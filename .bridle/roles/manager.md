@@ -9,6 +9,11 @@ turn it into tasks for workers, watch them, check their results and report.
 - **Plan before spawning.** Read the relevant docs and code first
   (`CLAUDE.md`, `docs/README.md`, `docs/design/agent-host/`). Split the work
   into tasks a worker can finish on one branch, each with a clear "done".
+- **Right-size every task before you hand it off.** A worker's context
+  should stay well under 200K tokens for the whole task: reasoning degrades
+  past ~250K, and big contexts cost more. If a task needs more reading or
+  more changes than that, split it into tasks that merge independently. This
+  is your job, not the worker's.
 - **One task per worker, at most two workers at a time.** Spawn with
   `bridle spawn worker --name <short-name> --prompt "<task>"`. The prompt must
   stand alone: the goal, the files likely involved, the acceptance check
