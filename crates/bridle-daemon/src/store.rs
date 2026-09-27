@@ -14,8 +14,8 @@ use std::sync::{Arc, Mutex};
 
 use bridle_api::types::{
     Agent, AgentState, AgentUsage, Event, EventQuery, ExitInfo, InteractiveUsageRow, Message,
-    MessageKind, MessageState, PrincipalId, PrincipalKind, RateLimit, TokenCreated, TokenTotals,
-    Usage, When,
+    MessageKind, MessageState, PrincipalId, PrincipalKind, RateLimit, TokenCreated, TokenInfo,
+    TokenTotals, Usage, When,
 };
 use chrono::{DateTime, SecondsFormat, Utc};
 use rusqlite::Connection;
@@ -187,6 +187,19 @@ impl Store {
     pub async fn revoke_principal(&self, id: &str) -> Result<(), StoreError> {
         let id = id.to_string();
         self.with_conn(move |c| sync::revoke_principal(c, &id))
+            .await
+    }
+
+    pub async fn list_external_tokens(&self) -> Result<Vec<TokenInfo>, StoreError> {
+        self.with_conn(sync::list_external_tokens).await
+    }
+
+    /// Revokes `external:<name>`, failing with `NotFound` if no such
+    /// external-token principal exists (an agent's own token isn't revoked
+    /// this way; that happens through `rm`).
+    pub async fn revoke_external_token(&self, name: &str) -> Result<(), StoreError> {
+        let name = name.to_string();
+        self.with_conn(move |c| sync::revoke_external_token(c, &name))
             .await
     }
 
@@ -819,6 +832,42 @@ mod sync {
             params![fmt_dt(Utc::now()), id],
         )?;
         Ok(())
+    }
+
+    pub(super) fn list_external_tokens(conn: &Connection) -> Result<Vec<TokenInfo>, StoreError> {
+        let mut stmt = conn.prepare(
+            "SELECT id, name, created_at, revoked_at FROM principals
+             WHERE kind = 'external' ORDER BY created_at ASC",
+        )?;
+        let rows = stmt.query_map([], |row| {
+            let created_at: String = row.get(2)?;
+            let revoked_at: Option<String> = row.get(3)?;
+            Ok(TokenInfo {
+                principal: row.get(0)?,
+                name: row.get(1)?,
+                created_at: parse_dt(&created_at)?,
+                revoked: revoked_at.is_some(),
+            })
+        })?;
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
+    pub(super) fn revoke_external_token(conn: &Connection, name: &str) -> Result<(), StoreError> {
+        let id = format!("external:{name}");
+        let exists: bool = conn
+            .query_row(
+                "SELECT 1 FROM principals WHERE id = ?1 AND kind = 'external'",
+                params![id],
+                |_| Ok(()),
+            )
+            .optional()?
+            .is_some();
+        if !exists {
+            return Err(StoreError::NotFound(format!(
+                "no such external token: {name}"
+            )));
+        }
+        revoke_principal(conn, &id)
     }
 
     // ---------- agents ----------
@@ -1854,6 +1903,50 @@ mod tests {
                 .expect("auth bogus")
                 .is_none()
         );
+    }
+
+    #[tokio::test]
+    async fn list_and_revoke_external_tokens() {
+        let (store, _tmp) = store().await;
+        store
+            .create_external_token("orchestrator")
+            .await
+            .expect("create external token");
+        store
+            .create_external_token("tui")
+            .await
+            .expect("create external token");
+
+        let tokens = store.list_external_tokens().await.expect("list tokens");
+        assert_eq!(tokens.len(), 2);
+        // Never carries the secret itself.
+        let json = serde_json::to_string(&tokens).expect("serialize");
+        assert!(!json.contains("token"));
+        let orchestrator = tokens
+            .iter()
+            .find(|t| t.name == "orchestrator")
+            .expect("orchestrator listed");
+        assert_eq!(orchestrator.principal, "external:orchestrator");
+        assert!(!orchestrator.revoked);
+
+        store
+            .revoke_external_token("orchestrator")
+            .await
+            .expect("revoke");
+        let tokens = store.list_external_tokens().await.expect("list again");
+        let orchestrator = tokens
+            .iter()
+            .find(|t| t.name == "orchestrator")
+            .expect("still listed after revoke");
+        assert!(orchestrator.revoked);
+        let tui = tokens.iter().find(|t| t.name == "tui").expect("tui listed");
+        assert!(!tui.revoked);
+
+        let err = store
+            .revoke_external_token("no-such-name")
+            .await
+            .expect_err("revoking an unknown name fails");
+        assert!(matches!(err, StoreError::NotFound(_)));
     }
 
     #[tokio::test]

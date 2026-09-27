@@ -1,0 +1,29 @@
+---
+id: j2vq
+title: Should an autonomous orchestrator be granted bridle stop/rm permission?
+opened: 2026-09-27
+repos: [bridle]
+changes: []
+specs: []
+needs: []
+see: []
+---
+
+## The question
+
+During bridle's first self-hosted run, an orchestrator Claude Code session
+running in a fully-autonomous mode was refused permission to run `bridle
+stop` or `bridle rm` on agents by its own safety classifier, even though it
+had legitimate cause (cleaning up agents it had itself spawned). The human
+had to do that cleanup by hand.
+
+Should — and if so how — an autonomous orchestrator be granted that kind of
+operational permission, given that stopping/removing agents is exactly the
+kind of lifecycle management an orchestrator role is meant to do?
+
+## Why it matters
+
+This is a gap between what the orchestrator role needs to do
+(`docs/design/agent-host/roles-and-config.md`) and what Claude Code's own
+permission classifier allows an autonomous session to do unattended,
+independent of anything bridle itself enforces.

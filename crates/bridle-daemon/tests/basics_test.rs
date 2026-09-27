@@ -11,6 +11,7 @@ async fn health_needs_no_auth_and_status_needs_a_token() {
 
     let health = daemon.client.health().await.expect("health");
     assert!(health.ok);
+    assert_eq!(health.agent_count, 0);
 
     let anon = Client::new(daemon.running.url.clone(), None);
     assert!(anon.health().await.is_ok(), "health should need no auth");
@@ -18,6 +19,30 @@ async fn health_needs_no_auth_and_status_needs_a_token() {
     let status = daemon.client.status().await.expect("status");
     assert_eq!(status.principal, "human");
     assert!(!status.daemon.project.is_empty());
+}
+
+#[tokio::test]
+async fn health_counts_non_terminal_agents() {
+    let (daemon, _tmp) = support::start_daemon(None).await;
+
+    daemon
+        .client
+        .spawn(&SpawnRequest {
+            role: "worker".to_string(),
+            name: Some("w1".to_string()),
+            prompt: None,
+            workdir: Some(bridle_api::types::Workdir::Repo),
+            model: None,
+            ignore_budget: false,
+        })
+        .await
+        .expect("spawn");
+
+    let health = daemon.client.health().await.expect("health");
+    assert_eq!(health.agent_count, 1);
+
+    daemon.running.shutdown();
+    daemon.running.join().await.expect("join");
 }
 
 #[tokio::test]
@@ -85,6 +110,73 @@ async fn agent_token_cannot_create_tokens() {
     let err = agent_client.shutdown().await.unwrap_err();
     assert!(
         matches!(err, ClientError::Api { status: 403, .. }),
+        "{err:?}"
+    );
+
+    let err = agent_client.list_tokens().await.unwrap_err();
+    assert!(
+        matches!(err, ClientError::Api { status: 403, .. }),
+        "{err:?}"
+    );
+
+    let err = agent_client.revoke_token("orchestrator").await.unwrap_err();
+    assert!(
+        matches!(err, ClientError::Api { status: 403, .. }),
+        "{err:?}"
+    );
+
+    daemon.running.shutdown();
+    daemon.running.join().await.expect("join");
+}
+
+#[tokio::test]
+async fn token_list_and_revoke() {
+    let (daemon, _tmp) = support::start_daemon(None).await;
+
+    let created = daemon
+        .client
+        .create_token(&bridle_api::types::TokenCreateRequest {
+            name: "orchestrator".to_string(),
+        })
+        .await
+        .expect("create token");
+    assert_eq!(created.principal, "external:orchestrator");
+
+    let tokens = daemon.client.list_tokens().await.expect("list tokens");
+    assert_eq!(tokens.len(), 1);
+    assert_eq!(tokens[0].name, "orchestrator");
+    assert!(!tokens[0].revoked);
+
+    let external = Client::new(daemon.running.url.clone(), Some(created.token.clone()));
+    assert!(external.status().await.is_ok(), "token works before revoke");
+
+    daemon
+        .client
+        .revoke_token("orchestrator")
+        .await
+        .expect("revoke token");
+
+    let tokens = daemon
+        .client
+        .list_tokens()
+        .await
+        .expect("list after revoke");
+    assert_eq!(tokens.len(), 1);
+    assert!(tokens[0].revoked);
+
+    let err = external.status().await.unwrap_err();
+    assert!(
+        matches!(err, ClientError::Api { status: 401, .. }),
+        "revoked token should no longer authenticate: {err:?}"
+    );
+
+    let err = daemon
+        .client
+        .revoke_token("no-such-name")
+        .await
+        .unwrap_err();
+    assert!(
+        matches!(err, ClientError::Api { status: 404, .. }),
         "{err:?}"
     );
 

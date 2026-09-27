@@ -107,19 +107,46 @@ async fn stop_daemon(cli: &Cli) -> Result<(), CliError> {
     }
 }
 
+#[derive(serde::Serialize)]
+struct DaemonRow {
+    #[serde(flatten)]
+    info: bridle_api::DaemonInfo,
+    /// `None` when the daemon didn't answer `/v1/health` within the timeout.
+    agents: Option<u32>,
+}
+
 async fn daemons(cli: &Cli) -> Result<(), CliError> {
     let list = discovery::list_registry();
+    let timeout = std::time::Duration::from_secs(1);
+    let counts = futures::future::join_all(list.iter().map(|d| {
+        let client = Client::new_with_timeout(d.url.clone(), None, timeout);
+        async move { client.health().await.ok().map(|h| h.agent_count) }
+    }))
+    .await;
+    let rows: Vec<DaemonRow> = list
+        .into_iter()
+        .zip(counts)
+        .map(|(info, agents)| DaemonRow { info, agents })
+        .collect();
+
     if cli.json {
-        render::print_json(&list)?;
-    } else if list.is_empty() {
+        render::print_json(&rows)?;
+    } else if rows.is_empty() {
         println!("no daemons running");
     } else {
-        let url_w = list.iter().map(|d| d.url.len()).max().unwrap_or(3);
-        println!("{:<16} {:<8} {:<url_w$} WORKSPACE", "PROJECT", "PID", "URL");
-        for d in &list {
+        let url_w = rows.iter().map(|d| d.info.url.len()).max().unwrap_or(3);
+        println!(
+            "{:<16} {:<8} {:<url_w$} {:<7} WORKSPACE",
+            "PROJECT", "PID", "URL", "AGENTS"
+        );
+        for d in &rows {
+            let agents = d
+                .agents
+                .map(|n| n.to_string())
+                .unwrap_or_else(|| "?".to_string());
             println!(
-                "{:<16} {:<8} {:<url_w$} {}",
-                d.project, d.pid, d.url, d.workspace
+                "{:<16} {:<8} {:<url_w$} {:<7} {}",
+                d.info.project, d.info.pid, d.info.url, agents, d.info.workspace
             );
         }
     }
@@ -616,18 +643,43 @@ fn parse_duration(s: &str) -> Option<chrono::Duration> {
 
 async fn token(cli: &Cli, args: &TokenArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
-    let TokenAction::Create { name } = &args.action;
-    let created = client
-        .create_token(&TokenCreateRequest { name: name.clone() })
-        .await?;
-    if cli.json {
-        render::print_json(&created)?;
-    } else {
-        println!("{}", created.token);
-        eprintln!(
-            "principal {} — this token is shown once; store it now",
-            created.principal
-        );
+    match &args.action {
+        TokenAction::Create { name } => {
+            let created = client
+                .create_token(&TokenCreateRequest { name: name.clone() })
+                .await?;
+            if cli.json {
+                render::print_json(&created)?;
+            } else {
+                println!("{}", created.token);
+                eprintln!(
+                    "principal {} — this token is shown once; store it now",
+                    created.principal
+                );
+            }
+        }
+        TokenAction::List => {
+            let tokens = client.list_tokens().await?;
+            if cli.json {
+                render::print_json(&tokens)?;
+            } else if tokens.is_empty() {
+                println!("no external tokens");
+            } else {
+                println!("{:<20} {:<26} REVOKED", "NAME", "CREATED");
+                for t in &tokens {
+                    println!(
+                        "{:<20} {:<26} {}",
+                        t.name,
+                        t.created_at.to_rfc3339(),
+                        t.revoked
+                    );
+                }
+            }
+        }
+        TokenAction::Revoke { name } => {
+            client.revoke_token(name).await?;
+            println!("revoked {name}");
+        }
     }
     Ok(())
 }
