@@ -28,6 +28,7 @@ bridle events  [--follow] [--since SEQ] [--agent A] [--kind PREFIX]
 bridle usage
 bridle budget [hold [--for D|--until T] | release]   usage governor (usage-and-budget.md)
 bridle token create <name>
+bridle statusline                           usage from interactive sessions
 ```
 
 - **`--ignore-budget`** on `spawn`/`resume` skips the budget governor's
@@ -52,6 +53,12 @@ bridle token create <name>
   starts at the tail unless given `--since` (or resuming after a
   reconnect), in which case it backfills from that cursor first.
 - **`serve --detach`**: [[docs/design/agent-host/daemon#Running it|running the daemon]].
+- **`statusline`** is Claude Code's `statusLine` command, configured in `settings.json`. It
+  reads Claude Code's JSON on stdin, prints a short line back, and posts a snapshot to
+  `POST /v1/statusline` ([[docs/design/agent-host/api|API]]) using the same daemon discovery
+  and token as every other command, but with a 2 s request timeout. It never fails or hangs:
+  unparseable stdin, no daemon, and a slow or unreachable daemon all just mean the line prints
+  with whatever it has and nothing gets recorded ([[docs/design/usage-and-budget#Where bridle can see usage|usage and budget]]).
 
 ## Planned
 
@@ -60,7 +67,6 @@ as a first cut:
 
 ```
 bridle init | sync | prime | doctor              project setup, render, session start, health
-bridle statusline                                usage from interactive sessions
 bridle task new|show|edit|list|drop|reopen
 bridle dep add|rm            bridle ready [--all] [--role]
 bridle claim|release|handoff bridle plan <id>     bridle accept <id> (human only)

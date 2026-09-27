@@ -20,7 +20,8 @@ JSON over HTTP, versioned under `/v1`. The contract is
 | `POST /v1/messages/{id}/read` | mark read |
 | `GET /v1/events?since=&agent=&kind=&limit=` | the event log, oldest first (default limit 500); `agent` is an id or name; `kind` is a prefix |
 | `GET /v1/events/stream?since=` | the same as **SSE**; resumable with `Last-Event-ID` (`since` wins if both are given); keep-alive every 15 s |
-| `GET /v1/usage` | per-agent (including removed agents) and total turns, tokens, cost, latest rate limits |
+| `GET /v1/usage` | per-agent (including removed agents) and total turns, tokens, cost, latest rate limits, today's `bridle statusline` snapshots |
+| `POST /v1/statusline` | record a `bridle statusline` snapshot (`{session_id?, model?, cost_usd?, context_used_tokens?, context_max_tokens?, rate_limits: [{window, utilization?, resets_at?}]}`); rate-limit windows go through the same store path as `rate_limit_event` |
 | `GET /v1/budget` | the governor's state, per-window readings and staleness, and the effective thresholds ([[../usage-and-budget#The budget governor\|the budget governor]]); `hold`/`release` land with the wind-down work |
 | `POST /v1/tokens` | mint an `external` token (human only) |
 | `POST /v1/shutdown` | graceful stop of all agents, then exit (human only) |
