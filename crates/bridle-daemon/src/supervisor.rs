@@ -123,6 +123,11 @@ struct AgentRuntime {
     /// expired); gives `agent.exited` the `budget_paused` reason, distinct
     /// from the per-agent `budget_exhausted` spend cap.
     budget_paused: AtomicBool,
+    /// Set by [`AgentManager::stop_all`] before it calls `stop()`, so
+    /// `classify_exit` can tell a shutdown-triggered stop from an ordinary
+    /// `bridle stop`, and give it a reason that `resume_on_restart` treats
+    /// like `lost` after the next start.
+    shutdown_requested: AtomicBool,
     state: AsyncMutex<RuntimeState>,
     exited: watch::Receiver<bool>,
     task: AsyncMutex<Option<tokio::task::JoinHandle<()>>>,
@@ -310,6 +315,9 @@ impl AgentManager {
             let this = self.clone();
             let system = system.clone();
             async move {
+                if let Some(rt) = this.get_runtime(&id) {
+                    rt.shutdown_requested.store(true, Ordering::SeqCst);
+                }
                 let _ = this.stop(&id, false, &system).await;
             }
         });
@@ -616,6 +624,7 @@ impl AgentManager {
             stop_requested: AtomicBool::new(false),
             budget_exhausted: AtomicBool::new(false),
             budget_paused: AtomicBool::new(false),
+            shutdown_requested: AtomicBool::new(false),
             state: AsyncMutex::new(RuntimeState {
                 tracker: Tracker::new(pid, start),
                 fifo: VecDeque::new(),
@@ -1037,10 +1046,12 @@ impl AgentManager {
         let mut st = runtime.state.lock().await;
         self.sweep_and_emit(id, &mut st.tracker).await;
         let stop_requested = runtime.stop_requested.load(Ordering::SeqCst);
+        let shutdown_requested = runtime.shutdown_requested.load(Ordering::SeqCst);
         let saw_any_line = st.saw_any_line;
         drop(st);
 
-        let (state, mut exit) = classify_exit(stop_requested, saw_any_line, &outcome);
+        let (state, mut exit) =
+            classify_exit(stop_requested, shutdown_requested, saw_any_line, &outcome);
         if runtime.budget_exhausted.load(Ordering::SeqCst) {
             exit.reason = "budget_exhausted".to_string();
         } else if runtime.budget_paused.load(Ordering::SeqCst) {
@@ -1656,8 +1667,16 @@ async fn write_message(
     Ok(())
 }
 
+/// Reason on `ExitInfo` for an agent stopped as part of daemon shutdown
+/// (`AgentManager::stop_all`), distinct from an ordinary `bridle stop`'s
+/// `sigterm`/`sigkill`/`stdin_closed`. `run_autostart_and_resume` treats a
+/// `resume_on_restart` role stopped this way the same as `lost`, so it comes
+/// back after a clean restart, not only after a crash.
+pub const DAEMON_SHUTDOWN_REASON: &str = "daemon_shutdown";
+
 fn classify_exit(
     stop_requested: bool,
+    shutdown_requested: bool,
     saw_any_line: bool,
     outcome: &ExitOutcome,
 ) -> (AgentState, ExitInfo) {
@@ -1665,10 +1684,14 @@ fn classify_exit(
     const SIGKILL: i32 = 9;
 
     if stop_requested {
-        let reason = match outcome.signal {
-            Some(SIGKILL) => "sigkill",
-            Some(SIGTERM) => "sigterm",
-            _ => "stdin_closed",
+        let reason = if shutdown_requested {
+            DAEMON_SHUTDOWN_REASON
+        } else {
+            match outcome.signal {
+                Some(SIGKILL) => "sigkill",
+                Some(SIGTERM) => "sigterm",
+                _ => "stdin_closed",
+            }
         };
         return (
             AgentState::Stopped,

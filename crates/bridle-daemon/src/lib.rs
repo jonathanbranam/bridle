@@ -28,7 +28,7 @@ mod supervisor;
 pub mod worktree;
 
 pub use governor::Governor;
-pub use supervisor::{AgentManager, SupervisorError, ToTarget};
+pub use supervisor::{AgentManager, DAEMON_SHUTDOWN_REASON, SupervisorError, ToTarget};
 
 use config::Config;
 use events::Emitter;
@@ -285,9 +285,16 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
                 json!({}),
             )
             .await;
-        manager
-            .stop_all(config.stop_grace + Duration::from_secs(5))
-            .await;
+        let cap = config.stop_grace + Duration::from_secs(5);
+        let n = manager.running_ids().len();
+        if n > 0 {
+            tracing::info!(
+                "stopping {n} agent{} (up to {}s)...",
+                if n == 1 { "" } else { "s" },
+                cap.as_secs()
+            );
+        }
+        manager.stop_all(cap).await;
 
         let _ = discovery::remove_registry(&project);
         let _ = std::fs::remove_file(ws.daemon_json());
@@ -449,7 +456,12 @@ async fn run_autostart_and_resume(store: &Store, config: &Config, manager: &Agen
         return;
     };
     for a in agents {
-        if a.state == AgentState::Lost
+        let resumable_after_restart = a.state == AgentState::Lost
+            || (a.state == AgentState::Stopped
+                && a.exit
+                    .as_ref()
+                    .is_some_and(|e| e.reason == supervisor::DAEMON_SHUTDOWN_REASON));
+        if resumable_after_restart
             && config
                 .roles
                 .get(&a.role)

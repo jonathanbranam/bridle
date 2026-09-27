@@ -107,6 +107,20 @@ impl Drop for DaemonGuard {
     }
 }
 
+/// Same purpose as [`DaemonGuard`], for `serve --detach`: the CLI process we
+/// run is only the launcher, and exits once the real daemon (re-exec'd into
+/// its own process group) reports healthy, so there's no `Child` to hold. A
+/// panicking assertion between detach and the test's own `stop-daemon` call
+/// would otherwise leak that daemon against a tempdir that's about to be
+/// deleted.
+struct DetachedDaemonGuard(i32);
+
+impl Drop for DetachedDaemonGuard {
+    fn drop(&mut self) {
+        let _ = kill(Pid::from_raw(self.0), Signal::SIGKILL);
+    }
+}
+
 #[test]
 fn cli_end_to_end_against_a_foreground_daemon() {
     let tmp = tempfile::tempdir().expect("tempdir");
@@ -277,6 +291,7 @@ fn serve_detach_returns_once_healthy_and_daemons_lists_it() {
     );
     assert!(ok, "serve --detach failed: {err}");
     let info: serde_json::Value = serde_json::from_str(&out).expect("detach json");
+    let _guard = DetachedDaemonGuard(info["pid"].as_i64().expect("pid") as i32);
     assert!(
         info["url"].as_str().expect("url").starts_with("http://"),
         "{info}"
