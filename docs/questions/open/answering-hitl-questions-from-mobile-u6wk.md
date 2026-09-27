@@ -41,3 +41,9 @@ Raised on 2026-09-27 while checking the NUC plan ([[docs/context/nuc-host|NUC ho
 - **MCP from claude.ai mobile** ([[docs/proposal/build-order|build order]]) needs bridle
   on public HTTPS, e.g. Tailscale Funnel. claude.ai's connectors run on
   Anthropic's servers, not on the phone, so they can't reach the tailnet.
+
+The requirements here are to be refined later. The human's tentative preference (not yet a
+spec): a claude.ai connector reachable only via public HTTPS to `/mcp`, with OAuth,
+exposing a small voice-shaped tool set — briefing, pending questions, answer question, tell
+manager, budget hold/release, approve held merges — deliberately **not** spawn/stop/rm or
+anything else that could run arbitrary work from a phone call.
