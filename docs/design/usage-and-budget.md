@@ -316,11 +316,22 @@ ledger's task, project and workflow-revision columns, which don't exist yet
 
 - **`bridle cost audit`** counts the tokens bridle adds to each role's context
   with no work done: prime, the rendered system-prompt file, skill
-  descriptions, MCP tool schemas and hook boilerplate. It compares the result
-  with a committed baseline (`.bridle/cost-baseline.json`, a record, not
-  generated output). `--check` fails when a change to rules, skills or tools
-  grows any role's fixed overhead by more than a set percentage. The growth
-  then shows up in review, as a number, before it costs anything.
+  descriptions, MCP tool schemas and hook boilerplate. Built: only the
+  rendered system-prompt file exists in bridle today, so that's all it
+  measures — specifically `stable_system_prompt`'s output, the role-scoped
+  part meant to be identical across agents of a role, from a fresh render
+  per role. The other categories are unbuilt (prime, skills) or deferred
+  (MCP, hooks); `bridle_daemon::cost_audit::measure` folds each in once it
+  exists, rather than reporting a placeholder zero for it now. It compares
+  the result with a committed baseline (`.bridle/cost-baseline.json`, a
+  record, not generated output — a human or worker writes it deliberately
+  when moving the baseline). Since there's no tokenizer dependency in the
+  workspace and this count is only a relative unit (see the caveat on
+  `total_cost_usd` above), sizes are approximated at ~4 bytes/token.
+  `--check` fails when a role's current size exceeds its baseline by more
+  than `bridle_daemon::cost_audit::GROWTH_THRESHOLD_PERCENT` (10% by
+  default). The growth then shows up in review, as a number, before it costs
+  anything.
 - **`bridle usage compare --workflow`** compares tokens per task kind before
   and after a workflow revision. The comparison is rough, because tasks
   differ, but a clear increase in "tokens per chore" after a rules change is

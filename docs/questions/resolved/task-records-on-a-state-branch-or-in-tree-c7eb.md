@@ -36,3 +36,8 @@ It decides where every durable task record lives, and P0 of the
 - Prior art on the other side: the ticket system in `workflow-instructions/`
   keeps tickets in-tree under `docs/tickets/`, and these question files are
   in-tree too.
+
+## Resolution
+
+Task records live on a state branch, not in-tree: recorded in
+[[docs/design/storage#The state branch|the state branch]].

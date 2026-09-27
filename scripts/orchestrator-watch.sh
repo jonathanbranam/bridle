@@ -1,0 +1,28 @@
+#!/bin/zsh
+# Background watcher for the orchestrator (.bridle/roles/orchestrator.md). Exits, waking the
+# orchestrator, on: a question to the human, main moving, an unexpected exit/crash/stall, all
+# agents idle for 15 min, five_hour >= 93% or seven_day >= 85%. Usage: orchestrator-watch.sh <since-seq>
+export BRIDLE_TOKEN=$(cat ~/.bridle-orchestrator.token)
+cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
+since=${1:-0}
+head0=$(git rev-parse main)
+idle_ticks=0
+while true; do
+  U=$(bridle status --json 2>/dev/null | jq -r .daemon.url)
+  if [[ -n $U && $U != null ]]; then
+    ev=$(bridle events --json --since $since 2>/dev/null)
+    last=$(print -r -- "$ev" | jq '[.[].seq] | max // empty')
+    [[ -n $last ]] && since=$last
+    hit=$(print -r -- "$ev" | jq -c '[.[] | select((.kind=="agent.exited" and .data.reason!="stdin_closed") or (.kind=="agent.state" and (.data.to=="crashed" or .data.to=="stalled")))]')
+    q=$(curl -s -H "Authorization: Bearer $BRIDLE_TOKEN" "$U/v1/messages?to=human&unread=true&limit=50" | jq -c '[.[] | select(.kind=="question")]')
+    util=$(bridle status --json | jq '[.rate_limits[]? | if .window=="five_hour" then (.utilization//0)/0.93 else (.utilization//0)/0.85 end] | max')
+    if [[ -n $hit && $hit != "[]" ]]; then echo "EVENTS since=$since"; print -r -- "$hit"; exit 0; fi
+    if [[ -n $q && $q != "[]" ]]; then echo "QUESTION since=$since"; print -r -- "$q"; exit 0; fi
+    busy=$(bridle agents --json | jq '[.[] | select(.state=="working" or .state=="starting")] | length')
+    if (( busy == 0 )); then (( idle_ticks++ )); else idle_ticks=0; fi
+    if (( idle_ticks >= 30 )); then echo "ALL IDLE since=$since"; bridle agents; exit 0; fi
+    if (( util >= 1.0 )); then echo "USAGE since=$since"; bridle status; exit 0; fi
+  fi
+  if [[ $(git rev-parse main) != $head0 ]]; then echo "MAIN MOVED since=$since"; git log --oneline $head0..main; exit 0; fi
+  sleep 30
+done

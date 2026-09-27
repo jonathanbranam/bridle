@@ -29,3 +29,11 @@ state branch.
 
 - Design: [[docs/design/storage#The state branch|the state branch]].
 - Depends on where task records live at all: [[task-records-on-a-state-branch-or-in-tree-c7eb|state branch or in-tree]].
+
+## Resolution
+
+A question lives inline in the thread of the task it blocks, not in a
+separate `questions/…` folder. The daemon additionally indexes open
+questions in SQLite so `bridle inbox` can show them without walking the
+state branch. Recorded in [[docs/design/storage#The state branch|the state
+branch]] and [[docs/design/coordination#Messages|messages]].

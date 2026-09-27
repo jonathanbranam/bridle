@@ -12,9 +12,9 @@ use chrono::{Local, TimeZone, Utc};
 use futures::StreamExt;
 
 use crate::cli::{
-    AgentsArgs, BudgetAction, BudgetArgs, BudgetHoldArgs, Cli, Command, EventsArgs, InboxArgs,
-    InterruptArgs, LogsArgs, RmArgs, SendArgs, ShowArgs, SpawnArgs, StopArgs, TokenAction,
-    TokenArgs, UsageArgs, UsageByArg, WhenArg,
+    AgentsArgs, BudgetAction, BudgetArgs, BudgetHoldArgs, Cli, Command, CostAction, CostArgs,
+    CostAuditArgs, EventsArgs, InboxArgs, InterruptArgs, LogsArgs, RmArgs, SendArgs, ShowArgs,
+    SpawnArgs, StopArgs, TokenAction, TokenArgs, UsageArgs, UsageByArg, WhenArg,
 };
 use crate::error::CliError;
 use crate::render;
@@ -38,6 +38,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Logs(args) => logs(&cli, args).await,
         Command::Events(args) => events(&cli, args).await,
         Command::Usage(args) => usage(&cli, args).await,
+        Command::Cost(args) => cost(&cli, args).await,
         Command::Tui => tui(&cli).await,
         Command::Budget(args) => budget(&cli, args).await,
         Command::Token(args) => token(&cli, args).await,
@@ -621,6 +622,77 @@ async fn usage(cli: &Cli, args: &UsageArgs) -> Result<(), CliError> {
         }
     }
     Ok(())
+}
+
+/// `bridle cost audit`: a static, local check (no daemon involved — it reads
+/// `.bridle/config.toml` and `.bridle/cost-baseline.json` from the current
+/// directory) of what bridle injects into agent context, per
+/// docs/design/usage-and-budget.md ("Tracking token use over time") and
+/// `bridle_daemon::cost_audit`.
+async fn cost(cli: &Cli, args: &CostArgs) -> Result<(), CliError> {
+    match &args.action {
+        CostAction::Audit(audit_args) => cost_audit(cli, audit_args).await,
+    }
+}
+
+async fn cost_audit(cli: &Cli, args: &CostAuditArgs) -> Result<(), CliError> {
+    use bridle_daemon::config::Config;
+    use bridle_daemon::cost_audit::{self, RoleAudit};
+
+    let repo = std::env::current_dir().context("current directory")?;
+    let config = Config::load(&repo).context("loading .bridle/config.toml")?;
+    let current = cost_audit::measure(&config, &repo);
+    let baseline = cost_audit::Baseline::load(&repo)
+        .context("loading .bridle/cost-baseline.json")?
+        .unwrap_or_default();
+    let rows = cost_audit::compare(&current, &baseline);
+
+    if cli.json {
+        render::print_json(&rows)?;
+    } else {
+        println!(
+            "{:<14} {:>9} {:>9} {:>8}",
+            "ROLE", "CURRENT", "BASELINE", "CHANGE"
+        );
+        for r in &rows {
+            print_cost_row(r);
+        }
+    }
+
+    if args.check {
+        let failing: Vec<&RoleAudit> = rows.iter().filter(|r| r.over_threshold).collect();
+        if !failing.is_empty() {
+            for r in &failing {
+                eprintln!(
+                    "role {} grew {:.1}% over baseline (threshold {:.0}%)",
+                    r.role,
+                    r.change_percent.unwrap_or(0.0),
+                    cost_audit::GROWTH_THRESHOLD_PERCENT
+                );
+            }
+            return Err(CliError::Other(anyhow::anyhow!(
+                "{} role(s) exceeded the cost-growth threshold",
+                failing.len()
+            )));
+        }
+    }
+    Ok(())
+}
+
+fn print_cost_row(r: &bridle_daemon::cost_audit::RoleAudit) {
+    let baseline = r
+        .baseline_tokens
+        .map(|b| b.to_string())
+        .unwrap_or_else(|| "-".to_string());
+    let change = r
+        .change_percent
+        .map(|c| format!("{c:+.1}%"))
+        .unwrap_or_else(|| "new".to_string());
+    let flag = if r.over_threshold { " !" } else { "" };
+    println!(
+        "{:<14} {:>9} {:>9} {:>8}{flag}",
+        r.role, r.current_tokens, baseline, change
+    );
 }
 
 async fn budget(cli: &Cli, args: &BudgetArgs) -> Result<(), CliError> {
