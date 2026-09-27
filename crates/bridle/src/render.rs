@@ -46,7 +46,10 @@ fn render_assistant_blocks(value: &Value) -> Vec<String> {
                 .map(|t| format!("  {t}")),
             Some("tool_use") => {
                 let name = block.get("name").and_then(Value::as_str).unwrap_or("?");
-                let input = block.get("input").map(summarize_input).unwrap_or_default();
+                let input = block
+                    .get("input")
+                    .map(tool_input_summary)
+                    .unwrap_or_default();
                 Some(format!("\u{2192} {name}({input})"))
             }
             // "thinking" and any future block type: skipped.
@@ -77,9 +80,21 @@ fn render_system_init(value: &Value) -> Option<String> {
         .then(|| "\u{2014} turn start".to_string())
 }
 
-/// A short one-line summary of a tool call's input, for `tool_use` and for
-/// an event's `data` object: compact JSON with the outer braces stripped,
-/// truncated.
+/// A short one-line summary of a tool call's input for `tool_use` blocks:
+/// the `command`, `file_path` or `pattern` key's string value if there is
+/// one (truncated), matching how `tool.use` events render it
+/// (bridle-daemon's `supervisor::input_summary`), else the compact JSON.
+fn tool_input_summary(input: &Value) -> String {
+    for key in ["command", "file_path", "pattern"] {
+        if let Some(s) = input.get(key).and_then(Value::as_str) {
+            return truncate(s, 60);
+        }
+    }
+    summarize_input(input)
+}
+
+/// A short one-line summary of a tool call's input, for an event's `data`
+/// object: compact JSON with the outer braces stripped, truncated.
 fn summarize_input(input: &Value) -> String {
     let compact = serde_json::to_string(input).unwrap_or_default();
     let inner = compact
@@ -128,6 +143,8 @@ mod tests {
 
     const ASSISTANT_TOOL_USE: &str = r#"{"type":"assistant","message":{"model":"claude-haiku-4-5-20251001","id":"msg_011CfU3xnUCj9Rh3MUMiDT7P","type":"message","role":"assistant","content":[{"type":"tool_use","id":"toolu_01HLwKKcrzNkRpbiStqByY6g","name":"Bash","input":{"command":"sleep 8","description":"Sleep for 8 seconds"},"caller":{"type":"direct"}}],"container":null,"stop_reason":null,"stop_sequence":null,"stop_details":null},"parent_tool_use_id":null,"session_id":"efdb4e0e-d577-445e-bfbd-3ebbe59f28f5","uuid":"e654193b-52ef-46d1-9c0c-4a79783621d0","timestamp":"2026-09-27T13:50:19.546Z"}"#;
 
+    const ASSISTANT_TOOL_USE_WRITE: &str = r#"{"type":"assistant","message":{"model":"claude-haiku-4-5-20251001","id":"msg_011CfU3xnUCj9Rh3MUMiDT7P","type":"message","role":"assistant","content":[{"type":"tool_use","id":"toolu_01HLwKKcrzNkRpbiStqByY6g","name":"Write","input":{"file_path":"/tmp/hi.txt","content":"hi"},"caller":{"type":"direct"}}],"container":null,"stop_reason":null,"stop_sequence":null,"stop_details":null},"parent_tool_use_id":null,"session_id":"efdb4e0e-d577-445e-bfbd-3ebbe59f28f5","uuid":"e654193b-52ef-46d1-9c0c-4a79783621d0","timestamp":"2026-09-27T13:50:19.546Z"}"#;
+
     const TOOL_RESULT_USER: &str = r#"{"type":"user","message":{"role":"user","content":[{"tool_use_id":"toolu_01HLwKKcrzNkRpbiStqByY6g","type":"tool_result","content":"(Bash completed with no output)","is_error":false}]},"parent_tool_use_id":null,"session_id":"efdb4e0e-d577-445e-bfbd-3ebbe59f28f5","uuid":"34297844-3f53-4b95-b2b0-460fd15eaf83","timestamp":"2026-09-27T13:50:31.440Z"}"#;
 
     const ASSISTANT_TEXT: &str = r#"{"type":"assistant","message":{"model":"claude-haiku-4-5-20251001","id":"msg_011CfU3ymukZiKonoDfuQomP","type":"message","role":"assistant","content":[{"type":"text","text":"DONE\nBANANA"}],"container":null,"stop_reason":null,"stop_sequence":null,"stop_details":null},"parent_tool_use_id":null,"session_id":"efdb4e0e-d577-445e-bfbd-3ebbe59f28f5","uuid":"35f77723-f291-4c46-ab7d-f0153f4713d2","timestamp":"2026-09-27T13:50:33.227Z"}"#;
@@ -165,8 +182,14 @@ mod tests {
     fn assistant_tool_use_renders_with_arrow_and_short_input() {
         let out = render_stream_json_line(&parse(ASSISTANT_TOOL_USE));
         assert_eq!(out.len(), 1);
-        assert!(out[0].starts_with("\u{2192} Bash("));
-        assert!(out[0].contains("sleep 8"));
+        assert_eq!(out[0], "\u{2192} Bash(sleep 8)");
+    }
+
+    #[test]
+    fn assistant_tool_use_prefers_file_path_over_raw_json() {
+        let out = render_stream_json_line(&parse(ASSISTANT_TOOL_USE_WRITE));
+        assert_eq!(out.len(), 1);
+        assert_eq!(out[0], "\u{2192} Write(/tmp/hi.txt)");
     }
 
     #[test]

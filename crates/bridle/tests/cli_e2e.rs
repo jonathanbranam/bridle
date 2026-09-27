@@ -47,6 +47,23 @@ fn init_repo(dir: &Path) {
     ]);
 }
 
+/// This test suite may itself be running under bridle (as one of its own
+/// agents), which sets these in its own environment. The `bridle` child
+/// processes spawned here must not inherit them — otherwise they'd talk to
+/// that real daemon instead of the one this test starts, as happened once
+/// (see docs/questions/open/v1-follow-ups-from-the-build-9c6e.md).
+/// Mirrors the CLAUDE*/BRIDLE_TOKEN stripping in
+/// `bridle_claude::command::env_removal_keys`, extended to every BRIDLE_*
+/// var the CLI itself reads for discovery.
+fn strip_bridle_env(cmd: &mut Command) -> &mut Command {
+    cmd.env_remove("CLAUDECODE")
+        .env_remove("BRIDLE_URL")
+        .env_remove("BRIDLE_TOKEN")
+        .env_remove("BRIDLE_AGENT_ID")
+        .env_remove("BRIDLE_AGENT_NAME")
+        .env_remove("BRIDLE_PROJECT")
+}
+
 fn wait_for_file(path: &Path, timeout: Duration) {
     let deadline = Instant::now() + timeout;
     while !path.is_file() {
@@ -61,14 +78,13 @@ fn wait_for_file(path: &Path, timeout: Duration) {
 
 /// Runs the real `bridle` binary and returns (succeeded, stdout, stderr).
 fn run_cli(cwd: &Path, home: &Path, args: &[&str]) -> (bool, String, String) {
-    let out = Command::new(bridle_bin())
-        .args(args)
+    let mut cmd = Command::new(bridle_bin());
+    cmd.args(args)
         .current_dir(cwd)
         .env("BRIDLE_CLAUDE_BIN", fake_claude_path())
-        .env("BRIDLE_HOME", home)
-        .env_remove("CLAUDECODE")
-        .output()
-        .expect("run bridle");
+        .env("BRIDLE_HOME", home);
+    strip_bridle_env(&mut cmd);
+    let out = cmd.output().expect("run bridle");
     (
         out.status.success(),
         String::from_utf8_lossy(&out.stdout).into_owned(),
@@ -98,7 +114,8 @@ fn cli_end_to_end_against_a_foreground_daemon() {
     let workspace = tmp.path().to_path_buf();
     let home = tmp.path().join("home");
 
-    let child = Command::new(bridle_bin())
+    let mut serve_cmd = Command::new(bridle_bin());
+    serve_cmd
         .arg("serve")
         .arg("--repo")
         .arg(&repo)
@@ -106,12 +123,11 @@ fn cli_end_to_end_against_a_foreground_daemon() {
         .arg("127.0.0.1:0")
         .env("BRIDLE_CLAUDE_BIN", fake_claude_path())
         .env("BRIDLE_HOME", &home)
-        .env_remove("CLAUDECODE")
         .stdin(Stdio::null())
         .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .spawn()
-        .expect("spawn bridle serve");
+        .stderr(Stdio::null());
+    strip_bridle_env(&mut serve_cmd);
+    let child = serve_cmd.spawn().expect("spawn bridle serve");
     let mut guard = DaemonGuard(child);
 
     let daemon_json = workspace.join(".bridle/daemon.json");

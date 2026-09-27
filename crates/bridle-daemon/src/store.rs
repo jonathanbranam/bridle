@@ -224,13 +224,6 @@ impl Store {
             .await
     }
 
-    pub async fn set_session(&self, id: &str, session_id: &str) -> Result<(), StoreError> {
-        let id = id.to_string();
-        let session_id = session_id.to_string();
-        self.with_conn(move |c| sync::set_session(c, &id, &session_id))
-            .await
-    }
-
     pub async fn add_turn_start(
         &self,
         id: &str,
@@ -979,21 +972,6 @@ mod sync {
         Ok(())
     }
 
-    pub(super) fn set_session(
-        conn: &Connection,
-        id: &str,
-        session_id: &str,
-    ) -> Result<(), StoreError> {
-        let n = conn.execute(
-            "UPDATE agents SET session_id = ?1, updated_at = ?2 WHERE id = ?3",
-            params![session_id, fmt_dt(Utc::now()), id],
-        )?;
-        if n == 0 {
-            return Err(StoreError::NotFound(id.to_string()));
-        }
-        Ok(())
-    }
-
     pub(super) fn add_turn_start(
         conn: &Connection,
         id: &str,
@@ -1260,17 +1238,30 @@ mod sync {
     }
 
     pub(super) fn list_events(conn: &Connection, q: &EventQuery) -> Result<Vec<Event>, StoreError> {
+        let limit = q.limit.unwrap_or(500);
+        // No cursor: "recent", not "oldest" — take the newest `limit` rows
+        // and put them back in ascending order so the shape is unchanged.
+        // A cursor is forward pagination and keeps the ascending scan.
+        if q.since.is_none() {
+            let sql = "SELECT seq, ts, kind, actor, data, agent_id FROM events
+                 WHERE (?1 IS NULL OR agent_id = ?1)
+                   AND (?2 IS NULL OR kind LIKE ?2 || '%')
+                 ORDER BY seq DESC
+                 LIMIT ?3";
+            let mut stmt = conn.prepare(sql)?;
+            let rows = stmt.query_map(params![q.agent, q.kind, limit], row_to_event)?;
+            let mut events = rows.collect::<Result<Vec<_>, _>>()?;
+            events.reverse();
+            return Ok(events);
+        }
         let sql = "SELECT seq, ts, kind, actor, data, agent_id FROM events
-             WHERE (?1 IS NULL OR seq > ?1)
+             WHERE seq > ?1
                AND (?2 IS NULL OR agent_id = ?2)
                AND (?3 IS NULL OR kind LIKE ?3 || '%')
              ORDER BY seq ASC
              LIMIT ?4";
         let mut stmt = conn.prepare(sql)?;
-        let rows = stmt.query_map(
-            params![q.since, q.agent, q.kind, q.limit.unwrap_or(500)],
-            row_to_event,
-        )?;
+        let rows = stmt.query_map(params![q.since, q.agent, q.kind, limit], row_to_event)?;
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
     }
 
@@ -1516,10 +1507,6 @@ mod tests {
             .await
             .expect("set state");
         store
-            .set_session(&agent.id, "sess-2")
-            .await
-            .expect("set session");
-        store
             .touch_agent(&agent.id, Utc::now())
             .await
             .expect("touch");
@@ -1564,7 +1551,7 @@ mod tests {
         assert!((after.cost_usd_total - 0.05).abs() < 1e-9);
         assert!(after.turn_started_at.is_none());
         assert_eq!(after.pid, Some(4242));
-        assert_eq!(after.session_id, "sess-2");
+        assert_eq!(after.session_id, "sess-1");
 
         // Lookup by name works too.
         let by_name = store
@@ -1879,6 +1866,8 @@ mod tests {
         assert_eq!(page.len(), 3);
         assert_eq!(page[0].seq, 3);
 
+        // No cursor: "recent", so a limit of 2 gets the newest two, not the
+        // oldest, still returned in ascending order.
         let limited = store
             .list_events(EventQuery {
                 limit: Some(2),
@@ -1887,7 +1876,8 @@ mod tests {
             .await
             .expect("list limited");
         assert_eq!(limited.len(), 2);
-        assert_eq!(limited[0].seq, 1);
+        assert_eq!(limited[0].seq, 4);
+        assert_eq!(limited[1].seq, 5);
 
         store
             .append_event(
@@ -1906,6 +1896,50 @@ mod tests {
             .await
             .expect("list prefix");
         assert_eq!(prefix.len(), 5);
+    }
+
+    #[tokio::test]
+    async fn list_events_with_no_cursor_returns_the_recent_end() {
+        let (store, _tmp) = store().await;
+        for i in 0..10 {
+            store
+                .append_event(
+                    "agent.text",
+                    "human".to_string(),
+                    Some("a-1".to_string()),
+                    serde_json::json!({"i": i}),
+                )
+                .await
+                .expect("append event");
+        }
+
+        // since=None: the most recent `limit`, still in ascending order.
+        let recent = store
+            .list_events(EventQuery {
+                since: None,
+                limit: Some(3),
+                ..Default::default()
+            })
+            .await
+            .expect("list recent");
+        assert_eq!(
+            recent.iter().map(|e| e.seq).collect::<Vec<_>>(),
+            vec![8, 9, 10]
+        );
+
+        // since=Some(_): forward pagination from the cursor, unchanged.
+        let page = store
+            .list_events(EventQuery {
+                since: Some(3),
+                limit: Some(3),
+                ..Default::default()
+            })
+            .await
+            .expect("list page");
+        assert_eq!(
+            page.iter().map(|e| e.seq).collect::<Vec<_>>(),
+            vec![4, 5, 6]
+        );
     }
 
     #[tokio::test]

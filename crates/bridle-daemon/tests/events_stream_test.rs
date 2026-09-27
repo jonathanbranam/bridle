@@ -34,7 +34,10 @@ async fn events_stream_receives_backfill_then_live_events_in_seq_order() {
         "expected some events already recorded"
     );
 
-    let mut stream = Box::pin(daemon.client.events_stream(None));
+    // since=Some(0) is a cursor, so this still exercises backfill-then-live,
+    // unlike since=None (no cursor), which starts at the tail (see
+    // `events_stream_with_no_cursor_skips_backfill_and_starts_at_the_tail`).
+    let mut stream = Box::pin(daemon.client.events_stream(Some(0)));
     let mut seen = Vec::new();
     // Collect the backfill plus at least one live event.
     let target = backfilled.len() + 1;
@@ -108,6 +111,64 @@ async fn events_stream_since_skips_already_seen_events() {
     assert!(
         first.seq > cutoff,
         "expected seq > {cutoff}, got {}",
+        first.seq
+    );
+}
+
+#[tokio::test]
+async fn events_stream_with_no_cursor_skips_backfill_and_starts_at_the_tail() {
+    let (daemon, _tmp) = start_daemon(None).await;
+
+    // Produce some history before anyone subscribes.
+    let agent = daemon
+        .client
+        .spawn(&SpawnRequest {
+            role: "worker".to_string(),
+            name: Some("w1".to_string()),
+            prompt: None,
+            workdir: Some(Workdir::Repo),
+            model: None,
+        })
+        .await
+        .expect("spawn");
+    wait_for_state(&daemon.client, &agent.id, AgentState::Idle).await;
+    let existing = daemon
+        .client
+        .events(&bridle_api::types::EventQuery::default())
+        .await
+        .expect("list events");
+    assert!(!existing.is_empty(), "expected some prior history");
+
+    // A fresh `--follow` with no `--since` (since=None) shouldn't replay
+    // that history — only a live event triggered after subscribing. The
+    // client stream is lazy (nothing is sent until first polled), so send
+    // the trigger repeatedly in the background rather than once up front:
+    // a single send could land before the subscribe that happens on the
+    // server once the SSE request actually arrives.
+    let mut stream = Box::pin(daemon.client.events_stream(None));
+    let trigger_client = daemon.client.clone();
+    tokio::spawn(async move {
+        for _ in 0..40 {
+            let _ = trigger_client
+                .send(&bridle_api::types::SendRequest {
+                    to: Some("human".to_string()),
+                    body: "live event trigger".to_string(),
+                    kind: bridle_api::types::MessageKind::Note,
+                    when: bridle_api::types::When::Now,
+                    reply_to: None,
+                })
+                .await;
+            tokio::time::sleep(std::time::Duration::from_millis(250)).await;
+        }
+    });
+    let first = tokio::time::timeout(std::time::Duration::from_secs(15), stream.next())
+        .await
+        .expect("timed out")
+        .expect("stream ended")
+        .expect("event ok");
+    assert!(
+        first.seq > existing.last().unwrap().seq,
+        "expected the tail, not backfilled history: got seq {}",
         first.seq
     );
 }
