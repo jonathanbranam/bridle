@@ -17,7 +17,7 @@ pub enum WorktreeError {
     InvalidName(String),
 }
 
-async fn run_git(repo: &Path, args: &[&str]) -> Result<String, WorktreeError> {
+pub(crate) async fn run_git(repo: &Path, args: &[&str]) -> Result<String, WorktreeError> {
     let output = Command::new("git")
         .arg("-C")
         .arg(repo)
@@ -48,6 +48,61 @@ pub async fn add(repo: &Path, path: &Path, branch: &str, base: &str) -> Result<(
         }
         other => other.map(|_| ()),
     }
+}
+
+/// Adds a new worktree at `path`, checking out `branch`, which must already
+/// exist (unlike [`add`], no `-b`: this doesn't create the branch).
+pub async fn add_existing(repo: &Path, path: &Path, branch: &str) -> Result<(), WorktreeError> {
+    let path_str = path.to_string_lossy().into_owned();
+    run_git(repo, &["worktree", "add", &path_str, branch])
+        .await
+        .map(|_| ())
+}
+
+/// Whether `branch` exists as a local branch, without needing a checkout.
+pub async fn branch_exists(repo: &Path, branch: &str) -> Result<bool, WorktreeError> {
+    Ok(Command::new("git")
+        .arg("-C")
+        .arg(repo)
+        .args([
+            "rev-parse",
+            "--verify",
+            "--quiet",
+            &format!("refs/heads/{branch}"),
+        ])
+        .output()
+        .await?
+        .status
+        .success())
+}
+
+/// Git's well-known empty-tree object id (`git hash-object -t tree /dev/null`),
+/// the same in every repository, so it can be a constant instead of a shell-out.
+const EMPTY_TREE: &str = "4b825dc642cb6eb9a060e54bf8d69288fbee4904";
+
+/// Creates `branch` as a fresh orphan (parentless) branch pointing at an
+/// empty commit, if it doesn't already exist. No-op otherwise.
+///
+/// Deliberately plumbing (`commit-tree` + `update-ref`), not `git checkout
+/// --orphan`: those write commit and ref objects directly and never touch
+/// any working tree or index, so this is safe to call against the main
+/// checkout's `repo` without any risk of disturbing it (docs/design/storage.md,
+/// "The state branch").
+pub async fn ensure_orphan_branch(
+    repo: &Path,
+    branch: &str,
+    message: &str,
+) -> Result<(), WorktreeError> {
+    if branch_exists(repo, branch).await? {
+        return Ok(());
+    }
+    let sha = run_git(repo, &["commit-tree", EMPTY_TREE, "-m", message]).await?;
+    run_git(
+        repo,
+        &["update-ref", &format!("refs/heads/{branch}"), sha.trim()],
+    )
+    .await?;
+    Ok(())
 }
 
 /// Removes a worktree. `force` matches `git worktree remove --force`, needed
@@ -287,6 +342,73 @@ mod tests {
             std::fs::canonicalize(top).expect("canon"),
             std::fs::canonicalize(&repo).expect("canon")
         );
+    }
+
+    #[tokio::test]
+    async fn ensure_orphan_branch_is_idempotent_and_never_touches_the_checkout() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let repo = tmp.path().join("repo");
+        init_repo(&repo).await;
+
+        assert!(!branch_exists(&repo, "bridle").await.expect("check"));
+        let status_before = run_git(&repo, &["status", "--porcelain"])
+            .await
+            .expect("status");
+        let index_mtime_before = std::fs::metadata(repo.join(".git/index"))
+            .expect("stat index")
+            .modified()
+            .expect("mtime");
+
+        ensure_orphan_branch(&repo, "bridle", "initial bridle state")
+            .await
+            .expect("create orphan branch");
+        assert!(branch_exists(&repo, "bridle").await.expect("check"));
+
+        // Calling it again with the branch already there is a no-op, not
+        // an error, and still leaves the checkout untouched.
+        ensure_orphan_branch(&repo, "bridle", "initial bridle state")
+            .await
+            .expect("idempotent");
+
+        let status_after = run_git(&repo, &["status", "--porcelain"])
+            .await
+            .expect("status");
+        assert_eq!(status_before, status_after);
+        assert!(status_after.trim().is_empty());
+        let index_mtime_after = std::fs::metadata(repo.join(".git/index"))
+            .expect("stat index")
+            .modified()
+            .expect("mtime");
+        assert_eq!(
+            index_mtime_before, index_mtime_after,
+            "creating the orphan branch must not touch the index"
+        );
+
+        // The new branch has no history in common with HEAD.
+        let out = run_git(&repo, &["merge-base", "--is-ancestor", "bridle", "HEAD"]).await;
+        assert!(out.is_err(), "orphan branch must not be an ancestor of HEAD");
+    }
+
+    #[tokio::test]
+    async fn add_existing_checks_out_a_branch_without_minus_b() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let repo = tmp.path().join("repo");
+        init_repo(&repo).await;
+        ensure_orphan_branch(&repo, "bridle", "initial bridle state")
+            .await
+            .expect("create orphan branch");
+
+        let wt_path = tmp.path().join("state");
+        add_existing(&repo, &wt_path, "bridle")
+            .await
+            .expect("add existing");
+        assert!(wt_path.join(".git").exists());
+        // The orphan branch has no files: nothing but the worktree's `.git` link.
+        let entries: Vec<_> = std::fs::read_dir(&wt_path)
+            .expect("read dir")
+            .map(|e| e.expect("entry").file_name())
+            .collect();
+        assert_eq!(entries, vec![std::ffi::OsString::from(".git")]);
     }
 
     #[test]
