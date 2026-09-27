@@ -1,5 +1,5 @@
 //! Process containment: tracking and reaping an agent's descendant
-//! processes, and stopping a process group. See docs/agent-host.md §4.5–§4.6.
+//! processes, and stopping a process group. See docs/design/agent-host/agents.md.
 
 use std::collections::{HashMap, HashSet};
 use std::io;
@@ -101,7 +101,7 @@ pub fn is_same_process(pid: i32, start: &str) -> bool {
 
 /// Tracks an agent's descendant processes across repeated snapshots, keyed
 /// by pid + start time so a reused pid is never confused for the one we saw
-/// before (§4.6).
+/// before (agents.md, Containment).
 #[derive(Debug, Clone)]
 pub struct Tracker {
     pub root_pid: i32,
@@ -120,7 +120,7 @@ impl Tracker {
 
     /// Adds every current descendant of the root to `seen`. Call this
     /// periodically and just before any stop, so short-lived tool process
-    /// groups are caught before they can re-parent to init (§4.6).
+    /// groups are caught before they can re-parent to init.
     pub fn update(&mut self, snap: &[ProcInfo]) {
         for p in descendants(self.root_pid, snap) {
             self.seen.insert(p.pid, p.start);
@@ -188,7 +188,7 @@ pub async fn terminate_group(pgid: i32, grace: Duration) -> bool {
 }
 
 /// Behind this trait so a future Linux cgroup-v2 implementation can slot in
-/// without touching callers (§4.6).
+/// without touching callers.
 pub trait Containment {
     fn sweep(
         &self,

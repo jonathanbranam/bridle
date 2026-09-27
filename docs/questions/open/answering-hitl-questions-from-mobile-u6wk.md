@@ -28,7 +28,7 @@ is waiting.
 
 ## Notes
 
-Raised on 2026-09-27 while checking the NUC plan ([[docs/context/nuc-host|NUC host]]) against `docs/agent-host.md`.
+Raised on 2026-09-27 while checking the NUC plan ([[docs/context/nuc-host|NUC host]]) against the agent-host design.
 
 - **No notification.** Nothing tells the human that a question has arrived.
   Something has to watch the event stream for questions addressed to `human`
@@ -38,6 +38,6 @@ Raised on 2026-09-27 while checking the NUC plan ([[docs/context/nuc-host|NUC ho
   "relayed for human" field.
 - **A small web inbox** served by the daemon, opened from the phone over
   Tailscale, avoids public exposure.
-- **MCP from claude.ai mobile** (`docs/agent-host.md` §12 item 5) needs bridle
+- **MCP from claude.ai mobile** ([[docs/proposal/build-order|build order]]) needs bridle
   on public HTTPS, e.g. Tailscale Funnel. claude.ai's connectors run on
   Anthropic's servers, not on the phone, so they can't reach the tailnet.

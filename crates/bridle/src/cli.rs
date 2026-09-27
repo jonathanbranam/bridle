@@ -1,4 +1,4 @@
-//! clap definitions for the `bridle` CLI. See docs/agent-host.md §6.3.
+//! clap definitions for the `bridle` CLI. See docs/design/cli.md.
 
 use std::net::SocketAddr;
 use std::path::PathBuf;
@@ -12,7 +12,7 @@ use clap::{ArgGroup, Args, Parser, Subcommand, ValueEnum};
     about = "Run and coordinate Claude Code agents"
 )]
 pub struct Cli {
-    /// Talk to the daemon at this URL (highest priority; see §3.1 discovery order).
+    /// Talk to the daemon at this URL (highest priority; see the discovery order in docs/design/agent-host/daemon.md).
     #[arg(long, global = true)]
     pub url: Option<String>,
 
@@ -20,7 +20,7 @@ pub struct Cli {
     #[arg(long, global = true, env = "BRIDLE_PROJECT")]
     pub project: Option<String>,
 
-    /// Bearer token; see §5.2 for how the CLI picks one when this is unset.
+    /// Bearer token; see docs/design/agent-host/principals.md for how the CLI picks one when this is unset.
     #[arg(long, global = true)]
     pub token: Option<String>,
 

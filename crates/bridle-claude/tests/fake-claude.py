@@ -31,6 +31,14 @@ message text (matched exactly, or as a prefix where noted) change behaviour:
     DENY          Like a plain turn, but the result carries a synthetic
                   permission_denials entry.
 
+`--max-budget-usd X` behaves like real claude (docs/spikes/02-budget-cap-findings.md):
+spend is per process, checked after the turn's model work, so the turn that
+crosses the cap still runs but its result is `error_max_budget_usd`; every
+later turn fails the same way at once, costing nothing.
+
+`system/init` reports `claude_code_version` from a `.fake-claude-version` file
+in the working directory, or "fake".
+
 Any other control_request gets a generic success control_response echoing
 its subtype. On stdin EOF, the current turn (if any) finishes, then the
 process exits 0 if the last result wasn't an error, 1 otherwise — matching
@@ -61,6 +69,8 @@ state = {
     "last_error": False,
     "msg_counter": 0,
     "rate_limit_emitted": False,
+    "process_cost": 0.0,
+    "max_budget": None,
 }
 
 replay = False
@@ -118,6 +128,38 @@ def emit_user(content):
 
 def bump_cost():
     state["cost"] = round(state["cost"] + 0.001, 3)
+    state["process_cost"] = round(state["process_cost"] + 0.001, 3)
+
+
+def over_budget():
+    cap = state["max_budget"]
+    return cap is not None and state["process_cost"] >= cap
+
+
+def emit_budget_result():
+    emit(
+        {
+            "type": "result",
+            "subtype": "error_max_budget_usd",
+            "is_error": True,
+            "num_turns": 1,
+            "session_id": state["session_id"],
+            "total_cost_usd": state["cost"],
+            "usage": USAGE,
+            "terminal_reason": "budget_exhausted",
+            "errors": [f"Reached maximum budget (${state['max_budget']})"],
+            "permission_denials": [],
+        }
+    )
+    state["last_error"] = True
+
+
+def claude_code_version():
+    try:
+        with open(".fake-claude-version") as f:
+            return f.read().strip() or "fake"
+    except OSError:
+        return "fake"
 
 
 def reader():
@@ -189,9 +231,13 @@ def run_turn(text):
             "model": "fake-haiku",
             "tools": ["Bash"],
             "capabilities": ["interrupt_receipt_v1"],
-            "claude_code_version": "fake",
+            "claude_code_version": claude_code_version(),
         }
     )
+
+    if over_budget():
+        emit_budget_result()
+        return
 
     command = command_line(text)
 
@@ -300,6 +346,9 @@ def run_turn(text):
         denials = [{"tool_name": "Bash", "tool_use_id": "t1", "tool_input": {"command": "rm -rf /"}}]
 
     bump_cost()
+    if over_budget():
+        emit_budget_result()
+        return
     emit(
         {
             "type": "result",
@@ -333,6 +382,10 @@ def parse_args(argv):
         if a == "--resume" and i + 1 < len(argv):
             session_id = argv[i + 1]
             resume = True
+            i += 2
+            continue
+        if a == "--max-budget-usd" and i + 1 < len(argv):
+            state["max_budget"] = float(argv[i + 1])
             i += 2
             continue
         if a == "--replay-user-messages":

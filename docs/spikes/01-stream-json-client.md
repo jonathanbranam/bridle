@@ -2,8 +2,9 @@
 
 *Written 2026-09-27 to be run in a **separate, clean session**. This document
 is self-contained. The background is in
-[`../research/01-agent-runtime.md`](../research/01-agent-runtime.md) and
-[`../design.md`](../design.md) §6 and §11, but you should not need to read them
+[`research/01-agent-runtime.md`](docs/research/01-agent-runtime.md) and
+the design's §6 and §11 (now [coordination](docs/design/coordination.md) and
+[usage and budget](docs/design/usage-and-budget.md)), but you should not need to read them
 to do this spike. **Don't read them unless something here is unclear**: they're
 long, and this spike has a token budget.*
 

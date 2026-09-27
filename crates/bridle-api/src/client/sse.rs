@@ -1,7 +1,7 @@
 //! Incremental Server-Sent-Events parsing for `GET /v1/events/stream`. Pure
 //! and independent of reqwest so it can be unit tested with hand-fed chunks.
 //!
-//! Framing (docs/agent-host.md §6.1): `id: <seq>` and `event: <kind>` lines
+//! Framing (docs/design/agent-host/api.md): `id: <seq>` and `event: <kind>` lines
 //! are optional and ignored — the `data:` line already carries the full
 //! JSON [`Event`], seq included. A blank line ends an event. Lines starting
 //! with `:` are comments/keepalives and are ignored. `data:` may repeat

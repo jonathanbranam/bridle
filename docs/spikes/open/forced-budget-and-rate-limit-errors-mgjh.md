@@ -22,3 +22,8 @@ The [[docs/design/usage-and-budget#The budget governor|budget governor]] pauses
 and resumes on these events. Their shapes are guessed until observed.
 
 ## Notes
+
+- **The budget cap is done**: [spike 02 findings](docs/spikes/02-budget-cap-findings.md).
+  What's left is API retries (`system/api_retry`) and a `rejected`
+  rate-limit event, which can't be forced cheaply; capture them when they
+  first happen in a transcript.

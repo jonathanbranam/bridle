@@ -7,7 +7,7 @@ lifetime to short. They sit under a configurable root, `design/` by default:
 |---|---|---|---|---|
 | **Goals** | `design/goals.md` | long-term direction, some clear and some fuzzy | at planning sessions | **human** (agents may propose) |
 | **Architecture** | `design/architecture/*.md` | project-wide design: principles, invariants, component boundaries, key decisions with alternatives | rarely, deliberately | **human, always** (locked rule) |
-| **Specs** | `design/specs/<capability>.md` | detailed behaviour: requirements and scenarios | by tasks, continuously | driver, or human for `protected` requirements ([gates](docs/design/gates.md)) |
+| **Specs** | `design/specs/<capability>.md` | detailed behaviour: requirements and scenarios | by tasks, continuously | manager, or human for `protected` requirements ([gates](docs/design/gates.md)) |
 | **Explorations** | `design/explore/<task>/` | spike findings that may contradict everything above | per spike | nobody; they are not adopted by being written |
 
 Tasks sit below all four, on the state branch ([[docs/design/storage#The state branch|state branch]]). Everything in the table

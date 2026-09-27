@@ -1,7 +1,7 @@
 //! Daemon discovery: workspace layout, `daemon.json`, the machine registry
 //! and token/endpoint resolution. Pure filesystem + env logic, shared by the
-//! CLI and (by design) the daemon itself. See docs/agent-host.md §2.1, §3.1
-//! and §5.2.
+//! CLI and (by design) the daemon itself. See docs/design/agent-host/daemon.md (discovery)
+//! and docs/design/agent-host/principals.md (token choice).
 
 use std::path::{Path, PathBuf};
 use std::{fs, io};
@@ -271,7 +271,7 @@ pub fn resolve_endpoint(
     ))
 }
 
-/// §5.2: `--token`/`$BRIDLE_TOKEN`, else (only if `$CLAUDECODE` is unset) the
+/// principals.md: `--token`/`$BRIDLE_TOKEN`, else (only if `$CLAUDECODE` is unset) the
 /// human token file in `workspace`, else an error.
 pub fn resolve_token(
     token_flag: Option<&str>,

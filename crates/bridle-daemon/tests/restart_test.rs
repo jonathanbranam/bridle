@@ -1,4 +1,4 @@
-//! §9: restart reconciliation (docs/agent-host.md §4.7).
+//! §9: restart reconciliation (docs/design/agent-host/daemon.md).
 //!
 //! Two daemons in one OS process would share a pid, which defeats
 //! pid-liveness checks, so instead of literally running two overlapping
@@ -87,6 +87,10 @@ async fn restart_marks_a_stale_running_agent_lost_and_kills_its_process() {
     let lost = support::wait_for_state(&client, &agent.id, AgentState::Lost).await;
     let exit = lost.exit.expect("exit info");
     assert_eq!(exit.reason, "daemon_restart");
+    support::wait_for_event(&client, "agent.state", Some(&agent.id), |e| {
+        e.data["from"] == "working" && e.data["to"] == "lost"
+    })
+    .await;
 
     // The process was actually terminated (not just marked lost in the
     // store): reap it and check it died by signal, not by living out its

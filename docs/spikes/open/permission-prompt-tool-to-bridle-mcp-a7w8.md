@@ -24,7 +24,7 @@ channel that tolerates a slow human.
 
 ## Notes
 
-`docs/agent-host.md` §12 item 3 plans this through claude's `can_use_tool`
+The [[docs/proposal/build-order|build order]] plans this through claude's `can_use_tool`
 control requests (`--permission-prompts host`) instead of an MCP tool. The
 spike should cover whichever mechanism is chosen, including the slow-answer
 timeout.

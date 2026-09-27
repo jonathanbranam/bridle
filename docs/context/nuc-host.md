@@ -39,6 +39,14 @@ it listens there. Either way the traffic is encrypted.
 - The human regularly goes **mobile-only** and still wants to answer HITL
   questions and send new ideas.
 
+## How bridle is run for now
+
+By hand. The human, 2026-09-27: "I don't think bridle is stable enough as a
+daemon unless it can auto update itself. I'll run and manage it myself for
+now." So no systemd or launchd unit, and no unattended deployment on the NUC,
+until bridle can update itself. That makes the reboot and detached-daemon
+tickets below less urgent.
+
 ## What this changes in the design
 
 Each of these is an open ticket:

@@ -1,5 +1,5 @@
 //! The bridle daemon: store, supervisor, containment and the HTTP API.
-//! See docs/agent-host.md.
+//! See docs/design/agent-host/.
 
 use std::net::SocketAddr;
 use std::path::{Path, PathBuf};
@@ -32,6 +32,9 @@ use config::Config;
 use events::Emitter;
 use paths::{Workspace, write_secret_file};
 use store::{Principal, Store};
+
+/// How long the event log keeps rows (docs/design/agent-host/api.md, Events).
+const EVENT_RETENTION_DAYS: i64 = 30;
 
 /// Options for `bridle serve`.
 #[derive(Debug, Clone)]
@@ -108,6 +111,8 @@ pub async fn run(opts: ServeOptions) -> anyhow::Result<()> {
 /// and background tasks are up. Does not block for shutdown; see
 /// [`RunningDaemon::join`].
 pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<RunningDaemon> {
+    // First, so a detached daemon ignores SIGHUP from the moment it runs.
+    let signals = Signals::install().context("installing signal handlers")?;
     if !worktree::is_git_repo(&opts.repo).await {
         anyhow::bail!("{} is not a git repository", opts.repo.display());
     }
@@ -126,9 +131,14 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
     let store = Store::open(ws.db()).await.context("opening the store")?;
     ensure_human_token(&store, &ws).await?;
 
-    reconcile(&store)
+    let emitter = Emitter::new(store.clone());
+    reconcile(&store, &emitter)
         .await
         .context("reconciling running agents")?;
+    // The daily loop below waits a day before its first tick.
+    let _ = store
+        .prune_events(Utc::now() - chrono::Duration::days(EVENT_RETENTION_DAYS))
+        .await;
 
     let listen_addr = opts.listen.unwrap_or(config.listen);
     let listener = tokio::net::TcpListener::bind(listen_addr)
@@ -151,7 +161,6 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         discovery::write_registry(&info).context("writing registry entry")?;
     }
 
-    let emitter = Emitter::new(store.clone());
     let _ = emitter
         .emit(
             event_kind::DAEMON_STARTED,
@@ -222,12 +231,12 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         move || {
             let store = store.clone();
             async move {
-                let cutoff = Utc::now() - chrono::Duration::days(30);
+                let cutoff = Utc::now() - chrono::Duration::days(EVENT_RETENTION_DAYS);
                 let _ = store.prune_events(cutoff).await;
             }
         }
     });
-    let signal_task = spawn_signal_listener(shutdown_tx.clone());
+    let signal_task = signals.listen(shutdown_tx.clone());
 
     let join_handle = tokio::spawn(async move {
         let mut rx = shutdown_rx;
@@ -314,10 +323,10 @@ async fn ensure_human_token(store: &Store, ws: &Workspace) -> anyhow::Result<()>
     Ok(())
 }
 
-/// docs/agent-host.md §4.7: kill any surviving process for a recorded
+/// docs/design/agent-host/daemon.md, restart and recovery: kill any surviving process for a recorded
 /// "running" agent, mark it `lost`, and put its `written` messages back to
 /// `pending`.
-async fn reconcile(store: &Store) -> anyhow::Result<()> {
+async fn reconcile(store: &Store, emitter: &Emitter) -> anyhow::Result<()> {
     for ra in store.running_agents().await? {
         if let (Some(pid), Some(start)) = (ra.pid, ra.pid_start.clone())
             && containment::is_same_process(pid, &start)
@@ -340,8 +349,30 @@ async fn reconcile(store: &Store) -> anyhow::Result<()> {
             )
             .await?;
         store.set_agent_state(&ra.id, AgentState::Lost).await?;
+        let _ = emitter
+            .emit(
+                event_kind::AGENT_STATE,
+                "system".to_string(),
+                Some(ra.id.clone()),
+                json!({"from": ra.state, "to": AgentState::Lost.as_str()}),
+            )
+            .await;
+        let _ = emitter
+            .emit(
+                event_kind::AGENT_EXITED,
+                "system".to_string(),
+                Some(ra.id.clone()),
+                json!({"code": null, "signal": null, "reason": "daemon_restart"}),
+            )
+            .await;
         for m in store
-            .messages_for_agent(&ra.id, &[bridle_api::types::MessageState::Written])
+            .messages_for_agent(
+                &ra.id,
+                &[
+                    bridle_api::types::MessageState::Written,
+                    bridle_api::types::MessageState::Held,
+                ],
+            )
             .await?
         {
             store
@@ -364,7 +395,7 @@ async fn run_autostart_and_resume(store: &Store, config: &Config, manager: &Agen
                     let req = SpawnRequest {
                         role: name.clone(),
                         name: Some(name.clone()),
-                        prompt: None,
+                        prompt: None, // the role's start_prompt
                         workdir: None,
                         model: None,
                     };
@@ -416,26 +447,41 @@ where
     })
 }
 
-fn spawn_signal_listener(tx: watch::Sender<bool>) -> tokio::task::JoinHandle<()> {
-    tokio::spawn(async move {
+/// Signal handlers, registered as soon as the daemon starts (registering
+/// replaces the default action, so SIGHUP no longer kills it) and listened
+/// to once the shutdown channel exists.
+struct Signals {
+    sigint: tokio::signal::unix::Signal,
+    sigterm: tokio::signal::unix::Signal,
+    sighup: tokio::signal::unix::Signal,
+}
+
+impl Signals {
+    fn install() -> std::io::Result<Self> {
         use tokio::signal::unix::{SignalKind, signal};
-        let Ok(mut sigint) = signal(SignalKind::interrupt()) else {
-            return;
-        };
-        let Ok(mut sigterm) = signal(SignalKind::terminate()) else {
-            return;
-        };
-        let Ok(mut sighup) = signal(SignalKind::hangup()) else {
-            return;
-        };
-        let mut rx = tx.subscribe();
-        loop {
-            tokio::select! {
-                _ = sigint.recv() => { let _ = tx.send(true); break; }
-                _ = sigterm.recv() => { let _ = tx.send(true); break; }
-                _ = sighup.recv() => { tracing::info!("received SIGHUP; ignoring"); }
-                _ = rx.changed() => { if *rx.borrow() { break; } }
+        Ok(Signals {
+            sigint: signal(SignalKind::interrupt())?,
+            sigterm: signal(SignalKind::terminate())?,
+            sighup: signal(SignalKind::hangup())?,
+        })
+    }
+
+    fn listen(self, tx: watch::Sender<bool>) -> tokio::task::JoinHandle<()> {
+        let Signals {
+            mut sigint,
+            mut sigterm,
+            mut sighup,
+        } = self;
+        tokio::spawn(async move {
+            let mut rx = tx.subscribe();
+            loop {
+                tokio::select! {
+                    _ = sigint.recv() => { let _ = tx.send(true); break; }
+                    _ = sigterm.recv() => { let _ = tx.send(true); break; }
+                    _ = sighup.recv() => { tracing::info!("received SIGHUP; ignoring"); }
+                    _ = rx.changed() => { if *rx.borrow() { break; } }
+                }
             }
-        }
-    })
+        })
+    }
 }

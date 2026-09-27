@@ -4,7 +4,7 @@ title: How does bridle pin and check the Claude Code version?
 opened: 2026-09-27
 repos: [bridle]
 changes: []
-specs: []
+specs: [docs/design/agent-host/agents.md]
 needs: []
 see: []
 ---
@@ -47,3 +47,29 @@ State as of the v1 build (2026-09-27):
   and would make a good `#[ignore]` live test.
 - The spike harness (`spikes/stream-json`, `cargo run -- all`) is the fuller
   contract test, but it costs about $0.40 per run.
+
+## Resolution
+
+Don't pin. The human, verbatim:
+
+> We need a set of automatic tests instead of pinning the Claude version.
+> Claude wants to auto update and I'm not even sure if we can control that
+> would we disable that behavior? Seems like we want to update Claude and run
+> the test suite that is VERY LIMITED to key behaviors, then accept the upgrade
+> as new. If something breaks preference to fix forward rather than rollback.
+
+So:
+
+- **A contract suite** of three live tests,
+  `crates/bridle-claude/tests/contract_test.rs`, covering turn boundaries,
+  verbatim replay echoes, the exit codes, cumulative cost across `--resume`,
+  mid-turn folding, the interrupt receipt and the budget cap's result.
+  `just test-contract` runs it (Haiku, about $0.10) and on success records the
+  version in `crates/bridle-claude/tests/contract-verified.txt`. First passed on
+  2.1.283.
+- **The daemon notices upgrades**: it records the version from each agent's
+  `system/init`, shows it in `bridle status`, and emits `claude.version` (and
+  logs a warning) when it changes.
+- Auto-update stays on. A failure is fixed forward in bridle.
+
+Recorded in [[docs/design/agent-host/agents#Claude Code upgrades|agents]].

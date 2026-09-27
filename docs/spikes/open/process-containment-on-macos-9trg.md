@@ -29,6 +29,6 @@ From `docs/spikes/01-stream-json-findings.md`, Risks and follow-ups @ c192bfc:
 
 ## Notes
 
-- `docs/agent-host.md` §4.6 implements a `ps` scan and sweep. Double-forked
+- [[docs/design/agent-host/agents#Containment|Containment]] implements a `ps` scan and sweep. Double-forked
   daemons that detach between two scans aren't covered in v1.
 - Linux needs its own: [[process-containment-on-linux-2mj9|containment on Linux]].

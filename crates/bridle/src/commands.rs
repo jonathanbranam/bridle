@@ -1,5 +1,5 @@
 //! Dispatch and implementation for every subcommand except `serve` (see
-//! `serve.rs`). See docs/agent-host.md §6.3.
+//! `serve.rs`). See docs/design/cli.md.
 
 use anyhow::Context;
 use bridle_api::discovery::{self, ProcessEnv};
@@ -39,8 +39,8 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
     }
 }
 
-/// Resolve the daemon endpoint and a token, per docs/agent-host.md §3.1 and
-/// §5.2, then build a client for it. `resolve_endpoint` failing to find any
+/// Resolve the daemon endpoint and a token, per docs/design/agent-host/daemon.md and
+/// principals.md, then build a client for it. `resolve_endpoint` failing to find any
 /// daemon at all is exactly the "daemon unreachable" case (exit 3).
 async fn client_for(cli: &Cli) -> Result<Client, CliError> {
     let cwd = std::env::current_dir().context("current directory")?;
@@ -100,6 +100,10 @@ async fn status(cli: &Cli) -> Result<(), CliError> {
         println!("workspace  {}", status.daemon.workspace);
         println!("url        {}", status.daemon.url);
         println!("principal  {}", status.principal);
+        println!(
+            "claude     {}",
+            status.claude_version.as_deref().unwrap_or("-")
+        );
         println!("unread     {}", status.unread_human_messages);
         for (state, count) in &status.agents_by_state {
             println!("  {state:<10} {count}");
@@ -428,20 +432,36 @@ async fn usage(cli: &Cli) -> Result<(), CliError> {
         for a in &usage.agents {
             let tokens =
                 a.tokens.input + a.tokens.output + a.tokens.cache_read + a.tokens.cache_write;
+            let name = if a.removed {
+                format!("{} (rm)", a.name)
+            } else {
+                a.name.clone()
+            };
             println!(
                 "{:<12} {:<14} {:<10} {:>5} {:>12} {:>9.4}",
-                a.agent, a.name, a.role, a.turns, tokens, a.cost_usd_total
+                a.agent, name, a.role, a.turns, tokens, a.cost_usd_total
             );
         }
+        let t = &usage.total_tokens;
         println!(
-            "total: {} turns, ${:.4}",
-            usage.total_turns, usage.total_cost_usd
+            "total: {} turns, {} tokens, ${:.4}",
+            usage.total_turns,
+            t.input + t.output + t.cache_read + t.cache_write,
+            usage.total_cost_usd
         );
         if let Some(ratio) = usage.cache_hit_ratio {
             println!("cache hit ratio: {:.1}%", ratio * 100.0);
         }
         for rl in &usage.rate_limits {
-            println!("{:<10} {}", rl.window, format_utilization(rl.utilization));
+            let resets = rl
+                .resets_at
+                .map(|r| format!(", resets {}", r.format("%Y-%m-%d %H:%M UTC")))
+                .unwrap_or_default();
+            println!(
+                "{:<10} {}{resets}",
+                rl.window,
+                format_utilization(rl.utilization)
+            );
         }
     }
     Ok(())

@@ -21,6 +21,13 @@ test:
 test-live:
     BRIDLE_LIVE_TESTS=1 cargo nextest run --workspace --run-ignored only --no-capture
 
+# The Claude Code contract (live, ~$0.10). Run after Claude Code updates
+# itself: on success the version is recorded as verified; on failure, fix forward.
+test-contract:
+    BRIDLE_LIVE_TESTS=1 cargo nextest run -p bridle-claude --test contract_test --run-ignored only --no-capture
+    claude --version > crates/bridle-claude/tests/contract-verified.txt
+    @echo "verified: $(cat crates/bridle-claude/tests/contract-verified.txt)"
+
 deny:
     cargo deny check
 

@@ -89,9 +89,22 @@ impl TestDaemon {
 /// claude, with the registry disabled (each test is isolated by its own
 /// tempdir; no need to touch `~/.bridle`).
 pub async fn start_daemon(overrides: Option<Overrides>) -> (TestDaemon, tempfile::TempDir) {
+    start_daemon_with_config(overrides, None).await
+}
+
+/// [`start_daemon`], with `config_toml` written to `<repo>/.bridle/config.toml`
+/// first.
+pub async fn start_daemon_with_config(
+    overrides: Option<Overrides>,
+    config_toml: Option<&str>,
+) -> (TestDaemon, tempfile::TempDir) {
     let tmp = tempfile::tempdir().expect("tempdir");
     let repo = tmp.path().join("repo");
     init_repo(&repo).await;
+    if let Some(text) = config_toml {
+        std::fs::create_dir_all(repo.join(".bridle")).expect("mkdir .bridle");
+        std::fs::write(repo.join(".bridle/config.toml"), text).expect("write config");
+    }
     let workspace = tmp.path().to_path_buf();
 
     let opts = ServeOptions {

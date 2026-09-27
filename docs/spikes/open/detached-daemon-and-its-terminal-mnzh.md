@@ -14,12 +14,13 @@ see: []
 `bridle serve --detach` re-executes itself in a new **process group**
 (`process_group(0)`), not a new session. The workspace forbids `unsafe`, so
 there's no `setsid` via `pre_exec`. The daemon ignores SIGHUP.
-`docs/agent-host.md` §6.3 says:
+`docs/agent-host.md` §6.3 @ c192bfc said:
 
 > `bridle serve --detach` re-executes itself in a new session with output
 > going to `.bridle/daemon.log`.
 
-That isn't quite what was built. Verify by hand:
+That isn't what was built, and [[docs/design/agent-host/daemon#Running it|the daemon doc]]
+now says so. Verify by hand:
 
 - start `bridle serve --detach` from a terminal, then close the terminal
   window (and try the same over SSH, and inside tmux);

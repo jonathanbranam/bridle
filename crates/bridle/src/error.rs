@@ -1,4 +1,4 @@
-//! The CLI's error type: it exists only to carry the exit code (§6.3:
+//! The CLI's error type: it exists only to carry the exit code (docs/design/cli.md:
 //! 0 ok, 1 error, 2 usage error [clap handles that one itself], 3 daemon
 //! unreachable) alongside a human-readable message.
 
@@ -49,7 +49,7 @@ impl From<ClientError> for CliError {
 /// Discovery failures are config/usage problems (bad token, bad workspace),
 /// not "couldn't reach a daemon we found" — callers map the specific
 /// "no endpoint found" case from `resolve_endpoint` to `Unreachable`
-/// themselves, since that's the one §6.3 calls out.
+/// themselves, since that's the one cli.md calls out.
 impl From<DiscoveryError> for CliError {
     fn from(e: DiscoveryError) -> Self {
         CliError::Other(anyhow::anyhow!(e))

@@ -1,8 +1,5 @@
 # Architecture in one picture
 
-> **Superseded in part** (note added when this file was split out of `design.md`):
-> `docs/agent-host.md` §1.2 replaces the single global `~/.bridle/bridle.db` in this picture with **one daemon per workspace** (one project clone), state in `<workspace>/.bridle/`, and the CLI as a thin client of the daemon's API. A global registry can still exist as a list of daemons.
-
 ```
                          ┌──────────────────────────────────────────┐
                          │  bridle-workflow repo  (the one place)    │
@@ -10,22 +7,38 @@
                          └──────────────┬───────────────────────────┘
                                         │ resolved per project
   ┌─────────────────────────────────────▼─────────────────────────────────────┐
-  │  bridle (Rust CLI)                                                         │
+  │  one workspace per project                                                 │
   │                                                                            │
-  │  ~/.bridle/bridle.db  (SQLite, WAL)  ── live index + ephemeral state       │
-  │     tasks · edges · claims · messages · impact · agents · waits            │
+  │  bridle daemon  (bridle serve)   HTTP + SSE API on /v1                     │
+  │    <workspace>/.bridle/bridle.db  (SQLite, WAL)  live index + ephemeral    │
+  │       agents · messages · events · usage   (later: tasks · edges ·         │
+  │       claims · impact · waits)                                             │
+  │    supervisor: one headless `claude -p` stream-json process per agent      │
   │                                                                            │
-  │  per project:                                                              │
-  │    <repo>/.bridle/            project layer: config, rules, overrides (git)│
-  │    <repo>/design/             goals, architecture, specs, explorations (git) │
-  │    state branch `bridle`      task records + event log (git, own worktree) │
-  │    .claude/…  CLAUDE.md block rendered outputs (gitignored or managed)     │
+  │  <workspace>/<repo>/            the clone                                  │
+  │    .bridle/                     project layer: config, rules, overrides (git)
+  │    design/                      goals, architecture, specs, explorations (git)
+  │    .claude/…  CLAUDE.md block   rendered outputs (gitignored or managed)   │
+  │  <workspace>/wt/<agent>/        one worktree per agent                     │
+  │  state branch `bridle`          task records + event log (git, own worktree)
   └──────────┬───────────────────────────────┬─────────────────────────────────┘
-             │ hooks: prime / inbox / heartbeat │ bridle wait (background Bash)
+             │ stdin / stdout stream-json    │ agents call back: `bridle` CLI
      ┌───────▼───────┐   ┌──────────────┐   ┌─▼────────────┐
-     │ driver session │   │ worker (wt A) │   │ worker (wt B) │  … any project
+     │ manager        │   │ worker (wt A) │   │ worker (wt B) │
      └───────────────┘   └──────────────┘   └──────────────┘
+             ▲
+             │ HTTP (CLI, TUI, orchestrator agent), locally or remotely
 ```
+
+- **One daemon per workspace**, and one workspace per project clone. Projects
+  are isolated from each other; a machine-level registry lists the running
+  daemons ([[docs/design/agent-host/operating-model|operating model]]).
+- **The CLI is a thin client** of the daemon's API. So are the human's
+  orchestrator agent, the agents bridle hosts, and later a TUI or MCP server
+  ([[docs/design/agent-host/api|API]]).
+- **The daemon is built** (v1: the agent host). Tasks, the state branch,
+  workflow layers and everything under `design/` are designed here and not yet
+  built ([[docs/proposal/build-order|build order]]).
 
 Three kinds of state, each in the place its lifetime demands:
 
@@ -34,8 +47,8 @@ Three kinds of state, each in the place its lifetime demands:
 | Workflow, rules, guidelines, skill sources | `bridle-workflow` repo + `<repo>/.bridle/` | months–years | yes (git) |
 | Goals, architecture, specs, exploration findings | `<repo>/design/`, edited on task branches ([knowledge tiers](docs/design/knowledge-tiers.md)) | months–system lifetime | yes (git) |
 | Tasks, edges, decisions, answered questions, impact | state branch `bridle` in each repo | until closed, then history | yes (git) |
-| Claims, leases, heartbeats, unread flags, waits, agent chatter | `~/.bridle/bridle.db` only | minutes–days | **no, by design** |
+| Agents, claims, leases, unread flags, waits, agent chatter, events, usage | `<workspace>/.bridle/bridle.db` only | minutes–days | **no, by design** |
 
-`bridle rebuild` recreates the database from the state branches of every
-registered project. That is the migration story: clone the repos on the new
-machine, `bridle project add` each, `bridle rebuild`.
+`bridle rebuild` recreates the database from the project's state branch. That
+is the migration story: clone the repo into a workspace on the new machine,
+start the daemon, `bridle rebuild`.

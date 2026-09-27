@@ -1,13 +1,51 @@
 # Storage
 
-> **Superseded in part** (note added when this file was split out of `design.md`):
-> `docs/agent-host.md` §1.2 moves live state to one daemon per workspace, in `<workspace>/.bridle/`, and §2 step 3 moves the state branch's worktree to `<workspace>/.bridle/state/`. §2.1 turns the project registry into `~/.bridle/daemons/<project>.json`, one entry per running daemon.
+Each project's workspace holds everything bridle keeps for it
+([[docs/design/agent-host/daemon#Workspace layout|workspace layout]]). There
+is no machine-wide database.
+
+## The daemon's database
+
+`<workspace>/.bridle/bridle.db`, SQLite in WAL mode with foreign keys on. One
+connection sits behind a mutex, and every access goes through async methods on
+a `Store` handle that run it on `spawn_blocking`. The daemon is the only
+writer. Migrations use `PRAGMA user_version`. What is built:
+
+```
+principals(id TEXT PK, kind, name, token_hash, created_at, revoked_at)
+agents(id PK, name UNIQUE, role, state, model, session_id, pid, pid_start,
+       workdir_kind, cwd, worktree, branch, created_at, updated_at,
+       turns, turn_started_at, cost_usd_total, last_event_at,
+       exit_code, exit_signal, exit_reason, created_by)
+turns(agent_id, agent_name, role, model,           -- no FK: turns outlive rm
+      n, started_at, ended_at, subtype, is_error, terminal_reason,
+      input_tokens, output_tokens, cache_read, cache_write,
+      cost_total,                                    -- this turn's cost
+      PRIMARY KEY(agent_id, n))
+messages(seq INTEGER PK AUTOINCREMENT, id UNIQUE,    -- id = m-0042 from seq
+         from_principal, to_kind, to_id, kind, body, reply_to,
+         when_mode, state, created_at, written_at, delivered_at, read_at)
+events(seq INTEGER PK AUTOINCREMENT, ts, kind, actor, agent_id, data JSON)
+                                                     -- agent_id has no FK: events outlive agents
+rate_limits(window PK, status, utilization, resets_at, observed_at)
+meta(key PK, value)                                  -- e.g. claude_version
+```
+
+Nothing here has to survive a lost database ([[docs/proposal/decisions|decision 2]]):
+there are no tasks yet, transcripts are files, and the conversations live in
+Claude Code's session store, resumable by session id.
+
+With tasks, the database also indexes the project's task records and holds the
+ephemeral tables: `claims`, `waits`, `ports`, `impact_cache`. Every durable
+write goes to the database and the state branch in the same logical
+operation. The database is the read path because it's fast, and git is the
+recovery path.
 
 ## The state branch
 
-Each project repo gets a `bridle` branch, checked out by bridle into
-`~/.bridle/state/<project>/` (a normal git worktree, not visible in the working
-checkout):
+*Designed, not built.* Each project repo gets a `bridle` branch, checked out
+by the daemon into `<workspace>/.bridle/state/` (a normal git worktree, not
+visible in the working checkout):
 
 ```
 tasks/tw-7fa2.md          one file per task: TOML frontmatter + markdown body + thread
@@ -24,19 +62,14 @@ questions/…               (or inline in the task thread — open, c5a8)
 
 The alternative, task files in-tree under `.bridle/tasks/` on the main line, is
 easier to browse next to code but brings back the worktree-visibility and
-churn problems. It is an open question: [[task-records-on-a-state-branch-or-in-tree-c7eb|state branch or in-tree]].
+churn problems. Open questions:
+[[task-records-on-a-state-branch-or-in-tree-c7eb|state branch or in-tree]],
+[[where-questions-live-on-the-state-branch-c5a8|where questions live]].
 
-## The database
+## The daemon registry
 
-`~/.bridle/bridle.db`, SQLite in WAL mode, one writer per transaction. It
-indexes every registered project's tasks and holds the ephemeral tables:
-`claims`, `agents`, `messages`, `waits`, `ports`, `impact_cache`. Every
-durable write goes to the database and the state branch in the same logical
-operation. The database is the read path because it's fast, and git is the
-recovery path.
-
-## Project registry
-
-`~/.bridle/projects.toml` lists each registered repo with its path, prefix and
-remote. `bridle status --all` and `bridle ready --all` work across all of them,
-which gives one view of work over all projects.
+`~/.bridle/daemons/<project>.json` lists each running daemon with its
+workspace, repo and URL
+([[docs/design/agent-host/operating-model#Several projects at once|several projects]]).
+Views across projects (`bridle daemons`, and later `status --all`,
+`ready --all`) fan out over it.

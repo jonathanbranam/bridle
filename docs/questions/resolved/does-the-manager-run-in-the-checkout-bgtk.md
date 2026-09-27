@@ -4,7 +4,7 @@ title: Does the manager run in the main checkout or its own worktree?
 opened: 2026-09-27
 repos: [bridle]
 changes: []
-specs: []
+specs: [docs/design/agent-host/roles-and-config.md]
 needs: []
 see: [93u2]
 ---
@@ -24,3 +24,13 @@ The clone's checkout is shared with the human.
 ## Notes
 
 Related: [[integration-branch-or-merge-to-main-93u2|integration branch or main]].
+
+## Resolution
+
+The manager runs in the clone's checkout. It coordinates and doesn't merge:
+the integrator is bridle itself, not an agent
+([[docs/design/roles-and-lifecycle|roles]]), so the integration worktree
+belongs to bridle when the integrator is built (P5). Recorded in
+[[docs/design/agent-host/roles-and-config|roles and config]]. Whether bridle
+integrates to a branch or to main is still open:
+[[integration-branch-or-merge-to-main-93u2|integration branch or main]].

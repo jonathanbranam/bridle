@@ -1,5 +1,5 @@
 //! Daemon config: `<repo>/.bridle/config.toml` over built-in defaults.
-//! See docs/agent-host.md §8.
+//! See docs/design/agent-host/roles-and-config.md.
 
 use std::collections::BTreeMap;
 use std::net::SocketAddr;
@@ -43,10 +43,16 @@ pub struct Role {
     pub permission_mode: String,
     pub allowed_tools: Vec<String>,
     pub disallowed_tools: Vec<String>,
-    /// Relative to the repo, per docs/agent-host.md §8.
+    /// Relative to the repo, per roles-and-config.md.
     pub system_prompt: Option<PathBuf>,
     pub autostart: bool,
     pub resume_on_restart: bool,
+    /// The first message when an agent is spawned without a prompt,
+    /// including by `autostart`, so it starts working.
+    pub start_prompt: Option<String>,
+    /// Passed as `--max-budget-usd`. Claude applies it per process, and
+    /// checks it after each model call, so a turn can overshoot it.
+    pub max_budget_usd: Option<f64>,
 }
 
 impl Role {
@@ -71,6 +77,8 @@ impl Role {
             system_prompt: None,
             autostart: false,
             resume_on_restart: false,
+            start_prompt: None,
+            max_budget_usd: None,
         }
     }
 
@@ -92,6 +100,8 @@ impl Role {
             system_prompt: None,
             autostart: false,
             resume_on_restart: true,
+            start_prompt: None,
+            max_budget_usd: None,
         }
     }
 
@@ -112,11 +122,13 @@ impl Role {
             system_prompt: None,
             autostart: false,
             resume_on_restart: true,
+            start_prompt: None,
+            max_budget_usd: None,
         }
     }
 
     /// `Bash(bridle *)` is always available, so an agent can always reach
-    /// bridle even if a config role forgot to list it (§8).
+    /// bridle even if a config role forgot to list it.
     pub fn effective_allowed_tools(&self) -> Vec<String> {
         let mut tools = self.allowed_tools.clone();
         if !tools.iter().any(|t| t == "Bash(bridle *)") {
@@ -156,6 +168,12 @@ impl Role {
         if let Some(v) = raw.resume_on_restart {
             self.resume_on_restart = v;
         }
+        if let Some(v) = raw.start_prompt {
+            self.start_prompt = Some(v);
+        }
+        if let Some(v) = raw.max_budget_usd {
+            self.max_budget_usd = Some(v);
+        }
         self
     }
 }
@@ -185,7 +203,7 @@ impl Default for Config {
 
 impl Config {
     /// Loads `<repo>/.bridle/config.toml` over the built-in defaults. Missing
-    /// file is not an error: the file is optional (docs/agent-host.md §2).
+    /// file is not an error: the file is optional (docs/design/agent-host/operating-model.md).
     pub fn load(repo: &Path) -> Result<Self, ConfigError> {
         let path = repo.join(".bridle").join("config.toml");
         match std::fs::read_to_string(&path) {
@@ -290,6 +308,10 @@ struct RawRole {
     autostart: Option<bool>,
     #[serde(default)]
     resume_on_restart: Option<bool>,
+    #[serde(default)]
+    start_prompt: Option<String>,
+    #[serde(default)]
+    max_budget_usd: Option<f64>,
 }
 
 impl<'de> Deserialize<'de> for Workdir {
@@ -309,7 +331,7 @@ impl<'de> Deserialize<'de> for Workdir {
 }
 
 /// The fixed bridle preamble, identical for every agent of a role so the
-/// prompt cache holds across worktrees (§8, design.md §11.4 rule 2). No
+/// prompt cache holds across worktrees (docs/design/usage-and-budget.md, rule 2). No
 /// agent names, paths or timestamps: those go in the first user message.
 const PREAMBLE: &str = "\
 You are an agent run by bridle, a local daemon that spawns, supervises and \
@@ -337,6 +359,10 @@ state with `bridle status --json` and `bridle agents --json`. Always pass
 
 Never read another principal's token, and never read anything under
 .bridle/tokens. Your own token is already in BRIDLE_TOKEN.
+
+Claude Code's memory is off, and you must not keep notes outside the
+repository. Anything worth keeping (a decision, a fact, a gotcha) goes in the
+repository's docs or rules, or in a message to whoever gave you the task.
 ";
 
 fn role_preamble_suffix(role_name: &str) -> Option<&'static str> {
@@ -458,6 +484,19 @@ mod tests {
         assert_eq!(reviewer.workdir, Workdir::Repo);
         assert_eq!(reviewer.permission_mode, "plan");
         assert_eq!(reviewer.base, "HEAD"); // inherited from worker defaults
+    }
+
+    #[test]
+    fn bridles_own_config_parses() {
+        let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let config = Config::load(&repo).expect("bridle's .bridle/config.toml parses");
+        let manager = &config.roles["manager"];
+        assert!(manager.start_prompt.is_some());
+        assert!(manager.max_budget_usd.is_some());
+        for role in ["worker", "manager"] {
+            let prompt = config.roles[role].system_prompt.as_ref().expect("prompt");
+            assert!(repo.join(prompt).is_file(), "{} exists", prompt.display());
+        }
     }
 
     #[test]

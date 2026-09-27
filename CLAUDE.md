@@ -3,11 +3,14 @@
 Rust workspace for bridle: a daemon + CLI that runs and coordinates headless
 Claude Code agents. Read these before changing behaviour:
 
-- `docs/agent-host.md`: the design being built (daemon, API, agent host). **Source of truth for v1.**
-- `docs/README.md`: the docs index. The wider design (tasks, workflow layers, specs) is split
-  under `docs/proposal/`, `docs/context/` and `docs/design/`. Mostly future work.
+- `docs/design/agent-host/`: the daemon, API and agent host, as built. **Source of truth for
+  the code**, with `docs/design/cli.md` and `docs/design/storage.md` (the database). Keep them
+  in step when behaviour changes.
+- `docs/README.md`: the docs index and reading order. The rest of `docs/design/` (tasks,
+  workflow layers, specs) is future work; `docs/proposal/build-order.md` says what's next.
 - `docs/questions/open/` and `docs/spikes/open/`: open questions and spikes, one ticket each.
-  File new ones by the conventions in `docs/README.md`.
+  File new ones by the conventions in `docs/README.md`. Known v1 bugs and gaps:
+  `docs/questions/open/v1-follow-ups-from-the-build-9c6e.md`.
 - `docs/spikes/01-stream-json-findings.md`: verified Claude Code stream-json behaviour.
   Cite it rather than assuming how `claude` behaves.
 
@@ -28,6 +31,7 @@ just check        # fmt-check + clippy -D warnings + nextest: must pass before y
 just fmt
 just test         # cargo nextest run --workspace
 just test-live    # ignored tests that run real `claude` (Haiku; costs tokens) — only when asked
+just test-contract  # the Claude Code contract suite (live, ~$0.10), after Claude Code updates — only when asked
 cargo test -p <crate>   # when working on one crate
 ```
 
@@ -45,3 +49,6 @@ cargo test -p <crate>   # when working on one crate
   `BRIDLE_LIVE_TESTS=1`. Use the fake at `crates/bridle-claude/tests/fake-claude.py`.
 - Comments explain why, not what. Match the density of the surrounding code.
 - Don't commit unless asked.
+- **No Claude Code memory**, ever: it's off in `.claude/settings.json`, and bridle turns it off for
+  every agent it spawns. Record anything worth keeping in the repo (docs, tickets, or
+  `.bridle/rules/`). See `.bridle/rules/memory.none.md`.

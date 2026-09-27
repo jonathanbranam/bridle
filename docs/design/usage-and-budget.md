@@ -26,7 +26,7 @@ In practice this means:
 |---|---|---|
 | stream-json `rate_limit_event` | `status` (`allowed` / `allowed_warning` / `rejected`), `resetsAt`, `utilization` (0–1), and the window type (`five_hour`, `seven_day`, `seven_day_opus`, `seven_day_sonnet`). Emitted **when the status changes** | headless workers |
 | stream-json `result` | `usage` (input, output, cache-creation and cache-read tokens), per-model `modelUsage`, `total_cost_usd` (list-price equivalent, **cumulative across turns** in streaming mode) | headless workers |
-| status line JSON | `rate_limits.five_hour` / `.seven_day`: `used_percentage`, `resets_at`, plus session cost and context use | the interactive driver: bridle ships `bridle statusline` as the status line command, which shows the numbers **and** records them |
+| status line JSON | `rate_limits.five_hour` / `.seven_day`: `used_percentage`, `resets_at`, plus session cost and context use | interactive sessions (the human's, the orchestrator): bridle ships `bridle statusline` as the status line command, which shows the numbers **and** records them |
 | assistant error `rate_limit` | a turn failed on a limit | both |
 | OpenTelemetry | tokens, cost, per request | later, optional |
 
@@ -42,6 +42,27 @@ Caveats:
   published and may change. Bridle **learns it** by relating the ledger to the
   window percentages over time, and treats that as an estimate.
 
+## What bridle records today
+
+Built with the agent host, for the agents it hosts:
+
+- every `turn.ended`'s four token counts and its cost, per agent and turn
+  ([[docs/design/storage#The daemon's database|database]]), kept after the
+  agent is removed. The cost counter
+  is cumulative per session and survives `--resume`, so a turn's cost is the
+  difference between consecutive counters;
+- the latest `rate_limit_event` per window. It arrives once per process, so
+  it can be stale while no agent is starting.
+
+`bridle usage` (and `GET /v1/usage`) shows per-agent turns, tokens and cost,
+totals, the cache hit ratio (cache reads ÷ all input tokens), and the last
+known utilisation and reset time per window. A role can also cap each
+agent's spend ([[docs/design/agent-host/agents#Spend cap|spend cap]]).
+
+Not built: the status line, the ledger's task, role and workflow-revision
+columns, and the governor. Claude Code also answers an undocumented
+`get_usage` control request; bridle doesn't depend on it.
+
 ## The budget governor
 
 Bridle checks the budget before every dispatch:
@@ -56,7 +77,7 @@ pause_at.seven_day   = 85
 pause_at.seven_day_opus = 70
 
 [models]                            # defaults by role; the governor may step down
-driver   = ["opus", "sonnet"]
+manager  = ["opus", "sonnet"]
 planner  = ["opus", "sonnet"]
 reviewer = ["sonnet", "opus"]       # opus for protected/arch-revision reviews only
 worker   = ["sonnet", "haiku"]
@@ -80,7 +101,7 @@ explore  = ["sonnet"]
   4. It sets a timer for `resetsAt`.
 - **Resuming** when the window resets: bridle restarts paused agents with
   `--resume <session-id>`, in priority order, up to `max_workers`, and tells the
-  driver.
+  manager.
 - **The human's reserve** is respected even when work is queued. The human's
   interactive sessions share the account, and running out mid-conversation is
   the worst outcome.

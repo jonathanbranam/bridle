@@ -4,7 +4,7 @@ title: Workers as Agent subagents or separate claude sessions?
 opened: 2026-09-27
 repos: [bridle]
 changes: []
-specs: [docs/agent-host.md]
+specs: [docs/design/agent-host/agents.md]
 needs: []
 see: []
 ---
@@ -42,6 +42,6 @@ Separate headless `claude -p` stream-json sessions that bridle owns.
   subagents and carry `agent_id`, and recommended bridle-owned headless workers.
 - Spike 01 verified the stream-json host:
   [findings](docs/spikes/01-stream-json-findings.md).
-- [[docs/agent-host|agent-host.md]] designs the daemon, API and agent host on it,
+- [[docs/design/agent-host/operating-model|The agent host]] designs the daemon, API and agent host on it,
   and `crates/bridle-claude` implements the client.
 - The remaining spikes from research/01 §8 are filed under `docs/spikes/open/`.

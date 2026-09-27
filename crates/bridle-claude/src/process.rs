@@ -120,7 +120,7 @@ impl AgentHandle {
 
     /// Sends `{"subtype":"interrupt"}` and waits for the correlated receipt.
     /// Never sets `cancel_queued`: it silently drops pending messages
-    /// (docs/agent-host.md §4.4 / spike surprise 2).
+    /// (docs/design/agent-host/messages.md / spike surprise 2).
     pub async fn interrupt(&self, timeout: Duration) -> Result<Value, ControlError> {
         let rx = self.control(json!({ "subtype": "interrupt" }))?;
         match tokio::time::timeout(timeout, rx).await {
@@ -132,7 +132,7 @@ impl AgentHandle {
 
     /// Closes stdin. Idempotent: closing an already-closed handle is a
     /// no-op. This is what makes claude finish its current turn and exit
-    /// (docs/agent-host.md §4.5 step 1).
+    /// (docs/design/agent-host/agents.md, stop step 1).
     pub fn close_stdin(&self) {
         self.0.stdin_tx.lock().expect("stdin mutex poisoned").take();
     }
@@ -161,7 +161,7 @@ impl AgentHandle {
 
 /// Spawns `cmd` as a child of the current process, in its own process group,
 /// with `kill_on_drop(false)`: the caller (a supervisor) decides when and
-/// how to kill it, per docs/agent-host.md §4.5. Every raw line in and out is
+/// how to kill it, per docs/design/agent-host/agents.md. Every raw line in and out is
 /// recorded to `transcript`.
 pub async fn spawn(cmd: &ClaudeCommand, transcript: Transcript) -> Result<Spawned, SpawnError> {
     let args = cmd.args();

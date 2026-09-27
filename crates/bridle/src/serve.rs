@@ -1,4 +1,4 @@
-//! `bridle serve`: foreground and `--detach`. See docs/agent-host.md §6.3.
+//! `bridle serve`: foreground and `--detach`. See docs/design/agent-host/daemon.md.
 
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};

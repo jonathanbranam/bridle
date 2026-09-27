@@ -135,7 +135,7 @@ impl Message {
 
     /// A `user` event whose `message.content` is a plain JSON string. That's
     /// how `--replay-user-messages` echoes stdin text back on stdout, at the
-    /// moment the model is about to see it (docs/agent-host.md §4.3). Tool
+    /// moment the model is about to see it (docs/design/agent-host/messages.md). Tool
     /// results and the synthetic "interrupted" marker are content *arrays*,
     /// never plain strings, so this never false-positives on them.
     pub fn is_replay(&self) -> bool {
@@ -171,7 +171,7 @@ pub struct ResultEvent {
     #[serde(default)]
     pub stop_reason: Option<String>,
     /// What `--permission-prompts none` denied. Empty when nothing was
-    /// denied; v1 never answers these itself (docs/agent-host.md §4.1).
+    /// denied; v1 never answers these itself (docs/design/agent-host/agents.md).
     #[serde(default)]
     pub permission_denials: Vec<Value>,
 }

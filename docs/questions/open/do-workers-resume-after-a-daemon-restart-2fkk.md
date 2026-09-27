@@ -11,7 +11,7 @@ see: [t39j]
 
 ## The question
 
-From `docs/agent-host.md` §4.7:
+From `docs/agent-host.md` §4.7 @ 38532ef (now [[docs/design/agent-host/daemon#Restart and recovery|restart and recovery]]):
 
 > Agents are the daemon's children through pipes. **If the daemon dies, each
 > agent's stdin reaches EOF and the agent exits after its current turn.** …
@@ -38,5 +38,5 @@ instead of resumed.
   - let the manager decide (it gets `agent.state` events);
   - tie it to claims once tasks exist.
 - Related: whether agents should survive a daemon restart at all, e.g. by
-  giving the daemon's stdio pipes to a small per-agent holder process. §4.7
-  rules this out for v1.
+  giving the daemon's stdio pipes to a small per-agent holder process. v1
+  rules this out.

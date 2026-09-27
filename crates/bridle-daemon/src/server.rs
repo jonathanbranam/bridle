@@ -1,4 +1,4 @@
-//! The axum HTTP + SSE API. Every route in docs/agent-host.md §6.1.
+//! The axum HTTP + SSE API. Every route in docs/design/agent-host/api.md.
 
 use std::convert::Infallible;
 use std::time::Duration;
@@ -198,6 +198,7 @@ async fn status(
     let agents_by_state = state.store.agents_by_state().await?;
     let unread = state.store.unread_count("human").await?;
     let rate_limits = state.store.rate_limits().await?;
+    let claude_version = state.store.get_meta("claude_version").await?;
     Ok(Json(Status {
         daemon: bridle_api::types::DaemonInfo {
             project: state.project.clone(),
@@ -212,6 +213,7 @@ async fn status(
         agents_by_state,
         unread_human_messages: unread,
         rate_limits,
+        claude_version,
     }))
 }
 
@@ -480,8 +482,15 @@ async fn mark_read(
 
 async fn list_events(
     State(state): State<AppState>,
-    Query(q): Query<EventQuery>,
+    Query(mut q): Query<EventQuery>,
 ) -> Result<Json<Vec<Event>>, ApiError> {
+    // Events store the agent id; accept a name too, like every other
+    // endpoint. A removed agent has no row, so its id is used as given.
+    if let Some(agent) = &q.agent
+        && let Some(a) = state.store.get_agent(agent).await?
+    {
+        q.agent = Some(a.id);
+    }
     Ok(Json(state.store.list_events(q).await?))
 }
 

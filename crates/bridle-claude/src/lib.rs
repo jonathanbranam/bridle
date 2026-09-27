@@ -1,6 +1,6 @@
 //! bridle-claude: a client for one headless `claude -p` process driven over
 //! stream-json. This crate has no knowledge of the bridle daemon — it just
-//! spawns and drives a single agent process. See docs/agent-host.md §4 for
+//! spawns and drives a single agent process. See docs/design/agent-host/agents.md for
 //! the protocol it implements, and
 //! docs/spikes/01-stream-json-findings.md for the evidence behind it.
 //!

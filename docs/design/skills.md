@@ -5,7 +5,7 @@ with project addenda:
 
 | Skill | For | Replaces |
 |---|---|---|
-| `bridle-driver` | orient, decompose, plan, spawn, wait, arbitrate | driver-guide, propose/new/continue/ff-change |
+| `bridle-manager` | orient, decompose, plan, spawn, wait, arbitrate | driver-guide, propose/new/continue/ff-change |
 | `bridle-worker` | claim, read plan, implement, report on the task as it goes, handoff | apply-agent-guide, apply-change |
 | `bridle-plan` | writing the task plan, spec edits with ids, impact declaration | propose-change, design.md conventions |
 | `bridle-review` | reviewing a diff against plan + specs + impact | verify-change, acceptance-verifier |

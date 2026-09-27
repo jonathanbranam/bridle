@@ -1,5 +1,5 @@
 //! Bridle daemon API: wire types shared by the daemon and every client, plus
-//! an async HTTP/SSE client and daemon discovery. See docs/agent-host.md §6.
+//! an async HTTP/SSE client and daemon discovery. See docs/design/agent-host/api.md.
 
 pub mod client;
 pub mod discovery;

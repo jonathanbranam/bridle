@@ -1,6 +1,6 @@
 //! Transcript writer/reader: every stdin line written and every stdout/stderr
 //! line read, as `{"t_ms":…, "dir":"in|out|err|note", "line":…}` JSONL. This
-//! is `.bridle/agents/<id>/transcript.jsonl` in docs/agent-host.md §4.8.
+//! is `.bridle/agents/<id>/transcript.jsonl` in docs/design/agent-host/agents.md.
 
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Write};

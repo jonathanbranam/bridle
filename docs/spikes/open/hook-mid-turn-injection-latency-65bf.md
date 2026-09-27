@@ -25,9 +25,9 @@ From `docs/spikes/01-stream-json-findings.md`, Risks and follow-ups @ c192bfc:
 
 ## Why it matters
 
-[[docs/design/coordination#How agents actually hear things (Claude Code integration)|design.md's delivery model]]
-assumed hooks. `docs/agent-host.md` §1.2 moved mid-turn delivery to stdin for
-v1, so this matters only if hooks come back for heartbeat, status or
-injection.
+The original delivery model assumed hooks. Delivery now uses stdin
+([[docs/design/coordination#How agents actually hear things (Claude Code integration)|how agents hear things]]),
+so this matters only if hooks come back for status or injection, e.g. for
+agents bridle doesn't host.
 
 ## Notes

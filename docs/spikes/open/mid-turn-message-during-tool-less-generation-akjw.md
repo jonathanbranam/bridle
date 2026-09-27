@@ -25,7 +25,7 @@ From `docs/agent-host.md` §13 @ c192bfc, item 2:
 
 ## Why it matters
 
-v1 delivers messages through stdin (`docs/agent-host.md` §4.3), so delivery
+v1 delivers messages through stdin ([[docs/design/agent-host/messages|messages]]), so delivery
 timing depends on it.
 
 ## Notes

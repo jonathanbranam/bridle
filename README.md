@@ -2,11 +2,12 @@
 
 Runs and coordinates headless Claude Code agents for one project: a daemon per
 workspace, a CLI, and an HTTP/SSE API that the CLI, your orchestrator agent and
-(later) a TUI or GUI all share. The design is in [`docs/agent-host.md`](docs/agent-host.md).
+(later) a TUI or GUI all share. The design is in [`docs/`](docs/README.md); what
+runs today is [`docs/design/agent-host/`](docs/design/agent-host/operating-model.md).
 
 **Status: v1 of the agent host.** You can spawn agents, message them, observe
 them, interrupt, stop, resume and remove them. Tasks, workflow layers and the
-integrator ([`docs/design.md`](docs/design.md)) come later.
+integrator come later ([build order](docs/proposal/build-order.md)).
 
 ## Install
 
@@ -69,7 +70,8 @@ allowed_tools = ["Bash", "Read", "Edit", "Write", "Glob", "Grep"]
 system_prompt = ".bridle/roles/worker.md"
 
 [roles.manager]
-autostart = true          # "start working": the manager starts with the daemon
+autostart = true          # an agent named "manager" starts with the daemon…
+start_prompt = "Check your inbox and tell the human you're ready."   # …and gets this
 system_prompt = ".bridle/roles/manager.md"
 ```
 
@@ -96,7 +98,7 @@ accident. This is attribution, not security, on a single-user machine.
 ```sh
 bridle serve --detach --listen 0.0.0.0:7433     # on the remote host (no TLS: use SSH/VPN)
 ssh -L 7433:localhost:7433 host                  # on the laptop
-export BRIDLE_URL=http://localhost:7433 BRIDLE_TOKEN=<token>
+export BRIDLE_URL=http://localhost:7433 BRIDLE_TOKEN=<token>   # a URL needs an explicit token
 ```
 
 Your orchestrator and a future TUI then work entirely through bridle, with no
@@ -105,9 +107,11 @@ local checkout needed.
 ## Development
 
 ```
-just check        # fmt + clippy -D warnings + tests (what CI runs)
-just test-live    # tests against real `claude` (Haiku; costs a little)
+just check          # fmt + clippy -D warnings + tests (what CI runs)
+just test-contract  # after Claude Code updates itself: the live contract suite (Haiku, ~$0.10)
 ```
 
 Tests use a fake `claude`, `crates/bridle-claude/tests/fake-claude.py`, so they
-cost no tokens. See [`CLAUDE.md`](CLAUDE.md) for conventions.
+cost no tokens. Claude Code isn't pinned: when it updates, `bridle status`
+shows the new version and the daemon logs a warning; run `just test-contract`,
+and fix bridle forward if it fails. See [`CLAUDE.md`](CLAUDE.md) for conventions.

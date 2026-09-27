@@ -25,9 +25,9 @@ the better mechanism there?
 ## Why it matters
 
 The workforce host is Linux ([[docs/context/nuc-host|the NUC]]).
-`docs/agent-host.md` §4.6 defers Linux containment to "when bridle moves to a
-VPS", but that move is now the plan.
+The v1 design deferred Linux containment to "when bridle moves to a VPS", and
+that move is now the plan.
 
 ## Notes
 
-Raised on 2026-09-27 while checking the NUC plan ([[docs/context/nuc-host|NUC host]]) against `docs/agent-host.md`.
+Raised on 2026-09-27 while checking the NUC plan ([[docs/context/nuc-host|NUC host]]) against the agent-host design.

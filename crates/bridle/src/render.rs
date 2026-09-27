@@ -1,7 +1,7 @@
 //! Rendering the daemon's raw output into terse, human-readable lines: the
 //! `bridle logs` transcript view and `bridle events` lines. Works directly
 //! on `serde_json::Value`, deliberately not depending on bridle-claude
-//! (spec: docs/agent-host.md §4.8, §7; the CLI brief for `bridle logs`).
+//! (spec: docs/design/agent-host/agents.md, api.md; the CLI brief for `bridle logs`).
 
 use bridle_api::Event;
 use serde::Serialize;

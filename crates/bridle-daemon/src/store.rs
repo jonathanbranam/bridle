@@ -1,6 +1,6 @@
 //! SQLite-backed store for principals, agents, turns, messages, events and
-//! rate limits. See docs/agent-host.md §10 for the schema this implements
-//! and §5 for principals/tokens.
+//! rate limits. See docs/design/storage.md for the schema this implements
+//! and docs/design/agent-host/principals.md for principals/tokens.
 //!
 //! `Store` is a thin, cloneable async handle: every public method runs its
 //! SQL on a single connection inside `spawn_blocking`, guarded by a mutex
@@ -63,13 +63,15 @@ pub struct TurnEnd {
     pub cache_read: u64,
     pub cache_write: u64,
     /// This turn's own cost (not the session's cumulative counter); added
-    /// to `agents.cost_usd_total` (docs/agent-host.md §9).
+    /// to `agents.cost_usd_total` (docs/design/usage-and-budget.md).
     pub cost_total: f64,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RunningAgent {
     pub id: String,
+    /// As stored, e.g. `working`.
+    pub state: String,
     pub pid: Option<i32>,
     pub pid_start: Option<String>,
 }
@@ -148,7 +150,7 @@ impl Store {
 
     /// `agent_id` is accepted for interface symmetry with the rest of the
     /// agent lifecycle calls and for future audit use; the principal itself
-    /// is keyed by name (`agent:<name>`, docs/agent-host.md §5.1), like
+    /// is keyed by name (`agent:<name>`, principals.md), like
     /// every other agent-facing reference.
     pub async fn create_agent_token(
         &self,
@@ -339,6 +341,18 @@ impl Store {
         let to = to.to_string();
         self.with_conn(move |c| sync::unread_count(c, &to)).await
     }
+
+    pub async fn get_meta(&self, key: &str) -> Result<Option<String>, StoreError> {
+        let key = key.to_string();
+        self.with_conn(move |c| sync::get_meta(c, &key)).await
+    }
+
+    /// Sets `key`, returning the previous value.
+    pub async fn swap_meta(&self, key: &str, value: &str) -> Result<Option<String>, StoreError> {
+        let (key, value) = (key.to_string(), value.to_string());
+        self.with_conn(move |c| sync::swap_meta(c, &key, &value))
+            .await
+    }
 }
 
 // =====================================================================
@@ -352,7 +366,7 @@ mod sync {
 
     use super::*;
 
-    const SCHEMA_V1: &str = r#"
+    pub(super) const SCHEMA_V1: &str = r#"
         CREATE TABLE principals (
             id TEXT PRIMARY KEY,
             kind TEXT NOT NULL,
@@ -404,7 +418,7 @@ mod sync {
         );
 
         -- `agent_id` deliberately has no foreign key: events must survive
-        -- `delete_agent` (docs/agent-host.md: "keeps its events").
+        -- `delete_agent` (agents.md: "its events … are kept").
         CREATE TABLE events (
             seq INTEGER PRIMARY KEY AUTOINCREMENT,
             ts TEXT NOT NULL,
@@ -445,7 +459,44 @@ mod sync {
         );
     "#;
 
-    const MIGRATIONS: &[&str] = &[SCHEMA_V1];
+    // Turns outlive their agent, carrying its name, role and model, so
+    // `rm` doesn't erase usage history. SQLite can't drop a foreign key in
+    // place, hence the rebuild.
+    const SCHEMA_V2: &str = r#"
+        CREATE TABLE turns_v2 (
+            agent_id TEXT NOT NULL,
+            agent_name TEXT NOT NULL,
+            role TEXT NOT NULL,
+            model TEXT NOT NULL,
+            n INTEGER NOT NULL,
+            started_at TEXT NOT NULL,
+            ended_at TEXT,
+            subtype TEXT,
+            is_error INTEGER,
+            terminal_reason TEXT,
+            input_tokens INTEGER NOT NULL DEFAULT 0,
+            output_tokens INTEGER NOT NULL DEFAULT 0,
+            cache_read INTEGER NOT NULL DEFAULT 0,
+            cache_write INTEGER NOT NULL DEFAULT 0,
+            cost_total REAL NOT NULL DEFAULT 0,
+            PRIMARY KEY (agent_id, n)
+        );
+        INSERT INTO turns_v2
+            SELECT t.agent_id, a.name, a.role, a.model, t.n, t.started_at, t.ended_at,
+                   t.subtype, t.is_error, t.terminal_reason, t.input_tokens,
+                   t.output_tokens, t.cache_read, t.cache_write, t.cost_total
+            FROM turns t JOIN agents a ON a.id = t.agent_id;
+        DROP TABLE turns;
+        ALTER TABLE turns_v2 RENAME TO turns;
+
+        -- Small daemon facts that outlive a restart, e.g. `claude_version`.
+        CREATE TABLE meta (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL
+        );
+    "#;
+
+    const MIGRATIONS: &[&str] = &[SCHEMA_V1, SCHEMA_V2];
 
     pub(super) fn open(path: &Path) -> Result<Connection, StoreError> {
         if let Some(parent) = path.parent() {
@@ -458,7 +509,7 @@ mod sync {
         Ok(conn)
     }
 
-    fn migrate(conn: &Connection) -> Result<(), StoreError> {
+    pub(super) fn migrate(conn: &Connection) -> Result<(), StoreError> {
         let version: i64 = conn.query_row("PRAGMA user_version", [], |r| r.get(0))?;
         let version = usize::try_from(version).unwrap_or(0);
         for (i, sql) in MIGRATIONS.iter().enumerate().skip(version) {
@@ -514,7 +565,7 @@ mod sync {
         format!("a-{}", random_base36(5))
     }
 
-    /// 64 hex characters from two v4 UUIDs, per docs/agent-host.md §5.
+    /// 64 hex characters from two v4 UUIDs, per principals.md.
     fn random_token() -> String {
         format!("{}{}", Uuid::new_v4().simple(), Uuid::new_v4().simple())
     }
@@ -648,7 +699,7 @@ mod sync {
     }
 
     /// Creates a principal, failing with `Conflict` if one with this id is
-    /// already active (docs/agent-host.md: "conflict if active").
+    /// already active (409 if the name is taken).
     fn create_principal_active_only(
         conn: &Connection,
         id: &str,
@@ -950,7 +1001,8 @@ mod sync {
         at: DateTime<Utc>,
     ) -> Result<(), StoreError> {
         conn.execute(
-            "INSERT INTO turns(agent_id, n, started_at) VALUES (?1, ?2, ?3)",
+            "INSERT INTO turns(agent_id, agent_name, role, model, n, started_at)
+             SELECT id, name, role, model, ?2, ?3 FROM agents WHERE id = ?1",
             params![id, n, fmt_dt(at)],
         )?;
         let updated = conn.execute(
@@ -1012,7 +1064,7 @@ mod sync {
 
     pub(super) fn running_agents(conn: &Connection) -> Result<Vec<RunningAgent>, StoreError> {
         let mut stmt = conn.prepare(
-            "SELECT id, pid, pid_start FROM agents
+            "SELECT id, pid, pid_start, state FROM agents
              WHERE state IN ('starting', 'idle', 'working', 'stopping')",
         )?;
         let rows = stmt.query_map([], |row| {
@@ -1020,6 +1072,7 @@ mod sync {
                 id: row.get(0)?,
                 pid: row.get(1)?,
                 pid_start: row.get(2)?,
+                state: row.get(3)?,
             })
         })?;
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
@@ -1268,12 +1321,21 @@ mod sync {
 
     pub(super) fn usage(conn: &Connection) -> Result<Usage, StoreError> {
         let mut stmt = conn.prepare(
-            "SELECT a.id, a.name, a.role, a.model, a.turns, a.cost_usd_total,
-                    COALESCE(SUM(t.input_tokens), 0), COALESCE(SUM(t.output_tokens), 0),
-                    COALESCE(SUM(t.cache_read), 0), COALESCE(SUM(t.cache_write), 0)
-             FROM agents a LEFT JOIN turns t ON t.agent_id = a.id
-             GROUP BY a.id
-             ORDER BY a.name",
+            "SELECT id, name, role, model, turns, cost, tin, tout, cr, cw, removed FROM (
+                 SELECT a.id, a.name, a.role, a.model, a.turns, a.cost_usd_total AS cost,
+                        COALESCE(SUM(t.input_tokens), 0) AS tin, COALESCE(SUM(t.output_tokens), 0) AS tout,
+                        COALESCE(SUM(t.cache_read), 0) AS cr, COALESCE(SUM(t.cache_write), 0) AS cw,
+                        0 AS removed
+                 FROM agents a LEFT JOIN turns t ON t.agent_id = a.id
+                 GROUP BY a.id
+                 UNION ALL
+                 SELECT t.agent_id, MAX(t.agent_name), MAX(t.role), MAX(t.model),
+                        COUNT(t.ended_at), SUM(t.cost_total),
+                        SUM(t.input_tokens), SUM(t.output_tokens), SUM(t.cache_read), SUM(t.cache_write),
+                        1
+                 FROM turns t WHERE t.agent_id NOT IN (SELECT id FROM agents)
+                 GROUP BY t.agent_id
+             ) ORDER BY removed, name",
         )?;
         let rows = stmt.query_map([], |row| {
             Ok(AgentUsage {
@@ -1289,6 +1351,7 @@ mod sync {
                     cache_read: row.get::<_, i64>(8)? as u64,
                     cache_write: row.get::<_, i64>(9)? as u64,
                 },
+                removed: row.get::<_, i64>(10)? != 0,
             })
         })?;
         let agents = rows.collect::<Result<Vec<_>, _>>()?;
@@ -1334,6 +1397,28 @@ mod sync {
         Ok(out)
     }
 
+    pub(super) fn get_meta(conn: &Connection, key: &str) -> Result<Option<String>, StoreError> {
+        conn.query_row("SELECT value FROM meta WHERE key = ?1", params![key], |r| {
+            r.get(0)
+        })
+        .optional()
+        .map_err(Into::into)
+    }
+
+    pub(super) fn swap_meta(
+        conn: &Connection,
+        key: &str,
+        value: &str,
+    ) -> Result<Option<String>, StoreError> {
+        let previous = get_meta(conn, key)?;
+        conn.execute(
+            "INSERT INTO meta(key, value) VALUES (?1, ?2)
+             ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+            params![key, value],
+        )?;
+        Ok(previous)
+    }
+
     pub(super) fn unread_count(conn: &Connection, to: &str) -> Result<u32, StoreError> {
         let n: i64 = conn.query_row(
             "SELECT COUNT(*) FROM messages WHERE to_id = ?1 AND state NOT IN ('read', 'dropped')",
@@ -1347,6 +1432,42 @@ mod sync {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn v2_migration_keeps_turns_and_gives_them_the_agents_identity() {
+        let conn = Connection::open_in_memory().expect("open");
+        conn.execute_batch(sync::SCHEMA_V1).expect("v1 schema");
+        conn.pragma_update(None, "user_version", 1)
+            .expect("set version");
+        conn.execute_batch(
+            "INSERT INTO agents(id, name, role, state, model, session_id, workdir_kind, cwd,
+                                created_at, updated_at, created_by)
+             VALUES ('a-1', 'w1', 'worker', 'idle', 'sonnet', 's', 'repo', '/r', 't', 't', 'human');
+             INSERT INTO turns(agent_id, n, started_at, input_tokens) VALUES ('a-1', 1, 't', 42);",
+        )
+        .expect("v1 rows");
+
+        sync::migrate(&conn).expect("migrate");
+
+        let (name, role, model, input): (String, String, String, i64) = conn
+            .query_row(
+                "SELECT agent_name, role, model, input_tokens FROM turns WHERE agent_id = 'a-1'",
+                [],
+                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)),
+            )
+            .expect("migrated turn");
+        assert_eq!(
+            (name.as_str(), role.as_str(), model.as_str(), input),
+            ("w1", "worker", "sonnet", 42)
+        );
+        // No cascade any more: the turn outlives its agent.
+        conn.execute("DELETE FROM agents WHERE id = 'a-1'", [])
+            .expect("delete agent");
+        let n: i64 = conn
+            .query_row("SELECT COUNT(*) FROM turns", [], |r| r.get(0))
+            .expect("count");
+        assert_eq!(n, 1);
+    }
 
     async fn store() -> (Store, tempfile::TempDir) {
         let tmp = tempfile::tempdir().expect("tempdir");

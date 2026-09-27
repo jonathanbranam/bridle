@@ -52,7 +52,7 @@ facts.md             short operational facts, loaded every session (the bd prime
 ---
 id: servers.never-restart
 severity: must            # must | should | may
-roles: [driver, worker]
+roles: [manager, worker]
 ---
 Never kill or restart a dev server the human is running. …
 ```

@@ -27,4 +27,4 @@ laptop and phone: [[where-the-single-orchestrator-lives-hj4g|where the orchestra
 
 ## Notes
 
-Raised on 2026-09-27 while checking the NUC plan ([[docs/context/nuc-host|NUC host]]) against `docs/agent-host.md`. None of this has been tested.
+Raised on 2026-09-27 while checking the NUC plan ([[docs/context/nuc-host|NUC host]]) against the agent-host design. None of this has been tested.

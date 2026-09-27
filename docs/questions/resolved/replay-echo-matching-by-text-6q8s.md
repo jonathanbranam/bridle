@@ -4,7 +4,7 @@ title: Replay echo matching by text
 opened: 2026-09-27
 repos: [bridle]
 changes: []
-specs: []
+specs: [docs/design/agent-host/messages.md]
 needs: []
 see: []
 ---
@@ -24,3 +24,11 @@ Message delivery tracking depends on matching each echo to the message sent.
 ## Notes
 
 Evidence: [spike 01 findings](docs/spikes/01-stream-json-findings.md).
+
+## Resolution
+
+Keep matching by text, oldest first, as built. It isn't a design choice to
+revisit until claude changes its echo, and the guard against that change is a
+contract test on upgrade:
+[[pinning-and-checking-the-claude-code-version-enz3|version pinning]]. Recorded
+in [[docs/design/agent-host/messages#Acks|messages and delivery]].

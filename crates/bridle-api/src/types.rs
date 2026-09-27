@@ -1,5 +1,5 @@
 //! Wire types for the bridle daemon API (`/v1`). Shared by the daemon, the
-//! CLI and any future TUI/GUI/MCP client. See docs/agent-host.md §6–§7.
+//! CLI and any future TUI/GUI/MCP client. See docs/design/agent-host/api.md.
 
 use std::collections::BTreeMap;
 
@@ -51,6 +51,9 @@ pub struct Status {
     pub agents_by_state: BTreeMap<String, u32>,
     pub unread_human_messages: u32,
     pub rate_limits: Vec<RateLimit>,
+    /// The Claude Code version the daemon's agents last reported.
+    #[serde(default)]
+    pub claude_version: Option<String>,
 }
 
 // ---------- agents ----------
@@ -345,6 +348,18 @@ pub mod event_kind {
     /// data: {count}
     pub const AGENT_ORPHANS_KILLED: &str = "agent.orphans_killed";
     pub const AGENT_REMOVED: &str = "agent.removed";
+    /// data: {dropped_held}. The actor is whoever asked.
+    pub const AGENT_INTERRUPTED: &str = "agent.interrupted";
+    /// The actor is whoever asked; the state change follows as `agent.state`.
+    pub const AGENT_STOP_REQUESTED: &str = "agent.stop_requested";
+    /// The actor is whoever asked (`system` for a restart).
+    pub const AGENT_RESUMED: &str = "agent.resumed";
+    /// data: {cost_total}. The role's `max_budget_usd` is spent; bridle
+    /// stops the agent, and `resume` grants a fresh allowance.
+    pub const AGENT_BUDGET_EXHAUSTED: &str = "agent.budget_exhausted";
+    /// data: {version, previous}. The Claude Code version seen in an agent's
+    /// `system/init` differs from the last one this daemon saw.
+    pub const CLAUDE_VERSION: &str = "claude.version";
     /// data: {text} (≤ 2 KB)
     pub const AGENT_TEXT: &str = "agent.text";
     /// data: {name, input_summary}
@@ -408,6 +423,9 @@ pub struct AgentUsage {
     pub turns: u32,
     pub tokens: TokenTotals,
     pub cost_usd_total: f64,
+    /// The agent was removed with `rm`; its turns still count.
+    #[serde(default)]
+    pub removed: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

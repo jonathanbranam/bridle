@@ -1,5 +1,5 @@
 //! Git worktree management for agents. Shells out to the `git` CLI via
-//! `tokio::process::Command`. See docs/agent-host.md §3.1, §4.1, §4.5.
+//! `tokio::process::Command`. See docs/design/agent-host/daemon.md, agents.md.
 
 use std::path::Path;
 

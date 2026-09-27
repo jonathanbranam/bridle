@@ -1,5 +1,5 @@
 //! An async HTTP/SSE client for the bridle daemon API. See
-//! docs/agent-host.md §6.1 for the endpoint list this mirrors.
+//! docs/design/agent-host/api.md for the endpoint list this mirrors.
 
 mod sse;
 

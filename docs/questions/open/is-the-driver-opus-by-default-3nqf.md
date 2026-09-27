@@ -25,6 +25,8 @@ The budget is one subscription with no overage
 
 ## Notes
 
-- `docs/agent-host.md` §2 splits design.md's driver into an external
-  orchestrator (the human's own agent) and a bridle-hosted manager. Its §8
-  config defaults the manager to `sonnet`. The question now applies to both.
+- The driver is now split into an external orchestrator (the human's own
+  agent) and a bridle-hosted manager
+  ([[docs/design/roles-and-lifecycle|roles]]). The built-in manager role
+  defaults to `sonnet` ([[docs/design/agent-host/roles-and-config|roles and config]]).
+  The question applies to both.

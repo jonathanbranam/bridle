@@ -1,5 +1,5 @@
-//! `bridle`: the CLI. A thin client of the daemon's API (docs/agent-host.md
-//! §6), plus `serve`, which runs the daemon itself.
+//! `bridle`: the CLI. A thin client of the daemon's API
+//! (docs/design/agent-host/api.md), plus `serve`, which runs the daemon itself.
 
 mod cli;
 mod commands;

@@ -30,8 +30,7 @@ It decides where every durable task record lives, and P0 of the
 ## Notes
 
 - Design: [[docs/design/storage#The state branch|the state branch]].
-- `docs/agent-host.md` §2 step 3 moves the state branch's worktree from
-  `~/.bridle/state/<project>/` to `<workspace>/.bridle/state/`, arriving with
+- The state branch's worktree is `<workspace>/.bridle/state/`, arriving with
   tasks in P0. v1 has no task store.
 - Related: [[where-questions-live-on-the-state-branch-c5a8|where questions live on the state branch]].
 - Prior art on the other side: the ticket system in `workflow-instructions/`

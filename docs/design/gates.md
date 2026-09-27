@@ -4,7 +4,7 @@ Each gate is configured, not hardcoded:
 
 ```toml
 [gates.plan]
-default  = "driver"                              # driver reviews plans
+default  = "manager"                             # manager reviews plans
 human_when = ["impact.protected", "new_capability", "kind == 'arch-revision'"]  # arch-revision is locked
 skip_when  = ["kind == 'explore'"]            # explorations are not plan-gated
 
@@ -21,8 +21,8 @@ Where each current human check goes:
 
 | Current check | New home |
 |---|---|
-| Approve every plan | **driver**, unless the plan touches a spec requirement marked `protected`, creates a capability, or the driver chooses to escalate |
-| Blocking question stops the driver | **async**: the question goes on the task, the task blocks, and the agent claims other work ([questions do not stop work](docs/design/coordination.md)) |
+| Approve every plan | **manager**, unless the plan touches a spec requirement marked `protected`, creates a capability, or the manager chooses to escalate |
+| Blocking question stops the lead agent | **async**: the question goes on the task, the task blocks, and the agent claims other work ([questions do not stop work](docs/design/coordination.md)) |
 | Archive after "land the work" | **gone**. Specs fold on merge; acceptance is a state change |
 | Finish one same-capability change before starting the next | **gone**. The impact registry decides ([impact registry](docs/design/impact-and-conflicts.md)) |
 | Accept finished work | **kept**, as a batched queue: `bridle review` |

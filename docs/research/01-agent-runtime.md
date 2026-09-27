@@ -338,7 +338,7 @@ the raw control protocol turns out too unstable to use from Rust.
 
 Each is small and settles an unknown this report couldn't:
 
-1. **Stream-json client in Rust** (written up as [`../spikes/01-stream-json-client.md`](../spikes/01-stream-json-client.md)): a 200-line prototype that spawns, sends two
+1. **Stream-json client in Rust** (written up as [`spikes/01-stream-json-client.md`](docs/spikes/01-stream-json-client.md)): a 200-line prototype that spawns, sends two
    messages, interrupts, receives `result`, and resumes. Also check what
    `system/init` capabilities v2.1.283 advertises.
 2. **`--permission-prompt-tool` → bridle MCP**: confirm the request and

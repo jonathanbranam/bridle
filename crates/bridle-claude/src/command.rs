@@ -1,5 +1,5 @@
 //! `ClaudeCommand`: builds the argv/env for one headless `claude` process,
-//! per docs/agent-host.md §4.1. Kept as a pure builder (`args()` returns a
+//! per docs/design/agent-host/agents.md. Kept as a pure builder (`args()` returns a
 //! `Vec<String>`) so the flag set is unit-testable without spawning
 //! anything.
 
@@ -31,11 +31,19 @@ pub struct ClaudeCommand {
     pub allowed_tools: Vec<String>,
     pub disallowed_tools: Vec<String>,
     pub name: Option<String>,
+    /// `--max-budget-usd`: per process, checked after each model call.
+    pub max_budget_usd: Option<f64>,
     /// Applied on top of the stripped inherited environment; see
     /// [`env_removal_keys`].
     pub env: Vec<(String, String)>,
     pub extra_args: Vec<String>,
 }
+
+/// Agents never use Claude Code's auto memory: everything durable goes in
+/// the repo, where the human and other agents can read it
+/// (docs/proposal/decisions.md, no assistant memory). Passed on every spawn,
+/// so it holds whatever the project's or user's settings say.
+pub const NO_MEMORY_SETTINGS: &str = r#"{"autoMemoryEnabled":false,"autoDreamEnabled":false}"#;
 
 impl ClaudeCommand {
     pub fn new(cwd: impl Into<PathBuf>, session: Session) -> Self {
@@ -50,13 +58,14 @@ impl ClaudeCommand {
             allowed_tools: Vec::new(),
             disallowed_tools: Vec::new(),
             name: None,
+            max_budget_usd: None,
             env: Vec::new(),
             extra_args: Vec::new(),
         }
     }
 
     /// The argv (excluding the program name itself), in the order given by
-    /// docs/agent-host.md §4.1.
+    /// docs/design/agent-host/agents.md.
     pub fn args(&self) -> Vec<String> {
         let mut args: Vec<String> = [
             "-p",
@@ -70,6 +79,8 @@ impl ClaudeCommand {
             "--strict-mcp-config",
             "--permission-prompts",
             "none",
+            "--settings",
+            NO_MEMORY_SETTINGS,
         ]
         .into_iter()
         .map(String::from)
@@ -116,6 +127,10 @@ impl ClaudeCommand {
             args.push("--name".into());
             args.push(name.clone());
         }
+        if let Some(usd) = self.max_budget_usd {
+            args.push("--max-budget-usd".into());
+            args.push(usd.to_string());
+        }
 
         args.extend(self.extra_args.iter().cloned());
         args
@@ -124,7 +139,7 @@ impl ClaudeCommand {
 
 /// Keys to remove from the inherited environment before spawning: every
 /// `CLAUDE*` variable (including `CLAUDECODE`) and `BRIDLE_TOKEN` (spike
-/// surprise 12 / docs/agent-host.md §4.1). Bridle itself may run inside a
+/// surprise 12 / agents.md). Bridle itself may run inside a
 /// Claude Code session, and the child must not inherit that session's
 /// identity or the parent daemon's own token.
 pub fn env_removal_keys(vars: impl IntoIterator<Item = (String, String)>) -> Vec<String> {
@@ -183,12 +198,21 @@ mod tests {
             "--exclude-dynamic-system-prompt-sections",
             "--strict-mcp-config",
             "--permission-prompts",
+            "--settings",
         ] {
             assert!(
                 args.contains(&flag.to_string()),
                 "missing {flag} in {args:?}"
             );
         }
+        let i = args
+            .iter()
+            .position(|a| a == "--settings")
+            .expect("--settings");
+        let settings: serde_json::Value =
+            serde_json::from_str(&args[i + 1]).expect("--settings is JSON");
+        assert_eq!(settings["autoMemoryEnabled"], false);
+        assert_eq!(settings["autoDreamEnabled"], false);
     }
 
     #[test]

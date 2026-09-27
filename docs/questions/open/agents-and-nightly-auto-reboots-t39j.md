@@ -17,14 +17,14 @@ updates?
 ## Why it matters
 
 The NUC guide sets unattended-upgrades to `Automatic-Reboot "true"` at 04:00
-when an update needs it. `docs/agent-host.md` §4.7: agents don't survive a
+when an update needs it. [[docs/design/agent-host/daemon#Restart and recovery|Restart and recovery]]: agents don't survive a
 daemon restart. They are marked `lost`, and only roles with `autostart` or
 `resume_on_restart` (the manager, by default) come back. A worker mid-turn at
 04:00 loses that turn.
 
 ## Notes
 
-Raised on 2026-09-27 while checking the NUC plan ([[docs/context/nuc-host|NUC host]]) against `docs/agent-host.md`.
+Raised on 2026-09-27 while checking the NUC plan ([[docs/context/nuc-host|NUC host]]) against the agent-host design.
 
 - Options: turn off automatic reboot and rely on Livepatch for kernel fixes; accept the
   loss; or have bridle drain before a reboot, e.g. hold a systemd shutdown

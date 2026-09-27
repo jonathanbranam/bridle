@@ -11,13 +11,13 @@ see: [xqvg]
 
 ## The question
 
-From `docs/agent-host.md` §5.3:
+From `docs/agent-host.md` §5.3 @ 38532ef:
 
 > On one machine as one user, a token file is readable by any process of that
 > user, so provenance is **attribution that honest agents can't get wrong by
 > accident, not a security boundary**.
 
-And §4.9, added in the v1 build:
+And §4.9, added in the v1 build (now [[docs/design/agent-host/principals|principals]]):
 
 > **An agent's token is also kept in `.bridle/agents/<id>/token` (0600)** so
 > `resume` can re-inject the same identity (the store keeps only hashes).

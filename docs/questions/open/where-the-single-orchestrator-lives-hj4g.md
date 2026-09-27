@@ -29,9 +29,9 @@ switches to mobile.
 
 **Needs** spike `bagg` first: [[remote-control-for-a-hosted-orchestrator-bagg|remote control for a hosted orchestrator]].
 
-Raised on 2026-09-27 while checking the NUC plan ([[docs/context/nuc-host|NUC host]]) against `docs/agent-host.md`.
+Raised on 2026-09-27 while checking the NUC plan ([[docs/context/nuc-host|NUC host]]) against the agent-host design.
 
-- `docs/agent-host.md` §2 makes the orchestrator optional and external, with its
+- [[docs/design/agent-host/operating-model|The operating model]] makes the orchestrator optional and external, with its
   own `external:orchestrator` token. It can run anywhere, or bridle can host
   one (`bridle spawn orchestrator`).
 - A bridle-hosted agent is headless `claude -p` stream-json. It isn't a Remote

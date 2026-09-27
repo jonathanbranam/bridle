@@ -34,7 +34,7 @@ Base rules for goals (locked):
 - **A gap between a goal and the current design is expected.** Agents don't
   report it unless the goal's stance is `build`. An `unaddressed` goal missing
   from the design is the intended state.
-- **Plans cite the goals they serve** (`serves: g-03`), so the driver can see
+- **Plans cite the goals they serve** (`serves: g-03`), so the manager can see
   which goals have work behind them.
 - **Changing a goal's firmness, priority or stance is the human's call.** An
   agent can propose a change with `bridle goals propose`.

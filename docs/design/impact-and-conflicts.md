@@ -26,7 +26,7 @@ didn't declare. An agent can't avoid a conflict by under-declaring.
 
 ## The conflict protocol
 
-1. Bridle opens a `conflict` thread between the two claimants (or the driver,
+1. Bridle opens a `conflict` thread between the two claimants (or the manager,
    for unclaimed tasks) and injects it into both sessions.
 2. They decide between them, and one records the outcome:
    - `bridle conflict resolve C12 --compatible "…"`: not a real conflict; the
@@ -37,7 +37,7 @@ didn't declare. An agent can't avoid a conflict by under-declaring.
    - `bridle conflict resolve C12 --merge-into tw-7fa2`: one task absorbs the
      other's scenario change.
 3. If they disagree, or the conflict is a product question rather than an
-   ordering question, it escalates to the driver, and to the human only if it's
+   ordering question, it escalates to the manager, and to the human only if it's
    a product question.
 4. **After a merge**, bridle sends `system: spec changed under you` to every
    in-flight task whose impact overlaps what just merged, so those agents rebase

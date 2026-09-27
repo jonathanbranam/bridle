@@ -28,5 +28,5 @@ rejected work is undone.
 
 - [[docs/design/gates|Gates]]: `[gates.accept] when = "after-merge"` is the
   default, with `before-merge` suggested for harness.
-- `docs/agent-host.md` §12 item 7: the integrator (merge-tree probes, merging
+- [[docs/proposal/build-order|Build order]] P5: the integrator (merge-tree probes, merging
   workers' branches) comes after v1.

@@ -1,4 +1,4 @@
-//! Filesystem layout for a bridle workspace. See docs/agent-host.md §3.1.
+//! Filesystem layout for a bridle workspace. See docs/design/agent-host/daemon.md.
 
 use std::io;
 use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
@@ -14,7 +14,7 @@ pub struct Workspace {
 }
 
 impl Workspace {
-    /// `workspace` defaults to the repo's parent directory (docs/agent-host.md §3.1).
+    /// `workspace` defaults to the repo's parent directory (daemon.md).
     pub fn new(repo: impl Into<PathBuf>, workspace: Option<PathBuf>) -> Self {
         let repo = repo.into();
         let workspace = workspace.unwrap_or_else(|| {
@@ -74,7 +74,7 @@ impl Workspace {
     }
 
     /// Creates the directories the daemon needs before it can write
-    /// anything. The tokens directory is tightened to 0700 (§5.3: the human
+    /// anything. The tokens directory is tightened to 0700 (principals.md: the human
     /// token must not be group/world readable).
     pub fn ensure_dirs(&self) -> io::Result<()> {
         std::fs::create_dir_all(self.state_dir())?;

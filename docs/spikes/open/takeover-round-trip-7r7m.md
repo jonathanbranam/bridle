@@ -19,6 +19,6 @@ From `docs/research/01-agent-runtime.md` §8 @ c192bfc, item 4:
 
 ## Why it matters
 
-`bridle take` / `give` (`docs/agent-host.md` §12 item 2) depends on it.
+`bridle take` / `give` ([[docs/proposal/build-order|build order]]) depends on it.
 
 ## Notes

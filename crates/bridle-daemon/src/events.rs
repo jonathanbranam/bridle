@@ -1,7 +1,7 @@
 //! The event bus: every mutation the daemon records goes through one
 //! `emit()` that appends to the store *and* broadcasts to live SSE
 //! subscribers, so `GET /v1/events/stream` never misses an event between
-//! subscribing and backfilling (docs/agent-host.md §6.1, §7).
+//! subscribing and backfilling (docs/design/agent-host/api.md).
 
 use bridle_api::types::{Event, PrincipalId};
 use serde_json::Value;

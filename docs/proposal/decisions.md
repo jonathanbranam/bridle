@@ -19,3 +19,10 @@
    Token efficiency is a design constraint, and bridle manages usage limits:
    it picks models, pauses at limits, resumes at reset, and tracks token use
    over time ([[docs/design/usage-and-budget|usage and budget]]).
+8. **No assistant memory** (added 2026-09-27). Claude Code's auto memory is
+   off for bridle and every project it runs, for every agent including the
+   human's own sessions. What's worth keeping is written into the repo: docs,
+   tickets, or rules in the workflow layers. The rule is
+   `.bridle/rules/memory.none.md`, and bridle passes
+   `--settings '{"autoMemoryEnabled":false,…}'` to every agent it spawns
+   ([[docs/design/agent-host/agents|agents]]).

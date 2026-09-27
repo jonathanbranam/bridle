@@ -1,6 +1,6 @@
 //! The agent supervisor: spawns and drives headless `claude` processes,
 //! delivers messages to them, and stops/resumes/removes them. See
-//! docs/agent-host.md §4.
+//! docs/design/agent-host/agents.md and messages.md.
 
 use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
@@ -32,6 +32,8 @@ const TRUNCATE_SUMMARY: usize = 120;
 const INTERRUPT_TIMEOUT: Duration = Duration::from_secs(10);
 const TERMINATE_GRACE: Duration = Duration::from_secs(3);
 const SWEEP_GRACE: Duration = Duration::from_secs(2);
+/// `result.subtype` when `--max-budget-usd` is spent (docs/spikes/02-budget-cap-findings.md).
+const BUDGET_EXHAUSTED_SUBTYPE: &str = "error_max_budget_usd";
 
 #[derive(Debug, thiserror::Error)]
 pub enum SupervisorError {
@@ -84,7 +86,7 @@ struct RuntimeState {
     /// FIFO of (message id, exact text written to stdin), oldest first.
     fifo: VecDeque<(String, String)>,
     /// The session's cumulative cost as of the last `result`, per
-    /// docs/agent-host.md's cost-delta rule.
+    /// docs/design/agent-host/agents.md's cost-delta rule.
     last_cumulative: f64,
     /// The last turn number started (equals `agent.turns` until a turn is
     /// in flight, then `agent.turns + 1`).
@@ -93,6 +95,9 @@ struct RuntimeState {
     current_state: AgentState,
     /// Whether any stdout line at all has been seen (system/init counts).
     saw_any_line: bool,
+    /// Whether this process's Claude Code version has been checked; init
+    /// repeats every turn but the version can't change within a process.
+    version_checked: bool,
     /// Last time `touch_agent` actually wrote to the store, to throttle it
     /// to roughly once a second under a chatty agent.
     last_touch: std::time::Instant,
@@ -101,6 +106,9 @@ struct RuntimeState {
 struct AgentRuntime {
     handle: AgentHandle,
     stop_requested: AtomicBool,
+    /// Set when claude reported its `--max-budget-usd` spent; the agent is
+    /// then stopped, and a resume grants a fresh allowance.
+    budget_exhausted: AtomicBool,
     state: AsyncMutex<RuntimeState>,
     exited: watch::Receiver<bool>,
     task: AsyncMutex<Option<tokio::task::JoinHandle<()>>>,
@@ -184,7 +192,7 @@ impl AgentManager {
     }
 
     /// Updates every live agent's containment tracker from one process
-    /// snapshot (docs/agent-host.md §4.6, called every `tracker_interval`).
+    /// snapshot (agents.md, Containment; called every `tracker_interval`).
     pub async fn tick_tracker(&self) {
         let snap = match tokio::task::spawn_blocking(containment::snapshot).await {
             Ok(Ok(s)) => s,
@@ -197,7 +205,7 @@ impl AgentManager {
     }
 
     /// Emits `agent.stalled` for any `working` agent silent past
-    /// `config.stall_after`, once per turn (docs/agent-host.md §4.2).
+    /// `config.stall_after`, once per silent stretch (agents.md, States).
     pub async fn tick_stall_check(&self) {
         let Ok(agents) = self.0.store.list_agents(false).await else {
             return;
@@ -237,7 +245,7 @@ impl AgentManager {
     }
 
     /// Stops every running agent concurrently, capped at `cap` in total
-    /// (docs/agent-host.md's shutdown sequence).
+    /// (the shutdown sequence in agents.md, Stopping).
     pub async fn stop_all(&self, cap: Duration) {
         let ids = self.running_ids();
         let system = system_principal();
@@ -389,6 +397,7 @@ impl AgentManager {
         cmd.allowed_tools = role.effective_allowed_tools();
         cmd.disallowed_tools = role.disallowed_tools.clone();
         cmd.name = Some(agent.name.clone());
+        cmd.max_budget_usd = role.max_budget_usd;
         cmd.env = agent_env(
             &self.0.workspace,
             &self.0.url,
@@ -449,7 +458,7 @@ impl AgentManager {
             )
             .await;
 
-        if let Some(prompt) = req.prompt {
+        if let Some(prompt) = req.prompt.or(role.start_prompt.clone()) {
             let branch_clause = branch
                 .as_ref()
                 .map(|b| format!(" on branch {b}"))
@@ -511,6 +520,7 @@ impl AgentManager {
         let runtime = Arc::new(AgentRuntime {
             handle: spawned.handle,
             stop_requested: AtomicBool::new(false),
+            budget_exhausted: AtomicBool::new(false),
             state: AsyncMutex::new(RuntimeState {
                 tracker: Tracker::new(pid, start),
                 fifo: VecDeque::new(),
@@ -519,6 +529,7 @@ impl AgentManager {
                 stall_notified: false,
                 current_state: AgentState::Idle,
                 saw_any_line: false,
+                version_checked: false,
                 last_touch: std::time::Instant::now(),
             }),
             exited: exited_rx,
@@ -591,12 +602,17 @@ impl AgentManager {
         }
 
         match ev.kind {
-            ClaudeEventKind::SystemInit(_) => {
-                let n = {
+            ClaudeEventKind::SystemInit(init) => {
+                let (n, check_version) = {
                     let mut st = runtime.state.lock().await;
                     st.turn_n += 1;
-                    st.turn_n
+                    let check = !st.version_checked;
+                    st.version_checked = true;
+                    (st.turn_n, check)
                 };
+                if check_version && let Some(version) = init.claude_code_version.as_deref() {
+                    self.note_claude_version(id, version).await;
+                }
                 let _ = self.0.store.add_turn_start(id, n, Utc::now()).await;
                 self.transition_state(id, runtime, AgentState::Working)
                     .await;
@@ -737,6 +753,30 @@ impl AgentManager {
                     )
                     .await;
 
+                // Every later turn would fail at once without calling the
+                // model, so stop the agent instead of leaving it idle and
+                // useless. Its messages wait, pending, for a resume.
+                if r.subtype == BUDGET_EXHAUSTED_SUBTYPE {
+                    if !runtime.budget_exhausted.swap(true, Ordering::SeqCst) {
+                        let _ = self
+                            .0
+                            .emitter
+                            .emit(
+                                event_kind::AGENT_BUDGET_EXHAUSTED,
+                                "system".to_string(),
+                                Some(id.to_string()),
+                                json!({"cost_total": cumulative}),
+                            )
+                            .await;
+                        let this = self.clone();
+                        let id = id.to_string();
+                        tokio::spawn(async move {
+                            let _ = this.stop(&id, false, &system_principal()).await;
+                        });
+                    }
+                    return;
+                }
+
                 if let Ok(held) = self
                     .0
                     .store
@@ -783,6 +823,40 @@ impl AgentManager {
         }
     }
 
+    /// Claude Code updates itself, and bridle leans on behaviour it doesn't
+    /// document. A new version is accepted, not refused; this makes the
+    /// change visible so the contract tests get run
+    /// (docs/design/agent-host/agents.md, Claude Code upgrades).
+    async fn note_claude_version(&self, id: &str, version: &str) {
+        let previous = match self.0.store.swap_meta("claude_version", version).await {
+            Ok(p) => p,
+            Err(e) => {
+                tracing::warn!(error = %e, "recording claude version");
+                return;
+            }
+        };
+        if previous.as_deref() == Some(version) {
+            return;
+        }
+        if let Some(prev) = &previous {
+            tracing::warn!(
+                from = prev.as_str(),
+                to = version,
+                "Claude Code version changed; run `just test-contract`"
+            );
+        }
+        let _ = self
+            .0
+            .emitter
+            .emit(
+                event_kind::CLAUDE_VERSION,
+                "system".to_string(),
+                Some(id.to_string()),
+                json!({"version": version, "previous": previous}),
+            )
+            .await;
+    }
+
     async fn transition_state(&self, id: &str, runtime: &Arc<AgentRuntime>, to: AgentState) {
         let from = {
             let mut st = runtime.state.lock().await;
@@ -812,7 +886,7 @@ impl AgentManager {
 
     /// Sweeps a tracker and emits `agent.orphans_killed` if it found
     /// anything. Shared between [`AgentManager::stop`] (which sweeps eagerly
-    /// as part of the stop sequence, §4.5 step 4) and
+    /// as part of the stop sequence, step 4) and
     /// [`AgentManager::finish_agent`] (which sweeps on every exit path, not
     /// just an explicit stop). Whichever call actually catches live
     /// descendants reports them; a sweep that finds nothing left (because
@@ -841,7 +915,10 @@ impl AgentManager {
         let saw_any_line = st.saw_any_line;
         drop(st);
 
-        let (state, exit) = classify_exit(stop_requested, saw_any_line, &outcome);
+        let (state, mut exit) = classify_exit(stop_requested, saw_any_line, &outcome);
+        if runtime.budget_exhausted.load(Ordering::SeqCst) {
+            exit.reason = "budget_exhausted".to_string();
+        }
         let _ = self.0.store.set_agent_exit(id, exit.clone()).await;
         self.transition_state(id, runtime, state).await;
         let _ = self
@@ -855,13 +932,15 @@ impl AgentManager {
             )
             .await;
 
-        if let Ok(written) = self
+        // Held messages go back to pending too: after a resume the agent is
+        // idle, so `--when idle` has nothing left to wait for.
+        if let Ok(undelivered) = self
             .0
             .store
-            .messages_for_agent(id, &[MessageState::Written])
+            .messages_for_agent(id, &[MessageState::Written, MessageState::Held])
             .await
         {
-            for m in written {
+            for m in undelivered {
                 let _ = self
                     .0
                     .store
@@ -997,6 +1076,16 @@ impl AgentManager {
                 dropped += 1;
             }
         }
+        let _ = self
+            .0
+            .emitter
+            .emit(
+                event_kind::AGENT_INTERRUPTED,
+                principal.id.clone(),
+                Some(agent.id.clone()),
+                json!({"dropped_held": dropped}),
+            )
+            .await;
         Ok(bridle_api::types::InterruptResponse {
             receipt,
             dropped_held: dropped,
@@ -1007,7 +1096,7 @@ impl AgentManager {
         &self,
         id_or_name: &str,
         now: bool,
-        _principal: &Principal,
+        principal: &Principal,
     ) -> Result<Agent, SupervisorError> {
         let agent = self
             .0
@@ -1022,10 +1111,20 @@ impl AgentManager {
             return Ok(agent);
         };
         rt.stop_requested.store(true, Ordering::SeqCst);
+        let _ = self
+            .0
+            .emitter
+            .emit(
+                event_kind::AGENT_STOP_REQUESTED,
+                principal.id.clone(),
+                Some(agent.id.clone()),
+                json!({"now": now}),
+            )
+            .await;
         self.transition_state(&agent.id, &rt, AgentState::Stopping)
             .await;
 
-        // §4.6: snapshot right before doing anything that might end the
+        // Snapshot right before doing anything that might end the
         // process, so short-lived tool/child processes are caught while
         // they're still parented under the agent's pid (once the agent
         // exits, an orphan is reparented to init and this walk can no
@@ -1110,6 +1209,7 @@ impl AgentManager {
         cmd.allowed_tools = role.effective_allowed_tools();
         cmd.disallowed_tools = role.disallowed_tools.clone();
         cmd.name = Some(agent.name.clone());
+        cmd.max_budget_usd = role.max_budget_usd;
         cmd.env = agent_env(
             &self.0.workspace,
             &self.0.url,
@@ -1135,6 +1235,16 @@ impl AgentManager {
             principal,
         )
         .await?;
+        let _ = self
+            .0
+            .emitter
+            .emit(
+                event_kind::AGENT_RESUMED,
+                principal.id.clone(),
+                Some(agent.id.clone()),
+                json!({"from": agent.state.as_str()}),
+            )
+            .await;
 
         let pending = self
             .0
@@ -1177,16 +1287,29 @@ impl AgentManager {
                 "branch {branch} is not merged into HEAD; merge it, drop --delete-branch, or use --force"
             )));
         }
+        let dirty_refusal = || {
+            SupervisorError::Conflict("worktree has uncommitted changes; use --force".to_string())
+        };
+        let worktree_dirty = |wt: Option<String>| async move {
+            match wt {
+                Some(wt) => worktree::is_dirty(std::path::Path::new(&wt))
+                    .await
+                    .unwrap_or(false),
+                None => false,
+            }
+        };
+        if !force && worktree_dirty(agent.worktree.clone()).await {
+            return Err(dirty_refusal());
+        }
         if agent.state.is_running() {
             agent = self.stop(&agent.id, false, principal).await?;
+            // The agent's last turn may have left changes behind.
+            if !force && worktree_dirty(agent.worktree.clone()).await {
+                return Err(dirty_refusal());
+            }
         }
         if let Some(wt) = agent.worktree.clone() {
             let path = std::path::PathBuf::from(&wt);
-            if !force && worktree::is_dirty(&path).await.unwrap_or(false) {
-                return Err(SupervisorError::Conflict(
-                    "worktree has uncommitted changes; use --force".to_string(),
-                ));
-            }
             // Already gone (e.g. an earlier rm failed after removing it): just prune.
             if path.exists() {
                 worktree::remove(&self.0.workspace.repo, &path, force).await?;

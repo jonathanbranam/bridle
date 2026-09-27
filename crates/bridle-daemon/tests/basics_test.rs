@@ -1,4 +1,4 @@
-//! §1: health, status, auth. See docs/agent-host.md §5, §6.1.
+//! §1: health, status, auth. See docs/design/agent-host/principals.md, api.md.
 
 mod support;
 
