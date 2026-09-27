@@ -19,6 +19,7 @@ use tokio::sync::watch;
 
 pub mod config;
 pub mod containment;
+pub mod cost_audit;
 mod events;
 pub mod governor;
 pub mod paths;

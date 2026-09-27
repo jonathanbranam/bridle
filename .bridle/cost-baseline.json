@@ -1,0 +1,7 @@
+{
+  "roles": {
+    "manager": 1049,
+    "orchestrator": 381,
+    "worker": 832
+  }
+}

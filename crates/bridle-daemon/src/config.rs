@@ -642,7 +642,10 @@ fn role_preamble_suffix(role_name: &str) -> Option<&'static str> {
 /// role's own prompt file if it has one. Byte-identical for every agent of
 /// `role_name` in this project, so it's the shared, cacheable prefix
 /// `render_system_prompt` builds on (docs/design/usage-and-budget.md, rule 2).
-fn stable_system_prompt(role_name: &str, role: &Role, repo: &Path) -> String {
+///
+/// Public so `bridle cost audit` ([`crate::cost_audit`]) can measure the exact bytes
+/// that go on the wire, from a fresh render rather than a cached figure.
+pub fn stable_system_prompt(role_name: &str, role: &Role, repo: &Path) -> String {
     let mut out = String::from(PREAMBLE);
     if let Some(suffix) = role_preamble_suffix(role_name) {
         out.push_str(suffix);
