@@ -44,14 +44,28 @@ established; S-numbers are its scenarios. Each agent is one headless
   role's base ref), the clone itself, or an explicit path.
 - **Names** are `[a-z0-9][a-z0-9-]{0,39}`, unique (409 on a clash), and
   default to `<role>-<n>`.
+- **Identity**: an agent's name, role, cwd and branch are always in its
+  system prompt (`render_system_prompt`), as a short sentence after the
+  role's shared, cacheable preamble. This holds regardless of whether the
+  spawn had a first message.
 - **First message**: the spawn request's prompt, or else the role's
-  `start_prompt`, is sent as a normal message from the spawner, prefixed with
-  the agent's own facts (`You are w1 (role worker) in <cwd> on branch
-  bridle/w1.`), and starts the first turn. With neither, the agent starts
-  idle.
+  `start_prompt`, is sent as a normal message from the spawner and starts
+  the first turn. With neither, the agent starts idle.
 - **A failed spawn is rolled back**: worktree, branch, token and agent row, and
-  the API returns 500. A failure after `claude` has started (a bad model name,
-  expired auth) shows up later as a `crashed` agent instead.
+  the API returns 500.
+- **Spawn waits for readiness, if a first message was sent.** `system/init` is
+  a turn-start marker, re-emitted before every turn, not a one-time startup
+  handshake (S2), so there's nothing to wait for until a turn actually
+  starts. When the spawn had a prompt or `start_prompt`, `spawn` waits up to
+  `SPAWN_READY_TIMEOUT` (8s), after sending it, for either that turn's
+  `system/init` or the process's exit, whichever comes first, so a bad model
+  name or expired auth usually shows up as a `crashed` agent in the spawn
+  response itself, not only later via polling. An idle spawn with no first
+  message returns as soon as the process is started, since no turn has
+  begun to wait on. Either way this is a wait, not a guarantee: a slow init
+  that outlasts the timeout is still returned as-is, with no error.
+  `POST /v1/agents` always returns 2xx once the process has been started;
+  the agent's `state` is the readiness signal, not the status code.
 - **Spend cap**: below.
 
 ## Spend cap

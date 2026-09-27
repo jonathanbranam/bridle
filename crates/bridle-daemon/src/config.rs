@@ -587,7 +587,9 @@ impl<'de> Deserialize<'de> for Workdir {
 
 /// The fixed bridle preamble, identical for every agent of a role so the
 /// prompt cache holds across worktrees (docs/design/usage-and-budget.md, rule 2). No
-/// agent names, paths or timestamps: those go in the first user message.
+/// agent names, paths or timestamps: [`render_system_prompt`] appends those,
+/// as a short sentence after this shared, cacheable part, so the long
+/// prefix still matches across agents of the same role.
 const PREAMBLE: &str = "\
 You are an agent run by bridle, a local daemon that spawns, supervises and \
 records headless Claude Code agents for a software project. You are one of \
@@ -635,10 +637,12 @@ fn role_preamble_suffix(role_name: &str) -> Option<&'static str> {
     }
 }
 
-/// The rendered `--append-system-prompt-file` contents for an agent of
-/// `role_name`: the fixed preamble, a role-specific sentence for the three
-/// built-in roles, then the role's own prompt file if it has one.
-pub fn render_system_prompt(role_name: &str, role: &Role, repo: &Path) -> String {
+/// The role-scoped, agent-independent part of the system prompt: the fixed
+/// preamble, a role-specific sentence for the three built-in roles, then the
+/// role's own prompt file if it has one. Byte-identical for every agent of
+/// `role_name` in this project, so it's the shared, cacheable prefix
+/// `render_system_prompt` builds on (docs/design/usage-and-budget.md, rule 2).
+fn stable_system_prompt(role_name: &str, role: &Role, repo: &Path) -> String {
     let mut out = String::from(PREAMBLE);
     if let Some(suffix) = role_preamble_suffix(role_name) {
         out.push_str(suffix);
@@ -655,6 +659,32 @@ pub fn render_system_prompt(role_name: &str, role: &Role, repo: &Path) -> String
             }
         }
     }
+    out
+}
+
+/// The rendered `--append-system-prompt-file` contents for one agent:
+/// [`stable_system_prompt`], then a short identity sentence (name, role,
+/// cwd, branch) appended last, so an agent always knows these facts even
+/// with no first message (docs/questions/open/v1-follow-ups-from-the-build-9c6e.md).
+/// The identity sentence goes at the end, not the start, so the long shared
+/// prefix above it still matches across agents of the same role and the
+/// prompt cache still holds for that part.
+pub fn render_system_prompt(
+    role_name: &str,
+    role: &Role,
+    repo: &Path,
+    agent_name: &str,
+    cwd: &Path,
+    branch: Option<&str>,
+) -> String {
+    let mut out = stable_system_prompt(role_name, role, repo);
+    let branch_clause = branch
+        .map(|b| format!(" on branch {b}"))
+        .unwrap_or_default();
+    out.push_str(&format!(
+        "\nYou are {agent_name} (role {role_name}) in {}{branch_clause}.\n",
+        cwd.display()
+    ));
     out
 }
 
@@ -768,39 +798,82 @@ mod tests {
     }
 
     #[test]
-    fn preamble_has_no_per_agent_data() {
+    fn stable_prompt_has_no_per_agent_data() {
         let repo = Path::new("/does/not/matter");
         for (name, role) in Config::default().roles {
-            let rendered = render_system_prompt(&name, &role, repo);
+            let rendered = stable_system_prompt(&name, &role, repo);
             assert!(
                 !rendered.contains("BRIDLE_AGENT_ID="),
-                "preamble must not embed an id"
+                "stable prompt must not embed an id"
             );
             assert!(
                 !rendered.contains(repo.to_str().expect("utf8 path")),
-                "preamble must not embed a path"
+                "stable prompt must not embed a path"
             );
             assert!(
                 !rendered.contains("2026"),
-                "preamble must not embed a timestamp"
+                "stable prompt must not embed a timestamp"
             );
         }
     }
 
     #[test]
-    fn preamble_identical_for_two_agents_of_the_same_role() {
+    fn stable_prompt_identical_for_two_agents_of_the_same_role() {
         let repo = Path::new("/repo/a");
         let role = Role::worker_default();
-        let a = render_system_prompt("worker", &role, repo);
-        let b = render_system_prompt("worker", &role, repo);
+        let a = stable_system_prompt("worker", &role, repo);
+        let b = stable_system_prompt("worker", &role, repo);
         assert_eq!(a, b);
     }
 
     #[test]
-    fn preamble_differs_by_role() {
+    fn stable_prompt_differs_by_role() {
         let repo = Path::new("/repo/a");
-        let worker = render_system_prompt("worker", &Role::worker_default(), repo);
-        let manager = render_system_prompt("manager", &Role::manager_default(), repo);
+        let worker = stable_system_prompt("worker", &Role::worker_default(), repo);
+        let manager = stable_system_prompt("manager", &Role::manager_default(), repo);
         assert_ne!(worker, manager);
+    }
+
+    #[test]
+    fn rendered_prompt_carries_identity_after_the_shared_prefix() {
+        let repo = Path::new("/repo/a");
+        let role = Role::worker_default();
+        let stable = stable_system_prompt("worker", &role, repo);
+        let a = render_system_prompt(
+            "worker",
+            &role,
+            repo,
+            "worker-1",
+            Path::new("/repo/a/wt/worker-1"),
+            Some("bridle/worker-1"),
+        );
+        let b = render_system_prompt(
+            "worker",
+            &role,
+            repo,
+            "worker-2",
+            Path::new("/repo/a/wt/worker-2"),
+            Some("bridle/worker-2"),
+        );
+
+        // The long, cacheable part is unaffected by which agent is asking.
+        assert!(a.starts_with(&stable));
+        assert!(b.starts_with(&stable));
+        // Each agent's own identity comes after it.
+        assert!(a.contains(
+            "You are worker-1 (role worker) in /repo/a/wt/worker-1 on branch bridle/worker-1."
+        ));
+        assert!(b.contains(
+            "You are worker-2 (role worker) in /repo/a/wt/worker-2 on branch bridle/worker-2."
+        ));
+        assert_ne!(a, b);
+    }
+
+    #[test]
+    fn rendered_prompt_without_branch_omits_the_branch_clause() {
+        let repo = Path::new("/repo/a");
+        let role = Role::manager_default();
+        let rendered = render_system_prompt("manager", &role, repo, "manager-1", repo, None);
+        assert!(rendered.contains("You are manager-1 (role manager) in /repo/a.\n"));
     }
 }

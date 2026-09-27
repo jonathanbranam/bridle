@@ -32,6 +32,9 @@ const TRUNCATE_SUMMARY: usize = 120;
 const INTERRUPT_TIMEOUT: Duration = Duration::from_secs(10);
 const TERMINATE_GRACE: Duration = Duration::from_secs(3);
 const SWEEP_GRACE: Duration = Duration::from_secs(2);
+/// How long `spawn` waits for the process's first `system/init` (or its
+/// exit) before answering anyway (docs/questions/open/v1-follow-ups-from-the-build-9c6e.md).
+const SPAWN_READY_TIMEOUT: Duration = Duration::from_secs(8);
 /// `result.subtype` when `--max-budget-usd` is spent (docs/spikes/02-budget-cap-findings.md).
 const BUDGET_EXHAUSTED_SUBTYPE: &str = "error_max_budget_usd";
 
@@ -431,8 +434,14 @@ impl AgentManager {
             return Err(e.into());
         }
 
-        let prompt_text =
-            crate::config::render_system_prompt(&req.role, &role, &self.0.workspace.repo);
+        let prompt_text = crate::config::render_system_prompt(
+            &req.role,
+            &role,
+            &self.0.workspace.repo,
+            &agent.name,
+            &cwd,
+            branch.as_deref(),
+        );
         let system_prompt_path = self.0.workspace.system_prompt(&agent.id);
         if let Err(e) = std::fs::write(&system_prompt_path, &prompt_text) {
             cleanup_worktree(&created_worktree).await;
@@ -495,14 +504,17 @@ impl AgentManager {
             }
         };
 
-        self.register_and_start(
-            &agent.id,
-            agent.turns,
-            agent.cost_usd_total,
-            spawned,
-            principal,
-        )
-        .await?;
+        let (ready_tx, ready_rx) = tokio::sync::oneshot::channel();
+        let runtime = self
+            .register_and_start(
+                &agent.id,
+                agent.turns,
+                agent.cost_usd_total,
+                spawned,
+                principal,
+                Some(ready_tx),
+            )
+            .await?;
 
         let _ = self
             .0
@@ -515,24 +527,45 @@ impl AgentManager {
             )
             .await;
 
-        if let Some(prompt) = req.prompt.or(role.start_prompt.clone()) {
-            let branch_clause = branch
-                .as_ref()
-                .map(|b| format!(" on branch {b}"))
-                .unwrap_or_default();
-            let body = format!(
-                "You are {} (role {}) in {}{}.\n{}",
-                agent.name, req.role, agent.cwd, branch_clause, prompt
-            );
+        // The agent's name, cwd and branch are always in its system prompt
+        // now (render_system_prompt), so the first message no longer needs
+        // to carry them: it's just the task, if there is one.
+        let first_message = req.prompt.or(role.start_prompt.clone());
+        let sent_first_message = first_message.is_some();
+        if let Some(prompt) = first_message {
             self.send(
                 principal.id.clone(),
                 ToTarget::Agent(agent.id.clone()),
                 MessageKind::Note,
-                body,
+                prompt,
                 bridle_api::types::When::Now,
                 None,
             )
             .await?;
+        }
+
+        // Wait for the process to prove it's actually up before answering:
+        // its first `system/init` (a turn-start marker, re-emitted before
+        // every turn, not a startup handshake — spike 01, S2) or its exit,
+        // whichever comes first. Only worth doing when a first message was
+        // just sent: that's what starts the turn where a bad model name or
+        // expired auth would actually fail. An idle spawn (no prompt, no
+        // `start_prompt`) starts no turn, so there is nothing to wait for
+        // yet, and waiting out SPAWN_READY_TIMEOUT on every such spawn would
+        // only add latency. If neither init nor an exit arrives within the
+        // timeout, the agent is returned as-is (typically still `working`);
+        // spawn's contract is "the daemon tried, here's the agent's current
+        // state," not "the agent is ready" (docs/design/agent-host/agents.md,
+        // Spawning).
+        if sent_first_message {
+            let mut exited = runtime.exited.clone();
+            tokio::select! {
+                _ = ready_rx => {}
+                _ = exited.wait_for(|v| *v) => {}
+                _ = tokio::time::sleep(SPAWN_READY_TIMEOUT) => {
+                    tracing::warn!(agent = %agent.id, "spawn: timed out waiting for claude readiness");
+                }
+            }
         }
 
         self.0
@@ -553,7 +586,10 @@ impl AgentManager {
     }
 
     /// Records pid/start time, brings the agent to `idle`, builds the
-    /// runtime and starts its event-processing task.
+    /// runtime and starts its event-processing task. `ready_tx`, if given,
+    /// is fired the first time the process's `system/init` is seen (used by
+    /// `spawn` to wait for readiness); resume passes `None`, since a resumed
+    /// agent's caller doesn't wait on it.
     async fn register_and_start(
         &self,
         agent_id: &str,
@@ -561,7 +597,8 @@ impl AgentManager {
         cost_so_far: f64,
         spawned: bridle_claude::process::Spawned,
         _principal: &Principal,
-    ) -> Result<(), SupervisorError> {
+        ready_tx: Option<tokio::sync::oneshot::Sender<()>>,
+    ) -> Result<Arc<AgentRuntime>, SupervisorError> {
         let pid = spawned.handle.pid();
         let start = containment::start_time(pid).unwrap_or_default();
         self.0
@@ -609,9 +646,10 @@ impl AgentManager {
             spawned.events,
             spawned.exit,
             exited_tx,
+            ready_tx,
         ));
         *runtime.task.lock().await = Some(task);
-        Ok(())
+        Ok(runtime)
     }
 
     // ---------- the per-agent event-processing task ----------
@@ -623,9 +661,17 @@ impl AgentManager {
         mut events: tokio::sync::mpsc::UnboundedReceiver<bridle_claude::events::Event>,
         exit: tokio::sync::oneshot::Receiver<ExitOutcome>,
         exited_tx: watch::Sender<bool>,
+        mut ready_tx: Option<tokio::sync::oneshot::Sender<()>>,
     ) {
         while let Some(ev) = events.recv().await {
+            let is_init = matches!(ev.kind, ClaudeEventKind::SystemInit(_));
             self.handle_claude_event(&id, &runtime, ev).await;
+            // Fired after handle_claude_event, not before: by the time
+            // `spawn` sees this, the store already reflects `working` and
+            // `turn.started` has already been emitted, not just enqueued.
+            if is_init && let Some(tx) = ready_tx.take() {
+                let _ = tx.send(());
+            }
         }
         let outcome = exit.await.unwrap_or(ExitOutcome {
             code: None,
@@ -1340,8 +1386,14 @@ impl AgentManager {
             .trim()
             .to_string();
 
-        let prompt_text =
-            crate::config::render_system_prompt(&agent.role, &role, &self.0.workspace.repo);
+        let prompt_text = crate::config::render_system_prompt(
+            &agent.role,
+            &role,
+            &self.0.workspace.repo,
+            &agent.name,
+            std::path::Path::new(&agent.cwd),
+            agent.branch.as_deref(),
+        );
         let system_prompt_path = self.0.workspace.system_prompt(&agent.id);
         std::fs::write(&system_prompt_path, &prompt_text)?;
 
@@ -1381,6 +1433,7 @@ impl AgentManager {
             agent.cost_usd_total,
             spawned,
             principal,
+            None,
         )
         .await?;
         let _ = self

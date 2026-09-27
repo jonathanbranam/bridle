@@ -261,8 +261,9 @@ Rules the design follows, and that the build is reviewed against:
 2. **The system prompt is stable, and the task is in the first message.**
    Everything role-specific and slow-changing goes in
    `--append-system-prompt-file`, identical for every agent in that role and
-   project. The task-specific content goes in the first user message. That
-   keeps a long shared prefix cached across agents.
+   project up to a short identity sentence (name, cwd, branch) appended last;
+   that keeps the long, role-scoped part of the prefix cached across agents.
+   The task-specific content goes in the first user message.
 3. **Prime is role-scoped and has a size budget.** `bridle prime` has a token
    budget per role, e.g. a worker's prime ≤ 3k tokens. Guides are pointed to,
    not included, unless the task's components need them.

@@ -25,6 +25,16 @@ events from restart reconciliation, the SIGHUP window at start, an idle
 autostarted manager (now `start_prompt`), and reset times missing from
 `bridle usage`.
 
+On 2026-09-27, two more: when a spawn has a first message, `spawn` now waits
+(`SPAWN_READY_TIMEOUT`, 8s) after sending it for that turn's `system/init` or
+the process's exit, whichever comes first, before answering, so a bad model
+name or expired auth usually shows up as a `crashed` agent in the spawn
+response itself (an idle spawn with no first message starts no turn, so
+there's nothing to wait for and none is added); and an agent's name, cwd and
+branch are now always in its system prompt (`render_system_prompt`), not just
+prefixed to a first message that might not exist. The first-message prefix
+is gone, since it's now redundant.
+
 On 2026-09-27, four more small gaps: `Client::events_stream` now reconnects
 (reissuing the request with `since` = last seq yielded, after a short
 backoff) when the daemon ends the SSE response on a lagging or closed
@@ -40,18 +50,11 @@ no callers, is gone.
 - **`bridle daemons` shows no agent counts.** The CLI deferred it because it
   would need to probe every registered daemon. With a short timeout that's
   cheap.
-- **Spawn failures after `claude` starts** (bad model name, auth expired)
-  surface only as a `crashed` agent with a stderr tail. `spawn` still returns
-  201. Either wait for the first `system/init`, or document that `spawn`
-  returning isn't readiness.
 - **`rm` doesn't check for open files** under the worktree (`lsof +D`), as
   the original design said it would.
 - **The `Containment` trait is unused.** Callers use the `ps` functions
   directly. Wire it in when a Linux implementation arrives
   ([[docs/spikes/open/process-containment-on-linux-2mj9|spike 2mj9]]).
-- **Without a spawn prompt or a role `start_prompt`, an agent never learns
-  its name or worktree**: those facts are prefixed to the first message, and
-  there is none.
 - **No `token list` or `token revoke`.** An external token can't be rotated.
 - **The fake `claude` matches magic words on the last line of a message**,
   because bridle wraps deliveries in an envelope. Tests that send multi-line
