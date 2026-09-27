@@ -512,12 +512,34 @@ impl Config {
             }
         }
 
+        // A role's own `model` pins the step-down floor unless the project
+        // also gives that role an explicit `[models]` list (which wins
+        // outright, below). Collect those names before merging `[models]`
+        // in, so the pin and the explicit override stay distinguishable.
+        let explicit_models: std::collections::BTreeSet<&str> = raw
+            .models
+            .iter()
+            .flat_map(|m| m.keys())
+            .map(String::as_str)
+            .collect();
+
         for (name, raw_role) in raw.roles.unwrap_or_default() {
+            let pinned_model = raw_role.model.clone();
             let base = config
                 .roles
                 .remove(&name)
                 .unwrap_or_else(Role::worker_default);
-            config.roles.insert(name, base.merge(raw_role));
+            config.roles.insert(name.clone(), base.merge(raw_role));
+
+            if let Some(model) = pinned_model
+                && !explicit_models.contains(name.as_str())
+                && let Some(list) = config.models.by_role.get_mut(&name)
+            {
+                *list = match list.iter().position(|m| *m == model) {
+                    Some(pos) => list[pos..].to_vec(),
+                    None => vec![model],
+                };
+            }
         }
 
         if let Some(raw_budget) = raw.budget {
@@ -943,6 +965,21 @@ mod tests {
             cfg.models.candidates("some_custom_role", &role),
             vec!["opus"]
         );
+    }
+
+    #[test]
+    fn a_roles_model_below_the_builtin_top_choice_trims_but_does_not_step_back_up() {
+        // The built-in list for `manager` is ["opus", "sonnet"]. Pinning the
+        // role to "sonnet" with no explicit `[models]` entry should trim off
+        // "opus" (never step back up to it) but keep "sonnet" onward.
+        let toml = r#"
+            [roles.manager]
+            model = "sonnet"
+        "#;
+        let cfg = Config::parse(toml).expect("parse");
+        let manager = &cfg.roles["manager"];
+        assert_eq!(manager.model, "sonnet");
+        assert_eq!(cfg.models.candidates("manager", manager), vec!["sonnet"]);
     }
 
     #[test]
