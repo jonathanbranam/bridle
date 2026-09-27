@@ -25,7 +25,7 @@ bridle stop    <agent> [--now]      bridle resume <agent> [--ignore-budget]
 bridle rm      <agent> [--force] [--delete-branch]
 bridle logs    <agent> [--follow] [--raw] [--since LINE]
 bridle events  [--follow] [--since SEQ] [--agent A] [--kind PREFIX]
-bridle usage
+bridle usage   [--by role|model|agent] [--since DURATION]   # DURATION: <n>s|m|h|d, e.g. 30d
 bridle tui                                  interactive terminal UI: agents list, live event tail
 bridle budget [hold [--for D|--until T] | release]   usage governor (usage-and-budget.md)
 bridle token create <name>
@@ -106,7 +106,7 @@ bridle rules show|explain|diff|propose
 bridle goals list|propose       bridle arch propose
 bridle trace up|down|suspect|confirm|orphans|coverage
 bridle explore new|conclude|adopt|abandon
-bridle usage --by …|task|trend|compare          bridle cost audit
+bridle usage --by project|kind|task|trend|compare          bridle cost audit
 bridle rebuild
 ```
 

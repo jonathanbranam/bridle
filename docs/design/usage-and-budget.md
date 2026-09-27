@@ -63,6 +63,17 @@ totals, the cache hit ratio (cache reads ÷ all input tokens), the last
 known utilisation and reset time per window, and today's `bridle statusline`
 rows. A role can also cap each agent's spend ([[docs/design/agent-host/agents#Spend cap|spend cap]]).
 
+`bridle usage --by role|model|agent --since <duration>` (and
+`GET /v1/usage/breakdown?since=&by=`) aggregates the turns ledger instead:
+turns, tokens, cost and the cache hit ratio, grouped by role or model across
+every agent that shares one, or per agent (the same grouping `bridle usage`
+shows by default, but read from the turns ledger so `--since` applies to it
+too). `--since` accepts a plain `<n><unit>` duration (`s`/`m`/`h`/`d`, e.g.
+`30d`) and keeps only turns started within it. Task, project and kind
+grouping, and `bridle usage task`/`trend`/`compare` and `bridle cost audit`
+below, are not built: they need the ledger's task, kind and
+workflow-revision columns, which don't exist yet (below).
+
 Not built: the full usage ledger's task, role and workflow-revision columns.
 The governor is built: it computes
 `normal`/`holding`/`winding_down`/`paused` from `hold_at`/`wind_down_at`/
@@ -291,14 +302,17 @@ revision in effect.
 
 ```
 bridle usage                      # today / this window / this week vs limits
-bridle usage --by role|project|kind|model --since 30d
+bridle usage --by role|model|agent --since 30d   # built: role/model/agent, no project or kind yet
 bridle usage task tw-7fa2         # what one task cost, per agent and phase
 bridle usage trend --per kind     # tokens per task kind over time
 bridle usage compare --workflow <rev-a> <rev-b>   # did a workflow change cost more?
 bridle cost audit [--check]       # static: size of everything bridle injects
 ```
 
-The last two answer *"are new systems increasing the token budget?"* directly:
+`--by project` and `--by kind`, and everything below this line, need the
+ledger's task, project and workflow-revision columns, which don't exist yet
+("What bridle records today" above). The last two of the built ones answer
+*"are new systems increasing the token budget?"* directly:
 
 - **`bridle cost audit`** counts the tokens bridle adds to each role's context
   with no work done: prime, the rendered system-prompt file, skill
