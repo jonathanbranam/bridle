@@ -273,7 +273,13 @@ async fn spawn_child_orphan_is_swept_on_stop() {
         .await
         .expect("spawn");
 
-    let done = wait_for_agent(&daemon.client, &agent.id, |a| a.turns >= 1).await;
+    // `end_turn` (which bumps `turns`) commits before the agent's state
+    // flips back to `idle` (supervisor.rs's Result handling), so waiting on
+    // `turns >= 1` alone can catch it still `working`; wait for both.
+    let done = wait_for_agent(&daemon.client, &agent.id, |a| {
+        a.turns >= 1 && a.state == AgentState::Idle
+    })
+    .await;
     assert_eq!(done.state, AgentState::Idle);
 
     let text_event = support::wait_for_event(

@@ -452,9 +452,15 @@ fn sigint_shuts_down_cleanly_with_a_store_call_in_flight() {
 
     kill(Pid::from_raw(pid as i32), Signal::SIGINT).expect("send SIGINT");
 
+    // Stopping 8 agents concurrently is capped at `stop_grace` (30s) + 5s
+    // by the daemon itself (see `lib.rs`'s shutdown sequence); give it that
+    // much plus real margin for a loaded machine (measured up to ~42s with
+    // several full `cargo nextest run --workspace` runs going at once)
+    // rather than the idle-daemon 10s used elsewhere in this file, so a
+    // busy machine doesn't get SIGKILLed mid-shutdown.
     let status = guard
         .0
-        .wait_timeout_or_kill(Duration::from_secs(10))
+        .wait_timeout_or_kill(Duration::from_secs(60))
         .expect("daemon process should exit after SIGINT");
 
     let mut stderr_text = String::new();
