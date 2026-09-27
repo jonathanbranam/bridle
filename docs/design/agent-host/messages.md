@@ -34,6 +34,14 @@ The sender reads `human`, `agent w1` or `external orchestrator`.
 | `now` *(default)* | written at once; starts a turn | written at once; **folded into the current turn** at the next tool boundary (spike 01 S3). If the turn is interrupted first, the message runs as the next turn (S4c) |
 | `idle` | written at once | held by bridle; written when the turn's `result` arrives, so it starts a turn of its own. One held message is written per turn end, oldest first |
 
+A message to an *idle* agent is also held, not written, while the budget
+governor isn't `normal` (usage-and-budget.md, hold_at): writing it would
+start a new turn, which the governor isn't letting happen yet. Since the
+agent is already idle, it has no turn of its own ending to trigger delivery
+once the governor recovers; the governor's recovery to `normal` delivers
+each idle agent's oldest held message itself (usage-and-budget.md,
+Resuming).
+
 Hooks aren't used for delivery: a stdin message already reaches a working agent
 mid-turn, and each hook costs about 0.9 s (S11).
 

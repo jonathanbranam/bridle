@@ -129,6 +129,86 @@ async fn idle_message_is_held_not_written_while_governor_is_holding() {
     assert_eq!(msg.state, bridle_api::types::MessageState::Held);
 }
 
+/// An idle agent's held message (docs/design/agent-host/messages.md,
+/// Delivery) has no turn ending of its own to trigger delivery once the
+/// governor recovers; the governor's drop back to `normal` must deliver it
+/// itself instead of leaving it held forever.
+#[tokio::test]
+async fn held_message_for_idle_agent_is_delivered_when_governor_returns_to_normal() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    script_usage(&daemon.repo, 10.0, 10.0);
+    wait_for("normal before spawn", || async {
+        let b = daemon.client.budget().await.ok()?;
+        (b.state == GovernorState::Normal).then_some(())
+    })
+    .await;
+
+    let agent = daemon
+        .client
+        .spawn(&SpawnRequest {
+            role: "worker".to_string(),
+            name: Some("w1".to_string()),
+            prompt: None,
+            workdir: None,
+            model: None,
+            ignore_budget: false,
+        })
+        .await
+        .expect("spawn while normal");
+    let agent = wait_for_state(&daemon.client, &agent.id, AgentState::Idle).await;
+
+    script_usage(std::path::Path::new(&agent.cwd), 82.0, 10.0);
+    wait_for("holding", || async {
+        let b = daemon.client.budget().await.ok()?;
+        (b.state == GovernorState::Holding).then_some(())
+    })
+    .await;
+
+    let msg = daemon
+        .client
+        .send_to_agent(
+            &agent.id,
+            &SendRequest {
+                to: None,
+                body: "hello while holding".to_string(),
+                kind: Default::default(),
+                when: When::Now,
+                reply_to: None,
+            },
+        )
+        .await
+        .expect("message accepted (held, not refused)");
+    assert_eq!(msg.state, bridle_api::types::MessageState::Held);
+
+    // Back below every threshold: the agent is still idle (nothing else
+    // poked it), so only the governor's own recovery path can deliver it.
+    script_usage(std::path::Path::new(&agent.cwd), 10.0, 10.0);
+    wait_for("normal after recovery", || async {
+        let b = daemon.client.budget().await.ok()?;
+        (b.state == GovernorState::Normal).then_some(())
+    })
+    .await;
+
+    wait_for("held message delivered", || {
+        let daemon = &daemon;
+        let msg_id = msg.id.clone();
+        let agent_id = agent.id.clone();
+        async move {
+            let messages = daemon
+                .client
+                .list_messages(&MessageQuery {
+                    to: Some(agent_id),
+                    ..Default::default()
+                })
+                .await
+                .ok()?;
+            let m = messages.iter().find(|m| m.id == msg_id)?;
+            (m.state != bridle_api::types::MessageState::Held).then_some(())
+        }
+    })
+    .await;
+}
+
 async fn has_message_containing(
     daemon: &support::TestDaemon,
     agent_id: &str,

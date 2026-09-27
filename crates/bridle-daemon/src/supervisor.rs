@@ -940,15 +940,7 @@ impl AgentManager {
                     return;
                 }
 
-                if let Ok(held) = self
-                    .0
-                    .store
-                    .messages_for_agent(id, &[MessageState::Held])
-                    .await
-                    && let Some(oldest) = held.into_iter().next()
-                {
-                    let _ = write_message(&self.0.store, runtime, &oldest).await;
-                }
+                self.deliver_oldest_held(id).await;
             }
             ClaudeEventKind::RateLimit(rl) => {
                 for w in rl.windows() {
@@ -1251,6 +1243,26 @@ impl AgentManager {
         }
         for id in due {
             self.stop_for_budget(&id, true).await;
+        }
+    }
+
+    /// Writes `id`'s oldest held message, if it has one and is running.
+    /// Called at the end of every turn (so an agent that finishes with a
+    /// message still held picks it up right away) and by the governor when
+    /// it recovers to `normal` (so an agent that's already idle at that
+    /// point isn't left holding forever with no turn ending to trigger it).
+    pub async fn deliver_oldest_held(&self, id: &str) {
+        let Some(rt) = self.get_runtime(id) else {
+            return;
+        };
+        if let Ok(held) = self
+            .0
+            .store
+            .messages_for_agent(id, &[MessageState::Held])
+            .await
+            && let Some(oldest) = held.into_iter().next()
+        {
+            let _ = write_message(&self.0.store, &rt, &oldest).await;
         }
     }
 
