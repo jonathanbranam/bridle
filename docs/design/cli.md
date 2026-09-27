@@ -11,7 +11,7 @@ bridle [--url URL] [--project NAME] [--token T] [--json] <command>
 
 bridle serve   [--repo PATH] [--workspace DIR] [--listen ADDR] [--detach]
 bridle stop-daemon
-bridle daemons                              # every running project daemon on this machine
+bridle daemons                              # every running project daemon on this machine, with agent counts
 bridle status                               # daemon, agents, Claude Code version
 bridle spawn   <role> [--name N] [--prompt TEXT | --prompt-file F]
                [--worktree [--base REF] | --in-repo | --cwd PATH] [--model M]
@@ -28,6 +28,9 @@ bridle events  [--follow] [--since SEQ] [--agent A] [--kind PREFIX]
 bridle usage
 bridle budget [hold [--for D|--until T] | release]   usage governor (usage-and-budget.md)
 bridle token create <name>
+bridle token list                           name, created-at, revoked-or-not; never the token itself
+bridle token revoke <name>                  human only, external tokens only (an agent's own token is
+                                             revoked through `bridle rm`, not this)
 bridle statusline                           usage from interactive sessions
 ```
 
@@ -52,6 +55,11 @@ bridle statusline                           usage from interactive sessions
   `--follow` streams over SSE, filtering agent and kind on the client, and
   starts at the tail unless given `--since` (or resuming after a
   reconnect), in which case it backfills from that cursor first.
+- **`daemons`** hits every registered daemon's unauthenticated `GET /v1/health`
+  concurrently, with a ~1 s timeout each, to show non-terminal agent counts
+  without a cross-daemon token. A daemon that doesn't answer in time (dead,
+  slow, unreachable) shows `?` (`null` under `--json`) instead of blocking on
+  it.
 - **`serve --detach`**: [[docs/design/agent-host/daemon#Running it|running the daemon]].
 - **`statusline`** is Claude Code's `statusLine` command, configured in `settings.json`. It
   reads Claude Code's JSON on stdin, prints a short line back, and posts a snapshot to
@@ -81,7 +89,6 @@ bridle goals list|propose       bridle arch propose
 bridle trace up|down|suspect|confirm|orphans|coverage
 bridle explore new|conclude|adopt|abandon
 bridle usage --by …|task|trend|compare          bridle cost audit
-bridle token list|revoke
 bridle rebuild
 ```
 

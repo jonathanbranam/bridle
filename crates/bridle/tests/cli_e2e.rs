@@ -199,6 +199,43 @@ fn cli_end_to_end_against_a_foreground_daemon() {
     let (ok, _out, err) = run_cli(&repo, &home, &["rm", "w1"]);
     assert!(ok, "rm failed: {err}");
 
+    // `token create orchestrator --json`
+    let (ok, out, err) = run_cli(&repo, &home, &["token", "create", "orchestrator", "--json"]);
+    assert!(ok, "token create failed: {err}");
+    let created: serde_json::Value = serde_json::from_str(&out).expect("token created json");
+    assert_eq!(created["principal"], "external:orchestrator");
+
+    // `token list --json`
+    let (ok, out, err) = run_cli(&repo, &home, &["token", "list", "--json"]);
+    assert!(ok, "token list failed: {err}");
+    let tokens: serde_json::Value = serde_json::from_str(&out).expect("token list json");
+    let orchestrator = tokens
+        .as_array()
+        .expect("array")
+        .iter()
+        .find(|t| t["name"] == "orchestrator")
+        .expect("orchestrator token listed");
+    assert_eq!(orchestrator["revoked"], false);
+    assert!(
+        orchestrator.get("token").is_none(),
+        "token list must never carry the secret: {orchestrator}"
+    );
+
+    // `token revoke orchestrator`
+    let (ok, _out, err) = run_cli(&repo, &home, &["token", "revoke", "orchestrator"]);
+    assert!(ok, "token revoke failed: {err}");
+
+    let (ok, out, err) = run_cli(&repo, &home, &["token", "list", "--json"]);
+    assert!(ok, "token list after revoke failed: {err}");
+    let tokens: serde_json::Value = serde_json::from_str(&out).expect("token list json");
+    let orchestrator = tokens
+        .as_array()
+        .expect("array")
+        .iter()
+        .find(|t| t["name"] == "orchestrator")
+        .expect("orchestrator token still listed");
+    assert_eq!(orchestrator["revoked"], true);
+
     // `stop-daemon`
     let (ok, out, err) = run_cli(&repo, &home, &["stop-daemon"]);
     assert!(ok, "stop-daemon failed: {err}");
@@ -245,16 +282,46 @@ fn serve_detach_returns_once_healthy_and_daemons_lists_it() {
         "{info}"
     );
 
+    // A second, stale-looking registry entry: alive pid (this test process's
+    // own), but nothing listening on its port, so `daemons` can't reach its
+    // `/v1/health` and must show `agents: null` rather than hang or fail.
+    let dead_registry_dir = home.join("daemons");
+    std::fs::create_dir_all(&dead_registry_dir).expect("mkdir registry dir");
+    std::fs::write(
+        dead_registry_dir.join("unreachable.json"),
+        format!(
+            r#"{{"project":"unreachable","workspace":"/tmp/nowhere","repo":"/tmp/nowhere",
+                "url":"http://127.0.0.1:1","pid":{},"started_at":"2026-01-01T00:00:00Z",
+                "version":"0.0.0"}}"#,
+            std::process::id()
+        ),
+    )
+    .expect("write stale registry entry");
+
     let (ok, out, err) = run_cli(&repo, &home, &["daemons", "--json"]);
     assert!(ok, "daemons failed: {err}");
     let list: serde_json::Value = serde_json::from_str(&out).expect("daemons json");
     let ws_str = workspace.to_string_lossy().into_owned();
+    let entry = list
+        .as_array()
+        .expect("array")
+        .iter()
+        .find(|d| d["workspace"] == ws_str)
+        .unwrap_or_else(|| panic!("expected the detached daemon in the registry: {list}"));
+    assert_eq!(
+        entry["agents"], 0,
+        "no agents spawned yet, and health answered: {entry}"
+    );
+
+    let unreachable = list
+        .as_array()
+        .expect("array")
+        .iter()
+        .find(|d| d["project"] == "unreachable")
+        .unwrap_or_else(|| panic!("expected the stale entry in the registry: {list}"));
     assert!(
-        list.as_array()
-            .expect("array")
-            .iter()
-            .any(|d| d["workspace"] == ws_str),
-        "expected the detached daemon in the registry: {list}"
+        unreachable["agents"].is_null(),
+        "unreachable daemon should show no agent count: {unreachable}"
     );
 
     // This daemon's workspace isn't an ancestor of `repo` (explicit

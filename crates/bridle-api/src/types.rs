@@ -27,6 +27,9 @@ pub enum PrincipalKind {
 pub struct Health {
     pub ok: bool,
     pub version: String,
+    /// Non-terminal agents on this daemon, for `bridle daemons` to show
+    /// without probing every daemon's authenticated status endpoint.
+    pub agent_count: u32,
 }
 
 /// Written by the daemon to `<workspace>/.bridle/daemon.json` and to the
@@ -609,6 +612,16 @@ pub struct TokenCreated {
     pub principal: PrincipalId,
     /// Shown once; the daemon stores only a hash.
     pub token: String,
+}
+
+/// One row of `GET /v1/tokens`. Never carries the token itself, which is
+/// shown only once, at creation.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TokenInfo {
+    pub principal: PrincipalId,
+    pub name: String,
+    pub created_at: DateTime<Utc>,
+    pub revoked: bool,
 }
 
 // ---------- errors ----------

@@ -14,7 +14,7 @@ use bridle_api::types::{
     Agent, ApiErrorResponse, BudgetHoldRequest, BudgetStatus, ErrorBody, Event, EventQuery, Health,
     HoldStatus, InteractiveUsageRow, InterruptRequest, Message, MessageQuery, MessageState,
     PrincipalKind, RateLimit, RemoveQuery, ResumeRequest, SendRequest, SpawnRequest, Status,
-    StatusLineReport, StopRequest, TokenCreateRequest, TokenCreated, TranscriptLine,
+    StatusLineReport, StopRequest, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine,
     TranscriptQuery, Usage, WindowStatus,
 };
 use chrono::Utc;
@@ -63,7 +63,8 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/budget", get(budget))
         .route("/v1/budget/hold", post(budget_hold))
         .route("/v1/budget/release", post(budget_release))
-        .route("/v1/tokens", post(create_token))
+        .route("/v1/tokens", get(list_tokens).post(create_token))
+        .route("/v1/tokens/{name}", axum::routing::delete(revoke_token))
         .route("/v1/shutdown", post(shutdown))
         .layer(middleware::from_fn_with_state(
             state.clone(),
@@ -196,11 +197,13 @@ fn require_human(principal: &Principal) -> Result<(), ApiError> {
 
 // ---------- health / status ----------
 
-async fn health(State(state): State<AppState>) -> Json<Health> {
-    Json(Health {
+async fn health(State(state): State<AppState>) -> Result<Json<Health>, ApiError> {
+    let agent_count = state.store.list_agents(false).await?.len() as u32;
+    Ok(Json(Health {
         ok: true,
         version: state.version.clone(),
-    })
+        agent_count,
+    }))
 }
 
 async fn status(
@@ -710,6 +713,24 @@ async fn create_token(
 ) -> Result<Json<TokenCreated>, ApiError> {
     require_human(&principal)?;
     Ok(Json(state.store.create_external_token(&req.name).await?))
+}
+
+async fn list_tokens(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+) -> Result<Json<Vec<TokenInfo>>, ApiError> {
+    require_human(&principal)?;
+    Ok(Json(state.store.list_external_tokens().await?))
+}
+
+async fn revoke_token(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path(name): Path<String>,
+) -> Result<StatusCode, ApiError> {
+    require_human(&principal)?;
+    state.store.revoke_external_token(&name).await?;
+    Ok(StatusCode::NO_CONTENT)
 }
 
 async fn shutdown(

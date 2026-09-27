@@ -14,7 +14,7 @@ use crate::types::{
     Agent, ApiErrorResponse, BudgetHoldRequest, BudgetStatus, Event, EventQuery, Health,
     InterruptRequest, InterruptResponse, Message, MessageQuery, RemoveQuery, ResumeRequest,
     SendRequest, SpawnRequest, Status, StatusLineReport, StopRequest, TokenCreateRequest,
-    TokenCreated, TranscriptLine, TranscriptQuery, Usage,
+    TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
 };
 
 #[derive(Debug, Error)]
@@ -340,6 +340,15 @@ impl Client {
         self.post_json(&["v1", "tokens"], req).await
     }
 
+    pub async fn list_tokens(&self) -> Result<Vec<TokenInfo>, ClientError> {
+        self.get_json(&["v1", "tokens"]).await
+    }
+
+    pub async fn revoke_token(&self, name: &str) -> Result<(), ClientError> {
+        let req = self.request(Method::DELETE, &["v1", "tokens", name])?;
+        self.send_unit(req).await
+    }
+
     pub async fn shutdown(&self) -> Result<(), ClientError> {
         let req = self.request(Method::POST, &["v1", "shutdown"])?;
         self.send_unit(req).await
@@ -406,13 +415,14 @@ mod tests {
     async fn health_ok() {
         let app = axum::Router::new().route(
             "/v1/health",
-            get(|| async { Json(json!({"ok": true, "version": "0.1.0"})) }),
+            get(|| async { Json(json!({"ok": true, "version": "0.1.0", "agent_count": 2})) }),
         );
         let addr = spawn_test_server(app).await;
         let client = Client::new(format!("http://{addr}"), None);
         let health = client.health().await.unwrap();
         assert!(health.ok);
         assert_eq!(health.version, "0.1.0");
+        assert_eq!(health.agent_count, 2);
     }
 
     #[tokio::test]

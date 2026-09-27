@@ -270,6 +270,11 @@ pub struct TokenArgs {
 pub enum TokenAction {
     /// Mint an `external:<name>` token (human only).
     Create { name: String },
+    /// List external tokens: name, created-at, revoked-or-not (human only).
+    List,
+    /// Revoke an `external:<name>` token (human only). An agent's own token
+    /// isn't revoked this way; that happens through `bridle rm`.
+    Revoke { name: String },
 }
 
 #[cfg(test)]
@@ -379,7 +384,27 @@ mod tests {
         let Command::Token(t) = cli.command else {
             panic!("expected token")
         };
-        let TokenAction::Create { name } = t.action;
+        let TokenAction::Create { name } = t.action else {
+            panic!("expected create")
+        };
+        assert_eq!(name, "orchestrator");
+    }
+
+    #[test]
+    fn token_list_and_revoke_parse() {
+        let cli = parse(&["token", "list"]).unwrap();
+        let Command::Token(t) = cli.command else {
+            panic!("expected token")
+        };
+        assert!(matches!(t.action, TokenAction::List));
+
+        let cli = parse(&["token", "revoke", "orchestrator"]).unwrap();
+        let Command::Token(t) = cli.command else {
+            panic!("expected token")
+        };
+        let TokenAction::Revoke { name } = t.action else {
+            panic!("expected revoke")
+        };
         assert_eq!(name, "orchestrator");
     }
 
