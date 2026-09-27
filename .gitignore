@@ -4,3 +4,6 @@
 .DS_Store
 # a bridle workspace's state, if someone runs bridle with this repo inside a workspace
 .bridle/*.db*
+
+# Personal Claude Code settings (the orchestrator's local permissions)
+.claude/settings.local.json
