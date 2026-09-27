@@ -33,6 +33,6 @@ Agent-host work that can land between phases, roughly in this order:
    claude's `can_use_tool` control requests answered from role rules or turned
    into a `question` to the manager or human.
 4. **The TUI**, a crate on `bridle-api`: agents list, event tail, per-agent
-   logs, inbox and reply.
+   logs, inbox and reply. **built** (`crates/bridle-tui`).
 5. **MCP server** at `/mcp` on the same listener, with tools mirroring the CLI.
    Reaching it from claude.ai or mobile needs bridle on public HTTPS with auth.

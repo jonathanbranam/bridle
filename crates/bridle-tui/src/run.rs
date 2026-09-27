@@ -3,7 +3,7 @@
 
 use std::io::{self, Stdout};
 
-use bridle_api::Client;
+use bridle_api::{Client, MessageQuery, SendRequest};
 use crossterm::event::{Event as CrosstermEvent, EventStream, KeyCode, KeyEvent, KeyEventKind};
 use crossterm::execute;
 use crossterm::terminal::{
@@ -79,6 +79,28 @@ async fn run_app(terminal: &mut Term, client: Client) -> anyhow::Result<()> {
             }
         });
     }
+    {
+        // Same polling model as spawn_transcript_poll: there's no SSE stream
+        // for messages, so poll the unread inbox (`to: "me"`, same query as
+        // `bridle inbox`) once a second.
+        let client = client.clone();
+        let tx = tx.clone();
+        tokio::spawn(async move {
+            let query = MessageQuery {
+                to: Some("me".to_string()),
+                unread: true,
+                ..Default::default()
+            };
+            loop {
+                if let Ok(messages) = client.list_messages(&query).await
+                    && tx.send(Message::MessagesLoaded(messages)).is_err()
+                {
+                    break;
+                }
+                tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+            }
+        });
+    }
     let mut log_task: Option<tokio::task::JoinHandle<()>> = None;
     let mut log_target: Option<String> = None;
 
@@ -111,6 +133,10 @@ async fn run_app(terminal: &mut Term, client: Client) -> anyhow::Result<()> {
             log_task = log_target
                 .clone()
                 .map(|id| spawn_transcript_poll(client.clone(), tx.clone(), id));
+        }
+
+        if let Some(pending) = app.pending_send.take() {
+            spawn_reply(client.clone(), pending);
         }
 
         terminal.draw(|f| ui::draw(f, &app))?;
@@ -156,6 +182,25 @@ fn spawn_transcript_poll(
     })
 }
 
+/// Send a composed reply and, once it lands, mark the original message
+/// read -- matching what `bridle inbox --mark-read` does for a message
+/// once it's been acted on -- so it drops out of the polled unread inbox
+/// on its own without `App` needing to hear back from this task.
+fn spawn_reply(client: Client, pending: crate::app::PendingSend) -> tokio::task::JoinHandle<()> {
+    tokio::spawn(async move {
+        let req = SendRequest {
+            to: Some(pending.to),
+            body: pending.body,
+            reply_to: Some(pending.reply_to.clone()),
+            when: bridle_api::When::Now,
+            ..Default::default()
+        };
+        if client.send(&req).await.is_ok() {
+            let _ = client.mark_read(&pending.reply_to).await;
+        }
+    })
+}
+
 fn map_key(key: KeyEvent) -> Option<Key> {
     if key.kind != KeyEventKind::Press {
         return None;
@@ -164,7 +209,11 @@ fn map_key(key: KeyEvent) -> Option<Key> {
         KeyCode::Char(c) => Some(Key::Char(c)),
         KeyCode::Up => Some(Key::Up),
         KeyCode::Down => Some(Key::Down),
+        KeyCode::Left => Some(Key::Left),
+        KeyCode::Right => Some(Key::Right),
         KeyCode::Tab => Some(Key::Tab),
+        KeyCode::Enter => Some(Key::Enter),
+        KeyCode::Backspace => Some(Key::Backspace),
         KeyCode::Esc => Some(Key::Esc),
         _ => None,
     }
