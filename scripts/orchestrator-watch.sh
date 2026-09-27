@@ -1,6 +1,6 @@
 #!/bin/zsh
 # Background watcher for the orchestrator (.bridle/roles/orchestrator.md). Exits, waking the
-# orchestrator, on: a question to the human, main moving, an unexpected exit/crash/stall, all
+# orchestrator, on: a question to the human, a message to the orchestrator, main moving, an unexpected exit/crash/stall, all
 # agents idle for 15 min, five_hour >= 93% or seven_day >= 85%. Usage: orchestrator-watch.sh <since-seq>
 export BRIDLE_TOKEN=$(cat ~/.bridle-orchestrator.token)
 cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
@@ -18,6 +18,10 @@ while true; do
     util=$(bridle status --json | jq '[.rate_limits[]? | if .window=="five_hour" then (.utilization//0)/0.93 else (.utilization//0)/0.85 end] | max')
     if [[ -n $hit && $hit != "[]" ]]; then echo "EVENTS since=$since"; print -r -- "$hit"; exit 0; fi
     if [[ -n $q && $q != "[]" ]]; then echo "QUESTION since=$since"; print -r -- "$q"; exit 0; fi
+    # Anything sent to the orchestrator itself: the manager's plans, STOPs and requests for help.
+    # Read it with `bridle inbox --mark-read`, or this fires again.
+    mine=$(bridle inbox --json 2>/dev/null)
+    if [[ -n $mine && $mine != "[]" ]]; then echo "INBOX since=$since"; print -r -- "$mine"; exit 0; fi
     busy=$(bridle agents --json | jq '[.[] | select(.state=="working" or .state=="starting")] | length')
     if (( busy == 0 )); then (( idle_ticks++ )); else idle_ticks=0; fi
     if (( idle_ticks >= 30 )); then echo "ALL IDLE since=$since"; bridle agents; exit 0; fi

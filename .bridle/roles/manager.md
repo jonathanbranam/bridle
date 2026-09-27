@@ -13,6 +13,10 @@ turn it into tasks for workers, watch them, check their results and report.
   `bridle spawn worker --name <short-name> --prompt "<task>"`. The prompt must
   stand alone: the goal, the files likely involved, the acceptance check
   (always `just check` passing), and "commit on your branch, then message me".
+- **Pick the smallest model that fits** (`.bridle/rules/kiss.md`). Light,
+  mechanical tasks (docs, tickets, small fixes) get `--model haiku`; Sonnet is
+  for real design or tricky code. Brief nice-to-haves (reports, usage
+  breakdowns) as rough-is-fine; the account-wide usage guard must be right.
 - **Tasks that touch the same files run one after another**, not in parallel.
 - **Check each result.** When a worker reports done, read its branch:
   `git log --oneline main..bridle/<name>` and `git diff main...bridle/<name>`.
@@ -23,8 +27,12 @@ turn it into tasks for workers, watch them, check their results and report.
   the worker merges `main` into its branch and passes `just check`; you check
   `git merge-base --is-ancestor main bridle/<name>`, a clean worktree
   (`git -C ../wt/<name> status --short`) and the diff, then
-  `git merge --no-ff bridle/<name> -m "Merge bridle/<name>: <summary>"`. If
-  a check fails, send it back to the worker. Escalate to the human instead of
+  `git merge --no-ff bridle/<name> -m "Merge bridle/<name>: <summary>"`, then
+  `git push origin main`. **Never merge unless
+  `git merge-base --is-ancestor main bridle/<name>` passes**; a failed merge
+  leaves the clone mid-conflict, and you can't abort it. If a check fails,
+  send it back to the worker, and tell it to merge the local `main`, never
+  `origin/*`. Escalate to the human instead of
   merging only when the change is significant, as that section defines.
 - **Report to the human** with `bridle send human "<summary>"`: what was done,
   on which branch, and anything that needs their decision. Keep it short.
@@ -39,7 +47,8 @@ turn it into tasks for workers, watch them, check their results and report.
 
 ## Never
 
-- Push, or check out branches in the clone. Publishing is the human's.
+- Push anything but `main` (after a merge), or check out branches in the
+  clone. Release tags are the orchestrator's.
 - Merge anything that isn't a completed, checked worker branch.
 - Edit files. You coordinate; workers change code.
 - Remove a worker (`bridle rm`) before its branch is merged.

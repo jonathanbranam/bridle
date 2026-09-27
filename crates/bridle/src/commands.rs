@@ -6,7 +6,8 @@ use bridle_api::discovery::{self, ProcessEnv};
 use bridle_api::{
     BudgetHoldRequest, Client, DropTaskRequest, EditTaskRequest, Event, EventQuery,
     InterruptRequest, MessageKind, MessageQuery, NewTaskRequest, RemoveQuery, ResumeRequest,
-    SendRequest, SpawnRequest, StopRequest, Task, TaskKind, TokenCreateRequest, Workdir,
+    SendRequest, SpawnRequest, StopRequest, Task, TaskKind, TokenCreateRequest,
+    UsageBreakdownQuery, UsageGroupBy, Workdir,
 };
 use chrono::{Local, TimeZone, Utc};
 use futures::StreamExt;
@@ -15,7 +16,8 @@ use crate::cli::{
     AgentsArgs, BudgetAction, BudgetArgs, BudgetHoldArgs, Cli, Command, CostAction, CostArgs,
     CostAuditArgs, EventsArgs, InboxArgs, InterruptArgs, LogsArgs, RmArgs, SendArgs, ShowArgs,
     SpawnArgs, StopArgs, TaskAction, TaskArgs, TaskDropArgs, TaskEditArgs, TaskKindArg,
-    TaskNewArgs, TaskReopenArgs, TaskShowArgs, TokenAction, TokenArgs, WhenArg,
+    TaskNewArgs, TaskReopenArgs, TaskShowArgs, TokenAction, TokenArgs, UsageArgs, UsageByArg,
+    WhenArg,
 };
 use crate::error::CliError;
 use crate::render;
@@ -38,7 +40,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Rm(args) => rm(&cli, args).await,
         Command::Logs(args) => logs(&cli, args).await,
         Command::Events(args) => events(&cli, args).await,
-        Command::Usage => usage(&cli).await,
+        Command::Usage(args) => usage(&cli, args).await,
         Command::Cost(args) => cost(&cli, args).await,
         Command::Tui => tui(&cli).await,
         Command::Budget(args) => budget(&cli, args).await,
@@ -500,8 +502,67 @@ async fn tui(cli: &Cli) -> Result<(), CliError> {
     Ok(())
 }
 
-async fn usage(cli: &Cli) -> Result<(), CliError> {
+async fn usage(cli: &Cli, args: &UsageArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
+
+    let since = args
+        .since
+        .as_deref()
+        .map(|s| {
+            parse_duration(s)
+                .map(|d| Utc::now() - d)
+                .ok_or_else(|| CliError::Other(anyhow::anyhow!("bad --since duration: {s:?}")))
+        })
+        .transpose()?;
+
+    // `--by role|model` (and `--since` on its own) go through the turns
+    // ledger directly; the plain per-agent view keeps using the existing
+    // endpoint, unfiltered, as before.
+    if since.is_some() || matches!(args.by, Some(UsageByArg::Role) | Some(UsageByArg::Model)) {
+        let by = match args.by {
+            Some(UsageByArg::Role) => UsageGroupBy::Role,
+            Some(UsageByArg::Model) => UsageGroupBy::Model,
+            Some(UsageByArg::Agent) | None => UsageGroupBy::Agent,
+        };
+        let breakdown = client
+            .usage_breakdown(&UsageBreakdownQuery {
+                since,
+                by: Some(by),
+            })
+            .await?;
+        if cli.json {
+            render::print_json(&breakdown)?;
+        } else {
+            println!(
+                "{:<20} {:>5} {:>12} {:>9} {:>8}",
+                "KEY", "TURNS", "TOKENS", "COST", "CACHE"
+            );
+            for g in &breakdown.groups {
+                let tokens =
+                    g.tokens.input + g.tokens.output + g.tokens.cache_read + g.tokens.cache_write;
+                let cache = g
+                    .cache_hit_ratio
+                    .map(|r| format!("{:.1}%", r * 100.0))
+                    .unwrap_or_else(|| "-".to_string());
+                println!(
+                    "{:<20} {:>5} {:>12} {:>9.4} {:>8}",
+                    g.key, g.turns, tokens, g.cost_usd_total, cache
+                );
+            }
+            let t = &breakdown.total_tokens;
+            println!(
+                "total: {} turns, {} tokens, ${:.4}",
+                breakdown.total_turns,
+                t.input + t.output + t.cache_read + t.cache_write,
+                breakdown.total_cost_usd
+            );
+            if let Some(ratio) = breakdown.cache_hit_ratio {
+                println!("cache hit ratio: {:.1}%", ratio * 100.0);
+            }
+        }
+        return Ok(());
+    }
+
     let usage = client.usage().await?;
     if cli.json {
         render::print_json(&usage)?;
@@ -709,7 +770,7 @@ fn resolve_hold_until(args: &BudgetHoldArgs) -> Result<Option<chrono::DateTime<U
     Ok(None)
 }
 
-/// A plain `<n><unit>` duration (`s`/`m`/`h`), matching config.toml's.
+/// A plain `<n><unit>` duration (`s`/`m`/`h`/`d`), matching config.toml's.
 fn parse_duration(s: &str) -> Option<chrono::Duration> {
     let s = s.trim();
     let (num, unit) = s.split_at(s.len().checked_sub(1)?);
@@ -718,6 +779,7 @@ fn parse_duration(s: &str) -> Option<chrono::Duration> {
         "s" => Some(chrono::Duration::seconds(n)),
         "m" => Some(chrono::Duration::minutes(n)),
         "h" => Some(chrono::Duration::hours(n)),
+        "d" => Some(chrono::Duration::days(n)),
         _ => None,
     }
 }

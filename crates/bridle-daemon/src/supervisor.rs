@@ -206,6 +206,28 @@ impl AgentManager {
             .for_model(model)
     }
 
+    /// Picks the model for a spawn/resume that didn't pin one explicitly:
+    /// the first entry in the role's `[models]` list whose window is
+    /// `Normal`, stepping down as a window gets tight (usage-and-budget.md,
+    /// Model choice). Falls back to the list's first (strongest) entry when
+    /// every candidate is blocked, so the caller's own budget check still
+    /// refuses on that model's window rather than inventing a new failure
+    /// mode — stepping down delays a wind-down, it never replaces one.
+    fn choose_model(&self, role_name: &str, role: &Role) -> String {
+        let candidates = self.0.config.models.candidates(role_name, role);
+        let chosen = {
+            let governor = self.0.governor.lock().expect("governor mutex poisoned");
+            candidates
+                .iter()
+                .copied()
+                .find(|m| governor.for_model(m).state == bridle_api::types::GovernorState::Normal)
+        };
+        chosen
+            .or_else(|| candidates.first().copied())
+            .map(str::to_string)
+            .unwrap_or_else(|| role.model.clone())
+    }
+
     fn refuse_if_holding(&self, model: &str) -> Result<(), SupervisorError> {
         let block = self.budget_block_for_model(model);
         if block.state == bridle_api::types::GovernorState::Normal {
@@ -335,8 +357,12 @@ impl AgentManager {
             self.0.config.roles.get(&req.role).cloned().ok_or_else(|| {
                 SupervisorError::BadRequest(format!("unknown role {:?}", req.role))
             })?;
+        let model = match &req.model {
+            Some(m) => m.clone(),
+            None => self.choose_model(&req.role, &role),
+        };
         if !req.ignore_budget {
-            self.refuse_if_holding(req.model.as_deref().unwrap_or(&role.model))?;
+            self.refuse_if_holding(&model)?;
         }
 
         let name = match req.name {
@@ -392,7 +418,6 @@ impl AgentManager {
         };
 
         let session_id = Uuid::new_v4();
-        let model = req.model.unwrap_or_else(|| role.model.clone());
         let new_agent = NewAgent {
             name: name.clone(),
             role: req.role.clone(),
