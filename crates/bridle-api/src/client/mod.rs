@@ -14,7 +14,8 @@ use crate::types::{
     Agent, ApiErrorResponse, BudgetHoldRequest, BudgetStatus, Event, EventQuery, Health,
     InterruptRequest, InterruptResponse, Message, MessageQuery, RemoveQuery, ResumeRequest,
     SendRequest, SpawnRequest, Status, StatusLineReport, StopRequest, TokenCreateRequest,
-    TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
+    TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown,
+    UsageBreakdownQuery,
 };
 
 #[derive(Debug, Error)]
@@ -319,6 +320,14 @@ impl Client {
 
     pub async fn usage(&self) -> Result<Usage, ClientError> {
         self.get_json(&["v1", "usage"]).await
+    }
+
+    pub async fn usage_breakdown(
+        &self,
+        query: &UsageBreakdownQuery,
+    ) -> Result<UsageBreakdown, ClientError> {
+        self.get_json_query(&["v1", "usage", "breakdown"], query)
+            .await
     }
 
     pub async fn budget(&self) -> Result<BudgetStatus, ClientError> {

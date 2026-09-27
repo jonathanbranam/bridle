@@ -465,6 +465,51 @@ pub struct Usage {
     pub interactive_today: Vec<InteractiveUsageRow>,
 }
 
+/// `GET /v1/usage/breakdown` grouping: role and model aggregate turns across
+/// every agent that shares one, since there's no task/workflow-revision
+/// column yet to group by (docs/design/usage-and-budget.md, "Tracking token
+/// use over time"). `agent` groups the same way `GET /v1/usage` already does,
+/// but through the turns ledger so `--since` applies to it too.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum UsageGroupBy {
+    Role,
+    Model,
+    Agent,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct UsageBreakdownQuery {
+    /// Only turns started at or after this time.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub since: Option<DateTime<Utc>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub by: Option<UsageGroupBy>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UsageGroup {
+    /// The role name, model name, or agent id, depending on `by`.
+    pub key: String,
+    pub turns: u32,
+    pub tokens: TokenTotals,
+    pub cost_usd_total: f64,
+    /// cache_read / (input + cache_read + cache_write) for this group alone.
+    pub cache_hit_ratio: Option<f64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UsageBreakdown {
+    pub by: UsageGroupBy,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub since: Option<DateTime<Utc>>,
+    pub groups: Vec<UsageGroup>,
+    pub total_turns: u32,
+    pub total_tokens: TokenTotals,
+    pub cache_hit_ratio: Option<f64>,
+    pub total_cost_usd: f64,
+}
+
 // ---------- statusline ----------
 
 /// `POST /v1/statusline` body: one snapshot from `bridle statusline`, read

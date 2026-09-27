@@ -65,7 +65,7 @@ pub enum Command {
     /// The event log.
     Events(EventsArgs),
     /// Usage and cost summary.
-    Usage,
+    Usage(UsageArgs),
     /// Static checks on what bridle injects into agent context.
     Cost(CostArgs),
     /// Interactive terminal UI: agents list and live event tail.
@@ -235,6 +235,24 @@ pub struct EventsArgs {
     /// Prefix match, e.g. `message.` or `agent.state`.
     #[arg(long)]
     pub kind: Option<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct UsageArgs {
+    /// Group by role or model instead of the default per-agent breakdown.
+    #[arg(long)]
+    pub by: Option<UsageByArg>,
+    /// Only turns started within this long, e.g. `30d`, `12h`, `45m`.
+    #[arg(long)]
+    pub since: Option<String>,
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+#[value(rename_all = "lower")]
+pub enum UsageByArg {
+    Role,
+    Model,
+    Agent,
 }
 
 #[derive(Debug, Args)]

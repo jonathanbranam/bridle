@@ -15,7 +15,7 @@ use bridle_api::types::{
     HoldStatus, InteractiveUsageRow, InterruptRequest, Message, MessageQuery, MessageState,
     PrincipalKind, RateLimit, RemoveQuery, ResumeRequest, SendRequest, SpawnRequest, Status,
     StatusLineReport, StopRequest, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine,
-    TranscriptQuery, Usage, WindowStatus,
+    TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, WindowStatus,
 };
 use chrono::Utc;
 use futures::Stream;
@@ -59,6 +59,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/events", get(list_events))
         .route("/v1/events/stream", get(events_stream))
         .route("/v1/usage", get(usage))
+        .route("/v1/usage/breakdown", get(usage_breakdown))
         .route("/v1/statusline", post(report_statusline))
         .route("/v1/budget", get(budget))
         .route("/v1/budget/hold", post(budget_hold))
@@ -669,6 +670,14 @@ fn to_sse(ev: &Event) -> SseEvent {
 
 async fn usage(State(state): State<AppState>) -> Result<Json<Usage>, ApiError> {
     Ok(Json(state.store.usage().await?))
+}
+
+async fn usage_breakdown(
+    State(state): State<AppState>,
+    Query(q): Query<UsageBreakdownQuery>,
+) -> Result<Json<UsageBreakdown>, ApiError> {
+    let by = q.by.unwrap_or(UsageGroupBy::Agent);
+    Ok(Json(state.store.usage_breakdown(q.since, by).await?))
 }
 
 /// `bridle statusline`'s report from an interactive session bridle doesn't

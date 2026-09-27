@@ -15,7 +15,7 @@ use std::sync::{Arc, Mutex};
 use bridle_api::types::{
     Agent, AgentState, AgentUsage, Event, EventQuery, ExitInfo, InteractiveUsageRow, Message,
     MessageKind, MessageState, PrincipalId, PrincipalKind, RateLimit, TokenCreated, TokenInfo,
-    TokenTotals, Usage, When,
+    TokenTotals, Usage, UsageBreakdown, UsageGroup, UsageGroupBy, When,
 };
 use chrono::{DateTime, SecondsFormat, Utc};
 use rusqlite::Connection;
@@ -353,6 +353,15 @@ impl Store {
 
     pub async fn usage(&self) -> Result<Usage, StoreError> {
         self.with_conn(sync::usage).await
+    }
+
+    pub async fn usage_breakdown(
+        &self,
+        since: Option<DateTime<Utc>>,
+        by: UsageGroupBy,
+    ) -> Result<UsageBreakdown, StoreError> {
+        self.with_conn(move |c| sync::usage_breakdown(c, since, by))
+            .await
     }
 
     /// One `bridle statusline` snapshot: `observed_at` is set here, not
@@ -1474,6 +1483,77 @@ mod sync {
         })
     }
 
+    /// Aggregates the turns ledger by role, model or agent, since the turns
+    /// table already carries all three per row (docs/design/usage-and-budget.md,
+    /// "Tracking token use over time"). Unlike `usage()`, this reads turns
+    /// directly rather than `agents.cost_usd_total`, so `since` filtering
+    /// applies uniformly, including to the `agent` grouping.
+    pub(super) fn usage_breakdown(
+        conn: &Connection,
+        since: Option<DateTime<Utc>>,
+        by: UsageGroupBy,
+    ) -> Result<UsageBreakdown, StoreError> {
+        let group_col = match by {
+            UsageGroupBy::Role => "role",
+            UsageGroupBy::Model => "model",
+            UsageGroupBy::Agent => "agent_id",
+        };
+        let sql = format!(
+            "SELECT {group_col} AS key, COUNT(*),
+                    COALESCE(SUM(input_tokens), 0), COALESCE(SUM(output_tokens), 0),
+                    COALESCE(SUM(cache_read), 0), COALESCE(SUM(cache_write), 0),
+                    COALESCE(SUM(cost_total), 0)
+             FROM turns
+             WHERE (?1 IS NULL OR started_at >= ?1)
+             GROUP BY {group_col}
+             ORDER BY key"
+        );
+        let since_str = since.map(fmt_dt);
+        let mut stmt = conn.prepare(&sql)?;
+        let rows = stmt.query_map(params![since_str], |row| {
+            let tokens = TokenTotals {
+                input: row.get::<_, i64>(2)? as u64,
+                output: row.get::<_, i64>(3)? as u64,
+                cache_read: row.get::<_, i64>(4)? as u64,
+                cache_write: row.get::<_, i64>(5)? as u64,
+            };
+            let denom = tokens.input + tokens.cache_read + tokens.cache_write;
+            let cache_hit_ratio = (denom > 0).then(|| tokens.cache_read as f64 / denom as f64);
+            Ok(UsageGroup {
+                key: row.get(0)?,
+                turns: row.get::<_, i64>(1)? as u32,
+                tokens,
+                cost_usd_total: row.get(6)?,
+                cache_hit_ratio,
+            })
+        })?;
+        let groups = rows.collect::<Result<Vec<_>, _>>()?;
+
+        let mut total_tokens = TokenTotals::default();
+        let mut total_turns = 0u32;
+        let mut total_cost = 0.0f64;
+        for g in &groups {
+            total_tokens.input += g.tokens.input;
+            total_tokens.output += g.tokens.output;
+            total_tokens.cache_read += g.tokens.cache_read;
+            total_tokens.cache_write += g.tokens.cache_write;
+            total_turns += g.turns;
+            total_cost += g.cost_usd_total;
+        }
+        let denom = total_tokens.input + total_tokens.cache_read + total_tokens.cache_write;
+        let cache_hit_ratio = (denom > 0).then(|| total_tokens.cache_read as f64 / denom as f64);
+
+        Ok(UsageBreakdown {
+            by,
+            since,
+            groups,
+            total_turns,
+            total_tokens,
+            cache_hit_ratio,
+            total_cost_usd: total_cost,
+        })
+    }
+
     pub(super) fn record_interactive_usage(
         conn: &Connection,
         row: &InteractiveUsageRow,
@@ -2242,6 +2322,158 @@ mod tests {
 
         let by_state = store.agents_by_state().await.expect("agents by state");
         assert_eq!(by_state.get("starting").copied(), Some(2));
+    }
+
+    #[tokio::test]
+    async fn usage_breakdown_groups_by_role_and_model() {
+        let (store, _tmp) = store().await;
+        let a = store
+            .insert_agent(NewAgent {
+                role: "worker".to_string(),
+                model: "sonnet".to_string(),
+                ..new_agent("w1")
+            })
+            .await
+            .expect("insert a");
+        let b = store
+            .insert_agent(NewAgent {
+                role: "worker".to_string(),
+                model: "haiku".to_string(),
+                ..new_agent("w2")
+            })
+            .await
+            .expect("insert b");
+        let c = store
+            .insert_agent(NewAgent {
+                role: "manager".to_string(),
+                model: "sonnet".to_string(),
+                ..new_agent("m1")
+            })
+            .await
+            .expect("insert c");
+
+        for (agent, cost, input, cache_read) in [
+            (&a, 0.10, 100u64, 20u64),
+            (&b, 0.20, 200u64, 0u64),
+            (&c, 0.05, 50u64, 10u64),
+        ] {
+            store
+                .add_turn_start(&agent.id, 1, Utc::now())
+                .await
+                .expect("turn start");
+            store
+                .end_turn(
+                    &agent.id,
+                    1,
+                    TurnEnd {
+                        subtype: "success".to_string(),
+                        is_error: false,
+                        terminal_reason: None,
+                        input_tokens: input,
+                        output_tokens: 10,
+                        cache_read,
+                        cache_write: 0,
+                        cost_total: cost,
+                    },
+                )
+                .await
+                .expect("end turn");
+        }
+
+        let by_role = store
+            .usage_breakdown(None, UsageGroupBy::Role)
+            .await
+            .expect("by role");
+        assert_eq!(by_role.groups.len(), 2);
+        let worker = by_role
+            .groups
+            .iter()
+            .find(|g| g.key == "worker")
+            .expect("worker group");
+        assert_eq!(worker.turns, 2);
+        assert_eq!(worker.tokens.input, 300);
+        assert!((worker.cost_usd_total - 0.30).abs() < 1e-9);
+        assert!((worker.cache_hit_ratio.expect("ratio") - (20.0 / 320.0)).abs() < 1e-9);
+        assert_eq!(by_role.total_turns, 3);
+        assert!((by_role.total_cost_usd - 0.35).abs() < 1e-9);
+
+        let by_model = store
+            .usage_breakdown(None, UsageGroupBy::Model)
+            .await
+            .expect("by model");
+        assert_eq!(by_model.groups.len(), 2);
+        let sonnet = by_model
+            .groups
+            .iter()
+            .find(|g| g.key == "sonnet")
+            .expect("sonnet group");
+        assert_eq!(sonnet.turns, 2);
+        assert!((sonnet.cost_usd_total - 0.15).abs() < 1e-9);
+    }
+
+    #[tokio::test]
+    async fn usage_breakdown_since_filters_turns() {
+        let (store, _tmp) = store().await;
+        let a = store.insert_agent(new_agent("w1")).await.expect("insert a");
+
+        let old_turn_at = Utc::now() - chrono::Duration::days(10);
+        store
+            .add_turn_start(&a.id, 1, old_turn_at)
+            .await
+            .expect("old turn start");
+        store
+            .end_turn(
+                &a.id,
+                1,
+                TurnEnd {
+                    subtype: "success".to_string(),
+                    is_error: false,
+                    terminal_reason: None,
+                    input_tokens: 1000,
+                    output_tokens: 10,
+                    cache_read: 0,
+                    cache_write: 0,
+                    cost_total: 9.99,
+                },
+            )
+            .await
+            .expect("end old turn");
+
+        store
+            .add_turn_start(&a.id, 2, Utc::now())
+            .await
+            .expect("recent turn start");
+        store
+            .end_turn(
+                &a.id,
+                2,
+                TurnEnd {
+                    subtype: "success".to_string(),
+                    is_error: false,
+                    terminal_reason: None,
+                    input_tokens: 50,
+                    output_tokens: 5,
+                    cache_read: 0,
+                    cache_write: 0,
+                    cost_total: 0.01,
+                },
+            )
+            .await
+            .expect("end recent turn");
+
+        let since = Utc::now() - chrono::Duration::days(1);
+        let recent = store
+            .usage_breakdown(Some(since), UsageGroupBy::Agent)
+            .await
+            .expect("recent breakdown");
+        assert_eq!(recent.total_turns, 1);
+        assert!((recent.total_cost_usd - 0.01).abs() < 1e-9);
+
+        let all = store
+            .usage_breakdown(None, UsageGroupBy::Agent)
+            .await
+            .expect("unfiltered breakdown");
+        assert_eq!(all.total_turns, 2);
     }
 
     #[tokio::test]
