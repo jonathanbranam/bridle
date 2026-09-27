@@ -413,6 +413,10 @@ driver answers, or forwards to human ─► answer lands on the task ─► task
 > recommendation is headless `claude -p` stream-json workers that bridle owns
 > directly: stdin to wake an agent, hooks for mid-turn injection and status,
 > and a bridle MCP server for tools.
+>
+> **Update 2026-09-27 (later):** spike 01 verified the stream-json host, and
+> [`agent-host.md`](agent-host.md) designs the daemon, API and agent host built
+> on it. Mid-turn delivery there uses stdin rather than hooks.
 
 **To verify before building on it:** whether hooks fire inside `Agent`-tool
 subagents with enough identity (session/agent id) to tell them apart, or whether
