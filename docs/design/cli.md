@@ -37,9 +37,11 @@ bridle token create <name>
   discovery failure, including an unknown `--project`).
 - **`logs`** renders the transcript's output lines; `--raw` prints every line
   verbatim. `--follow` polls once a second.
-- **`events`** without `--follow` returns the oldest 500 matching events.
+- **`events`** without `--follow` returns the most recent 500 matching
+  events, oldest first; give `--since` to page forward from a cursor instead.
   `--follow` streams over SSE, filtering agent and kind on the client, and
-  replays the whole history first unless given `--since`.
+  starts at the tail unless given `--since` (or resuming after a
+  reconnect), in which case it backfills from that cursor first.
 - **`serve --detach`**: [[docs/design/agent-host/daemon#Running it|running the daemon]].
 
 ## Planned
