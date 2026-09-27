@@ -24,8 +24,10 @@ mod events;
 pub mod governor;
 pub mod paths;
 mod server;
+pub mod state_branch;
 pub mod store;
 mod supervisor;
+mod tasks;
 pub mod worktree;
 
 pub use governor::Governor;
