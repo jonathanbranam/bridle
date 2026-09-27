@@ -73,6 +73,99 @@ async fn spawn_with_prompt_runs_a_turn_and_creates_a_worktree() {
     assert!(done.cost_usd_total > 0.0, "expected nonzero cost");
 }
 
+/// Fix for docs/questions/open/v1-follow-ups-from-the-build-9c6e.md's spawn
+/// readiness gap: with a first message, `spawn` waits for that turn's
+/// `system/init` before answering, so the response (and the store, and the
+/// event log) already reflect the turn having started — no extra polling
+/// needed, unlike the assertions above this test that use `wait_for_*`.
+#[tokio::test]
+async fn spawn_with_prompt_waits_for_the_turn_to_start_before_returning() {
+    let (daemon, _tmp) = start_daemon(None).await;
+
+    let agent = daemon
+        .client
+        .spawn(&SpawnRequest {
+            role: "worker".to_string(),
+            name: Some("w1".to_string()),
+            prompt: Some("hello there".to_string()),
+            workdir: None,
+            model: None,
+            ignore_budget: false,
+        })
+        .await
+        .expect("spawn");
+
+    assert_eq!(agent.state, AgentState::Working);
+
+    let events = daemon
+        .client
+        .events(&bridle_api::types::EventQuery {
+            since: None,
+            agent: Some(agent.id.clone()),
+            kind: Some(event_kind::TURN_STARTED.to_string()),
+            limit: None,
+        })
+        .await
+        .expect("list events");
+    assert_eq!(events.len(), 1, "turn.started should already be recorded");
+}
+
+/// The other side of the same fix: a spawn with no first message starts no
+/// turn, so there's no `system/init` to wait for, and `spawn` returns at
+/// once instead of waiting out `SPAWN_READY_TIMEOUT`.
+#[tokio::test]
+async fn spawn_without_a_prompt_returns_promptly_and_stays_idle() {
+    let (daemon, _tmp) = start_daemon(None).await;
+
+    let started = std::time::Instant::now();
+    let agent = daemon
+        .client
+        .spawn(&SpawnRequest {
+            role: "worker".to_string(),
+            name: Some("w1".to_string()),
+            prompt: None,
+            workdir: None,
+            model: None,
+            ignore_budget: false,
+        })
+        .await
+        .expect("spawn");
+
+    assert!(
+        started.elapsed() < std::time::Duration::from_secs(5),
+        "an idle spawn should not wait for a turn that never starts"
+    );
+    assert_eq!(agent.state, AgentState::Idle);
+}
+
+/// A failure in the very first turn (a bad model name or expired auth, in
+/// the real world) shows up in the spawn response itself, not only later
+/// via polling: `spawn` waits for the process's exit as well as its init.
+#[tokio::test]
+async fn spawn_with_a_crashing_first_message_returns_promptly() {
+    let (daemon, _tmp) = start_daemon(None).await;
+
+    let started = std::time::Instant::now();
+    daemon
+        .client
+        .spawn(&SpawnRequest {
+            role: "worker".to_string(),
+            name: Some("w1".to_string()),
+            prompt: Some("CRASH".to_string()),
+            workdir: None,
+            model: None,
+            ignore_budget: false,
+        })
+        .await
+        .expect("spawn");
+
+    assert!(
+        started.elapsed() < std::time::Duration::from_secs(5),
+        "a crash right after init should not need the full readiness timeout"
+    );
+    wait_for_state(&daemon.client, "w1", AgentState::Crashed).await;
+}
+
 #[tokio::test]
 async fn message_now_mid_turn_folds_into_the_running_turn() {
     let (daemon, _tmp) = start_daemon(None).await;

@@ -27,6 +27,13 @@ JSON over HTTP, versioned under `/v1`. The contract is
 | `DELETE /v1/tokens/{name}` | revoke `external:{name}` (human only; an agent's own token isn't revoked this way — see `rm`) |
 | `POST /v1/shutdown` | graceful stop of all agents, then exit (human only) |
 
+`POST /v1/agents` with a `prompt` (or a role `start_prompt`) waits briefly
+after sending it for that turn's readiness before answering (a `system/init`
+or an exit, whichever comes first), so a spawn failure after `claude` starts
+usually comes back as a `crashed` agent in the response itself, not only
+later via polling; see [[agents#Spawning|agents.md, Spawning]] for the
+timeout. A spawn with no first message starts no turn and returns at once.
+
 Errors use one shape, `{"error": {"code": "...", "message": "..."}}`, with
 proper status codes. The codes are `not_found`, `conflict`, `bad_request`,
 `unauthorized`, `forbidden`, `agent_not_running` (409), `shutting_down` (503,
