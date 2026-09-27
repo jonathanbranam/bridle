@@ -12,8 +12,8 @@ use thiserror::Error;
 
 use crate::types::{
     Agent, ApiErrorResponse, Event, EventQuery, Health, InterruptRequest, InterruptResponse,
-    Message, MessageQuery, RemoveQuery, SendRequest, SpawnRequest, Status, StopRequest,
-    TokenCreateRequest, TokenCreated, TranscriptLine, TranscriptQuery, Usage,
+    Message, MessageQuery, RemoveQuery, SendRequest, SpawnRequest, Status, StatusLineReport,
+    StopRequest, TokenCreateRequest, TokenCreated, TranscriptLine, TranscriptQuery, Usage,
 };
 
 #[derive(Debug, Error)]
@@ -48,6 +48,29 @@ impl Client {
         }
         Self {
             http: reqwest::Client::new(),
+            base_url,
+            token,
+        }
+    }
+
+    /// Like [`Client::new`], but every request gives up after `timeout`
+    /// instead of waiting on reqwest's (much longer) default. For callers
+    /// that must never hang, e.g. `bridle statusline` on the human's
+    /// interactive prompt.
+    pub fn new_with_timeout(
+        base_url: impl Into<String>,
+        token: Option<String>,
+        timeout: std::time::Duration,
+    ) -> Self {
+        let mut base_url = base_url.into();
+        while base_url.ends_with('/') {
+            base_url.pop();
+        }
+        Self {
+            http: reqwest::Client::builder()
+                .timeout(timeout)
+                .build()
+                .expect("building a plain http client with a timeout never fails"),
             base_url,
             token,
         }
@@ -306,6 +329,15 @@ impl Client {
 
     pub async fn shutdown(&self) -> Result<(), ClientError> {
         let req = self.request(Method::POST, &["v1", "shutdown"])?;
+        self.send_unit(req).await
+    }
+
+    /// `bridle statusline`'s only network call. Build the client with
+    /// [`Client::new_with_timeout`] so this never hangs the human's prompt.
+    pub async fn report_statusline(&self, report: &StatusLineReport) -> Result<(), ClientError> {
+        let req = self
+            .request(Method::POST, &["v1", "statusline"])?
+            .json(report);
         self.send_unit(req).await
     }
 }

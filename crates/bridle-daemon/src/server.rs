@@ -11,9 +11,10 @@ use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::{Extension, Json, Router};
 use bridle_api::types::{
-    Agent, ApiErrorResponse, ErrorBody, Event, EventQuery, Health, InterruptRequest, Message,
-    MessageQuery, MessageState, PrincipalKind, RemoveQuery, SendRequest, SpawnRequest, Status,
-    StopRequest, TokenCreateRequest, TokenCreated, TranscriptLine, TranscriptQuery, Usage,
+    Agent, ApiErrorResponse, ErrorBody, Event, EventQuery, Health, InteractiveUsageRow,
+    InterruptRequest, Message, MessageQuery, MessageState, PrincipalKind, RateLimit, RemoveQuery,
+    SendRequest, SpawnRequest, Status, StatusLineReport, StopRequest, TokenCreateRequest,
+    TokenCreated, TranscriptLine, TranscriptQuery, Usage,
 };
 use chrono::Utc;
 use futures::Stream;
@@ -56,6 +57,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/events", get(list_events))
         .route("/v1/events/stream", get(events_stream))
         .route("/v1/usage", get(usage))
+        .route("/v1/statusline", post(report_statusline))
         .route("/v1/tokens", post(create_token))
         .route("/v1/shutdown", post(shutdown))
         .layer(middleware::from_fn_with_state(
@@ -578,6 +580,41 @@ fn to_sse(ev: &Event) -> SseEvent {
 
 async fn usage(State(state): State<AppState>) -> Result<Json<Usage>, ApiError> {
     Ok(Json(state.store.usage().await?))
+}
+
+/// `bridle statusline`'s report from an interactive session bridle doesn't
+/// host: rate-limit windows go through the same `upsert_rate_limit` path
+/// every other source feeds, and the rest becomes one `interactive_usage`
+/// row (docs/design/usage-and-budget.md, "Where bridle can see usage").
+async fn report_statusline(
+    State(state): State<AppState>,
+    Json(req): Json<StatusLineReport>,
+) -> Result<StatusCode, ApiError> {
+    let observed_at = Utc::now();
+    for reading in &req.rate_limits {
+        state
+            .store
+            .upsert_rate_limit(RateLimit {
+                window: reading.window.clone(),
+                status: None,
+                utilization: reading.utilization,
+                resets_at: reading.resets_at,
+                observed_at,
+            })
+            .await?;
+    }
+    state
+        .store
+        .record_interactive_usage(InteractiveUsageRow {
+            observed_at,
+            session_id: req.session_id,
+            model: req.model,
+            cost_usd: req.cost_usd,
+            context_used_tokens: req.context_used_tokens,
+            context_max_tokens: req.context_max_tokens,
+        })
+        .await?;
+    Ok(StatusCode::NO_CONTENT)
 }
 
 async fn create_token(
