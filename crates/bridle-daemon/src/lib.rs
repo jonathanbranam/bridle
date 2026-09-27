@@ -20,12 +20,14 @@ use tokio::sync::watch;
 pub mod config;
 pub mod containment;
 mod events;
+pub mod governor;
 pub mod paths;
 mod server;
 pub mod store;
 mod supervisor;
 pub mod worktree;
 
+pub use governor::Governor;
 pub use supervisor::{AgentManager, SupervisorError, ToTarget};
 
 use config::Config;
@@ -61,6 +63,14 @@ pub struct Overrides {
     pub write_registry: bool,
     pub stall_check_interval: Duration,
     pub tracker_interval: Duration,
+    /// How often the governor tick fires; each tick separately decides
+    /// whether a `get_usage` poll is actually due, per the next two fields.
+    pub governor_interval: Duration,
+    /// usage-and-budget.md, Seeing the windows: how long to wait between
+    /// polls below `hold_at`.
+    pub governor_poll_interval_normal: Duration,
+    /// ...and at or above it.
+    pub governor_poll_interval_above_hold: Duration,
 }
 
 impl Default for Overrides {
@@ -71,6 +81,9 @@ impl Default for Overrides {
             write_registry: true,
             stall_check_interval: Duration::from_secs(30),
             tracker_interval: Duration::from_secs(2),
+            governor_interval: Duration::from_secs(30),
+            governor_poll_interval_normal: Duration::from_secs(5 * 60),
+            governor_poll_interval_above_hold: Duration::from_secs(30),
         }
     }
 }
@@ -170,6 +183,8 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         )
         .await;
 
+    let governor_handle: governor::GovernorHandle =
+        std::sync::Arc::new(std::sync::Mutex::new(governor::GovernorSnapshot::default()));
     let manager = AgentManager::new(
         store.clone(),
         ws.clone(),
@@ -178,6 +193,18 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         url.clone(),
         project.clone(),
         emitter.clone(),
+        governor_handle.clone(),
+    );
+    let governor = Governor::new(
+        store.clone(),
+        manager.clone(),
+        emitter.clone(),
+        config.budget.clone(),
+        overrides.claude_program.clone(),
+        ws.clone(),
+        governor_handle,
+        overrides.governor_poll_interval_normal,
+        overrides.governor_poll_interval_above_hold,
     );
 
     run_autostart_and_resume(&store, &config, &manager).await;
@@ -196,6 +223,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         started_at: info.started_at,
         pid: info.pid,
         shutdown_tx: shutdown_tx.clone(),
+        governor: governor.clone(),
     };
     let app = server::router(state);
 
@@ -224,6 +252,13 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         move || {
             let manager = manager.clone();
             async move { manager.tick_tracker().await }
+        }
+    });
+    let governor_task = spawn_loop(shutdown_rx.clone(), overrides.governor_interval, {
+        let governor = governor.clone();
+        move || {
+            let governor = governor.clone();
+            async move { governor.tick().await }
         }
     });
     let prune_task = spawn_loop(shutdown_rx.clone(), Duration::from_secs(24 * 60 * 60), {
@@ -261,6 +296,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         signal_task.abort();
         stall_task.abort();
         tracker_task.abort();
+        governor_task.abort();
         prune_task.abort();
     });
 

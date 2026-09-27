@@ -54,6 +54,9 @@ pub struct Status {
     /// The Claude Code version the daemon's agents last reported.
     #[serde(default)]
     pub claude_version: Option<String>,
+    /// The budget governor's current state (usage-and-budget.md).
+    #[serde(default = "GovernorState::default")]
+    pub budget_state: GovernorState,
 }
 
 // ---------- agents ----------
@@ -376,6 +379,10 @@ pub mod event_kind {
     pub const MESSAGE_DROPPED: &str = "message.dropped";
     /// data: {info}
     pub const RATE_LIMIT: &str = "rate_limit";
+    /// data: {from, to, window, utilization, resets_at, reason}. Emitted on
+    /// every governor state transition (usage-and-budget.md, the budget
+    /// governor).
+    pub const BUDGET_STATE: &str = "budget.state";
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -437,6 +444,74 @@ pub struct Usage {
     pub cache_hit_ratio: Option<f64>,
     pub total_cost_usd: f64,
     pub rate_limits: Vec<RateLimit>,
+}
+
+// ---------- budget governor ----------
+
+/// The governor's state, most severe first. `usage-and-budget.md`, The
+/// budget governor.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum GovernorState {
+    #[default]
+    Normal,
+    Holding,
+    WindingDown,
+    Paused,
+}
+
+impl GovernorState {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Normal => "normal",
+            Self::Holding => "holding",
+            Self::WindingDown => "winding_down",
+            Self::Paused => "paused",
+        }
+    }
+}
+
+impl std::fmt::Display for GovernorState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+/// One window's reading and the state it alone implies.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WindowStatus {
+    /// `five_hour`, `seven_day`, `seven_day_opus`, `seven_day_sonnet`, …
+    pub window: String,
+    pub state: GovernorState,
+    pub status: Option<String>,
+    /// 0-1 fraction.
+    pub utilization: Option<f64>,
+    pub resets_at: Option<DateTime<Utc>>,
+    pub observed_at: Option<DateTime<Utc>>,
+    /// No reading at all, or one older than `max_staleness`.
+    pub stale: bool,
+}
+
+/// The effective thresholds in force, account-wide values merged with any
+/// (lower) project overrides. Percentages, 0-100, matching config.toml.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BudgetThresholds {
+    pub max_workers: u32,
+    pub hold_at: BTreeMap<String, f64>,
+    pub wind_down_at: BTreeMap<String, f64>,
+    pub stop_at: BTreeMap<String, f64>,
+    pub resume_below: BTreeMap<String, f64>,
+    pub wind_down_grace_secs: u64,
+    pub max_staleness_secs: u64,
+}
+
+/// `GET /v1/budget`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BudgetStatus {
+    /// The overall (default-scoped windows + staleness) governor state.
+    pub state: GovernorState,
+    pub windows: Vec<WindowStatus>,
+    pub thresholds: BudgetThresholds,
 }
 
 // ---------- tokens ----------

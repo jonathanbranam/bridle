@@ -11,9 +11,9 @@ use serde::de::DeserializeOwned;
 use thiserror::Error;
 
 use crate::types::{
-    Agent, ApiErrorResponse, Event, EventQuery, Health, InterruptRequest, InterruptResponse,
-    Message, MessageQuery, RemoveQuery, SendRequest, SpawnRequest, Status, StopRequest,
-    TokenCreateRequest, TokenCreated, TranscriptLine, TranscriptQuery, Usage,
+    Agent, ApiErrorResponse, BudgetStatus, Event, EventQuery, Health, InterruptRequest,
+    InterruptResponse, Message, MessageQuery, RemoveQuery, SendRequest, SpawnRequest, Status,
+    StopRequest, TokenCreateRequest, TokenCreated, TranscriptLine, TranscriptQuery, Usage,
 };
 
 #[derive(Debug, Error)]
@@ -295,6 +295,10 @@ impl Client {
 
     pub async fn usage(&self) -> Result<Usage, ClientError> {
         self.get_json(&["v1", "usage"]).await
+    }
+
+    pub async fn budget(&self) -> Result<BudgetStatus, ClientError> {
+        self.get_json(&["v1", "budget"]).await
     }
 
     pub async fn create_token(

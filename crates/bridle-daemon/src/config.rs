@@ -24,6 +24,18 @@ pub enum ConfigError {
     BadDuration(String),
     #[error("invalid listen address {0:?}: {1}")]
     BadListen(String, std::net::AddrParseError),
+    #[error("[budget] {field} needs a \"default\" entry")]
+    MissingDefault { field: &'static str },
+    #[error(
+        "{path}: [budget] {field}.{window} = {value} raises the machine-wide threshold {machine_value}; a project config may only lower it"
+    )]
+    ThresholdTooHigh {
+        path: PathBuf,
+        field: &'static str,
+        window: String,
+        value: f64,
+        machine_value: f64,
+    },
 }
 
 /// Where an agent's process runs, before a worktree path is resolved.
@@ -178,12 +190,191 @@ impl Role {
     }
 }
 
+/// A percentage threshold (0-100) per window, with a required fallback for
+/// any window not named explicitly (usage-and-budget.md, Thresholds: `{
+/// default = 80 }`).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WindowThresholds {
+    default: f64,
+    overrides: BTreeMap<String, f64>,
+}
+
+impl WindowThresholds {
+    fn constant(default: f64) -> Self {
+        WindowThresholds {
+            default,
+            overrides: BTreeMap::new(),
+        }
+    }
+
+    /// The effective threshold for `window` (its own override, else the
+    /// section's default).
+    pub fn get(&self, window: &str) -> f64 {
+        self.overrides.get(window).copied().unwrap_or(self.default)
+    }
+
+    fn from_raw(map: &BTreeMap<String, f64>, field: &'static str) -> Result<Self, ConfigError> {
+        let default = *map
+            .get("default")
+            .ok_or(ConfigError::MissingDefault { field })?;
+        let overrides = map
+            .iter()
+            .filter(|(k, _)| k.as_str() != "default")
+            .map(|(k, v)| (k.clone(), *v))
+            .collect();
+        Ok(WindowThresholds { default, overrides })
+    }
+
+    /// All entries this threshold is aware of, `default` first, for the
+    /// wire representation (`GET /v1/budget`).
+    fn to_map(&self) -> BTreeMap<String, f64> {
+        let mut m = self.overrides.clone();
+        m.insert("default".to_string(), self.default);
+        m
+    }
+
+    /// A project override may only lower a threshold, never raise it
+    /// (usage-and-budget.md, Thresholds).
+    fn merge_lower_only(
+        &self,
+        raw: &BTreeMap<String, f64>,
+        field: &'static str,
+        path: &Path,
+    ) -> Result<Self, ConfigError> {
+        let mut out = self.clone();
+        for (window, &value) in raw {
+            let machine_value = self.get(window);
+            if value > machine_value {
+                return Err(ConfigError::ThresholdTooHigh {
+                    path: path.to_path_buf(),
+                    field,
+                    window: window.clone(),
+                    value,
+                    machine_value,
+                });
+            }
+            if window == "default" {
+                out.default = value;
+            } else {
+                out.overrides.insert(window.clone(), value);
+            }
+        }
+        Ok(out)
+    }
+}
+
+/// `[budget]`: the account-wide usage governor's thresholds
+/// (usage-and-budget.md, The budget governor). Lives in
+/// `~/.bridle/config.toml`; a project's `.bridle/config.toml` may lower
+/// (never raise) the four percentage thresholds.
+#[derive(Debug, Clone)]
+pub struct BudgetConfig {
+    pub max_workers: u32,
+    pub hold_at: WindowThresholds,
+    pub wind_down_at: WindowThresholds,
+    pub stop_at: WindowThresholds,
+    pub resume_below: WindowThresholds,
+    pub wind_down_grace: Duration,
+    pub max_staleness: Duration,
+}
+
+impl Default for BudgetConfig {
+    fn default() -> Self {
+        let mut wind_down_at = WindowThresholds::constant(90.0);
+        wind_down_at
+            .overrides
+            .insert("seven_day_opus".to_string(), 85.0);
+        BudgetConfig {
+            max_workers: 2,
+            hold_at: WindowThresholds::constant(80.0),
+            wind_down_at,
+            stop_at: WindowThresholds::constant(95.0),
+            resume_below: WindowThresholds::constant(70.0),
+            wind_down_grace: Duration::from_secs(5 * 60),
+            max_staleness: Duration::from_secs(10 * 60),
+        }
+    }
+}
+
+impl BudgetConfig {
+    /// Machine-level merge: an unrestricted overlay, like [`Role::merge`].
+    fn merge(mut self, raw: RawBudget) -> Result<Self, ConfigError> {
+        if let Some(v) = raw.max_workers {
+            self.max_workers = v;
+        }
+        if let Some(m) = &raw.hold_at {
+            self.hold_at = WindowThresholds::from_raw(m, "hold_at")?;
+        }
+        if let Some(m) = &raw.wind_down_at {
+            self.wind_down_at = WindowThresholds::from_raw(m, "wind_down_at")?;
+        }
+        if let Some(m) = &raw.stop_at {
+            self.stop_at = WindowThresholds::from_raw(m, "stop_at")?;
+        }
+        if let Some(m) = &raw.resume_below {
+            self.resume_below = WindowThresholds::from_raw(m, "resume_below")?;
+        }
+        if let Some(s) = &raw.wind_down_grace {
+            self.wind_down_grace = parse_duration(s)?;
+        }
+        if let Some(s) = &raw.max_staleness {
+            self.max_staleness = parse_duration(s)?;
+        }
+        Ok(self)
+    }
+
+    /// Project-level merge: `max_workers` and the durations may be set
+    /// freely, but the four percentage thresholds may only come down from
+    /// the machine-wide value (usage-and-budget.md, Thresholds).
+    fn merge_project(mut self, raw: RawBudget, path: &Path) -> Result<Self, ConfigError> {
+        if let Some(v) = raw.max_workers {
+            self.max_workers = v;
+        }
+        if let Some(m) = &raw.hold_at {
+            self.hold_at = self.hold_at.merge_lower_only(m, "hold_at", path)?;
+        }
+        if let Some(m) = &raw.wind_down_at {
+            self.wind_down_at = self
+                .wind_down_at
+                .merge_lower_only(m, "wind_down_at", path)?;
+        }
+        if let Some(m) = &raw.stop_at {
+            self.stop_at = self.stop_at.merge_lower_only(m, "stop_at", path)?;
+        }
+        if let Some(m) = &raw.resume_below {
+            self.resume_below = self
+                .resume_below
+                .merge_lower_only(m, "resume_below", path)?;
+        }
+        if let Some(s) = &raw.wind_down_grace {
+            self.wind_down_grace = parse_duration(s)?;
+        }
+        if let Some(s) = &raw.max_staleness {
+            self.max_staleness = parse_duration(s)?;
+        }
+        Ok(self)
+    }
+
+    pub fn to_wire(&self) -> bridle_api::types::BudgetThresholds {
+        bridle_api::types::BudgetThresholds {
+            max_workers: self.max_workers,
+            hold_at: self.hold_at.to_map(),
+            wind_down_at: self.wind_down_at.to_map(),
+            stop_at: self.stop_at.to_map(),
+            resume_below: self.resume_below.to_map(),
+            wind_down_grace_secs: self.wind_down_grace.as_secs(),
+            max_staleness_secs: self.max_staleness.as_secs(),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Config {
     pub listen: SocketAddr,
     pub stall_after: Duration,
     pub stop_grace: Duration,
     pub roles: BTreeMap<String, Role>,
+    pub budget: BudgetConfig,
 }
 
 impl Default for Config {
@@ -197,31 +388,70 @@ impl Default for Config {
             stall_after: Duration::from_secs(10 * 60),
             stop_grace: Duration::from_secs(30),
             roles,
+            budget: BudgetConfig::default(),
         }
     }
 }
 
 impl Config {
-    /// Loads `<repo>/.bridle/config.toml` over the built-in defaults. Missing
-    /// file is not an error: the file is optional (docs/design/agent-host/operating-model.md).
-    pub fn load(repo: &Path) -> Result<Self, ConfigError> {
-        let path = repo.join(".bridle").join("config.toml");
+    /// Loads the machine-wide `[budget]` section
+    /// (`$BRIDLE_HOME/config.toml`, else `~/.bridle/config.toml`; see
+    /// `bridle_api::discovery::bridle_home`) merged over the built-in
+    /// defaults. Missing file is not an error.
+    fn load_machine_budget() -> Result<BudgetConfig, ConfigError> {
+        let path = bridle_api::discovery::bridle_home().join("config.toml");
         match std::fs::read_to_string(&path) {
-            Ok(text) => Self::parse(&text),
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Config::default()),
+            Ok(text) => {
+                let raw: RawConfig =
+                    toml::from_str(&text).map_err(|source| ConfigError::Parse {
+                        path: path.clone(),
+                        source: Box::new(source),
+                    })?;
+                BudgetConfig::default().merge(raw.budget.unwrap_or_default())
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(BudgetConfig::default()),
             Err(source) => Err(ConfigError::Read { path, source }),
         }
     }
 
-    /// Parses config TOML text over the built-in defaults. Split out from
-    /// [`Config::load`] so tests don't need real files.
+    /// Loads `<repo>/.bridle/config.toml` over the built-in defaults,
+    /// merged with the machine-wide `[budget]` section. Missing file is not
+    /// an error: the file is optional (docs/design/agent-host/operating-model.md).
+    pub fn load(repo: &Path) -> Result<Self, ConfigError> {
+        let machine_budget = Self::load_machine_budget()?;
+        let path = repo.join(".bridle").join("config.toml");
+        match std::fs::read_to_string(&path) {
+            Ok(text) => Self::parse_with_budget(&text, machine_budget, &path),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Config {
+                budget: machine_budget,
+                ..Config::default()
+            }),
+            Err(source) => Err(ConfigError::Read { path, source }),
+        }
+    }
+
+    /// Parses config TOML text over the built-in defaults, with the
+    /// built-in `[budget]` defaults as the "machine" side (no lower-only
+    /// restriction applies). Split out from [`Config::load`] so tests don't
+    /// need real files.
     pub fn parse(text: &str) -> Result<Self, ConfigError> {
+        Self::parse_with_budget(text, BudgetConfig::default(), Path::new("config.toml"))
+    }
+
+    fn parse_with_budget(
+        text: &str,
+        machine_budget: BudgetConfig,
+        path: &Path,
+    ) -> Result<Self, ConfigError> {
         let raw: RawConfig = toml::from_str(text).map_err(|source| ConfigError::Parse {
-            path: PathBuf::from("config.toml"),
+            path: path.to_path_buf(),
             source: Box::new(source),
         })?;
 
-        let mut config = Config::default();
+        let mut config = Config {
+            budget: machine_budget,
+            ..Config::default()
+        };
 
         if let Some(d) = raw.daemon {
             if let Some(listen) = d.listen {
@@ -243,6 +473,10 @@ impl Config {
                 .remove(&name)
                 .unwrap_or_else(Role::worker_default);
             config.roles.insert(name, base.merge(raw_role));
+        }
+
+        if let Some(raw_budget) = raw.budget {
+            config.budget = config.budget.merge_project(raw_budget, path)?;
         }
 
         Ok(config)
@@ -272,6 +506,27 @@ struct RawConfig {
     daemon: Option<RawDaemon>,
     #[serde(default)]
     roles: Option<BTreeMap<String, RawRole>>,
+    #[serde(default)]
+    budget: Option<RawBudget>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawBudget {
+    #[serde(default)]
+    max_workers: Option<u32>,
+    #[serde(default)]
+    hold_at: Option<BTreeMap<String, f64>>,
+    #[serde(default)]
+    wind_down_at: Option<BTreeMap<String, f64>>,
+    #[serde(default)]
+    stop_at: Option<BTreeMap<String, f64>>,
+    #[serde(default)]
+    resume_below: Option<BTreeMap<String, f64>>,
+    #[serde(default)]
+    wind_down_grace: Option<String>,
+    #[serde(default)]
+    max_staleness: Option<String>,
 }
 
 #[derive(Debug, Default, Deserialize)]
