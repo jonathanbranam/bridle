@@ -11,11 +11,12 @@ use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::{Extension, Json, Router};
 use bridle_api::types::{
-    Agent, ApiErrorResponse, BudgetHoldRequest, BudgetStatus, ErrorBody, Event, EventQuery, Health,
-    HoldStatus, InteractiveUsageRow, InterruptRequest, Message, MessageQuery, MessageState,
-    PrincipalKind, RateLimit, RemoveQuery, ResumeRequest, SendRequest, SpawnRequest, Status,
-    StatusLineReport, StopRequest, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine,
-    TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, WindowStatus,
+    Agent, ApiErrorResponse, BudgetHoldRequest, BudgetStatus, DropTaskRequest, EditTaskRequest,
+    ErrorBody, Event, EventQuery, Health, HoldStatus, InteractiveUsageRow, InterruptRequest,
+    Message, MessageQuery, MessageState, NewTaskRequest, PrincipalKind, RateLimit, RemoveQuery,
+    ResumeRequest, SendRequest, SpawnRequest, Status, StatusLineReport, StopRequest, Task,
+    TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
+    UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, WindowStatus, event_kind,
 };
 use chrono::Utc;
 use futures::Stream;
@@ -26,6 +27,7 @@ use crate::events::Emitter;
 use crate::paths::Workspace;
 use crate::store::{Principal, Store, StoreError};
 use crate::supervisor::{AgentManager, SupervisorError, ToTarget};
+use crate::tasks::{TaskError, TaskManager};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -41,6 +43,7 @@ pub struct AppState {
     pub pid: i32,
     pub shutdown_tx: watch::Sender<bool>,
     pub governor: crate::governor::Governor,
+    pub tasks: TaskManager,
 }
 
 pub fn router(state: AppState) -> Router {
@@ -66,6 +69,10 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/budget/release", post(budget_release))
         .route("/v1/tokens", get(list_tokens).post(create_token))
         .route("/v1/tokens/{name}", axum::routing::delete(revoke_token))
+        .route("/v1/tasks", get(list_tasks).post(new_task))
+        .route("/v1/tasks/{id}", get(get_task).patch(edit_task))
+        .route("/v1/tasks/{id}/drop", post(drop_task))
+        .route("/v1/tasks/{id}/reopen", post(reopen_task))
         .route("/v1/shutdown", post(shutdown))
         .layer(middleware::from_fn_with_state(
             state.clone(),
@@ -145,6 +152,19 @@ impl From<SupervisorError> for ApiError {
                 ApiError::new(StatusCode::CONFLICT, "agent_not_running", m)
             }
             SupervisorError::Internal(m) => {
+                ApiError::new(StatusCode::INTERNAL_SERVER_ERROR, "internal", m)
+            }
+        }
+    }
+}
+
+impl From<TaskError> for ApiError {
+    fn from(e: TaskError) -> Self {
+        match e {
+            TaskError::NotFound(m) => ApiError::not_found(m),
+            TaskError::Conflict(m) => ApiError::new(StatusCode::CONFLICT, "conflict", m),
+            TaskError::BadRequest(m) => ApiError::bad_request(m),
+            TaskError::Internal(m) => {
                 ApiError::new(StatusCode::INTERNAL_SERVER_ERROR, "internal", m)
             }
         }
@@ -713,6 +733,100 @@ async fn report_statusline(
         })
         .await?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+// ---------- tasks ----------
+
+async fn list_tasks(State(state): State<AppState>) -> Result<Json<Vec<Task>>, ApiError> {
+    Ok(Json(state.tasks.list_tasks()))
+}
+
+async fn new_task(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Json(req): Json<NewTaskRequest>,
+) -> Result<Json<Task>, ApiError> {
+    let task = state.tasks.new_task(&req.title, req.kind, req.body).await?;
+    let _ = state
+        .emitter
+        .emit(
+            event_kind::TASK_CREATED,
+            principal.id,
+            None,
+            serde_json::json!({"task": task.id, "kind": task.kind, "state": task.state}),
+        )
+        .await;
+    Ok(Json(task))
+}
+
+async fn get_task(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+) -> Result<Json<Task>, ApiError> {
+    state
+        .tasks
+        .get_task(&id)
+        .map(Json)
+        .ok_or_else(|| ApiError::not_found(format!("no such task: {id}")))
+}
+
+async fn edit_task(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path(id): Path<String>,
+    Json(req): Json<EditTaskRequest>,
+) -> Result<Json<Task>, ApiError> {
+    let task = state.tasks.edit_task(&id, req.title, req.body).await?;
+    let _ = state
+        .emitter
+        .emit(
+            event_kind::TASK_EDITED,
+            principal.id,
+            None,
+            serde_json::json!({"task": task.id}),
+        )
+        .await;
+    Ok(Json(task))
+}
+
+async fn drop_task(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path(id): Path<String>,
+    Json(req): Json<DropTaskRequest>,
+) -> Result<Json<Task>, ApiError> {
+    let task = state
+        .tasks
+        .drop_task(&id, &req.reason, &principal.id)
+        .await?;
+    let _ = state
+        .emitter
+        .emit(
+            event_kind::TASK_STATE,
+            principal.id,
+            None,
+            serde_json::json!({"task": task.id, "to": task.state}),
+        )
+        .await;
+    Ok(Json(task))
+}
+
+async fn reopen_task(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path(id): Path<String>,
+) -> Result<Json<Task>, ApiError> {
+    let task = state.tasks.reopen_task(&id, &principal.id).await?;
+    let _ = state
+        .emitter
+        .emit(
+            event_kind::TASK_STATE,
+            principal.id,
+            None,
+            serde_json::json!({"task": task.id, "to": task.state}),
+        )
+        .await;
+    Ok(Json(task))
 }
 
 async fn create_token(

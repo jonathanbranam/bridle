@@ -398,6 +398,11 @@ pub mod event_kind {
     /// every governor state transition (usage-and-budget.md, the budget
     /// governor).
     pub const BUDGET_STATE: &str = "budget.state";
+    pub const TASK_CREATED: &str = "task.created";
+    /// data: {from, to}
+    pub const TASK_STATE: &str = "task.state";
+    /// data: {fields}, the names of the fields that changed.
+    pub const TASK_EDITED: &str = "task.edited";
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -669,6 +674,172 @@ pub struct TokenInfo {
     pub revoked: bool,
 }
 
+// ---------- tasks ----------
+
+/// What kind of work a task is; changes gates and the agent's prime once
+/// those exist (roles-and-lifecycle.md).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum TaskKind {
+    Feature,
+    Bug,
+    Chore,
+    Question,
+    Research,
+    Explore,
+    ArchRevision,
+    ReEvaluate,
+}
+
+impl TaskKind {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Feature => "feature",
+            Self::Bug => "bug",
+            Self::Chore => "chore",
+            Self::Question => "question",
+            Self::Research => "research",
+            Self::Explore => "explore",
+            Self::ArchRevision => "arch-revision",
+            Self::ReEvaluate => "re-evaluate",
+        }
+    }
+}
+
+impl std::fmt::Display for TaskKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl std::str::FromStr for TaskKind {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        serde_json::from_value(Value::String(s.to_string()))
+            .map_err(|_| format!("unknown task kind: {s}"))
+    }
+}
+
+/// The lifecycle states this build knows about
+/// ([[docs/design/roles-and-lifecycle#Task lifecycle|task lifecycle]]).
+/// `ready`, `claimed`, `in_review`, `integrated` and `accepted` arrive with
+/// later tasks that build edges, claims and the ready computation on top of
+/// this record.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum TaskState {
+    Open,
+    Planned,
+    /// Requires a reason, recorded in the thread.
+    Dropped,
+    /// A dropped task brought back; only reachable from `dropped`.
+    Reopened,
+}
+
+impl TaskState {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Open => "open",
+            Self::Planned => "planned",
+            Self::Dropped => "dropped",
+            Self::Reopened => "reopened",
+        }
+    }
+}
+
+impl std::fmt::Display for TaskState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl std::str::FromStr for TaskState {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        serde_json::from_value(Value::String(s.to_string()))
+            .map_err(|_| format!("unknown task state: {s}"))
+    }
+}
+
+/// One entry in a task's thread, on the state branch
+/// ([[docs/design/storage#The state branch|storage.md]]). Only `note` is
+/// produced by this build; `question`, `answer`, `handoff`, `conflict` and
+/// `system` (coordination.md, Messages) arrive with later tasks and reuse
+/// this same shape.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ThreadEntryKind {
+    Note,
+}
+
+impl ThreadEntryKind {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Note => "note",
+        }
+    }
+}
+
+impl std::fmt::Display for ThreadEntryKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl std::str::FromStr for ThreadEntryKind {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        serde_json::from_value(Value::String(s.to_string()))
+            .map_err(|_| format!("unknown thread entry kind: {s}"))
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ThreadEntry {
+    pub kind: ThreadEntryKind,
+    pub from: PrincipalId,
+    pub body: String,
+    pub at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Task {
+    /// e.g. `tw-7fa2`: a per-project prefix and a random suffix
+    /// (docs/design/storage.md).
+    pub id: String,
+    pub title: String,
+    pub kind: TaskKind,
+    pub state: TaskState,
+    /// The task's description. Durable only on the state branch: a crash
+    /// between a write and the next batched flush can lose an edit to this
+    /// (docs/design/storage.md).
+    pub body: String,
+    pub thread: Vec<ThreadEntry>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NewTaskRequest {
+    pub title: String,
+    pub kind: TaskKind,
+    #[serde(default)]
+    pub body: String,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct EditTaskRequest {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub title: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub body: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DropTaskRequest {
+    pub reason: String,
+}
+
 // ---------- errors ----------
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -707,6 +878,31 @@ mod tests {
             "starting", "idle", "working", "stopping", "stopped", "exited", "crashed", "lost",
         ] {
             let st: AgentState = s.parse().unwrap();
+            assert_eq!(st.as_str(), s);
+        }
+    }
+
+    #[test]
+    fn task_kind_round_trip() {
+        for s in [
+            "feature",
+            "bug",
+            "chore",
+            "question",
+            "research",
+            "explore",
+            "arch-revision",
+            "re-evaluate",
+        ] {
+            let k: TaskKind = s.parse().unwrap();
+            assert_eq!(k.as_str(), s);
+        }
+    }
+
+    #[test]
+    fn task_state_round_trip() {
+        for s in ["open", "planned", "dropped", "reopened"] {
+            let st: TaskState = s.parse().unwrap();
             assert_eq!(st.as_str(), s);
         }
     }

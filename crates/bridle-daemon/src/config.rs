@@ -419,6 +419,10 @@ pub struct Config {
     pub roles: BTreeMap<String, Role>,
     pub budget: BudgetConfig,
     pub models: ModelsConfig,
+    /// The prefix new task ids get (storage.md: `<prefix>-<4 hex chars>`,
+    /// e.g. `tw-7fa2`). `None` means derive one from the project name
+    /// ([`default_task_prefix`]).
+    pub task_prefix: Option<String>,
 }
 
 impl Default for Config {
@@ -434,7 +438,31 @@ impl Default for Config {
             roles,
             budget: BudgetConfig::default(),
             models: ModelsConfig::default(),
+            task_prefix: None,
         }
+    }
+}
+
+/// The default task id prefix when `[tasks] prefix` isn't set: the
+/// project name's first two ASCII alphanumeric characters, lowercased (e.g.
+/// "bridle" -> "br"). Storage.md's own examples (`tw-7fa2`, `hx-19ab`)
+/// aren't derived from any project name shown in these docs, so this is a
+/// judgment call, not a rule pinned down anywhere else; picked over hashing
+/// or a random prefix because it's the same prefix every time a given
+/// project is served, without needing to persist it anywhere. Falls back to
+/// `"tk"` if the project name has no alphanumeric characters at all, and
+/// pads with `'x'` if it has exactly one.
+pub fn default_task_prefix(project: &str) -> String {
+    let alnum: String = project
+        .chars()
+        .filter(|c| c.is_ascii_alphanumeric())
+        .map(|c| c.to_ascii_lowercase())
+        .take(2)
+        .collect();
+    match alnum.len() {
+        0 => "tk".to_string(),
+        1 => format!("{alnum}x"),
+        _ => alnum,
     }
 }
 
@@ -550,6 +578,10 @@ impl Config {
             config.models = config.models.merge(raw_models);
         }
 
+        if let Some(t) = raw.tasks {
+            config.task_prefix = t.prefix;
+        }
+
         Ok(config)
     }
 }
@@ -581,6 +613,15 @@ struct RawConfig {
     budget: Option<RawBudget>,
     #[serde(default)]
     models: Option<BTreeMap<String, Vec<String>>>,
+    #[serde(default)]
+    tasks: Option<RawTasks>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawTasks {
+    #[serde(default)]
+    prefix: Option<String>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -858,6 +899,25 @@ mod tests {
             let prompt = config.roles[role].system_prompt.as_ref().expect("prompt");
             assert!(repo.join(prompt).is_file(), "{} exists", prompt.display());
         }
+    }
+
+    #[test]
+    fn default_task_prefix_from_project_name() {
+        assert_eq!(default_task_prefix("bridle"), "br");
+        assert_eq!(default_task_prefix("Hexworks"), "he");
+        assert_eq!(default_task_prefix("9lives"), "9l");
+        assert_eq!(default_task_prefix("a"), "ax");
+        assert_eq!(default_task_prefix("---"), "tk");
+        assert_eq!(default_task_prefix(""), "tk");
+    }
+
+    #[test]
+    fn tasks_prefix_config_overrides_the_default() {
+        let cfg = Config::parse("[tasks]\nprefix = \"hx\"\n").expect("parse");
+        assert_eq!(cfg.task_prefix.as_deref(), Some("hx"));
+
+        let cfg = Config::default();
+        assert_eq!(cfg.task_prefix, None);
     }
 
     #[test]

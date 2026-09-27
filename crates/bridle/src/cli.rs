@@ -75,6 +75,11 @@ pub enum Command {
     Budget(BudgetArgs),
     /// Token management.
     Token(TokenArgs),
+    /// Task records: create/show/edit/list/drop/reopen
+    /// (docs/design/storage.md). Scoped for now to open/planned/dropped/
+    /// reopened; ready/claimed/in_review/integrated/accepted arrive with
+    /// later tasks.
+    Task(TaskArgs),
     /// Claude Code's statusLine command: reads its JSON on stdin, prints a
     /// line back, and records a usage snapshot. Never fails or blocks: see
     /// docs/design/usage-and-budget.md ("Where bridle can see usage").
@@ -321,6 +326,76 @@ pub enum TokenAction {
     Revoke { name: String },
 }
 
+#[derive(Debug, Clone, Copy, ValueEnum)]
+#[value(rename_all = "kebab-case")]
+pub enum TaskKindArg {
+    Feature,
+    Bug,
+    Chore,
+    Question,
+    Research,
+    Explore,
+    ArchRevision,
+    ReEvaluate,
+}
+
+#[derive(Debug, Args)]
+pub struct TaskArgs {
+    #[command(subcommand)]
+    pub action: TaskAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum TaskAction {
+    /// Create a task, open, with title and kind.
+    New(TaskNewArgs),
+    /// Show one task in full, including its body and thread.
+    Show(TaskShowArgs),
+    /// Change a task's title or body (not its state).
+    Edit(TaskEditArgs),
+    /// List every task: id, title, kind, state.
+    List,
+    /// Drop a task (requires a reason, recorded in its thread).
+    Drop(TaskDropArgs),
+    /// Bring a dropped task back.
+    Reopen(TaskReopenArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct TaskNewArgs {
+    pub title: String,
+    #[arg(short = 'k', long, value_enum)]
+    pub kind: TaskKindArg,
+    #[arg(long)]
+    pub body: Option<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct TaskShowArgs {
+    pub task: String,
+}
+
+#[derive(Debug, Args)]
+pub struct TaskEditArgs {
+    pub task: String,
+    #[arg(long)]
+    pub title: Option<String>,
+    #[arg(long)]
+    pub body: Option<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct TaskDropArgs {
+    pub task: String,
+    #[arg(long)]
+    pub reason: String,
+}
+
+#[derive(Debug, Args)]
+pub struct TaskReopenArgs {
+    pub task: String,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -477,5 +552,88 @@ mod tests {
         };
         assert!(args.force);
         assert!(args.delete_branch);
+    }
+
+    #[test]
+    fn task_new_takes_title_and_kind() {
+        let cli = parse(&["task", "new", "Add foo", "-k", "feature", "--body", "desc"]).unwrap();
+        let Command::Task(args) = cli.command else {
+            panic!("expected task")
+        };
+        let TaskAction::New(a) = args.action else {
+            panic!("expected task new")
+        };
+        assert_eq!(a.title, "Add foo");
+        assert!(matches!(a.kind, TaskKindArg::Feature));
+        assert_eq!(a.body.as_deref(), Some("desc"));
+    }
+
+    #[test]
+    fn task_new_kind_uses_kebab_case_arch_revision() {
+        let cli = parse(&["task", "new", "x", "-k", "arch-revision"]).unwrap();
+        let Command::Task(args) = cli.command else {
+            panic!("expected task")
+        };
+        let TaskAction::New(a) = args.action else {
+            panic!("expected task new")
+        };
+        assert!(matches!(a.kind, TaskKindArg::ArchRevision));
+    }
+
+    #[test]
+    fn task_new_requires_kind() {
+        let err = parse(&["task", "new", "Add foo"]).unwrap_err();
+        assert_eq!(err.kind(), clap::error::ErrorKind::MissingRequiredArgument);
+    }
+
+    #[test]
+    fn task_drop_requires_reason() {
+        let err = parse(&["task", "drop", "tw-1234"]).unwrap_err();
+        assert_eq!(err.kind(), clap::error::ErrorKind::MissingRequiredArgument);
+
+        let cli = parse(&["task", "drop", "tw-1234", "--reason", "budget cut"]).unwrap();
+        let Command::Task(args) = cli.command else {
+            panic!("expected task")
+        };
+        let TaskAction::Drop(a) = args.action else {
+            panic!("expected task drop")
+        };
+        assert_eq!(a.task, "tw-1234");
+        assert_eq!(a.reason, "budget cut");
+    }
+
+    #[test]
+    fn task_reopen_and_show_and_list_parse() {
+        let cli = parse(&["task", "reopen", "tw-1234"]).unwrap();
+        let Command::Task(args) = cli.command else {
+            panic!("expected task")
+        };
+        assert!(matches!(args.action, TaskAction::Reopen(a) if a.task == "tw-1234"));
+
+        let cli = parse(&["task", "show", "tw-1234"]).unwrap();
+        let Command::Task(args) = cli.command else {
+            panic!("expected task")
+        };
+        assert!(matches!(args.action, TaskAction::Show(a) if a.task == "tw-1234"));
+
+        let cli = parse(&["task", "list"]).unwrap();
+        let Command::Task(args) = cli.command else {
+            panic!("expected task")
+        };
+        assert!(matches!(args.action, TaskAction::List));
+    }
+
+    #[test]
+    fn task_edit_takes_title_or_body() {
+        let cli = parse(&["task", "edit", "tw-1234", "--title", "new title"]).unwrap();
+        let Command::Task(args) = cli.command else {
+            panic!("expected task")
+        };
+        let TaskAction::Edit(a) = args.action else {
+            panic!("expected task edit")
+        };
+        assert_eq!(a.task, "tw-1234");
+        assert_eq!(a.title.as_deref(), Some("new title"));
+        assert_eq!(a.body, None);
     }
 }

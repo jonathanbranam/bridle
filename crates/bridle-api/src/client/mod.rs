@@ -11,11 +11,11 @@ use serde::de::DeserializeOwned;
 use thiserror::Error;
 
 use crate::types::{
-    Agent, ApiErrorResponse, BudgetHoldRequest, BudgetStatus, Event, EventQuery, Health,
-    InterruptRequest, InterruptResponse, Message, MessageQuery, RemoveQuery, ResumeRequest,
-    SendRequest, SpawnRequest, Status, StatusLineReport, StopRequest, TokenCreateRequest,
-    TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown,
-    UsageBreakdownQuery,
+    Agent, ApiErrorResponse, BudgetHoldRequest, BudgetStatus, DropTaskRequest, EditTaskRequest,
+    Event, EventQuery, Health, InterruptRequest, InterruptResponse, Message, MessageQuery,
+    NewTaskRequest, RemoveQuery, ResumeRequest, SendRequest, SpawnRequest, Status,
+    StatusLineReport, StopRequest, Task, TokenCreateRequest, TokenCreated, TokenInfo,
+    TranscriptLine, TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery,
 };
 
 #[derive(Debug, Error)]
@@ -124,6 +124,15 @@ impl Client {
 
     async fn post_empty<T: DeserializeOwned>(&self, segments: &[&str]) -> Result<T, ClientError> {
         let req = self.request(Method::POST, segments)?;
+        self.send_json(req).await
+    }
+
+    async fn patch_json<T: DeserializeOwned, B: Serialize + ?Sized>(
+        &self,
+        segments: &[&str],
+        body: &B,
+    ) -> Result<T, ClientError> {
+        let req = self.request(Method::PATCH, segments)?.json(body);
         self.send_json(req).await
     }
 
@@ -356,6 +365,32 @@ impl Client {
     pub async fn revoke_token(&self, name: &str) -> Result<(), ClientError> {
         let req = self.request(Method::DELETE, &["v1", "tokens", name])?;
         self.send_unit(req).await
+    }
+
+    // ---------- tasks ----------
+
+    pub async fn list_tasks(&self) -> Result<Vec<Task>, ClientError> {
+        self.get_json(&["v1", "tasks"]).await
+    }
+
+    pub async fn new_task(&self, req: &NewTaskRequest) -> Result<Task, ClientError> {
+        self.post_json(&["v1", "tasks"], req).await
+    }
+
+    pub async fn get_task(&self, id: &str) -> Result<Task, ClientError> {
+        self.get_json(&["v1", "tasks", id]).await
+    }
+
+    pub async fn edit_task(&self, id: &str, req: &EditTaskRequest) -> Result<Task, ClientError> {
+        self.patch_json(&["v1", "tasks", id], req).await
+    }
+
+    pub async fn drop_task(&self, id: &str, req: &DropTaskRequest) -> Result<Task, ClientError> {
+        self.post_json(&["v1", "tasks", id, "drop"], req).await
+    }
+
+    pub async fn reopen_task(&self, id: &str) -> Result<Task, ClientError> {
+        self.post_empty(&["v1", "tasks", id, "reopen"]).await
     }
 
     pub async fn shutdown(&self) -> Result<(), ClientError> {

@@ -69,6 +69,14 @@ impl Workspace {
         self.workspace.join("wt")
     }
 
+    /// The `bridle` state branch's own worktree
+    /// (docs/design/storage.md, "The state branch"): a normal git worktree,
+    /// distinct from `state_dir()` (`<workspace>/.bridle`, everything else
+    /// the daemon keeps), not visible in the project's main checkout.
+    pub fn state_branch_dir(&self) -> PathBuf {
+        self.state_dir().join("state")
+    }
+
     pub fn worktree(&self, name: &str) -> PathBuf {
         self.wt_dir().join(name)
     }

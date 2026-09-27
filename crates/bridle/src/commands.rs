@@ -4,8 +4,9 @@
 use anyhow::Context;
 use bridle_api::discovery::{self, ProcessEnv};
 use bridle_api::{
-    BudgetHoldRequest, Client, Event, EventQuery, InterruptRequest, MessageKind, MessageQuery,
-    RemoveQuery, ResumeRequest, SendRequest, SpawnRequest, StopRequest, TokenCreateRequest,
+    BudgetHoldRequest, Client, DropTaskRequest, EditTaskRequest, Event, EventQuery,
+    InterruptRequest, MessageKind, MessageQuery, NewTaskRequest, RemoveQuery, ResumeRequest,
+    SendRequest, SpawnRequest, StopRequest, Task, TaskKind, TokenCreateRequest,
     UsageBreakdownQuery, UsageGroupBy, Workdir,
 };
 use chrono::{Local, TimeZone, Utc};
@@ -14,7 +15,9 @@ use futures::StreamExt;
 use crate::cli::{
     AgentsArgs, BudgetAction, BudgetArgs, BudgetHoldArgs, Cli, Command, CostAction, CostArgs,
     CostAuditArgs, EventsArgs, InboxArgs, InterruptArgs, LogsArgs, RmArgs, SendArgs, ShowArgs,
-    SpawnArgs, StopArgs, TokenAction, TokenArgs, UsageArgs, UsageByArg, WhenArg,
+    SpawnArgs, StopArgs, TaskAction, TaskArgs, TaskDropArgs, TaskEditArgs, TaskKindArg,
+    TaskNewArgs, TaskReopenArgs, TaskShowArgs, TokenAction, TokenArgs, UsageArgs, UsageByArg,
+    WhenArg,
 };
 use crate::error::CliError;
 use crate::render;
@@ -42,6 +45,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Tui => tui(&cli).await,
         Command::Budget(args) => budget(&cli, args).await,
         Command::Token(args) => token(&cli, args).await,
+        Command::Task(args) => task(&cli, args).await,
         Command::Statusline => statusline(&cli).await,
     }
 }
@@ -819,6 +823,139 @@ async fn token(cli: &Cli, args: &TokenArgs) -> Result<(), CliError> {
             client.revoke_token(name).await?;
             println!("revoked {name}");
         }
+    }
+    Ok(())
+}
+
+fn task_kind_arg(k: TaskKindArg) -> TaskKind {
+    match k {
+        TaskKindArg::Feature => TaskKind::Feature,
+        TaskKindArg::Bug => TaskKind::Bug,
+        TaskKindArg::Chore => TaskKind::Chore,
+        TaskKindArg::Question => TaskKind::Question,
+        TaskKindArg::Research => TaskKind::Research,
+        TaskKindArg::Explore => TaskKind::Explore,
+        TaskKindArg::ArchRevision => TaskKind::ArchRevision,
+        TaskKindArg::ReEvaluate => TaskKind::ReEvaluate,
+    }
+}
+
+async fn task(cli: &Cli, args: &TaskArgs) -> Result<(), CliError> {
+    match &args.action {
+        TaskAction::New(a) => task_new(cli, a).await,
+        TaskAction::Show(a) => task_show(cli, a).await,
+        TaskAction::Edit(a) => task_edit(cli, a).await,
+        TaskAction::List => task_list(cli).await,
+        TaskAction::Drop(a) => task_drop(cli, a).await,
+        TaskAction::Reopen(a) => task_reopen(cli, a).await,
+    }
+}
+
+fn print_task_row(t: &Task) {
+    println!("{:<10} {:<9} {:<8} {}", t.id, t.kind, t.state, t.title);
+}
+
+async fn task_new(cli: &Cli, args: &TaskNewArgs) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let req = NewTaskRequest {
+        title: args.title.clone(),
+        kind: task_kind_arg(args.kind),
+        body: args.body.clone().unwrap_or_default(),
+    };
+    let task = client.new_task(&req).await?;
+    if cli.json {
+        render::print_json(&task)?;
+    } else {
+        print_task_row(&task);
+    }
+    Ok(())
+}
+
+async fn task_show(cli: &Cli, args: &TaskShowArgs) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let task = client.get_task(&args.task).await?;
+    if cli.json {
+        render::print_json(&task)?;
+    } else {
+        println!("id          {}", task.id);
+        println!("title       {}", task.title);
+        println!("kind        {}", task.kind);
+        println!("state       {}", task.state);
+        println!("created     {}", task.created_at.to_rfc3339());
+        println!("updated     {}", task.updated_at.to_rfc3339());
+        if !task.body.is_empty() {
+            println!();
+            println!("{}", task.body);
+        }
+        if !task.thread.is_empty() {
+            println!();
+            println!("Thread:");
+            for e in &task.thread {
+                println!(
+                    "  [{}] {} ({}): {}",
+                    e.kind,
+                    e.from,
+                    e.at.to_rfc3339(),
+                    e.body
+                );
+            }
+        }
+    }
+    Ok(())
+}
+
+async fn task_edit(cli: &Cli, args: &TaskEditArgs) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let req = EditTaskRequest {
+        title: args.title.clone(),
+        body: args.body.clone(),
+    };
+    let task = client.edit_task(&args.task, &req).await?;
+    if cli.json {
+        render::print_json(&task)?;
+    } else {
+        print_task_row(&task);
+    }
+    Ok(())
+}
+
+async fn task_list(cli: &Cli) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let tasks = client.list_tasks().await?;
+    if cli.json {
+        render::print_json(&tasks)?;
+    } else if tasks.is_empty() {
+        println!("no tasks");
+    } else {
+        println!("{:<10} {:<9} {:<8} TITLE", "ID", "KIND", "STATE");
+        for t in &tasks {
+            print_task_row(t);
+        }
+    }
+    Ok(())
+}
+
+async fn task_drop(cli: &Cli, args: &TaskDropArgs) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let req = DropTaskRequest {
+        reason: args.reason.clone(),
+    };
+    let task = client.drop_task(&args.task, &req).await?;
+    if cli.json {
+        render::print_json(&task)?;
+    } else {
+        print_task_row(&task);
+    }
+    Ok(())
+}
+
+async fn task_reopen(cli: &Cli, args: &TaskReopenArgs) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let task = client.reopen_task(&args.task).await?;
+    if cli.json {
+        render::print_json(&task)?;
+    } else {
+        print_task_row(&task);
     }
     Ok(())
 }

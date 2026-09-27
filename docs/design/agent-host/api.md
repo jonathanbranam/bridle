@@ -26,7 +26,17 @@ JSON over HTTP, versioned under `/v1`. The contract is
 | `GET /v1/budget` | the governor's state, per-window readings and staleness, and the effective thresholds ([[../usage-and-budget#The budget governor\|the budget governor]]); `hold`/`release` land with the wind-down work |
 | `GET /v1/tokens` · `POST /v1/tokens` | list external tokens (name, created-at, revoked-or-not; never the token itself) · mint one (human only) |
 | `DELETE /v1/tokens/{name}` | revoke `external:{name}` (human only; an agent's own token isn't revoked this way — see `rm`) |
+| `GET /v1/tasks` · `POST /v1/tasks` | list all · create (`{title, kind, body?}`), starting `open` |
+| `GET /v1/tasks/{id}` · `PATCH /v1/tasks/{id}` | one task, including its body and thread · change `title`/`body` (`{title?, body?}`; never state) |
+| `POST /v1/tasks/{id}/drop` | `{reason}` (required) -> `dropped`, recorded in the thread |
+| `POST /v1/tasks/{id}/reopen` | `dropped` -> `reopened`; any other current state is a 409 |
 | `POST /v1/shutdown` | graceful stop of all agents, then exit (human only) |
+
+Tasks ([[docs/design/storage#The state branch|storage.md]]) are scoped, for
+now, to `open`/`planned`/`dropped`/`reopened`
+([[docs/design/roles-and-lifecycle#Task lifecycle|task lifecycle]]);
+`ready`/`claimed`/`in_review`/`integrated`/`accepted` and the edges/questions/
+claims that drive them arrive with later tasks.
 
 `POST /v1/agents` with a `prompt` (or a role `start_prompt`) waits briefly
 after sending it for that turn's readiness before answering (a `system/init`
