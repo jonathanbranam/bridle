@@ -1,1 +1,6 @@
 .obsidian/
+/target
+**/target
+.DS_Store
+# a bridle workspace's state, if someone runs bridle with this repo inside a workspace
+.bridle/*.db*

@@ -1,0 +1,515 @@
+//! An async HTTP/SSE client for the bridle daemon API. See
+//! docs/agent-host.md §6.1 for the endpoint list this mirrors.
+
+mod sse;
+
+use bytes::Bytes;
+use futures::{Stream, StreamExt, TryStreamExt};
+use reqwest::{Method, RequestBuilder, StatusCode};
+use serde::Serialize;
+use serde::de::DeserializeOwned;
+use thiserror::Error;
+
+use crate::types::{
+    Agent, ApiErrorResponse, Event, EventQuery, Health, InterruptRequest, InterruptResponse,
+    Message, MessageQuery, RemoveQuery, SendRequest, SpawnRequest, Status, StopRequest,
+    TokenCreateRequest, TokenCreated, TranscriptLine, TranscriptQuery, Usage,
+};
+
+#[derive(Debug, Error)]
+pub enum ClientError {
+    #[error("could not reach the daemon: {0}")]
+    Unreachable(String),
+    #[error("{code}: {message}")]
+    Api {
+        status: u16,
+        code: String,
+        message: String,
+    },
+    #[error("failed to decode response: {0}")]
+    Decode(String),
+    #[error("{0}")]
+    Other(String),
+}
+
+/// A thin, cloneable HTTP client for one daemon.
+#[derive(Debug, Clone)]
+pub struct Client {
+    http: reqwest::Client,
+    base_url: String,
+    token: Option<String>,
+}
+
+impl Client {
+    pub fn new(base_url: impl Into<String>, token: Option<String>) -> Self {
+        let mut base_url = base_url.into();
+        while base_url.ends_with('/') {
+            base_url.pop();
+        }
+        Self {
+            http: reqwest::Client::new(),
+            base_url,
+            token,
+        }
+    }
+
+    fn build_url(&self, segments: &[&str]) -> Result<reqwest::Url, ClientError> {
+        let mut url = reqwest::Url::parse(&self.base_url)
+            .map_err(|e| ClientError::Other(format!("invalid base url {}: {e}", self.base_url)))?;
+        {
+            let mut segs = url.path_segments_mut().map_err(|()| {
+                ClientError::Other(format!("base url {} cannot be a base", self.base_url))
+            })?;
+            segs.extend(segments);
+        }
+        Ok(url)
+    }
+
+    fn request(&self, method: Method, segments: &[&str]) -> Result<RequestBuilder, ClientError> {
+        let url = self.build_url(segments)?;
+        let mut req = self.http.request(method, url);
+        if let Some(t) = &self.token {
+            req = req.bearer_auth(t);
+        }
+        Ok(req)
+    }
+
+    async fn get_json<T: DeserializeOwned>(&self, segments: &[&str]) -> Result<T, ClientError> {
+        let req = self.request(Method::GET, segments)?;
+        self.send_json(req).await
+    }
+
+    async fn get_json_query<T: DeserializeOwned, Q: Serialize + ?Sized>(
+        &self,
+        segments: &[&str],
+        query: &Q,
+    ) -> Result<T, ClientError> {
+        let req = self.request(Method::GET, segments)?.query(query);
+        self.send_json(req).await
+    }
+
+    async fn post_json<T: DeserializeOwned, B: Serialize + ?Sized>(
+        &self,
+        segments: &[&str],
+        body: &B,
+    ) -> Result<T, ClientError> {
+        let req = self.request(Method::POST, segments)?.json(body);
+        self.send_json(req).await
+    }
+
+    async fn post_empty<T: DeserializeOwned>(&self, segments: &[&str]) -> Result<T, ClientError> {
+        let req = self.request(Method::POST, segments)?;
+        self.send_json(req).await
+    }
+
+    async fn send_json<T: DeserializeOwned>(&self, req: RequestBuilder) -> Result<T, ClientError> {
+        let resp = req.send().await.map_err(map_send_err)?;
+        let status = resp.status();
+        let bytes = resp
+            .bytes()
+            .await
+            .map_err(|e| ClientError::Decode(e.to_string()))?;
+        if status.is_success() {
+            serde_json::from_slice(&bytes).map_err(|e| ClientError::Decode(e.to_string()))
+        } else {
+            Err(parse_api_error(status, &bytes))
+        }
+    }
+
+    async fn send_unit(&self, req: RequestBuilder) -> Result<(), ClientError> {
+        let resp = req.send().await.map_err(map_send_err)?;
+        let status = resp.status();
+        if status.is_success() {
+            Ok(())
+        } else {
+            let bytes = resp
+                .bytes()
+                .await
+                .map_err(|e| ClientError::Decode(e.to_string()))?;
+            Err(parse_api_error(status, &bytes))
+        }
+    }
+
+    // ---------- health / status ----------
+
+    pub async fn health(&self) -> Result<Health, ClientError> {
+        self.get_json(&["v1", "health"]).await
+    }
+
+    pub async fn status(&self) -> Result<Status, ClientError> {
+        self.get_json(&["v1", "status"]).await
+    }
+
+    // ---------- agents ----------
+
+    pub async fn list_agents(&self) -> Result<Vec<Agent>, ClientError> {
+        self.get_json(&["v1", "agents"]).await
+    }
+
+    pub async fn spawn(&self, req: &SpawnRequest) -> Result<Agent, ClientError> {
+        self.post_json(&["v1", "agents"], req).await
+    }
+
+    pub async fn get_agent(&self, id: &str) -> Result<Agent, ClientError> {
+        self.get_json(&["v1", "agents", id]).await
+    }
+
+    pub async fn send_to_agent(&self, id: &str, req: &SendRequest) -> Result<Message, ClientError> {
+        self.post_json(&["v1", "agents", id, "messages"], req).await
+    }
+
+    pub async fn interrupt(
+        &self,
+        id: &str,
+        req: &InterruptRequest,
+    ) -> Result<InterruptResponse, ClientError> {
+        self.post_json(&["v1", "agents", id, "interrupt"], req)
+            .await
+    }
+
+    pub async fn stop(&self, id: &str, req: &StopRequest) -> Result<Agent, ClientError> {
+        self.post_json(&["v1", "agents", id, "stop"], req).await
+    }
+
+    pub async fn resume(&self, id: &str) -> Result<Agent, ClientError> {
+        self.post_empty(&["v1", "agents", id, "resume"]).await
+    }
+
+    pub async fn remove(&self, id: &str, query: &RemoveQuery) -> Result<(), ClientError> {
+        let req = self
+            .request(Method::DELETE, &["v1", "agents", id])?
+            .query(query);
+        self.send_unit(req).await
+    }
+
+    pub async fn transcript(
+        &self,
+        id: &str,
+        since: Option<u64>,
+        limit: Option<u32>,
+    ) -> Result<Vec<TranscriptLine>, ClientError> {
+        let query = TranscriptQuery { since, limit };
+        self.get_json_query(&["v1", "agents", id, "transcript"], &query)
+            .await
+    }
+
+    // ---------- messages ----------
+
+    pub async fn list_messages(&self, query: &MessageQuery) -> Result<Vec<Message>, ClientError> {
+        self.get_json_query(&["v1", "messages"], query).await
+    }
+
+    pub async fn send(&self, req: &SendRequest) -> Result<Message, ClientError> {
+        self.post_json(&["v1", "messages"], req).await
+    }
+
+    pub async fn mark_read(&self, id: &str) -> Result<Message, ClientError> {
+        self.post_empty(&["v1", "messages", id, "read"]).await
+    }
+
+    // ---------- events ----------
+
+    pub async fn events(&self, query: &EventQuery) -> Result<Vec<Event>, ClientError> {
+        self.get_json_query(&["v1", "events"], query).await
+    }
+
+    /// `GET /v1/events/stream?since=` as SSE. The request isn't sent until
+    /// the returned stream is first polled.
+    pub fn events_stream(
+        &self,
+        since: Option<i64>,
+    ) -> impl Stream<Item = Result<Event, ClientError>> + use<> {
+        let client = self.clone();
+        futures::stream::once(async move { open_event_stream(client, since).await }).try_flatten()
+    }
+}
+
+async fn open_event_stream(
+    client: Client,
+    since: Option<i64>,
+) -> Result<impl Stream<Item = Result<Event, ClientError>> + use<>, ClientError> {
+    let mut req = client.request(Method::GET, &["v1", "events", "stream"])?;
+    if let Some(s) = since {
+        req = req.query(&[("since", s)]);
+    }
+    let resp = req.send().await.map_err(map_send_err)?;
+    let status = resp.status();
+    if !status.is_success() {
+        let bytes = resp
+            .bytes()
+            .await
+            .map_err(|e| ClientError::Decode(e.to_string()))?;
+        return Err(parse_api_error(status, &bytes));
+    }
+    let byte_stream: std::pin::Pin<Box<dyn Stream<Item = Result<Bytes, ClientError>> + Send>> =
+        Box::pin(resp.bytes_stream().map(|r| r.map_err(map_send_err)));
+    Ok(sse::parse_event_stream(byte_stream))
+}
+
+impl Client {
+    // ---------- usage / tokens / shutdown ----------
+
+    pub async fn usage(&self) -> Result<Usage, ClientError> {
+        self.get_json(&["v1", "usage"]).await
+    }
+
+    pub async fn create_token(
+        &self,
+        req: &TokenCreateRequest,
+    ) -> Result<TokenCreated, ClientError> {
+        self.post_json(&["v1", "tokens"], req).await
+    }
+
+    pub async fn shutdown(&self) -> Result<(), ClientError> {
+        let req = self.request(Method::POST, &["v1", "shutdown"])?;
+        self.send_unit(req).await
+    }
+}
+
+fn map_send_err(e: reqwest::Error) -> ClientError {
+    if e.is_connect() || e.is_timeout() {
+        ClientError::Unreachable(e.to_string())
+    } else {
+        ClientError::Other(e.to_string())
+    }
+}
+
+fn parse_api_error(status: StatusCode, body: &[u8]) -> ClientError {
+    match serde_json::from_slice::<ApiErrorResponse>(body) {
+        Ok(e) => ClientError::Api {
+            status: status.as_u16(),
+            code: e.error.code,
+            message: e.error.message,
+        },
+        Err(_) => ClientError::Api {
+            status: status.as_u16(),
+            code: "unknown".to_string(),
+            message: String::from_utf8_lossy(body).into_owned(),
+        },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::net::SocketAddr;
+
+    use axum::Json;
+    use axum::extract::State;
+    use axum::response::sse::{Event as AxumSseEvent, Sse};
+    use axum::routing::{get, post};
+    use futures::StreamExt;
+    use serde_json::json;
+    use tokio::net::TcpListener;
+
+    use super::*;
+    use crate::types::{AgentState, ErrorBody, PrincipalKind};
+
+    async fn spawn_test_server(app: axum::Router) -> SocketAddr {
+        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        tokio::spawn(async move {
+            axum::serve(listener, app).await.unwrap();
+        });
+        addr
+    }
+
+    #[tokio::test]
+    async fn health_ok() {
+        let app = axum::Router::new().route(
+            "/v1/health",
+            get(|| async { Json(json!({"ok": true, "version": "0.1.0"})) }),
+        );
+        let addr = spawn_test_server(app).await;
+        let client = Client::new(format!("http://{addr}"), None);
+        let health = client.health().await.unwrap();
+        assert!(health.ok);
+        assert_eq!(health.version, "0.1.0");
+    }
+
+    #[tokio::test]
+    async fn list_agents_returns_a_json_array() {
+        let app = axum::Router::new().route(
+            "/v1/agents",
+            get(|| async {
+                Json(json!([{
+                    "id": "a-1", "name": "w1", "role": "worker", "state": "idle",
+                    "model": "sonnet", "session_id": "s-1", "pid": null, "cwd": "/ws/wt/w1",
+                    "worktree": "/ws/wt/w1", "branch": "bridle/w1",
+                    "created_at": "2026-09-27T00:00:00Z", "updated_at": "2026-09-27T00:00:00Z",
+                    "last_event_at": null, "turns": 0, "turn_started_at": null,
+                    "cost_usd_total": 0.0, "exit": null, "created_by": "human",
+                    "held_messages": 0, "unacked_messages": 0
+                }]))
+            }),
+        );
+        let addr = spawn_test_server(app).await;
+        let client = Client::new(format!("http://{addr}"), None);
+        let agents = client.list_agents().await.unwrap();
+        assert_eq!(agents.len(), 1);
+        assert_eq!(agents[0].id, "a-1");
+        assert_eq!(agents[0].state, AgentState::Idle);
+    }
+
+    #[tokio::test]
+    async fn sends_bearer_token() {
+        let app = axum::Router::new().route(
+            "/v1/status",
+            get(|headers: axum::http::HeaderMap| async move {
+                let auth = headers
+                    .get("authorization")
+                    .and_then(|v| v.to_str().ok())
+                    .unwrap_or_default();
+                assert_eq!(auth, "Bearer secret-token");
+                Json(json!({
+                    "daemon": {
+                        "project": "demo", "workspace": "/ws", "repo": "/ws/repo",
+                        "url": "http://x", "pid": 1, "started_at": "2026-09-27T00:00:00Z",
+                        "version": "0.1.0"
+                    },
+                    "principal": "human",
+                    "agents_by_state": {},
+                    "unread_human_messages": 0,
+                    "rate_limits": []
+                }))
+            }),
+        );
+        let addr = spawn_test_server(app).await;
+        let client = Client::new(format!("http://{addr}"), Some("secret-token".to_string()));
+        let status = client.status().await.unwrap();
+        assert_eq!(status.principal, "human");
+        let _ = PrincipalKind::Human; // keep import used across cfg combos
+    }
+
+    #[tokio::test]
+    async fn api_error_is_decoded_from_error_body() {
+        let app = axum::Router::new().route(
+            "/v1/agents/missing",
+            get(|| async {
+                (
+                    axum::http::StatusCode::NOT_FOUND,
+                    Json(json!({"error": {"code": "not_found", "message": "no such agent"}})),
+                )
+            }),
+        );
+        let addr = spawn_test_server(app).await;
+        let client = Client::new(format!("http://{addr}"), None);
+        let err = client.get_agent("missing").await.unwrap_err();
+        match err {
+            ClientError::Api {
+                status,
+                code,
+                message,
+            } => {
+                assert_eq!(status, 404);
+                assert_eq!(code, "not_found");
+                assert_eq!(message, "no such agent");
+            }
+            other => panic!("expected ClientError::Api, got {other:?}"),
+        }
+        // Exercise the ErrorBody type directly too, so it's covered here.
+        let body: ErrorBody = serde_json::from_value(json!({"code": "x", "message": "y"})).unwrap();
+        assert_eq!(body.code, "x");
+    }
+
+    #[tokio::test]
+    async fn unreachable_when_nothing_is_listening() {
+        // Reserve a port, then drop the listener so nothing answers on it.
+        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        drop(listener);
+        let client = Client::new(format!("http://{addr}"), None);
+        let err = client.health().await.unwrap_err();
+        assert!(
+            matches!(err, ClientError::Unreachable(_)),
+            "expected Unreachable, got {err:?}"
+        );
+    }
+
+    #[tokio::test]
+    async fn remove_sends_query_params() {
+        let app = axum::Router::new().route(
+            "/v1/agents/w1",
+            axum::routing::delete(
+                |axum::extract::Query(q): axum::extract::Query<RemoveQuery>| async move {
+                    assert!(q.force);
+                    assert!(!q.delete_branch);
+                    axum::http::StatusCode::NO_CONTENT
+                },
+            ),
+        );
+        let addr = spawn_test_server(app).await;
+        let client = Client::new(format!("http://{addr}"), None);
+        client
+            .remove(
+                "w1",
+                &RemoveQuery {
+                    force: true,
+                    delete_branch: false,
+                },
+            )
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn events_stream_parses_sse_from_a_real_server() {
+        #[derive(Clone)]
+        struct AppState;
+
+        async fn stream_handler(
+            State(_): State<AppState>,
+        ) -> Sse<impl futures::Stream<Item = Result<AxumSseEvent, std::convert::Infallible>>>
+        {
+            let events = vec![
+                json!({"seq": 1, "ts": "2026-09-27T00:00:00Z", "kind": "agent.text", "actor": "human", "agent": null, "data": {}}),
+                json!({"seq": 2, "ts": "2026-09-27T00:00:01Z", "kind": "agent.text", "actor": "human", "agent": null, "data": {}}),
+            ];
+            let stream = futures::stream::iter(
+                events
+                    .into_iter()
+                    .map(|e| Ok(AxumSseEvent::default().data(e.to_string()))),
+            );
+            Sse::new(stream)
+        }
+
+        let app = axum::Router::new()
+            .route("/v1/events/stream", get(stream_handler))
+            .with_state(AppState);
+        let addr = spawn_test_server(app).await;
+        let client = Client::new(format!("http://{addr}"), None);
+
+        let events: Vec<_> = client.events_stream(None).take(2).collect().await;
+        assert_eq!(events.len(), 2);
+        assert_eq!(events[0].as_ref().unwrap().seq, 1);
+        assert_eq!(events[1].as_ref().unwrap().seq, 2);
+    }
+
+    #[tokio::test]
+    async fn spawn_posts_body_and_returns_agent() {
+        let app = axum::Router::new().route(
+            "/v1/agents",
+            post(|Json(body): Json<SpawnRequest>| async move {
+                assert_eq!(body.role, "worker");
+                Json(json!({
+                    "id": "a-2", "name": "w2", "role": "worker", "state": "starting",
+                    "model": "sonnet", "session_id": "s-2", "pid": null, "cwd": "/ws/wt/w2",
+                    "worktree": "/ws/wt/w2", "branch": "bridle/w2",
+                    "created_at": "2026-09-27T00:00:00Z", "updated_at": "2026-09-27T00:00:00Z",
+                    "last_event_at": null, "turns": 0, "turn_started_at": null,
+                    "cost_usd_total": 0.0, "exit": null, "created_by": "human",
+                    "held_messages": 0, "unacked_messages": 0
+                }))
+            }),
+        );
+        let addr = spawn_test_server(app).await;
+        let client = Client::new(format!("http://{addr}"), None);
+        let agent = client
+            .spawn(&SpawnRequest {
+                role: "worker".to_string(),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+        assert_eq!(agent.id, "a-2");
+    }
+}

@@ -1,0 +1,246 @@
+//! `ClaudeCommand`: builds the argv/env for one headless `claude` process,
+//! per docs/agent-host.md §4.1. Kept as a pure builder (`args()` returns a
+//! `Vec<String>`) so the flag set is unit-testable without spawning
+//! anything.
+
+use std::path::PathBuf;
+
+use uuid::Uuid;
+
+/// Whether the process starts a new conversation or resumes one.
+/// `--session-id` and `--resume` are never both passed (claude rejects that
+/// unless `--fork-session` is also given; see S7 in
+/// docs/spikes/01-stream-json-findings.md).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Session {
+    New(Uuid),
+    Resume(Uuid),
+}
+
+#[derive(Debug, Clone)]
+pub struct ClaudeCommand {
+    /// The executable to run. Defaults to `"claude"`; tests point this at
+    /// `tests/fake-claude.py`.
+    pub program: String,
+    pub cwd: PathBuf,
+    pub session: Session,
+    pub model: Option<String>,
+    pub effort: Option<String>,
+    pub append_system_prompt_file: Option<PathBuf>,
+    pub permission_mode: Option<String>,
+    pub allowed_tools: Vec<String>,
+    pub disallowed_tools: Vec<String>,
+    pub name: Option<String>,
+    /// Applied on top of the stripped inherited environment; see
+    /// [`env_removal_keys`].
+    pub env: Vec<(String, String)>,
+    pub extra_args: Vec<String>,
+}
+
+impl ClaudeCommand {
+    pub fn new(cwd: impl Into<PathBuf>, session: Session) -> Self {
+        Self {
+            program: "claude".to_string(),
+            cwd: cwd.into(),
+            session,
+            model: None,
+            effort: None,
+            append_system_prompt_file: None,
+            permission_mode: None,
+            allowed_tools: Vec::new(),
+            disallowed_tools: Vec::new(),
+            name: None,
+            env: Vec::new(),
+            extra_args: Vec::new(),
+        }
+    }
+
+    /// The argv (excluding the program name itself), in the order given by
+    /// docs/agent-host.md §4.1.
+    pub fn args(&self) -> Vec<String> {
+        let mut args: Vec<String> = [
+            "-p",
+            "--input-format",
+            "stream-json",
+            "--output-format",
+            "stream-json",
+            "--verbose",
+            "--replay-user-messages",
+            "--exclude-dynamic-system-prompt-sections",
+            "--strict-mcp-config",
+            "--permission-prompts",
+            "none",
+        ]
+        .into_iter()
+        .map(String::from)
+        .collect();
+
+        match &self.session {
+            Session::New(id) => {
+                args.push("--session-id".into());
+                args.push(id.to_string());
+            }
+            Session::Resume(id) => {
+                args.push("--resume".into());
+                args.push(id.to_string());
+            }
+        }
+
+        if let Some(model) = &self.model {
+            args.push("--model".into());
+            args.push(model.clone());
+        }
+        if let Some(effort) = &self.effort {
+            args.push("--effort".into());
+            args.push(effort.clone());
+        }
+        if let Some(path) = &self.append_system_prompt_file {
+            args.push("--append-system-prompt-file".into());
+            args.push(path.to_string_lossy().into_owned());
+        }
+        if let Some(mode) = &self.permission_mode {
+            args.push("--permission-mode".into());
+            args.push(mode.clone());
+        }
+        // `--allowedTools <tools...>` is variadic (verified via `claude
+        // --help`): one flag followed by each tool as its own argv element.
+        if !self.allowed_tools.is_empty() {
+            args.push("--allowedTools".into());
+            args.extend(self.allowed_tools.iter().cloned());
+        }
+        if !self.disallowed_tools.is_empty() {
+            args.push("--disallowedTools".into());
+            args.extend(self.disallowed_tools.iter().cloned());
+        }
+        if let Some(name) = &self.name {
+            args.push("--name".into());
+            args.push(name.clone());
+        }
+
+        args.extend(self.extra_args.iter().cloned());
+        args
+    }
+}
+
+/// Keys to remove from the inherited environment before spawning: every
+/// `CLAUDE*` variable (including `CLAUDECODE`) and `BRIDLE_TOKEN` (spike
+/// surprise 12 / docs/agent-host.md §4.1). Bridle itself may run inside a
+/// Claude Code session, and the child must not inherit that session's
+/// identity or the parent daemon's own token.
+pub fn env_removal_keys(vars: impl IntoIterator<Item = (String, String)>) -> Vec<String> {
+    vars.into_iter()
+        .map(|(k, _)| k)
+        .filter(|k| k.starts_with("CLAUDE") || k == "BRIDLE_TOKEN")
+        .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn uuid(n: u8) -> Uuid {
+        Uuid::from_bytes([n; 16])
+    }
+
+    #[test]
+    fn new_session_passes_session_id_not_resume() {
+        let cmd = ClaudeCommand::new("/tmp", Session::New(uuid(1)));
+        let args = cmd.args();
+        assert!(args.contains(&"--session-id".to_string()));
+        assert!(!args.contains(&"--resume".to_string()));
+    }
+
+    #[test]
+    fn resume_session_passes_resume_not_session_id() {
+        let cmd = ClaudeCommand::new("/tmp", Session::Resume(uuid(2)));
+        let args = cmd.args();
+        assert!(args.contains(&"--resume".to_string()));
+        assert!(!args.contains(&"--session-id".to_string()));
+    }
+
+    #[test]
+    fn never_both_session_id_and_resume() {
+        for session in [Session::New(uuid(3)), Session::Resume(uuid(4))] {
+            let cmd = ClaudeCommand::new("/tmp", session);
+            let args = cmd.args();
+            let has_session_id = args.contains(&"--session-id".to_string());
+            let has_resume = args.contains(&"--resume".to_string());
+            assert!(!(has_session_id && has_resume), "{args:?}");
+            assert!(has_session_id || has_resume, "{args:?}");
+        }
+    }
+
+    #[test]
+    fn always_includes_fixed_flags() {
+        let cmd = ClaudeCommand::new("/tmp", Session::New(uuid(5)));
+        let args = cmd.args();
+        for flag in [
+            "-p",
+            "--input-format",
+            "--output-format",
+            "--verbose",
+            "--replay-user-messages",
+            "--exclude-dynamic-system-prompt-sections",
+            "--strict-mcp-config",
+            "--permission-prompts",
+        ] {
+            assert!(
+                args.contains(&flag.to_string()),
+                "missing {flag} in {args:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn allowed_tools_are_separate_argv_elements_after_one_flag() {
+        let mut cmd = ClaudeCommand::new("/tmp", Session::New(uuid(6)));
+        cmd.allowed_tools = vec!["Bash(git *)".to_string(), "Edit".to_string()];
+        let args = cmd.args();
+        let idx = args
+            .iter()
+            .position(|a| a == "--allowedTools")
+            .expect("flag present");
+        assert_eq!(args[idx + 1], "Bash(git *)");
+        assert_eq!(args[idx + 2], "Edit");
+        // Only one occurrence of the flag itself.
+        assert_eq!(args.iter().filter(|a| *a == "--allowedTools").count(), 1);
+    }
+
+    #[test]
+    fn omits_optional_flags_when_unset() {
+        let cmd = ClaudeCommand::new("/tmp", Session::New(uuid(7)));
+        let args = cmd.args();
+        for flag in [
+            "--model",
+            "--effort",
+            "--append-system-prompt-file",
+            "--permission-mode",
+            "--allowedTools",
+            "--disallowedTools",
+            "--name",
+        ] {
+            assert!(
+                !args.contains(&flag.to_string()),
+                "unexpected {flag} in {args:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn env_removal_strips_claude_and_bridle_token() {
+        let vars = vec![
+            ("CLAUDECODE".to_string(), "1".to_string()),
+            ("CLAUDE_CODE_SESSION_ID".to_string(), "abc".to_string()),
+            ("BRIDLE_TOKEN".to_string(), "secret".to_string()),
+            ("PATH".to_string(), "/usr/bin".to_string()),
+            ("HOME".to_string(), "/home/x".to_string()),
+        ];
+        let removed = env_removal_keys(vars);
+        assert!(removed.contains(&"CLAUDECODE".to_string()));
+        assert!(removed.contains(&"CLAUDE_CODE_SESSION_ID".to_string()));
+        assert!(removed.contains(&"BRIDLE_TOKEN".to_string()));
+        assert!(!removed.contains(&"PATH".to_string()));
+        assert!(!removed.contains(&"HOME".to_string()));
+        assert_eq!(removed.len(), 3);
+    }
+}

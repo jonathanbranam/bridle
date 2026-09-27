@@ -1,0 +1,1402 @@
+//! The agent supervisor: spawns and drives headless `claude` processes,
+//! delivers messages to them, and stops/resumes/removes them. See
+//! docs/agent-host.md §4.
+
+use std::collections::{HashMap, VecDeque};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::Duration;
+
+use bridle_api::types::{
+    Agent, AgentState, ExitInfo, Message, MessageKind, MessageState, PrincipalId, PrincipalKind,
+    SpawnRequest, Workdir, event_kind,
+};
+use bridle_claude::command::{ClaudeCommand, Session};
+use bridle_claude::events::{ContentBlock, EventKind as ClaudeEventKind};
+use bridle_claude::process::{AgentHandle, ExitOutcome};
+use bridle_claude::transcript::Transcript;
+use chrono::Utc;
+use serde_json::{Value, json};
+use tokio::sync::{Mutex as AsyncMutex, watch};
+use uuid::Uuid;
+
+use crate::config::{Config, Role};
+use crate::containment::{self, Tracker};
+use crate::events::Emitter;
+use crate::paths::{Workspace, write_secret_file};
+use crate::store::{NewAgent, NewMessage, Principal, Store, StoreError};
+use crate::worktree::{self, WorktreeError};
+
+const TRUNCATE_TEXT: usize = 2048;
+const TRUNCATE_SUMMARY: usize = 120;
+const INTERRUPT_TIMEOUT: Duration = Duration::from_secs(10);
+const TERMINATE_GRACE: Duration = Duration::from_secs(3);
+const SWEEP_GRACE: Duration = Duration::from_secs(2);
+
+#[derive(Debug, thiserror::Error)]
+pub enum SupervisorError {
+    #[error("not found: {0}")]
+    NotFound(String),
+    #[error("conflict: {0}")]
+    Conflict(String),
+    #[error("bad request: {0}")]
+    BadRequest(String),
+    #[error("agent not running: {0}")]
+    AgentNotRunning(String),
+    #[error("internal error: {0}")]
+    Internal(String),
+}
+
+impl From<StoreError> for SupervisorError {
+    fn from(e: StoreError) -> Self {
+        match e {
+            StoreError::NotFound(m) => SupervisorError::NotFound(m),
+            StoreError::Conflict(m) => SupervisorError::Conflict(m),
+            other => SupervisorError::Internal(other.to_string()),
+        }
+    }
+}
+
+impl From<WorktreeError> for SupervisorError {
+    fn from(e: WorktreeError) -> Self {
+        match e {
+            WorktreeError::BranchExists { branch } => {
+                SupervisorError::Conflict(format!("branch {branch:?} already exists"))
+            }
+            WorktreeError::InvalidName(n) => {
+                SupervisorError::BadRequest(format!("invalid agent name {n:?}"))
+            }
+            other => SupervisorError::Internal(other.to_string()),
+        }
+    }
+}
+
+impl From<std::io::Error> for SupervisorError {
+    fn from(e: std::io::Error) -> Self {
+        SupervisorError::Internal(e.to_string())
+    }
+}
+
+// ---------- runtime bookkeeping for a live agent process ----------
+
+struct RuntimeState {
+    tracker: Tracker,
+    /// FIFO of (message id, exact text written to stdin), oldest first.
+    fifo: VecDeque<(String, String)>,
+    /// The session's cumulative cost as of the last `result`, per
+    /// docs/agent-host.md's cost-delta rule.
+    last_cumulative: f64,
+    /// The last turn number started (equals `agent.turns` until a turn is
+    /// in flight, then `agent.turns + 1`).
+    turn_n: u32,
+    stall_notified: bool,
+    current_state: AgentState,
+    /// Whether any stdout line at all has been seen (system/init counts).
+    saw_any_line: bool,
+    /// Last time `touch_agent` actually wrote to the store, to throttle it
+    /// to roughly once a second under a chatty agent.
+    last_touch: std::time::Instant,
+}
+
+struct AgentRuntime {
+    handle: AgentHandle,
+    stop_requested: AtomicBool,
+    state: AsyncMutex<RuntimeState>,
+    exited: watch::Receiver<bool>,
+    task: AsyncMutex<Option<tokio::task::JoinHandle<()>>>,
+}
+
+// ---------- the manager ----------
+
+struct Inner {
+    store: Store,
+    workspace: Workspace,
+    config: Config,
+    claude_program: String,
+    url: String,
+    project: String,
+    emitter: Emitter,
+    runtimes: std::sync::Mutex<HashMap<String, Arc<AgentRuntime>>>,
+}
+
+#[derive(Clone)]
+pub struct AgentManager(Arc<Inner>);
+
+pub fn system_principal() -> Principal {
+    Principal {
+        id: "system".to_string(),
+        kind: PrincipalKind::System,
+    }
+}
+
+impl AgentManager {
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(
+        store: Store,
+        workspace: Workspace,
+        config: Config,
+        claude_program: String,
+        url: String,
+        project: String,
+        emitter: Emitter,
+    ) -> Self {
+        AgentManager(Arc::new(Inner {
+            store,
+            workspace,
+            config,
+            claude_program,
+            url,
+            project,
+            emitter,
+            runtimes: std::sync::Mutex::new(HashMap::new()),
+        }))
+    }
+
+    fn get_runtime(&self, id: &str) -> Option<Arc<AgentRuntime>> {
+        self.0
+            .runtimes
+            .lock()
+            .expect("runtimes mutex poisoned")
+            .get(id)
+            .cloned()
+    }
+
+    pub fn running_ids(&self) -> Vec<String> {
+        self.0
+            .runtimes
+            .lock()
+            .expect("runtimes mutex poisoned")
+            .keys()
+            .cloned()
+            .collect()
+    }
+
+    /// A snapshot of every live runtime, for the background containment
+    /// tracker loop.
+    fn runtimes_snapshot(&self) -> Vec<(String, Arc<AgentRuntime>)> {
+        self.0
+            .runtimes
+            .lock()
+            .expect("runtimes mutex poisoned")
+            .iter()
+            .map(|(k, v)| (k.clone(), v.clone()))
+            .collect()
+    }
+
+    /// Updates every live agent's containment tracker from one process
+    /// snapshot (docs/agent-host.md §4.6, called every `tracker_interval`).
+    pub async fn tick_tracker(&self) {
+        let snap = match tokio::task::spawn_blocking(containment::snapshot).await {
+            Ok(Ok(s)) => s,
+            _ => return,
+        };
+        for (_, rt) in self.runtimes_snapshot() {
+            let mut st = rt.state.lock().await;
+            st.tracker.update(&snap);
+        }
+    }
+
+    /// Emits `agent.stalled` for any `working` agent silent past
+    /// `config.stall_after`, once per turn (docs/agent-host.md §4.2).
+    pub async fn tick_stall_check(&self) {
+        let Ok(agents) = self.0.store.list_agents(false).await else {
+            return;
+        };
+        let stall_after = chrono::Duration::from_std(self.0.config.stall_after)
+            .unwrap_or_else(|_| chrono::Duration::zero());
+        for a in agents {
+            if a.state != AgentState::Working {
+                continue;
+            }
+            let Some(last) = a.last_event_at.or(a.turn_started_at) else {
+                continue;
+            };
+            if Utc::now() - last < stall_after {
+                continue;
+            }
+            let Some(rt) = self.get_runtime(&a.id) else {
+                continue;
+            };
+            let mut st = rt.state.lock().await;
+            if st.stall_notified {
+                continue;
+            }
+            st.stall_notified = true;
+            drop(st);
+            let _ = self
+                .0
+                .emitter
+                .emit(
+                    event_kind::AGENT_STALLED,
+                    "system".to_string(),
+                    Some(a.id),
+                    json!({}),
+                )
+                .await;
+        }
+    }
+
+    /// Stops every running agent concurrently, capped at `cap` in total
+    /// (docs/agent-host.md's shutdown sequence).
+    pub async fn stop_all(&self, cap: Duration) {
+        let ids = self.running_ids();
+        let system = system_principal();
+        let futs = ids.into_iter().map(|id| {
+            let this = self.clone();
+            let system = system.clone();
+            async move {
+                let _ = this.stop(&id, false, &system).await;
+            }
+        });
+        let _ = tokio::time::timeout(cap, futures::future::join_all(futs)).await;
+    }
+
+    // ---------- spawn ----------
+
+    pub async fn spawn(
+        &self,
+        req: SpawnRequest,
+        principal: &Principal,
+    ) -> Result<Agent, SupervisorError> {
+        let role =
+            self.0.config.roles.get(&req.role).cloned().ok_or_else(|| {
+                SupervisorError::BadRequest(format!("unknown role {:?}", req.role))
+            })?;
+
+        let name = match req.name {
+            Some(n) => {
+                worktree::validate_agent_name(&n)?;
+                if self.0.store.get_agent(&n).await?.is_some() {
+                    return Err(SupervisorError::Conflict(format!(
+                        "agent name {n:?} already exists"
+                    )));
+                }
+                n
+            }
+            None => self.generate_name(&req.role).await?,
+        };
+
+        let workdir = req.workdir.unwrap_or(match role.workdir {
+            crate::config::Workdir::Worktree => Workdir::Worktree { base: None },
+            crate::config::Workdir::Repo => Workdir::Repo,
+        });
+
+        let mut created_worktree: Option<(std::path::PathBuf, String)> = None;
+        let (workdir_kind, cwd, worktree_path, branch) = match workdir {
+            Workdir::Worktree { base } => {
+                let path = self.0.workspace.worktree(&name);
+                let branch = format!("bridle/{name}");
+                let base_ref = base.unwrap_or_else(|| role.base.clone());
+                worktree::add(&self.0.workspace.repo, &path, &branch, &base_ref).await?;
+                created_worktree = Some((path.clone(), branch.clone()));
+                ("worktree", path.clone(), Some(path), Some(branch))
+            }
+            Workdir::Repo => ("repo", self.0.workspace.repo.clone(), None, None),
+            Workdir::Path { path } => {
+                let path = std::path::PathBuf::from(path);
+                if !path.is_dir() {
+                    return Err(SupervisorError::BadRequest(format!(
+                        "workdir path {} does not exist",
+                        path.display()
+                    )));
+                }
+                ("path", path, None, None)
+            }
+        };
+
+        let cleanup_worktree = |created: &Option<(std::path::PathBuf, String)>| {
+            let workspace = self.0.workspace.clone();
+            let created = created.clone();
+            async move {
+                if let Some((path, branch)) = created {
+                    let _ = worktree::remove(&workspace.repo, &path, true).await;
+                    let _ = worktree::delete_branch(&workspace.repo, &branch, true).await;
+                }
+            }
+        };
+
+        let session_id = Uuid::new_v4();
+        let model = req.model.unwrap_or_else(|| role.model.clone());
+        let new_agent = NewAgent {
+            name: name.clone(),
+            role: req.role.clone(),
+            model: model.clone(),
+            session_id: session_id.to_string(),
+            workdir_kind: workdir_kind.to_string(),
+            cwd: cwd.to_string_lossy().into_owned(),
+            worktree: worktree_path
+                .as_ref()
+                .map(|p| p.to_string_lossy().into_owned()),
+            branch: branch.clone(),
+            created_by: principal.id.clone(),
+        };
+        let agent = match self.0.store.insert_agent(new_agent).await {
+            Ok(a) => a,
+            Err(e) => {
+                cleanup_worktree(&created_worktree).await;
+                return Err(e.into());
+            }
+        };
+
+        let token = match self
+            .0
+            .store
+            .create_agent_token(&agent.id, &agent.name)
+            .await
+        {
+            Ok(t) => t,
+            Err(e) => {
+                cleanup_worktree(&created_worktree).await;
+                let _ = self.0.store.delete_agent(&agent.id).await;
+                return Err(e.into());
+            }
+        };
+        if let Err(e) =
+            std::fs::create_dir_all(self.0.workspace.agent_dir(&agent.id)).and_then(|_| {
+                write_secret_file(&self.0.workspace.agent_dir(&agent.id).join("token"), &token)
+            })
+        {
+            cleanup_worktree(&created_worktree).await;
+            let _ = self
+                .0
+                .store
+                .revoke_principal(&format!("agent:{}", agent.name))
+                .await;
+            let _ = self.0.store.delete_agent(&agent.id).await;
+            return Err(e.into());
+        }
+
+        let prompt_text =
+            crate::config::render_system_prompt(&req.role, &role, &self.0.workspace.repo);
+        let system_prompt_path = self.0.workspace.system_prompt(&agent.id);
+        if let Err(e) = std::fs::write(&system_prompt_path, &prompt_text) {
+            cleanup_worktree(&created_worktree).await;
+            let _ = self
+                .0
+                .store
+                .revoke_principal(&format!("agent:{}", agent.name))
+                .await;
+            let _ = self.0.store.delete_agent(&agent.id).await;
+            return Err(e.into());
+        }
+
+        let mut cmd = ClaudeCommand::new(cwd.clone(), Session::New(session_id));
+        cmd.program = self.0.claude_program.clone();
+        cmd.model = Some(model.clone());
+        cmd.effort = role.effort.clone();
+        cmd.append_system_prompt_file = Some(system_prompt_path);
+        cmd.permission_mode = Some(role.permission_mode.clone());
+        cmd.allowed_tools = role.effective_allowed_tools();
+        cmd.disallowed_tools = role.disallowed_tools.clone();
+        cmd.name = Some(agent.name.clone());
+        cmd.env = agent_env(
+            &self.0.workspace,
+            &self.0.url,
+            &self.0.project,
+            &agent.id,
+            &agent.name,
+            &token,
+        );
+
+        let transcript = match Transcript::open(
+            &self.0.workspace.transcript(&agent.id),
+            std::time::Instant::now(),
+        ) {
+            Ok(t) => t,
+            Err(e) => {
+                cleanup_worktree(&created_worktree).await;
+                let _ = self
+                    .0
+                    .store
+                    .revoke_principal(&format!("agent:{}", agent.name))
+                    .await;
+                let _ = self.0.store.delete_agent(&agent.id).await;
+                return Err(e.into());
+            }
+        };
+
+        let spawned = match bridle_claude::process::spawn(&cmd, transcript).await {
+            Ok(s) => s,
+            Err(e) => {
+                cleanup_worktree(&created_worktree).await;
+                let _ = self
+                    .0
+                    .store
+                    .revoke_principal(&format!("agent:{}", agent.name))
+                    .await;
+                let _ = self.0.store.delete_agent(&agent.id).await;
+                return Err(SupervisorError::Internal(format!("spawning claude: {e}")));
+            }
+        };
+
+        self.register_and_start(
+            &agent.id,
+            agent.turns,
+            agent.cost_usd_total,
+            spawned,
+            principal,
+        )
+        .await?;
+
+        let _ = self
+            .0
+            .emitter
+            .emit(
+                event_kind::AGENT_SPAWNED,
+                principal.id.clone(),
+                Some(agent.id.clone()),
+                json!({"role": req.role, "model": model, "cwd": agent.cwd, "branch": branch}),
+            )
+            .await;
+
+        if let Some(prompt) = req.prompt {
+            let branch_clause = branch
+                .as_ref()
+                .map(|b| format!(" on branch {b}"))
+                .unwrap_or_default();
+            let body = format!(
+                "You are {} (role {}) in {}{}.\n{}",
+                agent.name, req.role, agent.cwd, branch_clause, prompt
+            );
+            self.send(
+                principal.id.clone(),
+                ToTarget::Agent(agent.id.clone()),
+                MessageKind::Note,
+                body,
+                bridle_api::types::When::Now,
+                None,
+            )
+            .await?;
+        }
+
+        self.0
+            .store
+            .get_agent(&agent.id)
+            .await?
+            .ok_or_else(|| SupervisorError::Internal("agent vanished after spawn".to_string()))
+    }
+
+    async fn generate_name(&self, role: &str) -> Result<String, SupervisorError> {
+        for n in 1u32.. {
+            let candidate = format!("{role}-{n}");
+            if self.0.store.get_agent(&candidate).await?.is_none() {
+                return Ok(candidate);
+            }
+        }
+        unreachable!("u32 exhausted generating an agent name")
+    }
+
+    /// Records pid/start time, brings the agent to `idle`, builds the
+    /// runtime and starts its event-processing task.
+    async fn register_and_start(
+        &self,
+        agent_id: &str,
+        turns_so_far: u32,
+        cost_so_far: f64,
+        spawned: bridle_claude::process::Spawned,
+        _principal: &Principal,
+    ) -> Result<(), SupervisorError> {
+        let pid = spawned.handle.pid();
+        let start = containment::start_time(pid).unwrap_or_default();
+        self.0
+            .store
+            .set_agent_process(agent_id, Some(pid), Some(start.clone()))
+            .await?;
+        self.0
+            .store
+            .set_agent_state(agent_id, AgentState::Idle)
+            .await?;
+
+        let (exited_tx, exited_rx) = watch::channel(false);
+        let runtime = Arc::new(AgentRuntime {
+            handle: spawned.handle,
+            stop_requested: AtomicBool::new(false),
+            state: AsyncMutex::new(RuntimeState {
+                tracker: Tracker::new(pid, start),
+                fifo: VecDeque::new(),
+                last_cumulative: cost_so_far,
+                turn_n: turns_so_far,
+                stall_notified: false,
+                current_state: AgentState::Idle,
+                saw_any_line: false,
+                last_touch: std::time::Instant::now(),
+            }),
+            exited: exited_rx,
+            task: AsyncMutex::new(None),
+        });
+        self.0
+            .runtimes
+            .lock()
+            .expect("runtimes mutex poisoned")
+            .insert(agent_id.to_string(), runtime.clone());
+
+        let manager = self.clone();
+        let id = agent_id.to_string();
+        let task = tokio::spawn(manager.run_event_task(
+            id,
+            runtime.clone(),
+            spawned.events,
+            spawned.exit,
+            exited_tx,
+        ));
+        *runtime.task.lock().await = Some(task);
+        Ok(())
+    }
+
+    // ---------- the per-agent event-processing task ----------
+
+    async fn run_event_task(
+        self,
+        id: String,
+        runtime: Arc<AgentRuntime>,
+        mut events: tokio::sync::mpsc::UnboundedReceiver<bridle_claude::events::Event>,
+        exit: tokio::sync::oneshot::Receiver<ExitOutcome>,
+        exited_tx: watch::Sender<bool>,
+    ) {
+        while let Some(ev) = events.recv().await {
+            self.handle_claude_event(&id, &runtime, ev).await;
+        }
+        let outcome = exit.await.unwrap_or(ExitOutcome {
+            code: None,
+            signal: None,
+            stderr_tail: Vec::new(),
+        });
+        self.finish_agent(&id, &runtime, outcome).await;
+        let _ = exited_tx.send(true);
+        self.0
+            .runtimes
+            .lock()
+            .expect("runtimes mutex poisoned")
+            .remove(&id);
+    }
+
+    async fn handle_claude_event(
+        &self,
+        id: &str,
+        runtime: &Arc<AgentRuntime>,
+        ev: bridle_claude::events::Event,
+    ) {
+        let should_touch = {
+            let mut st = runtime.state.lock().await;
+            st.saw_any_line = true;
+            st.stall_notified = false;
+            let due = st.last_touch.elapsed() >= Duration::from_secs(1);
+            if due {
+                st.last_touch = std::time::Instant::now();
+            }
+            due
+        };
+        if should_touch {
+            self.touch_now(id).await;
+        }
+
+        match ev.kind {
+            ClaudeEventKind::SystemInit(_) => {
+                let n = {
+                    let mut st = runtime.state.lock().await;
+                    st.turn_n += 1;
+                    st.turn_n
+                };
+                let _ = self.0.store.add_turn_start(id, n, Utc::now()).await;
+                self.transition_state(id, runtime, AgentState::Working)
+                    .await;
+                let _ = self
+                    .0
+                    .emitter
+                    .emit(
+                        event_kind::TURN_STARTED,
+                        "system".to_string(),
+                        Some(id.to_string()),
+                        json!({"n": n}),
+                    )
+                    .await;
+            }
+            ClaudeEventKind::System { .. } => {}
+            ClaudeEventKind::Assistant(msg) => {
+                for block in msg.blocks() {
+                    match block {
+                        ContentBlock::Text { text } => {
+                            let _ = self
+                                .0
+                                .emitter
+                                .emit(
+                                    event_kind::AGENT_TEXT,
+                                    "system".to_string(),
+                                    Some(id.to_string()),
+                                    json!({"text": truncate_chars(&text, TRUNCATE_TEXT)}),
+                                )
+                                .await;
+                        }
+                        ContentBlock::ToolUse { name, input, .. } => {
+                            let _ = self
+                                .0
+                                .emitter
+                                .emit(
+                                    event_kind::TOOL_USE,
+                                    "system".to_string(),
+                                    Some(id.to_string()),
+                                    json!({"name": name, "input_summary": input_summary(&input)}),
+                                )
+                                .await;
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            ClaudeEventKind::User(msg) => {
+                if msg.is_replay() {
+                    let Some(text) = msg.replay_text() else {
+                        return;
+                    };
+                    let matched = {
+                        let mut st = runtime.state.lock().await;
+                        let pos = st.fifo.iter().position(|(_, t)| t == text);
+                        pos.map(|i| st.fifo.remove(i).expect("position just found"))
+                    };
+                    if let Some((mid, _)) = matched {
+                        let _ = self
+                            .0
+                            .store
+                            .set_message_state(&mid, MessageState::Delivered, Utc::now())
+                            .await;
+                        let _ = self
+                            .0
+                            .emitter
+                            .emit(
+                                event_kind::MESSAGE_DELIVERED,
+                                "system".to_string(),
+                                Some(id.to_string()),
+                                json!({"message": mid}),
+                            )
+                            .await;
+                    } else {
+                        tracing::debug!(agent = id, "unmatched replayed user message");
+                    }
+                }
+            }
+            ClaudeEventKind::Result(r) => {
+                let (delta, cumulative, n) = {
+                    let mut st = runtime.state.lock().await;
+                    // Fall back to the last known cumulative (a zero delta),
+                    // not 0.0: claude's `total_cost_usd` is a running total,
+                    // so treating a missing value as "zero so far" would
+                    // manufacture a large negative delta.
+                    let cumulative = r.total_cost_usd.unwrap_or(st.last_cumulative);
+                    let delta = cumulative - st.last_cumulative;
+                    st.last_cumulative = cumulative;
+                    (delta, cumulative, st.turn_n)
+                };
+                let usage = r.usage.clone().unwrap_or_default();
+                let turn_end = crate::store::TurnEnd {
+                    subtype: r.subtype.clone(),
+                    is_error: r.is_error,
+                    terminal_reason: r.terminal_reason.clone(),
+                    input_tokens: usage.input_tokens,
+                    output_tokens: usage.output_tokens,
+                    cache_read: usage.cache_read_input_tokens,
+                    cache_write: usage.cache_creation_input_tokens,
+                    cost_total: delta,
+                };
+                let _ = self.0.store.end_turn(id, n, turn_end).await;
+
+                if !r.permission_denials.is_empty() {
+                    let _ = self
+                        .0
+                        .emitter
+                        .emit(
+                            event_kind::PERMISSION_DENIED,
+                            "system".to_string(),
+                            Some(id.to_string()),
+                            json!({"denials": r.permission_denials}),
+                        )
+                        .await;
+                }
+
+                self.transition_state(id, runtime, AgentState::Idle).await;
+                let _ = self
+                    .0
+                    .emitter
+                    .emit(
+                        event_kind::TURN_ENDED,
+                        "system".to_string(),
+                        Some(id.to_string()),
+                        json!({
+                            "n": n,
+                            "subtype": r.subtype,
+                            "is_error": r.is_error,
+                            "terminal_reason": r.terminal_reason,
+                            "usage": {
+                                "input_tokens": usage.input_tokens,
+                                "output_tokens": usage.output_tokens,
+                                "cache_read": usage.cache_read_input_tokens,
+                                "cache_write": usage.cache_creation_input_tokens,
+                            },
+                            "cost_total": cumulative,
+                            "result": r.result.as_deref().map(|s| truncate_chars(s, TRUNCATE_TEXT)),
+                        }),
+                    )
+                    .await;
+
+                if let Ok(held) = self
+                    .0
+                    .store
+                    .messages_for_agent(id, &[MessageState::Held])
+                    .await
+                    && let Some(oldest) = held.into_iter().next()
+                {
+                    let _ = write_message(&self.0.store, runtime, &oldest).await;
+                }
+            }
+            ClaudeEventKind::RateLimit(rl) => {
+                for w in rl.windows() {
+                    let resets_at = w
+                        .resets_at_epoch
+                        .and_then(|e| chrono::DateTime::from_timestamp(e, 0));
+                    let _ = self
+                        .0
+                        .store
+                        .upsert_rate_limit(bridle_api::types::RateLimit {
+                            window: w.window,
+                            status: w.status,
+                            utilization: w.utilization,
+                            resets_at,
+                            observed_at: Utc::now(),
+                        })
+                        .await;
+                }
+                let _ = self
+                    .0
+                    .emitter
+                    .emit(
+                        event_kind::RATE_LIMIT,
+                        "system".to_string(),
+                        Some(id.to_string()),
+                        json!({"info": rl.rate_limit_info}),
+                    )
+                    .await;
+            }
+            ClaudeEventKind::ControlResponse(_)
+            | ClaudeEventKind::ControlRequest(_)
+            | ClaudeEventKind::Unknown { .. }
+            | ClaudeEventKind::Unparsed { .. }
+            | ClaudeEventKind::NotJson => {}
+        }
+    }
+
+    async fn transition_state(&self, id: &str, runtime: &Arc<AgentRuntime>, to: AgentState) {
+        let from = {
+            let mut st = runtime.state.lock().await;
+            let from = st.current_state;
+            st.current_state = to;
+            from
+        };
+        if from == to {
+            return;
+        }
+        let _ = self.0.store.set_agent_state(id, to).await;
+        let _ = self
+            .0
+            .emitter
+            .emit(
+                event_kind::AGENT_STATE,
+                "system".to_string(),
+                Some(id.to_string()),
+                json!({"from": from.as_str(), "to": to.as_str()}),
+            )
+            .await;
+    }
+
+    async fn touch_now(&self, id: &str) {
+        let _ = self.0.store.touch_agent(id, Utc::now()).await;
+    }
+
+    /// Sweeps a tracker and emits `agent.orphans_killed` if it found
+    /// anything. Shared between [`AgentManager::stop`] (which sweeps eagerly
+    /// as part of the stop sequence, §4.5 step 4) and
+    /// [`AgentManager::finish_agent`] (which sweeps on every exit path, not
+    /// just an explicit stop). Whichever call actually catches live
+    /// descendants reports them; a sweep that finds nothing left (because
+    /// an earlier one already reaped them) simply stays quiet, so the two
+    /// calls are safe to both run without double-counting.
+    async fn sweep_and_emit(&self, id: &str, tracker: &mut Tracker) {
+        let report = containment::sweep(tracker, SWEEP_GRACE).await;
+        if report.terminated > 0 {
+            let _ = self
+                .0
+                .emitter
+                .emit(
+                    event_kind::AGENT_ORPHANS_KILLED,
+                    "system".to_string(),
+                    Some(id.to_string()),
+                    json!({"count": report.terminated}),
+                )
+                .await;
+        }
+    }
+
+    async fn finish_agent(&self, id: &str, runtime: &Arc<AgentRuntime>, outcome: ExitOutcome) {
+        let mut st = runtime.state.lock().await;
+        self.sweep_and_emit(id, &mut st.tracker).await;
+        let stop_requested = runtime.stop_requested.load(Ordering::SeqCst);
+        let saw_any_line = st.saw_any_line;
+        drop(st);
+
+        let (state, exit) = classify_exit(stop_requested, saw_any_line, &outcome);
+        let _ = self.0.store.set_agent_exit(id, exit.clone()).await;
+        self.transition_state(id, runtime, state).await;
+        let _ = self
+            .0
+            .emitter
+            .emit(
+                event_kind::AGENT_EXITED,
+                "system".to_string(),
+                Some(id.to_string()),
+                json!({"code": exit.code, "signal": exit.signal, "reason": exit.reason}),
+            )
+            .await;
+
+        if let Ok(written) = self
+            .0
+            .store
+            .messages_for_agent(id, &[MessageState::Written])
+            .await
+        {
+            for m in written {
+                let _ = self
+                    .0
+                    .store
+                    .set_message_state(&m.id, MessageState::Pending, Utc::now())
+                    .await;
+            }
+        }
+    }
+
+    // ---------- messages ----------
+
+    pub async fn send(
+        &self,
+        from: PrincipalId,
+        to: ToTarget,
+        kind: MessageKind,
+        body: String,
+        when: bridle_api::types::When,
+        reply_to: Option<String>,
+    ) -> Result<Message, SupervisorError> {
+        let to_id = match &to {
+            ToTarget::Human => "human".to_string(),
+            ToTarget::Agent(id) => id.clone(),
+        };
+        let inserted = self
+            .0
+            .store
+            .insert_message(NewMessage {
+                from: from.clone(),
+                to: to_id.clone(),
+                kind,
+                body,
+                reply_to,
+                when,
+                state: MessageState::Pending,
+            })
+            .await?;
+        let _ = self
+            .0
+            .emitter
+            .emit(
+                event_kind::MESSAGE_SENT,
+                from,
+                if matches!(to, ToTarget::Agent(_)) {
+                    Some(to_id.clone())
+                } else {
+                    None
+                },
+                json!({"message": inserted.id, "to": to_id}),
+            )
+            .await;
+
+        if let ToTarget::Agent(agent_id) = &to {
+            let agent = self
+                .0
+                .store
+                .get_agent(agent_id)
+                .await?
+                .ok_or_else(|| SupervisorError::NotFound(agent_id.clone()))?;
+            if agent.state.is_running()
+                && let Some(rt) = self.get_runtime(agent_id)
+            {
+                let write_now = matches!(when, bridle_api::types::When::Now)
+                    || (matches!(when, bridle_api::types::When::Idle)
+                        && agent.state == AgentState::Idle);
+                if write_now {
+                    let _ = write_message(&self.0.store, &rt, &inserted).await;
+                } else {
+                    let _ = self
+                        .0
+                        .store
+                        .set_message_state(&inserted.id, MessageState::Held, Utc::now())
+                        .await;
+                }
+            }
+        }
+
+        self.0
+            .store
+            .get_message(&inserted.id)
+            .await?
+            .ok_or_else(|| SupervisorError::Internal("message vanished after insert".to_string()))
+    }
+
+    // ---------- interrupt / stop / resume / remove ----------
+
+    pub async fn interrupt(
+        &self,
+        id_or_name: &str,
+        drop_held: bool,
+        principal: &Principal,
+    ) -> Result<bridle_api::types::InterruptResponse, SupervisorError> {
+        let agent = self
+            .0
+            .store
+            .get_agent(id_or_name)
+            .await?
+            .ok_or_else(|| SupervisorError::NotFound(id_or_name.to_string()))?;
+        if !agent.state.is_running() {
+            return Err(SupervisorError::AgentNotRunning(agent.id));
+        }
+        let rt = self
+            .get_runtime(&agent.id)
+            .ok_or_else(|| SupervisorError::AgentNotRunning(agent.id.clone()))?;
+        let receipt = rt
+            .handle
+            .interrupt(INTERRUPT_TIMEOUT)
+            .await
+            .map_err(|e| SupervisorError::Internal(format!("interrupt: {e}")))?;
+
+        let mut dropped = 0u32;
+        if drop_held {
+            let held = self
+                .0
+                .store
+                .messages_for_agent(&agent.id, &[MessageState::Held])
+                .await?;
+            for m in held {
+                self.0
+                    .store
+                    .set_message_state(&m.id, MessageState::Dropped, Utc::now())
+                    .await?;
+                let _ = self
+                    .0
+                    .emitter
+                    .emit(
+                        event_kind::MESSAGE_DROPPED,
+                        principal.id.clone(),
+                        Some(agent.id.clone()),
+                        json!({"message": m.id}),
+                    )
+                    .await;
+                dropped += 1;
+            }
+        }
+        Ok(bridle_api::types::InterruptResponse {
+            receipt,
+            dropped_held: dropped,
+        })
+    }
+
+    pub async fn stop(
+        &self,
+        id_or_name: &str,
+        now: bool,
+        _principal: &Principal,
+    ) -> Result<Agent, SupervisorError> {
+        let agent = self
+            .0
+            .store
+            .get_agent(id_or_name)
+            .await?
+            .ok_or_else(|| SupervisorError::NotFound(id_or_name.to_string()))?;
+        if !agent.state.is_running() {
+            return Ok(agent);
+        }
+        let Some(rt) = self.get_runtime(&agent.id) else {
+            return Ok(agent);
+        };
+        rt.stop_requested.store(true, Ordering::SeqCst);
+        self.transition_state(&agent.id, &rt, AgentState::Stopping)
+            .await;
+
+        // §4.6: snapshot right before doing anything that might end the
+        // process, so short-lived tool/child processes are caught while
+        // they're still parented under the agent's pid (once the agent
+        // exits, an orphan is reparented to init and this walk can no
+        // longer find it by ancestry).
+        if let Ok(Ok(snap)) = tokio::task::spawn_blocking(containment::snapshot).await {
+            let mut st = rt.state.lock().await;
+            st.tracker.update(&snap);
+        }
+
+        if !now {
+            rt.handle.close_stdin();
+            let mut exited = rt.exited.clone();
+            let _ = tokio::time::timeout(self.0.config.stop_grace, exited.wait_for(|v| *v)).await;
+        }
+
+        containment::terminate_group(rt.handle.pid(), TERMINATE_GRACE).await;
+        {
+            let mut st = rt.state.lock().await;
+            self.sweep_and_emit(&agent.id, &mut st.tracker).await;
+        }
+
+        let task = rt.task.lock().await.take();
+        if let Some(task) = task {
+            let _ = task.await;
+        } else {
+            let mut exited = rt.exited.clone();
+            let _ = exited.wait_for(|v| *v).await;
+        }
+
+        self.0
+            .store
+            .get_agent(&agent.id)
+            .await?
+            .ok_or_else(|| SupervisorError::Internal("agent vanished after stop".to_string()))
+    }
+
+    pub async fn resume(
+        &self,
+        id_or_name: &str,
+        principal: &Principal,
+    ) -> Result<Agent, SupervisorError> {
+        let agent = self
+            .0
+            .store
+            .get_agent(id_or_name)
+            .await?
+            .ok_or_else(|| SupervisorError::NotFound(id_or_name.to_string()))?;
+        if !agent.state.is_resumable() {
+            return Err(SupervisorError::Conflict(format!(
+                "agent {} is not resumable (state {})",
+                agent.id, agent.state
+            )));
+        }
+        let role = self
+            .0
+            .config
+            .roles
+            .get(&agent.role)
+            .cloned()
+            .unwrap_or_else(Role::worker_default);
+
+        let token_path = self.0.workspace.agent_dir(&agent.id).join("token");
+        let token = std::fs::read_to_string(&token_path)
+            .map_err(|e| SupervisorError::Internal(format!("reading agent token: {e}")))?
+            .trim()
+            .to_string();
+
+        let prompt_text =
+            crate::config::render_system_prompt(&agent.role, &role, &self.0.workspace.repo);
+        let system_prompt_path = self.0.workspace.system_prompt(&agent.id);
+        std::fs::write(&system_prompt_path, &prompt_text)?;
+
+        let session_uuid = Uuid::parse_str(&agent.session_id)
+            .map_err(|e| SupervisorError::Internal(format!("bad session id: {e}")))?;
+        let cwd = std::path::PathBuf::from(&agent.cwd);
+        let mut cmd = ClaudeCommand::new(cwd, Session::Resume(session_uuid));
+        cmd.program = self.0.claude_program.clone();
+        cmd.model = Some(agent.model.clone());
+        cmd.effort = role.effort.clone();
+        cmd.append_system_prompt_file = Some(system_prompt_path);
+        cmd.permission_mode = Some(role.permission_mode.clone());
+        cmd.allowed_tools = role.effective_allowed_tools();
+        cmd.disallowed_tools = role.disallowed_tools.clone();
+        cmd.name = Some(agent.name.clone());
+        cmd.env = agent_env(
+            &self.0.workspace,
+            &self.0.url,
+            &self.0.project,
+            &agent.id,
+            &agent.name,
+            &token,
+        );
+
+        let transcript = Transcript::open(
+            &self.0.workspace.transcript(&agent.id),
+            std::time::Instant::now(),
+        )?;
+        let spawned = bridle_claude::process::spawn(&cmd, transcript)
+            .await
+            .map_err(|e| SupervisorError::Internal(format!("spawning claude: {e}")))?;
+
+        self.register_and_start(
+            &agent.id,
+            agent.turns,
+            agent.cost_usd_total,
+            spawned,
+            principal,
+        )
+        .await?;
+
+        let pending = self
+            .0
+            .store
+            .messages_for_agent(&agent.id, &[MessageState::Pending])
+            .await?;
+        if let Some(rt) = self.get_runtime(&agent.id) {
+            for m in pending {
+                let _ = write_message(&self.0.store, &rt, &m).await;
+            }
+        }
+
+        self.0
+            .store
+            .get_agent(&agent.id)
+            .await?
+            .ok_or_else(|| SupervisorError::Internal("agent vanished after resume".to_string()))
+    }
+
+    pub async fn remove(
+        &self,
+        id_or_name: &str,
+        force: bool,
+        delete_branch: bool,
+        principal: &Principal,
+    ) -> Result<(), SupervisorError> {
+        let mut agent = self
+            .0
+            .store
+            .get_agent(id_or_name)
+            .await?
+            .ok_or_else(|| SupervisorError::NotFound(id_or_name.to_string()))?;
+        // Refuse before touching anything, so a refused rm leaves no half-removed agent.
+        if delete_branch
+            && !force
+            && let Some(branch) = &agent.branch
+            && !worktree::is_merged(&self.0.workspace.repo, branch).await?
+        {
+            return Err(SupervisorError::Conflict(format!(
+                "branch {branch} is not merged into HEAD; merge it, drop --delete-branch, or use --force"
+            )));
+        }
+        if agent.state.is_running() {
+            agent = self.stop(&agent.id, false, principal).await?;
+        }
+        if let Some(wt) = agent.worktree.clone() {
+            let path = std::path::PathBuf::from(&wt);
+            if !force && worktree::is_dirty(&path).await.unwrap_or(false) {
+                return Err(SupervisorError::Conflict(
+                    "worktree has uncommitted changes; use --force".to_string(),
+                ));
+            }
+            // Already gone (e.g. an earlier rm failed after removing it): just prune.
+            if path.exists() {
+                worktree::remove(&self.0.workspace.repo, &path, force).await?;
+            } else {
+                worktree::prune(&self.0.workspace.repo).await?;
+            }
+            if delete_branch && let Some(branch) = &agent.branch {
+                worktree::delete_branch(&self.0.workspace.repo, branch, force).await?;
+            }
+        }
+        let _ = self
+            .0
+            .store
+            .revoke_principal(&format!("agent:{}", agent.name))
+            .await;
+        for state in [
+            MessageState::Pending,
+            MessageState::Held,
+            MessageState::Written,
+        ] {
+            for m in self.0.store.messages_for_agent(&agent.id, &[state]).await? {
+                self.0
+                    .store
+                    .set_message_state(&m.id, MessageState::Dropped, Utc::now())
+                    .await?;
+            }
+        }
+        self.0.store.delete_agent(&agent.id).await?;
+        let _ = self
+            .0
+            .emitter
+            .emit(
+                event_kind::AGENT_REMOVED,
+                principal.id.clone(),
+                Some(agent.id.clone()),
+                json!({}),
+            )
+            .await;
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum ToTarget {
+    Human,
+    Agent(String),
+}
+
+#[allow(clippy::too_many_arguments)]
+fn agent_env(
+    ws: &Workspace,
+    url: &str,
+    project: &str,
+    id: &str,
+    name: &str,
+    token: &str,
+) -> Vec<(String, String)> {
+    vec![
+        ("BRIDLE_URL".to_string(), url.to_string()),
+        ("BRIDLE_TOKEN".to_string(), token.to_string()),
+        ("BRIDLE_AGENT_ID".to_string(), id.to_string()),
+        ("BRIDLE_AGENT_NAME".to_string(), name.to_string()),
+        (
+            "BRIDLE_WORKSPACE".to_string(),
+            ws.workspace.to_string_lossy().into_owned(),
+        ),
+        ("BRIDLE_PROJECT".to_string(), project.to_string()),
+        ("PATH".to_string(), agent_path()),
+    ]
+}
+
+/// Agents call `bridle` from their Bash tool, so the binary running this
+/// daemon goes first on their PATH: they always talk to the same version,
+/// even when it isn't installed (e.g. `cargo run`).
+fn agent_path() -> String {
+    let inherited = std::env::var("PATH").unwrap_or_default();
+    match std::env::current_exe()
+        .ok()
+        .and_then(|p| p.parent().map(|d| d.to_path_buf()))
+    {
+        Some(dir) if inherited.is_empty() => dir.to_string_lossy().into_owned(),
+        Some(dir) => format!("{}:{inherited}", dir.to_string_lossy()),
+        None => inherited,
+    }
+}
+
+fn principal_display(id: &str) -> String {
+    if id == "human" {
+        "human".to_string()
+    } else if let Some(name) = id.strip_prefix("agent:") {
+        format!("agent {name}")
+    } else if let Some(name) = id.strip_prefix("external:") {
+        format!("external {name}")
+    } else {
+        id.to_string()
+    }
+}
+
+fn reply_target(id: &str) -> String {
+    if id == "human" {
+        "human".to_string()
+    } else if let Some(name) = id.strip_prefix("agent:") {
+        name.to_string()
+    } else if let Some(name) = id.strip_prefix("external:") {
+        name.to_string()
+    } else {
+        id.to_string()
+    }
+}
+
+fn format_delivery(msg: &Message) -> String {
+    let mut s = format!(
+        "[bridle message {} from {}]\n{}",
+        msg.id,
+        principal_display(&msg.from),
+        msg.body
+    );
+    if msg.kind == MessageKind::Question {
+        s.push_str(&format!(
+            "\nReply with: bridle send {} --reply-to {} \"<answer>\"",
+            reply_target(&msg.from),
+            msg.id
+        ));
+    }
+    s
+}
+
+async fn write_message(
+    store: &Store,
+    runtime: &Arc<AgentRuntime>,
+    msg: &Message,
+) -> Result<(), SupervisorError> {
+    let text = format_delivery(msg);
+    runtime
+        .handle
+        .send_user(&text)
+        .map_err(|_| SupervisorError::Internal("stdin is closed".to_string()))?;
+    store
+        .set_message_state(&msg.id, MessageState::Written, Utc::now())
+        .await?;
+    let mut st = runtime.state.lock().await;
+    st.fifo.push_back((msg.id.clone(), text));
+    Ok(())
+}
+
+fn classify_exit(
+    stop_requested: bool,
+    saw_any_line: bool,
+    outcome: &ExitOutcome,
+) -> (AgentState, ExitInfo) {
+    const SIGTERM: i32 = 15;
+    const SIGKILL: i32 = 9;
+
+    if stop_requested {
+        let reason = match outcome.signal {
+            Some(SIGKILL) => "sigkill",
+            Some(SIGTERM) => "sigterm",
+            _ => "stdin_closed",
+        };
+        return (
+            AgentState::Stopped,
+            ExitInfo {
+                code: outcome.code,
+                signal: outcome.signal,
+                reason: reason.to_string(),
+            },
+        );
+    }
+
+    let clean = outcome.signal.is_none() && matches!(outcome.code, Some(0) | Some(1));
+    if clean && saw_any_line {
+        return (
+            AgentState::Exited,
+            ExitInfo {
+                code: outcome.code,
+                signal: outcome.signal,
+                reason: "eof".to_string(),
+            },
+        );
+    }
+
+    let tail = outcome.stderr_tail.join("; ");
+    let reason = if tail.is_empty() {
+        "crashed".to_string()
+    } else {
+        format!("crashed: {}", truncate_chars(&tail, 500))
+    };
+    (
+        AgentState::Crashed,
+        ExitInfo {
+            code: outcome.code,
+            signal: outcome.signal,
+            reason,
+        },
+    )
+}
+
+fn input_summary(input: &Value) -> String {
+    for key in ["command", "file_path", "pattern"] {
+        if let Some(s) = input.get(key).and_then(Value::as_str) {
+            return truncate_chars(s, TRUNCATE_SUMMARY);
+        }
+    }
+    truncate_chars(&input.to_string(), TRUNCATE_SUMMARY)
+}
+
+fn truncate_chars(s: &str, max_chars: usize) -> String {
+    if s.chars().count() <= max_chars {
+        s.to_string()
+    } else {
+        s.chars().take(max_chars).collect()
+    }
+}

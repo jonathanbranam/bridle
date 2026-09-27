@@ -6,7 +6,9 @@
 doc covers the part of bridle that runs agents: the long-running daemon, the
 API every client uses, and the supervisor that hosts headless Claude Code.*
 
-> **Status: design for v1, being built.** Where this doc and `design.md`
+> **Status: v1 built** (2026-09-27): all of §3–§8 and §10, verified with a
+> fake `claude` in tests and one live Haiku run. §4.9 records what the build
+> decided that this doc didn't say. Where this doc and `design.md`
 > disagree, this doc is newer and says why (§1.2). Everything here is a
 > recommendation to be argued with. §13 lists what is still open.
 
@@ -362,6 +364,23 @@ Assistant content arrives **one content block per event** (surprise 6).
 Bridle emits `agent.text` per text block and doesn't try to reassemble
 messages.
 
+### 4.9 Decided during the build
+
+- **Agents' `PATH` starts with the daemon's own binary directory**, so an
+  agent's `bridle` is always the version supervising it, installed or not.
+  The first live run needed this: it's how a worker ran `bridle send human`.
+- **An agent's token is also kept in `.bridle/agents/<id>/token` (0600)** so
+  `resume` can re-inject the same identity (the store keeps only hashes).
+  Like the human token file, it is readable by the same Unix user (§5.3).
+- **`rm --delete-branch` refuses an unmerged branch up front** (409, or `-D`
+  with `--force`), before stopping or removing anything. Found in the live run.
+  `rm` also finishes if the worktree directory is already gone.
+- **`bridle stop` snapshots the process tree before closing stdin**, not only
+  on the 2 s tick, so a child spawned in a short turn is still seen and swept.
+- **No `--max-budget-usd` per agent yet.** The spike used one. Per-role budget
+  caps belong to the budget governor (§12.6).
+- **Transcripts are kept after `rm`**, under `.bridle/agents/<id>/`.
+
 ---
 
 ## 5. Principals and provenance
@@ -468,8 +487,10 @@ bridle token create <name>
 - Every command takes `--json`, which agents always use. Humans get compact
   tables.
 - Exit codes: 0 ok, 1 error, 2 usage error, 3 daemon unreachable.
-- `bridle serve --detach` re-executes itself in a new session with output
-  going to `.bridle/daemon.log`. It waits for `/v1/health` to answer, prints
+- `bridle serve --detach` re-executes itself in a new process group (not a
+  new session: `setsid` would need `unsafe`) with SIGHUP ignored and output
+  going to `.bridle/daemon.log`. Surviving a closed terminal is unverified;
+  see spike `mnzh` (`docs/spikes/open/detached-daemon-and-its-terminal-mnzh.md`). It waits for `/v1/health` to answer, prints
   the URL and exits. `serve` in the foreground logs to stderr.
 
 ### 6.4 Running the workforce remotely
