@@ -296,6 +296,10 @@ impl Governor {
                 self.react_to_wind_down(&new_default, &agents, &rate_limits)
                     .await;
             }
+            if crossed_into_normal(previous.default.state, new_default.state) {
+                let agents = self.running_agents(None).await;
+                self.deliver_held_to_idle(&agents).await;
+            }
         }
         for (needle, block) in &new_per_model {
             let prev_state = previous
@@ -308,6 +312,10 @@ impl Governor {
                 if crossed_into_wind_down(prev_state, block.state) {
                     let agents = self.running_agents(Some(needle)).await;
                     self.react_to_wind_down(block, &agents, &rate_limits).await;
+                }
+                if crossed_into_normal(prev_state, block.state) {
+                    let agents = self.running_agents(Some(needle)).await;
+                    self.deliver_held_to_idle(&agents).await;
                 }
             }
         }
@@ -359,6 +367,18 @@ impl Governor {
                         .await;
                 }
                 _ => {}
+            }
+        }
+    }
+
+    /// An agent that was already idle when the governor recovered to
+    /// `normal` has no turn ending to trigger the held-message check in
+    /// `handle_claude_event`, so it would otherwise sit on a held message
+    /// forever; deliver each idle agent's oldest one now.
+    async fn deliver_held_to_idle(&self, agents: &[bridle_api::types::Agent]) {
+        for agent in agents {
+            if agent.state == AgentState::Idle {
+                self.0.manager.deliver_oldest_held(&agent.id).await;
             }
         }
     }
@@ -727,6 +747,13 @@ fn age_to_state(age: Duration, max_staleness: Duration) -> GovernorState {
 /// stopped and working ones notified.
 fn crossed_into_wind_down(from: GovernorState, to: GovernorState) -> bool {
     from < GovernorState::WindingDown && to >= GovernorState::WindingDown
+}
+
+/// Whether a transition dropped back to `normal` from a held/wound-down
+/// state: the point where an idle agent's held messages need a nudge, since
+/// nothing else will deliver them until its next turn ends.
+fn crossed_into_normal(from: GovernorState, to: GovernorState) -> bool {
+    from > GovernorState::Normal && to == GovernorState::Normal
 }
 
 fn parse_iso(v: Option<&Value>) -> Option<DateTime<Utc>> {

@@ -123,8 +123,12 @@ max_staleness   = "10m"     # older readings count as unknown
 ```
 
 - **`hold_at`**: no spawns, no resumes, no autostarts, and no message that
-  would start a turn in an idle agent (it stays `pending`). Agents already
-  working carry on.
+  would start a turn in an idle agent (it's held instead, same as a message
+  to a *working* agent below `wind_down_at` — see
+  [[docs/design/agent-host/messages#Delivery|messages, Delivery]]). Agents
+  already working carry on. Since an idle agent has no turn of its own
+  ending to pick the held message up again, the governor delivers each idle
+  agent's oldest held message itself the moment it drops back to `normal`.
 - **`wind_down_at`** is the main knob, and the one to tune: how much of the
   window the human keeps for themselves is roughly `100 − wind_down_at`, less
   what the wrap-up turns spend. See [[docs/design/usage-and-budget#The wind-down|the wind-down]].
