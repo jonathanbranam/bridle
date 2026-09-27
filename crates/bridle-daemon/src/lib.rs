@@ -20,12 +20,14 @@ use tokio::sync::watch;
 pub mod config;
 pub mod containment;
 mod events;
+pub mod governor;
 pub mod paths;
 mod server;
 pub mod store;
 mod supervisor;
 pub mod worktree;
 
+pub use governor::Governor;
 pub use supervisor::{AgentManager, SupervisorError, ToTarget};
 
 use config::Config;
@@ -170,6 +172,8 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         )
         .await;
 
+    let governor_handle: governor::GovernorHandle =
+        std::sync::Arc::new(std::sync::Mutex::new(governor::GovernorSnapshot::default()));
     let manager = AgentManager::new(
         store.clone(),
         ws.clone(),
@@ -178,6 +182,16 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         url.clone(),
         project.clone(),
         emitter.clone(),
+        governor_handle.clone(),
+    );
+    let governor = Governor::new(
+        store.clone(),
+        manager.clone(),
+        emitter.clone(),
+        config.budget.clone(),
+        overrides.claude_program.clone(),
+        ws.clone(),
+        governor_handle,
     );
 
     run_autostart_and_resume(&store, &config, &manager).await;
