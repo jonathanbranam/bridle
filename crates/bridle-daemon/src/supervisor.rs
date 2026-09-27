@@ -1047,9 +1047,20 @@ impl AgentManager {
             if agent.state.is_running()
                 && let Some(rt) = self.get_runtime(agent_id)
             {
-                let write_now = matches!(when, bridle_api::types::When::Now)
+                let mut write_now = matches!(when, bridle_api::types::When::Now)
                     || (matches!(when, bridle_api::types::When::Idle)
                         && agent.state == AgentState::Idle);
+                // A message to an idle agent would start a new turn; while
+                // the governor isn't normal, that's held instead
+                // (usage-and-budget.md, hold_at). A message folding into an
+                // already-running turn is unaffected: that turn was already
+                // permitted to run.
+                if agent.state == AgentState::Idle
+                    && self.budget_block_for_model(&agent.model).state
+                        != bridle_api::types::GovernorState::Normal
+                {
+                    write_now = false;
+                }
                 if write_now {
                     let _ = write_message(&self.0.store, &rt, &inserted).await;
                 } else {
