@@ -74,6 +74,11 @@ pub struct Overrides {
     pub governor_poll_interval_normal: Duration,
     /// ...and at or above it.
     pub governor_poll_interval_above_hold: Duration,
+    /// How often pending state-branch writes are flushed to one commit
+    /// (docs/design/storage.md, "The state branch"). There's no immediate-
+    /// flush trigger yet (that arrives with `accept`), so this is the only
+    /// thing that commits task records durably right now.
+    pub task_flush_interval: Duration,
 }
 
 impl Default for Overrides {
@@ -87,6 +92,7 @@ impl Default for Overrides {
             governor_interval: Duration::from_secs(30),
             governor_poll_interval_normal: Duration::from_secs(5 * 60),
             governor_poll_interval_above_hold: Duration::from_secs(30),
+            task_flush_interval: Duration::from_secs(30),
         }
     }
 }
@@ -146,6 +152,17 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
 
     let store = Store::open(ws.db()).await.context("opening the store")?;
     ensure_human_token(&store, &ws).await?;
+
+    let state_branch = state_branch::StateBranch::open(&ws.repo, &ws.state_branch_dir())
+        .await
+        .context("opening the state branch")?;
+    let task_prefix = config
+        .task_prefix
+        .clone()
+        .unwrap_or_else(|| config::default_task_prefix(&project));
+    let tasks = tasks::TaskManager::open(store.clone(), state_branch, task_prefix)
+        .await
+        .context("loading tasks")?;
 
     let emitter = Emitter::new(store.clone());
     reconcile(&store, &emitter)
@@ -227,6 +244,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         pid: info.pid,
         shutdown_tx: shutdown_tx.clone(),
         governor: governor.clone(),
+        tasks: tasks.clone(),
     };
     let app = server::router(state);
 
@@ -274,6 +292,17 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
             }
         }
     });
+    let task_flush_task = spawn_loop(shutdown_rx.clone(), overrides.task_flush_interval, {
+        let tasks = tasks.clone();
+        move || {
+            let tasks = tasks.clone();
+            async move {
+                if let Err(e) = tasks.flush_now().await {
+                    tracing::warn!(error = %e, "flushing the task state branch failed");
+                }
+            }
+        }
+    });
     let signal_task = signals.listen(shutdown_tx.clone());
 
     let join_handle = tokio::spawn(async move {
@@ -299,6 +328,15 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         }
         manager.stop_all(cap).await;
 
+        // Best-effort: flush whatever's pending on the state branch so a
+        // clean shutdown doesn't wait up to `task_flush_interval` to become
+        // durable there. A crash instead of a clean shutdown still relies
+        // on the next flush after restart, per the batching trade-off
+        // (docs/design/storage.md).
+        if let Err(e) = tasks.flush_now().await {
+            tracing::warn!(error = %e, "flushing the task state branch on shutdown failed");
+        }
+
         let _ = discovery::remove_registry(&project);
         let _ = std::fs::remove_file(ws.daemon_json());
 
@@ -308,6 +346,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         tracker_task.abort();
         governor_task.abort();
         prune_task.abort();
+        task_flush_task.abort();
     });
 
     Ok(RunningDaemon {

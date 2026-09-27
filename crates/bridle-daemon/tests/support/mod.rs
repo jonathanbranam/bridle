@@ -121,6 +121,7 @@ pub async fn start_daemon_with_config(
         governor_interval: Duration::from_millis(200),
         governor_poll_interval_normal: Duration::ZERO,
         governor_poll_interval_above_hold: Duration::ZERO,
+        task_flush_interval: Duration::from_secs(3600),
     });
     let running = bridle_daemon::start(opts, overrides)
         .await
