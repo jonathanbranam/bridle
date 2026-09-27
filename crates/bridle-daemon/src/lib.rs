@@ -63,10 +63,14 @@ pub struct Overrides {
     pub write_registry: bool,
     pub stall_check_interval: Duration,
     pub tracker_interval: Duration,
-    /// How often the governor tick fires; the tick itself decides whether
-    /// a `get_usage` poll is actually due (usage-and-budget.md, Seeing the
-    /// windows: 5 min normally, 30 s above `hold_at`).
+    /// How often the governor tick fires; each tick separately decides
+    /// whether a `get_usage` poll is actually due, per the next two fields.
     pub governor_interval: Duration,
+    /// usage-and-budget.md, Seeing the windows: how long to wait between
+    /// polls below `hold_at`.
+    pub governor_poll_interval_normal: Duration,
+    /// ...and at or above it.
+    pub governor_poll_interval_above_hold: Duration,
 }
 
 impl Default for Overrides {
@@ -78,6 +82,8 @@ impl Default for Overrides {
             stall_check_interval: Duration::from_secs(30),
             tracker_interval: Duration::from_secs(2),
             governor_interval: Duration::from_secs(30),
+            governor_poll_interval_normal: Duration::from_secs(5 * 60),
+            governor_poll_interval_above_hold: Duration::from_secs(30),
         }
     }
 }
@@ -197,6 +203,8 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         overrides.claude_program.clone(),
         ws.clone(),
         governor_handle,
+        overrides.governor_poll_interval_normal,
+        overrides.governor_poll_interval_above_hold,
     );
 
     run_autostart_and_resume(&store, &config, &manager).await;

@@ -31,9 +31,6 @@ const DEFAULT_WINDOWS: &[&str] = &["five_hour", "seven_day"];
 const MODEL_WINDOWS: &[(&str, &str)] = &[("opus", "seven_day_opus"), ("sonnet", "seven_day_sonnet")];
 
 const PROBE_TIMEOUT: Duration = Duration::from_secs(10);
-/// docs/design/usage-and-budget.md, Seeing the windows.
-const POLL_INTERVAL_NORMAL: Duration = Duration::from_secs(5 * 60);
-const POLL_INTERVAL_ABOVE_HOLD: Duration = Duration::from_secs(30);
 
 /// One window's contribution to a governor state: which window it was and
 /// when it resets, so a 409 can name both.
@@ -83,6 +80,11 @@ struct Inner {
     handle: GovernorHandle,
     last_poll: Mutex<Option<Instant>>,
     probe: tokio::sync::Mutex<Option<bridle_claude::process::AgentHandle>>,
+    /// docs/design/usage-and-budget.md, Seeing the windows: 5 min normally,
+    /// 30 s at or above `hold_at`. Fields (not consts) so tests can poll
+    /// every tick instead of waiting out the real cadence.
+    poll_interval_normal: Duration,
+    poll_interval_above_hold: Duration,
 }
 
 #[derive(Clone)]
@@ -98,6 +100,8 @@ impl Governor {
         claude_program: String,
         workspace: Workspace,
         handle: GovernorHandle,
+        poll_interval_normal: Duration,
+        poll_interval_above_hold: Duration,
     ) -> Self {
         Governor(Arc::new(Inner {
             store,
@@ -109,6 +113,8 @@ impl Governor {
             handle,
             last_poll: Mutex::new(None),
             probe: tokio::sync::Mutex::new(None),
+            poll_interval_normal,
+            poll_interval_above_hold,
         }))
     }
 
@@ -132,9 +138,9 @@ impl Governor {
 
     async fn poll_due(&self) -> bool {
         let due_after = if self.snapshot().default.state == GovernorState::Normal {
-            POLL_INTERVAL_NORMAL
+            self.0.poll_interval_normal
         } else {
-            POLL_INTERVAL_ABOVE_HOLD
+            self.0.poll_interval_above_hold
         };
         let mut last = self.0.last_poll.lock().expect("governor mutex poisoned");
         let due = last.is_none_or(|t| t.elapsed() >= due_after);
