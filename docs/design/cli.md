@@ -64,14 +64,21 @@ bridle statusline                           usage from interactive sessions
 - **`serve --detach`**: [[docs/design/agent-host/daemon#Running it|running the daemon]].
 - **`tui`** is a subcommand, not a separate binary, so it shares `bridle`'s discovery,
   token and `--url`/`--project` flags like every other command. It's a thin client of
-  `bridle-api`'s `Client`: an agents list (seeded from `GET /v1/agents`, kept live by
-  `agent.state`/`agent.removed` events) and a scrolling event tail (`events_stream`,
-  which already reconnects on its own — see `crates/bridle-api/src/client/mod.rs`).
-  `Tab` switches between the two views, `j`/`k`/arrow keys scroll the focused one,
-  `q`/`Esc` quits. Lives in its own crate, `crates/bridle-tui`, split Elm-style: a
-  plain state struct and update function with no terminal/ratatui dependency (so it's
-  unit-tested without a terminal), rendered by a separate `ui` module. Per-agent logs
-  and inbox/reply are follow-up work, not built yet.
+  `bridle-api`'s `Client`, with four views: an agents list (seeded from `GET
+  /v1/agents`, kept live by `agent.state`/`agent.removed` events), a scrolling event
+  tail (`events_stream`, which already reconnects on its own — see
+  `crates/bridle-api/src/client/mod.rs`), the selected agent's transcript tail (polled
+  from `Client::transcript` once a second, same model as `bridle logs --follow`), and
+  an inbox of unread messages addressed to `me` (polled from `Client::list_messages`
+  once a second, same query as `bridle inbox`). `Tab` switches between the four views,
+  `j`/`k`/arrow keys scroll the focused one, `q`/`Esc` quits. On the inbox view, `r`
+  starts composing a reply to the selected message (simple line editing: insert,
+  backspace, left/right, `Enter` to send, `Esc` to cancel); a submitted reply goes out
+  via `Client::send` with `reply_to` set and `when: now`, then the original is marked
+  read via `Client::mark_read` so it drops out of the unread list. Lives in its own
+  crate, `crates/bridle-tui`, split Elm-style: a plain state struct and update function
+  with no terminal/ratatui dependency (so it's unit-tested without a terminal),
+  rendered by a separate `ui` module.
 - **`statusline`** is Claude Code's `statusLine` command, configured in `settings.json`. It
   reads Claude Code's JSON on stdin, prints a short line back, and posts a snapshot to
   `POST /v1/statusline` ([[docs/design/agent-host/api|API]]) using the same daemon discovery
