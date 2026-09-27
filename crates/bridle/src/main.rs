@@ -6,6 +6,7 @@ mod commands;
 mod error;
 mod render;
 mod serve;
+mod statusline;
 
 use std::process::ExitCode;
 

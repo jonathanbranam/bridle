@@ -36,13 +36,14 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Events(args) => events(&cli, args).await,
         Command::Usage => usage(&cli).await,
         Command::Token(args) => token(&cli, args).await,
+        Command::Statusline => statusline(&cli).await,
     }
 }
 
 /// Resolve the daemon endpoint and a token, per docs/design/agent-host/daemon.md and
-/// principals.md, then build a client for it. `resolve_endpoint` failing to find any
-/// daemon at all is exactly the "daemon unreachable" case (exit 3).
-async fn client_for(cli: &Cli) -> Result<Client, CliError> {
+/// principals.md. `resolve_endpoint` failing to find any daemon at all is exactly the
+/// "daemon unreachable" case (exit 3).
+async fn resolve_endpoint_and_token(cli: &Cli) -> Result<(String, Option<String>), CliError> {
     let cwd = std::env::current_dir().context("current directory")?;
     let env = ProcessEnv;
     let endpoint =
@@ -50,7 +51,38 @@ async fn client_for(cli: &Cli) -> Result<Client, CliError> {
             .map_err(|e| CliError::Unreachable(e.to_string()))?;
     let token =
         discovery::resolve_token(cli.token.as_deref(), endpoint.workspace.as_deref(), &env)?;
-    Ok(Client::new(endpoint.url, token))
+    Ok((endpoint.url, token))
+}
+
+async fn client_for(cli: &Cli) -> Result<Client, CliError> {
+    let (url, token) = resolve_endpoint_and_token(cli).await?;
+    Ok(Client::new(url, token))
+}
+
+/// How long `bridle statusline` waits on the daemon before giving up. Claude
+/// Code runs this on every render of the human's prompt, so it must never be
+/// what makes the terminal feel slow (docs/design/usage-and-budget.md).
+const STATUSLINE_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(2);
+
+/// Claude Code's statusLine command (docs/design/cli.md, docs/design/usage-and-budget.md
+/// "Where bridle can see usage"). Reads Claude Code's JSON from stdin, prints a short
+/// line back, and best-effort records a snapshot with the daemon. Never returns an
+/// error and never blocks beyond `STATUSLINE_TIMEOUT`: an unreachable daemon, no
+/// project daemon at all, a slow response, or unparseable stdin all just mean nothing
+/// gets recorded, not a failed or slow status line.
+async fn statusline(cli: &Cli) -> Result<(), CliError> {
+    let input: serde_json::Value = std::io::read_to_string(std::io::stdin())
+        .ok()
+        .and_then(|s| serde_json::from_str(&s).ok())
+        .unwrap_or(serde_json::Value::Null);
+    let report = crate::statusline::parse(&input);
+    println!("{}", crate::statusline::render_line(&report));
+
+    if let Ok((url, token)) = resolve_endpoint_and_token(cli).await {
+        let client = Client::new_with_timeout(url, token, STATUSLINE_TIMEOUT);
+        let _ = tokio::time::timeout(STATUSLINE_TIMEOUT, client.report_statusline(&report)).await;
+    }
+    Ok(())
 }
 
 async fn stop_daemon(cli: &Cli) -> Result<(), CliError> {
@@ -462,6 +494,25 @@ async fn usage(cli: &Cli) -> Result<(), CliError> {
                 rl.window,
                 format_utilization(rl.utilization)
             );
+        }
+        if !usage.interactive_today.is_empty() {
+            println!("today, interactive (bridle statusline):");
+            for row in &usage.interactive_today {
+                let cost = row
+                    .cost_usd
+                    .map(|c| format!("${c:.4}"))
+                    .unwrap_or_else(|| "-".to_string());
+                let ctx = match (row.context_used_tokens, row.context_max_tokens) {
+                    (Some(u), Some(m)) if m > 0 => format!("{:.0}%", (u as f64 / m as f64) * 100.0),
+                    _ => "-".to_string(),
+                };
+                println!(
+                    "  {} {:<10} {:>9} ctx {ctx}",
+                    row.observed_at.format("%H:%M:%S"),
+                    row.model.as_deref().unwrap_or("-"),
+                    cost
+                );
+            }
         }
     }
     Ok(())

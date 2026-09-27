@@ -68,6 +68,10 @@ pub enum Command {
     Usage,
     /// Token management.
     Token(TokenArgs),
+    /// Claude Code's statusLine command: reads its JSON on stdin, prints a
+    /// line back, and records a usage snapshot. Never fails or blocks: see
+    /// docs/design/usage-and-budget.md ("Where bridle can see usage").
+    Statusline,
 }
 
 #[derive(Debug, Args)]
