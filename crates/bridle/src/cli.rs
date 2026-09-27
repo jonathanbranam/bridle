@@ -75,6 +75,11 @@ pub enum Command {
     Budget(BudgetArgs),
     /// Token management.
     Token(TokenArgs),
+    /// Task records: create/show/edit/list/drop/reopen
+    /// (docs/design/storage.md). Scoped for now to open/planned/dropped/
+    /// reopened; ready/claimed/in_review/integrated/accepted arrive with
+    /// later tasks.
+    Task(TaskArgs),
     /// Claude Code's statusLine command: reads its JSON on stdin, prints a
     /// line back, and records a usage snapshot. Never fails or blocks: see
     /// docs/design/usage-and-budget.md ("Where bridle can see usage").
@@ -301,6 +306,76 @@ pub enum TokenAction {
     /// Revoke an `external:<name>` token (human only). An agent's own token
     /// isn't revoked this way; that happens through `bridle rm`.
     Revoke { name: String },
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+#[value(rename_all = "kebab-case")]
+pub enum TaskKindArg {
+    Feature,
+    Bug,
+    Chore,
+    Question,
+    Research,
+    Explore,
+    ArchRevision,
+    ReEvaluate,
+}
+
+#[derive(Debug, Args)]
+pub struct TaskArgs {
+    #[command(subcommand)]
+    pub action: TaskAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum TaskAction {
+    /// Create a task, open, with title and kind.
+    New(TaskNewArgs),
+    /// Show one task in full, including its body and thread.
+    Show(TaskShowArgs),
+    /// Change a task's title or body (not its state).
+    Edit(TaskEditArgs),
+    /// List every task: id, title, kind, state.
+    List,
+    /// Drop a task (requires a reason, recorded in its thread).
+    Drop(TaskDropArgs),
+    /// Bring a dropped task back.
+    Reopen(TaskReopenArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct TaskNewArgs {
+    pub title: String,
+    #[arg(short = 'k', long, value_enum)]
+    pub kind: TaskKindArg,
+    #[arg(long)]
+    pub body: Option<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct TaskShowArgs {
+    pub task: String,
+}
+
+#[derive(Debug, Args)]
+pub struct TaskEditArgs {
+    pub task: String,
+    #[arg(long)]
+    pub title: Option<String>,
+    #[arg(long)]
+    pub body: Option<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct TaskDropArgs {
+    pub task: String,
+    #[arg(long)]
+    pub reason: String,
+}
+
+#[derive(Debug, Args)]
+pub struct TaskReopenArgs {
+    pub task: String,
 }
 
 #[cfg(test)]
