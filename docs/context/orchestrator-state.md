@@ -27,7 +27,13 @@ Its queue, two workers at a time:
    SQLite index for the inbox.
 5. **P0** ([build order](docs/proposal/build-order.md)). The manager is to send
    its task breakdown before spawning. It takes priority over (C).
-6. **(C) The governor's `[models]` step-down** per role, after (A), because
+6. **P0-6, migrate bridle's own work into bridle tasks** (after P0-4 and
+   P0-5; the human asked for it on 2026-09-27). Step 1 is a verification
+   gate that I check before anything moves. Step 2 imports all open work
+   as-is: every open question and spike ticket, the live queue, and P1 onward.
+   Nothing is triaged, and the files stay in place. The manager is filing a
+   ticket for it.
+7. **(C) The governor's `[models]` step-down** per role, after (A), because
    they touch the same files.
 
 Parked: `bridle/mcp-1` (WIP `cae932c`, a hand-rolled read-side `/mcp`, not

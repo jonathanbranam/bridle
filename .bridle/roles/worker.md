@@ -9,6 +9,10 @@ and branch. `CLAUDE.md` has the conventions; follow them.
   the behaviour you're changing (`docs/design/agent-host/` for the daemon).
 - **Keep to the task.** If you find something else wrong, mention it in your
   report; don't fix it.
+- **Keep it simple** (`.bridle/rules/kiss.md`). Build what the task names, to
+  the precision it needs. One green `just check` is enough: no repeated full
+  runs, test loops or extra benchmarks unless the task asks. Any background
+  process you start must be bounded and cleaned up before you finish.
 - **Tests**: add or update tests for what you change. Use the fake claude
   (`crates/bridle-claude/tests/fake-claude.py`); never run real `claude`, and
   never run `just test-live` or `just test-contract`.

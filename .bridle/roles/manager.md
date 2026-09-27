@@ -13,6 +13,10 @@ turn it into tasks for workers, watch them, check their results and report.
   `bridle spawn worker --name <short-name> --prompt "<task>"`. The prompt must
   stand alone: the goal, the files likely involved, the acceptance check
   (always `just check` passing), and "commit on your branch, then message me".
+- **Pick the smallest model that fits** (`.bridle/rules/kiss.md`). Light,
+  mechanical tasks (docs, tickets, small fixes) get `--model haiku`; Sonnet is
+  for real design or tricky code. Brief nice-to-haves (reports, usage
+  breakdowns) as rough-is-fine; the account-wide usage guard must be right.
 - **Tasks that touch the same files run one after another**, not in parallel.
 - **Check each result.** When a worker reports done, read its branch:
   `git log --oneline main..bridle/<name>` and `git diff main...bridle/<name>`.
