@@ -371,15 +371,23 @@ async fn ensure_human_token(store: &Store, ws: &Workspace) -> anyhow::Result<()>
 /// `pending`.
 async fn reconcile(store: &Store, emitter: &Emitter) -> anyhow::Result<()> {
     for ra in store.running_agents().await? {
-        if let (Some(pid), Some(start)) = (ra.pid, ra.pid_start.clone())
-            && containment::is_same_process(pid, &start)
-        {
+        let alive = match tokio::task::spawn_blocking(containment::snapshot).await {
+            Ok(Ok(snap)) => match (ra.pid, ra.pid_start.clone()) {
+                (Some(pid), Some(start)) => snap
+                    .iter()
+                    .any(|p| p.pid == pid && p.start == start)
+                    .then_some((pid, start)),
+                _ => None,
+            },
+            _ => None,
+        };
+        if let Some((pid, start)) = alive {
             containment::terminate_group(pid, Duration::from_secs(3)).await;
             let mut tracker = containment::Tracker::new(pid, start);
             if let Ok(Ok(snap)) = tokio::task::spawn_blocking(containment::snapshot).await {
                 tracker.update(&snap);
+                containment::sweep(&mut tracker, &snap, Duration::from_secs(2)).await;
             }
-            containment::sweep(&mut tracker, Duration::from_secs(2)).await;
         }
         store
             .set_agent_exit(
