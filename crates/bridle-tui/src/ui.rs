@@ -49,7 +49,7 @@ fn draw_status_line(frame: &mut Frame, area: Rect, app: &App) {
 fn draw_agents(frame: &mut Frame, area: Rect, app: &App) {
     let focused = app.focus == Focus::Agents;
     let header = Row::new(vec![
-        "ID", "NAME", "ROLE", "STATE", "MODEL", "COST", "TURNS",
+        "ID", "NAME", "ROLE", "STATE", "MODEL", "COST", "TURNS", "CONTEXT",
     ])
     .style(Style::default().add_modifier(Modifier::BOLD));
     let rows = app.agents.iter().map(|a| {
@@ -61,6 +61,12 @@ fn draw_agents(frame: &mut Frame, area: Rect, app: &App) {
             Cell::from(a.model.clone()),
             Cell::from(format!("${:.4}", a.cost_usd_total)),
             Cell::from(a.turns.to_string()),
+            // Not a real zero-sized context: no turn has ended yet.
+            Cell::from(
+                a.context_tokens
+                    .map(|n| n.to_string())
+                    .unwrap_or_else(|| "-".to_string()),
+            ),
         ])
     });
     let widths = [
@@ -71,6 +77,7 @@ fn draw_agents(frame: &mut Frame, area: Rect, app: &App) {
         Constraint::Length(14),
         Constraint::Length(10),
         Constraint::Length(6),
+        Constraint::Length(9),
     ];
     let selected_style = Style::default().add_modifier(Modifier::REVERSED);
     let rows: Vec<Row> = rows
