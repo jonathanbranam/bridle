@@ -20,8 +20,8 @@ A message goes to an agent, a task (all current and future claimants), a role
 | Kind | Effect |
 |---|---|
 | `note` | informational; appended to the task's thread if addressed to a task |
-| `question` | **blocks** the task until answered; to `human` it shows in the human's `bridle inbox` |
-| `answer` | unblocks; the answer is written durably to the task record |
+| `question` | **blocks** the task until answered; to `human` it shows in the human's `bridle inbox`. A question is not a separate record: it lives inline in the thread of the task it blocks, on the state branch. The daemon also indexes open questions in SQLite so `bridle inbox` can show them without walking the state branch ([[where-questions-live-on-the-state-branch-c5a8|decided]]) |
+| `answer` | unblocks; the answer is written durably to the task record, inline in the same thread |
 | `handoff` | "here is where I left it" when releasing a claim |
 | `conflict` | opened by the impact registry between two claimants ([impact registry](docs/design/impact-and-conflicts.md)) |
 | `system` | from bridle: rebase needed, blocker cleared, lease lapsing |
