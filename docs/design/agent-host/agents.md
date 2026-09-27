@@ -25,9 +25,12 @@ established; S-numbers are its scenarios. Each agent is one headless
 
 - **`--permission-prompts none`**: anything that would prompt is denied
   automatically, and the denial shows up in `result.permission_denials`, which
-  bridle surfaces as an event. Bridle therefore never has to answer a
-  `control_request` from claude. Routing permission prompts to questions is
-  later work ([[docs/proposal/build-order|build order]]).
+  bridle surfaces as an event. Bridle therefore never has to serve an answerer
+  for claude's prompts. Routing permission prompts to questions is later work
+  ([[docs/proposal/build-order|build order]]); it needs an MCP tool
+  (`--permission-prompt-tool`), not a `control_request` bridle answers on this
+  same channel — see
+  [[docs/design/agent-host/messages#Permission prompts as questions|messages.md]].
 - **Environment**: bridle removes every inherited `CLAUDE*` variable and any
   `BRIDLE_TOKEN` (spike surprise 12), then sets `BRIDLE_URL`, `BRIDLE_TOKEN`
   (the agent's own), `BRIDLE_AGENT_ID`, `BRIDLE_AGENT_NAME`,

@@ -80,3 +80,50 @@ claude, and the agent returns to `idle`.
 pending messages (S4b). Held (`--when idle`) messages are bridle's own queue,
 and `bridle interrupt --drop-held` discards those explicitly, with a
 `message.dropped` event each.
+
+## Permission prompts as questions (planned)
+
+Not built yet ([[docs/proposal/build-order|build order]] item 3). [Spike
+03](docs/spikes/03-permission-prompt-tool-findings.md) settled the mechanism,
+which isn't the one build-order originally assumed: claude does **not** send
+a `can_use_tool` control request over the stdin/stdout channel that already
+carries `interrupt` and `get_usage`. It only asks if `--permission-prompt-tool
+<name>` names an **MCP tool**, served over `--mcp-config`, and the tool is
+called with a `tools/call` per prompt-worthy tool use — `arguments.tool_name`,
+`arguments.input`, `arguments.tool_use_id`, correlated to the `assistant`
+event's `tool_use.id`. `--permission-prompts host` (already bridle's plan; it
+must not be `none`) is necessary but not sufficient without that tool. This
+only fires for tool calls claude's own (undocumented) risk classifier decides
+are prompt-worthy — reads and in-cwd writes never reach it — and a role stuck
+on `--permission-mode dontAsk` never reaches it either, whatever
+`--permission-prompts` says; a role that wants questions needs a different
+permission mode too (spike 03 answer 5).
+
+The plan this unblocks:
+
+- **Bridle serves the MCP tool itself.** A small server, reachable the way
+  other per-agent MCP servers are (`--mcp-config`, `--strict-mcp-config`),
+  exposing one tool that every prompt-worthy tool call goes through. The
+  simplest shape is a `bridle` subcommand that speaks MCP stdio to claude on
+  one side and calls back into the daemon (over its own API, the way any
+  other bridle client would) on the other, so the daemon stays the one place
+  that knows about agents, roles and messages.
+- **A `tools/call` becomes a `question`** from the agent to its role's
+  configured recipient (manager or human), reusing the existing message model
+  above verbatim: same `pending → written → delivered → read` states, same
+  `bridle send <recipient> --reply-to` reply path. The open MCP call blocks
+  until that reply lands — spike 03 held one for 130 s with no ill effect, and
+  nothing in the design needs a shorter bound than a human actually takes to
+  decide. A role's rules can also answer without asking (an allow/deny rule
+  keyed on tool name or command pattern), the same way `--permission-prompts
+  none` already lets the permission mode decide without asking anyone.
+- **The response** is the tool's decision, JSON-encoded a second time inside
+  the MCP text content block (`{"content":[{"type":"text","text":
+  "{\"behavior\":\"allow\"|\"deny\", ...}"}]}`) — an MCP-shape detail the
+  bridging subcommand handles, not something a human answering a question
+  ever sees.
+- **Still open**: whether the MCP server is one process per agent or shared
+  across a daemon's agents; what happens if it crashes or the daemon restarts
+  mid-prompt (the pending `tools/call` has no bridle-side durability yet);
+  and whether `updatedInput` (letting an allow rewrite the command, not just
+  pass it through) is worth exposing to a human answering the question.
