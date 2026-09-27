@@ -28,7 +28,8 @@ use crate::supervisor::AgentManager;
 /// (usage-and-budget.md: "The rest apply to everyone").
 const DEFAULT_WINDOWS: &[&str] = &["five_hour", "seven_day"];
 /// Per-model windows and the model-name substring that selects them.
-const MODEL_WINDOWS: &[(&str, &str)] = &[("opus", "seven_day_opus"), ("sonnet", "seven_day_sonnet")];
+const MODEL_WINDOWS: &[(&str, &str)] =
+    &[("opus", "seven_day_opus"), ("sonnet", "seven_day_sonnet")];
 
 const PROBE_TIMEOUT: Duration = Duration::from_secs(10);
 
@@ -123,7 +124,11 @@ impl Governor {
     }
 
     pub fn snapshot(&self) -> GovernorSnapshot {
-        self.0.handle.lock().expect("governor mutex poisoned").clone()
+        self.0
+            .handle
+            .lock()
+            .expect("governor mutex poisoned")
+            .clone()
     }
 
     /// Called on every background tick: polls `get_usage` when due, then
@@ -189,7 +194,10 @@ impl Governor {
             }
         }
         let handle = self.spawn_probe().await.map_err(|e| e.to_string())?;
-        let result = handle.get_usage(PROBE_TIMEOUT).await.map_err(|e| e.to_string());
+        let result = handle
+            .get_usage(PROBE_TIMEOUT)
+            .await
+            .map_err(|e| e.to_string());
         *guard = Some(handle);
         result
     }
@@ -198,7 +206,8 @@ impl Governor {
         use bridle_claude::command::{ClaudeCommand, Session};
         use bridle_claude::transcript::Transcript;
 
-        let mut cmd = ClaudeCommand::new(self.0.workspace.repo.clone(), Session::New(Uuid::new_v4()));
+        let mut cmd =
+            ClaudeCommand::new(self.0.workspace.repo.clone(), Session::New(Uuid::new_v4()));
         cmd.program = self.0.claude_program.clone();
         let transcript = Transcript::open(
             &self.0.workspace.state_dir().join("governor-probe.jsonl"),
@@ -247,7 +256,8 @@ impl Governor {
         }
 
         if new_default.state != previous.default.state {
-            self.emit_transition(previous.default.state, &new_default).await;
+            self.emit_transition(previous.default.state, &new_default)
+                .await;
         }
         for (needle, block) in &new_per_model {
             let prev_state = previous
@@ -333,7 +343,8 @@ impl Governor {
                 None => GovernorState::Holding,
                 Some(observed) => {
                     let age = Utc::now() - observed;
-                    let staleness = chrono::Duration::from_std(cfg.max_staleness).unwrap_or_default();
+                    let staleness =
+                        chrono::Duration::from_std(cfg.max_staleness).unwrap_or_default();
                     if age > staleness * 3 {
                         GovernorState::WindingDown
                     } else if age > staleness {
@@ -368,7 +379,10 @@ fn parse_get_usage(v: &Value, observed_at: DateTime<Utc>) -> Vec<RateLimit> {
             out.push(RateLimit {
                 window: window.clone(),
                 status: None,
-                utilization: entry.get("utilization").and_then(Value::as_f64).map(|p| p / 100.0),
+                utilization: entry
+                    .get("utilization")
+                    .and_then(Value::as_f64)
+                    .map(|p| p / 100.0),
                 resets_at: parse_iso(entry.get("resets_at")),
                 observed_at,
             });
@@ -383,7 +397,9 @@ fn parse_get_usage(v: &Value, observed_at: DateTime<Utc>) -> Vec<RateLimit> {
             let Some(model) = l.pointer("/scope/model").and_then(Value::as_str) else {
                 continue;
             };
-            let Some((_, window)) = MODEL_WINDOWS.iter().find(|(needle, _)| model.contains(needle))
+            let Some((_, window)) = MODEL_WINDOWS
+                .iter()
+                .find(|(needle, _)| model.contains(needle))
             else {
                 continue;
             };
@@ -447,10 +463,16 @@ mod tests {
         let observed = Utc::now();
         let rls = parse_get_usage(&v, observed);
         assert_eq!(rls.len(), 4);
-        let five = rls.iter().find(|r| r.window == "five_hour").expect("five_hour");
+        let five = rls
+            .iter()
+            .find(|r| r.window == "five_hour")
+            .expect("five_hour");
         assert_eq!(five.utilization, Some(0.42));
         assert!(five.resets_at.is_some());
-        let opus = rls.iter().find(|r| r.window == "seven_day_opus").expect("opus");
+        let opus = rls
+            .iter()
+            .find(|r| r.window == "seven_day_opus")
+            .expect("opus");
         assert_eq!(opus.utilization, Some(0.6));
         let sonnet = rls
             .iter()

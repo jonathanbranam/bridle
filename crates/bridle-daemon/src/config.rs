@@ -402,10 +402,11 @@ impl Config {
         let path = bridle_api::discovery::bridle_home().join("config.toml");
         match std::fs::read_to_string(&path) {
             Ok(text) => {
-                let raw: RawConfig = toml::from_str(&text).map_err(|source| ConfigError::Parse {
-                    path: path.clone(),
-                    source: Box::new(source),
-                })?;
+                let raw: RawConfig =
+                    toml::from_str(&text).map_err(|source| ConfigError::Parse {
+                        path: path.clone(),
+                        source: Box::new(source),
+                    })?;
                 BudgetConfig::default().merge(raw.budget.unwrap_or_default())
             }
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(BudgetConfig::default()),

@@ -54,7 +54,10 @@ async fn governor_holds_then_pauses_as_usage_climbs() {
         })
         .await
         .expect_err("spawn refused while holding");
-    assert!(matches!(err, bridle_api::ClientError::Api { status: 409, .. }));
+    assert!(matches!(
+        err,
+        bridle_api::ClientError::Api { status: 409, .. }
+    ));
 
     // stop_at default is 95: paused.
     script_usage(&daemon.repo, 96.0, 10.0);

@@ -227,12 +227,21 @@ async fn budget(State(state): State<AppState>) -> Result<Json<BudgetStatus>, Api
     let snapshot = state.governor.snapshot();
     let rate_limits = state.store.rate_limits().await?;
     let mut windows = Vec::new();
-    for window in ["five_hour", "seven_day", "seven_day_opus", "seven_day_sonnet"] {
+    for window in [
+        "five_hour",
+        "seven_day",
+        "seven_day_opus",
+        "seven_day_sonnet",
+    ] {
         let rl = rate_limits.iter().find(|r| r.window == window);
         let block = if window == "seven_day_opus" {
             snapshot.per_model.get("opus").cloned().unwrap_or_default()
         } else if window == "seven_day_sonnet" {
-            snapshot.per_model.get("sonnet").cloned().unwrap_or_default()
+            snapshot
+                .per_model
+                .get("sonnet")
+                .cloned()
+                .unwrap_or_default()
         } else if snapshot.default.window.as_deref() == Some(window) {
             snapshot.default.clone()
         } else {
