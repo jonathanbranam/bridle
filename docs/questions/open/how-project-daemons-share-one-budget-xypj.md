@@ -37,3 +37,8 @@ sessions ([[docs/design/usage-and-budget|usage and budget]]).
   CPU and memory as well as tokens.
 - The account is also shared with the human's laptop sessions, so a
   machine-local ledger doesn't see everything.
+- **Pausing no longer needs this.** The governor reads account-wide
+  utilisation (`get_usage`) and uses machine-wide thresholds, so every daemon
+  winds down at the same point without coordinating
+  ([[docs/design/usage-and-budget#Across projects|across projects]]). What's
+  left is sharing `max_workers` and the dispatch rate below `hold_at`.

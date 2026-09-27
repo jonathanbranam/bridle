@@ -64,6 +64,7 @@ bridle goals list|propose       bridle arch propose
 bridle trace up|down|suspect|confirm|orphans|coverage
 bridle explore new|conclude|adopt|abandon
 bridle usage --by …|task|trend|compare          bridle cost audit
+bridle budget [hold [--for D|--until T] | release]   usage governor (usage-and-budget.md)
 bridle token list|revoke
 bridle rebuild
 ```

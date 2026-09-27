@@ -12,7 +12,8 @@ In practice this means:
 - A subscription has **rolling limits, not a bill**: a 5-hour window, a 7-day
   window, and per-model weekly windows (`seven_day_opus`, `seven_day_sonnet`).
   Hitting one stops all work on the account, **including the human's own
-  sessions**.
+  sessions**. Bridle must never be what hits one: idle bridle work is always
+  the better outcome ([[docs/design/usage-and-budget#The budget governor|budget governor]]).
 - Parallelism is not free. Two workers use the window twice as fast. The number
   of concurrent workers is a budget setting, not an architectural one.
 - Tokens spent on coordination (priming, injected rules, tool schemas, agents
@@ -61,21 +62,137 @@ agent's spend ([[docs/design/agent-host/agents#Spend cap|spend cap]]).
 
 Not built: the status line, the ledger's task, role and workflow-revision
 columns, and the governor. Claude Code also answers an undocumented
-`get_usage` control request; bridle doesn't depend on it.
+`get_usage` control request, which the governor will poll
+([[docs/design/usage-and-budget#Seeing the windows|seeing the windows]]).
 
 ## The budget governor
 
-Bridle checks the budget before every dispatch:
+**Bridle never takes the account to a limit.** Hitting one blocks the human's
+own Claude use (here, on the laptop, on the phone) until the window resets,
+and that is far worse than any amount of bridle work waiting. So the governor
+is built to leave bridle idle rather than risk it: it stops starting work
+early, winds running agents down before the limit, and treats not knowing the
+numbers as a reason to stop. Throughput is the thing it gives up.
+
+### Thresholds
+
+Per window, as a percentage of the window used, account-wide:
 
 ```toml
 [budget]
-plan                 = "max-5x"
-max_workers          = 2            # concurrent headless workers
-reserve.five_hour    = 25           # % of the window kept free for the human
-pause_at.five_hour   = 80           # stop dispatching
-pause_at.seven_day   = 85
-pause_at.seven_day_opus = 70
+max_workers  = 2            # concurrent headless agents
 
+# per window; `default` applies to any window not named
+hold_at      = { default = 80 }               # start nothing new
+wind_down_at = { default = 90, seven_day_opus = 85 }   # tell every agent to wrap up and stop
+stop_at      = { default = 95 }               # interrupt and stop at once, no wrap-up turn
+resume_below = { default = 70 }               # every window must be below this to resume
+wind_down_grace = "5m"      # how long a wrap-up turn may run before it's interrupted
+max_staleness   = "10m"     # older readings count as unknown
+```
+
+- **`hold_at`**: no spawns, no resumes, no autostarts, and no message that
+  would start a turn in an idle agent (it stays `pending`). Agents already
+  working carry on.
+- **`wind_down_at`** is the main knob, and the one to tune: how much of the
+  window the human keeps for themselves is roughly `100 − wind_down_at`, less
+  what the wrap-up turns spend. See [[docs/design/usage-and-budget#The wind-down|the wind-down]].
+- **`stop_at`** is the backstop for a window moving faster than the wind-down
+  can finish: every agent is interrupted and stopped straight away.
+- **`resume_below`** gives hysteresis, so a reading that jitters around a
+  threshold doesn't pause and resume the workforce repeatedly.
+- **Per-model windows** (`seven_day_opus`, `seven_day_sonnet`) apply only to
+  agents on that model; the others carry on. The rest apply to everyone.
+- Thresholds are **account settings**, so they live in `~/.bridle/config.toml`
+  and every daemon on the machine uses the same ones. A project's
+  `.bridle/config.toml` may lower them, never raise them.
+- **Unknown is not safe.** With no reading newer than `max_staleness` while
+  any agent is working, the governor holds. Once the reading is three times
+  that old, it winds down.
+
+### The wind-down
+
+When any window crosses `wind_down_at`, or the human asks for a hold:
+
+1. The governor enters `winding_down` and emits `budget.state`.
+2. **Idle agents are stopped at once** (closing stdin costs nothing). A message
+   would start a turn, so they get no notice.
+3. **Working agents get a notice** from `bridle`, sent `now` so it folds into
+   the current turn at the next tool boundary:
+   `Usage pause: <window> is at 91%. Commit your work in progress to your
+   branch, send your manager one line on where you are, and end your turn.
+   Don't start anything new.` Every role's preamble carries a one-line rule
+   for this notice, so the notice itself stays short and the prompt cache
+   holds.
+4. **Every other message to an agent is held** as `pending`, so nothing starts
+   a new turn.
+5. When a notified agent's turn ends, bridle stops it with exit reason
+   `budget_paused`. After `wind_down_grace`, or at once past `stop_at` or on a
+   `rejected` rate-limit event, it's interrupted and stopped instead.
+6. The governor is then `paused`. Each paused agent keeps its session id,
+   worktree, branch and pending messages, as any `stopped` agent does. Once
+   tasks exist, its task moves to `paused:limit` and keeps its claim.
+
+The manager and orchestrator bridle hosts are agents like any other and wind
+down the same way.
+
+### Resuming
+
+When **every** window is below `resume_below` and no human hold is in force,
+the governor resumes paused agents with `--resume <session-id>`, in priority
+order, up to `max_workers`. Each gets its pending messages, or, if it has
+none, one line saying the pause is over. Then the manager is told. Short of
+that, bridle stays idle: a paused `seven_day` window can mean days without
+bridle work, and that is intended.
+
+`bridle spawn` and `bridle resume` are refused (409, naming the window and its
+reset time) while the governor holds or is paused; the human can pass
+`--ignore-budget` to run one anyway.
+
+### The human's hold
+
+The human can idle bridle whenever they want the account for themselves:
+
+```
+bridle budget                       # windows, thresholds, governor state, what's paused
+bridle budget hold [--for 3h | --until 18:00]
+bridle budget release
+```
+
+`hold` does exactly what crossing `wind_down_at` does, and applies to every
+daemon in the registry. Without `--for` or `--until` it lasts until
+`release`.
+
+### Seeing the windows
+
+The governor needs a **fresh** reading, and the stream doesn't give one: a
+`rate_limit_event` arrives once per process (spike 01 S8), so a long-running
+agent's last reading can be hours old, and it can't see the human's own use.
+Sources, best first:
+
+1. **`get_usage` probes.** The control request returns every window's
+   utilisation and reset time **without a model call** (~1.1 s, spike 01). The
+   daemon sends it to a running agent, or to a probe process of its own
+   (`claude -p`, stream-json, no prompt, no tools) when none is running, and
+   records only the window numbers (the response also carries account
+   details). It polls every 5 min below `hold_at` and every 30 s above, and
+   whenever a turn ends above `hold_at`. The reading is account-wide, so it
+   includes the human's sessions on every machine.
+2. **`rate_limit_event`s** from agents, and `bridle statusline` snapshots from
+   the human's interactive sessions, as they arrive.
+3. **An estimate** between readings: the ledger's tokens since the last
+   reading, converted with the learned tokens-per-percent. It only ever makes
+   the governor more cautious, never less.
+
+`get_usage` is undocumented, so the contract suite covers it, and if it stops
+working the governor falls back to 2 and 3 and holds at the staleness limits
+above. `allowed_warning` and `rejected` events trip the wind-down and
+`stop_at` respectively, whatever the percentages say; when Claude sends
+`allowed_warning` is unknown ([[usage-probe-and-wind-down-headroom-u7pw|spike u7pw]]).
+
+### Model choice
+
+```toml
 [models]                            # defaults by role; the governor may step down
 manager  = ["opus", "sonnet"]
 planner  = ["opus", "sonnet"]
@@ -85,26 +202,25 @@ chore    = ["haiku"]
 explore  = ["sonnet"]
 ```
 
-- **Dispatch** checks headroom first. If a window is past its `pause_at`, bridle
-  doesn't spawn. The ready queue waits in priority order, and explorations and
-  `someday` work go last.
-- **Model choice** starts from the role's list and steps down as a window gets
-  tight, e.g. Sonnet instead of Opus when `seven_day_opus` is high. A task can
-  pin a model (`model = "opus"`) when its plan says the step-down would be a
-  false economy.
-- **Pausing when a limit is hit**:
-  1. On `allowed_warning`, bridle stops dispatching and lets running turns
-     finish.
-  2. On `rejected`, it interrupts cleanly at the next turn boundary.
-  3. It records each paused agent's session id and moves its task to
-     `paused:limit`. The claim, worktree and branch are all kept.
-  4. It sets a timer for `resetsAt`.
-- **Resuming** when the window resets: bridle restarts paused agents with
-  `--resume <session-id>`, in priority order, up to `max_workers`, and tells the
-  manager.
-- **The human's reserve** is respected even when work is queued. The human's
-  interactive sessions share the account, and running out mid-conversation is
-  the worst outcome.
+New work starts from the role's list and steps down as a window gets tight,
+e.g. Sonnet instead of Opus when `seven_day_opus` is high. A task can pin a
+model (`model = "opus"`) when its plan says the step-down would be a false
+economy. Stepping down delays a wind-down; it never replaces one.
+
+### Across projects
+
+Each project's daemon runs its own governor. They agree on when to pause
+without talking to each other, because the readings are account-wide and the
+thresholds are machine-wide. Sharing `max_workers` between them is still open:
+[[how-project-daemons-share-one-budget-xypj|how project daemons share one budget]].
+
+### API
+
+`budget.state` (`{from, to, window, utilization, resets_at, reason}`, `to` one
+of `normal`, `holding`, `winding_down`, `paused`) on each transition;
+`agent.exited` with reason `budget_paused`; the governor's state in
+`GET /v1/status`; and `GET /v1/budget`, `POST /v1/budget/hold`,
+`POST /v1/budget/release`. None of it is built.
 
 ## Designing for fewer tokens
 

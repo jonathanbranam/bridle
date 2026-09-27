@@ -19,8 +19,14 @@ Don't start at P5. Research 09 §7 still applies.
 
 Agent-host work that can land between phases, roughly in this order:
 
-1. **Budget governor** ([usage and budget](docs/design/usage-and-budget.md)):
-   pause at limits, resume at reset. The data it needs is already recorded.
+1. **Budget governor**, next, before P0a
+   ([budget governor](docs/design/usage-and-budget.md)): `get_usage`
+   polling, hold at 80%, wind every agent down at 90%, stop at 95%, resume
+   when every window is back under 70%, and `bridle budget hold`. V1 already
+   runs agents with nothing but a per-agent spend cap between them and the
+   account's limits, and hitting a limit blocks the human's own Claude use.
+   Spike [u7pw](docs/spikes/open/usage-probe-and-wind-down-headroom-u7pw.md)'s
+   cheap questions come first.
 2. **`bridle take` / `give`** (research 01 §5.3): interrupt, close, hand the
    human `claude --resume <session>` in the worktree, resume headless after.
 3. **Permission prompts as questions**: `--permission-prompts host`, with
