@@ -68,6 +68,7 @@ async fn run_app(terminal: &mut Term, client: Client) -> anyhow::Result<()> {
     {
         // events_stream reconnects on its own (bridle_api::Client::events_stream);
         // this task just forwards whatever it yields until the receiver goes away.
+        let client = client.clone();
         let tx = tx.clone();
         tokio::spawn(async move {
             let mut events = std::pin::pin!(client.events_stream(None));
@@ -78,7 +79,8 @@ async fn run_app(terminal: &mut Term, client: Client) -> anyhow::Result<()> {
             }
         });
     }
-    drop(tx);
+    let mut log_task: Option<tokio::task::JoinHandle<()>> = None;
+    let mut log_target: Option<String> = None;
 
     let mut input = EventStream::new();
     terminal.draw(|f| ui::draw(f, &app))?;
@@ -97,12 +99,61 @@ async fn run_app(terminal: &mut Term, client: Client) -> anyhow::Result<()> {
                 }
             }
         }
+
+        // `logs_agent` always tracks the selected agent (App::sync_logs_target);
+        // restart the poll task whenever it changes so the logs view never
+        // shows a stale agent's tail.
+        if app.logs_agent.as_deref() != log_target.as_deref() {
+            if let Some(handle) = log_task.take() {
+                handle.abort();
+            }
+            log_target = app.logs_agent.clone();
+            log_task = log_target
+                .clone()
+                .map(|id| spawn_transcript_poll(client.clone(), tx.clone(), id));
+        }
+
         terminal.draw(|f| ui::draw(f, &app))?;
         if app.should_quit {
             break;
         }
     }
+    if let Some(handle) = log_task {
+        handle.abort();
+    }
     Ok(())
+}
+
+/// Poll `Client::transcript` for `agent`'s tail once a second, same model as
+/// `bridle logs --follow` (crates/bridle/src/commands.rs's `logs`): track
+/// the last-seen line number locally and pass it as `since`. There's no SSE
+/// stream for transcript lines, only for events.
+fn spawn_transcript_poll(
+    client: Client,
+    tx: tokio::sync::mpsc::UnboundedSender<Message>,
+    agent: String,
+) -> tokio::task::JoinHandle<()> {
+    tokio::spawn(async move {
+        let mut since = None;
+        loop {
+            if let Ok(lines) = client.transcript(&agent, since, None).await {
+                if let Some(last) = lines.last() {
+                    since = Some(last.n);
+                }
+                if !lines.is_empty()
+                    && tx
+                        .send(Message::TranscriptLines {
+                            agent: agent.clone(),
+                            lines,
+                        })
+                        .is_err()
+                {
+                    break;
+                }
+            }
+            tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+        }
+    })
 }
 
 fn map_key(key: KeyEvent) -> Option<Key> {

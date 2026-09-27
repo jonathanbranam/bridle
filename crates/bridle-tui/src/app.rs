@@ -3,21 +3,25 @@
 //! [`Message`] (from `events_stream`, or the initial agents list) or a
 //! [`Key`] press, and assert on the resulting [`App`].
 
-use bridle_api::{Agent, AgentState, Event, event_kind};
+use bridle_api::{Agent, AgentState, Event, TranscriptLine, event_kind};
 
-/// Which of the two views has keyboard focus.
+use crate::format::render_transcript_line;
+
+/// Which of the three views has keyboard focus.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Focus {
     #[default]
     Agents,
     Events,
+    Logs,
 }
 
 impl Focus {
-    pub fn toggle(self) -> Self {
+    pub fn next(self) -> Self {
         match self {
             Focus::Agents => Focus::Events,
-            Focus::Events => Focus::Agents,
+            Focus::Events => Focus::Logs,
+            Focus::Logs => Focus::Agents,
         }
     }
 }
@@ -51,6 +55,13 @@ pub enum Key {
 pub enum Message {
     AgentsLoaded(Vec<Agent>),
     Event(Event),
+    /// One poll's worth of transcript lines for `agent` (possibly empty).
+    /// Dropped by `App` if `agent` isn't the currently selected agent, so a
+    /// response to a since-superseded poll can't clobber the new tail.
+    TranscriptLines {
+        agent: String,
+        lines: Vec<TranscriptLine>,
+    },
 }
 
 /// Everything on screen. Rendering (`ui.rs`) only ever reads this; only
@@ -64,6 +75,15 @@ pub struct App {
     pub selected_agent: usize,
     /// Lines scrolled up from the tail (0 = pinned to the newest event).
     pub event_scroll: usize,
+    /// Id of the agent `log_lines` holds the transcript for, kept in step
+    /// with `selected_agent` by `sync_logs_target` regardless of `focus` --
+    /// so the log poll (driven off this field by `run.rs`) is always
+    /// following the selected agent, and the logs view never has to
+    /// backfill on focus change.
+    pub logs_agent: Option<String>,
+    pub log_lines: Vec<String>,
+    /// Lines scrolled up from the tail (0 = pinned to the newest line).
+    pub log_scroll: usize,
     pub connection: ConnectionStatus,
     pub should_quit: bool,
 }
@@ -84,16 +104,44 @@ impl App {
                 self.apply_event_to_agents(&ev);
                 self.events.push(ev);
             }
+            Message::TranscriptLines { agent, lines } => {
+                if self.logs_agent.as_deref() == Some(agent.as_str()) {
+                    for line in &lines {
+                        self.log_lines.extend(render_transcript_line(line));
+                    }
+                }
+            }
         }
+        self.sync_logs_target();
     }
 
     pub fn on_key(&mut self, key: Key) {
         match key {
             Key::Char('q') | Key::Esc => self.should_quit = true,
-            Key::Tab => self.focus = self.focus.toggle(),
+            Key::Tab => self.focus = self.focus.next(),
             Key::Char('k') | Key::Up => self.scroll_up(),
             Key::Char('j') | Key::Down => self.scroll_down(),
             Key::Char(_) => {}
+        }
+        self.sync_logs_target();
+    }
+
+    /// The id of the currently selected agent, or `None` if the list is
+    /// empty.
+    pub fn selected_agent_id(&self) -> Option<&str> {
+        self.agents.get(self.selected_agent).map(|a| a.id.as_str())
+    }
+
+    /// Reset the logs view whenever the selected agent changes (a
+    /// navigation key, a reload of the agents list, or the selected agent
+    /// being removed), so `logs_agent` -- and therefore what `run.rs`
+    /// polls -- always tracks the current selection.
+    fn sync_logs_target(&mut self) {
+        let current = self.selected_agent_id().map(str::to_string);
+        if current != self.logs_agent {
+            self.logs_agent = current;
+            self.log_lines.clear();
+            self.log_scroll = 0;
         }
     }
 
@@ -103,6 +151,10 @@ impl App {
             Focus::Events => {
                 let max = self.events.len().saturating_sub(1);
                 self.event_scroll = (self.event_scroll + 1).min(max);
+            }
+            Focus::Logs => {
+                let max = self.log_lines.len().saturating_sub(1);
+                self.log_scroll = (self.log_scroll + 1).min(max);
             }
         }
     }
@@ -115,6 +167,7 @@ impl App {
                 }
             }
             Focus::Events => self.event_scroll = self.event_scroll.saturating_sub(1),
+            Focus::Logs => self.log_scroll = self.log_scroll.saturating_sub(1),
         }
     }
 
@@ -278,11 +331,13 @@ mod tests {
     }
 
     #[test]
-    fn tab_toggles_focus() {
+    fn tab_cycles_through_the_three_views() {
         let mut app = App::new();
         assert_eq!(app.focus, Focus::Agents);
         app.on_key(Key::Tab);
         assert_eq!(app.focus, Focus::Events);
+        app.on_key(Key::Tab);
+        assert_eq!(app.focus, Focus::Logs);
         app.on_key(Key::Tab);
         assert_eq!(app.focus, Focus::Agents);
     }
@@ -362,5 +417,106 @@ mod tests {
         assert_eq!(app.event_scroll, 0);
         app.on_key(Key::Down); // already pinned to the tail
         assert_eq!(app.event_scroll, 0);
+    }
+
+    fn transcript_line(n: u64, line: &str) -> TranscriptLine {
+        TranscriptLine {
+            n,
+            t_ms: 0,
+            dir: "out".to_string(),
+            line: line.to_string(),
+        }
+    }
+
+    #[test]
+    fn selecting_an_agent_sets_it_as_the_logs_target() {
+        let mut app = App::new();
+        assert_eq!(app.logs_agent, None);
+        app.on_message(Message::AgentsLoaded(vec![
+            agent("a-1", AgentState::Idle),
+            agent("a-2", AgentState::Idle),
+        ]));
+        assert_eq!(app.logs_agent, Some("a-1".to_string()));
+    }
+
+    #[test]
+    fn transcript_lines_for_the_selected_agent_are_rendered_into_log_lines() {
+        let mut app = App::new();
+        app.on_message(Message::AgentsLoaded(vec![agent("a-1", AgentState::Idle)]));
+        app.on_message(Message::TranscriptLines {
+            agent: "a-1".to_string(),
+            lines: vec![transcript_line(
+                1,
+                r#"{"type":"result","subtype":"success","total_cost_usd":0.0}"#,
+            )],
+        });
+        assert_eq!(app.log_lines, vec!["\u{2713} turn done (success, $0.0000)"]);
+    }
+
+    #[test]
+    fn transcript_lines_for_a_stale_agent_are_dropped() {
+        let mut app = App::new();
+        app.on_message(Message::AgentsLoaded(vec![agent("a-1", AgentState::Idle)]));
+        app.on_message(Message::TranscriptLines {
+            agent: "a-nope".to_string(),
+            lines: vec![transcript_line(
+                1,
+                r#"{"type":"result","subtype":"success","total_cost_usd":0.0}"#,
+            )],
+        });
+        assert!(app.log_lines.is_empty());
+    }
+
+    #[test]
+    fn changing_the_selected_agent_reloads_the_logs_view() {
+        let mut app = App::new();
+        app.on_message(Message::AgentsLoaded(vec![
+            agent("a-1", AgentState::Idle),
+            agent("a-2", AgentState::Idle),
+        ]));
+        app.on_message(Message::TranscriptLines {
+            agent: "a-1".to_string(),
+            lines: vec![transcript_line(
+                1,
+                r#"{"type":"result","subtype":"success","total_cost_usd":0.0}"#,
+            )],
+        });
+        assert_eq!(app.log_lines.len(), 1);
+
+        app.on_key(Key::Down); // select a-2
+        assert_eq!(app.logs_agent, Some("a-2".to_string()));
+        assert!(app.log_lines.is_empty());
+    }
+
+    #[test]
+    fn logs_scroll_is_bounded_by_the_focused_view() {
+        let mut app = App::new();
+        app.on_message(Message::AgentsLoaded(vec![agent("a-1", AgentState::Idle)]));
+        app.on_message(Message::TranscriptLines {
+            agent: "a-1".to_string(),
+            lines: vec![
+                transcript_line(
+                    1,
+                    r#"{"type":"assistant","message":{"content":[{"type":"text","text":"one"}]}}"#,
+                ),
+                transcript_line(
+                    2,
+                    r#"{"type":"assistant","message":{"content":[{"type":"text","text":"two"}]}}"#,
+                ),
+            ],
+        });
+        assert_eq!(app.log_lines.len(), 2);
+
+        app.on_key(Key::Tab); // Events
+        app.on_key(Key::Tab); // Logs
+        assert_eq!(app.focus, Focus::Logs);
+        app.on_key(Key::Up);
+        assert_eq!(app.log_scroll, 1);
+        app.on_key(Key::Up); // already at the oldest line
+        assert_eq!(app.log_scroll, 1);
+        app.on_key(Key::Down);
+        assert_eq!(app.log_scroll, 0);
+        app.on_key(Key::Down); // already pinned to the tail
+        assert_eq!(app.log_scroll, 0);
     }
 }
