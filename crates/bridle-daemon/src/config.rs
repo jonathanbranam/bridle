@@ -422,11 +422,10 @@ impl Config {
         let path = repo.join(".bridle").join("config.toml");
         match std::fs::read_to_string(&path) {
             Ok(text) => Self::parse_with_budget(&text, machine_budget, &path),
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
-                let mut config = Config::default();
-                config.budget = machine_budget;
-                Ok(config)
-            }
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Config {
+                budget: machine_budget,
+                ..Config::default()
+            }),
             Err(source) => Err(ConfigError::Read { path, source }),
         }
     }
@@ -449,8 +448,10 @@ impl Config {
             source: Box::new(source),
         })?;
 
-        let mut config = Config::default();
-        config.budget = machine_budget;
+        let mut config = Config {
+            budget: machine_budget,
+            ..Config::default()
+        };
 
         if let Some(d) = raw.daemon {
             if let Some(listen) = d.listen {

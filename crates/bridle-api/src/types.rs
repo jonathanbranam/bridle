@@ -450,19 +450,14 @@ pub struct Usage {
 
 /// The governor's state, most severe first. `usage-and-budget.md`, The
 /// budget governor.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum GovernorState {
+    #[default]
     Normal,
     Holding,
     WindingDown,
     Paused,
-}
-
-impl Default for GovernorState {
-    fn default() -> Self {
-        Self::Normal
-    }
 }
 
 impl GovernorState {
