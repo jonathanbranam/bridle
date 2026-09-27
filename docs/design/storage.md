@@ -46,14 +46,15 @@ recovery path.
 
 ## The state branch
 
-*Designed, not built.* Each project repo gets a `bridle` branch, checked out
-by the daemon into `<workspace>/.bridle/state/` (a normal git worktree, not
-visible in the working checkout):
+*Designed, not built.* Task records live on a state branch, not in-tree
+([[task-records-on-a-state-branch-or-in-tree-c7eb|decided]]).
+Each project repo gets a `bridle` branch, checked out by the daemon into
+`<workspace>/.bridle/state/` (a normal git worktree, not visible in the
+working checkout):
 
 ```
 tasks/tw-7fa2.md          one file per task: TOML frontmatter + markdown body + thread
 events/2026-09.jsonl      append-only transitions, for history and rebuild
-questions/…               (or inline in the task thread — open, c5a8)
 ```
 
 - **One file per task** merges cleanly, can be read on GitHub, and is the file
@@ -65,9 +66,13 @@ questions/…               (or inline in the task thread — open, c5a8)
 
 The alternative, task files in-tree under `.bridle/tasks/` on the main line, is
 easier to browse next to code but brings back the worktree-visibility and
-churn problems. Open questions:
-[[task-records-on-a-state-branch-or-in-tree-c7eb|state branch or in-tree]],
-[[where-questions-live-on-the-state-branch-c5a8|where questions live]].
+churn problems.
+
+Questions aren't a separate `questions/…` folder: a question lives inline in
+the thread of the task it blocks, the same file as the task itself. The
+daemon additionally indexes open questions in SQLite so `bridle inbox` can
+show them without walking the state branch
+([[where-questions-live-on-the-state-branch-c5a8|decided]]).
 
 ## The daemon registry
 
