@@ -63,15 +63,39 @@ orchestrator and TUI stay on the laptop.
 Progress would otherwise stop at every finished branch. The manager does it,
 or the orchestrator when there's no manager, in the clone:
 
-1. The worker brings its branch up to date: it merges `main` into
-   `bridle/<agent>`, resolves any conflicts, runs `just check` (or the
-   project's equivalent) and commits. A worker never touches `main`.
+1. The worker brings its branch up to date: it merges the **local** `main`
+   (`git merge main`, never `origin/*`) into `bridle/<agent>`, resolves any
+   conflicts, runs `just check` (or the project's equivalent) and commits. A
+   worker never touches `main` and never fetches or merges from a remote.
 2. The merger checks that `main` is an ancestor of the branch
    (`git merge-base --is-ancestor main bridle/<agent>`), that the worker's
    worktree is clean, and that the diff does what the task asked and nothing
    else. Anything short of that goes back to the worker.
 3. `git merge --no-ff bridle/<agent>`. Because the branch already contains
-   `main`, this can't conflict. Nobody pushes; publishing is the human's.
+   `main`, this can't conflict.
+4. `git push origin main`, straight after the merge, so the remote never
+   lags the clone. Only the merger pushes, and only `main` and release tags;
+   workers never push.
+
+The orchestrator verifies `main` after each merge (`just check`, twice, off
+load). If it's red, nothing else merges until it's green again; the fix goes
+forward as a normal task.
+
+### Releases
+
+Bridle is versioned with [SemVer](https://semver.org). The version lives in
+`[workspace.package]` in `Cargo.toml`; the tag is `vX.Y.Z`, annotated, on a
+`main` commit the orchestrator has verified green. Before 1.0:
+
+- **minor** (`0.x.0`): a build-order phase or agent-host item is complete
+  (for example P0);
+- **patch** (`0.x.y`): fixes and small improvements since the last tag, when
+  they're worth marking;
+- docs-only changes don't get a release.
+
+The orchestrator cuts releases: it bumps the version in one commit on `main`,
+tags it, and pushes both. A missed or late tag costs nothing, so releases
+wait for an orchestrator to be live.
 
 **Escalate to the human instead of merging** when the change is significant:
 it rewrites a design decision rather than implementing one, changes what is

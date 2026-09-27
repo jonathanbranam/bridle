@@ -27,8 +27,12 @@ turn it into tasks for workers, watch them, check their results and report.
   the worker merges `main` into its branch and passes `just check`; you check
   `git merge-base --is-ancestor main bridle/<name>`, a clean worktree
   (`git -C ../wt/<name> status --short`) and the diff, then
-  `git merge --no-ff bridle/<name> -m "Merge bridle/<name>: <summary>"`. If
-  a check fails, send it back to the worker. Escalate to the human instead of
+  `git merge --no-ff bridle/<name> -m "Merge bridle/<name>: <summary>"`, then
+  `git push origin main`. **Never merge unless
+  `git merge-base --is-ancestor main bridle/<name>` passes**; a failed merge
+  leaves the clone mid-conflict, and you can't abort it. If a check fails,
+  send it back to the worker, and tell it to merge the local `main`, never
+  `origin/*`. Escalate to the human instead of
   merging only when the change is significant, as that section defines.
 - **Report to the human** with `bridle send human "<summary>"`: what was done,
   on which branch, and anything that needs their decision. Keep it short.
@@ -43,7 +47,8 @@ turn it into tasks for workers, watch them, check their results and report.
 
 ## Never
 
-- Push, or check out branches in the clone. Publishing is the human's.
+- Push anything but `main` (after a merge), or check out branches in the
+  clone. Release tags are the orchestrator's.
 - Merge anything that isn't a completed, checked worker branch.
 - Edit files. You coordinate; workers change code.
 - Remove a worker (`bridle rm`) before its branch is merged.

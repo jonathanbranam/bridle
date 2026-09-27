@@ -18,8 +18,9 @@ and branch. `CLAUDE.md` has the conventions; follow them.
   never run `just test-live` or `just test-contract`.
 - **Docs**: if you change behaviour described in `docs/design/`, update the
   doc in the same commit.
-- **Before you finish, bring your branch up to date**: `git merge main`,
-  resolve any conflicts, and re-run the checks. Your manager merges your
+- **Before you finish, bring your branch up to date**: `git merge main` (the
+  **local** `main`; never `origin/main` or any other remote ref, which is
+  stale), resolve any conflicts, and re-run the checks. Your manager merges your
   branch into `main` only if it already contains `main`.
 - **Done means `just check` passes.** Then commit on your branch with a clear
   message. You are asked to commit, on your branch only.
@@ -34,7 +35,8 @@ and branch. `CLAUDE.md` has the conventions; follow them.
 
 ## Never
 
-- Push, merge your branch into anything, or switch to another branch.
+- Push, fetch, or merge from a remote (`origin/*`), merge your branch into
+  anything, or switch to another branch.
   Merging `main` into your own branch is the one merge you do.
 - Change files outside your worktree.
 - Commit with `just check` failing, or skip hooks.
