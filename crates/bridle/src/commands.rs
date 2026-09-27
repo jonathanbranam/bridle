@@ -4,14 +4,17 @@
 use anyhow::Context;
 use bridle_api::discovery::{self, ProcessEnv};
 use bridle_api::{
-    Client, Event, EventQuery, InterruptRequest, MessageKind, MessageQuery, RemoveQuery,
-    SendRequest, SpawnRequest, StopRequest, TokenCreateRequest, Workdir,
+    BudgetHoldRequest, Client, Event, EventQuery, InterruptRequest, MessageKind, MessageQuery,
+    RemoveQuery, ResumeRequest, SendRequest, SpawnRequest, StopRequest, TokenCreateRequest,
+    Workdir,
 };
+use chrono::{Local, TimeZone, Utc};
 use futures::StreamExt;
 
 use crate::cli::{
-    AgentsArgs, Cli, Command, EventsArgs, InboxArgs, InterruptArgs, LogsArgs, RmArgs, SendArgs,
-    ShowArgs, SpawnArgs, StopArgs, TokenAction, TokenArgs, WhenArg,
+    AgentsArgs, BudgetAction, BudgetArgs, BudgetHoldArgs, Cli, Command, EventsArgs, InboxArgs,
+    InterruptArgs, LogsArgs, RmArgs, SendArgs, ShowArgs, SpawnArgs, StopArgs, TokenAction,
+    TokenArgs, WhenArg,
 };
 use crate::error::CliError;
 use crate::render;
@@ -35,7 +38,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Logs(args) => logs(&cli, args).await,
         Command::Events(args) => events(&cli, args).await,
         Command::Usage => usage(&cli).await,
-        Command::Budget => budget(&cli).await,
+        Command::Budget(args) => budget(&cli, args).await,
         Command::Token(args) => token(&cli, args).await,
         Command::Statusline => statusline(&cli).await,
     }
@@ -179,6 +182,7 @@ async fn spawn(cli: &Cli, args: &SpawnArgs) -> Result<(), CliError> {
         prompt,
         workdir,
         model: args.model.clone(),
+        ignore_budget: args.ignore_budget,
     };
     let agent = client.spawn(&req).await?;
     print_agent(cli, &agent)
@@ -344,7 +348,14 @@ async fn stop(cli: &Cli, args: &StopArgs) -> Result<(), CliError> {
 
 async fn resume(cli: &Cli, args: &crate::cli::ResumeArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
-    let agent = client.resume(&args.agent).await?;
+    let agent = client
+        .resume(
+            &args.agent,
+            &ResumeRequest {
+                ignore_budget: args.ignore_budget,
+            },
+        )
+        .await?;
     print_agent(cli, &agent)
 }
 
@@ -519,13 +530,27 @@ async fn usage(cli: &Cli) -> Result<(), CliError> {
     Ok(())
 }
 
-async fn budget(cli: &Cli) -> Result<(), CliError> {
+async fn budget(cli: &Cli, args: &BudgetArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
-    let budget = client.budget().await?;
+    let budget = match &args.action {
+        None => client.budget().await?,
+        Some(BudgetAction::Hold(hold_args)) => {
+            let until = resolve_hold_until(hold_args)?;
+            client.budget_hold(&BudgetHoldRequest { until }).await?
+        }
+        Some(BudgetAction::Release) => client.budget_release().await?,
+    };
     if cli.json {
         render::print_json(&budget)?;
     } else {
         println!("state  {}", budget.state);
+        if let Some(hold) = &budget.human_hold {
+            let until = hold
+                .until
+                .map(|u| format!(", until {}", u.format("%Y-%m-%d %H:%M UTC")))
+                .unwrap_or_else(|| ", until released".to_string());
+            println!("hold   in force{until}");
+        }
         for w in &budget.windows {
             let resets = w
                 .resets_at
@@ -546,6 +571,47 @@ async fn budget(cli: &Cli) -> Result<(), CliError> {
         );
     }
     Ok(())
+}
+
+/// `--for 3h` (a plain duration from now) or `--until 18:00` (a local
+/// `HH:MM`, resolved to the next occurrence: today if still ahead, else
+/// tomorrow); neither given holds until `bridle budget release`.
+fn resolve_hold_until(args: &BudgetHoldArgs) -> Result<Option<chrono::DateTime<Utc>>, CliError> {
+    if let Some(for_) = &args.for_ {
+        let dur = parse_duration(for_)
+            .ok_or_else(|| CliError::Other(anyhow::anyhow!("bad --for duration: {for_:?}")))?;
+        return Ok(Some(Utc::now() + dur));
+    }
+    if let Some(until) = &args.until {
+        let (h, m) = until
+            .split_once(':')
+            .and_then(|(h, m)| Some((h.parse::<u32>().ok()?, m.parse::<u32>().ok()?)))
+            .ok_or_else(|| CliError::Other(anyhow::anyhow!("bad --until time: {until:?}")))?;
+        let now = Local::now();
+        let mut target = now
+            .date_naive()
+            .and_hms_opt(h, m, 0)
+            .and_then(|dt| Local.from_local_datetime(&dt).single())
+            .ok_or_else(|| CliError::Other(anyhow::anyhow!("bad --until time: {until:?}")))?;
+        if target <= now {
+            target += chrono::Duration::days(1);
+        }
+        return Ok(Some(target.with_timezone(&Utc)));
+    }
+    Ok(None)
+}
+
+/// A plain `<n><unit>` duration (`s`/`m`/`h`), matching config.toml's.
+fn parse_duration(s: &str) -> Option<chrono::Duration> {
+    let s = s.trim();
+    let (num, unit) = s.split_at(s.len().checked_sub(1)?);
+    let n: i64 = num.parse().ok()?;
+    match unit {
+        "s" => Some(chrono::Duration::seconds(n)),
+        "m" => Some(chrono::Duration::minutes(n)),
+        "h" => Some(chrono::Duration::hours(n)),
+        _ => None,
+    }
 }
 
 async fn token(cli: &Cli, args: &TokenArgs) -> Result<(), CliError> {

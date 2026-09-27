@@ -63,8 +63,8 @@ totals, the cache hit ratio (cache reads ÷ all input tokens), the last
 known utilisation and reset time per window, and today's `bridle statusline`
 rows. A role can also cap each agent's spend ([[docs/design/agent-host/agents#Spend cap|spend cap]]).
 
-Not built: the full usage ledger's task, role and
-workflow-revision columns. The governor is partly built: it computes
+Not built: the full usage ledger's task, role and workflow-revision columns.
+The governor is built: it computes
 `normal`/`holding`/`winding_down`/`paused` from `hold_at`/`wind_down_at`/
 `stop_at` threshold crossings (per default-scoped window and, separately,
 per per-model window), from `rejected`/`allowed_warning` rate-limit
@@ -72,15 +72,18 @@ statuses, and from reading staleness while any agent is working, and it
 polls the undocumented `get_usage` control request
 ([[docs/design/usage-and-budget#Seeing the windows|seeing the windows]]) on
 a running agent or a dedicated probe process. It holds new work while not
-`normal`: `bridle spawn`/`resume` are refused (409), and a message that
-would start a turn in an idle agent is held instead. `budget.state` events,
-`GET /v1/budget` and the read-only `bridle budget` show the state.
-
-Not yet built (a later task): actually stopping idle agents and notifying
-working ones, `wind_down_grace`, applying the `budget_paused` exit reason,
-resuming paused agents when every window drops below `resume_below`,
-`bridle budget hold`/`release`, `--ignore-budget`, and the role-preamble
-notice line.
+`normal`: `bridle spawn`/`resume` are refused (409) unless `--ignore-budget`
+is passed, and a message that would start a turn in an idle agent is held
+instead. On crossing into `winding_down` or worse, it stops idle agents at
+once, sends working ones the usage-pause notice and stops them with exit
+reason `budget_paused` when their turn ends or `wind_down_grace` expires,
+and resumes paused agents (up to `max_workers`, oldest-paused first) once
+every window is back below `resume_below` and no human hold is in force.
+`bridle budget hold`/`release` (and `POST /v1/budget/hold`/`release`) drive
+the same wind-down for a human-requested pause, for the current daemon only
+(see the open question below). `budget.state` events, `agent.exited` with
+reason `budget_paused`, `GET /v1/budget` and `bridle budget` show the
+state.
 
 ## The budget governor
 
@@ -125,7 +128,9 @@ max_staleness   = "10m"     # older readings count as unknown
   `.bridle/config.toml` may lower them, never raise them.
 - **Unknown is not safe.** With no reading newer than `max_staleness` while
   any agent is working, the governor holds. Once the reading is three times
-  that old, it winds down.
+  that old, it winds down. Before the daemon's first reading ever lands, its
+  own age stands in for the reading's age, so a fresh daemon doesn't hold
+  before its first `get_usage` poll has had a chance to answer.
 
 ### The wind-down
 
@@ -176,9 +181,14 @@ bridle budget hold [--for 3h | --until 18:00]
 bridle budget release
 ```
 
-`hold` does exactly what crossing `wind_down_at` does, and applies to every
-daemon in the registry. Without `--for` or `--until` it lasts until
-`release`.
+`hold` does exactly what crossing `wind_down_at` does, and is meant to apply
+to every daemon in the registry; today it only reaches the current daemon
+(`POST /v1/budget/hold` on the daemon the CLI is already talking to). Reaching
+every other project's daemon needs a cross-project credential the CLI
+doesn't have yet:
+[[how-does-bridle-budget-hold-identify-itself-to-other-daemons-hb0q|how does
+`bridle budget hold` identify itself to other daemons]]. Without `--for` or
+`--until` it lasts until `release`.
 
 ### Seeing the windows
 
@@ -237,7 +247,8 @@ thresholds are machine-wide. Sharing `max_workers` between them is still open:
 of `normal`, `holding`, `winding_down`, `paused`) on each transition;
 `agent.exited` with reason `budget_paused`; the governor's state in
 `GET /v1/status`; and `GET /v1/budget`, `POST /v1/budget/hold`,
-`POST /v1/budget/release`. None of it is built.
+`POST /v1/budget/release`. All built, current-daemon-only per the hold gap
+above.
 
 ## Designing for fewer tokens
 

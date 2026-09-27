@@ -20,6 +20,7 @@ async fn spawn_with_prompt_runs_a_turn_and_creates_a_worktree() {
             prompt: Some("hello there".to_string()),
             workdir: None,
             model: None,
+            ignore_budget: false,
         })
         .await
         .expect("spawn");
@@ -83,6 +84,7 @@ async fn message_now_mid_turn_folds_into_the_running_turn() {
             prompt: Some("SLEEP 3".to_string()),
             workdir: Some(Workdir::Repo),
             model: None,
+            ignore_budget: false,
         })
         .await
         .expect("spawn");
@@ -124,6 +126,7 @@ async fn message_idle_is_held_until_the_turn_ends_then_starts_its_own_turn() {
             prompt: Some("SLEEP 2".to_string()),
             workdir: Some(Workdir::Repo),
             model: None,
+            ignore_budget: false,
         })
         .await
         .expect("spawn");
@@ -169,6 +172,7 @@ async fn human_inbox_receives_agent_messages_and_mark_read_works() {
             prompt: None,
             workdir: Some(Workdir::Repo),
             model: None,
+            ignore_budget: false,
         })
         .await
         .expect("spawn");

@@ -434,6 +434,7 @@ async fn run_autostart_and_resume(store: &Store, config: &Config, manager: &Agen
                         prompt: None, // the role's start_prompt
                         workdir: None,
                         model: None,
+                        ignore_budget: false,
                     };
                     if let Err(e) = manager.spawn(req, &system).await {
                         tracing::warn!(role = %name, error = %e, "autostart failed");
@@ -453,7 +454,7 @@ async fn run_autostart_and_resume(store: &Store, config: &Config, manager: &Agen
                 .roles
                 .get(&a.role)
                 .is_some_and(|r| r.resume_on_restart)
-            && let Err(e) = manager.resume(&a.id, &system).await
+            && let Err(e) = manager.resume(&a.id, false, &system).await
         {
             tracing::warn!(agent = %a.id, error = %e, "resume-on-restart failed");
         }

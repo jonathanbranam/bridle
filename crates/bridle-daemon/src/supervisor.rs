@@ -101,6 +101,12 @@ struct RuntimeState {
     /// Last time `touch_agent` actually wrote to the store, to throttle it
     /// to roughly once a second under a chatty agent.
     last_touch: std::time::Instant,
+    /// Set once the governor's wind-down notice has been sent
+    /// (usage-and-budget.md, The wind-down); `wind_down_deadline` is when
+    /// the grace period runs out (or, for an escalation straight to
+    /// `paused`, "now").
+    wind_down_pending: bool,
+    wind_down_deadline: Option<std::time::Instant>,
 }
 
 struct AgentRuntime {
@@ -109,6 +115,11 @@ struct AgentRuntime {
     /// Set when claude reported its `--max-budget-usd` spent; the agent is
     /// then stopped, and a resume grants a fresh allowance.
     budget_exhausted: AtomicBool,
+    /// Set when the account-wide budget governor is stopping this agent
+    /// (idle at once, or a notified working agent whose turn ended or grace
+    /// expired); gives `agent.exited` the `budget_paused` reason, distinct
+    /// from the per-agent `budget_exhausted` spend cap.
+    budget_paused: AtomicBool,
     state: AsyncMutex<RuntimeState>,
     exited: watch::Receiver<bool>,
     task: AsyncMutex<Option<tokio::task::JoinHandle<()>>>,
@@ -313,7 +324,9 @@ impl AgentManager {
             self.0.config.roles.get(&req.role).cloned().ok_or_else(|| {
                 SupervisorError::BadRequest(format!("unknown role {:?}", req.role))
             })?;
-        self.refuse_if_holding(req.model.as_deref().unwrap_or(&role.model))?;
+        if !req.ignore_budget {
+            self.refuse_if_holding(req.model.as_deref().unwrap_or(&role.model))?;
+        }
 
         let name = match req.name {
             Some(n) => {
@@ -565,6 +578,7 @@ impl AgentManager {
             handle: spawned.handle,
             stop_requested: AtomicBool::new(false),
             budget_exhausted: AtomicBool::new(false),
+            budget_paused: AtomicBool::new(false),
             state: AsyncMutex::new(RuntimeState {
                 tracker: Tracker::new(pid, start),
                 fifo: VecDeque::new(),
@@ -575,6 +589,8 @@ impl AgentManager {
                 saw_any_line: false,
                 version_checked: false,
                 last_touch: std::time::Instant::now(),
+                wind_down_pending: false,
+                wind_down_deadline: None,
             }),
             exited: exited_rx,
             task: AsyncMutex::new(None),
@@ -821,6 +837,25 @@ impl AgentManager {
                     return;
                 }
 
+                // The governor's wind-down notice told this agent to end its
+                // turn (usage-and-budget.md, The wind-down step 5); do that
+                // now instead of starting another turn on a held message.
+                // Spawned, not awaited, for the same reason as above: `stop`
+                // joins this very task.
+                let wind_down_pending = {
+                    let st = runtime.state.lock().await;
+                    st.wind_down_pending
+                };
+                if wind_down_pending {
+                    runtime.budget_paused.store(true, Ordering::SeqCst);
+                    let this = self.clone();
+                    let id = id.to_string();
+                    tokio::spawn(async move {
+                        let _ = this.stop(&id, false, &system_principal()).await;
+                    });
+                    return;
+                }
+
                 if let Ok(held) = self
                     .0
                     .store
@@ -962,6 +997,8 @@ impl AgentManager {
         let (state, mut exit) = classify_exit(stop_requested, saw_any_line, &outcome);
         if runtime.budget_exhausted.load(Ordering::SeqCst) {
             exit.reason = "budget_exhausted".to_string();
+        } else if runtime.budget_paused.load(Ordering::SeqCst) {
+            exit.reason = "budget_paused".to_string();
         }
         let _ = self.0.store.set_agent_exit(id, exit.clone()).await;
         self.transition_state(id, runtime, state).await;
@@ -1078,6 +1115,58 @@ impl AgentManager {
             .get_message(&inserted.id)
             .await?
             .ok_or_else(|| SupervisorError::Internal("message vanished after insert".to_string()))
+    }
+
+    // ---------- budget governor wind-down ----------
+
+    /// Marks `id` as wind-down-pending with grace deadline `deadline`
+    /// (`Instant::now()` for an immediate `paused` escalation, otherwise
+    /// `now + wind_down_grace`). Returns `Some(true)` the first time (the
+    /// caller should send the notice), `Some(false)` on a later call for an
+    /// already-pending agent (only the deadline is tightened, never
+    /// loosened), `None` if the agent isn't running.
+    pub async fn mark_wind_down(&self, id: &str, deadline: std::time::Instant) -> Option<bool> {
+        let rt = self.get_runtime(id)?;
+        let mut st = rt.state.lock().await;
+        let first = !st.wind_down_pending;
+        st.wind_down_pending = true;
+        if st.wind_down_deadline.is_none_or(|d| deadline < d) {
+            st.wind_down_deadline = Some(deadline);
+        }
+        Some(first)
+    }
+
+    /// Interrupts and stops, with exit reason `budget_paused`, every
+    /// wind-down-pending agent whose grace deadline has passed. Called on
+    /// every governor tick (usage-and-budget.md, The wind-down step 5).
+    pub async fn expire_wind_downs(&self) {
+        let now = std::time::Instant::now();
+        let mut due = Vec::new();
+        for (id, rt) in self.runtimes_snapshot() {
+            let is_due = {
+                let st = rt.state.lock().await;
+                st.wind_down_pending && st.wind_down_deadline.is_some_and(|d| now >= d)
+            };
+            if is_due {
+                due.push(id);
+            }
+        }
+        for id in due {
+            self.stop_for_budget(&id, true).await;
+        }
+    }
+
+    /// Stops `id` with exit reason `budget_paused`: an idle agent stopped at
+    /// once by the governor, or a wind-down-pending one whose grace expired
+    /// (`interrupt_first`, since its turn is still running).
+    pub async fn stop_for_budget(&self, id: &str, interrupt_first: bool) {
+        if let Some(rt) = self.get_runtime(id) {
+            rt.budget_paused.store(true, Ordering::SeqCst);
+        }
+        if interrupt_first {
+            let _ = self.interrupt(id, false, &system_principal()).await;
+        }
+        let _ = self.stop(id, false, &system_principal()).await;
     }
 
     // ---------- interrupt / stop / resume / remove ----------
@@ -1219,6 +1308,7 @@ impl AgentManager {
     pub async fn resume(
         &self,
         id_or_name: &str,
+        ignore_budget: bool,
         principal: &Principal,
     ) -> Result<Agent, SupervisorError> {
         let agent = self
@@ -1233,7 +1323,9 @@ impl AgentManager {
                 agent.id, agent.state
             )));
         }
-        self.refuse_if_holding(&agent.model)?;
+        if !ignore_budget {
+            self.refuse_if_holding(&agent.model)?;
+        }
         let role = self
             .0
             .config

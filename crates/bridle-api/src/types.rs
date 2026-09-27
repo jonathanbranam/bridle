@@ -188,6 +188,18 @@ pub struct SpawnRequest {
     /// None = the role's default.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub model: Option<String>,
+    /// Skip the budget governor's holding/paused check for this one call
+    /// (usage-and-budget.md, Resuming: the escape hatch).
+    #[serde(default)]
+    pub ignore_budget: bool,
+}
+
+/// `POST /v1/agents/{id}/resume`.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct ResumeRequest {
+    /// Skip the budget governor's holding/paused check for this one call.
+    #[serde(default)]
+    pub ignore_budget: bool,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -564,6 +576,24 @@ pub struct BudgetStatus {
     pub state: GovernorState,
     pub windows: Vec<WindowStatus>,
     pub thresholds: BudgetThresholds,
+    /// Set while `bridle budget hold` is in force (usage-and-budget.md, The
+    /// human's hold).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub human_hold: Option<HoldStatus>,
+}
+
+/// `POST /v1/budget/hold`: `--for`/`--until` resolved to an absolute instant
+/// by the CLI; `until: None` holds until `POST /v1/budget/release`.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct BudgetHoldRequest {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub until: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HoldStatus {
+    /// `None` = held until released.
+    pub until: Option<DateTime<Utc>>,
 }
 
 // ---------- tokens ----------
