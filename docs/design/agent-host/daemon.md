@@ -79,10 +79,26 @@ would need `unsafe`), and surviving a closed terminal is unverified:
 keep bridle running, run `bridle serve` in the foreground under a service
 manager (systemd, launchd).
 
+On Ctrl-C, SIGTERM or `POST /v1/shutdown`, stopping every running agent
+([[docs/design/agent-host/agents#Stopping|agents, stopping]]) can take up to
+`stop_grace` (default 30 s) plus 5 s. Right when the shutdown sequence
+starts, the daemon logs one line at `info` (so it lands on stderr in the
+foreground, and in `daemon.log` when detached) naming how many agents it's
+stopping and the actual cap, so a slow shutdown doesn't look hung.
+
 ## Restart and recovery
 
 If the daemon dies, each agent's stdin reaches EOF and the agent exits after
 its current turn. Agents don't survive a restart and aren't designed to.
+
+A clean shutdown (Ctrl-C / SIGTERM / `POST /v1/shutdown`) stops every running
+agent through the normal `stop()` path
+([[docs/design/agent-host/agents#Stopping|agents, stopping]]), but tags each
+of those stops as shutdown-triggered, so it exits `stopped` with reason
+`daemon_shutdown` instead of the usual `sigterm`/`stdin_closed`. On the next
+`bridle serve` startup, `stopped` agents with that reason are treated the
+same as `lost` for the resume step below, so a `resume_on_restart` role comes
+back after a clean restart, not only after a crash.
 
 On startup the daemon reconciles:
 
@@ -93,8 +109,10 @@ On startup the daemon reconciles:
   `agent.exited` events. The seen set isn't persisted, so a tool process that
   had already re-parented is missed.
 - Written-but-unacked and held messages go back to `pending`.
-- Every `lost` agent whose role has `resume_on_restart` (the default for the
-  manager and orchestrator roles) is resumed with `--resume`.
+- Every agent whose role has `resume_on_restart` (the default for the manager
+  and orchestrator roles) is resumed with `--resume`, if it's either `lost`
+  (the case above) or `stopped` with reason `daemon_shutdown` (a clean
+  shutdown before this restart).
 - For every role with `autostart = true`, an agent named after the role is
   spawned with the role's `start_prompt`, unless an agent of that name already
   exists in any state.

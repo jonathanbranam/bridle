@@ -9,7 +9,7 @@
 
 mod support;
 
-use bridle_api::types::AgentState;
+use bridle_api::types::{AgentState, SpawnRequest, Workdir};
 use bridle_daemon::containment;
 use bridle_daemon::store::{NewAgent, Store};
 use tokio::process::Command;
@@ -112,4 +112,66 @@ async fn restart_marks_a_stale_running_agent_lost_and_kills_its_process() {
 
     running.shutdown();
     running.join().await.expect("join");
+}
+
+/// A `resume_on_restart` role (the built-in `manager`) must come back not
+/// just after a crash (the test above) but also after a clean shutdown: the
+/// bug this guards against is `run_autostart_and_resume` only ever looking
+/// for `AgentState::Lost`, which a graceful `stop_all` never produces (it
+/// leaves the agent `Stopped` with reason `sigterm`/`stdin_closed`).
+#[tokio::test]
+async fn resume_on_restart_role_comes_back_after_a_clean_shutdown_then_restart() {
+    let (daemon, tmp) = support::start_daemon(None).await;
+    let workspace = daemon.workspace.clone();
+    let repo = daemon.repo.clone();
+
+    let agent = daemon
+        .client
+        .spawn(&SpawnRequest {
+            role: "manager".to_string(),
+            name: Some("mgr".to_string()),
+            prompt: None,
+            workdir: Some(Workdir::Repo),
+            model: None,
+            ignore_budget: false,
+        })
+        .await
+        .expect("spawn manager");
+    support::wait_for_state(&daemon.client, &agent.id, AgentState::Idle).await;
+
+    daemon.running.shutdown();
+    daemon.running.join().await.expect("join");
+
+    let opts = bridle_daemon::ServeOptions {
+        repo: repo.clone(),
+        workspace: Some(workspace.clone()),
+        project: None,
+        listen: Some("127.0.0.1:0".parse().expect("valid addr")),
+    };
+    let overrides = bridle_daemon::Overrides {
+        claude_program: support::fake_claude_path().to_string_lossy().into_owned(),
+        write_registry: false,
+        stall_check_interval: std::time::Duration::from_secs(3600),
+        tracker_interval: std::time::Duration::from_millis(200),
+        governor_interval: std::time::Duration::from_secs(3600),
+        governor_poll_interval_normal: std::time::Duration::from_secs(3600),
+        governor_poll_interval_above_hold: std::time::Duration::from_secs(3600),
+    };
+    let running = bridle_daemon::start(opts, overrides)
+        .await
+        .expect("start second daemon");
+    let token =
+        std::fs::read_to_string(workspace.join(".bridle/tokens/human")).expect("human token");
+    let client = bridle_api::Client::new(running.url.clone(), Some(token.trim().to_string()));
+
+    // Resumed: back to a live, non-terminal state, not left `stopped`.
+    let resumed = support::wait_for_agent(&client, &agent.id, |a| {
+        a.state != AgentState::Stopped && a.state.is_running()
+    })
+    .await;
+    assert_ne!(resumed.state, AgentState::Stopped);
+
+    running.shutdown();
+    running.join().await.expect("join");
+    drop(tmp);
 }
