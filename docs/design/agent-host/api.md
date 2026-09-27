@@ -28,7 +28,8 @@ JSON over HTTP, versioned under `/v1`. The contract is
 
 Errors use one shape, `{"error": {"code": "...", "message": "..."}}`, with
 proper status codes. The codes are `not_found`, `conflict`, `bad_request`,
-`unauthorized`, `forbidden`, `agent_not_running` (409) and `internal`.
+`unauthorized`, `forbidden`, `agent_not_running` (409), `shutting_down` (503,
+a store call raced a graceful shutdown; retry) and `internal`.
 
 An SSE subscriber that falls more than 4096 events behind is disconnected, and
 has to reconnect with the last `seq` it saw.

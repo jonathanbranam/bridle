@@ -3,9 +3,13 @@
 //! of CLI subcommands against it, then `serve --detach` + `daemons`. No
 //! real `claude` is ever spawned.
 
+use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 use std::time::{Duration, Instant};
+
+use nix::sys::signal::{Signal, kill};
+use nix::unistd::Pid;
 
 fn bridle_bin() -> PathBuf {
     PathBuf::from(env!("CARGO_BIN_EXE_bridle"))
@@ -257,6 +261,130 @@ fn serve_detach_returns_once_healthy_and_daemons_lists_it() {
     // `--workspace`), so discover it from inside the workspace instead.
     let (ok, _out, err) = run_cli(&workspace, &home, &["stop-daemon"]);
     assert!(ok, "stop-daemon failed: {err}");
+}
+
+/// SIGINT must shut the daemon down cleanly, not panic it: regression test
+/// for the `spawn_blocking().await.expect(...)` panics in `Store::open`/
+/// `with_conn`, which turned an ordinary `JoinError::Cancelled` (queued
+/// blocking store tasks dropped during shutdown) into a real panic.
+#[test]
+fn sigint_shuts_down_cleanly_while_idle() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let repo = tmp.path().join("repo");
+    init_repo(&repo);
+    let workspace = tmp.path().to_path_buf();
+    let home = tmp.path().join("home");
+
+    let mut serve_cmd = Command::new(bridle_bin());
+    serve_cmd
+        .arg("serve")
+        .arg("--repo")
+        .arg(&repo)
+        .arg("--listen")
+        .arg("127.0.0.1:0")
+        .env("BRIDLE_CLAUDE_BIN", fake_claude_path())
+        .env("BRIDLE_HOME", &home)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::piped());
+    strip_bridle_env(&mut serve_cmd);
+    let mut child = serve_cmd.spawn().expect("spawn bridle serve");
+    let pid = child.id();
+    let mut stderr = child.stderr.take().expect("piped stderr");
+    let mut guard = DaemonGuard(child);
+
+    let daemon_json = workspace.join(".bridle/daemon.json");
+    wait_for_file(&daemon_json, Duration::from_secs(20));
+
+    kill(Pid::from_raw(pid as i32), Signal::SIGINT).expect("send SIGINT");
+
+    let status = guard
+        .0
+        .wait_timeout_or_kill(Duration::from_secs(10))
+        .expect("daemon process should exit after SIGINT");
+
+    let mut stderr_text = String::new();
+    stderr
+        .read_to_string(&mut stderr_text)
+        .expect("read daemon stderr");
+
+    assert!(status.success(), "daemon exited with {status:?}");
+    assert!(
+        !stderr_text.contains("panicked"),
+        "daemon panicked on shutdown:\n{stderr_text}"
+    );
+    assert!(
+        !daemon_json.exists(),
+        "daemon.json should be removed on clean shutdown"
+    );
+}
+
+/// Same as above, but sends SIGINT immediately after spawning an agent
+/// (before its first turn completes), so a store call has a real chance of
+/// being in flight when the shutdown-triggered blocking-task cancellation
+/// happens.
+#[test]
+fn sigint_shuts_down_cleanly_with_a_store_call_in_flight() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let repo = tmp.path().join("repo");
+    init_repo(&repo);
+    let workspace = tmp.path().to_path_buf();
+    let home = tmp.path().join("home");
+
+    let mut serve_cmd = Command::new(bridle_bin());
+    serve_cmd
+        .arg("serve")
+        .arg("--repo")
+        .arg(&repo)
+        .arg("--listen")
+        .arg("127.0.0.1:0")
+        .env("BRIDLE_CLAUDE_BIN", fake_claude_path())
+        .env("BRIDLE_HOME", &home)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::piped());
+    strip_bridle_env(&mut serve_cmd);
+    let mut child = serve_cmd.spawn().expect("spawn bridle serve");
+    let pid = child.id();
+    let mut stderr = child.stderr.take().expect("piped stderr");
+    let mut guard = DaemonGuard(child);
+
+    let daemon_json = workspace.join(".bridle/daemon.json");
+    wait_for_file(&daemon_json, Duration::from_secs(20));
+
+    for i in 0..8 {
+        let (ok, _out, err) = run_cli(
+            &repo,
+            &home,
+            &[
+                "spawn",
+                "worker",
+                "--name",
+                &format!("w{i}"),
+                "--prompt",
+                "hi",
+            ],
+        );
+        assert!(ok, "spawn failed: {err}");
+    }
+
+    kill(Pid::from_raw(pid as i32), Signal::SIGINT).expect("send SIGINT");
+
+    let status = guard
+        .0
+        .wait_timeout_or_kill(Duration::from_secs(10))
+        .expect("daemon process should exit after SIGINT");
+
+    let mut stderr_text = String::new();
+    stderr
+        .read_to_string(&mut stderr_text)
+        .expect("read daemon stderr");
+
+    assert!(status.success(), "daemon exited with {status:?}");
+    assert!(
+        !stderr_text.contains("panicked"),
+        "daemon panicked on shutdown:\n{stderr_text}"
+    );
 }
 
 /// A small extension so the foreground-daemon test can bound how long it

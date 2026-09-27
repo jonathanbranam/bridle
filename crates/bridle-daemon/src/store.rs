@@ -30,6 +30,21 @@ pub enum StoreError {
     Sqlite(#[from] rusqlite::Error),
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
+    /// The runtime cancelled a queued blocking task during shutdown
+    /// (`JoinError::is_cancelled()`), not a bug: the caller should treat
+    /// this like the daemon is unavailable, not a 500.
+    #[error("store is shutting down")]
+    ShuttingDown,
+}
+
+/// Turns a `spawn_blocking` `JoinError` into a `StoreError`, or resumes the
+/// unwind if the blocking task genuinely panicked (so real bugs still
+/// surface as panics rather than being swallowed as `ShuttingDown`).
+fn join_error(e: tokio::task::JoinError) -> StoreError {
+    match e.try_into_panic() {
+        Ok(payload) => std::panic::resume_unwind(payload),
+        Err(_) => StoreError::ShuttingDown,
+    }
 }
 
 /// An authenticated caller. Not a wire type (see `bridle_api::types`):
@@ -117,7 +132,7 @@ impl Store {
         let path = path.into();
         let conn = tokio::task::spawn_blocking(move || sync::open(&path))
             .await
-            .expect("store open task panicked")?;
+            .map_err(join_error)??;
         Ok(Store {
             conn: Arc::new(Mutex::new(conn)),
         })
@@ -134,7 +149,7 @@ impl Store {
             f(&conn)
         })
         .await
-        .expect("store blocking task panicked")
+        .map_err(join_error)?
     }
 
     // ---------- principals / tokens ----------
@@ -1531,6 +1546,47 @@ mod tests {
             .query_row("SELECT COUNT(*) FROM turns", [], |r| r.get(0))
             .expect("count");
         assert_eq!(n, 1);
+    }
+
+    /// Reproduces the real `JoinError::Cancelled` that `Store::open` and
+    /// `with_conn` await: caps the blocking pool at one thread, occupies
+    /// it, queues a second blocking task behind it, then cancels that
+    /// second task before it can start (exactly what the runtime does to
+    /// queued-but-not-yet-started blocking work during shutdown, per the
+    /// `JoinHandle::abort` docs). Before the fix, `join_error` didn't
+    /// exist and the call sites did
+    /// `spawn_blocking(...).await.expect("... task panicked")`, which
+    /// turned this ordinary cancellation into a panic.
+    #[tokio::test(flavor = "multi_thread", worker_threads = 1)]
+    async fn cancelled_blocking_task_returns_shutting_down_not_a_panic() {
+        let occupy = tokio::task::spawn_blocking(|| {
+            std::thread::sleep(std::time::Duration::from_millis(200))
+        });
+        tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+
+        let handle = tokio::task::spawn_blocking(|| 1);
+        handle.abort();
+        let err = handle.await.expect_err("aborted task should error");
+        assert!(err.is_cancelled());
+
+        match join_error(err) {
+            StoreError::ShuttingDown => {}
+            other => panic!("expected StoreError::ShuttingDown, got {other:?}"),
+        }
+
+        occupy.await.expect("occupying task should finish normally");
+    }
+
+    /// A genuine panic inside the blocking closure must still surface as a
+    /// panic, not be swallowed as `ShuttingDown`.
+    #[tokio::test]
+    async fn real_panic_in_blocking_task_still_panics() {
+        let handle = tokio::task::spawn_blocking(|| panic!("boom"));
+        let err = handle.await.expect_err("panicking task should error");
+        assert!(err.is_panic());
+
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| join_error(err)));
+        assert!(result.is_err(), "join_error should propagate the panic");
     }
 
     async fn store() -> (Store, tempfile::TempDir) {

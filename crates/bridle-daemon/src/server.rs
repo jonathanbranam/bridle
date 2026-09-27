@@ -116,6 +116,11 @@ impl From<StoreError> for ApiError {
         match e {
             StoreError::NotFound(m) => ApiError::not_found(m),
             StoreError::Conflict(m) => ApiError::new(StatusCode::CONFLICT, "conflict", m),
+            StoreError::ShuttingDown => ApiError::new(
+                StatusCode::SERVICE_UNAVAILABLE,
+                "shutting_down",
+                "daemon is shutting down".to_string(),
+            ),
             other => ApiError::new(
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "internal",
