@@ -14,13 +14,16 @@ publish = false
 bridle-api = { path = "crates/bridle-api" }
 bridle-claude = { path = "crates/bridle-claude" }
 bridle-daemon = { path = "crates/bridle-daemon" }
+bridle-tui = { path = "crates/bridle-tui" }
 
 anyhow = "1"
 axum = "0.8"
 bytes = "1"
 chrono = { version = "0.4", features = ["serde"] }
 clap = { version = "4", features = ["derive", "env"] }
+crossterm = { version = "0.29", features = ["event-stream"] }
 futures = "0.3"
+ratatui = "0.30"
 hex = "0.4"
 nix = { version = "0.31", features = ["signal", "process", "fs"] }
 reqwest = { version = "0.13", default-features = false, features = ["json", "query", "stream"] }

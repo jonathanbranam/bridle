@@ -38,6 +38,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Logs(args) => logs(&cli, args).await,
         Command::Events(args) => events(&cli, args).await,
         Command::Usage => usage(&cli).await,
+        Command::Tui => tui(&cli).await,
         Command::Budget(args) => budget(&cli, args).await,
         Command::Token(args) => token(&cli, args).await,
         Command::Statusline => statusline(&cli).await,
@@ -487,6 +488,12 @@ fn print_event(cli: &Cli, ev: &Event) -> Result<(), CliError> {
     } else {
         println!("{}", render::render_event_line(ev));
     }
+    Ok(())
+}
+
+async fn tui(cli: &Cli) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    bridle_tui::run(client).await?;
     Ok(())
 }
 

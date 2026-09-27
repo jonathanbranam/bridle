@@ -66,6 +66,8 @@ pub enum Command {
     Events(EventsArgs),
     /// Usage and cost summary.
     Usage,
+    /// Interactive terminal UI: agents list and live event tail.
+    Tui,
     /// The budget governor: windows, thresholds and state; `hold`/`release`
     /// idle the account for the human.
     Budget(BudgetArgs),
