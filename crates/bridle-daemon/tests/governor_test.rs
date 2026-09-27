@@ -96,7 +96,11 @@ async fn idle_message_is_held_not_written_while_governor_is_holding() {
     )
     .await;
 
-    script_usage(&daemon.repo, 82.0, 10.0);
+    // Once an agent is running, the governor's `get_usage` probe goes to its
+    // handle instead of a dedicated probe process (governor.rs's
+    // `any_running_handle`), and fake-claude reads `.fake-claude-usage`
+    // from its own cwd — the agent's worktree, not `daemon.repo`.
+    script_usage(std::path::Path::new(&agent.cwd), 82.0, 10.0);
     wait_for("holding", || async {
         let b = daemon.client.budget().await.ok()?;
         (b.state == GovernorState::Holding).then_some(())

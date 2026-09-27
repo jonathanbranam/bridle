@@ -86,6 +86,12 @@ struct Inner {
     /// every tick instead of waiting out the real cadence.
     poll_interval_normal: Duration,
     poll_interval_above_hold: Duration,
+    /// When this governor started; substitutes for "no reading yet" in the
+    /// staleness check below, so a daemon that hasn't had time for its
+    /// first `get_usage` poll to land doesn't hold on its own age (Unknown
+    /// is not safe still applies once `max_staleness` passes with no
+    /// reading at all).
+    started_at: Instant,
 }
 
 #[derive(Clone)]
@@ -116,6 +122,7 @@ impl Governor {
             probe: tokio::sync::Mutex::new(None),
             poll_interval_normal,
             poll_interval_above_hold,
+            started_at: Instant::now(),
         }))
     }
 
@@ -340,7 +347,11 @@ impl Governor {
                 .map(|r| r.observed_at)
                 .max();
             let stale_state = match freshest {
-                None => GovernorState::Holding,
+                // No reading at all yet: judge it by the governor's own
+                // age, not as instantly stale, so a daemon that hasn't had
+                // time for its first `get_usage` poll to land doesn't hold
+                // spawns/resumes before that poll had a chance to run.
+                None => age_to_state(self.0.started_at.elapsed(), cfg.max_staleness),
                 Some(observed) => {
                     let age = Utc::now() - observed;
                     let staleness =
@@ -436,6 +447,18 @@ fn parse_get_usage(v: &Value, observed_at: DateTime<Utc>) -> Vec<RateLimit> {
     }
 
     out
+}
+
+/// `Normal` under `max_staleness`, `Holding` under 3x that, `WindingDown`
+/// past it (usage-and-budget.md, Unknown is not safe).
+fn age_to_state(age: Duration, max_staleness: Duration) -> GovernorState {
+    if age > max_staleness.saturating_mul(3) {
+        GovernorState::WindingDown
+    } else if age > max_staleness {
+        GovernorState::Holding
+    } else {
+        GovernorState::Normal
+    }
 }
 
 fn parse_iso(v: Option<&Value>) -> Option<DateTime<Utc>> {

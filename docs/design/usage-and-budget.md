@@ -122,7 +122,9 @@ max_staleness   = "10m"     # older readings count as unknown
   `.bridle/config.toml` may lower them, never raise them.
 - **Unknown is not safe.** With no reading newer than `max_staleness` while
   any agent is working, the governor holds. Once the reading is three times
-  that old, it winds down.
+  that old, it winds down. Before the daemon's first reading ever lands, its
+  own age stands in for the reading's age, so a fresh daemon doesn't hold
+  before its first `get_usage` poll has had a chance to answer.
 
 ### The wind-down
 
