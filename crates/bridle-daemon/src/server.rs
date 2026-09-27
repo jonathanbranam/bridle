@@ -11,10 +11,10 @@ use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::{Extension, Json, Router};
 use bridle_api::types::{
-    Agent, ApiErrorResponse, BudgetStatus, ErrorBody, Event, EventQuery, Health, InterruptRequest,
-    Message, MessageQuery, MessageState, PrincipalKind, RemoveQuery, SendRequest, SpawnRequest,
-    Status, StopRequest, TokenCreateRequest, TokenCreated, TranscriptLine, TranscriptQuery, Usage,
-    WindowStatus,
+    Agent, ApiErrorResponse, BudgetHoldRequest, BudgetStatus, ErrorBody, Event, EventQuery, Health,
+    HoldStatus, InterruptRequest, Message, MessageQuery, MessageState, PrincipalKind, RemoveQuery,
+    ResumeRequest, SendRequest, SpawnRequest, Status, StopRequest, TokenCreateRequest,
+    TokenCreated, TranscriptLine, TranscriptQuery, Usage, WindowStatus,
 };
 use chrono::Utc;
 use futures::Stream;
@@ -59,6 +59,8 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/events/stream", get(events_stream))
         .route("/v1/usage", get(usage))
         .route("/v1/budget", get(budget))
+        .route("/v1/budget/hold", post(budget_hold))
+        .route("/v1/budget/release", post(budget_release))
         .route("/v1/tokens", post(create_token))
         .route("/v1/shutdown", post(shutdown))
         .layer(middleware::from_fn_with_state(
@@ -262,7 +264,32 @@ async fn budget(State(state): State<AppState>) -> Result<Json<BudgetStatus>, Api
         state: snapshot.default.state,
         windows,
         thresholds: cfg.to_wire(),
+        human_hold: state
+            .governor
+            .hold_status()
+            .map(|until| HoldStatus { until }),
     }))
+}
+
+async fn budget_hold(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Json(req): Json<BudgetHoldRequest>,
+) -> Result<Json<BudgetStatus>, ApiError> {
+    require_human(&principal)?;
+    state.governor.hold(req.until);
+    state.governor.recompute().await;
+    budget(State(state)).await
+}
+
+async fn budget_release(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+) -> Result<Json<BudgetStatus>, ApiError> {
+    require_human(&principal)?;
+    state.governor.release();
+    state.governor.recompute().await;
+    budget(State(state)).await
 }
 
 // ---------- agents ----------
@@ -343,8 +370,14 @@ async fn resume_agent(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
     Path(id): Path<String>,
+    Json(req): Json<ResumeRequest>,
 ) -> Result<Json<Agent>, ApiError> {
-    Ok(Json(state.manager.resume(&id, &principal).await?))
+    Ok(Json(
+        state
+            .manager
+            .resume(&id, req.ignore_budget, &principal)
+            .await?,
+    ))
 }
 
 async fn remove_agent(

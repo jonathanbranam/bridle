@@ -33,6 +33,9 @@ turn it into tasks for workers, watch them, check their results and report.
   you wait.
 - **Answer workers' questions** yourself when the docs or code settle them;
   otherwise ask the human.
+- **On a message starting "Usage pause:"**: commit your work in progress,
+  send whoever's waiting on you one line on where you are, and end your turn
+  without starting anything new.
 
 ## Never
 

@@ -15,18 +15,27 @@ bridle daemons                              # every running project daemon on th
 bridle status                               # daemon, agents, Claude Code version
 bridle spawn   <role> [--name N] [--prompt TEXT | --prompt-file F]
                [--worktree [--base REF] | --in-repo | --cwd PATH] [--model M]
+               [--ignore-budget]
 bridle agents  [--all]
 bridle show    <agent>
 bridle send    <agent|human> TEXT [--question] [--when now|idle] [--reply-to ID]
 bridle inbox   [--all] [--mark-read]        # messages to me (human, or the calling agent)
 bridle interrupt <agent> [--drop-held]
-bridle stop    <agent> [--now]      bridle resume <agent>
+bridle stop    <agent> [--now]      bridle resume <agent> [--ignore-budget]
 bridle rm      <agent> [--force] [--delete-branch]
 bridle logs    <agent> [--follow] [--raw] [--since LINE]
 bridle events  [--follow] [--since SEQ] [--agent A] [--kind PREFIX]
 bridle usage
+bridle budget [hold [--for D|--until T] | release]   usage governor (usage-and-budget.md)
 bridle token create <name>
 ```
+
+- **`--ignore-budget`** on `spawn`/`resume` skips the budget governor's
+  holding/paused refusal for that one call
+  ([[docs/design/usage-and-budget#Resuming|the escape hatch]]).
+- **`budget hold`/`release`** apply to the current daemon only; see
+  [[docs/design/usage-and-budget#The human's hold|the human's hold]] for the
+  cross-daemon gap.
 
 - **Discovery** of the daemon, and **which token** the CLI uses, are in
   [[docs/design/agent-host/daemon#Workspace layout|workspace layout]] and
@@ -66,7 +75,6 @@ bridle goals list|propose       bridle arch propose
 bridle trace up|down|suspect|confirm|orphans|coverage
 bridle explore new|conclude|adopt|abandon
 bridle usage --by …|task|trend|compare          bridle cost audit
-bridle budget [hold [--for D|--until T] | release]   usage governor (usage-and-budget.md)
 bridle token list|revoke
 bridle rebuild
 ```

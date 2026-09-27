@@ -20,6 +20,7 @@ async fn interrupt_during_sleep_ends_the_turn_and_agent_stays_usable() {
             prompt: Some("SLEEP 10".to_string()),
             workdir: Some(Workdir::Repo),
             model: None,
+            ignore_budget: false,
         })
         .await
         .expect("spawn");
@@ -79,6 +80,7 @@ async fn stop_then_resume_keeps_the_session_and_answers_new_messages() {
             prompt: None,
             workdir: Some(Workdir::Worktree { base: None }),
             model: None,
+            ignore_budget: false,
         })
         .await
         .expect("spawn");
@@ -92,7 +94,11 @@ async fn stop_then_resume_keeps_the_session_and_answers_new_messages() {
         .expect("stop");
     assert_eq!(stopped.state, AgentState::Stopped);
 
-    let resumed = daemon.client.resume(&agent.id).await.expect("resume");
+    let resumed = daemon
+        .client
+        .resume(&agent.id, &Default::default())
+        .await
+        .expect("resume");
     assert_eq!(resumed.session_id, session_id);
     wait_for_state(&daemon.client, &agent.id, AgentState::Idle).await;
 
@@ -157,6 +163,7 @@ async fn rm_refuses_a_dirty_worktree_without_force() {
             prompt: None,
             workdir: Some(Workdir::Worktree { base: None }),
             model: None,
+            ignore_budget: false,
         })
         .await
         .expect("spawn");
@@ -200,6 +207,7 @@ async fn crash_is_reported_with_a_stderr_tail_and_pending_messages_deliver_on_re
             prompt: Some("CRASH".to_string()),
             workdir: Some(Workdir::Repo),
             model: None,
+            ignore_budget: false,
         })
         .await
         .expect("spawn");
@@ -232,7 +240,7 @@ async fn crash_is_reported_with_a_stderr_tail_and_pending_messages_deliver_on_re
 
     daemon
         .client
-        .resume(&agent.id)
+        .resume(&agent.id, &Default::default())
         .await
         .expect("resume after crash");
     wait_for_state(&daemon.client, &agent.id, AgentState::Idle).await;
@@ -260,6 +268,7 @@ async fn spawn_child_orphan_is_swept_on_stop() {
             prompt: Some("SPAWN_CHILD".to_string()),
             workdir: Some(Workdir::Repo),
             model: None,
+            ignore_budget: false,
         })
         .await
         .expect("spawn");

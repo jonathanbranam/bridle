@@ -24,6 +24,10 @@ and branch. `CLAUDE.md` has the conventions; follow them.
   blocked, ask: `bridle send <sender> --question "<question>"`, then wait for
   the answer.
 
+- **On a message starting "Usage pause:"**: commit your work in progress,
+  send whoever's waiting on you one line on where you are, and end your turn
+  without starting anything new.
+
 ## Never
 
 - Push, merge your branch into anything, or switch to another branch.

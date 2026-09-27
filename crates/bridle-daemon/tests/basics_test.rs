@@ -53,6 +53,7 @@ async fn agent_token_cannot_create_tokens() {
             prompt: None,
             workdir: Some(bridle_api::types::Workdir::Repo),
             model: None,
+            ignore_budget: false,
         })
         .await
         .expect("spawn");

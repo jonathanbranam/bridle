@@ -19,6 +19,7 @@ async fn events_stream_receives_backfill_then_live_events_in_seq_order() {
             prompt: None,
             workdir: Some(Workdir::Repo),
             model: None,
+            ignore_budget: false,
         })
         .await
         .expect("spawn");
@@ -86,6 +87,7 @@ async fn events_stream_since_skips_already_seen_events() {
             prompt: Some("hello".to_string()),
             workdir: Some(Workdir::Repo),
             model: None,
+            ignore_budget: false,
         })
         .await
         .expect("spawn");
@@ -128,6 +130,7 @@ async fn events_stream_with_no_cursor_skips_backfill_and_starts_at_the_tail() {
             prompt: None,
             workdir: Some(Workdir::Repo),
             model: None,
+            ignore_budget: false,
         })
         .await
         .expect("spawn");

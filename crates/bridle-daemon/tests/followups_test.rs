@@ -20,6 +20,7 @@ fn spawn_req(name: &str, prompt: Option<&str>, workdir: Workdir) -> SpawnRequest
         prompt: prompt.map(str::to_string),
         workdir: Some(workdir),
         model: None,
+        ignore_budget: false,
     }
 }
 
@@ -52,7 +53,9 @@ async fn a_held_message_survives_an_exit_and_is_delivered_on_resume() {
     c.stop(&agent.id, &StopRequest { now: true })
         .await
         .expect("stop");
-    c.resume(&agent.id).await.expect("resume");
+    c.resume(&agent.id, &Default::default())
+        .await
+        .expect("resume");
 
     wait_for_event(c, "message.delivered", Some(&agent.id), |e| {
         e.data["message"] == held.id.as_str()
@@ -156,7 +159,9 @@ async fn interrupt_stop_and_resume_record_the_caller() {
     })
     .await;
 
-    c.resume(&agent.id).await.expect("resume");
+    c.resume(&agent.id, &Default::default())
+        .await
+        .expect("resume");
     wait_for_event(c, "agent.resumed", Some(&agent.id), |e| e.actor == "human").await;
 }
 
@@ -174,7 +179,10 @@ async fn a_spent_budget_stops_the_agent_and_resume_grants_another() {
     assert_eq!(stopped.exit.expect("exit").reason, "budget_exhausted");
     wait_for_event(c, "agent.budget_exhausted", Some(&agent.id), |_| true).await;
 
-    let resumed = c.resume(&agent.id).await.expect("resume");
+    let resumed = c
+        .resume(&agent.id, &Default::default())
+        .await
+        .expect("resume");
     assert!(resumed.state.is_running());
 }
 

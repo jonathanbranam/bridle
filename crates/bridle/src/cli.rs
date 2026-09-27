@@ -66,9 +66,9 @@ pub enum Command {
     Events(EventsArgs),
     /// Usage and cost summary.
     Usage,
-    /// The budget governor: windows, thresholds and state (read-only;
-    /// `hold`/`release` land with the wind-down work).
-    Budget,
+    /// The budget governor: windows, thresholds and state; `hold`/`release`
+    /// idle the account for the human.
+    Budget(BudgetArgs),
     /// Token management.
     Token(TokenArgs),
 }
@@ -117,6 +117,9 @@ pub struct SpawnArgs {
     pub cwd: Option<PathBuf>,
     #[arg(long)]
     pub model: Option<String>,
+    /// Skip the budget governor's holding/paused check for this one spawn.
+    #[arg(long)]
+    pub ignore_budget: bool,
 }
 
 #[derive(Debug, Args)]
@@ -182,6 +185,9 @@ pub struct StopArgs {
 #[derive(Debug, Args)]
 pub struct ResumeArgs {
     pub agent: String,
+    /// Skip the budget governor's holding/paused check for this one resume.
+    #[arg(long)]
+    pub ignore_budget: bool,
 }
 
 #[derive(Debug, Args)]
@@ -221,6 +227,33 @@ pub struct EventsArgs {
     /// Prefix match, e.g. `message.` or `agent.state`.
     #[arg(long)]
     pub kind: Option<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct BudgetArgs {
+    #[command(subcommand)]
+    pub action: Option<BudgetAction>,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum BudgetAction {
+    /// Idle the account for the human: stop idle agents, wind working ones
+    /// down, and hold `bridle spawn`/`resume` until `release` (or `--for`/
+    /// `--until` passes).
+    #[command(group(ArgGroup::new("hold_duration").args(["for_", "until"])))]
+    Hold(BudgetHoldArgs),
+    /// End a `hold` early.
+    Release,
+}
+
+#[derive(Debug, Args)]
+pub struct BudgetHoldArgs {
+    /// Hold for a duration, e.g. `3h`, `45m`, `90s`.
+    #[arg(long = "for")]
+    pub for_: Option<String>,
+    /// Hold until this local time (`HH:MM`), today or tomorrow if already past.
+    #[arg(long)]
+    pub until: Option<String>,
 }
 
 #[derive(Debug, Args)]

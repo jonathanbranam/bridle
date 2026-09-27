@@ -11,9 +11,10 @@ use serde::de::DeserializeOwned;
 use thiserror::Error;
 
 use crate::types::{
-    Agent, ApiErrorResponse, BudgetStatus, Event, EventQuery, Health, InterruptRequest,
-    InterruptResponse, Message, MessageQuery, RemoveQuery, SendRequest, SpawnRequest, Status,
-    StopRequest, TokenCreateRequest, TokenCreated, TranscriptLine, TranscriptQuery, Usage,
+    Agent, ApiErrorResponse, BudgetHoldRequest, BudgetStatus, Event, EventQuery, Health,
+    InterruptRequest, InterruptResponse, Message, MessageQuery, RemoveQuery, ResumeRequest,
+    SendRequest, SpawnRequest, Status, StopRequest, TokenCreateRequest, TokenCreated,
+    TranscriptLine, TranscriptQuery, Usage,
 };
 
 #[derive(Debug, Error)]
@@ -171,8 +172,8 @@ impl Client {
         self.post_json(&["v1", "agents", id, "stop"], req).await
     }
 
-    pub async fn resume(&self, id: &str) -> Result<Agent, ClientError> {
-        self.post_empty(&["v1", "agents", id, "resume"]).await
+    pub async fn resume(&self, id: &str, req: &ResumeRequest) -> Result<Agent, ClientError> {
+        self.post_json(&["v1", "agents", id, "resume"], req).await
     }
 
     pub async fn remove(&self, id: &str, query: &RemoveQuery) -> Result<(), ClientError> {
@@ -299,6 +300,14 @@ impl Client {
 
     pub async fn budget(&self) -> Result<BudgetStatus, ClientError> {
         self.get_json(&["v1", "budget"]).await
+    }
+
+    pub async fn budget_hold(&self, req: &BudgetHoldRequest) -> Result<BudgetStatus, ClientError> {
+        self.post_json(&["v1", "budget", "hold"], req).await
+    }
+
+    pub async fn budget_release(&self) -> Result<BudgetStatus, ClientError> {
+        self.post_empty(&["v1", "budget", "release"]).await
     }
 
     pub async fn create_token(
