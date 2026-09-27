@@ -22,7 +22,12 @@ Its queue, two workers at a time:
    - the cache-hit ratio per role.
 3. **(B) `bridle cost audit [--check]`**, with a committed
    `.bridle/cost-baseline.json`. Runs in parallel with (A).
-4. **(C) The governor's `[models]` step-down** per role, after (A), because
+4. **Resolve c7eb and c5a8** (docs). The human agreed on 2026-09-27: task
+   records on a state branch; questions in the blocking task's thread, with a
+   SQLite index for the inbox.
+5. **P0** ([build order](docs/proposal/build-order.md)). The manager is to send
+   its task breakdown before spawning. It takes priority over (C).
+6. **(C) The governor's `[models]` step-down** per role, after (A), because
    they touch the same files.
 
 Parked: `bridle/mcp-1` (WIP `cae932c`, a hand-rolled read-side `/mcp`, not
@@ -30,17 +35,6 @@ tested). Don't merge it.
 
 ## Waiting on the human
 
-- **P0 is blocked on two decisions**, each with a recommendation already made:
-  - **c7eb** (task records): on a state branch, not in-tree. It's also the
-    design's recommendation, and `storage.md` assumes it.
-  - **c5a8** (where questions live): in the thread of the task they block,
-    with bridle keeping an index of open questions in SQLite for the inbox.
-  Once answered, resolve both tickets and queue P0
-  ([build order](docs/proposal/build-order.md)).
-- **Cleanup only they can do:**
-  - `bridle rm w1 --delete-branch`: a stray worker, stopped.
-  - `kill 29657 40941 45171`: orphaned test daemons left from before the
-    leak fix, if still running.
 - **Optional:** set `bridle statusline` as the `statusLine` command in
   `~/.claude/settings.json`. Its parser is unverified against the real JSON
   (spike m9wt).
