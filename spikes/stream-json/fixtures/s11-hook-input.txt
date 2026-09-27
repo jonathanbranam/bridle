@@ -1,0 +1,13 @@
+start 1790517337.807
+CLAUDE_CODE_MESSAGING_TOKEN=<redacted>
+CLAUDE_CODE_ENTRYPOINT=sdk-cli
+CLAUDE_CODE_CHILD_SESSION=1
+CLAUDE_PID=87463
+CLAUDE_PROJECT_DIR=$TMPDIR/bridle-spike/s11
+BRIDLE_AGENT=spike-01-s11
+CLAUDE_CODE_SESSION_ATTENDED=0
+CLAUDE_CODE_SESSION_ID=74321091-71b5-47c8-aa19-809f77be4f26
+CLAUDE_CODE_MESSAGING_SOCKET=/tmp/cc-socks/87463.sock
+CLAUDECODE=1
+{"session_id":"74321091-71b5-47c8-aa19-809f77be4f26","transcript_path":"$HOME/.claude/projects/-TMPDIR-bridle-spike-s11/74321091-71b5-47c8-aa19-809f77be4f26.jsonl","cwd":"$TMPDIR/bridle-spike/s11","prompt_id":"ba6b580b-8bcf-485b-a935-af9160b8f650","permission_mode":"dontAsk","hook_event_name":"PostToolUse","tool_name":"Bash","tool_input":{"command":"echo hi","description":"Run echo hi"},"tool_response":{"stdout":"hi","stderr":"","interrupted":false,"isImage":false,"noOutputExpected":false},"tool_use_id":"toolu_01LhaVUCHZa4K45rnZ1LeyM4","duration_ms":3406}
+end 1790517337.828
