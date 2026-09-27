@@ -29,12 +29,19 @@ Agent-host work that can land between phases, roughly in this order:
    cheap questions come first.
 2. **`bridle take` / `give`** (research 01 §5.3): interrupt, close, hand the
    human `claude --resume <session>` in the worktree, resume headless after.
-3. **Permission prompts as questions**: `--permission-prompts host` plus
-   `--permission-prompt-tool` naming an MCP tool bridle serves (spike 03: not
-   a `can_use_tool` control request on the existing stdin/stdout channel),
-   answered from role rules or turned into a `question` to the manager or
-   human. Plan: [[docs/design/agent-host/messages#Permission prompts as questions|messages.md]].
+3. **Permission prompts as questions** — deferred, nice-to-have, not
+   near-term work; requirements to be refined later: `--permission-prompts
+   host` plus `--permission-prompt-tool` naming an MCP tool bridle serves
+   (spike 03: not a `can_use_tool` control request on the existing
+   stdin/stdout channel), answered from role rules or turned into a
+   `question` to the manager or human. The real mechanism needs bridle to
+   serve an MCP tool ([spike 03](docs/spikes/03-permission-prompt-tool-findings.md)
+   confirms this), so this item depends on item 5. Plan:
+   [[docs/design/agent-host/messages#Permission prompts as questions|messages.md]].
 4. **The TUI**, a crate on `bridle-api`: agents list, event tail, per-agent
    logs, inbox and reply. **built** (`crates/bridle-tui`).
-5. **MCP server** at `/mcp` on the same listener, with tools mirroring the CLI.
-   Reaching it from claude.ai or mobile needs bridle on public HTTPS with auth.
+5. **MCP server** at `/mcp` on the same listener, with tools mirroring the
+   CLI — deferred, nice-to-have, not near-term work; requirements to be
+   refined later. Reaching it from claude.ai or mobile needs bridle on
+   public HTTPS with auth. `bridle/mcp-1` has a parked, uncommitted-to-main
+   branch with a working but untested read-side MCP server.
