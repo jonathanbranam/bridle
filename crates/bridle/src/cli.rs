@@ -535,4 +535,87 @@ mod tests {
         assert!(args.force);
         assert!(args.delete_branch);
     }
+
+    #[test]
+    fn task_new_takes_title_and_kind() {
+        let cli = parse(&["task", "new", "Add foo", "-k", "feature", "--body", "desc"]).unwrap();
+        let Command::Task(args) = cli.command else {
+            panic!("expected task")
+        };
+        let TaskAction::New(a) = args.action else {
+            panic!("expected task new")
+        };
+        assert_eq!(a.title, "Add foo");
+        assert!(matches!(a.kind, TaskKindArg::Feature));
+        assert_eq!(a.body.as_deref(), Some("desc"));
+    }
+
+    #[test]
+    fn task_new_kind_uses_kebab_case_arch_revision() {
+        let cli = parse(&["task", "new", "x", "-k", "arch-revision"]).unwrap();
+        let Command::Task(args) = cli.command else {
+            panic!("expected task")
+        };
+        let TaskAction::New(a) = args.action else {
+            panic!("expected task new")
+        };
+        assert!(matches!(a.kind, TaskKindArg::ArchRevision));
+    }
+
+    #[test]
+    fn task_new_requires_kind() {
+        let err = parse(&["task", "new", "Add foo"]).unwrap_err();
+        assert_eq!(err.kind(), clap::error::ErrorKind::MissingRequiredArgument);
+    }
+
+    #[test]
+    fn task_drop_requires_reason() {
+        let err = parse(&["task", "drop", "tw-1234"]).unwrap_err();
+        assert_eq!(err.kind(), clap::error::ErrorKind::MissingRequiredArgument);
+
+        let cli = parse(&["task", "drop", "tw-1234", "--reason", "budget cut"]).unwrap();
+        let Command::Task(args) = cli.command else {
+            panic!("expected task")
+        };
+        let TaskAction::Drop(a) = args.action else {
+            panic!("expected task drop")
+        };
+        assert_eq!(a.task, "tw-1234");
+        assert_eq!(a.reason, "budget cut");
+    }
+
+    #[test]
+    fn task_reopen_and_show_and_list_parse() {
+        let cli = parse(&["task", "reopen", "tw-1234"]).unwrap();
+        let Command::Task(args) = cli.command else {
+            panic!("expected task")
+        };
+        assert!(matches!(args.action, TaskAction::Reopen(a) if a.task == "tw-1234"));
+
+        let cli = parse(&["task", "show", "tw-1234"]).unwrap();
+        let Command::Task(args) = cli.command else {
+            panic!("expected task")
+        };
+        assert!(matches!(args.action, TaskAction::Show(a) if a.task == "tw-1234"));
+
+        let cli = parse(&["task", "list"]).unwrap();
+        let Command::Task(args) = cli.command else {
+            panic!("expected task")
+        };
+        assert!(matches!(args.action, TaskAction::List));
+    }
+
+    #[test]
+    fn task_edit_takes_title_or_body() {
+        let cli = parse(&["task", "edit", "tw-1234", "--title", "new title"]).unwrap();
+        let Command::Task(args) = cli.command else {
+            panic!("expected task")
+        };
+        let TaskAction::Edit(a) = args.action else {
+            panic!("expected task edit")
+        };
+        assert_eq!(a.task, "tw-1234");
+        assert_eq!(a.title.as_deref(), Some("new title"));
+        assert_eq!(a.body, None);
+    }
 }
