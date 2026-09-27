@@ -63,6 +63,10 @@ pub struct Overrides {
     pub write_registry: bool,
     pub stall_check_interval: Duration,
     pub tracker_interval: Duration,
+    /// How often the governor tick fires; the tick itself decides whether
+    /// a `get_usage` poll is actually due (usage-and-budget.md, Seeing the
+    /// windows: 5 min normally, 30 s above `hold_at`).
+    pub governor_interval: Duration,
 }
 
 impl Default for Overrides {
@@ -73,6 +77,7 @@ impl Default for Overrides {
             write_registry: true,
             stall_check_interval: Duration::from_secs(30),
             tracker_interval: Duration::from_secs(2),
+            governor_interval: Duration::from_secs(30),
         }
     }
 }
@@ -210,6 +215,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         started_at: info.started_at,
         pid: info.pid,
         shutdown_tx: shutdown_tx.clone(),
+        governor: governor.clone(),
     };
     let app = server::router(state);
 
@@ -238,6 +244,13 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         move || {
             let manager = manager.clone();
             async move { manager.tick_tracker().await }
+        }
+    });
+    let governor_task = spawn_loop(shutdown_rx.clone(), overrides.governor_interval, {
+        let governor = governor.clone();
+        move || {
+            let governor = governor.clone();
+            async move { governor.tick().await }
         }
     });
     let prune_task = spawn_loop(shutdown_rx.clone(), Duration::from_secs(24 * 60 * 60), {
@@ -275,6 +288,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         signal_task.abort();
         stall_task.abort();
         tracker_task.abort();
+        governor_task.abort();
         prune_task.abort();
     });
 

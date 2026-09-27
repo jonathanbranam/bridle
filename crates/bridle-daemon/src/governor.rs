@@ -13,7 +13,7 @@ use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
-use bridle_api::types::{GovernorState, RateLimit, WindowStatus, event_kind};
+use bridle_api::types::{GovernorState, RateLimit, event_kind};
 use chrono::{DateTime, Utc};
 use serde_json::{Value, json};
 use uuid::Uuid;
@@ -149,7 +149,7 @@ impl Governor {
     /// every window it reports.
     async fn poll_usage(&self) {
         let response = if let Some(h) = self.0.manager.any_running_handle() {
-            h.get_usage(PROBE_TIMEOUT).await
+            h.get_usage(PROBE_TIMEOUT).await.map_err(|e| e.to_string())
         } else {
             self.probe_get_usage().await
         };
