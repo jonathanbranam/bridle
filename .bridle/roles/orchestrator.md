@@ -80,6 +80,16 @@ curl -s -H "Authorization: Bearer $BRIDLE_TOKEN" "$U/v1/messages?to=human&limit=
 - **No Claude Code memory.** Record anything worth keeping in the repo
   (`.bridle/rules/memory.none.md`).
 
+## Context
+
+Agents are ephemeral; the branch, worktree and bridle's records carry the
+work. Keep every context well under 200K tokens (the human, 2026-09-27:
+reasoning breaks down around 250-300K, and large windows cost more). That
+includes yours: past ~200K, bring `docs/context/orchestrator-state.md` up to
+date, commit it, and tell the human to start a fresh orchestrator. Watch the
+manager's and workers' size too, until bridle governs it itself (the context
+governor in the queue).
+
 ## Only the human can
 
 - Stop or restart the daemon: `bridle stop-daemon`, or Ctrl-C in their
