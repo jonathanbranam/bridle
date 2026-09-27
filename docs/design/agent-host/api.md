@@ -8,7 +8,7 @@ JSON over HTTP, versioned under `/v1`. The contract is
 
 | Method + path | Does |
 |---|---|
-| `GET /v1/health` | liveness + version (no auth) |
+| `GET /v1/health` | liveness + version + non-terminal agent count (no auth) |
 | `GET /v1/status` | daemon, workspace, repo, principal, agent counts by state, unread human messages, latest rate limits, Claude Code version |
 | `GET /v1/agents` · `POST /v1/agents` | list all · spawn (`{name?, role, prompt?, workdir?, model?}`, where `workdir` is `{"kind":"worktree","base"?}`, `{"kind":"repo"}` or `{"kind":"path","path"}`) |
 | `GET /v1/agents/{id}` | one agent: state, current turn's start, turns, cost, held and unacked message counts |
@@ -23,7 +23,8 @@ JSON over HTTP, versioned under `/v1`. The contract is
 | `GET /v1/usage` | per-agent (including removed agents) and total turns, tokens, cost, latest rate limits, today's `bridle statusline` snapshots |
 | `POST /v1/statusline` | record a `bridle statusline` snapshot (`{session_id?, model?, cost_usd?, context_used_tokens?, context_max_tokens?, rate_limits: [{window, utilization?, resets_at?}]}`); rate-limit windows go through the same store path as `rate_limit_event` |
 | `GET /v1/budget` | the governor's state, per-window readings and staleness, and the effective thresholds ([[../usage-and-budget#The budget governor\|the budget governor]]); `hold`/`release` land with the wind-down work |
-| `POST /v1/tokens` | mint an `external` token (human only) |
+| `GET /v1/tokens` · `POST /v1/tokens` | list external tokens (name, created-at, revoked-or-not; never the token itself) · mint one (human only) |
+| `DELETE /v1/tokens/{name}` | revoke `external:{name}` (human only; an agent's own token isn't revoked this way — see `rm`) |
 | `POST /v1/shutdown` | graceful stop of all agents, then exit (human only) |
 
 Errors use one shape, `{"error": {"code": "...", "message": "..."}}`, with
