@@ -254,6 +254,15 @@ project-scoped only (`<repo>/.bridle/config.toml`), and a project may
 replace a role's list outright: it's an ordered preference, not a ceiling,
 so there's no lower-only restriction.
 
+A project's `[roles.X]` section can also set that role's `model` without
+giving it its own `[models]` entry (e.g. `[roles.manager] model = "sonnet"`
+alone). When there's no explicit `[models].X` list, that `model` is a floor
+on the role's built-in default list: the candidate list starts at that
+model and keeps only the built-in entries after it, so the role still steps
+down further under load but never steps back up to a stronger built-in
+entry the project didn't ask for. An explicit `[models].X` entry still wins
+outright, unchanged, and is used as given.
+
 ### Across projects
 
 Each project's daemon runs its own governor. They agree on when to pause
