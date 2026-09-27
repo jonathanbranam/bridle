@@ -608,7 +608,11 @@ impl AgentManager {
         ready_tx: Option<tokio::sync::oneshot::Sender<()>>,
     ) -> Result<Arc<AgentRuntime>, SupervisorError> {
         let pid = spawned.handle.pid();
-        let start = containment::start_time(pid).unwrap_or_default();
+        let start = tokio::task::spawn_blocking(move || containment::start_time(pid))
+            .await
+            .ok()
+            .flatten()
+            .unwrap_or_default();
         self.0
             .store
             .set_agent_process(agent_id, Some(pid), Some(start.clone()))
@@ -1026,8 +1030,13 @@ impl AgentManager {
     /// descendants reports them; a sweep that finds nothing left (because
     /// an earlier one already reaped them) simply stays quiet, so the two
     /// calls are safe to both run without double-counting.
-    async fn sweep_and_emit(&self, id: &str, tracker: &mut Tracker) {
-        let report = containment::sweep(tracker, SWEEP_GRACE).await;
+    async fn sweep_and_emit(
+        &self,
+        id: &str,
+        tracker: &mut Tracker,
+        snap: &[containment::ProcInfo],
+    ) {
+        let report = containment::sweep(tracker, snap, SWEEP_GRACE).await;
         if report.terminated > 0 {
             let _ = self
                 .0
@@ -1043,8 +1052,15 @@ impl AgentManager {
     }
 
     async fn finish_agent(&self, id: &str, runtime: &Arc<AgentRuntime>, outcome: ExitOutcome) {
+        let snap = tokio::task::spawn_blocking(containment::snapshot)
+            .await
+            .ok()
+            .and_then(Result::ok);
         let mut st = runtime.state.lock().await;
-        self.sweep_and_emit(id, &mut st.tracker).await;
+        if let Some(snap) = &snap {
+            st.tracker.update(snap);
+            self.sweep_and_emit(id, &mut st.tracker, snap).await;
+        }
         let stop_requested = runtime.stop_requested.load(Ordering::SeqCst);
         let shutdown_requested = runtime.shutdown_requested.load(Ordering::SeqCst);
         let saw_any_line = st.saw_any_line;
@@ -1330,9 +1346,13 @@ impl AgentManager {
         // they're still parented under the agent's pid (once the agent
         // exits, an orphan is reparented to init and this walk can no
         // longer find it by ancestry).
-        if let Ok(Ok(snap)) = tokio::task::spawn_blocking(containment::snapshot).await {
+        let snap = tokio::task::spawn_blocking(containment::snapshot)
+            .await
+            .ok()
+            .and_then(Result::ok);
+        if let Some(snap) = &snap {
             let mut st = rt.state.lock().await;
-            st.tracker.update(&snap);
+            st.tracker.update(snap);
         }
 
         if !now {
@@ -1342,9 +1362,9 @@ impl AgentManager {
         }
 
         containment::terminate_group(rt.handle.pid(), TERMINATE_GRACE).await;
-        {
+        if let Some(snap) = &snap {
             let mut st = rt.state.lock().await;
-            self.sweep_and_emit(&agent.id, &mut st.tracker).await;
+            self.sweep_and_emit(&agent.id, &mut st.tracker, snap).await;
         }
 
         let task = rt.task.lock().await.take();
