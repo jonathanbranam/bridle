@@ -394,7 +394,29 @@ fn parse_get_usage(v: &Value, observed_at: DateTime<Utc>) -> Vec<RateLimit> {
             if l.get("kind").and_then(Value::as_str) != Some("weekly_scoped") {
                 continue;
             }
-            let Some(model) = l.pointer("/scope/model").and_then(Value::as_str) else {
+            // Undocumented (docs/spikes/open/usage-probe-and-wind-down-headroom-u7pw.md):
+            // `scope.model` was seen as a bare string in spike 01's fixture,
+            // but u7pw's live probe shows it may be an object; accept a
+            // string directly or a nested `id`/`name`/`model` string field.
+            let scope_model = l.pointer("/scope/model");
+            let model = scope_model
+                .and_then(Value::as_str)
+                .or_else(|| {
+                    scope_model
+                        .and_then(|m| m.get("id"))
+                        .and_then(Value::as_str)
+                })
+                .or_else(|| {
+                    scope_model
+                        .and_then(|m| m.get("name"))
+                        .and_then(Value::as_str)
+                })
+                .or_else(|| {
+                    scope_model
+                        .and_then(|m| m.get("model"))
+                        .and_then(Value::as_str)
+                });
+            let Some(model) = model else {
                 continue;
             };
             let Some((_, window)) = MODEL_WINDOWS
