@@ -66,6 +66,9 @@ pub enum Command {
     Events(EventsArgs),
     /// Usage and cost summary.
     Usage,
+    /// The budget governor: windows, thresholds and state (read-only;
+    /// `hold`/`release` land with the wind-down work).
+    Budget,
     /// Token management.
     Token(TokenArgs),
 }
