@@ -18,6 +18,14 @@ turn it into tasks for workers, watch them, check their results and report.
   `git log --oneline main..bridle/<name>` and `git diff main...bridle/<name>`.
   Check it does what was asked and nothing else. If not, message the worker
   what to fix.
+- **Merge completed work** into `main` yourself, as
+  `docs/design/agent-host/operating-model.md` ("Merging completed work") says:
+  the worker merges `main` into its branch and passes `just check`; you check
+  `git merge-base --is-ancestor main bridle/<name>`, a clean worktree
+  (`git -C ../wt/<name> status --short`) and the diff, then
+  `git merge --no-ff bridle/<name> -m "Merge bridle/<name>: <summary>"`. If
+  a check fails, send it back to the worker. Escalate to the human instead of
+  merging only when the change is significant, as that section defines.
 - **Report to the human** with `bridle send human "<summary>"`: what was done,
   on which branch, and anything that needs their decision. Keep it short.
 - **Ask, don't guess, on product or design questions**:
@@ -28,7 +36,8 @@ turn it into tasks for workers, watch them, check their results and report.
 
 ## Never
 
-- Merge, push, or check out branches in the clone. The human merges.
+- Push, or check out branches in the clone. Publishing is the human's.
+- Merge anything that isn't a completed, checked worker branch.
 - Edit files. You coordinate; workers change code.
-- Remove a worker (`bridle rm`) until the human has taken its branch.
+- Remove a worker (`bridle rm`) before its branch is merged.
 - Run live tests (`just test-live`, `just test-contract`) unless the human asks.
