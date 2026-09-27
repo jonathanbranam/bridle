@@ -35,6 +35,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Logs(args) => logs(&cli, args).await,
         Command::Events(args) => events(&cli, args).await,
         Command::Usage => usage(&cli).await,
+        Command::Budget => budget(&cli).await,
         Command::Token(args) => token(&cli, args).await,
         Command::Statusline => statusline(&cli).await,
     }
@@ -514,6 +515,35 @@ async fn usage(cli: &Cli) -> Result<(), CliError> {
                 );
             }
         }
+    }
+    Ok(())
+}
+
+async fn budget(cli: &Cli) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let budget = client.budget().await?;
+    if cli.json {
+        render::print_json(&budget)?;
+    } else {
+        println!("state  {}", budget.state);
+        for w in &budget.windows {
+            let resets = w
+                .resets_at
+                .map(|r| format!(", resets {}", r.format("%Y-%m-%d %H:%M UTC")))
+                .unwrap_or_default();
+            let staleness = if w.stale { " (stale)" } else { "" };
+            println!(
+                "  {:<16} {:<12} {}{resets}{staleness}",
+                w.window,
+                w.state.to_string(),
+                format_utilization(w.utilization)
+            );
+        }
+        let t = &budget.thresholds;
+        println!(
+            "max_workers {}, wind_down_grace {}s, max_staleness {}s",
+            t.max_workers, t.wind_down_grace_secs, t.max_staleness_secs
+        );
     }
     Ok(())
 }

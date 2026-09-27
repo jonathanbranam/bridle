@@ -11,10 +11,10 @@ use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::{Extension, Json, Router};
 use bridle_api::types::{
-    Agent, ApiErrorResponse, ErrorBody, Event, EventQuery, Health, InteractiveUsageRow,
-    InterruptRequest, Message, MessageQuery, MessageState, PrincipalKind, RateLimit, RemoveQuery,
-    SendRequest, SpawnRequest, Status, StatusLineReport, StopRequest, TokenCreateRequest,
-    TokenCreated, TranscriptLine, TranscriptQuery, Usage,
+    Agent, ApiErrorResponse, BudgetStatus, ErrorBody, Event, EventQuery, Health,
+    InteractiveUsageRow, InterruptRequest, Message, MessageQuery, MessageState, PrincipalKind,
+    RateLimit, RemoveQuery, SendRequest, SpawnRequest, Status, StatusLineReport, StopRequest,
+    TokenCreateRequest, TokenCreated, TranscriptLine, TranscriptQuery, Usage, WindowStatus,
 };
 use chrono::Utc;
 use futures::Stream;
@@ -39,6 +39,7 @@ pub struct AppState {
     pub started_at: chrono::DateTime<Utc>,
     pub pid: i32,
     pub shutdown_tx: watch::Sender<bool>,
+    pub governor: crate::governor::Governor,
 }
 
 pub fn router(state: AppState) -> Router {
@@ -58,6 +59,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/events/stream", get(events_stream))
         .route("/v1/usage", get(usage))
         .route("/v1/statusline", post(report_statusline))
+        .route("/v1/budget", get(budget))
         .route("/v1/tokens", post(create_token))
         .route("/v1/shutdown", post(shutdown))
         .layer(middleware::from_fn_with_state(
@@ -216,6 +218,51 @@ async fn status(
         unread_human_messages: unread,
         rate_limits,
         claude_version,
+        budget_state: state.governor.snapshot().default.state,
+    }))
+}
+
+// ---------- budget ----------
+
+async fn budget(State(state): State<AppState>) -> Result<Json<BudgetStatus>, ApiError> {
+    let snapshot = state.governor.snapshot();
+    let rate_limits = state.store.rate_limits().await?;
+    let mut windows = Vec::new();
+    for window in [
+        "five_hour",
+        "seven_day",
+        "seven_day_opus",
+        "seven_day_sonnet",
+    ] {
+        let rl = rate_limits.iter().find(|r| r.window == window);
+        let block = if window == "seven_day_opus" {
+            snapshot.per_model.get("opus").cloned().unwrap_or_default()
+        } else if window == "seven_day_sonnet" {
+            snapshot
+                .per_model
+                .get("sonnet")
+                .cloned()
+                .unwrap_or_default()
+        } else if snapshot.default.window.as_deref() == Some(window) {
+            snapshot.default.clone()
+        } else {
+            crate::governor::WindowBlock::default()
+        };
+        windows.push(WindowStatus {
+            window: window.to_string(),
+            state: block.state,
+            status: rl.and_then(|r| r.status.clone()),
+            utilization: rl.and_then(|r| r.utilization),
+            resets_at: rl.and_then(|r| r.resets_at),
+            observed_at: rl.map(|r| r.observed_at),
+            stale: rl.is_none(),
+        });
+    }
+    let cfg = state.governor.config();
+    Ok(Json(BudgetStatus {
+        state: snapshot.default.state,
+        windows,
+        thresholds: cfg.to_wire(),
     }))
 }
 

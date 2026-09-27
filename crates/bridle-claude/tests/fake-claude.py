@@ -39,8 +39,10 @@ later turn fails the same way at once, costing nothing.
 `system/init` reports `claude_code_version` from a `.fake-claude-version` file
 in the working directory, or "fake".
 
-Any other control_request gets a generic success control_response echoing
-its subtype. On stdin EOF, the current turn (if any) finishes, then the
+A `get_usage` control_request returns `.fake-claude-usage` (JSON) from the
+working directory, if present, else a quiet all-normal reading; see
+`fake_usage_response()`. Any other control_request gets a generic success
+control_response echoing its subtype. On stdin EOF, the current turn (if any) finishes, then the
 process exits 0 if the last result wasn't an error, 1 otherwise — matching
 real claude (docs/spikes/01-stream-json-findings.md, S5). SIGTERM exits 143.
 """
@@ -198,13 +200,26 @@ def wait_item_until(deadline):
             continue
 
 
+def fake_usage_response():
+    """Reads `.fake-claude-usage` (JSON) in cwd if present: lets a test
+    script the daemon-side governor's get_usage polling without a real
+    account. Same precedent as `.fake-claude-version`. Falls back to a
+    quiet, all-normal reading."""
+    try:
+        with open(".fake-claude-usage") as f:
+            return json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return {"rate_limits": {"five_hour": {"utilization": 1.0}, "seven_day": {"utilization": 1.0}}, "limits": []}
+
+
 def handle_generic_control_request(item):
     req_id = item.get("request_id")
     subtype = item.get("request", {}).get("subtype")
+    response = fake_usage_response() if subtype == "get_usage" else {"subtype": subtype}
     emit(
         {
             "type": "control_response",
-            "response": {"subtype": "success", "request_id": req_id, "response": {"subtype": subtype}},
+            "response": {"subtype": "success", "request_id": req_id, "response": response},
         }
     )
 

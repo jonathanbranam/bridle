@@ -76,6 +76,9 @@ async fn restart_marks_a_stale_running_agent_lost_and_kills_its_process() {
         write_registry: false,
         stall_check_interval: std::time::Duration::from_secs(3600),
         tracker_interval: std::time::Duration::from_millis(200),
+        governor_interval: std::time::Duration::from_secs(3600),
+        governor_poll_interval_normal: std::time::Duration::from_secs(3600),
+        governor_poll_interval_above_hold: std::time::Duration::from_secs(3600),
     };
     let running = bridle_daemon::start(opts, overrides)
         .await

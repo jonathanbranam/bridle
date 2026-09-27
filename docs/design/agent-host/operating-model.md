@@ -57,6 +57,28 @@ Events for the live stream. It listens on `127.0.0.1` by default. Listening on
 another interface is one flag, which lets the workforce run remotely while the
 orchestrator and TUI stay on the laptop.
 
+## Merging completed work
+
+**Bridle merges its own completed work into main**; the human doesn't have to.
+Progress would otherwise stop at every finished branch. The manager does it,
+or the orchestrator when there's no manager, in the clone:
+
+1. The worker brings its branch up to date: it merges `main` into
+   `bridle/<agent>`, resolves any conflicts, runs `just check` (or the
+   project's equivalent) and commits. A worker never touches `main`.
+2. The merger checks that `main` is an ancestor of the branch
+   (`git merge-base --is-ancestor main bridle/<agent>`), that the worker's
+   worktree is clean, and that the diff does what the task asked and nothing
+   else. Anything short of that goes back to the worker.
+3. `git merge --no-ff bridle/<agent>`. Because the branch already contains
+   `main`, this can't conflict. Nobody pushes; publishing is the human's.
+
+**Escalate to the human instead of merging** when the change is significant:
+it rewrites a design decision rather than implementing one, changes what is
+human-only or how tokens and containment work, migrates the store in a way
+that drops data, deletes work, or the worker or merger flags it for review.
+Send `bridle send human --question`, and keep other work moving.
+
 ## Several projects at once
 
 Several projects run at the same time on different repos, **entirely

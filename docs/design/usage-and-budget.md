@@ -63,10 +63,24 @@ totals, the cache hit ratio (cache reads ÷ all input tokens), the last
 known utilisation and reset time per window, and today's `bridle statusline`
 rows. A role can also cap each agent's spend ([[docs/design/agent-host/agents#Spend cap|spend cap]]).
 
-Not built: the full usage ledger (task, role and workflow-revision columns) and
-the governor. Claude Code also answers an undocumented `get_usage` control
-request, which the governor will poll
-([[docs/design/usage-and-budget#Seeing the windows|seeing the windows]]).
+Not built: the full usage ledger's task, role and
+workflow-revision columns. The governor is partly built: it computes
+`normal`/`holding`/`winding_down`/`paused` from `hold_at`/`wind_down_at`/
+`stop_at` threshold crossings (per default-scoped window and, separately,
+per per-model window), from `rejected`/`allowed_warning` rate-limit
+statuses, and from reading staleness while any agent is working, and it
+polls the undocumented `get_usage` control request
+([[docs/design/usage-and-budget#Seeing the windows|seeing the windows]]) on
+a running agent or a dedicated probe process. It holds new work while not
+`normal`: `bridle spawn`/`resume` are refused (409), and a message that
+would start a turn in an idle agent is held instead. `budget.state` events,
+`GET /v1/budget` and the read-only `bridle budget` show the state.
+
+Not yet built (a later task): actually stopping idle agents and notifying
+working ones, `wind_down_grace`, applying the `budget_paused` exit reason,
+resuming paused agents when every window drops below `resume_below`,
+`bridle budget hold`/`release`, `--ignore-budget`, and the role-preamble
+notice line.
 
 ## The budget governor
 

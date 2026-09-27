@@ -125,6 +125,7 @@ struct Inner {
     project: String,
     emitter: Emitter,
     runtimes: std::sync::Mutex<HashMap<String, Arc<AgentRuntime>>>,
+    governor: crate::governor::GovernorHandle,
 }
 
 #[derive(Clone)]
@@ -147,6 +148,7 @@ impl AgentManager {
         url: String,
         project: String,
         emitter: Emitter,
+        governor: crate::governor::GovernorHandle,
     ) -> Self {
         AgentManager(Arc::new(Inner {
             store,
@@ -157,7 +159,48 @@ impl AgentManager {
             project,
             emitter,
             runtimes: std::sync::Mutex::new(HashMap::new()),
+            governor,
         }))
+    }
+
+    /// Any one live agent's control handle, for the governor's `get_usage`
+    /// probe (usage-and-budget.md, Seeing the windows): cheaper than a
+    /// dedicated probe process when an agent is already running.
+    pub fn any_running_handle(&self) -> Option<bridle_claude::process::AgentHandle> {
+        self.0
+            .runtimes
+            .lock()
+            .expect("runtimes mutex poisoned")
+            .values()
+            .next()
+            .map(|rt| rt.handle.clone())
+    }
+
+    /// The budget state that applies to a spawn/resume/message pinned to
+    /// `model` (the worse of the default-scoped state and that model's own
+    /// weekly window).
+    fn budget_block_for_model(&self, model: &str) -> crate::governor::WindowBlock {
+        self.0
+            .governor
+            .lock()
+            .expect("governor mutex poisoned")
+            .for_model(model)
+    }
+
+    fn refuse_if_holding(&self, model: &str) -> Result<(), SupervisorError> {
+        let block = self.budget_block_for_model(model);
+        if block.state == bridle_api::types::GovernorState::Normal {
+            return Ok(());
+        }
+        let window = block.window.as_deref().unwrap_or("budget");
+        let resets = block
+            .resets_at
+            .map(|r| r.to_rfc3339())
+            .unwrap_or_else(|| "unknown".to_string());
+        Err(SupervisorError::Conflict(format!(
+            "budget governor is {} ({window}, resets {resets}); pass --ignore-budget once that's built, or wait",
+            block.state
+        )))
     }
 
     fn get_runtime(&self, id: &str) -> Option<Arc<AgentRuntime>> {
@@ -270,6 +313,7 @@ impl AgentManager {
             self.0.config.roles.get(&req.role).cloned().ok_or_else(|| {
                 SupervisorError::BadRequest(format!("unknown role {:?}", req.role))
             })?;
+        self.refuse_if_holding(req.model.as_deref().unwrap_or(&role.model))?;
 
         let name = match req.name {
             Some(n) => {
@@ -1003,9 +1047,20 @@ impl AgentManager {
             if agent.state.is_running()
                 && let Some(rt) = self.get_runtime(agent_id)
             {
-                let write_now = matches!(when, bridle_api::types::When::Now)
+                let mut write_now = matches!(when, bridle_api::types::When::Now)
                     || (matches!(when, bridle_api::types::When::Idle)
                         && agent.state == AgentState::Idle);
+                // A message to an idle agent would start a new turn; while
+                // the governor isn't normal, that's held instead
+                // (usage-and-budget.md, hold_at). A message folding into an
+                // already-running turn is unaffected: that turn was already
+                // permitted to run.
+                if agent.state == AgentState::Idle
+                    && self.budget_block_for_model(&agent.model).state
+                        != bridle_api::types::GovernorState::Normal
+                {
+                    write_now = false;
+                }
                 if write_now {
                     let _ = write_message(&self.0.store, &rt, &inserted).await;
                 } else {
@@ -1178,6 +1233,7 @@ impl AgentManager {
                 agent.id, agent.state
             )));
         }
+        self.refuse_if_holding(&agent.model)?;
         let role = self
             .0
             .config
