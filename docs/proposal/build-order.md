@@ -29,9 +29,11 @@ Agent-host work that can land between phases, roughly in this order:
    cheap questions come first.
 2. **`bridle take` / `give`** (research 01 §5.3): interrupt, close, hand the
    human `claude --resume <session>` in the worktree, resume headless after.
-3. **Permission prompts as questions**: `--permission-prompts host`, with
-   claude's `can_use_tool` control requests answered from role rules or turned
-   into a `question` to the manager or human.
+3. **Permission prompts as questions**: `--permission-prompts host` plus
+   `--permission-prompt-tool` naming an MCP tool bridle serves (spike 03: not
+   a `can_use_tool` control request on the existing stdin/stdout channel),
+   answered from role rules or turned into a `question` to the manager or
+   human. Plan: [[docs/design/agent-host/messages#Permission prompts as questions|messages.md]].
 4. **The TUI**, a crate on `bridle-api`: agents list, event tail, per-agent
    logs, inbox and reply. **built** (`crates/bridle-tui`).
 5. **MCP server** at `/mcp` on the same listener, with tools mirroring the CLI.
