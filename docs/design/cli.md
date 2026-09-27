@@ -26,6 +26,7 @@ bridle rm      <agent> [--force] [--delete-branch]
 bridle logs    <agent> [--follow] [--raw] [--since LINE]
 bridle events  [--follow] [--since SEQ] [--agent A] [--kind PREFIX]
 bridle usage
+bridle cost audit [--check]                 static: size of what bridle injects into agent context (usage-and-budget.md)
 bridle tui                                  interactive terminal UI: agents list, live event tail
 bridle budget [hold [--for D|--until T] | release]   usage governor (usage-and-budget.md)
 bridle token create <name>
@@ -61,6 +62,15 @@ bridle statusline                           usage from interactive sessions
   without a cross-daemon token. A daemon that doesn't answer in time (dead,
   slow, unreachable) shows `?` (`null` under `--json`) instead of blocking on
   it.
+- **`cost audit`** is local and static: no daemon call, just `.bridle/config.toml` and
+  `.bridle/cost-baseline.json` read from the current directory. It measures each role's
+  rendered system-prompt file (the part meant to be identical across agents of a role,
+  `stable_system_prompt`) from a fresh render, and reports it next to the committed
+  baseline. The other categories the design names (prime, skill descriptions, MCP tool
+  schemas, hook boilerplate) aren't measured yet because they don't exist in bridle
+  today; see `bridle_daemon::cost_audit`. Without `--check` it only reports; with it,
+  exit 1 if any role grew more than
+  `bridle_daemon::cost_audit::GROWTH_THRESHOLD_PERCENT` over baseline.
 - **`serve --detach`**: [[docs/design/agent-host/daemon#Running it|running the daemon]].
 - **`tui`** is a subcommand, not a separate binary, so it shares `bridle`'s discovery,
   token and `--url`/`--project` flags like every other command. It's a thin client of
@@ -106,7 +116,7 @@ bridle rules show|explain|diff|propose
 bridle goals list|propose       bridle arch propose
 bridle trace up|down|suspect|confirm|orphans|coverage
 bridle explore new|conclude|adopt|abandon
-bridle usage --by …|task|trend|compare          bridle cost audit
+bridle usage --by …|task|trend|compare
 bridle rebuild
 ```
 

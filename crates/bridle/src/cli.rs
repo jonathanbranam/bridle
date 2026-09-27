@@ -66,6 +66,8 @@ pub enum Command {
     Events(EventsArgs),
     /// Usage and cost summary.
     Usage,
+    /// Static checks on what bridle injects into agent context.
+    Cost(CostArgs),
     /// Interactive terminal UI: agents list and live event tail.
     Tui,
     /// The budget governor: windows, thresholds and state; `hold`/`release`
@@ -233,6 +235,28 @@ pub struct EventsArgs {
     /// Prefix match, e.g. `message.` or `agent.state`.
     #[arg(long)]
     pub kind: Option<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct CostArgs {
+    #[command(subcommand)]
+    pub action: CostAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum CostAction {
+    /// Measure each role's fixed context overhead (currently: the rendered
+    /// system-prompt file) against the committed baseline
+    /// (.bridle/cost-baseline.json).
+    Audit(CostAuditArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct CostAuditArgs {
+    /// Exit non-zero if any role grew more than the threshold over baseline
+    /// (see bridle_daemon::cost_audit::GROWTH_THRESHOLD_PERCENT).
+    #[arg(long)]
+    pub check: bool,
 }
 
 #[derive(Debug, Args)]
@@ -408,6 +432,23 @@ mod tests {
             panic!("expected revoke")
         };
         assert_eq!(name, "orchestrator");
+    }
+
+    #[test]
+    fn cost_audit_check_flag_parses() {
+        let cli = parse(&["cost", "audit", "--check"]).unwrap();
+        let Command::Cost(args) = cli.command else {
+            panic!("expected cost")
+        };
+        let CostAction::Audit(audit) = args.action;
+        assert!(audit.check);
+
+        let cli = parse(&["cost", "audit"]).unwrap();
+        let Command::Cost(args) = cli.command else {
+            panic!("expected cost")
+        };
+        let CostAction::Audit(audit) = args.action;
+        assert!(!audit.check);
     }
 
     #[test]
