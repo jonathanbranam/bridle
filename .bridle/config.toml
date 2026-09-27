@@ -10,21 +10,23 @@ effort           = "medium"
 workdir          = "worktree"
 permission_mode  = "acceptEdits"
 allowed_tools    = ["Bash", "Read", "Edit", "Write", "Glob", "Grep"]
-disallowed_tools = ["Bash(git push *)", "Bash(git checkout main*)", "Bash(git merge *)"]
+# A worker merges main into its own branch; its worktree can't check out main.
+disallowed_tools = ["Bash(git push *)", "Bash(git checkout main*)"]
 system_prompt    = ".bridle/roles/worker.md"
-# Per process: claude checks it after each model call, and `bridle resume`
-# grants a fresh allowance. The cost is list price, a relative unit on a
-# subscription. A guess; tune from `bridle usage`.
-max_budget_usd   = 3.0
+# Per process, a runaway guard only: claude checks it after each model call, and
+# `bridle resume` grants a fresh allowance. The cost is list price, a relative
+# unit on a subscription. Pacing belongs to the account's windows (the budget
+# governor), not to this cap, so it's set well above a normal task.
+max_budget_usd   = 50.0
 
 [roles.manager]
 model             = "sonnet"
 workdir           = "repo"
 permission_mode   = "dontAsk"
-allowed_tools     = ["Bash(bridle *)", "Bash(git log*)", "Bash(git diff*)", "Bash(git show*)", "Bash(git status*)", "Bash(git branch*)", "Read", "Glob", "Grep"]
+allowed_tools     = ["Bash(bridle *)", "Bash(git log*)", "Bash(git diff*)", "Bash(git show*)", "Bash(git status*)", "Bash(git branch*)", "Bash(git merge-base *)", "Bash(git merge --no-ff *)", "Bash(git -C * status*)", "Read", "Glob", "Grep"]
 system_prompt     = ".bridle/roles/manager.md"
 resume_on_restart = true
-max_budget_usd    = 5.0
+max_budget_usd    = 50.0
 start_prompt      = """
 You're starting up. Run `bridle status --json`, `bridle agents --json` and \
 `bridle inbox --json`, then send the human one short line saying you're ready \

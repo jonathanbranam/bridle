@@ -4,7 +4,7 @@
 mod sse;
 
 use bytes::Bytes;
-use futures::{Stream, StreamExt, TryStreamExt};
+use futures::{Stream, StreamExt};
 use reqwest::{Method, RequestBuilder, StatusCode};
 use serde::Serialize;
 use serde::de::DeserializeOwned;
@@ -213,16 +213,60 @@ impl Client {
         self.get_json_query(&["v1", "events"], query).await
     }
 
-    /// `GET /v1/events/stream?since=` as SSE. The request isn't sent until
-    /// the returned stream is first polled.
+    /// `GET /v1/events/stream?since=` as SSE, reconnecting transparently.
+    ///
+    /// The daemon's `events_stream` ends the SSE response cleanly (no error)
+    /// whenever the broadcast channel lags or closes (see
+    /// `bridle-daemon::server::events_stream`), so a long-lived consumer
+    /// must reconnect on its own. This resumes with `since` set to the last
+    /// seq actually yielded, after a short backoff, whether the inner
+    /// stream ended in an `Err` or just stopped. The request isn't sent
+    /// until the returned stream is first polled.
     pub fn events_stream(
         &self,
         since: Option<i64>,
     ) -> impl Stream<Item = Result<Event, ClientError>> + use<> {
-        let client = self.clone();
-        futures::stream::once(async move { open_event_stream(client, since).await }).try_flatten()
+        type EventStream = std::pin::Pin<Box<dyn Stream<Item = Result<Event, ClientError>> + Send>>;
+        struct State {
+            client: Client,
+            cursor: Option<i64>,
+            inner: Option<EventStream>,
+        }
+        let state = State {
+            client: self.clone(),
+            cursor: since,
+            inner: None,
+        };
+        futures::stream::unfold(state, |mut st| async move {
+            loop {
+                if st.inner.is_none() {
+                    match open_event_stream(st.client.clone(), st.cursor).await {
+                        Ok(s) => st.inner = Some(Box::pin(s)),
+                        Err(_) => {
+                            tokio::time::sleep(RECONNECT_BACKOFF).await;
+                            continue;
+                        }
+                    }
+                }
+                let next = st.inner.as_mut().expect("set above when None").next().await;
+                match next {
+                    Some(Ok(ev)) => {
+                        st.cursor = Some(ev.seq);
+                        return Some((Ok(ev), st));
+                    }
+                    Some(Err(_)) | None => {
+                        st.inner = None;
+                        tokio::time::sleep(RECONNECT_BACKOFF).await;
+                    }
+                }
+            }
+        })
     }
 }
+
+/// How long to wait before reissuing `GET /v1/events/stream` after the
+/// previous attempt ended, so a persistently-down server doesn't spin hot.
+const RECONNECT_BACKOFF: std::time::Duration = std::time::Duration::from_millis(500);
 
 async fn open_event_stream(
     client: Client,
@@ -486,6 +530,65 @@ mod tests {
         assert_eq!(events.len(), 2);
         assert_eq!(events[0].as_ref().unwrap().seq, 1);
         assert_eq!(events[1].as_ref().unwrap().seq, 2);
+    }
+
+    #[tokio::test]
+    async fn events_stream_reconnects_after_the_server_closes_the_stream() {
+        #[derive(Clone)]
+        struct AppState {
+            calls: std::sync::Arc<std::sync::atomic::AtomicU32>,
+        }
+
+        async fn stream_handler(
+            State(state): State<AppState>,
+            axum::extract::Query(q): axum::extract::Query<
+                std::collections::HashMap<String, String>,
+            >,
+        ) -> Sse<impl futures::Stream<Item = Result<AxumSseEvent, std::convert::Infallible>>>
+        {
+            let call = state
+                .calls
+                .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            let since: i64 = q.get("since").and_then(|s| s.parse().ok()).unwrap_or(0);
+            // First connection: two events, then the stream ends cleanly
+            // (as the daemon does on lag/close), with no error. A
+            // reconnecting client resumes with `since` set to the last seq
+            // it yielded, so the second call should only be asked for
+            // events after seq 2.
+            let events: Vec<serde_json::Value> = if call == 0 {
+                vec![
+                    json!({"seq": 1, "ts": "2026-09-27T00:00:00Z", "kind": "agent.text", "actor": "human", "agent": null, "data": {}}),
+                    json!({"seq": 2, "ts": "2026-09-27T00:00:01Z", "kind": "agent.text", "actor": "human", "agent": null, "data": {}}),
+                ]
+            } else {
+                assert_eq!(
+                    since, 2,
+                    "reconnect should resume from the last seq yielded"
+                );
+                vec![
+                    json!({"seq": 3, "ts": "2026-09-27T00:00:02Z", "kind": "agent.text", "actor": "human", "agent": null, "data": {}}),
+                ]
+            };
+            let stream = futures::stream::iter(
+                events
+                    .into_iter()
+                    .map(|e| Ok(AxumSseEvent::default().data(e.to_string()))),
+            );
+            Sse::new(stream)
+        }
+
+        let state = AppState {
+            calls: std::sync::Arc::new(std::sync::atomic::AtomicU32::new(0)),
+        };
+        let app = axum::Router::new()
+            .route("/v1/events/stream", get(stream_handler))
+            .with_state(state);
+        let addr = spawn_test_server(app).await;
+        let client = Client::new(format!("http://{addr}"), None);
+
+        let events: Vec<_> = client.events_stream(None).take(3).collect().await;
+        let seqs: Vec<i64> = events.into_iter().map(|e| e.unwrap().seq).collect();
+        assert_eq!(seqs, vec![1, 2, 3]);
     }
 
     #[tokio::test]

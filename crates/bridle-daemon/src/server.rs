@@ -566,16 +566,24 @@ async fn events_stream(
     });
     // Subscribe before backfilling, so nothing appended in between is missed.
     let rx = state.emitter.subscribe();
-    let backfill = state
-        .store
-        .list_events(EventQuery {
-            since,
-            agent: None,
-            kind: None,
-            limit: Some(1_000_000),
-        })
-        .await
-        .unwrap_or_default();
+    // No cursor at all (fresh `--follow`, no `--since`, no `Last-Event-ID`):
+    // start at the tail and only stream events that arrive from here, rather
+    // than replaying the whole history. A cursor (reconnect, or an explicit
+    // `--since`) still backfills from it.
+    let backfill = if since.is_some() {
+        state
+            .store
+            .list_events(EventQuery {
+                since,
+                agent: None,
+                kind: None,
+                limit: Some(1_000_000),
+            })
+            .await
+            .unwrap_or_default()
+    } else {
+        Vec::new()
+    };
 
     let init = StreamState {
         backfill: backfill.into_iter(),
