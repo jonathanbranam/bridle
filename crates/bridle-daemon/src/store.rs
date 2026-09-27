@@ -14,8 +14,8 @@ use std::sync::{Arc, Mutex};
 
 use bridle_api::types::{
     Agent, AgentState, AgentUsage, Event, EventQuery, ExitInfo, InteractiveUsageRow, Message,
-    MessageKind, MessageState, PrincipalId, PrincipalKind, RateLimit, TokenCreated, TokenInfo,
-    TokenTotals, Usage, When,
+    MessageKind, MessageState, PrincipalId, PrincipalKind, RateLimit, TaskKind, TaskState,
+    TokenCreated, TokenInfo, TokenTotals, Usage, When,
 };
 use chrono::{DateTime, SecondsFormat, Utc};
 use rusqlite::Connection;
@@ -90,6 +90,20 @@ pub struct RunningAgent {
     pub state: String,
     pub pid: Option<i32>,
     pub pid_start: Option<String>,
+}
+
+/// The fast-index row for a task: `id, title, kind, state, created_at,
+/// updated_at` (storage.md). The body and thread live only on the state
+/// branch; see `crate::tasks::TaskManager`, which combines this with a file
+/// read to answer `show`/`list`.
+#[derive(Debug, Clone, PartialEq)]
+pub struct TaskRow {
+    pub id: String,
+    pub title: String,
+    pub kind: TaskKind,
+    pub state: TaskState,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone)]
@@ -340,6 +354,42 @@ impl Store {
             .await
     }
 
+    // ---------- tasks ----------
+
+    /// Inserts a new task with a fresh id (`<prefix>-<4 hex chars>`,
+    /// storage.md), retrying on the rare id collision.
+    pub async fn insert_task(
+        &self,
+        prefix: &str,
+        title: &str,
+        kind: TaskKind,
+    ) -> Result<TaskRow, StoreError> {
+        let (prefix, title) = (prefix.to_string(), title.to_string());
+        self.with_conn(move |c| sync::insert_task(c, &prefix, &title, kind))
+            .await
+    }
+
+    pub async fn get_task(&self, id: &str) -> Result<Option<TaskRow>, StoreError> {
+        let id = id.to_string();
+        self.with_conn(move |c| sync::get_task(c, &id)).await
+    }
+
+    pub async fn list_tasks(&self) -> Result<Vec<TaskRow>, StoreError> {
+        self.with_conn(sync::list_tasks).await
+    }
+
+    pub async fn set_task_title(&self, id: &str, title: &str) -> Result<(), StoreError> {
+        let (id, title) = (id.to_string(), title.to_string());
+        self.with_conn(move |c| sync::set_task_title(c, &id, &title))
+            .await
+    }
+
+    pub async fn set_task_state(&self, id: &str, state: TaskState) -> Result<(), StoreError> {
+        let id = id.to_string();
+        self.with_conn(move |c| sync::set_task_state(c, &id, state))
+            .await
+    }
+
     // ---------- rate limits / usage ----------
 
     pub async fn upsert_rate_limit(&self, rl: RateLimit) -> Result<(), StoreError> {
@@ -551,7 +601,23 @@ mod sync {
         DELETE FROM rate_limits WHERE utilization IS NULL AND resets_at IS NULL;
     "#;
 
-    const MIGRATIONS: &[&str] = &[SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4];
+    // The fast index over task records; the state branch (storage.md) holds
+    // the body and thread, so this table is deliberately narrow. `id` is
+    // `<project prefix>-<4 hex chars>` (storage.md), generated here with a
+    // collision retry, not by the caller.
+    pub(super) const SCHEMA_V5: &str = r#"
+        CREATE TABLE tasks (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            kind TEXT NOT NULL,
+            state TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+        CREATE INDEX tasks_state ON tasks(state);
+    "#;
+
+    const MIGRATIONS: &[&str] = &[SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5];
 
     pub(super) fn open(path: &Path) -> Result<Connection, StoreError> {
         if let Some(parent) = path.parent() {
@@ -618,6 +684,18 @@ mod sync {
 
     fn new_agent_id() -> String {
         format!("a-{}", random_base36(5))
+    }
+
+    /// `len` hex characters, from a fresh v4 UUID's own hex text (already a
+    /// CSPRNG draw; see `random_base36` above for why there's no `rand`
+    /// dependency here). Used for task ids (storage.md: `tw-7fa2`), whose
+    /// example suffixes are hex, not base36.
+    fn random_hex(len: usize) -> String {
+        Uuid::new_v4().simple().to_string()[..len].to_string()
+    }
+
+    fn new_task_id(prefix: &str) -> String {
+        format!("{prefix}-{}", random_hex(4))
     }
 
     /// 64 hex characters from two v4 UUIDs, per principals.md.
@@ -1372,6 +1450,112 @@ mod sync {
             params![fmt_dt(older_than)],
         )?;
         Ok(n as u64)
+    }
+
+    // ---------- tasks ----------
+
+    fn row_to_task(row: &Row<'_>) -> rusqlite::Result<TaskRow> {
+        let kind: String = row.get(2)?;
+        let state: String = row.get(3)?;
+        Ok(TaskRow {
+            id: row.get(0)?,
+            title: row.get(1)?,
+            kind: kind.parse().map_err(|_| {
+                rusqlite::Error::InvalidColumnType(2, "kind".into(), rusqlite::types::Type::Text)
+            })?,
+            state: state.parse().map_err(|_| {
+                rusqlite::Error::InvalidColumnType(3, "state".into(), rusqlite::types::Type::Text)
+            })?,
+            created_at: parse_dt(&row.get::<_, String>(4)?)?,
+            updated_at: parse_dt(&row.get::<_, String>(5)?)?,
+        })
+    }
+
+    /// Retries the id up to this many times on a unique-constraint
+    /// collision (4 hex chars is 65536 values, so this is generous) before
+    /// giving up.
+    const TASK_ID_ATTEMPTS: u32 = 8;
+
+    pub(super) fn insert_task(
+        conn: &Connection,
+        prefix: &str,
+        title: &str,
+        kind: TaskKind,
+    ) -> Result<TaskRow, StoreError> {
+        let now = Utc::now();
+        for _ in 0..TASK_ID_ATTEMPTS {
+            let id = new_task_id(prefix);
+            let result = conn.execute(
+                "INSERT INTO tasks(id, title, kind, state, created_at, updated_at)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?5)",
+                params![id, title, kind.as_str(), TaskState::Open.as_str(), fmt_dt(now)],
+            );
+            match result {
+                Ok(_) => {
+                    return Ok(TaskRow {
+                        id,
+                        title: title.to_string(),
+                        kind,
+                        state: TaskState::Open,
+                        created_at: now,
+                        updated_at: now,
+                    });
+                }
+                Err(e) if is_unique_violation(&e) => continue,
+                Err(e) => return Err(e.into()),
+            }
+        }
+        Err(StoreError::Conflict(format!(
+            "could not generate a unique task id with prefix {prefix:?} after {TASK_ID_ATTEMPTS} attempts"
+        )))
+    }
+
+    pub(super) fn get_task(conn: &Connection, id: &str) -> Result<Option<TaskRow>, StoreError> {
+        Ok(conn
+            .query_row(
+                "SELECT id, title, kind, state, created_at, updated_at FROM tasks WHERE id = ?1",
+                params![id],
+                row_to_task,
+            )
+            .optional()?)
+    }
+
+    pub(super) fn list_tasks(conn: &Connection) -> Result<Vec<TaskRow>, StoreError> {
+        let mut stmt = conn.prepare(
+            "SELECT id, title, kind, state, created_at, updated_at FROM tasks ORDER BY created_at ASC",
+        )?;
+        let rows = stmt.query_map([], row_to_task)?;
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
+    pub(super) fn set_task_title(
+        conn: &Connection,
+        id: &str,
+        title: &str,
+    ) -> Result<(), StoreError> {
+        let n = conn.execute(
+            "UPDATE tasks SET title = ?1, updated_at = ?2 WHERE id = ?3",
+            params![title, fmt_dt(Utc::now()), id],
+        )?;
+        if n == 0 {
+            return Err(StoreError::NotFound(format!("no such task: {id}")));
+        }
+        Ok(())
+    }
+
+    pub(super) fn set_task_state(
+        conn: &Connection,
+        id: &str,
+        state: TaskState,
+    ) -> Result<(), StoreError> {
+        let n = conn.execute(
+            "UPDATE tasks SET state = ?1, updated_at = ?2 WHERE id = ?3",
+            params![state.as_str(), fmt_dt(Utc::now()), id],
+        )?;
+        if n == 0 {
+            return Err(StoreError::NotFound(format!("no such task: {id}")));
+        }
+        Ok(())
     }
 
     // ---------- rate limits / usage ----------
@@ -2335,5 +2519,85 @@ mod tests {
 
         let usage = store.usage().await.expect("usage");
         assert!(usage.interactive_today.is_empty());
+    }
+
+    #[tokio::test]
+    async fn insert_task_uses_the_prefix_and_four_hex_chars() {
+        let (store, _tmp) = store().await;
+        let task = store
+            .insert_task("tw", "Add foo", TaskKind::Feature)
+            .await
+            .expect("insert");
+        assert!(task.id.starts_with("tw-"));
+        let suffix = task.id.strip_prefix("tw-").expect("prefix");
+        assert_eq!(suffix.len(), 4);
+        assert!(suffix.chars().all(|c| c.is_ascii_hexdigit()));
+        assert_eq!(task.title, "Add foo");
+        assert_eq!(task.kind, TaskKind::Feature);
+        assert_eq!(task.state, TaskState::Open);
+        assert_eq!(task.created_at, task.updated_at);
+    }
+
+    /// Not a forced collision (that would need to control the RNG), but
+    /// exercises the id generator enough times to give the retry loop's
+    /// unique-violation path a real chance to fire, and pins down that
+    /// every id actually is unique.
+    #[tokio::test]
+    async fn insert_task_ids_are_unique_under_repeated_use() {
+        let (store, _tmp) = store().await;
+        let mut ids = std::collections::HashSet::new();
+        for i in 0..50 {
+            let t = store
+                .insert_task("tw", &format!("task {i}"), TaskKind::Chore)
+                .await
+                .expect("insert");
+            assert!(ids.insert(t.id), "duplicate task id generated");
+        }
+    }
+
+    #[tokio::test]
+    async fn get_list_edit_and_transition_a_task() {
+        let (store, _tmp) = store().await;
+        let task = store
+            .insert_task("tw", "Add foo", TaskKind::Bug)
+            .await
+            .expect("insert");
+
+        let fetched = store.get_task(&task.id).await.expect("get").expect("some");
+        assert_eq!(fetched.id, task.id);
+        assert_eq!(fetched.title, task.title);
+        assert_eq!(fetched.kind, task.kind);
+        assert_eq!(fetched.state, task.state);
+
+        assert!(store.get_task("tw-nope").await.expect("get").is_none());
+
+        store
+            .set_task_title(&task.id, "Add foo, better")
+            .await
+            .expect("retitle");
+        let renamed = store.get_task(&task.id).await.expect("get").expect("some");
+        assert_eq!(renamed.title, "Add foo, better");
+        assert!(renamed.updated_at >= task.updated_at);
+
+        store
+            .set_task_state(&task.id, TaskState::Dropped)
+            .await
+            .expect("drop");
+        store
+            .set_task_state(&task.id, TaskState::Reopened)
+            .await
+            .expect("reopen");
+        let reopened = store.get_task(&task.id).await.expect("get").expect("some");
+        assert_eq!(reopened.state, TaskState::Reopened);
+
+        let err = store
+            .set_task_title("tw-nope", "x")
+            .await
+            .expect_err("no such task");
+        assert!(matches!(err, StoreError::NotFound(_)));
+
+        let list = store.list_tasks().await.expect("list");
+        assert_eq!(list.len(), 1);
+        assert_eq!(list[0].id, task.id);
     }
 }
