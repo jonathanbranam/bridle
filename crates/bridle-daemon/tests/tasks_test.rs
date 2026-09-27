@@ -3,8 +3,8 @@
 
 mod support;
 
-use bridle_api::types::{DropTaskRequest, EditTaskRequest, NewTaskRequest, TaskKind, TaskState};
 use bridle_api::ClientError;
+use bridle_api::types::{DropTaskRequest, EditTaskRequest, NewTaskRequest, TaskKind, TaskState};
 use support::start_daemon;
 
 fn new_req(title: &str, kind: TaskKind) -> NewTaskRequest {
@@ -91,7 +91,12 @@ async fn drop_requires_a_reason() {
 
     let err = daemon
         .client
-        .drop_task(&task.id, &DropTaskRequest { reason: String::new() })
+        .drop_task(
+            &task.id,
+            &DropTaskRequest {
+                reason: String::new(),
+            },
+        )
         .await
         .expect_err("empty reason");
     assert!(matches!(err, ClientError::Api { status: 400, .. }));
@@ -179,7 +184,10 @@ async fn a_task_created_before_restart_is_still_there_after() {
         .expect("human token");
     let client = bridle_api::Client::new(running.url.clone(), Some(token.trim().to_string()));
 
-    let fetched = client.get_task(&task.id).await.expect("get task after restart");
+    let fetched = client
+        .get_task(&task.id)
+        .await
+        .expect("get task after restart");
     assert_eq!(fetched.title, "Add foo");
     assert_eq!(fetched.state, TaskState::Open);
 

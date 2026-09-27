@@ -1488,7 +1488,13 @@ mod sync {
             let result = conn.execute(
                 "INSERT INTO tasks(id, title, kind, state, created_at, updated_at)
                  VALUES (?1, ?2, ?3, ?4, ?5, ?5)",
-                params![id, title, kind.as_str(), TaskState::Open.as_str(), fmt_dt(now)],
+                params![
+                    id,
+                    title,
+                    kind.as_str(),
+                    TaskState::Open.as_str(),
+                    fmt_dt(now)
+                ],
             );
             match result {
                 Ok(_) => {

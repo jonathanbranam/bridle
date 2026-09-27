@@ -829,7 +829,13 @@ async fn task_show(cli: &Cli, args: &TaskShowArgs) -> Result<(), CliError> {
             println!();
             println!("Thread:");
             for e in &task.thread {
-                println!("  [{}] {} ({}): {}", e.kind, e.from, e.at.to_rfc3339(), e.body);
+                println!(
+                    "  [{}] {} ({}): {}",
+                    e.kind,
+                    e.from,
+                    e.at.to_rfc3339(),
+                    e.body
+                );
             }
         }
     }

@@ -34,6 +34,12 @@ bridle token list                           name, created-at, revoked-or-not; ne
 bridle token revoke <name>                  human only, external tokens only (an agent's own token is
                                              revoked through `bridle rm`, not this)
 bridle statusline                           usage from interactive sessions
+bridle task new    <title> -k/--kind KIND [--body TEXT]
+bridle task show   <id>
+bridle task edit   <id> [--title TEXT] [--body TEXT]
+bridle task list
+bridle task drop   <id> --reason TEXT
+bridle task reopen <id>
 ```
 
 - **`--ignore-budget`** on `spawn`/`resume` skips the budget governor's
@@ -89,6 +95,13 @@ bridle statusline                           usage from interactive sessions
   crate, `crates/bridle-tui`, split Elm-style: a plain state struct and update function
   with no terminal/ratatui dependency (so it's unit-tested without a terminal),
   rendered by a separate `ui` module.
+- **`task`** is scoped, for now, to the `open`/`planned`/`dropped`/`reopened` states
+  (docs/design/roles-and-lifecycle.md, Task lifecycle): create, show, edit (title/body,
+  never state), list (id/title/kind/state), drop (a reason is required, recorded in the
+  task's thread) and reopen (only a dropped task can be reopened). `ready`, `claimed`,
+  `in_review`, `integrated`, `accepted`, and everything that depends on edges, questions
+  or claims, arrive with later tasks — see the `Planned` block below for the rest of the
+  surface this command will eventually grow into.
 - **`statusline`** is Claude Code's `statusLine` command, configured in `settings.json`. It
   reads Claude Code's JSON on stdin, prints a short line back, and posts a snapshot to
   `POST /v1/statusline` ([[docs/design/agent-host/api|API]]) using the same daemon discovery
@@ -103,7 +116,8 @@ as a first cut:
 
 ```
 bridle init | sync | prime | doctor              project setup, render, session start, health
-bridle task new|show|edit|list|drop|reopen
+bridle task <cmd> at ready|claimed|in_review|integrated|accepted  -- new/show/edit/list/drop/reopen
+                                                  are built (see Built); these five states aren't
 bridle dep add|rm            bridle ready [--all] [--role]
 bridle claim|release|handoff bridle plan <id>     bridle accept <id> (human only)
 bridle ask|answer            bridle inbox --inject

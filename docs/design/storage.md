@@ -38,19 +38,45 @@ Nothing here has to survive a lost database ([[docs/proposal/decisions|decision 
 there are no tasks yet, transcripts are files, and the conversations live in
 Claude Code's session store, resumable by session id.
 
-With tasks, the database also indexes the project's task records and holds the
-ephemeral tables: `claims`, `waits`, `ports`, `impact_cache`. Every durable
-write goes to the database and the state branch in the same logical
-operation. The database is the read path because it's fast, and git is the
-recovery path.
+With tasks, the database also indexes the project's task records
+(`crates/bridle-daemon/src/store.rs`, `SCHEMA_V5`):
+
+```
+tasks(id TEXT PK, title, kind, state, created_at, updated_at)
+```
+
+deliberately narrow: it's the fast index (id, title, kind, state,
+timestamps), not the record itself. `id` is `<project prefix>-<4 hex
+characters>` (e.g. `tw-7fa2`), generated with a collision retry; the prefix
+is `[tasks] prefix` in config, defaulting to the project name's first two
+alphanumeric characters (`bridle` -> `br`) if unset
+(`config::default_task_prefix`). The body and thread live only on the state
+branch below; a crash between a task write and the next batched flush can
+lose an edit to those two fields specifically, though not the row above,
+which is written to SQLite synchronously on every call.
+
+The ephemeral tables `claims`, `waits`, `ports`, `impact_cache` arrive with
+later tasks (edges, claims, the ready computation). Every durable write goes
+to the database and the state branch in the same logical operation (for the
+`tasks` table: synchronously to SQLite, then enqueued for the state branch's
+next batched flush — see below). The database is the read path because it's
+fast, and git is the recovery path.
 
 ## The state branch
 
-*Designed, not built.* Task records live on a state branch, not in-tree
+Built for task records at the `open`/`planned`/`dropped`/`reopened` states
+(`crates/bridle-daemon/src/state_branch.rs`, `src/tasks.rs`); `ready`,
+`claimed`, `in_review`, `integrated` and `accepted`, and the edges/questions/
+claims that go with them, are still only designed
 ([[task-records-on-a-state-branch-or-in-tree-c7eb|decided]]).
-Each project repo gets a `bridle` branch, checked out by the daemon into
-`<workspace>/.bridle/state/` (a normal git worktree, not visible in the
-working checkout):
+Each project repo gets a `bridle/state` branch, checked out by the daemon
+into `<workspace>/.bridle/state/` (a normal git worktree, not visible in the
+working checkout). Named `bridle/state`, not the bare `bridle` an earlier
+draft of this doc named: agent worktrees already live on `bridle/<name>`
+branches (agents.md), and git can't have both `refs/heads/bridle` and
+`refs/heads/bridle/<anything>` at once (a ref can't be both a leaf and a
+directory) — a real namespace collision the build ran into, not a style
+choice.
 
 ```
 tasks/tw-7fa2.md          one file per task: TOML frontmatter + markdown body + thread
@@ -59,10 +85,33 @@ events/2026-09.jsonl      append-only transitions, for history and rebuild
 
 - **One file per task** merges cleanly, can be read on GitHub, and is the file
   design from research 13 carried over.
-- **Bridle commits it**, batching writes (e.g. at most one commit every 30 s,
-  plus one on every accept), and pushes on a configurable schedule.
+- **Bridle commits it**, batching writes (at most one commit every 30 s,
+  `Overrides::task_flush_interval`, plus a best-effort flush on graceful
+  shutdown). There's no immediate-flush trigger yet — that arrives with
+  `accept` — but `TaskManager::flush_now` already exists as the one function
+  both the periodic tick and that future caller will call, so adding it
+  won't need a restructure. **Pushing on a configurable schedule is not yet
+  built**; this build only commits locally.
 - **Code branches never contain task state.** Task chatter can't cause a merge
   conflict with code, and main isn't committed to on every status change.
+- **The `bridle/state` branch doesn't exist on a project's first run.** The daemon
+  creates it itself, as a parentless orphan, using `git commit-tree` against
+  the well-known empty-tree object id plus `git update-ref` — plumbing that
+  only writes a commit object and a ref, never a checkout — in preference to
+  `git checkout --orphan`, which would need one
+  (`worktree::ensure_orphan_branch`). This is the safety property the build
+  was explicit about: writing task state must never be able to touch the
+  project's own working tree or index, under any circumstance.
+- **The task file's frontmatter delimiter is `+++`** (TOML, Hugo's
+  convention), not `---` (which reads as YAML). The thread section, when a
+  task has one, is a `## Thread` heading followed by one
+  `### <kind> · <from> · <timestamp>` heading per entry and its body; this
+  build only ever writes `note` entries, but `question`/`answer`/`handoff`/
+  `conflict`/`system` (coordination.md, Messages) reuse the same heading
+  shape later without a format change. Parsing this back is line/substring
+  based, not a real markdown parser: a body or thread entry containing the
+  literal text `"\n## Thread\n"` or `"\n### "` will confuse it. Known,
+  accepted for this build.
 
 The alternative, task files in-tree under `.bridle/tasks/` on the main line, is
 easier to browse next to code but brings back the worktree-visibility and
@@ -72,7 +121,8 @@ Questions aren't a separate `questions/…` folder: a question lives inline in
 the thread of the task it blocks, the same file as the task itself. The
 daemon additionally indexes open questions in SQLite so `bridle inbox` can
 show them without walking the state branch
-([[where-questions-live-on-the-state-branch-c5a8|decided]]).
+([[where-questions-live-on-the-state-branch-c5a8|decided]]). Neither questions
+nor this indexing exist yet; this build only has `note` thread entries.
 
 ## The daemon registry
 

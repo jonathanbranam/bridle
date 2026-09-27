@@ -386,7 +386,10 @@ mod tests {
 
         // The new branch has no history in common with HEAD.
         let out = run_git(&repo, &["merge-base", "--is-ancestor", "bridle", "HEAD"]).await;
-        assert!(out.is_err(), "orphan branch must not be an ancestor of HEAD");
+        assert!(
+            out.is_err(),
+            "orphan branch must not be an ancestor of HEAD"
+        );
     }
 
     #[tokio::test]

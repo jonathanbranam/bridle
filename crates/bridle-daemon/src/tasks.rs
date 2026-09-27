@@ -125,7 +125,7 @@ impl TaskManager {
     pub fn list_tasks(&self) -> Vec<Task> {
         let cache = self.cache.lock().expect("task cache lock");
         let mut tasks: Vec<Task> = cache.values().cloned().collect();
-        tasks.sort_by(|a, b| a.created_at.cmp(&b.created_at));
+        tasks.sort_by_key(|t| t.created_at);
         tasks
     }
 
@@ -250,8 +250,15 @@ mod tests {
             .arg("-C")
             .arg(dir)
             .args([
-                "-c", "user.email=t@e.com", "-c", "user.name=T",
-                "commit", "--allow-empty", "-q", "-m", "init",
+                "-c",
+                "user.email=t@e.com",
+                "-c",
+                "user.name=T",
+                "commit",
+                "--allow-empty",
+                "-q",
+                "-m",
+                "init",
             ])
             .output()
             .await

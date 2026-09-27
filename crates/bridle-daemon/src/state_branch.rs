@@ -23,7 +23,14 @@ use crate::worktree::{self, WorktreeError};
 
 /// The project's state branch (storage.md). Fixed, not configurable: it's
 /// bridle's own branch, not something a project should need to rename.
-const BRANCH: &str = "bridle";
+///
+/// Named `bridle/state`, not the bare `bridle` storage.md's prose names --
+/// a real git ref namespace collision, not a style choice: agent worktrees
+/// already live on `bridle/<name>` branches (worktree.rs), and git refuses
+/// to have both `refs/heads/bridle` and `refs/heads/bridle/<anything>` at
+/// once (a ref can't be both a leaf and a directory). `bridle/state` sits
+/// in the same `bridle/` namespace as every agent branch instead.
+const BRANCH: &str = "bridle/state";
 
 #[derive(Debug, thiserror::Error)]
 pub enum StateBranchError {
@@ -95,7 +102,14 @@ impl StateBranch {
     }
 
     /// Queues one line for `events/<YYYY-MM>.jsonl`, keyed by `at`'s month.
-    pub fn enqueue_event(&self, task_id: &str, from: &str, to: &str, actor: &str, at: DateTime<Utc>) {
+    pub fn enqueue_event(
+        &self,
+        task_id: &str,
+        from: &str,
+        to: &str,
+        actor: &str,
+        at: DateTime<Utc>,
+    ) {
         let month = at.format("%Y-%m").to_string();
         let line = serde_json::json!({
             "task": task_id,
@@ -324,13 +338,24 @@ mod tests {
                     .output()
                     .await
                     .expect("run git");
-                assert!(out.status.success(), "git {args:?}: {}", String::from_utf8_lossy(&out.stderr));
+                assert!(
+                    out.status.success(),
+                    "git {args:?}: {}",
+                    String::from_utf8_lossy(&out.stderr)
+                );
             }
         };
         run(&["init", "-q"]).await;
         run(&[
-            "-c", "user.email=t@e.com", "-c", "user.name=T",
-            "commit", "--allow-empty", "-q", "-m", "init",
+            "-c",
+            "user.email=t@e.com",
+            "-c",
+            "user.name=T",
+            "commit",
+            "--allow-empty",
+            "-q",
+            "-m",
+            "init",
         ])
         .await;
     }
@@ -416,7 +441,9 @@ mod tests {
 
         sb.flush_now().await.expect("flush");
         // No commit was made: HEAD@bridle is still the orphan's first commit.
-        let log = worktree::run_git(&dir, &["log", "--oneline"]).await.expect("log");
+        let log = worktree::run_git(&dir, &["log", "--oneline"])
+            .await
+            .expect("log");
         assert_eq!(log.lines().count(), 1);
     }
 
@@ -442,12 +469,19 @@ mod tests {
         let events_path = dir.join(format!("events/{month}.jsonl"));
         let events_text = std::fs::read_to_string(&events_path).expect("read events");
         assert_eq!(events_text.lines().count(), 1);
-        let parsed: serde_json::Value = serde_json::from_str(events_text.lines().next().unwrap()).expect("json");
+        let parsed: serde_json::Value =
+            serde_json::from_str(events_text.lines().next().unwrap()).expect("json");
         assert_eq!(parsed["task"], "tw-7fa2");
         assert_eq!(parsed["to"], "open");
 
-        let log = worktree::run_git(&dir, &["log", "--oneline"]).await.expect("log");
-        assert_eq!(log.lines().count(), 2, "one commit beyond the orphan's first");
+        let log = worktree::run_git(&dir, &["log", "--oneline"])
+            .await
+            .expect("log");
+        assert_eq!(
+            log.lines().count(),
+            2,
+            "one commit beyond the orphan's first"
+        );
     }
 
     #[tokio::test]
@@ -466,8 +500,14 @@ mod tests {
 
         let read_back = sb.read_task("tw-7fa2").expect("read back");
         assert_eq!(read_back.title, "Add foo, better");
-        let log = worktree::run_git(&dir, &["log", "--oneline"]).await.expect("log");
-        assert_eq!(log.lines().count(), 2, "two enqueues, one flush, one commit");
+        let log = worktree::run_git(&dir, &["log", "--oneline"])
+            .await
+            .expect("log");
+        assert_eq!(
+            log.lines().count(),
+            2,
+            "two enqueues, one flush, one commit"
+        );
     }
 
     /// The safety property the design calls out explicitly: writing to the
@@ -480,7 +520,8 @@ mod tests {
         init_repo(&repo).await;
         std::fs::write(repo.join("app.txt"), "unrelated project file\n").expect("write app file");
         let out = Command::new("git")
-            .arg("-C").arg(&repo)
+            .arg("-C")
+            .arg(&repo)
             .args(["add", "app.txt"])
             .output()
             .await
@@ -506,17 +547,23 @@ mod tests {
         }
 
         let index_after = std::fs::read(repo.join(".git/index")).expect("read index");
-        assert_eq!(index_before, index_after, "main checkout's index must not be touched");
+        assert_eq!(
+            index_before, index_after,
+            "main checkout's index must not be touched"
+        );
         let files_after = list_files(&repo);
-        assert_eq!(files_before, files_after, "main checkout's working tree must not change");
+        assert_eq!(
+            files_before, files_after,
+            "main checkout's working tree must not change"
+        );
 
-        // And the main checkout's HEAD branch never moved to `bridle`
-        // (`git init`'s default branch name varies, master vs main, so
-        // this just checks it's still whatever it started as).
+        // And the main checkout's HEAD branch never moved to the state
+        // branch (`git init`'s default branch name varies, master vs main,
+        // so this just checks it's still whatever it started as).
         let head = worktree::run_git(&repo, &["rev-parse", "--abbrev-ref", "HEAD"])
             .await
             .expect("head");
-        assert_ne!(head.trim(), "bridle");
+        assert_ne!(head.trim(), BRANCH);
     }
 
     /// Every regular file under `dir`, excluding `.git`, with its contents,
