@@ -13,8 +13,9 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
 use bridle_api::types::{
-    Agent, AgentState, AgentUsage, Event, EventQuery, ExitInfo, Message, MessageKind, MessageState,
-    PrincipalId, PrincipalKind, RateLimit, TokenCreated, TokenTotals, Usage, When,
+    Agent, AgentState, AgentUsage, Event, EventQuery, ExitInfo, InteractiveUsageRow, Message,
+    MessageKind, MessageState, PrincipalId, PrincipalKind, RateLimit, TokenCreated, TokenTotals,
+    Usage, When,
 };
 use chrono::{DateTime, SecondsFormat, Utc};
 use rusqlite::Connection;
@@ -326,6 +327,16 @@ impl Store {
         self.with_conn(sync::usage).await
     }
 
+    /// One `bridle statusline` snapshot: `observed_at` is set here, not
+    /// trusted from the client, same as `upsert_rate_limit`.
+    pub async fn record_interactive_usage(
+        &self,
+        row: InteractiveUsageRow,
+    ) -> Result<(), StoreError> {
+        self.with_conn(move |c| sync::record_interactive_usage(c, &row))
+            .await
+    }
+
     pub async fn agents_by_state(&self) -> Result<BTreeMap<String, u32>, StoreError> {
         self.with_conn(sync::agents_by_state).await
     }
@@ -489,7 +500,23 @@ mod sync {
         );
     "#;
 
-    const MIGRATIONS: &[&str] = &[SCHEMA_V1, SCHEMA_V2];
+    // `bridle statusline` snapshots from interactive sessions bridle doesn't
+    // host: no agent id to attach them to, so this is its own table rather
+    // than a row in `turns`.
+    const SCHEMA_V3: &str = r#"
+        CREATE TABLE interactive_usage (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            observed_at TEXT NOT NULL,
+            session_id TEXT,
+            model TEXT,
+            cost_usd REAL,
+            context_used_tokens INTEGER,
+            context_max_tokens INTEGER
+        );
+        CREATE INDEX interactive_usage_observed_at ON interactive_usage(observed_at);
+    "#;
+
+    const MIGRATIONS: &[&str] = &[SCHEMA_V1, SCHEMA_V2, SCHEMA_V3];
 
     pub(super) fn open(path: &Path) -> Result<Connection, StoreError> {
         if let Some(parent) = path.parent() {
@@ -1372,7 +1399,53 @@ mod sync {
             cache_hit_ratio,
             total_cost_usd: total_cost,
             rate_limits: rate_limits(conn)?,
+            interactive_today: interactive_usage_today(conn)?,
         })
+    }
+
+    pub(super) fn record_interactive_usage(
+        conn: &Connection,
+        row: &InteractiveUsageRow,
+    ) -> Result<(), StoreError> {
+        conn.execute(
+            "INSERT INTO interactive_usage
+                (observed_at, session_id, model, cost_usd, context_used_tokens, context_max_tokens)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            params![
+                fmt_dt(row.observed_at),
+                row.session_id,
+                row.model,
+                row.cost_usd,
+                row.context_used_tokens.map(|n| n as i64),
+                row.context_max_tokens.map(|n| n as i64),
+            ],
+        )?;
+        Ok(())
+    }
+
+    /// Since UTC midnight, newest first: `bridle usage` shows it alongside
+    /// hosted-agent usage as "today's" non-hosted usage.
+    fn interactive_usage_today(conn: &Connection) -> Result<Vec<InteractiveUsageRow>, StoreError> {
+        let today_start = Utc::now()
+            .date_naive()
+            .and_hms_opt(0, 0, 0)
+            .expect("midnight is a valid time")
+            .and_utc();
+        let mut stmt = conn.prepare(
+            "SELECT observed_at, session_id, model, cost_usd, context_used_tokens, context_max_tokens
+             FROM interactive_usage WHERE observed_at >= ?1 ORDER BY observed_at DESC",
+        )?;
+        let rows = stmt.query_map(params![fmt_dt(today_start)], |row| {
+            Ok(InteractiveUsageRow {
+                observed_at: parse_dt(&row.get::<_, String>(0)?)?,
+                session_id: row.get(1)?,
+                model: row.get(2)?,
+                cost_usd: row.get(3)?,
+                context_used_tokens: row.get::<_, Option<i64>>(4)?.map(|n| n as u64),
+                context_max_tokens: row.get::<_, Option<i64>>(5)?.map(|n| n as u64),
+            })
+        })?;
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
     }
 
     pub(super) fn agents_by_state(conn: &Connection) -> Result<BTreeMap<String, u32>, StoreError> {
@@ -2034,5 +2107,49 @@ mod tests {
         let limits = store.rate_limits().await.expect("rate limits");
         assert_eq!(limits.len(), 1);
         assert_eq!(limits[0].status.as_deref(), Some("allowed_warning"));
+    }
+
+    #[tokio::test]
+    async fn interactive_usage_shows_up_in_usage_today() {
+        let (store, _tmp) = store().await;
+        store
+            .record_interactive_usage(InteractiveUsageRow {
+                observed_at: Utc::now(),
+                session_id: Some("sess-1".to_string()),
+                model: Some("opus".to_string()),
+                cost_usd: Some(0.42),
+                context_used_tokens: Some(50_000),
+                context_max_tokens: Some(200_000),
+            })
+            .await
+            .expect("record");
+
+        let usage = store.usage().await.expect("usage");
+        assert_eq!(usage.interactive_today.len(), 1);
+        let row = &usage.interactive_today[0];
+        assert_eq!(row.session_id.as_deref(), Some("sess-1"));
+        assert_eq!(row.model.as_deref(), Some("opus"));
+        assert_eq!(row.cost_usd, Some(0.42));
+        assert_eq!(row.context_used_tokens, Some(50_000));
+        assert_eq!(row.context_max_tokens, Some(200_000));
+    }
+
+    #[tokio::test]
+    async fn interactive_usage_before_today_is_excluded() {
+        let (store, _tmp) = store().await;
+        store
+            .record_interactive_usage(InteractiveUsageRow {
+                observed_at: Utc::now() - chrono::Duration::days(2),
+                session_id: None,
+                model: None,
+                cost_usd: Some(1.0),
+                context_used_tokens: None,
+                context_max_tokens: None,
+            })
+            .await
+            .expect("record");
+
+        let usage = store.usage().await.expect("usage");
+        assert!(usage.interactive_today.is_empty());
     }
 }

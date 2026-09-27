@@ -444,6 +444,58 @@ pub struct Usage {
     pub cache_hit_ratio: Option<f64>,
     pub total_cost_usd: f64,
     pub rate_limits: Vec<RateLimit>,
+    /// Today's `bridle statusline` snapshots: interactive sessions bridle
+    /// doesn't host, so there's no agent to attach them to.
+    #[serde(default)]
+    pub interactive_today: Vec<InteractiveUsageRow>,
+}
+
+// ---------- statusline ----------
+
+/// `POST /v1/statusline` body: one snapshot from `bridle statusline`, read
+/// off Claude Code's own statusLine stdin JSON. That schema isn't pinned
+/// down in bridle's own docs (docs/design/usage-and-budget.md), so the CLI
+/// parses it tolerantly (crates/bridle/src/statusline.rs, matching
+/// bridle-claude's event-parsing convention) and only ever sends fields it
+/// actually found.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct StatusLineReport {
+    #[serde(default)]
+    pub session_id: Option<String>,
+    #[serde(default)]
+    pub model: Option<String>,
+    #[serde(default)]
+    pub cost_usd: Option<f64>,
+    #[serde(default)]
+    pub context_used_tokens: Option<u64>,
+    #[serde(default)]
+    pub context_max_tokens: Option<u64>,
+    #[serde(default)]
+    pub rate_limits: Vec<StatusLineRateLimitReading>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StatusLineRateLimitReading {
+    /// `five_hour`, `seven_day`, …
+    pub window: String,
+    /// 0–1 fraction, normalized from Claude Code's `used_percentage`.
+    #[serde(default)]
+    pub utilization: Option<f64>,
+    #[serde(default)]
+    pub resets_at: Option<DateTime<Utc>>,
+}
+
+/// One recorded `bridle statusline` invocation, kept distinct from
+/// per-agent turns (`AgentUsage`) since there's no hosted agent to attach it
+/// to.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct InteractiveUsageRow {
+    pub observed_at: DateTime<Utc>,
+    pub session_id: Option<String>,
+    pub model: Option<String>,
+    pub cost_usd: Option<f64>,
+    pub context_used_tokens: Option<u64>,
+    pub context_max_tokens: Option<u64>,
 }
 
 // ---------- budget governor ----------

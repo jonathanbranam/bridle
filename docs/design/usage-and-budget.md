@@ -27,7 +27,7 @@ In practice this means:
 |---|---|---|
 | stream-json `rate_limit_event` | `status` (`allowed` / `allowed_warning` / `rejected`), `resetsAt`, `utilization` (0–1), and the window type (`five_hour`, `seven_day`, `seven_day_opus`, `seven_day_sonnet`). Emitted **when the status changes** | headless workers |
 | stream-json `result` | `usage` (input, output, cache-creation and cache-read tokens), per-model `modelUsage`, `total_cost_usd` (list-price equivalent, **cumulative across turns** in streaming mode) | headless workers |
-| status line JSON | `rate_limits.five_hour` / `.seven_day`: `used_percentage`, `resets_at`, plus session cost and context use | interactive sessions (the human's, the orchestrator): bridle ships `bridle statusline` as the status line command, which shows the numbers **and** records them |
+| status line JSON | `rate_limits.five_hour` / `.seven_day`: `used_percentage`, `resets_at`, plus session cost and context use (field names not confirmed against Claude Code's own docs; parsed tolerantly, [[docs/design/cli#Built|cli.md]]) | interactive sessions (the human's, the orchestrator): bridle ships `bridle statusline` as the status line command, which shows the numbers **and** records them |
 | assistant error `rate_limit` | a turn failed on a limit | both |
 | OpenTelemetry | tokens, cost, per request | later, optional |
 
@@ -54,13 +54,16 @@ Built with the agent host, for the agents it hosts:
   difference between consecutive counters;
 - the latest `rate_limit_event` per window. It arrives once per process, so
   it can be stale while no agent is starting.
+- `bridle statusline` snapshots from interactive sessions bridle doesn't host: the same
+  rate-limit windows (via the same `upsert_rate_limit` path), plus a per-invocation row
+  (cost, context use) in its own table, since there's no agent to attach it to.
 
 `bridle usage` (and `GET /v1/usage`) shows per-agent turns, tokens and cost,
-totals, the cache hit ratio (cache reads ÷ all input tokens), and the last
-known utilisation and reset time per window. A role can also cap each
-agent's spend ([[docs/design/agent-host/agents#Spend cap|spend cap]]).
+totals, the cache hit ratio (cache reads ÷ all input tokens), the last
+known utilisation and reset time per window, and today's `bridle statusline`
+rows. A role can also cap each agent's spend ([[docs/design/agent-host/agents#Spend cap|spend cap]]).
 
-Not built: the status line, and the ledger's task, role and
+Not built: the full usage ledger's task, role and
 workflow-revision columns. The governor is partly built: it computes
 `normal`/`holding`/`winding_down`/`paused` from `hold_at`/`wind_down_at`/
 `stop_at` threshold crossings (per default-scoped window and, separately,

@@ -28,6 +28,9 @@ messages(seq INTEGER PK AUTOINCREMENT, id UNIQUE,    -- id = m-0042 from seq
 events(seq INTEGER PK AUTOINCREMENT, ts, kind, actor, agent_id, data JSON)
                                                      -- agent_id has no FK: events outlive agents
 rate_limits(window PK, status, utilization, resets_at, observed_at)
+interactive_usage(id PK AUTOINCREMENT, observed_at, session_id, model,
+                   cost_usd, context_used_tokens, context_max_tokens)
+                                                     -- from `bridle statusline`; no agent id, nothing bridle hosts
 meta(key PK, value)                                  -- e.g. claude_version
 ```
 
