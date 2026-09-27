@@ -1,7 +1,13 @@
 # Roles and configuration
 
 The daemon loads built-in defaults, then applies `<repo>/.bridle/config.toml`
-over them:
+over them. The `[budget]` section (the account-wide usage governor's
+thresholds) is different: it's read from the machine-wide
+`~/.bridle/config.toml` first, and a project's `.bridle/config.toml` may
+only lower its four percentage thresholds, never raise them — see
+[[../usage-and-budget#The budget governor|the budget governor]] for the
+full shape and merge rule. Everything else below is project-scoped, as
+usual:
 
 ```toml
 [daemon]
