@@ -196,7 +196,20 @@ async fn idle_agent_is_stopped_at_once_on_wind_down_then_resumed() {
     })
     .await;
     assert_eq!(resumed.session_id, agent.session_id);
-    assert!(has_message_containing(&daemon, &agent.id, "pause is over").await);
+    // The agent's state flips to running before the governor's resume note
+    // is written (`maybe_resume` in governor.rs: `manager.resume` then a
+    // separate `manager.send`), so poll for the message instead of
+    // checking once right after the state transition.
+    wait_for("resume note delivered", || {
+        let daemon = &daemon;
+        let id = agent.id.clone();
+        async move {
+            has_message_containing(daemon, &id, "pause is over")
+                .await
+                .then_some(())
+        }
+    })
+    .await;
 }
 
 /// A working agent gets the usage-pause notice, then is stopped with
