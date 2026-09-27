@@ -1,0 +1,39 @@
+---
+id: xqvg
+title: Finding remote daemons from the laptop
+opened: 2026-09-27
+repos: [bridle]
+changes: []
+specs: []
+needs: []
+see: [hj4g]
+---
+
+## The question
+
+How does a client on the laptop find and reach the project daemons running on
+another machine?
+
+## Why it matters
+
+`docs/agent-host.md` §2.1 selects daemons with `bridle --project <name>` from a
+machine-local registry, `~/.bridle/daemons/`. Each daemon listens on
+`127.0.0.1:0` by default, so its port is random. From the laptop, the registry
+isn't visible and SSH forwards can't be set up ahead of time.
+
+## Notes
+
+Raised on 2026-09-27 while checking the NUC plan ([[docs/context/nuc-host|NUC host]]) against `docs/agent-host.md`.
+
+- **Fixed port per project**, set in `.bridle/config.toml` `[daemon] listen`.
+  Forward each one with `ssh -L`, or bind to the host's Tailscale address.
+  With Tailscale, the traffic is already encrypted, and the NUC's firewall
+  only admits the tailnet and LAN SSH. Tokens then become the real
+  authentication (§5.3).
+- **Run the CLI remotely:** `ssh nuc 'BRIDLE_TOKEN=… bridle --project X …'`.
+  The token must be explicit. The CLI's rule 2 (§5.2) falls back to the human
+  token when `$CLAUDECODE` is unset, and it is unset in the remote shell, so an
+  orchestrator would silently act as the human. SSH doesn't forward
+  environment variables by default.
+- If the orchestrator lives on the NUC ([[where-the-single-orchestrator-lives-hj4g|where it lives]]), most of this
+  goes away.
