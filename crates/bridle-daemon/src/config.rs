@@ -368,6 +368,49 @@ impl BudgetConfig {
     }
 }
 
+/// `[models]`: default model preference lists by role, strongest first
+/// (usage-and-budget.md, Model choice). A project's `.bridle/config.toml`
+/// may replace a role's list outright — unlike `[budget]`'s thresholds,
+/// this is an ordered preference, not a ceiling, so there's no lower-only
+/// restriction.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ModelsConfig {
+    pub by_role: BTreeMap<String, Vec<String>>,
+}
+
+impl Default for ModelsConfig {
+    fn default() -> Self {
+        let mut by_role = BTreeMap::new();
+        by_role.insert("manager".to_string(), vec!["opus".into(), "sonnet".into()]);
+        by_role.insert("planner".to_string(), vec!["opus".into(), "sonnet".into()]);
+        by_role.insert("reviewer".to_string(), vec!["sonnet".into(), "opus".into()]);
+        by_role.insert("worker".to_string(), vec!["sonnet".into(), "haiku".into()]);
+        by_role.insert("chore".to_string(), vec!["haiku".into()]);
+        by_role.insert("explore".to_string(), vec!["sonnet".into()]);
+        ModelsConfig { by_role }
+    }
+}
+
+impl ModelsConfig {
+    /// The role's preference list, strongest first, for stepping down
+    /// (usage-and-budget.md, Model choice). Falls back to `role.model` as a
+    /// single-entry list when the role has no `[models]` entry, so a
+    /// project's custom role that only sets `model` still works unchanged.
+    pub fn candidates<'a>(&'a self, role_name: &str, role: &'a Role) -> Vec<&'a str> {
+        match self.by_role.get(role_name) {
+            Some(list) if !list.is_empty() => list.iter().map(String::as_str).collect(),
+            _ => vec![role.model.as_str()],
+        }
+    }
+
+    fn merge(mut self, raw: BTreeMap<String, Vec<String>>) -> Self {
+        for (role, list) in raw {
+            self.by_role.insert(role, list);
+        }
+        self
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Config {
     pub listen: SocketAddr,
@@ -375,6 +418,7 @@ pub struct Config {
     pub stop_grace: Duration,
     pub roles: BTreeMap<String, Role>,
     pub budget: BudgetConfig,
+    pub models: ModelsConfig,
 }
 
 impl Default for Config {
@@ -389,6 +433,7 @@ impl Default for Config {
             stop_grace: Duration::from_secs(30),
             roles,
             budget: BudgetConfig::default(),
+            models: ModelsConfig::default(),
         }
     }
 }
@@ -479,6 +524,10 @@ impl Config {
             config.budget = config.budget.merge_project(raw_budget, path)?;
         }
 
+        if let Some(raw_models) = raw.models {
+            config.models = config.models.merge(raw_models);
+        }
+
         Ok(config)
     }
 }
@@ -508,6 +557,8 @@ struct RawConfig {
     roles: Option<BTreeMap<String, RawRole>>,
     #[serde(default)]
     budget: Option<RawBudget>,
+    #[serde(default)]
+    models: Option<BTreeMap<String, Vec<String>>>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -870,6 +921,42 @@ mod tests {
             "You are worker-2 (role worker) in /repo/a/wt/worker-2 on branch bridle/worker-2."
         ));
         assert_ne!(a, b);
+    }
+
+    #[test]
+    fn models_config_defaults_match_usage_and_budget_md() {
+        let cfg = Config::default();
+        assert_eq!(cfg.models.by_role["manager"], vec!["opus", "sonnet"]);
+        assert_eq!(cfg.models.by_role["planner"], vec!["opus", "sonnet"]);
+        assert_eq!(cfg.models.by_role["reviewer"], vec!["sonnet", "opus"]);
+        assert_eq!(cfg.models.by_role["worker"], vec!["sonnet", "haiku"]);
+        assert_eq!(cfg.models.by_role["chore"], vec!["haiku"]);
+        assert_eq!(cfg.models.by_role["explore"], vec!["sonnet"]);
+    }
+
+    #[test]
+    fn models_config_candidates_falls_back_to_role_model_when_unlisted() {
+        let cfg = Config::default();
+        let mut role = Role::worker_default();
+        role.model = "opus".to_string();
+        assert_eq!(
+            cfg.models.candidates("some_custom_role", &role),
+            vec!["opus"]
+        );
+    }
+
+    #[test]
+    fn a_project_config_can_replace_a_roles_model_list_outright() {
+        let toml = r#"
+            [models]
+            worker = ["haiku"]
+            explore = ["opus", "haiku"]
+        "#;
+        let cfg = Config::parse(toml).expect("parse");
+        assert_eq!(cfg.models.by_role["worker"], vec!["haiku"]);
+        assert_eq!(cfg.models.by_role["explore"], vec!["opus", "haiku"]);
+        // Untouched roles keep the built-in default.
+        assert_eq!(cfg.models.by_role["manager"], vec!["opus", "sonnet"]);
     }
 
     #[test]

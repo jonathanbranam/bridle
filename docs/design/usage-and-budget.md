@@ -241,9 +241,18 @@ explore  = ["sonnet"]
 ```
 
 New work starts from the role's list and steps down as a window gets tight,
-e.g. Sonnet instead of Opus when `seven_day_opus` is high. A task can pin a
-model (`model = "opus"`) when its plan says the step-down would be a false
-economy. Stepping down delays a wind-down; it never replaces one.
+e.g. Sonnet instead of Opus when `seven_day_opus` is high: spawn picks the
+first model in the list whose window (via the same per-model scoping as
+[[docs/design/usage-and-budget#The budget governor|the budget governor]])
+is `normal`. A task can pin a model (`model = "opus"`) when its plan says
+the step-down would be a false economy; a pinned model bypasses the list
+entirely, and is refused like any other spawn if its own window isn't
+`normal`. If every model in the role's list is blocked, spawn falls through
+to the same hold-enforcement refusal as an unpinned spawn — stepping down
+delays a wind-down, it never replaces one. Unlike `[budget]`, `[models]` is
+project-scoped only (`<repo>/.bridle/config.toml`), and a project may
+replace a role's list outright: it's an ordered preference, not a ceiling,
+so there's no lower-only restriction.
 
 ### Across projects
 

@@ -351,3 +351,134 @@ async fn ignore_budget_bypasses_the_holding_refusal() {
         .await
         .expect("resume ignores the governor with --ignore-budget");
 }
+
+/// Writes `.fake-claude-usage` with a per-model window on top of the two
+/// default-scoped ones, for [`GovernorSnapshot::for_model`] step-down tests.
+fn script_usage_with_model_window(
+    repo: &std::path::Path,
+    five_hour_pct: f64,
+    seven_day_pct: f64,
+    model_window: &str,
+    model_window_pct: f64,
+) {
+    std::fs::write(
+        repo.join(".fake-claude-usage"),
+        serde_json::json!({
+            "rate_limits": {
+                "five_hour": {"utilization": five_hour_pct},
+                "seven_day": {"utilization": seven_day_pct},
+                model_window: {"utilization": model_window_pct}
+            },
+            "limits": []
+        })
+        .to_string(),
+    )
+    .expect("write .fake-claude-usage");
+}
+
+/// docs/design/usage-and-budget.md, Model choice: with no `model` pinned,
+/// the manager's `["opus", "sonnet"]` list steps down to sonnet once
+/// `seven_day_opus` alone is tight, per `GovernorSnapshot::for_model`.
+#[tokio::test]
+async fn spawn_steps_down_to_the_next_model_when_the_first_ones_window_is_tight() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    script_usage_with_model_window(&daemon.repo, 10.0, 10.0, "seven_day_opus", 96.0);
+    wait_for(
+        "seven_day_opus is paused, default windows stay normal",
+        || async {
+            let b = daemon.client.budget().await.ok()?;
+            let opus_paused = b
+                .windows
+                .iter()
+                .any(|w| w.window == "seven_day_opus" && w.state == GovernorState::Paused);
+            (b.state == GovernorState::Normal && opus_paused).then_some(())
+        },
+    )
+    .await;
+
+    let agent = daemon
+        .client
+        .spawn(&SpawnRequest {
+            role: "manager".to_string(),
+            name: Some("m1".to_string()),
+            prompt: None,
+            workdir: None,
+            model: None,
+            ignore_budget: false,
+        })
+        .await
+        .expect("spawn steps down instead of refusing");
+    assert_eq!(agent.model, "sonnet");
+}
+
+/// A task pinning a model (`model = "opus"`) bypasses the step-down
+/// entirely, per usage-and-budget.md's existing escape hatch — the governor
+/// still refuses the spawn if that model's own window is blocked.
+#[tokio::test]
+async fn explicit_model_pin_bypasses_step_down() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    script_usage_with_model_window(&daemon.repo, 10.0, 10.0, "seven_day_opus", 96.0);
+    wait_for(
+        "seven_day_opus is paused, default windows stay normal",
+        || async {
+            let b = daemon.client.budget().await.ok()?;
+            let opus_paused = b
+                .windows
+                .iter()
+                .any(|w| w.window == "seven_day_opus" && w.state == GovernorState::Paused);
+            (b.state == GovernorState::Normal && opus_paused).then_some(())
+        },
+    )
+    .await;
+
+    let err = daemon
+        .client
+        .spawn(&SpawnRequest {
+            role: "manager".to_string(),
+            name: Some("m2".to_string()),
+            prompt: None,
+            workdir: None,
+            model: Some("opus".to_string()),
+            ignore_budget: false,
+        })
+        .await
+        .expect_err("pinned opus is refused on its own tight window, not stepped down");
+    assert!(matches!(
+        err,
+        bridle_api::ClientError::Api { status: 409, .. }
+    ));
+}
+
+/// Stepping down delays a wind-down, it never replaces one: with every
+/// model in the manager's list blocked, spawn falls through to the
+/// existing hold-enforcement 409 rather than inventing a new failure mode.
+#[tokio::test]
+async fn spawn_refuses_when_every_candidate_model_is_blocked() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    script_usage_with_model_window(&daemon.repo, 10.0, 10.0, "seven_day_opus", 96.0);
+    // Both of the manager's candidates (opus, sonnet) are blocked: opus by
+    // its own window, sonnet by the default-scoped hold below.
+    script_usage(&daemon.repo, 82.0, 10.0);
+    wait_for("holding", || async {
+        let b = daemon.client.budget().await.ok()?;
+        (b.state == GovernorState::Holding).then_some(())
+    })
+    .await;
+
+    let err = daemon
+        .client
+        .spawn(&SpawnRequest {
+            role: "manager".to_string(),
+            name: Some("m3".to_string()),
+            prompt: None,
+            workdir: None,
+            model: None,
+            ignore_budget: false,
+        })
+        .await
+        .expect_err("every candidate blocked: refuse rather than spawn");
+    assert!(matches!(
+        err,
+        bridle_api::ClientError::Api { status: 409, .. }
+    ));
+}
