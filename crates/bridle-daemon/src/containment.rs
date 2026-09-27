@@ -99,6 +99,12 @@ pub fn is_same_process(pid: i32, start: &str) -> bool {
     start_time(pid).as_deref() == Some(start)
 }
 
+/// Maps each pid in `snap` to its start time, for O(1) identity checks
+/// instead of a linear scan per tracked pid.
+fn start_index(snap: &[ProcInfo]) -> HashMap<i32, &str> {
+    snap.iter().map(|p| (p.pid, p.start.as_str())).collect()
+}
+
 /// Tracks an agent's descendant processes across repeated snapshots, keyed
 /// by pid + start time so a reused pid is never confused for the one we saw
 /// before (agents.md, Containment).
@@ -118,10 +124,18 @@ impl Tracker {
         }
     }
 
-    /// Adds every current descendant of the root to `seen`. Call this
-    /// periodically and just before any stop, so short-lived tool process
-    /// groups are caught before they can re-parent to init.
+    /// Prunes `seen` to what `snap` confirms still exists (a pid gone, or
+    /// reused by a different process, is dropped -- this check is pid+start
+    /// identity only, so a process that's re-parented to init is still kept
+    /// as long as its pid+start still matches), then adds every current
+    /// descendant of the root. Call this periodically and just before any
+    /// stop, so short-lived tool process groups are caught before they can
+    /// re-parent, and `seen` doesn't grow without bound across an agent's
+    /// lifetime.
     pub fn update(&mut self, snap: &[ProcInfo]) {
+        let index = start_index(snap);
+        self.seen
+            .retain(|pid, start| index.get(pid) == Some(&start.as_str()));
         for p in descendants(self.root_pid, snap) {
             self.seen.insert(p.pid, p.start);
         }
@@ -134,13 +148,20 @@ pub struct SweepReport {
     pub killed: u32,
 }
 
-/// SIGTERMs every process in `tracker.seen` that's still alive with a
-/// matching start time, waits up to `grace`, then SIGKILLs whatever is
-/// still around. Never signals a pid whose start time no longer matches.
-pub async fn sweep(tracker: &mut Tracker, grace: Duration) -> SweepReport {
+/// SIGTERMs every process in `tracker.seen` that's still alive in `snap`
+/// with a matching start time, waits up to `grace`, then SIGKILLs whatever
+/// is still around -- checked against the same `snap`, not a fresh one, since
+/// staleness here only risks a redundant signal to an already-dead pid, never
+/// a signal to a reused one. Never signals a pid whose start time doesn't
+/// match. Takes `snap` rather than fetching its own, so a sweep over many
+/// tracked pids costs one process-table scan, not one per pid.
+pub async fn sweep(tracker: &mut Tracker, snap: &[ProcInfo], grace: Duration) -> SweepReport {
+    let index = start_index(snap);
+    let matches = |pid: i32, start: &str| index.get(&pid) == Some(&start);
+
     let mut termed: Vec<(i32, String)> = Vec::new();
     for (&pid, start) in tracker.seen.iter() {
-        if is_same_process(pid, start) && kill(Pid::from_raw(pid), Signal::SIGTERM).is_ok() {
+        if matches(pid, start) && kill(Pid::from_raw(pid), Signal::SIGTERM).is_ok() {
             termed.push((pid, start.clone()));
         }
     }
@@ -152,7 +173,7 @@ pub async fn sweep(tracker: &mut Tracker, grace: Duration) -> SweepReport {
 
     let mut killed = 0u32;
     for (pid, start) in termed {
-        if is_same_process(pid, &start) && kill(Pid::from_raw(pid), Signal::SIGKILL).is_ok() {
+        if matches(pid, &start) && kill(Pid::from_raw(pid), Signal::SIGKILL).is_ok() {
             killed += 1;
         }
     }
@@ -193,6 +214,7 @@ pub trait Containment {
     fn sweep(
         &self,
         tracker: &mut Tracker,
+        snap: &[ProcInfo],
         grace: Duration,
     ) -> impl std::future::Future<Output = SweepReport> + Send;
     fn terminate_group(
@@ -207,8 +229,13 @@ pub trait Containment {
 pub struct PsContainment;
 
 impl Containment for PsContainment {
-    async fn sweep(&self, tracker: &mut Tracker, grace: Duration) -> SweepReport {
-        sweep(tracker, grace).await
+    async fn sweep(
+        &self,
+        tracker: &mut Tracker,
+        snap: &[ProcInfo],
+        grace: Duration,
+    ) -> SweepReport {
+        sweep(tracker, snap, grace).await
     }
 
     async fn terminate_group(&self, pgid: i32, grace: Duration) -> bool {
@@ -252,7 +279,7 @@ mod tests {
             tracker.seen
         );
 
-        let report = sweep(&mut tracker, Duration::from_millis(500)).await;
+        let report = sweep(&mut tracker, &snap, Duration::from_millis(500)).await;
         assert!(report.terminated + report.killed >= 2);
 
         for pid in tracker.seen.keys() {
@@ -283,7 +310,7 @@ mod tests {
             .seen
             .insert(victim, "not a real start time".to_string());
 
-        let report = sweep(&mut tracker, Duration::from_millis(300)).await;
+        let report = sweep(&mut tracker, &snap, Duration::from_millis(300)).await;
         assert_eq!(report.terminated, 0);
         assert_eq!(report.killed, 0);
 
@@ -294,10 +321,48 @@ mod tests {
         ));
 
         // Clean up for real.
+        let real_snap = snapshot().expect("snapshot");
         let mut real_tracker = Tracker::new(root_pid, start_time(root_pid).expect("root alive"));
-        real_tracker.update(&snapshot().expect("snapshot"));
-        sweep(&mut real_tracker, Duration::from_millis(300)).await;
+        real_tracker.update(&real_snap);
+        sweep(&mut real_tracker, &real_snap, Duration::from_millis(300)).await;
         let _ = child.wait();
+    }
+
+    /// Regression for the stop-hangs-forever bug: sweep used to call
+    /// `is_same_process` (a full `ps` scan) once per tracked pid, twice over
+    /// (once per pass). With thousands of tracked pids that made `stop` take
+    /// minutes even though the agent's own process had already exited. Sweep
+    /// now takes one snapshot as a parameter and never calls the real,
+    /// `ps`-backed `snapshot()` itself, so this test tracks thousands of
+    /// fabricated (never-real) pids and asserts it still completes fast.
+    #[tokio::test]
+    async fn sweep_uses_one_snapshot_regardless_of_tracked_pid_count() {
+        let mut tracker = Tracker::new(1, "root-start".to_string());
+        for i in 0..5_000 {
+            tracker
+                .seen
+                .insert(1_000_000 + i, format!("fake-start-{i}"));
+        }
+        // None of the fabricated pids appear here, so nothing should be
+        // signalled and no grace sleep should be entered.
+        let snap = [ProcInfo {
+            pid: 1,
+            ppid: 0,
+            pgid: 1,
+            start: "root-start".to_string(),
+        }];
+
+        let started = std::time::Instant::now();
+        let report = sweep(&mut tracker, &snap, Duration::from_millis(500)).await;
+        let elapsed = started.elapsed();
+
+        assert_eq!(report.terminated, 0);
+        assert_eq!(report.killed, 0);
+        assert!(
+            elapsed < Duration::from_millis(200),
+            "sweep over {} tracked pids took {elapsed:?}; a ps call per pid would take far longer",
+            tracker.seen.len()
+        );
     }
 
     #[tokio::test]

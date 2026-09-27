@@ -170,12 +170,20 @@ The implementation today uses the process table. A `Containment` trait
 wired in yet.
 
 - **Track**: every 2 s, and just before any stop, snapshot the process table
-  (`ps -axo pid,ppid,pgid,lstart`). Add every descendant of the agent's pid to
-  the agent's *seen* set, keyed by pid + start time so that a reused pid is
-  never killed. This catches tool process groups before they re-parent.
-- **Sweep**: SIGTERM every seen process still alive with a matching start time,
-  wait 2 s, SIGKILL the remainder, and emit `agent.orphans_killed` with the
-  count when it killed anything.
+  (`ps -axo pid,ppid,pgid,lstart`) once. Prune the agent's *seen* set to what
+  that snapshot confirms still exists (a pid that's gone, or reused by a
+  different process, is dropped; the check is pid + start time identity only,
+  not parentage, so a process re-parented to init is kept as long as its
+  pid + start still matches), then add every current descendant of the
+  agent's pid. This catches tool process groups before they re-parent, and
+  keeps *seen* from growing without bound across a long-lived agent.
+- **Sweep**: against that same one snapshot, SIGTERM every seen process
+  still alive with a matching start time, wait 2 s, SIGKILL the remainder
+  (checked against the same snapshot, not a fresh one -- staleness there
+  only risks a redundant signal to an already-dead pid, never a signal to a
+  reused one), and emit `agent.orphans_killed` with the count when it killed
+  anything. Sweep never takes its own snapshot, so it costs one process-table
+  scan no matter how many pids are tracked.
 - **Not covered**: double-forked daemons that detach between two scans
   ([[process-containment-on-macos-9trg|spike 9trg]]), and Linux specifics such
   as `lstart` locale and cgroups ([[process-containment-on-linux-2mj9|spike 2mj9]]).

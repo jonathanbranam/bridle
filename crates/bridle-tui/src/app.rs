@@ -3,17 +3,18 @@
 //! [`Message`] (from `events_stream`, or the initial agents list) or a
 //! [`Key`] press, and assert on the resulting [`App`].
 
-use bridle_api::{Agent, AgentState, Event, TranscriptLine, event_kind};
+use bridle_api::{Agent, AgentState, Event, Message as ApiMessage, TranscriptLine, event_kind};
 
 use crate::format::render_transcript_line;
 
-/// Which of the three views has keyboard focus.
+/// Which of the four views has keyboard focus.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Focus {
     #[default]
     Agents,
     Events,
     Logs,
+    Inbox,
 }
 
 impl Focus {
@@ -21,9 +22,74 @@ impl Focus {
         match self {
             Focus::Agents => Focus::Events,
             Focus::Events => Focus::Logs,
-            Focus::Logs => Focus::Agents,
+            Focus::Logs => Focus::Inbox,
+            Focus::Inbox => Focus::Agents,
         }
     }
+}
+
+/// Line-editing state for composing a reply: `body` plus a cursor position
+/// (a char index, not a byte offset, so it moves one visible character at a
+/// time regardless of UTF-8 width) and the message being replied to.
+#[derive(Debug, Clone, Default)]
+pub struct Compose {
+    pub to: String,
+    pub reply_to: String,
+    pub body: String,
+    pub cursor: usize,
+}
+
+impl Compose {
+    fn byte_index(&self) -> usize {
+        self.body
+            .char_indices()
+            .nth(self.cursor)
+            .map(|(i, _)| i)
+            .unwrap_or(self.body.len())
+    }
+
+    fn char_len(&self) -> usize {
+        self.body.chars().count()
+    }
+
+    fn insert(&mut self, c: char) {
+        let idx = self.byte_index();
+        self.body.insert(idx, c);
+        self.cursor += 1;
+    }
+
+    fn backspace(&mut self) {
+        if self.cursor == 0 {
+            return;
+        }
+        self.cursor -= 1;
+        let idx = self.byte_index();
+        let len = self.body[idx..]
+            .chars()
+            .next()
+            .map(char::len_utf8)
+            .unwrap_or(0);
+        self.body.drain(idx..idx + len);
+    }
+
+    fn cursor_left(&mut self) {
+        self.cursor = self.cursor.saturating_sub(1);
+    }
+
+    fn cursor_right(&mut self) {
+        self.cursor = (self.cursor + 1).min(self.char_len());
+    }
+}
+
+/// A reply App has finished composing, for `run.rs` to actually send: `App`
+/// has no client of its own (see the module doc), so submitting a compose
+/// just hands this off the same way `logs_agent` hands off which agent to
+/// poll transcript for.
+#[derive(Debug, Clone)]
+pub struct PendingSend {
+    pub to: String,
+    pub reply_to: String,
+    pub body: String,
 }
 
 /// Whether we've heard from the daemon yet. `events_stream` reconnects
@@ -45,7 +111,11 @@ pub enum Key {
     Char(char),
     Up,
     Down,
+    Left,
+    Right,
     Tab,
+    Enter,
+    Backspace,
     Esc,
 }
 
@@ -62,6 +132,9 @@ pub enum Message {
         agent: String,
         lines: Vec<TranscriptLine>,
     },
+    /// One poll's worth of the unread inbox (`to: "me"`, unread only --
+    /// same query as `bridle inbox`).
+    MessagesLoaded(Vec<ApiMessage>),
 }
 
 /// Everything on screen. Rendering (`ui.rs`) only ever reads this; only
@@ -84,6 +157,16 @@ pub struct App {
     pub log_lines: Vec<String>,
     /// Lines scrolled up from the tail (0 = pinned to the newest line).
     pub log_scroll: usize,
+    /// Unread messages addressed to `me`, same query as `bridle inbox`.
+    pub messages: Vec<ApiMessage>,
+    /// Index into `messages` of the selected row.
+    pub selected_message: usize,
+    /// Set while composing a reply to `messages[selected_message]`; `None`
+    /// means the inbox view is just a list.
+    pub compose: Option<Compose>,
+    /// A finished compose waiting for `run.rs` to send and mark the
+    /// original read; taken (cleared) once `run.rs` has picked it up.
+    pub pending_send: Option<PendingSend>,
     pub connection: ConnectionStatus,
     pub should_quit: bool,
 }
@@ -111,19 +194,95 @@ impl App {
                     }
                 }
             }
+            Message::MessagesLoaded(messages) => {
+                self.messages = messages;
+                self.clamp_selected_message();
+            }
         }
         self.sync_logs_target();
     }
 
     pub fn on_key(&mut self, key: Key) {
+        if self.compose.is_some() {
+            self.on_compose_key(key);
+            return;
+        }
         match key {
             Key::Char('q') | Key::Esc => self.should_quit = true,
             Key::Tab => self.focus = self.focus.next(),
+            Key::Char('r') if self.focus == Focus::Inbox => self.start_reply(),
             Key::Char('k') | Key::Up => self.scroll_up(),
             Key::Char('j') | Key::Down => self.scroll_down(),
-            Key::Char(_) => {}
+            Key::Char(_) | Key::Left | Key::Right | Key::Enter | Key::Backspace => {}
         }
         self.sync_logs_target();
+    }
+
+    fn on_compose_key(&mut self, key: Key) {
+        match key {
+            Key::Esc => self.compose = None,
+            Key::Enter => self.submit_compose(),
+            Key::Char(c) => {
+                if let Some(compose) = &mut self.compose {
+                    compose.insert(c);
+                }
+            }
+            Key::Backspace => {
+                if let Some(compose) = &mut self.compose {
+                    compose.backspace();
+                }
+            }
+            Key::Left => {
+                if let Some(compose) = &mut self.compose {
+                    compose.cursor_left();
+                }
+            }
+            Key::Right => {
+                if let Some(compose) = &mut self.compose {
+                    compose.cursor_right();
+                }
+            }
+            Key::Up | Key::Down | Key::Tab => {}
+        }
+    }
+
+    /// Start composing a reply to the selected inbox message, addressed
+    /// back to its sender.
+    fn start_reply(&mut self) {
+        let Some(msg) = self.messages.get(self.selected_message) else {
+            return;
+        };
+        self.compose = Some(Compose {
+            to: msg.from.clone(),
+            reply_to: msg.id.clone(),
+            body: String::new(),
+            cursor: 0,
+        });
+    }
+
+    /// Hand the finished compose off to `run.rs` as a [`PendingSend`] and
+    /// close the compose view. An empty body is dropped rather than sent.
+    fn submit_compose(&mut self) {
+        let Some(compose) = &self.compose else {
+            return;
+        };
+        if compose.body.is_empty() {
+            return;
+        }
+        let compose = self.compose.take().expect("checked above");
+        self.pending_send = Some(PendingSend {
+            to: compose.to,
+            reply_to: compose.reply_to,
+            body: compose.body,
+        });
+    }
+
+    fn clamp_selected_message(&mut self) {
+        if self.messages.is_empty() {
+            self.selected_message = 0;
+        } else {
+            self.selected_message = self.selected_message.min(self.messages.len() - 1);
+        }
     }
 
     /// The id of the currently selected agent, or `None` if the list is
@@ -156,6 +315,7 @@ impl App {
                 let max = self.log_lines.len().saturating_sub(1);
                 self.log_scroll = (self.log_scroll + 1).min(max);
             }
+            Focus::Inbox => self.selected_message = self.selected_message.saturating_sub(1),
         }
     }
 
@@ -168,6 +328,12 @@ impl App {
             }
             Focus::Events => self.event_scroll = self.event_scroll.saturating_sub(1),
             Focus::Logs => self.log_scroll = self.log_scroll.saturating_sub(1),
+            Focus::Inbox => {
+                if !self.messages.is_empty() {
+                    self.selected_message =
+                        (self.selected_message + 1).min(self.messages.len() - 1);
+                }
+            }
         }
     }
 
@@ -331,13 +497,15 @@ mod tests {
     }
 
     #[test]
-    fn tab_cycles_through_the_three_views() {
+    fn tab_cycles_through_the_four_views() {
         let mut app = App::new();
         assert_eq!(app.focus, Focus::Agents);
         app.on_key(Key::Tab);
         assert_eq!(app.focus, Focus::Events);
         app.on_key(Key::Tab);
         assert_eq!(app.focus, Focus::Logs);
+        app.on_key(Key::Tab);
+        assert_eq!(app.focus, Focus::Inbox);
         app.on_key(Key::Tab);
         assert_eq!(app.focus, Focus::Agents);
     }
@@ -518,5 +686,205 @@ mod tests {
         assert_eq!(app.log_scroll, 0);
         app.on_key(Key::Down); // already pinned to the tail
         assert_eq!(app.log_scroll, 0);
+    }
+
+    fn inbox_message(id: &str, from: &str, body: &str) -> ApiMessage {
+        ApiMessage {
+            id: id.to_string(),
+            from: from.to_string(),
+            to: "human".to_string(),
+            kind: bridle_api::MessageKind::Note,
+            body: body.to_string(),
+            reply_to: None,
+            when: bridle_api::When::Now,
+            state: bridle_api::MessageState::Delivered,
+            created_at: Utc::now(),
+            written_at: None,
+            delivered_at: None,
+            read_at: None,
+        }
+    }
+
+    #[test]
+    fn messages_loaded_seeds_the_inbox() {
+        let mut app = App::new();
+        app.on_message(Message::MessagesLoaded(vec![
+            inbox_message("m-1", "w1", "hi"),
+            inbox_message("m-2", "w2", "hey"),
+        ]));
+        assert_eq!(app.messages.len(), 2);
+        assert_eq!(app.selected_message, 0);
+    }
+
+    #[test]
+    fn inbox_navigation_is_clamped_to_the_list() {
+        let mut app = App::new();
+        app.on_message(Message::MessagesLoaded(vec![
+            inbox_message("m-1", "w1", "hi"),
+            inbox_message("m-2", "w2", "hey"),
+        ]));
+        app.on_key(Key::Tab); // Events
+        app.on_key(Key::Tab); // Logs
+        app.on_key(Key::Tab); // Inbox
+        assert_eq!(app.focus, Focus::Inbox);
+        app.on_key(Key::Up); // already at top
+        assert_eq!(app.selected_message, 0);
+        app.on_key(Key::Down);
+        assert_eq!(app.selected_message, 1);
+        app.on_key(Key::Down); // already at bottom
+        assert_eq!(app.selected_message, 1);
+    }
+
+    #[test]
+    fn reloading_the_inbox_reclamps_the_selection() {
+        let mut app = App::new();
+        app.on_message(Message::MessagesLoaded(vec![
+            inbox_message("m-1", "w1", "hi"),
+            inbox_message("m-2", "w2", "hey"),
+        ]));
+        app.on_key(Key::Tab); // Events
+        app.on_key(Key::Tab); // Logs
+        app.on_key(Key::Tab); // Inbox
+        app.on_key(Key::Down);
+        assert_eq!(app.selected_message, 1);
+        app.on_message(Message::MessagesLoaded(vec![inbox_message(
+            "m-2", "w2", "hey",
+        )]));
+        assert_eq!(app.selected_message, 0);
+    }
+
+    fn focus_inbox(app: &mut App) {
+        app.on_key(Key::Tab); // Events
+        app.on_key(Key::Tab); // Logs
+        app.on_key(Key::Tab); // Inbox
+    }
+
+    #[test]
+    fn r_on_the_inbox_starts_composing_a_reply_to_the_sender() {
+        let mut app = App::new();
+        app.on_message(Message::MessagesLoaded(vec![inbox_message(
+            "m-1", "w1", "hi",
+        )]));
+        focus_inbox(&mut app);
+        app.on_key(Key::Char('r'));
+        let compose = app.compose.as_ref().expect("compose started");
+        assert_eq!(compose.to, "w1");
+        assert_eq!(compose.reply_to, "m-1");
+        assert_eq!(compose.body, "");
+        assert_eq!(compose.cursor, 0);
+    }
+
+    #[test]
+    fn r_elsewhere_is_not_treated_as_reply() {
+        let mut app = App::new();
+        app.on_message(Message::MessagesLoaded(vec![inbox_message(
+            "m-1", "w1", "hi",
+        )]));
+        app.on_key(Key::Char('r')); // still focused on Agents
+        assert!(app.compose.is_none());
+    }
+
+    #[test]
+    fn compose_insert_and_backspace_edit_the_body_at_the_cursor() {
+        let mut app = App::new();
+        app.on_message(Message::MessagesLoaded(vec![inbox_message(
+            "m-1", "w1", "hi",
+        )]));
+        focus_inbox(&mut app);
+        app.on_key(Key::Char('r'));
+        app.on_key(Key::Char('h'));
+        app.on_key(Key::Char('i'));
+        assert_eq!(app.compose.as_ref().unwrap().body, "hi");
+        assert_eq!(app.compose.as_ref().unwrap().cursor, 2);
+
+        app.on_key(Key::Backspace);
+        assert_eq!(app.compose.as_ref().unwrap().body, "h");
+        assert_eq!(app.compose.as_ref().unwrap().cursor, 1);
+
+        app.on_key(Key::Backspace);
+        app.on_key(Key::Backspace); // already empty
+        assert_eq!(app.compose.as_ref().unwrap().body, "");
+        assert_eq!(app.compose.as_ref().unwrap().cursor, 0);
+    }
+
+    #[test]
+    fn compose_cursor_movement_inserts_at_the_right_spot() {
+        let mut app = App::new();
+        app.on_message(Message::MessagesLoaded(vec![inbox_message(
+            "m-1", "w1", "hi",
+        )]));
+        focus_inbox(&mut app);
+        app.on_key(Key::Char('r'));
+        app.on_key(Key::Char('a'));
+        app.on_key(Key::Char('c'));
+        app.on_key(Key::Left);
+        app.on_key(Key::Char('b'));
+        assert_eq!(app.compose.as_ref().unwrap().body, "abc");
+        assert_eq!(app.compose.as_ref().unwrap().cursor, 2);
+
+        app.on_key(Key::Right);
+        assert_eq!(app.compose.as_ref().unwrap().cursor, 3);
+        app.on_key(Key::Right); // already at the end
+        assert_eq!(app.compose.as_ref().unwrap().cursor, 3);
+    }
+
+    #[test]
+    fn esc_cancels_the_compose_without_sending() {
+        let mut app = App::new();
+        app.on_message(Message::MessagesLoaded(vec![inbox_message(
+            "m-1", "w1", "hi",
+        )]));
+        focus_inbox(&mut app);
+        app.on_key(Key::Char('r'));
+        app.on_key(Key::Char('x'));
+        app.on_key(Key::Esc);
+        assert!(app.compose.is_none());
+        assert!(app.pending_send.is_none());
+        assert!(!app.should_quit);
+    }
+
+    #[test]
+    fn enter_submits_the_compose_as_a_pending_send() {
+        let mut app = App::new();
+        app.on_message(Message::MessagesLoaded(vec![inbox_message(
+            "m-1", "w1", "hi",
+        )]));
+        focus_inbox(&mut app);
+        app.on_key(Key::Char('r'));
+        app.on_key(Key::Char('o'));
+        app.on_key(Key::Char('k'));
+        app.on_key(Key::Enter);
+
+        assert!(app.compose.is_none());
+        let pending = app.pending_send.as_ref().expect("pending send");
+        assert_eq!(pending.to, "w1");
+        assert_eq!(pending.reply_to, "m-1");
+        assert_eq!(pending.body, "ok");
+    }
+
+    #[test]
+    fn enter_on_an_empty_body_does_not_submit() {
+        let mut app = App::new();
+        app.on_message(Message::MessagesLoaded(vec![inbox_message(
+            "m-1", "w1", "hi",
+        )]));
+        focus_inbox(&mut app);
+        app.on_key(Key::Char('r'));
+        app.on_key(Key::Enter);
+        assert!(app.compose.is_some());
+        assert!(app.pending_send.is_none());
+    }
+
+    #[test]
+    fn q_while_composing_is_typed_not_treated_as_quit() {
+        let mut app = App::new();
+        app.on_message(Message::MessagesLoaded(vec![inbox_message(
+            "m-1", "w1", "hi",
+        )]));
+        focus_inbox(&mut app);
+        app.on_key(Key::Char('r'));
+        app.on_key(Key::Char('q'));
+        assert_eq!(app.compose.as_ref().unwrap().body, "q");
+        assert!(!app.should_quit);
     }
 }
