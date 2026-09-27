@@ -62,4 +62,11 @@ start_prompt      = "Check your inbox and tell the human you're ready."   # firs
   ([[docs/design/roles-and-lifecycle|roles]]).
 
 The [[docs/design/workflow-layers|workflow layers]] later replace the role
-prompts. The `[roles]` table stays as the place models and tools are set.
+prompts. The `[roles]` table stays as the place a role's own default model
+and tools are set. `[models]` sits alongside it: an ordered, strongest-first
+model list per role that the budget governor steps down through when a
+spawn doesn't pin a model itself, e.g.
+`worker = ["sonnet", "haiku"]` — see
+[[../usage-and-budget#Model choice|Model choice]] for the defaults and the
+step-down rule. A project may replace a role's list outright; a role with no
+`[models]` entry falls back to its own `model` as a single-entry list.
