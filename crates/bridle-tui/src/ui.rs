@@ -15,7 +15,8 @@ pub fn draw(frame: &mut Frame, app: &App) {
         .direction(Direction::Vertical)
         .constraints([
             Constraint::Length(1),
-            Constraint::Percentage(40),
+            Constraint::Percentage(30),
+            Constraint::Percentage(35),
             Constraint::Min(3),
         ])
         .split(frame.area());
@@ -23,6 +24,7 @@ pub fn draw(frame: &mut Frame, app: &App) {
     draw_status_line(frame, chunks[0], app);
     draw_agents(frame, chunks[1], app);
     draw_events(frame, chunks[2], app);
+    draw_logs(frame, chunks[3], app);
 }
 
 fn draw_status_line(frame: &mut Frame, area: Rect, app: &App) {
@@ -92,6 +94,22 @@ fn draw_events(frame: &mut Frame, area: Rect, app: &App) {
     let items: Vec<ListItem> = app.events[start..end]
         .iter()
         .map(|ev| ListItem::new(render_event_line(ev)))
+        .collect();
+
+    let list = List::new(items).block(block);
+    frame.render_widget(list, area);
+}
+
+fn draw_logs(frame: &mut Frame, area: Rect, app: &App) {
+    let focused = app.focus == Focus::Logs;
+    let block = border_block("Logs", focused);
+    let inner_height = block.inner(area).height as usize;
+
+    let end = app.log_lines.len().saturating_sub(app.log_scroll);
+    let start = end.saturating_sub(inner_height);
+    let items: Vec<ListItem> = app.log_lines[start..end]
+        .iter()
+        .map(|line| ListItem::new(line.as_str()))
         .collect();
 
     let list = List::new(items).block(block);
