@@ -495,8 +495,14 @@ mod tests {
         app.on_message(Message::TranscriptLines {
             agent: "a-1".to_string(),
             lines: vec![
-                transcript_line(1, r#"{"type":"assistant","message":{"content":[{"type":"text","text":"one"}]}}"#),
-                transcript_line(2, r#"{"type":"assistant","message":{"content":[{"type":"text","text":"two"}]}}"#),
+                transcript_line(
+                    1,
+                    r#"{"type":"assistant","message":{"content":[{"type":"text","text":"one"}]}}"#,
+                ),
+                transcript_line(
+                    2,
+                    r#"{"type":"assistant","message":{"content":[{"type":"text","text":"two"}]}}"#,
+                ),
             ],
         });
         assert_eq!(app.log_lines.len(), 2);
