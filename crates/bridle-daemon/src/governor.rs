@@ -640,14 +640,22 @@ fn parse_get_usage(v: &Value, observed_at: DateTime<Utc>) -> Vec<RateLimit> {
 
     if let Some(map) = payload.get("rate_limits").and_then(Value::as_object) {
         for (window, entry) in map {
+            let utilization = entry
+                .get("utilization")
+                .and_then(Value::as_f64)
+                .map(|p| p / 100.0);
+            let resets_at = parse_iso(entry.get("resets_at"));
+            // Internal codenames and non-window fields share this object
+            // (docs/questions/open/v1-follow-ups-from-the-build-9c6e.md);
+            // only entries actually shaped like a window have either field.
+            if utilization.is_none() && resets_at.is_none() {
+                continue;
+            }
             out.push(RateLimit {
                 window: window.clone(),
                 status: None,
-                utilization: entry
-                    .get("utilization")
-                    .and_then(Value::as_f64)
-                    .map(|p| p / 100.0),
-                resets_at: parse_iso(entry.get("resets_at")),
+                utilization,
+                resets_at,
                 observed_at,
             });
         }
@@ -784,6 +792,43 @@ mod tests {
             .find(|r| r.window == "seven_day_sonnet")
             .expect("sonnet");
         assert_eq!(sonnet.utilization, Some(0.2));
+    }
+
+    #[test]
+    fn parses_get_usage_ignores_null_codenames_and_account_fields() {
+        // Shaped like a live probe's response (u7pw): real windows sit
+        // alongside dozens of null-valued internal codenames and unrelated
+        // account fields under the same `rate_limits` object.
+        let v = json!({
+            "response": {
+                "response": {
+                    "rate_limits": {
+                        "five_hour": {"utilization": 42.0, "resets_at": "2026-01-01T00:00:00Z"},
+                        "seven_day": {"utilization": 10.0},
+                        "project_zephyr_beta": {"utilization": null, "resets_at": null},
+                        "project_kestrel_internal": {"utilization": null},
+                        "codename_marlin_v2": {},
+                        "account_tier": "max_5x",
+                        "feature_flags_snapshot": {"enabled": true, "utilization": null}
+                    },
+                    "limits": [
+                        {"kind": "weekly_scoped", "percent": 60.0, "scope": {"model": "claude-opus-4"}}
+                    ],
+                    "spend": {"total_usd": 12.34},
+                    "extra_usage": {"allowed": false},
+                    "subscription_type": "max_5x",
+                    "member_dashboard_available": true
+                }
+            }
+        });
+        let observed = Utc::now();
+        let rls = parse_get_usage(&v, observed);
+        let windows: std::collections::BTreeSet<_> =
+            rls.iter().map(|r| r.window.as_str()).collect();
+        assert_eq!(
+            windows,
+            std::collections::BTreeSet::from(["five_hour", "seven_day", "seven_day_opus"])
+        );
     }
 
     #[test]

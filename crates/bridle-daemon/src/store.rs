@@ -494,7 +494,7 @@ mod sync {
     // Turns outlive their agent, carrying its name, role and model, so
     // `rm` doesn't erase usage history. SQLite can't drop a foreign key in
     // place, hence the rebuild.
-    const SCHEMA_V2: &str = r#"
+    pub(super) const SCHEMA_V2: &str = r#"
         CREATE TABLE turns_v2 (
             agent_id TEXT NOT NULL,
             agent_name TEXT NOT NULL,
@@ -531,7 +531,7 @@ mod sync {
     // `bridle statusline` snapshots from interactive sessions bridle doesn't
     // host: no agent id to attach them to, so this is its own table rather
     // than a row in `turns`.
-    const SCHEMA_V3: &str = r#"
+    pub(super) const SCHEMA_V3: &str = r#"
         CREATE TABLE interactive_usage (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             observed_at TEXT NOT NULL,
@@ -544,7 +544,14 @@ mod sync {
         CREATE INDEX interactive_usage_observed_at ON interactive_usage(observed_at);
     "#;
 
-    const MIGRATIONS: &[&str] = &[SCHEMA_V1, SCHEMA_V2, SCHEMA_V3];
+    // A `parse_get_usage` bug (fixed alongside this migration) recorded every
+    // key of the real `get_usage` response's `rate_limits` object, including
+    // null-valued internal codenames; this sweeps out any daemon's existing junk.
+    pub(super) const SCHEMA_V4: &str = r#"
+        DELETE FROM rate_limits WHERE utilization IS NULL AND resets_at IS NULL;
+    "#;
+
+    const MIGRATIONS: &[&str] = &[SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4];
 
     pub(super) fn open(path: &Path) -> Result<Connection, StoreError> {
         if let Some(parent) = path.parent() {
@@ -1595,6 +1602,34 @@ mod tests {
             .query_row("SELECT COUNT(*) FROM turns", [], |r| r.get(0))
             .expect("count");
         assert_eq!(n, 1);
+    }
+
+    #[test]
+    fn v4_migration_deletes_windowless_rate_limit_rows() {
+        let conn = Connection::open_in_memory().expect("open");
+        for sql in [sync::SCHEMA_V1, sync::SCHEMA_V2, sync::SCHEMA_V3] {
+            conn.execute_batch(sql).expect("earlier schema");
+        }
+        conn.pragma_update(None, "user_version", 3)
+            .expect("set version");
+        conn.execute_batch(
+            "INSERT INTO rate_limits(window, utilization, resets_at, observed_at)
+                VALUES ('five_hour', 0.42, '2026-01-01T00:00:00Z', 't');
+             INSERT INTO rate_limits(window, utilization, resets_at, observed_at)
+                VALUES ('project_zephyr_beta', NULL, NULL, 't');",
+        )
+        .expect("v3 rows");
+
+        sync::migrate(&conn).expect("migrate");
+
+        let windows: Vec<String> = conn
+            .prepare("SELECT window FROM rate_limits")
+            .expect("prepare")
+            .query_map([], |r| r.get(0))
+            .expect("query")
+            .collect::<Result<_, _>>()
+            .expect("rows");
+        assert_eq!(windows, vec!["five_hour".to_string()]);
     }
 
     /// Reproduces the real `JoinError::Cancelled` that `Store::open` and
