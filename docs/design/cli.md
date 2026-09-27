@@ -26,6 +26,7 @@ bridle rm      <agent> [--force] [--delete-branch]
 bridle logs    <agent> [--follow] [--raw] [--since LINE]
 bridle events  [--follow] [--since SEQ] [--agent A] [--kind PREFIX]
 bridle usage
+bridle tui                                  interactive terminal UI: agents list, live event tail
 bridle budget [hold [--for D|--until T] | release]   usage governor (usage-and-budget.md)
 bridle token create <name>
 bridle token list                           name, created-at, revoked-or-not; never the token itself
@@ -61,6 +62,16 @@ bridle statusline                           usage from interactive sessions
   slow, unreachable) shows `?` (`null` under `--json`) instead of blocking on
   it.
 - **`serve --detach`**: [[docs/design/agent-host/daemon#Running it|running the daemon]].
+- **`tui`** is a subcommand, not a separate binary, so it shares `bridle`'s discovery,
+  token and `--url`/`--project` flags like every other command. It's a thin client of
+  `bridle-api`'s `Client`: an agents list (seeded from `GET /v1/agents`, kept live by
+  `agent.state`/`agent.removed` events) and a scrolling event tail (`events_stream`,
+  which already reconnects on its own — see `crates/bridle-api/src/client/mod.rs`).
+  `Tab` switches between the two views, `j`/`k`/arrow keys scroll the focused one,
+  `q`/`Esc` quits. Lives in its own crate, `crates/bridle-tui`, split Elm-style: a
+  plain state struct and update function with no terminal/ratatui dependency (so it's
+  unit-tested without a terminal), rendered by a separate `ui` module. Per-agent logs
+  and inbox/reply are follow-up work, not built yet.
 - **`statusline`** is Claude Code's `statusLine` command, configured in `settings.json`. It
   reads Claude Code's JSON on stdin, prints a short line back, and posts a snapshot to
   `POST /v1/statusline` ([[docs/design/agent-host/api|API]]) using the same daemon discovery
