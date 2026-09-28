@@ -44,11 +44,30 @@ The human, verbatim (2026-09-28):
   manager and workers target must be a project setting. During a trial it is the trial
   branch; after adoption, `main` or `dev` per rxe8's two patterns.
 
+## The human's answers
+
+2026-09-28, on the name, how the branch starts, and pushing:
+
+> yes, bridle-adopt is a better name, I expect adoption to WORK! :) right the orchestrator
+> will clone main/dev to bridle-adopt and that is the target for all merged and work until
+> I personally approve to replace main/dev.
+> Yes, push branch to github.
+
+So:
+
+- The trial branch is **`bridle-adopt`** (outside the `bridle/<agent>` namespace, so no clash
+  with agent names).
+- The orchestrator creates it from the project's `main` (or `dev`, where that is the
+  working branch).
+- It is the target for all merges and work until the human personally approves replacing
+  `main`/`dev` with it.
+- It is pushed to GitHub.
+
 ## Notes
 
 - **Naming.** Agent branches are `bridle/<agent>`, and the state branch is
   `bridle/state`. A trial branch named `bridle/main` would clash with an agent named
-  `main`. The trial branch needs a name agents can't take (e.g. `bridle-trial`), or
+  `main`. The trial branch needs a name agents can't take (settled: `bridle-adopt`, below), or
   agent-name validation should reserve it. The same clash exists today for an agent named
   `state` (`validate_agent_name` in `crates/bridle-daemon/src/worktree.rs` doesn't
   reserve it), worth checking.
