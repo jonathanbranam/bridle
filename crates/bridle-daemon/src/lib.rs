@@ -28,6 +28,7 @@ mod server;
 pub mod state_branch;
 pub mod store;
 mod supervisor;
+pub mod sync;
 mod tasks;
 pub mod worktree;
 

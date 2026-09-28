@@ -119,6 +119,12 @@ pub enum Command {
     /// Layer resolution over the workflow rules (docs/design/workflow-layers.md):
     /// which layer wins each rule id, and what a project changes.
     Rules(RulesArgs),
+    /// Renders the resolved workflow layers into what Claude Code reads:
+    /// CLAUDE.md's managed block, .claude/skills, .claude/agents and
+    /// .claude/settings.json's hooks (docs/design/workflow-layers.md,
+    /// "Rendering into what the agent harness reads"). Local, like `rules
+    /// explain`/`diff` — no daemon call.
+    Sync,
 }
 
 #[derive(Debug, Args)]
