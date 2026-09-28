@@ -18,11 +18,12 @@ use futures::StreamExt;
 use crate::cli::{
     AgentsArgs, AnswerArgs, AskArgs, BudgetAction, BudgetArgs, BudgetHoldArgs, ClaimArgs, Cli,
     Command, CostAction, CostArgs, CostAuditArgs, DepAction, DepArgs, DepEdgeArgs, EdgeKindArg,
-    EventsArgs, InboxArgs, InterruptArgs, LogsArgs, PrimeArgs, PrimeRoleArg, ReadyArgs,
-    ReleaseArgs, RmArgs, RulesAction, RulesArgs, RulesDiffArgs, RulesExplainArgs, SendArgs,
-    ShowArgs, SpawnArgs, StopArgs, TaskAction, TaskArgs, TaskDropArgs, TaskEditArgs, TaskKindArg,
-    TaskListArgs, TaskNewArgs, TaskNoteArgs, TaskReopenArgs, TaskShowArgs, TokenAction, TokenArgs,
-    UsageArgs, UsageByArg, WhenArg,
+    EventsArgs, InboxArgs, InterruptArgs, LogsArgs, PrimeArgs, PrimeRoleArg, QueueAction,
+    QueueAddTierArgs, QueueArgs, QueueSetArgs, ReadyArgs, ReleaseArgs, RmArgs, RulesAction,
+    RulesArgs, RulesDiffArgs, RulesExplainArgs, SendArgs, ShowArgs, SpawnArgs, StopArgs,
+    TaskAction, TaskArgs, TaskDropArgs, TaskEditArgs, TaskKindArg, TaskListArgs, TaskNewArgs,
+    TaskNoteArgs, TaskPlanArgs, TaskReopenArgs, TaskShowArgs, TokenAction, TokenArgs, UsageArgs,
+    UsageByArg, WhenArg,
 };
 use crate::error::CliError;
 use crate::render;
@@ -59,6 +60,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Claim(args) => claim(&cli, args).await,
         Command::Release(args) => release(&cli, args).await,
         Command::Ready(args) => ready(&cli, args).await,
+        Command::Queue(args) => queue(&cli, args).await,
         Command::Statusline => statusline(&cli).await,
         Command::StopCheck => stop_check(&cli).await,
         Command::Prime(args) => prime(args).await,
@@ -1377,6 +1379,7 @@ async fn task(cli: &Cli, args: &TaskArgs) -> Result<(), CliError> {
         TaskAction::Show(a) => task_show(cli, a).await,
         TaskAction::Edit(a) => task_edit(cli, a).await,
         TaskAction::List(a) => task_list(cli, a).await,
+        TaskAction::Plan(a) => task_plan(cli, a).await,
         TaskAction::Drop(a) => task_drop(cli, a).await,
         TaskAction::Reopen(a) => task_reopen(cli, a).await,
         TaskAction::Note(a) => task_note(cli, a).await,
@@ -1466,6 +1469,17 @@ async fn task_list(cli: &Cli, args: &TaskListArgs) -> Result<(), CliError> {
         for t in &tasks {
             print_task_row(t);
         }
+    }
+    Ok(())
+}
+
+async fn task_plan(cli: &Cli, args: &TaskPlanArgs) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let task = client.plan_task(&args.task).await?;
+    if cli.json {
+        render::print_json(&task)?;
+    } else {
+        print_task_row(&task);
     }
     Ok(())
 }
@@ -1583,7 +1597,7 @@ async fn ready(cli: &Cli, args: &ReadyArgs) -> Result<(), CliError> {
 
     if !args.all {
         let client = client_for_read(cli).await?;
-        let tasks = client.ready_tasks().await?;
+        let tasks = client.top_tier_ready_tasks().await?;
         if cli.json {
             render::print_json(&tasks)?;
         } else if tasks.is_empty() {
@@ -1609,7 +1623,7 @@ async fn ready(cli: &Cli, args: &ReadyArgs) -> Result<(), CliError> {
         .flatten();
         let client =
             Client::new_with_timeout(info.url.clone(), token, std::time::Duration::from_secs(5));
-        if let Ok(tasks) = client.ready_tasks().await {
+        if let Ok(tasks) = client.top_tier_ready_tasks().await {
             rows.extend(tasks.into_iter().map(|t| (info.project.clone(), t)));
         }
     }
@@ -1620,6 +1634,151 @@ async fn ready(cli: &Cli, args: &ReadyArgs) -> Result<(), CliError> {
     } else {
         for (project, t) in &rows {
             print_task_row_with_project(Some(project), t);
+        }
+    }
+    Ok(())
+}
+
+async fn queue(cli: &Cli, args: &QueueArgs) -> Result<(), CliError> {
+    match &args.action {
+        None => queue_show(cli).await,
+        Some(QueueAction::Set(a)) => queue_set(cli, a).await,
+        Some(QueueAction::AddTier(a)) => queue_add_tier(cli, a).await,
+    }
+}
+
+/// Splits `--tier tw-1,tw-2 --tier tw-3` into the ordered `Vec<Vec<String>>`
+/// `set_queue`/`add_queue_tier` want.
+fn split_tier(s: &str) -> Vec<String> {
+    s.split(',')
+        .map(|id| id.trim().to_string())
+        .filter(|id| !id.is_empty())
+        .collect()
+}
+
+async fn queue_set(cli: &Cli, args: &QueueSetArgs) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let tiers: Vec<Vec<String>> = args.tiers.iter().map(|t| split_tier(t)).collect();
+    let q = client.set_queue(tiers).await?;
+    if cli.json {
+        render::print_json(&q)?;
+    } else {
+        println!("queue set: {} tier(s)", q.tiers.len());
+    }
+    Ok(())
+}
+
+async fn queue_add_tier(cli: &Cli, args: &QueueAddTierArgs) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let q = client.add_queue_tier(args.tasks.clone()).await?;
+    if cli.json {
+        render::print_json(&q)?;
+    } else {
+        println!("queue set: {} tier(s)", q.tiers.len());
+    }
+    Ok(())
+}
+
+#[derive(serde::Serialize)]
+struct QueueTaskRow {
+    id: String,
+    title: String,
+    kind: TaskKind,
+    state: bridle_api::TaskState,
+    /// Ready (deps met, no open question) and, since ready already implies
+    /// `planned`, therefore unclaimed too (roles-and-lifecycle.md, "the
+    /// queue").
+    startable: bool,
+}
+
+#[derive(serde::Serialize)]
+struct QueueTierRow {
+    rank: usize,
+    tasks: Vec<QueueTaskRow>,
+}
+
+#[derive(serde::Serialize)]
+struct QueueView {
+    claimed: Vec<Task>,
+    tiers: Vec<QueueTierRow>,
+}
+
+/// `bridle queue`'s read-only view: claimed tasks with their worker, then
+/// the tiers in rank order, each task marked startable or blocked
+/// (roles-and-lifecycle.md, "the queue"). Composed client-side from three
+/// plain reads (queue, all tasks, ready tasks) rather than a bespoke server
+/// endpoint, since none of the three needs PM/human-only write access.
+async fn queue_show(cli: &Cli) -> Result<(), CliError> {
+    let client = client_for_read(cli).await?;
+    let q = client.get_queue().await?;
+    let all_tasks = client.list_tasks().await?;
+    let ready_ids: std::collections::HashSet<String> = client
+        .ready_tasks()
+        .await?
+        .into_iter()
+        .map(|t| t.id)
+        .collect();
+    let by_id: std::collections::HashMap<&str, &Task> =
+        all_tasks.iter().map(|t| (t.id.as_str(), t)).collect();
+
+    let claimed: Vec<Task> = all_tasks
+        .iter()
+        .filter(|t| t.claimed_by.is_some())
+        .cloned()
+        .collect();
+    let tiers: Vec<QueueTierRow> = q
+        .tiers
+        .iter()
+        .enumerate()
+        .map(|(i, tier)| QueueTierRow {
+            rank: i + 1,
+            tasks: tier
+                .iter()
+                .filter_map(|id| by_id.get(id.as_str()).copied())
+                .map(|t| QueueTaskRow {
+                    id: t.id.clone(),
+                    title: t.title.clone(),
+                    kind: t.kind,
+                    state: t.state,
+                    startable: ready_ids.contains(&t.id),
+                })
+                .collect(),
+        })
+        .collect();
+
+    if cli.json {
+        render::print_json(&QueueView { claimed, tiers })?;
+        return Ok(());
+    }
+
+    if claimed.is_empty() {
+        println!("no claimed tasks");
+    } else {
+        println!("Claimed:");
+        for t in &claimed {
+            println!(
+                "  {:<10} {:<9} {:<8} {:<16} {}",
+                t.id,
+                t.kind,
+                t.state,
+                t.claimed_by.as_deref().unwrap_or(""),
+                t.title
+            );
+        }
+    }
+    if tiers.is_empty() {
+        println!("no queue set");
+        return Ok(());
+    }
+    for tier in &tiers {
+        println!();
+        println!("Tier {}:", tier.rank);
+        for t in &tier.tasks {
+            let mark = if t.startable { "startable" } else { "blocked" };
+            println!(
+                "  {:<10} {:<9} {:<8} {:<9} {}",
+                t.id, t.kind, t.state, mark, t.title
+            );
         }
     }
     Ok(())

@@ -169,13 +169,13 @@ pub struct OpenQuestion {
     pub asked_at: DateTime<Utc>,
 }
 
-/// The fast-index row for a claim (storage.md: "the ephemeral tables
-/// claims, waits, ports, impact_cache arrive with later tasks" — this table
-/// is SQLite-only, with no state-branch counterpart). `task_id` is the
-/// primary key: a task has at most one claimant at a time. Lease expiry is
-/// computed live from the claiming agent's own activity (`agents.last_event_at`
-/// / `turn_started_at`), not stored here, so there's nothing to renew on a
-/// tick.
+/// The fast-index row for a claim (storage.md, "claims"), mirrored to the
+/// state branch's `claims.toml` so `bridle rebuild` can restore it; the
+/// ephemeral tables `waits`, `ports`, `impact_cache` still arrive with later
+/// tasks. `task_id` is the primary key: a task has at most one claimant at a
+/// time. Lease expiry is computed live from the claiming agent's own
+/// activity (`agents.last_event_at`/`turn_started_at`), not stored here, so
+/// there's nothing to renew on a tick.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Claim {
     pub task_id: String,
@@ -869,11 +869,10 @@ mod sync {
         );
     "#;
 
-    // The fast index over claims (storage.md: "the ephemeral tables claims,
-    // waits, ports, impact_cache arrive with later tasks"), SQLite-only —
-    // unlike `open_questions`, no state-branch file mirrors this table.
-    // `task_id` is the primary key, since a task has at most one claimant at
-    // a time.
+    // The fast index over claims (storage.md, "claims"), mirrored to the
+    // state branch's `claims.toml` the same way `open_questions` mirrors its
+    // thread entry. `task_id` is the primary key, since a task has at most
+    // one claimant at a time.
     pub(super) const SCHEMA_V9: &str = r#"
         CREATE TABLE claims (
             task_id TEXT PRIMARY KEY,

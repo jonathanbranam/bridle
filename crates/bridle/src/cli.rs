@@ -100,9 +100,14 @@ pub enum Command {
     Claim(ClaimArgs),
     /// Release the calling principal's own claim: `claimed` -> `planned`.
     Release(ReleaseArgs),
-    /// List every ready task: planned, with no open `blocks` edge naming an
-    /// unresolved blocker (roles-and-lifecycle.md, "ready is computed").
+    /// The highest queue tier with a startable task: planned, deps met, no
+    /// open question, unclaimed (roles-and-lifecycle.md, "the queue"). A
+    /// task outside the queue is backlog and never shown here.
     Ready(ReadyArgs),
+    /// The queue: claimed tasks with their worker, then the tiers in rank
+    /// order (roles-and-lifecycle.md, "the queue"). Read-only; `queue set`/
+    /// `queue add-tier` edit it, PM (or human) only.
+    Queue(QueueArgs),
     /// Claude Code's statusLine command: reads its JSON on stdin, prints a
     /// line back, and records a usage snapshot. Never fails or blocks: see
     /// docs/design/usage-and-budget.md ("Where bridle can see usage").
@@ -455,6 +460,8 @@ pub enum TaskAction {
     Edit(TaskEditArgs),
     /// List every task: id, title, kind, state.
     List(TaskListArgs),
+    /// Mark a task ready to build: `open` -> `planned`.
+    Plan(TaskPlanArgs),
     /// Drop a task (requires a reason, recorded in its thread).
     Drop(TaskDropArgs),
     /// Bring a dropped task back.
@@ -493,6 +500,11 @@ pub struct TaskEditArgs {
     pub title: Option<String>,
     #[arg(long)]
     pub body: Option<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct TaskPlanArgs {
+    pub task: String,
 }
 
 #[derive(Debug, Args)]
@@ -618,6 +630,37 @@ pub struct ReadyArgs {
     /// ignored.
     #[arg(long)]
     pub role: Option<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct QueueArgs {
+    #[command(subcommand)]
+    pub action: Option<QueueAction>,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum QueueAction {
+    /// Replace the whole queue: reorder, add or remove by resending the
+    /// tiers in the shape they should be. PM (or human) only.
+    Set(QueueSetArgs),
+    /// Append one new tier, ranked after every existing one. PM (or human)
+    /// only.
+    AddTier(QueueAddTierArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct QueueSetArgs {
+    /// One tier, as its task ids, comma-separated, in rank order. Repeat
+    /// for more than one tier: `--tier tw-1,tw-2 --tier tw-3`.
+    #[arg(long = "tier", value_name = "TASK,TASK,...", required = true)]
+    pub tiers: Vec<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct QueueAddTierArgs {
+    /// The new tier's task ids, equally ranked.
+    #[arg(required = true)]
+    pub tasks: Vec<String>,
 }
 
 #[cfg(test)]

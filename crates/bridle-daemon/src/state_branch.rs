@@ -60,6 +60,16 @@ struct Pending {
     /// per-edge id to key a per-file write on, and the whole set is small,
     /// so each enqueue re-renders it entirely rather than diffing.
     edges: Option<String>,
+    /// The full rendered contents of `claims.toml`, replaced wholesale on
+    /// every [`StateBranch::enqueue_claims`] call, the same reasoning as
+    /// `edges` above: claims are durable now (storage.md, "claims"), but
+    /// there's still no per-claim file to key a targeted write on.
+    claims: Option<String>,
+    /// The full rendered contents of `queue.toml`, replaced wholesale on
+    /// every [`StateBranch::enqueue_queue`] call: the queue is one small,
+    /// PM-owned record (roles-and-lifecycle.md, "the queue"), not per-task
+    /// files.
+    queue: Option<String>,
 }
 
 /// A handle onto the state branch's worktree. Cheap to clone (an `Arc`
@@ -131,6 +141,26 @@ impl StateBranch {
             .push((month, line));
     }
 
+    /// Queues one `events/<YYYY-MM>.jsonl` line for a queue reprioritisation:
+    /// the same append-only history [`StateBranch::enqueue_event`] gives
+    /// task transitions, keyed by `"queue"` instead of a task id, so a
+    /// reprioritisation's actor survives even though `queue.toml` itself
+    /// (wholesale-replaced) carries no history of its own.
+    pub fn enqueue_queue_event(&self, actor: &str, at: DateTime<Utc>) {
+        let month = at.format("%Y-%m").to_string();
+        let line = serde_json::json!({
+            "queue": "reprioritized",
+            "at": at,
+            "actor": actor,
+        })
+        .to_string();
+        self.pending
+            .lock()
+            .expect("state branch pending lock")
+            .events
+            .push((month, line));
+    }
+
     /// Queues the full current edge set to overwrite `edges.toml` at the
     /// next flush. The caller passes every edge, not a delta: SQLite is the
     /// source of truth for what currently exists (docs/design/storage.md),
@@ -144,21 +174,56 @@ impl StateBranch {
         Ok(())
     }
 
-    /// Writes every pending file, event line and the edges snapshot, then
-    /// makes one commit, if anything is pending; a pure no-op (no git calls
-    /// at all) otherwise. Takes what's pending under the lock and does the
-    /// slower file/git work outside it, so an `enqueue_*` racing this call
-    /// can't be lost: it either lands in this flush or the next one.
+    /// Queues the full current claim set to overwrite `claims.toml` at the
+    /// next flush, mirroring [`StateBranch::enqueue_edges`]'s wholesale
+    /// approach. Claims are durable now (storage.md, "claims"): a `bridle
+    /// rebuild` restores current claims from this file, unlike before this
+    /// existed, when a claim had no state-branch counterpart at all.
+    pub fn enqueue_claims(&self, claims: &[ClaimRecord]) -> Result<(), StateBranchError> {
+        let rendered = render_claims(claims)?;
+        self.pending
+            .lock()
+            .expect("state branch pending lock")
+            .claims = Some(rendered);
+        Ok(())
+    }
+
+    /// Queues the full current queue record to overwrite `queue.toml` at the
+    /// next flush, the same wholesale approach as edges/claims: the whole
+    /// record is small, and there's no per-tier id to key a targeted write
+    /// on.
+    pub fn enqueue_queue(&self, tiers: &[Vec<String>]) -> Result<(), StateBranchError> {
+        let rendered = render_queue(tiers)?;
+        self.pending
+            .lock()
+            .expect("state branch pending lock")
+            .queue = Some(rendered);
+        Ok(())
+    }
+
+    /// Writes every pending file, event line, and the edges/claims/queue
+    /// snapshots, then makes one commit, if anything is pending; a pure
+    /// no-op (no git calls at all) otherwise. Takes what's pending under the
+    /// lock and does the slower file/git work outside it, so an `enqueue_*`
+    /// racing this call can't be lost: it either lands in this flush or the
+    /// next one.
     pub async fn flush_now(&self) -> Result<(), StateBranchError> {
         let Pending {
             files,
             events,
             edges,
+            claims,
+            queue,
         } = {
             let mut guard = self.pending.lock().expect("state branch pending lock");
             std::mem::take(&mut *guard)
         };
-        if files.is_empty() && events.is_empty() && edges.is_none() {
+        if files.is_empty()
+            && events.is_empty()
+            && edges.is_none()
+            && claims.is_none()
+            && queue.is_none()
+        {
             return Ok(());
         }
 
@@ -169,6 +234,12 @@ impl StateBranch {
         }
         if let Some(contents) = &edges {
             std::fs::write(self.dir.join("edges.toml"), contents)?;
+        }
+        if let Some(contents) = &claims {
+            std::fs::write(self.dir.join("claims.toml"), contents)?;
+        }
+        if let Some(contents) = &queue {
+            std::fs::write(self.dir.join("queue.toml"), contents)?;
         }
 
         if !events.is_empty() {
@@ -201,14 +272,29 @@ impl StateBranch {
         if status.trim().is_empty() {
             return Ok(());
         }
-        let message = match (files.is_empty(), edges.is_some()) {
-            (false, true) => format!("{} task update(s), edges", files.len()),
-            (false, false) => format!("{} task update(s)", files.len()),
-            (true, true) => "edges update".to_string(),
-            // Neither files nor edges changed, so this flush is only events
-            // (or, since `flush_now` already returned early with nothing
-            // pending at all, unreachable in practice); keep the old wording.
-            (true, false) => "1 task update(s)".to_string(),
+        // Built from whatever actually changed, rather than a fixed match
+        // arm per combination: with edges/claims/queue all independently
+        // optional now, enumerating every combination by hand doesn't scale.
+        let mut parts = Vec::new();
+        if !files.is_empty() {
+            parts.push(format!("{} task update(s)", files.len()));
+        }
+        if edges.is_some() {
+            parts.push("edges".to_string());
+        }
+        if claims.is_some() {
+            parts.push("claims".to_string());
+        }
+        if queue.is_some() {
+            parts.push("queue".to_string());
+        }
+        // Nothing but events changed (or, since `flush_now` already returned
+        // early with nothing pending at all, unreachable in practice); keep
+        // the old wording.
+        let message = if parts.is_empty() {
+            "1 task update(s)".to_string()
+        } else {
+            parts.join(", ")
         };
         worktree::run_git(
             &self.dir,
@@ -280,6 +366,42 @@ impl StateBranch {
             Err(e) => Err(e.into()),
         }
     }
+
+    /// The current claim set from `claims.toml`, or empty if the file
+    /// doesn't exist yet (a project with nothing claimed, or one predating
+    /// durable claims). Used both to hydrate `TaskManager::open`'s claims
+    /// cache and by `bridle rebuild`.
+    pub fn list_claims(&self) -> Result<Vec<ClaimRecord>, StateBranchError> {
+        match std::fs::read_to_string(self.dir.join("claims.toml")) {
+            Ok(text) => parse_claims(&text),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Vec::new()),
+            Err(e) => Err(e.into()),
+        }
+    }
+
+    /// The current queue record from `queue.toml`, tolerating a missing or
+    /// unparseable file as "no queue yet" (empty) rather than failing —
+    /// [`StateBranch::read_task`]'s reasoning applies the same way here,
+    /// since this is also used to hydrate the in-memory cache on daemon
+    /// startup, not just `bridle rebuild`.
+    pub fn read_queue(&self) -> Vec<Vec<String>> {
+        let text = match std::fs::read_to_string(self.dir.join("queue.toml")) {
+            Ok(text) => text,
+            Err(_) => return Vec::new(),
+        };
+        parse_queue(&text).unwrap_or_default()
+    }
+}
+
+/// One row of `claims.toml`: a task id, its claimant, and when it was
+/// claimed — the state-branch mirror of `store::Claim`, using a plain
+/// `String` rather than `PrincipalId` since this module doesn't otherwise
+/// depend on `bridle_api`'s principal alias.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ClaimRecord {
+    pub task_id: String,
+    pub claimed_by: String,
+    pub claimed_at: DateTime<Utc>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -463,11 +585,112 @@ fn parse_task(text: &str) -> Result<Task, StateBranchError> {
         thread,
         created_at: fm.created_at,
         updated_at: fm.updated_at,
-        // Claims are SQLite-only, with nothing on the state branch to read
-        // back (storage.md); the caller layers the current claim on top.
+        // Not this file's job: `TaskManager` layers the current claim (from
+        // `claims.toml`/SQLite, storage.md) on top of what this parses.
         claimed_by: None,
         claimed_at: None,
     })
+}
+
+#[derive(Serialize)]
+struct ClaimRecordFile<'a> {
+    task: &'a str,
+    claimed_by: &'a str,
+    claimed_at: DateTime<Utc>,
+}
+
+#[derive(Serialize)]
+struct ClaimsFile<'a> {
+    claim: Vec<ClaimRecordFile<'a>>,
+}
+
+/// The whole claim set as one `claims.toml`, mirroring [`render_edges`]'s
+/// wholesale-array-of-tables shape. Unlike edges, this one does have a read
+/// path back (`parse_claims`, [`StateBranch::list_claims`]): claims are
+/// SQLite-only otherwise (storage.md), so this file is the only durable copy
+/// `bridle rebuild` can restore them from.
+fn render_claims(claims: &[ClaimRecord]) -> Result<String, StateBranchError> {
+    let file = ClaimsFile {
+        claim: claims
+            .iter()
+            .map(|c| ClaimRecordFile {
+                task: &c.task_id,
+                claimed_by: &c.claimed_by,
+                claimed_at: c.claimed_at,
+            })
+            .collect(),
+    };
+    Ok(toml::to_string_pretty(&file)?)
+}
+
+#[derive(Deserialize)]
+struct ClaimRecordFileOwned {
+    task: String,
+    claimed_by: String,
+    claimed_at: DateTime<Utc>,
+}
+
+#[derive(Deserialize, Default)]
+struct ClaimsFileOwned {
+    #[serde(default)]
+    claim: Vec<ClaimRecordFileOwned>,
+}
+
+/// The inverse of [`render_claims`].
+fn parse_claims(text: &str) -> Result<Vec<ClaimRecord>, StateBranchError> {
+    let file: ClaimsFileOwned = toml::from_str(text)?;
+    Ok(file
+        .claim
+        .into_iter()
+        .map(|c| ClaimRecord {
+            task_id: c.task,
+            claimed_by: c.claimed_by,
+            claimed_at: c.claimed_at,
+        })
+        .collect())
+}
+
+#[derive(Serialize)]
+struct QueueTierRecord<'a> {
+    tasks: &'a [String],
+}
+
+#[derive(Serialize)]
+struct QueueFile<'a> {
+    tier: Vec<QueueTierRecord<'a>>,
+}
+
+/// The queue as one `queue.toml`, an ordered array of tables (`[[tier]]`):
+/// array order *is* rank order (tier 1 first), so there's no separate rank
+/// field to keep in sync with position. Has a read path back
+/// ([`parse_queue`], [`StateBranch::read_queue`]) since the queue has no
+/// SQLite counterpart at all — this file is its only durable copy.
+fn render_queue(tiers: &[Vec<String>]) -> Result<String, StateBranchError> {
+    let file = QueueFile {
+        tier: tiers
+            .iter()
+            .map(|tasks| QueueTierRecord { tasks })
+            .collect(),
+    };
+    Ok(toml::to_string_pretty(&file)?)
+}
+
+#[derive(Deserialize, Default)]
+struct QueueTierRecordOwned {
+    #[serde(default)]
+    tasks: Vec<String>,
+}
+
+#[derive(Deserialize, Default)]
+struct QueueFileOwned {
+    #[serde(default)]
+    tier: Vec<QueueTierRecordOwned>,
+}
+
+/// The inverse of [`render_queue`].
+fn parse_queue(text: &str) -> Result<Vec<Vec<String>>, StateBranchError> {
+    let file: QueueFileOwned = toml::from_str(text)?;
+    Ok(file.tier.into_iter().map(|t| t.tasks).collect())
 }
 
 #[cfg(test)]
@@ -692,6 +915,56 @@ mod tests {
         sb.flush_now().await.expect("flush");
         let contents = std::fs::read_to_string(dir.join("edges.toml")).expect("read edges.toml");
         assert!(!contents.contains("tw-0001"));
+    }
+
+    #[tokio::test]
+    async fn claims_round_trip_through_flush_and_read_back() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let repo = tmp.path().join("repo");
+        init_repo(&repo).await;
+        let dir = tmp.path().join("state");
+        let sb = StateBranch::open(&repo, &dir).await.expect("open");
+
+        let claim = ClaimRecord {
+            task_id: "tw-0001".to_string(),
+            claimed_by: "agent:w1".to_string(),
+            claimed_at: Utc::now(),
+        };
+        sb.enqueue_claims(std::slice::from_ref(&claim))
+            .expect("enqueue");
+        sb.flush_now().await.expect("flush");
+
+        let read_back = sb.list_claims().expect("list claims");
+        assert_eq!(read_back.len(), 1);
+        assert_eq!(read_back[0].task_id, "tw-0001");
+        assert_eq!(read_back[0].claimed_by, "agent:w1");
+
+        // Releasing means the next enqueue passes an empty set, which
+        // overwrites the file rather than appending to it.
+        sb.enqueue_claims(&[]).expect("enqueue empty");
+        sb.flush_now().await.expect("flush");
+        assert!(sb.list_claims().expect("list claims").is_empty());
+    }
+
+    #[tokio::test]
+    async fn queue_round_trips_through_flush_and_read_back_and_defaults_to_empty() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let repo = tmp.path().join("repo");
+        init_repo(&repo).await;
+        let dir = tmp.path().join("state");
+        let sb = StateBranch::open(&repo, &dir).await.expect("open");
+
+        // No queue.toml written yet: reads as an empty queue, not an error.
+        assert!(sb.read_queue().is_empty());
+
+        let tiers = vec![
+            vec!["tw-0001".to_string(), "tw-0002".to_string()],
+            vec!["tw-0003".to_string()],
+        ];
+        sb.enqueue_queue(&tiers).expect("enqueue");
+        sb.flush_now().await.expect("flush");
+
+        assert_eq!(sb.read_queue(), tiers);
     }
 
     /// The safety property the design calls out explicitly: writing to the

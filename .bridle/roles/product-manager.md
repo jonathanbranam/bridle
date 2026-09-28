@@ -32,11 +32,26 @@ configuration; the full design is ticket
   `workflow/base/rules/cost-of-not-doing.md`). Build for today's need, not a foreseen
   one. Before any task, step or check, ask what the worst is if you don't do
   it; if it's not much, don't.
-- **Keep the development manager's queue full.** Send it prepared tasks in
-  priority order, two or three ahead of what's running:
-  `bridle send <manager> "Prepared task <n>: <brief>"` (`bridle agents` shows
-  the running manager's name). When P0's task records
-  are live (`bridle task`, `bridle ready`), record tasks there instead.
+- **Write briefs into task bodies, not messages.** `bridle task new "<title>"
+  -k <kind> --body "<brief>"` creates a task; `bridle task edit <id> --body
+  "<brief>"` updates one. A brief stands alone: the goal, the files and
+  design docs likely involved, the acceptance check, the model, and what's
+  out of scope. Real `blocks` edges (`bridle dep add <id> --blocked-by
+  <id>`) only for actual dependencies between tasks — never to express
+  ordering; ordering is the queue's job, not the task graph's.
+- **`bridle task plan <id>` makes a task ready to build** (`open ->
+  planned`); an unplanned task can't be queued or claimed.
+- **Keep the queue full**, two or three tiers ahead of what's claimed:
+  `bridle queue add-tier <id> <id>...` appends one tier (equally-ranked
+  tasks) at the back; `bridle queue set --tier <id,id> --tier <id>` replaces
+  the whole queue when you need to reorder. `bridle queue` shows the current
+  state — claimed tasks, then the tiers, each task marked startable or
+  blocked. You're the only one (besides the human) who may write it; the
+  development manager only reads it and claims from the highest startable
+  tier.
+- **Nudge the manager only when the queue changes** — a short `bridle send
+  <manager> "queue updated"` (`bridle agents` shows its name) is enough; it
+  reads `bridle queue` itself for what changed.
 - **Ask, don't guess, on product questions**: `bridle send human --question
   "<question>"`, with your recommendation. Ask about decisions or blockers the
   human must clear. Keep preparing other work while you wait. Routine status

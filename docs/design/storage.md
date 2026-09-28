@@ -102,49 +102,95 @@ Claims get their own table too (`SCHEMA_V9`):
 claims(task_id TEXT PK, claimed_by, claimed_at)
 ```
 
-Unlike every table above, this one is *never* mirrored to the state branch —
-no task file write, no thread entry, no event. `task_id` is the primary key:
-a task has at most one claimant at a time, so `TaskManager::claim_task` on
-an already-claimed (or otherwise not-ready) task is a conflict, the same
-shape as `insert_edge`/`ask_question`'s conflicts. Claiming transitions the
-task `planned -> claimed` (dropping it out of `ready`, since that already
-requires `planned`); releasing — explicit, or the lease expiring — reverses
-it. There's no separate lease-renewal call: `TaskManager::tick_claim_lease_check`
-reads the claiming agent's own `last_event_at`/`turn_started_at` (the same
-signal `supervisor.rs`'s stall check watches) and releases the claim once
-that activity is older than `config.claim_lease_after`. The ephemeral tables
+`task_id` is the primary key: a task has at most one claimant at a time, so
+`TaskManager::claim_task` on an already-claimed (or otherwise not-ready)
+task is a conflict, the same shape as `insert_edge`/`ask_question`'s
+conflicts. Claiming transitions the task `planned -> claimed` (dropping it
+out of `ready`, since that already requires `planned`); releasing —
+explicit, or the lease expiring — reverses it. There's no separate
+lease-renewal call: `TaskManager::tick_claim_lease_check` reads the claiming
+agent's own `last_event_at`/`turn_started_at` (the same signal
+`supervisor.rs`'s stall check watches) and releases the claim once that
+activity is older than `config.claim_lease_after`. The ephemeral tables
 `waits`, `ports`, `impact_cache` arrive with later tasks.
+
+**Claims are durable now (j479):** unlike `tasks`/`edges`/`open_questions`,
+there's no per-claim file to key a targeted write on, so — the same
+wholesale approach `edges.toml` already uses — every claim/release enqueues
+the *entire* current claim set to overwrite the state branch's `claims.toml`
+at the next flush (`TaskManager::enqueue_claims_snapshot`,
+`StateBranch::enqueue_claims`). Unlike `edges.toml`, this file does have a
+read path back (`StateBranch::list_claims`): `bridle rebuild`
+(`TaskManager::rebuild_from_state_branch`) restores `claims` from it, the
+same way it restores `tasks`/`edges`/`open_questions` from their own files —
+inserting each row and setting the task's `state` back to `Claimed` (that
+part happens only in SQLite even in the live path, so rebuild mirrors it
+explicitly rather than getting it from the task file, which never carries
+`claimed`). Refusing to rebuild over an already-populated database now checks
+`claims` too, alongside the other three tables.
 
 The current claim, if any, rides along on the wire `Task` as `claimed_by`/
 `claimed_at` (`bridle-api::types::Task`): null when unclaimed, populated from
-`claims` on `TaskManager::open` and again on every claim/release. Like the
-table it mirrors, it's never written to the state branch — a task read back
-from the state branch alone (e.g. after `bridle rebuild`) always has it null,
-even if it was claimed before the last flush. `GET /v1/tasks?claimed_by=`
-filters on it; `me` resolves to the calling principal's own id (the same
-pattern `?to=me` uses for messages, `server.rs::resolve_to`), anything else
-is matched against `claimed_by` verbatim after the same name lookup
-`resolve_from` does for messages.
+`claims` on `TaskManager::open` and again on every claim/release. `GET
+/v1/tasks?claimed_by=` filters on it; `me` resolves to the calling
+principal's own id (the same pattern `?to=me` uses for messages,
+`server.rs::resolve_to`), anything else is matched against `claimed_by`
+verbatim after the same name lookup `resolve_from` does for messages.
 
 Every durable write goes to the database and the state branch in the same
 logical operation (for the `tasks` table: synchronously to SQLite, then
-enqueued for the state branch's next batched flush — see below; edges follow
-the same rule, enqueuing the *entire* current edge set on every add/remove
-rather than a diff, since there's no per-edge file to key a targeted write
-on). Asking and answering a question follow the same rule: the
-`open_questions` row is written synchronously, like a task or edge row, while
-the thread entry it corresponds to is enqueued for the next flush. Claiming
-and releasing a task write synchronously to `claims` and to `tasks.state`
-and stop there — there's nothing to enqueue. The database is the read path
-because it's fast, and git is the recovery path.
+enqueued for the state branch's next batched flush — see below; edges and
+claims follow the same rule, enqueuing the *entire* current set on every
+add/remove rather than a diff, since there's no per-row file to key a
+targeted write on). Asking and answering a question follow the same rule:
+the `open_questions` row is written synchronously, like a task or edge row,
+while the thread entry it corresponds to is enqueued for the next flush.
+Claiming and releasing a task write synchronously to `claims` and to
+`tasks.state`, then enqueue the claim snapshot above. The database is the
+read path because it's fast, and git is the recovery path.
+
+## The queue
+
+A separate record from `tasks`/`edges`: an ordered list of tiers, each tier
+a set of equally-ranked task ids — tier 1 (index 0) before tier 2. A task
+not listed in any tier is backlog. There's no SQLite table for it at all
+(unlike claims, it was never SQLite-only to begin with): `TaskManager` keeps
+an in-memory `Vec<Vec<String>>` cache, hydrated straight from the state
+branch's `queue.toml` at `open`/`rebuild_from_state_branch`, since that file
+is the record's only durable copy.
+
+`queue.toml` is an ordered array of tables, `[[tier]]`, each with a `tasks`
+array; array order *is* rank order, so there's no separate rank field to
+keep in sync with position (`state_branch.rs::render_queue`/`parse_queue`).
+Every write (`TaskManager::set_queue`, replacing the whole queue; the CLI's
+`bridle queue add-tier` is sugar over it that appends one tier) re-renders
+the file wholesale, the same way `edges.toml`/`claims.toml` do, and enqueues
+an `events/<YYYY-MM>.jsonl` line recording the actor
+(`StateBranch::enqueue_queue_event`) — since the file itself carries no
+history of who changed it, only the append-only event log does.
+
+Only the PM (and the human, to override) may write the queue; every other
+principal, the manager included, is read-only
+(`server.rs::require_pm_or_human`, gating `POST /v1/queue` and `POST
+/v1/queue/tiers`) — checked against the calling agent's configured `role`
+being `product-manager`, the same lookup `require_not_worker` does for
+agent-lifecycle endpoints. `bridle queue` is the read-only view: claimed
+tasks with their worker, then the tiers in rank order, each task marked
+startable (ready — planned, deps met, no open question, and therefore
+unclaimed too, since `is_ready` already requires `planned`) or blocked.
+`TaskManager::highest_startable_tier` (`GET /v1/tasks?top_tier=true`,
+`bridle ready` with no `--all`) returns just the highest tier with at least
+one startable task, skipping a tier stuck on a dependency rather than
+returning nothing — the manager takes from the next tier down instead of
+idling on a blocked one, and never moves a task between tiers itself.
 
 ## The state branch
 
 Built for task records at the `open`/`planned`/`claimed`/`dropped`/`reopened`
-states (`crates/bridle-daemon/src/state_branch.rs`, `src/tasks.rs`) — claims
-themselves are SQLite-only and never touch this branch (above); `in_review`,
-`integrated` and `accepted`, and the edges/questions that go with them, are
-still only designed
+states (`crates/bridle-daemon/src/state_branch.rs`, `src/tasks.rs`),
+including claims and the queue now (above); `in_review`, `integrated` and
+`accepted`, and the edges/questions that go with them, are still only
+designed
 ([[task-records-on-a-state-branch-or-in-tree-c7eb|decided]]).
 Each project repo gets a `bridle/state` branch, checked out by the daemon
 into `<workspace>/.bridle/state/` (a normal git worktree, not visible in the
@@ -157,6 +203,9 @@ choice.
 
 ```
 tasks/tw-7fa2.md          one file per task: TOML frontmatter + markdown body + thread
+edges.toml                the whole edge set, replaced wholesale on every add/remove
+claims.toml               the whole claim set, replaced wholesale on every claim/release
+queue.toml                the queue: an ordered [[tier]] array, replaced wholesale on every write
 events/2026-09.jsonl      append-only transitions, for history and rebuild
 ```
 
@@ -207,20 +256,26 @@ an open question. Not yet built: the `bridle ask`/`bridle answer` CLI and
 ## Rebuild
 
 `bridle rebuild` (`TaskManager::rebuild_from_state_branch`) reconstructs
-`tasks`, `edges` and `open_questions` from the state branch alone: the
-migration path for a fresh clone with no `bridle.db` — clone the repo, start
-the daemon, `bridle rebuild`. It walks every `tasks/<id>.md` file for the
-task rows, `edges.toml` for the edge set, and each task's own thread for its
+`tasks`, `edges`, `open_questions` and `claims` from the state branch alone:
+the migration path for a fresh clone with no `bridle.db` — clone the repo,
+start the daemon, `bridle rebuild`. It walks every `tasks/<id>.md` file for
+the task rows, `edges.toml` for the edge set, each task's own thread for its
 open question, if any (the most recent `question`/`answer` entry; an
-unanswered trailing `question` becomes an `open_questions` row). Refuses
-(409) rather than overwriting if the database already has any rows in these
-three tables — a rebuild is a from-nothing reconstruction, not a merge.
+unanswered trailing `question` becomes an `open_questions` row), and
+`claims.toml` for who's working what. Refuses (409) rather than overwriting
+if the database already has any rows in these four tables — a rebuild is a
+from-nothing reconstruction, not a merge.
 
-Claims are never reconstructed: they're SQLite-only with no state-branch
-counterpart at all (above), so any in-flight claim a rebuild runs into is
-simply lost. That's correct here, not a gap the way a body/thread edit lost
-between an enqueue and a flush is (above) — there was never anything on the
-state branch to rebuild a claim from.
+Restoring a claim also sets that task's `tasks.state` back to `Claimed` in
+SQLite: the live `claim_task` path does that synchronously and never on the
+state branch (above), so the task file rebuild just restored the row from
+still says whatever state it was in before the claim (typically `planned`);
+rebuild mirrors `claim_task`'s own synchronous update explicitly rather than
+getting it from the task file, which never carries `claimed`.
+
+The queue is reloaded too (`TaskManager::queue` cache, from `queue.toml`),
+the same as any other startup — there was never a SQLite table for it to
+refuse a rebuild over.
 
 A rebuilt open question's `message_id` doesn't point at a real `messages`
 row: messages don't survive on the state branch at all — the durability

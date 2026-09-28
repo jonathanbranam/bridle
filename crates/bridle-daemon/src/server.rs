@@ -11,14 +11,15 @@ use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::{Extension, Json, Router};
 use bridle_api::types::{
-    Agent, AnswerQuestionRequest, ApiErrorResponse, AskQuestionRequest, BudgetHoldRequest,
-    BudgetOverrideRequest, BudgetStatus, DropTaskRequest, Edge, EditTaskRequest, ErrorBody, Event,
-    EventQuery, Health, HoldStatus, InteractiveUsageRow, InterruptRequest, Message, MessageQuery,
-    MessageState, NewEdgeRequest, NewTaskRequest, NoteTaskRequest, OpenQuestion, PrincipalKind,
-    RateLimit, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResumeRequest, ScheduleOverrideStatus,
-    SendRequest, SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery,
-    TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
-    UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, WindowStatus, event_kind,
+    AddQueueTierRequest, Agent, AnswerQuestionRequest, ApiErrorResponse, AskQuestionRequest,
+    BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, DropTaskRequest, Edge, EditTaskRequest,
+    ErrorBody, Event, EventQuery, Health, HoldStatus, InteractiveUsageRow, InterruptRequest,
+    Message, MessageQuery, MessageState, NewEdgeRequest, NewTaskRequest, NoteTaskRequest,
+    OpenQuestion, PrincipalKind, Queue, RateLimit, RemoveEdgeQuery, RemoveQuery, RenewRequest,
+    ResumeRequest, ScheduleOverrideStatus, SendRequest, SetQueueRequest, SpawnRequest, Status,
+    StatusLineReport, StopRequest, Task, TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo,
+    TranscriptLine, TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery, UsageGroupBy,
+    WindowStatus, event_kind,
 };
 use chrono::Utc;
 use futures::Stream;
@@ -76,6 +77,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/tokens/{name}", axum::routing::delete(revoke_token))
         .route("/v1/tasks", get(list_tasks).post(new_task))
         .route("/v1/tasks/{id}", get(get_task).patch(edit_task))
+        .route("/v1/tasks/{id}/plan", post(plan_task))
         .route("/v1/tasks/{id}/drop", post(drop_task))
         .route("/v1/tasks/{id}/reopen", post(reopen_task))
         .route("/v1/tasks/{id}/ask", post(ask_task))
@@ -88,6 +90,8 @@ pub fn router(state: AppState) -> Router {
             "/v1/edges",
             get(list_edges).post(add_edge).delete(remove_edge),
         )
+        .route("/v1/queue", get(get_queue).post(set_queue))
+        .route("/v1/queue/tiers", post(add_queue_tier))
         .route("/v1/rebuild", post(rebuild))
         .route("/v1/shutdown", post(shutdown))
         .layer(middleware::from_fn_with_state(
@@ -242,6 +246,26 @@ fn require_human(principal: &Principal) -> Result<(), ApiError> {
         Ok(())
     } else {
         Err(ApiError::forbidden("this endpoint is human-only"))
+    }
+}
+
+/// The queue is PM-owned; the human can override it, and every other
+/// principal (the manager included) only reads it
+/// (roles-and-lifecycle.md, "the queue"). Unlike [`require_not_worker`]'s
+/// blocklist, this is an allowlist: only `human` and an agent whose role is
+/// `product-manager` pass.
+async fn require_pm_or_human(state: &AppState, principal: &Principal) -> Result<(), ApiError> {
+    if principal.kind == PrincipalKind::Human {
+        return Ok(());
+    }
+    let name = principal.id.strip_prefix("agent:").unwrap_or(&principal.id);
+    let role = state.store.get_agent(name).await?.map(|a| a.role);
+    if role.as_deref() == Some("product-manager") {
+        Ok(())
+    } else {
+        Err(ApiError::forbidden(
+            "only the product manager or the human may edit the queue",
+        ))
     }
 }
 
@@ -874,7 +898,9 @@ async fn list_tasks(
     Extension(principal): Extension<Principal>,
     Query(q): Query<TaskQuery>,
 ) -> Result<Json<Vec<Task>>, ApiError> {
-    let tasks = if q.ready.unwrap_or(false) {
+    let tasks = if q.top_tier.unwrap_or(false) {
+        state.tasks.highest_startable_tier()
+    } else if q.ready.unwrap_or(false) {
         state.tasks.ready_tasks()
     } else {
         state.tasks.list_tasks()
@@ -935,6 +961,24 @@ async fn edit_task(
             principal.id,
             None,
             serde_json::json!({"task": task.id}),
+        )
+        .await;
+    Ok(Json(task))
+}
+
+async fn plan_task(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path(id): Path<String>,
+) -> Result<Json<Task>, ApiError> {
+    let task = state.tasks.plan_task(&id, &principal.id).await?;
+    let _ = state
+        .emitter
+        .emit(
+            event_kind::TASK_STATE,
+            principal.id,
+            None,
+            serde_json::json!({"task": task.id, "to": task.state}),
         )
         .await;
     Ok(Json(task))
@@ -1125,6 +1169,52 @@ async fn remove_edge(
         )
         .await;
     Ok(StatusCode::NO_CONTENT)
+}
+
+// ---------- queue ----------
+
+async fn get_queue(State(state): State<AppState>) -> Result<Json<Queue>, ApiError> {
+    Ok(Json(Queue {
+        tiers: state.tasks.queue_tiers(),
+    }))
+}
+
+async fn set_queue(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Json(req): Json<SetQueueRequest>,
+) -> Result<Json<Queue>, ApiError> {
+    require_pm_or_human(&state, &principal).await?;
+    let tiers = state.tasks.set_queue(req.tiers, &principal.id).await?;
+    let _ = state
+        .emitter
+        .emit(
+            event_kind::QUEUE_CHANGED,
+            principal.id,
+            None,
+            serde_json::json!({"tiers": tiers.len()}),
+        )
+        .await;
+    Ok(Json(Queue { tiers }))
+}
+
+async fn add_queue_tier(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Json(req): Json<AddQueueTierRequest>,
+) -> Result<Json<Queue>, ApiError> {
+    require_pm_or_human(&state, &principal).await?;
+    let tiers = state.tasks.add_queue_tier(req.tasks, &principal.id).await?;
+    let _ = state
+        .emitter
+        .emit(
+            event_kind::QUEUE_CHANGED,
+            principal.id,
+            None,
+            serde_json::json!({"tiers": tiers.len()}),
+        )
+        .await;
+    Ok(Json(Queue { tiers }))
 }
 
 async fn create_token(
