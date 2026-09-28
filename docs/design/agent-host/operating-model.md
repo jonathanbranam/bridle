@@ -106,10 +106,17 @@ start without one, naming `branches.integration` (a `master` project sets it exp
 Every role's system prompt states the project's actual `integration`/
 `release` branches as a plain sentence (`bridle-daemon::config::
 stable_system_prompt`), and `workflow/base/skills/worker/SKILL.md` and
-`workflow/base/roles/manager.md` reference them as `{{branches.integration}}`
+the base role prompts (`workflow/base/roles/*.md`) and manager skill reference them as `{{branches.integration}}`
 / `{{branches.release}}`, the same templating `{{commands.check}}` already
 uses (docs/design/workflow-layers.md, "Per-project command bindings") — so
-neither prompt hardcodes a branch name.
+no prompt hardcodes a branch name. The role prompts and skills likewise use
+`{{commands.check}}` for the definition-of-done command.
+
+**Rules reach every role by file, not by `prime`.** `bridle prime` is
+orchestrator-only (it prints orchestrator state), so the CLAUDE.md block
+`bridle sync` writes points every role at the rule files themselves: the project's
+`.bridle/rules/` and the workflow checkout's `base/rules/` (config `workflow`). Role
+prompts cite rules by id (`kiss`, `yagni`), not by bridle's own paths.
 
 **Enforcement, not just prose.** When `release` is set, every role except
 `orchestrator` gets `Bash(git push origin <release>)` added to its

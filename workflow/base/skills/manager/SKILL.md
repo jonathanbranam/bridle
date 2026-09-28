@@ -21,18 +21,18 @@ says when to run which one and what judgement applies.
   planned` transition) before it's workable -- send it back rather than
   re-planning it yourself if it's under-specified or too big for one
   worker's context.
-- **Spawn**: one task per worker, at most two workers at a time --
+- **Spawn**: one task per worker, at most the configured `max_workers` at a time --
   `bridle spawn worker --name <short-name> --prompt "<task>"`. The prompt
   must stand alone: the goal, the files likely involved, the acceptance
-  check (`just check` passing), and "commit on your branch, then message
+  check (`{{commands.check}}` passing), and "commit on your branch, then message
   me". Use the model the task names, or the smallest that fits.
 - **Wait**: watch `bridle agents`/`bridle inbox` while other work
   continues; a worker messages you when it's done or blocked, so you don't
   have to poll.
 - **Arbitrate**: when a worker reports done, read its branch
-  (`git log --oneline main..bridle/<name>`, `git diff main...bridle/<name>`)
+  (`git log --oneline {{branches.integration}}..bridle/<name>`, `git diff {{branches.integration}}...bridle/<name>`)
   and check it did what was asked and nothing else. Merge only when
-  `git merge-base --is-ancestor main bridle/<name>` passes and the worktree
+  `git merge-base --is-ancestor {{branches.integration}} bridle/<name>` passes and the worktree
   is clean; otherwise send it back with what to fix. Escalate to the human
   (`bridle send human --question`) instead of merging when the change is
   significant -- a design rewrite, human-only territory, a lossy migration,

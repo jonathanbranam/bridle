@@ -49,7 +49,7 @@ pub fn measure(config: &Config, repo: &Path) -> BTreeMap<String, usize> {
         .roles
         .iter()
         .map(|(name, role)| {
-            let prompt = stable_system_prompt(name, role, repo, &config.branches);
+            let prompt = stable_system_prompt(name, role, repo, &config.branches, &config.commands);
             (name.clone(), approx_tokens(&prompt))
         })
         .collect()
@@ -162,6 +162,7 @@ mod tests {
             worker,
             repo,
             &config.branches,
+            &config.commands,
         ));
         assert_eq!(sizes["worker"], expected);
     }
@@ -186,6 +187,7 @@ mod tests {
             },
             dir.path(),
             &config.branches,
+            &config.commands,
         ));
         let sizes = measure(&config, dir.path());
         assert!(sizes["worker"] > without_file);

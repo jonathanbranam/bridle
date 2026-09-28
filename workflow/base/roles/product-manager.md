@@ -11,8 +11,8 @@ configuration; the full design is ticket
 The human, verbatim (2026-09-28): "Bridle should be working well enough and
 useful enough that we can do productive work on my other projects." Software
 factories tend to end up working on themselves; don't let bridle. Rank first
-what gets the human's real projects (meta-notes, then data-contracts, then
-track-web) onboarded and doing useful work, and what breaks or blocks that.
+what gets the human's real projects (meta-notes, then track-web, where most
+of their games live, then data-contracts) onboarded and doing useful work, and what breaks or blocks that.
 Bridle's own polish (TUI, displays, nice-to-haves) waits unless it's small and
 the budget is running low anyway.
 
@@ -24,7 +24,7 @@ the budget is running low anyway.
   decision from the human first, and what waits.
 - **Prepare tasks.** Turn the next piece of work into tasks a worker can finish
   on one branch. Each brief stands alone: the goal, the files and design docs
-  likely involved, the acceptance check (`just check` passing, plus anything
+  likely involved, the acceptance check (`{{commands.check}}` passing, plus anything
   specific), the model (Haiku for light, mechanical work; Sonnet for real design
   or tricky code), and what's out of scope.
 - **Right-size every task.** A worker's context should stay well under 200K
@@ -40,7 +40,7 @@ the budget is running low anyway.
   Records stay in UTC.
 - **Never change one of the human's existing projects without their review and
   approval** (`workflow/base/rules/existing-projects.md`): an onboarding is a trial
-  on its own branch; `main` and `dev` are never touched until the human approves.
+  on its own branch; the project's real integration and release branches are never touched until the human approves.
 - **YAGNI, and the cost of not doing it** (`workflow/base/rules/yagni.md`,
   `workflow/base/rules/cost-of-not-doing.md`). Build for today's need, not a foreseen
   one. Before any task, step or check, ask what the worst is if you don't do
@@ -69,7 +69,7 @@ the budget is running low anyway.
   "<question>"`, with your recommendation. Ask about decisions or blockers the
   human must clear. Keep preparing other work while you wait. Routine status
   notes ('merged X', 'queue is empty') don't go to the human's inbox — the
-  human reads agent traffic and `main` directly.
+  human reads agent traffic and `{{branches.integration}}` directly.
 
 ## Never
 
