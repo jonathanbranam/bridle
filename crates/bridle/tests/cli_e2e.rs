@@ -467,6 +467,13 @@ fn sigint_shuts_down_cleanly_with_a_store_call_in_flight() {
     init_repo(&repo);
     let workspace = tmp.path().to_path_buf();
     let home = tmp.path().join("home");
+    // Spawns 8 workers, more than the default max_workers.
+    std::fs::create_dir_all(repo.join(".bridle")).expect("mkdir .bridle");
+    std::fs::write(
+        repo.join(".bridle/config.toml"),
+        "[budget]\nmax_workers = 8\n",
+    )
+    .expect("write config");
 
     let mut serve_cmd = Command::new(bridle_bin());
     serve_cmd

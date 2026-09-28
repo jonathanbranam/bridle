@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- `max_workers` is now enforced at worker spawn (409 at the cap), and `bridle budget
+  max-workers <n>` (`--clear`) changes it live without a restart. After a usage pause,
+  managers, the PM and the orchestrator always resume; the cap limits workers only.
 - `bridle spawn --allow-tool <tool>` gives one spawn extra Claude Code tools, and
   `--env KEY=VALUE` gives it environment variables (e.g. a paid API key) that are
   never logged. Both are kept on the agent and reapplied on resume and renew.
