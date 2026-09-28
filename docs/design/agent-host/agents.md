@@ -19,6 +19,7 @@ established; S-numbers are its scenarios. Each agent is one headless
 --permission-mode <role.permission_mode>  --permission-prompts none
 --allowedTools <tool>…  [--disallowedTools <tool>…]
 --name <agent name>
+--setting-sources project
 --settings '{"autoMemoryEnabled":false,"autoDreamEnabled":false}'
 [--max-budget-usd <role.max_budget_usd>]
 ```
@@ -42,6 +43,13 @@ established; S-numbers are its scenarios. Each agent is one headless
   `--settings '{"autoMemoryEnabled":false,"autoDreamEnabled":false}'`, so
   Claude Code's auto memory is off whatever the project's or user's settings
   say ([[docs/proposal/decisions|decision 8]]).
+- **`--setting-sources project`**: every agent loads only the project's
+  checked-in `.claude/settings.json`, never the human's own
+  `~/.claude/settings.json` or a clone's untracked `.claude/settings.local.json`
+  (docs/questions/open/per-role-claude-settings-for-spawned-agents-4eep.md).
+  Per-role scoping beyond that stays `allowed_tools`/`disallowed_tools`
+  ([[docs/design/agent-host/roles-and-config|roles and config]]) plus the
+  no-memory `--settings` above.
 - **Process group**: the agent is the leader of its own process group.
 - **cwd**: `wt/<name>` (a new worktree on branch `bridle/<name>` from the
   role's base ref), the clone itself, or an explicit path.
