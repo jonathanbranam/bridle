@@ -782,6 +782,7 @@ struct StreamQuery {
 struct StreamState {
     backfill: std::vec::IntoIter<Event>,
     rx: tokio::sync::broadcast::Receiver<Event>,
+    shutdown_rx: watch::Receiver<bool>,
     last_sent: i64,
 }
 
@@ -820,6 +821,7 @@ async fn events_stream(
     let init = StreamState {
         backfill: backfill.into_iter(),
         rx,
+        shutdown_rx: state.shutdown_tx.subscribe(),
         last_sent: since.unwrap_or(0),
     };
     let stream = futures::stream::unfold(init, |mut st| async move {
@@ -831,7 +833,13 @@ async fn events_stream(
                 st.last_sent = ev.seq;
                 return Some((Ok(to_sse(&ev)), st));
             }
-            match st.rx.recv().await {
+            // The emitter keeps a sender alive, so `Closed` never comes; end
+            // the stream on shutdown or graceful shutdown waits on the client.
+            let recv = tokio::select! {
+                r = st.rx.recv() => r,
+                _ = st.shutdown_rx.wait_for(|v| *v) => return None,
+            };
+            match recv {
                 Ok(ev) => {
                     if ev.seq <= st.last_sent {
                         continue;
