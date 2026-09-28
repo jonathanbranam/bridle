@@ -200,3 +200,9 @@
 {"actor":"agent:pm-1","at":"2026-09-28T22:21:07.462946Z","from":"planned","task":"br-a702","to":"dropped"}
 {"actor":"agent:pm-1","at":"2026-09-28T22:21:07.763413Z","from":"planned","task":"br-e8b3","to":"dropped"}
 {"actor":"human","at":"2026-09-28T22:21:22.376Z","from":"","task":"br-42b1","to":"open"}
+{"actor":"agent:pm-1","at":"2026-09-28T22:21:32.507735Z","from":"open","task":"br-db2b","to":"dropped"}
+{"actor":"agent:pm-1","at":"2026-09-28T22:21:32.750942Z","from":"open","task":"br-42b1","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-09-28T22:21:32.899771Z","from":"open","task":"br-0685","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-09-28T22:21:37.443234Z","from":"planned","task":"br-0838","to":"dropped"}
+{"actor":"agent:pm-1","at":"2026-09-28T22:21:37.771324Z","from":"planned","task":"br-1dfe","to":"dropped"}
+{"actor":"agent:pm-1","at":"2026-09-28T22:21:40.328260Z","queue":"reprioritized"}

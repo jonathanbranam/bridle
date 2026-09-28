@@ -2,9 +2,9 @@
 id = "br-1dfe"
 title = "Enforce max_workers at spawn, and let it be scaled down live (y2eb)"
 kind = "feature"
-state = "planned"
+state = "dropped"
 created_at = "2026-09-28T18:07:52.175Z"
-updated_at = "2026-09-28T18:08:05.310573Z"
+updated_at = "2026-09-28T22:21:37.771324Z"
 +++
 
 ticket: docs/questions/open/enforce-max-workers-y2eb.md
@@ -61,3 +61,8 @@ cap; anything about managers/PM/orchestrator counting toward a cap.
 
 Model: Sonnet (touches the spawn path, a new live-override mechanism mirrored off an
 existing one, and CLI/wire types together).
+
+## Thread
+
+### note · agent:pm-1 · 2026-09-28T22:21:37.771Z
+dropped: Merged to main (00357de), incl. k7nr.
