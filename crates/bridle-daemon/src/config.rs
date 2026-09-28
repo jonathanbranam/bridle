@@ -6,6 +6,7 @@ use std::net::SocketAddr;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
+use chrono::{DateTime, Datelike, Local, NaiveTime, Weekday};
 use serde::Deserialize;
 
 #[derive(Debug, thiserror::Error)]
@@ -36,6 +37,8 @@ pub enum ConfigError {
         value: f64,
         machine_value: f64,
     },
+    #[error("invalid [[budget.schedule]] {name:?}: {reason}")]
+    BadSchedule { name: String, reason: String },
 }
 
 /// Where an agent's process runs, before a worktree path is resolved.
@@ -299,6 +302,40 @@ impl WindowThresholds {
     }
 }
 
+/// One `[[budget.schedule]]` period: a set of host-local days and a
+/// time-of-day window, with its own `five_hour` thresholds
+/// (usage-and-budget.md, Schedule; ticket n9qh). Time is read from
+/// `chrono::Local`, i.e. the host machine's own timezone — there's no
+/// per-project timezone config, since this machine is effectively US
+/// Eastern already; a daemon running elsewhere is a future ticket.
+#[derive(Debug, Clone, PartialEq)]
+pub struct SchedulePeriod {
+    pub name: String,
+    pub days: Vec<Weekday>,
+    pub start: NaiveTime,
+    pub end: NaiveTime,
+    pub hold_at: f64,
+    pub wind_down_at: f64,
+    pub stop_at: f64,
+}
+
+impl SchedulePeriod {
+    /// Whether host-local `now` falls in this period: today's weekday is
+    /// listed, and the time-of-day is within `start..end`, a range that may
+    /// cross midnight (e.g. `23:00..07:00`).
+    pub fn matches(&self, now: DateTime<Local>) -> bool {
+        if !self.days.contains(&now.weekday()) {
+            return false;
+        }
+        let t = now.time();
+        if self.start <= self.end {
+            t >= self.start && t < self.end
+        } else {
+            t >= self.start || t < self.end
+        }
+    }
+}
+
 /// `[budget]`: the account-wide usage governor's thresholds
 /// (usage-and-budget.md, The budget governor). Lives in
 /// `~/.bridle/config.toml`; a project's `.bridle/config.toml` may lower
@@ -312,6 +349,11 @@ pub struct BudgetConfig {
     pub resume_below: WindowThresholds,
     pub wind_down_grace: Duration,
     pub max_staleness: Duration,
+    /// Named time-of-day periods that replace the `five_hour` thresholds
+    /// above while they're in effect (usage-and-budget.md, Schedule).
+    /// `seven_day` and every other window are never affected. Walked in
+    /// order; the first match wins. Empty by default.
+    pub schedule: Vec<SchedulePeriod>,
 }
 
 impl Default for BudgetConfig {
@@ -328,6 +370,7 @@ impl Default for BudgetConfig {
             resume_below: WindowThresholds::constant(70.0),
             wind_down_grace: Duration::from_secs(5 * 60),
             max_staleness: Duration::from_secs(10 * 60),
+            schedule: Vec::new(),
         }
     }
 }
@@ -355,6 +398,12 @@ impl BudgetConfig {
         }
         if let Some(s) = &raw.max_staleness {
             self.max_staleness = parse_duration(s)?;
+        }
+        if let Some(list) = raw.schedule {
+            self.schedule = list
+                .into_iter()
+                .map(RawSchedulePeriod::into_period)
+                .collect::<Result<_, _>>()?;
         }
         Ok(self)
     }
@@ -387,6 +436,36 @@ impl BudgetConfig {
         }
         if let Some(s) = &raw.max_staleness {
             self.max_staleness = parse_duration(s)?;
+        }
+        if let Some(list) = raw.schedule {
+            let periods = list
+                .into_iter()
+                .map(RawSchedulePeriod::into_period)
+                .collect::<Result<Vec<_>, _>>()?;
+            for period in &periods {
+                check_schedule_ceiling(
+                    period.hold_at,
+                    self.hold_at.get("five_hour"),
+                    &period.name,
+                    "hold_at",
+                    path,
+                )?;
+                check_schedule_ceiling(
+                    period.wind_down_at,
+                    self.wind_down_at.get("five_hour"),
+                    &period.name,
+                    "wind_down_at",
+                    path,
+                )?;
+                check_schedule_ceiling(
+                    period.stop_at,
+                    self.stop_at.get("five_hour"),
+                    &period.name,
+                    "stop_at",
+                    path,
+                )?;
+            }
+            self.schedule = periods;
         }
         Ok(self)
     }
@@ -676,6 +755,52 @@ impl Config {
     }
 }
 
+/// A `[[budget.schedule]]` period's threshold may only come down from the
+/// machine-wide plain `five_hour` value, the same `ThresholdTooHigh` rule as
+/// the four percentage thresholds themselves.
+fn check_schedule_ceiling(
+    value: f64,
+    machine_value: f64,
+    period_name: &str,
+    kind: &'static str,
+    path: &Path,
+) -> Result<(), ConfigError> {
+    if value > machine_value {
+        return Err(ConfigError::ThresholdTooHigh {
+            path: path.to_path_buf(),
+            field: "schedule",
+            window: format!("{period_name}.{kind}"),
+            value,
+            machine_value,
+        });
+    }
+    Ok(())
+}
+
+fn parse_weekday(s: &str, period_name: &str) -> Result<Weekday, ConfigError> {
+    use Weekday::*;
+    match s.to_ascii_lowercase().as_str() {
+        "mon" => Ok(Mon),
+        "tue" => Ok(Tue),
+        "wed" => Ok(Wed),
+        "thu" => Ok(Thu),
+        "fri" => Ok(Fri),
+        "sat" => Ok(Sat),
+        "sun" => Ok(Sun),
+        other => Err(ConfigError::BadSchedule {
+            name: period_name.to_string(),
+            reason: format!("invalid day {other:?}: expected mon, tue, wed, thu, fri, sat or sun"),
+        }),
+    }
+}
+
+fn parse_time_of_day(s: &str, period_name: &str) -> Result<NaiveTime, ConfigError> {
+    NaiveTime::parse_from_str(s, "%H:%M").map_err(|_| ConfigError::BadSchedule {
+        name: period_name.to_string(),
+        reason: format!("invalid time {s:?}: expected HH:MM"),
+    })
+}
+
 /// Parses "10m"-style durations: an integer followed by `s`, `m` or `h`.
 fn parse_duration(s: &str) -> Result<Duration, ConfigError> {
     let s = s.trim();
@@ -742,6 +867,65 @@ struct RawBudget {
     wind_down_grace: Option<String>,
     #[serde(default)]
     max_staleness: Option<String>,
+    #[serde(default)]
+    schedule: Option<Vec<RawSchedulePeriod>>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawSchedulePeriod {
+    name: String,
+    days: RawDays,
+    start: String,
+    end: String,
+    hold_at: f64,
+    wind_down_at: f64,
+    stop_at: f64,
+}
+
+impl RawSchedulePeriod {
+    fn into_period(self) -> Result<SchedulePeriod, ConfigError> {
+        let days = match self.days {
+            RawDays::All(s) if s.eq_ignore_ascii_case("all") => {
+                vec![
+                    Weekday::Mon,
+                    Weekday::Tue,
+                    Weekday::Wed,
+                    Weekday::Thu,
+                    Weekday::Fri,
+                    Weekday::Sat,
+                    Weekday::Sun,
+                ]
+            }
+            RawDays::All(s) => {
+                return Err(ConfigError::BadSchedule {
+                    name: self.name,
+                    reason: format!("invalid days {s:?}: expected \"all\" or a list of mon..sun"),
+                });
+            }
+            RawDays::List(days) => days
+                .iter()
+                .map(|d| parse_weekday(d, &self.name))
+                .collect::<Result<Vec<_>, _>>()?,
+        };
+        Ok(SchedulePeriod {
+            start: parse_time_of_day(&self.start, &self.name)?,
+            end: parse_time_of_day(&self.end, &self.name)?,
+            name: self.name,
+            days,
+            hold_at: self.hold_at,
+            wind_down_at: self.wind_down_at,
+            stop_at: self.stop_at,
+        })
+    }
+}
+
+/// `days = "all"`, or a list of `mon`..`sun` (roles-and-config.md, `[budget]`).
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+enum RawDays {
+    All(String),
+    List(Vec<String>),
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -1091,6 +1275,176 @@ mod tests {
         assert_eq!(cfg.context.wind_down_at.get("default"), 50_000.0);
         assert_eq!(cfg.context.wind_down_at.get("worker"), 30_000.0);
         assert_eq!(cfg.context.wind_down_grace, Duration::from_secs(45));
+    }
+
+    #[test]
+    fn budget_schedule_defaults_to_empty() {
+        assert!(BudgetConfig::default().schedule.is_empty());
+    }
+
+    /// Parses `[[budget.schedule]]` the way `~/.bridle/config.toml` (the
+    /// machine-wide side) does: unrestricted, since only a *project*
+    /// config's periods are held to the machine-wide ceiling.
+    fn parse_machine_budget(toml: &str) -> BudgetConfig {
+        let raw: RawConfig = toml::from_str(toml).expect("toml");
+        BudgetConfig::default()
+            .merge(raw.budget.unwrap_or_default())
+            .expect("merge")
+    }
+
+    #[test]
+    fn budget_schedule_parses_named_periods_with_all_and_a_day_list() {
+        let toml = r#"
+            [[budget.schedule]]
+            name = "night"
+            days = "all"
+            start = "23:00"
+            end = "07:00"
+            hold_at = 90
+            wind_down_at = 93
+            stop_at = 95
+
+            [[budget.schedule]]
+            name = "workday"
+            days = ["mon", "tue", "wed", "thu", "fri"]
+            start = "09:00"
+            end = "17:00"
+            hold_at = 85
+            wind_down_at = 92
+            stop_at = 95
+        "#;
+        let budget = parse_machine_budget(toml);
+        assert_eq!(budget.schedule.len(), 2);
+
+        let night = &budget.schedule[0];
+        assert_eq!(night.name, "night");
+        assert_eq!(night.days.len(), 7);
+        assert_eq!(night.hold_at, 90.0);
+        assert_eq!(night.wind_down_at, 93.0);
+        assert_eq!(night.stop_at, 95.0);
+
+        let workday = &budget.schedule[1];
+        assert_eq!(
+            workday.days,
+            vec![
+                Weekday::Mon,
+                Weekday::Tue,
+                Weekday::Wed,
+                Weekday::Thu,
+                Weekday::Fri,
+            ]
+        );
+        assert_eq!(workday.hold_at, 85.0);
+    }
+
+    #[test]
+    fn budget_schedule_rejects_a_bad_day_name() {
+        let toml = r#"
+            [[budget.schedule]]
+            name = "oops"
+            days = ["someday"]
+            start = "09:00"
+            end = "17:00"
+            hold_at = 85
+            wind_down_at = 92
+            stop_at = 95
+        "#;
+        let err = Config::parse(toml).expect_err("bad day should fail");
+        assert!(matches!(err, ConfigError::BadSchedule { .. }), "{err}");
+    }
+
+    #[test]
+    fn budget_schedule_rejects_a_bad_time() {
+        let toml = r#"
+            [[budget.schedule]]
+            name = "oops"
+            days = "all"
+            start = "9am"
+            end = "17:00"
+            hold_at = 85
+            wind_down_at = 92
+            stop_at = 95
+        "#;
+        let err = Config::parse(toml).expect_err("bad time should fail");
+        assert!(matches!(err, ConfigError::BadSchedule { .. }), "{err}");
+    }
+
+    #[test]
+    fn budget_schedule_period_may_not_raise_five_hour_above_machine_wide() {
+        // The machine-wide default five_hour hold_at is 80; a project's
+        // schedule period may not raise it, same ThresholdTooHigh rule as
+        // the plain [budget] thresholds.
+        let toml = r#"
+            [[budget.schedule]]
+            name = "night"
+            days = "all"
+            start = "23:00"
+            end = "07:00"
+            hold_at = 96
+            wind_down_at = 97
+            stop_at = 98
+        "#;
+        let err = Config::parse(toml).expect_err("raising the ceiling should fail");
+        assert!(matches!(err, ConfigError::ThresholdTooHigh { .. }), "{err}");
+    }
+
+    #[test]
+    fn schedule_period_matches_a_plain_and_a_midnight_crossing_range() {
+        use chrono::{NaiveDate, TimeZone};
+
+        // 2024-01-01 is a Monday.
+        let at = |h: u32, m: u32| {
+            Local
+                .from_local_datetime(
+                    &NaiveDate::from_ymd_opt(2024, 1, 1)
+                        .expect("date")
+                        .and_hms_opt(h, m, 0)
+                        .expect("time"),
+                )
+                .single()
+                .expect("unambiguous")
+        };
+
+        let workday = SchedulePeriod {
+            name: "workday".to_string(),
+            days: vec![
+                Weekday::Mon,
+                Weekday::Tue,
+                Weekday::Wed,
+                Weekday::Thu,
+                Weekday::Fri,
+            ],
+            start: NaiveTime::from_hms_opt(9, 0, 0).expect("time"),
+            end: NaiveTime::from_hms_opt(17, 0, 0).expect("time"),
+            hold_at: 85.0,
+            wind_down_at: 92.0,
+            stop_at: 95.0,
+        };
+        assert!(workday.matches(at(10, 0)));
+        assert!(!workday.matches(at(8, 59)));
+        assert!(!workday.matches(at(17, 0)));
+
+        let night = SchedulePeriod {
+            name: "night".to_string(),
+            days: vec![
+                Weekday::Mon,
+                Weekday::Tue,
+                Weekday::Wed,
+                Weekday::Thu,
+                Weekday::Fri,
+                Weekday::Sat,
+                Weekday::Sun,
+            ],
+            start: NaiveTime::from_hms_opt(23, 0, 0).expect("time"),
+            end: NaiveTime::from_hms_opt(7, 0, 0).expect("time"),
+            hold_at: 90.0,
+            wind_down_at: 93.0,
+            stop_at: 95.0,
+        };
+        // Both sides of midnight match.
+        assert!(night.matches(at(23, 30)));
+        assert!(night.matches(at(6, 0)));
+        assert!(!night.matches(at(12, 0)));
     }
 
     #[test]

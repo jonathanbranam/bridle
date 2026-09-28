@@ -178,6 +178,55 @@ max_staleness   = "10m"     # older readings count as unknown
   own age stands in for the reading's age, so a fresh daemon doesn't hold
   before its first `get_usage` poll has had a chance to answer.
 
+### Schedule
+
+`five_hour` can afford higher thresholds while the human isn't using the
+account themselves — overnight, or during their own work hours elsewhere
+(ticket n9qh). `[[budget.schedule]]` lists named periods, each with its own
+`hold_at`/`wind_down_at`/`stop_at` for `five_hour` only:
+
+```toml
+[[budget.schedule]]
+name         = "night"
+days         = "all"                        # or a list: ["mon", "tue", ...]
+start        = "23:00"
+end          = "07:00"                      # crossing midnight is fine
+hold_at      = 90
+wind_down_at = 93
+stop_at      = 95
+
+[[budget.schedule]]
+name         = "workday"
+days         = ["mon", "tue", "wed", "thu", "fri"]
+start        = "09:00"
+end          = "17:00"
+hold_at      = 85
+wind_down_at = 92
+stop_at      = 95
+```
+
+- **Host-local time.** Days and times are read from the daemon process's own
+  clock and timezone (`chrono::Local`), not a configured or per-project
+  timezone — there's no IANA/`chrono-tz` dependency for this. This assumes
+  the daemon runs on a machine already in the human's own timezone; a daemon
+  running elsewhere is a future ticket, not handled here.
+- **Resolution**: periods are walked in order; the first whose `days`
+  includes today's host-local weekday and whose `start..end` window (which
+  may cross midnight, e.g. `23:00..07:00`) contains the current host-local
+  time wins. Its `hold_at`/`wind_down_at`/`stop_at` replace the `five_hour`
+  entries in the thresholds above for that evaluation only. No match, or no
+  `[[budget.schedule]]` at all, falls back to the plain `[budget]` thresholds
+  unchanged.
+- **`seven_day` (and every other window) is never affected** — only
+  `five_hour` has a schedule.
+- Schedule periods live under `[budget]`, so the same machine-wide/project
+  split and lower-only rule applies: a project's `.bridle/config.toml` may
+  give a period's `hold_at`/`wind_down_at`/`stop_at` lower than the
+  machine-wide `five_hour` value, never higher.
+- What's missing here: a way for the human to override the schedule by hand
+  (a thermostat-style `bridle budget override`) is a separate, later ticket
+  — see [[higher-budget-thresholds-on-a-schedule-n9qh|n9qh]].
+
 ### The wind-down
 
 When any window crosses `wind_down_at`, or the human asks for a hold:

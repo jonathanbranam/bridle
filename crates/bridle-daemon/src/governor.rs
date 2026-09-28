@@ -10,7 +10,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use bridle_api::types::{AgentState, GovernorState, MessageKind, RateLimit, When, event_kind};
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Local, Utc};
 use serde_json::{Value, json};
 use uuid::Uuid;
 
@@ -566,14 +566,23 @@ impl Governor {
         let Some(rl) = rl else {
             return WindowBlock::default();
         };
+        let (hold_at, wind_down_at, stop_at) = if window == "five_hour" {
+            resolve_five_hour_thresholds(cfg, Local::now())
+        } else {
+            (
+                cfg.hold_at.get(window),
+                cfg.wind_down_at.get(window),
+                cfg.stop_at.get(window),
+            )
+        };
         let mut state = match rl.utilization {
             Some(u) => {
                 let pct = u * 100.0;
-                if pct >= cfg.stop_at.get(window) {
+                if pct >= stop_at {
                     GovernorState::Paused
-                } else if pct >= cfg.wind_down_at.get(window) {
+                } else if pct >= wind_down_at {
                     GovernorState::WindingDown
-                } else if pct >= cfg.hold_at.get(window) {
+                } else if pct >= hold_at {
                     GovernorState::Holding
                 } else {
                     GovernorState::Normal
@@ -732,6 +741,24 @@ fn parse_get_usage(v: &Value, observed_at: DateTime<Utc>) -> Vec<RateLimit> {
 
 /// `Normal` under `max_staleness`, `Holding` under 3x that, `WindingDown`
 /// past it (usage-and-budget.md, Unknown is not safe).
+/// The `five_hour` thresholds in effect for `now` (host-local time; see
+/// [`crate::config::SchedulePeriod`]): the first `[[budget.schedule]]`
+/// period whose days and time-of-day window contain it, else the plain
+/// `[budget]` `five_hour` thresholds unchanged (usage-and-budget.md,
+/// Schedule). `seven_day` and every other window never consult this.
+fn resolve_five_hour_thresholds(cfg: &BudgetConfig, now: DateTime<Local>) -> (f64, f64, f64) {
+    for period in &cfg.schedule {
+        if period.matches(now) {
+            return (period.hold_at, period.wind_down_at, period.stop_at);
+        }
+    }
+    (
+        cfg.hold_at.get("five_hour"),
+        cfg.wind_down_at.get("five_hour"),
+        cfg.stop_at.get("five_hour"),
+    )
+}
+
 fn age_to_state(age: Duration, max_staleness: Duration) -> GovernorState {
     if age > max_staleness.saturating_mul(3) {
         GovernorState::WindingDown
@@ -885,6 +912,88 @@ mod tests {
         } else {
             GovernorState::Normal
         }
+    }
+
+    fn local_at(h: u32, m: u32) -> DateTime<Local> {
+        use chrono::{NaiveDate, TimeZone};
+        // 2024-01-01 is a Monday.
+        Local
+            .from_local_datetime(
+                &NaiveDate::from_ymd_opt(2024, 1, 1)
+                    .expect("date")
+                    .and_hms_opt(h, m, 0)
+                    .expect("time"),
+            )
+            .single()
+            .expect("unambiguous")
+    }
+
+    fn night_period() -> crate::config::SchedulePeriod {
+        crate::config::SchedulePeriod {
+            name: "night".to_string(),
+            days: vec![
+                chrono::Weekday::Mon,
+                chrono::Weekday::Tue,
+                chrono::Weekday::Wed,
+                chrono::Weekday::Thu,
+                chrono::Weekday::Fri,
+                chrono::Weekday::Sat,
+                chrono::Weekday::Sun,
+            ],
+            start: chrono::NaiveTime::from_hms_opt(23, 0, 0).expect("time"),
+            end: chrono::NaiveTime::from_hms_opt(7, 0, 0).expect("time"),
+            hold_at: 90.0,
+            wind_down_at: 93.0,
+            stop_at: 95.0,
+        }
+    }
+
+    #[test]
+    fn resolve_five_hour_thresholds_picks_a_matching_period() {
+        let (_rt, mut cfg) = test_governor();
+        cfg.schedule = vec![night_period()];
+        assert_eq!(
+            resolve_five_hour_thresholds(&cfg, local_at(23, 30)),
+            (90.0, 93.0, 95.0)
+        );
+        // The other side of midnight matches too.
+        assert_eq!(
+            resolve_five_hour_thresholds(&cfg, local_at(6, 0)),
+            (90.0, 93.0, 95.0)
+        );
+    }
+
+    #[test]
+    fn resolve_five_hour_thresholds_falls_back_to_defaults_when_nothing_matches() {
+        let (_rt, mut cfg) = test_governor();
+        cfg.schedule = vec![night_period()];
+        // Midday: outside the night period, no other period configured.
+        assert_eq!(
+            resolve_five_hour_thresholds(&cfg, local_at(12, 0)),
+            (
+                cfg.hold_at.get("five_hour"),
+                cfg.wind_down_at.get("five_hour"),
+                cfg.stop_at.get("five_hour"),
+            )
+        );
+    }
+
+    #[test]
+    fn resolve_five_hour_thresholds_never_touches_seven_day() {
+        let (_rt, mut cfg) = test_governor();
+        let seven_day_before = (
+            cfg.hold_at.get("seven_day"),
+            cfg.wind_down_at.get("seven_day"),
+            cfg.stop_at.get("seven_day"),
+        );
+        cfg.schedule = vec![night_period()];
+        resolve_five_hour_thresholds(&cfg, local_at(23, 30));
+        let seven_day_after = (
+            cfg.hold_at.get("seven_day"),
+            cfg.wind_down_at.get("seven_day"),
+            cfg.stop_at.get("seven_day"),
+        );
+        assert_eq!(seven_day_before, seven_day_after);
     }
 
     #[test]
