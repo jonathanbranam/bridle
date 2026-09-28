@@ -1,5 +1,5 @@
 ---
-id: s8ln
+id: s8kn
 title: "bridle statusline: real context, a tighter layout, and snapshots that arrive"
 opened: 2026-09-28
 repos: [bridle]
