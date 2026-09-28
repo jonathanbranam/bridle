@@ -84,3 +84,6 @@
 {"actor":"agent:ticket-housekeeping-2","at":"2026-09-28T09:33:38.540070Z","from":"open","task":"br-f23c","to":"dropped"}
 {"actor":"agent:ticket-housekeeping-2","at":"2026-09-28T09:33:38.555374Z","from":"open","task":"br-5712","to":"dropped"}
 {"actor":"agent:ticket-housekeeping-2","at":"2026-09-28T09:33:38.571720Z","from":"open","task":"br-1944","to":"dropped"}
+{"actor":"agent:ticket-housekeeping-2","at":"2026-09-28T09:34:41.037063Z","from":"open","task":"br-7231","to":"dropped"}
+{"actor":"agent:ticket-housekeeping-2","at":"2026-09-28T09:34:41.050975Z","from":"open","task":"br-7c2e","to":"dropped"}
+{"actor":"agent:ticket-housekeeping-2","at":"2026-09-28T09:34:41.064800Z","from":"open","task":"br-1253","to":"dropped"}
