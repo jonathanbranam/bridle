@@ -59,12 +59,15 @@ curl -s -H "Authorization: Bearer $BRIDLE_TOKEN" "$U/v1/messages?to=human&limit=
   - renew agents idle above ~140K context (not during a hold: see r3nh; do
     it right after the restart instead);
   - tidy tickets, the state file and the role notes.
-- **Verify every merge yourself.** When `main` moves, run `just check`
-  **twice** on `main`. The tests are timing-sensitive, so if the load average
-  is high (`uptime` above ~20, typically from workers' builds and test
-  loops), wait for it to fall first; a red run under load means nothing.
-  - If a failure reproduces, send it to the manager with the test name, the
-    panic message and your diagnosis.
+- **Verify every merge by its CI run, not locally.** The worker has already
+  passed `just check` on its branch with `main` merged in; GitHub Actions then
+  runs the same check on `main`, on Linux and macOS. That's enough. Don't run
+  `just check` on `main` yourself (the human, 2026-09-28: repeating it adds
+  almost nothing and costs a lot of time and CPU, and won't fit on the NUC).
+  When `main` moves, `gh run watch <id> --exit-status` in the background (or
+  `gh run list --branch main`), until bridle reports CI itself (ticket c8qw).
+  - If CI fails, send it to the manager with the failing test, the error and
+    your diagnosis (`gh run view <id> --log-failed`).
   - Until `main` is green again, tell the manager not to merge anything else.
 - **The manager sometimes asks in a `note`, not a `question`**, then idles.
   If everything goes idle, read its latest messages and answer.
@@ -167,5 +170,4 @@ cargo install --path crates/bridle      # then the human restarts the daemon
   asks for.
 - Run live tests (`just test-live`, `just test-contract`) unless the human
   asks. Workers may run small live spikes when you authorise a budget.
-- Merge a branch while `main` is red, or treat a green run under heavy load
-  as proof.
+- Merge a branch while `main` is red.

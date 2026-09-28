@@ -7,6 +7,11 @@ at the handover from the sixth orchestrator session.
 
 ## First, for the incoming orchestrator
 
+- **The human's goal, which orders the queue** (2026-09-28, via the advisor): "Bridle should be
+  working well enough and useful enough that we can do productive work on my other
+  projects." They worry software factories end up working on themselves. Also in the
+  product manager's role prompt. meta-notes onboards first (the human, 2026-09-28: active
+  needs), then data-contracts, then track-web.
 - **Do these first, before the budget hold lifts (five_hour resets 19:20
   UTC, 3:20 PM):** the sixth session couldn't send them while the human
   cycled the daemon for a new budget setting.
@@ -159,8 +164,8 @@ Parked: `bridle/j2vq-orchestrator-perms`, `bridle/mcp-1` (u6wk).
   tell them.
 - **Never start the watcher with `&`** in a Bash call; use
   `run_in_background`. It happened twice this session.
-- **Verifying:** `just check` twice with the 5-minute load under ~16. If a
-  merge lands mid-run, the first run can build a mix of commits; re-run.
+- **Verifying:** by GitHub Actions only, no local runs (the human, 2026-09-28; the role's
+  "Verify every merge by its CI run"). `gh run watch <id> --exit-status` until c8qw lands.
 - **Test daemons are isolated from `~/.bridle`** (fix-test-home-leak); the
   human's `~/.bridle/config.toml` has a budget schedule.
 - **Haiku workers sometimes print their final `bridle send` instead of

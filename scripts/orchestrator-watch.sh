@@ -1,7 +1,8 @@
 #!/bin/zsh
 # Background watcher for the orchestrator (workflow/base/roles/orchestrator.md). Exits, waking the
 # orchestrator, on: a question to the human, a message to the orchestrator, main moving, an unexpected exit/crash/stall, all
-# agents idle for 15 min, five_hour >= 93% or seven_day >= 85%, a budget hold starting. Usage: orchestrator-watch.sh <since-seq>
+# agents idle for 15 min, five_hour >= 93% or seven_day >= 85%, a budget hold starting, a failed CI run on main
+# (interim, until bridle reports CI itself: ticket c8qw). Usage: orchestrator-watch.sh <since-seq>
 export BRIDLE_TOKEN=$(cat ~/.bridle-orchestrator.token)
 cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
 since=${1:-0}
@@ -9,6 +10,8 @@ head0=$(git rev-parse main)
 idle_ticks=0
 seen_file=~/.bridle-orchestrator-seen-questions
 hold_file=~/.bridle-orchestrator-hold-state
+ci_seen_file=~/.bridle-orchestrator-ci-seen
+ci_ticks=0
 while true; do
   U=$(bridle status --json 2>/dev/null | jq -r .daemon.url)
   if [[ -n $U && $U != null ]]; then
@@ -41,6 +44,15 @@ while true; do
         print -r -- $gov > $hold_file; echo "HOLD since=$since"; bridle budget; exit 0
       fi
       [[ $gov == normal ]] && rm -f $hold_file
+    fi
+  fi
+  # Every ~2 minutes: a failed GitHub Actions run on main not reported before.
+  if (( ++ci_ticks % 4 == 1 )); then
+    failed=$(gh run list --branch main --limit 10 --json databaseId,conclusion,headSha,displayTitle,url 2>/dev/null \
+      | jq -c --rawfile seen <(cat $ci_seen_file 2>/dev/null) '[.[] | select(.conclusion=="failure" and ((.databaseId|tostring) as $i | ($seen | split("\n") | index($i)) == null))]')
+    if [[ -n $failed && $failed != "[]" ]]; then
+      print -r -- "$failed" | jq -r '.[].databaseId' >> $ci_seen_file
+      echo "CI FAILED since=$since"; print -r -- "$failed"; exit 0
     fi
   fi
   if [[ $(git rev-parse main) != $head0 ]]; then echo "MAIN MOVED since=$since"; git log --oneline $head0..main; exit 0; fi
