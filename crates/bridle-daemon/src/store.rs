@@ -383,6 +383,22 @@ impl Store {
             .await
     }
 
+    /// Like `set_message_state(id, Written, at)`, but only applies over
+    /// `pending`: a message's replay confirmation (`Delivered`) can land
+    /// concurrently from the agent's own event stream, on a separate task
+    /// from whichever caller wrote the text to stdin, and a plain
+    /// unconditional `Written` write can lose that race and land *after*,
+    /// silently downgrading `Delivered` back to `Written` forever (nothing
+    /// re-checks a message once its replay has already been matched and
+    /// removed from the fifo). A no-op, not an error, when it doesn't
+    /// apply — `Held`/`Pending`/`Delivered` already reaching the caller
+    /// with a different state is an expected outcome here, not a bug.
+    pub async fn mark_message_written(&self, id: &str, at: DateTime<Utc>) -> Result<(), StoreError> {
+        let id = id.to_string();
+        self.with_conn(move |c| sync::mark_message_written(c, &id, at))
+            .await
+    }
+
     pub async fn messages_for_agent(
         &self,
         agent_id: &str,
@@ -1597,6 +1613,19 @@ mod sync {
         if n == 0 {
             return Err(StoreError::NotFound(id.to_string()));
         }
+        Ok(())
+    }
+
+    pub(super) fn mark_message_written(
+        conn: &Connection,
+        id: &str,
+        at: DateTime<Utc>,
+    ) -> Result<(), StoreError> {
+        conn.execute(
+            "UPDATE messages SET state = 'written', written_at = ?1
+             WHERE id = ?2 AND state = 'pending'",
+            params![fmt_dt(at), id],
+        )?;
         Ok(())
     }
 

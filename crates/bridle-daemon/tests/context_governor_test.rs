@@ -92,3 +92,71 @@ async fn crossing_wind_down_at_sends_handoff_and_renews_once() {
         .expect("events");
     assert_eq!(events.len(), 1, "renew must fire exactly once per crossing");
 }
+
+/// Regression coverage for two races the single-shot test above can't catch
+/// reliably (both found by manually stress-running that test tens of times,
+/// not by a single run): (1) `expire_context_renews`'s sweep and the
+/// turn-end hook both spawning a renew for the same crossing, and (2) the
+/// crossing turn itself racing `tick_context_check` for its own
+/// `context_renew_pending` flag and renewing immediately (on `stop_grace`)
+/// instead of leaving a real handoff turn to run first. Many agents
+/// crossing at once, repeated, gives `tick_context_check` many chances to
+/// interleave with each agent's own turn-end in the ways that produced
+/// those races.
+#[tokio::test]
+async fn many_concurrent_crossings_each_renew_exactly_once() {
+    let config = "[context.wind_down_at]\ndefault = 1\n";
+    let (daemon, _tmp) = start_daemon_with_config(Some(fast_overrides()), Some(config)).await;
+    let c = &daemon.client;
+
+    const N: usize = 30;
+    let mut agents = Vec::with_capacity(N);
+    for i in 0..N {
+        let agent = c
+            .spawn(&SpawnRequest {
+                role: "worker".to_string(),
+                name: Some(format!("w{i}")),
+                prompt: Some("hi".to_string()),
+                workdir: Some(Workdir::Repo),
+                model: None,
+                ignore_budget: false,
+            })
+            .await
+            .expect("spawn");
+        agents.push(agent);
+    }
+
+    for agent in &agents {
+        wait_for_event(c, "agent.renewed", Some(&agent.id), |_| true).await;
+    }
+
+    // A little slack past each agent's first renewal: if the crossing turn
+    // raced its own notice and renewed on `stop_grace`, or two paths both
+    // renewed the same crossing, a second `agent.renewed` would land here.
+    tokio::time::sleep(Duration::from_millis(500)).await;
+
+    for agent in &agents {
+        let events = c
+            .events(&bridle_api::types::EventQuery {
+                since: None,
+                agent: Some(agent.id.clone()),
+                kind: Some("agent.renewed".to_string()),
+                limit: None,
+            })
+            .await
+            .expect("events");
+        assert_eq!(
+            events.len(),
+            1,
+            "agent {} must renew exactly once, got {events:?}",
+            agent.id
+        );
+
+        let renewed = c.get_agent(&agent.id).await.expect("get renewed agent");
+        assert_ne!(
+            renewed.session_id, agent.session_id,
+            "agent {} should have a fresh session after renew",
+            agent.id
+        );
+    }
+}
