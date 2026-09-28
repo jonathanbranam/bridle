@@ -2,9 +2,9 @@
 id = "br-42dd"
 title = "Worktree setup command: run a project's install step in each new worktree"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-09-28T23:52:23.825Z"
-updated_at = "2026-09-28T23:52:23.825Z"
+updated_at = "2026-09-28T23:52:34.667472Z"
 +++
 
 source: docs/questions/open/onboarding-survey-track-web-and-harness-u8sm.md, section 8 item 4
