@@ -113,3 +113,16 @@ serve repo:
 
 install:
     cargo install --path crates/bridle --locked
+
+# Remove stale build artifacts older than N days (default: 7).
+# Runs only during orchestrator maintenance windows to avoid conflicts with builds.
+# Uses `cargo sweep` if available; falls back to `cargo clean`.
+clean-stale days='7':
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if command -v cargo-sweep &> /dev/null; then
+        cargo sweep -r -t {{days}}
+    else
+        echo "cargo sweep not found; falling back to cargo clean" >&2
+        cargo clean
+    fi
