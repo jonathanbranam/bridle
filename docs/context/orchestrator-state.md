@@ -21,10 +21,13 @@ at the handover from the fifth orchestrator session.
   tier by load and never re-prioritises. Priorities go to pm-1, who records
   them; not by message alone.
 - **In flight: the data-contracts onboarding** (the human said go,
-  16:30 UTC). A read-only survey subagent of the fifth session is writing
-  `docs/context/onboarding-data-contracts.md` (not committed). If it isn't
-  there, re-run the survey (see below). Then bring the human the decisions
-  in it and run the plan below.
+  16:30 UTC). The survey is done: `docs/context/onboarding-data-contracts.md`
+  (9e82147). Next: bring the human its 8 questions (section 7; the biggest is
+  gates: data-contracts wants the human to approve every plan and land,
+  bridle's manager merges on checks), then run the plan below. Two bridle
+  fixes it found: the worker skill hardcodes `just check` (needs a
+  pack/project setting for `make check`), and its `git merge main` may be
+  refused under the human's global `merge.ff = only`.
 - **Tests got ~10x faster after `cargo clean`** (400 s -> 35 s); see f75x.
 
 ## The data-contracts onboarding (plan agreed with the human)
