@@ -30,3 +30,18 @@ The human's words, 2026-09-28:
 The human keeps an eye on bridle from whatever session is open. Counts in the
 status line (agents working, messages waiting for the human) would show when
 bridle needs them without running `bridle status`.
+
+## Resolution
+
+The `$CLAUDECODE` gate in `resolve_token`
+(`crates/bridle-api/src/discovery.rs`) only guards the human-token-file
+fallback; `$BRIDLE_TOKEN` itself is checked first, unconditionally. So a
+human-minted `external:statusline` token (`bridle token create statusline`),
+exported once as `$BRIDLE_TOKEN` in the shell profile, already flows through
+normal token resolution — no new scoping or daemon endpoint needed.
+`statusline` now makes its own best-effort, 2s-timeout `GET /v1/status` call
+when `$BRIDLE_TOKEN` is set (and only then — it never falls back to the
+workspace's human token file, unlike other CLI commands), appending "N
+working · M for you" to the line. Any failure is silent to the line, logged
+at `tracing::debug`. Documented in
+[[docs/design/cli#Built|cli.md]].

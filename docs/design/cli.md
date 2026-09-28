@@ -163,6 +163,17 @@ bridle task reopen <id>
   `interactive_usage` table still exist in the daemon, unused for now, in case something
   needs per-invocation interactive snapshots later ([[docs/design/usage-and-budget#Where bridle can see usage|usage and budget]]).
 
+  If `$BRIDLE_TOKEN` is set, it also appends a short "N working · M for you" from `GET
+  /v1/status` (agents in `working`/`starting`, and `unread_human_messages`) — a 2s-timeout,
+  best-effort call: no token, no daemon found, a timeout or an HTTP error all just skip the
+  counts silently (logged at `tracing::debug`), never delaying or blanking the rest of the
+  line. This is the one case where `statusline` does call the daemon, but never with the
+  workspace's human token file even outside Claude Code — only an explicitly set
+  `$BRIDLE_TOKEN` (see [[statusline-bridle-counts-with-a-read-only-token-r7cs|r7cs]]). One-time
+  setup: `bridle token create statusline` to mint a read-only `external:statusline` token,
+  then `export BRIDLE_TOKEN=<token>` in the shell profile (not per-invocation — Claude Code
+  runs `statusline` in a subshell that doesn't reread it otherwise).
+
 ## Planned
 
 Commands for the phases after v1 ([[docs/proposal/build-order|build order]]),
