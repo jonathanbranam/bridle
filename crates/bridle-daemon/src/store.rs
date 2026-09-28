@@ -18,7 +18,7 @@ use bridle_api::types::{
     TaskKind, TaskState, TokenCreated, TokenInfo, TokenTotals, Usage, UsageBreakdown, UsageGroup,
     UsageGroupBy, When,
 };
-use chrono::{DateTime, SecondsFormat, Utc};
+use chrono::{DateTime, SecondsFormat, SubsecRound, Utc};
 use rusqlite::Connection;
 
 #[derive(Debug, thiserror::Error)]
@@ -82,6 +82,10 @@ pub struct TurnEnd {
     /// This turn's own cost (not the session's cumulative counter); added
     /// to `agents.cost_usd_total` (docs/design/usage-and-budget.md).
     pub cost_total: f64,
+    /// `input_tokens + cache_read + cache_write` for this turn: the context
+    /// size claude reported at the end of it. Overwrites
+    /// `agents.context_tokens`, unlike `cost_total` (agents.md).
+    pub context_tokens: u64,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -655,11 +659,18 @@ mod sync {
         CREATE INDEX tasks_state ON tasks(state);
     "#;
 
+    // Context governor, part 1 (measure): the agent's latest known context
+    // size, from its most recent turn's `result` event. Not cumulative, so
+    // it's a plain column on `agents`, not folded into `turns` history.
+    pub(super) const SCHEMA_V6: &str = r#"
+        ALTER TABLE agents ADD COLUMN context_tokens INTEGER;
+    "#;
+
     // Coordination edges between tasks (coordination.md, Edges). `(from_task,
     // to_task, kind)` is the natural key: there's no separate edge id, and
     // `dep rm` identifies the row to delete by that same triple. Named
     // `from_task`/`to_task`, not `from`/`to`, since both are SQL keywords.
-    pub(super) const SCHEMA_V6: &str = r#"
+    pub(super) const SCHEMA_V7: &str = r#"
         CREATE TABLE edges (
             from_task TEXT NOT NULL,
             to_task TEXT NOT NULL,
@@ -672,7 +683,7 @@ mod sync {
     "#;
 
     const MIGRATIONS: &[&str] = &[
-        SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6,
+        SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7,
     ];
 
     pub(super) fn open(path: &Path) -> Result<Connection, StoreError> {
@@ -1019,7 +1030,8 @@ mod sync {
                a.turns, a.cost_usd_total, a.last_event_at, a.turn_started_at,
                a.exit_code, a.exit_signal, a.exit_reason, a.created_by,
                (SELECT COUNT(*) FROM messages m WHERE m.to_kind='agent' AND m.to_id=a.id AND m.state='held') AS held_messages,
-               (SELECT COUNT(*) FROM messages m WHERE m.to_kind='agent' AND m.to_id=a.id AND m.state='written') AS unacked_messages
+               (SELECT COUNT(*) FROM messages m WHERE m.to_kind='agent' AND m.to_id=a.id AND m.state='written') AS unacked_messages,
+               a.context_tokens
         FROM agents a";
 
     fn row_to_agent(row: &Row<'_>) -> rusqlite::Result<Agent> {
@@ -1055,6 +1067,7 @@ mod sync {
             created_by: row.get(21)?,
             held_messages: row.get::<_, i64>(22)? as u32,
             unacked_messages: row.get::<_, i64>(23)? as u32,
+            context_tokens: row.get::<_, Option<i64>>(24)?.map(|n| n as u64),
         })
     }
 
@@ -1114,6 +1127,7 @@ mod sync {
             created_by: new.created_by.clone(),
             held_messages: 0,
             unacked_messages: 0,
+            context_tokens: None,
         })
     }
 
@@ -1255,8 +1269,8 @@ mod sync {
         }
         let updated_agent = conn.execute(
             "UPDATE agents SET turns = turns + 1, cost_usd_total = cost_usd_total + ?1,
-                turn_started_at = NULL, updated_at = ?2 WHERE id = ?3",
-            params![turn.cost_total, fmt_dt(now), id],
+                context_tokens = ?2, turn_started_at = NULL, updated_at = ?3 WHERE id = ?4",
+            params![turn.cost_total, turn.context_tokens as i64, fmt_dt(now), id],
         )?;
         if updated_agent == 0 {
             return Err(StoreError::NotFound(id.to_string()));
@@ -1538,7 +1552,10 @@ mod sync {
         title: &str,
         kind: TaskKind,
     ) -> Result<TaskRow, StoreError> {
-        let now = Utc::now();
+        // Truncate to millisecond precision (matching fmt_dt's on-disk format) so the
+        // returned in-memory value can't be strictly less than a later floor-truncated
+        // read of the same row.
+        let now = Utc::now().trunc_subsecs(3);
         for _ in 0..TASK_ID_ATTEMPTS {
             let id = new_task_id(prefix);
             let result = conn.execute(
@@ -1640,9 +1657,10 @@ mod sync {
         to: &str,
         kind: EdgeKind,
     ) -> Result<Edge, StoreError> {
-        // Rounded to the millisecond `fmt_dt` stores, so the returned `Edge`
-        // matches what a later `list_edges` reads back byte-for-byte.
-        let now = parse_dt(&fmt_dt(Utc::now()))?;
+        // Truncated to millisecond precision (matching fmt_dt's on-disk
+        // format, and insert_task's own fix above) so the returned in-memory
+        // value matches a later `list_edges` read of the same row exactly.
+        let now = Utc::now().trunc_subsecs(3);
         let result = conn.execute(
             "INSERT INTO edges(from_task, to_task, kind, created_at) VALUES (?1, ?2, ?3, ?4)",
             params![from, to, kind.as_str(), fmt_dt(now)],
@@ -2122,6 +2140,7 @@ mod tests {
             .expect("found");
         assert_eq!(mid.state, AgentState::Idle); // turn bookkeeping doesn't itself change state
         assert!(mid.turn_started_at.is_some());
+        assert_eq!(mid.context_tokens, None); // no turn has ended yet
 
         store
             .end_turn(
@@ -2136,6 +2155,7 @@ mod tests {
                     cache_read: 10,
                     cache_write: 5,
                     cost_total: 0.05,
+                    context_tokens: 115,
                 },
             )
             .await
@@ -2151,6 +2171,7 @@ mod tests {
         assert!(after.turn_started_at.is_none());
         assert_eq!(after.pid, Some(4242));
         assert_eq!(after.session_id, "sess-1");
+        assert_eq!(after.context_tokens, Some(115));
 
         // Lookup by name works too.
         let by_name = store
@@ -2611,6 +2632,7 @@ mod tests {
                         cache_read,
                         cache_write: 0,
                         cost_total: cost,
+                        context_tokens: input + cache_read,
                     },
                 )
                 .await
@@ -2680,6 +2702,7 @@ mod tests {
                         cache_read,
                         cache_write: 0,
                         cost_total: cost,
+                        context_tokens: input + cache_read,
                     },
                 )
                 .await
@@ -2740,6 +2763,7 @@ mod tests {
                     cache_read: 0,
                     cache_write: 0,
                     cost_total: 9.99,
+                    context_tokens: 1000,
                 },
             )
             .await
@@ -2762,6 +2786,7 @@ mod tests {
                     cache_read: 0,
                     cache_write: 0,
                     cost_total: 0.01,
+                    context_tokens: 50,
                 },
             )
             .await

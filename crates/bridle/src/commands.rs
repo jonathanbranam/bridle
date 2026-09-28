@@ -223,6 +223,14 @@ async fn spawn(cli: &Cli, args: &SpawnArgs) -> Result<(), CliError> {
     print_agent(cli, &agent)
 }
 
+/// No turn has ended yet, not a real zero-sized context.
+fn format_context_tokens(tokens: Option<u64>) -> String {
+    match tokens {
+        Some(n) => n.to_string(),
+        None => "-".to_string(),
+    }
+}
+
 fn print_agent(cli: &Cli, agent: &bridle_api::Agent) -> Result<(), CliError> {
     if cli.json {
         render::print_json(agent)?;
@@ -247,19 +255,20 @@ async fn agents(cli: &Cli, args: &AgentsArgs) -> Result<(), CliError> {
         println!("no agents");
     } else {
         println!(
-            "{:<12} {:<14} {:<10} {:<9} {:<10} {:>5} {:>9}",
-            "ID", "NAME", "ROLE", "STATE", "MODEL", "TURNS", "COST"
+            "{:<12} {:<14} {:<10} {:<9} {:<10} {:>5} {:>9} {:>9}",
+            "ID", "NAME", "ROLE", "STATE", "MODEL", "TURNS", "COST", "CONTEXT"
         );
         for a in &list {
             println!(
-                "{:<12} {:<14} {:<10} {:<9} {:<10} {:>5} {:>9.4}",
+                "{:<12} {:<14} {:<10} {:<9} {:<10} {:>5} {:>9.4} {:>9}",
                 a.id,
                 a.name,
                 a.role,
                 a.state.to_string(),
                 a.model,
                 a.turns,
-                a.cost_usd_total
+                a.cost_usd_total,
+                format_context_tokens(a.context_tokens),
             );
         }
     }
@@ -288,6 +297,10 @@ async fn show(cli: &Cli, args: &ShowArgs) -> Result<(), CliError> {
         println!("cost        ${:.4}", agent.cost_usd_total);
         println!("held msgs   {}", agent.held_messages);
         println!("unacked     {}", agent.unacked_messages);
+        println!(
+            "context     {}",
+            format_context_tokens(agent.context_tokens)
+        );
         if let Some(exit) = &agent.exit {
             println!(
                 "exit        code={:?} signal={:?} reason={}",
