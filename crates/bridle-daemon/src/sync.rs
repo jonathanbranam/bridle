@@ -689,6 +689,7 @@ mod tests {
 
         let custom = CommandsConfig {
             check: "make check".to_string(),
+            check_worker: None,
         };
         sync(repo.path(), &layers, &custom, &BranchesConfig::default()).expect("sync");
         let custom_rendered =
