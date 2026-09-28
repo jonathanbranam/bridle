@@ -7,9 +7,9 @@
 //! L4 component/path-scoped rules are out of scope (blocked on spike vxp6).
 //!
 //! Each layer is a directory of `<id>.md` files (`Layer::dir` already points at
-//! the `rules/` directory itself, e.g. `<bridle-workflow>/rules` for L1,
-//! `<bridle-workflow>/packs/<name>/rules` for L2, `<repo>/.bridle/rules` for L3 —
-//! see [`Layer`]). A rule file's frontmatter carries its id and, for anything
+//! the `rules/` directory itself, e.g. `<workflow>/base/rules` for L1,
+//! `<workflow>/packs/<name>/rules` for L2, `<repo>/.bridle/rules` for L3 —
+//! see [`Layer`], [`discover_layers`]). A rule file's frontmatter carries its id, and for anything
 //! after the first layer that defines that id, an explicit `override` kind
 //! (`replace` | `append` | `disable`) — silent redefinition is an error, per the
 //! "overrides are explicit" section. `disable` requires a `reason`. A rule marked
@@ -51,12 +51,18 @@ pub struct Layer {
     pub dir: PathBuf,
 }
 
-/// Builds the layer list for a repo from `[rules] workflow`/`packs` in
-/// `<repo>/.bridle/config.toml` (`config::RulesConfig`): L1 base and L2 packs
+/// Builds the layer list for a repo from `workflow`/`packs` in
+/// `<repo>/.bridle/config.toml` (`config::Config`): L1 base and L2 packs
 /// from the workflow checkout, if one is configured, then L3 project from
 /// `<repo>/.bridle/rules`. With no `workflow` set, resolution only sees the
-/// project layer — see `RulesConfig::workflow`'s doc comment for why nothing
-/// is guessed here. `workflow_root`, if relative, is resolved against `repo`.
+/// project layer. `workflow_root`, if relative, is resolved against `repo`
+/// — bridle's own workflow checkout is in-repo (`workflow = "workflow"`,
+/// decision r2uq), but the field also accepts a path to a sibling checkout
+/// or, per docs/design/workflow-layers.md, a git url (not resolved here;
+/// a git-url `workflow` currently yields an empty base layer, since nothing
+/// clones it yet — a documented follow-up, not this task's scope). Layout
+/// inside the workflow root: `base/rules/<id>.md` for L1,
+/// `packs/<name>/rules/<id>.md` for L2.
 pub fn discover_layers(repo: &Path, workflow_root: Option<&Path>, packs: &[String]) -> Vec<Layer> {
     let mut layers = Vec::new();
     if let Some(root) = workflow_root {
@@ -68,7 +74,7 @@ pub fn discover_layers(repo: &Path, workflow_root: Option<&Path>, packs: &[Strin
         layers.push(Layer {
             kind: LayerKind::Base,
             name: "base".to_string(),
-            dir: root.join("rules"),
+            dir: root.join("base").join("rules"),
         });
         for pack in packs {
             layers.push(Layer {
@@ -1008,7 +1014,7 @@ mod tests {
         );
         assert_eq!(layers.len(), 4);
         assert_eq!(layers[0].kind, LayerKind::Base);
-        assert_eq!(layers[0].dir, Path::new("/wf/rules"));
+        assert_eq!(layers[0].dir, Path::new("/wf/base/rules"));
         assert_eq!(layers[1].kind, LayerKind::Pack);
         assert_eq!(layers[1].name, "typescript");
         assert_eq!(layers[1].dir, Path::new("/wf/packs/typescript/rules"));
@@ -1019,13 +1025,13 @@ mod tests {
     #[test]
     fn discover_layers_resolves_a_relative_workflow_path_against_repo() {
         let layers = discover_layers(Path::new("/repo"), Some(Path::new("../wf")), &[]);
-        assert_eq!(layers[0].dir, Path::new("/repo/../wf/rules"));
+        assert_eq!(layers[0].dir, Path::new("/repo/../wf/base/rules"));
     }
 
     #[test]
     fn load_and_resolve_runs_end_to_end_on_real_directories() {
         let repo = tempfile::tempdir().expect("tempdir");
-        let base_rules = repo.path().join("workflow").join("rules");
+        let base_rules = repo.path().join("workflow").join("base").join("rules");
         std::fs::create_dir_all(&base_rules).expect("mkdir");
         std::fs::write(
             base_rules.join("verify.browser.md"),

@@ -4,20 +4,23 @@
 
 ```
 L0  core        built into the binary: task states, edge types, command semantics
-L1  base        bridle-workflow/base/          shared by every project
-L2  packs       bridle-workflow/packs/<name>/   opt-in: typescript, python, vim,
+L1  base        workflow/base/                  shared by every project
+L2  packs       workflow/packs/<name>/           opt-in: typescript, python, vim,
                                                 web-ui, game, monorepo, …
 L3  project     <repo>/.bridle/                 this project's overrides + additions
 L4  component   <repo>/.bridle/components/<n>/  path-scoped, e.g. client-watch/**
 ```
 
-Later layers win. A project lists its packs in `.bridle/config.toml`:
+Later layers win. A project lists its packs in `.bridle/config.toml`, and
+points `workflow` at wherever `base/` and `packs/` live — a directory inside
+the project's own repo (bridle's own choice, decision r2uq: a separate repo
+was "too much hassle"), a path to a sibling checkout, or a git url:
 
 ```toml
 project  = "track-web"
 prefix   = "tw"
 packs    = ["typescript", "web-ui", "monorepo"]
-workflow = "~/work/bridle-workflow"      # path or git url; rev pin optional
+workflow = "workflow"                    # path or git url
 
 [components.client-watch]
 paths = ["client-watch/**"]
@@ -26,11 +29,21 @@ paths = ["packages/dungeon-engine/**"]
 consumers = ["harness"]                  # a cross-project edge the tool knows about
 ```
 
-**The base layer is edited in one place.** `bridle-workflow` is a git repo;
-change a base rule, commit, and every project picks it up on its next
-`bridle sync` (which the SessionStart hook runs). Nothing is copied into
-projects, so nothing goes stale. A project can pin `rev = "…"` if it needs to
-stay behind.
+**The base layer is edited in one place.** Whether `workflow` is a directory
+in this repo or a separate git repo shared across projects, the same rule
+applies: change a base rule, commit, and every project picks it up on its
+next `bridle sync` (which the SessionStart hook runs). Nothing is copied into
+projects, so nothing goes stale.
+
+**Updates apply automatically by default.** The human's words, 2026-09-28:
+there's no rev pinning for the common case — a project just gets whatever
+`workflow` currently has next time it syncs. A project that wants to know
+what changed reads a changelog (e.g. `workflow/CHANGELOG.md`); `bridle sync`
+can print the entries new since the project's last sync (exact mechanism is
+implementation work, not designed here). A project that disagrees with a
+specific base rule doesn't pin or fork — it opts out with a local
+`override: disable` and a `reason` (below), which stays visible instead of
+silently drifting behind.
 
 ## What a layer contains
 

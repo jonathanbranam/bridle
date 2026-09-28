@@ -592,22 +592,14 @@ pub struct Config {
     /// e.g. `tw-7fa2`). `None` means derive one from the project name
     /// ([`default_task_prefix`]).
     pub task_prefix: Option<String>,
-    pub rules: RulesConfig,
-}
-
-/// `[rules]` in `<repo>/.bridle/config.toml`: where the L1 base and L2 pack
-/// layers come from (docs/design/workflow-layers.md, `bridle_daemon::rules`).
-#[derive(Debug, Clone, Default)]
-pub struct RulesConfig {
-    /// The `bridle-workflow` checkout. Relative paths are resolved against
-    /// the repo root. `None` until a project sets `workflow = "..."` — its
-    /// location is still provisional (docs/questions/open/
-    /// where-bridle-workflow-lives-r2uq.md), so there's no default guess
-    /// here; with no workflow set, resolution only sees the project layer.
-    pub workflow: Option<PathBuf>,
-    /// L2 pack names to layer in, in listed order, each read from
-    /// `<workflow>/packs/<name>/rules`. Pack content itself is out of scope
-    /// for now (docs/design/workflow-layers.md); this is just the list of
+    /// Where the L1/L2 workflow layers live (docs/design/workflow-layers.md):
+    /// a path (relative to the repo root) or a git url. `None` until a
+    /// project opts in. Read by `bridle_daemon::rules::discover_layers` as
+    /// `<workflow>/base/rules` (L1) and `<workflow>/packs/<name>/rules` (L2,
+    /// one per entry in `packs`).
+    pub workflow: Option<String>,
+    /// L2 pack names to layer in, in listed order. Pack content itself is
+    /// out of scope for now (docs/design/workflow-layers.md); this is just
     /// which pack directories to include.
     pub packs: Vec<String>,
 }
@@ -628,7 +620,8 @@ impl Default for Config {
             models: ModelsConfig::default(),
             context: ContextConfig::default(),
             task_prefix: None,
-            rules: RulesConfig::default(),
+            workflow: None,
+            packs: Vec::new(),
         }
     }
 }
@@ -779,10 +772,8 @@ impl Config {
             config.task_prefix = t.prefix;
         }
 
-        if let Some(r) = raw.rules {
-            config.rules.workflow = r.workflow.map(PathBuf::from);
-            config.rules.packs = r.packs.unwrap_or_default();
-        }
+        config.workflow = raw.workflow;
+        config.packs = raw.packs.unwrap_or_default();
 
         Ok(config)
     }
@@ -866,7 +857,9 @@ struct RawConfig {
     #[serde(default)]
     tasks: Option<RawTasks>,
     #[serde(default)]
-    rules: Option<RawRules>,
+    workflow: Option<String>,
+    #[serde(default)]
+    packs: Option<Vec<String>>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -876,15 +869,6 @@ struct RawContext {
     wind_down_at: Option<BTreeMap<String, f64>>,
     #[serde(default)]
     wind_down_grace: Option<String>,
-}
-
-#[derive(Debug, Default, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct RawRules {
-    #[serde(default)]
-    workflow: Option<String>,
-    #[serde(default)]
-    packs: Option<Vec<String>>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -1671,6 +1655,13 @@ mod tests {
         assert_eq!(cfg.models.by_role["explore"], vec!["opus", "haiku"]);
         // Untouched roles keep the built-in default.
         assert_eq!(cfg.models.by_role["manager"], vec!["opus", "sonnet"]);
+    }
+
+    #[test]
+    fn workflow_path_is_parsed_and_defaults_to_none() {
+        assert_eq!(Config::parse("").expect("parse").workflow, None);
+        let cfg = Config::parse(r#"workflow = "workflow""#).expect("parse");
+        assert_eq!(cfg.workflow.as_deref(), Some("workflow"));
     }
 
     #[test]

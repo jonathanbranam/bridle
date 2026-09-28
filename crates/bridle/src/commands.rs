@@ -1095,8 +1095,8 @@ fn resolve_workflow_rules(repo: &Path) -> Result<bridle_daemon::rules::Resolutio
     use bridle_daemon::rules;
 
     let config = Config::load(repo).context("loading .bridle/config.toml")?;
-    let layers =
-        rules::discover_layers(repo, config.rules.workflow.as_deref(), &config.rules.packs);
+    let workflow_root = config.workflow.as_deref().map(Path::new);
+    let layers = rules::discover_layers(repo, workflow_root, &config.packs);
     rules::load_and_resolve(&layers)
         .map_err(|e| CliError::from(anyhow::Error::new(e).context("resolving workflow rules")))
 }

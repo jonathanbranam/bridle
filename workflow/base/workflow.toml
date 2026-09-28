@@ -1,0 +1,8 @@
+# L1 base layer for bridle's workflow system.
+#
+# Schema: docs/design/workflow-layers.md, roles-and-lifecycle.md and gates.md
+# in the bridle repo. Those tables ([roles.*], [gates.*], lifecycle settings)
+# aren't populated here yet — this is scaffolding (P2-1); roles and gates
+# still live in bridle's own <repo>/.bridle/config.toml until the layer
+# resolution engine reads this file.
+layer = "base"

@@ -81,6 +81,18 @@ split above.
 
 Newest first. One line per item: what happened, who did it, what it says about roles.
 
+- 2026-09-28: the human wanted a second session to chat, file tickets and
+  triage questions without taking the orchestrator's attention. Set up as
+  `external:advisor` (own token, Remote Control `bridle-chat`). A first
+  split of the voice: discussion and triage vs. watching and steering.
+- 2026-09-28: the geem research worker had no web access (worker
+  `allowed_tools` has no WebSearch/WebFetch) and merged an unverified
+  catalogue. The orchestrator redid it with a web-enabled subagent; a
+  `researcher` role is queued. Research needs its own role.
+- 2026-09-28: the product manager proposed a separate `bridle-workflow` repo,
+  and the orchestrator seconded it; the human rejected it as a hassle (r2uq).
+  The voice should check a design's heavier choices against KISS before
+  recommending them, not pass them through.
 - 2026-09-28: the human asked for the voice/admin split and for this file.
   The orchestrator took the human's answers to three questions (P2 next,
   j2vq parked, no alias) and relayed them to the product manager.
