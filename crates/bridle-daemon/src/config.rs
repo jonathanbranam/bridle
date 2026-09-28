@@ -419,6 +419,11 @@ impl ModelsConfig {
 #[derive(Debug, Clone)]
 pub struct ContextConfig {
     pub wind_down_at: WindowThresholds,
+    /// How long a notified agent gets to finish a handoff turn (commit WIP,
+    /// write a note) on its own before it's renewed regardless — the same
+    /// shape as `[budget] wind_down_grace`, since `stop_grace`'s 30s is
+    /// meant for an idle process noticing stdin EOF, not a whole turn.
+    pub wind_down_grace: Duration,
 }
 
 impl Default for ContextConfig {
@@ -427,7 +432,10 @@ impl Default for ContextConfig {
         wind_down_at
             .overrides
             .insert("worker".to_string(), 120_000.0);
-        ContextConfig { wind_down_at }
+        ContextConfig {
+            wind_down_at,
+            wind_down_grace: Duration::from_secs(5 * 60),
+        }
     }
 }
 
@@ -435,6 +443,9 @@ impl ContextConfig {
     fn merge(mut self, raw: RawContext) -> Result<Self, ConfigError> {
         if let Some(m) = &raw.wind_down_at {
             self.wind_down_at = WindowThresholds::from_raw(m, "wind_down_at")?;
+        }
+        if let Some(s) = &raw.wind_down_grace {
+            self.wind_down_grace = parse_duration(s)?;
         }
         Ok(self)
     }
@@ -659,6 +670,8 @@ struct RawConfig {
 struct RawContext {
     #[serde(default)]
     wind_down_at: Option<BTreeMap<String, f64>>,
+    #[serde(default)]
+    wind_down_grace: Option<String>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -943,6 +956,27 @@ mod tests {
             let prompt = config.roles[role].system_prompt.as_ref().expect("prompt");
             assert!(repo.join(prompt).is_file(), "{} exists", prompt.display());
         }
+    }
+
+    #[test]
+    fn context_config_defaults_and_parses_overrides() {
+        let cfg = Config::default();
+        assert_eq!(cfg.context.wind_down_at.get("default"), 200_000.0);
+        assert_eq!(cfg.context.wind_down_at.get("worker"), 120_000.0);
+        assert_eq!(cfg.context.wind_down_grace, Duration::from_secs(5 * 60));
+
+        let toml = r#"
+            [context]
+            wind_down_grace = "45s"
+
+            [context.wind_down_at]
+            default = 50000
+            worker = 30000
+        "#;
+        let cfg = Config::parse(toml).expect("parse");
+        assert_eq!(cfg.context.wind_down_at.get("default"), 50_000.0);
+        assert_eq!(cfg.context.wind_down_at.get("worker"), 30_000.0);
+        assert_eq!(cfg.context.wind_down_grace, Duration::from_secs(45));
     }
 
     #[test]

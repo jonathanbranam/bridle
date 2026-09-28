@@ -99,11 +99,16 @@ struct RuntimeState {
     turn_n: u32,
     stall_notified: bool,
     /// Set once this crossing of the `[context] wind_down_at` threshold has
-    /// sent its "Context handoff:" notice and called `renew` (htp6b);
-    /// `register_and_start` gives every fresh runtime — including the one
-    /// `renew` itself creates — a clean `false`, so the next crossing (on a
-    /// fresh session, after context_tokens resets) notifies again.
-    context_notified: bool,
+    /// sent its "Context handoff:" notice (htp6b, mirrors
+    /// `wind_down_pending`): the agent gets `context_renew_deadline` to
+    /// finish a handoff turn on its own (checked at turn-end, alongside
+    /// `wind_down_pending`) before `expire_context_renews` renews it
+    /// regardless. `register_and_start` gives every fresh runtime —
+    /// including the one `renew` itself creates — a clean `false`, so the
+    /// next crossing (on a fresh session, after context_tokens resets)
+    /// notifies again.
+    context_renew_pending: bool,
+    context_renew_deadline: Option<std::time::Instant>,
     current_state: AgentState,
     /// Whether any stdout line at all has been seen (system/init counts).
     saw_any_line: bool,
@@ -337,12 +342,17 @@ impl AgentManager {
         }
     }
 
-    /// Sends `Context handoff:` and renews any agent whose `context_tokens`
-    /// crosses its role's `[context] wind_down_at` threshold, once per
-    /// crossing (htp6b: govern context size the way `tick_stall_check`
-    /// governs silence). `renew` starts a fresh session with
-    /// `context_tokens` cleared (`Store::set_agent_session`), so the next
-    /// turn's growth is a new crossing, not a repeat of this one.
+    /// Sends `Context handoff:` to any agent whose `context_tokens` crosses
+    /// its role's `[context] wind_down_at` threshold, once per crossing
+    /// (htp6b: govern context size the way the budget governor governs
+    /// usage — see `mark_context_renew`/`expire_context_renews`, mirroring
+    /// `mark_wind_down`/`expire_wind_downs`). The renew itself is deferred:
+    /// a handoff needs a whole turn (commit WIP, write a note) to run
+    /// safely, not `stop_grace`'s 30s meant for an idle process noticing
+    /// stdin EOF, so it fires either when that turn ends on its own (the
+    /// `context_renew_pending` check at turn-end, alongside
+    /// `wind_down_pending`) or, failing that, once `context.wind_down_grace`
+    /// runs out.
     pub async fn tick_context_check(&self) {
         let Ok(agents) = self.0.store.list_agents(false).await else {
             return;
@@ -358,21 +368,18 @@ impl AgentManager {
             if (tokens as f64) < threshold {
                 continue;
             }
-            let Some(rt) = self.get_runtime(&a.id) else {
-                continue;
-            };
-            let mut st = rt.state.lock().await;
-            if st.context_notified {
+            let deadline = std::time::Instant::now() + self.0.config.context.wind_down_grace;
+            if self.mark_context_renew(&a.id, deadline).await != Some(true) {
                 continue;
             }
-            st.context_notified = true;
-            drop(st);
 
             let body = format!(
                 "Context handoff: your context is at {tokens} tokens, past this role's \
                  {threshold:.0}-token wind-down threshold. Commit your work in progress \
                  to your branch, then send a short handoff note on where you are and \
-                 what's next — you're about to be renewed with a fresh context."
+                 what's next — you'll be renewed with a fresh context once this turn \
+                 ends (or in {grace_secs}s regardless).",
+                grace_secs = self.0.config.context.wind_down_grace.as_secs(),
             );
             let _ = self
                 .send(
@@ -384,7 +391,42 @@ impl AgentManager {
                     None,
                 )
                 .await;
-            let _ = self.renew(&a.id, true, &system_principal()).await;
+        }
+        self.expire_context_renews().await;
+    }
+
+    /// Marks `id` as owing a context renew once its handoff turn ends or
+    /// its grace deadline passes, whichever comes first (mirrors
+    /// `mark_wind_down`). Returns `Some(true)` the first time, so the
+    /// caller only sends the handoff notice once per crossing.
+    async fn mark_context_renew(&self, id: &str, deadline: std::time::Instant) -> Option<bool> {
+        let rt = self.get_runtime(id)?;
+        let mut st = rt.state.lock().await;
+        let first = !st.context_renew_pending;
+        st.context_renew_pending = true;
+        if first {
+            st.context_renew_deadline = Some(deadline);
+        }
+        Some(first)
+    }
+
+    /// Renews every context-renew-pending agent whose grace deadline has
+    /// passed (mirrors `expire_wind_downs`): the fallback for an agent
+    /// that's idle when notified, or whose handoff turn runs past grace.
+    async fn expire_context_renews(&self) {
+        let now = std::time::Instant::now();
+        let mut due = Vec::new();
+        for (id, rt) in self.runtimes_snapshot() {
+            let is_due = {
+                let st = rt.state.lock().await;
+                st.context_renew_pending && st.context_renew_deadline.is_some_and(|d| now >= d)
+            };
+            if is_due {
+                due.push(id);
+            }
+        }
+        for id in due {
+            let _ = self.renew(&id, true, &system_principal()).await;
         }
     }
 
@@ -720,7 +762,8 @@ impl AgentManager {
                 last_cumulative: cost_so_far,
                 turn_n: turns_so_far,
                 stall_notified: false,
-                context_notified: false,
+                context_renew_pending: false,
+                context_renew_deadline: None,
                 current_state: AgentState::Idle,
                 saw_any_line: false,
                 version_checked: false,
@@ -1035,6 +1078,23 @@ impl AgentManager {
                     let id = id.to_string();
                     tokio::spawn(async move {
                         let _ = this.stop(&id, false, &system_principal()).await;
+                    });
+                    return;
+                }
+
+                // The context governor's handoff notice told this agent to
+                // wrap up (htp6b); renew now instead of starting another
+                // turn on a held message, the same way the budget wind-down
+                // does above. Spawned, not awaited, for the same reason.
+                let context_renew_pending = {
+                    let st = runtime.state.lock().await;
+                    st.context_renew_pending
+                };
+                if context_renew_pending {
+                    let this = self.clone();
+                    let id = id.to_string();
+                    tokio::spawn(async move {
+                        let _ = this.renew(&id, true, &system_principal()).await;
                     });
                     return;
                 }
@@ -1641,7 +1701,26 @@ impl AgentManager {
     /// and checked out; renew just points a new process at it. The agent
     /// keeps its id and name throughout, so nothing else that addresses it
     /// (messages, tasks) needs to know it was renewed.
-    pub async fn renew(
+    // A plain `async fn` here would make its opaque return type part of a
+    // mutually recursive cycle: `register_and_start` spawns
+    // `run_event_task`, which calls `handle_claude_event`, which (htp6b)
+    // calls `renew` on a context-handoff turn's end, which calls
+    // `register_and_start` again. `rustc` can't resolve that cycle through
+    // `impl Future` alone (each is a fresh task at runtime, but the
+    // compiler still needs a non-opaque type to close the loop), so this
+    // boxes the future explicitly instead.
+    pub fn renew<'a>(
+        &'a self,
+        id_or_name: &'a str,
+        ignore_budget: bool,
+        principal: &'a Principal,
+    ) -> std::pin::Pin<
+        Box<dyn std::future::Future<Output = Result<Agent, SupervisorError>> + Send + 'a>,
+    > {
+        Box::pin(self.renew_inner(id_or_name, ignore_budget, principal))
+    }
+
+    async fn renew_inner(
         &self,
         id_or_name: &str,
         ignore_budget: bool,

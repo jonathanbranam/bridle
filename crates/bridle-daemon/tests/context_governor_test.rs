@@ -10,7 +10,7 @@ use std::time::Duration;
 
 use bridle_api::types::{MessageQuery, SpawnRequest, Workdir};
 use bridle_daemon::Overrides;
-use support::{fake_claude_path, start_daemon_with_config, wait_for_event, wait_for_state};
+use support::{fake_claude_path, start_daemon_with_config, wait_for_event};
 
 fn fast_overrides() -> Overrides {
     Overrides {
@@ -45,12 +45,10 @@ async fn crossing_wind_down_at_sends_handoff_and_renews_once() {
         .await
         .expect("spawn");
 
-    let after_turn = wait_for_state(c, &agent.id, bridle_api::types::AgentState::Idle).await;
-    assert!(
-        after_turn.context_tokens.unwrap_or(0) >= 1,
-        "expected a completed turn to report context_tokens"
-    );
-
+    // With a threshold this low, the crossing (and its handoff-turn
+    // renewal) can happen within a poll or two of the first turn ending, so
+    // don't try to catch the transient "Idle right after turn 1" state —
+    // it's a race by construction. Go straight to the renewal itself.
     wait_for_event(c, "agent.renewed", Some(&agent.id), |_| true).await;
 
     let messages = c
