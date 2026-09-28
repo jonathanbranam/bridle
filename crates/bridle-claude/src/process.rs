@@ -142,6 +142,19 @@ impl AgentHandle {
         }
     }
 
+    /// Sends `{"subtype":"get_context_usage"}` and waits for the correlated
+    /// receipt. Undocumented (docs/spikes/01-stream-json-findings.md §11):
+    /// gives a per-category token breakdown plus a single `totalTokens` for
+    /// the whole context window, and the auto-compact threshold.
+    pub async fn get_context_usage(&self, timeout: Duration) -> Result<Value, ControlError> {
+        let rx = self.control(json!({ "subtype": "get_context_usage" }))?;
+        match tokio::time::timeout(timeout, rx).await {
+            Ok(Ok(v)) => Ok(v),
+            Ok(Err(_)) => Err(ControlError::Dropped),
+            Err(_) => Err(ControlError::Timeout),
+        }
+    }
+
     /// Closes stdin. Idempotent: closing an already-closed handle is a
     /// no-op. This is what makes claude finish its current turn and exit
     /// (docs/design/agent-host/agents.md, stop step 1).

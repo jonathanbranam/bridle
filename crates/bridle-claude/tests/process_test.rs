@@ -344,3 +344,33 @@ async fn pending_control_request_is_dropped_on_exit() {
         "expected the pending control request's sender to be dropped, not resolved"
     );
 }
+
+/// `get_context_usage` reports a single `totalTokens` for the whole context
+/// window, separate from a turn's `usage` sum (kc4v: the daemon uses this,
+/// not `result.usage`, for `context_tokens`, since that sum is per-API-call
+/// and inflates across a turn's tool round-trips).
+#[tokio::test]
+async fn get_context_usage_returns_total_tokens() {
+    let dir = tempfile::tempdir().expect("tempdir");
+    std::fs::write(
+        dir.path().join(".fake-claude-context-usage"),
+        serde_json::json!({"totalTokens": 42_000, "maxTokens": 200_000}).to_string(),
+    )
+    .expect("write .fake-claude-context-usage");
+    let cmd = fake_command(dir.path(), Session::New(Uuid::new_v4()));
+    let transcript = open_transcript(dir.path());
+    let spawned = spawn(&cmd, transcript).await.expect("spawn");
+
+    let response = timeout(
+        Duration::from_secs(5),
+        spawned.handle.get_context_usage(Duration::from_secs(5)),
+    )
+    .await
+    .expect("get_context_usage timed out")
+    .expect("get_context_usage control error");
+
+    let total = response
+        .pointer("/response/response/totalTokens")
+        .and_then(serde_json::Value::as_u64);
+    assert_eq!(total, Some(42_000));
+}
