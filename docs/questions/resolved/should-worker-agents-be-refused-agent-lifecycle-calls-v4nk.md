@@ -30,3 +30,23 @@ of the worker role as described in `docs/design/agent-host/roles-and-config.md`.
 Whether this is a gap worth closing (a server-side role check on those
 endpoints) or a non-issue (workers already have Bash, so an API restriction
 adds no real containment) is unsettled.
+
+## Resolution
+
+Close the gap: worker principals are refused on the six agent lifecycle
+endpoints (spawn, interrupt, stop, resume, renew, remove). `require_not_worker`
+in `crates/bridle-daemon/src/server.rs`, next to the existing `require_human`
+guard, looks up an `agent` principal's role via `state.store.get_agent()` and
+returns `403` when it's `worker`; manager, orchestrator, human and external
+principals are unaffected. Covered by
+`worker_principal_is_refused_agent_lifecycle_endpoints` and
+`manager_and_orchestrator_principals_keep_agent_lifecycle_authority` in
+`crates/bridle-daemon/tests/lifecycle_test.rs`. Documented in
+`docs/design/agent-host/principals.md`.
+
+A worker with Bash can still forge the same HTTP calls by other means, so
+this isn't a hard security boundary (see principals.md's provenance caveat),
+but it does close the API-level gap and matches the intended shape of the
+worker role.
+
+Resolved 2026-09-28.

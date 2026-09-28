@@ -5,7 +5,8 @@ mod support;
 use std::time::Duration;
 
 use bridle_api::types::{
-    AgentState, InterruptRequest, RemoveQuery, SendRequest, SpawnRequest, Workdir,
+    AgentState, InterruptRequest, RemoveQuery, RenewRequest, ResumeRequest, SendRequest,
+    SpawnRequest, StopRequest, Workdir,
 };
 use support::{start_daemon, wait_for_agent, wait_for_state};
 
@@ -411,4 +412,176 @@ async fn spawn_child_orphan_is_swept_on_stop() {
         nix::sys::signal::kill(nix::unistd::Pid::from_raw(child_pid), None).is_err(),
         "spawned child pid {child_pid} should be dead after stop"
     );
+}
+
+/// v4nk: worker-role agents get no agent lifecycle authority
+/// (docs/design/agent-host/roles-and-config.md) — a worker's own token must
+/// be refused on spawn/interrupt/stop/resume/renew/rm of any agent,
+/// including agents it didn't spawn itself.
+#[tokio::test]
+async fn worker_principal_is_refused_agent_lifecycle_endpoints() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let actor = daemon
+        .client
+        .spawn(&SpawnRequest {
+            role: "worker".to_string(),
+            name: Some("actor".to_string()),
+            prompt: None,
+            workdir: Some(Workdir::Repo),
+            model: None,
+            ignore_budget: false,
+        })
+        .await
+        .expect("spawn actor");
+    wait_for_state(&daemon.client, &actor.id, AgentState::Idle).await;
+    let victim = daemon
+        .client
+        .spawn(&SpawnRequest {
+            role: "worker".to_string(),
+            name: Some("victim".to_string()),
+            prompt: None,
+            workdir: Some(Workdir::Repo),
+            model: None,
+            ignore_budget: false,
+        })
+        .await
+        .expect("spawn victim");
+    wait_for_state(&daemon.client, &victim.id, AgentState::Idle).await;
+
+    let worker_client = daemon.agent_client(&actor.id);
+
+    let err = worker_client
+        .spawn(&SpawnRequest {
+            role: "worker".to_string(),
+            name: Some("victim2".to_string()),
+            prompt: None,
+            workdir: Some(Workdir::Repo),
+            model: None,
+            ignore_budget: false,
+        })
+        .await
+        .unwrap_err();
+    assert!(matches!(
+        err,
+        bridle_api::ClientError::Api { status: 403, .. }
+    ));
+
+    let err = worker_client
+        .interrupt(&victim.id, &InterruptRequest { drop_held: false })
+        .await
+        .unwrap_err();
+    assert!(matches!(
+        err,
+        bridle_api::ClientError::Api { status: 403, .. }
+    ));
+
+    let err = worker_client
+        .stop(&victim.id, &StopRequest { now: false })
+        .await
+        .unwrap_err();
+    assert!(matches!(
+        err,
+        bridle_api::ClientError::Api { status: 403, .. }
+    ));
+
+    let err = worker_client
+        .resume(&victim.id, &ResumeRequest::default())
+        .await
+        .unwrap_err();
+    assert!(matches!(
+        err,
+        bridle_api::ClientError::Api { status: 403, .. }
+    ));
+
+    let err = worker_client
+        .renew(&victim.id, &RenewRequest::default())
+        .await
+        .unwrap_err();
+    assert!(matches!(
+        err,
+        bridle_api::ClientError::Api { status: 403, .. }
+    ));
+
+    let err = worker_client
+        .remove(&victim.id, &RemoveQuery::default())
+        .await
+        .unwrap_err();
+    assert!(matches!(
+        err,
+        bridle_api::ClientError::Api { status: 403, .. }
+    ));
+}
+
+/// The other side of v4nk: manager and orchestrator principals keep full
+/// lifecycle authority, matching roles-and-config.md.
+#[tokio::test]
+async fn manager_and_orchestrator_principals_keep_agent_lifecycle_authority() {
+    let (daemon, _tmp) = start_daemon(None).await;
+
+    for (role, name) in [("manager", "mgr"), ("orchestrator", "orc")] {
+        let actor = daemon
+            .client
+            .spawn(&SpawnRequest {
+                role: role.to_string(),
+                name: Some(name.to_string()),
+                prompt: None,
+                workdir: Some(Workdir::Repo),
+                model: None,
+                ignore_budget: false,
+            })
+            .await
+            .expect("spawn actor");
+        wait_for_state(&daemon.client, &actor.id, AgentState::Idle).await;
+        let actor_client = daemon.agent_client(&actor.id);
+
+        let victim = actor_client
+            .spawn(&SpawnRequest {
+                role: "worker".to_string(),
+                name: Some(format!("{name}-victim")),
+                prompt: None,
+                workdir: Some(Workdir::Worktree { base: None }),
+                model: None,
+                ignore_budget: false,
+            })
+            .await
+            .unwrap_or_else(|e| panic!("{role} spawn should succeed: {e}"));
+        wait_for_state(&daemon.client, &victim.id, AgentState::Idle).await;
+
+        actor_client
+            .interrupt(&victim.id, &InterruptRequest { drop_held: false })
+            .await
+            .unwrap_or_else(|e| panic!("{role} interrupt should succeed: {e}"));
+
+        let stopped = actor_client
+            .stop(&victim.id, &StopRequest { now: false })
+            .await
+            .unwrap_or_else(|e| panic!("{role} stop should succeed: {e}"));
+        assert_eq!(stopped.state, AgentState::Stopped);
+
+        actor_client
+            .resume(&victim.id, &ResumeRequest::default())
+            .await
+            .unwrap_or_else(|e| panic!("{role} resume should succeed: {e}"));
+        wait_for_state(&daemon.client, &victim.id, AgentState::Idle).await;
+
+        actor_client
+            .renew(&victim.id, &RenewRequest::default())
+            .await
+            .unwrap_or_else(|e| panic!("{role} renew should succeed: {e}"));
+
+        actor_client
+            .stop(&victim.id, &StopRequest { now: false })
+            .await
+            .unwrap_or_else(|e| panic!("{role} stop before rm should succeed: {e}"));
+        actor_client
+            .remove(
+                &victim.id,
+                &RemoveQuery {
+                    force: false,
+                    delete_branch: true,
+                },
+            )
+            .await
+            .unwrap_or_else(|e| panic!("{role} rm should succeed: {e}"));
+    }
 }
