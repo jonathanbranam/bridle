@@ -56,6 +56,15 @@ design moves on; the design docs cite them.
 - Bodies quote their source verbatim (the doc section, the human's words,
   pinned to a commit when the source has since changed) and don't triage.
 
+**Since P0-6 (tskm), `bridle task` is the queue, not this folder.** Every
+ticket here has a matching bridle task (body starts `original id: <id>`); a
+new ticket gets its task at filing, and resolving a ticket closes its task.
+The ticket file stays the durable text its task points to — filing and
+resolving still work the way this section describes. This doesn't decide
+the folder-as-state question itself
+([[ticket-state-without-moving-files-p2ys|ticket state without moving files]]),
+which stays open.
+
 Check links and IDs with:
 
 ```bash

@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
-"""import-tickets.py — throwaway importer for P0-6a (ticket tskm), the
-verification gate for "migrate bridle's own work into bridle task
-management". Reads docs/questions/open/*.md and docs/spikes/open/*.md and
-creates one bridle task per ticket via the `bridle` CLI, plus a `blocks`
-edge for each `needs:` reference that resolves to another ticket in the
-same import batch.
+"""import-tickets.py — ticket importer for tskm (migrate bridle's own work
+into bridle task management). Reads docs/questions/open/*.md and
+docs/spikes/open/*.md and creates one bridle task per ticket via the
+`bridle` CLI, plus a `blocks` edge for each `needs:` reference that
+resolves to another ticket in the same import batch.
 
-Not a permanent CLI subcommand (YAGNI) — point it at a throwaway daemon:
+Idempotent: before creating a task for a ticket, it checks every existing
+task's body for the line `original id: <ticket-id>` and skips that ticket
+if found. This lets an interrupted run be re-run safely.
+
+Not a permanent CLI subcommand (YAGNI) — point it at the target daemon:
 
     BRIDLE_URL=http://127.0.0.1:PORT BRIDLE_TOKEN=... \\
         scripts/import-tickets.py --bridle-bin target/debug/bridle
@@ -109,9 +112,25 @@ def main() -> int:
                 }
             )
 
+    # ticket id -> "original id: <id>" seen in an existing task's body, so a
+    # re-run after an interruption doesn't create duplicates.
+    existing_tasks = bridle(args.bridle_bin, "task", "list")
+    already_imported: dict[str, str] = {}
+    for task in existing_tasks:
+        for line in task["body"].splitlines():
+            m = re.match(r"^original id: (\S+)$", line)
+            if m:
+                already_imported[m.group(1)] = task["id"]
+
     # id -> bridle task id, only for tickets in this batch (needs same-tree resolution).
     task_ids: dict[str, str] = {}
+    skipped = 0
     for t in tickets:
+        if t["id"] in already_imported:
+            task_ids[t["id"]] = already_imported[t["id"]]
+            print(f"{t['id']} -> {already_imported[t['id']]}  (already imported, skipped)")
+            skipped += 1
+            continue
         body = f"ticket: {t['path']}\noriginal id: {t['id']}\n"
         task = bridle(
             args.bridle_bin,
@@ -129,14 +148,21 @@ def main() -> int:
             if needed not in task_ids:
                 skipped_needs.append((t["id"], needed))
                 continue
-            bridle(
-                args.bridle_bin,
-                "dep", "add", task_ids[t["id"]],
-                "--blocked-by", task_ids[needed],
-            )
-            edges += 1
+            try:
+                bridle(
+                    args.bridle_bin,
+                    "dep", "add", task_ids[t["id"]],
+                    "--blocked-by", task_ids[needed],
+                )
+                edges += 1
+            except RuntimeError as e:
+                if "edge already exists" not in str(e):
+                    raise
 
-    print(f"\nimported {len(tickets)} tickets, {edges} dep edges, {malformed} malformed skipped")
+    print(
+        f"\nimported {len(tickets) - skipped} tickets, {skipped} already imported, "
+        f"{edges} dep edges, {malformed} malformed skipped"
+    )
     if skipped_needs:
         print("skipped needs: (not resolvable within this batch — cross-tree or unknown)")
         for from_id, needed in skipped_needs:
