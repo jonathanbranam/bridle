@@ -49,10 +49,10 @@ On 2026-09-28, three more gaps verified fixed in code: `bridle daemons`
 already shows agent counts with a 1s health-probe join_all
 (crates/bridle/src/commands.rs:146); `token list` and `token revoke` already
 exist (crates/bridle/src/cli.rs); and `rm` now checks for open files under the
-worktree using `lsof +D` (merge 8920cbc, commit 999f8f0).
+worktree using `lsof +D`, gated on `!force` like the dirty and unmerged-branch
+checks, naming the offending process when it refuses (merge 8920cbc, commit 999f8f0).
 
 ## Gaps
-
 - **The `Containment` trait is unused.** Callers use the `ps` functions
   directly. Wire it in when a Linux implementation arrives
   ([[docs/spikes/open/process-containment-on-linux-2mj9|spike 2mj9]]).

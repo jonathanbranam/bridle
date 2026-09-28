@@ -163,6 +163,9 @@ worktree:
 - It refuses if the worktree has uncommitted changes, unless `--force`. It
   checks before stopping a running agent, and again after, since the agent's
   last turn may leave changes.
+- It refuses if a process still has a file open under the worktree
+  (`lsof +D`), unless `--force`, so removal can't yank the directory out from
+  under a straggler the containment sweep missed.
 - It keeps the branch unless `--delete-branch`. It refuses an unmerged branch
   (one not an ancestor of the clone's `HEAD`) up front, with 409, before
   stopping or removing anything, unless `--force` too.
