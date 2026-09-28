@@ -51,7 +51,7 @@ curl -s -H "Authorization: Bearer $BRIDLE_TOKEN" "$U/v1/messages?to=human&limit=
   waiting for the next window. When the watcher reports a hold:
   - verify and push anything merged but unpushed;
   - if `main` has changes the daemon needs (role prompts, rules, code), run
-    `cargo clean` if `target/` is stale or large, `cargo install --path
+    `just clean-stale` if `target/` is stale or large, then `cargo install --path
     crates/bridle`, and ask the human for one restart (it's theirs to do);
   - after the restart, resume managers and `lost` workers and tell them why;
   - give the human the `bridle rm <name> --delete-branch` commands for
