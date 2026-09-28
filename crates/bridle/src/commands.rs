@@ -7,9 +7,9 @@ use anyhow::Context;
 use bridle_api::discovery::{self, Env, ProcessEnv};
 use bridle_api::{
     BudgetHoldRequest, BudgetOverrideRequest, Client, DropTaskRequest, Edge, EdgeKind,
-    EditTaskRequest, Event, EventQuery, InterruptRequest, MessageKind, MessageQuery,
-    NewEdgeRequest, NewTaskRequest, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResumeRequest,
-    SendRequest, SpawnRequest, StopRequest, Task, TaskKind, TokenCreateRequest,
+    EditTaskRequest, Event, EventQuery, InterruptRequest, MaxWorkersRequest, MessageKind,
+    MessageQuery, NewEdgeRequest, NewTaskRequest, RemoveEdgeQuery, RemoveQuery, RenewRequest,
+    ResumeRequest, SendRequest, SpawnRequest, StopRequest, Task, TaskKind, TokenCreateRequest,
     UsageBreakdownQuery, UsageGroupBy, Workdir,
 };
 use chrono::{Local, TimeZone, Utc};
@@ -1264,6 +1264,11 @@ async fn budget(cli: &Cli, args: &BudgetArgs) -> Result<(), CliError> {
                 .await?
         }
         Some(BudgetAction::OverrideClear) => client.budget_override_clear().await?,
+        Some(BudgetAction::MaxWorkers(a)) => {
+            client
+                .budget_max_workers(&MaxWorkersRequest { max_workers: a.n })
+                .await?
+        }
     };
     if cli.json {
         render::print_json(&budget)?;
@@ -1298,9 +1303,13 @@ async fn budget(cli: &Cli, args: &BudgetArgs) -> Result<(), CliError> {
             );
         }
         let t = &budget.thresholds;
+        let max_workers = match budget.max_workers_override {
+            Some(n) => format!("{n} (override; configured {})", t.max_workers),
+            None => t.max_workers.to_string(),
+        };
         println!(
-            "max_workers {}, wind_down_grace {}s, max_staleness {}s",
-            t.max_workers, t.wind_down_grace_secs, t.max_staleness_secs
+            "max_workers {max_workers}, wind_down_grace {}s, max_staleness {}s",
+            t.wind_down_grace_secs, t.max_staleness_secs
         );
     }
     Ok(())

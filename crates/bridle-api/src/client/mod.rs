@@ -13,11 +13,12 @@ use thiserror::Error;
 use crate::types::{
     AddQueueTierRequest, Agent, AnswerQuestionRequest, ApiErrorResponse, AskQuestionRequest,
     BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, DropTaskRequest, Edge, EditTaskRequest,
-    Event, EventQuery, Health, InterruptRequest, InterruptResponse, Message, MessageQuery,
-    NewEdgeRequest, NewTaskRequest, NoteTaskRequest, OpenQuestion, Queue, RemoveEdgeQuery,
-    RemoveQuery, RenewRequest, ResumeRequest, SendRequest, SetQueueRequest, SpawnRequest, Status,
-    StatusLineReport, StopRequest, Task, TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo,
-    TranscriptLine, TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery,
+    Event, EventQuery, Health, InterruptRequest, InterruptResponse, MaxWorkersRequest, Message,
+    MessageQuery, NewEdgeRequest, NewTaskRequest, NoteTaskRequest, OpenQuestion, Queue,
+    RemoveEdgeQuery, RemoveQuery, RenewRequest, ResumeRequest, SendRequest, SetQueueRequest,
+    SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery, TokenCreateRequest,
+    TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown,
+    UsageBreakdownQuery,
 };
 
 #[derive(Debug, Error)]
@@ -369,6 +370,13 @@ impl Client {
     pub async fn budget_override_clear(&self) -> Result<BudgetStatus, ClientError> {
         self.post_empty(&["v1", "budget", "override", "clear"])
             .await
+    }
+
+    pub async fn budget_max_workers(
+        &self,
+        req: &MaxWorkersRequest,
+    ) -> Result<BudgetStatus, ClientError> {
+        self.post_json(&["v1", "budget", "max-workers"], req).await
     }
 
     pub async fn create_token(
