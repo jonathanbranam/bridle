@@ -48,6 +48,12 @@ usually comes back as a `crashed` agent in the response itself, not only
 later via polling; see [[agents#Spawning|agents.md, Spawning]] for the
 timeout. A spawn with no first message starts no turn and returns at once.
 
+Every `GET` route, not just `/v1/health`, needs no bearer token: a request
+with none authenticates as a synthetic `local` principal instead of 401ing
+(see [[principals#Read access without a token|principals.md]]). A `GET` with
+a *valid* token still authenticates normally and keeps real attribution.
+Every `POST`/`PATCH`/`DELETE` route still requires one.
+
 Errors use one shape, `{"error": {"code": "...", "message": "..."}}`, with
 proper status codes. The codes are `not_found`, `conflict`, `bad_request`,
 `unauthorized`, `forbidden`, `agent_not_running` (409), `shutting_down` (503,

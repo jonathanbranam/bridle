@@ -37,3 +37,20 @@ fail on its first `bridle` call.
 - The daemon listens on 127.0.0.1 only.
 - The human's standing stance: "I trust Claude agents so I don't think we need
   to go overboard in restricting their access too much." KISS.
+
+## Resolution
+
+`auth_middleware` (`crates/bridle-daemon/src/server.rs`) no longer 401s a
+`GET`/`HEAD` request that has no bearer token: it authenticates as a new
+synthetic `local` principal (`PrincipalKind::Local`,
+`crates/bridle-api/src/types.rs`) instead, never stored, never minted. A
+`GET` with a *valid* token still authenticates normally with real
+attribution. Every `POST`/`PATCH`/`DELETE` route is unaffected and still
+401s with no token. See [[docs/design/agent-host/principals#Read access
+without a token|principals.md]] and `docs/design/agent-host/api.md`.
+
+The human's second point — a session that acts getting a named token with
+provenance — is out of scope here; that's the existing `external:advisor`
+pattern (`bridle token create`), unchanged by this ticket.
+
+Resolved 2026-09-28.

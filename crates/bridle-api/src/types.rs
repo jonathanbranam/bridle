@@ -9,7 +9,7 @@ use serde_json::Value;
 
 pub const API_VERSION: &str = "v1";
 
-/// `human`, `agent:<name>`, `external:<name>` or `system`.
+/// `human`, `agent:<name>`, `external:<name>`, `system` or `local`.
 pub type PrincipalId = String;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -19,6 +19,11 @@ pub enum PrincipalKind {
     Agent,
     External,
     System,
+    /// A GET/HEAD request with no bearer token, synthesized by the daemon
+    /// rather than authenticated against a stored principal (see
+    /// `docs/design/agent-host/principals.md`, "Read access without a
+    /// token"). Never persisted, and never reaches a write route.
+    Local,
 }
 
 // ---------- health / status / discovery ----------

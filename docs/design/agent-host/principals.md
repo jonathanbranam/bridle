@@ -8,9 +8,30 @@
 | `agent` | `agent:w1` | minted at spawn, injected as `BRIDLE_TOKEN`, revoked at `rm` |
 | `external` | `external:orchestrator` | `bridle token create orchestrator`, printed once and stored hashed (409 if the name is taken; no list or revoke yet) |
 | `system` | `system` | bridle itself; no token |
+| `local` | `local` | synthesized per-request for a `GET`/`HEAD` with no bearer token; never stored, never minted |
 
 Tokens are 64 hex characters, stored as SHA-256 hashes. If the human token
 file goes missing, the next start revokes the old token and mints a new one.
+
+## Read access without a token
+
+The daemon only listens on 127.0.0.1
+([[docs/questions/open/read-only-access-without-a-token-9c63|ticket 9c63]]):
+any process on the machine can already reach it, so requiring a token just to
+read is friction without a security benefit. A `GET`/`HEAD` request with no
+`Authorization` header authenticates as a synthetic `local` principal instead
+of 401ing. `local` never passes `require_human` or the worker lifecycle gate,
+but it can't reach those anyway — both only guard
+`POST`/`PATCH`/`DELETE` routes, which still 401 with no token. A request that
+*does* present a token, valid or not, is checked as before: a valid token
+authenticates normally (with its real principal and attribution) even on a
+`GET`, and an invalid one is still a 401.
+
+This is for read-only ad hoc sessions (a plain Claude Code session in the
+clone, poking around with `bridle status`/`bridle agents`) that have no
+`BRIDLE_TOKEN` per the rule below. A session that needs to *act* still wants
+a named token with provenance, minted the way the advisor's is
+(`external:advisor`, `bridle token create`) — this doesn't replace that.
 
 Every event records its `actor`: the caller for spawn, send, read,
 interrupt, stop, resume and remove, and `system` for what agents do and for

@@ -204,6 +204,19 @@ async fn auth_middleware(
         .and_then(|v| v.strip_prefix("Bearer "))
         .map(str::to_string);
     let Some(token) = token else {
+        // The daemon only listens on 127.0.0.1 (docs/design/agent-host/
+        // principals.md, "Read access without a token"): a request already
+        // on this machine can read without a token. Writes still need one.
+        if matches!(
+            req.method(),
+            &axum::http::Method::GET | &axum::http::Method::HEAD
+        ) {
+            req.extensions_mut().insert(Principal {
+                id: "local".to_string(),
+                kind: PrincipalKind::Local,
+            });
+            return next.run(req).await;
+        }
         return ApiError::new(
             StatusCode::UNAUTHORIZED,
             "unauthorized",
