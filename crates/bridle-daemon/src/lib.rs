@@ -407,7 +407,14 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         let _ = std::fs::remove_file(ws.daemon_json());
 
         let _ = serve_shutdown_tx.send(true);
-        let _ = serve_task.await;
+        // Open connections (SSE streams end on shutdown, but anything else
+        // slow) must not keep the process alive indefinitely.
+        if tokio::time::timeout(Duration::from_secs(5), serve_task)
+            .await
+            .is_err()
+        {
+            tracing::warn!("http server did not drain within 5s of shutdown; exiting anyway");
+        }
         signal_task.abort();
         stall_task.abort();
         tracker_task.abort();
