@@ -58,6 +58,9 @@ pub enum Command {
     Stop(StopArgs),
     /// Resume a stopped/exited/crashed/lost agent.
     Resume(ResumeArgs),
+    /// Stop an agent and start its replacement fresh, in the same
+    /// worktree/branch/role/model.
+    Renew(RenewArgs),
     /// Remove an agent and its worktree.
     Rm(RmArgs),
     /// Readable rendering of an agent's transcript.
@@ -205,6 +208,14 @@ pub struct StopArgs {
 pub struct ResumeArgs {
     pub agent: String,
     /// Skip the budget governor's holding/paused check for this one resume.
+    #[arg(long)]
+    pub ignore_budget: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct RenewArgs {
+    pub agent: String,
+    /// Skip the budget governor's holding/paused check for this one renew.
     #[arg(long)]
     pub ignore_budget: bool,
 }

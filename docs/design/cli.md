@@ -22,6 +22,7 @@ bridle send    <agent|human> TEXT [--question] [--when now|idle] [--reply-to ID]
 bridle inbox   [--all] [--mark-read]        # messages to me (human, or the calling agent)
 bridle interrupt <agent> [--drop-held]
 bridle stop    <agent> [--now]      bridle resume <agent> [--ignore-budget]
+bridle renew   <agent> [--ignore-budget]    stop + fresh process/session, same worktree/branch/role/model
 bridle rm      <agent> [--force] [--delete-branch]
 bridle logs    <agent> [--follow] [--raw] [--since LINE]
 bridle events  [--follow] [--since SEQ] [--agent A] [--kind PREFIX]
@@ -42,7 +43,7 @@ bridle task drop   <id> --reason TEXT
 bridle task reopen <id>
 ```
 
-- **`--ignore-budget`** on `spawn`/`resume` skips the budget governor's
+- **`--ignore-budget`** on `spawn`/`resume`/`renew` skips the budget governor's
   holding/paused refusal for that one call
   ([[docs/design/usage-and-budget#Resuming|the escape hatch]]).
 - **`budget hold`/`release`** apply to the current daemon only; see

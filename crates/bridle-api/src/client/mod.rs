@@ -13,9 +13,9 @@ use thiserror::Error;
 use crate::types::{
     Agent, ApiErrorResponse, BudgetHoldRequest, BudgetStatus, DropTaskRequest, Edge,
     EditTaskRequest, Event, EventQuery, Health, InterruptRequest, InterruptResponse, Message,
-    MessageQuery, NewEdgeRequest, NewTaskRequest, RemoveEdgeQuery, RemoveQuery, ResumeRequest,
-    SendRequest, SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery,
-    TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
+    MessageQuery, NewEdgeRequest, NewTaskRequest, RemoveEdgeQuery, RemoveQuery, RenewRequest,
+    ResumeRequest, SendRequest, SpawnRequest, Status, StatusLineReport, StopRequest, Task,
+    TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
     UsageBreakdown, UsageBreakdownQuery,
 };
 
@@ -208,6 +208,10 @@ impl Client {
 
     pub async fn resume(&self, id: &str, req: &ResumeRequest) -> Result<Agent, ClientError> {
         self.post_json(&["v1", "agents", id, "resume"], req).await
+    }
+
+    pub async fn renew(&self, id: &str, req: &RenewRequest) -> Result<Agent, ClientError> {
+        self.post_json(&["v1", "agents", id, "renew"], req).await
     }
 
     pub async fn remove(&self, id: &str, query: &RemoveQuery) -> Result<(), ClientError> {

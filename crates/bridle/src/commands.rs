@@ -6,8 +6,8 @@ use bridle_api::discovery::{self, ProcessEnv};
 use bridle_api::{
     BudgetHoldRequest, Client, DropTaskRequest, Edge, EdgeKind, EditTaskRequest, Event, EventQuery,
     InterruptRequest, MessageKind, MessageQuery, NewEdgeRequest, NewTaskRequest, RemoveEdgeQuery,
-    RemoveQuery, ResumeRequest, SendRequest, SpawnRequest, StopRequest, Task, TaskKind,
-    TokenCreateRequest, UsageBreakdownQuery, UsageGroupBy, Workdir,
+    RemoveQuery, RenewRequest, ResumeRequest, SendRequest, SpawnRequest, StopRequest, Task,
+    TaskKind, TokenCreateRequest, UsageBreakdownQuery, UsageGroupBy, Workdir,
 };
 use chrono::{Local, TimeZone, Utc};
 use futures::StreamExt;
@@ -37,6 +37,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Interrupt(args) => interrupt(&cli, args).await,
         Command::Stop(args) => stop(&cli, args).await,
         Command::Resume(args) => resume(&cli, args).await,
+        Command::Renew(args) => renew(&cli, args).await,
         Command::Rm(args) => rm(&cli, args).await,
         Command::Logs(args) => logs(&cli, args).await,
         Command::Events(args) => events(&cli, args).await,
@@ -400,6 +401,19 @@ async fn resume(cli: &Cli, args: &crate::cli::ResumeArgs) -> Result<(), CliError
         .resume(
             &args.agent,
             &ResumeRequest {
+                ignore_budget: args.ignore_budget,
+            },
+        )
+        .await?;
+    print_agent(cli, &agent)
+}
+
+async fn renew(cli: &Cli, args: &crate::cli::RenewArgs) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let agent = client
+        .renew(
+            &args.agent,
+            &RenewRequest {
                 ignore_budget: args.ignore_budget,
             },
         )

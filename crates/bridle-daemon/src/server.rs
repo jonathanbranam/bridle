@@ -14,10 +14,10 @@ use bridle_api::types::{
     Agent, ApiErrorResponse, BudgetHoldRequest, BudgetStatus, DropTaskRequest, Edge,
     EditTaskRequest, ErrorBody, Event, EventQuery, Health, HoldStatus, InteractiveUsageRow,
     InterruptRequest, Message, MessageQuery, MessageState, NewEdgeRequest, NewTaskRequest,
-    PrincipalKind, RateLimit, RemoveEdgeQuery, RemoveQuery, ResumeRequest, SendRequest,
-    SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery, TokenCreateRequest,
-    TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown,
-    UsageBreakdownQuery, UsageGroupBy, WindowStatus, event_kind,
+    PrincipalKind, RateLimit, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResumeRequest,
+    SendRequest, SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery,
+    TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
+    UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, WindowStatus, event_kind,
 };
 use chrono::Utc;
 use futures::Stream;
@@ -57,6 +57,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/agents/{id}/interrupt", post(interrupt_agent))
         .route("/v1/agents/{id}/stop", post(stop_agent))
         .route("/v1/agents/{id}/resume", post(resume_agent))
+        .route("/v1/agents/{id}/renew", post(renew_agent))
         .route("/v1/agents/{id}/transcript", get(transcript))
         .route("/v1/messages", get(list_messages).post(send_message))
         .route("/v1/messages/{id}/read", post(mark_read))
@@ -412,6 +413,20 @@ async fn resume_agent(
         state
             .manager
             .resume(&id, req.ignore_budget, &principal)
+            .await?,
+    ))
+}
+
+async fn renew_agent(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path(id): Path<String>,
+    Json(req): Json<RenewRequest>,
+) -> Result<Json<Agent>, ApiError> {
+    Ok(Json(
+        state
+            .manager
+            .renew(&id, req.ignore_budget, &principal)
             .await?,
     ))
 }
