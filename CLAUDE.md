@@ -32,6 +32,10 @@ spikes/stream-json     spike 01 (standalone, excluded from the workspace; don't 
 just check        # fmt-check + clippy -D warnings + nextest: must pass before you're done
 just fmt
 just test         # cargo nextest run --workspace
+just check-affected [base]  # local-only fast path: nextest for changed crates + their
+                  # reverse-dep closure (vs. base, default merge-base with main); falls
+                  # back to the full suite whenever it can't be sure. Never replaces
+                  # `just check`, which always runs everything.
 just test-live    # ignored tests that run real `claude` (Haiku; costs tokens) — only when asked
 just test-contract  # the Claude Code contract suite (live, ~$0.10), after Claude Code updates — only when asked
 cargo test -p <crate>   # when working on one crate
