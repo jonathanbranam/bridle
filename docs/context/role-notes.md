@@ -81,6 +81,11 @@ split above.
 
 Newest first. One line per item: what happened, who did it, what it says about roles.
 
+- 2026-09-28: the human's inbox had 150 unread status notes from the
+  managers; the human wants only actionable items there (kp3f), found by
+  the advisor. The advisor's "For orchestrator" questions also land in
+  the human's inbox, because nothing can address the orchestrator (a7h3);
+  that workaround now works against kp3f.
 - 2026-09-28: the human wanted a second session to chat, file tickets and
   triage questions without taking the orchestrator's attention. Set up as
   `external:advisor` (own token, Remote Control `bridle-chat`). A first
