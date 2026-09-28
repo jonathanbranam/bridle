@@ -30,3 +30,9 @@ The budget is one subscription with no overage
   ([[docs/design/roles-and-lifecycle|roles]]). The built-in manager role
   defaults to `sonnet` ([[docs/design/agent-host/roles-and-config|roles and config]]).
   The question applies to both.
+
+## Resolution
+
+The built-in role defaults for both `manager` (line 128–149) and `orchestrator` (line 151–173) are Sonnet in `crates/bridle-daemon/src/config.rs`. There is no distinct `product-manager` built-in role; both driver roles default to Sonnet as stated in the ticket's Notes.
+
+The suggested alternative—escalating to Opus for specific planning and architecture turns—remains unbuilt and un-asked-for (YAGNI), not a gap. No current task requires it.
