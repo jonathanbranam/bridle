@@ -15,6 +15,7 @@ async fn statusline_report_feeds_rate_limits_and_usage() {
             session_id: Some("sess-1".to_string()),
             model: Some("Opus".to_string()),
             cost_usd: Some(0.5),
+            context_used_percentage: Some(0.005),
             context_used_tokens: Some(1_000),
             context_max_tokens: Some(200_000),
             rate_limits: vec![StatusLineRateLimitReading {

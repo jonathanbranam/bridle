@@ -38,7 +38,7 @@ bridle token create <name>
 bridle token list                           name, created-at, revoked-or-not; never the token itself
 bridle token revoke <name>                  human only, external tokens only (an agent's own token is
                                              revoked through `bridle rm`, not this)
-bridle statusline                           usage from interactive sessions
+bridle statusline                           Claude Code statusLine command; local only, no daemon call
 bridle task new    <title> -k/--kind KIND [--body TEXT]
 bridle task show   <id>
 bridle task edit   <id> [--title TEXT] [--body TEXT]
@@ -143,11 +143,14 @@ bridle task reopen <id>
   discovery would pick. `--role` is accepted but a no-op: tasks don't carry a role field
   yet (a gap, not a design decision — see `Planned` below).
 - **`statusline`** is Claude Code's `statusLine` command, configured in `settings.json`. It
-  reads Claude Code's JSON on stdin, prints a short line back, and posts a snapshot to
-  `POST /v1/statusline` ([[docs/design/agent-host/api|API]]) using the same daemon discovery
-  and token as every other command, but with a 2 s request timeout. It never fails or hangs:
-  unparseable stdin, no daemon, and a slow or unreachable daemon all just mean the line prints
-  with whatever it has and nothing gets recorded ([[docs/design/usage-and-budget#Where bridle can see usage|usage and budget]]).
+  reads Claude Code's JSON on stdin and prints a short line back: model, context %
+  (`context_window.used_percentage`), the `5h`/`7d` rate-limit windows, the current folder
+  and git branch, and the estimated session cost last, parenthesized. It's purely local —
+  no daemon call, no token, never fails or hangs — since it runs on every render of the
+  prompt. It does **not** call `POST /v1/statusline` any more (dropped in s8kn: the context
+  governor gets account-wide windows from `get_usage` instead); that route and the
+  `interactive_usage` table still exist in the daemon, unused for now, in case something
+  needs per-invocation interactive snapshots later ([[docs/design/usage-and-budget#Where bridle can see usage|usage and budget]]).
 
 ## Planned
 
