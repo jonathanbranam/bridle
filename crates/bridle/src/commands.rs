@@ -527,11 +527,13 @@ async fn send(cli: &Cli, args: &SendArgs) -> Result<(), CliError> {
         },
         reply_to: args.reply_to.clone(),
     };
-    let msg = client.send(&req).await?;
+    let msgs = client.send(&req).await?;
     if cli.json {
-        render::print_json(&msg)?;
+        render::print_json(&msgs)?;
     } else {
-        println!("sent {} -> {}", msg.id, msg.to);
+        for msg in &msgs {
+            println!("sent {} -> {}", msg.id, msg.to);
+        }
     }
     Ok(())
 }

@@ -331,7 +331,8 @@ pub struct Message {
 }
 
 /// `POST /v1/agents/{id}/messages` uses this with `to` ignored;
-/// `POST /v1/messages` requires `to` (`human`, agent id or name).
+/// `POST /v1/messages` requires `to` (`human`, agent id or name, or
+/// `role:<name>` for every live agent currently holding that role).
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct SendRequest {
     #[serde(default, skip_serializing_if = "Option::is_none")]

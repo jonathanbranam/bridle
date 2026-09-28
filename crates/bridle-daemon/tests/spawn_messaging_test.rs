@@ -324,6 +324,7 @@ async fn human_inbox_receives_agent_messages_and_mark_read_works() {
         })
         .await
         .expect("agent sends to human");
+    let sent = sent.into_iter().next().expect("one message sent");
 
     let unread = daemon
         .client
@@ -354,6 +355,95 @@ async fn human_inbox_receives_agent_messages_and_mark_read_works() {
         .await
         .expect("list unread after read");
     assert!(!unread_after.iter().any(|m| m.id == sent.id));
+}
+
+#[tokio::test]
+async fn send_to_role_delivers_to_every_live_agent_with_that_role() {
+    let (daemon, _tmp) = start_daemon(None).await;
+
+    async fn spawn_idle(
+        daemon: &support::TestDaemon,
+        role: &str,
+        name: &str,
+    ) -> bridle_api::types::Agent {
+        let agent = daemon
+            .client
+            .spawn(&SpawnRequest {
+                role: role.to_string(),
+                name: Some(name.to_string()),
+                prompt: None,
+                workdir: Some(Workdir::Repo),
+                model: None,
+                ignore_budget: false,
+            })
+            .await
+            .expect("spawn");
+        wait_for_state(&daemon.client, &agent.id, AgentState::Idle).await
+    }
+
+    let w1 = spawn_idle(&daemon, "worker", "w1").await;
+    let w2 = spawn_idle(&daemon, "worker", "w2").await;
+    let manager = spawn_idle(&daemon, "manager", "m1").await;
+
+    let sent = daemon
+        .client
+        .send(&SendRequest {
+            to: Some("role:worker".to_string()),
+            body: "standup".to_string(),
+            kind: MessageKind::Note,
+            when: When::Now,
+            reply_to: None,
+        })
+        .await
+        .expect("send to role");
+    assert_eq!(sent.len(), 2);
+    let recipients: std::collections::HashSet<_> = sent.iter().map(|m| m.to.clone()).collect();
+    assert_eq!(
+        recipients,
+        std::collections::HashSet::from([w1.id.clone(), w2.id.clone()])
+    );
+
+    for agent_id in [&w1.id, &w2.id] {
+        let inbox = daemon
+            .client
+            .list_messages(&MessageQuery {
+                to: Some(agent_id.clone()),
+                ..Default::default()
+            })
+            .await
+            .expect("list messages");
+        assert!(inbox.iter().any(|m| m.body == "standup"));
+    }
+
+    let manager_inbox = daemon
+        .client
+        .list_messages(&MessageQuery {
+            to: Some(manager.id.clone()),
+            ..Default::default()
+        })
+        .await
+        .expect("list messages");
+    assert!(!manager_inbox.iter().any(|m| m.body == "standup"));
+}
+
+#[tokio::test]
+async fn send_to_role_with_no_live_agents_errors() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let err = daemon
+        .client
+        .send(&SendRequest {
+            to: Some("role:nobody-has-this".to_string()),
+            body: "hello".to_string(),
+            kind: MessageKind::Note,
+            when: When::Now,
+            reply_to: None,
+        })
+        .await
+        .expect_err("no live agents with role");
+    assert!(matches!(
+        err,
+        bridle_api::ClientError::Api { status: 404, .. }
+    ));
 }
 
 async fn wait_for(client: &bridle_api::Client, id: &str) -> bridle_api::types::Message {
