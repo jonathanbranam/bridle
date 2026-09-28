@@ -36,7 +36,7 @@ the agents bridle hosts, and later a TUI, GUI or MCP server all share:
    on branches `bridle/<agent>`. The clone's own checkout is left to the human
    and the manager.
 4. **"Start working" means starting the manager**: `bridle spawn manager`, or
-   `autostart = true` on its role so it starts with the daemon. Bridle is
+   it autostarts with the daemon by default. Bridle is
    mechanism: it spawns, delivers, supervises, records and (later) integrates.
    Deciding what to work on is judgement, so it's the manager's job
    ([[docs/design/roles-and-lifecycle|roles]]). Until tasks exist, "the

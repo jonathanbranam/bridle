@@ -113,7 +113,7 @@ On startup the daemon reconciles:
   and orchestrator roles) is resumed with `--resume`, if it's either `lost`
   (the case above) or `stopped` with reason `daemon_shutdown` (a clean
   shutdown before this restart).
-- For every role with `autostart = true`, an agent named after the role is
+- For every role with `autostart = true` (by default only the built-in `manager`), an agent named after the role is
   spawned with the role's `start_prompt`, unless an agent of that name already
   exists in any state.
 - Events older than 30 days are pruned, then daily.

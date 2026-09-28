@@ -326,6 +326,13 @@ fn serve_detach_returns_once_healthy_and_daemons_lists_it() {
     let tmp = tempfile::tempdir().expect("tempdir");
     let repo = tmp.path().join("repo");
     init_repo(&repo);
+    // The manager autostarts by default; this test counts agents.
+    std::fs::create_dir_all(repo.join(".bridle")).expect("mkdir .bridle");
+    std::fs::write(
+        repo.join(".bridle/config.toml"),
+        "[roles.manager]\nautostart = false\n",
+    )
+    .expect("write config");
     let workspace = tmp.path().join("ws");
     let home = tmp.path().join("home");
 
