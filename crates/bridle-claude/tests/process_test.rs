@@ -41,7 +41,7 @@ async fn one_turn_produces_init_assistant_text_and_result() {
 
     let mut saw_init = false;
     let mut saw_text = false;
-    timeout(Duration::from_secs(10), async {
+    timeout(HANG_GUARD_TIMEOUT, async {
         loop {
             let ev = spawned
                 .events
@@ -89,7 +89,7 @@ async fn mid_turn_message_is_folded_into_the_running_turn() {
         .send_user("banana")
         .expect("send_user fold-in");
 
-    let result = timeout(Duration::from_secs(10), async {
+    let result = timeout(HANG_GUARD_TIMEOUT, async {
         loop {
             let ev = spawned
                 .events
@@ -130,7 +130,7 @@ async fn interrupt_during_sleep_gets_a_fast_receipt_and_aborts_the_turn() {
     // 1-second bound below measures interrupt latency once the process is
     // up and mid-turn, not interpreter/process startup (which can itself
     // take a while, e.g. behind a slow `python3` shim).
-    timeout(Duration::from_secs(10), async {
+    timeout(HANG_GUARD_TIMEOUT, async {
         loop {
             let ev = spawned
                 .events
@@ -246,7 +246,7 @@ async fn sigterm_via_signal_group_exits_143() {
         .handle
         .control(serde_json::json!({"subtype": "get_usage"}))
         .expect("control");
-    timeout(Duration::from_secs(10), rx)
+    timeout(HANG_GUARD_TIMEOUT, rx)
         .await
         .expect("control response timed out")
         .expect("control sender dropped");
@@ -367,7 +367,7 @@ async fn get_context_usage_returns_total_tokens() {
 
     let response = timeout(
         HANG_GUARD_TIMEOUT,
-        spawned.handle.get_context_usage(Duration::from_secs(5)),
+        spawned.handle.get_context_usage(HANG_GUARD_TIMEOUT),
     )
     .await
     .expect("get_context_usage timed out")
