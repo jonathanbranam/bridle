@@ -328,6 +328,12 @@ pub enum BudgetAction {
     Hold(BudgetHoldArgs),
     /// End a `hold` early.
     Release,
+    /// Force a `[[budget.schedule]]` period's thresholds (or `default` for
+    /// the plain `[budget]` ones), like a thermostat: until `--until`, or
+    /// else until the schedule would next change on its own.
+    Override(BudgetOverrideArgs),
+    /// Cancel an active `override` and revert to the schedule right away.
+    OverrideClear,
 }
 
 #[derive(Debug, Args)]
@@ -336,6 +342,18 @@ pub struct BudgetHoldArgs {
     #[arg(long = "for")]
     pub for_: Option<String>,
     /// Hold until this local time (`HH:MM`), today or tomorrow if already past.
+    #[arg(long)]
+    pub until: Option<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct BudgetOverrideArgs {
+    /// A `[[budget.schedule]]` period name, or `default` for the plain
+    /// `[budget]` thresholds.
+    pub period: String,
+    /// Force it until this local time (`HH:MM`), today or tomorrow if
+    /// already past. Without this, it lasts until the schedule would next
+    /// change on its own.
     #[arg(long)]
     pub until: Option<String>,
 }

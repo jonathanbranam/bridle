@@ -6,8 +6,8 @@
 mod support;
 
 use bridle_api::types::{
-    AgentState, BudgetHoldRequest, GovernorState, MessageQuery, ResumeRequest, SendRequest,
-    SpawnRequest, When,
+    AgentState, BudgetHoldRequest, BudgetOverrideRequest, GovernorState, MessageQuery,
+    ResumeRequest, SendRequest, SpawnRequest, When,
 };
 use support::{start_daemon, wait_for, wait_for_state};
 
@@ -386,6 +386,106 @@ async fn human_hold_forces_winding_down_and_release_lifts_it() {
         (b.state == GovernorState::Normal).then_some(())
     })
     .await;
+}
+
+/// `bridle budget override`: forces a named `[[budget.schedule]]` period's
+/// `five_hour` thresholds regardless of whether the schedule itself would
+/// currently pick it, an explicit `--until` is stored as given, and
+/// `override clear` reverts to the plain thresholds right away.
+#[tokio::test]
+async fn budget_override_forces_period_thresholds_and_clear_reverts() {
+    // `start == end` never naturally matches (`SchedulePeriod::matches`), so
+    // this period only ever applies while forced by the override — the test
+    // doesn't depend on the real wall-clock time it happens to run at.
+    let (daemon, _tmp) = support::start_daemon_with_config(
+        None,
+        Some(
+            r#"
+[[budget.schedule]]
+name = "night"
+days = "all"
+start = "03:00"
+end = "03:00"
+hold_at = 50
+wind_down_at = 60
+stop_at = 70
+"#,
+        ),
+    )
+    .await;
+
+    // 55%: below the plain default hold_at (80), but at/above `night`'s (50).
+    script_usage(&daemon.repo, 55.0, 10.0);
+    wait_for("normal before override", || async {
+        let b = daemon.client.budget().await.ok()?;
+        (b.state == GovernorState::Normal).then_some(())
+    })
+    .await;
+
+    let explicit_until = chrono::Utc::now() + chrono::Duration::hours(1);
+    let overridden = daemon
+        .client
+        .budget_override(&BudgetOverrideRequest {
+            period: Some("night".to_string()),
+            until: Some(explicit_until),
+        })
+        .await
+        .expect("override");
+    let ov = overridden.schedule_override.expect("override in force");
+    assert_eq!(ov.period.as_deref(), Some("night"));
+    assert_eq!(ov.until, Some(explicit_until));
+
+    wait_for("holding under the forced night thresholds", || async {
+        let b = daemon.client.budget().await.ok()?;
+        (b.state == GovernorState::Holding).then_some(())
+    })
+    .await;
+
+    let cleared = daemon.client.budget_override_clear().await.expect("clear");
+    assert!(cleared.schedule_override.is_none());
+    wait_for("normal again after clear", || async {
+        let b = daemon.client.budget().await.ok()?;
+        (b.state == GovernorState::Normal).then_some(())
+    })
+    .await;
+}
+
+/// With no `--until`, the override's `until` is computed on the daemon side:
+/// the next instant the schedule (unforced) would change periods.
+#[tokio::test]
+async fn budget_override_without_until_computes_next_schedule_change() {
+    let (daemon, _tmp) = support::start_daemon_with_config(
+        None,
+        Some(
+            r#"
+[[budget.schedule]]
+name = "night"
+days = "all"
+start = "23:00"
+end = "07:00"
+hold_at = 70
+wind_down_at = 85
+stop_at = 95
+"#,
+        ),
+    )
+    .await;
+
+    let before = chrono::Utc::now();
+    let overridden = daemon
+        .client
+        .budget_override(&BudgetOverrideRequest {
+            period: None,
+            until: None,
+        })
+        .await
+        .expect("override");
+    let ov = overridden.schedule_override.expect("override in force");
+    assert_eq!(ov.period, None);
+    // `night` recurs daily, so the schedule always changes within 24h of
+    // any instant; the computed `until` must be a real, future instant.
+    let until = ov.until.expect("a computed next-change instant");
+    assert!(until > before && until <= before + chrono::Duration::days(1));
 }
 
 /// `--ignore-budget` skips the governor's refusal for that one call only.

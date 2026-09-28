@@ -67,6 +67,10 @@ impl GovernorSnapshot {
 
 pub type GovernorHandle = Arc<Mutex<GovernorSnapshot>>;
 
+/// A `bridle budget override`'s state: the forced period (`None` = plain
+/// `[budget]` defaults) and its end (`None` = no computed or given end).
+type ScheduleOverrideState = (Option<String>, Option<DateTime<Utc>>);
+
 struct Inner {
     store: Store,
     manager: AgentManager,
@@ -86,6 +90,13 @@ struct Inner {
     /// until released or `until` passes (`None` inside = held
     /// indefinitely). usage-and-budget.md, The human's hold.
     human_hold: Mutex<Option<Option<DateTime<Utc>>>>,
+    /// `bridle budget override`: forces the `five_hour` thresholds of a
+    /// named `[[budget.schedule]]` period (`Some(name)`) or the plain
+    /// `[budget]` thresholds (`None`), until `until` passes or `--clear`.
+    /// A parallel mechanism to `human_hold`: this only changes which
+    /// thresholds are effective, it doesn't itself pause anything.
+    /// usage-and-budget.md, Schedule override.
+    schedule_override: Mutex<Option<ScheduleOverrideState>>,
     /// When this governor started; substitutes for "no reading yet" in the
     /// staleness check below, so a daemon that hasn't had time for its
     /// first `get_usage` poll to land doesn't hold on its own age (Unknown
@@ -123,6 +134,7 @@ impl Governor {
             poll_interval_normal,
             poll_interval_above_hold,
             human_hold: Mutex::new(None),
+            schedule_override: Mutex::new(None),
             started_at: Instant::now(),
         }))
     }
@@ -154,6 +166,47 @@ impl Governor {
             *guard = None;
         }
         *guard
+    }
+
+    /// Starts (or replaces) a schedule override: `period: Some(name)` forces
+    /// that `[[budget.schedule]]` period's `five_hour` thresholds, `None`
+    /// forces the plain `[budget]` ones. `until: None` (no `--until` given)
+    /// computes the thermostat's "next scheduled change" instant from the
+    /// period actually in force right now (usage-and-budget.md, Schedule
+    /// override); `Some(until)` uses that instead.
+    pub fn set_schedule_override(&self, period: Option<String>, until: Option<DateTime<Utc>>) {
+        let until = until.or_else(|| next_schedule_change(&self.0.config, Local::now()));
+        *self
+            .0
+            .schedule_override
+            .lock()
+            .expect("governor mutex poisoned") = Some((period, until));
+    }
+
+    pub fn clear_schedule_override(&self) {
+        *self
+            .0
+            .schedule_override
+            .lock()
+            .expect("governor mutex poisoned") = None;
+    }
+
+    /// `Some((period, until))` while an override is in force (`period: None`
+    /// = forced to the plain defaults; `until: None` = no computed or given
+    /// end), `None` otherwise. Also clears an expired override, so a
+    /// `bridle budget` read after `until` passes reports it gone.
+    pub fn schedule_override_status(&self) -> Option<ScheduleOverrideState> {
+        let mut guard = self
+            .0
+            .schedule_override
+            .lock()
+            .expect("governor mutex poisoned");
+        if let Some((_, Some(until))) = guard.as_ref()
+            && *until <= Utc::now()
+        {
+            *guard = None;
+        }
+        guard.clone()
     }
 
     pub fn snapshot(&self) -> GovernorSnapshot {
@@ -560,6 +613,14 @@ impl Governor {
             .await;
     }
 
+    /// The `five_hour` thresholds in effect for `now`: an unexpired
+    /// `bridle budget override` (usage-and-budget.md, Schedule override)
+    /// wins over the time-based `[[budget.schedule]]` lookup, which wins
+    /// over the plain `[budget]` defaults.
+    fn effective_five_hour_thresholds(&self, now: DateTime<Local>) -> (f64, f64, f64) {
+        effective_five_hour_thresholds_for(&self.0.config, now, self.schedule_override_status())
+    }
+
     fn evaluate_window(&self, rate_limits: &[RateLimit], window: &str) -> WindowBlock {
         let cfg = &self.0.config;
         let rl = rate_limits.iter().find(|r| r.window == window);
@@ -567,7 +628,7 @@ impl Governor {
             return WindowBlock::default();
         };
         let (hold_at, wind_down_at, stop_at) = if window == "five_hour" {
-            resolve_five_hour_thresholds(cfg, Local::now())
+            self.effective_five_hour_thresholds(Local::now())
         } else {
             (
                 cfg.hold_at.get(window),
@@ -752,11 +813,68 @@ fn resolve_five_hour_thresholds(cfg: &BudgetConfig, now: DateTime<Local>) -> (f6
             return (period.hold_at, period.wind_down_at, period.stop_at);
         }
     }
+    default_five_hour_thresholds(cfg)
+}
+
+/// The `five_hour` thresholds in effect given an (already-unexpired)
+/// schedule override state: `Some((Some(name), _))` forces that period's
+/// thresholds, `Some((None, _))` forces the plain defaults
+/// (`bridle budget override default`), and `None` (no override) falls back
+/// to the time-based schedule lookup. Split out from
+/// [`Governor::effective_five_hour_thresholds`] so the resolution order can
+/// be unit tested without a full `Governor`.
+fn effective_five_hour_thresholds_for(
+    cfg: &BudgetConfig,
+    now: DateTime<Local>,
+    override_state: Option<ScheduleOverrideState>,
+) -> (f64, f64, f64) {
+    match override_state {
+        Some((Some(name), _)) => cfg
+            .schedule
+            .iter()
+            .find(|p| p.name == name)
+            .map(|p| (p.hold_at, p.wind_down_at, p.stop_at))
+            .unwrap_or_else(|| default_five_hour_thresholds(cfg)),
+        Some((None, _)) => default_five_hour_thresholds(cfg),
+        None => resolve_five_hour_thresholds(cfg, now),
+    }
+}
+
+/// The plain `[budget]` `five_hour` thresholds, ignoring the schedule
+/// entirely (`bridle budget override default`).
+fn default_five_hour_thresholds(cfg: &BudgetConfig) -> (f64, f64, f64) {
     (
         cfg.hold_at.get("five_hour"),
         cfg.wind_down_at.get("five_hour"),
         cfg.stop_at.get("five_hour"),
     )
+}
+
+/// The name of the `[[budget.schedule]]` period that would (unforced) be in
+/// effect at `now`, or `None` for the plain `[budget]` defaults.
+fn current_schedule_period_name(cfg: &BudgetConfig, now: DateTime<Local>) -> Option<String> {
+    cfg.schedule
+        .iter()
+        .find(|p| p.matches(now))
+        .map(|p| p.name.clone())
+}
+
+/// The next instant, after `now`, at which the schedule (unforced) would
+/// transition to a different period than the one in force right now — the
+/// thermostat's "hold until next" (usage-and-budget.md, Schedule override).
+/// Steps forward hourly for up to 7 days; this runs once per `bridle budget
+/// override` call, not hot-path, so that granularity and bound are fine.
+/// `None` if no change turns up within the bound (e.g. no schedule at all).
+fn next_schedule_change(cfg: &BudgetConfig, now: DateTime<Local>) -> Option<DateTime<Utc>> {
+    let current = current_schedule_period_name(cfg, now);
+    let mut t = now;
+    for _ in 0..(7 * 24) {
+        t += chrono::Duration::hours(1);
+        if current_schedule_period_name(cfg, t) != current {
+            return Some(t.with_timezone(&Utc));
+        }
+    }
+    None
 }
 
 fn age_to_state(age: Duration, max_staleness: Duration) -> GovernorState {
@@ -1003,5 +1121,75 @@ mod tests {
         let mut r = rl("five_hour", 0.1, Utc::now());
         r.status = Some("rejected".to_string());
         assert!(r.utilization.unwrap() * 100.0 < 80.0);
+    }
+
+    /// `bridle budget override`'s thermostat semantics: `next_schedule_change`
+    /// steps forward from a point inside `night` and finds the instant it
+    /// stops matching — the same hour `night`'s `end` falls in.
+    #[test]
+    fn next_schedule_change_finds_the_next_period_boundary() {
+        let (_rt, mut cfg) = test_governor();
+        cfg.schedule = vec![night_period()];
+        let now = local_at(23, 30);
+        let changed_at = next_schedule_change(&cfg, now).expect("a boundary within a week");
+        let changed_at_local = changed_at.with_timezone(&Local);
+        // Stepping hourly from 23:30, `night` (ends 07:00) last matches at
+        // 06:30 and no longer matches at 07:30 the next day.
+        assert_eq!(
+            changed_at_local.time(),
+            night_period().end + chrono::Duration::minutes(30)
+        );
+        assert_eq!(
+            changed_at_local.date_naive(),
+            now.date_naive() + chrono::Duration::days(1)
+        );
+        assert_ne!(
+            current_schedule_period_name(&cfg, changed_at_local),
+            current_schedule_period_name(&cfg, now)
+        );
+    }
+
+    #[test]
+    fn next_schedule_change_none_when_schedule_never_changes() {
+        let (_rt, cfg) = test_governor();
+        // No `[[budget.schedule]]` at all: always the plain defaults, so no
+        // future instant ever disagrees with "now".
+        assert_eq!(next_schedule_change(&cfg, local_at(12, 0)), None);
+    }
+
+    #[test]
+    fn effective_thresholds_override_wins_over_schedule_and_defaults() {
+        let (_rt, mut cfg) = test_governor();
+        cfg.schedule = vec![night_period()];
+        let now = local_at(23, 30); // inside `night`, unforced would be (90, 93, 95).
+
+        // No override: the schedule's `night` thresholds apply.
+        assert_eq!(
+            effective_five_hour_thresholds_for(&cfg, now, None),
+            (90.0, 93.0, 95.0)
+        );
+
+        // `bridle budget override default`: forces the plain thresholds even
+        // though `night` is in effect right now.
+        assert_eq!(
+            effective_five_hour_thresholds_for(&cfg, now, Some((None, None))),
+            (
+                cfg.hold_at.get("five_hour"),
+                cfg.wind_down_at.get("five_hour"),
+                cfg.stop_at.get("five_hour"),
+            )
+        );
+
+        // `bridle budget override night` during the day: forces `night`'s
+        // thresholds even though the schedule alone wouldn't match.
+        let midday = local_at(12, 0);
+        assert_eq!(
+            effective_five_hour_thresholds_for(
+                &cfg,
+                midday,
+                Some((Some("night".to_string()), None))
+            ),
+            (90.0, 93.0, 95.0)
+        );
     }
 }

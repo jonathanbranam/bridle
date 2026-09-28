@@ -237,9 +237,42 @@ stop_at      = 95
   split and lower-only rule applies: a project's `.bridle/config.toml` may
   give a period's `hold_at`/`wind_down_at`/`stop_at` lower than the
   machine-wide `five_hour` value, never higher.
-- What's missing here: a way for the human to override the schedule by hand
-  (a thermostat-style `bridle budget override`) is a separate, later ticket
-  — see [[higher-budget-thresholds-on-a-schedule-n9qh|n9qh]].
+### Schedule override
+
+The human can override the schedule by hand, like a thermostat's "hold
+until next" (ticket n9qh):
+
+```
+bridle budget override <period-name|default> [--until 18:00]
+bridle budget override --clear
+```
+
+- `<period-name>` forces that `[[budget.schedule]]` period's
+  `hold_at`/`wind_down_at`/`stop_at` for `five_hour`, whether or not the
+  schedule itself would currently pick it. `default` forces the plain
+  `[budget]` thresholds instead, ignoring the schedule entirely — e.g.
+  `bridle budget override default --until 5pm` when the human needs their
+  own Claude during a period that would otherwise hold higher.
+- **Resolution order**: an unexpired override wins over the time-based
+  `[[budget.schedule]]` lookup, which wins over the plain `[budget]`
+  defaults — the same order `evaluate_window` already applied for the
+  schedule alone.
+- **Thermostat semantics**: with no `--until`, the override lasts until the
+  schedule (unforced) would next transition to a different period than the
+  one actually in force right now — found by stepping forward through the
+  configured periods (hourly, bounded to 7 days) and comparing against the
+  period active at the moment the override was set. `--until <time>`
+  (`HH:MM` local, rolling to tomorrow if already past — the same parsing
+  `bridle budget hold --until` uses) sets an explicit end instead.
+  `bridle budget override --clear` cancels an active override immediately,
+  reverting to the schedule's normal time-based resolution right away.
+- A parallel mechanism to the human's hold above, not a reuse of it: a hold
+  pauses spawning; an override only changes which `five_hour` thresholds are
+  effective. Human-only, like `hold`, and shown in `bridle budget` alongside
+  it. `seven_day` (and every other window) is never affected, same as the
+  schedule itself.
+- No permanent override mode: every override needs an end, computed or
+  given (YAGNI — see n9qh).
 
 ### The wind-down
 
@@ -375,8 +408,9 @@ thresholds are machine-wide. Sharing `max_workers` between them is still open:
 of `normal`, `holding`, `winding_down`, `paused`) on each transition;
 `agent.exited` with reason `budget_paused`; the governor's state in
 `GET /v1/status`; and `GET /v1/budget`, `POST /v1/budget/hold`,
-`POST /v1/budget/release`. All built, current-daemon-only per the hold gap
-above.
+`POST /v1/budget/release`, `POST /v1/budget/override`,
+`POST /v1/budget/override/clear`. All built, current-daemon-only per the
+hold gap above.
 
 ## Designing for fewer tokens
 
