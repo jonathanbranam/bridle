@@ -2,6 +2,7 @@
 //! line read, as `{"t_ms":…, "dir":"in|out|err|note", "line":…}` JSONL. This
 //! is `.bridle/agents/<id>/transcript.jsonl` in docs/design/agent-host/agents.md.
 
+use std::collections::VecDeque;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Write};
 use std::path::Path;
@@ -70,34 +71,70 @@ struct RawEntry {
     line: String,
 }
 
-/// Reads transcript entries after line number `since` (1-based; `0` reads
-/// from the start), up to `limit` entries. Malformed lines are skipped
-/// rather than failing the whole read: the writer controls the format, so a
-/// bad line means truncation mid-write, not a caller bug to surface.
-pub fn read_lines(path: &Path, since: u64, limit: usize) -> io::Result<Vec<TranscriptEntry>> {
+/// Reads transcript entries, up to `limit` entries. With `since` set
+/// (1-based line number), returns entries after that line in ascending
+/// order, same as before. With `since: None`, returns the latest `limit`
+/// valid entries in ascending order (like `tail`), not the oldest — since
+/// this is a flat JSONL file with no index, that's done in one forward scan
+/// with a bounded ring buffer rather than two passes. Malformed lines are
+/// skipped rather than failing the whole read: the writer controls the
+/// format, so a bad line means truncation mid-write, not a caller bug to
+/// surface.
+pub fn read_lines(
+    path: &Path,
+    since: Option<u64>,
+    limit: usize,
+) -> io::Result<Vec<TranscriptEntry>> {
     let file = File::open(path)?;
     let reader = BufReader::new(file);
-    let mut out = Vec::new();
-    for (i, line) in reader.lines().enumerate() {
-        let line = line?;
-        let n = i + 1;
-        if (n as u64) <= since {
-            continue;
+    match since {
+        Some(since) => {
+            let mut out = Vec::new();
+            for (i, line) in reader.lines().enumerate() {
+                let line = line?;
+                let n = i + 1;
+                if (n as u64) <= since {
+                    continue;
+                }
+                let Ok(raw) = serde_json::from_str::<RawEntry>(&line) else {
+                    continue;
+                };
+                out.push(TranscriptEntry {
+                    n,
+                    t_ms: raw.t_ms,
+                    dir: raw.dir,
+                    line: raw.line,
+                });
+                if out.len() >= limit {
+                    break;
+                }
+            }
+            Ok(out)
         }
-        let Ok(raw) = serde_json::from_str::<RawEntry>(&line) else {
-            continue;
-        };
-        out.push(TranscriptEntry {
-            n,
-            t_ms: raw.t_ms,
-            dir: raw.dir,
-            line: raw.line,
-        });
-        if out.len() >= limit {
-            break;
+        None => {
+            let mut tail: VecDeque<TranscriptEntry> = VecDeque::with_capacity(limit.min(1024));
+            for (i, line) in reader.lines().enumerate() {
+                let line = line?;
+                let n = i + 1;
+                let Ok(raw) = serde_json::from_str::<RawEntry>(&line) else {
+                    continue;
+                };
+                if limit == 0 {
+                    continue;
+                }
+                if tail.len() >= limit {
+                    tail.pop_front();
+                }
+                tail.push_back(TranscriptEntry {
+                    n,
+                    t_ms: raw.t_ms,
+                    dir: raw.dir,
+                    line: raw.line,
+                });
+            }
+            Ok(tail.into_iter().collect())
         }
     }
-    Ok(out)
 }
 
 #[cfg(test)]
@@ -114,18 +151,18 @@ mod tests {
         t.record("in", r#"{"type":"user"}"#);
         t.record("out", r#"{"type":"system","subtype":"init"}"#);
 
-        let all = read_lines(&path, 0, 100).expect("read");
+        let all = read_lines(&path, Some(0), 100).expect("read");
         assert_eq!(all.len(), 3);
         assert_eq!(all[0].n, 1);
         assert_eq!(all[0].dir, "note");
         assert_eq!(all[1].dir, "in");
         assert_eq!(all[2].dir, "out");
 
-        let after_first = read_lines(&path, 1, 100).expect("read");
+        let after_first = read_lines(&path, Some(1), 100).expect("read");
         assert_eq!(after_first.len(), 2);
         assert_eq!(after_first[0].n, 2);
 
-        let limited = read_lines(&path, 0, 1).expect("read");
+        let limited = read_lines(&path, Some(0), 1).expect("read");
         assert_eq!(limited.len(), 1);
         assert_eq!(limited[0].n, 1);
     }
@@ -139,9 +176,33 @@ mod tests {
             "not json\n{\"t_ms\":1,\"dir\":\"note\",\"line\":\"ok\"}\n",
         )
         .expect("write");
-        let entries = read_lines(&path, 0, 10).expect("read");
+        let entries = read_lines(&path, Some(0), 10).expect("read");
         assert_eq!(entries.len(), 1);
         assert_eq!(entries[0].line, "ok");
         assert_eq!(entries[0].n, 2);
+    }
+
+    #[test]
+    fn no_since_returns_the_latest_n_in_ascending_order() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let path = dir.path().join("transcript.jsonl");
+        let t = Transcript::open(&path, Instant::now()).expect("open");
+        for i in 0..10 {
+            t.note(&format!("line {i}"));
+        }
+
+        let tail = read_lines(&path, None, 3).expect("read");
+        assert_eq!(tail.len(), 3);
+        assert_eq!(tail[0].n, 8);
+        assert_eq!(tail[0].line, "line 7");
+        assert_eq!(tail[1].n, 9);
+        assert_eq!(tail[2].n, 10);
+        assert_eq!(tail[2].line, "line 9");
+
+        // An explicit since=0 still means "from the start", not "latest N".
+        let head = read_lines(&path, Some(0), 3).expect("read");
+        assert_eq!(head.len(), 3);
+        assert_eq!(head[0].n, 1);
+        assert_eq!(head[0].line, "line 0");
     }
 }
