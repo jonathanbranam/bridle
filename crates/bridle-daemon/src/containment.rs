@@ -367,8 +367,23 @@ mod tests {
 
     #[tokio::test]
     async fn terminate_group_kills_the_whole_group() {
-        let mut child = spawn_group();
+        let child = spawn_group();
         let pgid = child.id() as i32; // leader's pid == pgid (process_group(0))
+
+        // Reap the leader on a background thread as soon as it exits, the
+        // same way production reaps the real `claude` child concurrently
+        // with `terminate_group`'s poll loop. Without this, nobody calls
+        // `wait()` while `terminate_group` is running, so the leader sits as
+        // a zombie: on Linux (unlike macOS) `killpg`'s signal-0 liveness
+        // check still reports a zombie-led group as alive, so the poll loop
+        // never sees the group go away, falls through to the SIGKILL branch,
+        // and the final assertion still fails because the zombie is still in
+        // the process table.
+        let reaper = std::thread::spawn(move || {
+            let mut child = child;
+            child.wait()
+        });
+
         tokio::time::sleep(Duration::from_millis(200)).await;
 
         let needed_kill = terminate_group(pgid, Duration::from_millis(500)).await;
@@ -376,11 +391,15 @@ mod tests {
         // usually isn't needed, but either outcome is a pass so long as the
         // group is gone afterward.
         let _ = needed_kill;
+
+        reaper
+            .join()
+            .expect("reaper thread panicked")
+            .expect("wait on leader");
+
         assert!(
             killpg(Pid::from_raw(pgid), None).is_err(),
             "process group should be gone"
         );
-
-        let _ = child.wait();
     }
 }
