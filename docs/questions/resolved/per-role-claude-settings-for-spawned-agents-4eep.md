@@ -29,3 +29,17 @@ Should bridle generate each role's settings (permissions plus no-memory) and
 pass them with `--settings`, and keep spawned agents from loading the user's
 and the clone's local settings at all? Whether `claude` has a flag to limit
 which settings sources load needs checking against the real CLI.
+
+## Resolution
+
+`claude --help` has `--setting-sources <sources>`, comma-separated from
+`user`, `project`, `local`. Bridle now always passes
+`--setting-sources project`, which excludes the human's
+`~/.claude/settings.json` and the clone's untracked
+`.claude/settings.local.json`, keeping only the project's checked-in
+`.claude/settings.json` (same for every worktree and agent). No bridle-
+generated per-role settings JSON beyond what already existed
+(`NO_MEMORY_SETTINGS` via `--settings`, and the `disallowed_tools` deny-lists
+in role config): those already cover permission scoping, and
+`--setting-sources` alone closes the leak this ticket raised. Recorded in
+[[docs/design/agent-host/agents.md#Spawning|agents.md]].

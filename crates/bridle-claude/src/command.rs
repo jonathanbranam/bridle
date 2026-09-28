@@ -79,6 +79,12 @@ impl ClaudeCommand {
             "--strict-mcp-config",
             "--permission-prompts",
             "none",
+            // `project` only: excludes the human's `~/.claude/settings.json`
+            // and the clone's untracked `.claude/settings.local.json` from
+            // ever loading into a spawned agent (docs/questions/open/
+            // per-role-claude-settings-for-spawned-agents-4eep.md).
+            "--setting-sources",
+            "project",
             "--settings",
             NO_MEMORY_SETTINGS,
         ]
@@ -198,6 +204,7 @@ mod tests {
             "--exclude-dynamic-system-prompt-sections",
             "--strict-mcp-config",
             "--permission-prompts",
+            "--setting-sources",
             "--settings",
         ] {
             assert!(
@@ -213,6 +220,17 @@ mod tests {
             serde_json::from_str(&args[i + 1]).expect("--settings is JSON");
         assert_eq!(settings["autoMemoryEnabled"], false);
         assert_eq!(settings["autoDreamEnabled"], false);
+    }
+
+    #[test]
+    fn always_restricts_setting_sources_to_project() {
+        let cmd = ClaudeCommand::new("/tmp", Session::New(uuid(8)));
+        let args = cmd.args();
+        let i = args
+            .iter()
+            .position(|a| a == "--setting-sources")
+            .expect("--setting-sources");
+        assert_eq!(args[i + 1], "project");
     }
 
     #[test]
