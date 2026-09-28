@@ -7,18 +7,14 @@ during the fourth orchestrator session.
 
 ## First, for the incoming orchestrator
 
-- **The release gate.** P0 is complete and verified locally. Tag `v0.2.0`
-  (bump `[workspace.package]` version in one commit, annotated tag, push both;
-  operating-model.md, Releases) once GitHub CI is green on both OSes. CI
-  had never passed on Linux: fixed so far are the git identity (82240e5), the
-  containment zombie (625a455), CI without nextest fail-fast (ad5a170) and the
-  daemon.json shutdown race (6d5d22b). Next is `fail-fast: false` on the CI
-  matrix. Check CI with `gh run list -R jonathanbranam/bridle`; the managers
-  have no `gh`.
-- **n6gy** (the interrupt test's undelivered message) is reopened. htp6b's
-  fifo-before-send_user fix (85cc270) probably cures it; confirm on CI.
-- **Paging:** `bridle logs` and `bridle events` return the oldest 500 lines
-  without `--since` (ticket x7gp). Find the latest seq by paging, and read an
+- **v0.2.0 is tagged** (2683d6d, 2026-09-28 ~06:25 UTC): P0 complete, two
+  local runs 297/297, GitHub CI green on Linux and macOS. n6gy resolved again.
+- **For the human in the morning:** rebuild and restart the daemon
+  (`cargo install --path crates/bridle`, then restart). The running daemon is
+  the 9608376 build, so htp6b auto-renew, 78sp, 4eep, x7gp and the shutdown fix
+  aren't live yet. After the restart, resume any `lost` workers.
+- **Paging:** until the restart, `bridle logs` and `bridle events` return the
+  oldest 500 lines without `--since` (x7gp is fixed on main). Find the latest seq by paging, and read an
   agent's current turn with `--since`.
 - **Once the daemon restarts on a build with htp6b** (b7b2051 or later), context
   renewal is automatic; until then renew by hand with `bridle renew`.
@@ -35,10 +31,10 @@ during the fourth orchestrator session.
 
 ## Queue
 
-1. Linux CI green, which gates v0.2.0.
-2. 4eep (running), then misc-cli-polish, then x7gp.
-3. After v0.2.0: n9qh (the budget schedule, nights and weekday work hours, with
-   a thermostat-style override; after the cutover, per the human).
+1. n9qh, now unblocked: the budget schedule (nights and weekday work hours)
+   with a thermostat-style override.
+2. Running at 06:25 UTC: w4tb (wall time in `bridle usage`). Then pm-1's
+   picks from `bridle task`.
 
 Parked: a7h3 (agreed with pm-1: the message-human workaround works), and
 `bridle/mcp-1` (don't merge or delete it; u6wk).

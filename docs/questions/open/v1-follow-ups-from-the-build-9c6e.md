@@ -45,19 +45,17 @@ now shows the command or path for a tool call instead of a raw JSON
 fragment, matching `tool.use` events; and `Store::set_session`, which had
 no callers, is gone.
 
-On 2026-09-28: `rm` now checks for open files under the worktree (`lsof
-+D`), gated on `!force` like the dirty and unmerged-branch checks, naming
-the offending process when it refuses.
+On 2026-09-28, three more gaps verified fixed in code: `bridle daemons`
+already shows agent counts with a 1s health-probe join_all
+(crates/bridle/src/commands.rs:146); `token list` and `token revoke` already
+exist (crates/bridle/src/cli.rs); and `rm` now checks for open files under the
+worktree using `lsof +D`, gated on `!force` like the dirty and unmerged-branch
+checks, naming the offending process when it refuses (merge 8920cbc, commit 999f8f0).
 
 ## Gaps
-
-- **`bridle daemons` shows no agent counts.** The CLI deferred it because it
-  would need to probe every registered daemon. With a short timeout that's
-  cheap.
 - **The `Containment` trait is unused.** Callers use the `ps` functions
   directly. Wire it in when a Linux implementation arrives
   ([[docs/spikes/open/process-containment-on-linux-2mj9|spike 2mj9]]).
-- **No `token list` or `token revoke`.** An external token can't be rotated.
 - **The fake `claude` matches magic words on the last line of a message**,
   because bridle wraps deliveries in an envelope. Tests that send multi-line
   bodies need the magic word last.
