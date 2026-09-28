@@ -411,6 +411,35 @@ impl ModelsConfig {
     }
 }
 
+/// `[context]`: the context governor's `wind_down_at` token threshold, per
+/// role (htp6). Every role bridle spawns — including manager and
+/// orchestrator — is governed; workers default well under the 200k window
+/// so a long tool-heavy run still has room for a handoff message before the
+/// window fills (docs/design/agent-host/, htp6 task notes).
+#[derive(Debug, Clone)]
+pub struct ContextConfig {
+    pub wind_down_at: WindowThresholds,
+}
+
+impl Default for ContextConfig {
+    fn default() -> Self {
+        let mut wind_down_at = WindowThresholds::constant(200_000.0);
+        wind_down_at
+            .overrides
+            .insert("worker".to_string(), 120_000.0);
+        ContextConfig { wind_down_at }
+    }
+}
+
+impl ContextConfig {
+    fn merge(mut self, raw: RawContext) -> Result<Self, ConfigError> {
+        if let Some(m) = &raw.wind_down_at {
+            self.wind_down_at = WindowThresholds::from_raw(m, "wind_down_at")?;
+        }
+        Ok(self)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Config {
     pub listen: SocketAddr,
@@ -419,6 +448,7 @@ pub struct Config {
     pub roles: BTreeMap<String, Role>,
     pub budget: BudgetConfig,
     pub models: ModelsConfig,
+    pub context: ContextConfig,
     /// The prefix new task ids get (storage.md: `<prefix>-<4 hex chars>`,
     /// e.g. `tw-7fa2`). `None` means derive one from the project name
     /// ([`default_task_prefix`]).
@@ -438,6 +468,7 @@ impl Default for Config {
             roles,
             budget: BudgetConfig::default(),
             models: ModelsConfig::default(),
+            context: ContextConfig::default(),
             task_prefix: None,
         }
     }
@@ -578,6 +609,10 @@ impl Config {
             config.models = config.models.merge(raw_models);
         }
 
+        if let Some(raw_context) = raw.context {
+            config.context = config.context.merge(raw_context)?;
+        }
+
         if let Some(t) = raw.tasks {
             config.task_prefix = t.prefix;
         }
@@ -614,7 +649,16 @@ struct RawConfig {
     #[serde(default)]
     models: Option<BTreeMap<String, Vec<String>>>,
     #[serde(default)]
+    context: Option<RawContext>,
+    #[serde(default)]
     tasks: Option<RawTasks>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawContext {
+    #[serde(default)]
+    wind_down_at: Option<BTreeMap<String, f64>>,
 }
 
 #[derive(Debug, Default, Deserialize)]

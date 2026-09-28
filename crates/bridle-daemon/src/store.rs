@@ -1282,13 +1282,17 @@ mod sync {
         Ok(())
     }
 
+    /// Also clears `context_tokens`: a fresh session has no completed turn
+    /// yet, so the old session's context size no longer applies (renew's
+    /// only caller — htp6b's context governor relies on this to stop
+    /// re-notifying a just-renewed agent on the very next check).
     pub(super) fn set_agent_session(
         conn: &Connection,
         id: &str,
         session_id: &str,
     ) -> Result<(), StoreError> {
         let n = conn.execute(
-            "UPDATE agents SET session_id = ?1, updated_at = ?2 WHERE id = ?3",
+            "UPDATE agents SET session_id = ?1, context_tokens = NULL, updated_at = ?2 WHERE id = ?3",
             params![session_id, fmt_dt(Utc::now()), id],
         )?;
         if n == 0 {

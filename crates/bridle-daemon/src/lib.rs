@@ -64,6 +64,8 @@ pub struct Overrides {
     /// Whether to also write the machine-wide registry entry. Tests set
     /// this to `false` and rely on `BRIDLE_HOME` isolation instead.
     pub write_registry: bool,
+    /// Also drives the context governor's per-agent check (htp6b): both
+    /// are cheap per-agent scans with no need for separate cadences.
     pub stall_check_interval: Duration,
     pub tracker_interval: Duration,
     /// How often the governor tick fires; each tick separately decides
@@ -265,7 +267,10 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         let manager = manager.clone();
         move || {
             let manager = manager.clone();
-            async move { manager.tick_stall_check().await }
+            async move {
+                manager.tick_stall_check().await;
+                manager.tick_context_check().await;
+            }
         }
     });
     let tracker_task = spawn_loop(shutdown_rx.clone(), overrides.tracker_interval, {

@@ -98,6 +98,12 @@ struct RuntimeState {
     /// in flight, then `agent.turns + 1`).
     turn_n: u32,
     stall_notified: bool,
+    /// Set once this crossing of the `[context] wind_down_at` threshold has
+    /// sent its "Context handoff:" notice and called `renew` (htp6b);
+    /// `register_and_start` gives every fresh runtime — including the one
+    /// `renew` itself creates — a clean `false`, so the next crossing (on a
+    /// fresh session, after context_tokens resets) notifies again.
+    context_notified: bool,
     current_state: AgentState,
     /// Whether any stdout line at all has been seen (system/init counts).
     saw_any_line: bool,
@@ -328,6 +334,57 @@ impl AgentManager {
                     json!({}),
                 )
                 .await;
+        }
+    }
+
+    /// Sends `Context handoff:` and renews any agent whose `context_tokens`
+    /// crosses its role's `[context] wind_down_at` threshold, once per
+    /// crossing (htp6b: govern context size the way `tick_stall_check`
+    /// governs silence). `renew` starts a fresh session with
+    /// `context_tokens` cleared (`Store::set_agent_session`), so the next
+    /// turn's growth is a new crossing, not a repeat of this one.
+    pub async fn tick_context_check(&self) {
+        let Ok(agents) = self.0.store.list_agents(false).await else {
+            return;
+        };
+        for a in agents {
+            if !matches!(a.state, AgentState::Idle | AgentState::Working) {
+                continue;
+            }
+            let Some(tokens) = a.context_tokens else {
+                continue;
+            };
+            let threshold = self.0.config.context.wind_down_at.get(&a.role);
+            if (tokens as f64) < threshold {
+                continue;
+            }
+            let Some(rt) = self.get_runtime(&a.id) else {
+                continue;
+            };
+            let mut st = rt.state.lock().await;
+            if st.context_notified {
+                continue;
+            }
+            st.context_notified = true;
+            drop(st);
+
+            let body = format!(
+                "Context handoff: your context is at {tokens} tokens, past this role's \
+                 {threshold:.0}-token wind-down threshold. Commit your work in progress \
+                 to your branch, then send a short handoff note on where you are and \
+                 what's next — you're about to be renewed with a fresh context."
+            );
+            let _ = self
+                .send(
+                    "system".to_string(),
+                    ToTarget::Agent(a.id.clone()),
+                    MessageKind::Note,
+                    body,
+                    bridle_api::types::When::Now,
+                    None,
+                )
+                .await;
+            let _ = self.renew(&a.id, true, &system_principal()).await;
         }
     }
 
@@ -663,6 +720,7 @@ impl AgentManager {
                 last_cumulative: cost_so_far,
                 turn_n: turns_so_far,
                 stall_notified: false,
+                context_notified: false,
                 current_state: AgentState::Idle,
                 saw_any_line: false,
                 version_checked: false,
