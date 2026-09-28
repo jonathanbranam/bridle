@@ -451,6 +451,8 @@ pub mod event_kind {
     pub const TASK_QUESTION_ANSWERED: &str = "task.question_answered";
     /// data: {task}
     pub const TASK_NOTE_ADDED: &str = "task.note_added";
+    /// data: {tiers} (the tier count after the change)
+    pub const QUEUE_CHANGED: &str = "queue.changed";
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -835,9 +837,9 @@ impl std::str::FromStr for TaskKind {
 pub enum TaskState {
     Open,
     Planned,
-    /// A worker holds this task's lease (storage.md: `claims` is SQLite-only,
-    /// not written to the state branch). Only reachable from `planned`, and
-    /// only returns to `planned` (release, or the lease expiring).
+    /// A worker holds this task's lease (storage.md, "claims"). Only
+    /// reachable from `planned`, and only returns to `planned` (release, or
+    /// the lease expiring).
     Claimed,
     /// Requires a reason, recorded in the thread.
     Dropped,
@@ -1000,6 +1002,37 @@ pub struct TaskQuery {
     /// anything else is matched against `Task::claimed_by` verbatim.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub claimed_by: Option<String>,
+    /// `?top_tier=true`: just the highest queue tier with a startable task
+    /// (roles-and-lifecycle.md, "the queue"), rather than every ready task
+    /// project-wide. Takes precedence over `ready` when both are set.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub top_tier: Option<bool>,
+}
+
+// ---------- queue ----------
+
+/// The queue's own record: an ordered list of tiers, each a set of
+/// equally-ranked task ids — tier 1 (`tiers[0]`) before tier 2
+/// (roles-and-lifecycle.md, "the queue"). A task not listed in any tier is
+/// backlog. PM-written (and human, to override); the manager only reads it.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct Queue {
+    pub tiers: Vec<Vec<String>>,
+}
+
+/// `POST /v1/queue`: replaces the whole queue. The one write primitive —
+/// reorder, add and remove are all "resend the tiers in the shape they
+/// should be" (docs/design/storage.md).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SetQueueRequest {
+    pub tiers: Vec<Vec<String>>,
+}
+
+/// `POST /v1/queue/tiers`: appends one new tier, ranked after every existing
+/// one.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AddQueueTierRequest {
+    pub tasks: Vec<String>,
 }
 
 // ---------- edges ----------

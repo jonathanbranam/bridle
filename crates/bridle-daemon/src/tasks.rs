@@ -11,13 +11,20 @@
 //! written in the same logical operation), and `ready` needs both the task
 //! cache and the edge cache to answer.
 //!
-//! Claims are different: storage.md calls them out as one of "the ephemeral
-//! tables … [that] arrive with later tasks" — SQLite-only, with no
-//! state-branch file or thread entry. `claim_task`/`release_task` write only
-//! to `Store`; the claiming agent's own activity (the same signal
-//! `supervisor.rs`'s stall check watches) stands in for a lease renewal, so
-//! [`TaskManager::tick_claim_lease_check`] can release a stale claim without
-//! a separate heartbeat call.
+//! Claims are durable too now: `claim_task`/`release_task` write to `Store`
+//! *and* enqueue the full current claim set to the state branch's
+//! `claims.toml`, so `bridle rebuild` restores who's working what (storage.md,
+//! "claims"). The claiming agent's own activity (the same signal
+//! `supervisor.rs`'s stall check watches) still stands in for a lease
+//! renewal, so [`TaskManager::tick_claim_lease_check`] can release a stale
+//! claim without a separate heartbeat call.
+//!
+//! The queue (roles-and-lifecycle.md, "the queue") is a separate record this
+//! manager also owns: an ordered list of tiers of task ids, PM-written,
+//! durable on the state branch's `queue.toml` alone — there's no SQLite
+//! table for it, so [`TaskManager::open`] hydrates the in-memory cache
+//! straight from that file, the same way `rebuild_from_state_branch`
+//! rebuilds the task/edge/open-question caches from their own files.
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -28,7 +35,7 @@ use bridle_api::types::{
 };
 use chrono::Utc;
 
-use crate::state_branch::{StateBranch, StateBranchError};
+use crate::state_branch::{ClaimRecord, StateBranch, StateBranchError};
 use crate::store::{NewMessage, RecipientKind, Store, StoreError, TaskRow};
 
 /// A claim's claimant and when it was made; the in-memory mirror of a
@@ -91,6 +98,12 @@ pub struct TaskManager {
     /// How long a claim survives without the claiming agent's own activity
     /// before [`TaskManager::tick_claim_lease_check`] releases it.
     claim_lease_after: chrono::Duration,
+    /// The queue: an ordered list of tiers, each a list of task ids
+    /// (roles-and-lifecycle.md, "the queue"). Loaded from `queue.toml` at
+    /// [`TaskManager::open`]; there's no SQLite table backing it, so this
+    /// cache — kept current on every [`TaskManager::set_queue`] — is the
+    /// only in-memory copy.
+    queue: Arc<Mutex<Vec<Vec<String>>>>,
 }
 
 impl TaskManager {
@@ -141,6 +154,7 @@ impl TaskManager {
                 task.claimed_at = Some(*claimed_at);
             }
         }
+        let queue = state.read_queue();
         Ok(TaskManager {
             store,
             state,
@@ -151,18 +165,19 @@ impl TaskManager {
             claims: Arc::new(Mutex::new(claims)),
             claim_lease_after: chrono::Duration::from_std(claim_lease_after)
                 .unwrap_or_else(|_| chrono::Duration::zero()),
+            queue: Arc::new(Mutex::new(queue)),
         })
     }
 
-    /// Reconstructs `tasks`, `edges` and `open_questions` from the state
-    /// branch alone: the migration path for a fresh clone with no
+    /// Reconstructs `tasks`, `edges`, `open_questions` and `claims` from the
+    /// state branch alone: the migration path for a fresh clone with no
     /// `bridle.db` (docs/design/overview.md, "`bridle rebuild` recreates the
     /// database from the project's state branch"). Refuses — rather than
     /// silently overwriting — if the database already has any rows in these
-    /// tables; a rebuild is a from-nothing reconstruction, not a merge.
-    /// Claims are never touched: they're SQLite-only, with no state-branch
-    /// counterpart to rebuild from (storage.md), so any in-flight claim is
-    /// simply lost, which is correct here, not a gap.
+    /// tables; a rebuild is a from-nothing reconstruction, not a merge. The
+    /// queue cache is re-read from `queue.toml` too, the same as any other
+    /// startup, since it never lived in SQLite to begin with (there's
+    /// nothing to refuse-over for it).
     ///
     /// An open question's `message_id` in the rebuilt `open_questions` row
     /// doesn't point at a real `messages` row: messages don't survive on the
@@ -176,9 +191,10 @@ impl TaskManager {
         if !self.store.list_tasks().await?.is_empty()
             || !self.store.list_edges().await?.is_empty()
             || !self.store.list_open_questions().await?.is_empty()
+            || !self.store.list_claims().await?.is_empty()
         {
             return Err(TaskError::Conflict(
-                "database already has tasks, edges or open questions; refusing to rebuild over it"
+                "database already has tasks, edges, open questions or claims; refusing to rebuild over it"
                     .to_string(),
             ));
         }
@@ -218,9 +234,33 @@ impl TaskManager {
             self.store.insert_edge_row(edge).await?;
         }
 
+        let claim_records = self.state.list_claims()?;
+        let mut claims = HashMap::with_capacity(claim_records.len());
+        for c in &claim_records {
+            self.store
+                .insert_claim(&c.task_id, &c.claimed_by, c.claimed_at)
+                .await?;
+            // `claim_task` sets `tasks.state = Claimed` synchronously in
+            // SQLite, never on the state branch (storage.md, "claims"): the
+            // task file this rebuild just restored the row from still says
+            // whatever pre-claim state it was last flushed at (`planned`),
+            // so this mirrors that same synchronous update here too.
+            self.store
+                .set_task_state(&c.task_id, TaskState::Claimed)
+                .await?;
+            if let Some(task) = cache.get_mut(&c.task_id) {
+                task.state = TaskState::Claimed;
+                task.claimed_by = Some(c.claimed_by.clone());
+                task.claimed_at = Some(c.claimed_at);
+            }
+            claims.insert(c.task_id.clone(), (c.claimed_by.clone(), c.claimed_at));
+        }
+
         *self.cache.lock().expect("task cache lock") = cache;
         *self.edges.lock().expect("edges lock") = edges;
         *self.open_questions.lock().expect("open questions lock") = open_questions;
+        *self.claims.lock().expect("claims lock") = claims;
+        *self.queue.lock().expect("queue lock") = self.state.read_queue();
         Ok(())
     }
 
@@ -297,6 +337,26 @@ impl TaskManager {
             task.body = body;
         }
         task.updated_at = Utc::now();
+        self.state.enqueue_task(&task)?;
+        Ok(self.put(task))
+    }
+
+    /// `open` -> `planned`: the PM has decided this task is ready to build.
+    /// Fails with `Conflict` if the task isn't `open` (including a task
+    /// that's already `planned`, `claimed`, or reachable only by `reopen`
+    /// once dropped).
+    pub async fn plan_task(&self, id: &str, actor: &PrincipalId) -> Result<Task, TaskError> {
+        let mut task = self
+            .get_task(id)
+            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+        if task.state != TaskState::Open {
+            return Err(TaskError::Conflict(format!(
+                "task {id} is {}, not open; only an open task can be planned",
+                task.state
+            )));
+        }
+        self.transition(&mut task, TaskState::Planned, actor)
+            .await?;
         self.state.enqueue_task(&task)?;
         Ok(self.put(task))
     }
@@ -605,13 +665,32 @@ impl TaskManager {
 
     // ---------- claims ----------
 
+    /// Enqueues the full current claim set to the state branch's
+    /// `claims.toml`, mirroring [`TaskManager::claims`] the way
+    /// `add_edge`/`remove_edge` mirror the edge cache to `edges.toml`. Called
+    /// with the claims lock already released, after every claim/release, so
+    /// `bridle rebuild` can restore current claims (storage.md, "claims").
+    fn enqueue_claims_snapshot(&self) -> Result<(), TaskError> {
+        let records: Vec<ClaimRecord> = self
+            .claims
+            .lock()
+            .expect("claims lock")
+            .iter()
+            .map(|(task_id, (claimed_by, claimed_at))| ClaimRecord {
+                task_id: task_id.clone(),
+                claimed_by: claimed_by.clone(),
+                claimed_at: *claimed_at,
+            })
+            .collect();
+        Ok(self.state.enqueue_claims(&records)?)
+    }
+
     /// Claims `id` for `by`: `planned` -> `claimed`. Fails with `Conflict`
     /// if the task isn't ready right now — not planned, blocked, or already
     /// claimed (claiming again would need it to still be `planned`, which
-    /// `is_ready` already requires). Unlike drop/reopen, this writes only to
-    /// the database: claims are SQLite-only, with no state-branch file or
-    /// thread entry (storage.md, "the ephemeral tables … arrive with later
-    /// tasks").
+    /// `is_ready` already requires). Writes synchronously to the database,
+    /// like every other task state change, and enqueues the claim set's new
+    /// state to the state branch for the next flush (storage.md, "claims").
     pub async fn claim_task(&self, id: &str, by: &PrincipalId) -> Result<Task, TaskError> {
         let mut task = self
             .get_task(id)
@@ -628,6 +707,7 @@ impl TaskManager {
             .lock()
             .expect("claims lock")
             .insert(id.to_string(), (by.clone(), now));
+        self.enqueue_claims_snapshot()?;
         task.state = TaskState::Claimed;
         task.updated_at = now;
         task.claimed_by = Some(by.clone());
@@ -658,7 +738,8 @@ impl TaskManager {
 
     /// The shared release path for an explicit `release_task` and automatic
     /// lease expiry: clears the claim and transitions the task back to
-    /// `planned`, without touching the state branch.
+    /// `planned`, enqueuing the claim set's new state to the state branch
+    /// the same way [`TaskManager::claim_task`] does.
     async fn release_claim(&self, id: &str) -> Result<Task, TaskError> {
         let mut task = self
             .get_task(id)
@@ -666,6 +747,7 @@ impl TaskManager {
         self.store.delete_claim(id).await?;
         self.store.set_task_state(id, TaskState::Planned).await?;
         self.claims.lock().expect("claims lock").remove(id);
+        self.enqueue_claims_snapshot()?;
         task.state = TaskState::Planned;
         task.updated_at = Utc::now();
         task.claimed_by = None;
@@ -714,6 +796,94 @@ impl TaskManager {
             .into_iter()
             .filter(|t| self.is_ready(t))
             .collect()
+    }
+
+    // ---------- queue ----------
+
+    /// The queue's tiers in rank order, each a list of task ids
+    /// (roles-and-lifecycle.md, "the queue"). Empty until the PM sets one; a
+    /// task not listed in any tier is backlog.
+    pub fn queue_tiers(&self) -> Vec<Vec<String>> {
+        self.queue.lock().expect("queue lock").clone()
+    }
+
+    /// Validates `tiers` against the task cache: every id must name a task
+    /// that exists, no id may repeat across tiers (a task holds one rank),
+    /// and no tier may be empty (an empty tier isn't a rank, it's nothing).
+    fn validate_queue(&self, tiers: &[Vec<String>]) -> Result<(), TaskError> {
+        let mut seen = std::collections::HashSet::new();
+        for tier in tiers {
+            if tier.is_empty() {
+                return Err(TaskError::BadRequest(
+                    "a tier must name at least one task".to_string(),
+                ));
+            }
+            for id in tier {
+                if self.get_task(id).is_none() {
+                    return Err(TaskError::NotFound(format!("no such task: {id}")));
+                }
+                if !seen.insert(id) {
+                    return Err(TaskError::Conflict(format!(
+                        "task {id} appears more than once in the queue"
+                    )));
+                }
+            }
+        }
+        Ok(())
+    }
+
+    /// Replaces the whole queue: the PM's one write primitive, covering
+    /// reorder/add/remove alike (resend the full tier list in the shape it
+    /// should be). Durable the same way a task edit is: enqueued for the
+    /// state branch's next flush, with `actor` recorded on the accompanying
+    /// event line, and the in-memory cache updated immediately so a
+    /// following read sees it before that flush happens.
+    pub async fn set_queue(
+        &self,
+        tiers: Vec<Vec<String>>,
+        actor: &PrincipalId,
+    ) -> Result<Vec<Vec<String>>, TaskError> {
+        self.validate_queue(&tiers)?;
+        self.state.enqueue_queue(&tiers)?;
+        self.state.enqueue_queue_event(actor, Utc::now());
+        *self.queue.lock().expect("queue lock") = tiers.clone();
+        Ok(tiers)
+    }
+
+    /// Appends one new tier, ranked after every existing one: sugar over
+    /// `set_queue` for the common case of adding work at the back of the
+    /// queue without resending the tiers already there.
+    pub async fn add_queue_tier(
+        &self,
+        tasks: Vec<String>,
+        actor: &PrincipalId,
+    ) -> Result<Vec<Vec<String>>, TaskError> {
+        let mut tiers = self.queue_tiers();
+        tiers.push(tasks);
+        self.set_queue(tiers, actor).await
+    }
+
+    /// The highest tier with at least one startable task (ready: planned,
+    /// deps met, no open question, and — since `is_ready` requires
+    /// `Planned` — necessarily unclaimed), and just that tier's startable
+    /// tasks. Empty if no tier has one, including when the queue itself is
+    /// empty: the manager takes from the next tier down rather than idling
+    /// on a blocked one (roles-and-lifecycle.md, "the queue"), and a task
+    /// outside the queue entirely is backlog, never returned here.
+    pub fn highest_startable_tier(&self) -> Vec<Task> {
+        let ready_ids: std::collections::HashSet<String> =
+            self.ready_tasks().into_iter().map(|t| t.id).collect();
+        for tier in self.queue_tiers() {
+            let startable: Vec<Task> = tier
+                .iter()
+                .filter(|id| ready_ids.contains(*id))
+                .filter_map(|id| self.get_task(id))
+                .collect();
+            if !startable.is_empty() {
+                return startable;
+            }
+        }
+        Vec::new()
     }
 
     /// Every task with an unanswered question, oldest first: for `bridle
@@ -912,6 +1082,66 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn plan_moves_open_to_planned_and_rejects_every_other_state() {
+        let (tm, _tmp) = manager().await;
+        let task = tm
+            .new_task("Add foo", TaskKind::Feature, String::new())
+            .await
+            .expect("new task");
+        assert_eq!(task.state, TaskState::Open);
+
+        let planned = tm
+            .plan_task(&task.id, &"human".to_string())
+            .await
+            .expect("plan");
+        assert_eq!(planned.state, TaskState::Planned);
+
+        // Already planned: not open any more.
+        let err = tm
+            .plan_task(&task.id, &"human".to_string())
+            .await
+            .expect_err("already planned");
+        assert!(matches!(err, TaskError::Conflict(_)));
+
+        // Claimed: also not open.
+        tm.claim_task(&task.id, &"agent:w1".to_string())
+            .await
+            .expect("claim");
+        let err = tm
+            .plan_task(&task.id, &"human".to_string())
+            .await
+            .expect_err("claimed, not open");
+        assert!(matches!(err, TaskError::Conflict(_)));
+
+        // Dropped and reopened: also not open (reopened, per the lifecycle
+        // diagram, not open).
+        tm.release_task(&task.id, &"agent:w1".to_string())
+            .await
+            .expect("release");
+        tm.drop_task(&task.id, "no longer needed", &"human".to_string())
+            .await
+            .expect("drop");
+        tm.reopen_task(&task.id, &"human".to_string())
+            .await
+            .expect("reopen");
+        let err = tm
+            .plan_task(&task.id, &"human".to_string())
+            .await
+            .expect_err("reopened, not open");
+        assert!(matches!(err, TaskError::Conflict(_)));
+    }
+
+    #[tokio::test]
+    async fn plan_of_an_unknown_id_is_not_found() {
+        let (tm, _tmp) = manager().await;
+        let err = tm
+            .plan_task("tw-nope", &"human".to_string())
+            .await
+            .expect_err("no such task");
+        assert!(matches!(err, TaskError::NotFound(_)));
+    }
+
+    #[tokio::test]
     async fn add_edge_rejects_self_loops_and_unknown_tasks_and_duplicates() {
         let (tm, _tmp) = manager().await;
         let a = tm
@@ -983,11 +1213,11 @@ mod tests {
         assert!(matches!(err, TaskError::NotFound(_)));
     }
 
-    /// There's no `plan` command yet (roles-and-lifecycle.md's `open ->
-    /// planned` transition isn't built), so this reaches into the private
-    /// cache directly to put a task in `planned` for the purposes of
-    /// exercising `is_ready`/`ready_tasks` — legal from within this module,
-    /// and simpler than inventing a test-only public API for it.
+    /// A shortcut for tests that don't care about `plan_task` itself, just
+    /// getting a task to `planned` to exercise `is_ready`/`ready_tasks`/etc.
+    /// on top of it: reaches into the private cache directly rather than
+    /// going through `plan_task`'s actor/event bookkeeping, which those
+    /// tests have no use for.
     fn force_planned(tm: &TaskManager, id: &str) {
         let mut cache = tm.cache.lock().expect("task cache lock");
         cache.get_mut(id).expect("task in cache").state = TaskState::Planned;
@@ -1035,6 +1265,189 @@ mod tests {
             .expect("drop blocker");
         let ready_ids: Vec<String> = tm.ready_tasks().into_iter().map(|t| t.id).collect();
         assert!(ready_ids.contains(&blocked.id));
+    }
+
+    #[tokio::test]
+    async fn set_queue_validates_unknown_ids_duplicates_and_empty_tiers() {
+        let (tm, _tmp) = manager().await;
+        let a = tm
+            .new_task("A", TaskKind::Chore, String::new())
+            .await
+            .expect("new a");
+        let b = tm
+            .new_task("B", TaskKind::Chore, String::new())
+            .await
+            .expect("new b");
+
+        let err = tm
+            .set_queue(vec![vec!["tw-nope".to_string()]], &"human".to_string())
+            .await
+            .expect_err("unknown task id");
+        assert!(matches!(err, TaskError::NotFound(_)));
+
+        let err = tm
+            .set_queue(
+                vec![vec![a.id.clone()], vec![a.id.clone()]],
+                &"human".to_string(),
+            )
+            .await
+            .expect_err("same task in two tiers");
+        assert!(matches!(err, TaskError::Conflict(_)));
+
+        let err = tm
+            .set_queue(vec![vec![]], &"human".to_string())
+            .await
+            .expect_err("empty tier");
+        assert!(matches!(err, TaskError::BadRequest(_)));
+
+        let tiers = tm
+            .set_queue(vec![vec![a.id.clone(), b.id.clone()]], &"human".to_string())
+            .await
+            .expect("valid queue");
+        assert_eq!(tiers, vec![vec![a.id.clone(), b.id.clone()]]);
+        assert_eq!(tm.queue_tiers(), tiers);
+    }
+
+    #[tokio::test]
+    async fn add_queue_tier_appends_after_whatever_is_already_there() {
+        let (tm, _tmp) = manager().await;
+        let a = tm
+            .new_task("A", TaskKind::Chore, String::new())
+            .await
+            .expect("new a");
+        let b = tm
+            .new_task("B", TaskKind::Chore, String::new())
+            .await
+            .expect("new b");
+
+        tm.add_queue_tier(vec![a.id.clone()], &"human".to_string())
+            .await
+            .expect("first tier");
+        let tiers = tm
+            .add_queue_tier(vec![b.id.clone()], &"human".to_string())
+            .await
+            .expect("second tier");
+        assert_eq!(tiers, vec![vec![a.id.clone()], vec![b.id.clone()]]);
+    }
+
+    /// The core dispatch rule: the manager takes from the highest tier with
+    /// a startable task, skipping a tier that's stuck on a dependency rather
+    /// than idling on it (roles-and-lifecycle.md, "the queue").
+    #[tokio::test]
+    async fn highest_startable_tier_skips_a_tier_blocked_on_a_dependency() {
+        let (tm, _tmp) = manager().await;
+        let blocker = tm
+            .new_task("Blocker", TaskKind::Chore, String::new())
+            .await
+            .expect("new blocker");
+        let blocked = tm
+            .new_task("Blocked", TaskKind::Feature, String::new())
+            .await
+            .expect("new blocked");
+        let next = tm
+            .new_task("Next", TaskKind::Feature, String::new())
+            .await
+            .expect("new next");
+        tm.add_edge(&blocker.id, &blocked.id, EdgeKind::Blocks)
+            .await
+            .expect("add edge");
+        force_planned(&tm, &blocker.id);
+        force_planned(&tm, &blocked.id);
+        force_planned(&tm, &next.id);
+
+        // Tier 1's only task is blocked on tier 1's own blocker... but the
+        // blocker isn't itself in the queue (it's backlog): tier 1 has
+        // nothing startable, so the highest startable tier is tier 2.
+        tm.set_queue(
+            vec![vec![blocked.id.clone()], vec![next.id.clone()]],
+            &"human".to_string(),
+        )
+        .await
+        .expect("set queue");
+        let top: Vec<String> = tm
+            .highest_startable_tier()
+            .into_iter()
+            .map(|t| t.id)
+            .collect();
+        assert_eq!(top, vec![next.id.clone()]);
+
+        // Resolving the blocker frees tier 1's task, which now outranks
+        // tier 2 again.
+        tm.drop_task(&blocker.id, "done another way", &"human".to_string())
+            .await
+            .expect("drop blocker");
+        let top: Vec<String> = tm
+            .highest_startable_tier()
+            .into_iter()
+            .map(|t| t.id)
+            .collect();
+        assert_eq!(top, vec![blocked.id.clone()]);
+    }
+
+    #[tokio::test]
+    async fn highest_startable_tier_is_empty_with_no_queue_or_nothing_startable() {
+        let (tm, _tmp) = manager().await;
+        assert!(tm.highest_startable_tier().is_empty());
+
+        // A task exists and is even ready, but it's backlog: not in any
+        // tier, so it's never returned here.
+        let task = tm
+            .new_task("Add foo", TaskKind::Feature, String::new())
+            .await
+            .expect("new task");
+        force_planned(&tm, &task.id);
+        assert!(tm.ready_tasks().iter().any(|t| t.id == task.id));
+        assert!(tm.highest_startable_tier().is_empty());
+    }
+
+    #[tokio::test]
+    async fn queue_survives_a_flush_and_a_fresh_manager_hydrating_from_the_state_branch() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let repo = tmp.path().join("repo");
+        init_repo(&repo).await;
+        let store = Store::open(tmp.path().join("bridle.db"))
+            .await
+            .expect("open store");
+        let state = StateBranch::open(&repo, &tmp.path().join("state"))
+            .await
+            .expect("open state branch");
+        let tm = TaskManager::open(
+            store.clone(),
+            state.clone(),
+            "tw".to_string(),
+            std::time::Duration::from_secs(600),
+        )
+        .await
+        .expect("open task manager");
+
+        let a = tm
+            .new_task("A", TaskKind::Chore, String::new())
+            .await
+            .expect("new a");
+        let b = tm
+            .new_task("B", TaskKind::Chore, String::new())
+            .await
+            .expect("new b");
+        tm.set_queue(
+            vec![vec![a.id.clone()], vec![b.id.clone()]],
+            &"human".to_string(),
+        )
+        .await
+        .expect("set queue");
+        tm.flush_now().await.expect("flush");
+
+        let tm2 = TaskManager::open(
+            store,
+            state,
+            "tw".to_string(),
+            std::time::Duration::from_secs(600),
+        )
+        .await
+        .expect("reopen task manager");
+        assert_eq!(
+            tm2.queue_tiers(),
+            vec![vec![a.id.clone()], vec![b.id.clone()]]
+        );
     }
 
     #[tokio::test]
@@ -1430,6 +1843,65 @@ mod tests {
             tm.ready_tasks().iter().any(|t| t.id == task.id),
             "a stale claim's lease expiry re-enables readiness"
         );
+    }
+
+    #[tokio::test]
+    async fn a_claim_survives_a_flush_and_a_fresh_manager_hydrating_from_the_state_branch() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let repo = tmp.path().join("repo");
+        init_repo(&repo).await;
+        let store = Store::open(tmp.path().join("bridle.db"))
+            .await
+            .expect("open store");
+        let state = StateBranch::open(&repo, &tmp.path().join("state"))
+            .await
+            .expect("open state branch");
+        let tm = TaskManager::open(
+            store,
+            state.clone(),
+            "tw".to_string(),
+            std::time::Duration::from_secs(600),
+        )
+        .await
+        .expect("open task manager");
+
+        let task = tm
+            .new_task("Add foo", TaskKind::Feature, String::new())
+            .await
+            .expect("new task");
+        tm.plan_task(&task.id, &"human".to_string())
+            .await
+            .expect("plan");
+        tm.claim_task(&task.id, &"agent:w1".to_string())
+            .await
+            .expect("claim");
+        tm.flush_now().await.expect("flush");
+
+        // A fresh database, over the same already-flushed state branch, as
+        // `bridle rebuild` runs against: unlike before durable claims, this
+        // restores the claim too, not just the task.
+        let fresh_store = Store::open(tmp.path().join("bridle2.db"))
+            .await
+            .expect("open fresh store");
+        let tm2 = TaskManager::open(
+            fresh_store.clone(),
+            state,
+            "tw".to_string(),
+            std::time::Duration::from_secs(600),
+        )
+        .await
+        .expect("open fresh task manager");
+        tm2.rebuild_from_state_branch().await.expect("rebuild");
+
+        let rehydrated = tm2.get_task(&task.id).expect("rehydrated");
+        assert_eq!(rehydrated.state, TaskState::Claimed);
+        assert_eq!(rehydrated.claimed_by.as_deref(), Some("agent:w1"));
+        assert!(rehydrated.claimed_at.is_some());
+
+        let db_claims = fresh_store.list_claims().await.expect("db claims");
+        assert_eq!(db_claims.len(), 1);
+        assert_eq!(db_claims[0].task_id, task.id);
+        assert_eq!(db_claims[0].claimed_by, "agent:w1");
     }
 
     #[tokio::test]

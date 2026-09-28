@@ -41,18 +41,45 @@ in `[roles.*]` in `<repo>/.bridle/config.toml`
 ```
 
 - **ready** is computed: planned, no open blockers, no unanswered questions.
-  `bridle ready` is the dispatch primitive. Built: a blocker counts as open
-  unless it's `dropped` (`integrated`/`accepted` don't exist yet, so there's
-  no "done" state to check besides that one — see coordination.md, Edges);
-  the unanswered-questions half is a seam that always answers "no" until
-  P0-3 builds questions. There's also no `plan` command yet to move a task
-  from `open` to `planned` in the first place, so in practice `ready` has
-  nothing to return until that lands too.
+  A blocker counts as open unless it's `dropped` (`integrated`/`accepted`
+  don't exist yet, so there's no "done" state to check besides that one —
+  see coordination.md, Edges). `bridle task plan <id>` makes the `open ->
+  planned` transition (`TaskManager::plan_task`); `open` is the only state it
+  accepts, so a task already planned, claimed, dropped or reopened is a
+  conflict.
+- **The queue is a separate record, not a field on the task.** Tasks stay
+  the *what* (kind, body, real `blocks` edges for actual dependencies —
+  never for ordering); the queue is the *when*, an ordered list of tiers,
+  each tier a set of equally-ranked task ids (tier 1 before tier 2). A task
+  not listed in any tier is backlog. It's PM-owned (and the human, to
+  override): `bridle queue set --tier <task,task> --tier <task,task>`
+  replaces the whole queue (reorder/add/remove are all "resend the tiers in
+  the shape they should be"), and `bridle queue add-tier <task>...` appends
+  one tier at the back. Every other principal, the manager included, only
+  reads it (`server.rs::require_pm_or_human`, gating `POST /v1/queue` and
+  `POST /v1/queue/tiers`). Durable on the state branch's `queue.toml`
+  (storage.md, "The state branch"), since there's no SQLite table for it at
+  all — the in-memory cache is hydrated straight from that file at
+  `TaskManager::open`/`rebuild_from_state_branch`.
+- **The manager is mechanical** about the queue: it takes from the highest
+  tier with a startable task (`TaskManager::highest_startable_tier`:
+  `ready`, and therefore unclaimed too, since `is_ready` already requires
+  `planned`), picking within a tier by load/free worker slots. It never
+  moves a task between tiers; if the top tier's only task is blocked on an
+  unmet dependency, it takes from the next tier down rather than idling.
+  `bridle ready` (no `--all`) now returns exactly this — the highest
+  startable tier's ready tasks, `GET /v1/tasks?top_tier=true` — not every
+  ready task project-wide; a task outside the queue is never returned here,
+  even if it happens to be ready. `bridle queue` is the read-only view:
+  claimed tasks with their worker first, then the tiers in rank order, each
+  task marked startable or blocked.
 - **claimed** carries a lease renewed by the agent's activity, which the
   daemon already sees on every agent's stream, so no heartbeat hook is needed
   for bridle-hosted agents. If the lease expires, the task returns to ready,
   and whatever the worker wrote on it goes to the next claimant (research 10
-  §5).
+  §5). Claims are durable: mirrored to the state branch alongside the task
+  and edge state, so `bridle rebuild` restores who's working what
+  (storage.md, "claims").
 - **Kinds** change the gates and the prime: `feature`, `bug`, `chore`,
   `question`, `research`, `explore` ([[docs/design/explorations|explorations]]), `arch-revision` ([[docs/design/architecture-tier|architecture]]) and
   `re-evaluate` ([[docs/design/traceability|traceability]]).
@@ -67,7 +94,8 @@ bridle ready --all                      # what can move, across projects
 bridle task new "Fix vitest config" -k chore            → tw-c0f1
 bridle task new "Watch: ratings filter" -k feature      → tw-7fa2
 bridle dep add tw-7fa2 --blocked-by tw-c0f1
-bridle plan tw-7fa2                     # manager writes plan + spec edits + impact
+bridle task plan tw-7fa2                # PM: open -> planned, ready to build
+bridle queue add-tier tw-c0f1 tw-7fa2   # PM: queues them, tw-c0f1 first
 bridle spawn worker tw-c0f1             # worktree + session, claims the task
 bridle wait tw-c0f1 --until integrated  # run as background Bash; manager is woken
 …

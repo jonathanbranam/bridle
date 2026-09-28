@@ -29,3 +29,11 @@ run while `just check` is building in the same clone.
 - Low priority; after P2 (the human).
 - Worker worktrees' `target` goes away with `bridle rm --delete-branch` after merge;
   this is about the long-lived main clone.
+
+- Observed by the orchestrator, 2026-09-28: after `cargo clean` in the main clone
+  (41 GiB, ~240k files removed, ~15:50 UTC), `just check` on `main` went from about
+  400 s to about 35 s, with individual tests about 10x faster (the governor tests
+  from ~15 s to ~2 s each), at similar load. Nothing else changed in between except
+  P2-3's merge, which added tests. Cause not investigated; one guess is background
+  indexing or I/O on the large `target/`. If it holds, stale build output costs
+  test time, not just disk.

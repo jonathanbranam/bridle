@@ -43,7 +43,7 @@ stop_check        = false
 start_prompt      = """
 You're starting up. Run `bridle status --json`, `bridle agents --json` and \
 `bridle inbox --json`, then send the human one short line saying you're ready. \
-Then triage the backlog and send the development manager its next prepared tasks."""
+Then triage the backlog and keep the queue full (`bridle queue`, `bridle task plan`)."""
 
 [roles.manager]
 model             = "sonnet"
