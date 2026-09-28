@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Fixed: TUI inbox and agents panel now scroll: each table maintains TableState to track view offset as the selection moves, so selecting beyond the visible rows keeps the selection in view (tickets 8ups, yurx).
 - New `vim` workflow pack (`workflow/packs/vim/`, opt in with `packs = ["vim"]`): vader.vim testing convention, the `g:test_dir` temp-dir pattern, no reliance on `after/ftplugin/`, and a check-command rule that defers to the `commands.check` binding.
 - `bridle budget` now shows local-machine times, the applied `five_hour` thresholds with their source (override/schedule period/default), the current period's span, the next schedule change, why the state is what it is, each reading's age (stale by `max_staleness`) and non-`allowed` statuses; `bridle budget --schedule` prints the whole resolved schedule. `GET /v1/budget` gains `five_hour`, `schedule`, `reasons` and `age_secs`.
 - Fixed: autostart now skips a role that already has an agent of that role (any state), not only one named after the role, so a restart no longer spawns a second manager beside e.g. `manager-2`.
