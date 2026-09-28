@@ -335,10 +335,19 @@ async fn status(cli: &Cli) -> Result<(), CliError> {
             println!("  {state:<10} {count}");
         }
         for rl in &status.rate_limits {
-            println!("  {:<10} {}", rl.window, format_utilization(rl.utilization));
+            if is_known_rate_limit_window(&rl.window) {
+                println!("  {:<10} {}", rl.window, format_utilization(rl.utilization));
+            }
         }
     }
     Ok(())
+}
+
+fn is_known_rate_limit_window(window: &str) -> bool {
+    matches!(
+        window,
+        "five_hour" | "seven_day" | "seven_day_opus" | "seven_day_sonnet"
+    )
 }
 
 fn format_utilization(u: Option<f64>) -> String {
@@ -959,15 +968,17 @@ async fn usage(cli: &Cli, args: &UsageArgs) -> Result<(), CliError> {
             println!("cache hit ratio: {:.1}%", ratio * 100.0);
         }
         for rl in &usage.rate_limits {
-            let resets = rl
-                .resets_at
-                .map(|r| format!(", resets {}", r.format("%Y-%m-%d %H:%M UTC")))
-                .unwrap_or_default();
-            println!(
-                "{:<10} {}{resets}",
-                rl.window,
-                format_utilization(rl.utilization)
-            );
+            if is_known_rate_limit_window(&rl.window) {
+                let resets = rl
+                    .resets_at
+                    .map(|r| format!(", resets {}", r.format("%Y-%m-%d %H:%M UTC")))
+                    .unwrap_or_default();
+                println!(
+                    "{:<10} {}{resets}",
+                    rl.window,
+                    format_utilization(rl.utilization)
+                );
+            }
         }
         if !usage.interactive_today.is_empty() {
             println!("today, interactive (bridle statusline):");
