@@ -18,12 +18,28 @@ pub enum WorktreeError {
 }
 
 pub(crate) async fn run_git(repo: &Path, args: &[&str]) -> Result<String, WorktreeError> {
-    let output = Command::new("git")
-        .arg("-C")
-        .arg(repo)
-        .args(args)
-        .output()
-        .await?;
+    run_git_with_env(repo, args, &[], &[]).await
+}
+
+/// Like [`run_git`], but lets the caller set or remove environment variables
+/// on the `git` child process, without touching the daemon's own process
+/// environment. Used to exercise `ensure_orphan_branch` under an environment
+/// with no git identity configured anywhere (see its test).
+async fn run_git_with_env(
+    repo: &Path,
+    args: &[&str],
+    set_env: &[(&str, &str)],
+    remove_env: &[&str],
+) -> Result<String, WorktreeError> {
+    let mut cmd = Command::new("git");
+    cmd.arg("-C").arg(repo).args(args);
+    for var in remove_env {
+        cmd.env_remove(var);
+    }
+    for (key, value) in set_env {
+        cmd.env(key, value);
+    }
+    let output = cmd.output().await?;
     if output.status.success() {
         Ok(String::from_utf8_lossy(&output.stdout).into_owned())
     } else {
@@ -93,10 +109,40 @@ pub async fn ensure_orphan_branch(
     branch: &str,
     message: &str,
 ) -> Result<(), WorktreeError> {
+    ensure_orphan_branch_with_env(repo, branch, message, &[], &[]).await
+}
+
+/// [`ensure_orphan_branch`], with `set_env`/`remove_env` applied to the
+/// `commit-tree` child process's environment. Exists so the regression test
+/// can prove the branch still gets created when no git identity is
+/// configured anywhere, without mutating the daemon's own process
+/// environment (see `run_git_with_env`).
+async fn ensure_orphan_branch_with_env(
+    repo: &Path,
+    branch: &str,
+    message: &str,
+    set_env: &[(&str, &str)],
+    remove_env: &[&str],
+) -> Result<(), WorktreeError> {
     if branch_exists(repo, branch).await? {
         return Ok(());
     }
-    let sha = run_git(repo, &["commit-tree", EMPTY_TREE, "-m", message]).await?;
+    let sha = run_git_with_env(
+        repo,
+        &[
+            "-c",
+            "user.email=bridle@localhost",
+            "-c",
+            "user.name=bridle",
+            "commit-tree",
+            EMPTY_TREE,
+            "-m",
+            message,
+        ],
+        set_env,
+        remove_env,
+    )
+    .await?;
     run_git(
         repo,
         &["update-ref", &format!("refs/heads/{branch}"), sha.trim()],
@@ -390,6 +436,45 @@ mod tests {
             out.is_err(),
             "orphan branch must not be an ancestor of HEAD"
         );
+    }
+
+    #[tokio::test]
+    async fn ensure_orphan_branch_succeeds_with_no_git_identity_anywhere() {
+        // Reproduces GitHub Actions runners, which have no git author
+        // identity configured at all (unlike a developer's machine): no
+        // global/system gitconfig with user.name/user.email, and no
+        // GIT_AUTHOR_*/GIT_COMMITTER_*/EMAIL env vars.
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let repo = tmp.path().join("repo");
+        init_repo(&repo).await;
+
+        let empty_home = tmp.path().join("empty-home");
+        std::fs::create_dir_all(&empty_home).expect("mkdir empty home");
+        let home = empty_home.to_string_lossy().into_owned();
+        let global_config = empty_home.join(".gitconfig").to_string_lossy().into_owned();
+
+        ensure_orphan_branch_with_env(
+            &repo,
+            "bridle",
+            "initial bridle state",
+            &[
+                ("HOME", home.as_str()),
+                ("GIT_CONFIG_GLOBAL", global_config.as_str()),
+                ("GIT_CONFIG_NOSYSTEM", "1"),
+            ],
+            &[
+                "GIT_AUTHOR_NAME",
+                "GIT_AUTHOR_EMAIL",
+                "GIT_COMMITTER_NAME",
+                "GIT_COMMITTER_EMAIL",
+                "EMAIL",
+            ],
+        )
+        .await
+        .expect(
+            "ensure_orphan_branch must supply its own identity, not rely on one being configured",
+        );
+        assert!(branch_exists(&repo, "bridle").await.expect("check"));
     }
 
     #[tokio::test]
