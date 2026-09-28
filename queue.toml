@@ -8,10 +8,10 @@ tasks = [
 [[tier]]
 tasks = [
     "br-1e0c",
-    "br-4221",
     "br-7678",
     "br-bc21",
     "br-55e2",
+    "br-00eb",
 ]
 
 [[tier]]
