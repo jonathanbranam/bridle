@@ -2,13 +2,20 @@
 //! branch (`crate::state_branch`) kept in step, plus an in-memory cache that
 //! carries the body/thread the database doesn't (docs/design/storage.md).
 //! Scoped to this build's four states: `open`, `planned`, `dropped`,
-//! `reopened`; edges, questions-block-a-task, claims and the rest of the
-//! lifecycle arrive with later tasks.
+//! `reopened`; claims and the rest of the lifecycle arrive with later tasks.
+//!
+//! Edges (coordination.md) and `ready` (roles-and-lifecycle.md, "ready is
+//! computed") live here too, on the same manager, per that design: an edge
+//! is durable the same way a task is (database fast index + state branch,
+//! written in the same logical operation), and `ready` needs both the task
+//! cache and the edge cache to answer.
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use bridle_api::types::{PrincipalId, Task, TaskKind, TaskState, ThreadEntry, ThreadEntryKind};
+use bridle_api::types::{
+    Edge, EdgeKind, PrincipalId, Task, TaskKind, TaskState, ThreadEntry, ThreadEntryKind,
+};
 use chrono::Utc;
 
 use crate::state_branch::{StateBranch, StateBranchError};
@@ -52,6 +59,10 @@ pub struct TaskManager {
     /// carry. Hydrated from the state branch at [`TaskManager::open`], kept
     /// current on every write.
     cache: Arc<Mutex<HashMap<String, Task>>>,
+    /// Every edge. Unlike `cache`, the database row *is* the full record
+    /// (there's no extra body/thread to hydrate from the state branch), so
+    /// this is loaded straight from `Store::list_edges` at `open`.
+    edges: Arc<Mutex<Vec<Edge>>>,
 }
 
 impl TaskManager {
@@ -76,11 +87,13 @@ impl TaskManager {
             });
             cache.insert(task.id.clone(), task);
         }
+        let edges = store.list_edges().await?;
         Ok(TaskManager {
             store,
             state,
             prefix,
             cache: Arc::new(Mutex::new(cache)),
+            edges: Arc::new(Mutex::new(edges)),
         })
     }
 
@@ -219,6 +232,96 @@ impl TaskManager {
         self.state
             .enqueue_event(&task.id, from.as_str(), to.as_str(), actor, task.updated_at);
         Ok(())
+    }
+
+    // ---------- edges ----------
+
+    /// Adds a `from`-`kind`->`to` edge. Both tasks must exist, and an edge
+    /// can't connect a task to itself; the underlying unique constraint
+    /// (coordination.md's table has no notion of a duplicate edge) turns a
+    /// repeat of the same triple into a conflict.
+    pub async fn add_edge(&self, from: &str, to: &str, kind: EdgeKind) -> Result<Edge, TaskError> {
+        if from == to {
+            return Err(TaskError::BadRequest(
+                "an edge cannot connect a task to itself".to_string(),
+            ));
+        }
+        if self.get_task(from).is_none() {
+            return Err(TaskError::NotFound(format!("no such task: {from}")));
+        }
+        if self.get_task(to).is_none() {
+            return Err(TaskError::NotFound(format!("no such task: {to}")));
+        }
+        let edge = self.store.insert_edge(from, to, kind).await?;
+        let edges = {
+            let mut g = self.edges.lock().expect("edges lock");
+            g.push(edge.clone());
+            g.clone()
+        };
+        self.state.enqueue_edges(&edges)?;
+        Ok(edge)
+    }
+
+    /// Removes the edge identified by the `(from, to, kind)` triple; not
+    /// found if no such edge exists.
+    pub async fn remove_edge(&self, from: &str, to: &str, kind: EdgeKind) -> Result<(), TaskError> {
+        self.store.delete_edge(from, to, kind).await?;
+        let edges = {
+            let mut g = self.edges.lock().expect("edges lock");
+            g.retain(|e| !(e.from == from && e.to == to && e.kind == kind));
+            g.clone()
+        };
+        self.state.enqueue_edges(&edges)?;
+        Ok(())
+    }
+
+    pub fn list_edges(&self) -> Vec<Edge> {
+        self.edges.lock().expect("edges lock").clone()
+    }
+
+    // ---------- ready ----------
+
+    /// A blocker is unresolved unless it's `dropped`: `integrated` and
+    /// `accepted` don't exist yet (P0 hasn't built them), so for now
+    /// anything else — including a blocker this manager doesn't know about —
+    /// still counts as blocking (roles-and-lifecycle.md, "ready is
+    /// computed"). Documented here rather than left implicit, since it's a
+    /// deliberate simplification this build makes, not the final rule.
+    fn blocker_is_resolved(&self, blocker_id: &str) -> bool {
+        self.get_task(blocker_id)
+            .is_some_and(|b| b.state == TaskState::Dropped)
+    }
+
+    /// `planned`, no open `blocks` edge naming an unresolved blocker, and no
+    /// unanswered question. The question half is a seam for P0-3: no task
+    /// has one yet, so [`Self::has_open_questions`] always returns `false`
+    /// and this only ever checks the first two.
+    pub fn is_ready(&self, task: &Task) -> bool {
+        if task.state != TaskState::Planned {
+            return false;
+        }
+        if self.has_open_questions(task) {
+            return false;
+        }
+        let edges = self.edges.lock().expect("edges lock");
+        !edges.iter().any(|e| {
+            e.kind == EdgeKind::Blocks && e.to == task.id && !self.blocker_is_resolved(&e.from)
+        })
+    }
+
+    /// Always `false` until P0-3 builds questions
+    /// (docs/design/coordination.md, "Questions do not stop work"); kept as
+    /// its own function so `is_ready` doesn't need restructuring when it's
+    /// filled in.
+    fn has_open_questions(&self, _task: &Task) -> bool {
+        false
+    }
+
+    pub fn ready_tasks(&self) -> Vec<Task> {
+        self.list_tasks()
+            .into_iter()
+            .filter(|t| self.is_ready(t))
+            .collect()
     }
 
     /// Flushes the state branch's pending writes. Exposed so the periodic
@@ -380,6 +483,132 @@ mod tests {
             .await
             .expect_err("not dropped any more");
         assert!(matches!(err, TaskError::Conflict(_)));
+    }
+
+    #[tokio::test]
+    async fn add_edge_rejects_self_loops_and_unknown_tasks_and_duplicates() {
+        let (tm, _tmp) = manager().await;
+        let a = tm
+            .new_task("A", TaskKind::Chore, String::new())
+            .await
+            .expect("new a");
+        let b = tm
+            .new_task("B", TaskKind::Chore, String::new())
+            .await
+            .expect("new b");
+
+        let err = tm
+            .add_edge(&a.id, &a.id, EdgeKind::Blocks)
+            .await
+            .expect_err("self loop");
+        assert!(matches!(err, TaskError::BadRequest(_)));
+
+        let err = tm
+            .add_edge("tw-nope", &b.id, EdgeKind::Blocks)
+            .await
+            .expect_err("unknown from");
+        assert!(matches!(err, TaskError::NotFound(_)));
+
+        let err = tm
+            .add_edge(&a.id, "tw-nope", EdgeKind::Blocks)
+            .await
+            .expect_err("unknown to");
+        assert!(matches!(err, TaskError::NotFound(_)));
+
+        let edge = tm
+            .add_edge(&a.id, &b.id, EdgeKind::Blocks)
+            .await
+            .expect("add edge");
+        assert_eq!(edge.from, a.id);
+        assert_eq!(edge.to, b.id);
+        assert_eq!(tm.list_edges(), vec![edge]);
+
+        let err = tm
+            .add_edge(&a.id, &b.id, EdgeKind::Blocks)
+            .await
+            .expect_err("duplicate edge");
+        assert!(matches!(err, TaskError::Conflict(_)));
+    }
+
+    #[tokio::test]
+    async fn remove_edge_drops_it_and_errors_when_missing() {
+        let (tm, _tmp) = manager().await;
+        let a = tm
+            .new_task("A", TaskKind::Chore, String::new())
+            .await
+            .expect("new a");
+        let b = tm
+            .new_task("B", TaskKind::Chore, String::new())
+            .await
+            .expect("new b");
+        tm.add_edge(&a.id, &b.id, EdgeKind::Blocks)
+            .await
+            .expect("add edge");
+
+        tm.remove_edge(&a.id, &b.id, EdgeKind::Blocks)
+            .await
+            .expect("remove edge");
+        assert!(tm.list_edges().is_empty());
+
+        let err = tm
+            .remove_edge(&a.id, &b.id, EdgeKind::Blocks)
+            .await
+            .expect_err("already removed");
+        assert!(matches!(err, TaskError::NotFound(_)));
+    }
+
+    /// There's no `plan` command yet (roles-and-lifecycle.md's `open ->
+    /// planned` transition isn't built), so this reaches into the private
+    /// cache directly to put a task in `planned` for the purposes of
+    /// exercising `is_ready`/`ready_tasks` — legal from within this module,
+    /// and simpler than inventing a test-only public API for it.
+    fn force_planned(tm: &TaskManager, id: &str) {
+        let mut cache = tm.cache.lock().expect("task cache lock");
+        cache.get_mut(id).expect("task in cache").state = TaskState::Planned;
+    }
+
+    #[tokio::test]
+    async fn ready_tasks_excludes_unplanned_and_blocked_tasks() {
+        let (tm, _tmp) = manager().await;
+        let blocker = tm
+            .new_task("Blocker", TaskKind::Chore, String::new())
+            .await
+            .expect("new blocker");
+        let blocked = tm
+            .new_task("Blocked", TaskKind::Feature, String::new())
+            .await
+            .expect("new blocked");
+        let unplanned = tm
+            .new_task("Unplanned", TaskKind::Feature, String::new())
+            .await
+            .expect("new unplanned");
+
+        tm.add_edge(&blocker.id, &blocked.id, EdgeKind::Blocks)
+            .await
+            .expect("add edge");
+
+        // Still open, not planned: none of the three are ready yet.
+        assert!(tm.ready_tasks().is_empty());
+
+        force_planned(&tm, &blocker.id);
+        force_planned(&tm, &blocked.id);
+        force_planned(&tm, &unplanned.id);
+
+        // `blocked` is planned but its blocker isn't dropped, so it's still
+        // not ready. `blocker` and `unplanned` (misleadingly named now that
+        // it's planned too) have no blocks-edge pointing at them, so both
+        // are ready.
+        let ready_ids: Vec<String> = tm.ready_tasks().into_iter().map(|t| t.id).collect();
+        assert!(!ready_ids.contains(&blocked.id));
+        assert!(ready_ids.contains(&unplanned.id));
+        assert!(ready_ids.contains(&blocker.id));
+
+        // Dropping the blocker resolves it, which frees the blocked task.
+        tm.drop_task(&blocker.id, "done another way", &"human".to_string())
+            .await
+            .expect("drop blocker");
+        let ready_ids: Vec<String> = tm.ready_tasks().into_iter().map(|t| t.id).collect();
+        assert!(ready_ids.contains(&blocked.id));
     }
 
     #[tokio::test]

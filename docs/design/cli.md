@@ -98,10 +98,26 @@ bridle task reopen <id>
 - **`task`** is scoped, for now, to the `open`/`planned`/`dropped`/`reopened` states
   (docs/design/roles-and-lifecycle.md, Task lifecycle): create, show, edit (title/body,
   never state), list (id/title/kind/state), drop (a reason is required, recorded in the
-  task's thread) and reopen (only a dropped task can be reopened). `ready`, `claimed`,
-  `in_review`, `integrated`, `accepted`, and everything that depends on edges, questions
-  or claims, arrive with later tasks — see the `Planned` block below for the rest of the
-  surface this command will eventually grow into.
+  task's thread) and reopen (only a dropped task can be reopened). `claimed`,
+  `in_review`, `integrated`, `accepted`, and everything that depends on claims, arrive
+  with later tasks — see the `Planned` block below for the rest of the surface this
+  command will eventually grow into. There's no `plan` yet either, so nothing can reach
+  `planned` through the CLI — which means `ready` (below) can never actually return
+  anything until a later task adds it; documented as a known gap, not fixed here.
+- **`dep add|rm`** creates or removes one coordination edge (docs/design/coordination.md).
+  `bridle dep add <task> --to <other> --kind <kind>` draws `<task> --kind--> <other>`;
+  `bridle dep add <task> --blocked-by <other>` is sugar for `--kind blocks` with `from`
+  and `to` swapped (`<task>` is blocked by `<other>`, so the edge runs the other way) and
+  can't be combined with `--to`/`--kind`. `dep rm` takes the same shape. Edges can't
+  connect a task to itself, and a repeat of the same `(from, to, kind)` triple is a
+  conflict, not a silent no-op.
+- **`ready [--all] [--role]`** lists every ready task: `planned`, with no open `blocks`
+  edge naming an unresolved blocker (roles-and-lifecycle.md, "ready is computed"; see
+  coordination.md for exactly what "unresolved" means in this build). `--all` fans out
+  across every daemon in the registry (`bridle daemons`), each with its own
+  discovery-resolved token, instead of just the one daemon `--url`/`--project`/cwd
+  discovery would pick. `--role` is accepted but a no-op: tasks don't carry a role field
+  yet (a gap, not a design decision — see `Planned` below).
 - **`statusline`** is Claude Code's `statusLine` command, configured in `settings.json`. It
   reads Claude Code's JSON on stdin, prints a short line back, and posts a snapshot to
   `POST /v1/statusline` ([[docs/design/agent-host/api|API]]) using the same daemon discovery
@@ -116,9 +132,10 @@ as a first cut:
 
 ```
 bridle init | sync | prime | doctor              project setup, render, session start, health
-bridle task <cmd> at ready|claimed|in_review|integrated|accepted  -- new/show/edit/list/drop/reopen
-                                                  are built (see Built); these five states aren't
-bridle dep add|rm            bridle ready [--all] [--role]
+bridle task <cmd> at claimed|in_review|integrated|accepted  -- new/show/edit/list/drop/reopen
+                                                  are built (see Built); `dep add|rm` and
+                                                  `ready [--all] [--role]` are built too, but
+                                                  ready can't return anything until `plan` exists
 bridle claim|release|handoff bridle plan <id>     bridle accept <id> (human only)
 bridle ask|answer            bridle inbox --inject
 bridle wait <id> [--until <state>] [--or-message] [--timeout]

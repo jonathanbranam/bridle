@@ -77,9 +77,15 @@ pub enum Command {
     Token(TokenArgs),
     /// Task records: create/show/edit/list/drop/reopen
     /// (docs/design/storage.md). Scoped for now to open/planned/dropped/
-    /// reopened; ready/claimed/in_review/integrated/accepted arrive with
-    /// later tasks.
+    /// reopened; claimed/in_review/integrated/accepted arrive with later
+    /// tasks.
     Task(TaskArgs),
+    /// Add or remove a coordination edge between two tasks
+    /// (docs/design/coordination.md).
+    Dep(DepArgs),
+    /// List every ready task: planned, with no open `blocks` edge naming an
+    /// unresolved blocker (roles-and-lifecycle.md, "ready is computed").
+    Ready(ReadyArgs),
     /// Claude Code's statusLine command: reads its JSON on stdin, prints a
     /// line back, and records a usage snapshot. Never fails or blocks: see
     /// docs/design/usage-and-budget.md ("Where bridle can see usage").
@@ -396,6 +402,59 @@ pub struct TaskReopenArgs {
     pub task: String,
 }
 
+#[derive(Debug, Clone, Copy, ValueEnum)]
+#[value(rename_all = "kebab-case")]
+pub enum EdgeKindArg {
+    Blocks,
+    Parent,
+    DiscoveredFrom,
+    Related,
+    Supersedes,
+    Duplicates,
+}
+
+#[derive(Debug, Args)]
+pub struct DepArgs {
+    #[command(subcommand)]
+    pub action: DepAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum DepAction {
+    /// Add an edge.
+    Add(DepEdgeArgs),
+    /// Remove an edge.
+    Rm(DepEdgeArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct DepEdgeArgs {
+    /// The edge's `from` task, unless `--blocked-by` is given.
+    pub task: String,
+    /// Sugar for `--kind blocks --to <task>` with `from`/`to` swapped: reads
+    /// as "`<task>` is blocked by `<other>`".
+    #[arg(long, value_name = "TASK", conflicts_with_all = ["to", "kind"])]
+    pub blocked_by: Option<String>,
+    /// The edge's `to` task.
+    #[arg(long, value_name = "TASK")]
+    pub to: Option<String>,
+    #[arg(long, value_enum, default_value = "blocks")]
+    pub kind: EdgeKindArg,
+}
+
+#[derive(Debug, Args)]
+pub struct ReadyArgs {
+    /// Fan out across every daemon registered on this machine (`bridle
+    /// daemons`), not just the one `--url`/`--project`/discovery resolves.
+    #[arg(long)]
+    pub all: bool,
+    /// Filter by role. A stub for now: tasks don't carry a role field yet
+    /// (P0-1 gap), so this has nothing to filter on and is accepted but
+    /// ignored.
+    #[arg(long)]
+    pub role: Option<String>,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -635,5 +694,91 @@ mod tests {
         assert_eq!(a.task, "tw-1234");
         assert_eq!(a.title.as_deref(), Some("new title"));
         assert_eq!(a.body, None);
+    }
+
+    #[test]
+    fn dep_add_blocked_by_parses() {
+        let cli = parse(&["dep", "add", "tw-7fa2", "--blocked-by", "tw-c0f1"]).unwrap();
+        let Command::Dep(args) = cli.command else {
+            panic!("expected dep")
+        };
+        let DepAction::Add(a) = args.action else {
+            panic!("expected dep add")
+        };
+        assert_eq!(a.task, "tw-7fa2");
+        assert_eq!(a.blocked_by.as_deref(), Some("tw-c0f1"));
+        assert_eq!(a.to, None);
+    }
+
+    #[test]
+    fn dep_add_to_and_kind_parses() {
+        let cli = parse(&[
+            "dep",
+            "add",
+            "tw-7fa2",
+            "--to",
+            "hx-19ab",
+            "--kind",
+            "discovered-from",
+        ])
+        .unwrap();
+        let Command::Dep(args) = cli.command else {
+            panic!("expected dep")
+        };
+        let DepAction::Add(a) = args.action else {
+            panic!("expected dep add")
+        };
+        assert_eq!(a.task, "tw-7fa2");
+        assert_eq!(a.to.as_deref(), Some("hx-19ab"));
+        assert!(matches!(a.kind, EdgeKindArg::DiscoveredFrom));
+    }
+
+    #[test]
+    fn dep_add_rejects_kind_alongside_blocked_by() {
+        let err = parse(&[
+            "dep",
+            "add",
+            "tw-7fa2",
+            "--blocked-by",
+            "tw-c0f1",
+            "--kind",
+            "parent",
+        ])
+        .unwrap_err();
+        assert_eq!(err.kind(), clap::error::ErrorKind::ArgumentConflict);
+    }
+
+    #[test]
+    fn dep_rm_parses() {
+        let cli = parse(&[
+            "dep", "rm", "tw-7fa2", "--to", "tw-c0f1", "--kind", "related",
+        ])
+        .unwrap();
+        let Command::Dep(args) = cli.command else {
+            panic!("expected dep")
+        };
+        let DepAction::Rm(a) = args.action else {
+            panic!("expected dep rm")
+        };
+        assert_eq!(a.task, "tw-7fa2");
+        assert_eq!(a.to.as_deref(), Some("tw-c0f1"));
+        assert!(matches!(a.kind, EdgeKindArg::Related));
+    }
+
+    #[test]
+    fn ready_parses_all_and_role() {
+        let cli = parse(&["ready", "--all", "--role", "worker"]).unwrap();
+        let Command::Ready(args) = cli.command else {
+            panic!("expected ready")
+        };
+        assert!(args.all);
+        assert_eq!(args.role.as_deref(), Some("worker"));
+
+        let cli = parse(&["ready"]).unwrap();
+        let Command::Ready(args) = cli.command else {
+            panic!("expected ready")
+        };
+        assert!(!args.all);
+        assert_eq!(args.role, None);
     }
 }

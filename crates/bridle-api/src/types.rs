@@ -408,6 +408,10 @@ pub mod event_kind {
     pub const TASK_STATE: &str = "task.state";
     /// data: {fields}, the names of the fields that changed.
     pub const TASK_EDITED: &str = "task.edited";
+    /// data: {from, to, kind}
+    pub const EDGE_ADDED: &str = "edge.added";
+    /// data: {from, to, kind}
+    pub const EDGE_REMOVED: &str = "edge.removed";
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -845,6 +849,85 @@ pub struct DropTaskRequest {
     pub reason: String,
 }
 
+/// `GET /v1/tasks?ready=true` filters to ready tasks only (roles-and-lifecycle.md,
+/// "ready is computed"); omitted or `false` returns every task, as before.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct TaskQuery {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ready: Option<bool>,
+}
+
+// ---------- edges ----------
+
+/// Coordination edges between tasks (coordination.md, Edges). Only `blocks`
+/// affects readiness; the rest are provenance, recorded but not yet acted on.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum EdgeKind {
+    /// `to` cannot start until `from` is done.
+    Blocks,
+    /// `from` decomposes into `to`.
+    Parent,
+    DiscoveredFrom,
+    Related,
+    Supersedes,
+    Duplicates,
+}
+
+impl EdgeKind {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Blocks => "blocks",
+            Self::Parent => "parent",
+            Self::DiscoveredFrom => "discovered-from",
+            Self::Related => "related",
+            Self::Supersedes => "supersedes",
+            Self::Duplicates => "duplicates",
+        }
+    }
+}
+
+impl std::fmt::Display for EdgeKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl std::str::FromStr for EdgeKind {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        serde_json::from_value(Value::String(s.to_string()))
+            .map_err(|_| format!("unknown edge kind: {s}"))
+    }
+}
+
+/// A directed edge `from` -> `to`, e.g. `from` blocks `to`. Durable the same
+/// way a task is: a SQLite fast index plus a copy on the state branch
+/// (docs/design/storage.md).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Edge {
+    pub from: String,
+    pub to: String,
+    pub kind: EdgeKind,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NewEdgeRequest {
+    pub from: String,
+    pub to: String,
+    pub kind: EdgeKind,
+}
+
+/// `DELETE /v1/edges?from=&to=&kind=`: the same triple identifies the edge
+/// to remove, since there's no separate edge id.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RemoveEdgeQuery {
+    pub from: String,
+    pub to: String,
+    pub kind: EdgeKind,
+}
+
 // ---------- errors ----------
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -909,6 +992,21 @@ mod tests {
         for s in ["open", "planned", "dropped", "reopened"] {
             let st: TaskState = s.parse().unwrap();
             assert_eq!(st.as_str(), s);
+        }
+    }
+
+    #[test]
+    fn edge_kind_round_trip() {
+        for s in [
+            "blocks",
+            "parent",
+            "discovered-from",
+            "related",
+            "supersedes",
+            "duplicates",
+        ] {
+            let k: EdgeKind = s.parse().unwrap();
+            assert_eq!(k.as_str(), s);
         }
     }
 }
