@@ -143,3 +143,9 @@ and `docs/games/<game>/` where the game's code folder name can differ
   review as markdown. Related: [[which-docs-live-in-bridle-and-which-in-markdown-hv8e|hv8e]].
 - Whether a component has its own roadmap, planning and tickets (not necessarily 1:1), kept
   low-overhead per the follow-up above.
+
+## Design
+
+[[docs/design/components|Components: scoped work contexts]] answers gaps 1–5 and the two
+open items above, and names the follow-up implementation task. Not resolved (moved) yet:
+that waits on the implementation.

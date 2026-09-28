@@ -8,7 +8,7 @@ L1  base        workflow/base/                  shared by every project
 L2  packs       workflow/packs/<name>/           opt-in: typescript, python, vim,
                                                 web-ui, game, monorepo, …
 L3  project     <repo>/.bridle/                 this project's overrides + additions
-L4  component   <repo>/.bridle/components/<n>/  path-scoped, e.g. client-watch/**
+L4  component   <repo>/.bridle/components/<n>/  scoped by task/spawn; nests (client → game)
 ```
 
 Later layers win. A project lists its packs in `.bridle/config.toml`, and
@@ -24,6 +24,7 @@ workflow = "workflow"                    # path or git url
 
 [components.client-watch]
 paths = ["client-watch/**"]
+docs  = "docs/watch"                     # see docs/design/components.md
 [components.dungeon-engine]
 paths = ["packages/dungeon-engine/**"]
 consumers = ["harness"]                  # a cross-project edge the tool knows about
@@ -117,7 +118,7 @@ Claude Code reads `CLAUDE.md`, `.claude/skills/`, `.claude/agents/`,
 | `.claude/skills/bridle-*/` | rendered skills, with project addenda appended | **no** — gitignored, regenerated |
 | `.claude/agents/*.md` | rendered role definitions | no |
 | `.claude/settings.json` hooks | bridle's hook entries, merged into existing settings | yes (small, stable) |
-| path-scoped rules | L4 component rules, rendered as nested/path-scoped rule files so they load only when the agent works in that path (**verify** the exact Claude Code mechanism) | no |
+| path-scoped rules | none: L4 component rules are delivered by `bridle prime` from the task's or spawn's named components, not rendered ([[docs/design/components|components]]) | n/a |
 
 The principle is the Gherkin lesson ([[docs/design/specs-to-tests|specs to tests]]) applied to configuration: **do not
 commit generated output.** Keep the sources in git, make regeneration fast, and
@@ -159,7 +160,8 @@ written down anywhere else yet:
   the same base `workflow/base/skills/worker/SKILL.md` rendered with their own command.
 - **The `SessionStart` hook that would run `sync` automatically is not built yet** — a
   follow-up (P2-3 built the command itself, not the auto-invocation).
-- Path-scoped (L4 component) rule rendering is still out of scope, per the table above.
+- L4 component rules aren't rendered into files: scope comes from the task or spawn, and
+  `bridle prime` delivers them ([[docs/design/components|components]]; designed, not built).
 
 Most rule content is not rendered into a file at all. It is delivered by
 `bridle prime` at session start, sized to the role: a worker gets its task,

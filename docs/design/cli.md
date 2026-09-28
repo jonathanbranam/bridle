@@ -139,7 +139,7 @@ bridle task note   <id> TEXT                     plain note to the task's thread
   layer that redefines an id must give an `override` kind (`replace`, `append` or
   `disable`) — silent redefinition is an error, and `disable` requires a `reason`.
   L0 core has no file-backed layer yet (nothing in the binary defines rules that way
-  today) and L4 component/path-scoped rules are out of scope (blocked on spike vxp6).
+  today) and L4 component rules are designed, not built (docs/design/components.md).
   `explain <id>` prints which layer won and the full history of what it shadowed, in
   layer order; `diff --project-layer` prints every rule id the project layer
   (`<repo>/.bridle/rules`) defines, replaces, appends to or disables, relative to the
@@ -170,8 +170,8 @@ bridle task note   <id> TEXT                     plain note to the task's thread
   that event name); a gitignored sidecar, `.claude/.bridle-sync-hooks.json`, records
   exactly which entries the last sync wrote, so re-syncing (or a layer's hooks
   changing) only ever touches those, never a hook a human added by hand — a
-  pre-existing hook entry sync didn't write is always left alone. Skips L4
-  component/path-scoped rule rendering, same as `rules explain`/`diff` above; wiring a
+  pre-existing hook entry sync didn't write is always left alone. Renders no L4
+  component rules (delivered by `bridle prime` instead, docs/design/components.md), same as `rules explain`/`diff` above; wiring a
   `SessionStart` hook to run `sync` automatically is a follow-up, not built yet — for
   now it's a command you run yourself. `hooks/<event>.json`, and the "later layer wins
   wholesale" convention it and `agents/<role>.md` use, are this command's own

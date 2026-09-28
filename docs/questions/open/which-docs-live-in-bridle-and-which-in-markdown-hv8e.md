@@ -27,3 +27,7 @@ for data-contracts (survey question 7 in `docs/context/onboarding-data-contracts
   `openspec/specs/`.
 - Link checking (`check-tickets.py`, in both repos) depends on the answer.
 - Related: [[ticket-state-without-moving-files-p2ys|ticket state without moving files]].
+- The roadmap-location slice is narrowed by [[docs/design/components|components]]:
+  roadmaps and planning docs live in the project's `docs/` next to the component's
+  other docs, and the task queue lives in bridle. The rest of this question (which
+  other docs live in bridle's records; link checking) is still open.
