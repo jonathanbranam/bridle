@@ -222,3 +222,5 @@
 {"actor":"human","at":"2026-09-28T22:30:12.053Z","from":"","task":"br-2264","to":"open"}
 {"actor":"agent:pm-1","at":"2026-09-28T22:30:55.573957Z","queue":"reprioritized"}
 {"actor":"human","at":"2026-09-28T22:53:46.737Z","from":"","task":"br-6d50","to":"open"}
+{"actor":"agent:pm-1","at":"2026-09-28T22:54:26.555888Z","from":"open","task":"br-6d50","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-09-28T22:54:26.570588Z","queue":"reprioritized"}
