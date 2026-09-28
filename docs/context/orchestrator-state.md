@@ -46,7 +46,9 @@ during the sixth orchestrator session.
   touched until the human approves adoption. Needs rxe8 (br-29f9) first.
   Before the rule reached us, the orchestrator had already pushed ticket moves
   to DC `main` (b923c7e) and deleted the adopt branch (both on the human's
-  explicit answers); the human was told and can have b923c7e reverted.
+  explicit answers); the human was told and said keep it. The trial branch
+  is `bridle-adopt` (63rv), made by the orchestrator from DC `main` (incl.
+  b923c7e) once br-29f9 lands, and pushed.
 - **`merge.ff = only` fix merged** (m2fq, br-544b, b809c4e): workers use
   `git merge --no-ff main`; live for new workers after the next restart.
 - **Local permissions** (`.claude/settings.local.json`, untracked): the
