@@ -447,6 +447,46 @@ impl ModelsConfig {
     }
 }
 
+/// `[context]`: the context governor's `wind_down_at` token threshold, per
+/// role (htp6). Every role bridle spawns — including manager and
+/// orchestrator — is governed; workers default well under the 200k window
+/// so a long tool-heavy run still has room for a handoff message before the
+/// window fills (docs/design/agent-host/, htp6 task notes).
+#[derive(Debug, Clone)]
+pub struct ContextConfig {
+    pub wind_down_at: WindowThresholds,
+    /// How long a notified agent gets to finish a handoff turn (commit WIP,
+    /// write a note) on its own before it's renewed regardless — the same
+    /// shape as `[budget] wind_down_grace`, since `stop_grace`'s 30s is
+    /// meant for an idle process noticing stdin EOF, not a whole turn.
+    pub wind_down_grace: Duration,
+}
+
+impl Default for ContextConfig {
+    fn default() -> Self {
+        let mut wind_down_at = WindowThresholds::constant(200_000.0);
+        wind_down_at
+            .overrides
+            .insert("worker".to_string(), 120_000.0);
+        ContextConfig {
+            wind_down_at,
+            wind_down_grace: Duration::from_secs(5 * 60),
+        }
+    }
+}
+
+impl ContextConfig {
+    fn merge(mut self, raw: RawContext) -> Result<Self, ConfigError> {
+        if let Some(m) = &raw.wind_down_at {
+            self.wind_down_at = WindowThresholds::from_raw(m, "wind_down_at")?;
+        }
+        if let Some(s) = &raw.wind_down_grace {
+            self.wind_down_grace = parse_duration(s)?;
+        }
+        Ok(self)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Config {
     pub listen: SocketAddr,
@@ -459,6 +499,7 @@ pub struct Config {
     pub roles: BTreeMap<String, Role>,
     pub budget: BudgetConfig,
     pub models: ModelsConfig,
+    pub context: ContextConfig,
     /// The prefix new task ids get (storage.md: `<prefix>-<4 hex chars>`,
     /// e.g. `tw-7fa2`). `None` means derive one from the project name
     /// ([`default_task_prefix`]).
@@ -479,6 +520,7 @@ impl Default for Config {
             roles,
             budget: BudgetConfig::default(),
             models: ModelsConfig::default(),
+            context: ContextConfig::default(),
             task_prefix: None,
         }
     }
@@ -622,6 +664,10 @@ impl Config {
             config.models = config.models.merge(raw_models);
         }
 
+        if let Some(raw_context) = raw.context {
+            config.context = config.context.merge(raw_context)?;
+        }
+
         if let Some(t) = raw.tasks {
             config.task_prefix = t.prefix;
         }
@@ -658,7 +704,18 @@ struct RawConfig {
     #[serde(default)]
     models: Option<BTreeMap<String, Vec<String>>>,
     #[serde(default)]
+    context: Option<RawContext>,
+    #[serde(default)]
     tasks: Option<RawTasks>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawContext {
+    #[serde(default)]
+    wind_down_at: Option<BTreeMap<String, f64>>,
+    #[serde(default)]
+    wind_down_grace: Option<String>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -1013,6 +1070,27 @@ mod tests {
             let prompt = config.roles[role].system_prompt.as_ref().expect("prompt");
             assert!(repo.join(prompt).is_file(), "{} exists", prompt.display());
         }
+    }
+
+    #[test]
+    fn context_config_defaults_and_parses_overrides() {
+        let cfg = Config::default();
+        assert_eq!(cfg.context.wind_down_at.get("default"), 200_000.0);
+        assert_eq!(cfg.context.wind_down_at.get("worker"), 120_000.0);
+        assert_eq!(cfg.context.wind_down_grace, Duration::from_secs(5 * 60));
+
+        let toml = r#"
+            [context]
+            wind_down_grace = "45s"
+
+            [context.wind_down_at]
+            default = 50000
+            worker = 30000
+        "#;
+        let cfg = Config::parse(toml).expect("parse");
+        assert_eq!(cfg.context.wind_down_at.get("default"), 50_000.0);
+        assert_eq!(cfg.context.wind_down_at.get("worker"), 30_000.0);
+        assert_eq!(cfg.context.wind_down_grace, Duration::from_secs(45));
     }
 
     #[test]

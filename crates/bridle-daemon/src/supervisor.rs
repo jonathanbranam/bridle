@@ -98,6 +98,24 @@ struct RuntimeState {
     /// in flight, then `agent.turns + 1`).
     turn_n: u32,
     stall_notified: bool,
+    /// This runtime's session id, set once at construction (htp6b): lets
+    /// `mark_context_renew` tell a live crossing from a stale one — a
+    /// `tick_context_check` snapshot naming an *old* session's tokens will
+    /// carry that old session's id, which can't match here once `renew`
+    /// has swapped in a new runtime for a new session, however this lookup
+    /// races that swap.
+    session_id: String,
+    /// Set once this crossing of the `[context] wind_down_at` threshold has
+    /// sent its "Context handoff:" notice (htp6b, mirrors
+    /// `wind_down_pending`): the agent gets `context_renew_deadline` to
+    /// finish a handoff turn on its own (checked at turn-end, alongside
+    /// `wind_down_pending`) before `expire_context_renews` renews it
+    /// regardless. `register_and_start` gives every fresh runtime —
+    /// including the one `renew` itself creates — a clean `false`, so the
+    /// next crossing (on a fresh session, after context_tokens resets)
+    /// notifies again.
+    context_renew_pending: bool,
+    context_renew_deadline: Option<std::time::Instant>,
     current_state: AgentState,
     /// Whether any stdout line at all has been seen (system/init counts).
     saw_any_line: bool,
@@ -131,6 +149,16 @@ struct AgentRuntime {
     /// `bridle stop`, and give it a reason that `resume_on_restart` treats
     /// like `lost` after the next start.
     shutdown_requested: AtomicBool,
+    /// CAS-claimed the first time something actually calls `renew` for a
+    /// pending context handoff (htp6b), so only one of the turn-end hook
+    /// and `expire_context_renews`'s periodic sweep spawns it — plain
+    /// `context_renew_pending` alone isn't enough: it stays true, read by
+    /// both, until the fresh runtime `renew` creates replaces this one, so
+    /// either the turn that caused the crossing and the handoff turn it
+    /// triggers can both see it true and both spawn a renew, or two sweep
+    /// ticks can both see the same deadline as due before the first renew
+    /// finishes.
+    context_renew_claimed: AtomicBool,
     state: AsyncMutex<RuntimeState>,
     exited: watch::Receiver<bool>,
     task: AsyncMutex<Option<tokio::task::JoinHandle<()>>>,
@@ -158,6 +186,24 @@ pub fn system_principal() -> Principal {
         id: "system".to_string(),
         kind: PrincipalKind::System,
     }
+}
+
+/// Wins the race to actually renew `rt`'s agent for its pending context
+/// handoff (htp6b): `true` only for the first caller, so the turn-end hook
+/// and `expire_context_renews`'s sweep — which can both see
+/// `context_renew_pending` true for the same still-live runtime — don't
+/// each spawn their own `renew`.
+fn claim_context_renew(rt: &AgentRuntime) -> bool {
+    !rt.context_renew_claimed.swap(true, Ordering::SeqCst)
+}
+
+/// The agent-row fields `register_and_start` needs to build a fresh
+/// runtime, grouped so the function stays under clippy's argument limit.
+struct StartingAgent<'a> {
+    agent_id: &'a str,
+    session_id: &'a str,
+    turns_so_far: u32,
+    cost_so_far: f64,
 }
 
 impl AgentManager {
@@ -328,6 +374,125 @@ impl AgentManager {
                     json!({}),
                 )
                 .await;
+        }
+    }
+
+    /// Sends `Context handoff:` to any agent whose `context_tokens` crosses
+    /// its role's `[context] wind_down_at` threshold, once per crossing
+    /// (htp6b: govern context size the way the budget governor governs
+    /// usage — see `mark_context_renew`/`expire_context_renews`, mirroring
+    /// `mark_wind_down`/`expire_wind_downs`). The renew itself is deferred:
+    /// a handoff needs a whole turn (commit WIP, write a note) to run
+    /// safely, not `stop_grace`'s 30s meant for an idle process noticing
+    /// stdin EOF, so it fires either when that turn ends on its own (the
+    /// `context_renew_pending` check at turn-end, alongside
+    /// `wind_down_pending`) or, failing that, once `context.wind_down_grace`
+    /// runs out.
+    pub async fn tick_context_check(&self) {
+        let Ok(agents) = self.0.store.list_agents(false).await else {
+            return;
+        };
+        for a in agents {
+            if !matches!(a.state, AgentState::Idle | AgentState::Working) {
+                continue;
+            }
+            let Some(tokens) = a.context_tokens else {
+                continue;
+            };
+            let threshold = self.0.config.context.wind_down_at.get(&a.role);
+            if (tokens as f64) < threshold {
+                continue;
+            }
+            let deadline = std::time::Instant::now() + self.0.config.context.wind_down_grace;
+            if self
+                .mark_context_renew(&a.id, &a.session_id, deadline)
+                .await
+                != Some(true)
+            {
+                continue;
+            }
+
+            let body = format!(
+                "Context handoff: your context is at {tokens} tokens, past this role's \
+                 {threshold:.0}-token wind-down threshold. Commit your work in progress \
+                 to your branch, then send a short handoff note on where you are and \
+                 what's next — you'll be renewed with a fresh context once this turn \
+                 ends (or in {grace_secs}s regardless).",
+                grace_secs = self.0.config.context.wind_down_grace.as_secs(),
+            );
+            let _ = self
+                .send(
+                    "system".to_string(),
+                    ToTarget::Agent(a.id.clone()),
+                    MessageKind::Note,
+                    body,
+                    bridle_api::types::When::Now,
+                    None,
+                )
+                .await;
+        }
+        self.expire_context_renews().await;
+    }
+
+    /// Marks `id` as owing a context renew once its handoff turn ends or
+    /// its grace deadline passes, whichever comes first (mirrors
+    /// `mark_wind_down`). Returns `Some(true)` the first time for a
+    /// crossing that's still live, `None` if it no longer is.
+    ///
+    /// `expected_session_id` guards against `tick_context_check`'s
+    /// once-per-tick agent list going stale mid-iteration (30+ agents,
+    /// each an await point): if an *earlier* agent's crossing already
+    /// renewed a *different* agent by the time this one's turn comes up,
+    /// that's unrelated and harmless, but if renew has *already happened
+    /// for this same agent* — e.g. its handoff turn finished and renewed
+    /// while this stale-snapshot iteration was still working through
+    /// other agents — `get_runtime` below now returns the fresh runtime
+    /// `renew` swapped in, whose `context_renew_pending` reads `false` and
+    /// would otherwise look exactly like a genuine new crossing. Session
+    /// id is checked *inside* the lock this function already takes, not
+    /// via a separate fresh read beforehand (which would just narrow the
+    /// race, not close it): the moment renew's `register_and_start`
+    /// installs a new runtime with a new session id, any concurrent
+    /// caller here — no matter how stale its snapshot — either observes
+    /// that new runtime (id mismatch, bail out) or the old one it
+    /// replaced (id matches, genuinely still current); there's no
+    /// in-between state to race.
+    async fn mark_context_renew(
+        &self,
+        id: &str,
+        expected_session_id: &str,
+        deadline: std::time::Instant,
+    ) -> Option<bool> {
+        let rt = self.get_runtime(id)?;
+        let mut st = rt.state.lock().await;
+        if st.session_id != expected_session_id {
+            return None;
+        }
+        let first = !st.context_renew_pending;
+        st.context_renew_pending = true;
+        if first {
+            st.context_renew_deadline = Some(deadline);
+        }
+        Some(first)
+    }
+
+    /// Renews every context-renew-pending agent whose grace deadline has
+    /// passed (mirrors `expire_wind_downs`): the fallback for an agent
+    /// that's idle when notified, or whose handoff turn runs past grace.
+    async fn expire_context_renews(&self) {
+        let now = std::time::Instant::now();
+        let mut due = Vec::new();
+        for (id, rt) in self.runtimes_snapshot() {
+            let is_due = {
+                let st = rt.state.lock().await;
+                st.context_renew_pending && st.context_renew_deadline.is_some_and(|d| now >= d)
+            };
+            if is_due && claim_context_renew(&rt) {
+                due.push(id);
+            }
+        }
+        for id in due {
+            let _ = self.renew(&id, true, &system_principal()).await;
         }
     }
 
@@ -543,9 +708,12 @@ impl AgentManager {
         let (ready_tx, ready_rx) = tokio::sync::oneshot::channel();
         let runtime = self
             .register_and_start(
-                &agent.id,
-                agent.turns,
-                agent.cost_usd_total,
+                StartingAgent {
+                    agent_id: &agent.id,
+                    session_id: &agent.session_id,
+                    turns_so_far: agent.turns,
+                    cost_so_far: agent.cost_usd_total,
+                },
                 spawned,
                 principal,
                 Some(ready_tx),
@@ -628,13 +796,17 @@ impl AgentManager {
     /// agent's caller doesn't wait on it.
     async fn register_and_start(
         &self,
-        agent_id: &str,
-        turns_so_far: u32,
-        cost_so_far: f64,
+        start: StartingAgent<'_>,
         spawned: bridle_claude::process::Spawned,
         _principal: &Principal,
         ready_tx: Option<tokio::sync::oneshot::Sender<()>>,
     ) -> Result<Arc<AgentRuntime>, SupervisorError> {
+        let StartingAgent {
+            agent_id,
+            session_id,
+            turns_so_far,
+            cost_so_far,
+        } = start;
         let pid = spawned.handle.pid();
         let start = tokio::task::spawn_blocking(move || containment::start_time(pid))
             .await
@@ -657,12 +829,16 @@ impl AgentManager {
             budget_exhausted: AtomicBool::new(false),
             budget_paused: AtomicBool::new(false),
             shutdown_requested: AtomicBool::new(false),
+            context_renew_claimed: AtomicBool::new(false),
             state: AsyncMutex::new(RuntimeState {
                 tracker: Tracker::new(pid, start),
                 fifo: VecDeque::new(),
                 last_cumulative: cost_so_far,
                 turn_n: turns_so_far,
                 stall_notified: false,
+                session_id: session_id.to_string(),
+                context_renew_pending: false,
+                context_renew_deadline: None,
                 current_state: AgentState::Idle,
                 saw_any_line: false,
                 version_checked: false,
@@ -838,7 +1014,19 @@ impl AgentManager {
                 }
             }
             ClaudeEventKind::Result(r) => {
-                let (delta, cumulative, n) = {
+                // Captured before `end_turn` commits this turn's
+                // `context_tokens` below, not after (htp6b): a concurrent
+                // `tick_context_check` can only see this turn's own crossing
+                // once that commit lands, so a pending flag already true
+                // *here* can only be an earlier turn's crossing — proof this
+                // is genuinely the handoff turn ending, not the crossing
+                // turn racing its own notice. Reading the flag fresh after
+                // the commit (as the wind-down check below does, safely,
+                // since nothing else writes context_tokens) would let this
+                // turn's own crossing win that race and trigger renew
+                // immediately, on `stop_grace` instead of the intended
+                // `wind_down_grace`.
+                let (delta, cumulative, n, was_context_renew_pending) = {
                     let mut st = runtime.state.lock().await;
                     // Fall back to the last known cumulative (a zero delta),
                     // not 0.0: claude's `total_cost_usd` is a running total,
@@ -847,7 +1035,7 @@ impl AgentManager {
                     let cumulative = r.total_cost_usd.unwrap_or(st.last_cumulative);
                     let delta = cumulative - st.last_cumulative;
                     st.last_cumulative = cumulative;
-                    (delta, cumulative, st.turn_n)
+                    (delta, cumulative, st.turn_n, st.context_renew_pending)
                 };
                 let usage = r.usage.clone().unwrap_or_default();
                 // `result.usage` is summed over every API call the turn made
@@ -978,6 +1166,32 @@ impl AgentManager {
                     tokio::spawn(async move {
                         let _ = this.stop(&id, false, &system_principal()).await;
                     });
+                    return;
+                }
+
+                // The context governor's handoff notice told this agent to
+                // wrap up (htp6b); renew now instead of starting another
+                // turn on a held message, the same way the budget wind-down
+                // does above. Spawned, not awaited, for the same reason.
+                // Uses `was_context_renew_pending`, captured before this
+                // turn's own `context_tokens` commit above, not a fresh
+                // read: this turn's own crossing (if any) can only have set
+                // the flag *after* that commit, so it can't masquerade here
+                // as an already-finished handoff turn (see the comment on
+                // that capture).
+                if was_context_renew_pending {
+                    // Don't start another turn on a held message either
+                    // way, but only the caller that wins `claim_context_renew`
+                    // actually spawns `renew`: this turn's own end can race
+                    // `expire_context_renews`'s sweep for the same pending
+                    // renew.
+                    if claim_context_renew(runtime) {
+                        let this = self.clone();
+                        let id = id.to_string();
+                        tokio::spawn(async move {
+                            let _ = this.renew(&id, true, &system_principal()).await;
+                        });
+                    }
                     return;
                 }
 
@@ -1538,9 +1752,12 @@ impl AgentManager {
             .map_err(|e| SupervisorError::Internal(format!("spawning claude: {e}")))?;
 
         self.register_and_start(
-            &agent.id,
-            agent.turns,
-            agent.cost_usd_total,
+            StartingAgent {
+                agent_id: &agent.id,
+                session_id: &agent.session_id,
+                turns_so_far: agent.turns,
+                cost_so_far: agent.cost_usd_total,
+            },
             spawned,
             principal,
             None,
@@ -1583,7 +1800,26 @@ impl AgentManager {
     /// and checked out; renew just points a new process at it. The agent
     /// keeps its id and name throughout, so nothing else that addresses it
     /// (messages, tasks) needs to know it was renewed.
-    pub async fn renew(
+    // A plain `async fn` here would make its opaque return type part of a
+    // mutually recursive cycle: `register_and_start` spawns
+    // `run_event_task`, which calls `handle_claude_event`, which (htp6b)
+    // calls `renew` on a context-handoff turn's end, which calls
+    // `register_and_start` again. `rustc` can't resolve that cycle through
+    // `impl Future` alone (each is a fresh task at runtime, but the
+    // compiler still needs a non-opaque type to close the loop), so this
+    // boxes the future explicitly instead.
+    pub fn renew<'a>(
+        &'a self,
+        id_or_name: &'a str,
+        ignore_budget: bool,
+        principal: &'a Principal,
+    ) -> std::pin::Pin<
+        Box<dyn std::future::Future<Output = Result<Agent, SupervisorError>> + Send + 'a>,
+    > {
+        Box::pin(self.renew_inner(id_or_name, ignore_budget, principal))
+    }
+
+    async fn renew_inner(
         &self,
         id_or_name: &str,
         ignore_budget: bool,
@@ -1669,9 +1905,12 @@ impl AgentManager {
             .await?;
 
         self.register_and_start(
-            &agent.id,
-            agent.turns,
-            agent.cost_usd_total,
+            StartingAgent {
+                agent_id: &agent.id,
+                session_id: &session_id.to_string(),
+                turns_so_far: agent.turns,
+                cost_so_far: agent.cost_usd_total,
+            },
             spawned,
             principal,
             None,
@@ -1885,15 +2124,28 @@ async fn write_message(
     msg: &Message,
 ) -> Result<(), SupervisorError> {
     let text = format_delivery(msg);
-    runtime
-        .handle
-        .send_user(&text)
-        .map_err(|_| SupervisorError::Internal("stdin is closed".to_string()))?;
-    store
-        .set_message_state(&msg.id, MessageState::Written, Utc::now())
-        .await?;
-    let mut st = runtime.state.lock().await;
-    st.fifo.push_back((msg.id.clone(), text));
+    // Queued *before* the process ever sees the text (htp6b's stress test
+    // caught this under 30-agent SQLite contention, but the race is
+    // general): `send_user` can trigger an echo fast enough that the
+    // daemon's own replay-matching code runs before this function reaches
+    // the `fifo.push_back` that used to come after `send_user` — with
+    // nothing in the fifo yet, that match silently fails, the message
+    // never reaches `Delivered`, and the plain `Written` set below (a
+    // separate, slower store round trip on a separate task from the
+    // replay handler's) can even land *after* and stomp a `Delivered` that
+    // did land, so `mark_message_written` only applies over `pending`.
+    {
+        let mut st = runtime.state.lock().await;
+        st.fifo.push_back((msg.id.clone(), text.clone()));
+    }
+    if runtime.handle.send_user(&text).is_err() {
+        let mut st = runtime.state.lock().await;
+        if let Some(pos) = st.fifo.iter().position(|(id, _)| *id == msg.id) {
+            st.fifo.remove(pos);
+        }
+        return Err(SupervisorError::Internal("stdin is closed".to_string()));
+    }
+    store.mark_message_written(&msg.id, Utc::now()).await?;
     Ok(())
 }
 

@@ -383,6 +383,26 @@ impl Store {
             .await
     }
 
+    /// Like `set_message_state(id, Written, at)`, but only applies over
+    /// `pending`: a message's replay confirmation (`Delivered`) can land
+    /// concurrently from the agent's own event stream, on a separate task
+    /// from whichever caller wrote the text to stdin, and a plain
+    /// unconditional `Written` write can lose that race and land *after*,
+    /// silently downgrading `Delivered` back to `Written` forever (nothing
+    /// re-checks a message once its replay has already been matched and
+    /// removed from the fifo). A no-op, not an error, when it doesn't
+    /// apply — `Held`/`Pending`/`Delivered` already reaching the caller
+    /// with a different state is an expected outcome here, not a bug.
+    pub async fn mark_message_written(
+        &self,
+        id: &str,
+        at: DateTime<Utc>,
+    ) -> Result<(), StoreError> {
+        let id = id.to_string();
+        self.with_conn(move |c| sync::mark_message_written(c, &id, at))
+            .await
+    }
+
     pub async fn messages_for_agent(
         &self,
         agent_id: &str,
@@ -1363,13 +1383,17 @@ mod sync {
         Ok(())
     }
 
+    /// Also clears `context_tokens`: a fresh session has no completed turn
+    /// yet, so the old session's context size no longer applies (renew's
+    /// only caller — htp6b's context governor relies on this to stop
+    /// re-notifying a just-renewed agent on the very next check).
     pub(super) fn set_agent_session(
         conn: &Connection,
         id: &str,
         session_id: &str,
     ) -> Result<(), StoreError> {
         let n = conn.execute(
-            "UPDATE agents SET session_id = ?1, updated_at = ?2 WHERE id = ?3",
+            "UPDATE agents SET session_id = ?1, context_tokens = NULL, updated_at = ?2 WHERE id = ?3",
             params![session_id, fmt_dt(Utc::now()), id],
         )?;
         if n == 0 {
@@ -1612,6 +1636,19 @@ mod sync {
         if n == 0 {
             return Err(StoreError::NotFound(id.to_string()));
         }
+        Ok(())
+    }
+
+    pub(super) fn mark_message_written(
+        conn: &Connection,
+        id: &str,
+        at: DateTime<Utc>,
+    ) -> Result<(), StoreError> {
+        conn.execute(
+            "UPDATE messages SET state = 'written', written_at = ?1
+             WHERE id = ?2 AND state = 'pending'",
+            params![fmt_dt(at), id],
+        )?;
         Ok(())
     }
 
