@@ -19,7 +19,7 @@ at the handover from the third orchestrator session.
   queue and to read `docs/questions/open/`. htp6b (the automatic wind-down)
   isn't merged yet, so this is manual for now.
 - **Then keep both tracks moving overnight.** The human is asleep until about
-  7:00 AM ET (11:00 UTC). Verify each merge, and bring back only what needs them.
+  7:00 AM (11:00 UTC). Verify each merge, and bring back only what needs them.
 
 ## Who's running
 
@@ -72,7 +72,7 @@ recorded in build-order.md and ticket u6wk.
 - Status line: display only (real context %, 5h/7d, model, 📁 folder,
   🌿 branch). Recording was dropped (s8kn); counts come later (r7cs).
 - Talk to the human in US Eastern time; record in UTC (`human-timezone.md`).
-  The human is asleep until about 7:00 AM ET.
+  The human is asleep until about 7:00 AM.
 - The orchestrator owns d4mz. `scripts/claude-orchestrator` starts a new
   orchestrator with Remote Control on (as `bridle-orch`).
 

@@ -64,7 +64,8 @@ curl -s -H "Authorization: Bearer $BRIDLE_TOKEN" "$U/v1/messages?to=human&limit=
   one. Before any task, step or check, ask what the worst is if you don't do
   it; if it's not much, don't.
 - **Times to the human are US Eastern** (`.bridle/rules/human-timezone.md`);
-  records stay in UTC.
+  written bare ("7:00 AM"), with a zone only when it isn't Eastern.
+  Records stay in UTC.
 - **Relay to the human only what needs them**: decisions, things only they
   can do, and a short summary of merges. Give a recommendation with every
   question.

@@ -23,7 +23,8 @@ configuration; the full design is ticket tx3f.)
   (`.bridle/rules/kiss.md`): `--model haiku` for light, mechanical work; Sonnet
   for real design or tricky code.
 - **Times to the human are US Eastern** (`.bridle/rules/human-timezone.md`);
-  records stay in UTC.
+  written bare ("7:00 AM"), with a zone only when it isn't Eastern.
+  Records stay in UTC.
 - **YAGNI, and the cost of not doing it** (`.bridle/rules/yagni.md`,
   `.bridle/rules/cost-of-not-doing.md`). Build for today's need, not a foreseen
   one. Before any task, step or check, ask what the worst is if you don't do
