@@ -38,6 +38,13 @@ From [[docs/design/usage-and-budget|usage and budget]] @ 873af46, `### Schedule 
   (`RawSchedulePeriod` in `crates/bridle-daemon/src/config.rs` @ 873af46).
 - **Workaround today:** `days = []` parses and never matches, so a period with it is only
   reachable through `bridle budget override <name>`. Undocumented.
+- **`max_workers` doesn't cap spawns.** The daemon only uses it in `maybe_resume`
+  (`crates/bridle-daemon/src/governor.rs` @ b874b0f), to limit how many budget-paused agents
+  resume at once. The only cap on concurrent workers is prose in the manager's role prompt,
+  `workflow/base/roles/manager.md`: "One task per worker, at most two workers at a time."
+  Three workers were `working` at once on 2026-09-28 (smaller-debug-builds, python-pack,
+  branch-rules). So the human's `max_workers` ask needs the daemon to enforce it at spawn
+  (and resume) first.
 - A period sets only the three `five_hour` thresholds. `max_workers` is a single `[budget]`
   value (default 2), with no per-period or override form.
 
