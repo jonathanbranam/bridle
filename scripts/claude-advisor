@@ -1,0 +1,16 @@
+#!/bin/zsh
+# Start the human's advisor session (.bridle/roles/advisor.md): read-only investigation, ticket
+# filing and question triage, reachable by Remote Control. Not an orchestrator: no watcher.
+# Needs ~/.bridle-advisor.token, made once by the human with `bridle token create advisor`.
+# Usage: claude-advisor [extra claude args]
+cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
+token_file=~/.bridle-advisor.token
+if [[ ! -s $token_file ]]; then
+  print -u2 "No $token_file. Run 'bridle token create advisor' and save the token there (chmod 600)."
+  exit 1
+fi
+export BRIDLE_TOKEN=$(<$token_file)
+exec claude --name bridle-advisor --remote-control bridle-advisor "$@" \
+  "$(cat .bridle/roles/advisor.md)
+
+Check in: bridle status, and the open questions to the human. Say hello to the human in one line, then wait."
