@@ -96,6 +96,30 @@ the same wind-down for a human-requested pause, for the current daemon only
 reason `budget_paused`, `GET /v1/budget` and `bridle budget` show the
 state.
 
+## Context size
+
+Agents are ephemeral, so bridle needs to see when one's context is growing
+large well before it becomes a problem — this is part 1 (measure) of a
+context governor; part 2 (acting on it: warning, forcing a `/compact` or
+handoff, refusing new work) is separate, later work.
+
+`agents.context_tokens` is the agent's latest known context size: `input +
+cache_read + cache_creation` tokens from its most recent turn's `result`
+event. It is **not cumulative** like `cost_usd_total` — each `end_turn` call
+overwrites it with that turn's own number, since context size is what the
+next turn will start from, not a running total across turns. It's `None`
+until an agent's first turn ends.
+
+Spike 01's fixtures confirm `result.usage` on the `n`th turn equals the
+`usage` on that turn's last `assistant` event (`modelUsage` is the one that's
+cumulative across the session — never use it for this). So the three-field
+sum from `result.usage`, taken once per turn end, is the same number a
+per-content-block read of `assistant.message.usage` would give for the
+context at that point; the daemon only needs the former.
+
+`bridle agents`, `bridle show` and the TUI's agents list show it as
+`CONTEXT`/`context`, `-` when unknown.
+
 ## The budget governor
 
 **Bridle never takes the account to a limit.** Hitting one blocks the human's

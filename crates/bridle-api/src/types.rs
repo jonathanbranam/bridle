@@ -169,6 +169,11 @@ pub struct Agent {
     pub turn_started_at: Option<DateTime<Utc>>,
     /// Cumulative for the session (survives resume).
     pub cost_usd_total: f64,
+    /// Context size after the most recent turn (input + cache_read +
+    /// cache_creation tokens from that turn's `result` event). Not
+    /// cumulative like `cost_usd_total`: it's the latest known size, not a
+    /// running total. `None` before any turn has ended.
+    pub context_tokens: Option<u64>,
     pub exit: Option<ExitInfo>,
     pub created_by: PrincipalId,
     /// Messages held for `when=idle` delivery.

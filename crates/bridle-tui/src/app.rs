@@ -406,6 +406,7 @@ mod tests {
             created_by: "human".to_string(),
             held_messages: 0,
             unacked_messages: 0,
+            context_tokens: None,
         }
     }
 

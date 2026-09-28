@@ -847,6 +847,9 @@ impl AgentManager {
                     (delta, cumulative, st.turn_n)
                 };
                 let usage = r.usage.clone().unwrap_or_default();
+                let context_tokens = usage.input_tokens
+                    + usage.cache_read_input_tokens
+                    + usage.cache_creation_input_tokens;
                 let turn_end = crate::store::TurnEnd {
                     subtype: r.subtype.clone(),
                     is_error: r.is_error,
@@ -856,6 +859,7 @@ impl AgentManager {
                     cache_read: usage.cache_read_input_tokens,
                     cache_write: usage.cache_creation_input_tokens,
                     cost_total: delta,
+                    context_tokens,
                 };
                 let _ = self.0.store.end_turn(id, n, turn_end).await;
 

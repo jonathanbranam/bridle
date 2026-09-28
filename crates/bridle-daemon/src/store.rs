@@ -81,6 +81,10 @@ pub struct TurnEnd {
     /// This turn's own cost (not the session's cumulative counter); added
     /// to `agents.cost_usd_total` (docs/design/usage-and-budget.md).
     pub cost_total: f64,
+    /// `input_tokens + cache_read + cache_write` for this turn: the context
+    /// size claude reported at the end of it. Overwrites
+    /// `agents.context_tokens`, unlike `cost_total` (agents.md).
+    pub context_tokens: u64,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -626,7 +630,16 @@ mod sync {
         CREATE INDEX tasks_state ON tasks(state);
     "#;
 
-    const MIGRATIONS: &[&str] = &[SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5];
+    // Context governor, part 1 (measure): the agent's latest known context
+    // size, from its most recent turn's `result` event. Not cumulative, so
+    // it's a plain column on `agents`, not folded into `turns` history.
+    pub(super) const SCHEMA_V6: &str = r#"
+        ALTER TABLE agents ADD COLUMN context_tokens INTEGER;
+    "#;
+
+    const MIGRATIONS: &[&str] = &[
+        SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6,
+    ];
 
     pub(super) fn open(path: &Path) -> Result<Connection, StoreError> {
         if let Some(parent) = path.parent() {
@@ -972,7 +985,8 @@ mod sync {
                a.turns, a.cost_usd_total, a.last_event_at, a.turn_started_at,
                a.exit_code, a.exit_signal, a.exit_reason, a.created_by,
                (SELECT COUNT(*) FROM messages m WHERE m.to_kind='agent' AND m.to_id=a.id AND m.state='held') AS held_messages,
-               (SELECT COUNT(*) FROM messages m WHERE m.to_kind='agent' AND m.to_id=a.id AND m.state='written') AS unacked_messages
+               (SELECT COUNT(*) FROM messages m WHERE m.to_kind='agent' AND m.to_id=a.id AND m.state='written') AS unacked_messages,
+               a.context_tokens
         FROM agents a";
 
     fn row_to_agent(row: &Row<'_>) -> rusqlite::Result<Agent> {
@@ -1008,6 +1022,7 @@ mod sync {
             created_by: row.get(21)?,
             held_messages: row.get::<_, i64>(22)? as u32,
             unacked_messages: row.get::<_, i64>(23)? as u32,
+            context_tokens: row.get::<_, Option<i64>>(24)?.map(|n| n as u64),
         })
     }
 
@@ -1067,6 +1082,7 @@ mod sync {
             created_by: new.created_by.clone(),
             held_messages: 0,
             unacked_messages: 0,
+            context_tokens: None,
         })
     }
 
@@ -1208,8 +1224,8 @@ mod sync {
         }
         let updated_agent = conn.execute(
             "UPDATE agents SET turns = turns + 1, cost_usd_total = cost_usd_total + ?1,
-                turn_started_at = NULL, updated_at = ?2 WHERE id = ?3",
-            params![turn.cost_total, fmt_dt(now), id],
+                context_tokens = ?2, turn_started_at = NULL, updated_at = ?3 WHERE id = ?4",
+            params![turn.cost_total, turn.context_tokens as i64, fmt_dt(now), id],
         )?;
         if updated_agent == 0 {
             return Err(StoreError::NotFound(id.to_string()));
@@ -2009,6 +2025,7 @@ mod tests {
             .expect("found");
         assert_eq!(mid.state, AgentState::Idle); // turn bookkeeping doesn't itself change state
         assert!(mid.turn_started_at.is_some());
+        assert_eq!(mid.context_tokens, None); // no turn has ended yet
 
         store
             .end_turn(
@@ -2023,6 +2040,7 @@ mod tests {
                     cache_read: 10,
                     cache_write: 5,
                     cost_total: 0.05,
+                    context_tokens: 115,
                 },
             )
             .await
@@ -2038,6 +2056,7 @@ mod tests {
         assert!(after.turn_started_at.is_none());
         assert_eq!(after.pid, Some(4242));
         assert_eq!(after.session_id, "sess-1");
+        assert_eq!(after.context_tokens, Some(115));
 
         // Lookup by name works too.
         let by_name = store
@@ -2498,6 +2517,7 @@ mod tests {
                         cache_read,
                         cache_write: 0,
                         cost_total: cost,
+                        context_tokens: input + cache_read,
                     },
                 )
                 .await
@@ -2567,6 +2587,7 @@ mod tests {
                         cache_read,
                         cache_write: 0,
                         cost_total: cost,
+                        context_tokens: input + cache_read,
                     },
                 )
                 .await
@@ -2627,6 +2648,7 @@ mod tests {
                     cache_read: 0,
                     cache_write: 0,
                     cost_total: 9.99,
+                    context_tokens: 1000,
                 },
             )
             .await
@@ -2649,6 +2671,7 @@ mod tests {
                     cache_read: 0,
                     cache_write: 0,
                     cost_total: 0.01,
+                    context_tokens: 50,
                 },
             )
             .await
