@@ -12,13 +12,13 @@ use axum::routing::{get, post};
 use axum::{Extension, Json, Router};
 use bridle_api::types::{
     Agent, AnswerQuestionRequest, ApiErrorResponse, AskQuestionRequest, BudgetHoldRequest,
-    BudgetStatus, DropTaskRequest, Edge, EditTaskRequest, ErrorBody, Event, EventQuery, Health,
-    HoldStatus, InteractiveUsageRow, InterruptRequest, Message, MessageQuery, MessageState,
-    NewEdgeRequest, NewTaskRequest, OpenQuestion, PrincipalKind, RateLimit, RemoveEdgeQuery,
-    RemoveQuery, RenewRequest, ResumeRequest, SendRequest, SpawnRequest, Status, StatusLineReport,
-    StopRequest, Task, TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine,
-    TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, WindowStatus,
-    event_kind,
+    BudgetOverrideRequest, BudgetStatus, DropTaskRequest, Edge, EditTaskRequest, ErrorBody, Event,
+    EventQuery, Health, HoldStatus, InteractiveUsageRow, InterruptRequest, Message, MessageQuery,
+    MessageState, NewEdgeRequest, NewTaskRequest, OpenQuestion, PrincipalKind, RateLimit,
+    RemoveEdgeQuery, RemoveQuery, RenewRequest, ResumeRequest, ScheduleOverrideStatus, SendRequest,
+    SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery, TokenCreateRequest,
+    TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown,
+    UsageBreakdownQuery, UsageGroupBy, WindowStatus, event_kind,
 };
 use chrono::Utc;
 use futures::Stream;
@@ -70,6 +70,8 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/budget", get(budget))
         .route("/v1/budget/hold", post(budget_hold))
         .route("/v1/budget/release", post(budget_release))
+        .route("/v1/budget/override", post(budget_override))
+        .route("/v1/budget/override/clear", post(budget_override_clear))
         .route("/v1/tokens", get(list_tokens).post(create_token))
         .route("/v1/tokens/{name}", axum::routing::delete(revoke_token))
         .route("/v1/tasks", get(list_tasks).post(new_task))
@@ -312,6 +314,10 @@ async fn budget(State(state): State<AppState>) -> Result<Json<BudgetStatus>, Api
             .governor
             .hold_status()
             .map(|until| HoldStatus { until }),
+        schedule_override: state
+            .governor
+            .schedule_override_status()
+            .map(|(period, until)| ScheduleOverrideStatus { period, until }),
     }))
 }
 
@@ -332,6 +338,27 @@ async fn budget_release(
 ) -> Result<Json<BudgetStatus>, ApiError> {
     require_human(&principal)?;
     state.governor.release();
+    state.governor.recompute().await;
+    budget(State(state)).await
+}
+
+async fn budget_override(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Json(req): Json<BudgetOverrideRequest>,
+) -> Result<Json<BudgetStatus>, ApiError> {
+    require_human(&principal)?;
+    state.governor.set_schedule_override(req.period, req.until);
+    state.governor.recompute().await;
+    budget(State(state)).await
+}
+
+async fn budget_override_clear(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+) -> Result<Json<BudgetStatus>, ApiError> {
+    require_human(&principal)?;
+    state.governor.clear_schedule_override();
     state.governor.recompute().await;
     budget(State(state)).await
 }

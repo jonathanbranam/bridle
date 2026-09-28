@@ -4,10 +4,11 @@
 use anyhow::Context;
 use bridle_api::discovery::{self, ProcessEnv};
 use bridle_api::{
-    BudgetHoldRequest, Client, DropTaskRequest, Edge, EdgeKind, EditTaskRequest, Event, EventQuery,
-    InterruptRequest, MessageKind, MessageQuery, NewEdgeRequest, NewTaskRequest, RemoveEdgeQuery,
-    RemoveQuery, RenewRequest, ResumeRequest, SendRequest, SpawnRequest, StopRequest, Task,
-    TaskKind, TokenCreateRequest, UsageBreakdownQuery, UsageGroupBy, Workdir,
+    BudgetHoldRequest, BudgetOverrideRequest, Client, DropTaskRequest, Edge, EdgeKind,
+    EditTaskRequest, Event, EventQuery, InterruptRequest, MessageKind, MessageQuery,
+    NewEdgeRequest, NewTaskRequest, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResumeRequest,
+    SendRequest, SpawnRequest, StopRequest, Task, TaskKind, TokenCreateRequest,
+    UsageBreakdownQuery, UsageGroupBy, Workdir,
 };
 use chrono::{Local, TimeZone, Utc};
 use futures::StreamExt;
@@ -918,6 +919,14 @@ async fn budget(cli: &Cli, args: &BudgetArgs) -> Result<(), CliError> {
             client.budget_hold(&BudgetHoldRequest { until }).await?
         }
         Some(BudgetAction::Release) => client.budget_release().await?,
+        Some(BudgetAction::Override(o)) => {
+            let period = (o.period != "default").then(|| o.period.clone());
+            let until = o.until.as_deref().map(parse_local_until).transpose()?;
+            client
+                .budget_override(&BudgetOverrideRequest { period, until })
+                .await?
+        }
+        Some(BudgetAction::OverrideClear) => client.budget_override_clear().await?,
     };
     if cli.json {
         render::print_json(&budget)?;
@@ -929,6 +938,14 @@ async fn budget(cli: &Cli, args: &BudgetArgs) -> Result<(), CliError> {
                 .map(|u| format!(", until {}", u.format("%Y-%m-%d %H:%M UTC")))
                 .unwrap_or_else(|| ", until released".to_string());
             println!("hold   in force{until}");
+        }
+        if let Some(ov) = &budget.schedule_override {
+            let period = ov.period.as_deref().unwrap_or("default");
+            let until = ov
+                .until
+                .map(|u| format!(", until {}", u.format("%Y-%m-%d %H:%M UTC")))
+                .unwrap_or_else(|| ", until cleared".to_string());
+            println!("override {period}{until}");
         }
         for w in &budget.windows {
             let resets = w
@@ -962,22 +979,29 @@ fn resolve_hold_until(args: &BudgetHoldArgs) -> Result<Option<chrono::DateTime<U
         return Ok(Some(Utc::now() + dur));
     }
     if let Some(until) = &args.until {
-        let (h, m) = until
-            .split_once(':')
-            .and_then(|(h, m)| Some((h.parse::<u32>().ok()?, m.parse::<u32>().ok()?)))
-            .ok_or_else(|| CliError::Other(anyhow::anyhow!("bad --until time: {until:?}")))?;
-        let now = Local::now();
-        let mut target = now
-            .date_naive()
-            .and_hms_opt(h, m, 0)
-            .and_then(|dt| Local.from_local_datetime(&dt).single())
-            .ok_or_else(|| CliError::Other(anyhow::anyhow!("bad --until time: {until:?}")))?;
-        if target <= now {
-            target += chrono::Duration::days(1);
-        }
-        return Ok(Some(target.with_timezone(&Utc)));
+        return Ok(Some(parse_local_until(until)?));
     }
     Ok(None)
+}
+
+/// `HH:MM` local time, resolved to the next occurrence: today if still
+/// ahead, else tomorrow. Shared by `bridle budget hold --until` and
+/// `bridle budget override --until`.
+fn parse_local_until(until: &str) -> Result<chrono::DateTime<Utc>, CliError> {
+    let (h, m) = until
+        .split_once(':')
+        .and_then(|(h, m)| Some((h.parse::<u32>().ok()?, m.parse::<u32>().ok()?)))
+        .ok_or_else(|| CliError::Other(anyhow::anyhow!("bad --until time: {until:?}")))?;
+    let now = Local::now();
+    let mut target = now
+        .date_naive()
+        .and_hms_opt(h, m, 0)
+        .and_then(|dt| Local.from_local_datetime(&dt).single())
+        .ok_or_else(|| CliError::Other(anyhow::anyhow!("bad --until time: {until:?}")))?;
+    if target <= now {
+        target += chrono::Duration::days(1);
+    }
+    Ok(target.with_timezone(&Utc))
 }
 
 /// A plain `<n><unit>` duration (`s`/`m`/`h`/`d`), matching config.toml's.

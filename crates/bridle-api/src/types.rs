@@ -692,6 +692,10 @@ pub struct BudgetStatus {
     /// human's hold).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub human_hold: Option<HoldStatus>,
+    /// Set while `bridle budget override` is in force (usage-and-budget.md,
+    /// Schedule override).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub schedule_override: Option<ScheduleOverrideStatus>,
 }
 
 /// `POST /v1/budget/hold`: `--for`/`--until` resolved to an absolute instant
@@ -705,6 +709,28 @@ pub struct BudgetHoldRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HoldStatus {
     /// `None` = held until released.
+    pub until: Option<DateTime<Utc>>,
+}
+
+/// `POST /v1/budget/override`: `--until` resolved to an absolute instant by
+/// the CLI; `until: None` asks the daemon to compute the thermostat's
+/// "until the schedule would next change on its own" instant itself, since
+/// that needs the daemon's own `[[budget.schedule]]` config.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BudgetOverrideRequest {
+    /// `None` = force the plain `[budget]` thresholds (`bridle budget
+    /// override default`); `Some(name)` = force that `[[budget.schedule]]`
+    /// period's thresholds.
+    pub period: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub until: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ScheduleOverrideStatus {
+    /// `None` = forced to the plain `[budget]` thresholds.
+    pub period: Option<String>,
+    /// `None` = no computed or given end (no schedule to revert to).
     pub until: Option<DateTime<Utc>>,
 }
 

@@ -125,6 +125,26 @@ async fn agent_token_cannot_create_tokens() {
         "{err:?}"
     );
 
+    // `bridle budget override`/`override clear`, like `hold`/`release`, are
+    // human-only.
+    let err = agent_client
+        .budget_override(&bridle_api::types::BudgetOverrideRequest {
+            period: None,
+            until: None,
+        })
+        .await
+        .unwrap_err();
+    assert!(
+        matches!(err, ClientError::Api { status: 403, .. }),
+        "{err:?}"
+    );
+
+    let err = agent_client.budget_override_clear().await.unwrap_err();
+    assert!(
+        matches!(err, ClientError::Api { status: 403, .. }),
+        "{err:?}"
+    );
+
     daemon.running.shutdown();
     daemon.running.join().await.expect("join");
 }
