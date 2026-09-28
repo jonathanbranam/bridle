@@ -113,6 +113,30 @@ track-web (L3)       server, db, api, packages/*       → every agent
 > pick up a project that I have set aside for a time period. Mostly, that is per-repo, but
 > track-web is unique.
 
+2026-09-28, on where component docs live:
+
+> I like having planning docs inside of docs, yes; generally I have a parallel docs structure to
+> the client/games. look at track-web
+
+What the advisor found in track-web (`dev` branch, read-only, 2026-09-28):
+
+| Component | Code | Docs | Roadmap today |
+|---|---|---|---|
+| client-games | `client-games/` | `docs/games/` | `docs/games/planning.md` (54 lines, mixes all games) |
+| space-golf | `client-games/src/games/space-golf/` | `docs/games/space-golf/` | none (README, ideas, open-questions, tech) |
+| dungeon-tactics | `client-games/src/games/dungeon-tactics-solo/` | `docs/games/dungeon-tactics/` | none |
+| orbital-dodger | `client-games/src/games/orbital-dodger/` | `docs/games/orbital-dodger/` | none |
+| ball-merge | `client-games/src/games/ball-merge/` | none | items in `docs/games/planning.md` |
+| mimlings | none yet | `docs/games/mimlings/` | none |
+| client-watch, -play, -time | `client-<x>/` | `docs/<x>/` | `docs/<x>/planning.md` |
+| client-trips, -talks | `client-<x>/` | `docs/<x>/` | none |
+| server/shared | `src/`, `packages/` | `docs/arch/`, `docs/app/` | `docs/app/planning.md` |
+
+So the parallel structure is a convention, not exact: `docs/<client without the client- prefix>/`,
+and `docs/games/<game>/` where the game's code folder name can differ
+(`dungeon-tactics-solo` ↔ `dungeon-tactics`). Some docs folders map to no client
+(`food`, `life-mgmt`, `pixellab`, `other`), and a game can have docs before code (mimlings).
+
 ## Still open
 
 - Where roadmaps live (in track-web's `docs/`, or in bridle), given they must stay easy to
