@@ -611,6 +611,88 @@ async fn ignore_budget_bypasses_the_holding_refusal() {
         .expect("resume ignores the governor with --ignore-budget");
 }
 
+/// A renew refused by the hold must change nothing: the agent stays idle in
+/// its old session, with no stop events; without a hold, renew still works.
+#[tokio::test]
+async fn refused_renew_under_hold_changes_nothing() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    script_usage(&daemon.repo, 10.0, 10.0);
+    wait_for("normal before spawn", || async {
+        let b = daemon.client.budget().await.ok()?;
+        (b.state == GovernorState::Normal).then_some(())
+    })
+    .await;
+    let agent = daemon
+        .client
+        .spawn(&SpawnRequest {
+            components: Vec::new(),
+            role: "worker".to_string(),
+            name: Some("w1".to_string()),
+            prompt: None,
+            workdir: None,
+            model: None,
+            extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
+            ignore_budget: false,
+        })
+        .await
+        .expect("spawn while normal");
+    let agent = wait_for_state(&daemon.client, &agent.id, AgentState::Idle).await;
+
+    // Renew with no hold still works, and gives a new session.
+    let renewed = daemon
+        .client
+        .renew(&agent.id, &Default::default())
+        .await
+        .expect("renew while normal");
+    assert_ne!(renewed.session_id, agent.session_id);
+    let agent = wait_for_state(&daemon.client, &agent.id, AgentState::Idle).await;
+
+    // The agent's own process answers the usage probe from its worktree.
+    script_usage(std::path::Path::new(&agent.cwd), 82.0, 10.0);
+    wait_for("holding", || async {
+        let b = daemon.client.budget().await.ok()?;
+        (b.state == GovernorState::Holding).then_some(())
+    })
+    .await;
+    let last_seq = daemon
+        .client
+        .events(&Default::default())
+        .await
+        .expect("events")
+        .last()
+        .map_or(0, |e| e.seq);
+
+    let err = daemon
+        .client
+        .renew(&agent.id, &Default::default())
+        .await
+        .expect_err("renew refused while holding");
+    assert!(matches!(
+        err,
+        bridle_api::ClientError::Api { status: 409, .. }
+    ));
+
+    let after = daemon.client.get_agent(&agent.id).await.expect("agent");
+    assert_eq!(after.state, AgentState::Idle);
+    assert_eq!(after.session_id, agent.session_id);
+    let events = daemon
+        .client
+        .events(&bridle_api::types::EventQuery {
+            since: Some(last_seq),
+            agent: Some(agent.id.clone()),
+            ..Default::default()
+        })
+        .await
+        .expect("events");
+    assert!(
+        !events.iter().any(|e| e.kind.starts_with("agent.stop")
+            || e.kind == event_kind::AGENT_STATE
+            || e.kind == "agent.exited"),
+        "refused renew emitted events: {events:?}"
+    );
+}
+
 /// Writes `.fake-claude-usage` with a per-model window on top of the two
 /// default-scoped ones, for [`GovernorSnapshot::for_model`] step-down tests.
 fn script_usage_with_model_window(
