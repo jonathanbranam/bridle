@@ -312,6 +312,7 @@ fn substitute_placeholders(
     match std::str::from_utf8(content) {
         Ok(text) => {
             let text = text.replace("{{commands.check}}", &commands.check);
+            let text = text.replace("{{commands.check_worker}}", commands.worker_check());
             let text = text.replace("{{branches.integration}}", &branches.integration);
             let text = match &branches.release {
                 Some(release) => text.replace("{{branches.release}}", release),
@@ -688,6 +689,7 @@ mod tests {
 
         let custom = CommandsConfig {
             check: "make check".to_string(),
+            check_worker: None,
         };
         sync(repo.path(), &layers, &custom, &BranchesConfig::default()).expect("sync");
         let custom_rendered =
@@ -705,6 +707,7 @@ mod tests {
         };
         let commands = CommandsConfig {
             check: "make ci".to_string(),
+            check_worker: None,
         };
         let out =
             String::from_utf8(substitute_placeholders(src, &commands, &branches)).expect("utf8");

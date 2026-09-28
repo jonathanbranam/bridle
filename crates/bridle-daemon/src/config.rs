@@ -602,6 +602,16 @@ impl ContextConfig {
 #[derive(Debug, Clone, PartialEq)]
 pub struct CommandsConfig {
     pub check: String,
+    /// What a worker runs as its own gate (`{{commands.check_worker}}`); `None` means the same
+    /// as `check`. Bridle's own project binds `just check-affected` here (ticket b7cz) while
+    /// the manager and orchestrator keep the full `check`.
+    pub check_worker: Option<String>,
+}
+
+impl CommandsConfig {
+    pub fn worker_check(&self) -> &str {
+        self.check_worker.as_deref().unwrap_or(&self.check)
+    }
 }
 
 /// `[branches]`: the project's branch pattern (docs/design/agent-host/operating-model.md,
@@ -655,6 +665,7 @@ impl Default for CommandsConfig {
     fn default() -> Self {
         CommandsConfig {
             check: "just check".to_string(),
+            check_worker: None,
         }
     }
 }
@@ -663,6 +674,9 @@ impl CommandsConfig {
     fn merge(mut self, raw: RawCommands) -> Self {
         if let Some(v) = raw.check {
             self.check = v;
+        }
+        if let Some(v) = raw.check_worker {
+            self.check_worker = Some(v);
         }
         self
     }
@@ -682,6 +696,9 @@ pub struct Config {
     pub models: ModelsConfig,
     pub context: ContextConfig,
     pub commands: CommandsConfig,
+    /// `[worktrees] warm_target`: clone the clone's `target/` into each new worktree
+    /// (macOS only; ticket b7cz). On by default.
+    pub warm_target: bool,
     pub branches: BranchesConfig,
     pub ci: CiConfig,
     /// The prefix new task ids get (storage.md: `<prefix>-<4 hex chars>`,
@@ -718,6 +735,7 @@ impl Default for Config {
             models: ModelsConfig::default(),
             context: ContextConfig::default(),
             commands: CommandsConfig::default(),
+            warm_target: true,
             branches: BranchesConfig::default(),
             ci: CiConfig::default(),
             task_prefix: None,
@@ -976,6 +994,12 @@ impl Config {
             config.commands = config.commands.merge(raw_commands);
         }
 
+        if let Some(w) = raw.worktrees
+            && let Some(v) = w.warm_target
+        {
+            config.warm_target = v;
+        }
+
         if let Some(t) = raw.tasks {
             config.task_prefix = t.prefix;
         }
@@ -1103,6 +1127,8 @@ struct RawConfig {
     #[serde(default)]
     commands: Option<RawCommands>,
     #[serde(default)]
+    worktrees: Option<RawWorktrees>,
+    #[serde(default)]
     branches: Option<RawBranches>,
     #[serde(default)]
     ci: Option<RawCi>,
@@ -1130,6 +1156,15 @@ struct RawContext {
 struct RawCommands {
     #[serde(default)]
     check: Option<String>,
+    #[serde(default)]
+    check_worker: Option<String>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawWorktrees {
+    #[serde(default)]
+    warm_target: Option<bool>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -1413,6 +1448,7 @@ fn substitute_role_text(
     commands: &CommandsConfig,
 ) -> String {
     let out = text.replace("{{commands.check}}", &commands.check);
+    let out = out.replace("{{commands.check_worker}}", commands.worker_check());
     let out = out.replace("{{branches.integration}}", &branches.integration);
     match &branches.release {
         Some(release) => out.replace("{{branches.release}}", release),
@@ -1636,6 +1672,7 @@ mod tests {
         };
         let commands = CommandsConfig {
             check: "make ci".to_string(),
+            check_worker: None,
         };
         for name in ["worker", "manager", "product-manager"] {
             let role = Role {
@@ -2070,6 +2107,13 @@ mod tests {
     fn commands_check_defaults_to_just_check_and_can_be_overridden() {
         let cfg = Config::default();
         assert_eq!(cfg.commands.check, "just check");
+        assert_eq!(cfg.commands.worker_check(), "just check");
+        assert!(cfg.warm_target);
+        let cfg = Config::parse("[commands]\ncheck_worker = \"just check-affected\"\n[worktrees]\nwarm_target = false\n")
+            .expect("parse");
+        assert_eq!(cfg.commands.check, "just check");
+        assert_eq!(cfg.commands.worker_check(), "just check-affected");
+        assert!(!cfg.warm_target);
 
         let cfg = Config::parse("[commands]\ncheck = \"make check\"\n").expect("parse");
         assert_eq!(cfg.commands.check, "make check");
