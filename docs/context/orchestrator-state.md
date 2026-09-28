@@ -2,8 +2,8 @@
 
 The orchestrator's working notes for handing over between sessions. The role
 itself is in `.bridle/roles/orchestrator.md`. Update this file whenever the
-queue, open items or decisions change. Last updated 2026-09-28 05:55 UTC,
-during the fourth orchestrator session.
+queue, open items or decisions change. Last updated 2026-09-28 07:20 UTC,
+near the end of the fourth orchestrator session.
 
 ## First, for the incoming orchestrator
 
@@ -48,25 +48,23 @@ during the fourth orchestrator session.
 
 ## Who's running
 
-- **`pm-1`** (product manager, Sonnet), renewed at 05:53 UTC. It owns the
-  queue, which is now `bridle task` (68 tasks imported by P0-6b).
-- **`manager-2`** (development manager, Sonnet), renewed at 05:02 UTC. It runs
-  the workers, reviews, merges, pushes, and removes merged branches.
-- **Worker:** `4eep-role-settings` (per-role Claude settings via
-  `claude --setting-sources`).
+- **`pm-1`** (product manager, Sonnet), renewed 05:53 UTC, 145K at 07:15.
+  It owns the queue in `bridle task`.
+- **`manager-2`** (development manager, Sonnet), renewed 07:17 UTC.
+- **Workers:** `s8kn-resolve-tickets` (Haiku) and `r7cs-token-file-fix`
+  (Sonnet: the statusline reads its token from a file, not `$BRIDLE_TOKEN`,
+  and doesn't claim the token is read-only).
 - The split is interim, by configuration (ticket tx3f).
 
 ## Queue
 
-1. n9qh, now unblocked: the budget schedule (nights and weekday work hours)
-   with a thermostat-style override.
-2. Running at 06:25 UTC: w4tb (wall time in `bridle usage`). Then pm-1's
-   picks from `bridle task`.
+Done since v0.2.0 and verified on CI: w4tb (wall time), n9qh parts 1 and 2
+(the schedule and `bridle budget override`), mt7r (`just check-affected`),
+r7cs (df32928; its setup docs are being fixed). Local double-check of
+aab6ee6/df32928 was pending at 07:15. Next: pm-1's picks from `bridle task`.
 
 Parked: a7h3 (agreed with pm-1: the message-human workaround works), and
 `bridle/mcp-1` (don't merge or delete it; u6wk).
-
-Backlog: d4mz step 2, w4tb, mt7r, r7cs.
 
 ## The human's decisions (2026-09-27 and 28)
 
