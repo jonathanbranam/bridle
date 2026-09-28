@@ -67,12 +67,12 @@ your own, in `<repo>/.bridle/config.toml`:
 [roles.worker]
 model = "sonnet"
 allowed_tools = ["Bash", "Read", "Edit", "Write", "Glob", "Grep"]
-system_prompt = ".bridle/roles/worker.md"
+system_prompt = "workflow/base/roles/worker.md"
 
 [roles.manager]
 autostart = true          # an agent named "manager" starts with the daemon…
 start_prompt = "Check your inbox and tell the human you're ready."   # …and gets this
-system_prompt = ".bridle/roles/manager.md"
+system_prompt = "workflow/base/roles/manager.md"
 ```
 
 Every agent can use `bridle` from its Bash tool with its own identity.

@@ -1,7 +1,7 @@
 # Orchestrator state
 
 The orchestrator's working notes for handing over between sessions. The role
-itself is in `.bridle/roles/orchestrator.md`. Update this file whenever the
+itself is in `workflow/base/roles/orchestrator.md`. Update this file whenever the
 queue, open items or decisions change. Last updated 2026-09-28 16:35 UTC,
 at the handover from the fifth orchestrator session.
 
@@ -65,7 +65,7 @@ P3; new work goes in bridle's queue; old `docs/tickets/` stays as history.
 - **Workers:** `spike-path-rules` (vxp6, Haiku) and `smaller-debug-builds`
   (nbkj).
 - **The advisor** (`external:advisor`, `scripts/claude-advisor`,
-  `.bridle/roles/advisor.md`): the human's chat and ticket session.
+  `workflow/base/roles/advisor.md`): the human's chat and ticket session.
   Read-only; files tickets; messages you directly.
 
 ## Queue (`bridle queue`)

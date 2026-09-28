@@ -206,8 +206,8 @@ async fn prime(args: &PrimeArgs) -> Result<(), CliError> {
 
 async fn prime_orchestrator() -> Result<(), CliError> {
     let repo = std::env::current_dir().context("current directory")?;
-    let role_prompt = std::fs::read_to_string(repo.join(".bridle/roles/orchestrator.md"))
-        .context("reading .bridle/roles/orchestrator.md")?;
+    let role_prompt = std::fs::read_to_string(repo.join("workflow/base/roles/orchestrator.md"))
+        .context("reading workflow/base/roles/orchestrator.md")?;
     let state = std::fs::read_to_string(repo.join("docs/context/orchestrator-state.md"))
         .context("reading docs/context/orchestrator-state.md")?;
     print!("{}", render_prime_orchestrator(&role_prompt, &state));

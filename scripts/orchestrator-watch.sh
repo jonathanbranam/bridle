@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Background watcher for the orchestrator (.bridle/roles/orchestrator.md). Exits, waking the
+# Background watcher for the orchestrator (workflow/base/roles/orchestrator.md). Exits, waking the
 # orchestrator, on: a question to the human, a message to the orchestrator, main moving, an unexpected exit/crash/stall, all
 # agents idle for 15 min, five_hour >= 93% or seven_day >= 85%. Usage: orchestrator-watch.sh <since-seq>
 export BRIDLE_TOKEN=$(cat ~/.bridle-orchestrator.token)
