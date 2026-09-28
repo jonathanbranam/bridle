@@ -180,7 +180,8 @@ pub enum WhenArg {
 #[derive(Debug, Args)]
 #[command(group(ArgGroup::new("text_source").args(["text", "text_file"])))]
 pub struct SendArgs {
-    /// An agent id/name, or `human`.
+    /// An agent id/name, `human`, or `role:<name>` for every live agent
+    /// currently holding that role.
     pub to: String,
     /// Message body.
     #[arg(value_name = "TEXT")]

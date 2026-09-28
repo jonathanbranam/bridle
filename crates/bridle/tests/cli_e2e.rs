@@ -189,8 +189,8 @@ fn cli_end_to_end_against_a_foreground_daemon() {
     // `send w1 hello --json`
     let (ok, out, err) = run_cli(&repo, &home, &["send", "w1", "hello", "--json"]);
     assert!(ok, "send failed: {err}");
-    let msg: serde_json::Value = serde_json::from_str(&out).expect("message json");
-    assert_eq!(msg["to"], agent_id);
+    let msgs: serde_json::Value = serde_json::from_str(&out).expect("message json");
+    assert_eq!(msgs[0]["to"], agent_id);
 
     // `logs w1` (readable rendering; just check it runs and prints something).
     let (ok, out, err) = run_cli(&repo, &home, &["logs", "w1"]);

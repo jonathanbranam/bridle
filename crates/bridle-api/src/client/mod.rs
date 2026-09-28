@@ -239,7 +239,9 @@ impl Client {
         self.get_json_query(&["v1", "messages"], query).await
     }
 
-    pub async fn send(&self, req: &SendRequest) -> Result<Message, ClientError> {
+    /// Returns one message per recipient: one for `human` or a single
+    /// agent, or one per matching live agent for a `role:<name>` target.
+    pub async fn send(&self, req: &SendRequest) -> Result<Vec<Message>, ClientError> {
         self.post_json(&["v1", "messages"], req).await
     }
 

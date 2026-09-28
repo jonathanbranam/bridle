@@ -21,7 +21,7 @@ bridle spawn   <role> [--name N] [--prompt TEXT | --prompt-file FILE]
                [--ignore-budget]
 bridle agents  [--all]
 bridle show    <agent>
-bridle send    <agent|human> [TEXT | --text-file FILE] [--question] [--when now|idle] [--reply-to ID]
+bridle send    <agent|human|role:NAME> [TEXT | --text-file FILE] [--question] [--when now|idle] [--reply-to ID]
 bridle inbox   [--all] [--mark-read]        # messages to me, plus every task's open question
 bridle ask     <task-id> TEXT                    question against a task; blocks it until answered
 bridle answer  <task-id> TEXT                    answers a task's open question; frees it to be ready again
@@ -62,6 +62,10 @@ bridle task note   <id> TEXT                     plain note to the task's thread
   as the filename to read from stdin instead. This avoids passing backticks and
   other shell metacharacters as command-line arguments, which can trigger
   permission denials in Claude Code. Example: `echo "message" | bridle send w1 --text-file -`.
+  `role:NAME` fans the message out to every live agent currently holding that
+  role — one delivered message per matching agent, same as sending to each
+  individually; `bridle send` prints one `sent <id> -> <to>` line per recipient.
+  A role with no live agents is an error, same as an unknown agent name.
 
 - **`rebuild`** is `TaskManager::rebuild_from_state_branch` (docs/design/storage.md,
   "Rebuild"): the migration path for a fresh clone with no `bridle.db` — clone the repo,
@@ -145,8 +149,8 @@ bridle task note   <id> TEXT                     plain note to the task's thread
   thread entry and blocks the task's readiness until answered (`Conflict` if one is
   already open); `answer` appends an `answer` entry and clears the block. Neither takes a
   recipient — a question addressed to a task has no single recipient, per
-  coordination.md's message table — so there's no `--to`; that arrives with role
-  recipients, a later task. `inbox` lists every task's open question (task id, asker,
+  coordination.md's message table — so there's no `--to`; send-to-task is a
+  later task. `inbox` lists every task's open question (task id, asker,
   body, age) alongside messages addressed to `me`, reading `GET /v1/questions`
   (`TaskManager::list_open_questions`, backed by the same in-memory cache `is_ready`
   reads) rather than walking the state branch.

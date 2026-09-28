@@ -43,7 +43,11 @@ the task's thread, which gives later claimants the context Gas Town calls
 
 **Built so far:** messages to an agent or to `human`, of kind `note` or
 `question`, with replies linked by `reply_to` and delivery tracked
-([[docs/design/agent-host/messages|messages and delivery]]). Messages to a
+([[docs/design/agent-host/messages|messages and delivery]]). `bridle send
+role:<name>` fans a message out to every live agent currently holding that
+role — the same delivery path as sending to one agent, just one message row
+per matching agent (`POST /v1/messages` returns the list); sending to a role
+with no live agents is a 404. Messages to a
 task: `TaskManager::ask_question`/`answer_question`
 (`crates/bridle-daemon/src/tasks.rs`) insert a `question`/`answer` message
 addressed to the task (`to_kind = task`, [[docs/design/storage#The daemon's
@@ -53,9 +57,8 @@ without walking the state branch, per
 [[where-questions-live-on-the-state-branch-c5a8|decided]]. `TaskManager::note_task`
 is the same shape without the open-question bookkeeping: it inserts a `note`
 message addressed to the task, appends a `note` thread entry, and has no
-effect on readiness (`bridle task note`). Role recipients,
-`handoff`/`conflict`/`system`, and send-to-task/send-to-role from `bridle
-send` all arrive with later tasks.
+effect on readiness (`bridle task note`). `handoff`/`conflict`/`system`
+message kinds and send-to-task from `bridle send` arrive with later tasks.
 
 ## Questions do not stop work
 

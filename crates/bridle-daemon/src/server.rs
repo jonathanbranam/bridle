@@ -597,32 +597,51 @@ async fn send_message(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
     Json(req): Json<SendRequest>,
-) -> Result<Json<Message>, ApiError> {
+) -> Result<Json<Vec<Message>>, ApiError> {
     let Some(to_raw) = req.to.as_deref() else {
         return Err(ApiError::bad_request("`to` is required"));
     };
-    let target = if to_raw == "human" {
-        ToTarget::Human
+    let targets = if to_raw == "human" {
+        vec![ToTarget::Human]
+    } else if let Some(role) = to_raw.strip_prefix("role:") {
+        let matching: Vec<ToTarget> = state
+            .store
+            .list_agents(false)
+            .await?
+            .into_iter()
+            .filter(|a| a.role == role)
+            .map(|a| ToTarget::Agent(a.id))
+            .collect();
+        if matching.is_empty() {
+            return Err(ApiError::not_found(format!(
+                "no live agents with role: {role}"
+            )));
+        }
+        matching
     } else {
         let agent = state
             .store
             .get_agent(to_raw)
             .await?
             .ok_or_else(|| ApiError::not_found(format!("no such recipient: {to_raw}")))?;
-        ToTarget::Agent(agent.id)
+        vec![ToTarget::Agent(agent.id)]
     };
-    let msg = state
-        .manager
-        .send(
-            principal.id,
-            target,
-            req.kind,
-            req.body,
-            req.when,
-            req.reply_to,
-        )
-        .await?;
-    Ok(Json(msg))
+    let mut msgs = Vec::with_capacity(targets.len());
+    for target in targets {
+        let msg = state
+            .manager
+            .send(
+                principal.id.clone(),
+                target,
+                req.kind,
+                req.body.clone(),
+                req.when,
+                req.reply_to.clone(),
+            )
+            .await?;
+        msgs.push(msg);
+    }
+    Ok(Json(msgs))
 }
 
 async fn mark_read(
