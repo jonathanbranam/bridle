@@ -45,7 +45,7 @@ bridle statusline                           Claude Code statusLine command; loca
 bridle task new    <title> -k/--kind KIND [--body TEXT]
 bridle task show   <id>
 bridle task edit   <id> [--title TEXT] [--body TEXT]
-bridle task list
+bridle task list   [--claimed-by WHO]             WHO: me|human|<agent name>|<principal id>; unclaimed tasks have no claimant to match
 bridle task drop   <id> --reason TEXT
 bridle task reopen <id>
 bridle task note   <id> TEXT                     plain note to the task's thread; no effect on readiness
@@ -69,6 +69,12 @@ bridle task note   <id> TEXT                     plain note to the task's thread
   the database already has any tasks, edges or open questions. Claims are never
   reconstructed — they're SQLite-only, with no state-branch counterpart, so any in-flight
   claim is simply lost, which is correct here, not a gap.
+- **`task list --claimed-by`** filters on the task's current claimant
+  (`Task::claimed_by`, docs/design/storage.md). `me` resolves to the calling
+  principal's own id, the same as `--to me` on `send`/`inbox`; anything else
+  is looked up as an agent name first, then matched against `claimed_by`
+  verbatim, so a full principal id (`agent:w1`, `human`) works too. A task
+  with no claim never matches any filter value.
 - **Discovery** of the daemon, and **which token** the CLI uses, are in
   [[docs/design/agent-host/daemon#Workspace layout|workspace layout]] and
   [[docs/design/agent-host/principals#How the CLI picks a token|principals]].

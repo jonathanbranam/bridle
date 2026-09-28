@@ -393,7 +393,20 @@ impl Client {
 
     /// `GET /v1/tasks?ready=true` (roles-and-lifecycle.md, "ready is computed").
     pub async fn ready_tasks(&self) -> Result<Vec<Task>, ClientError> {
-        let query = TaskQuery { ready: Some(true) };
+        let query = TaskQuery {
+            ready: Some(true),
+            ..Default::default()
+        };
+        self.get_json_query(&["v1", "tasks"], &query).await
+    }
+
+    /// `GET /v1/tasks?claimed_by=...`; `claimed_by` may be `me`, `human`, an
+    /// agent name, or a full `PrincipalId`.
+    pub async fn list_tasks_claimed_by(&self, claimed_by: &str) -> Result<Vec<Task>, ClientError> {
+        let query = TaskQuery {
+            claimed_by: Some(claimed_by.to_string()),
+            ..Default::default()
+        };
         self.get_json_query(&["v1", "tasks"], &query).await
     }
 

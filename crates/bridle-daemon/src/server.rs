@@ -818,14 +818,44 @@ async fn report_statusline(
 
 // ---------- tasks ----------
 
+/// `?claimed_by=me` resolves to the caller's own id, same as `resolve_to`'s
+/// `"me"` case for messages; anything else is matched against `Task::claimed_by`
+/// verbatim (that field is the claimant's `PrincipalId`, e.g. `agent:w1`, not
+/// the stable agent id `resolve_to`/`resolve_from` resolve names to).
+async fn resolve_claimed_by(
+    store: &Store,
+    principal: &Principal,
+    raw: &str,
+) -> Result<String, ApiError> {
+    Ok(match raw {
+        "me" => principal.id.clone(),
+        "human" => "human".to_string(),
+        other => match store.get_agent(other).await? {
+            Some(a) => format!("agent:{}", a.name),
+            None => other.to_string(),
+        },
+    })
+}
+
 async fn list_tasks(
     State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
     Query(q): Query<TaskQuery>,
 ) -> Result<Json<Vec<Task>>, ApiError> {
     let tasks = if q.ready.unwrap_or(false) {
         state.tasks.ready_tasks()
     } else {
         state.tasks.list_tasks()
+    };
+    let tasks = match q.claimed_by.as_deref() {
+        Some(raw) => {
+            let claimed_by = resolve_claimed_by(&state.store, &principal, raw).await?;
+            tasks
+                .into_iter()
+                .filter(|t| t.claimed_by.as_deref() == Some(claimed_by.as_str()))
+                .collect()
+        }
+        None => tasks,
     };
     Ok(Json(tasks))
 }
@@ -1113,4 +1143,55 @@ async fn rebuild(
     require_human(&principal)?;
     state.tasks.rebuild_from_state_branch().await?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[cfg(test)]
+mod tests {
+    //! `resolve_claimed_by` alone, not `list_tasks`'s use of it: reaching a
+    //! `claimed` task needs `planned` first, and there's no `plan` endpoint
+    //! yet (same gap `tasks_test.rs` notes for claim/release), so the
+    //! end-to-end `?claimed_by=` filter is exercised at the `TaskManager`
+    //! level instead (`tasks.rs`, `claim_blocks_ready_and_release_unblocks_it`).
+    use super::*;
+
+    async fn store() -> (Store, tempfile::TempDir) {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let store = Store::open(tmp.path().join("bridle.db"))
+            .await
+            .expect("open store");
+        (store, tmp)
+    }
+
+    #[tokio::test]
+    async fn resolve_claimed_by_resolves_me_to_the_caller_and_passes_the_rest_through() {
+        let (store, _tmp) = store().await;
+
+        async fn resolve(store: &Store, principal: &Principal, raw: &str) -> String {
+            resolve_claimed_by(store, principal, raw)
+                .await
+                .unwrap_or_else(|_| panic!("resolve_claimed_by({raw:?}) failed"))
+        }
+
+        let human = Principal {
+            id: "human".to_string(),
+            kind: PrincipalKind::Human,
+        };
+        assert_eq!(resolve(&store, &human, "me").await, "human");
+
+        let agent = Principal {
+            id: "agent:w1".to_string(),
+            kind: PrincipalKind::Agent,
+        };
+        assert_eq!(
+            resolve(&store, &agent, "me").await,
+            "agent:w1",
+            "an agent's own claimed_by is its PrincipalId verbatim, not the stable agent id"
+        );
+
+        assert_eq!(
+            resolve(&store, &human, "agent:w2").await,
+            "agent:w2",
+            "an explicit claimant id not naming a known agent passes through unchanged"
+        );
+    }
 }

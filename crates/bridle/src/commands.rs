@@ -20,8 +20,8 @@ use crate::cli::{
     Command, CostAction, CostArgs, CostAuditArgs, DepAction, DepArgs, DepEdgeArgs, EdgeKindArg,
     EventsArgs, InboxArgs, InterruptArgs, LogsArgs, ReadyArgs, ReleaseArgs, RmArgs, SendArgs,
     ShowArgs, SpawnArgs, StopArgs, TaskAction, TaskArgs, TaskDropArgs, TaskEditArgs, TaskKindArg,
-    TaskNewArgs, TaskNoteArgs, TaskReopenArgs, TaskShowArgs, TokenAction, TokenArgs, UsageArgs,
-    UsageByArg, WhenArg,
+    TaskListArgs, TaskNewArgs, TaskNoteArgs, TaskReopenArgs, TaskShowArgs, TokenAction, TokenArgs,
+    UsageArgs, UsageByArg, WhenArg,
 };
 use crate::error::CliError;
 use crate::render;
@@ -1153,7 +1153,7 @@ async fn task(cli: &Cli, args: &TaskArgs) -> Result<(), CliError> {
         TaskAction::New(a) => task_new(cli, a).await,
         TaskAction::Show(a) => task_show(cli, a).await,
         TaskAction::Edit(a) => task_edit(cli, a).await,
-        TaskAction::List => task_list(cli).await,
+        TaskAction::List(a) => task_list(cli, a).await,
         TaskAction::Drop(a) => task_drop(cli, a).await,
         TaskAction::Reopen(a) => task_reopen(cli, a).await,
         TaskAction::Note(a) => task_note(cli, a).await,
@@ -1228,9 +1228,12 @@ async fn task_edit(cli: &Cli, args: &TaskEditArgs) -> Result<(), CliError> {
     Ok(())
 }
 
-async fn task_list(cli: &Cli) -> Result<(), CliError> {
+async fn task_list(cli: &Cli, args: &TaskListArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
-    let tasks = client.list_tasks().await?;
+    let tasks = match &args.claimed_by {
+        Some(claimed_by) => client.list_tasks_claimed_by(claimed_by).await?,
+        None => client.list_tasks().await?,
+    };
     if cli.json {
         render::print_json(&tasks)?;
     } else if tasks.is_empty() {

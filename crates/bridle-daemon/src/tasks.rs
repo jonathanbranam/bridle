@@ -31,6 +31,10 @@ use chrono::Utc;
 use crate::state_branch::{StateBranch, StateBranchError};
 use crate::store::{NewMessage, RecipientKind, Store, StoreError, TaskRow};
 
+/// A claim's claimant and when it was made; the in-memory mirror of a
+/// `claims` row (`Store::list_claims`).
+type ClaimEntry = (PrincipalId, chrono::DateTime<Utc>);
+
 #[derive(Debug, thiserror::Error)]
 pub enum TaskError {
     #[error("not found: {0}")]
@@ -78,11 +82,12 @@ pub struct TaskManager {
     /// `open`, so `has_open_questions` (called from the sync `is_ready`) can
     /// answer without a database round trip.
     open_questions: Arc<Mutex<HashMap<String, String>>>,
-    /// Task id -> claimant, for every currently claimed task. Mirrors
-    /// `Store::list_claims`, loaded at `open`. Unlike `open_questions`,
-    /// there's no state-branch counterpart at all (storage.md: claims is
-    /// SQLite-only).
-    claims: Arc<Mutex<HashMap<String, PrincipalId>>>,
+    /// Task id -> (claimant, claimed at), for every currently claimed task.
+    /// Mirrors `Store::list_claims`, loaded at `open`. Unlike
+    /// `open_questions`, there's no state-branch counterpart at all
+    /// (storage.md: claims is SQLite-only), and this is also the source of
+    /// `Task::claimed_by`/`claimed_at` on the cached task.
+    claims: Arc<Mutex<HashMap<String, ClaimEntry>>>,
     /// How long a claim survives without the claiming agent's own activity
     /// before [`TaskManager::tick_claim_lease_check`] releases it.
     claim_lease_after: chrono::Duration,
@@ -112,6 +117,8 @@ impl TaskManager {
                 thread: Vec::new(),
                 created_at: row.created_at,
                 updated_at: row.updated_at,
+                claimed_by: None,
+                claimed_at: None,
             });
             cache.insert(task.id.clone(), task);
         }
@@ -122,12 +129,18 @@ impl TaskManager {
             .into_iter()
             .map(|q| (q.task_id, q.message_id))
             .collect();
-        let claims = store
+        let claims: HashMap<String, ClaimEntry> = store
             .list_claims()
             .await?
             .into_iter()
-            .map(|c| (c.task_id, c.claimed_by))
+            .map(|c| (c.task_id, (c.claimed_by, c.claimed_at)))
             .collect();
+        for (task_id, (claimant, claimed_at)) in &claims {
+            if let Some(task) = cache.get_mut(task_id) {
+                task.claimed_by = Some(claimant.clone());
+                task.claimed_at = Some(*claimed_at);
+            }
+        }
         Ok(TaskManager {
             store,
             state,
@@ -238,6 +251,8 @@ impl TaskManager {
             thread: Vec::new(),
             created_at: row.created_at,
             updated_at: row.updated_at,
+            claimed_by: None,
+            claimed_at: None,
         };
         self.state.enqueue_task(&task)?;
         self.state
@@ -612,9 +627,11 @@ impl TaskManager {
         self.claims
             .lock()
             .expect("claims lock")
-            .insert(id.to_string(), by.clone());
+            .insert(id.to_string(), (by.clone(), now));
         task.state = TaskState::Claimed;
         task.updated_at = now;
+        task.claimed_by = Some(by.clone());
+        task.claimed_at = Some(now);
         Ok(self.put(task))
     }
 
@@ -625,7 +642,7 @@ impl TaskManager {
         {
             let claims = self.claims.lock().expect("claims lock");
             match claims.get(id) {
-                Some(claimant) if claimant == by => {}
+                Some((claimant, _)) if claimant == by => {}
                 Some(_) => {
                     return Err(TaskError::Conflict(format!(
                         "task {id} is claimed by another agent"
@@ -651,6 +668,8 @@ impl TaskManager {
         self.claims.lock().expect("claims lock").remove(id);
         task.state = TaskState::Planned;
         task.updated_at = Utc::now();
+        task.claimed_by = None;
+        task.claimed_at = None;
         Ok(self.put(task))
     }
 
@@ -667,7 +686,7 @@ impl TaskManager {
             .lock()
             .expect("claims lock")
             .iter()
-            .map(|(id, by)| (id.clone(), by.clone()))
+            .map(|(id, (by, _))| (id.clone(), by.clone()))
             .collect();
         for (task_id, claimant) in claimed {
             // Agent principals are `agent:<name>` (principals.md); `agents`
@@ -1259,12 +1278,15 @@ mod tests {
             .expect("new task");
         force_planned(&tm, &task.id);
         assert!(tm.ready_tasks().iter().any(|t| t.id == task.id));
+        assert_eq!(task.claimed_by, None, "unclaimed on creation");
 
         let claimed = tm
             .claim_task(&task.id, &"agent:w1".to_string())
             .await
             .expect("claim task");
         assert_eq!(claimed.state, TaskState::Claimed);
+        assert_eq!(claimed.claimed_by.as_deref(), Some("agent:w1"));
+        assert!(claimed.claimed_at.is_some());
         assert!(
             !tm.ready_tasks().iter().any(|t| t.id == task.id),
             "a claimed task drops out of ready"
@@ -1282,6 +1304,8 @@ mod tests {
             .await
             .expect("release task");
         assert_eq!(released.state, TaskState::Planned);
+        assert_eq!(released.claimed_by, None, "cleared on release");
+        assert_eq!(released.claimed_at, None);
         assert!(
             tm.ready_tasks().iter().any(|t| t.id == task.id),
             "releasing the claim re-enables readiness"
@@ -1293,6 +1317,43 @@ mod tests {
             .await
             .expect_err("no longer claimed");
         assert!(matches!(err, TaskError::Conflict(_)));
+    }
+
+    /// `server.rs::list_tasks` filters `?claimed_by=` by matching
+    /// `Task::claimed_by` verbatim against the already-resolved id (`me` is
+    /// resolved to the caller's own `PrincipalId` before this filter ever
+    /// runs); this exercises that same filter directly against the field.
+    #[tokio::test]
+    async fn claimed_by_filters_to_the_matching_claimant() {
+        let (tm, _tmp) = manager().await;
+        let a = tm
+            .new_task("A", TaskKind::Feature, String::new())
+            .await
+            .expect("new a");
+        let b = tm
+            .new_task("B", TaskKind::Feature, String::new())
+            .await
+            .expect("new b");
+        force_planned(&tm, &a.id);
+        force_planned(&tm, &b.id);
+
+        tm.claim_task(&a.id, &"agent:w1".to_string())
+            .await
+            .expect("claim a");
+        tm.claim_task(&b.id, &"human".to_string())
+            .await
+            .expect("claim b");
+
+        let claimed_by = |who: &str| -> Vec<String> {
+            tm.list_tasks()
+                .into_iter()
+                .filter(|t| t.claimed_by.as_deref() == Some(who))
+                .map(|t| t.id)
+                .collect()
+        };
+        assert_eq!(claimed_by("agent:w1"), vec![a.id.clone()]);
+        assert_eq!(claimed_by("human"), vec![b.id.clone()]);
+        assert!(claimed_by("agent:w2").is_empty());
     }
 
     #[tokio::test]

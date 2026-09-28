@@ -409,7 +409,7 @@ pub enum TaskAction {
     /// Change a task's title or body (not its state).
     Edit(TaskEditArgs),
     /// List every task: id, title, kind, state.
-    List,
+    List(TaskListArgs),
     /// Drop a task (requires a reason, recorded in its thread).
     Drop(TaskDropArgs),
     /// Bring a dropped task back.
@@ -426,6 +426,14 @@ pub struct TaskNewArgs {
     pub kind: TaskKindArg,
     #[arg(long)]
     pub body: Option<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct TaskListArgs {
+    /// Filter to tasks claimed by this principal: `me`, `human`, an agent
+    /// name, or a full principal id.
+    #[arg(long)]
+    pub claimed_by: Option<String>,
 }
 
 #[derive(Debug, Args)]
@@ -797,7 +805,15 @@ mod tests {
         let Command::Task(args) = cli.command else {
             panic!("expected task")
         };
-        assert!(matches!(args.action, TaskAction::List));
+        assert!(matches!(args.action, TaskAction::List(a) if a.claimed_by.is_none()));
+
+        let cli = parse(&["task", "list", "--claimed-by", "me"]).unwrap();
+        let Command::Task(args) = cli.command else {
+            panic!("expected task")
+        };
+        assert!(
+            matches!(args.action, TaskAction::List(a) if a.claimed_by.as_deref() == Some("me"))
+        );
     }
 
     #[test]
