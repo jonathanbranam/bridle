@@ -6,7 +6,66 @@ use bridle_api::types::{
     AgentState, MessageKind, MessageQuery, MessageState, SendRequest, When, Workdir,
 };
 use bridle_api::types::{SpawnRequest, event_kind};
-use support::{start_daemon, wait_for_agent, wait_for_event, wait_for_state};
+use bridle_daemon::Overrides;
+use support::{
+    default_overrides, fake_claude_argv_dump_wrapper, start_daemon, start_daemon_with_config,
+    wait_for_agent, wait_for_event, wait_for_state,
+};
+
+/// k8dw: `extra_allowed_tools` grants a tool beyond the role's own
+/// `allowed_tools` for this one spawn, without touching the role.
+#[tokio::test]
+async fn spawn_extra_allowed_tools_grants_a_tool_the_role_lacks() {
+    let argv_dir = tempfile::tempdir().expect("argv tempdir");
+    let argv_path = argv_dir.path().join("argv.json");
+    let wrapper = fake_claude_argv_dump_wrapper(argv_dir.path(), &argv_path);
+    let overrides = Overrides {
+        claude_program: wrapper.to_string_lossy().into_owned(),
+        ..default_overrides()
+    };
+
+    let (daemon, _tmp) = start_daemon_with_config(Some(overrides), None).await;
+
+    let agent = daemon
+        .client
+        .spawn(&SpawnRequest {
+            role: "worker".to_string(),
+            name: Some("w1".to_string()),
+            prompt: None,
+            workdir: Some(Workdir::Repo),
+            model: None,
+            extra_allowed_tools: vec!["WebSearch".to_string()],
+            ignore_budget: false,
+        })
+        .await
+        .expect("spawn");
+
+    wait_for_event(
+        &daemon.client,
+        event_kind::AGENT_SPAWNED,
+        Some(&agent.id),
+        |_| true,
+    )
+    .await;
+
+    let argv: Vec<String> = support::wait_for("fake-claude argv file", || async {
+        std::fs::read_to_string(&argv_path)
+            .ok()
+            .and_then(|s| serde_json::from_str(&s).ok())
+    })
+    .await;
+
+    let flag_idx = argv
+        .iter()
+        .position(|a| a == "--allowedTools")
+        .expect("--allowedTools flag present");
+    assert!(
+        argv[flag_idx + 1..].iter().any(|a| a == "WebSearch"),
+        "expected WebSearch among allowed tools, got {argv:?}"
+    );
+    // The role's own tools are still there too: this only adds.
+    assert!(argv[flag_idx + 1..].iter().any(|a| a == "Read"));
+}
 
 #[tokio::test]
 async fn spawn_with_prompt_runs_a_turn_and_creates_a_worktree() {
@@ -20,6 +79,7 @@ async fn spawn_with_prompt_runs_a_turn_and_creates_a_worktree() {
             prompt: Some("hello there".to_string()),
             workdir: None,
             model: None,
+            extra_allowed_tools: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -90,6 +150,7 @@ async fn spawn_with_prompt_waits_for_the_turn_to_start_before_returning() {
             prompt: Some("hello there".to_string()),
             workdir: None,
             model: None,
+            extra_allowed_tools: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -126,6 +187,7 @@ async fn spawn_without_a_prompt_returns_promptly_and_stays_idle() {
             prompt: None,
             workdir: None,
             model: None,
+            extra_allowed_tools: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -155,6 +217,7 @@ async fn spawn_with_a_crashing_first_message_reaches_crashed_state() {
             prompt: Some("CRASH".to_string()),
             workdir: None,
             model: None,
+            extra_allowed_tools: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -174,6 +237,7 @@ async fn message_now_mid_turn_folds_into_the_running_turn() {
             prompt: Some("SLEEP 3".to_string()),
             workdir: Some(Workdir::Repo),
             model: None,
+            extra_allowed_tools: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -220,6 +284,7 @@ async fn context_tokens_comes_from_get_context_usage_not_turn_usage_sum() {
             prompt: Some("SLEEP 2".to_string()),
             workdir: Some(Workdir::Repo),
             model: None,
+            extra_allowed_tools: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -251,6 +316,7 @@ async fn message_idle_is_held_until_the_turn_ends_then_starts_its_own_turn() {
             prompt: Some("SLEEP 2".to_string()),
             workdir: Some(Workdir::Repo),
             model: None,
+            extra_allowed_tools: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -297,6 +363,7 @@ async fn human_inbox_receives_agent_messages_and_mark_read_works() {
             prompt: None,
             workdir: Some(Workdir::Repo),
             model: None,
+            extra_allowed_tools: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -374,6 +441,7 @@ async fn send_to_role_delivers_to_every_live_agent_with_that_role() {
                 prompt: None,
                 workdir: Some(Workdir::Repo),
                 model: None,
+                extra_allowed_tools: Vec::new(),
                 ignore_budget: false,
             })
             .await

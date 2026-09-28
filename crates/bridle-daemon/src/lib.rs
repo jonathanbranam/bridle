@@ -519,6 +519,7 @@ async fn run_autostart_and_resume(store: &Store, config: &Config, manager: &Agen
                         prompt: None, // the role's start_prompt
                         workdir: None,
                         model: None,
+                        extra_allowed_tools: Vec::new(),
                         ignore_budget: false,
                     };
                     if let Err(e) = manager.spawn(req, &system).await {

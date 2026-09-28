@@ -18,7 +18,7 @@ bridle daemons                              # every running project daemon on th
 bridle status                               # daemon, agents, Claude Code version
 bridle spawn   <role> [--name N] [--prompt TEXT | --prompt-file FILE]
                [--worktree [--base REF] | --in-repo | --cwd PATH] [--model M]
-               [--ignore-budget]
+               [--allow-tool TOOL ...] [--ignore-budget]
 bridle agents  [--all]
 bridle show    <agent>
 bridle send    <agent|human|role:NAME> [TEXT | --text-file FILE] [--question] [--when now|idle] [--reply-to ID]
@@ -56,6 +56,10 @@ bridle task reopen <id>
 bridle task note   <id> TEXT                     plain note to the task's thread; no effect on readiness
 ```
 
+- **`--allow-tool TOOL`** on `spawn` (repeatable) grants a tool beyond the
+  role's `allowed_tools` for this one spawn only — no config or role change,
+  and it never touches `disallowed_tools`
+  ([[docs/design/agent-host/roles-and-config#Per-spawn tool overrides|roles-and-config.md]]).
 - **`--ignore-budget`** on `spawn`/`resume`/`renew` skips the budget governor's
   holding/paused refusal for that one call
   ([[docs/design/usage-and-budget#Resuming|the escape hatch]]).

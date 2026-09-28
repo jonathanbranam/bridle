@@ -20,6 +20,7 @@ fn spawn_req(name: &str, prompt: Option<&str>, workdir: Workdir) -> SpawnRequest
         prompt: prompt.map(str::to_string),
         workdir: Some(workdir),
         model: None,
+        extra_allowed_tools: Vec::new(),
         ignore_budget: false,
     }
 }

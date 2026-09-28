@@ -111,6 +111,44 @@ pub async fn start_daemon(overrides: Option<Overrides>) -> (TestDaemon, tempfile
     start_daemon_with_config(overrides, None).await
 }
 
+/// A wrapper script around fake-claude.py that sets `FAKE_CLAUDE_ARGV_FILE`
+/// before exec'ing it, so a test can inspect the real invocation's argv
+/// (e.g. `--allowedTools`) without fake-claude dropping a file into the
+/// agent's own worktree on every run.
+pub fn fake_claude_argv_dump_wrapper(dir: &Path, argv_path: &Path) -> PathBuf {
+    let wrapper = dir.join("fake-claude-argv-wrapper.sh");
+    std::fs::write(
+        &wrapper,
+        format!(
+            "#!/bin/sh\nexec env FAKE_CLAUDE_ARGV_FILE={:?} {:?} \"$@\"\n",
+            argv_path.display(),
+            fake_claude_path().display(),
+        ),
+    )
+    .expect("write wrapper script");
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&wrapper, std::fs::Permissions::from_mode(0o755))
+            .expect("chmod wrapper script");
+    }
+    wrapper
+}
+
+pub fn default_overrides() -> Overrides {
+    Overrides {
+        claude_program: fake_claude_path().to_string_lossy().into_owned(),
+        write_registry: false,
+        stall_check_interval: Duration::from_secs(3600),
+        tracker_interval: Duration::from_millis(200),
+        governor_interval: Duration::from_millis(200),
+        governor_poll_interval_normal: Duration::ZERO,
+        governor_poll_interval_above_hold: Duration::ZERO,
+        task_flush_interval: Duration::from_secs(3600),
+        claim_lease_check_interval: Duration::from_secs(3600),
+    }
+}
+
 /// [`start_daemon`], with `config_toml` written to `<repo>/.bridle/config.toml`
 /// first.
 pub async fn start_daemon_with_config(
@@ -132,17 +170,7 @@ pub async fn start_daemon_with_config(
         project: None,
         listen: Some("127.0.0.1:0".parse().expect("valid addr")),
     };
-    let overrides = overrides.unwrap_or_else(|| Overrides {
-        claude_program: fake_claude_path().to_string_lossy().into_owned(),
-        write_registry: false,
-        stall_check_interval: Duration::from_secs(3600),
-        tracker_interval: Duration::from_millis(200),
-        governor_interval: Duration::from_millis(200),
-        governor_poll_interval_normal: Duration::ZERO,
-        governor_poll_interval_above_hold: Duration::ZERO,
-        task_flush_interval: Duration::from_secs(3600),
-        claim_lease_check_interval: Duration::from_secs(3600),
-    });
+    let overrides = overrides.unwrap_or_else(default_overrides);
     let running = bridle_daemon::start(opts, overrides)
         .await
         .expect("start daemon");
