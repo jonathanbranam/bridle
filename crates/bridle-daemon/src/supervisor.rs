@@ -1996,9 +1996,7 @@ impl AgentManager {
                 // Catches a process bridle's containment sweep missed that
                 // still has a file open under the worktree: removing the
                 // directory out from under it would corrupt its view.
-                if !force
-                    && let Some(holder) = worktree::open_file_holder(&path).await?
-                {
+                if !force && let Some(holder) = worktree::open_file_holder(&path).await? {
                     return Err(SupervisorError::Conflict(format!(
                         "worktree has an open file ({holder}); use --force"
                     )));

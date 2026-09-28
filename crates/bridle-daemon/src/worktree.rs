@@ -190,7 +190,9 @@ pub async fn open_file_holder(path: &Path) -> Result<Option<String>, WorktreeErr
     Ok(offender.map(|line| {
         let fields: Vec<&str> = line.split_whitespace().collect();
         match (fields.first(), fields.get(1), fields.last()) {
-            (Some(command), Some(pid), Some(name)) => format!("{command} (pid {pid}) has {name} open"),
+            (Some(command), Some(pid), Some(name)) => {
+                format!("{command} (pid {pid}) has {name} open")
+            }
             _ => line.trim().to_string(),
         }
     }))

@@ -254,7 +254,10 @@ async fn rm_refuses_a_worktree_with_open_files_without_force() {
     // lsof isn't necessarily instantaneous to see a freshly opened fd.
     let deadline = std::time::Instant::now() + Duration::from_secs(5);
     loop {
-        let result = daemon.client.remove(&agent.id, &RemoveQuery::default()).await;
+        let result = daemon
+            .client
+            .remove(&agent.id, &RemoveQuery::default())
+            .await;
         match result {
             Err(bridle_api::ClientError::Api { status: 409, .. }) => break,
             _ if std::time::Instant::now() < deadline => {
