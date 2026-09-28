@@ -35,3 +35,12 @@ The formatting is hardcoded as `"%Y-%m-%d %H:%M UTC"` in `crates/bridle/src/comm
 - The human offered either option: always Eastern, or the machine's local timezone.
 - `chrono` is already a dependency of the `bridle` crate.
 - Low priority, small.
+
+## The human's answer
+
+2026-09-28:
+
+> fine resolve that question and use the local machine timezone
+
+Decided: show times in the machine's local timezone. What's left is implementing it; the
+ticket resolves when that lands.
