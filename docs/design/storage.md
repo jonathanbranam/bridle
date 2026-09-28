@@ -94,23 +94,44 @@ explicitly at the call site (`store::RecipientKind`) rather than guessing
 it from `to`'s shape, since a task id and an agent id are both opaque
 strings that don't self-identify.
 
-The ephemeral tables `claims`, `waits`, `ports`, `impact_cache` arrive with
-later tasks. Every durable write goes to the database and the state branch
-in the same logical operation (for the `tasks` table: synchronously to
-SQLite, then enqueued for the state branch's next batched flush — see below;
-edges follow the same rule, enqueuing the *entire* current edge set on every
-add/remove rather than a diff, since there's no per-edge file to key a
-targeted write on). Asking and answering a question follow the same rule:
-the `open_questions` row is written synchronously, like a task or edge row,
-while the thread entry it corresponds to is enqueued for the next flush. The
-database is the read path because it's fast, and git is the recovery path.
+Claims get their own table too (`SCHEMA_V9`):
+
+```
+claims(task_id TEXT PK, claimed_by, claimed_at)
+```
+
+Unlike every table above, this one is *never* mirrored to the state branch —
+no task file write, no thread entry, no event. `task_id` is the primary key:
+a task has at most one claimant at a time, so `TaskManager::claim_task` on
+an already-claimed (or otherwise not-ready) task is a conflict, the same
+shape as `insert_edge`/`ask_question`'s conflicts. Claiming transitions the
+task `planned -> claimed` (dropping it out of `ready`, since that already
+requires `planned`); releasing — explicit, or the lease expiring — reverses
+it. There's no separate lease-renewal call: `TaskManager::tick_claim_lease_check`
+reads the claiming agent's own `last_event_at`/`turn_started_at` (the same
+signal `supervisor.rs`'s stall check watches) and releases the claim once
+that activity is older than `config.claim_lease_after`. The ephemeral tables
+`waits`, `ports`, `impact_cache` arrive with later tasks.
+
+Every durable write goes to the database and the state branch in the same
+logical operation (for the `tasks` table: synchronously to SQLite, then
+enqueued for the state branch's next batched flush — see below; edges follow
+the same rule, enqueuing the *entire* current edge set on every add/remove
+rather than a diff, since there's no per-edge file to key a targeted write
+on). Asking and answering a question follow the same rule: the
+`open_questions` row is written synchronously, like a task or edge row, while
+the thread entry it corresponds to is enqueued for the next flush. Claiming
+and releasing a task write synchronously to `claims` and to `tasks.state`
+and stop there — there's nothing to enqueue. The database is the read path
+because it's fast, and git is the recovery path.
 
 ## The state branch
 
-Built for task records at the `open`/`planned`/`dropped`/`reopened` states
-(`crates/bridle-daemon/src/state_branch.rs`, `src/tasks.rs`); `ready`,
-`claimed`, `in_review`, `integrated` and `accepted`, and the edges/questions/
-claims that go with them, are still only designed
+Built for task records at the `open`/`planned`/`claimed`/`dropped`/`reopened`
+states (`crates/bridle-daemon/src/state_branch.rs`, `src/tasks.rs`) — claims
+themselves are SQLite-only and never touch this branch (above); `in_review`,
+`integrated` and `accepted`, and the edges/questions that go with them, are
+still only designed
 ([[task-records-on-a-state-branch-or-in-tree-c7eb|decided]]).
 Each project repo gets a `bridle/state` branch, checked out by the daemon
 into `<workspace>/.bridle/state/` (a normal git worktree, not visible in the

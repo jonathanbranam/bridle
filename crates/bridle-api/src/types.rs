@@ -757,14 +757,17 @@ impl std::str::FromStr for TaskKind {
 
 /// The lifecycle states this build knows about
 /// ([[docs/design/roles-and-lifecycle#Task lifecycle|task lifecycle]]).
-/// `ready`, `claimed`, `in_review`, `integrated` and `accepted` arrive with
-/// later tasks that build edges, claims and the ready computation on top of
-/// this record.
+/// `in_review`, `integrated` and `accepted` arrive with later tasks that
+/// build on top of this record.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum TaskState {
     Open,
     Planned,
+    /// A worker holds this task's lease (storage.md: `claims` is SQLite-only,
+    /// not written to the state branch). Only reachable from `planned`, and
+    /// only returns to `planned` (release, or the lease expiring).
+    Claimed,
     /// Requires a reason, recorded in the thread.
     Dropped,
     /// A dropped task brought back; only reachable from `dropped`.
@@ -776,6 +779,7 @@ impl TaskState {
         match self {
             Self::Open => "open",
             Self::Planned => "planned",
+            Self::Claimed => "claimed",
             Self::Dropped => "dropped",
             Self::Reopened => "reopened",
         }
