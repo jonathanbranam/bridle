@@ -560,6 +560,22 @@ impl AgentManager {
 
     // ---------- spawn ----------
 
+    /// The config's view of a component list: unknown ids rejected, repeats dropped.
+    pub fn normalize_components(&self, ids: &[String]) -> Result<Vec<String>, SupervisorError> {
+        self.0
+            .config
+            .normalize_components(ids)
+            .map_err(SupervisorError::BadRequest)
+    }
+
+    pub fn components_match(&self, named: &[String], filter: &str) -> bool {
+        self.0.config.components_match(named, filter)
+    }
+
+    pub fn has_components(&self) -> bool {
+        !self.0.config.components.is_empty()
+    }
+
     pub async fn spawn(
         &self,
         req: SpawnRequest,
@@ -656,6 +672,7 @@ impl AgentManager {
             created_by: principal.id.clone(),
             extra_allowed_tools: req.extra_allowed_tools.clone(),
             extra_env: req.extra_env.clone(),
+            components: req.components.clone(),
         };
         let agent = match self.0.store.insert_agent(new_agent).await {
             Ok(a) => a,
@@ -738,6 +755,7 @@ impl AgentManager {
             &agent.id,
             &agent.name,
             &token,
+            &agent.components,
         );
         if !req.extra_env.is_empty() {
             tracing::info!(
@@ -1825,6 +1843,7 @@ impl AgentManager {
             &agent.id,
             &agent.name,
             &token,
+            &agent.components,
         );
         if !extra_env.is_empty() {
             cmd.env.extend(extra_env);
@@ -1996,6 +2015,7 @@ impl AgentManager {
             &agent.id,
             &agent.name,
             &token,
+            &agent.components,
         );
         if !extra_env.is_empty() {
             cmd.env.extend(extra_env);
@@ -2208,8 +2228,9 @@ fn agent_env(
     id: &str,
     name: &str,
     token: &str,
+    components: &[String],
 ) -> Vec<(String, String)> {
-    vec![
+    let mut env = vec![
         ("BRIDLE_URL".to_string(), url.to_string()),
         ("BRIDLE_TOKEN".to_string(), token.to_string()),
         ("BRIDLE_AGENT_ID".to_string(), id.to_string()),
@@ -2220,7 +2241,11 @@ fn agent_env(
         ),
         ("BRIDLE_PROJECT".to_string(), project.to_string()),
         ("PATH".to_string(), agent_path()),
-    ]
+    ];
+    if !components.is_empty() {
+        env.push(("BRIDLE_COMPONENTS".to_string(), components.join(",")));
+    }
+    env
 }
 
 /// Agents call `bridle` from their Bash tool, so the binary running this

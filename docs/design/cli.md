@@ -19,6 +19,7 @@ bridle status                               # daemon, agents, Claude Code versio
 bridle spawn   <role> [--name N] [--prompt TEXT | --prompt-file FILE]
                [--worktree [--base REF] | --in-repo | --cwd PATH] [--model M]
                [--allow-tool TOOL ...] [--env KEY=VALUE ...] [--ignore-budget]
+               [--component ID ...]
 bridle agents  [--all]
 bridle show    <agent>
 bridle send    <agent|human|role:NAME> [TEXT | --text-file FILE] [--question] [--when now|idle] [--reply-to ID]
@@ -58,10 +59,10 @@ bridle sync                                 renders resolved workflow layers int
                                              .claude/settings.json's hooks; local only, no daemon call
 bridle prime orchestrator                   fresh session's opening context: role prompt, current
                                              state, startup steps; local only, no daemon call
-bridle task new    <title> -k/--kind KIND [--body TEXT]
+bridle task new    <title> -k/--kind KIND [--body TEXT] [--component ID ...]
 bridle task show   <id>
-bridle task edit   <id> [--title TEXT] [--body TEXT]
-bridle task list   [--claimed-by WHO]             WHO: me|human|<agent name>|<principal id>; unclaimed tasks have no claimant to match
+bridle task edit   <id> [--title TEXT] [--body TEXT] [--component ID ... | --no-component]
+bridle task list   [--claimed-by WHO] [--component ID]             WHO: me|human|<agent name>|<principal id>; unclaimed tasks have no claimant to match
 bridle task drop   <id> --reason TEXT
 bridle task reopen <id>
 bridle task note   <id> TEXT                     plain note to the task's thread; no effect on readiness
@@ -98,6 +99,18 @@ bridle task note   <id> TEXT                     plain note to the task's thread
   the database already has any tasks, edges or open questions. Claims are never
   reconstructed — they're SQLite-only, with no state-branch counterpart, so any in-flight
   claim is simply lost, which is correct here, not a gap.
+- **`--component ID`** (docs/design/components.md) scopes a task or spawn to a
+  `[components.<id>]`. `task new`/`task edit`/`spawn` reject an unknown id (the
+  daemon checks it against its config); repeats collapse. `task edit --component`
+  replaces the list, `--no-component` clears it (repo-wide). `task new` with none
+  given prints a one-line reminder on stderr, only in a project that defines
+  components (read from `.bridle/config.toml` in the cwd), and never refuses.
+  `task list --component X` matches tasks naming `X` or any descendant of it
+  (naming a child implies its ancestors), and combines with `--claimed-by`.
+  `task show` prints the list. `spawn` without `--component` defaults to the list
+  of a task the spawner has claimed, else none. The daemon stores the list on the
+  agent (`agents.components`, shown by `show`) and sets `BRIDLE_COMPONENTS`
+  (comma-separated) in its process env, also on `resume`/`renew`.
 - **`task list --claimed-by`** filters on the task's current claimant
   (`Task::claimed_by`, docs/design/storage.md). `me` resolves to the calling
   principal's own id, the same as `--to me` on `send`/`inbox`; anything else

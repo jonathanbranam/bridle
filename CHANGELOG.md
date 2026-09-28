@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   on macOS (`[worktrees] warm_target`, default on), and workers' own gate is
   `{{commands.check_worker}}` (`commands.check_worker`, default `commands.check`; bridle's own
   project runs `just check-affected`).
+- Components part 2: tasks and spawns carry an optional `components` list (`task new|edit`,
+  `spawn --component <id>`, repeatable; unknown ids rejected, never required). `task list
+  --component X` matches `X` and its descendants; the daemon stores the list on the agent and
+  sets `BRIDLE_COMPONENTS`. Task files gain an optional `components` frontmatter array.
 - Components part 1: `[components.<id>]` in `.bridle/config.toml` (`paths`, `parent`, `docs`,
   `consumers`; unknown parents and cycles are config errors), an L4 component rule layer per
   chain, and `bridle rules explain|diff --component <id>`.

@@ -450,6 +450,7 @@ async fn spawn(cli: &Cli, args: &SpawnArgs) -> Result<(), CliError> {
         extra_allowed_tools: args.allow_tool.clone(),
         extra_env: args.env.clone(),
         ignore_budget: args.ignore_budget,
+        components: args.component.clone(),
     };
     let agent = client.spawn(&req).await?;
     print_agent(cli, &agent)
@@ -1548,6 +1549,16 @@ async fn task(cli: &Cli, args: &TaskArgs) -> Result<(), CliError> {
     }
 }
 
+/// Whether the project's `.bridle/config.toml` (read from the current
+/// directory, like `bridle rules`) defines any components. Best effort: the
+/// reminder it gates is only a nudge.
+fn project_has_components() -> bool {
+    std::env::current_dir()
+        .ok()
+        .and_then(|d| bridle_daemon::config::Config::load(&d).ok())
+        .is_some_and(|c| !c.components.is_empty())
+}
+
 fn print_task_row(t: &Task) {
     println!("{:<10} {:<9} {:<8} {}", t.id, t.kind, t.state, t.title);
 }
@@ -1558,8 +1569,14 @@ async fn task_new(cli: &Cli, args: &TaskNewArgs) -> Result<(), CliError> {
         title: args.title.clone(),
         kind: task_kind_arg(args.kind),
         body: args.body.clone().unwrap_or_default(),
+        components: args.component.clone(),
     };
     let task = client.new_task(&req).await?;
+    if args.component.is_empty() && project_has_components() {
+        eprintln!(
+            "note: no --component given; this task is repo-wide (see `bridle task edit --component`)"
+        );
+    }
     if cli.json {
         render::print_json(&task)?;
     } else {
@@ -1580,6 +1597,9 @@ async fn task_show(cli: &Cli, args: &TaskShowArgs) -> Result<(), CliError> {
         println!("state       {}", task.state);
         println!("created     {}", task.created_at.to_rfc3339());
         println!("updated     {}", task.updated_at.to_rfc3339());
+        if !task.components.is_empty() {
+            println!("components  {}", task.components.join(", "));
+        }
         if !task.body.is_empty() {
             println!();
             println!("{}", task.body);
@@ -1606,6 +1626,13 @@ async fn task_edit(cli: &Cli, args: &TaskEditArgs) -> Result<(), CliError> {
     let req = EditTaskRequest {
         title: args.title.clone(),
         body: args.body.clone(),
+        components: if args.no_component {
+            Some(Vec::new())
+        } else if args.component.is_empty() {
+            None
+        } else {
+            Some(args.component.clone())
+        },
     };
     let task = client.edit_task(&args.task, &req).await?;
     if cli.json {
@@ -1618,10 +1645,15 @@ async fn task_edit(cli: &Cli, args: &TaskEditArgs) -> Result<(), CliError> {
 
 async fn task_list(cli: &Cli, args: &TaskListArgs) -> Result<(), CliError> {
     let client = client_for_read(cli).await?;
-    let tasks = match &args.claimed_by {
+    let mut tasks = match &args.claimed_by {
         Some(claimed_by) => client.list_tasks_claimed_by(claimed_by).await?,
         None => client.list_tasks().await?,
     };
+    if let Some(component) = &args.component {
+        // Both filters at once: the daemon takes one, so intersect by id.
+        let scoped = client.list_tasks_component(component).await?;
+        tasks.retain(|t| scoped.iter().any(|s| s.id == t.id));
+    }
     if cli.json {
         render::print_json(&tasks)?;
     } else if tasks.is_empty() {

@@ -848,6 +848,31 @@ impl Config {
         Some(chain)
     }
 
+    /// Checks each id names a defined component and drops repeats, keeping
+    /// order. Ancestors are implied by naming a child, so they aren't added.
+    pub fn normalize_components(&self, ids: &[String]) -> Result<Vec<String>, String> {
+        let mut out: Vec<String> = Vec::new();
+        for id in ids {
+            if !self.components.contains_key(id) {
+                return Err(format!("no component {id:?} in .bridle/config.toml"));
+            }
+            if !out.contains(id) {
+                out.push(id.clone());
+            }
+        }
+        Ok(out)
+    }
+
+    /// Whether work naming `named` is in `filter`'s scope: `filter` is one of
+    /// them or an ancestor of one (i.e. a named component is `filter` or a
+    /// descendant of it).
+    pub fn components_match(&self, named: &[String], filter: &str) -> bool {
+        named.iter().any(|n| {
+            self.component_chain(n)
+                .is_some_and(|chain| chain.contains(&filter))
+        })
+    }
+
     fn validate_components(&self) -> Result<(), ConfigError> {
         for (id, c) in &self.components {
             if let Some(p) = &c.parent

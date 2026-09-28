@@ -563,6 +563,7 @@ async fn run_autostart_and_resume(store: &Store, config: &Config, manager: &Agen
                         extra_allowed_tools: Vec::new(),
                         extra_env: Vec::new(),
                         ignore_budget: false,
+                        components: Vec::new(),
                     };
                     if let Err(e) = manager.spawn(req, &system).await {
                         tracing::warn!(role = %name, error = %e, "autostart failed");

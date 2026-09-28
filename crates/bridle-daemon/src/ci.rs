@@ -525,6 +525,7 @@ mod tests {
                 created_by: "human".to_string(),
                 extra_allowed_tools: vec![],
                 extra_env: vec![],
+                components: vec![],
             })
             .await
             .unwrap();

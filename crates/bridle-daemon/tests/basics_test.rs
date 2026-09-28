@@ -51,6 +51,7 @@ async fn write_routes_still_401_without_a_token() {
     let anon = Client::new(daemon.running.url.clone(), None);
     let err = anon
         .spawn(&SpawnRequest {
+            components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
             prompt: None,
@@ -78,6 +79,7 @@ async fn health_counts_non_terminal_agents() {
     daemon
         .client
         .spawn(&SpawnRequest {
+            components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
             prompt: None,
@@ -115,6 +117,7 @@ async fn agent_token_cannot_create_tokens() {
     let agent = daemon
         .client
         .spawn(&SpawnRequest {
+            components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
             prompt: None,

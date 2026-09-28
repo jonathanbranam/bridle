@@ -61,6 +61,7 @@ mod tests {
     ) -> Task {
         let now = Utc::now();
         Task {
+            components: Vec::new(),
             id: "tw-0001".to_string(),
             title: "do the thing".to_string(),
             kind: TaskKind::Chore,

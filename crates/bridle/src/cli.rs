@@ -201,6 +201,10 @@ pub struct SpawnArgs {
     /// Skip the budget governor's holding/paused check for this one spawn.
     #[arg(long)]
     pub ignore_budget: bool,
+    /// Scope the agent to this component (repeatable); sets `BRIDLE_COMPONENTS`.
+    /// Default: the spawner's claimed task's list.
+    #[arg(long = "component", value_name = "ID")]
+    pub component: Vec<String>,
 }
 
 fn parse_env_kv(s: &str) -> Result<(String, String), String> {
@@ -522,6 +526,9 @@ pub struct TaskNewArgs {
     pub kind: TaskKindArg,
     #[arg(long)]
     pub body: Option<String>,
+    /// Scope the task to this component (repeatable); none = repo-wide.
+    #[arg(long = "component", value_name = "ID")]
+    pub component: Vec<String>,
 }
 
 #[derive(Debug, Args)]
@@ -530,6 +537,9 @@ pub struct TaskListArgs {
     /// name, or a full principal id.
     #[arg(long)]
     pub claimed_by: Option<String>,
+    /// Only tasks naming this component or any descendant.
+    #[arg(long, value_name = "ID")]
+    pub component: Option<String>,
 }
 
 #[derive(Debug, Args)]
@@ -544,6 +554,12 @@ pub struct TaskEditArgs {
     pub title: Option<String>,
     #[arg(long)]
     pub body: Option<String>,
+    /// Replace the task's components with these (repeatable).
+    #[arg(long = "component", value_name = "ID")]
+    pub component: Vec<String>,
+    /// Make the task repo-wide (clear its components).
+    #[arg(long, conflicts_with = "component")]
+    pub no_component: bool,
 }
 
 #[derive(Debug, Args)]
