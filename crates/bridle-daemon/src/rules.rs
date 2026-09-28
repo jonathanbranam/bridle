@@ -1028,6 +1028,58 @@ mod tests {
         assert_eq!(layers[0].dir, Path::new("/repo/../wf/base/rules"));
     }
 
+    /// The real `workflow/packs/python` layer (br-7678): exercises
+    /// `discover_layers`/`load_and_resolve` against actual pack content,
+    /// not synthetic fixtures, and demonstrates both binding paths the pack
+    /// promises — uv by default, pipenv via a project-layer `override:
+    /// replace` — the same mechanism `bridle rules explain`/`diff` use.
+    #[test]
+    fn python_pack_resolves_with_uv_default_and_pipenv_override() {
+        let repo_root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let workflow_root = repo_root.join("workflow");
+
+        // No project layer: the pack's own uv-default binding wins.
+        let repo = tempfile::tempdir().expect("tempdir");
+        let layers = discover_layers(repo.path(), Some(&workflow_root), &["python".to_string()]);
+        let resolution = load_and_resolve(&layers).expect("resolve");
+        let rule = &resolution.rules["python.package-manager"];
+        assert_eq!(rule.winning_layer().kind, LayerKind::Pack);
+        assert_eq!(rule.winning_layer().name, "python");
+        match rule.state() {
+            RuleState::Active { body, .. } => {
+                assert!(body.contains("uv run"));
+                assert!(body.contains("pipenv"));
+            }
+            other => panic!("expected active, got {other:?}"),
+        }
+
+        // Other pack rules load too.
+        assert!(resolution.rules.contains_key("python.ruff"));
+        assert!(resolution.rules.contains_key("python.test-floor"));
+        assert!(resolution.rules.contains_key("python.check-command"));
+        assert!(resolution.rules.contains_key("python.pytest-style"));
+
+        // A project on pipenv overrides the id in its own layer.
+        let project_rules = repo.path().join(".bridle").join("rules");
+        std::fs::create_dir_all(&project_rules).expect("mkdir");
+        std::fs::write(
+            project_rules.join("python.package-manager.md"),
+            "---\nid: python.package-manager\noverride: replace\nreason: this project uses pipenv, not uv\n---\nRun tools through `pipenv run` (e.g. `pipenv run pytest`).\n",
+        )
+        .expect("write");
+
+        let layers = discover_layers(repo.path(), Some(&workflow_root), &["python".to_string()]);
+        let resolution = load_and_resolve(&layers).expect("resolve");
+        let rule = &resolution.rules["python.package-manager"];
+        assert_eq!(rule.winning_layer().kind, LayerKind::Project);
+        match rule.state() {
+            RuleState::Active { body, .. } => {
+                assert!(body.contains("pipenv run"));
+            }
+            other => panic!("expected active, got {other:?}"),
+        }
+    }
+
     #[test]
     fn load_and_resolve_runs_end_to_end_on_real_directories() {
         let repo = tempfile::tempdir().expect("tempdir");

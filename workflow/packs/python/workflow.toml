@@ -1,0 +1,7 @@
+# L2 python pack for bridle's workflow system.
+#
+# Schema: docs/design/workflow-layers.md, roles-and-lifecycle.md and gates.md
+# in the bridle repo. Those tables ([roles.*], [gates.*], lifecycle settings)
+# aren't populated here yet, same as workflow/base/workflow.toml — this is
+# scaffolding.
+layer = "python"
