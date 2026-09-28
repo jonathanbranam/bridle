@@ -437,6 +437,16 @@ impl Store {
         self.with_conn(move |c| sync::get_task(c, &id)).await
     }
 
+    /// Inserts `row` exactly as given, rather than generating a fresh id and
+    /// `created_at` the way [`Store::insert_task`] does. Only for `bridle
+    /// rebuild`, reconstructing this table's rows from the state branch's
+    /// own ids and timestamps.
+    pub async fn insert_task_row(&self, row: &TaskRow) -> Result<(), StoreError> {
+        let row = row.clone();
+        self.with_conn(move |c| sync::insert_task_row(c, &row))
+            .await
+    }
+
     pub async fn list_tasks(&self) -> Result<Vec<TaskRow>, StoreError> {
         self.with_conn(sync::list_tasks).await
     }
@@ -540,6 +550,15 @@ impl Store {
 
     pub async fn list_edges(&self) -> Result<Vec<Edge>, StoreError> {
         self.with_conn(sync::list_edges).await
+    }
+
+    /// Inserts `edge` exactly as given, including its `created_at`, rather
+    /// than stamping `now()` the way [`Store::insert_edge`] does. Only for
+    /// `bridle rebuild`.
+    pub async fn insert_edge_row(&self, edge: &Edge) -> Result<(), StoreError> {
+        let edge = edge.clone();
+        self.with_conn(move |c| sync::insert_edge_row(c, &edge))
+            .await
     }
 
     // ---------- rate limits / usage ----------
@@ -1759,6 +1778,29 @@ mod sync {
         )))
     }
 
+    pub(super) fn insert_task_row(conn: &Connection, row: &TaskRow) -> Result<(), StoreError> {
+        let result = conn.execute(
+            "INSERT INTO tasks(id, title, kind, state, created_at, updated_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            params![
+                row.id,
+                row.title,
+                row.kind.as_str(),
+                row.state.as_str(),
+                fmt_dt(row.created_at),
+                fmt_dt(row.updated_at),
+            ],
+        );
+        match result {
+            Ok(_) => Ok(()),
+            Err(e) if is_unique_violation(&e) => Err(StoreError::Conflict(format!(
+                "task {:?} already exists",
+                row.id
+            ))),
+            Err(e) => Err(e.into()),
+        }
+    }
+
     pub(super) fn get_task(conn: &Connection, id: &str) -> Result<Option<TaskRow>, StoreError> {
         Ok(conn
             .query_row(
@@ -1845,6 +1887,28 @@ mod sync {
             Err(e) if is_unique_violation(&e) => Err(StoreError::Conflict(format!(
                 "edge already exists: {from} -{}-> {to}",
                 kind.as_str()
+            ))),
+            Err(e) => Err(e.into()),
+        }
+    }
+
+    pub(super) fn insert_edge_row(conn: &Connection, edge: &Edge) -> Result<(), StoreError> {
+        let result = conn.execute(
+            "INSERT INTO edges(from_task, to_task, kind, created_at) VALUES (?1, ?2, ?3, ?4)",
+            params![
+                edge.from,
+                edge.to,
+                edge.kind.as_str(),
+                fmt_dt(edge.created_at)
+            ],
+        );
+        match result {
+            Ok(_) => Ok(()),
+            Err(e) if is_unique_violation(&e) => Err(StoreError::Conflict(format!(
+                "edge already exists: {} -{}-> {}",
+                edge.from,
+                edge.kind.as_str(),
+                edge.to
             ))),
             Err(e) => Err(e.into()),
         }

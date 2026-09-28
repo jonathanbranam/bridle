@@ -85,6 +85,7 @@ pub fn router(state: AppState) -> Router {
             "/v1/edges",
             get(list_edges).post(add_edge).delete(remove_edge),
         )
+        .route("/v1/rebuild", post(rebuild))
         .route("/v1/shutdown", post(shutdown))
         .layer(middleware::from_fn_with_state(
             state.clone(),
@@ -1025,5 +1026,19 @@ async fn shutdown(
 ) -> Result<StatusCode, ApiError> {
     require_human(&principal)?;
     let _ = state.shutdown_tx.send(true);
+    Ok(StatusCode::NO_CONTENT)
+}
+
+/// `bridle rebuild` (docs/design/overview.md, "`bridle rebuild` recreates
+/// the database from the project's state branch"): reconstructs
+/// `tasks`/`edges`/`open_questions` from the state branch alone. Human-only,
+/// like `shutdown`; refuses (409) rather than overwrites if the database
+/// already has rows in any of those tables.
+async fn rebuild(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+) -> Result<StatusCode, ApiError> {
+    require_human(&principal)?;
+    state.tasks.rebuild_from_state_branch().await?;
     Ok(StatusCode::NO_CONTENT)
 }

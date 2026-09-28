@@ -463,6 +463,14 @@ impl Client {
         self.send_unit(req).await
     }
 
+    /// `bridle rebuild`: reconstructs `tasks`/`edges`/`open_questions` from
+    /// the project's state branch. Human-only; fails if the database
+    /// already has rows in any of those tables.
+    pub async fn rebuild(&self) -> Result<(), ClientError> {
+        let req = self.request(Method::POST, &["v1", "rebuild"])?;
+        self.send_unit(req).await
+    }
+
     /// `bridle statusline`'s only network call. Build the client with
     /// [`Client::new_with_timeout`] so this never hangs the human's prompt.
     pub async fn report_statusline(&self, report: &StatusLineReport) -> Result<(), ClientError> {

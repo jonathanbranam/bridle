@@ -15,7 +15,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
-use bridle_api::types::{Edge, Task, TaskKind, TaskState, ThreadEntry, ThreadEntryKind};
+use bridle_api::types::{Edge, EdgeKind, Task, TaskKind, TaskState, ThreadEntry, ThreadEntryKind};
 use chrono::{DateTime, SecondsFormat, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -235,6 +235,51 @@ impl StateBranch {
         let text = std::fs::read_to_string(path).ok()?;
         parse_task(&text).ok()
     }
+
+    /// Every task file under `tasks/`, parsed, sorted by id for a
+    /// deterministic order. Unlike [`StateBranch::read_task`] (which treats
+    /// a missing or unparseable file as "nothing to hydrate", tolerating a
+    /// crash between an enqueue and the next flush), this is strict: it's
+    /// only used by `bridle rebuild`, reconstructing the database from this
+    /// branch alone, where a task file that exists but won't parse must
+    /// surface as an error rather than silently vanish from the rebuilt set.
+    pub fn list_tasks(&self) -> Result<Vec<Task>, StateBranchError> {
+        let tasks_dir = self.dir.join("tasks");
+        let mut ids = Vec::new();
+        match std::fs::read_dir(&tasks_dir) {
+            Ok(entries) => {
+                for entry in entries {
+                    let path = entry?.path();
+                    if path.extension().and_then(|e| e.to_str()) == Some("md")
+                        && let Some(stem) = path.file_stem().and_then(|s| s.to_str())
+                    {
+                        ids.push(stem.to_string());
+                    }
+                }
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+            Err(e) => return Err(e.into()),
+        }
+        ids.sort();
+        ids.into_iter()
+            .map(|id| {
+                let text = std::fs::read_to_string(tasks_dir.join(format!("{id}.md")))?;
+                parse_task(&text)
+            })
+            .collect()
+    }
+
+    /// The current edge set from `edges.toml`, or empty if the file doesn't
+    /// exist yet (a project with no edges). Used by `bridle rebuild`; see
+    /// [`render_edges`] for why there's normally no read path back from this
+    /// file.
+    pub fn list_edges(&self) -> Result<Vec<Edge>, StateBranchError> {
+        match std::fs::read_to_string(self.dir.join("edges.toml")) {
+            Ok(text) => parse_edges(&text),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Vec::new()),
+            Err(e) => Err(e.into()),
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -315,6 +360,40 @@ fn render_edges(edges: &[Edge]) -> Result<String, StateBranchError> {
             .collect(),
     };
     Ok(toml::to_string_pretty(&file)?)
+}
+
+#[derive(Deserialize)]
+struct EdgeRecordOwned {
+    from: String,
+    to: String,
+    kind: String,
+    created_at: DateTime<Utc>,
+}
+
+#[derive(Deserialize, Default)]
+struct EdgesFileOwned {
+    #[serde(default)]
+    edge: Vec<EdgeRecordOwned>,
+}
+
+/// The inverse of [`render_edges`], used only by `bridle rebuild`
+/// (`render_edges`'s own doc comment notes there's normally no read path
+/// back from `edges.toml`, since SQLite already has everything an `Edge`
+/// carries — rebuild is the one case reconstructing SQLite from scratch).
+fn parse_edges(text: &str) -> Result<Vec<Edge>, StateBranchError> {
+    let file: EdgesFileOwned = toml::from_str(text)?;
+    file.edge
+        .into_iter()
+        .map(|e| {
+            let kind: EdgeKind = e.kind.parse().map_err(StateBranchError::Parse)?;
+            Ok(Edge {
+                from: e.from,
+                to: e.to,
+                kind,
+                created_at: e.created_at,
+            })
+        })
+        .collect()
 }
 
 /// The inverse of [`render_task`]. A known limitation: the body or an

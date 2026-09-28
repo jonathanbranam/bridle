@@ -29,7 +29,7 @@ use bridle_api::types::{
 use chrono::Utc;
 
 use crate::state_branch::{StateBranch, StateBranchError};
-use crate::store::{NewMessage, RecipientKind, Store, StoreError};
+use crate::store::{NewMessage, RecipientKind, Store, StoreError, TaskRow};
 
 #[derive(Debug, thiserror::Error)]
 pub enum TaskError {
@@ -139,6 +139,76 @@ impl TaskManager {
             claim_lease_after: chrono::Duration::from_std(claim_lease_after)
                 .unwrap_or_else(|_| chrono::Duration::zero()),
         })
+    }
+
+    /// Reconstructs `tasks`, `edges` and `open_questions` from the state
+    /// branch alone: the migration path for a fresh clone with no
+    /// `bridle.db` (docs/design/overview.md, "`bridle rebuild` recreates the
+    /// database from the project's state branch"). Refuses — rather than
+    /// silently overwriting — if the database already has any rows in these
+    /// tables; a rebuild is a from-nothing reconstruction, not a merge.
+    /// Claims are never touched: they're SQLite-only, with no state-branch
+    /// counterpart to rebuild from (storage.md), so any in-flight claim is
+    /// simply lost, which is correct here, not a gap.
+    ///
+    /// An open question's `message_id` in the rebuilt `open_questions` row
+    /// doesn't point at a real `messages` row: messages don't survive on the
+    /// state branch at all (overview.md's durability table lists them as
+    /// SQLite-only, "no durability, by design"), only the thread entry that
+    /// records the question's body/from/timestamp does. Rather than leave
+    /// the column unfillable, this synthesizes a stand-in id from the task
+    /// id; nothing downstream looks a message up by this id after a
+    /// rebuild, since there's no message row behind it to find.
+    pub async fn rebuild_from_state_branch(&self) -> Result<(), TaskError> {
+        if !self.store.list_tasks().await?.is_empty()
+            || !self.store.list_edges().await?.is_empty()
+            || !self.store.list_open_questions().await?.is_empty()
+        {
+            return Err(TaskError::Conflict(
+                "database already has tasks, edges or open questions; refusing to rebuild over it"
+                    .to_string(),
+            ));
+        }
+
+        let tasks = self.state.list_tasks()?;
+        let mut cache = HashMap::with_capacity(tasks.len());
+        let mut open_questions = HashMap::new();
+        for task in tasks {
+            self.store
+                .insert_task_row(&TaskRow {
+                    id: task.id.clone(),
+                    title: task.title.clone(),
+                    kind: task.kind,
+                    state: task.state,
+                    created_at: task.created_at,
+                    updated_at: task.updated_at,
+                })
+                .await?;
+            if let Some(entry) = task
+                .thread
+                .iter()
+                .rev()
+                .find(|e| matches!(e.kind, ThreadEntryKind::Question | ThreadEntryKind::Answer))
+                && entry.kind == ThreadEntryKind::Question
+            {
+                let message_id = format!("m-rebuilt-{}", task.id);
+                self.store
+                    .insert_open_question(&task.id, &message_id, &entry.from, entry.at)
+                    .await?;
+                open_questions.insert(task.id.clone(), message_id);
+            }
+            cache.insert(task.id.clone(), task);
+        }
+
+        let edges = self.state.list_edges()?;
+        for edge in &edges {
+            self.store.insert_edge_row(edge).await?;
+        }
+
+        *self.cache.lock().expect("task cache lock") = cache;
+        *self.edges.lock().expect("edges lock") = edges;
+        *self.open_questions.lock().expect("open questions lock") = open_questions;
+        Ok(())
     }
 
     fn put(&self, task: Task) -> Task {
@@ -1211,5 +1281,145 @@ mod tests {
             tm.ready_tasks().iter().any(|t| t.id == task.id),
             "a stale claim's lease expiry re-enables readiness"
         );
+    }
+
+    #[tokio::test]
+    async fn rebuild_reconstructs_tasks_edges_and_open_questions_from_the_state_branch() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let repo = tmp.path().join("repo");
+        init_repo(&repo).await;
+        let store = Store::open(tmp.path().join("bridle.db"))
+            .await
+            .expect("open store");
+        let state = StateBranch::open(&repo, &tmp.path().join("state"))
+            .await
+            .expect("open state branch");
+        let tm = TaskManager::open(
+            store,
+            state.clone(),
+            "tw".to_string(),
+            std::time::Duration::from_secs(600),
+        )
+        .await
+        .expect("open task manager");
+
+        let a = tm
+            .new_task("A", TaskKind::Chore, "body a".to_string())
+            .await
+            .expect("new a");
+        let b = tm
+            .new_task("B", TaskKind::Feature, "body b".to_string())
+            .await
+            .expect("new b");
+        let c = tm
+            .new_task("C", TaskKind::Feature, String::new())
+            .await
+            .expect("new c");
+        tm.add_edge(&a.id, &b.id, EdgeKind::Blocks)
+            .await
+            .expect("add edge");
+
+        force_planned(&tm, &c.id);
+        tm.ask_question(&c.id, &"human".to_string(), "which endpoint?")
+            .await
+            .expect("ask c");
+
+        force_planned(&tm, &b.id);
+        tm.ask_question(&b.id, &"agent:w1".to_string(), "old question?")
+            .await
+            .expect("ask b");
+        tm.answer_question(&b.id, &"human".to_string(), "answered")
+            .await
+            .expect("answer b");
+
+        tm.flush_now().await.expect("flush");
+
+        // A fresh, empty database over the same (already flushed) state
+        // branch, as the migration story describes: clone, start the
+        // daemon, `bridle rebuild`.
+        let fresh_store = Store::open(tmp.path().join("bridle2.db"))
+            .await
+            .expect("open fresh store");
+        let tm2 = TaskManager::open(
+            fresh_store.clone(),
+            state,
+            "tw".to_string(),
+            std::time::Duration::from_secs(600),
+        )
+        .await
+        .expect("open fresh task manager");
+        tm2.rebuild_from_state_branch().await.expect("rebuild");
+
+        let mut tasks = tm2.list_tasks();
+        tasks.sort_by(|x, y| x.id.cmp(&y.id));
+        assert_eq!(tasks.len(), 3);
+
+        let got_a = tasks.iter().find(|t| t.id == a.id).expect("a rebuilt");
+        assert_eq!(got_a.title, "A");
+        assert_eq!(got_a.body, "body a");
+        assert_eq!(got_a.state, TaskState::Open);
+
+        let got_b = tasks.iter().find(|t| t.id == b.id).expect("b rebuilt");
+        assert_eq!(got_b.state, TaskState::Planned);
+        assert_eq!(
+            got_b.thread.len(),
+            2,
+            "b's question and its answer both survive"
+        );
+        assert!(
+            !tm2.list_open_questions().iter().any(|q| q.task_id == b.id),
+            "b's question was answered before the rebuild, so it has no open question"
+        );
+
+        let got_c = tasks.iter().find(|t| t.id == c.id).expect("c rebuilt");
+        assert_eq!(got_c.state, TaskState::Planned);
+        assert!(
+            !tm2.is_ready(got_c),
+            "c's open question survives the rebuild and still blocks ready"
+        );
+
+        let edges = tm2.list_edges();
+        assert_eq!(edges.len(), 1);
+        assert_eq!(edges[0].from, a.id);
+        assert_eq!(edges[0].to, b.id);
+        assert_eq!(edges[0].kind, EdgeKind::Blocks);
+
+        let open_qs = tm2.list_open_questions();
+        assert_eq!(open_qs.len(), 1);
+        assert_eq!(open_qs[0].task_id, c.id);
+        assert_eq!(open_qs[0].asked_by, "human");
+        assert_eq!(open_qs[0].body, "which endpoint?");
+
+        // The database rows themselves, not just the in-memory cache this
+        // process built while rebuilding.
+        let db_tasks = fresh_store.list_tasks().await.expect("db tasks");
+        assert_eq!(db_tasks.len(), 3);
+        let db_edges = fresh_store.list_edges().await.expect("db edges");
+        assert_eq!(db_edges.len(), 1);
+        let db_open_qs = fresh_store
+            .list_open_questions()
+            .await
+            .expect("db open questions");
+        assert_eq!(db_open_qs.len(), 1);
+        assert_eq!(db_open_qs[0].task_id, c.id);
+    }
+
+    #[tokio::test]
+    async fn rebuild_refuses_against_an_already_populated_database() {
+        let (tm, _tmp) = manager().await;
+        tm.new_task("A", TaskKind::Chore, String::new())
+            .await
+            .expect("new a");
+        tm.flush_now().await.expect("flush");
+
+        let err = tm
+            .rebuild_from_state_branch()
+            .await
+            .expect_err("must refuse to rebuild over an already-populated database");
+        assert!(matches!(err, TaskError::Conflict(_)));
+
+        // Untouched: still exactly the one task from before the refused
+        // rebuild attempt.
+        assert_eq!(tm.list_tasks().len(), 1);
     }
 }
