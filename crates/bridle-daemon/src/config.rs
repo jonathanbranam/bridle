@@ -592,6 +592,11 @@ pub struct Config {
     /// e.g. `tw-7fa2`). `None` means derive one from the project name
     /// ([`default_task_prefix`]).
     pub task_prefix: Option<String>,
+    /// Where the L1/L2 workflow layers live (docs/design/workflow-layers.md):
+    /// a path (relative to the repo root) or a git url. `None` until a
+    /// project opts in. Not yet read by anything — the layer resolution
+    /// engine is separate work.
+    pub workflow: Option<String>,
 }
 
 impl Default for Config {
@@ -610,6 +615,7 @@ impl Default for Config {
             models: ModelsConfig::default(),
             context: ContextConfig::default(),
             task_prefix: None,
+            workflow: None,
         }
     }
 }
@@ -760,6 +766,8 @@ impl Config {
             config.task_prefix = t.prefix;
         }
 
+        config.workflow = raw.workflow;
+
         Ok(config)
     }
 }
@@ -841,6 +849,8 @@ struct RawConfig {
     context: Option<RawContext>,
     #[serde(default)]
     tasks: Option<RawTasks>,
+    #[serde(default)]
+    workflow: Option<String>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -1636,6 +1646,13 @@ mod tests {
         assert_eq!(cfg.models.by_role["explore"], vec!["opus", "haiku"]);
         // Untouched roles keep the built-in default.
         assert_eq!(cfg.models.by_role["manager"], vec!["opus", "sonnet"]);
+    }
+
+    #[test]
+    fn workflow_path_is_parsed_and_defaults_to_none() {
+        assert_eq!(Config::parse("").expect("parse").workflow, None);
+        let cfg = Config::parse(r#"workflow = "workflow""#).expect("parse");
+        assert_eq!(cfg.workflow.as_deref(), Some("workflow"));
     }
 
     #[test]
