@@ -21,6 +21,8 @@ cause (or "unknown").
 - **What still worked:**
   - The machine was awake, on power and online. The human saw it on Tailscale. `pmset -g log`
     has no Sleep/Wake entries in the window, and uptime was 30 days.
+    `caffeinate -si` (pid 67952, started 2026-09-26 18:39 UTC) held `PreventSystemSleep`
+    and `PreventUserIdleSystemSleep` throughout.
   - The bridle daemon (pid 83314) kept running. After the five_hour reset at 19:20 it resumed
     pm-1 and python-pack-2 itself.
 - **Impact:**
