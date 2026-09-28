@@ -58,3 +58,32 @@ from the machine-wide config, and a project config may only lower them.
   next scheduled change (a thermostat's "hold until next"); `--until <time>`
   sets the end; `bridle budget override --clear` goes back to the schedule
   now. Whether a permanent override is needed is open (YAGNI: probably not).
+
+## Resolution
+
+Both parts have been implemented and merged into main:
+
+**Part 1** (commit cdb4ed0): Schedule-based five-hour budget thresholds by
+time of day. `[[budget.schedule]]` periods list named periods with days and
+hours in the daemon's local timezone, each with their own `hold_at`,
+`wind_down_at`, and `stop_at` thresholds for the `five_hour` window only.
+Periods are walked in order and the first match (matching days and time range)
+becomes the effective thresholds; no match falls back to plain `[budget]`
+defaults. The schedule itself is never affected by the human's hold or
+override — only the five-hour window respects it.
+
+**Part 2** (commit aab6ee6): Thermostat-style bridle budget override over the
+schedule. `bridle budget override <period-name|default> [--until HH:MM]` forces
+a period's thresholds for the five-hour window (or the defaults if `default` is
+named), bypassing the schedule entirely until the override expires. With no
+`--until`, the override lasts until the schedule (unforced) would naturally
+transition to a different period; `--until` sets an explicit end in the daemon's
+local time, rolling to tomorrow if already past. `bridle budget override --clear`
+cancels an active override immediately. Like the hold, an override is human-only
+and shown in `bridle budget` output. Schedule periods live under `[budget]`, so
+a project config may only lower a period's thresholds, never raise them.
+
+Both are documented in `docs/design/usage-and-budget.md` (schedule at §195–239,
+override at §240–275).
+
+Resolved 2026-09-28.
