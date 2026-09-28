@@ -27,20 +27,42 @@ fn fast_overrides() -> Overrides {
     }
 }
 
+/// A threshold above fake-claude's fixed `get_context_usage` default (999,
+/// see fake-claude.py), so a turn only crosses it when a test deliberately
+/// overrides `.fake-claude-context-usage` — including the synthetic
+/// continuation-note turn `renew` now sends the moment it swaps a process in
+/// (br-ab66): without this margin, that turn's own default-999 reading would
+/// re-cross a threshold as low as `1` and renew forever. The override file is
+/// consumed on read (fake-claude.py), so writing it once is enough: the
+/// deliberately crossing turn reads it, every later turn (including the
+/// renewed process's own continuation-note turn) falls back to the
+/// under-threshold default.
+const THRESHOLD: u64 = 2_000;
+const CROSSING_TOKENS: u64 = 5_000;
+
+fn write_high_context_usage(cwd: &str) {
+    std::fs::write(
+        std::path::Path::new(cwd).join(".fake-claude-context-usage"),
+        serde_json::json!({"totalTokens": CROSSING_TOKENS}).to_string(),
+    )
+    .expect("write .fake-claude-context-usage");
+}
+
 #[tokio::test]
 async fn crossing_wind_down_at_sends_handoff_and_renews_once() {
-    // An artificially low threshold: any completed turn's context_tokens
-    // will cross it.
-    let config = "[context.wind_down_at]\ndefault = 1\n";
-    let (daemon, _tmp) = start_daemon_with_config(Some(fast_overrides()), Some(config)).await;
+    let config = format!("[context.wind_down_at]\ndefault = {THRESHOLD}\n");
+    let (daemon, _tmp) = start_daemon_with_config(Some(fast_overrides()), Some(&config)).await;
     let c = &daemon.client;
 
     let agent = c
         .spawn(&SpawnRequest {
             role: "worker".to_string(),
             name: Some("w1".to_string()),
-            prompt: Some("hi".to_string()),
-            workdir: Some(Workdir::Repo),
+            // SLEEP gives the test a window, after `spawn` returns at
+            // `system/init`, to drop the override below before this first
+            // turn's own `get_context_usage` probe at turn end.
+            prompt: Some("SLEEP 1".to_string()),
+            workdir: Some(Workdir::Worktree { base: None }),
             model: None,
             extra_allowed_tools: Vec::new(),
             extra_env: Vec::new(),
@@ -48,11 +70,13 @@ async fn crossing_wind_down_at_sends_handoff_and_renews_once() {
         })
         .await
         .expect("spawn");
+    write_high_context_usage(&agent.cwd);
 
-    // With a threshold this low, the crossing (and its handoff-turn
-    // renewal) can happen within a poll or two of the first turn ending, so
-    // don't try to catch the transient "Idle right after turn 1" state —
-    // it's a race by construction. Go straight to the renewal itself.
+    // With a threshold this low relative to the deliberate crossing, the
+    // crossing (and its handoff-turn renewal) can happen within a poll or
+    // two of the first turn ending, so don't try to catch the transient
+    // "Idle right after turn 1" state — it's a race by construction. Go
+    // straight to the renewal itself.
     wait_for_event(c, "agent.renewed", Some(&agent.id), |_| true).await;
 
     let messages = c
@@ -74,10 +98,7 @@ async fn crossing_wind_down_at_sends_handoff_and_renews_once() {
         "expected exactly one handoff notice, got {handoffs:?}"
     );
 
-    // Renew clears context_tokens (a fresh session has no completed turn
-    // yet), so later ticks see nothing to cross and don't renew again.
     let renewed = c.get_agent(&agent.id).await.expect("get renewed agent");
-    assert_eq!(renewed.context_tokens, None);
     assert_ne!(
         renewed.session_id, agent.session_id,
         "renew starts a fresh session"
@@ -108,8 +129,8 @@ async fn crossing_wind_down_at_sends_handoff_and_renews_once() {
 /// those races.
 #[tokio::test]
 async fn many_concurrent_crossings_each_renew_exactly_once() {
-    let config = "[context.wind_down_at]\ndefault = 1\n";
-    let (daemon, _tmp) = start_daemon_with_config(Some(fast_overrides()), Some(config)).await;
+    let config = format!("[context.wind_down_at]\ndefault = {THRESHOLD}\n");
+    let (daemon, _tmp) = start_daemon_with_config(Some(fast_overrides()), Some(&config)).await;
     let c = &daemon.client;
 
     const N: usize = 30;
@@ -119,8 +140,11 @@ async fn many_concurrent_crossings_each_renew_exactly_once() {
             .spawn(&SpawnRequest {
                 role: "worker".to_string(),
                 name: Some(format!("w{i}")),
-                prompt: Some("hi".to_string()),
-                workdir: Some(Workdir::Repo),
+                prompt: Some("SLEEP 1".to_string()),
+                // Each agent needs its own `.fake-claude-context-usage`
+                // (below), so each gets its own worktree/cwd rather than
+                // sharing the plain repo checkout.
+                workdir: Some(Workdir::Worktree { base: None }),
                 model: None,
                 extra_allowed_tools: Vec::new(),
                 extra_env: Vec::new(),
@@ -128,6 +152,7 @@ async fn many_concurrent_crossings_each_renew_exactly_once() {
             })
             .await
             .expect("spawn");
+        write_high_context_usage(&agent.cwd);
         agents.push(agent);
     }
 

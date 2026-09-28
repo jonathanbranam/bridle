@@ -4,10 +4,13 @@
 
 mod support;
 
-use bridle_api::types::{AgentState, RenewRequest, SpawnRequest, StopRequest, Workdir};
+use bridle_api::types::{
+    AgentState, MessageQuery, RenewRequest, SpawnRequest, StopRequest, Workdir, event_kind,
+};
 use bridle_daemon::Overrides;
 use support::{
-    default_overrides, fake_claude_argv_and_env_dump_wrapper, start_daemon, wait_for_state,
+    default_overrides, fake_claude_argv_and_env_dump_wrapper, start_daemon, wait_for_event,
+    wait_for_state,
 };
 
 #[tokio::test]
@@ -96,6 +99,80 @@ async fn renew_replaces_the_process_in_the_same_worktree_and_branch() {
         count, 1,
         "renew must not create a second worktree for the branch"
     );
+
+    daemon.running.shutdown();
+    daemon.running.join().await.expect("join");
+}
+
+/// br-ab66: a renewed agent must get a first message of its own, even with
+/// no pending messages queued for it (the common case: the agent renewed
+/// itself mid-task, nothing new was sent to it) — otherwise the fresh
+/// process just sits on stdin forever, since (unlike `spawn`) `renew` has no
+/// `req.prompt`/`start_prompt` to send.
+#[tokio::test]
+async fn renew_sends_a_continuation_note_with_no_pending_messages() {
+    let (daemon, _tmp) = start_daemon(None).await;
+
+    let agent = daemon
+        .client
+        .spawn(&SpawnRequest {
+            role: "worker".to_string(),
+            name: Some("w1".to_string()),
+            prompt: None,
+            workdir: Some(Workdir::Worktree { base: None }),
+            model: None,
+            extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
+            ignore_budget: false,
+        })
+        .await
+        .expect("spawn");
+    wait_for_state(&daemon.client, &agent.id, AgentState::Idle).await;
+
+    daemon
+        .client
+        .stop(&agent.id, &StopRequest { now: true })
+        .await
+        .expect("stop");
+    wait_for_state(&daemon.client, &agent.id, AgentState::Stopped).await;
+
+    // No pending messages queued for the agent before this renew: the note
+    // below has to come from `renew` itself.
+    let renewed = daemon
+        .client
+        .renew(
+            &agent.id,
+            &RenewRequest {
+                ignore_budget: false,
+            },
+        )
+        .await
+        .expect("renew");
+
+    wait_for_event(
+        &daemon.client,
+        event_kind::TURN_STARTED,
+        Some(&renewed.id),
+        |_| true,
+    )
+    .await;
+
+    let inbox = daemon
+        .client
+        .list_messages(&MessageQuery {
+            to: Some(renewed.id.clone()),
+            ..Default::default()
+        })
+        .await
+        .expect("list messages");
+    assert!(
+        inbox
+            .iter()
+            .any(|m| m.body.contains("Continue from your task's thread")),
+        "expected a continuation note in the renewed agent's inbox, got {inbox:?}"
+    );
+
+    wait_for_state(&daemon.client, &agent.id, AgentState::Idle).await;
 
     daemon.running.shutdown();
     daemon.running.join().await.expect("join");
