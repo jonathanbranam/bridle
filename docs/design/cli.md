@@ -22,7 +22,9 @@ bridle spawn   <role> [--name N] [--prompt TEXT | --prompt-file FILE]
 bridle agents  [--all]
 bridle show    <agent>
 bridle send    <agent|human|role:NAME> [TEXT | --text-file FILE] [--question] [--when now|idle] [--reply-to ID]
-bridle inbox   [--all] [--mark-read]        # messages to me, plus every task's open question
+bridle inbox   [--all] [--mark-read]        # messages to me, plus every task's open question (list)
+bridle inbox show <id> [--no-mark-read]     # show one message in full, mark read by default
+bridle inbox read <id>...                   # mark one or more messages read
 bridle ask     <task-id> TEXT                    question against a task; blocks it until answered
 bridle answer  <task-id> TEXT                    answers a task's open question; frees it to be ready again
 bridle claim   <task-id>                         claims a ready task for the caller: planned -> claimed
@@ -212,16 +214,33 @@ bridle task note   <id> TEXT                     plain note to the task's thread
   can't be combined with `--to`/`--kind`. `dep rm` takes the same shape. Edges can't
   connect a task to itself, and a repeat of the same `(from, to, kind)` triple is a
   conflict, not a silent no-op.
+- **`inbox`** has three forms:
+  - Bare `bridle inbox [--all] [--mark-read]` (list, the default) shows every message to
+    `me` plus every task's open question: reads `GET /v1/messages` (with `to=me`,
+    `unread=true` by default) and `GET /v1/questions`. `--all` drops the `unread` filter
+    (shows read messages too); `--mark-read` calls `POST /v1/messages/{id}/read` on each
+    message after listing, marking every one read. In JSON mode, returns both messages and
+    questions; plain text prints a compact line per message/question.
+  - `bridle inbox show <id> [--no-mark-read]` (show one message in full) fetches a single
+    message to `me` by id, prints the full header (from, kind, time, reply-to), the body,
+    and the reply command (formatted as `bridle send <from> --reply-to <id> "..."`). By
+    default, calls `POST /v1/messages/{id}/read` to mark it read, just as reading an
+    inbox message in most UI apps would; pass `--no-mark-read` to list cheaply without
+    side effects. In JSON mode, returns the message object; plain text returns the
+    formatted rendering above. Fails with a 404-like error if the message doesn't exist
+    or isn't addressed to `me`.
+  - `bridle inbox read <id>... ` (mark read, one or more) calls `POST /v1/messages/{id}/read`
+    for each id in turn (the same endpoint `--mark-read` on list uses per message). Accepts
+    multiple ids; useful for marking specific messages read without listing/marking
+    everything else. In JSON mode, returns the list of ids that were marked; plain text
+    prints a line per id.
 - **`ask`/`answer`** are thin clients of `TaskManager::ask_question`/`answer_question`
   (docs/design/coordination.md, "Questions do not stop work"): `ask` appends a `question`
   thread entry and blocks the task's readiness until answered (`Conflict` if one is
   already open); `answer` appends an `answer` entry and clears the block. Neither takes a
   recipient — a question addressed to a task has no single recipient, per
   coordination.md's message table — so there's no `--to`; send-to-task is a
-  later task. `inbox` lists every task's open question (task id, asker,
-  body, age) alongside messages addressed to `me`, reading `GET /v1/questions`
-  (`TaskManager::list_open_questions`, backed by the same in-memory cache `is_ready`
-  reads) rather than walking the state branch.
+  later task.
 - **`claim`/`release`** are thin clients of `TaskManager::claim_task`/`release_task`
   (docs/design/storage.md, "claims and leases"): `claim` moves a `planned`, unblocked
   task to `claimed` for the calling principal (`Conflict` if it isn't ready to claim —
