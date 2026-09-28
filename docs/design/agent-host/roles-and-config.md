@@ -6,8 +6,13 @@ thresholds) is different: it's read from the machine-wide
 `~/.bridle/config.toml` first, and a project's `.bridle/config.toml` may
 only lower its four percentage thresholds, never raise them — see
 [[../usage-and-budget#The budget governor|the budget governor]] for the
-full shape and merge rule. Everything else below is project-scoped, as
-usual:
+full shape and merge rule. `[budget]` can also carry `[[budget.schedule]]`:
+named periods, in host-local days and `HH:MM` time-of-day (the daemon's own
+`chrono::Local`, not a configured timezone), that replace the `five_hour`
+thresholds while they're in effect — see
+[[../usage-and-budget#Schedule|Schedule]]. The same lower-only rule applies
+to a project's own schedule periods. Everything else below is
+project-scoped, as usual:
 
 ```toml
 [daemon]
