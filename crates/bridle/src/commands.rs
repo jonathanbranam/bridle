@@ -112,7 +112,7 @@ async fn stop_daemon(cli: &Cli) -> Result<(), CliError> {
     let deadline = std::time::Instant::now() + std::time::Duration::from_secs(60);
     loop {
         if client.health().await.is_err() {
-            println!("daemon stopped");
+            println!("received; shutting down gracefully, may take up to 30s");
             return Ok(());
         }
         if std::time::Instant::now() >= deadline {
@@ -211,6 +211,31 @@ fn format_utilization(u: Option<f64>) -> String {
         .unwrap_or_else(|| "-".to_string())
 }
 
+fn format_tokens(tokens: u64) -> String {
+    format_tokens_impl(tokens as usize)
+}
+
+fn format_tokens_impl(tokens: usize) -> String {
+    if tokens >= 10000 {
+        let k = tokens as f64 / 1000.0;
+        if k >= 100.0 {
+            format!("{:.0}k", k)
+        } else {
+            format!("{:.1}k", k)
+        }
+    } else {
+        tokens.to_string()
+    }
+}
+
+fn format_cost_dollars(cost: f64) -> String {
+    if cost >= 1.0 {
+        format!("{:.2}", cost)
+    } else {
+        format!("{:.4}", cost)
+    }
+}
+
 async fn spawn(cli: &Cli, args: &SpawnArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
     let prompt = match (&args.prompt, &args.prompt_file) {
@@ -246,7 +271,7 @@ async fn spawn(cli: &Cli, args: &SpawnArgs) -> Result<(), CliError> {
 /// No turn has ended yet, not a real zero-sized context.
 fn format_context_tokens(tokens: Option<u64>) -> String {
     match tokens {
-        Some(n) => n.to_string(),
+        Some(n) => format_tokens(n),
         None => "-".to_string(),
     }
 }
@@ -280,14 +305,14 @@ async fn agents(cli: &Cli, args: &AgentsArgs) -> Result<(), CliError> {
         );
         for a in &list {
             println!(
-                "{:<12} {:<14} {:<10} {:<9} {:<10} {:>5} {:>9.4} {:>9}",
+                "{:<12} {:<14} {:<10} {:<9} {:<10} {:>5} {:>9} {:>9}",
                 a.id,
                 a.name,
                 a.role,
                 a.state.to_string(),
                 a.model,
                 a.turns,
-                a.cost_usd_total,
+                format_cost_dollars(a.cost_usd_total),
                 format_context_tokens(a.context_tokens),
             );
         }
@@ -314,7 +339,7 @@ async fn show(cli: &Cli, args: &ShowArgs) -> Result<(), CliError> {
             println!("branch      {b}");
         }
         println!("turns       {}", agent.turns);
-        println!("cost        ${:.4}", agent.cost_usd_total);
+        println!("cost        ${}", format_cost_dollars(agent.cost_usd_total));
         println!("held msgs   {}", agent.held_messages);
         println!("unacked     {}", agent.unacked_messages);
         println!(
@@ -668,16 +693,21 @@ async fn usage(cli: &Cli, args: &UsageArgs) -> Result<(), CliError> {
                     .map(|r| format!("{:.1}%", r * 100.0))
                     .unwrap_or_else(|| "-".to_string());
                 println!(
-                    "{:<20} {:>5} {:>12} {:>9.4} {:>8}",
-                    g.key, g.turns, tokens, g.cost_usd_total, cache
+                    "{:<20} {:>5} {:>12} {:>9} {:>8}",
+                    g.key,
+                    g.turns,
+                    format_tokens(tokens),
+                    format_cost_dollars(g.cost_usd_total),
+                    cache
                 );
             }
             let t = &breakdown.total_tokens;
+            let total_tokens = t.input + t.output + t.cache_read + t.cache_write;
             println!(
-                "total: {} turns, {} tokens, ${:.4}",
+                "total: {} turns, {} tokens, ${}",
                 breakdown.total_turns,
-                t.input + t.output + t.cache_read + t.cache_write,
-                breakdown.total_cost_usd
+                format_tokens(total_tokens),
+                format_cost_dollars(breakdown.total_cost_usd)
             );
             if let Some(ratio) = breakdown.cache_hit_ratio {
                 println!("cache hit ratio: {:.1}%", ratio * 100.0);
@@ -703,16 +733,22 @@ async fn usage(cli: &Cli, args: &UsageArgs) -> Result<(), CliError> {
                 a.name.clone()
             };
             println!(
-                "{:<12} {:<14} {:<10} {:>5} {:>12} {:>9.4}",
-                a.agent, name, a.role, a.turns, tokens, a.cost_usd_total
+                "{:<12} {:<14} {:<10} {:>5} {:>12} {:>9}",
+                a.agent,
+                name,
+                a.role,
+                a.turns,
+                format_tokens(tokens),
+                format_cost_dollars(a.cost_usd_total)
             );
         }
         let t = &usage.total_tokens;
+        let total_tokens = t.input + t.output + t.cache_read + t.cache_write;
         println!(
-            "total: {} turns, {} tokens, ${:.4}",
+            "total: {} turns, {} tokens, ${}",
             usage.total_turns,
-            t.input + t.output + t.cache_read + t.cache_write,
-            usage.total_cost_usd
+            format_tokens(total_tokens),
+            format_cost_dollars(usage.total_cost_usd)
         );
         if let Some(ratio) = usage.cache_hit_ratio {
             println!("cache hit ratio: {:.1}%", ratio * 100.0);
@@ -733,7 +769,7 @@ async fn usage(cli: &Cli, args: &UsageArgs) -> Result<(), CliError> {
             for row in &usage.interactive_today {
                 let cost = row
                     .cost_usd
-                    .map(|c| format!("${c:.4}"))
+                    .map(|c| format!("${}", format_cost_dollars(c)))
                     .unwrap_or_else(|| "-".to_string());
                 let ctx = match row.context_used_percentage {
                     Some(p) => format!("{:.0}%", p * 100.0),
@@ -809,7 +845,7 @@ async fn cost_audit(cli: &Cli, args: &CostAuditArgs) -> Result<(), CliError> {
 fn print_cost_row(r: &bridle_daemon::cost_audit::RoleAudit) {
     let baseline = r
         .baseline_tokens
-        .map(|b| b.to_string())
+        .map(format_tokens_impl)
         .unwrap_or_else(|| "-".to_string());
     let change = r
         .change_percent
@@ -818,7 +854,10 @@ fn print_cost_row(r: &bridle_daemon::cost_audit::RoleAudit) {
     let flag = if r.over_threshold { " !" } else { "" };
     println!(
         "{:<14} {:>9} {:>9} {:>8}{flag}",
-        r.role, r.current_tokens, baseline, change
+        r.role,
+        format_tokens_impl(r.current_tokens),
+        baseline,
+        change
     );
 }
 
