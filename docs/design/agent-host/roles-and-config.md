@@ -79,6 +79,17 @@ start_prompt      = "Check your inbox and tell the human you're ready."   # firs
   integrator is bridle itself, in its own worktree
   ([[docs/design/roles-and-lifecycle|roles]]).
 
+## Per-spawn tool overrides
+
+`bridle spawn <role> --allow-tool TOOL` (repeatable) grants a tool beyond the
+role's `allowed_tools` for that one spawn only ([[../cli#Built|cli.md]]).
+It's per-invocation: nothing is written to `.bridle/config.toml` or the role,
+so the next agent spawned with the same role gets the role's own tools again.
+It only adds — there's no `--deny-tool` to shrink a role's tools for one
+spawn, since `disallowed_tools` is meant as a floor every agent of a role
+gets, not something a single spawn should be able to lower
+(docs/questions/open/per-task-tools-and-model-k8dw.md).
+
 The [[docs/design/workflow-layers|workflow layers]] later replace the role
 prompts. The `[roles]` table stays as the place a role's own default model
 and tools are set. `[models]` sits alongside it: an ordered, strongest-first

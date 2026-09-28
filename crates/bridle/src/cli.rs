@@ -174,6 +174,11 @@ pub struct SpawnArgs {
     pub cwd: Option<PathBuf>,
     #[arg(long)]
     pub model: Option<String>,
+    /// Grant this tool for this one spawn only, beyond the role's
+    /// `allowed_tools` (docs/design/agent-host/roles-and-config.md). Repeat
+    /// for more than one.
+    #[arg(long = "allow-tool", value_name = "TOOL")]
+    pub allow_tool: Vec<String>,
     /// Skip the budget governor's holding/paused check for this one spawn.
     #[arg(long)]
     pub ignore_budget: bool,
@@ -627,6 +632,29 @@ mod tests {
         assert!(!args.worktree);
         assert!(!args.in_repo);
         assert_eq!(args.cwd, None);
+    }
+
+    #[test]
+    fn spawn_allow_tool_is_repeatable_and_defaults_empty() {
+        let cli = parse(&["spawn", "worker"]).unwrap();
+        let Command::Spawn(args) = cli.command else {
+            panic!("expected spawn")
+        };
+        assert!(args.allow_tool.is_empty());
+
+        let cli = parse(&[
+            "spawn",
+            "worker",
+            "--allow-tool",
+            "WebSearch",
+            "--allow-tool",
+            "WebFetch",
+        ])
+        .unwrap();
+        let Command::Spawn(args) = cli.command else {
+            panic!("expected spawn")
+        };
+        assert_eq!(args.allow_tool, vec!["WebSearch", "WebFetch"]);
     }
 
     #[test]

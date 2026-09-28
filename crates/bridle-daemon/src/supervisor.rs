@@ -662,6 +662,11 @@ impl AgentManager {
         cmd.append_system_prompt_file = Some(system_prompt_path);
         cmd.permission_mode = Some(role.permission_mode.clone());
         cmd.allowed_tools = role.effective_allowed_tools();
+        for tool in &req.extra_allowed_tools {
+            if !cmd.allowed_tools.contains(tool) {
+                cmd.allowed_tools.push(tool.clone());
+            }
+        }
         cmd.disallowed_tools = role.disallowed_tools.clone();
         cmd.stop_check = role.stop_check;
         cmd.name = Some(agent.name.clone());

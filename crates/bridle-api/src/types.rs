@@ -196,6 +196,10 @@ pub struct SpawnRequest {
     /// None = the role's default.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub model: Option<String>,
+    /// Extra tools to grant for this one spawn only, beyond the role's
+    /// `allowed_tools`. Never touches the role's `disallowed_tools`.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub extra_allowed_tools: Vec<String>,
     /// Skip the budget governor's holding/paused check for this one call
     /// (usage-and-budget.md, Resuming: the escape hatch).
     #[serde(default)]
