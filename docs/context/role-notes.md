@@ -81,6 +81,10 @@ split above.
 
 Newest first. One line per item: what happened, who did it, what it says about roles.
 
+- 2026-09-28: the product manager proposed a separate `bridle-workflow` repo,
+  and the orchestrator seconded it; the human rejected it as a hassle (r2uq).
+  The voice should check a design's heavier choices against KISS before
+  recommending them, not pass them through.
 - 2026-09-28: the human asked for the voice/admin split and for this file.
   The orchestrator took the human's answers to three questions (P2 next,
   j2vq parked, no alias) and relayed them to the product manager.
