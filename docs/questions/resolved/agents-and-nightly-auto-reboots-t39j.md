@@ -31,3 +31,13 @@ Raised on 2026-09-27 while checking the NUC plan ([[docs/context/nuc-host|NUC ho
   inhibitor while turns are running.
 - Run the daemon as a systemd user service in the foreground, not
   `serve --detach`, so systemd restarts it after a reboot.
+
+## Resolution
+
+Accept the lost-turn risk from nightly auto-reboot as-is. bridle doesn't run
+on the NUC yet, so the systemd-inhibitor option (holding a shutdown inhibitor
+while turns are running) is YAGNI for now. Revisit both this decision and the
+resume policy ([[do-workers-resume-after-a-daemon-restart-2fkk|2fkk]]) when
+bridle actually moves to the NUC.
+
+Resolved 2026-09-28.
