@@ -231,6 +231,26 @@ fn require_human(principal: &Principal) -> Result<(), ApiError> {
     }
 }
 
+/// Worker-role agents get no agent lifecycle authority
+/// (docs/design/agent-host/roles-and-config.md): they can run arbitrary
+/// Bash but must not spawn/interrupt/stop/resume/renew/remove agents via
+/// the API. Manager, orchestrator, human and other non-worker principals
+/// pass through unchanged.
+async fn require_not_worker(state: &AppState, principal: &Principal) -> Result<(), ApiError> {
+    if principal.kind != PrincipalKind::Agent {
+        return Ok(());
+    }
+    let name = principal.id.strip_prefix("agent:").unwrap_or(&principal.id);
+    let role = state.store.get_agent(name).await?.map(|a| a.role);
+    if role.as_deref() == Some("worker") {
+        Err(ApiError::forbidden(
+            "worker agents cannot use agent lifecycle endpoints",
+        ))
+    } else {
+        Ok(())
+    }
+}
+
 // ---------- health / status ----------
 
 async fn health(State(state): State<AppState>) -> Result<Json<Health>, ApiError> {
@@ -374,6 +394,7 @@ async fn spawn_agent(
     Extension(principal): Extension<Principal>,
     Json(req): Json<SpawnRequest>,
 ) -> Result<Json<Agent>, ApiError> {
+    require_not_worker(&state, &principal).await?;
     Ok(Json(state.manager.spawn(req, &principal).await?))
 }
 
@@ -420,6 +441,7 @@ async fn interrupt_agent(
     Path(id): Path<String>,
     Json(req): Json<InterruptRequest>,
 ) -> Result<Json<bridle_api::types::InterruptResponse>, ApiError> {
+    require_not_worker(&state, &principal).await?;
     Ok(Json(
         state
             .manager
@@ -434,6 +456,7 @@ async fn stop_agent(
     Path(id): Path<String>,
     Json(req): Json<StopRequest>,
 ) -> Result<Json<Agent>, ApiError> {
+    require_not_worker(&state, &principal).await?;
     Ok(Json(state.manager.stop(&id, req.now, &principal).await?))
 }
 
@@ -443,6 +466,7 @@ async fn resume_agent(
     Path(id): Path<String>,
     Json(req): Json<ResumeRequest>,
 ) -> Result<Json<Agent>, ApiError> {
+    require_not_worker(&state, &principal).await?;
     Ok(Json(
         state
             .manager
@@ -457,6 +481,7 @@ async fn renew_agent(
     Path(id): Path<String>,
     Json(req): Json<RenewRequest>,
 ) -> Result<Json<Agent>, ApiError> {
+    require_not_worker(&state, &principal).await?;
     Ok(Json(
         state
             .manager
@@ -471,6 +496,7 @@ async fn remove_agent(
     Path(id): Path<String>,
     Query(q): Query<RemoveQuery>,
 ) -> Result<StatusCode, ApiError> {
+    require_not_worker(&state, &principal).await?;
     state
         .manager
         .remove(&id, q.force, q.delete_branch, &principal)
