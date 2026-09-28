@@ -22,6 +22,7 @@ fn fast_overrides() -> Overrides {
         governor_poll_interval_normal: Duration::ZERO,
         governor_poll_interval_above_hold: Duration::ZERO,
         task_flush_interval: Duration::from_secs(3600),
+        claim_lease_check_interval: Duration::from_secs(3600),
     }
 }
 

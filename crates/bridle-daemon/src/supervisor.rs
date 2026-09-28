@@ -142,6 +142,16 @@ struct AgentRuntime {
     /// `bridle stop`, and give it a reason that `resume_on_restart` treats
     /// like `lost` after the next start.
     shutdown_requested: AtomicBool,
+    /// CAS-claimed the first time something actually calls `renew` for a
+    /// pending context handoff (htp6b), so only one of the turn-end hook
+    /// and `expire_context_renews`'s periodic sweep spawns it — plain
+    /// `context_renew_pending` alone isn't enough: it stays true, read by
+    /// both, until the fresh runtime `renew` creates replaces this one, so
+    /// either the turn that caused the crossing and the handoff turn it
+    /// triggers can both see it true and both spawn a renew, or two sweep
+    /// ticks can both see the same deadline as due before the first renew
+    /// finishes.
+    context_renew_claimed: AtomicBool,
     state: AsyncMutex<RuntimeState>,
     exited: watch::Receiver<bool>,
     task: AsyncMutex<Option<tokio::task::JoinHandle<()>>>,
@@ -169,6 +179,15 @@ pub fn system_principal() -> Principal {
         id: "system".to_string(),
         kind: PrincipalKind::System,
     }
+}
+
+/// Wins the race to actually renew `rt`'s agent for its pending context
+/// handoff (htp6b): `true` only for the first caller, so the turn-end hook
+/// and `expire_context_renews`'s sweep — which can both see
+/// `context_renew_pending` true for the same still-live runtime — don't
+/// each spawn their own `renew`.
+fn claim_context_renew(rt: &AgentRuntime) -> bool {
+    !rt.context_renew_claimed.swap(true, Ordering::SeqCst)
 }
 
 impl AgentManager {
@@ -421,7 +440,7 @@ impl AgentManager {
                 let st = rt.state.lock().await;
                 st.context_renew_pending && st.context_renew_deadline.is_some_and(|d| now >= d)
             };
-            if is_due {
+            if is_due && claim_context_renew(&rt) {
                 due.push(id);
             }
         }
@@ -756,6 +775,7 @@ impl AgentManager {
             budget_exhausted: AtomicBool::new(false),
             budget_paused: AtomicBool::new(false),
             shutdown_requested: AtomicBool::new(false),
+            context_renew_claimed: AtomicBool::new(false),
             state: AsyncMutex::new(RuntimeState {
                 tracker: Tracker::new(pid, start),
                 fifo: VecDeque::new(),
@@ -1091,11 +1111,19 @@ impl AgentManager {
                     st.context_renew_pending
                 };
                 if context_renew_pending {
-                    let this = self.clone();
-                    let id = id.to_string();
-                    tokio::spawn(async move {
-                        let _ = this.renew(&id, true, &system_principal()).await;
-                    });
+                    // Don't start another turn on a held message either
+                    // way, but only the caller that wins `claim_context_renew`
+                    // actually spawns `renew`: this turn's own end can race
+                    // the handoff turn it triggered (both see
+                    // `context_renew_pending` true before either renew
+                    // completes and replaces this runtime).
+                    if claim_context_renew(runtime) {
+                        let this = self.clone();
+                        let id = id.to_string();
+                        tokio::spawn(async move {
+                            let _ = this.renew(&id, true, &system_principal()).await;
+                        });
+                    }
                     return;
                 }
 
