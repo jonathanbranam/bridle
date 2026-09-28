@@ -2,57 +2,48 @@
 
 The orchestrator's working notes for handing over between sessions. The role
 itself is in `.bridle/roles/orchestrator.md`. Update this file whenever the
-queue, open items or decisions change. Last updated 2026-09-28 03:15 UTC,
-at the handover from the third orchestrator session.
+queue, open items or decisions change. Last updated 2026-09-28 05:55 UTC,
+during the fourth orchestrator session.
 
 ## First, for the incoming orchestrator
 
-- **Renew the heavy contexts.** Since the restart at ~02:23 UTC,
-  `context_tokens` is accurate (kc4v), and at 03:10 UTC it read:
-  `manager-2` 293K, `htp6b-context-governor` 321K, `pm-1` 191K. All are past
-  the ~200K limit. `bridle renew <agent>` (htp6a) stops an agent and starts a
-  fresh one in the same worktree, role and model. Renew each one between
-  turns, when it's idle, and send the fresh one a short handover. For a
-  worker, give it the task brief and "check git log/status on your branch
-  and carry on". For manager-2, tell it what's in flight: which worker is on
-  which task, the queue below, and that pm-1 feeds it. For pm-1, tell it the
-  queue and to read `docs/questions/open/`. htp6b (the automatic wind-down)
-  isn't merged yet, so this is manual for now.
-- **Then keep both tracks moving overnight.** The human is asleep until about
-  7:00 AM (11:00 UTC). Verify each merge, and bring back only what needs them.
+- **The release gate.** P0 is complete and verified locally. Tag `v0.2.0`
+  (bump `[workspace.package]` version in one commit, annotated tag, push both;
+  operating-model.md, Releases) once GitHub CI is green on both OSes. CI
+  had never passed on Linux: fixed so far are the git identity (82240e5), the
+  containment zombie (625a455), CI without nextest fail-fast (ad5a170) and the
+  daemon.json shutdown race (6d5d22b). Next is `fail-fast: false` on the CI
+  matrix. Check CI with `gh run list -R jonathanbranam/bridle`; the managers
+  have no `gh`.
+- **n6gy** (the interrupt test's undelivered message) is reopened. htp6b's
+  fifo-before-send_user fix (85cc270) probably cures it; confirm on CI.
+- **Paging:** `bridle logs` and `bridle events` return the oldest 500 lines
+  without `--since` (ticket x7gp). Find the latest seq by paging, and read an
+  agent's current turn with `--since`.
+- **Once the daemon restarts on a build with htp6b** (b7b2051 or later), context
+  renewal is automatic; until then renew by hand with `bridle renew`.
 
 ## Who's running
 
-- **`pm-1`**, the product manager (`product-manager` role, Sonnet). It owns
-  the backlog: triage, right-sized briefs, priority order, sent to manager-2
-  by message until P0-6 moves the queue into `bridle task`.
-- **`manager-2`**, the development manager (`manager` role, Sonnet). It runs
-  up to two workers, reviews, merges, pushes `main`, and now also runs
-  `bridle rm <name> --delete-branch` after each merge.
-- **Workers at handover:** `p0-5-rebuild` (track 1) and
-  `htp6b-context-governor` (track 2, the `[context]` wind-down; it was sent
-  back once for a grace-window fix).
+- **`pm-1`** (product manager, Sonnet), renewed at 05:53 UTC. It owns the
+  queue, which is now `bridle task` (68 tasks imported by P0-6b).
+- **`manager-2`** (development manager, Sonnet), renewed at 05:02 UTC. It runs
+  the workers, reviews, merges, pushes, and removes merged branches.
+- **Worker:** `4eep-role-settings` (per-role Claude settings via
+  `claude --setting-sources`).
 - The split is interim, by configuration (ticket tx3f).
 
-## Queue (pm-1's)
+## Queue
 
-Track 1, P0: P0-3 and P0-4 are done. Next is P0-5 `bridle rebuild`
-(running), then P0-6 (ticket tskm), the migration: a verification gate whose
-results the orchestrator checks, then all open work imported as-is. When P0
-is complete, tag `v0.2.0` on verified `main` (operating-model.md, Releases).
+1. Linux CI green, which gates v0.2.0.
+2. 4eep (running), then misc-cli-polish, then x7gp.
+3. After v0.2.0: n9qh (the budget schedule, nights and weekday work hours, with
+   a thermostat-style override; after the cutover, per the human).
 
-Track 2: htp6b wind-down (running), then 78sp, 4eep, a7h3.
+Parked: a7h3 (agreed with pm-1: the message-human workaround works), and
+`bridle/mcp-1` (don't merge or delete it; u6wk).
 
-Small items pm-1 holds for free slots, on Haiku: the `stop-daemon` message
-("received; shutting down gracefully, may take up to 30s"), and human-friendly
-numbers (152k, $11.6) in the TUI, `bridle usage` and `bridle agents`.
-
-Backlog, not scheduled: d4mz step 2 (`bridle prime orchestrator`, P1), w4tb
-(wall-time tracking), mt7r (run only the tests a change can affect), r7cs
-(status-line counts with a read-only token).
-
-Parked: `bridle/mcp-1` (WIP `cae932c`). Don't merge or delete it. It's
-recorded in build-order.md and ticket u6wk.
+Backlog: d4mz step 2, w4tb, mt7r, r7cs.
 
 ## The human's decisions (2026-09-27 and 28)
 
@@ -110,6 +101,17 @@ Nothing.
 - **`bridle take` / `give`:** spike 7r7m needs the human at a terminal.
 - **P2 and later:** need P0 first.
 
+## Done on 2026-09-28, fourth session (merged, verified green locally, pushed)
+
+- P0-5 (`bridle rebuild`), P0-6a (the gate, signed off by the orchestrator)
+  and P0-6b (68 tasks imported, idempotent; README states the post-cutover
+  rule). P0 is complete.
+- htp6b (automatic context renewal, plus two renew races and the message
+  delivery fifo race), 78sp (built-in tools denied by default; `Agent`
+  allowed again, da5fe47), and the Linux CI fixes listed above.
+- Rules and tickets: `human-timezone.md` (bare Eastern times to the human),
+  x7gp, n9qh, n6gy reopened.
+
 ## Done on 2026-09-28, third session (merged, verified green, pushed)
 
 - htp6a (`bridle renew`), kc4v (accurate context via `get_context_usage`),
@@ -158,9 +160,6 @@ Nothing.
   bridle's stop cleanup and slow everyone down. The worker role prompt should
   require background processes to be bounded, capped (`--test-threads 4`)
   and cleaned up.
-- **`lifecycle_test interrupt_during_sleep_ends_the_turn_and_agent_stays_usable`**
-  failed once under load. `deflake` couldn't reproduce it, and n6gy was moved
-  to resolved anyway. Reopen it if the test fails again.
 - **`bridle status` lists `nimbus_quill 0%`,** an unnamed `get_usage` entry
   that carries a utilization. It's harmless, but decide whether status should
   show only named windows.
