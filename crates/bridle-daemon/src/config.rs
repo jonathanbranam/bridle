@@ -39,6 +39,26 @@ pub enum ConfigError {
     },
     #[error("invalid [[budget.schedule]] {name:?}: {reason}")]
     BadSchedule { name: String, reason: String },
+    #[error("[components.{id}] parent {parent:?} is not a defined component")]
+    UnknownComponentParent { id: String, parent: String },
+    #[error("[components] parent cycle: {}", .0.join(" -> "))]
+    ComponentCycle(Vec<String>),
+}
+
+/// `[components.<id>]`: a named scope inside the project (docs/design/components.md).
+/// Everything is optional; `paths` and `consumers` are metadata for tooling, `docs` a
+/// folder pointer, `parent` the nesting.
+#[derive(Debug, Clone, Default, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Component {
+    #[serde(default)]
+    pub paths: Vec<String>,
+    #[serde(default)]
+    pub parent: Option<String>,
+    #[serde(default)]
+    pub docs: Option<String>,
+    #[serde(default)]
+    pub consumers: Vec<String>,
 }
 
 /// Where an agent's process runs, before a worktree path is resolved.
@@ -695,6 +715,8 @@ pub struct Config {
     /// out of scope for now (docs/design/workflow-layers.md); this is just
     /// which pack directories to include.
     pub packs: Vec<String>,
+    /// `[components.<id>]`, validated: parents exist and there are no cycles.
+    pub components: BTreeMap<String, Component>,
 }
 
 impl Default for Config {
@@ -719,6 +741,7 @@ impl Default for Config {
             task_prefix: None,
             workflow: None,
             packs: Vec::new(),
+            components: BTreeMap::new(),
         }
     }
 }
@@ -801,6 +824,56 @@ impl Config {
             }
             Err(source) => Err(ConfigError::Read { path, source }),
         }
+    }
+
+    /// A component's chain, root-most ancestor first, itself last. `None` if `id` isn't
+    /// defined. Config is validated on load, so the walk terminates; the length bound is
+    /// only a guard for a hand-built `Config`.
+    pub fn component_chain(&self, id: &str) -> Option<Vec<&str>> {
+        let mut chain = Vec::new();
+        let mut cur = self.components.get_key_value(id)?;
+        loop {
+            chain.push(cur.0.as_str());
+            match cur
+                .1
+                .parent
+                .as_deref()
+                .and_then(|p| self.components.get_key_value(p))
+            {
+                Some(next) if chain.len() <= self.components.len() => cur = next,
+                _ => break,
+            }
+        }
+        chain.reverse();
+        Some(chain)
+    }
+
+    fn validate_components(&self) -> Result<(), ConfigError> {
+        for (id, c) in &self.components {
+            if let Some(p) = &c.parent
+                && !self.components.contains_key(p)
+            {
+                return Err(ConfigError::UnknownComponentParent {
+                    id: id.clone(),
+                    parent: p.clone(),
+                });
+            }
+        }
+        for start in self.components.keys() {
+            let mut path = vec![start.clone()];
+            let mut cur = start;
+            while let Some(p) = self.components[cur].parent.as_ref() {
+                path.push(p.clone());
+                if p == start {
+                    return Err(ConfigError::ComponentCycle(path));
+                }
+                if path.len() > self.components.len() + 1 {
+                    break; // a cycle not through `start`; reported from its own members
+                }
+                cur = p;
+            }
+        }
+        Ok(())
     }
 
     /// Parses config TOML text over the built-in defaults, with the
@@ -908,6 +981,8 @@ impl Config {
 
         config.workflow = raw.workflow;
         config.packs = raw.packs.unwrap_or_default();
+        config.components = raw.components.unwrap_or_default();
+        config.validate_components()?;
 
         apply_branches(&mut config);
 
@@ -1038,6 +1113,8 @@ struct RawConfig {
     workflow: Option<String>,
     #[serde(default)]
     packs: Option<Vec<String>>,
+    #[serde(default)]
+    components: Option<BTreeMap<String, Component>>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -2130,5 +2207,38 @@ mod tests {
             None,
         );
         assert!(rendered.contains("You are manager-1 (role manager) in /repo/a.\n"));
+    }
+
+    #[test]
+    fn components_parse_with_chain_and_validation() {
+        let cfg = Config::parse(
+            r#"
+            [components.client-games]
+            paths = ["client-games/**"]
+            docs = "docs/games"
+            [components.dungeon]
+            parent = "client-games"
+            consumers = ["harness"]
+            "#,
+        )
+        .expect("parse");
+        assert_eq!(
+            cfg.component_chain("dungeon"),
+            Some(vec!["client-games", "dungeon"])
+        );
+        assert_eq!(
+            cfg.component_chain("client-games"),
+            Some(vec!["client-games"])
+        );
+        assert_eq!(cfg.component_chain("nope"), None);
+        assert!(Config::parse("").expect("parse").components.is_empty());
+
+        let err = Config::parse("[components.a]\nparent = \"zzz\"").unwrap_err();
+        assert!(err.to_string().contains("not a defined component"), "{err}");
+        let err = Config::parse("[components.a]\nparent = \"b\"\n[components.b]\nparent = \"a\"")
+            .unwrap_err();
+        assert!(err.to_string().contains("cycle"), "{err}");
+        let err = Config::parse("[components.a]\nbogus = 1").unwrap_err();
+        assert!(matches!(err, ConfigError::Parse { .. }));
     }
 }
