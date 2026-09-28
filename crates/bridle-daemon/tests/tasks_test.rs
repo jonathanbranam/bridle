@@ -215,6 +215,55 @@ async fn ask_blocks_a_task_and_answer_frees_it_again() {
     assert!(matches!(err, ClientError::Api { status: 409, .. }));
 }
 
+/// `bridle claim`/`bridle release`'s HTTP surface. This build has no `plan`
+/// command (see `ask_blocks_a_task_and_answer_frees_it_again` above), so a
+/// task created here never reaches `planned` and `claim` can only be
+/// exercised in its "not ready" conflict shape at this layer; the full
+/// claim -> ready-exclusion -> release -> ready-again round trip (plus a
+/// second claim being rejected) is covered where a task can actually reach
+/// `planned`: `TaskManager`'s own
+/// `claim_blocks_ready_and_release_unblocks_it` in `tasks.rs`.
+#[tokio::test]
+async fn claim_of_an_unknown_task_is_404() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let err = daemon
+        .client
+        .claim_task("br-nope")
+        .await
+        .expect_err("no such task");
+    assert!(matches!(err, ClientError::Api { status: 404, .. }));
+}
+
+#[tokio::test]
+async fn claim_of_a_task_that_is_not_ready_is_a_conflict() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let c = &daemon.client;
+    let task = c
+        .new_task(&new_req("Add foo", TaskKind::Feature))
+        .await
+        .expect("new task");
+    assert_eq!(task.state, TaskState::Open);
+
+    let err = c
+        .claim_task(&task.id)
+        .await
+        .expect_err("open, not planned, isn't ready to claim");
+    assert!(matches!(err, ClientError::Api { status: 409, .. }));
+}
+
+#[tokio::test]
+async fn release_of_an_unclaimed_task_is_a_conflict() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let c = &daemon.client;
+    let task = c
+        .new_task(&new_req("Add foo", TaskKind::Feature))
+        .await
+        .expect("new task");
+
+    let err = c.release_task(&task.id).await.expect_err("never claimed");
+    assert!(matches!(err, ClientError::Api { status: 409, .. }));
+}
+
 #[tokio::test]
 async fn a_task_created_before_restart_is_still_there_after() {
     let (daemon, tmp) = start_daemon(None).await;
