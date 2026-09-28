@@ -7,8 +7,9 @@ during the sixth orchestrator session.
 
 ## First, for the incoming orchestrator
 
-- **`main` is bff19bf, verified** (two local runs, 419/419).
-  The installed binary is built from 8516bf8. The running daemon started
+- **`main` is c533cb0, verified** (two local runs, 428/428); the daemon
+  runs it since 17:53 UTC.
+  (Superseded:) The installed binary was built from 8516bf8. The daemon started
   16:22 UTC on f401a7f (j479, a7h3, 9c63, persist-spawn-overrides all live);
   only the renewal first-message fix (br-ab66, 8516bf8) waits for the next
   restart. Start the watcher from seq ~22386.
@@ -53,12 +54,12 @@ during the sixth orchestrator session.
   `git merge --no-ff main`; live for new workers after the next restart.
 - **Local permissions** (`.claude/settings.local.json`, untracked): the
   watcher script and reads under data-contracts-workspace are allowed.
-- **Waiting for the next maintenance window** (budget holds; see the role's
-  "Budget holds" section): rebuild and restart (the daemon runs f401a7f; `main`
-  has roles in `workflow/base/roles/`, so never restart on the old binary);
-  `cargo clean` (the debug-profile change made `target/` stale); resume pm-1
-  (stopped by a refused renew, r3nh) and python-pack; the human removes
-  `branch-rules` and `smaller-debug-builds`.
+- **Maintenance window, 2026-09-28 17:53 UTC:** `cargo clean` (8.2 GiB),
+  installed from c533cb0, the human restarted the daemon; pm-1 and
+  python-pack resumed. Still waiting: renew pm-1 once the hold lifts (not
+  during one: r3nh). manager-2 removed the finished workers itself (the
+  manager may `bridle rm`; only the orchestrator's auto mode can't).
+  `j2vq-orchestrator-perms` is parked (keep).
 - **Tests got ~10x faster after `cargo clean`** (400 s -> 35 s); see f75x.
 
 ## The data-contracts onboarding (plan agreed with the human)
