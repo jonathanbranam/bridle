@@ -111,12 +111,33 @@ pub struct TaskRow {
     pub updated_at: DateTime<Utc>,
 }
 
+/// A message's concrete recipient kind (`messages.to_kind`). The caller
+/// states this explicitly rather than the store guessing it from `to`'s
+/// shape, since a task id and an agent id are both opaque strings.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RecipientKind {
+    Human,
+    Agent,
+    Task,
+}
+
+impl RecipientKind {
+    fn as_str(self) -> &'static str {
+        match self {
+            Self::Human => "human",
+            Self::Agent => "agent",
+            Self::Task => "task",
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct NewMessage {
     pub from: PrincipalId,
-    /// Concrete recipient: `"human"` or an agent id. Name/`"me"` resolution
-    /// happens above the store.
+    /// Concrete recipient: `"human"`, an agent id, or a task id.
+    /// Name/`"me"` resolution happens above the store.
     pub to: String,
+    pub to_kind: RecipientKind,
     pub kind: MessageKind,
     pub body: String,
     pub reply_to: Option<String>,
@@ -125,6 +146,19 @@ pub struct NewMessage {
     /// depending on whether it was delivered immediately). Timestamps for
     /// later transitions are set through `set_message_state`, not here.
     pub state: MessageState,
+}
+
+/// The fast-index row for an open question (storage.md, "Questions aren't a
+/// separate `questions/…` folder"): enough to list a task's open question in
+/// `bridle inbox` without walking the state branch. `message_id` is a
+/// pointer into `messages`, which already carries the body, so this table
+/// doesn't duplicate it.
+#[derive(Debug, Clone, PartialEq)]
+pub struct OpenQuestion {
+    pub task_id: String,
+    pub message_id: String,
+    pub asked_by: PrincipalId,
+    pub asked_at: DateTime<Utc>,
 }
 
 /// A resolved message query: `to`/`from` are concrete ids, already picked
@@ -403,6 +437,41 @@ impl Store {
         let id = id.to_string();
         self.with_conn(move |c| sync::set_task_state(c, &id, state))
             .await
+    }
+
+    // ---------- open questions ----------
+
+    /// Records `task_id` as blocked on an unanswered question, failing with
+    /// `Conflict` if it already has one (one open question per task at a
+    /// time; `task_id` is the table's primary key).
+    pub async fn insert_open_question(
+        &self,
+        task_id: &str,
+        message_id: &str,
+        asked_by: &PrincipalId,
+        asked_at: DateTime<Utc>,
+    ) -> Result<(), StoreError> {
+        let (task_id, message_id, asked_by) = (
+            task_id.to_string(),
+            message_id.to_string(),
+            asked_by.clone(),
+        );
+        self.with_conn(move |c| {
+            sync::insert_open_question(c, &task_id, &message_id, &asked_by, asked_at)
+        })
+        .await
+    }
+
+    /// Clears `task_id`'s open question, failing with `NotFound` if it has
+    /// none.
+    pub async fn delete_open_question(&self, task_id: &str) -> Result<(), StoreError> {
+        let task_id = task_id.to_string();
+        self.with_conn(move |c| sync::delete_open_question(c, &task_id))
+            .await
+    }
+
+    pub async fn list_open_questions(&self) -> Result<Vec<OpenQuestion>, StoreError> {
+        self.with_conn(sync::list_open_questions).await
     }
 
     // ---------- edges ----------
@@ -692,8 +761,23 @@ mod sync {
         CREATE INDEX edges_from ON edges(from_task);
     "#;
 
+    // The fast index over open questions (storage.md, "Questions aren't a
+    // separate `questions/…` folder"): `task_id` is the primary key, since a
+    // task has at most one open question at a time, and `message_id` points
+    // at the `messages` row that carries the body rather than duplicating
+    // it. `is_ready` (tasks.rs) treats a task's presence in this table as
+    // "has an open question".
+    pub(super) const SCHEMA_V8: &str = r#"
+        CREATE TABLE open_questions (
+            task_id TEXT PRIMARY KEY,
+            message_id TEXT NOT NULL,
+            asked_by TEXT NOT NULL,
+            asked_at TEXT NOT NULL
+        );
+    "#;
+
     const MIGRATIONS: &[&str] = &[
-        SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7,
+        SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7, SCHEMA_V8,
     ];
 
     pub(super) fn open(path: &Path) -> Result<Connection, StoreError> {
@@ -1362,7 +1446,6 @@ mod sync {
         conn: &Connection,
         new: &NewMessage,
     ) -> Result<Message, StoreError> {
-        let to_kind = if new.to == "human" { "human" } else { "agent" };
         let now = Utc::now();
         conn.execute(
             "INSERT INTO messages(id, from_principal, to_kind, to_id, kind, body, reply_to,
@@ -1370,7 +1453,7 @@ mod sync {
              VALUES ('', ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, NULL, NULL, NULL)",
             params![
                 new.from,
-                to_kind,
+                new.to_kind.as_str(),
                 new.to,
                 kind_str(new.kind),
                 new.body,
@@ -1729,6 +1812,59 @@ mod sync {
             "SELECT from_task, to_task, kind, created_at FROM edges ORDER BY created_at ASC",
         )?;
         let rows = stmt.query_map([], row_to_edge)?;
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
+    // ---------- open questions ----------
+
+    fn row_to_open_question(row: &Row<'_>) -> rusqlite::Result<OpenQuestion> {
+        Ok(OpenQuestion {
+            task_id: row.get(0)?,
+            message_id: row.get(1)?,
+            asked_by: row.get(2)?,
+            asked_at: parse_dt(&row.get::<_, String>(3)?)?,
+        })
+    }
+
+    pub(super) fn insert_open_question(
+        conn: &Connection,
+        task_id: &str,
+        message_id: &str,
+        asked_by: &str,
+        asked_at: DateTime<Utc>,
+    ) -> Result<(), StoreError> {
+        let result = conn.execute(
+            "INSERT INTO open_questions(task_id, message_id, asked_by, asked_at)
+             VALUES (?1, ?2, ?3, ?4)",
+            params![task_id, message_id, asked_by, fmt_dt(asked_at)],
+        );
+        match result {
+            Ok(_) => Ok(()),
+            Err(e) if is_unique_violation(&e) => Err(StoreError::Conflict(format!(
+                "task {task_id} already has an open question"
+            ))),
+            Err(e) => Err(e.into()),
+        }
+    }
+
+    pub(super) fn delete_open_question(conn: &Connection, task_id: &str) -> Result<(), StoreError> {
+        let n = conn.execute(
+            "DELETE FROM open_questions WHERE task_id = ?1",
+            params![task_id],
+        )?;
+        if n == 0 {
+            return Err(StoreError::NotFound(format!(
+                "task {task_id} has no open question"
+            )));
+        }
+        Ok(())
+    }
+
+    pub(super) fn list_open_questions(conn: &Connection) -> Result<Vec<OpenQuestion>, StoreError> {
+        let mut stmt = conn.prepare(
+            "SELECT task_id, message_id, asked_by, asked_at FROM open_questions ORDER BY asked_at ASC",
+        )?;
+        let rows = stmt.query_map([], row_to_open_question)?;
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
     }
 
@@ -2428,6 +2564,7 @@ mod tests {
             .insert_message(NewMessage {
                 from: "human".to_string(),
                 to: agent.id.clone(),
+                to_kind: RecipientKind::Agent,
                 kind: MessageKind::Question,
                 body: "are you there?".to_string(),
                 reply_to: None,
@@ -2487,6 +2624,7 @@ mod tests {
             .insert_message(NewMessage {
                 from: "human".to_string(),
                 to: agent.id.clone(),
+                to_kind: RecipientKind::Agent,
                 kind: MessageKind::Note,
                 body: "fyi".to_string(),
                 reply_to: None,
@@ -2841,6 +2979,7 @@ mod tests {
             .insert_message(NewMessage {
                 from: "agent:w1".to_string(),
                 to: "human".to_string(),
+                to_kind: RecipientKind::Human,
                 kind: MessageKind::Note,
                 body: "done".to_string(),
                 reply_to: None,
@@ -3045,6 +3184,60 @@ mod tests {
             .delete_edge(&a.id, &b.id, EdgeKind::Blocks)
             .await
             .expect_err("already deleted");
+        assert!(matches!(err, StoreError::NotFound(_)));
+    }
+
+    #[tokio::test]
+    async fn insert_list_and_delete_open_questions() {
+        let (store, _tmp) = store().await;
+        let task = store
+            .insert_task("tw", "Add foo", TaskKind::Feature)
+            .await
+            .expect("insert task");
+        let msg = store
+            .insert_message(NewMessage {
+                from: "agent:w1".to_string(),
+                to: task.id.clone(),
+                to_kind: RecipientKind::Task,
+                kind: MessageKind::Question,
+                body: "which endpoint?".to_string(),
+                reply_to: None,
+                when: When::Now,
+                state: MessageState::Delivered,
+            })
+            .await
+            .expect("insert question message");
+
+        let asked_at = Utc::now();
+        store
+            .insert_open_question(&task.id, &msg.id, &"agent:w1".to_string(), asked_at)
+            .await
+            .expect("insert open question");
+
+        let list = store.list_open_questions().await.expect("list");
+        assert_eq!(list.len(), 1);
+        assert_eq!(list[0].task_id, task.id);
+        assert_eq!(list[0].message_id, msg.id);
+        assert_eq!(list[0].asked_by, "agent:w1");
+
+        // One open question per task at a time: a second insert for the
+        // same task conflicts on the `task_id` primary key.
+        let err = store
+            .insert_open_question(&task.id, &msg.id, &"human".to_string(), Utc::now())
+            .await
+            .expect_err("already has an open question");
+        assert!(matches!(err, StoreError::Conflict(_)));
+
+        store
+            .delete_open_question(&task.id)
+            .await
+            .expect("delete open question");
+        assert!(store.list_open_questions().await.expect("list").is_empty());
+
+        let err = store
+            .delete_open_question(&task.id)
+            .await
+            .expect_err("already answered");
         assert!(matches!(err, StoreError::NotFound(_)));
     }
 }

@@ -14,12 +14,13 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use bridle_api::types::{
-    Edge, EdgeKind, PrincipalId, Task, TaskKind, TaskState, ThreadEntry, ThreadEntryKind,
+    Edge, EdgeKind, MessageKind, MessageState, PrincipalId, Task, TaskKind, TaskState, ThreadEntry,
+    ThreadEntryKind, When,
 };
 use chrono::Utc;
 
 use crate::state_branch::{StateBranch, StateBranchError};
-use crate::store::{Store, StoreError};
+use crate::store::{NewMessage, RecipientKind, Store, StoreError};
 
 #[derive(Debug, thiserror::Error)]
 pub enum TaskError {
@@ -63,6 +64,11 @@ pub struct TaskManager {
     /// (there's no extra body/thread to hydrate from the state branch), so
     /// this is loaded straight from `Store::list_edges` at `open`.
     edges: Arc<Mutex<Vec<Edge>>>,
+    /// Task id -> the id of its open question's message, for the tasks that
+    /// currently have one. Mirrors `Store::list_open_questions`, loaded at
+    /// `open`, so `has_open_questions` (called from the sync `is_ready`) can
+    /// answer without a database round trip.
+    open_questions: Arc<Mutex<HashMap<String, String>>>,
 }
 
 impl TaskManager {
@@ -88,12 +94,19 @@ impl TaskManager {
             cache.insert(task.id.clone(), task);
         }
         let edges = store.list_edges().await?;
+        let open_questions = store
+            .list_open_questions()
+            .await?
+            .into_iter()
+            .map(|q| (q.task_id, q.message_id))
+            .collect();
         Ok(TaskManager {
             store,
             state,
             prefix,
             cache: Arc::new(Mutex::new(cache)),
             edges: Arc::new(Mutex::new(edges)),
+            open_questions: Arc::new(Mutex::new(open_questions)),
         })
     }
 
@@ -293,9 +306,7 @@ impl TaskManager {
     }
 
     /// `planned`, no open `blocks` edge naming an unresolved blocker, and no
-    /// unanswered question. The question half is a seam for P0-3: no task
-    /// has one yet, so [`Self::has_open_questions`] always returns `false`
-    /// and this only ever checks the first two.
+    /// unanswered question.
     pub fn is_ready(&self, task: &Task) -> bool {
         if task.state != TaskState::Planned {
             return false;
@@ -309,12 +320,139 @@ impl TaskManager {
         })
     }
 
-    /// Always `false` until P0-3 builds questions
-    /// (docs/design/coordination.md, "Questions do not stop work"); kept as
-    /// its own function so `is_ready` doesn't need restructuring when it's
-    /// filled in.
-    fn has_open_questions(&self, _task: &Task) -> bool {
-        false
+    /// `true` while `task` has an unanswered question (docs/design/coordination.md,
+    /// "Questions do not stop work").
+    fn has_open_questions(&self, task: &Task) -> bool {
+        self.open_questions
+            .lock()
+            .expect("open questions lock")
+            .contains_key(&task.id)
+    }
+
+    // ---------- questions ----------
+
+    /// Asks a question against `task`: appends a `question` thread entry,
+    /// inserts the durable message (`to_kind` `task`, so it's addressed to
+    /// the task rather than an agent or `human`), and indexes the task as
+    /// blocked until answered. Fails with `Conflict` if the task already has
+    /// an open question — one at a time, per `open_questions`'s primary key.
+    #[allow(
+        dead_code,
+        reason = "exercised by tests only until `bridle ask` (P0-3b) calls it"
+    )]
+    pub async fn ask_question(
+        &self,
+        id: &str,
+        from: &PrincipalId,
+        body: &str,
+    ) -> Result<Task, TaskError> {
+        if body.trim().is_empty() {
+            return Err(TaskError::BadRequest(
+                "a question requires a body".to_string(),
+            ));
+        }
+        let mut task = self
+            .get_task(id)
+            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+        // Checked here too, not just left to the store's unique-constraint
+        // conflict below: this cache is the source `is_ready` reads, so a
+        // question already recorded here must not have its store insert
+        // half-succeed while this half is skipped.
+        if self.has_open_questions(&task) {
+            return Err(TaskError::Conflict(format!(
+                "task {id} already has an open question"
+            )));
+        }
+        let message = self
+            .store
+            .insert_message(NewMessage {
+                from: from.clone(),
+                to: id.to_string(),
+                to_kind: RecipientKind::Task,
+                kind: MessageKind::Question,
+                body: body.to_string(),
+                reply_to: None,
+                when: When::Now,
+                // Delivery here means "durably attached to the task", which
+                // already happened synchronously (this message *is* the
+                // thread entry below); there's no agent stdin to write to
+                // and no further transition this state machine models.
+                state: MessageState::Delivered,
+            })
+            .await?;
+        self.store
+            .insert_open_question(id, &message.id, from, message.created_at)
+            .await?;
+        self.open_questions
+            .lock()
+            .expect("open questions lock")
+            .insert(id.to_string(), message.id.clone());
+        task.thread.push(ThreadEntry {
+            kind: ThreadEntryKind::Question,
+            from: from.clone(),
+            body: body.to_string(),
+            at: message.created_at,
+        });
+        task.updated_at = message.created_at;
+        self.state.enqueue_task(&task)?;
+        Ok(self.put(task))
+    }
+
+    /// Answers `task`'s open question: appends an `answer` thread entry,
+    /// clears the open-questions index, and re-enables readiness. Fails
+    /// with `Conflict` if the task has no open question.
+    #[allow(
+        dead_code,
+        reason = "exercised by tests only until `bridle answer` (P0-3b) calls it"
+    )]
+    pub async fn answer_question(
+        &self,
+        id: &str,
+        from: &PrincipalId,
+        body: &str,
+    ) -> Result<Task, TaskError> {
+        if body.trim().is_empty() {
+            return Err(TaskError::BadRequest(
+                "an answer requires a body".to_string(),
+            ));
+        }
+        let mut task = self
+            .get_task(id)
+            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+        let question_message_id = self
+            .open_questions
+            .lock()
+            .expect("open questions lock")
+            .get(id)
+            .cloned()
+            .ok_or_else(|| TaskError::Conflict(format!("task {id} has no open question")))?;
+        let message = self
+            .store
+            .insert_message(NewMessage {
+                from: from.clone(),
+                to: id.to_string(),
+                to_kind: RecipientKind::Task,
+                kind: MessageKind::Answer,
+                body: body.to_string(),
+                reply_to: Some(question_message_id),
+                when: When::Now,
+                state: MessageState::Delivered,
+            })
+            .await?;
+        self.store.delete_open_question(id).await?;
+        self.open_questions
+            .lock()
+            .expect("open questions lock")
+            .remove(id);
+        task.thread.push(ThreadEntry {
+            kind: ThreadEntryKind::Answer,
+            from: from.clone(),
+            body: body.to_string(),
+            at: message.created_at,
+        });
+        task.updated_at = message.created_at;
+        self.state.enqueue_task(&task)?;
+        Ok(self.put(task))
     }
 
     pub fn ready_tasks(&self) -> Vec<Task> {
@@ -659,5 +797,121 @@ mod tests {
         let rehydrated = tm2.get_task(&task.id).expect("rehydrated");
         assert_eq!(rehydrated.title, "Add foo");
         assert_eq!(rehydrated.body, "a description");
+    }
+
+    #[tokio::test]
+    async fn asking_a_question_blocks_ready_and_answering_unblocks_it() {
+        let (tm, _tmp) = manager().await;
+        let task = tm
+            .new_task("Add foo", TaskKind::Feature, String::new())
+            .await
+            .expect("new task");
+        force_planned(&tm, &task.id);
+        assert!(tm.ready_tasks().iter().any(|t| t.id == task.id));
+
+        let asked = tm
+            .ask_question(&task.id, &"agent:w1".to_string(), "which endpoint?")
+            .await
+            .expect("ask question");
+        assert_eq!(asked.thread.len(), 1);
+        assert_eq!(asked.thread[0].kind, ThreadEntryKind::Question);
+        assert_eq!(asked.thread[0].from, "agent:w1");
+        assert_eq!(asked.thread[0].body, "which endpoint?");
+        assert!(
+            !tm.ready_tasks().iter().any(|t| t.id == task.id),
+            "an open question excludes a task from ready"
+        );
+
+        // A second question while one is already open is a conflict.
+        let err = tm
+            .ask_question(&task.id, &"human".to_string(), "another one?")
+            .await
+            .expect_err("already has an open question");
+        assert!(matches!(err, TaskError::Conflict(_)));
+
+        let answered = tm
+            .answer_question(&task.id, &"human".to_string(), "the v1 endpoint")
+            .await
+            .expect("answer question");
+        assert_eq!(answered.thread.len(), 2);
+        assert_eq!(answered.thread[1].kind, ThreadEntryKind::Answer);
+        assert_eq!(answered.thread[1].from, "human");
+        assert_eq!(answered.thread[1].body, "the v1 endpoint");
+        assert!(
+            tm.ready_tasks().iter().any(|t| t.id == task.id),
+            "answering the question re-enables readiness"
+        );
+
+        // Answering again with nothing open is a conflict.
+        let err = tm
+            .answer_question(&task.id, &"human".to_string(), "still there?")
+            .await
+            .expect_err("no open question left");
+        assert!(matches!(err, TaskError::Conflict(_)));
+    }
+
+    #[tokio::test]
+    async fn ask_and_answer_reject_blank_bodies() {
+        let (tm, _tmp) = manager().await;
+        let task = tm
+            .new_task("Add foo", TaskKind::Feature, String::new())
+            .await
+            .expect("new task");
+
+        let err = tm
+            .ask_question(&task.id, &"human".to_string(), "   ")
+            .await
+            .expect_err("blank question body");
+        assert!(matches!(err, TaskError::BadRequest(_)));
+
+        tm.ask_question(&task.id, &"human".to_string(), "real question")
+            .await
+            .expect("ask question");
+        let err = tm
+            .answer_question(&task.id, &"human".to_string(), "")
+            .await
+            .expect_err("blank answer body");
+        assert!(matches!(err, TaskError::BadRequest(_)));
+    }
+
+    #[tokio::test]
+    async fn an_open_question_survives_a_flush_and_a_fresh_manager_hydrating_from_the_database() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let repo = tmp.path().join("repo");
+        init_repo(&repo).await;
+        let store = Store::open(tmp.path().join("bridle.db"))
+            .await
+            .expect("open store");
+        let state = StateBranch::open(&repo, &tmp.path().join("state"))
+            .await
+            .expect("open state branch");
+        let tm = TaskManager::open(store.clone(), state.clone(), "tw".to_string())
+            .await
+            .expect("open task manager");
+
+        let task = tm
+            .new_task("Add foo", TaskKind::Feature, String::new())
+            .await
+            .expect("new task");
+        force_planned(&tm, &task.id);
+        tm.ask_question(&task.id, &"human".to_string(), "which endpoint?")
+            .await
+            .expect("ask question");
+        tm.flush_now().await.expect("flush");
+
+        // A fresh manager, as a restarted daemon would build, hydrates the
+        // open-questions index from the database (not the state branch, which
+        // has no separate index of its own) and the thread entry from the
+        // flushed task file.
+        let tm2 = TaskManager::open(store, state, "tw".to_string())
+            .await
+            .expect("reopen task manager");
+        let rehydrated = tm2.get_task(&task.id).expect("rehydrated");
+        assert_eq!(rehydrated.thread.len(), 1);
+        assert_eq!(rehydrated.thread[0].kind, ThreadEntryKind::Question);
+        assert!(
+            !tm2.is_ready(&rehydrated),
+            "the open question survives a restart and still blocks ready"
+        );
     }
 }
