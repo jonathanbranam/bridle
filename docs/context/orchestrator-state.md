@@ -2,11 +2,15 @@
 
 The orchestrator's working notes for handing over between sessions. The role
 itself is in `.bridle/roles/orchestrator.md`. Update this file whenever the
-queue, open items or decisions change. Last updated 2026-09-28 07:20 UTC,
-near the end of the fourth orchestrator session.
+queue, open items or decisions change. Last updated 2026-09-28 11:50 UTC,
+at the handover from the fourth orchestrator session.
 
 ## First, for the incoming orchestrator
 
+- **At handover:** everything is idle, waiting on the human's decisions below.
+  `main` is 6e78e6c, verified (two local runs, CI green on both OSes). Start
+  the watcher from the latest seq; find it by paging `bridle events --since`
+  (or plain `bridle events` once the new build runs).
 - **v0.3.0 is tagged** (9dc6cf3, 2026-09-28 ~09:55 UTC): P1 complete. What
   comes after P1 (P2, or a design question first) is for the human to decide.
 - **v0.2.0 is tagged** (2683d6d, 2026-09-28 ~06:25 UTC): P0 complete, two
