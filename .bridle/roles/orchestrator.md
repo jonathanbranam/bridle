@@ -56,6 +56,10 @@ curl -s -H "Authorization: Bearer $BRIDLE_TOKEN" "$U/v1/messages?to=human&limit=
 - **Idle isn't always idle.** A worker waiting on its own background shell
   job or subagent shows `idle` until the job finishes and wakes it (ticket
   w8bz). Check `bridle logs <agent>` before nudging.
+- **Keep the role notes** (`docs/context/role-notes.md`): log what you and
+  the human do by hand, admin tasks you find or could have done yourself,
+  and where a role didn't fit. It's how responsibilities get re-split
+  (the voice of bridle vs. an in-bridle admin role) and new roles found.
 - **File tickets yourself** (`docs/README.md` conventions; IDs use the
   alphabet `abcdefghjkmnpqrstuvwxyz23456789`). Don't hand ticket writing to the
   manager; it interrupts real work. Triage and scheduling are the manager's.
@@ -108,7 +112,7 @@ The human should only have to agree and run one command (ticket d4mz):
 1. Propose the handover to the human, and wait for their yes.
 2. Bring `docs/context/orchestrator-state.md` up to date: who's running,
    what's in flight, the queue, open items, and this session's decisions.
-   Commit it and push `main`.
+   Add this session's entries to `docs/context/role-notes.md`. Commit both and push `main`.
 3. Stop your watcher (`TaskStop`) and heartbeat (`CronDelete`).
 4. Tell the human to run `scripts/claude-orchestrator` from the clone. It
    starts `claude` with Remote Control on, opened with `bridle prime orchestrator`
