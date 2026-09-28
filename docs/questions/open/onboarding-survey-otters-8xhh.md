@@ -35,6 +35,18 @@ its report, unedited; nothing in the surveyed repos was changed.
 - Related surveys from the same request: [[onboarding-survey-file-db-d9nu|d9nu]], [[onboarding-survey-meta-notes-ajqa|ajqa]], [[onboarding-survey-track-web-and-harness-u8sm|u8sm]], [[shared-pixellab-tooling-for-game-projects-a8fk|a8fk]].
 - The open questions at the end are for the human; none is answered yet.
 
+## The human's answers
+
+2026-09-28, on question 1 (which is canonical) and the migration:
+
+> otters, yes, I'm not sure; I started the new project on purpose to try to actually
+> simplify and improve the iteration speed on the game. I would start with the new project
+> and then create tickets to migrate over functionality from the older one
+
+So otters-back is the project, and its simpler design is deliberate: the port is not a
+wholesale copy. Onboard otters-back, then file tickets to bring over otter-life's features
+one at a time, each a decision rather than a straight port.
+
 ## The survey
 
 ### Summary
