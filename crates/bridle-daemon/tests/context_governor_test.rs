@@ -16,6 +16,7 @@ fn fast_overrides() -> Overrides {
     Overrides {
         claude_program: fake_claude_path().to_string_lossy().into_owned(),
         write_registry: false,
+        bridle_home: None,
         stall_check_interval: Duration::from_millis(50),
         tracker_interval: Duration::from_millis(200),
         governor_interval: Duration::from_millis(200),

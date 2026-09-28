@@ -62,8 +62,14 @@ pub struct Overrides {
     /// else `"claude"`.
     pub claude_program: String,
     /// Whether to also write the machine-wide registry entry. Tests set
-    /// this to `false` and rely on `BRIDLE_HOME` isolation instead.
+    /// this to `false` and rely on `bridle_home` isolation instead.
     pub write_registry: bool,
+    /// Overrides the machine-wide `~/.bridle` (or `$BRIDLE_HOME`) directory
+    /// that [`config::Config::load`] reads `[budget]` from. `None` (the
+    /// real `serve` default) uses the real machine home; tests set this to
+    /// a per-test tempdir so they never read the real machine's
+    /// `~/.bridle/config.toml`.
+    pub bridle_home: Option<PathBuf>,
     /// Also drives the context governor's per-agent check (htp6b): both
     /// are cheap per-agent scans with no need for separate cadences.
     pub stall_check_interval: Duration,
@@ -92,6 +98,7 @@ impl Default for Overrides {
             claude_program: std::env::var("BRIDLE_CLAUDE_BIN")
                 .unwrap_or_else(|_| "claude".to_string()),
             write_registry: true,
+            bridle_home: None,
             stall_check_interval: Duration::from_secs(30),
             tracker_interval: Duration::from_secs(2),
             governor_interval: Duration::from_secs(30),
@@ -146,7 +153,8 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
     }
     let ws = Workspace::new(opts.repo.clone(), opts.workspace.clone());
     ws.ensure_dirs().context("creating workspace directories")?;
-    let config = Config::load(&opts.repo).context("loading .bridle/config.toml")?;
+    let config = Config::load_with_home(&opts.repo, overrides.bridle_home.as_deref())
+        .context("loading .bridle/config.toml")?;
     let project = opts.project.clone().unwrap_or_else(|| {
         opts.repo
             .file_name()

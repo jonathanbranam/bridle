@@ -74,6 +74,7 @@ async fn restart_marks_a_stale_running_agent_lost_and_kills_its_process() {
     let overrides = bridle_daemon::Overrides {
         claude_program: support::fake_claude_path().to_string_lossy().into_owned(),
         write_registry: false,
+        bridle_home: Some(support::machine_home_dir(tmp.path())),
         stall_check_interval: std::time::Duration::from_secs(3600),
         tracker_interval: std::time::Duration::from_millis(200),
         governor_interval: std::time::Duration::from_secs(3600),
@@ -154,6 +155,7 @@ async fn resume_on_restart_role_comes_back_after_a_clean_shutdown_then_restart()
     let overrides = bridle_daemon::Overrides {
         claude_program: support::fake_claude_path().to_string_lossy().into_owned(),
         write_registry: false,
+        bridle_home: Some(support::machine_home_dir(tmp.path())),
         stall_check_interval: std::time::Duration::from_secs(3600),
         tracker_interval: std::time::Duration::from_millis(200),
         governor_interval: std::time::Duration::from_secs(3600),
