@@ -911,7 +911,9 @@ mod tests {
     #[test]
     fn agents_table_state_follows_selection() {
         let mut app = App::new();
-        let agents = (0..10).map(|i| agent(&format!("a-{i}"), AgentState::Idle)).collect();
+        let agents = (0..10)
+            .map(|i| agent(&format!("a-{i}"), AgentState::Idle))
+            .collect();
         app.on_message(Message::AgentsLoaded(agents));
         assert_eq!(app.selected_agent, 0);
         assert_eq!(app.agents_table_state.selected(), Some(0));
