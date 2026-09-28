@@ -75,6 +75,9 @@ recorded in build-order.md and ticket u6wk.
   The human is asleep until about 7:00 AM.
 - The orchestrator owns d4mz. `scripts/claude-orchestrator` starts a new
   orchestrator with Remote Control on (as `bridle-orch`).
+- n9qh (budget schedule and thermostat override) is after the cutover, not P0.
+  But when the P0 track is idle and waiting on the human, pick up n9qh or
+  other polish work to keep the workers busy (2026-09-28).
 
 ## Things to know
 
