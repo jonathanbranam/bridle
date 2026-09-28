@@ -122,3 +122,26 @@ The diagnosis above has been acted on:
 The other listed failures (process_test.rs timeouts, the wait-until-condition
 helper idea) remain open and are still being monitored as per this ticket's
 Status section.
+
+### `renew_reapplies_the_spawn_s_extra_allowed_tools_and_env`, fixed, 2026-09-28
+
+`crates/bridle-daemon/tests/renew_test.rs::renew_reapplies_the_spawn_s_extra_allowed_tools_and_env`
+(added by the persist-spawn-overrides merge, `2d1588c`) hit the same 20 s
+`wait_for` timeout once under load, green on rerun and 3/3 alone. Root cause
+was structural, not a scheduling artifact: `fake-claude.py`'s
+`FAKE_CLAUDE_ARGV_FILE`/`FAKE_CLAUDE_ENV_FILE` dump was a single file,
+overwritten (mode `"w"`) by every `claude` invocation sharing an overridden
+`claude_program` — including the daemon's own governor probes, which reuse
+the test's `claude_program` override for their periodic usage/rate-limit
+checks. A probe invocation landing right after the invocation under test
+could permanently clobber its dump before the test read it.
+
+Fixed by having each invocation write its own `<path>.<pid>` file instead of
+sharing one, so no invocation can ever overwrite another's dump; a shared
+`support::wait_for_dump` scans all per-pid files under a path for one
+matching a predicate. Applied to every caller of `fake_claude_argv_dump_wrapper`,
+`fake_claude_env_dump_wrapper` and `fake_claude_argv_and_env_dump_wrapper`
+(`renew_test.rs`, `spawn_messaging_test.rs`), adding a `--name`/
+`BRIDLE_AGENT_NAME` filter to the two `spawn_messaging_test` callers that
+didn't already have one — they shared the same root cause but hadn't yet
+been observed to flake on it.

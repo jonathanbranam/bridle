@@ -49,12 +49,15 @@ async fn spawn_extra_allowed_tools_grants_a_tool_the_role_lacks() {
     )
     .await;
 
-    let argv: Vec<String> = support::wait_for("fake-claude argv file", || async {
-        std::fs::read_to_string(&argv_path)
-            .ok()
-            .and_then(|s| serde_json::from_str(&s).ok())
-    })
-    .await;
+    // The daemon's own governor probes reuse this same overridden
+    // `claude_program` and dump their argv too; filter on `--name w1` (only
+    // this agent's own process gets `cmd.name`) so a probe can't be mistaken
+    // for it.
+    let argv: Vec<String> =
+        support::wait_for_dump("fake-claude argv file", &argv_path, |argv: &Vec<String>| {
+            argv.windows(2).any(|w| w[0] == "--name" && w[1] == "w1")
+        })
+        .await;
 
     let flag_idx = argv
         .iter()
@@ -104,13 +107,17 @@ async fn spawn_extra_env_reaches_only_that_one_process() {
         |_| true,
     )
     .await;
-    let env1: std::collections::HashMap<String, String> =
-        support::wait_for("fake-claude env file (w1)", || async {
-            std::fs::read_to_string(&env_path)
-                .ok()
-                .and_then(|s| serde_json::from_str(&s).ok())
-        })
-        .await;
+    // Same reasoning as the argv filter above: filter on `BRIDLE_AGENT_NAME`
+    // so a governor probe's own env dump (it isn't a named agent) can't be
+    // mistaken for w1's.
+    let env1: std::collections::HashMap<String, String> = support::wait_for_dump(
+        "fake-claude env file (w1)",
+        &env_path,
+        |env: &std::collections::HashMap<String, String>| {
+            env.get("BRIDLE_AGENT_NAME").map(String::as_str) == Some("w1")
+        },
+    )
+    .await;
     assert_eq!(
         env1.get("PIXELLAB_TOKEN").map(String::as_str),
         Some("secret-1")
@@ -138,18 +145,14 @@ async fn spawn_extra_env_reaches_only_that_one_process() {
         |_| true,
     )
     .await;
-    let env2: std::collections::HashMap<String, String> =
-        support::wait_for("fake-claude env file (w2)", || async {
-            let contents = std::fs::read_to_string(&env_path).ok()?;
-            let parsed: std::collections::HashMap<String, String> =
-                serde_json::from_str(&contents).ok()?;
-            // The dump file is shared and overwritten per-invocation; only
-            // accept it once it reflects w2's own process (BRIDLE_AGENT_NAME
-            // flips before PIXELLAB_TOKEN would disappear, since both are
-            // set once at spawn time).
-            (parsed.get("BRIDLE_AGENT_NAME").map(String::as_str) == Some("w2")).then_some(parsed)
-        })
-        .await;
+    let env2: std::collections::HashMap<String, String> = support::wait_for_dump(
+        "fake-claude env file (w2)",
+        &env_path,
+        |env: &std::collections::HashMap<String, String>| {
+            env.get("BRIDLE_AGENT_NAME").map(String::as_str) == Some("w2")
+        },
+    )
+    .await;
     assert!(
         !env2.contains_key("PIXELLAB_TOKEN"),
         "w2 should not inherit w1's extra_env, got {env2:?}"

@@ -141,14 +141,11 @@ async fn renew_reapplies_the_spawn_s_extra_allowed_tools_and_env() {
     // `--name w1` (only the agent's own process gets `cmd.name`) so a
     // governor poll racing the read can't be mistaken for it.
     async fn check_dump(argv_path: &std::path::Path, env_path: &std::path::Path) {
-        let argv: Vec<String> = support::wait_for("fake-claude argv dump for w1", || async {
-            let argv: Vec<String> = std::fs::read_to_string(argv_path)
-                .ok()
-                .and_then(|s| serde_json::from_str(&s).ok())?;
-            argv.windows(2)
-                .any(|w| w[0] == "--name" && w[1] == "w1")
-                .then_some(argv)
-        })
+        let argv: Vec<String> = support::wait_for_dump(
+            "fake-claude argv dump for w1",
+            argv_path,
+            |argv: &Vec<String>| argv.windows(2).any(|w| w[0] == "--name" && w[1] == "w1"),
+        )
         .await;
         let flag_idx = argv
             .iter()
@@ -158,15 +155,14 @@ async fn renew_reapplies_the_spawn_s_extra_allowed_tools_and_env() {
             argv[flag_idx + 1..].iter().any(|a| a == "WebSearch"),
             "expected WebSearch among allowed tools, got {argv:?}"
         );
-        let env: std::collections::HashMap<String, String> =
-            support::wait_for("fake-claude env dump for w1", || async {
-                let env: std::collections::HashMap<String, String> =
-                    std::fs::read_to_string(env_path)
-                        .ok()
-                        .and_then(|s| serde_json::from_str(&s).ok())?;
-                (env.get("BRIDLE_AGENT_NAME").map(String::as_str) == Some("w1")).then_some(env)
-            })
-            .await;
+        let env: std::collections::HashMap<String, String> = support::wait_for_dump(
+            "fake-claude env dump for w1",
+            env_path,
+            |env: &std::collections::HashMap<String, String>| {
+                env.get("BRIDLE_AGENT_NAME").map(String::as_str) == Some("w1")
+            },
+        )
+        .await;
         assert_eq!(
             env.get("PIXELLAB_TOKEN").map(String::as_str),
             Some("secret-1"),
@@ -183,10 +179,10 @@ async fn renew_reapplies_the_spawn_s_extra_allowed_tools_and_env() {
     wait_for_state(&daemon.client, &agent.id, AgentState::Stopped).await;
 
     // The dump files already hold the original spawn's argv/env; remove them
-    // so the next `wait_for` below can't pass on stale content and must
+    // so the next `check_dump` below can't pass on stale content and must
     // observe a fresh write from the renewed process.
-    std::fs::remove_file(&argv_path).expect("remove stale argv dump");
-    std::fs::remove_file(&env_path).expect("remove stale env dump");
+    support::clear_dump(&argv_path);
+    support::clear_dump(&env_path);
 
     daemon
         .client
