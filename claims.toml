@@ -1,19 +1,4 @@
 [[claim]]
-task = "br-d063"
-claimed_by = "agent:manager-2"
-claimed_at = "2026-09-28T16:28:57.502328Z"
-
-[[claim]]
-task = "br-5042"
-claimed_by = "agent:manager-2"
-claimed_at = "2026-09-28T16:29:24.309995Z"
-
-[[claim]]
-task = "br-544b"
-claimed_by = "agent:manager-2"
-claimed_at = "2026-09-28T16:47:51.505823Z"
-
-[[claim]]
 task = "br-7678"
 claimed_by = "agent:python-pack"
 claimed_at = "2026-09-28T17:16:26.800278Z"
@@ -22,8 +7,3 @@ claimed_at = "2026-09-28T17:16:26.800278Z"
 task = "br-29f9"
 claimed_by = "agent:branch-rules"
 claimed_at = "2026-09-28T17:18:22.823050Z"
-
-[[claim]]
-task = "br-1e0c"
-claimed_by = "agent:manager-2"
-claimed_at = "2026-09-28T16:54:32.089188Z"
