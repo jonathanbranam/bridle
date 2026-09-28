@@ -15,7 +15,7 @@ bridle rebuild                               reconstructs tasks/edges/open_quest
                                               state branch alone; the migration path for a fresh
                                               clone with no bridle.db yet
 bridle daemons                              # every running project daemon on this machine, with agent counts
-bridle status                               # daemon, agents, Claude Code version
+bridle status                               # daemon, agents, Claude Code version, last CI result (sha, conclusion, age, url) when [ci] github is on
 bridle spawn   <role> [--name N] [--prompt TEXT | --prompt-file FILE]
                [--worktree [--base REF] | --in-repo | --cwd PATH] [--model M]
                [--allow-tool TOOL ...] [--env KEY=VALUE ...] [--ignore-budget]
