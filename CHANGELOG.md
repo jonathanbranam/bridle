@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Fixed: an agent renewed and then resumed after a daemon restart before its new session's first turn died on its first turn (`--resume` of a session claude never wrote). `resume` now starts a fresh session in that case (`agents.session_started`, schema v13), and an abnormal claude exit is logged at warn with its stderr tail.
 - A `[[budget.schedule]]` period may omit `days`/`start`/`end` to be a named preset used only via `bridle budget override <name>`, and may set `max_workers`, applied through the live max-workers override while the override is in force and reverted when it ends or is cleared. `bridle budget` shows a period's `max_workers`; `GET /v1/budget` schedule `span` is now optional and gains `max_workers`.
 - New `vim` workflow pack (`workflow/packs/vim/`, opt in with `packs = ["vim"]`): vader.vim testing convention, the `g:test_dir` temp-dir pattern, no reliance on `after/ftplugin/`, and a check-command rule that defers to the `commands.check` binding.
 - `bridle budget` now shows local-machine times, the applied `five_hour` thresholds with their source (override/schedule period/default), the current period's span, the next schedule change, why the state is what it is, each reading's age (stale by `max_staleness`) and non-`allowed` statuses; `bridle budget --schedule` prints the whole resolved schedule. `GET /v1/budget` gains `five_hour`, `schedule`, `reasons` and `age_secs`.
