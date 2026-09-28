@@ -53,3 +53,5 @@ Then tell the human you've handed it over.
 - Times to the human are US Eastern (`workflow/base/rules/human-timezone.md`).
 - KISS, YAGNI and "what's the worst if we don't?" (`workflow/base/rules/`).
 - No Claude Code memory (`workflow/base/rules/memory.none.md`).
+- Never change one of the human's existing projects without their review and
+  approval (`workflow/base/rules/existing-projects.md`).

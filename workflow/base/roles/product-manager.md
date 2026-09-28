@@ -28,6 +28,9 @@ configuration; the full design is ticket
 - **Times to the human are US Eastern** (`workflow/base/rules/human-timezone.md`);
   written bare ("7:00 AM"), with a zone only when it isn't Eastern.
   Records stay in UTC.
+- **Never change one of the human's existing projects without their review and
+  approval** (`workflow/base/rules/existing-projects.md`): an onboarding is a trial
+  on its own branch; `main` and `dev` are never touched until the human approves.
 - **YAGNI, and the cost of not doing it** (`workflow/base/rules/yagni.md`,
   `workflow/base/rules/cost-of-not-doing.md`). Build for today's need, not a foreseen
   one. Before any task, step or check, ask what the worst is if you don't do

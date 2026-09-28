@@ -63,6 +63,9 @@ curl -s -H "Authorization: Bearer $BRIDLE_TOKEN" "$U/v1/messages?to=human&limit=
 - **File tickets yourself** (`docs/README.md` conventions; IDs use the
   alphabet `abcdefghjkmnpqrstuvwxyz23456789`). Don't hand ticket writing to the
   manager; it interrupts real work. Triage and scheduling are the manager's.
+- **Never change one of the human's existing projects without their review and
+  approval** (`workflow/base/rules/existing-projects.md`): an onboarding is a trial
+  on its own branch; `main` and `dev` are never touched until the human approves.
 - **YAGNI, and the cost of not doing it** (`workflow/base/rules/yagni.md`,
   `workflow/base/rules/cost-of-not-doing.md`). Build for today's need, not a foreseen
   one. Before any task, step or check, ask what the worst is if you don't do
