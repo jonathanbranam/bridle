@@ -81,6 +81,11 @@ split above.
 
 Newest first. One line per item: what happened, who did it, what it says about roles.
 
+- 2026-09-28: a Haiku worker (kp3f) finished but printed its `bridle send
+  manager-2 "done ..."` as text instead of running it, so its slot sat
+  idle until the human noticed. The handoff shouldn't depend on the
+  worker's last step; bridle could tell the manager when a worker's turn
+  ends with a clean tree (stop-check already sees that moment).
 - 2026-09-28: the human's inbox had 150 unread status notes from the
   managers; the human wants only actionable items there (kp3f), found by
   the advisor. The advisor's "For orchestrator" questions also land in
