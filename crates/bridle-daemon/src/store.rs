@@ -56,6 +56,10 @@ pub struct Principal {
     pub kind: PrincipalKind,
 }
 
+/// An agent's persisted `--allow-tool`/`--env` overrides: the grants and
+/// `KEY=VALUE` pairs from its spawn.
+pub type AgentOverrides = (Vec<String>, Vec<(String, String)>);
+
 #[derive(Debug, Clone)]
 pub struct NewAgent {
     pub name: String,
@@ -68,6 +72,10 @@ pub struct NewAgent {
     pub worktree: Option<String>,
     pub branch: Option<String>,
     pub created_by: PrincipalId,
+    /// This spawn's `--allow-tool`/`--env` overrides (spike 2ty9/k8dw),
+    /// persisted so `renew` and `resume` can reapply them.
+    pub extra_allowed_tools: Vec<String>,
+    pub extra_env: Vec<(String, String)>,
 }
 
 #[derive(Debug, Clone)]
@@ -279,6 +287,12 @@ impl Store {
     pub async fn get_agent(&self, id_or_name: &str) -> Result<Option<Agent>, StoreError> {
         let id_or_name = id_or_name.to_string();
         self.with_conn(move |c| sync::get_agent(c, &id_or_name))
+            .await
+    }
+
+    pub async fn get_agent_overrides(&self, id: &str) -> Result<AgentOverrides, StoreError> {
+        let id = id.to_string();
+        self.with_conn(move |c| sync::get_agent_overrides(c, &id))
             .await
     }
 
@@ -876,9 +890,18 @@ mod sync {
         ALTER TABLE interactive_usage ADD COLUMN context_used_percentage REAL;
     "#;
 
+    // Per-spawn `--allow-tool`/`--env` overrides (roles-and-config.md), JSON
+    // arrays. Stored on the agent's own row so `renew` (context handoff) and
+    // `resume` (daemon restart) can reapply them: both rebuild `cmd` from
+    // the role alone otherwise, silently dropping the overrides mid-task.
+    pub(super) const SCHEMA_V11: &str = r#"
+        ALTER TABLE agents ADD COLUMN extra_allowed_tools TEXT NOT NULL DEFAULT '[]';
+        ALTER TABLE agents ADD COLUMN extra_env TEXT NOT NULL DEFAULT '[]';
+    "#;
+
     const MIGRATIONS: &[&str] = &[
         SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7, SCHEMA_V8,
-        SCHEMA_V9, SCHEMA_V10,
+        SCHEMA_V9, SCHEMA_V10, SCHEMA_V11,
     ];
 
     pub(super) fn open(path: &Path) -> Result<Connection, StoreError> {
@@ -1272,13 +1295,17 @@ mod sync {
     pub(super) fn insert_agent(conn: &Connection, new: &NewAgent) -> Result<Agent, StoreError> {
         let id = new_agent_id();
         let now = Utc::now();
+        let extra_allowed_tools =
+            serde_json::to_string(&new.extra_allowed_tools).expect("Vec<String> always serializes");
+        let extra_env =
+            serde_json::to_string(&new.extra_env).expect("Vec<(String,String)> always serializes");
         let result = conn.execute(
             "INSERT INTO agents(id, name, role, state, model, session_id, pid, pid_start,
                 workdir_kind, cwd, worktree, branch, created_at, updated_at, turns,
                 cost_usd_total, last_event_at, turn_started_at, exit_code, exit_signal,
-                exit_reason, created_by)
+                exit_reason, created_by, extra_allowed_tools, extra_env)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6, NULL, NULL, ?7, ?8, ?9, ?10, ?11, ?11, 0, 0,
-                NULL, NULL, NULL, NULL, NULL, ?12)",
+                NULL, NULL, NULL, NULL, NULL, ?12, ?13, ?14)",
             params![
                 id,
                 new.name,
@@ -1292,6 +1319,8 @@ mod sync {
                 new.branch,
                 fmt_dt(now),
                 new.created_by,
+                extra_allowed_tools,
+                extra_env,
             ],
         );
         match result {
@@ -1337,6 +1366,27 @@ mod sync {
         Ok(conn
             .query_row(&sql, params![id_or_name], row_to_agent)
             .optional()?)
+    }
+
+    /// This agent's persisted `--allow-tool`/`--env` overrides from spawn
+    /// (`NewAgent::extra_allowed_tools`/`extra_env`), for `renew` and
+    /// `resume` to reapply. Not part of the wire `Agent` type: it's an
+    /// internal detail of how the daemon rebuilds `cmd`.
+    pub(super) fn get_agent_overrides(
+        conn: &Connection,
+        id: &str,
+    ) -> Result<AgentOverrides, StoreError> {
+        let (tools_json, env_json): (String, String) = conn
+            .query_row(
+                "SELECT extra_allowed_tools, extra_env FROM agents WHERE id = ?1",
+                params![id],
+                |r| Ok((r.get(0)?, r.get(1)?)),
+            )
+            .optional()?
+            .ok_or_else(|| StoreError::NotFound(id.to_string()))?;
+        let tools = serde_json::from_str(&tools_json).unwrap_or_default();
+        let env = serde_json::from_str(&env_json).unwrap_or_default();
+        Ok((tools, env))
     }
 
     pub(super) fn list_agents(
@@ -2537,6 +2587,8 @@ mod tests {
             worktree: Some("/ws/wt/w1".to_string()),
             branch: Some("bridle/w1".to_string()),
             created_by: "human".to_string(),
+            extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
         }
     }
 

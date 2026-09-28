@@ -27,3 +27,12 @@ This is a gap between what the orchestrator role needs to do
 (`docs/design/agent-host/roles-and-config.md`) and what Claude Code's own
 permission classifier allows an autonomous session to do unattended,
 independent of anything bridle itself enforces.
+
+## Notes
+
+2026-09-28: branch `bridle/j2vq-orchestrator-perms` added `Bash(bridle *)` to the tracked
+`.claude/settings.json`, which grants it to every Claude Code session opened in the repo,
+not only the orchestrator. The advisor recommended scoping it to the orchestrator instead
+(untracked `.claude/settings.local.json`, or a flag passed from
+`scripts/claude-orchestrator`). The human: "j2vq accept your recommendation". Relayed to
+manager-2 (m-0861).
