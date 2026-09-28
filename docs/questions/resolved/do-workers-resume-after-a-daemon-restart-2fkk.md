@@ -40,3 +40,15 @@ instead of resumed.
 - Related: whether agents should survive a daemon restart at all, e.g. by
   giving the daemon's stdio pipes to a small per-agent holder process. v1
   rules this out.
+
+## Resolution
+
+Defer the resume policy decision. bridle doesn't run on the NUC yet, so the
+question of how workers resume after a daemon restart is YAGNI for now.
+Workers default to `resume_on_restart = false` and stay `lost` until someone
+runs `bridle resume`, and this is acceptable while bridle is development-only.
+Revisit this alongside the nightly reboot decision ([[agents-and-nightly-auto-reboots-t39j|t39j]]),
+including the systemd-inhibitor idea, when bridle actually moves to the NUC
+and the cost of losing a turn becomes significant.
+
+Resolved 2026-09-28.
