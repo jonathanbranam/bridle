@@ -114,8 +114,8 @@ On startup the daemon reconciles:
   (the case above) or `stopped` with reason `daemon_shutdown` (a clean
   shutdown before this restart).
 - For every role with `autostart = true` (by default only the built-in `manager`), an agent named after the role is
-  spawned with the role's `start_prompt`, unless an agent of that name already
-  exists in any state.
+  spawned with the role's `start_prompt`, unless an agent with that *role* already
+  exists in any state (so a manager named `manager-2` suppresses it).
 - Events older than 30 days are pruned, then daily.
 
 Whether workers should resume too is open:
