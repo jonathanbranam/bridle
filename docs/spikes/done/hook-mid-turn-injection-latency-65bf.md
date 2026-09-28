@@ -31,3 +31,11 @@ so this matters only if hooks come back for status or injection, e.g. for
 agents bridle doesn't host.
 
 ## Notes
+
+The original `PostToolUse` `additionalContext` latency question is superseded: delivery uses
+stdin now (see Why it matters above), not hooks, so this scenario no longer applies as bridle's
+message-delivery path.
+
+This ticket was reused rather than closed to carry a narrower, still-live question: the `Stop`
+hook's stdin schema and blocking mechanism, needed to unblock the "stop-check" (P1) task. That
+question is answered in `docs/spikes/05-stop-hook-findings.md`.
