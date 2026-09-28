@@ -200,6 +200,10 @@ pub struct Agent {
     pub held_messages: u32,
     /// Written to stdin but not yet acknowledged by replay echo.
     pub unacked_messages: u32,
+    /// Component ids this agent is scoped to (`BRIDLE_COMPONENTS` in its
+    /// env; docs/design/components.md). Empty = repo-wide.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub components: Vec<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -229,6 +233,10 @@ pub struct SpawnRequest {
     /// (usage-and-budget.md, Resuming: the escape hatch).
     #[serde(default)]
     pub ignore_budget: bool,
+    /// Component ids to scope the agent to. Empty = the claimed task's list
+    /// (if the spawner has one), else repo-wide.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub components: Vec<String>,
 }
 
 /// `POST /v1/agents/{id}/resume`.
@@ -971,6 +979,10 @@ pub struct Task {
     pub claimed_by: Option<PrincipalId>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub claimed_at: Option<DateTime<Utc>>,
+    /// Component ids the task is scoped to; empty = repo-wide. Naming a
+    /// child implies its ancestors (docs/design/components.md).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub components: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -979,6 +991,8 @@ pub struct NewTaskRequest {
     pub kind: TaskKind,
     #[serde(default)]
     pub body: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub components: Vec<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -987,6 +1001,9 @@ pub struct EditTaskRequest {
     pub title: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub body: Option<String>,
+    /// Replaces the whole list; `Some(vec![])` clears it (repo-wide).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub components: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -1037,6 +1054,9 @@ pub struct TaskQuery {
     /// project-wide. Takes precedence over `ready` when both are set.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub top_tier: Option<bool>,
+    /// `?component=<id>`: tasks naming that component or any descendant.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub component: Option<String>,
 }
 
 // ---------- queue ----------

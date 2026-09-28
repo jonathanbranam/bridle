@@ -43,6 +43,7 @@ async fn restart_marks_a_stale_running_agent_lost_and_kills_its_process() {
 
     let agent = store
         .insert_agent(NewAgent {
+            components: Vec::new(),
             name: "stale".to_string(),
             role: "worker".to_string(),
             model: "sonnet".to_string(),
@@ -133,6 +134,7 @@ async fn resume_on_restart_role_comes_back_after_a_clean_shutdown_then_restart()
     let agent = daemon
         .client
         .spawn(&SpawnRequest {
+            components: Vec::new(),
             role: "manager".to_string(),
             name: Some("mgr".to_string()),
             prompt: None,

@@ -76,6 +76,7 @@ pub struct NewAgent {
     /// persisted so `renew` and `resume` can reapply them.
     pub extra_allowed_tools: Vec<String>,
     pub extra_env: Vec<(String, String)>,
+    pub components: Vec<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -909,9 +910,15 @@ mod sync {
         ALTER TABLE agents ADD COLUMN extra_env TEXT NOT NULL DEFAULT '[]';
     "#;
 
+    // Component ids the agent is scoped to (docs/design/components.md), a JSON
+    // array. Kept so `resume`/`renew` re-pass `BRIDLE_COMPONENTS`.
+    pub(super) const SCHEMA_V12: &str = r#"
+        ALTER TABLE agents ADD COLUMN components TEXT NOT NULL DEFAULT '[]';
+    "#;
+
     const MIGRATIONS: &[&str] = &[
         SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7, SCHEMA_V8,
-        SCHEMA_V9, SCHEMA_V10, SCHEMA_V11,
+        SCHEMA_V9, SCHEMA_V10, SCHEMA_V11, SCHEMA_V12,
     ];
 
     pub(super) fn open(path: &Path) -> Result<Connection, StoreError> {
@@ -1275,7 +1282,7 @@ mod sync {
                a.exit_code, a.exit_signal, a.exit_reason, a.created_by,
                (SELECT COUNT(*) FROM messages m WHERE m.to_kind='agent' AND m.to_id=a.id AND m.state='held') AS held_messages,
                (SELECT COUNT(*) FROM messages m WHERE m.to_kind='agent' AND m.to_id=a.id AND m.state='written') AS unacked_messages,
-               a.context_tokens
+               a.context_tokens, a.components
         FROM agents a";
 
     fn row_to_agent(row: &Row<'_>) -> rusqlite::Result<Agent> {
@@ -1312,6 +1319,7 @@ mod sync {
             held_messages: row.get::<_, i64>(22)? as u32,
             unacked_messages: row.get::<_, i64>(23)? as u32,
             context_tokens: row.get::<_, Option<i64>>(24)?.map(|n| n as u64),
+            components: serde_json::from_str(&row.get::<_, String>(25)?).unwrap_or_default(),
         })
     }
 
@@ -1326,9 +1334,9 @@ mod sync {
             "INSERT INTO agents(id, name, role, state, model, session_id, pid, pid_start,
                 workdir_kind, cwd, worktree, branch, created_at, updated_at, turns,
                 cost_usd_total, last_event_at, turn_started_at, exit_code, exit_signal,
-                exit_reason, created_by, extra_allowed_tools, extra_env)
+                exit_reason, created_by, extra_allowed_tools, extra_env, components)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6, NULL, NULL, ?7, ?8, ?9, ?10, ?11, ?11, 0, 0,
-                NULL, NULL, NULL, NULL, NULL, ?12, ?13, ?14)",
+                NULL, NULL, NULL, NULL, NULL, ?12, ?13, ?14, ?15)",
             params![
                 id,
                 new.name,
@@ -1344,6 +1352,7 @@ mod sync {
                 new.created_by,
                 extra_allowed_tools,
                 extra_env,
+                serde_json::to_string(&new.components).expect("Vec<String> always serializes"),
             ],
         );
         match result {
@@ -1378,6 +1387,7 @@ mod sync {
             held_messages: 0,
             unacked_messages: 0,
             context_tokens: None,
+            components: new.components.clone(),
         })
     }
 
@@ -2612,6 +2622,7 @@ mod tests {
             created_by: "human".to_string(),
             extra_allowed_tools: Vec::new(),
             extra_env: Vec::new(),
+            components: Vec::new(),
         }
     }
 

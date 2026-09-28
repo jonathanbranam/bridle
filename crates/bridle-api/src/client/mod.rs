@@ -430,6 +430,15 @@ impl Client {
         self.get_json_query(&["v1", "tasks"], &query).await
     }
 
+    /// `GET /v1/tasks?component=...`: tasks naming `component` or a descendant.
+    pub async fn list_tasks_component(&self, component: &str) -> Result<Vec<Task>, ClientError> {
+        let query = TaskQuery {
+            component: Some(component.to_string()),
+            ..Default::default()
+        };
+        self.get_json_query(&["v1", "tasks"], &query).await
+    }
+
     pub async fn new_task(&self, req: &NewTaskRequest) -> Result<Task, ClientError> {
         self.post_json(&["v1", "tasks"], req).await
     }

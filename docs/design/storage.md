@@ -17,8 +17,9 @@ agents(id PK, name UNIQUE, role, state, model, session_id, pid, pid_start,
        workdir_kind, cwd, worktree, branch, created_at, updated_at,
        turns, turn_started_at, cost_usd_total, last_event_at,
        exit_code, exit_signal, exit_reason, created_by,
-       extra_allowed_tools JSON, extra_env JSON)  -- this agent's --allow-tool/--env
+       extra_allowed_tools JSON, extra_env JSON,  -- this agent's --allow-tool/--env
                                                    -- overrides, reapplied on renew/resume
+       components JSON)                            -- component ids (SCHEMA_V12), BRIDLE_COMPONENTS
 turns(agent_id, agent_name, role, model,           -- no FK: turns outlive rm
       n, started_at, ended_at, subtype, is_error, terminal_reason,
       input_tokens, output_tokens, cache_read, cache_write,
@@ -228,6 +229,10 @@ events/2026-09.jsonl      append-only transitions, for history and rebuild
   (`worktree::ensure_orphan_branch`). This is the safety property the build
   was explicit about: writing task state must never be able to touch the
   project's own working tree or index, under any circumstance.
+- **A task's `components`** (component ids, docs/design/components.md) live only
+  in the frontmatter, as an optional `components = ["a", "b"]` array: omitted when
+  empty, and a file written before the field existed loads with none. Like the body,
+  the state branch is its only durable copy, so a rebuild round-trips it.
 - **The task file's frontmatter delimiter is `+++`** (TOML, Hugo's
   convention), not `---` (which reads as YAML). The thread section, when a
   task has one, is a `## Thread` heading followed by one
