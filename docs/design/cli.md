@@ -42,6 +42,9 @@ bridle token list                           name, created-at, revoked-or-not; ne
 bridle token revoke <name>                  human only, external tokens only (an agent's own token is
                                              revoked through `bridle rm`, not this)
 bridle statusline                           Claude Code statusLine command; local only, no daemon call
+bridle stop-check                           Claude Code Stop hook for the worker role; refuses to stop
+                                             with an unreleased claim and no thread entry since claiming
+                                             it (docs/design/coordination.md); never fails
 bridle task new    <title> -k/--kind KIND [--body TEXT]
 bridle task show   <id>
 bridle task edit   <id> [--title TEXT] [--body TEXT]
@@ -192,6 +195,19 @@ bridle task note   <id> TEXT                     plain note to the task's thread
   an `external:statusline` token and store it where `statusline` reads it (a fixed path under
   `$BRIDLE_HOME`/`~/.bridle`, not the workspace's own `.bridle/`, since this needs to work
   regardless of which project workspace Claude Code happens to be in).
+- **`stop-check`** is Claude Code's `Stop` hook, registered only for the worker role
+  ([[docs/design/coordination#How agents actually hear things (Claude Code integration)|coordination.md]],
+  [[docs/spikes/05-stop-hook-findings|spike 05]]). It reads the hook's JSON on stdin; if
+  `stop_hook_active` is set it allows immediately (Claude Code silently overrides a hook
+  after 9 consecutive blocks in one turn, so a well-behaved hook blocks at most once per
+  turn). Otherwise it lists the calling principal's own claimed tasks
+  (`?claimed_by=me`) and blocks — printing the flat `{"decision":"block","reason":"..."}`
+  spike 05 confirmed, not the `hookSpecificOutput` wrapper — on the first one with no
+  thread entry (note, question or answer) from itself at or after `claimed_at`; naming
+  the task and telling the agent to `bridle release` it or leave a `bridle task note`
+  first. Any error of bridle's own (unparseable stdin, no daemon reachable, an API
+  error) allows rather than blocks: a bug in bridle's own tooling must never trap an
+  agent from stopping.
 
 ## Planned
 

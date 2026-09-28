@@ -71,6 +71,9 @@ pub struct Role {
     /// Passed as `--max-budget-usd`. Claude applies it per process, and
     /// checks it after each model call, so a turn can overshoot it.
     pub max_budget_usd: Option<f64>,
+    /// Registers the `bridle stop-check` Stop hook (docs/design/
+    /// coordination.md): worker only for now, not project-configurable.
+    pub stop_check: bool,
 }
 
 /// Claude Code built-ins that let an agent bypass bridle's own coordination
@@ -122,6 +125,7 @@ impl Role {
             resume_on_restart: false,
             start_prompt: None,
             max_budget_usd: None,
+            stop_check: true,
         }
     }
 
@@ -145,6 +149,7 @@ impl Role {
             resume_on_restart: true,
             start_prompt: None,
             max_budget_usd: None,
+            stop_check: false,
         }
     }
 
@@ -169,6 +174,7 @@ impl Role {
             resume_on_restart: true,
             start_prompt: None,
             max_budget_usd: None,
+            stop_check: false,
         }
     }
 
@@ -1115,6 +1121,7 @@ mod tests {
             !worker.disallowed_tools.contains(&"Agent".to_string()),
             "worker should allow Agent"
         );
+        assert!(worker.stop_check, "worker should have stop_check on");
 
         let manager = &cfg.roles["manager"];
         assert_eq!(manager.workdir, Workdir::Repo);
@@ -1131,6 +1138,7 @@ mod tests {
             !manager.disallowed_tools.contains(&"Agent".to_string()),
             "manager should allow Agent"
         );
+        assert!(!manager.stop_check, "manager should have stop_check off");
 
         let orchestrator = &cfg.roles["orchestrator"];
         assert_eq!(orchestrator.workdir, Workdir::Repo);
@@ -1157,6 +1165,10 @@ mod tests {
                 "orchestrator should not deny {tool}"
             );
         }
+        assert!(
+            !orchestrator.stop_check,
+            "orchestrator should have stop_check off"
+        );
     }
 
     #[test]

@@ -59,6 +59,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Release(args) => release(&cli, args).await,
         Command::Ready(args) => ready(&cli, args).await,
         Command::Statusline => statusline(&cli).await,
+        Command::StopCheck => stop_check(&cli).await,
     }
 }
 
@@ -114,6 +115,39 @@ async fn statusline(_cli: &Cli) -> Result<(), CliError> {
         line.push_str(&counts);
     }
     println!("{line}");
+    Ok(())
+}
+
+/// Claude Code's Stop hook for the worker role (docs/design/coordination.md,
+/// docs/spikes/05-stop-hook-findings.md). Per the protocol there: allow
+/// immediately (print nothing) when `stop_hook_active` is set, on any error
+/// of bridle's own reaching the daemon, and whenever every claimed task has
+/// a thread entry since it was claimed; block (print the flat
+/// `decision`/`reason` JSON) only for the first claim missing one.
+async fn stop_check(cli: &Cli) -> Result<(), CliError> {
+    let input: serde_json::Value = std::io::read_to_string(std::io::stdin())
+        .ok()
+        .and_then(|s| serde_json::from_str(&s).ok())
+        .unwrap_or(serde_json::Value::Null);
+    if input
+        .get("stop_hook_active")
+        .and_then(serde_json::Value::as_bool)
+        .unwrap_or(false)
+    {
+        return Ok(());
+    }
+    let Ok(client) = client_for(cli).await else {
+        return Ok(());
+    };
+    let Ok(claimed) = client.list_tasks_claimed_by("me").await else {
+        return Ok(());
+    };
+    if let Some(task) = crate::stop_check::first_unacknowledged_claim(&claimed) {
+        println!(
+            "{}",
+            crate::stop_check::block_json(&crate::stop_check::reason_for(task))
+        );
+    }
     Ok(())
 }
 
