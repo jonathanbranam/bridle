@@ -113,6 +113,17 @@ signal `supervisor.rs`'s stall check watches) and releases the claim once
 that activity is older than `config.claim_lease_after`. The ephemeral tables
 `waits`, `ports`, `impact_cache` arrive with later tasks.
 
+The current claim, if any, rides along on the wire `Task` as `claimed_by`/
+`claimed_at` (`bridle-api::types::Task`): null when unclaimed, populated from
+`claims` on `TaskManager::open` and again on every claim/release. Like the
+table it mirrors, it's never written to the state branch — a task read back
+from the state branch alone (e.g. after `bridle rebuild`) always has it null,
+even if it was claimed before the last flush. `GET /v1/tasks?claimed_by=`
+filters on it; `me` resolves to the calling principal's own id (the same
+pattern `?to=me` uses for messages, `server.rs::resolve_to`), anything else
+is matched against `claimed_by` verbatim after the same name lookup
+`resolve_from` does for messages.
+
 Every durable write goes to the database and the state branch in the same
 logical operation (for the `tasks` table: synchronously to SQLite, then
 enqueued for the state branch's next batched flush — see below; edges follow

@@ -463,6 +463,10 @@ fn parse_task(text: &str) -> Result<Task, StateBranchError> {
         thread,
         created_at: fm.created_at,
         updated_at: fm.updated_at,
+        // Claims are SQLite-only, with nothing on the state branch to read
+        // back (storage.md); the caller layers the current claim on top.
+        claimed_by: None,
+        claimed_at: None,
     })
 }
 
@@ -517,6 +521,8 @@ mod tests {
             thread: vec![],
             created_at: now,
             updated_at: now,
+            claimed_by: None,
+            claimed_at: None,
         }
     }
 
