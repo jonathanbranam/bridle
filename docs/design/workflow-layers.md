@@ -167,13 +167,16 @@ written down anywhere else yet:
 - **The `SessionStart` hook that would run `sync` automatically is not built yet** — a
   follow-up (P2-3 built the command itself, not the auto-invocation).
 - L4 component rules aren't rendered into files: scope comes from the task or spawn, and
-  `bridle prime` delivers them ([[docs/design/components|components]]; prime delivery not built yet).
+  `bridle prime worker|planner` delivers them ([[docs/design/components|components]]).
 
 Most rule content is not rendered into a file at all. It is delivered by
 `bridle prime` at session start, sized to the role: a worker gets its task,
 the rules tagged for `worker`, the facts, the guides its task's components
 point to, the architecture invariants, the goals its task serves, and the
-standing rule about explorations ([[docs/design/explorations|explorations]]). It does not get every rule in the
+standing rule about explorations ([[docs/design/explorations|explorations]]). Built so far:
+`prime worker|planner` prints the role's rules, facts and guide paths and the named
+components' scope (see cli.md); the task, invariants, goals and explorations rule aren't
+in it yet. It does not get every rule in the
 tree, and it does not get the full goals document.
 
 ## Rules improve through the workflow itself
