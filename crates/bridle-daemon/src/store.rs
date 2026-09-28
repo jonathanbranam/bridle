@@ -1061,6 +1061,9 @@ mod sync {
             PrincipalKind::Agent => "agent",
             PrincipalKind::External => "external",
             PrincipalKind::System => "system",
+            PrincipalKind::Local => {
+                unreachable!("Local principals are synthesized per-request, never stored")
+            }
         }
     }
 

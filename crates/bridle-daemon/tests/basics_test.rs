@@ -21,6 +21,56 @@ async fn health_needs_no_auth_and_status_needs_a_token() {
     assert!(!status.daemon.project.is_empty());
 }
 
+/// docs/questions/open/read-only-access-without-a-token-9c63.md: a GET with
+/// no bearer token reads as a synthetic `local` principal rather than
+/// 401ing, since the daemon only listens on 127.0.0.1. A GET with a valid
+/// token still authenticates normally and keeps real attribution.
+#[tokio::test]
+async fn get_routes_work_without_a_token_and_keep_real_attribution_with_one() {
+    let (daemon, _tmp) = support::start_daemon(None).await;
+
+    let anon = Client::new(daemon.running.url.clone(), None);
+    let status = anon.status().await.expect("status without a token");
+    assert_eq!(status.principal, "local");
+
+    let agents = anon
+        .list_agents()
+        .await
+        .expect("list_agents without a token");
+    assert!(agents.is_empty());
+
+    let status = daemon.client.status().await.expect("status with a token");
+    assert_eq!(status.principal, "human");
+}
+
+/// Same ticket: writes still need a token, even from localhost.
+#[tokio::test]
+async fn write_routes_still_401_without_a_token() {
+    let (daemon, _tmp) = support::start_daemon(None).await;
+
+    let anon = Client::new(daemon.running.url.clone(), None);
+    let err = anon
+        .spawn(&SpawnRequest {
+            role: "worker".to_string(),
+            name: Some("w1".to_string()),
+            prompt: None,
+            workdir: Some(bridle_api::types::Workdir::Repo),
+            model: None,
+            extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
+            ignore_budget: false,
+        })
+        .await
+        .unwrap_err();
+    match err {
+        ClientError::Api { status, code, .. } => {
+            assert_eq!(status, 401);
+            assert_eq!(code, "unauthorized");
+        }
+        other => panic!("expected 401, got {other:?}"),
+    }
+}
+
 #[tokio::test]
 async fn health_counts_non_terminal_agents() {
     let (daemon, _tmp) = support::start_daemon(None).await;
@@ -48,18 +98,8 @@ async fn health_counts_non_terminal_agents() {
 }
 
 #[tokio::test]
-async fn missing_or_invalid_token_is_401() {
+async fn invalid_token_is_401_even_on_a_get_route() {
     let (daemon, _tmp) = support::start_daemon(None).await;
-
-    let anon = Client::new(daemon.running.url.clone(), None);
-    let err = anon.status().await.unwrap_err();
-    match err {
-        ClientError::Api { status, code, .. } => {
-            assert_eq!(status, 401);
-            assert_eq!(code, "unauthorized");
-        }
-        other => panic!("expected 401, got {other:?}"),
-    }
 
     let bad = Client::new(
         daemon.running.url.clone(),
