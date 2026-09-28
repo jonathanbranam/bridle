@@ -49,6 +49,7 @@ async fn governor_holds_then_pauses_as_usage_climbs() {
     let err = daemon
         .client
         .spawn(&SpawnRequest {
+            components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
             prompt: None,
@@ -87,6 +88,7 @@ async fn idle_message_is_held_not_written_while_governor_is_holding() {
     let agent = daemon
         .client
         .spawn(&SpawnRequest {
+            components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
             prompt: None,
@@ -150,6 +152,7 @@ async fn held_message_for_idle_agent_is_delivered_when_governor_returns_to_norma
     let agent = daemon
         .client
         .spawn(&SpawnRequest {
+            components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
             prompt: None,
@@ -248,6 +251,7 @@ async fn idle_agent_is_stopped_at_once_on_wind_down_then_resumed() {
     let agent = daemon
         .client
         .spawn(&SpawnRequest {
+            components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
             prompt: None,
@@ -315,6 +319,7 @@ async fn working_agent_is_notified_then_stopped_when_its_turn_ends() {
     let agent = daemon
         .client
         .spawn(&SpawnRequest {
+            components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
             prompt: Some("SLEEP 3".to_string()),
@@ -369,6 +374,7 @@ async fn human_hold_forces_winding_down_and_release_lifts_it() {
     let agent = daemon
         .client
         .spawn(&SpawnRequest {
+            components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
             prompt: None,
@@ -514,6 +520,7 @@ async fn ignore_budget_bypasses_the_holding_refusal() {
     let agent = daemon
         .client
         .spawn(&SpawnRequest {
+            components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
             prompt: None,
@@ -593,6 +600,7 @@ async fn spawn_steps_down_to_the_next_model_when_the_first_ones_window_is_tight(
     let agent = daemon
         .client
         .spawn(&SpawnRequest {
+            components: Vec::new(),
             role: "manager".to_string(),
             name: Some("m1".to_string()),
             prompt: None,
@@ -630,6 +638,7 @@ async fn explicit_model_pin_bypasses_step_down() {
     let err = daemon
         .client
         .spawn(&SpawnRequest {
+            components: Vec::new(),
             role: "manager".to_string(),
             name: Some("m2".to_string()),
             prompt: None,
@@ -666,6 +675,7 @@ async fn spawn_refuses_when_every_candidate_model_is_blocked() {
     let err = daemon
         .client
         .spawn(&SpawnRequest {
+            components: Vec::new(),
             role: "manager".to_string(),
             name: Some("m3".to_string()),
             prompt: None,
@@ -701,6 +711,7 @@ async fn resume_brings_back_a_manager_even_when_workers_fill_max_workers() {
         let a = daemon
             .client
             .spawn(&SpawnRequest {
+                components: Vec::new(),
                 role: role.to_string(),
                 name: Some(name.to_string()),
                 prompt: None,

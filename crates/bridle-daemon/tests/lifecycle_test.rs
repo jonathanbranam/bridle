@@ -16,6 +16,7 @@ async fn interrupt_during_sleep_ends_the_turn_and_agent_stays_usable() {
     let agent = daemon
         .client
         .spawn(&SpawnRequest {
+            components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
             prompt: Some("SLEEP 10".to_string()),
@@ -78,6 +79,7 @@ async fn stop_then_resume_keeps_the_session_and_answers_new_messages() {
     let agent = daemon
         .client
         .spawn(&SpawnRequest {
+            components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
             prompt: None,
@@ -163,6 +165,7 @@ async fn rm_refuses_a_dirty_worktree_without_force() {
     let agent = daemon
         .client
         .spawn(&SpawnRequest {
+            components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
             prompt: None,
@@ -209,6 +212,7 @@ async fn rm_refuses_a_worktree_with_open_files_without_force() {
     let agent = daemon
         .client
         .spawn(&SpawnRequest {
+            components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
             prompt: None,
@@ -299,6 +303,7 @@ async fn crash_is_reported_with_a_stderr_tail_and_pending_messages_deliver_on_re
     let agent = daemon
         .client
         .spawn(&SpawnRequest {
+            components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
             prompt: Some("CRASH".to_string()),
@@ -362,6 +367,7 @@ async fn spawn_child_orphan_is_swept_on_stop() {
     let agent = daemon
         .client
         .spawn(&SpawnRequest {
+            components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
             prompt: Some("SPAWN_CHILD".to_string()),
@@ -436,6 +442,7 @@ async fn worker_principal_is_refused_agent_lifecycle_endpoints() {
     let actor = daemon
         .client
         .spawn(&SpawnRequest {
+            components: Vec::new(),
             role: "worker".to_string(),
             name: Some("actor".to_string()),
             prompt: None,
@@ -451,6 +458,7 @@ async fn worker_principal_is_refused_agent_lifecycle_endpoints() {
     let victim = daemon
         .client
         .spawn(&SpawnRequest {
+            components: Vec::new(),
             role: "worker".to_string(),
             name: Some("victim".to_string()),
             prompt: None,
@@ -468,6 +476,7 @@ async fn worker_principal_is_refused_agent_lifecycle_endpoints() {
 
     let err = worker_client
         .spawn(&SpawnRequest {
+            components: Vec::new(),
             role: "worker".to_string(),
             name: Some("victim2".to_string()),
             prompt: None,
@@ -540,6 +549,7 @@ async fn manager_and_orchestrator_principals_keep_agent_lifecycle_authority() {
         let actor = daemon
             .client
             .spawn(&SpawnRequest {
+                components: Vec::new(),
                 role: role.to_string(),
                 name: Some(name.to_string()),
                 prompt: None,
@@ -556,6 +566,7 @@ async fn manager_and_orchestrator_principals_keep_agent_lifecycle_authority() {
 
         let victim = actor_client
             .spawn(&SpawnRequest {
+                components: Vec::new(),
                 role: "worker".to_string(),
                 name: Some(format!("{name}-victim")),
                 prompt: None,

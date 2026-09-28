@@ -14,6 +14,7 @@ async fn events_stream_receives_backfill_then_live_events_in_seq_order() {
     let agent = daemon
         .client
         .spawn(&SpawnRequest {
+            components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
             prompt: None,
@@ -84,6 +85,7 @@ async fn events_stream_since_skips_already_seen_events() {
     let agent = daemon
         .client
         .spawn(&SpawnRequest {
+            components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
             prompt: Some("hello".to_string()),
@@ -129,6 +131,7 @@ async fn events_stream_with_no_cursor_skips_backfill_and_starts_at_the_tail() {
     let agent = daemon
         .client
         .spawn(&SpawnRequest {
+            components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
             prompt: None,

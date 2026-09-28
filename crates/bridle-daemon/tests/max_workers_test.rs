@@ -9,6 +9,7 @@ use bridle_api::{Client, ClientError};
 async fn spawn(client: &Client, role: &str, name: &str) -> Result<(), ClientError> {
     client
         .spawn(&SpawnRequest {
+            components: Vec::new(),
             role: role.to_string(),
             name: Some(name.to_string()),
             prompt: None,

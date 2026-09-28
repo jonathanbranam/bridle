@@ -35,7 +35,9 @@ established; S-numbers are its scenarios. Each agent is one headless
 - **Environment**: bridle removes every inherited `CLAUDE*` variable and any
   `BRIDLE_TOKEN` (spike surprise 12), then sets `BRIDLE_URL`, `BRIDLE_TOKEN`
   (the agent's own), `BRIDLE_AGENT_ID`, `BRIDLE_AGENT_NAME`,
-  `BRIDLE_WORKSPACE` and `BRIDLE_PROJECT`. Other `BRIDLE_*` variables are
+  `BRIDLE_WORKSPACE` and `BRIDLE_PROJECT`, plus `BRIDLE_COMPONENTS`
+  (comma-separated component ids, only when the spawn named any; see
+  docs/design/components.md). Other `BRIDLE_*` variables are
   inherited.
 - **`PATH` starts with the daemon's own binary directory**, so an agent's
   `bridle` is always the version supervising it, installed or not.

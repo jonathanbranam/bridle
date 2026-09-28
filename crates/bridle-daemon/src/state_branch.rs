@@ -412,6 +412,9 @@ struct Frontmatter {
     state: String,
     created_at: DateTime<Utc>,
     updated_at: DateTime<Utc>,
+    /// Absent in records written before components existed.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    components: Vec<String>,
 }
 
 /// `+++`-delimited TOML frontmatter (the same convention Hugo uses, picked
@@ -428,6 +431,7 @@ fn render_task(task: &Task) -> Result<String, StateBranchError> {
         state: task.state.as_str().to_string(),
         created_at: task.created_at,
         updated_at: task.updated_at,
+        components: task.components.clone(),
     };
     let toml = toml::to_string_pretty(&fm)?;
     let mut out = String::new();
@@ -589,6 +593,7 @@ fn parse_task(text: &str) -> Result<Task, StateBranchError> {
         // `claims.toml`/SQLite, storage.md) on top of what this parses.
         claimed_by: None,
         claimed_at: None,
+        components: fm.components,
     })
 }
 
@@ -746,6 +751,7 @@ mod tests {
             updated_at: now,
             claimed_by: None,
             claimed_at: None,
+            components: vec!["client-games".to_string(), "dungeon".to_string()],
         }
     }
 
@@ -763,6 +769,16 @@ mod tests {
         assert!(parsed.thread.is_empty());
         assert_eq!(parsed.created_at, task.created_at);
         assert_eq!(parsed.updated_at, task.updated_at);
+    }
+
+    #[test]
+    fn a_record_written_before_components_existed_still_loads() {
+        let text = "+++\nid = \"tw-1\"\ntitle = \"Old\"\nkind = \"feature\"\nstate = \"open\"\n\
+                    created_at = \"2026-01-01T00:00:00Z\"\nupdated_at = \"2026-01-01T00:00:00Z\"\n+++\n\nbody\n";
+        let task = parse_task(text).expect("parse old record");
+        assert!(task.components.is_empty());
+        // And an empty list isn't written back out.
+        assert!(!render_task(&task).expect("render").contains("components"));
     }
 
     #[test]

@@ -20,6 +20,7 @@ async fn renew_replaces_the_process_in_the_same_worktree_and_branch() {
     let agent = daemon
         .client
         .spawn(&SpawnRequest {
+            components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
             prompt: None,
@@ -116,6 +117,7 @@ async fn renew_sends_a_continuation_note_with_no_pending_messages() {
     let agent = daemon
         .client
         .spawn(&SpawnRequest {
+            components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
             prompt: None,
@@ -198,6 +200,7 @@ async fn renew_reapplies_the_spawn_s_extra_allowed_tools_and_env() {
     let agent = daemon
         .client
         .spawn(&SpawnRequest {
+            components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
             prompt: None,

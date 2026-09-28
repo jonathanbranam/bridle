@@ -15,6 +15,7 @@ use support::{
 
 fn spawn_req(name: &str, prompt: Option<&str>, workdir: Workdir) -> SpawnRequest {
     SpawnRequest {
+        components: Vec::new(),
         role: "worker".to_string(),
         name: Some(name.to_string()),
         prompt: prompt.map(str::to_string),

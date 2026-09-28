@@ -56,6 +56,7 @@ async fn crossing_wind_down_at_sends_handoff_and_renews_once() {
 
     let agent = c
         .spawn(&SpawnRequest {
+            components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
             // SLEEP gives the test a window, after `spawn` returns at
@@ -139,6 +140,7 @@ async fn many_concurrent_crossings_each_renew_exactly_once() {
     for i in 0..N {
         let agent = c
             .spawn(&SpawnRequest {
+                components: Vec::new(),
                 role: "worker".to_string(),
                 name: Some(format!("w{i}")),
                 prompt: Some("SLEEP 1".to_string()),

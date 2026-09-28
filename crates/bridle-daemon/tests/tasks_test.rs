@@ -15,6 +15,7 @@ use support::{start_daemon, wait_for_state};
 
 fn new_req(title: &str, kind: TaskKind) -> NewTaskRequest {
     NewTaskRequest {
+        components: Vec::new(),
         title: title.to_string(),
         kind,
         body: String::new(),
@@ -28,6 +29,7 @@ async fn create_show_list_and_edit_a_task() {
 
     let task = c
         .new_task(&NewTaskRequest {
+            components: Vec::new(),
             title: "Add foo".to_string(),
             kind: TaskKind::Feature,
             body: "a description".to_string(),
@@ -53,6 +55,7 @@ async fn create_show_list_and_edit_a_task() {
         .edit_task(
             &task.id,
             &EditTaskRequest {
+                components: None,
                 title: Some("Add foo, better".to_string()),
                 body: None,
             },
@@ -501,6 +504,7 @@ async fn only_pm_or_human_may_write_the_queue() {
     let manager = daemon
         .client
         .spawn(&SpawnRequest {
+            components: Vec::new(),
             role: "manager".to_string(),
             name: Some("mgr".to_string()),
             prompt: None,

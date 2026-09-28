@@ -447,6 +447,19 @@ async fn spawn_agent(
     Json(req): Json<SpawnRequest>,
 ) -> Result<Json<Agent>, ApiError> {
     require_not_worker(&state, &principal).await?;
+    let mut req = req;
+    req.components = if req.components.is_empty() {
+        // Default to the spawner's claimed task's scope (components.md).
+        state
+            .tasks
+            .list_tasks()
+            .into_iter()
+            .find(|t| t.claimed_by.as_deref() == Some(principal.id.as_str()))
+            .map(|t| t.components)
+            .unwrap_or_default()
+    } else {
+        state.manager.normalize_components(&req.components)?
+    };
     Ok(Json(state.manager.spawn(req, &principal).await?))
 }
 
@@ -924,6 +937,13 @@ async fn list_tasks(
     } else {
         state.tasks.list_tasks()
     };
+    let tasks: Vec<Task> = match q.component.as_deref() {
+        Some(id) => tasks
+            .into_iter()
+            .filter(|t| state.manager.components_match(&t.components, id))
+            .collect(),
+        None => tasks,
+    };
     let tasks = match q.claimed_by.as_deref() {
         Some(raw) => {
             let claimed_by = resolve_claimed_by(&state.store, &principal, raw).await?;
@@ -942,7 +962,11 @@ async fn new_task(
     Extension(principal): Extension<Principal>,
     Json(req): Json<NewTaskRequest>,
 ) -> Result<Json<Task>, ApiError> {
-    let task = state.tasks.new_task(&req.title, req.kind, req.body).await?;
+    let components = state.manager.normalize_components(&req.components)?;
+    let task = state
+        .tasks
+        .new_task(&req.title, req.kind, req.body, components)
+        .await?;
     let _ = state
         .emitter
         .emit(
@@ -972,7 +996,15 @@ async fn edit_task(
     Path(id): Path<String>,
     Json(req): Json<EditTaskRequest>,
 ) -> Result<Json<Task>, ApiError> {
-    let task = state.tasks.edit_task(&id, req.title, req.body).await?;
+    let components = req
+        .components
+        .as_deref()
+        .map(|c| state.manager.normalize_components(c))
+        .transpose()?;
+    let task = state
+        .tasks
+        .edit_task(&id, req.title, req.body, components)
+        .await?;
     let _ = state
         .emitter
         .emit(
