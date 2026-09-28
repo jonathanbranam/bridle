@@ -61,19 +61,33 @@ bridle doesn't host), but nothing calls the route today: `bridle statusline`
 stopped posting snapshots (s8kn) once the context governor got account-wide
 windows from `get_usage` instead, which covers the reason this existed.
 
-`bridle usage` (and `GET /v1/usage`) shows per-agent turns, tokens and cost,
-totals, the cache hit ratio (cache reads ÷ all input tokens), the last
-known utilisation and reset time per window, and today's `interactive_usage`
-rows, if any exist. A role can also cap each agent's spend
-([[docs/design/agent-host/agents#Spend cap|spend cap]]).
+`bridle usage` (and `GET /v1/usage`) shows per-agent turns, tokens, cost,
+busy and wall time, totals, the cache hit ratio (cache reads ÷ all input
+tokens), the last known utilisation and reset time per window, and today's
+`interactive_usage` rows, if any exist. A role can also cap each agent's
+spend ([[docs/design/agent-host/agents#Spend cap|spend cap]]).
+
+Busy time is the sum of each turn's `ended_at - started_at`; wall time is
+`MIN(started_at)` to `MAX(ended_at)` across the agent's turns, so it also
+counts the idle gaps between them — the answer to "how much wall-clock time
+did this agent actually take," not just how long it was generating. Both
+come from the turns ledger (`started_at`/`ended_at`), not `agent.spawned`/
+`agent.exited` events, since [[event-and-transcript-retention-34wz|events are
+pruned]] after 30 days and turns are durable. Wall time is `None` until at
+least one turn has ended.
+Per-task wall time isn't built: there's no task/workflow-revision column on
+turns yet (below).
 
 `bridle usage --by role|model|agent --since <duration>` (and
 `GET /v1/usage/breakdown?since=&by=`) aggregates the turns ledger instead:
-turns, tokens, cost and the cache hit ratio, grouped by role or model across
-every agent that shares one, or per agent (the same grouping `bridle usage`
-shows by default, but read from the turns ledger so `--since` applies to it
-too). `--since` accepts a plain `<n><unit>` duration (`s`/`m`/`h`/`d`, e.g.
-`30d`) and keeps only turns started within it. Task, project and kind
+turns, tokens, cost, busy time and the cache hit ratio, grouped by role or
+model across every agent that shares one, or per agent (the same grouping
+`bridle usage` shows by default, but read from the turns ledger so `--since`
+applies to it too). Wall time is only reported for the `agent` grouping:
+summing several agents' turns together and calling the result "wall time"
+would silently overlap or double-count their timelines, so `role`/`model`
+groups omit it. `--since` accepts a plain `<n><unit>` duration (`s`/`m`/`h`/`d`,
+e.g. `30d`) and keeps only turns started within it. Task, project and kind
 grouping, and `bridle usage task`/`trend`/`compare` and `bridle cost audit`
 below, are not built: they need the ledger's task, kind and
 workflow-revision columns, which don't exist yet (below).
