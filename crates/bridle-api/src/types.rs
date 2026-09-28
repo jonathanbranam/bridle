@@ -730,6 +730,9 @@ pub struct AppliedThresholds {
     /// thresholds come from a period.
     #[serde(default)]
     pub span: Option<ScheduleSpan>,
+    /// The current period's `max_workers`, when it sets one.
+    #[serde(default)]
+    pub max_workers: Option<u32>,
     /// When the schedule next changes on its own, and to what.
     #[serde(default)]
     pub next_change: Option<NextScheduleChange>,
@@ -758,10 +761,16 @@ pub struct NextScheduleChange {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct SchedulePeriodInfo {
     pub name: String,
-    pub span: ScheduleSpan,
+    /// `None` for a schedule-less preset (only `bridle budget override`).
+    #[serde(default)]
+    pub span: Option<ScheduleSpan>,
     pub hold_at: f64,
     pub wind_down_at: f64,
     pub stop_at: f64,
+    /// Applied as the live `max_workers` override while this period is
+    /// forced with `bridle budget override`.
+    #[serde(default)]
+    pub max_workers: Option<u32>,
 }
 
 /// The effective thresholds in force, account-wide values merged with any

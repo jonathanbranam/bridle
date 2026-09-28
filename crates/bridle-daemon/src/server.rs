@@ -489,6 +489,7 @@ async fn budget_max_workers(
     Json(req): Json<MaxWorkersRequest>,
 ) -> Result<Json<BudgetStatus>, ApiError> {
     require_human(&principal)?;
+    state.governor.forget_preset_cap();
     state.manager.set_max_workers_override(req.max_workers);
     budget(State(state)).await
 }

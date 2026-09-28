@@ -1450,6 +1450,9 @@ async fn budget(cli: &Cli, args: &BudgetArgs) -> Result<(), CliError> {
         if let Some(span) = &fh.span {
             println!("  span {}", format_span(span));
         }
+        if let Some(n) = fh.max_workers {
+            println!("  period max_workers {n} (applied while overridden)");
+        }
         match &fh.next_change {
             Some(n) => println!(
                 "  next change {} -> {}: hold {}, wind_down {}, stop {}",
@@ -1516,12 +1519,17 @@ fn print_schedule(budget: &bridle_api::types::BudgetStatus) {
     }
     for p in &budget.schedule {
         println!(
-            "{:<12} {}  hold {}, wind_down {}, stop {}",
+            "{:<12} {}  hold {}, wind_down {}, stop {}{}",
             p.name,
-            format_span(&p.span),
+            p.span
+                .as_ref()
+                .map_or_else(|| "override only".to_string(), format_span),
             p.hold_at,
             p.wind_down_at,
-            p.stop_at
+            p.stop_at,
+            p.max_workers
+                .map(|n| format!(", max_workers {n}"))
+                .unwrap_or_default()
         );
     }
 }

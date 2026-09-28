@@ -3,7 +3,7 @@
 
 mod support;
 
-use bridle_api::types::{MaxWorkersRequest, SpawnRequest, Workdir};
+use bridle_api::types::{BudgetOverrideRequest, MaxWorkersRequest, SpawnRequest, Workdir};
 use bridle_api::{Client, ClientError};
 
 async fn spawn(client: &Client, role: &str, name: &str) -> Result<(), ClientError> {
@@ -76,4 +76,43 @@ async fn live_override_changes_the_cap_without_a_restart_and_clears() {
         is_conflict(spawn(c, "worker", "w3").await),
         "back to config 1"
     );
+}
+
+#[tokio::test]
+async fn schedule_less_preset_caps_workers_while_overridden_and_reverts() {
+    let config = "[budget]\nmax_workers = 3\n\n[[budget.schedule]]\nname = \"low\"\n\
+                  hold_at = 50\nwind_down_at = 60\nstop_at = 70\nmax_workers = 1\n";
+    let (daemon, _tmp) = support::start_daemon_with_config(None, Some(config)).await;
+    let c = &daemon.client;
+    let ov = |period: &str| BudgetOverrideRequest {
+        period: Some(period.to_string()),
+        until: None,
+    };
+
+    // The preset has no span and the clock never picks it.
+    let b = c.budget().await.expect("budget");
+    assert_eq!(b.five_hour.source, "default");
+    assert_eq!(b.schedule[0].span, None);
+    assert_eq!(b.schedule[0].max_workers, Some(1));
+
+    spawn(c, "worker", "w1").await.expect("w1");
+    let b = c.budget_override(&ov("low")).await.expect("override");
+    assert_eq!(b.max_workers_override, Some(1));
+    assert_eq!(b.five_hour.max_workers, Some(1));
+    assert!(is_conflict(spawn(c, "worker", "w2").await));
+
+    // Clearing the override reverts the cap to the configured 3.
+    let b = c.budget_override_clear().await.expect("clear");
+    assert_eq!(b.max_workers_override, None);
+    spawn(c, "worker", "w2").await.expect("w2 after clear");
+
+    // A cap the human set by hand survives the preset's override ending.
+    c.budget_override(&ov("low")).await.expect("override again");
+    c.budget_max_workers(&MaxWorkersRequest {
+        max_workers: Some(2),
+    })
+    .await
+    .expect("hand set");
+    let b = c.budget_override_clear().await.expect("clear");
+    assert_eq!(b.max_workers_override, Some(2));
 }
