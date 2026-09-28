@@ -201,7 +201,36 @@ The human will mostly reach you through Remote Control.";
 async fn prime(args: &PrimeArgs) -> Result<(), CliError> {
     match args.role {
         PrimeRoleArg::Orchestrator => prime_orchestrator().await,
+        PrimeRoleArg::Worker => prime_scoped(args, "worker", "worker"),
+        PrimeRoleArg::Planner => prime_scoped(args, "product-manager", "planner"),
     }
+}
+
+/// Worker/planner prime: rules, facts, guides and component scope (`--component`, else
+/// the agent's own `BRIDLE_COMPONENTS`). Prime is otherwise orchestrator-only; these two
+/// roles each get their own view.
+fn prime_scoped(args: &PrimeArgs, role: &str, title: &str) -> Result<(), CliError> {
+    let repo = std::env::current_dir().context("current directory")?;
+    let config =
+        bridle_daemon::config::Config::load(&repo).context("loading .bridle/config.toml")?;
+    let raw: Vec<String> = if args.components.is_empty() {
+        std::env::var("BRIDLE_COMPONENTS")
+            .unwrap_or_default()
+            .split(',')
+            .filter(|s| !s.is_empty())
+            .map(str::to_string)
+            .collect()
+    } else {
+        args.components.clone()
+    };
+    let components = config
+        .normalize_components(&raw)
+        .map_err(|e| anyhow::anyhow!(e))?;
+    print!(
+        "{}",
+        crate::prime::render(&repo, &config, role, title, &components)?
+    );
+    Ok(())
 }
 
 async fn prime_orchestrator() -> Result<(), CliError> {

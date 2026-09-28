@@ -4,6 +4,7 @@
 mod cli;
 mod commands;
 mod error;
+mod prime;
 mod render;
 mod serve;
 mod statusline;

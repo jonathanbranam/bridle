@@ -136,12 +136,17 @@ pub enum Command {
 pub struct PrimeArgs {
     #[arg(value_enum)]
     pub role: PrimeRoleArg,
+    /// Component to scope to (repeatable); worker/planner only. Defaults to `BRIDLE_COMPONENTS`.
+    #[arg(long = "component", value_name = "ID")]
+    pub components: Vec<String>,
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
 #[value(rename_all = "lower")]
 pub enum PrimeRoleArg {
     Orchestrator,
+    Worker,
+    Planner,
 }
 
 #[derive(Debug, Args)]
@@ -1217,7 +1222,7 @@ mod tests {
 
     #[test]
     fn prime_rejects_unknown_role() {
-        let err = parse(&["prime", "worker"]).unwrap_err();
+        let err = parse(&["prime", "manager"]).unwrap_err();
         assert_eq!(err.kind(), clap::error::ErrorKind::InvalidValue);
     }
 
