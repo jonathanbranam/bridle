@@ -592,6 +592,24 @@ pub struct Config {
     /// e.g. `tw-7fa2`). `None` means derive one from the project name
     /// ([`default_task_prefix`]).
     pub task_prefix: Option<String>,
+    pub rules: RulesConfig,
+}
+
+/// `[rules]` in `<repo>/.bridle/config.toml`: where the L1 base and L2 pack
+/// layers come from (docs/design/workflow-layers.md, `bridle_daemon::rules`).
+#[derive(Debug, Clone, Default)]
+pub struct RulesConfig {
+    /// The `bridle-workflow` checkout. Relative paths are resolved against
+    /// the repo root. `None` until a project sets `workflow = "..."` — its
+    /// location is still provisional (docs/questions/open/
+    /// where-bridle-workflow-lives-r2uq.md), so there's no default guess
+    /// here; with no workflow set, resolution only sees the project layer.
+    pub workflow: Option<PathBuf>,
+    /// L2 pack names to layer in, in listed order, each read from
+    /// `<workflow>/packs/<name>/rules`. Pack content itself is out of scope
+    /// for now (docs/design/workflow-layers.md); this is just the list of
+    /// which pack directories to include.
+    pub packs: Vec<String>,
 }
 
 impl Default for Config {
@@ -610,6 +628,7 @@ impl Default for Config {
             models: ModelsConfig::default(),
             context: ContextConfig::default(),
             task_prefix: None,
+            rules: RulesConfig::default(),
         }
     }
 }
@@ -760,6 +779,11 @@ impl Config {
             config.task_prefix = t.prefix;
         }
 
+        if let Some(r) = raw.rules {
+            config.rules.workflow = r.workflow.map(PathBuf::from);
+            config.rules.packs = r.packs.unwrap_or_default();
+        }
+
         Ok(config)
     }
 }
@@ -841,6 +865,8 @@ struct RawConfig {
     context: Option<RawContext>,
     #[serde(default)]
     tasks: Option<RawTasks>,
+    #[serde(default)]
+    rules: Option<RawRules>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -850,6 +876,15 @@ struct RawContext {
     wind_down_at: Option<BTreeMap<String, f64>>,
     #[serde(default)]
     wind_down_grace: Option<String>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawRules {
+    #[serde(default)]
+    workflow: Option<String>,
+    #[serde(default)]
+    packs: Option<Vec<String>>,
 }
 
 #[derive(Debug, Default, Deserialize)]

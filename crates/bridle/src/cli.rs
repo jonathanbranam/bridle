@@ -116,6 +116,9 @@ pub enum Command {
     /// Print a fresh session's opening context for a role: the role prompt,
     /// current state and startup steps. Orchestrator only for now.
     Prime(PrimeArgs),
+    /// Layer resolution over the workflow rules (docs/design/workflow-layers.md):
+    /// which layer wins each rule id, and what a project changes.
+    Rules(RulesArgs),
 }
 
 #[derive(Debug, Args)]
@@ -553,6 +556,38 @@ pub struct DepEdgeArgs {
 }
 
 #[derive(Debug, Args)]
+pub struct RulesArgs {
+    #[command(subcommand)]
+    pub action: RulesAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum RulesAction {
+    /// Which layer wins a rule id, and what it shadowed.
+    Explain(RulesExplainArgs),
+    /// Everything the project layer (`<repo>/.bridle/rules`) does
+    /// differently from the base and pack layers below it.
+    Diff(RulesDiffArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct RulesExplainArgs {
+    pub id: String,
+}
+
+#[derive(Debug, Args)]
+pub struct RulesDiffArgs {
+    /// Diff the project layer against the layers below it. The only mode
+    /// for now, so it's required rather than a silent default. Named
+    /// `--project-layer`, not `--project` (docs/design/workflow-layers.md's
+    /// own phrasing), because `--project` is already the global flag that
+    /// selects a daemon by project name (docs/design/cli.md) and clap can't
+    /// have both share that name with different types.
+    #[arg(long)]
+    pub project_layer: bool,
+}
+
+#[derive(Debug, Args)]
 pub struct ReadyArgs {
     /// Fan out across every daemon registered on this machine (`bridle
     /// daemons`), not just the one `--url`/`--project`/discovery resolves.
@@ -749,6 +784,43 @@ mod tests {
         };
         let CostAction::Audit(audit) = args.action;
         assert!(!audit.check);
+    }
+
+    #[test]
+    fn rules_explain_parses() {
+        let cli = parse(&["rules", "explain", "kiss"]).unwrap();
+        let Command::Rules(args) = cli.command else {
+            panic!("expected rules")
+        };
+        let RulesAction::Explain(e) = args.action else {
+            panic!("expected rules explain")
+        };
+        assert_eq!(e.id, "kiss");
+    }
+
+    #[test]
+    fn rules_diff_project_layer_parses() {
+        let cli = parse(&["rules", "diff", "--project-layer"]).unwrap();
+        let Command::Rules(args) = cli.command else {
+            panic!("expected rules")
+        };
+        let RulesAction::Diff(d) = args.action else {
+            panic!("expected rules diff")
+        };
+        assert!(d.project_layer);
+    }
+
+    #[test]
+    fn rules_diff_still_parses_the_global_project_flag() {
+        let cli = parse(&["--project", "track-web", "rules", "diff", "--project-layer"]).unwrap();
+        assert_eq!(cli.project.as_deref(), Some("track-web"));
+        let Command::Rules(args) = cli.command else {
+            panic!("expected rules")
+        };
+        let RulesAction::Diff(d) = args.action else {
+            panic!("expected rules diff")
+        };
+        assert!(d.project_layer);
     }
 
     #[test]
