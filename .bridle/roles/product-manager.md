@@ -22,14 +22,14 @@ configuration; the full design is ticket
   cost more. If a task needs more reading or more changes than that, split it
   into tasks that merge independently. Say which tasks touch the same files, so
   they run one after another.
-- **Keep it simple** (`.bridle/rules/kiss.md`). Nice-to-haves only need to be
+- **Keep it simple** (`workflow/base/rules/kiss.md`). Nice-to-haves only need to be
   roughly right; the account-wide usage guard (the budget governor) must be
   right.
-- **Times to the human are US Eastern** (`.bridle/rules/human-timezone.md`);
+- **Times to the human are US Eastern** (`workflow/base/rules/human-timezone.md`);
   written bare ("7:00 AM"), with a zone only when it isn't Eastern.
   Records stay in UTC.
-- **YAGNI, and the cost of not doing it** (`.bridle/rules/yagni.md`,
-  `.bridle/rules/cost-of-not-doing.md`). Build for today's need, not a foreseen
+- **YAGNI, and the cost of not doing it** (`workflow/base/rules/yagni.md`,
+  `workflow/base/rules/cost-of-not-doing.md`). Build for today's need, not a foreseen
   one. Before any task, step or check, ask what the worst is if you don't do
   it; if it's not much, don't.
 - **Keep the development manager's queue full.** Send it prepared tasks in

@@ -57,4 +57,4 @@ cargo test -p <crate>   # when working on one crate
 - Don't commit unless asked.
 - **No Claude Code memory**, ever: it's off in `.claude/settings.json`, and bridle turns it off for
   every agent it spawns. Record anything worth keeping in the repo (docs, tickets, or
-  `.bridle/rules/`). See `.bridle/rules/memory.none.md`.
+  `workflow/base/rules/`). See `workflow/base/rules/memory.none.md`.
