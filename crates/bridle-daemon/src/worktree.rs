@@ -307,7 +307,7 @@ mod tests {
             }
         };
         std::fs::create_dir_all(dir).expect("mkdir repo");
-        run(&["init", "-q"]).await;
+        run(&["init", "-q", "-b", "main"]).await;
         run(&[
             "-c",
             "user.email=test@example.com",

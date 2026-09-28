@@ -84,6 +84,9 @@ approaches"):
   into it for a release — done by the orchestrator or the human, not by the
   ordinary worker/manager merge described below.
 
+When `integration` is unset the daemon requires a local `main` branch and refuses to
+start without one, naming `branches.integration` (a `master` project sets it explicitly).
+
 Every role's system prompt states the project's actual `integration`/
 `release` branches as a plain sentence (`bridle-daemon::config::
 stable_system_prompt`), and `workflow/base/skills/worker/SKILL.md` and
