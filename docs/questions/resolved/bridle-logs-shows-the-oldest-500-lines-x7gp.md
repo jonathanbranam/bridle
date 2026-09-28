@@ -35,3 +35,19 @@ idle", w8bz), so they can misread a worker in the same way.
   `--follow` would start from; `--since 0` keeps the old behaviour.
 - A `--tail N` flag, and a way to get the latest event seq
   (`bridle events --latest`, or the seq in `bridle status --json`).
+
+## Resolution
+
+Fixed in two places:
+
+1. `crates/bridle-claude/src/transcript.rs` around line 114: when `since` is None
+   (no `--since` flag), `read_lines()` now maintains a `VecDeque` tail of the last
+   `limit` entries instead of returning the first `limit` lines.
+
+2. `bridle events` endpoint: on 2026-09-27, `bridle events` without `--follow`
+   now returns the most recent 500 matching events instead of the oldest
+   (docs/questions/open/v1-follow-ups-from-the-build-9c6e.md, Fixed section, dated
+   2026-09-27). `--follow` without `--since` also starts at the tail instead of
+   replaying the whole history.
+
+Resolved 2026-09-28.
