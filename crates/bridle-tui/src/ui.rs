@@ -78,21 +78,12 @@ fn draw_agents(frame: &mut Frame, area: Rect, app: &App) {
         Constraint::Length(6),
         Constraint::Length(9),
     ];
-    let selected_style = Style::default().add_modifier(Modifier::REVERSED);
-    let rows: Vec<Row> = rows
-        .enumerate()
-        .map(|(i, row)| {
-            if focused && i == app.selected_agent {
-                row.style(selected_style)
-            } else {
-                row
-            }
-        })
-        .collect();
+    let rows: Vec<Row> = rows.collect();
     let table = Table::new(rows, widths)
         .header(header)
         .block(border_block("Agents", focused));
-    frame.render_widget(table, area);
+    let mut state = app.agents_table_state;
+    frame.render_stateful_widget(table, area, &mut state);
 }
 
 fn draw_events(frame: &mut Frame, area: Rect, app: &App) {
@@ -148,21 +139,12 @@ fn draw_inbox(frame: &mut Frame, area: Rect, app: &App) {
         Constraint::Length(10),
         Constraint::Min(20),
     ];
-    let selected_style = Style::default().add_modifier(Modifier::REVERSED);
-    let rows: Vec<Row> = rows
-        .enumerate()
-        .map(|(i, row)| {
-            if focused && i == app.selected_message {
-                row.style(selected_style)
-            } else {
-                row
-            }
-        })
-        .collect();
+    let rows: Vec<Row> = rows.collect();
     let table = Table::new(rows, widths)
         .header(header)
         .block(border_block("Inbox", focused));
-    frame.render_widget(table, area);
+    let mut state = app.inbox_table_state;
+    frame.render_stateful_widget(table, area, &mut state);
 }
 
 /// A centered popup with the reply-in-progress body and a `|` cursor, drawn

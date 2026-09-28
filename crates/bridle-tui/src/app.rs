@@ -4,6 +4,7 @@
 //! [`Key`] press, and assert on the resulting [`App`].
 
 use bridle_api::{Agent, AgentState, Event, Message as ApiMessage, TranscriptLine, event_kind};
+use ratatui::widgets::TableState;
 
 use crate::format::render_transcript_line;
 
@@ -146,6 +147,8 @@ pub struct App {
     pub focus: Focus,
     /// Index into `agents` of the selected row.
     pub selected_agent: usize,
+    /// TableState for agents table to track view offset.
+    pub agents_table_state: TableState,
     /// Lines scrolled up from the tail (0 = pinned to the newest event).
     pub event_scroll: usize,
     /// Id of the agent `log_lines` holds the transcript for, kept in step
@@ -161,6 +164,8 @@ pub struct App {
     pub messages: Vec<ApiMessage>,
     /// Index into `messages` of the selected row.
     pub selected_message: usize,
+    /// TableState for inbox table to track view offset.
+    pub inbox_table_state: TableState,
     /// Set while composing a reply to `messages[selected_message]`; `None`
     /// means the inbox view is just a list.
     pub compose: Option<Compose>,
@@ -283,6 +288,23 @@ impl App {
         } else {
             self.selected_message = self.selected_message.min(self.messages.len() - 1);
         }
+        self.sync_inbox_table_state();
+    }
+
+    fn sync_agents_table_state(&mut self) {
+        if self.agents.is_empty() {
+            self.agents_table_state.select(None);
+        } else {
+            self.agents_table_state.select(Some(self.selected_agent));
+        }
+    }
+
+    fn sync_inbox_table_state(&mut self) {
+        if self.messages.is_empty() {
+            self.inbox_table_state.select(None);
+        } else {
+            self.inbox_table_state.select(Some(self.selected_message));
+        }
     }
 
     /// The id of the currently selected agent, or `None` if the list is
@@ -306,7 +328,10 @@ impl App {
 
     fn scroll_up(&mut self) {
         match self.focus {
-            Focus::Agents => self.selected_agent = self.selected_agent.saturating_sub(1),
+            Focus::Agents => {
+                self.selected_agent = self.selected_agent.saturating_sub(1);
+                self.sync_agents_table_state();
+            }
             Focus::Events => {
                 let max = self.events.len().saturating_sub(1);
                 self.event_scroll = (self.event_scroll + 1).min(max);
@@ -315,7 +340,10 @@ impl App {
                 let max = self.log_lines.len().saturating_sub(1);
                 self.log_scroll = (self.log_scroll + 1).min(max);
             }
-            Focus::Inbox => self.selected_message = self.selected_message.saturating_sub(1),
+            Focus::Inbox => {
+                self.selected_message = self.selected_message.saturating_sub(1);
+                self.sync_inbox_table_state();
+            }
         }
     }
 
@@ -325,6 +353,7 @@ impl App {
                 if !self.agents.is_empty() {
                     self.selected_agent = (self.selected_agent + 1).min(self.agents.len() - 1);
                 }
+                self.sync_agents_table_state();
             }
             Focus::Events => self.event_scroll = self.event_scroll.saturating_sub(1),
             Focus::Logs => self.log_scroll = self.log_scroll.saturating_sub(1),
@@ -333,6 +362,7 @@ impl App {
                     self.selected_message =
                         (self.selected_message + 1).min(self.messages.len() - 1);
                 }
+                self.sync_inbox_table_state();
             }
         }
     }
@@ -343,6 +373,7 @@ impl App {
         } else {
             self.selected_agent = self.selected_agent.min(self.agents.len() - 1);
         }
+        self.sync_agents_table_state();
     }
 
     /// Keep the visible agent list in step with the live event feed for
@@ -875,6 +906,65 @@ mod tests {
         app.on_key(Key::Enter);
         assert!(app.compose.is_some());
         assert!(app.pending_send.is_none());
+    }
+
+    #[test]
+    fn agents_table_state_follows_selection() {
+        let mut app = App::new();
+        let agents = (0..10)
+            .map(|i| agent(&format!("a-{i}"), AgentState::Idle))
+            .collect();
+        app.on_message(Message::AgentsLoaded(agents));
+        assert_eq!(app.selected_agent, 0);
+        assert_eq!(app.agents_table_state.selected(), Some(0));
+
+        app.on_key(Key::Down);
+        assert_eq!(app.selected_agent, 1);
+        assert_eq!(app.agents_table_state.selected(), Some(1));
+
+        app.on_key(Key::Down);
+        assert_eq!(app.selected_agent, 2);
+        assert_eq!(app.agents_table_state.selected(), Some(2));
+
+        app.on_key(Key::Up);
+        assert_eq!(app.selected_agent, 1);
+        assert_eq!(app.agents_table_state.selected(), Some(1));
+
+        for _ in 0..9 {
+            app.on_key(Key::Down);
+        }
+        assert_eq!(app.selected_agent, 9);
+        assert_eq!(app.agents_table_state.selected(), Some(9));
+    }
+
+    #[test]
+    fn inbox_table_state_follows_selection() {
+        let mut app = App::new();
+        let messages = (0..10)
+            .map(|i| inbox_message(&format!("m-{i}"), "sender", "body"))
+            .collect();
+        app.on_message(Message::MessagesLoaded(messages));
+        focus_inbox(&mut app);
+        assert_eq!(app.selected_message, 0);
+        assert_eq!(app.inbox_table_state.selected(), Some(0));
+
+        app.on_key(Key::Down);
+        assert_eq!(app.selected_message, 1);
+        assert_eq!(app.inbox_table_state.selected(), Some(1));
+
+        app.on_key(Key::Down);
+        assert_eq!(app.selected_message, 2);
+        assert_eq!(app.inbox_table_state.selected(), Some(2));
+
+        app.on_key(Key::Up);
+        assert_eq!(app.selected_message, 1);
+        assert_eq!(app.inbox_table_state.selected(), Some(1));
+
+        for _ in 0..9 {
+            app.on_key(Key::Down);
+        }
+        assert_eq!(app.selected_message, 9);
+        assert_eq!(app.inbox_table_state.selected(), Some(9));
     }
 
     #[test]
