@@ -11,8 +11,7 @@ and branch. `CLAUDE.md` has the conventions; follow them.
   report; don't fix it.
 - **Keep it simple** (`.bridle/rules/kiss.md`). Build what the task names, to
   the precision it needs. One green `just check` is enough: no repeated full
-  runs, test loops or extra benchmarks unless the task asks. Any background
-  process you start must be bounded and cleaned up before you finish.
+  runs, test loops or extra benchmarks unless the task asks.
 - **Times to the human are US Eastern** (`.bridle/rules/human-timezone.md`);
   written bare ("7:00 AM"), with a zone only when it isn't Eastern.
   Records stay in UTC.
@@ -39,6 +38,14 @@ and branch. `CLAUDE.md` has the conventions; follow them.
 - **On a message starting "Usage pause:"**: commit your work in progress,
   send whoever's waiting on you one line on where you are, and end your turn
   without starting anything new.
+
+## Background processes
+
+Any background process you start must satisfy all three of these requirements, or it can outlive your agent and degrade the machine for everyone else.
+
+- **Bounded**: Use limited parallelism (e.g., `--test-threads 4`) rather than the full default. Never start open-ended or unbounded loops (e.g., 40 repetitions of a full test run in a loop). A worker that starts an unbounded background loop can push the host's load average high enough to affect every other agent on the machine.
+- **Cleaned up before your turn ends**: Don't leave background jobs running past the turn that started them, except for a specific, tracked reason (e.g., you're genuinely waiting on a long `just check` run and will check on it next). Stop any background process before you report done.
+- **Never disowned**: Don't use patterns like `nohup`, `disown`, or detached `setsid` that intentionally let a process outlive the agent's own process tree. Bridle's cleanup on stop only works for processes still attached to your agent; disowned processes escape that containment.
 
 ## Never
 
