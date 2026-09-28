@@ -50,9 +50,12 @@ addressed to the task (`to_kind = task`, [[docs/design/storage#The daemon's
 database|storage.md]]), append the matching thread entry, and keep an
 `open_questions` SQLite index so `is_ready` excludes a task with one open —
 without walking the state branch, per
-[[where-questions-live-on-the-state-branch-c5a8|decided]]. Role recipients,
-`handoff`/`conflict`/`system`, and the `bridle ask`/`bridle answer`/`bridle
-inbox` surface over this all arrive with later tasks.
+[[where-questions-live-on-the-state-branch-c5a8|decided]]. `TaskManager::note_task`
+is the same shape without the open-question bookkeeping: it inserts a `note`
+message addressed to the task, appends a `note` thread entry, and has no
+effect on readiness (`bridle task note`). Role recipients,
+`handoff`/`conflict`/`system`, and send-to-task/send-to-role from `bridle
+send` all arrive with later tasks.
 
 ## Questions do not stop work
 

@@ -48,6 +48,7 @@ bridle task edit   <id> [--title TEXT] [--body TEXT]
 bridle task list
 bridle task drop   <id> --reason TEXT
 bridle task reopen <id>
+bridle task note   <id> TEXT                     plain note to the task's thread; no effect on readiness
 ```
 
 - **`--ignore-budget`** on `spawn`/`resume`/`renew` skips the budget governor's

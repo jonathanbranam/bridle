@@ -434,6 +434,8 @@ pub mod event_kind {
     pub const TASK_QUESTION_ASKED: &str = "task.question_asked";
     /// data: {task}
     pub const TASK_QUESTION_ANSWERED: &str = "task.question_answered";
+    /// data: {task}
+    pub const TASK_NOTE_ADDED: &str = "task.note_added";
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -946,6 +948,12 @@ pub struct AskQuestionRequest {
 /// `POST /v1/tasks/{id}/answer`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnswerQuestionRequest {
+    pub body: String,
+}
+
+/// `POST /v1/tasks/{id}/note`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NoteTaskRequest {
     pub body: String,
 }
 

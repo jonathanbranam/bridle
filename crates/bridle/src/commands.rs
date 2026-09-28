@@ -20,8 +20,8 @@ use crate::cli::{
     Command, CostAction, CostArgs, CostAuditArgs, DepAction, DepArgs, DepEdgeArgs, EdgeKindArg,
     EventsArgs, InboxArgs, InterruptArgs, LogsArgs, ReadyArgs, ReleaseArgs, RmArgs, SendArgs,
     ShowArgs, SpawnArgs, StopArgs, TaskAction, TaskArgs, TaskDropArgs, TaskEditArgs, TaskKindArg,
-    TaskNewArgs, TaskReopenArgs, TaskShowArgs, TokenAction, TokenArgs, UsageArgs, UsageByArg,
-    WhenArg,
+    TaskNewArgs, TaskNoteArgs, TaskReopenArgs, TaskShowArgs, TokenAction, TokenArgs, UsageArgs,
+    UsageByArg, WhenArg,
 };
 use crate::error::CliError;
 use crate::render;
@@ -1156,6 +1156,7 @@ async fn task(cli: &Cli, args: &TaskArgs) -> Result<(), CliError> {
         TaskAction::List => task_list(cli).await,
         TaskAction::Drop(a) => task_drop(cli, a).await,
         TaskAction::Reopen(a) => task_reopen(cli, a).await,
+        TaskAction::Note(a) => task_note(cli, a).await,
     }
 }
 
@@ -1264,6 +1265,17 @@ async fn task_reopen(cli: &Cli, args: &TaskReopenArgs) -> Result<(), CliError> {
         render::print_json(&task)?;
     } else {
         print_task_row(&task);
+    }
+    Ok(())
+}
+
+async fn task_note(cli: &Cli, args: &TaskNoteArgs) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let task = client.note_task(&args.task, &args.text).await?;
+    if cli.json {
+        render::print_json(&task)?;
+    } else {
+        println!("noted on {}", task.id);
     }
     Ok(())
 }

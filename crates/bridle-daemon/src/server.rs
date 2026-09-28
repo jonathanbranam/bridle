@@ -14,11 +14,11 @@ use bridle_api::types::{
     Agent, AnswerQuestionRequest, ApiErrorResponse, AskQuestionRequest, BudgetHoldRequest,
     BudgetOverrideRequest, BudgetStatus, DropTaskRequest, Edge, EditTaskRequest, ErrorBody, Event,
     EventQuery, Health, HoldStatus, InteractiveUsageRow, InterruptRequest, Message, MessageQuery,
-    MessageState, NewEdgeRequest, NewTaskRequest, OpenQuestion, PrincipalKind, RateLimit,
-    RemoveEdgeQuery, RemoveQuery, RenewRequest, ResumeRequest, ScheduleOverrideStatus, SendRequest,
-    SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery, TokenCreateRequest,
-    TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown,
-    UsageBreakdownQuery, UsageGroupBy, WindowStatus, event_kind,
+    MessageState, NewEdgeRequest, NewTaskRequest, NoteTaskRequest, OpenQuestion, PrincipalKind,
+    RateLimit, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResumeRequest, ScheduleOverrideStatus,
+    SendRequest, SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery,
+    TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
+    UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, WindowStatus, event_kind,
 };
 use chrono::Utc;
 use futures::Stream;
@@ -80,6 +80,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/tasks/{id}/reopen", post(reopen_task))
         .route("/v1/tasks/{id}/ask", post(ask_task))
         .route("/v1/tasks/{id}/answer", post(answer_task))
+        .route("/v1/tasks/{id}/note", post(note_task))
         .route("/v1/tasks/{id}/claim", post(claim_task))
         .route("/v1/tasks/{id}/release", post(release_task))
         .route("/v1/questions", get(list_open_questions))
@@ -953,6 +954,25 @@ async fn answer_task(
         .emitter
         .emit(
             event_kind::TASK_QUESTION_ANSWERED,
+            principal.id,
+            None,
+            serde_json::json!({"task": task.id}),
+        )
+        .await;
+    Ok(Json(task))
+}
+
+async fn note_task(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path(id): Path<String>,
+    Json(req): Json<NoteTaskRequest>,
+) -> Result<Json<Task>, ApiError> {
+    let task = state.tasks.note_task(&id, &principal.id, &req.body).await?;
+    let _ = state
+        .emitter
+        .emit(
+            event_kind::TASK_NOTE_ADDED,
             principal.id,
             None,
             serde_json::json!({"task": task.id}),

@@ -14,9 +14,9 @@ use crate::types::{
     Agent, AnswerQuestionRequest, ApiErrorResponse, AskQuestionRequest, BudgetHoldRequest,
     BudgetOverrideRequest, BudgetStatus, DropTaskRequest, Edge, EditTaskRequest, Event, EventQuery,
     Health, InterruptRequest, InterruptResponse, Message, MessageQuery, NewEdgeRequest,
-    NewTaskRequest, OpenQuestion, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResumeRequest,
-    SendRequest, SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery,
-    TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
+    NewTaskRequest, NoteTaskRequest, OpenQuestion, RemoveEdgeQuery, RemoveQuery, RenewRequest,
+    ResumeRequest, SendRequest, SpawnRequest, Status, StatusLineReport, StopRequest, Task,
+    TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
     UsageBreakdown, UsageBreakdownQuery,
 };
 
@@ -431,6 +431,16 @@ impl Client {
         self.post_json(
             &["v1", "tasks", id, "answer"],
             &AnswerQuestionRequest {
+                body: body.to_string(),
+            },
+        )
+        .await
+    }
+
+    pub async fn note_task(&self, id: &str, body: &str) -> Result<Task, ClientError> {
+        self.post_json(
+            &["v1", "tasks", id, "note"],
+            &NoteTaskRequest {
                 body: body.to_string(),
             },
         )
