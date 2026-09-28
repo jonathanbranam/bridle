@@ -95,6 +95,7 @@ done
    [[docs/design/storage|storage]],
    [[docs/design/usage-and-budget|usage and budget]],
    [[docs/design/workflow-layers|workflow layers]],
+   [[docs/design/components|components]],
    [[docs/design/gates|gates]],
    [[docs/design/knowledge-tiers|knowledge tiers]] and the tiers under it,
    [[docs/design/specs|specs]], [[docs/design/impact-and-conflicts|impact]],
