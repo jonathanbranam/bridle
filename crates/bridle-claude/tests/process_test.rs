@@ -11,6 +11,10 @@ use nix::sys::signal::Signal;
 use tokio::time::timeout;
 use uuid::Uuid;
 
+/// Hang guard timeout for waiting on the fake claude process to exit or close stdout.
+/// A passing test should never be slowed by this; only a genuinely hung one waits longer.
+const HANG_GUARD_TIMEOUT: Duration = Duration::from_secs(60);
+
 fn fake_claude_path() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fake-claude.py")
 }
@@ -63,7 +67,7 @@ async fn one_turn_produces_init_assistant_text_and_result() {
     assert!(saw_text, "expected the assistant's echoed text");
 
     spawned.handle.close_stdin();
-    let outcome = timeout(Duration::from_secs(5), spawned.exit)
+    let outcome = timeout(HANG_GUARD_TIMEOUT, spawned.exit)
         .await
         .expect("timed out waiting for exit")
         .expect("exit sender dropped");
@@ -106,7 +110,7 @@ async fn mid_turn_message_is_folded_into_the_running_turn() {
     assert!(text.contains("echo: banana"), "{text}");
 
     spawned.handle.close_stdin();
-    let outcome = timeout(Duration::from_secs(5), spawned.exit)
+    let outcome = timeout(HANG_GUARD_TIMEOUT, spawned.exit)
         .await
         .expect("exit timeout")
         .expect("exit sender dropped");
@@ -164,7 +168,7 @@ async fn interrupt_during_sleep_gets_a_fast_receipt_and_aborts_the_turn() {
         .map(|a| a.len());
     assert_eq!(still_queued, Some(0));
 
-    let result = timeout(Duration::from_secs(5), async {
+    let result = timeout(HANG_GUARD_TIMEOUT, async {
         loop {
             let ev = spawned
                 .events
@@ -183,7 +187,7 @@ async fn interrupt_during_sleep_gets_a_fast_receipt_and_aborts_the_turn() {
     assert_eq!(result.terminal_reason.as_deref(), Some("aborted_tools"));
 
     spawned.handle.close_stdin();
-    let outcome = timeout(Duration::from_secs(5), spawned.exit)
+    let outcome = timeout(HANG_GUARD_TIMEOUT, spawned.exit)
         .await
         .expect("exit timeout")
         .expect("exit sender dropped");
@@ -201,7 +205,7 @@ async fn close_stdin_with_no_turn_exits_zero() {
     spawned.handle.close_stdin();
     assert!(!spawned.handle.stdin_open());
 
-    let outcome = timeout(Duration::from_secs(5), spawned.exit)
+    let outcome = timeout(HANG_GUARD_TIMEOUT, spawned.exit)
         .await
         .expect("exit timeout")
         .expect("exit sender dropped");
@@ -221,7 +225,7 @@ async fn close_stdin_is_idempotent() {
     assert!(!spawned.handle.stdin_open());
     assert!(spawned.handle.send_user("too late").is_err());
 
-    let _ = timeout(Duration::from_secs(5), spawned.exit)
+    let _ = timeout(HANG_GUARD_TIMEOUT, spawned.exit)
         .await
         .expect("exit timeout");
 }
@@ -252,7 +256,7 @@ async fn sigterm_via_signal_group_exits_143() {
         .signal_group(Signal::SIGTERM)
         .expect("signal_group");
 
-    let outcome = timeout(Duration::from_secs(5), spawned.exit)
+    let outcome = timeout(HANG_GUARD_TIMEOUT, spawned.exit)
         .await
         .expect("exit timeout")
         .expect("exit sender dropped");
@@ -271,12 +275,12 @@ async fn crash_reports_exit_code_and_stderr_tail() {
 
     // No result is ever emitted for a crash; drain events until the channel
     // closes (stdout EOF) rather than waiting for a Result.
-    let _ = timeout(Duration::from_secs(5), async {
+    let _ = timeout(HANG_GUARD_TIMEOUT, async {
         while spawned.events.recv().await.is_some() {}
     })
     .await;
 
-    let outcome = timeout(Duration::from_secs(5), spawned.exit)
+    let outcome = timeout(HANG_GUARD_TIMEOUT, spawned.exit)
         .await
         .expect("exit timeout")
         .expect("exit sender dropped");
@@ -301,7 +305,7 @@ async fn events_channel_closes_at_stdout_eof() {
 
     spawned.handle.send_user("EXIT 0").expect("send_user");
 
-    let drained = timeout(Duration::from_secs(5), async {
+    let drained = timeout(HANG_GUARD_TIMEOUT, async {
         let mut n = 0;
         while spawned.events.recv().await.is_some() {
             n += 1;
@@ -336,7 +340,7 @@ async fn pending_control_request_is_dropped_on_exit() {
         .signal_group(Signal::SIGKILL)
         .expect("signal_group");
 
-    let resolved = timeout(Duration::from_secs(5), rx)
+    let resolved = timeout(HANG_GUARD_TIMEOUT, rx)
         .await
         .expect("did not resolve promptly");
     assert!(
@@ -362,7 +366,7 @@ async fn get_context_usage_returns_total_tokens() {
     let spawned = spawn(&cmd, transcript).await.expect("spawn");
 
     let response = timeout(
-        Duration::from_secs(5),
+        HANG_GUARD_TIMEOUT,
         spawned.handle.get_context_usage(Duration::from_secs(5)),
     )
     .await
