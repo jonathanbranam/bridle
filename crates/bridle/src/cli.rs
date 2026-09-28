@@ -91,6 +91,10 @@ pub enum Command {
     Ask(AskArgs),
     /// Answer a task's open question, clearing the block `ask` set.
     Answer(AnswerArgs),
+    /// Claim a ready task for the calling principal: `planned` -> `claimed`.
+    Claim(ClaimArgs),
+    /// Release the calling principal's own claim: `claimed` -> `planned`.
+    Release(ReleaseArgs),
     /// List every ready task: planned, with no open `blocks` edge naming an
     /// unresolved blocker (roles-and-lifecycle.md, "ready is computed").
     Ready(ReadyArgs),
@@ -453,6 +457,16 @@ pub struct AskArgs {
 pub struct AnswerArgs {
     pub task: String,
     pub text: String,
+}
+
+#[derive(Debug, Args)]
+pub struct ClaimArgs {
+    pub task: String,
+}
+
+#[derive(Debug, Args)]
+pub struct ReleaseArgs {
+    pub task: String,
 }
 
 #[derive(Debug, Args)]

@@ -13,11 +13,12 @@ use chrono::{Local, TimeZone, Utc};
 use futures::StreamExt;
 
 use crate::cli::{
-    AgentsArgs, AnswerArgs, AskArgs, BudgetAction, BudgetArgs, BudgetHoldArgs, Cli, Command,
-    CostAction, CostArgs, CostAuditArgs, DepAction, DepArgs, DepEdgeArgs, EdgeKindArg, EventsArgs,
-    InboxArgs, InterruptArgs, LogsArgs, ReadyArgs, RmArgs, SendArgs, ShowArgs, SpawnArgs, StopArgs,
-    TaskAction, TaskArgs, TaskDropArgs, TaskEditArgs, TaskKindArg, TaskNewArgs, TaskReopenArgs,
-    TaskShowArgs, TokenAction, TokenArgs, UsageArgs, UsageByArg, WhenArg,
+    AgentsArgs, AnswerArgs, AskArgs, BudgetAction, BudgetArgs, BudgetHoldArgs, ClaimArgs, Cli,
+    Command, CostAction, CostArgs, CostAuditArgs, DepAction, DepArgs, DepEdgeArgs, EdgeKindArg,
+    EventsArgs, InboxArgs, InterruptArgs, LogsArgs, ReadyArgs, ReleaseArgs, RmArgs, SendArgs,
+    ShowArgs, SpawnArgs, StopArgs, TaskAction, TaskArgs, TaskDropArgs, TaskEditArgs, TaskKindArg,
+    TaskNewArgs, TaskReopenArgs, TaskShowArgs, TokenAction, TokenArgs, UsageArgs, UsageByArg,
+    WhenArg,
 };
 use crate::error::CliError;
 use crate::render;
@@ -50,6 +51,8 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Dep(args) => dep(&cli, args).await,
         Command::Ask(args) => ask(&cli, args).await,
         Command::Answer(args) => answer(&cli, args).await,
+        Command::Claim(args) => claim(&cli, args).await,
+        Command::Release(args) => release(&cli, args).await,
         Command::Ready(args) => ready(&cli, args).await,
         Command::Statusline => statusline(&cli).await,
     }
@@ -74,29 +77,31 @@ async fn client_for(cli: &Cli) -> Result<Client, CliError> {
     Ok(Client::new(url, token))
 }
 
-/// How long `bridle statusline` waits on the daemon before giving up. Claude
-/// Code runs this on every render of the human's prompt, so it must never be
-/// what makes the terminal feel slow (docs/design/usage-and-budget.md).
-const STATUSLINE_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(2);
-
 /// Claude Code's statusLine command (docs/design/cli.md, docs/design/usage-and-budget.md
-/// "Where bridle can see usage"). Reads Claude Code's JSON from stdin, prints a short
-/// line back, and best-effort records a snapshot with the daemon. Never returns an
-/// error and never blocks beyond `STATUSLINE_TIMEOUT`: an unreachable daemon, no
-/// project daemon at all, a slow response, or unparseable stdin all just mean nothing
-/// gets recorded, not a failed or slow status line.
-async fn statusline(cli: &Cli) -> Result<(), CliError> {
+/// "Where bridle can see usage"). Reads Claude Code's JSON from stdin and prints a short
+/// line back. Purely local: no daemon call, so unparseable stdin is the only way this
+/// can produce a degraded line, never a slow or failed one. It no longer records a
+/// snapshot with the daemon (dropped per s8kn's scope change: the context governor
+/// gets account-wide windows from `get_usage` instead, and `POST /v1/statusline` /
+/// `interactive_usage` stay in the daemon unused for now, not removed).
+async fn statusline(_cli: &Cli) -> Result<(), CliError> {
     let input: serde_json::Value = std::io::read_to_string(std::io::stdin())
         .ok()
         .and_then(|s| serde_json::from_str(&s).ok())
         .unwrap_or(serde_json::Value::Null);
     let report = crate::statusline::parse(&input);
-    println!("{}", crate::statusline::render_line(&report));
-
-    if let Ok((url, token)) = resolve_endpoint_and_token(cli).await {
-        let client = Client::new_with_timeout(url, token, STATUSLINE_TIMEOUT);
-        let _ = tokio::time::timeout(STATUSLINE_TIMEOUT, client.report_statusline(&report)).await;
-    }
+    let workspace_dir = crate::statusline::workspace_dir(&input);
+    let folder = workspace_dir
+        .as_deref()
+        .and_then(|d| d.file_name())
+        .map(|n| n.to_string_lossy().into_owned());
+    let branch = workspace_dir
+        .as_deref()
+        .and_then(crate::statusline::git_branch);
+    println!(
+        "{}",
+        crate::statusline::render_line(&report, folder.as_deref(), branch.as_deref())
+    );
     Ok(())
 }
 
@@ -421,6 +426,28 @@ async fn answer(cli: &Cli, args: &AnswerArgs) -> Result<(), CliError> {
     Ok(())
 }
 
+async fn claim(cli: &Cli, args: &ClaimArgs) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let task = client.claim_task(&args.task).await?;
+    if cli.json {
+        render::print_json(&task)?;
+    } else {
+        println!("claimed {}", task.id);
+    }
+    Ok(())
+}
+
+async fn release(cli: &Cli, args: &ReleaseArgs) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let task = client.release_task(&args.task).await?;
+    if cli.json {
+        render::print_json(&task)?;
+    } else {
+        println!("released {}", task.id);
+    }
+    Ok(())
+}
+
 async fn interrupt(cli: &Cli, args: &InterruptArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
     let resp = client
@@ -696,9 +723,9 @@ async fn usage(cli: &Cli, args: &UsageArgs) -> Result<(), CliError> {
                     .cost_usd
                     .map(|c| format!("${c:.4}"))
                     .unwrap_or_else(|| "-".to_string());
-                let ctx = match (row.context_used_tokens, row.context_max_tokens) {
-                    (Some(u), Some(m)) if m > 0 => format!("{:.0}%", (u as f64 / m as f64) * 100.0),
-                    _ => "-".to_string(),
+                let ctx = match row.context_used_percentage {
+                    Some(p) => format!("{:.0}%", p * 100.0),
+                    None => "-".to_string(),
                 };
                 println!(
                     "  {} {:<10} {:>9} ctx {ctx}",

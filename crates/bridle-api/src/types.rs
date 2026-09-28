@@ -562,8 +562,20 @@ pub struct StatusLineReport {
     pub model: Option<String>,
     #[serde(default)]
     pub cost_usd: Option<f64>,
+    /// `context_window.used_percentage` (0–100), normalized to 0–1 like
+    /// `StatusLineRateLimitReading::utilization`. Precomputed by Claude Code
+    /// from the last API response's input tokens; shown directly rather than
+    /// recomputed from `context_used_tokens`/`context_max_tokens`, since it
+    /// stays correct on extended-context (1M) models.
+    #[serde(default)]
+    pub context_used_percentage: Option<f64>,
+    /// Sum of `context_window.current_usage`'s three input-token fields
+    /// (input, cache creation, cache read) from the last API call. `None`
+    /// before the first call, or right after `/compact`.
     #[serde(default)]
     pub context_used_tokens: Option<u64>,
+    /// `context_window.context_window_size`: 200000, or 1000000 for
+    /// extended-context models.
     #[serde(default)]
     pub context_max_tokens: Option<u64>,
     #[serde(default)]
@@ -590,6 +602,7 @@ pub struct InteractiveUsageRow {
     pub session_id: Option<String>,
     pub model: Option<String>,
     pub cost_usd: Option<f64>,
+    pub context_used_percentage: Option<f64>,
     pub context_used_tokens: Option<u64>,
     pub context_max_tokens: Option<u64>,
 }

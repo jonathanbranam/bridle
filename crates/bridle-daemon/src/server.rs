@@ -78,6 +78,8 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/tasks/{id}/reopen", post(reopen_task))
         .route("/v1/tasks/{id}/ask", post(ask_task))
         .route("/v1/tasks/{id}/answer", post(answer_task))
+        .route("/v1/tasks/{id}/claim", post(claim_task))
+        .route("/v1/tasks/{id}/release", post(release_task))
         .route("/v1/questions", get(list_open_questions))
         .route(
             "/v1/edges",
@@ -752,6 +754,7 @@ async fn report_statusline(
             session_id: req.session_id,
             model: req.model,
             cost_usd: req.cost_usd,
+            context_used_percentage: req.context_used_percentage,
             context_used_tokens: req.context_used_tokens,
             context_max_tokens: req.context_max_tokens,
         })
@@ -909,6 +912,42 @@ async fn list_open_questions(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<OpenQuestion>>, ApiError> {
     Ok(Json(state.tasks.list_open_questions()))
+}
+
+async fn claim_task(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path(id): Path<String>,
+) -> Result<Json<Task>, ApiError> {
+    let task = state.tasks.claim_task(&id, &principal.id).await?;
+    let _ = state
+        .emitter
+        .emit(
+            event_kind::TASK_STATE,
+            principal.id,
+            None,
+            serde_json::json!({"task": task.id, "to": task.state}),
+        )
+        .await;
+    Ok(Json(task))
+}
+
+async fn release_task(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path(id): Path<String>,
+) -> Result<Json<Task>, ApiError> {
+    let task = state.tasks.release_task(&id, &principal.id).await?;
+    let _ = state
+        .emitter
+        .emit(
+            event_kind::TASK_STATE,
+            principal.id,
+            None,
+            serde_json::json!({"task": task.id, "to": task.state}),
+        )
+        .await;
+    Ok(Json(task))
 }
 
 // ---------- edges ----------

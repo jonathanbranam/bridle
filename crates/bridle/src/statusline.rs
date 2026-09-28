@@ -4,13 +4,14 @@
 //! time it renders the status line; this prints a short line back and turns
 //! the JSON into a [`bridle_api::types::StatusLineReport`] for the daemon.
 //!
-//! The design doc paraphrases the schema as carrying `rate_limits.five_hour`
-//! / `.seven_day`, each with `used_percentage` and `resets_at`, plus session
-//! cost and context-window use, but doesn't pin down the exact field names,
-//! and Claude Code's own docs weren't reachable from the environment this
-//! was built in. So parsing stays tolerant, matching bridle-claude's event
-//! model (`crates/bridle-claude/src/events.rs`): walk the raw `Value` for
-//! the fields wanted, skip anything missing or reshaped, never error.
+//! Field names below are confirmed against Claude Code's own docs
+//! (docs/questions/open/statusline-real-context-and-a-tighter-layout-s8kn.md);
+//! anything not confirmed (`rate_limits.*`'s exact shape beyond the windows
+//! bridle cares about) still stays tolerant, matching bridle-claude's event
+//! model (`crates/bridle-claude/src/events.rs`): walk the raw `Value` for the
+//! fields wanted, skip anything missing or reshaped, never error.
+
+use std::path::{Path, PathBuf};
 
 use bridle_api::types::{StatusLineRateLimitReading, StatusLineReport};
 use chrono::{DateTime, Utc};
@@ -38,7 +39,7 @@ pub fn parse(input: &Value) -> StatusLineReport {
     let cost_usd = input
         .pointer("/cost/total_cost_usd")
         .and_then(Value::as_f64);
-    let (context_used_tokens, context_max_tokens) = context_window(input);
+    let (context_used_percentage, context_used_tokens, context_max_tokens) = context_window(input);
 
     let rate_limits = WINDOWS
         .iter()
@@ -61,30 +62,45 @@ pub fn parse(input: &Value) -> StatusLineReport {
         session_id,
         model,
         cost_usd,
+        context_used_percentage,
         context_used_tokens,
         context_max_tokens,
         rate_limits,
     }
 }
 
-/// Tried under both a nested `context_window` object and Claude Code's
-/// documented `exceeds_200k_tokens` flag, since only one of the two shapes
-/// may exist depending on version.
-fn context_window(input: &Value) -> (Option<u64>, Option<u64>) {
-    let used = input
-        .pointer("/context_window/used_tokens")
+/// `context_window` "describes the live context window from the most recent
+/// API response" (Claude Code's docs, quoted in s8kn): `used_percentage` is
+/// precomputed and already what's wanted for display, so it's used directly
+/// rather than recomputed from token counts — a recomputation that used to
+/// wrongly cap out at 200k on extended-context (1M) models. `used_tokens` is
+/// the three `current_usage` input fields (input, cache creation, cache
+/// read) added together, recorded for `bridle usage`'s history; both
+/// `current_usage` and `used_percentage` are `null`/absent before the first
+/// API call and right after `/compact`.
+fn context_window(input: &Value) -> (Option<f64>, Option<u64>, Option<u64>) {
+    let cw = input.get("context_window");
+    let used_percentage = cw
+        .and_then(|c| c.get("used_percentage"))
+        .and_then(Value::as_f64)
+        .map(|p| p / 100.0);
+    let max_tokens = cw
+        .and_then(|c| c.get("context_window_size"))
         .and_then(Value::as_u64);
-    let max = input
-        .pointer("/context_window/max_tokens")
-        .and_then(Value::as_u64);
-    if used.is_some() || max.is_some() {
-        return (used, max);
-    }
-    // No token counts, just a boolean: report it as "at" the 200k ceiling.
-    match input.get("exceeds_200k_tokens").and_then(Value::as_bool) {
-        Some(true) => (Some(200_000), Some(200_000)),
-        _ => (None, None),
-    }
+    let current_usage = cw
+        .and_then(|c| c.get("current_usage"))
+        .filter(|u| !u.is_null());
+    let used_tokens = current_usage.map(|u| {
+        [
+            "input_tokens",
+            "cache_creation_input_tokens",
+            "cache_read_input_tokens",
+        ]
+        .iter()
+        .filter_map(|field| u.get(field).and_then(Value::as_u64))
+        .sum()
+    });
+    (used_percentage, used_tokens, max_tokens)
 }
 
 /// Either an RFC3339 string or epoch seconds, since it's undocumented which
@@ -100,25 +116,70 @@ fn parse_resets_at(v: &Value) -> Option<DateTime<Utc>> {
         .and_then(|epoch| DateTime::from_timestamp(epoch, 0))
 }
 
-/// What shows in the human's terminal. Kept short and never empty, so a
-/// mostly-unparsed input still prints something rather than a blank line.
-pub fn render_line(report: &StatusLineReport) -> String {
+/// The session's working directory, for the folder shown in the line:
+/// `workspace.current_dir` if present, else the top-level `cwd` Claude Code
+/// also sends.
+pub fn workspace_dir(input: &Value) -> Option<PathBuf> {
+    input
+        .pointer("/workspace/current_dir")
+        .or_else(|| input.get("cwd"))
+        .and_then(Value::as_str)
+        .map(PathBuf::from)
+}
+
+/// The current branch of the git repo containing `dir`, or `None` if `dir`
+/// isn't in one (or in a detached-HEAD state). Claude Code's statusline JSON
+/// doesn't carry the branch itself, so this shells out the same way a
+/// hand-written statusline script would.
+pub fn git_branch(dir: &Path) -> Option<String> {
+    let output = std::process::Command::new("git")
+        .args(["branch", "--show-current"])
+        .current_dir(dir)
+        .output()
+        .ok()?;
+    if !output.status.success() {
+        return None;
+    }
+    let branch = String::from_utf8(output.stdout).ok()?;
+    let branch = branch.trim();
+    if branch.is_empty() {
+        None
+    } else {
+        Some(branch.to_string())
+    }
+}
+
+/// What shows in the human's terminal: model, context %, rate-limit windows
+/// (`5h`/`7d` labels), folder and git branch, then the estimated cost last
+/// and parenthesized — de-emphasized since it's a list-price estimate that
+/// can differ from the real bill and resets on `/clear` (Claude Code's
+/// docs, quoted in s8kn). Kept short and never empty, so a mostly-unparsed
+/// input still prints something rather than a blank line.
+pub fn render_line(
+    report: &StatusLineReport,
+    folder: Option<&str>,
+    branch: Option<&str>,
+) -> String {
     let mut parts = Vec::new();
     if let Some(model) = &report.model {
         parts.push(model.clone());
     }
-    if let Some(cost) = report.cost_usd {
-        parts.push(format!("${cost:.2}"));
-    }
-    if let (Some(used), Some(max)) = (report.context_used_tokens, report.context_max_tokens)
-        && max > 0
-    {
-        parts.push(format!("ctx {:.0}%", (used as f64 / max as f64) * 100.0));
+    if let Some(p) = report.context_used_percentage {
+        parts.push(format!("ctx {:.0}%", p * 100.0));
     }
     for rl in &report.rate_limits {
         if let Some(u) = rl.utilization {
-            parts.push(format!("{} {:.0}%", rl.window, u * 100.0));
+            parts.push(format!("{} {:.0}%", window_label(&rl.window), u * 100.0));
         }
+    }
+    if let Some(folder) = folder {
+        parts.push(format!("\u{1F4C1} {folder}"));
+    }
+    if let Some(branch) = branch {
+        parts.push(format!("\u{1F33F} {branch}"));
+    }
+    if let Some(cost) = report.cost_usd {
+        parts.push(format!("(${cost:.2})"));
     }
     if parts.is_empty() {
         "bridle".to_string()
@@ -127,18 +188,41 @@ pub fn render_line(report: &StatusLineReport) -> String {
     }
 }
 
+fn window_label(window: &str) -> &str {
+    match window {
+        "five_hour" => "5h",
+        "seven_day" => "7d",
+        "seven_day_opus" => "7d-opus",
+        "seven_day_sonnet" => "7d-sonnet",
+        other => other,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use serde_json::json;
 
+    /// The documented example shape (s8kn's findings table): `used_percentage`
+    /// precomputed, `current_usage` carrying the last call's input fields.
     #[test]
     fn parses_the_documented_shape() {
         let input = json!({
             "session_id": "abc123",
             "model": {"id": "claude-opus-4-1", "display_name": "Opus"},
             "cost": {"total_cost_usd": 1.2345},
-            "context_window": {"used_tokens": 50_000, "max_tokens": 200_000},
+            "context_window": {
+                "used_percentage": 42.0,
+                "context_window_size": 200_000,
+                "current_usage": {
+                    "input_tokens": 30_000,
+                    "cache_creation_input_tokens": 5_000,
+                    "cache_read_input_tokens": 5_000,
+                    "output_tokens": 1_200
+                },
+                "total_input_tokens": 40_000,
+                "total_output_tokens": 1_200
+            },
             "rate_limits": {
                 "five_hour": {"used_percentage": 42.0, "resets_at": "2026-09-27T20:00:00Z"},
                 "seven_day": {"used_percentage": 10.5, "resets_at": 1790533200},
@@ -148,7 +232,8 @@ mod tests {
         assert_eq!(report.session_id.as_deref(), Some("abc123"));
         assert_eq!(report.model.as_deref(), Some("Opus"));
         assert_eq!(report.cost_usd, Some(1.2345));
-        assert_eq!(report.context_used_tokens, Some(50_000));
+        assert_eq!(report.context_used_percentage, Some(0.42));
+        assert_eq!(report.context_used_tokens, Some(40_000));
         assert_eq!(report.context_max_tokens, Some(200_000));
         assert_eq!(report.rate_limits.len(), 2);
         let five = report
@@ -166,11 +251,53 @@ mod tests {
         assert_eq!(seven.utilization, Some(0.105));
         assert!(seven.resets_at.is_some());
 
-        let line = render_line(&report);
+        let line = render_line(&report, Some("bridle"), Some("bridle/s8kn-statusline"));
         assert!(line.contains("Opus"), "{line}");
-        assert!(line.contains("$1.23"), "{line}");
-        assert!(line.contains("ctx 25%"), "{line}");
-        assert!(line.contains("five_hour 42%"), "{line}");
+        assert!(line.contains("(\u{24}1.23)"), "{line}");
+        assert!(line.contains("ctx 42%"), "{line}");
+        assert!(line.contains("5h 42%"), "{line}");
+        assert!(line.contains("7d 11%") || line.contains("7d 10%"), "{line}");
+        assert!(line.contains("\u{1F4C1} bridle"), "{line}");
+        assert!(line.contains("\u{1F33F} bridle/s8kn-statusline"), "{line}");
+        // The cost is de-emphasized: parenthesized and last.
+        assert!(line.trim_end().ends_with(')'), "{line}");
+    }
+
+    #[test]
+    fn null_current_usage_after_compact_reports_no_used_tokens() {
+        let input = json!({
+            "context_window": {
+                "used_percentage": 0.0,
+                "context_window_size": 200_000,
+                "current_usage": null
+            }
+        });
+        let report = parse(&input);
+        assert_eq!(report.context_used_percentage, Some(0.0));
+        assert_eq!(report.context_used_tokens, None);
+        assert_eq!(report.context_max_tokens, Some(200_000));
+    }
+
+    #[test]
+    fn extended_context_model_is_not_capped_at_200k() {
+        // A 1M-context model at 200k used tokens is 20%, not the old
+        // exceeds_200k_tokens fallback's 100%.
+        let input = json!({
+            "context_window": {
+                "used_percentage": 20.0,
+                "context_window_size": 1_000_000,
+                "current_usage": {
+                    "input_tokens": 200_000,
+                    "cache_creation_input_tokens": 0,
+                    "cache_read_input_tokens": 0
+                }
+            },
+            "exceeds_200k_tokens": true
+        });
+        let report = parse(&input);
+        assert_eq!(report.context_used_percentage, Some(0.20));
+        assert_eq!(report.context_used_tokens, Some(200_000));
+        assert_eq!(report.context_max_tokens, Some(1_000_000));
     }
 
     #[test]
@@ -178,7 +305,7 @@ mod tests {
         let report = parse(&Value::Null);
         assert!(report.model.is_none());
         assert!(report.rate_limits.is_empty());
-        assert_eq!(render_line(&report), "bridle");
+        assert_eq!(render_line(&report, None, None), "bridle");
     }
 
     #[test]
@@ -196,10 +323,13 @@ mod tests {
     }
 
     #[test]
-    fn falls_back_to_exceeds_200k_flag() {
-        let input = json!({"exceeds_200k_tokens": true});
-        let report = parse(&input);
-        assert_eq!(report.context_used_tokens, Some(200_000));
-        assert_eq!(report.context_max_tokens, Some(200_000));
+    fn workspace_dir_prefers_workspace_current_dir_over_top_level_cwd() {
+        let input = json!({"cwd": "/top", "workspace": {"current_dir": "/nested"}});
+        assert_eq!(workspace_dir(&input), Some(PathBuf::from("/nested")));
+
+        let input = json!({"cwd": "/top"});
+        assert_eq!(workspace_dir(&input), Some(PathBuf::from("/top")));
+
+        assert_eq!(workspace_dir(&Value::Null), None);
     }
 }
