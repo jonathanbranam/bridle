@@ -2,12 +2,12 @@
 
 The orchestrator's working notes for handing over between sessions. The role
 itself is in `workflow/base/roles/orchestrator.md`. Update this file whenever the
-queue, open items or decisions change. Last updated 2026-09-28 16:35 UTC,
-at the handover from the fifth orchestrator session.
+queue, open items or decisions change. Last updated 2026-09-28 17:00 UTC,
+during the sixth orchestrator session.
 
 ## First, for the incoming orchestrator
 
-- **`main` is 8516bf8 plus doc commits, verified** (two local runs, 419/419).
+- **`main` is bff19bf, verified** (two local runs, 419/419).
   The installed binary is built from 8516bf8. The running daemon started
   16:22 UTC on f401a7f (j479, a7h3, 9c63, persist-spawn-overrides all live);
   only the renewal first-message fix (br-ab66, 8516bf8) waits for the next
@@ -20,14 +20,31 @@ at the handover from the fifth orchestrator session.
   equally ranked tasks, on the state branch); manager-2 takes from the top
   tier by load and never re-prioritises. Priorities go to pm-1, who records
   them; not by message alone.
-- **In flight: the data-contracts onboarding** (the human said go,
-  16:30 UTC). The survey is done: `docs/context/onboarding-data-contracts.md`
-  (9e82147). Next: bring the human its 8 questions (section 7; the biggest is
-  gates: data-contracts wants the human to approve every plan and land,
-  bridle's manager merges on checks), then run the plan below. Two bridle
-  fixes it found: the worker skill hardcodes `just check` (needs a
-  pack/project setting for `make check`), and its `git merge main` may be
-  refused under the human's global `merge.ff = only`.
+- **In flight: the data-contracts onboarding.** The human answered the
+  survey's 8 questions (2026-09-28, sixth session):
+  1. `adopt-branch-per-change-workflow`: deleted, local and origin (tip
+     4200ad6), worktree and orphaned `.claude/worktrees/` removed. Done.
+  2. `.claude/settings.json`: the human removed it on purpose; don't re-add.
+  3. OpenSpec: option B. Keep `openspec/specs/` and the spec->feature
+     pipeline; retire the CLI, the 10 skills and `changes/`.
+  4. **No gates**: bridle's normal merge model applies to data-contracts.
+  5. `docs/tickets/` frozen; DC ticket 3fm6 deletes it once bridle is
+     adopted. Workflow tickets are not migrated (vf32 sjkw 6tps mv9p d35t
+     dropped, 992c landed: DC b923c7e, pushed). Library tickets become tasks.
+  6. `plan-of-record.md`: keep §0 and §3, retire §1 and §2 for the queue.
+  7. Link checking: DC keeps `check-tickets.py` for now. The human is unsure
+     which docs live in bridle vs markdown: ticket hv8e (br-8c6e).
+  8. `workflow`: absolute path to bridle's clone for now; a git url yields an
+     empty base today (nothing clones it; `rules.rs` discover_layers).
+  Bridle side queued by pm-1 (tier 2): br-1e0c roles into workflow/base (in
+  progress), br-4221 check-command binding, br-7678 python pack (after
+  br-4221), br-bc21 harvest base rules. Next for the orchestrator: the DC
+  branch (survey §7 step 3) once those land, then the human starts DC's
+  daemon (workspace `data-contracts-workspace/`) and makes a token.
+- **`merge.ff = only` fix merged** (m2fq, br-544b, b809c4e): workers use
+  `git merge --no-ff main`; live for new workers after the next restart.
+- **Local permissions** (`.claude/settings.local.json`, untracked): the
+  watcher script and reads under data-contracts-workspace are allowed.
 - **Tests got ~10x faster after `cargo clean`** (400 s -> 35 s); see f75x.
 
 ## The data-contracts onboarding (plan agreed with the human)
