@@ -87,3 +87,5 @@
 {"actor":"agent:ticket-housekeeping-2","at":"2026-09-28T09:34:41.037063Z","from":"open","task":"br-7231","to":"dropped"}
 {"actor":"agent:ticket-housekeeping-2","at":"2026-09-28T09:34:41.050975Z","from":"open","task":"br-7c2e","to":"dropped"}
 {"actor":"agent:ticket-housekeeping-2","at":"2026-09-28T09:34:41.064800Z","from":"open","task":"br-1253","to":"dropped"}
+{"actor":"human","at":"2026-09-28T09:35:37.747Z","from":"","task":"br-9300","to":"open"}
+{"actor":"human","at":"2026-09-28T09:35:37.793Z","from":"","task":"br-a22a","to":"open"}
