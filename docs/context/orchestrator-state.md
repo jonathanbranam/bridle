@@ -9,6 +9,11 @@ near the end of the fourth orchestrator session.
 
 - **v0.2.0 is tagged** (2683d6d, 2026-09-28 ~06:25 UTC): P0 complete, two
   local runs 297/297, GitHub CI green on Linux and macOS. n6gy resolved again.
+- **Order for the morning: rebuild first, then hand over.**
+  `scripts/claude-orchestrator` now calls `bridle prime orchestrator`
+  (a7e5019), which the installed binary lacks, so the new session would start
+  with an empty prompt. Run `cargo install --path crates/bridle` and restart
+  the daemon, then run the script.
 - **For the human in the morning:** rebuild and restart the daemon
   (`cargo install --path crates/bridle`, then restart). The running daemon is
   the 9608376 build, so htp6b auto-renew, 78sp, 4eep, x7gp and the shutdown fix
