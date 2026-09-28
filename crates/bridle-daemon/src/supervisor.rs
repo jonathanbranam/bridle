@@ -176,10 +176,17 @@ struct Inner {
     emitter: Emitter,
     runtimes: std::sync::Mutex<HashMap<String, Arc<AgentRuntime>>>,
     governor: crate::governor::GovernorHandle,
+    /// `bridle budget max-workers`: a live cap replacing
+    /// `[budget] max_workers` until cleared or the daemon restarts.
+    /// usage-and-budget.md, Max-workers override.
+    max_workers_override: std::sync::Mutex<Option<u32>>,
 }
 
 #[derive(Clone)]
 pub struct AgentManager(Arc<Inner>);
+
+/// The role `max_workers` counts; the manager, PM and orchestrator don't.
+pub(crate) const WORKER_ROLE: &str = "worker";
 
 pub fn system_principal() -> Principal {
     Principal {
@@ -228,6 +235,7 @@ impl AgentManager {
             emitter,
             runtimes: std::sync::Mutex::new(HashMap::new()),
             governor,
+            max_workers_override: std::sync::Mutex::new(None),
         }))
     }
 
@@ -300,6 +308,42 @@ impl AgentManager {
             .expect("runtimes mutex poisoned")
             .get(id)
             .cloned()
+    }
+
+    pub fn set_max_workers_override(&self, cap: Option<u32>) {
+        *self
+            .0
+            .max_workers_override
+            .lock()
+            .expect("max_workers_override mutex poisoned") = cap;
+    }
+
+    pub fn max_workers_override(&self) -> Option<u32> {
+        *self
+            .0
+            .max_workers_override
+            .lock()
+            .expect("max_workers_override mutex poisoned")
+    }
+
+    /// The cap in force: the live override, else the configured value.
+    pub fn effective_max_workers(&self) -> u32 {
+        self.max_workers_override()
+            .unwrap_or(self.0.config.budget.max_workers)
+    }
+
+    /// Running agents in the `worker` role: what `max_workers` limits, both
+    /// at spawn and in the governor's `maybe_resume`.
+    pub async fn running_worker_count(&self) -> usize {
+        let mut n = 0;
+        for id in self.running_ids() {
+            if let Ok(Some(a)) = self.0.store.get_agent(&id).await
+                && a.role == WORKER_ROLE
+            {
+                n += 1;
+            }
+        }
+        n
     }
 
     pub fn running_ids(&self) -> Vec<String> {
@@ -531,6 +575,15 @@ impl AgentManager {
         };
         if !req.ignore_budget {
             self.refuse_if_holding(&model)?;
+        }
+        if req.role == WORKER_ROLE {
+            let cap = self.effective_max_workers() as usize;
+            let running = self.running_worker_count().await;
+            if running >= cap {
+                return Err(SupervisorError::Conflict(format!(
+                    "{running} workers running, at max_workers {cap}; wait for one to finish or raise it with `bridle budget max-workers`"
+                )));
+            }
         }
 
         let name = match req.name {

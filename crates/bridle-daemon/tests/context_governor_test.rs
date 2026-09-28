@@ -129,7 +129,8 @@ async fn crossing_wind_down_at_sends_handoff_and_renews_once() {
 /// those races.
 #[tokio::test]
 async fn many_concurrent_crossings_each_renew_exactly_once() {
-    let config = format!("[context.wind_down_at]\ndefault = {THRESHOLD}\n");
+    let config =
+        format!("[context.wind_down_at]\ndefault = {THRESHOLD}\n[budget]\nmax_workers = 64\n");
     let (daemon, _tmp) = start_daemon_with_config(Some(fast_overrides()), Some(&config)).await;
     let c = &daemon.client;
 

@@ -715,6 +715,18 @@ pub struct BudgetStatus {
     /// Schedule override).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub schedule_override: Option<ScheduleOverrideStatus>,
+    /// Set while `bridle budget max-workers` has a live cap in force
+    /// (usage-and-budget.md, Max-workers override); `thresholds.max_workers`
+    /// stays the configured value.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub max_workers_override: Option<u32>,
+}
+
+/// `POST /v1/budget/max-workers`: `None` clears the override and falls back
+/// to the configured `max_workers`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MaxWorkersRequest {
+    pub max_workers: Option<u32>,
 }
 
 /// `POST /v1/budget/hold`: `--for`/`--until` resolved to an absolute instant

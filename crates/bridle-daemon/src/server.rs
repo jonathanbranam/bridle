@@ -14,12 +14,12 @@ use bridle_api::types::{
     AddQueueTierRequest, Agent, AnswerQuestionRequest, ApiErrorResponse, AskQuestionRequest,
     BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, DropTaskRequest, Edge, EditTaskRequest,
     ErrorBody, Event, EventQuery, Health, HoldStatus, InteractiveUsageRow, InterruptRequest,
-    Message, MessageQuery, MessageState, NewEdgeRequest, NewTaskRequest, NoteTaskRequest,
-    OpenQuestion, PrincipalKind, Queue, RateLimit, RemoveEdgeQuery, RemoveQuery, RenewRequest,
-    ResumeRequest, ScheduleOverrideStatus, SendRequest, SetQueueRequest, SpawnRequest, Status,
-    StatusLineReport, StopRequest, Task, TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo,
-    TranscriptLine, TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery, UsageGroupBy,
-    WindowStatus, event_kind,
+    MaxWorkersRequest, Message, MessageQuery, MessageState, NewEdgeRequest, NewTaskRequest,
+    NoteTaskRequest, OpenQuestion, PrincipalKind, Queue, RateLimit, RemoveEdgeQuery, RemoveQuery,
+    RenewRequest, ResumeRequest, ScheduleOverrideStatus, SendRequest, SetQueueRequest,
+    SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery, TokenCreateRequest,
+    TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown,
+    UsageBreakdownQuery, UsageGroupBy, WindowStatus, event_kind,
 };
 use chrono::Utc;
 use futures::Stream;
@@ -73,6 +73,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/budget/release", post(budget_release))
         .route("/v1/budget/override", post(budget_override))
         .route("/v1/budget/override/clear", post(budget_override_clear))
+        .route("/v1/budget/max-workers", post(budget_max_workers))
         .route("/v1/tokens", get(list_tokens).post(create_token))
         .route("/v1/tokens/{name}", axum::routing::delete(revoke_token))
         .route("/v1/tasks", get(list_tasks).post(new_task))
@@ -376,6 +377,7 @@ async fn budget(State(state): State<AppState>) -> Result<Json<BudgetStatus>, Api
             .governor
             .schedule_override_status()
             .map(|(period, until)| ScheduleOverrideStatus { period, until }),
+        max_workers_override: state.manager.max_workers_override(),
     }))
 }
 
@@ -418,6 +420,16 @@ async fn budget_override_clear(
     require_human(&principal)?;
     state.governor.clear_schedule_override();
     state.governor.recompute().await;
+    budget(State(state)).await
+}
+
+async fn budget_max_workers(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Json(req): Json<MaxWorkersRequest>,
+) -> Result<Json<BudgetStatus>, ApiError> {
+    require_human(&principal)?;
+    state.manager.set_max_workers_override(req.max_workers);
     budget(State(state)).await
 }
 

@@ -474,7 +474,8 @@ impl Governor {
 
     /// Resuming (usage-and-budget.md, Resuming): once every window is below
     /// `resume_below` and no human hold is in force, paused agents resume
-    /// with `--resume`, in priority order, up to `max_workers` concurrently.
+    /// with `--resume`, in priority order, workers up to `max_workers` concurrently
+    /// (other roles always resume).
     /// No task/priority system exists yet, so "priority order" is the order
     /// they were paused in (oldest `updated_at` first).
     async fn maybe_resume(&self, rate_limits: &[RateLimit]) {
@@ -499,10 +500,16 @@ impl Governor {
         }
         paused.sort_by_key(|a| a.updated_at);
 
-        let running = self.0.manager.running_ids().len();
-        let slots = (self.0.config.max_workers as usize).saturating_sub(running);
+        let running = self.0.manager.running_worker_count().await;
+        let slots = (self.0.manager.effective_max_workers() as usize).saturating_sub(running);
         let mut resumed = Vec::new();
-        for agent in paused.into_iter().take(slots) {
+        // Managers, the PM and the orchestrator always resume; `max_workers`
+        // limits workers only (k7nr: they used to use up the slots, and a
+        // manager paused last never came back).
+        let (workers, others): (Vec<_>, Vec<_>) = paused
+            .into_iter()
+            .partition(|a| a.role == crate::supervisor::WORKER_ROLE);
+        for agent in others.into_iter().chain(workers.into_iter().take(slots)) {
             let had_pending = !self
                 .0
                 .store

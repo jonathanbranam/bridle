@@ -396,6 +396,19 @@ pub enum BudgetAction {
     Override(BudgetOverrideArgs),
     /// Cancel an active `override` and revert to the schedule right away.
     OverrideClear,
+    /// Set a live `max_workers` cap (lost on daemon restart), or `--clear` it.
+    /// Never stops running workers; only blocks new spawns and resumes.
+    MaxWorkers(BudgetMaxWorkersArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct BudgetMaxWorkersArgs {
+    /// The new cap.
+    #[arg(required_unless_present = "clear", conflicts_with = "clear")]
+    pub n: Option<u32>,
+    /// Revert to the configured `max_workers`.
+    #[arg(long)]
+    pub clear: bool,
 }
 
 #[derive(Debug, Args)]

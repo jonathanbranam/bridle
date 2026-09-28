@@ -682,3 +682,52 @@ async fn spawn_refuses_when_every_candidate_model_is_blocked() {
         bridle_api::ClientError::Api { status: 409, .. }
     ));
 }
+
+/// k7nr: `max_workers` limits workers only, so a manager paused last still
+/// resumes when the workers have already used every slot.
+#[tokio::test]
+async fn resume_brings_back_a_manager_even_when_workers_fill_max_workers() {
+    let (daemon, _tmp) =
+        support::start_daemon_with_config(None, Some("[budget]\nmax_workers = 2\n")).await;
+    script_usage(&daemon.repo, 10.0, 10.0);
+    wait_for("normal before spawn", || async {
+        let b = daemon.client.budget().await.ok()?;
+        (b.state == GovernorState::Normal).then_some(())
+    })
+    .await;
+
+    let mut ids = Vec::new();
+    for (role, name) in [("worker", "w1"), ("worker", "w2"), ("manager", "m1")] {
+        let a = daemon
+            .client
+            .spawn(&SpawnRequest {
+                role: role.to_string(),
+                name: Some(name.to_string()),
+                prompt: None,
+                workdir: Some(bridle_api::types::Workdir::Repo),
+                model: None,
+                extra_allowed_tools: Vec::new(),
+                extra_env: Vec::new(),
+                ignore_budget: false,
+            })
+            .await
+            .expect("spawn while normal");
+        wait_for_state(&daemon.client, &a.id, AgentState::Idle).await;
+        ids.push(a.id);
+    }
+
+    // Idle agents stop at once on wind-down; the manager is stopped last.
+    script_usage(&daemon.repo, 90.0, 10.0);
+    for id in &ids {
+        wait_for_state(&daemon.client, id, AgentState::Stopped).await;
+    }
+
+    script_usage(&daemon.repo, 10.0, 10.0);
+    for id in &ids {
+        wait_for(&format!("{id} resumed"), || async {
+            let a = daemon.client.get_agent(id).await.ok()?;
+            a.state.is_running().then_some(())
+        })
+        .await;
+    }
+}

@@ -106,7 +106,7 @@ is passed, and a message that would start a turn in an idle agent is held
 instead. On crossing into `winding_down` or worse, it stops idle agents at
 once, sends working ones the usage-pause notice and stops them with exit
 reason `budget_paused` when their turn ends or `wind_down_grace` expires,
-and resumes paused agents (up to `max_workers`, oldest-paused first) once
+and resumes paused agents (workers up to `max_workers`, oldest-paused first; other roles always) once
 every window is back below `resume_below` and no human hold is in force.
 `bridle budget hold`/`release` (and `POST /v1/budget/hold`/`release`) drive
 the same wind-down for a human-requested pause, for the current daemon only
@@ -274,6 +274,31 @@ bridle budget override --clear
 - No permanent override mode: every override needs an end, computed or
   given (YAGNI — see n9qh).
 
+### Max-workers override
+
+`[budget] max_workers` limits **workers** (role `worker`; the manager, PM and
+orchestrator never count), in two places that share one definition of
+"running" (`AgentManager::running_worker_count`, any live worker process, idle
+included): `bridle spawn` of a worker is refused (409) once running workers
+meet the cap, and `maybe_resume` resumes budget-paused workers only into the
+free slots. Other paused roles always resume (k7nr).
+
+The human can change the cap live (ticket y2eb), for when they need the
+laptop:
+
+```
+bridle budget max-workers <n>
+bridle budget max-workers --clear
+```
+
+- An in-memory value on the agent manager, like the schedule override: it
+  replaces the configured `max_workers` until cleared, and is lost when the
+  daemon restarts (back to config). Human-only; shown in `bridle budget` and
+  as `max_workers_override` in `GET /v1/budget` (`POST /v1/budget/max-workers`
+  sets or, with `null`, clears it).
+- Lowering never stops or preempts running workers; it only blocks new
+  spawns and resumes until the running count drops under the new cap.
+
 ### The wind-down
 
 When any window crosses `wind_down_at`, or the human asks for a hold:
@@ -304,7 +329,8 @@ down the same way.
 
 When **every** window is below `resume_below` and no human hold is in force,
 the governor resumes paused agents with `--resume <session-id>`, in priority
-order, up to `max_workers`. Each gets its pending messages, or, if it has
+order; workers up to `max_workers`, while managers, the PM and the
+orchestrator always resume. Each gets its pending messages, or, if it has
 none, one line saying the pause is over. Then the manager is told. Short of
 that, bridle stays idle: a paused `seven_day` window can mean days without
 bridle work, and that is intended.
