@@ -26,6 +26,11 @@ And:
 
 > And also there should be an override
 
+Asked whether that meant switching periods by hand until a time, then back to
+the schedule:
+
+> Yes like a thermostat
+
 ## What exists
 
 The governor's thresholds are per window, with no time of day: `hold_at` 80,
@@ -49,3 +54,7 @@ from the machine-wide config, and a project config may only lower them.
   override default --until 5pm` when they need their own Claude during a work
   period, or `bridle budget override night --until 11pm` to boost early.
   Human-only, like `bridle budget hold`, and shown in `bridle budget`.
+- Thermostat semantics, then: with no `--until`, an override lasts until the
+  next scheduled change (a thermostat's "hold until next"); `--until <time>`
+  sets the end; `bridle budget override --clear` goes back to the schedule
+  now. Whether a permanent override is needed is open (YAGNI: probably not).
