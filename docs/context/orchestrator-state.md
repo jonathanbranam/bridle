@@ -164,8 +164,8 @@ Parked: `bridle/j2vq-orchestrator-perms`, `bridle/mcp-1` (u6wk).
   tell them.
 - **Never start the watcher with `&`** in a Bash call; use
   `run_in_background`. It happened twice this session.
-- **Verifying:** `just check` twice with the 5-minute load under ~16. If a
-  merge lands mid-run, the first run can build a mix of commits; re-run.
+- **Verifying:** by GitHub Actions only, no local runs (the human, 2026-09-28; the role's
+  "Verify every merge by its CI run"). `gh run watch <id> --exit-status` until c8qw lands.
 - **Test daemons are isolated from `~/.bridle`** (fix-test-home-leak); the
   human's `~/.bridle/config.toml` has a budget schedule.
 - **Haiku workers sometimes print their final `bridle send` instead of

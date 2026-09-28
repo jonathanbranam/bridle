@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   project-neutral: they use `{{commands.check}}` and `{{branches.integration}}` (role prompt
   files now get `{{commands.check}}` substituted too), and `bridle sync`'s CLAUDE.md block points
   every role at the rule files instead of the orchestrator-only `bridle prime`.
+- `bridle statusline` now shows context tokens (e.g., `40.0k`, `1.2M`) alongside the context
+  percent, so the human can see the raw count; when tokens aren't available after a compact,
+  only the percent is shown.
 - `bridle inbox show <id>` prints one message in full, with header and body, plus the reply
   command; marks it read by default, with `--no-mark-read` to skip. `bridle inbox read <id>...`
   marks one or more messages read (the same endpoint `--mark-read` on list uses, one at a time).
