@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Fixed: `bridle renew` under a budget hold refused only after stopping the agent, leaving it stopped; the hold check now comes first, so a refused renew changes nothing (ticket r3nh). Automatic context renewals already bypass the check.
 - Fixed: an agent renewed and then resumed after a daemon restart before its new session's first turn died on its first turn (`--resume` of a session claude never wrote). `resume` now starts a fresh session in that case (`agents.session_started`, schema v13), and an abnormal claude exit is logged at warn with its stderr tail.
 - Fixed: TUI inbox and agents panel now scroll: each table maintains TableState to track view offset as the selection moves, so selecting beyond the visible rows keeps the selection in view (tickets 8ups, yurx).
 - A `[[budget.schedule]]` period may omit `days`/`start`/`end` to be a named preset used only via `bridle budget override <name>`, and may set `max_workers`, applied through the live max-workers override while the override is in force and reverted when it ends or is cleared. `bridle budget` shows a period's `max_workers`; `GET /v1/budget` schedule `span` is now optional and gains `max_workers`.

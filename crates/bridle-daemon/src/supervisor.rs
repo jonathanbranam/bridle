@@ -1981,11 +1981,12 @@ impl AgentManager {
             .await?
             .ok_or_else(|| SupervisorError::NotFound(id_or_name.to_string()))?;
         let from_state = agent.state;
-        if agent.state.is_running() {
-            agent = self.stop(&agent.id, false, principal).await?;
-        }
+        // Before the stop: a refused renew must change nothing.
         if !ignore_budget {
             self.refuse_if_holding(&agent.model)?;
+        }
+        if agent.state.is_running() {
+            agent = self.stop(&agent.id, false, principal).await?;
         }
         let role = self
             .0
