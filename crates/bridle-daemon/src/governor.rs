@@ -6,6 +6,7 @@
 //! docs/design/usage-and-budget.md, "The budget governor".
 
 use std::collections::BTreeMap;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
@@ -100,6 +101,10 @@ struct Inner {
     /// thresholds are effective, it doesn't itself pause anything.
     /// usage-and-budget.md, Schedule override.
     schedule_override: Mutex<Option<ScheduleOverrideState>>,
+    /// Whether the manager's live `max_workers` override was set by a
+    /// period's `max_workers` (so ending the override reverts it, and a
+    /// value the human set by hand isn't clobbered).
+    preset_cap_applied: AtomicBool,
     /// When this governor started; substitutes for "no reading yet" in the
     /// staleness check below, so a daemon that hasn't had time for its
     /// first `get_usage` poll to land doesn't hold on its own age (Unknown
@@ -138,6 +143,7 @@ impl Governor {
             poll_interval_above_hold,
             human_hold: Mutex::new(None),
             schedule_override: Mutex::new(None),
+            preset_cap_applied: AtomicBool::new(false),
             started_at: Instant::now(),
         }))
     }
@@ -179,11 +185,25 @@ impl Governor {
     /// override); `Some(until)` uses that instead.
     pub fn set_schedule_override(&self, period: Option<String>, until: Option<DateTime<Utc>>) {
         let until = until.or_else(|| next_schedule_change(&self.0.config, Local::now()));
+        let cap = period
+            .as_ref()
+            .and_then(|n| self.0.config.schedule.iter().find(|p| &p.name == n))
+            .and_then(|p| p.max_workers);
         *self
             .0
             .schedule_override
             .lock()
             .expect("governor mutex poisoned") = Some((period, until));
+        // The same live override `bridle budget max-workers` sets, not a
+        // second mechanism; a period without `max_workers` reverts an
+        // earlier period's cap.
+        match cap {
+            Some(n) => {
+                self.0.manager.set_max_workers_override(Some(n));
+                self.0.preset_cap_applied.store(true, Ordering::SeqCst);
+            }
+            None => self.revert_preset_cap(),
+        }
     }
 
     pub fn clear_schedule_override(&self) {
@@ -192,6 +212,20 @@ impl Governor {
             .schedule_override
             .lock()
             .expect("governor mutex poisoned") = None;
+        self.revert_preset_cap();
+    }
+
+    /// Drops the live `max_workers` override if a period put it there.
+    fn revert_preset_cap(&self) {
+        if self.0.preset_cap_applied.swap(false, Ordering::SeqCst) {
+            self.0.manager.set_max_workers_override(None);
+        }
+    }
+
+    /// The human set `max_workers` by hand: it's theirs now, so the end of
+    /// a period override must leave it alone.
+    pub fn forget_preset_cap(&self) {
+        self.0.preset_cap_applied.store(false, Ordering::SeqCst);
     }
 
     /// `Some((period, until))` while an override is in force (`period: None`
@@ -208,6 +242,7 @@ impl Governor {
             && *until <= Utc::now()
         {
             *guard = None;
+            self.revert_preset_cap();
         }
         guard.clone()
     }
@@ -650,7 +685,11 @@ impl Governor {
         let span = period
             .as_ref()
             .and_then(|n| cfg.schedule.iter().find(|p| &p.name == n))
-            .map(span_of);
+            .and_then(span_of);
+        let max_workers = period
+            .as_ref()
+            .and_then(|n| cfg.schedule.iter().find(|p| &p.name == n))
+            .and_then(|p| p.max_workers);
         let next_change = next_schedule_change(cfg, now).map(|at| {
             let local = at.with_timezone(&Local);
             let (hold_at, wind_down_at, stop_at) = resolve_five_hour_thresholds(cfg, local);
@@ -669,6 +708,7 @@ impl Governor {
             wind_down_at,
             stop_at,
             span,
+            max_workers,
             next_change,
         }
     }
@@ -685,6 +725,7 @@ impl Governor {
                 hold_at: p.hold_at,
                 wind_down_at: p.wind_down_at,
                 stop_at: p.stop_at,
+                max_workers: p.max_workers,
             })
             .collect()
     }
@@ -947,16 +988,18 @@ fn next_schedule_change(cfg: &BudgetConfig, now: DateTime<Local>) -> Option<Date
     None
 }
 
-fn span_of(p: &crate::config::SchedulePeriod) -> ScheduleSpan {
-    ScheduleSpan {
+/// `None` for a schedule-less preset.
+fn span_of(p: &crate::config::SchedulePeriod) -> Option<ScheduleSpan> {
+    let (start, end) = (p.start?, p.end?);
+    Some(ScheduleSpan {
         days: p
             .days
             .iter()
             .map(|d| format!("{d:?}").to_lowercase())
             .collect(),
-        start: p.start.format("%H:%M").to_string(),
-        end: p.end.format("%H:%M").to_string(),
-    }
+        start: start.format("%H:%M").to_string(),
+        end: end.format("%H:%M").to_string(),
+    })
 }
 
 fn age_to_state(age: Duration, max_staleness: Duration) -> GovernorState {
@@ -1140,11 +1183,12 @@ mod tests {
                 chrono::Weekday::Sat,
                 chrono::Weekday::Sun,
             ],
-            start: chrono::NaiveTime::from_hms_opt(23, 0, 0).expect("time"),
-            end: chrono::NaiveTime::from_hms_opt(7, 0, 0).expect("time"),
+            start: chrono::NaiveTime::from_hms_opt(23, 0, 0),
+            end: chrono::NaiveTime::from_hms_opt(7, 0, 0),
             hold_at: 90.0,
             wind_down_at: 93.0,
             stop_at: 95.0,
+            max_workers: None,
         }
     }
 
@@ -1217,7 +1261,7 @@ mod tests {
         let changed_at_local = changed_at.with_timezone(&Local);
         // Stepping by the minute from 23:30, the first instant `night`
         // (ends 07:00) stops matching is exactly its `end` the next day.
-        assert_eq!(changed_at_local.time(), night_period().end);
+        assert_eq!(changed_at_local.time(), night_period().end.expect("end"));
         assert_eq!(
             changed_at_local.date_naive(),
             now.date_naive() + chrono::Duration::days(1)

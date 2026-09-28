@@ -340,12 +340,18 @@ impl WindowThresholds {
 #[derive(Debug, Clone, PartialEq)]
 pub struct SchedulePeriod {
     pub name: String,
+    /// Empty, with `start`/`end` `None`, for a schedule-less preset: it
+    /// never matches by the clock and is reachable only through
+    /// `bridle budget override <name>`.
     pub days: Vec<Weekday>,
-    pub start: NaiveTime,
-    pub end: NaiveTime,
+    pub start: Option<NaiveTime>,
+    pub end: Option<NaiveTime>,
     pub hold_at: f64,
     pub wind_down_at: f64,
     pub stop_at: f64,
+    /// Applied through the live `max_workers` override while a
+    /// `bridle budget override` of this period is in force.
+    pub max_workers: Option<u32>,
 }
 
 impl SchedulePeriod {
@@ -353,14 +359,17 @@ impl SchedulePeriod {
     /// listed, and the time-of-day is within `start..end`, a range that may
     /// cross midnight (e.g. `23:00..07:00`).
     pub fn matches(&self, now: DateTime<Local>) -> bool {
+        let (Some(start), Some(end)) = (self.start, self.end) else {
+            return false;
+        };
         if !self.days.contains(&now.weekday()) {
             return false;
         }
         let t = now.time();
-        if self.start <= self.end {
-            t >= self.start && t < self.end
+        if start <= end {
+            t >= start && t < end
         } else {
-            t >= self.start || t < self.end
+            t >= start || t < end
         }
     }
 }
@@ -1215,17 +1224,35 @@ struct RawBudget {
 #[serde(deny_unknown_fields)]
 struct RawSchedulePeriod {
     name: String,
-    days: RawDays,
-    start: String,
-    end: String,
+    /// `days`, `start` and `end` are all given or all omitted (a preset).
+    #[serde(default)]
+    days: Option<RawDays>,
+    #[serde(default)]
+    start: Option<String>,
+    #[serde(default)]
+    end: Option<String>,
     hold_at: f64,
     wind_down_at: f64,
     stop_at: f64,
+    #[serde(default)]
+    max_workers: Option<u32>,
 }
 
 impl RawSchedulePeriod {
     fn into_period(self) -> Result<SchedulePeriod, ConfigError> {
-        let days = match self.days {
+        let (days, start, end) = match (self.days, self.start, self.end) {
+            (Some(d), Some(s), Some(e)) => (d, Some(s), Some(e)),
+            (None, None, None) => (RawDays::List(Vec::new()), None, None),
+            _ => {
+                return Err(ConfigError::BadSchedule {
+                    name: self.name,
+                    reason: "days, start and end must all be given or all omitted \
+                             (a preset used only via `bridle budget override`)"
+                        .into(),
+                });
+            }
+        };
+        let days = match days {
             RawDays::All(s) if s.eq_ignore_ascii_case("all") => {
                 vec![
                     Weekday::Mon,
@@ -1248,14 +1275,19 @@ impl RawSchedulePeriod {
                 .map(|d| parse_weekday(d, &self.name))
                 .collect::<Result<Vec<_>, _>>()?,
         };
+        let start = start
+            .map(|t| parse_time_of_day(&t, &self.name))
+            .transpose()?;
+        let end = end.map(|t| parse_time_of_day(&t, &self.name)).transpose()?;
         Ok(SchedulePeriod {
-            start: parse_time_of_day(&self.start, &self.name)?,
-            end: parse_time_of_day(&self.end, &self.name)?,
+            start,
+            end,
             name: self.name,
             days,
             hold_at: self.hold_at,
             wind_down_at: self.wind_down_at,
             stop_at: self.stop_at,
+            max_workers: self.max_workers,
         })
     }
 }
@@ -1817,6 +1849,43 @@ mod tests {
     }
 
     #[test]
+    fn budget_schedule_preset_omits_days_start_end_and_never_matches() {
+        let toml = r#"
+            [[budget.schedule]]
+            name = "burst"
+            hold_at = 95
+            wind_down_at = 97
+            stop_at = 99
+            max_workers = 4
+        "#;
+        let budget = parse_machine_budget(toml);
+        let burst = &budget.schedule[0];
+        assert_eq!((burst.start, burst.end), (None, None));
+        assert_eq!(burst.max_workers, Some(4));
+        let now = Local::now();
+        for d in 0..7 {
+            assert!(!burst.matches(now + chrono::Duration::days(d)));
+        }
+    }
+
+    #[test]
+    fn budget_schedule_rejects_a_partial_schedule() {
+        let toml = r#"
+            [[budget.schedule]]
+            name = "half"
+            start = "09:00"
+            hold_at = 85
+            wind_down_at = 92
+            stop_at = 95
+        "#;
+        let raw: RawConfig = toml::from_str(toml).expect("toml");
+        let err = BudgetConfig::default()
+            .merge(raw.budget.unwrap_or_default())
+            .unwrap_err();
+        assert!(matches!(err, ConfigError::BadSchedule { .. }), "{err}");
+    }
+
+    #[test]
     fn budget_schedule_rejects_a_bad_day_name() {
         let toml = r#"
             [[budget.schedule]]
@@ -1893,11 +1962,12 @@ mod tests {
                 Weekday::Thu,
                 Weekday::Fri,
             ],
-            start: NaiveTime::from_hms_opt(9, 0, 0).expect("time"),
-            end: NaiveTime::from_hms_opt(17, 0, 0).expect("time"),
+            start: NaiveTime::from_hms_opt(9, 0, 0),
+            end: NaiveTime::from_hms_opt(17, 0, 0),
             hold_at: 85.0,
             wind_down_at: 92.0,
             stop_at: 95.0,
+            max_workers: None,
         };
         assert!(workday.matches(at(10, 0)));
         assert!(!workday.matches(at(8, 59)));
@@ -1914,11 +1984,12 @@ mod tests {
                 Weekday::Sat,
                 Weekday::Sun,
             ],
-            start: NaiveTime::from_hms_opt(23, 0, 0).expect("time"),
-            end: NaiveTime::from_hms_opt(7, 0, 0).expect("time"),
+            start: NaiveTime::from_hms_opt(23, 0, 0),
+            end: NaiveTime::from_hms_opt(7, 0, 0),
             hold_at: 90.0,
             wind_down_at: 93.0,
             stop_at: 95.0,
+            max_workers: None,
         };
         // Both sides of midnight match.
         assert!(night.matches(at(23, 30)));
