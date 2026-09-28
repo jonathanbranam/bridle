@@ -2,9 +2,9 @@
 id = "br-e8b3"
 title = "Clean stale build output in the main clone (f75x)"
 kind = "chore"
-state = "open"
+state = "planned"
 created_at = "2026-09-28T15:37:14.739Z"
-updated_at = "2026-09-28T15:37:14.739Z"
+updated_at = "2026-09-28T16:28:36.479135Z"
 +++
 
 ticket: docs/questions/open/clean-stale-build-output-f75x.md

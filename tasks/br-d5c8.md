@@ -2,9 +2,9 @@
 id = "br-d5c8"
 title = "Statusline context as a token count, not just a percent"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-09-28T14:56:35.636Z"
-updated_at = "2026-09-28T14:56:35.636Z"
+updated_at = "2026-09-28T16:28:36.498122Z"
 +++
 
 ticket: docs/questions/open/statusline-context-as-a-token-count-xpuc.md

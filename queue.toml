@@ -1,0 +1,18 @@
+[[tier]]
+tasks = ["br-d063"]
+
+[[tier]]
+tasks = [
+    "br-5042",
+    "br-e8b3",
+    "br-d5c8",
+    "br-0e14",
+]
+
+[[tier]]
+tasks = [
+    "br-7bf8",
+    "br-2724",
+    "br-3822",
+    "br-f6ad",
+]

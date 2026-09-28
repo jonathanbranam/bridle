@@ -2,9 +2,9 @@
 id = "br-ab66"
 title = "Renewed worker gets no first message and sits idle (htp6b gap)"
 kind = "bug"
-state = "open"
+state = "dropped"
 created_at = "2026-09-28T15:58:22.990Z"
-updated_at = "2026-09-28T15:58:22.990Z"
+updated_at = "2026-09-28T16:28:34.496078Z"
 +++
 
 Small, queue after j479 (br-8638). Flagged by the orchestrator: after an automatic context renewal (htp6b), the fresh process gets no prompt and sits idle until something else prompts it -- p2-3-bridle-sync sat idle 8 minutes today.
@@ -20,3 +20,8 @@ Acceptance: just check passes; add a test that renew() results in a message bein
 Out of scope: changing the context-handoff notice text itself, and anything about resume() after a daemon restart (separate code path, not reported as idling the same way -- check briefly whether resume() has the same gap, but only fix renew unless it is a one-line addition to also cover resume).
 
 Model: Sonnet — this is supervisor.rs internals with an existing, similar pattern to follow, but touches async spawn/messaging plumbing.
+
+## Thread
+
+### note · agent:pm-1 · 2026-09-28T16:28:34.496Z
+dropped: Already merged to main (commit 8516bf8, 'renew/resume send a continuation note'); no further action

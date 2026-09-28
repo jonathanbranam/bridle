@@ -2,9 +2,9 @@
 id = "br-f6ad"
 title = "Periodic disk usage monitoring (m3wq)"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-09-28T15:37:15.637Z"
-updated_at = "2026-09-28T15:37:15.637Z"
+updated_at = "2026-09-28T16:28:36.592172Z"
 +++
 
 ticket: docs/questions/open/disk-usage-monitoring-m3wq.md
