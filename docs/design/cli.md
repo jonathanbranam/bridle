@@ -173,7 +173,10 @@ bridle task note   <id> TEXT                     plain note to the task's thread
   `SessionStart` hook to run `sync` automatically is a follow-up, not built yet — for
   now it's a command you run yourself. `hooks/<event>.json`, and the "later layer wins
   wholesale" convention it and `agents/<role>.md` use, are this command's own
-  convention; nothing in `workflow/` uses either yet.
+  convention; nothing in `workflow/` uses either yet. Skill sources may reference
+  `{{commands.check}}`, substituted with `.bridle/config.toml`'s `[commands] check`
+  (default `"just check"`, per-project — e.g. `"make check"`) so a base skill like
+  `workflow/base/skills/worker/SKILL.md` doesn't hardcode one project's build tool.
 - **`serve --detach`**: [[docs/design/agent-host/daemon#Running it|running the daemon]].
 - **`tui`** is a subcommand, not a separate binary, so it shares `bridle`'s discovery,
   token and `--url`/`--project` flags like every other command. It's a thin client of

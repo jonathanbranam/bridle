@@ -575,6 +575,32 @@ impl ContextConfig {
     }
 }
 
+/// `[commands]`: shell commands a project binds for the workflow to invoke,
+/// so `workflow/base/skills/worker/SKILL.md` (and friends) can reference
+/// `{{commands.check}}` instead of hardcoding a build tool that differs
+/// per project (`just check` here, `make check` for data-contracts).
+#[derive(Debug, Clone, PartialEq)]
+pub struct CommandsConfig {
+    pub check: String,
+}
+
+impl Default for CommandsConfig {
+    fn default() -> Self {
+        CommandsConfig {
+            check: "just check".to_string(),
+        }
+    }
+}
+
+impl CommandsConfig {
+    fn merge(mut self, raw: RawCommands) -> Self {
+        if let Some(v) = raw.check {
+            self.check = v;
+        }
+        self
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Config {
     pub listen: SocketAddr,
@@ -588,6 +614,7 @@ pub struct Config {
     pub budget: BudgetConfig,
     pub models: ModelsConfig,
     pub context: ContextConfig,
+    pub commands: CommandsConfig,
     /// The prefix new task ids get (storage.md: `<prefix>-<4 hex chars>`,
     /// e.g. `tw-7fa2`). `None` means derive one from the project name
     /// ([`default_task_prefix`]).
@@ -619,6 +646,7 @@ impl Default for Config {
             budget: BudgetConfig::default(),
             models: ModelsConfig::default(),
             context: ContextConfig::default(),
+            commands: CommandsConfig::default(),
             task_prefix: None,
             workflow: None,
             packs: Vec::new(),
@@ -784,6 +812,10 @@ impl Config {
             config.context = config.context.merge(raw_context)?;
         }
 
+        if let Some(raw_commands) = raw.commands {
+            config.commands = config.commands.merge(raw_commands);
+        }
+
         if let Some(t) = raw.tasks {
             config.task_prefix = t.prefix;
         }
@@ -871,6 +903,8 @@ struct RawConfig {
     #[serde(default)]
     context: Option<RawContext>,
     #[serde(default)]
+    commands: Option<RawCommands>,
+    #[serde(default)]
     tasks: Option<RawTasks>,
     #[serde(default)]
     workflow: Option<String>,
@@ -885,6 +919,13 @@ struct RawContext {
     wind_down_at: Option<BTreeMap<String, f64>>,
     #[serde(default)]
     wind_down_grace: Option<String>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawCommands {
+    #[serde(default)]
+    check: Option<String>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -1299,6 +1340,7 @@ mod tests {
     fn bridles_own_config_parses() {
         let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
         let config = Config::load(&repo).expect("bridle's .bridle/config.toml parses");
+        assert_eq!(config.commands.check, "just check");
         let manager = &config.roles["manager"];
         assert!(manager.start_prompt.is_some());
         assert!(manager.max_budget_usd.is_some());
@@ -1671,6 +1713,15 @@ mod tests {
         assert_eq!(cfg.models.by_role["explore"], vec!["opus", "haiku"]);
         // Untouched roles keep the built-in default.
         assert_eq!(cfg.models.by_role["manager"], vec!["opus", "sonnet"]);
+    }
+
+    #[test]
+    fn commands_check_defaults_to_just_check_and_can_be_overridden() {
+        let cfg = Config::default();
+        assert_eq!(cfg.commands.check, "just check");
+
+        let cfg = Config::parse("[commands]\ncheck = \"make check\"\n").expect("parse");
+        assert_eq!(cfg.commands.check, "make check");
     }
 
     #[test]

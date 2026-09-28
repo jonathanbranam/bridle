@@ -25,7 +25,7 @@ what judgement applies.
   rather than guessing past a blocker.
 - **Handoff**: before finishing, merge the local `main` into your branch
   (`git merge --no-ff main`, never `origin/*`), resolve conflicts, and re-run
-  `just check`. Commit on your branch once it's green, then report to
+  `{{commands.check}}`. Commit on your branch once it's green, then report to
   whoever gave you the task:
   `bridle send <sender> "done: <one-line summary>; <commit sha>"`.
 

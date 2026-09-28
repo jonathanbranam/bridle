@@ -151,6 +151,12 @@ written down anywhere else yet:
 - **No real skill/agent/hook content exists in `workflow/` yet** (P2-1/P2-2 only
   scaffolded `rules/` and `workflow.toml`); the conventions above are sync's contract for
   when it does.
+- **Per-project command bindings**: a skill source can reference `{{commands.check}}`
+  instead of hardcoding a build tool. `bridle sync` substitutes it from
+  `.bridle/config.toml`'s `[commands] check` (default `"just check"`, so bridle's own
+  project needs no explicit setting, though it sets one anyway for clarity). Projects
+  like data-contracts that use `make check` set `commands.check = "make check"` and get
+  the same base `workflow/base/skills/worker/SKILL.md` rendered with their own command.
 - **The `SessionStart` hook that would run `sync` automatically is not built yet** — a
   follow-up (P2-3 built the command itself, not the auto-invocation).
 - Path-scoped (L4 component) rule rendering is still out of scope, per the table above.
