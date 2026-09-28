@@ -323,6 +323,7 @@ async fn a_task_created_before_restart_is_still_there_after() {
     let overrides = bridle_daemon::Overrides {
         claude_program: support::fake_claude_path().to_string_lossy().into_owned(),
         write_registry: false,
+        bridle_home: Some(support::machine_home_dir(tmp.path())),
         stall_check_interval: std::time::Duration::from_secs(3600),
         tracker_interval: std::time::Duration::from_millis(200),
         governor_interval: std::time::Duration::from_secs(3600),
