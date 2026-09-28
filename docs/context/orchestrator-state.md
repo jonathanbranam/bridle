@@ -13,6 +13,33 @@ during the fourth orchestrator session.
   (`cargo install --path crates/bridle`, then restart). The running daemon is
   the 9608376 build, so htp6b auto-renew, 78sp, 4eep, x7gp and the shutdown fix
   aren't live yet. After the restart, resume any `lost` workers.
+- **Also for the human: turn on the budget schedule** (n9qh part 1, cdb4ed0).
+  It ships with no periods, and a project config may only lower thresholds,
+  so the periods go in the machine-wide `~/.bridle/config.toml` (which doesn't
+  exist yet). The human creates it, then restarts. The recommendation, in the
+  machine's local time (the workday hours are a guess; the human confirms):
+
+  ```toml
+  [[budget.schedule]]
+  name = "night"
+  days = "all"
+  start = "23:00"
+  end = "07:00"
+  hold_at = 90
+  wind_down_at = 93
+  stop_at = 95
+
+  [[budget.schedule]]
+  name = "workday"
+  days = ["mon", "tue", "wed", "thu", "fri"]
+  start = "09:00"
+  end = "17:00"
+  hold_at = 90
+  wind_down_at = 93
+  stop_at = 95
+  ```
+
+  n9qh part 2, the thermostat-style `bridle budget override`, is still to do.
 - **Paging:** until the restart, `bridle logs` and `bridle events` return the
   oldest 500 lines without `--since` (x7gp is fixed on main). Find the latest seq by paging, and read an
   agent's current turn with `--since`.

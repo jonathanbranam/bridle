@@ -38,3 +38,51 @@ make the load-sensitive flakes in
 is already split into crates (`bridle-claude`, `bridle-api`, `bridle-daemon`,
 `bridle`), but most of the tests, and most of the change, sit in
 `bridle-daemon`.
+
+## What was built (2026-09-28, ticket mt7r)
+
+A practical, bounded fast path for local iteration: `just check-affected
+[base]`. It is a crate-level heuristic, not strict modularity — it does not
+attempt to guarantee that a change in module A is unrelated to module B
+within a crate, only that crate B can't be affected by a change confined to
+crate A's directory when B doesn't (transitively) depend on A.
+
+What it does:
+- Computes changed files via `git diff --name-only <base> --` (working tree
+  vs. `<base>`, default the merge-base with local `main`).
+- Maps changed paths to crate directories under `crates/`, resolves the
+  crate names and the reverse-dependency closure from `cargo metadata
+  --format-version 1 --no-deps` (parsed with `jq`; no new binary or script),
+  and runs `cargo nextest run -p <crate> ...` for just that set.
+- Falls back to the full `just test` whenever it can't be sure: any changed
+  file outside `crates/` (root `Cargo.toml`, `Cargo.lock`, `justfile`, CI
+  config, docs, etc.), no merge-base with `main`, a changed file under an
+  unrecognized crate directory, or `cargo metadata`/`git diff` itself
+  failing. It never silently under-tests.
+- Manually verified: a change confined to `crates/bridle-claude/src`
+  selects `bridle-claude bridle-daemon bridle` (their actual
+  reverse-dependency closure, excluding `bridle-api`/`bridle-tui`); a change
+  to `justfile` or `Cargo.lock` triggers the full-suite fallback.
+
+`just check` (the merge gate) is unchanged: it always runs the full suite.
+`check-affected` is additive, opt-in, and only for local iteration.
+
+## Still open
+
+The human's actual ask — guaranteed test selection via strict module
+boundaries, so that "module A changed" can *prove* "module B is
+unaffected" — is broader than this pass and unaddressed. In particular:
+- No enforcement that a crate's public API changes are the only way it can
+  affect dependents (e.g. behavior changes without a signature change still
+  correctly trigger the reverse-dep closure here, but nothing stops a crate
+  from being *too* coarse-grained internally — a change to one module inside
+  `bridle-daemon` still reruns every `bridle-daemon` test).
+- No finer-than-crate granularity (module- or file-level test mapping)
+  considered; the crates are uneven in size (`bridle-daemon` holds most of
+  the code and tests), so the practical win here is smaller than the ticket
+  hopes for on a `bridle-daemon`-only change.
+- CI and `just check` intentionally still run everything; whether CI should
+  ever adopt an affected-only fast path (with the same fallback discipline)
+  is undecided.
+
+Leaving this ticket open for that broader question.
