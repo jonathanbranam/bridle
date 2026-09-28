@@ -1406,6 +1406,7 @@ impl AgentManager {
         let (to_id, to_kind) = match &to {
             ToTarget::Human => ("human".to_string(), crate::store::RecipientKind::Human),
             ToTarget::Agent(id) => (id.clone(), crate::store::RecipientKind::Agent),
+            ToTarget::External(id) => (id.clone(), crate::store::RecipientKind::External),
         };
         let inserted = self
             .0
@@ -2081,6 +2082,9 @@ impl AgentManager {
 pub enum ToTarget {
     Human,
     Agent(String),
+    /// A `bridle token create`-minted external principal, addressed by its
+    /// full id (`external:<name>`).
+    External(String),
 }
 
 #[allow(clippy::too_many_arguments)]
