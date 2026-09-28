@@ -1236,6 +1236,7 @@ pub fn stable_system_prompt(
     role: &Role,
     repo: &Path,
     branches: &BranchesConfig,
+    commands: &CommandsConfig,
 ) -> String {
     let mut out = String::from(PREAMBLE);
     if let Some(suffix) = role_preamble_suffix(role_name) {
@@ -1247,7 +1248,7 @@ pub fn stable_system_prompt(
         match std::fs::read_to_string(&path) {
             Ok(text) => {
                 out.push('\n');
-                out.push_str(&substitute_branches(&text, branches));
+                out.push_str(&substitute_role_text(&text, branches, commands));
             }
             Err(e) => {
                 tracing::warn!(path = %path.display(), error = %e, "role system_prompt file not readable; using preamble only");
@@ -1279,13 +1280,18 @@ fn branches_sentence(branches: &BranchesConfig) -> String {
     }
 }
 
-/// Substitutes `{{branches.integration}}`/`{{branches.release}}` in a role's
-/// own `system_prompt` file text, the same convention `{{commands.check}}`
-/// uses for skill files (`sync::substitute_placeholders`). `{{branches.release}}`
+/// Substitutes `{{commands.check}}` and `{{branches.integration}}`/`{{branches.release}}`
+/// in a role's own `system_prompt` file text, the same convention skill files use
+/// (`sync::substitute_placeholders`). `{{branches.release}}`
 /// is left as-is (nothing sensible to substitute) when no release branch is
 /// configured; [`branches_sentence`] already states that plainly.
-fn substitute_branches(text: &str, branches: &BranchesConfig) -> String {
-    let out = text.replace("{{branches.integration}}", &branches.integration);
+fn substitute_role_text(
+    text: &str,
+    branches: &BranchesConfig,
+    commands: &CommandsConfig,
+) -> String {
+    let out = text.replace("{{commands.check}}", &commands.check);
+    let out = out.replace("{{branches.integration}}", &branches.integration);
     match &branches.release {
         Some(release) => out.replace("{{branches.release}}", release),
         None => out,
@@ -1299,16 +1305,18 @@ fn substitute_branches(text: &str, branches: &BranchesConfig) -> String {
 /// The identity sentence goes at the end, not the start, so the long shared
 /// prefix above it still matches across agents of the same role and the
 /// prompt cache still holds for that part.
+#[allow(clippy::too_many_arguments)] // flat per-agent facts; a struct would only rename them
 pub fn render_system_prompt(
     role_name: &str,
     role: &Role,
     repo: &Path,
     branches: &BranchesConfig,
+    commands: &CommandsConfig,
     agent_name: &str,
     cwd: &Path,
     branch: Option<&str>,
 ) -> String {
-    let mut out = stable_system_prompt(role_name, role, repo, branches);
+    let mut out = stable_system_prompt(role_name, role, repo, branches, commands);
     let branch_clause = branch
         .map(|b| format!(" on branch {b}"))
         .unwrap_or_default();
@@ -1498,11 +1506,52 @@ mod tests {
     }
 
     #[test]
+    fn base_role_prompts_render_project_neutral() {
+        let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let branches = BranchesConfig {
+            integration: "trunk-x".to_string(),
+            ..BranchesConfig::default()
+        };
+        let commands = CommandsConfig {
+            check: "make ci".to_string(),
+        };
+        for name in ["worker", "manager", "product-manager"] {
+            let role = Role {
+                system_prompt: Some(format!("workflow/base/roles/{name}.md").into()),
+                ..Role::worker_default()
+            };
+            let rendered = stable_system_prompt(name, &role, &repo, &branches, &commands);
+            assert!(rendered.contains("make ci"), "{name}: check command");
+            assert!(rendered.contains("trunk-x"), "{name}: integration branch");
+            assert!(
+                !rendered.contains("just check"),
+                "{name}: stray `just check`"
+            );
+            assert!(
+                !rendered.contains("{{"),
+                "{name}: unsubstituted placeholder"
+            );
+            for word in rendered.split(|c: char| !(c.is_alphanumeric() || c == '/' || c == '-')) {
+                assert!(
+                    word != "main" && word != "origin/main",
+                    "{name}: stray `main`"
+                );
+            }
+        }
+    }
+
+    #[test]
     fn bridles_own_manager_prompt_has_no_unsubstituted_branch_placeholder() {
         let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
         let config = Config::load(&repo).expect("bridle's .bridle/config.toml parses");
         let manager = &config.roles["manager"];
-        let rendered = stable_system_prompt("manager", manager, &repo, &config.branches);
+        let rendered = stable_system_prompt(
+            "manager",
+            manager,
+            &repo,
+            &config.branches,
+            &config.commands,
+        );
         assert!(
             !rendered.contains("{{branches."),
             "manager.md should have every {{{{branches.*}}}} placeholder substituted"
@@ -1755,7 +1804,8 @@ mod tests {
         let repo = Path::new("/does/not/matter");
         let branches = BranchesConfig::default();
         for (name, role) in Config::default().roles {
-            let rendered = stable_system_prompt(&name, &role, repo, &branches);
+            let rendered =
+                stable_system_prompt(&name, &role, repo, &branches, &CommandsConfig::default());
             assert!(
                 !rendered.contains("BRIDLE_AGENT_ID="),
                 "stable prompt must not embed an id"
@@ -1776,8 +1826,8 @@ mod tests {
         let repo = Path::new("/repo/a");
         let branches = BranchesConfig::default();
         let role = Role::worker_default();
-        let a = stable_system_prompt("worker", &role, repo, &branches);
-        let b = stable_system_prompt("worker", &role, repo, &branches);
+        let a = stable_system_prompt("worker", &role, repo, &branches, &CommandsConfig::default());
+        let b = stable_system_prompt("worker", &role, repo, &branches, &CommandsConfig::default());
         assert_eq!(a, b);
     }
 
@@ -1785,8 +1835,20 @@ mod tests {
     fn stable_prompt_differs_by_role() {
         let repo = Path::new("/repo/a");
         let branches = BranchesConfig::default();
-        let worker = stable_system_prompt("worker", &Role::worker_default(), repo, &branches);
-        let manager = stable_system_prompt("manager", &Role::manager_default(), repo, &branches);
+        let worker = stable_system_prompt(
+            "worker",
+            &Role::worker_default(),
+            repo,
+            &branches,
+            &CommandsConfig::default(),
+        );
+        let manager = stable_system_prompt(
+            "manager",
+            &Role::manager_default(),
+            repo,
+            &branches,
+            &CommandsConfig::default(),
+        );
         assert_ne!(worker, manager);
     }
 
@@ -1795,12 +1857,14 @@ mod tests {
         let repo = Path::new("/repo/a");
         let branches = BranchesConfig::default();
         let role = Role::worker_default();
-        let stable = stable_system_prompt("worker", &role, repo, &branches);
+        let stable =
+            stable_system_prompt("worker", &role, repo, &branches, &CommandsConfig::default());
         let a = render_system_prompt(
             "worker",
             &role,
             repo,
             &branches,
+            &CommandsConfig::default(),
             "worker-1",
             Path::new("/repo/a/wt/worker-1"),
             Some("bridle/worker-1"),
@@ -1810,6 +1874,7 @@ mod tests {
             &role,
             repo,
             &branches,
+            &CommandsConfig::default(),
             "worker-2",
             Path::new("/repo/a/wt/worker-2"),
             Some("bridle/worker-2"),
@@ -1995,6 +2060,7 @@ mod tests {
             &role,
             repo,
             &BranchesConfig::default(),
+            &CommandsConfig::default(),
             "manager-1",
             repo,
             None,
