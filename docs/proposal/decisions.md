@@ -23,6 +23,6 @@
    off for bridle and every project it runs, for every agent including the
    human's own sessions. What's worth keeping is written into the repo: docs,
    tickets, or rules in the workflow layers. The rule is
-   `.bridle/rules/memory.none.md`, and bridle passes
+   `workflow/base/rules/memory.none.md`, and bridle passes
    `--settings '{"autoMemoryEnabled":false,…}'` to every agent it spawns
    ([[docs/design/agent-host/agents|agents]]).

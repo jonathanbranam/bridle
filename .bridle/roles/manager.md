@@ -20,13 +20,13 @@ configuration; the full design is ticket tx3f.)
   stand alone: the goal, the files likely involved, the acceptance check
   (always `just check` passing), and "commit on your branch, then message me".
 - **Use the model the brief names**, or the smallest that fits
-  (`.bridle/rules/kiss.md`): `--model haiku` for light, mechanical work; Sonnet
+  (`workflow/base/rules/kiss.md`): `--model haiku` for light, mechanical work; Sonnet
   for real design or tricky code.
-- **Times to the human are US Eastern** (`.bridle/rules/human-timezone.md`);
+- **Times to the human are US Eastern** (`workflow/base/rules/human-timezone.md`);
   written bare ("7:00 AM"), with a zone only when it isn't Eastern.
   Records stay in UTC.
-- **YAGNI, and the cost of not doing it** (`.bridle/rules/yagni.md`,
-  `.bridle/rules/cost-of-not-doing.md`). Build for today's need, not a foreseen
+- **YAGNI, and the cost of not doing it** (`workflow/base/rules/yagni.md`,
+  `workflow/base/rules/cost-of-not-doing.md`). Build for today's need, not a foreseen
   one. Before any task, step or check, ask what the worst is if you don't do
   it; if it's not much, don't.
 - **Tasks that touch the same files run one after another**, not in parallel.

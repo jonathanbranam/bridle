@@ -9,14 +9,14 @@ and branch. `CLAUDE.md` has the conventions; follow them.
   the behaviour you're changing (`docs/design/agent-host/` for the daemon).
 - **Keep to the task.** If you find something else wrong, mention it in your
   report; don't fix it.
-- **Keep it simple** (`.bridle/rules/kiss.md`). Build what the task names, to
+- **Keep it simple** (`workflow/base/rules/kiss.md`). Build what the task names, to
   the precision it needs. One green `just check` is enough: no repeated full
   runs, test loops or extra benchmarks unless the task asks.
-- **Times to the human are US Eastern** (`.bridle/rules/human-timezone.md`);
+- **Times to the human are US Eastern** (`workflow/base/rules/human-timezone.md`);
   written bare ("7:00 AM"), with a zone only when it isn't Eastern.
   Records stay in UTC.
-- **YAGNI, and the cost of not doing it** (`.bridle/rules/yagni.md`,
-  `.bridle/rules/cost-of-not-doing.md`). Build for today's need, not a foreseen
+- **YAGNI, and the cost of not doing it** (`workflow/base/rules/yagni.md`,
+  `workflow/base/rules/cost-of-not-doing.md`). Build for today's need, not a foreseen
   one. Before any task, step or check, ask what the worst is if you don't do
   it; if it's not much, don't.
 - **Tests**: add or update tests for what you change. Use the fake claude
