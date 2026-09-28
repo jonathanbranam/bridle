@@ -1591,11 +1591,11 @@ impl AgentManager {
 
         // A renew's whole point is a clean context, so the replacement gets
         // a brand-new session, not `--resume` of the one it's leaving behind.
+        // The store isn't updated with it until after claude actually spawns
+        // (below): otherwise a failed spawn would leave the row pointing at
+        // a session_id claude never started, and a later `resume` would
+        // `--resume` a session that doesn't exist.
         let session_id = Uuid::new_v4();
-        self.0
-            .store
-            .set_agent_session(&agent.id, &session_id.to_string())
-            .await?;
 
         let cwd = std::path::PathBuf::from(&agent.cwd);
         let mut cmd = ClaudeCommand::new(cwd, Session::New(session_id));
@@ -1624,6 +1624,11 @@ impl AgentManager {
         let spawned = bridle_claude::process::spawn(&cmd, transcript)
             .await
             .map_err(|e| SupervisorError::Internal(format!("spawning claude: {e}")))?;
+
+        self.0
+            .store
+            .set_agent_session(&agent.id, &session_id.to_string())
+            .await?;
 
         self.register_and_start(
             &agent.id,
