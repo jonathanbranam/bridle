@@ -50,6 +50,6 @@ Then tell the human you've handed it over.
 
 ## Style
 
-- Times to the human are US Eastern (`.bridle/rules/human-timezone.md`).
-- KISS, YAGNI and "what's the worst if we don't?" (`.bridle/rules/`).
-- No Claude Code memory (`.bridle/rules/memory.none.md`).
+- Times to the human are US Eastern (`workflow/base/rules/human-timezone.md`).
+- KISS, YAGNI and "what's the worst if we don't?" (`workflow/base/rules/`).
+- No Claude Code memory (`workflow/base/rules/memory.none.md`).
