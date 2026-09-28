@@ -86,3 +86,12 @@ The later steps the orchestrator proposed, not yet scheduled: check whether
 crash signal, and test the behaviour instead of wall-clock time; one shared
 wait-until-condition helper for every test; reproduce the two unexplained
 failures under load; no automatic retries, which would hide real bugs.
+
+### The timeout fix, 2026-09-28
+
+Merged as `cce2bec` and `3f1abe3`: the hang guards in `process_test`,
+`restart_test`, `events_stream_test` and the daemon tests' support module are
+now a shared 60 s constant. Left as they were: the `elapsed() < 5 s` speed
+checks (`spawn_messaging_test.rs`, `lifecycle_test.rs`), and `cli_e2e.rs`'s two
+10 s `wait_timeout_or_kill` shutdown waits, which sit beside the unexplained
+"daemon.json should be removed on clean shutdown" failure above.
