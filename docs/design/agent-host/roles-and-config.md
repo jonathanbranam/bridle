@@ -46,14 +46,16 @@ start_prompt      = "Check your inbox and tell the human you're ready."   # firs
 - **`disallowed_tools` defaults deny Claude Code's own built-ins that bypass
   bridle's coordination the same way as a direct `SendMessage` call would**
   (docs/questions/open/agents-can-use-claude-codes-own-sendmessage-78sp.md):
-  `SendMessage` and the subagent-spawning `Agent`/`Workflow` tools, for every
-  built-in role; `worker` and `manager` also deny the scheduling tools
-  (`ScheduleWakeup`, `CronCreate`, `CronDelete`, `CronList`) and
-  `RemoteTrigger`. The orchestrator keeps scheduling, since it paces its own
-  loop with `ScheduleWakeup`, but still denies the rest. Unlike
-  `allowed_tools`, a project's `disallowed_tools` is **additive**: it extends
-  the role's built-in denials rather than replacing them, so a project never
-  needs to re-list what's already denied by default to add one more.
+  `SendMessage` and the `Workflow` tool, for every built-in role; `worker` and
+  `manager` also deny the scheduling tools (`ScheduleWakeup`, `CronCreate`,
+  `CronDelete`, `CronList`) and `RemoteTrigger`. The `Agent` tool is allowed
+  since subagents run inside the same agent's process and cost counts toward
+  that agent's budget, so it doesn't bypass bridle's coordination. The
+  orchestrator keeps scheduling, since it paces its own loop with
+  `ScheduleWakeup`, but still denies the rest. Unlike `allowed_tools`, a
+  project's `disallowed_tools` is **additive**: it extends the role's built-in
+  denials rather than replacing them, so a project never needs to re-list
+  what's already denied by default to add one more.
 - **Parsing is strict**: an unknown key stops the daemon from starting.
   Durations are an integer plus `s`, `m` or `h`. The config is read once, at
   start.

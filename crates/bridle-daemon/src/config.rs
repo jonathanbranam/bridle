@@ -73,8 +73,11 @@ pub struct Role {
 /// Claude Code built-ins that let an agent bypass bridle's own coordination
 /// the way `SendMessage` did (docs/questions/open/agents-can-use-claude-codes-own-sendmessage-78sp.md):
 /// reporting straight to another session instead of `bridle send`, or
-/// spawning subagents bridle never sees. Denied for every built-in role.
-const DENY_MESSAGING_AND_SUBAGENTS: [&str; 3] = ["SendMessage", "Agent", "Workflow"];
+/// spawning subagents bridle never sees. `SendMessage` and `Workflow` are denied for
+/// every built-in role; `Agent` is allowed since subagents run inside the same
+/// agent's process and cost counts toward that agent's budget, so it doesn't
+/// bypass bridle's coordination (ticket htp6).
+const DENY_MESSAGING_AND_SUBAGENTS: [&str; 2] = ["SendMessage", "Workflow"];
 
 /// Bypasses that also fire outside bridle's supervision: waiting via
 /// Claude Code's own scheduler instead of bridle's task/claim lifecycle, or
@@ -861,36 +864,32 @@ mod tests {
         assert_eq!(worker.workdir, Workdir::Worktree);
         assert_eq!(worker.permission_mode, "acceptEdits");
         assert!(worker.allowed_tools.contains(&"Edit".to_string()));
-        for tool in [
-            "SendMessage",
-            "Agent",
-            "Workflow",
-            "ScheduleWakeup",
-            "RemoteTrigger",
-        ] {
+        for tool in ["SendMessage", "Workflow", "ScheduleWakeup", "RemoteTrigger"] {
             assert!(
                 worker.disallowed_tools.contains(&tool.to_string()),
                 "worker should deny {tool}"
             );
         }
+        assert!(
+            !worker.disallowed_tools.contains(&"Agent".to_string()),
+            "worker should allow Agent"
+        );
 
         let manager = &cfg.roles["manager"];
         assert_eq!(manager.workdir, Workdir::Repo);
         assert_eq!(manager.permission_mode, "dontAsk");
         assert!(manager.resume_on_restart);
         assert!(manager.allowed_tools.contains(&"Bash(git *)".to_string()));
-        for tool in [
-            "SendMessage",
-            "Agent",
-            "Workflow",
-            "ScheduleWakeup",
-            "RemoteTrigger",
-        ] {
+        for tool in ["SendMessage", "Workflow", "ScheduleWakeup", "RemoteTrigger"] {
             assert!(
                 manager.disallowed_tools.contains(&tool.to_string()),
                 "manager should deny {tool}"
             );
         }
+        assert!(
+            !manager.disallowed_tools.contains(&"Agent".to_string()),
+            "manager should allow Agent"
+        );
 
         let orchestrator = &cfg.roles["orchestrator"];
         assert_eq!(orchestrator.workdir, Workdir::Repo);
@@ -900,12 +899,16 @@ mod tests {
                 .allowed_tools
                 .contains(&"Bash(git *)".to_string())
         );
-        for tool in ["SendMessage", "Agent", "Workflow", "RemoteTrigger"] {
+        for tool in ["SendMessage", "Workflow", "RemoteTrigger"] {
             assert!(
                 orchestrator.disallowed_tools.contains(&tool.to_string()),
                 "orchestrator should deny {tool}"
             );
         }
+        assert!(
+            !orchestrator.disallowed_tools.contains(&"Agent".to_string()),
+            "orchestrator should allow Agent"
+        );
         // Exempted: the orchestrator paces its own loop with these.
         for tool in ["ScheduleWakeup", "CronCreate", "CronDelete", "CronList"] {
             assert!(
@@ -986,18 +989,17 @@ mod tests {
         );
         // ...and so is everything the built-in default already denied, with
         // no need to re-list it.
-        for tool in [
-            "SendMessage",
-            "Agent",
-            "Workflow",
-            "ScheduleWakeup",
-            "RemoteTrigger",
-        ] {
+        for tool in ["SendMessage", "Workflow", "ScheduleWakeup", "RemoteTrigger"] {
             assert!(
                 worker.disallowed_tools.contains(&tool.to_string()),
                 "built-in denial {tool} should survive a project addition"
             );
         }
+        // Agent is not in the deny list by default.
+        assert!(
+            !worker.disallowed_tools.contains(&"Agent".to_string()),
+            "Agent should not be in the deny list"
+        );
     }
 
     #[test]
