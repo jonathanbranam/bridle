@@ -231,6 +231,9 @@ impl Role {
         if let Some(v) = raw.max_budget_usd {
             self.max_budget_usd = Some(v);
         }
+        if let Some(v) = raw.stop_check {
+            self.stop_check = v;
+        }
         self
     }
 }
@@ -974,6 +977,8 @@ struct RawRole {
     start_prompt: Option<String>,
     #[serde(default)]
     max_budget_usd: Option<f64>,
+    #[serde(default)]
+    stop_check: Option<bool>,
 }
 
 impl<'de> Deserialize<'de> for Workdir {
@@ -1266,6 +1271,25 @@ mod tests {
             let prompt = config.roles[role].system_prompt.as_ref().expect("prompt");
             assert!(repo.join(prompt).is_file(), "{} exists", prompt.display());
         }
+        // product-manager is a custom role, so it falls back to
+        // Role::worker_default() as its merge base (stop_check: true); config
+        // must turn it back off explicitly, since it isn't the worker role.
+        assert!(!config.roles["product-manager"].stop_check);
+    }
+
+    #[test]
+    fn custom_role_falling_back_to_worker_default_can_turn_stop_check_back_off() {
+        let toml = r#"
+            [roles.product-manager]
+            model = "sonnet"
+            stop_check = false
+        "#;
+        let cfg = Config::parse(toml).expect("parse");
+        let pm = &cfg.roles["product-manager"];
+        // Confirms the fallback base really is worker_default (stop_check: true)
+        // and that the project config can override it.
+        assert!(Role::worker_default().stop_check);
+        assert!(!pm.stop_check);
     }
 
     #[test]

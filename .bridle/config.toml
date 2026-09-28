@@ -34,6 +34,9 @@ disallowed_tools  = ["Bash(bridle spawn*)", "Bash(bridle stop*)", "Bash(bridle r
 system_prompt     = ".bridle/roles/product-manager.md"
 resume_on_restart = true
 max_budget_usd    = 50.0
+# Falls back to the built-in worker default (stop_check = true) since this is a custom
+# role, not one of the three hardcoded ones; not a worker, so turn it back off.
+stop_check        = false
 start_prompt      = """
 You're starting up. Run `bridle status --json`, `bridle agents --json` and \
 `bridle inbox --json`, then send the human one short line saying you're ready. \
