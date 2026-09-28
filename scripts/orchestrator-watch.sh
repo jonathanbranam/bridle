@@ -21,7 +21,7 @@ while true; do
     q=$(curl -s -H "Authorization: Bearer $BRIDLE_TOKEN" "$U/v1/messages?to=human&unread=true&limit=50" \
       | jq -c --rawfile seen <(cat $seen_file 2>/dev/null) '[.[] | select(.kind=="question" and (.id as $i | ($seen | split("\n") | index($i)) == null))]')
     [[ -n $q && $q != "[]" ]] && print -r -- "$q" | jq -r '.[].id' >> $seen_file
-    util=$(bridle status --json | jq '[.rate_limits[]? | if .window=="five_hour" then (.utilization//0)/0.93 else (.utilization//0)/0.85 end] | max')
+    util=$(bridle status --json | jq '[.rate_limits[]? | if .window=="five_hour" then (.utilization//0)/'"${FIVE_HOUR_WAKE:-0.93}"' else (.utilization//0)/0.85 end] | max')
     if [[ -n $hit && $hit != "[]" ]]; then echo "EVENTS since=$since"; print -r -- "$hit"; exit 0; fi
     if [[ -n $q && $q != "[]" ]]; then echo "QUESTION since=$since"; print -r -- "$q"; exit 0; fi
     # Anything sent to the orchestrator itself: the manager's plans, STOPs and requests for help.
