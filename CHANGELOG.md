@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Six more base workflow rules (`doc-links`, `work-flow`, `ask-blocking`, `record-decisions`,
+  `plan-discipline`, `out-of-scope`), harvested from data-contracts' working practice.
 - `max_workers` is now enforced at worker spawn (409 at the cap), and `bridle budget
   max-workers <n>` (`--clear`) changes it live without a restart. After a usage pause,
   managers, the PM and the orchestrator always resume; the cap limits workers only.
