@@ -279,11 +279,17 @@ pub fn resolve_endpoint(
 }
 
 /// principals.md: `--token`/`$BRIDLE_TOKEN`, else (only if `$CLAUDECODE` is unset) the
-/// human token file in `workspace`, else an error.
+/// human token file in `workspace`, else an error — except for a read command
+/// (`allow_anonymous_read`), which proceeds with no token instead: the daemon
+/// already accepts token-less GET/HEAD requests as the synthetic `local`
+/// principal (server.rs's `auth_middleware`), so a read gets the same
+/// tolerance client-side rather than a client-side error ahead of a request
+/// that would have succeeded anyway.
 pub fn resolve_token(
     token_flag: Option<&str>,
     workspace: Option<&Path>,
     env: &impl Env,
+    allow_anonymous_read: bool,
 ) -> Result<Option<String>, DiscoveryError> {
     if let Some(t) = token_flag {
         return Ok(Some(t.to_string()));
@@ -292,6 +298,9 @@ pub fn resolve_token(
         return Ok(Some(t));
     }
     if env.var("CLAUDECODE").is_some() {
+        if allow_anonymous_read {
+            return Ok(None);
+        }
         return Err(DiscoveryError::Message(
             "running inside Claude Code ($CLAUDECODE is set), so the human token is never \
              used implicitly: set $BRIDLE_TOKEN"
@@ -455,7 +464,7 @@ mod tests {
     #[test]
     fn resolve_token_prefers_flag_then_env() {
         assert_eq!(
-            resolve_token(Some("flag"), None, &empty_env()).unwrap(),
+            resolve_token(Some("flag"), None, &empty_env(), false).unwrap(),
             Some("flag".to_string())
         );
         let env = MapEnv(std::collections::HashMap::from([(
@@ -463,7 +472,7 @@ mod tests {
             "envtok",
         )]));
         assert_eq!(
-            resolve_token(None, None, &env).unwrap(),
+            resolve_token(None, None, &env, false).unwrap(),
             Some("envtok".to_string())
         );
     }
@@ -476,7 +485,7 @@ mod tests {
         fs::create_dir_all(token_path.parent().unwrap()).unwrap();
         fs::write(&token_path, "human-secret\n").unwrap();
 
-        let tok = resolve_token(None, Some(ws), &empty_env()).unwrap();
+        let tok = resolve_token(None, Some(ws), &empty_env(), false).unwrap();
         assert_eq!(tok, Some("human-secret".to_string()));
     }
 
@@ -489,14 +498,36 @@ mod tests {
         fs::write(&token_path, "human-secret").unwrap();
 
         let env = MapEnv(std::collections::HashMap::from([("CLAUDECODE", "1")]));
-        let err = resolve_token(None, Some(ws), &env).unwrap_err();
+        let err = resolve_token(None, Some(ws), &env, false).unwrap_err();
         assert!(err.to_string().contains("BRIDLE_TOKEN"));
     }
 
     #[test]
     fn resolve_token_errors_when_no_token_file_exists() {
         let root = tempdir().unwrap();
-        let err = resolve_token(None, Some(root.path()), &empty_env()).unwrap_err();
+        let err = resolve_token(None, Some(root.path()), &empty_env(), false).unwrap_err();
+        assert!(err.to_string().contains("BRIDLE_TOKEN"));
+    }
+
+    #[test]
+    fn resolve_token_allows_anonymous_read_when_claudecode_is_set() {
+        let root = tempdir().unwrap();
+        let ws = root.path();
+        let token_path = human_token_path(ws);
+        fs::create_dir_all(token_path.parent().unwrap()).unwrap();
+        fs::write(&token_path, "human-secret").unwrap();
+
+        let env = MapEnv(std::collections::HashMap::from([("CLAUDECODE", "1")]));
+        // The human token file must still never be used implicitly under
+        // CLAUDECODE: the request goes out with no token at all, not the
+        // human's.
+        assert_eq!(resolve_token(None, Some(ws), &env, true).unwrap(), None);
+    }
+
+    #[test]
+    fn resolve_token_write_still_errors_under_claudecode_even_with_anonymous_read_available() {
+        let env = MapEnv(std::collections::HashMap::from([("CLAUDECODE", "1")]));
+        let err = resolve_token(None, None, &env, false).unwrap_err();
         assert!(err.to_string().contains("BRIDLE_TOKEN"));
     }
 }

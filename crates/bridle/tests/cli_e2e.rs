@@ -269,6 +269,58 @@ fn cli_end_to_end_against_a_foreground_daemon() {
     assert!(status.success(), "daemon exited with {status:?}");
 }
 
+/// Ticket 9c63's client-side half: a read command run as a plain Claude Code
+/// session (`$CLAUDECODE` set, no `$BRIDLE_TOKEN`) must not error out before
+/// even sending a request — it should succeed, unauthenticated, against the
+/// daemon's own tolerance for a token-less `GET` (docs/design/agent-host/
+/// principals.md, "Read access without a token").
+#[test]
+fn read_command_succeeds_with_no_token_when_claudecode_is_set() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let repo = tmp.path().join("repo");
+    init_repo(&repo);
+    let workspace = tmp.path().to_path_buf();
+    let home = tmp.path().join("home");
+
+    let mut serve_cmd = Command::new(bridle_bin());
+    serve_cmd
+        .arg("serve")
+        .arg("--repo")
+        .arg(&repo)
+        .arg("--listen")
+        .arg("127.0.0.1:0")
+        .env("BRIDLE_CLAUDE_BIN", fake_claude_path())
+        .env("BRIDLE_HOME", &home)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null());
+    strip_bridle_env(&mut serve_cmd);
+    let child = serve_cmd.spawn().expect("spawn bridle serve");
+    let _guard = DaemonGuard(child);
+
+    let daemon_json = workspace.join(".bridle/daemon.json");
+    wait_for_file(&daemon_json, Duration::from_secs(20));
+
+    // Same as `run_cli`, but with `$CLAUDECODE` set and no `$BRIDLE_TOKEN` —
+    // the case that used to fail client-side (crates/bridle-api/src/
+    // discovery.rs's `resolve_token`) before any request went out.
+    let mut cmd = Command::new(bridle_bin());
+    cmd.args(["status", "--json"])
+        .current_dir(&repo)
+        .env("BRIDLE_CLAUDE_BIN", fake_claude_path())
+        .env("BRIDLE_HOME", &home);
+    strip_bridle_env(&mut cmd);
+    cmd.env("CLAUDECODE", "1");
+    let out = cmd.output().expect("run bridle status");
+    assert!(
+        out.status.success(),
+        "status with CLAUDECODE set and no token should succeed: {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let status: serde_json::Value = serde_json::from_slice(&out.stdout).expect("status json");
+    assert_eq!(status["principal"], "local");
+}
+
 #[test]
 fn serve_detach_returns_once_healthy_and_daemons_lists_it() {
     let tmp = tempfile::tempdir().expect("tempdir");

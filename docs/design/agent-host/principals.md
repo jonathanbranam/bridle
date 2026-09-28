@@ -29,9 +29,13 @@ authenticates normally (with its real principal and attribution) even on a
 
 This is for read-only ad hoc sessions (a plain Claude Code session in the
 clone, poking around with `bridle status`/`bridle agents`) that have no
-`BRIDLE_TOKEN` per the rule below. A session that needs to *act* still wants
-a named token with provenance, minted the way the advisor's is
-(`external:advisor`, `bridle token create`) — this doesn't replace that.
+`BRIDLE_TOKEN` per the rule below. That's only useful if the `bridle` CLI
+itself cooperates: a read-only command run with `$CLAUDECODE` set and no
+token sends the request anonymously (see "How the CLI picks a token" below)
+instead of erring out client-side before any request is sent. A session that
+needs to *act* still wants a named token with provenance, minted the way the
+advisor's is (`external:advisor`, `bridle token create`) — this doesn't
+replace that.
 
 Every event records its `actor`: the caller for spawn, send, read,
 interrupt, stop, resume and remove, and `system` for what agents do and for
@@ -51,12 +55,20 @@ An agent's token is also kept in `.bridle/agents/<id>/token` (0600), so
 
 1. `--token`, then `$BRIDLE_TOKEN`.
 2. Otherwise, **only if `$CLAUDECODE` is unset**, the human token file.
-3. Otherwise, fail with "set `BRIDLE_TOKEN`". This is also what happens when
-   the daemon was found by URL, since there is no local workspace to hold a
-   human token file.
+3. Otherwise, for a read-only command (`status`, `agents`, `show`, `logs`,
+   `events`, `usage`, `inbox`, `task show`/`list`, `token list`, `budget`
+   with no subcommand, `ready`), send the request with no token at all: the
+   daemon's own tolerance for a token-less `GET`/`HEAD` (above) then
+   authenticates it as `local`. The human token file is still never read
+   implicitly under `$CLAUDECODE` — the CLI just stops erring out ahead of a
+   request that would have succeeded anyway.
+4. Otherwise (a write, or a non-read command that can't reach a workspace to
+   find a human token file — e.g. the daemon was found by URL), fail with
+   "set `BRIDLE_TOKEN`".
 
 Rule 2 means a Claude Code session (the human's orchestrator, or any agent)
-never silently acts as the human. It has to be given an identity.
+never silently acts as the human. It has to be given an identity to write;
+rule 3 only ever gets it as far as `local` can reach, which is reads.
 
 ## What this is and isn't
 

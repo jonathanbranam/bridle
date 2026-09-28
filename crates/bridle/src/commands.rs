@@ -68,20 +68,41 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
 
 /// Resolve the daemon endpoint and a token, per docs/design/agent-host/daemon.md and
 /// principals.md. `resolve_endpoint` failing to find any daemon at all is exactly the
-/// "daemon unreachable" case (exit 3).
-async fn resolve_endpoint_and_token(cli: &Cli) -> Result<(String, Option<String>), CliError> {
+/// "daemon unreachable" case (exit 3). `allow_anonymous_read` mirrors the daemon's own
+/// tolerance for token-less GET/HEAD requests (server.rs's `auth_middleware`): pass it
+/// for a read-only command so a caller running inside Claude Code with no
+/// `$BRIDLE_TOKEN` gets a working request instead of a client-side error ahead of one
+/// that would have succeeded anyway.
+async fn resolve_endpoint_and_token(
+    cli: &Cli,
+    allow_anonymous_read: bool,
+) -> Result<(String, Option<String>), CliError> {
     let cwd = std::env::current_dir().context("current directory")?;
     let env = ProcessEnv;
     let endpoint =
         discovery::resolve_endpoint(cli.url.as_deref(), cli.project.as_deref(), &cwd, &env)
             .map_err(|e| CliError::Unreachable(e.to_string()))?;
-    let token =
-        discovery::resolve_token(cli.token.as_deref(), endpoint.workspace.as_deref(), &env)?;
+    let token = discovery::resolve_token(
+        cli.token.as_deref(),
+        endpoint.workspace.as_deref(),
+        &env,
+        allow_anonymous_read,
+    )?;
     Ok((endpoint.url, token))
 }
 
+/// A client for a command that only ever writes (or both reads and writes):
+/// keeps today's client-side error when `$CLAUDECODE` is set with no token.
 async fn client_for(cli: &Cli) -> Result<Client, CliError> {
-    let (url, token) = resolve_endpoint_and_token(cli).await?;
+    let (url, token) = resolve_endpoint_and_token(cli, false).await?;
+    Ok(Client::new(url, token))
+}
+
+/// A client for a read-only command: proceeds with no token when `$CLAUDECODE`
+/// is set and no token was given, matching the daemon's tolerance for
+/// token-less GET/HEAD requests.
+async fn client_for_read(cli: &Cli) -> Result<Client, CliError> {
+    let (url, token) = resolve_endpoint_and_token(cli, true).await?;
     Ok(Client::new(url, token))
 }
 
@@ -139,7 +160,7 @@ async fn stop_check(cli: &Cli) -> Result<(), CliError> {
     {
         return Ok(());
     }
-    let Ok(client) = client_for(cli).await else {
+    let Ok(client) = client_for_read(cli).await else {
         return Ok(());
     };
     let Ok(claimed) = client.list_tasks_claimed_by("me").await else {
@@ -319,7 +340,7 @@ async fn daemons(cli: &Cli) -> Result<(), CliError> {
 }
 
 async fn status(cli: &Cli) -> Result<(), CliError> {
-    let client = client_for(cli).await?;
+    let client = client_for_read(cli).await?;
     let status = client.status().await?;
     if cli.json {
         render::print_json(&status)?;
@@ -442,7 +463,7 @@ fn print_agent(cli: &Cli, agent: &bridle_api::Agent) -> Result<(), CliError> {
 }
 
 async fn agents(cli: &Cli, args: &AgentsArgs) -> Result<(), CliError> {
-    let client = client_for(cli).await?;
+    let client = client_for_read(cli).await?;
     let mut list = client.list_agents().await?;
     if !args.all {
         list.retain(|a| a.state.is_running());
@@ -474,7 +495,7 @@ async fn agents(cli: &Cli, args: &AgentsArgs) -> Result<(), CliError> {
 }
 
 async fn show(cli: &Cli, args: &ShowArgs) -> Result<(), CliError> {
-    let client = client_for(cli).await?;
+    let client = client_for_read(cli).await?;
     let agent = client.get_agent(&args.agent).await?;
     if cli.json {
         render::print_json(&agent)?;
@@ -552,7 +573,11 @@ async fn send(cli: &Cli, args: &SendArgs) -> Result<(), CliError> {
 }
 
 async fn inbox(cli: &Cli, args: &InboxArgs) -> Result<(), CliError> {
-    let client = client_for(cli).await?;
+    // `--mark-read` writes (POST /v1/messages/{id}/read), but inbox is
+    // overwhelmingly a read command, so it gets the same anonymous-read
+    // tolerance; `--mark-read` under `$CLAUDECODE` with no token still fails,
+    // just from the daemon's 401 rather than a client-side check.
+    let client = client_for_read(cli).await?;
     let query = MessageQuery {
         to: Some("me".to_string()),
         unread: !args.all,
@@ -744,7 +769,7 @@ async fn rm(cli: &Cli, args: &RmArgs) -> Result<(), CliError> {
 }
 
 async fn logs(cli: &Cli, args: &LogsArgs) -> Result<(), CliError> {
-    let client = client_for(cli).await?;
+    let client = client_for_read(cli).await?;
     let mut since = args.since;
     loop {
         let lines = client.transcript(&args.agent, since, None).await?;
@@ -776,7 +801,7 @@ fn print_transcript_line(line: &bridle_api::TranscriptLine, raw: bool) {
 }
 
 async fn events(cli: &Cli, args: &EventsArgs) -> Result<(), CliError> {
-    let client = client_for(cli).await?;
+    let client = client_for_read(cli).await?;
     if args.follow {
         let mut stream = Box::pin(client.events_stream(args.since));
         while let Some(item) = stream.next().await {
@@ -835,7 +860,7 @@ async fn tui(cli: &Cli) -> Result<(), CliError> {
 }
 
 async fn usage(cli: &Cli, args: &UsageArgs) -> Result<(), CliError> {
-    let client = client_for(cli).await?;
+    let client = client_for_read(cli).await?;
 
     let since = args
         .since
@@ -1173,7 +1198,13 @@ async fn rules_diff(cli: &Cli, args: &RulesDiffArgs) -> Result<(), CliError> {
 }
 
 async fn budget(cli: &Cli, args: &BudgetArgs) -> Result<(), CliError> {
-    let client = client_for(cli).await?;
+    // Only the no-action form (`bridle budget`) is a read; every `BudgetAction`
+    // writes, so it keeps the client-side check.
+    let client = if args.action.is_none() {
+        client_for_read(cli).await?
+    } else {
+        client_for(cli).await?
+    };
     let budget = match &args.action {
         None => client.budget().await?,
         Some(BudgetAction::Hold(hold_args)) => {
@@ -1281,7 +1312,11 @@ fn parse_duration(s: &str) -> Option<chrono::Duration> {
 }
 
 async fn token(cli: &Cli, args: &TokenArgs) -> Result<(), CliError> {
-    let client = client_for(cli).await?;
+    let client = if matches!(args.action, TokenAction::List) {
+        client_for_read(cli).await?
+    } else {
+        client_for(cli).await?
+    };
     match &args.action {
         TokenAction::Create { name } => {
             let created = client
@@ -1369,7 +1404,7 @@ async fn task_new(cli: &Cli, args: &TaskNewArgs) -> Result<(), CliError> {
 }
 
 async fn task_show(cli: &Cli, args: &TaskShowArgs) -> Result<(), CliError> {
-    let client = client_for(cli).await?;
+    let client = client_for_read(cli).await?;
     let task = client.get_task(&args.task).await?;
     if cli.json {
         render::print_json(&task)?;
@@ -1417,7 +1452,7 @@ async fn task_edit(cli: &Cli, args: &TaskEditArgs) -> Result<(), CliError> {
 }
 
 async fn task_list(cli: &Cli, args: &TaskListArgs) -> Result<(), CliError> {
-    let client = client_for(cli).await?;
+    let client = client_for_read(cli).await?;
     let tasks = match &args.claimed_by {
         Some(claimed_by) => client.list_tasks_claimed_by(claimed_by).await?,
         None => client.list_tasks().await?,
@@ -1547,7 +1582,7 @@ async fn ready(cli: &Cli, args: &ReadyArgs) -> Result<(), CliError> {
     let _ = &args.role;
 
     if !args.all {
-        let client = client_for(cli).await?;
+        let client = client_for_read(cli).await?;
         let tasks = client.ready_tasks().await?;
         if cli.json {
             render::print_json(&tasks)?;
@@ -1568,6 +1603,7 @@ async fn ready(cli: &Cli, args: &ReadyArgs) -> Result<(), CliError> {
             cli.token.as_deref(),
             Some(std::path::Path::new(&info.workspace)),
             &ProcessEnv,
+            true,
         )
         .ok()
         .flatten();
