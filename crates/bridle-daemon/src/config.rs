@@ -635,6 +635,12 @@ impl BranchesConfig {
     }
 }
 
+/// `[ci]`: opt-in watching of the integration branch's GitHub Actions runs (`crate::ci`).
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct CiConfig {
+    pub github: bool,
+}
+
 impl Default for CommandsConfig {
     fn default() -> Self {
         CommandsConfig {
@@ -674,6 +680,7 @@ pub struct Config {
     /// (macOS only; ticket b7cz). On by default.
     pub warm_target: bool,
     pub branches: BranchesConfig,
+    pub ci: CiConfig,
     /// The prefix new task ids get (storage.md: `<prefix>-<4 hex chars>`,
     /// e.g. `tw-7fa2`). `None` means derive one from the project name
     /// ([`default_task_prefix`]).
@@ -708,6 +715,7 @@ impl Default for Config {
             commands: CommandsConfig::default(),
             warm_target: true,
             branches: BranchesConfig::default(),
+            ci: CiConfig::default(),
             task_prefix: None,
             workflow: None,
             packs: Vec::new(),
@@ -837,6 +845,9 @@ impl Config {
 
         if let Some(raw_branches) = raw.branches {
             config.branches = config.branches.merge(raw_branches);
+        }
+        if let Some(github) = raw.ci.and_then(|c| c.github) {
+            config.ci.github = github;
         }
 
         // A role's own `model` pins the step-down floor unless the project
@@ -1020,6 +1031,8 @@ struct RawConfig {
     #[serde(default)]
     branches: Option<RawBranches>,
     #[serde(default)]
+    ci: Option<RawCi>,
+    #[serde(default)]
     tasks: Option<RawTasks>,
     #[serde(default)]
     workflow: Option<String>,
@@ -1059,6 +1072,13 @@ struct RawBranches {
     integration: Option<String>,
     #[serde(default)]
     release: Option<String>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawCi {
+    #[serde(default)]
+    github: Option<bool>,
 }
 
 #[derive(Debug, Default, Deserialize)]

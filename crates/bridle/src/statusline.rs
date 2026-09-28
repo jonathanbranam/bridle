@@ -383,6 +383,7 @@ mod tests {
             rate_limits: Vec::new(),
             claude_version: None,
             budget_state: Default::default(),
+            ci: None,
         }
     }
 

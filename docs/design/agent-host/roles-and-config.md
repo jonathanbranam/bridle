@@ -97,6 +97,9 @@ start_prompt      = "Check your inbox and tell the human you're ready."   # firs
   defaults to `"main"`, so bridle's own project needs no `[branches]` entry
   at all.
 
+- **`[ci] github = true` turns on the CI watcher** (off by default; nothing is
+  auto-detected). See [[../agent-host/operating-model#CI watcher|operating-model.md, "CI watcher"]].
+
 ## Per-spawn tool overrides
 
 `bridle spawn <role> --allow-tool TOOL` (repeatable) grants a tool beyond the

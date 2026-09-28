@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   on macOS (`[worktrees] warm_target`, default on), and workers' own gate is
   `{{commands.check_worker}}` (`commands.check_worker`, default `commands.check`; bridle's own
   project runs `just check-affected`).
+- CI watcher: with `[ci] github = true`, the daemon polls GitHub Actions (via `gh`) for each new
+  tip of the integration branch, emits `ci.completed`, messages the manager on a failure with
+  the failed jobs, and `bridle status` shows the last result.
+
 - The base `worker`/`manager`/`product-manager` role prompts and the manager skill are
   project-neutral: they use `{{commands.check}}` and `{{branches.integration}}` (role prompt
   files now get `{{commands.check}}` substituted too), and `bridle sync`'s CLAUDE.md block points
