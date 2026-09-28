@@ -17,6 +17,7 @@ use nix::unistd::Pid;
 use serde_json::json;
 use tokio::sync::watch;
 
+pub mod ci;
 pub mod config;
 pub mod containment;
 pub mod cost_audit;
@@ -260,6 +261,15 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         overrides.governor_poll_interval_above_hold,
     );
 
+    let ci = ci::CiWatcher::new(
+        config.ci.github,
+        config.branches.integration.clone(),
+        std::sync::Arc::new(ci::RealGh::new(ws.repo.clone())),
+        store.clone(),
+        manager.clone(),
+        emitter.clone(),
+    );
+
     run_autostart_and_resume(&store, &config, &manager).await;
 
     let (shutdown_tx, shutdown_rx) = watch::channel(false);
@@ -277,6 +287,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         pid: info.pid,
         shutdown_tx: shutdown_tx.clone(),
         governor: governor.clone(),
+        ci: ci.clone(),
         tasks: tasks.clone(),
     };
     let app = server::router(state);
@@ -321,6 +332,13 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         move || {
             let governor = governor.clone();
             async move { governor.tick().await }
+        }
+    });
+    let ci_task = spawn_loop(shutdown_rx.clone(), ci::TICK_INTERVAL, {
+        let ci = ci.clone();
+        move || {
+            let ci = ci.clone();
+            async move { ci.tick().await }
         }
     });
     let prune_task = spawn_loop(shutdown_rx.clone(), Duration::from_secs(24 * 60 * 60), {
@@ -394,6 +412,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         stall_task.abort();
         tracker_task.abort();
         governor_task.abort();
+        ci_task.abort();
         prune_task.abort();
         task_flush_task.abort();
         claim_lease_task.abort();

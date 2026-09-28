@@ -9,7 +9,7 @@ JSON over HTTP, versioned under `/v1`. The contract is
 | Method + path | Does |
 |---|---|
 | `GET /v1/health` | liveness + version + non-terminal agent count (no auth) |
-| `GET /v1/status` | daemon, workspace, repo, principal, agent counts by state, unread human messages, latest rate limits, Claude Code version |
+| `GET /v1/status` | daemon, workspace, repo, principal, agent counts by state, unread human messages, latest rate limits, Claude Code version, the last CI result for the integration branch (`ci`, when `[ci] github` is on) |
 | `GET /v1/agents` · `POST /v1/agents` | list all · spawn (`{name?, role, prompt?, workdir?, model?}`, where `workdir` is `{"kind":"worktree","base"?}`, `{"kind":"repo"}` or `{"kind":"path","path"}`) |
 | `GET /v1/agents/{id}` | one agent: state, current turn's start, turns, cost, held and unacked message counts |
 | `POST /v1/agents/{id}/messages` | send (`{body, kind, when, reply_to?}`) |
@@ -83,6 +83,7 @@ SSE event id:
 |---|---|
 | `daemon.started` / `daemon.stopping` | lifecycle |
 | `agent.spawned` (`{role,model,cwd,branch}`) · `agent.state` (`{from,to}`) · `agent.exited` (`{code,signal,reason}`) · `agent.stalled` · `agent.orphans_killed` (`{count}`) · `agent.removed` · `agent.budget_exhausted` (`{cost_total}`) | agent lifecycle |
+| `ci.completed` (`{sha,conclusion,url}`) | GitHub Actions finished for a new integration-branch tip ([[operating-model#CI watcher\|CI watcher]]) |
 | `budget.state` (`{from,to,window,utilization,resets_at,reason}`) | the governor's state changed ([[../usage-and-budget#The budget governor\|the budget governor]]) |
 | `agent.interrupted` (`{dropped_held}`) · `agent.stop_requested` (`{now}`) · `agent.resumed` (`{from}`) · `agent.renewed` (`{from}`) | control requests, with the caller as actor |
 | `turn.started` (`{n}`) · `turn.ended` (`{n,subtype,is_error,terminal_reason,result,usage,cost_total}`, where `cost_total` is the session's cumulative cost) | turn boundaries |

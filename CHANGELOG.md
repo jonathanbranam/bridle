@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- CI watcher: with `[ci] github = true`, the daemon polls GitHub Actions (via `gh`) for each new
+  tip of the integration branch, emits `ci.completed`, messages the manager on a failure with
+  the failed jobs, and `bridle status` shows the last result.
+
 - `bridle statusline` now shows context tokens (e.g., `40.0k`, `1.2M`) alongside the context
   percent, so the human can see the raw count; when tokens aren't available after a compact,
   only the percent is shown.

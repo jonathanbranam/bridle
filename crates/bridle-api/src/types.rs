@@ -65,6 +65,21 @@ pub struct Status {
     /// The budget governor's current state (usage-and-budget.md).
     #[serde(default = "GovernorState::default")]
     pub budget_state: GovernorState,
+    /// The last finished CI run for the integration branch's tip; `None`
+    /// until one finishes, or when `[ci] github` is off.
+    #[serde(default)]
+    pub ci: Option<CiStatus>,
+}
+
+/// The outcome of GitHub Actions for one commit of the integration branch.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CiStatus {
+    pub sha: String,
+    /// `success`, `failure` or `cancelled`.
+    pub conclusion: String,
+    #[serde(default)]
+    pub url: Option<String>,
+    pub completed_at: DateTime<Utc>,
 }
 
 // ---------- agents ----------
@@ -436,6 +451,9 @@ pub mod event_kind {
     /// every governor state transition (usage-and-budget.md, the budget
     /// governor).
     pub const BUDGET_STATE: &str = "budget.state";
+    /// data: {sha, conclusion, url}. Every GitHub Actions run for the
+    /// integration branch's new tip has finished (`[ci] github`).
+    pub const CI_COMPLETED: &str = "ci.completed";
     pub const TASK_CREATED: &str = "task.created";
     /// data: {from, to}
     pub const TASK_STATE: &str = "task.state";

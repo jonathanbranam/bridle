@@ -58,6 +58,22 @@ Events for the live stream. It listens on `127.0.0.1` by default. Listening on
 another interface is one flag, which lets the workforce run remotely while the
 orchestrator and TUI stay on the laptop.
 
+## CI watcher
+
+`[ci] github = true` in `.bridle/config.toml` makes the daemon watch GitHub Actions for the
+integration branch (`bridle-daemon/src/ci.rs`, a background loop like the governor's; it
+shells out to `git` and `gh` from the main clone, so `gh` must be installed and
+authenticated). Every minute-long tick it checks `git ls-remote origin <integration>` (every
+third tick while idle, so it doesn't depend on seeing the merger's push). A new tip is polled
+with `gh run list --commit <sha>` each tick until every run is `completed` (no runs yet keeps
+polling); it gives up after about an hour. Then it emits `ci.completed` (`{sha, conclusion,
+url}`; `conclusion` is `success`, `failure` or `cancelled`) and remembers the result for
+`bridle status`. On `failure` only, it sends a note to the first running `manager` agent (the
+human if none): "CI failed on <sha>: <failed jobs>; <url>. Don't merge until it's green." The
+job names come from `gh run view <id> --json jobs`. A missing or failing `gh`/`git` is one
+logged warning until the next success, and the next tick retries. The daemon's first tick
+after a restart treats the current tip as new, so a red tip is reported again then.
+
 ## Branch pattern
 
 A project names its branches with `[branches]` in `.bridle/config.toml`

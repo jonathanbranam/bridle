@@ -357,6 +357,16 @@ async fn status(cli: &Cli) -> Result<(), CliError> {
             status.claude_version.as_deref().unwrap_or("-")
         );
         println!("unread     {}", status.unread_human_messages);
+        if let Some(ci) = &status.ci {
+            let age = (chrono::Utc::now() - ci.completed_at).num_minutes().max(0);
+            println!(
+                "ci         {} {} {}m ago {}",
+                &ci.sha[..ci.sha.len().min(8)],
+                ci.conclusion,
+                age,
+                ci.url.as_deref().unwrap_or("")
+            );
+        }
         for (state, count) in &status.agents_by_state {
             println!("  {state:<10} {count}");
         }

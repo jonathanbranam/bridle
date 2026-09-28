@@ -46,6 +46,7 @@ pub struct AppState {
     pub pid: i32,
     pub shutdown_tx: watch::Sender<bool>,
     pub governor: crate::governor::Governor,
+    pub ci: crate::ci::CiWatcher,
     pub tasks: TaskManager,
 }
 
@@ -325,6 +326,7 @@ async fn status(
         rate_limits,
         claude_version,
         budget_state: state.governor.snapshot().default.state,
+        ci: state.ci.last(),
     }))
 }
 
