@@ -128,7 +128,10 @@ version. Instead:
   and session id are kept (S7), and so are the cumulative cost counters. The
   model is the one it was spawned with; the role's prompt and flags are re-read
   from the current config. Every `pending` message is then written at once,
-  including ones held for `--when idle` when the agent exited.
+  including ones held for `--when idle` when the agent exited, followed by a
+  synthetic continuation note (same mechanism as `renew`'s below) so the
+  process always has something to start a turn on, even with no pending
+  messages.
 - **Stall detection**: an agent that is `working` but has emitted nothing for
   `stall_after` (default 10 min, checked every 30 s) gets an `agent.stalled`
   event, once per silent stretch.
@@ -186,7 +189,12 @@ continuity. The agent keeps its id and name, so anything that addresses it
 is created or removed — `stop` never touches either, so the one from the
 agent's original spawn is simply still there to point the new process at.
 Every `pending` message is written once the replacement is up, same as
-`resume`. Emits `agent.renewed`.
+`resume`. Since a renew's whole point is starting fresh, there's usually no
+`pending` message to give the new process a turn to start on (unlike `spawn`,
+`renew` has no `req.prompt`/`start_prompt` either) — so it also sends a
+synthetic continuation note (a `Note` message, same delivery path as `spawn`'s
+first message) pointing the agent at its task thread and its own last handoff
+note (br-ab66). Emits `agent.renewed`.
 
 This is the mechanical primitive; the automatic wind-down trigger for an
 agent nearing its context limit (`[context]` config, `wind_down_at`, a

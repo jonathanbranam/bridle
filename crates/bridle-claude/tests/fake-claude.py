@@ -55,8 +55,9 @@ A `get_usage` control_request returns `.fake-claude-usage` (JSON) from the
 working directory, if present, else a quiet all-normal reading; see
 `fake_usage_response()`. A `get_context_usage` control_request works the same
 way via `.fake-claude-context-usage`, defaulting to a `totalTokens` reading
-distinct from a single turn's `usage` sum, so tests can tell the two apart;
-see `fake_context_usage_response()`. Any other control_request gets a generic
+distinct from a single turn's `usage` sum, so tests can tell the two apart —
+except that file is deleted once read, so it only overrides the next probe,
+not every one after it; see `fake_context_usage_response()`. Any other control_request gets a generic
 success control_response echoing its subtype. On stdin EOF, the current turn (if any) finishes, then the
 process exits 0 if the last result wasn't an error, 1 otherwise — matching
 real claude (docs/spikes/01-stream-json-findings.md, S5). SIGTERM exits 143.
@@ -234,10 +235,19 @@ def fake_context_usage_response():
     real account. Same precedent as `.fake-claude-usage`. The default
     `totalTokens` (999) is deliberately not derivable from `USAGE` above, so
     a test can tell whether context_tokens came from this call or from
-    summing `result.usage`."""
+    summing `result.usage`.
+
+    Consumed on read (deleted once loaded): a test that wants exactly one
+    turn to cross a threshold — but not the turns after it, including a
+    renewed process's own synthetic continuation-note turn (br-ab66) — would
+    otherwise have to win a race against the daemon's own next probe to put
+    the override back below threshold in time; a one-shot override needs no
+    such timing."""
     try:
         with open(".fake-claude-context-usage") as f:
-            return json.load(f)
+            reading = json.load(f)
+        os.remove(".fake-claude-context-usage")
+        return reading
     except (OSError, json.JSONDecodeError):
         return {"totalTokens": 999, "maxTokens": 200000, "categories": []}
 
