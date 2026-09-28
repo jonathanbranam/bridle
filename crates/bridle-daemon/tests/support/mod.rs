@@ -87,6 +87,21 @@ impl TestDaemon {
             .expect("create external token");
         Client::new(self.running.url.clone(), Some(created.token))
     }
+
+    /// A client authenticated as `agent_id`'s own token, to exercise its
+    /// role's principal against role-gated endpoints (e.g. agent lifecycle).
+    pub fn agent_client(&self, agent_id: &str) -> Client {
+        let token_path = self
+            .workspace
+            .join(".bridle/agents")
+            .join(agent_id)
+            .join("token");
+        let token = std::fs::read_to_string(token_path)
+            .expect("agent token")
+            .trim()
+            .to_string();
+        Client::new(self.running.url.clone(), Some(token))
+    }
 }
 
 /// Starts a fresh temp repo + workspace + daemon, pointed at the fake
