@@ -36,3 +36,6 @@ daemon's environment may reach all of them.
   network allowance, the same per-task question as k8dw).
 - Known uses: PixelLab (images and animations for game development) and
   DeepInfra (other models).
+- The human, verbatim (2026-09-28, on k8dw and 2ty9): "KISS for both of these.
+  Also on general I trust Claude agents so I don't think we need to go overboard
+  in restricting their access too much."

@@ -37,3 +37,6 @@ daemon startup) or `bridle spawn --model`, which covers the model but not tools.
   role's defaults) and the model it needs, and the worker that takes it gets them.
 - Replaces the `researcher` role the orchestrator proposed to the product
   manager (m-0778) for the same gap.
+- The human, verbatim (2026-09-28, on k8dw and 2ty9): "KISS for both of these.
+  Also on general I trust Claude agents so I don't think we need to go overboard
+  in restricting their access too much."

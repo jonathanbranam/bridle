@@ -79,6 +79,9 @@ Parked: a7h3 (agreed with pm-1: the message-human workaround works), and
 
 ## The human's decisions (2026-09-27 and 28)
 
+- Permissions (2026-09-28): "I trust Claude agents so I don't think we need to
+  go overboard in restricting their access too much." KISS for per-task tools,
+  models and secrets (k8dw, 2ty9).
 - P0: task records on a state branch (c7eb); questions inline in the task
   thread with a SQLite index (c5a8). Migrate bridle's own work after P0,
   as-is (tskm).
