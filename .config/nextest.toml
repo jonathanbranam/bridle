@@ -1,0 +1,6 @@
+# Isolate tests' git from the machine's global config, so a local run behaves
+# like CI (e.g. a global init.defaultBranch=main once hid g3ck). Tests that need
+# an identity or branch name set it explicitly.
+[profile.default.env]
+GIT_CONFIG_GLOBAL = "/dev/null"
+GIT_CONFIG_NOSYSTEM = "1"

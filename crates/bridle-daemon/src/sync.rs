@@ -730,6 +730,7 @@ mod tests {
         // Dev + release pattern: both are substituted.
         let dev_release = BranchesConfig {
             integration: "dev".to_string(),
+            integration_set: true,
             release: Some("main".to_string()),
         };
         sync(
