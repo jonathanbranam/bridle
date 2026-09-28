@@ -393,7 +393,11 @@ impl Store {
     /// removed from the fifo). A no-op, not an error, when it doesn't
     /// apply — `Held`/`Pending`/`Delivered` already reaching the caller
     /// with a different state is an expected outcome here, not a bug.
-    pub async fn mark_message_written(&self, id: &str, at: DateTime<Utc>) -> Result<(), StoreError> {
+    pub async fn mark_message_written(
+        &self,
+        id: &str,
+        at: DateTime<Utc>,
+    ) -> Result<(), StoreError> {
         let id = id.to_string();
         self.with_conn(move |c| sync::mark_message_written(c, &id, at))
             .await

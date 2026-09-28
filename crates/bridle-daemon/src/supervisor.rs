@@ -197,6 +197,15 @@ fn claim_context_renew(rt: &AgentRuntime) -> bool {
     !rt.context_renew_claimed.swap(true, Ordering::SeqCst)
 }
 
+/// The agent-row fields `register_and_start` needs to build a fresh
+/// runtime, grouped so the function stays under clippy's argument limit.
+struct StartingAgent<'a> {
+    agent_id: &'a str,
+    session_id: &'a str,
+    turns_so_far: u32,
+    cost_so_far: f64,
+}
+
 impl AgentManager {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -699,10 +708,12 @@ impl AgentManager {
         let (ready_tx, ready_rx) = tokio::sync::oneshot::channel();
         let runtime = self
             .register_and_start(
-                &agent.id,
-                &agent.session_id,
-                agent.turns,
-                agent.cost_usd_total,
+                StartingAgent {
+                    agent_id: &agent.id,
+                    session_id: &agent.session_id,
+                    turns_so_far: agent.turns,
+                    cost_so_far: agent.cost_usd_total,
+                },
                 spawned,
                 principal,
                 Some(ready_tx),
@@ -785,14 +796,17 @@ impl AgentManager {
     /// agent's caller doesn't wait on it.
     async fn register_and_start(
         &self,
-        agent_id: &str,
-        session_id: &str,
-        turns_so_far: u32,
-        cost_so_far: f64,
+        start: StartingAgent<'_>,
         spawned: bridle_claude::process::Spawned,
         _principal: &Principal,
         ready_tx: Option<tokio::sync::oneshot::Sender<()>>,
     ) -> Result<Arc<AgentRuntime>, SupervisorError> {
+        let StartingAgent {
+            agent_id,
+            session_id,
+            turns_so_far,
+            cost_so_far,
+        } = start;
         let pid = spawned.handle.pid();
         let start = tokio::task::spawn_blocking(move || containment::start_time(pid))
             .await
@@ -1738,10 +1752,12 @@ impl AgentManager {
             .map_err(|e| SupervisorError::Internal(format!("spawning claude: {e}")))?;
 
         self.register_and_start(
-            &agent.id,
-            &agent.session_id,
-            agent.turns,
-            agent.cost_usd_total,
+            StartingAgent {
+                agent_id: &agent.id,
+                session_id: &agent.session_id,
+                turns_so_far: agent.turns,
+                cost_so_far: agent.cost_usd_total,
+            },
             spawned,
             principal,
             None,
@@ -1889,10 +1905,12 @@ impl AgentManager {
             .await?;
 
         self.register_and_start(
-            &agent.id,
-            &session_id.to_string(),
-            agent.turns,
-            agent.cost_usd_total,
+            StartingAgent {
+                agent_id: &agent.id,
+                session_id: &session_id.to_string(),
+                turns_so_far: agent.turns,
+                cost_so_far: agent.cost_usd_total,
+            },
             spawned,
             principal,
             None,
