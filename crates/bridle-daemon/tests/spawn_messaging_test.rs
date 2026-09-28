@@ -8,8 +8,8 @@ use bridle_api::types::{
 use bridle_api::types::{SpawnRequest, event_kind};
 use bridle_daemon::Overrides;
 use support::{
-    default_overrides, fake_claude_argv_dump_wrapper, start_daemon, start_daemon_with_config,
-    wait_for_agent, wait_for_event, wait_for_state,
+    default_overrides, fake_claude_argv_dump_wrapper, fake_claude_env_dump_wrapper, start_daemon,
+    start_daemon_with_config, wait_for_agent, wait_for_event, wait_for_state,
 };
 
 /// k8dw: `extra_allowed_tools` grants a tool beyond the role's own
@@ -35,6 +35,7 @@ async fn spawn_extra_allowed_tools_grants_a_tool_the_role_lacks() {
             workdir: Some(Workdir::Repo),
             model: None,
             extra_allowed_tools: vec!["WebSearch".to_string()],
+            extra_env: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -67,6 +68,94 @@ async fn spawn_extra_allowed_tools_grants_a_tool_the_role_lacks() {
     assert!(argv[flag_idx + 1..].iter().any(|a| a == "Read"));
 }
 
+/// 2ty9: `extra_env` sets an env var in this one spawn's process only, and
+/// it doesn't carry over to the next spawn of the same role.
+#[tokio::test]
+async fn spawn_extra_env_reaches_only_that_one_process() {
+    let env_dir = tempfile::tempdir().expect("env tempdir");
+    let env_path = env_dir.path().join("env.json");
+    let wrapper = fake_claude_env_dump_wrapper(env_dir.path(), &env_path);
+    let overrides = Overrides {
+        claude_program: wrapper.to_string_lossy().into_owned(),
+        ..default_overrides()
+    };
+
+    let (daemon, _tmp) = start_daemon_with_config(Some(overrides), None).await;
+
+    // w1 gets the secret.
+    let agent1 = daemon
+        .client
+        .spawn(&SpawnRequest {
+            role: "worker".to_string(),
+            name: Some("w1".to_string()),
+            prompt: None,
+            workdir: Some(Workdir::Repo),
+            model: None,
+            extra_allowed_tools: Vec::new(),
+            extra_env: vec![("PIXELLAB_TOKEN".to_string(), "secret-1".to_string())],
+            ignore_budget: false,
+        })
+        .await
+        .expect("spawn w1");
+    wait_for_event(
+        &daemon.client,
+        event_kind::AGENT_SPAWNED,
+        Some(&agent1.id),
+        |_| true,
+    )
+    .await;
+    let env1: std::collections::HashMap<String, String> =
+        support::wait_for("fake-claude env file (w1)", || async {
+            std::fs::read_to_string(&env_path)
+                .ok()
+                .and_then(|s| serde_json::from_str(&s).ok())
+        })
+        .await;
+    assert_eq!(
+        env1.get("PIXELLAB_TOKEN").map(String::as_str),
+        Some("secret-1")
+    );
+
+    // w2, same role, no --env: doesn't inherit w1's secret.
+    let agent2 = daemon
+        .client
+        .spawn(&SpawnRequest {
+            role: "worker".to_string(),
+            name: Some("w2".to_string()),
+            prompt: None,
+            workdir: Some(Workdir::Repo),
+            model: None,
+            extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
+            ignore_budget: false,
+        })
+        .await
+        .expect("spawn w2");
+    wait_for_event(
+        &daemon.client,
+        event_kind::AGENT_SPAWNED,
+        Some(&agent2.id),
+        |_| true,
+    )
+    .await;
+    let env2: std::collections::HashMap<String, String> =
+        support::wait_for("fake-claude env file (w2)", || async {
+            let contents = std::fs::read_to_string(&env_path).ok()?;
+            let parsed: std::collections::HashMap<String, String> =
+                serde_json::from_str(&contents).ok()?;
+            // The dump file is shared and overwritten per-invocation; only
+            // accept it once it reflects w2's own process (BRIDLE_AGENT_NAME
+            // flips before PIXELLAB_TOKEN would disappear, since both are
+            // set once at spawn time).
+            (parsed.get("BRIDLE_AGENT_NAME").map(String::as_str) == Some("w2")).then_some(parsed)
+        })
+        .await;
+    assert!(
+        !env2.contains_key("PIXELLAB_TOKEN"),
+        "w2 should not inherit w1's extra_env, got {env2:?}"
+    );
+}
+
 #[tokio::test]
 async fn spawn_with_prompt_runs_a_turn_and_creates_a_worktree() {
     let (daemon, _tmp) = start_daemon(None).await;
@@ -80,6 +169,7 @@ async fn spawn_with_prompt_runs_a_turn_and_creates_a_worktree() {
             workdir: None,
             model: None,
             extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -151,6 +241,7 @@ async fn spawn_with_prompt_waits_for_the_turn_to_start_before_returning() {
             workdir: None,
             model: None,
             extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -188,6 +279,7 @@ async fn spawn_without_a_prompt_returns_promptly_and_stays_idle() {
             workdir: None,
             model: None,
             extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -218,6 +310,7 @@ async fn spawn_with_a_crashing_first_message_reaches_crashed_state() {
             workdir: None,
             model: None,
             extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -238,6 +331,7 @@ async fn message_now_mid_turn_folds_into_the_running_turn() {
             workdir: Some(Workdir::Repo),
             model: None,
             extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -285,6 +379,7 @@ async fn context_tokens_comes_from_get_context_usage_not_turn_usage_sum() {
             workdir: Some(Workdir::Repo),
             model: None,
             extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -317,6 +412,7 @@ async fn message_idle_is_held_until_the_turn_ends_then_starts_its_own_turn() {
             workdir: Some(Workdir::Repo),
             model: None,
             extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -364,6 +460,7 @@ async fn human_inbox_receives_agent_messages_and_mark_read_works() {
             workdir: Some(Workdir::Repo),
             model: None,
             extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -442,6 +539,7 @@ async fn send_to_role_delivers_to_every_live_agent_with_that_role() {
                 workdir: Some(Workdir::Repo),
                 model: None,
                 extra_allowed_tools: Vec::new(),
+                extra_env: Vec::new(),
                 ignore_budget: false,
             })
             .await

@@ -55,6 +55,7 @@ async fn governor_holds_then_pauses_as_usage_climbs() {
             workdir: None,
             model: None,
             extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -92,6 +93,7 @@ async fn idle_message_is_held_not_written_while_governor_is_holding() {
             workdir: None,
             model: None,
             extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -154,6 +156,7 @@ async fn held_message_for_idle_agent_is_delivered_when_governor_returns_to_norma
             workdir: None,
             model: None,
             extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -251,6 +254,7 @@ async fn idle_agent_is_stopped_at_once_on_wind_down_then_resumed() {
             workdir: None,
             model: None,
             extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -317,6 +321,7 @@ async fn working_agent_is_notified_then_stopped_when_its_turn_ends() {
             workdir: Some(bridle_api::types::Workdir::Repo),
             model: None,
             extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -370,6 +375,7 @@ async fn human_hold_forces_winding_down_and_release_lifts_it() {
             workdir: None,
             model: None,
             extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -514,6 +520,7 @@ async fn ignore_budget_bypasses_the_holding_refusal() {
             workdir: None,
             model: None,
             extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
             ignore_budget: true,
         })
         .await
@@ -592,6 +599,7 @@ async fn spawn_steps_down_to_the_next_model_when_the_first_ones_window_is_tight(
             workdir: None,
             model: None,
             extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -628,6 +636,7 @@ async fn explicit_model_pin_bypasses_step_down() {
             workdir: None,
             model: Some("opus".to_string()),
             extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -663,6 +672,7 @@ async fn spawn_refuses_when_every_candidate_model_is_blocked() {
             workdir: None,
             model: None,
             extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
             ignore_budget: false,
         })
         .await

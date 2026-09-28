@@ -21,6 +21,7 @@ fn spawn_req(name: &str, prompt: Option<&str>, workdir: Workdir) -> SpawnRequest
         workdir: Some(workdir),
         model: None,
         extra_allowed_tools: Vec::new(),
+        extra_env: Vec::new(),
         ignore_budget: false,
     }
 }

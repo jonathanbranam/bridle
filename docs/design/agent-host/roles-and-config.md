@@ -90,6 +90,23 @@ spawn, since `disallowed_tools` is meant as a floor every agent of a role
 gets, not something a single spawn should be able to lower
 (docs/questions/open/per-task-tools-and-model-k8dw.md).
 
+## Per-spawn secrets
+
+`bridle spawn <role> --env KEY=VALUE` (repeatable) sets an environment
+variable in that one spawn's `claude` process only ([[../cli#Built|cli.md]]),
+e.g. a paid API token (docs/questions/open/per-task-secrets-and-network-access-2ty9.md).
+Same shape as `--allow-tool`: per-invocation only, nothing written to
+`.bridle/config.toml` or the role, so the next agent spawned with the same
+role — and a `resume` of this one — doesn't get it. It isn't logged or
+returned by `bridle agents` or other read endpoints; only the variable names
+are ever written to the daemon's log, never the values.
+
+Network access for that secret (e.g. scoping `WebFetch` to the paid API's
+domain) needs no new mechanism: `--allow-tool` already accepts any tool
+permission string, so `--allow-tool 'WebFetch(domain:api.example.com)'` works
+today if Claude Code's own permission syntax supports scoping `WebFetch` by
+domain.
+
 The [[docs/design/workflow-layers|workflow layers]] later replace the role
 prompts. The `[roles]` table stays as the place a role's own default model
 and tools are set. `[models]` sits alongside it: an ordered, strongest-first

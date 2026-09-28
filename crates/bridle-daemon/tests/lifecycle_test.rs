@@ -22,6 +22,7 @@ async fn interrupt_during_sleep_ends_the_turn_and_agent_stays_usable() {
             workdir: Some(Workdir::Repo),
             model: None,
             extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -83,6 +84,7 @@ async fn stop_then_resume_keeps_the_session_and_answers_new_messages() {
             workdir: Some(Workdir::Worktree { base: None }),
             model: None,
             extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -167,6 +169,7 @@ async fn rm_refuses_a_dirty_worktree_without_force() {
             workdir: Some(Workdir::Worktree { base: None }),
             model: None,
             extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -212,6 +215,7 @@ async fn rm_refuses_a_worktree_with_open_files_without_force() {
             workdir: Some(Workdir::Worktree { base: None }),
             model: None,
             extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -301,6 +305,7 @@ async fn crash_is_reported_with_a_stderr_tail_and_pending_messages_deliver_on_re
             workdir: Some(Workdir::Repo),
             model: None,
             extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -363,6 +368,7 @@ async fn spawn_child_orphan_is_swept_on_stop() {
             workdir: Some(Workdir::Repo),
             model: None,
             extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -436,6 +442,7 @@ async fn worker_principal_is_refused_agent_lifecycle_endpoints() {
             workdir: Some(Workdir::Repo),
             model: None,
             extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -450,6 +457,7 @@ async fn worker_principal_is_refused_agent_lifecycle_endpoints() {
             workdir: Some(Workdir::Repo),
             model: None,
             extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -466,6 +474,7 @@ async fn worker_principal_is_refused_agent_lifecycle_endpoints() {
             workdir: Some(Workdir::Repo),
             model: None,
             extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -537,6 +546,7 @@ async fn manager_and_orchestrator_principals_keep_agent_lifecycle_authority() {
                 workdir: Some(Workdir::Repo),
                 model: None,
                 extra_allowed_tools: Vec::new(),
+                extra_env: Vec::new(),
                 ignore_budget: false,
             })
             .await
@@ -552,6 +562,7 @@ async fn manager_and_orchestrator_principals_keep_agent_lifecycle_authority() {
                 workdir: Some(Workdir::Worktree { base: None }),
                 model: None,
                 extra_allowed_tools: Vec::new(),
+                extra_env: Vec::new(),
                 ignore_budget: false,
             })
             .await

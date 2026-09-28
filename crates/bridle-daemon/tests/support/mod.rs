@@ -143,6 +143,29 @@ pub fn fake_claude_argv_dump_wrapper(dir: &Path, argv_path: &Path) -> PathBuf {
     wrapper
 }
 
+/// A wrapper script around fake-claude.py that sets `FAKE_CLAUDE_ENV_FILE`
+/// before exec'ing it, so a test can inspect the real invocation's own
+/// environment (e.g. a per-spawn `--env` secret).
+pub fn fake_claude_env_dump_wrapper(dir: &Path, env_path: &Path) -> PathBuf {
+    let wrapper = dir.join("fake-claude-env-wrapper.sh");
+    std::fs::write(
+        &wrapper,
+        format!(
+            "#!/bin/sh\nexec env FAKE_CLAUDE_ENV_FILE={:?} {:?} \"$@\"\n",
+            env_path.display(),
+            fake_claude_path().display(),
+        ),
+    )
+    .expect("write wrapper script");
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&wrapper, std::fs::Permissions::from_mode(0o755))
+            .expect("chmod wrapper script");
+    }
+    wrapper
+}
+
 pub fn default_overrides() -> Overrides {
     Overrides {
         claude_program: fake_claude_path().to_string_lossy().into_owned(),

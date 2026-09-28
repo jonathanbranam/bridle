@@ -679,6 +679,14 @@ impl AgentManager {
             &agent.name,
             &token,
         );
+        if !req.extra_env.is_empty() {
+            tracing::info!(
+                agent = %agent.id,
+                keys = ?req.extra_env.iter().map(|(k, _)| k.as_str()).collect::<Vec<_>>(),
+                "spawn: extra env vars for this spawn only"
+            );
+            cmd.env.extend(req.extra_env.iter().cloned());
+        }
 
         let transcript = match Transcript::open(
             &self.0.workspace.transcript(&agent.id),

@@ -414,6 +414,7 @@ async fn spawn(cli: &Cli, args: &SpawnArgs) -> Result<(), CliError> {
         workdir,
         model: args.model.clone(),
         extra_allowed_tools: args.allow_tool.clone(),
+        extra_env: args.env.clone(),
         ignore_budget: args.ignore_budget,
     };
     let agent = client.spawn(&req).await?;

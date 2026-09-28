@@ -18,7 +18,7 @@ bridle daemons                              # every running project daemon on th
 bridle status                               # daemon, agents, Claude Code version
 bridle spawn   <role> [--name N] [--prompt TEXT | --prompt-file FILE]
                [--worktree [--base REF] | --in-repo | --cwd PATH] [--model M]
-               [--allow-tool TOOL ...] [--ignore-budget]
+               [--allow-tool TOOL ...] [--env KEY=VALUE ...] [--ignore-budget]
 bridle agents  [--all]
 bridle show    <agent>
 bridle send    <agent|human|role:NAME> [TEXT | --text-file FILE] [--question] [--when now|idle] [--reply-to ID]
@@ -63,6 +63,11 @@ bridle task note   <id> TEXT                     plain note to the task's thread
   role's `allowed_tools` for this one spawn only — no config or role change,
   and it never touches `disallowed_tools`
   ([[docs/design/agent-host/roles-and-config#Per-spawn tool overrides|roles-and-config.md]]).
+- **`--env KEY=VALUE`** on `spawn` (repeatable) sets an environment variable
+  in this one spawn's process only, e.g. a secret — no config or role
+  change, not carried by a later spawn or `resume`, and never logged or
+  returned by read endpoints
+  ([[docs/design/agent-host/roles-and-config#Per-spawn secrets|roles-and-config.md]]).
 - **`--ignore-budget`** on `spawn`/`resume`/`renew` skips the budget governor's
   holding/paused refusal for that one call
   ([[docs/design/usage-and-budget#Resuming|the escape hatch]]).

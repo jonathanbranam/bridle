@@ -182,9 +182,24 @@ pub struct SpawnArgs {
     /// for more than one.
     #[arg(long = "allow-tool", value_name = "TOOL")]
     pub allow_tool: Vec<String>,
+    /// Set an environment variable in this one spawn's process only, e.g. a
+    /// secret (docs/design/agent-host/roles-and-config.md). Never written to
+    /// `.bridle/config.toml` or the role. Repeat for more than one.
+    #[arg(long = "env", value_name = "KEY=VALUE", value_parser = parse_env_kv)]
+    pub env: Vec<(String, String)>,
     /// Skip the budget governor's holding/paused check for this one spawn.
     #[arg(long)]
     pub ignore_budget: bool,
+}
+
+fn parse_env_kv(s: &str) -> Result<(String, String), String> {
+    let (key, value) = s
+        .split_once('=')
+        .ok_or_else(|| format!("expected KEY=VALUE, got `{s}`"))?;
+    if key.is_empty() {
+        return Err(format!("expected KEY=VALUE, got `{s}`"));
+    }
+    Ok((key.to_string(), value.to_string()))
 }
 
 #[derive(Debug, Args)]
@@ -690,6 +705,59 @@ mod tests {
             panic!("expected spawn")
         };
         assert_eq!(args.allow_tool, vec!["WebSearch", "WebFetch"]);
+    }
+
+    #[test]
+    fn spawn_env_is_repeatable_and_defaults_empty() {
+        let cli = parse(&["spawn", "worker"]).unwrap();
+        let Command::Spawn(args) = cli.command else {
+            panic!("expected spawn")
+        };
+        assert!(args.env.is_empty());
+
+        let cli = parse(&[
+            "spawn",
+            "worker",
+            "--env",
+            "PIXELLAB_TOKEN=abc123",
+            "--env",
+            "DEEPINFRA_TOKEN=def456",
+        ])
+        .unwrap();
+        let Command::Spawn(args) = cli.command else {
+            panic!("expected spawn")
+        };
+        assert_eq!(
+            args.env,
+            vec![
+                ("PIXELLAB_TOKEN".to_string(), "abc123".to_string()),
+                ("DEEPINFRA_TOKEN".to_string(), "def456".to_string()),
+            ]
+        );
+    }
+
+    #[test]
+    fn spawn_env_rejects_missing_equals() {
+        let err = parse(&["spawn", "worker", "--env", "NOEQUALS"]).unwrap_err();
+        assert_eq!(err.kind(), clap::error::ErrorKind::ValueValidation);
+    }
+
+    #[test]
+    fn spawn_env_rejects_empty_key() {
+        let err = parse(&["spawn", "worker", "--env", "=value"]).unwrap_err();
+        assert_eq!(err.kind(), clap::error::ErrorKind::ValueValidation);
+    }
+
+    #[test]
+    fn spawn_env_allows_value_with_embedded_equals() {
+        let cli = parse(&["spawn", "worker", "--env", "URL=https://a.example/b=c"]).unwrap();
+        let Command::Spawn(args) = cli.command else {
+            panic!("expected spawn")
+        };
+        assert_eq!(
+            args.env,
+            vec![("URL".to_string(), "https://a.example/b=c".to_string())]
+        );
     }
 
     #[test]

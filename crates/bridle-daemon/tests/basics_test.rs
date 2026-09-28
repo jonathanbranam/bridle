@@ -34,6 +34,7 @@ async fn health_counts_non_terminal_agents() {
             workdir: Some(bridle_api::types::Workdir::Repo),
             model: None,
             extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -80,6 +81,7 @@ async fn agent_token_cannot_create_tokens() {
             workdir: Some(bridle_api::types::Workdir::Repo),
             model: None,
             extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
             ignore_budget: false,
         })
         .await
