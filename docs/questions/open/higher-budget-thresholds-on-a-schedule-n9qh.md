@@ -22,6 +22,10 @@ And, a few minutes later:
 > Yes time of day is good. Could probably use more budget during week day
 > work hours too because I'm not using my Claude much then either
 
+And:
+
+> And also there should be an override
+
 ## What exists
 
 The governor's thresholds are per window, with no time of day: `hold_at` 80,
@@ -39,3 +43,9 @@ from the machine-wide config, and a project config may only lower them.
   it, and the orchestrator's watcher wakes at five_hour ≥ 93%. For example:
   hold 90, wind down 93, stop 95.
 - Only the five-hour window. The ask names it; seven_day pacing is unchanged.
+- The override. The human can switch periods by hand without editing config
+  or restarting: force a period's thresholds (or the defaults) now, until a
+  given time, then fall back to the schedule. For example, `bridle budget
+  override default --until 5pm` when they need their own Claude during a work
+  period, or `bridle budget override night --until 11pm` to boost early.
+  Human-only, like `bridle budget hold`, and shown in `bridle budget`.
