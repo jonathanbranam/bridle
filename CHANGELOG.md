@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- New `[worktrees] setup` (with `setup_timeout_secs`, default 600): a shell command run in each new worker worktree, e.g. an install step; a failure or timeout fails the spawn and removes the worktree (ticket br-42dd).
 - Fixed: `bridle renew` under a budget hold refused only after stopping the agent, leaving it stopped; the hold check now comes first, so a refused renew changes nothing (ticket r3nh). Automatic context renewals already bypass the check.
 - Fixed: an agent renewed and then resumed after a daemon restart before its new session's first turn died on its first turn (`--resume` of a session claude never wrote). `resume` now starts a fresh session in that case (`agents.session_started`, schema v13), and an abnormal claude exit is logged at warn with its stderr tail.
 - Fixed: TUI inbox and agents panel now scroll: each table maintains TableState to track view offset as the selection moves, so selecting beyond the visible rows keeps the selection in view (tickets 8ups, yurx).
