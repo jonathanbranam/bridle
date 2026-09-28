@@ -165,7 +165,7 @@ impl Role {
             ],
             disallowed_tools: deny_list(&[&DENY_SCHEDULING, &DENY_REMOTE_TRIGGERS]),
             system_prompt: None,
-            autostart: false,
+            autostart: true,
             resume_on_restart: true,
             start_prompt: None,
             max_budget_usd: None,

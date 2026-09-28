@@ -40,7 +40,7 @@ max_budget_usd   = 3.0             # per process; see agents.md, Spend cap
 model             = "sonnet"
 workdir           = "repo"
 permission_mode   = "dontAsk"
-autostart         = false
+autostart         = true           # the built-in manager's default; false for every other role
 resume_on_restart = true
 allowed_tools     = ["Bash(bridle *)", "Bash(git *)", "Read", "Glob", "Grep"]
 system_prompt     = "workflow/base/roles/manager.md"
@@ -51,7 +51,9 @@ start_prompt      = "Check your inbox and tell the human you're ready."   # firs
   ([[docs/design/roles-and-lifecycle|roles]]). The defaults are the values
   above; the orchestrator is like the manager without `Bash(git *)`. None has a
   default `system_prompt`, `start_prompt` or `max_budget_usd`; the values
-  above are examples. Bridle's own `.bridle/` has a working set. A project can
+  above are examples. Only the manager has `autostart = true` by default (so a
+  project with no role config gets a manager at daemon start); `autostart = false` in
+  `[roles.manager]` turns it off, and any other role can set it on. Bridle's own `.bridle/` has a working set. A project can
   override the built-ins or add roles, which start from the worker's defaults.
 - **`disallowed_tools` defaults deny Claude Code's own built-ins that bypass
   bridle's coordination the same way as a direct `SendMessage` call would**

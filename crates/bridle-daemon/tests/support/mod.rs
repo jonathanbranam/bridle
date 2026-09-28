@@ -211,8 +211,24 @@ pub fn default_overrides() -> Overrides {
 }
 
 /// [`start_daemon`], with `config_toml` written to `<repo>/.bridle/config.toml`
-/// first.
+/// first. The built-in manager autostarts by default, which would put an extra
+/// agent in every test's count, so it's switched off here unless the config
+/// has its own `[roles.manager]`; [`start_daemon_verbatim_config`] keeps the
+/// defaults.
 pub async fn start_daemon_with_config(
+    overrides: Option<Overrides>,
+    config_toml: Option<&str>,
+) -> (TestDaemon, tempfile::TempDir) {
+    let mut text = config_toml.unwrap_or("").to_string();
+    if !text.contains("[roles.manager]") {
+        text.push_str("\n[roles.manager]\nautostart = false\n");
+    }
+    start_daemon_verbatim_config(overrides, Some(&text)).await
+}
+
+/// [`start_daemon_with_config`] without the manager opt-out: the config is
+/// written as given, so the built-in defaults apply.
+pub async fn start_daemon_verbatim_config(
     overrides: Option<Overrides>,
     config_toml: Option<&str>,
 ) -> (TestDaemon, tempfile::TempDir) {
