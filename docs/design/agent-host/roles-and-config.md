@@ -20,11 +20,16 @@ listen      = "127.0.0.1:0"        # 0 = any free port; the chosen URL goes in d
 stall_after = "10m"
 stop_grace  = "30s"                # how long `stop` waits after closing stdin
 
+[branches]
+integration = "main"               # work merges here; worktree roles branch from here too
+# release    = "dev"               # optional: only set for the dev+release pattern
+
 [roles.worker]
 model            = "sonnet"
 effort           = "medium"
 workdir          = "worktree"      # worktree | repo
-base             = "HEAD"          # ref new worktrees branch from
+base             = "HEAD"          # ref new worktrees branch from; "HEAD" resolves to
+                                    # [branches] integration unless set explicitly
 permission_mode  = "acceptEdits"
 allowed_tools    = ["Bash", "Read", "Edit", "Write", "Glob", "Grep"]
 disallowed_tools = []
@@ -78,6 +83,13 @@ start_prompt      = "Check your inbox and tell the human you're ready."   # firs
   coordinates rather than edits. Merging is the integrator's job, and the
   integrator is bridle itself, in its own worktree
   ([[docs/design/roles-and-lifecycle|roles]]).
+- **`[branches]` names the project's integration branch, and its release
+  branch when it has one** — see [[../agent-host/operating-model#Branch
+  pattern|operating-model.md, "Branch pattern"]] for the two supported
+  patterns, the trial-onboarding case, and the mechanical `disallowed_tools`
+  enforcement that keeps ordinary agents off the release branch. `integration`
+  defaults to `"main"`, so bridle's own project needs no `[branches]` entry
+  at all.
 
 ## Per-spawn tool overrides
 

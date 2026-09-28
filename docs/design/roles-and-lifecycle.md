@@ -26,6 +26,13 @@ reviewer cheaper or its worker stronger. Until the layers exist, they are set
 in `[roles.*]` in `<repo>/.bridle/config.toml`
 ([[docs/design/agent-host/roles-and-config|roles and config]]).
 
+**Which branch the manager and worker merge into, push to, and branch new
+work from is also a project setting**, `[branches]` in the same file — one
+knob for two patterns (trunk, or dev+release), plus the branch a project
+trial uses instead of its real `main`/`dev`:
+[[docs/design/agent-host/operating-model|operating model]], "Branch
+pattern".
+
 ## Task lifecycle
 
 ```

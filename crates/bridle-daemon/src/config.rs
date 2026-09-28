@@ -584,6 +584,42 @@ pub struct CommandsConfig {
     pub check: String,
 }
 
+/// `[branches]`: the project's branch pattern (docs/design/agent-host/operating-model.md,
+/// "Branch pattern"). Exactly two shapes, per the human's own KISS ask (ticket br-29f9):
+/// trunk (`release` unset — work merges into `integration`, releases are tags on it, bridle's
+/// own pattern) or dev+release (`release` set — work merges into `integration`, and `release`
+/// only moves when `integration` is merged into it for a release, done by whoever cuts
+/// releases, not by workers or the manager's normal merge). A project trial
+/// (docs/questions/open/trial-adoption-*.md, 63rv) sets `integration` to its trial branch
+/// (e.g. `bridle-adopt`) with `release` left unset, so nothing here ever targets the
+/// project's real `main`/`dev`.
+#[derive(Debug, Clone, PartialEq)]
+pub struct BranchesConfig {
+    pub integration: String,
+    pub release: Option<String>,
+}
+
+impl Default for BranchesConfig {
+    fn default() -> Self {
+        BranchesConfig {
+            integration: "main".to_string(),
+            release: None,
+        }
+    }
+}
+
+impl BranchesConfig {
+    fn merge(mut self, raw: RawBranches) -> Self {
+        if let Some(v) = raw.integration {
+            self.integration = v;
+        }
+        if let Some(v) = raw.release {
+            self.release = Some(v);
+        }
+        self
+    }
+}
+
 impl Default for CommandsConfig {
     fn default() -> Self {
         CommandsConfig {
@@ -615,6 +651,7 @@ pub struct Config {
     pub models: ModelsConfig,
     pub context: ContextConfig,
     pub commands: CommandsConfig,
+    pub branches: BranchesConfig,
     /// The prefix new task ids get (storage.md: `<prefix>-<4 hex chars>`,
     /// e.g. `tw-7fa2`). `None` means derive one from the project name
     /// ([`default_task_prefix`]).
@@ -647,6 +684,7 @@ impl Default for Config {
             models: ModelsConfig::default(),
             context: ContextConfig::default(),
             commands: CommandsConfig::default(),
+            branches: BranchesConfig::default(),
             task_prefix: None,
             workflow: None,
             packs: Vec::new(),
@@ -722,10 +760,14 @@ impl Config {
         let path = repo.join(".bridle").join("config.toml");
         match std::fs::read_to_string(&path) {
             Ok(text) => Self::parse_with_budget(&text, machine_budget, &path),
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Config {
-                budget: machine_budget,
-                ..Config::default()
-            }),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+                let mut config = Config {
+                    budget: machine_budget,
+                    ..Config::default()
+                };
+                apply_branches(&mut config);
+                Ok(config)
+            }
             Err(source) => Err(ConfigError::Read { path, source }),
         }
     }
@@ -768,6 +810,10 @@ impl Config {
             if let Some(s) = d.stop_grace {
                 config.stop_grace = parse_duration(&s)?;
             }
+        }
+
+        if let Some(raw_branches) = raw.branches {
+            config.branches = config.branches.merge(raw_branches);
         }
 
         // A role's own `model` pins the step-down floor unless the project
@@ -823,7 +869,43 @@ impl Config {
         config.workflow = raw.workflow;
         config.packs = raw.packs.unwrap_or_default();
 
+        apply_branches(&mut config);
+
         Ok(config)
+    }
+}
+
+/// Wires `[branches]` through the roles, once every other section has been
+/// merged (roles-and-config.md, "Branch pattern"):
+/// - A worktree role's `base` still defaults to the built-in `"HEAD"`
+///   sentinel unless a project explicitly overrides it; when untouched, it's
+///   set to the integration branch, so new agent worktrees (and the worker's
+///   own handoff merge, via `{{branches.integration}}`) branch from and
+///   merge into the same ref the manager merges into -- not from whatever
+///   happens to be checked out.
+/// - When a separate release branch is configured, every role except
+///   `orchestrator` (which legitimately cuts releases, docs/design/
+///   agent-host/operating-model.md) is mechanically denied `git push` to it,
+///   the same additive `disallowed_tools` hook a project already uses for
+///   `Bash(git push *)` (roles-and-config.md) -- a locked rule
+///   (workflow-layers.md override semantics), not just written prose in a
+///   role prompt.
+fn apply_branches(config: &mut Config) {
+    let integration = config.branches.integration.clone();
+    let release = config.branches.release.clone();
+    for (name, role) in config.roles.iter_mut() {
+        if role.workdir == Workdir::Worktree && role.base == "HEAD" {
+            role.base = integration.clone();
+        }
+        if let Some(release) = &release
+            && release != &integration
+            && name != "orchestrator"
+        {
+            let deny = format!("Bash(git push origin {release})");
+            if !role.disallowed_tools.contains(&deny) {
+                role.disallowed_tools.push(deny);
+            }
+        }
     }
 }
 
@@ -905,6 +987,8 @@ struct RawConfig {
     #[serde(default)]
     commands: Option<RawCommands>,
     #[serde(default)]
+    branches: Option<RawBranches>,
+    #[serde(default)]
     tasks: Option<RawTasks>,
     #[serde(default)]
     workflow: Option<String>,
@@ -926,6 +1010,15 @@ struct RawContext {
 struct RawCommands {
     #[serde(default)]
     check: Option<String>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawBranches {
+    #[serde(default)]
+    integration: Option<String>,
+    #[serde(default)]
+    release: Option<String>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -1133,17 +1226,23 @@ fn role_preamble_suffix(role_name: &str) -> Option<&'static str> {
 ///
 /// Public so `bridle cost audit` ([`crate::cost_audit`]) can measure the exact bytes
 /// that go on the wire, from a fresh render rather than a cached figure.
-pub fn stable_system_prompt(role_name: &str, role: &Role, repo: &Path) -> String {
+pub fn stable_system_prompt(
+    role_name: &str,
+    role: &Role,
+    repo: &Path,
+    branches: &BranchesConfig,
+) -> String {
     let mut out = String::from(PREAMBLE);
     if let Some(suffix) = role_preamble_suffix(role_name) {
         out.push_str(suffix);
     }
+    out.push_str(&branches_sentence(branches));
     if let Some(rel) = &role.system_prompt {
         let path = repo.join(rel);
         match std::fs::read_to_string(&path) {
             Ok(text) => {
                 out.push('\n');
-                out.push_str(&text);
+                out.push_str(&substitute_branches(&text, branches));
             }
             Err(e) => {
                 tracing::warn!(path = %path.display(), error = %e, "role system_prompt file not readable; using preamble only");
@@ -1151,6 +1250,41 @@ pub fn stable_system_prompt(role_name: &str, role: &Role, repo: &Path) -> String
         }
     }
     out
+}
+
+/// A short, project-scoped statement of the branch pattern (`[branches]`,
+/// docs/design/agent-host/operating-model.md), so every role always knows
+/// which branch is the integration target and whether a separate release
+/// branch exists, without needing to hardcode either name in role prose.
+/// Same text for every agent of a project (not per-agent), so it stays part
+/// of the cacheable stable prefix.
+fn branches_sentence(branches: &BranchesConfig) -> String {
+    match &branches.release {
+        Some(release) => format!(
+            "\nThis project's integration branch is `{}`: merge and push completed work there. \
+            `{}` is the release branch -- never merge or push it except as the release step \
+            (done by the orchestrator or the human, not by the ordinary worker/manager merge).\n",
+            branches.integration, release
+        ),
+        None => format!(
+            "\nThis project's integration branch is `{}`: merge and push completed work there. \
+            There is no separate release branch; releases are tags on it.\n",
+            branches.integration
+        ),
+    }
+}
+
+/// Substitutes `{{branches.integration}}`/`{{branches.release}}` in a role's
+/// own `system_prompt` file text, the same convention `{{commands.check}}`
+/// uses for skill files (`sync::substitute_placeholders`). `{{branches.release}}`
+/// is left as-is (nothing sensible to substitute) when no release branch is
+/// configured; [`branches_sentence`] already states that plainly.
+fn substitute_branches(text: &str, branches: &BranchesConfig) -> String {
+    let out = text.replace("{{branches.integration}}", &branches.integration);
+    match &branches.release {
+        Some(release) => out.replace("{{branches.release}}", release),
+        None => out,
+    }
 }
 
 /// The rendered `--append-system-prompt-file` contents for one agent:
@@ -1164,11 +1298,12 @@ pub fn render_system_prompt(
     role_name: &str,
     role: &Role,
     repo: &Path,
+    branches: &BranchesConfig,
     agent_name: &str,
     cwd: &Path,
     branch: Option<&str>,
 ) -> String {
-    let mut out = stable_system_prompt(role_name, role, repo);
+    let mut out = stable_system_prompt(role_name, role, repo, branches);
     let branch_clause = branch
         .map(|b| format!(" on branch {b}"))
         .unwrap_or_default();
@@ -1304,7 +1439,10 @@ mod tests {
         assert_eq!(reviewer.model, "sonnet");
         assert_eq!(reviewer.workdir, Workdir::Repo);
         assert_eq!(reviewer.permission_mode, "plan");
-        assert_eq!(reviewer.base, "HEAD"); // inherited from worker defaults
+        // Inherited from worker defaults ("HEAD"); `apply_branches` only
+        // resolves "HEAD" to the integration branch for worktree roles, and
+        // this custom role's workdir is "repo".
+        assert_eq!(reviewer.base, "HEAD");
     }
 
     #[test]
@@ -1352,6 +1490,21 @@ mod tests {
         // Role::worker_default() as its merge base (stop_check: true); config
         // must turn it back off explicitly, since it isn't the worker role.
         assert!(!config.roles["product-manager"].stop_check);
+    }
+
+    #[test]
+    fn bridles_own_manager_prompt_has_no_unsubstituted_branch_placeholder() {
+        let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let config = Config::load(&repo).expect("bridle's .bridle/config.toml parses");
+        let manager = &config.roles["manager"];
+        let rendered = stable_system_prompt("manager", manager, &repo, &config.branches);
+        assert!(
+            !rendered.contains("{{branches."),
+            "manager.md should have every {{{{branches.*}}}} placeholder substituted"
+        );
+        // Bridle's own project defaults to trunk on "main".
+        assert!(rendered.contains("integration branch is `main`"));
+        assert!(rendered.contains("push origin main"));
     }
 
     #[test]
@@ -1595,8 +1748,9 @@ mod tests {
     #[test]
     fn stable_prompt_has_no_per_agent_data() {
         let repo = Path::new("/does/not/matter");
+        let branches = BranchesConfig::default();
         for (name, role) in Config::default().roles {
-            let rendered = stable_system_prompt(&name, &role, repo);
+            let rendered = stable_system_prompt(&name, &role, repo, &branches);
             assert!(
                 !rendered.contains("BRIDLE_AGENT_ID="),
                 "stable prompt must not embed an id"
@@ -1615,29 +1769,33 @@ mod tests {
     #[test]
     fn stable_prompt_identical_for_two_agents_of_the_same_role() {
         let repo = Path::new("/repo/a");
+        let branches = BranchesConfig::default();
         let role = Role::worker_default();
-        let a = stable_system_prompt("worker", &role, repo);
-        let b = stable_system_prompt("worker", &role, repo);
+        let a = stable_system_prompt("worker", &role, repo, &branches);
+        let b = stable_system_prompt("worker", &role, repo, &branches);
         assert_eq!(a, b);
     }
 
     #[test]
     fn stable_prompt_differs_by_role() {
         let repo = Path::new("/repo/a");
-        let worker = stable_system_prompt("worker", &Role::worker_default(), repo);
-        let manager = stable_system_prompt("manager", &Role::manager_default(), repo);
+        let branches = BranchesConfig::default();
+        let worker = stable_system_prompt("worker", &Role::worker_default(), repo, &branches);
+        let manager = stable_system_prompt("manager", &Role::manager_default(), repo, &branches);
         assert_ne!(worker, manager);
     }
 
     #[test]
     fn rendered_prompt_carries_identity_after_the_shared_prefix() {
         let repo = Path::new("/repo/a");
+        let branches = BranchesConfig::default();
         let role = Role::worker_default();
-        let stable = stable_system_prompt("worker", &role, repo);
+        let stable = stable_system_prompt("worker", &role, repo, &branches);
         let a = render_system_prompt(
             "worker",
             &role,
             repo,
+            &branches,
             "worker-1",
             Path::new("/repo/a/wt/worker-1"),
             Some("bridle/worker-1"),
@@ -1646,6 +1804,7 @@ mod tests {
             "worker",
             &role,
             repo,
+            &branches,
             "worker-2",
             Path::new("/repo/a/wt/worker-2"),
             Some("bridle/worker-2"),
@@ -1725,6 +1884,97 @@ mod tests {
     }
 
     #[test]
+    fn branches_default_to_trunk_on_main_with_no_release_branch() {
+        let cfg = Config::default();
+        assert_eq!(cfg.branches.integration, "main");
+        assert_eq!(cfg.branches.release, None);
+        // Bridle's own project needs no config change: the default worker
+        // base is "HEAD" until `apply_branches` (only run by `Config::load`/
+        // `parse`, not bare `Config::default`) resolves it.
+        assert_eq!(cfg.roles["worker"].base, "HEAD");
+    }
+
+    #[test]
+    fn dev_and_release_pattern_targets_dev_not_main() {
+        let cfg = Config::parse(
+            r#"
+            [branches]
+            integration = "dev"
+            release = "main"
+        "#,
+        )
+        .expect("parse");
+        assert_eq!(cfg.branches.integration, "dev");
+        assert_eq!(cfg.branches.release.as_deref(), Some("main"));
+
+        // The manager's and worker's worktree base -- what new work branches
+        // from and what a merge/push targets -- follows the integration
+        // branch, not "main".
+        assert_eq!(cfg.roles["worker"].base, "dev");
+
+        // Pushing the release branch is mechanically denied for every
+        // ordinary role, not just documented.
+        for role in ["worker", "manager"] {
+            assert!(
+                cfg.roles[role]
+                    .disallowed_tools
+                    .contains(&"Bash(git push origin main)".to_string()),
+                "{role} should be denied pushing the release branch"
+            );
+        }
+        // The orchestrator legitimately cuts releases, so it's exempt.
+        assert!(
+            !cfg.roles["orchestrator"]
+                .disallowed_tools
+                .contains(&"Bash(git push origin main)".to_string())
+        );
+    }
+
+    #[test]
+    fn a_trial_branch_name_is_the_only_integration_target_and_main_dev_are_never_touched() {
+        // Stands in for the trial's own fixed branch name, `bridle-adopt`
+        // (63rv): any name works, nothing here is specific to that literal
+        // string.
+        let cfg = Config::parse(
+            r#"
+            [branches]
+            integration = "bridle-adopt"
+        "#,
+        )
+        .expect("parse");
+        assert_eq!(cfg.branches.integration, "bridle-adopt");
+        assert_eq!(cfg.branches.release, None);
+
+        assert_eq!(cfg.roles["worker"].base, "bridle-adopt");
+        assert_ne!(cfg.roles["worker"].base, "main");
+        assert_ne!(cfg.roles["worker"].base, "dev");
+        // No release branch is configured, so no push is mechanically
+        // denied on its account -- there is no `main`/`dev` for a trial to
+        // touch in the first place.
+        assert!(
+            !cfg.roles["manager"]
+                .disallowed_tools
+                .iter()
+                .any(|t| t.contains("push origin main") || t.contains("push origin dev"))
+        );
+    }
+
+    #[test]
+    fn an_explicit_role_base_is_not_overridden_by_branches() {
+        let cfg = Config::parse(
+            r#"
+            [branches]
+            integration = "dev"
+
+            [roles.worker]
+            base = "some-other-ref"
+        "#,
+        )
+        .expect("parse");
+        assert_eq!(cfg.roles["worker"].base, "some-other-ref");
+    }
+
+    #[test]
     fn workflow_path_is_parsed_and_defaults_to_none() {
         assert_eq!(Config::parse("").expect("parse").workflow, None);
         let cfg = Config::parse(r#"workflow = "workflow""#).expect("parse");
@@ -1735,7 +1985,15 @@ mod tests {
     fn rendered_prompt_without_branch_omits_the_branch_clause() {
         let repo = Path::new("/repo/a");
         let role = Role::manager_default();
-        let rendered = render_system_prompt("manager", &role, repo, "manager-1", repo, None);
+        let rendered = render_system_prompt(
+            "manager",
+            &role,
+            repo,
+            &BranchesConfig::default(),
+            "manager-1",
+            repo,
+            None,
+        );
         assert!(rendered.contains("You are manager-1 (role manager) in /repo/a.\n"));
     }
 }
