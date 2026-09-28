@@ -4,7 +4,7 @@ mod support;
 
 use bridle_api::types::{AgentState, SpawnRequest, Workdir};
 use futures::StreamExt;
-use support::{start_daemon, wait_for_agent, wait_for_state};
+use support::{TestDaemon, start_daemon, wait_for_agent, wait_for_state};
 
 #[tokio::test]
 async fn events_stream_receives_backfill_then_live_events_in_seq_order() {
@@ -183,4 +183,50 @@ async fn events_stream_with_no_cursor_skips_backfill_and_starts_at_the_tail() {
         "expected the tail, not backfilled history: got seq {}",
         first.seq
     );
+}
+
+#[tokio::test]
+async fn shutdown_ends_open_event_streams_and_finishes_promptly() {
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+
+    let (daemon, _tmp) = start_daemon(None).await;
+    // Raw HTTP, because `Client::events_stream` reconnects forever and would
+    // hide the server closing the stream.
+    let token = daemon
+        .client
+        .create_token(&bridle_api::types::TokenCreateRequest {
+            name: "raw-sse".to_string(),
+        })
+        .await
+        .expect("token")
+        .token;
+    let addr = daemon.running.url.trim_start_matches("http://").to_string();
+    let mut conn = tokio::net::TcpStream::connect(&addr)
+        .await
+        .expect("connect");
+    conn.write_all(
+        format!(
+            "GET /v1/events/stream HTTP/1.1\r\nHost: {addr}\r\nAuthorization: Bearer {token}\r\n\r\n"
+        )
+        .as_bytes(),
+    )
+    .await
+    .expect("write");
+    let mut buf = [0u8; 1024];
+    let n = conn.read(&mut buf).await.expect("read headers");
+    assert!(String::from_utf8_lossy(&buf[..n]).starts_with("HTTP/1.1 200"));
+
+    let TestDaemon { running, .. } = daemon;
+    running.shutdown();
+    tokio::time::timeout(std::time::Duration::from_secs(3), running.join())
+        .await
+        .expect("daemon shutdown hung on the open event stream")
+        .expect("join");
+
+    // The client is still holding the connection; it must see EOF.
+    let end = tokio::time::timeout(std::time::Duration::from_secs(3), async {
+        while conn.read(&mut buf).await.map(|n| n > 0).unwrap_or(false) {}
+    })
+    .await;
+    assert!(end.is_ok(), "stream did not end");
 }
