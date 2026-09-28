@@ -82,7 +82,7 @@ async fn stop_then_resume_keeps_the_session_and_answers_new_messages() {
             components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
-            prompt: None,
+            prompt: Some("hi".to_string()),
             workdir: Some(Workdir::Worktree { base: None }),
             model: None,
             extra_allowed_tools: Vec::new(),
@@ -91,6 +91,14 @@ async fn stop_then_resume_keeps_the_session_and_answers_new_messages() {
         })
         .await
         .expect("spawn");
+    // A session only exists to resume once its first turn has run.
+    support::wait_for_event(
+        &daemon.client,
+        bridle_api::types::event_kind::TURN_ENDED,
+        Some(&agent.id),
+        |_| true,
+    )
+    .await;
     wait_for_state(&daemon.client, &agent.id, AgentState::Idle).await;
     let session_id = agent.session_id.clone();
 
