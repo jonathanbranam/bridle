@@ -1143,6 +1143,30 @@ mod tests {
     }
 
     #[test]
+    fn vim_pack_rules_resolve() {
+        let repo_root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let workflow_root = repo_root.join("workflow");
+        let repo = tempfile::tempdir().expect("tempdir");
+        let layers = discover_layers(repo.path(), Some(&workflow_root), &["vim".to_string()]);
+        let resolution = load_and_resolve(&layers).expect("resolve");
+        for id in [
+            "vim.check-command",
+            "vim.vader",
+            "vim.vader-tempdir",
+            "vim.no-after-ftplugin",
+        ] {
+            let rule = &resolution.rules[id];
+            assert_eq!(rule.winning_layer().kind, LayerKind::Pack);
+            assert_eq!(rule.winning_layer().name, "vim");
+            assert!(matches!(rule.state(), RuleState::Active { .. }), "{id}");
+        }
+        match resolution.rules["vim.vader-tempdir"].state() {
+            RuleState::Active { body, .. } => assert!(!body.contains("let g:test_root")),
+            other => panic!("expected active, got {other:?}"),
+        }
+    }
+
+    #[test]
     fn load_and_resolve_runs_end_to_end_on_real_directories() {
         let repo = tempfile::tempdir().expect("tempdir");
         let base_rules = repo.path().join("workflow").join("base").join("rules");
