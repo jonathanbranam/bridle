@@ -259,7 +259,12 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
     };
     let app = server::router(state);
 
-    let mut serve_shutdown_rx = shutdown_rx.clone();
+    // The axum listener must close only after the cleanup sequence below
+    // (through removing daemon.json) has finished, not merely when
+    // `shutdown_rx` flips — otherwise a client polling health() can see the
+    // listener go away and conclude shutdown is done while daemon.json still
+    // exists.
+    let (serve_shutdown_tx, mut serve_shutdown_rx) = watch::channel(false);
     let serve_task = tokio::spawn(async move {
         let graceful = async move {
             let _ = serve_shutdown_rx.wait_for(|v| *v).await;
@@ -361,6 +366,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         let _ = discovery::remove_registry(&project);
         let _ = std::fs::remove_file(ws.daemon_json());
 
+        let _ = serve_shutdown_tx.send(true);
         let _ = serve_task.await;
         signal_task.abort();
         stall_task.abort();
