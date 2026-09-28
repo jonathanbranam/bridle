@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Cheaper builds: new worker worktrees start with a copy-on-write clone of the clone's `target/`
+  on macOS (`[worktrees] warm_target`, default on), and workers' own gate is
+  `{{commands.check_worker}}` (`commands.check_worker`, default `commands.check`; bridle's own
+  project runs `just check-affected`).
 - The base `worker`/`manager`/`product-manager` role prompts and the manager skill are
   project-neutral: they use `{{commands.check}}` and `{{branches.integration}}` (role prompt
   files now get `{{commands.check}}` substituted too), and `bridle sync`'s CLAUDE.md block points

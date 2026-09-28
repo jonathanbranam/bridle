@@ -66,6 +66,35 @@ pub async fn add(repo: &Path, path: &Path, branch: &str, base: &str) -> Result<(
     }
 }
 
+/// Clones the clone's `target/` into the new worktree so its first build is incremental, not
+/// cold (ticket b7cz). `cp -cR` is an APFS copy-on-write clone: near-instant, no extra disk.
+/// macOS only; elsewhere a no-op. Best effort: a missing `target/` or a failed copy is logged
+/// and never fails the spawn. Never writes to the clone's `target/`.
+pub async fn warm_target(repo: &Path, worktree: &Path) {
+    if !cfg!(target_os = "macos") {
+        return;
+    }
+    let src = repo.join("target");
+    let dst = worktree.join("target");
+    if !src.is_dir() || dst.exists() {
+        return;
+    }
+    match Command::new("cp")
+        .arg("-cR")
+        .arg(&src)
+        .arg(&dst)
+        .output()
+        .await
+    {
+        Ok(out) if out.status.success() => {}
+        Ok(out) => tracing::warn!(
+            stderr = %String::from_utf8_lossy(&out.stderr).trim(),
+            "warming worktree target/ failed; continuing cold"
+        ),
+        Err(e) => tracing::warn!(error = %e, "warming worktree target/ failed; continuing cold"),
+    }
+}
+
 /// Adds a new worktree at `path`, checking out `branch`, which must already
 /// exist (unlike [`add`], no `-b`: this doesn't create the branch).
 pub async fn add_existing(repo: &Path, path: &Path, branch: &str) -> Result<(), WorktreeError> {
@@ -287,6 +316,26 @@ mod tests {
     use std::time::Duration;
 
     use super::*;
+
+    #[tokio::test]
+    async fn warm_target_clones_when_present_and_tolerates_absence() {
+        let tmp = tempfile::tempdir().expect("tmp");
+        let (repo, wt) = (tmp.path().join("repo"), tmp.path().join("wt"));
+        std::fs::create_dir_all(&wt).expect("mk");
+        std::fs::create_dir_all(&repo).expect("mk");
+        // No target/ in the clone: no-op, no panic.
+        warm_target(&repo, &wt).await;
+        assert!(!wt.join("target").exists());
+
+        std::fs::create_dir_all(repo.join("target/debug")).expect("mk");
+        std::fs::write(repo.join("target/debug/dep"), "x").expect("w");
+        warm_target(&repo, &wt).await;
+        assert_eq!(
+            wt.join("target/debug/dep").exists(),
+            cfg!(target_os = "macos")
+        );
+        assert!(repo.join("target/debug/dep").exists());
+    }
 
     async fn init_repo(dir: &Path) {
         let run = |args: &'static [&'static str]| {

@@ -611,6 +611,9 @@ impl AgentManager {
                 let branch = format!("bridle/{name}");
                 let base_ref = base.unwrap_or_else(|| role.base.clone());
                 worktree::add(&self.0.workspace.repo, &path, &branch, &base_ref).await?;
+                if self.0.config.warm_target {
+                    worktree::warm_target(&self.0.workspace.repo, &path).await;
+                }
                 created_worktree = Some((path.clone(), branch.clone()));
                 ("worktree", path.clone(), Some(path), Some(branch))
             }

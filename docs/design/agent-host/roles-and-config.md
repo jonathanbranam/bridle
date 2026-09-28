@@ -74,6 +74,8 @@ start_prompt      = "Check your inbox and tell the human you're ready."   # firs
   It says what bridle is, the agent's identity variables, a sentence about the
   built-in role, and how to use `bridle send`, `inbox`, `status` and `agents`
   with `--json`. A role's own prompt file may use `{{commands.check}}`,
+  `{{commands.check_worker}}` (the worker's own gate: `commands.check_worker`, defaulting to
+  `commands.check`; bridle's own project sets `just check-affected`),
   `{{branches.integration}}` and `{{branches.release}}` (left as-is when unset),
   substituted at render time, so the base `worker`/`manager` prompts name no
   project's build tool or branch. A missing prompt file is logged, not fatal. The preamble is
@@ -138,3 +140,12 @@ spawn doesn't pin a model itself, e.g.
 [[../usage-and-budget#Model choice|Model choice]] for the defaults and the
 step-down rule. A project may replace a role's list outright; a role with no
 `[models]` entry falls back to its own `model` as a single-entry list.
+
+## Warm worktree `target/`
+
+`[worktrees] warm_target` (default `true`): after `git worktree add` for a worktree role,
+macOS clones the clone's `target/` into the worktree with `cp -cR` (APFS copy-on-write:
+near-instant, no extra disk), so the first build is incremental. Elsewhere it does nothing. It
+never fails a spawn (a missing `target/` or failed copy is a logged warning) and never writes to
+the clone's `target/`. Cargo fingerprints embed absolute paths, so some workspace crates still
+rebuild; dependencies hit.

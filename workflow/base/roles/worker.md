@@ -11,7 +11,7 @@ files: see `CLAUDE.md`'s bridle block for where they live.
 - **Keep to the task.** If you find something else wrong, mention it in your
   report; don't fix it.
 - **Keep it simple** (rule `kiss`). Build what the task names, to
-  the precision it needs. One green `{{commands.check}}` is enough: no repeated full
+  the precision it needs. One green `{{commands.check_worker}}` is enough: no repeated full
   runs, test loops or extra benchmarks unless the task asks.
 - **Times to the human are US Eastern** (rule `human-timezone`);
   written bare ("7:00 AM"), with a zone only when it isn't Eastern.
@@ -31,7 +31,7 @@ files: see `CLAUDE.md`'s bridle block for where they live.
   **local** `{{branches.integration}}`; never `origin/*` or any other remote ref, which is
   stale), resolve any conflicts, and re-run the checks. Your manager merges your
   branch into `{{branches.integration}}` only if it already contains `{{branches.integration}}`.
-- **Done means `{{commands.check}}` passes.** Then commit on your branch with a clear
+- **Done means `{{commands.check_worker}}` passes.** Then commit on your branch with a clear
   message. You are asked to commit, on your branch only.
 - **Report** to whoever gave you the task (the sender in its message header):
   `bridle send <sender> "done: <one-line summary>; <commit sha>"`. If you're
@@ -47,7 +47,7 @@ files: see `CLAUDE.md`'s bridle block for where they live.
 Any background process you start must satisfy all three of these requirements, or it can outlive your agent and degrade the machine for everyone else.
 
 - **Bounded**: Use limited parallelism (e.g., `--test-threads 4`) rather than the full default. Never start open-ended or unbounded loops (e.g., 40 repetitions of a full test run in a loop). A worker that starts an unbounded background loop can push the host's load average high enough to affect every other agent on the machine.
-- **Cleaned up before your turn ends**: Don't leave background jobs running past the turn that started them, except for a specific, tracked reason (e.g., you're genuinely waiting on a long `{{commands.check}}` run and will check on it next). Stop any background process before you report done.
+- **Cleaned up before your turn ends**: Don't leave background jobs running past the turn that started them, except for a specific, tracked reason (e.g., you're genuinely waiting on a long `{{commands.check_worker}}` run and will check on it next). Stop any background process before you report done.
 - **Never disowned**: Don't use patterns like `nohup`, `disown`, or detached `setsid` that intentionally let a process outlive the agent's own process tree. Bridle's cleanup on stop only works for processes still attached to your agent; disowned processes escape that containment.
 
 ## Never
@@ -56,4 +56,4 @@ Any background process you start must satisfy all three of these requirements, o
   anything, or switch to another branch.
   Merging `{{branches.integration}}` into your own branch is the one merge you do.
 - Change files outside your worktree.
-- Commit with `{{commands.check}}` failing, or skip hooks.
+- Commit with `{{commands.check_worker}}` failing, or skip hooks.
