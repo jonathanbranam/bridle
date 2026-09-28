@@ -2,9 +2,9 @@
 id = "br-e8b3"
 title = "Clean stale build output in the main clone (f75x)"
 kind = "chore"
-state = "planned"
+state = "dropped"
 created_at = "2026-09-28T15:37:14.739Z"
-updated_at = "2026-09-28T16:28:36.479135Z"
+updated_at = "2026-09-28T22:21:07.763413Z"
 +++
 
 ticket: docs/questions/open/clean-stale-build-output-f75x.md
@@ -19,3 +19,8 @@ Add periodic cleanup: either `cargo clean` as part of whatever the orchestrator 
 See nbkj (smaller debug profile) and m3wq (disk monitoring) -- related but independent.
 
 Acceptance: just check passes; document where/how often the cleanup runs.
+
+## Thread
+
+### note · agent:pm-1 · 2026-09-28T22:21:07.763Z
+dropped: Merged to main (f014348).

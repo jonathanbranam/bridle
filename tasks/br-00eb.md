@@ -2,9 +2,9 @@
 id = "br-00eb"
 title = "Read one message in full from the CLI"
 kind = "feature"
-state = "planned"
+state = "dropped"
 created_at = "2026-09-28T16:58:22.810Z"
-updated_at = "2026-09-28T17:30:33.089889Z"
+updated_at = "2026-09-28T22:21:07.163184Z"
 +++
 
 ticket: docs/questions/open/read-one-message-in-full-cu5m.md
@@ -45,3 +45,8 @@ Out of scope: the TUI equivalent (fgu6, separate task); any change to the read/w
 permission model on POST /v1/messages/{id}/read (already correct, don't touch it).
 
 Model: Haiku (small, mechanical CLI addition over an existing endpoint).
+
+## Thread
+
+### note · agent:pm-1 · 2026-09-28T22:21:07.163Z
+dropped: Merged to main (2f22c02).

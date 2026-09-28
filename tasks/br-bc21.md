@@ -2,9 +2,9 @@
 id = "br-bc21"
 title = "Harvest the onboarding survey's Base rows into workflow/base/rules/"
 kind = "feature"
-state = "planned"
+state = "dropped"
 created_at = "2026-09-28T16:42:02.250Z"
-updated_at = "2026-09-28T16:42:03.830147Z"
+updated_at = "2026-09-28T22:21:06.869536Z"
 +++
 
 Part of onboarding data-contracts (docs/context/onboarding-data-contracts.md §3, §7 step 2;
@@ -44,3 +44,8 @@ Out of scope: anything not explicitly marked "Base" in the survey's §3 table; e
 data-contracts itself.
 
 Model: Sonnet (judgment calls on wording/redundancy against existing bridle rules).
+
+## Thread
+
+### note · agent:pm-1 · 2026-09-28T22:21:06.869Z
+dropped: Merged to main (b5ec903).
