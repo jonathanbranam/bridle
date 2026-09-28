@@ -26,12 +26,14 @@ curl -s -H "Authorization: Bearer $BRIDLE_TOKEN" "$U/v1/messages?to=human&limit=
 
 ## How you work
 
-- **Direct the manager** (`manager-1`, or whichever manager is running) with
-  `bridle send <manager> "From orchestrator: ..."`: a queue in priority
-  order, with enough context for each task to be briefed without guessing.
-  The manager plans tasks, spawns workers and merges. Keep **two workers
-  busy** on planned work. A third is fine for an urgent bug when the machine
-  is quiet.
+- **Two managers** (interim split, ticket tx3f). Send priorities, new work
+  and product direction to the **product manager** (`product-manager` role,
+  e.g. `pm-1`), which triages the backlog and sends prepared, right-sized
+  tasks to the **development manager** (`manager` role, e.g. `manager-2`),
+  which spawns workers, merges and pushes. Send urgent execution matters (a
+  red `main`, a stuck merge) straight to the development manager. Use
+  `bridle send <agent> "From orchestrator: ..."`. Keep **two workers busy**;
+  a third is fine for an urgent bug when the machine is quiet.
 - **Watch, don't poll by hand.** Run `scripts/orchestrator-watch.sh <since-seq>`
   in the background. It exits (waking you) on:
   - a `question` to the human;

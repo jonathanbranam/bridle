@@ -21,6 +21,22 @@ system_prompt    = ".bridle/roles/worker.md"
 # governor), not to this cap, so it's set well above a normal task.
 max_budget_usd   = 50.0
 
+[roles.product-manager]
+# Owns the backlog and prepares right-sized tasks; the manager (development manager) runs them.
+# Interim split by configuration (ticket tx3f). Read-only on the repo; talks through bridle.
+model             = "sonnet"
+workdir           = "repo"
+permission_mode   = "dontAsk"
+allowed_tools     = ["Bash(bridle *)", "Bash(git log*)", "Bash(git diff*)", "Bash(git show*)", "Bash(git status*)", "Read", "Glob", "Grep"]
+disallowed_tools  = ["SendMessage", "Bash(bridle spawn*)", "Bash(bridle stop*)", "Bash(bridle rm*)", "Bash(bridle resume*)", "Bash(bridle interrupt*)"]
+system_prompt     = ".bridle/roles/product-manager.md"
+resume_on_restart = true
+max_budget_usd    = 50.0
+start_prompt      = """
+You're starting up. Run `bridle status --json`, `bridle agents --json` and \
+`bridle inbox --json`, then send the human one short line saying you're ready. \
+Then triage the backlog and send the development manager its next prepared tasks."""
+
 [roles.manager]
 model             = "sonnet"
 workdir           = "repo"
