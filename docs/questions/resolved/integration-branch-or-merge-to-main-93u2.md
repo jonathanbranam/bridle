@@ -30,3 +30,13 @@ rejected work is undone.
   default, with `before-merge` suggested for harness.
 - [[docs/proposal/build-order|Build order]] P5: the integrator (merge-tree probes, merging
   workers' branches) comes after v1.
+
+## Resolution
+
+Decided to merge worker branches straight to main with `--no-ff`, as described
+in `docs/design/agent-host/operating-model.md`, "Merging completed work"
+section (lines 60–74). The merger in main checks that the branch contains
+main, validates the diff, and merges with `git merge --no-ff bridle/<agent>`.
+An integration branch and integrator role remain open in build-order P5.
+
+Resolved 2026-09-28.
