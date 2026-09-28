@@ -105,7 +105,7 @@ async fn events_stream_since_skips_already_seen_events() {
     let cutoff = all[all.len() / 2].seq;
 
     let mut stream = Box::pin(daemon.client.events_stream(Some(cutoff)));
-    let first = tokio::time::timeout(std::time::Duration::from_secs(10), stream.next())
+    let first = tokio::time::timeout(support::HANG_GUARD_TIMEOUT, stream.next())
         .await
         .expect("timed out")
         .expect("stream ended")

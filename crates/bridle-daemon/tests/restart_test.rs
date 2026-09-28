@@ -102,7 +102,7 @@ async fn restart_marks_a_stale_running_agent_lost_and_kills_its_process() {
     // test), so `kill(pid, 0)` alone isn't reliable here — a signaled
     // child sits as a zombie, and zombie pids still answer a liveness
     // probe, until whoever reaps it (us) calls `wait()`.
-    let status = tokio::time::timeout(std::time::Duration::from_secs(5), child.wait())
+    let status = tokio::time::timeout(support::HANG_GUARD_TIMEOUT, child.wait())
         .await
         .expect("stray process was not reaped promptly")
         .expect("wait on stray process");
