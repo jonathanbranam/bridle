@@ -7,6 +7,11 @@ at the handover from the sixth orchestrator session.
 
 ## First, for the incoming orchestrator
 
+- **meta-notes is live** (2026-09-28, 22:52 UTC): its daemon runs from
+  `/Volumes/Data/work/meta-notes-workspace/meta-notes` on `bridle-adopt` (never `main`);
+  its manager is `manager` (autostart). Reach it with `--project meta-notes` and
+  `BRIDLE_TOKEN=$(cat ~/.bridle-orchestrator-meta-notes.token)`. It has no CI, so the worker's
+  check is the gate. The human gives it tasks directly.
 - **The human's goal, which orders the queue** (2026-09-28, via the advisor): "Bridle should be
   working well enough and useful enough that we can do productive work on my other
   projects." They worry software factories end up working on themselves. Also in the
