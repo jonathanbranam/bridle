@@ -2,9 +2,9 @@
 id = "br-7bf8"
 title = "The TUI inbox doesn't scroll"
 kind = "bug"
-state = "planned"
+state = "dropped"
 created_at = "2026-09-28T15:03:27.767Z"
-updated_at = "2026-09-28T22:21:32.111942Z"
+updated_at = "2026-09-28T23:51:59.879799Z"
 +++
 
 tickets: docs/questions/open/tui-inbox-doesnt-scroll-8ups.md (8ups) and
@@ -31,3 +31,8 @@ anything else in the TUI.
 
 Size: small (filler for low budget). Model: Haiku if the change is as mechanical as it
 looks; Sonnet if ui.rs state handling turns out tangled.
+
+## Thread
+
+### note · agent:pm-1 · 2026-09-28T23:51:59.879Z
+dropped: Merged to main (07d929c).

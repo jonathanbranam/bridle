@@ -245,3 +245,5 @@
 {"actor":"agent:pm-1","at":"2026-09-28T23:36:35.531346Z","from":"open","task":"br-1185","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-09-28T23:36:35.694496Z","from":"open","task":"br-37b2","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-09-28T23:36:39.575698Z","queue":"reprioritized"}
+{"actor":"agent:pm-1","at":"2026-09-28T23:51:59.559438Z","from":"planned","task":"br-37b2","to":"dropped"}
+{"actor":"agent:pm-1","at":"2026-09-28T23:51:59.879799Z","from":"planned","task":"br-7bf8","to":"dropped"}
