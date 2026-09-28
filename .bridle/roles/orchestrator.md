@@ -111,7 +111,8 @@ The human should only have to agree and run one command (ticket d4mz):
    Commit it and push `main`.
 3. Stop your watcher (`TaskStop`) and heartbeat (`CronDelete`).
 4. Tell the human to run `scripts/claude-orchestrator` from the clone. It
-   starts `claude` with Remote Control on, and with the standing opening prompt.
+   starts `claude` with Remote Control on, opened with `bridle prime orchestrator`
+   (this file, the current state, and the startup steps).
 
 ## Only the human can
 

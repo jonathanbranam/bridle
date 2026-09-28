@@ -113,6 +113,21 @@ pub enum Command {
     /// claimed task with no thread entry since claiming it. Never fails: any
     /// error of bridle's own allows the stop rather than trapping the agent.
     StopCheck,
+    /// Print a fresh session's opening context for a role: the role prompt,
+    /// current state and startup steps. Orchestrator only for now.
+    Prime(PrimeArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct PrimeArgs {
+    #[arg(value_enum)]
+    pub role: PrimeRoleArg,
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+#[value(rename_all = "lower")]
+pub enum PrimeRoleArg {
+    Orchestrator,
 }
 
 #[derive(Debug, Args)]
@@ -909,6 +924,27 @@ mod tests {
     fn rebuild_parses() {
         let cli = parse(&["rebuild"]).unwrap();
         assert!(matches!(cli.command, Command::Rebuild));
+    }
+
+    #[test]
+    fn prime_orchestrator_parses() {
+        let cli = parse(&["prime", "orchestrator"]).unwrap();
+        let Command::Prime(args) = cli.command else {
+            panic!("expected prime")
+        };
+        assert!(matches!(args.role, PrimeRoleArg::Orchestrator));
+    }
+
+    #[test]
+    fn prime_rejects_unknown_role() {
+        let err = parse(&["prime", "worker"]).unwrap_err();
+        assert_eq!(err.kind(), clap::error::ErrorKind::InvalidValue);
+    }
+
+    #[test]
+    fn prime_requires_a_role() {
+        let err = parse(&["prime"]).unwrap_err();
+        assert_eq!(err.kind(), clap::error::ErrorKind::MissingRequiredArgument);
     }
 
     #[test]

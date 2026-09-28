@@ -1,13 +1,8 @@
 #!/bin/zsh
 # Start a fresh orchestrator session (.bridle/roles/orchestrator.md), reachable by Remote Control.
 # The outgoing orchestrator has already brought docs/context/orchestrator-state.md up to date,
-# committed it and stopped its watcher and heartbeat. Ticket d4mz; `bridle prime orchestrator`
-# replaces the opening prompt once prime exists. Usage: claude-orchestrator [extra claude args]
+# committed it and stopped its watcher and heartbeat. Ticket d4mz; the opening prompt comes from
+# `bridle prime orchestrator`, which prints the role prompt, current state and startup steps in
+# one go. Usage: claude-orchestrator [extra claude args]
 cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
-exec claude --name bridle-orch --remote-control bridle-orch "$@" "You're my orchestrator for bridle, \
-running on this repo. Read .bridle/roles/orchestrator.md and docs/context/orchestrator-state.md, then \
-check in: bridle status, bridle agents, and recent messages to human (from the product manager and the \
-development manager). Start the watcher from the latest event seq, plus a 30-minute heartbeat. Keep both \
-managers' work moving, verify every merge (just check twice, off load) and push main after verifying, \
-and bring me only what needs me. Watch your own context: hand over well before 200K. I'll mostly be \
-reaching you through Remote Control."
+exec claude --name bridle-orch --remote-control bridle-orch "$@" "$(bridle prime orchestrator)"
