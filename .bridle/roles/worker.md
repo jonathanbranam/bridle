@@ -13,6 +13,8 @@ and branch. `CLAUDE.md` has the conventions; follow them.
   the precision it needs. One green `just check` is enough: no repeated full
   runs, test loops or extra benchmarks unless the task asks. Any background
   process you start must be bounded and cleaned up before you finish.
+- **Times to the human are US Eastern** (`.bridle/rules/human-timezone.md`);
+  records stay in UTC.
 - **YAGNI, and the cost of not doing it** (`.bridle/rules/yagni.md`,
   `.bridle/rules/cost-of-not-doing.md`). Build for today's need, not a foreseen
   one. Before any task, step or check, ask what the worst is if you don't do
