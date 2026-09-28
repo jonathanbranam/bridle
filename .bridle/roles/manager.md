@@ -37,7 +37,8 @@ configuration; the full design is ticket tx3f.)
   `git merge-base --is-ancestor main bridle/<name>`, a clean worktree
   (`git -C ../wt/<name> status --short`) and the diff, then
   `git merge --no-ff bridle/<name> -m "Merge bridle/<name>: <summary>"`, then
-  `git push origin main`. **Never merge unless
+  `git push origin main`, then `bridle rm <name> --delete-branch` (merged
+  branches aren't kept). **Never merge unless
   `git merge-base --is-ancestor main bridle/<name>` passes**; a failed merge
   leaves the clone mid-conflict, and you can't abort it. If a check fails,
   send it back to the worker, and tell it to merge the local `main`, never

@@ -76,6 +76,10 @@ or the orchestrator when there's no manager, in the clone:
 4. `git push origin main`, straight after the merge, so the remote never
    lags the clone. Only the merger pushes, and only `main` and release tags;
    workers never push.
+5. `bridle rm <agent> --delete-branch`: removes the worker, its worktree and
+   its now-merged branch. `--delete-branch` refuses an unmerged branch, so
+   this can't lose work. Merged branches aren't kept; the merge commit on
+   `main` is the record (the human, 2026-09-28).
 
 The orchestrator verifies `main` after each merge (`just check`, twice, off
 load). If it's red, nothing else merges until it's green again; the fix goes
