@@ -81,6 +81,9 @@ pub struct Overrides {
     /// flush trigger yet (that arrives with `accept`), so this is the only
     /// thing that commits task records durably right now.
     pub task_flush_interval: Duration,
+    /// How often [`tasks::TaskManager::tick_claim_lease_check`] walks open
+    /// claims for a stale lease.
+    pub claim_lease_check_interval: Duration,
 }
 
 impl Default for Overrides {
@@ -95,6 +98,7 @@ impl Default for Overrides {
             governor_poll_interval_normal: Duration::from_secs(5 * 60),
             governor_poll_interval_above_hold: Duration::from_secs(30),
             task_flush_interval: Duration::from_secs(30),
+            claim_lease_check_interval: Duration::from_secs(30),
         }
     }
 }
@@ -162,9 +166,14 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         .task_prefix
         .clone()
         .unwrap_or_else(|| config::default_task_prefix(&project));
-    let tasks = tasks::TaskManager::open(store.clone(), state_branch, task_prefix)
-        .await
-        .context("loading tasks")?;
+    let tasks = tasks::TaskManager::open(
+        store.clone(),
+        state_branch,
+        task_prefix,
+        config.claim_lease_after,
+    )
+    .await
+    .context("loading tasks")?;
 
     let emitter = Emitter::new(store.clone());
     reconcile(&store, &emitter)
@@ -308,6 +317,13 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
             }
         }
     });
+    let claim_lease_task = spawn_loop(shutdown_rx.clone(), overrides.claim_lease_check_interval, {
+        let tasks = tasks.clone();
+        move || {
+            let tasks = tasks.clone();
+            async move { tasks.tick_claim_lease_check(Utc::now()).await }
+        }
+    });
     let signal_task = signals.listen(shutdown_tx.clone());
 
     let join_handle = tokio::spawn(async move {
@@ -352,6 +368,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         governor_task.abort();
         prune_task.abort();
         task_flush_task.abort();
+        claim_lease_task.abort();
     });
 
     Ok(RunningDaemon {

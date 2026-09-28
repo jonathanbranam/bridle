@@ -1,14 +1,23 @@
 //! Task records: the SQLite fast index (`crate::store`) and the state
 //! branch (`crate::state_branch`) kept in step, plus an in-memory cache that
 //! carries the body/thread the database doesn't (docs/design/storage.md).
-//! Scoped to this build's four states: `open`, `planned`, `dropped`,
-//! `reopened`; claims and the rest of the lifecycle arrive with later tasks.
+//! Scoped to this build's states: `open`, `planned`, `claimed`, `dropped`,
+//! `reopened`; `in_review`, `integrated` and `accepted` arrive with later
+//! tasks.
 //!
 //! Edges (coordination.md) and `ready` (roles-and-lifecycle.md, "ready is
 //! computed") live here too, on the same manager, per that design: an edge
 //! is durable the same way a task is (database fast index + state branch,
 //! written in the same logical operation), and `ready` needs both the task
 //! cache and the edge cache to answer.
+//!
+//! Claims are different: storage.md calls them out as one of "the ephemeral
+//! tables … [that] arrive with later tasks" — SQLite-only, with no
+//! state-branch file or thread entry. `claim_task`/`release_task` write only
+//! to `Store`; the claiming agent's own activity (the same signal
+//! `supervisor.rs`'s stall check watches) stands in for a lease renewal, so
+//! [`TaskManager::tick_claim_lease_check`] can release a stale claim without
+//! a separate heartbeat call.
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -69,6 +78,14 @@ pub struct TaskManager {
     /// `open`, so `has_open_questions` (called from the sync `is_ready`) can
     /// answer without a database round trip.
     open_questions: Arc<Mutex<HashMap<String, String>>>,
+    /// Task id -> claimant, for every currently claimed task. Mirrors
+    /// `Store::list_claims`, loaded at `open`. Unlike `open_questions`,
+    /// there's no state-branch counterpart at all (storage.md: claims is
+    /// SQLite-only).
+    claims: Arc<Mutex<HashMap<String, PrincipalId>>>,
+    /// How long a claim survives without the claiming agent's own activity
+    /// before [`TaskManager::tick_claim_lease_check`] releases it.
+    claim_lease_after: chrono::Duration,
 }
 
 impl TaskManager {
@@ -77,7 +94,12 @@ impl TaskManager {
     /// `insert_task` and the first flush that would have written it) falls
     /// back to an empty body/thread built from the database row alone,
     /// rather than failing daemon startup over it.
-    pub async fn open(store: Store, state: StateBranch, prefix: String) -> Result<Self, TaskError> {
+    pub async fn open(
+        store: Store,
+        state: StateBranch,
+        prefix: String,
+        claim_lease_after: std::time::Duration,
+    ) -> Result<Self, TaskError> {
         let rows = store.list_tasks().await?;
         let mut cache = HashMap::with_capacity(rows.len());
         for row in rows {
@@ -100,6 +122,12 @@ impl TaskManager {
             .into_iter()
             .map(|q| (q.task_id, q.message_id))
             .collect();
+        let claims = store
+            .list_claims()
+            .await?
+            .into_iter()
+            .map(|c| (c.task_id, c.claimed_by))
+            .collect();
         Ok(TaskManager {
             store,
             state,
@@ -107,6 +135,9 @@ impl TaskManager {
             cache: Arc::new(Mutex::new(cache)),
             edges: Arc::new(Mutex::new(edges)),
             open_questions: Arc::new(Mutex::new(open_questions)),
+            claims: Arc::new(Mutex::new(claims)),
+            claim_lease_after: chrono::Duration::from_std(claim_lease_after)
+                .unwrap_or_else(|_| chrono::Duration::zero()),
         })
     }
 
@@ -447,6 +478,116 @@ impl TaskManager {
         Ok(self.put(task))
     }
 
+    // ---------- claims ----------
+
+    /// Claims `id` for `by`: `planned` -> `claimed`. Fails with `Conflict`
+    /// if the task isn't ready right now — not planned, blocked, or already
+    /// claimed (claiming again would need it to still be `planned`, which
+    /// `is_ready` already requires). Unlike drop/reopen, this writes only to
+    /// the database: claims are SQLite-only, with no state-branch file or
+    /// thread entry (storage.md, "the ephemeral tables … arrive with later
+    /// tasks").
+    #[allow(
+        dead_code,
+        reason = "exercised by tests only until bridle claim (P0-4b) calls it"
+    )]
+    pub async fn claim_task(&self, id: &str, by: &PrincipalId) -> Result<Task, TaskError> {
+        let mut task = self
+            .get_task(id)
+            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+        if !self.is_ready(&task) {
+            return Err(TaskError::Conflict(format!(
+                "task {id} is not ready to claim"
+            )));
+        }
+        let now = Utc::now();
+        self.store.insert_claim(id, by, now).await?;
+        self.store.set_task_state(id, TaskState::Claimed).await?;
+        self.claims
+            .lock()
+            .expect("claims lock")
+            .insert(id.to_string(), by.clone());
+        task.state = TaskState::Claimed;
+        task.updated_at = now;
+        Ok(self.put(task))
+    }
+
+    /// Releases `id`'s claim: `claimed` -> `planned`. Fails with `Conflict`
+    /// if `by` isn't the current claimant (including if the task isn't
+    /// claimed at all).
+    #[allow(
+        dead_code,
+        reason = "exercised by tests only until bridle release (P0-4b) calls it"
+    )]
+    pub async fn release_task(&self, id: &str, by: &PrincipalId) -> Result<Task, TaskError> {
+        {
+            let claims = self.claims.lock().expect("claims lock");
+            match claims.get(id) {
+                Some(claimant) if claimant == by => {}
+                Some(_) => {
+                    return Err(TaskError::Conflict(format!(
+                        "task {id} is claimed by another agent"
+                    )));
+                }
+                None => {
+                    return Err(TaskError::Conflict(format!("task {id} is not claimed")));
+                }
+            }
+        }
+        self.release_claim(id).await
+    }
+
+    /// The shared release path for an explicit `release_task` and automatic
+    /// lease expiry: clears the claim and transitions the task back to
+    /// `planned`, without touching the state branch.
+    async fn release_claim(&self, id: &str) -> Result<Task, TaskError> {
+        let mut task = self
+            .get_task(id)
+            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+        self.store.delete_claim(id).await?;
+        self.store.set_task_state(id, TaskState::Planned).await?;
+        self.claims.lock().expect("claims lock").remove(id);
+        task.state = TaskState::Planned;
+        task.updated_at = Utc::now();
+        Ok(self.put(task))
+    }
+
+    /// Releases any claim whose claiming agent has gone quiet past
+    /// `claim_lease_after`, using the same activity signal the supervisor's
+    /// stall check watches (`last_event_at.or(turn_started_at)`,
+    /// `supervisor.rs::tick_stall_check`) rather than a separate renewal
+    /// call: a claim is alive as long as its claimant is. `now` is passed in
+    /// rather than read live, so tests can inject a stale claimant without
+    /// waiting out the real lease.
+    pub async fn tick_claim_lease_check(&self, now: chrono::DateTime<Utc>) {
+        let claimed: Vec<(String, PrincipalId)> = self
+            .claims
+            .lock()
+            .expect("claims lock")
+            .iter()
+            .map(|(id, by)| (id.clone(), by.clone()))
+            .collect();
+        for (task_id, claimant) in claimed {
+            // Agent principals are `agent:<name>` (principals.md); `agents`
+            // rows are keyed by id/name, not this prefixed form (mirrors the
+            // same lookup in server.rs).
+            let name = claimant.strip_prefix("agent:").unwrap_or(&claimant);
+            let Ok(Some(agent)) = self.store.get_agent(name).await else {
+                // Not an agent claimant (e.g. `human`), or a lookup error:
+                // nothing to measure activity against, so leave the claim as
+                // is rather than guessing.
+                continue;
+            };
+            let Some(last) = agent.last_event_at.or(agent.turn_started_at) else {
+                continue;
+            };
+            if now - last < self.claim_lease_after {
+                continue;
+            }
+            let _ = self.release_claim(&task_id).await;
+        }
+    }
+
     pub fn ready_tasks(&self) -> Vec<Task> {
         self.list_tasks()
             .into_iter()
@@ -494,7 +635,7 @@ impl TaskManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::store::Store;
+    use crate::store::{NewAgent, Store};
     use std::path::Path;
     use tokio::process::Command;
 
@@ -538,9 +679,14 @@ mod tests {
         let state = StateBranch::open(&repo, &tmp.path().join("state"))
             .await
             .expect("open state branch");
-        let tm = TaskManager::open(store, state, "tw".to_string())
-            .await
-            .expect("open task manager");
+        let tm = TaskManager::open(
+            store,
+            state,
+            "tw".to_string(),
+            std::time::Duration::from_secs(600),
+        )
+        .await
+        .expect("open task manager");
         (tm, tmp)
     }
 
@@ -799,9 +945,14 @@ mod tests {
         let state = StateBranch::open(&repo, &tmp.path().join("state"))
             .await
             .expect("open state branch");
-        let tm = TaskManager::open(store.clone(), state.clone(), "tw".to_string())
-            .await
-            .expect("open task manager");
+        let tm = TaskManager::open(
+            store.clone(),
+            state.clone(),
+            "tw".to_string(),
+            std::time::Duration::from_secs(600),
+        )
+        .await
+        .expect("open task manager");
 
         let task = tm
             .new_task("Add foo", TaskKind::Feature, "a description".to_string())
@@ -812,9 +963,14 @@ mod tests {
         // A fresh manager over the same store and state branch, as a
         // restarted daemon would build, hydrates the full record (title
         // *and* body) from the flushed file, not just the database row.
-        let tm2 = TaskManager::open(store, state, "tw".to_string())
-            .await
-            .expect("reopen task manager");
+        let tm2 = TaskManager::open(
+            store,
+            state,
+            "tw".to_string(),
+            std::time::Duration::from_secs(600),
+        )
+        .await
+        .expect("reopen task manager");
         let rehydrated = tm2.get_task(&task.id).expect("rehydrated");
         assert_eq!(rehydrated.title, "Add foo");
         assert_eq!(rehydrated.body, "a description");
@@ -906,9 +1062,14 @@ mod tests {
         let state = StateBranch::open(&repo, &tmp.path().join("state"))
             .await
             .expect("open state branch");
-        let tm = TaskManager::open(store.clone(), state.clone(), "tw".to_string())
-            .await
-            .expect("open task manager");
+        let tm = TaskManager::open(
+            store.clone(),
+            state.clone(),
+            "tw".to_string(),
+            std::time::Duration::from_secs(600),
+        )
+        .await
+        .expect("open task manager");
 
         let task = tm
             .new_task("Add foo", TaskKind::Feature, String::new())
@@ -924,15 +1085,139 @@ mod tests {
         // open-questions index from the database (not the state branch, which
         // has no separate index of its own) and the thread entry from the
         // flushed task file.
-        let tm2 = TaskManager::open(store, state, "tw".to_string())
-            .await
-            .expect("reopen task manager");
+        let tm2 = TaskManager::open(
+            store,
+            state,
+            "tw".to_string(),
+            std::time::Duration::from_secs(600),
+        )
+        .await
+        .expect("reopen task manager");
         let rehydrated = tm2.get_task(&task.id).expect("rehydrated");
         assert_eq!(rehydrated.thread.len(), 1);
         assert_eq!(rehydrated.thread[0].kind, ThreadEntryKind::Question);
         assert!(
             !tm2.is_ready(&rehydrated),
             "the open question survives a restart and still blocks ready"
+        );
+    }
+
+    #[tokio::test]
+    async fn claim_blocks_ready_and_release_unblocks_it() {
+        let (tm, _tmp) = manager().await;
+        let task = tm
+            .new_task("Add foo", TaskKind::Feature, String::new())
+            .await
+            .expect("new task");
+        force_planned(&tm, &task.id);
+        assert!(tm.ready_tasks().iter().any(|t| t.id == task.id));
+
+        let claimed = tm
+            .claim_task(&task.id, &"agent:w1".to_string())
+            .await
+            .expect("claim task");
+        assert_eq!(claimed.state, TaskState::Claimed);
+        assert!(
+            !tm.ready_tasks().iter().any(|t| t.id == task.id),
+            "a claimed task drops out of ready"
+        );
+
+        // Claiming an already-claimed task is a conflict.
+        let err = tm
+            .claim_task(&task.id, &"agent:w2".to_string())
+            .await
+            .expect_err("already claimed");
+        assert!(matches!(err, TaskError::Conflict(_)));
+
+        let released = tm
+            .release_task(&task.id, &"agent:w1".to_string())
+            .await
+            .expect("release task");
+        assert_eq!(released.state, TaskState::Planned);
+        assert!(
+            tm.ready_tasks().iter().any(|t| t.id == task.id),
+            "releasing the claim re-enables readiness"
+        );
+
+        // Releasing again with nothing claimed is a conflict.
+        let err = tm
+            .release_task(&task.id, &"agent:w1".to_string())
+            .await
+            .expect_err("no longer claimed");
+        assert!(matches!(err, TaskError::Conflict(_)));
+    }
+
+    #[tokio::test]
+    async fn claim_by_another_agent_is_rejected() {
+        let (tm, _tmp) = manager().await;
+        let task = tm
+            .new_task("Add foo", TaskKind::Feature, String::new())
+            .await
+            .expect("new task");
+        force_planned(&tm, &task.id);
+
+        tm.claim_task(&task.id, &"agent:w1".to_string())
+            .await
+            .expect("claim task");
+
+        let err = tm
+            .release_task(&task.id, &"agent:w2".to_string())
+            .await
+            .expect_err("not the claimant");
+        assert!(matches!(err, TaskError::Conflict(_)));
+
+        // Still claimed by w1, untouched by w2's rejected release.
+        assert!(!tm.ready_tasks().iter().any(|t| t.id == task.id));
+    }
+
+    #[tokio::test]
+    async fn a_stale_claim_expires_and_releases_the_task_back_to_ready() {
+        let (tm, _tmp) = manager().await;
+        let store = tm.store.clone();
+        let task = tm
+            .new_task("Add foo", TaskKind::Feature, String::new())
+            .await
+            .expect("new task");
+        force_planned(&tm, &task.id);
+
+        let agent = store
+            .insert_agent(NewAgent {
+                name: "w1".to_string(),
+                role: "worker".to_string(),
+                model: "sonnet".to_string(),
+                session_id: "sess-1".to_string(),
+                workdir_kind: "worktree".to_string(),
+                cwd: "/ws/wt/w1".to_string(),
+                worktree: Some("/ws/wt/w1".to_string()),
+                branch: Some("bridle/w1".to_string()),
+                created_by: "human".to_string(),
+            })
+            .await
+            .expect("insert agent");
+        let last_activity = Utc::now();
+        store
+            .touch_agent(&agent.id, last_activity)
+            .await
+            .expect("touch agent");
+
+        tm.claim_task(&task.id, &"agent:w1".to_string())
+            .await
+            .expect("claim task");
+        assert!(!tm.ready_tasks().iter().any(|t| t.id == task.id));
+
+        // Well within the lease: a lease-check tick leaves the claim alone.
+        tm.tick_claim_lease_check(last_activity + chrono::Duration::seconds(1))
+            .await;
+        assert!(!tm.ready_tasks().iter().any(|t| t.id == task.id));
+
+        // Past the lease with no further activity: the tick releases it.
+        tm.tick_claim_lease_check(
+            last_activity + tm.claim_lease_after + chrono::Duration::seconds(1),
+        )
+        .await;
+        assert!(
+            tm.ready_tasks().iter().any(|t| t.id == task.id),
+            "a stale claim's lease expiry re-enables readiness"
         );
     }
 }

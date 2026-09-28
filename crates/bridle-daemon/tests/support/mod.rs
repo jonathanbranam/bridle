@@ -20,6 +20,10 @@ use tokio::process::Command;
 pub const POLL: Duration = Duration::from_millis(100);
 pub const TIMEOUT: Duration = Duration::from_secs(20);
 
+/// Hang guard timeout for waiting on the fake claude process or its events.
+/// A passing test should never be slowed by this; only a genuinely hung one waits longer.
+pub const HANG_GUARD_TIMEOUT: Duration = Duration::from_secs(60);
+
 pub fn fake_claude_path() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../bridle-claude/tests/fake-claude.py")
@@ -122,6 +126,7 @@ pub async fn start_daemon_with_config(
         governor_poll_interval_normal: Duration::ZERO,
         governor_poll_interval_above_hold: Duration::ZERO,
         task_flush_interval: Duration::from_secs(3600),
+        claim_lease_check_interval: Duration::from_secs(3600),
     });
     let running = bridle_daemon::start(opts, overrides)
         .await
