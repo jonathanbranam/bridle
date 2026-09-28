@@ -2,65 +2,74 @@
 
 The orchestrator's working notes for handing over between sessions. The role
 itself is in `workflow/base/roles/orchestrator.md`. Update this file whenever the
-queue, open items or decisions change. Last updated 2026-09-28 17:00 UTC,
-during the sixth orchestrator session.
+queue, open items or decisions change. Last updated 2026-09-28 18:00 UTC,
+at the handover from the sixth orchestrator session.
 
 ## First, for the incoming orchestrator
 
-- **`main` is c533cb0, verified** (two local runs, 428/428); the daemon
-  runs it since 17:53 UTC.
-  (Superseded:) The installed binary was built from 8516bf8. The daemon started
-  16:22 UTC on f401a7f (j479, a7h3, 9c63, persist-spawn-overrides all live);
-  only the renewal first-message fix (br-ab66, 8516bf8) waits for the next
-  restart. Start the watcher from seq ~22386.
-- **Agents now reach you directly** (a7h3): `bridle send external:orchestrator`.
-  The watcher wakes on your inbox; read with `bridle inbox`, then
-  `bridle inbox --mark-read` or it fires again. The human's inbox is for what
-  they must act on only (kp3f).
-- **The queue is live** (j479): `bridle queue`. pm-1 owns it (tiers of
-  equally ranked tasks, on the state branch); manager-2 takes from the top
-  tier by load and never re-prioritises. Priorities go to pm-1, who records
-  them; not by message alone.
-- **In flight: the data-contracts onboarding.** The human answered the
-  survey's 8 questions (2026-09-28, sixth session):
-  1. `adopt-branch-per-change-workflow`: deleted, local and origin (tip
-     4200ad6), worktree and orphaned `.claude/worktrees/` removed. Done.
-  2. `.claude/settings.json`: the human removed it on purpose; don't re-add.
-  3. OpenSpec: option B. Keep `openspec/specs/` and the spec->feature
-     pipeline; retire the CLI, the 10 skills and `changes/`.
-  4. **No gates**: bridle's normal merge model applies to data-contracts.
-  5. `docs/tickets/` frozen; DC ticket 3fm6 deletes it once bridle is
-     adopted. Workflow tickets are not migrated (vf32 sjkw 6tps mv9p d35t
-     dropped, 992c landed: DC b923c7e, pushed). Library tickets become tasks.
-  6. `plan-of-record.md`: keep §0 and §3, retire §1 and §2 for the queue.
-  7. Link checking: DC keeps `check-tickets.py` for now. The human is unsure
-     which docs live in bridle vs markdown: ticket hv8e (br-8c6e).
-  8. `workflow`: absolute path to bridle's clone for now; a git url yields an
-     empty base today (nothing clones it; `rules.rs` discover_layers).
-  Bridle side queued by pm-1 (tier 2): br-1e0c roles into workflow/base (in
-  progress), br-4221 check-command binding, br-7678 python pack (after
-  br-4221), br-bc21 harvest base rules.
-  **HOLD all changes in data-contracts** (the human's standing rule,
-  2026-09-28: no changes to their existing projects without their review and
-  approval; `workflow/base/rules/existing-projects.md`, ticket 63rv). Every
-  onboarding is a trial on its own integration branch; `main`/`dev` are never
-  touched until the human approves adoption. Needs rxe8 (br-29f9) first.
-  Before the rule reached us, the orchestrator had already pushed ticket moves
-  to DC `main` (b923c7e) and deleted the adopt branch (both on the human's
-  explicit answers); the human was told and said keep it. The trial branch
-  is `bridle-adopt` (63rv), made by the orchestrator from DC `main` (incl.
-  b923c7e) once br-29f9 lands, and pushed.
-- **`merge.ff = only` fix merged** (m2fq, br-544b, b809c4e): workers use
-  `git merge --no-ff main`; live for new workers after the next restart.
+- **Do these first, before the budget hold lifts (five_hour resets 19:20
+  UTC, 3:20 PM):** the sixth session couldn't send them while the human
+  cycled the daemon for a new budget setting.
+  1. `bridle send pm-1`: drop br-d063 (vxp6 spike, merged ea9ee52), br-544b
+     (m2fq, merged b809c4e) and br-1e0c (roles, merged d9a770a). The 17:53
+     restart released their claims and they show "planned startable" in
+     tiers 1-2; with no done state (br-789a), manager-2 would re-spawn them.
+     Also: queue the advisor's new ticket 6t29 (named budget presets via
+     `bridle budget override`, max_workers per period) in tier 4 with br-7ab7.
+  2. `bridle send manager-2`: don't start those three; for br-7678 spawn a
+     fresh worker that continues from `bridle/python-pack` (482825b; handoff
+     note on the task). **Never resume `python-pack`**: every resume dies on
+     its first turn (p4ks, br-26ae).
+  3. `bridle inbox --mark-read` (the advisor's 6t29 note is unread).
+  4. After the hold lifts: renew pm-1 (idle at ~146K). Not during a hold:
+     a refused renew leaves the agent stopped (r3nh, br-187b). If the daemon
+     cycle left pm-1 or manager-2 stopped, `bridle resume` them.
+- **`main` is 0ca0ffd plus doc and watcher commits; code verified at c533cb0**
+  (two local runs, 428/428). Installed binary: c533cb0. The daemon was cycled
+  by the human after 17:55 UTC for a budget setting. Start the watcher from
+  seq ~23921.
+- **Budget holds are the maintenance window** (the human, 2026-09-28; the
+  role's new section; ticket m7wn). The watcher now wakes when a hold starts
+  (it remembers the reported state in `~/.bridle-orchestrator-hold-state`),
+  and ignores `budget_paused` exits. Keep the list below current.
+- **Waiting for the next maintenance window:** nothing yet beyond the pm-1
+  renewal.
+- **The standing rule on the human's projects** (`existing-projects`, 63rv):
+  no change to any of their projects without their review and approval.
+  Onboardings are trials on a `bridle-adopt` branch the orchestrator creates
+  from the project's `main` (or `dev`) and pushes; `main`/`dev` never touched.
+  br-29f9 (the `[branches]` setting) is merged, so data-contracts can start:
+  create `bridle-adopt` in DC (from `main`, which includes b923c7e; the
+  human said keep it), then survey step 3 on that branch, once the Python
+  pack (br-7678) lands.
+- **Onboarding order:** data-contracts, then meta-notes (Python pack with
+  pipenv, the Vim/vader pack br-55e2), then track-web (needs y3sd's
+  component design, br-a702). Other surveys filed by the advisor: d9nu
+  file-db, 8xhh otters, a8fk PixelLab tooling; not scheduled.
+- **Agents reach you directly** (a7h3), including the advisor (reminded
+  twice this session). The human's inbox is only for what they must act on
+  (kp3f); only the recipient can mark a message read (cu5m, queued br-00eb).
+- **The queue** (j479): pm-1 owns it; manager-2 is mechanical. Merged tasks
+  must be dropped by pm-1 (no done state yet, br-789a).
 - **Local permissions** (`.claude/settings.local.json`, untracked): the
-  watcher script and reads under data-contracts-workspace are allowed.
-- **Maintenance window, 2026-09-28 17:53 UTC:** `cargo clean` (8.2 GiB),
-  installed from c533cb0, the human restarted the daemon; pm-1 and
-  python-pack resumed. Still waiting: renew pm-1 once the hold lifts (not
-  during one: r3nh). manager-2 removed the finished workers itself (the
-  manager may `bridle rm`; only the orchestrator's auto mode can't).
-  `j2vq-orchestrator-perms` is parked (keep).
-- **Tests got ~10x faster after `cargo clean`** (400 s -> 35 s); see f75x.
+  watcher script, and reads under `/Volumes/Data/work/data-contracts-workspace/`.
+- **Managers may `bridle rm` finished workers themselves**; only the
+  orchestrator's auto mode can't. Don't ask the human to.
+
+### The data-contracts survey answers (the human, 2026-09-28)
+
+1. The adopt branch: deleted, local and origin (tip 4200ad6). Done.
+2. `.claude/settings.json`: removed on purpose; don't re-add.
+3. OpenSpec option B: keep `openspec/specs/` and the pipeline; retire the
+   CLI, the 10 skills and `changes/`.
+4. No human plan/land gates for bridle's work (the trial branch is the
+   review point).
+5. `docs/tickets/` frozen; DC ticket 3fm6 deletes it once bridle is adopted.
+   Workflow tickets not migrated (dropped: DC b923c7e). Library tickets
+   become tasks.
+6. `plan-of-record.md`: keep §0 and §3, retire §1 and §2.
+7. DC keeps `check-tickets.py` for now; where docs live is open (hv8e).
+8. `workflow` = absolute path to bridle's clone (git url isn't resolved yet).
 
 ## The data-contracts onboarding (plan agreed with the human)
 
@@ -92,28 +101,30 @@ P3; new work goes in bridle's queue; old `docs/tickets/` stays as history.
 ## Who's running
 
 - **`pm-1`** (product manager, Sonnet) and **`manager-2`** (development
-  manager, Sonnet). Renew them by hand when idle above ~140K (the config
-  still renews managers only at 200K).
-- **Workers:** `spike-path-rules` (vxp6, Haiku) and `smaller-debug-builds`
-  (nbkj).
-- **The advisor** (`external:advisor`, `scripts/claude-advisor`,
-  `workflow/base/roles/advisor.md`): the human's chat and ticket session.
-  Read-only; files tickets; messages you directly.
+  manager, Sonnet). Renew by hand when idle above ~140K.
+- **Workers:** none live. `python-pack` is dead (p4ks; don't resume; remove
+  once its branch is taken over). `j2vq-orchestrator-perms` is parked.
+- **The advisor** (`external:advisor`): the human's chat and ticket session.
 
-## Queue (`bridle queue`)
+## Queue (`bridle queue`, at 17:55 UTC)
 
-Tier 1: vxp6 spike. Tier 2: nbkj (smaller debug builds), f75x (clean stale
-build output), statusline token count, TUI inbox full message. Tier 3: TUI
-inbox scroll, send-body quoting bug, m3wq (disk monitoring). Onboarding
-tasks join when the survey's done. P3 is held until onboarding.
+Tier 1: (only the stale merged d063, 544b; drop). Tier 2: br-7678 python
+pack, br-bc21 harvest base rules, br-55e2 vim pack, br-00eb read/mark one
+message (plus stale 1e0c). Tier 3: br-a702 components design (y3sd).
+Tier 4: f75x, statusline tokens, TUI inbox full message, br-7ab7 (c424
+budget display). Tier 5: TUI inbox scroll, send quoting, m3wq.
 
-Parked: `bridle/j2vq-orchestrator-perms` (the human's decision: scope bridle
-permissions to the orchestrator via `scripts/claude-orchestrator` or
-settings.local.json, never the repo-wide settings), `bridle/mcp-1` (u6wk).
+Parked: `bridle/j2vq-orchestrator-perms`, `bridle/mcp-1` (u6wk).
 
 ## The human's decisions (2026-09-27 and 28)
 
-- 2026-09-28, this session:
+- 2026-09-28, sixth session:
+  - The data-contracts answers above; the `existing-projects` rule and
+    `bridle-adopt` trials (63rv); budget holds are the maintenance window
+    (m7wn); workers use `git merge --no-ff main` (m2fq); CLI times in local
+    time plus the applied budget and schedule (c424); meta-notes onboards
+    after data-contracts; track-web needs y3sd first.
+- 2026-09-28, fifth session:
   - After P1: P2, the workflow; one repo, the workflow in `workflow/` inside
     bridle (no separate repos). Shared workflow updated automatically; a
     project sees a changelog and can override (quoted in workflow-layers.md).
@@ -157,11 +168,20 @@ settings.local.json, never the repo-wide settings), `bridle/mcp-1` (u6wk).
 - **Auto mode's classifier sometimes errors** for a minute or two; it hits
   the orchestrator and the advisor, not bridle's agents.
 
-## Tickets filed this session
+## Tickets filed this session (sixth)
 
-geem (name research), prvy (laptop sleep; observed), k8dw, 2ty9, 9c63,
-role notes; the advisor filed xpuc, 8ups, fgu6, j479, kp3f, sed3, nbkj,
-f75x, m3wq.
+Orchestrator: m2fq, hv8e, r3nh, m7wn, p4ks; DC 3fm6; cu5m and c424
+extended. The advisor: surveys d9nu, ajqa, u8sm, 8xhh, a8fk; rxe8, 63rv,
+y3sd, cu5m, c424, 6t29.
+
+## Done on 2026-09-28, sixth session (merged, verified, pushed)
+
+vxp6 spike (path-scoped rules), m2fq (`--no-ff`), br-1e0c (roles into
+`workflow/base/roles/`), br-4221 (check command per project), br-29f9
+(`[branches]` integration/release setting; `state` reserved), br-5042
+(line-tables-only debug), the `existing-projects` rule, the watcher's hold
+wake. The orchestrator merged br-29f9 and br-5042 itself during the hold at
+the human's request. Maintenance: `cargo clean`, install, restart.
 
 ## Done on 2026-09-28, fifth session (merged, verified, pushed)
 
