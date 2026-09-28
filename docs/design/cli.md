@@ -19,7 +19,9 @@ bridle spawn   <role> [--name N] [--prompt TEXT | --prompt-file F]
 bridle agents  [--all]
 bridle show    <agent>
 bridle send    <agent|human> TEXT [--question] [--when now|idle] [--reply-to ID]
-bridle inbox   [--all] [--mark-read]        # messages to me (human, or the calling agent)
+bridle inbox   [--all] [--mark-read]        # messages to me, plus every task's open question
+bridle ask     <task-id> TEXT                    question against a task; blocks it until answered
+bridle answer  <task-id> TEXT                    answers a task's open question; frees it to be ready again
 bridle interrupt <agent> [--drop-held]
 bridle stop    <agent> [--now]      bridle resume <agent> [--ignore-budget]
 bridle renew   <agent> [--ignore-budget]    stop + fresh process/session, same worktree/branch/role/model
@@ -112,6 +114,16 @@ bridle task reopen <id>
   can't be combined with `--to`/`--kind`. `dep rm` takes the same shape. Edges can't
   connect a task to itself, and a repeat of the same `(from, to, kind)` triple is a
   conflict, not a silent no-op.
+- **`ask`/`answer`** are thin clients of `TaskManager::ask_question`/`answer_question`
+  (docs/design/coordination.md, "Questions do not stop work"): `ask` appends a `question`
+  thread entry and blocks the task's readiness until answered (`Conflict` if one is
+  already open); `answer` appends an `answer` entry and clears the block. Neither takes a
+  recipient — a question addressed to a task has no single recipient, per
+  coordination.md's message table — so there's no `--to`; that arrives with role
+  recipients, a later task. `inbox` lists every task's open question (task id, asker,
+  body, age) alongside messages addressed to `me`, reading `GET /v1/questions`
+  (`TaskManager::list_open_questions`, backed by the same in-memory cache `is_ready`
+  reads) rather than walking the state branch.
 - **`ready [--all] [--role]`** lists every ready task: `planned`, with no open `blocks`
   edge naming an unresolved blocker (roles-and-lifecycle.md, "ready is computed"; see
   coordination.md for exactly what "unresolved" means in this build). `--all` fans out
@@ -138,7 +150,7 @@ bridle task <cmd> at claimed|in_review|integrated|accepted  -- new/show/edit/lis
                                                   `ready [--all] [--role]` are built too, but
                                                   ready can't return anything until `plan` exists
 bridle claim|release|handoff bridle plan <id>     bridle accept <id> (human only)
-bridle ask|answer            bridle inbox --inject
+bridle inbox --inject        # `ask`/`answer` are built (see Built)
 bridle wait <id> [--until <state>] [--or-message] [--timeout]
 bridle spawn <role> <task>   bridle review
 bridle take|give <agent>                         human takeover of a headless agent

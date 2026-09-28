@@ -1,10 +1,14 @@
 //! The task record's HTTP surface (P0-1): create, show, edit, list, drop,
-//! reopen. See docs/design/storage.md.
+//! reopen. See docs/design/storage.md. Plus questions (P0-3): `ask`/`answer`
+//! and their effect on readiness (docs/design/coordination.md, "Questions do
+//! not stop work").
 
 mod support;
 
 use bridle_api::ClientError;
-use bridle_api::types::{DropTaskRequest, EditTaskRequest, NewTaskRequest, TaskKind, TaskState};
+use bridle_api::types::{
+    DropTaskRequest, EditTaskRequest, NewTaskRequest, TaskKind, TaskState, ThreadEntryKind,
+};
 use support::start_daemon;
 
 fn new_req(title: &str, kind: TaskKind) -> NewTaskRequest {
@@ -144,6 +148,70 @@ async fn reopen_only_applies_to_a_dropped_task() {
         .reopen_task(&task.id)
         .await
         .expect_err("not dropped any more");
+    assert!(matches!(err, ClientError::Api { status: 409, .. }));
+}
+
+/// End to end through the HTTP surface `bridle ask`/`bridle answer`/`bridle
+/// inbox` are thin clients of: asking blocks the task (an open question in
+/// `GET /v1/questions`, which is exactly what `TaskManager::is_ready` checks
+/// — see `tasks.rs`'s own
+/// `asking_a_question_blocks_ready_and_answering_unblocks_it` for readiness
+/// itself), then answering clears it. This build has no `plan` command, so a
+/// task here never reaches `planned` and `ready_tasks` always excludes it
+/// regardless of questions; the open-questions index is the observable
+/// stand-in for "blocked" at this layer.
+#[tokio::test]
+async fn ask_blocks_a_task_and_answer_frees_it_again() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let c = &daemon.client;
+
+    let task = c
+        .new_task(&new_req("Add foo", TaskKind::Feature))
+        .await
+        .expect("new task");
+    assert!(c.list_open_questions().await.expect("list").is_empty());
+
+    let asked = c
+        .ask_question(&task.id, "which endpoint?")
+        .await
+        .expect("ask question");
+    assert_eq!(asked.thread.len(), 1);
+    assert_eq!(asked.thread[0].kind, ThreadEntryKind::Question);
+    assert_eq!(asked.thread[0].body, "which endpoint?");
+
+    let open = c.list_open_questions().await.expect("list open questions");
+    assert_eq!(open.len(), 1);
+    assert_eq!(open[0].task_id, task.id);
+    assert_eq!(open[0].body, "which endpoint?");
+
+    // A second question while one is already open is a conflict.
+    let err = c
+        .ask_question(&task.id, "another one?")
+        .await
+        .expect_err("already has an open question");
+    assert!(matches!(err, ClientError::Api { status: 409, .. }));
+
+    let answered = c
+        .answer_question(&task.id, "the v1 endpoint")
+        .await
+        .expect("answer question");
+    assert_eq!(answered.thread.len(), 2);
+    assert_eq!(answered.thread[1].kind, ThreadEntryKind::Answer);
+    assert_eq!(answered.thread[1].body, "the v1 endpoint");
+
+    assert!(
+        c.list_open_questions()
+            .await
+            .expect("list open questions")
+            .is_empty(),
+        "answering clears the task from the open-questions index"
+    );
+
+    // Answering again with nothing open is a conflict.
+    let err = c
+        .answer_question(&task.id, "still there?")
+        .await
+        .expect_err("no open question left");
     assert!(matches!(err, ClientError::Api { status: 409, .. }));
 }
 

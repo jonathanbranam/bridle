@@ -86,6 +86,11 @@ pub enum Command {
     /// Add or remove a coordination edge between two tasks
     /// (docs/design/coordination.md).
     Dep(DepArgs),
+    /// Ask a question against a task: blocks it from being ready until
+    /// answered (docs/design/coordination.md, "Questions do not stop work").
+    Ask(AskArgs),
+    /// Answer a task's open question, clearing the block `ask` set.
+    Answer(AnswerArgs),
     /// List every ready task: planned, with no open `blocks` edge naming an
     /// unresolved blocker (roles-and-lifecycle.md, "ready is computed").
     Ready(ReadyArgs),
@@ -436,6 +441,18 @@ pub enum DepAction {
     Add(DepEdgeArgs),
     /// Remove an edge.
     Rm(DepEdgeArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct AskArgs {
+    pub task: String,
+    pub text: String,
+}
+
+#[derive(Debug, Args)]
+pub struct AnswerArgs {
+    pub task: String,
+    pub text: String,
 }
 
 #[derive(Debug, Args)]
