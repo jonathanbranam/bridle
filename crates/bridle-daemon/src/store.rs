@@ -17,7 +17,7 @@ use bridle_api::types::{
     MessageKind, MessageState, PrincipalId, PrincipalKind, RateLimit, TaskKind, TaskState,
     TokenCreated, TokenInfo, TokenTotals, Usage, UsageBreakdown, UsageGroup, UsageGroupBy, When,
 };
-use chrono::{DateTime, SecondsFormat, Utc};
+use chrono::{DateTime, SecondsFormat, SubsecRound, Utc};
 use rusqlite::Connection;
 
 #[derive(Debug, thiserror::Error)]
@@ -1507,7 +1507,10 @@ mod sync {
         title: &str,
         kind: TaskKind,
     ) -> Result<TaskRow, StoreError> {
-        let now = Utc::now();
+        // Truncate to millisecond precision (matching fmt_dt's on-disk format) so the
+        // returned in-memory value can't be strictly less than a later floor-truncated
+        // read of the same row.
+        let now = Utc::now().trunc_subsecs(3);
         for _ in 0..TASK_ID_ATTEMPTS {
             let id = new_task_id(prefix);
             let result = conn.execute(
