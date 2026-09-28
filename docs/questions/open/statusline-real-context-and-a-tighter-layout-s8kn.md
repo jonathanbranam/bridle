@@ -83,6 +83,43 @@ The human's words, 2026-09-28:
 > Test fixtures in statusline.rs use the invented shape. Replace them with the
 > documented example JSON from the page above.
 
+## A likely cause for item 5, from a second conversation (verbatim)
+
+The human ran `echo '{}' | bridle statusline` from a plain shell on
+2026-09-28, and a row (id 1, all fields empty) reached `interactive_usage`.
+The agent's diagnosis:
+
+> What the test showed: the database dates from 17:41 today, not from when
+> you first set up the status line. So "empty table" meant "nothing recorded
+> today", not "never". Even so, your interactive sessions have been running
+> all day without adding a row, while your shell run added one immediately.
+>
+> Likely cause: crates/bridle-api/src/discovery.rs:287. When $CLAUDECODE is
+> set, the CLI deliberately refuses to use your human token file unless
+> $BRIDLE_TOKEN is set. That's a safety rule so an agent running inside
+> Claude Code can't pick up your credentials. Claude Code sets CLAUDECODE for
+> processes it starts, so bridle statusline probably fails at that step when
+> Claude Code runs it. commands.rs:96 then silently discards the error, so
+> the line still prints but nothing gets recorded. Your shell doesn't have
+> CLAUDECODE set, which is why your manual run succeeded.
+>
+> I haven't confirmed that Claude Code sets CLAUDECODE for the status line
+> command specifically, as opposed to Bash tool commands. Checking that
+> should be the first step of the ticket.
+>
+> Fix options for the ticket:
+> - Give the status line a narrow token that can only POST /v1/statusline,
+>   and pass it through the command, e.g. BRIDLE_TOKEN=… bridle statusline.
+>   This keeps the safety rule intact. Headless workers never run a status
+>   line, so the token wouldn't reach them.
+> - Or allow the human token for statusline only. That's simpler, but it
+>   weakens the rule.
+>
+> Either way, log the failure instead of swallowing it.
+>
+> Your test also left one row with all fields empty in interactive_usage.
+> It's harmless, but it will appear in bridle usage today.
+
 ## Why it matters
 
 The human reads the status line all day; today its context figure is wrong
