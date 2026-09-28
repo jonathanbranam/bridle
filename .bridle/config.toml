@@ -1,6 +1,9 @@
 # Bridle's own roles, for running bridle on itself.
 # Reference: docs/design/agent-host/roles-and-config.md
 
+# L1 base layer, in-repo (docs/design/workflow-layers.md). No L2 packs yet.
+workflow = "workflow"
+
 [daemon]
 stall_after = "10m"
 
