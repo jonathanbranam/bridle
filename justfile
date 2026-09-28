@@ -14,8 +14,8 @@ fmt-check:
 lint:
     cargo clippy --workspace --all-targets -- -D warnings
 
-test:
-    cargo nextest run --workspace
+test *args:
+    cargo nextest run --workspace {{args}}
 
 # Tests that spawn real `claude` (costs tokens; Haiku, tiny prompts).
 test-live:
