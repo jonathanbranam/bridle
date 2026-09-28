@@ -10,8 +10,9 @@ at the handover from the sixth orchestrator session.
 - **The human's goal, which orders the queue** (2026-09-28, via the advisor): "Bridle should be
   working well enough and useful enough that we can do productive work on my other
   projects." They worry software factories end up working on themselves. Also in the
-  product manager's role prompt. meta-notes onboards first (the human, 2026-09-28: active
-  needs), then data-contracts, then track-web.
+  product manager's role prompt. meta-notes onboards first, then track-web (most of the
+  human's games live there; "kind of a beast to onboard"), then data-contracts (lower; "I will
+  have some things to do soon"). The human, 2026-09-28.
 - **Do these first, before the budget hold lifts (five_hour resets 19:20
   UTC, 3:20 PM):** the sixth session couldn't send them while the human
   cycled the daemon for a new budget setting.
