@@ -271,6 +271,11 @@ pub struct TranscriptQuery {
 
 // ---------- messages ----------
 
+/// Not to be confused with [`TaskKind::Question`], a *kind of task* (research
+/// work whose output is an answer, not code). A `MessageKind::Question` is a
+/// message that blocks whatever task it's addressed to until answered
+/// (docs/design/coordination.md, "Messages"); the two are unrelated and a
+/// task of any `TaskKind` can have one addressed to it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum MessageKind {
@@ -700,6 +705,10 @@ pub struct TokenInfo {
 
 /// What kind of work a task is; changes gates and the agent's prime once
 /// those exist (roles-and-lifecycle.md).
+/// `Question` here is a *kind of task*, unrelated to [`MessageKind::Question`]
+/// (a message that blocks the task it's addressed to). Don't conflate them:
+/// a `TaskKind::Question` task can itself have a `MessageKind::Question`
+/// asked against it, like any other task.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum TaskKind {
@@ -784,20 +793,24 @@ impl std::str::FromStr for TaskState {
 }
 
 /// One entry in a task's thread, on the state branch
-/// ([[docs/design/storage#The state branch|storage.md]]). Only `note` is
-/// produced by this build; `question`, `answer`, `handoff`, `conflict` and
+/// ([[docs/design/storage#The state branch|storage.md]]). `note`, `question`
+/// and `answer` are produced by this build; `handoff`, `conflict` and
 /// `system` (coordination.md, Messages) arrive with later tasks and reuse
 /// this same shape.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ThreadEntryKind {
     Note,
+    Question,
+    Answer,
 }
 
 impl ThreadEntryKind {
     pub fn as_str(self) -> &'static str {
         match self {
             Self::Note => "note",
+            Self::Question => "question",
+            Self::Answer => "answer",
         }
     }
 }

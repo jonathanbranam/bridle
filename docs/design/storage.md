@@ -68,14 +68,42 @@ carry, so `TaskManager`'s edge cache hydrates straight from this table at
 triple is the natural key: there's no separate edge id, and `bridle dep rm`
 identifies the row to delete by that same triple.
 
+Open questions get their own table too (`SCHEMA_V8`), the fast index
+coordination.md's `question` message kind needs:
+
+```
+open_questions(task_id TEXT PK, message_id, asked_by, asked_at)
+```
+
+`task_id` is the primary key: a task has at most one open question at a
+time, so `TaskManager::ask_question` on a task that already has one is a
+conflict, the same shape as `insert_edge`'s duplicate-triple conflict.
+`message_id` points at the `messages` row the question is (see below); the
+body isn't duplicated here since that row already carries it. `TaskManager`
+hydrates a `task_id -> message_id` cache from this table at `open`, the same
+way it hydrates the edge cache, so `is_ready` (a plain, synchronous function)
+can check "does this task have an open question" without a database round
+trip. Answering deletes the row and clears the cache entry.
+
+Messages can now target a task, not just `human` or an agent: `to_kind`
+(`messages.to_kind`) takes a third value, `task`, with `to_id` the task id.
+Asking a question inserts a `kind=question` message with `to_kind=task`,
+addressed to the task itself; answering inserts a `kind=answer` message with
+`reply_to` pointing at the question. Message routing decides `to_kind`
+explicitly at the call site (`store::RecipientKind`) rather than guessing
+it from `to`'s shape, since a task id and an agent id are both opaque
+strings that don't self-identify.
+
 The ephemeral tables `claims`, `waits`, `ports`, `impact_cache` arrive with
 later tasks. Every durable write goes to the database and the state branch
 in the same logical operation (for the `tasks` table: synchronously to
 SQLite, then enqueued for the state branch's next batched flush — see below;
 edges follow the same rule, enqueuing the *entire* current edge set on every
 add/remove rather than a diff, since there's no per-edge file to key a
-targeted write on). The database is the read path because it's fast, and git
-is the recovery path.
+targeted write on). Asking and answering a question follow the same rule:
+the `open_questions` row is written synchronously, like a task or edge row,
+while the thread entry it corresponds to is enqueued for the next flush. The
+database is the read path because it's fast, and git is the recovery path.
 
 ## The state branch
 
@@ -121,7 +149,7 @@ events/2026-09.jsonl      append-only transitions, for history and rebuild
   convention), not `---` (which reads as YAML). The thread section, when a
   task has one, is a `## Thread` heading followed by one
   `### <kind> · <from> · <timestamp>` heading per entry and its body; this
-  build only ever writes `note` entries, but `question`/`answer`/`handoff`/
+  build writes `note`, `question` and `answer` entries, and `handoff`/
   `conflict`/`system` (coordination.md, Messages) reuse the same heading
   shape later without a format change. Parsing this back is line/substring
   based, not a real markdown parser: a body or thread entry containing the
@@ -134,10 +162,13 @@ churn problems.
 
 Questions aren't a separate `questions/…` folder: a question lives inline in
 the thread of the task it blocks, the same file as the task itself. The
-daemon additionally indexes open questions in SQLite so `bridle inbox` can
-show them without walking the state branch
-([[where-questions-live-on-the-state-branch-c5a8|decided]]). Neither questions
-nor this indexing exist yet; this build only has `note` thread entries.
+daemon additionally indexes open questions in SQLite (`open_questions`,
+above) so `bridle inbox` can show them without walking the state branch
+([[where-questions-live-on-the-state-branch-c5a8|decided]]). Built:
+`TaskManager::ask_question`/`answer_question` write both the thread entry
+and the SQLite index in the same call, and `is_ready` excludes a task with
+an open question. Not yet built: the `bridle ask`/`bridle answer` CLI and
+`bridle inbox` reading this index — both arrive with the next task.
 
 ## The daemon registry
 

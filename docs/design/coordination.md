@@ -43,8 +43,16 @@ the task's thread, which gives later claimants the context Gas Town calls
 
 **Built so far:** messages to an agent or to `human`, of kind `note` or
 `question`, with replies linked by `reply_to` and delivery tracked
-([[docs/design/agent-host/messages|messages and delivery]]). Task and role
-recipients and the other kinds arrive with tasks.
+([[docs/design/agent-host/messages|messages and delivery]]). Messages to a
+task: `TaskManager::ask_question`/`answer_question`
+(`crates/bridle-daemon/src/tasks.rs`) insert a `question`/`answer` message
+addressed to the task (`to_kind = task`, [[docs/design/storage#The daemon's
+database|storage.md]]), append the matching thread entry, and keep an
+`open_questions` SQLite index so `is_ready` excludes a task with one open —
+without walking the state branch, per
+[[where-questions-live-on-the-state-branch-c5a8|decided]]. Role recipients,
+`handoff`/`conflict`/`system`, and the `bridle ask`/`bridle answer`/`bridle
+inbox` surface over this all arrive with later tasks.
 
 ## Questions do not stop work
 

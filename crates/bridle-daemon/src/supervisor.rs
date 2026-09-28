@@ -1136,9 +1136,9 @@ impl AgentManager {
         when: bridle_api::types::When,
         reply_to: Option<String>,
     ) -> Result<Message, SupervisorError> {
-        let to_id = match &to {
-            ToTarget::Human => "human".to_string(),
-            ToTarget::Agent(id) => id.clone(),
+        let (to_id, to_kind) = match &to {
+            ToTarget::Human => ("human".to_string(), crate::store::RecipientKind::Human),
+            ToTarget::Agent(id) => (id.clone(), crate::store::RecipientKind::Agent),
         };
         let inserted = self
             .0
@@ -1146,6 +1146,7 @@ impl AgentManager {
             .insert_message(NewMessage {
                 from: from.clone(),
                 to: to_id.clone(),
+                to_kind,
                 kind,
                 body,
                 reply_to,
