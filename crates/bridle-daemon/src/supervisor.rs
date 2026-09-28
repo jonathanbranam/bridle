@@ -1993,6 +1993,14 @@ impl AgentManager {
             let path = std::path::PathBuf::from(&wt);
             // Already gone (e.g. an earlier rm failed after removing it): just prune.
             if path.exists() {
+                // Catches a process bridle's containment sweep missed that
+                // still has a file open under the worktree: removing the
+                // directory out from under it would corrupt its view.
+                if !force && let Some(holder) = worktree::open_file_holder(&path).await? {
+                    return Err(SupervisorError::Conflict(format!(
+                        "worktree has an open file ({holder}); use --force"
+                    )));
+                }
                 worktree::remove(&self.0.workspace.repo, &path, force).await?;
             } else {
                 worktree::prune(&self.0.workspace.repo).await?;

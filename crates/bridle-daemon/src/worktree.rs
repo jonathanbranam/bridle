@@ -171,6 +171,33 @@ pub async fn is_dirty(path: &Path) -> Result<bool, WorktreeError> {
     Ok(!out.trim().is_empty())
 }
 
+/// Whether any process still has a file open under `path` (a worktree),
+/// checked with `lsof +D` (recursive, POSIX; available on macOS and Linux).
+/// Returns a short description of the offending process/file for the error
+/// message, or `None` if nothing was found or `lsof` isn't installed: a
+/// missing `lsof` means the check can't run, not that it's safe to remove.
+pub async fn open_file_holder(path: &Path) -> Result<Option<String>, WorktreeError> {
+    let path_str = path.to_string_lossy().into_owned();
+    let output = match Command::new("lsof").args(["+D", &path_str]).output().await {
+        Ok(output) => output,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(e) => return Err(e.into()),
+    };
+    // lsof exits non-zero when it finds nothing under `path`: its normal
+    // "no matches" result, not a failure, so only the stdout matters.
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let offender = stdout.lines().skip(1).find(|line| !line.trim().is_empty());
+    Ok(offender.map(|line| {
+        let fields: Vec<&str> = line.split_whitespace().collect();
+        match (fields.first(), fields.get(1), fields.last()) {
+            (Some(command), Some(pid), Some(name)) => {
+                format!("{command} (pid {pid}) has {name} open")
+            }
+            _ => line.trim().to_string(),
+        }
+    }))
+}
+
 /// Deletes a branch. `force` matches `git branch -D` vs `-d`.
 pub async fn delete_branch(repo: &Path, branch: &str, force: bool) -> Result<(), WorktreeError> {
     let flag = if force { "-D" } else { "-d" };
@@ -250,6 +277,8 @@ pub fn validate_agent_name(name: &str) -> Result<(), WorktreeError> {
 
 #[cfg(test)]
 mod tests {
+    use std::time::Duration;
+
     use super::*;
 
     async fn init_repo(dir: &Path) {
@@ -315,6 +344,71 @@ mod tests {
         delete_branch(&repo, "bridle/w1", true)
             .await
             .expect("delete branch");
+    }
+
+    #[tokio::test]
+    async fn open_file_holder_finds_and_clears_a_held_open_file() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let repo = tmp.path().join("repo");
+        init_repo(&repo).await;
+        let wt_path = tmp.path().join("wt").join("w3");
+        add(&repo, &wt_path, "bridle/w3", "HEAD")
+            .await
+            .expect("add worktree");
+
+        assert_eq!(
+            open_file_holder(&wt_path).await.expect("no holder yet"),
+            None
+        );
+
+        let held_path = wt_path.join("held.txt");
+        std::fs::write(&held_path, "hold me open").expect("write held file");
+        let mut holder = std::process::Command::new("tail")
+            .arg("-f")
+            .arg(&held_path)
+            .spawn()
+            .expect("spawn tail -f");
+
+        let found = poll_until_some(|| open_file_holder(&wt_path)).await;
+        assert!(found.contains("tail"), "expected tail in {found:?}");
+
+        holder.kill().expect("kill holder");
+        let _ = holder.wait();
+
+        poll_until_none(|| open_file_holder(&wt_path)).await;
+    }
+
+    /// Polls `check` for up to 5s until it returns `Some`, panicking otherwise.
+    /// `lsof` and process teardown aren't instantaneous, so a single call can
+    /// race a holder that only just spawned or only just exited.
+    async fn poll_until_some<F, Fut>(mut check: F) -> String
+    where
+        F: FnMut() -> Fut,
+        Fut: std::future::Future<Output = Result<Option<String>, WorktreeError>>,
+    {
+        let deadline = std::time::Instant::now() + Duration::from_secs(5);
+        loop {
+            if let Some(found) = check().await.expect("lsof") {
+                return found;
+            }
+            assert!(std::time::Instant::now() < deadline, "timed out waiting");
+            tokio::time::sleep(Duration::from_millis(100)).await;
+        }
+    }
+
+    async fn poll_until_none<F, Fut>(mut check: F)
+    where
+        F: FnMut() -> Fut,
+        Fut: std::future::Future<Output = Result<Option<String>, WorktreeError>>,
+    {
+        let deadline = std::time::Instant::now() + Duration::from_secs(5);
+        loop {
+            if check().await.expect("lsof").is_none() {
+                return;
+            }
+            assert!(std::time::Instant::now() < deadline, "timed out waiting");
+            tokio::time::sleep(Duration::from_millis(100)).await;
+        }
     }
 
     #[tokio::test]
