@@ -1,13 +1,7 @@
 [[tier]]
 tasks = [
-    "br-d063",
-    "br-544b",
-]
-
-[[tier]]
-tasks = [
-    "br-1e0c",
     "br-7678",
+    "br-1dfe",
     "br-bc21",
     "br-55e2",
     "br-00eb",
@@ -22,6 +16,7 @@ tasks = [
     "br-d5c8",
     "br-0e14",
     "br-7ab7",
+    "br-37ed",
 ]
 
 [[tier]]
