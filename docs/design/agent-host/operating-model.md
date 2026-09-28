@@ -64,7 +64,7 @@ Progress would otherwise stop at every finished branch. The manager does it,
 or the orchestrator when there's no manager, in the clone:
 
 1. The worker brings its branch up to date: it merges the **local** `main`
-   (`git merge main`, never `origin/*`) into `bridle/<agent>`, resolves any
+   (`git merge --no-ff main`, never `origin/*`) into `bridle/<agent>`, resolves any
    conflicts, runs `just check` (or the project's equivalent) and commits. A
    worker never touches `main` and never fetches or merges from a remote.
 2. The merger checks that `main` is an ancestor of the branch
