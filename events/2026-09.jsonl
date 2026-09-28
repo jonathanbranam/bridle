@@ -101,3 +101,5 @@
 {"actor":"agent:pm-1","at":"2026-09-28T12:45:40.515305Z","from":"open","task":"br-e8a3","to":"dropped"}
 {"actor":"human","at":"2026-09-28T14:23:49.385Z","from":"","task":"br-05d3","to":"open"}
 {"actor":"human","at":"2026-09-28T14:56:35.636Z","from":"","task":"br-d5c8","to":"open"}
+{"actor":"human","at":"2026-09-28T15:03:27.767Z","from":"","task":"br-7bf8","to":"open"}
+{"actor":"human","at":"2026-09-28T15:03:27.802Z","from":"","task":"br-0e14","to":"open"}
