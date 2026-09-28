@@ -89,7 +89,12 @@ curl -s -H "Authorization: Bearer $BRIDLE_TOKEN" "$U/v1/messages?to=human&limit=
   - The merger pushes `main` right after each merge (the human's decision,
     2026-09-27); workers never push or merge from `origin/*`.
   - Releases follow SemVer; you cut them on verified `main`
-    (`operating-model.md`, "Releases").
+    (`operating-model.md`, "Releases"). Move `CHANGELOG.md`'s Unreleased
+    entries under the new version as part of the release.
+- **The human's inbox is only for what they must act on** (kp3f,
+  2026-09-28): questions, blockers, decisions. No routine status notes from
+  any role. Read the managers' traffic directly
+  (`GET /v1/messages?to=<agent id>`) instead of relying on notes to `human`.
 - **MCP is a deferred nice-to-have**, and so are permission prompts, which
   depend on it (spike 03). The parked branch is `bridle/mcp-1`; don't merge
   it. The requirements get refined later (ticket u6wk).

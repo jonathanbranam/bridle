@@ -6,7 +6,7 @@ repos: [bridle]
 changes: []
 specs: []
 needs: []
-see: []
+see: [geem]
 ---
 
 ## The question
@@ -21,3 +21,19 @@ From `docs/design.md` §15 @ c192bfc, item 7:
 Agents type it on every call, and a clash with `br` breaks otters.
 
 ## Notes
+
+## Resolution
+
+No short alias. The human, 2026-09-28:
+
+> sqt6 - no short alias; I want to finish the first rounds of getting it working, then I
+> actually was planning to come up with a new, unique name for the entire project.
+
+and again, the same day:
+
+> I don't want to stick with bridle long-term; we can come up with a short name after
+> picking a new overall name.
+
+The command name, and any short alias with it, is now part of
+[[a-new-name-for-the-project-geem|a new name for the project]]; the names to avoid are in
+[[docs/context/agent-harness-name-catalogue|the harness name catalogue]].
