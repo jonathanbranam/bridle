@@ -27,7 +27,7 @@ In practice this means:
 |---|---|---|
 | stream-json `rate_limit_event` | `status` (`allowed` / `allowed_warning` / `rejected`), `resetsAt`, `utilization` (0–1), and the window type (`five_hour`, `seven_day`, `seven_day_opus`, `seven_day_sonnet`). Emitted **when the status changes** | headless workers |
 | stream-json `result` | `usage` (input, output, cache-creation and cache-read tokens), per-model `modelUsage`, `total_cost_usd` (list-price equivalent, **cumulative across turns** in streaming mode) | headless workers |
-| status line JSON | `rate_limits.five_hour` / `.seven_day`: `used_percentage`, `resets_at`, plus session cost and context use (field names not confirmed against Claude Code's own docs; parsed tolerantly, [[docs/design/cli#Built|cli.md]]) | interactive sessions (the human's, the orchestrator): bridle ships `bridle statusline` as the status line command, which shows the numbers **and** records them |
+| status line JSON | `rate_limits.five_hour` / `.seven_day` / `.seven_day_opus` / `.seven_day_sonnet`: `used_percentage`, `resets_at`; `context_window.used_percentage`/`.context_window_size`/`.current_usage` (last API call only, `null` before it or after `/compact`); session cost. Confirmed field names, [[docs/design/cli#Built|cli.md]] | interactive sessions (the human's, the orchestrator): bridle ships `bridle statusline` as the status line command, which shows the numbers. It's local-only now (s8kn) — it no longer records them with the daemon |
 | assistant error `rate_limit` | a turn failed on a limit | both |
 | OpenTelemetry | tokens, cost, per request | later, optional |
 
@@ -54,14 +54,18 @@ Built with the agent host, for the agents it hosts:
   difference between consecutive counters;
 - the latest `rate_limit_event` per window. It arrives once per process, so
   it can be stale while no agent is starting.
-- `bridle statusline` snapshots from interactive sessions bridle doesn't host: the same
-  rate-limit windows (via the same `upsert_rate_limit` path), plus a per-invocation row
-  (cost, context use) in its own table, since there's no agent to attach it to.
+
+`POST /v1/statusline` and its `interactive_usage` table still exist (the same
+rate-limit-window path plus a per-invocation cost/context row, for a session
+bridle doesn't host), but nothing calls the route today: `bridle statusline`
+stopped posting snapshots (s8kn) once the context governor got account-wide
+windows from `get_usage` instead, which covers the reason this existed.
 
 `bridle usage` (and `GET /v1/usage`) shows per-agent turns, tokens and cost,
 totals, the cache hit ratio (cache reads ÷ all input tokens), the last
-known utilisation and reset time per window, and today's `bridle statusline`
-rows. A role can also cap each agent's spend ([[docs/design/agent-host/agents#Spend cap|spend cap]]).
+known utilisation and reset time per window, and today's `interactive_usage`
+rows, if any exist. A role can also cap each agent's spend
+([[docs/design/agent-host/agents#Spend cap|spend cap]]).
 
 `bridle usage --by role|model|agent --since <duration>` (and
 `GET /v1/usage/breakdown?since=&by=`) aggregates the turns ledger instead:
@@ -247,8 +251,9 @@ Sources, best first:
    details). It polls every 5 min below `hold_at` and every 30 s above, and
    whenever a turn ends above `hold_at`. The reading is account-wide, so it
    includes the human's sessions on every machine.
-2. **`rate_limit_event`s** from agents, and `bridle statusline` snapshots from
-   the human's interactive sessions, as they arrive.
+2. **`rate_limit_event`s** from agents, as they arrive. (`bridle statusline`
+   no longer feeds this: `get_usage` above already covers the human's
+   interactive sessions, account-wide.)
 3. **An estimate** between readings: the ledger's tokens since the last
    reading, converted with the learned tokens-per-percent. It only ever makes
    the governor more cautious, never less.

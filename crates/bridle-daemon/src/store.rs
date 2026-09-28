@@ -829,9 +829,17 @@ mod sync {
         );
     "#;
 
+    // Claude Code's real statusline schema has `context_window.used_percentage`
+    // precomputed (docs/questions/open/statusline-real-context-and-a-tighter-layout-s8kn.md):
+    // shown directly instead of recomputed from context_used_tokens/context_max_tokens,
+    // since that recomputation is wrong on extended-context (1M) models.
+    pub(super) const SCHEMA_V10: &str = r#"
+        ALTER TABLE interactive_usage ADD COLUMN context_used_percentage REAL;
+    "#;
+
     const MIGRATIONS: &[&str] = &[
         SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7, SCHEMA_V8,
-        SCHEMA_V9,
+        SCHEMA_V9, SCHEMA_V10,
     ];
 
     pub(super) fn open(path: &Path) -> Result<Connection, StoreError> {
@@ -2146,13 +2154,15 @@ mod sync {
     ) -> Result<(), StoreError> {
         conn.execute(
             "INSERT INTO interactive_usage
-                (observed_at, session_id, model, cost_usd, context_used_tokens, context_max_tokens)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+                (observed_at, session_id, model, cost_usd, context_used_percentage,
+                 context_used_tokens, context_max_tokens)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
             params![
                 fmt_dt(row.observed_at),
                 row.session_id,
                 row.model,
                 row.cost_usd,
+                row.context_used_percentage,
                 row.context_used_tokens.map(|n| n as i64),
                 row.context_max_tokens.map(|n| n as i64),
             ],
@@ -2169,7 +2179,8 @@ mod sync {
             .expect("midnight is a valid time")
             .and_utc();
         let mut stmt = conn.prepare(
-            "SELECT observed_at, session_id, model, cost_usd, context_used_tokens, context_max_tokens
+            "SELECT observed_at, session_id, model, cost_usd, context_used_percentage,
+                    context_used_tokens, context_max_tokens
              FROM interactive_usage WHERE observed_at >= ?1 ORDER BY observed_at DESC",
         )?;
         let rows = stmt.query_map(params![fmt_dt(today_start)], |row| {
@@ -2178,8 +2189,9 @@ mod sync {
                 session_id: row.get(1)?,
                 model: row.get(2)?,
                 cost_usd: row.get(3)?,
-                context_used_tokens: row.get::<_, Option<i64>>(4)?.map(|n| n as u64),
-                context_max_tokens: row.get::<_, Option<i64>>(5)?.map(|n| n as u64),
+                context_used_percentage: row.get(4)?,
+                context_used_tokens: row.get::<_, Option<i64>>(5)?.map(|n| n as u64),
+                context_max_tokens: row.get::<_, Option<i64>>(6)?.map(|n| n as u64),
             })
         })?;
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
@@ -3130,6 +3142,7 @@ mod tests {
                 session_id: Some("sess-1".to_string()),
                 model: Some("opus".to_string()),
                 cost_usd: Some(0.42),
+                context_used_percentage: Some(0.25),
                 context_used_tokens: Some(50_000),
                 context_max_tokens: Some(200_000),
             })
@@ -3142,6 +3155,7 @@ mod tests {
         assert_eq!(row.session_id.as_deref(), Some("sess-1"));
         assert_eq!(row.model.as_deref(), Some("opus"));
         assert_eq!(row.cost_usd, Some(0.42));
+        assert_eq!(row.context_used_percentage, Some(0.25));
         assert_eq!(row.context_used_tokens, Some(50_000));
         assert_eq!(row.context_max_tokens, Some(200_000));
     }
@@ -3155,6 +3169,7 @@ mod tests {
                 session_id: None,
                 model: None,
                 cost_usd: Some(1.0),
+                context_used_percentage: None,
                 context_used_tokens: None,
                 context_max_tokens: None,
             })

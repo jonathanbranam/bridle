@@ -754,6 +754,7 @@ async fn report_statusline(
             session_id: req.session_id,
             model: req.model,
             cost_usd: req.cost_usd,
+            context_used_percentage: req.context_used_percentage,
             context_used_tokens: req.context_used_tokens,
             context_max_tokens: req.context_max_tokens,
         })

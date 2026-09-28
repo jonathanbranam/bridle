@@ -120,6 +120,31 @@ The agent's diagnosis:
 > Your test also left one row with all fields empty in interactive_usage.
 > It's harmless, but it will appear in bridle usage today.
 
+## Decision: drop recording, don't chase the token gap
+
+The human, via the orchestrator, mid-task on the fix above:
+
+> Drop the recording half of `bridle statusline` entirely. No
+> `POST /v1/statusline` call from the statusline command, no statusline
+> token, no token file, no `bridle token create statusline` setup. The
+> context governor already gets account-wide windows from `get_usage`, and
+> the original reason for statusline recording has passed. Also drop the
+> working/waiting-counts stretch entirely — reading those needs the same
+> under-`$CLAUDECODE` token problem, so skip it, don't build it.
+
+This supersedes the token-file plan item 5 originally called for (a
+dedicated `external:statusline` token in a per-workspace file, read
+regardless of `$CLAUDECODE`). `bridle statusline` is now purely local: it
+parses Claude Code's stdin JSON and prints a line, with no daemon call, no
+token, and nothing that can fail beyond unparseable stdin.
+
+`POST /v1/statusline` and the `interactive_usage` table stay in the daemon
+as-is — not removed, just unused for now, in case a future need for
+per-invocation interactive snapshots resurfaces. If it does, item 5's
+token-file plan (and its known gap — an `external:statusline` token isn't
+endpoint-scoped, tracked separately in 4eep/a7h3) is still the right shape
+for it; it just isn't needed today.
+
 ## Why it matters
 
 The human reads the status line all day; today its context figure is wrong
