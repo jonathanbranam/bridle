@@ -101,6 +101,13 @@ pub fn human_token_path(workspace: &Path) -> PathBuf {
     state_dir(workspace).join("tokens").join("human")
 }
 
+/// `~/.bridle/statusline.token`: the per-user token Claude Code's statusLine
+/// command reads for bridle's own counts, regardless of which project
+/// workspace it's running in. See docs/design/cli.md.
+pub fn statusline_token_path() -> PathBuf {
+    bridle_home().join("statusline.token")
+}
+
 /// Walk up from `start` to the first ancestor (inclusive) containing
 /// `.bridle/daemon.json`, returning that ancestor.
 pub fn find_workspace(start: &Path) -> Option<PathBuf> {
