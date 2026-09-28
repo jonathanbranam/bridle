@@ -7,6 +7,7 @@ cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
 since=${1:-0}
 head0=$(git rev-parse main)
 idle_ticks=0
+seen_file=~/.bridle-orchestrator-seen-questions
 while true; do
   U=$(bridle status --json 2>/dev/null | jq -r .daemon.url)
   if [[ -n $U && $U != null ]]; then
@@ -14,7 +15,11 @@ while true; do
     last=$(print -r -- "$ev" | jq '[.[].seq] | max // empty')
     [[ -n $last ]] && since=$last
     hit=$(print -r -- "$ev" | jq -c '[.[] | select((.kind=="agent.exited" and .data.reason!="stdin_closed") or (.kind=="agent.state" and (.data.to=="crashed" or .data.to=="stalled")))]')
-    q=$(curl -s -H "Authorization: Bearer $BRIDLE_TOKEN" "$U/v1/messages?to=human&unread=true&limit=50" | jq -c '[.[] | select(.kind=="question")]')
+    # Questions stay unread until the human reads them, and the orchestrator can't mark them, so
+    # remember the ones already reported.
+    q=$(curl -s -H "Authorization: Bearer $BRIDLE_TOKEN" "$U/v1/messages?to=human&unread=true&limit=50" \
+      | jq -c --rawfile seen <(cat $seen_file 2>/dev/null) '[.[] | select(.kind=="question" and (.id as $i | ($seen | split("\n") | index($i)) == null))]')
+    [[ -n $q && $q != "[]" ]] && print -r -- "$q" | jq -r '.[].id' >> $seen_file
     util=$(bridle status --json | jq '[.rate_limits[]? | if .window=="five_hour" then (.utilization//0)/0.93 else (.utilization//0)/0.85 end] | max')
     if [[ -n $hit && $hit != "[]" ]]; then echo "EVENTS since=$since"; print -r -- "$hit"; exit 0; fi
     if [[ -n $q && $q != "[]" ]]; then echo "QUESTION since=$since"; print -r -- "$q"; exit 0; fi
