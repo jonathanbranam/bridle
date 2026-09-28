@@ -102,7 +102,14 @@ track-web (L3)       server, db, api, packages/*       → every agent
    > right, makes sense; soft rule but yes; some tasks could span components as well, so
    > that should be a list and/or allowed to be repo-wide in some cases.
 
+2026-09-28, a follow-up on gap 3:
+
+> IDK if components match 1:1 with roadmap, planning, tickets or not; I don't want to add too
+> much admin overhead for that.
+
 ## Still open
 
 - Where roadmaps live (in track-web's `docs/`, or in bridle), given they must stay easy to
   review as markdown. Related: [[which-docs-live-in-bridle-and-which-in-markdown-hv8e|hv8e]].
+- Whether a component has its own roadmap, planning and tickets (not necessarily 1:1), kept
+  low-overhead per the follow-up above.
