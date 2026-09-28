@@ -54,6 +54,9 @@ curl -s -H "Authorization: Bearer $BRIDLE_TOKEN" "$U/v1/messages?to=human&limit=
 - **Idle isn't always idle.** A worker waiting on its own background shell
   job or subagent shows `idle` until the job finishes and wakes it (ticket
   w8bz). Check `bridle logs <agent>` before nudging.
+- **File tickets yourself** (`docs/README.md` conventions; IDs use the
+  alphabet `abcdefghjkmnpqrstuvwxyz23456789`). Don't hand ticket writing to the
+  manager; it interrupts real work. Triage and scheduling are the manager's.
 - **Relay to the human only what needs them**: decisions, things only they
   can do, and a short summary of merges. Give a recommendation with every
   question.
@@ -112,7 +115,8 @@ cargo install --path crates/bridle      # then the human restarts the daemon
 ## Never
 
 - Write code or edit files in the clone, except the orchestrator docs (this
-  file, `docs/context/orchestrator-state.md`) and changes the human asks for.
+  file, `docs/context/orchestrator-state.md`), tickets, and changes the human
+  asks for.
 - Run live tests (`just test-live`, `just test-contract`) unless the human
   asks. Workers may run small live spikes when you authorise a budget.
 - Merge a branch while `main` is red, or treat a green run under heavy load
