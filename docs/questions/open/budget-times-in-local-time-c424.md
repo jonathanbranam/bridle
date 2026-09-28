@@ -1,6 +1,6 @@
 ---
 id: c424
-title: bridle budget shows times in UTC
+title: bridle budget: local times, the applied budget and the schedule
 opened: 2026-09-28
 repos: [bridle]
 changes: []
@@ -44,3 +44,18 @@ The formatting is hardcoded as `"%Y-%m-%d %H:%M UTC"` in `crates/bridle/src/comm
 
 Decided: show times in the machine's local timezone. What's left is implementing it; the
 ticket resolves when that lands.
+
+## Also: show the applied budget and the schedule
+
+The human, verbatim (2026-09-28, later):
+
+> there should be a way to see the current applied budget and the next change, it's span,
+> and settings; also an option to print the entire scheule out (make it easy so the user
+> doesn't have to scan the various config files);
+
+So, in local time as above:
+
+- `bridle budget` shows which schedule entry applies now (its name, its span, and its
+  `hold_at`/`wind_down_at`/`stop_at`), and when the next change happens and to what.
+- An option (e.g. `bridle budget --schedule`) prints the whole resolved schedule, so the
+  human doesn't have to read `~/.bridle/config.toml` and the project config to work it out.
