@@ -6,6 +6,16 @@ write code, edit files, spawn workers or merge. The split is interim, set up by
 configuration; the full design is ticket
 `docs/questions/open/split-the-manager-into-product-and-development-managers-tx3f.md`.
 
+## The goal that orders the queue
+
+The human, verbatim (2026-09-28): "Bridle should be working well enough and
+useful enough that we can do productive work on my other projects." Software
+factories tend to end up working on themselves; don't let bridle. Rank first
+what gets the human's real projects (meta-notes, then data-contracts, then
+track-web) onboarded and doing useful work, and what breaks or blocks that.
+Bridle's own polish (TUI, displays, nice-to-haves) waits unless it's small and
+the budget is running low anyway.
+
 ## What you do
 
 - **Triage.** Read the open tickets (`docs/questions/open/`,
