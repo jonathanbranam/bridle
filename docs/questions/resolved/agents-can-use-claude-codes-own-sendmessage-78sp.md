@@ -23,3 +23,14 @@ worker and manager roles (commit 979a714). Which other Claude Code built-ins
 should bridle deny every agent by default (messaging, scheduling, subagents,
 remote triggers), and should that list live in the built-in role defaults
 rather than each project's config?
+
+## Resolution
+
+Implemented in `crates/bridle-daemon/src/config.rs` (lines 83–91):
+`DENY_MESSAGING_AND_SUBAGENTS` (`SendMessage`, `Workflow`), `DENY_SCHEDULING`
+(`ScheduleWakeup`, `CronCreate`, `CronDelete`, `CronList`), and
+`DENY_REMOTE_TRIGGERS` (`RemoteTrigger`) are now built-in role defaults applied
+in worker_default(), manager_default(), and orchestrator_default(). Tests at
+lines 1108–1128 verify the denials are in place.
+
+Resolved 2026-09-28.

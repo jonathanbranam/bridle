@@ -31,3 +31,22 @@ per role, what the handoff persists and where (a message now, the task record
 after P0), how bridle respawns an agent in the same worktree and branch
 (`spawn` can only create a new worktree today), and `bridle renew <agent>` to
 do it on demand.
+
+## Resolution
+
+Implemented context governance with three pieces:
+
+1. **Threshold configuration** in `crates/bridle-daemon/src/config.rs`: each
+   role has a `wind_down_at` threshold (seconds of agent context).
+
+2. **Governance logic** in `crates/bridle-daemon/src/governor.rs` and
+   `src/supervisor.rs`: the supervisor monitors context size and winds agents
+   down as they approach the threshold, persisting state to bridle before
+   stopping.
+
+3. **Renew on demand** via `bridle renew <agent>` in `crates/bridle/src/cli.rs`
+   and `commands.rs`: spawns a new agent in the same worktree and branch with
+   `--resume`, re-reading the persisted message history. Verified end-to-end
+   in `crates/bridle-daemon/tests/renew_test.rs`.
+
+Resolved 2026-09-28.
