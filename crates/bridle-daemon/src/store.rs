@@ -3161,4 +3161,58 @@ mod tests {
             .expect_err("already deleted");
         assert!(matches!(err, StoreError::NotFound(_)));
     }
+
+    #[tokio::test]
+    async fn insert_list_and_delete_open_questions() {
+        let (store, _tmp) = store().await;
+        let task = store
+            .insert_task("tw", "Add foo", TaskKind::Feature)
+            .await
+            .expect("insert task");
+        let msg = store
+            .insert_message(NewMessage {
+                from: "agent:w1".to_string(),
+                to: task.id.clone(),
+                to_kind: RecipientKind::Task,
+                kind: MessageKind::Question,
+                body: "which endpoint?".to_string(),
+                reply_to: None,
+                when: When::Now,
+                state: MessageState::Delivered,
+            })
+            .await
+            .expect("insert question message");
+
+        let asked_at = Utc::now();
+        store
+            .insert_open_question(&task.id, &msg.id, &"agent:w1".to_string(), asked_at)
+            .await
+            .expect("insert open question");
+
+        let list = store.list_open_questions().await.expect("list");
+        assert_eq!(list.len(), 1);
+        assert_eq!(list[0].task_id, task.id);
+        assert_eq!(list[0].message_id, msg.id);
+        assert_eq!(list[0].asked_by, "agent:w1");
+
+        // One open question per task at a time: a second insert for the
+        // same task conflicts on the `task_id` primary key.
+        let err = store
+            .insert_open_question(&task.id, &msg.id, &"human".to_string(), Utc::now())
+            .await
+            .expect_err("already has an open question");
+        assert!(matches!(err, StoreError::Conflict(_)));
+
+        store
+            .delete_open_question(&task.id)
+            .await
+            .expect("delete open question");
+        assert!(store.list_open_questions().await.expect("list").is_empty());
+
+        let err = store
+            .delete_open_question(&task.id)
+            .await
+            .expect_err("already answered");
+        assert!(matches!(err, StoreError::NotFound(_)));
+    }
 }
