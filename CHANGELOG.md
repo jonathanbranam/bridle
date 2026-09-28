@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- The built-in `manager` role now defaults to `autostart = true`: a project with no role config gets a
+  manager at daemon start (`autostart = false` in `[roles.manager]` turns it off).
 - Fixed: daemon shutdown no longer hangs while a client (`bridle tui`, `events --follow`) holds the event stream open; the stream now ends when shutdown begins, and the HTTP drain is bounded at 5s.
 
 - Cheaper builds: new worker worktrees start with a copy-on-write clone of the clone's `target/`
