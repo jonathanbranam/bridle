@@ -36,6 +36,25 @@ its report, unedited; nothing in the surveyed repos was changed.
 - Bears on [[what-happens-to-meta-notes-planning-cli-b5zh|b5zh]] (see its section below).
 - The open questions at the end are for the human; none is answered yet.
 
+## The human's answers
+
+2026-09-28, on question 6 (b5zh):
+
+> yes, close b5zh; the meta-notes CLI is part of the plugin, not related to bridle.
+
+b5zh is resolved as unrelated. On the survey's framing and priority:
+
+> meta-notes is a project I spent hours on this weekend and is active; it is software - it is
+> a vim plugin; I have plenty of tasks to work on there and would be great to use bridle to
+> get that done.
+
+On question 8 (a Vim pack):
+
+> yes, it's an example of a different language again, different test framework, etc.
+
+So meta-notes is active and wanted on bridle, and a Vim/vader pack is worth building as
+another language and test framework, not kept project-local.
+
 ## The survey
 
 ### Summary
@@ -165,7 +184,7 @@ No project tooling reads the specs. There's no spec→test pipeline at all, so n
   - It's cheaper here than in data-contracts because there are no generated `.feature` files and no custom schema.
 - **C. Move to the P3 layout now.** Not recommended, for the same reason as data-contracts: it's churn before the parser exists.
 
-### Relation to b5zh (`docs/questions/open/what-happens-to-meta-notes-planning-cli-b5zh.md`)
+### Relation to b5zh (`docs/questions/resolved/what-happens-to-meta-notes-planning-cli-b5zh.md`)
 
 Findings bearing on the three options in the ticket:
 - **Client of bridle?** No. meta-notes plans a person's workday: ceremonies, calendar, time logs, PPARA projects (`MN/docs/planning-system.md`, `MN/skills/`). Bridle plans software work for agents. Their "task" models differ: markdown checkbox lines with 📅/🛫 dates, compared with bridle tasks on a state branch. Their "project" models also differ: PPARA folders with home notes, compared with a repo.
