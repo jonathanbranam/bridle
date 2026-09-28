@@ -208,6 +208,41 @@ async fn message_now_mid_turn_folds_into_the_running_turn() {
     assert!(final_agent.turns <= 2, "turns = {}", final_agent.turns);
 }
 
+/// kc4v: `context_tokens` must come from the turn-end `get_context_usage`
+/// probe, not from summing `result.usage` across the turn's tool round
+/// trips (docs/spikes/01-stream-json-findings.md row 8 — that sum is
+/// per-API-call, not the context size).
+#[tokio::test]
+async fn context_tokens_comes_from_get_context_usage_not_turn_usage_sum() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let agent = daemon
+        .client
+        .spawn(&SpawnRequest {
+            role: "worker".to_string(),
+            name: Some("w1".to_string()),
+            prompt: Some("SLEEP 2".to_string()),
+            workdir: Some(Workdir::Repo),
+            model: None,
+            ignore_budget: false,
+        })
+        .await
+        .expect("spawn");
+
+    wait_for_state(&daemon.client, &agent.id, AgentState::Working).await;
+
+    // fake-claude's fixed per-call `usage` sums to 110 regardless of how
+    // many tool round trips the turn makes; 55_000 is unreachable from that
+    // sum, so seeing it proves context_tokens came from get_context_usage.
+    std::fs::write(
+        std::path::Path::new(&agent.cwd).join(".fake-claude-context-usage"),
+        serde_json::json!({"totalTokens": 55_000}).to_string(),
+    )
+    .expect("write .fake-claude-context-usage");
+
+    let final_agent = wait_for_state(&daemon.client, &agent.id, AgentState::Idle).await;
+    assert_eq!(final_agent.context_tokens, Some(55_000));
+}
+
 #[tokio::test]
 async fn message_idle_is_held_until_the_turn_ends_then_starts_its_own_turn() {
     let (daemon, _tmp) = start_daemon(None).await;

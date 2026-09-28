@@ -37,6 +37,9 @@ const SWEEP_GRACE: Duration = Duration::from_secs(2);
 const SPAWN_READY_TIMEOUT: Duration = Duration::from_secs(8);
 /// `result.subtype` when `--max-budget-usd` is spent (docs/spikes/02-budget-cap-findings.md).
 const BUDGET_EXHAUSTED_SUBTYPE: &str = "error_max_budget_usd";
+/// How long the turn-end `get_context_usage` probe waits before falling back
+/// to `result.usage` (kc4v).
+const CONTEXT_USAGE_TIMEOUT: Duration = Duration::from_secs(10);
 
 #[derive(Debug, thiserror::Error)]
 pub enum SupervisorError {
@@ -847,9 +850,43 @@ impl AgentManager {
                     (delta, cumulative, st.turn_n)
                 };
                 let usage = r.usage.clone().unwrap_or_default();
-                let context_tokens = usage.input_tokens
+                // `result.usage` is summed over every API call the turn made
+                // (docs/spikes/01-stream-json-findings.md row 8), not the
+                // current context size: a turn with N tool round-trips
+                // re-reads the cached prompt N times, inflating this sum to
+                // roughly N times the real context. `get_context_usage`
+                // reports the actual current size directly (spike 01 §11);
+                // fall back to the (inflated) sum only if that probe fails.
+                let turn_usage_sum = usage.input_tokens
                     + usage.cache_read_input_tokens
                     + usage.cache_creation_input_tokens;
+                let context_tokens = match runtime
+                    .handle
+                    .get_context_usage(CONTEXT_USAGE_TIMEOUT)
+                    .await
+                {
+                    Ok(v) => v
+                        .pointer("/response/response/totalTokens")
+                        .and_then(Value::as_u64)
+                        .unwrap_or_else(|| {
+                            tracing::warn!(
+                                agent = id,
+                                response = %v,
+                                "get_context_usage response missing totalTokens; \
+                                 falling back to the (inflated) turn usage sum"
+                            );
+                            turn_usage_sum
+                        }),
+                    Err(e) => {
+                        tracing::warn!(
+                            agent = id,
+                            error = %e,
+                            "get_context_usage probe failed; falling back to \
+                             the (inflated) turn usage sum"
+                        );
+                        turn_usage_sum
+                    }
+                };
                 let turn_end = crate::store::TurnEnd {
                     subtype: r.subtype.clone(),
                     is_error: r.is_error,

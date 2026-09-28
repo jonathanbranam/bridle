@@ -103,19 +103,22 @@ large well before it becomes a problem — this is part 1 (measure) of a
 context governor; part 2 (acting on it: warning, forcing a `/compact` or
 handoff, refusing new work) is separate, later work.
 
-`agents.context_tokens` is the agent's latest known context size: `input +
-cache_read + cache_creation` tokens from its most recent turn's `result`
-event. It is **not cumulative** like `cost_usd_total` — each `end_turn` call
-overwrites it with that turn's own number, since context size is what the
-next turn will start from, not a running total across turns. It's `None`
-until an agent's first turn ends.
+`agents.context_tokens` is the agent's latest known context size, taken at
+each turn end from the undocumented `get_context_usage` control request's
+`totalTokens` (spike 01 §11: a per-category token breakdown plus the
+auto-compact threshold, no model call needed). It is **not cumulative** like
+`cost_usd_total` — each `end_turn` call overwrites it with that turn's own
+number, since context size is what the next turn will start from, not a
+running total across turns. It's `None` until an agent's first turn ends.
 
-Spike 01's fixtures confirm `result.usage` on the `n`th turn equals the
-`usage` on that turn's last `assistant` event (`modelUsage` is the one that's
-cumulative across the session — never use it for this). So the three-field
-sum from `result.usage`, taken once per turn end, is the same number a
-per-content-block read of `assistant.message.usage` would give for the
-context at that point; the daemon only needs the former.
+`result.usage`'s three fields (`input + cache_read + cache_creation`) are
+**not** the context size, despite looking like it: spike 01 row 8 found this
+sum is per turn, summed over the turn's API calls, so a turn with N tool-call
+round trips re-reads the cached prompt N times and inflates the sum to
+roughly N times the real context (ticket kc4v). The daemon still records
+those three fields on `TurnEnd` for cost/token accounting, and falls back to
+their sum for `context_tokens` only if the `get_context_usage` probe times
+out or its response doesn't parse.
 
 `bridle agents`, `bridle show` and the TUI's agents list show it as
 `CONTEXT`/`context`, `-` when unknown.

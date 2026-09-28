@@ -41,8 +41,11 @@ in the working directory, or "fake".
 
 A `get_usage` control_request returns `.fake-claude-usage` (JSON) from the
 working directory, if present, else a quiet all-normal reading; see
-`fake_usage_response()`. Any other control_request gets a generic success
-control_response echoing its subtype. On stdin EOF, the current turn (if any) finishes, then the
+`fake_usage_response()`. A `get_context_usage` control_request works the same
+way via `.fake-claude-context-usage`, defaulting to a `totalTokens` reading
+distinct from a single turn's `usage` sum, so tests can tell the two apart;
+see `fake_context_usage_response()`. Any other control_request gets a generic
+success control_response echoing its subtype. On stdin EOF, the current turn (if any) finishes, then the
 process exits 0 if the last result wasn't an error, 1 otherwise — matching
 real claude (docs/spikes/01-stream-json-findings.md, S5). SIGTERM exits 143.
 """
@@ -212,10 +215,29 @@ def fake_usage_response():
         return {"rate_limits": {"five_hour": {"utilization": 1.0}, "seven_day": {"utilization": 1.0}}, "limits": []}
 
 
+def fake_context_usage_response():
+    """Reads `.fake-claude-context-usage` (JSON) in cwd if present: lets a
+    test script the daemon-side turn-end `get_context_usage` call without a
+    real account. Same precedent as `.fake-claude-usage`. The default
+    `totalTokens` (999) is deliberately not derivable from `USAGE` above, so
+    a test can tell whether context_tokens came from this call or from
+    summing `result.usage`."""
+    try:
+        with open(".fake-claude-context-usage") as f:
+            return json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return {"totalTokens": 999, "maxTokens": 200000, "categories": []}
+
+
 def handle_generic_control_request(item):
     req_id = item.get("request_id")
     subtype = item.get("request", {}).get("subtype")
-    response = fake_usage_response() if subtype == "get_usage" else {"subtype": subtype}
+    if subtype == "get_usage":
+        response = fake_usage_response()
+    elif subtype == "get_context_usage":
+        response = fake_context_usage_response()
+    else:
+        response = {"subtype": subtype}
     emit(
         {
             "type": "control_response",
