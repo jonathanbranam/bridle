@@ -1812,6 +1812,17 @@ impl AgentManager {
             }
         }
 
+        // Same gap as `renew` (br-ab66): `--resume` still just waits on
+        // stdin, so with no pending messages the process would otherwise sit
+        // idle forever.
+        self.send_continuation_note(
+            principal,
+            &agent.id,
+            "You were resumed after a daemon restart. Continue from your task's thread and \
+             your own last handoff note",
+        )
+        .await?;
+
         self.0
             .store
             .get_agent(&agent.id)
@@ -1975,11 +1986,51 @@ impl AgentManager {
             }
         }
 
+        // Unlike `spawn`, a renew never has a `req.prompt`/`start_prompt` to
+        // start the fresh process's first turn with, and the common case has
+        // no pending messages either (the agent renewed itself mid-task,
+        // nothing new was sent to it) — so without this, the process just
+        // sits on stdin forever (br-ab66). The context governor already told
+        // the outgoing process to leave a handoff note before renewing
+        // (`tick_context_check` above); point the replacement at it.
+        let handoff_note = match agent.context_tokens {
+            Some(tokens) => format!(
+                "You were renewed for context (you were at ~{tokens} tokens). Continue from \
+                 your task's thread and your own last handoff note"
+            ),
+            None => "You were renewed for context. Continue from your task's thread and your \
+                     own last handoff note"
+                .to_string(),
+        };
+        self.send_continuation_note(principal, &agent.id, &handoff_note)
+            .await?;
+
         self.0
             .store
             .get_agent(&agent.id)
             .await?
             .ok_or_else(|| SupervisorError::Internal("agent vanished after renew".to_string()))
+    }
+
+    /// Points a freshly (re)started process at where to pick up: sent as a
+    /// `Note` the same way `spawn`'s `first_message` is, since a fresh
+    /// `claude` process otherwise just waits on stdin (br-ab66).
+    async fn send_continuation_note(
+        &self,
+        principal: &Principal,
+        agent_id: &str,
+        lead_in: &str,
+    ) -> Result<(), SupervisorError> {
+        self.send(
+            principal.id.clone(),
+            ToTarget::Agent(agent_id.to_string()),
+            MessageKind::Note,
+            format!("{lead_in} — check `bridle inbox` and the task body for where you left off."),
+            bridle_api::types::When::Now,
+            None,
+        )
+        .await?;
+        Ok(())
     }
 
     pub async fn remove(
