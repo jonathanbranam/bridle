@@ -79,7 +79,7 @@ stdin and stdout directly:
 | **stdout stream** | status, turn boundaries, tool use, usage, and liveness for leases | built |
 | **the first user message** | task-specific context at spawn (today: the spawn prompt; later: `bridle prime` output) | built (prompt only) |
 | **`--append-system-prompt-file`** | role-scoped rules and guides, identical for every agent in a role so the prompt cache holds | built (role prompt + bridle preamble) |
-| **Stop hook** → `bridle stop-check` | refuses to let a worker stop with an unreleased claim and no handoff note | with tasks |
+| **Stop hook** → `bridle stop-check` | refuses to let a worker stop with an unreleased claim and no handoff note | built |
 | **`bridle wait` as background Bash** | an agent is re-invoked when a task reaches a state or a message arrives. For bridle-hosted agents a stdin message does the same | with tasks |
 | **PreToolUse hooks** | enforce locked rules mechanically, e.g. workers can't run `git push` or `bridle accept` | with layers |
 
