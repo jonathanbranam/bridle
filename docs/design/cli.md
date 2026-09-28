@@ -50,6 +50,9 @@ bridle stop-check                           Claude Code Stop hook for the worker
 bridle rules explain <id>                   which layer wins a rule id, and what it shadowed
 bridle rules diff --project-layer           everything the project layer does differently from
                                              the base/pack layers below it
+bridle rules explain|diff ... --component <id>  the same on top of that component's chain (L4,
+                                             root-most ancestor first); diff shows what each
+                                             component layer changes instead of the project layer
 bridle sync                                 renders resolved workflow layers into CLAUDE.md's
                                              managed block, .claude/skills, .claude/agents and
                                              .claude/settings.json's hooks; local only, no daemon call
@@ -139,7 +142,11 @@ bridle task note   <id> TEXT                     plain note to the task's thread
   layer that redefines an id must give an `override` kind (`replace`, `append` or
   `disable`) — silent redefinition is an error, and `disable` requires a `reason`.
   L0 core has no file-backed layer yet (nothing in the binary defines rules that way
-  today) and L4 component rules are designed, not built (docs/design/components.md).
+  today). `--component <id>` appends that component's chain (`[components.*]` in config,
+  rules in `.bridle/components/<id>/rules`, root-most ancestor first) after L3, resolved
+  on its own ([[docs/design/components|components]]); an unknown id is an error, and
+  without the flag output is unchanged. `diff --component <id>` prints what each
+  component layer defines, replaces, appends to or disables instead of the project layer.
   `explain <id>` prints which layer won and the full history of what it shadowed, in
   layer order; `diff --project-layer` prints every rule id the project layer
   (`<repo>/.bridle/rules`) defines, replaces, appends to or disables, relative to the

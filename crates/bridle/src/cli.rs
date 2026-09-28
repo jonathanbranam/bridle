@@ -649,6 +649,10 @@ pub enum RulesAction {
 #[derive(Debug, Args)]
 pub struct RulesExplainArgs {
     pub id: String,
+    /// Resolve on top of this component's chain (L4, docs/design/components.md)
+    /// instead of stopping at the project layer.
+    #[arg(long)]
+    pub component: Option<String>,
 }
 
 #[derive(Debug, Args)]
@@ -661,6 +665,10 @@ pub struct RulesDiffArgs {
     /// have both share that name with different types.
     #[arg(long)]
     pub project_layer: bool,
+    /// Diff this component's chain against the layers below each of its
+    /// components, instead of the project layer.
+    #[arg(long)]
+    pub component: Option<String>,
 }
 
 #[derive(Debug, Args)]

@@ -1197,20 +1197,28 @@ async fn rules(cli: &Cli, args: &RulesArgs) -> Result<(), CliError> {
     }
 }
 
-fn resolve_workflow_rules(repo: &Path) -> Result<bridle_daemon::rules::Resolution, CliError> {
+fn resolve_workflow_rules(
+    repo: &Path,
+    component: Option<&str>,
+) -> Result<bridle_daemon::rules::Resolution, CliError> {
     use bridle_daemon::config::Config;
     use bridle_daemon::rules;
 
     let config = Config::load(repo).context("loading .bridle/config.toml")?;
     let workflow_root = config.workflow.as_deref().map(Path::new);
-    let layers = rules::discover_layers(repo, workflow_root, &config.packs);
+    let mut layers = rules::discover_layers(repo, workflow_root, &config.packs);
+    if let Some(id) = component {
+        let chain = rules::discover_component_layers(repo, &config, id)
+            .ok_or_else(|| anyhow::anyhow!("no component {id:?} in .bridle/config.toml"))?;
+        layers.extend(chain);
+    }
     rules::load_and_resolve(&layers)
         .map_err(|e| CliError::from(anyhow::Error::new(e).context("resolving workflow rules")))
 }
 
 async fn rules_explain(cli: &Cli, args: &RulesExplainArgs) -> Result<(), CliError> {
     let repo = std::env::current_dir().context("current directory")?;
-    let resolution = resolve_workflow_rules(&repo)?;
+    let resolution = resolve_workflow_rules(&repo, args.component.as_deref())?;
     let Some(rule) = bridle_daemon::rules::explain(&resolution, &args.id) else {
         return Err(anyhow::anyhow!("no rule with id {:?} in any layer", args.id).into());
     };
@@ -1247,11 +1255,37 @@ async fn rules_explain(cli: &Cli, args: &RulesExplainArgs) -> Result<(), CliErro
 }
 
 async fn rules_diff(cli: &Cli, args: &RulesDiffArgs) -> Result<(), CliError> {
-    if !args.project_layer {
-        return Err(anyhow::anyhow!("rules diff needs a mode: --project-layer").into());
+    if !args.project_layer && args.component.is_none() {
+        return Err(anyhow::anyhow!(
+            "rules diff needs a mode: --project-layer or --component <id>"
+        )
+        .into());
     }
     let repo = std::env::current_dir().context("current directory")?;
-    let resolution = resolve_workflow_rules(&repo)?;
+    let resolution = resolve_workflow_rules(&repo, args.component.as_deref())?;
+    if args.component.is_some() {
+        let diffs = bridle_daemon::rules::diff_components(&resolution);
+        if cli.json {
+            render::print_json(&diffs)?;
+            return Ok(());
+        }
+        if diffs.is_empty() {
+            println!("the component chain changes nothing");
+        }
+        for d in &diffs {
+            let action = d
+                .diff
+                .override_kind
+                .map(|k| format!("{k}s"))
+                .unwrap_or_else(|| "defines".to_string());
+            print!("{}: {} {action}", d.component, d.diff.id);
+            if let Some(reason) = &d.diff.reason {
+                print!(" ({reason})");
+            }
+            println!();
+        }
+        return Ok(());
+    }
     let diffs = bridle_daemon::rules::diff_project(&resolution);
 
     if cli.json {

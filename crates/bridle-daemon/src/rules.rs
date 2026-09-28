@@ -4,7 +4,11 @@
 //! file-backed layer yet — it's "built into the binary" per the design's layer
 //! table, and nothing in the binary defines rules that way today — so it isn't
 //! given a directory here; wiring it in is a follow-up once L0 has real content.
-//! L4 component/path-scoped rules are out of scope (blocked on spike vxp6).
+//! L4 component layers (docs/design/components.md) are more layers after L3, one per
+//! component in a chain, root-most first ([`discover_component_layers`]). Each named
+//! component's chain is resolved on its own, on top of L1-L3: never several
+//! components' layers in one list, or two siblings defining the same id would
+//! read as a silent redefinition.
 //!
 //! Each layer is a directory of `<id>.md` files (`Layer::dir` already points at
 //! the `rules/` directory itself, e.g. `<workflow>/base/rules` for L1,
@@ -28,6 +32,7 @@ pub enum LayerKind {
     Base,
     Pack,
     Project,
+    Component,
 }
 
 impl fmt::Display for LayerKind {
@@ -36,6 +41,7 @@ impl fmt::Display for LayerKind {
             LayerKind::Base => "base",
             LayerKind::Pack => "pack",
             LayerKind::Project => "project",
+            LayerKind::Component => "component",
         };
         f.write_str(s)
     }
@@ -90,6 +96,30 @@ pub fn discover_layers(repo: &Path, workflow_root: Option<&Path>, packs: &[Strin
         dir: repo.join(".bridle").join("rules"),
     });
     layers
+}
+
+/// The L4 layers for one component's chain, root-most ancestor first, to append after
+/// [`discover_layers`]' output. `None` if `component` isn't defined in `config`.
+pub fn discover_component_layers(
+    repo: &Path,
+    config: &crate::config::Config,
+    component: &str,
+) -> Option<Vec<Layer>> {
+    let chain = config.component_chain(component)?;
+    Some(
+        chain
+            .into_iter()
+            .map(|id| Layer {
+                kind: LayerKind::Component,
+                name: id.to_string(),
+                dir: repo
+                    .join(".bridle")
+                    .join("components")
+                    .join(id)
+                    .join("rules"),
+            })
+            .collect(),
+    )
 }
 
 /// Loads every layer's rule files and resolves them, in one step, for CLI
@@ -641,6 +671,38 @@ pub fn diff_project(resolution: &Resolution) -> Vec<ProjectDiff> {
     diffs
 }
 
+/// One component layer's contribution to a rule, for `bridle rules diff --component`.
+#[derive(Debug, Clone, Serialize)]
+pub struct ComponentDiff {
+    pub component: String,
+    #[serde(flatten)]
+    pub diff: ProjectDiff,
+}
+
+/// Everything the component layers of a resolved chain do differently from the layer
+/// below each: one entry per rule per component layer that touches it.
+pub fn diff_components(resolution: &Resolution) -> Vec<ComponentDiff> {
+    let mut diffs = Vec::new();
+    for rule in resolution.rules.values() {
+        for (idx, entry) in rule.history.iter().enumerate() {
+            if entry.layer.kind != LayerKind::Component {
+                continue;
+            }
+            diffs.push(ComponentDiff {
+                component: entry.layer.name.clone(),
+                diff: ProjectDiff {
+                    id: rule.id.clone(),
+                    before: idx.checked_sub(1).map(|i| rule.history[i].state.clone()),
+                    after: entry.state.clone(),
+                    override_kind: entry.override_kind,
+                    reason: entry.reason.clone(),
+                },
+            });
+        }
+    }
+    diffs
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1107,5 +1169,96 @@ mod tests {
             RuleState::Active { body, .. } => assert!(body.contains("CLI harness")),
             other => panic!("expected active, got {other:?}"),
         }
+    }
+
+    // -- components (L4) ----------------------------------------------------
+
+    fn chain_layers() -> Vec<LoadedLayer> {
+        let mut locked = rule("secure");
+        locked.locked = Some(true);
+        vec![
+            layer(
+                LayerKind::Base,
+                "base",
+                vec![locked, rule("style"), rule("x")],
+            ),
+            layer(LayerKind::Project, "project", vec![]),
+            layer(
+                LayerKind::Component,
+                "client",
+                vec![
+                    overriding("style", OverrideKind::Replace, None),
+                    overriding("x", OverrideKind::Disable, Some("n/a")),
+                    rule("client-only"),
+                ],
+            ),
+        ]
+    }
+
+    #[test]
+    fn two_deep_chain_replaces_appends_and_disables() {
+        let mut layers = chain_layers();
+        layers.push(layer(
+            LayerKind::Component,
+            "game",
+            vec![
+                overriding("client-only", OverrideKind::Append, None),
+                overriding("style", OverrideKind::Replace, None),
+            ],
+        ));
+        let res = resolve(&layers).expect("resolve");
+        assert_eq!(res.rules["style"].winning_layer().name, "game");
+        assert_eq!(res.rules["client-only"].history.len(), 2);
+        assert!(matches!(res.rules["x"].state(), RuleState::Disabled { .. }));
+        let diffs = diff_components(&res);
+        assert!(
+            diffs
+                .iter()
+                .any(|d| d.component == "game" && d.diff.id == "style")
+        );
+        assert!(diffs.iter().any(|d| d.component == "client"
+            && d.diff.id == "client-only"
+            && d.diff.before.is_none()));
+    }
+
+    #[test]
+    fn a_game_cannot_override_a_locked_rule() {
+        let mut layers = chain_layers();
+        layers.push(layer(
+            LayerKind::Component,
+            "game",
+            vec![overriding("secure", OverrideKind::Replace, None)],
+        ));
+        assert!(resolve(&layers).is_err());
+    }
+
+    #[test]
+    fn sibling_chains_resolve_separately() {
+        let base = layer(LayerKind::Base, "base", vec![]);
+        let a = layer(LayerKind::Component, "client-games", vec![rule("shared")]);
+        let b = layer(LayerKind::Component, "client-play", vec![rule("shared")]);
+        assert!(resolve(&[base.clone(), a.clone(), b.clone()]).is_err());
+        assert!(resolve(&[base.clone(), a]).is_ok());
+        assert!(resolve(&[base, b]).is_ok());
+    }
+
+    #[test]
+    fn component_layers_follow_the_chain_root_first() {
+        let cfg = crate::config::Config::parse(
+            r#"
+            [components.client-games]
+            [components.dungeon]
+            parent = "client-games"
+            "#,
+        )
+        .expect("parse");
+        let layers = discover_component_layers(Path::new("/r"), &cfg, "dungeon").expect("known");
+        let names: Vec<_> = layers.iter().map(|l| l.name.as_str()).collect();
+        assert_eq!(names, ["client-games", "dungeon"]);
+        assert_eq!(
+            layers[1].dir,
+            Path::new("/r/.bridle/components/dungeon/rules")
+        );
+        assert!(discover_component_layers(Path::new("/r"), &cfg, "nope").is_none());
     }
 }

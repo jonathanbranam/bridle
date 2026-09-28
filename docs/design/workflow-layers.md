@@ -11,6 +11,12 @@ L3  project     <repo>/.bridle/                 this project's overrides + addit
 L4  component   <repo>/.bridle/components/<n>/  scoped by task/spawn; nests (client → game)
 ```
 
+L4 is built for rule resolution: `[components.<id>]` in config declares the nesting
+(`parent`, validated), each component's chain is layered after L3 and resolved on its own
+(never several components in one list), and `bridle rules explain|diff --component <id>`
+shows it. Delivery to agents (`bridle prime`, task/spawn scoping) is still to come; see
+[[docs/design/components|components]].
+
 Later layers win. A project lists its packs in `.bridle/config.toml`, and
 points `workflow` at wherever `base/` and `packs/` live — a directory inside
 the project's own repo (bridle's own choice, decision r2uq: a separate repo
@@ -161,7 +167,7 @@ written down anywhere else yet:
 - **The `SessionStart` hook that would run `sync` automatically is not built yet** — a
   follow-up (P2-3 built the command itself, not the auto-invocation).
 - L4 component rules aren't rendered into files: scope comes from the task or spawn, and
-  `bridle prime` delivers them ([[docs/design/components|components]]; designed, not built).
+  `bridle prime` delivers them ([[docs/design/components|components]]; prime delivery not built yet).
 
 Most rule content is not rendered into a file at all. It is delivered by
 `bridle prime` at session start, sized to the role: a worker gets its task,
