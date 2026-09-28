@@ -1,7 +1,7 @@
 # Orchestrator state
 
 The orchestrator's working notes for handing over between sessions. The role
-itself is in `.bridle/roles/orchestrator.md`. Update this file whenever the
+itself is in `workflow/base/roles/orchestrator.md`. Update this file whenever the
 queue, open items or decisions change. Last updated 2026-09-28 17:00 UTC,
 during the sixth orchestrator session.
 
@@ -38,9 +38,15 @@ during the sixth orchestrator session.
      empty base today (nothing clones it; `rules.rs` discover_layers).
   Bridle side queued by pm-1 (tier 2): br-1e0c roles into workflow/base (in
   progress), br-4221 check-command binding, br-7678 python pack (after
-  br-4221), br-bc21 harvest base rules. Next for the orchestrator: the DC
-  branch (survey §7 step 3) once those land, then the human starts DC's
-  daemon (workspace `data-contracts-workspace/`) and makes a token.
+  br-4221), br-bc21 harvest base rules.
+  **HOLD all changes in data-contracts** (the human's standing rule,
+  2026-09-28: no changes to their existing projects without their review and
+  approval; `workflow/base/rules/existing-projects.md`, ticket 63rv). Every
+  onboarding is a trial on its own integration branch; `main`/`dev` are never
+  touched until the human approves adoption. Needs rxe8 (br-29f9) first.
+  Before the rule reached us, the orchestrator had already pushed ticket moves
+  to DC `main` (b923c7e) and deleted the adopt branch (both on the human's
+  explicit answers); the human was told and can have b923c7e reverted.
 - **`merge.ff = only` fix merged** (m2fq, br-544b, b809c4e): workers use
   `git merge --no-ff main`; live for new workers after the next restart.
 - **Local permissions** (`.claude/settings.local.json`, untracked): the
@@ -82,7 +88,7 @@ P3; new work goes in bridle's queue; old `docs/tickets/` stays as history.
 - **Workers:** `spike-path-rules` (vxp6, Haiku) and `smaller-debug-builds`
   (nbkj).
 - **The advisor** (`external:advisor`, `scripts/claude-advisor`,
-  `.bridle/roles/advisor.md`): the human's chat and ticket session.
+  `workflow/base/roles/advisor.md`): the human's chat and ticket session.
   Read-only; files tickets; messages you directly.
 
 ## Queue (`bridle queue`)

@@ -6,7 +6,7 @@ repos: [bridle]
 changes: []
 specs: []
 needs: []
-see: [u8sm, m2fq]
+see: [u8sm, m2fq, 63rv]
 ---
 
 ## The ask
@@ -56,3 +56,8 @@ Nothing else (release branches, git-flow, per-feature integration branches).
   open.
 - Related: [[merging-main-fails-under-merge-ff-only-m2fq|m2fq]] (`git merge main` under
   the human's global `merge.ff = only`).
+- **Needed first by onboarding**: the human wants every new project trialled on its own
+  branch, with `main` and `dev` left alone until they approve adoption
+  ([[trial-adoption-on-a-bridle-branch-63rv|63rv]]). That's the same setting (the integration
+  branch) pointed at a trial branch, and the same rule (never merge into or push `main` or
+  `dev`).

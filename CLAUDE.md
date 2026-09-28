@@ -14,7 +14,7 @@ Claude Code agents. Read these before changing behaviour:
 - `docs/spikes/01-stream-json-findings.md`: verified Claude Code stream-json behaviour.
   Cite it rather than assuming how `claude` behaves.
 - **If you are the human's orchestrator** (directing bridle's workforce on this repo):
-  `.bridle/roles/orchestrator.md`, then `docs/context/orchestrator-state.md`.
+  `workflow/base/roles/orchestrator.md`, then `docs/context/orchestrator-state.md`.
 
 ## Layout
 

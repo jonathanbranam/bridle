@@ -199,7 +199,7 @@ needs action.
 - Bridle already provides the substance:
   - Each worker gets its own worktree and branch and commits there (`docs/design/agent-host/operating-model.md`).
   - The worker merges the local main into its branch.
-  - The manager checks `merge-base --is-ancestor`, then `git merge --no-ff` and pushes (`.bridle/roles/manager.md`).
+  - The manager checks `merge-base --is-ancestor`, then `git merge --no-ff` and pushes (`workflow/base/roles/manager.md`).
   - Tasks and planning live on the state branch, so they never create noise in the tree.
 - The branch's design conflicts with bridle in three places:
   - Per-change branches driven by an interactive driver using `EnterWorktree`, where bridle has per-agent branches under `bridle/`.

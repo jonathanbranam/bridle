@@ -19,4 +19,4 @@ early abstraction are worth it; we'll come back in the future when the rules
 and constraints are implemented in bridle and fill them out further".
 
 Until `bridle sync` renders rules into agents, the role prompts in the
-`bridle` repo's `.bridle/roles/` carry this.
+`bridle` repo's `workflow/base/roles/` carry this.

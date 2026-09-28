@@ -29,4 +29,4 @@ important to get right however, since that is a limited and shared budget." And:
 token budget."
 
 Until `bridle sync` renders rules into agents, the role prompts in the
-`bridle` repo's `.bridle/roles/` carry this.
+`bridle` repo's `workflow/base/roles/` carry this.

@@ -28,7 +28,7 @@ base             = "HEAD"          # ref new worktrees branch from
 permission_mode  = "acceptEdits"
 allowed_tools    = ["Bash", "Read", "Edit", "Write", "Glob", "Grep"]
 disallowed_tools = []
-system_prompt    = ".bridle/roles/worker.md"     # appended; bridle adds its own preamble
+system_prompt    = "workflow/base/roles/worker.md"     # appended; bridle adds its own preamble
 max_budget_usd   = 3.0             # per process; see agents.md, Spend cap
 
 [roles.manager]
@@ -38,7 +38,7 @@ permission_mode   = "dontAsk"
 autostart         = false
 resume_on_restart = true
 allowed_tools     = ["Bash(bridle *)", "Bash(git *)", "Read", "Glob", "Grep"]
-system_prompt     = ".bridle/roles/manager.md"
+system_prompt     = "workflow/base/roles/manager.md"
 start_prompt      = "Check your inbox and tell the human you're ready."   # first message when spawned without one
 ```
 

@@ -17,4 +17,4 @@ do has a cost - tokens, time, energy, water, oil, money; we save all of that by
 NOT doing something."
 
 Until `bridle sync` renders rules into agents, the role prompts in the
-`bridle` repo's `.bridle/roles/` carry this.
+`bridle` repo's `workflow/base/roles/` carry this.

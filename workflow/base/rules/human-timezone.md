@@ -16,4 +16,4 @@ And, the same day: "drop the "ET", just "7:00 AM" only list the timezone if
 it's NOT ET."
 
 Until `bridle sync` renders rules into agents, the role prompts in the
-`bridle` repo's `.bridle/roles/` carry this.
+`bridle` repo's `workflow/base/roles/` carry this.
