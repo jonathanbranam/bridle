@@ -161,6 +161,20 @@ pub struct OpenQuestion {
     pub asked_at: DateTime<Utc>,
 }
 
+/// The fast-index row for a claim (storage.md: "the ephemeral tables
+/// claims, waits, ports, impact_cache arrive with later tasks" — this table
+/// is SQLite-only, with no state-branch counterpart). `task_id` is the
+/// primary key: a task has at most one claimant at a time. Lease expiry is
+/// computed live from the claiming agent's own activity (`agents.last_event_at`
+/// / `turn_started_at`), not stored here, so there's nothing to renew on a
+/// tick.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Claim {
+    pub task_id: String,
+    pub claimed_by: PrincipalId,
+    pub claimed_at: DateTime<Utc>,
+}
+
 /// A resolved message query: `to`/`from` are concrete ids, already picked
 /// apart from the wire `MessageQuery`'s `"me"` / name lookups.
 #[derive(Debug, Clone, Default)]
@@ -474,6 +488,32 @@ impl Store {
         self.with_conn(sync::list_open_questions).await
     }
 
+    // ---------- claims ----------
+
+    /// Claims `task_id` for `claimed_by`, failing with `Conflict` if it's
+    /// already claimed (`task_id` is the table's primary key).
+    pub async fn insert_claim(
+        &self,
+        task_id: &str,
+        claimed_by: &PrincipalId,
+        claimed_at: DateTime<Utc>,
+    ) -> Result<(), StoreError> {
+        let (task_id, claimed_by) = (task_id.to_string(), claimed_by.clone());
+        self.with_conn(move |c| sync::insert_claim(c, &task_id, &claimed_by, claimed_at))
+            .await
+    }
+
+    /// Releases `task_id`'s claim, failing with `NotFound` if it has none.
+    pub async fn delete_claim(&self, task_id: &str) -> Result<(), StoreError> {
+        let task_id = task_id.to_string();
+        self.with_conn(move |c| sync::delete_claim(c, &task_id))
+            .await
+    }
+
+    pub async fn list_claims(&self) -> Result<Vec<Claim>, StoreError> {
+        self.with_conn(sync::list_claims).await
+    }
+
     // ---------- edges ----------
 
     pub async fn insert_edge(
@@ -776,8 +816,22 @@ mod sync {
         );
     "#;
 
+    // The fast index over claims (storage.md: "the ephemeral tables claims,
+    // waits, ports, impact_cache arrive with later tasks"), SQLite-only —
+    // unlike `open_questions`, no state-branch file mirrors this table.
+    // `task_id` is the primary key, since a task has at most one claimant at
+    // a time.
+    pub(super) const SCHEMA_V9: &str = r#"
+        CREATE TABLE claims (
+            task_id TEXT PRIMARY KEY,
+            claimed_by TEXT NOT NULL,
+            claimed_at TEXT NOT NULL
+        );
+    "#;
+
     const MIGRATIONS: &[&str] = &[
         SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7, SCHEMA_V8,
+        SCHEMA_V9,
     ];
 
     pub(super) fn open(path: &Path) -> Result<Connection, StoreError> {
@@ -1865,6 +1919,53 @@ mod sync {
             "SELECT task_id, message_id, asked_by, asked_at FROM open_questions ORDER BY asked_at ASC",
         )?;
         let rows = stmt.query_map([], row_to_open_question)?;
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
+    // ---------- claims ----------
+
+    fn row_to_claim(row: &Row<'_>) -> rusqlite::Result<Claim> {
+        Ok(Claim {
+            task_id: row.get(0)?,
+            claimed_by: row.get(1)?,
+            claimed_at: parse_dt(&row.get::<_, String>(2)?)?,
+        })
+    }
+
+    pub(super) fn insert_claim(
+        conn: &Connection,
+        task_id: &str,
+        claimed_by: &str,
+        claimed_at: DateTime<Utc>,
+    ) -> Result<(), StoreError> {
+        let result = conn.execute(
+            "INSERT INTO claims(task_id, claimed_by, claimed_at) VALUES (?1, ?2, ?3)",
+            params![task_id, claimed_by, fmt_dt(claimed_at)],
+        );
+        match result {
+            Ok(_) => Ok(()),
+            Err(e) if is_unique_violation(&e) => Err(StoreError::Conflict(format!(
+                "task {task_id} is already claimed"
+            ))),
+            Err(e) => Err(e.into()),
+        }
+    }
+
+    pub(super) fn delete_claim(conn: &Connection, task_id: &str) -> Result<(), StoreError> {
+        let n = conn.execute("DELETE FROM claims WHERE task_id = ?1", params![task_id])?;
+        if n == 0 {
+            return Err(StoreError::NotFound(format!(
+                "task {task_id} is not claimed"
+            )));
+        }
+        Ok(())
+    }
+
+    pub(super) fn list_claims(conn: &Connection) -> Result<Vec<Claim>, StoreError> {
+        let mut stmt = conn.prepare(
+            "SELECT task_id, claimed_by, claimed_at FROM claims ORDER BY claimed_at ASC",
+        )?;
+        let rows = stmt.query_map([], row_to_claim)?;
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
     }
 
@@ -3238,6 +3339,43 @@ mod tests {
             .delete_open_question(&task.id)
             .await
             .expect_err("already answered");
+        assert!(matches!(err, StoreError::NotFound(_)));
+    }
+
+    #[tokio::test]
+    async fn insert_list_and_delete_claims() {
+        let (store, _tmp) = store().await;
+        let task = store
+            .insert_task("tw", "Add foo", TaskKind::Feature)
+            .await
+            .expect("insert task");
+
+        let claimed_at = Utc::now();
+        store
+            .insert_claim(&task.id, &"agent:w1".to_string(), claimed_at)
+            .await
+            .expect("insert claim");
+
+        let list = store.list_claims().await.expect("list");
+        assert_eq!(list.len(), 1);
+        assert_eq!(list[0].task_id, task.id);
+        assert_eq!(list[0].claimed_by, "agent:w1");
+
+        // One claimant per task at a time: a second insert for the same
+        // task conflicts on the `task_id` primary key.
+        let err = store
+            .insert_claim(&task.id, &"agent:w2".to_string(), Utc::now())
+            .await
+            .expect_err("already claimed");
+        assert!(matches!(err, StoreError::Conflict(_)));
+
+        store.delete_claim(&task.id).await.expect("delete claim");
+        assert!(store.list_claims().await.expect("list").is_empty());
+
+        let err = store
+            .delete_claim(&task.id)
+            .await
+            .expect_err("already released");
         assert!(matches!(err, StoreError::NotFound(_)));
     }
 }

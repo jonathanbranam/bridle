@@ -415,6 +415,10 @@ impl ModelsConfig {
 pub struct Config {
     pub listen: SocketAddr,
     pub stall_after: Duration,
+    /// How long a claimed task's lease survives without the claiming
+    /// agent's own activity (`last_event_at`/`turn_started_at`) before it's
+    /// released back to `planned` (docs/design/storage.md, claims).
+    pub claim_lease_after: Duration,
     pub stop_grace: Duration,
     pub roles: BTreeMap<String, Role>,
     pub budget: BudgetConfig,
@@ -434,6 +438,7 @@ impl Default for Config {
         Config {
             listen: "127.0.0.1:0".parse().expect("valid default listen addr"),
             stall_after: Duration::from_secs(10 * 60),
+            claim_lease_after: Duration::from_secs(10 * 60),
             stop_grace: Duration::from_secs(30),
             roles,
             budget: BudgetConfig::default(),
@@ -534,6 +539,9 @@ impl Config {
             }
             if let Some(s) = d.stall_after {
                 config.stall_after = parse_duration(&s)?;
+            }
+            if let Some(s) = d.claim_lease_after {
+                config.claim_lease_after = parse_duration(&s)?;
             }
             if let Some(s) = d.stop_grace {
                 config.stop_grace = parse_duration(&s)?;
@@ -650,6 +658,8 @@ struct RawDaemon {
     listen: Option<String>,
     #[serde(default)]
     stall_after: Option<String>,
+    #[serde(default)]
+    claim_lease_after: Option<String>,
     #[serde(default)]
     stop_grace: Option<String>,
 }
@@ -852,6 +862,7 @@ mod tests {
             [daemon]
             listen = "0.0.0.0:7433"
             stall_after = "5m"
+            claim_lease_after = "15m"
             stop_grace = "45s"
 
             [roles.worker]
@@ -868,6 +879,7 @@ mod tests {
 
         assert_eq!(cfg.listen, "0.0.0.0:7433".parse().expect("addr"));
         assert_eq!(cfg.stall_after, Duration::from_secs(5 * 60));
+        assert_eq!(cfg.claim_lease_after, Duration::from_secs(15 * 60));
         assert_eq!(cfg.stop_grace, Duration::from_secs(45));
 
         // Overridden field changes; untouched fields keep the built-in default.
