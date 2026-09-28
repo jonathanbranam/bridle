@@ -91,3 +91,5 @@
 {"actor":"human","at":"2026-09-28T09:35:37.793Z","from":"","task":"br-a22a","to":"open"}
 {"actor":"agent:pm-1","at":"2026-09-28T09:46:06.342912Z","from":"open","task":"br-9300","to":"dropped"}
 {"actor":"agent:pm-1","at":"2026-09-28T09:59:16.594330Z","from":"open","task":"br-a22a","to":"dropped"}
+{"actor":"human","at":"2026-09-28T12:23:03.487Z","from":"","task":"br-1b35","to":"open"}
+{"actor":"human","at":"2026-09-28T12:23:03.504Z","from":"","task":"br-dbd1","to":"open"}
