@@ -105,12 +105,47 @@ fn render_result(value: &Value) -> String {
         .get("total_cost_usd")
         .and_then(Value::as_f64)
         .unwrap_or(0.0);
-    format!("\u{2713} turn done ({subtype}, ${cost:.4})")
+    format!(
+        "\u{2713} turn done ({subtype}, ${})",
+        format_cost_dollars(cost)
+    )
 }
 
 fn render_system_init(value: &Value) -> Option<String> {
     (value.get("subtype").and_then(Value::as_str) == Some("init"))
         .then(|| "\u{2014} turn start".to_string())
+}
+
+fn format_tokens_impl(tokens: usize) -> String {
+    if tokens >= 10000 {
+        let k = tokens as f64 / 1000.0;
+        if k >= 100.0 {
+            format!("{:.0}k", k)
+        } else {
+            format!("{:.1}k", k)
+        }
+    } else {
+        tokens.to_string()
+    }
+}
+
+pub fn format_tokens(tokens: u64) -> String {
+    format_tokens_impl(tokens as usize)
+}
+
+pub fn format_cost_dollars(cost: f64) -> String {
+    if cost >= 1.0 {
+        format!("{:.2}", cost)
+    } else {
+        format!("{:.4}", cost)
+    }
+}
+
+pub fn format_context_tokens(tokens: Option<u64>) -> String {
+    match tokens {
+        Some(n) => format_tokens(n),
+        None => "-".to_string(),
+    }
 }
 
 /// A short one-line summary of a tool call's input for `tool_use` blocks:

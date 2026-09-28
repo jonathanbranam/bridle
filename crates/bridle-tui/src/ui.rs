@@ -59,14 +59,13 @@ fn draw_agents(frame: &mut Frame, area: Rect, app: &App) {
             Cell::from(a.role.clone()),
             Cell::from(a.state.to_string()),
             Cell::from(a.model.clone()),
-            Cell::from(format!("${:.4}", a.cost_usd_total)),
+            Cell::from(format!(
+                "${}",
+                crate::format::format_cost_dollars(a.cost_usd_total)
+            )),
             Cell::from(a.turns.to_string()),
             // Not a real zero-sized context: no turn has ended yet.
-            Cell::from(
-                a.context_tokens
-                    .map(|n| n.to_string())
-                    .unwrap_or_else(|| "-".to_string()),
-            ),
+            Cell::from(crate::format::format_context_tokens(a.context_tokens)),
         ])
     });
     let widths = [
