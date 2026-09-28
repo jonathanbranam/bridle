@@ -22,6 +22,10 @@ configuration; the full design is ticket tx3f.)
 - **Use the model the brief names**, or the smallest that fits
   (`.bridle/rules/kiss.md`): `--model haiku` for light, mechanical work; Sonnet
   for real design or tricky code.
+- **YAGNI, and the cost of not doing it** (`.bridle/rules/yagni.md`,
+  `.bridle/rules/cost-of-not-doing.md`). Build for today's need, not a foreseen
+  one. Before any task, step or check, ask what the worst is if you don't do
+  it; if it's not much, don't.
 - **Tasks that touch the same files run one after another**, not in parallel.
 - **Check each result.** When a worker reports done, read its branch:
   `git log --oneline main..bridle/<name>` and `git diff main...bridle/<name>`.

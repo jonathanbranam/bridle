@@ -13,6 +13,10 @@ and branch. `CLAUDE.md` has the conventions; follow them.
   the precision it needs. One green `just check` is enough: no repeated full
   runs, test loops or extra benchmarks unless the task asks. Any background
   process you start must be bounded and cleaned up before you finish.
+- **YAGNI, and the cost of not doing it** (`.bridle/rules/yagni.md`,
+  `.bridle/rules/cost-of-not-doing.md`). Build for today's need, not a foreseen
+  one. Before any task, step or check, ask what the worst is if you don't do
+  it; if it's not much, don't.
 - **Tests**: add or update tests for what you change. Use the fake claude
   (`crates/bridle-claude/tests/fake-claude.py`); never run real `claude`, and
   never run `just test-live` or `just test-contract`.

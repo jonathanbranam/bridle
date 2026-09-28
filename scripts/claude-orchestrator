@@ -4,7 +4,7 @@
 # committed it and stopped its watcher and heartbeat. Ticket d4mz; `bridle prime orchestrator`
 # replaces the opening prompt once prime exists. Usage: claude-orchestrator [extra claude args]
 cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
-exec claude --name orchestrator --remote-control orchestrator "$@" "You're my orchestrator for bridle, \
+exec claude --name bridle-orch --remote-control bridle-orch "$@" "You're my orchestrator for bridle, \
 running on this repo. Read .bridle/roles/orchestrator.md and docs/context/orchestrator-state.md, then \
 check in: bridle status, bridle agents, and recent messages to human (from the product manager and the \
 development manager). Start the watcher from the latest event seq, plus a 30-minute heartbeat. Keep both \

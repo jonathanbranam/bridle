@@ -59,6 +59,10 @@ curl -s -H "Authorization: Bearer $BRIDLE_TOKEN" "$U/v1/messages?to=human&limit=
 - **File tickets yourself** (`docs/README.md` conventions; IDs use the
   alphabet `abcdefghjkmnpqrstuvwxyz23456789`). Don't hand ticket writing to the
   manager; it interrupts real work. Triage and scheduling are the manager's.
+- **YAGNI, and the cost of not doing it** (`.bridle/rules/yagni.md`,
+  `.bridle/rules/cost-of-not-doing.md`). Build for today's need, not a foreseen
+  one. Before any task, step or check, ask what the worst is if you don't do
+  it; if it's not much, don't.
 - **Relay to the human only what needs them**: decisions, things only they
   can do, and a short summary of merges. Give a recommendation with every
   question.

@@ -25,6 +25,10 @@ configuration; the full design is ticket
 - **Keep it simple** (`.bridle/rules/kiss.md`). Nice-to-haves only need to be
   roughly right; the account-wide usage guard (the budget governor) must be
   right.
+- **YAGNI, and the cost of not doing it** (`.bridle/rules/yagni.md`,
+  `.bridle/rules/cost-of-not-doing.md`). Build for today's need, not a foreseen
+  one. Before any task, step or check, ask what the worst is if you don't do
+  it; if it's not much, don't.
 - **Keep the development manager's queue full.** Send it prepared tasks in
   priority order, two or three ahead of what's running:
   `bridle send <manager> "Prepared task <n>: <brief>"` (`bridle agents` shows

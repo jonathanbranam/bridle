@@ -62,3 +62,27 @@ that crate in between:
   load average ~11, on `fc737e5`.
 
 Both wait 5 s for the Python fake `claude` to exit or close stdout.
+
+### Another, 2026-09-28 (orchestrator)
+
+- `close_stdin_is_idempotent` (`process_test.rs`), 16.6 s, in a full
+  `just check` at load average ~50, on `66ce86a`. The run before it on the
+  same commit, at load ~18, was green.
+
+## The human's decision, 2026-09-28
+
+Scheduled right after P0-3. The human's words:
+
+> yes, move the flaky tests up after P0-3; [...] the first task, the first
+> effort is to do the easy thing and increase the timeouts as you suggested.
+
+What the orchestrator suggested, which the first task takes up:
+
+> **Safety-net timeouts:** raise them to 30–60 s through one shared helper.
+> A passing test costs no time either way, and only a truly hung one waits.
+
+The later steps the orchestrator proposed, not yet scheduled: check whether
+`spawn_with_a_crashing_first_message_returns_promptly` hides a real missed
+crash signal, and test the behaviour instead of wall-clock time; one shared
+wait-until-condition helper for every test; reproduce the two unexplained
+failures under load; no automatic retries, which would hide real bugs.
