@@ -150,3 +150,21 @@ for it; it just isn't needed today.
 The human reads the status line all day; today its context figure is wrong
 (item 2) and its snapshots, which feed the budget governor's view of
 interactive sessions, never arrive (item 5).
+
+## Resolution
+
+All findings have been verified against `crates/bridle/src/statusline.rs`:
+
+1. **Context parsing** (item 1): Confirmed. `context_window()` (lines 81–103) correctly parses `used_percentage`, `context_window_size`, and `current_usage` with its three input fields summed for token accounting.
+
+2. **Exceeds 200k fallback** (item 2): Confirmed removed. `exceeds_200k_tokens` does not appear in the parsing logic. Test `extended_context_model_is_not_capped_at_200k()` (lines 296–316) verifies that 1M-context models at 200k tokens read as 20%, not 100%.
+
+3. **Rate limits** (item 3): Confirmed. `WINDOWS` const (lines 22–27) explicitly lists `five_hour`, `seven_day`, `seven_day_opus`, `seven_day_sonnet`. Parser correctly skips missing or unknown windows.
+
+4. **Cost de-emphasization** (item 4): Confirmed. `render_line()` (lines 181–183) places cost last, parenthesized. Test (line 278) verifies the line ends with ')'.
+
+5. **Recording drop** (item 5): Confirmed. Parsing is pure, no HTTP calls or token handling. `render_counts()` (lines 191–204) uses the read-only token from r7cs (merged at df32928) for counts display. The decision to drop recording has been implemented: no `POST /v1/statusline` from statusline; the daemon's endpoint and `interactive_usage` table remain unused.
+
+Test fixtures use the documented shape (lines 223–279), validating the field names and structure. All changes described in this ticket have landed in production code.
+
+See also the spike findings: `docs/spikes/04-statusline-stdin-schema-findings.md`.
