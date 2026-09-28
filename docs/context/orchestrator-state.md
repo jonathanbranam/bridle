@@ -2,149 +2,141 @@
 
 The orchestrator's working notes for handing over between sessions. The role
 itself is in `.bridle/roles/orchestrator.md`. Update this file whenever the
-queue, open items or decisions change. Last updated 2026-09-28 11:50 UTC,
-at the handover from the fourth orchestrator session.
+queue, open items or decisions change. Last updated 2026-09-28 16:35 UTC,
+at the handover from the fifth orchestrator session.
 
 ## First, for the incoming orchestrator
 
-- **At handover:** everything is idle, waiting on the human's decisions below.
-  `main` is 6e78e6c, verified (two local runs, CI green on both OSes). Start
-  the watcher from the latest seq; find it by paging `bridle events --since`
-  (or plain `bridle events` once the new build runs).
-- **v0.3.0 is tagged** (9dc6cf3, 2026-09-28 ~09:55 UTC): P1 complete. What
-  comes after P1 (P2, or a design question first) is for the human to decide.
-- **v0.2.0 is tagged** (2683d6d, 2026-09-28 ~06:25 UTC): P0 complete, two
-  local runs 297/297, GitHub CI green on Linux and macOS. n6gy resolved again.
-- **Order for the morning: rebuild first, then hand over.**
-  `scripts/claude-orchestrator` now calls `bridle prime orchestrator`
-  (a7e5019), which the installed binary lacks, so the new session would start
-  with an empty prompt. Run `cargo install --path crates/bridle` and restart
-  the daemon, then run the script.
-- **For the human in the morning:** rebuild and restart the daemon
-  (`cargo install --path crates/bridle`, then restart). The running daemon is
-  the 9608376 build, so htp6b auto-renew, 78sp, 4eep, x7gp and the shutdown fix
-  aren't live yet. After the restart, resume any `lost` workers.
-- **Also for the human: turn on the budget schedule** (n9qh part 1, cdb4ed0).
-  It ships with no periods, and a project config may only lower thresholds,
-  so the periods go in the machine-wide `~/.bridle/config.toml` (which doesn't
-  exist yet). The human creates it, then restarts. The recommendation, in the
-  machine's local time (the workday hours are a guess; the human confirms):
+- **`main` is 8516bf8 plus doc commits, verified** (two local runs, 419/419).
+  The installed binary is built from 8516bf8. The running daemon started
+  16:22 UTC on f401a7f (j479, a7h3, 9c63, persist-spawn-overrides all live);
+  only the renewal first-message fix (br-ab66, 8516bf8) waits for the next
+  restart. Start the watcher from seq ~22386.
+- **Agents now reach you directly** (a7h3): `bridle send external:orchestrator`.
+  The watcher wakes on your inbox; read with `bridle inbox`, then
+  `bridle inbox --mark-read` or it fires again. The human's inbox is for what
+  they must act on only (kp3f).
+- **The queue is live** (j479): `bridle queue`. pm-1 owns it (tiers of
+  equally ranked tasks, on the state branch); manager-2 takes from the top
+  tier by load and never re-prioritises. Priorities go to pm-1, who records
+  them; not by message alone.
+- **In flight: the data-contracts onboarding** (the human said go,
+  16:30 UTC). A read-only survey subagent of the fifth session is writing
+  `docs/context/onboarding-data-contracts.md` (not committed). If it isn't
+  there, re-run the survey (see below). Then bring the human the decisions
+  in it and run the plan below.
+- **Tests got ~10x faster after `cargo clean`** (400 s -> 35 s); see f75x.
 
-  ```toml
-  [[budget.schedule]]
-  name = "night"
-  days = "all"
-  start = "23:00"
-  end = "07:00"
-  hold_at = 90
-  wind_down_at = 93
-  stop_at = 95
+## The data-contracts onboarding (plan agreed with the human)
 
-  [[budget.schedule]]
-  name = "workday"
-  days = ["mon", "tue", "wed", "thu", "fri"]
-  start = "09:00"
-  end = "17:00"
-  hold_at = 90
-  wind_down_at = 93
-  stop_at = 95
-  ```
+Repo: `/Volumes/Data/work/data-contracts-workspace/data-contracts`, sibling
+worktrees like bridle's. It has its own CLAUDE.md (183 lines), 10 OpenSpec
+skills, 2 agents, a `docs/tickets/` pipeline, an untracked
+`.claude/settings.json` and an in-flight branch
+`adopt-branch-per-change-workflow` (7 ahead). Leave those two alone until the
+human says what they are.
 
-  n9qh part 2, the thermostat-style `bridle budget override`, is still to do.
-- **Paging:** until the restart, `bridle logs` and `bridle events` return the
-  oldest 500 lines without `--since` (x7gp is fixed on main). Find the latest seq by paging, and read an
-  agent's current turn with `--since`.
-- **Once the daemon restarts on a build with htp6b** (b7b2051 or later), context
-  renewal is automatic; until then renew by hand with `bridle renew`.
+1. Survey (read-only): classify its rules/skills/agents into base, a Python
+   pack, the project layer, superseded by bridle, or OpenSpec-dependent; list
+   its workflow tickets (some belong in bridle, the human says).
+2. Bridle side (bridle's workers): move roles and role prompts into
+   `workflow/base` (today they are per repo in `.bridle/roles/`), and build the
+   Python pack.
+3. data-contracts side (the orchestrator, on a branch; the human reviews):
+   `.bridle/config.toml` (project, workflow path, packs = ["python"],
+   max_workers 1), a project layer, `bridle sync`, commit.
+4. The human starts a second daemon there and makes the orchestrator a token
+   for it.
+5. A first small real task with one worker.
+
+The human: "we've dropped openspec". OpenSpec's replacement is P3 (bridle
+specs and a Python adapter replacing `spec-to-feature.py`); onboarding needs
+only an interim answer. Recommendations given: OpenSpec stays for specs until
+P3; new work goes in bridle's queue; old `docs/tickets/` stays as history.
 
 ## Who's running
 
-- **`pm-1`** (product manager, Sonnet), renewed 05:53 UTC, 145K at 07:15.
-  It owns the queue in `bridle task`.
-- **`manager-2`** (development manager, Sonnet), renewed 07:17 UTC.
-- **Workers:** `s8kn-resolve-tickets` (Haiku) and `r7cs-token-file-fix`
-  (Sonnet: the statusline reads its token from a file, not `$BRIDLE_TOKEN`,
-  and doesn't claim the token is read-only).
-- The split is interim, by configuration (ticket tx3f).
+- **`pm-1`** (product manager, Sonnet) and **`manager-2`** (development
+  manager, Sonnet). Renew them by hand when idle above ~140K (the config
+  still renews managers only at 200K).
+- **Workers:** `spike-path-rules` (vxp6, Haiku) and `smaller-debug-builds`
+  (nbkj).
+- **The advisor** (`external:advisor`, `scripts/claude-advisor`,
+  `.bridle/roles/advisor.md`): the human's chat and ticket session.
+  Read-only; files tickets; messages you directly.
 
-## Queue
+## Queue (`bridle queue`)
 
-Done since v0.2.0 and verified on CI: w4tb (wall time), n9qh parts 1 and 2
-(the schedule and `bridle budget override`), mt7r (`just check-affected`),
-r7cs (df32928; its setup docs are being fixed). Local double-check of
-aab6ee6/df32928 was pending at 07:15. Next: pm-1's picks from `bridle task`.
+Tier 1: vxp6 spike. Tier 2: nbkj (smaller debug builds), f75x (clean stale
+build output), statusline token count, TUI inbox full message. Tier 3: TUI
+inbox scroll, send-body quoting bug, m3wq (disk monitoring). Onboarding
+tasks join when the survey's done. P3 is held until onboarding.
 
-Parked: a7h3 (agreed with pm-1: the message-human workaround works), and
-`bridle/mcp-1` (don't merge or delete it; u6wk).
+Parked: `bridle/j2vq-orchestrator-perms` (the human's decision: scope bridle
+permissions to the orchestrator via `scripts/claude-orchestrator` or
+settings.local.json, never the repo-wide settings), `bridle/mcp-1` (u6wk).
 
 ## The human's decisions (2026-09-27 and 28)
 
-- Permissions (2026-09-28): "I trust Claude agents so I don't think we need to
-  go overboard in restricting their access too much." KISS for per-task tools,
-  models and secrets (k8dw, 2ty9).
-- P0: task records on a state branch (c7eb); questions inline in the task
-  thread with a SQLite index (c5a8). Migrate bridle's own work after P0,
-  as-is (tskm).
-- Rules for every role: KISS (`kiss.md`), YAGNI (`yagni.md`), and "what's the
-  worst if we don't?" (`cost-of-not-doing.md`), all in `.bridle/rules/`.
-- The merger pushes `main` after each merge; workers never touch `origin/*`.
-  Merged branches are removed (`bridle rm <name> --delete-branch`). SemVer
-  releases, cut by the orchestrator (`v0.1.0` tagged).
-- Context: agents are ephemeral. Keep contexts well under 200K and renew in
-  place (htp6). This includes the orchestrator.
-- Split product and development managers (tx3f).
-- Flaky tests: fix them properly, never with retries (f1ky). Hang guards
-  are 60 s; the misdiagnosed promptness test was fixed.
-- Status line: display only (real context %, 5h/7d, model, 📁 folder,
-  🌿 branch). Recording was dropped (s8kn); counts come later (r7cs).
-- Talk to the human in US Eastern time; record in UTC (`human-timezone.md`).
-  The human is asleep until about 7:00 AM.
-- The orchestrator owns d4mz. `scripts/claude-orchestrator` starts a new
-  orchestrator with Remote Control on (as `bridle-orch`).
-- n9qh (budget schedule and thermostat override) is after the cutover, not P0.
-  But when the P0 track is idle and waiting on the human, pick up n9qh or
-  other polish work to keep the workers busy (2026-09-28).
+- 2026-09-28, this session:
+  - After P1: P2, the workflow; one repo, the workflow in `workflow/` inside
+    bridle (no separate repos). Shared workflow updated automatically; a
+    project sees a changelog and can override (quoted in workflow-layers.md).
+  - After P2's core: onboard a second real project (data-contracts), not P3.
+  - KISS for per-task tools, models and secrets; "I trust Claude agents".
+  - The human's inbox: only questions, blockers, decisions (kp3f).
+    Changes go in `CHANGELOG.md` (Unreleased; the orchestrator moves them
+    under the version at release).
+  - The task queue is a PM-owned tiered record (j479); dependencies only for
+    real dependencies; the manager is mechanical.
+  - The orchestrator is the "voice of bridle"; a mechanical in-bridle admin
+    role is to be designed. Keep `docs/context/role-notes.md` (every
+    session and at handover).
+  - No short alias (sqt6); the project will be renamed later (geem;
+    catalogue in `docs/context/agent-harness-name-catalogue.md`; "bridle" is
+    taken by neiii/bridle).
+  - Laptop sleep: just let it be interrupted (prvy; `caffeinate -s` doesn't
+    help on battery).
+- Permissions: "I trust Claude agents so I don't think we need to go
+  overboard in restricting their access too much."
+- Earlier: P0 task records on a state branch (c7eb); questions inline
+  (c5a8); rules KISS, YAGNI, cost-of-not-doing (now in
+  `workflow/base/rules/`); the merger pushes `main`; SemVer releases by the
+  orchestrator; contexts well under 200K; split managers (tx3f); flaky tests
+  fixed properly (f1ky); times to the human in US Eastern.
 
 ## Things to know
 
-- **The daemon reads `.bridle/config.toml` and the role prompts only at
-  startup**, and runs the installed binary. Rebuild with `cargo install
-  --path crates/bridle` (the orchestrator can); only the human restarts the
-  daemon. The binary was installed at `9608376` (P0-4, s8kn). The running
-  daemon started at ~02:23 UTC, on `cce2bec`.
-- **A daemon restart stops busy workers** after their 30 s grace. Resume them
-  with `bridle resume <name>`, and tell each one the daemon restarted.
-- **`bridle send` can't address `external:orchestrator`** (a7h3). Agents
-  reach the orchestrator by messaging `human`; the watcher wakes on
-  questions.
-- **The watcher**: since P0-3b, `bridle inbox --json` is
-  `{messages, open_questions}`, and the watcher handles that. Run exactly
-  one. A backgrounded `&` in a Bash call orphans a copy that can't wake you.
-- **Verifying under load**: `just check` twice, once the 5-minute load
-  average is under 20. The two runs can straddle a merge; the second then
-  covers it. After tonight's fixes, both of the last two runs were fully green.
-- **The manager's git**: plain commands from the clone by branch name.
-  `git -C <worktree>` is allowed only for `status`, and pipes are denied.
+- **The daemon reads `.bridle/config.toml` and role prompts only at
+  startup.** Rebuild with `cargo install --path crates/bridle`; only the
+  human restarts the daemon. After a restart, resume stopped workers and
+  tell them.
+- **Never start the watcher with `&`** in a Bash call; use
+  `run_in_background`. It happened twice this session.
+- **Verifying:** `just check` twice with the 5-minute load under ~16. If a
+  merge lands mid-run, the first run can build a mix of commits; re-run.
+- **Test daemons are isolated from `~/.bridle`** (fix-test-home-leak); the
+  human's `~/.bridle/config.toml` has a budget schedule.
+- **Haiku workers sometimes print their final `bridle send` instead of
+  running it**; if a worker is idle with a clean tree, read its log.
+- **Auto mode's classifier sometimes errors** for a minute or two; it hits
+  the orchestrator and the advisor, not bridle's agents.
 
-## Waiting on the human
+## Tickets filed this session
 
-- **sqt6, a short command alias** (pm-1's m-0616): `br` is taken (beads_rust).
-  Recommendation: none for now; a shell alias of the human's own costs
-  nothing. Low stakes, so no worker until they say.
-- **j2vq, orchestrator permissions** (manager-2's m-0655, branch held
-  unmerged): it adds `Bash(bridle *)` to the repo-wide `.claude/settings.json`,
-  which grants it to every Claude Code session in the repo. Recommendation:
-  don't merge it as-is; if wanted, pass it in `scripts/claude-orchestrator`
-  (`--allowedTools`) so only the orchestrator gets it.
-- **v4nk, FYI:** merged without escalation (bfd07c5). Workers are now refused
-  agent lifecycle calls. It's a tightening that matches the role's design, so
-  it was left in; the human can ask for a revert.
+geem (name research), prvy (laptop sleep; observed), k8dw, 2ty9, 9c63,
+role notes; the advisor filed xpuc, 8ups, fgu6, j479, kp3f, sed3, nbkj,
+f75x, m3wq.
 
-## Deferred
+## Done on 2026-09-28, fifth session (merged, verified, pushed)
 
-- **MCP server and permission prompts:** nice-to-haves.
-- **`bridle take` / `give`:** spike 7r7m needs the human at a terminal.
-- **P2 and later:** need P0 first.
+P2-1 (workflow/base in-repo), P2-2 (layer resolution, `rules
+explain/diff`), P2-3 (`bridle sync`), the manager and worker skills, k8dw
+(`--allow-tool`), 2ty9 (`--env`), persisting both across renew/resume,
+9c63 (read-only access without a token), a7h3 (messages to external
+principals), j479 (the queue), kp3f (inbox rule, CHANGELOG.md), the
+renewal first-message fix, the test home-dir leak and the flaky renew
+test, and the advisor role and script.
 
 ## Done on 2026-09-28, fourth session (merged, verified green locally, pushed)
 
