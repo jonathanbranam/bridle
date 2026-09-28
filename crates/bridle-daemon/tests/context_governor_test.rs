@@ -42,6 +42,7 @@ async fn crossing_wind_down_at_sends_handoff_and_renews_once() {
             prompt: Some("hi".to_string()),
             workdir: Some(Workdir::Repo),
             model: None,
+            extra_allowed_tools: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -120,6 +121,7 @@ async fn many_concurrent_crossings_each_renew_exactly_once() {
                 prompt: Some("hi".to_string()),
                 workdir: Some(Workdir::Repo),
                 model: None,
+                extra_allowed_tools: Vec::new(),
                 ignore_budget: false,
             })
             .await

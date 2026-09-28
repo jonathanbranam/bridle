@@ -136,6 +136,7 @@ async fn resume_on_restart_role_comes_back_after_a_clean_shutdown_then_restart()
             prompt: None,
             workdir: Some(Workdir::Repo),
             model: None,
+            extra_allowed_tools: Vec::new(),
             ignore_budget: false,
         })
         .await

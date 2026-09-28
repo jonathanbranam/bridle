@@ -36,6 +36,11 @@ spend is per process, checked after the turn's model work, so the turn that
 crosses the cap still runs but its result is `error_max_budget_usd`; every
 later turn fails the same way at once, costing nothing.
 
+With `FAKE_CLAUDE_ARGV_FILE` set, every invocation dumps its argv (JSON list,
+excluding argv[0]) to that path, so tests can assert on flags like
+`--allowedTools` directly without leaving a stray file in the agent's own
+worktree.
+
 `system/init` reports `claude_code_version` from a `.fake-claude-version` file
 in the working directory, or "fake".
 
@@ -51,6 +56,7 @@ real claude (docs/spikes/01-stream-json-findings.md, S5). SIGTERM exits 143.
 """
 
 import json
+import os
 import queue
 import signal
 import subprocess
@@ -451,6 +457,13 @@ def parse_args(argv):
 
 def main():
     global replay
+    # Opt-in: tests that want to assert on the invocation itself (e.g.
+    # --allowedTools), not just its behaviour, set this rather than always
+    # dropping a file into the agent's own worktree.
+    argv_file = os.environ.get("FAKE_CLAUDE_ARGV_FILE")
+    if argv_file:
+        with open(argv_file, "w") as f:
+            json.dump(sys.argv[1:], f)
     session_id, _resume, replay_flag = parse_args(sys.argv[1:])
     state["session_id"] = session_id
     state["eof"] = False
