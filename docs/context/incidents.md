@@ -33,7 +33,11 @@ cause (or "unknown").
     gone, nothing noticed.
   - The orchestrator first told the human the laptop had slept. That was wrong: it had misread
     the "PrevSleep" state flags on power assertions as sleep events.
-- **Cause:** unknown. The session's own log stops at 19:23:34 without an error. The timing
+- **Why bridle stopped too:** a separate bridle bug, k7nr. At 19:20:36 the governor resumed
+  only pm-1 and python-pack-2 (`max_workers = 2` counts managers too, oldest paused first),
+  never manager-2. Both finished by 19:27, and python-pack-2's done report to manager-2 sat
+  undelivered. Bridle should have carried on without the orchestrator.
+- **Cause of the connection loss:** unknown. The session's own log stops at 19:23:34 without an error. The timing
   matches the Remote Control drop, so the likely cause is on the Remote Control side (the
   connection, or the `claude` process exiting when it dropped), not bridle.
 - **Follow-ups:**
