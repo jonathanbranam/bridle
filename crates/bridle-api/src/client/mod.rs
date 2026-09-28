@@ -11,11 +11,12 @@ use serde::de::DeserializeOwned;
 use thiserror::Error;
 
 use crate::types::{
-    Agent, ApiErrorResponse, BudgetHoldRequest, BudgetStatus, DropTaskRequest, EditTaskRequest,
-    Event, EventQuery, Health, InterruptRequest, InterruptResponse, Message, MessageQuery,
-    NewTaskRequest, RemoveQuery, ResumeRequest, SendRequest, SpawnRequest, Status,
-    StatusLineReport, StopRequest, Task, TokenCreateRequest, TokenCreated, TokenInfo,
-    TranscriptLine, TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery,
+    Agent, ApiErrorResponse, BudgetHoldRequest, BudgetStatus, DropTaskRequest, Edge,
+    EditTaskRequest, Event, EventQuery, Health, InterruptRequest, InterruptResponse, Message,
+    MessageQuery, NewEdgeRequest, NewTaskRequest, RemoveEdgeQuery, RemoveQuery, ResumeRequest,
+    SendRequest, SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery,
+    TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
+    UsageBreakdown, UsageBreakdownQuery,
 };
 
 #[derive(Debug, Error)]
@@ -373,6 +374,12 @@ impl Client {
         self.get_json(&["v1", "tasks"]).await
     }
 
+    /// `GET /v1/tasks?ready=true` (roles-and-lifecycle.md, "ready is computed").
+    pub async fn ready_tasks(&self) -> Result<Vec<Task>, ClientError> {
+        let query = TaskQuery { ready: Some(true) };
+        self.get_json_query(&["v1", "tasks"], &query).await
+    }
+
     pub async fn new_task(&self, req: &NewTaskRequest) -> Result<Task, ClientError> {
         self.post_json(&["v1", "tasks"], req).await
     }
@@ -391,6 +398,21 @@ impl Client {
 
     pub async fn reopen_task(&self, id: &str) -> Result<Task, ClientError> {
         self.post_empty(&["v1", "tasks", id, "reopen"]).await
+    }
+
+    // ---------- edges ----------
+
+    pub async fn list_edges(&self) -> Result<Vec<Edge>, ClientError> {
+        self.get_json(&["v1", "edges"]).await
+    }
+
+    pub async fn add_edge(&self, req: &NewEdgeRequest) -> Result<Edge, ClientError> {
+        self.post_json(&["v1", "edges"], req).await
+    }
+
+    pub async fn remove_edge(&self, query: &RemoveEdgeQuery) -> Result<(), ClientError> {
+        let req = self.request(Method::DELETE, &["v1", "edges"])?.query(query);
+        self.send_unit(req).await
     }
 
     pub async fn shutdown(&self) -> Result<(), ClientError> {

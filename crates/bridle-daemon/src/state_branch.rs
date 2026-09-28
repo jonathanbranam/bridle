@@ -15,7 +15,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
-use bridle_api::types::{Task, TaskKind, TaskState, ThreadEntry, ThreadEntryKind};
+use bridle_api::types::{Edge, Task, TaskKind, TaskState, ThreadEntry, ThreadEntryKind};
 use chrono::{DateTime, SecondsFormat, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -55,6 +55,11 @@ struct Pending {
     /// (the `events/<YYYY-MM>.jsonl` file it belongs to, one pre-rendered
     /// JSON line), in write order.
     events: Vec<(String, String)>,
+    /// The full rendered contents of `edges.toml`, replaced wholesale on
+    /// every [`StateBranch::enqueue_edges`] call: unlike tasks there's no
+    /// per-edge id to key a per-file write on, and the whole set is small,
+    /// so each enqueue re-renders it entirely rather than diffing.
+    edges: Option<String>,
 }
 
 /// A handle onto the state branch's worktree. Cheap to clone (an `Arc`
@@ -126,17 +131,34 @@ impl StateBranch {
             .push((month, line));
     }
 
-    /// Writes every pending file and event line and makes one commit, if
-    /// anything is pending; a pure no-op (no git calls at all) otherwise.
-    /// Takes what's pending under the lock and does the slower file/git
-    /// work outside it, so an `enqueue_*` racing this call can't be lost:
-    /// it either lands in this flush or the next one.
+    /// Queues the full current edge set to overwrite `edges.toml` at the
+    /// next flush. The caller passes every edge, not a delta: SQLite is the
+    /// source of truth for what currently exists (docs/design/storage.md),
+    /// this is just its durable copy on the state branch.
+    pub fn enqueue_edges(&self, edges: &[Edge]) -> Result<(), StateBranchError> {
+        let rendered = render_edges(edges)?;
+        self.pending
+            .lock()
+            .expect("state branch pending lock")
+            .edges = Some(rendered);
+        Ok(())
+    }
+
+    /// Writes every pending file, event line and the edges snapshot, then
+    /// makes one commit, if anything is pending; a pure no-op (no git calls
+    /// at all) otherwise. Takes what's pending under the lock and does the
+    /// slower file/git work outside it, so an `enqueue_*` racing this call
+    /// can't be lost: it either lands in this flush or the next one.
     pub async fn flush_now(&self) -> Result<(), StateBranchError> {
-        let Pending { files, events } = {
+        let Pending {
+            files,
+            events,
+            edges,
+        } = {
             let mut guard = self.pending.lock().expect("state branch pending lock");
             std::mem::take(&mut *guard)
         };
-        if files.is_empty() && events.is_empty() {
+        if files.is_empty() && events.is_empty() && edges.is_none() {
             return Ok(());
         }
 
@@ -144,6 +166,9 @@ impl StateBranch {
         std::fs::create_dir_all(&tasks_dir)?;
         for (id, contents) in &files {
             std::fs::write(tasks_dir.join(format!("{id}.md")), contents)?;
+        }
+        if let Some(contents) = &edges {
+            std::fs::write(self.dir.join("edges.toml"), contents)?;
         }
 
         if !events.is_empty() {
@@ -176,6 +201,15 @@ impl StateBranch {
         if status.trim().is_empty() {
             return Ok(());
         }
+        let message = match (files.is_empty(), edges.is_some()) {
+            (false, true) => format!("{} task update(s), edges", files.len()),
+            (false, false) => format!("{} task update(s)", files.len()),
+            (true, true) => "edges update".to_string(),
+            // Neither files nor edges changed, so this flush is only events
+            // (or, since `flush_now` already returned early with nothing
+            // pending at all, unreachable in practice); keep the old wording.
+            (true, false) => "1 task update(s)".to_string(),
+        };
         worktree::run_git(
             &self.dir,
             &[
@@ -186,7 +220,7 @@ impl StateBranch {
                 "commit",
                 "-q",
                 "-m",
-                &format!("{} task update(s)", files.len().max(1)),
+                &message,
             ],
         )
         .await?;
@@ -248,6 +282,39 @@ fn render_task(task: &Task) -> Result<String, StateBranchError> {
         }
     }
     Ok(out)
+}
+
+#[derive(Serialize)]
+struct EdgeRecord<'a> {
+    from: &'a str,
+    to: &'a str,
+    kind: &'static str,
+    created_at: DateTime<Utc>,
+}
+
+#[derive(Serialize)]
+struct EdgesFile<'a> {
+    edge: Vec<EdgeRecord<'a>>,
+}
+
+/// The whole edge set as one `edges.toml`, an array of tables (`[[edge]]`),
+/// mirroring `render_task`'s TOML-frontmatter convention. There's no parser
+/// back: SQLite already has everything an `Edge` carries, so unlike a task's
+/// body/thread, nothing here is read back from the state branch — this file
+/// exists for git history and recovery, not as bridle's read path.
+fn render_edges(edges: &[Edge]) -> Result<String, StateBranchError> {
+    let file = EdgesFile {
+        edge: edges
+            .iter()
+            .map(|e| EdgeRecord {
+                from: &e.from,
+                to: &e.to,
+                kind: e.kind.as_str(),
+                created_at: e.created_at,
+            })
+            .collect(),
+    };
+    Ok(toml::to_string_pretty(&file)?)
 }
 
 /// The inverse of [`render_task`]. A known limitation: the body or an
@@ -508,6 +575,38 @@ mod tests {
             2,
             "two enqueues, one flush, one commit"
         );
+    }
+
+    #[tokio::test]
+    async fn enqueue_edges_writes_the_whole_set_and_a_second_call_replaces_it() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let repo = tmp.path().join("repo");
+        init_repo(&repo).await;
+        let dir = tmp.path().join("state");
+        let sb = StateBranch::open(&repo, &dir).await.expect("open");
+
+        let now = Utc::now();
+        let edge = Edge {
+            from: "tw-0001".to_string(),
+            to: "tw-0002".to_string(),
+            kind: bridle_api::types::EdgeKind::Blocks,
+            created_at: now,
+        };
+        sb.enqueue_edges(std::slice::from_ref(&edge))
+            .expect("enqueue");
+        sb.flush_now().await.expect("flush");
+
+        let contents = std::fs::read_to_string(dir.join("edges.toml")).expect("read edges.toml");
+        assert!(contents.contains("tw-0001"));
+        assert!(contents.contains("tw-0002"));
+        assert!(contents.contains("blocks"));
+
+        // Removing the edge means the next enqueue passes an empty set,
+        // which overwrites the file rather than appending to it.
+        sb.enqueue_edges(&[]).expect("enqueue empty");
+        sb.flush_now().await.expect("flush");
+        let contents = std::fs::read_to_string(dir.join("edges.toml")).expect("read edges.toml");
+        assert!(!contents.contains("tw-0001"));
     }
 
     /// The safety property the design calls out explicitly: writing to the

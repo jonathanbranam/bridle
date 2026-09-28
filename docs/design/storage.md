@@ -55,12 +55,26 @@ branch below; a crash between a task write and the next batched flush can
 lose an edit to those two fields specifically, though not the row above,
 which is written to SQLite synchronously on every call.
 
+Edges get their own table (`SCHEMA_V6`), coordination.md's six kinds:
+
+```
+edges(from_task, to_task, kind, created_at, PRIMARY KEY(from_task, to_task, kind))
+```
+
+Unlike a task, the row *is* the whole record — there's no body/thread to
+carry, so `TaskManager`'s edge cache hydrates straight from this table at
+`open`, without touching the state branch. The `(from_task, to_task, kind)`
+triple is the natural key: there's no separate edge id, and `bridle dep rm`
+identifies the row to delete by that same triple.
+
 The ephemeral tables `claims`, `waits`, `ports`, `impact_cache` arrive with
-later tasks (edges, claims, the ready computation). Every durable write goes
-to the database and the state branch in the same logical operation (for the
-`tasks` table: synchronously to SQLite, then enqueued for the state branch's
-next batched flush — see below). The database is the read path because it's
-fast, and git is the recovery path.
+later tasks. Every durable write goes to the database and the state branch
+in the same logical operation (for the `tasks` table: synchronously to
+SQLite, then enqueued for the state branch's next batched flush — see below;
+edges follow the same rule, enqueuing the *entire* current edge set on every
+add/remove rather than a diff, since there's no per-edge file to key a
+targeted write on). The database is the read path because it's fast, and git
+is the recovery path.
 
 ## The state branch
 

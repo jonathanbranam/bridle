@@ -13,9 +13,10 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
 use bridle_api::types::{
-    Agent, AgentState, AgentUsage, Event, EventQuery, ExitInfo, InteractiveUsageRow, Message,
-    MessageKind, MessageState, PrincipalId, PrincipalKind, RateLimit, TaskKind, TaskState,
-    TokenCreated, TokenInfo, TokenTotals, Usage, UsageBreakdown, UsageGroup, UsageGroupBy, When,
+    Agent, AgentState, AgentUsage, Edge, EdgeKind, Event, EventQuery, ExitInfo,
+    InteractiveUsageRow, Message, MessageKind, MessageState, PrincipalId, PrincipalKind, RateLimit,
+    TaskKind, TaskState, TokenCreated, TokenInfo, TokenTotals, Usage, UsageBreakdown, UsageGroup,
+    UsageGroupBy, When,
 };
 use chrono::{DateTime, SecondsFormat, Utc};
 use rusqlite::Connection;
@@ -390,6 +391,34 @@ impl Store {
             .await
     }
 
+    // ---------- edges ----------
+
+    pub async fn insert_edge(
+        &self,
+        from: &str,
+        to: &str,
+        kind: EdgeKind,
+    ) -> Result<Edge, StoreError> {
+        let (from, to) = (from.to_string(), to.to_string());
+        self.with_conn(move |c| sync::insert_edge(c, &from, &to, kind))
+            .await
+    }
+
+    pub async fn delete_edge(
+        &self,
+        from: &str,
+        to: &str,
+        kind: EdgeKind,
+    ) -> Result<(), StoreError> {
+        let (from, to) = (from.to_string(), to.to_string());
+        self.with_conn(move |c| sync::delete_edge(c, &from, &to, kind))
+            .await
+    }
+
+    pub async fn list_edges(&self) -> Result<Vec<Edge>, StoreError> {
+        self.with_conn(sync::list_edges).await
+    }
+
     // ---------- rate limits / usage ----------
 
     pub async fn upsert_rate_limit(&self, rl: RateLimit) -> Result<(), StoreError> {
@@ -626,7 +655,25 @@ mod sync {
         CREATE INDEX tasks_state ON tasks(state);
     "#;
 
-    const MIGRATIONS: &[&str] = &[SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5];
+    // Coordination edges between tasks (coordination.md, Edges). `(from_task,
+    // to_task, kind)` is the natural key: there's no separate edge id, and
+    // `dep rm` identifies the row to delete by that same triple. Named
+    // `from_task`/`to_task`, not `from`/`to`, since both are SQL keywords.
+    pub(super) const SCHEMA_V6: &str = r#"
+        CREATE TABLE edges (
+            from_task TEXT NOT NULL,
+            to_task TEXT NOT NULL,
+            kind TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            PRIMARY KEY (from_task, to_task, kind)
+        );
+        CREATE INDEX edges_to ON edges(to_task);
+        CREATE INDEX edges_from ON edges(from_task);
+    "#;
+
+    const MIGRATIONS: &[&str] = &[
+        SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6,
+    ];
 
     pub(super) fn open(path: &Path) -> Result<Connection, StoreError> {
         if let Some(parent) = path.parent() {
@@ -1571,6 +1618,75 @@ mod sync {
             return Err(StoreError::NotFound(format!("no such task: {id}")));
         }
         Ok(())
+    }
+
+    // ---------- edges ----------
+
+    fn row_to_edge(row: &Row<'_>) -> rusqlite::Result<Edge> {
+        let kind: String = row.get(2)?;
+        Ok(Edge {
+            from: row.get(0)?,
+            to: row.get(1)?,
+            kind: kind.parse().map_err(|_| {
+                rusqlite::Error::InvalidColumnType(2, "kind".into(), rusqlite::types::Type::Text)
+            })?,
+            created_at: parse_dt(&row.get::<_, String>(3)?)?,
+        })
+    }
+
+    pub(super) fn insert_edge(
+        conn: &Connection,
+        from: &str,
+        to: &str,
+        kind: EdgeKind,
+    ) -> Result<Edge, StoreError> {
+        // Rounded to the millisecond `fmt_dt` stores, so the returned `Edge`
+        // matches what a later `list_edges` reads back byte-for-byte.
+        let now = parse_dt(&fmt_dt(Utc::now()))?;
+        let result = conn.execute(
+            "INSERT INTO edges(from_task, to_task, kind, created_at) VALUES (?1, ?2, ?3, ?4)",
+            params![from, to, kind.as_str(), fmt_dt(now)],
+        );
+        match result {
+            Ok(_) => Ok(Edge {
+                from: from.to_string(),
+                to: to.to_string(),
+                kind,
+                created_at: now,
+            }),
+            Err(e) if is_unique_violation(&e) => Err(StoreError::Conflict(format!(
+                "edge already exists: {from} -{}-> {to}",
+                kind.as_str()
+            ))),
+            Err(e) => Err(e.into()),
+        }
+    }
+
+    pub(super) fn delete_edge(
+        conn: &Connection,
+        from: &str,
+        to: &str,
+        kind: EdgeKind,
+    ) -> Result<(), StoreError> {
+        let n = conn.execute(
+            "DELETE FROM edges WHERE from_task = ?1 AND to_task = ?2 AND kind = ?3",
+            params![from, to, kind.as_str()],
+        )?;
+        if n == 0 {
+            return Err(StoreError::NotFound(format!(
+                "no such edge: {from} -{}-> {to}",
+                kind.as_str()
+            )));
+        }
+        Ok(())
+    }
+
+    pub(super) fn list_edges(conn: &Connection) -> Result<Vec<Edge>, StoreError> {
+        let mut stmt = conn.prepare(
+            "SELECT from_task, to_task, kind, created_at FROM edges ORDER BY created_at ASC",
+        )?;
+        let rows = stmt.query_map([], row_to_edge)?;
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
     }
 
     // ---------- rate limits / usage ----------
@@ -2837,5 +2953,48 @@ mod tests {
         let list = store.list_tasks().await.expect("list");
         assert_eq!(list.len(), 1);
         assert_eq!(list[0].id, task.id);
+    }
+
+    #[tokio::test]
+    async fn insert_list_and_delete_edges() {
+        let (store, _tmp) = store().await;
+        let a = store
+            .insert_task("tw", "A", TaskKind::Chore)
+            .await
+            .expect("insert a");
+        let b = store
+            .insert_task("tw", "B", TaskKind::Chore)
+            .await
+            .expect("insert b");
+
+        let edge = store
+            .insert_edge(&a.id, &b.id, EdgeKind::Blocks)
+            .await
+            .expect("insert edge");
+        assert_eq!(edge.from, a.id);
+        assert_eq!(edge.to, b.id);
+        assert_eq!(edge.kind, EdgeKind::Blocks);
+
+        let list = store.list_edges().await.expect("list");
+        assert_eq!(list.len(), 1);
+        assert_eq!(list[0], edge);
+
+        let err = store
+            .insert_edge(&a.id, &b.id, EdgeKind::Blocks)
+            .await
+            .expect_err("duplicate edge");
+        assert!(matches!(err, StoreError::Conflict(_)));
+
+        store
+            .delete_edge(&a.id, &b.id, EdgeKind::Blocks)
+            .await
+            .expect("delete edge");
+        assert!(store.list_edges().await.expect("list").is_empty());
+
+        let err = store
+            .delete_edge(&a.id, &b.id, EdgeKind::Blocks)
+            .await
+            .expect_err("already deleted");
+        assert!(matches!(err, StoreError::NotFound(_)));
     }
 }

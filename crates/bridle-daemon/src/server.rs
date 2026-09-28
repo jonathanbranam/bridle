@@ -11,12 +11,13 @@ use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::{Extension, Json, Router};
 use bridle_api::types::{
-    Agent, ApiErrorResponse, BudgetHoldRequest, BudgetStatus, DropTaskRequest, EditTaskRequest,
-    ErrorBody, Event, EventQuery, Health, HoldStatus, InteractiveUsageRow, InterruptRequest,
-    Message, MessageQuery, MessageState, NewTaskRequest, PrincipalKind, RateLimit, RemoveQuery,
-    ResumeRequest, SendRequest, SpawnRequest, Status, StatusLineReport, StopRequest, Task,
-    TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
-    UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, WindowStatus, event_kind,
+    Agent, ApiErrorResponse, BudgetHoldRequest, BudgetStatus, DropTaskRequest, Edge,
+    EditTaskRequest, ErrorBody, Event, EventQuery, Health, HoldStatus, InteractiveUsageRow,
+    InterruptRequest, Message, MessageQuery, MessageState, NewEdgeRequest, NewTaskRequest,
+    PrincipalKind, RateLimit, RemoveEdgeQuery, RemoveQuery, ResumeRequest, SendRequest,
+    SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery, TokenCreateRequest,
+    TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown,
+    UsageBreakdownQuery, UsageGroupBy, WindowStatus, event_kind,
 };
 use chrono::Utc;
 use futures::Stream;
@@ -73,6 +74,10 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/tasks/{id}", get(get_task).patch(edit_task))
         .route("/v1/tasks/{id}/drop", post(drop_task))
         .route("/v1/tasks/{id}/reopen", post(reopen_task))
+        .route(
+            "/v1/edges",
+            get(list_edges).post(add_edge).delete(remove_edge),
+        )
         .route("/v1/shutdown", post(shutdown))
         .layer(middleware::from_fn_with_state(
             state.clone(),
@@ -737,8 +742,16 @@ async fn report_statusline(
 
 // ---------- tasks ----------
 
-async fn list_tasks(State(state): State<AppState>) -> Result<Json<Vec<Task>>, ApiError> {
-    Ok(Json(state.tasks.list_tasks()))
+async fn list_tasks(
+    State(state): State<AppState>,
+    Query(q): Query<TaskQuery>,
+) -> Result<Json<Vec<Task>>, ApiError> {
+    let tasks = if q.ready.unwrap_or(false) {
+        state.tasks.ready_tasks()
+    } else {
+        state.tasks.list_tasks()
+    };
+    Ok(Json(tasks))
 }
 
 async fn new_task(
@@ -827,6 +840,48 @@ async fn reopen_task(
         )
         .await;
     Ok(Json(task))
+}
+
+// ---------- edges ----------
+
+async fn list_edges(State(state): State<AppState>) -> Result<Json<Vec<Edge>>, ApiError> {
+    Ok(Json(state.tasks.list_edges()))
+}
+
+async fn add_edge(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Json(req): Json<NewEdgeRequest>,
+) -> Result<Json<Edge>, ApiError> {
+    let edge = state.tasks.add_edge(&req.from, &req.to, req.kind).await?;
+    let _ = state
+        .emitter
+        .emit(
+            event_kind::EDGE_ADDED,
+            principal.id,
+            None,
+            serde_json::json!({"from": edge.from, "to": edge.to, "kind": edge.kind}),
+        )
+        .await;
+    Ok(Json(edge))
+}
+
+async fn remove_edge(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Query(q): Query<RemoveEdgeQuery>,
+) -> Result<StatusCode, ApiError> {
+    state.tasks.remove_edge(&q.from, &q.to, q.kind).await?;
+    let _ = state
+        .emitter
+        .emit(
+            event_kind::EDGE_REMOVED,
+            principal.id,
+            None,
+            serde_json::json!({"from": q.from, "to": q.to, "kind": q.kind}),
+        )
+        .await;
+    Ok(StatusCode::NO_CONTENT)
 }
 
 async fn create_token(

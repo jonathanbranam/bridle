@@ -41,7 +41,13 @@ in `[roles.*]` in `<repo>/.bridle/config.toml`
 ```
 
 - **ready** is computed: planned, no open blockers, no unanswered questions.
-  `bridle ready` is the dispatch primitive.
+  `bridle ready` is the dispatch primitive. Built: a blocker counts as open
+  unless it's `dropped` (`integrated`/`accepted` don't exist yet, so there's
+  no "done" state to check besides that one — see coordination.md, Edges);
+  the unanswered-questions half is a seam that always answers "no" until
+  P0-3 builds questions. There's also no `plan` command yet to move a task
+  from `open` to `planned` in the first place, so in practice `ready` has
+  nothing to return until that lands too.
 - **claimed** carries a lease renewed by the agent's activity, which the
   daemon already sees on every agent's stream, so no heartbeat hook is needed
   for bridle-hosted agents. If the lease expires, the task returns to ready,

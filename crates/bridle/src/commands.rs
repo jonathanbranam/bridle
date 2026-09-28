@@ -4,20 +4,20 @@
 use anyhow::Context;
 use bridle_api::discovery::{self, ProcessEnv};
 use bridle_api::{
-    BudgetHoldRequest, Client, DropTaskRequest, EditTaskRequest, Event, EventQuery,
-    InterruptRequest, MessageKind, MessageQuery, NewTaskRequest, RemoveQuery, ResumeRequest,
-    SendRequest, SpawnRequest, StopRequest, Task, TaskKind, TokenCreateRequest,
-    UsageBreakdownQuery, UsageGroupBy, Workdir,
+    BudgetHoldRequest, Client, DropTaskRequest, Edge, EdgeKind, EditTaskRequest, Event, EventQuery,
+    InterruptRequest, MessageKind, MessageQuery, NewEdgeRequest, NewTaskRequest, RemoveEdgeQuery,
+    RemoveQuery, ResumeRequest, SendRequest, SpawnRequest, StopRequest, Task, TaskKind,
+    TokenCreateRequest, UsageBreakdownQuery, UsageGroupBy, Workdir,
 };
 use chrono::{Local, TimeZone, Utc};
 use futures::StreamExt;
 
 use crate::cli::{
     AgentsArgs, BudgetAction, BudgetArgs, BudgetHoldArgs, Cli, Command, CostAction, CostArgs,
-    CostAuditArgs, EventsArgs, InboxArgs, InterruptArgs, LogsArgs, RmArgs, SendArgs, ShowArgs,
-    SpawnArgs, StopArgs, TaskAction, TaskArgs, TaskDropArgs, TaskEditArgs, TaskKindArg,
-    TaskNewArgs, TaskReopenArgs, TaskShowArgs, TokenAction, TokenArgs, UsageArgs, UsageByArg,
-    WhenArg,
+    CostAuditArgs, DepAction, DepArgs, DepEdgeArgs, EdgeKindArg, EventsArgs, InboxArgs,
+    InterruptArgs, LogsArgs, ReadyArgs, RmArgs, SendArgs, ShowArgs, SpawnArgs, StopArgs,
+    TaskAction, TaskArgs, TaskDropArgs, TaskEditArgs, TaskKindArg, TaskNewArgs, TaskReopenArgs,
+    TaskShowArgs, TokenAction, TokenArgs, UsageArgs, UsageByArg, WhenArg,
 };
 use crate::error::CliError;
 use crate::render;
@@ -46,6 +46,8 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Budget(args) => budget(&cli, args).await,
         Command::Token(args) => token(&cli, args).await,
         Command::Task(args) => task(&cli, args).await,
+        Command::Dep(args) => dep(&cli, args).await,
+        Command::Ready(args) => ready(&cli, args).await,
         Command::Statusline => statusline(&cli).await,
     }
 }
@@ -956,6 +958,124 @@ async fn task_reopen(cli: &Cli, args: &TaskReopenArgs) -> Result<(), CliError> {
         render::print_json(&task)?;
     } else {
         print_task_row(&task);
+    }
+    Ok(())
+}
+
+fn edge_kind_arg(k: EdgeKindArg) -> EdgeKind {
+    match k {
+        EdgeKindArg::Blocks => EdgeKind::Blocks,
+        EdgeKindArg::Parent => EdgeKind::Parent,
+        EdgeKindArg::DiscoveredFrom => EdgeKind::DiscoveredFrom,
+        EdgeKindArg::Related => EdgeKind::Related,
+        EdgeKindArg::Supersedes => EdgeKind::Supersedes,
+        EdgeKindArg::Duplicates => EdgeKind::Duplicates,
+    }
+}
+
+/// `--blocked-by <other>` is sugar for `--kind blocks --to <task>` with
+/// `from`/`to` swapped (roles-and-lifecycle.md's `bridle dep add tw-7fa2
+/// --blocked-by tw-c0f1` reads as "`tw-7fa2` is blocked by `tw-c0f1`", i.e.
+/// the edge points from the blocker to the blocked task). clap's
+/// `conflicts_with_all` already rules out combining it with `--to`/`--kind`.
+fn resolve_edge_args(args: &DepEdgeArgs) -> Result<(String, String, EdgeKind), CliError> {
+    match (&args.blocked_by, &args.to) {
+        (Some(blocker), None) => Ok((blocker.clone(), args.task.clone(), EdgeKind::Blocks)),
+        (None, Some(to)) => Ok((args.task.clone(), to.clone(), edge_kind_arg(args.kind))),
+        (None, None) => Err(CliError::from(anyhow::anyhow!(
+            "specify --to <task> or --blocked-by <task>"
+        ))),
+        (Some(_), Some(_)) => unreachable!("clap's conflicts_with_all rules this out"),
+    }
+}
+
+fn print_edge_row(e: &Edge) {
+    println!("{:<10} {:<16} {}", e.from, e.kind, e.to);
+}
+
+async fn dep(cli: &Cli, args: &DepArgs) -> Result<(), CliError> {
+    match &args.action {
+        DepAction::Add(a) => dep_add(cli, a).await,
+        DepAction::Rm(a) => dep_rm(cli, a).await,
+    }
+}
+
+async fn dep_add(cli: &Cli, args: &DepEdgeArgs) -> Result<(), CliError> {
+    let (from, to, kind) = resolve_edge_args(args)?;
+    let client = client_for(cli).await?;
+    let edge = client.add_edge(&NewEdgeRequest { from, to, kind }).await?;
+    if cli.json {
+        render::print_json(&edge)?;
+    } else {
+        print_edge_row(&edge);
+    }
+    Ok(())
+}
+
+async fn dep_rm(cli: &Cli, args: &DepEdgeArgs) -> Result<(), CliError> {
+    let (from, to, kind) = resolve_edge_args(args)?;
+    let client = client_for(cli).await?;
+    client
+        .remove_edge(&RemoveEdgeQuery { from, to, kind })
+        .await?;
+    Ok(())
+}
+
+fn print_task_row_with_project(project: Option<&str>, t: &Task) {
+    match project {
+        Some(p) => println!(
+            "{:<16} {:<10} {:<9} {:<8} {}",
+            p, t.id, t.kind, t.state, t.title
+        ),
+        None => print_task_row(t),
+    }
+}
+
+async fn ready(cli: &Cli, args: &ReadyArgs) -> Result<(), CliError> {
+    // `--role` has nothing to filter on yet: tasks don't carry a role field
+    // (P0-1 gap, docs/design/cli.md). Accepted, not rejected, so a caller
+    // scripting ahead of that field landing doesn't need to special-case it.
+    let _ = &args.role;
+
+    if !args.all {
+        let client = client_for(cli).await?;
+        let tasks = client.ready_tasks().await?;
+        if cli.json {
+            render::print_json(&tasks)?;
+        } else if tasks.is_empty() {
+            println!("no ready tasks");
+        } else {
+            for t in &tasks {
+                print_task_row_with_project(None, t);
+            }
+        }
+        return Ok(());
+    }
+
+    let daemons = discovery::list_registry();
+    let mut rows: Vec<(String, Task)> = Vec::new();
+    for info in &daemons {
+        let token = discovery::resolve_token(
+            cli.token.as_deref(),
+            Some(std::path::Path::new(&info.workspace)),
+            &ProcessEnv,
+        )
+        .ok()
+        .flatten();
+        let client =
+            Client::new_with_timeout(info.url.clone(), token, std::time::Duration::from_secs(5));
+        if let Ok(tasks) = client.ready_tasks().await {
+            rows.extend(tasks.into_iter().map(|t| (info.project.clone(), t)));
+        }
+    }
+    if cli.json {
+        render::print_json(&rows)?;
+    } else if rows.is_empty() {
+        println!("no ready tasks");
+    } else {
+        for (project, t) in &rows {
+            print_task_row_with_project(Some(project), t);
+        }
     }
     Ok(())
 }

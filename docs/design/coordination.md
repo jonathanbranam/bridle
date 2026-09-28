@@ -12,6 +12,17 @@
 Edges can cross projects (`hx-19ab blocked-by tw-7fa2`), which turns "engine
 first, host second" into something the tool enforces.
 
+**Built so far:** the edges table (`from`, `to`, `kind`) and `bridle dep
+add|rm`, durable the same way a task is: a SQLite fast index plus a copy on
+the state branch, written in the same logical operation
+([[docs/design/agent-host/storage|storage.md]]). Only `blocks` is acted on:
+`ready` (below) treats any `blocks` edge whose `from` task isn't `dropped` as
+still blocking the `to` task — `integrated`/`accepted` don't exist yet, so
+there's no "done" state to check against besides that one. The other four
+kinds are recorded but not yet acted on (`parent` doesn't yet close a parent
+when its children close). `ready [--all] [--role]` is built too; `--role` is
+presently a no-op, since tasks don't carry a role field yet.
+
 ## Messages
 
 A message goes to an agent, a task (all current and future claimants), a role
