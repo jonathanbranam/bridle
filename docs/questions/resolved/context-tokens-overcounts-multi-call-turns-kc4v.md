@@ -38,3 +38,13 @@ The options, for whoever takes it: query `get_context_usage` at turn end; or
 take the last assistant message's `usage` if the stream carries it (spike 01
 says assistant events don't carry usage on the wire, so probably not); or keep
 the sum but label it as turn input, not context.
+
+## Resolution
+
+Fixed in `crates/bridle-daemon/src/supervisor.rs` around line 1051. The turn-end
+handler now calls `runtime.handle.get_context_usage()` to get the actual current
+context size directly, and only falls back to the (inflated) turn_usage_sum if
+that probe fails or doesn't return totalTokens. See supervisor.rs lines 1040–1077
+for the full fix.
+
+Resolved 2026-09-28.
