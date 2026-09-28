@@ -128,3 +128,19 @@ Newest first. One line per item: what happened, who did it, what it says about r
   19:23 to 21:27 UTC, with the machine awake (`docs/context/incidents.md`). Nothing outside
   the orchestrator's session notices when it stops; the human found it. A liveness check on
   the orchestrator (by the advisor or bridle) would have caught it.
+- 2026-09-28, seventh orchestrator session (handover 23:55 UTC):
+  - By hand, orchestrator: set up the meta-notes trial through a subagent (clone,
+    `bridle-adopt`, project layer); turned on its manager's autostart; wrote its first two
+    tasks from the human's write-ups. An admin role, or `bridle onboard`, could do the
+    mechanical part.
+  - By hand, the human: two daemon restarts, a token for meta-notes, starting meta-notes'
+    daemon. Restarts remain the human's alone; zm95 and qun8 make them simpler.
+  - Where roles didn't fit:
+    - The orchestrator's double local `just check` was waste. The human stopped it, so
+      verification is now CI's.
+    - Nothing restarts the orchestrator when its session dies (incidents).
+    - The advisor relays many of the human's requests. It works, but it's a second
+      channel to keep in step.
+  - The orchestrator caught a duplicate-manager bug (qun8) by reading the diff before
+    asking for a restart. Reading a daemon-affecting diff before a restart is worth
+    keeping as a habit.
