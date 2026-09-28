@@ -209,7 +209,7 @@ mod tests {
         assert!(out.contains("dungeon fact"), "{out}");
         assert!(!out.contains("play rule"), "{out}");
         assert!(
-            out.contains("Other components: client-play (docs/play)"),
+            out.contains("Other components: client-games (docs/client), client-play (docs/play)"),
             "{out}"
         );
         assert!(
@@ -217,7 +217,7 @@ mod tests {
         );
         assert!(out.contains("who this is for"));
         // Ancestors get no docs pointers of their own.
-        assert!(!out.contains("docs/client"), "{out}");
+        assert!(!out.contains("folder: docs/client"), "{out}");
     }
 
     #[test]

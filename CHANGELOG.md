@@ -7,12 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-<<<<<<< HEAD
 - Components part 3: `bridle prime worker|planner` prints the role's rules, facts and guide pointers, then, for each component in `--component` (else `BRIDLE_COMPONENTS`), its chain's rules/facts/guides under its own heading, docs pointers (README.md inline when ≤40 lines), and a one-line list of the components not named. Nothing is rendered to files; `prime orchestrator` is unchanged.
-=======
 - The built-in `manager` role now defaults to `autostart = true`: a project with no role config gets a
   manager at daemon start (`autostart = false` in `[roles.manager]` turns it off).
->>>>>>> main
 - Fixed: daemon shutdown no longer hangs while a client (`bridle tui`, `events --follow`) holds the event stream open; the stream now ends when shutdown begins, and the HTTP drain is bounded at 5s.
 
 - Cheaper builds: new worker worktrees start with a copy-on-write clone of the clone's `target/`
