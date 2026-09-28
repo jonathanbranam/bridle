@@ -411,6 +411,10 @@ pub struct CostAuditArgs {
 
 #[derive(Debug, Args)]
 pub struct BudgetArgs {
+    /// Print the whole resolved `[[budget.schedule]]` (every period, its
+    /// span and thresholds) instead of the status.
+    #[arg(long, conflicts_with = "action")]
+    pub schedule: bool,
     #[command(subcommand)]
     pub action: Option<BudgetAction>,
 }

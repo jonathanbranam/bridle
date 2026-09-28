@@ -506,6 +506,56 @@ stop_at = 95
     assert!(until > before && until <= before + chrono::Duration::days(1));
 }
 
+/// `GET /v1/budget` reports the applied `five_hour` thresholds and their
+/// source (not the plain config), the resolved schedule and the next change.
+#[tokio::test]
+async fn budget_reports_applied_thresholds_source_and_schedule() {
+    let (daemon, _tmp) = support::start_daemon_with_config(
+        None,
+        Some(
+            r#"
+[[budget.schedule]]
+name = "night"
+days = "all"
+start = "23:00"
+end = "07:00"
+hold_at = 70
+wind_down_at = 85
+stop_at = 95
+"#,
+        ),
+    )
+    .await;
+    let b = daemon.client.budget().await.expect("budget");
+    assert_eq!(b.schedule.len(), 1);
+    assert_eq!(b.schedule[0].name, "night");
+    assert_eq!(b.schedule[0].span.start, "23:00");
+    assert_eq!(b.schedule[0].span.days.len(), 7);
+    assert!(b.five_hour.next_change.is_some());
+    // `night` covers 23:00-07:00 host-local; either way the applied values
+    // must match the source reported and the thresholds map.
+    match b.five_hour.source.as_str() {
+        "schedule" => {
+            assert_eq!(b.five_hour.period.as_deref(), Some("night"));
+            assert_eq!(b.five_hour.hold_at, 70.0);
+        }
+        s => assert_eq!(s, "default"),
+    }
+    assert_eq!(b.thresholds.hold_at["five_hour"], b.five_hour.hold_at);
+
+    let ov = daemon
+        .client
+        .budget_override(&BudgetOverrideRequest {
+            period: Some("night".into()),
+            until: None,
+        })
+        .await
+        .expect("override");
+    assert_eq!(ov.five_hour.source, "override");
+    assert_eq!(ov.five_hour.hold_at, 70.0);
+    assert_eq!(ov.thresholds.wind_down_at["five_hour"], 85.0);
+}
+
 /// `--ignore-budget` skips the governor's refusal for that one call only.
 #[tokio::test]
 async fn ignore_budget_bypasses_the_holding_refusal() {

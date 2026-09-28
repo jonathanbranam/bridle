@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- `bridle budget` now shows local-machine times, the applied `five_hour` thresholds with their source (override/schedule period/default), the current period's span, the next schedule change, why the state is what it is, each reading's age (stale by `max_staleness`) and non-`allowed` statuses; `bridle budget --schedule` prints the whole resolved schedule. `GET /v1/budget` gains `five_hour`, `schedule`, `reasons` and `age_secs`.
 - Components part 3: `bridle prime worker|planner` prints the role's rules, facts and guide pointers, then, for each component in `--component` (else `BRIDLE_COMPONENTS`), its chain's rules/facts/guides under its own heading, docs pointers (README.md inline when ≤40 lines), and a one-line list of the components not named. Nothing is rendered to files; `prime orchestrator` is unchanged.
 - The built-in `manager` role now defaults to `autostart = true`: a project with no role config gets a
   manager at daemon start (`autostart = false` in `[roles.manager]` turns it off).

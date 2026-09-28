@@ -1110,7 +1110,7 @@ async fn usage(cli: &Cli, args: &UsageArgs) -> Result<(), CliError> {
             if is_known_rate_limit_window(&rl.window) {
                 let resets = rl
                     .resets_at
-                    .map(|r| format!(", resets {}", r.format("%Y-%m-%d %H:%M UTC")))
+                    .map(|r| format!(", resets {}", local_time(r)))
                     .unwrap_or_default();
                 println!(
                     "{:<10} {}{resets}",
@@ -1414,11 +1414,18 @@ async fn budget(cli: &Cli, args: &BudgetArgs) -> Result<(), CliError> {
     if cli.json {
         render::print_json(&budget)?;
     } else {
+        if args.schedule {
+            print_schedule(&budget);
+            return Ok(());
+        }
         println!("state  {}", budget.state);
+        for reason in &budget.reasons {
+            println!("why    {reason}");
+        }
         if let Some(hold) = &budget.human_hold {
             let until = hold
                 .until
-                .map(|u| format!(", until {}", u.format("%Y-%m-%d %H:%M UTC")))
+                .map(|u| format!(", until {}", local_time(u)))
                 .unwrap_or_else(|| ", until released".to_string());
             println!("hold   in force{until}");
         }
@@ -1426,18 +1433,50 @@ async fn budget(cli: &Cli, args: &BudgetArgs) -> Result<(), CliError> {
             let period = ov.period.as_deref().unwrap_or("default");
             let until = ov
                 .until
-                .map(|u| format!(", until {}", u.format("%Y-%m-%d %H:%M UTC")))
+                .map(|u| format!(", until {}", local_time(u)))
                 .unwrap_or_else(|| ", until cleared".to_string());
             println!("override {period}{until}");
+        }
+        let fh = &budget.five_hour;
+        let from = match (fh.source.as_str(), &fh.period) {
+            ("default", _) => "default".to_string(),
+            (src, Some(p)) => format!("{src} {p}"),
+            (src, None) => format!("{src} default"),
+        };
+        println!(
+            "five_hour thresholds ({from}): hold {}, wind_down {}, stop {}",
+            fh.hold_at, fh.wind_down_at, fh.stop_at
+        );
+        if let Some(span) = &fh.span {
+            println!("  span {}", format_span(span));
+        }
+        match &fh.next_change {
+            Some(n) => println!(
+                "  next change {} -> {}: hold {}, wind_down {}, stop {}",
+                local_time(n.at),
+                n.period.as_deref().unwrap_or("default"),
+                n.hold_at,
+                n.wind_down_at,
+                n.stop_at
+            ),
+            None => println!("  next change: none scheduled"),
         }
         for w in &budget.windows {
             let resets = w
                 .resets_at
-                .map(|r| format!(", resets {}", r.format("%Y-%m-%d %H:%M UTC")))
+                .map(|r| format!(", resets {}", local_time(r)))
                 .unwrap_or_default();
+            let age = match w.age_secs {
+                Some(s) => format!(", read {}", format_age(chrono::Duration::seconds(s as i64))),
+                None => ", no reading".to_string(),
+            };
+            let status = match w.status.as_deref() {
+                Some("allowed") | None => String::new(),
+                Some(s) => format!(", status {s}"),
+            };
             let staleness = if w.stale { " (stale)" } else { "" };
             println!(
-                "  {:<16} {:<12} {}{resets}{staleness}",
+                "  {:<16} {:<12} {}{resets}{status}{age}{staleness}",
                 w.window,
                 w.state.to_string(),
                 format_utilization(w.utilization)
@@ -1454,6 +1493,37 @@ async fn budget(cli: &Cli, args: &BudgetArgs) -> Result<(), CliError> {
         );
     }
     Ok(())
+}
+
+/// A time for the human, in the machine's local timezone (`bridle budget`'s
+/// own choice; `--json` stays UTC).
+fn local_time(t: chrono::DateTime<Utc>) -> String {
+    t.with_timezone(&chrono::Local)
+        .format("%Y-%m-%d %H:%M %Z")
+        .to_string()
+}
+
+fn format_span(s: &bridle_api::types::ScheduleSpan) -> String {
+    format!("{} {}-{}", s.days.join(","), s.start, s.end)
+}
+
+/// `bridle budget --schedule`: the resolved periods in match order (the
+/// first match wins), start/end in host-local time.
+fn print_schedule(budget: &bridle_api::types::BudgetStatus) {
+    if budget.schedule.is_empty() {
+        println!("no [[budget.schedule]] periods; the plain [budget] thresholds always apply");
+        return;
+    }
+    for p in &budget.schedule {
+        println!(
+            "{:<12} {}  hold {}, wind_down {}, stop {}",
+            p.name,
+            format_span(&p.span),
+            p.hold_at,
+            p.wind_down_at,
+            p.stop_at
+        );
+    }
 }
 
 /// `--for 3h` (a plain duration from now) or `--until 18:00` (a local

@@ -39,7 +39,7 @@ bridle events  [--follow] [--since SEQ] [--agent A] [--kind PREFIX]
 bridle usage   [--by role|model|agent] [--since DURATION]   # DURATION: <n>s|m|h|d, e.g. 30d
 bridle cost audit [--check]                 static: size of what bridle injects into agent context (usage-and-budget.md)
 bridle tui                                  interactive terminal UI: agents list, live event tail
-bridle budget [hold [--for D|--until T] | release]   usage governor (usage-and-budget.md)
+bridle budget [--schedule | hold [--for D|--until T] | release | override ...]   usage governor (usage-and-budget.md)
 bridle token create <name>
 bridle token list                           name, created-at, revoked-or-not; never the token itself
 bridle token revoke <name>                  human only, external tokens only (an agent's own token is
@@ -84,6 +84,14 @@ bridle task note   <id> TEXT                     plain note to the task's thread
 - **`budget hold`/`release`** apply to the current daemon only; see
   [[docs/design/usage-and-budget#The human's hold|the human's hold]] for the
   cross-daemon gap.
+
+- **`budget`** prints the applied `five_hour` thresholds with their source
+  (override / schedule period / default), the current period's span, the next
+  schedule change, a `why` line per non-normal window, and each window's
+  status (when not `allowed`) and reading age, marked `(stale)` past
+  `max_staleness`. `--schedule` prints the whole resolved schedule instead.
+  Text times are local machine time; `--json` keeps UTC/ISO 8601
+  ([[docs/design/usage-and-budget#Seeing what applies|details]]).
 
 - **`send`**: when given `--text-file FILE` or `--prompt-file FILE`, pass `-`
   as the filename to read from stdin instead. This avoids passing backticks and
