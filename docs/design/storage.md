@@ -55,7 +55,8 @@ branch below; a crash between a task write and the next batched flush can
 lose an edit to those two fields specifically, though not the row above,
 which is written to SQLite synchronously on every call.
 
-Edges get their own table (`SCHEMA_V6`), coordination.md's six kinds:
+Edges get their own table (`SCHEMA_V7`; `V6` went to `agents.context_tokens`,
+the context governor's own migration), coordination.md's six kinds:
 
 ```
 edges(from_task, to_task, kind, created_at, PRIMARY KEY(from_task, to_task, kind))
