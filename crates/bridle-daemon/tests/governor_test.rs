@@ -529,8 +529,8 @@ stop_at = 95
     let b = daemon.client.budget().await.expect("budget");
     assert_eq!(b.schedule.len(), 1);
     assert_eq!(b.schedule[0].name, "night");
-    assert_eq!(b.schedule[0].span.start, "23:00");
-    assert_eq!(b.schedule[0].span.days.len(), 7);
+    assert_eq!(b.schedule[0].span.as_ref().expect("span").start, "23:00");
+    assert_eq!(b.schedule[0].span.as_ref().expect("span").days.len(), 7);
     assert!(b.five_hour.next_change.is_some());
     // `night` covers 23:00-07:00 host-local; either way the applied values
     // must match the source reported and the thresholds map.

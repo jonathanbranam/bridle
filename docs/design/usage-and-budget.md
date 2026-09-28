@@ -237,6 +237,28 @@ stop_at      = 95
   split and lower-only rule applies: a project's `.bridle/config.toml` may
   give a period's `hold_at`/`wind_down_at`/`stop_at` lower than the
   machine-wide `five_hour` value, never higher.
+- **Presets**: a period may omit `days`, `start` and `end` (all three or
+  none; a partial schedule is a config error). It never matches by the
+  clock, so it is reachable only through `bridle budget override <name>`:
+  e.g. a `burst` or `low` period. `bridle budget --schedule` lists it as
+  "override only".
+- **`max_workers`** (optional, any period): while `bridle budget override
+  <name>` is in force, the period's value is applied through the live
+  max-workers override below (no second mechanism), and reverts when the
+  override is cleared, expires, or is replaced by a period without one. A cap
+  the human sets by hand with `bridle budget max-workers` is never reverted
+  by this. Expiry is noticed on the governor's next read (each poll tick, or
+  any `bridle budget`), not at the instant.
+
+```toml
+[[budget.schedule]]
+name        = "low"       # no days/start/end: override-only
+hold_at     = 50
+wind_down_at = 60
+stop_at     = 70
+max_workers = 1
+```
+
 ### Schedule override
 
 The human can override the schedule by hand, like a thermostat's "hold
