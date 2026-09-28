@@ -221,3 +221,4 @@
 {"actor":"agent:pm-1","at":"2026-09-28T22:30:10.226893Z","queue":"reprioritized"}
 {"actor":"human","at":"2026-09-28T22:30:12.053Z","from":"","task":"br-2264","to":"open"}
 {"actor":"agent:pm-1","at":"2026-09-28T22:30:55.573957Z","queue":"reprioritized"}
+{"actor":"human","at":"2026-09-28T22:53:46.737Z","from":"","task":"br-6d50","to":"open"}
