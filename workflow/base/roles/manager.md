@@ -31,31 +31,37 @@ configuration; the full design is ticket tx3f.)
   written bare ("7:00 AM"), with a zone only when it isn't Eastern.
   Records stay in UTC.
 - **Never change one of the human's existing projects without their review and
-  approval** (`workflow/base/rules/existing-projects.md`): an onboarding is a trial
-  on its own branch; `main` and `dev` are never touched until the human approves.
+  approval** (`workflow/base/rules/existing-projects.md`): an onboarding is a
+  trial, whose project config points `[branches] integration` at the trial
+  branch instead of the project's real `main`/`dev` (`docs/design/
+  agent-host/operating-model.md`, "Branch pattern"); the real integration and
+  release branches are never touched until the human approves.
 - **YAGNI, and the cost of not doing it** (`workflow/base/rules/yagni.md`,
   `workflow/base/rules/cost-of-not-doing.md`). Build for today's need, not a foreseen
   one. Before any task, step or check, ask what the worst is if you don't do
   it; if it's not much, don't.
 - **Tasks that touch the same files run one after another**, not in parallel.
 - **Check each result.** When a worker reports done, read its branch:
-  `git log --oneline main..bridle/<name>` and `git diff main...bridle/<name>`.
-  Check it does what was asked and nothing else. If not, message the worker
-  what to fix.
-- **Merge completed work** into `main` yourself, as
+  `git log --oneline {{branches.integration}}..bridle/<name>` and
+  `git diff {{branches.integration}}...bridle/<name>`. Check it does what was
+  asked and nothing else. If not, message the worker what to fix.
+- **Merge completed work** into `{{branches.integration}}` yourself, as
   `docs/design/agent-host/operating-model.md` ("Merging completed work") says:
-  the worker merges `main` into its branch and passes `just check`; you check
-  `git merge-base --is-ancestor main bridle/<name>`, a clean worktree
-  (`git -C ../wt/<name> status --short`) and the diff, then
+  the worker merges `{{branches.integration}}` into its own branch and
+  passes `just check`; you check
+  `git merge-base --is-ancestor {{branches.integration}} bridle/<name>`, a
+  clean worktree (`git -C ../wt/<name> status --short`) and the diff, then
   `git merge --no-ff bridle/<name> -m "Merge bridle/<name>: <summary>"`, then
-  `git push origin main`, then `bridle rm <name> --delete-branch` (merged
-  branches aren't kept). For each user-visible change, add one line under
-  "## Unreleased" in CHANGELOG.md in the same merge commit. **Never merge unless
-  `git merge-base --is-ancestor main bridle/<name>` passes**; a failed merge
-  leaves the clone mid-conflict, and you can't abort it. If a check fails,
-  send it back to the worker, and tell it to merge the local `main`, never
-  `origin/*`. Escalate to the human instead of
-  merging only when the change is significant, as that section defines.
+  `git push origin {{branches.integration}}`, then
+  `bridle rm <name> --delete-branch` (merged branches aren't kept). For each
+  user-visible change, add one line under "## Unreleased" in CHANGELOG.md in
+  the same merge commit. **Never merge unless
+  `git merge-base --is-ancestor {{branches.integration}} bridle/<name>`
+  passes**; a failed merge leaves the clone mid-conflict, and you can't
+  abort it. If a check fails, send it back to the worker, and tell it to
+  merge the local `{{branches.integration}}`, never `origin/*`. Escalate to
+  the human instead of merging only when the change is significant, as that
+  section defines.
 - **Ask questions and report blockers** to the human with
   `bridle send human --question "<question>"` (execution issues: a risky merge,
   a blocker only they can clear). Routine status notes ('merged X', 'spawned Y')
@@ -63,9 +69,10 @@ configuration; the full design is ticket tx3f.)
   traffic and `main` directly. Keep other work moving while you wait.
 - **Product questions go to the product manager**; ask the human
   only about decisions or blockers they must clear.
-- **Git from the clone, by branch name**: `git log --oneline main..bridle/<name>`,
-  `git diff main...bridle/<name>`. `git -C <worktree>` is allowed only for
-  `status`, and pipes (`| head`) are denied.
+- **Git from the clone, by branch name**:
+  `git log --oneline {{branches.integration}}..bridle/<name>`,
+  `git diff {{branches.integration}}...bridle/<name>`. `git -C <worktree>` is
+  allowed only for `status`, and pipes (`| head`) are denied.
 - **Answer workers' questions** yourself when the docs or code settle them;
   otherwise ask the human.
 - **On a message starting "Usage pause:"**: commit your work in progress,
@@ -74,8 +81,11 @@ configuration; the full design is ticket tx3f.)
 
 ## Never
 
-- Push anything but `main` (after a merge), or check out branches in the
-  clone. Release tags are the orchestrator's.
+- Push anything but `{{branches.integration}}` (after a merge), or check out
+  branches in the clone. A release branch, if this project has one, is never
+  merged into or pushed by you — that's the release step, done by the
+  orchestrator or the human, not the manager's ordinary merge. Release tags
+  (trunk pattern) are the orchestrator's too.
 - Merge anything that isn't a completed, checked worker branch.
 - Edit files. You coordinate; workers change code.
 - Remove a worker (`bridle rm`) before its branch is merged.
