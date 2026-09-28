@@ -59,6 +59,7 @@ bridle sync                                 renders resolved workflow layers int
                                              .claude/settings.json's hooks; local only, no daemon call
 bridle prime orchestrator                   fresh session's opening context: role prompt, current
                                              state, startup steps; local only, no daemon call
+bridle prime worker|planner [--component ID ...]   the role's rules, facts, guides, plus named components' scope
 bridle task new    <title> -k/--kind KIND [--body TEXT] [--component ID ...]
 bridle task show   <id>
 bridle task edit   <id> [--title TEXT] [--body TEXT] [--component ID ... | --no-component]
@@ -324,9 +325,19 @@ bridle task note   <id> TEXT                     plain note to the task's thread
   work moving, verify merges, watch context). Purely local — no daemon call — and reads
   both files from the current directory, so run it from the repo root, as
   `scripts/claude-orchestrator` does when it uses this as `claude`'s opening prompt.
-  Only `orchestrator` is accepted as the role for now (other roles haven't asked for
-  this); anything else is a clap `InvalidValue` error, not a silent no-op. The role
-  scope and the rest of the "commands still to build" surface (`init`, `doctor`) stay
+  Any other role is a clap `InvalidValue` error, not a silent no-op.
+- **`prime worker|planner`** (planner = the `product-manager` rule tag) opens prime to
+  those two roles, each for its own role only, to deliver component scope
+  ([[docs/design/components|components]]). It prints the rules tagged for the role (or
+  untagged), the facts and guide paths from L1–L3; then, for each component named by
+  `--component` (repeatable) or else `$BRIDLE_COMPONENTS`, a section of its own: the
+  chain's rules (only those a component layer defines, overrides or disables; the L1–L3
+  ones are above), facts and guide paths, resolved separately per named component so two
+  chains never merge, and docs pointers (the component's `docs` folder, which of
+  README.md and roadmap.md exist, README.md inline when ≤40 lines; ancestors get none).
+  A last line lists the components not named with their docs folders, which is what
+  makes the scoping soft. Local, reads the current directory, renders nothing to files;
+  an unknown component id is an error. The role scope and the rest of the "commands still to build" surface (`init`, `doctor`) stay
   in `Planned` below; `sync` is built (see above).
 
 ## Planned
@@ -336,7 +347,6 @@ as a first cut:
 
 ```
 bridle init | doctor                             project setup, health; `sync` is built (see Built)
-bridle prime <role>                              non-orchestrator roles; `prime orchestrator` is built (see Built)
 bridle task <cmd> at in_review|integrated|accepted  -- new/show/edit/list/drop/reopen
                                                   are built (see Built); `dep add|rm`,
                                                   `claim`/`release`, and `ready [--all] [--role]`
