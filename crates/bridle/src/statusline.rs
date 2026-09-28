@@ -149,6 +149,27 @@ pub fn git_branch(dir: &Path) -> Option<String> {
     }
 }
 
+/// Format tokens as a pretty-printed human number (e.g., 10k, 234k, 1.2M).
+/// Under 10,000, prints raw digits; 10,000–999,999 as k (with one decimal
+/// below 100k); 1M+ as M.
+fn format_tokens(tokens: u64) -> String {
+    match tokens {
+        0..=9999 => tokens.to_string(),
+        10000..=999999 => {
+            let k = tokens as f64 / 1000.0;
+            if k >= 100.0 {
+                format!("{:.0}k", k)
+            } else {
+                format!("{:.1}k", k)
+            }
+        }
+        _ => {
+            let m = tokens as f64 / 1_000_000.0;
+            format!("{:.1}M", m)
+        }
+    }
+}
+
 /// What shows in the human's terminal: model, context %, rate-limit windows
 /// (`5h`/`7d` labels), folder and git branch, then the estimated cost last
 /// and parenthesized — de-emphasized since it's a list-price estimate that
@@ -165,7 +186,12 @@ pub fn render_line(
         parts.push(model.clone());
     }
     if let Some(p) = report.context_used_percentage {
-        parts.push(format!("ctx {:.0}%", p * 100.0));
+        let ctx_part = if let Some(tokens) = report.context_used_tokens {
+            format!("ctx {:.0}% ({})", p * 100.0, format_tokens(tokens))
+        } else {
+            format!("ctx {:.0}%", p * 100.0)
+        };
+        parts.push(ctx_part);
     }
     for rl in &report.rate_limits {
         if let Some(u) = rl.utilization {
@@ -269,7 +295,7 @@ mod tests {
         let line = render_line(&report, Some("bridle"), Some("bridle/s8kn-statusline"));
         assert!(line.contains("Opus"), "{line}");
         assert!(line.contains("(\u{24}1.23)"), "{line}");
-        assert!(line.contains("ctx 42%"), "{line}");
+        assert!(line.contains("ctx 42% (40.0k)"), "{line}");
         assert!(line.contains("5h 42%"), "{line}");
         assert!(line.contains("7d 11%") || line.contains("7d 10%"), "{line}");
         assert!(line.contains("\u{1F4C1} bridle"), "{line}");
@@ -381,5 +407,65 @@ mod tests {
         assert_eq!(workspace_dir(&input), Some(PathBuf::from("/top")));
 
         assert_eq!(workspace_dir(&Value::Null), None);
+    }
+
+    #[test]
+    fn format_tokens_shows_raw_digits_under_10k() {
+        assert_eq!(format_tokens(0), "0");
+        assert_eq!(format_tokens(1234), "1234");
+        assert_eq!(format_tokens(9999), "9999");
+    }
+
+    #[test]
+    fn format_tokens_shows_k_with_one_decimal_below_100k() {
+        assert_eq!(format_tokens(10000), "10.0k");
+        assert_eq!(format_tokens(50000), "50.0k");
+        assert_eq!(format_tokens(99999), "100.0k");
+    }
+
+    #[test]
+    fn format_tokens_shows_k_with_no_decimal_at_100k_and_above() {
+        assert_eq!(format_tokens(100000), "100k");
+        assert_eq!(format_tokens(234567), "235k");
+        assert_eq!(format_tokens(999999), "1000k");
+    }
+
+    #[test]
+    fn format_tokens_shows_m_for_millions() {
+        assert_eq!(format_tokens(1000000), "1.0M");
+        assert_eq!(format_tokens(1200000), "1.2M");
+        assert_eq!(format_tokens(234567890), "234.6M");
+    }
+
+    #[test]
+    fn render_line_shows_context_token_count_alongside_percentage() {
+        let report = StatusLineReport {
+            session_id: None,
+            model: Some("Opus".to_string()),
+            cost_usd: None,
+            context_used_percentage: Some(0.50),
+            context_used_tokens: Some(100_000),
+            context_max_tokens: Some(200_000),
+            rate_limits: vec![],
+        };
+        let line = render_line(&report, None, None);
+        assert!(line.contains("ctx 50% (100k)"), "{line}");
+    }
+
+    #[test]
+    fn render_line_shows_only_percentage_when_tokens_unavailable() {
+        let report = StatusLineReport {
+            session_id: None,
+            model: Some("Opus".to_string()),
+            cost_usd: None,
+            context_used_percentage: Some(0.0),
+            context_used_tokens: None,
+            context_max_tokens: Some(200_000),
+            rate_limits: vec![],
+        };
+        let line = render_line(&report, None, None);
+        assert!(line.contains("ctx 0%"), "{line}");
+        // Should not have token count in parentheses
+        assert!(!line.contains("("), "{line}");
     }
 }
