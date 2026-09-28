@@ -123,3 +123,8 @@ Newest first. One line per item: what happened, who did it, what it says about r
   restart and a read of another project's docs after a branch deletion; the
   human added local allow rules. Cross-project work needs those
   permissions set up ahead of an onboarding.
+
+- 2026-09-28, seventh orchestrator session: Remote Control and this session were lost from
+  19:23 to 21:27 UTC, with the machine awake (`docs/context/incidents.md`). Nothing outside
+  the orchestrator's session notices when it stops; the human found it. A liveness check on
+  the orchestrator (by the advisor or bridle) would have caught it.

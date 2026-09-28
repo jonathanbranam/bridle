@@ -42,7 +42,7 @@ pub fn fake_claude_path() -> PathBuf {
 /// `git init` plus one commit, so worktrees can branch from `HEAD`.
 pub async fn init_repo(dir: &Path) {
     std::fs::create_dir_all(dir).expect("mkdir repo");
-    run_git(dir, &["init", "-q"]).await;
+    run_git(dir, &["init", "-q", "-b", "main"]).await;
     run_git(
         dir,
         &[

@@ -157,6 +157,18 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
     ws.ensure_dirs().context("creating workspace directories")?;
     let config = Config::load_with_home(&opts.repo, overrides.bridle_home.as_deref())
         .context("loading .bridle/config.toml")?;
+    // An unset `[branches] integration` means `main`; a repo on `master` would otherwise
+    // fail every spawn with `invalid reference` (g3ck). No guessing from HEAD.
+    if !config.branches.integration_set
+        && !worktree::branch_exists(&opts.repo, &config.branches.integration).await?
+    {
+        anyhow::bail!(
+            "branch `{0}` doesn't exist in {1}: set `branches.integration` in \
+             .bridle/config.toml to this project's integration branch",
+            config.branches.integration,
+            opts.repo.display()
+        );
+    }
     let project = opts.project.clone().unwrap_or_else(|| {
         opts.repo
             .file_name()
