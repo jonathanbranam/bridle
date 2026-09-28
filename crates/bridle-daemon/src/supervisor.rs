@@ -598,6 +598,8 @@ impl AgentManager {
                 .map(|p| p.to_string_lossy().into_owned()),
             branch: branch.clone(),
             created_by: principal.id.clone(),
+            extra_allowed_tools: req.extra_allowed_tools.clone(),
+            extra_env: req.extra_env.clone(),
         };
         let agent = match self.0.store.insert_agent(new_agent).await {
             Ok(a) => a,
@@ -1745,6 +1747,12 @@ impl AgentManager {
         cmd.append_system_prompt_file = Some(system_prompt_path);
         cmd.permission_mode = Some(role.permission_mode.clone());
         cmd.allowed_tools = role.effective_allowed_tools();
+        let (extra_allowed_tools, extra_env) = self.0.store.get_agent_overrides(&agent.id).await?;
+        for tool in &extra_allowed_tools {
+            if !cmd.allowed_tools.contains(tool) {
+                cmd.allowed_tools.push(tool.clone());
+            }
+        }
         cmd.disallowed_tools = role.disallowed_tools.clone();
         cmd.stop_check = role.stop_check;
         cmd.name = Some(agent.name.clone());
@@ -1757,6 +1765,9 @@ impl AgentManager {
             &agent.name,
             &token,
         );
+        if !extra_env.is_empty() {
+            cmd.env.extend(extra_env);
+        }
 
         let transcript = Transcript::open(
             &self.0.workspace.transcript(&agent.id),
@@ -1894,6 +1905,12 @@ impl AgentManager {
         cmd.append_system_prompt_file = Some(system_prompt_path);
         cmd.permission_mode = Some(role.permission_mode.clone());
         cmd.allowed_tools = role.effective_allowed_tools();
+        let (extra_allowed_tools, extra_env) = self.0.store.get_agent_overrides(&agent.id).await?;
+        for tool in &extra_allowed_tools {
+            if !cmd.allowed_tools.contains(tool) {
+                cmd.allowed_tools.push(tool.clone());
+            }
+        }
         cmd.disallowed_tools = role.disallowed_tools.clone();
         cmd.stop_check = role.stop_check;
         cmd.name = Some(agent.name.clone());
@@ -1906,6 +1923,9 @@ impl AgentManager {
             &agent.name,
             &token,
         );
+        if !extra_env.is_empty() {
+            cmd.env.extend(extra_env);
+        }
 
         let transcript = Transcript::open(
             &self.0.workspace.transcript(&agent.id),

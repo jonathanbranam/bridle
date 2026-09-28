@@ -83,29 +83,35 @@ start_prompt      = "Check your inbox and tell the human you're ready."   # firs
 
 `bridle spawn <role> --allow-tool TOOL` (repeatable) grants a tool beyond the
 role's `allowed_tools` for that one spawn only ([[../cli#Built|cli.md]]).
-It's per-invocation: nothing is written to `.bridle/config.toml` or the role,
-so the next agent spawned with the same role gets the role's own tools again.
-It only adds — there's no `--deny-tool` to shrink a role's tools for one
-spawn, since `disallowed_tools` is meant as a floor every agent of a role
-gets, not something a single spawn should be able to lower
-(docs/questions/open/per-task-tools-and-model-k8dw.md).
+It's per-agent, not per-role: nothing is written to `.bridle/config.toml` or
+the role, so the next agent spawned with the same role gets the role's own
+tools again. The grant is persisted on the agent's own record, though, so it
+survives that one agent's `renew` (context handoff) and `resume` (daemon
+restart) — both rebuild the `claude` command from the role plus this agent's
+stored overrides, not the role alone. It only adds — there's no `--deny-tool`
+to shrink a role's tools for one spawn, since `disallowed_tools` is meant as
+a floor every agent of a role gets, not something a single spawn should be
+able to lower (docs/questions/open/per-task-tools-and-model-k8dw.md).
 
 ## Per-spawn secrets
 
 `bridle spawn <role> --env KEY=VALUE` (repeatable) sets an environment
 variable in that one spawn's `claude` process only ([[../cli#Built|cli.md]]),
 e.g. a paid API token (docs/questions/open/per-task-secrets-and-network-access-2ty9.md).
-Same shape as `--allow-tool`: per-invocation only, nothing written to
+Same shape as `--allow-tool`: per-agent only, nothing written to
 `.bridle/config.toml` or the role, so the next agent spawned with the same
-role — and a `resume` of this one — doesn't get it. It isn't logged or
+role doesn't get it. Like `--allow-tool`, it's persisted on the agent's own
+record and reapplied on that agent's `renew` and `resume`. It isn't logged or
 returned by `bridle agents` or other read endpoints; only the variable names
 are ever written to the daemon's log, never the values.
 
-Network access for that secret (e.g. scoping `WebFetch` to the paid API's
-domain) needs no new mechanism: `--allow-tool` already accepts any tool
-permission string, so `--allow-tool 'WebFetch(domain:api.example.com)'` works
-today if Claude Code's own permission syntax supports scoping `WebFetch` by
-domain.
+Network access for that secret needs no new mechanism: every role already
+has `Bash` in its `allowed_tools` (see above), and `curl`/similar under
+`Bash` already reaches any external API — no `--allow-tool` grant is needed
+for that. `--allow-tool` matters for network access only when a narrower
+tool than `Bash` is wanted, e.g. scoping `WebFetch` to one domain with
+`--allow-tool 'WebFetch(domain:api.example.com)'`, if Claude Code's own
+permission syntax supports scoping `WebFetch` that way.
 
 The [[docs/design/workflow-layers|workflow layers]] later replace the role
 prompts. The `[roles]` table stays as the place a role's own default model
