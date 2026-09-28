@@ -9,6 +9,12 @@ Control connection, daemon or agent is lost for no known reason. Related:
 Each entry covers what was lost, when, what still worked, the evidence, the impact and the
 cause (or "unknown").
 
+## 2026-09-28, from 22:03: the laptop on battery and a phone hotspot (observation)
+
+Not an incident; a trial. The human is driving home with the laptop on battery and a personal
+hotspot, to see whether Remote Control and bridle's work hold up. At 22:03 it was online,
+with two workers running (`base-rules`, `pypack-merge`). Record any drop here, with times.
+
 ## 2026-09-28, 19:23–21:27: Remote Control and the orchestrator session lost
 
 - **What was lost:**
