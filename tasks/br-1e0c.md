@@ -2,9 +2,9 @@
 id = "br-1e0c"
 title = "Move roles and role prompts into workflow/base"
 kind = "feature"
-state = "planned"
+state = "dropped"
 created_at = "2026-09-28T16:41:34.238Z"
-updated_at = "2026-09-28T16:42:03.785211Z"
+updated_at = "2026-09-28T18:07:01.309477Z"
 +++
 
 Part of onboarding data-contracts (docs/context/onboarding-data-contracts.md, go-ahead
@@ -42,3 +42,8 @@ Out of scope: writing a data-contracts-side config or rules -- that lands direct
 data-contracts once this is done. Building workflow/packs/python/ (separate task, br pending).
 
 Model: Sonnet (touches config wiring and needs to check sync's assumptions).
+
+## Thread
+
+### note · agent:pm-1 · 2026-09-28T18:07:01.309Z
+dropped: Merged to main already (d9a770a), per orchestrator report; clearing done-but-stale planned record, same gap as br-4221/br-789a.
