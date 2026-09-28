@@ -197,6 +197,91 @@ async fn rm_refuses_a_dirty_worktree_without_force() {
 }
 
 #[tokio::test]
+async fn rm_refuses_a_worktree_with_open_files_without_force() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let agent = daemon
+        .client
+        .spawn(&SpawnRequest {
+            role: "worker".to_string(),
+            name: Some("w1".to_string()),
+            prompt: None,
+            workdir: Some(Workdir::Worktree { base: None }),
+            model: None,
+            ignore_budget: false,
+        })
+        .await
+        .expect("spawn");
+    wait_for_state(&daemon.client, &agent.id, AgentState::Idle).await;
+    daemon
+        .client
+        .stop(&agent.id, &bridle_api::types::StopRequest { now: false })
+        .await
+        .expect("stop before rm");
+    let wt = agent.worktree.clone().expect("worktree");
+
+    // A file committed in the worktree, so opening it doesn't also make the
+    // worktree dirty and fail for the wrong reason.
+    let held_path = std::path::Path::new(&wt).join("held.txt");
+    std::fs::write(&held_path, "hold me open").expect("write held file");
+    for args in [
+        vec!["add", "held.txt"],
+        vec![
+            "-c",
+            "user.email=test@example.com",
+            "-c",
+            "user.name=Test",
+            "commit",
+            "-q",
+            "-m",
+            "add held.txt",
+        ],
+    ] {
+        let out = std::process::Command::new("git")
+            .arg("-C")
+            .arg(&wt)
+            .args(&args)
+            .output()
+            .expect("run git");
+        assert!(out.status.success(), "git {args:?} failed");
+    }
+
+    let mut holder = std::process::Command::new("tail")
+        .arg("-f")
+        .arg(&held_path)
+        .spawn()
+        .expect("spawn tail -f to hold the file open");
+
+    // lsof isn't necessarily instantaneous to see a freshly opened fd.
+    let deadline = std::time::Instant::now() + Duration::from_secs(5);
+    loop {
+        let result = daemon.client.remove(&agent.id, &RemoveQuery::default()).await;
+        match result {
+            Err(bridle_api::ClientError::Api { status: 409, .. }) => break,
+            _ if std::time::Instant::now() < deadline => {
+                tokio::time::sleep(Duration::from_millis(100)).await;
+            }
+            other => panic!("expected a 409 conflict for the open file, got {other:?}"),
+        }
+    }
+
+    holder.kill().expect("kill holder");
+    let _ = holder.wait();
+
+    daemon
+        .client
+        .remove(
+            &agent.id,
+            &RemoveQuery {
+                force: true,
+                delete_branch: true,
+            },
+        )
+        .await
+        .expect("force rm");
+    assert!(!std::path::Path::new(&wt).exists());
+}
+
+#[tokio::test]
 async fn crash_is_reported_with_a_stderr_tail_and_pending_messages_deliver_on_resume() {
     let (daemon, _tmp) = start_daemon(None).await;
     let agent = daemon
