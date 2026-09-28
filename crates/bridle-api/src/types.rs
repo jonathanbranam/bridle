@@ -210,6 +210,16 @@ pub struct ResumeRequest {
     pub ignore_budget: bool,
 }
 
+/// `POST /v1/agents/{id}/renew`. Stops the agent if it's running and starts
+/// its replacement fresh (`Session::New`, not `--resume`) in the same
+/// worktree/branch/role/model — no new worktree is created.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct RenewRequest {
+    /// Skip the budget governor's holding/paused check for this one call.
+    #[serde(default)]
+    pub ignore_budget: bool,
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct InterruptRequest {
     /// Also discard messages bridle is holding for `when=idle`.
@@ -382,6 +392,9 @@ pub mod event_kind {
     pub const AGENT_STOP_REQUESTED: &str = "agent.stop_requested";
     /// The actor is whoever asked (`system` for a restart).
     pub const AGENT_RESUMED: &str = "agent.resumed";
+    /// A fresh process, fresh session, same worktree/branch/role/model as
+    /// the agent it replaced (`bridle renew`). data: {from} (the old state).
+    pub const AGENT_RENEWED: &str = "agent.renewed";
     /// data: {cost_total}. The role's `max_budget_usd` is spent; bridle
     /// stops the agent, and `resume` grants a fresh allowance.
     pub const AGENT_BUDGET_EXHAUSTED: &str = "agent.budget_exhausted";

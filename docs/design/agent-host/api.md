@@ -13,7 +13,7 @@ JSON over HTTP, versioned under `/v1`. The contract is
 | `GET /v1/agents` · `POST /v1/agents` | list all · spawn (`{name?, role, prompt?, workdir?, model?}`, where `workdir` is `{"kind":"worktree","base"?}`, `{"kind":"repo"}` or `{"kind":"path","path"}`) |
 | `GET /v1/agents/{id}` | one agent: state, current turn's start, turns, cost, held and unacked message counts |
 | `POST /v1/agents/{id}/messages` | send (`{body, kind, when, reply_to?}`) |
-| `POST /v1/agents/{id}/interrupt` · `/stop` · `/resume` | control (`{drop_held}` · `{now}` · no body) |
+| `POST /v1/agents/{id}/interrupt` · `/stop` · `/resume` · `/renew` | control (`{drop_held}` · `{now}` · `{ignore_budget}` · `{ignore_budget}`); `renew` stops the agent if running and starts its replacement fresh (new session, same worktree/branch/role/model), keeping the same id and name |
 | `DELETE /v1/agents/{id}` | `rm` (`?force&delete_branch`) |
 | `GET /v1/agents/{id}/transcript?since=&limit=` | raw transcript lines after line `since` (default limit 500) |
 | `GET /v1/messages?to=&from=&unread=&limit=` · `POST /v1/messages` | inbox queries (`to=me` for the caller) · send to any recipient incl. `human` |
@@ -75,7 +75,7 @@ SSE event id:
 | `daemon.started` / `daemon.stopping` | lifecycle |
 | `agent.spawned` (`{role,model,cwd,branch}`) · `agent.state` (`{from,to}`) · `agent.exited` (`{code,signal,reason}`) · `agent.stalled` · `agent.orphans_killed` (`{count}`) · `agent.removed` · `agent.budget_exhausted` (`{cost_total}`) | agent lifecycle |
 | `budget.state` (`{from,to,window,utilization,resets_at,reason}`) | the governor's state changed ([[../usage-and-budget#The budget governor\|the budget governor]]) |
-| `agent.interrupted` (`{dropped_held}`) · `agent.stop_requested` (`{now}`) · `agent.resumed` (`{from}`) | control requests, with the caller as actor |
+| `agent.interrupted` (`{dropped_held}`) · `agent.stop_requested` (`{now}`) · `agent.resumed` (`{from}`) · `agent.renewed` (`{from}`) | control requests, with the caller as actor |
 | `turn.started` (`{n}`) · `turn.ended` (`{n,subtype,is_error,terminal_reason,result,usage,cost_total}`, where `cost_total` is the session's cumulative cost) | turn boundaries |
 | `agent.text` (`{text}`, truncated to 2048 characters) · `tool.use` (`{name,input_summary}`) · `permission.denied` (`{denials}`) | what the agent is doing |
 | `message.sent` (`{message,to}`) · `message.delivered` · `message.read` · `message.dropped` | messaging |

@@ -290,6 +290,16 @@ impl Store {
             .await
     }
 
+    /// Replaces the agent's Claude Code session id, e.g. when `renew` starts
+    /// a fresh session in the same worktree/branch instead of resuming the
+    /// old one.
+    pub async fn set_agent_session(&self, id: &str, session_id: &str) -> Result<(), StoreError> {
+        let id = id.to_string();
+        let session_id = session_id.to_string();
+        self.with_conn(move |c| sync::set_agent_session(c, &id, &session_id))
+            .await
+    }
+
     pub async fn set_agent_exit(&self, id: &str, exit: ExitInfo) -> Result<(), StoreError> {
         let id = id.to_string();
         self.with_conn(move |c| sync::set_agent_exit(c, &id, &exit))
@@ -1265,6 +1275,21 @@ mod sync {
         let n = conn.execute(
             "UPDATE agents SET pid = ?1, pid_start = ?2, updated_at = ?3 WHERE id = ?4",
             params![pid, pid_start, fmt_dt(Utc::now()), id],
+        )?;
+        if n == 0 {
+            return Err(StoreError::NotFound(id.to_string()));
+        }
+        Ok(())
+    }
+
+    pub(super) fn set_agent_session(
+        conn: &Connection,
+        id: &str,
+        session_id: &str,
+    ) -> Result<(), StoreError> {
+        let n = conn.execute(
+            "UPDATE agents SET session_id = ?1, updated_at = ?2 WHERE id = ?3",
+            params![session_id, fmt_dt(Utc::now()), id],
         )?;
         if n == 0 {
             return Err(StoreError::NotFound(id.to_string()));

@@ -163,6 +163,24 @@ worktree:
   agent's row and emits `agent.removed`. Its turns (so its usage), events
   and transcript under `.bridle/agents/<id>/` are kept.
 
+## Renewing
+
+`bridle renew <agent>` swaps an agent's process for a fresh one without
+losing its in-flight branch work: stop it if it's running (same escalation as
+`bridle stop`), then start its replacement in the *same* worktree, branch,
+role and model. Unlike `resume`, the replacement gets a brand-new session
+(`--session-id`, not `--resume`): the point of a renew is a clean context, not
+continuity. The agent keeps its id and name, so anything that addresses it
+(messages, tasks) doesn't need to know it was renewed. No worktree or branch
+is created or removed — `stop` never touches either, so the one from the
+agent's original spawn is simply still there to point the new process at.
+Every `pending` message is written once the replacement is up, same as
+`resume`. Emits `agent.renewed`.
+
+This is the mechanical primitive; the automatic wind-down trigger for an
+agent nearing its context limit (`[context]` config, `wind_down_at`, a
+"Context handoff:" message before the swap) is separate, later work.
+
 ## Containment
 
 The implementation today uses the process table. A `Containment` trait
