@@ -711,6 +711,57 @@ pub struct WindowStatus {
     pub observed_at: Option<DateTime<Utc>>,
     /// No reading at all, or one older than `max_staleness`.
     pub stale: bool,
+    /// Seconds since `observed_at`, computed by the daemon.
+    #[serde(default)]
+    pub age_secs: Option<u64>,
+}
+
+/// The `five_hour` thresholds in force and where they come from.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct AppliedThresholds {
+    /// `override` | `schedule` | `default`.
+    pub source: String,
+    /// The override's or schedule period's name; `None` for `default`.
+    pub period: Option<String>,
+    pub hold_at: f64,
+    pub wind_down_at: f64,
+    pub stop_at: f64,
+    /// The current schedule period's span (`days` + `start`/`end`), when the
+    /// thresholds come from a period.
+    #[serde(default)]
+    pub span: Option<ScheduleSpan>,
+    /// When the schedule next changes on its own, and to what.
+    #[serde(default)]
+    pub next_change: Option<NextScheduleChange>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct ScheduleSpan {
+    /// `mon`, `tue`, …
+    pub days: Vec<String>,
+    /// Host-local `HH:MM`.
+    pub start: String,
+    pub end: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct NextScheduleChange {
+    pub at: DateTime<Utc>,
+    /// `None` = back to the plain `[budget]` defaults.
+    pub period: Option<String>,
+    pub hold_at: f64,
+    pub wind_down_at: f64,
+    pub stop_at: f64,
+}
+
+/// One resolved `[[budget.schedule]]` period.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct SchedulePeriodInfo {
+    pub name: String,
+    pub span: ScheduleSpan,
+    pub hold_at: f64,
+    pub wind_down_at: f64,
+    pub stop_at: f64,
 }
 
 /// The effective thresholds in force, account-wide values merged with any
@@ -732,7 +783,18 @@ pub struct BudgetStatus {
     /// The overall (default-scoped windows + staleness) governor state.
     pub state: GovernorState,
     pub windows: Vec<WindowStatus>,
+    /// The thresholds in force: the `five_hour` entries are the applied ones
+    /// (see `five_hour`), not the plain config.
     pub thresholds: BudgetThresholds,
+    /// Where the applied `five_hour` thresholds come from, and the next change.
+    pub five_hour: AppliedThresholds,
+    /// The whole resolved schedule, in match order.
+    #[serde(default)]
+    pub schedule: Vec<SchedulePeriodInfo>,
+    /// Why the state is what it is: one line per window (or `staleness`)
+    /// that is above `normal`.
+    #[serde(default)]
+    pub reasons: Vec<String>,
     /// Set while `bridle budget hold` is in force (usage-and-budget.md, The
     /// human's hold).
     #[serde(default, skip_serializing_if = "Option::is_none")]

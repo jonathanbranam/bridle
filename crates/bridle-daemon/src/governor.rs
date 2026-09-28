@@ -9,8 +9,11 @@ use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
-use bridle_api::types::{AgentState, GovernorState, MessageKind, RateLimit, When, event_kind};
-use chrono::{DateTime, Local, Utc};
+use bridle_api::types::{
+    AgentState, AppliedThresholds, GovernorState, MessageKind, NextScheduleChange, RateLimit,
+    SchedulePeriodInfo, ScheduleSpan, When, event_kind,
+};
+use chrono::{DateTime, Local, Timelike, Utc};
 use serde_json::{Value, json};
 use uuid::Uuid;
 
@@ -628,6 +631,64 @@ impl Governor {
         effective_five_hour_thresholds_for(&self.0.config, now, self.schedule_override_status())
     }
 
+    /// The `five_hour` thresholds in force right now with their source, the
+    /// current period's span and the schedule's next change, for
+    /// `GET /v1/budget`. Uses the same resolution as the governor.
+    pub fn applied_five_hour(&self) -> AppliedThresholds {
+        let cfg = &self.0.config;
+        let now = Local::now();
+        let ov = self.schedule_override_status();
+        let (source, period) = match &ov {
+            Some((Some(name), _)) => ("override", Some(name.clone())),
+            Some((None, _)) => ("override", None),
+            None => match current_schedule_period_name(cfg, now) {
+                Some(name) => ("schedule", Some(name)),
+                None => ("default", None),
+            },
+        };
+        let (hold_at, wind_down_at, stop_at) = effective_five_hour_thresholds_for(cfg, now, ov);
+        let span = period
+            .as_ref()
+            .and_then(|n| cfg.schedule.iter().find(|p| &p.name == n))
+            .map(span_of);
+        let next_change = next_schedule_change(cfg, now).map(|at| {
+            let local = at.with_timezone(&Local);
+            let (hold_at, wind_down_at, stop_at) = resolve_five_hour_thresholds(cfg, local);
+            NextScheduleChange {
+                at,
+                period: current_schedule_period_name(cfg, local),
+                hold_at,
+                wind_down_at,
+                stop_at,
+            }
+        });
+        AppliedThresholds {
+            source: source.to_string(),
+            period,
+            hold_at,
+            wind_down_at,
+            stop_at,
+            span,
+            next_change,
+        }
+    }
+
+    /// Every configured `[[budget.schedule]]` period, in match order.
+    pub fn schedule_info(&self) -> Vec<SchedulePeriodInfo> {
+        self.0
+            .config
+            .schedule
+            .iter()
+            .map(|p| SchedulePeriodInfo {
+                name: p.name.clone(),
+                span: span_of(p),
+                hold_at: p.hold_at,
+                wind_down_at: p.wind_down_at,
+                stop_at: p.stop_at,
+            })
+            .collect()
+    }
+
     fn evaluate_window(&self, rate_limits: &[RateLimit], window: &str) -> WindowBlock {
         let cfg = &self.0.config;
         let rl = rate_limits.iter().find(|r| r.window == window);
@@ -869,19 +930,33 @@ fn current_schedule_period_name(cfg: &BudgetConfig, now: DateTime<Local>) -> Opt
 /// The next instant, after `now`, at which the schedule (unforced) would
 /// transition to a different period than the one in force right now — the
 /// thermostat's "hold until next" (usage-and-budget.md, Schedule override).
-/// Steps forward hourly for up to 7 days; this runs once per `bridle budget
+/// Steps forward by the minute for up to 7 days; this runs once per `bridle budget
 /// override` call, not hot-path, so that granularity and bound are fine.
 /// `None` if no change turns up within the bound (e.g. no schedule at all).
 fn next_schedule_change(cfg: &BudgetConfig, now: DateTime<Local>) -> Option<DateTime<Utc>> {
     let current = current_schedule_period_name(cfg, now);
-    let mut t = now;
-    for _ in 0..(7 * 24) {
-        t += chrono::Duration::hours(1);
+    // Minute steps so the reported instant is the real boundary, not the
+    // next whole hour (periods may start at e.g. 07:30).
+    let mut t = now.with_second(0)?.with_nanosecond(0)?;
+    for _ in 0..(7 * 24 * 60) {
+        t += chrono::Duration::minutes(1);
         if current_schedule_period_name(cfg, t) != current {
             return Some(t.with_timezone(&Utc));
         }
     }
     None
+}
+
+fn span_of(p: &crate::config::SchedulePeriod) -> ScheduleSpan {
+    ScheduleSpan {
+        days: p
+            .days
+            .iter()
+            .map(|d| format!("{d:?}").to_lowercase())
+            .collect(),
+        start: p.start.format("%H:%M").to_string(),
+        end: p.end.format("%H:%M").to_string(),
+    }
 }
 
 fn age_to_state(age: Duration, max_staleness: Duration) -> GovernorState {
@@ -1132,7 +1207,7 @@ mod tests {
 
     /// `bridle budget override`'s thermostat semantics: `next_schedule_change`
     /// steps forward from a point inside `night` and finds the instant it
-    /// stops matching — the same hour `night`'s `end` falls in.
+    /// stops matching — `night`'s `end`.
     #[test]
     fn next_schedule_change_finds_the_next_period_boundary() {
         let (_rt, mut cfg) = test_governor();
@@ -1140,12 +1215,9 @@ mod tests {
         let now = local_at(23, 30);
         let changed_at = next_schedule_change(&cfg, now).expect("a boundary within a week");
         let changed_at_local = changed_at.with_timezone(&Local);
-        // Stepping hourly from 23:30, `night` (ends 07:00) last matches at
-        // 06:30 and no longer matches at 07:30 the next day.
-        assert_eq!(
-            changed_at_local.time(),
-            night_period().end + chrono::Duration::minutes(30)
-        );
+        // Stepping by the minute from 23:30, the first instant `night`
+        // (ends 07:00) stops matching is exactly its `end` the next day.
+        assert_eq!(changed_at_local.time(), night_period().end);
         assert_eq!(
             changed_at_local.date_naive(),
             now.date_naive() + chrono::Duration::days(1)

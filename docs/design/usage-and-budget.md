@@ -260,7 +260,7 @@ bridle budget override --clear
 - **Thermostat semantics**: with no `--until`, the override lasts until the
   schedule (unforced) would next transition to a different period than the
   one actually in force right now — found by stepping forward through the
-  configured periods (hourly, bounded to 7 days) and comparing against the
+  configured periods (by the minute, bounded to 7 days) and comparing against the
   period active at the moment the override was set. `--until <time>`
   (`HH:MM` local, rolling to tomorrow if already past — the same parsing
   `bridle budget hold --until` uses) sets an explicit end instead.
@@ -273,6 +273,21 @@ bridle budget override --clear
   schedule itself.
 - No permanent override mode: every override needs an end, computed or
   given (YAGNI — see n9qh).
+
+### Seeing what applies
+
+`bridle budget` (`GET /v1/budget`) shows what the governor actually uses, not
+the plain config: the applied `five_hour` thresholds and their source
+(`override <period>`, `schedule <period>` or `default`), the current period's
+span, the schedule's next change (when, and to which period's thresholds; the
+daemon steps by the minute to find the real boundary), and a `why` line per
+window above `normal` (the threshold crossed and/or the `status` that forced
+it). `allowed_warning` forces at least winding-down even when utilization is
+under the applied thresholds (ticket kv7d, open), and the `why` line says so
+rather than hiding it. Each reading shows its age and is `stale` when older
+than `max_staleness` or missing. `bridle budget --schedule` prints every
+resolved period (span and thresholds). Times are the machine's local
+timezone in text; `--json` stays UTC.
 
 ### Max-workers override
 

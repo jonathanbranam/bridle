@@ -334,6 +334,7 @@ async fn status(
 
 async fn budget(State(state): State<AppState>) -> Result<Json<BudgetStatus>, ApiError> {
     let snapshot = state.governor.snapshot();
+    let cfg = state.governor.config();
     let rate_limits = state.store.rate_limits().await?;
     let mut windows = Vec::new();
     for window in [
@@ -356,6 +357,7 @@ async fn budget(State(state): State<AppState>) -> Result<Json<BudgetStatus>, Api
         } else {
             crate::governor::WindowBlock::default()
         };
+        let age = rl.map(|r| (Utc::now() - r.observed_at).to_std().unwrap_or_default());
         windows.push(WindowStatus {
             window: window.to_string(),
             state: block.state,
@@ -363,14 +365,29 @@ async fn budget(State(state): State<AppState>) -> Result<Json<BudgetStatus>, Api
             utilization: rl.and_then(|r| r.utilization),
             resets_at: rl.and_then(|r| r.resets_at),
             observed_at: rl.map(|r| r.observed_at),
-            stale: rl.is_none(),
+            stale: age.is_none_or(|a| a > cfg.max_staleness),
+            age_secs: age.map(|a| a.as_secs()),
         });
     }
-    let cfg = state.governor.config();
+    let five_hour = state.governor.applied_five_hour();
+    let mut thresholds = cfg.to_wire();
+    thresholds
+        .hold_at
+        .insert("five_hour".into(), five_hour.hold_at);
+    thresholds
+        .wind_down_at
+        .insert("five_hour".into(), five_hour.wind_down_at);
+    thresholds
+        .stop_at
+        .insert("five_hour".into(), five_hour.stop_at);
+    let reasons = budget_reasons(&windows, &thresholds);
     Ok(Json(BudgetStatus {
         state: snapshot.default.state,
         windows,
-        thresholds: cfg.to_wire(),
+        thresholds,
+        five_hour,
+        schedule: state.governor.schedule_info(),
+        reasons,
         human_hold: state
             .governor
             .hold_status()
@@ -381,6 +398,47 @@ async fn budget(State(state): State<AppState>) -> Result<Json<BudgetStatus>, Api
             .map(|(period, until)| ScheduleOverrideStatus { period, until }),
         max_workers_override: state.manager.max_workers_override(),
     }))
+}
+
+/// One line per window above `normal`: the threshold it crossed or the
+/// `status` that forced it, so a state that contradicts the utilization
+/// (`allowed_warning` forces wind-down, ticket kv7d) is shown as such.
+fn budget_reasons(
+    windows: &[WindowStatus],
+    t: &bridle_api::types::BudgetThresholds,
+) -> Vec<String> {
+    let mut out = Vec::new();
+    for w in windows {
+        if w.state == bridle_api::types::GovernorState::Normal {
+            continue;
+        }
+        let pct = w.utilization.map(|u| u * 100.0);
+        let get = |m: &std::collections::BTreeMap<String, f64>| {
+            m.get(&w.window).or_else(|| m.get("default")).copied()
+        };
+        let crossed = pct.and_then(|p| {
+            [
+                ("stop_at", get(&t.stop_at)),
+                ("wind_down_at", get(&t.wind_down_at)),
+                ("hold_at", get(&t.hold_at)),
+            ]
+            .into_iter()
+            .find(|(_, v)| v.is_some_and(|v| p >= v))
+        });
+        let status = w.status.as_deref().filter(|s| *s != "allowed");
+        let mut line = format!("{} is {}", w.window, w.state);
+        if let (Some((name, Some(v))), Some(p)) = (crossed, pct) {
+            line.push_str(&format!(": {p:.0}% >= {name} {v:.0}%"));
+        }
+        if let Some(s) = status {
+            line.push_str(&format!("; status {s}"));
+            if s == "allowed_warning" {
+                line.push_str(" forces at least winding_down regardless of thresholds");
+            }
+        }
+        out.push(line);
+    }
+    out
 }
 
 async fn budget_hold(
