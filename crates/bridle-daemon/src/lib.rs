@@ -23,6 +23,7 @@ pub mod cost_audit;
 mod events;
 pub mod governor;
 pub mod paths;
+pub mod rules;
 mod server;
 pub mod state_branch;
 pub mod store;

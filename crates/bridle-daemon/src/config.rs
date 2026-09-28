@@ -594,9 +594,14 @@ pub struct Config {
     pub task_prefix: Option<String>,
     /// Where the L1/L2 workflow layers live (docs/design/workflow-layers.md):
     /// a path (relative to the repo root) or a git url. `None` until a
-    /// project opts in. Not yet read by anything — the layer resolution
-    /// engine is separate work.
+    /// project opts in. Read by `bridle_daemon::rules::discover_layers` as
+    /// `<workflow>/base/rules` (L1) and `<workflow>/packs/<name>/rules` (L2,
+    /// one per entry in `packs`).
     pub workflow: Option<String>,
+    /// L2 pack names to layer in, in listed order. Pack content itself is
+    /// out of scope for now (docs/design/workflow-layers.md); this is just
+    /// which pack directories to include.
+    pub packs: Vec<String>,
 }
 
 impl Default for Config {
@@ -616,6 +621,7 @@ impl Default for Config {
             context: ContextConfig::default(),
             task_prefix: None,
             workflow: None,
+            packs: Vec::new(),
         }
     }
 }
@@ -783,6 +789,7 @@ impl Config {
         }
 
         config.workflow = raw.workflow;
+        config.packs = raw.packs.unwrap_or_default();
 
         Ok(config)
     }
@@ -867,6 +874,8 @@ struct RawConfig {
     tasks: Option<RawTasks>,
     #[serde(default)]
     workflow: Option<String>,
+    #[serde(default)]
+    packs: Option<Vec<String>>,
 }
 
 #[derive(Debug, Default, Deserialize)]

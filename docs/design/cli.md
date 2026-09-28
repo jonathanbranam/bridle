@@ -45,6 +45,9 @@ bridle statusline                           Claude Code statusLine command; loca
 bridle stop-check                           Claude Code Stop hook for the worker role; refuses to stop
                                              with an unreleased claim and no thread entry since claiming
                                              it (docs/design/coordination.md); never fails
+bridle rules explain <id>                   which layer wins a rule id, and what it shadowed
+bridle rules diff --project-layer           everything the project layer does differently from
+                                             the base/pack layers below it
 bridle prime orchestrator                   fresh session's opening context: role prompt, current
                                              state, startup steps; local only, no daemon call
 bridle task new    <title> -k/--kind KIND [--body TEXT]
@@ -118,6 +121,29 @@ bridle task note   <id> TEXT                     plain note to the task's thread
   today; see `bridle_daemon::cost_audit`. Without `--check` it only reports; with it,
   exit 1 if any role grew more than
   `bridle_daemon::cost_audit::GROWTH_THRESHOLD_PERCENT` over baseline.
+- **`rules explain`/`rules diff`** are local and static, like `cost audit`: no daemon
+  call, just `.bridle/config.toml` and the layer directories it points at, read from
+  the current directory ([[docs/design/workflow-layers|workflow layers]],
+  `bridle_daemon::rules`). They resolve L1 base, L2 packs and L3 project rule layers
+  by id, later layers winning unless an earlier one marks the id `locked: true`; a
+  layer that redefines an id must give an `override` kind (`replace`, `append` or
+  `disable`) — silent redefinition is an error, and `disable` requires a `reason`.
+  L0 core has no file-backed layer yet (nothing in the binary defines rules that way
+  today) and L4 component/path-scoped rules are out of scope (blocked on spike vxp6).
+  `explain <id>` prints which layer won and the full history of what it shadowed, in
+  layer order; `diff --project-layer` prints every rule id the project layer
+  (`<repo>/.bridle/rules`) defines, replaces, appends to or disables, relative to the
+  base/pack layers below it — the flag is `--project-layer`, not `--project` as
+  workflow-layers.md's own example reads, because `--project` is already the global
+  flag that selects a daemon by project name and clap can't have both share that name
+  with different value types. The L1 base and L2 pack layers come from `[rules]
+  workflow = "path"` (relative paths resolve against the repo root) and `packs =
+  ["name", ...]` in `.bridle/config.toml`; with no `workflow` set, or a `workflow`/pack
+  directory that doesn't exist on disk, resolution just sees the project layer, not an
+  error — `bridle-workflow`'s real location is still provisional (docs/questions/open/
+  where-bridle-workflow-lives-r2uq.md), so nothing is guessed here. Pack layers are
+  mechanism only for now: reading multiple `<workflow>/packs/<name>/rules` directories
+  in listed order, with no real pack content yet (out of scope per workflow-layers.md).
 - **`serve --detach`**: [[docs/design/agent-host/daemon#Running it|running the daemon]].
 - **`tui`** is a subcommand, not a separate binary, so it shares `bridle`'s discovery,
   token and `--url`/`--project` flags like every other command. It's a thin client of
@@ -251,7 +277,7 @@ bridle spawn <role> <task>   bridle review
 bridle take|give <agent>                         human takeover of a headless agent
 bridle impact set|show|check bridle conflict list|resolve
 bridle spec check|id|export|coverage|import
-bridle rules show|explain|diff|propose
+bridle rules show|propose                        `explain`/`diff --project-layer` are built (see Built)
 bridle goals list|propose       bridle arch propose
 bridle trace up|down|suspect|confirm|orphans|coverage
 bridle explore new|conclude|adopt|abandon

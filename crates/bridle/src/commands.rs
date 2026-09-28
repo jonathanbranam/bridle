@@ -19,9 +19,10 @@ use crate::cli::{
     AgentsArgs, AnswerArgs, AskArgs, BudgetAction, BudgetArgs, BudgetHoldArgs, ClaimArgs, Cli,
     Command, CostAction, CostArgs, CostAuditArgs, DepAction, DepArgs, DepEdgeArgs, EdgeKindArg,
     EventsArgs, InboxArgs, InterruptArgs, LogsArgs, PrimeArgs, PrimeRoleArg, ReadyArgs,
-    ReleaseArgs, RmArgs, SendArgs, ShowArgs, SpawnArgs, StopArgs, TaskAction, TaskArgs,
-    TaskDropArgs, TaskEditArgs, TaskKindArg, TaskListArgs, TaskNewArgs, TaskNoteArgs,
-    TaskReopenArgs, TaskShowArgs, TokenAction, TokenArgs, UsageArgs, UsageByArg, WhenArg,
+    ReleaseArgs, RmArgs, RulesAction, RulesArgs, RulesDiffArgs, RulesExplainArgs, SendArgs,
+    ShowArgs, SpawnArgs, StopArgs, TaskAction, TaskArgs, TaskDropArgs, TaskEditArgs, TaskKindArg,
+    TaskListArgs, TaskNewArgs, TaskNoteArgs, TaskReopenArgs, TaskShowArgs, TokenAction, TokenArgs,
+    UsageArgs, UsageByArg, WhenArg,
 };
 use crate::error::CliError;
 use crate::render;
@@ -61,6 +62,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Statusline => statusline(&cli).await,
         Command::StopCheck => stop_check(&cli).await,
         Command::Prime(args) => prime(args).await,
+        Command::Rules(args) => rules(&cli, args).await,
     }
 }
 
@@ -1076,6 +1078,97 @@ fn print_cost_row(r: &bridle_daemon::cost_audit::RoleAudit) {
         baseline,
         change
     );
+}
+
+/// `bridle rules explain`/`diff`: local and static, like `cost audit` — no
+/// daemon call, just `.bridle/config.toml` and the layer directories it
+/// points at, read from the current directory (docs/design/workflow-layers.md,
+/// `bridle_daemon::rules`).
+async fn rules(cli: &Cli, args: &RulesArgs) -> Result<(), CliError> {
+    match &args.action {
+        RulesAction::Explain(e) => rules_explain(cli, e).await,
+        RulesAction::Diff(d) => rules_diff(cli, d).await,
+    }
+}
+
+fn resolve_workflow_rules(repo: &Path) -> Result<bridle_daemon::rules::Resolution, CliError> {
+    use bridle_daemon::config::Config;
+    use bridle_daemon::rules;
+
+    let config = Config::load(repo).context("loading .bridle/config.toml")?;
+    let workflow_root = config.workflow.as_deref().map(Path::new);
+    let layers = rules::discover_layers(repo, workflow_root, &config.packs);
+    rules::load_and_resolve(&layers)
+        .map_err(|e| CliError::from(anyhow::Error::new(e).context("resolving workflow rules")))
+}
+
+async fn rules_explain(cli: &Cli, args: &RulesExplainArgs) -> Result<(), CliError> {
+    let repo = std::env::current_dir().context("current directory")?;
+    let resolution = resolve_workflow_rules(&repo)?;
+    let Some(rule) = bridle_daemon::rules::explain(&resolution, &args.id) else {
+        return Err(anyhow::anyhow!("no rule with id {:?} in any layer", args.id).into());
+    };
+
+    if cli.json {
+        render::print_json(rule)?;
+        return Ok(());
+    }
+
+    println!("{}: won by {}", rule.id, rule.winning_layer());
+    for entry in &rule.history {
+        let action = match entry.override_kind {
+            None => "defines".to_string(),
+            Some(kind) => format!("{kind}s it"),
+        };
+        print!("  {} {action}", entry.layer);
+        if let Some(reason) = &entry.reason {
+            print!(" ({reason})");
+        }
+        println!();
+    }
+    match rule.state() {
+        bridle_daemon::rules::RuleState::Active { severity, body, .. } => {
+            if let Some(s) = severity {
+                println!("severity: {s}");
+            }
+            println!("{body}");
+        }
+        bridle_daemon::rules::RuleState::Disabled { reason } => {
+            println!("disabled: {reason}");
+        }
+    }
+    Ok(())
+}
+
+async fn rules_diff(cli: &Cli, args: &RulesDiffArgs) -> Result<(), CliError> {
+    if !args.project_layer {
+        return Err(anyhow::anyhow!("rules diff needs a mode: --project-layer").into());
+    }
+    let repo = std::env::current_dir().context("current directory")?;
+    let resolution = resolve_workflow_rules(&repo)?;
+    let diffs = bridle_daemon::rules::diff_project(&resolution);
+
+    if cli.json {
+        render::print_json(&diffs)?;
+        return Ok(());
+    }
+
+    if diffs.is_empty() {
+        println!("project layer changes nothing");
+        return Ok(());
+    }
+    for d in &diffs {
+        let action = d
+            .override_kind
+            .map(|k| format!("{k}s"))
+            .unwrap_or_else(|| "defines".to_string());
+        print!("{} {action}", d.id);
+        if let Some(reason) = &d.reason {
+            print!(" ({reason})");
+        }
+        println!();
+    }
+    Ok(())
 }
 
 async fn budget(cli: &Cli, args: &BudgetArgs) -> Result<(), CliError> {
