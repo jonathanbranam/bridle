@@ -178,10 +178,16 @@ pub enum WhenArg {
 }
 
 #[derive(Debug, Args)]
+#[command(group(ArgGroup::new("text_source").args(["text", "text_file"])))]
 pub struct SendArgs {
     /// An agent id/name, or `human`.
     pub to: String,
-    pub text: String,
+    /// Message body.
+    #[arg(value_name = "TEXT")]
+    pub text: Option<String>,
+    /// Read the message body from a file (or `-` for stdin).
+    #[arg(long)]
+    pub text_file: Option<PathBuf>,
     /// Mark this as a question (expects a reply).
     #[arg(long)]
     pub question: bool,
@@ -592,7 +598,7 @@ mod tests {
         };
         assert!(matches!(args.when, WhenArg::Now));
         assert_eq!(args.to, "w1");
-        assert_eq!(args.text, "hello");
+        assert_eq!(args.text.as_deref(), Some("hello"));
     }
 
     #[test]
@@ -609,6 +615,44 @@ mod tests {
     fn send_when_rejects_bad_value() {
         let err = parse(&["send", "w1", "hi", "--when", "soon"]).unwrap_err();
         assert_eq!(err.kind(), clap::error::ErrorKind::InvalidValue);
+    }
+
+    #[test]
+    fn send_accepts_text_file() {
+        let cli = parse(&["send", "w1", "--text-file", "msg.txt"]).unwrap();
+        let Command::Send(args) = cli.command else {
+            panic!("expected send")
+        };
+        assert_eq!(args.to, "w1");
+        assert_eq!(args.text, None);
+        assert_eq!(
+            args.text_file.as_deref(),
+            Some(std::path::Path::new("msg.txt"))
+        );
+    }
+
+    #[test]
+    fn send_rejects_text_and_text_file_together() {
+        let err = parse(&["send", "w1", "hello", "--text-file", "msg.txt"]).unwrap_err();
+        assert_eq!(err.kind(), clap::error::ErrorKind::ArgumentConflict);
+    }
+
+    #[test]
+    fn spawn_prompt_file_accepts_dash_for_stdin() {
+        let cli = parse(&["spawn", "worker", "--prompt-file", "-"]).unwrap();
+        let Command::Spawn(args) = cli.command else {
+            panic!("expected spawn")
+        };
+        assert_eq!(args.prompt_file.as_deref(), Some(std::path::Path::new("-")));
+    }
+
+    #[test]
+    fn send_text_file_accepts_dash_for_stdin() {
+        let cli = parse(&["send", "w1", "--text-file", "-"]).unwrap();
+        let Command::Send(args) = cli.command else {
+            panic!("expected send")
+        };
+        assert_eq!(args.text_file.as_deref(), Some(std::path::Path::new("-")));
     }
 
     #[test]

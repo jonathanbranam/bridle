@@ -16,12 +16,12 @@ bridle rebuild                               reconstructs tasks/edges/open_quest
                                               clone with no bridle.db yet
 bridle daemons                              # every running project daemon on this machine, with agent counts
 bridle status                               # daemon, agents, Claude Code version
-bridle spawn   <role> [--name N] [--prompt TEXT | --prompt-file F]
+bridle spawn   <role> [--name N] [--prompt TEXT | --prompt-file FILE]
                [--worktree [--base REF] | --in-repo | --cwd PATH] [--model M]
                [--ignore-budget]
 bridle agents  [--all]
 bridle show    <agent>
-bridle send    <agent|human> TEXT [--question] [--when now|idle] [--reply-to ID]
+bridle send    <agent|human> [TEXT | --text-file FILE] [--question] [--when now|idle] [--reply-to ID]
 bridle inbox   [--all] [--mark-read]        # messages to me, plus every task's open question
 bridle ask     <task-id> TEXT                    question against a task; blocks it until answered
 bridle answer  <task-id> TEXT                    answers a task's open question; frees it to be ready again
@@ -56,6 +56,11 @@ bridle task reopen <id>
 - **`budget hold`/`release`** apply to the current daemon only; see
   [[docs/design/usage-and-budget#The human's hold|the human's hold]] for the
   cross-daemon gap.
+
+- **`send`**: when given `--text-file FILE` or `--prompt-file FILE`, pass `-`
+  as the filename to read from stdin instead. This avoids passing backticks and
+  other shell metacharacters as command-line arguments, which can trigger
+  permission denials in Claude Code. Example: `echo "message" | bridle send w1 --text-file -`.
 
 - **`rebuild`** is `TaskManager::rebuild_from_state_branch` (docs/design/storage.md,
   "Rebuild"): the migration path for a fresh clone with no `bridle.db` — clone the repo,

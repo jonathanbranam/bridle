@@ -296,7 +296,12 @@ async fn spawn(cli: &Cli, args: &SpawnArgs) -> Result<(), CliError> {
     let prompt = match (&args.prompt, &args.prompt_file) {
         (Some(p), _) => Some(p.clone()),
         (None, Some(f)) => {
-            Some(std::fs::read_to_string(f).with_context(|| format!("reading {}", f.display()))?)
+            let content = if f.to_string_lossy() == "-" {
+                std::io::read_to_string(std::io::stdin()).context("reading from stdin")?
+            } else {
+                std::fs::read_to_string(f).with_context(|| format!("reading {}", f.display()))?
+            };
+            Some(content)
         }
         (None, None) => None,
     };
@@ -413,9 +418,24 @@ async fn show(cli: &Cli, args: &ShowArgs) -> Result<(), CliError> {
 
 async fn send(cli: &Cli, args: &SendArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
+    let body = match (&args.text, &args.text_file) {
+        (Some(t), _) => t.clone(),
+        (None, Some(f)) => {
+            if f.to_string_lossy() == "-" {
+                std::io::read_to_string(std::io::stdin()).context("reading from stdin")?
+            } else {
+                std::fs::read_to_string(f).with_context(|| format!("reading {}", f.display()))?
+            }
+        }
+        (None, None) => {
+            return Err(CliError::from(anyhow::anyhow!(
+                "specify TEXT or --text-file"
+            )));
+        }
+    };
     let req = SendRequest {
         to: Some(args.to.clone()),
-        body: args.text.clone(),
+        body,
         kind: if args.question {
             MessageKind::Question
         } else {

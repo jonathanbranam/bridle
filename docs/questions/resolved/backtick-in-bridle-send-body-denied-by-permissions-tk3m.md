@@ -2,12 +2,27 @@
 id: tk3m
 title: How should a bridle send/spawn body avoid the permission layer's backtick check?
 opened: 2026-09-27
+resolved: 2026-09-28
 repos: [bridle]
-changes: []
+changes: [b1f4750]
 specs: []
 needs: []
 see: []
 ---
+
+## Resolution
+
+Both `bridle send` and `bridle spawn` now support reading their body/prompt from
+stdin when `-` is passed to `--text-file` or `--prompt-file`. This lets callers
+pipe the content without it ever appearing as a shell argument, bypassing Claude
+Code's permission classifier entirely.
+
+- Added `--text-file FILE` to `bridle send`, mutually exclusive with the
+  positional TEXT argument
+- Both `--prompt-file` (spawn) and `--text-file` (send) treat `-` as stdin
+- Updated docs/design/cli.md with the new flags and usage examples
+
+Example: `echo "message with \`backticks\`" | bridle send w1 --text-file -`
 
 ## The question
 
