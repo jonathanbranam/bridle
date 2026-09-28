@@ -114,7 +114,9 @@ Parked: a7h3 (agreed with pm-1: the message-human workaround works), and
 
 ## Waiting on the human
 
-Nothing.
+- **sqt6, a short command alias** (pm-1's m-0616): `br` is taken (beads_rust).
+  Recommendation: none for now; a shell alias of the human's own costs
+  nothing. Low stakes, so no worker until they say.
 
 ## Deferred
 
