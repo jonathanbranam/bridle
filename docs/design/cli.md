@@ -11,6 +11,9 @@ bridle [--url URL] [--project NAME] [--token T] [--json] <command>
 
 bridle serve   [--repo PATH] [--workspace DIR] [--listen ADDR] [--detach]
 bridle stop-daemon
+bridle rebuild                               reconstructs tasks/edges/open_questions from the
+                                              state branch alone; the migration path for a fresh
+                                              clone with no bridle.db yet
 bridle daemons                              # every running project daemon on this machine, with agent counts
 bridle status                               # daemon, agents, Claude Code version
 bridle spawn   <role> [--name N] [--prompt TEXT | --prompt-file F]
@@ -54,6 +57,12 @@ bridle task reopen <id>
   [[docs/design/usage-and-budget#The human's hold|the human's hold]] for the
   cross-daemon gap.
 
+- **`rebuild`** is `TaskManager::rebuild_from_state_branch` (docs/design/storage.md,
+  "Rebuild"): the migration path for a fresh clone with no `bridle.db` — clone the repo,
+  start the daemon, `bridle rebuild`. Human-only; refuses (409) rather than overwrites if
+  the database already has any tasks, edges or open questions. Claims are never
+  reconstructed — they're SQLite-only, with no state-branch counterpart, so any in-flight
+  claim is simply lost, which is correct here, not a gap.
 - **Discovery** of the daemon, and **which token** the CLI uses, are in
   [[docs/design/agent-host/daemon#Workspace layout|workspace layout]] and
   [[docs/design/agent-host/principals#How the CLI picks a token|principals]].
@@ -176,7 +185,6 @@ bridle goals list|propose       bridle arch propose
 bridle trace up|down|suspect|confirm|orphans|coverage
 bridle explore new|conclude|adopt|abandon
 bridle usage --by project|kind|task|trend|compare
-bridle rebuild
 ```
 
 The command name and a short alias are open:

@@ -191,6 +191,32 @@ and the SQLite index in the same call, and `is_ready` excludes a task with
 an open question. Not yet built: the `bridle ask`/`bridle answer` CLI and
 `bridle inbox` reading this index — both arrive with the next task.
 
+## Rebuild
+
+`bridle rebuild` (`TaskManager::rebuild_from_state_branch`) reconstructs
+`tasks`, `edges` and `open_questions` from the state branch alone: the
+migration path for a fresh clone with no `bridle.db` — clone the repo, start
+the daemon, `bridle rebuild`. It walks every `tasks/<id>.md` file for the
+task rows, `edges.toml` for the edge set, and each task's own thread for its
+open question, if any (the most recent `question`/`answer` entry; an
+unanswered trailing `question` becomes an `open_questions` row). Refuses
+(409) rather than overwriting if the database already has any rows in these
+three tables — a rebuild is a from-nothing reconstruction, not a merge.
+
+Claims are never reconstructed: they're SQLite-only with no state-branch
+counterpart at all (above), so any in-flight claim a rebuild runs into is
+simply lost. That's correct here, not a gap the way a body/thread edit lost
+between an enqueue and a flush is (above) — there was never anything on the
+state branch to rebuild a claim from.
+
+A rebuilt open question's `message_id` doesn't point at a real `messages`
+row: messages don't survive on the state branch at all — the durability
+table above lists them as SQLite-only, "no durability, by design" — only the
+thread entry recording the question's body/from/timestamp does. Rather than
+leave the column unfillable, rebuild synthesizes a stand-in id from the task
+id (`m-rebuilt-<task id>`). Nothing downstream looks a message up by this id
+after a rebuild, since there's no message row behind it to find.
+
 ## The daemon registry
 
 `~/.bridle/daemons/<project>.json` lists each running daemon with its

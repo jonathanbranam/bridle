@@ -47,3 +47,9 @@ spec): a claude.ai connector reachable only via public HTTPS to `/mcp`, with OAu
 exposing a small voice-shaped tool set — briefing, pending questions, answer question, tell
 manager, budget hold/release, approve held merges — deliberately **not** spawn/stop/rm or
 anything else that could run arbitrary work from a phone call.
+
+## Parked work
+
+MCP was deferred on 2026-09-27. The work so far is on the unmerged branch
+`bridle/mcp-1` (WIP `cae932c`), which is kept for when this is picked up; see
+`docs/proposal/build-order.md`.

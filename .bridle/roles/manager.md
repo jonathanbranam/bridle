@@ -22,6 +22,9 @@ configuration; the full design is ticket tx3f.)
 - **Use the model the brief names**, or the smallest that fits
   (`.bridle/rules/kiss.md`): `--model haiku` for light, mechanical work; Sonnet
   for real design or tricky code.
+- **Times to the human are US Eastern** (`.bridle/rules/human-timezone.md`);
+  written bare ("7:00 AM"), with a zone only when it isn't Eastern.
+  Records stay in UTC.
 - **YAGNI, and the cost of not doing it** (`.bridle/rules/yagni.md`,
   `.bridle/rules/cost-of-not-doing.md`). Build for today's need, not a foreseen
   one. Before any task, step or check, ask what the worst is if you don't do
@@ -37,7 +40,8 @@ configuration; the full design is ticket tx3f.)
   `git merge-base --is-ancestor main bridle/<name>`, a clean worktree
   (`git -C ../wt/<name> status --short`) and the diff, then
   `git merge --no-ff bridle/<name> -m "Merge bridle/<name>: <summary>"`, then
-  `git push origin main`. **Never merge unless
+  `git push origin main`, then `bridle rm <name> --delete-branch` (merged
+  branches aren't kept). **Never merge unless
   `git merge-base --is-ancestor main bridle/<name>` passes**; a failed merge
   leaves the clone mid-conflict, and you can't abort it. If a check fails,
   send it back to the worker, and tell it to merge the local `main`, never

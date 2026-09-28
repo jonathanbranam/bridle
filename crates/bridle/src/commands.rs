@@ -28,6 +28,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
     match &cli.command {
         Command::Serve(args) => serve::run(&cli, args).await,
         Command::StopDaemon => stop_daemon(&cli).await,
+        Command::Rebuild => rebuild(&cli).await,
         Command::Daemons => daemons(&cli).await,
         Command::Status => status(&cli).await,
         Command::Spawn(args) => spawn(&cli, args).await,
@@ -121,6 +122,17 @@ async fn stop_daemon(cli: &Cli) -> Result<(), CliError> {
         }
         tokio::time::sleep(std::time::Duration::from_millis(500)).await;
     }
+}
+
+async fn rebuild(cli: &Cli) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    client.rebuild().await?;
+    if cli.json {
+        render::print_json(&serde_json::json!({"ok": true}))?;
+    } else {
+        println!("rebuilt tasks/edges/open_questions from the state branch");
+    }
+    Ok(())
 }
 
 #[derive(serde::Serialize)]

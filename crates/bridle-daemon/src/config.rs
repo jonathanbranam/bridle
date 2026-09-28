@@ -54,6 +54,9 @@ pub struct Role {
     pub base: String,
     pub permission_mode: String,
     pub allowed_tools: Vec<String>,
+    /// Built-in roles start from [`DENY_MESSAGING_AND_SUBAGENTS`] and friends;
+    /// a project's `.bridle/config.toml` can only add to this list
+    /// ([`Role::merge`]), never remove a built-in denial.
     pub disallowed_tools: Vec<String>,
     /// Relative to the repo, per roles-and-config.md.
     pub system_prompt: Option<PathBuf>,
@@ -65,6 +68,31 @@ pub struct Role {
     /// Passed as `--max-budget-usd`. Claude applies it per process, and
     /// checks it after each model call, so a turn can overshoot it.
     pub max_budget_usd: Option<f64>,
+}
+
+/// Claude Code built-ins that let an agent bypass bridle's own coordination
+/// the way `SendMessage` did (docs/questions/open/agents-can-use-claude-codes-own-sendmessage-78sp.md):
+/// reporting straight to another session instead of `bridle send`, or
+/// spawning subagents bridle never sees. `SendMessage` and `Workflow` are denied for
+/// every built-in role; `Agent` is allowed since subagents run inside the same
+/// agent's process and cost counts toward that agent's budget, so it doesn't
+/// bypass bridle's coordination (ticket htp6).
+const DENY_MESSAGING_AND_SUBAGENTS: [&str; 2] = ["SendMessage", "Workflow"];
+
+/// Bypasses that also fire outside bridle's supervision: waiting via
+/// Claude Code's own scheduler instead of bridle's task/claim lifecycle, or
+/// kicking off a run on claude.ai directly. Denied for worker and manager;
+/// the orchestrator is exempted from the scheduling half (below) since it
+/// legitimately paces its own loop with `ScheduleWakeup`.
+const DENY_SCHEDULING: [&str; 4] = ["ScheduleWakeup", "CronCreate", "CronDelete", "CronList"];
+const DENY_REMOTE_TRIGGERS: [&str; 1] = ["RemoteTrigger"];
+
+fn deny_list(extra: &[&[&str]]) -> Vec<String> {
+    DENY_MESSAGING_AND_SUBAGENTS
+        .iter()
+        .chain(extra.iter().flat_map(|s| s.iter()))
+        .map(|s| s.to_string())
+        .collect()
 }
 
 impl Role {
@@ -85,7 +113,7 @@ impl Role {
                 "Glob".into(),
                 "Grep".into(),
             ],
-            disallowed_tools: Vec::new(),
+            disallowed_tools: deny_list(&[&DENY_SCHEDULING, &DENY_REMOTE_TRIGGERS]),
             system_prompt: None,
             autostart: false,
             resume_on_restart: false,
@@ -108,7 +136,7 @@ impl Role {
                 "Glob".into(),
                 "Grep".into(),
             ],
-            disallowed_tools: Vec::new(),
+            disallowed_tools: deny_list(&[&DENY_SCHEDULING, &DENY_REMOTE_TRIGGERS]),
             system_prompt: None,
             autostart: false,
             resume_on_restart: true,
@@ -130,7 +158,9 @@ impl Role {
                 "Glob".into(),
                 "Grep".into(),
             ],
-            disallowed_tools: Vec::new(),
+            // Scheduling is exempted: the orchestrator paces its own loop
+            // with `ScheduleWakeup` (docs/questions/open/agents-can-use-claude-codes-own-sendmessage-78sp.md).
+            disallowed_tools: deny_list(&[&DENY_REMOTE_TRIGGERS]),
             system_prompt: None,
             autostart: false,
             resume_on_restart: true,
@@ -168,8 +198,14 @@ impl Role {
         if let Some(v) = raw.allowed_tools {
             self.allowed_tools = v;
         }
+        // Additive, unlike `allowed_tools`: a project config can only add
+        // denials to the built-in defaults, never drop one by omission.
         if let Some(v) = raw.disallowed_tools {
-            self.disallowed_tools = v;
+            for tool in v {
+                if !self.disallowed_tools.contains(&tool) {
+                    self.disallowed_tools.push(tool);
+                }
+            }
         }
         if let Some(v) = raw.system_prompt {
             self.system_prompt = Some(v);
@@ -885,12 +921,32 @@ mod tests {
         assert_eq!(worker.workdir, Workdir::Worktree);
         assert_eq!(worker.permission_mode, "acceptEdits");
         assert!(worker.allowed_tools.contains(&"Edit".to_string()));
+        for tool in ["SendMessage", "Workflow", "ScheduleWakeup", "RemoteTrigger"] {
+            assert!(
+                worker.disallowed_tools.contains(&tool.to_string()),
+                "worker should deny {tool}"
+            );
+        }
+        assert!(
+            !worker.disallowed_tools.contains(&"Agent".to_string()),
+            "worker should allow Agent"
+        );
 
         let manager = &cfg.roles["manager"];
         assert_eq!(manager.workdir, Workdir::Repo);
         assert_eq!(manager.permission_mode, "dontAsk");
         assert!(manager.resume_on_restart);
         assert!(manager.allowed_tools.contains(&"Bash(git *)".to_string()));
+        for tool in ["SendMessage", "Workflow", "ScheduleWakeup", "RemoteTrigger"] {
+            assert!(
+                manager.disallowed_tools.contains(&tool.to_string()),
+                "manager should deny {tool}"
+            );
+        }
+        assert!(
+            !manager.disallowed_tools.contains(&"Agent".to_string()),
+            "manager should allow Agent"
+        );
 
         let orchestrator = &cfg.roles["orchestrator"];
         assert_eq!(orchestrator.workdir, Workdir::Repo);
@@ -900,6 +956,23 @@ mod tests {
                 .allowed_tools
                 .contains(&"Bash(git *)".to_string())
         );
+        for tool in ["SendMessage", "Workflow", "RemoteTrigger"] {
+            assert!(
+                orchestrator.disallowed_tools.contains(&tool.to_string()),
+                "orchestrator should deny {tool}"
+            );
+        }
+        assert!(
+            !orchestrator.disallowed_tools.contains(&"Agent".to_string()),
+            "orchestrator should allow Agent"
+        );
+        // Exempted: the orchestrator paces its own loop with these.
+        for tool in ["ScheduleWakeup", "CronCreate", "CronDelete", "CronList"] {
+            assert!(
+                !orchestrator.disallowed_tools.contains(&tool.to_string()),
+                "orchestrator should not deny {tool}"
+            );
+        }
     }
 
     #[test]
@@ -955,6 +1028,35 @@ mod tests {
         assert_eq!(reviewer.workdir, Workdir::Repo);
         assert_eq!(reviewer.permission_mode, "plan");
         assert_eq!(reviewer.base, "HEAD"); // inherited from worker defaults
+    }
+
+    #[test]
+    fn project_config_adds_to_the_default_deny_list_without_repeating_it() {
+        let toml = r#"
+            [roles.worker]
+            disallowed_tools = ["Bash(git push *)"]
+        "#;
+        let cfg = Config::parse(toml).expect("parse");
+        let worker = &cfg.roles["worker"];
+        // The project's own addition is there...
+        assert!(
+            worker
+                .disallowed_tools
+                .contains(&"Bash(git push *)".to_string())
+        );
+        // ...and so is everything the built-in default already denied, with
+        // no need to re-list it.
+        for tool in ["SendMessage", "Workflow", "ScheduleWakeup", "RemoteTrigger"] {
+            assert!(
+                worker.disallowed_tools.contains(&tool.to_string()),
+                "built-in denial {tool} should survive a project addition"
+            );
+        }
+        // Agent is not in the deny list by default.
+        assert!(
+            !worker.disallowed_tools.contains(&"Agent".to_string()),
+            "Agent should not be in the deny list"
+        );
     }
 
     #[test]

@@ -87,3 +87,31 @@ shared machine, 5 consecutive clean runs under 2-3 concurrent full-workspace
 loops, plus a 15-iteration focused loop on just `governor_test` +
 `lifecycle_test` under 3x load that caught fix #3). No other flaky test
 surfaced across roughly 60 stressed full-suite runs total.
+
+## Reopened, 2026-09-28
+
+The state notes said to reopen this if
+`lifecycle_test::interrupt_during_sleep_ends_the_turn_and_agent_stays_usable`
+failed again; it failed once under local load on 2026-09-27 and `deflake`
+couldn't reproduce it. It failed on GitHub CI (ubuntu-latest) on `main` at
+`625a455`, run 36379394941, as the only failure of 289 (macos-latest was
+cancelled by it):
+
+```
+FAIL [  20.175s] bridle-daemon::lifecycle_test interrupt_during_sleep_ends_the_turn_and_agent_stays_usable
+panicked at crates/bridle-daemon/tests/support/mod.rs:165:13:
+timed out waiting for post-interrupt message delivered
+```
+
+The same commit passed `just check` twice locally (289/289). The test waits
+for `Idle` after the interrupt, sends a `now` note, and polls for that message
+to reach `Delivered`. Per the human's decision in f1ky, fix the cause, not the
+timeout, unless the timeout itself is shown to be the problem.
+
+The timing says it isn't slowness. `wait_for` times out after 20 s
+(`support/mod.rs`, `TIMEOUT`), and the whole test took 20.175 s, so spawn,
+`Working`, the interrupt and `Idle` took under 0.2 s together and the note
+then sat undelivered for the full 20 s. Suspect a race in delivering a `now`
+message to an agent that has just gone idle after an interrupt (the
+interrupted turn's late output, or the idle transition's held-message
+check), not load.

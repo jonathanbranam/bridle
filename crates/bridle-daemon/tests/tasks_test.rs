@@ -313,3 +313,24 @@ async fn a_task_created_before_restart_is_still_there_after() {
     running.join().await.expect("join");
     drop(tmp);
 }
+
+/// `bridle rebuild`'s HTTP surface: a no-op against an empty database
+/// succeeds, but refuses once the database has anything to lose
+/// (docs/design/storage.md, "Rebuild"). The reconstruction itself is
+/// covered at the `TaskManager` level (`tasks.rs`'s own tests); this is just
+/// the route/auth wiring on top.
+#[tokio::test]
+async fn rebuild_is_a_no_op_when_empty_and_refuses_once_populated() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let c = &daemon.client;
+
+    c.rebuild().await.expect("rebuild against an empty db");
+    assert!(c.list_tasks().await.expect("list tasks").is_empty());
+
+    c.new_task(&new_req("Add foo", TaskKind::Feature))
+        .await
+        .expect("new task");
+
+    let err = c.rebuild().await.unwrap_err();
+    assert!(matches!(err, ClientError::Api { status: 409, .. }));
+}
