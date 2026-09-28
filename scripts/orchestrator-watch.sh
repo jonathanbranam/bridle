@@ -15,7 +15,7 @@ while true; do
     ev=$(bridle events --json --since $since 2>/dev/null)
     last=$(print -r -- "$ev" | jq '[.[].seq] | max // empty')
     [[ -n $last ]] && since=$last
-    hit=$(print -r -- "$ev" | jq -c '[.[] | select((.kind=="agent.exited" and .data.reason!="stdin_closed") or (.kind=="agent.state" and (.data.to=="crashed" or .data.to=="stalled")))]')
+    hit=$(print -r -- "$ev" | jq -c '[.[] | select((.kind=="agent.exited" and .data.reason!="stdin_closed" and .data.reason!="budget_paused") or (.kind=="agent.state" and (.data.to=="crashed" or .data.to=="stalled")))]')
     # Questions stay unread until the human reads them, and the orchestrator can't mark them, so
     # remember the ones already reported.
     q=$(curl -s -H "Authorization: Bearer $BRIDLE_TOKEN" "$U/v1/messages?to=human&unread=true&limit=50" \
