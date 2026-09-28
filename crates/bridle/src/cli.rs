@@ -256,12 +256,37 @@ pub struct SendArgs {
 
 #[derive(Debug, Args)]
 pub struct InboxArgs {
-    /// Include already-read messages too (default: unread only).
+    #[command(subcommand)]
+    pub action: Option<InboxAction>,
+    /// Include already-read messages too (default: unread only). Only used by list.
     #[arg(long)]
     pub all: bool,
-    /// Mark every listed message read.
+    /// Mark every listed message read. Only used by list.
     #[arg(long)]
     pub mark_read: bool,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum InboxAction {
+    /// Show one message in full, including header and body, plus the reply command.
+    Show(InboxShowArgs),
+    /// Mark one or more messages read.
+    Read(InboxReadArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct InboxShowArgs {
+    pub id: String,
+    /// Don't mark the message as read.
+    #[arg(long)]
+    pub no_mark_read: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct InboxReadArgs {
+    /// One or more message ids to mark as read.
+    #[arg(required = true)]
+    pub ids: Vec<String>,
 }
 
 #[derive(Debug, Args)]
@@ -1193,5 +1218,83 @@ mod tests {
         };
         assert!(!args.all);
         assert_eq!(args.role, None);
+    }
+
+    #[test]
+    fn inbox_list_defaults_to_no_action() {
+        let cli = parse(&["inbox"]).unwrap();
+        let Command::Inbox(args) = cli.command else {
+            panic!("expected inbox")
+        };
+        assert!(args.action.is_none());
+        assert!(!args.all);
+        assert!(!args.mark_read);
+    }
+
+    #[test]
+    fn inbox_list_with_flags_parses() {
+        let cli = parse(&["inbox", "--all", "--mark-read"]).unwrap();
+        let Command::Inbox(args) = cli.command else {
+            panic!("expected inbox")
+        };
+        assert!(args.action.is_none());
+        assert!(args.all);
+        assert!(args.mark_read);
+    }
+
+    #[test]
+    fn inbox_show_parses() {
+        let cli = parse(&["inbox", "show", "m-1234"]).unwrap();
+        let Command::Inbox(args) = cli.command else {
+            panic!("expected inbox")
+        };
+        let InboxAction::Show(show) = args.action.as_ref().expect("show action") else {
+            panic!("expected show action")
+        };
+        assert_eq!(show.id, "m-1234");
+        assert!(!show.no_mark_read);
+    }
+
+    #[test]
+    fn inbox_show_with_no_mark_read_parses() {
+        let cli = parse(&["inbox", "show", "m-1234", "--no-mark-read"]).unwrap();
+        let Command::Inbox(args) = cli.command else {
+            panic!("expected inbox")
+        };
+        let InboxAction::Show(show) = args.action.as_ref().expect("show action") else {
+            panic!("expected show action")
+        };
+        assert_eq!(show.id, "m-1234");
+        assert!(show.no_mark_read);
+    }
+
+    #[test]
+    fn inbox_read_parses_single_id() {
+        let cli = parse(&["inbox", "read", "m-1234"]).unwrap();
+        let Command::Inbox(args) = cli.command else {
+            panic!("expected inbox")
+        };
+        let InboxAction::Read(read) = args.action.as_ref().expect("read action") else {
+            panic!("expected read action")
+        };
+        assert_eq!(read.ids, vec!["m-1234"]);
+    }
+
+    #[test]
+    fn inbox_read_parses_multiple_ids() {
+        let cli = parse(&["inbox", "read", "m-1234", "m-5678", "m-abcd"]).unwrap();
+        let Command::Inbox(args) = cli.command else {
+            panic!("expected inbox")
+        };
+        let InboxAction::Read(read) = args.action.as_ref().expect("read action") else {
+            panic!("expected read action")
+        };
+        assert_eq!(read.ids, vec!["m-1234", "m-5678", "m-abcd"]);
+    }
+
+    #[test]
+    fn inbox_read_requires_at_least_one_id() {
+        let err = parse(&["inbox", "read"]).unwrap_err();
+        assert_eq!(err.kind(), clap::error::ErrorKind::MissingRequiredArgument);
     }
 }

@@ -537,6 +537,192 @@ fn sigint_shuts_down_cleanly_with_a_store_call_in_flight() {
     );
 }
 
+/// Test `bridle inbox show <id>` and `bridle inbox read <id>`.
+#[test]
+fn inbox_show_and_read_commands() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let repo = tmp.path().join("repo");
+    init_repo(&repo);
+    let workspace = tmp.path().to_path_buf();
+    let home = tmp.path().join("home");
+
+    let mut serve_cmd = Command::new(bridle_bin());
+    serve_cmd
+        .arg("serve")
+        .arg("--repo")
+        .arg(&repo)
+        .arg("--listen")
+        .arg("127.0.0.1:0")
+        .env("BRIDLE_CLAUDE_BIN", fake_claude_path())
+        .env("BRIDLE_HOME", &home)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null());
+    strip_bridle_env(&mut serve_cmd);
+    let child = serve_cmd.spawn().expect("spawn bridle serve");
+    let mut guard = DaemonGuard(child);
+
+    let daemon_json = workspace.join(".bridle/daemon.json");
+    wait_for_file(&daemon_json, Duration::from_secs(20));
+
+    // Spawn a worker
+    let (ok, out, err) = run_cli(
+        &repo,
+        &home,
+        &[
+            "spawn", "worker", "--name", "w1", "--prompt", "hi", "--json",
+        ],
+    );
+    assert!(ok, "spawn failed: {err}");
+    let _: serde_json::Value = serde_json::from_str(&out).expect("agent json");
+
+    // Wait for the first turn to complete
+    let deadline = Instant::now() + Duration::from_secs(20);
+    loop {
+        let (ok, out, err) = run_cli(&repo, &home, &["agents", "--all", "--json"]);
+        assert!(ok, "agents failed: {err}");
+        let agents: serde_json::Value = serde_json::from_str(&out).expect("agents json");
+        let w1 = agents
+            .as_array()
+            .expect("array")
+            .iter()
+            .find(|a| a["name"] == "w1")
+            .expect("w1 present");
+        if w1["turns"].as_u64().unwrap_or(0) >= 1 && w1["state"] == "idle" {
+            break;
+        }
+        assert!(
+            Instant::now() < deadline,
+            "w1 never finished its first turn: {agents}"
+        );
+        std::thread::sleep(Duration::from_millis(200));
+    }
+
+    // Send a message from w1 to human
+    let (ok, out, err) = run_cli(&repo, &home, &["send", "human", "hello", "--json"]);
+    assert!(ok, "send failed: {err}");
+    let msgs: serde_json::Value = serde_json::from_str(&out).expect("message json");
+    let msg_id = msgs[0]["id"].as_str().expect("message id").to_string();
+
+    // Test `bridle inbox show <id>` (marks read by default)
+    let (ok, out, err) = run_cli(&repo, &home, &["inbox", "show", &msg_id]);
+    assert!(ok, "inbox show failed: {err}");
+    assert!(
+        out.contains("From:"),
+        "expected From: header in output: {out}"
+    );
+    assert!(
+        out.contains("hello"),
+        "expected message body in output: {out}"
+    );
+    assert!(
+        out.contains("To reply:"),
+        "expected reply command in output: {out}"
+    );
+
+    // Verify message was marked read (check via json output)
+    let (ok, out, err) = run_cli(&repo, &home, &["inbox", "--json"]);
+    assert!(ok, "inbox failed: {err}");
+    let inbox: serde_json::Value = serde_json::from_str(&out).expect("inbox json");
+    let messages = inbox["messages"]
+        .as_array()
+        .expect("messages array")
+        .iter()
+        .filter(|m| m["id"] == msg_id)
+        .collect::<Vec<_>>();
+    assert!(
+        messages.is_empty(),
+        "message should be read and not appear in unread inbox"
+    );
+
+    // Send another message
+    let (ok, out, err) = run_cli(&repo, &home, &["send", "human", "hello2", "--json"]);
+    assert!(ok, "send failed: {err}");
+    let msgs: serde_json::Value = serde_json::from_str(&out).expect("message json");
+    let msg_id2 = msgs[0]["id"].as_str().expect("message id").to_string();
+
+    // Test `bridle inbox show <id> --no-mark-read`
+    let (ok, out, err) = run_cli(&repo, &home, &["inbox", "show", &msg_id2, "--no-mark-read"]);
+    assert!(ok, "inbox show --no-mark-read failed: {err}");
+    assert!(
+        out.contains("hello2"),
+        "expected message body in output: {out}"
+    );
+
+    // Verify message is still unread
+    let (ok, out, err) = run_cli(&repo, &home, &["inbox", "--json"]);
+    assert!(ok, "inbox failed: {err}");
+    let inbox: serde_json::Value = serde_json::from_str(&out).expect("inbox json");
+    let messages = inbox["messages"]
+        .as_array()
+        .expect("messages array")
+        .iter()
+        .filter(|m| m["id"] == msg_id2)
+        .collect::<Vec<_>>();
+    assert!(
+        !messages.is_empty(),
+        "message should still be unread in inbox"
+    );
+
+    // Test `bridle inbox read <id>` to mark it read
+    let (ok, out, err) = run_cli(&repo, &home, &["inbox", "read", &msg_id2]);
+    assert!(ok, "inbox read failed: {err}");
+    assert!(
+        out.contains("marked") && out.contains("read"),
+        "expected marked read output: {out}"
+    );
+
+    // Verify message is now read
+    let (ok, out, err) = run_cli(&repo, &home, &["inbox", "--json"]);
+    assert!(ok, "inbox failed: {err}");
+    let inbox: serde_json::Value = serde_json::from_str(&out).expect("inbox json");
+    let messages = inbox["messages"]
+        .as_array()
+        .expect("messages array")
+        .iter()
+        .filter(|m| m["id"] == msg_id2)
+        .collect::<Vec<_>>();
+    assert!(
+        messages.is_empty(),
+        "message should be read and not appear in unread inbox"
+    );
+
+    // Test `bridle inbox read` with multiple ids
+    let (ok, out, err) = run_cli(&repo, &home, &["send", "human", "msg3", "--json"]);
+    assert!(ok, "send failed: {err}");
+    let msgs: serde_json::Value = serde_json::from_str(&out).expect("message json");
+    let msg_id3 = msgs[0]["id"].as_str().expect("message id").to_string();
+
+    let (ok, out, err) = run_cli(&repo, &home, &["send", "human", "msg4", "--json"]);
+    assert!(ok, "send failed: {err}");
+    let msgs: serde_json::Value = serde_json::from_str(&out).expect("message json");
+    let msg_id4 = msgs[0]["id"].as_str().expect("message id").to_string();
+
+    let (ok, out, err) = run_cli(&repo, &home, &["inbox", "read", &msg_id3, &msg_id4]);
+    assert!(ok, "inbox read multiple failed: {err}");
+    assert!(
+        out.contains(&msg_id3) && out.contains(&msg_id4),
+        "expected both ids in output: {out}"
+    );
+
+    // Verify both messages are marked read
+    let (ok, out, err) = run_cli(&repo, &home, &["inbox", "--json"]);
+    assert!(ok, "inbox failed: {err}");
+    let inbox: serde_json::Value = serde_json::from_str(&out).expect("inbox json");
+    let messages = inbox["messages"]
+        .as_array()
+        .expect("messages array")
+        .iter()
+        .filter(|m| m["id"] == msg_id3 || m["id"] == msg_id4)
+        .collect::<Vec<_>>();
+    assert!(
+        messages.is_empty(),
+        "both messages should be read and not appear in unread inbox"
+    );
+
+    let _ = guard.0.kill();
+}
+
 /// A small extension so the foreground-daemon test can bound how long it
 /// waits for the child to exit after asking it to stop, without pulling in
 /// a whole process-management crate for one call.

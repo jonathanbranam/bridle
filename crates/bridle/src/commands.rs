@@ -18,12 +18,12 @@ use futures::StreamExt;
 use crate::cli::{
     AgentsArgs, AnswerArgs, AskArgs, BudgetAction, BudgetArgs, BudgetHoldArgs, ClaimArgs, Cli,
     Command, CostAction, CostArgs, CostAuditArgs, DepAction, DepArgs, DepEdgeArgs, EdgeKindArg,
-    EventsArgs, InboxArgs, InterruptArgs, LogsArgs, PrimeArgs, PrimeRoleArg, QueueAction,
-    QueueAddTierArgs, QueueArgs, QueueSetArgs, ReadyArgs, ReleaseArgs, RmArgs, RulesAction,
-    RulesArgs, RulesDiffArgs, RulesExplainArgs, SendArgs, ShowArgs, SpawnArgs, StopArgs,
-    TaskAction, TaskArgs, TaskDropArgs, TaskEditArgs, TaskKindArg, TaskListArgs, TaskNewArgs,
-    TaskNoteArgs, TaskPlanArgs, TaskReopenArgs, TaskShowArgs, TokenAction, TokenArgs, UsageArgs,
-    UsageByArg, WhenArg,
+    EventsArgs, InboxAction, InboxArgs, InboxReadArgs, InboxShowArgs, InterruptArgs, LogsArgs,
+    PrimeArgs, PrimeRoleArg, QueueAction, QueueAddTierArgs, QueueArgs, QueueSetArgs, ReadyArgs,
+    ReleaseArgs, RmArgs, RulesAction, RulesArgs, RulesDiffArgs, RulesExplainArgs, SendArgs,
+    ShowArgs, SpawnArgs, StopArgs, TaskAction, TaskArgs, TaskDropArgs, TaskEditArgs, TaskKindArg,
+    TaskListArgs, TaskNewArgs, TaskNoteArgs, TaskPlanArgs, TaskReopenArgs, TaskShowArgs,
+    TokenAction, TokenArgs, UsageArgs, UsageByArg, WhenArg,
 };
 use crate::error::CliError;
 use crate::render;
@@ -576,6 +576,14 @@ async fn send(cli: &Cli, args: &SendArgs) -> Result<(), CliError> {
 }
 
 async fn inbox(cli: &Cli, args: &InboxArgs) -> Result<(), CliError> {
+    match &args.action {
+        Some(InboxAction::Show(show_args)) => inbox_show(cli, show_args).await,
+        Some(InboxAction::Read(read_args)) => inbox_read(cli, read_args).await,
+        None => inbox_list(cli, args).await,
+    }
+}
+
+async fn inbox_list(cli: &Cli, args: &InboxArgs) -> Result<(), CliError> {
     // `--mark-read` writes (POST /v1/messages/{id}/read), but inbox is
     // overwhelmingly a read command, so it gets the same anonymous-read
     // tolerance; `--mark-read` under `$CLAUDECODE` with no token still fails,
@@ -621,6 +629,65 @@ async fn inbox(cli: &Cli, args: &InboxArgs) -> Result<(), CliError> {
                 q.body,
                 format_age(age)
             );
+        }
+    }
+    Ok(())
+}
+
+async fn inbox_show(cli: &Cli, args: &InboxShowArgs) -> Result<(), CliError> {
+    let client = client_for_read(cli).await?;
+    let query = MessageQuery {
+        to: Some("me".to_string()),
+        ..Default::default()
+    };
+    let messages = client.list_messages(&query).await?;
+    let message = messages
+        .iter()
+        .find(|m| m.id == args.id)
+        .ok_or_else(|| CliError::Other(anyhow::anyhow!("message {} not found", args.id)))?;
+
+    if cli.json {
+        render::print_json(message)?;
+    } else {
+        let kind = serde_json::to_value(message.kind)
+            .ok()
+            .and_then(|v| v.as_str().map(str::to_owned))
+            .unwrap_or_default();
+        let local_time = message.created_at.with_timezone(&Local);
+        println!("From: {}", message.from);
+        println!("Kind: {}", kind);
+        println!("Time: {}", local_time.format("%Y-%m-%d %H:%M:%S %Z"));
+        if let Some(reply_to) = &message.reply_to {
+            println!("Reply-To: {}", reply_to);
+        }
+        println!();
+        println!("{}", message.body);
+        println!();
+        println!(
+            "To reply: bridle send {} --reply-to {} \"<message>\"",
+            message.from, message.id
+        );
+    }
+
+    if !args.no_mark_read {
+        client.mark_read(&message.id).await?;
+    }
+
+    Ok(())
+}
+
+async fn inbox_read(cli: &Cli, args: &InboxReadArgs) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    for id in &args.ids {
+        client.mark_read(id).await?;
+    }
+    if cli.json {
+        render::print_json(&serde_json::json!({
+            "marked_read": args.ids,
+        }))?;
+    } else {
+        for id in &args.ids {
+            println!("marked {} read", id);
         }
     }
     Ok(())

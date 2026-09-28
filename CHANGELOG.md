@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- `bridle inbox show <id>` prints one message in full, with header and body, plus the reply
+  command; marks it read by default, with `--no-mark-read` to skip. `bridle inbox read <id>...`
+  marks one or more messages read (the same endpoint `--mark-read` on list uses, one at a time).
 - `max_workers` is now enforced at worker spawn (409 at the cap), and `bridle budget
   max-workers <n>` (`--clear`) changes it live without a restart. After a usage pause,
   managers, the PM and the orchestrator always resume; the cap limits workers only.
