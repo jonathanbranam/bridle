@@ -2,83 +2,118 @@
 
 The orchestrator's working notes for handing over between sessions. The role
 itself is in `.bridle/roles/orchestrator.md`. Update this file whenever the
-queue, open items or decisions change. Last updated 2026-09-28 01:10 UTC,
-after the second orchestrator session's daemon restart.
+queue, open items or decisions change. Last updated 2026-09-28 03:15 UTC,
+at the handover from the third orchestrator session.
+
+## First, for the incoming orchestrator
+
+- **Renew the heavy contexts.** Since the restart at ~02:23 UTC,
+  `context_tokens` is accurate (kc4v), and at 03:10 UTC it read:
+  `manager-2` 293K, `htp6b-context-governor` 321K, `pm-1` 191K. All are past
+  the ~200K limit. `bridle renew <agent>` (htp6a) stops an agent and starts a
+  fresh one in the same worktree, role and model. Renew each one between
+  turns, when it's idle, and send the fresh one a short handover. For a
+  worker, give it the task brief and "check git log/status on your branch
+  and carry on". For manager-2, tell it what's in flight: which worker is on
+  which task, the queue below, and that pm-1 feeds it. For pm-1, tell it the
+  queue and to read `docs/questions/open/`. htp6b (the automatic wind-down)
+  isn't merged yet, so this is manual for now.
+- **Then keep both tracks moving overnight.** The human is asleep until about
+  11:00 UTC. Verify each merge, and bring back only what needs them.
 
 ## Who's running
 
-- **`pm-1`**, the product manager (`product-manager` role, Sonnet), spawned
-  2026-09-28. It owns the backlog: triage, right-sized briefs, priority order.
-  It sends prepared tasks to the development manager by message until P0-6
-  moves the queue into `bridle task`.
+- **`pm-1`**, the product manager (`product-manager` role, Sonnet). It owns
+  the backlog: triage, right-sized briefs, priority order, sent to manager-2
+  by message until P0-6 moves the queue into `bridle task`.
 - **`manager-2`**, the development manager (`manager` role, Sonnet). It runs
-  prepared tasks two workers at a time, reviews, merges and pushes `main`.
-  It replaced `manager-1`, which was stopped for heavy context.
-- The split is interim, by configuration; ticket tx3f holds the full design.
+  up to two workers, reviews, merges, pushes `main`, and now also runs
+  `bridle rm <name> --delete-branch` after each merge.
+- **Workers at handover:** `p0-5-rebuild` (track 1) and
+  `htp6b-context-governor` (track 2, the `[context]` wind-down; it was sent
+  back once for a grace-window fix).
+- The split is interim, by configuration (ticket tx3f).
 
-## Queue (pm-1's, as briefed)
+## Queue (pm-1's)
 
-Track 1, P0: P0-3 questions on tasks, then P0-4 claims and leases (lease
-renewed by agent activity), then P0-5 `rebuild`, then P0-6 (ticket tskm). P0-6
-is the migration: a verification gate whose results I check, then all open
-work imported as-is, with no triage and the files left in place.
+Track 1, P0: P0-3 and P0-4 are done. Next is P0-5 `bridle rebuild`
+(running), then P0-6 (ticket tskm), the migration: a verification gate whose
+results the orchestrator checks, then all open work imported as-is. When P0
+is complete, tag `v0.2.0` on verified `main` (operating-model.md, Releases).
 
-Track 2: the context governor (ticket htp6). Measuring is built; next, spawn
-into an existing worktree plus `bridle renew`, then `[context]` wind-down and
-handoff. After it: 78sp, 4eep, a7h3. The f1ky flakes are low priority.
+Track 2: htp6b wind-down (running), then 78sp, 4eep, a7h3.
 
-Parked: `bridle/mcp-1` (WIP `cae932c`); don't merge it. `v0.2.0` goes out
-when P0 is complete.
+Small items pm-1 holds for free slots, on Haiku: the `stop-daemon` message
+("received; shutting down gracefully, may take up to 30s"), and human-friendly
+numbers (152k, $11.6) in the TUI, `bridle usage` and `bridle agents`.
 
-## The human's decisions this session (2026-09-27)
+Backlog, not scheduled: d4mz step 2 (`bridle prime orchestrator`, P1), w4tb
+(wall-time tracking), mt7r (run only the tests a change can affect), r7cs
+(status-line counts with a read-only token).
+
+Parked: `bridle/mcp-1` (WIP `cae932c`). Don't merge or delete it. It's
+recorded in build-order.md and ticket u6wk.
+
+## The human's decisions (2026-09-27 and 28)
 
 - P0: task records on a state branch (c7eb); questions inline in the task
-  thread with a SQLite index (c5a8).
-- Migrate bridle's own work into bridle after P0, as-is (tskm).
-- KISS (`.bridle/rules/kiss.md`): Haiku for light work; nice-to-haves only
-  roughly right; the account-wide usage guard exact.
+  thread with a SQLite index (c5a8). Migrate bridle's own work after P0,
+  as-is (tskm).
+- Rules for every role: KISS (`kiss.md`), YAGNI (`yagni.md`), and "what's the
+  worst if we don't?" (`cost-of-not-doing.md`), all in `.bridle/rules/`.
 - The merger pushes `main` after each merge; workers never touch `origin/*`.
-  SemVer releases, cut by the orchestrator on verified `main` (`v0.1.0`
-  tagged).
-- Context: agents are ephemeral. Keep contexts well under 200K, size tasks
-  to fit, and renew agents in place (htp6). This includes the orchestrator.
-- Split product and development managers (tx3f). The orchestrator may stop
-  managers (`Bash(bridle stop manager-*)` in `.claude/settings.local.json`)
-  and files its own tickets.
+  Merged branches are removed (`bridle rm <name> --delete-branch`). SemVer
+  releases, cut by the orchestrator (`v0.1.0` tagged).
+- Context: agents are ephemeral. Keep contexts well under 200K and renew in
+  place (htp6). This includes the orchestrator.
+- Split product and development managers (tx3f).
+- Flaky tests: fix them properly, never with retries (f1ky). Hang guards
+  are 60 s; the misdiagnosed promptness test was fixed.
+- Status line: display only (real context %, 5h/7d, model, 📁 folder,
+  🌿 branch). Recording was dropped (s8kn); counts come later (r7cs).
+- The orchestrator owns d4mz. `scripts/claude-orchestrator` starts a new
+  orchestrator with Remote Control on (as `bridle-orch`).
 
 ## Things to know
 
-- **The daemon reads `.bridle/config.toml` only at startup**, and runs the
-  installed binary. Config and code changes need `cargo install --path
-  crates/bridle` (I can run it) and a daemon restart (only the human).
+- **The daemon reads `.bridle/config.toml` and the role prompts only at
+  startup**, and runs the installed binary. Rebuild with `cargo install
+  --path crates/bridle` (the orchestrator can); only the human restarts the
+  daemon. The binary was installed at `9608376` (P0-4, s8kn). The running
+  daemon started at ~02:23 UTC, on `cce2bec`.
+- **A daemon restart stops busy workers** after their 30 s grace. Resume them
+  with `bridle resume <name>`, and tell each one the daemon restarted.
 - **`bridle send` can't address `external:orchestrator`** (a7h3). Agents
-  reach me by messaging `human`, with `--question` when they need an answer;
-  the watcher wakes on questions and remembers the ones it has reported
-  (`~/.bridle-orchestrator-seen-questions`).
+  reach the orchestrator by messaging `human`; the watcher wakes on
+  questions.
+- **The watcher**: since P0-3b, `bridle inbox --json` is
+  `{messages, open_questions}`, and the watcher handles that. Run exactly
+  one. A backgrounded `&` in a Bash call orphans a copy that can't wake you.
+- **Verifying under load**: `just check` twice, once the 5-minute load
+  average is under 20. The two runs can straddle a merge; the second then
+  covers it. After tonight's fixes, both of the last two runs were fully green.
 - **The manager's git**: plain commands from the clone by branch name.
   `git -C <worktree>` is allowed only for `status`, and pipes are denied.
-- **`bridle-claude` process_test** has 5 s timeouts that flake under load
-  (f1ky). Re-run before calling `main` red.
-
-## The orchestrator's own work
-
-- **d4mz, one-command handover:** mine (the human, 2026-09-28). Step 1 is
-  done (`scripts/claude-orchestrator`, the role's "Handing over"). Step 2 is
-  `bridle prime orchestrator` in P1, with pm-1.
-- **kc4v, context_tokens overcounts:** filed and sent to pm-1 for track 2,
-  ahead of the governor's wind-down.
 
 ## Waiting on the human
 
-- **Optional:** set `bridle statusline` as the `statusLine` command in
-  `~/.claude/settings.json`. Its parser is unverified against the real JSON
-  (spike m9wt).
+Nothing.
 
 ## Deferred
 
 - **MCP server and permission prompts:** nice-to-haves.
 - **`bridle take` / `give`:** spike 7r7m needs the human at a terminal.
 - **P2 and later:** need P0 first.
+
+## Done on 2026-09-28, third session (merged, verified green, pushed)
+
+- htp6a (`bridle renew`), kc4v (accurate context via `get_context_usage`),
+  P0-3a/b (questions on tasks: `ask`, `answer`, inbox), P0-4a/b (claims and
+  leases), the f1ky hang-guard timeouts and the promptness-test fix, s8kn
+  (status line).
+- Tickets: kc4v, d4mz (step 1 done), mt7r, w4tb, s8kn, r7cs; f1ky updated.
+- Rules `yagni.md` and `cost-of-not-doing.md`; the merge-cleanup step; 27
+  merged branches deleted.
 
 ## Done on 2026-09-27, second session (merged, verified green, pushed)
 
