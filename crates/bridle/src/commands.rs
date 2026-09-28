@@ -1212,7 +1212,7 @@ async fn sync(cli: &Cli) -> Result<(), CliError> {
     let config = Config::load(&repo).context("loading .bridle/config.toml")?;
     let workflow_root = config.workflow.as_deref().map(Path::new);
     let layers = rules::discover_layers(&repo, workflow_root, &config.packs);
-    let report = bridle_daemon::sync::sync(&repo, &layers)
+    let report = bridle_daemon::sync::sync(&repo, &layers, &config.commands)
         .map_err(|e| CliError::from(anyhow::Error::new(e).context("syncing workflow layers")))?;
 
     if cli.json {

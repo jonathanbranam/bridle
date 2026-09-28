@@ -35,6 +35,7 @@ use std::path::{Path, PathBuf};
 use serde::Serialize;
 use serde_json::{Map, Value};
 
+use crate::config::CommandsConfig;
 use crate::rules::Layer;
 
 pub const CLAUDE_MD_START: &str = "<!-- bridle:managed:start -->";
@@ -81,13 +82,17 @@ pub struct SyncReport {
 /// broken override kind or locked-rule conflict fails loudly before
 /// anything on disk is touched, even though rule *content* itself isn't
 /// rendered anywhere by sync.
-pub fn sync(repo: &Path, layers: &[Layer]) -> Result<SyncReport, SyncError> {
+pub fn sync(
+    repo: &Path,
+    layers: &[Layer],
+    commands: &CommandsConfig,
+) -> Result<SyncReport, SyncError> {
     crate::rules::load_and_resolve(layers)?;
 
     let claude_md_changed = sync_claude_md(repo)?;
 
     let skills = discover_skills(layers)?;
-    write_skills(repo, &skills)?;
+    write_skills(repo, &skills, commands)?;
 
     let agents = discover_agents(layers)?;
     write_agents(repo, &agents)?;
@@ -244,7 +249,11 @@ fn overlay_dir(root: &Path, dir: &Path, files: &mut SkillFiles) -> Result<(), Sy
 /// existing `bridle-*` skill directory, then writes the current set. Never
 /// commited (docs/design/workflow-layers.md), so a full wipe-and-rewrite is
 /// always safe.
-fn write_skills(repo: &Path, skills: &BTreeMap<String, SkillFiles>) -> Result<(), SyncError> {
+fn write_skills(
+    repo: &Path,
+    skills: &BTreeMap<String, SkillFiles>,
+    commands: &CommandsConfig,
+) -> Result<(), SyncError> {
     let skills_root = repo.join(".claude").join("skills");
     if let Ok(entries) = fs::read_dir(&skills_root) {
         for entry in entries.filter_map(|e| e.ok()) {
@@ -271,13 +280,29 @@ fn write_skills(repo: &Path, skills: &BTreeMap<String, SkillFiles>) -> Result<()
                     source,
                 })?;
             }
-            fs::write(&out_path, content).map_err(|source| SyncError::Io {
+            let rendered = substitute_commands(content, commands);
+            fs::write(&out_path, &rendered).map_err(|source| SyncError::Io {
                 path: out_path.clone(),
                 source,
             })?;
         }
     }
     Ok(())
+}
+
+/// Substitutes `{{commands.check}}` for the project's bound check command
+/// (default `just check`) in skill source text, so
+/// `workflow/base/skills/worker/SKILL.md` can reference the project's
+/// definition-of-done command instead of hardcoding one. Applied to every
+/// skill file; binary content (not valid UTF-8) passes through unchanged
+/// since there's nothing to substitute in it.
+fn substitute_commands(content: &[u8], commands: &CommandsConfig) -> Vec<u8> {
+    match std::str::from_utf8(content) {
+        Ok(text) => text
+            .replace("{{commands.check}}", &commands.check)
+            .into_bytes(),
+        Err(_) => content.to_vec(),
+    }
 }
 
 /// Collects every layer's `agents/<role>.md`, later layers replacing
@@ -554,13 +579,13 @@ mod tests {
         )
         .expect("write");
 
-        let report = sync(repo.path(), &[]).expect("sync");
+        let report = sync(repo.path(), &[], &CommandsConfig::default()).expect("sync");
         assert!(report.claude_md_changed);
         let after_first = std::fs::read_to_string(repo.path().join("CLAUDE.md")).expect("read");
         assert!(after_first.contains("# Human title"));
         assert!(after_first.contains(CLAUDE_MD_START));
 
-        let report2 = sync(repo.path(), &[]).expect("sync");
+        let report2 = sync(repo.path(), &[], &CommandsConfig::default()).expect("sync");
         assert!(!report2.claude_md_changed);
         let after_second = std::fs::read_to_string(repo.path().join("CLAUDE.md")).expect("read");
         assert_eq!(after_first, after_second);
@@ -585,7 +610,7 @@ mod tests {
             layer(LayerKind::Project, "project", &repo.path().join(".bridle")),
         ];
 
-        let report = sync(repo.path(), &layers).expect("sync");
+        let report = sync(repo.path(), &layers, &CommandsConfig::default()).expect("sync");
         assert_eq!(report.skills, vec!["verify".to_string()]);
 
         let out_dir = repo.path().join(".claude/skills/bridle-verify");
@@ -597,6 +622,39 @@ mod tests {
     }
 
     #[test]
+    fn skill_check_command_placeholder_is_substituted_per_project() {
+        let repo = tempfile::tempdir().expect("tempdir");
+        let base_skill = repo.path().join("workflow/base/skills/worker");
+        std::fs::create_dir_all(&base_skill).expect("mkdir");
+        std::fs::write(
+            base_skill.join("SKILL.md"),
+            "run `{{commands.check}}` before handoff\n",
+        )
+        .expect("write");
+
+        let layers = vec![layer(
+            LayerKind::Base,
+            "base",
+            &repo.path().join("workflow/base"),
+        )];
+
+        sync(repo.path(), &layers, &CommandsConfig::default()).expect("sync");
+        let default_rendered =
+            std::fs::read_to_string(repo.path().join(".claude/skills/bridle-worker/SKILL.md"))
+                .expect("read");
+        assert!(default_rendered.contains("run `just check` before handoff"));
+
+        let custom = CommandsConfig {
+            check: "make check".to_string(),
+        };
+        sync(repo.path(), &layers, &custom).expect("sync");
+        let custom_rendered =
+            std::fs::read_to_string(repo.path().join(".claude/skills/bridle-worker/SKILL.md"))
+                .expect("read");
+        assert!(custom_rendered.contains("run `make check` before handoff"));
+    }
+
+    #[test]
     fn resyncing_skills_removes_a_skill_dropped_from_the_layers() {
         let repo = tempfile::tempdir().expect("tempdir");
         let base_root = repo.path().join("workflow/base");
@@ -605,7 +663,7 @@ mod tests {
         std::fs::write(skill_a.join("SKILL.md"), "a\n").expect("write");
 
         let layers = vec![layer(LayerKind::Base, "base", &base_root)];
-        sync(repo.path(), &layers).expect("sync");
+        sync(repo.path(), &layers, &CommandsConfig::default()).expect("sync");
         assert!(
             repo.path()
                 .join(".claude/skills/bridle-a")
@@ -614,7 +672,7 @@ mod tests {
         );
 
         std::fs::remove_dir_all(&skill_a).expect("remove");
-        sync(repo.path(), &layers).expect("sync");
+        sync(repo.path(), &layers, &CommandsConfig::default()).expect("sync");
         assert!(!repo.path().join(".claude/skills/bridle-a").exists());
     }
 
@@ -636,7 +694,7 @@ mod tests {
             layer(LayerKind::Project, "project", &project_root),
         ];
 
-        let report = sync(repo.path(), &layers).expect("sync");
+        let report = sync(repo.path(), &layers, &CommandsConfig::default()).expect("sync");
         assert_eq!(report.agents, vec!["worker".to_string()]);
         let rendered =
             std::fs::read_to_string(repo.path().join(".claude/agents/worker.md")).expect("read");
@@ -651,11 +709,11 @@ mod tests {
         std::fs::write(base_root.join("agents/worker.md"), "worker\n").expect("write");
 
         let layers = vec![layer(LayerKind::Base, "base", &base_root)];
-        sync(repo.path(), &layers).expect("sync");
+        sync(repo.path(), &layers, &CommandsConfig::default()).expect("sync");
         assert!(repo.path().join(".claude/agents/worker.md").exists());
 
         std::fs::remove_file(base_root.join("agents/worker.md")).expect("remove");
-        sync(repo.path(), &layers).expect("sync");
+        sync(repo.path(), &layers, &CommandsConfig::default()).expect("sync");
         assert!(!repo.path().join(".claude/agents/worker.md").exists());
     }
 
@@ -690,7 +748,7 @@ mod tests {
         .expect("write");
 
         let layers = vec![layer(LayerKind::Base, "base", &base_root)];
-        let report = sync(repo.path(), &layers).expect("sync");
+        let report = sync(repo.path(), &layers, &CommandsConfig::default()).expect("sync");
         assert_eq!(report.hook_events, vec!["SessionStart".to_string()]);
 
         let settings: Value = serde_json::from_str(
@@ -739,7 +797,7 @@ mod tests {
         .expect("write");
 
         let layers = vec![layer(LayerKind::Base, "base", &base_root)];
-        sync(repo.path(), &layers).expect("sync");
+        sync(repo.path(), &layers, &CommandsConfig::default()).expect("sync");
 
         std::fs::write(
             &hook_path,
@@ -749,7 +807,7 @@ mod tests {
             .to_string(),
         )
         .expect("write");
-        sync(repo.path(), &layers).expect("sync");
+        sync(repo.path(), &layers, &CommandsConfig::default()).expect("sync");
 
         let settings: Value = serde_json::from_str(
             &std::fs::read_to_string(repo.path().join(".claude/settings.json")).expect("read"),
@@ -772,7 +830,7 @@ mod tests {
         let original = serde_json::json!({ "someOtherKey": true }).to_string();
         std::fs::write(repo.path().join(".claude/settings.json"), &original).expect("write");
 
-        sync(repo.path(), &[]).expect("sync");
+        sync(repo.path(), &[], &CommandsConfig::default()).expect("sync");
 
         let settings: Value = serde_json::from_str(
             &std::fs::read_to_string(repo.path().join(".claude/settings.json")).expect("read"),
