@@ -253,7 +253,10 @@ fn cli_end_to_end_against_a_foreground_daemon() {
     // `stop-daemon`
     let (ok, out, err) = run_cli(&repo, &home, &["stop-daemon"]);
     assert!(ok, "stop-daemon failed: {err}");
-    assert!(out.contains("daemon stopped"), "{out}");
+    assert!(
+        out.contains("received; shutting down gracefully, may take up to 30s"),
+        "{out}"
+    );
     assert!(
         !daemon_json.exists(),
         "daemon.json should be removed on clean shutdown"
