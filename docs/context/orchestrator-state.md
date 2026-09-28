@@ -53,6 +53,12 @@ during the sixth orchestrator session.
   `git merge --no-ff main`; live for new workers after the next restart.
 - **Local permissions** (`.claude/settings.local.json`, untracked): the
   watcher script and reads under data-contracts-workspace are allowed.
+- **Waiting for the next maintenance window** (budget holds; see the role's
+  "Budget holds" section): rebuild and restart (the daemon runs f401a7f; `main`
+  has roles in `workflow/base/roles/`, so never restart on the old binary);
+  `cargo clean` (the debug-profile change made `target/` stale); resume pm-1
+  (stopped by a refused renew, r3nh) and python-pack; the human removes
+  `branch-rules` and `smaller-debug-builds`.
 - **Tests got ~10x faster after `cargo clean`** (400 s -> 35 s); see f75x.
 
 ## The data-contracts onboarding (plan agreed with the human)
