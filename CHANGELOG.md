@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- `bridle statusline` now shows context tokens (e.g., `40.0k`, `1.2M`) alongside the context
+  percent, so the human can see the raw count; when tokens aren't available after a compact,
+  only the percent is shown.
 - `bridle inbox show <id>` prints one message in full, with header and body, plus the reply
   command; marks it read by default, with `--no-mark-read` to skip. `bridle inbox read <id>...`
   marks one or more messages read (the same endpoint `--mark-read` on list uses, one at a time).
