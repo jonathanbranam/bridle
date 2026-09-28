@@ -428,6 +428,20 @@ async fn inbox(cli: &Cli, args: &InboxArgs) -> Result<(), CliError> {
     Ok(())
 }
 
+/// `1h23m`-style rendering for a duration in whole seconds, for the `usage`
+/// command's busy/wall columns.
+fn format_duration_secs(secs: u64) -> String {
+    if secs < 60 {
+        format!("{secs}s")
+    } else if secs < 3600 {
+        format!("{}m{:02}s", secs / 60, secs % 60)
+    } else if secs < 86400 {
+        format!("{}h{:02}m", secs / 3600, (secs % 3600) / 60)
+    } else {
+        format!("{}d{:02}h", secs / 86400, (secs % 86400) / 3600)
+    }
+}
+
 fn format_age(age: chrono::Duration) -> String {
     let secs = age.num_seconds().max(0);
     if secs < 60 {
@@ -681,10 +695,19 @@ async fn usage(cli: &Cli, args: &UsageArgs) -> Result<(), CliError> {
         if cli.json {
             render::print_json(&breakdown)?;
         } else {
-            println!(
-                "{:<20} {:>5} {:>12} {:>9} {:>8}",
-                "KEY", "TURNS", "TOKENS", "COST", "CACHE"
-            );
+            // `wall` only means anything grouped by agent (see UsageGroup::wall_seconds).
+            let show_wall = by == UsageGroupBy::Agent;
+            if show_wall {
+                println!(
+                    "{:<20} {:>5} {:>12} {:>9} {:>8} {:>8} {:>8}",
+                    "KEY", "TURNS", "TOKENS", "COST", "CACHE", "BUSY", "WALL"
+                );
+            } else {
+                println!(
+                    "{:<20} {:>5} {:>12} {:>9} {:>8} {:>8}",
+                    "KEY", "TURNS", "TOKENS", "COST", "CACHE", "BUSY"
+                );
+            }
             for g in &breakdown.groups {
                 let tokens =
                     g.tokens.input + g.tokens.output + g.tokens.cache_read + g.tokens.cache_write;
@@ -692,14 +715,33 @@ async fn usage(cli: &Cli, args: &UsageArgs) -> Result<(), CliError> {
                     .cache_hit_ratio
                     .map(|r| format!("{:.1}%", r * 100.0))
                     .unwrap_or_else(|| "-".to_string());
-                println!(
-                    "{:<20} {:>5} {:>12} {:>9} {:>8}",
-                    g.key,
-                    g.turns,
-                    format_tokens(tokens),
-                    format_cost_dollars(g.cost_usd_total),
-                    cache
-                );
+                let busy = format_duration_secs(g.busy_seconds);
+                if show_wall {
+                    let wall = g
+                        .wall_seconds
+                        .map(format_duration_secs)
+                        .unwrap_or_else(|| "-".to_string());
+                    println!(
+                        "{:<20} {:>5} {:>12} {:>9} {:>8} {:>8} {:>8}",
+                        g.key,
+                        g.turns,
+                        format_tokens(tokens),
+                        format_cost_dollars(g.cost_usd_total),
+                        cache,
+                        busy,
+                        wall
+                    );
+                } else {
+                    println!(
+                        "{:<20} {:>5} {:>12} {:>9} {:>8} {:>8}",
+                        g.key,
+                        g.turns,
+                        format_tokens(tokens),
+                        format_cost_dollars(g.cost_usd_total),
+                        cache,
+                        busy
+                    );
+                }
             }
             let t = &breakdown.total_tokens;
             let total_tokens = t.input + t.output + t.cache_read + t.cache_write;
@@ -721,8 +763,8 @@ async fn usage(cli: &Cli, args: &UsageArgs) -> Result<(), CliError> {
         render::print_json(&usage)?;
     } else {
         println!(
-            "{:<12} {:<14} {:<10} {:>5} {:>12} {:>9}",
-            "ID", "NAME", "ROLE", "TURNS", "TOKENS", "COST"
+            "{:<12} {:<14} {:<10} {:>5} {:>12} {:>9} {:>8} {:>8}",
+            "ID", "NAME", "ROLE", "TURNS", "TOKENS", "COST", "BUSY", "WALL"
         );
         for a in &usage.agents {
             let tokens =
@@ -732,14 +774,20 @@ async fn usage(cli: &Cli, args: &UsageArgs) -> Result<(), CliError> {
             } else {
                 a.name.clone()
             };
+            let wall = a
+                .wall_seconds
+                .map(format_duration_secs)
+                .unwrap_or_else(|| "-".to_string());
             println!(
-                "{:<12} {:<14} {:<10} {:>5} {:>12} {:>9}",
+                "{:<12} {:<14} {:<10} {:>5} {:>12} {:>9} {:>8} {:>8}",
                 a.agent,
                 name,
                 a.role,
                 a.turns,
                 format_tokens(tokens),
-                format_cost_dollars(a.cost_usd_total)
+                format_cost_dollars(a.cost_usd_total),
+                format_duration_secs(a.busy_seconds),
+                wall
             );
         }
         let t = &usage.total_tokens;

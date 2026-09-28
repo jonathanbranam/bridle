@@ -20,8 +20,8 @@ JSON over HTTP, versioned under `/v1`. The contract is
 | `POST /v1/messages/{id}/read` | mark read |
 | `GET /v1/events?since=&agent=&kind=&limit=` | the event log, oldest first (default limit 500); `agent` is an id or name; `kind` is a prefix |
 | `GET /v1/events/stream?since=` | the same as **SSE**; resumable with `Last-Event-ID` (`since` wins if both are given); keep-alive every 15 s |
-| `GET /v1/usage` | per-agent (including removed agents) and total turns, tokens, cost, latest rate limits, today's `bridle statusline` snapshots |
-| `GET /v1/usage/breakdown?since=&by=` | the turns ledger grouped by `role`, `model` or `agent` (default), each with turns, tokens, cost and its own cache hit ratio; `since` (RFC 3339) keeps only turns started at or after it |
+| `GET /v1/usage` | per-agent (including removed agents) and total turns, tokens, cost, busy and wall time, latest rate limits, today's `bridle statusline` snapshots |
+| `GET /v1/usage/breakdown?since=&by=` | the turns ledger grouped by `role`, `model` or `agent` (default), each with turns, tokens, cost, busy time and its own cache hit ratio, plus wall time for the `agent` grouping only; `since` (RFC 3339) keeps only turns started at or after it |
 | `POST /v1/statusline` | record a `bridle statusline` snapshot (`{session_id?, model?, cost_usd?, context_used_tokens?, context_max_tokens?, rate_limits: [{window, utilization?, resets_at?}]}`); rate-limit windows go through the same store path as `rate_limit_event` |
 | `GET /v1/budget` | the governor's state, per-window readings and staleness, and the effective thresholds ([[../usage-and-budget#The budget governor\|the budget governor]]); `hold`/`release` land with the wind-down work |
 | `GET /v1/tokens` · `POST /v1/tokens` | list external tokens (name, created-at, revoked-or-not; never the token itself) · mint one (human only) |
