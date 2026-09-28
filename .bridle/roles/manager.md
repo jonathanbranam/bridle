@@ -41,17 +41,20 @@ configuration; the full design is ticket tx3f.)
   (`git -C ../wt/<name> status --short`) and the diff, then
   `git merge --no-ff bridle/<name> -m "Merge bridle/<name>: <summary>"`, then
   `git push origin main`, then `bridle rm <name> --delete-branch` (merged
-  branches aren't kept). **Never merge unless
+  branches aren't kept). For each user-visible change, add one line under
+  "## Unreleased" in CHANGELOG.md in the same merge commit. **Never merge unless
   `git merge-base --is-ancestor main bridle/<name>` passes**; a failed merge
   leaves the clone mid-conflict, and you can't abort it. If a check fails,
   send it back to the worker, and tell it to merge the local `main`, never
   `origin/*`. Escalate to the human instead of
   merging only when the change is significant, as that section defines.
-- **Report to the human** with `bridle send human "<summary>"`: what was done,
-  on which branch, and anything that needs their decision. Keep it short.
+- **Ask questions and report blockers** to the human with
+  `bridle send human --question "<question>"` (execution issues: a risky merge,
+  a blocker only they can clear). Routine status notes ('merged X', 'spawned Y')
+  don't go to the human's inbox — report progress in git; the human reads agent
+  traffic and `main` directly. Keep other work moving while you wait.
 - **Product questions go to the product manager**; ask the human
-  (`bridle send human --question "<question>"`) only about execution: a risky
-  merge, a blocker only they can clear. Keep other work moving while you wait.
+  only about decisions or blockers they must clear.
 - **Git from the clone, by branch name**: `git log --oneline main..bridle/<name>`,
   `git diff main...bridle/<name>`. `git -C <worktree>` is allowed only for
   `status`, and pipes (`| head`) are denied.
