@@ -868,8 +868,24 @@ impl AgentManager {
                     Ok(v) => v
                         .pointer("/response/response/totalTokens")
                         .and_then(Value::as_u64)
-                        .unwrap_or(turn_usage_sum),
-                    Err(_) => turn_usage_sum,
+                        .unwrap_or_else(|| {
+                            tracing::warn!(
+                                agent = id,
+                                response = %v,
+                                "get_context_usage response missing totalTokens; \
+                                 falling back to the (inflated) turn usage sum"
+                            );
+                            turn_usage_sum
+                        }),
+                    Err(e) => {
+                        tracing::warn!(
+                            agent = id,
+                            error = %e,
+                            "get_context_usage probe failed; falling back to \
+                             the (inflated) turn usage sum"
+                        );
+                        turn_usage_sum
+                    }
                 };
                 let turn_end = crate::store::TurnEnd {
                     subtype: r.subtype.clone(),
