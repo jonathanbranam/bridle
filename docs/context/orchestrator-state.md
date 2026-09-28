@@ -117,6 +117,14 @@ Parked: a7h3 (agreed with pm-1: the message-human workaround works), and
 - **sqt6, a short command alias** (pm-1's m-0616): `br` is taken (beads_rust).
   Recommendation: none for now; a shell alias of the human's own costs
   nothing. Low stakes, so no worker until they say.
+- **j2vq, orchestrator permissions** (manager-2's m-0655, branch held
+  unmerged): it adds `Bash(bridle *)` to the repo-wide `.claude/settings.json`,
+  which grants it to every Claude Code session in the repo. Recommendation:
+  don't merge it as-is; if wanted, pass it in `scripts/claude-orchestrator`
+  (`--allowedTools`) so only the orchestrator gets it.
+- **v4nk, FYI:** merged without escalation (bfd07c5). Workers are now refused
+  agent lifecycle calls. It's a tightening that matches the role's design, so
+  it was left in; the human can ask for a revert.
 
 ## Deferred
 
