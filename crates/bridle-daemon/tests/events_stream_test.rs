@@ -20,6 +20,7 @@ async fn events_stream_receives_backfill_then_live_events_in_seq_order() {
             workdir: Some(Workdir::Repo),
             model: None,
             extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -89,6 +90,7 @@ async fn events_stream_since_skips_already_seen_events() {
             workdir: Some(Workdir::Repo),
             model: None,
             extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
             ignore_budget: false,
         })
         .await
@@ -133,6 +135,7 @@ async fn events_stream_with_no_cursor_skips_backfill_and_starts_at_the_tail() {
             workdir: Some(Workdir::Repo),
             model: None,
             extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
             ignore_budget: false,
         })
         .await

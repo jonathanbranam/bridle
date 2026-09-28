@@ -200,6 +200,11 @@ pub struct SpawnRequest {
     /// `allowed_tools`. Never touches the role's `disallowed_tools`.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub extra_allowed_tools: Vec<String>,
+    /// Environment variables set in this one spawn's process only (e.g. a
+    /// secret). Never persisted: not written to the role or config, and not
+    /// carried by any later spawn or resume of the same agent/role.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub extra_env: Vec<(String, String)>,
     /// Skip the budget governor's holding/paused check for this one call
     /// (usage-and-budget.md, Resuming: the escape hatch).
     #[serde(default)]

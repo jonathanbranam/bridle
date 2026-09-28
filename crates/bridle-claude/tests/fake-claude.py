@@ -41,6 +41,10 @@ excluding argv[0]) to that path, so tests can assert on flags like
 `--allowedTools` directly without leaving a stray file in the agent's own
 worktree.
 
+With `FAKE_CLAUDE_ENV_FILE` set, every invocation dumps its own environment
+(JSON object) to that path, so tests can assert on a per-spawn env var
+reaching (or not reaching) the child process.
+
 `system/init` reports `claude_code_version` from a `.fake-claude-version` file
 in the working directory, or "fake".
 
@@ -464,6 +468,13 @@ def main():
     if argv_file:
         with open(argv_file, "w") as f:
             json.dump(sys.argv[1:], f)
+    # Opt-in, same idea as FAKE_CLAUDE_ARGV_FILE: a test that wants to assert
+    # on the child process's own environment (e.g. a per-spawn secret) sets
+    # this rather than always dumping it.
+    env_file = os.environ.get("FAKE_CLAUDE_ENV_FILE")
+    if env_file:
+        with open(env_file, "w") as f:
+            json.dump(dict(os.environ), f)
     session_id, _resume, replay_flag = parse_args(sys.argv[1:])
     state["session_id"] = session_id
     state["eof"] = False

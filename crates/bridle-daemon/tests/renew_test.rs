@@ -20,6 +20,7 @@ async fn renew_replaces_the_process_in_the_same_worktree_and_branch() {
             workdir: Some(Workdir::Worktree { base: None }),
             model: None,
             extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
             ignore_budget: false,
         })
         .await
