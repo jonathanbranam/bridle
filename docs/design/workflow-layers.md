@@ -112,6 +112,37 @@ commit generated output.** Keep the sources in git, make regeneration fast, and
 there's no stale copy to check for. Everything but the managed CLAUDE.md block
 and hook entries can be rebuilt with `bridle sync`.
 
+`bridle sync` is built (P2-3), local like `rules explain`/`diff` (no daemon call — see
+[[docs/design/cli|cli.md]]). A few things the table above left open turned out to need a
+concrete answer to implement, so — layer-content conventions this command owns, not
+written down anywhere else yet:
+
+- **A layer's skill/agent/hook sources sit next to its `rules/` directory**, not inside
+  it: `<layer root>/skills/<name>/`, `<layer root>/agents/<role>.md`,
+  `<layer root>/hooks/<event>.json` (e.g. `workflow/base/skills/verify/`,
+  `<repo>/.bridle/agents/worker.md`).
+- **Skills**: each layer's `skills/<name>/` is overlaid onto the same name's output
+  directory (`.claude/skills/bridle-<name>/`) in layer order, file by file — except
+  `SKILL.md`, which a later layer's `SKILL.md` is *appended* to rather than replacing.
+  That's "project addenda appended" made concrete: a project only needs a
+  `skills/<name>/SKILL.md` with the extra paragraph, not a full copy of the skill.
+- **Agents**: each layer's `agents/<role>.md` replaces the earlier layer's file for that
+  role wholesale — no addenda convention, since a role definition doesn't read well as
+  fragments.
+- **Hooks**: each layer's `hooks/<event>.json` is a JSON array of Claude Code hook-config
+  entries for that event name (e.g. `hooks/SessionStart.json`); a later layer's file for
+  the same event replaces the earlier one wholesale, same as agents. `bridle sync` merges
+  the result into `.claude/settings.json`'s `hooks.<event>` array without disturbing
+  anything a human added by hand: a gitignored sidecar,
+  `.claude/.bridle-sync-hooks.json`, records exactly which entries the previous sync
+  wrote, and only those are removed before the current ones go in.
+- **No real skill/agent/hook content exists in `workflow/` yet** (P2-1/P2-2 only
+  scaffolded `rules/` and `workflow.toml`); the conventions above are sync's contract for
+  when it does.
+- **The `SessionStart` hook that would run `sync` automatically is not built yet** — a
+  follow-up (P2-3 built the command itself, not the auto-invocation).
+- Path-scoped (L4 component) rule rendering is still out of scope, per the table above.
+
 Most rule content is not rendered into a file at all. It is delivered by
 `bridle prime` at session start, sized to the role: a worker gets its task,
 the rules tagged for `worker`, the facts, the guides its task's components

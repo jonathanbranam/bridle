@@ -7,3 +7,9 @@
 
 # Personal Claude Code settings (the orchestrator's local permissions)
 .claude/settings.local.json
+
+# bridle sync output (docs/design/workflow-layers.md): regenerated from the
+# workflow layers, never committed. .claude/settings.json itself IS committed.
+.claude/skills/bridle-*/
+.claude/agents/
+.claude/.bridle-sync-hooks.json

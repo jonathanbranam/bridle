@@ -48,6 +48,9 @@ bridle stop-check                           Claude Code Stop hook for the worker
 bridle rules explain <id>                   which layer wins a rule id, and what it shadowed
 bridle rules diff --project-layer           everything the project layer does differently from
                                              the base/pack layers below it
+bridle sync                                 renders resolved workflow layers into CLAUDE.md's
+                                             managed block, .claude/skills, .claude/agents and
+                                             .claude/settings.json's hooks; local only, no daemon call
 bridle prime orchestrator                   fresh session's opening context: role prompt, current
                                              state, startup steps; local only, no daemon call
 bridle task new    <title> -k/--kind KIND [--body TEXT]
@@ -149,6 +152,28 @@ bridle task note   <id> TEXT                     plain note to the task's thread
   where-bridle-workflow-lives-r2uq.md), so nothing is guessed here. Pack layers are
   mechanism only for now: reading multiple `<workflow>/packs/<name>/rules` directories
   in listed order, with no real pack content yet (out of scope per workflow-layers.md).
+- **`sync`** is local and static too, like `rules explain`/`diff`: no daemon call, just
+  the layers `bridle_daemon::rules::discover_layers` finds, rendered by
+  `bridle_daemon::sync` (docs/design/workflow-layers.md, "Rendering into what the agent
+  harness reads"). `CLAUDE.md` gets a small managed block between
+  `<!-- bridle:managed:start -->`/`<!-- bridle:managed:end -->` markers, inserted if
+  absent and replaced in place otherwise — everything else in the file is untouched
+  byte-for-byte. `.claude/skills/bridle-<name>/` and `.claude/agents/<role>.md` are
+  fully regenerated every run from each layer's `skills/<name>/` and `agents/<role>.md`
+  sources (not committed — gitignore them); a skill's `SKILL.md` is *appended* across
+  layers (a project's own `skills/<name>/SKILL.md` reads as an addendum), while every
+  other skill file and the whole of an agent file is replaced wholesale by the last
+  layer that defines it. `.claude/settings.json`'s `hooks` object is merged from each
+  layer's `hooks/<event>.json` (a JSON array of Claude Code hook-config entries for
+  that event name); a gitignored sidecar, `.claude/.bridle-sync-hooks.json`, records
+  exactly which entries the last sync wrote, so re-syncing (or a layer's hooks
+  changing) only ever touches those, never a hook a human added by hand — a
+  pre-existing hook entry sync didn't write is always left alone. Skips L4
+  component/path-scoped rule rendering, same as `rules explain`/`diff` above; wiring a
+  `SessionStart` hook to run `sync` automatically is a follow-up, not built yet — for
+  now it's a command you run yourself. `hooks/<event>.json`, and the "later layer wins
+  wholesale" convention it and `agents/<role>.md` use, are this command's own
+  convention; nothing in `workflow/` uses either yet.
 - **`serve --detach`**: [[docs/design/agent-host/daemon#Running it|running the daemon]].
 - **`tui`** is a subcommand, not a separate binary, so it shares `bridle`'s discovery,
   token and `--url`/`--project` flags like every other command. It's a thin client of
@@ -259,8 +284,8 @@ bridle task note   <id> TEXT                     plain note to the task's thread
   `scripts/claude-orchestrator` does when it uses this as `claude`'s opening prompt.
   Only `orchestrator` is accepted as the role for now (other roles haven't asked for
   this); anything else is a clap `InvalidValue` error, not a silent no-op. The role
-  scope and the rest of the "commands still to build" surface (`init`, `sync`,
-  `doctor`) stay in `Planned` below.
+  scope and the rest of the "commands still to build" surface (`init`, `doctor`) stay
+  in `Planned` below; `sync` is built (see above).
 
 ## Planned
 
@@ -268,7 +293,7 @@ Commands for the phases after v1 ([[docs/proposal/build-order|build order]]),
 as a first cut:
 
 ```
-bridle init | sync | doctor                      project setup, render, health
+bridle init | doctor                             project setup, health; `sync` is built (see Built)
 bridle prime <role>                              non-orchestrator roles; `prime orchestrator` is built (see Built)
 bridle task <cmd> at in_review|integrated|accepted  -- new/show/edit/list/drop/reopen
                                                   are built (see Built); `dep add|rm`,
