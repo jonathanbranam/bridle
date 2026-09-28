@@ -115,3 +115,9 @@ then sat undelivered for the full 20 s. Suspect a race in delivering a `now`
 message to an agent that has just gone idle after an interrupt (the
 interrupted turn's late output, or the idle transition's held-message
 check), not load.
+
+Resolved again, 2026-09-28: the undelivered-message race was in
+`write_message`, which pushed to the runtime's fifo after `send_user`, so a
+fast echo could run the replay match against an empty fifo. htp6b fixed it
+(85cc270). The test has passed on GitHub CI on both OSes on every run since
+6d5d22b.
