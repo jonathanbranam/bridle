@@ -1,8 +1,9 @@
 # Messages and delivery
 
-A message has a sender principal, a recipient (an agent, or `human`), a kind
-(`note` or `question`), an optional `reply_to` naming the message it answers,
-a body and a delivery state:
+A message has a sender principal, a recipient (an agent, `human`, or an
+`external:<name>` principal — [[docs/design/agent-host/principals.md|principals]]),
+a kind (`note` or `question`), an optional `reply_to` naming the message it
+answers, a body and a delivery state:
 
 ```
 pending ─► written ─► delivered ─► read
@@ -71,6 +72,14 @@ events, so a TUI shows them live.
 
 **Agent-to-agent** messages work the same way as human-to-agent ones, with the
 sending agent as principal.
+
+**Messages to `external:<name>`** (`bridle send external:orchestrator ...`)
+land in that external principal's own inbox (`bridle inbox` run with that
+principal's token), the same way `human`'s do. `to` must name an
+active external principal (minted with `bridle token create`, not since
+revoked) or the send 404s. There's no live process to deliver to, so
+`--when`/held/written/ack don't apply — an external principal reads its
+inbox on its own schedule.
 
 The inbox lists every message not yet `read`, so an agent's inbox also shows
 messages already delivered to it over stdin until it runs

@@ -640,6 +640,11 @@ async fn send_message(
     };
     let targets = if to_raw == "human" {
         vec![ToTarget::Human]
+    } else if let Some(name) = to_raw.strip_prefix("external:") {
+        if !state.store.external_exists(name).await? {
+            return Err(ApiError::not_found(format!("no such recipient: {to_raw}")));
+        }
+        vec![ToTarget::External(to_raw.to_string())]
     } else if let Some(role) = to_raw.strip_prefix("role:") {
         let matching: Vec<ToTarget> = state
             .store

@@ -127,6 +127,7 @@ pub enum RecipientKind {
     Human,
     Agent,
     Task,
+    External,
 }
 
 impl RecipientKind {
@@ -135,6 +136,7 @@ impl RecipientKind {
             Self::Human => "human",
             Self::Agent => "agent",
             Self::Task => "task",
+            Self::External => "external",
         }
     }
 }
@@ -267,6 +269,15 @@ impl Store {
 
     pub async fn list_external_tokens(&self) -> Result<Vec<TokenInfo>, StoreError> {
         self.with_conn(sync::list_external_tokens).await
+    }
+
+    /// Whether an active `external:<name>` principal exists (minted with
+    /// `bridle token create` and not since revoked) — used to validate
+    /// `bridle send external:<name>` without needing the token itself.
+    pub async fn external_exists(&self, name: &str) -> Result<bool, StoreError> {
+        let name = name.to_string();
+        self.with_conn(move |c| sync::external_exists(c, &name))
+            .await
     }
 
     /// Revokes `external:<name>`, failing with `NotFound` if no such
@@ -1222,6 +1233,19 @@ mod sync {
             })
         })?;
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
+    pub(super) fn external_exists(conn: &Connection, name: &str) -> Result<bool, StoreError> {
+        let id = format!("external:{name}");
+        let exists: bool = conn
+            .query_row(
+                "SELECT 1 FROM principals WHERE id = ?1 AND kind = 'external' AND revoked_at IS NULL",
+                params![id],
+                |_| Ok(()),
+            )
+            .optional()?
+            .is_some();
+        Ok(exists)
     }
 
     pub(super) fn revoke_external_token(conn: &Connection, name: &str) -> Result<(), StoreError> {
