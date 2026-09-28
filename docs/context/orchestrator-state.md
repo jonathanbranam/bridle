@@ -7,6 +7,8 @@ near the end of the fourth orchestrator session.
 
 ## First, for the incoming orchestrator
 
+- **v0.3.0 is tagged** (9dc6cf3, 2026-09-28 ~09:55 UTC): P1 complete. What
+  comes after P1 (P2, or a design question first) is for the human to decide.
 - **v0.2.0 is tagged** (2683d6d, 2026-09-28 ~06:25 UTC): P0 complete, two
   local runs 297/297, GitHub CI green on Linux and macOS. n6gy resolved again.
 - **Order for the morning: rebuild first, then hand over.**
@@ -191,11 +193,6 @@ Parked: a7h3 (agreed with pm-1: the message-human workaround works), and
 
 ## Findings not yet ticketed
 
-- **Workers launch heavy, disowned background load.** `deflake` started two
-  loops of 40 full test runs (load average 104). Disowned processes escape
-  bridle's stop cleanup and slow everyone down. The worker role prompt should
-  require background processes to be bounded, capped (`--test-threads 4`)
-  and cleaned up.
 - **`bridle status` lists `nimbus_quill 0%`,** an unnamed `get_usage` entry
   that carries a utilization. It's harmless, but decide whether status should
   show only named windows.
