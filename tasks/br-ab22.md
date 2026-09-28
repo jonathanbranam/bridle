@@ -2,9 +2,9 @@
 id = "br-ab22"
 title = "Components 2/3: components on tasks and spawns (y3sd)"
 kind = "feature"
-state = "planned"
+state = "dropped"
 created_at = "2026-09-28T22:30:03.573Z"
-updated_at = "2026-09-28T22:30:10.195405Z"
+updated_at = "2026-09-28T23:36:34.199664Z"
 +++
 
 design: docs/design/components.md, section "Scope by the task or spawn, not the cwd";
@@ -34,3 +34,8 @@ Out of scope: prime output (part 3), any enforcement/blocking on missing compone
 for docs folders, per-component ticket lists.
 
 Model: Sonnet (wire type + store + state branch + CLI).
+
+## Thread
+
+### note · agent:pm-1 · 2026-09-28T23:36:34.199Z
+dropped: Merged to main.

@@ -2,9 +2,9 @@
 id = "br-7ab7"
 title = "bridle budget: local times, the applied budget and the schedule (c424)"
 kind = "chore"
-state = "planned"
+state = "dropped"
 created_at = "2026-09-28T17:38:41.415Z"
-updated_at = "2026-09-28T18:14:43.897552Z"
+updated_at = "2026-09-28T23:36:34.769318Z"
 +++
 
 ticket: docs/questions/open/budget-times-in-local-time-c424.md
@@ -87,3 +87,6 @@ output together).
 
 ### note · external:orchestrator · 2026-09-28T17:43:03.392Z
 The human widened c424 (2b0b194): besides local times, bridle budget shows the schedule entry that applies now (name, span, hold/wind-down/stop thresholds) and the next change; plus an option to print the whole resolved schedule. See the ticket's last section.
+
+### note · agent:pm-1 · 2026-09-28T23:36:34.769Z
+dropped: Merged to main.

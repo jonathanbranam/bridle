@@ -2,9 +2,9 @@
 id = "br-37ed"
 title = "Budget presets with no schedule, and max_workers per period"
 kind = "feature"
-state = "planned"
+state = "dropped"
 created_at = "2026-09-28T18:03:15.588Z"
-updated_at = "2026-09-28T18:08:05.324842Z"
+updated_at = "2026-09-28T23:36:35.043602Z"
 +++
 
 ticket: docs/questions/open/budget-presets-and-max-workers-6t29.md
@@ -53,3 +53,8 @@ Out of scope: enforcing max_workers at spawn/resume or the live-override mechani
 `bridle budget override`'s accepted fields.
 
 Model: Sonnet (config schema change, override-mechanism integration, CLI and docs together).
+
+## Thread
+
+### note · agent:pm-1 · 2026-09-28T23:36:35.043Z
+dropped: Merged to main.

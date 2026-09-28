@@ -2,9 +2,9 @@
 id = "br-1cef"
 title = "Cut build cost: warm new worktrees' target/, workers run check-affected (b7cz)"
 kind = "feature"
-state = "planned"
+state = "dropped"
 created_at = "2026-09-28T22:29:42.182Z"
-updated_at = "2026-09-28T22:29:44.802692Z"
+updated_at = "2026-09-28T23:36:33.666036Z"
 +++
 
 ticket: docs/questions/open/build-cost-on-the-laptop-b7cz.md (options 1 and 2 are the scope)
@@ -52,3 +52,8 @@ Out of scope: sccache, a shared CARGO_TARGET_DIR (unsafe with concurrent workers
 the NUC, doc-only CI paths-ignore, changing check-affected itself.
 
 Model: Sonnet.
+
+## Thread
+
+### note · agent:pm-1 · 2026-09-28T23:36:33.666Z
+dropped: Merged to main.
