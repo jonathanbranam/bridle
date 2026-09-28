@@ -59,3 +59,7 @@ now").
 - **Step 2, open:** `bridle prime orchestrator` (P1) prints the role, the state
   and the startup steps, and replaces the script's fixed prompt. After P0-6,
   the handover state moves into bridle's task records instead of the doc.
+
+## Resolution
+
+Completed 2026-09-28. Step 2 was built and merged in commit a7e5019: "bridle prime orchestrator, one-command session handover (P1)". The `bridle prime orchestrator` command prints the role, current state, and startup steps as designed in the ticket, enabling one-command orchestrator handover.

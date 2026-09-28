@@ -43,3 +43,7 @@ workers' load.
 Also found: removing an agent deletes its `agents` row, but its `turns` rows
 stay, so the turns lose their agent's name. The names had to be recovered from
 `agent.spawned` events' branch field.
+
+## Resolution
+
+Implemented and merged 2026-09-28 in commit 72cc135 ("bridle usage reports per-agent busy and wall time"). The feature is now live: `bridle usage` reports per-agent wall time (agent spawn to exit) and busy time (sum of turns) for every worker and task, matching the data computed and analyzed in the ticket's "What exists" section.
