@@ -287,3 +287,103 @@ async fn renew_reapplies_the_spawn_s_extra_allowed_tools_and_env() {
     daemon.running.shutdown();
     daemon.running.join().await.expect("join");
 }
+
+/// p4ks: a renew persists its fresh session id before claude has written that
+/// session, so a restart in that gap left `resume` running `--resume` on a
+/// session that doesn't exist (dies on the first turn). Such an agent must
+/// resume into a fresh session instead.
+#[tokio::test]
+async fn resume_of_a_session_that_never_started_uses_a_fresh_session() {
+    let dump_dir = tempfile::tempdir().expect("dump tempdir");
+    let argv_path = dump_dir.path().join("argv.json");
+    let wrapper = support::fake_claude_argv_dump_wrapper(dump_dir.path(), &argv_path);
+    let overrides = Overrides {
+        claude_program: wrapper.to_string_lossy().into_owned(),
+        ..default_overrides()
+    };
+    let (daemon, _tmp) = start_daemon(Some(overrides)).await;
+
+    let agent = daemon
+        .client
+        .spawn(&SpawnRequest {
+            components: Vec::new(),
+            role: "worker".to_string(),
+            name: Some("w1".to_string()),
+            prompt: None,
+            workdir: Some(Workdir::Worktree { base: None }),
+            model: None,
+            extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
+            ignore_budget: false,
+        })
+        .await
+        .expect("spawn");
+    wait_for_state(&daemon.client, &agent.id, AgentState::Idle).await;
+    daemon
+        .client
+        .stop(&agent.id, &StopRequest { now: true })
+        .await
+        .expect("stop");
+    wait_for_state(&daemon.client, &agent.id, AgentState::Stopped).await;
+
+    // The state a renew leaves behind when the daemon dies before the new
+    // session's first turn.
+    let stale = uuid::Uuid::new_v4().to_string();
+    let conn =
+        rusqlite::Connection::open(daemon.workspace.join(".bridle/bridle.db")).expect("open db");
+    conn.execute(
+        "UPDATE agents SET session_id = ?1, session_started = 0 WHERE id = ?2",
+        rusqlite::params![stale, agent.id],
+    )
+    .expect("stage stale session");
+    drop(conn);
+    support::clear_dump(&argv_path);
+
+    let resumed = daemon
+        .client
+        .resume(&agent.id, &Default::default())
+        .await
+        .expect("resume");
+    assert_ne!(resumed.session_id, stale, "session id replaced");
+
+    let argv: Vec<String> = support::wait_for_dump(
+        "fake-claude argv dump for resumed w1",
+        &argv_path,
+        |argv: &Vec<String>| argv.windows(2).any(|w| w[0] == "--name" && w[1] == "w1"),
+    )
+    .await;
+    assert!(!argv.iter().any(|a| a == "--resume"), "got {argv:?}");
+    assert!(
+        argv.windows(2)
+            .any(|w| w[0] == "--session-id" && w[1] == resumed.session_id),
+        "got {argv:?}"
+    );
+
+    // Once its first turn has started the session exists: the next resume
+    // uses `--resume` again.
+    wait_for_state(&daemon.client, &agent.id, AgentState::Idle).await;
+    daemon
+        .client
+        .stop(&agent.id, &StopRequest { now: true })
+        .await
+        .expect("stop");
+    wait_for_state(&daemon.client, &agent.id, AgentState::Stopped).await;
+    support::clear_dump(&argv_path);
+    let again = daemon
+        .client
+        .resume(&agent.id, &Default::default())
+        .await
+        .expect("resume again");
+    assert_eq!(again.session_id, resumed.session_id);
+    let argv: Vec<String> = support::wait_for_dump(
+        "fake-claude argv dump for re-resumed w1",
+        &argv_path,
+        |argv: &Vec<String>| argv.windows(2).any(|w| w[0] == "--name" && w[1] == "w1"),
+    )
+    .await;
+    assert!(
+        argv.windows(2)
+            .any(|w| w[0] == "--resume" && w[1] == resumed.session_id),
+        "got {argv:?}"
+    );
+}

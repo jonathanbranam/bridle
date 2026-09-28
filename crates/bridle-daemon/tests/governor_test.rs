@@ -7,9 +7,9 @@ mod support;
 
 use bridle_api::types::{
     AgentState, BudgetHoldRequest, BudgetOverrideRequest, GovernorState, MessageQuery,
-    ResumeRequest, SendRequest, SpawnRequest, When,
+    ResumeRequest, SendRequest, SpawnRequest, When, event_kind,
 };
-use support::{start_daemon, wait_for, wait_for_state};
+use support::{start_daemon, wait_for, wait_for_event, wait_for_state};
 
 /// Writes `.fake-claude-usage` in the repo (the governor probe's cwd) so
 /// the next poll reports this utilization for both default windows.
@@ -254,7 +254,7 @@ async fn idle_agent_is_stopped_at_once_on_wind_down_then_resumed() {
             components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
-            prompt: None,
+            prompt: Some("hi".to_string()),
             workdir: None,
             model: None,
             extra_allowed_tools: Vec::new(),
@@ -263,6 +263,14 @@ async fn idle_agent_is_stopped_at_once_on_wind_down_then_resumed() {
         })
         .await
         .expect("spawn while normal");
+    // The session must have run a turn to be resumable in place.
+    wait_for_event(
+        &daemon.client,
+        event_kind::TURN_ENDED,
+        Some(&agent.id),
+        |_| true,
+    )
+    .await;
     let agent = wait_for_state(&daemon.client, &agent.id, AgentState::Idle).await;
 
     // wind_down_at default is 90: an idle agent is stopped at once.
