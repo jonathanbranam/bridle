@@ -1537,6 +1537,137 @@ impl AgentManager {
             .ok_or_else(|| SupervisorError::Internal("agent vanished after resume".to_string()))
     }
 
+    /// Stops the agent if it's running, then starts its replacement: a fresh
+    /// `claude` process, fresh session (`Session::New`, unlike `resume`'s
+    /// `Session::Resume`), in the *same* worktree/branch/role/model. No
+    /// worktree or branch is created or removed — `stop` never touches
+    /// either, so the one from the agent's original spawn is still attached
+    /// and checked out; renew just points a new process at it. The agent
+    /// keeps its id and name throughout, so nothing else that addresses it
+    /// (messages, tasks) needs to know it was renewed.
+    pub async fn renew(
+        &self,
+        id_or_name: &str,
+        ignore_budget: bool,
+        principal: &Principal,
+    ) -> Result<Agent, SupervisorError> {
+        let mut agent = self
+            .0
+            .store
+            .get_agent(id_or_name)
+            .await?
+            .ok_or_else(|| SupervisorError::NotFound(id_or_name.to_string()))?;
+        let from_state = agent.state;
+        if agent.state.is_running() {
+            agent = self.stop(&agent.id, false, principal).await?;
+        }
+        if !ignore_budget {
+            self.refuse_if_holding(&agent.model)?;
+        }
+        let role = self
+            .0
+            .config
+            .roles
+            .get(&agent.role)
+            .cloned()
+            .unwrap_or_else(Role::worker_default);
+
+        let token_path = self.0.workspace.agent_dir(&agent.id).join("token");
+        let token = std::fs::read_to_string(&token_path)
+            .map_err(|e| SupervisorError::Internal(format!("reading agent token: {e}")))?
+            .trim()
+            .to_string();
+
+        let prompt_text = crate::config::render_system_prompt(
+            &agent.role,
+            &role,
+            &self.0.workspace.repo,
+            &agent.name,
+            std::path::Path::new(&agent.cwd),
+            agent.branch.as_deref(),
+        );
+        let system_prompt_path = self.0.workspace.system_prompt(&agent.id);
+        std::fs::write(&system_prompt_path, &prompt_text)?;
+
+        // A renew's whole point is a clean context, so the replacement gets
+        // a brand-new session, not `--resume` of the one it's leaving behind.
+        // The store isn't updated with it until after claude actually spawns
+        // (below): otherwise a failed spawn would leave the row pointing at
+        // a session_id claude never started, and a later `resume` would
+        // `--resume` a session that doesn't exist.
+        let session_id = Uuid::new_v4();
+
+        let cwd = std::path::PathBuf::from(&agent.cwd);
+        let mut cmd = ClaudeCommand::new(cwd, Session::New(session_id));
+        cmd.program = self.0.claude_program.clone();
+        cmd.model = Some(agent.model.clone());
+        cmd.effort = role.effort.clone();
+        cmd.append_system_prompt_file = Some(system_prompt_path);
+        cmd.permission_mode = Some(role.permission_mode.clone());
+        cmd.allowed_tools = role.effective_allowed_tools();
+        cmd.disallowed_tools = role.disallowed_tools.clone();
+        cmd.name = Some(agent.name.clone());
+        cmd.max_budget_usd = role.max_budget_usd;
+        cmd.env = agent_env(
+            &self.0.workspace,
+            &self.0.url,
+            &self.0.project,
+            &agent.id,
+            &agent.name,
+            &token,
+        );
+
+        let transcript = Transcript::open(
+            &self.0.workspace.transcript(&agent.id),
+            std::time::Instant::now(),
+        )?;
+        let spawned = bridle_claude::process::spawn(&cmd, transcript)
+            .await
+            .map_err(|e| SupervisorError::Internal(format!("spawning claude: {e}")))?;
+
+        self.0
+            .store
+            .set_agent_session(&agent.id, &session_id.to_string())
+            .await?;
+
+        self.register_and_start(
+            &agent.id,
+            agent.turns,
+            agent.cost_usd_total,
+            spawned,
+            principal,
+            None,
+        )
+        .await?;
+        let _ = self
+            .0
+            .emitter
+            .emit(
+                event_kind::AGENT_RENEWED,
+                principal.id.clone(),
+                Some(agent.id.clone()),
+                json!({"from": from_state.as_str()}),
+            )
+            .await;
+
+        let pending = self
+            .0
+            .store
+            .messages_for_agent(&agent.id, &[MessageState::Pending])
+            .await?;
+        if let Some(rt) = self.get_runtime(&agent.id) {
+            for m in pending {
+                let _ = write_message(&self.0.store, &rt, &m).await;
+            }
+        }
+
+        self.0
+            .store
+            .get_agent(&agent.id)
+            .await?
+            .ok_or_else(|| SupervisorError::Internal("agent vanished after renew".to_string()))
+    }
+
     pub async fn remove(
         &self,
         id_or_name: &str,
