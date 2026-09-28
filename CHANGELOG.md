@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Components part 1: `[components.<id>]` in `.bridle/config.toml` (`paths`, `parent`, `docs`,
+  `consumers`; unknown parents and cycles are config errors), an L4 component rule layer per
+  chain, and `bridle rules explain|diff --component <id>`.
+
 - CI watcher: with `[ci] github = true`, the daemon polls GitHub Actions (via `gh`) for each new
   tip of the integration branch, emits `ci.completed`, messages the manager on a failure with
   the failed jobs, and `bridle status` shows the last result.
