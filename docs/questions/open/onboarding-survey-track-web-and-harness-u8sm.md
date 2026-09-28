@@ -6,7 +6,7 @@ repos: [bridle]
 changes: []
 specs: []
 needs: []
-see: [d9nu, ajqa, 8xhh, a8fk]
+see: [d9nu, ajqa, 8xhh, a8fk, rxe8]
 ---
 
 ## The ask
@@ -35,6 +35,24 @@ its report, unedited; nothing in the surveyed repos was changed.
 - Related surveys from the same request: [[onboarding-survey-file-db-d9nu|d9nu]], [[onboarding-survey-meta-notes-ajqa|ajqa]], [[onboarding-survey-otters-8xhh|8xhh]], [[shared-pixellab-tooling-for-game-projects-a8fk|a8fk]].
 - The two surveys ran minutes apart while the human was working in `~/work/track-web`, so its HEAD and dirty state differ between them.
 - The open questions at the end are for the human; none is answered yet.
+
+## The human's answers
+
+2026-09-28, on the deploy hazard and question 2 (which branch):
+
+> File a ticket to enhance bridle to support strong rules for branch usage. Some projects
+> work directly on main, others use a dev branch. KISS, but merging to main for a release is
+> a common enough pattern. don't add complexity for other approaches.
+
+Filed as [[branch-rules-per-project-rxe8|rxe8]].
+
+On question 1 (the two track-web checkouts):
+
+> I just haven't pulled recently in that folder; I just updated it; you're right I have two
+> copies; but that's ok without bridle, i just remember to push/pull from remote between them
+
+So both checkouts stay, synced through the remote by hand (option c). What that means for
+bridle's workspace and paired worktrees is still open.
 
 ## The survey
 
