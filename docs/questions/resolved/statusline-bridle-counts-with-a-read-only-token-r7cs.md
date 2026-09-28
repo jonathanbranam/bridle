@@ -1,6 +1,6 @@
 ---
 id: r7cs
-title: Bridle counts in the status line, with a read-only token
+title: Bridle counts in the status line, with a dedicated token
 opened: 2026-09-28
 repos: [bridle]
 changes: []
@@ -33,15 +33,24 @@ bridle needs them without running `bridle status`.
 
 ## Resolution
 
-The `$CLAUDECODE` gate in `resolve_token`
-(`crates/bridle-api/src/discovery.rs`) only guards the human-token-file
-fallback; `$BRIDLE_TOKEN` itself is checked first, unconditionally. So a
-human-minted `external:statusline` token (`bridle token create statusline`),
-exported once as `$BRIDLE_TOKEN` in the shell profile, already flows through
-normal token resolution — no new scoping or daemon endpoint needed.
-`statusline` now makes its own best-effort, 2s-timeout `GET /v1/status` call
-when `$BRIDLE_TOKEN` is set (and only then — it never falls back to the
-workspace's human token file, unlike other CLI commands), appending "N
-working · M for you" to the line. Any failure is silent to the line, logged
-at `tracing::debug`. Documented in
+`$BRIDLE_TOKEN` was the first idea, but it doesn't work: `resolve_token`
+(`crates/bridle-api/src/discovery.rs`) checks `$BRIDLE_TOKEN` first,
+unconditionally, for *every* command — the `$CLAUDECODE` gate only guards the
+human-token-file fallback. Exporting `$BRIDLE_TOKEN` in the shell profile so
+`statusline` could read it would make every other bridle command the human
+runs (`stop-daemon`, `budget hold`/`override`, `token create`, ...) act as
+that token's principal too, which is a real footgun the human had already
+flagged once. The fix instead is a dedicated file,
+`~/.bridle/statusline.token` (`discovery::statusline_token_path`), that only
+`statusline` reads. Setup: `bridle token create statusline >
+~/.bridle/statusline.token`. `statusline` makes its own best-effort,
+2s-timeout `GET /v1/status` call when that file holds a token (and only
+then — it never falls back to `$BRIDLE_TOKEN` or the workspace's human token
+file, unlike other CLI commands), appending "N working · M for you" to the
+line. Any failure (missing/empty file, no daemon, timeout, HTTP error) is
+silent to the line, logged at `tracing::debug`.
+
+The token is not scoped read-only or to this route: bridle has no
+per-route/per-token scoping yet, so it can do whatever an `external:*`
+principal can do. That's a known gap, not solved here. Documented in
 [[docs/design/cli#Built|cli.md]].

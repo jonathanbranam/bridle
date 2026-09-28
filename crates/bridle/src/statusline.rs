@@ -191,7 +191,7 @@ pub fn render_line(
 /// Bridle's own counts for the human: agents currently working (`working`
 /// and `starting`, both "in progress" from the outside) and messages
 /// waiting for the human
-/// (docs/questions/open/statusline-bridle-counts-with-a-read-only-token-r7cs.md).
+/// (docs/questions/resolved/statusline-bridle-counts-with-a-read-only-token-r7cs.md).
 pub fn render_counts(status: &Status) -> String {
     let working: u32 = ["working", "starting"]
         .iter()

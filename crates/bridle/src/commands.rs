@@ -107,7 +107,9 @@ async fn statusline(_cli: &Cli) -> Result<(), CliError> {
         .clone()
         .or_else(|| std::env::current_dir().ok())
         .unwrap_or_default();
-    if let Some(counts) = bridle_counts(&cwd, &ProcessEnv).await {
+    if let Some(counts) =
+        bridle_counts(&cwd, &ProcessEnv, &discovery::statusline_token_path()).await
+    {
         line.push_str(" \u{b7} ");
         line.push_str(&counts);
     }
@@ -115,16 +117,32 @@ async fn statusline(_cli: &Cli) -> Result<(), CliError> {
     Ok(())
 }
 
-/// Bridle's own counts for the human (docs/questions/open/
+/// Bridle's own counts for the human (docs/questions/resolved/
 /// statusline-bridle-counts-with-a-read-only-token-r7cs.md): agents working
-/// and messages waiting. Attempted only when `$BRIDLE_TOKEN` is set
-/// explicitly — unlike `resolve_token`, this never falls back to the
-/// workspace's human token file even outside Claude Code, since headless
-/// workers and other CLI paths already have their own token handling and
-/// shouldn't silently pick up the human's. Any failure (no token, no
-/// daemon, timeout, HTTP error) is silent to the line, logged at debug.
-async fn bridle_counts(cwd: &Path, env: &impl Env) -> Option<String> {
-    let token = env.var("BRIDLE_TOKEN")?;
+/// and messages waiting. Attempted only when `token_path` holds a token —
+/// deliberately not `$BRIDLE_TOKEN` or the workspace's human token file,
+/// since statusline needs a token that works read regardless of which
+/// project workspace Claude Code happens to be in, and reading `$BRIDLE_TOKEN`
+/// would make every other bridle command run as this token's principal too
+/// (discovery::resolve_token checks it first, unconditionally). This token is
+/// not scoped read-only or otherwise: it can do whatever its principal can do
+/// (docs/design/cli.md). Any failure (no token file, no daemon, timeout,
+/// HTTP error) is silent to the line, logged at debug.
+async fn bridle_counts(cwd: &Path, env: &impl Env, token_path: &Path) -> Option<String> {
+    let token = match std::fs::read_to_string(token_path) {
+        Ok(s) => {
+            let s = s.trim();
+            if s.is_empty() {
+                tracing::debug!("statusline: token file {} is empty", token_path.display());
+                return None;
+            }
+            s.to_string()
+        }
+        Err(e) => {
+            tracing::debug!("statusline: no token at {}: {e}", token_path.display());
+            return None;
+        }
+    };
     let endpoint = match discovery::resolve_endpoint(None, None, cwd, env) {
         Ok(e) => e,
         Err(e) => {
@@ -1353,29 +1371,42 @@ mod bridle_counts_tests {
     use super::bridle_counts;
 
     #[tokio::test]
-    async fn no_token_skips_the_daemon_call() {
+    async fn missing_token_file_skips_the_daemon_call() {
         let dir = tempfile::tempdir().unwrap();
         let env = |_key: &str| None;
-        assert_eq!(bridle_counts(dir.path(), &env).await, None);
+        let token_path = dir.path().join("statusline.token");
+        assert_eq!(bridle_counts(dir.path(), &env, &token_path).await, None);
+    }
+
+    #[tokio::test]
+    async fn empty_token_file_skips_the_daemon_call() {
+        let dir = tempfile::tempdir().unwrap();
+        let token_path = dir.path().join("statusline.token");
+        std::fs::write(&token_path, "  \n").unwrap();
+        let env = |_key: &str| None;
+        assert_eq!(bridle_counts(dir.path(), &env, &token_path).await, None);
     }
 
     #[tokio::test]
     async fn token_but_no_daemon_found_returns_none() {
         let dir = tempfile::tempdir().unwrap();
-        let env = |key: &str| (key == "BRIDLE_TOKEN").then(|| "tok".to_string());
-        assert_eq!(bridle_counts(dir.path(), &env).await, None);
+        let token_path = dir.path().join("statusline.token");
+        std::fs::write(&token_path, "tok\n").unwrap();
+        let env = |_key: &str| None;
+        assert_eq!(bridle_counts(dir.path(), &env, &token_path).await, None);
     }
 
     #[tokio::test]
     async fn token_set_but_daemon_unreachable_returns_none() {
         let dir = tempfile::tempdir().unwrap();
+        let token_path = dir.path().join("statusline.token");
+        std::fs::write(&token_path, "tok\n").unwrap();
         let env = |key: &str| match key {
-            "BRIDLE_TOKEN" => Some("tok".to_string()),
             // Port 0 refuses connections outright, so this fails fast
             // rather than exercising the full 2s timeout.
             "BRIDLE_URL" => Some("http://127.0.0.1:0".to_string()),
             _ => None,
         };
-        assert_eq!(bridle_counts(dir.path(), &env).await, None);
+        assert_eq!(bridle_counts(dir.path(), &env, &token_path).await, None);
     }
 }
