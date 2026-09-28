@@ -13,7 +13,7 @@
 
 use std::path::{Path, PathBuf};
 
-use bridle_api::types::{StatusLineRateLimitReading, StatusLineReport};
+use bridle_api::types::{Status, StatusLineRateLimitReading, StatusLineReport};
 use chrono::{DateTime, Utc};
 use serde_json::Value;
 
@@ -188,6 +188,21 @@ pub fn render_line(
     }
 }
 
+/// Bridle's own counts for the human: agents currently working (`working`
+/// and `starting`, both "in progress" from the outside) and messages
+/// waiting for the human
+/// (docs/questions/open/statusline-bridle-counts-with-a-read-only-token-r7cs.md).
+pub fn render_counts(status: &Status) -> String {
+    let working: u32 = ["working", "starting"]
+        .iter()
+        .filter_map(|s| status.agents_by_state.get(*s))
+        .sum();
+    format!(
+        "{working} working \u{b7} {} for you",
+        status.unread_human_messages
+    )
+}
+
 fn window_label(window: &str) -> &str {
     match window {
         "five_hour" => "5h",
@@ -320,6 +335,41 @@ mod tests {
         });
         let report = parse(&input);
         assert!(report.rate_limits.is_empty());
+    }
+
+    fn sample_status(agents_by_state: &[(&str, u32)], unread: u32) -> Status {
+        Status {
+            daemon: bridle_api::types::DaemonInfo {
+                project: "demo".to_string(),
+                workspace: "/ws".to_string(),
+                repo: "/ws/repo".to_string(),
+                url: "http://127.0.0.1:0".to_string(),
+                pid: 1,
+                started_at: Utc::now(),
+                version: "0.1.0".to_string(),
+            },
+            principal: "external:statusline".to_string(),
+            agents_by_state: agents_by_state
+                .iter()
+                .map(|(k, v)| (k.to_string(), *v))
+                .collect(),
+            unread_human_messages: unread,
+            rate_limits: Vec::new(),
+            claude_version: None,
+            budget_state: Default::default(),
+        }
+    }
+
+    #[test]
+    fn render_counts_sums_working_and_starting() {
+        let status = sample_status(&[("working", 2), ("starting", 1), ("idle", 5)], 3);
+        assert_eq!(render_counts(&status), "3 working \u{b7} 3 for you");
+    }
+
+    #[test]
+    fn render_counts_handles_no_agents_or_messages() {
+        let status = sample_status(&[], 0);
+        assert_eq!(render_counts(&status), "0 working \u{b7} 0 for you");
     }
 
     #[test]

@@ -1,8 +1,10 @@
 //! Dispatch and implementation for every subcommand except `serve` (see
 //! `serve.rs`). See docs/design/cli.md.
 
+use std::path::Path;
+
 use anyhow::Context;
-use bridle_api::discovery::{self, ProcessEnv};
+use bridle_api::discovery::{self, Env, ProcessEnv};
 use bridle_api::{
     BudgetHoldRequest, BudgetOverrideRequest, Client, DropTaskRequest, Edge, EdgeKind,
     EditTaskRequest, Event, EventQuery, InterruptRequest, MessageKind, MessageQuery,
@@ -100,11 +102,45 @@ async fn statusline(_cli: &Cli) -> Result<(), CliError> {
     let branch = workspace_dir
         .as_deref()
         .and_then(crate::statusline::git_branch);
-    println!(
-        "{}",
-        crate::statusline::render_line(&report, folder.as_deref(), branch.as_deref())
-    );
+    let mut line = crate::statusline::render_line(&report, folder.as_deref(), branch.as_deref());
+    let cwd = workspace_dir
+        .clone()
+        .or_else(|| std::env::current_dir().ok())
+        .unwrap_or_default();
+    if let Some(counts) = bridle_counts(&cwd, &ProcessEnv).await {
+        line.push_str(" \u{b7} ");
+        line.push_str(&counts);
+    }
+    println!("{line}");
     Ok(())
+}
+
+/// Bridle's own counts for the human (docs/questions/open/
+/// statusline-bridle-counts-with-a-read-only-token-r7cs.md): agents working
+/// and messages waiting. Attempted only when `$BRIDLE_TOKEN` is set
+/// explicitly — unlike `resolve_token`, this never falls back to the
+/// workspace's human token file even outside Claude Code, since headless
+/// workers and other CLI paths already have their own token handling and
+/// shouldn't silently pick up the human's. Any failure (no token, no
+/// daemon, timeout, HTTP error) is silent to the line, logged at debug.
+async fn bridle_counts(cwd: &Path, env: &impl Env) -> Option<String> {
+    let token = env.var("BRIDLE_TOKEN")?;
+    let endpoint = match discovery::resolve_endpoint(None, None, cwd, env) {
+        Ok(e) => e,
+        Err(e) => {
+            tracing::debug!("statusline: no bridle daemon found: {e}");
+            return None;
+        }
+    };
+    let timeout = std::time::Duration::from_secs(2);
+    let client = Client::new_with_timeout(endpoint.url, Some(token), timeout);
+    match client.status().await {
+        Ok(status) => Some(crate::statusline::render_counts(&status)),
+        Err(e) => {
+            tracing::debug!("statusline: bridle status call failed: {e}");
+            None
+        }
+    }
 }
 
 async fn stop_daemon(cli: &Cli) -> Result<(), CliError> {
@@ -1310,4 +1346,36 @@ async fn ready(cli: &Cli, args: &ReadyArgs) -> Result<(), CliError> {
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod bridle_counts_tests {
+    use super::bridle_counts;
+
+    #[tokio::test]
+    async fn no_token_skips_the_daemon_call() {
+        let dir = tempfile::tempdir().unwrap();
+        let env = |_key: &str| None;
+        assert_eq!(bridle_counts(dir.path(), &env).await, None);
+    }
+
+    #[tokio::test]
+    async fn token_but_no_daemon_found_returns_none() {
+        let dir = tempfile::tempdir().unwrap();
+        let env = |key: &str| (key == "BRIDLE_TOKEN").then(|| "tok".to_string());
+        assert_eq!(bridle_counts(dir.path(), &env).await, None);
+    }
+
+    #[tokio::test]
+    async fn token_set_but_daemon_unreachable_returns_none() {
+        let dir = tempfile::tempdir().unwrap();
+        let env = |key: &str| match key {
+            "BRIDLE_TOKEN" => Some("tok".to_string()),
+            // Port 0 refuses connections outright, so this fails fast
+            // rather than exercising the full 2s timeout.
+            "BRIDLE_URL" => Some("http://127.0.0.1:0".to_string()),
+            _ => None,
+        };
+        assert_eq!(bridle_counts(dir.path(), &env).await, None);
+    }
 }
