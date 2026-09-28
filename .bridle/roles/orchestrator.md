@@ -90,10 +90,21 @@ curl -s -H "Authorization: Bearer $BRIDLE_TOKEN" "$U/v1/messages?to=human&limit=
 Agents are ephemeral; the branch, worktree and bridle's records carry the
 work. Keep every context well under 200K tokens (the human, 2026-09-27:
 reasoning breaks down around 250-300K, and large windows cost more). That
-includes yours: past ~200K, bring `docs/context/orchestrator-state.md` up to
-date, commit it, and tell the human to start a fresh orchestrator. Watch the
+includes yours: hand over well before ~200K (below). Watch the
 manager's and workers' size too, until bridle governs it itself (the context
 governor in the queue).
+
+## Handing over
+
+The human should only have to agree and run one command (ticket d4mz):
+
+1. Propose the handover to the human, and wait for their yes.
+2. Bring `docs/context/orchestrator-state.md` up to date: who's running,
+   what's in flight, the queue, open items, and this session's decisions.
+   Commit it and push `main`.
+3. Stop your watcher (`TaskStop`) and heartbeat (`CronDelete`).
+4. Tell the human to run `scripts/claude-orchestrator` from the clone. It
+   starts `claude` with Remote Control on, and with the standing opening prompt.
 
 ## Only the human can
 

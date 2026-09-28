@@ -60,6 +60,14 @@ when P0 is complete.
 - **`bridle-claude` process_test** has 5 s timeouts that flake under load
   (f1ky). Re-run before calling `main` red.
 
+## The orchestrator's own work
+
+- **d4mz, one-command handover:** mine (the human, 2026-09-28). Step 1 is
+  done (`scripts/claude-orchestrator`, the role's "Handing over"). Step 2 is
+  `bridle prime orchestrator` in P1, with pm-1.
+- **kc4v, context_tokens overcounts:** filed and sent to pm-1 for track 2,
+  ahead of the governor's wind-down.
+
 ## Waiting on the human
 
 - **Optional:** set `bridle statusline` as the `statusLine` command in

@@ -46,3 +46,16 @@ The shape the human describes:
 The orchestrator should renew itself as readily as bridle's own agents will
 (htp6), and every handover costs the human effort and risks losing state.
 `prime` is already planned for P1 ([build order](docs/proposal/build-order.md)).
+
+## Progress
+
+Owned by the orchestrator (the human, 2026-09-28: "this ticket d4mz is yours
+now").
+
+- **Step 1, done 2026-09-28:** `scripts/claude-orchestrator` starts `claude`
+  with Remote Control on and the standing opening prompt, and the role's
+  "Handing over" section is the outgoing checklist. State still lives in
+  `docs/context/orchestrator-state.md`.
+- **Step 2, open:** `bridle prime orchestrator` (P1) prints the role, the state
+  and the startup steps, and replaces the script's fixed prompt. After P0-6,
+  the handover state moves into bridle's task records instead of the doc.
