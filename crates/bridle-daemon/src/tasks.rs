@@ -935,7 +935,7 @@ mod tests {
         let out = Command::new("git")
             .arg("-C")
             .arg(dir)
-            .args(["init", "-q"])
+            .args(["init", "-q", "-b", "main"])
             .output()
             .await
             .expect("git init");

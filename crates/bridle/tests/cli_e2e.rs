@@ -37,7 +37,7 @@ fn init_repo(dir: &Path) {
             String::from_utf8_lossy(&out.stderr)
         );
     };
-    run(&["init", "-q"]);
+    run(&["init", "-q", "-b", "main"]);
     run(&[
         "-c",
         "user.email=test@example.com",

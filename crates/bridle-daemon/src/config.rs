@@ -596,6 +596,9 @@ pub struct CommandsConfig {
 #[derive(Debug, Clone, PartialEq)]
 pub struct BranchesConfig {
     pub integration: String,
+    /// True when `integration` came from the config file rather than the `main` default;
+    /// startup only insists the default exists (g3ck).
+    pub integration_set: bool,
     pub release: Option<String>,
 }
 
@@ -603,6 +606,7 @@ impl Default for BranchesConfig {
     fn default() -> Self {
         BranchesConfig {
             integration: "main".to_string(),
+            integration_set: false,
             release: None,
         }
     }
@@ -612,6 +616,7 @@ impl BranchesConfig {
     fn merge(mut self, raw: RawBranches) -> Self {
         if let Some(v) = raw.integration {
             self.integration = v;
+            self.integration_set = true;
         }
         if let Some(v) = raw.release {
             self.release = Some(v);
