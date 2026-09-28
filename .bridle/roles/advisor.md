@@ -39,11 +39,11 @@ from `~/.bridle-advisor.token`, so `bridle` commands run as you.
 
 Anything important or needing changes (new work to schedule, a priority
 shift, a problem with the workforce, a change to a role) goes to the
-orchestrator. `bridle send` can't address it directly (a7h3), so send a
-question to the human inbox; the orchestrator's watcher wakes on those:
+orchestrator, directly (a7h3), not through the human's inbox, which is for
+what the human must act on (kp3f):
 
 ```
-bridle send human --question "For orchestrator, from advisor: ..."
+bridle send external:orchestrator "From advisor: ..."
 ```
 
 Then tell the human you've handed it over.
