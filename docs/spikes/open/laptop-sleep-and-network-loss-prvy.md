@@ -6,7 +6,7 @@ repos: [bridle]
 changes: []
 specs: []
 needs: []
-see: [where-the-single-orchestrator-lives-hj4g]
+see: []
 ---
 
 ## What happened
@@ -32,7 +32,7 @@ tested it. Things that are likely to trip on a wake, from the design as built:
 - In-flight API calls from `claude` fail on the lost network; how Claude Code retries,
   and whether a turn ends in an error, is unverified.
 - The orchestrator, a Claude Code session on the same laptop, sleeps too, so the human
-  can't reach it from the phone meanwhile (hj4g).
+  can't reach it from the phone meanwhile ([[where-the-single-orchestrator-lives-hj4g|where the orchestrator lives]]).
 
 `bridle budget hold [--for | --until]` already exists as a deliberate pause.
 
