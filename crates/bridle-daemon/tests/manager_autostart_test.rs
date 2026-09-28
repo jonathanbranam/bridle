@@ -56,3 +56,51 @@ async fn a_resumed_manager_is_not_spawned_twice() {
     running.shutdown();
     running.join().await.expect("join");
 }
+
+#[tokio::test]
+async fn a_differently_named_manager_suppresses_autostart() {
+    let (daemon, tmp) =
+        start_daemon_verbatim_config(None, Some("[roles.manager]\nautostart = false\n")).await;
+    let workspace = daemon.workspace.clone();
+    let repo = daemon.repo.clone();
+    let req = bridle_api::types::SpawnRequest {
+        role: "manager".to_string(),
+        name: Some("manager-2".to_string()),
+        prompt: None,
+        workdir: None,
+        model: None,
+        extra_allowed_tools: Vec::new(),
+        extra_env: Vec::new(),
+        ignore_budget: false,
+        components: Vec::new(),
+    };
+    let first = daemon.client.spawn(&req).await.expect("spawn manager-2");
+    wait_for_state(&daemon.client, "manager-2", AgentState::Idle).await;
+    daemon.running.shutdown();
+    daemon.running.join().await.expect("join");
+
+    // Autostart is back on (the default) for the restart.
+    std::fs::write(repo.join(".bridle/config.toml"), "").expect("rewrite config");
+    let opts = bridle_daemon::ServeOptions {
+        repo,
+        workspace: Some(workspace.clone()),
+        project: None,
+        listen: Some("127.0.0.1:0".parse().expect("valid addr")),
+    };
+    let mut overrides = support::default_overrides();
+    overrides.bridle_home = Some(support::machine_home_dir(tmp.path()));
+    overrides.governor_interval = Duration::from_secs(3600);
+    let running = bridle_daemon::start(opts, overrides)
+        .await
+        .expect("start second daemon");
+    let token =
+        std::fs::read_to_string(workspace.join(".bridle/tokens/human")).expect("human token");
+    let client = bridle_api::Client::new(running.url.clone(), Some(token.trim().to_string()));
+
+    let agents = client.list_agents().await.expect("list");
+    assert_eq!(agents.len(), 1, "{agents:?}");
+    assert_eq!(agents[0].id, first.id);
+
+    running.shutdown();
+    running.join().await.expect("join");
+}

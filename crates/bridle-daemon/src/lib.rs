@@ -557,33 +557,29 @@ async fn run_autostart_and_resume(store: &Store, config: &Config, manager: &Agen
         id: "system".to_string(),
         kind: PrincipalKind::System,
     };
+    let Ok(agents) = store.list_agents(true).await else {
+        tracing::warn!("autostart lookup failed");
+        return;
+    };
     for (name, role) in &config.roles {
-        if role.autostart {
-            match store.get_agent(name).await {
-                Ok(None) => {
-                    let req = SpawnRequest {
-                        role: name.clone(),
-                        name: Some(name.clone()),
-                        prompt: None, // the role's start_prompt
-                        workdir: None,
-                        model: None,
-                        extra_allowed_tools: Vec::new(),
-                        extra_env: Vec::new(),
-                        ignore_budget: false,
-                        components: Vec::new(),
-                    };
-                    if let Err(e) = manager.spawn(req, &system).await {
-                        tracing::warn!(role = %name, error = %e, "autostart failed");
-                    }
-                }
-                Ok(Some(_)) => {}
-                Err(e) => tracing::warn!(role = %name, error = %e, "autostart lookup failed"),
+        // By role, not name: a manager named `manager-2` still counts.
+        if role.autostart && !agents.iter().any(|a| &a.role == name) {
+            let req = SpawnRequest {
+                role: name.clone(),
+                name: Some(name.clone()),
+                prompt: None, // the role's start_prompt
+                workdir: None,
+                model: None,
+                extra_allowed_tools: Vec::new(),
+                extra_env: Vec::new(),
+                ignore_budget: false,
+                components: Vec::new(),
+            };
+            if let Err(e) = manager.spawn(req, &system).await {
+                tracing::warn!(role = %name, error = %e, "autostart failed");
             }
         }
     }
-    let Ok(agents) = store.list_agents(true).await else {
-        return;
-    };
     for a in agents {
         let resumable_after_restart = a.state == AgentState::Lost
             || (a.state == AgentState::Stopped
