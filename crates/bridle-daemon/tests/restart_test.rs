@@ -52,6 +52,8 @@ async fn restart_marks_a_stale_running_agent_lost_and_kills_its_process() {
             worktree: None,
             branch: None,
             created_by: "human".to_string(),
+            extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
         })
         .await
         .expect("insert agent");

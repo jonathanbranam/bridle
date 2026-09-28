@@ -166,6 +166,35 @@ pub fn fake_claude_env_dump_wrapper(dir: &Path, env_path: &Path) -> PathBuf {
     wrapper
 }
 
+/// A wrapper script around fake-claude.py that sets both
+/// `FAKE_CLAUDE_ARGV_FILE` and `FAKE_CLAUDE_ENV_FILE`, so a test can assert
+/// on a single invocation's argv and environment together (e.g. that a
+/// renew or resume still carries a spawn's `--allow-tool`/`--env`).
+pub fn fake_claude_argv_and_env_dump_wrapper(
+    dir: &Path,
+    argv_path: &Path,
+    env_path: &Path,
+) -> PathBuf {
+    let wrapper = dir.join("fake-claude-argv-env-wrapper.sh");
+    std::fs::write(
+        &wrapper,
+        format!(
+            "#!/bin/sh\nexec env FAKE_CLAUDE_ARGV_FILE={:?} FAKE_CLAUDE_ENV_FILE={:?} {:?} \"$@\"\n",
+            argv_path.display(),
+            env_path.display(),
+            fake_claude_path().display(),
+        ),
+    )
+    .expect("write wrapper script");
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&wrapper, std::fs::Permissions::from_mode(0o755))
+            .expect("chmod wrapper script");
+    }
+    wrapper
+}
+
 pub fn default_overrides() -> Overrides {
     Overrides {
         claude_program: fake_claude_path().to_string_lossy().into_owned(),

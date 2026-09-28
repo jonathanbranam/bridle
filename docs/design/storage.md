@@ -16,7 +16,9 @@ principals(id TEXT PK, kind, name, token_hash, created_at, revoked_at)
 agents(id PK, name UNIQUE, role, state, model, session_id, pid, pid_start,
        workdir_kind, cwd, worktree, branch, created_at, updated_at,
        turns, turn_started_at, cost_usd_total, last_event_at,
-       exit_code, exit_signal, exit_reason, created_by)
+       exit_code, exit_signal, exit_reason, created_by,
+       extra_allowed_tools JSON, extra_env JSON)  -- this agent's --allow-tool/--env
+                                                   -- overrides, reapplied on renew/resume
 turns(agent_id, agent_name, role, model,           -- no FK: turns outlive rm
       n, started_at, ended_at, subtype, is_error, terminal_reason,
       input_tokens, output_tokens, cache_read, cache_write,

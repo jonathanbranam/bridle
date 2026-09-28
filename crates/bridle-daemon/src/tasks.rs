@@ -1400,6 +1400,8 @@ mod tests {
                 worktree: Some("/ws/wt/w1".to_string()),
                 branch: Some("bridle/w1".to_string()),
                 created_by: "human".to_string(),
+                extra_allowed_tools: Vec::new(),
+                extra_env: Vec::new(),
             })
             .await
             .expect("insert agent");
