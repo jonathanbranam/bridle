@@ -107,6 +107,12 @@ track-web (L3)       server, db, api, packages/*       → every agent
 > IDK if components match 1:1 with roadmap, planning, tickets or not; I don't want to add too
 > much admin overhead for that.
 
+2026-09-28, on roadmaps:
+
+> generally, i do like having a roadmap of where I'm planning to go with something that helps me
+> pick up a project that I have set aside for a time period. Mostly, that is per-repo, but
+> track-web is unique.
+
 ## Still open
 
 - Where roadmaps live (in track-web's `docs/`, or in bridle), given they must stay easy to
