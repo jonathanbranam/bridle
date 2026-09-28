@@ -113,9 +113,10 @@ fn managed_block() -> String {
     format!(
         "{CLAUDE_MD_START}\n\
 This project's workflow rules, current task and role priming are rendered by\n\
-bridle, not written here. Run `bridle prime <role>` at the start of a\n\
-session for the rules, facts and task context that apply now — don't rely\n\
-on this file for rule content.\n\
+bridle, not written here. Read the rule files (markdown, one per rule id)\n\
+in `.bridle/rules/` and in the workflow checkout's `base/rules/` (`workflow`\n\
+in `.bridle/config.toml`) at the start of a session — don't rely on this\n\
+file for rule content. The orchestrator also runs `bridle prime orchestrator`.\n\
 {CLAUDE_MD_END}\n"
     )
 }
@@ -693,6 +694,25 @@ mod tests {
             std::fs::read_to_string(repo.path().join(".claude/skills/bridle-worker/SKILL.md"))
                 .expect("read");
         assert!(custom_rendered.contains("run `make check` before handoff"));
+    }
+
+    #[test]
+    fn manager_skill_renders_project_neutral() {
+        let src = include_bytes!("../../../workflow/base/skills/manager/SKILL.md");
+        let branches = BranchesConfig {
+            integration: "trunk-x".to_string(),
+            ..BranchesConfig::default()
+        };
+        let commands = CommandsConfig {
+            check: "make ci".to_string(),
+        };
+        let out =
+            String::from_utf8(substitute_placeholders(src, &commands, &branches)).expect("utf8");
+        assert!(out.contains("make ci") && out.contains("trunk-x"));
+        assert!(!out.contains("just check") && !out.contains("{{"));
+        for word in out.split(|c: char| !(c.is_alphanumeric() || c == '/' || c == '-')) {
+            assert!(word != "main", "stray `main`");
+        }
     }
 
     #[test]

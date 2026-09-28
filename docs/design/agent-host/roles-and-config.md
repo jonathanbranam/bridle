@@ -66,13 +66,17 @@ start_prompt      = "Check your inbox and tell the human you're ready."   # firs
   project's `disallowed_tools` is **additive**: it extends the role's built-in
   denials rather than replacing them, so a project never needs to re-list
   what's already denied by default to add one more.
-- **Parsing is strict**: an unknown key stops the daemon from starting.
+- **Parsing is strict**: an unknown key stops the daemon from starting. There is
+  no `project` key: the project's name comes from its directory.
   Durations are an integer plus `s`, `m` or `h`. The config is read once, at
   start.
 - **Every role's system-prompt file** is prefixed with a short bridle preamble.
   It says what bridle is, the agent's identity variables, a sentence about the
   built-in role, and how to use `bridle send`, `inbox`, `status` and `agents`
-  with `--json`. A missing prompt file is logged, not fatal. The preamble is
+  with `--json`. A role's own prompt file may use `{{commands.check}}`,
+  `{{branches.integration}}` and `{{branches.release}}` (left as-is when unset),
+  substituted at render time, so the base `worker`/`manager` prompts name no
+  project's build tool or branch. A missing prompt file is logged, not fatal. The preamble is
   **identical for every agent of a role**, so the prompt cache holds
   ([[docs/design/usage-and-budget#Designing for fewer tokens|fewer tokens]],
   rule 2). Agent-specific facts (name, worktree path) go in the first user
