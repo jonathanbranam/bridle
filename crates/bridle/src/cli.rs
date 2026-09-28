@@ -38,6 +38,11 @@ pub enum Command {
     Serve(ServeArgs),
     /// Ask the daemon to shut down gracefully.
     StopDaemon,
+    /// Reconstruct the tasks/edges/open_questions tables from the project's
+    /// state branch alone (docs/design/storage.md, "Rebuild"): the
+    /// migration path for a fresh clone with no `bridle.db`. Refuses if the
+    /// database already has rows in any of those tables.
+    Rebuild,
     /// List every running project daemon on this machine.
     Daemons,
     /// Daemon + agents summary.
@@ -805,6 +810,12 @@ mod tests {
         assert_eq!(a.task, "tw-7fa2");
         assert_eq!(a.to.as_deref(), Some("tw-c0f1"));
         assert!(matches!(a.kind, EdgeKindArg::Related));
+    }
+
+    #[test]
+    fn rebuild_parses() {
+        let cli = parse(&["rebuild"]).unwrap();
+        assert!(matches!(cli.command, Command::Rebuild));
     }
 
     #[test]
