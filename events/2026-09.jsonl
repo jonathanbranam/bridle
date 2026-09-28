@@ -140,3 +140,9 @@
 {"actor":"human","at":"2026-09-28T16:41:34.238Z","from":"","task":"br-1e0c","to":"open"}
 {"actor":"human","at":"2026-09-28T16:41:43.201Z","from":"","task":"br-4221","to":"open"}
 {"actor":"human","at":"2026-09-28T16:41:51.673Z","from":"","task":"br-7678","to":"open"}
+{"actor":"human","at":"2026-09-28T16:42:02.250Z","from":"","task":"br-bc21","to":"open"}
+{"actor":"agent:pm-1","at":"2026-09-28T16:42:03.785211Z","from":"open","task":"br-1e0c","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-09-28T16:42:03.800090Z","from":"open","task":"br-4221","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-09-28T16:42:03.815317Z","from":"open","task":"br-7678","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-09-28T16:42:03.830147Z","from":"open","task":"br-bc21","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-09-28T16:42:07.790397Z","queue":"reprioritized"}

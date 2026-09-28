@@ -2,9 +2,9 @@
 id = "br-1e0c"
 title = "Move roles and role prompts into workflow/base"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-09-28T16:41:34.238Z"
-updated_at = "2026-09-28T16:41:34.238Z"
+updated_at = "2026-09-28T16:42:03.785211Z"
 +++
 
 Part of onboarding data-contracts (docs/context/onboarding-data-contracts.md, go-ahead
