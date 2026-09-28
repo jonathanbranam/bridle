@@ -22,6 +22,8 @@ bridle send    <agent|human> TEXT [--question] [--when now|idle] [--reply-to ID]
 bridle inbox   [--all] [--mark-read]        # messages to me, plus every task's open question
 bridle ask     <task-id> TEXT                    question against a task; blocks it until answered
 bridle answer  <task-id> TEXT                    answers a task's open question; frees it to be ready again
+bridle claim   <task-id>                         claims a ready task for the caller: planned -> claimed
+bridle release <task-id>                         releases the caller's own claim: claimed -> planned
 bridle interrupt <agent> [--drop-held]
 bridle stop    <agent> [--now]      bridle resume <agent> [--ignore-budget]
 bridle renew   <agent> [--ignore-budget]    stop + fresh process/session, same worktree/branch/role/model
@@ -101,12 +103,13 @@ bridle task reopen <id>
 - **`task`** is scoped, for now, to the `open`/`planned`/`dropped`/`reopened` states
   (docs/design/roles-and-lifecycle.md, Task lifecycle): create, show, edit (title/body,
   never state), list (id/title/kind/state), drop (a reason is required, recorded in the
-  task's thread) and reopen (only a dropped task can be reopened). `claimed`,
-  `in_review`, `integrated`, `accepted`, and everything that depends on claims, arrive
-  with later tasks — see the `Planned` block below for the rest of the surface this
-  command will eventually grow into. There's no `plan` yet either, so nothing can reach
-  `planned` through the CLI — which means `ready` (below) can never actually return
-  anything until a later task adds it; documented as a known gap, not fixed here.
+  task's thread) and reopen (only a dropped task can be reopened). `in_review`,
+  `integrated`, `accepted`, and everything that depends on those, arrive with later
+  tasks — see the `Planned` block below for the rest of the surface this command will
+  eventually grow into. There's still no `plan` yet, so nothing can reach `planned`
+  through the CLI — which means `ready` (below) can never actually return anything, and
+  `claim` can only be exercised in its "not ready" conflict shape, until a later task
+  adds it; documented as a known gap, not fixed here.
 - **`dep add|rm`** creates or removes one coordination edge (docs/design/coordination.md).
   `bridle dep add <task> --to <other> --kind <kind>` draws `<task> --kind--> <other>`;
   `bridle dep add <task> --blocked-by <other>` is sugar for `--kind blocks` with `from`
@@ -124,6 +127,14 @@ bridle task reopen <id>
   body, age) alongside messages addressed to `me`, reading `GET /v1/questions`
   (`TaskManager::list_open_questions`, backed by the same in-memory cache `is_ready`
   reads) rather than walking the state branch.
+- **`claim`/`release`** are thin clients of `TaskManager::claim_task`/`release_task`
+  (docs/design/storage.md, "claims and leases"): `claim` moves a `planned`, unblocked
+  task to `claimed` for the calling principal (`Conflict` if it isn't ready to claim —
+  not planned, blocked, or already claimed); `release` moves it back to `planned`
+  (`Conflict` if the caller isn't the current claimant, including if it isn't claimed at
+  all). Neither takes a body: the claimant is always the caller's own token. A claimed
+  task drops out of `ready` immediately, since `is_ready` requires `planned`; releasing
+  it (explicitly, or via the lease-expiry tick) puts it back.
 - **`ready [--all] [--role]`** lists every ready task: `planned`, with no open `blocks`
   edge naming an unresolved blocker (roles-and-lifecycle.md, "ready is computed"; see
   coordination.md for exactly what "unresolved" means in this build). `--all` fans out
@@ -145,11 +156,12 @@ as a first cut:
 
 ```
 bridle init | sync | prime | doctor              project setup, render, session start, health
-bridle task <cmd> at claimed|in_review|integrated|accepted  -- new/show/edit/list/drop/reopen
-                                                  are built (see Built); `dep add|rm` and
-                                                  `ready [--all] [--role]` are built too, but
-                                                  ready can't return anything until `plan` exists
-bridle claim|release|handoff bridle plan <id>     bridle accept <id> (human only)
+bridle task <cmd> at in_review|integrated|accepted  -- new/show/edit/list/drop/reopen
+                                                  are built (see Built); `dep add|rm`,
+                                                  `claim`/`release`, and `ready [--all] [--role]`
+                                                  are built too, but ready can't return anything
+                                                  until `plan` exists
+bridle handoff bridle plan <id>                   bridle accept <id> (human only)
 bridle inbox --inject        # `ask`/`answer` are built (see Built)
 bridle wait <id> [--until <state>] [--or-message] [--timeout]
 bridle spawn <role> <task>   bridle review

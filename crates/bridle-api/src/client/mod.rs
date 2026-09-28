@@ -429,6 +429,20 @@ impl Client {
         self.get_json(&["v1", "questions"]).await
     }
 
+    /// Claims a ready task for the caller: `planned` -> `claimed`. A 409
+    /// means the task isn't ready to claim (not planned, blocked, or
+    /// already claimed).
+    pub async fn claim_task(&self, id: &str) -> Result<Task, ClientError> {
+        self.post_empty(&["v1", "tasks", id, "claim"]).await
+    }
+
+    /// Releases the caller's own claim: `claimed` -> `planned`. A 409 means
+    /// the caller isn't the current claimant, including if the task isn't
+    /// claimed at all.
+    pub async fn release_task(&self, id: &str) -> Result<Task, ClientError> {
+        self.post_empty(&["v1", "tasks", id, "release"]).await
+    }
+
     // ---------- edges ----------
 
     pub async fn list_edges(&self) -> Result<Vec<Edge>, ClientError> {

@@ -13,11 +13,12 @@ use chrono::{Local, TimeZone, Utc};
 use futures::StreamExt;
 
 use crate::cli::{
-    AgentsArgs, AnswerArgs, AskArgs, BudgetAction, BudgetArgs, BudgetHoldArgs, Cli, Command,
-    CostAction, CostArgs, CostAuditArgs, DepAction, DepArgs, DepEdgeArgs, EdgeKindArg, EventsArgs,
-    InboxArgs, InterruptArgs, LogsArgs, ReadyArgs, RmArgs, SendArgs, ShowArgs, SpawnArgs, StopArgs,
-    TaskAction, TaskArgs, TaskDropArgs, TaskEditArgs, TaskKindArg, TaskNewArgs, TaskReopenArgs,
-    TaskShowArgs, TokenAction, TokenArgs, UsageArgs, UsageByArg, WhenArg,
+    AgentsArgs, AnswerArgs, AskArgs, BudgetAction, BudgetArgs, BudgetHoldArgs, ClaimArgs, Cli,
+    Command, CostAction, CostArgs, CostAuditArgs, DepAction, DepArgs, DepEdgeArgs, EdgeKindArg,
+    EventsArgs, InboxArgs, InterruptArgs, LogsArgs, ReadyArgs, ReleaseArgs, RmArgs, SendArgs,
+    ShowArgs, SpawnArgs, StopArgs, TaskAction, TaskArgs, TaskDropArgs, TaskEditArgs, TaskKindArg,
+    TaskNewArgs, TaskReopenArgs, TaskShowArgs, TokenAction, TokenArgs, UsageArgs, UsageByArg,
+    WhenArg,
 };
 use crate::error::CliError;
 use crate::render;
@@ -50,6 +51,8 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Dep(args) => dep(&cli, args).await,
         Command::Ask(args) => ask(&cli, args).await,
         Command::Answer(args) => answer(&cli, args).await,
+        Command::Claim(args) => claim(&cli, args).await,
+        Command::Release(args) => release(&cli, args).await,
         Command::Ready(args) => ready(&cli, args).await,
         Command::Statusline => statusline(&cli).await,
     }
@@ -417,6 +420,28 @@ async fn answer(cli: &Cli, args: &AnswerArgs) -> Result<(), CliError> {
         render::print_json(&task)?;
     } else {
         println!("answered on {}", task.id);
+    }
+    Ok(())
+}
+
+async fn claim(cli: &Cli, args: &ClaimArgs) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let task = client.claim_task(&args.task).await?;
+    if cli.json {
+        render::print_json(&task)?;
+    } else {
+        println!("claimed {}", task.id);
+    }
+    Ok(())
+}
+
+async fn release(cli: &Cli, args: &ReleaseArgs) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let task = client.release_task(&args.task).await?;
+    if cli.json {
+        render::print_json(&task)?;
+    } else {
+        println!("released {}", task.id);
     }
     Ok(())
 }

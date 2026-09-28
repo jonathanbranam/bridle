@@ -30,13 +30,15 @@ JSON over HTTP, versioned under `/v1`. The contract is
 | `GET /v1/tasks/{id}` · `PATCH /v1/tasks/{id}` | one task, including its body and thread · change `title`/`body` (`{title?, body?}`; never state) |
 | `POST /v1/tasks/{id}/drop` | `{reason}` (required) -> `dropped`, recorded in the thread |
 | `POST /v1/tasks/{id}/reopen` | `dropped` -> `reopened`; any other current state is a 409 |
+| `POST /v1/tasks/{id}/claim` | claims a ready task for the caller: `planned` -> `claimed`; 409 if it isn't ready (not planned, blocked, or already claimed) |
+| `POST /v1/tasks/{id}/release` | releases the caller's own claim: `claimed` -> `planned`; 409 if the caller isn't the current claimant, including if it isn't claimed at all |
 | `POST /v1/shutdown` | graceful stop of all agents, then exit (human only) |
 
 Tasks ([[docs/design/storage#The state branch|storage.md]]) are scoped, for
-now, to `open`/`planned`/`dropped`/`reopened`
+now, to `open`/`planned`/`claimed`/`dropped`/`reopened`
 ([[docs/design/roles-and-lifecycle#Task lifecycle|task lifecycle]]);
-`ready`/`claimed`/`in_review`/`integrated`/`accepted` and the edges/questions/
-claims that drive them arrive with later tasks.
+`in_review`/`integrated`/`accepted` and what drives them arrive with later
+tasks.
 
 `POST /v1/agents` with a `prompt` (or a role `start_prompt`) waits briefly
 after sending it for that turn's readiness before answering (a `system/init`

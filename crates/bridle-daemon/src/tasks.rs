@@ -487,10 +487,6 @@ impl TaskManager {
     /// the database: claims are SQLite-only, with no state-branch file or
     /// thread entry (storage.md, "the ephemeral tables … arrive with later
     /// tasks").
-    #[allow(
-        dead_code,
-        reason = "exercised by tests only until bridle claim (P0-4b) calls it"
-    )]
     pub async fn claim_task(&self, id: &str, by: &PrincipalId) -> Result<Task, TaskError> {
         let mut task = self
             .get_task(id)
@@ -515,10 +511,6 @@ impl TaskManager {
     /// Releases `id`'s claim: `claimed` -> `planned`. Fails with `Conflict`
     /// if `by` isn't the current claimant (including if the task isn't
     /// claimed at all).
-    #[allow(
-        dead_code,
-        reason = "exercised by tests only until bridle release (P0-4b) calls it"
-    )]
     pub async fn release_task(&self, id: &str, by: &PrincipalId) -> Result<Task, TaskError> {
         {
             let claims = self.claims.lock().expect("claims lock");
