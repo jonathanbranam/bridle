@@ -54,10 +54,22 @@ workflow.toml        lifecycle, gates, roles, models (see roles-and-lifecycle, g
 rules/<id>.md        must/should statements, one per file, with ids
 guides/<id>.md       longer how-to prose (testing, architecture, verification)
 skills/<name>/       skill sources (SKILL.md + scripts)
-agents/<role>.md     subagent definitions
+agents/<role>.md     Claude Code subagent definitions (rendered to .claude/agents/)
+roles/<role>.md      driver-facing role prompts (bridle's own worker/manager/etc,
+                      referenced by system_prompt in .bridle/config.toml)
 hooks/               hook scripts, if any beyond bridle's own
 facts.md             short operational facts, loaded every session (the bd prime idea)
 ```
+
+`agents/<role>.md` and `roles/<role>.md` are easy to confuse but not the same thing:
+`agents/` is Claude Code's own subagent mechanism (the `Agent` tool, `.claude/agents/`);
+`roles/` is bridle's driver-facing role prompt, appended after bridle's own preamble to
+the `claude` process's system prompt for a whole bridle role (worker, manager,
+product-manager, orchestrator, advisor) — see
+[[docs/design/agent-host/roles-and-config|roles and config]]. `bridle sync` renders
+`agents/` into `.claude/agents/*.md` (below); it does not yet do anything with `roles/` —
+a project still points `system_prompt` at a `roles/<role>.md` path by hand in its own
+`.bridle/config.toml` (docs/questions/open/sync-does-not-render-role-prompts-rl2v.md).
 
 ## Rules have ids, and overrides are explicit
 

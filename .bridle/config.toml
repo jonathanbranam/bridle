@@ -17,7 +17,7 @@ allowed_tools    = ["Bash", "Read", "Edit", "Write", "Glob", "Grep"]
 # remote refs are stale (only the merger pushes), so no fetching or merging from origin.
 # (SendMessage and friends are denied by bridle's own built-in worker default.)
 disallowed_tools = ["Bash(git push *)", "Bash(git checkout main*)", "Bash(git fetch *)", "Bash(git pull *)", "Bash(git merge origin*)"]
-system_prompt    = ".bridle/roles/worker.md"
+system_prompt    = "workflow/base/roles/worker.md"
 # Per process, a runaway guard only: claude checks it after each model call, and
 # `bridle resume` grants a fresh allowance. The cost is list price, a relative
 # unit on a subscription. Pacing belongs to the account's windows (the budget
@@ -34,7 +34,7 @@ allowed_tools     = ["Bash(bridle *)", "Bash(git log*)", "Bash(git diff*)", "Bas
 # (SendMessage and friends are denied by bridle's own built-in worker default,
 # which custom roles like this one start from.)
 disallowed_tools  = ["Bash(bridle spawn*)", "Bash(bridle stop*)", "Bash(bridle rm*)", "Bash(bridle resume*)", "Bash(bridle interrupt*)"]
-system_prompt     = ".bridle/roles/product-manager.md"
+system_prompt     = "workflow/base/roles/product-manager.md"
 resume_on_restart = true
 max_budget_usd    = 50.0
 # Falls back to the built-in worker default (stop_check = true) since this is a custom
@@ -51,7 +51,7 @@ workdir           = "repo"
 permission_mode   = "dontAsk"
 allowed_tools     = ["Bash(bridle *)", "Bash(git log*)", "Bash(git diff*)", "Bash(git show*)", "Bash(git status*)", "Bash(git branch*)", "Bash(git merge-base *)", "Bash(git merge --no-ff *)", "Bash(git push origin main)", "Bash(git -C * status*)", "Read", "Glob", "Grep"]
 # (SendMessage and friends are denied by bridle's own built-in manager default.)
-system_prompt     = ".bridle/roles/manager.md"
+system_prompt     = "workflow/base/roles/manager.md"
 resume_on_restart = true
 max_budget_usd    = 50.0
 start_prompt      = """

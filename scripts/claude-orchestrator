@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Start a fresh orchestrator session (.bridle/roles/orchestrator.md), reachable by Remote Control.
+# Start a fresh orchestrator session (workflow/base/roles/orchestrator.md), reachable by Remote Control.
 # The outgoing orchestrator has already brought docs/context/orchestrator-state.md up to date,
 # committed it and stopped its watcher and heartbeat. Ticket d4mz; the opening prompt comes from
 # `bridle prime orchestrator`, which prints the role prompt, current state and startup steps in

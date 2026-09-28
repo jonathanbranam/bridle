@@ -276,7 +276,7 @@ bridle task note   <id> TEXT                     plain note to the task's thread
   agent from stopping.
 - **`prime orchestrator`** prints a fresh orchestrator session's opening context in one
   go (docs/questions/open/one-command-orchestrator-handover-d4mz.md, step 2): the role
-  prompt (`.bridle/roles/orchestrator.md`), the current state
+  prompt (`workflow/base/roles/orchestrator.md`), the current state
   (`docs/context/orchestrator-state.md`), then the startup steps (check in with
   `status`/`agents`/messages, start the watcher and a heartbeat, keep both managers'
   work moving, verify merges, watch context). Purely local — no daemon call — and reads

@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Start the human's advisor session (.bridle/roles/advisor.md): read-only investigation, ticket
+# Start the human's advisor session (workflow/base/roles/advisor.md): read-only investigation, ticket
 # filing and question triage, reachable by Remote Control. Not an orchestrator: no watcher.
 # Needs ~/.bridle-advisor.token, made once by the human with `bridle token create advisor`.
 # Usage: claude-advisor [extra claude args]
@@ -11,6 +11,6 @@ if [[ ! -s $token_file ]]; then
 fi
 export BRIDLE_TOKEN=$(<$token_file)
 exec claude --name bridle-advisor --remote-control bridle-advisor "$@" \
-  "$(cat .bridle/roles/advisor.md)
+  "$(cat workflow/base/roles/advisor.md)
 
 Check in: bridle status, and the open questions to the human. Say hello to the human in one line, then wait."
