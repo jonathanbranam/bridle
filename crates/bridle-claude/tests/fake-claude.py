@@ -37,13 +37,16 @@ crosses the cap still runs but its result is `error_max_budget_usd`; every
 later turn fails the same way at once, costing nothing.
 
 With `FAKE_CLAUDE_ARGV_FILE` set, every invocation dumps its argv (JSON list,
-excluding argv[0]) to that path, so tests can assert on flags like
-`--allowedTools` directly without leaving a stray file in the agent's own
-worktree.
+excluding argv[0]) to `<path>.<pid>` (its own pid-suffixed file, never the
+bare path), so tests can assert on flags like `--allowedTools` directly
+without leaving a stray file in the agent's own worktree, and so that two
+invocations sharing the same override (e.g. a test's own process racing the
+daemon's governor probes, which reuse the same overridden `claude_program`)
+can never clobber each other's dump — each pid gets its own file.
 
 With `FAKE_CLAUDE_ENV_FILE` set, every invocation dumps its own environment
-(JSON object) to that path, so tests can assert on a per-spawn env var
-reaching (or not reaching) the child process.
+(JSON object) to `<path>.<pid>`, same reasoning as above, so tests can assert
+on a per-spawn env var reaching (or not reaching) the child process.
 
 `system/init` reports `claude_code_version` from a `.fake-claude-version` file
 in the working directory, or "fake".
@@ -464,16 +467,20 @@ def main():
     # Opt-in: tests that want to assert on the invocation itself (e.g.
     # --allowedTools), not just its behaviour, set this rather than always
     # dropping a file into the agent's own worktree.
+    # Suffixed with our own pid: two invocations sharing the same override
+    # (a test's own process racing the daemon's governor probes) each get
+    # their own file, so neither can overwrite the other's dump before a
+    # test gets to read it.
     argv_file = os.environ.get("FAKE_CLAUDE_ARGV_FILE")
     if argv_file:
-        with open(argv_file, "w") as f:
+        with open(f"{argv_file}.{os.getpid()}", "w") as f:
             json.dump(sys.argv[1:], f)
     # Opt-in, same idea as FAKE_CLAUDE_ARGV_FILE: a test that wants to assert
     # on the child process's own environment (e.g. a per-spawn secret) sets
     # this rather than always dumping it.
     env_file = os.environ.get("FAKE_CLAUDE_ENV_FILE")
     if env_file:
-        with open(env_file, "w") as f:
+        with open(f"{env_file}.{os.getpid()}", "w") as f:
             json.dump(dict(os.environ), f)
     session_id, _resume, replay_flag = parse_args(sys.argv[1:])
     state["session_id"] = session_id

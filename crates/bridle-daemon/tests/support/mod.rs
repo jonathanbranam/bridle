@@ -276,6 +276,70 @@ where
     }
 }
 
+/// Reads a fake-claude dump written by [`fake_claude_argv_dump_wrapper`],
+/// [`fake_claude_env_dump_wrapper`], or [`fake_claude_argv_and_env_dump_wrapper`].
+/// Each invocation (including the daemon's own governor probes, which reuse
+/// the same overridden `claude_program`) writes its own `<path>.<pid>` file
+/// rather than sharing one, so a probe can never overwrite the dump a test is
+/// waiting to read; this scans every such file for one whose parsed contents
+/// satisfy `pred`, retrying (via [`wait_for`]) until one shows up.
+pub async fn wait_for_dump<T, F>(what: &str, path: &Path, pred: F) -> T
+where
+    T: serde::de::DeserializeOwned,
+    F: Fn(&T) -> bool,
+{
+    wait_for(what, || async { read_dump(path, &pred) }).await
+}
+
+fn read_dump<T, F>(path: &Path, pred: &F) -> Option<T>
+where
+    T: serde::de::DeserializeOwned,
+    F: Fn(&T) -> bool,
+{
+    let dir = path.parent().expect("dump path has a parent dir");
+    let prefix = format!(
+        "{}.",
+        path.file_name()
+            .expect("dump path has a file name")
+            .to_string_lossy()
+    );
+    for entry in std::fs::read_dir(dir).ok()?.flatten() {
+        if !entry.file_name().to_string_lossy().starts_with(&prefix) {
+            continue;
+        }
+        if let Some(v) = std::fs::read_to_string(entry.path())
+            .ok()
+            .and_then(|s| serde_json::from_str::<T>(&s).ok())
+            .filter(|v| pred(v))
+        {
+            return Some(v);
+        }
+    }
+    None
+}
+
+/// Removes every per-invocation dump file left by earlier `claude`
+/// invocations under `path` (see [`wait_for_dump`]), so a later
+/// [`wait_for_dump`] on the same `path` can't pass on a stale file from
+/// before a stop/renew and must observe a fresh invocation's dump.
+pub fn clear_dump(path: &Path) {
+    let dir = path.parent().expect("dump path has a parent dir");
+    let prefix = format!(
+        "{}.",
+        path.file_name()
+            .expect("dump path has a file name")
+            .to_string_lossy()
+    );
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        if entry.file_name().to_string_lossy().starts_with(&prefix) {
+            let _ = std::fs::remove_file(entry.path());
+        }
+    }
+}
+
 pub async fn wait_for_state(client: &Client, id: &str, state: AgentState) -> Agent {
     wait_for(&format!("agent {id} to reach {state:?}"), || async {
         let a = client.get_agent(id).await.ok()?;
