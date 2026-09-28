@@ -65,6 +65,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::StopCheck => stop_check(&cli).await,
         Command::Prime(args) => prime(args).await,
         Command::Rules(args) => rules(&cli, args).await,
+        Command::Sync => sync(&cli).await,
     }
 }
 
@@ -1196,6 +1197,47 @@ async fn rules_diff(cli: &Cli, args: &RulesDiffArgs) -> Result<(), CliError> {
         }
         println!();
     }
+    Ok(())
+}
+
+/// `bridle sync`: local and static, like `rules explain`/`diff` — renders
+/// the resolved workflow layers into CLAUDE.md, .claude/skills,
+/// .claude/agents and .claude/settings.json's hooks
+/// (docs/design/workflow-layers.md, `bridle_daemon::sync`).
+async fn sync(cli: &Cli) -> Result<(), CliError> {
+    use bridle_daemon::config::Config;
+    use bridle_daemon::rules;
+
+    let repo = std::env::current_dir().context("current directory")?;
+    let config = Config::load(&repo).context("loading .bridle/config.toml")?;
+    let workflow_root = config.workflow.as_deref().map(Path::new);
+    let layers = rules::discover_layers(&repo, workflow_root, &config.packs);
+    let report = bridle_daemon::sync::sync(&repo, &layers)
+        .map_err(|e| CliError::from(anyhow::Error::new(e).context("syncing workflow layers")))?;
+
+    if cli.json {
+        render::print_json(&report)?;
+        return Ok(());
+    }
+
+    println!(
+        "CLAUDE.md: {}",
+        if report.claude_md_changed {
+            "updated"
+        } else {
+            "unchanged"
+        }
+    );
+    let list = |items: &[String]| {
+        if items.is_empty() {
+            "none".to_string()
+        } else {
+            items.join(", ")
+        }
+    };
+    println!("skills: {}", list(&report.skills));
+    println!("agents: {}", list(&report.agents));
+    println!("hooks: {}", list(&report.hook_events));
     Ok(())
 }
 
