@@ -95,3 +95,15 @@ now a shared 60 s constant. Left as they were: the `elapsed() < 5 s` speed
 checks (`spawn_messaging_test.rs`, `lifecycle_test.rs`), and `cli_e2e.rs`'s two
 10 s `wait_timeout_or_kill` shutdown waits, which sit beside the unexplained
 "daemon.json should be removed on clean shutdown" failure above.
+
+### The promptness test, diagnosed, 2026-09-28 (orchestrator)
+
+`spawn_with_a_crashing_first_message_returns_promptly` failed again (5.79 s
+against its 5 s bound, load ~20, on `cfe3cea`); the next run was green.
+`spawn` returns on the first of `system/init`, the process's exit, or
+`SPAWN_READY_TIMEOUT` (8 s, `supervisor.rs`). The fake emits `system/init`
+before it crashes, so `spawn` returns at init, before the crash. The 5 s bound
+therefore measures only how fast the fake starts under load, and the 10.4 s
+failure was the 8 s timeout plus overhead. The test's doc comment says the
+failure "shows up in the spawn response itself", but nothing asserts on the
+response, and with init arriving first it likely doesn't.
