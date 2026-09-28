@@ -62,3 +62,12 @@ So a sleep of about 20 minutes needs no plan: let it be interrupted. Still to
 observe: a sleep longer than 30 minutes (the staleness wind-down stops working
 agents; does work come back without a hand?), and whether stall detection
 should discount time the machine was asleep.
+
+The human runs `caffeinate -si` all the time (their words: "I do that b/c the
+laptop will sleep even when plugged in usually; I handle that manually"). It
+didn't keep the laptop awake with the lid closed on battery: `-s` only holds
+off sleep on AC power. `pmset -g log` for the commute (Eastern times) shows
+it asleep, with two short maintenance dark wakes: 09:07:27 (8 s) and
+09:18:56 (8 s), then the full wake at 09:21:34. The daemon's events at
+13:18:55 UTC (the stall events and the governor's hold) come from that
+second dark wake, not from the lid opening.
