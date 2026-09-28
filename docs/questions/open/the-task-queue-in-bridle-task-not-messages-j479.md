@@ -42,26 +42,49 @@ The human, verbatim (2026-09-28):
 
 ## What the human wants
 
-- The product manager manages the queue in `bridle task`, not by messaging the
-  development manager.
+- The product manager manages the queue in bridle, not by messaging the development
+  manager.
 - The queue survives a crash or renewal: it's in bridle's records, not in an agent's
   context or message history.
 - From bridle, the human can see the tasks being worked now and the next tasks up.
 
-## The advisor's recommendation
+The human, verbatim, later the same day (discussing how tasks get ordered):
 
-- Use the lifecycle that's already built (`docs/design/roles-and-lifecycle.md`): the
-  product manager writes the brief into the task body and moves it `open -> planned`,
-  with `blocks` edges where order matters; the development manager takes work from
-  `bridle ready` and claims it for the worker it spawns (`claimed_by`).
-- Add the one missing piece, an order among ready tasks (e.g. a priority or rank
-  field the product manager sets), so "next up" is a query, not a message.
-- One view for the human, e.g. `bridle queue` or `bridle task list --queue`: claimed
-  tasks (with the worker), then ready tasks in order.
-- Change both role prompts: no `Prepared task` messages. A message to the manager is
-  only a nudge ("the queue changed"), never the only record.
+> dependencies should be for actual task dependencies, not for task ordering by priority;
+> should the task order be written into the task? Feels like the task queue is a separate
+> thing.
+> manager should be mechanic not making priority decisions, that is good.
+> we should formalize how tasks get ordered;
+>
+> should the manager have a set of equally ranked tasks and decide what to do based on
+> load and available workers? Or is that the PM?
+>
+> I don't mind if the manager picks from equally ranked tasks that is reasonable, but the
+> project plan overall should be set by the PM.
 
-## Notes
+The human agreed to the model below ("yes").
 
-- Claims live only in SQLite (storage.md, "claims"). After `bridle rebuild`, what was
-  being worked would be lost; whether that matters is part of point 2.
+## The model
+
+- **Tasks are the what**: brief (in the task body), kind, and real dependencies
+  (`blocks` edges). The product manager writes them. No ordering on the task, and no
+  edges used to force an order.
+- **The queue is the plan**, a separate record owned by the product manager: an ordered
+  list of tiers, each tier a set of equally ranked task IDs; tier 1 before tier 2. A task
+  not in the queue is backlog.
+- **The development manager is mechanical.** It takes from the highest tier that has a
+  startable task (dependencies met, unclaimed), and within a tier picks by load and free
+  worker slots (model size, tasks touching the same files run one after another). It
+  never moves tasks between tiers. If a tier is stuck on dependencies, it takes from the
+  next tier rather than idling. A strict order is one task per tier.
+- **Durable**: the queue lives on the state branch beside the tasks, so `bridle rebuild`
+  restores it, and each change is a commit (who reprioritised what, and when). Who is
+  working which task should be durable too; today claims are SQLite-only (storage.md,
+  "claims"), so a rebuild forgets them.
+- **Visible**: `bridle queue` shows the tasks being worked (with the worker), then the
+  tiers in order.
+- **Who edits it**: the product manager, and the human to override. The development
+  manager only reads and claims.
+- **Role prompts**: `product-manager.md` and `manager.md` change to match. No `Prepared
+  task` messages; a message to the manager is only a nudge ("the queue changed"), never
+  the only record.
