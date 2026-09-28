@@ -24,6 +24,14 @@ pub const TIMEOUT: Duration = Duration::from_secs(20);
 /// A passing test should never be slowed by this; only a genuinely hung one waits longer.
 pub const HANG_GUARD_TIMEOUT: Duration = Duration::from_secs(60);
 
+/// A fake `~/.bridle` for [`Overrides::bridle_home`], under a test's own
+/// tempdir, so a daemon started in-process never reads the real machine's
+/// `~/.bridle/config.toml` (it's read directly, not via `$BRIDLE_HOME`, so
+/// tests can't isolate it by setting an env var without `unsafe`).
+pub fn machine_home_dir(tmp: &Path) -> PathBuf {
+    tmp.join("machine-home")
+}
+
 pub fn fake_claude_path() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../bridle-claude/tests/fake-claude.py")
@@ -132,9 +140,10 @@ pub async fn start_daemon_with_config(
         project: None,
         listen: Some("127.0.0.1:0".parse().expect("valid addr")),
     };
-    let overrides = overrides.unwrap_or_else(|| Overrides {
+    let mut overrides = overrides.unwrap_or_else(|| Overrides {
         claude_program: fake_claude_path().to_string_lossy().into_owned(),
         write_registry: false,
+        bridle_home: None,
         stall_check_interval: Duration::from_secs(3600),
         tracker_interval: Duration::from_millis(200),
         governor_interval: Duration::from_millis(200),
@@ -143,6 +152,10 @@ pub async fn start_daemon_with_config(
         task_flush_interval: Duration::from_secs(3600),
         claim_lease_check_interval: Duration::from_secs(3600),
     });
+    // Never read the real machine's ~/.bridle/config.toml: every test
+    // daemon gets its own fake machine home, regardless of what the caller
+    // passed in.
+    overrides.bridle_home = Some(machine_home_dir(tmp.path()));
     let running = bridle_daemon::start(opts, overrides)
         .await
         .expect("start daemon");

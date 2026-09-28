@@ -654,8 +654,16 @@ impl Config {
     /// (`$BRIDLE_HOME/config.toml`, else `~/.bridle/config.toml`; see
     /// `bridle_api::discovery::bridle_home`) merged over the built-in
     /// defaults. Missing file is not an error.
-    fn load_machine_budget() -> Result<BudgetConfig, ConfigError> {
-        let path = bridle_api::discovery::bridle_home().join("config.toml");
+    ///
+    /// `home_override` lets callers (tests, via [`crate::Overrides`]) bypass
+    /// the real machine home instead of mutating `$BRIDLE_HOME`, which would
+    /// need `std::env::set_var` -- unsafe as of edition 2024, and `unsafe`
+    /// is forbidden in this workspace.
+    fn load_machine_budget(home_override: Option<&Path>) -> Result<BudgetConfig, ConfigError> {
+        let home = home_override
+            .map(Path::to_path_buf)
+            .unwrap_or_else(bridle_api::discovery::bridle_home);
+        let path = home.join("config.toml");
         match std::fs::read_to_string(&path) {
             Ok(text) => {
                 let raw: RawConfig =
@@ -674,7 +682,15 @@ impl Config {
     /// merged with the machine-wide `[budget]` section. Missing file is not
     /// an error: the file is optional (docs/design/agent-host/operating-model.md).
     pub fn load(repo: &Path) -> Result<Self, ConfigError> {
-        let machine_budget = Self::load_machine_budget()?;
+        Self::load_with_home(repo, None)
+    }
+
+    /// [`Config::load`], with the machine-wide home directory overridable
+    /// (see [`Self::load_machine_budget`]). Tests use this, via
+    /// [`crate::Overrides::bridle_home`], to stay isolated from the real
+    /// machine's `~/.bridle/config.toml`.
+    pub fn load_with_home(repo: &Path, home_override: Option<&Path>) -> Result<Self, ConfigError> {
+        let machine_budget = Self::load_machine_budget(home_override)?;
         let path = repo.join(".bridle").join("config.toml");
         match std::fs::read_to_string(&path) {
             Ok(text) => Self::parse_with_budget(&text, machine_budget, &path),
