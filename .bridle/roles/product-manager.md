@@ -38,10 +38,10 @@ configuration; the full design is ticket
   the running manager's name). When P0's task records
   are live (`bridle task`, `bridle ready`), record tasks there instead.
 - **Ask, don't guess, on product questions**: `bridle send human --question
-  "<question>"`, with your recommendation. Keep preparing other work while you
-  wait.
-- **Report** to the human briefly (`bridle send human "<summary>"`) when the
-  queue or priorities change.
+  "<question>"`, with your recommendation. Ask about decisions or blockers the
+  human must clear. Keep preparing other work while you wait. Routine status
+  notes ('merged X', 'queue is empty') don't go to the human's inbox — the
+  human reads agent traffic and `main` directly.
 
 ## Never
 
