@@ -11,13 +11,13 @@ use serde::de::DeserializeOwned;
 use thiserror::Error;
 
 use crate::types::{
-    Agent, AnswerQuestionRequest, ApiErrorResponse, AskQuestionRequest, BudgetHoldRequest,
-    BudgetOverrideRequest, BudgetStatus, DropTaskRequest, Edge, EditTaskRequest, Event, EventQuery,
-    Health, InterruptRequest, InterruptResponse, Message, MessageQuery, NewEdgeRequest,
-    NewTaskRequest, NoteTaskRequest, OpenQuestion, RemoveEdgeQuery, RemoveQuery, RenewRequest,
-    ResumeRequest, SendRequest, SpawnRequest, Status, StatusLineReport, StopRequest, Task,
-    TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
-    UsageBreakdown, UsageBreakdownQuery,
+    AddQueueTierRequest, Agent, AnswerQuestionRequest, ApiErrorResponse, AskQuestionRequest,
+    BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, DropTaskRequest, Edge, EditTaskRequest,
+    Event, EventQuery, Health, InterruptRequest, InterruptResponse, Message, MessageQuery,
+    NewEdgeRequest, NewTaskRequest, NoteTaskRequest, OpenQuestion, Queue, RemoveEdgeQuery,
+    RemoveQuery, RenewRequest, ResumeRequest, SendRequest, SetQueueRequest, SpawnRequest, Status,
+    StatusLineReport, StopRequest, Task, TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo,
+    TranscriptLine, TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery,
 };
 
 #[derive(Debug, Error)]
@@ -402,6 +402,16 @@ impl Client {
         self.get_json_query(&["v1", "tasks"], &query).await
     }
 
+    /// `GET /v1/tasks?top_tier=true`: just the highest queue tier with a
+    /// startable task (roles-and-lifecycle.md, "the queue").
+    pub async fn top_tier_ready_tasks(&self) -> Result<Vec<Task>, ClientError> {
+        let query = TaskQuery {
+            top_tier: Some(true),
+            ..Default::default()
+        };
+        self.get_json_query(&["v1", "tasks"], &query).await
+    }
+
     /// `GET /v1/tasks?claimed_by=...`; `claimed_by` may be `me`, `human`, an
     /// agent name, or a full `PrincipalId`.
     pub async fn list_tasks_claimed_by(&self, claimed_by: &str) -> Result<Vec<Task>, ClientError> {
@@ -430,6 +440,11 @@ impl Client {
 
     pub async fn reopen_task(&self, id: &str) -> Result<Task, ClientError> {
         self.post_empty(&["v1", "tasks", id, "reopen"]).await
+    }
+
+    /// `open` -> `planned`. A 409 means the task isn't `open`.
+    pub async fn plan_task(&self, id: &str) -> Result<Task, ClientError> {
+        self.post_empty(&["v1", "tasks", id, "plan"]).await
     }
 
     pub async fn ask_question(&self, id: &str, body: &str) -> Result<Task, ClientError> {
@@ -478,6 +493,25 @@ impl Client {
     /// claimed at all.
     pub async fn release_task(&self, id: &str) -> Result<Task, ClientError> {
         self.post_empty(&["v1", "tasks", id, "release"]).await
+    }
+
+    // ---------- queue ----------
+
+    pub async fn get_queue(&self) -> Result<Queue, ClientError> {
+        self.get_json(&["v1", "queue"]).await
+    }
+
+    /// PM-only (and human): 403 for anyone else (roles-and-lifecycle.md,
+    /// "the queue").
+    pub async fn set_queue(&self, tiers: Vec<Vec<String>>) -> Result<Queue, ClientError> {
+        self.post_json(&["v1", "queue"], &SetQueueRequest { tiers })
+            .await
+    }
+
+    /// PM-only (and human), same as [`Client::set_queue`].
+    pub async fn add_queue_tier(&self, tasks: Vec<String>) -> Result<Queue, ClientError> {
+        self.post_json(&["v1", "queue", "tiers"], &AddQueueTierRequest { tasks })
+            .await
     }
 
     // ---------- edges ----------

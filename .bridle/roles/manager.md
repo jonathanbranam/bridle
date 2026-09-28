@@ -9,10 +9,15 @@ configuration; the full design is ticket tx3f.)
 
 ## How you work
 
-- **Work from the product manager's queue.** Take the next prepared task,
-  read enough of the docs and code to brief a worker well, and spawn it. If a
-  task is under-specified or too big for one worker (its context should stay
-  well under 200K tokens), send it back to the product manager instead of
+- **Work mechanically from `bridle queue`/`bridle ready`.** Claim from the
+  highest tier with a startable task; within a tier, pick by load (free
+  worker slots, model size; tasks touching the same files run one after
+  another, never in parallel). Never move a task between tiers or reorder
+  the queue yourself — that's the product manager's call. If the top tier is
+  blocked on a dependency, take from the next tier down instead of idling;
+  never reach into backlog (a task outside every tier). If a task is
+  under-specified or too big for one worker (its context should stay well
+  under 200K tokens), send it back to the product manager instead of
   re-planning it yourself. Direct instructions from the human or the
   orchestrator (urgent fixes, a red `main`) go ahead of the queue.
 - **One task per worker, at most two workers at a time.** Spawn with

@@ -1,15 +1,17 @@
 //! The task record's HTTP surface (P0-1): create, show, edit, list, drop,
 //! reopen. See docs/design/storage.md. Plus questions (P0-3): `ask`/`answer`
 //! and their effect on readiness (docs/design/coordination.md, "Questions do
-//! not stop work").
+//! not stop work"). Plus `plan` and the queue (j479): `open` -> `planned`,
+//! and the PM-owned queue record (roles-and-lifecycle.md, "the queue").
 
 mod support;
 
 use bridle_api::ClientError;
 use bridle_api::types::{
-    DropTaskRequest, EditTaskRequest, NewTaskRequest, TaskKind, TaskState, ThreadEntryKind,
+    AgentState, DropTaskRequest, EditTaskRequest, NewTaskRequest, SpawnRequest, TaskKind,
+    TaskState, ThreadEntryKind, Workdir,
 };
-use support::start_daemon;
+use support::{start_daemon, wait_for_state};
 
 fn new_req(title: &str, kind: TaskKind) -> NewTaskRequest {
     NewTaskRequest {
@@ -156,10 +158,10 @@ async fn reopen_only_applies_to_a_dropped_task() {
 /// `GET /v1/questions`, which is exactly what `TaskManager::is_ready` checks
 /// — see `tasks.rs`'s own
 /// `asking_a_question_blocks_ready_and_answering_unblocks_it` for readiness
-/// itself), then answering clears it. This build has no `plan` command, so a
-/// task here never reaches `planned` and `ready_tasks` always excludes it
-/// regardless of questions; the open-questions index is the observable
-/// stand-in for "blocked" at this layer.
+/// itself), then answering clears it. The full ready-tasks round trip
+/// through a `plan` needs a `planned` task to bite on; that's covered by
+/// `plan_moves_open_to_planned_and_ask_still_blocks_ready` below, so this
+/// one just checks the open-questions index itself.
 #[tokio::test]
 async fn ask_blocks_a_task_and_answer_frees_it_again() {
     let (daemon, _tmp) = start_daemon(None).await;
@@ -251,14 +253,13 @@ async fn note_appears_in_the_task_thread_from_human_and_agent() {
     assert_eq!(fetched.thread.len(), 2);
 }
 
-/// `bridle claim`/`bridle release`'s HTTP surface. This build has no `plan`
-/// command (see `ask_blocks_a_task_and_answer_frees_it_again` above), so a
-/// task created here never reaches `planned` and `claim` can only be
-/// exercised in its "not ready" conflict shape at this layer; the full
+/// `bridle claim`/`bridle release`'s HTTP surface, in its "not ready"
+/// conflict shape (a fresh task is `open`, not `planned`). The full
 /// claim -> ready-exclusion -> release -> ready-again round trip (plus a
-/// second claim being rejected) is covered where a task can actually reach
-/// `planned`: `TaskManager`'s own
-/// `claim_blocks_ready_and_release_unblocks_it` in `tasks.rs`.
+/// second claim being rejected) is covered where the state-machine details
+/// live: `TaskManager`'s own `claim_blocks_ready_and_release_unblocks_it` in
+/// `tasks.rs`; `plan_then_claim_round_trips_through_the_http_surface` below
+/// covers plan -> claim end to end at this layer.
 #[tokio::test]
 async fn claim_of_an_unknown_task_is_404() {
     let (daemon, _tmp) = start_daemon(None).await;
@@ -349,6 +350,189 @@ async fn a_task_created_before_restart_is_still_there_after() {
     running.shutdown();
     running.join().await.expect("join");
     drop(tmp);
+}
+
+#[tokio::test]
+async fn plan_moves_open_to_planned_and_rejects_a_second_plan() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let c = &daemon.client;
+    let task = c
+        .new_task(&new_req("Add foo", TaskKind::Feature))
+        .await
+        .expect("new task");
+    assert_eq!(task.state, TaskState::Open);
+
+    let planned = c.plan_task(&task.id).await.expect("plan");
+    assert_eq!(planned.state, TaskState::Planned);
+    assert!(
+        c.ready_tasks()
+            .await
+            .expect("ready tasks")
+            .iter()
+            .any(|t| t.id == task.id),
+        "a planned task with no blockers is ready"
+    );
+
+    let err = c.plan_task(&task.id).await.expect_err("already planned");
+    assert!(matches!(err, ClientError::Api { status: 409, .. }));
+}
+
+#[tokio::test]
+async fn plan_of_an_unknown_task_is_404() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let err = daemon
+        .client
+        .plan_task("br-nope")
+        .await
+        .expect_err("no such task");
+    assert!(matches!(err, ClientError::Api { status: 404, .. }));
+}
+
+/// `plan` -> `claim` -> `release`, the same round trip
+/// `claim_of_a_task_that_is_not_ready_is_a_conflict`/`release_of_an_unclaimed_task_is_a_conflict`
+/// above only reach the "not ready yet" half of.
+#[tokio::test]
+async fn plan_then_claim_round_trips_through_the_http_surface() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let c = &daemon.client;
+    let task = c
+        .new_task(&new_req("Add foo", TaskKind::Feature))
+        .await
+        .expect("new task");
+    c.plan_task(&task.id).await.expect("plan");
+
+    let claimed = c.claim_task(&task.id).await.expect("claim");
+    assert_eq!(claimed.state, TaskState::Claimed);
+    assert_eq!(claimed.claimed_by.as_deref(), Some("human"));
+
+    let released = c.release_task(&task.id).await.expect("release");
+    assert_eq!(released.state, TaskState::Planned);
+    assert_eq!(released.claimed_by, None);
+}
+
+/// `bridle queue`'s HTTP surface: empty by default, set by the PM/human
+/// (here, human), read back verbatim, and `?top_tier=true` picks the
+/// highest tier with a startable task — skipping one stuck on a dependency
+/// rather than returning nothing (roles-and-lifecycle.md, "the queue").
+#[tokio::test]
+async fn queue_set_get_and_top_tier_pick_the_right_tier_when_blocked() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let c = &daemon.client;
+
+    assert!(
+        c.get_queue()
+            .await
+            .expect("get empty queue")
+            .tiers
+            .is_empty()
+    );
+
+    let blocker = c
+        .new_task(&new_req("Blocker", TaskKind::Chore))
+        .await
+        .expect("new blocker");
+    let blocked = c
+        .new_task(&new_req("Blocked", TaskKind::Feature))
+        .await
+        .expect("new blocked");
+    let next = c
+        .new_task(&new_req("Next", TaskKind::Feature))
+        .await
+        .expect("new next");
+    c.add_edge(&bridle_api::types::NewEdgeRequest {
+        from: blocker.id.clone(),
+        to: blocked.id.clone(),
+        kind: bridle_api::types::EdgeKind::Blocks,
+    })
+    .await
+    .expect("add edge");
+    c.plan_task(&blocker.id).await.expect("plan blocker");
+    c.plan_task(&blocked.id).await.expect("plan blocked");
+    c.plan_task(&next.id).await.expect("plan next");
+
+    let q = c
+        .set_queue(vec![vec![blocked.id.clone()], vec![next.id.clone()]])
+        .await
+        .expect("set queue");
+    assert_eq!(
+        q.tiers,
+        vec![vec![blocked.id.clone()], vec![next.id.clone()]]
+    );
+    assert_eq!(c.get_queue().await.expect("get queue").tiers, q.tiers);
+
+    // Tier 1's only task is blocked (its blocker isn't itself queued, so
+    // it's backlog): the top startable tier is tier 2, not tier 1.
+    let top = c.top_tier_ready_tasks().await.expect("top tier");
+    assert_eq!(top.len(), 1);
+    assert_eq!(top[0].id, next.id);
+
+    // Resolving the blocker frees tier 1, which now outranks tier 2 again.
+    c.drop_task(
+        &blocker.id,
+        &DropTaskRequest {
+            reason: "done another way".to_string(),
+        },
+    )
+    .await
+    .expect("drop blocker");
+    let top = c.top_tier_ready_tasks().await.expect("top tier");
+    assert_eq!(top.len(), 1);
+    assert_eq!(top[0].id, blocked.id);
+
+    let q = c
+        .add_queue_tier(vec![blocker.id.clone()])
+        .await
+        .expect("add tier");
+    assert_eq!(q.tiers.len(), 3);
+}
+
+/// Only the PM (or the human) may write the queue; every other principal,
+/// the manager included, is read-only (roles-and-lifecycle.md, "the
+/// queue").
+#[tokio::test]
+async fn only_pm_or_human_may_write_the_queue() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let task = daemon
+        .client
+        .new_task(&new_req("Add foo", TaskKind::Feature))
+        .await
+        .expect("new task");
+
+    let manager = daemon
+        .client
+        .spawn(&SpawnRequest {
+            role: "manager".to_string(),
+            name: Some("mgr".to_string()),
+            prompt: None,
+            workdir: Some(Workdir::Repo),
+            model: None,
+            extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
+            ignore_budget: false,
+        })
+        .await
+        .expect("spawn manager");
+    wait_for_state(&daemon.client, &manager.id, AgentState::Idle).await;
+    let manager_client = daemon.agent_client(&manager.id);
+
+    let err = manager_client
+        .set_queue(vec![vec![task.id.clone()]])
+        .await
+        .expect_err("manager can't write the queue");
+    assert!(matches!(err, ClientError::Api { status: 403, .. }));
+
+    let err = manager_client
+        .add_queue_tier(vec![task.id.clone()])
+        .await
+        .expect_err("manager can't write the queue");
+    assert!(matches!(err, ClientError::Api { status: 403, .. }));
+
+    // The human still can.
+    daemon
+        .client
+        .set_queue(vec![vec![task.id.clone()]])
+        .await
+        .expect("human can write the queue");
 }
 
 /// `bridle rebuild`'s HTTP surface: a no-op against an empty database
