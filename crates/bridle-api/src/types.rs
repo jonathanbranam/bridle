@@ -430,6 +430,10 @@ pub mod event_kind {
     pub const EDGE_ADDED: &str = "edge.added";
     /// data: {from, to, kind}
     pub const EDGE_REMOVED: &str = "edge.removed";
+    /// data: {task}
+    pub const TASK_QUESTION_ASKED: &str = "task.question_asked";
+    /// data: {task}
+    pub const TASK_QUESTION_ANSWERED: &str = "task.question_answered";
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -873,6 +877,28 @@ pub struct EditTaskRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DropTaskRequest {
     pub reason: String,
+}
+
+/// `POST /v1/tasks/{id}/ask`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AskQuestionRequest {
+    pub body: String,
+}
+
+/// `POST /v1/tasks/{id}/answer`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AnswerQuestionRequest {
+    pub body: String,
+}
+
+/// One task's unanswered question (coordination.md, "Questions do not stop
+/// work"), for `GET /v1/questions` and `bridle inbox`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OpenQuestion {
+    pub task_id: String,
+    pub asked_by: PrincipalId,
+    pub body: String,
+    pub asked_at: DateTime<Utc>,
 }
 
 /// `GET /v1/tasks?ready=true` filters to ready tasks only (roles-and-lifecycle.md,

@@ -14,8 +14,8 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use bridle_api::types::{
-    Edge, EdgeKind, MessageKind, MessageState, PrincipalId, Task, TaskKind, TaskState, ThreadEntry,
-    ThreadEntryKind, When,
+    Edge, EdgeKind, MessageKind, MessageState, OpenQuestion, PrincipalId, Task, TaskKind,
+    TaskState, ThreadEntry, ThreadEntryKind, When,
 };
 use chrono::Utc;
 
@@ -336,10 +336,6 @@ impl TaskManager {
     /// the task rather than an agent or `human`), and indexes the task as
     /// blocked until answered. Fails with `Conflict` if the task already has
     /// an open question — one at a time, per `open_questions`'s primary key.
-    #[allow(
-        dead_code,
-        reason = "exercised by tests only until `bridle ask` (P0-3b) calls it"
-    )]
     pub async fn ask_question(
         &self,
         id: &str,
@@ -401,10 +397,6 @@ impl TaskManager {
     /// Answers `task`'s open question: appends an `answer` thread entry,
     /// clears the open-questions index, and re-enables readiness. Fails
     /// with `Conflict` if the task has no open question.
-    #[allow(
-        dead_code,
-        reason = "exercised by tests only until `bridle answer` (P0-3b) calls it"
-    )]
     pub async fn answer_question(
         &self,
         id: &str,
@@ -460,6 +452,35 @@ impl TaskManager {
             .into_iter()
             .filter(|t| self.is_ready(t))
             .collect()
+    }
+
+    /// Every task with an unanswered question, oldest first: for `bridle
+    /// inbox` (coordination.md, "Questions do not stop work"). Reads the
+    /// asker/body/age off the cached task's thread rather than the store, the
+    /// same way the rest of this manager avoids a database round trip for
+    /// data it already holds.
+    pub fn list_open_questions(&self) -> Vec<OpenQuestion> {
+        let open = self.open_questions.lock().expect("open questions lock");
+        let cache = self.cache.lock().expect("task cache lock");
+        let mut questions: Vec<OpenQuestion> = open
+            .keys()
+            .filter_map(|task_id| {
+                let task = cache.get(task_id)?;
+                let entry = task
+                    .thread
+                    .iter()
+                    .rev()
+                    .find(|e| e.kind == ThreadEntryKind::Question)?;
+                Some(OpenQuestion {
+                    task_id: task_id.clone(),
+                    asked_by: entry.from.clone(),
+                    body: entry.body.clone(),
+                    asked_at: entry.at,
+                })
+            })
+            .collect();
+        questions.sort_by_key(|q| q.asked_at);
+        questions
     }
 
     /// Flushes the state branch's pending writes. Exposed so the periodic

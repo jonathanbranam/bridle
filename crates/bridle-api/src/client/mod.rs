@@ -11,12 +11,13 @@ use serde::de::DeserializeOwned;
 use thiserror::Error;
 
 use crate::types::{
-    Agent, ApiErrorResponse, BudgetHoldRequest, BudgetStatus, DropTaskRequest, Edge,
-    EditTaskRequest, Event, EventQuery, Health, InterruptRequest, InterruptResponse, Message,
-    MessageQuery, NewEdgeRequest, NewTaskRequest, RemoveEdgeQuery, RemoveQuery, RenewRequest,
-    ResumeRequest, SendRequest, SpawnRequest, Status, StatusLineReport, StopRequest, Task,
-    TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
-    UsageBreakdown, UsageBreakdownQuery,
+    Agent, AnswerQuestionRequest, ApiErrorResponse, AskQuestionRequest, BudgetHoldRequest,
+    BudgetStatus, DropTaskRequest, Edge, EditTaskRequest, Event, EventQuery, Health,
+    InterruptRequest, InterruptResponse, Message, MessageQuery, NewEdgeRequest, NewTaskRequest,
+    OpenQuestion, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResumeRequest, SendRequest,
+    SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery, TokenCreateRequest,
+    TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown,
+    UsageBreakdownQuery,
 };
 
 #[derive(Debug, Error)]
@@ -402,6 +403,30 @@ impl Client {
 
     pub async fn reopen_task(&self, id: &str) -> Result<Task, ClientError> {
         self.post_empty(&["v1", "tasks", id, "reopen"]).await
+    }
+
+    pub async fn ask_question(&self, id: &str, body: &str) -> Result<Task, ClientError> {
+        self.post_json(
+            &["v1", "tasks", id, "ask"],
+            &AskQuestionRequest {
+                body: body.to_string(),
+            },
+        )
+        .await
+    }
+
+    pub async fn answer_question(&self, id: &str, body: &str) -> Result<Task, ClientError> {
+        self.post_json(
+            &["v1", "tasks", id, "answer"],
+            &AnswerQuestionRequest {
+                body: body.to_string(),
+            },
+        )
+        .await
+    }
+
+    pub async fn list_open_questions(&self) -> Result<Vec<OpenQuestion>, ClientError> {
+        self.get_json(&["v1", "questions"]).await
     }
 
     // ---------- edges ----------

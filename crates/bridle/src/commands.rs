@@ -13,9 +13,9 @@ use chrono::{Local, TimeZone, Utc};
 use futures::StreamExt;
 
 use crate::cli::{
-    AgentsArgs, BudgetAction, BudgetArgs, BudgetHoldArgs, Cli, Command, CostAction, CostArgs,
-    CostAuditArgs, DepAction, DepArgs, DepEdgeArgs, EdgeKindArg, EventsArgs, InboxArgs,
-    InterruptArgs, LogsArgs, ReadyArgs, RmArgs, SendArgs, ShowArgs, SpawnArgs, StopArgs,
+    AgentsArgs, AnswerArgs, AskArgs, BudgetAction, BudgetArgs, BudgetHoldArgs, Cli, Command,
+    CostAction, CostArgs, CostAuditArgs, DepAction, DepArgs, DepEdgeArgs, EdgeKindArg, EventsArgs,
+    InboxArgs, InterruptArgs, LogsArgs, ReadyArgs, RmArgs, SendArgs, ShowArgs, SpawnArgs, StopArgs,
     TaskAction, TaskArgs, TaskDropArgs, TaskEditArgs, TaskKindArg, TaskNewArgs, TaskReopenArgs,
     TaskShowArgs, TokenAction, TokenArgs, UsageArgs, UsageByArg, WhenArg,
 };
@@ -48,6 +48,8 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Token(args) => token(&cli, args).await,
         Command::Task(args) => task(&cli, args).await,
         Command::Dep(args) => dep(&cli, args).await,
+        Command::Ask(args) => ask(&cli, args).await,
+        Command::Answer(args) => answer(&cli, args).await,
         Command::Ready(args) => ready(&cli, args).await,
         Command::Statusline => statusline(&cli).await,
     }
@@ -350,9 +352,17 @@ async fn inbox(cli: &Cli, args: &InboxArgs) -> Result<(), CliError> {
             client.mark_read(&m.id).await?;
         }
     }
+    // Open questions aren't messages "to me": any task's open question is
+    // relevant to whoever might answer it, so this lists every one rather
+    // than filtering by recipient (there's no per-question recipient to
+    // filter on — see docs/design/coordination.md, "Messages").
+    let questions = client.list_open_questions().await?;
     if cli.json {
-        render::print_json(&messages)?;
-    } else if messages.is_empty() {
+        render::print_json(&serde_json::json!({
+            "messages": messages,
+            "open_questions": questions,
+        }))?;
+    } else if messages.is_empty() && questions.is_empty() {
         println!("inbox empty");
     } else {
         for m in &messages {
@@ -362,6 +372,51 @@ async fn inbox(cli: &Cli, args: &InboxArgs) -> Result<(), CliError> {
                 .unwrap_or_default();
             println!("{} [{kind}] from {}: {}", m.id, m.from, m.body);
         }
+        for q in &questions {
+            let age = Utc::now() - q.asked_at;
+            println!(
+                "{} [question] from {}: {} ({})",
+                q.task_id,
+                q.asked_by,
+                q.body,
+                format_age(age)
+            );
+        }
+    }
+    Ok(())
+}
+
+fn format_age(age: chrono::Duration) -> String {
+    let secs = age.num_seconds().max(0);
+    if secs < 60 {
+        format!("{secs}s ago")
+    } else if secs < 3600 {
+        format!("{}m ago", secs / 60)
+    } else if secs < 86400 {
+        format!("{}h ago", secs / 3600)
+    } else {
+        format!("{}d ago", secs / 86400)
+    }
+}
+
+async fn ask(cli: &Cli, args: &AskArgs) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let task = client.ask_question(&args.task, &args.text).await?;
+    if cli.json {
+        render::print_json(&task)?;
+    } else {
+        println!("asked on {}", task.id);
+    }
+    Ok(())
+}
+
+async fn answer(cli: &Cli, args: &AnswerArgs) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let task = client.answer_question(&args.task, &args.text).await?;
+    if cli.json {
+        render::print_json(&task)?;
+    } else {
+        println!("answered on {}", task.id);
     }
     Ok(())
 }

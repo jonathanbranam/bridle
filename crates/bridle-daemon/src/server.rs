@@ -11,13 +11,14 @@ use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::{Extension, Json, Router};
 use bridle_api::types::{
-    Agent, ApiErrorResponse, BudgetHoldRequest, BudgetStatus, DropTaskRequest, Edge,
-    EditTaskRequest, ErrorBody, Event, EventQuery, Health, HoldStatus, InteractiveUsageRow,
-    InterruptRequest, Message, MessageQuery, MessageState, NewEdgeRequest, NewTaskRequest,
-    PrincipalKind, RateLimit, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResumeRequest,
-    SendRequest, SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery,
-    TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
-    UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, WindowStatus, event_kind,
+    Agent, AnswerQuestionRequest, ApiErrorResponse, AskQuestionRequest, BudgetHoldRequest,
+    BudgetStatus, DropTaskRequest, Edge, EditTaskRequest, ErrorBody, Event, EventQuery, Health,
+    HoldStatus, InteractiveUsageRow, InterruptRequest, Message, MessageQuery, MessageState,
+    NewEdgeRequest, NewTaskRequest, OpenQuestion, PrincipalKind, RateLimit, RemoveEdgeQuery,
+    RemoveQuery, RenewRequest, ResumeRequest, SendRequest, SpawnRequest, Status, StatusLineReport,
+    StopRequest, Task, TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine,
+    TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, WindowStatus,
+    event_kind,
 };
 use chrono::Utc;
 use futures::Stream;
@@ -75,6 +76,9 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/tasks/{id}", get(get_task).patch(edit_task))
         .route("/v1/tasks/{id}/drop", post(drop_task))
         .route("/v1/tasks/{id}/reopen", post(reopen_task))
+        .route("/v1/tasks/{id}/ask", post(ask_task))
+        .route("/v1/tasks/{id}/answer", post(answer_task))
+        .route("/v1/questions", get(list_open_questions))
         .route(
             "/v1/edges",
             get(list_edges).post(add_edge).delete(remove_edge),
@@ -855,6 +859,56 @@ async fn reopen_task(
         )
         .await;
     Ok(Json(task))
+}
+
+async fn ask_task(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path(id): Path<String>,
+    Json(req): Json<AskQuestionRequest>,
+) -> Result<Json<Task>, ApiError> {
+    let task = state
+        .tasks
+        .ask_question(&id, &principal.id, &req.body)
+        .await?;
+    let _ = state
+        .emitter
+        .emit(
+            event_kind::TASK_QUESTION_ASKED,
+            principal.id,
+            None,
+            serde_json::json!({"task": task.id}),
+        )
+        .await;
+    Ok(Json(task))
+}
+
+async fn answer_task(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path(id): Path<String>,
+    Json(req): Json<AnswerQuestionRequest>,
+) -> Result<Json<Task>, ApiError> {
+    let task = state
+        .tasks
+        .answer_question(&id, &principal.id, &req.body)
+        .await?;
+    let _ = state
+        .emitter
+        .emit(
+            event_kind::TASK_QUESTION_ANSWERED,
+            principal.id,
+            None,
+            serde_json::json!({"task": task.id}),
+        )
+        .await;
+    Ok(Json(task))
+}
+
+async fn list_open_questions(
+    State(state): State<AppState>,
+) -> Result<Json<Vec<OpenQuestion>>, ApiError> {
+    Ok(Json(state.tasks.list_open_questions()))
 }
 
 // ---------- edges ----------
