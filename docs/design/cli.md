@@ -71,7 +71,9 @@ bridle task reopen <id>
 - **Exit codes**: 0 ok, 1 error, 2 usage error, 3 daemon unreachable (every
   discovery failure, including an unknown `--project`).
 - **`logs`** renders the transcript's output lines; `--raw` prints every line
-  verbatim. `--follow` polls once a second.
+  verbatim. Without `--since` it shows the latest lines (tail), not the
+  oldest; give `--since` to page forward from a line number instead.
+  `--follow` polls once a second.
 - **`events`** without `--follow` returns the most recent 500 matching
   events, oldest first; give `--since` to page forward from a cursor instead.
   `--follow` streams over SSE, filtering agent and kind on the client, and

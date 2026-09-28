@@ -462,12 +462,11 @@ async fn transcript(
         .await?
         .ok_or_else(|| ApiError::not_found(format!("no such agent: {id}")))?;
     let path = state.workspace.transcript(&agent.id);
-    let entries = bridle_claude::transcript::read_lines(
-        &path,
-        q.since.unwrap_or(0),
-        q.limit.unwrap_or(500) as usize,
-    )
-    .map_err(|e| ApiError::new(StatusCode::INTERNAL_SERVER_ERROR, "internal", e.to_string()))?;
+    let entries =
+        bridle_claude::transcript::read_lines(&path, q.since, q.limit.unwrap_or(500) as usize)
+            .map_err(|e| {
+                ApiError::new(StatusCode::INTERNAL_SERVER_ERROR, "internal", e.to_string())
+            })?;
     Ok(Json(
         entries
             .into_iter()
