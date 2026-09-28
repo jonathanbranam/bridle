@@ -107,3 +107,18 @@ therefore measures only how fast the fake starts under load, and the 10.4 s
 failure was the 8 s timeout plus overhead. The test's doc comment says the
 failure "shows up in the spawn response itself", but nothing asserts on the
 response, and with init arriving first it likely doesn't.
+
+### Promptness diagnosis addressed, 2026-09-28 (housekeeping pass)
+
+The diagnosis above has been acted on:
+
+- `spawn_with_a_crashing_first_message_returns_promptly` no longer exists as
+  of the test rename. It is now `spawn_with_a_crashing_first_message_reaches_crashed_state`
+  (crates/bridle-daemon/tests/spawn_messaging_test.rs:147), which tests the
+  Crashed end-state directly instead of enforcing a wall-clock timing bound.
+- The "daemon.json should be removed on clean shutdown" panic is explained and
+  fixed by the daemon-shutdown-race merge (commits 6d5d22b, 67489eb).
+
+The other listed failures (process_test.rs timeouts, the wait-until-condition
+helper idea) remain open and are still being monitored as per this ticket's
+Status section.
