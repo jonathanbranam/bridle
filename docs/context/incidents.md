@@ -15,6 +15,12 @@ Not an incident; a trial. The human is driving home with the laptop on battery a
 hotspot, to see whether Remote Control and bridle's work hold up. At 22:03 it was online,
 with two workers running (`base-rules`, `pypack-merge`). Record any drop here, with times.
 
+Result: no drop. From 22:04 to 22:31 (home, switching to Wi-Fi) the minute-by-minute check
+(`.bridle/connectivity.log` in the workspace) reached api.anthropic.com every time, with no
+gaps; Remote Control and this session stayed up. Five merges landed on the way. The
+battery fell from 99% to 70% in 27 minutes (about 1.1% a minute) with two workers building
+(load 40-131); see b7cz.
+
 ## 2026-09-28, 19:23–21:27: Remote Control and the orchestrator session lost
 
 - **What was lost:**
