@@ -49,3 +49,16 @@ Neither failure has reproduced. This ticket is a record to monitor, not a
 confirmed bug to fix. If either recurs, it should be investigated with the
 techniques that successfully reproduced the prior flaky test races (concurrent
 load, isolated runs, and timing analysis).
+
+### More failures of the same kind, 2026-09-27 (orchestrator)
+
+Two more 5-second timeouts in `crates/bridle-claude/tests/process_test.rs`,
+each once in a full `just check` and green on the rerun, with no change to
+that crate in between:
+
+- `close_stdin_with_no_turn_exits_zero` (panicked at `process_test.rs:206`,
+  "exit timeout"), load average ~17, on `c312fad`.
+- `events_channel_closes_at_stdout_eof` (panicked at `process_test.rs:312`),
+  load average ~11, on `fc737e5`.
+
+Both wait 5 s for the Python fake `claude` to exit or close stdout.
