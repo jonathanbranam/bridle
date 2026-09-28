@@ -481,6 +481,13 @@ pub struct AgentUsage {
     pub turns: u32,
     pub tokens: TokenTotals,
     pub cost_usd_total: f64,
+    /// Sum of each turn's `ended_at - started_at`.
+    #[serde(default)]
+    pub busy_seconds: u64,
+    /// MIN(started_at) to MAX(ended_at) across the agent's turns. `None`
+    /// until at least one turn has ended.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub wall_seconds: Option<u64>,
     /// The agent was removed with `rm`; its turns still count.
     #[serde(default)]
     pub removed: bool,
@@ -532,6 +539,14 @@ pub struct UsageGroup {
     pub cost_usd_total: f64,
     /// cache_read / (input + cache_read + cache_write) for this group alone.
     pub cache_hit_ratio: Option<f64>,
+    /// Sum of each turn's `ended_at - started_at` in the group. Sums
+    /// meaningfully regardless of grouping.
+    pub busy_seconds: u64,
+    /// MIN(started_at) to MAX(ended_at) across the group's turns. Only set
+    /// when grouped by agent: for `role`/`model`, unrelated agents' turns
+    /// can overlap, so a wall-clock span wouldn't mean anything.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub wall_seconds: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

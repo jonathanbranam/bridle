@@ -2112,6 +2112,56 @@ mod sync {
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
     }
 
+    #[derive(Default)]
+    struct TurnTimeStats {
+        busy_seconds: i64,
+        min_started: Option<DateTime<Utc>>,
+        max_ended: Option<DateTime<Utc>>,
+    }
+
+    impl TurnTimeStats {
+        fn wall_seconds(&self) -> Option<u64> {
+            let (s, e) = (self.min_started?, self.max_ended?);
+            Some((e - s).num_seconds().max(0) as u64)
+        }
+    }
+
+    /// Busy and wall time per `group_col` value (`agent_id`, `role`, or
+    /// `model`), from the turns ledger directly rather than SQL date
+    /// arithmetic, since `chrono` already parses the RFC3339 timestamps
+    /// `fmt_dt`/`parse_dt` write and reads them back exactly.
+    fn turn_time_stats(
+        conn: &Connection,
+        group_col: &str,
+        since: Option<&str>,
+    ) -> Result<BTreeMap<String, TurnTimeStats>, StoreError> {
+        let sql = format!(
+            "SELECT {group_col} AS key, started_at, ended_at FROM turns
+             WHERE (?1 IS NULL OR started_at >= ?1)"
+        );
+        let mut stmt = conn.prepare(&sql)?;
+        let rows = stmt.query_map(params![since], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, Option<String>>(2)?,
+            ))
+        })?;
+        let mut acc: BTreeMap<String, TurnTimeStats> = BTreeMap::new();
+        for row in rows {
+            let (key, started, ended) = row?;
+            let started_dt = parse_dt(&started)?;
+            let ended_dt = parse_dt_opt(ended)?;
+            let entry = acc.entry(key).or_default();
+            if let Some(e) = ended_dt {
+                entry.busy_seconds += (e - started_dt).num_seconds().max(0);
+                entry.max_ended = Some(entry.max_ended.map_or(e, |m| m.max(e)));
+            }
+            entry.min_started = Some(entry.min_started.map_or(started_dt, |m| m.min(started_dt)));
+        }
+        Ok(acc)
+    }
+
     pub(super) fn usage(conn: &Connection) -> Result<Usage, StoreError> {
         let mut stmt = conn.prepare(
             "SELECT id, name, role, model, turns, cost, tin, tout, cr, cw, removed FROM (
@@ -2130,9 +2180,12 @@ mod sync {
                  GROUP BY t.agent_id
              ) ORDER BY removed, name",
         )?;
+        let time_stats = turn_time_stats(conn, "agent_id", None)?;
         let rows = stmt.query_map([], |row| {
+            let agent: String = row.get(0)?;
+            let stats = time_stats.get(&agent);
             Ok(AgentUsage {
-                agent: row.get(0)?,
+                agent: agent.clone(),
                 name: row.get(1)?,
                 role: row.get(2)?,
                 model: row.get(3)?,
@@ -2144,6 +2197,8 @@ mod sync {
                     cache_read: row.get::<_, i64>(8)? as u64,
                     cache_write: row.get::<_, i64>(9)? as u64,
                 },
+                busy_seconds: stats.map(|s| s.busy_seconds as u64).unwrap_or(0),
+                wall_seconds: stats.and_then(TurnTimeStats::wall_seconds),
                 removed: row.get::<_, i64>(10)? != 0,
             })
         })?;
@@ -2204,6 +2259,7 @@ mod sync {
              ORDER BY key"
         );
         let since_str = since.map(fmt_dt);
+        let time_stats = turn_time_stats(conn, group_col, since_str.as_deref())?;
         let mut stmt = conn.prepare(&sql)?;
         let rows = stmt.query_map(params![since_str], |row| {
             let tokens = TokenTotals {
@@ -2214,12 +2270,19 @@ mod sync {
             };
             let denom = tokens.input + tokens.cache_read + tokens.cache_write;
             let cache_hit_ratio = (denom > 0).then(|| tokens.cache_read as f64 / denom as f64);
+            let key: String = row.get(0)?;
+            let stats = time_stats.get(&key);
+            let wall_seconds = (by == UsageGroupBy::Agent)
+                .then(|| stats.and_then(TurnTimeStats::wall_seconds))
+                .flatten();
             Ok(UsageGroup {
-                key: row.get(0)?,
+                key,
                 turns: row.get::<_, i64>(1)? as u32,
                 tokens,
                 cost_usd_total: row.get(6)?,
                 cache_hit_ratio,
+                busy_seconds: stats.map(|s| s.busy_seconds as u64).unwrap_or(0),
+                wall_seconds,
             })
         })?;
         let groups = rows.collect::<Result<Vec<_>, _>>()?;
@@ -3182,6 +3245,44 @@ mod tests {
             .await
             .expect("unfiltered breakdown");
         assert_eq!(all.total_turns, 2);
+    }
+
+    /// Two turns with a gap between them: wall time spans the gap, busy
+    /// time doesn't, so wall must come out strictly greater than busy.
+    #[tokio::test]
+    async fn agent_wall_time_spans_the_gap_between_turns() {
+        let (store, _tmp) = store().await;
+        let a = store.insert_agent(new_agent("w1")).await.expect("insert a");
+
+        let t0 = Utc::now() - chrono::Duration::seconds(300);
+        let t1 = t0 + chrono::Duration::seconds(10); // turn 1: 10s busy
+        let t2 = t1 + chrono::Duration::seconds(50); // 50s gap, idle
+        let t3 = t2 + chrono::Duration::seconds(20); // turn 2: 20s busy
+
+        let agent_id = a.id.clone();
+        store
+            .with_conn(move |conn| {
+                for (n, started, ended) in [(1, t0, t1), (2, t2, t3)] {
+                    conn.execute(
+                        "INSERT INTO turns(agent_id, agent_name, role, model, n, started_at, ended_at)
+                         SELECT id, name, role, model, ?2, ?3, ?4 FROM agents WHERE id = ?1",
+                        rusqlite::params![agent_id, n, started.to_rfc3339(), ended.to_rfc3339()],
+                    )?;
+                }
+                Ok(())
+            })
+            .await
+            .expect("insert turns");
+
+        let usage = store.usage().await.expect("usage");
+        let row = usage
+            .agents
+            .iter()
+            .find(|u| u.agent == a.id)
+            .expect("agent row");
+        assert_eq!(row.busy_seconds, 30);
+        assert_eq!(row.wall_seconds, Some(80));
+        assert!(row.wall_seconds.expect("wall") > row.busy_seconds);
     }
 
     #[tokio::test]
