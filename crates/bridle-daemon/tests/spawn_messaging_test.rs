@@ -2,10 +2,11 @@
 
 mod support;
 
+use bridle_api::Client;
 use bridle_api::types::{
     AgentState, MessageKind, MessageQuery, MessageState, SendRequest, When, Workdir,
 };
-use bridle_api::types::{SpawnRequest, event_kind};
+use bridle_api::types::{SpawnRequest, TokenCreateRequest, event_kind};
 use bridle_daemon::Overrides;
 use support::{
     default_overrides, fake_claude_argv_dump_wrapper, fake_claude_env_dump_wrapper, start_daemon,
@@ -609,6 +610,65 @@ async fn send_to_role_with_no_live_agents_errors() {
         })
         .await
         .expect_err("no live agents with role");
+    assert!(matches!(
+        err,
+        bridle_api::ClientError::Api { status: 404, .. }
+    ));
+}
+
+/// a7h3: an external principal (e.g. `external:orchestrator`) is an
+/// addressable recipient with its own inbox, once minted with `token create`.
+#[tokio::test]
+async fn send_to_external_principal_lands_in_its_own_inbox() {
+    let (daemon, _tmp) = start_daemon(None).await;
+
+    let created = daemon
+        .client
+        .create_token(&TokenCreateRequest {
+            name: "orchestrator".to_string(),
+        })
+        .await
+        .expect("create external token");
+    assert_eq!(created.principal, "external:orchestrator");
+
+    let sent = daemon
+        .client
+        .send(&SendRequest {
+            to: Some("external:orchestrator".to_string()),
+            body: "please look at this".to_string(),
+            kind: MessageKind::Note,
+            when: When::Now,
+            reply_to: None,
+        })
+        .await
+        .expect("send to external principal")
+        .into_iter()
+        .next()
+        .expect("one message sent");
+    assert_eq!(sent.to, "external:orchestrator");
+
+    let orchestrator = Client::new(daemon.running.url.clone(), Some(created.token));
+    let inbox = orchestrator
+        .list_messages(&MessageQuery {
+            to: Some("me".to_string()),
+            ..Default::default()
+        })
+        .await
+        .expect("orchestrator reads its own inbox");
+    assert!(inbox.iter().any(|m| m.id == sent.id));
+
+    // Never minted with `token create`: still 404s.
+    let err = daemon
+        .client
+        .send(&SendRequest {
+            to: Some("external:nobody-minted-this".to_string()),
+            body: "hello".to_string(),
+            kind: MessageKind::Note,
+            when: When::Now,
+            reply_to: None,
+        })
+        .await
+        .expect_err("unminted external name should 404");
     assert!(matches!(
         err,
         bridle_api::ClientError::Api { status: 404, .. }
