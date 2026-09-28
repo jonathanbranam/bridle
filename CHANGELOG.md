@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Test daemons no longer read the machine-wide `~/.bridle/config.toml`.
 - The human's inbox is for questions, blockers and decisions only; managers no longer
   send routine status notes. Changes are recorded here.
+- Per-project branch pattern: `[branches]` in `.bridle/config.toml` sets the
+  `integration` branch workers branch from and managers merge into (default `main`),
+  and an optional `release` branch no agent but the orchestrator may push. A project
+  trial points `integration` at `bridle-adopt`. `state` is now a reserved agent name.
 
 ## [0.3.0] - 2026-09-28
 

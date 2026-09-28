@@ -109,3 +109,17 @@ Newest first. One line per item: what happened, who did it, what it says about r
 - 2026-09-28: the human rebuilt, restarted the daemon and created
   `~/.bridle/config.toml` (the budget schedule) from the orchestrator's text:
   three admin steps only the human could take.
+- 2026-09-28 (sixth session): the human marks read by hand what the advisor
+  sent to their inbox for the orchestrator; only the recipient may mark a
+  message read, and the CLI marks all or nothing (cu5m). Admin toil that
+  a7h3 now avoids.
+- 2026-09-28: the human asked the orchestrator to merge two checked branches
+  itself while the governor held (the manager couldn't act). The merger's
+  role fits the orchestrator in a hold; so does maintenance generally: the
+  human made budget holds the maintenance window (m7wn), which is admin work
+  a mechanical in-bridle role could take over, except the daemon restart,
+  which only the human can do today.
+- 2026-09-28: the auto-mode classifier blocked the orchestrator's watcher
+  restart and a read of another project's docs after a branch deletion; the
+  human added local allow rules. Cross-project work needs those
+  permissions set up ahead of an onboarding.

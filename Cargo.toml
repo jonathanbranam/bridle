@@ -50,5 +50,8 @@ dbg_macro = "warn"
 todo = "warn"
 unwrap_used = "warn"
 
+[profile.dev]
+debug = "line-tables-only"
+
 [profile.dev.package."*"]
 opt-level = 1

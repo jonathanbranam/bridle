@@ -23,8 +23,9 @@ what judgement applies.
   daemon isn't running the code yet). Ask a question with
   `bridle send <sender> --question "<question>"` and wait for the answer
   rather than guessing past a blocker.
-- **Handoff**: before finishing, merge the local `main` into your branch
-  (`git merge --no-ff main`, never `origin/*`), resolve conflicts, and re-run
+- **Handoff**: before finishing, merge the local `{{branches.integration}}` into your
+  branch (`git merge --no-ff {{branches.integration}}`, never `origin/*`), resolve
+  conflicts, and re-run
   `{{commands.check}}`. Commit on your branch once it's green, then report to
   whoever gave you the task:
   `bridle send <sender> "done: <one-line summary>; <commit sha>"`.

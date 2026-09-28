@@ -41,9 +41,24 @@ curl -s -H "Authorization: Bearer $BRIDLE_TOKEN" "$U/v1/messages?to=human&limit=
   - an unexpected exit, crash or stall;
   - all agents idle for 15 minutes;
   - five_hour ≥ 93% or seven_day ≥ 85%.
+  - a budget hold starting (the governor leaving `normal`).
 
   After each wake, handle it and restart it with the last seq. Add a
   heartbeat check every 30 minutes in case it hangs.
+- **Budget holds are the maintenance window** (the human, 2026-09-28: "when
+  we are hitting a budget hold, then always use that opportunity for general
+  cleanup"). Plan for it: keep a running list in the state file of what's
+  waiting for the next window. When the watcher reports a hold:
+  - verify and push anything merged but unpushed;
+  - if `main` has changes the daemon needs (role prompts, rules, code), run
+    `cargo clean` if `target/` is stale or large, `cargo install --path
+    crates/bridle`, and ask the human for one restart (it's theirs to do);
+  - after the restart, resume managers and `lost` workers and tell them why;
+  - give the human the `bridle rm <name> --delete-branch` commands for
+    finished workers;
+  - renew agents idle above ~140K context (not during a hold: see r3nh; do
+    it right after the restart instead);
+  - tidy tickets, the state file and the role notes.
 - **Verify every merge yourself.** When `main` moves, run `just check`
   **twice** on `main`. The tests are timing-sensitive, so if the load average
   is high (`uptime` above ~20, typically from workers' builds and test
