@@ -27,7 +27,8 @@ the agents bridle hosts, and later a TUI, GUI or MCP server all share:
 
 1. **Create a workspace folder.** It's the daemon's home: it holds the clone,
    the worktrees and bridle's state ([[docs/design/agent-host/daemon|daemon]]).
-2. **Clone the project's main branch** into it.
+2. **Clone the project's integration branch** into it (`main` by default —
+   see "Branch pattern", below).
 3. **Run `bridle serve` in the clone.** Bridle reads `<repo>/.bridle/config.toml`
    if present (roles, defaults); the file is optional. Bridle needs no worktree
    for itself: it never edits code, and its state is a SQLite file under
@@ -57,33 +58,109 @@ Events for the live stream. It listens on `127.0.0.1` by default. Listening on
 another interface is one flag, which lets the workforce run remotely while the
 orchestrator and TUI stay on the laptop.
 
+## Branch pattern
+
+A project names its branches with `[branches]` in `.bridle/config.toml`
+(`bridle-daemon/src/config.rs`, `BranchesConfig`): one setting doubles as
+both "where new work branches from" and "where completed work merges to and
+pushes to", so there's a single knob, not two.
+
+```toml
+[branches]
+integration = "dev"    # work merges here, agent worktrees branch from here (default "main")
+release = "main"       # optional; unset means the trunk pattern (below)
+```
+
+Exactly two shapes, KISS (the human, 2026-09-28: "some projects work
+directly on main, others use a dev branch... don't add complexity for other
+approaches"):
+
+- **Trunk** (`release` unset, bridle's own pattern): work merges into
+  `integration` (`main` by default); releases are tags on it, cut by the
+  orchestrator (below). Bridle's own project sets nothing, since the default
+  already matches.
+- **Dev + release** (`release` set): work merges into `integration` (e.g.
+  `dev`); `release` (e.g. `main`) only moves when `integration` is merged
+  into it for a release — done by the orchestrator or the human, not by the
+  ordinary worker/manager merge described below.
+
+Every role's system prompt states the project's actual `integration`/
+`release` branches as a plain sentence (`bridle-daemon::config::
+stable_system_prompt`), and `workflow/base/skills/worker/SKILL.md` and
+`workflow/base/roles/manager.md` reference them as `{{branches.integration}}`
+/ `{{branches.release}}`, the same templating `{{commands.check}}` already
+uses (docs/design/workflow-layers.md, "Per-project command bindings") — so
+neither prompt hardcodes a branch name.
+
+**Enforcement, not just prose.** When `release` is set, every role except
+`orchestrator` gets `Bash(git push origin <release>)` added to its
+`disallowed_tools` automatically (`config::apply_branches`) — additive and
+so, per the override semantics in
+[[docs/design/workflow-layers|workflow-layers.md]], **locked**: a project
+config can't remove it. The orchestrator is exempt because cutting a release
+is its job. Workers already can't push at all
+(`Bash(git push *)` in their built-in `disallowed_tools`); this closes the
+one door a manager would otherwise have to the release branch.
+
+### Trial onboarding
+
+Per `workflow/base/rules/existing-projects.md`: the human's real projects are
+never touched by an agent without review. An onboarding is a **trial**: the
+orchestrator clones the project's real integration branch (`main` or `dev`)
+to a fixed branch, `bridle-adopt`, pushes it, and the trial's own
+`.bridle/config.toml` sets `[branches] integration = "bridle-adopt"` (with
+`release` left unset — a trial never cuts a release). `bridle-adopt` sits
+outside the `bridle/<agent>` branch namespace (a `-`, not a `/`, after
+`bridle`), so it can't collide with an agent's own branch; `validate_agent_name`
+(`worktree.rs`) separately reserves `state`, since `bridle/state` is the
+state branch. Nothing about the setting itself is trial-specific: it's the
+same `integration` key, pointed at a different value, so `main`/`dev` are
+mechanically never a push or merge target for the trial's own agents at all,
+not just conventionally avoided.
+
+**Where the manager merges, during a trial.** The manager's `workdir = repo`
+role runs in the daemon's one main clone, which the human also uses
+day-to-day for the project's real branches. Checking that clone out to
+`bridle-adopt` would disturb whatever the human has checked out there. The
+simpler alternative — and the one bridle uses — is to leave the main clone
+alone and give the trial's manager a `workdir` pointing at a dedicated
+worktree checked out on `bridle-adopt` instead (`bridle spawn manager
+--workdir path:<trial-worktree>`; `Workdir::Path` already exists for exactly
+this, `supervisor.rs`). No new mechanism: the trial just uses the spawn-time
+override every role already has, instead of the role's own `workdir =
+"repo"` default.
+
 ## Merging completed work
 
-**Bridle merges its own completed work into main**; the human doesn't have to.
-Progress would otherwise stop at every finished branch. The manager does it,
-or the orchestrator when there's no manager, in the clone:
+**Bridle merges its own completed work into the integration branch**; the
+human doesn't have to. Progress would otherwise stop at every finished
+branch. The manager does it, or the orchestrator when there's no manager, in
+the clone:
 
-1. The worker brings its branch up to date: it merges the **local** `main`
-   (`git merge --no-ff main`, never `origin/*`) into `bridle/<agent>`, resolves any
-   conflicts, runs `just check` (or the project's equivalent) and commits. A
-   worker never touches `main` and never fetches or merges from a remote.
-2. The merger checks that `main` is an ancestor of the branch
-   (`git merge-base --is-ancestor main bridle/<agent>`), that the worker's
-   worktree is clean, and that the diff does what the task asked and nothing
-   else. Anything short of that goes back to the worker.
+1. The worker brings its branch up to date: it merges the **local**
+   integration branch (`git merge --no-ff <integration>`, never `origin/*`)
+   into `bridle/<agent>`, resolves any conflicts, runs `just check` (or the
+   project's equivalent) and commits. A worker never touches the integration
+   branch directly and never fetches or merges from a remote.
+2. The merger checks that the integration branch is an ancestor of the
+   branch (`git merge-base --is-ancestor <integration> bridle/<agent>`),
+   that the worker's worktree is clean, and that the diff does what the task
+   asked and nothing else. Anything short of that goes back to the worker.
 3. `git merge --no-ff bridle/<agent>`. Because the branch already contains
-   `main`, this can't conflict.
-4. `git push origin main`, straight after the merge, so the remote never
-   lags the clone. Only the merger pushes, and only `main` and release tags;
-   workers never push.
+   the integration branch, this can't conflict.
+4. `git push origin <integration>`, straight after the merge, so the remote
+   never lags the clone. Only the merger pushes, and only the integration
+   branch and (trunk pattern) release tags; workers never push. The release
+   branch, when a project has one, is never a target of this step at all
+   (mechanically denied — see "Branch pattern", above).
 5. `bridle rm <agent> --delete-branch`: removes the worker, its worktree and
    its now-merged branch. `--delete-branch` refuses an unmerged branch, so
    this can't lose work. Merged branches aren't kept; the merge commit on
-   `main` is the record (the human, 2026-09-28).
+   the integration branch is the record (the human, 2026-09-28).
 
-The orchestrator verifies `main` after each merge (`just check`, twice, off
-load). If it's red, nothing else merges until it's green again; the fix goes
-forward as a normal task.
+The orchestrator verifies the integration branch after each merge (`just
+check`, twice, off load). If it's red, nothing else merges until it's green
+again; the fix goes forward as a normal task.
 
 ### Releases
 
@@ -99,7 +176,12 @@ Bridle is versioned with [SemVer](https://semver.org). The version lives in
 
 The orchestrator cuts releases: it bumps the version in one commit on `main`,
 tags it, and pushes both. A missed or late tag costs nothing, so releases
-wait for an orchestrator to be live.
+wait for an orchestrator to be live. For a dev+release project, cutting a
+release is also the orchestrator's (or the human's) job: merging
+`integration` into `release` and pushing `release` is exactly the one case
+"Branch pattern" above carves out of the mechanical deny — building that
+release-cut flow itself is future work (out of scope for the branch-pattern
+setting described here).
 
 **Escalate to the human instead of merging** when the change is significant:
 it rewrites a design decision rather than implementing one, changes what is

@@ -256,9 +256,15 @@ pub async fn repo_toplevel(path: &Path) -> Result<std::path::PathBuf, WorktreeEr
     Ok(std::path::PathBuf::from(out.trim()))
 }
 
+/// Agent names that would collide with a branch bridle itself owns, not an
+/// agent's: `bridle/state` is the state branch (state_branch.rs), so an
+/// agent named "state" would fight it for `refs/heads/bridle/state`.
+const RESERVED_AGENT_NAMES: [&str; 1] = ["state"];
+
 /// Agent names double as worktree directory names and branch suffixes, so
 /// they're restricted to what's safe in both: lowercase alnum and hyphens,
-/// starting with an alnum, at most 40 characters.
+/// starting with an alnum, at most 40 characters, and not a name reserved
+/// for one of bridle's own branches ([`RESERVED_AGENT_NAMES`]).
 pub fn validate_agent_name(name: &str) -> Result<(), WorktreeError> {
     let bytes = name.as_bytes();
     let first_ok = bytes
@@ -268,7 +274,8 @@ pub fn validate_agent_name(name: &str) -> Result<(), WorktreeError> {
     let rest_ok = bytes
         .iter()
         .all(|&b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-');
-    if first_ok && len_ok && rest_ok {
+    let not_reserved = !RESERVED_AGENT_NAMES.contains(&name);
+    if first_ok && len_ok && rest_ok && not_reserved {
         Ok(())
     } else {
         Err(WorktreeError::InvalidName(name.to_string()))
@@ -611,5 +618,14 @@ mod tests {
                 "{bad:?} should be invalid"
             );
         }
+    }
+
+    #[test]
+    fn agent_name_state_is_reserved() {
+        // "state" would collide with the `bridle/state` branch
+        // (state_branch.rs): git can't have both `refs/heads/bridle/state`
+        // and an agent worktree branch of the same name.
+        let err = validate_agent_name("state").expect_err("state should be reserved");
+        assert!(matches!(err, WorktreeError::InvalidName(n) if n == "state"));
     }
 }
