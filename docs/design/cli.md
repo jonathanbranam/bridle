@@ -45,6 +45,8 @@ bridle statusline                           Claude Code statusLine command; loca
 bridle stop-check                           Claude Code Stop hook for the worker role; refuses to stop
                                              with an unreleased claim and no thread entry since claiming
                                              it (docs/design/coordination.md); never fails
+bridle prime orchestrator                   fresh session's opening context: role prompt, current
+                                             state, startup steps; local only, no daemon call
 bridle task new    <title> -k/--kind KIND [--body TEXT]
 bridle task show   <id>
 bridle task edit   <id> [--title TEXT] [--body TEXT]
@@ -208,6 +210,18 @@ bridle task note   <id> TEXT                     plain note to the task's thread
   first. Any error of bridle's own (unparseable stdin, no daemon reachable, an API
   error) allows rather than blocks: a bug in bridle's own tooling must never trap an
   agent from stopping.
+- **`prime orchestrator`** prints a fresh orchestrator session's opening context in one
+  go (docs/questions/open/one-command-orchestrator-handover-d4mz.md, step 2): the role
+  prompt (`.bridle/roles/orchestrator.md`), the current state
+  (`docs/context/orchestrator-state.md`), then the startup steps (check in with
+  `status`/`agents`/messages, start the watcher and a heartbeat, keep both managers'
+  work moving, verify merges, watch context). Purely local — no daemon call — and reads
+  both files from the current directory, so run it from the repo root, as
+  `scripts/claude-orchestrator` does when it uses this as `claude`'s opening prompt.
+  Only `orchestrator` is accepted as the role for now (other roles haven't asked for
+  this); anything else is a clap `InvalidValue` error, not a silent no-op. The role
+  scope and the rest of the "commands still to build" surface (`init`, `sync`,
+  `doctor`) stay in `Planned` below.
 
 ## Planned
 
@@ -215,7 +229,8 @@ Commands for the phases after v1 ([[docs/proposal/build-order|build order]]),
 as a first cut:
 
 ```
-bridle init | sync | prime | doctor              project setup, render, session start, health
+bridle init | sync | doctor                      project setup, render, health
+bridle prime <role>                              non-orchestrator roles; `prime orchestrator` is built (see Built)
 bridle task <cmd> at in_review|integrated|accepted  -- new/show/edit/list/drop/reopen
                                                   are built (see Built); `dep add|rm`,
                                                   `claim`/`release`, and `ready [--all] [--role]`

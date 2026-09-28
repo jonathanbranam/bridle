@@ -18,10 +18,10 @@ use futures::StreamExt;
 use crate::cli::{
     AgentsArgs, AnswerArgs, AskArgs, BudgetAction, BudgetArgs, BudgetHoldArgs, ClaimArgs, Cli,
     Command, CostAction, CostArgs, CostAuditArgs, DepAction, DepArgs, DepEdgeArgs, EdgeKindArg,
-    EventsArgs, InboxArgs, InterruptArgs, LogsArgs, ReadyArgs, ReleaseArgs, RmArgs, SendArgs,
-    ShowArgs, SpawnArgs, StopArgs, TaskAction, TaskArgs, TaskDropArgs, TaskEditArgs, TaskKindArg,
-    TaskListArgs, TaskNewArgs, TaskNoteArgs, TaskReopenArgs, TaskShowArgs, TokenAction, TokenArgs,
-    UsageArgs, UsageByArg, WhenArg,
+    EventsArgs, InboxArgs, InterruptArgs, LogsArgs, PrimeArgs, PrimeRoleArg, ReadyArgs,
+    ReleaseArgs, RmArgs, SendArgs, ShowArgs, SpawnArgs, StopArgs, TaskAction, TaskArgs,
+    TaskDropArgs, TaskEditArgs, TaskKindArg, TaskListArgs, TaskNewArgs, TaskNoteArgs,
+    TaskReopenArgs, TaskShowArgs, TokenAction, TokenArgs, UsageArgs, UsageByArg, WhenArg,
 };
 use crate::error::CliError;
 use crate::render;
@@ -60,6 +60,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Ready(args) => ready(&cli, args).await,
         Command::Statusline => statusline(&cli).await,
         Command::StopCheck => stop_check(&cli).await,
+        Command::Prime(args) => prime(args).await,
     }
 }
 
@@ -149,6 +150,51 @@ async fn stop_check(cli: &Cli) -> Result<(), CliError> {
         );
     }
     Ok(())
+}
+
+/// The orchestrator's startup steps, printed by `bridle prime orchestrator`
+/// alongside the role prompt and current state (docs/questions/open/
+/// one-command-orchestrator-handover-d4mz.md). Kept in the binary, not
+/// `scripts/claude-orchestrator`, so there's one source of truth for what a
+/// fresh orchestrator session does first; the script just runs `bridle prime
+/// orchestrator` for its opening prompt.
+const ORCHESTRATOR_STARTUP_STEPS: &str = "\
+Check in: `bridle status`, `bridle agents`, and recent messages to human (from the \
+product manager and the development manager).
+Start the watcher from the latest event seq, plus a 30-minute heartbeat.
+Keep both managers' work moving, verify every merge (`just check` twice, off load) \
+and push main after verifying, and bring the human only what needs them.
+Watch your own context: hand over well before 200K.
+The human will mostly reach you through Remote Control.";
+
+/// `bridle prime orchestrator`: a fresh orchestrator session's opening
+/// context in one command (docs/questions/open/
+/// one-command-orchestrator-handover-d4mz.md, step 2), read from the current
+/// directory — run this from the repo root, as
+/// `scripts/claude-orchestrator` does. Purely local: no daemon call.
+async fn prime(args: &PrimeArgs) -> Result<(), CliError> {
+    match args.role {
+        PrimeRoleArg::Orchestrator => prime_orchestrator().await,
+    }
+}
+
+async fn prime_orchestrator() -> Result<(), CliError> {
+    let repo = std::env::current_dir().context("current directory")?;
+    let role_prompt = std::fs::read_to_string(repo.join(".bridle/roles/orchestrator.md"))
+        .context("reading .bridle/roles/orchestrator.md")?;
+    let state = std::fs::read_to_string(repo.join("docs/context/orchestrator-state.md"))
+        .context("reading docs/context/orchestrator-state.md")?;
+    print!("{}", render_prime_orchestrator(&role_prompt, &state));
+    Ok(())
+}
+
+fn render_prime_orchestrator(role_prompt: &str, state: &str) -> String {
+    format!(
+        "# Role: orchestrator\n\n{}\n\n# Current state\n\n{}\n\n# Startup steps\n\n{}\n",
+        role_prompt.trim_end(),
+        state.trim_end(),
+        ORCHESTRATOR_STARTUP_STEPS,
+    )
 }
 
 /// Bridle's own counts for the human (docs/questions/resolved/
@@ -1477,5 +1523,28 @@ mod bridle_counts_tests {
             _ => None,
         };
         assert_eq!(bridle_counts(dir.path(), &env, &token_path).await, None);
+    }
+}
+
+#[cfg(test)]
+mod prime_tests {
+    use super::render_prime_orchestrator;
+
+    #[test]
+    fn includes_role_prompt_state_and_startup_steps() {
+        let out = render_prime_orchestrator(
+            "You're my orchestrator for bridle.",
+            "## Handover, 2026-09-28",
+        );
+        assert!(out.contains("You're my orchestrator for bridle."));
+        assert!(out.contains("## Handover, 2026-09-28"));
+        assert!(out.contains("bridle status"));
+        assert!(out.contains("30-minute heartbeat"));
+        // Sections appear in a fixed, readable order.
+        let role_pos = out.find("# Role: orchestrator").unwrap();
+        let state_pos = out.find("# Current state").unwrap();
+        let steps_pos = out.find("# Startup steps").unwrap();
+        assert!(role_pos < state_pos);
+        assert!(state_pos < steps_pos);
     }
 }
