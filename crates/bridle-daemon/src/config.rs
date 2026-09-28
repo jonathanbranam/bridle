@@ -71,6 +71,9 @@ pub struct Role {
     /// Passed as `--max-budget-usd`. Claude applies it per process, and
     /// checks it after each model call, so a turn can overshoot it.
     pub max_budget_usd: Option<f64>,
+    /// Registers the `bridle stop-check` Stop hook (docs/design/
+    /// coordination.md): worker only for now, not project-configurable.
+    pub stop_check: bool,
 }
 
 /// Claude Code built-ins that let an agent bypass bridle's own coordination
@@ -122,6 +125,7 @@ impl Role {
             resume_on_restart: false,
             start_prompt: None,
             max_budget_usd: None,
+            stop_check: true,
         }
     }
 
@@ -145,6 +149,7 @@ impl Role {
             resume_on_restart: true,
             start_prompt: None,
             max_budget_usd: None,
+            stop_check: false,
         }
     }
 
@@ -169,6 +174,7 @@ impl Role {
             resume_on_restart: true,
             start_prompt: None,
             max_budget_usd: None,
+            stop_check: false,
         }
     }
 
@@ -224,6 +230,9 @@ impl Role {
         }
         if let Some(v) = raw.max_budget_usd {
             self.max_budget_usd = Some(v);
+        }
+        if let Some(v) = raw.stop_check {
+            self.stop_check = v;
         }
         self
     }
@@ -968,6 +977,8 @@ struct RawRole {
     start_prompt: Option<String>,
     #[serde(default)]
     max_budget_usd: Option<f64>,
+    #[serde(default)]
+    stop_check: Option<bool>,
 }
 
 impl<'de> Deserialize<'de> for Workdir {
@@ -1115,6 +1126,7 @@ mod tests {
             !worker.disallowed_tools.contains(&"Agent".to_string()),
             "worker should allow Agent"
         );
+        assert!(worker.stop_check, "worker should have stop_check on");
 
         let manager = &cfg.roles["manager"];
         assert_eq!(manager.workdir, Workdir::Repo);
@@ -1131,6 +1143,7 @@ mod tests {
             !manager.disallowed_tools.contains(&"Agent".to_string()),
             "manager should allow Agent"
         );
+        assert!(!manager.stop_check, "manager should have stop_check off");
 
         let orchestrator = &cfg.roles["orchestrator"];
         assert_eq!(orchestrator.workdir, Workdir::Repo);
@@ -1157,6 +1170,10 @@ mod tests {
                 "orchestrator should not deny {tool}"
             );
         }
+        assert!(
+            !orchestrator.stop_check,
+            "orchestrator should have stop_check off"
+        );
     }
 
     #[test]
@@ -1254,6 +1271,25 @@ mod tests {
             let prompt = config.roles[role].system_prompt.as_ref().expect("prompt");
             assert!(repo.join(prompt).is_file(), "{} exists", prompt.display());
         }
+        // product-manager is a custom role, so it falls back to
+        // Role::worker_default() as its merge base (stop_check: true); config
+        // must turn it back off explicitly, since it isn't the worker role.
+        assert!(!config.roles["product-manager"].stop_check);
+    }
+
+    #[test]
+    fn custom_role_falling_back_to_worker_default_can_turn_stop_check_back_off() {
+        let toml = r#"
+            [roles.product-manager]
+            model = "sonnet"
+            stop_check = false
+        "#;
+        let cfg = Config::parse(toml).expect("parse");
+        let pm = &cfg.roles["product-manager"];
+        // Confirms the fallback base really is worker_default (stop_check: true)
+        // and that the project config can override it.
+        assert!(Role::worker_default().stop_check);
+        assert!(!pm.stop_check);
     }
 
     #[test]

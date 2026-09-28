@@ -107,6 +107,12 @@ pub enum Command {
     /// line back, and records a usage snapshot. Never fails or blocks: see
     /// docs/design/usage-and-budget.md ("Where bridle can see usage").
     Statusline,
+    /// Claude Code's Stop hook for the worker role (docs/design/
+    /// coordination.md, docs/spikes/05-stop-hook-findings.md): reads its
+    /// JSON on stdin and blocks the stop if the calling principal has a
+    /// claimed task with no thread entry since claiming it. Never fails: any
+    /// error of bridle's own allows the stop rather than trapping the agent.
+    StopCheck,
 }
 
 #[derive(Debug, Args)]

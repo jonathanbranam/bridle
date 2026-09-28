@@ -36,14 +36,43 @@ pub struct ClaudeCommand {
     /// Applied on top of the stripped inherited environment; see
     /// [`env_removal_keys`].
     pub env: Vec<(String, String)>,
+    /// Registers `bridle stop-check` as a `Stop` hook (docs/design/
+    /// coordination.md, docs/spikes/05-stop-hook-findings.md): worker role
+    /// only, set from `Role::stop_check`.
+    pub stop_check: bool,
     pub extra_args: Vec<String>,
 }
 
-/// Agents never use Claude Code's auto memory: everything durable goes in
-/// the repo, where the human and other agents can read it
-/// (docs/proposal/decisions.md, no assistant memory). Passed on every spawn,
-/// so it holds whatever the project's or user's settings say.
-pub const NO_MEMORY_SETTINGS: &str = r#"{"autoMemoryEnabled":false,"autoDreamEnabled":false}"#;
+/// The `Stop` hook command name: resolved on the agent's own `PATH`, which
+/// the supervisor already points at the running daemon's own binary
+/// (`agent_path` in supervisor.rs), so the hook always calls the same
+/// version of `bridle` the agent itself does.
+const STOP_CHECK_HOOK_COMMAND: &str = "bridle stop-check";
+
+/// The `--settings` JSON passed on every spawn. Agents never use Claude
+/// Code's auto memory: everything durable goes in the repo, where the human
+/// and other agents can read it (docs/proposal/decisions.md, no assistant
+/// memory). `stop_check` adds the `Stop` hook shape confirmed by spike 05
+/// (flat `decision`/`reason`, not `hookSpecificOutput`).
+fn settings_json(stop_check: bool) -> String {
+    let mut settings = serde_json::json!({
+        "autoMemoryEnabled": false,
+        "autoDreamEnabled": false,
+    });
+    if stop_check {
+        settings["hooks"] = serde_json::json!({
+            "Stop": [
+                {
+                    "matcher": "",
+                    "hooks": [
+                        { "type": "command", "command": STOP_CHECK_HOOK_COMMAND }
+                    ]
+                }
+            ]
+        });
+    }
+    settings.to_string()
+}
 
 impl ClaudeCommand {
     pub fn new(cwd: impl Into<PathBuf>, session: Session) -> Self {
@@ -60,6 +89,7 @@ impl ClaudeCommand {
             name: None,
             max_budget_usd: None,
             env: Vec::new(),
+            stop_check: false,
             extra_args: Vec::new(),
         }
     }
@@ -86,11 +116,11 @@ impl ClaudeCommand {
             "--setting-sources",
             "project",
             "--settings",
-            NO_MEMORY_SETTINGS,
         ]
         .into_iter()
         .map(String::from)
         .collect();
+        args.push(settings_json(self.stop_check));
 
         match &self.session {
             Session::New(id) => {
@@ -220,6 +250,36 @@ mod tests {
             serde_json::from_str(&args[i + 1]).expect("--settings is JSON");
         assert_eq!(settings["autoMemoryEnabled"], false);
         assert_eq!(settings["autoDreamEnabled"], false);
+    }
+
+    #[test]
+    fn stop_check_false_omits_hooks_from_settings() {
+        let cmd = ClaudeCommand::new("/tmp", Session::New(uuid(9)));
+        let args = cmd.args();
+        let i = args
+            .iter()
+            .position(|a| a == "--settings")
+            .expect("--settings");
+        let settings: serde_json::Value =
+            serde_json::from_str(&args[i + 1]).expect("--settings is JSON");
+        assert!(settings.get("hooks").is_none());
+    }
+
+    #[test]
+    fn stop_check_true_adds_stop_hook_to_settings() {
+        let mut cmd = ClaudeCommand::new("/tmp", Session::New(uuid(10)));
+        cmd.stop_check = true;
+        let args = cmd.args();
+        let i = args
+            .iter()
+            .position(|a| a == "--settings")
+            .expect("--settings");
+        let settings: serde_json::Value =
+            serde_json::from_str(&args[i + 1]).expect("--settings is JSON");
+        let command = settings["hooks"]["Stop"][0]["hooks"][0]["command"]
+            .as_str()
+            .expect("hooks.Stop[0].hooks[0].command");
+        assert_eq!(command, "bridle stop-check");
     }
 
     #[test]
