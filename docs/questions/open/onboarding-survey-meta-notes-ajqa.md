@@ -55,6 +55,28 @@ On question 8 (a Vim pack):
 So meta-notes is active and wanted on bridle, and a Vim/vader pack is worth building as
 another language and test framework, not kept project-local.
 
+
+2026-09-28, later (priority and the open questions):
+
+> I actually want to adjust priority if possible - I have active needs for meta-notes but data
+> contracts is lower priority. If we can onboard meta notes I would use it tonight or ASAP it
+> is done.
+
+Decided with the orchestrator's recommendations:
+
+- **meta-notes onboards before data-contracts**, on the fast path: its Vim/vader and pipenv
+  rules go in meta-notes' own project layer now (`.bridle/rules/`), no packs; they move into
+  the Python and Vim packs once those exist.
+- **Workspace:** a fresh clone at `/Volumes/Data/work/meta-notes-workspace/meta-notes`; the
+  human's checkout at `/Volumes/Data/work/meta-notes` (which Vim may load) is untouched. The
+  trial branch is `bridle-adopt` (63rv).
+- **Questions 1 and 4:** OpenSpec option B (keep `openspec/specs/`, retire the CLI, the 10
+  skills and `changes/`; `task-age` becomes a parked task). The worker bumps `__version__`;
+  the manager tags `v<ver>` after merging into `bridle-adopt` and pushes the tag.
+- **Question 2:** `.claude/settings.local.json` is untracked on the trial branch.
+- Not asked, defaulted: Beads 17y.3/17y.4 not imported (question 5); workers test on the
+  pipenv interpreter (3.14), not the 3.11 floor (question 7).
+
 ## The survey
 
 ### Summary
