@@ -548,6 +548,46 @@ impl TaskManager {
         Ok(self.put(task))
     }
 
+    /// Adds a plain note to `task`'s thread: no open-question bookkeeping,
+    /// no effect on readiness (docs/design/coordination.md, Messages). The
+    /// smallest useful message-to-a-task primitive; `ask_question` builds
+    /// the blocking variant on the same shape.
+    pub async fn note_task(
+        &self,
+        id: &str,
+        from: &PrincipalId,
+        body: &str,
+    ) -> Result<Task, TaskError> {
+        if body.trim().is_empty() {
+            return Err(TaskError::BadRequest("a note requires a body".to_string()));
+        }
+        let mut task = self
+            .get_task(id)
+            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+        let message = self
+            .store
+            .insert_message(NewMessage {
+                from: from.clone(),
+                to: id.to_string(),
+                to_kind: RecipientKind::Task,
+                kind: MessageKind::Note,
+                body: body.to_string(),
+                reply_to: None,
+                when: When::Now,
+                state: MessageState::Delivered,
+            })
+            .await?;
+        task.thread.push(ThreadEntry {
+            kind: ThreadEntryKind::Note,
+            from: from.clone(),
+            body: body.to_string(),
+            at: message.created_at,
+        });
+        task.updated_at = message.created_at;
+        self.state.enqueue_task(&task)?;
+        Ok(self.put(task))
+    }
+
     // ---------- claims ----------
 
     /// Claims `id` for `by`: `planned` -> `claimed`. Fails with `Conflict`
@@ -1110,6 +1150,52 @@ mod tests {
             .answer_question(&task.id, &"human".to_string(), "")
             .await
             .expect_err("blank answer body");
+        assert!(matches!(err, TaskError::BadRequest(_)));
+    }
+
+    #[tokio::test]
+    async fn note_adds_a_thread_entry_without_affecting_readiness() {
+        let (tm, _tmp) = manager().await;
+        let task = tm
+            .new_task("Add foo", TaskKind::Feature, String::new())
+            .await
+            .expect("new task");
+        force_planned(&tm, &task.id);
+        assert!(tm.ready_tasks().iter().any(|t| t.id == task.id));
+
+        let noted = tm
+            .note_task(&task.id, &"agent:w1".to_string(), "fyi, started on this")
+            .await
+            .expect("note task");
+        assert_eq!(noted.thread.len(), 1);
+        assert_eq!(noted.thread[0].kind, ThreadEntryKind::Note);
+        assert_eq!(noted.thread[0].from, "agent:w1");
+        assert_eq!(noted.thread[0].body, "fyi, started on this");
+        assert!(
+            tm.ready_tasks().iter().any(|t| t.id == task.id),
+            "a note doesn't block readiness like a question does"
+        );
+
+        let noted = tm
+            .note_task(&task.id, &"human".to_string(), "sounds good")
+            .await
+            .expect("note task from human");
+        assert_eq!(noted.thread.len(), 2);
+        assert_eq!(noted.thread[1].from, "human");
+        assert_eq!(noted.thread[1].body, "sounds good");
+    }
+
+    #[tokio::test]
+    async fn note_rejects_a_blank_body() {
+        let (tm, _tmp) = manager().await;
+        let task = tm
+            .new_task("Add foo", TaskKind::Feature, String::new())
+            .await
+            .expect("new task");
+        let err = tm
+            .note_task(&task.id, &"human".to_string(), "   ")
+            .await
+            .expect_err("blank note body");
         assert!(matches!(err, TaskError::BadRequest(_)));
     }
 

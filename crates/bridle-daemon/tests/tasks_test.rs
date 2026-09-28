@@ -215,6 +215,42 @@ async fn ask_blocks_a_task_and_answer_frees_it_again() {
     assert!(matches!(err, ClientError::Api { status: 409, .. }));
 }
 
+/// End to end through the HTTP surface `bridle task note` is a thin client
+/// of: a note lands in the task's thread and is visible on `get_task` (what
+/// `bridle task show` renders), from both a human and an external
+/// principal. Unlike `ask_question`, `note_task` has no readiness or
+/// open-question bookkeeping, so there's nothing else to assert here.
+#[tokio::test]
+async fn note_appears_in_the_task_thread_from_human_and_agent() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let c = &daemon.client;
+
+    let task = c
+        .new_task(&new_req("Add foo", TaskKind::Feature))
+        .await
+        .expect("new task");
+
+    let noted = c
+        .note_task(&task.id, "starting on this now")
+        .await
+        .expect("note task");
+    assert_eq!(noted.thread.len(), 1);
+    assert_eq!(noted.thread[0].kind, ThreadEntryKind::Note);
+    assert_eq!(noted.thread[0].body, "starting on this now");
+
+    let external = daemon.external_client("w1").await;
+    let noted = external
+        .note_task(&task.id, "picking this up")
+        .await
+        .expect("note task as external principal");
+    assert_eq!(noted.thread.len(), 2);
+    assert_eq!(noted.thread[1].kind, ThreadEntryKind::Note);
+    assert_eq!(noted.thread[1].body, "picking this up");
+
+    let fetched = c.get_task(&task.id).await.expect("get task");
+    assert_eq!(fetched.thread.len(), 2);
+}
+
 /// `bridle claim`/`bridle release`'s HTTP surface. This build has no `plan`
 /// command (see `ask_blocks_a_task_and_answer_frees_it_again` above), so a
 /// task created here never reaches `planned` and `claim` can only be

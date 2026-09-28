@@ -414,6 +414,9 @@ pub enum TaskAction {
     Drop(TaskDropArgs),
     /// Bring a dropped task back.
     Reopen(TaskReopenArgs),
+    /// Add a plain note to a task's thread (no question/answer semantics,
+    /// doesn't affect readiness).
+    Note(TaskNoteArgs),
 }
 
 #[derive(Debug, Args)]
@@ -449,6 +452,12 @@ pub struct TaskDropArgs {
 #[derive(Debug, Args)]
 pub struct TaskReopenArgs {
     pub task: String,
+}
+
+#[derive(Debug, Args)]
+pub struct TaskNoteArgs {
+    pub task: String,
+    pub text: String,
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
