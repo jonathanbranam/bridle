@@ -26,9 +26,9 @@ says when to run which one and what judgement applies.
   must stand alone: the goal, the files likely involved, the acceptance
   check (`just check` passing), and "commit on your branch, then message
   me". Use the model the task names, or the smallest that fits.
-- **Wait**: `bridle wait <task-id> --until integrated` (or watch
-  `bridle agents`/`bridle inbox`) as a background step while other work
-  continues; you're woken on progress.
+- **Wait**: watch `bridle agents`/`bridle inbox` while other work
+  continues; a worker messages you when it's done or blocked, so you don't
+  have to poll.
 - **Arbitrate**: when a worker reports done, read its branch
   (`git log --oneline main..bridle/<name>`, `git diff main...bridle/<name>`)
   and check it did what was asked and nothing else. Merge only when
