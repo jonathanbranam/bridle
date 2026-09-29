@@ -529,3 +529,4 @@
 {"actor":"agent:pm-1","at":"2026-09-29T11:30:40.525352Z","from":"open","task":"br-4c1d","to":"dropped"}
 {"actor":"agent:pm-1","at":"2026-09-29T11:30:40.568384Z","from":"open","task":"br-1f62","to":"dropped"}
 {"actor":"agent:manager-2","at":"2026-09-29T11:44:05.354828Z","from":"planned","task":"br-d99e","to":"integrated"}
+{"actor":"agent:manager-2","at":"2026-09-29T11:56:26.019754Z","from":"planned","task":"br-f671","to":"integrated"}
