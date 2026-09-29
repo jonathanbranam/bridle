@@ -58,6 +58,20 @@ Events for the live stream. It listens on `127.0.0.1` by default. Listening on
 another interface is one flag, which lets the workforce run remotely while the
 orchestrator and TUI stay on the laptop.
 
+## Disk monitor
+
+Decision (ticket m3wq): the daemon runs the check, on a timer, not a role polling, because it
+must keep working when no manager or orchestrator is up and costs no tokens. Every
+`[disk] check_interval` (default `1h`; `0s` turns it off) it reads free space on the workspace
+volume and the allocated size of the clone's `target/`, `wt/` and `.bridle/`
+(`bridle-daemon/src/disk.rs`; the walk runs in `spawn_blocking`). Each reading is logged at
+`info` and recorded as a `disk.checked` event (`{free_bytes, total_bytes, target_bytes,
+worktrees_bytes, data_bytes}`), so growth over time is queryable from the event log. Only a real
+problem reaches the human's inbox ([[stop-status-notes-to-the-human-inbox-kp3f|kp3f]]): free
+space under `[disk] min_free_gb` (default 20) sends one note with the sizes and a remediation
+(`cargo clean`, remove finished worktrees), and not again until free space has recovered and
+dipped again. Investigating growth is left to whoever reads the events.
+
 ## CI watcher
 
 `[ci] github = true` in `.bridle/config.toml` makes the daemon watch GitHub Actions for the
