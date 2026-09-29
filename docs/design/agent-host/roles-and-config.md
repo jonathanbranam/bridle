@@ -97,13 +97,13 @@ start_prompt      = "Check your inbox and tell the human you're ready."   # firs
   merges the branch `--no-ff` in `<workspace>/integration` (a worktree on scratch branch
   `integrate/<task>` cut from the integration tip, created on first use), runs
   `[integration] check = "..."` there (unset: skipped, with a note; `--check-cmd`
-  overrides), then moves the integration branch with `git update-ref` guarded by the tip
-  it started from (`<branch> moved, retry` if it changed), and marks the task done with
+  overrides), then moves the integration branch guarded by the tip it started from
+  (`<branch> moved, retry` if it changed): `git update-ref`, or, when a worktree (the
+  clone, say) has the branch checked out, `git merge --ff-only` there so its files follow
+  (refused if that worktree has uncommitted changes to tracked files), and marks the task done with
   the merge commit. A conflict (probed first with `merge-tree`), a failed check, a moved
   tip, or a branch touching `design/architecture/**` for a task that isn't an
-  `arch-revision` lands nothing (409). It never pushes, and the human's checkout is not
-  touched, so a checkout of the integration branch sees the new tip as staged changes
-  until it's reset. Events: `integrate.started`, `integrate.finished`
+  `arch-revision` lands nothing (409). It never pushes. Events: `integrate.started`, `integrate.finished`
   (`{task, branch, ok, commit|error}`).
 - **`[branches]` names the project's integration branch, and its release
   branch when it has one** — see [[../agent-host/operating-model#Branch
