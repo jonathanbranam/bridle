@@ -186,17 +186,22 @@ the clone:
    branch (`git merge-base --is-ancestor <integration> bridle/<agent>`),
    that the worker's worktree is clean, and that the diff does what the task
    asked and nothing else. Anything short of that goes back to the worker.
-3. `git merge --no-ff bridle/<agent>`. Because the branch already contains
-   the integration branch, this can't conflict.
+3. `git merge --squash bridle/<agent>`, then one commit: subject `<task id>:
+   <task title>`, body the worker's summary (`bridle task summary`), trailers
+   `Task: <id>` and `Branch: bridle/<agent>`. Because the branch already
+   contains the integration branch, this can't conflict, and the integration
+   branch reads as a list of completed tasks, not the workers' commits.
 4. `git push origin <integration>`, straight after the merge, so the remote
    never lags the clone. Only the merger pushes, and only the integration
    branch and (trunk pattern) release tags; workers never push. The release
    branch, when a project has one, is never a target of this step at all
    (mechanically denied — see "Branch pattern", above).
 5. `bridle rm <agent> --delete-branch`: removes the worker, its worktree and
-   its now-merged branch. `--delete-branch` refuses an unmerged branch, so
-   this can't lose work. Merged branches aren't kept; the merge commit on
-   the integration branch is the record (the human, 2026-09-28).
+   its now-landed branch. A squashed branch isn't a git ancestor of the
+   integration branch, so `--delete-branch` treats a `Branch: bridle/<agent>`
+   trailer on a commit reachable from `HEAD` as landed, and refuses any other
+   unmerged branch, so this can't lose work. Landed branches aren't kept; the
+   landing commit on the integration branch is the record (the human, 2026-09-28).
 
 The orchestrator verifies the integration branch after each merge (`just
 check`, twice, off load). If it's red, nothing else merges until it's green

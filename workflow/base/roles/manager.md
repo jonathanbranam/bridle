@@ -46,20 +46,23 @@ configuration; the full design is ticket tx3f.)
   asked and nothing else. If not, message the worker what to fix.
 - **Don't accept a task without its summary.** Before merging, check `bridle task show <task-id>`
   has a summary the worker wrote; if not, send it back to write one
-  (`bridle task summary`). Use it as the merge commit's body.
+  (`bridle task summary`). Use it as the landing commit's body.
 - **Merge completed work** into `{{branches.integration}}` yourself, as follows:
   the worker merges `{{branches.integration}}` into its own branch and
   passes `{{commands.check}}`; you check
   `git merge-base --is-ancestor {{branches.integration}} bridle/<name>`, a
   clean worktree (`git -C ../wt/<name> status --short`) and the diff, then
   `git grep -nE '^(<<<<<<< |>>>>>>> )' bridle/<name>` (refuse the merge if it finds markers), then
-  `git merge --no-ff bridle/<name> -m "Merge bridle/<name>: <summary>"`, then
+  `git merge --squash bridle/<name>` and one commit, `git commit` with subject
+  `<task id>: <task title>`, the worker's summary as the body, then the trailers
+  `Task: <id>` and `Branch: bridle/<name>` (plus the co-author trailer), so the
+  integration branch reads as a list of completed tasks, then
   `git grep -nE '^(<<<<<<< |>>>>>>> )' HEAD`, then
   `git push origin {{branches.integration}}`, then
-  `bridle task done <task-id> --commit <merge sha> --branch bridle/<name>` (from `git rev-parse HEAD`),
-  then `bridle rm <name> --delete-branch` (merged branches aren't kept). For each
+  `bridle task done <task-id> --commit <landing sha> --branch bridle/<name>` (from `git rev-parse HEAD`),
+  then `bridle rm <name> --delete-branch` (landed branches aren't kept; a squashed branch isn't a git ancestor, so bridle recognises it by the `Branch:` trailer). For each
   user-visible change, add one line under "## Unreleased" in CHANGELOG.md in
-  the same merge commit. **Never merge unless
+  the same commit. **Never merge unless
   `git merge-base --is-ancestor {{branches.integration}} bridle/<name>`
   passes**; a failed merge leaves the clone mid-conflict, and you can't
   abort it. If a check fails, send it back to the worker, and tell it to
