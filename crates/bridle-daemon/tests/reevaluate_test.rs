@@ -12,7 +12,6 @@ fn git(repo: &std::path::Path, args: &[&str]) -> String {
     let out = std::process::Command::new("git")
         .arg("-C")
         .arg(repo)
-        .args(["-c", "user.email=t@bridle.invalid", "-c", "user.name=t"])
         .args(args)
         .output()
         .expect("git");
