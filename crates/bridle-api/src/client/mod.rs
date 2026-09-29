@@ -14,12 +14,12 @@ use crate::types::{
     AddQueueTierRequest, Agent, AllocPortRequest, AnswerQuestionRequest, ApiErrorResponse,
     AskQuestionRequest, BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, Conflict,
     DoneTaskRequest, DropTaskRequest, Edge, EditTaskRequest, Event, EventQuery, Health,
-    ImpactCheckRequest, ImpactReport, InterruptRequest, InterruptResponse, MaxWorkersRequest,
-    Message, MessageQuery, NewEdgeRequest, NewTaskRequest, NoteTaskRequest, OpenQuestion,
-    PortAllocation, ProbeRequest, ProbeResult, Queue, RemoveEdgeQuery, RemoveQuery, RenewRequest,
-    ResolveConflictRequest, ResumeRequest, SendRequest, SetImpactRequest, SetQueueRequest,
-    SetSummaryRequest, SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery,
-    TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
+    ImpactCheckRequest, ImpactReport, InterruptRequest, InterruptResponse, LandRequest, LandResult,
+    MaxWorkersRequest, Message, MessageQuery, NewEdgeRequest, NewTaskRequest, NoteTaskRequest,
+    OpenQuestion, PortAllocation, ProbeRequest, ProbeResult, Queue, RemoveEdgeQuery, RemoveQuery,
+    RenewRequest, ResolveConflictRequest, ResumeRequest, SendRequest, SetImpactRequest,
+    SetQueueRequest, SetSummaryRequest, SpawnRequest, Status, StatusLineReport, StopRequest, Task,
+    TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
     UsageBreakdown, UsageBreakdownQuery,
 };
 
@@ -502,6 +502,10 @@ impl Client {
         req: &ImpactCheckRequest,
     ) -> Result<ImpactReport, ClientError> {
         self.post_json(&["v1", "impact", "check"], req).await
+    }
+
+    pub async fn land_task(&self, id: &str, req: &LandRequest) -> Result<LandResult, ClientError> {
+        self.post_json(&["v1", "tasks", id, "land"], req).await
     }
 
     pub async fn probe(&self, req: &ProbeRequest) -> Result<ProbeResult, ClientError> {

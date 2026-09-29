@@ -54,6 +54,10 @@ pub struct AppState {
     pub ports: crate::config::PortsConfig,
     /// `[branches] integration`, the branch `probe` merges against.
     pub integration: String,
+    /// `[integration] check`, run by `bridle land`.
+    pub integration_check: Option<String>,
+    /// Held for the length of a landing: one at a time.
+    pub landing: std::sync::Arc<tokio::sync::Mutex<()>>,
 }
 
 pub fn router(state: AppState) -> Router {
@@ -88,6 +92,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/tasks/{id}/plan", post(plan_task))
         .route("/v1/tasks/{id}/drop", post(drop_task))
         .route("/v1/tasks/{id}/done", post(done_task))
+        .route("/v1/tasks/{id}/land", post(land_task))
         .route("/v1/tasks/{id}/summary", post(set_summary))
         .route("/v1/tasks/{id}/impact", post(set_impact))
         .route("/v1/impact/check", post(impact_check))
@@ -1531,6 +1536,95 @@ async fn done_task(
         )
         .await;
     Ok(Json(task))
+}
+
+/// `bridle land`: merge the task's branch in the integration worktree, check it, move the
+/// integration branch, then mark the task done. Anything that stops the landing leaves the
+/// integration branch and the task untouched.
+async fn land_task(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path(id): Path<String>,
+    Json(req): Json<bridle_api::types::LandRequest>,
+) -> Result<Json<bridle_api::types::LandResult>, ApiError> {
+    let task = state
+        .tasks
+        .get_task(&id)
+        .ok_or_else(|| ApiError::not_found(format!("no such task: {id}")))?;
+    let branch = match req
+        .branch
+        .as_deref()
+        .map(str::trim)
+        .filter(|b| !b.is_empty())
+    {
+        Some(b) => b.to_string(),
+        None => claimed_branch(&state, &task)
+            .await
+            .ok_or_else(|| ApiError::bad_request(format!("no branch for {id}; pass --branch")))?,
+    };
+    let one_at_a_time = state.landing.clone().lock_owned().await;
+    let emit = |kind: &'static str, data: serde_json::Value| {
+        let emitter = state.emitter.clone();
+        let actor = principal.id.clone();
+        async move {
+            let _ = emitter.emit(kind, actor, None, data).await;
+        }
+    };
+    emit(
+        event_kind::INTEGRATE_STARTED,
+        serde_json::json!({"task": id, "branch": branch}),
+    )
+    .await;
+    let check = req
+        .check_cmd
+        .as_deref()
+        .or(state.integration_check.as_deref());
+    let landed = crate::integrator::land(&crate::integrator::LandInput {
+        repo: &state.workspace.repo,
+        dir: state.workspace.workspace.join("integration"),
+        integration: &state.integration,
+        branch: &branch,
+        task: &id,
+        is_arch_revision: task.kind == bridle_api::types::TaskKind::ArchRevision,
+        check,
+    })
+    .await;
+    let landed = match landed {
+        Ok(l) => l,
+        Err(e) => {
+            emit(
+                event_kind::INTEGRATE_FINISHED,
+                serde_json::json!({"task": id, "branch": branch, "ok": false, "error": e.to_string()}),
+            )
+            .await;
+            return Err(ApiError::new(
+                StatusCode::CONFLICT,
+                "land_failed",
+                e.to_string(),
+            ));
+        }
+    };
+    emit(
+        event_kind::INTEGRATE_FINISHED,
+        serde_json::json!({"task": id, "branch": branch, "ok": true, "commit": landed.commit}),
+    )
+    .await;
+    drop(one_at_a_time);
+    let Json(task) = done_task(
+        State(state),
+        Extension(principal),
+        Path(id),
+        Json(DoneTaskRequest {
+            commit: landed.commit.clone(),
+            branch: Some(branch),
+        }),
+    )
+    .await?;
+    Ok(Json(bridle_api::types::LandResult {
+        task,
+        commit: landed.commit,
+        notes: landed.notes,
+    }))
 }
 
 /// After an `arch-revision` lands, opens one `re-evaluate` task per capability with suspect

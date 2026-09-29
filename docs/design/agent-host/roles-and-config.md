@@ -92,7 +92,19 @@ start_prompt      = "Check your inbox and tell the human you're ready."   # firs
 - **The manager runs in the clone** (`workdir = "repo"`) because it
   coordinates rather than edits. Merging is the integrator's job, and the
   integrator is bridle itself, in its own worktree
-  ([[docs/design/roles-and-lifecycle|roles]]).
+  ([[docs/design/roles-and-lifecycle|roles]]). `bridle land <task> [--branch B]
+  [--check-cmd CMD]` is that integrator: under one lock (one landing at a time) it
+  merges the branch `--no-ff` in `<workspace>/integration` (a worktree on scratch branch
+  `integrate/<task>` cut from the integration tip, created on first use), runs
+  `[integration] check = "..."` there (unset: skipped, with a note; `--check-cmd`
+  overrides), then moves the integration branch with `git update-ref` guarded by the tip
+  it started from (`<branch> moved, retry` if it changed), and marks the task done with
+  the merge commit. A conflict (probed first with `merge-tree`), a failed check, a moved
+  tip, or a branch touching `design/architecture/**` for a task that isn't an
+  `arch-revision` lands nothing (409). It never pushes, and the human's checkout is not
+  touched, so a checkout of the integration branch sees the new tip as staged changes
+  until it's reset. Events: `integrate.started`, `integrate.finished`
+  (`{task, branch, ok, commit|error}`).
 - **`[branches]` names the project's integration branch, and its release
   branch when it has one** — see [[../agent-host/operating-model#Branch
   pattern|operating-model.md, "Branch pattern"]] for the two supported

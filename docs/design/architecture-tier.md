@@ -40,4 +40,4 @@ or an id used twice (within a file or across files) is an error reported as
 `bridle arch list [--invariants] [--root DIR] [--json]` prints the elements
 (local, no daemon); `bridle arch propose --title T --argument TEXT|-` creates an
 `arch-revision` task (daemon); see [[docs/design/cli|the CLI]]. The
-PreToolUse hook and the integrator check are not built.
+integrator check is built (`bridle land` refuses a branch touching `design/architecture/**` unless the task is an `arch-revision`); the PreToolUse hook is not.
