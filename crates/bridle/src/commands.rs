@@ -1683,11 +1683,12 @@ fn size_str(size: Option<TaskSize>) -> &'static str {
     size.map_or("-", TaskSize::as_str)
 }
 
-fn task_size(arg: TaskSizeArg) -> TaskSize {
+fn task_size_arg_to_opt(arg: TaskSizeArg) -> Option<TaskSize> {
     match arg {
-        TaskSizeArg::S => TaskSize::S,
-        TaskSizeArg::M => TaskSize::M,
-        TaskSizeArg::L => TaskSize::L,
+        TaskSizeArg::S => Some(TaskSize::S),
+        TaskSizeArg::M => Some(TaskSize::M),
+        TaskSizeArg::L => Some(TaskSize::L),
+        TaskSizeArg::None => Some(TaskSize::None),
     }
 }
 
@@ -1714,7 +1715,7 @@ async fn task_new(cli: &Cli, args: &TaskNewArgs) -> Result<(), CliError> {
         kind: task_kind_arg(args.kind),
         body,
         components: args.component.clone(),
-        size: args.size.map(task_size),
+        size: args.size.and_then(task_size_arg_to_opt),
     };
     let task = client.new_task(&req).await?;
     if args.component.is_empty() && project_has_components() {
@@ -1786,7 +1787,7 @@ async fn task_edit(cli: &Cli, args: &TaskEditArgs) -> Result<(), CliError> {
         } else {
             Some(args.component.clone())
         },
-        size: args.size.map(task_size),
+        size: args.size.and_then(task_size_arg_to_opt),
     };
     let task = client.edit_task(&args.task, &req).await?;
     if cli.json {
