@@ -74,9 +74,10 @@ facts.md             short operational facts, loaded every session (the bd prime
 the `claude` process's system prompt for a whole bridle role (worker, manager,
 product-manager, orchestrator, advisor) — see
 [[docs/design/agent-host/roles-and-config|roles and config]]. `bridle sync` renders
-`agents/` into `.claude/agents/*.md` (below); it does not yet do anything with `roles/` —
-a project still points `system_prompt` at a `roles/<role>.md` path by hand in its own
-`.bridle/config.toml` (docs/questions/open/sync-does-not-render-role-prompts-rl2v.md).
+`agents/` into `.claude/agents/*.md` (below); it does nothing with `roles/`. Instead, a
+role with no `system_prompt` in `.bridle/config.toml` defaults to
+`<workflow>/base/roles/<role>.md` when that file exists, and a project's own `system_prompt`
+wins. There is no layer overlay of role prompts.
 
 ## Rules have ids, and overrides are explicit
 

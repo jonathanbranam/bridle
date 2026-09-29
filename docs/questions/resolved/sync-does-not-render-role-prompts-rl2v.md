@@ -42,3 +42,10 @@ skills and Claude Code agent defs are.
    overrides a base role prompt) rather than a single static path.
 
 Not resolved here — flagged as a follow-up, out of scope for br-1e0c.
+
+## Resolution
+
+Option 2, built (br-f636): a role with no `system_prompt` defaults to
+`<workflow>/base/roles/<role>.md` when it exists. Documented in
+[[docs/design/agent-host/roles-and-config|roles and config]] and
+[[docs/design/workflow-layers|workflow layers]]. Option 3 (layer overlay of role prompts) is not built.
