@@ -35,3 +35,13 @@ deals with this up front:
   when it concludes with a recommendation. Adopting it goes through the normal
   path: an `arch-revision` and/or a goals change (human gates), then ordinary
   tasks on mainline. Until that happens, the exploration has no authority.
+
+## Built
+
+- **The locked base rule** `explorations` (`workflow/base/rules/explorations.md`, tagged
+  for every role) carries the text above, so `bridle prime` prints it to every role. The
+  path-scoped copy on `design/explore/**` is not built: rules have no path scoping yet.
+- **The exploring agent's paragraph**: `bridle prime worker --task <id>` looks the task up
+  and, when its kind is `explore`, opens with the exploring paragraph. Without `--task`
+  (prime is otherwise local) it is absent.
+- Not built: frontmatter checking, `bridle explore`, and the gate exemptions.
