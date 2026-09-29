@@ -1929,21 +1929,8 @@ async fn task_search(cli: &Cli, args: &TaskSearchArgs) -> Result<(), CliError> {
         )));
     }
     let client = client_for_read(cli).await?;
-    let all_tasks = client.list_tasks().await?;
-    let search_words: Vec<String> = args.words.iter().map(|w| w.to_lowercase()).collect();
-    let filtered_tasks: Vec<Task> = all_tasks
-        .into_iter()
-        .filter(|task| {
-            let title_lower = task.title.to_lowercase();
-            let body_lower = task.body.to_lowercase();
-            let summary_lower = task.summary.as_ref().map(|s| s.to_lowercase());
-            search_words.iter().all(|word| {
-                title_lower.contains(word)
-                    || body_lower.contains(word)
-                    || summary_lower.as_ref().is_some_and(|s| s.contains(word))
-            })
-        })
-        .collect();
+    let word_refs: Vec<&str> = args.words.iter().map(|w| w.as_str()).collect();
+    let filtered_tasks = client.search_tasks(&word_refs).await?;
     if cli.json {
         render::print_json(&filtered_tasks)?;
     } else if filtered_tasks.is_empty() {
