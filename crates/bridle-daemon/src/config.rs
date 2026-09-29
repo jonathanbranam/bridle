@@ -43,6 +43,20 @@ pub enum ConfigError {
     UnknownComponentParent { id: String, parent: String },
     #[error("[components] parent cycle: {}", .0.join(" -> "))]
     ComponentCycle(Vec<String>),
+    #[error("[worktrees] copy entry {0:?} must be a relative path without \"..\"")]
+    BadCopyPath(String),
+}
+
+/// True for a path that stays inside the repo root: relative, no `..`, not empty.
+pub fn is_safe_relative(path: &str) -> bool {
+    let p = Path::new(path);
+    !path.is_empty()
+        && p.components().all(|c| {
+            matches!(
+                c,
+                std::path::Component::Normal(_) | std::path::Component::CurDir
+            )
+        })
 }
 
 /// `[components.<id>]`: a named scope inside the project (docs/design/components.md).
@@ -730,6 +744,8 @@ pub struct Config {
     pub setup: Option<String>,
     /// `[worktrees] setup_timeout_secs` (default 600).
     pub setup_timeout: Duration,
+    /// `[worktrees] copy`: repo-relative files copied into each new worktree before setup.
+    pub copy: Vec<String>,
     pub branches: BranchesConfig,
     pub ci: CiConfig,
     pub disk: DiskConfig,
@@ -770,6 +786,7 @@ impl Default for Config {
             warm_target: true,
             setup: None,
             setup_timeout: Duration::from_secs(10 * 60),
+            copy: Vec::new(),
             branches: BranchesConfig::default(),
             ci: CiConfig::default(),
             disk: DiskConfig::default(),
@@ -1046,6 +1063,10 @@ impl Config {
             if let Some(secs) = w.setup_timeout_secs {
                 config.setup_timeout = Duration::from_secs(secs);
             }
+            if let Some(bad) = w.copy.iter().find(|p| !is_safe_relative(p)) {
+                return Err(ConfigError::BadCopyPath(bad.clone()));
+            }
+            config.copy = w.copy;
         }
 
         if let Some(t) = raw.tasks {
@@ -1219,6 +1240,8 @@ struct RawWorktrees {
     setup: Option<String>,
     #[serde(default)]
     setup_timeout_secs: Option<u64>,
+    #[serde(default)]
+    copy: Vec<String>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -2254,6 +2277,16 @@ mod tests {
             .expect("parse");
         assert_eq!(cfg.setup.as_deref(), Some("npm ci"));
         assert_eq!(cfg.setup_timeout, Duration::from_secs(5));
+        assert!(cfg.copy.is_empty());
+        let cfg = Config::parse("[worktrees]\ncopy = [\".env\", \"a/b.json\"]\n").expect("parses");
+        assert_eq!(cfg.copy, [".env", "a/b.json"]);
+        for bad in ["/etc/passwd", "../x", "a/../../x", ""] {
+            let toml = format!("[worktrees]\ncopy = [{bad:?}]\n");
+            assert!(
+                matches!(Config::parse(&toml), Err(ConfigError::BadCopyPath(_))),
+                "{bad}"
+            );
+        }
 
         let cfg = Config::parse("[commands]\ncheck = \"make check\"\n").expect("parse");
         assert_eq!(cfg.commands.check, "make check");

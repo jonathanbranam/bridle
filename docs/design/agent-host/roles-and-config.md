@@ -163,5 +163,11 @@ worktree roles only, never the main clone (e.g. `npm install --prefer-offline`, 
 project's worker has `node_modules`). `setup_timeout_secs` (default 600) bounds it. The env is
 the daemon's minus every `BRIDLE_*` variable. On non-zero exit or timeout the spawn fails with
 an error naming the command, exit status and the last ~20 lines of output, and the worktree and
-branch are removed as for any other failed spawn. Duration is logged at info. It doesn't copy
-gitignored files (`.env`, `.mcp.json`); that's an open question (u8sm Q8).
+branch are removed as for any other failed spawn. Duration is logged at info. 
+
+`[worktrees] copy = [".env", ".mcp.json"]` (optional, default empty) lists repo-relative
+gitignored files a worker needs. After `git worktree add` and before setup runs, each one that
+exists in the project clone is copied (not symlinked) to the same path in the worktree, keeping
+its mode, so a 0600 token file stays 0600; parent directories are created. A missing file is
+skipped with a logged warning and never fails the spawn. Absolute paths and paths containing
+`..` are rejected when the config is parsed. Files only: no directories or globs.
