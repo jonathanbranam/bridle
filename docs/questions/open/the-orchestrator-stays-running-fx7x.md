@@ -88,8 +88,8 @@ locally and over Remote Control), not a stream-json agent.
 - Risk: typing into the pane while the human is typing there locally. Remote Control messages
   don't collide. Keep wakes short and only on idle; accept the rare collision.
 
-**Context and restarts.** Thresholds (defaults, configurable): a note at 100K ("context at N%"),
-at 140K "plan a handover at the next quiet point", at 170K "hand over now", and past a hard
+**Context and restarts.** Thresholds (defaults, configurable): a note at 150K ("context at N%"),
+at 210K "plan a handover at the next quiet point", at 255K "hand over now", and past a hard
 limit (or a handover deadline) the daemon writes the handover marker itself, exits the session
 (`/exit` by send-keys, then kill after a grace period) and relaunches. Uptime: the same restart
 after N hours even under the context limit, at a quiet point. The handover is done when the
@@ -106,3 +106,12 @@ What's left is a short handover note and the decisions log. Proposal:
 
 Open for the human: the pane name; the thresholds; whether a forced restart may interrupt a
 conversation in progress (proposal: it waits for idle, up to a deadline, then goes anyway).
+
+## Status (2026-09-29)
+
+- Task br-2ebc (spike + design + split) is **held for the human's review**: an open question on
+  it blocks it. The first worker was stopped before it began.
+- The human raised the thresholds by 50% (from 100K/140K/170K): **150K** note, **210K** plan a
+  handover, **255K** hand over now, then the forced restart.
+- Still open for the human: the pane name; whether a forced restart may interrupt a conversation
+  (recommended: wait for idle up to a deadline, then go).
