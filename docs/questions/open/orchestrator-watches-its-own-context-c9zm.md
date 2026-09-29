@@ -2,9 +2,8 @@
 id: c9zm
 title: The watcher tells the orchestrator when its own context is getting large
 opened: 2026-09-29
-resolved: 2026-09-29
 repos: [bridle]
-changes: [037c6ee]
+changes: []
 specs: []
 needs: []
 see: [d4mz, s8kn]
@@ -29,7 +28,3 @@ to remind you or give you a hint."
   Check that the ledger is actually being fed for this session: `bridle usage --json`'s
   `interactive_today` was empty on 2026-09-29 even with the statusline running.
 - The same for the advisor's session, later.
-
-## Resolution
-
-Resolved by 037c6ee: the orchestrator's watcher wakes it with `CONTEXT <tokens>` when its own context passes 140K.
