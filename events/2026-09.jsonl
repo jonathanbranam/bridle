@@ -639,3 +639,4 @@
 {"actor":"agent:pm-1","at":"2026-09-29T20:42:30.985930Z","from":"open","task":"br-a3a4","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-09-29T20:42:31.018973Z","queue":"reprioritized"}
 {"actor":"agent:manager-2","at":"2026-09-29T20:44:25.879141Z","from":"planned","task":"br-ef49","to":"integrated"}
+{"actor":"agent:manager-2","at":"2026-09-29T20:47:29.120245Z","from":"planned","task":"br-9e71","to":"integrated"}
