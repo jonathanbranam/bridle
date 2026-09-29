@@ -15,6 +15,7 @@ bridle-api = { path = "crates/bridle-api" }
 bridle-claude = { path = "crates/bridle-claude" }
 bridle-daemon = { path = "crates/bridle-daemon" }
 bridle-tui = { path = "crates/bridle-tui" }
+bridle-spec = { path = "crates/bridle-spec" }
 
 anyhow = "1"
 axum = "0.8"
