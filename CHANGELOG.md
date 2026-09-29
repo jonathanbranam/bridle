@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `bridle send` and `task note` refuse an empty or whitespace-only body (CLI and API); the worker skill, role and stop-check tell workers to report to their manager, not `human` (br-6fd7, hx7t).
 ### Changed
 
+- `scripts/claude-orchestrator` and `scripts/claude-advisor` start leaner (ct8m step 4, br-72da): `--strict-mcp-config` plus settings keys that drop bundled skills, workflows and the claude.ai connectors, and denies for tools these roles never use. AskUserQuestion, Agent, ToolSearch, Cron and Monitor stay. First turn 22.8K to 18.8K tokens in a scratch Haiku run (`docs/spikes/08-lean-context-findings.md`).
+
 - `bridle land` lands one squash commit per task (`<task id>: <title>`, the summary as body, `Task:`/`Branch:` trailers) instead of a `--no-ff` merge (br-1d3d).
 
 ### Added

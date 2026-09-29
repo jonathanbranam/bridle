@@ -309,3 +309,30 @@ commit; it costs nothing but is a trap. Not worth a task on its own.
 
 The system prompt itself (5.0K, ~1.5K of it bridle's) is not worth trimming: cutting the role
 file in half saves ~0.8K, less than any of items 1-3.
+
+## Step 4: the orchestrator and advisor launchers (task br-72da)
+
+`scripts/claude-orchestrator` and `scripts/claude-advisor` now pass `--strict-mcp-config` and one
+`--settings` object with `disableBundledSkills`, `disableWorkflows`, `disableClaudeAiConnectors`,
+`disableArtifact` and `permissions.deny` for EnterPlanMode, ExitPlanMode, DesignSync, NotebookEdit,
+PushNotification, ReportFindings, RemoteTrigger, Artifact, Workflow and SendMessage. The orchestrator's
+object also carries the `SessionStart` hook (a second `--settings` would replace it, so it is one
+object). Kept on purpose: AskUserQuestion (the human's decision), Agent, ToolSearch, WebSearch/WebFetch,
+Monitor and Bash background runs, the Cron tools and ScheduleWakeup (heartbeat), and
+`--remote-control` (no `disableRemoteControl`). Not `--tools`: these roles use too much of the set.
+
+Scratch check, Haiku, `-p`, the harness above, `--setting-sources project`, unrestricted tools, the
+manager prompt, one "OK" turn, $0.055 in all. Before is the old launch flags (no strict, no keys);
+after is the new set. It is a `-p` approximation: the live TUI also has AskUserQuestion and loads the
+human's user settings, so the live number is higher; `/context` after a restart gives the real one.
+
+| | before | after |
+|---|---|---|
+| total tokens at first turn | 22,777 | **18,838** (-3,939, -17%) |
+| System tools (loaded) | 11,397 | 10,830 |
+| System tools (deferred, not in total) | 15,317 | 9,139 |
+| Skills / skill listing | 1,556 | 0 (skills 18 to 2) |
+| MCP instructions + deferred MCP tools | 538 + 1,726 | 0 (4 claude.ai connectors gone) |
+| Messages | 2,606 | 1,328 |
+
+Not measured here: `bridle prime orchestrator` (~9K, step 5's state-file shrink) is not in this number.

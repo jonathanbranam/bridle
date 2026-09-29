@@ -26,7 +26,7 @@ over, and carries its wake conditions, with no agent in the loop.
 ## 1. Pieces
 
 ```
-scripts/claude-orchestrator   launches the session; writes the pid file; adds a SessionStart hook
+scripts/claude-orchestrator   launches the session; writes the pid file; adds a SessionStart hook (in one --settings object with the lean keys, ct8m)
 $BRIDLE_HOME/orchestrator.pid       "<pid> <process start time> <launch epoch>"   (launcher)
 $BRIDLE_HOME/orchestrator.session   the current session id                        (the hook)
 $BRIDLE_HOME/context/<session id>   context tokens                                (bridle statusline, exists)

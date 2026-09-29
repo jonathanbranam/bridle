@@ -14,13 +14,19 @@ mkdir -p $home
 print -r -- "$$ $(ps -o lstart= -p $$ | xargs) $(date +%s)" > $home/orchestrator.pid
 # The session id changes on /clear, so a SessionStart hook for this session only records the current
 # one (and the transcript path) in $BRIDLE_HOME/orchestrator.session.
-hooks='{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"bridle orchestrator note-session"}]}]}}'
+# Lean start (ticket ct8m, docs/spikes/08-lean-context-findings.md): settings keys that drop bundled
+# skills, workflows and the claude.ai connectors, and bare-name denies for tools this role never uses
+# (spike 08's usage counts; bridle send replaces SendMessage). Kept: AskUserQuestion, Agent,
+# ToolSearch, Web*, Monitor and Bash background runs (wait-for-wake), Cron*, ScheduleWakeup. Not
+# disableRemoteControl: the human reaches this session through Remote Control.
+# One --settings object: the hook plus the lean keys (a second --settings would replace it).
+settings='{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"bridle orchestrator note-session"}]}]},"disableBundledSkills":true,"disableWorkflows":true,"disableClaudeAiConnectors":true,"disableArtifact":true,"permissions":{"deny":["EnterPlanMode","ExitPlanMode","DesignSync","NotebookEdit","PushNotification","ReportFindings","RemoteTrigger","Artifact","Workflow","SendMessage"]}}'
 # Every bridle command in the session then acts as external:orchestrator, with the token for the
 # project it talks to from ~/.bridle/credentials.toml (`bridle token create orchestrator --project <p>`).
 export BRIDLE_AS=orchestrator
 # The opening prompt only points at `bridle prime`: a long prompt in argv is matched by any
 # `pkill -f <pattern>` a worker runs, and a worker's `pkill -f "just check"` killed two sessions (fx7x).
-claude --settings $hooks --name bridle-orch --remote-control bridle-orch "$@" \
+claude --settings $settings --strict-mcp-config --name bridle-orch --remote-control bridle-orch "$@" \
   "Run \`bridle prime orchestrator\` and follow what it prints."
 # Sessions have ended unattended with no trace (fx7x): record when, and how (a status above 128 is a
 # signal), in the pane and in a log that outlives it.
