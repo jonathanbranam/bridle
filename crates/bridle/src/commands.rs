@@ -70,6 +70,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Rules(args) => rules(&cli, args).await,
         Command::Sync => sync(&cli).await,
         Command::Spec(args) => spec(&cli, args),
+        Command::Arch(args) => arch(&cli, args),
     }
 }
 
@@ -2612,6 +2613,33 @@ fn spec(cli: &Cli, args: &SpecArgs) -> Result<(), CliError> {
     }
     if report.errors > 0 {
         return Err(anyhow::anyhow!("spec check found {} error(s)", report.errors).into());
+    }
+    Ok(())
+}
+
+/// `bridle arch list`: local, no daemon call (docs/design/architecture-tier.md).
+fn arch(cli: &Cli, args: &crate::cli::ArchArgs) -> Result<(), CliError> {
+    let crate::cli::ArchAction::List(args) = &args.action;
+    let files = spec_inputs(std::slice::from_ref(&args.root), None)?;
+    let mut elements = match bridle_spec::arch::parse_files(&files) {
+        Ok(els) => els,
+        Err(ds) => {
+            for d in &ds {
+                eprintln!("{d}");
+            }
+            return Err(anyhow::anyhow!("arch list found {} error(s)", ds.len()).into());
+        }
+    };
+    if args.invariants {
+        elements.retain(|e| e.invariant);
+    }
+    if cli.json {
+        render::print_json(&elements)?;
+    } else {
+        for e in &elements {
+            let flag = if e.invariant { " invariant" } else { "" };
+            println!("{}{flag}  {}  ({}:{})", e.id, e.title, e.file, e.line);
+        }
     }
     Ok(())
 }

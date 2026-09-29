@@ -137,6 +137,32 @@ pub enum Command {
     /// Validate capability spec files (docs/design/specs.md) and print each
     /// diagnostic as file:line:col: message. Local, like `rules` — no daemon call.
     Spec(SpecArgs),
+    /// Architecture-tier elements (docs/design/architecture-tier.md). Local, no daemon call.
+    Arch(ArchArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct ArchArgs {
+    #[command(subcommand)]
+    pub action: ArchAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum ArchAction {
+    /// List the elements (id, invariant flag, title); exits non-zero, printing
+    /// diagnostics, on a missing or duplicate id.
+    List(ArchListArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct ArchListArgs {
+    /// Only elements marked `invariant`.
+    #[arg(long)]
+    pub invariants: bool,
+    /// The architecture directory, searched recursively for `*.md` (default
+    /// `design/architecture`, relative to the current directory).
+    #[arg(long, value_name = "DIR", default_value = "design/architecture")]
+    pub root: PathBuf,
 }
 
 #[derive(Debug, Args)]

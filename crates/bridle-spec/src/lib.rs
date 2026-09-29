@@ -15,6 +15,7 @@
 //! problem in the file is reported, not just the first. The crate is pure: no
 //! async, no daemon, no I/O beyond [`parse_file`].
 
+pub mod arch;
 mod ids;
 mod parse;
 
