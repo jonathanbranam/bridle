@@ -125,3 +125,13 @@ tasks = [
     "br-cc25",
     "br-5d2a",
 ]
+
+[[tier]]
+tasks = [
+    "br-3b72",
+    "br-a54d",
+    "br-b1e2",
+]
+
+[[tier]]
+tasks = ["br-b85c"]
