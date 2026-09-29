@@ -1,7 +1,7 @@
 #!/bin/zsh
 # Start a fresh orchestrator session (workflow/base/roles/orchestrator.md), reachable by Remote Control.
 # The outgoing orchestrator has already brought docs/context/orchestrator-state.md up to date,
-# committed it and stopped its watcher and heartbeat. Ticket d4mz; the opening prompt comes from
+# committed it and stopped its watcher and heartbeat. Ticket d4mz; the session opens by running
 # `bridle prime orchestrator`, which prints the role prompt, current state and startup steps in
 # one go. Usage: claude-orchestrator [extra claude args]
 cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
@@ -18,7 +18,10 @@ hooks='{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"bridle o
 # Every bridle command in the session then acts as external:orchestrator, with the token for the
 # project it talks to from ~/.bridle/credentials.toml (`bridle token create orchestrator --project <p>`).
 export BRIDLE_AS=orchestrator
-claude --settings $hooks --name bridle-orch --remote-control bridle-orch "$@" "$(bridle prime orchestrator)"
+# The opening prompt only points at `bridle prime`: a long prompt in argv is matched by any
+# `pkill -f <pattern>` a worker runs, and a worker's `pkill -f "just check"` killed two sessions (fx7x).
+claude --settings $hooks --name bridle-orch --remote-control bridle-orch "$@" \
+  "Run \`bridle prime orchestrator\` and follow what it prints."
 # Sessions have ended unattended with no trace (fx7x): record when, and how (a status above 128 is a
 # signal), in the pane and in a log that outlives it.
 rc=$?

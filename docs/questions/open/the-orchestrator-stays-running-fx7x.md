@@ -29,10 +29,24 @@ Remote Control:
   send it a message.
 - It's the orchestrator running outside bridle (an `external` principal in a terminal), so the
   daemon's `resume_on_restart` doesn't cover it. The advisor is in the same position.
-- **It happened again at ~18:26 UTC (2:26 PM, the human's report)**: the eleventh orchestrator
-  session (`d19c4df3-...`) died with no warning and no handover, after fx7x 1a had landed
-  but before the daemon was rebuilt, so nothing supervised it. The human restarted it by hand.
-  Cause under investigation (see below when found).
+- **It happened again**: the eleventh orchestrator session (`d19c4df3-...`), idle since its last
+  turn at 18:26:54 UTC (2:26 PM), exited at 18:33:18 UTC with no warning and no handover. fx7x
+  1a had landed but the daemon wasn't rebuilt, so nothing supervised it. The human restarted it
+  by hand.
+- **Cause, both times (found 2026-09-29, high confidence): a worker's `pkill -f "just check"`.**
+  The launcher passed the whole `bridle prime orchestrator` text to `claude` as an argument; it
+  mentions `just check`, and `pkill -f` matches the full command line. Claude Code exits cleanly
+  on SIGTERM (hence the "Resume this session with…" banner and no crash report). The
+  human-todos worker ran it at 12:36:17.6 UTC and the orchestrator entered its exit handler at
+  12:36:17.9 (unified log); orch-1b ran `pkill -P …; sleep 1; pkill -f "just check"` at
+  18:33:17.6 and the orchestrator exited at 18:33:18.9. Ruled out: memory (no jetsam), crashes
+  (no reports), a Claude Code update (2.1.285 installed at 15:31 ET, after both), the daemon
+  (its binary predated fx7x 1a's send-keys), the human (not there; nothing in history.jsonl).
+  pkill's target isn't logged, so the match is by timing plus `ps -ww` showing the pattern in
+  the orchestrator's argv; the advisor's argv lacked it and it survived.
+- **Fixes:** both launchers now pass a one-line prompt (83b1f07's successor); managers told
+  every worker never to use `pkill -f`/`killall`, only pids; a worker rule is queued. The
+  launcher now logs each exit to `$BRIDLE_HOME/orchestrator.exits`.
 
 ## Shape (for the orchestrator to design; KISS)
 

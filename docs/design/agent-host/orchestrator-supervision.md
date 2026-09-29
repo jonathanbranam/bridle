@@ -96,8 +96,9 @@ same incident.
 
 To relaunch: `tmux send-keys -t <pane_id> -l '<launcher, absolute>'`, then a separate
 `tmux send-keys -t <pane_id> Enter` (spike #7; the two calls are the tested form). The launcher
-does `cd`, writes the pid file and starts `claude` with `bridle prime orchestrator` as its
-prompt, as today. A fresh session, not `--resume`: a handover is how state crosses a restart.
+does `cd`, writes the pid file and starts `claude` with a one-line prompt telling it to run
+`bridle prime orchestrator`. Not the prime's text itself: a long prompt in argv matches any
+worker's `pkill -f <pattern>`, which is how two sessions died (fx7x). A fresh session, not `--resume`: a handover is how state crosses a restart.
 
 A launch is *confirmed* when the pid file changes to a live pid within 60 s. A launch that isn't
 confirmed (the trust prompt of spike Surprise 2, a broken launcher) counts as a failed relaunch

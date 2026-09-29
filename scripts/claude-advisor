@@ -8,7 +8,6 @@ cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
 # Every bridle command in the session then acts as external:advisor, with the token for the
 # project it talks to from ~/.bridle/credentials.toml.
 export BRIDLE_AS=advisor
+# A short prompt, not the role file's text: any `pkill -f <pattern>` a worker runs matches argv (fx7x).
 exec claude --name bridle-advisor --remote-control bridle-advisor "$@" \
-  "$(cat workflow/base/roles/advisor.md)
-
-Check in: bridle status, and the open questions to the human. Say hello to the human in one line, then wait."
+  "Read workflow/base/roles/advisor.md and follow it. Then check in: bridle status, and the open questions to the human. Say hello to the human in one line, then wait."
