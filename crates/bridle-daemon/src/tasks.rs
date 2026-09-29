@@ -147,12 +147,20 @@ impl TaskManager {
             .into_iter()
             .map(|q| (q.task_id, q.message_id))
             .collect();
-        let claims: HashMap<String, ClaimEntry> = store
-            .list_claims()
-            .await?
-            .into_iter()
-            .map(|c| (c.task_id, (c.claimed_by, c.claimed_at)))
-            .collect();
+        // A claim on a task that isn't `claimed` (say, left behind by an
+        // older `drop`) is stale: drop the row rather than list the task as
+        // claimed forever.
+        let mut claims: HashMap<String, ClaimEntry> = HashMap::new();
+        for c in store.list_claims().await? {
+            if cache
+                .get(&c.task_id)
+                .is_some_and(|t| t.state == TaskState::Claimed)
+            {
+                claims.insert(c.task_id, (c.claimed_by, c.claimed_at));
+            } else {
+                store.delete_claim(&c.task_id).await?;
+            }
+        }
         for (task_id, (claimant, claimed_at)) in &claims {
             if let Some(task) = cache.get_mut(task_id) {
                 task.claimed_by = Some(claimant.clone());
@@ -385,7 +393,7 @@ impl TaskManager {
         Ok(self.put(task))
     }
 
-    /// `open` or `planned` -> `dropped`, recording `reason` in the thread.
+    /// `open`, `planned` or `claimed` -> `dropped` (releasing any claim), recording `reason` in the thread.
     pub async fn drop_task(
         &self,
         id: &str,
@@ -402,6 +410,11 @@ impl TaskManager {
             .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
         if task.state == TaskState::Dropped {
             return Err(TaskError::Conflict(format!("task {id} is already dropped")));
+        }
+        if task.state == TaskState::Claimed {
+            self.clear_claim(id).await?;
+            task.claimed_by = None;
+            task.claimed_at = None;
         }
         self.transition(&mut task, TaskState::Dropped, actor)
             .await?;
@@ -824,6 +837,14 @@ impl TaskManager {
         self.release_claim(id).await
     }
 
+    /// Removes `id`'s claim row, in-memory entry and state-branch record,
+    /// leaving the task's state to the caller.
+    async fn clear_claim(&self, id: &str) -> Result<(), TaskError> {
+        self.store.delete_claim(id).await?;
+        self.claims.lock().expect("claims lock").remove(id);
+        self.enqueue_claims_snapshot()
+    }
+
     /// The shared release path for an explicit `release_task` and automatic
     /// lease expiry: clears the claim and transitions the task back to
     /// `planned`, enqueuing the claim set's new state to the state branch
@@ -832,10 +853,11 @@ impl TaskManager {
         let mut task = self
             .get_task(id)
             .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
-        self.store.delete_claim(id).await?;
+        if task.state != TaskState::Claimed {
+            return Err(TaskError::Conflict(format!("task {id} is not claimed")));
+        }
+        self.clear_claim(id).await?;
         self.store.set_task_state(id, TaskState::Planned).await?;
-        self.claims.lock().expect("claims lock").remove(id);
-        self.enqueue_claims_snapshot()?;
         task.state = TaskState::Planned;
         task.updated_at = Utc::now();
         task.claimed_by = None;
@@ -875,6 +897,8 @@ impl TaskManager {
             if now - last < self.claim_lease_after {
                 continue;
             }
+            // Only a `claimed` task moves back to `planned`; anything else
+            // (e.g. dropped) has a stale claim that isn't ours to act on.
             let _ = self.release_claim(&task_id).await;
         }
     }
@@ -2012,6 +2036,77 @@ mod tests {
 
         // Still claimed by w1, untouched by w2's rejected release.
         assert!(!tm.ready_tasks().iter().any(|t| t.id == task.id));
+    }
+
+    async fn claimed_task(tm: &TaskManager, agent: &str) -> Task {
+        let task = tm
+            .new_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
+            .await
+            .expect("new task");
+        force_planned(tm, &task.id);
+        tm.claim_task(&task.id, &format!("agent:{agent}"))
+            .await
+            .expect("claim task")
+    }
+
+    #[tokio::test]
+    async fn dropping_a_claimed_task_releases_its_claim() {
+        let (tm, _tmp) = manager().await;
+        let task = claimed_task(&tm, "w1").await;
+
+        let dropped = tm
+            .drop_task(&task.id, "obsolete", &"human".to_string())
+            .await
+            .expect("drop claimed task");
+        assert_eq!(dropped.state, TaskState::Dropped);
+        assert_eq!(dropped.claimed_by, None);
+        assert!(tm.store.list_claims().await.expect("claims").is_empty());
+        assert!(tm.claims.lock().expect("claims lock").is_empty());
+    }
+
+    #[tokio::test]
+    async fn the_lease_check_never_moves_a_task_that_is_not_claimed() {
+        let (tm, _tmp) = manager().await;
+        let task = claimed_task(&tm, "w1").await;
+        // A stale claim on a dropped task, as older versions could leave.
+        tm.cache
+            .lock()
+            .expect("task cache lock")
+            .get_mut(&task.id)
+            .expect("task in cache")
+            .state = TaskState::Dropped;
+        assert!(matches!(
+            tm.release_claim(&task.id).await,
+            Err(TaskError::Conflict(_))
+        ));
+        tm.tick_claim_lease_check(Utc::now() + chrono::Duration::days(1))
+            .await;
+        assert_eq!(
+            tm.get_task(&task.id).expect("task").state,
+            TaskState::Dropped
+        );
+    }
+
+    #[tokio::test]
+    async fn open_discards_claims_whose_task_is_not_claimed() {
+        let (tm, _tmp) = manager().await;
+        let task = claimed_task(&tm, "w1").await;
+        tm.store
+            .set_task_state(&task.id, TaskState::Dropped)
+            .await
+            .expect("set state");
+
+        let tm2 = TaskManager::open(
+            tm.store.clone(),
+            tm.state.clone(),
+            "tw".to_string(),
+            std::time::Duration::from_secs(600),
+        )
+        .await
+        .expect("reopen task manager");
+        assert!(tm.store.list_claims().await.expect("claims").is_empty());
+        assert!(tm2.claims.lock().expect("claims lock").is_empty());
+        assert_eq!(tm2.get_task(&task.id).expect("task").claimed_by, None);
     }
 
     #[tokio::test]
