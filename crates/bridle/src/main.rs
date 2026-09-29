@@ -9,6 +9,7 @@ mod prime;
 mod render;
 mod serve;
 mod spec_export;
+mod specid;
 mod statusline;
 mod stop_check;
 

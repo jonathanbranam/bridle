@@ -2495,7 +2495,7 @@ fn spec_files(path: &Path, out: &mut Vec<PathBuf>) -> anyhow::Result<()> {
 
 /// The spec files named by `paths`, else those under `root` (default
 /// `design/specs`): the defaults every `bridle spec` subcommand shares.
-fn spec_inputs(paths: &[PathBuf], root: Option<&Path>) -> anyhow::Result<Vec<PathBuf>> {
+pub(crate) fn spec_inputs(paths: &[PathBuf], root: Option<&Path>) -> anyhow::Result<Vec<PathBuf>> {
     let default = [root.map_or_else(|| PathBuf::from("design/specs"), Path::to_path_buf)];
     let roots = if paths.is_empty() {
         &default[..]
@@ -2514,6 +2514,7 @@ fn spec(cli: &Cli, args: &SpecArgs) -> Result<(), CliError> {
     let args = match &args.action {
         SpecAction::Check(args) => args,
         SpecAction::Export(args) => return spec_export(cli, args),
+        SpecAction::Id(args) => return crate::specid::run(cli, args),
     };
     let files = spec_inputs(&args.paths, args.root.as_deref())?;
 

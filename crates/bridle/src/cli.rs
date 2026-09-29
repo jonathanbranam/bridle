@@ -149,6 +149,8 @@ pub struct SpecArgs {
 pub enum SpecAction {
     /// Parse spec files and report diagnostics; exits non-zero on any error.
     Check(SpecCheckArgs),
+    /// Write a stable id into every requirement and scenario heading that lacks one.
+    Id(SpecIdArgs),
     /// Export the specs for test runners; refuses (printing the diagnostics)
     /// when any spec has errors.
     Export(SpecExportArgs),
@@ -209,6 +211,22 @@ pub enum PrimeRoleArg {
     Orchestrator,
     Worker,
     Planner,
+}
+
+#[derive(Debug, Args)]
+pub struct SpecIdArgs {
+    /// Spec files, or directories searched recursively for `*.md`. Default: the `--root` directory.
+    pub paths: Vec<PathBuf>,
+    /// The specs directory used when no paths are given (default `design/specs`, relative to
+    /// the current directory); its `.ids` file is the ledger of every id ever assigned.
+    #[arg(long, value_name = "DIR")]
+    pub root: Option<PathBuf>,
+    /// The ledger file (default `<root>/.ids`).
+    #[arg(long, value_name = "FILE")]
+    pub ledger: Option<PathBuf>,
+    /// Print what would change; write nothing.
+    #[arg(long)]
+    pub dry_run: bool,
 }
 
 #[derive(Debug, Args)]

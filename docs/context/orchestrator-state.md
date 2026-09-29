@@ -5,7 +5,37 @@ itself is in `workflow/base/roles/orchestrator.md`. Update this file whenever th
 queue, open items or decisions change. Last updated 2026-09-29 02:40 UTC (10:40 PM),
 at the handover from the eighth orchestrator session.
 
-## First, for the incoming orchestrator
+## Ninth session, in progress (2026-09-29 from 02:50 UTC); read this first
+
+- **Overnight plan** (the human: "what is our next work on the roadmap? ... We still have 40%
+  weekly budget to burn"): pm-1 feeds manager-2 P3 (spec parser, check, id, export) and P1's
+  `bridle wait` (br-4444), then k3wp (br-7d81, br-0589), h5qd. Take/give parked (build-order
+  refreshed, 86bdc71). The human set `max-workers 3` live (lost on restart).
+- **Merged and CI-green this session:** statusline flake (792629c), sq4m squash landing
+  (3d8f986), task search, b5br claim release, n8tj `send --task`, c9zm (bb6bbf9, plus a fmt fix
+  for a red main), qr8z/br-936d `bridle launchd` (069fae2), t6kq credentials (2e39995),
+  `bridle-spec` parser, `spec check`, build-order, `spec export`.
+- **Installed: 2e39995** (03:3x UTC). Daemons still run cc9b612. **At the next restart** the
+  manager's squash/commit permissions and squash landing take effect; until then managers land
+  with `--no-ff`. The human plans to move the daemons to launchd in the morning
+  (`docs/context/launchd-restart-plan.md`; track-web first). Workers come back `lost`: resume them.
+- **track-web:** all five Space golf tasks integrated on `bridle-adopt` (tw-80fc, 54dc, 090c,
+  da80, f1c0). Gap: the human's new tasks in a project with no PM reached nobody until I told
+  the manager; and it didn't `task done` until told. Idle, waiting on tasks.
+- **meta-notes:** mn-fbc0 (check-in skill + sleep-and-return CLI) v1 landed on `bridle-adopt`
+  with defaults for the human to review in the morning. Idle.
+- **data-contracts step 3 done** (a subagent): `bridle-adopt` 74f2aea + d73ce54, pushed; `main`
+  untouched (b923c7e); clone back on `main`, clean. `.bridle/ADOPT-REVIEW.md` has four questions
+  for the human (library tickets → tasks; `.claude/settings.json` that sync writes as `{}`;
+  acceptance-verifier; Python 3.12). Then the human starts its daemon and makes
+  `~/.bridle-orchestrator-data-contracts.token`. To ticket: `bridle sync` writes an empty
+  `.claude/settings.json`.
+- **NUC:** SSD installed, Ubuntu on it, online "tomorrow" (2026-09-29). Test load there with a
+  timed `just check` and a real worker task; revisit b7cz (daemons-only) if builds are fast now.
+- **Email/texting:** researched, ticket rs7p; waits on the human's answers.
+- **The human's Claude Code settings:** sent options (classic renderer, reduced motion) to try.
+
+## First, for the incoming orchestrator (eighth session's handover)
 
 - **Three projects are live**, each with its own daemon and token:
   - bridle: `~/.bridle-orchestrator.token`.

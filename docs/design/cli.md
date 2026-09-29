@@ -68,6 +68,12 @@ bridle spec check [paths...] [--root DIR] [--require-ids]   validates spec files
                                              requirement without an id is a warning (an error with
                                              --require-ids); --json prints them as structured output;
                                              local only, no daemon call
+bridle spec id [paths...] [--root DIR] [--ledger FILE] [--dry-run]   writes a stable id (`{#r-xxxx}` /
+                                             `{#s-xxxx}`) into every requirement and scenario heading
+                                             lacking one, in place, touching only those heading lines;
+                                             ids are unique across the files processed and never reused
+                                             (ledger `<root>/.ids`); idempotent; `--dry-run` prints
+                                             the plan and writes nothing; local only, no daemon call
 bridle spec export --format gherkin|json [--out DIR] [paths...] [--root DIR]
                                              exports specs for test runners (same path defaults as
                                              `spec check`); gherkin: one <capability>.feature per spec

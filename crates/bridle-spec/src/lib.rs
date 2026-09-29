@@ -15,7 +15,10 @@
 //! problem in the file is reported, not just the first. The crate is pure: no
 //! async, no daemon, no I/O beyond [`parse_file`].
 
+mod ids;
 mod parse;
+
+pub use ids::{Assigned, assign_ids};
 
 use std::fmt;
 use std::path::Path;
