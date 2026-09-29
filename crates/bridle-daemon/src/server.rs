@@ -1514,6 +1514,9 @@ async fn done_task(
         .done_task(&id, &req.commit, req.branch.as_deref(), &principal.id)
         .await?;
     notify_main_moved(&state, &task, claimant.as_deref(), branch).await;
+    if task.kind == bridle_api::types::TaskKind::ArchRevision {
+        open_reevaluate_tasks(&state, &task).await;
+    }
     if let Some(branch) = branch {
         let report = clean_up_landed_branch(&state, branch, &principal).await;
         task = state.tasks.note_task(&id, &principal.id, &report).await?;
@@ -1528,6 +1531,77 @@ async fn done_task(
         )
         .await;
     Ok(Json(task))
+}
+
+/// After an `arch-revision` lands, opens one `re-evaluate` task per capability with suspect
+/// requirements (once per arch task and capability) and tells the manager. Failures only log:
+/// the landing itself has succeeded.
+async fn open_reevaluate_tasks(state: &AppState, arch: &Task) {
+    let repo = state.workspace.repo.clone();
+    let suspects =
+        match tokio::task::spawn_blocking(move || crate::reevaluate::suspects_by_capability(&repo))
+            .await
+        {
+            Ok(Ok(s)) => s,
+            Ok(Err(e)) => {
+                tracing::warn!(task = %arch.id, "re-evaluate: {e}");
+                return;
+            }
+            Err(_) => return,
+        };
+    let existing: std::collections::HashSet<String> = state
+        .tasks
+        .list_tasks()
+        .into_iter()
+        .filter(|t| t.kind == bridle_api::types::TaskKind::ReEvaluate)
+        .map(|t| t.title)
+        .collect();
+    let mut opened = Vec::new();
+    for (cap, ids) in suspects {
+        let title = crate::reevaluate::title(&cap, &arch.id);
+        if existing.contains(&title) {
+            continue;
+        }
+        match state
+            .tasks
+            .new_task(
+                &title,
+                bridle_api::types::TaskKind::ReEvaluate,
+                crate::reevaluate::body(&ids),
+                Vec::new(),
+                None,
+            )
+            .await
+        {
+            Ok(t) => opened.push(t.id),
+            Err(e) => tracing::warn!(task = %arch.id, "re-evaluate: {e}"),
+        }
+    }
+    if opened.is_empty() {
+        return;
+    }
+    let manager = match state.store.list_agents(false).await {
+        Ok(agents) => agents
+            .into_iter()
+            .find(|a| a.role == "manager" && a.state.is_running()),
+        Err(_) => None,
+    };
+    let to = manager.map_or(ToTarget::Human, |a| ToTarget::Agent(a.id));
+    let _ = state
+        .manager
+        .send(
+            "system".to_string(),
+            to,
+            bridle_api::types::MessageKind::Note,
+            format!(
+                "arch-revision {} landed with suspect requirements; opened re-evaluate tasks: {}",
+                arch.id,
+                opened.join(", ")
+            ),
+            bridle_api::types::When::Now,
+            None,
+        )
+        .await;
 }
 
 /// Tells the other running workers that a landing moved the integration
