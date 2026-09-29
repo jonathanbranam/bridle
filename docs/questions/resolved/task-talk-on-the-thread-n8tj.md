@@ -2,8 +2,9 @@
 id: n8tj
 title: Talk about a task on its thread; messages only notify
 opened: 2026-09-29
+resolved: 2026-09-29
 repos: [bridle]
-changes: []
+changes: [6cae4af]
 specs: []
 needs: []
 see: [tr7k, sq4m]
@@ -39,3 +40,7 @@ but they're used little, apart from the landing summary (tr7k).
   `bridle task show <id>`'s thread.
 - **Role prompts and skills** (manager, worker, product manager) updated to use it: the brief
   on the task, done reports and review findings as task notes.
+
+## Resolution
+
+Resolved by 6cae4af: `bridle send --task` and `bridle task note --notify` put the talk on the task's thread; messages only notify.

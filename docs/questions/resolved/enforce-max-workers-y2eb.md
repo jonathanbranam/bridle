@@ -2,8 +2,9 @@
 id: y2eb
 title: Enforce max_workers, and let the human scale it down live
 opened: 2026-09-28
+resolved: 2026-09-29
 repos: [bridle]
-changes: []
+changes: [c70b971]
 specs: []
 needs: []
 see: [6t29, nbkj, mt7r]
@@ -38,3 +39,7 @@ Earlier the same day, from [[budget-presets-and-max-workers-6t29|6t29]]:
   `max_workers`, applied by `bridle budget override`) needs this ticket first.
 - Open: what happens to running workers above a lowered cap (let them finish, or wind the
   extras down), and whether managers, the PM and the orchestrator count toward it.
+
+## Resolution
+
+Resolved by c70b971: `max_workers` enforced at worker spawn, with a live override (`bridle budget max-workers`).

@@ -2,8 +2,9 @@
 id: f75x
 title: Clean stale build output
 opened: 2026-09-28
+resolved: 2026-09-29
 repos: [bridle]
-changes: []
+changes: [5b68552]
 specs: []
 needs: []
 see: [nbkj, m3wq]
@@ -37,3 +38,7 @@ run while `just check` is building in the same clone.
   P2-3's merge, which added tests. Cause not investigated; one guess is background
   indexing or I/O on the large `target/`. If it holds, stale build output costs
   test time, not just disk.
+
+## Resolution
+
+Resolved by 5b68552: `just clean-stale` recipe (docs/design/build-maintenance/clean-stale-artifacts.md), used by the orchestrator role at release.

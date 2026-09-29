@@ -64,4 +64,4 @@ cargo test -p <crate>   # when working on one crate
 On Intel Macs (x86_64), binaries must be ad-hoc code-signed at link time to avoid crashes in macOS's
 system policy daemon. `.cargo/config.toml` adds `rustflags = ["-C", "link-arg=-Wl,-adhoc_codesign"]`
 for the x86_64-apple-darwin target. This applies to `cargo install`, test binaries, and worker builds.
-The flag is a no-op on arm64 (which signs automatically). See `docs/questions/open/sign-binaries-on-intel-macs-cs7x.md`.
+The flag is a no-op on arm64 (which signs automatically). See `docs/questions/resolved/sign-binaries-on-intel-macs-cs7x.md`.

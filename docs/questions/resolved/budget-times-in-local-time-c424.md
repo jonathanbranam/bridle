@@ -2,8 +2,9 @@
 id: c424
 title: bridle budget: local times, the applied budget and the schedule
 opened: 2026-09-28
+resolved: 2026-09-29
 repos: [bridle]
-changes: []
+changes: [ed9ea02]
 specs: []
 needs: []
 see: []
@@ -59,3 +60,7 @@ So, in local time as above:
   `hold_at`/`wind_down_at`/`stop_at`), and when the next change happens and to what.
 - An option (e.g. `bridle budget --schedule`) prints the whole resolved schedule, so the
   human doesn't have to read `~/.bridle/config.toml` and the project config to work it out.
+
+## Resolution
+
+Resolved by ed9ea02: `bridle budget` shows local times, the applied thresholds with their source, the schedule and reading age.

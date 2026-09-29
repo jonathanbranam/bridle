@@ -2,8 +2,9 @@
 id: tr7k
 title: A task records its branch, merge commit and an implementation summary
 opened: 2026-09-29
+resolved: 2026-09-29
 repos: [bridle]
-changes: []
+changes: [a602652]
 specs: []
 needs: []
 see: [sq4m]
@@ -53,3 +54,7 @@ the manager, not part of the task.
 - **Update the instructions**: worker role and skill (write the summary before reporting
   done; a task isn't done without one), manager role and skill (record branch and commit;
   don't mark done without a summary; use the summary in the commit).
+
+## Resolution
+
+Resolved by a602652: `bridle task done --branch` and `bridle task summary` record branch, commit and summary on the task; `task show` prints them (docs/design/cli.md, storage.md).

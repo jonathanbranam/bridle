@@ -2,8 +2,9 @@
 id: kv7d
 title: allowed_warning forces wind-down even under a raised override
 opened: 2026-09-28
+resolved: 2026-09-29
 repos: [bridle]
-changes: []
+changes: [8d7a9e5]
 specs: []
 needs: []
 see: [6t29, u7pw, y2eb]
@@ -50,3 +51,7 @@ warnings".
 So the human's configured thresholds win over `allowed_warning`, in general, not only
 under an override: the warning is shown in `bridle budget` but doesn't force a wind-down.
 `rejected` isn't a warning and still forces `Paused` (the recommendation above).
+
+## Resolution
+
+Resolved by 8d7a9e5: `allowed_warning` is information only; the thresholds and overrides decide the governor state.

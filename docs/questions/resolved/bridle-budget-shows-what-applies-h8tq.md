@@ -2,8 +2,9 @@
 id: h8tq
 title: bridle budget should show what the governor actually applies
 opened: 2026-09-28
+resolved: 2026-09-29
 repos: [bridle]
-changes: []
+changes: [ed9ea02]
 specs: []
 needs: []
 see: [c424, kv7d, 6t29]
@@ -47,3 +48,7 @@ Seen on 2026-09-28 between 18:05 and 18:14 UTC, with `bridle budget override bur
   own usage, if that's cheap; otherwise just show the age.
 
 Resolve kv7d first: if `allowed_warning` stops forcing wind-down, point 2 mostly goes away.
+
+## Resolution
+
+Resolved by ed9ea02: `bridle budget` shows the applied thresholds with their source (docs/design/usage-and-budget.md).

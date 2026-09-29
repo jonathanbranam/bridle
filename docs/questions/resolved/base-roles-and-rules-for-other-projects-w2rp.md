@@ -2,8 +2,9 @@
 id: w2rp
 title: Base roles, skills and rules don't fit a second project yet
 opened: 2026-09-28
+resolved: 2026-09-29
 repos: [bridle]
-changes: []
+changes: [baf1225]
 specs: []
 needs: []
 see: [ajqa, 63rv, rxe8]
@@ -36,3 +37,7 @@ Make the base role prompts and the manager skill project-neutral, with substitut
 integration branch, check command and worker count. Deliver rules to every role. Consider
 base role definitions a project inherits and overrides. Then trim meta-notes' `.bridle/roles/`
 on its trial branch.
+
+## Resolution
+
+Resolved by baf1225: base roles, manager skill and CLAUDE.md block made project-neutral, with substitutions for the integration branch and check command.

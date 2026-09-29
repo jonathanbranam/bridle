@@ -2,8 +2,9 @@
 id: cu5m
 title: Read one message in full from the CLI
 opened: 2026-09-28
+resolved: 2026-09-29
 repos: [bridle]
-changes: []
+changes: [1db6dfe]
 specs: []
 needs: []
 see: [fgu6]
@@ -38,3 +39,7 @@ message and nothing marks just one (the human, verbatim):
   recipient may call it (the orchestrator got 403 on the human's messages). Something
   like `bridle inbox read <id>...`, or showing a message marking it read.
 - Low priority (the human), raised again as annoying on 2026-09-28.
+
+## Resolution
+
+Resolved by 1db6dfe: `bridle inbox show <id>` and `bridle inbox read <id>...`.

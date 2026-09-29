@@ -2,8 +2,9 @@
 id: xpuc
 title: Statusline context as a token count, not just a percent
 opened: 2026-09-28
+resolved: 2026-09-29
 repos: [bridle]
-changes: []
+changes: [f3b3e47]
 specs: []
 needs: []
 see: []
@@ -32,3 +33,7 @@ From the human, 2026-09-28:
 - `context_used_tokens` is absent after a compact until the next turn ends
   (see `null_current_usage_after_compact_reports_no_used_tokens`), so the
   count needs a fallback when the percent is present but the count isn't.
+
+## Resolution
+
+Resolved by f3b3e47: `bridle statusline` shows context tokens alongside the percent.
