@@ -83,6 +83,24 @@ losing continuity, which is real but not measured.
    - Check the rest of §5 the same way: each wake needs a decision from the orchestrator, or it
      goes.
 
+### Done for item 2 (br-9e71)
+
+The main-moved wake is gone (daemon, §5, the role's `gh run watch` line). Review of the wakes
+that remain, for the human to say which to drop (none dropped):
+
+- **Keep**: a question to the human, a message to the orchestrator, a failed CI run on main,
+  context/uptime notes (the orchestrator must act on each).
+- **Candidates to drop** (the manager or the daemon can handle them without the orchestrator's
+  judgment):
+  - `agent_exited` / `agent_crashed` / `agent_stalled`: the manager supervises workers; the
+    orchestrator only needs these for the manager itself, or once the manager has failed to deal
+    with them.
+  - `budget_hold` begins: the governor already holds spawns automatically; nothing to decide.
+  - `usage` (five_hour >= 93% / seven_day >= 85%): informational unless the orchestrator's
+    role has a step to take at that level.
+  - `all_idle` (15 min): needs a look, but often only to read the manager's last note; could go
+    to the manager first.
+
 ## Open
 
 - **Thresholds** (decided 2026-09-29): 150K / 180K / 200K, now also the defaults (by23). The

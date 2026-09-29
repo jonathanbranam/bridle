@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- The orchestrator is no longer woken when `main` moves (`main_moved` wake removed): a merge arrives as the manager's message and a red main as the CI-failure wake. The role no longer tells it to `gh run watch` (br-9e71, pdmd).
 ### Fixed
 
 - `bridle stop-daemon` prints progress as it goes (requested, acknowledged with the agent count and the daemon's cap, shutdown complete with elapsed time) instead of one misleading line at the end, and its 60 s timeout error points at `bridle daemons` and the daemon log (q23k). `POST /v1/shutdown` now replies with `{"stop_limit_secs"}`.

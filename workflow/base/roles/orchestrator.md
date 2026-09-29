@@ -75,8 +75,8 @@ curl -s -H "Authorization: Bearer $tok" "$U/v1/messages?to=human&limit=50" \
   runs the same check on `main`, on Linux and macOS. That's enough. Don't run
   `just check` on `main` yourself (the human, 2026-09-28: repeating it adds
   almost nothing and costs a lot of time and CPU, and won't fit on the NUC).
-  When `main` moves, `gh run watch <id> --exit-status` in the background (or
-  `gh run list --branch main`), until bridle reports CI itself (ticket c8qw).
+  Bridle watches CI itself: a failed run on `main` is a wake, and a green
+  one needs nothing from you.
   - If CI fails, send it to the manager with the failing test, the error and
     your diagnosis (`gh run view <id> --log-failed`).
   - Until `main` is green again, tell the manager not to merge anything else.

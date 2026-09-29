@@ -4,11 +4,10 @@
 //!
 //! Most conditions are facts in the event log (an exit, a message, a failed CI run, a budget
 //! hold), so the persisted cursor is "events up to here have been delivered": a daemon restart
-//! re-derives whatever was queued and undelivered. The rest are states (idle, usage, main
-//! moved) kept in memory; each fires once per crossing.
+//! re-derives whatever was queued and undelivered. The rest are states (idle, usage) kept in
+//! memory; each fires once per crossing. `main` moving is not a wake: it needs no decision.
 
 use std::collections::HashSet;
-use std::path::PathBuf;
 use std::sync::{Arc, Mutex as StdMutex};
 use std::time::Duration;
 
@@ -93,23 +92,18 @@ struct State {
     idle_since: Option<DateTime<Utc>>,
     idle_fired: bool,
     usage_fired: HashSet<String>,
-    main_head: Option<String>,
 }
 
 pub struct Wakes {
     store: Store,
-    repo: PathBuf,
-    branch: String,
     state: Mutex<State>,
     notify: Notify,
 }
 
 impl Wakes {
-    pub fn new(store: Store, repo: PathBuf, branch: String) -> Arc<Self> {
+    pub fn new(store: Store) -> Arc<Self> {
         Arc::new(Wakes {
             store,
-            repo,
-            branch,
             state: Default::default(),
             notify: Notify::new(),
         })
@@ -171,7 +165,6 @@ impl Wakes {
 
         self.check_idle(st, now).await?;
         self.check_usage(st).await?;
-        self.check_main(st).await;
         Ok(())
     }
 
@@ -305,39 +298,6 @@ impl Wakes {
         Ok(())
     }
 
-    async fn check_main(&self, st: &mut State) {
-        let out = tokio::process::Command::new("git")
-            .args(["rev-parse", &self.branch])
-            .current_dir(&self.repo)
-            .output()
-            .await;
-        let Some(head) = out
-            .ok()
-            .filter(|o| o.status.success())
-            .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
-        else {
-            return;
-        };
-        let Some(old) = st.main_head.replace(head.clone()) else {
-            return;
-        };
-        if old == head {
-            return;
-        }
-        let log = tokio::process::Command::new("git")
-            .args(["log", "--oneline", &format!("{old}..{head}")])
-            .current_dir(&self.repo)
-            .output()
-            .await
-            .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
-            .unwrap_or_default();
-        st.pending.push(WakeReason {
-            reason: "main_moved".to_string(),
-            text: format!("{} moved to {}", self.branch, &head[..head.len().min(9)]),
-            detail: json!({ "from": old, "to": head, "log": log }),
-        });
-    }
-
     /// Queues a wake the supervisor raised (a context or uptime note); it is delivered like the
     /// rest, and never lost to a waiter that isn't there.
     pub async fn push(&self, wake: WakeReason) {
@@ -409,8 +369,8 @@ mod tests {
         let repo = tempfile::tempdir().expect("tempdir");
         git(repo.path(), &["init", "-q", "-b", "main"]);
         git(repo.path(), &["commit", "-q", "--allow-empty", "-m", "one"]);
-        let wakes = Wakes::new(store.clone(), repo.path().to_path_buf(), "main".into());
-        // The first tick sets the cursor at the tail and the main baseline.
+        let wakes = Wakes::new(store.clone());
+        // The first tick sets the cursor at the tail.
         wakes.tick(Utc::now()).await;
         Rig {
             store,
@@ -577,11 +537,11 @@ mod tests {
             .await;
         r.wakes.tick(Utc::now()).await;
         // A restart before delivery re-derives the wake from the events.
-        let again = Wakes::new(r.store.clone(), r.repo.path().into(), "main".into());
+        let again = Wakes::new(r.store.clone());
         again.tick(Utc::now()).await;
         assert_eq!(again.take().await.len(), 1);
         // After delivery a restart doesn't repeat it.
-        let after = Wakes::new(r.store.clone(), r.repo.path().into(), "main".into());
+        let after = Wakes::new(r.store.clone());
         after.tick(Utc::now()).await;
         assert!(after.take().await.is_empty());
     }
@@ -630,22 +590,12 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn main_moving_fires_once() {
+    async fn main_moving_alone_does_not_wake() {
         let r = rig().await;
         assert!(r.reasons(Utc::now()).await.is_empty());
         git(
             r.repo.path(),
             &["commit", "-q", "--allow-empty", "-m", "two"],
-        );
-        r.wakes.tick(Utc::now()).await;
-        let wakes = r.wakes.take().await;
-        assert_eq!(wakes.len(), 1);
-        assert_eq!(wakes[0].reason, "main_moved");
-        assert!(
-            wakes[0].detail["log"]
-                .as_str()
-                .unwrap_or("")
-                .contains("two")
         );
         assert!(r.reasons(Utc::now()).await.is_empty());
     }

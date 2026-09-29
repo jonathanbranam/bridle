@@ -274,11 +274,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         overrides.governor_poll_interval_above_hold,
     );
 
-    let wakes = wake::Wakes::new(
-        store.clone(),
-        ws.repo.clone(),
-        config.branches.integration.clone(),
-    );
+    let wakes = wake::Wakes::new(store.clone());
     let waiters = wake::Waiters::new(Utc::now());
     let handover: std::sync::Arc<orchestrator::Handover> = Default::default();
     let ci = ci::CiWatcher::new(

@@ -138,7 +138,6 @@ The conditions in `scripts/orchestrator-watch.sh` move into the daemon:
 | `five_hour` >= 93% or `seven_day` >= 85% | the usage the governor already polls |
 | a budget hold begins | the governor's state change |
 | a failed CI run on main | the `[ci]` watcher's records (no `gh` polling from the session) |
-| main moved | `git rev-parse main` in the repo, per tick |
 | context past `CONTEXT_WAKE` | new: 6 below |
 
 Each condition fires **once**, keyed by what it saw (the event seq, message id, CI run id, hold
@@ -166,7 +165,7 @@ conversation, and the incident tells the human.
 `message.sent` to the orchestrator or a question to the human, a failed `ci.completed`, a
 `budget.state` away from `normal`) are derived from events after the cursor, which is one row in
 the `meta` table (`orchestrator_wake_cursor`, no schema change) and moves only when wakes are
-delivered, so a daemon restart re-derives what was queued. Idle, usage and main-moved are states
+delivered, so a daemon restart re-derives what was queued. Idle and usage are states
 kept in memory (a restart resets their baselines). The wake loop runs whether or not `[orchestrator]`
 is enabled. The waiter incident is measured from the later of the last request's close and the
 session's launch. `scripts/orchestrator-watch.sh` is deleted; `scripts/context-check.sh` was

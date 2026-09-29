@@ -99,7 +99,7 @@ pub struct CiStatus {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct WakeReason {
     /// `agent_exited`, `agent_crashed`, `agent_stalled`, `question`, `message`, `all_idle`,
-    /// `usage`, `budget_hold`, `ci_failed`, `main_moved`, or `context` (a context or uptime note).
+    /// `usage`, `budget_hold`, `ci_failed`, or `context` (a context or uptime note).
     pub reason: String,
     /// One line for the model to read.
     pub text: String,
