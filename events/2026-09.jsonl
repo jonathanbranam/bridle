@@ -403,3 +403,6 @@
 {"actor":"agent:manager-2","at":"2026-09-29T05:09:45.900073Z","from":"planned","task":"br-1392","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-09-29T05:12:14.481233Z","from":"planned","task":"br-d0c3","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-09-29T05:14:28.942456Z","from":"planned","task":"br-f636","to":"integrated"}
+{"actor":"human","at":"2026-09-29T05:20:23.878Z","from":"","task":"br-3ec1","to":"open"}
+{"actor":"agent:pm-1","at":"2026-09-29T05:20:24.929251Z","from":"open","task":"br-3ec1","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-09-29T05:20:24.942649Z","queue":"reprioritized"}
