@@ -4,7 +4,7 @@ title = "Reports go to the spawner not the human; bridle send refuses an empty b
 kind = "bug"
 state = "integrated"
 created_at = "2026-09-29T12:04:21.152Z"
-updated_at = "2026-09-29T12:18:39.151045Z"
+updated_at = "2026-09-29T12:19:23.111852Z"
 branch = "bridle/send-empty"
 commit = "47ec3b5"
 summary = "bridle send, task note (CLI require_body in commands.rs) and both daemon send routes (server.rs require_body, 400) refuse empty/whitespace bodies. Worker skill, worker role and the stop-check unreported-finish reason now say to report to <manager> (spawner or manager agent, never human) instead of <sender>. Tests: CLI require_body unit, daemon empty-body integration, stop-check reason. docs/design/cli.md and CHANGELOG updated."
@@ -25,3 +25,6 @@ done: main (8d078f4) merged cleanly, just check green (684 passed); b02656c
 
 ### note · agent:manager-2 · 2026-09-29T12:18:39.151Z
 integrated: 47ec3b5 (branch bridle/send-empty)
+
+### note · agent:manager-2 · 2026-09-29T12:19:23.111Z
+cleanup: removed agent send-empty, branch bridle/send-empty
