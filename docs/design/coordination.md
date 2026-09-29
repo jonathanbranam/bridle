@@ -16,9 +16,8 @@ first, host second" into something the tool enforces.
 add|rm`, durable the same way a task is: a SQLite fast index plus a copy on
 the state branch, written in the same logical operation
 ([[docs/design/agent-host/storage|storage.md]]). Only `blocks` is acted on:
-`ready` (below) treats any `blocks` edge whose `from` task isn't `dropped` as
-still blocking the `to` task — `integrated`/`accepted` don't exist yet, so
-there's no "done" state to check against besides that one. The other four
+`ready` (below) treats any `blocks` edge whose `from` task isn't `dropped` or
+`integrated` as still blocking the `to` task (`accepted` doesn't exist yet). The other four
 kinds are recorded but not yet acted on (`parent` doesn't yet close a parent
 when its children close). `ready [--all] [--role]` is built too; `--role` is
 presently a no-op, since tasks don't carry a role field yet.
@@ -58,7 +57,8 @@ without walking the state branch, per
 is the same shape without the open-question bookkeeping: it inserts a `note`
 message addressed to the task, appends a `note` thread entry, and has no
 effect on readiness (`bridle task note`). `handoff`/`conflict`/`system`
-message kinds and send-to-task from `bridle send` arrive with later tasks.
+message kinds and send-to-task from `bridle send` are not built: bridle's own notices are
+`note`s from the `system` principal.
 
 ### Waking the manager
 
@@ -71,14 +71,16 @@ when a PM is running or no manager is.
 
 ### Telling workers main moved
 
-When `bridle task done` lands a task, the daemon sends every other running `worker` that has a
+When a task lands (`bridle land`, or `bridle task done`, which `land` calls), the daemon sends every other running `worker` that has a
 worktree branch or a claimed task a `note` from `system`: "main moved: task <id> (<title>)
 landed at <sha>; files changed: <up to 15 paths, then +N more>. Rebase or merge main into your
 branch when at a safe point, before your next commit." (`AgentManager::note_main_moved`). The
 file list comes from `git diff-tree` on the commit and is left out if git fails. The agent whose
 task (claim or branch) landed gets nothing, nor do the manager, PM or orchestrator. At most one
-message per agent per minute; landings inside the window are joined into one. Filtering by
-impact overlap is not done yet.
+message per agent per minute; landings inside the window are joined into one. A claimant
+whose declared impact overlaps what the landing changed also gets `spec changed under you: …`
+appended ([[docs/design/impact-and-conflicts|impact and conflicts]]); the notice still goes to
+every busy worker, the overlap only adds the detail.
 
 ## Questions do not stop work
 

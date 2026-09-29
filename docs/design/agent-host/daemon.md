@@ -32,12 +32,15 @@
 ```
 <workspace>/
   <repo>/                   the clone (main checkout): human's + manager's cwd
-  wt/<agent>/               one worktree per agent that asked for one
+  wt/<agent>/               one worktree per agent that asked for one (default `[worktrees] layout`;
+                            `root`/`paired` place them elsewhere, roles-and-config.md)
+  integration/              the integrator's worktree, created by the first `bridle land`
   .bridle/
     daemon.json             {project, workspace, repo, url, pid, started_at, version}
     bridle.db               SQLite (WAL)
     tokens/human            the human's token (0600, in a 0700 directory)
     daemon.log              when detached
+    state/                  the `bridle/state` branch's worktree (storage.md)
     agents/<id>/
       transcript.jsonl      every stdin/stdout/stderr line, as in spike 01
       system-prompt.md      the rendered --append-system-prompt-file
@@ -47,7 +50,7 @@
 `bridle serve` takes the repo from `--repo` or the cwd; it must be a git
 repo. The workspace defaults to the repo's parent directory. The daemon refuses
 to start if this workspace's daemon is already running, or if another
-workspace has registered the same project name. When tasks arrive, the
+workspace has registered the same project name. The
 state branch's worktree goes under `<workspace>/.bridle/state/`
 ([[docs/design/storage#The state branch|storage]]).
 
@@ -85,6 +88,14 @@ On Ctrl-C, SIGTERM or `POST /v1/shutdown`, stopping every running agent
 starts, the daemon logs one line at `info` (so it lands on stderr in the
 foreground, and in `daemon.log` when detached) naming how many agents it's
 stopping and the actual cap, so a slow shutdown doesn't look hung.
+
+## Background loops
+
+Besides serving the API, the daemon runs: the stall and context checks (every 30 s), the process
+tracker (2 s), the budget governor (30 s tick; polls `get_usage` every 5 min, 30 s above
+`hold_at`), the CI watcher (when `[ci] github`), the disk monitor (`[disk] check_interval`), the
+task state-branch flush (30 s), the claim-lease check (30 s) and the port sweep (30 s; frees
+ports whose owner is gone), plus the daily event prune. All stop on shutdown.
 
 ## Restart and recovery
 

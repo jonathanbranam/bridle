@@ -118,8 +118,11 @@ state.
 
 Agents are ephemeral, so bridle needs to see when one's context is growing
 large well before it becomes a problem — this is part 1 (measure) of a
-context governor; part 2 (acting on it: warning, forcing a `/compact` or
-handoff, refusing new work) is separate, later work.
+context governor. Part 2 acts on it: past `[context] wind_down_at` (default 200000 tokens; 120000
+for `worker`), the agent gets a `Context handoff:` note and is renewed with a fresh session when
+that turn ends, or after `[context] wind_down_grace` (default 5 min)
+([[docs/design/agent-host/agents#Renewing|renewing]]). Forcing a `/compact` and refusing new
+work are not built.
 
 `agents.context_tokens` is the agent's latest known context size, taken at
 each turn end from the undocumented `get_context_usage` control request's
@@ -374,7 +377,9 @@ bridle work, and that is intended.
 
 `bridle spawn` and `bridle resume` are refused (409, naming the window and its
 reset time) while the governor holds or is paused; the human can pass
-`--ignore-budget` to run one anyway.
+`--ignore-budget` to run one anyway. `bridle renew` is never refused: it swaps a running agent's
+process for a fresh one rather than adding work (`ignore_budget` is accepted and ignored). The
+daemon's own autostart goes through `spawn`, so a hold refuses it too.
 
 ### The human's hold
 
@@ -472,7 +477,7 @@ of `normal`, `holding`, `winding_down`, `paused`) on each transition;
 `agent.exited` with reason `budget_paused`; the governor's state in
 `GET /v1/status`; and `GET /v1/budget`, `POST /v1/budget/hold`,
 `POST /v1/budget/release`, `POST /v1/budget/override`,
-`POST /v1/budget/override/clear`. All built, current-daemon-only per the
+`POST /v1/budget/override/clear`, `POST /v1/budget/max-workers`. All built, current-daemon-only per the
 hold gap above.
 
 ## Designing for fewer tokens
