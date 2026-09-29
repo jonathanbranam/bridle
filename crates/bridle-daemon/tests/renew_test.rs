@@ -9,8 +9,8 @@ use bridle_api::types::{
 };
 use bridle_daemon::Overrides;
 use support::{
-    default_overrides, fake_claude_argv_and_env_dump_wrapper, start_daemon, wait_for_event,
-    wait_for_state,
+    default_overrides, fake_claude_argv_and_env_dump_wrapper, fake_claude_sessions_wrapper,
+    start_daemon, wait_for_event, wait_for_state,
 };
 
 #[tokio::test]
@@ -386,4 +386,72 @@ async fn resume_of_a_session_that_never_started_uses_a_fresh_session() {
             .any(|w| w[0] == "--resume" && w[1] == resumed.session_id),
         "got {argv:?}"
     );
+}
+
+/// p4ks: a session claude no longer has (started, but `--resume` can't find
+/// it) must not kill the agent on every resume: the daemon retries once on a
+/// fresh session, and the failed exit carries claude's stderr.
+#[tokio::test]
+async fn resume_of_a_dead_session_falls_back_to_a_fresh_one() {
+    let dir = tempfile::tempdir().expect("tempdir");
+    let wrapper = fake_claude_sessions_wrapper(dir.path());
+    let overrides = Overrides {
+        claude_program: wrapper.to_string_lossy().into_owned(),
+        ..default_overrides()
+    };
+    let (daemon, _tmp) = start_daemon(Some(overrides)).await;
+
+    let agent = daemon
+        .client
+        .spawn(&SpawnRequest {
+            components: Vec::new(),
+            role: "worker".to_string(),
+            name: Some("w1".to_string()),
+            prompt: None,
+            workdir: Some(Workdir::Worktree { base: None }),
+            model: None,
+            extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
+            ignore_budget: false,
+        })
+        .await
+        .expect("spawn");
+    wait_for_state(&daemon.client, &agent.id, AgentState::Idle).await;
+    daemon
+        .client
+        .stop(&agent.id, &StopRequest { now: true })
+        .await
+        .expect("stop");
+    wait_for_state(&daemon.client, &agent.id, AgentState::Stopped).await;
+
+    // A started session claude has since lost.
+    let stale = uuid::Uuid::new_v4().to_string();
+    let conn =
+        rusqlite::Connection::open(daemon.workspace.join(".bridle/bridle.db")).expect("open db");
+    conn.execute(
+        "UPDATE agents SET session_id = ?1, session_started = 1 WHERE id = ?2",
+        rusqlite::params![stale, agent.id],
+    )
+    .expect("stage dead session");
+    drop(conn);
+
+    daemon
+        .client
+        .resume(&agent.id, &Default::default())
+        .await
+        .expect("resume");
+    let recovered = support::wait_for_agent(&daemon.client, &agent.id, |a| {
+        a.session_id != stale && a.state == AgentState::Idle
+    })
+    .await;
+    assert_ne!(recovered.session_id, stale);
+
+    let ev = wait_for_event(
+        &daemon.client,
+        event_kind::AGENT_EXITED,
+        Some(&agent.id),
+        |e| e.data.to_string().contains("No conversation found"),
+    )
+    .await;
+    assert!(ev.data["stderr_tail"].is_array(), "got {ev:?}");
 }
