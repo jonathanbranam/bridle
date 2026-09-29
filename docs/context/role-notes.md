@@ -181,3 +181,18 @@ Newest first. One line per item: what happened, who did it, what it says about r
   - `bridle budget max-workers` is human-only; the human had to run it for a third worker.
   - Subagents did the data-contracts trial branch and the email research, keeping the
     orchestrator's context small; worth repeating for any read-heavy job.
+
+## Tenth session (2026-09-29 16:48-17:50 UTC)
+
+- The previous session died with no warning; nothing noticed until the human looked. The human
+  called it a design flaw ("you are the lynchpin of too much"); fx7x makes the daemon supervise
+  the orchestrator.
+- By hand: pushed main after the human fixed SSH (the auto-mode classifier refused the first
+  push; the human added the permission); migrated the watcher and role docs to
+  credentials.toml; closed a stale question for the human; restored the watcher's state files
+  after an over-broad `rm`.
+- The PM and manager needed the orchestrator to free a held worker slot (a parked worker keeps
+  its slot; `max-workers` is human-only).
+- Context: the orchestrator starts ~50K and grew ~85K in 48 busy minutes. Ticket ct8m trims
+  every agent's starting context; the state file now holds current state only (history moved
+  to `orchestrator-history.md`).
