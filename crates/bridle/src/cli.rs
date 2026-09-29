@@ -393,6 +393,16 @@ pub struct SpecExportArgs {
     /// `design/specs`, relative to the current directory).
     #[arg(long, value_name = "DIR")]
     pub root: Option<PathBuf>,
+    /// Export only this scenario (`s-xxxx`), or all of a requirement's
+    /// scenarios (`r-xxxx`). Repeatable. A requirement is kept only if one of
+    /// its scenarios is selected.
+    #[arg(long, value_name = "ID")]
+    pub scenario: Vec<String>,
+    /// Export only the scenarios in this task's declared impact (its modify,
+    /// add-under and remove ids); exits 1 if the task declares none. Needs the
+    /// daemon.
+    #[arg(long, value_name = "TASK")]
+    pub task: Option<String>,
 }
 
 #[derive(Debug, Args)]

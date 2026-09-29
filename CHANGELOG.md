@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Added: `bridle spec export --scenario ID` (repeatable; `s-` or `r-` ids) and `--task ID` (the scenarios in a task's declared impact; exits 1 if none declared) narrow the json/gherkin export to selected scenarios (br-b85c).
 - Added: `bridle spec coverage [--root DIR] [--tests DIR ...] [--require-all] [--json]` lists executable scenarios whose id does not appear in test sources; scans text files under `--tests` directories (default `tests` and `test` if present) for scenario ids; exits 1 with `--require-all` if any unbound (br-b1e2).
 - Added: typescript pack's vitest adapter, `workflow/packs/typescript/adapters/vitest-bridle/`: `registerBridleSpecs({ steps })` registers executable scenarios from `bridle spec export --format json` as vitest tests with a given/when/then step registry (br-a54d).
 - Added: python pack pytest plugin `workflow/packs/python/adapters/bridle_specs.py`: registers pytest-bdd scenarios from `bridle spec export --format json` (ids in test names, tags as markers, examples parametrized, `--bridle-spec`/`--bridle-scenario` selection), replacing `spec-to-feature.py` + `run-specs.py` (br-3b72).

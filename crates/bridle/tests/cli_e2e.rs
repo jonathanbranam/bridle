@@ -871,6 +871,115 @@ fn spec_export_json_has_ids_and_every_scenario() {
     assert_eq!(got, want);
 }
 
+fn exported_scenario_ids(json: &str) -> Vec<String> {
+    let v: serde_json::Value = serde_json::from_str(json).expect("json on stdout");
+    v["specs"]
+        .as_array()
+        .expect("specs")
+        .iter()
+        .flat_map(|s| s["requirements"].as_array().expect("reqs"))
+        .flat_map(|r| r["scenarios"].as_array().expect("scenarios"))
+        .map(|s| s["id"].as_str().expect("id").to_string())
+        .collect()
+}
+
+#[test]
+fn spec_export_scenario_filter_selects_scenarios_and_requirements() {
+    let dir = tempfile::tempdir().expect("tempdir");
+    let home = tempfile::tempdir().expect("home");
+    let specs = export_fixture().join("design/specs");
+    let export = |extra: &[&str]| {
+        let mut args = vec!["spec", "export", "--format", "json", "--root"];
+        args.push(specs.to_str().expect("utf8"));
+        args.extend_from_slice(extra);
+        run_cli(dir.path(), home.path(), &args)
+    };
+
+    let (ok, out, err) = export(&["--scenario", "s-b312"]);
+    assert!(ok, "{out}{err}");
+    assert_eq!(exported_scenario_ids(&out), ["s-b312"]);
+    let v: serde_json::Value = serde_json::from_str(&out).expect("json");
+    assert_eq!(
+        v["specs"][0]["requirements"]
+            .as_array()
+            .expect("reqs")
+            .len(),
+        1
+    );
+
+    // A requirement id selects all its scenarios; repeats add up.
+    let (ok, out, err) = export(&["--scenario", "r-7fa2", "--scenario", "s-b312"]);
+    assert!(ok, "{out}{err}");
+    assert_eq!(exported_scenario_ids(&out), ["s-b310", "s-b311", "s-b312"]);
+
+    // Gherkin: the requirement with nothing selected is gone.
+    let (ok, out, err) = run_cli(
+        dir.path(),
+        home.path(),
+        &[
+            "spec",
+            "export",
+            "--format",
+            "gherkin",
+            "--scenario",
+            "s-b310",
+            specs.to_str().expect("utf8"),
+        ],
+    );
+    assert!(ok, "{out}{err}");
+    let got = std::fs::read_to_string(dir.path().join(".bridle/cache/features/widgets.feature"))
+        .expect("feature");
+    assert!(
+        got.contains("@s-b310") && !got.contains("Colouring"),
+        "{got}"
+    );
+}
+
+#[test]
+fn spec_export_task_selects_the_tasks_impact() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let (_guard, repo, home) = start_daemon(tmp.path());
+    let specs = export_fixture().join("design/specs");
+    let specs = specs.to_str().expect("utf8");
+
+    let (ok, out, err) = run_cli(&repo, &home, &["task", "new", "t", "-k", "chore", "--json"]);
+    assert!(ok, "task new failed: {err}");
+    let id = serde_json::from_str::<serde_json::Value>(&out).expect("task json")["id"]
+        .as_str()
+        .expect("id")
+        .to_string();
+
+    let export = [
+        "spec", "export", "--format", "json", "--root", specs, "--task",
+    ];
+    let with_task = |id: &str| {
+        let mut args = export.to_vec();
+        args.push(id);
+        run_cli(&repo, &home, &args)
+    };
+    let (ok, _, err) = with_task(&id);
+    assert!(!ok);
+    assert!(err.contains("declares no impact"), "{err}");
+
+    let (ok, _, err) = run_cli(
+        &repo,
+        &home,
+        &[
+            "impact",
+            "set",
+            &id,
+            "--modify",
+            "s-b312",
+            "--add-under",
+            "r-7fa2",
+        ],
+    );
+    assert!(ok, "impact set failed: {err}");
+    let (ok, out, err) = with_task(&id);
+    assert!(ok, "{out}{err}");
+    assert_eq!(exported_scenario_ids(&out), ["s-b310", "s-b311", "s-b312"]);
+}
+
 #[test]
 fn spec_export_refuses_specs_with_errors() {
     let dir = spec_dir(

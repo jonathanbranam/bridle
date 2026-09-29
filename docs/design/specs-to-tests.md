@@ -45,7 +45,9 @@ comes from the committed generated file.
   (`registerBridleSpecs({ steps })`, see its README), for track-web, harness,
   otters and file-db's TS side.
 - **Scenario ids in test results.** Results report by `s-b310`, which lets
-  `bridle test --task tw-7fa2` run only the scenarios in that task's impact,
+  `bridle test --task tw-7fa2` run only the scenarios in that task's impact
+  (built as `bridle spec export --task ID` / `--scenario ID`, which narrow the
+  export to those scenarios; the adapters pass their selection through it),
   and `bridle spec coverage` list executable scenarios with no bound test
   (research 11's "147 scenarios with zero links to code").
 - **Validation stays strict but gets cheaper.** Rejecting near-misses is the
