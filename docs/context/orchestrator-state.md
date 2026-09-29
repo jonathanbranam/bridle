@@ -27,12 +27,11 @@ at the handover from the eighth orchestrator session.
     worktrees; `[worktrees] copy` exists now, unused).
   - None of the three is covered by the watcher except bridle: on heartbeats check
     `bridle agents --project <p>` and the managers' messages.
-- **All three daemons were restarted by the human at 01:26 UTC** onto ff0c64f. `main` has
-  since gained the TUI fixes, landing record (tr7k), signing (cs7x), ordering flake fix and
-  more; the next install/restart picks them up. **After every `cargo install`, check
-  `bridle --version` starts** (see incidents): until cs7x's build is installed, run
-  `codesign -s - -f ~/.cargo/bin/bridle` right after installing. The installed binary is
-  signed by hand.
+- **Installed build: cc9b612** (02:50 UTC), signed at link time by cs7x (`codesign -dv` shows
+  `adhoc`), starts cleanly, no new syspolicyd crash. The human restarts all three daemons onto
+  it at this handover. After it: resume `lost` workers (`squash-land`, `statusline-flake`)
+  and tell them the daemon restarted. The new rules (`talk-on-the-task`, tr7k's landing
+  record) take effect with it.
 - **meta-notes:** out of tasks; its manager is idle. Five tasks merged and integrated with
   summaries and commits (traceability backfilled): mn-efc9, mn-bf7a, mn-d160, mn-b6c5
   (Time Block highlights), mn-dcc1 (time-of-day highlights removed; the human: "don't
@@ -40,6 +39,8 @@ at the handover from the eighth orchestrator session.
 - **The human's goal orders the queue** (2026-09-28): "Bridle should be working well enough
   and useful enough that we can do productive work on my other projects." Order: meta-notes,
   track-web, then data-contracts.
+- **Tokens:** t6kq (one `~/.bridle/credentials.toml`) is queued; for now the advisor also
+  has `~/.bridle-advisor-meta-notes.token` and `~/.bridle-advisor-track-web.token`.
 - **New principles from the human this session** (all ticketed, most queued):
   - **Traceability** (tr7k, sq4m): from a task id, the brief, implementation summary, branch
     and merge commit; one squash commit per task on the integration branch. The advisor must
