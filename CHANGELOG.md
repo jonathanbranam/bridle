@@ -7,11 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-<<<<<<< HEAD
 - Changed: Claude's `allowed_warning` rate-limit status no longer forces wind-down; it is shown by `bridle budget` but the configured thresholds and overrides alone decide the governor state. `rejected` still forces paused (ticket kv7d).
-=======
 - `bridle task new|edit|note` now accept `--body-file` and `--text-file` options (mutually exclusive with `--body` and positional `TEXT` respectively), allowing long task bodies and notes to be passed via file or stdin to avoid shell metacharacter permission denials (ticket br-3822).
->>>>>>> main
 - New disk usage monitor: every `[disk] check_interval` (default 1h, `0s` = off) the daemon logs and records as a `disk.checked` event the volume's free space and the sizes of the clone's `target/`, `wt/` and `.bridle/`, and messages the human once when free space falls under `[disk] min_free_gb` (default 20) (ticket m3wq).
 - TUI inbox: `Enter` opens the selected message in full (marking it read), `r` replies from there, `Esc`/`Enter` dismisses (ticket fgu6).
 - Fixed: the TUI now shows agents spawned after it started: an event for an agent it has no row for triggers a refetch of the agents list, keeping the selected agent selected (ticket n4vk).
