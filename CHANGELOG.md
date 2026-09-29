@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Fixed: `bridle budget --help` (and any `bridle budget` parse) no longer panics on a clap debug assert for a non-existent `conflicts_with = "action"` attribute; added tests for `--help` on budget and related subcommands to catch this class of bug.
+- Fixed: help text for `bridle statusline`, `bridle prime`, `bridle task` and `bridle usage --by` now accurately reflect their supported roles and options.
 - Added: `bridle spec export --scenario ID` (repeatable; `s-` or `r-` ids) and `--task ID` (the scenarios in a task's declared impact; exits 1 if none declared) narrow the json/gherkin export to selected scenarios (br-b85c).
 - Added: `bridle spec coverage [--root DIR] [--tests DIR ...] [--require-all] [--json]` lists executable scenarios whose id does not appear in test sources; scans text files under `--tests` directories (default `tests` and `test` if present) for scenario ids; exits 1 with `--require-all` if any unbound (br-b1e2).
 - Added: typescript pack's vitest adapter, `workflow/packs/typescript/adapters/vitest-bridle/`: `registerBridleSpecs({ steps })` registers executable scenarios from `bridle spec export --format json` as vitest tests with a given/when/then step registry (br-a54d).
