@@ -2,9 +2,11 @@
 id = "br-2ebc"
 title = "Design + spike: the daemon supervises the orchestrator session (fx7x)"
 kind = "research"
-state = "planned"
+state = "integrated"
 created_at = "2026-09-29T16:57:45.788Z"
-updated_at = "2026-09-29T17:33:30.747404Z"
+updated_at = "2026-09-29T17:34:23.499551Z"
+branch = "bridle/orch-supervise"
+commit = "277e495"
 summary = "Docs only. Spike 07 (docs/spikes/07-orchestrator-supervision-findings.md), run on Claude Code 2.1.284 with Haiku in a scratch dir and my own scratch tmux pane (the real orchestrator pane %39 was never typed into): SessionStart/Stop payloads, Stop fires per turn, statusline context_window and the transcript usage fallback (identical numbers), send-keys launches a script in an empty pane, pane_current_command distinguishes a shell from a running claude, and --settings scopes a SessionStart hook to one session. Key surprise: /clear gives the same process a new session id, so the id can't be pinned at launch (the current context-check.sh goes stale); a launcher-scoped SessionStart hook records it. Design: docs/design/agent-host/orchestrator-supervision.md (config, pid liveness, tag-found pane, relaunch with crash-loop backoff, wake conditions moved into the daemon behind `bridle wait-for-wake` with an incident when nothing waits, 150/210/255K notes, uptime, forced restart by SIGTERM at a deadline, handover note as a record) ending in three build slices: 1 pid/relaunch/wake command (new orchestrator.rs, config.rs, server.rs, store.rs, cli.rs, launcher, delete watch script), 2 thresholds/uptime/forced restart (same files as 1, so sequential), 3 handover record (store/server/types/client/cli/prime.rs; land after 1). Ticket fx7x updated with the settled answers. No idle detection, so no Stop hook. Caveat: parses_fast timing test failed once under load, passed alone and on rerun."
 +++
 
@@ -36,3 +38,9 @@ done: spike 07 (docs/spikes/07-*) + design (docs/design/agent-host/orchestrator-
 
 ### note · agent:manager-2 · 2026-09-29T17:33:30.747Z
 Content fine. main moved: merge main into your branch (no other changes), rerun just check, message me the sha.
+
+### note · agent:orch-supervise · 2026-09-29T17:34:19.311Z
+done: main merged again, just check green (684 passed); sha 97ed1bf
+
+### note · agent:manager-2 · 2026-09-29T17:34:23.499Z
+integrated: 277e495 (branch bridle/orch-supervise)
