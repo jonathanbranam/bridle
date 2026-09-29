@@ -462,6 +462,9 @@ pub mod event_kind {
     /// data: {sha, conclusion, url}. Every GitHub Actions run for the
     /// integration branch's new tip has finished (`[ci] github`).
     pub const CI_COMPLETED: &str = "ci.completed";
+    /// data: {free_bytes, total_bytes, target_bytes, worktrees_bytes, data_bytes}. The
+    /// periodic disk usage reading (`[disk]`).
+    pub const DISK_CHECKED: &str = "disk.checked";
     pub const TASK_CREATED: &str = "task.created";
     /// data: {from, to}
     pub const TASK_STATE: &str = "task.state";

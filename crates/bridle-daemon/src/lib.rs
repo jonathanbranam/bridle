@@ -21,6 +21,7 @@ pub mod ci;
 pub mod config;
 pub mod containment;
 pub mod cost_audit;
+pub mod disk;
 mod events;
 pub mod governor;
 pub mod paths;
@@ -270,6 +271,13 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         emitter.clone(),
     );
 
+    let disk = disk::DiskMonitor::new(
+        ws.clone(),
+        config.disk.min_free_gb,
+        emitter.clone(),
+        manager.clone(),
+    );
+
     run_autostart_and_resume(&store, &config, &manager).await;
 
     let (shutdown_tx, shutdown_rx) = watch::channel(false);
@@ -369,6 +377,16 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
             async move { tasks.tick_claim_lease_check(Utc::now()).await }
         }
     });
+    // A zero interval turns the monitor off.
+    let disk_task = (!config.disk.check_interval.is_zero()).then(|| {
+        spawn_loop(shutdown_rx.clone(), config.disk.check_interval, {
+            let disk = disk.clone();
+            move || {
+                let disk = disk.clone();
+                async move { disk.tick().await }
+            }
+        })
+    });
     let signal_task = signals.listen(shutdown_tx.clone());
 
     let join_handle = tokio::spawn(async move {
@@ -420,6 +438,9 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         tracker_task.abort();
         governor_task.abort();
         ci_task.abort();
+        if let Some(t) = disk_task {
+            t.abort();
+        }
         prune_task.abort();
         task_flush_task.abort();
         claim_lease_task.abort();
