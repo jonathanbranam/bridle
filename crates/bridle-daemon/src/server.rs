@@ -1081,6 +1081,16 @@ async fn new_task(
             serde_json::json!({"task": task.id, "kind": task.kind, "state": task.state}),
         )
         .await;
+    let open = state
+        .tasks
+        .list_tasks()
+        .iter()
+        .filter(|t| t.state == bridle_api::types::TaskState::Open)
+        .count();
+    state
+        .manager
+        .note_task_filed(&task.id, &task.title, open)
+        .await;
     Ok(Json(task))
 }
 
