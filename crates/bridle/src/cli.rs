@@ -38,6 +38,8 @@ pub enum Command {
     Serve(ServeArgs),
     /// Ask the daemon to shut down gracefully.
     StopDaemon,
+    /// Write or remove a macOS LaunchAgent that runs the daemon (never runs launchctl).
+    Launchd(LaunchdArgs),
     /// Reconstruct the tasks/edges/open_questions tables from the project's
     /// state branch alone (docs/design/storage.md, "Rebuild"): the
     /// migration path for a fresh clone with no `bridle.db`. Refuses if the
@@ -147,6 +149,33 @@ pub enum PrimeRoleArg {
     Orchestrator,
     Worker,
     Planner,
+}
+
+#[derive(Debug, Args)]
+pub struct LaunchdArgs {
+    #[command(subcommand)]
+    pub action: LaunchdAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum LaunchdAction {
+    /// Write `~/Library/LaunchAgents/dev.bridle.<project>.plist` and print the launchctl commands.
+    Install(LaunchdInstallArgs),
+    /// Remove the plist and print the launchctl bootout command.
+    Uninstall,
+}
+
+#[derive(Debug, Args)]
+pub struct LaunchdInstallArgs {
+    /// The clone's main checkout. Defaults to the current directory.
+    #[arg(long)]
+    pub repo: Option<PathBuf>,
+    /// Defaults to the repo's parent directory.
+    #[arg(long)]
+    pub workspace: Option<PathBuf>,
+    /// Overwrite an existing plist.
+    #[arg(long)]
+    pub force: bool,
 }
 
 #[derive(Debug, Args)]
