@@ -308,3 +308,4 @@
 {"actor":"agent:pm-1","at":"2026-09-29T02:22:01.360176Z","from":"open","task":"br-7d81","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-09-29T02:22:01.388763Z","from":"open","task":"br-0589","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-09-29T02:22:01.419167Z","queue":"reprioritized"}
+{"actor":"human","at":"2026-09-29T02:24:40.607Z","from":"","task":"br-ce1a","to":"open"}
