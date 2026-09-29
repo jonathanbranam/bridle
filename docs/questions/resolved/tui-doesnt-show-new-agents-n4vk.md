@@ -23,3 +23,7 @@ open; the agents pane didn't show it until the human restarted the TUI.
   a new agent "only shows up on the next full `agents` list", but nothing lists again.
 - Likely fix: on `agent.spawned` (and on SSE reconnect, which can miss events), re-fetch the
   agents list. Test: a spawn event with no prior row makes the agent appear.
+
+## Resolution
+
+Completed 2026-09-29. Fixed in f3817a2: `apply_event_to_agents` (`crates/bridle-tui/src/app.rs`) sets `refresh_agents` when an event names an agent with no row, and `run_app` (`run.rs`) refetches the list; the selection stays on the same agent. Test: `event_for_an_unknown_agent_requests_a_refresh_and_selection_survives_it`.
