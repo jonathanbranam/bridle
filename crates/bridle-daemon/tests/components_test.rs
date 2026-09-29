@@ -71,7 +71,11 @@ async fn task_components_round_trip_validate_and_filter_by_descendant() {
     assert_eq!(ids(&server), vec!["both"]);
     // Dedupe on the way in.
     let both = c.list_tasks().await.expect("list");
-    assert_eq!(both[1].components, vec!["client-play", "server"]);
+    let both = both
+        .iter()
+        .find(|t| t.title == "both")
+        .expect("both listed");
+    assert_eq!(both.components, vec!["client-play", "server"]);
 
     // Edit replaces the list; an empty list clears it.
     let edited = c
