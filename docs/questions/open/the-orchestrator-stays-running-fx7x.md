@@ -162,6 +162,16 @@ the human runs `tmux set -p @bridle orchestrator` in the chosen pane. Bridle fin
 changes and moves, and is lost only when the pane closes or tmux restarts. If no pane has the
 tag, bridle records an incident rather than guessing. No config key for the pane is needed.
 
+The human tagged pane `pi:5.4` (`%39`, running the orchestrator). The advisor checked it and,
+at the human's request, typed a note into it. Observed on Claude Code 2.1.284 (one run; the
+br-2ebc spike should confirm):
+- `tmux send-keys -t %39 -l '<text>'`, then a separate `tmux send-keys -t %39 Enter`, submitted
+  the prompt.
+- Claude Code's greyed-out suggested prompt was replaced by the typed text, with no mixing.
+- `tmux capture-pane -p` drops colours, so it can't tell the suggestion from a draft the human
+  typed. A screen check before typing would take a suggestion for a draft. That only matters if
+  bridle ever types into a live session, which it won't.
+
 ## Suggestions for follow-up (not in scope now; KISS)
 
 - Move the daemons to launchd (`docs/context/launchd-restart-plan.md`, the human's steps) so
