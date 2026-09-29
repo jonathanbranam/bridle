@@ -300,3 +300,6 @@
 {"actor":"human","at":"2026-09-29T01:48:14.082Z","from":"","task":"br-f86f","to":"open"}
 {"actor":"agent:pm-1","at":"2026-09-29T01:48:17.225732Z","from":"open","task":"br-f86f","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-09-29T01:48:17.261226Z","queue":"reprioritized"}
+{"actor":"human","at":"2026-09-29T01:59:17.176Z","from":"","task":"br-9cf3","to":"open"}
+{"actor":"agent:pm-1","at":"2026-09-29T01:59:20.253269Z","from":"open","task":"br-9cf3","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-09-29T01:59:20.268725Z","queue":"reprioritized"}
