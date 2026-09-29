@@ -796,7 +796,25 @@ impl AgentManager {
         let mut created_worktree: Option<(std::path::PathBuf, String)> = None;
         let (workdir_kind, cwd, worktree_path, branch) = match workdir {
             Workdir::Worktree { base } => {
-                let path = self.0.workspace.worktree(&name);
+                let path = match self.0.config.worktree_layout.resolve(
+                    &self.0.workspace.repo,
+                    &name,
+                    &name,
+                ) {
+                    Some(path) => {
+                        // An explicit root leaves the workspace, but never lands in the clone.
+                        let repo = &self.0.workspace.repo;
+                        let repo = repo.canonicalize().unwrap_or_else(|_| repo.clone());
+                        if path.starts_with(repo) || path.starts_with(&self.0.workspace.repo) {
+                            return Err(SupervisorError::BadRequest(format!(
+                                "worktree path {} is inside the project clone",
+                                path.display()
+                            )));
+                        }
+                        path
+                    }
+                    None => self.0.workspace.worktree(&name),
+                };
                 let branch = format!("bridle/{name}");
                 let base_ref = base.unwrap_or_else(|| role.base.clone());
                 worktree::add(&self.0.workspace.repo, &path, &branch, &base_ref).await?;

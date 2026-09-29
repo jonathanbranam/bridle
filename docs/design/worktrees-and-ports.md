@@ -4,16 +4,21 @@
 declares, including harness's **paired** sibling layout (research 09 §2.2):
 
 ```toml
-[worktree]
-layout = "paired"
+[worktrees]
+layout = "root"                                 # "default" (the default) | "root"
 root   = "/Volumes/Data/work/pi/wt/{task}"
-pair   = { harness = "worktree", "track-web" = "symlink|worktree" }
 setup  = "npm install --prefer-offline"
 ```
 
-Only `setup` is built, as `[worktrees] setup` (see
-[[agent-host/roles-and-config#Worktree setup command|Worktree setup command]]); the layout,
-root and pair keys above are still design.
+Built: `layout` and `root`, in the existing `[worktrees]` table alongside `setup`, `copy` and
+`warm_target` (one table, not a `[worktree]`/`[worktrees]` pair). `default` puts the worktree
+at `<workspace>/wt/<agent>`, unchanged. `root` is an absolute path template with `{task}`
+(the agent's claimed task id, else its name; a fresh spawn has none, so its name), `{agent}`
+and `{project}` (the clone's directory name); it must contain `{task}` or `{agent}`, and a bad
+one (relative, `..`, unknown placeholder, `layout = "root"` without `root`) is refused when
+the config loads. A root may leave the workspace, but never the clone: a path inside it is
+refused at spawn. `bridle rm` uses the path recorded on the agent, so it finds the worktree
+wherever it was put. The `paired` layout and its `pair` key are still design (next task).
 
 ## Port registry (built)
 

@@ -47,6 +47,75 @@ pub enum ConfigError {
     BadPortRange(u16, u16),
     #[error("[worktrees] copy entry {0:?} must be a relative path without \"..\"")]
     BadCopyPath(String),
+    #[error("[worktrees] {0}")]
+    BadWorktreeLayout(String),
+}
+
+/// `[worktrees] layout`: where a new worker worktree is created.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum WorktreeLayout {
+    /// `<workspace>/wt/<agent>`.
+    Default,
+    /// An explicit path template (absolute; `{task}`, `{agent}`, `{project}`).
+    Root(String),
+}
+
+impl WorktreeLayout {
+    fn parse(layout: Option<&str>, root: Option<String>) -> Result<Self, ConfigError> {
+        let bad = |m: String| Err(ConfigError::BadWorktreeLayout(m));
+        match (layout.unwrap_or("default"), root) {
+            ("default", None) => Ok(Self::Default),
+            ("default", Some(_)) => bad("root needs layout = \"root\"".into()),
+            ("root", None) => bad("layout = \"root\" needs root".into()),
+            ("root", Some(root)) => {
+                if !Path::new(&root).is_absolute() {
+                    return bad(format!("root {root:?} must be an absolute path"));
+                }
+                if root.split('/').any(|c| c == "..") {
+                    return bad(format!("root {root:?} must not contain \"..\""));
+                }
+                let mut rest = root.as_str();
+                while let Some(i) = rest.find('{') {
+                    let tail = &rest[i..];
+                    let Some(end) = tail.find('}') else {
+                        return bad(format!("root {root:?} has an unclosed placeholder"));
+                    };
+                    let name = &tail[1..end];
+                    if !["task", "agent", "project"].contains(&name) {
+                        return bad(format!(
+                            "root {root:?}: unknown placeholder {{{name}}} (use {{task}}, {{agent}}, {{project}})"
+                        ));
+                    }
+                    rest = &tail[end + 1..];
+                }
+                if !root.contains("{task}") && !root.contains("{agent}") {
+                    return bad(format!(
+                        "root {root:?} must contain {{task}} or {{agent}} so each worktree gets its own path"
+                    ));
+                }
+                Ok(Self::Root(root))
+            }
+            (other, _) => bad(format!(
+                "invalid layout {other:?}: expected \"default\" or \"root\""
+            )),
+        }
+    }
+
+    /// The worktree path for a new agent. `task` is the agent's claimed task
+    /// id, or its name when it has none (always so at spawn). `None` for
+    /// `Default`: the caller uses the workspace's `wt/<agent>`.
+    pub fn resolve(&self, repo: &Path, task: &str, agent: &str) -> Option<PathBuf> {
+        let Self::Root(root) = self else { return None };
+        let project = repo
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("project");
+        Some(PathBuf::from(
+            root.replace("{task}", task)
+                .replace("{agent}", agent)
+                .replace("{project}", project),
+        ))
+    }
 }
 
 /// True for a path that stays inside the repo root: relative, no `..`, not empty.
@@ -789,6 +858,8 @@ pub struct Config {
     pub setup_timeout: Duration,
     /// `[worktrees] copy`: repo-relative files copied into each new worktree before setup.
     pub copy: Vec<String>,
+    /// `[worktrees] layout`/`root`: where new worker worktrees live.
+    pub worktree_layout: WorktreeLayout,
     pub branches: BranchesConfig,
     pub ci: CiConfig,
     pub disk: DiskConfig,
@@ -833,6 +904,7 @@ impl Default for Config {
             setup: None,
             setup_timeout: Duration::from_secs(10 * 60),
             copy: Vec::new(),
+            worktree_layout: WorktreeLayout::Default,
             branches: BranchesConfig::default(),
             ci: CiConfig::default(),
             disk: DiskConfig::default(),
@@ -1157,6 +1229,7 @@ impl Config {
                 return Err(ConfigError::BadCopyPath(bad.clone()));
             }
             config.copy = w.copy;
+            config.worktree_layout = WorktreeLayout::parse(w.layout.as_deref(), w.root)?;
         }
 
         if let Some(t) = raw.tasks {
@@ -1338,6 +1411,10 @@ struct RawWorktrees {
     setup_timeout_secs: Option<u64>,
     #[serde(default)]
     copy: Vec<String>,
+    #[serde(default)]
+    layout: Option<String>,
+    #[serde(default)]
+    root: Option<String>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -2600,5 +2677,33 @@ mod tests {
         );
         // No base file for the role: still no prompt.
         assert_eq!(cfg.roles["orchestrator"].system_prompt, None);
+    }
+
+    #[test]
+    fn worktree_layout_parses_and_refuses_bad_roots() {
+        let cfg = Config::parse("").expect("parses");
+        assert_eq!(cfg.worktree_layout, WorktreeLayout::Default);
+        let cfg = Config::parse("[worktrees]\nlayout = \"root\"\nroot = \"/w/{project}/{task}\"\n")
+            .expect("parses");
+        let path = cfg
+            .worktree_layout
+            .resolve(Path::new("/x/proj"), "br-1", "w1")
+            .expect("root");
+        assert_eq!(path, PathBuf::from("/w/proj/br-1"));
+        for bad in [
+            "layout = \"root\"",
+            "root = \"/w/{task}\"",
+            "layout = \"root\"\nroot = \"w/{task}\"",
+            "layout = \"root\"\nroot = \"/w/../{task}\"",
+            "layout = \"root\"\nroot = \"/w/{nope}\"",
+            "layout = \"root\"\nroot = \"/w/fixed\"",
+            "layout = \"paired\"",
+        ] {
+            let err = Config::parse(&format!("[worktrees]\n{bad}\n")).expect_err(bad);
+            assert!(
+                matches!(err, ConfigError::BadWorktreeLayout(_)),
+                "{bad}: {err}"
+            );
+        }
     }
 }
