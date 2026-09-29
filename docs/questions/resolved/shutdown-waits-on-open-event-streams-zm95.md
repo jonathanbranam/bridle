@@ -32,3 +32,7 @@ Read from the code at 4e06628; not reproduced.
   while the process lingers.
 - Likely fix: end SSE streams when shutdown starts (select on the shutdown signal in the
   stream), and/or bound `serve_task.await` with a timeout.
+
+## Resolution
+
+End of stream on shutdown and a 5s bounded HTTP drain landed in 681d0c3 (test: `shutdown_ends_open_event_streams_and_finishes_promptly` in `crates/bridle-daemon/tests/events_stream_test.rs`). Behaviour is described in `docs/design/agent-host/`; CHANGELOG has the line.

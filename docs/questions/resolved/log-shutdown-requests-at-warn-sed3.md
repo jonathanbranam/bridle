@@ -25,3 +25,7 @@ The human, verbatim (2026-09-28):
 - Saying what triggered it (the API and its principal, or which signal) would tell the
   human who shut the daemon down.
 - Low priority (the human).
+
+## Resolution
+
+Shutdown via `POST /v1/shutdown` (with the caller principal) and via SIGINT/SIGTERM is logged at WARN by the daemon (`server.rs` `shutdown`, `lib.rs` `Signals::listen`).
