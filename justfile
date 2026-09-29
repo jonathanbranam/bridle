@@ -14,8 +14,10 @@ fmt-check:
 lint:
     cargo clippy --workspace --all-targets -- -D warnings
 
+# Git runs with an empty global config, like a CI runner, so a developer's
+# `init.defaultBranch` or identity can't hide a failure (g3ck).
 test *args:
-    cargo nextest run --workspace {{args}}
+    GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 cargo nextest run --workspace {{args}}
 
 # Tests that spawn real `claude` (costs tokens; Haiku, tiny prompts).
 test-live:

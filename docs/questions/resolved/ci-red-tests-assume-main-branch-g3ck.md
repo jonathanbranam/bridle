@@ -36,3 +36,7 @@ machine's global git config sets `init.defaultBranch=main`.
    guessing from HEAD; rxe8 wants strong, explicit branch rules.)
 
 Done when CI is green on `main`.
+
+## Resolution
+
+Tests use `git init -b main` everywhere; `bridle-daemon` startup fails with a message naming `branches.integration` when it is unset and `main` is missing (`crates/bridle-daemon/src/lib.rs`); `just test` runs with `GIT_CONFIG_GLOBAL=/dev/null` and `GIT_CONFIG_NOSYSTEM=1` so a developer's global git config can't mask CI failures (br-d0c3).
