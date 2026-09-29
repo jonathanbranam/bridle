@@ -21,10 +21,10 @@ use crate::cli::{
     EventsArgs, InboxAction, InboxArgs, InboxReadArgs, InboxShowArgs, InterruptArgs, LogsArgs,
     PrimeArgs, PrimeRoleArg, QueueAction, QueueAddTierArgs, QueueArgs, QueueSetArgs, ReadyArgs,
     ReleaseArgs, RmArgs, RulesAction, RulesArgs, RulesDiffArgs, RulesExplainArgs, SendArgs,
-    ShowArgs, SpawnArgs, SpecAction, SpecArgs, StopArgs, TaskAction, TaskArgs, TaskDoneArgs,
-    TaskDropArgs, TaskEditArgs, TaskKindArg, TaskListArgs, TaskNewArgs, TaskNoteArgs, TaskPlanArgs,
-    TaskReopenArgs, TaskSearchArgs, TaskShowArgs, TaskSizeArg, TaskSummaryArgs, TokenAction,
-    TokenArgs, UsageArgs, UsageByArg, WhenArg,
+    ShowArgs, SpawnArgs, SpecAction, SpecArgs, SpecExportArgs, SpecFormatArg, StopArgs, TaskAction,
+    TaskArgs, TaskDoneArgs, TaskDropArgs, TaskEditArgs, TaskKindArg, TaskListArgs, TaskNewArgs,
+    TaskNoteArgs, TaskPlanArgs, TaskReopenArgs, TaskSearchArgs, TaskShowArgs, TaskSizeArg,
+    TaskSummaryArgs, TokenAction, TokenArgs, UsageArgs, UsageByArg, WhenArg,
 };
 use crate::error::CliError;
 use crate::render;
@@ -2403,22 +2403,29 @@ fn spec_files(path: &Path, out: &mut Vec<PathBuf>) -> anyhow::Result<()> {
     Ok(())
 }
 
-/// `bridle spec check`: local, no daemon call (docs/design/specs.md).
-fn spec(cli: &Cli, args: &SpecArgs) -> Result<(), CliError> {
-    let SpecAction::Check(args) = &args.action;
-    let roots = if args.paths.is_empty() {
-        vec![
-            args.root
-                .clone()
-                .unwrap_or_else(|| PathBuf::from("design/specs")),
-        ]
+/// The spec files named by `paths`, else those under `root` (default
+/// `design/specs`): the defaults every `bridle spec` subcommand shares.
+fn spec_inputs(paths: &[PathBuf], root: Option<&Path>) -> anyhow::Result<Vec<PathBuf>> {
+    let default = [root.map_or_else(|| PathBuf::from("design/specs"), Path::to_path_buf)];
+    let roots = if paths.is_empty() {
+        &default[..]
     } else {
-        args.paths.clone()
+        paths
     };
     let mut files = Vec::new();
-    for r in &roots {
+    for r in roots {
         spec_files(r, &mut files)?;
     }
+    Ok(files)
+}
+
+/// `bridle spec check`: local, no daemon call (docs/design/specs.md).
+fn spec(cli: &Cli, args: &SpecArgs) -> Result<(), CliError> {
+    let args = match &args.action {
+        SpecAction::Check(args) => args,
+        SpecAction::Export(args) => return spec_export(cli, args),
+    };
+    let files = spec_inputs(&args.paths, args.root.as_deref())?;
 
     let mut diagnostics = Vec::new();
     for file in &files {
@@ -2476,6 +2483,79 @@ fn spec(cli: &Cli, args: &SpecArgs) -> Result<(), CliError> {
     }
     if report.errors > 0 {
         return Err(anyhow::anyhow!("spec check found {} error(s)", report.errors).into());
+    }
+    Ok(())
+}
+
+/// `bridle spec export`: local, no daemon call (docs/design/specs-to-tests.md).
+fn spec_export(cli: &Cli, args: &SpecExportArgs) -> Result<(), CliError> {
+    let files = spec_inputs(&args.paths, args.root.as_deref())?;
+
+    let mut specs = Vec::new();
+    let mut diagnostics = Vec::new();
+    for file in &files {
+        match bridle_spec::parse_file(file) {
+            Ok(spec) => specs.push((file, spec)),
+            Err(bridle_spec::ParseFileError::Diagnostics(ds)) => diagnostics.extend(ds),
+            Err(e) => return Err(anyhow::Error::new(e).into()),
+        }
+    }
+    if !diagnostics.is_empty() {
+        for d in &diagnostics {
+            eprintln!("{d}");
+        }
+        return Err(
+            anyhow::anyhow!("not exporting: {} spec diagnostic(s)", diagnostics.len()).into(),
+        );
+    }
+
+    let write = |dir: &Path, name: &str, text: &str| -> anyhow::Result<PathBuf> {
+        std::fs::create_dir_all(dir).with_context(|| format!("creating {}", dir.display()))?;
+        let path = dir.join(name);
+        std::fs::write(&path, text).with_context(|| format!("writing {}", path.display()))?;
+        Ok(path)
+    };
+    match args.format {
+        SpecFormatArg::Gherkin => {
+            let dir = args
+                .out
+                .clone()
+                .unwrap_or_else(|| PathBuf::from(".bridle/cache/features"));
+            let mut written = Vec::new();
+            for (file, spec) in &specs {
+                let cap = crate::spec_export::capability(file);
+                let text = crate::spec_export::gherkin(&cap, spec);
+                written.push(
+                    write(&dir, &format!("{cap}.feature"), &text)?
+                        .display()
+                        .to_string(),
+                );
+            }
+            if cli.json {
+                render::print_json(&written)?;
+            } else {
+                for p in &written {
+                    println!("{p}");
+                }
+            }
+        }
+        SpecFormatArg::Json => {
+            let doc = crate::spec_export::JsonExport {
+                version: crate::spec_export::JSON_VERSION,
+                specs: specs
+                    .iter()
+                    .map(|(f, s)| crate::spec_export::json_spec(f, s))
+                    .collect(),
+            };
+            match &args.out {
+                Some(dir) => {
+                    let text = serde_json::to_string_pretty(&doc).context("encoding json")?;
+                    let path = write(dir, "specs.json", &format!("{text}\n"))?;
+                    println!("{}", path.display());
+                }
+                None => render::print_json(&doc)?,
+            }
+        }
     }
     Ok(())
 }
