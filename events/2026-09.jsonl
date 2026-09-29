@@ -257,3 +257,4 @@
 {"actor":"agent:pm-1","at":"2026-09-29T00:05:12.896306Z","from":"open","task":"br-626e","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-09-29T00:05:12.910890Z","queue":"reprioritized"}
 {"actor":"agent:pm-1","at":"2026-09-29T00:13:42.535555Z","queue":"reprioritized"}
+{"actor":"agent:pm-1","at":"2026-09-29T00:28:18.351794Z","queue":"reprioritized"}
