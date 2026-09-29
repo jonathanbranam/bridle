@@ -652,6 +652,26 @@ impl AgentManager {
                         path.display()
                     )));
                 }
+                // One agent per branch: a directory inside another agent's
+                // worktree is that agent's branch, running or stopped.
+                let canon = path.canonicalize().unwrap_or_else(|_| path.clone());
+                for other in self.0.store.list_agents(true).await? {
+                    let Some(wt) = other.worktree.as_deref() else {
+                        continue;
+                    };
+                    let wt = std::path::Path::new(wt);
+                    let wt = wt.canonicalize().unwrap_or_else(|_| wt.to_path_buf());
+                    if canon.starts_with(&wt) {
+                        let branch = other.branch.as_deref().unwrap_or("its branch");
+                        return Err(SupervisorError::Conflict(format!(
+                            "{} is agent {:?}'s worktree (branch {branch}); one agent per branch: `bridle renew {}` to continue it, or `bridle remove {}` first",
+                            path.display(),
+                            other.name,
+                            other.name,
+                            other.name
+                        )));
+                    }
+                }
                 ("path", path, None, None)
             }
         };
