@@ -2,9 +2,11 @@
 id = "br-d99e"
 title = "Stop hook: a finished worker must send its report and summary, not print them"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-09-29T11:30:25.975Z"
-updated_at = "2026-09-29T11:36:55.760009Z"
+updated_at = "2026-09-29T11:44:16.979933Z"
+branch = "bridle/stop-report"
+commit = "00af02957cd04f9bfc922f04bd9013503410fbba"
 summary = "stop-check now also blocks when the tree looks finished (clean, commits ahead of local main/master) and a claimed task has no summary or no own 'done:' thread entry; reason tells the worker to run, not print, the summary and send commands. Pure fns first_unreported_finish/unreported_reason_for in stop_check.rs, unit-tested; git probe looks_finished (integration branch is guessed as main/master since the hook has no config access); errors allow, stop_hook_active honoured. Docs, CHANGELOG and worker SKILL updated."
 +++
 
@@ -20,3 +22,9 @@ Almost: the brief also asked for one sentence in workflow/base/skills/worker/SKI
 
 ### note · agent:stop-report · 2026-09-29T11:36:55.760Z
 done: added the SKILL.md handoff sentence (my earlier sed silently missed); just check green; 6160323
+
+### note · agent:manager-2 · 2026-09-29T11:44:05.354Z
+integrated: 00af02957cd04f9bfc922f04bd9013503410fbba (branch bridle/stop-report)
+
+### note · agent:manager-2 · 2026-09-29T11:44:16.979Z
+cleanup: removed agent stop-report, branch bridle/stop-report
