@@ -405,6 +405,12 @@ async fn status(cli: &Cli) -> Result<(), CliError> {
         for (state, count) in &status.agents_by_state {
             println!("  {state:<10} {count}");
         }
+        if !status.merged_leftovers.is_empty() {
+            println!(
+                "merged     stopped agents whose branch has landed: {} (bridle rm <name> --delete-branch)",
+                status.merged_leftovers.join(", ")
+            );
+        }
         for rl in &status.rate_limits {
             if is_known_rate_limit_window(&rl.window) {
                 println!("  {:<10} {}", rl.window, format_utilization(rl.utilization));

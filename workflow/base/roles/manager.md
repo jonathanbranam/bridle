@@ -62,8 +62,9 @@ configuration; the full design is ticket tx3f.)
   integration branch reads as a list of completed tasks, then
   `git grep -nE '^(<<<<<<< |>>>>>>> )' HEAD`, then
   `git push origin {{branches.integration}}`, then
-  `bridle task done <task-id> --commit <landing sha> --branch bridle/<name>` (from `git rev-parse HEAD`),
-  then `bridle rm <name> --delete-branch` (landed branches aren't kept; a squashed branch isn't a git ancestor, so bridle recognises it by the `Branch:` trailer, matched as a substring, fine for now). For each
+  `bridle task done <task-id> --commit <landing sha> --branch bridle/<name>` (from `git rev-parse HEAD`);
+  it also removes the branch's agents, worktree and branch (landed branches aren't kept), so there
+  is no separate `bridle rm`. If `bridle status` lists merged leftovers, `bridle rm <name> --delete-branch` them. For each
   user-visible change, add one line under "## Unreleased" in CHANGELOG.md in
   the same commit. **Never merge unless
   `git merge-base --is-ancestor {{branches.integration}} bridle/<name>`

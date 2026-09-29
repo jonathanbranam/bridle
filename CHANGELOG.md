@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- `bridle task done --branch` now removes the branch's agents, worktree and branch (refusing unless `--commit` is on the integration branch) and notes it on the task; `bridle status` lists stopped agents whose branch has merged (br-7d81).
 - New `bridle spec id [paths...] [--root DIR] [--ledger FILE] [--dry-run]`: writes stable ids (`{#r-xxxx}`, `{#s-xxxx}`) into spec headings that lack one, editing only those lines, unique across the spec set and never reused, via a committed `design/specs/.ids` ledger (br-41e1).
 - New `bridle spec export --format gherkin|json [--out DIR] [paths...]`: exports capability specs for test runners (gherkin: one `.feature` per capability, executable scenarios only, tagged with their `@tags` and scenario id; json: the whole AST with ids), refusing when the specs have errors; gherkin defaults to the gitignored `.bridle/cache/features/` (br-3058).
 - New `bridle spec check [paths...] [--root DIR] [--require-ids] [--json]`: validates capability spec files with the `bridle-spec` parser and prints `file:line:col: message` diagnostics; a requirement without an id is a warning (an error with `--require-ids`), any error exits non-zero (br-e531).
