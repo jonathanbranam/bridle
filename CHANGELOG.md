@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Orchestrator supervision slice 2 (br-65b8): the daemon reads the orchestrator's context (the statusline file, the transcript as a fallback) and sends `context` wakes at `note_tokens`, `plan_tokens` and `handover_tokens`, each once per session and again after a `/compact`; `max_uptime` asks for a handover too. `bridle handover done` (`POST /v1/orchestrator/handover`) or the `handover_deadline` stops the session (SIGTERM, SIGKILL after 15 s) and relaunches it without counting a crash. `scripts/context-check.sh` is gone.
+
 ### Fixed
 
 - `bridle ask` now notifies someone: it sends a pointer message (kind `question`) to `--to` (default: the caller's spawner, or the human), and `bridle answer` sends one back to the asker. Docs and comments that called claims SQLite-only are corrected: they are mirrored to `claims.toml` and restored by `rebuild` (br-b966).

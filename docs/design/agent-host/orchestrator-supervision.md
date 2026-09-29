@@ -3,8 +3,10 @@
 Design for ticket [[the-orchestrator-stays-running-fx7x|fx7x]]; signals verified in
 [[docs/spikes/07-orchestrator-supervision-findings|spike 07]]. **Slice 1a built** (br-a424): liveness, relaunch and crash-loop backoff (sections 1 to 4, the
 interim incident of 8). **Slice 1b built** (br-e949): the wake conditions and `wait-for-wake`
-(5), `waiter_grace`. **Slice 3 built** (br-4573): the handover note as a record (7). Not built: context and
-uptime thresholds and the forced restart (6); config keys for those aren't accepted yet. The orchestrator
+(5), `waiter_grace`. **Slice 2 built** (br-65b8): context and uptime thresholds, the deadline and
+the forced restart (6), `bridle handover done`, the `note_tokens`, `plan_tokens`,
+`handover_tokens`, `handover_deadline` and `max_uptime` keys. **Slice 3 built** (br-4573): the
+handover note as a record (7). The orchestrator
 stays an interactive `claude` in the human's tmux pane (the human types to it, locally and over
 Remote Control). The daemon keeps it running, tells it when its context or uptime says to hand
 over, and carries its wake conditions, with no agent in the loop.
@@ -167,9 +169,8 @@ the `meta` table (`orchestrator_wake_cursor`, no schema change) and moves only w
 delivered, so a daemon restart re-derives what was queued. Idle, usage and main-moved are states
 kept in memory (a restart resets their baselines). The wake loop runs whether or not `[orchestrator]`
 is enabled. The waiter incident is measured from the later of the last request's close and the
-session's launch. `scripts/orchestrator-watch.sh` is deleted; `scripts/context-check.sh` stays until
-slice 2 (so the role file has the orchestrator run it after each wake), and with it its
-`~/.bridle-orchestrator-{ctx-level,session}` files.
+session's launch. `scripts/orchestrator-watch.sh` is deleted; `scripts/context-check.sh` was
+deleted in slice 2 (with `~/.bridle-orchestrator-{ctx-level,session}`).
 
 `scripts/orchestrator-watch.sh` and `scripts/context-check.sh` are deleted, and with them the
 `~/.bridle-orchestrator-{seen-questions,hold-state,ci-seen,ctx-level,session}` files. The
@@ -211,6 +212,19 @@ prime orchestrator`, which prints the handover.
 A forced stop without a handover leaves the previous handover (or the state file) as the
 newest: the new session starts from stale state and the incident text says so. That is why the
 deadline is long and the two earlier notes exist.
+
+**Built as** (`orchestrator.rs`): the notes are wakes with reason `context`, pushed into the
+wake queue (`Wakes::push`). A threshold announces once per session id until a lower reading
+resets it; a session id change (`/clear`) starts fresh. `bridle handover done` sets an in-memory
+marker with its time; only a marker made after the current process launched stops it, so a stale
+one never stops the next session. The stop is the marker or the deadline (started by the
+first "hand over now" or uptime note; not restarted by later ones): SIGTERM to the recorded pid
+(start time must match), SIGKILL 15 s later if it is still there. Once the process is gone the
+ordinary dead-session path relaunches it, flagged deliberate: no backoff, not counted, and it
+can't give up; only that first relaunch is free (an unconfirmed one counts as a crash). A
+deadline stop says in its incident text that the new session starts from stale state; a
+handover stop is not an incident. The transcript fallback reads the last 1 MB of the file.
+The deadline is in memory: a daemon restart forgets it (section 8).
 
 ## 7. The handover note as a record
 

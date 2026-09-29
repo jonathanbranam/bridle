@@ -7,10 +7,10 @@
 //! liveness and the incident sink sit behind traits so tests drive a fake clock and fakes.
 
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex as StdMutex};
 use std::time::Duration;
 
-use bridle_api::types::{MessageKind, When, event_kind};
+use bridle_api::types::{MessageKind, WakeReason, When, event_kind};
 use chrono::{DateTime, Utc};
 use serde_json::json;
 use tokio::sync::Mutex;
@@ -18,7 +18,7 @@ use tokio::sync::Mutex;
 use crate::config::OrchestratorConfig;
 use crate::events::Emitter;
 use crate::supervisor::{AgentManager, ToTarget};
-use crate::wake::Waiters;
+use crate::wake::{Waiters, Wakes};
 
 pub const TICK_INTERVAL: Duration = Duration::from_secs(10);
 /// The tag the human sets on the orchestrator's pane: `tmux set -p @bridle orchestrator`.
@@ -28,6 +28,8 @@ const SHELLS: &[&str] = &["zsh", "bash", "sh", "fish"];
 const SHELL_RECHECK: Duration = Duration::from_secs(5);
 /// A launch is confirmed when the pid file changes to a live pid within this long.
 const CONFIRM_WITHIN: Duration = Duration::from_secs(60);
+/// After SIGTERM, a process still alive this long gets SIGKILL.
+const KILL_AFTER: Duration = Duration::from_secs(15);
 
 pub trait Tmux: Send + Sync {
     /// `(pane id, @bridle tag)` for every pane; the tag is empty when unset.
@@ -40,6 +42,37 @@ pub trait Tmux: Send + Sync {
 pub trait Procs: Send + Sync {
     /// The pid exists and its start time matches: a reused pid is not the session.
     async fn is_alive(&self, pid: i32, start: &str) -> bool;
+    /// SIGTERM, or SIGKILL when `kill`, to the pid if its start time still matches.
+    async fn signal(&self, pid: i32, start: &str, kill: bool);
+}
+
+/// Where the supervisor's context and uptime notes go: the wake queue.
+pub trait WakeSink: Send + Sync {
+    async fn push(&self, wake: WakeReason);
+}
+
+impl WakeSink for Arc<Wakes> {
+    async fn push(&self, wake: WakeReason) {
+        Wakes::push(self, wake).await
+    }
+}
+
+/// `bridle handover done`: when the orchestrator said it has written its state. Only a mark
+/// made after the current session launched counts, so a stale one never stops the next session.
+#[derive(Default)]
+pub struct Handover(StdMutex<Option<DateTime<Utc>>>);
+
+impl Handover {
+    pub fn mark(&self, now: DateTime<Utc>) {
+        *self.0.lock().expect("handover lock") = Some(now);
+    }
+
+    fn done_since(&self, launched: i64) -> bool {
+        self.0
+            .lock()
+            .expect("handover lock")
+            .is_some_and(|t| t.timestamp() >= launched)
+    }
 }
 
 /// The interim "record an incident" (section 8): one function nc7r replaces.
@@ -67,6 +100,14 @@ fn parse_pid_file(text: &str) -> Option<PidRecord> {
     })
 }
 
+/// One session's context notes: the last reading and which thresholds have been announced.
+#[derive(Default)]
+struct ContextNotes {
+    session: String,
+    last: u64,
+    fired: [bool; 3],
+}
+
 #[derive(Default)]
 struct State {
     warned_no_file: bool,
@@ -84,31 +125,56 @@ struct State {
     waiter_noted: bool,
     /// The last incident text, so a condition that persists across ticks is reported once.
     last_incident: Option<String>,
+    /// The launch epoch the per-session fields below belong to.
+    session_key: i64,
+    context: ContextNotes,
+    uptime_fired: bool,
+    /// When the session is stopped without a handover, once a "now" or uptime note went out.
+    deadline: Option<DateTime<Utc>>,
+    /// SIGTERM sent at, and SIGKILL sent.
+    term_sent: Option<DateTime<Utc>>,
+    kill_sent: bool,
+    /// The stop was ours: the next relaunch is free (not a crash). `forced` = no handover.
+    deliberate: Option<Stop>,
 }
 
-pub struct Supervisor<T, P, I> {
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Stop {
+    HandoverDone,
+    Deadline,
+}
+
+pub struct Supervisor<T, P, I, W> {
     home: PathBuf,
     launcher: String,
     backoff: Vec<Duration>,
     stable_after: Duration,
     waiter_grace: Duration,
+    tokens: [u64; 3],
+    handover_deadline: Duration,
+    max_uptime: Duration,
     waiters: Arc<Waiters>,
+    handover: Arc<Handover>,
     tmux: T,
     procs: P,
     incidents: I,
+    wakes: W,
     state: Mutex<State>,
 }
 
-impl<T: Tmux, P: Procs, I: Incidents> Supervisor<T, P, I> {
+impl<T: Tmux, P: Procs, I: Incidents, W: WakeSink> Supervisor<T, P, I, W> {
     /// `launcher` is the absolute path to type into the pane.
+    #[allow(clippy::too_many_arguments)] // the fakes in tests are why each is a parameter
     pub fn new(
         home: PathBuf,
         launcher: String,
         cfg: &OrchestratorConfig,
         waiters: Arc<Waiters>,
+        handover: Arc<Handover>,
         tmux: T,
         procs: P,
         incidents: I,
+        wakes: W,
     ) -> Self {
         Supervisor {
             home,
@@ -116,10 +182,15 @@ impl<T: Tmux, P: Procs, I: Incidents> Supervisor<T, P, I> {
             backoff: cfg.relaunch_backoff.clone(),
             stable_after: cfg.stable_after,
             waiter_grace: cfg.waiter_grace,
+            tokens: [cfg.note_tokens, cfg.plan_tokens, cfg.handover_tokens],
+            handover_deadline: cfg.handover_deadline,
+            max_uptime: cfg.max_uptime,
             waiters,
+            handover,
             tmux,
             procs,
             incidents,
+            wakes,
             state: Mutex::new(State::default()),
         }
     }
@@ -149,18 +220,32 @@ impl<T: Tmux, P: Procs, I: Incidents> Supervisor<T, P, I> {
             st.dead_noted = false;
             st.last_incident = None;
             self.check_waiter(&mut st, now, rec.launched).await;
+            self.check_thresholds(&mut st, now, &rec).await;
             return;
         }
         st.waiter_noted = false;
 
         if !std::mem::replace(&mut st.dead_noted, true) {
-            let text = format!(
-                "The orchestrator session (pid {}) is not running; found dead at {}. {}",
-                rec.pid,
-                now.format("%H:%M:%S UTC"),
-                self.transcript_activity()
-            );
-            self.report(&mut st, text).await;
+            let text = match st.deliberate {
+                Some(Stop::Deadline) => format!(
+                    "The orchestrator was stopped at {}: the handover deadline passed with no `bridle handover done`. The new session starts from the previous handover or state file, which is stale. {}",
+                    now.format("%H:%M:%S UTC"),
+                    self.transcript_activity()
+                ),
+                Some(Stop::HandoverDone) => {
+                    tracing::info!("orchestrator stopped after its handover; relaunching");
+                    String::new()
+                }
+                None => format!(
+                    "The orchestrator session (pid {}) is not running; found dead at {}. {}",
+                    rec.pid,
+                    now.format("%H:%M:%S UTC"),
+                    self.transcript_activity()
+                ),
+            };
+            if !text.is_empty() {
+                self.report(&mut st, text).await;
+            }
         }
         if let Some(at) = st.pending {
             if now - at < chrono_dur(CONFIRM_WITHIN) {
@@ -169,10 +254,12 @@ impl<T: Tmux, P: Procs, I: Incidents> Supervisor<T, P, I> {
             // Never confirmed (the trust prompt, a broken launcher): a failed relaunch.
             st.pending = None;
         }
-        if st.given_up {
+        // A restart we caused is not a crash: no backoff, no count, and it can't give up.
+        let free = st.deliberate.is_some();
+        if st.given_up && !free {
             return;
         }
-        if st.attempts as usize > self.backoff.len() {
+        if st.attempts as usize > self.backoff.len() && !free {
             st.given_up = true;
             let text = format!(
                 "The orchestrator is not staying up: {} relaunches, last attempt {}. Not trying again until it is running.",
@@ -185,10 +272,12 @@ impl<T: Tmux, P: Procs, I: Incidents> Supervisor<T, P, I> {
             return;
         }
         // The first relaunch goes at once, then `backoff[0]`, `backoff[1]`, ...
-        if let (Some(last), Some(wait)) = (
-            st.last_attempt,
-            st.attempts.checked_sub(1).map(|i| self.backoff[i as usize]),
-        ) && now - last < chrono_dur(wait)
+        if !free
+            && let (Some(last), Some(wait)) = (
+                st.last_attempt,
+                st.attempts.checked_sub(1).map(|i| self.backoff[i as usize]),
+            )
+            && now - last < chrono_dur(wait)
         {
             return;
         }
@@ -236,10 +325,15 @@ impl<T: Tmux, P: Procs, I: Incidents> Supervisor<T, P, I> {
             Some(_) => {}
         }
 
-        st.attempts += 1;
-        st.last_attempt = Some(now);
+        if free {
+            // Only this first relaunch is free; if it fails, the ordinary rules apply.
+            st.deliberate = None;
+        } else {
+            st.attempts += 1;
+            st.last_attempt = Some(now);
+        }
         st.shell_seen = None;
-        tracing::info!(pane = %pane, attempt = st.attempts, "relaunching the orchestrator");
+        tracing::info!(pane = %pane, attempt = st.attempts, free, "relaunching the orchestrator");
         match self.tmux.type_line(&pane, &self.launcher).await {
             Ok(()) => st.pending = Some(now),
             Err(e) => {
@@ -247,6 +341,150 @@ impl<T: Tmux, P: Procs, I: Incidents> Supervisor<T, P, I> {
                     .await
             }
         }
+    }
+
+    /// Context and uptime notes, and the restart (section 6).
+    async fn check_thresholds(&self, st: &mut State, now: DateTime<Utc>, rec: &PidRecord) {
+        if st.session_key != rec.launched {
+            // A new process: nothing announced yet, no deadline, no stop under way.
+            st.session_key = rec.launched;
+            st.context = ContextNotes::default();
+            st.uptime_fired = false;
+            st.deadline = None;
+            st.term_sent = None;
+            st.kill_sent = false;
+            st.deliberate = None;
+        }
+
+        if let Some(tokens) = self.context_tokens(st) {
+            let notes = &mut st.context;
+            if tokens < notes.last {
+                notes.fired = [false; 3]; // /compact
+            }
+            notes.last = tokens;
+            let due: Vec<usize> = (0..3)
+                .filter(|&i| tokens >= self.tokens[i] && !notes.fired[i])
+                .collect();
+            for i in due {
+                st.context.fired[i] = true;
+                if i == 2 && st.deadline.is_none() {
+                    st.deadline = Some(now + chrono_dur(self.handover_deadline));
+                }
+                let text = match i {
+                    0 => format!("context at {}K of the window", tokens / 1000),
+                    1 => "plan a handover at the next quiet point".to_string(),
+                    _ => format!(
+                        "hand over now; the session is stopped at {}",
+                        self.deadline_text(st)
+                    ),
+                };
+                self.wake(
+                    &text,
+                    json!({ "tokens": tokens, "threshold": self.tokens[i] }),
+                )
+                .await;
+            }
+        }
+
+        let up = Duration::from_secs((now.timestamp() - rec.launched).max(0) as u64);
+        if up >= self.max_uptime && !std::mem::replace(&mut st.uptime_fired, true) {
+            st.deadline
+                .get_or_insert(now + chrono_dur(self.handover_deadline));
+            let text = format!(
+                "uptime {}h: plan a handover at the next quiet point; the session is stopped at {}",
+                up.as_secs() / 3600,
+                self.deadline_text(st)
+            );
+            self.wake(&text, json!({ "uptime_secs": up.as_secs() }))
+                .await;
+        }
+
+        self.check_stop(st, now, rec).await;
+    }
+
+    fn deadline_text(&self, st: &State) -> String {
+        st.deadline
+            .map(|d| d.format("%H:%M:%S UTC").to_string())
+            .unwrap_or_default()
+    }
+
+    async fn wake(&self, text: &str, detail: serde_json::Value) {
+        self.wakes
+            .push(WakeReason {
+                reason: "context".to_string(),
+                text: text.to_string(),
+                detail,
+            })
+            .await;
+    }
+
+    /// The marker or the deadline stops the session: SIGTERM, then SIGKILL after 15 s. The
+    /// relaunch is the dead-session path, flagged deliberate.
+    async fn check_stop(&self, st: &mut State, now: DateTime<Utc>, rec: &PidRecord) {
+        if st.deliberate.is_none() {
+            let stop = if self.handover.done_since(rec.launched) {
+                Stop::HandoverDone
+            } else if st.deadline.is_some_and(|d| now >= d) {
+                Stop::Deadline
+            } else {
+                return;
+            };
+            tracing::info!(
+                pid = rec.pid,
+                forced = stop == Stop::Deadline,
+                "stopping the orchestrator"
+            );
+            st.deliberate = Some(stop);
+            st.term_sent = Some(now);
+            self.procs.signal(rec.pid, &rec.start, false).await;
+        } else if let Some(t) = st.term_sent
+            && !st.kill_sent
+            && now - t >= chrono_dur(KILL_AFTER)
+        {
+            st.kill_sent = true;
+            self.procs.signal(rec.pid, &rec.start, true).await;
+        }
+    }
+
+    /// Context tokens of the current session: the statusline's file, else the transcript's last
+    /// assistant usage when the file is missing or older than the transcript.
+    fn context_tokens(&self, st: &mut State) -> Option<u64> {
+        let text = std::fs::read_to_string(self.home.join("orchestrator.session")).ok()?;
+        let (id, transcript) = match text.trim().split_once(' ') {
+            Some((id, p)) => (id, Some(p.trim())),
+            None => (text.trim(), None),
+        };
+        if id.is_empty()
+            || !id
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+        {
+            return None;
+        }
+        if st.context.session != id {
+            // /clear: a new session id starts its own notes.
+            st.context = ContextNotes {
+                session: id.to_string(),
+                ..Default::default()
+            };
+        }
+        let file = self.home.join("context").join(id);
+        let file_mtime = std::fs::metadata(&file).and_then(|m| m.modified()).ok();
+        let transcript_mtime = transcript
+            .and_then(|p| std::fs::metadata(p).ok())
+            .and_then(|m| m.modified().ok());
+        let stale = match (file_mtime, transcript_mtime) {
+            (None, _) => true,
+            (Some(f), Some(t)) => f < t,
+            _ => false,
+        };
+        let from_file = std::fs::read_to_string(&file)
+            .ok()
+            .and_then(|t| t.trim().parse().ok());
+        if !stale && from_file.is_some() {
+            return from_file;
+        }
+        transcript.and_then(transcript_tokens).or(from_file)
     }
 
     /// A live session with no wake command running (section 5): the human is told, the session
@@ -362,6 +600,38 @@ impl Tmux for RealTmux {
     }
 }
 
+/// The last `assistant` entry's usage in a transcript: input + cache creation + cache read
+/// (spike 07 #6). Only the tail is read; a transcript can be many megabytes.
+fn transcript_tokens(path: &str) -> Option<u64> {
+    use std::io::{Read, Seek, SeekFrom};
+    let mut f = std::fs::File::open(path).ok()?;
+    let len = f.metadata().ok()?.len();
+    let from = len.saturating_sub(1 << 20);
+    f.seek(SeekFrom::Start(from)).ok()?;
+    let mut buf = Vec::new();
+    f.read_to_end(&mut buf).ok()?;
+    String::from_utf8_lossy(&buf)
+        .lines()
+        .rev()
+        .find_map(|line| {
+            let v: serde_json::Value = serde_json::from_str(line).ok()?;
+            if v.get("type")?.as_str()? != "assistant" {
+                return None;
+            }
+            let u = v.get("message")?.get("usage")?;
+            Some(
+                [
+                    "input_tokens",
+                    "cache_creation_input_tokens",
+                    "cache_read_input_tokens",
+                ]
+                .iter()
+                .filter_map(|k| u.get(k).and_then(serde_json::Value::as_u64))
+                .sum(),
+            )
+        })
+}
+
 pub struct RealProcs;
 
 impl Procs for RealProcs {
@@ -370,6 +640,25 @@ impl Procs for RealProcs {
         tokio::task::spawn_blocking(move || crate::containment::is_same_process(pid, &start))
             .await
             .unwrap_or(false)
+    }
+
+    async fn signal(&self, pid: i32, start: &str, kill: bool) {
+        let start = start.to_string();
+        let _ = tokio::task::spawn_blocking(move || {
+            // Never signal a reused pid.
+            if !crate::containment::is_same_process(pid, &start) {
+                return;
+            }
+            let sig = if kill {
+                nix::sys::signal::Signal::SIGKILL
+            } else {
+                nix::sys::signal::Signal::SIGTERM
+            };
+            if let Err(e) = nix::sys::signal::kill(nix::unistd::Pid::from_raw(pid), sig) {
+                tracing::warn!(pid, error = %e, "signalling the orchestrator failed");
+            }
+        })
+        .await;
     }
 }
 
@@ -405,13 +694,16 @@ impl Incidents for RealIncidents {
     }
 }
 
-pub type RealSupervisor = Supervisor<RealTmux, RealProcs, RealIncidents>;
+pub type RealSupervisor = Supervisor<RealTmux, RealProcs, RealIncidents, Arc<Wakes>>;
 
+#[allow(clippy::too_many_arguments)]
 pub fn real(
     home: PathBuf,
     launcher: String,
     cfg: &OrchestratorConfig,
     waiters: Arc<Waiters>,
+    handover: Arc<Handover>,
+    wakes: Arc<Wakes>,
     manager: AgentManager,
     emitter: Emitter,
 ) -> Arc<RealSupervisor> {
@@ -420,9 +712,11 @@ pub fn real(
         launcher,
         cfg,
         waiters,
+        handover,
         RealTmux,
         RealProcs,
         RealIncidents { manager, emitter },
+        wakes,
     ))
 }
 
@@ -453,10 +747,25 @@ mod tests {
     }
 
     #[derive(Default)]
-    struct FakeProcs(StdMutex<HashSet<i32>>);
+    struct FakeProcs {
+        alive: StdMutex<HashSet<i32>>,
+        /// `(pid, kill)` for every signal sent.
+        signals: StdMutex<Vec<(i32, bool)>>,
+    }
     impl Procs for Arc<FakeProcs> {
         async fn is_alive(&self, pid: i32, _start: &str) -> bool {
-            self.0.lock().unwrap().contains(&pid)
+            self.alive.lock().unwrap().contains(&pid)
+        }
+        async fn signal(&self, pid: i32, _start: &str, kill: bool) {
+            self.signals.lock().unwrap().push((pid, kill));
+        }
+    }
+
+    #[derive(Default)]
+    struct FakeWakes(StdMutex<Vec<String>>);
+    impl WakeSink for Arc<FakeWakes> {
+        async fn push(&self, wake: WakeReason) {
+            self.0.lock().unwrap().push(wake.text);
         }
     }
 
@@ -473,8 +782,10 @@ mod tests {
         tmux: Arc<FakeTmux>,
         procs: Arc<FakeProcs>,
         incidents: Arc<FakeIncidents>,
-        sup: Supervisor<Arc<FakeTmux>, Arc<FakeProcs>, Arc<FakeIncidents>>,
+        sup: Supervisor<Arc<FakeTmux>, Arc<FakeProcs>, Arc<FakeIncidents>, Arc<FakeWakes>>,
         waiters: Arc<Waiters>,
+        wakes: Arc<FakeWakes>,
+        handover: Arc<Handover>,
         t0: DateTime<Utc>,
     }
 
@@ -492,18 +803,27 @@ mod tests {
             let cfg = OrchestratorConfig {
                 relaunch_backoff: vec![Duration::from_secs(30), Duration::from_secs(120)],
                 stable_after: Duration::from_secs(600),
+                note_tokens: 150,
+                plan_tokens: 210,
+                handover_tokens: 255,
+                handover_deadline: Duration::from_secs(1800),
+                max_uptime: Duration::from_secs(12 * 3600),
                 ..Default::default()
             };
             let t0 = DateTime::from_timestamp(1_800_000_000, 0).unwrap();
             let waiters = Waiters::new(t0);
+            let wakes = Arc::new(FakeWakes::default());
+            let handover = Arc::new(Handover::default());
             let sup = Supervisor::new(
                 dir.path().to_path_buf(),
                 "/x/launch".into(),
                 &cfg,
                 waiters.clone(),
+                handover.clone(),
                 tmux.clone(),
                 procs.clone(),
                 incidents.clone(),
+                wakes.clone(),
             );
             Rig {
                 dir,
@@ -512,6 +832,8 @@ mod tests {
                 incidents,
                 sup,
                 waiters,
+                wakes,
+                handover,
                 t0,
             }
         }
@@ -522,6 +844,28 @@ mod tests {
                 format!("{pid} Mon Sep 29 10:00:00 2026 {launched_at}\n"),
             )
             .unwrap();
+        }
+
+        /// A live session (pid 10, launched at t0) whose statusline says `tokens`.
+        fn set_context(&self, tokens: u64) {
+            std::fs::write(self.dir.path().join("orchestrator.session"), "sess-1\n").unwrap();
+            std::fs::create_dir_all(self.dir.path().join("context")).unwrap();
+            std::fs::write(self.dir.path().join("context/sess-1"), tokens.to_string()).unwrap();
+        }
+
+        fn live(&self) {
+            self.write_pid(10, self.t0.timestamp());
+            self.procs.alive.lock().unwrap().insert(10);
+            // The waiter incident isn't under test here.
+            std::mem::forget(self.waiters.opened());
+        }
+
+        fn wakes(&self) -> Vec<String> {
+            self.wakes.0.lock().unwrap().clone()
+        }
+
+        fn signals(&self) -> Vec<(i32, bool)> {
+            self.procs.signals.lock().unwrap().clone()
         }
 
         fn typed(&self) -> usize {
@@ -574,7 +918,7 @@ mod tests {
     async fn alive_session_is_left_alone() {
         let r = Rig::new();
         r.write_pid(10, r.t0.timestamp());
-        r.procs.0.lock().unwrap().insert(10);
+        r.procs.alive.lock().unwrap().insert(10);
         r.relaunch(0).await;
         assert_eq!(r.typed(), 0);
         assert!(r.incidents().is_empty());
@@ -584,7 +928,7 @@ mod tests {
     async fn live_session_without_a_waiter_is_one_incident_closed_by_a_request() {
         let r = Rig::new();
         r.write_pid(10, r.t0.timestamp());
-        r.procs.0.lock().unwrap().insert(10);
+        r.procs.alive.lock().unwrap().insert(10);
         // Within the grace of the launch: nothing yet.
         r.tick(60).await;
         assert!(r.incidents().is_empty());
@@ -648,10 +992,10 @@ mod tests {
 
         // A live pid (the human launched it) clears the give-up.
         r.write_pid(11, r.t0.timestamp() + 30_000);
-        r.procs.0.lock().unwrap().insert(11);
+        r.procs.alive.lock().unwrap().insert(11);
         r.tick(30_001).await;
         r.tick(30_700).await;
-        r.procs.0.lock().unwrap().clear();
+        r.procs.alive.lock().unwrap().clear();
         r.relaunch(31_000).await;
         assert_eq!(r.typed(), 4);
     }
@@ -664,11 +1008,11 @@ mod tests {
         assert_eq!(r.typed(), 1);
         // The relaunched session (pid 11, launched at t=15) comes up and stays up.
         r.write_pid(11, r.t0.timestamp() + 15);
-        r.procs.0.lock().unwrap().insert(11);
+        r.procs.alive.lock().unwrap().insert(11);
         r.tick(20).await;
         r.tick(15 + 601).await;
         // It dies: the next relaunch is the first again, at once, not after backoff[0].
-        r.procs.0.lock().unwrap().clear();
+        r.procs.alive.lock().unwrap().clear();
         r.relaunch(700).await;
         assert_eq!(r.typed(), 2);
     }
@@ -679,9 +1023,9 @@ mod tests {
         r.write_pid(10, r.t0.timestamp() - 1000);
         r.relaunch(0).await; // attempt 1 at t=10
         r.write_pid(11, r.t0.timestamp() + 15);
-        r.procs.0.lock().unwrap().insert(11);
+        r.procs.alive.lock().unwrap().insert(11);
         r.tick(20).await;
-        r.procs.0.lock().unwrap().clear();
+        r.procs.alive.lock().unwrap().clear();
         // Died young: attempt 2 still waits backoff[0] after t=10.
         r.tick(25).await;
         assert_eq!(r.typed(), 1);
@@ -723,5 +1067,170 @@ mod tests {
         *r.tmux.panes.lock().unwrap() = vec![("%1".into(), "orchestrator".into())];
         r.relaunch(40).await;
         assert_eq!(r.typed(), 1);
+    }
+
+    #[tokio::test]
+    async fn each_context_threshold_fires_once_and_resets_on_compact() {
+        let r = Rig::new();
+        r.live();
+        r.set_context(100);
+        r.tick(10).await;
+        assert!(r.wakes().is_empty());
+        r.set_context(160);
+        r.tick(20).await;
+        r.tick(30).await;
+        assert_eq!(r.wakes(), vec!["context at 0K of the window"]);
+        r.set_context(220);
+        r.tick(40).await;
+        r.tick(50).await;
+        assert_eq!(r.wakes().len(), 2);
+        assert!(r.wakes()[1].contains("plan a handover"));
+        r.set_context(260);
+        r.tick(60).await;
+        r.tick(70).await;
+        assert_eq!(r.wakes().len(), 3);
+        assert!(r.wakes()[2].starts_with("hand over now; the session is stopped at"));
+        // /compact: a lower reading resets the notes, and they fire again on the next climb.
+        r.set_context(50);
+        r.tick(80).await;
+        assert_eq!(r.wakes().len(), 3);
+        r.set_context(160);
+        r.tick(90).await;
+        assert_eq!(r.wakes().len(), 4);
+    }
+
+    #[tokio::test]
+    async fn a_session_already_past_the_notes_gets_them_on_the_first_tick() {
+        let r = Rig::new();
+        r.live();
+        r.set_context(220);
+        r.tick(10).await;
+        assert_eq!(r.wakes().len(), 2);
+    }
+
+    #[tokio::test]
+    async fn a_new_session_id_starts_its_own_notes() {
+        let r = Rig::new();
+        r.live();
+        r.set_context(160);
+        r.tick(10).await;
+        std::fs::write(r.dir.path().join("orchestrator.session"), "sess-2\n").unwrap();
+        std::fs::write(r.dir.path().join("context/sess-2"), "160").unwrap();
+        r.tick(20).await;
+        assert_eq!(
+            r.wakes().len(),
+            2,
+            "/clear gave a new id, so the note repeats"
+        );
+    }
+
+    #[tokio::test]
+    async fn context_falls_back_to_the_transcript_when_the_file_is_missing() {
+        let r = Rig::new();
+        r.live();
+        let tp = r.dir.path().join("t.jsonl");
+        std::fs::write(
+            &tp,
+            "{\"type\":\"assistant\",\"message\":{\"usage\":{\"input_tokens\":1,\"cache_creation_input_tokens\":9,\"cache_read_input_tokens\":150}}}\n\
+             {\"type\":\"user\"}\n",
+        )
+        .unwrap();
+        std::fs::write(
+            r.dir.path().join("orchestrator.session"),
+            format!("sess-1 {}\n", tp.display()),
+        )
+        .unwrap();
+        r.tick(10).await;
+        assert_eq!(r.wakes().len(), 1);
+    }
+
+    #[tokio::test]
+    async fn uptime_notes_once_and_starts_the_deadline() {
+        let r = Rig::new();
+        r.live();
+        r.tick(12 * 3600 - 10).await;
+        assert!(r.wakes().is_empty());
+        r.tick(12 * 3600 + 10).await;
+        r.tick(12 * 3600 + 20).await;
+        assert_eq!(r.wakes().len(), 1);
+        assert!(r.wakes()[0].starts_with("uptime 12h"));
+        assert!(r.signals().is_empty());
+        // The deadline follows: 30 minutes after the note.
+        r.tick(12 * 3600 + 10 + 1800).await;
+        assert_eq!(r.signals(), vec![(10, false)]);
+    }
+
+    #[tokio::test]
+    async fn the_deadline_stops_the_session_and_the_relaunch_is_free() {
+        let r = Rig::new();
+        r.live();
+        r.set_context(260);
+        r.tick(10).await; // the "now" note, the deadline at t=1810
+        r.tick(1800).await;
+        assert!(r.signals().is_empty());
+        r.tick(1810).await;
+        assert_eq!(r.signals(), vec![(10, false)]);
+        // Still alive 15 s later: SIGKILL, once.
+        r.tick(1820).await;
+        assert_eq!(r.signals().len(), 1);
+        r.tick(1825).await;
+        r.tick(1835).await;
+        assert_eq!(r.signals(), vec![(10, false), (10, true)]);
+        // It dies; the relaunch goes at once with no crash backoff, and says the stop was forced.
+        r.procs.alive.lock().unwrap().clear();
+        r.relaunch(1840).await;
+        assert_eq!(r.typed(), 1);
+        assert!(
+            r.incidents()
+                .iter()
+                .any(|t| t.contains("no `bridle handover done`"))
+        );
+        assert!(!r.incidents().iter().any(|t| t.contains("not running")));
+        assert_eq!(
+            r.sup.state.lock().await.attempts,
+            0,
+            "not counted as a crash"
+        );
+    }
+
+    #[tokio::test]
+    async fn handover_done_stops_at_once_and_relaunches_uncounted() {
+        let r = Rig::new();
+        r.live();
+        r.tick(10).await;
+        assert!(r.signals().is_empty());
+        r.handover.mark(r.t0 + chrono::Duration::seconds(20));
+        r.tick(20).await;
+        assert_eq!(r.signals(), vec![(10, false)]);
+        r.procs.alive.lock().unwrap().clear();
+        r.relaunch(30).await;
+        assert_eq!(r.typed(), 1);
+        assert!(r.incidents().is_empty(), "a handover is not an incident");
+        let st = r.sup.state.lock().await;
+        assert_eq!((st.attempts, st.last_attempt), (0, None));
+    }
+
+    #[tokio::test]
+    async fn a_marker_from_before_the_launch_does_not_stop_the_new_session() {
+        let r = Rig::new();
+        r.handover.mark(r.t0 - chrono::Duration::seconds(5));
+        r.live();
+        r.tick(10).await;
+        assert!(r.signals().is_empty());
+    }
+
+    #[tokio::test]
+    async fn only_the_first_deliberate_relaunch_is_free() {
+        let r = Rig::new();
+        r.live();
+        r.handover.mark(r.t0 + chrono::Duration::seconds(20));
+        r.tick(20).await;
+        r.procs.alive.lock().unwrap().clear();
+        r.relaunch(30).await; // free
+        assert_eq!(r.typed(), 1);
+        // Never confirmed and dead again: this one counts as a crash.
+        r.relaunch(100).await;
+        assert_eq!(r.typed(), 2);
+        assert_eq!(r.sup.state.lock().await.attempts, 1);
     }
 }

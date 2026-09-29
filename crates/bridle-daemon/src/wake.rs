@@ -338,6 +338,13 @@ impl Wakes {
         });
     }
 
+    /// Queues a wake the supervisor raised (a context or uptime note); it is delivered like the
+    /// rest, and never lost to a waiter that isn't there.
+    pub async fn push(&self, wake: WakeReason) {
+        self.state.lock().await.pending.push(wake);
+        self.notify.notify_one();
+    }
+
     /// Takes every queued wake and marks them delivered.
     pub async fn take(&self) -> Vec<WakeReason> {
         let mut st = self.state.lock().await;

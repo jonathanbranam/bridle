@@ -62,6 +62,7 @@ bridle token revoke <name>                  human only, external tokens only (an
 bridle statusline                           Claude Code statusLine command; local only, no daemon call
 bridle orchestrator note-session            the orchestrator launcher's SessionStart hook: writes $BRIDLE_HOME/orchestrator.session
                                              from the hook JSON on stdin; local only; never fails
+bridle handover done                       the orchestrator's state is written: the daemon stops and relaunches its session (marker only); human and external:orchestrator only
 bridle handover write --file <path>|-      record the orchestrator's handover note (human and external:orchestrator only); prints its id
 bridle handover list | show <id>           the notes, newest first · one note
 bridle wait-for-wake                        the orchestrator's background watcher: waits for a wake condition, prints it and exits 0 (`nothing` after 5 min); external:orchestrator only
@@ -470,13 +471,15 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
 - **`orchestrator note-session`** is the SessionStart hook `scripts/claude-orchestrator` registers for
   its own session ([[orchestrator-supervision]]). It reads the hook JSON on stdin and writes
   `$BRIDLE_HOME/orchestrator.session` as `<session id> <transcript path>` (`/clear` gives the same
-  process a new id). Local, silent, never fails; it also keeps `~/.bridle-orchestrator-session`
-  current for `scripts/context-check.sh` until the daemon reads the context itself.
+  process a new id). Local, silent, never fails.
 - **`handover`** keeps the orchestrator's note as a record ([[orchestrator-supervision]] section 7):
   `write` reads a file or stdin (`-`), `list` shows id, time, author and first line, `show` the
   whole note. Latest wins; `bridle prime orchestrator` prints the newest under a heading with
   its age, and falls back to `docs/context/orchestrator-state.md` when there is no note (or no
-  daemon to ask).
+  daemon to ask). **`handover done`** is `POST /v1/orchestrator/handover`
+  ([[orchestrator-supervision]] section 6): the orchestrator runs it after writing its state, and
+  the daemon stops the session (SIGTERM, SIGKILL after 15 s) and relaunches it at once. It
+  stores nothing itself.
 - **`wait-for-wake`** is `GET /v1/orchestrator/wake` ([[orchestrator-supervision]] section 5),
   replacing `scripts/orchestrator-watch.sh`. It prints each wake as `<reason>: <text>` and its
   detail as JSON (`--json`: the list of wakes), exits 0, and prints `nothing` when the daemon's

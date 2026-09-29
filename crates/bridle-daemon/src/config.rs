@@ -949,6 +949,15 @@ pub struct OrchestratorConfig {
     pub stable_after: Duration,
     /// No `wait-for-wake` connected for this long while the session is up is an incident.
     pub waiter_grace: Duration,
+    /// Context tokens at which the orchestrator is told the context size, asked to plan a
+    /// handover, and told to hand over now (which starts the deadline).
+    pub note_tokens: u64,
+    pub plan_tokens: u64,
+    pub handover_tokens: u64,
+    /// After the "hand over now" or uptime message, the session is stopped this long after.
+    pub handover_deadline: Duration,
+    /// A session this old is asked to plan a handover; the deadline follows.
+    pub max_uptime: Duration,
 }
 
 impl Default for OrchestratorConfig {
@@ -963,6 +972,11 @@ impl Default for OrchestratorConfig {
             ],
             stable_after: Duration::from_secs(10 * 60),
             waiter_grace: Duration::from_secs(2 * 60),
+            note_tokens: 150_000,
+            plan_tokens: 210_000,
+            handover_tokens: 255_000,
+            handover_deadline: Duration::from_secs(30 * 60),
+            max_uptime: Duration::from_secs(12 * 60 * 60),
         }
     }
 }
@@ -994,6 +1008,34 @@ impl OrchestratorConfig {
         }
         if let Some(s) = raw.waiter_grace {
             self.waiter_grace = parse_duration(&s)?;
+        }
+        if let Some(v) = raw.note_tokens {
+            self.note_tokens = v;
+        }
+        if let Some(v) = raw.plan_tokens {
+            self.plan_tokens = v;
+        }
+        if let Some(v) = raw.handover_tokens {
+            self.handover_tokens = v;
+        }
+        if let Some(s) = raw.handover_deadline {
+            self.handover_deadline = parse_duration(&s)?;
+        }
+        if let Some(s) = raw.max_uptime {
+            self.max_uptime = parse_duration(&s)?;
+        }
+        if self.note_tokens == 0
+            || self.note_tokens > self.plan_tokens
+            || self.plan_tokens > self.handover_tokens
+        {
+            return Err(ConfigError::BadOrchestrator(
+                "need 0 < note_tokens <= plan_tokens <= handover_tokens".into(),
+            ));
+        }
+        if self.handover_deadline.is_zero() || self.max_uptime.is_zero() {
+            return Err(ConfigError::BadOrchestrator(
+                "handover_deadline and max_uptime must be positive".into(),
+            ));
         }
         Ok(self)
     }
@@ -1685,6 +1727,16 @@ struct RawOrchestrator {
     stable_after: Option<String>,
     #[serde(default)]
     waiter_grace: Option<String>,
+    #[serde(default)]
+    note_tokens: Option<u64>,
+    #[serde(default)]
+    plan_tokens: Option<u64>,
+    #[serde(default)]
+    handover_tokens: Option<u64>,
+    #[serde(default)]
+    handover_deadline: Option<String>,
+    #[serde(default)]
+    max_uptime: Option<String>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -2594,6 +2646,21 @@ mod tests {
         assert!(Config::parse("[orchestrator]\nrelaunch_backoff = [\"5\"]\n").is_err());
         assert!(Config::parse("[orchestrator]\nlauncher = \" \"\n").is_err());
         assert!(Config::parse("[orchestrator]\npane = \"%3\"\n").is_err());
+        assert_eq!(d.plan_tokens, 210_000);
+        assert_eq!(d.handover_deadline, Duration::from_secs(1800));
+        let o = Config::parse(
+            "[orchestrator]\nnote_tokens = 1\nplan_tokens = 2\nhandover_tokens = 3\n\
+             handover_deadline = \"5m\"\nmax_uptime = \"1h\"\n",
+        )
+        .unwrap()
+        .orchestrator;
+        assert_eq!((o.note_tokens, o.plan_tokens, o.handover_tokens), (1, 2, 3));
+        assert_eq!(o.max_uptime, Duration::from_secs(3600));
+        // Out of order, zero, or a zero duration.
+        assert!(Config::parse("[orchestrator]\nplan_tokens = 100\n").is_err());
+        assert!(Config::parse("[orchestrator]\nnote_tokens = 0\n").is_err());
+        assert!(Config::parse("[orchestrator]\nhandover_tokens = 200000\n").is_err());
+        assert!(Config::parse("[orchestrator]\nmax_uptime = \"0s\"\n").is_err());
     }
 
     #[test]

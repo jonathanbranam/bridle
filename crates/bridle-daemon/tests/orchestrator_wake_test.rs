@@ -45,3 +45,27 @@ async fn only_the_orchestrator_may_wait_and_a_message_wakes_it() {
     assert_eq!(got.wakes[0].reason, "message");
     assert_eq!(got.wakes[0].detail["body"], "plan is ready");
 }
+
+#[tokio::test]
+async fn handover_done_is_for_the_human_and_the_orchestrator() {
+    let (daemon, _tmp) = support::start_daemon(None).await;
+    let anon = Client::new(daemon.running.url.clone(), None);
+    let err = anon.handover_done().await.expect_err("no token");
+    assert!(
+        matches!(err, ClientError::Api { status: 401, .. }),
+        "got {err:?}"
+    );
+    let err = daemon
+        .external_client("other")
+        .await
+        .handover_done()
+        .await
+        .expect_err("forbidden");
+    assert!(
+        matches!(err, ClientError::Api { status: 403, .. }),
+        "got {err:?}"
+    );
+    daemon.client.handover_done().await.expect("human");
+    let orch = daemon.external_client("orchestrator").await;
+    orch.handover_done().await.expect("orchestrator");
+}

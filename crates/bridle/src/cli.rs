@@ -1165,6 +1165,10 @@ pub enum HandoverAction {
         #[arg(long)]
         file: PathBuf,
     },
+    /// Say the state is written: the daemon stops this session and relaunches the orchestrator
+    /// at once (orchestrator-supervision.md, section 6). Only the human and
+    /// `external:orchestrator`. The marker only; `write` records the note.
+    Done,
     /// List notes, newest first.
     List,
     /// Print one note.
@@ -2064,6 +2068,12 @@ mod tests {
         ));
         assert!(parse(&["handover", "show", "h-0001"]).is_ok());
         assert!(parse(&["handover", "list"]).is_ok());
+        assert!(matches!(
+            parse(&["handover", "done"]).unwrap().command,
+            Command::Handover(HandoverArgs {
+                action: HandoverAction::Done
+            })
+        ));
     }
 
     #[test]

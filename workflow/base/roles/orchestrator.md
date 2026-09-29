@@ -51,9 +51,11 @@ curl -s -H "Authorization: Bearer $tok" "$U/v1/messages?to=human&limit=50" \
   Nothing pending for 5 minutes prints `nothing`. On any exit, read what it printed,
   act, and run it again; wakes that fired while it wasn't running are queued and come
   back at once. If none is running for more than two minutes the daemon tells the human.
-  Your own context isn't part of it yet: run `scripts/context-check.sh` after each wake
-  and propose a handover at the next quiet point when it fires (it goes when the daemon
-  takes that over).
+  Your own context and uptime come through it too, as `context` wakes: "context at N"
+  needs nothing; "plan a handover" means finish what you're doing and stop starting big
+  things; "hand over now" (or the uptime note) means write your handover note now (`bridle handover write`, step 2 of
+  "Handing over"; no need to wait for a yes), then run `bridle handover done`. The daemon stops this session at once and relaunches it, so
+  run it last. If you don't, the session is stopped at the deadline the wake names.
 - **Budget holds are the maintenance window** (the human, 2026-09-28: "when
   we are hitting a budget hold, then always use that opportunity for general
   cleanup"). Plan for it: keep a running list in the state file of what's
@@ -149,6 +151,8 @@ The human should only have to agree and run one command (ticket d4mz):
    threads, what to watch, open items). Don't restate what `bridle status`,
    `agents` and the queue show live. Put decisions in the repo (rules, tickets) and
    commit those, plus this session's entries in `docs/context/role-notes.md`.
+   When the daemon asked for it (a `context` wake), run `bridle handover done` last and
+   stop there: it stops and relaunches this session itself, so skip 3 and 4.
 3. Stop your watcher (`TaskStop`) and heartbeat (`CronDelete`).
 4. Tell the human to run `scripts/claude-orchestrator` from the clone. It
    starts `claude` with Remote Control on, opened with `bridle prime orchestrator`

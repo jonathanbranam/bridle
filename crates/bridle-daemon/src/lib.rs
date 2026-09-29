@@ -280,6 +280,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         config.branches.integration.clone(),
     );
     let waiters = wake::Waiters::new(Utc::now());
+    let handover: std::sync::Arc<orchestrator::Handover> = Default::default();
     let ci = ci::CiWatcher::new(
         config.ci.github,
         config.branches.integration.clone(),
@@ -316,6 +317,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         ci: ci.clone(),
         wakes: wakes.clone(),
         waiters: waiters.clone(),
+        handover: handover.clone(),
         tasks: tasks.clone(),
         integration: config.branches.integration.clone(),
         ports: config.ports.clone(),
@@ -430,6 +432,8 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
             orchestrator::shell_word(&launcher),
             &config.orchestrator,
             waiters.clone(),
+            handover.clone(),
+            wakes.clone(),
             manager.clone(),
             emitter.clone(),
         );

@@ -1699,7 +1699,22 @@ async fn wait_for_wake(cli: &Cli) -> Result<(), CliError> {
     Ok(())
 }
 
-/// `bridle handover write|list|show`.
+/// `bridle handover done`: the marker only; the daemon stops and relaunches the session.
+async fn handover_done(cli: &Cli) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let done = client.handover_done().await?;
+    if cli.json {
+        println!(
+            "{}",
+            serde_json::to_string(&done).map_err(anyhow::Error::from)?
+        );
+    } else {
+        println!("handover marked done; the session will be relaunched shortly");
+    }
+    Ok(())
+}
+
+/// `bridle handover write|done|list|show`.
 async fn handover(cli: &Cli, args: &HandoverArgs) -> Result<(), CliError> {
     match &args.action {
         HandoverAction::Write { file } => {
@@ -1716,6 +1731,7 @@ async fn handover(cli: &Cli, args: &HandoverArgs) -> Result<(), CliError> {
                 println!("{}", h.id);
             }
         }
+        HandoverAction::Done => handover_done(cli).await?,
         HandoverAction::List => {
             let list = client_for_read(cli).await?.list_handovers().await?;
             if cli.json {

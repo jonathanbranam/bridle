@@ -13,14 +13,15 @@ use thiserror::Error;
 use crate::types::{
     AddQueueTierRequest, Agent, AllocPortRequest, AnswerQuestionRequest, ApiErrorResponse,
     AskQuestionRequest, BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, Conflict,
-    DoneTaskRequest, DropTaskRequest, Edge, EditTaskRequest, Event, EventQuery, Handover, Health,
-    ImpactCheckRequest, ImpactReport, InterruptRequest, InterruptResponse, LandRequest, LandResult,
-    MaxWorkersRequest, Message, MessageQuery, NewEdgeRequest, NewTaskRequest, NoteTaskRequest,
-    OpenQuestion, PortAllocation, ProbeRequest, ProbeResult, Queue, RemoveEdgeQuery, RemoveQuery,
-    RenewRequest, ResolveConflictRequest, ResumeRequest, SendRequest, SetImpactRequest,
-    SetQueueRequest, SetSummaryRequest, SpawnRequest, Status, StatusLineReport, StopRequest, Task,
-    TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
-    UsageBreakdown, UsageBreakdownQuery, WakeResponse, WriteHandoverRequest,
+    DoneTaskRequest, DropTaskRequest, Edge, EditTaskRequest, Event, EventQuery, Handover,
+    HandoverDone, Health, ImpactCheckRequest, ImpactReport, InterruptRequest, InterruptResponse,
+    LandRequest, LandResult, MaxWorkersRequest, Message, MessageQuery, NewEdgeRequest,
+    NewTaskRequest, NoteTaskRequest, OpenQuestion, PortAllocation, ProbeRequest, ProbeResult,
+    Queue, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, ResumeRequest,
+    SendRequest, SetImpactRequest, SetQueueRequest, SetSummaryRequest, SpawnRequest, Status,
+    StatusLineReport, StopRequest, Task, TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo,
+    TranscriptLine, TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery, WakeResponse,
+    WriteHandoverRequest,
 };
 
 #[derive(Debug, Error)]
@@ -377,6 +378,12 @@ impl Client {
     /// are up, answering empty). `external:orchestrator` only.
     pub async fn orchestrator_wake(&self) -> Result<WakeResponse, ClientError> {
         self.get_json(&["v1", "orchestrator", "wake"]).await
+    }
+
+    /// `POST /v1/orchestrator/handover`: the orchestrator has written its state; the daemon
+    /// stops the session and relaunches it. Human and `external:orchestrator` only.
+    pub async fn handover_done(&self) -> Result<HandoverDone, ClientError> {
+        self.post_empty(&["v1", "orchestrator", "handover"]).await
     }
 
     pub async fn budget(&self) -> Result<BudgetStatus, ClientError> {

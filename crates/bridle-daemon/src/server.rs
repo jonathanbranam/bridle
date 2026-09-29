@@ -54,6 +54,7 @@ pub struct AppState {
     pub ci: crate::ci::CiWatcher,
     pub wakes: std::sync::Arc<crate::wake::Wakes>,
     pub waiters: std::sync::Arc<crate::wake::Waiters>,
+    pub handover: std::sync::Arc<crate::orchestrator::Handover>,
     pub tasks: TaskManager,
     pub ports: crate::config::PortsConfig,
     /// `[branches] integration`, the branch `probe` merges against.
@@ -81,6 +82,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/events", get(list_events))
         .route("/v1/events/stream", get(events_stream))
         .route("/v1/orchestrator/wake", get(orchestrator_wake))
+        .route("/v1/orchestrator/handover", post(orchestrator_handover))
         .route("/v1/handovers", get(list_handovers).post(write_handover))
         .route("/v1/handovers/latest", get(latest_handover))
         .route("/v1/handovers/{id}", get(get_handover))
@@ -384,6 +386,22 @@ async fn orchestrator_wake(
         _ = shutdown.wait_for(|v| *v) => Vec::new(),
     };
     Ok(Json(WakeResponse { wakes }))
+}
+
+/// `bridle handover done`: only the marker (slice 3 stores the note). The supervisor stops and
+/// relaunches the session on its next tick.
+async fn orchestrator_handover(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+) -> Result<Json<bridle_api::types::HandoverDone>, ApiError> {
+    if principal.kind != PrincipalKind::Human && principal.id != crate::wake::ORCHESTRATOR {
+        return Err(ApiError::forbidden(
+            "only the human and external:orchestrator may mark a handover done",
+        ));
+    }
+    let marked_at = chrono::Utc::now();
+    state.handover.mark(marked_at);
+    Ok(Json(bridle_api::types::HandoverDone { marked_at }))
 }
 
 // ---------- health / status ----------
