@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- A reply from a principal in `[messages] answer_for_human` (default `external:orchestrator`) to a message addressed to the human now closes it: it leaves the unread count and `bridle inbox` and the TUI show "answered by <who>: <first line>"; `Message` gains `answered_by`, `answered_reply` and `answered_line` (ticket h5qd, br-b29c).
 - `bridle task done --branch` now removes the branch's agents, worktree and branch (refusing unless `--commit` is on the integration branch) and notes it on the task; `bridle status` lists stopped agents whose branch has merged (br-7d81).
 - New `bridle spec id [paths...] [--root DIR] [--ledger FILE] [--dry-run]`: writes stable ids (`{#r-xxxx}`, `{#s-xxxx}`) into spec headings that lack one, editing only those lines, unique across the spec set and never reused, via a committed `design/specs/.ids` ledger (br-41e1).
 - New `bridle spec export --format gherkin|json [--out DIR] [paths...]`: exports capability specs for test runners (gherkin: one `.feature` per capability, executable scenarios only, tagged with their `@tags` and scenario id; json: the whole AST with ids), refusing when the specs have errors; gherkin defaults to the gitignored `.bridle/cache/features/` (br-3058).
