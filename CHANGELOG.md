@@ -7,9 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-- Fixed: `bridle budget --help` (and any `bridle budget` parse) no longer panics on a clap debug assert for a non-existent `conflicts_with = "action"` attribute; added tests for `--help` on budget and related subcommands to catch this class of bug.
-- Fixed: help text for `bridle statusline`, `bridle prime`, `bridle task` and `bridle usage --by` now accurately reflect their supported roles and options.
-- Added: `bridle spec export --scenario ID` (repeatable; `s-` or `r-` ids) and `--task ID` (the scenarios in a task's declared impact; exits 1 if none declared) narrow the json/gherkin export to selected scenarios (br-b85c).
+### Added
+
+- `bridle spec export --scenario ID` (repeatable; `s-` or `r-` ids) and `--task ID` (the scenarios in a task's declared impact; exits 1 if none declared) narrow the json/gherkin export to selected scenarios (br-b85c).
 - Added: `bridle spec coverage [--root DIR] [--tests DIR ...] [--require-all] [--json]` lists executable scenarios whose id does not appear in test sources; scans text files under `--tests` directories (default `tests` and `test` if present) for scenario ids; exits 1 with `--require-all` if any unbound (br-b1e2).
 - Added: typescript pack's vitest adapter, `workflow/packs/typescript/adapters/vitest-bridle/`: `registerBridleSpecs({ steps })` registers executable scenarios from `bridle spec export --format json` as vitest tests with a given/when/then step registry (br-a54d).
 - Added: python pack pytest plugin `workflow/packs/python/adapters/bridle_specs.py`: registers pytest-bdd scenarios from `bridle spec export --format json` (ids in test names, tags as markers, examples parametrized, `--bridle-spec`/`--bridle-scenario` selection), replacing `spec-to-feature.py` + `run-specs.py` (br-3b72).
@@ -97,6 +97,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `bridle budget --help` (and any `bridle budget` parse) no longer panics on a clap debug assert for a non-existent `conflicts_with = "action"` attribute; added tests for `--help` on budget and related subcommands to catch this class of bug.
+- Help text for `bridle statusline`, `bridle prime`, `bridle task` and `bridle usage --by` now accurately reflect their supported roles and options.
 - `bridle land` no longer leaves a worktree that has the integration branch checked out (the clone) showing the new tip as staged changes: it fast-forwards there (`merge --ff-only`) instead of `update-ref`, and refuses if that worktree has uncommitted changes (br-land).
 - After a budget pause the governor resumes the manager and PM along with workers; `max_workers` limits workers only (ticket k7nr, br-0a50; code landed with y2eb).
 - A resumed agent whose Claude Code session is gone no longer dies on its first turn on every resume; the daemon retries once on a fresh session in the same worktree, and `agent.exited` carries the claude `stderr_tail` (ticket p4ks, br-3ec1).
