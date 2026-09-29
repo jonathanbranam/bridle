@@ -599,3 +599,4 @@
 {"actor":"human","at":"2026-09-29T17:59:36.068Z","from":"","task":"br-5c6c","to":"open"}
 {"actor":"agent:pm-1","at":"2026-09-29T17:59:38.912631Z","from":"open","task":"br-5c6c","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-09-29T17:59:38.941926Z","queue":"reprioritized"}
+{"actor":"agent:manager-2","at":"2026-09-29T18:01:24.200628Z","from":"planned","task":"br-a424","to":"integrated"}
