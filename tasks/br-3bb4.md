@@ -4,7 +4,8 @@ title = "Manager learns of new tasks without a PM: wake on task.created or poll 
 kind = "bug"
 state = "planned"
 created_at = "2026-09-29T04:34:59.147Z"
-updated_at = "2026-09-29T04:35:08.445214Z"
+updated_at = "2026-09-29T04:53:36.452892Z"
+summary = "On task.created with no running product-manager, AgentManager::note_task_filed (supervisor.rs, called from server.rs new_task) sends running managers a system note listing tasks filed and the open count; first message is immediate, later ones inside 60s coalesce into one delayed flush. Manager role prompt now says to run bridle queue and bridle task list --state open when idle or woken. Docs: coordination.md 'Waking the manager'. Tests: tests/task_wake_test.rs. Coalescing state is in-memory, not persisted."
 +++
 
 Problem: a project with no product-manager doesn't learn of tasks the human files. track-web's manager sat idle with five open tasks until told (open = not yet planned, so they never reach the queue; the manager is the one who should notice).
