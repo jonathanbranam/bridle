@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- With no product manager running, a newly filed task now sends the running manager a `system` note ("task <id> filed: <title>; open tasks: N. Plan it or queue it."), at most once a minute; the manager role prompt says to run `bridle queue` and `bridle task list --state open` when idle or woken (br-3bb4).
 - Fixed: `bridle sync` no longer creates an empty `.claude/settings.json` when there are no hooks to write (br-082f).
 - A reply from a principal in `[messages] answer_for_human` (default `external:orchestrator`) to a message addressed to the human now closes it: it leaves the unread count and `bridle inbox` and the TUI show "answered by <who>: <first line>"; `Message` gains `answered_by`, `answered_reply` and `answered_line` (ticket h5qd, br-b29c).
 - `bridle task done --branch` now removes the branch's agents, worktree and branch (refusing unless `--commit` is on the integration branch) and notes it on the task; `bridle status` lists stopped agents whose branch has merged (br-7d81).
