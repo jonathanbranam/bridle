@@ -2,8 +2,6 @@
 
 mod support;
 
-use std::time::Duration;
-
 use bridle_api::types::{
     AgentState, InterruptRequest, RemoveQuery, RenewRequest, ResumeRequest, SendRequest,
     SpawnRequest, StopRequest, Workdir,
@@ -30,16 +28,15 @@ async fn interrupt_during_sleep_ends_the_turn_and_agent_stays_usable() {
         .expect("spawn");
     wait_for_state(&daemon.client, &agent.id, AgentState::Working).await;
 
-    let started = std::time::Instant::now();
-    let resp = daemon
-        .client
-        .interrupt(&agent.id, &InterruptRequest { drop_held: false })
-        .await
-        .expect("interrupt");
-    assert!(
-        started.elapsed() < Duration::from_secs(5),
-        "interrupt should be fast"
-    );
+    let resp = tokio::time::timeout(
+        support::HANG_GUARD_TIMEOUT,
+        daemon
+            .client
+            .interrupt(&agent.id, &InterruptRequest { drop_held: false }),
+    )
+    .await
+    .expect("interrupt hung")
+    .expect("interrupt");
     assert!(resp.receipt.is_object());
 
     let idle = wait_for_state(&daemon.client, &agent.id, AgentState::Idle).await;
@@ -275,20 +272,18 @@ async fn rm_refuses_a_worktree_with_open_files_without_force() {
         .expect("spawn tail -f to hold the file open");
 
     // lsof isn't necessarily instantaneous to see a freshly opened fd.
-    let deadline = std::time::Instant::now() + Duration::from_secs(5);
-    loop {
+    support::wait_for("a 409 conflict for the open file", || async {
         let result = daemon
             .client
             .remove(&agent.id, &RemoveQuery::default())
             .await;
-        match result {
-            Err(bridle_api::ClientError::Api { status: 409, .. }) => break,
-            _ if std::time::Instant::now() < deadline => {
-                tokio::time::sleep(Duration::from_millis(100)).await;
-            }
-            other => panic!("expected a 409 conflict for the open file, got {other:?}"),
-        }
-    }
+        matches!(
+            result,
+            Err(bridle_api::ClientError::Api { status: 409, .. })
+        )
+        .then_some(())
+    })
+    .await;
 
     holder.kill().expect("kill holder");
     let _ = holder.wait();

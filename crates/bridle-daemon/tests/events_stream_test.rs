@@ -175,7 +175,7 @@ async fn events_stream_with_no_cursor_skips_backfill_and_starts_at_the_tail() {
             tokio::time::sleep(std::time::Duration::from_millis(250)).await;
         }
     });
-    let first = tokio::time::timeout(std::time::Duration::from_secs(15), stream.next())
+    let first = tokio::time::timeout(support::HANG_GUARD_TIMEOUT, stream.next())
         .await
         .expect("timed out")
         .expect("stream ended")
