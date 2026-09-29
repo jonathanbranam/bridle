@@ -505,7 +505,10 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   spike 05 confirmed, not the `hookSpecificOutput` wrapper — on the first one with no
   thread entry (note, question or answer) from itself at or after `claimed_at`; naming
   the task and telling the agent to `bridle release` it or leave a `bridle task note`
-  first. Any error of bridle's own (unparseable stdin, no daemon reachable, an API
+  first. It also blocks when the tree looks finished (clean, commits ahead of local `main`/`master`)
+  and a claimed task has no summary or no thread entry from itself starting `done:`, telling
+  the agent to *run* `bridle task summary` and `bridle send ... done:` (workers were printing
+  them). Any error of bridle's own (unparseable stdin, no daemon reachable, an API
   error) allows rather than blocks: a bug in bridle's own tooling must never trap an
   agent from stopping.
 - **`prime orchestrator`** prints a fresh orchestrator session's opening context in one
