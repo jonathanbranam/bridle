@@ -190,10 +190,13 @@ its mode, so a 0600 token file stays 0600; parent directories are created. A mis
 skipped with a logged warning and never fails the spawn. Absolute paths and paths containing
 `..` are rejected when the config is parsed. Files only: no directories or globs.
 
-`[worktrees] layout = "default"|"root"` and `root = "/path/{task}"` choose where a new worktree
+`[worktrees] layout = "default"|"root"|"paired"` and `root = "/path/{task}"` choose where a new worktree
 is created: `default` is `<workspace>/wt/<agent>`; `root` is an absolute template with
 `{task}` (claimed task id, else agent name), `{agent}` and `{project}`, and needs `{task}` or
 `{agent}`. Invalid roots are config errors; a resolved path inside the clone is refused at spawn.
+`paired` takes the same `root` (the project's worktree goes at `<root>/<project>`) plus one or more
+`[worktrees.pair.<name>]` tables (`path`, absolute; `mode = "worktree"|"symlink"`, default
+`worktree`) for sibling repos placed at `<root>/<name>`.
 See [[../worktrees-and-ports|Worktrees and ports]].
 
 ## Ports
