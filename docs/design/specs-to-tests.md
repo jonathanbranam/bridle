@@ -35,7 +35,12 @@ comes from the committed generated file.
     null). `id` is null until `bridle spec id` assigns it. Fields may be added;
     a rename or removal bumps `version`.
 - **Adapters live in stack packs.** `python` ships a small pytest plugin that
-  gets scenarios from bridle and binds them to pytest-bdd steps. `typescript`
+  gets scenarios from bridle and binds them to pytest-bdd steps. The python one
+  is built: `workflow/packs/python/adapters/bridle_specs.py` (vendored by the
+  project, not synced; see its README). It registers one scenario per
+  executable scenario, named with its id, tags as markers, examples as
+  parametrization, selected by `--bridle-spec` / `--bridle-scenario`; a refused
+  export fails collection with the diagnostics. `typescript`
   ships a vitest equivalent, needed by track-web, harness, otters and file-db's
   TS side.
 - **Scenario ids in test results.** Results report by `s-b310`, which lets
