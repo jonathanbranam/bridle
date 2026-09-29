@@ -708,6 +708,10 @@ pub struct Config {
     /// `[worktrees] warm_target`: clone the clone's `target/` into each new worktree
     /// (macOS only; ticket b7cz). On by default.
     pub warm_target: bool,
+    /// `[worktrees] setup`: shell command run in each new worker worktree (e.g. an install step).
+    pub setup: Option<String>,
+    /// `[worktrees] setup_timeout_secs` (default 600).
+    pub setup_timeout: Duration,
     pub branches: BranchesConfig,
     pub ci: CiConfig,
     /// The prefix new task ids get (storage.md: `<prefix>-<4 hex chars>`,
@@ -745,6 +749,8 @@ impl Default for Config {
             context: ContextConfig::default(),
             commands: CommandsConfig::default(),
             warm_target: true,
+            setup: None,
+            setup_timeout: Duration::from_secs(10 * 60),
             branches: BranchesConfig::default(),
             ci: CiConfig::default(),
             task_prefix: None,
@@ -1003,10 +1009,14 @@ impl Config {
             config.commands = config.commands.merge(raw_commands);
         }
 
-        if let Some(w) = raw.worktrees
-            && let Some(v) = w.warm_target
-        {
-            config.warm_target = v;
+        if let Some(w) = raw.worktrees {
+            if let Some(v) = w.warm_target {
+                config.warm_target = v;
+            }
+            config.setup = w.setup.filter(|c| !c.trim().is_empty());
+            if let Some(secs) = w.setup_timeout_secs {
+                config.setup_timeout = Duration::from_secs(secs);
+            }
         }
 
         if let Some(t) = raw.tasks {
@@ -1174,6 +1184,10 @@ struct RawCommands {
 struct RawWorktrees {
     #[serde(default)]
     warm_target: Option<bool>,
+    #[serde(default)]
+    setup: Option<String>,
+    #[serde(default)]
+    setup_timeout_secs: Option<u64>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -2185,6 +2199,11 @@ mod tests {
         assert_eq!(cfg.commands.check, "just check");
         assert_eq!(cfg.commands.worker_check(), "just check-affected");
         assert!(!cfg.warm_target);
+        assert!(cfg.setup.is_none());
+        let cfg = Config::parse("[worktrees]\nsetup = \"npm ci\"\nsetup_timeout_secs = 5\n")
+            .expect("parse");
+        assert_eq!(cfg.setup.as_deref(), Some("npm ci"));
+        assert_eq!(cfg.setup_timeout, Duration::from_secs(5));
 
         let cfg = Config::parse("[commands]\ncheck = \"make check\"\n").expect("parse");
         assert_eq!(cfg.commands.check, "make check");

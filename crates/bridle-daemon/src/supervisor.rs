@@ -631,6 +631,15 @@ impl AgentManager {
                     worktree::warm_target(&self.0.workspace.repo, &path).await;
                 }
                 created_worktree = Some((path.clone(), branch.clone()));
+                if let Some(cmd) = &self.0.config.setup
+                    && let Err(e) =
+                        worktree::run_setup(&path, cmd, self.0.config.setup_timeout).await
+                {
+                    // Same cleanup as the later spawn-failure paths.
+                    let _ = worktree::remove(&self.0.workspace.repo, &path, true).await;
+                    let _ = worktree::delete_branch(&self.0.workspace.repo, &branch, true).await;
+                    return Err(e.into());
+                }
                 ("worktree", path.clone(), Some(path), Some(branch))
             }
             Workdir::Repo => ("repo", self.0.workspace.repo.clone(), None, None),

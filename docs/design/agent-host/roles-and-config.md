@@ -154,3 +154,14 @@ near-instant, no extra disk), so the first build is incremental. Elsewhere it do
 never fails a spawn (a missing `target/` or failed copy is a logged warning) and never writes to
 the clone's `target/`. Cargo fingerprints embed absolute paths, so some workspace crates still
 rebuild; dependencies hit.
+
+## Worktree setup command
+
+`[worktrees] setup = "<shell command>"` (optional, unset = nothing runs): after `git worktree
+add` and the `target/` warm-up, the daemon runs it with `sh -c` in each new worktree, for
+worktree roles only, never the main clone (e.g. `npm install --prefer-offline`, so a Node
+project's worker has `node_modules`). `setup_timeout_secs` (default 600) bounds it. The env is
+the daemon's minus every `BRIDLE_*` variable. On non-zero exit or timeout the spawn fails with
+an error naming the command, exit status and the last ~20 lines of output, and the worktree and
+branch are removed as for any other failed spawn. Duration is logged at info. It doesn't copy
+gitignored files (`.env`, `.mcp.json`); that's an open question (u8sm Q8).
