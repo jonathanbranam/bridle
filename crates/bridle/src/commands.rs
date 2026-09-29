@@ -2903,6 +2903,7 @@ fn spec(cli: &Cli, args: &SpecArgs) -> Result<(), CliError> {
         SpecAction::Export(args) => return spec_export(cli, args),
         SpecAction::Id(args) => return crate::specid::run(cli, args),
         SpecAction::Import(args) => return crate::spec_import::run(cli, args),
+        SpecAction::Coverage(args) => return crate::spec_coverage::run(cli, args),
     };
     let files = spec_inputs(&args.paths, args.root.as_deref())?;
 
