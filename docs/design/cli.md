@@ -66,6 +66,13 @@ bridle arch list [--invariants] [--root DIR]   lists architecture elements (id, 
                                              `design/architecture`); a missing or duplicate `a-` id
                                              is an error (diagnostics on stderr, exit 1); --json
                                              prints the elements with their text; local only
+bridle trace down|up <id>  [--goals DIR] [--arch DIR] [--specs DIR]   walks the trace links across
+                                             `design/goals`, `design/architecture` and `design/specs`:
+                                             `down` lists everything depending on the element, `up` what it
+                                             rests on, up to the goals (indented by distance; --json gives
+                                             rows with `depth`); an unknown id, an unknown link target or
+                                             any parse error is an error (exit 1); local only
+bridle trace orphans                         requirements with no `traces=` (a warning on stderr, exit 0)
 bridle explore check [paths...]              checks exploration findings frontmatter (default `design/explore`);
                                              diagnostics on stdout, exit 1 on any error; local only
 bridle explore new|conclude|abandon <id>     scaffolds `design/explore/<id>/findings.md` (status open;
@@ -467,7 +474,7 @@ bridle impact set|show|check bridle conflict list|resolve
 bridle spec check|id|export|coverage|import   `check`, `id`, `export`, `import openspec` are built (see Built)
 bridle rules show|propose                        `explain`/`diff --project-layer` are built (see Built)
 bridle goals propose            bridle arch propose   (`goals list` is built, see Built)
-bridle trace up|down|suspect|confirm|orphans|coverage
+bridle trace suspect|confirm|coverage   (`up`, `down`, `orphans` are built, see above)
 bridle explore new|conclude|adopt|abandon
 bridle usage --by project|kind|task|trend|compare
 ```

@@ -137,6 +137,8 @@ pub struct Goal {
     pub body: String,
     /// 1-based line of the heading.
     pub line: usize,
+    /// Short text hash for trace links (`trace::text_hash` of title and body).
+    pub hash: String,
 }
 
 /// What [`parse_goals`] found. Goals with errors are left out; a warning
@@ -313,6 +315,7 @@ pub fn parse_goals(file: &str, text: &str) -> Goals {
             firmness,
             priority,
             stance,
+            hash: crate::trace::text_hash(title, &body),
             body: body.trim().to_string(),
             line: h + 1,
         });

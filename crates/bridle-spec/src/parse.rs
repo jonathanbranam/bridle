@@ -73,6 +73,16 @@ pub(crate) fn is_id(s: &str, prefix: char) -> bool {
     it.next() == Some(prefix) && it.next() == Some('-') && is_hex(it.as_str())
 }
 
+/// An id as a link names it: a lowercase letter, `-`, then 2+ lowercase
+/// alphanumerics (`g-03` and `a-12cd` alike).
+pub(crate) fn is_link_id(s: &str) -> bool {
+    let mut it = s.chars();
+    it.next().is_some_and(|c| c.is_ascii_lowercase())
+        && it.next() == Some('-')
+        && it.as_str().len() >= 2
+        && it.all(|c| c.is_ascii_lowercase() || c.is_ascii_digit())
+}
+
 fn is_hex(s: &str) -> bool {
     s.len() >= 4 && s.chars().all(|c| matches!(c, '0'..='9' | 'a'..='f'))
 }
@@ -320,7 +330,7 @@ impl<'a> Parser<'a> {
             {
                 for item in list.split(',') {
                     match item.split_once('@') {
-                        Some((t, h)) if t.len() > 2 && is_id(t, t.chars().next().unwrap_or('?')) && t.chars().next().is_some_and(|c| c.is_ascii_lowercase()) && is_hex(h) => {
+                        Some((t, h)) if is_link_id(t) && h.len() == 4 && is_hex(h) => {
                             out.traces.push(Trace { target: t.to_string(), hash: h.to_string() });
                         }
                         _ => self.diag(i, c, format!("expected 'traces=<id>@<hash>' like 'traces=a-12cd@3f9e', found {tok:?}")),
