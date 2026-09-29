@@ -112,7 +112,9 @@ explicit, or the lease expiring — reverses it. There's no separate
 lease-renewal call: `TaskManager::tick_claim_lease_check` reads the claiming
 agent's own `last_event_at`/`turn_started_at` (the same signal
 `supervisor.rs`'s stall check watches) and releases the claim once that
-activity is older than `config.claim_lease_after`. The ephemeral tables
+activity is older than `config.claim_lease_after`. Only a `claimed` task is ever
+moved by a release: dropping or integrating a claimed task clears its claim, and
+`TaskManager::open` deletes any `claims` row whose task isn't `claimed`. The ephemeral tables
 `waits`, `ports`, `impact_cache` arrive with later tasks.
 
 **Claims are durable now (j479):** unlike `tasks`/`edges`/`open_questions`,
