@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- The daemon logs a shutdown request at WARN, naming the caller for `POST /v1/shutdown` or the signal (SIGINT/SIGTERM); open event streams already end on shutdown and the HTTP drain is bounded at 5s (tickets sed3, zm95, br-36fa).
 - A role with no `system_prompt` now defaults to `<workflow>/base/roles/<role>.md` when `workflow` is set and the file exists; an explicit `system_prompt` still wins (ticket rl2v, br-f636).
 - `just test` (and so `just check`) runs git with an empty global config, like CI, so local runs no longer depend on your `init.defaultBranch` (g3ck, br-d0c3).
 - Fixed: `bridle renew` no longer waits on a budget hold (it replaces a session rather than adding load), so a hold can't leave the agent stopped; `--ignore-budget` is accepted and ignored on renew (ticket r3nh, br-1392).

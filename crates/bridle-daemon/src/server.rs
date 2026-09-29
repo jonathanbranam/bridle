@@ -1516,6 +1516,7 @@ async fn shutdown(
     Extension(principal): Extension<Principal>,
 ) -> Result<StatusCode, ApiError> {
     require_human(&principal)?;
+    tracing::warn!(principal = %principal.id, "shutdown requested via POST /v1/shutdown");
     let _ = state.shutdown_tx.send(true);
     Ok(StatusCode::NO_CONTENT)
 }
