@@ -75,6 +75,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Queue(args) => queue(&cli, args).await,
         Command::Statusline => statusline(&cli).await,
         Command::StopCheck => stop_check(&cli).await,
+        Command::ArchGuard => arch_guard(&cli).await,
         Command::Prime(args) => prime(&cli, args).await,
         Command::Rules(args) => rules(&cli, args).await,
         Command::Sync => sync(&cli).await,
@@ -193,6 +194,50 @@ async fn stop_check(cli: &Cli) -> Result<(), CliError> {
         println!(
             "{}",
             crate::stop_check::block_json(&crate::stop_check::reason_for(task))
+        );
+    }
+    Ok(())
+}
+
+/// Claude Code's PreToolUse hook guarding `design/architecture/`
+/// (docs/design/architecture-tier.md). Allows (prints nothing) unless the
+/// call edits a file there, the caller is a worker agent, and none of its
+/// claimed tasks is an `arch-revision`; any error of bridle's own allows.
+async fn arch_guard(cli: &Cli) -> Result<(), CliError> {
+    let input: serde_json::Value = std::io::read_to_string(std::io::stdin())
+        .ok()
+        .and_then(|s| serde_json::from_str(&s).ok())
+        .unwrap_or(serde_json::Value::Null);
+    let Some(path) = crate::arch_guard::edited_path(&input) else {
+        return Ok(());
+    };
+    let cwd = input.get("cwd").and_then(serde_json::Value::as_str);
+    if !crate::arch_guard::is_architecture_path(&path, cwd) {
+        return Ok(());
+    }
+    let Ok(client) = client_for_read(cli).await else {
+        return Ok(());
+    };
+    let Ok(status) = client.status().await else {
+        return Ok(());
+    };
+    // Humans and other non-agent principals are never guarded.
+    let Some(name) = status.principal.strip_prefix("agent:") else {
+        return Ok(());
+    };
+    let Ok(agent) = client.get_agent(name).await else {
+        return Ok(());
+    };
+    if agent.role != "worker" {
+        return Ok(());
+    }
+    let Ok(claimed) = client.list_tasks_claimed_by("me").await else {
+        return Ok(());
+    };
+    if crate::arch_guard::should_deny(&path, cwd, &claimed) {
+        println!(
+            "{}",
+            crate::arch_guard::deny_json(&crate::arch_guard::deny_reason(&path))
         );
     }
     Ok(())
