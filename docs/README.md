@@ -109,3 +109,5 @@ done
    [[docs/design/worktrees-and-ports|worktrees and ports]],
    [[docs/design/skills|skills]].
 6. `questions/open/` and `spikes/open/` for what isn't settled.
+
+For a plain-language read of one part as built today, see [[docs/briefs/README|the briefs]].
