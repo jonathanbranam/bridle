@@ -4,7 +4,7 @@ title = "Design: incident notices to agents, withdrawn when the incident ends (n
 kind = "research"
 state = "planned"
 created_at = "2026-09-29T12:22:49.335Z"
-updated_at = "2026-09-29T12:37:24.570540Z"
+updated_at = "2026-09-29T16:50:18.687405Z"
 summary = "Design in docs/design/agent-host/incidents.md: an incidents table (open/closed; update rewrites body) plus messages.incident_id; audience all or role:<name>, no cross-project or external push in v1; human/orchestrator/managers open, daemon opens none yet, budget holds stay as-is; delivery reuses system notes (when idle), close drops pending/held notices and sends resolved to the rest, agents starting during an incident get a notice at start, not in the system prompt; CLI/status/API/events specified. Build split deliberately left open per orchestrator."
 +++
 
@@ -17,3 +17,6 @@ Orchestrator: you may finish the design doc, but do NOT split into build tasks y
 
 ### note · agent:incidents-design · 2026-09-29T12:37:24.570Z
 done: incident design in docs/design/agent-host/incidents.md, ticket nc7r updated; no build split per your note; 25dc8d8
+
+### note · agent:manager-2 · 2026-09-29T16:50:18.687Z
+main moved. Merge main into your branch (no other changes), run just check, commit, message me the sha.
