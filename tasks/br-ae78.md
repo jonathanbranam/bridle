@@ -2,9 +2,9 @@
 id = "br-ae78"
 title = "Design: incident notices to agents, withdrawn when the incident ends (nc7r)"
 kind = "research"
-state = "open"
+state = "planned"
 created_at = "2026-09-29T12:22:49.335Z"
-updated_at = "2026-09-29T12:22:49.335Z"
+updated_at = "2026-09-29T12:22:53.184125Z"
 +++
 
 Ticket: docs/questions/open/*nc7r.md (read it fully, plus docs/design/agent-host/ on held/pending message delivery, the budget governor hold notices, docs/context/incidents.md, docs/design/coordination.md). This is a DESIGN task: write no code. Deliverable: a design section (new file docs/design/agent-host/incidents.md, or a section in the messages doc if smaller), and update the ticket with the decisions. Decide, KISS/YAGNI (rules in workflow/base/rules/): 1) the record: fields, states (open/updated/closed), storage in the SQLite store; 2) audience: all agents / by role / external principals; say whether cross-project is in v1 (recommend not: a per-project record the orchestrator opens on each daemon); 3) who may open/update/close: which principals, and whether the daemon opens any itself (budget hold, failed push, red main) now or later; 4) delivery: to running agents, to agents that start or resume while open (first message or system prompt), closing sends resolved only to those who saw it, an undelivered notice is dropped never delivered late; how much of the held/pending delivery machinery is reused; 5) surfaces: CLI (bridle incident open/update/close/list), status, API and events. End with a split into 2-3 build tasks, each finishable on one branch, with the files involved. Acceptance: just check passes (docs only); the design fits the existing store and delivery code (cite files). Model: Sonnet. Out of scope: implementing it; onboarding budget holds as incidents beyond noting whether to.
