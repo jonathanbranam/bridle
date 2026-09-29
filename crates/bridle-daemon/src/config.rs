@@ -58,6 +58,26 @@ pub enum WorktreeLayout {
     Default,
     /// An explicit path template (absolute; `{task}`, `{agent}`, `{project}`).
     Root(String),
+    /// Like `Root`, but the template names a directory holding the project's
+    /// worktree (`<root>/<project>`) and each `[worktrees.pair.<name>]` member
+    /// (`<root>/<name>`), side by side.
+    Paired(String),
+}
+
+/// `[worktrees.pair.<name>] mode`: how a sibling repo joins a paired worktree.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PairMode {
+    /// `git worktree add` on `bridle/<agent>` from the sibling's HEAD.
+    Worktree,
+    /// A symlink to the sibling's checkout, for read-only use.
+    Symlink,
+}
+
+/// `[worktrees.pair.<name>]`: a sibling repo created alongside the project's worktree.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PairMember {
+    pub path: PathBuf,
+    pub mode: PairMode,
 }
 
 impl WorktreeLayout {
@@ -65,9 +85,9 @@ impl WorktreeLayout {
         let bad = |m: String| Err(ConfigError::BadWorktreeLayout(m));
         match (layout.unwrap_or("default"), root) {
             ("default", None) => Ok(Self::Default),
-            ("default", Some(_)) => bad("root needs layout = \"root\"".into()),
-            ("root", None) => bad("layout = \"root\" needs root".into()),
-            ("root", Some(root)) => {
+            ("default", Some(_)) => bad("root needs layout = \"root\" or \"paired\"".into()),
+            ("root" | "paired", None) => bad("layout = \"root\" or \"paired\" needs root".into()),
+            (kind @ ("root" | "paired"), Some(root)) => {
                 if !Path::new(&root).is_absolute() {
                     return bad(format!("root {root:?} must be an absolute path"));
                 }
@@ -93,28 +113,99 @@ impl WorktreeLayout {
                         "root {root:?} must contain {{task}} or {{agent}} so each worktree gets its own path"
                     ));
                 }
-                Ok(Self::Root(root))
+                Ok(if kind == "paired" {
+                    Self::Paired(root)
+                } else {
+                    Self::Root(root)
+                })
             }
             (other, _) => bad(format!(
-                "invalid layout {other:?}: expected \"default\" or \"root\""
+                "invalid layout {other:?}: expected \"default\", \"root\" or \"paired\""
             )),
         }
     }
 
     /// The worktree path for a new agent. `task` is the agent's claimed task
     /// id, or its name when it has none (always so at spawn). `None` for
-    /// `Default`: the caller uses the workspace's `wt/<agent>`.
+    /// `Default`: the caller uses the workspace's `wt/<agent>`. For `Paired`
+    /// it is the project's member, `<root>/<project>`.
     pub fn resolve(&self, repo: &Path, task: &str, agent: &str) -> Option<PathBuf> {
-        let Self::Root(root) = self else { return None };
+        let (Self::Root(root) | Self::Paired(root)) = self else {
+            return None;
+        };
         let project = repo
             .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or("project");
-        Some(PathBuf::from(
+        let path = PathBuf::from(
             root.replace("{task}", task)
                 .replace("{agent}", agent)
                 .replace("{project}", project),
-        ))
+        );
+        Some(if matches!(self, Self::Paired(_)) {
+            path.join(project)
+        } else {
+            path
+        })
+    }
+}
+
+fn parse_pairs(
+    raw: BTreeMap<String, RawPair>,
+    layout: &WorktreeLayout,
+) -> Result<BTreeMap<String, PairMember>, ConfigError> {
+    let bad = |m: String| Err(ConfigError::BadWorktreeLayout(m));
+    if raw.is_empty() {
+        return if matches!(layout, WorktreeLayout::Paired(_)) {
+            bad("layout = \"paired\" needs at least one [worktrees.pair.<name>]".into())
+        } else {
+            Ok(BTreeMap::new())
+        };
+    }
+    if !matches!(layout, WorktreeLayout::Paired(_)) {
+        return bad("[worktrees.pair.*] needs layout = \"paired\"".into());
+    }
+    let mut out = BTreeMap::new();
+    for (name, p) in raw {
+        if crate::worktree::validate_agent_name(&name).is_err() {
+            return bad(format!(
+                "pair name {name:?} must match [a-z0-9][a-z0-9-]{{0,39}}"
+            ));
+        }
+        if !Path::new(&p.path).is_absolute() {
+            return bad(format!("pair {name}: path {:?} must be absolute", p.path));
+        }
+        let mode = match p.mode.as_deref().unwrap_or("worktree") {
+            "worktree" => PairMode::Worktree,
+            "symlink" => PairMode::Symlink,
+            other => {
+                return bad(format!(
+                    "pair {name}: invalid mode {other:?}: expected \"worktree\" or \"symlink\""
+                ));
+            }
+        };
+        out.insert(
+            name,
+            PairMember {
+                path: PathBuf::from(p.path),
+                mode,
+            },
+        );
+    }
+    Ok(out)
+}
+
+impl Config {
+    /// Where each paired member lives beside `worktree` (the project's member
+    /// of a paired layout): `<parent>/<name>`. Empty for other layouts.
+    pub fn pair_paths(&self, worktree: &Path) -> Vec<(String, PathBuf)> {
+        let Some(dir) = worktree.parent() else {
+            return Vec::new();
+        };
+        self.worktree_pairs
+            .keys()
+            .map(|n| (n.clone(), dir.join(n)))
+            .collect()
     }
 }
 
@@ -860,6 +951,8 @@ pub struct Config {
     pub copy: Vec<String>,
     /// `[worktrees] layout`/`root`: where new worker worktrees live.
     pub worktree_layout: WorktreeLayout,
+    /// `[worktrees.pair.<name>]`: sibling repos of a paired layout.
+    pub worktree_pairs: BTreeMap<String, PairMember>,
     pub branches: BranchesConfig,
     pub ci: CiConfig,
     pub disk: DiskConfig,
@@ -905,6 +998,7 @@ impl Default for Config {
             setup_timeout: Duration::from_secs(10 * 60),
             copy: Vec::new(),
             worktree_layout: WorktreeLayout::Default,
+            worktree_pairs: BTreeMap::new(),
             branches: BranchesConfig::default(),
             ci: CiConfig::default(),
             disk: DiskConfig::default(),
@@ -1230,6 +1324,7 @@ impl Config {
             }
             config.copy = w.copy;
             config.worktree_layout = WorktreeLayout::parse(w.layout.as_deref(), w.root)?;
+            config.worktree_pairs = parse_pairs(w.pair, &config.worktree_layout)?;
         }
 
         if let Some(t) = raw.tasks {
@@ -1415,6 +1510,16 @@ struct RawWorktrees {
     layout: Option<String>,
     #[serde(default)]
     root: Option<String>,
+    #[serde(default)]
+    pair: BTreeMap<String, RawPair>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawPair {
+    path: String,
+    #[serde(default)]
+    mode: Option<String>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -1778,6 +1883,7 @@ pub fn render_system_prompt(
     agent_name: &str,
     cwd: &Path,
     branch: Option<&str>,
+    siblings: &[(String, PathBuf)],
 ) -> String {
     let mut out = stable_system_prompt(role_name, role, repo, branches, commands);
     let branch_clause = branch
@@ -1787,6 +1893,12 @@ pub fn render_system_prompt(
         "\nYou are {agent_name} (role {role_name}) in {}{branch_clause}.\n",
         cwd.display()
     ));
+    for (name, path) in siblings {
+        out.push_str(&format!(
+            "Paired sibling repo {name} is at {}.\n",
+            path.display()
+        ));
+    }
     out
 }
 
@@ -2398,6 +2510,7 @@ mod tests {
             "worker-1",
             Path::new("/repo/a/wt/worker-1"),
             Some("bridle/worker-1"),
+            &[],
         );
         let b = render_system_prompt(
             "worker",
@@ -2408,6 +2521,7 @@ mod tests {
             "worker-2",
             Path::new("/repo/a/wt/worker-2"),
             Some("bridle/worker-2"),
+            &[],
         );
 
         // The long, cacheable part is unaffected by which agent is asking.
@@ -2616,6 +2730,7 @@ mod tests {
             "manager-1",
             repo,
             None,
+            &[],
         );
         assert!(rendered.contains("You are manager-1 (role manager) in /repo/a.\n"));
     }
@@ -2680,6 +2795,34 @@ mod tests {
     }
 
     #[test]
+    fn worktree_pairs_parse_and_refuse_bad_config() {
+        let cfg = Config::parse(
+            "[worktrees]\nlayout = \"paired\"\nroot = \"/w/{task}\"\n\
+             [worktrees.pair.web]\npath = \"/r/web\"\nmode = \"symlink\"\n\
+             [worktrees.pair.api]\npath = \"/r/api\"\n",
+        )
+        .expect("parses");
+        assert!(matches!(cfg.worktree_layout, WorktreeLayout::Paired(_)));
+        assert_eq!(cfg.worktree_pairs["web"].mode, PairMode::Symlink);
+        assert_eq!(cfg.worktree_pairs["api"].mode, PairMode::Worktree);
+        let r = cfg.worktree_layout.resolve(Path::new("/x/proj"), "t", "a");
+        assert_eq!(r, Some(PathBuf::from("/w/t/proj")));
+        for bad in [
+            "layout = \"paired\"\nroot = \"/w/{task}\"",
+            "layout = \"root\"\nroot = \"/w/{task}\"\n[worktrees.pair.a]\npath = \"/r\"",
+            "layout = \"paired\"\nroot = \"/w/{task}\"\n[worktrees.pair.a]\npath = \"r\"",
+            "layout = \"paired\"\nroot = \"/w/{task}\"\n[worktrees.pair.a]\npath = \"/r\"\nmode = \"x\"",
+            "layout = \"paired\"\nroot = \"/w/{task}\"\n[worktrees.pair.A_b]\npath = \"/r\"",
+        ] {
+            let err = Config::parse(&format!("[worktrees]\n{bad}\n")).expect_err(bad);
+            assert!(
+                matches!(err, ConfigError::BadWorktreeLayout(_)),
+                "{bad}: {err}"
+            );
+        }
+    }
+
+    #[test]
     fn worktree_layout_parses_and_refuses_bad_roots() {
         let cfg = Config::parse("").expect("parses");
         assert_eq!(cfg.worktree_layout, WorktreeLayout::Default);
@@ -2697,7 +2840,7 @@ mod tests {
             "layout = \"root\"\nroot = \"/w/../{task}\"",
             "layout = \"root\"\nroot = \"/w/{nope}\"",
             "layout = \"root\"\nroot = \"/w/fixed\"",
-            "layout = \"paired\"",
+            "layout = \"bogus\"",
         ] {
             let err = Config::parse(&format!("[worktrees]\n{bad}\n")).expect_err(bad);
             assert!(

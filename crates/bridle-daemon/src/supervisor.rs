@@ -794,6 +794,9 @@ impl AgentManager {
         });
 
         let mut created_worktree: Option<(std::path::PathBuf, String)> = None;
+        // Paired members made so far, for cleanup: (member, path, branch).
+        let mut created_pairs: Vec<(crate::config::PairMember, std::path::PathBuf, String)> =
+            Vec::new();
         let (workdir_kind, cwd, worktree_path, branch) = match workdir {
             Workdir::Worktree { base } => {
                 let path = match self.0.config.worktree_layout.resolve(
@@ -823,11 +826,35 @@ impl AgentManager {
                 }
                 created_worktree = Some((path.clone(), branch.clone()));
                 worktree::copy_files(&self.0.workspace.repo, &path, &self.0.config.copy);
-                if let Some(cmd) = &self.0.config.setup
-                    && let Err(e) =
-                        worktree::run_setup(&path, cmd, self.0.config.setup_timeout).await
-                {
+                let mut setup_result = Ok(());
+                if let Some(cmd) = &self.0.config.setup {
+                    setup_result =
+                        worktree::run_setup(&path, cmd, self.0.config.setup_timeout).await;
+                }
+                if setup_result.is_ok() {
+                    for (name, member_path) in self.0.config.pair_paths(&path) {
+                        let member = self.0.config.worktree_pairs[&name].clone();
+                        if let Err(e) = worktree::add_pair(&member, &member_path, &branch).await {
+                            setup_result = Err(e);
+                            break;
+                        }
+                        let is_worktree = member.mode == crate::config::PairMode::Worktree;
+                        created_pairs.push((member, member_path.clone(), branch.clone()));
+                        if is_worktree && let Some(cmd) = &self.0.config.setup {
+                            setup_result =
+                                worktree::run_setup(&member_path, cmd, self.0.config.setup_timeout)
+                                    .await;
+                            if setup_result.is_err() {
+                                break;
+                            }
+                        }
+                    }
+                }
+                if let Err(e) = setup_result {
                     // Same cleanup as the later spawn-failure paths.
+                    for (member, p, b) in &created_pairs {
+                        let _ = worktree::remove_pair(member, p, true, Some(b)).await;
+                    }
                     let _ = worktree::remove(&self.0.workspace.repo, &path, true).await;
                     let _ = worktree::delete_branch(&self.0.workspace.repo, &branch, true).await;
                     return Err(e.into());
@@ -870,7 +897,11 @@ impl AgentManager {
         let cleanup_worktree = |created: &Option<(std::path::PathBuf, String)>| {
             let workspace = self.0.workspace.clone();
             let created = created.clone();
+            let pairs = created_pairs.clone();
             async move {
+                for (member, p, b) in &pairs {
+                    let _ = worktree::remove_pair(member, p, true, Some(b)).await;
+                }
                 if let Some((path, branch)) = created {
                     let _ = worktree::remove(&workspace.repo, &path, true).await;
                     let _ = worktree::delete_branch(&workspace.repo, &branch, true).await;
@@ -940,6 +971,10 @@ impl AgentManager {
             &agent.name,
             &cwd,
             branch.as_deref(),
+            &worktree_path
+                .as_deref()
+                .map(|p| self.0.config.pair_paths(p))
+                .unwrap_or_default(),
         );
         let system_prompt_path = self.0.workspace.system_prompt(&agent.id);
         if let Err(e) = std::fs::write(&system_prompt_path, &prompt_text) {
@@ -2120,6 +2155,11 @@ impl AgentManager {
             &agent.name,
             std::path::Path::new(&agent.cwd),
             agent.branch.as_deref(),
+            &agent
+                .worktree
+                .as_deref()
+                .map(|p| self.0.config.pair_paths(std::path::Path::new(p)))
+                .unwrap_or_default(),
         );
         let system_prompt_path = self.0.workspace.system_prompt(&agent.id);
         std::fs::write(&system_prompt_path, &prompt_text)?;
@@ -2308,6 +2348,11 @@ impl AgentManager {
             &agent.name,
             std::path::Path::new(&agent.cwd),
             agent.branch.as_deref(),
+            &agent
+                .worktree
+                .as_deref()
+                .map(|p| self.0.config.pair_paths(std::path::Path::new(p)))
+                .unwrap_or_default(),
         );
         let system_prompt_path = self.0.workspace.system_prompt(&agent.id);
         std::fs::write(&system_prompt_path, &prompt_text)?;
@@ -2480,8 +2525,43 @@ impl AgentManager {
                 None => false,
             }
         };
+        // Paired members beside the project's worktree; worktree-mode ones can be dirty too.
+        let pair_members =
+            |agent: &Agent| -> Vec<(String, crate::config::PairMember, std::path::PathBuf)> {
+                let Some(wt) = agent.worktree.as_deref() else {
+                    return Vec::new();
+                };
+                self.0
+                    .config
+                    .pair_paths(std::path::Path::new(wt))
+                    .into_iter()
+                    .map(|(n, p)| (n.clone(), self.0.config.worktree_pairs[&n].clone(), p))
+                    .collect()
+            };
+        let dirty_pair = |agent: &Agent| {
+            let members = pair_members(agent);
+            async move {
+                for (name, member, path) in members {
+                    if member.mode == crate::config::PairMode::Worktree
+                        && path.exists()
+                        && worktree::is_dirty(&path).await.unwrap_or(false)
+                    {
+                        return Some(name);
+                    }
+                }
+                None
+            }
+        };
+        let pair_dirty_refusal = |name: String| {
+            SupervisorError::Conflict(format!(
+                "paired worktree {name} has uncommitted changes; use --force"
+            ))
+        };
         if !force && worktree_dirty(agent.worktree.clone()).await {
             return Err(dirty_refusal());
+        }
+        if !force && let Some(name) = dirty_pair(&agent).await {
+            return Err(pair_dirty_refusal(name));
         }
         if agent.state.is_running() {
             agent = self.stop(&agent.id, false, principal).await?;
@@ -2489,6 +2569,13 @@ impl AgentManager {
             if !force && worktree_dirty(agent.worktree.clone()).await {
                 return Err(dirty_refusal());
             }
+            if !force && let Some(name) = dirty_pair(&agent).await {
+                return Err(pair_dirty_refusal(name));
+            }
+        }
+        for (_, member, path) in pair_members(&agent) {
+            let branch = delete_branch.then_some(agent.branch.as_deref()).flatten();
+            worktree::remove_pair(&member, &path, force, branch).await?;
         }
         if let Some(wt) = agent.worktree.clone() {
             let path = std::path::PathBuf::from(&wt);

@@ -72,6 +72,57 @@ pub async fn add(repo: &Path, path: &Path, branch: &str, base: &str) -> Result<(
     }
 }
 
+/// Creates one paired member at `path`: a symlink to the sibling's checkout, or
+/// a worktree of it on `branch` from the sibling's own HEAD.
+pub async fn add_pair(
+    member: &crate::config::PairMember,
+    path: &Path,
+    branch: &str,
+) -> Result<(), WorktreeError> {
+    match member.mode {
+        crate::config::PairMode::Worktree => add(&member.path, path, branch, "HEAD").await,
+        crate::config::PairMode::Symlink => {
+            if !member.path.is_dir() {
+                return Err(WorktreeError::Io(std::io::Error::new(
+                    std::io::ErrorKind::NotFound,
+                    format!("paired repo {} does not exist", member.path.display()),
+                )));
+            }
+            std::fs::create_dir_all(path.parent().unwrap_or(path))?;
+            std::os::unix::fs::symlink(&member.path, path)?;
+            Ok(())
+        }
+    }
+}
+
+/// Removes one paired member created by [`add_pair`]. `force` as for [`remove`];
+/// `branch` is deleted (`-D`) from the sibling repo when given.
+pub async fn remove_pair(
+    member: &crate::config::PairMember,
+    path: &Path,
+    force: bool,
+    branch: Option<&str>,
+) -> Result<(), WorktreeError> {
+    match member.mode {
+        crate::config::PairMode::Symlink => {
+            if path.symlink_metadata().is_ok() {
+                std::fs::remove_file(path)?;
+            }
+        }
+        crate::config::PairMode::Worktree => {
+            if path.exists() {
+                remove(&member.path, path, force).await?;
+            } else {
+                prune(&member.path).await?;
+            }
+            if let Some(branch) = branch {
+                delete_branch(&member.path, branch, true).await?;
+            }
+        }
+    }
+    Ok(())
+}
+
 /// Clones the clone's `target/` into the new worktree so its first build is incremental, not
 /// cold (ticket b7cz). `cp -cR` is an APFS copy-on-write clone: near-instant, no extra disk.
 /// macOS only; elsewhere a no-op. Best effort: a missing `target/` or a failed copy is logged
