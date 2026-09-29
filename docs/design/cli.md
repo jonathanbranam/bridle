@@ -182,7 +182,13 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   `--project` also reads `$BRIDLE_PROJECT`, including for `serve`, where it
   names the project being served.
 - **Exit codes**: 0 ok, 1 error, 2 usage error, 3 daemon unreachable (every
-  discovery failure, including an unknown `--project`).
+  discovery failure, including an unknown `--project`), 4 `wait` timed out.
+- **`wait <task> [--until <state>] [--or-message] [--timeout <secs>]`** blocks on the SSE
+  event stream (no polling) until the task's next state change, or until it is in
+  `--until` (returning at once if it already is). `--or-message` also returns on a message to
+  the caller, including one already unread. `--timeout` exits 4. Prints one line
+  (`<task> is <state>` / `message <id> arrived`); `--json` prints `{result: state|message|timeout,
+  task, state, message}`. Meant to run as a background Bash so the caller is woken.
 - **`logs`** renders the transcript's output lines; `--raw` prints every line
   verbatim. Without `--since` it shows the latest lines (tail), not the
   oldest; give `--since` to page forward from a line number instead.
@@ -427,7 +433,6 @@ bridle task <cmd> at in_review|integrated|accepted  -- new/show/edit/list/drop/r
                                                   until `plan` exists
 bridle handoff bridle plan <id>                   bridle accept <id> (human only)
 bridle inbox --inject        # `ask`/`answer` are built (see Built)
-bridle wait <id> [--until <state>] [--or-message] [--timeout]
 bridle spawn <role> <task>   bridle review
 bridle take|give <agent>                         human takeover of a headless agent
 bridle impact set|show|check bridle conflict list|resolve

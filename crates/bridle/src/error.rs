@@ -1,6 +1,6 @@
 //! The CLI's error type: it exists only to carry the exit code (docs/design/cli.md:
 //! 0 ok, 1 error, 2 usage error [clap handles that one itself], 3 daemon
-//! unreachable) alongside a human-readable message.
+//! unreachable, 4 `wait` timed out) alongside a human-readable message.
 
 use bridle_api::ClientError;
 use bridle_api::discovery::DiscoveryError;
@@ -9,6 +9,8 @@ use bridle_api::discovery::DiscoveryError;
 pub enum CliError {
     /// Exit 3: no daemon could be found or reached.
     Unreachable(String),
+    /// Exit 4: `bridle wait` gave up at `--timeout`.
+    Timeout(String),
     /// Exit 1: anything else.
     Other(anyhow::Error),
 }
@@ -17,6 +19,7 @@ impl CliError {
     pub fn exit_code(&self) -> u8 {
         match self {
             CliError::Unreachable(_) => 3,
+            CliError::Timeout(_) => 4,
             CliError::Other(_) => 1,
         }
     }
@@ -25,7 +28,7 @@ impl CliError {
 impl std::fmt::Display for CliError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            CliError::Unreachable(msg) => write!(f, "{msg}"),
+            CliError::Unreachable(msg) | CliError::Timeout(msg) => write!(f, "{msg}"),
             CliError::Other(e) => write!(f, "{e:#}"),
         }
     }
