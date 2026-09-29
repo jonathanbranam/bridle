@@ -1002,6 +1002,7 @@ impl AgentManager {
         }
         cmd.disallowed_tools = role.disallowed_tools.clone();
         cmd.stop_check = role.stop_check;
+        cmd.tools = role.tools.clone();
         cmd.name = Some(agent.name.clone());
         cmd.max_budget_usd = role.max_budget_usd;
         cmd.env = agent_env(
@@ -2198,6 +2199,7 @@ impl AgentManager {
         }
         cmd.disallowed_tools = role.disallowed_tools.clone();
         cmd.stop_check = role.stop_check;
+        cmd.tools = role.tools.clone();
         cmd.name = Some(agent.name.clone());
         cmd.max_budget_usd = role.max_budget_usd;
         cmd.env = agent_env(
@@ -2381,6 +2383,7 @@ impl AgentManager {
         }
         cmd.disallowed_tools = role.disallowed_tools.clone();
         cmd.stop_check = role.stop_check;
+        cmd.tools = role.tools.clone();
         cmd.name = Some(agent.name.clone());
         cmd.max_budget_usd = role.max_budget_usd;
         cmd.env = agent_env(

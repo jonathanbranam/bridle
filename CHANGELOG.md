@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Roles take a `tools` key, passed as `--tools`; the built-in worker and manager get lean defaults (worker: Bash, Read, Edit, Write, Glob, Grep; manager: no Edit/Write, plus Agent), cutting a spawned agent's first turn by about a third (br-9fca, ct8m step 2).
+
 - Orchestrator supervision, first half (br-a424): with `[orchestrator] enabled = true` the daemon watches `$BRIDLE_HOME/orchestrator.pid` (pid plus start time) and, when the session is dead and the pane tagged `@bridle=orchestrator` shows a shell on two checks 5 s apart, types the launcher into it, with crash-loop backoff (`relaunch_backoff`, `stable_after`) and an incident message to the human when it gives up, finds no tagged pane, or finds something else running. `scripts/claude-orchestrator` writes the pid file and registers a SessionStart hook, `bridle orchestrator note-session`, instead of pinning `--session-id`.
 - `bridle stop-check` runs the project's `check_worker` command for a finished-looking worker whose HEAD has no recorded pass, records the pass in the worktree's git dir, and blocks with the output tail on failure (br-f671).
 - `bridle stop-check` also blocks a worker whose tree looks finished (clean, commits ahead) but whose claimed task has no summary or `done:` report, telling it to run the commands rather than print them (br-d99e).

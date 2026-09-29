@@ -29,6 +29,10 @@ pub struct ClaudeCommand {
     pub append_system_prompt_file: Option<PathBuf>,
     pub permission_mode: Option<String>,
     pub allowed_tools: Vec<String>,
+    /// `--tools`: the built-in tools that exist for the agent at all. Unlike
+    /// `allowed_tools`, unlisted tools' definitions leave its context
+    /// (docs/spikes/08-lean-context-findings.md). `None` passes no flag.
+    pub tools: Option<Vec<String>>,
     pub disallowed_tools: Vec<String>,
     pub name: Option<String>,
     /// `--max-budget-usd`: per process, checked after each model call.
@@ -58,11 +62,16 @@ const STOP_CHECK_TIMEOUT_SECS: u64 = 1800;
 /// and other agents can read it (docs/proposal/decisions.md, no assistant
 /// memory). `stop_check` adds the `Stop` hook shape confirmed by spike 05
 /// (flat `decision`/`reason`, not `hookSpecificOutput`).
-fn settings_json(stop_check: bool) -> String {
+fn settings_json(stop_check: bool, keeps_skill: bool) -> String {
     let mut settings = serde_json::json!({
         "autoMemoryEnabled": false,
         "autoDreamEnabled": false,
     });
+    // Without `Skill` in `--tools` the skill listing is already gone; a role
+    // that keeps it drops Claude Code's bundled skills instead (spike 08).
+    if keeps_skill {
+        settings["disableBundledSkills"] = true.into();
+    }
     if stop_check {
         settings["hooks"] = serde_json::json!({
             "Stop": [
@@ -93,6 +102,7 @@ impl ClaudeCommand {
             append_system_prompt_file: None,
             permission_mode: None,
             allowed_tools: Vec::new(),
+            tools: None,
             disallowed_tools: Vec::new(),
             name: None,
             max_budget_usd: None,
@@ -128,7 +138,12 @@ impl ClaudeCommand {
         .into_iter()
         .map(String::from)
         .collect();
-        args.push(settings_json(self.stop_check));
+        args.push(settings_json(
+            self.stop_check,
+            self.tools
+                .as_ref()
+                .is_some_and(|t| t.iter().any(|x| x == "Skill")),
+        ));
 
         match &self.session {
             Session::New(id) => {
@@ -162,6 +177,10 @@ impl ClaudeCommand {
         if !self.allowed_tools.is_empty() {
             args.push("--allowedTools".into());
             args.extend(self.allowed_tools.iter().cloned());
+        }
+        if let Some(tools) = &self.tools {
+            args.push("--tools".into());
+            args.push(tools.join(","));
         }
         if !self.disallowed_tools.is_empty() {
             args.push("--disallowedTools".into());
@@ -316,6 +335,31 @@ mod tests {
         assert_eq!(args.iter().filter(|a| *a == "--allowedTools").count(), 1);
     }
 
+    fn settings_of(args: &[String]) -> serde_json::Value {
+        let i = args
+            .iter()
+            .position(|a| a == "--settings")
+            .expect("--settings");
+        serde_json::from_str(&args[i + 1]).expect("--settings is JSON")
+    }
+
+    #[test]
+    fn tools_are_one_comma_joined_argument() {
+        let mut cmd = ClaudeCommand::new("/tmp", Session::New(uuid(11)));
+        cmd.tools = Some(vec!["Bash".into(), "Read".into(), "Agent".into()]);
+        let args = cmd.args();
+        let i = args.iter().position(|a| a == "--tools").expect("--tools");
+        assert_eq!(args[i + 1], "Bash,Read,Agent");
+        assert!(settings_of(&args).get("disableBundledSkills").is_none());
+    }
+
+    #[test]
+    fn skill_in_tools_disables_bundled_skills() {
+        let mut cmd = ClaudeCommand::new("/tmp", Session::New(uuid(12)));
+        cmd.tools = Some(vec!["Bash".into(), "Skill".into()]);
+        assert_eq!(settings_of(&cmd.args())["disableBundledSkills"], true);
+    }
+
     #[test]
     fn omits_optional_flags_when_unset() {
         let cmd = ClaudeCommand::new("/tmp", Session::New(uuid(7)));
@@ -327,6 +371,7 @@ mod tests {
             "--permission-mode",
             "--allowedTools",
             "--disallowedTools",
+            "--tools",
             "--name",
         ] {
             assert!(

@@ -255,6 +255,11 @@ pub struct Role {
     pub base: String,
     pub permission_mode: String,
     pub allowed_tools: Vec<String>,
+    /// The built-in tool set the agent gets at all (`--tools`): unlisted
+    /// tools' definitions are removed from its context, not just denied
+    /// (docs/spikes/08-lean-context-findings.md). `None` leaves Claude Code's
+    /// full set. Project config replaces the default, unlike `disallowed_tools`.
+    pub tools: Option<Vec<String>>,
     /// Built-in roles start from [`DENY_MESSAGING_AND_SUBAGENTS`] and friends;
     /// a project's `.bridle/config.toml` can only add to this list
     /// ([`Role::merge`]), never remove a built-in denial.
@@ -317,6 +322,14 @@ impl Role {
                 "Glob".into(),
                 "Grep".into(),
             ],
+            tools: Some(vec![
+                "Bash".into(),
+                "Read".into(),
+                "Edit".into(),
+                "Write".into(),
+                "Glob".into(),
+                "Grep".into(),
+            ]),
             disallowed_tools: deny_list(&[&DENY_SCHEDULING, &DENY_REMOTE_TRIGGERS]),
             system_prompt: None,
             autostart: false,
@@ -340,7 +353,16 @@ impl Role {
                 "Read".into(),
                 "Glob".into(),
                 "Grep".into(),
+                "Agent".into(),
             ],
+            // Agent for `Explore` subagents; no Edit/Write (dontAsk denies them anyway).
+            tools: Some(vec![
+                "Bash".into(),
+                "Read".into(),
+                "Glob".into(),
+                "Grep".into(),
+                "Agent".into(),
+            ]),
             disallowed_tools: deny_list(&[&DENY_SCHEDULING, &DENY_REMOTE_TRIGGERS]),
             system_prompt: None,
             autostart: true,
@@ -364,6 +386,8 @@ impl Role {
                 "Glob".into(),
                 "Grep".into(),
             ],
+            // No whitelist until the orchestrator's launch is measured (ct8m step 4).
+            tools: None,
             // Scheduling is exempted: the orchestrator paces its own loop
             // with `ScheduleWakeup` (docs/questions/open/agents-can-use-claude-codes-own-sendmessage-78sp.md).
             disallowed_tools: deny_list(&[&DENY_REMOTE_TRIGGERS]),
@@ -404,6 +428,9 @@ impl Role {
         }
         if let Some(v) = raw.allowed_tools {
             self.allowed_tools = v;
+        }
+        if let Some(v) = raw.tools {
+            self.tools = Some(v);
         }
         // Additive, unlike `allowed_tools`: a project config can only add
         // denials to the built-in defaults, never drop one by omission.
@@ -1789,6 +1816,8 @@ struct RawRole {
     #[serde(default)]
     allowed_tools: Option<Vec<String>>,
     #[serde(default)]
+    tools: Option<Vec<String>>,
+    #[serde(default)]
     disallowed_tools: Option<Vec<String>>,
     #[serde(default)]
     system_prompt: Option<PathBuf>,
@@ -2055,6 +2084,48 @@ mod tests {
             !orchestrator.stop_check,
             "orchestrator should have stop_check off"
         );
+    }
+
+    fn tools_of(cfg: &Config, role: &str) -> Option<String> {
+        cfg.roles[role].tools.as_ref().map(|t| t.join(","))
+    }
+
+    #[test]
+    fn default_roles_get_the_spike_toolsets() {
+        let cfg = Config::default();
+        assert_eq!(
+            tools_of(&cfg, "worker").as_deref(),
+            Some("Bash,Read,Edit,Write,Glob,Grep")
+        );
+        assert_eq!(
+            tools_of(&cfg, "manager").as_deref(),
+            Some("Bash,Read,Glob,Grep,Agent")
+        );
+        assert!(
+            cfg.roles["manager"]
+                .allowed_tools
+                .contains(&"Agent".to_string())
+        );
+        // Not measured yet (ct8m step 4): full toolset.
+        assert_eq!(tools_of(&cfg, "orchestrator"), None);
+    }
+
+    #[test]
+    fn a_roles_tools_key_replaces_the_default() {
+        let cfg = Config::parse(
+            r#"
+            [roles.worker]
+            tools = ["Bash", "Read", "Skill"]
+
+            [roles.reviewer]
+            tools = ["Read"]
+        "#,
+        )
+        .expect("parse");
+        assert_eq!(tools_of(&cfg, "worker").as_deref(), Some("Bash,Read,Skill"));
+        assert_eq!(tools_of(&cfg, "reviewer").as_deref(), Some("Read"));
+        // Untouched roles keep theirs.
+        assert!(tools_of(&cfg, "manager").is_some());
     }
 
     #[test]

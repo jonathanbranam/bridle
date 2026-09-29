@@ -18,6 +18,7 @@ established; S-numbers are its scenarios. Each agent is one headless
 --strict-mcp-config
 --permission-mode <role.permission_mode>  --permission-prompts none
 --allowedTools <tool>…  [--disallowedTools <tool>…]
+[--tools <a,b,c>]                            # role.tools: only these built-ins exist (lean context)
 --name <agent name>
 --setting-sources project
 --settings '{"autoMemoryEnabled":false,"autoDreamEnabled":false}'
@@ -52,6 +53,11 @@ established; S-numbers are its scenarios. Each agent is one headless
   Per-role scoping beyond that stays `allowed_tools`/`disallowed_tools`
   ([[docs/design/agent-host/roles-and-config|roles and config]]) plus the
   no-memory `--settings` above.
+- **`--tools`**: the role's `tools` list, comma-joined. Definitions of unlisted
+  built-ins are removed from the agent's context, which is where most of the
+  starting-context saving comes from (docs/spikes/08-lean-context-findings.md);
+  `--allowedTools`/`--disallowedTools` still gate the calls. If the list holds
+  `Skill`, `--settings` also carries `disableBundledSkills: true`.
 - **Process group**: the agent is the leader of its own process group.
 - **cwd**: `wt/<name>` (a new worktree on branch `bridle/<name>` from the
   role's base ref; the path follows `[worktrees] layout`, and a `paired` layout also
