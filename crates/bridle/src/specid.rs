@@ -14,24 +14,24 @@ use crate::error::CliError;
 use crate::render;
 
 #[derive(Debug, serde::Serialize)]
-struct FileReport {
+pub(crate) struct FileReport {
     file: String,
-    assigned: Vec<AssignedRow>,
+    pub(crate) assigned: Vec<AssignedRow>,
 }
 
 #[derive(Debug, serde::Serialize)]
-struct AssignedRow {
+pub(crate) struct AssignedRow {
     line: usize,
     id: String,
     title: String,
 }
 
 #[derive(Debug, serde::Serialize)]
-struct Report {
-    dry_run: bool,
-    files: Vec<FileReport>,
+pub(crate) struct Report {
+    pub(crate) dry_run: bool,
+    pub(crate) files: Vec<FileReport>,
     /// Ids added to the ledger: the new ones and any found in files but missing from it.
-    ledger_added: Vec<String>,
+    pub(crate) ledger_added: Vec<String>,
 }
 
 pub fn run(cli: &Cli, args: &SpecIdArgs) -> Result<(), CliError> {
@@ -75,13 +75,13 @@ pub fn run(cli: &Cli, args: &SpecIdArgs) -> Result<(), CliError> {
 }
 
 /// A fresh 64-bit value per call from std's randomly keyed hasher.
-fn random() -> u64 {
+pub(crate) fn random() -> u64 {
     std::collections::hash_map::RandomState::new()
         .build_hasher()
         .finish()
 }
 
-fn assign(
+pub(crate) fn assign(
     root: &Path,
     paths: &[PathBuf],
     ledger: Option<&Path>,
