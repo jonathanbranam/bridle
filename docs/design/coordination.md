@@ -69,6 +69,17 @@ It is coalesced to at most one message per minute: the first goes out at once, a
 filed inside the window are listed together in one message when it ends. Nothing is sent
 when a PM is running or no manager is.
 
+### Telling workers main moved
+
+When `bridle task done` lands a task, the daemon sends every other running `worker` that has a
+worktree branch or a claimed task a `note` from `system`: "main moved: task <id> (<title>)
+landed at <sha>; files changed: <up to 15 paths, then +N more>. Rebase or merge main into your
+branch when at a safe point, before your next commit." (`AgentManager::note_main_moved`). The
+file list comes from `git diff-tree` on the commit and is left out if git fails. The agent whose
+task (claim or branch) landed gets nothing, nor do the manager, PM or orchestrator. At most one
+message per agent per minute; landings inside the window are joined into one. Filtering by
+impact overlap is not done yet.
+
 ## Questions do not stop work
 
 ```

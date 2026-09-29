@@ -310,6 +310,24 @@ pub async fn delete_branch(repo: &Path, branch: &str, force: bool) -> Result<(),
     run_git(repo, &["branch", flag, branch]).await.map(|_| ())
 }
 
+/// Paths changed by `commit` (against its first parent, for a merge).
+pub async fn changed_files(repo: &Path, commit: &str) -> Result<Vec<String>, WorktreeError> {
+    let out = run_git(
+        repo,
+        &[
+            "diff-tree",
+            "--no-commit-id",
+            "--name-only",
+            "-r",
+            "-m",
+            "--first-parent",
+            commit,
+        ],
+    )
+    .await?;
+    Ok(out.lines().map(str::to_string).collect())
+}
+
 /// Whether `commit` names a commit reachable from the repo's `HEAD`, i.e. it
 /// is on the integration branch. An unknown revision is `false`, not an error.
 pub async fn is_on_head(repo: &Path, commit: &str) -> Result<bool, WorktreeError> {
