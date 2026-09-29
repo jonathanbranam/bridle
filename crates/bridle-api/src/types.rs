@@ -1202,6 +1202,44 @@ pub struct Overlap {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ImpactReport {
     pub overlaps: Vec<Overlap>,
+    /// Ids (`C12`) of conflicts this check opened; already-known overlaps aren't repeated.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub opened: Vec<String>,
+}
+
+/// A conflict-level overlap between two tasks that the claimants must settle
+/// (impact-and-conflicts.md, "The conflict protocol").
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Conflict {
+    /// `C<n>`.
+    pub id: String,
+    /// The two tasks, in id order.
+    pub tasks: [String; 2],
+    /// The overlap's `kind` and `key` (see [`Overlap`]).
+    pub kind: String,
+    pub key: String,
+    /// `open` or `resolved`.
+    pub state: String,
+    /// `compatible: <reason>`, `order: A blocks B` or `merge-into: A`, once resolved.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub resolution: Option<String>,
+    pub opened_at: DateTime<Utc>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub resolved_at: Option<DateTime<Utc>>,
+}
+
+/// Exactly one field is set.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct ResolveConflictRequest {
+    /// Not a real conflict; the reason.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub compatible: Option<String>,
+    /// `[first, second]`: the first blocks the second.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub order: Option<[String; 2]>,
+    /// The task that absorbs the other's change.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub merge_into: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

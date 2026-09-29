@@ -101,6 +101,8 @@ Claims get their own table too (`SCHEMA_V9`):
 
 ```
 claims(task_id TEXT PK, claimed_by, claimed_at)
+conflicts(id INTEGER PK -> shown as C<id>, task_a, task_b, kind, key, state, resolution,
+          opened_at, resolved_at; UNIQUE(task_a, task_b, kind, key))
 ```
 
 `task_id` is the primary key: a task has at most one claimant at a time, so

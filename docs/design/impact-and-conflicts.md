@@ -64,5 +64,17 @@ didn't declare. An agent can't avoid a conflict by under-declaring.
    in-flight task whose impact overlaps what just merged, so those agents rebase
    and re-read before building on stale text.
 
+**Built: steps 1 and 2.** `impact check` (`POST /v1/impact/check`) opens one conflict per
+conflict-level overlap, and each overlap only once, resolved or not (unique on the two tasks,
+kind and key). Conflicts live in the SQLite `conflicts` table only: a conflict is not a
+task thread and has no state-branch record, so `bridle rebuild` drops them and the next
+`impact check` reopens any still-real overlap. Each task's claimant gets one `system`
+message naming the other task and the overlap, and a note lands on both task threads. For
+an unclaimed task the message goes to the running `manager` agents. `bridle conflict list`
+and `resolve` (`GET /v1/conflicts`, `POST /v1/conflicts/{id}/resolve`) do the rest:
+`--order A,B` adds the `A blocks B` edge, and `--compatible` and `--merge-into` record only
+the outcome; the agents make the change. Not built: escalation (step 3), the `git merge-tree`
+conflicts, and the handoff for the blocked task's claimant.
+
 This replaces the same-spec pile-up rule. Serialisation happens only when two
 tasks actually collide, and the agents involved decide the order.
