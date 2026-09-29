@@ -1,0 +1,14 @@
++++
+id = "br-57be"
+title = "P5: port registry: bridle port alloc/release/list with reserved ports"
+kind = "feature"
+state = "planned"
+created_at = "2026-09-29T06:50:51.728Z"
+updated_at = "2026-09-29T06:50:53.775019Z"
++++
+
+Goal (docs/design/worktrees-and-ports.md; build-order P5): track-web workers run dev servers; the human's ports must never be taken and 'stop what you start' must be checkable. Find track-web's rule on it (its .bridle/rules/dev-servers.md under the workspace, /Volumes/Data/work/*, read-only) and match its needs.
+
+Do: table `ports` (port, agent, task, pid, allocated_at) in the SQLite store (schema migration, docs/design/storage.md; it is runtime state, NOT on the state branch, not rebuilt). Config `[ports] range = [4000, 4999]`, `reserved = [..]` in .bridle/config.toml (crates/bridle-daemon/src/config.rs). API + CLI: `bridle port alloc [--pid N] [--label L]` returns a free port in range not reserved, not allocated, and not currently listening on the host (bind test on 127.0.0.1), recorded against the calling agent and its claimed task; `bridle port release <port>`; `bridle port list [--json]`. The daemon frees a port when its owner agent stops/exits or when its pid is dead (check on the existing tick). Wire types in bridle-api/src/types.rs. Docs: worktrees-and-ports.md (built), storage.md, cli.md, config docs.
+
+Acceptance: just check passes; tests: alloc skips reserved and taken ports, release, cleanup on agent exit. Model: Sonnet. Out of scope: injecting PORT into env, worktree layouts.
