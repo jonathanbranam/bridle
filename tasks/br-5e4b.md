@@ -2,9 +2,9 @@
 id = "br-5e4b"
 title = "Trim agent context growth: read by range, cap check/git output (ct8m step 3 build)"
 kind = "chore"
-state = "open"
+state = "planned"
 created_at = "2026-09-29T18:20:36.018Z"
-updated_at = "2026-09-29T18:20:36.018Z"
+updated_at = "2026-09-29T18:20:38.476740Z"
 size = "S"
 +++
 
