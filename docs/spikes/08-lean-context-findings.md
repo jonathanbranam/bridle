@@ -199,10 +199,113 @@ tools, so they are not covered by the lists above.
   what was observed.
 - Whether deferred tools cost anything at the moment ToolSearch loads them (not needed if
   `--tools` leaves nothing deferred).
-- The gap between 19K here and 48-60K in `bridle agents` (above).
+- The gap between 19K here and 48-60K in `bridle agents`: explained in [the gap section](#the-gap-19k-first-turn-vs-48-60k-live-plan-step-3) below.
 
 ## Fixtures
 
 Not kept. The harness was a 60-line Python script in `/tmp/lean-scratch` (spawns `claude` with the
 argv above, sends one message, then `get_context_usage`); the per-run JSON (categories, init tools,
 skills, mcp servers) is reproducible in a few cents per run.
+
+## The gap: 19K first turn vs 48-60K live (plan step 3)
+
+Task br-5c6c. Docs only, no live run: the daemon already records everything needed. Source:
+`.bridle/agents/*/transcript.jsonl` (each has the spawn line, the stream-json events with per-call
+`usage`, and every tool result) and `system-prompt.md`. The 77 most recent workers with more than 5
+turns (mean 27 turns), plus the two long-lived sessions `manager-2` (`a-qx8ud`) and `pm-1`
+(`a-fs6oq`). Context at a call is `input + cache_creation + cache_read` tokens of the call's
+`usage`, which is what `bridle agents` shows as `context_tokens` (last turn). Tokens below are
+`bytes / 2.7`, the ratio that reconciles one worker's summed content (215 KB) with its measured growth
+(80K); the split is an estimate, the totals are not.
+
+### Verdict
+
+**There is no unexplained fixed cost.** The 48-60K is the ordinary context of a worker part-way
+through its task; only about 17K of it is the fixed start.
+
+- A real Sonnet worker's first call is **17.5K** (mean over 77; 17.1K for most, 19.7K for the few
+  that also carried a longer first message). That agrees with spike 08's 19K for Haiku with the
+  same flags (`get_context_usage` and the API's `usage` differ by a couple of K; not chased).
+- It then grows **~1.4K per turn** and ends at a median **53K** (mean 55K) after ~27 turns. That
+  is the "48-60K". Nothing else is added at start: the first call's `usage` already contains the
+  system prompt, tools, skills, CLAUDE.md and the first message, and the later calls only add what
+  the agent itself produced or read.
+- `manager-2` (545 turns) and `pm-1` (224) show 88K and 103K: the same growth over more turns, not
+  a bigger start.
+
+### One real fixed-cost finding: `manager-2` and `pm-1` started at 32K, not 17K
+
+Their first call is **32.7K and 32.1K**. Their spawn lines have no `--setting-sources project`,
+`--tools` or `--disallowedTools`: they predate `c8f5baa` (2026-09-28 01:47 -04; manager-2 started
+09-27 23:45, pm-1 01:05). Their `init` shows the human's setup leaking in: 4 plugins
+(skill-creator, rust-analyzer-lsp), **31 skills** (`anthropic-skills:*`, `deep-research`, ...), 67
+slash commands, 28 tools including `LSP`. That is the missing ~15K, and it goes away on a
+restart of those roles with today's `command.rs`. Every worker in the sample from 09-28 on is at
+17K.
+
+### Where a worker's 55K goes (mean of 77 workers, at the final call)
+
+| part | tokens | notes |
+|---|---|---|
+| fixed start (first call) | 17.5K | system prompt 5.0K (bridle's role file ~1.5K of it), tools 8.5K, skill/agent listings ~2.1K, CLAUDE.md 1.1K, first message ~0.7K |
+| the agent's own tool calls (`tool_use` input) | ~8.4K | heredocs, `sed -n` ranges, commit messages, task summaries |
+| thinking kept in context | ~6.2K | over-counted: the transcript stores the signature too |
+| source read through Bash (`cat`, `sed -n`) | ~6.0K | |
+| docs read through Bash | ~5.1K | |
+| `Read` of source / docs / other | ~2.7K / 1.1K / 1.3K | |
+| `just check` / cargo output | ~1.9K | |
+| git output | ~1.7K | |
+| CLAUDE.md, role file or rules re-read | ~1.1K | |
+| `bridle task show` | ~0.8K | one call in most tasks, the brief |
+| the agent's text, other Bash, `bridle ...`, grep | ~2.4K | |
+
+Sum ~56K against a measured mean of 55.3K. Reading (source, docs, output) is ~19K, what the
+agent writes and thinks ~15K, the fixed start 17.5K. `bridle prime` is never run by a worker
+(0 calls); its 12.5K output for `worker` (`bridle prime worker` today) exists but is not in their
+context. The ticket's 9K of `bridle prime` is an orchestrator figure.
+
+### Which files cost most (workers, whole-file reads, mean per read)
+
+| file | reads | bytes/read | note |
+|---|---|---|---|
+| `crates/bridle/src/cli.rs` | 21 | 13 KB | whole file when the worker needed one subcommand |
+| `CHANGELOG.md` | 11 | 15 KB | whole file read to add one entry |
+| `docs/design/cli.md` | 7 | 18 KB | |
+| `crates/bridle/src/commands.rs` | 20 | 6 KB | |
+| `docs/design/agent-host/*.md` (several `cat` in one command) | many | 17-27 KB per command | |
+
+Big multi-file `cat` commands (15-27 KB, ~6-10K tokens each) are the single largest items: one such
+command costs more than the whole role file and CLAUDE.md together.
+
+### Repeated text between preamble, role file, CLAUDE.md
+
+Small. Checked `system-prompt.md` (6.1 KB, worker) against `CLAUDE.md` (3.8 KB): repeated is the
+`just check` / `just check-affected` line, "no memory", and the pointer to docs; about 250 tokens
+in total. `Don't commit unless asked` in CLAUDE.md even contradicts the worker prompt, which says to
+commit; it costs nothing but is a trap. Not worth a task on its own.
+
+### Ranked recommendations (tokens saved per agent, worker unless said)
+
+1. **Restart `manager-2`/`pm-1` (and any other long-lived role) under today's flags:** ~15K each at
+   start (32K to 17K). No code change; takes effect at their next spawn. Interactive orchestrator
+   and advisor stay separate (step 4).
+2. **`--tools` whitelist (spike section above):** ~4.7K per worker/manager start (19.1K to 12.8K
+   measured, and the worker's first call today is 17.5K). Already the plan's step 2.
+3. **Tell workers to read by range, not whole file:** `CHANGELOG.md` (`head -30`, entries go on
+   top), `sed -n` for `cli.rs`/`commands.rs`, one design doc rather than the folder. Whole-file
+   reads of these four files alone are ~4-6K tokens per worker that touches them; a line in the
+   worker role file or a `docs/` index that says which doc covers what saves the `cat docs/design/*`
+   shotgun (~5K per worker). Estimated ~3-5K.
+4. **Keep the brief short and a pointer:** `bridle task show` is only 0.8K, so nothing to gain here;
+   the cost is the ticket and docs the brief points at. A brief that names the sections
+   (`file:lines`) instead of the file saves what item 3 saves.
+5. **Cap chatty output:** `just check` and cargo output ~1.9K, git ~1.7K per worker; `| tail -n 30`
+   in the worker role's check instruction saves ~1K.
+6. **Long-lived roles (manager, pm): compact or restart on a schedule.** They grow ~1.4K per turn
+   with no ceiling (88K and 103K); nothing at start explains it. Out of scope for a start-context
+   trim, but it is the largest single number in `bridle agents`. Related: the step-6 logging.
+7. **De-duplicate CLAUDE.md against the role prompt (~250 tokens) and drop the "Don't commit unless
+   asked" line for agents:** cosmetic, last.
+
+The system prompt itself (5.0K, ~1.5K of it bridle's) is not worth trimming: cutting the role
+file in half saves ~0.8K, less than any of items 1-3.
