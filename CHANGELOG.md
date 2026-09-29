@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `bridle doctor [--repo PATH]`: checks a project's setup (git repo, integration branch, config and the files it references, role prompts, `.gitignore`, `[ports]`, git >= 2.38, `claude`, `gh` when `[ci]` is on), prints ok/warn/FAIL with a one-line fix each, exits 1 on a failure (br-5a5d).
+- landing an arch-revision task opens one re-evaluate task per capability with suspect requirements (listing the ids, to confirm or edit) and notifies the manager (br-beab).
+- the landing notice to running workers says `spec changed under you: <ids/files>` when the landed commit touches a claimed task's declared impact (spec ids changed in design/specs, file globs); other workers keep the generic notice (br-66e2).
 - `bridle spec export --scenario ID` (repeatable; `s-` or `r-` ids) and `--task ID` (the scenarios in a task's declared impact; exits 1 if none declared) narrow the json/gherkin export to selected scenarios (br-b85c).
 - `bridle spec coverage [--root DIR] [--tests DIR ...] [--require-all] [--json]` lists executable scenarios whose id does not appear in test sources; scans text files under `--tests` directories (default `tests` and `test` if present) for scenario ids; exits 1 with `--require-all` if any unbound (br-b1e2).
 - `bridle spec id [paths...] [--root DIR] [--ledger FILE] [--dry-run]`: writes stable ids (`{#r-xxxx}`, `{#s-xxxx}`) into spec headings that lack one, editing only those lines, unique across the spec set and never reused, via a committed `design/specs/.ids` ledger (br-41e1).

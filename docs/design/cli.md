@@ -11,6 +11,7 @@ bridle [--url URL] [--project NAME] [--token T] [--json] <command>
 
 bridle serve   [--repo PATH] [--workspace DIR] [--listen ADDR] [--detach]
 bridle stop-daemon
+bridle doctor  [--repo PATH]                 check the project's setup, say what to fix; exit 1 on a failure
 bridle launchd install [--repo PATH] [--workspace DIR] [--force]   macOS: write the LaunchAgent plist, print launchctl commands
 bridle launchd uninstall                    remove the plist, print the bootout command
 bridle rebuild                               reconstructs tasks/edges/open_questions from the
@@ -342,6 +343,15 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   `{{commands.check}}`, substituted with `.bridle/config.toml`'s `[commands] check`
   (default `"just check"`, per-project — e.g. `"make check"`) so a base skill like
   `workflow/base/skills/worker/SKILL.md` doesn't hardcode one project's build tool.
+- **`doctor [--repo PATH]`**: local checks on the clone (default: the current directory),
+  each printed `ok`/`warn`/`FAIL` with a one-line fix (`--json`: the list). Git repo; the
+  integration branch exists (the g3ck failure mode); `.bridle/config.toml` loads (the
+  config loader's own error text); files it references exist (role `system_prompt`, `workflow`,
+  packs, component `docs`); every role has a prompt (warn); `.gitignore` covers
+  `.bridle/cache/`, `bridle.db` and `daemon.json` (warn); `bridle/state` exists once a
+  `bridle.db` does (warn); `[ports]` range sane; git >= 2.38; `claude` on PATH; `gh` on PATH
+  when `[ci] github` is on. Exits 1 if any check fails. It never fixes anything and does not
+  talk to a daemon; a dry `sync` check isn't done because `sync` has no check mode.
 - **`launchd install|uninstall`** (macOS only): writes/removes
   `~/Library/LaunchAgents/dev.bridle.<project>.plist` (project from `--project`, else the repo
   directory name) and prints, but never runs, the `launchctl bootstrap`/`bootout` commands.
@@ -506,7 +516,7 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   A last line lists the components not named with their docs folders, which is what
   makes the scoping soft. Local, reads the current directory, renders nothing to files;
   an unknown component id is an error. `--task ID` (worker) fetches the task, and an `explore` one
-  gets the exploring agent's paragraph first ([[docs/design/explorations|explorations]]). The role scope and the rest of the "commands still to build" surface (`init`, `doctor`) stay
+  gets the exploring agent's paragraph first ([[docs/design/explorations|explorations]]). The role scope and the rest of the "commands still to build" surface (`init`) stays
   in `Planned` below; `sync` is built (see above).
 
 ## Planned
@@ -515,7 +525,7 @@ Commands for the phases after v1 ([[docs/proposal/build-order|build order]]),
 as a first cut:
 
 ```
-bridle init | doctor                             project setup, health
+bridle init                                      project scaffolding (`doctor` is built)
 bridle task <cmd> at in_review|accepted          states not built yet
 bridle handoff                                   bridle accept <id> (human only)
 bridle inbox --inject

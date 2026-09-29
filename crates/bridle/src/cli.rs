@@ -38,6 +38,8 @@ pub enum Command {
     Serve(ServeArgs),
     /// Ask the daemon to shut down gracefully.
     StopDaemon,
+    /// Check the project's setup (git, config, tools, gitignore) and say what to fix; exit 1 on a failure.
+    Doctor(DoctorArgs),
     /// Write or remove a macOS LaunchAgent that runs the daemon (never runs launchctl).
     Launchd(LaunchdArgs),
     /// Reconstruct the tasks/edges/open_questions tables from the project's
@@ -467,6 +469,13 @@ pub struct SpecCoverageArgs {
     /// Exit 1 if any executable scenarios are unbound; default exit 0.
     #[arg(long)]
     pub require_all: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct DoctorArgs {
+    /// The project's clone. Defaults to the current directory.
+    #[arg(long)]
+    pub repo: Option<PathBuf>,
 }
 
 #[derive(Debug, Args)]
