@@ -12,14 +12,14 @@ use axum::routing::{get, post};
 use axum::{Extension, Json, Router};
 use bridle_api::types::{
     AddQueueTierRequest, Agent, AnswerQuestionRequest, ApiErrorResponse, AskQuestionRequest,
-    BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, DropTaskRequest, Edge, EditTaskRequest,
-    ErrorBody, Event, EventQuery, Health, HoldStatus, InteractiveUsageRow, InterruptRequest,
-    MaxWorkersRequest, Message, MessageQuery, MessageState, NewEdgeRequest, NewTaskRequest,
-    NoteTaskRequest, OpenQuestion, PrincipalKind, Queue, RateLimit, RemoveEdgeQuery, RemoveQuery,
-    RenewRequest, ResumeRequest, ScheduleOverrideStatus, SendRequest, SetQueueRequest,
-    SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery, TokenCreateRequest,
-    TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown,
-    UsageBreakdownQuery, UsageGroupBy, WindowStatus, event_kind,
+    BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, DoneTaskRequest, DropTaskRequest, Edge,
+    EditTaskRequest, ErrorBody, Event, EventQuery, Health, HoldStatus, InteractiveUsageRow,
+    InterruptRequest, MaxWorkersRequest, Message, MessageQuery, MessageState, NewEdgeRequest,
+    NewTaskRequest, NoteTaskRequest, OpenQuestion, PrincipalKind, Queue, RateLimit,
+    RemoveEdgeQuery, RemoveQuery, RenewRequest, ResumeRequest, ScheduleOverrideStatus, SendRequest,
+    SetQueueRequest, SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery,
+    TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
+    UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, WindowStatus, event_kind,
 };
 use chrono::Utc;
 use futures::Stream;
@@ -81,6 +81,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/tasks/{id}", get(get_task).patch(edit_task))
         .route("/v1/tasks/{id}/plan", post(plan_task))
         .route("/v1/tasks/{id}/drop", post(drop_task))
+        .route("/v1/tasks/{id}/done", post(done_task))
         .route("/v1/tasks/{id}/reopen", post(reopen_task))
         .route("/v1/tasks/{id}/ask", post(ask_task))
         .route("/v1/tasks/{id}/answer", post(answer_task))
@@ -1121,6 +1122,28 @@ async fn drop_task(
     Ok(Json(task))
 }
 
+async fn done_task(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path(id): Path<String>,
+    Json(req): Json<DoneTaskRequest>,
+) -> Result<Json<Task>, ApiError> {
+    let task = state
+        .tasks
+        .done_task(&id, &req.commit, &principal.id)
+        .await?;
+    let _ = state
+        .emitter
+        .emit(
+            event_kind::TASK_STATE,
+            principal.id,
+            None,
+            serde_json::json!({"task": task.id, "to": task.state}),
+        )
+        .await;
+    Ok(Json(task))
+}
+
 async fn reopen_task(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
@@ -1290,7 +1313,7 @@ async fn remove_edge(
 
 async fn get_queue(State(state): State<AppState>) -> Result<Json<Queue>, ApiError> {
     Ok(Json(Queue {
-        tiers: state.tasks.queue_tiers(),
+        tiers: state.tasks.live_queue_tiers(),
     }))
 }
 

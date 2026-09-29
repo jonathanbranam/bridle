@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- New terminal task state `integrated`, entered by `bridle task done <id> --commit <sha>` (the sha is recorded in the thread): it resolves the task's `blocks` edges, drops it from `bridle queue` and `ready`, and `reopen` works from it (ticket br-789a).
 - Changed: Claude's `allowed_warning` rate-limit status no longer forces wind-down; it is shown by `bridle budget` but the configured thresholds and overrides alone decide the governor state. `rejected` still forces paused (ticket kv7d).
 - `bridle task new|edit|note` now accept `--body-file` and `--text-file` options (mutually exclusive with `--body` and positional `TEXT` respectively), allowing long task bodies and notes to be passed via file or stdin to avoid shell metacharacter permission denials (ticket br-3822).
 - New disk usage monitor: every `[disk] check_interval` (default 1h, `0s` = off) the daemon logs and records as a `disk.checked` event the volume's free space and the sizes of the clone's `target/`, `wt/` and `.bridle/`, and messages the human once when free space falls under `[disk] min_free_gb` (default 20) (ticket m3wq).

@@ -942,8 +942,8 @@ impl std::str::FromStr for TaskKind {
 
 /// The lifecycle states this build knows about
 /// ([[docs/design/roles-and-lifecycle#Task lifecycle|task lifecycle]]).
-/// `in_review`, `integrated` and `accepted` arrive with later tasks that
-/// build on top of this record.
+/// `in_review` and `accepted` arrive with later tasks that build on top of
+/// this record.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum TaskState {
@@ -955,7 +955,10 @@ pub enum TaskState {
     Claimed,
     /// Requires a reason, recorded in the thread.
     Dropped,
-    /// A dropped task brought back; only reachable from `dropped`.
+    /// Merged; requires the merge commit, recorded in the thread. Terminal
+    /// and resolves `blocks` edges; leaves the queue and `ready`.
+    Integrated,
+    /// A dropped or integrated task brought back.
     Reopened,
 }
 
@@ -966,6 +969,7 @@ impl TaskState {
             Self::Planned => "planned",
             Self::Claimed => "claimed",
             Self::Dropped => "dropped",
+            Self::Integrated => "integrated",
             Self::Reopened => "reopened",
         }
     }
@@ -1083,6 +1087,12 @@ pub struct EditTaskRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DropTaskRequest {
     pub reason: String,
+}
+
+/// `POST /v1/tasks/{id}/done`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DoneTaskRequest {
+    pub commit: String,
 }
 
 /// `POST /v1/tasks/{id}/ask`.

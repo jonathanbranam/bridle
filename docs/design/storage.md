@@ -187,9 +187,9 @@ idling on a blocked one, and never moves a task between tiers itself.
 
 ## The state branch
 
-Built for task records at the `open`/`planned`/`claimed`/`dropped`/`reopened`
+Built for task records at the `open`/`planned`/`claimed`/`dropped`/`integrated`/`reopened`
 states (`crates/bridle-daemon/src/state_branch.rs`, `src/tasks.rs`),
-including claims and the queue now (above); `in_review`, `integrated` and
+including claims and the queue now (above); `in_review` and
 `accepted`, and the edges/questions that go with them, are still only
 designed
 ([[task-records-on-a-state-branch-or-in-tree-c7eb|decided]]).

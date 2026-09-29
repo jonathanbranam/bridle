@@ -6,8 +6,8 @@ use std::path::Path;
 use anyhow::Context;
 use bridle_api::discovery::{self, Env, ProcessEnv};
 use bridle_api::{
-    BudgetHoldRequest, BudgetOverrideRequest, Client, DropTaskRequest, Edge, EdgeKind,
-    EditTaskRequest, Event, EventQuery, InterruptRequest, MaxWorkersRequest, MessageKind,
+    BudgetHoldRequest, BudgetOverrideRequest, Client, DoneTaskRequest, DropTaskRequest, Edge,
+    EdgeKind, EditTaskRequest, Event, EventQuery, InterruptRequest, MaxWorkersRequest, MessageKind,
     MessageQuery, NewEdgeRequest, NewTaskRequest, RemoveEdgeQuery, RemoveQuery, RenewRequest,
     ResumeRequest, SendRequest, SpawnRequest, StopRequest, Task, TaskKind, TokenCreateRequest,
     UsageBreakdownQuery, UsageGroupBy, Workdir,
@@ -21,9 +21,9 @@ use crate::cli::{
     EventsArgs, InboxAction, InboxArgs, InboxReadArgs, InboxShowArgs, InterruptArgs, LogsArgs,
     PrimeArgs, PrimeRoleArg, QueueAction, QueueAddTierArgs, QueueArgs, QueueSetArgs, ReadyArgs,
     ReleaseArgs, RmArgs, RulesAction, RulesArgs, RulesDiffArgs, RulesExplainArgs, SendArgs,
-    ShowArgs, SpawnArgs, StopArgs, TaskAction, TaskArgs, TaskDropArgs, TaskEditArgs, TaskKindArg,
-    TaskListArgs, TaskNewArgs, TaskNoteArgs, TaskPlanArgs, TaskReopenArgs, TaskShowArgs,
-    TokenAction, TokenArgs, UsageArgs, UsageByArg, WhenArg,
+    ShowArgs, SpawnArgs, StopArgs, TaskAction, TaskArgs, TaskDoneArgs, TaskDropArgs, TaskEditArgs,
+    TaskKindArg, TaskListArgs, TaskNewArgs, TaskNoteArgs, TaskPlanArgs, TaskReopenArgs,
+    TaskShowArgs, TokenAction, TokenArgs, UsageArgs, UsageByArg, WhenArg,
 };
 use crate::error::CliError;
 use crate::render;
@@ -1663,6 +1663,7 @@ async fn task(cli: &Cli, args: &TaskArgs) -> Result<(), CliError> {
         TaskAction::List(a) => task_list(cli, a).await,
         TaskAction::Plan(a) => task_plan(cli, a).await,
         TaskAction::Drop(a) => task_drop(cli, a).await,
+        TaskAction::Done(a) => task_done(cli, a).await,
         TaskAction::Reopen(a) => task_reopen(cli, a).await,
         TaskAction::Note(a) => task_note(cli, a).await,
     }
@@ -1813,6 +1814,20 @@ async fn task_drop(cli: &Cli, args: &TaskDropArgs) -> Result<(), CliError> {
         reason: args.reason.clone(),
     };
     let task = client.drop_task(&args.task, &req).await?;
+    if cli.json {
+        render::print_json(&task)?;
+    } else {
+        print_task_row(&task);
+    }
+    Ok(())
+}
+
+async fn task_done(cli: &Cli, args: &TaskDoneArgs) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let req = DoneTaskRequest {
+        commit: args.commit.clone(),
+    };
+    let task = client.done_task(&args.task, &req).await?;
     if cli.json {
         render::print_json(&task)?;
     } else {
