@@ -206,7 +206,8 @@ fn body(lines: &[&str]) -> (String, Option<String>) {
     alt.extend(&lines[start + 1..start + len]);
     let alt = alt.join("\n").trim().to_string();
     let mut rest = lines[..start].to_vec();
-    rest.extend(&lines[start + len..]);
+    // Drop the blank line that ended the paragraph too.
+    rest.extend(&lines[(start + len + 1).min(lines.len())..]);
     (rest.join("\n").trim().to_string(), Some(alt))
 }
 
