@@ -4,10 +4,29 @@ mod support;
 
 use bridle_api::types::{StatusLineRateLimitReading, StatusLineReport};
 use chrono::Utc;
+use std::time::Duration;
 
 #[tokio::test]
 async fn statusline_report_feeds_rate_limits_and_usage() {
-    let (daemon, _tmp) = support::start_daemon(None).await;
+    // The default test daemon polls the fake `get_usage` (five_hour 1%) on
+    // every governor tick, which would overwrite the statusline reading;
+    // an hour-long interval leaves only the report as a source. The first
+    // poll still fires at startup, so wait for it before reporting.
+    let (daemon, _tmp) = support::start_daemon(Some(bridle_daemon::Overrides {
+        governor_poll_interval_normal: Duration::from_secs(3600),
+        governor_poll_interval_above_hold: Duration::from_secs(3600),
+        ..support::default_overrides()
+    }))
+    .await;
+    support::wait_for("first get_usage poll", || async {
+        let usage = daemon.client.usage().await.ok()?;
+        usage
+            .rate_limits
+            .iter()
+            .find(|rl| rl.window == "five_hour")?;
+        Some(())
+    })
+    .await;
 
     daemon
         .client
