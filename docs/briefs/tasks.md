@@ -46,8 +46,10 @@ affect anything. A task is **ready** when it is `planned`, every task blocking i
 integrated (or dropped), and it has no open question. `dep rm` removes an edge. **Built.**
 
 `bridle ask <task> "text"` records a question on the task and takes it out of `ready` until
-`bridle answer <task> "text"`. A task has at most one open question. **Built**, but see
-gaps: nothing notifies anyone.
+`bridle answer <task> "text"`. A task has at most one open question. `ask` also sends a
+pointer message (kind `question`) to `--to` (an agent, `role:NAME`, `external:NAME` or
+`human`), by default the caller's spawner or, for a human caller, the human; `answer` sends
+the asker a pointer back. The thread stays the record. **Built.**
 
 ## Claims and leases
 
@@ -109,8 +111,6 @@ requirements is **planned** (the marker parses; nothing enforces it).
 
 ## Gaps and known rough edges
 
-- `ask` writes to the task, addressed to the task itself; I found nothing that puts it in
-  anyone's inbox or messages a person. The asker must also `bridle send`.
 - `bridle ready --role` is accepted and ignored (tasks carry no role).
 - Any principal can `plan`, `done` or `drop`; only the queue is gated.
 - A crash between a write and the next state-branch flush can lose an edit to a task's body
@@ -121,9 +121,6 @@ requirements is **planned** (the marker parses; nothing enforces it).
 
 ## Where design docs disagree with the code
 
-- `docs/design/cli.md` ("rebuild") and a comment in `tasks.rs` say claims are SQLite-only
-  and lost in a rebuild; `storage.md` and the code say they are on the state branch
-  (`claims.toml`) and restored (j479). The latter is current.
 - `docs/design/roles-and-lifecycle.md` and `coordination.md` describe roles and checks
   (plan gates, protected requirements, role-filtered `ready`) beyond what is enforced; see
   above.

@@ -548,11 +548,17 @@ impl Client {
         self.post_empty(&["v1", "tasks", id, "plan"]).await
     }
 
-    pub async fn ask_question(&self, id: &str, body: &str) -> Result<Task, ClientError> {
+    pub async fn ask_question(
+        &self,
+        id: &str,
+        body: &str,
+        to: Option<&str>,
+    ) -> Result<Task, ClientError> {
         self.post_json(
             &["v1", "tasks", id, "ask"],
             &AskQuestionRequest {
                 body: body.to_string(),
+                to: to.map(str::to_string),
             },
         )
         .await

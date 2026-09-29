@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `bridle ask` now notifies someone: it sends a pointer message (kind `question`) to `--to` (default: the caller's spawner, or the human), and `bridle answer` sends one back to the asker. Docs and comments that called claims SQLite-only are corrected: they are mirrored to `claims.toml` and restored by `rebuild` (br-b966).
+
 - `bridle send` and `task note` refuse an empty or whitespace-only body (CLI and API); the worker skill, role and stop-check tell workers to report to their manager, not `human` (br-6fd7, hx7t).
 ### Changed
 

@@ -921,7 +921,9 @@ fn format_age(age: chrono::Duration) -> String {
 
 async fn ask(cli: &Cli, args: &AskArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
-    let task = client.ask_question(&args.task, &args.text).await?;
+    let task = client
+        .ask_question(&args.task, &args.text, args.to.as_deref())
+        .await?;
     if cli.json {
         render::print_json(&task)?;
     } else {

@@ -1103,10 +1103,9 @@ pub struct Task {
     pub thread: Vec<ThreadEntry>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
-    /// The claim, if any. Null when unclaimed. Ephemeral: SQLite-only, with
-    /// no state-branch counterpart (docs/design/storage.md), so a task read
-    /// back from the state branch alone (e.g. after `rebuild`) never carries
-    /// one, even if it was claimed before the last flush.
+    /// The claim, if any. Null when unclaimed. Kept in SQLite and mirrored
+    /// to `claims.toml` on the state branch (docs/design/storage.md); the
+    /// task file itself carries no claim, so it comes from the claim set.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub claimed_by: Option<PrincipalId>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -1381,6 +1380,10 @@ pub struct SetSummaryRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AskQuestionRequest {
     pub body: String,
+    /// Who gets the pointer message: `human`, `role:NAME`, `external:NAME` or
+    /// an agent. Default: the caller's spawner, or `human`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub to: Option<String>,
 }
 
 /// `POST /v1/tasks/{id}/answer`.

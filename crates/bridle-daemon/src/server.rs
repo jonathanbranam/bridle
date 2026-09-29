@@ -24,6 +24,7 @@ use bridle_api::types::{
     TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
     UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, When, WindowStatus, event_kind,
 };
+use bridle_api::types::{PrincipalId, ThreadEntryKind};
 use chrono::Utc;
 use futures::Stream;
 use serde::Deserialize;
@@ -751,16 +752,10 @@ async fn list_messages(
     Ok(Json(msgs))
 }
 
-async fn send_message(
-    State(state): State<AppState>,
-    Extension(principal): Extension<Principal>,
-    Json(req): Json<SendRequest>,
-) -> Result<Json<Vec<Message>>, ApiError> {
-    require_body(&req)?;
-    let Some(to_raw) = req.to.as_deref() else {
-        return Err(ApiError::bad_request("`to` is required"));
-    };
-    let targets = if to_raw == "human" {
+/// Resolves a `to` string (`human`, `external:NAME`, `role:NAME` or an agent) to
+/// its delivery targets; unknown recipients are a 404.
+async fn resolve_targets(state: &AppState, to_raw: &str) -> Result<Vec<ToTarget>, ApiError> {
+    Ok(if to_raw == "human" {
         vec![ToTarget::Human]
     } else if let Some(name) = to_raw.strip_prefix("external:") {
         if !state.store.external_exists(name).await? {
@@ -789,7 +784,19 @@ async fn send_message(
             .await?
             .ok_or_else(|| ApiError::not_found(format!("no such recipient: {to_raw}")))?;
         vec![ToTarget::Agent(agent.id)]
+    })
+}
+
+async fn send_message(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Json(req): Json<SendRequest>,
+) -> Result<Json<Vec<Message>>, ApiError> {
+    require_body(&req)?;
+    let Some(to_raw) = req.to.as_deref() else {
+        return Err(ApiError::bad_request("`to` is required"));
     };
+    let targets = resolve_targets(&state, to_raw).await?;
     // The full text goes on the task's thread (an unknown task fails here,
     // before anything is sent); recipients get a short pointer to it.
     let body = match req.task.as_deref() {
@@ -1874,12 +1881,78 @@ async fn reopen_task(
     Ok(Json(task))
 }
 
+/// Sends the recipients of a question or answer a short pointer to the task
+/// thread, which stays the record.
+async fn send_task_pointer(
+    state: &AppState,
+    from: &PrincipalId,
+    targets: Vec<ToTarget>,
+    kind: MessageKind,
+    task_id: &str,
+    what: &str,
+    body: &str,
+) -> Result<(), ApiError> {
+    let first = body.lines().find(|l| !l.trim().is_empty()).unwrap_or("");
+    let pointer = format!("{task_id}: {what}\n{first}");
+    for target in targets {
+        state
+            .manager
+            .send(
+                from.clone(),
+                target,
+                kind,
+                pointer.clone(),
+                Default::default(),
+                None,
+            )
+            .await?;
+    }
+    Ok(())
+}
+
+/// The delivery target for a principal id, or `None` when it is an agent that
+/// no longer exists.
+async fn target_for_principal(state: &AppState, id: &str) -> Result<Option<ToTarget>, ApiError> {
+    if id == "human" {
+        return Ok(Some(ToTarget::Human));
+    }
+    if id.starts_with("external:") {
+        return Ok(Some(ToTarget::External(id.to_string())));
+    }
+    let name = id.strip_prefix("agent:").unwrap_or(id);
+    Ok(state
+        .store
+        .get_agent(name)
+        .await?
+        .map(|a| ToTarget::Agent(a.id)))
+}
+
 async fn ask_task(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
     Path(id): Path<String>,
     Json(req): Json<AskQuestionRequest>,
 ) -> Result<Json<Task>, ApiError> {
+    // Resolved before the question is recorded, so a bad `--to` leaves no
+    // open question behind. The default is the caller's spawner (an agent
+    // caller) or the human.
+    let targets = match req.to.as_deref() {
+        Some(to) => resolve_targets(&state, to).await?,
+        None => {
+            let spawner = match principal.kind {
+                PrincipalKind::Agent => {
+                    let name = principal.id.strip_prefix("agent:").unwrap_or(&principal.id);
+                    state.store.get_agent(name).await?.map(|a| a.created_by)
+                }
+                _ => None,
+            };
+            let target = match spawner {
+                Some(s) => target_for_principal(&state, &s).await?,
+                None => None,
+            };
+            vec![target.unwrap_or(ToTarget::Human)]
+        }
+    };
     let task = state
         .tasks
         .ask_question(&id, &principal.id, &req.body)
@@ -1888,11 +1961,21 @@ async fn ask_task(
         .emitter
         .emit(
             event_kind::TASK_QUESTION_ASKED,
-            principal.id,
+            principal.id.clone(),
             None,
             serde_json::json!({"task": task.id}),
         )
         .await;
+    send_task_pointer(
+        &state,
+        &principal.id,
+        targets,
+        MessageKind::Question,
+        &task.id,
+        "question asked",
+        &req.body,
+    )
+    .await?;
     Ok(Json(task))
 }
 
@@ -1902,6 +1985,13 @@ async fn answer_task(
     Path(id): Path<String>,
     Json(req): Json<AnswerQuestionRequest>,
 ) -> Result<Json<Task>, ApiError> {
+    let asker = state.tasks.get_task(&id).and_then(|t| {
+        t.thread
+            .iter()
+            .rev()
+            .find(|e| e.kind == ThreadEntryKind::Question)
+            .map(|e| e.from.clone())
+    });
     let task = state
         .tasks
         .answer_question(&id, &principal.id, &req.body)
@@ -1910,11 +2000,25 @@ async fn answer_task(
         .emitter
         .emit(
             event_kind::TASK_QUESTION_ANSWERED,
-            principal.id,
+            principal.id.clone(),
             None,
             serde_json::json!({"task": task.id}),
         )
         .await;
+    if let Some(asker) = asker.filter(|a| *a != principal.id)
+        && let Some(target) = target_for_principal(&state, &asker).await?
+    {
+        send_task_pointer(
+            &state,
+            &principal.id,
+            vec![target],
+            MessageKind::Answer,
+            &task.id,
+            "question answered",
+            &req.body,
+        )
+        .await?;
+    }
     Ok(Json(task))
 }
 

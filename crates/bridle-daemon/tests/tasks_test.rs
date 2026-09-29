@@ -180,7 +180,7 @@ async fn ask_blocks_a_task_and_answer_frees_it_again() {
     assert!(c.list_open_questions().await.expect("list").is_empty());
 
     let asked = c
-        .ask_question(&task.id, "which endpoint?")
+        .ask_question(&task.id, "which endpoint?", None)
         .await
         .expect("ask question");
     assert_eq!(asked.thread.len(), 1);
@@ -194,7 +194,7 @@ async fn ask_blocks_a_task_and_answer_frees_it_again() {
 
     // A second question while one is already open is a conflict.
     let err = c
-        .ask_question(&task.id, "another one?")
+        .ask_question(&task.id, "another one?", None)
         .await
         .expect_err("already has an open question");
     assert!(matches!(err, ClientError::Api { status: 409, .. }));
@@ -1009,4 +1009,135 @@ async fn status_lists_stopped_agents_whose_branch_has_merged() {
         c.status().await.expect("status").merged_leftovers,
         vec!["landed".to_string()]
     );
+}
+
+fn spawn_req(name: &str) -> SpawnRequest {
+    SpawnRequest {
+        components: Vec::new(),
+        role: "worker".to_string(),
+        name: Some(name.to_string()),
+        prompt: None,
+        workdir: Some(Workdir::Repo),
+        model: None,
+        extra_allowed_tools: Vec::new(),
+        extra_env: Vec::new(),
+        ignore_budget: false,
+    }
+}
+
+fn agent_client(daemon: &support::TestDaemon, agent_id: &str) -> bridle_api::Client {
+    let path = daemon
+        .workspace
+        .join(".bridle/agents")
+        .join(agent_id)
+        .join("token");
+    let token = std::fs::read_to_string(path).expect("agent token file");
+    bridle_api::Client::new(daemon.running.url.clone(), Some(token.trim().to_string()))
+}
+
+async fn inbox(c: &bridle_api::Client, to: &str) -> Vec<bridle_api::types::Message> {
+    c.list_messages(&bridle_api::types::MessageQuery {
+        to: Some(to.to_string()),
+        ..Default::default()
+    })
+    .await
+    .expect("list messages")
+}
+
+/// br-b966: `ask` sends a pointer (kind question) to `--to`, `answer` sends
+/// one back to the asker, and a blank body is refused with nothing sent.
+#[tokio::test]
+async fn ask_with_to_notifies_that_recipient_and_answer_notifies_the_asker() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let c = &daemon.client;
+    let boss = c.spawn(&spawn_req("boss")).await.expect("spawn boss");
+    let task = c
+        .new_task(&new_req("Add foo", TaskKind::Feature))
+        .await
+        .expect("new task");
+
+    let err = c
+        .ask_question(&task.id, "  ", Some("boss"))
+        .await
+        .expect_err("blank question");
+    assert!(
+        matches!(err, ClientError::Api { status: 400, .. }),
+        "{err:?}"
+    );
+    assert!(inbox(c, &boss.id).await.is_empty());
+
+    // An unknown recipient leaves no open question behind.
+    let err = c
+        .ask_question(&task.id, "which endpoint?", Some("nobody"))
+        .await
+        .expect_err("unknown recipient");
+    assert!(
+        matches!(err, ClientError::Api { status: 404, .. }),
+        "{err:?}"
+    );
+    assert!(c.list_open_questions().await.expect("list").is_empty());
+
+    c.ask_question(&task.id, "which endpoint?", Some("boss"))
+        .await
+        .expect("ask");
+    let msgs = inbox(c, &boss.id).await;
+    assert_eq!(msgs.len(), 1);
+    assert_eq!(msgs[0].kind, bridle_api::types::MessageKind::Question);
+    assert!(msgs[0].body.contains(&task.id) && msgs[0].body.contains("which endpoint?"));
+
+    // The human answers; the asker (the human here) is not messaged about
+    // their own answer, but a boss-asked question gets its pointer back.
+    let boss_c = agent_client(&daemon, &boss.id);
+    c.answer_question(&task.id, "v1").await.expect("answer");
+    assert!(inbox(c, "human").await.is_empty());
+    boss_c
+        .ask_question(&task.id, "and the port?", Some("human"))
+        .await
+        .expect("ask as boss");
+    assert_eq!(inbox(c, "human").await.len(), 1);
+    c.answer_question(&task.id, "8080").await.expect("answer");
+    let back = inbox(c, &boss.id).await;
+    assert_eq!(back.len(), 2);
+    assert_eq!(back[1].kind, bridle_api::types::MessageKind::Answer);
+}
+
+/// br-b966: with no `--to`, an agent's question goes to its spawner and a
+/// human caller's to the human.
+#[tokio::test]
+async fn ask_defaults_to_the_spawner_or_the_human() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let c = &daemon.client;
+    let mut req = spawn_req("boss");
+    req.role = "manager".to_string();
+    let boss = c.spawn(&req).await.expect("spawn boss");
+    let w1 = agent_client(&daemon, &boss.id)
+        .spawn(&spawn_req("w1"))
+        .await
+        .expect("boss spawns w1");
+    let task = c
+        .new_task(&new_req("Add foo", TaskKind::Feature))
+        .await
+        .expect("new task");
+
+    agent_client(&daemon, &w1.id)
+        .ask_question(&task.id, "which endpoint?", None)
+        .await
+        .expect("ask as w1");
+    let questions = |msgs: Vec<bridle_api::types::Message>| {
+        msgs.into_iter()
+            .filter(|m| m.kind == bridle_api::types::MessageKind::Question)
+            .count()
+    };
+    assert_eq!(questions(inbox(c, &boss.id).await), 1);
+    assert_eq!(questions(inbox(c, "human").await), 0);
+
+    c.answer_question(&task.id, "v1").await.expect("answer");
+    let back = inbox(c, &w1.id).await;
+    assert_eq!(back.len(), 1);
+    assert_eq!(back[0].kind, bridle_api::types::MessageKind::Answer);
+
+    c.ask_question(&task.id, "and you?", None)
+        .await
+        .expect("ask as human");
+    assert_eq!(inbox(c, "human").await.len(), 1);
 }

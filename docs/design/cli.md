@@ -15,8 +15,8 @@ bridle init    [--repo PATH] [--name N] [--integration BRANCH] [--stack S]  scaf
 bridle doctor  [--repo PATH]                 check the project's setup, say what to fix; exit 1 on a failure
 bridle launchd install [--repo PATH] [--workspace DIR] [--force]   macOS: write the LaunchAgent plist, print launchctl commands
 bridle launchd uninstall                    remove the plist, print the bootout command
-bridle rebuild                               reconstructs tasks/edges/open_questions from the
-                                              state branch alone; the migration path for a fresh
+bridle rebuild                               reconstructs tasks/edges/open_questions/claims
+                                              (claims.toml) from the state branch alone; the migration path for a fresh
                                               clone with no bridle.db yet
 bridle daemons                              # every running project daemon on this machine, with agent counts
 bridle status                               # daemon, agents, Claude Code version, last CI result (sha, conclusion, age, url) when [ci] github is on
@@ -30,8 +30,8 @@ bridle send    <agent|human|role:NAME> [TEXT | --text-file FILE] [--question] [-
 bridle inbox   [--all] [--mark-read]        # messages to me, plus every task's open question (list)
 bridle inbox show <id> [--no-mark-read]     # show one message in full, mark read by default
 bridle inbox read <id>...                   # mark one or more messages read
-bridle ask     <task-id> TEXT                    question against a task; blocks it until answered
-bridle answer  <task-id> TEXT                    answers a task's open question; frees it to be ready again
+bridle ask     <task-id> TEXT [--to WHO]         question against a task; blocks it until answered, and sends a pointer message (kind question) to WHO (agent, role:NAME, external:NAME, human); default: the caller's spawner, or human
+bridle answer  <task-id> TEXT                    answers a task's open question; frees it to be ready again; sends the asker a pointer (kind answer)
 bridle claim   <task-id>                         claims a ready task for the caller: planned -> claimed
 bridle release <task-id>                         releases the caller's own claim: claimed -> planned
 bridle ready   [--all] [--role R]                the highest queue tier with a startable task (planned, deps met, no open question, unclaimed)

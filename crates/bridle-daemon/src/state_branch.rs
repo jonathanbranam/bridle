@@ -636,8 +636,8 @@ struct ClaimsFile<'a> {
 
 /// The whole claim set as one `claims.toml`, mirroring [`render_edges`]'s
 /// wholesale-array-of-tables shape. Unlike edges, this one does have a read
-/// path back (`parse_claims`, [`StateBranch::list_claims`]): claims are
-/// SQLite-only otherwise (storage.md), so this file is the only durable copy
+/// path back (`parse_claims`, [`StateBranch::list_claims`]): the task
+/// files carry no claim (storage.md), so this file is the only durable copy
 /// `bridle rebuild` can restore them from.
 fn render_claims(claims: &[ClaimRecord]) -> Result<String, StateBranchError> {
     let file = ClaimsFile {

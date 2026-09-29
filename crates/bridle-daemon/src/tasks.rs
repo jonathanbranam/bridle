@@ -99,9 +99,10 @@ pub struct TaskManager {
     /// answer without a database round trip.
     open_questions: Arc<Mutex<HashMap<String, String>>>,
     /// Task id -> (claimant, claimed at), for every currently claimed task.
-    /// Mirrors `Store::list_claims`, loaded at `open`. Unlike
-    /// `open_questions`, there's no state-branch counterpart at all
-    /// (storage.md: claims is SQLite-only), and this is also the source of
+    /// Mirrors `Store::list_claims`, loaded at `open`. Like
+    /// `open_questions` it is a SQLite table, but the whole set is also
+    /// mirrored to `claims.toml` on the state branch and restored by a
+    /// rebuild (storage.md); this is also the source of
     /// `Task::claimed_by`/`claimed_at` on the cached task.
     claims: Arc<Mutex<HashMap<String, ClaimEntry>>>,
     /// How long a claim survives without the claiming agent's own activity

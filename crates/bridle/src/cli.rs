@@ -1208,6 +1208,10 @@ pub enum DepAction {
 pub struct AskArgs {
     pub task: String,
     pub text: String,
+    /// Who to notify: an agent, `role:NAME`, `external:NAME` or `human`.
+    /// Default: your spawner (an agent) or the human.
+    #[arg(long)]
+    pub to: Option<String>,
 }
 
 #[derive(Debug, Args)]
