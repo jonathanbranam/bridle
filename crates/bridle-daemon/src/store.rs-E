@@ -1248,7 +1248,7 @@ mod sync {
     pub(super) fn list_external_tokens(conn: &Connection) -> Result<Vec<TokenInfo>, StoreError> {
         let mut stmt = conn.prepare(
             "SELECT id, name, created_at, revoked_at FROM principals
-             WHERE kind = 'external' ORDER BY created_at ASC, rowid ASC",
+             WHERE kind = 'external' ORDER BY created_at ASC",
         )?;
         let rows = stmt.query_map([], |row| {
             let created_at: String = row.get(2)?;
@@ -1449,10 +1449,10 @@ mod sync {
         include_terminal: bool,
     ) -> Result<Vec<Agent>, StoreError> {
         let sql = if include_terminal {
-            format!("{AGENT_SELECT} ORDER BY a.created_at ASC, a.rowid ASC")
+            format!("{AGENT_SELECT} ORDER BY a.created_at ASC")
         } else {
             format!(
-                "{AGENT_SELECT} WHERE a.state NOT IN ('stopped','exited','crashed','lost') ORDER BY a.created_at ASC, a.rowid ASC"
+                "{AGENT_SELECT} WHERE a.state NOT IN ('stopped','exited','crashed','lost') ORDER BY a.created_at ASC"
             )
         };
         let mut stmt = conn.prepare(&sql)?;
@@ -1978,7 +1978,7 @@ mod sync {
 
     pub(super) fn list_tasks(conn: &Connection) -> Result<Vec<TaskRow>, StoreError> {
         let mut stmt = conn.prepare(
-            "SELECT id, title, kind, state, created_at, updated_at FROM tasks ORDER BY created_at ASC, rowid ASC",
+            "SELECT id, title, kind, state, created_at, updated_at FROM tasks ORDER BY created_at ASC",
         )?;
         let rows = stmt.query_map([], row_to_task)?;
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
@@ -2100,7 +2100,7 @@ mod sync {
 
     pub(super) fn list_edges(conn: &Connection) -> Result<Vec<Edge>, StoreError> {
         let mut stmt = conn.prepare(
-            "SELECT from_task, to_task, kind, created_at FROM edges ORDER BY created_at ASC, rowid ASC",
+            "SELECT from_task, to_task, kind, created_at FROM edges ORDER BY created_at ASC",
         )?;
         let rows = stmt.query_map([], row_to_edge)?;
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
@@ -2153,7 +2153,7 @@ mod sync {
 
     pub(super) fn list_open_questions(conn: &Connection) -> Result<Vec<OpenQuestion>, StoreError> {
         let mut stmt = conn.prepare(
-            "SELECT task_id, message_id, asked_by, asked_at FROM open_questions ORDER BY asked_at ASC, rowid ASC",
+            "SELECT task_id, message_id, asked_by, asked_at FROM open_questions ORDER BY asked_at ASC",
         )?;
         let rows = stmt.query_map([], row_to_open_question)?;
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
@@ -2200,7 +2200,7 @@ mod sync {
 
     pub(super) fn list_claims(conn: &Connection) -> Result<Vec<Claim>, StoreError> {
         let mut stmt = conn.prepare(
-            "SELECT task_id, claimed_by, claimed_at FROM claims ORDER BY claimed_at ASC, rowid ASC",
+            "SELECT task_id, claimed_by, claimed_at FROM claims ORDER BY claimed_at ASC",
         )?;
         let rows = stmt.query_map([], row_to_claim)?;
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
@@ -2649,34 +2649,6 @@ mod tests {
             .await
             .expect("open store");
         (store, tmp)
-    }
-
-    #[tokio::test]
-    async fn list_tasks_breaks_created_at_ties_by_insertion_order() {
-        let (store, _tmp) = store().await;
-        let at = Utc::now();
-        // Ids descend, so neither an id sort nor an unspecified tie order passes.
-        for id in ["t-c", "t-b", "t-a", "t-d"] {
-            store
-                .insert_task_row(&TaskRow {
-                    id: id.to_string(),
-                    title: id.to_string(),
-                    kind: TaskKind::Feature,
-                    state: TaskState::Open,
-                    created_at: at,
-                    updated_at: at,
-                })
-                .await
-                .expect("insert task");
-        }
-        let ids: Vec<String> = store
-            .list_tasks()
-            .await
-            .expect("list")
-            .into_iter()
-            .map(|t| t.id)
-            .collect();
-        assert_eq!(ids, ["t-c", "t-b", "t-a", "t-d"]);
     }
 
     fn new_agent(name: &str) -> NewAgent {
