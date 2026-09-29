@@ -4,7 +4,7 @@ title = "stop-daemon reports progress and completion (q23k)"
 kind = "bug"
 state = "integrated"
 created_at = "2026-09-29T20:34:11.054Z"
-updated_at = "2026-09-29T20:44:25.879141Z"
+updated_at = "2026-09-29T20:44:45.621482Z"
 size = "S"
 branch = "bridle/stop-progress"
 commit = "1059ed6"
@@ -26,3 +26,6 @@ done: client tolerates a 204/empty shutdown reply (prints 'acknowledged; the dae
 
 ### note · agent:manager-2 · 2026-09-29T20:44:25.879Z
 integrated: 1059ed6 (branch bridle/stop-progress)
+
+### note · agent:manager-2 · 2026-09-29T20:44:45.621Z
+cleanup: removed agent stop-progress, branch bridle/stop-progress
