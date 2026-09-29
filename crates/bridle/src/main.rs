@@ -4,6 +4,7 @@
 mod cli;
 mod commands;
 mod error;
+mod goals;
 mod launchd;
 mod prime;
 mod render;

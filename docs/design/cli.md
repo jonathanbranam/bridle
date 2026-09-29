@@ -92,6 +92,13 @@ bridle spec export --format gherkin|json [--out DIR] [paths...] [--root DIR]
                                              whole AST (documented in specs-to-tests.md) on stdout, or
                                              `specs.json` in --out; refuses, printing the diagnostics,
                                              when any spec has errors; local only, no daemon call
+bridle goals list [--root DIR] [--priority P] [--stance S]   lists goals (docs/design/goals-tier.md) from
+                                             `*.md` under --root (default `design/goals`): id, firmness,
+                                             priority, stance, title per line; the stance is defaulted from
+                                             the priority when not written; --json prints the goals and
+                                             diagnostics; diagnostics go to stderr as file:line:col: message
+                                             (an unaddressed goal without a why is a warning); exit 1 on
+                                             any error; local only, no daemon call
 bridle spec import openspec [--from DIR] [--to DIR] [--dry-run]   moves each `<from>/<cap>/spec.md`
                                              (default `openspec/specs`) to `<to>/<cap>.md` (default
                                              `design/specs`) with `git mv` (plain rename if untracked),
@@ -456,7 +463,7 @@ bridle take|give <agent>                         human takeover of a headless ag
 bridle impact set|show|check bridle conflict list|resolve
 bridle spec check|id|export|coverage|import   `check`, `id`, `export`, `import openspec` are built (see Built)
 bridle rules show|propose                        `explain`/`diff --project-layer` are built (see Built)
-bridle goals list|propose       bridle arch propose
+bridle goals propose            bridle arch propose   (`goals list` is built, see Built)
 bridle trace up|down|suspect|confirm|orphans|coverage
 bridle explore new|conclude|adopt|abandon
 bridle usage --by project|kind|task|trend|compare

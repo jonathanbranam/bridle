@@ -17,9 +17,11 @@
 
 pub mod arch;
 pub mod explore;
+mod goals;
 mod ids;
 mod parse;
 
+pub use goals::{Firmness, Goal, Goals, Priority, Stance, parse_goals};
 pub use ids::{Assigned, assign_ids};
 
 use std::fmt;

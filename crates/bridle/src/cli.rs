@@ -137,6 +137,8 @@ pub enum Command {
     /// Validate capability spec files (docs/design/specs.md) and print each
     /// diagnostic as file:line:col: message. Local, like `rules` — no daemon call.
     Spec(SpecArgs),
+    /// Goals (docs/design/goals-tier.md). Local — no daemon call.
+    Goals(GoalsArgs),
     /// Architecture-tier elements (docs/design/architecture-tier.md). Local, no daemon call.
     Arch(ArchArgs),
     /// Exploration findings docs (docs/design/explorations.md). Local, no daemon call.
@@ -172,6 +174,31 @@ pub struct ExploreCheckArgs {
 pub struct ExploreIdArgs {
     /// The exploration's task id; its doc is design/explore/<id>/findings.md.
     pub id: String,
+}
+
+#[derive(Debug, Args)]
+pub struct GoalsArgs {
+    #[command(subcommand)]
+    pub action: GoalsAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum GoalsAction {
+    /// List goals with id, firmness, priority, stance and title; exits 1 on parse errors.
+    List(GoalsListArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct GoalsListArgs {
+    /// The goals directory, searched recursively for `*.md` (default `design/goals`).
+    #[arg(long, value_name = "DIR", default_value = "design/goals")]
+    pub root: PathBuf,
+    /// Only goals with this priority (now, next, later, someday).
+    #[arg(long, value_name = "P")]
+    pub priority: Option<String>,
+    /// Only goals with this stance (build, keep-open, unaddressed).
+    #[arg(long, value_name = "S")]
+    pub stance: Option<String>,
 }
 
 #[derive(Debug, Args)]
