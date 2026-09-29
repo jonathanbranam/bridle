@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- On Intel Macs (x86_64), `.cargo/config.toml` now ad-hoc code-signs binaries at link time, preventing crashes in macOS's system policy daemon when executing unsigned Mach-O binaries; the flag is a no-op on arm64 (ticket cs7x).
 - Fixed: the TUI agents and inbox lists no longer lose the highlight on the selected row (regression from making them scroll).
 - `.gitattributes` sets CHANGELOG.md to use the union merge driver, so branches that append to the changelog can be merged without conflicts (ticket br-e7f4).
 - New `[worktrees] copy`: repo-relative files (e.g. gitignored `.env`, `.mcp.json`) copied from the project clone into each new worker worktree before setup runs, keeping their mode; a missing file is skipped with a warning; absolute or `..` paths are rejected (ticket br-3309).
