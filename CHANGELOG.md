@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- New `bridle spec check [paths...] [--root DIR] [--require-ids] [--json]`: validates capability spec files with the `bridle-spec` parser and prints `file:line:col: message` diagnostics; a requirement without an id is a warning (an error with `--require-ids`), any error exits non-zero (br-e531).
 - One `~/.bridle/credentials.toml` (0600, a table per external principal, a key per project) replaces the per-principal token files: `BRIDLE_AS=<principal>` makes every command use that principal's token for the project it talks to (after `--token` and `$BRIDLE_TOKEN`), `bridle token create` saves the token there instead of printing it (when the project is known) and `token revoke` removes it, and a file looser than 0600 is refused; `scripts/claude-orchestrator` and `scripts/claude-advisor` set `BRIDLE_AS` (ticket t6kq, br-f4d1).
 - New `bridle launchd install|uninstall` (macOS): writes or removes a per-project LaunchAgent plist that runs `bridle serve`, and prints the `launchctl` commands without running them, so the daemon and its builds have no GUI responsible app and stop flashing Gatekeeper's Verifying window (ticket qr8z, br-936d).
 - The orchestrator's watcher wakes it with `CONTEXT <tokens>` when its own session passes 140K (`CONTEXT_WAKE`), once per crossing; `bridle statusline` now writes the session's context size to `~/.bridle/context/<session id>` and `scripts/claude-orchestrator` pins and records its session id (ticket c9zm).
