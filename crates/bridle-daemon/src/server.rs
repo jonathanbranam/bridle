@@ -402,8 +402,8 @@ async fn budget(State(state): State<AppState>) -> Result<Json<BudgetStatus>, Api
 }
 
 /// One line per window above `normal`: the threshold it crossed or the
-/// `status` that forced it, so a state that contradicts the utilization
-/// (`allowed_warning` forces wind-down, ticket kv7d) is shown as such.
+/// `status` reported with it (`allowed_warning` is shown but forces nothing,
+/// ticket kv7d).
 fn budget_reasons(
     windows: &[WindowStatus],
     t: &bridle_api::types::BudgetThresholds,
@@ -433,9 +433,6 @@ fn budget_reasons(
         }
         if let Some(s) = status {
             line.push_str(&format!("; status {s}"));
-            if s == "allowed_warning" {
-                line.push_str(" forces at least winding_down regardless of thresholds");
-            }
         }
         out.push(line);
     }
