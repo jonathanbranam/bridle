@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+<<<<<<< HEAD
+- New disk usage monitor: every `[disk] check_interval` (default 1h, `0s` = off) the daemon logs and records as a `disk.checked` event the volume's free space and the sizes of the clone's `target/`, `wt/` and `.bridle/`, and messages the human once when free space falls under `[disk] min_free_gb` (default 20) (ticket m3wq).
+=======
 - TUI inbox: `Enter` opens the selected message in full (marking it read), `r` replies from there, `Esc`/`Enter` dismisses (ticket fgu6).
 - Fixed: the TUI now shows agents spawned after it started: an event for an agent it has no row for triggers a refetch of the agents list, keeping the selected agent selected (ticket n4vk).
 - New `[worktrees] setup` (with `setup_timeout_secs`, default 600): a shell command run in each new worker worktree, e.g. an install step; a failure or timeout fails the spawn and removes the worktree (ticket br-42dd).

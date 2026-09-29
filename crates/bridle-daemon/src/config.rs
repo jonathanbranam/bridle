@@ -670,6 +670,24 @@ pub struct CiConfig {
     pub github: bool,
 }
 
+/// `[disk]`: the periodic disk usage check (`crate::disk`).
+#[derive(Debug, Clone, PartialEq)]
+pub struct DiskConfig {
+    /// Zero turns the check off.
+    pub check_interval: Duration,
+    /// Free space under this many GiB on the workspace volume messages the human.
+    pub min_free_gb: u64,
+}
+
+impl Default for DiskConfig {
+    fn default() -> Self {
+        DiskConfig {
+            check_interval: crate::disk::DEFAULT_INTERVAL,
+            min_free_gb: crate::disk::DEFAULT_MIN_FREE_GB,
+        }
+    }
+}
+
 impl Default for CommandsConfig {
     fn default() -> Self {
         CommandsConfig {
@@ -714,6 +732,7 @@ pub struct Config {
     pub setup_timeout: Duration,
     pub branches: BranchesConfig,
     pub ci: CiConfig,
+    pub disk: DiskConfig,
     /// The prefix new task ids get (storage.md: `<prefix>-<4 hex chars>`,
     /// e.g. `tw-7fa2`). `None` means derive one from the project name
     /// ([`default_task_prefix`]).
@@ -753,6 +772,7 @@ impl Default for Config {
             setup_timeout: Duration::from_secs(10 * 60),
             branches: BranchesConfig::default(),
             ci: CiConfig::default(),
+            disk: DiskConfig::default(),
             task_prefix: None,
             workflow: None,
             packs: Vec::new(),
@@ -963,6 +983,15 @@ impl Config {
             config.ci.github = github;
         }
 
+        if let Some(d) = raw.disk {
+            if let Some(s) = d.check_interval {
+                config.disk.check_interval = parse_duration(&s)?;
+            }
+            if let Some(v) = d.min_free_gb {
+                config.disk.min_free_gb = v;
+            }
+        }
+
         // A role's own `model` pins the step-down floor unless the project
         // also gives that role an explicit `[models]` list (which wins
         // outright, below). Collect those names before merging `[models]`
@@ -1152,6 +1181,8 @@ struct RawConfig {
     #[serde(default)]
     ci: Option<RawCi>,
     #[serde(default)]
+    disk: Option<RawDisk>,
+    #[serde(default)]
     tasks: Option<RawTasks>,
     #[serde(default)]
     workflow: Option<String>,
@@ -1204,6 +1235,15 @@ struct RawBranches {
 struct RawCi {
     #[serde(default)]
     github: Option<bool>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawDisk {
+    #[serde(default)]
+    check_interval: Option<String>,
+    #[serde(default)]
+    min_free_gb: Option<u64>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -2009,6 +2049,16 @@ mod tests {
         assert!(night.matches(at(23, 30)));
         assert!(night.matches(at(6, 0)));
         assert!(!night.matches(at(12, 0)));
+    }
+
+    #[test]
+    fn disk_config_parses() {
+        let d = Config::default().disk;
+        assert_eq!(d.check_interval, Duration::from_secs(3600));
+        assert_eq!(d.min_free_gb, 20);
+        let cfg = Config::parse("[disk]\ncheck_interval = \"0s\"\nmin_free_gb = 5\n").unwrap();
+        assert!(cfg.disk.check_interval.is_zero());
+        assert_eq!(cfg.disk.min_free_gb, 5);
     }
 
     #[test]
