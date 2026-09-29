@@ -1,5 +1,7 @@
 # Specs: keep the model, replace the lifecycle
 
+See [[docs/design/spec-flow|the spec flow]] for the whole path from adoption to CI.
+
 ## What stays
 
 Capability → requirement (`SHALL`) → scenario (`GIVEN/WHEN/THEN`), with the

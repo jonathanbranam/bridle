@@ -99,7 +99,7 @@ done
    [[docs/design/gates|gates]],
    [[docs/design/knowledge-tiers|knowledge tiers]] and the tiers under it,
    [[docs/design/specs|specs]], [[docs/design/impact-and-conflicts|impact]],
-   [[docs/design/specs-to-tests|specs to tests]],
+   [[docs/design/specs-to-tests|specs to tests]], [[docs/design/spec-flow|the spec flow]],
    [[docs/design/worktrees-and-ports|worktrees and ports]],
    [[docs/design/skills|skills]].
 6. `questions/open/` and `spikes/open/` for what isn't settled.
