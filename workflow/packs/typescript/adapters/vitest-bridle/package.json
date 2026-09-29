@@ -1,0 +1,10 @@
+{
+  "name": "vitest-bridle",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "index.mjs",
+  "types": "index.d.ts",
+  "scripts": { "test": "node --test test/adapter.test.mjs" },
+  "peerDependencies": { "vitest": ">=1" }
+}

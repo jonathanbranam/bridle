@@ -13,7 +13,7 @@ project. Every phase sits on the daemon and API that v1 built.
 | **P3** | parser for goals, architecture and specs; ids; `spec check/export`; `import openspec`; the explore task kind and its prime rules | data-contracts on bridle specs, with the Python adapter replacing `spec-to-feature.py` | Python adapter built (br-3b72); data-contracts not yet switched |
 | **P4** | impact registry, conflict protocol, post-merge rebase notices; trace links with suspect tracking; `arch-revision` → `re-evaluate` flow | two workers on one capability at once; an architecture change traced to the specs it affects | |
 | **P5** | worktree layouts (incl. paired), port registry, merge-tree probes, integration branch, the integrator | harness + track-web in parallel | plain per-agent worktrees built in v1 |
-| **P6** | TS test adapter; migrate track-web, harness, meta-notes, file-db | everything on bridle | |
+| **P6** | TS test adapter; migrate track-web, harness, meta-notes, file-db | everything on bridle | vitest adapter built (`workflow/packs/typescript/adapters/vitest-bridle/`); migrations not started |
 
 Don't start at P5. Research 09 §7 still applies.
 
