@@ -60,6 +60,15 @@ And on how agents run the check:
   `check-affected` and `land` runs the full suite; with (1), a fast-forward landing would run no
   full suite locally, only CI. Either the worker goes back to `just check` (full, to a file; more
   CPU per worker, none at land), or it keeps `check-affected` and full coverage relies on CI.
-- **"The proper number of tests."** There's no recorded expected count. Simplest: the summary
-  line exists, N > 0, 0 failed. Stronger: compare with the last count on `main` and flag a drop
-  (tests do get removed legitimately, so a warning, not a failure).
+- ~~**"The proper number of tests."**~~ Settled, below.
+
+## The test count (the human, 2026-09-29)
+
+> Yes, by "the proper number of tests" I mean, not 0, not 10,000 but some expected number; just
+> as a sniff check.
+
+So: a sanity range, not an exact match. On success, read the summary line's count and compare
+it with the last full-suite count on `main` (recorded wherever is simplest, e.g. by `land` or
+CI). Well outside it (say under half or over double; the band is a detail for the build) is
+treated as a failure to look into, not a pass. Tests added or removed by the change itself
+stay well inside the band.
