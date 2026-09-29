@@ -4,8 +4,9 @@ title = "Token counts in config accept k and M; defaults 150k/180k/200k (by23)"
 kind = "feature"
 state = "planned"
 created_at = "2026-09-29T20:37:13.711Z"
-updated_at = "2026-09-29T20:40:10.553604Z"
+updated_at = "2026-09-29T21:35:10.888637Z"
 size = "S"
+summary = "Implement token count parsing with k/M suffixes: added parse_token_count() parser supporting '150k' and '1.5M' formats (case-insensitive) for [orchestrator] note_tokens, plan_tokens, handover_tokens; updated defaults from 150K/210K/255K to 150K/180K/200K; updated examples in orchestrator-supervision.md and roles-and-config.md; added unit tests for parser and config parsing."
 +++
 
 original id: by23
