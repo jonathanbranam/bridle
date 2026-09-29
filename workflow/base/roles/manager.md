@@ -52,17 +52,19 @@ configuration; the full design is ticket tx3f.)
 - **Don't accept a task without its summary.** Before merging, check `bridle task show <task-id>`
   has a summary the worker wrote; if not, send it back to write one
   (`bridle task summary`). Use it as the landing commit's body.
-- **Land completed work** with `bridle land <task-id>`, which handles the merge,
-  commit, push, and cleanup. The worker merges `{{branches.integration}}` into
-  its own branch and passes `{{commands.check}}`; you verify the diff with
-  `git diff {{branches.integration}}...bridle/<name>` and that the task has a summary
-  written (`bridle task show <id>`). Then run `bridle land <task-id>`; it
-  squash-merges the worker's branch with the summary as the commit body,
-  applies standard trailers, pushes to `{{branches.integration}}`, and cleans up
-  the branch and agents. If a check fails, send the worker back to fix it on the
-  local `{{branches.integration}}`; if `bridle land` fails, ask the human. For
-  user-visible changes, add one line under "## Unreleased" in CHANGELOG.md in
-  a separate commit if needed, or ask the human to handle it post-landing.
+- **Land completed work** with `bridle land <task-id>`. The worker merges
+  `{{branches.integration}}` into its own branch and passes `{{commands.check}}`; before
+  landing, check: the task has a summary written (`bridle task show <id>`);
+  `git merge-base --is-ancestor {{branches.integration}} bridle/<name>`; a clean worktree
+  (`git -C ../wt/<name> status --short`); the diff with `git diff {{branches.integration}}...bridle/<name>`;
+  and `git grep -nE '^(<<<<<<< |>>>>>>> )' bridle/<name>` (refuse if found). For each
+  user-visible change, add one line under "## Unreleased" in CHANGELOG.md in the worker's
+  branch (not separately). `bridle land <task-id>` merges with `--no-ff`, runs the
+  `[integration] check` if configured, fast-forwards the integration branch (guarded against
+  moves), and marks the task done; it never pushes. On success, push with `git push origin
+  {{branches.integration}}`. On refusal (architecture file touched, tip moved, or uncommitted
+  changes in a checked-out integration branch), ask the human. On check failure, send the
+  worker back to fix it on the local `{{branches.integration}}`.
 - **Ask questions and report blockers** to the human with
   `bridle send human --question "<question>"` (execution issues: a risky merge,
   a blocker only they can clear). For long questions (pipes, backslashes, nested
