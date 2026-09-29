@@ -532,3 +532,9 @@
 {"actor":"agent:manager-2","at":"2026-09-29T11:56:26.019754Z","from":"planned","task":"br-f671","to":"integrated"}
 {"actor":"human","at":"2026-09-29T12:03:18.395Z","from":"","task":"br-fbad","to":"open"}
 {"actor":"human","at":"2026-09-29T12:03:18.430Z","from":"","task":"br-0f46","to":"open"}
+{"actor":"human","at":"2026-09-29T12:04:21.107Z","from":"","task":"br-1d3d","to":"open"}
+{"actor":"human","at":"2026-09-29T12:04:21.152Z","from":"","task":"br-6fd7","to":"open"}
+{"actor":"agent:pm-1","at":"2026-09-29T12:04:23.630447Z","from":"open","task":"br-1d3d","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-09-29T12:04:23.668963Z","from":"open","task":"br-6fd7","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-09-29T12:04:23.705383Z","queue":"reprioritized"}
+{"actor":"agent:pm-1","at":"2026-09-29T12:04:23.736906Z","queue":"reprioritized"}
