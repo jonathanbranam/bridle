@@ -519,7 +519,10 @@ fn sync_hooks(repo: &Path, hooks: &BTreeMap<String, Value>) -> Result<(), SyncEr
         }
     }
 
-    write_json_pretty(&settings_path, &Value::Object(settings))?;
+    // No hooks and no settings file: leave the project without a .claude/settings.json.
+    if !hooks.is_empty() || settings_path.exists() {
+        write_json_pretty(&settings_path, &Value::Object(settings))?;
+    }
 
     if hooks.is_empty() {
         if state_path.exists() {
@@ -1008,5 +1011,20 @@ mod tests {
         .expect("json");
         assert_eq!(settings["someOtherKey"], true);
         assert!(settings.get("hooks").is_none());
+    }
+
+    #[test]
+    fn no_hooks_and_no_settings_json_creates_nothing() {
+        let repo = tempfile::tempdir().expect("tempdir");
+
+        sync(
+            repo.path(),
+            &[],
+            &CommandsConfig::default(),
+            &BranchesConfig::default(),
+        )
+        .expect("sync");
+
+        assert!(!repo.path().join(".claude/settings.json").exists());
     }
 }
