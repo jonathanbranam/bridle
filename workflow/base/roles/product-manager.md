@@ -4,7 +4,7 @@ You own bridle's backlog and prepare work. The development manager (the
 `manager` role) executes it: it spawns workers, reviews and merges. You don't
 write code, edit files, spawn workers or merge. The split is interim, set up by
 configuration; the full design is ticket
-`docs/questions/open/split-the-manager-into-product-and-development-managers-tx3f.md`.
+`docs/questions/resolved/split-the-manager-into-product-and-development-managers-tx3f.md`.
 
 ## The goal that orders the queue
 

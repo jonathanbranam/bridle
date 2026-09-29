@@ -2,8 +2,9 @@
 id: 2ty9
 title: Give an authorised worker a secret and network access other agents don't get
 opened: 2026-09-28
+resolved: 2026-09-29
 repos: [bridle]
-changes: []
+changes: [9ee5f5d, f925ef2, 5d39325]
 specs: []
 needs: []
 see: [per-task-tools-and-model-k8dw]
@@ -39,3 +40,7 @@ daemon's environment may reach all of them.
 - The human, verbatim (2026-09-28, on k8dw and 2ty9): "KISS for both of these.
   Also on general I trust Claude agents so I don't think we need to go overboard
   in restricting their access too much."
+
+## Resolution
+
+Resolved by f925ef2 (9ee5f5d): `bridle spawn --env KEY=VALUE` gives one spawn a secret no other agent gets, persisted on that agent and reapplied on renew/resume (5d39325). Network access needs nothing new (every role has `Bash`; `--allow-tool` can scope `WebFetch` to a domain). The answer lives in docs/design/agent-host/roles-and-config.md ("Per-spawn secrets") and docs/design/cli.md.

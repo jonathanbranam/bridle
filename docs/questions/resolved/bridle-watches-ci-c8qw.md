@@ -2,8 +2,9 @@
 id: c8qw
 title: Bridle watches the remote CI and reports failures
 opened: 2026-09-28
+resolved: 2026-09-29
 repos: [bridle]
-changes: []
+changes: [3abb0af, b51d9b4]
 specs: []
 needs: []
 see: [g3ck, mt7r, n6gy]
@@ -65,3 +66,7 @@ which is more than today needs.
   It costs GitHub minutes, not the laptop, so this is optional.
 - On the NUC: workers' one local run is the remaining load. mt7r (`check-affected`) for
   workers, with the full suite left to CI, is the natural next step.
+
+## Resolution
+
+Resolved by b51d9b4 (3abb0af): with `[ci] github = true` the daemon polls GitHub Actions (`gh`) for the integration branch's tip, emits the result, messages the manager on a failure, and `bridle status` shows the last CI result. The answer lives in docs/design/agent-host/operating-model.md ("CI watcher") and docs/design/cli.md.

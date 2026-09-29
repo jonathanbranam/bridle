@@ -63,7 +63,7 @@ start_prompt      = "Check your inbox and tell the human you're ready."   # firs
   override the built-ins or add roles, which start from the worker's defaults.
 - **`disallowed_tools` defaults deny Claude Code's own built-ins that bypass
   bridle's coordination the same way as a direct `SendMessage` call would**
-  (docs/questions/open/agents-can-use-claude-codes-own-sendmessage-78sp.md):
+  (docs/questions/resolved/agents-can-use-claude-codes-own-sendmessage-78sp.md):
   `SendMessage` and the `Workflow` tool, for every built-in role; `worker` and
   `manager` also deny the scheduling tools (`ScheduleWakeup`, `CronCreate`,
   `CronDelete`, `CronList`) and `RemoteTrigger`. The `Agent` tool is allowed
@@ -161,7 +161,7 @@ able to lower (docs/questions/open/per-task-tools-and-model-k8dw.md).
 
 `bridle spawn <role> --env KEY=VALUE` (repeatable) sets an environment
 variable in that one spawn's `claude` process only ([[../cli#Built|cli.md]]),
-e.g. a paid API token (docs/questions/open/per-task-secrets-and-network-access-2ty9.md).
+e.g. a paid API token (docs/questions/resolved/per-task-secrets-and-network-access-2ty9.md).
 Same shape as `--allow-tool`: per-agent only, nothing written to
 `.bridle/config.toml` or the role, so the next agent spawned with the same
 role doesn't get it. Like `--allow-tool`, it's persisted on the agent's own

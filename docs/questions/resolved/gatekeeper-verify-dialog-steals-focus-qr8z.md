@@ -2,8 +2,9 @@
 id: qr8z
 title: Gatekeeper's "Verifying…" window flashes and steals keystrokes while bridle builds
 opened: 2026-09-28
+resolved: 2026-09-29
 repos: [bridle]
-changes: []
+changes: [74603a5]
 specs: []
 needs: []
 see: [sign-binaries-on-intel-macs-cs7x]
@@ -53,3 +54,7 @@ see: [sign-binaries-on-intel-macs-cs7x]
 - Fewer fresh executables: share or warm `target/` and `node_modules` across worktrees
   (b7cz covers `target/`).
 - Live with it.
+
+## Resolution
+
+Resolved by 74603a5 (br-936d): `bridle launchd install|uninstall` writes a per-project LaunchAgent, so the daemon and its agents' builds have no GUI responsible app and Gatekeeper's window doesn't show (the first option above). The answer lives in docs/design/cli.md (`launchd install|uninstall`); moving a running daemon is docs/context/launchd-restart-plan.md.

@@ -2,8 +2,9 @@
 id: rxe8
 title: Branch rules per project
 opened: 2026-09-28
+resolved: 2026-09-29
 repos: [bridle]
-changes: []
+changes: [0fa0fb8, 0c84f5d]
 specs: []
 needs: []
 see: [u8sm, m2fq, 63rv]
@@ -61,3 +62,7 @@ Nothing else (release branches, git-flow, per-feature integration branches).
   ([[trial-adoption-on-a-bridle-branch-63rv|63rv]]). That's the same setting (the integration
   branch) pointed at a trial branch, and the same rule (never merge into or push `main` or
   `dev`).
+
+## Resolution
+
+Resolved by 0c84f5d (br-29f9, 0fa0fb8): the `[branches]` project setting names the integration branch and, for the dev + release pattern, the release branch; worktrees, the manager's merge and the worker's handoff use it, and `disallowed_tools` keeps ordinary agents off the release branch. The answer lives in docs/design/agent-host/operating-model.md ("Branch pattern") and docs/design/agent-host/roles-and-config.md. Trial onboardings (`bridle-adopt`, [[trial-adoption-on-a-bridle-branch-63rv|63rv]]) run on it.

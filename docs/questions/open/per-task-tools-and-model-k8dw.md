@@ -40,3 +40,10 @@ daemon startup) or `bridle spawn --model`, which covers the model but not tools.
 - The human, verbatim (2026-09-28, on k8dw and 2ty9): "KISS for both of these.
   Also on general I trust Claude agents so I don't think we need to go overboard
   in restricting their access too much."
+
+## Progress (2026-09-29)
+
+Built (ba2a32f, merged 932f381; persisted across renew/resume in 5d39325): `bridle spawn
+--allow-tool TOOL` grants a tool for one spawn, alongside the existing `--model`, so whoever
+spawns the worker can give it what the task needs. Still open: a task can't state its tools
+and model itself; the manager has to read them from the brief and pass the flags.

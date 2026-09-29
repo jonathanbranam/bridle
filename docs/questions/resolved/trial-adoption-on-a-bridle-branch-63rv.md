@@ -2,8 +2,9 @@
 id: 63rv
 title: Trial adoption on a bridle branch
 opened: 2026-09-28
+resolved: 2026-09-29
 repos: [bridle]
-changes: []
+changes: [61ce8ed, 7ffae38, 0c84f5d]
 specs: []
 needs: [rxe8]
 see: [rxe8, d9nu, ajqa, u8sm, 8xhh]
@@ -79,3 +80,7 @@ So:
   call; pushing only it doesn't touch `main` or `dev`.
 - The data-contracts onboarding plan in `docs/context/orchestrator-state.md` (step 3 on a
   branch, then a first real task) predates this and should follow it.
+
+## Resolution
+
+Resolved by 61ce8ed (the `existing-projects` rule: no change to the human's projects without review), 7ffae38 (the human's answers: `bridle-adopt`, pushed) and 0c84f5d (br-29f9, [[branch-rules-per-project-rxe8|rxe8]]: `[branches] integration = "bridle-adopt"`). Onboardings now run on `bridle-adopt` branches. The answer lives in docs/design/agent-host/operating-model.md ("Trial onboarding").
