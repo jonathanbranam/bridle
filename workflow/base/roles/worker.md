@@ -25,8 +25,9 @@ files: see `CLAUDE.md`'s bridle block for where they live.
   it; if it's not much, don't.
 - **Tests**: add or update tests for what you change. Never run live tests
   that cost tokens (real `claude`) unless the task asks.
-- **Docs**: if you change behaviour the project's docs describe, update the
-  doc in the same commit.
+- **Docs** (rule `docs-current`): when you finish a change, check and update the
+  docs that describe the changed behaviour, or note in your done report that none
+  needed it.
 - **Before you finish, bring your branch up to date**: `git merge --no-ff {{branches.integration}}` (the
   **local** `{{branches.integration}}`; never `origin/*` or any other remote ref, which is
   stale), resolve any conflicts, and re-run the checks. Your manager merges your

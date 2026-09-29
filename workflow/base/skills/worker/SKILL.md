@@ -23,16 +23,22 @@ what judgement applies.
   daemon isn't running the code yet). Ask a question with
   `bridle send <manager> --question "<question>"` and wait for the answer
   rather than guessing past a blocker.
-- **Handoff**: before finishing, merge the local `{{branches.integration}}` into your
-  branch (`git merge --no-ff {{branches.integration}}`, never `origin/*`), resolve
-  conflicts, and re-run
-  `{{commands.check_worker}}`. Commit on your branch once it's green, write the task's
-  summary (`bridle task summary <task-id> --file <path>`: what changed, where, any decision
-  or caveat; a task isn't done without one), then report to
-  your spawner (never `human` unless it says to: a one-off worker reports to the manager,
-  found with `bridle agents --json`):
-  `bridle send <manager> --task <task-id> "done: <one-line summary>; <commit sha>"`
-  (the text goes on the task's thread; they get a short pointer).
+- **Handoff**: before finishing, do the following in order:
+  1. **Check docs** (rule `docs-current`): if your change affects behaviour the
+     project's docs describe (design docs, briefs, CHANGELOG), update them in your
+     working tree. Include these edits in the commit so they travel with the code.
+  2. **Merge and check**: merge the local `{{branches.integration}}` into your
+     branch (`git merge --no-ff {{branches.integration}}`, never `origin/*`), resolve
+     conflicts, and re-run `{{commands.check_worker}}` to ensure doc edits are included
+     in the checked commit.
+  3. **Commit and report**: once it's green, write the task's summary (`bridle task summary
+     <task-id> --file <path>`: what changed, where, any decision or caveat; a task isn't
+     done without one). Include 'docs: updated X' or 'docs: none needed' in the summary,
+     then report to your spawner (never `human` unless it says to: a one-off worker
+     reports to the manager, found with `bridle agents --json`):
+     `bridle send <manager> --task <task-id> "done: <one-line summary>; <commit sha>"`
+     (the text goes on the task's thread; they get a short pointer).
+
   Run these commands with Bash: printing them does nothing, and the manager only learns
   you are done from the send.
 
