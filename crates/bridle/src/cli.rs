@@ -502,11 +502,12 @@ pub enum TaskKindArg {
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
-#[value(rename_all = "verbatim")]
+#[value(rename_all = "lowercase")]
 pub enum TaskSizeArg {
     S,
     M,
     L,
+    None,
 }
 
 #[derive(Debug, Args)]
@@ -1312,6 +1313,19 @@ mod tests {
         assert_eq!(a.task, "tw-1234");
         assert_eq!(a.title.as_deref(), Some("new title"));
         assert_eq!(a.body, None);
+    }
+
+    #[test]
+    fn task_edit_size_none_parses() {
+        let cli = parse(&["task", "edit", "tw-1234", "--size", "none"]).unwrap();
+        let Command::Task(args) = cli.command else {
+            panic!("expected task")
+        };
+        let TaskAction::Edit(a) = args.action else {
+            panic!("expected task edit")
+        };
+        assert_eq!(a.task, "tw-1234");
+        assert!(matches!(a.size, Some(TaskSizeArg::None)));
     }
 
     #[test]

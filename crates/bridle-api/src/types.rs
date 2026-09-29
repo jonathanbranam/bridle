@@ -943,10 +943,13 @@ impl std::str::FromStr for TaskKind {
 /// A rough estimate of a task's size, so small ones can be picked when the
 /// budget runs short. Optional on a task; nothing derives or acts on it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum TaskSize {
     S,
     M,
     L,
+    /// Marker used in EditTaskRequest to clear a task's size.
+    None,
 }
 
 impl TaskSize {
@@ -955,6 +958,7 @@ impl TaskSize {
             Self::S => "S",
             Self::M => "M",
             Self::L => "L",
+            Self::None => "none",
         }
     }
 }

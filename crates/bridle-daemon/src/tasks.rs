@@ -347,8 +347,8 @@ impl TaskManager {
         if let Some(components) = components {
             task.components = components;
         }
-        if size.is_some() {
-            task.size = size;
+        if let Some(size) = size {
+            task.size = if size == TaskSize::None { None } else { Some(size) };
         }
         task.updated_at = Utc::now();
         self.state.enqueue_task(&task)?;
@@ -1115,6 +1115,22 @@ mod tests {
             .await
             .expect_err("blank title");
         assert!(matches!(err, TaskError::BadRequest(_)));
+    }
+
+    #[tokio::test]
+    async fn edit_clears_size_with_none() {
+        let (tm, _tmp) = manager().await;
+        let task = tm
+            .new_task("Add foo", TaskKind::Feature, String::new(), vec![], Some(TaskSize::M))
+            .await
+            .expect("new task");
+        assert_eq!(task.size, Some(TaskSize::M));
+
+        let edited = tm
+            .edit_task(&task.id, None, None, None, Some(TaskSize::None))
+            .await
+            .expect("clear size");
+        assert_eq!(edited.size, None);
     }
 
     #[tokio::test]
