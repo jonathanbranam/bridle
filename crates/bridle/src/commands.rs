@@ -208,6 +208,21 @@ async fn stop_check(cli: &Cli) -> Result<(), CliError> {
     let finished = std::env::current_dir()
         .map(|d| crate::stop_check::looks_finished(&d))
         .unwrap_or(false);
+    if finished && !claimed.is_empty() {
+        // Blocking work: keep it off the runtime. Config errors allow.
+        let reason = tokio::task::spawn_blocking(|| {
+            let dir = std::env::current_dir().ok()?;
+            let config = bridle_daemon::config::Config::load(&dir).ok()?;
+            crate::stop_check::unchecked_head_reason(&dir, Some(config.commands.worker_check()))
+        })
+        .await
+        .ok()
+        .flatten();
+        if let Some(reason) = reason {
+            println!("{}", crate::stop_check::block_json(&reason));
+            return Ok(());
+        }
+    }
     if let Some(task) = crate::stop_check::first_unreported_finish(&claimed, finished) {
         println!(
             "{}",

@@ -49,6 +49,10 @@ pub struct ClaudeCommand {
 /// version of `bridle` the agent itself does.
 const STOP_CHECK_HOOK_COMMAND: &str = "bridle stop-check";
 
+/// The hook may run the project's `check_worker` command itself, which can
+/// outlast Claude Code's default hook timeout.
+const STOP_CHECK_TIMEOUT_SECS: u64 = 1800;
+
 /// The `--settings` JSON passed on every spawn. Agents never use Claude
 /// Code's auto memory: everything durable goes in the repo, where the human
 /// and other agents can read it (docs/proposal/decisions.md, no assistant
@@ -65,7 +69,11 @@ fn settings_json(stop_check: bool) -> String {
                 {
                     "matcher": "",
                     "hooks": [
-                        { "type": "command", "command": STOP_CHECK_HOOK_COMMAND }
+                        {
+                            "type": "command",
+                            "command": STOP_CHECK_HOOK_COMMAND,
+                            "timeout": STOP_CHECK_TIMEOUT_SECS
+                        }
                     ]
                 }
             ]

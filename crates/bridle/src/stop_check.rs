@@ -85,6 +85,57 @@ pub fn looks_finished(dir: &std::path::Path) -> bool {
     })
 }
 
+/// Lines of failing check output quoted in the block reason.
+const OUTPUT_TAIL_LINES: usize = 40;
+
+/// The file (in the worktree's own git dir, so never committed) recording
+/// the HEAD sha the worker's check last passed at.
+fn pass_record(dir: &std::path::Path) -> Option<(std::path::PathBuf, String)> {
+    let git = |arg: &str| {
+        std::process::Command::new("git")
+            .args(["rev-parse", arg])
+            .current_dir(dir)
+            .output()
+            .ok()
+            .filter(|o| o.status.success())
+            .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+    };
+    let git_dir = std::path::PathBuf::from(git("--absolute-git-dir")?);
+    Some((git_dir.join("bridle-check-passed"), git("HEAD")?))
+}
+
+/// The block reason if the project's `check_worker` `command` has not passed
+/// at the worktree's current HEAD; `None` (allow) when it has, when none is
+/// bound, or when git can't say what HEAD is. A missing pass record runs the
+/// check here and records HEAD on success, so a later stop at the same HEAD
+/// skips the rerun. Blocks with the tail of the output on failure.
+pub fn unchecked_head_reason(dir: &std::path::Path, command: Option<&str>) -> Option<String> {
+    let command = command?;
+    let (record, head) = pass_record(dir)?;
+    if std::fs::read_to_string(&record).is_ok_and(|s| s.trim() == head) {
+        return None;
+    }
+    let output = std::process::Command::new("sh")
+        .args(["-c", command])
+        .current_dir(dir)
+        .stdin(std::process::Stdio::null())
+        .output()
+        .ok()?;
+    if output.status.success() {
+        let _ = std::fs::write(&record, &head);
+        return None;
+    }
+    let mut text = String::from_utf8_lossy(&output.stdout).into_owned();
+    text.push_str(&String::from_utf8_lossy(&output.stderr));
+    let lines: Vec<&str> = text.lines().collect();
+    let tail = lines[lines.len().saturating_sub(OUTPUT_TAIL_LINES)..].join("\n");
+    Some(format!(
+        "`{command}` failed at HEAD {}. Fix it, commit, and run it green before stopping. \
+         Last output:\n{tail}",
+        &head[..head.len().min(12)]
+    ))
+}
+
 /// The block reason, phrased as a direct instruction since Claude Code
 /// delivers it as an ordinary user-turn message, not a system directive
 /// (spike 05, surprise 2).
@@ -243,6 +294,64 @@ mod tests {
     fn unfinished_tree_is_left_to_the_claim_check() {
         let task = task_with(Some("agent:w1"), Some(Utc::now()), vec![]);
         assert!(first_unreported_finish(&[task], false).is_none());
+    }
+
+    fn repo() -> tempfile::TempDir {
+        let dir = tempfile::tempdir().expect("tempdir");
+        for args in [
+            &["init", "-q"][..],
+            &[
+                "-c",
+                "user.name=t",
+                "-c",
+                "user.email=t@t",
+                "commit",
+                "-q",
+                "--allow-empty",
+                "-m",
+                "x",
+            ],
+        ] {
+            let ok = std::process::Command::new("git")
+                .args(args)
+                .current_dir(dir.path())
+                .status()
+                .expect("git")
+                .success();
+            assert!(ok);
+        }
+        dir
+    }
+
+    #[test]
+    fn no_binding_allows() {
+        let dir = repo();
+        assert!(unchecked_head_reason(dir.path(), None).is_none());
+    }
+
+    #[test]
+    fn no_record_runs_the_check_and_records_a_pass() {
+        let dir = repo();
+        assert!(unchecked_head_reason(dir.path(), Some("touch ran")).is_none());
+        assert!(dir.path().join("ran").exists());
+        assert!(dir.path().join(".git/bridle-check-passed").exists());
+    }
+
+    #[test]
+    fn recorded_pass_at_head_skips_the_check() {
+        let dir = repo();
+        assert!(unchecked_head_reason(dir.path(), Some("true")).is_none());
+        // Would fail if it ran again.
+        assert!(unchecked_head_reason(dir.path(), Some("false")).is_none());
+    }
+
+    #[test]
+    fn failing_check_blocks_with_the_output_tail_and_records_nothing() {
+        let dir = repo();
+        let reason =
+            unchecked_head_reason(dir.path(), Some("echo fmt is red; exit 1")).expect("blocked");
+        assert!(reason.contains("fmt is red"));
+        assert!(!dir.path().join(".git/bridle-check-passed").exists());
     }
 
     #[test]
