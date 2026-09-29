@@ -53,7 +53,8 @@ gone. The watcher needs no token env: `scripts/orchestrator-watch.sh <seq>`.
   SSH key and Tailscale were down; fixed. I may now `git push origin main`
   (`.claude/settings.local.json`).
 - Landed and CI-green: incidents design, specs/tasks/agent-host briefs, docs-current rule
-  (3ndf), fx7x design, questions reach their addressee (br-b966).
+  (3ndf), fx7x design. br-b966 (questions reach their addressee) and the last four commits were
+  still in CI at handover: check `gh run list --branch main` first.
 - The watcher ignores my own open questions (969a361) and uses credentials.toml (9b87047).
 
 ## Watch
