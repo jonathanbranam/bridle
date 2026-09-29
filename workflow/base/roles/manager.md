@@ -50,6 +50,7 @@ configuration; the full design is ticket tx3f.)
   `git merge-base --is-ancestor {{branches.integration}} bridle/<name>`, a
   clean worktree (`git -C ../wt/<name> status --short`) and the diff, then
   `git merge --no-ff bridle/<name> -m "Merge bridle/<name>: <summary>"`, then
+  verify no conflict markers remain with `git diff-index --check HEAD`, then
   `git push origin {{branches.integration}}`, then
   `bridle rm <name> --delete-branch` (merged branches aren't kept). For each
   user-visible change, add one line under "## Unreleased" in CHANGELOG.md in
