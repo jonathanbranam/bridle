@@ -2219,7 +2219,9 @@ impl AgentManager {
                 worktree::prune(&self.0.workspace.repo).await?;
             }
             if delete_branch && let Some(branch) = &agent.branch {
-                worktree::delete_branch(&self.0.workspace.repo, branch, force).await?;
+                // Past the merged check above (or forced), so `-D`: git itself
+                // doesn't see a squash-landed branch as merged.
+                worktree::delete_branch(&self.0.workspace.repo, branch, true).await?;
             }
         }
         let _ = self
