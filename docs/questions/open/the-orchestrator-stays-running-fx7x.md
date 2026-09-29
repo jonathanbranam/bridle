@@ -44,7 +44,7 @@ Remote Control:
   (its binary predated fx7x 1a's send-keys), the human (not there; nothing in history.jsonl).
   pkill's target isn't logged, so the match is by timing plus `ps -ww` showing the pattern in
   the orchestrator's argv; the advisor's argv lacked it and it survived.
-- **Fixes:** both launchers now pass a one-line prompt (83b1f07's successor); managers told
+- **Fixes:** both launchers now pass a one-line prompt; managers told
   every worker never to use `pkill -f`/`killall`, only pids; a worker rule is queued. The
   launcher now logs each exit to `$BRIDLE_HOME/orchestrator.exits`.
 
