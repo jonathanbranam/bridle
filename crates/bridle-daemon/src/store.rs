@@ -14,9 +14,9 @@ use std::sync::{Arc, Mutex};
 
 use bridle_api::types::{
     Agent, AgentState, AgentUsage, Conflict, Edge, EdgeKind, Event, EventQuery, ExitInfo,
-    InteractiveUsageRow, Message, MessageKind, MessageState, PrincipalId, PrincipalKind, RateLimit,
-    TaskKind, TaskState, TokenCreated, TokenInfo, TokenTotals, Usage, UsageBreakdown, UsageGroup,
-    UsageGroupBy, When,
+    InteractiveUsageRow, Message, MessageKind, MessageState, PortAllocation, PrincipalId,
+    PrincipalKind, RateLimit, TaskKind, TaskState, TokenCreated, TokenInfo, TokenTotals, Usage,
+    UsageBreakdown, UsageGroup, UsageGroupBy, When,
 };
 use chrono::{DateTime, SecondsFormat, SubsecRound, Utc};
 use rusqlite::Connection;
@@ -640,6 +640,30 @@ impl Store {
             .await
     }
 
+    // ---------- ports ----------
+
+    /// Records `port` for the owner; `false` if it's already allocated.
+    pub async fn insert_port(&self, p: &PortAllocation) -> Result<bool, StoreError> {
+        let p = p.clone();
+        self.with_conn(move |c| sync::insert_port(c, &p)).await
+    }
+
+    pub async fn list_ports(&self) -> Result<Vec<PortAllocation>, StoreError> {
+        self.with_conn(sync::list_ports).await
+    }
+
+    /// Frees `port`, returning what was recorded for it.
+    pub async fn release_port(&self, port: u16) -> Result<Option<PortAllocation>, StoreError> {
+        self.with_conn(move |c| sync::release_port(c, port)).await
+    }
+
+    /// Frees every port an agent owns; returns how many.
+    pub async fn release_agent_ports(&self, agent: &str) -> Result<usize, StoreError> {
+        let agent = agent.to_string();
+        self.with_conn(move |c| Ok(c.execute("DELETE FROM ports WHERE agent = ?1", [agent])?))
+            .await
+    }
+
     // ---------- conflicts ----------
 
     /// Opens a conflict for the overlap, or returns `None` if it's already known.
@@ -1013,9 +1037,23 @@ mod sync {
         );
     "#;
 
+    // Ports handed out by `bridle port alloc`. Runtime state: not on the state
+    // branch and not rebuilt (worktrees-and-ports.md).
+    pub(super) const SCHEMA_V16: &str = r#"
+        CREATE TABLE ports (
+            port INTEGER PRIMARY KEY,
+            agent TEXT NOT NULL,
+            task TEXT,
+            pid INTEGER,
+            label TEXT,
+            allocated_at TEXT NOT NULL
+        );
+    "#;
+
     const MIGRATIONS: &[&str] = &[
         SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7, SCHEMA_V8,
         SCHEMA_V9, SCHEMA_V10, SCHEMA_V11, SCHEMA_V12, SCHEMA_V13, SCHEMA_V14, SCHEMA_V15,
+        SCHEMA_V16,
     ];
 
     pub(super) fn open(path: &Path) -> Result<Connection, StoreError> {
@@ -2205,6 +2243,58 @@ mod sync {
         )?;
         let rows = stmt.query_map([], row_to_edge)?;
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
+    // ---------- ports ----------
+
+    const PORT_COLS: &str = "port, agent, task, pid, label, allocated_at";
+
+    fn row_to_port(row: &Row<'_>) -> rusqlite::Result<PortAllocation> {
+        Ok(PortAllocation {
+            port: row.get(0)?,
+            agent: row.get(1)?,
+            task: row.get(2)?,
+            pid: row.get(3)?,
+            label: row.get(4)?,
+            allocated_at: parse_dt(&row.get::<_, String>(5)?)?,
+        })
+    }
+
+    pub(super) fn insert_port(conn: &Connection, p: &PortAllocation) -> Result<bool, StoreError> {
+        let n = conn.execute(
+            "INSERT OR IGNORE INTO ports(port, agent, task, pid, label, allocated_at) \
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            params![
+                p.port,
+                p.agent,
+                p.task,
+                p.pid,
+                p.label,
+                fmt_dt(p.allocated_at)
+            ],
+        )?;
+        Ok(n > 0)
+    }
+
+    pub(super) fn list_ports(conn: &Connection) -> Result<Vec<PortAllocation>, StoreError> {
+        let mut stmt = conn.prepare(&format!("SELECT {PORT_COLS} FROM ports ORDER BY port ASC"))?;
+        let rows = stmt.query_map([], row_to_port)?;
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
+    pub(super) fn release_port(
+        conn: &Connection,
+        port: u16,
+    ) -> Result<Option<PortAllocation>, StoreError> {
+        let found = conn
+            .query_row(
+                &format!("SELECT {PORT_COLS} FROM ports WHERE port = ?1"),
+                [port],
+                row_to_port,
+            )
+            .optional()?;
+        conn.execute("DELETE FROM ports WHERE port = ?1", [port])?;
+        Ok(found)
     }
 
     // ---------- conflicts ----------

@@ -1228,6 +1228,31 @@ pub struct Conflict {
     pub resolved_at: Option<DateTime<Utc>>,
 }
 
+/// A port handed out by `bridle port alloc` (worktrees-and-ports.md).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct PortAllocation {
+    pub port: u16,
+    /// The owning agent's stable id, or the principal id (`human`) for anyone else.
+    pub agent: String,
+    /// The task the owner had claimed when it allocated, if any.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub task: Option<String>,
+    /// The process that uses the port; the daemon frees the port once it's dead.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pid: Option<i32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub label: Option<String>,
+    pub allocated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct AllocPortRequest {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pid: Option<i32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub label: Option<String>,
+}
+
 /// Exactly one field is set.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ResolveConflictRequest {

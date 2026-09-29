@@ -43,6 +43,8 @@ pub enum ConfigError {
     UnknownComponentParent { id: String, parent: String },
     #[error("[components] parent cycle: {}", .0.join(" -> "))]
     ComponentCycle(Vec<String>),
+    #[error("[ports] range = [{0}, {1}] must have low <= high")]
+    BadPortRange(u16, u16),
     #[error("[worktrees] copy entry {0:?} must be a relative path without \"..\"")]
     BadCopyPath(String),
 }
@@ -700,6 +702,24 @@ impl Default for MessagesConfig {
     }
 }
 
+/// `[ports]`: what `bridle port alloc` may hand out (docs/design/worktrees-and-ports.md).
+#[derive(Debug, Clone, PartialEq)]
+pub struct PortsConfig {
+    /// Inclusive.
+    pub range: (u16, u16),
+    /// The human's own ports: never allocated, even when they're free right now.
+    pub reserved: Vec<u16>,
+}
+
+impl Default for PortsConfig {
+    fn default() -> Self {
+        PortsConfig {
+            range: (4000, 4999),
+            reserved: Vec::new(),
+        }
+    }
+}
+
 /// `[disk]`: the periodic disk usage check (`crate::disk`).
 #[derive(Debug, Clone, PartialEq)]
 pub struct DiskConfig {
@@ -765,6 +785,7 @@ pub struct Config {
     pub branches: BranchesConfig,
     pub ci: CiConfig,
     pub disk: DiskConfig,
+    pub ports: PortsConfig,
     pub messages: MessagesConfig,
     /// The prefix new task ids get (storage.md: `<prefix>-<4 hex chars>`,
     /// e.g. `tw-7fa2`). `None` means derive one from the project name
@@ -807,6 +828,7 @@ impl Default for Config {
             branches: BranchesConfig::default(),
             ci: CiConfig::default(),
             disk: DiskConfig::default(),
+            ports: PortsConfig::default(),
             messages: MessagesConfig::default(),
             task_prefix: None,
             workflow: None,
@@ -1045,6 +1067,16 @@ impl Config {
             config.messages.answer_for_human = v;
         }
 
+        if let Some(p) = raw.ports {
+            if let Some([lo, hi]) = p.range {
+                if lo > hi {
+                    return Err(ConfigError::BadPortRange(lo, hi));
+                }
+                config.ports.range = (lo, hi);
+            }
+            config.ports.reserved = p.reserved;
+        }
+
         if let Some(d) = raw.disk {
             if let Some(s) = d.check_interval {
                 config.disk.check_interval = parse_duration(&s)?;
@@ -1249,6 +1281,8 @@ struct RawConfig {
     #[serde(default)]
     disk: Option<RawDisk>,
     #[serde(default)]
+    ports: Option<RawPorts>,
+    #[serde(default)]
     messages: Option<RawMessages>,
     #[serde(default)]
     tasks: Option<RawTasks>,
@@ -1312,6 +1346,15 @@ struct RawCi {
 struct RawMessages {
     #[serde(default)]
     answer_for_human: Option<Vec<String>>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawPorts {
+    #[serde(default)]
+    range: Option<[u16; 2]>,
+    #[serde(default)]
+    reserved: Vec<u16>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -2126,6 +2169,16 @@ mod tests {
         assert!(night.matches(at(23, 30)));
         assert!(night.matches(at(6, 0)));
         assert!(!night.matches(at(12, 0)));
+    }
+
+    #[test]
+    fn ports_config_parses() {
+        assert_eq!(Config::default().ports.range, (4000, 4999));
+        let cfg =
+            Config::parse("[ports]\nrange = [5000, 5010]\nreserved = [5001, 5002]\n").unwrap();
+        assert_eq!(cfg.ports.range, (5000, 5010));
+        assert_eq!(cfg.ports.reserved, vec![5001, 5002]);
+        assert!(Config::parse("[ports]\nrange = [5010, 5000]\n").is_err());
     }
 
     #[test]

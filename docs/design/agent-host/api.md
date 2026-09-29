@@ -11,6 +11,7 @@ JSON over HTTP, versioned under `/v1`. The contract is
 | `GET /v1/health` | liveness + version + non-terminal agent count (no auth) |
 | `GET /v1/status` | daemon, workspace, repo, principal, agent counts by state, unread human messages, latest rate limits, Claude Code version, the last CI result for the integration branch (`ci`, when `[ci] github` is on) |
 | `GET /v1/agents` · `POST /v1/agents` | list all · spawn (`{name?, role, prompt?, workdir?, model?}`, where `workdir` is `{"kind":"worktree","base"?}`, `{"kind":"repo"}` or `{"kind":"path","path"}`) |
+| `GET /v1/ports` · `POST /v1/ports` · `POST /v1/ports/{port}/release` | list allocations · allocate (`{pid?, label?}`; 409 when the range is exhausted) · free one (404 if not allocated) |
 | `GET /v1/agents/{id}` | one agent: state, current turn's start, turns, cost, held and unacked message counts |
 | `POST /v1/agents/{id}/messages` | send (`{body, kind, when, reply_to?}`) |
 | `POST /v1/agents/{id}/interrupt` · `/stop` · `/resume` · `/renew` | control (`{drop_held}` · `{now}` · `{ignore_budget}` · `{ignore_budget}`); `renew` stops the agent if running and starts its replacement fresh (new session, same worktree/branch/role/model), keeping the same id and name; never refused by a budget hold (`ignore_budget` is accepted and ignored) |
