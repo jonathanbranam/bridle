@@ -985,3 +985,75 @@ fn wait_returns_on_state_change_message_timeout_and_already_in_state() {
     let v: serde_json::Value = serde_json::from_slice(&out.stdout).expect("wait json");
     assert_eq!(v["result"], "message");
 }
+
+fn goals_fixture(name: &str) -> std::path::PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/goals")
+        .join(name)
+}
+
+/// A temp dir whose `design/goals` holds the named fixtures.
+fn goals_dir(names: &[&str]) -> tempfile::TempDir {
+    let dir = tempfile::tempdir().expect("tempdir");
+    let goals = dir.path().join("design/goals");
+    std::fs::create_dir_all(&goals).expect("mkdir");
+    for n in names {
+        std::fs::copy(goals_fixture(n), goals.join(n)).expect("copy fixture");
+    }
+    dir
+}
+
+#[test]
+fn goals_list_prints_defaults_and_filters() {
+    let dir = goals_dir(&["good.md"]);
+    let home = tempfile::tempdir().expect("home");
+    let (ok, out, err) = run_cli(dir.path(), home.path(), &["goals", "list"]);
+    assert!(ok, "{out}{err}");
+    let lines: Vec<&str> = out.lines().collect();
+    assert_eq!(lines.len(), 3, "{out}");
+    assert!(
+        lines[0].contains("g-03") && lines[0].contains("unaddressed"),
+        "{out}"
+    );
+    assert!(
+        lines[1].contains("g-04") && lines[1].contains("build"),
+        "{out}"
+    );
+    assert!(
+        lines[2].contains("g-05") && lines[2].contains("keep-open"),
+        "{out}"
+    );
+
+    let (ok, out, _) = run_cli(
+        dir.path(),
+        home.path(),
+        &["goals", "list", "--stance", "build"],
+    );
+    assert!(ok);
+    assert_eq!(out.lines().count(), 1, "{out}");
+    let (_, out, _) = run_cli(
+        dir.path(),
+        home.path(),
+        &["goals", "list", "--priority", "next"],
+    );
+    assert!(out.contains("g-05") && !out.contains("g-04"), "{out}");
+
+    let (ok, out, _) = run_cli(dir.path(), home.path(), &["--json", "goals", "list"]);
+    assert!(ok);
+    let v: serde_json::Value = serde_json::from_str(&out).expect("json");
+    assert_eq!(v["goals"][1]["stance"], "build");
+    assert_eq!(v["goals"][2]["stance"], "keep-open");
+}
+
+#[test]
+fn goals_list_parse_error_exits_nonzero() {
+    let dir = goals_dir(&["good.md", "bad.md"]);
+    let home = tempfile::tempdir().expect("home");
+    let (ok, out, err) = run_cli(dir.path(), home.path(), &["goals", "list"]);
+    assert!(!ok, "{out}");
+    assert!(
+        err.contains("bad.md:2:11: unknown firmness \"hard\""),
+        "{err}"
+    );
+    assert!(out.contains("g-04"), "good goals still listed: {out}");
+}

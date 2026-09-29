@@ -38,3 +38,14 @@ Base rules for goals (locked):
   which goals have work behind them.
 - **Changing a goal's firmness, priority or stance is the human's call.** An
   agent can propose a change with `bridle goals propose`.
+
+## Built
+
+- `bridle-spec` parses goal files (`goals::parse_goals`): the heading, attribute
+  line and defaults above, with `file:line:col: message` diagnostics like the
+  spec parser. Goal ids are written by hand. A bad firmness, priority or stance
+  is an error; an `unaddressed` goal without a `**Why unaddressed:**` line is a
+  warning. Headings inside code fences are ignored.
+- `bridle goals list` (see `cli.md`) lists them, locally.
+- Not built: `bridle goals propose`, `serves:` link validation, gating changes to
+  goals, hooks.

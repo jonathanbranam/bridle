@@ -70,6 +70,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Rules(args) => rules(&cli, args).await,
         Command::Sync => sync(&cli).await,
         Command::Spec(args) => spec(&cli, args),
+        Command::Goals(args) => crate::goals::run(&cli, args),
     }
 }
 
