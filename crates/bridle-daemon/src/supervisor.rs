@@ -188,6 +188,16 @@ struct Inner {
     max_workers_override: std::sync::Mutex<Option<u32>>,
     /// Tasks filed since the manager was last told; see `note_task_filed`.
     task_wake: std::sync::Mutex<TaskWake>,
+    /// Per-agent "main moved" notices; see `note_main_moved`.
+    main_moved: std::sync::Mutex<HashMap<String, MainMovedSlot>>,
+}
+
+/// Coalescing state for one agent's "main moved" message.
+#[derive(Default)]
+struct MainMovedSlot {
+    last_sent: Option<std::time::Instant>,
+    pending: Vec<String>,
+    flush_scheduled: bool,
 }
 
 /// Coalescing state for the "new task filed" message to the manager.
@@ -258,6 +268,7 @@ impl AgentManager {
             governor,
             max_workers_override: std::sync::Mutex::new(None),
             task_wake: std::sync::Mutex::new(TaskWake::default()),
+            main_moved: std::sync::Mutex::new(HashMap::new()),
         }))
     }
 
@@ -339,6 +350,66 @@ impl AgentManager {
                 )
                 .await;
         }
+    }
+
+    /// Tells each of `recipients` (agent ids) that `landing` reached the
+    /// integration branch, at most once a minute per agent: landings inside
+    /// the window are joined into the one message
+    /// (impact-and-conflicts.md, conflict protocol step 4).
+    pub async fn note_main_moved(&self, recipients: Vec<String>, landing: String) {
+        for id in recipients {
+            let delay = {
+                let mut m = self.0.main_moved.lock().expect("main_moved mutex poisoned");
+                let slot = m.entry(id.clone()).or_default();
+                slot.pending.push(landing.clone());
+                match slot.last_sent.map(|t| t.elapsed()) {
+                    Some(e) if e < TASK_WAKE_WINDOW => {
+                        if slot.flush_scheduled {
+                            continue;
+                        }
+                        slot.flush_scheduled = true;
+                        TASK_WAKE_WINDOW - e
+                    }
+                    _ => std::time::Duration::ZERO,
+                }
+            };
+            if delay.is_zero() {
+                self.flush_main_moved(&id).await;
+            } else {
+                let this = self.clone();
+                tokio::spawn(async move {
+                    tokio::time::sleep(delay).await;
+                    this.flush_main_moved(&id).await;
+                });
+            }
+        }
+    }
+
+    async fn flush_main_moved(&self, id: &str) {
+        let pending = {
+            let mut m = self.0.main_moved.lock().expect("main_moved mutex poisoned");
+            let slot = m.entry(id.to_string()).or_default();
+            slot.flush_scheduled = false;
+            slot.last_sent = Some(std::time::Instant::now());
+            std::mem::take(&mut slot.pending)
+        };
+        if pending.is_empty() {
+            return;
+        }
+        let body = format!(
+            "main moved: {}. Rebase or merge main into your branch when at a safe point, before your next commit.",
+            pending.join("; ")
+        );
+        let _ = self
+            .send(
+                "system".to_string(),
+                ToTarget::Agent(id.to_string()),
+                MessageKind::Note,
+                body,
+                bridle_api::types::When::Idle,
+                None,
+            )
+            .await;
     }
 
     /// Any one live agent's control handle, for the governor's `get_usage`
