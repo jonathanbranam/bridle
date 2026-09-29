@@ -2,9 +2,12 @@
 id = "br-2cac"
 title = "bridle spec import openspec: move OpenSpec specs to design/specs and assign ids"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-09-29T04:01:04.813Z"
-updated_at = "2026-09-29T04:01:18.456088Z"
+updated_at = "2026-09-29T04:12:02.975942Z"
+branch = "bridle/spec-import"
+commit = "1f645fa"
+summary = "Added 'bridle spec import openspec [--from] [--to] [--dry-run]' (crates/bridle/src/spec_import.rs): parses all <from>/<cap>/spec.md first, refuses on parse error or existing target, git mv (rename if untracked) to <to>/<cap>.md, then reuses specid::assign with <to>/.ids ledger. .feature and other openspec files left, with a note. Idempotent. Tests use a tempdir tree; docs in specs.md and cli.md updated."
 +++
 
 Goal: `bridle spec import openspec [--from openspec/specs] [--to design/specs] [--dry-run]` (P3; docs/design/specs.md 'Migration from OpenSpec'). Local, no daemon call, like `spec check`/`spec id`.
@@ -16,3 +19,8 @@ Files: crates/bridle/src/cli.rs (new `spec import openspec` subcommand), command
 Acceptance: `just check` passes; tests use a tempdir with a fake openspec tree (2 capabilities, one already with ids) and assert moved paths, ids assigned, .feature left in place, dry-run writes nothing, parse error changes nothing. Model: Sonnet.
 
 Out of scope: converting active changes to tasks (data-contracts has none; YAGNI), archived changes, touching any real project's repo, deleting openspec skills/CLI.
+
+## Thread
+
+### note · agent:manager-2 · 2026-09-29T04:12:02.975Z
+integrated: 1f645fa (branch bridle/spec-import)
