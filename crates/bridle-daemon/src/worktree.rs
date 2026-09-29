@@ -345,6 +345,47 @@ pub async fn is_on_head(repo: &Path, commit: &str) -> Result<bool, WorktreeError
     Ok(out.status.success())
 }
 
+/// The result of `git merge-tree --write-tree` of `a` and `b`: touches no working tree
+/// or branch (it writes loose objects only).
+pub enum MergeProbe {
+    Clean,
+    Conflicts(Vec<String>),
+    /// git older than 2.38.
+    Unsupported,
+}
+
+pub async fn merge_probe(repo: &Path, a: &str, b: &str) -> Result<MergeProbe, WorktreeError> {
+    let out = Command::new("git")
+        .arg("-C")
+        .arg(repo)
+        .args(["merge-tree", "--write-tree", "--name-only", "--no-messages"])
+        .args([a, b])
+        .output()
+        .await?;
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    let stderr = String::from_utf8_lossy(&out.stderr);
+    match out.status.code() {
+        Some(0) => Ok(MergeProbe::Clean),
+        // Exit 1: the first line is the tree id, then one path per conflicted file.
+        Some(1) if stdout.lines().count() > 1 => {
+            let mut paths: Vec<String> = stdout
+                .lines()
+                .skip(1)
+                .take_while(|l| !l.is_empty())
+                .map(str::to_string)
+                .collect();
+            paths.dedup();
+            Ok(MergeProbe::Conflicts(paths))
+        }
+        // Older git rejects the options as a usage error.
+        Some(129) => Ok(MergeProbe::Unsupported),
+        _ => Err(WorktreeError::Git {
+            args: vec!["merge-tree".into(), a.into(), b.into()],
+            stderr: stderr.trim().to_string(),
+        }),
+    }
+}
+
 /// Drop git's records of worktrees whose directories no longer exist.
 pub async fn prune(repo: &Path) -> Result<(), WorktreeError> {
     run_git(repo, &["worktree", "prune"]).await.map(|_| ())
@@ -901,5 +942,50 @@ mod tests {
         // and an agent worktree branch of the same name.
         let err = validate_agent_name("state").expect_err("state should be reserved");
         assert!(matches!(err, WorktreeError::InvalidName(n) if n == "state"));
+    }
+
+    fn git_in(dir: &Path, args: &[&str]) {
+        let out = std::process::Command::new("git")
+            .arg("-C")
+            .arg(dir)
+            .args(["-c", "user.name=t", "-c", "user.email=t@bridle.invalid"])
+            .args(args)
+            .output()
+            .expect("git");
+        assert!(out.status.success(), "git {args:?}: {out:?}");
+    }
+
+    #[tokio::test]
+    async fn merge_probe_reports_clean_and_conflicting_branches() {
+        let tmp = tempfile::tempdir().expect("tmp");
+        let repo = tmp.path();
+        git_in(repo, &["init", "-q", "-b", "main"]);
+        std::fs::write(repo.join("a.txt"), "one\n").expect("w");
+        std::fs::write(repo.join("b.txt"), "one\n").expect("w");
+        git_in(repo, &["add", "."]);
+        git_in(repo, &["commit", "-qm", "base"]);
+        for (branch, file, text) in [("clean", "b.txt", "two\n"), ("clash", "a.txt", "three\n")] {
+            git_in(repo, &["checkout", "-q", "-b", branch, "main"]);
+            std::fs::write(repo.join(file), text).expect("w");
+            git_in(repo, &["commit", "-qam", branch]);
+        }
+        git_in(repo, &["checkout", "-q", "main"]);
+        std::fs::write(repo.join("a.txt"), "main\n").expect("w");
+        git_in(repo, &["commit", "-qam", "main moves"]);
+
+        assert!(matches!(
+            merge_probe(repo, "main", "clean").await.expect("probe"),
+            MergeProbe::Clean
+        ));
+        match merge_probe(repo, "main", "clash").await.expect("probe") {
+            MergeProbe::Conflicts(p) => assert_eq!(p, vec!["a.txt".to_string()]),
+            _ => panic!("expected a conflict"),
+        }
+        assert!(merge_probe(repo, "main", "nope").await.is_err());
+        // The probe leaves the working tree and HEAD alone.
+        assert_eq!(
+            std::fs::read_to_string(repo.join("a.txt")).expect("r"),
+            "main\n"
+        );
     }
 }

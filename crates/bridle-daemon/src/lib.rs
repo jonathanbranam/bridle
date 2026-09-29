@@ -298,6 +298,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         governor: governor.clone(),
         ci: ci.clone(),
         tasks: tasks.clone(),
+        integration: config.branches.integration.clone(),
     };
     let app = server::router(state);
 

@@ -15,11 +15,11 @@ use crate::types::{
     BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, Conflict, DoneTaskRequest,
     DropTaskRequest, Edge, EditTaskRequest, Event, EventQuery, Health, ImpactCheckRequest,
     ImpactReport, InterruptRequest, InterruptResponse, MaxWorkersRequest, Message, MessageQuery,
-    NewEdgeRequest, NewTaskRequest, NoteTaskRequest, OpenQuestion, Queue, RemoveEdgeQuery,
-    RemoveQuery, RenewRequest, ResolveConflictRequest, ResumeRequest, SendRequest,
-    SetImpactRequest, SetQueueRequest, SetSummaryRequest, SpawnRequest, Status, StatusLineReport,
-    StopRequest, Task, TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine,
-    TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery,
+    NewEdgeRequest, NewTaskRequest, NoteTaskRequest, OpenQuestion, ProbeRequest, ProbeResult,
+    Queue, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, ResumeRequest,
+    SendRequest, SetImpactRequest, SetQueueRequest, SetSummaryRequest, SpawnRequest, Status,
+    StatusLineReport, StopRequest, Task, TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo,
+    TranscriptLine, TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery,
 };
 
 #[derive(Debug, Error)]
@@ -501,6 +501,10 @@ impl Client {
         req: &ImpactCheckRequest,
     ) -> Result<ImpactReport, ClientError> {
         self.post_json(&["v1", "impact", "check"], req).await
+    }
+
+    pub async fn probe(&self, req: &ProbeRequest) -> Result<ProbeResult, ClientError> {
+        self.post_json(&["v1", "probe"], req).await
     }
 
     pub async fn list_conflicts(&self) -> Result<Vec<Conflict>, ClientError> {
