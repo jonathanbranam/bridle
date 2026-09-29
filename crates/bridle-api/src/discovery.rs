@@ -290,8 +290,101 @@ pub fn resolve_endpoint(
     ))
 }
 
-/// principals.md: `--token`/`$BRIDLE_TOKEN`, else (only if `$CLAUDECODE` is unset) the
-/// human token file in `workspace`, else an error — except for a read command
+/// `~/.bridle/credentials.toml`: one table per external principal, one key per
+/// project, holding that principal's token for the project's daemon.
+pub fn credentials_path() -> PathBuf {
+    bridle_home().join("credentials.toml")
+}
+
+/// Reads the credentials file; a missing file is an empty table. Refuses a file
+/// that group or others can access, since it holds live tokens.
+fn read_credentials(path: &Path) -> Result<toml::Table, DiscoveryError> {
+    use std::os::unix::fs::PermissionsExt;
+    let meta = match fs::metadata(path) {
+        Ok(m) => m,
+        Err(e) if e.kind() == io::ErrorKind::NotFound => return Ok(toml::Table::new()),
+        Err(e) => return Err(DiscoveryError::io(path, e)),
+    };
+    if meta.permissions().mode() & 0o077 != 0 {
+        return Err(DiscoveryError::Message(format!(
+            "{} is accessible to other users (mode {:o}); refusing to read it: run `chmod 600 {}`",
+            path.display(),
+            meta.permissions().mode() & 0o777,
+            path.display()
+        )));
+    }
+    let text = fs::read_to_string(path).map_err(|e| DiscoveryError::io(path, e))?;
+    text.parse().map_err(|e| {
+        DiscoveryError::Message(format!("{}: invalid credentials file: {e}", path.display()))
+    })
+}
+
+fn write_credentials(path: &Path, table: &toml::Table) -> Result<(), DiscoveryError> {
+    use std::io::Write;
+    use std::os::unix::fs::OpenOptionsExt;
+    if let Some(dir) = path.parent() {
+        fs::create_dir_all(dir).map_err(|e| DiscoveryError::io(dir, e))?;
+    }
+    // Written to a 0600 temp file and renamed, so the tokens are never on disk
+    // with a looser mode and a crash can't leave a half-written file.
+    let tmp = path.with_extension("toml.tmp");
+    let _ = fs::remove_file(&tmp);
+    let mut f = fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .mode(0o600)
+        .open(&tmp)
+        .map_err(|e| DiscoveryError::io(&tmp, e))?;
+    f.write_all(table.to_string().as_bytes())
+        .map_err(|e| DiscoveryError::io(&tmp, e))?;
+    fs::rename(&tmp, path).map_err(|e| DiscoveryError::io(path, e))
+}
+
+/// Stores `token` as `principal`'s entry for `project` in the credentials file,
+/// keeping every other entry.
+pub fn store_credential(
+    path: &Path,
+    principal: &str,
+    project: &str,
+    token: &str,
+) -> Result<(), DiscoveryError> {
+    let mut table = read_credentials(path)?;
+    let entry = table
+        .entry(principal.to_string())
+        .or_insert_with(|| toml::Value::Table(toml::Table::new()));
+    let Some(projects) = entry.as_table_mut() else {
+        return Err(DiscoveryError::Message(format!(
+            "{}: [{principal}] is not a table",
+            path.display()
+        )));
+    };
+    projects.insert(project.to_string(), toml::Value::String(token.to_string()));
+    write_credentials(path, &table)
+}
+
+/// Removes `principal`'s entry for `project`; returns whether there was one.
+pub fn remove_credential(
+    path: &Path,
+    principal: &str,
+    project: &str,
+) -> Result<bool, DiscoveryError> {
+    let mut table = read_credentials(path)?;
+    let Some(projects) = table.get_mut(principal).and_then(|v| v.as_table_mut()) else {
+        return Ok(false);
+    };
+    let removed = projects.remove(project).is_some();
+    if projects.is_empty() {
+        table.remove(principal);
+    }
+    if removed {
+        write_credentials(path, &table)?;
+    }
+    Ok(removed)
+}
+
+/// principals.md: `--token`, `$BRIDLE_TOKEN`, then `$BRIDLE_AS`'s entry for `project` in
+/// the credentials file; else (only if `$CLAUDECODE` is unset) the human token file in
+/// `workspace`, else an error — except for a read command
 /// (`allow_anonymous_read`), which proceeds with no token instead: the daemon
 /// already accepts token-less GET/HEAD requests as the synthetic `local`
 /// principal (server.rs's `auth_middleware`), so a read gets the same
@@ -300,6 +393,25 @@ pub fn resolve_endpoint(
 pub fn resolve_token(
     token_flag: Option<&str>,
     workspace: Option<&Path>,
+    project: Option<&str>,
+    env: &impl Env,
+    allow_anonymous_read: bool,
+) -> Result<Option<String>, DiscoveryError> {
+    resolve_token_in(
+        &credentials_path(),
+        token_flag,
+        workspace,
+        project,
+        env,
+        allow_anonymous_read,
+    )
+}
+
+fn resolve_token_in(
+    credentials: &Path,
+    token_flag: Option<&str>,
+    workspace: Option<&Path>,
+    project: Option<&str>,
     env: &impl Env,
     allow_anonymous_read: bool,
 ) -> Result<Option<String>, DiscoveryError> {
@@ -309,13 +421,33 @@ pub fn resolve_token(
     if let Some(t) = env.var("BRIDLE_TOKEN") {
         return Ok(Some(t));
     }
+    if let Some(principal) = env.var("BRIDLE_AS").filter(|s| !s.is_empty()) {
+        let Some(project) = project else {
+            return Err(DiscoveryError::Message(format!(
+                "$BRIDLE_AS={principal} but the project is unknown (the daemon was found by \
+                 URL): pass --project, or set $BRIDLE_TOKEN"
+            )));
+        };
+        let found = read_credentials(credentials)?
+            .get(&principal)
+            .and_then(|v| v.get(project))
+            .and_then(|v| v.as_str())
+            .map(str::to_string);
+        return found.map(Some).ok_or_else(|| {
+            DiscoveryError::Message(format!(
+                "no token for principal '{principal}' on project '{project}' in {}: run \
+                 `bridle token create {principal} --project {project}` (as the human)",
+                credentials.display()
+            ))
+        });
+    }
     if env.var("CLAUDECODE").is_some() {
         if allow_anonymous_read {
             return Ok(None);
         }
         return Err(DiscoveryError::Message(
             "running inside Claude Code ($CLAUDECODE is set), so the human token is never \
-             used implicitly: set $BRIDLE_TOKEN"
+             used implicitly: set $BRIDLE_TOKEN or $BRIDLE_AS"
                 .to_string(),
         ));
     }
@@ -476,7 +608,7 @@ mod tests {
     #[test]
     fn resolve_token_prefers_flag_then_env() {
         assert_eq!(
-            resolve_token(Some("flag"), None, &empty_env(), false).unwrap(),
+            resolve_token(Some("flag"), None, None, &empty_env(), false).unwrap(),
             Some("flag".to_string())
         );
         let env = MapEnv(std::collections::HashMap::from([(
@@ -484,7 +616,7 @@ mod tests {
             "envtok",
         )]));
         assert_eq!(
-            resolve_token(None, None, &env, false).unwrap(),
+            resolve_token(None, None, None, &env, false).unwrap(),
             Some("envtok".to_string())
         );
     }
@@ -497,7 +629,7 @@ mod tests {
         fs::create_dir_all(token_path.parent().unwrap()).unwrap();
         fs::write(&token_path, "human-secret\n").unwrap();
 
-        let tok = resolve_token(None, Some(ws), &empty_env(), false).unwrap();
+        let tok = resolve_token(None, Some(ws), None, &empty_env(), false).unwrap();
         assert_eq!(tok, Some("human-secret".to_string()));
     }
 
@@ -510,14 +642,14 @@ mod tests {
         fs::write(&token_path, "human-secret").unwrap();
 
         let env = MapEnv(std::collections::HashMap::from([("CLAUDECODE", "1")]));
-        let err = resolve_token(None, Some(ws), &env, false).unwrap_err();
+        let err = resolve_token(None, Some(ws), None, &env, false).unwrap_err();
         assert!(err.to_string().contains("BRIDLE_TOKEN"));
     }
 
     #[test]
     fn resolve_token_errors_when_no_token_file_exists() {
         let root = tempdir().unwrap();
-        let err = resolve_token(None, Some(root.path()), &empty_env(), false).unwrap_err();
+        let err = resolve_token(None, Some(root.path()), None, &empty_env(), false).unwrap_err();
         assert!(err.to_string().contains("BRIDLE_TOKEN"));
     }
 
@@ -533,13 +665,90 @@ mod tests {
         // The human token file must still never be used implicitly under
         // CLAUDECODE: the request goes out with no token at all, not the
         // human's.
-        assert_eq!(resolve_token(None, Some(ws), &env, true).unwrap(), None);
+        assert_eq!(
+            resolve_token(None, Some(ws), None, &env, true).unwrap(),
+            None
+        );
     }
 
     #[test]
     fn resolve_token_write_still_errors_under_claudecode_even_with_anonymous_read_available() {
         let env = MapEnv(std::collections::HashMap::from([("CLAUDECODE", "1")]));
-        let err = resolve_token(None, None, &env, false).unwrap_err();
+        let err = resolve_token(None, None, None, &env, false).unwrap_err();
         assert!(err.to_string().contains("BRIDLE_TOKEN"));
+    }
+
+    fn creds_env(vars: &[(&'static str, &'static str)]) -> MapEnv {
+        MapEnv(vars.iter().copied().collect())
+    }
+
+    fn creds_file(dir: &Path) -> PathBuf {
+        dir.join("credentials.toml")
+    }
+
+    #[test]
+    fn credentials_pick_order_is_flag_then_token_env_then_bridle_as() {
+        let dir = tempdir().unwrap();
+        let path = creds_file(dir.path());
+        store_credential(&path, "advisor", "demo", "from-file").unwrap();
+        let both = creds_env(&[("BRIDLE_TOKEN", "envtok"), ("BRIDLE_AS", "advisor")]);
+        let pick = |flag, env: &MapEnv| {
+            resolve_token_in(&path, flag, None, Some("demo"), env, false).unwrap()
+        };
+        assert_eq!(pick(Some("flag"), &both), Some("flag".to_string()));
+        assert_eq!(pick(None, &both), Some("envtok".to_string()));
+        let only_as = creds_env(&[("BRIDLE_AS", "advisor"), ("CLAUDECODE", "1")]);
+        assert_eq!(pick(None, &only_as), Some("from-file".to_string()));
+    }
+
+    #[test]
+    fn bridle_as_with_a_missing_entry_names_file_principal_and_project() {
+        let dir = tempdir().unwrap();
+        let path = creds_file(dir.path());
+        store_credential(&path, "advisor", "demo", "t").unwrap();
+        let env = creds_env(&[("BRIDLE_AS", "advisor")]);
+        let err = resolve_token_in(&path, None, None, Some("other"), &env, false).unwrap_err();
+        let msg = err.to_string();
+        assert!(msg.contains("credentials.toml"), "{msg}");
+        assert!(msg.contains("advisor"), "{msg}");
+        assert!(msg.contains("other"), "{msg}");
+        let err = resolve_token_in(&path, None, None, None, &env, false).unwrap_err();
+        assert!(err.to_string().contains("--project"));
+    }
+
+    #[test]
+    fn store_and_remove_round_trip_keeps_other_entries() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("nested").join("credentials.toml");
+        store_credential(&path, "advisor", "a", "ta").unwrap();
+        store_credential(&path, "advisor", "b", "tb").unwrap();
+        store_credential(&path, "orchestrator", "a", "to").unwrap();
+        assert_eq!(
+            fs::metadata(&path).unwrap().permissions().mode() & 0o777,
+            0o600
+        );
+
+        assert!(remove_credential(&path, "advisor", "a").unwrap());
+        assert!(!remove_credential(&path, "advisor", "a").unwrap());
+        let table = read_credentials(&path).unwrap();
+        assert_eq!(table["advisor"]["b"].as_str(), Some("tb"));
+        assert_eq!(table["orchestrator"]["a"].as_str(), Some("to"));
+        assert!(table["advisor"].get("a").is_none());
+
+        assert!(remove_credential(&path, "advisor", "b").unwrap());
+        assert!(read_credentials(&path).unwrap().get("advisor").is_none());
+    }
+
+    #[test]
+    fn a_loose_credentials_file_is_refused() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = tempdir().unwrap();
+        let path = creds_file(dir.path());
+        store_credential(&path, "advisor", "demo", "t").unwrap();
+        fs::set_permissions(&path, fs::Permissions::from_mode(0o644)).unwrap();
+        let env = creds_env(&[("BRIDLE_AS", "advisor")]);
+        let err = resolve_token_in(&path, None, None, Some("demo"), &env, false).unwrap_err();
+        assert!(err.to_string().contains("chmod 600"));
     }
 }

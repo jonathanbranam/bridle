@@ -8,4 +8,7 @@ cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
 # The session id is pinned and recorded so scripts/orchestrator-watch.sh can find this session's context size.
 sess=$(uuidgen | tr A-Z a-z)
 print -r -- $sess > ~/.bridle-orchestrator-session
+# Every bridle command in the session then acts as external:orchestrator, with the token for the
+# project it talks to from ~/.bridle/credentials.toml (`bridle token create orchestrator --project <p>`).
+export BRIDLE_AS=orchestrator
 exec claude --session-id $sess --name bridle-orch --remote-control bridle-orch "$@" "$(bridle prime orchestrator)"

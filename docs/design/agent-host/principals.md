@@ -6,7 +6,7 @@
 |---|---|---|
 | `human` | `human` | created on first start, `.bridle/tokens/human` (0600) |
 | `agent` | `agent:w1` | minted at spawn, injected as `BRIDLE_TOKEN`, revoked at `rm` |
-| `external` | `external:orchestrator` | `bridle token create orchestrator`, printed once and stored hashed (409 if the name is taken; no list or revoke yet) |
+| `external` | `external:orchestrator` | `bridle token create orchestrator`, stored hashed (409 if the name is taken); the CLI saves it in `~/.bridle/credentials.toml` (below) |
 | `system` | `system` | bridle itself; no token |
 | `local` | `local` | synthesized per-request for a `GET`/`HEAD` with no bearer token; never stored, never minted |
 
@@ -53,7 +53,11 @@ An agent's token is also kept in `.bridle/agents/<id>/token` (0600), so
 
 ## How the CLI picks a token
 
-1. `--token`, then `$BRIDLE_TOKEN`.
+1. `--token`, then `$BRIDLE_TOKEN`, then, if `$BRIDLE_AS=<principal>` is set, that
+   principal's entry for the project the command talks to (`--project`, or the cwd's
+   daemon) in `~/.bridle/credentials.toml`. A missing entry, or no known project (the
+   daemon was found by URL), is an error naming the file, principal and project; it
+   never falls through to the rules below.
 2. Otherwise, **only if `$CLAUDECODE` is unset**, the human token file.
 3. Otherwise, for a read-only command (`status`, `agents`, `show`, `logs`,
    `events`, `usage`, `inbox`, `task show`/`list`, `token list`, `budget`
@@ -65,6 +69,27 @@ An agent's token is also kept in `.bridle/agents/<id>/token` (0600), so
 4. Otherwise (a write, or a non-read command that can't reach a workspace to
    find a human token file — e.g. the daemon was found by URL), fail with
    "set `BRIDLE_TOKEN`".
+
+### The credentials file
+
+`~/.bridle/credentials.toml` (`$BRIDLE_HOME/credentials.toml`), mode 0600, one table per
+external principal and one key per project (names as in the registry):
+
+```toml
+[orchestrator]
+bridle = "..."
+track-web = "..."
+
+[advisor]
+bridle = "..."
+```
+
+`bridle token create <name> --project <p>` adds `[name] p = token` (creating the
+directory and file 0600, keeping other entries) and prints no token; with no known project
+(`--url`) it prints the token as before. `bridle token revoke <name> --project <p>`
+removes the entry. The CLI refuses to read a file that group or others can access, and
+says to `chmod 600` it. `scripts/claude-orchestrator` and `scripts/claude-advisor` set
+`BRIDLE_AS` so a session never handles a token.
 
 Rule 2 means a Claude Code session (the human's orchestrator, or any agent)
 never silently acts as the human. It has to be given an identity to write;
