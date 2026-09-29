@@ -10,7 +10,6 @@ fn git(dir: &std::path::Path, args: &[&str]) -> String {
     let out = std::process::Command::new("git")
         .arg("-C")
         .arg(dir)
-        .args(["-c", "user.name=t", "-c", "user.email=t@bridle.invalid"])
         .args(args)
         .output()
         .expect("git");
@@ -157,4 +156,42 @@ async fn architecture_changes_need_an_arch_revision() {
         .await
         .expect("arch land");
     assert_ne!(git(&d.repo, &["rev-parse", "main"]), before);
+}
+
+#[tokio::test]
+async fn landing_into_a_checked_out_branch_leaves_it_clean() {
+    let (d, _tmp) = start_daemon(None).await;
+    branch_with(&d, "b1", "f.txt", "x\n");
+    let id = task(&d, TaskKind::Feature).await;
+    assert_eq!(git(&d.repo, &["symbolic-ref", "--short", "HEAD"]), "main");
+    let r = d
+        .client
+        .land_task(&id, &req("b1", None))
+        .await
+        .expect("land");
+    assert_eq!(git(&d.repo, &["rev-parse", "HEAD"]), r.commit);
+    assert_eq!(git(&d.repo, &["status", "--porcelain", "-uno"]), "");
+    assert_eq!(
+        std::fs::read_to_string(d.repo.join("f.txt")).expect("landed file"),
+        "x\n"
+    );
+}
+
+#[tokio::test]
+async fn a_dirty_checked_out_branch_refuses_the_landing() {
+    let (d, _tmp) = start_daemon(None).await;
+    branch_with(&d, "b1", "f.txt", "x\n");
+    let id = task(&d, TaskKind::Feature).await;
+    std::fs::write(d.repo.join("tracked.txt"), "clean\n").expect("write");
+    git(&d.repo, &["add", "tracked.txt"]);
+    git(&d.repo, &["commit", "-qm", "track"]);
+    std::fs::write(d.repo.join("tracked.txt"), "dirty\n").expect("dirty");
+    let before = git(&d.repo, &["rev-parse", "main"]);
+    let e = land_err(&d, &id, &req("b1", None)).await;
+    assert!(e.contains("uncommitted"), "{e}");
+    assert_eq!(git(&d.repo, &["rev-parse", "main"]), before);
+    assert_ne!(
+        d.client.get_task(&id).await.expect("task").state,
+        TaskState::Integrated
+    );
 }

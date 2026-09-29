@@ -102,19 +102,54 @@ pub async fn land(i: &LandInput<'_>) -> Result<Landed, LandError> {
         .await?
         .trim()
         .to_string();
-    // The old value is the guard: a moved integration branch is refused, not overwritten.
-    run_git(
-        i.repo,
-        &[
-            "update-ref",
-            &format!("refs/heads/{}", i.integration),
-            &new,
-            &old,
-        ],
-    )
-    .await
-    .map_err(|_| LandError::Moved(i.integration.to_string()))?;
+    advance(i, &old, &new).await?;
     Ok(Landed { commit: new, notes })
+}
+
+/// Move the integration branch from `old` to `new`. A worktree with the branch checked out is
+/// advanced by a fast-forward merge there, since `update-ref` would leave its index and files at
+/// the old tip (the new tip showing as staged changes). The old value is the guard either way:
+/// a moved integration branch is refused, not overwritten.
+async fn advance(i: &LandInput<'_>, old: &str, new: &str) -> Result<(), LandError> {
+    let moved = || LandError::Moved(i.integration.to_string());
+    let Some(dir) = checked_out_at(i.repo, i.integration).await? else {
+        let refname = format!("refs/heads/{}", i.integration);
+        return run_git(i.repo, &["update-ref", &refname, new, old])
+            .await
+            .map(drop)
+            .map_err(|_| moved());
+    };
+    let tip = run_git(&dir, &["rev-parse", "HEAD"]).await?;
+    if tip.trim() != old {
+        return Err(moved());
+    }
+    let dirty = run_git(&dir, &["status", "--porcelain", "--untracked-files=no"]).await?;
+    if !dirty.trim().is_empty() {
+        return Err(LandError::Refused(format!(
+            "{} is checked out at {} with uncommitted changes; commit or stash them, then retry",
+            i.integration,
+            dir.display()
+        )));
+    }
+    run_git(&dir, &["merge", "--ff-only", new])
+        .await
+        .map(drop)
+        .map_err(|_| moved())
+}
+
+/// The worktree (the clone included) that has `branch` checked out, if any.
+async fn checked_out_at(repo: &Path, branch: &str) -> Result<Option<PathBuf>, WorktreeError> {
+    let list = run_git(repo, &["worktree", "list", "--porcelain"]).await?;
+    let want = format!("branch refs/heads/{branch}");
+    let mut dir = None;
+    for line in list.lines() {
+        if let Some(p) = line.strip_prefix("worktree ") {
+            dir = Some(PathBuf::from(p));
+        } else if line == want {
+            return Ok(dir);
+        }
+    }
+    Ok(None)
 }
 
 /// The integration worktree, created on first use, reset onto a scratch branch at `tip`.
