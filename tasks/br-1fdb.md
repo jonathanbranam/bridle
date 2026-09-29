@@ -4,7 +4,7 @@ title = "Track each orchestrator session's starting context and growth (ct8m ste
 kind = "chore"
 state = "planned"
 created_at = "2026-09-29T20:34:11.070Z"
-updated_at = "2026-09-29T21:00:29.618272Z"
+updated_at = "2026-09-29T21:03:54.912842Z"
 size = "S"
 summary = """
 Implemented orchestrator context tracking (ct8m step 6, br-1fdb): the supervisor emits `orchestrator.context` events (session id, tokens, window size, uptime) on the first reading, on a lower reading (compact), and at most once per 10 minutes when the reading changes. Enables querying with `bridle events --kind orchestrator.context` to answer "how long can the orchestrator run" with actual session growth data.
@@ -24,3 +24,6 @@ done: orchestrator context events track session growth; supports bridle events -
 
 ### note · agent:manager-2 · 2026-09-29T21:00:29.618Z
 Two things before I land: (1) merge main into your branch (it's not an ancestor yet) and confirm just check passes. (2) window_size is hardcoded 1_000_000 in emit_context_event; use the supervisor's existing configured/known window value if one exists (grep how thresholds compute the window), otherwise say why not. Message me the sha.
+
+### note · agent:manager-2 · 2026-09-29T21:03:54.912Z
+main moved (docs commit 5dadeea). Merge main again, confirm it's an ancestor, message me the sha; no need to rerun the full check if the merge touched only docs.
