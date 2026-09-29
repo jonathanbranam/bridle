@@ -57,7 +57,7 @@ Then triage the backlog and keep the queue full (`bridle queue`, `bridle task pl
 model             = "sonnet"
 workdir           = "repo"
 permission_mode   = "dontAsk"
-allowed_tools     = ["Bash(bridle *)", "Bash(git log*)", "Bash(git diff*)", "Bash(git show*)", "Bash(git status*)", "Bash(git branch*)", "Bash(git merge-base *)", "Bash(git merge --no-ff *)", "Bash(git push origin main)", "Bash(git -C * status*)", "Read", "Glob", "Grep"]
+allowed_tools     = ["Bash(bridle *)", "Bash(git log*)", "Bash(git diff*)", "Bash(git show*)", "Bash(git status*)", "Bash(git branch*)", "Bash(git merge-base *)", "Bash(git merge --no-ff *)", "Bash(git merge --squash *)", "Bash(git commit *)", "Bash(git push origin main)", "Bash(git -C * status*)", "Read", "Glob", "Grep"]
 # (SendMessage and friends are denied by bridle's own built-in manager default.)
 system_prompt     = "workflow/base/roles/manager.md"
 resume_on_restart = true
