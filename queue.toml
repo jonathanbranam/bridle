@@ -56,3 +56,10 @@ tasks = ["br-0adb"]
 
 [[tier]]
 tasks = ["br-c273"]
+
+[[tier]]
+tasks = [
+    "br-d0c3",
+    "br-1392",
+    "br-f636",
+]
