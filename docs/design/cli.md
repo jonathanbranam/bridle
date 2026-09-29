@@ -116,6 +116,8 @@ bridle task list   [--claimed-by WHO] [--component ID]             WHO: me|human
 bridle task search <words...>                                      search for tasks by words in title/body/summary (case-insensitive substring match, all words must match); includes done and dropped tasks
 bridle task drop   <id> --reason TEXT
 bridle task done   <id> --commit SHA [--branch NAME]                 -> integrated; records the sha (and branch) on the task and in the thread; with --branch removes the branch's agents, worktree and branch; warns if no summary
+bridle impact set  <task> [--modify ID].. [--add-under ID].. [--remove ID].. [--files GLOB..]  declares the task's impact, replacing any earlier one; only an open/planned/claimed task; ids checked by shape (r-/s-/g-/a- + hex) only
+bridle impact show <task>                                         prints the declared impact (`--json`: the impact object)
 bridle task summary <id> --text TEXT | --file FILE                    records how it was implemented; `-` reads stdin; replaces an earlier summary
 bridle task reopen <id>
 bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note to the task's thread; no effect on readiness

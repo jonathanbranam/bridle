@@ -17,9 +17,10 @@ use bridle_api::types::{
     InterruptRequest, MaxWorkersRequest, Message, MessageQuery, MessageState, NewEdgeRequest,
     NewTaskRequest, NoteTaskRequest, OpenQuestion, PrincipalKind, Queue, RateLimit,
     RemoveEdgeQuery, RemoveQuery, RenewRequest, ResumeRequest, ScheduleOverrideStatus, SendRequest,
-    SetQueueRequest, SetSummaryRequest, SpawnRequest, Status, StatusLineReport, StopRequest, Task,
-    TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
-    UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, WindowStatus, event_kind,
+    SetImpactRequest, SetQueueRequest, SetSummaryRequest, SpawnRequest, Status, StatusLineReport,
+    StopRequest, Task, TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine,
+    TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, WindowStatus,
+    event_kind,
 };
 use chrono::Utc;
 use futures::Stream;
@@ -83,6 +84,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/tasks/{id}/drop", post(drop_task))
         .route("/v1/tasks/{id}/done", post(done_task))
         .route("/v1/tasks/{id}/summary", post(set_summary))
+        .route("/v1/tasks/{id}/impact", post(set_impact))
         .route("/v1/tasks/{id}/reopen", post(reopen_task))
         .route("/v1/tasks/{id}/ask", post(ask_task))
         .route("/v1/tasks/{id}/answer", post(answer_task))
@@ -1174,6 +1176,14 @@ async fn set_summary(
     Json(req): Json<SetSummaryRequest>,
 ) -> Result<Json<Task>, ApiError> {
     Ok(Json(state.tasks.set_summary(&id, &req.text).await?))
+}
+
+async fn set_impact(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+    Json(req): Json<SetImpactRequest>,
+) -> Result<Json<Task>, ApiError> {
+    Ok(Json(state.tasks.set_impact(&id, req.impact).await?))
 }
 
 async fn done_task(
