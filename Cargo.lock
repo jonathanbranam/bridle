@@ -299,6 +299,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "bridle-spec"
+version = "0.3.0"
+dependencies = [
+ "thiserror 2.0.21",
+]
+
+[[package]]
 name = "bridle-tui"
 version = "0.3.0"
 dependencies = [
