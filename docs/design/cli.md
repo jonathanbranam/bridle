@@ -74,6 +74,15 @@ bridle spec id [paths...] [--root DIR] [--ledger FILE] [--dry-run]   writes a st
                                              ids are unique across the files processed and never reused
                                              (ledger `<root>/.ids`); idempotent; `--dry-run` prints
                                              the plan and writes nothing; local only, no daemon call
+bridle spec export --format gherkin|json [--out DIR] [paths...] [--root DIR]
+                                             exports specs for test runners (same path defaults as
+                                             `spec check`); gherkin: one <capability>.feature per spec
+                                             (Rule per requirement, executable scenarios only, tagged
+                                             with their @tags and id, e.g. @s-b310) into --out,
+                                             default `.bridle/cache/features/` (gitignored); json: the
+                                             whole AST (documented in specs-to-tests.md) on stdout, or
+                                             `specs.json` in --out; refuses, printing the diagnostics,
+                                             when any spec has errors; local only, no daemon call
 bridle prime orchestrator                   fresh session's opening context: role prompt, current
                                              state, startup steps; local only, no daemon call
 bridle prime worker|planner [--component ID ...]   the role's rules, facts, guides, plus named components' scope
@@ -417,7 +426,7 @@ bridle wait <id> [--until <state>] [--or-message] [--timeout]
 bridle spawn <role> <task>   bridle review
 bridle take|give <agent>                         human takeover of a headless agent
 bridle impact set|show|check bridle conflict list|resolve
-bridle spec check|id|export|coverage|import
+bridle spec check|id|export|coverage|import   `check`, `export` are built (see Built)
 bridle rules show|propose                        `explain`/`diff --project-layer` are built (see Built)
 bridle goals list|propose       bridle arch propose
 bridle trace up|down|suspect|confirm|orphans|coverage

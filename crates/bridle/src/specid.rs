@@ -9,7 +9,7 @@ use anyhow::{Context, anyhow};
 use bridle_spec::Assigned;
 
 use crate::cli::{Cli, SpecIdArgs};
-use crate::commands::spec_files;
+use crate::commands::spec_inputs;
 use crate::error::CliError;
 use crate::render;
 
@@ -103,14 +103,7 @@ fn assign(
         .map(str::to_string)
         .collect();
 
-    let mut files = Vec::new();
-    if paths.is_empty() {
-        spec_files(root, &mut files)?;
-    } else {
-        for p in paths {
-            spec_files(p, &mut files)?;
-        }
-    }
+    let files = spec_inputs(paths, Some(root))?;
 
     // Read and parse everything first: ids already in files count as taken
     // (and must be unique across the set) before any new one is drawn.

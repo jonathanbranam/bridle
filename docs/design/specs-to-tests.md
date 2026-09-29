@@ -14,6 +14,26 @@ comes from the committed generated file.
     (gitignored) for runners that need files;
   - `bridle spec export --format json` for adapters that register scenarios
     directly.
+  `export` is built (local, no daemon). It refuses to run, printing the
+  diagnostics, when any spec has errors. Defaults: paths and `--root` as for
+  `spec check`; gherkin without `--out` writes `.bridle/cache/features/`, which
+  this repo's `.gitignore` covers (`.bridle/cache/`), so a project using it
+  should ignore that directory too.
+  - **gherkin**: one `<capability>.feature` per spec (the file stem, or the
+    directory name for `<capability>/spec.md`). A `Rule:` per requirement (kept
+    even with no executable scenario, so the gap shows), a `Scenario:` (or
+    `Scenario Outline:` with an `Examples:` table) per **executable** scenario,
+    tagged with its `@tags` then its id (`@s-b310`). Non-executable scenarios
+    are omitted. The shape is data-contracts' `tools/spec-to-feature.py`, minus
+    the Purpose paragraph (the AST doesn't carry it).
+  - **json**: `{"version": 1, "specs": [...]}`, every scenario, executable or
+    not. Per spec: `file`, `capability`, `title`, `requirements`; per
+    requirement: `id`, `title`, `protected`, `traces` (`target`, `hash`),
+    `text`, `line`, `scenarios`; per scenario: `id`, `title`, `line`,
+    `executable`, `tags` (no `@`), `description`, `steps` (`keyword`
+    `Given|When|Then|And|But`, `text`, `line`), `examples` (`header`, `rows`, or
+    null). `id` is null until `bridle spec id` assigns it. Fields may be added;
+    a rename or removal bumps `version`.
 - **Adapters live in stack packs.** `python` ships a small pytest plugin that
   gets scenarios from bridle and binds them to pytest-bdd steps. `typescript`
   ships a vitest equivalent, needed by track-web, harness, otters and file-db's

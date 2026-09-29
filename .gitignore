@@ -13,3 +13,6 @@
 .claude/skills/bridle-*/
 .claude/agents/
 .claude/.bridle-sync-hooks.json
+
+# bridle spec export output (docs/design/specs-to-tests.md): regenerated, never committed
+.bridle/cache/

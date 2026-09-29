@@ -829,3 +829,79 @@ fn spec_check_json_and_root_override() {
     assert_eq!(v["diagnostics"][0]["severity"], "warning");
     assert_eq!(v["diagnostics"][0]["column"], 1);
 }
+
+fn export_fixture() -> std::path::PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/spec-export")
+}
+
+#[test]
+fn spec_export_gherkin_matches_golden_and_omits_non_executable() {
+    let dir = tempfile::tempdir().expect("tempdir");
+    let home = tempfile::tempdir().expect("home");
+    let specs = export_fixture().join("design/specs");
+    let (ok, out, err) = run_cli(
+        dir.path(),
+        home.path(),
+        &[
+            "spec",
+            "export",
+            "--format",
+            "gherkin",
+            specs.to_str().expect("utf8"),
+        ],
+    );
+    assert!(ok, "{out}{err}");
+    // No --out: the default cache dir, under the cwd.
+    let feature = dir.path().join(".bridle/cache/features/widgets.feature");
+    let got = std::fs::read_to_string(&feature).expect("feature written");
+    let want = std::fs::read_to_string(export_fixture().join("widgets.feature")).expect("golden");
+    assert_eq!(got, want);
+    assert!(got.contains("@s-b310") && !got.contains("s-b311"));
+}
+
+#[test]
+fn spec_export_json_has_ids_and_every_scenario() {
+    let dir = tempfile::tempdir().expect("tempdir");
+    let home = tempfile::tempdir().expect("home");
+    let (ok, out, err) = run_cli(
+        dir.path(),
+        home.path(),
+        &[
+            "spec",
+            "export",
+            "--format",
+            "json",
+            "--root",
+            export_fixture()
+                .join("design/specs")
+                .to_str()
+                .expect("utf8"),
+        ],
+    );
+    assert!(ok, "{out}{err}");
+    let got: serde_json::Value = serde_json::from_str(&out).expect("json on stdout");
+    let mut want: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(export_fixture().join("widgets.json")).expect("golden"),
+    )
+    .expect("golden json");
+    // `file` is the path as given, which differs per machine.
+    want["specs"][0]["file"] = got["specs"][0]["file"].clone();
+    assert_eq!(got, want);
+}
+
+#[test]
+fn spec_export_refuses_specs_with_errors() {
+    let dir = spec_dir(
+        "bad.md",
+        "## Requirements\n\n### Requirement: A {#nope}\n\ntext\n",
+    );
+    let home = tempfile::tempdir().expect("home");
+    let (ok, out, err) = run_cli(
+        dir.path(),
+        home.path(),
+        &["spec", "export", "--format", "gherkin"],
+    );
+    assert!(!ok);
+    assert!(err.contains("bad.md:3:"), "{out}{err}");
+    assert!(!dir.path().join(".bridle/cache/features").exists());
+}
