@@ -1034,6 +1034,26 @@ fn arch_list_rejects_duplicate_and_missing_ids() {
     assert!(err.contains("duplicate id"), "{err}");
 }
 
+#[test]
+fn explore_new_check_conclude_abandon() {
+    let dir = tempfile::tempdir().expect("tempdir");
+    let home = tempfile::tempdir().expect("home");
+    let run = |args: &[&str]| run_cli(dir.path(), home.path(), args);
+    assert!(run(&["explore", "new", "tw-e41a"]).0);
+    let (ok, _, err) = run(&["explore", "new", "tw-e41a"]);
+    assert!(!ok && err.contains("already exists"), "{err}");
+    assert!(run(&["explore", "check"]).0);
+    let doc = dir.path().join("design/explore/tw-e41a/findings.md");
+    let before = std::fs::read_to_string(&doc).expect("read");
+    assert!(run(&["explore", "conclude", "tw-e41a"]).0);
+    let after = std::fs::read_to_string(&doc).expect("read");
+    assert_eq!(after, before.replace("status: open", "status: concluded"));
+    assert!(run(&["explore", "abandon", "tw-e41a"]).0);
+    std::fs::write(&doc, before.replace("status: open", "status: nope")).expect("write");
+    let (ok, out, _) = run(&["explore", "check"]);
+    assert!(!ok && out.contains("found 'nope'"), "{out}");
+}
+
 fn goals_fixture(name: &str) -> std::path::PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("tests/fixtures/goals")
