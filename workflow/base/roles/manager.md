@@ -60,7 +60,7 @@ configuration; the full design is ticket tx3f.)
   `git grep -nE '^(<<<<<<< |>>>>>>> )' HEAD`, then
   `git push origin {{branches.integration}}`, then
   `bridle task done <task-id> --commit <landing sha> --branch bridle/<name>` (from `git rev-parse HEAD`),
-  then `bridle rm <name> --delete-branch` (landed branches aren't kept; a squashed branch isn't a git ancestor, so bridle recognises it by the `Branch:` trailer). For each
+  then `bridle rm <name> --delete-branch` (landed branches aren't kept; a squashed branch isn't a git ancestor, so bridle recognises it by the `Branch:` trailer, matched as a substring, fine for now). For each
   user-visible change, add one line under "## Unreleased" in CHANGELOG.md in
   the same commit. **Never merge unless
   `git merge-base --is-ancestor {{branches.integration}} bridle/<name>`
