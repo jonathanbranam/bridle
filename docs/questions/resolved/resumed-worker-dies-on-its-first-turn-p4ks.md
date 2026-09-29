@@ -35,3 +35,23 @@ The budget governor was holding at the time (five_hour past 85%).
   The daemon's stderr (in the human's terminal) would say.
 - Its work is safe: committed at 482825b on `bridle/python-pack`, with a handoff note on
   br-7678.
+
+## Findings
+
+- A renew persisted its fresh session id before claude had written that session; a
+  restart in that gap left `resume` running `--resume` on a session that doesn't exist.
+  That half was fixed earlier (`agents.session_started`). Renew itself does record the new
+  session id (`set_agent_session`).
+- The remaining case is a session marked started that claude no longer has. It exits at
+  once and, as seen here, dies on the first turn.
+
+## Resolution
+
+A `--resume` process that exits abnormally before any turn ended without `is_error` is
+treated as a dead session: the daemon marks the session unstarted and resumes once more on
+a fresh session (`Session::New`) in the same worktree/branch/role, with the usual
+continuation note. `agent.exited` now carries `stderr_tail`, and the exit is logged at
+warn. See "Resume" in [agents.md](../../design/agent-host/agents.md). Budget-hold
+behaviour is out of scope (br-1392).
+
+Resolved 2026-09-29.

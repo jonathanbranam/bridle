@@ -143,6 +143,10 @@ version. Instead:
   fresh `--session-id` session instead, stores it, and the continuation note
   points the agent at its handoff. An abnormal claude exit is logged at
   `warn` with its exit code and stderr tail.
+  If the resumed process dies before any turn ends without `is_error` (claude
+  no longer has the session), the daemon marks the session unstarted and
+  resumes once more on a fresh one, as above. `agent.exited` carries the
+  claude `stderr_tail`.
 - **Stall detection**: an agent that is `working` but has emitted nothing for
   `stall_after` (default 10 min, checked every 30 s) gets an `agent.stalled`
   event, once per silent stretch.

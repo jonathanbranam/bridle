@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Fixed: a resumed agent whose Claude Code session is gone no longer dies on its first turn on every resume; the daemon retries once on a fresh session in the same worktree, and `agent.exited` carries the claude `stderr_tail` (ticket p4ks, br-3ec1).
 - A role with no `system_prompt` now defaults to `<workflow>/base/roles/<role>.md` when `workflow` is set and the file exists; an explicit `system_prompt` still wins (ticket rl2v, br-f636).
 - `just test` (and so `just check`) runs git with an empty global config, like CI, so local runs no longer depend on your `init.defaultBranch` (g3ck, br-d0c3).
 - Fixed: `bridle renew` no longer waits on a budget hold (it replaces a session rather than adding load), so a hold can't leave the agent stopped; `--ignore-budget` is accepted and ignored on renew (ticket r3nh, br-1392).
