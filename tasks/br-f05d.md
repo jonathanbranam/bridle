@@ -2,9 +2,9 @@
 id = "br-f05d"
 title = "Token counts in config accept k and M (by23)"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-09-29T20:37:13.711Z"
-updated_at = "2026-09-29T20:37:13.711Z"
+updated_at = "2026-09-29T20:37:56.713770Z"
 size = "S"
 +++
 
