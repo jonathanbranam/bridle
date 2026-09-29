@@ -40,3 +40,14 @@ bridle trace up s-b310       # why this scenario exists, up to goals
 bridle trace orphans         # requirements tracing to nothing (warning, configurable)
 bridle trace coverage g-03   # how much of this goal has design, specs, tests
 ```
+
+## Built
+
+- **Link syntax**: `traces=<id>@<hash>[,...]` on requirements, `serves=<id>[,...]` on
+  architecture elements. Unknown link targets and malformed links are errors.
+- **Text hash** (`bridle_spec::trace::text_hash`): the first 4 hex digits of the SHA-256 of the
+  heading title (no `{#id ...}` block), a newline, and the body up to the next heading, with
+  whitespace runs collapsed to one space. Goals, architecture elements (alternatives included) and
+  requirements (prose before the first scenario) all hash this way.
+- **Queries**: `bridle trace down|up|orphans` (local, see `docs/design/cli.md`). Not built yet:
+  `suspect`, `confirm`, `coverage`, and `re-evaluate` task creation.

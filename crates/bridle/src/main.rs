@@ -14,6 +14,7 @@ mod spec_import;
 mod specid;
 mod statusline;
 mod stop_check;
+mod trace;
 
 use std::process::ExitCode;
 

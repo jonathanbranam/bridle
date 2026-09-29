@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Added: trace links: `serves=` on architecture elements, a 4-hex text hash for `traces=id@hash`, and `bridle trace down|up|orphans` over goals, architecture and specs (br-d226).
+
 - When a task lands (`bridle task done`), the daemon tells the other running workers that main moved, with the changed files, so they rebase or merge before their next commit; one message per agent per minute (br-07d6).
 - Added: `bridle impact set|show` declares and prints a task's impact (spec ids and file globs), stored on the task record and rebuilt by `bridle rebuild` (br-9821).
 

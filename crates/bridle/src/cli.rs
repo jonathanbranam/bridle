@@ -146,6 +146,48 @@ pub enum Command {
     Arch(ArchArgs),
     /// Exploration findings docs (docs/design/explorations.md). Local, no daemon call.
     Explore(ExploreArgs),
+    /// Trace links from goals down to scenarios (docs/design/traceability.md). Local, no daemon call.
+    Trace(TraceArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct TraceArgs {
+    #[command(subcommand)]
+    pub action: TraceAction,
+    /// The goals directory (default `design/goals`).
+    #[arg(
+        long,
+        value_name = "DIR",
+        default_value = "design/goals",
+        global = true
+    )]
+    pub goals: PathBuf,
+    /// The architecture directory (default `design/architecture`).
+    #[arg(
+        long,
+        value_name = "DIR",
+        default_value = "design/architecture",
+        global = true
+    )]
+    pub arch: PathBuf,
+    /// The specs directory (default `design/specs`).
+    #[arg(
+        long,
+        value_name = "DIR",
+        default_value = "design/specs",
+        global = true
+    )]
+    pub specs: PathBuf,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum TraceAction {
+    /// Everything that depends on an element, transitively.
+    Down { id: String },
+    /// Everything an element rests on, up to the goals.
+    Up { id: String },
+    /// Requirements that trace to nothing (a warning: exit 0).
+    Orphans,
 }
 
 #[derive(Debug, Args)]
