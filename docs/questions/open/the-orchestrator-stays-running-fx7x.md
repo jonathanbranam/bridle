@@ -36,3 +36,73 @@ Remote Control:
   `docs/context/launchd-restart-plan.md`) checks the orchestrator is running and, if not,
   restarts it, or at least tells the human.
 - Find out why it exited this time, if the logs can say.
+
+## The human's direction (2026-09-29, to the orchestrator)
+
+> I think this is a design flaw - you are the lynchpin of too much ... bridle needs to manage
+> your session in some way to ensure that you are always safe and running and can then also
+> manage context. This should be deterministic part of the system, doesn't need to be agent
+> driven. bridle itself can monitor your context and send messages to you about it as well as to
+> tell you to write your state out and restart you.
+
+> bridle should monitor you with a script and send messages such as "context filling up,
+> currently at x%" and "context reached threshold, please plan a restart" and eventually force a
+> restart. Also, it should monitor your uptime as well ... bridle should also I think handle
+> this watcher agent that you're using, if possible.
+
+> As for your launch interface, I can assign a specific tmux pane for you and I to interact on
+> and bridle should be able to send-keys to that pane to launch the script as needed.
+
+> I would also like to discuss moving your state into bridle instead of a file; it feels like
+> something the system should manage.
+
+So: the daemon supervises the orchestrator session the way it supervises its own agents, with
+no agent in the loop. The orchestrator stays an interactive `claude` (the human chats with it,
+locally and over Remote Control), not a stream-json agent.
+
+## The orchestrator's answers and a proposed shape
+
+**Reading the session without stream-json.** Two sources exist already, both outside the session:
+- The status line. Claude Code runs the `statusLine` command on each render with JSON that
+  carries `context_window` (used tokens and size); `bridle statusline` already writes that to
+  `~/.bridle/context/<session id>` (s8kn), and the watcher reads it (c9zm). It only updates while
+  the session renders, which is fine: an idle session's context doesn't grow.
+- The transcript, `~/.claude/projects/<dir>/<session id>.jsonl`: every assistant entry has its
+  `usage`. It's a fallback that needs nothing from the session. Its mtime is also a
+  last-activity time.
+- Liveness: the launch script records the `claude` pid next to the session id; the daemon checks
+  the pid. Hooks (`SessionStart`, `Stop`) can report started / turn ended, which gives
+  idle-vs-busy. Verify the hook payloads against the installed Claude Code before relying on them
+  (cite `docs/spikes/01-stream-json-findings.md` style: a short spike).
+
+**The pane is the channel.** The human names a tmux pane (config, e.g. `[orchestrator] pane =
+"bridle:0.0"`). The daemon:
+- launches `scripts/claude-orchestrator` there when the session is missing (pid gone), and
+  records an incident (nc7r) so the human learns of it;
+- wakes the orchestrator by typing a one-line prompt there (`send-keys`), only when the session
+  is idle (the `Stop` hook's last word), e.g. `bridle: main moved (95adc18); 2 unread`. That
+  replaces `scripts/orchestrator-watch.sh` and the background task and cron heartbeat the
+  orchestrator runs today: the wake conditions move into the daemon, deterministic, configured
+  once. The orchestrator gains nothing from owning its watcher; its background task being
+  `killed` is the last thing in the dead session's transcript.
+- Risk: typing into the pane while the human is typing there locally. Remote Control messages
+  don't collide. Keep wakes short and only on idle; accept the rare collision.
+
+**Context and restarts.** Thresholds (defaults, configurable): a note at 100K ("context at N%"),
+at 140K "plan a handover at the next quiet point", at 170K "hand over now", and past a hard
+limit (or a handover deadline) the daemon writes the handover marker itself, exits the session
+(`/exit` by send-keys, then kill after a grace period) and relaunches. Uptime: the same restart
+after N hours even under the context limit, at a quiet point. The handover is done when the
+orchestrator runs one command (e.g. `bridle handover done`); the relaunch primes the new session.
+
+**State in bridle, not a file.** Most of `orchestrator-state.md` restates what bridle already
+holds: who's running (`bridle agents`), the queue, tasks, CI, and (with ex9q) the human's to-dos.
+What's left is a short handover note and the decisions log. Proposal:
+- The handover note becomes a bridle record per role and project (latest wins, history kept);
+  `bridle prime orchestrator` prints it with live `agents`/`queue`/to-dos. No git commit or
+  push per handover (a handover today fails when pushing does).
+- The human's decisions stay in the repo (rules, tickets, the role file), where they're reviewed.
+- The state file shrinks to a pointer, then goes.
+
+Open for the human: the pane name; the thresholds; whether a forced restart may interrupt a
+conversation in progress (proposal: it waits for idle, up to a deadline, then goes anyway).
