@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Added: `[worktrees] layout = "paired"` with `[worktrees.pair.<name>] path, mode = "worktree"|"symlink"` creates sibling repos' worktrees (or symlinks) beside the project's at `<root>/<name>`; setup runs in each, rm cleans all and refuses on a dirty member, the system prompt lists sibling paths (br-cc25).
 - Added: `[worktrees] layout = "root"` with `root = "/path/{task}"` (`{task}`, `{agent}`, `{project}`) puts new worktrees at a configured absolute path; `default` is unchanged; invalid roots are refused at config load (br-930e).
 - Added: `bridle arch-guard`, a PreToolUse hook (shipped in `workflow/base/hooks/`, rendered by `bridle sync`) denying worker edits under `design/architecture/` unless the worker has claimed an `arch-revision` task (br-7f7e).
 - Added: `bridle arch propose --title T --argument TEXT|-` creates an `arch-revision` task with the proposal; validates the architecture directory exists (br-357f).

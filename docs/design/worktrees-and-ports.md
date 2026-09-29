@@ -5,7 +5,7 @@ declares, including harness's **paired** sibling layout (research 09 §2.2):
 
 ```toml
 [worktrees]
-layout = "root"                                 # "default" (the default) | "root"
+layout = "root"                                 # "default" (the default) | "root" | "paired"
 root   = "/Volumes/Data/work/pi/wt/{task}"
 setup  = "npm install --prefer-offline"
 ```
@@ -18,7 +18,27 @@ and `{project}` (the clone's directory name); it must contain `{task}` or `{agen
 one (relative, `..`, unknown placeholder, `layout = "root"` without `root`) is refused when
 the config loads. A root may leave the workspace, but never the clone: a path inside it is
 refused at spawn. `bridle rm` uses the path recorded on the agent, so it finds the worktree
-wherever it was put. The `paired` layout and its `pair` key are still design (next task).
+wherever it was put.
+
+Built: `layout = "paired"` (same `root` template, same validation) creates the project's
+worktree at `<root>/<project>` and one member per sibling beside it at `<root>/<name>`:
+
+```toml
+[worktrees]
+layout = "paired"
+root   = "/Volumes/Data/work/pi/wt/{task}"
+[worktrees.pair.web]
+path = "/Volumes/Data/work/pi-web"              # absolute path to the sibling repo
+mode = "worktree"                               # "worktree" (default) | "symlink"
+```
+
+`worktree` runs `git worktree add` in the sibling on `bridle/<agent>` from that repo's HEAD;
+`symlink` links to its checkout, for read-only use. The agent's cwd is the project's
+worktree, and its system prompt names each sibling's path. `setup` runs in the project's
+worktree and in each `worktree`-mode member. `bridle rm` removes every member (and, with
+`--delete-branch`, the sibling branches), refusing on a dirty member by name unless `--force`;
+members are found from the current config, beside the recorded worktree. `pair` needs
+`layout = "paired"` and the layout needs at least one `pair`.
 
 ## Port registry (built)
 
