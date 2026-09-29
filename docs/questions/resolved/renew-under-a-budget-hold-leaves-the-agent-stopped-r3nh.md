@@ -36,3 +36,7 @@ So a refused renewal leaves the agent `stopped`, not idle in its old session.
   since a renew replaces a session rather than adding load, a renew might not need to
   wait for a hold at all.
 - The automatic context renewal (htp6) may take the same path; worth checking.
+
+## Resolution
+
+`renew` no longer checks the budget hold at all: it replaces a session rather than adding load, so nothing after the stop can be refused for budget. The automatic context renewal (htp6) calls the same `renew`, so it is covered. See `bridle renew` in [[docs/design/cli|cli.md]] and `/renew` in [[docs/design/agent-host/api|api.md]].

@@ -613,10 +613,10 @@ async fn ignore_budget_bypasses_the_holding_refusal() {
         .expect("resume ignores the governor with --ignore-budget");
 }
 
-/// A renew refused by the hold must change nothing: the agent stays idle in
-/// its old session, with no stop events; without a hold, renew still works.
+/// A renew replaces a session rather than adding load, so a hold doesn't
+/// refuse it (r3nh); the automatic context renewal calls the same path.
 #[tokio::test]
-async fn refused_renew_under_hold_changes_nothing() {
+async fn renew_under_hold_succeeds() {
     let (daemon, _tmp) = start_daemon(None).await;
     script_usage(&daemon.repo, 10.0, 10.0);
     wait_for("normal before spawn", || async {
@@ -657,42 +657,13 @@ async fn refused_renew_under_hold_changes_nothing() {
         (b.state == GovernorState::Holding).then_some(())
     })
     .await;
-    let last_seq = daemon
-        .client
-        .events(&Default::default())
-        .await
-        .expect("events")
-        .last()
-        .map_or(0, |e| e.seq);
-
-    let err = daemon
+    let renewed = daemon
         .client
         .renew(&agent.id, &Default::default())
         .await
-        .expect_err("renew refused while holding");
-    assert!(matches!(
-        err,
-        bridle_api::ClientError::Api { status: 409, .. }
-    ));
-
-    let after = daemon.client.get_agent(&agent.id).await.expect("agent");
-    assert_eq!(after.state, AgentState::Idle);
-    assert_eq!(after.session_id, agent.session_id);
-    let events = daemon
-        .client
-        .events(&bridle_api::types::EventQuery {
-            since: Some(last_seq),
-            agent: Some(agent.id.clone()),
-            ..Default::default()
-        })
-        .await
-        .expect("events");
-    assert!(
-        !events.iter().any(|e| e.kind.starts_with("agent.stop")
-            || e.kind == event_kind::AGENT_STATE
-            || e.kind == "agent.exited"),
-        "refused renew emitted events: {events:?}"
-    );
+        .expect("renew while holding");
+    assert_ne!(renewed.session_id, agent.session_id);
+    wait_for_state(&daemon.client, &agent.id, AgentState::Idle).await;
 }
 
 /// Writes `.fake-claude-usage` with a per-model window on top of the two
