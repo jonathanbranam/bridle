@@ -32,6 +32,12 @@ bridle ask     <task-id> TEXT                    question against a task; blocks
 bridle answer  <task-id> TEXT                    answers a task's open question; frees it to be ready again
 bridle claim   <task-id>                         claims a ready task for the caller: planned -> claimed
 bridle release <task-id>                         releases the caller's own claim: claimed -> planned
+bridle ready   [--all] [--role R]                the highest queue tier with a startable task (planned, deps met, no open question, unclaimed)
+bridle queue                                     read-only: claimed tasks with their worker, then the tiers in rank order
+bridle queue set --tier T,T... [--tier T,T...]   replace the whole queue, one --tier per tier (PM or human only)
+bridle queue add-tier <task>...                  append one tier at the back (PM or human only)
+bridle dep add|rm <task> (--to OTHER [--kind K] | --blocked-by OTHER)   K: blocks (default)|parent|discovered-from|related|supersedes|duplicates
+bridle wait    <task> [--until STATE] [--or-message] [--timeout SECS]   block until the task changes state; exit 4 on timeout
 bridle interrupt <agent> [--drop-held]
 bridle stop    <agent> [--now]      bridle resume <agent> [--ignore-budget]
 bridle renew   <agent> [--ignore-budget]    stop + fresh process/session, same worktree/branch/role/model
@@ -41,7 +47,10 @@ bridle events  [--follow] [--since SEQ] [--agent A] [--kind PREFIX]
 bridle usage   [--by role|model|agent] [--since DURATION]   # DURATION: <n>s|m|h|d, e.g. 30d
 bridle cost audit [--check]                 static: size of what bridle injects into agent context (usage-and-budget.md)
 bridle tui                                  interactive terminal UI: agents list, live event tail
-bridle budget [--schedule | hold [--for D|--until T] | release | override ...]   usage governor (usage-and-budget.md)
+bridle budget [--schedule]                  usage governor status, or the whole resolved schedule (usage-and-budget.md)
+bridle budget hold [--for D | --until HH:MM] | release          idle the account for the human / end the hold early
+bridle budget override <period|default> [--until HH:MM] | override-clear   force a schedule period's thresholds / revert
+bridle budget max-workers <N> | --clear     live worker cap, lost on daemon restart
 bridle token create <name>                  with a known project (--project, or the cwd's daemon) the token is saved in
                                              ~/.bridle/credentials.toml and not printed; with --url it's printed once
 bridle token list                           name, created-at, revoked-or-not; never the token itself
@@ -67,7 +76,7 @@ bridle arch list [--invariants] [--root DIR]   lists architecture elements (id, 
                                              `design/architecture`); a missing or duplicate `a-` id
                                              is an error (diagnostics on stderr, exit 1); --json
                                              prints the elements with their text; local only
-bridle arch propose --title T --argument TEXT|-  creates an `arch-revision` task with the proposal
+bridle arch propose --title T (--argument TEXT | --argument-file FILE|-) [--arch-root DIR]   creates an `arch-revision` task with the proposal
                                              (daemon call); validates that the architecture
                                              directory exists locally
 bridle trace down|up <id>  [--goals DIR] [--arch DIR] [--specs DIR]   walks the trace links across
@@ -130,7 +139,7 @@ bridle goals list [--root DIR] [--priority P] [--stance S]   lists goals (docs/d
                                              diagnostics; diagnostics go to stderr as file:line:col: message
                                              (an unaddressed goal without a why is a warning); exit 1 on
                                              any error; local only, no daemon call
-bridle goals propose <goal-id> --change KEY=VALUE --why TEXT  creates a task proposing a change to the goal's
+bridle goals propose <goal-id> --change KEY=VALUE --why TEXT [--goals-root DIR]  creates a task proposing a change to the goal's
                                              firmness, priority, or stance (repeatable --change;
                                              daemon call); validates that the goal exists
 bridle spec import openspec [--from DIR] [--to DIR] [--dry-run]   moves each `<from>/<cap>/spec.md`
@@ -142,9 +151,10 @@ bridle spec import openspec [--from DIR] [--to DIR] [--dry-run]   moves each `<f
                                              idempotent; local only, no daemon call
 bridle prime orchestrator                   fresh session's opening context: role prompt, current
                                              state, startup steps; local only, no daemon call
-bridle prime worker|planner [--component ID ...] [--task ID]   the role's rules, facts, guides, plus named components' scope
+bridle prime worker|planner [--component ID ...] [--task ID]   the role's rules, facts, guides, plus named components' scope; --task is worker only
 bridle task new    <title> -k/--kind KIND [--body TEXT | --body-file FILE] [--component ID ...] [--size S|M|L]
 bridle task show   <id>
+bridle task plan   <id>                                                 open -> planned: ready to build, claimable once unblocked
 bridle task edit   <id> [--title TEXT] [--body TEXT | --body-file FILE] [--component ID ... | --no-component] [--size S|M|L|none]
 bridle task list   [--claimed-by WHO] [--component ID]             WHO: me|human|<agent name>|<principal id>; unclaimed tasks have no claimant to match
 bridle task search <words...>                                      search for tasks by words in title/body/summary (case-insensitive substring match, all words must match); includes done and dropped tasks
@@ -362,18 +372,14 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   crate, `crates/bridle-tui`, split Elm-style: a plain state struct and update function
   with no terminal/ratatui dependency (so it's unit-tested without a terminal),
   rendered by a separate `ui` module.
-- **`task`** is scoped, for now, to the `open`/`planned`/`claimed`/`dropped`/`integrated`/`reopened` states
+- **`task`** covers the `open`/`planned`/`claimed`/`dropped`/`integrated`/`reopened` states
   (docs/design/roles-and-lifecycle.md, Task lifecycle): create, show, edit (title/body,
-  never state), list (id/title/kind/state), drop (a reason is required, recorded in the
-  task's thread) done (`--commit` required, recorded in the thread; the task becomes `integrated`, which
-  resolves its `blocks` edges and drops it from `queue` and `ready`) and reopen (only a
-  dropped or integrated task can be reopened). `in_review`,
-  `accepted`, and everything that depends on those, arrive with later
-  tasks — see the `Planned` block below for the rest of the surface this command will
-  eventually grow into. There's still no `plan` yet, so nothing can reach `planned`
-  through the CLI — which means `ready` (below) can never actually return anything, and
-  `claim` can only be exercised in its "not ready" conflict shape, until a later task
-  adds it; documented as a known gap, not fixed here.
+  never state), list (id/title/kind/state), plan (`open` -> `planned`), drop (a reason is
+  required, recorded in the task's thread), done (`--commit` required, recorded in the
+  thread; the task becomes `integrated`, which resolves its `blocks` edges and drops it from
+  `queue` and `ready`) and reopen (only a dropped or integrated task can be reopened).
+  `in_review` and `accepted`, and everything that depends on those, arrive with later
+  tasks — see the `Planned` block below.
 - **`dep add|rm`** creates or removes one coordination edge (docs/design/coordination.md).
   `bridle dep add <task> --to <other> --kind <kind>` draws `<task> --kind--> <other>`;
   `bridle dep add <task> --blocked-by <other>` is sugar for `--kind blocks` with `from`
@@ -417,13 +423,21 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   all). Neither takes a body: the claimant is always the caller's own token. A claimed
   task drops out of `ready` immediately, since `is_ready` requires `planned`; releasing
   it (explicitly, or via the lease-expiry tick) puts it back.
-- **`ready [--all] [--role]`** lists every ready task: `planned`, with no open `blocks`
-  edge naming an unresolved blocker (roles-and-lifecycle.md, "ready is computed"; see
-  coordination.md for exactly what "unresolved" means in this build). `--all` fans out
+- **`ready [--all] [--role]`** lists the ready tasks of the highest queue tier that has a
+  startable one: `planned`, unclaimed, no open question, no open `blocks` edge naming an
+  unresolved blocker (roles-and-lifecycle.md, "ready is computed" and "the queue"; see
+  coordination.md for exactly what "unresolved" means in this build). A task in no tier
+  is backlog and never shown, even if it is ready. `--all` fans out
   across every daemon in the registry (`bridle daemons`), each with its own
   discovery-resolved token, instead of just the one daemon `--url`/`--project`/cwd
   discovery would pick. `--role` is accepted but a no-op: tasks don't carry a role field
-  yet (a gap, not a design decision — see `Planned` below).
+  yet (a gap, not a design decision).
+- **`queue`** without a subcommand is the read-only view; `set` and `add-tier` are PM-or-human
+  only and stored in the state branch's `queue.toml` (roles-and-lifecycle.md, "the queue").
+  `queue set` takes one `--tier a,b` per tier, in rank order, and replaces the whole queue.
+- **`budget`'s** subcommands (`hold`, `release`, `override`, `override-clear`, `max-workers`)
+  are described in [[docs/design/usage-and-budget|usage and budget]]. `max-workers` sets a live
+  cap that never stops running workers, only blocks new spawns and resumes.
 - **`statusline`** is Claude Code's `statusLine` command, configured in `settings.json`. It
   reads Claude Code's JSON on stdin and prints a short line back: model, context %
   (`context_window.used_percentage`) and token count (e.g., `40.0k`, `1.2M`) when available,
@@ -501,23 +515,16 @@ Commands for the phases after v1 ([[docs/proposal/build-order|build order]]),
 as a first cut:
 
 ```
-bridle init | doctor                             project setup, health; `sync` is built (see Built)
-bridle task <cmd> at in_review|integrated|accepted  -- new/show/edit/list/drop/reopen
-                                                  are built (see Built); `dep add|rm`,
-                                                  `claim`/`release`, and `ready [--all] [--role]`
-                                                  are built too, but ready can't return anything
-                                                  until `plan` exists
-bridle handoff bridle plan <id>                   bridle accept <id> (human only)
-bridle inbox --inject        # `ask`/`answer` are built (see Built)
+bridle init | doctor                             project setup, health
+bridle task <cmd> at in_review|accepted          states not built yet
+bridle handoff                                   bridle accept <id> (human only)
+bridle inbox --inject
 bridle spawn <role> <task>   bridle review
 bridle take|give <agent>                         human takeover of a headless agent
-bridle impact set|show|check bridle conflict list|resolve
-bridle spec check|id|export|coverage|import   `check`, `id`, `export`, `import openspec` are built (see Built)
 bridle rules show|propose                        `explain`/`diff --project-layer` are built (see Built)
-bridle goals propose            bridle arch propose   (`goals list` is built, see Built)
-bridle trace coverage   (`up`, `down`, `orphans`, `suspect`, `confirm` are built, see above)
-bridle explore new|conclude|adopt|abandon
-bridle usage --by project|kind|task|trend|compare
+bridle trace coverage                            the other `trace` commands are built
+bridle explore adopt                             `new`/`conclude`/`abandon` are built
+bridle usage --by project|kind|task|trend|compare   `role|model|agent` are built
 ```
 
 The command name and a short alias are open:
