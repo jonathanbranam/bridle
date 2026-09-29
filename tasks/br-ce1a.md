@@ -2,9 +2,11 @@
 id = "br-ce1a"
 title = "Dropping a claimed task leaves its claim behind (b5br)"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-09-29T02:24:40.607Z"
-updated_at = "2026-09-29T03:00:11.357187Z"
+updated_at = "2026-09-29T03:01:57.896857Z"
+branch = "bridle/claim-drop"
+commit = "39e36d6"
 summary = "Dropping a claimed task now clears its claim (row, in-memory entry, claims.toml) via new clear_claim; release_claim refuses non-claimed tasks so the lease check can't resurrect dropped ones; TaskManager::open deletes claims rows whose task isn't claimed. Tests for each in tasks.rs; storage.md and CHANGELOG updated. br-29f9 still needs reopen + done --commit c533cb0 after deploy."
 +++
 
@@ -21,3 +23,8 @@ After it lands: `bridle task reopen br-29f9` then `bridle task done br-29f9 --co
 
 Acceptance: just check passes; br-29f9 no longer shows under Claimed in `bridle queue` after a daemon restart on the fixed build.
 Model: Sonnet. Size: S.
+
+## Thread
+
+### note · agent:manager-2 · 2026-09-29T03:01:57.896Z
+integrated: 39e36d6 (branch bridle/claim-drop)
