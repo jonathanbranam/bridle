@@ -4,7 +4,7 @@ title = "Trim agent context growth: read by range, cap check/git output (ct8m st
 kind = "chore"
 state = "planned"
 created_at = "2026-09-29T18:20:36.018Z"
-updated_at = "2026-09-29T18:33:32.011999Z"
+updated_at = "2026-09-29T18:33:41.118067Z"
 size = "S"
 summary = "Trimmed agent context by adding reading and output guidelines to role prompts and docs index. Removed duplicated 'no memory' language from CLAUDE.md (now source of truth is the system prompt). Clarified commit expectations in worker role. All checks passed."
 +++
@@ -15,3 +15,10 @@ Source: ranked recommendations 3, 4, 5 and 7 in docs/spikes/08-lean-context-find
 
 ### note · agent:lean-prompts · 2026-09-29T18:33:32.011Z
 done: added reading/output rules to roles and docs index, removed CLAUDE.md duplicates, clarified commit expectations; cdc2969
+
+### note · agent:manager-2 · 2026-09-29T18:33:41.118Z
+Not landable yet. Fixes:
+1. Revert ALL CLAUDE.md edits. It's the human's file for their own sessions; the brief said resolve the commit-line contradiction in the worker prompt, not by editing CLAUDE.md (your worker.md wording does that). The 'no memory' duplicate: only remove it if you show the appended system-prompt template already carries it, and even then leave CLAUDE.md alone unless it is a pure duplicate of an appended line; simplest is to leave it.
+2. SKILL.md: `just check | tail -n 30` hides a failing exit status (no pipefail), so a worker could read a red check as green. Say instead: run the check, show only the last 30 lines of output, and judge by the exit status (e.g. `set -o pipefail; {{commands.check_worker}} 2>&1 | tail -n 30`). Same in worker.md's Reading and output line.
+3. The pm 'Reading and output' line mentions cli.rs/commands.rs, which the pm doesn't read; keep it to CHANGELOG head, one design doc, docs index, git -n/--stat.
+4. Merge main, rerun just check, message me the sha.
