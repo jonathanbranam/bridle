@@ -36,8 +36,9 @@ comes from the committed generated file.
     a rename or removal bumps `version`.
 - **Adapters live in stack packs.** `python` ships a small pytest plugin that
   gets scenarios from bridle and binds them to pytest-bdd steps. `typescript`
-  ships a vitest equivalent, needed by track-web, harness, otters and file-db's
-  TS side.
+  ships a vitest equivalent (`workflow/packs/typescript/adapters/vitest-bridle/`,
+  built: `registerBridleSpecs({ steps })`, see its README), needed by track-web,
+  harness, otters and file-db's TS side.
 - **Scenario ids in test results.** Results report by `s-b310`, which lets
   `bridle test --task tw-7fa2` run only the scenarios in that task's impact,
   and `bridle spec coverage` list executable scenarios with no bound test
