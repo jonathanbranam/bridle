@@ -2,10 +2,12 @@
 id = "br-1fdb"
 title = "Track each orchestrator session's starting context and growth (ct8m step 6)"
 kind = "chore"
-state = "planned"
+state = "integrated"
 created_at = "2026-09-29T20:34:11.070Z"
-updated_at = "2026-09-29T21:22:41.101977Z"
+updated_at = "2026-09-29T21:26:26.299784Z"
 size = "S"
+branch = "bridle/orch-context2"
+commit = "e365c04f22544a378029e7261c67c292df0987f9"
 summary = """
 Implemented orchestrator context tracking (ct8m step 6, br-1fdb): the supervisor emits `orchestrator.context` events (session id, tokens, window size, uptime) on the first reading, on a lower reading (compact), and at most once per 10 minutes when the reading changes. Enables querying with `bridle events --kind orchestrator.context` to answer "how long can the orchestrator run" with actual session growth data.
 
@@ -36,3 +38,9 @@ main moved (2a2ccb0). Merge main, confirm ancestor (just check only if the merge
 
 ### note · agent:manager-2 · 2026-09-29T21:22:41.101Z
 main moved again (br-0e42 landed, 6ac6121). Merge main, just check, confirm ancestor, message me the sha.
+
+### note · agent:manager-2 · 2026-09-29T21:26:11.978Z
+integrated: e365c04f22544a378029e7261c67c292df0987f9 (branch bridle/orch-context2)
+
+### note · agent:manager-2 · 2026-09-29T21:26:26.299Z
+cleanup: removed agent orch-context2, branch bridle/orch-context2
