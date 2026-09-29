@@ -539,6 +539,8 @@ pub enum TaskAction {
     /// Add a plain note to a task's thread (no question/answer semantics,
     /// doesn't affect readiness).
     Note(TaskNoteArgs),
+    /// Search for tasks by words in title, body, or summary.
+    Search(TaskSearchArgs),
 }
 
 #[derive(Debug, Args)]
@@ -645,6 +647,12 @@ pub struct TaskNoteArgs {
     /// Read the note text from a file (or `-` for stdin).
     #[arg(long)]
     pub text_file: Option<PathBuf>,
+}
+
+#[derive(Debug, Args)]
+pub struct TaskSearchArgs {
+    /// Search words; matches against title, body, and summary (all words must match, case-insensitive).
+    pub words: Vec<String>,
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]

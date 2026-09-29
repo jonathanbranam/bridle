@@ -64,6 +64,7 @@ bridle task new    <title> -k/--kind KIND [--body TEXT | --body-file FILE] [--co
 bridle task show   <id>
 bridle task edit   <id> [--title TEXT] [--body TEXT | --body-file FILE] [--component ID ... | --no-component] [--size S|M|L|none]
 bridle task list   [--claimed-by WHO] [--component ID]             WHO: me|human|<agent name>|<principal id>; unclaimed tasks have no claimant to match
+bridle task search <words...>                                      search for tasks by words in title/body/summary (case-insensitive substring match, all words must match); includes done and dropped tasks
 bridle task drop   <id> --reason TEXT
 bridle task done   <id> --commit SHA [--branch NAME]                 -> integrated; records the sha (and branch) on the task and in the thread; warns if no summary
 bridle task summary <id> --text TEXT | --file FILE                    records how it was implemented; `-` reads stdin; replaces an earlier summary

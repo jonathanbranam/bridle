@@ -645,3 +645,158 @@ async fn done_records_branch_commit_and_a_replaceable_summary() {
     assert_eq!(shown.commit.as_deref(), Some("abc123"));
     assert_eq!(shown.summary.as_deref(), Some("v2"));
 }
+
+#[tokio::test]
+async fn search_matches_words_in_title_body_and_summary() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let c = &daemon.client;
+
+    let t1 = c
+        .new_task(&NewTaskRequest {
+            components: Vec::new(),
+            title: "Fix database connection pool".to_string(),
+            kind: TaskKind::Bug,
+            body: "The connection pool is leaking memory in production".to_string(),
+            size: None,
+        })
+        .await
+        .expect("new task");
+
+    let t2 = c
+        .new_task(&NewTaskRequest {
+            components: Vec::new(),
+            title: "Refactor API endpoint".to_string(),
+            kind: TaskKind::Feature,
+            body: "The endpoint needs optimization for better performance".to_string(),
+            size: None,
+        })
+        .await
+        .expect("new task");
+
+    let t3 = c
+        .new_task(&NewTaskRequest {
+            components: Vec::new(),
+            title: "Add logging".to_string(),
+            kind: TaskKind::Feature,
+            body: "Add debug logging to trace requests".to_string(),
+            size: None,
+        })
+        .await
+        .expect("new task");
+
+    let _summary = c
+        .set_task_summary(&t2.id, &SetSummaryRequest {
+            text: "Optimized the API endpoint and reduced latency".into(),
+        })
+        .await
+        .expect("set summary");
+
+    let list = c.list_tasks().await.expect("list all");
+    assert_eq!(list.len(), 3);
+
+    // Search for "connection" - matches t1's title and body
+    let results = c.search_tasks(&["connection"]).await.expect("search");
+    assert_eq!(results.len(), 1);
+    assert_eq!(results[0].id, t1.id);
+
+    // Search for "pool" - matches t1's title and body
+    let results = c.search_tasks(&["pool"]).await.expect("search");
+    assert_eq!(results.len(), 1);
+    assert_eq!(results[0].id, t1.id);
+
+    // Search for "endpoint" - matches t2's title and summary
+    let results = c.search_tasks(&["endpoint"]).await.expect("search");
+    assert_eq!(results.len(), 1);
+    assert_eq!(results[0].id, t2.id);
+
+    // Search for "logging" - matches t3's title and body
+    let results = c.search_tasks(&["logging"]).await.expect("search");
+    assert_eq!(results.len(), 1);
+    assert_eq!(results[0].id, t3.id);
+
+    // Case-insensitive search
+    let results = c.search_tasks(&["CONNECTION"]).await.expect("search");
+    assert_eq!(results.len(), 1);
+    assert_eq!(results[0].id, t1.id);
+
+    // Multiple words - AND logic, matches t1
+    let results = c.search_tasks(&["connection", "pool"]).await.expect("search");
+    assert_eq!(results.len(), 1);
+    assert_eq!(results[0].id, t1.id);
+
+    // Multiple words - no match (both words needed but not in same task)
+    let results = c.search_tasks(&["endpoint", "pool"]).await.expect("search");
+    assert_eq!(results.len(), 0);
+
+    // No match
+    let results = c.search_tasks(&["nonexistent"]).await.expect("search");
+    assert_eq!(results.len(), 0);
+}
+
+#[tokio::test]
+async fn search_includes_done_and_dropped_tasks() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let c = &daemon.client;
+
+    let open_task = c
+        .new_task(&NewTaskRequest {
+            components: Vec::new(),
+            title: "Open task".to_string(),
+            kind: TaskKind::Feature,
+            body: "Search in open".to_string(),
+            size: None,
+        })
+        .await
+        .expect("new task");
+
+    let done_task = c
+        .new_task(&NewTaskRequest {
+            components: Vec::new(),
+            title: "Done task".to_string(),
+            kind: TaskKind::Feature,
+            body: "Search in done".to_string(),
+            size: None,
+        })
+        .await
+        .expect("new task");
+
+    let dropped_task = c
+        .new_task(&NewTaskRequest {
+            components: Vec::new(),
+            title: "Dropped task".to_string(),
+            kind: TaskKind::Feature,
+            body: "Search in dropped".to_string(),
+            size: None,
+        })
+        .await
+        .expect("new task");
+
+    // Mark one as done
+    c.done_task(
+        &done_task.id,
+        &DoneTaskRequest {
+            commit: "abc123".into(),
+            branch: None,
+        },
+    )
+    .await
+    .expect("done task");
+
+    // Mark one as dropped
+    c.drop_task(
+        &dropped_task.id,
+        &DropTaskRequest {
+            reason: "not needed".into(),
+        },
+    )
+    .await
+    .expect("drop task");
+
+    // Search for "search" - should find all three
+    let results = c.search_tasks(&["search"]).await.expect("search");
+    assert_eq!(results.len(), 3);
+    let ids: Vec<_> = results.iter().map(|t| t.id.clone()).collect();
+    assert!(ids.contains(&open_task.id));
+    assert!(ids.contains(&done_task.id));
+    assert!(ids.contains(&dropped_task.id));
+}

@@ -439,6 +439,26 @@ impl Client {
         self.get_json_query(&["v1", "tasks"], &query).await
     }
 
+    /// Search for tasks by words in title, body, or summary (all words must match, case-insensitive).
+    pub async fn search_tasks(&self, words: &[&str]) -> Result<Vec<Task>, ClientError> {
+        let all_tasks = self.list_tasks().await?;
+        let search_words: Vec<String> = words.iter().map(|w| w.to_lowercase()).collect();
+        let filtered_tasks: Vec<Task> = all_tasks
+            .into_iter()
+            .filter(|task| {
+                let title_lower = task.title.to_lowercase();
+                let body_lower = task.body.to_lowercase();
+                let summary_lower = task.summary.as_ref().map(|s| s.to_lowercase());
+                search_words.iter().all(|word| {
+                    title_lower.contains(word)
+                        || body_lower.contains(word)
+                        || summary_lower.as_ref().map_or(false, |s| s.contains(word))
+                })
+            })
+            .collect();
+        Ok(filtered_tasks)
+    }
+
     pub async fn new_task(&self, req: &NewTaskRequest) -> Result<Task, ClientError> {
         self.post_json(&["v1", "tasks"], req).await
     }

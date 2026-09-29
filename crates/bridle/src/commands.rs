@@ -23,8 +23,8 @@ use crate::cli::{
     ReleaseArgs, RmArgs, RulesAction, RulesArgs, RulesDiffArgs, RulesExplainArgs, SendArgs,
     ShowArgs, SpawnArgs, StopArgs, TaskAction, TaskArgs, TaskDoneArgs, TaskDropArgs, TaskEditArgs,
     TaskKindArg, TaskListArgs, TaskNewArgs, TaskNoteArgs, TaskPlanArgs, TaskReopenArgs,
-    TaskShowArgs, TaskSizeArg, TaskSummaryArgs, TokenAction, TokenArgs, UsageArgs, UsageByArg,
-    WhenArg,
+    TaskSearchArgs, TaskShowArgs, TaskSizeArg, TaskSummaryArgs, TokenAction, TokenArgs, UsageArgs,
+    UsageByArg, WhenArg,
 };
 use crate::error::CliError;
 use crate::render;
@@ -1668,6 +1668,7 @@ async fn task(cli: &Cli, args: &TaskArgs) -> Result<(), CliError> {
         TaskAction::Summary(a) => task_summary(cli, a).await,
         TaskAction::Reopen(a) => task_reopen(cli, a).await,
         TaskAction::Note(a) => task_note(cli, a).await,
+        TaskAction::Search(a) => task_search(cli, a).await,
     }
 }
 
@@ -1917,6 +1918,44 @@ async fn task_note(cli: &Cli, args: &TaskNoteArgs) -> Result<(), CliError> {
         render::print_json(&task)?;
     } else {
         println!("noted on {}", task.id);
+    }
+    Ok(())
+}
+
+async fn task_search(cli: &Cli, args: &TaskSearchArgs) -> Result<(), CliError> {
+    if args.words.is_empty() {
+        return Err(CliError::from(anyhow::anyhow!(
+            "at least one search word is required"
+        )));
+    }
+    let client = client_for_read(cli).await?;
+    let all_tasks = client.list_tasks().await?;
+    let search_words: Vec<String> = args.words.iter().map(|w| w.to_lowercase()).collect();
+    let filtered_tasks: Vec<Task> = all_tasks
+        .into_iter()
+        .filter(|task| {
+            let title_lower = task.title.to_lowercase();
+            let body_lower = task.body.to_lowercase();
+            let summary_lower = task.summary.as_ref().map(|s| s.to_lowercase());
+            search_words.iter().all(|word| {
+                title_lower.contains(word)
+                    || body_lower.contains(word)
+                    || summary_lower.as_ref().map_or(false, |s| s.contains(word))
+            })
+        })
+        .collect();
+    if cli.json {
+        render::print_json(&filtered_tasks)?;
+    } else if filtered_tasks.is_empty() {
+        println!("no matching tasks");
+    } else {
+        println!(
+            "{:<10} {:<9} {:<8} {:<4} TITLE",
+            "ID", "KIND", "STATE", "SIZE"
+        );
+        for t in &filtered_tasks {
+            print_task_row(t);
+        }
     }
     Ok(())
 }
