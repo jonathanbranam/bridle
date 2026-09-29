@@ -299,8 +299,8 @@ const ORCHESTRATOR_STARTUP_STEPS: &str = "\
 Check in: `bridle status`, `bridle agents`, and recent messages to human (from the \
 product manager and the development manager).
 Start the watcher from the latest event seq, plus a 30-minute heartbeat.
-Keep both managers' work moving, verify every merge (`just check` twice, off load) \
-and push main after verifying, and bring the human only what needs them.
+Keep both managers' work moving, verify every merge by its CI run (not locally), \
+push main after each merge, and bring the human only what needs them.
 Watch your own context: hand over well before 200K.
 The human will mostly reach you through Remote Control.";
 

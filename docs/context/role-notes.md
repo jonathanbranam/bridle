@@ -37,7 +37,7 @@ split above.
 
 | Task | Done by today | Could move to |
 |---|---|---|
-| Verify each merge: `just check` twice on `main`, off load | orchestrator | admin (mechanical; CI covers part) |
+| Verify each merge: by its CI run, not locally | orchestrator | admin (CI is mechanical) |
 | Push `main` after a merge | development manager or orchestrator | development manager only |
 | Cut SemVer releases on verified `main` | orchestrator | admin, with the human told |
 | Rebuild the binary (`cargo install --path crates/bridle`) | orchestrator | admin (`bridle rebuild`-like step) |
