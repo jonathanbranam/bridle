@@ -89,6 +89,7 @@ async fn resolve_endpoint_and_token(
     let token = discovery::resolve_token(
         cli.token.as_deref(),
         endpoint.workspace.as_deref(),
+        endpoint.project.as_deref(),
         &env,
         allow_anonymous_read,
     )?;
@@ -1599,6 +1600,19 @@ fn parse_duration(s: &str) -> Option<chrono::Duration> {
     }
 }
 
+/// The project a `token create`/`revoke` acted on: `--project`, or the cwd's daemon.
+fn token_project(cli: &Cli) -> Result<Option<String>, CliError> {
+    let cwd = std::env::current_dir().context("current directory")?;
+    let endpoint = discovery::resolve_endpoint(
+        cli.url.as_deref(),
+        cli.project.as_deref(),
+        &cwd,
+        &ProcessEnv,
+    )
+    .map_err(|e| CliError::Unreachable(e.to_string()))?;
+    Ok(endpoint.project)
+}
+
 async fn token(cli: &Cli, args: &TokenArgs) -> Result<(), CliError> {
     let client = if matches!(args.action, TokenAction::List) {
         client_for_read(cli).await?
@@ -1610,8 +1624,31 @@ async fn token(cli: &Cli, args: &TokenArgs) -> Result<(), CliError> {
             let created = client
                 .create_token(&TokenCreateRequest { name: name.clone() })
                 .await?;
+            // Stored for the project this command talked to, so the token never has
+            // to be seen; with no project (daemon found by URL) it's printed as before.
+            let stored_in = match token_project(cli)? {
+                Some(project) => {
+                    let path = discovery::credentials_path();
+                    discovery::store_credential(&path, name, &project, &created.token).map_err(
+                        |e| {
+                            CliError::Other(anyhow::anyhow!(
+                                "token created but not saved (it is shown once): {e}: {}",
+                                created.token
+                            ))
+                        },
+                    )?;
+                    Some((path, project))
+                }
+                None => None,
+            };
             if cli.json {
                 render::print_json(&created)?;
+            } else if let Some((path, project)) = stored_in {
+                println!(
+                    "principal {}: token for project {project} saved in {}",
+                    created.principal,
+                    path.display()
+                );
             } else {
                 println!("{}", created.token);
                 eprintln!(
@@ -1641,6 +1678,17 @@ async fn token(cli: &Cli, args: &TokenArgs) -> Result<(), CliError> {
         TokenAction::Revoke { name } => {
             client.revoke_token(name).await?;
             println!("revoked {name}");
+            if let Some(project) = token_project(cli)? {
+                let path = discovery::credentials_path();
+                if discovery::remove_credential(&path, name, &project)
+                    .map_err(|e| CliError::Other(e.into()))?
+                {
+                    println!(
+                        "removed its entry for project {project} from {}",
+                        path.display()
+                    );
+                }
+            }
         }
     }
     Ok(())
@@ -2067,6 +2115,7 @@ async fn ready(cli: &Cli, args: &ReadyArgs) -> Result<(), CliError> {
         let token = discovery::resolve_token(
             cli.token.as_deref(),
             Some(std::path::Path::new(&info.workspace)),
+            Some(&info.project),
             &ProcessEnv,
             true,
         )
