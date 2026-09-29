@@ -799,3 +799,21 @@ async fn wait_for(client: &bridle_api::Client, id: &str) -> bridle_api::types::M
     })
     .await
 }
+
+/// hx7t: an empty or whitespace-only body is refused, on both send routes.
+#[tokio::test]
+async fn send_with_an_empty_body_is_rejected() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    for body in ["", "  \n"] {
+        let err = daemon
+            .client
+            .send(&SendRequest {
+                to: Some("human".to_string()),
+                body: body.to_string(),
+                ..Default::default()
+            })
+            .await
+            .expect_err("empty body");
+        assert!(err.to_string().contains("must not be empty"), "{err}");
+    }
+}

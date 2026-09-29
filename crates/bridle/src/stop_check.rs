@@ -56,7 +56,8 @@ pub fn unreported_reason_for(task: &Task) -> String {
         "Your work on {id} ({title}) looks finished (clean tree, commits ahead) but you have not \
          reported it. RUN these commands now with the Bash tool; printing them does nothing: \
          `bridle task summary {id} --text \"<what changed>\"`, then \
-         `bridle send <sender> --task {id} \"done: <one-line summary>; <commit sha>\"`.",
+         `bridle send <manager> --task {id} \"done: <one-line summary>; <commit sha>\"`, \
+         where <manager> is your spawner or the manager agent (`bridle agents --json`), never `human`.",
         id = task.id,
         title = task.title
     )
@@ -277,6 +278,10 @@ mod tests {
         task.summary = Some("did it".into());
         assert!(first_unreported_finish(std::slice::from_ref(&task), true).is_some());
         assert!(unreported_reason_for(&task).contains("printing them does nothing"));
+        let reason = unreported_reason_for(&task);
+        assert!(reason.contains("bridle send <manager>"));
+        assert!(!reason.contains("<sender>"));
+        assert!(reason.contains("never `human`"));
     }
 
     #[test]

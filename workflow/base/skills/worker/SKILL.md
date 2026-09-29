@@ -21,7 +21,7 @@ what judgement applies.
 - **Report as you go**: `bridle task note <task-id> "<progress>"` for
   anything worth recording (blocked, made a judgement call, found the
   daemon isn't running the code yet). Ask a question with
-  `bridle send <sender> --question "<question>"` and wait for the answer
+  `bridle send <manager> --question "<question>"` and wait for the answer
   rather than guessing past a blocker.
 - **Handoff**: before finishing, merge the local `{{branches.integration}}` into your
   branch (`git merge --no-ff {{branches.integration}}`, never `origin/*`), resolve
@@ -29,8 +29,9 @@ what judgement applies.
   `{{commands.check_worker}}`. Commit on your branch once it's green, write the task's
   summary (`bridle task summary <task-id> --file <path>`: what changed, where, any decision
   or caveat; a task isn't done without one), then report to
-  whoever gave you the task:
-  `bridle send <sender> --task <task-id> "done: <one-line summary>; <commit sha>"`
+  your spawner (never `human` unless it says to: a one-off worker reports to the manager,
+  found with `bridle agents --json`):
+  `bridle send <manager> --task <task-id> "done: <one-line summary>; <commit sha>"`
   (the text goes on the task's thread; they get a short pointer).
   Run these commands with Bash: printing them does nothing, and the manager only learns
   you are done from the send.

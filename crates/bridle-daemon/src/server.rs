@@ -564,12 +564,21 @@ async fn get_agent(
         .ok_or_else(|| ApiError::not_found(format!("no such agent: {id}")))
 }
 
+/// An empty message is noise in someone's inbox (hx7t).
+fn require_body(req: &SendRequest) -> Result<(), ApiError> {
+    if req.body.trim().is_empty() {
+        return Err(ApiError::bad_request("`body` must not be empty"));
+    }
+    Ok(())
+}
+
 async fn send_to_agent(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
     Path(id): Path<String>,
     Json(req): Json<SendRequest>,
 ) -> Result<Json<Message>, ApiError> {
+    require_body(&req)?;
     let agent = state
         .store
         .get_agent(&id)
@@ -747,6 +756,7 @@ async fn send_message(
     Extension(principal): Extension<Principal>,
     Json(req): Json<SendRequest>,
 ) -> Result<Json<Vec<Message>>, ApiError> {
+    require_body(&req)?;
     let Some(to_raw) = req.to.as_deref() else {
         return Err(ApiError::bad_request("`to` is required"));
     };

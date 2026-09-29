@@ -202,7 +202,8 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   Text times are local machine time; `--json` keeps UTC/ISO 8601
   ([[docs/design/usage-and-budget#Seeing what applies|details]]).
 
-- **`send`**: when given `--text-file FILE` or `--prompt-file FILE`, pass `-`
+- **`send`**: an empty or whitespace-only text is refused (by the CLI, and by the daemon
+  with 400), here and in `task note`. When given `--text-file FILE` or `--prompt-file FILE`, pass `-`
   as the filename to read from stdin instead. This avoids passing backticks and
   other shell metacharacters as command-line arguments, which can trigger
   permission denials in Claude Code. Example: `echo "message" | bridle send w1 --text-file -`.

@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- `bridle send` and `task note` refuse an empty or whitespace-only body (CLI and API); the worker skill, role and stop-check tell workers to report to their manager, not `human` (br-6fd7, hx7t).
 ### Changed
 
 - `bridle land` lands one squash commit per task (`<task id>: <title>`, the summary as body, `Task:`/`Branch:` trailers) instead of a `--no-ff` merge (br-1d3d).

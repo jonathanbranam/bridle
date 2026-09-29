@@ -719,9 +719,20 @@ pub fn read_text(
     }
 }
 
+/// Message and note text must say something: an empty one lands in an
+/// inbox as noise (hx7t). The daemon refuses it too; this fails before the call.
+fn require_body(body: String) -> Result<String, CliError> {
+    if body.trim().is_empty() {
+        return Err(CliError::from(anyhow::anyhow!(
+            "message text must not be empty"
+        )));
+    }
+    Ok(body)
+}
+
 async fn send(cli: &Cli, args: &SendArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
-    let body = read_text(&args.text, &args.text_file, "text")?;
+    let body = require_body(read_text(&args.text, &args.text_file, "text")?)?;
     let req = SendRequest {
         to: Some(args.to.clone()),
         body,
@@ -2370,7 +2381,7 @@ async fn task_reopen(cli: &Cli, args: &TaskReopenArgs) -> Result<(), CliError> {
 
 async fn task_note(cli: &Cli, args: &TaskNoteArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
-    let text = read_text(&args.text, &args.text_file, "text")?;
+    let text = require_body(read_text(&args.text, &args.text_file, "text")?)?;
     if let Some(to) = &args.notify {
         let msgs = client
             .send(&SendRequest {
@@ -2846,6 +2857,18 @@ mod bridle_counts_tests {
             _ => None,
         };
         assert_eq!(bridle_counts(dir.path(), &env, &token_path).await, None);
+    }
+}
+
+#[cfg(test)]
+mod require_body_tests {
+    use super::require_body;
+
+    #[test]
+    fn rejects_empty_and_whitespace_only() {
+        assert!(require_body(String::new()).is_err());
+        assert!(require_body(" \n\t".to_string()).is_err());
+        assert_eq!(require_body("hi".to_string()).unwrap(), "hi");
     }
 }
 
