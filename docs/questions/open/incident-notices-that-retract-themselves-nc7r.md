@@ -46,3 +46,12 @@ like a failed push, a red `main` via c8qw, or a budget hold); whether it spans p
 (one incident, three daemons); whether the budget governor's hold notices become incidents.
 Held messages (`when`/pending delivery) may be most of the mechanism already: a message
 that is withdrawn while still pending is never delivered.
+
+## Decisions (design in [[docs/design/agent-host/incidents|incidents]])
+
+- A record (`incidents` table, `messages.incident_id`), states `open`/`closed`; an update rewrites the body.
+- Audience: `all` or `role:<name>`. External principals read `bridle status`/`incident list`, no push. Cross-project isn't in v1: the orchestrator opens one per daemon.
+- Open/update/close: human, orchestrator, managers. The daemon opens none yet; budget holds stay as they are.
+- Delivery is the message queue: `system` notes, `when idle`. Close drops `pending`/`held` notices (never seen) and sends "resolved" to the rest. Agents that start or resume while open get a notice then; not in the system prompt.
+- Surfaces: `bridle incident open|update|close|list|show`, `status`, `/v1/incidents`, `incident.*` events.
+- Build split: held until the orchestrator frames incidents and human to-dos as one pattern.
