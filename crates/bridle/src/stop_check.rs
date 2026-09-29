@@ -29,6 +29,62 @@ pub fn first_unacknowledged_claim(claimed: &[Task]) -> Option<&Task> {
     })
 }
 
+/// The task among `claimed` that looks finished but never reported: the
+/// tree is clean with commits ahead of the integration branch (`finished`),
+/// and the task has no summary or no thread entry from its claimant
+/// starting `done:`. Overnight, workers printed their `bridle send done`
+/// instead of running it and sat idle.
+pub fn first_unreported_finish(claimed: &[Task], finished: bool) -> Option<&Task> {
+    if !finished {
+        return None;
+    }
+    claimed.iter().find(|task| {
+        let Some(claimed_by) = task.claimed_by.as_deref() else {
+            return false;
+        };
+        let reported = task
+            .thread
+            .iter()
+            .any(|e| e.from == claimed_by && e.body.trim_start().starts_with("done:"));
+        task.summary.as_deref().is_none_or(|s| s.trim().is_empty()) || !reported
+    })
+}
+
+/// Direct instruction for a finished worker with no summary or report.
+pub fn unreported_reason_for(task: &Task) -> String {
+    format!(
+        "Your work on {id} ({title}) looks finished (clean tree, commits ahead) but you have not \
+         reported it. RUN these commands now with the Bash tool; printing them does nothing: \
+         `bridle task summary {id} --text \"<what changed>\"`, then \
+         `bridle send <sender> --task {id} \"done: <one-line summary>; <commit sha>\"`.",
+        id = task.id,
+        title = task.title
+    )
+}
+
+/// Whether the worktree at `dir` looks finished: clean, with commits ahead
+/// of the local integration branch (`main`, else `master`). Any git failure
+/// is "not finished", so the hook falls back to its older behaviour.
+pub fn looks_finished(dir: &std::path::Path) -> bool {
+    let git = |args: &[&str]| {
+        std::process::Command::new("git")
+            .args(args)
+            .current_dir(dir)
+            .output()
+            .ok()
+            .filter(|o| o.status.success())
+            .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+    };
+    if git(&["status", "--porcelain"]).is_none_or(|s| !s.is_empty()) {
+        return false;
+    }
+    ["main", "master"].iter().any(|base| {
+        git(&["rev-list", "--count", &format!("{base}..HEAD")])
+            .and_then(|n| n.parse::<u64>().ok())
+            .is_some_and(|n| n > 0)
+    })
+}
+
 /// The block reason, phrased as a direct instruction since Claude Code
 /// delivers it as an ordinary user-turn message, not a system directive
 /// (spike 05, surprise 2).
@@ -154,6 +210,39 @@ mod tests {
         let tasks = [ok, bad];
         let blocked = first_unacknowledged_claim(&tasks);
         assert_eq!(blocked.map(|t| t.id.as_str()), Some("tw-0002"));
+    }
+
+    fn done_entry(from: &str) -> ThreadEntry {
+        ThreadEntry {
+            body: "done: all good; abc123".to_string(),
+            ..entry(from, Utc::now())
+        }
+    }
+
+    #[test]
+    fn finished_without_report_is_blocked() {
+        let mut task = task_with(Some("agent:w1"), Some(Utc::now()), vec![]);
+        assert!(first_unreported_finish(std::slice::from_ref(&task), true).is_some());
+        task.summary = Some("did it".into());
+        assert!(first_unreported_finish(std::slice::from_ref(&task), true).is_some());
+        assert!(unreported_reason_for(&task).contains("printing them does nothing"));
+    }
+
+    #[test]
+    fn finished_and_reported_is_allowed() {
+        let mut task = task_with(
+            Some("agent:w1"),
+            Some(Utc::now()),
+            vec![done_entry("agent:w1")],
+        );
+        task.summary = Some("did it".into());
+        assert!(first_unreported_finish(&[task], true).is_none());
+    }
+
+    #[test]
+    fn unfinished_tree_is_left_to_the_claim_check() {
+        let task = task_with(Some("agent:w1"), Some(Utc::now()), vec![]);
+        assert!(first_unreported_finish(&[task], false).is_none());
     }
 
     #[test]

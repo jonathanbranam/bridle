@@ -177,7 +177,9 @@ async fn statusline(_cli: &Cli) -> Result<(), CliError> {
 /// immediately (print nothing) when `stop_hook_active` is set, on any error
 /// of bridle's own reaching the daemon, and whenever every claimed task has
 /// a thread entry since it was claimed; block (print the flat
-/// `decision`/`reason` JSON) only for the first claim missing one.
+/// `decision`/`reason` JSON) only for the first claim missing one, or for a
+/// finished-looking tree (clean, commits ahead) whose task lacks a summary or
+/// a `done:` report.
 async fn stop_check(cli: &Cli) -> Result<(), CliError> {
     let input: serde_json::Value = std::io::read_to_string(std::io::stdin())
         .ok()
@@ -200,6 +202,16 @@ async fn stop_check(cli: &Cli) -> Result<(), CliError> {
         println!(
             "{}",
             crate::stop_check::block_json(&crate::stop_check::reason_for(task))
+        );
+        return Ok(());
+    }
+    let finished = std::env::current_dir()
+        .map(|d| crate::stop_check::looks_finished(&d))
+        .unwrap_or(false);
+    if let Some(task) = crate::stop_check::first_unreported_finish(&claimed, finished) {
+        println!(
+            "{}",
+            crate::stop_check::block_json(&crate::stop_check::unreported_reason_for(task))
         );
     }
     Ok(())
