@@ -59,7 +59,7 @@ configuration; the full design is ticket tx3f.)
   (`git -C ../wt/<name> status --short`); the diff with `git diff {{branches.integration}}...bridle/<name>`;
   and `git grep -nE '^(<<<<<<< |>>>>>>> )' bridle/<name>` (refuse if found). For each
   user-visible change, add one line under "## Unreleased" in CHANGELOG.md in the worker's
-  branch (not separately). `bridle land <task-id>` merges with `--no-ff`, runs the
+  branch (not separately). `bridle land <task-id>` lands one squash commit (subject `<task id>: <title>`, the summary as body, `Task:`/`Branch:` trailers), runs the
   `[integration] check` if configured, fast-forwards the integration branch (guarded against
   moves), and marks the task done; it never pushes. On success, push with `git push origin
   {{branches.integration}}`. On refusal (architecture file touched, tip moved, or uncommitted

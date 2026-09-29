@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- `bridle land` lands one squash commit per task (`<task id>: <title>`, the summary as body, `Task:`/`Branch:` trailers) instead of a `--no-ff` merge (br-1d3d).
+
 ### Added
 
 - `bridle stop-check` runs the project's `check_worker` command for a finished-looking worker whose HEAD has no recorded pass, records the pass in the worktree's git dir, and blocks with the output tail on failure (br-f671).

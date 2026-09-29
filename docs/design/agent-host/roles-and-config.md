@@ -98,7 +98,7 @@ start_prompt      = "Check your inbox and tell the human you're ready."   # firs
   integrator is bridle itself, in its own worktree
   ([[docs/design/roles-and-lifecycle|roles]]). `bridle land <task> [--branch B]
   [--check-cmd CMD]` is that integrator: under one lock (one landing at a time) it
-  merges the branch `--no-ff` in `<workspace>/integration` (a worktree on scratch branch
+  squash-merges the branch (one commit: `<task id>: <title>`, summary body, `Task:`/`Branch:` trailers) in `<workspace>/integration` (a worktree on scratch branch
   `integrate/<task>` cut from the integration tip, created on first use), runs
   `[integration] check = "..."` there (unset: skipped, with a note; `--check-cmd`
   overrides), then moves the integration branch guarded by the tip it started from

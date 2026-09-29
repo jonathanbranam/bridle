@@ -83,7 +83,26 @@ async fn clean_land_moves_main_and_integrates_the_task() {
     let after = git(&d.repo, &["rev-parse", "main"]);
     assert_ne!(before, after);
     assert_eq!(r.commit, after);
-    assert_eq!(git(&d.repo, &["rev-parse", "main^2"]), tip);
+    // One single-parent squash commit carrying the trailers; the branch then reads as merged.
+    assert_eq!(
+        git(&d.repo, &["rev-list", "--parents", "-1", "main"])
+            .split_whitespace()
+            .count(),
+        2,
+        "single parent"
+    );
+    let msg = git(&d.repo, &["log", "-1", "--format=%B", "main"]);
+    assert!(msg.starts_with(&format!("{id}: t\n")), "{msg}");
+    assert!(msg.contains(&format!("Task: {id}")), "{msg}");
+    assert!(msg.contains("Branch: b1"), "{msg}");
+    assert_eq!(git(&d.repo, &["show", "main:f.txt"]), "x");
+    // Landing removes the branch; bring it back to show the trailer alone marks it merged.
+    git(&d.repo, &["branch", "-f", "b1", &tip]);
+    assert!(
+        bridle_daemon::worktree::is_merged(&d.repo, "b1")
+            .await
+            .expect("is_merged")
+    );
     assert_eq!(r.task.state, TaskState::Integrated);
     assert!(
         r.notes.iter().any(|n| n.contains("skipped")),

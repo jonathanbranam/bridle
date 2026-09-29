@@ -1,4 +1,4 @@
-//! `bridle land`: merge a task's branch into the integration branch in a dedicated worktree,
+//! `bridle land`: squash a task's branch into the integration branch in a dedicated worktree,
 //! run the project's check there, and only then move the integration branch's ref
 //! (docs/design/agent-host/roles-and-config.md, "The integrator"). Never pushes.
 
@@ -37,12 +37,14 @@ pub struct LandInput<'a> {
     pub integration: &'a str,
     pub branch: &'a str,
     pub task: &'a str,
+    pub title: &'a str,
+    pub summary: Option<&'a str>,
     pub is_arch_revision: bool,
     pub check: Option<&'a str>,
 }
 
 pub struct Landed {
-    /// The merge commit the integration branch now points at.
+    /// The squash commit the integration branch now points at.
     pub commit: String,
     pub notes: Vec<String>,
 }
@@ -79,12 +81,18 @@ pub async fn land(i: &LandInput<'_>) -> Result<Landed, LandError> {
     }
 
     let wt = prepare_worktree(i, &old).await?;
-    let msg = format!("Merge branch '{}' ({})", i.branch, i.task);
-    if let Err(e) = run_git(&wt, &["merge", "--no-ff", "-m", &msg, i.branch]).await {
+    // One single-parent commit per task; the `Branch:` trailer is how `is_merged` recognises it.
+    let msg = commit_message(i);
+    let squashed = match run_git(&wt, &["merge", "--squash", i.branch]).await {
+        Ok(_) => run_git(&wt, &["commit", "-q", "-m", &msg]).await.map(drop),
+        Err(e) => Err(e),
+    };
+    if let Err(e) = squashed {
         let paths = run_git(&wt, &["diff", "--name-only", "--diff-filter=U"])
             .await
             .unwrap_or_default();
-        let _ = run_git(&wt, &["merge", "--abort"]).await;
+        // A squash leaves no MERGE_HEAD, so `merge --abort` can't undo it.
+        let _ = run_git(&wt, &["reset", "-q", "--hard", &old]).await;
         let paths: Vec<String> = paths.lines().map(str::to_string).collect();
         return Err(if paths.is_empty() {
             LandError::Git(e)
@@ -104,6 +112,17 @@ pub async fn land(i: &LandInput<'_>) -> Result<Landed, LandError> {
         .to_string();
     advance(i, &old, &new).await?;
     Ok(Landed { commit: new, notes })
+}
+
+/// `<task id>: <title>`, the task summary as the body, then the `Task:` and `Branch:` trailers.
+fn commit_message(i: &LandInput<'_>) -> String {
+    let mut msg = format!("{}: {}\n\n", i.task, i.title);
+    if let Some(s) = i.summary.map(str::trim).filter(|s| !s.is_empty()) {
+        msg.push_str(s);
+        msg.push_str("\n\n");
+    }
+    msg.push_str(&format!("Task: {}\nBranch: {}\n", i.task, i.branch));
+    msg
 }
 
 /// Move the integration branch from `old` to `new`. A worktree with the branch checked out is

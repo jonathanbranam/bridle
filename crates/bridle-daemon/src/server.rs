@@ -1585,6 +1585,8 @@ async fn land_task(
         integration: &state.integration,
         branch: &branch,
         task: &id,
+        title: &task.title,
+        summary: task.summary.as_deref(),
         is_arch_revision: task.kind == bridle_api::types::TaskKind::ArchRevision,
         check,
     })

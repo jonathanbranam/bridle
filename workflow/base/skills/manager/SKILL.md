@@ -38,7 +38,7 @@ says when to run which one and what judgement applies.
   significant -- a design rewrite, human-only territory, a lossy migration,
   or the worker flags it for review.
 
-Land with `git merge --squash bridle/<name>` and one commit: subject `<task id>: <task title>`,
+Land with `bridle land <task-id>`, which makes one squash commit: subject `<task id>: <task title>`,
 body the worker's summary, trailers `Task: <id>` and `Branch: bridle/<name>`.
 After the push, record the landing:
 `bridle task done <task-id> --commit <landing sha> --branch bridle/<name>` (it warns if there is
