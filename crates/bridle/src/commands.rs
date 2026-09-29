@@ -34,6 +34,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
     match &cli.command {
         Command::Serve(args) => serve::run(&cli, args).await,
         Command::StopDaemon => stop_daemon(&cli).await,
+        Command::Launchd(args) => crate::launchd::run(&cli, args),
         Command::Rebuild => rebuild(&cli).await,
         Command::Daemons => daemons(&cli).await,
         Command::Status => status(&cli).await,
