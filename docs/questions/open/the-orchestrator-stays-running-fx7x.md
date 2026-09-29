@@ -184,3 +184,23 @@ br-2ebc spike should confirm):
 - Thresholds as a percentage of the window, or fail loudly on a small window (the token
   thresholds assume the 1M model).
 - The handover note as a bridle record (slice 3) can come later, separately.
+
+## Decisions and design (br-2ebc, 2026-09-29)
+
+Spike: [[docs/spikes/07-orchestrator-supervision-findings|spike 07]]. Design:
+[[docs/design/agent-host/orchestrator-supervision|orchestrator supervision]], with the build
+slices at its end. The human's answers, all settled:
+
+- **Pane:** found by the tmux tag, `tmux set -p @bridle orchestrator`, read with
+  `tmux list-panes -a -F '#{pane_id} #{@bridle}'`. No config key; no tagged pane is an incident.
+- **Thresholds:** 150K note, 210K plan a handover, 255K hand over now, then the forced restart.
+- **Forced restart:** ask for a handover, then stop the process at the deadline (30 min) and
+  relaunch. No `/exit` by send-keys; a restart may interrupt a conversation only after the
+  deadline. No idle detection, so the `Stop` hook isn't used.
+- **The pane is the human's:** bridle types only to relaunch when no `claude` is running.
+- **Wakes** stay in the session: `bridle wait-for-wake`, with the wake conditions of
+  `orchestrator-watch.sh` moved into the daemon; an incident if none is waiting.
+- **Crash loops:** a few relaunches with growing waits (30 s, 2 m, 10 m), then an incident and stop.
+
+New from the spike: `/clear` gives the same process a new session id, so the session id can't be
+pinned at launch; a `SessionStart` hook scoped to the launcher's session records it.

@@ -93,6 +93,7 @@ done
    [[docs/design/agent-host/messages|messages]],
    [[docs/design/agent-host/principals|principals]],
    [[docs/design/agent-host/api|API and events]],
+   [[docs/design/agent-host/orchestrator-supervision|orchestrator supervision]] (not built),
    [[docs/design/agent-host/roles-and-config|roles and config]],
    [[docs/design/cli|CLI]].
 5. The rest of the design as needed:
