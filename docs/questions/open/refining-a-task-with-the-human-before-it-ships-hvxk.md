@@ -58,3 +58,60 @@ The human, verbatim (2026-09-29, via the advisor):
    requirements up front.
 4. **A record of the design decisions the agent makes**, on the task, even when the human
    wasn't involved.
+
+## More from the human: iterating on the implementation, and reviewing it
+
+**Not fully fleshed out.** The human, 2026-09-29: this needs more design work, and they don't
+have time for it right now. Don't build from this ticket yet.
+
+The human, verbatim (2026-09-29, via the advisor):
+
+> Something else to think about in this is the idea of whether the work needs a human review
+> and what the right way to do that is. There are some tasks that are too vague for me to commit
+> to without seeing either the code, maybe, or without being able to actually try out the
+> solution. That comes up pretty often in the video game work and in other areas where I've had
+> to do a lot of tracked work, like multiple rounds of prototyping with the agent to build a
+> version, test the UI, and then give feedback, and then test it again and give feedback.
+>
+> I'm happy with the general idea of trunk-based development, but when we work with specs,
+> changes, and tasks, it is strange to create a new task just to fix a bug in something that was
+> shipped but not fully tested, and then go fix a bug in it. It's probably fine if we create
+> tasks for that, but I want an association there, or I want something where we can iterate on
+> the first approach.
+>
+> I'm not really sure how to design this the best way with the system, specifically with the Git
+> branching, the merging, and the way everything works now. Would we hold up an agent, a worker
+> agent, and have me look at the branch and see if I like the result? I'm not sure that's the
+> best approach, or is it better to have the agent merge in the work and then have me review it
+> on main and then pick it up with a new task and a new agent? I don't know. I think this may be
+> what the give-and-take was for, but basically there's some kind of work or some kind of
+> ability I want to have at least as an option: to take a more careful, iterative approach with
+> the implementation. This goes back to each task having maybe a different workflow,
+> potentially.
+>
+> There are probably a lot of tasks where I can write it up, be clear, ship it off, and just
+> check it after it merges. I prefer that approach. That's where I'd like to get to with most,
+> but in some cases, again, I need to work with an iterative approach.
+>
+> There may be tasks where I want the agent to work through the design or the implementation.
+> I'd like to be able to iterate on the design and the proposal with an agent. That's one thing,
+> and I prefer that the agent's context be more or less focused on what we're doing and not
+> distracted by other details. That's a specific thing, but I don't know. I don't want an agent
+> sitting there running all the time, even if it's idle.
+>
+> I think that's where the task comes into play, and this is where the task ticket thing is a
+> problem. I want to have a fairly clean context agent that can help me refine a specific task
+> until it's ready to go before implementation, and that should be tracked on the task itself.
+
+What this adds to the ask above:
+
+5. **An iterative implementation option**: rounds of build, the human tries it (often UI or
+   game work), feedback, build again. Open: review on the branch with the worker held, or merge
+   to main and follow up with a new task and agent. "Give-and-take" (take/give, parked in the
+   build order) may be meant for this.
+6. **A follow-up fix is linked to the task that shipped it**, or iterates on it, rather than
+   being an unrelated new task.
+7. **Most tasks ship and are checked after merge**, which the human prefers. The iterative
+   workflow is an option per task, not the default.
+8. **The refine agent doesn't idle.** It has a clean context, is focused on one task, starts
+   when needed and doesn't keep running; its work is tracked on the task.

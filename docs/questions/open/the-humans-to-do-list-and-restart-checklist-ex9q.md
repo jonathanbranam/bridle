@@ -68,3 +68,7 @@ The human, verbatim (2026-09-29, via the advisor):
    `Host *` / `UseKeychain yes` / `AddKeysToAgent yes`. The advisor recommends it.
 3. From orchestrator-state (ninth session), still open: try meta-notes mn-fbc0 and track-web's
    Space golf tasks; review the data-contracts trial (`.bridle/ADOPT-REVIEW.md`); answer rs7p.
+4. **[follow up] Tailscale.** After the laptop reboot it isn't connected (the human: "It may
+   just be that I need to click a button").
+5. **[now] Restart the orchestrator** (`scripts/claude-orchestrator`); it disappeared at 08:36 ET
+   (ticket [[the-orchestrator-stays-running-fx7x|the orchestrator stays running]]).
