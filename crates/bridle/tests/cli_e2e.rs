@@ -905,3 +905,83 @@ fn spec_export_refuses_specs_with_errors() {
     assert!(err.contains("bad.md:3:"), "{out}{err}");
     assert!(!dir.path().join(".bridle/cache/features").exists());
 }
+
+fn start_daemon(tmp: &Path) -> (DaemonGuard, PathBuf, PathBuf) {
+    let repo = tmp.join("repo");
+    init_repo(&repo);
+    let home = tmp.join("home");
+    let mut serve_cmd = Command::new(bridle_bin());
+    serve_cmd
+        .arg("serve")
+        .arg("--repo")
+        .arg(&repo)
+        .arg("--listen")
+        .arg("127.0.0.1:0")
+        .env("BRIDLE_CLAUDE_BIN", fake_claude_path())
+        .env("BRIDLE_HOME", &home)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null());
+    strip_bridle_env(&mut serve_cmd);
+    let guard = DaemonGuard(serve_cmd.spawn().expect("spawn bridle serve"));
+    wait_for_file(&tmp.join(".bridle/daemon.json"), Duration::from_secs(20));
+    (guard, repo, home)
+}
+
+fn spawn_cli(cwd: &Path, home: &Path, args: &[&str]) -> Child {
+    let mut cmd = Command::new(bridle_bin());
+    cmd.args(args)
+        .current_dir(cwd)
+        .env("BRIDLE_HOME", home)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    strip_bridle_env(&mut cmd);
+    cmd.spawn().expect("spawn bridle")
+}
+
+#[test]
+fn wait_returns_on_state_change_message_timeout_and_already_in_state() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let (_guard, repo, home) = start_daemon(tmp.path());
+
+    let (ok, out, err) = run_cli(&repo, &home, &["task", "new", "t", "-k", "chore", "--json"]);
+    assert!(ok, "task new failed: {err}");
+    let id = serde_json::from_str::<serde_json::Value>(&out).expect("task json")["id"]
+        .as_str()
+        .expect("id")
+        .to_string();
+
+    // Times out: exit 4, distinct from success (1) and unreachable (3).
+    let waiter = spawn_cli(&repo, &home, &["wait", &id, "--timeout", "1"]);
+    let out = waiter.wait_with_output().expect("wait output");
+    assert_eq!(out.status.code(), Some(4));
+
+    // Returns on a state change.
+    let waiter = spawn_cli(&repo, &home, &["wait", &id, "--until", "planned"]);
+    std::thread::sleep(Duration::from_millis(800));
+    let (ok, _, err) = run_cli(&repo, &home, &["task", "plan", &id]);
+    assert!(ok, "plan failed: {err}");
+    let out = waiter.wait_with_output().expect("wait output");
+    assert!(out.status.success());
+    assert_eq!(
+        String::from_utf8_lossy(&out.stdout).trim(),
+        format!("{id} is planned")
+    );
+
+    // Already in the state: returns at once.
+    let (ok, out, err) = run_cli(&repo, &home, &["wait", &id, "--until", "planned", "--json"]);
+    assert!(ok, "wait failed: {err}");
+    let v: serde_json::Value = serde_json::from_str(&out).expect("wait json");
+    assert_eq!(v["result"], "state");
+    assert_eq!(v["state"], "planned");
+
+    // --or-message returns on a message to the caller.
+    let waiter = spawn_cli(&repo, &home, &["wait", &id, "--or-message", "--json"]);
+    std::thread::sleep(Duration::from_millis(800));
+    let (ok, _, err) = run_cli(&repo, &home, &["send", "human", "ping"]);
+    assert!(ok, "send failed: {err}");
+    let out = waiter.wait_with_output().expect("wait output");
+    assert!(out.status.success());
+    let v: serde_json::Value = serde_json::from_slice(&out.stdout).expect("wait json");
+    assert_eq!(v["result"], "message");
+}

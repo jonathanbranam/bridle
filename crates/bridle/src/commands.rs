@@ -10,7 +10,7 @@ use bridle_api::{
     EdgeKind, EditTaskRequest, Event, EventQuery, InterruptRequest, MaxWorkersRequest, MessageKind,
     MessageQuery, NewEdgeRequest, NewTaskRequest, RemoveEdgeQuery, RemoveQuery, RenewRequest,
     ResumeRequest, SendRequest, SetSummaryRequest, SpawnRequest, StopRequest, Task, TaskKind,
-    TaskSize, TokenCreateRequest, UsageBreakdownQuery, UsageGroupBy, Workdir,
+    TaskSize, TokenCreateRequest, UsageBreakdownQuery, UsageGroupBy, Workdir, event_kind,
 };
 use chrono::{Local, TimeZone, Utc};
 use futures::StreamExt;
@@ -24,7 +24,7 @@ use crate::cli::{
     ShowArgs, SpawnArgs, SpecAction, SpecArgs, SpecExportArgs, SpecFormatArg, StopArgs, TaskAction,
     TaskArgs, TaskDoneArgs, TaskDropArgs, TaskEditArgs, TaskKindArg, TaskListArgs, TaskNewArgs,
     TaskNoteArgs, TaskPlanArgs, TaskReopenArgs, TaskSearchArgs, TaskShowArgs, TaskSizeArg,
-    TaskSummaryArgs, TokenAction, TokenArgs, UsageArgs, UsageByArg, WhenArg,
+    TaskSummaryArgs, TokenAction, TokenArgs, UsageArgs, UsageByArg, WaitArgs, WhenArg,
 };
 use crate::error::CliError;
 use crate::render;
@@ -50,6 +50,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Rm(args) => rm(&cli, args).await,
         Command::Logs(args) => logs(&cli, args).await,
         Command::Events(args) => events(&cli, args).await,
+        Command::Wait(args) => wait(&cli, args).await,
         Command::Usage(args) => usage(&cli, args).await,
         Command::Cost(args) => cost(&cli, args).await,
         Command::Tui => tui(&cli).await,
@@ -978,6 +979,95 @@ fn print_event(cli: &Cli, ev: &Event) -> Result<(), CliError> {
         render::print_json(ev)?;
     } else {
         println!("{}", render::render_event_line(ev));
+    }
+    Ok(())
+}
+
+/// Blocks on the SSE stream (no polling) until the task's state condition or,
+/// with `--or-message`, a message to the caller. The cursor is taken before
+/// the initial reads so an event landing in between is replayed, not missed.
+async fn wait(cli: &Cli, args: &WaitArgs) -> Result<(), CliError> {
+    let client = client_for_read(cli).await?;
+    let cursor = client
+        .events(&EventQuery {
+            limit: Some(1),
+            ..Default::default()
+        })
+        .await?
+        .last()
+        .map_or(0, |e| e.seq);
+    let task = client.get_task(&args.task).await?;
+    if args.until == Some(task.state) {
+        return wait_done(cli, "state", &task.id, Some(task.state.as_str()), None);
+    }
+    let me = if args.or_message {
+        let unread = client
+            .list_messages(&MessageQuery {
+                to: Some("me".to_string()),
+                unread: true,
+                limit: Some(1),
+                ..Default::default()
+            })
+            .await?;
+        if let Some(m) = unread.first() {
+            return wait_done(cli, "message", &task.id, None, Some(&m.id));
+        }
+        Some(client.status().await?.principal)
+    } else {
+        None
+    };
+
+    let watch = async {
+        let mut stream = Box::pin(client.events_stream(Some(cursor)));
+        while let Some(item) = stream.next().await {
+            let ev: Event = item?;
+            if ev.kind == event_kind::TASK_STATE && ev.data["task"] == task.id.as_str() {
+                let to = ev.data["to"].as_str().unwrap_or_default().to_string();
+                if args.until.is_none_or(|u| u.as_str() == to) {
+                    return wait_done(cli, "state", &task.id, Some(&to), None);
+                }
+            } else if let Some(me) = &me
+                && ev.kind == event_kind::MESSAGE_SENT
+                && ev.data["to"] == me.as_str()
+            {
+                let id = ev.data["message"].as_str().unwrap_or_default().to_string();
+                return wait_done(cli, "message", &task.id, None, Some(&id));
+            }
+        }
+        Err(CliError::Other(anyhow::anyhow!("event stream ended")))
+    };
+    let Some(secs) = args.timeout else {
+        return watch.await;
+    };
+    match tokio::time::timeout(std::time::Duration::from_secs(secs), watch).await {
+        Ok(r) => r,
+        Err(_) => {
+            if cli.json {
+                render::print_json(&serde_json::json!({"result": "timeout", "task": task.id}))?;
+            }
+            Err(CliError::Timeout(format!(
+                "timed out after {secs}s waiting on {}",
+                task.id
+            )))
+        }
+    }
+}
+
+fn wait_done(
+    cli: &Cli,
+    result: &str,
+    task: &str,
+    state: Option<&str>,
+    message: Option<&str>,
+) -> Result<(), CliError> {
+    if cli.json {
+        render::print_json(&serde_json::json!({
+            "result": result, "task": task, "state": state, "message": message,
+        }))?;
+    } else if let Some(m) = message {
+        println!("message {m} arrived (waiting on {task})");
+    } else {
+        println!("{task} is {}", state.unwrap_or_default());
     }
     Ok(())
 }
