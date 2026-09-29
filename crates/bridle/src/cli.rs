@@ -242,6 +242,8 @@ pub struct GoalsArgs {
 pub enum GoalsAction {
     /// List goals with id, firmness, priority, stance and title; exits 1 on parse errors.
     List(GoalsListArgs),
+    /// Propose a change to a goal's firmness, priority, or stance.
+    Propose(GoalsProposeProposeArgs),
 }
 
 #[derive(Debug, Args)]
@@ -258,6 +260,21 @@ pub struct GoalsListArgs {
 }
 
 #[derive(Debug, Args)]
+pub struct GoalsProposeProposeArgs {
+    /// The goal id (e.g., g-01).
+    pub goal_id: String,
+    /// The change to propose: firmness=firm|priority=now|stance=build (repeatable).
+    #[arg(long, value_name = "KEY=VALUE")]
+    pub change: Vec<String>,
+    /// Why this change is proposed.
+    #[arg(long)]
+    pub why: String,
+    /// The goals directory (default `design/goals`).
+    #[arg(long, value_name = "DIR", default_value = "design/goals")]
+    pub goals_root: PathBuf,
+}
+
+#[derive(Debug, Args)]
 pub struct ArchArgs {
     #[command(subcommand)]
     pub action: ArchAction,
@@ -268,6 +285,8 @@ pub enum ArchAction {
     /// List the elements (id, invariant flag, title); exits non-zero, printing
     /// diagnostics, on a missing or duplicate id.
     List(ArchListArgs),
+    /// Propose a change to the architecture.
+    Propose(ArchProposeArgs),
 }
 
 #[derive(Debug, Args)]
@@ -279,6 +298,23 @@ pub struct ArchListArgs {
     /// `design/architecture`, relative to the current directory).
     #[arg(long, value_name = "DIR", default_value = "design/architecture")]
     pub root: PathBuf,
+}
+
+#[derive(Debug, Args)]
+#[command(group(ArgGroup::new("arg_source").args(["argument", "argument_file"])))]
+pub struct ArchProposeArgs {
+    /// The title of the proposal.
+    #[arg(long)]
+    pub title: String,
+    /// The proposal text.
+    #[arg(long)]
+    pub argument: Option<String>,
+    /// Read the proposal from a file (or `-` for stdin).
+    #[arg(long)]
+    pub argument_file: Option<PathBuf>,
+    /// The architecture directory (default `design/architecture`).
+    #[arg(long, value_name = "DIR", default_value = "design/architecture")]
+    pub arch_root: PathBuf,
 }
 
 #[derive(Debug, Args)]

@@ -66,6 +66,9 @@ bridle arch list [--invariants] [--root DIR]   lists architecture elements (id, 
                                              `design/architecture`); a missing or duplicate `a-` id
                                              is an error (diagnostics on stderr, exit 1); --json
                                              prints the elements with their text; local only
+bridle arch propose --title T --argument TEXT|-  creates an `arch-revision` task with the proposal
+                                             (daemon call); validates that the architecture
+                                             directory exists locally
 bridle trace down|up <id>  [--goals DIR] [--arch DIR] [--specs DIR]   walks the trace links across
                                              `design/goals`, `design/architecture` and `design/specs`:
                                              `down` lists everything depending on the element, `up` what it
@@ -111,6 +114,9 @@ bridle goals list [--root DIR] [--priority P] [--stance S]   lists goals (docs/d
                                              diagnostics; diagnostics go to stderr as file:line:col: message
                                              (an unaddressed goal without a why is a warning); exit 1 on
                                              any error; local only, no daemon call
+bridle goals propose <goal-id> --change KEY=VALUE --why TEXT  creates a task proposing a change to the goal's
+                                             firmness, priority, or stance (repeatable --change;
+                                             daemon call); validates that the goal exists
 bridle spec import openspec [--from DIR] [--to DIR] [--dry-run]   moves each `<from>/<cap>/spec.md`
                                              (default `openspec/specs`) to `<to>/<cap>.md` (default
                                              `design/specs`) with `git mv` (plain rename if untracked),

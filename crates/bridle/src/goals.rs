@@ -1,10 +1,11 @@
-//! `bridle goals list` (docs/design/goals-tier.md). Local, no daemon call.
+//! `bridle goals list` and `bridle goals propose` (docs/design/goals-tier.md).
 
 use anyhow::anyhow;
+use bridle_api::{NewTaskRequest, TaskKind};
 use bridle_spec::{Goal, parse_goals};
 
-use crate::cli::{Cli, GoalsAction, GoalsArgs, GoalsListArgs};
-use crate::commands::spec_inputs;
+use crate::cli::{Cli, GoalsAction, GoalsArgs, GoalsListArgs, GoalsProposeProposeArgs};
+use crate::commands::{client_for, print_task_row, spec_inputs};
 use crate::error::CliError;
 use crate::render;
 
@@ -30,9 +31,10 @@ struct Report<'a> {
     diagnostics: Vec<Diag>,
 }
 
-pub fn run(cli: &Cli, args: &GoalsArgs) -> Result<(), CliError> {
+pub async fn run(cli: &Cli, args: &GoalsArgs) -> Result<(), CliError> {
     match &args.action {
         GoalsAction::List(a) => list(cli, a),
+        GoalsAction::Propose(a) => propose(cli, a).await,
     }
 }
 
@@ -97,6 +99,53 @@ fn list(cli: &Cli, args: &GoalsListArgs) -> Result<(), CliError> {
     }
     if errors > 0 {
         return Err(anyhow!("goals list found {errors} error(s)").into());
+    }
+    Ok(())
+}
+
+async fn propose(cli: &Cli, args: &GoalsProposeProposeArgs) -> Result<(), CliError> {
+    let files = spec_inputs(&[], Some(&args.goals_root))?;
+    let mut parsed = Vec::new();
+    for f in &files {
+        let name = f.display().to_string();
+        let text = std::fs::read_to_string(f).map_err(|e| anyhow!("reading {name}: {e}"))?;
+        let g = parse_goals(&name, &text);
+        if !g.errors.is_empty() || !g.warnings.is_empty() {
+            for d in &g.errors {
+                eprintln!("{}:{}:{}: {}", d.file, d.line, d.column, d.message);
+            }
+            for d in &g.warnings {
+                eprintln!("warning: {}:{}:{}: {}", d.file, d.line, d.column, d.message);
+            }
+        }
+        parsed.extend(g.goals.into_iter().map(|g| (name.clone(), g)));
+    }
+
+    let _goal = parsed
+        .iter()
+        .find(|(_, g)| g.id == args.goal_id)
+        .ok_or_else(|| anyhow!("goal {} not found", args.goal_id))?;
+
+    let title = format!("Goal {}: change {}", args.goal_id, args.change.join(", "));
+    let body = format!(
+        "Proposed changes:\n{}\n\nWhy:\n{}",
+        args.change.join("\n"),
+        args.why
+    );
+
+    let client = client_for(cli).await?;
+    let req = NewTaskRequest {
+        title,
+        kind: TaskKind::Question,
+        body,
+        components: Vec::new(),
+        size: None,
+    };
+    let task = client.new_task(&req).await?;
+    if cli.json {
+        render::print_json(&task)?;
+    } else {
+        print_task_row(&task);
     }
     Ok(())
 }
