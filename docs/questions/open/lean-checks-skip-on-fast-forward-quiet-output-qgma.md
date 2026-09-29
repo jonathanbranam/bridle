@@ -56,10 +56,7 @@ And on how agents run the check:
 
 ## Open points for the human
 
-- **Which suite the worker runs.** The human's words say the full suite. Today the worker runs
-  `check-affected` and `land` runs the full suite; with (1), a fast-forward landing would run no
-  full suite locally, only CI. Either the worker goes back to `just check` (full, to a file; more
-  CPU per worker, none at land), or it keeps `check-affected` and full coverage relies on CI.
+- ~~**Which suite the worker runs.**~~ Settled, below.
 - ~~**"The proper number of tests."**~~ Settled, below.
 
 ## The test count (the human, 2026-09-29)
@@ -72,3 +69,12 @@ it with the last full-suite count on `main` (recorded wherever is simplest, e.g.
 CI). Well outside it (say under half or over double; the band is a detail for the build) is
 treated as a failure to look into, not a pass. Tests added or removed by the change itself
 stay well inside the band.
+
+## The worker runs the full suite (the human, 2026-09-29)
+
+> I'm fine with the suggestion here: worker does full build; honestly it's this rust build that
+> is killing my machine
+
+So `[commands] check_worker` goes back to `just check` (full, output to a file), and `land`
+skips the check on a fast-forward. One full local run per task, instead of `check-affected` plus
+a full run at `land`.
