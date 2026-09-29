@@ -4,7 +4,7 @@ title = "bridle land lands one squash commit per task, not --no-ff (mz4q)"
 kind = "bug"
 state = "integrated"
 created_at = "2026-09-29T12:04:21.107Z"
-updated_at = "2026-09-29T12:14:48.935232Z"
+updated_at = "2026-09-29T12:15:04.023672Z"
 branch = "bridle/land-squash"
 commit = "8d078f4"
 summary = "bridle land now squash-merges (git merge --squash + commit) in the integration worktree: subject '<task id>: <title>', task summary as body, Task:/Branch: trailers; single parent, so is_merged's Branch: trailer check recognises it. LandInput gained title/summary. A failed squash is undone with reset --hard (no MERGE_HEAD). Manager role/skill and design docs (cli, operating-model, roles-and-config) agree; land_test asserts single parent, trailers and is_merged."
@@ -19,3 +19,6 @@ done: bridle land now makes one squash commit (id: title, summary body, Task:/Br
 
 ### note · agent:manager-2 · 2026-09-29T12:14:48.935Z
 integrated: 8d078f4 (branch bridle/land-squash)
+
+### note · agent:manager-2 · 2026-09-29T12:15:04.023Z
+cleanup: removed agent land-squash, branch bridle/land-squash
