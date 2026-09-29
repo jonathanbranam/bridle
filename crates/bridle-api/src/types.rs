@@ -541,6 +541,8 @@ pub mod event_kind {
     /// data: {text}. The orchestrator supervisor needs the human (interim, until incidents
     /// exist: docs/design/agent-host/orchestrator-supervision.md, section 8).
     pub const ORCHESTRATOR_INCIDENT: &str = "orchestrator.incident";
+    /// data: {session, tokens, window_size, uptime_secs}. Session's starting context and growth.
+    pub const ORCHESTRATOR_CONTEXT: &str = "orchestrator.context";
     /// data: {task, branch}. `bridle land` began merging.
     pub const INTEGRATE_STARTED: &str = "integrate.started";
     /// data: {task, branch, ok, commit?, error?}

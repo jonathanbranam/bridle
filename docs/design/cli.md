@@ -488,6 +488,11 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   detail as JSON (`--json`: the list of wakes), exits 0, and prints `nothing` when the daemon's
   5 minutes pass quietly. The orchestrator runs it in the background and starts it again on
   every exit. Any other principal gets a 403.
+- **`events --kind orchestrator.context`** queries the orchestrator's context tracking (ct8m
+  step 6, br-1fdb): emitted on the first reading of a session's tokens, on a lower reading
+  (when compacted), and at most once per 10 minutes when the tokens change. Each event carries
+  the session id, token count, context window size and uptime in seconds; use the query to
+  answer "how long can the orchestrator run" with data points across sessions.
 - **`statusline`** is Claude Code's `statusLine` command, configured in `settings.json`. It
   reads Claude Code's JSON on stdin and prints a short line back: model, context %
   (`context_window.used_percentage`) and token count (e.g., `40.0k`, `1.2M`) when available,

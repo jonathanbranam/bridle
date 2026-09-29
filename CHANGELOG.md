@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Orchestrator context tracking (br-1fdb, ct8m step 6): the supervisor emits `orchestrator.context` events (session id, tokens, window size, uptime) on the first reading, on a lower reading (when the context is compacted), and at most once per 10 minutes when the reading changes; supports `bridle events --kind orchestrator.context` queries to track sessions' starting context and peak growth, answering "how long can the orchestrator run" with actual data.
 - Orchestrator supervision slice 2 (br-65b8): the daemon reads the orchestrator's context (the statusline file, the transcript as a fallback) and sends `context` wakes at `note_tokens`, `plan_tokens` and `handover_tokens`, each once per session and again after a `/compact`; `max_uptime` asks for a handover too. `bridle handover done` (`POST /v1/orchestrator/handover`) or the `handover_deadline` stops the session (SIGTERM, SIGKILL after 15 s) and relaunches it without counting a crash. `scripts/context-check.sh` is gone.
 
 ### Fixed

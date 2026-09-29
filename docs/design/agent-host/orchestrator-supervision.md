@@ -194,7 +194,11 @@ reading than before (`/compact`, `/clear`) resets the notes.
 
 Each once per session id and crossing. The notes are wakes, so they reach the model through the
 same in-session command as everything else; a model that isn't waiting gets the incident of 5,
-not a keystroke.
+not a keystroke. **Context tracking** (ct8m step 6): in parallel, the supervisor emits
+`orchestrator.context` events (session id, tokens, window size, uptime) on the first reading,
+on a lower reading (compact), and at most once per 10 minutes when the tokens change, for
+querying with `bridle events --kind orchestrator.context` to answer "how long can the orchestrator
+run" with actual data.
 
 **Handover done.** The orchestrator writes its state and runs `bridle handover done`
 (`POST /v1/orchestrator/handover`), which marks "handover done for this session". At any point,
@@ -214,16 +218,19 @@ deadline is long and the two earlier notes exist.
 
 **Built as** (`orchestrator.rs`): the notes are wakes with reason `context`, pushed into the
 wake queue (`Wakes::push`). A threshold announces once per session id until a lower reading
-resets it; a session id change (`/clear`) starts fresh. `bridle handover done` sets an in-memory
-marker with its time; only a marker made after the current process launched stops it, so a stale
-one never stops the next session. The stop is the marker or the deadline (started by the
-first "hand over now" or uptime note; not restarted by later ones): SIGTERM to the recorded pid
-(start time must match), SIGKILL 15 s later if it is still there. Once the process is gone the
-ordinary dead-session path relaunches it, flagged deliberate: no backoff, not counted, and it
-can't give up; only that first relaunch is free (an unconfirmed one counts as a crash). A
-deadline stop says in its incident text that the new session starts from stale state; a
-handover stop is not an incident. The transcript fallback reads the last 1 MB of the file.
-The deadline is in memory: a daemon restart forgets it (section 8).
+resets it; a session id change (`/clear`) starts fresh. Context events are emitted separately
+via `emit_context_event()`: on the first reading (when `last_event` is `None`), on a lower
+reading (compact), and at most once per 10 minutes when the tokens change, storing the emit
+time in `last_event` to throttle further events and detect compacts. `bridle handover done`
+sets an in-memory marker with its time; only a marker made after the current process launched
+stops it, so a stale one never stops the next session. The stop is the marker or the deadline
+(started by the first "hand over now" or uptime note; not restarted by later ones): SIGTERM to
+the recorded pid (start time must match), SIGKILL 15 s later if it is still there. Once the
+process is gone the ordinary dead-session path relaunches it, flagged deliberate: no backoff,
+not counted, and it can't give up; only that first relaunch is free (an unconfirmed one counts
+as a crash). A deadline stop says in its incident text that the new session starts from stale
+state; a handover stop is not an incident. The transcript fallback reads the last 1 MB of the
+file. The deadline is in memory: a daemon restart forgets it (section 8).
 
 ## 7. The handover note as a record
 

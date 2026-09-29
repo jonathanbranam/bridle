@@ -51,9 +51,35 @@ pub trait WakeSink: Send + Sync {
     async fn push(&self, wake: WakeReason);
 }
 
+/// The event emitter for the supervisor's context tracking.
+pub trait EventEmitter: Send + Sync {
+    async fn emit(
+        &self,
+        kind: &str,
+        actor: String,
+        agent: Option<String>,
+        data: serde_json::Value,
+    ) -> Result<(), String>;
+}
+
 impl WakeSink for Arc<Wakes> {
     async fn push(&self, wake: WakeReason) {
         Wakes::push(self, wake).await
+    }
+}
+
+impl EventEmitter for Emitter {
+    async fn emit(
+        &self,
+        kind: &str,
+        actor: String,
+        agent: Option<String>,
+        data: serde_json::Value,
+    ) -> Result<(), String> {
+        Emitter::emit(self, kind, actor, agent, data)
+            .await
+            .map(|_| ())
+            .map_err(|e| e.to_string())
     }
 }
 
@@ -106,6 +132,8 @@ struct ContextNotes {
     session: String,
     last: u64,
     fired: [bool; 3],
+    /// When the last context event was emitted.
+    last_event: Option<DateTime<Utc>>,
 }
 
 #[derive(Default)]
@@ -144,7 +172,7 @@ enum Stop {
     Deadline,
 }
 
-pub struct Supervisor<T, P, I, W> {
+pub struct Supervisor<T, P, I, W, E> {
     home: PathBuf,
     launcher: String,
     backoff: Vec<Duration>,
@@ -159,10 +187,11 @@ pub struct Supervisor<T, P, I, W> {
     procs: P,
     incidents: I,
     wakes: W,
+    emitter: E,
     state: Mutex<State>,
 }
 
-impl<T: Tmux, P: Procs, I: Incidents, W: WakeSink> Supervisor<T, P, I, W> {
+impl<T: Tmux, P: Procs, I: Incidents, W: WakeSink, E: EventEmitter> Supervisor<T, P, I, W, E> {
     /// `launcher` is the absolute path to type into the pane.
     #[allow(clippy::too_many_arguments)] // the fakes in tests are why each is a parameter
     pub fn new(
@@ -175,6 +204,7 @@ impl<T: Tmux, P: Procs, I: Incidents, W: WakeSink> Supervisor<T, P, I, W> {
         procs: P,
         incidents: I,
         wakes: W,
+        emitter: E,
     ) -> Self {
         Supervisor {
             home,
@@ -191,6 +221,7 @@ impl<T: Tmux, P: Procs, I: Incidents, W: WakeSink> Supervisor<T, P, I, W> {
             procs,
             incidents,
             wakes,
+            emitter,
             state: Mutex::new(State::default()),
         }
     }
@@ -343,6 +374,51 @@ impl<T: Tmux, P: Procs, I: Incidents, W: WakeSink> Supervisor<T, P, I, W> {
         }
     }
 
+    /// Emit a context event on the first reading, on a lower reading (compact), or after 10
+    /// minutes if the reading changed.
+    async fn emit_context_event(
+        &self,
+        notes: &mut ContextNotes,
+        now: DateTime<Utc>,
+        tokens: u64,
+        launched: i64,
+    ) {
+        let should_emit = match notes.last_event {
+            None => true, // first reading
+            Some(t) => {
+                if tokens < notes.last {
+                    true // lower reading (compact)
+                } else {
+                    tokens != notes.last && now - t >= chrono_dur(Duration::from_secs(600))
+                }
+            }
+        };
+        if should_emit {
+            notes.last_event = Some(now);
+            let uptime = (now.timestamp() - launched).max(0) as u64;
+            // The token thresholds (note_tokens, plan_tokens, handover_tokens) in the config
+            // assume a 1M context window (orchestrator-supervision.md, section 2). The window
+            // size is available per-session in Claude Code's statusline JSON, but we don't
+            // currently extract it per-session; capturing it would require reading the transcript
+            // or adding a separate window_size file. For now, report the assumed 1M.
+            let window_size = 1_000_000u64;
+            let _ = self
+                .emitter
+                .emit(
+                    event_kind::ORCHESTRATOR_CONTEXT,
+                    "system".to_string(),
+                    None,
+                    json!({
+                        "session": notes.session,
+                        "tokens": tokens,
+                        "window_size": window_size,
+                        "uptime_secs": uptime,
+                    }),
+                )
+                .await;
+        }
+    }
+
     /// Context and uptime notes, and the restart (section 6).
     async fn check_thresholds(&self, st: &mut State, now: DateTime<Utc>, rec: &PidRecord) {
         if st.session_key != rec.launched {
@@ -357,6 +433,8 @@ impl<T: Tmux, P: Procs, I: Incidents, W: WakeSink> Supervisor<T, P, I, W> {
         }
 
         if let Some(tokens) = self.context_tokens(st) {
+            self.emit_context_event(&mut st.context, now, tokens, rec.launched)
+                .await;
             let notes = &mut st.context;
             if tokens < notes.last {
                 notes.fired = [false; 3]; // /compact
@@ -694,7 +772,7 @@ impl Incidents for RealIncidents {
     }
 }
 
-pub type RealSupervisor = Supervisor<RealTmux, RealProcs, RealIncidents, Arc<Wakes>>;
+pub type RealSupervisor = Supervisor<RealTmux, RealProcs, RealIncidents, Arc<Wakes>, Emitter>;
 
 #[allow(clippy::too_many_arguments)]
 pub fn real(
@@ -707,6 +785,7 @@ pub fn real(
     manager: AgentManager,
     emitter: Emitter,
 ) -> Arc<RealSupervisor> {
+    let emitter_clone = emitter.clone();
     Arc::new(Supervisor::new(
         home,
         launcher,
@@ -717,6 +796,7 @@ pub fn real(
         RealProcs,
         RealIncidents { manager, emitter },
         wakes,
+        emitter_clone,
     ))
 }
 
@@ -777,12 +857,36 @@ mod tests {
         }
     }
 
+    #[derive(Default)]
+    struct FakeEmitter(StdMutex<Vec<(String, serde_json::Value)>>);
+    impl EventEmitter for Arc<FakeEmitter> {
+        async fn emit(
+            &self,
+            kind: &str,
+            _actor: String,
+            _agent: Option<String>,
+            data: serde_json::Value,
+        ) -> Result<(), String> {
+            self.0.lock().unwrap().push((kind.to_string(), data));
+            Ok(())
+        }
+    }
+
+    type TestSupervisor = Supervisor<
+        Arc<FakeTmux>,
+        Arc<FakeProcs>,
+        Arc<FakeIncidents>,
+        Arc<FakeWakes>,
+        Arc<FakeEmitter>,
+    >;
+
     struct Rig {
         dir: tempfile::TempDir,
         tmux: Arc<FakeTmux>,
         procs: Arc<FakeProcs>,
         incidents: Arc<FakeIncidents>,
-        sup: Supervisor<Arc<FakeTmux>, Arc<FakeProcs>, Arc<FakeIncidents>, Arc<FakeWakes>>,
+        emitter: Arc<FakeEmitter>,
+        sup: TestSupervisor,
         waiters: Arc<Waiters>,
         wakes: Arc<FakeWakes>,
         handover: Arc<Handover>,
@@ -814,6 +918,7 @@ mod tests {
             let waiters = Waiters::new(t0);
             let wakes = Arc::new(FakeWakes::default());
             let handover = Arc::new(Handover::default());
+            let emitter = Arc::new(FakeEmitter::default());
             let sup = Supervisor::new(
                 dir.path().to_path_buf(),
                 "/x/launch".into(),
@@ -824,12 +929,14 @@ mod tests {
                 procs.clone(),
                 incidents.clone(),
                 wakes.clone(),
+                emitter.clone(),
             );
             Rig {
                 dir,
                 tmux,
                 procs,
                 incidents,
+                emitter,
                 sup,
                 waiters,
                 wakes,
@@ -874,6 +981,10 @@ mod tests {
 
         fn incidents(&self) -> Vec<String> {
             self.incidents.0.lock().unwrap().clone()
+        }
+
+        fn events(&self) -> Vec<(String, serde_json::Value)> {
+            self.emitter.0.lock().unwrap().clone()
         }
 
         /// A tick `secs` after t0.
@@ -1232,5 +1343,55 @@ mod tests {
         r.relaunch(100).await;
         assert_eq!(r.typed(), 2);
         assert_eq!(r.sup.state.lock().await.attempts, 1);
+    }
+
+    #[tokio::test]
+    async fn context_event_emitted_on_first_reading() {
+        let r = Rig::new();
+        r.live();
+        r.set_context(100);
+        r.tick(10).await;
+        let events = r.events();
+        assert_eq!(events.len(), 1);
+        assert_eq!(events[0].0, "orchestrator.context");
+        let data = &events[0].1;
+        assert_eq!(data["session"], "sess-1");
+        assert_eq!(data["tokens"], 100);
+        assert_eq!(data["window_size"], 1_000_000);
+        assert_eq!(data["uptime_secs"], 10);
+    }
+
+    #[tokio::test]
+    async fn context_event_not_emitted_within_10_minutes_if_unchanged() {
+        let r = Rig::new();
+        r.live();
+        r.set_context(100);
+        r.tick(10).await;
+        assert_eq!(r.events().len(), 1);
+        // Same reading within 10 minutes: no event.
+        r.tick(100).await;
+        assert_eq!(r.events().len(), 1);
+        r.tick(500).await;
+        assert_eq!(r.events().len(), 1);
+        // After 10 minutes with a different reading: new event.
+        r.set_context(150);
+        r.tick(10 + 600).await;
+        assert_eq!(r.events().len(), 2);
+        assert_eq!(r.events()[1].1["tokens"], 150);
+    }
+
+    #[tokio::test]
+    async fn context_event_emitted_on_lower_reading_compact() {
+        let r = Rig::new();
+        r.live();
+        r.set_context(100);
+        r.tick(10).await;
+        assert_eq!(r.events().len(), 1);
+        // Lower reading resets (compact); this is tracked by the threshold logic.
+        // Emit an event on the first tick after a lower reading.
+        r.set_context(50);
+        r.tick(20).await;
+        assert_eq!(r.events().len(), 2);
+        assert_eq!(r.events()[1].1["tokens"], 50);
     }
 }
