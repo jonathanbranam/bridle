@@ -10,10 +10,10 @@ use bridle_api::{
     AllocPortRequest, BudgetHoldRequest, BudgetOverrideRequest, Client, DoneTaskRequest,
     DropTaskRequest, Edge, EdgeKind, EditTaskRequest, Event, EventQuery, Impact,
     ImpactCheckRequest, InterruptRequest, MaxWorkersRequest, MessageKind, MessageQuery,
-    NewEdgeRequest, NewTaskRequest, OverlapLevel, RemoveEdgeQuery, RemoveQuery, RenewRequest,
-    ResolveConflictRequest, ResumeRequest, SendRequest, SetImpactRequest, SetSummaryRequest,
-    SpawnRequest, SpecRef, StopRequest, Task, TaskKind, TaskSize, TokenCreateRequest,
-    UsageBreakdownQuery, UsageGroupBy, Workdir, event_kind,
+    NewEdgeRequest, NewTaskRequest, OverlapLevel, ProbeOutcome, ProbeRequest, ProbeResult,
+    RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, ResumeRequest, SendRequest,
+    SetImpactRequest, SetSummaryRequest, SpawnRequest, SpecRef, StopRequest, Task, TaskKind,
+    TaskSize, TokenCreateRequest, UsageBreakdownQuery, UsageGroupBy, Workdir, event_kind,
 };
 use chrono::{Local, TimeZone, Utc};
 use futures::StreamExt;
@@ -22,13 +22,13 @@ use crate::cli::{
     AgentsArgs, AnswerArgs, AskArgs, BudgetAction, BudgetArgs, BudgetHoldArgs, ClaimArgs, Cli,
     Command, ConflictAction, ConflictArgs, CostAction, CostArgs, CostAuditArgs, DepAction, DepArgs,
     DepEdgeArgs, EdgeKindArg, EventsArgs, ImpactAction, ImpactArgs, InboxAction, InboxArgs,
-    InboxReadArgs, InboxShowArgs, InterruptArgs, LogsArgs, PrimeArgs, PrimeRoleArg, QueueAction,
-    QueueAddTierArgs, QueueArgs, QueueSetArgs, ReadyArgs, ReleaseArgs, RmArgs, RulesAction,
-    RulesArgs, RulesDiffArgs, RulesExplainArgs, SendArgs, ShowArgs, SpawnArgs, SpecAction,
-    SpecArgs, SpecExportArgs, SpecFormatArg, StopArgs, TaskAction, TaskArgs, TaskDoneArgs,
-    TaskDropArgs, TaskEditArgs, TaskKindArg, TaskListArgs, TaskNewArgs, TaskNoteArgs, TaskPlanArgs,
-    TaskReopenArgs, TaskSearchArgs, TaskShowArgs, TaskSizeArg, TaskSummaryArgs, TokenAction,
-    TokenArgs, UsageArgs, UsageByArg, WaitArgs, WhenArg,
+    InboxReadArgs, InboxShowArgs, InterruptArgs, LogsArgs, PrimeArgs, PrimeRoleArg, ProbeArgs,
+    QueueAction, QueueAddTierArgs, QueueArgs, QueueSetArgs, ReadyArgs, ReleaseArgs, RmArgs,
+    RulesAction, RulesArgs, RulesDiffArgs, RulesExplainArgs, SendArgs, ShowArgs, SpawnArgs,
+    SpecAction, SpecArgs, SpecExportArgs, SpecFormatArg, StopArgs, TaskAction, TaskArgs,
+    TaskDoneArgs, TaskDropArgs, TaskEditArgs, TaskKindArg, TaskListArgs, TaskNewArgs, TaskNoteArgs,
+    TaskPlanArgs, TaskReopenArgs, TaskSearchArgs, TaskShowArgs, TaskSizeArg, TaskSummaryArgs,
+    TokenAction, TokenArgs, UsageArgs, UsageByArg, WaitArgs, WhenArg,
 };
 use crate::cli::{PortAction, PortArgs};
 use crate::error::CliError;
@@ -63,6 +63,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Token(args) => token(&cli, args).await,
         Command::Task(args) => task(&cli, args).await,
         Command::Impact(args) => impact(&cli, args).await,
+        Command::Probe(args) => probe(&cli, args).await,
         Command::Conflict(args) => conflict(&cli, args).await,
         Command::Port(args) => port(&cli, args).await,
         Command::Dep(args) => dep(&cli, args).await,
@@ -2062,7 +2063,25 @@ async fn task_done(cli: &Cli, args: &TaskDoneArgs) -> Result<(), CliError> {
         commit: args.commit.clone(),
         branch: args.branch.clone(),
     };
-    let task = client.done_task(&args.task, &req).await?;
+    let task = match client.done_task(&args.task, &req).await {
+        Ok(t) => t,
+        Err(e) => {
+            // Refused because the work isn't on the integration branch: say whether it
+            // would merge cleanly, best effort.
+            if let Some(branch) = &args.branch
+                && let Ok(r) = client
+                    .probe(&ProbeRequest {
+                        target: None,
+                        branch: Some(branch.clone()),
+                    })
+                    .await
+                && r.outcome != ProbeOutcome::Clean
+            {
+                eprintln!("warning: {}", probe_line(&r));
+            }
+            return Err(e.into());
+        }
+    };
     if task.summary.is_none() {
         eprintln!(
             "warning: {} has no summary; record one with `bridle task summary {} --text ...`",
@@ -2150,6 +2169,38 @@ fn spec_map(dir: &Path) -> BTreeMap<String, SpecRef> {
     map
 }
 
+fn probe_line(r: &ProbeResult) -> String {
+    match r.outcome {
+        ProbeOutcome::Clean => format!("{} merges cleanly into {}", r.branch, r.against),
+        ProbeOutcome::Conflict => format!(
+            "textual conflict of {} with {}: {}",
+            r.branch,
+            r.against,
+            r.paths.join(", ")
+        ),
+        ProbeOutcome::Unsupported => "unsupported git: merge probe needs git 2.38 or newer".into(),
+    }
+}
+
+async fn probe(cli: &Cli, args: &ProbeArgs) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let r = client
+        .probe(&ProbeRequest {
+            target: args.target.clone(),
+            branch: args.branch.clone(),
+        })
+        .await?;
+    if cli.json {
+        render::print_json(&r)?;
+    } else {
+        println!("{}", probe_line(&r));
+    }
+    if r.outcome == ProbeOutcome::Conflict {
+        return Err(CliError::Other(anyhow::anyhow!("merge conflict")));
+    }
+    Ok(())
+}
+
 async fn impact_check(cli: &Cli, client: &Client, specs: &Path) -> Result<(), CliError> {
     let report = client
         .impact_check(&ImpactCheckRequest {
@@ -2158,10 +2209,19 @@ async fn impact_check(cli: &Cli, client: &Client, specs: &Path) -> Result<(), Cl
         .await?;
     if cli.json {
         render::print_json(&report)?;
-    } else if report.overlaps.is_empty() {
+    } else if report.overlaps.is_empty() && report.probes.is_empty() {
         println!("no overlaps");
     }
     if !cli.json {
+        for p in &report.probes {
+            let level = format!("{:?}", p.level).to_lowercase();
+            println!(
+                "{level:<9}{:<12}{}  {}",
+                "merge",
+                p.tasks.join(" "),
+                probe_line(&p.result)
+            );
+        }
         for o in &report.overlaps {
             let level = format!("{:?}", o.level).to_lowercase();
             println!(
@@ -2174,6 +2234,9 @@ async fn impact_check(cli: &Cli, client: &Client, specs: &Path) -> Result<(), Cl
         .overlaps
         .iter()
         .any(|o| o.level == OverlapLevel::Conflict)
+        || report.probes.iter().any(|p| {
+            p.level == OverlapLevel::Conflict && p.result.outcome == ProbeOutcome::Conflict
+        })
     {
         return Err(CliError::Other(anyhow::anyhow!("impact conflict")));
     }

@@ -19,13 +19,24 @@ hex), not for existence. Diffing actual against declared impact is not built.
 **Built: `bridle impact check [--specs DIR] [--json]`** (`POST /v1/impact/check`, pure
 `bridle-daemon/src/impact.rs`). It compares every planned or claimed task that declared an
 impact, pairwise, over `modify`, `remove` and `add-under` ids, and exits 1 if any overlap is a
-conflict. It builds the first four rows of the table below; the `git merge-tree` row is not built.
+conflict. It builds the first four rows of the table below; the `git merge-tree` row is built as a separate probe (below).
 - A scenario in `modify`/`remove` of both tasks: conflict.
 - Two tasks touching the same requirement (an `r-` id, or the parent of an `s-` id), other than
   through a scenario already reported as a conflict: warn.
 - Both touching a capability but no common requirement: info.
 - File globs overlap when the literal text before the first wildcard (`* ? [ {`) of one is a
   string prefix of the other's. Coarse on purpose: an early warning, not a proof.
+
+**Built: the merge probe.** `bridle probe <task-or-agent> | --branch B` (`POST /v1/probe`) runs
+`git merge-tree --write-tree` of the branch against the `[branches] integration` branch in the
+project repo, so no working tree or ref changes, and prints clean or the conflicting paths (exit 1
+on a conflict). A task resolves to its claimant's branch. `impact check` adds a probe line for
+every claimed task whose claimant has a branch: `conflict` level against the integration branch,
+and `warn` for each pair of those branches that conflicts with each other. Clean merges are not
+listed, probe lines don't open conflict threads, and a `conflict` probe makes the exit code 1. The
+report carries them as `probes`. It needs git 2.38 or newer: an older git reports `unsupported
+git` instead of failing. A `bridle task done` that is refused because the commit isn't on the
+integration branch also prints a warning line when `--branch` doesn't merge cleanly.
 
 The CLI reads `--specs` (default `design/specs`) with `bridle-spec` and sends the id -> (requirement,
 capability) map; the daemon never reads specs. Best effort: a missing or unparseable directory or
@@ -79,8 +90,7 @@ daemon compares it with the landed commit's changed files (glob overlap, as in `
 and with the spec ids whose text changed in the `design/specs/*.md` files it touched (parsed
 before and after with `bridle-spec`). An overlap adds `spec changed under you: <ids and
 files>` to that worker's notice; workers with no declared impact, or no overlap, get the
-generic notice. Edits to only the prose of a non-executable scenario aren't seen. Not built: escalation (step 3), the `git merge-tree`
-conflicts, and the handoff for the blocked task's claimant.
+generic notice. Edits to only the prose of a non-executable scenario aren't seen. Not built: escalation (step 3) and the handoff for the blocked task's claimant.
 
 This replaces the same-spec pile-up rule. Serialisation happens only when two
 tasks actually collide, and the agents involved decide the order.
