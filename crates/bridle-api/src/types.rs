@@ -1162,6 +1162,48 @@ pub struct SetImpactRequest {
     pub impact: Impact,
 }
 
+/// Where a spec id lives, for `impact check`: the requirement (itself, for an `r-` id;
+/// the parent, for an `s-` id) and the capability file it is in.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SpecRef {
+    pub requirement: String,
+    pub capability: String,
+}
+
+/// `POST /v1/impact/check`. The client reads `design/specs` (the daemon doesn't) and
+/// sends the id map; empty = skip the capability (info) level and match requirements
+/// only by `r-` ids named directly.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct ImpactCheckRequest {
+    #[serde(default)]
+    pub spec_map: std::collections::BTreeMap<String, SpecRef>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum OverlapLevel {
+    Info,
+    Warn,
+    Conflict,
+}
+
+/// One overlap between two in-flight tasks.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Overlap {
+    pub level: OverlapLevel,
+    /// The two tasks, in id order.
+    pub tasks: [String; 2],
+    /// `scenario`, `requirement`, `capability` or `files`.
+    pub kind: String,
+    /// The shared scenario/requirement/capability id, or the pair of globs.
+    pub key: String,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct ImpactReport {
+    pub overlaps: Vec<Overlap>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NewTaskRequest {
     pub title: String,

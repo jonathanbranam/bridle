@@ -14,8 +14,22 @@ bridle impact set tw-7fa2 \
 (`POST /v1/tasks/{id}/impact`) and `bridle impact show` prints it. It is a field on the task
 record, stored in the state branch frontmatter (storage.md) and restored by `bridle rebuild`. Only
 an open, planned or claimed task can be set; ids are checked by shape (`r-`/`s-`/`g-`/`a-` plus
-hex), not for existence. Checking overlaps and diffing actual against declared impact are not
-built.
+hex), not for existence. Diffing actual against declared impact is not built.
+
+**Built: `bridle impact check [--specs DIR] [--json]`** (`POST /v1/impact/check`, pure
+`bridle-daemon/src/impact.rs`). It compares every planned or claimed task that declared an
+impact, pairwise, over `modify`, `remove` and `add-under` ids, and exits 1 if any overlap is a
+conflict. It builds the first four rows of the table below; the `git merge-tree` row is not built.
+- A scenario in `modify`/`remove` of both tasks: conflict.
+- Two tasks touching the same requirement (an `r-` id, or the parent of an `s-` id), other than
+  through a scenario already reported as a conflict: warn.
+- Both touching a capability but no common requirement: info.
+- File globs overlap when the literal text before the first wildcard (`* ? [ {`) of one is a
+  string prefix of the other's. Coarse on purpose: an early warning, not a proof.
+
+The CLI reads `--specs` (default `design/specs`) with `bridle-spec` and sends the id -> (requirement,
+capability) map; the daemon never reads specs. Best effort: a missing or unparseable directory or
+file yields no map, so `s-` ids only match themselves, `r-` ids still match, and there is no info level.
 
 `bridle impact check` compares every in-flight task and reports:
 

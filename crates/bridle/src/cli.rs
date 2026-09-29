@@ -938,6 +938,16 @@ pub enum ImpactAction {
     Set(ImpactSetArgs),
     /// Print the task's declared impact.
     Show(ImpactShowArgs),
+    /// Report overlaps between in-flight tasks' declared impact; exits 1 on a conflict.
+    Check(ImpactCheckArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct ImpactCheckArgs {
+    /// The specs directory read for the id -> capability map (default `design/specs`);
+    /// unreadable specs skip the capability level.
+    #[arg(long, value_name = "DIR", default_value = "design/specs")]
+    pub specs: PathBuf,
 }
 
 #[derive(Debug, Args)]

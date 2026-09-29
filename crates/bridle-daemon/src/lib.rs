@@ -24,6 +24,7 @@ pub mod cost_audit;
 pub mod disk;
 mod events;
 pub mod governor;
+pub mod impact;
 pub mod paths;
 pub mod rules;
 mod server;

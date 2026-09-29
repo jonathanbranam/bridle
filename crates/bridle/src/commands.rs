@@ -1,17 +1,18 @@
 //! Dispatch and implementation for every subcommand except `serve` (see
 //! `serve.rs`). See docs/design/cli.md.
 
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 use anyhow::Context;
 use bridle_api::discovery::{self, Env, ProcessEnv};
 use bridle_api::{
     BudgetHoldRequest, BudgetOverrideRequest, Client, DoneTaskRequest, DropTaskRequest, Edge,
-    EdgeKind, EditTaskRequest, Event, EventQuery, Impact, InterruptRequest, MaxWorkersRequest,
-    MessageKind, MessageQuery, NewEdgeRequest, NewTaskRequest, RemoveEdgeQuery, RemoveQuery,
-    RenewRequest, ResumeRequest, SendRequest, SetImpactRequest, SetSummaryRequest, SpawnRequest,
-    StopRequest, Task, TaskKind, TaskSize, TokenCreateRequest, UsageBreakdownQuery, UsageGroupBy,
-    Workdir, event_kind,
+    EdgeKind, EditTaskRequest, Event, EventQuery, Impact, ImpactCheckRequest, InterruptRequest,
+    MaxWorkersRequest, MessageKind, MessageQuery, NewEdgeRequest, NewTaskRequest, OverlapLevel,
+    RemoveEdgeQuery, RemoveQuery, RenewRequest, ResumeRequest, SendRequest, SetImpactRequest,
+    SetSummaryRequest, SpawnRequest, SpecRef, StopRequest, Task, TaskKind, TaskSize,
+    TokenCreateRequest, UsageBreakdownQuery, UsageGroupBy, Workdir, event_kind,
 };
 use chrono::{Local, TimeZone, Utc};
 use futures::StreamExt;
@@ -2090,6 +2091,7 @@ async fn impact(cli: &Cli, args: &ImpactArgs) -> Result<(), CliError> {
             )
         }
         ImpactAction::Show(a) => (client.get_task(&a.task).await?, false),
+        ImpactAction::Check(a) => return impact_check(cli, &client, &a.specs).await,
     };
     if cli.json {
         render::print_json(&task.impact)?;
@@ -2110,6 +2112,66 @@ async fn impact(cli: &Cli, args: &ImpactArgs) -> Result<(), CliError> {
                 println!("{label:<10}{}", ids.join(", "));
             }
         }
+    }
+    Ok(())
+}
+
+/// Best effort: id -> (requirement, capability) from the specs directory; empty on any
+/// problem, which drops the capability level.
+fn spec_map(dir: &Path) -> BTreeMap<String, SpecRef> {
+    let mut map = BTreeMap::new();
+    let mut files = Vec::new();
+    if spec_files(dir, &mut files).is_err() {
+        return map;
+    }
+    for f in files {
+        let Some(capability) = f.file_stem().map(|s| s.to_string_lossy().into_owned()) else {
+            continue;
+        };
+        let Ok(spec) = bridle_spec::parse_file(&f) else {
+            continue;
+        };
+        for r in &spec.requirements {
+            let Some(rid) = &r.id else { continue };
+            let sref = SpecRef {
+                requirement: rid.clone(),
+                capability: capability.clone(),
+            };
+            map.insert(rid.clone(), sref.clone());
+            for sid in r.scenarios.iter().filter_map(|s| s.id.as_ref()) {
+                map.insert(sid.clone(), sref.clone());
+            }
+        }
+    }
+    map
+}
+
+async fn impact_check(cli: &Cli, client: &Client, specs: &Path) -> Result<(), CliError> {
+    let report = client
+        .impact_check(&ImpactCheckRequest {
+            spec_map: spec_map(specs),
+        })
+        .await?;
+    if cli.json {
+        render::print_json(&report)?;
+    } else if report.overlaps.is_empty() {
+        println!("no overlaps");
+    }
+    if !cli.json {
+        for o in &report.overlaps {
+            let level = format!("{:?}", o.level).to_lowercase();
+            println!(
+                "{level:<9}{:<12}{}  {} {}",
+                o.kind, o.key, o.tasks[0], o.tasks[1]
+            );
+        }
+    }
+    if report
+        .overlaps
+        .iter()
+        .any(|o| o.level == OverlapLevel::Conflict)
+    {
+        return Err(CliError::Other(anyhow::anyhow!("impact conflict")));
     }
     Ok(())
 }
