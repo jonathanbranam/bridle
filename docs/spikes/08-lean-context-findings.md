@@ -315,9 +315,10 @@ file in half saves ~0.8K, less than any of items 1-3.
 `scripts/claude-orchestrator` and `scripts/claude-advisor` now pass `--strict-mcp-config` and one
 `--settings` object with `disableBundledSkills`, `disableWorkflows`, `disableClaudeAiConnectors`,
 `disableArtifact` and `permissions.deny` for EnterPlanMode, ExitPlanMode, DesignSync, NotebookEdit,
-PushNotification, ReportFindings, RemoteTrigger, Artifact, Workflow and SendMessage. The orchestrator's
+PushNotification, ReportFindings, RemoteTrigger, Artifact and Workflow. The orchestrator's
 object also carries the `SessionStart` hook (a second `--settings` would replace it, so it is one
-object). Kept on purpose: AskUserQuestion (the human's decision), Agent, ToolSearch, WebSearch/WebFetch,
+object). Kept on purpose: AskUserQuestion (the human's decision), Agent, SendMessage (~2K; the human,
+2026-09-29: both roles run subagents and talk to them), ToolSearch, WebSearch/WebFetch,
 Monitor and Bash background runs, the Cron tools and ScheduleWakeup (heartbeat), and
 `--remote-control` (no `disableRemoteControl`). Not `--tools`: these roles use too much of the set.
 

@@ -16,11 +16,11 @@ print -r -- "$$ $(ps -o lstart= -p $$ | xargs) $(date +%s)" > $home/orchestrator
 # one (and the transcript path) in $BRIDLE_HOME/orchestrator.session.
 # Lean start (ticket ct8m, docs/spikes/08-lean-context-findings.md): settings keys that drop bundled
 # skills, workflows and the claude.ai connectors, and bare-name denies for tools this role never uses
-# (spike 08's usage counts; bridle send replaces SendMessage). Kept: AskUserQuestion, Agent,
+# (spike 08's usage counts). Kept: AskUserQuestion, Agent, SendMessage (to talk to its subagents),
 # ToolSearch, Web*, Monitor and Bash background runs (wait-for-wake), Cron*, ScheduleWakeup. Not
 # disableRemoteControl: the human reaches this session through Remote Control.
 # One --settings object: the hook plus the lean keys (a second --settings would replace it).
-settings='{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"bridle orchestrator note-session"}]}]},"disableBundledSkills":true,"disableWorkflows":true,"disableClaudeAiConnectors":true,"disableArtifact":true,"permissions":{"deny":["EnterPlanMode","ExitPlanMode","DesignSync","NotebookEdit","PushNotification","ReportFindings","RemoteTrigger","Artifact","Workflow","SendMessage"]}}'
+settings='{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"bridle orchestrator note-session"}]}]},"disableBundledSkills":true,"disableWorkflows":true,"disableClaudeAiConnectors":true,"disableArtifact":true,"permissions":{"deny":["EnterPlanMode","ExitPlanMode","DesignSync","NotebookEdit","PushNotification","ReportFindings","RemoteTrigger","Artifact","Workflow"]}}'
 # Every bridle command in the session then acts as external:orchestrator, with the token for the
 # project it talks to from ~/.bridle/credentials.toml (`bridle token create orchestrator --project <p>`).
 export BRIDLE_AS=orchestrator
