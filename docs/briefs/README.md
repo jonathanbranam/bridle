@@ -7,5 +7,6 @@ Ticket: [[docs/questions/open/product-briefs-of-how-bridle-works-today-8awb|8awb
 
 - [[docs/briefs/specs|Specs]]: what they're for, the flow, what a migration involves.
 - [[docs/briefs/tasks|Tasks]]: what a task is, the queue, claims, landing, storage.
+- [[docs/briefs/agent-host|Agent host]]: the daemon, spawning, messages, budget governor, roles, hooks.
 
-Later: the agent host, workflow layers.
+Later: workflow layers.
