@@ -149,6 +149,19 @@ Then, verbatim:
 So the in-session watcher stays. What changes is moving the checks in
 `scripts/orchestrator-watch.sh` into bridle, so the part left in the session is short.
 
+On the pane name, verbatim:
+
+> I don't care the name, but how do I configure / create this. Can I tag a pane with that name
+> right now? Is the pane number tied to layout? That sucks.
+
+Decided (advisor's proposal, answering the human): **tag the pane, not a `session:window.pane`
+target.** Pane indexes change when panes are split, closed or moved, and pane titles are
+overwritten by programs (Claude Code sets its own). tmux (3.7c here) has per-pane user options:
+the human runs `tmux set -p @bridle orchestrator` in the chosen pane. Bridle finds it with
+`tmux list-panes -a -F '#{pane_id} #{@bridle}'`. The tag stays with the pane through layout
+changes and moves, and is lost only when the pane closes or tmux restarts. If no pane has the
+tag, bridle records an incident rather than guessing. No config key for the pane is needed.
+
 ## Suggestions for follow-up (not in scope now; KISS)
 
 - Move the daemons to launchd (`docs/context/launchd-restart-plan.md`, the human's steps) so
