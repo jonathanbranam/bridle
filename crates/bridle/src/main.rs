@@ -4,6 +4,7 @@
 mod arch_guard;
 mod cli;
 mod commands;
+mod doctor;
 mod error;
 mod goals;
 mod launchd;
