@@ -631,7 +631,7 @@ impl AgentManager {
             }
         }
         for id in due {
-            let _ = self.renew(&id, true, &system_principal()).await;
+            let _ = self.renew(&id, &system_principal()).await;
         }
     }
 
@@ -1407,7 +1407,7 @@ impl AgentManager {
                         let this = self.clone();
                         let id = id.to_string();
                         tokio::spawn(async move {
-                            let _ = this.renew(&id, true, &system_principal()).await;
+                            let _ = this.renew(&id, &system_principal()).await;
                         });
                     }
                     return;
@@ -2106,18 +2106,16 @@ impl AgentManager {
     pub fn renew<'a>(
         &'a self,
         id_or_name: &'a str,
-        ignore_budget: bool,
         principal: &'a Principal,
     ) -> std::pin::Pin<
         Box<dyn std::future::Future<Output = Result<Agent, SupervisorError>> + Send + 'a>,
     > {
-        Box::pin(self.renew_inner(id_or_name, ignore_budget, principal))
+        Box::pin(self.renew_inner(id_or_name, principal))
     }
 
     async fn renew_inner(
         &self,
         id_or_name: &str,
-        ignore_budget: bool,
         principal: &Principal,
     ) -> Result<Agent, SupervisorError> {
         let mut agent = self
@@ -2127,10 +2125,9 @@ impl AgentManager {
             .await?
             .ok_or_else(|| SupervisorError::NotFound(id_or_name.to_string()))?;
         let from_state = agent.state;
-        // Before the stop: a refused renew must change nothing.
-        if !ignore_budget {
-            self.refuse_if_holding(&agent.model)?;
-        }
+        // No hold check: a renew replaces a session rather than adding load,
+        // so it never waits on the governor (r3nh). That also makes the
+        // stop below safe: nothing after it can be refused for budget.
         if agent.state.is_running() {
             agent = self.stop(&agent.id, false, principal).await?;
         }

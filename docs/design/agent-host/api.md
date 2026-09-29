@@ -13,7 +13,7 @@ JSON over HTTP, versioned under `/v1`. The contract is
 | `GET /v1/agents` · `POST /v1/agents` | list all · spawn (`{name?, role, prompt?, workdir?, model?}`, where `workdir` is `{"kind":"worktree","base"?}`, `{"kind":"repo"}` or `{"kind":"path","path"}`) |
 | `GET /v1/agents/{id}` | one agent: state, current turn's start, turns, cost, held and unacked message counts |
 | `POST /v1/agents/{id}/messages` | send (`{body, kind, when, reply_to?}`) |
-| `POST /v1/agents/{id}/interrupt` · `/stop` · `/resume` · `/renew` | control (`{drop_held}` · `{now}` · `{ignore_budget}` · `{ignore_budget}`); `renew` stops the agent if running and starts its replacement fresh (new session, same worktree/branch/role/model), keeping the same id and name |
+| `POST /v1/agents/{id}/interrupt` · `/stop` · `/resume` · `/renew` | control (`{drop_held}` · `{now}` · `{ignore_budget}` · `{ignore_budget}`); `renew` stops the agent if running and starts its replacement fresh (new session, same worktree/branch/role/model), keeping the same id and name; never refused by a budget hold (`ignore_budget` is accepted and ignored) |
 | `DELETE /v1/agents/{id}` | `rm` (`?force&delete_branch`) |
 | `GET /v1/agents/{id}/transcript?since=&limit=` | raw transcript lines, ascending; with `since`, lines after that line number; without it, the most recent `limit` lines (default limit 500) |
 | `GET /v1/messages?to=&from=&unread=&limit=` · `POST /v1/messages` | inbox queries (`to=me` for the caller) · send to any recipient incl. `human`. A `reply_to` from a `[messages] answer_for_human` principal to a message for the human closes it (`answered_by`, `answered_reply`, `answered_line` on the `Message`; see messages.md) |
