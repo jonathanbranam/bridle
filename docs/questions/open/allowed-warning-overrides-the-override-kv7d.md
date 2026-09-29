@@ -41,3 +41,12 @@ while an override is in force.
 
 Either way, update "Seeing the windows" in `usage-and-budget.md` and the test
 `rejected_status_forces_paused_regardless_of_percent`'s neighbour for the warning case.
+
+## The human's answer
+
+2026-09-28, verbatim, to the advisor: "For kv7d update that my settings override Claude
+warnings".
+
+So the human's configured thresholds win over `allowed_warning`, in general, not only
+under an override: the warning is shown in `bridle budget` but doesn't force a wind-down.
+`rejected` isn't a warning and still forces `Paused` (the recommendation above).
