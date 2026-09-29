@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Added: `bridle impact check [--json]` reports overlaps between in-flight tasks' declared impact (conflict, warn, info; exit 1 on a conflict) (br-3584).
 - Added: trace links: `serves=` on architecture elements, a 4-hex text hash for `traces=id@hash`, and `bridle trace down|up|orphans` over goals, architecture and specs (br-d226).
 
 - When a task lands (`bridle task done`), the daemon tells the other running workers that main moved, with the changed files, so they rebase or merge before their next commit; one message per agent per minute (br-07d6).

@@ -13,14 +13,14 @@ use axum::{Extension, Json, Router};
 use bridle_api::types::{
     AddQueueTierRequest, Agent, AnswerQuestionRequest, ApiErrorResponse, AskQuestionRequest,
     BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, DoneTaskRequest, DropTaskRequest, Edge,
-    EditTaskRequest, ErrorBody, Event, EventQuery, Health, HoldStatus, InteractiveUsageRow,
-    InterruptRequest, MaxWorkersRequest, Message, MessageQuery, MessageState, NewEdgeRequest,
-    NewTaskRequest, NoteTaskRequest, OpenQuestion, PrincipalKind, Queue, RateLimit,
-    RemoveEdgeQuery, RemoveQuery, RenewRequest, ResumeRequest, ScheduleOverrideStatus, SendRequest,
-    SetImpactRequest, SetQueueRequest, SetSummaryRequest, SpawnRequest, Status, StatusLineReport,
-    StopRequest, Task, TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine,
-    TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, WindowStatus,
-    event_kind,
+    EditTaskRequest, ErrorBody, Event, EventQuery, Health, HoldStatus, ImpactCheckRequest,
+    ImpactReport, InteractiveUsageRow, InterruptRequest, MaxWorkersRequest, Message, MessageQuery,
+    MessageState, NewEdgeRequest, NewTaskRequest, NoteTaskRequest, OpenQuestion, PrincipalKind,
+    Queue, RateLimit, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResumeRequest,
+    ScheduleOverrideStatus, SendRequest, SetImpactRequest, SetQueueRequest, SetSummaryRequest,
+    SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery, TokenCreateRequest,
+    TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown,
+    UsageBreakdownQuery, UsageGroupBy, WindowStatus, event_kind,
 };
 use chrono::Utc;
 use futures::Stream;
@@ -85,6 +85,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/tasks/{id}/done", post(done_task))
         .route("/v1/tasks/{id}/summary", post(set_summary))
         .route("/v1/tasks/{id}/impact", post(set_impact))
+        .route("/v1/impact/check", post(impact_check))
         .route("/v1/tasks/{id}/reopen", post(reopen_task))
         .route("/v1/tasks/{id}/ask", post(ask_task))
         .route("/v1/tasks/{id}/answer", post(answer_task))
@@ -1184,6 +1185,15 @@ async fn set_impact(
     Json(req): Json<SetImpactRequest>,
 ) -> Result<Json<Task>, ApiError> {
     Ok(Json(state.tasks.set_impact(&id, req.impact).await?))
+}
+
+async fn impact_check(
+    State(state): State<AppState>,
+    Json(req): Json<ImpactCheckRequest>,
+) -> Json<ImpactReport> {
+    Json(ImpactReport {
+        overlaps: crate::impact::check(&state.tasks.list_tasks(), &req.spec_map),
+    })
 }
 
 async fn done_task(
