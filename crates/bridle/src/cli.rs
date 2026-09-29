@@ -532,6 +532,8 @@ pub enum TaskAction {
     Drop(TaskDropArgs),
     /// Mark a task integrated (merged), recording the merge commit in its thread.
     Done(TaskDoneArgs),
+    /// Record how a task was implemented (replaces an earlier summary).
+    Summary(TaskSummaryArgs),
     /// Bring a dropped or integrated task back.
     Reopen(TaskReopenArgs),
     /// Add a plain note to a task's thread (no question/answer semantics,
@@ -613,6 +615,21 @@ pub struct TaskDoneArgs {
     pub task: String,
     #[arg(long)]
     pub commit: String,
+    /// The branch that did the work.
+    #[arg(long)]
+    pub branch: Option<String>,
+}
+
+#[derive(Debug, Args)]
+#[command(group(ArgGroup::new("summary_source").required(true).args(["text", "file"])))]
+pub struct TaskSummaryArgs {
+    pub task: String,
+    /// The summary text.
+    #[arg(long)]
+    pub text: Option<String>,
+    /// Read the summary from a file (or `-` for stdin).
+    #[arg(long)]
+    pub file: Option<PathBuf>,
 }
 
 #[derive(Debug, Args)]
@@ -1243,6 +1260,23 @@ mod tests {
     fn task_new_requires_kind() {
         let err = parse(&["task", "new", "Add foo"]).unwrap_err();
         assert_eq!(err.kind(), clap::error::ErrorKind::MissingRequiredArgument);
+    }
+
+    #[test]
+    fn task_summary_and_done_branch_parse() {
+        let cli = parse(&["task", "summary", "tw-1234", "--text", "did it"]).unwrap();
+        let Command::Task(args) = cli.command else {
+            panic!("not task")
+        };
+        assert!(
+            matches!(args.action, TaskAction::Summary(a) if a.text.as_deref() == Some("did it"))
+        );
+        assert!(parse(&["task", "summary", "tw-1234"]).is_err());
+        let cli = parse(&["task", "done", "tw-1", "--commit", "a", "--branch", "b"]).unwrap();
+        let Command::Task(args) = cli.command else {
+            panic!("not task")
+        };
+        assert!(matches!(args.action, TaskAction::Done(a) if a.branch.as_deref() == Some("b")));
     }
 
     #[test]

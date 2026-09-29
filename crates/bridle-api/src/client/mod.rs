@@ -16,8 +16,8 @@ use crate::types::{
     EditTaskRequest, Event, EventQuery, Health, InterruptRequest, InterruptResponse,
     MaxWorkersRequest, Message, MessageQuery, NewEdgeRequest, NewTaskRequest, NoteTaskRequest,
     OpenQuestion, Queue, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResumeRequest, SendRequest,
-    SetQueueRequest, SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery,
-    TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
+    SetQueueRequest, SetSummaryRequest, SpawnRequest, Status, StatusLineReport, StopRequest, Task,
+    TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
     UsageBreakdown, UsageBreakdownQuery,
 };
 
@@ -457,6 +457,14 @@ impl Client {
 
     pub async fn done_task(&self, id: &str, req: &DoneTaskRequest) -> Result<Task, ClientError> {
         self.post_json(&["v1", "tasks", id, "done"], req).await
+    }
+
+    pub async fn set_task_summary(
+        &self,
+        id: &str,
+        req: &SetSummaryRequest,
+    ) -> Result<Task, ClientError> {
+        self.post_json(&["v1", "tasks", id, "summary"], req).await
     }
 
     pub async fn reopen_task(&self, id: &str) -> Result<Task, ClientError> {

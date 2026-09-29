@@ -33,6 +33,10 @@ files: see `CLAUDE.md`'s bridle block for where they live.
   branch into `{{branches.integration}}` only if it already contains `{{branches.integration}}`.
 - **Done means `{{commands.check_worker}}` passes.** Then commit on your branch with a clear
   message. You are asked to commit, on your branch only.
+- **Write the summary before you report.** A task isn't done without one: a short
+  paragraph on the task itself (what changed, where, any decision or caveat worth
+  keeping) with `bridle task summary <task-id> --file <path>` (or `--file -` on stdin;
+  `--text` for one line). Re-running replaces it. The manager records it with the landing.
 - **Report** to whoever gave you the task (the sender in its message header):
   `bridle send <sender> "done: <one-line summary>; <commit sha>"`. If you're
   blocked, ask: `bridle send <sender> --question "<question>"`, then wait for

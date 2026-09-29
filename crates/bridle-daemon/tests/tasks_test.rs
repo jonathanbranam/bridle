@@ -8,8 +8,8 @@ mod support;
 
 use bridle_api::ClientError;
 use bridle_api::types::{
-    AgentState, DropTaskRequest, EditTaskRequest, NewTaskRequest, SpawnRequest, TaskKind, TaskSize,
-    TaskState, ThreadEntryKind, Workdir,
+    AgentState, DoneTaskRequest, DropTaskRequest, EditTaskRequest, NewTaskRequest,
+    SetSummaryRequest, SpawnRequest, TaskKind, TaskSize, TaskState, ThreadEntryKind, Workdir,
 };
 use support::{start_daemon, wait_for_state};
 
@@ -604,4 +604,44 @@ async fn size_is_set_on_new_shown_edited_and_kept_by_other_edits() {
     let list = c.list_tasks().await.expect("list");
     assert_eq!(list[0].size, Some(TaskSize::S));
     assert_eq!(list[1].size, Some(TaskSize::L));
+}
+
+#[tokio::test]
+async fn done_records_branch_commit_and_a_replaceable_summary() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let c = &daemon.client;
+
+    let task = c
+        .new_task(&new_req("Landed", TaskKind::Feature))
+        .await
+        .expect("new task");
+    assert!(task.summary.is_none());
+    c.set_task_summary(&task.id, &SetSummaryRequest { text: "v1".into() })
+        .await
+        .expect("summary");
+    let s = c
+        .set_task_summary(&task.id, &SetSummaryRequest { text: "v2".into() })
+        .await
+        .expect("replace");
+    assert_eq!(s.summary.as_deref(), Some("v2"));
+    let err = c
+        .set_task_summary(&task.id, &SetSummaryRequest { text: " ".into() })
+        .await
+        .unwrap_err();
+    assert!(matches!(err, ClientError::Api { status: 400, .. }));
+
+    let done = c
+        .done_task(
+            &task.id,
+            &DoneTaskRequest {
+                commit: "abc123".into(),
+                branch: Some("bridle/landed".into()),
+            },
+        )
+        .await
+        .expect("done");
+    let shown = c.get_task(&done.id).await.expect("show");
+    assert_eq!(shown.branch.as_deref(), Some("bridle/landed"));
+    assert_eq!(shown.commit.as_deref(), Some("abc123"));
+    assert_eq!(shown.summary.as_deref(), Some("v2"));
 }

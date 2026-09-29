@@ -1096,6 +1096,15 @@ pub struct Task {
     /// Estimated size; null when unset.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub size: Option<TaskSize>,
+    /// Branch that did the work, recorded by `task done --branch`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub branch: Option<String>,
+    /// Commit that landed the task, recorded by `task done --commit`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub commit: Option<String>,
+    /// Short account of how it was implemented, set by `task summary`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub summary: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -1132,6 +1141,14 @@ pub struct DropTaskRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DoneTaskRequest {
     pub commit: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub branch: Option<String>,
+}
+
+/// `POST /v1/tasks/{id}/summary`: replaces any earlier summary.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SetSummaryRequest {
+    pub text: String,
 }
 
 /// `POST /v1/tasks/{id}/ask`.
