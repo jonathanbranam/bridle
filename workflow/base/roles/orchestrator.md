@@ -41,7 +41,12 @@ curl -s -H "Authorization: Bearer $BRIDLE_TOKEN" "$U/v1/messages?to=human&limit=
   - an unexpected exit, crash or stall;
   - all agents idle for 15 minutes;
   - five_hour ≥ 93% or seven_day ≥ 85%.
-  - a budget hold starting (the governor leaving `normal`).
+  - a budget hold starting (the governor leaving `normal`);
+  - your own context passing 140K (`CONTEXT <tokens>`; `CONTEXT_WAKE` overrides),
+    once per crossing: propose a handover at the next quiet point. It reads the
+    size `bridle statusline` writes to `~/.bridle/context/<session id>`, for the
+    session id `scripts/claude-orchestrator` records in
+    `~/.bridle-orchestrator-session`, so it only works in a session started by that script.
 
   After each wake, handle it and restart it with the last seq. Add a
   heartbeat check every 30 minutes in case it hangs.
