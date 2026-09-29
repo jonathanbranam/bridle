@@ -13,6 +13,12 @@ pub enum WorktreeError {
     BranchExists { branch: String },
     #[error("io error running git: {0}")]
     Io(#[from] std::io::Error),
+    #[error("worktree setup command {command:?} {outcome}; last output:\n{tail}")]
+    Setup {
+        command: String,
+        outcome: String,
+        tail: String,
+    },
     #[error("invalid agent name {0:?}: expected [a-z0-9][a-z0-9-]{{0,39}}")]
     InvalidName(String),
 }
@@ -93,6 +99,56 @@ pub async fn warm_target(repo: &Path, worktree: &Path) {
         ),
         Err(e) => tracing::warn!(error = %e, "warming worktree target/ failed; continuing cold"),
     }
+}
+
+/// Runs the project's `[worktrees] setup` command (`sh -c`, cwd = the worktree). The env is the
+/// daemon's minus `BRIDLE_*`, so a setup script never sees an agent token. Fails on non-zero
+/// exit or after `timeout`, with the command, status and the last ~20 lines of output.
+pub async fn run_setup(
+    worktree: &Path,
+    command: &str,
+    timeout: std::time::Duration,
+) -> Result<(), WorktreeError> {
+    let started = std::time::Instant::now();
+    let mut cmd = Command::new("sh");
+    cmd.arg("-c")
+        .arg(command)
+        .current_dir(worktree)
+        .stdin(std::process::Stdio::null())
+        .kill_on_drop(true);
+    for (key, _) in std::env::vars_os() {
+        if key.to_string_lossy().starts_with("BRIDLE_") {
+            cmd.env_remove(key);
+        }
+    }
+    let fail = |outcome: String, tail: String| WorktreeError::Setup {
+        command: command.to_string(),
+        outcome,
+        tail,
+    };
+    // Dropping the future on timeout kills the child (kill_on_drop).
+    let out = match tokio::time::timeout(timeout, cmd.output()).await {
+        Ok(r) => r?,
+        Err(_) => {
+            return Err(fail(
+                format!("timed out after {}s", timeout.as_secs()),
+                String::new(),
+            ));
+        }
+    };
+    if !out.status.success() {
+        let mut text = String::from_utf8_lossy(&out.stdout).into_owned();
+        text.push_str(&String::from_utf8_lossy(&out.stderr));
+        let lines: Vec<&str> = text.lines().collect();
+        let tail = lines[lines.len().saturating_sub(20)..].join("\n");
+        return Err(fail(format!("failed with {}", out.status), tail));
+    }
+    tracing::info!(
+        command,
+        elapsed_ms = started.elapsed().as_millis() as u64,
+        "worktree setup done"
+    );
+    Ok(())
 }
 
 /// Adds a new worktree at `path`, checking out `branch`, which must already
@@ -335,6 +391,47 @@ mod tests {
             cfg!(target_os = "macos")
         );
         assert!(repo.join("target/debug/dep").exists());
+    }
+
+    #[tokio::test]
+    async fn run_setup_cwd_env_failure_and_timeout() {
+        let tmp = tempfile::tempdir().expect("tmp");
+        let wt = tmp.path();
+        let long = Duration::from_secs(30);
+        // set_var is unsafe (forbidden), so this only proves the filter where the test runner
+        // inherits BRIDLE_TOKEN, as it does when run by a bridle agent.
+        run_setup(
+            wt,
+            "pwd -P > marker; echo \"t=${BRIDLE_TOKEN-unset}\" >> marker",
+            long,
+        )
+        .await
+        .expect("ok");
+        let marker = std::fs::read_to_string(wt.join("marker")).expect("marker");
+        assert!(marker.starts_with(wt.canonicalize().expect("canon").to_str().expect("utf8")));
+        assert!(marker.contains("t=unset"));
+
+        let err = run_setup(wt, "seq 1 30; echo boom >&2; exit 3", long)
+            .await
+            .expect_err("fails")
+            .to_string();
+        assert!(
+            err.contains("seq 1 30") && err.contains("exit status: 3"),
+            "{err}"
+        );
+        assert!(
+            err.contains("boom") && err.contains("\n30") && !err.contains("\n5\n"),
+            "{err}"
+        );
+
+        let err = run_setup(wt, "sleep 30", Duration::from_millis(100))
+            .await
+            .expect_err("times out")
+            .to_string();
+        assert!(
+            err.contains("sleep 30") && err.contains("timed out"),
+            "{err}"
+        );
     }
 
     async fn init_repo(dir: &Path) {

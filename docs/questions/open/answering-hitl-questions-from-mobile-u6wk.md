@@ -53,3 +53,21 @@ anything else that could run arbitrary work from a phone call.
 MCP was deferred on 2026-09-27. The work so far is on the unmerged branch
 `bridle/mcp-1` (WIP `cae932c`), which is kept for when this is picked up; see
 `docs/proposal/build-order.md`.
+
+## The human on what MCP is for (2026-09-28)
+
+> for MCP - the main idea is that I want a voice interface to work with bridle remotely over
+> my phone. I think it should be able to check on bridle status, in progress tickets, and
+> such; ideally also access all the documentation on the repo; OR, maybe KISS? And just be
+> able to send and receive messages to the orchestrator or advisor? IDK that might be good
+> enough; then those agents can reply and the voice Claude agent can then talk to me over
+> voice.
+
+Advisor's notes from the same conversation (not a decision):
+
+- The repo is public on GitHub (`jonathanbranam/bridle`), so a claude.ai voice chat can
+  read the docs through GitHub without any bridle tool.
+- Public HTTPS and OAuth (above) are the cost whatever the tool count, so a small read-only
+  briefing (status, in-progress tasks, queue, questions to the human: GETs that exist
+  already) adds little beside send/receive, and answers "what's going on" at once instead
+  of waiting minutes for the orchestrator's reply mid-call.

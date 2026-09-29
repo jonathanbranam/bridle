@@ -133,7 +133,13 @@ version. Instead:
   including ones held for `--when idle` when the agent exited, followed by a
   synthetic continuation note (same mechanism as `renew`'s below) so the
   process always has something to start a turn on, even with no pending
-  messages.
+  messages. A session only exists for claude once its first turn has started,
+  so the store tracks `agents.session_started` (cleared by spawn and renew,
+  set on the first `system/init`). If the daemon died before that, `resume`
+  can't `--resume` it (claude dies on the first message, p4ks): it starts a
+  fresh `--session-id` session instead, stores it, and the continuation note
+  points the agent at its handoff. An abnormal claude exit is logged at
+  `warn` with its exit code and stderr tail.
 - **Stall detection**: an agent that is `working` but has emitted nothing for
   `stall_after` (default 10 min, checked every 30 s) gets an `agent.stalled`
   event, once per silent stretch.

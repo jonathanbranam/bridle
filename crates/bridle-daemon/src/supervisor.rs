@@ -631,6 +631,15 @@ impl AgentManager {
                     worktree::warm_target(&self.0.workspace.repo, &path).await;
                 }
                 created_worktree = Some((path.clone(), branch.clone()));
+                if let Some(cmd) = &self.0.config.setup
+                    && let Err(e) =
+                        worktree::run_setup(&path, cmd, self.0.config.setup_timeout).await
+                {
+                    // Same cleanup as the later spawn-failure paths.
+                    let _ = worktree::remove(&self.0.workspace.repo, &path, true).await;
+                    let _ = worktree::delete_branch(&self.0.workspace.repo, &branch, true).await;
+                    return Err(e.into());
+                }
                 ("worktree", path.clone(), Some(path), Some(branch))
             }
             Workdir::Repo => ("repo", self.0.workspace.repo.clone(), None, None),
@@ -1029,6 +1038,7 @@ impl AgentManager {
                     self.note_claude_version(id, version).await;
                 }
                 let _ = self.0.store.add_turn_start(id, n, Utc::now()).await;
+                let _ = self.0.store.mark_session_started(id).await;
                 self.transition_state(id, runtime, AgentState::Working)
                     .await;
                 let _ = self
@@ -1432,6 +1442,15 @@ impl AgentManager {
 
         let (state, mut exit) =
             classify_exit(stop_requested, shutdown_requested, saw_any_line, &outcome);
+        // Otherwise a claude that dies on start (e.g. a `--resume` it can't
+        // find) leaves its reason only in the transcript.
+        if !stop_requested && !shutdown_requested && outcome.code != Some(0) {
+            tracing::warn!(
+                agent = %id, code = ?outcome.code, signal = ?outcome.signal,
+                reason = %exit.reason, stderr = %outcome.stderr_tail.join("; "),
+                "claude exited abnormally"
+            );
+        }
         if runtime.budget_exhausted.load(Ordering::SeqCst) {
             exit.reason = "budget_exhausted".to_string();
         } else if runtime.budget_paused.load(Ordering::SeqCst) {
@@ -1818,8 +1837,23 @@ impl AgentManager {
 
         let session_uuid = Uuid::parse_str(&agent.session_id)
             .map_err(|e| SupervisorError::Internal(format!("bad session id: {e}")))?;
+        // A session that never started a turn (a renew, then a restart before
+        // its first turn) doesn't exist to claude, and `--resume` of it dies
+        // on the first message (p4ks). Start a fresh one instead; the
+        // continuation note below points it at the handoff.
+        let (session_uuid, session) = if self.0.store.session_started(&agent.id).await? {
+            (session_uuid, Session::Resume(session_uuid))
+        } else {
+            let fresh = Uuid::new_v4();
+            tracing::warn!(
+                agent = %agent.id, stale_session = %session_uuid, new_session = %fresh,
+                "stored session never started a turn; resuming into a fresh session"
+            );
+            (fresh, Session::New(fresh))
+        };
+        let session_id = session_uuid.to_string();
         let cwd = std::path::PathBuf::from(&agent.cwd);
-        let mut cmd = ClaudeCommand::new(cwd, Session::Resume(session_uuid));
+        let mut cmd = ClaudeCommand::new(cwd, session);
         cmd.program = self.0.claude_program.clone();
         cmd.model = Some(agent.model.clone());
         cmd.effort = role.effort.clone();
@@ -1857,10 +1891,17 @@ impl AgentManager {
             .await
             .map_err(|e| SupervisorError::Internal(format!("spawning claude: {e}")))?;
 
+        if session_id != agent.session_id {
+            self.0
+                .store
+                .set_agent_session(&agent.id, &session_id)
+                .await?;
+        }
+
         self.register_and_start(
             StartingAgent {
                 agent_id: &agent.id,
-                session_id: &agent.session_id,
+                session_id: &session_id,
                 turns_so_far: agent.turns,
                 cost_so_far: agent.cost_usd_total,
             },
@@ -1949,11 +1990,12 @@ impl AgentManager {
             .await?
             .ok_or_else(|| SupervisorError::NotFound(id_or_name.to_string()))?;
         let from_state = agent.state;
-        if agent.state.is_running() {
-            agent = self.stop(&agent.id, false, principal).await?;
-        }
+        // Before the stop: a refused renew must change nothing.
         if !ignore_budget {
             self.refuse_if_holding(&agent.model)?;
+        }
+        if agent.state.is_running() {
+            agent = self.stop(&agent.id, false, principal).await?;
         }
         let role = self
             .0

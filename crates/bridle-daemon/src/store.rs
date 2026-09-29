@@ -333,6 +333,19 @@ impl Store {
     /// Replaces the agent's Claude Code session id, e.g. when `renew` starts
     /// a fresh session in the same worktree/branch instead of resuming the
     /// old one.
+    /// Records that the agent's current session has started a turn (so it
+    /// exists on disk and `--resume` can find it).
+    pub async fn mark_session_started(&self, id: &str) -> Result<(), StoreError> {
+        let id = id.to_string();
+        self.with_conn(move |c| sync::mark_session_started(c, &id))
+            .await
+    }
+
+    pub async fn session_started(&self, id: &str) -> Result<bool, StoreError> {
+        let id = id.to_string();
+        self.with_conn(move |c| sync::session_started(c, &id)).await
+    }
+
     pub async fn set_agent_session(&self, id: &str, session_id: &str) -> Result<(), StoreError> {
         let id = id.to_string();
         let session_id = session_id.to_string();
@@ -916,9 +929,17 @@ mod sync {
         ALTER TABLE agents ADD COLUMN components TEXT NOT NULL DEFAULT '[]';
     "#;
 
+    // Whether the agent's current `session_id` has had a turn start, i.e. claude
+    // has written the session to disk. A fresh session that never got that far
+    // (renewed, then the daemon restarted) can't be `--resume`d. Existing rows
+    // predate the tracking and are assumed started.
+    pub(super) const SCHEMA_V13: &str = r#"
+        ALTER TABLE agents ADD COLUMN session_started INTEGER NOT NULL DEFAULT 1;
+    "#;
+
     const MIGRATIONS: &[&str] = &[
         SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7, SCHEMA_V8,
-        SCHEMA_V9, SCHEMA_V10, SCHEMA_V11, SCHEMA_V12,
+        SCHEMA_V9, SCHEMA_V10, SCHEMA_V11, SCHEMA_V12, SCHEMA_V13,
     ];
 
     pub(super) fn open(path: &Path) -> Result<Connection, StoreError> {
@@ -1334,9 +1355,10 @@ mod sync {
             "INSERT INTO agents(id, name, role, state, model, session_id, pid, pid_start,
                 workdir_kind, cwd, worktree, branch, created_at, updated_at, turns,
                 cost_usd_total, last_event_at, turn_started_at, exit_code, exit_signal,
-                exit_reason, created_by, extra_allowed_tools, extra_env, components)
+                exit_reason, created_by, extra_allowed_tools, extra_env, components,
+                session_started)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6, NULL, NULL, ?7, ?8, ?9, ?10, ?11, ?11, 0, 0,
-                NULL, NULL, NULL, NULL, NULL, ?12, ?13, ?14, ?15)",
+                NULL, NULL, NULL, NULL, NULL, ?12, ?13, ?14, ?15, 0)",
             params![
                 id,
                 new.name,
@@ -1469,17 +1491,37 @@ mod sync {
         Ok(())
     }
 
+    pub(super) fn mark_session_started(conn: &Connection, id: &str) -> Result<(), StoreError> {
+        conn.execute(
+            "UPDATE agents SET session_started = 1 WHERE id = ?1",
+            params![id],
+        )?;
+        Ok(())
+    }
+
+    pub(super) fn session_started(conn: &Connection, id: &str) -> Result<bool, StoreError> {
+        conn.query_row(
+            "SELECT session_started FROM agents WHERE id = ?1",
+            params![id],
+            |r| r.get(0),
+        )
+        .optional()?
+        .ok_or_else(|| StoreError::NotFound(id.to_string()))
+    }
+
     /// Also clears `context_tokens`: a fresh session has no completed turn
     /// yet, so the old session's context size no longer applies (renew's
     /// only caller — htp6b's context governor relies on this to stop
     /// re-notifying a just-renewed agent on the very next check).
+    /// Also marks the session not yet started (see `SCHEMA_V13`).
     pub(super) fn set_agent_session(
         conn: &Connection,
         id: &str,
         session_id: &str,
     ) -> Result<(), StoreError> {
         let n = conn.execute(
-            "UPDATE agents SET session_id = ?1, context_tokens = NULL, updated_at = ?2 WHERE id = ?3",
+            "UPDATE agents SET session_id = ?1, session_started = 0, context_tokens = NULL,
+                updated_at = ?2 WHERE id = ?3",
             params![session_id, fmt_dt(Utc::now()), id],
         )?;
         if n == 0 {

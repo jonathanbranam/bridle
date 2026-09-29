@@ -2,70 +2,62 @@
 
 The orchestrator's working notes for handing over between sessions. The role
 itself is in `workflow/base/roles/orchestrator.md`. Update this file whenever the
-queue, open items or decisions change. Last updated 2026-09-28 18:00 UTC,
-at the handover from the sixth orchestrator session.
+queue, open items or decisions change. Last updated 2026-09-28 23:55 UTC (7:55 PM),
+at the handover from the seventh orchestrator session.
 
 ## First, for the incoming orchestrator
 
-- **meta-notes is live** (2026-09-28, 22:52 UTC): its daemon runs from
-  `/Volumes/Data/work/meta-notes-workspace/meta-notes` on `bridle-adopt` (never `main`);
-  its manager is `manager` (autostart). Reach it with `--project meta-notes` and
-  `BRIDLE_TOKEN=$(cat ~/.bridle-orchestrator-meta-notes.token)`. It has no CI, so the worker's
-  check is the gate. The human gives it tasks directly.
-- **The human's goal, which orders the queue** (2026-09-28, via the advisor): "Bridle should be
-  working well enough and useful enough that we can do productive work on my other
-  projects." They worry software factories end up working on themselves. Also in the
-  product manager's role prompt. meta-notes onboards first, then track-web (most of the
-  human's games live there; "kind of a beast to onboard"), then data-contracts (lower; "I will
-  have some things to do soon"). The human, 2026-09-28.
-- **Do these first, before the budget hold lifts (five_hour resets 19:20
-  UTC, 3:20 PM):** the sixth session couldn't send them while the human
-  cycled the daemon for a new budget setting.
-  1. `bridle send pm-1`: drop br-d063 (vxp6 spike, merged ea9ee52), br-544b
-     (m2fq, merged b809c4e) and br-1e0c (roles, merged d9a770a). The 17:53
-     restart released their claims and they show "planned startable" in
-     tiers 1-2; with no done state (br-789a), manager-2 would re-spawn them.
-     Also: queue the advisor's new ticket 6t29 (named budget presets via
-     `bridle budget override`, max_workers per period) in tier 4 with br-7ab7.
-  2. `bridle send manager-2`: don't start those three; for br-7678 spawn a
-     fresh worker that continues from `bridle/python-pack` (482825b; handoff
-     note on the task). **Never resume `python-pack`**: every resume dies on
-     its first turn (p4ks, br-26ae).
-  3. `bridle inbox --mark-read` (the advisor's 6t29 note is unread).
-  4. After the hold lifts: renew pm-1 (idle at ~146K). Not during a hold:
-     a refused renew leaves the agent stopped (r3nh, br-187b). If the daemon
-     cycle left pm-1 or manager-2 stopped, `bridle resume` them.
-- **`main` is 0ca0ffd plus doc and watcher commits; code verified at c533cb0**
-  (two local runs, 428/428). Installed binary: c533cb0. The daemon was cycled
-  by the human after 17:55 UTC for a budget setting. Start the watcher from
-  seq ~23921.
-- **Budget holds are the maintenance window** (the human, 2026-09-28; the
-  role's new section; ticket m7wn). The watcher now wakes when a hold starts
-  (it remembers the reported state in `~/.bridle-orchestrator-hold-state`),
-  and ignores `budget_paused` exits. Keep the list below current.
-- **Waiting for the next maintenance window:** nothing yet beyond the pm-1
-  renewal.
-- **The standing rule on the human's projects** (`existing-projects`, 63rv):
-  no change to any of their projects without their review and approval.
-  Onboardings are trials on a `bridle-adopt` branch the orchestrator creates
-  from the project's `main` (or `dev`) and pushes; `main`/`dev` never touched.
-  br-29f9 (the `[branches]` setting) is merged, so data-contracts can start:
-  create `bridle-adopt` in DC (from `main`, which includes b923c7e; the
-  human said keep it), then survey step 3 on that branch, once the Python
-  pack (br-7678) lands.
-- **Onboarding order:** data-contracts, then meta-notes (Python pack with
-  pipenv, the Vim/vader pack br-55e2), then track-web (needs y3sd's
-  component design, br-a702). Other surveys filed by the advisor: d9nu
-  file-db, 8xhh otters, a8fk PixelLab tooling; not scheduled.
-- **Agents reach you directly** (a7h3), including the advisor (reminded
-  twice this session). The human's inbox is only for what they must act on
-  (kp3f); only the recipient can mark a message read (cu5m, queued br-00eb).
-- **The queue** (j479): pm-1 owns it; manager-2 is mechanical. Merged tasks
-  must be dropped by pm-1 (no done state yet, br-789a).
-- **Local permissions** (`.claude/settings.local.json`, untracked): the
-  watcher script, and reads under `/Volumes/Data/work/data-contracts-workspace/`.
-- **Managers may `bridle rm` finished workers themselves**; only the
-  orchestrator's auto mode can't. Don't ask the human to.
+- **Two projects are live.** bridle (`~/.bridle-orchestrator.token`) and meta-notes
+  (`--project meta-notes`, `BRIDLE_TOKEN=$(cat ~/.bridle-orchestrator-meta-notes.token)`).
+  Both daemons were restarted by the human at 23:45 UTC onto the installed build
+  **ce4e25d** (CI green). `main` has moved since only with p4ks (abacf6d, resume into a fresh
+  session) and docs; install it at the next maintenance window.
+- **meta-notes** (the human's priority): the daemon runs from
+  `/Volumes/Data/work/meta-notes-workspace/meta-notes`, which must stay on `bridle-adopt`
+  (the trial branch; `main` is never touched, `existing-projects` rule). Its manager is
+  `manager` (autostart, no PM); `max_workers = 1`. It has no CI: the worker's check
+  (`./run_tests.sh && pipenv run pytest test/unit/`) is the gate. In flight: **mn-efc9**
+  (OOO event not "mine"; worker `ooo-mine`), then **mn-bf7a** (daily-plan fills meetings
+  first). Both briefs are in the task bodies, from the human's write-ups. My watcher doesn't
+  cover this daemon: check `bridle agents --project meta-notes` and
+  `git -C <clone> log bridle-adopt` on heartbeats, and read its manager's messages to you
+  and to `human`. The project layer still carries its own role prompts and rules; w2rp (base
+  roles now project-neutral) and the new python/vim packs mean they can be trimmed later.
+- **The human's goal, which orders the queue** (2026-09-28): "Bridle should be working
+  well enough and useful enough that we can do productive work on my other projects."
+  Also, "keep our eyes on the prize". It's at the top of the product manager's role
+  prompt. Project order: **meta-notes, then track-web** (most of their games; a big
+  onboarding; y3sd's components parts 1-3 are merged), **then data-contracts** (lower).
+  Side tickets (y496, ksn2, kpgy) go to the backlog.
+- **Verify merges by CI only** (the human, 2026-09-28): no local `just check` on `main`.
+  The watcher wakes on a failed GitHub Actions run on main (interim until the daemon's
+  own CI watch, c8qw, merged in ce4e25d, has proved itself; then drop that part of the
+  watcher). The role says so.
+- **Open decision for the human:** kv7d. Should thresholds they set win over Claude Code's
+  `allowed_warning`? Recommended yes; it isn't answered yet. Their `burst` override was
+  defeated by it on 2026-09-28.
+- **Watcher:** `scripts/orchestrator-watch.sh <seq>`; start from seq ~26218. It takes
+  `FIVE_HOUR_WAKE=0.97` to raise the five_hour wake while an override is in force.
+  Keep it running through budget pauses; don't stop it to silence "all idle" wakes.
+  A background loop logs connectivity and battery once a minute to
+  `/Volumes/Data/work/bridle/.bridle/connectivity.log` (started at 22:04 UTC; it dies
+  with this session, which is useful: its last line marks when a session stopped).
+- **Incidents** go in `docs/context/incidents.md` (the human, 2026-09-28). One so far: Remote
+  Control and this session were lost from 19:23 to 21:27 UTC with the machine awake. The
+  hotspot trial on the drive home held.
+- **Renew:** pm-1 is at ~122K. Renew it when idle and above ~140K (not during a hold, r3nh).
+  manager-2 was renewed at 23:47 UTC.
+- **The standing rule on the human's projects** (`existing-projects`, 63rv): trials on
+  `bridle-adopt`; `main`/`dev` never touched until the human approves.
+- **Agents reach you directly** (a7h3), including the advisor. The human's inbox is only
+  for what they must act on (kp3f).
+- **The queue** (j479): pm-1 owns it; manager-2 is mechanical. pm-1 still has to drop
+  merged tasks by hand (no done state yet, br-789a).
+- **Local permissions** (`.claude/settings.local.json`, untracked): the watcher script,
+  and reads under `/Volumes/Data/work/data-contracts-workspace/`. The auto-mode classifier
+  sometimes refuses a routine read for a minute; ask the human to say "carry on".
+- **Managers may `bridle rm` finished workers themselves**; only the orchestrator's auto
+  mode can't.
 
 ### The data-contracts survey answers (the human, 2026-09-28)
 
@@ -111,24 +103,31 @@ P3; new work goes in bridle's queue; old `docs/tickets/` stays as history.
 
 ## Who's running
 
-- **`pm-1`** (product manager, Sonnet) and **`manager-2`** (development
-  manager, Sonnet). Renew by hand when idle above ~140K.
-- **Workers:** none live. `python-pack` is dead (p4ks; don't resume; remove
-  once its branch is taken over). `j2vq-orchestrator-perms` is parked.
+- **bridle:** `pm-1` (product manager, Sonnet) and `manager-2` (development manager,
+  Sonnet, renewed 23:47 UTC). Worker `tui-open-msg` (br-0e14) at handover. Stopped, to
+  remove: `python-pack-2` (merged), `j2vq-orchestrator-perms` (parked).
+- **meta-notes:** `manager`; worker `ooo-mine` (mn-efc9).
 - **The advisor** (`external:advisor`): the human's chat and ticket session.
 
-## Queue (`bridle queue`, at 17:55 UTC)
+## Queue (`bridle queue`, at 23:55 UTC)
 
-Tier 1: (only the stale merged d063, 544b; drop). Tier 2: br-7678 python
-pack, br-bc21 harvest base rules, br-55e2 vim pack, br-00eb read/mark one
-message (plus stale 1e0c). Tier 3: br-a702 components design (y3sd).
-Tier 4: f75x, statusline tokens, TUI inbox full message, br-7ab7 (c424
-budget display). Tier 5: TUI inbox scroll, send quoting, m3wq.
+Tier 1: br-37b2 (p4ks; merged abacf6d, so drop it). Tier 2: br-1185 (r3nh). Tier 3: br-7bf8
+(TUI inbox scroll). Tier 4: br-0e14 (running), br-d5c8 (statusline tokens). Tier 5:
+br-3822, br-f6ad (m3wq). pm-1 should refill it by the goal: whatever meta-notes needs next,
+then track-web's onboarding (u8sm survey; components done), and kv7d once answered.
 
 Parked: `bridle/j2vq-orchestrator-perms`, `bridle/mcp-1` (u6wk).
 
 ## The human's decisions (2026-09-27 and 28)
 
+- 2026-09-28, seventh session:
+  - meta-notes onboards now, on the fast path (project-layer rules, no packs), in a fresh
+    clone; OpenSpec option B; the worker bumps the version, the manager tags (ajqa).
+  - Project order: meta-notes, track-web, data-contracts. The goal quoted above.
+  - No local `just check` on main; CI is the verification. Bridle watches CI itself
+    (c8qw), with no agent and no webhook. The NUC suits light daemons, not bridle's builds (b7cz).
+  - Record connection losses in `docs/context/incidents.md`.
+  - The roles a project needs start by themselves (qun8).
 - 2026-09-28, sixth session:
   - The data-contracts answers above; the `existing-projects` rule and
     `bridle-adopt` trials (63rv); budget holds are the maintenance window
@@ -179,7 +178,24 @@ Parked: `bridle/j2vq-orchestrator-perms`, `bridle/mcp-1` (u6wk).
 - **Auto mode's classifier sometimes errors** for a minute or two; it hits
   the orchestrator and the advisor, not bridle's agents.
 
-## Tickets filed this session (sixth)
+## Tickets filed this session (seventh)
+
+Orchestrator: kv7d, h8tq, g3ck, w2rp, k7nr, c8qw, b7cz; the incident log. The advisor:
+y2eb, zm95, qun8, yurx, y496, ksn2, kpgy, ma8e.
+
+## Done on 2026-09-28, seventh session (merged, CI green, pushed)
+
+g3ck (CI red: tests on `main` explicitly, global git config isolated), y2eb and k7nr
+(`max_workers` enforced and live; managers always resume after a pause), br-7678 python
+pack, br-bc21 base rules, br-00eb `inbox show/read`, br-a702 and components parts 2-3,
+br-e8b3 `just clean-stale`, w2rp (project-neutral base roles), c8qw (daemon watches CI),
+b7cz (warm worktree `target/`, `check_worker`), zm95 (shutdown with open streams), qun8
+and the autostart-by-role fix (a duplicate manager caught before restart), c424/h8tq
+(`bridle budget` display), 6t29 (budget presets), the vim pack, p4ks (resume into a fresh
+session; not installed yet). The meta-notes trial (`bridle-adopt`, 053089e + af8b6c0).
+Two restarts by the human (21:49 and 23:45 UTC).
+
+## Tickets filed in the sixth session
 
 Orchestrator: m2fq, hv8e, r3nh, m7wn, p4ks; DC 3fm6; cu5m and c424
 extended. The advisor: surveys d9nu, ajqa, u8sm, 8xhh, a8fk; rxe8, 63rv,
