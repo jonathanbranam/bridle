@@ -38,3 +38,13 @@ to `design/specs/<capability>.md`, assign ids, convert active changes to tasks (
 delta specs are applied on a task branch), and leave archived changes in git
 history without converting them. The current `*Verification*` marker grammar is
 kept, so data-contracts' scenarios carry over unchanged.
+
+## Checking
+
+`bridle spec check [paths...]` (built, local, no daemon call) parses spec files
+with the `bridle-spec` parser and prints each diagnostic as `file:line:col:
+message`, then a one-line summary; it exits 1 on any error. With no paths it
+checks `design/specs` (or `--root DIR`, e.g. `openspec/specs` before migration).
+A requirement without an id is a warning so unmigrated specs can be checked
+before ids are assigned; `--require-ids` makes it an error. `--json` prints the
+diagnostics with their severity.

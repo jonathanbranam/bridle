@@ -132,8 +132,8 @@ pub enum Command {
     /// "Rendering into what the agent harness reads"). Local, like `rules
     /// explain`/`diff` — no daemon call.
     Sync,
-    /// Capability specs (docs/design/specs.md, specs-to-tests.md). Local, like
-    /// `rules` — no daemon call.
+    /// Validate capability spec files (docs/design/specs.md) and print each
+    /// diagnostic as file:line:col: message. Local, like `rules` — no daemon call.
     Spec(SpecArgs),
 }
 
@@ -145,6 +145,8 @@ pub struct SpecArgs {
 
 #[derive(Debug, Subcommand)]
 pub enum SpecAction {
+    /// Parse spec files and report diagnostics; exits non-zero on any error.
+    Check(SpecCheckArgs),
     /// Export the specs for test runners; refuses (printing the diagnostics)
     /// when any spec has errors.
     Export(SpecExportArgs),
@@ -173,6 +175,21 @@ pub struct SpecExportArgs {
     /// `design/specs`, relative to the current directory).
     #[arg(long, value_name = "DIR")]
     pub root: Option<PathBuf>,
+}
+
+#[derive(Debug, Args)]
+pub struct SpecCheckArgs {
+    /// Spec files, or directories searched recursively for `*.md`. Default:
+    /// the `--root` directory.
+    pub paths: Vec<PathBuf>,
+    /// The specs directory checked when no paths are given (default
+    /// `design/specs`, relative to the current directory), e.g.
+    /// `openspec/specs` for a project not yet migrated.
+    #[arg(long, value_name = "DIR")]
+    pub root: Option<PathBuf>,
+    /// Make a requirement without an id an error rather than a warning.
+    #[arg(long)]
+    pub require_ids: bool,
 }
 
 #[derive(Debug, Args)]

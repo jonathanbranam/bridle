@@ -61,6 +61,22 @@ bridle rules explain|diff ... --component <id>  the same on top of that componen
 bridle sync                                 renders resolved workflow layers into CLAUDE.md's
                                              managed block, .claude/skills, .claude/agents and
                                              .claude/settings.json's hooks; local only, no daemon call
+bridle spec check [paths...] [--root DIR] [--require-ids]   validates spec files (dirs are searched for
+                                             *.md; default `design/specs`, or --root) with the
+                                             bridle-spec parser: prints file:line:col: message per
+                                             diagnostic and a summary, exit 1 on any error; a
+                                             requirement without an id is a warning (an error with
+                                             --require-ids); --json prints them as structured output;
+                                             local only, no daemon call
+bridle spec export --format gherkin|json [--out DIR] [paths...] [--root DIR]
+                                             exports specs for test runners (same path defaults as
+                                             `spec check`); gherkin: one <capability>.feature per spec
+                                             (Rule per requirement, executable scenarios only, tagged
+                                             with their @tags and id, e.g. @s-b310) into --out,
+                                             default `.bridle/cache/features/` (gitignored); json: the
+                                             whole AST (documented in specs-to-tests.md) on stdout, or
+                                             `specs.json` in --out; refuses, printing the diagnostics,
+                                             when any spec has errors; local only, no daemon call
 bridle prime orchestrator                   fresh session's opening context: role prompt, current
                                              state, startup steps; local only, no daemon call
 bridle prime worker|planner [--component ID ...]   the role's rules, facts, guides, plus named components' scope
@@ -404,7 +420,7 @@ bridle wait <id> [--until <state>] [--or-message] [--timeout]
 bridle spawn <role> <task>   bridle review
 bridle take|give <agent>                         human takeover of a headless agent
 bridle impact set|show|check bridle conflict list|resolve
-bridle spec check|id|export|coverage|import
+bridle spec check|id|export|coverage|import   `check`, `export` are built (see Built)
 bridle rules show|propose                        `explain`/`diff --project-layer` are built (see Built)
 bridle goals list|propose       bridle arch propose
 bridle trace up|down|suspect|confirm|orphans|coverage
