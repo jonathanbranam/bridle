@@ -32,7 +32,7 @@ the agents bridle hosts, and later a TUI, GUI or MCP server all share:
 3. **Run `bridle serve` in the clone.** Bridle reads `<repo>/.bridle/config.toml`
    if present (roles, defaults); the file is optional. Bridle needs no worktree
    for itself: it never edits code, and its state is a SQLite file under
-   `<workspace>/.bridle/`. Agents get worktrees under `<workspace>/wt/<agent>`,
+   `<workspace>/.bridle/`. Agents get worktrees under `<workspace>/wt/<agent>` (the default `[worktrees] layout`),
    on branches `bridle/<agent>`. The clone's own checkout is left to the human
    and the manager.
 4. **"Start working" means starting the manager**: `bridle spawn manager`, or
@@ -186,21 +186,23 @@ the clone:
    branch (`git merge-base --is-ancestor <integration> bridle/<agent>`),
    that the worker's worktree is clean, and that the diff does what the task
    asked and nothing else. Anything short of that goes back to the worker.
-3. `git merge --squash bridle/<agent>`, then one commit: subject `<task id>:
-   <task title>`, body the worker's summary (`bridle task summary`), trailers
-   `Task: <id>` and `Branch: bridle/<agent>`. Because the branch already
-   contains the integration branch, this can't conflict, and the integration
-   branch reads as a list of completed tasks, not the workers' commits.
+3. `bridle land <task-id>` (the integrator, [[roles-and-config|roles and config]]): under a
+   daemon-wide lock, it merges the branch `--no-ff` (`Merge branch 'bridle/<agent>' (<task id>)`)
+   in `<workspace>/integration`, runs `[integration] check` there, and only then moves the
+   integration branch, so a red or conflicting merge never lands. The branch is found from the
+   task's claimant, or `--branch`. The integration branch reads as a list of merges rather than
+   a squash per task; the task's summary (`bridle task summary`) lives on the task record.
 4. `git push origin <integration>`, straight after the merge, so the remote
-   never lags the clone. Only the merger pushes, and only the integration
+   never lags the clone. `land` never pushes: only the merger pushes, and only the integration
    branch and (trunk pattern) release tags; workers never push. The release
    branch, when a project has one, is never a target of this step at all
    (mechanically denied — see "Branch pattern", above).
-5. `bridle task done <id> --commit <sha> --branch bridle/<agent>`: the daemon
-   refuses unless `<sha>` is reachable from the integration branch, then removes
-   every agent on that branch, its worktree and the now-landed branch (`-D`, since
-   a squashed branch isn't a git ancestor), and notes what it removed on the
-   task. Unmerged work can't be lost. `bridle rm --delete-branch` still works for
+5. `land` then does what `bridle task done <id> --commit <sha> --branch bridle/<agent>` does
+   (still available by hand): the daemon
+   refuses unless `<sha>` is reachable from the integration branch, marks the task
+   `integrated`, tells other workers `main moved`, then removes
+   every agent on that branch, its worktree and the now-landed branch (`-D`), and notes what it
+   removed on the task. Unmerged work can't be lost. `bridle rm --delete-branch` still works for
    one agent, and treats a `Branch: bridle/<agent>` trailer on a commit
    reachable from `HEAD` as landed. `bridle status` lists stopped agents whose
    branch has merged (`merged_leftovers`), as a safety net. Landed branches aren't kept; the

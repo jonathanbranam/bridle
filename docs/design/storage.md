@@ -16,6 +16,9 @@ principals(id TEXT PK, kind, name, token_hash, created_at, revoked_at)
 agents(id PK, name UNIQUE, role, state, model, session_id, pid, pid_start,
        workdir_kind, cwd, worktree, branch, created_at, updated_at,
        turns, turn_started_at, cost_usd_total, last_event_at,
+       context_tokens,                             -- latest context size (SCHEMA_V6), the governor's measure
+       session_started,                            -- 0 until the current session_id has had a turn
+                                                   -- (SCHEMA_V13); an unstarted session can't be --resume'd
        exit_code, exit_signal, exit_reason, created_by,
        extra_allowed_tools JSON, extra_env JSON,  -- this agent's --allow-tool/--env
                                                    -- overrides, reapplied on renew/resume
@@ -27,12 +30,15 @@ turns(agent_id, agent_name, role, model,           -- no FK: turns outlive rm
       PRIMARY KEY(agent_id, n))
 messages(seq INTEGER PK AUTOINCREMENT, id UNIQUE,    -- id = m-0042 from seq
          from_principal, to_kind, to_id, kind, body, reply_to,
-         when_mode, state, created_at, written_at, delivered_at, read_at)
+         when_mode, state, created_at, written_at, delivered_at, read_at,
+         answered_by, answered_reply, answered_line)  -- SCHEMA_V14: a question to the human closed
+                                                      -- by a delegate's reply (`answer_for_human`)
 events(seq INTEGER PK AUTOINCREMENT, ts, kind, actor, agent_id, data JSON)
                                                      -- agent_id has no FK: events outlive agents
 rate_limits(window PK, status, utilization, resets_at, observed_at)
 interactive_usage(id PK AUTOINCREMENT, observed_at, session_id, model,
-                   cost_usd, context_used_tokens, context_max_tokens)
+                   cost_usd, context_used_tokens, context_max_tokens,
+                   context_used_percentage)          -- V10: Claude's own figure; right on 1M models
                                                      -- from `bridle statusline`; no agent id, nothing bridle hosts
 meta(key PK, value)                                  -- e.g. claude_version
 ```
@@ -106,6 +112,10 @@ conflicts(id INTEGER PK -> shown as C<id>, task_a, task_b, kind, key, state, res
 ports(port INTEGER PK, agent, task, pid, label, allocated_at)     -- SCHEMA_V16
 ```
 
+`conflicts` rows are opened by `impact check` (impact-and-conflicts.md); the unique key makes
+reopening the same overlap a no-op, resolved or not. Conflicts are SQLite-only, not on the
+state branch and not rebuilt.
+
 `ports` is runtime state: not on the state branch and not rebuilt (see
 [[worktrees-and-ports]]).
 
@@ -121,7 +131,7 @@ agent's own `last_event_at`/`turn_started_at` (the same signal
 activity is older than `config.claim_lease_after`. Only a `claimed` task is ever
 moved by a release: dropping or integrating a claimed task clears its claim, and
 `TaskManager::open` deletes any `claims` row whose task isn't `claimed`. The ephemeral tables
-`waits`, `impact_cache` arrive with later tasks.
+`waits`, `impact_cache` are not built.
 
 **Claims are durable now (j479):** unlike `tasks`/`edges`/`open_questions`,
 there's no per-claim file to key a targeted write on, so — the same
@@ -196,7 +206,7 @@ idling on a blocked one, and never moves a task between tiers itself.
 ## The state branch
 
 Built for task records at the `open`/`planned`/`claimed`/`dropped`/`integrated`/`reopened`
-states (`crates/bridle-daemon/src/state_branch.rs`, `src/tasks.rs`),
+states (`TaskState`) (`crates/bridle-daemon/src/state_branch.rs`, `src/tasks.rs`),
 including claims and the queue now (above); `in_review` and
 `accepted`, and the edges/questions that go with them, are still only
 designed
