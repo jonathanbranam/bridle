@@ -348,7 +348,11 @@ impl TaskManager {
             task.components = components;
         }
         if let Some(size) = size {
-            task.size = if size == TaskSize::None { None } else { Some(size) };
+            task.size = if size == TaskSize::None {
+                None
+            } else {
+                Some(size)
+            };
         }
         task.updated_at = Utc::now();
         self.state.enqueue_task(&task)?;
@@ -1121,7 +1125,13 @@ mod tests {
     async fn edit_clears_size_with_none() {
         let (tm, _tmp) = manager().await;
         let task = tm
-            .new_task("Add foo", TaskKind::Feature, String::new(), vec![], Some(TaskSize::M))
+            .new_task(
+                "Add foo",
+                TaskKind::Feature,
+                String::new(),
+                vec![],
+                Some(TaskSize::M),
+            )
             .await
             .expect("new task");
         assert_eq!(task.size, Some(TaskSize::M));
