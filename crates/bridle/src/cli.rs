@@ -74,6 +74,8 @@ pub enum Command {
     Logs(LogsArgs),
     /// The event log.
     Events(EventsArgs),
+    /// Block until a task changes state (or reaches one), or a message arrives.
+    Wait(WaitArgs),
     /// Usage and cost summary.
     Usage(UsageArgs),
     /// Static checks on what bridle injects into agent context.
@@ -476,6 +478,21 @@ pub struct EventsArgs {
     /// Prefix match, e.g. `message.` or `agent.state`.
     #[arg(long)]
     pub kind: Option<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct WaitArgs {
+    pub task: String,
+    /// Return when the task is in this state (at once if it already is);
+    /// default: return on the next state change.
+    #[arg(long)]
+    pub until: Option<bridle_api::TaskState>,
+    /// Also return when a message to me arrives (or is already unread).
+    #[arg(long)]
+    pub or_message: bool,
+    /// Give up after this many seconds (exit 4).
+    #[arg(long)]
+    pub timeout: Option<u64>,
 }
 
 #[derive(Debug, Args)]
