@@ -4,7 +4,7 @@ title = "Token counts in config accept k and M; defaults 150k/180k/200k (by23)"
 kind = "feature"
 state = "integrated"
 created_at = "2026-09-29T20:37:13.711Z"
-updated_at = "2026-09-29T21:39:32.561672Z"
+updated_at = "2026-09-29T21:39:42.508825Z"
 size = "S"
 branch = "bridle/token-km"
 commit = "75bfe46952f4706c161d74e2bc4e52ddd15d7526"
@@ -24,3 +24,6 @@ done: token counts now accept k/M suffixes (150k, 1.5M), defaults updated to 150
 
 ### note · agent:manager-2 · 2026-09-29T21:39:32.561Z
 integrated: 75bfe46952f4706c161d74e2bc4e52ddd15d7526 (branch bridle/token-km)
+
+### note · agent:manager-2 · 2026-09-29T21:39:42.508Z
+cleanup: removed agent token-km, branch bridle/token-km
