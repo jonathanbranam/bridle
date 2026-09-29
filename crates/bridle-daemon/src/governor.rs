@@ -745,26 +745,7 @@ impl Governor {
                 cfg.stop_at.get(window),
             )
         };
-        let mut state = match rl.utilization {
-            Some(u) => {
-                let pct = u * 100.0;
-                if pct >= stop_at {
-                    GovernorState::Paused
-                } else if pct >= wind_down_at {
-                    GovernorState::WindingDown
-                } else if pct >= hold_at {
-                    GovernorState::Holding
-                } else {
-                    GovernorState::Normal
-                }
-            }
-            None => GovernorState::Normal,
-        };
-        match rl.status.as_deref() {
-            Some("rejected") => state = state.max(GovernorState::Paused),
-            Some("allowed_warning") => state = state.max(GovernorState::WindingDown),
-            _ => {}
-        }
+        let state = window_state(rl, hold_at, wind_down_at, stop_at);
         WindowBlock {
             state,
             window: Some(window.to_string()),
@@ -1032,6 +1013,31 @@ fn parse_iso(v: Option<&Value>) -> Option<DateTime<Utc>> {
         .map(|d| d.with_timezone(&Utc))
 }
 
+/// A window's state from its utilization against the configured thresholds.
+/// `rejected` forces `Paused`; `allowed_warning` is information only, since
+/// the human's thresholds (and overrides) alone decide (ticket kv7d).
+fn window_state(rl: &RateLimit, hold_at: f64, wind_down_at: f64, stop_at: f64) -> GovernorState {
+    let mut state = match rl.utilization {
+        Some(u) => {
+            let pct = u * 100.0;
+            if pct >= stop_at {
+                GovernorState::Paused
+            } else if pct >= wind_down_at {
+                GovernorState::WindingDown
+            } else if pct >= hold_at {
+                GovernorState::Holding
+            } else {
+                GovernorState::Normal
+            }
+        }
+        None => GovernorState::Normal,
+    };
+    if rl.status.as_deref() == Some("rejected") {
+        state = state.max(GovernorState::Paused);
+    }
+    state
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1242,11 +1248,23 @@ mod tests {
 
     #[test]
     fn rejected_status_forces_paused_regardless_of_percent() {
-        // Documented in usage-and-budget.md, Seeing the windows: allowed_warning
-        // and rejected trip wind_down/stop "whatever the percentages say".
         let mut r = rl("five_hour", 0.1, Utc::now());
         r.status = Some("rejected".to_string());
-        assert!(r.utilization.unwrap() * 100.0 < 80.0);
+        assert_eq!(window_state(&r, 80.0, 90.0, 95.0), GovernorState::Paused);
+    }
+
+    #[test]
+    fn allowed_warning_is_information_only() {
+        // A raised override (hold 93 / wind-down 96 / stop 98) at 91% with
+        // Claude's allowed_warning stays normal; the thresholds decide.
+        let mut r = rl("five_hour", 0.91, Utc::now());
+        r.status = Some("allowed_warning".to_string());
+        assert_eq!(window_state(&r, 93.0, 96.0, 98.0), GovernorState::Normal);
+        // Crossing a threshold still counts.
+        assert_eq!(
+            window_state(&r, 80.0, 90.0, 95.0),
+            GovernorState::WindingDown
+        );
     }
 
     /// `bridle budget override`'s thermostat semantics: `next_schedule_change`
