@@ -66,6 +66,7 @@ mod tests {
             branch: None,
             commit: None,
             summary: None,
+            impact: Default::default(),
             id: "tw-0001".to_string(),
             title: "do the thing".to_string(),
             kind: TaskKind::Chore,

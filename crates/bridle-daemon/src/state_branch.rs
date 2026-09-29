@@ -16,7 +16,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
 use bridle_api::types::{
-    Edge, EdgeKind, Task, TaskKind, TaskSize, TaskState, ThreadEntry, ThreadEntryKind,
+    Edge, EdgeKind, Impact, Task, TaskKind, TaskSize, TaskState, ThreadEntry, ThreadEntryKind,
 };
 use chrono::{DateTime, SecondsFormat, Utc};
 use serde::{Deserialize, Serialize};
@@ -427,6 +427,9 @@ struct Frontmatter {
     commit: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     summary: Option<String>,
+    /// Last: TOML needs tables after plain values.
+    #[serde(default, skip_serializing_if = "Impact::is_empty")]
+    impact: Impact,
 }
 
 /// `+++`-delimited TOML frontmatter (the same convention Hugo uses, picked
@@ -448,6 +451,7 @@ fn render_task(task: &Task) -> Result<String, StateBranchError> {
         branch: task.branch.clone(),
         commit: task.commit.clone(),
         summary: task.summary.clone(),
+        impact: task.impact.clone(),
     };
     let toml = toml::to_string_pretty(&fm)?;
     let mut out = String::new();
@@ -614,6 +618,7 @@ fn parse_task(text: &str) -> Result<Task, StateBranchError> {
         branch: fm.branch,
         commit: fm.commit,
         summary: fm.summary,
+        impact: fm.impact,
     })
 }
 
@@ -776,6 +781,12 @@ mod tests {
             branch: Some("bridle/x".to_string()),
             commit: Some("abc123".to_string()),
             summary: Some("Did a thing.\n\nSecond \"paragraph\".".to_string()),
+            impact: Impact {
+                modify: vec!["s-b310".to_string()],
+                add_under: vec!["r-7fa2".to_string()],
+                remove: Vec::new(),
+                files: vec!["client/**".to_string()],
+            },
         }
     }
 

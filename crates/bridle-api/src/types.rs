@@ -1123,6 +1123,43 @@ pub struct Task {
     /// Short account of how it was implemented, set by `task summary`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub summary: Option<String>,
+    /// Spec ids and file globs the task declares it will touch, set by
+    /// `impact set` (docs/design/impact-and-conflicts.md). Empty = undeclared.
+    #[serde(default, skip_serializing_if = "Impact::is_empty")]
+    pub impact: Impact,
+}
+
+/// A task's declared impact. Ids are validated by shape only (`r-`/`s-`/`g-`/`a-`
+/// plus hex); nothing checks they exist.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Impact {
+    /// Scenario/requirement ids the task changes.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub modify: Vec<String>,
+    /// Requirement/capability ids the task adds new spec under.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub add_under: Vec<String>,
+    /// Spec ids the task removes.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub remove: Vec<String>,
+    /// File globs the task touches.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub files: Vec<String>,
+}
+
+impl Impact {
+    pub fn is_empty(&self) -> bool {
+        self.modify.is_empty()
+            && self.add_under.is_empty()
+            && self.remove.is_empty()
+            && self.files.is_empty()
+    }
+}
+
+/// `POST /v1/tasks/{id}/impact`: replaces the whole declared impact.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SetImpactRequest {
+    pub impact: Impact,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

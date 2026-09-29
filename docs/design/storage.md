@@ -241,6 +241,11 @@ events/2026-09.jsonl      append-only transitions, for history and rebuild
 - **A task's landing record** (`branch`, `commit`, `summary`) lives only in the frontmatter, as
   optional strings: omitted when unset, and a file written before the fields existed loads
   with none. A rebuild round-trips them.
+- **A task's declared `impact`** (`modify`, `add_under`, `remove`, `files`; see
+  impact-and-conflicts.md) lives only in the frontmatter, as an optional `[impact]` table
+  of string arrays, last in the file: omitted when empty, and a file written before the field
+  existed loads with none. There is no SQLite column (the `tasks` table stays narrow); a
+  rebuild round-trips it.
 - **The task file's frontmatter delimiter is `+++`** (TOML, Hugo's
   convention), not `---` (which reads as YAML). The thread section, when a
   task has one, is a `## Thread` heading followed by one

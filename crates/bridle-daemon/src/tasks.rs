@@ -30,10 +30,19 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use bridle_api::types::{
-    Edge, EdgeKind, MessageKind, MessageState, OpenQuestion, PrincipalId, Task, TaskKind, TaskSize,
-    TaskState, ThreadEntry, ThreadEntryKind, When,
+    Edge, EdgeKind, Impact, MessageKind, MessageState, OpenQuestion, PrincipalId, Task, TaskKind,
+    TaskSize, TaskState, ThreadEntry, ThreadEntryKind, When,
 };
 use chrono::Utc;
+
+/// Shape check only: `r-`/`s-`/`g-`/`a-` plus hex digits.
+fn valid_spec_id(id: &str) -> bool {
+    id.split_once('-').is_some_and(|(p, hex)| {
+        matches!(p, "r" | "s" | "g" | "a")
+            && !hex.is_empty()
+            && hex.bytes().all(|b| b.is_ascii_hexdigit())
+    })
+}
 
 use crate::state_branch::{ClaimRecord, StateBranch, StateBranchError};
 use crate::store::{NewMessage, RecipientKind, Store, StoreError, TaskRow};
@@ -137,6 +146,7 @@ impl TaskManager {
                 branch: None,
                 commit: None,
                 summary: None,
+                impact: Impact::default(),
             });
             cache.insert(task.id.clone(), task);
         }
@@ -313,6 +323,7 @@ impl TaskManager {
             branch: None,
             commit: None,
             summary: None,
+            impact: Impact::default(),
         };
         self.state.enqueue_task(&task)?;
         self.state
@@ -487,6 +498,44 @@ impl TaskManager {
             .get_task(id)
             .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
         task.summary = Some(text.trim().to_string());
+        task.updated_at = Utc::now();
+        self.state.enqueue_task(&task)?;
+        Ok(self.put(task))
+    }
+
+    /// Replaces the task's declared impact (impact-and-conflicts.md). Only
+    /// while the task can still be worked: open, planned or claimed.
+    pub async fn set_impact(&self, id: &str, impact: Impact) -> Result<Task, TaskError> {
+        let mut task = self
+            .get_task(id)
+            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+        if !matches!(
+            task.state,
+            TaskState::Open | TaskState::Planned | TaskState::Claimed
+        ) {
+            return Err(TaskError::Conflict(format!(
+                "task {id} is {}; impact can only be set on an open, planned or claimed task",
+                task.state
+            )));
+        }
+        for id in impact
+            .modify
+            .iter()
+            .chain(&impact.add_under)
+            .chain(&impact.remove)
+        {
+            if !valid_spec_id(id) {
+                return Err(TaskError::BadRequest(format!(
+                    "bad spec id {id:?}: expected r-, s-, g- or a- plus hex digits"
+                )));
+            }
+        }
+        if impact.files.iter().any(|f| f.trim().is_empty()) {
+            return Err(TaskError::BadRequest(
+                "file globs must not be empty".to_string(),
+            ));
+        }
+        task.impact = impact;
         task.updated_at = Utc::now();
         self.state.enqueue_task(&task)?;
         Ok(self.put(task))
@@ -2220,6 +2269,71 @@ mod tests {
         assert_eq!(db_claims.len(), 1);
         assert_eq!(db_claims[0].task_id, task.id);
         assert_eq!(db_claims[0].claimed_by, "agent:w1");
+    }
+
+    #[tokio::test]
+    async fn impact_is_validated_state_gated_and_survives_rebuild() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let repo = tmp.path().join("repo");
+        init_repo(&repo).await;
+        let store = Store::open(tmp.path().join("bridle.db"))
+            .await
+            .expect("open store");
+        let state = StateBranch::open(&repo, &tmp.path().join("state"))
+            .await
+            .expect("open state branch");
+        let tm = TaskManager::open(
+            store,
+            state.clone(),
+            "tw".to_string(),
+            std::time::Duration::from_secs(600),
+        )
+        .await
+        .expect("open task manager");
+        let task = tm
+            .new_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
+            .await
+            .expect("new task");
+
+        let impact = Impact {
+            modify: vec!["s-b310".to_string()],
+            add_under: vec!["r-7fa2".to_string()],
+            remove: vec!["a-0c".to_string()],
+            files: vec!["client/**".to_string()],
+        };
+        tm.set_impact(&task.id, impact.clone()).await.expect("set");
+        let bad = Impact {
+            modify: vec!["x-12".to_string()],
+            ..Impact::default()
+        };
+        assert!(matches!(
+            tm.set_impact(&task.id, bad).await,
+            Err(TaskError::BadRequest(_))
+        ));
+        assert_eq!(tm.get_task(&task.id).expect("task").impact, impact);
+
+        tm.flush_now().await.expect("flush");
+        let fresh_store = Store::open(tmp.path().join("bridle2.db"))
+            .await
+            .expect("open fresh store");
+        let tm2 = TaskManager::open(
+            fresh_store,
+            state,
+            "tw".to_string(),
+            std::time::Duration::from_secs(600),
+        )
+        .await
+        .expect("open fresh task manager");
+        tm2.rebuild_from_state_branch().await.expect("rebuild");
+        assert_eq!(tm2.get_task(&task.id).expect("rebuilt").impact, impact);
+
+        tm2.drop_task(&task.id, "no", &"human".to_string())
+            .await
+            .expect("drop");
+        assert!(matches!(
+            tm2.set_impact(&task.id, impact).await,
+            Err(TaskError::Conflict(_))
+        ));
     }
 
     #[tokio::test]
