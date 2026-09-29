@@ -140,6 +140,15 @@ Decided:
 - **Crash-loop prevention is in scope.** Allow a few relaunches with growing waits between them,
   then give up and record an incident for the human.
 
+Then, verbatim:
+
+> ok, I see about the orchestator watch issues; so, then let's keep the watcher run as a
+> subagent, that is fine; if we can move some of that very complext script into bridle, that
+> would be good IMO.
+
+So the in-session watcher stays. What changes is moving the checks in
+`scripts/orchestrator-watch.sh` into bridle, so the part left in the session is short.
+
 ## Suggestions for follow-up (not in scope now; KISS)
 
 - Move the daemons to launchd (`docs/context/launchd-restart-plan.md`, the human's steps) so
