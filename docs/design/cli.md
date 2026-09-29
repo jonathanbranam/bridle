@@ -60,13 +60,13 @@ bridle sync                                 renders resolved workflow layers int
 bridle prime orchestrator                   fresh session's opening context: role prompt, current
                                              state, startup steps; local only, no daemon call
 bridle prime worker|planner [--component ID ...]   the role's rules, facts, guides, plus named components' scope
-bridle task new    <title> -k/--kind KIND [--body TEXT] [--component ID ...]
+bridle task new    <title> -k/--kind KIND [--body TEXT | --body-file FILE] [--component ID ...]
 bridle task show   <id>
-bridle task edit   <id> [--title TEXT] [--body TEXT] [--component ID ... | --no-component]
+bridle task edit   <id> [--title TEXT] [--body TEXT | --body-file FILE] [--component ID ... | --no-component]
 bridle task list   [--claimed-by WHO] [--component ID]             WHO: me|human|<agent name>|<principal id>; unclaimed tasks have no claimant to match
 bridle task drop   <id> --reason TEXT
 bridle task reopen <id>
-bridle task note   <id> TEXT                     plain note to the task's thread; no effect on readiness
+bridle task note   <id> [TEXT | --text-file FILE]                   plain note to the task's thread; no effect on readiness
 ```
 
 - **`--allow-tool TOOL`** on `spawn` (repeatable) grants a tool beyond the
@@ -101,6 +101,12 @@ bridle task note   <id> TEXT                     plain note to the task's thread
   role — one delivered message per matching agent, same as sending to each
   individually; `bridle send` prints one `sent <id> -> <to>` line per recipient.
   A role with no live agents is an error, same as an unknown agent name.
+
+- **`task new/edit/note`**: when given `--body-file FILE` or `--text-file FILE`, pass `-`
+  as the filename to read from stdin instead. This avoids passing backticks and
+  other shell metacharacters as command-line arguments, which can trigger
+  permission denials in Claude Code. Example: `cat long-body.txt | bridle task new "title" -k feature --body-file -`.
+  `--body-file` is mutually exclusive with `--body`; `--text-file` is mutually exclusive with the positional `TEXT` argument.
 
 - **`rebuild`** is `TaskManager::rebuild_from_state_branch` (docs/design/storage.md,
   "Rebuild"): the migration path for a fresh clone with no `bridle.db` — clone the repo,
