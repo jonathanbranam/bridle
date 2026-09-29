@@ -4,7 +4,7 @@ title = "Product brief: how bridle specs work today (8awb, part 1)"
 kind = "chore"
 state = "integrated"
 created_at = "2026-09-29T12:28:21.816Z"
-updated_at = "2026-09-29T16:56:25.666096Z"
+updated_at = "2026-09-29T16:56:31.651234Z"
 size = "S"
 branch = "bridle/specs-brief"
 commit = "95adc18"
@@ -20,3 +20,6 @@ done: docs/briefs/specs.md + README index (linked from docs/README.md); notes st
 
 ### note · agent:manager-2 · 2026-09-29T16:56:25.666Z
 integrated: 95adc18 (branch bridle/specs-brief)
+
+### note · agent:manager-2 · 2026-09-29T16:56:31.651Z
+cleanup: removed agent specs-brief, branch bridle/specs-brief
