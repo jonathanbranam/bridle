@@ -81,6 +81,27 @@ split above.
 
 Newest first. One line per item: what happened, who did it, what it says about roles.
 
+- 2026-09-29, eighth orchestrator session (handover 02:40 UTC):
+  - By hand, orchestrator: onboarded track-web (fresh clone, `bridle-adopt` from dev,
+    config, three project rules, sync, a check-command trial run); wrote meta-notes task
+    bodies when the manager's `bridle task edit` was refused on pipes and backslashes;
+    diagnosed and worked around the syspolicyd hangs (HTTP messages to agents while the CLI
+    hung; ad-hoc signed the binary); forwarded the advisor's meta-notes items, since the
+    advisor has no token there. `bridle onboard` would cover most of the first.
+  - By hand, the human: restarted three daemons, started track-web's, made a token; found
+    two TUI bugs (new agents missing, lost highlight) and the stale `python-pack-2`.
+  - Where roles didn't fit:
+    - Task talk was all direct messages, so nothing stayed with the task (the human's JIRA
+      point; rule `talk-on-the-task`, n8tj).
+    - Cleanup after merges depended on the manager's judgement and missed an agent whose
+      name didn't match its branch (k3wp). The orchestrator left "to remove" items for the
+      human when a manager could do them.
+    - pm-1 asked the human a question a standing rule answered; the orchestrator answered,
+      but the question stayed open in the human's inbox (h5qd).
+    - The orchestrator didn't watch its own context; the human called the handover (c9zm).
+    - The meta-notes manager, with no product manager, took tasks straight from the
+      orchestrator and worked well; the human expected a queue view there too.
+
 - 2026-09-28: a Haiku worker (kp3f) finished but printed its `bridle send
   manager-2 "done ..."` as text instead of running it, so its slot sat
   idle until the human noticed. The handoff shouldn't depend on the
