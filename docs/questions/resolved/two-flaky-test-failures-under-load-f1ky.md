@@ -145,3 +145,26 @@ matching a predicate. Applied to every caller of `fake_claude_argv_dump_wrapper`
 `BRIDLE_AGENT_NAME` filter to the two `spawn_messaging_test` callers that
 didn't already have one — they shared the same root cause but hadn't yet
 been observed to flake on it.
+
+### Shared wait helper and wall-clock asserts removed, 2026-09-29 (br-648a)
+
+- Daemon tests: `support::wait_for` (poll a condition) is the one helper, now
+  bounded by `HANG_GUARD_TIMEOUT` (60 s) instead of its own 20 s. The 5 s
+  polling loop in `lifecycle_test` (open-file 409) uses it.
+- `cli_e2e.rs`: `wait_until` (sync twin, 60 s guard) backs `wait_for_file`,
+  the "first turn finished" polls (one `wait_for_first_turn` instead of two
+  copies) and `wait_or_kill`, which replaces the two 10 s and one 60 s
+  `wait_timeout_or_kill` shutdown waits.
+- The `elapsed() < 5 s` / `< 1 s` asserts are gone from `lifecycle_test`,
+  `spawn_messaging_test` and `process_test`; the calls run under the 60 s
+  hang guard instead. `spawn_without_a_prompt_returns_promptly_and_stays_idle`
+  therefore no longer detects a spawn that waits out `SPAWN_READY_TIMEOUT`
+  (8 s); that can't be checked without a wall-clock bound.
+- `bridle-claude`'s tests don't poll a condition (they wait on channels under
+  the guard), so they need no polling helper. No automatic retries anywhere.
+
+## Resolution
+
+Nothing remains. The tests wait on conditions under one shared 60 s hang
+guard (`crates/bridle-daemon/tests/support/mod.rs`, `crates/bridle/tests/cli_e2e.rs`);
+no retries. Reopen if a new load flake appears.
