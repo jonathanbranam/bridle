@@ -671,8 +671,8 @@ impl Signals {
             let mut rx = tx.subscribe();
             loop {
                 tokio::select! {
-                    _ = sigint.recv() => { let _ = tx.send(true); break; }
-                    _ = sigterm.recv() => { let _ = tx.send(true); break; }
+                    _ = sigint.recv() => { tracing::warn!("shutdown requested: received SIGINT"); let _ = tx.send(true); break; }
+                    _ = sigterm.recv() => { tracing::warn!("shutdown requested: received SIGTERM"); let _ = tx.send(true); break; }
                     _ = sighup.recv() => { tracing::info!("received SIGHUP; ignoring"); }
                     _ = rx.changed() => { if *rx.borrow() { break; } }
                 }

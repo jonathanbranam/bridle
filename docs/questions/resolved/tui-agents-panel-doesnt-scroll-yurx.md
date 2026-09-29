@@ -24,3 +24,9 @@ doesn't scroll."
   likely covers both panels.
 - Backburner ideas for the TUI from the same conversation:
   [[tui-panels-and-seeing-the-work-y496|panels and seeing the work]].
+
+## Resolution
+
+The renderer copied the `TableState` each frame, discarding the scroll offset. `App` now keeps the offset (`agents_offset`, `inbox_offset`) and `draw_agents`/`draw_inbox` restore and write it back (br-9e67).
+
+Resolved 2026-09-29.
