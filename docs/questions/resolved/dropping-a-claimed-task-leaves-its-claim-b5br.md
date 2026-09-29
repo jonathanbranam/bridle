@@ -53,3 +53,9 @@ get it fixed. can you clear this from the queue as well?"
   which also clears br-29f9 on the next restart. A test for each.
 - br-29f9's work landed, so it should be `integrated` (c533cb0), not `dropped`. Once the fix
   is in: `bridle task reopen br-29f9` then `bridle task done br-29f9 --commit c533cb0`.
+
+## Resolution
+
+Fixed in `crates/bridle-daemon/src/tasks.rs` (387b5d9): `drop_task` releases a claim without the `planned` transition; `tick_claim_lease_check` only moves `claimed` tasks; `TaskManager::open` deletes `claims` rows whose task isn't `claimed`. A test covers each. Behaviour is documented with the claims in `docs/design/storage.md`.
+
+Resolved 2026-09-29.
