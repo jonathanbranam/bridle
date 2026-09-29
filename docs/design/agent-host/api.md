@@ -16,7 +16,7 @@ JSON over HTTP, versioned under `/v1`. The contract is
 | `POST /v1/agents/{id}/interrupt` · `/stop` · `/resume` · `/renew` | control (`{drop_held}` · `{now}` · `{ignore_budget}` · `{ignore_budget}`); `renew` stops the agent if running and starts its replacement fresh (new session, same worktree/branch/role/model), keeping the same id and name |
 | `DELETE /v1/agents/{id}` | `rm` (`?force&delete_branch`) |
 | `GET /v1/agents/{id}/transcript?since=&limit=` | raw transcript lines, ascending; with `since`, lines after that line number; without it, the most recent `limit` lines (default limit 500) |
-| `GET /v1/messages?to=&from=&unread=&limit=` · `POST /v1/messages` | inbox queries (`to=me` for the caller) · send to any recipient incl. `human` |
+| `GET /v1/messages?to=&from=&unread=&limit=` · `POST /v1/messages` | inbox queries (`to=me` for the caller) · send to any recipient incl. `human`. A `reply_to` from a `[messages] answer_for_human` principal to a message for the human closes it (`answered_by`, `answered_reply`, `answered_line` on the `Message`; see messages.md) |
 | `POST /v1/messages/{id}/read` | mark read |
 | `GET /v1/events?since=&agent=&kind=&limit=` | the event log, oldest first (default limit 500); `agent` is an id or name; `kind` is a prefix |
 | `GET /v1/events/stream?since=` | the same as **SSE**; resumable with `Last-Event-ID` (`since` wins if both are given); keep-alive every 15 s |

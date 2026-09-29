@@ -369,6 +369,16 @@ pub struct Message {
     pub written_at: Option<DateTime<Utc>>,
     pub delivered_at: Option<DateTime<Utc>>,
     pub read_at: Option<DateTime<Utc>>,
+    /// Set when a principal in `[messages] answer_for_human` replied to this
+    /// message, which was addressed to the human: who answered, and the
+    /// reply's id. An answered message is also `read`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub answered_by: Option<PrincipalId>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub answered_reply: Option<String>,
+    /// The reply's first line, for showing in the inbox without a second fetch.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub answered_line: Option<String>,
 }
 
 /// `POST /v1/agents/{id}/messages` uses this with `to` ignored;

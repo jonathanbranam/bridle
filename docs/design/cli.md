@@ -99,7 +99,7 @@ bridle spec import openspec [--from DIR] [--to DIR] [--dry-run]   moves each `<f
                                              idempotent; local only, no daemon call
 bridle prime orchestrator                   fresh session's opening context: role prompt, current
                                              state, startup steps; local only, no daemon call
-bridle prime worker|planner [--component ID ...]   the role's rules, facts, guides, plus named components' scope
+bridle prime worker|planner [--component ID ...] [--task ID]   the role's rules, facts, guides, plus named components' scope
 bridle task new    <title> -k/--kind KIND [--body TEXT | --body-file FILE] [--component ID ...] [--size S|M|L]
 bridle task show   <id>
 bridle task edit   <id> [--title TEXT] [--body TEXT | --body-file FILE] [--component ID ... | --no-component] [--size S|M|L|none]
@@ -335,7 +335,8 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
     message after listing, marking every one read. In JSON mode, returns both messages and
     questions; plain text prints a compact line per message/question.
   - `bridle inbox show <id> [--no-mark-read]` (show one message in full) fetches a single
-    message to `me` by id, prints the full header (from, kind, time, reply-to), the body,
+    message to `me` by id (a question a delegate answered shows `Answered by:`; the list shows
+    "answered by <who>: <first line>", visible with `--all`), prints the full header (from, kind, time, reply-to), the body,
     and the reply command (formatted as `bridle send <from> --reply-to <id> "..."`). By
     default, calls `POST /v1/messages/{id}/read` to mark it read, just as reading an
     inbox message in most UI apps would; pass `--no-mark-read` to list cheaply without
@@ -430,7 +431,8 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   README.md and roadmap.md exist, README.md inline when ≤40 lines; ancestors get none).
   A last line lists the components not named with their docs folders, which is what
   makes the scoping soft. Local, reads the current directory, renders nothing to files;
-  an unknown component id is an error. The role scope and the rest of the "commands still to build" surface (`init`, `doctor`) stay
+  an unknown component id is an error. `--task ID` (worker) fetches the task, and an `explore` one
+  gets the exploring agent's paragraph first ([[docs/design/explorations|explorations]]). The role scope and the rest of the "commands still to build" surface (`init`, `doctor`) stay
   in `Planned` below; `sync` is built (see above).
 
 ## Planned

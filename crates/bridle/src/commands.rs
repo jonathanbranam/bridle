@@ -66,7 +66,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Queue(args) => queue(&cli, args).await,
         Command::Statusline => statusline(&cli).await,
         Command::StopCheck => stop_check(&cli).await,
-        Command::Prime(args) => prime(args).await,
+        Command::Prime(args) => prime(&cli, args).await,
         Command::Rules(args) => rules(&cli, args).await,
         Command::Sync => sync(&cli).await,
         Command::Spec(args) => spec(&cli, args),
@@ -206,18 +206,23 @@ The human will mostly reach you through Remote Control.";
 /// one-command-orchestrator-handover-d4mz.md, step 2), read from the current
 /// directory — run this from the repo root, as
 /// `scripts/claude-orchestrator` does. Purely local: no daemon call.
-async fn prime(args: &PrimeArgs) -> Result<(), CliError> {
+async fn prime(cli: &Cli, args: &PrimeArgs) -> Result<(), CliError> {
     match args.role {
         PrimeRoleArg::Orchestrator => prime_orchestrator().await,
-        PrimeRoleArg::Worker => prime_scoped(args, "worker", "worker"),
-        PrimeRoleArg::Planner => prime_scoped(args, "product-manager", "planner"),
+        PrimeRoleArg::Worker => prime_scoped(cli, args, "worker", "worker").await,
+        PrimeRoleArg::Planner => prime_scoped(cli, args, "product-manager", "planner").await,
     }
 }
 
 /// Worker/planner prime: rules, facts, guides and component scope (`--component`, else
 /// the agent's own `BRIDLE_COMPONENTS`). Prime is otherwise orchestrator-only; these two
 /// roles each get their own view.
-fn prime_scoped(args: &PrimeArgs, role: &str, title: &str) -> Result<(), CliError> {
+async fn prime_scoped(
+    cli: &Cli,
+    args: &PrimeArgs,
+    role: &str,
+    title: &str,
+) -> Result<(), CliError> {
     let repo = std::env::current_dir().context("current directory")?;
     let config =
         bridle_daemon::config::Config::load(&repo).context("loading .bridle/config.toml")?;
@@ -234,9 +239,20 @@ fn prime_scoped(args: &PrimeArgs, role: &str, title: &str) -> Result<(), CliErro
     let components = config
         .normalize_components(&raw)
         .map_err(|e| anyhow::anyhow!(e))?;
+    let kind = match &args.task {
+        Some(id) => Some(
+            client_for_read(cli)
+                .await?
+                .get_task(id)
+                .await
+                .with_context(|| format!("looking up task {id}"))?
+                .kind,
+        ),
+        None => None,
+    };
     print!(
         "{}",
-        crate::prime::render(&repo, &config, role, title, &components)?
+        crate::prime::render(&repo, &config, role, title, &components, kind)?
     );
     Ok(())
 }
@@ -685,7 +701,16 @@ async fn inbox_list(cli: &Cli, args: &InboxArgs) -> Result<(), CliError> {
                 .ok()
                 .and_then(|v| v.as_str().map(str::to_owned))
                 .unwrap_or_default();
-            println!("{} [{kind}] from {}: {}", m.id, m.from, m.body);
+            match &m.answered_by {
+                Some(by) => {
+                    let line = m.answered_line.as_deref().unwrap_or_default();
+                    println!(
+                        "{} [{kind}] from {}: answered by {by}: {line}",
+                        m.id, m.from
+                    );
+                }
+                None => println!("{} [{kind}] from {}: {}", m.id, m.from, m.body),
+            }
         }
         for q in &questions {
             let age = Utc::now() - q.asked_at;
@@ -726,6 +751,12 @@ async fn inbox_show(cli: &Cli, args: &InboxShowArgs) -> Result<(), CliError> {
         println!("Time: {}", local_time.format("%Y-%m-%d %H:%M:%S %Z"));
         if let Some(reply_to) = &message.reply_to {
             println!("Reply-To: {}", reply_to);
+        }
+        if let Some(by) = &message.answered_by {
+            println!(
+                "Answered by: {by} ({})",
+                message.answered_reply.as_deref().unwrap_or("?")
+            );
         }
         println!();
         println!("{}", message.body);

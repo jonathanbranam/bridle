@@ -684,6 +684,22 @@ pub struct CiConfig {
     pub github: bool,
 }
 
+/// `[messages]`: who may answer for the human.
+#[derive(Debug, Clone, PartialEq)]
+pub struct MessagesConfig {
+    /// A reply from one of these principals to a message addressed to the human closes it
+    /// (`AgentManager::send`). Nothing else can.
+    pub answer_for_human: Vec<String>,
+}
+
+impl Default for MessagesConfig {
+    fn default() -> Self {
+        MessagesConfig {
+            answer_for_human: vec!["external:orchestrator".to_string()],
+        }
+    }
+}
+
 /// `[disk]`: the periodic disk usage check (`crate::disk`).
 #[derive(Debug, Clone, PartialEq)]
 pub struct DiskConfig {
@@ -749,6 +765,7 @@ pub struct Config {
     pub branches: BranchesConfig,
     pub ci: CiConfig,
     pub disk: DiskConfig,
+    pub messages: MessagesConfig,
     /// The prefix new task ids get (storage.md: `<prefix>-<4 hex chars>`,
     /// e.g. `tw-7fa2`). `None` means derive one from the project name
     /// ([`default_task_prefix`]).
@@ -790,6 +807,7 @@ impl Default for Config {
             branches: BranchesConfig::default(),
             ci: CiConfig::default(),
             disk: DiskConfig::default(),
+            messages: MessagesConfig::default(),
             task_prefix: None,
             workflow: None,
             packs: Vec::new(),
@@ -1000,6 +1018,10 @@ impl Config {
             config.ci.github = github;
         }
 
+        if let Some(v) = raw.messages.and_then(|m| m.answer_for_human) {
+            config.messages.answer_for_human = v;
+        }
+
         if let Some(d) = raw.disk {
             if let Some(s) = d.check_interval {
                 config.disk.check_interval = parse_duration(&s)?;
@@ -1204,6 +1226,8 @@ struct RawConfig {
     #[serde(default)]
     disk: Option<RawDisk>,
     #[serde(default)]
+    messages: Option<RawMessages>,
+    #[serde(default)]
     tasks: Option<RawTasks>,
     #[serde(default)]
     workflow: Option<String>,
@@ -1258,6 +1282,13 @@ struct RawBranches {
 struct RawCi {
     #[serde(default)]
     github: Option<bool>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawMessages {
+    #[serde(default)]
+    answer_for_human: Option<Vec<String>>,
 }
 
 #[derive(Debug, Default, Deserialize)]

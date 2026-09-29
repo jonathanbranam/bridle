@@ -143,7 +143,13 @@ fn draw_inbox(frame: &mut Frame, area: Rect, app: &App) {
             Cell::from(m.id.clone()),
             Cell::from(m.from.clone()),
             Cell::from(format!("{:?}", m.kind).to_lowercase()),
-            Cell::from(m.body.clone()),
+            Cell::from(match &m.answered_by {
+                Some(by) => format!(
+                    "answered by {by}: {}",
+                    m.answered_line.as_deref().unwrap_or_default()
+                ),
+                None => m.body.clone(),
+            }),
         ])
     });
     let widths = [
@@ -175,6 +181,10 @@ fn draw_message(frame: &mut Frame, area: Rect, msg: &bridle_api::Message) {
     ];
     if let Some(reply_to) = &msg.reply_to {
         lines.push(Line::from(format!("Reply-To: {reply_to}")));
+    }
+    if let Some(by) = &msg.answered_by {
+        let reply = msg.answered_reply.as_deref().unwrap_or("?");
+        lines.push(Line::from(format!("Answered by: {by} ({reply})")));
     }
     lines.push(Line::from(""));
     lines.extend(msg.body.lines().map(|l| Line::from(l.to_string())));
