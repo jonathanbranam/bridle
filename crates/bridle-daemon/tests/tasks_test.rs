@@ -806,3 +806,53 @@ async fn search_includes_done_and_dropped_tasks() {
     assert!(ids.contains(&done_task.id));
     assert!(ids.contains(&dropped_task.id));
 }
+
+/// `send --task`: the full text is a note on the thread and the recipient
+/// gets a short message naming the task; an unknown task sends nothing.
+#[tokio::test]
+async fn send_with_task_notes_the_thread_and_notifies_briefly() {
+    use bridle_api::types::{MessageQuery, SendRequest};
+    let (daemon, _tmp) = start_daemon(None).await;
+    let c = &daemon.client;
+    let task = c
+        .new_task(&new_req("Add foo", TaskKind::Feature))
+        .await
+        .expect("new task");
+    let external = daemon.external_client("w1").await;
+
+    let long = "first line\nsecond line with the detail";
+    let msgs = external
+        .send(&SendRequest {
+            to: Some("human".to_string()),
+            body: long.to_string(),
+            task: Some(task.id.clone()),
+            ..Default::default()
+        })
+        .await
+        .expect("send with task");
+    assert_eq!(msgs.len(), 1);
+    assert_eq!(msgs[0].body, format!("{}: note added\nfirst line", task.id));
+
+    let fetched = c.get_task(&task.id).await.expect("get task");
+    assert_eq!(fetched.thread.len(), 1);
+    assert_eq!(fetched.thread[0].body, long);
+
+    let err = external
+        .send(&SendRequest {
+            to: Some("human".to_string()),
+            body: "x".to_string(),
+            task: Some("re-nope".to_string()),
+            ..Default::default()
+        })
+        .await
+        .expect_err("unknown task");
+    assert!(matches!(err, ClientError::Api { status: 404, .. }));
+    let inbox = c
+        .list_messages(&MessageQuery {
+            to: Some("human".to_string()),
+            ..Default::default()
+        })
+        .await
+        .expect("list");
+    assert_eq!(inbox.len(), 1, "the failed send must not notify");
+}

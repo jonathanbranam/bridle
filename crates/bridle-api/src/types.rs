@@ -381,6 +381,10 @@ pub struct SendRequest {
     pub when: When,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reply_to: Option<String>,
+    /// About this task: `body` is written in full as a note on the task's
+    /// thread, and the recipient gets a short message naming the task.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub task: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

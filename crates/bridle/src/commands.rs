@@ -618,6 +618,7 @@ async fn send(cli: &Cli, args: &SendArgs) -> Result<(), CliError> {
             WhenArg::Idle => bridle_api::When::Idle,
         },
         reply_to: args.reply_to.clone(),
+        task: args.task.clone(),
     };
     let msgs = client.send(&req).await?;
     if cli.json {
@@ -1915,6 +1916,22 @@ async fn task_reopen(cli: &Cli, args: &TaskReopenArgs) -> Result<(), CliError> {
 async fn task_note(cli: &Cli, args: &TaskNoteArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
     let text = read_text(&args.text, &args.text_file, "text")?;
+    if let Some(to) = &args.notify {
+        let msgs = client
+            .send(&SendRequest {
+                to: Some(to.clone()),
+                body: text,
+                task: Some(args.task.clone()),
+                ..Default::default()
+            })
+            .await?;
+        if cli.json {
+            render::print_json(&msgs)?;
+        } else {
+            println!("noted on {}, notified {to}", args.task);
+        }
+        return Ok(());
+    }
     let task = client.note_task(&args.task, &text).await?;
     if cli.json {
         render::print_json(&task)?;

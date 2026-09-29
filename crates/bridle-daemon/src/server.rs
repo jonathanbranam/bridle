@@ -753,6 +753,28 @@ async fn send_message(
             .ok_or_else(|| ApiError::not_found(format!("no such recipient: {to_raw}")))?;
         vec![ToTarget::Agent(agent.id)]
     };
+    // The full text goes on the task's thread (an unknown task fails here,
+    // before anything is sent); recipients get a short pointer to it.
+    let body = match req.task.as_deref() {
+        Some(task_id) => {
+            let task = state
+                .tasks
+                .note_task(task_id, &principal.id, &req.body)
+                .await?;
+            let _ = state
+                .emitter
+                .emit(
+                    event_kind::TASK_NOTE_ADDED,
+                    principal.id.clone(),
+                    None,
+                    serde_json::json!({"task": task.id}),
+                )
+                .await;
+            let first = req.body.lines().find(|l| !l.trim().is_empty()).unwrap_or("");
+            format!("{}: note added\n{first}", task.id)
+        }
+        None => req.body.clone(),
+    };
     let mut msgs = Vec::with_capacity(targets.len());
     for target in targets {
         let msg = state
@@ -761,7 +783,7 @@ async fn send_message(
                 principal.id.clone(),
                 target,
                 req.kind,
-                req.body.clone(),
+                body.clone(),
                 req.when,
                 req.reply_to.clone(),
             )

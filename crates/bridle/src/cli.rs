@@ -261,6 +261,10 @@ pub struct SendArgs {
     /// This message replies to an earlier one.
     #[arg(long)]
     pub reply_to: Option<String>,
+    /// About this task: the text is added as a note on its thread and the
+    /// recipient gets a short message naming the task.
+    #[arg(long)]
+    pub task: Option<String>,
 }
 
 #[derive(Debug, Args)]
@@ -647,6 +651,10 @@ pub struct TaskNoteArgs {
     /// Read the note text from a file (or `-` for stdin).
     #[arg(long)]
     pub text_file: Option<PathBuf>,
+    /// Also send this agent a short message naming the task (same as
+    /// `bridle send <agent> --task <id>`).
+    #[arg(long, value_name = "AGENT")]
+    pub notify: Option<String>,
 }
 
 #[derive(Debug, Args)]

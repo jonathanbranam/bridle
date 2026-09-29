@@ -63,6 +63,7 @@ async fn events_stream_receives_backfill_then_live_events_in_seq_order() {
                         kind: bridle_api::types::MessageKind::Note,
                         when: bridle_api::types::When::Now,
                         reply_to: None,
+                        task: None,
                     })
                     .await;
             }
@@ -168,6 +169,7 @@ async fn events_stream_with_no_cursor_skips_backfill_and_starts_at_the_tail() {
                     kind: bridle_api::types::MessageKind::Note,
                     when: bridle_api::types::When::Now,
                     reply_to: None,
+                    task: None,
                 })
                 .await;
             tokio::time::sleep(std::time::Duration::from_millis(250)).await;

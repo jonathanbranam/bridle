@@ -361,6 +361,7 @@ async fn message_now_mid_turn_folds_into_the_running_turn() {
                 kind: MessageKind::Note,
                 when: When::Now,
                 reply_to: None,
+                task: None,
             },
         )
         .await
@@ -444,6 +445,7 @@ async fn message_idle_is_held_until_the_turn_ends_then_starts_its_own_turn() {
                 kind: MessageKind::Note,
                 when: When::Idle,
                 reply_to: None,
+                task: None,
             },
         )
         .await
@@ -500,6 +502,7 @@ async fn human_inbox_receives_agent_messages_and_mark_read_works() {
             kind: MessageKind::Note,
             when: When::Now,
             reply_to: None,
+            task: None,
         })
         .await
         .expect("agent sends to human");
@@ -575,6 +578,7 @@ async fn send_to_role_delivers_to_every_live_agent_with_that_role() {
             kind: MessageKind::Note,
             when: When::Now,
             reply_to: None,
+            task: None,
         })
         .await
         .expect("send to role");
@@ -619,6 +623,7 @@ async fn send_to_role_with_no_live_agents_errors() {
             kind: MessageKind::Note,
             when: When::Now,
             reply_to: None,
+            task: None,
         })
         .await
         .expect_err("no live agents with role");
@@ -651,6 +656,7 @@ async fn send_to_external_principal_lands_in_its_own_inbox() {
             kind: MessageKind::Note,
             when: When::Now,
             reply_to: None,
+            task: None,
         })
         .await
         .expect("send to external principal")
@@ -678,6 +684,7 @@ async fn send_to_external_principal_lands_in_its_own_inbox() {
             kind: MessageKind::Note,
             when: When::Now,
             reply_to: None,
+            task: None,
         })
         .await
         .expect_err("unminted external name should 404");
