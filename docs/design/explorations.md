@@ -44,4 +44,11 @@ deals with this up front:
 - **The exploring agent's paragraph**: `bridle prime worker --task <id>` looks the task up
   and, when its kind is `explore`, opens with the exploring paragraph. Without `--task`
   (prime is otherwise local) it is absent.
-- Not built: frontmatter checking, `bridle explore`, and the gate exemptions.
+- **Frontmatter checking**: `bridle-spec`'s `explore` module requires all four keys,
+  `exploratory: true`, a status in the set, and `diverges-from` ids that look like `g-`/`a-`/`r-`/`s-`
+  ids. `bridle explore check [paths...]` (default `design/explore`, local) prints diagnostics and
+  exits 1 on any error.
+- **`bridle explore new|conclude|abandon <id>`**: `new` scaffolds `design/explore/<id>/findings.md`
+  with status `open` (refusing to overwrite); `conclude` and `abandon` rewrite only the `status:`
+  line, byte for byte otherwise.
+- Not built: `explore adopt` (needs the arch-revision flow), and the gate exemptions.

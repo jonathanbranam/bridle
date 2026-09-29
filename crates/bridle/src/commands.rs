@@ -72,6 +72,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Spec(args) => spec(&cli, args),
         Command::Goals(args) => crate::goals::run(&cli, args),
         Command::Arch(args) => arch(&cli, args),
+        Command::Explore(args) => explore(&args.action),
     }
 }
 
@@ -2642,6 +2643,59 @@ fn arch(cli: &Cli, args: &crate::cli::ArchArgs) -> Result<(), CliError> {
             println!("{}{flag}  {}  ({}:{})", e.id, e.title, e.file, e.line);
         }
     }
+    Ok(())
+}
+
+/// `bridle explore`: local, no daemon call (docs/design/explorations.md).
+fn explore(action: &crate::cli::ExploreAction) -> Result<(), CliError> {
+    use crate::cli::ExploreAction as A;
+    let (id, status) = match action {
+        A::Check(args) => {
+            let files = spec_inputs(&args.paths, Some(Path::new("design/explore")))?;
+            let mut errors = 0;
+            for f in &files {
+                let name = f.display().to_string();
+                let text = std::fs::read_to_string(f).with_context(|| format!("reading {name}"))?;
+                if let Err(ds) = bridle_spec::explore::parse_str(&name, &text) {
+                    errors += ds.len();
+                    ds.iter().for_each(|d| println!("{d}"));
+                }
+            }
+            println!("{} file(s) checked: {errors} error(s)", files.len());
+            if errors > 0 {
+                return Err(anyhow::anyhow!("explore check found {errors} error(s)").into());
+            }
+            return Ok(());
+        }
+        A::New(a) => (&a.id, None),
+        A::Conclude(a) => (&a.id, Some("concluded")),
+        A::Abandon(a) => (&a.id, Some("abandoned")),
+    };
+    if id.is_empty() || id.contains(['/', '\\']) || id.starts_with('.') {
+        return Err(anyhow::anyhow!("invalid exploration id '{id}'").into());
+    }
+    let path = Path::new("design/explore").join(id).join("findings.md");
+    let Some(status) = status else {
+        if path.exists() {
+            return Err(anyhow::anyhow!("{} already exists", path.display()).into());
+        }
+        std::fs::create_dir_all(path.parent().expect("has a parent"))
+            .with_context(|| format!("creating {}", path.display()))?;
+        std::fs::write(&path, bridle_spec::explore::scaffold(id))
+            .with_context(|| format!("writing {}", path.display()))?;
+        println!("{}", path.display());
+        return Ok(());
+    };
+    let name = path.display().to_string();
+    let text = std::fs::read_to_string(&path).with_context(|| format!("reading {name}"))?;
+    match bridle_spec::explore::set_status(&name, &text, status) {
+        Ok(out) => std::fs::write(&path, out).with_context(|| format!("writing {name}"))?,
+        Err(ds) => {
+            ds.iter().for_each(|d| eprintln!("{d}"));
+            return Err(anyhow::anyhow!("{name} does not check; not changing its status").into());
+        }
+    }
+    println!("{name}: status {status}");
     Ok(())
 }
 
