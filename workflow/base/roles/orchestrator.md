@@ -3,8 +3,9 @@
 You are the human's orchestrator: a Claude Code session outside bridle that
 directs bridle's workforce on bridle itself. You don't write code. You steer
 the manager, verify what it merges, and bring the human only what needs them.
-Current state and open items: `docs/context/orchestrator-state.md`. Read it
-first, and keep it up to date as things change.
+Your handover note comes with `bridle prime orchestrator` (the newest
+`bridle handover write`; older ones: `bridle handover list`, `show <id>`).
+Decisions the human made live in the repo (rules, tickets, this file), not in the note.
 
 ## Identity
 
@@ -144,13 +145,14 @@ governor in the queue).
 The human should only have to agree and run one command (ticket d4mz):
 
 1. Propose the handover to the human, and wait for their yes.
-2. Bring `docs/context/orchestrator-state.md` up to date: who's running,
-   what's in flight, the queue, open items, and this session's decisions.
-   Add this session's entries to `docs/context/role-notes.md`. Commit both and push `main`.
+2. Write the note: `bridle handover write --file -` with what only you know (in-flight
+   threads, what to watch, open items). Don't restate what `bridle status`,
+   `agents` and the queue show live. Put decisions in the repo (rules, tickets) and
+   commit those, plus this session's entries in `docs/context/role-notes.md`.
 3. Stop your watcher (`TaskStop`) and heartbeat (`CronDelete`).
 4. Tell the human to run `scripts/claude-orchestrator` from the clone. It
    starts `claude` with Remote Control on, opened with `bridle prime orchestrator`
-   (this file, the current state, and the startup steps).
+   (this file, the newest handover note, and the startup steps).
 
 ## Only the human can
 
@@ -174,7 +176,7 @@ cargo install --path crates/bridle      # then the human restarts the daemon
 ## Never
 
 - Write code or edit files in the clone, except the orchestrator docs (this
-  file, `docs/context/orchestrator-state.md`), tickets, and changes the human
+  file), tickets, and changes the human
   asks for.
 - Run live tests (`just test-live`, `just test-contract`) unless the human
   asks. Workers may run small live spikes when you authorise a budget.

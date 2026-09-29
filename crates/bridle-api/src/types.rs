@@ -107,6 +107,27 @@ pub struct WakeResponse {
     pub wakes: Vec<WakeReason>,
 }
 
+// ---------- orchestrator handover notes ----------
+
+/// One handover note (`bridle handover write`; orchestrator-supervision.md, section 7).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Handover {
+    /// `h-0007`, from the insertion sequence.
+    pub id: String,
+    pub role: String,
+    pub project: String,
+    pub body: String,
+    pub created_at: DateTime<Utc>,
+    /// The writing principal: `human` or `external:orchestrator`.
+    pub created_by: String,
+}
+
+/// `POST /v1/handovers`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct WriteHandoverRequest {
+    pub body: String,
+}
+
 // ---------- agents ----------
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

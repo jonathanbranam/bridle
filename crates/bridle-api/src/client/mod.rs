@@ -13,14 +13,14 @@ use thiserror::Error;
 use crate::types::{
     AddQueueTierRequest, Agent, AllocPortRequest, AnswerQuestionRequest, ApiErrorResponse,
     AskQuestionRequest, BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, Conflict,
-    DoneTaskRequest, DropTaskRequest, Edge, EditTaskRequest, Event, EventQuery, Health,
+    DoneTaskRequest, DropTaskRequest, Edge, EditTaskRequest, Event, EventQuery, Handover, Health,
     ImpactCheckRequest, ImpactReport, InterruptRequest, InterruptResponse, LandRequest, LandResult,
     MaxWorkersRequest, Message, MessageQuery, NewEdgeRequest, NewTaskRequest, NoteTaskRequest,
     OpenQuestion, PortAllocation, ProbeRequest, ProbeResult, Queue, RemoveEdgeQuery, RemoveQuery,
     RenewRequest, ResolveConflictRequest, ResumeRequest, SendRequest, SetImpactRequest,
     SetQueueRequest, SetSummaryRequest, SpawnRequest, Status, StatusLineReport, StopRequest, Task,
     TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
-    UsageBreakdown, UsageBreakdownQuery, WakeResponse,
+    UsageBreakdown, UsageBreakdownQuery, WakeResponse, WriteHandoverRequest,
 };
 
 #[derive(Debug, Error)]
@@ -348,6 +348,29 @@ impl Client {
     ) -> Result<UsageBreakdown, ClientError> {
         self.get_json_query(&["v1", "usage", "breakdown"], query)
             .await
+    }
+
+    /// `POST /v1/handovers`: `human` and `external:orchestrator` only.
+    pub async fn write_handover(&self, body: &str) -> Result<Handover, ClientError> {
+        let req = WriteHandoverRequest {
+            body: body.to_string(),
+        };
+        self.post_json(&["v1", "handovers"], &req).await
+    }
+
+    /// `GET /v1/handovers`: newest first.
+    pub async fn list_handovers(&self) -> Result<Vec<Handover>, ClientError> {
+        self.get_json(&["v1", "handovers"]).await
+    }
+
+    /// `GET /v1/handovers/latest`: the note `prime` prints, if any.
+    pub async fn latest_handover(&self) -> Result<Option<Handover>, ClientError> {
+        self.get_json(&["v1", "handovers", "latest"]).await
+    }
+
+    /// `GET /v1/handovers/{id}`.
+    pub async fn get_handover(&self, id: &str) -> Result<Handover, ClientError> {
+        self.get_json(&["v1", "handovers", id]).await
     }
 
     /// `GET /v1/orchestrator/wake`: holds until a wake is pending (or the daemon's 5 minutes

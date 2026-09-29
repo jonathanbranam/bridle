@@ -13,7 +13,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
 use bridle_api::types::{
-    Agent, AgentState, AgentUsage, Conflict, Edge, EdgeKind, Event, EventQuery, ExitInfo,
+    Agent, AgentState, AgentUsage, Conflict, Edge, EdgeKind, Event, EventQuery, ExitInfo, Handover,
     InteractiveUsageRow, Message, MessageKind, MessageState, PortAllocation, PrincipalId,
     PrincipalKind, RateLimit, TaskKind, TaskState, TokenCreated, TokenInfo, TokenTotals, Usage,
     UsageBreakdown, UsageGroup, UsageGroupBy, When,
@@ -648,6 +648,40 @@ impl Store {
         self.with_conn(move |c| sync::insert_port(c, &p)).await
     }
 
+    /// Inserts a handover note; `id` is `h-<seq>`.
+    pub async fn insert_handover(
+        &self,
+        role: &str,
+        project: &str,
+        body: &str,
+        created_by: &str,
+    ) -> Result<Handover, StoreError> {
+        let (role, project, body, by) = (
+            role.to_string(),
+            project.to_string(),
+            body.to_string(),
+            created_by.to_string(),
+        );
+        self.with_conn(move |c| sync::insert_handover(c, &role, &project, &body, &by))
+            .await
+    }
+
+    /// Newest first.
+    pub async fn list_handovers(&self) -> Result<Vec<Handover>, StoreError> {
+        self.with_conn(sync::list_handovers).await
+    }
+
+    pub async fn get_handover(&self, id: &str) -> Result<Option<Handover>, StoreError> {
+        let id = id.to_string();
+        self.with_conn(move |c| sync::get_handover(c, &id)).await
+    }
+
+    /// Deletes notes older than `older_than`, always keeping the newest.
+    pub async fn prune_handovers(&self, older_than: DateTime<Utc>) -> Result<u64, StoreError> {
+        self.with_conn(move |c| sync::prune_handovers(c, older_than))
+            .await
+    }
+
     pub async fn list_ports(&self) -> Result<Vec<PortAllocation>, StoreError> {
         self.with_conn(sync::list_ports).await
     }
@@ -1050,10 +1084,24 @@ mod sync {
         );
     "#;
 
+    // Orchestrator handover notes: runtime, not on the state branch (orchestrator-supervision.md,
+    // section 7). `id` is `h-<seq>`, filled in after the insert like messages'.
+    pub(super) const SCHEMA_V17: &str = r#"
+        CREATE TABLE handovers (
+            seq INTEGER PRIMARY KEY AUTOINCREMENT,
+            id TEXT NOT NULL UNIQUE,
+            role TEXT NOT NULL,
+            project TEXT NOT NULL,
+            body TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            created_by TEXT NOT NULL
+        );
+    "#;
+
     const MIGRATIONS: &[&str] = &[
         SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7, SCHEMA_V8,
         SCHEMA_V9, SCHEMA_V10, SCHEMA_V11, SCHEMA_V12, SCHEMA_V13, SCHEMA_V14, SCHEMA_V15,
-        SCHEMA_V16,
+        SCHEMA_V16, SCHEMA_V17,
     ];
 
     pub(super) fn open(path: &Path) -> Result<Connection, StoreError> {
@@ -2297,6 +2345,83 @@ mod sync {
         Ok(found)
     }
 
+    // ---------- handovers ----------
+
+    const HANDOVER_COLS: &str = "id, role, project, body, created_at, created_by";
+
+    fn row_to_handover(row: &Row<'_>) -> rusqlite::Result<Handover> {
+        Ok(Handover {
+            id: row.get(0)?,
+            role: row.get(1)?,
+            project: row.get(2)?,
+            body: row.get(3)?,
+            created_at: parse_dt(&row.get::<_, String>(4)?)?,
+            created_by: row.get(5)?,
+        })
+    }
+
+    pub(super) fn insert_handover(
+        conn: &Connection,
+        role: &str,
+        project: &str,
+        body: &str,
+        created_by: &str,
+    ) -> Result<Handover, StoreError> {
+        let now = Utc::now();
+        conn.execute(
+            "INSERT INTO handovers(id, role, project, body, created_at, created_by)
+             VALUES ('', ?1, ?2, ?3, ?4, ?5)",
+            params![role, project, body, fmt_dt(now), created_by],
+        )?;
+        let seq = conn.last_insert_rowid();
+        let id = format!("h-{seq:04}");
+        conn.execute(
+            "UPDATE handovers SET id = ?1 WHERE seq = ?2",
+            params![id, seq],
+        )?;
+        Ok(Handover {
+            id,
+            role: role.to_string(),
+            project: project.to_string(),
+            body: body.to_string(),
+            created_at: now,
+            created_by: created_by.to_string(),
+        })
+    }
+
+    pub(super) fn list_handovers(conn: &Connection) -> Result<Vec<Handover>, StoreError> {
+        let mut stmt = conn.prepare(&format!(
+            "SELECT {HANDOVER_COLS} FROM handovers ORDER BY seq DESC"
+        ))?;
+        let rows = stmt.query_map([], row_to_handover)?;
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
+    pub(super) fn get_handover(
+        conn: &Connection,
+        id: &str,
+    ) -> Result<Option<Handover>, StoreError> {
+        Ok(conn
+            .query_row(
+                &format!("SELECT {HANDOVER_COLS} FROM handovers WHERE id = ?1"),
+                [id],
+                row_to_handover,
+            )
+            .optional()?)
+    }
+
+    pub(super) fn prune_handovers(
+        conn: &Connection,
+        older_than: DateTime<Utc>,
+    ) -> Result<u64, StoreError> {
+        let n = conn.execute(
+            "DELETE FROM handovers WHERE created_at < ?1
+               AND seq < (SELECT MAX(seq) FROM handovers)",
+            params![fmt_dt(older_than)],
+        )?;
+        Ok(n as u64)
+    }
+
     // ---------- conflicts ----------
 
     const CONFLICT_COLS: &str =
@@ -2924,6 +3049,32 @@ mod tests {
             .await
             .expect("open store");
         (store, tmp)
+    }
+
+    #[tokio::test]
+    async fn handovers_latest_first_and_prune_keeps_the_newest() {
+        let (store, _tmp) = store().await;
+        let a = store
+            .insert_handover("orchestrator", "bridle", "one", "human")
+            .await
+            .expect("a");
+        let b = store
+            .insert_handover("orchestrator", "bridle", "two", "human")
+            .await
+            .expect("b");
+        assert_eq!((a.id.as_str(), b.id.as_str()), ("h-0001", "h-0002"));
+        let list = store.list_handovers().await.expect("list");
+        assert_eq!(list[0].id, "h-0002");
+        assert_eq!(list.len(), 2);
+
+        // Everything is "old" against a future cutoff; the newest still stays.
+        let cutoff = Utc::now() + chrono::Duration::days(1);
+        assert_eq!(store.prune_handovers(cutoff).await.expect("prune"), 1);
+        let list = store.list_handovers().await.expect("list");
+        assert_eq!(list.len(), 1);
+        assert_eq!(list[0].id, "h-0002");
+        assert_eq!(store.prune_handovers(cutoff).await.expect("prune"), 0);
+        assert!(store.get_handover("h-0001").await.expect("get").is_none());
     }
 
     #[tokio::test]

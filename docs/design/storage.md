@@ -111,7 +111,14 @@ claims(task_id TEXT PK, claimed_by, claimed_at)
 conflicts(id INTEGER PK -> shown as C<id>, task_a, task_b, kind, key, state, resolution,
           opened_at, resolved_at; UNIQUE(task_a, task_b, kind, key))
 ports(port INTEGER PK, agent, task, pid, label, allocated_at)     -- SCHEMA_V16
+handovers(seq INTEGER PK AUTOINCREMENT, id UNIQUE -> h-0007, role, project, body,
+          created_at, created_by)                                  -- SCHEMA_V17
 ```
+
+`handovers` are the orchestrator's notes ([[orchestrator-supervision]] section 7): runtime, not
+on the state branch and not rebuilt. The highest `seq` is the current note; older rows stay for
+`handover list` and `show`, and the daily prune deletes those older than the events' 30 days but
+always keeps the newest.
 
 `conflicts` rows are opened by `impact check` (impact-and-conflicts.md); the unique key makes
 reopening the same overlap a no-op, resolved or not. Conflicts are SQLite-only, not on the

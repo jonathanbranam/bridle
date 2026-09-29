@@ -21,6 +21,8 @@ JSON over HTTP, versioned under `/v1`. The contract is
 | `POST /v1/messages/{id}/read` | mark read |
 | `GET /v1/events?since=&agent=&kind=&limit=` | the event log, oldest first (default limit 500); `agent` is an id or name; `kind` is a prefix |
 | `GET /v1/events/stream?since=` | the same as **SSE**; resumable with `Last-Event-ID` (`since` wins if both are given); keep-alive every 15 s |
+| `POST /v1/handovers` · `GET /v1/handovers` | write a handover note (`{body}`; `human` and `external:orchestrator` only, else 403; empty is 400) · list them, newest first |
+| `GET /v1/handovers/latest` · `/{id}` | the newest note (`null` when none) · one note (`h-0007`; 404 if unknown). Any principal may read |
 | `GET /v1/orchestrator/wake` | the orchestrator's long poll (`external:orchestrator` only, else 403): held until a wake condition is pending, then answers `{wakes: [{reason, text, detail}]}` and marks them delivered; answers `{wakes: []}` after 5 min. `reason` is `agent_exited`, `agent_crashed`, `agent_stalled`, `question`, `message`, `all_idle`, `usage`, `budget_hold`, `ci_failed` or `main_moved`. While a request is open the orchestrator counts as waiting ([[orchestrator-supervision]] section 5) |
 | `GET /v1/usage` | per-agent (including removed agents) and total turns, tokens, cost, busy and wall time, latest rate limits, today's `bridle statusline` snapshots |
 | `GET /v1/usage/breakdown?since=&by=` | the turns ledger grouped by `role`, `model` or `agent` (default), each with turns, tokens, cost, busy time and its own cache hit ratio, plus wall time for the `agent` grouping only; `since` (RFC 3339) keeps only turns started at or after it |

@@ -3,8 +3,8 @@
 Design for ticket [[the-orchestrator-stays-running-fx7x|fx7x]]; signals verified in
 [[docs/spikes/07-orchestrator-supervision-findings|spike 07]]. **Slice 1a built** (br-a424): liveness, relaunch and crash-loop backoff (sections 1 to 4, the
 interim incident of 8). **Slice 1b built** (br-e949): the wake conditions and `wait-for-wake`
-(5), `waiter_grace`. Not built: context and uptime thresholds and the forced restart (6),
-handover records (7); config keys for those aren't accepted yet. The orchestrator
+(5), `waiter_grace`. **Slice 3 built** (br-4573): the handover note as a record (7). Not built: context and
+uptime thresholds and the forced restart (6); config keys for those aren't accepted yet. The orchestrator
 stays an interactive `claude` in the human's tmux pane (the human types to it, locally and over
 Remote Control). The daemon keeps it running, tells it when its context or uptime says to hand
 over, and carries its wake conditions, with no agent in the loop.
@@ -225,8 +225,9 @@ tasks, CI), and that is printed live by `bridle prime orchestrator`. What is lef
 - `bridle prime orchestrator` prints the note under a heading, its age, then the live views.
 - Not on the state branch: like messages and incidents it is runtime. The human's **decisions
   stay in the repo** (rules, tickets, the role file), where they're reviewed.
-- Until this ships, the state file and its commit stay as they are; slice 1 and 2 don't depend
-  on it (`handover done` works with the file).
+- Built (slice 3). Prime prints the note's heading and age, then the startup steps, which point
+  at the live views (`bridle status`, `agents`, the queue) rather than embedding them. With no
+  note, prime prints the state file's pointer (`docs/context/orchestrator-state.md`).
 
 ## 8. Errors and small decisions
 

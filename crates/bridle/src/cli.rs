@@ -148,6 +148,8 @@ pub enum Command {
     /// 5 minutes of quiet). Run it in the background; run it again after each exit
     /// (orchestrator-supervision.md, section 5). `external:orchestrator` only.
     WaitForWake,
+    /// The orchestrator's handover note, kept as a record (orchestrator-supervision.md, section 7).
+    Handover(HandoverArgs),
     /// Print a fresh session's opening context for a role: the role prompt,
     /// current state and startup steps.
     Prime(PrimeArgs),
@@ -1149,6 +1151,27 @@ pub enum OrchestratorAction {
 }
 
 #[derive(Debug, Args)]
+pub struct HandoverArgs {
+    #[command(subcommand)]
+    pub action: HandoverAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum HandoverAction {
+    /// Record a new note (the newest one is what `prime orchestrator` prints). Only the human
+    /// and `external:orchestrator`.
+    Write {
+        /// Read the note from this file, or `-` for stdin.
+        #[arg(long)]
+        file: PathBuf,
+    },
+    /// List notes, newest first.
+    List,
+    /// Print one note.
+    Show { id: String },
+}
+
+#[derive(Debug, Args)]
 pub struct PortArgs {
     #[command(subcommand)]
     pub action: PortAction,
@@ -2028,6 +2051,19 @@ mod tests {
     fn rebuild_parses() {
         let cli = parse(&["rebuild"]).unwrap();
         assert!(matches!(cli.command, Command::Rebuild));
+    }
+
+    #[test]
+    fn handover_parses() {
+        let cli = parse(&["handover", "write", "--file", "-"]).unwrap();
+        assert!(matches!(
+            cli.command,
+            Command::Handover(HandoverArgs {
+                action: HandoverAction::Write { .. }
+            })
+        ));
+        assert!(parse(&["handover", "show", "h-0001"]).is_ok());
+        assert!(parse(&["handover", "list"]).is_ok());
     }
 
     #[test]

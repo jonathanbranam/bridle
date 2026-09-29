@@ -14,16 +14,16 @@ use bridle_api::types::{
     AddQueueTierRequest, Agent, AllocPortRequest, AnswerQuestionRequest, ApiErrorResponse,
     AskQuestionRequest, BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, Conflict,
     DoneTaskRequest, DropTaskRequest, Edge, EdgeKind, EditTaskRequest, ErrorBody, Event,
-    EventQuery, Health, HoldStatus, ImpactCheckRequest, ImpactReport, InteractiveUsageRow,
-    InterruptRequest, MaxWorkersRequest, MergeProbe, Message, MessageKind, MessageQuery,
-    MessageState, NewEdgeRequest, NewTaskRequest, NoteTaskRequest, OpenQuestion, OverlapLevel,
-    PortAllocation, PrincipalKind, ProbeOutcome, ProbeRequest, ProbeResult, Queue, RateLimit,
-    RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, ResumeRequest,
+    EventQuery, Handover, Health, HoldStatus, ImpactCheckRequest, ImpactReport,
+    InteractiveUsageRow, InterruptRequest, MaxWorkersRequest, MergeProbe, Message, MessageKind,
+    MessageQuery, MessageState, NewEdgeRequest, NewTaskRequest, NoteTaskRequest, OpenQuestion,
+    OverlapLevel, PortAllocation, PrincipalKind, ProbeOutcome, ProbeRequest, ProbeResult, Queue,
+    RateLimit, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, ResumeRequest,
     ScheduleOverrideStatus, SendRequest, SetImpactRequest, SetQueueRequest, SetSummaryRequest,
     SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery, TaskState,
     TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
     UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, WakeResponse, When, WindowStatus,
-    event_kind,
+    WriteHandoverRequest, event_kind,
 };
 use bridle_api::types::{PrincipalId, ThreadEntryKind};
 use chrono::Utc;
@@ -81,6 +81,9 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/events", get(list_events))
         .route("/v1/events/stream", get(events_stream))
         .route("/v1/orchestrator/wake", get(orchestrator_wake))
+        .route("/v1/handovers", get(list_handovers).post(write_handover))
+        .route("/v1/handovers/latest", get(latest_handover))
+        .route("/v1/handovers/{id}", get(get_handover))
         .route("/v1/usage", get(usage))
         .route("/v1/usage/breakdown", get(usage_breakdown))
         .route("/v1/statusline", post(report_statusline))
@@ -314,6 +317,51 @@ async fn require_not_worker(state: &AppState, principal: &Principal) -> Result<(
     } else {
         Ok(())
     }
+}
+
+// ---------- orchestrator handover notes ----------
+
+/// Writing is for the human and the orchestrator only; reading is for any principal.
+async fn write_handover(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Json(req): Json<WriteHandoverRequest>,
+) -> Result<Json<Handover>, ApiError> {
+    if principal.kind != PrincipalKind::Human && principal.id != crate::wake::ORCHESTRATOR {
+        return Err(ApiError::forbidden(
+            "only the human or external:orchestrator may write a handover note",
+        ));
+    }
+    if req.body.trim().is_empty() {
+        return Err(ApiError::bad_request("the note is empty"));
+    }
+    let h = state
+        .store
+        .insert_handover("orchestrator", &state.project, &req.body, &principal.id)
+        .await?;
+    Ok(Json(h))
+}
+
+async fn list_handovers(State(state): State<AppState>) -> Result<Json<Vec<Handover>>, ApiError> {
+    Ok(Json(state.store.list_handovers().await?))
+}
+
+async fn latest_handover(
+    State(state): State<AppState>,
+) -> Result<Json<Option<Handover>>, ApiError> {
+    Ok(Json(state.store.list_handovers().await?.into_iter().next()))
+}
+
+async fn get_handover(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+) -> Result<Json<Handover>, ApiError> {
+    state
+        .store
+        .get_handover(&id)
+        .await?
+        .map(Json)
+        .ok_or_else(|| ApiError::not_found(format!("no handover {id}")))
 }
 
 // ---------- orchestrator wake ----------

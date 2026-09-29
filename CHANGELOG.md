@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The orchestrator's handover note is a bridle record: `bridle handover write --file <path>|-` (human and `external:orchestrator`), `handover list` and `show <id>`, `/v1/handovers`, schema version 17. The newest note wins and `bridle prime orchestrator` prints it with its age; older notes are kept and pruned with the events at 30 days, always keeping the newest. The role file's handover step uses it instead of committing the state file (br-4573).
 - Roles take a `tools` key, passed as `--tools`; the built-in worker and manager get lean defaults (worker: Bash, Read, Edit, Write, Glob, Grep; manager: no Edit/Write, plus Agent), cutting a spawned agent's first turn by about a third (br-9fca, ct8m step 2).
 
 - Orchestrator supervision, first half (br-a424): with `[orchestrator] enabled = true` the daemon watches `$BRIDLE_HOME/orchestrator.pid` (pid plus start time) and, when the session is dead and the pane tagged `@bridle=orchestrator` shows a shell on two checks 5 s apart, types the launcher into it, with crash-loop backoff (`relaunch_backoff`, `stable_after`) and an incident message to the human when it gives up, finds no tagged pane, or finds something else running. `scripts/claude-orchestrator` writes the pid file and registers a SessionStart hook, `bridle orchestrator note-session`, instead of pinning `--session-id`.

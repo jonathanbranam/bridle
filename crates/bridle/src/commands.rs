@@ -21,14 +21,15 @@ use futures::StreamExt;
 use crate::cli::{
     AgentsArgs, AnswerArgs, ArchProposeArgs, AskArgs, BudgetAction, BudgetArgs, BudgetHoldArgs,
     ClaimArgs, Cli, Command, ConflictAction, ConflictArgs, CostAction, CostArgs, CostAuditArgs,
-    DepAction, DepArgs, DepEdgeArgs, EdgeKindArg, EventsArgs, ImpactAction, ImpactArgs,
-    InboxAction, InboxArgs, InboxReadArgs, InboxShowArgs, InterruptArgs, LogsArgs, PrimeArgs,
-    PrimeRoleArg, ProbeArgs, QueueAction, QueueAddTierArgs, QueueArgs, QueueSetArgs, ReadyArgs,
-    ReleaseArgs, RmArgs, RulesAction, RulesArgs, RulesDiffArgs, RulesExplainArgs, SendArgs,
-    ShowArgs, SpawnArgs, SpecAction, SpecArgs, SpecExportArgs, SpecFormatArg, StopArgs, TaskAction,
-    TaskArgs, TaskDoneArgs, TaskDropArgs, TaskEditArgs, TaskKindArg, TaskListArgs, TaskNewArgs,
-    TaskNoteArgs, TaskPlanArgs, TaskReopenArgs, TaskSearchArgs, TaskShowArgs, TaskSizeArg,
-    TaskSummaryArgs, TokenAction, TokenArgs, UsageArgs, UsageByArg, WaitArgs, WhenArg,
+    DepAction, DepArgs, DepEdgeArgs, EdgeKindArg, EventsArgs, HandoverAction, HandoverArgs,
+    ImpactAction, ImpactArgs, InboxAction, InboxArgs, InboxReadArgs, InboxShowArgs, InterruptArgs,
+    LogsArgs, PrimeArgs, PrimeRoleArg, ProbeArgs, QueueAction, QueueAddTierArgs, QueueArgs,
+    QueueSetArgs, ReadyArgs, ReleaseArgs, RmArgs, RulesAction, RulesArgs, RulesDiffArgs,
+    RulesExplainArgs, SendArgs, ShowArgs, SpawnArgs, SpecAction, SpecArgs, SpecExportArgs,
+    SpecFormatArg, StopArgs, TaskAction, TaskArgs, TaskDoneArgs, TaskDropArgs, TaskEditArgs,
+    TaskKindArg, TaskListArgs, TaskNewArgs, TaskNoteArgs, TaskPlanArgs, TaskReopenArgs,
+    TaskSearchArgs, TaskShowArgs, TaskSizeArg, TaskSummaryArgs, TokenAction, TokenArgs, UsageArgs,
+    UsageByArg, WaitArgs, WhenArg,
 };
 use crate::cli::{LandArgs, OrchestratorAction, OrchestratorArgs, PortAction, PortArgs};
 use crate::error::CliError;
@@ -89,6 +90,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
             crate::orchestrator::note_session(&input);
             Ok(())
         }
+        Command::Handover(args) => handover(&cli, args).await,
         Command::WaitForWake => wait_for_wake(&cli).await,
         Command::Prime(args) => prime(&cli, args).await,
         Command::Rules(args) => rules(&cli, args).await,
@@ -309,7 +311,7 @@ The human will mostly reach you through Remote Control.";
 /// `scripts/claude-orchestrator` does. Purely local: no daemon call.
 async fn prime(cli: &Cli, args: &PrimeArgs) -> Result<(), CliError> {
     match args.role {
-        PrimeRoleArg::Orchestrator => prime_orchestrator().await,
+        PrimeRoleArg::Orchestrator => prime_orchestrator(cli).await,
         PrimeRoleArg::Worker => prime_scoped(cli, args, "worker", "worker").await,
         PrimeRoleArg::Planner => prime_scoped(cli, args, "product-manager", "planner").await,
     }
@@ -358,21 +360,55 @@ async fn prime_scoped(
     Ok(())
 }
 
-async fn prime_orchestrator() -> Result<(), CliError> {
+/// Best-effort: the newest handover note comes from the daemon, and without one (or without
+/// a daemon) the state file's pointer stands in (orchestrator-supervision.md, section 7).
+async fn prime_orchestrator(cli: &Cli) -> Result<(), CliError> {
     let repo = std::env::current_dir().context("current directory")?;
     let role_prompt = std::fs::read_to_string(repo.join("workflow/base/roles/orchestrator.md"))
         .context("reading workflow/base/roles/orchestrator.md")?;
     let state = std::fs::read_to_string(repo.join("docs/context/orchestrator-state.md"))
         .context("reading docs/context/orchestrator-state.md")?;
-    print!("{}", render_prime_orchestrator(&role_prompt, &state));
+    let note = match client_for_read(cli).await {
+        Ok(c) => c.latest_handover().await.ok().flatten(),
+        Err(_) => None,
+    };
+    print!(
+        "{}",
+        render_prime_orchestrator(&role_prompt, &state, note.as_ref(), chrono::Utc::now())
+    );
     Ok(())
 }
 
-fn render_prime_orchestrator(role_prompt: &str, state: &str) -> String {
+fn note_age(d: chrono::Duration) -> String {
+    match d.num_minutes() {
+        m if m < 60 => format!("{}m", m.max(0)),
+        m if m < 48 * 60 => format!("{}h", m / 60),
+        m => format!("{}d", m / (24 * 60)),
+    }
+}
+
+fn render_prime_orchestrator(
+    role_prompt: &str,
+    state: &str,
+    note: Option<&bridle_api::Handover>,
+    now: chrono::DateTime<chrono::Utc>,
+) -> String {
+    let current = match note {
+        Some(h) => format!(
+            "# Handover note ({}, written {} ago by {})\n\n{}\n\n(Older notes: `bridle handover list`. The live state is in the startup steps' commands.)",
+            h.id,
+            note_age(now - h.created_at),
+            h.created_by,
+            h.body.trim_end(),
+        ),
+        None => format!(
+            "# Current state (no handover note recorded yet)\n\n{}",
+            state.trim_end()
+        ),
+    };
     format!(
-        "# Role: orchestrator\n\n{}\n\n# Current state\n\n{}\n\n# Startup steps\n\n{}\n",
+        "# Role: orchestrator\n\n{}\n\n{current}\n\n# Startup steps\n\n{}\n",
         role_prompt.trim_end(),
-        state.trim_end(),
         ORCHESTRATOR_STARTUP_STEPS,
     )
 }
@@ -1663,6 +1699,54 @@ async fn wait_for_wake(cli: &Cli) -> Result<(), CliError> {
     Ok(())
 }
 
+/// `bridle handover write|list|show`.
+async fn handover(cli: &Cli, args: &HandoverArgs) -> Result<(), CliError> {
+    match &args.action {
+        HandoverAction::Write { file } => {
+            let body = if file.to_string_lossy() == "-" {
+                std::io::read_to_string(std::io::stdin()).context("reading from stdin")?
+            } else {
+                std::fs::read_to_string(file)
+                    .with_context(|| format!("reading {}", file.display()))?
+            };
+            let h = client_for(cli).await?.write_handover(&body).await?;
+            if cli.json {
+                render::print_json(&h)?;
+            } else {
+                println!("{}", h.id);
+            }
+        }
+        HandoverAction::List => {
+            let list = client_for_read(cli).await?.list_handovers().await?;
+            if cli.json {
+                render::print_json(&list)?;
+            } else if list.is_empty() {
+                println!("no handover notes");
+            } else {
+                for h in &list {
+                    let first = h.body.lines().next().unwrap_or("");
+                    println!(
+                        "{}  {}  {:<22} {first}",
+                        h.id,
+                        h.created_at.format("%Y-%m-%d %H:%M"),
+                        h.created_by
+                    );
+                }
+            }
+        }
+        HandoverAction::Show { id } => {
+            let h = client_for_read(cli).await?.get_handover(id).await?;
+            if cli.json {
+                render::print_json(&h)?;
+            } else {
+                println!("{} by {} at {}\n", h.id, h.created_by, h.created_at);
+                println!("{}", h.body.trim_end());
+            }
+        }
+    }
+    Ok(())
+}
+
 async fn budget(cli: &Cli, args: &BudgetArgs) -> Result<(), CliError> {
     // Only the no-action form (`bridle budget`) is a read; every `BudgetAction`
     // writes, so it keeps the client-side check.
@@ -2914,6 +2998,8 @@ mod prime_tests {
         let out = render_prime_orchestrator(
             "You're my orchestrator for bridle.",
             "## Handover, 2026-09-28",
+            None,
+            chrono::Utc::now(),
         );
         assert!(out.contains("You're my orchestrator for bridle."));
         assert!(out.contains("## Handover, 2026-09-28"));
@@ -2925,6 +3011,24 @@ mod prime_tests {
         let steps_pos = out.find("# Startup steps").unwrap();
         assert!(role_pos < state_pos);
         assert!(state_pos < steps_pos);
+    }
+
+    #[test]
+    fn prints_the_note_with_its_age_instead_of_the_state_file() {
+        let now = chrono::Utc::now();
+        let note = bridle_api::Handover {
+            id: "h-0007".into(),
+            role: "orchestrator".into(),
+            project: "bridle".into(),
+            body: "Carry on with br-1.".into(),
+            created_at: now - chrono::Duration::hours(3),
+            created_by: "external:orchestrator".into(),
+        };
+        let out = render_prime_orchestrator("role", "the state file", Some(&note), now);
+        assert!(out.contains("# Handover note (h-0007, written 3h ago"));
+        assert!(out.contains("Carry on with br-1."));
+        assert!(!out.contains("the state file"));
+        assert!(out.find("# Handover note").unwrap() < out.find("# Startup steps").unwrap());
     }
 }
 

@@ -62,6 +62,8 @@ bridle token revoke <name>                  human only, external tokens only (an
 bridle statusline                           Claude Code statusLine command; local only, no daemon call
 bridle orchestrator note-session            the orchestrator launcher's SessionStart hook: writes $BRIDLE_HOME/orchestrator.session
                                              from the hook JSON on stdin; local only; never fails
+bridle handover write --file <path>|-      record the orchestrator's handover note (human and external:orchestrator only); prints its id
+bridle handover list | show <id>           the notes, newest first · one note
 bridle wait-for-wake                        the orchestrator's background watcher: waits for a wake condition, prints it and exits 0 (`nothing` after 5 min); external:orchestrator only
 bridle arch-guard                          Claude Code PreToolUse hook: blocks design/architecture/ edits outside an arch-revision task
 bridle stop-check                           Claude Code Stop hook for the worker role; refuses to stop
@@ -470,6 +472,11 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   `$BRIDLE_HOME/orchestrator.session` as `<session id> <transcript path>` (`/clear` gives the same
   process a new id). Local, silent, never fails; it also keeps `~/.bridle-orchestrator-session`
   current for `scripts/context-check.sh` until the daemon reads the context itself.
+- **`handover`** keeps the orchestrator's note as a record ([[orchestrator-supervision]] section 7):
+  `write` reads a file or stdin (`-`), `list` shows id, time, author and first line, `show` the
+  whole note. Latest wins; `bridle prime orchestrator` prints the newest under a heading with
+  its age, and falls back to `docs/context/orchestrator-state.md` when there is no note (or no
+  daemon to ask).
 - **`wait-for-wake`** is `GET /v1/orchestrator/wake` ([[orchestrator-supervision]] section 5),
   replacing `scripts/orchestrator-watch.sh`. It prints each wake as `<reason>: <text>` and its
   detail as JSON (`--json`: the list of wakes), exits 0, and prints `nothing` when the daemon's
@@ -531,11 +538,11 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   agent from stopping.
 - **`prime orchestrator`** prints a fresh orchestrator session's opening context in one
   go (docs/questions/open/one-command-orchestrator-handover-d4mz.md, step 2): the role
-  prompt (`workflow/base/roles/orchestrator.md`), the current state
-  (`docs/context/orchestrator-state.md`), then the startup steps (check in with
+  prompt (`workflow/base/roles/orchestrator.md`), the newest handover
+  note with its age (or, with none, `docs/context/orchestrator-state.md`), then the startup steps (check in with
   `status`/`agents`/messages, start the watcher and a heartbeat, keep both managers'
-  work moving, verify merges, watch context). Purely local — no daemon call — and reads
-  both files from the current directory, so run it from the repo root, as
+  work moving, verify merges, watch context). The note is fetched from the daemon
+  best-effort (no daemon or no note: the state file); the files are read from the current directory, so run it from the repo root, as
   `scripts/claude-orchestrator` does when it uses this as `claude`'s opening prompt.
   Any other role is a clap `InvalidValue` error, not a silent no-op.
 - **`prime worker|planner`** (planner = the `product-manager` rule tag) opens prime to

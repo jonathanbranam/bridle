@@ -216,6 +216,9 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
     let _ = store
         .prune_events(Utc::now() - chrono::Duration::days(EVENT_RETENTION_DAYS))
         .await;
+    let _ = store
+        .prune_handovers(Utc::now() - chrono::Duration::days(EVENT_RETENTION_DAYS))
+        .await;
 
     let listen_addr = opts.listen.unwrap_or(config.listen);
     let listener = tokio::net::TcpListener::bind(listen_addr)
@@ -377,6 +380,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
             async move {
                 let cutoff = Utc::now() - chrono::Duration::days(EVENT_RETENTION_DAYS);
                 let _ = store.prune_events(cutoff).await;
+                let _ = store.prune_handovers(cutoff).await;
             }
         }
     });
