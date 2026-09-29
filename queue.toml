@@ -43,3 +43,16 @@ tasks = ["br-2f6a"]
 
 [[tier]]
 tasks = ["br-7536"]
+
+[[tier]]
+tasks = [
+    "br-082f",
+    "br-3bb4",
+    "br-42e6",
+]
+
+[[tier]]
+tasks = ["br-0adb"]
+
+[[tier]]
+tasks = ["br-c273"]
