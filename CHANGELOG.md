@@ -10,6 +10,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `bridle spec export --scenario ID` (repeatable; `s-` or `r-` ids) and `--task ID` (the scenarios in a task's declared impact; exits 1 if none declared) narrow the json/gherkin export to selected scenarios (br-b85c).
+- Added: `bridle spec coverage [--root DIR] [--tests DIR ...] [--require-all] [--json]` lists executable scenarios whose id does not appear in test sources; scans text files under `--tests` directories (default `tests` and `test` if present) for scenario ids; exits 1 with `--require-all` if any unbound (br-b1e2).
+- Added: typescript pack's vitest adapter, `workflow/packs/typescript/adapters/vitest-bridle/`: `registerBridleSpecs({ steps })` registers executable scenarios from `bridle spec export --format json` as vitest tests with a given/when/then step registry (br-a54d).
+- Added: python pack pytest plugin `workflow/packs/python/adapters/bridle_specs.py`: registers pytest-bdd scenarios from `bridle spec export --format json` (ids in test names, tags as markers, examples parametrized, `--bridle-spec`/`--bridle-scenario` selection), replacing `spec-to-feature.py` + `run-specs.py` (br-3b72).
+- Added: `[worktrees] layout = "paired"` with `[worktrees.pair.<name>] path, mode = "worktree"|"symlink"` creates sibling repos' worktrees (or symlinks) beside the project's at `<root>/<name>`; setup runs in each, rm cleans all and refuses on a dirty member, the system prompt lists sibling paths (br-cc25).
+- Fixed: `bridle land` no longer leaves a worktree that has the integration branch checked out (the clone) showing the new tip as staged changes: it fast-forwards there (`merge --ff-only`) instead of `update-ref`, and refuses if that worktree has uncommitted changes.
+- Added: `bridle land <task> [--branch B] [--check-cmd CMD]`, the integrator: merges the branch in `<workspace>/integration`, runs `[integration] check`, moves the integration branch with a guarded `update-ref`, then marks the task done; refuses conflicts, failed checks, a moved main, and architecture changes outside an `arch-revision`; emits `integrate.started/finished` (br-6dd6).
+- Added: `[worktrees] layout = "root"` with `root = "/path/{task}"` (`{task}`, `{agent}`, `{project}`) puts new worktrees at a configured absolute path; `default` is unchanged; invalid roots are refused at config load (br-930e).
+- Added: `bridle arch-guard`, a PreToolUse hook (shipped in `workflow/base/hooks/`, rendered by `bridle sync`) denying worker edits under `design/architecture/` unless the worker has claimed an `arch-revision` task (br-7f7e).
+- Added: `bridle arch propose --title T --argument TEXT|-` creates an `arch-revision` task with the proposal; validates the architecture directory exists (br-357f).
+- Added: `bridle goals propose <goal-id> --change KEY=VALUE --why TEXT` (repeatable `--change`) creates a task proposing a change to the goal's firmness, priority, or stance; validates the goal exists (br-357f).
+- Added: landing an `arch-revision` task opens one `re-evaluate` task per capability with suspect requirements (listing the ids, to confirm or edit) and notifies the manager (br-beab).
+- Added: `bridle probe <task-or-agent>|--branch B` runs `git merge-tree` against the integration branch and reports clean or the conflicting paths; `impact check` lists non-clean probes of claimed tasks' branches (conflict vs integration, warn between tasks); needs git 2.38 (br-2612).
+- Added: port registry: `bridle port alloc [--pid N] [--label L]|release <port>|list`, `[ports] range`/`reserved` in config; the daemon frees a port when its owner agent exits or its pid dies (br-57be).
+- Added: the landing notice to running workers says `spec changed under you: <ids/files>` when the landed commit touches a claimed task's declared impact (spec ids changed in `design/specs`, file globs); other workers keep the generic notice (br-66e2).
+- Added: `bridle conflict list|resolve`: `impact check` opens a conflict (`C<n>`) for each shared scenario, once, and tells both claimants (or the managers, for an unclaimed task); resolve with `--compatible`, `--order A,B` or `--merge-into` (br-6774).
+- Added: `bridle trace suspect` lists links whose recorded hash is stale (exit 1 if any) and `bridle trace confirm <id>` rewrites them to current, line-edit only (br-dd44).
+- Added: `bridle impact check [--json]` reports overlaps between in-flight tasks' declared impact (conflict, warn, info; exit 1 on a conflict) (br-3584).
+- Added: trace links: `serves=` on architecture elements, a 4-hex text hash for `traces=id@hash`, and `bridle trace down|up|orphans` over goals, architecture and specs (br-d226).
+### Added
+
+- `bridle spec export --scenario ID` (repeatable; `s-` or `r-` ids) and `--task ID` (the scenarios in a task's declared impact; exits 1 if none declared) narrow the json/gherkin export to selected scenarios (br-b85c).
 - `bridle spec coverage [--root DIR] [--tests DIR ...] [--require-all] [--json]` lists executable scenarios whose id does not appear in test sources; scans text files under `--tests` directories (default `tests` and `test` if present) for scenario ids; exits 1 with `--require-all` if any unbound (br-b1e2).
 - `bridle spec id [paths...] [--root DIR] [--ledger FILE] [--dry-run]`: writes stable ids (`{#r-xxxx}`, `{#s-xxxx}`) into spec headings that lack one, editing only those lines, unique across the spec set and never reused, via a committed `design/specs/.ids` ledger (br-41e1).
 - `bridle spec export --format gherkin|json [--out DIR] [paths...]`: exports capability specs for test runners (gherkin: one `.feature` per capability, executable scenarios only, tagged with their `@tags` and scenario id; json: the whole AST with ids), refusing when the specs have errors; gherkin defaults to the gitignored `.bridle/cache/features/` (br-3058).
@@ -76,6 +97,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `bridle budget --help` (and any `bridle budget` parse) no longer panics on a clap debug assert for a non-existent `conflicts_with = "action"` attribute; added tests for `--help` on budget and related subcommands to catch this class of bug.
+- Help text for `bridle statusline`, `bridle prime`, `bridle task` and `bridle usage --by` now accurately reflect their supported roles and options.
 - `bridle land` no longer leaves a worktree that has the integration branch checked out (the clone) showing the new tip as staged changes: it fast-forwards there (`merge --ff-only`) instead of `update-ref`, and refuses if that worktree has uncommitted changes (br-land).
 - After a budget pause the governor resumes the manager and PM along with workers; `max_workers` limits workers only (ticket k7nr, br-0a50; code landed with y2eb).
 - A resumed agent whose Claude Code session is gone no longer dies on its first turn on every resume; the daemon retries once on a fresh session in the same worktree, and `agent.exited` carries the claude `stderr_tail` (ticket p4ks, br-3ec1).

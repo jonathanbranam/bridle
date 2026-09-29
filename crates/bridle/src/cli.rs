@@ -87,10 +87,9 @@ pub enum Command {
     Budget(BudgetArgs),
     /// Token management.
     Token(TokenArgs),
-    /// Task records: create/show/edit/list/drop/done/reopen
-    /// (docs/design/storage.md). Scoped for now to open/planned/claimed/
-    /// dropped/integrated/reopened; in_review/accepted arrive with later
-    /// tasks.
+    /// Task records: create/show/edit/list/drop/done/reopen/plan/summary.
+    /// Plan changes state: `open` -> `planned`. See docs/design/storage.md
+    /// for state machine and docs/design/coordination.md for the task lifecycle.
     Task(TaskArgs),
     /// A task's declared impact: the spec ids and files it will touch
     /// (docs/design/impact-and-conflicts.md).
@@ -124,9 +123,9 @@ pub enum Command {
     /// order (roles-and-lifecycle.md, "the queue"). Read-only; `queue set`/
     /// `queue add-tier` edit it, PM (or human) only.
     Queue(QueueArgs),
-    /// Claude Code's statusLine command: reads its JSON on stdin, prints a
-    /// line back, and records a usage snapshot. Never fails or blocks: see
-    /// docs/design/usage-and-budget.md ("Where bridle can see usage").
+    /// Claude Code's statusLine command: reads its JSON on stdin and prints a
+    /// line back. Never fails or blocks: see docs/design/usage-and-budget.md
+    /// ("Where bridle can see usage").
     Statusline,
     /// Claude Code's Stop hook for the worker role (docs/design/
     /// coordination.md, docs/spikes/05-stop-hook-findings.md): reads its
@@ -140,7 +139,7 @@ pub enum Command {
     /// fails: any error of bridle's own allows.
     ArchGuard,
     /// Print a fresh session's opening context for a role: the role prompt,
-    /// current state and startup steps. Orchestrator only for now.
+    /// current state and startup steps.
     Prime(PrimeArgs),
     /// Layer resolution over the workflow rules (docs/design/workflow-layers.md):
     /// which layer wins each rule id, and what a project changes.
@@ -738,7 +737,7 @@ pub struct WaitArgs {
 
 #[derive(Debug, Args)]
 pub struct UsageArgs {
-    /// Group by role or model instead of the default per-agent breakdown.
+    /// Group by role, model, or agent instead of the default per-agent breakdown.
     #[arg(long)]
     pub by: Option<UsageByArg>,
     /// Only turns started within this long, e.g. `30d`, `12h`, `45m`.
@@ -780,7 +779,7 @@ pub struct CostAuditArgs {
 pub struct BudgetArgs {
     /// Print the whole resolved `[[budget.schedule]]` (every period, its
     /// span and thresholds) instead of the status.
-    #[arg(long, conflicts_with = "action")]
+    #[arg(long)]
     pub schedule: bool,
     #[command(subcommand)]
     pub action: Option<BudgetAction>,
@@ -2095,5 +2094,45 @@ mod tests {
     fn inbox_read_requires_at_least_one_id() {
         let err = parse(&["inbox", "read"]).unwrap_err();
         assert_eq!(err.kind(), clap::error::ErrorKind::MissingRequiredArgument);
+    }
+
+    #[test]
+    fn budget_help_parses_without_panic() {
+        let cli = parse(&["budget", "--help"]).unwrap_err();
+        assert_eq!(cli.kind(), clap::error::ErrorKind::DisplayHelp);
+    }
+
+    #[test]
+    fn budget_schedule_parses() {
+        let cli = parse(&["budget", "--schedule"]).unwrap();
+        let Command::Budget(args) = cli.command else {
+            panic!("expected budget")
+        };
+        assert!(args.schedule);
+        assert!(args.action.is_none());
+    }
+
+    #[test]
+    fn status_help_parses_without_panic() {
+        let cli = parse(&["status", "--help"]).unwrap_err();
+        assert_eq!(cli.kind(), clap::error::ErrorKind::DisplayHelp);
+    }
+
+    #[test]
+    fn prime_help_parses_without_panic() {
+        let cli = parse(&["prime", "--help"]).unwrap_err();
+        assert_eq!(cli.kind(), clap::error::ErrorKind::DisplayHelp);
+    }
+
+    #[test]
+    fn task_help_parses_without_panic() {
+        let cli = parse(&["task", "--help"]).unwrap_err();
+        assert_eq!(cli.kind(), clap::error::ErrorKind::DisplayHelp);
+    }
+
+    #[test]
+    fn usage_help_parses_without_panic() {
+        let cli = parse(&["usage", "--help"]).unwrap_err();
+        assert_eq!(cli.kind(), clap::error::ErrorKind::DisplayHelp);
     }
 }
