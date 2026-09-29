@@ -2,9 +2,9 @@
 id = "br-2cac"
 title = "bridle spec import openspec: move OpenSpec specs to design/specs and assign ids"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-09-29T04:01:04.813Z"
-updated_at = "2026-09-29T04:01:04.813Z"
+updated_at = "2026-09-29T04:01:18.456088Z"
 +++
 
 Goal: `bridle spec import openspec [--from openspec/specs] [--to design/specs] [--dry-run]` (P3; docs/design/specs.md 'Migration from OpenSpec'). Local, no daemon call, like `spec check`/`spec id`.
