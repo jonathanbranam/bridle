@@ -4,7 +4,8 @@ title = "Explore kind: locked base rule and prime paragraph"
 kind = "feature"
 state = "planned"
 created_at = "2026-09-29T04:01:16.352Z"
-updated_at = "2026-09-29T04:01:18.507871Z"
+updated_at = "2026-09-29T04:24:18.579985Z"
+summary = "Added locked base rule workflow/base/rules/explorations.md (all roles, must), so bridle prime prints it to every role (tested against the repo's real rules). Path-scoped copy on design/explore/** skipped: rules have no path scoping yet. `bridle prime worker --task ID` (new flag; prime is otherwise local) fetches the task and, for kind explore, prepends the exploring agent's paragraph (prime.rs). Tests: explore vs feature vs no task. Docs: Built section in explorations.md, cli.md prime entry."
 +++
 
 Goal: deliver the explore task kind's rules (docs/design/explorations.md). Kind explore exists in bridle-api types; nothing tells agents how to treat it yet.
