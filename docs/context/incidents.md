@@ -56,3 +56,18 @@ battery fell from 99% to 70% in 27 minutes (about 1.1% a minute) with two worker
   - Nothing outside the orchestrator's session notices when it stops. Options: the advisor or
     bridle checks the orchestrator is alive, or the watcher runs outside the session.
   - Keep the watcher running through budget pauses; filter the idle wake instead of stopping it.
+
+## 2026-09-29 01:05-01:40 UTC: macOS hung every new program on exec
+
+- **What happened:** right after `cargo install --path crates/bridle` (01:05 UTC), every run of
+  the new `bridle` hung at exec: the CLI for all agents, the orchestrator, the advisor and the
+  human's `bridle tui`. The daemons (already running) were fine and answered HTTP.
+- **Cause:** macOS, not bridle. `syspolicyd` wasn't running, so the first-run assessment of any
+  new executable waited forever; a freshly compiled C program hung the same way, while
+  programs run before kept working. Two earlier installs that evening had run fine. Why
+  `syspolicyd` stopped is unknown.
+- **Fix:** `sudo launchctl kickstart -k system/com.apple.security.syspolicy` (the human);
+  hung calls then completed on their own.
+- **Diagnosis tips:** `ps` itself hangs when it reads a process stuck in exec; use `pgrep -l`.
+  Reach the daemons over HTTP (`curl` to the URL in `~/.bridle/daemons/<project>.json`) to send
+  messages while the CLI is down.
