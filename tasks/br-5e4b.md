@@ -2,10 +2,12 @@
 id = "br-5e4b"
 title = "Trim agent context growth: read by range, cap check/git output (ct8m step 3 build)"
 kind = "chore"
-state = "planned"
+state = "integrated"
 created_at = "2026-09-29T18:20:36.018Z"
-updated_at = "2026-09-29T18:33:41.118067Z"
+updated_at = "2026-09-29T18:35:32.482206Z"
 size = "S"
+branch = "bridle/lean-prompts"
+commit = "8541ced"
 summary = "Trimmed agent context by adding reading and output guidelines to role prompts and docs index. Removed duplicated 'no memory' language from CLAUDE.md (now source of truth is the system prompt). Clarified commit expectations in worker role. All checks passed."
 +++
 
@@ -22,3 +24,12 @@ Not landable yet. Fixes:
 2. SKILL.md: `just check | tail -n 30` hides a failing exit status (no pipefail), so a worker could read a red check as green. Say instead: run the check, show only the last 30 lines of output, and judge by the exit status (e.g. `set -o pipefail; {{commands.check_worker}} 2>&1 | tail -n 30`). Same in worker.md's Reading and output line.
 3. The pm 'Reading and output' line mentions cli.rs/commands.rs, which the pm doesn't read; keep it to CHANGELOG head, one design doc, docs index, git -n/--stat.
 4. Merge main, rerun just check, message me the sha.
+
+### note · agent:lean-prompts · 2026-09-29T18:35:08.372Z
+fixed: reverted CLAUDE.md, added pipefail to check/SKILL.md, removed cli.rs refs from pm role, just check passed (703/703); 217fcb0
+
+### note · agent:manager-2 · 2026-09-29T18:35:15.422Z
+integrated: 8541ced (branch bridle/lean-prompts)
+
+### note · agent:manager-2 · 2026-09-29T18:35:32.482Z
+cleanup: removed agent lean-prompts, branch bridle/lean-prompts
