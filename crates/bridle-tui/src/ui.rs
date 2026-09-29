@@ -95,8 +95,9 @@ fn draw_agents(frame: &mut Frame, area: Rect, app: &App) {
         .header(header)
         .row_highlight_style(highlight_style(focused))
         .block(border_block("Agents", focused));
-    let mut state = app.agents_table_state;
+    let mut state = app.agents_table_state.with_offset(app.agents_offset.get());
     frame.render_stateful_widget(table, area, &mut state);
+    app.agents_offset.set(state.offset());
 }
 
 fn draw_events(frame: &mut Frame, area: Rect, app: &App) {
@@ -163,8 +164,9 @@ fn draw_inbox(frame: &mut Frame, area: Rect, app: &App) {
         .header(header)
         .row_highlight_style(highlight_style(focused))
         .block(border_block("Inbox", focused));
-    let mut state = app.inbox_table_state;
+    let mut state = app.inbox_table_state.with_offset(app.inbox_offset.get());
     frame.render_stateful_widget(table, area, &mut state);
+    app.inbox_offset.set(state.offset());
 }
 
 /// The opened message in full, same layout as `bridle inbox show`.
@@ -326,5 +328,39 @@ mod tests {
         let buf = render(&app);
         assert!(reversed(&buf, "m-sel"));
         assert!(!reversed(&buf, "m-oth"));
+    }
+
+    #[test]
+    fn agents_panel_scrolls_to_keep_selection_visible() {
+        let mut app = App::new();
+        let agents = (0..30).map(|i| agent(&format!("ag-{i:02}"))).collect();
+        app.on_message(Message::AgentsLoaded(agents));
+        for _ in 0..25 {
+            app.on_key(crate::app::Key::Down);
+            render(&app);
+        }
+        let buf = render(&app);
+        assert!(reversed(&buf, "ag-25"));
+        // Scrolling back up moves the view only once the selection leaves it.
+        for _ in 0..25 {
+            app.on_key(crate::app::Key::Up);
+            render(&app);
+        }
+        assert!(reversed(&render(&app), "ag-00"));
+    }
+
+    #[test]
+    fn inbox_scrolls_to_keep_selection_visible() {
+        let mut app = App::new();
+        let msgs = (0..60)
+            .map(|i| inbox_message(&format!("m-{i:02}")))
+            .collect();
+        app.on_message(Message::MessagesLoaded(msgs));
+        app.focus = Focus::Inbox;
+        for _ in 0..45 {
+            app.on_key(crate::app::Key::Down);
+            render(&app);
+        }
+        assert!(reversed(&render(&app), "m-45"));
     }
 }
