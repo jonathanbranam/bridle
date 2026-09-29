@@ -172,6 +172,9 @@ pub struct App {
     /// A finished compose waiting for `run.rs` to send and mark the
     /// original read; taken (cleared) once `run.rs` has picked it up.
     pub pending_send: Option<PendingSend>,
+    /// Set when an event names an agent with no row (a spawn, typically);
+    /// taken by `run.rs`, which refetches the agents list.
+    pub refresh_agents: bool,
     pub connection: ConnectionStatus,
     pub should_quit: bool,
 }
@@ -185,7 +188,13 @@ impl App {
         self.connection = ConnectionStatus::Connected;
         match msg {
             Message::AgentsLoaded(agents) => {
+                // Keep the same agent selected if it's still listed.
+                let selected = self.selected_agent_id().map(str::to_string);
                 self.agents = agents;
+                if let Some(i) = selected.and_then(|id| self.agents.iter().position(|a| a.id == id))
+                {
+                    self.selected_agent = i;
+                }
                 self.clamp_selected_agent();
             }
             Message::Event(ev) => {
@@ -379,9 +388,15 @@ impl App {
     /// Keep the visible agent list in step with the live event feed for
     /// the state changes an event actually carries: `agent.state`'s
     /// `to` field, and `agent.removed` dropping the row. Anything else
-    /// (a brand-new agent from `agent.spawned`, for instance) only shows
-    /// up on the next full `agents` list.
+    /// (a brand-new agent from `agent.spawned`, for instance) isn't in the
+    /// event, so an event for an unknown agent sets `refresh_agents`.
     fn apply_event_to_agents(&mut self, ev: &Event) {
+        if ev.kind != event_kind::AGENT_REMOVED
+            && let Some(id) = &ev.agent
+            && !self.agents.iter().any(|a| &a.id == id)
+        {
+            self.refresh_agents = true;
+        }
         match ev.kind.as_str() {
             event_kind::AGENT_STATE => {
                 let Some(id) = &ev.agent else { return };
@@ -570,6 +585,35 @@ mod tests {
         assert_eq!(app.selected_agent, 1);
         app.on_key(Key::Up);
         assert_eq!(app.selected_agent, 0);
+    }
+
+    #[test]
+    fn event_for_an_unknown_agent_requests_a_refresh_and_selection_survives_it() {
+        let mut app = App::new();
+        app.on_message(Message::AgentsLoaded(vec![
+            agent("a", AgentState::Idle),
+            agent("c", AgentState::Idle),
+        ]));
+        app.on_key(Key::Down);
+        assert_eq!(app.selected_agent_id(), Some("c"));
+        assert!(!app.refresh_agents);
+
+        app.on_message(Message::Event(event(
+            1,
+            event_kind::AGENT_SPAWNED,
+            Some("b"),
+            serde_json::json!({}),
+        )));
+        assert!(app.refresh_agents);
+
+        // The refetched list has the new agent sorted before the selected one.
+        app.on_message(Message::AgentsLoaded(vec![
+            agent("a", AgentState::Idle),
+            agent("b", AgentState::Idle),
+            agent("c", AgentState::Idle),
+        ]));
+        assert_eq!(app.agents.len(), 3);
+        assert_eq!(app.selected_agent_id(), Some("c"));
     }
 
     #[test]
