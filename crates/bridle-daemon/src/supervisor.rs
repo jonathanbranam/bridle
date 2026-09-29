@@ -631,6 +631,7 @@ impl AgentManager {
                     worktree::warm_target(&self.0.workspace.repo, &path).await;
                 }
                 created_worktree = Some((path.clone(), branch.clone()));
+                worktree::copy_files(&self.0.workspace.repo, &path, &self.0.config.copy);
                 if let Some(cmd) = &self.0.config.setup
                     && let Err(e) =
                         worktree::run_setup(&path, cmd, self.0.config.setup_timeout).await
