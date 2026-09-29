@@ -508,7 +508,11 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   first. It also blocks when the tree looks finished (clean, commits ahead of local `main`/`master`)
   and a claimed task has no summary or no thread entry from itself starting `done:`, telling
   the agent to *run* `bridle task summary` and `bridle send ... done:` (workers were printing
-  them). Any error of bridle's own (unparseable stdin, no daemon reachable, an API
+  them). Before that report check, a finished-looking tree also has to have passed the
+  project's `commands.check_worker` (falling back to `check`) at the current HEAD: the hook
+  runs it itself when `<git-dir>/bridle-check-passed` doesn't name HEAD, records HEAD there on
+  success (never committed; a later stop at the same HEAD skips the rerun), and otherwise blocks
+  with the tail of the output. The hook is registered with a 30-minute timeout for this. Any error of bridle's own (unparseable stdin, no daemon reachable, an API
   error) allows rather than blocks: a bug in bridle's own tooling must never trap an
   agent from stopping.
 - **`prime orchestrator`** prints a fresh orchestrator session's opening context in one

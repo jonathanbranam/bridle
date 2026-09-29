@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `bridle stop-check` runs the project's `check_worker` command for a finished-looking worker whose HEAD has no recorded pass, records the pass in the worktree's git dir, and blocks with the output tail on failure (br-f671).
 - `bridle stop-check` also blocks a worker whose tree looks finished (clean, commits ahead) but whose claimed task has no summary or `done:` report, telling it to run the commands rather than print them (br-d99e).
 - `bridle init [--name N] [--integration BRANCH] [--stack python|typescript|rust]`: scaffolds `.bridle/config.toml` (integration branch from HEAD, `workflow`/`packs`, check command detected from `justfile`/`Cargo.toml`/`package.json`/`pyproject.toml`, worktree stubs) and the `.gitignore` entries; never overwrites, lists existing files as skipped (br-e0f4).
 - `bridle doctor [--repo PATH]`: checks a project's setup (git repo, integration branch, config and the files it references, role prompts, `.gitignore`, `[ports]`, git >= 2.38, `claude`, `gh` when `[ci]` is on), prints ok/warn/FAIL with a one-line fix each, exits 1 on a failure (br-5a5d).
