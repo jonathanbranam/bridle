@@ -398,14 +398,53 @@ impl TaskManager {
         Ok(self.put(task))
     }
 
-    /// `dropped` -> `reopened`. Any other starting state is a conflict.
+    /// `open`, `planned` or `claimed` -> `integrated`, recording the merge
+    /// `commit` in the thread. A claim is released first. `blocks` edges
+    /// out of the task resolve, and it leaves the queue and `ready`.
+    pub async fn done_task(
+        &self,
+        id: &str,
+        commit: &str,
+        actor: &PrincipalId,
+    ) -> Result<Task, TaskError> {
+        if commit.trim().is_empty() {
+            return Err(TaskError::BadRequest(
+                "marking a task done requires a commit".to_string(),
+            ));
+        }
+        let mut task = self
+            .get_task(id)
+            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+        match task.state {
+            TaskState::Dropped | TaskState::Integrated => {
+                return Err(TaskError::Conflict(format!(
+                    "task {id} is already {}",
+                    task.state
+                )));
+            }
+            TaskState::Claimed => task = self.release_claim(id).await?,
+            _ => {}
+        }
+        self.transition(&mut task, TaskState::Integrated, actor)
+            .await?;
+        task.thread.push(ThreadEntry {
+            kind: ThreadEntryKind::Note,
+            from: actor.clone(),
+            body: format!("integrated: {commit}"),
+            at: task.updated_at,
+        });
+        self.state.enqueue_task(&task)?;
+        Ok(self.put(task))
+    }
+
+    /// `dropped` or `integrated` -> `reopened`. Any other starting state is a conflict.
     pub async fn reopen_task(&self, id: &str, actor: &PrincipalId) -> Result<Task, TaskError> {
         let mut task = self
             .get_task(id)
             .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
-        if task.state != TaskState::Dropped {
+        if !matches!(task.state, TaskState::Dropped | TaskState::Integrated) {
             return Err(TaskError::Conflict(format!(
-                "task {id} is {}, not dropped; only a dropped task can be reopened",
+                "task {id} is {}; only a dropped or integrated task can be reopened",
                 task.state
             )));
         }
@@ -477,15 +516,15 @@ impl TaskManager {
 
     // ---------- ready ----------
 
-    /// A blocker is unresolved unless it's `dropped`: `integrated` and
-    /// `accepted` don't exist yet (P0 hasn't built them), so for now
-    /// anything else — including a blocker this manager doesn't know about —
-    /// still counts as blocking (roles-and-lifecycle.md, "ready is
-    /// computed"). Documented here rather than left implicit, since it's a
-    /// deliberate simplification this build makes, not the final rule.
+    /// A blocker is unresolved unless it's `dropped` or `integrated`:
+    /// `accepted` doesn't exist yet, so for now anything else — including a
+    /// blocker this manager doesn't know about — still counts as blocking
+    /// (roles-and-lifecycle.md, "ready is computed"). Documented here rather
+    /// than left implicit, since it's a deliberate simplification this
+    /// build makes, not the final rule.
     fn blocker_is_resolved(&self, blocker_id: &str) -> bool {
         self.get_task(blocker_id)
-            .is_some_and(|b| b.state == TaskState::Dropped)
+            .is_some_and(|b| matches!(b.state, TaskState::Dropped | TaskState::Integrated))
     }
 
     /// `planned`, no open `blocks` edge naming an unresolved blocker, and no
@@ -812,6 +851,24 @@ impl TaskManager {
     /// task not listed in any tier is backlog.
     pub fn queue_tiers(&self) -> Vec<Vec<String>> {
         self.queue.lock().expect("queue lock").clone()
+    }
+
+    /// [`TaskManager::queue_tiers`] without integrated tasks (and any tier
+    /// that leaves empty): merged work is done, not queued. The stored
+    /// queue keeps them until the PM's next `set_queue`.
+    pub fn live_queue_tiers(&self) -> Vec<Vec<String>> {
+        self.queue_tiers()
+            .into_iter()
+            .map(|tier| {
+                tier.into_iter()
+                    .filter(|id| {
+                        self.get_task(id)
+                            .is_none_or(|t| t.state != TaskState::Integrated)
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .filter(|tier| !tier.is_empty())
+            .collect()
     }
 
     /// Validates `tiers` against the task cache: every id must name a task
@@ -1233,6 +1290,59 @@ mod tests {
     fn force_planned(tm: &TaskManager, id: &str) {
         let mut cache = tm.cache.lock().expect("task cache lock");
         cache.get_mut(id).expect("task in cache").state = TaskState::Planned;
+    }
+
+    #[tokio::test]
+    async fn integrating_a_blocker_frees_the_blocked_task_and_leaves_the_queue() {
+        let (tm, _tmp) = manager().await;
+        let human = "human".to_string();
+        let blocker = tm
+            .new_task("Blocker", TaskKind::Chore, String::new(), vec![])
+            .await
+            .expect("new blocker");
+        let blocked = tm
+            .new_task("Blocked", TaskKind::Feature, String::new(), vec![])
+            .await
+            .expect("new blocked");
+        tm.add_edge(&blocker.id, &blocked.id, EdgeKind::Blocks)
+            .await
+            .expect("add edge");
+        force_planned(&tm, &blocker.id);
+        force_planned(&tm, &blocked.id);
+        tm.set_queue(
+            vec![vec![blocker.id.clone()], vec![blocked.id.clone()]],
+            &human,
+        )
+        .await
+        .expect("set queue");
+        assert!(!tm.is_ready(&tm.get_task(&blocked.id).expect("blocked")));
+
+        let err = tm
+            .done_task(&blocker.id, " ", &human)
+            .await
+            .expect_err("empty commit");
+        assert!(matches!(err, TaskError::BadRequest(_)));
+
+        let done = tm
+            .done_task(&blocker.id, "abc123", &human)
+            .await
+            .expect("done");
+        assert_eq!(done.state, TaskState::Integrated);
+        assert_eq!(done.thread[0].body, "integrated: abc123");
+        assert!(tm.is_ready(&tm.get_task(&blocked.id).expect("blocked")));
+        let ready: Vec<String> = tm.ready_tasks().into_iter().map(|t| t.id).collect();
+        assert_eq!(ready, vec![blocked.id.clone()]);
+        assert_eq!(tm.live_queue_tiers(), vec![vec![blocked.id.clone()]]);
+
+        let err = tm
+            .done_task(&blocker.id, "def456", &human)
+            .await
+            .expect_err("already integrated");
+        assert!(matches!(err, TaskError::Conflict(_)));
+
+        let reopened = tm.reopen_task(&blocker.id, &human).await.expect("reopen");
+        assert_eq!(reopened.state, TaskState::Reopened);
+        assert_eq!(tm.live_queue_tiers().len(), 2);
     }
 
     #[tokio::test]

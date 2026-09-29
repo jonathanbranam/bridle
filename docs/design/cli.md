@@ -65,6 +65,7 @@ bridle task show   <id>
 bridle task edit   <id> [--title TEXT] [--body TEXT | --body-file FILE] [--component ID ... | --no-component]
 bridle task list   [--claimed-by WHO] [--component ID]             WHO: me|human|<agent name>|<principal id>; unclaimed tasks have no claimant to match
 bridle task drop   <id> --reason TEXT
+bridle task done   <id> --commit SHA                                 -> integrated; records the sha in the thread
 bridle task reopen <id>
 bridle task note   <id> [TEXT | --text-file FILE]                   plain note to the task's thread; no effect on readiness
 ```
@@ -234,11 +235,13 @@ bridle task note   <id> [TEXT | --text-file FILE]                   plain note t
   crate, `crates/bridle-tui`, split Elm-style: a plain state struct and update function
   with no terminal/ratatui dependency (so it's unit-tested without a terminal),
   rendered by a separate `ui` module.
-- **`task`** is scoped, for now, to the `open`/`planned`/`dropped`/`reopened` states
+- **`task`** is scoped, for now, to the `open`/`planned`/`claimed`/`dropped`/`integrated`/`reopened` states
   (docs/design/roles-and-lifecycle.md, Task lifecycle): create, show, edit (title/body,
   never state), list (id/title/kind/state), drop (a reason is required, recorded in the
-  task's thread) and reopen (only a dropped task can be reopened). `in_review`,
-  `integrated`, `accepted`, and everything that depends on those, arrive with later
+  task's thread) done (`--commit` required, recorded in the thread; the task becomes `integrated`, which
+  resolves its `blocks` edges and drops it from `queue` and `ready`) and reopen (only a
+  dropped or integrated task can be reopened). `in_review`,
+  `accepted`, and everything that depends on those, arrive with later
   tasks — see the `Planned` block below for the rest of the surface this command will
   eventually grow into. There's still no `plan` yet, so nothing can reach `planned`
   through the CLI — which means `ready` (below) can never actually return anything, and

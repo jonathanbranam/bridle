@@ -83,9 +83,9 @@ pub enum Command {
     Budget(BudgetArgs),
     /// Token management.
     Token(TokenArgs),
-    /// Task records: create/show/edit/list/drop/reopen
-    /// (docs/design/storage.md). Scoped for now to open/planned/dropped/
-    /// reopened; claimed/in_review/integrated/accepted arrive with later
+    /// Task records: create/show/edit/list/drop/done/reopen
+    /// (docs/design/storage.md). Scoped for now to open/planned/claimed/
+    /// dropped/integrated/reopened; in_review/accepted arrive with later
     /// tasks.
     Task(TaskArgs),
     /// Add or remove a coordination edge between two tasks
@@ -521,7 +521,9 @@ pub enum TaskAction {
     Plan(TaskPlanArgs),
     /// Drop a task (requires a reason, recorded in its thread).
     Drop(TaskDropArgs),
-    /// Bring a dropped task back.
+    /// Mark a task integrated (merged), recording the merge commit in its thread.
+    Done(TaskDoneArgs),
+    /// Bring a dropped or integrated task back.
     Reopen(TaskReopenArgs),
     /// Add a plain note to a task's thread (no question/answer semantics,
     /// doesn't affect readiness).
@@ -589,6 +591,13 @@ pub struct TaskDropArgs {
     pub task: String,
     #[arg(long)]
     pub reason: String,
+}
+
+#[derive(Debug, Args)]
+pub struct TaskDoneArgs {
+    pub task: String,
+    #[arg(long)]
+    pub commit: String,
 }
 
 #[derive(Debug, Args)]
@@ -1219,6 +1228,17 @@ mod tests {
     fn task_new_requires_kind() {
         let err = parse(&["task", "new", "Add foo"]).unwrap_err();
         assert_eq!(err.kind(), clap::error::ErrorKind::MissingRequiredArgument);
+    }
+
+    #[test]
+    fn task_done_requires_commit() {
+        let err = parse(&["task", "done", "tw-1234"]).unwrap_err();
+        assert_eq!(err.kind(), clap::error::ErrorKind::MissingRequiredArgument);
+        let cli = parse(&["task", "done", "tw-1234", "--commit", "abc123"]).unwrap();
+        let Command::Task(args) = cli.command else {
+            panic!("expected task")
+        };
+        assert!(matches!(args.action, TaskAction::Done(a) if a.commit == "abc123"));
     }
 
     #[test]
