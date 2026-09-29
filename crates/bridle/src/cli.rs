@@ -134,6 +134,11 @@ pub enum Command {
     /// claimed task with no thread entry since claiming it. Never fails: any
     /// error of bridle's own allows the stop rather than trapping the agent.
     StopCheck,
+    /// Claude Code's PreToolUse hook: reads the hook JSON on stdin and denies
+    /// an Edit/Write/MultiEdit/NotebookEdit under `design/architecture/`
+    /// unless the calling worker has claimed an `arch-revision` task. Never
+    /// fails: any error of bridle's own allows.
+    ArchGuard,
     /// Print a fresh session's opening context for a role: the role prompt,
     /// current state and startup steps. Orchestrator only for now.
     Prime(PrimeArgs),

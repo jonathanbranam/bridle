@@ -49,6 +49,7 @@ bridle token revoke <name>                  human only, external tokens only (an
                                              revoked through `bridle rm`, not this); also removes its
                                              credentials.toml entry for the project
 bridle statusline                           Claude Code statusLine command; local only, no daemon call
+bridle arch-guard                          Claude Code PreToolUse hook: blocks design/architecture/ edits outside an arch-revision task
 bridle stop-check                           Claude Code Stop hook for the worker role; refuses to stop
                                              with an unreleased claim and no thread entry since claiming
                                              it (docs/design/coordination.md); never fails
@@ -436,6 +437,12 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   an `external:statusline` token and store it where `statusline` reads it (a fixed path under
   `$BRIDLE_HOME`/`~/.bridle`, not the workspace's own `.bridle/`, since this needs to work
   regardless of which project workspace Claude Code happens to be in).
+- **`arch-guard`** is Claude Code's `PreToolUse` hook (`workflow/base/hooks/PreToolUse.json`,
+  matcher `Edit|Write|MultiEdit`, rendered by `bridle sync`). It reads the hook JSON on stdin
+  and, for an edit whose path (resolved lexically against `cwd`) is under `design/architecture/`,
+  prints a `hookSpecificOutput` `permissionDecision: "deny"` unless the caller is not a worker
+  agent or has claimed an `arch-revision` task; the reason tells it to run `bridle arch propose`
+  ([[docs/design/architecture-tier|architecture tier]]). Any error of bridle's own allows.
 - **`stop-check`** is Claude Code's `Stop` hook, registered only for the worker role
   ([[docs/design/coordination#How agents actually hear things (Claude Code integration)|coordination.md]],
   [[docs/spikes/05-stop-hook-findings|spike 05]]). It reads the hook's JSON on stdin; if

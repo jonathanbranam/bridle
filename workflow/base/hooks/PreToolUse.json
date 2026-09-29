@@ -1,0 +1,6 @@
+[
+  {
+    "matcher": "Edit|Write|MultiEdit",
+    "hooks": [{ "type": "command", "command": "bridle arch-guard" }]
+  }
+]

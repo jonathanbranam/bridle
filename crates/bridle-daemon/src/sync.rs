@@ -722,6 +722,34 @@ mod tests {
     }
 
     #[test]
+    fn base_arch_guard_hook_is_rendered_into_settings() {
+        let repo = tempfile::tempdir().expect("tempdir");
+        let base_root = repo.path().join("workflow/base");
+        std::fs::create_dir_all(base_root.join("hooks")).expect("mkdir");
+        std::fs::write(
+            base_root.join("hooks/PreToolUse.json"),
+            include_bytes!("../../../workflow/base/hooks/PreToolUse.json"),
+        )
+        .expect("write");
+        let layers = vec![layer(LayerKind::Base, "base", &base_root)];
+        let report = sync(
+            repo.path(),
+            &layers,
+            &CommandsConfig::default(),
+            &BranchesConfig::default(),
+        )
+        .expect("sync");
+        assert_eq!(report.hook_events, vec!["PreToolUse".to_string()]);
+        let settings: Value = serde_json::from_str(
+            &std::fs::read_to_string(repo.path().join(".claude/settings.json")).expect("read"),
+        )
+        .expect("json");
+        let entry = &settings["hooks"]["PreToolUse"][0];
+        assert_eq!(entry["matcher"], "Edit|Write|MultiEdit");
+        assert_eq!(entry["hooks"][0]["command"], "bridle arch-guard");
+    }
+
+    #[test]
     fn skill_branches_placeholders_are_substituted_per_project() {
         let repo = tempfile::tempdir().expect("tempdir");
         let base_skill = repo.path().join("workflow/base/skills/worker");
