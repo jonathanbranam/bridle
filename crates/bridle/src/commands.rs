@@ -68,6 +68,9 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Prime(args) => prime(args).await,
         Command::Rules(args) => rules(&cli, args).await,
         Command::Sync => sync(&cli).await,
+        Command::Spec(args) => match &args.action {
+            crate::cli::SpecAction::Id(a) => crate::specid::run(&cli, a),
+        },
     }
 }
 

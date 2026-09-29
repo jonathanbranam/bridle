@@ -8,6 +8,7 @@ mod launchd;
 mod prime;
 mod render;
 mod serve;
+mod specid;
 mod statusline;
 mod stop_check;
 

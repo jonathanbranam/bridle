@@ -132,6 +132,8 @@ pub enum Command {
     /// "Rendering into what the agent harness reads"). Local, like `rules
     /// explain`/`diff` — no daemon call.
     Sync,
+    /// Capability spec files (docs/design/specs.md). Local, like `rules` — no daemon call.
+    Spec(SpecArgs),
 }
 
 #[derive(Debug, Args)]
@@ -149,6 +151,34 @@ pub enum PrimeRoleArg {
     Orchestrator,
     Worker,
     Planner,
+}
+
+#[derive(Debug, Args)]
+pub struct SpecArgs {
+    #[command(subcommand)]
+    pub action: SpecAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum SpecAction {
+    /// Write a stable id into every requirement and scenario heading that lacks one.
+    Id(SpecIdArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct SpecIdArgs {
+    /// Spec files, or directories searched recursively for `*.md`. Default: the `--root` directory.
+    pub paths: Vec<PathBuf>,
+    /// The specs directory used when no paths are given (default `design/specs`, relative to
+    /// the current directory); its `.ids` file is the ledger of every id ever assigned.
+    #[arg(long, value_name = "DIR")]
+    pub root: Option<PathBuf>,
+    /// The ledger file (default `<root>/.ids`).
+    #[arg(long, value_name = "FILE")]
+    pub ledger: Option<PathBuf>,
+    /// Print what would change; write nothing.
+    #[arg(long)]
+    pub dry_run: bool,
 }
 
 #[derive(Debug, Args)]
