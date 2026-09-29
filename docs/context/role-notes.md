@@ -196,3 +196,20 @@ Newest first. One line per item: what happened, who did it, what it says about r
 - Context: the orchestrator starts ~50K and grew ~85K in 48 busy minutes. Ticket ct8m trims
   every agent's starting context; the state file now holds current state only (history moved
   to `orchestrator-history.md`).
+
+## Twelfth session (2026-09-29 19:30-20:45 UTC)
+
+- Started by hand after the eleventh session died unattended. The human asked for the cause; a
+  subagent found it from the unified log and worker transcripts (a worker's `pkill -f`), which
+  kept ~120K of reading out of the orchestrator's context. Worth repeating for forensics.
+- By hand: fixed the launchers (one-line prompt, exit log) at the human's request; asked the
+  human for a rebuild and restart; recorded this session for context readings with
+  `bridle orchestrator note-session`; marked stale inbox messages read so the old watcher
+  stopped re-waking.
+- The human had no way to see what was waiting on them: the three items lived only in the
+  state file. Filed them as `bridle ask --to human` on their tasks; br-c83e (ex9q) is the real
+  fix.
+- A manager spawned two workers seconds before a "hold spawns" message; a restart window needs
+  a spawn hold the daemon enforces, not a message.
+- The auto-typed prompt suggestion in a dead session's input box looked like the human's
+  answer; it wasn't. Don't read a dead pane's input line as intent.
