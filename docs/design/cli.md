@@ -61,6 +61,19 @@ bridle rules explain|diff ... --component <id>  the same on top of that componen
 bridle sync                                 renders resolved workflow layers into CLAUDE.md's
                                              managed block, .claude/skills, .claude/agents and
                                              .claude/settings.json's hooks; local only, no daemon call
+bridle spec check [paths...] [--root DIR] [--require-ids]   validates spec files (dirs are searched for
+                                             *.md; default `design/specs`, or --root) with the
+                                             bridle-spec parser: prints file:line:col: message per
+                                             diagnostic and a summary, exit 1 on any error; a
+                                             requirement without an id is a warning (an error with
+                                             --require-ids); --json prints them as structured output;
+                                             local only, no daemon call
+bridle spec id [paths...] [--root DIR] [--ledger FILE] [--dry-run]   writes a stable id (`{#r-xxxx}` /
+                                             `{#s-xxxx}`) into every requirement and scenario heading
+                                             lacking one, in place, touching only those heading lines;
+                                             ids are unique across the files processed and never reused
+                                             (ledger `<root>/.ids`); idempotent; `--dry-run` prints
+                                             the plan and writes nothing; local only, no daemon call
 bridle prime orchestrator                   fresh session's opening context: role prompt, current
                                              state, startup steps; local only, no daemon call
 bridle prime worker|planner [--component ID ...]   the role's rules, facts, guides, plus named components' scope

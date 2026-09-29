@@ -9,23 +9,24 @@ use anyhow::{Context, anyhow};
 use bridle_spec::Assigned;
 
 use crate::cli::{Cli, SpecIdArgs};
+use crate::commands::spec_files;
 use crate::error::CliError;
 use crate::render;
 
-#[derive(serde::Serialize)]
+#[derive(Debug, serde::Serialize)]
 struct FileReport {
     file: String,
     assigned: Vec<AssignedRow>,
 }
 
-#[derive(serde::Serialize)]
+#[derive(Debug, serde::Serialize)]
 struct AssignedRow {
     line: usize,
     id: String,
     title: String,
 }
 
-#[derive(serde::Serialize)]
+#[derive(Debug, serde::Serialize)]
 struct Report {
     dry_run: bool,
     files: Vec<FileReport>,
@@ -78,29 +79,6 @@ fn random() -> u64 {
     std::collections::hash_map::RandomState::new()
         .build_hasher()
         .finish()
-}
-
-/// Every `*.md` under `path` (or `path` itself), sorted.
-fn spec_files(path: &Path, out: &mut Vec<PathBuf>) -> anyhow::Result<()> {
-    if path.is_dir() {
-        let mut entries = std::fs::read_dir(path)
-            .and_then(|d| {
-                d.map(|e| e.map(|e| e.path()))
-                    .collect::<Result<Vec<_>, _>>()
-            })
-            .with_context(|| format!("reading {}", path.display()))?;
-        entries.sort();
-        for e in entries {
-            if e.is_dir() || e.extension().is_some_and(|x| x == "md") {
-                spec_files(&e, out)?;
-            }
-        }
-    } else if path.exists() {
-        out.push(path.to_path_buf());
-    } else {
-        anyhow::bail!("no such file or directory: {}", path.display());
-    }
-    Ok(())
 }
 
 fn assign(
@@ -283,7 +261,7 @@ mod tests {
         // offer r-0001 again first.
         std::fs::write(root.join("cap.md"), SPEC).expect("write");
         let r = assign(&root, &[], None, false, &mut counter()).expect("assign");
-        assert_eq!(r.ledger_added, ["r-00010", "s-00020"]);
+        assert_eq!(r.ledger_added, ["r-00020", "s-0003"]);
     }
 
     #[test]

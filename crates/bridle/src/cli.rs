@@ -132,8 +132,38 @@ pub enum Command {
     /// "Rendering into what the agent harness reads"). Local, like `rules
     /// explain`/`diff` — no daemon call.
     Sync,
-    /// Capability spec files (docs/design/specs.md). Local, like `rules` — no daemon call.
+    /// Validate capability spec files (docs/design/specs.md) and print each
+    /// diagnostic as file:line:col: message. Local, like `rules` — no daemon call.
     Spec(SpecArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct SpecArgs {
+    #[command(subcommand)]
+    pub action: SpecAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum SpecAction {
+    /// Parse spec files and report diagnostics; exits non-zero on any error.
+    Check(SpecCheckArgs),
+    /// Write a stable id into every requirement and scenario heading that lacks one.
+    Id(SpecIdArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct SpecCheckArgs {
+    /// Spec files, or directories searched recursively for `*.md`. Default:
+    /// the `--root` directory.
+    pub paths: Vec<PathBuf>,
+    /// The specs directory checked when no paths are given (default
+    /// `design/specs`, relative to the current directory), e.g.
+    /// `openspec/specs` for a project not yet migrated.
+    #[arg(long, value_name = "DIR")]
+    pub root: Option<PathBuf>,
+    /// Make a requirement without an id an error rather than a warning.
+    #[arg(long)]
+    pub require_ids: bool,
 }
 
 #[derive(Debug, Args)]
@@ -151,18 +181,6 @@ pub enum PrimeRoleArg {
     Orchestrator,
     Worker,
     Planner,
-}
-
-#[derive(Debug, Args)]
-pub struct SpecArgs {
-    #[command(subcommand)]
-    pub action: SpecAction,
-}
-
-#[derive(Debug, Subcommand)]
-pub enum SpecAction {
-    /// Write a stable id into every requirement and scenario heading that lacks one.
-    Id(SpecIdArgs),
 }
 
 #[derive(Debug, Args)]
