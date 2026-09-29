@@ -68,16 +68,41 @@ fn strip_bridle_env(cmd: &mut Command) -> &mut Command {
         .env_remove("BRIDLE_PROJECT")
 }
 
-fn wait_for_file(path: &Path, timeout: Duration) {
-    let deadline = Instant::now() + timeout;
-    while !path.is_file() {
-        assert!(
-            Instant::now() < deadline,
-            "timed out waiting for {}",
-            path.display()
-        );
+/// Hang guard for every wait in this file: a passing test never waits this
+/// long, only a genuinely hung one does. Waits are on conditions, never on
+/// elapsed time, so a loaded machine can't fail a test that would pass.
+const HANG_GUARD: Duration = Duration::from_secs(60);
+
+/// Polls `f` until it returns `Some`, or panics after [`HANG_GUARD`].
+fn wait_until<T>(what: &str, mut f: impl FnMut() -> Option<T>) -> T {
+    let deadline = Instant::now() + HANG_GUARD;
+    loop {
+        if let Some(v) = f() {
+            return v;
+        }
+        assert!(Instant::now() < deadline, "timed out waiting for {what}");
         std::thread::sleep(Duration::from_millis(100));
     }
+}
+
+fn wait_for_file(path: &Path) {
+    wait_until(&path.display().to_string(), || path.is_file().then_some(()));
+}
+
+/// Waits for w1's first turn to complete (polls `agents --all --json`).
+fn wait_for_first_turn(cwd: &Path, home: &Path) {
+    wait_until("w1's first turn to finish", || {
+        let (ok, out, err) = run_cli(cwd, home, &["agents", "--all", "--json"]);
+        assert!(ok, "agents failed: {err}");
+        let agents: serde_json::Value = serde_json::from_str(&out).expect("agents json");
+        let w1 = agents
+            .as_array()
+            .expect("array")
+            .iter()
+            .find(|a| a["name"] == "w1")
+            .expect("w1 present");
+        (w1["turns"].as_u64().unwrap_or(0) >= 1 && w1["state"] == "idle").then_some(())
+    });
 }
 
 /// Runs the real `bridle` binary and returns (succeeded, stdout, stderr).
@@ -149,7 +174,7 @@ fn cli_end_to_end_against_a_foreground_daemon() {
     let mut guard = DaemonGuard(child);
 
     let daemon_json = workspace.join(".bridle/daemon.json");
-    wait_for_file(&daemon_json, Duration::from_secs(20));
+    wait_for_file(&daemon_json);
 
     // `spawn worker --name w1 --prompt hi --json`
     let (ok, out, err) = run_cli(
@@ -165,26 +190,7 @@ fn cli_end_to_end_against_a_foreground_daemon() {
     let agent_id = agent["id"].as_str().expect("agent id").to_string();
 
     // Wait for the first turn to complete (poll `agents --all --json`).
-    let deadline = Instant::now() + Duration::from_secs(20);
-    loop {
-        let (ok, out, err) = run_cli(&repo, &home, &["agents", "--all", "--json"]);
-        assert!(ok, "agents failed: {err}");
-        let agents: serde_json::Value = serde_json::from_str(&out).expect("agents json");
-        let w1 = agents
-            .as_array()
-            .expect("array")
-            .iter()
-            .find(|a| a["name"] == "w1")
-            .expect("w1 present");
-        if w1["turns"].as_u64().unwrap_or(0) >= 1 && w1["state"] == "idle" {
-            break;
-        }
-        assert!(
-            Instant::now() < deadline,
-            "w1 never finished its first turn: {agents}"
-        );
-        std::thread::sleep(Duration::from_millis(200));
-    }
+    wait_for_first_turn(&repo, &home);
 
     // `send w1 hello --json`
     let (ok, out, err) = run_cli(&repo, &home, &["send", "w1", "hello", "--json"]);
@@ -264,7 +270,7 @@ fn cli_end_to_end_against_a_foreground_daemon() {
 
     let status = guard
         .0
-        .wait_timeout_or_kill(Duration::from_secs(10))
+        .wait_or_kill()
         .expect("daemon process should exit after stop-daemon");
     assert!(status.success(), "daemon exited with {status:?}");
 }
@@ -299,7 +305,7 @@ fn read_command_succeeds_with_no_token_when_claudecode_is_set() {
     let _guard = DaemonGuard(child);
 
     let daemon_json = workspace.join(".bridle/daemon.json");
-    wait_for_file(&daemon_json, Duration::from_secs(20));
+    wait_for_file(&daemon_json);
 
     // Same as `run_cli`, but with `$CLAUDECODE` set and no `$BRIDLE_TOKEN` —
     // the case that used to fail client-side (crates/bridle-api/src/
@@ -438,13 +444,13 @@ fn sigint_shuts_down_cleanly_while_idle() {
     let mut guard = DaemonGuard(child);
 
     let daemon_json = workspace.join(".bridle/daemon.json");
-    wait_for_file(&daemon_json, Duration::from_secs(20));
+    wait_for_file(&daemon_json);
 
     kill(Pid::from_raw(pid as i32), Signal::SIGINT).expect("send SIGINT");
 
     let status = guard
         .0
-        .wait_timeout_or_kill(Duration::from_secs(10))
+        .wait_or_kill()
         .expect("daemon process should exit after SIGINT");
 
     let mut stderr_text = String::new();
@@ -501,7 +507,7 @@ fn sigint_shuts_down_cleanly_with_a_store_call_in_flight() {
     let mut guard = DaemonGuard(child);
 
     let daemon_json = workspace.join(".bridle/daemon.json");
-    wait_for_file(&daemon_json, Duration::from_secs(20));
+    wait_for_file(&daemon_json);
 
     for i in 0..8 {
         let (ok, _out, err) = run_cli(
@@ -529,7 +535,7 @@ fn sigint_shuts_down_cleanly_with_a_store_call_in_flight() {
     // busy machine doesn't get SIGKILLed mid-shutdown.
     let status = guard
         .0
-        .wait_timeout_or_kill(Duration::from_secs(60))
+        .wait_or_kill()
         .expect("daemon process should exit after SIGINT");
 
     let mut stderr_text = String::new();
@@ -570,7 +576,7 @@ fn inbox_show_and_read_commands() {
     let mut guard = DaemonGuard(child);
 
     let daemon_json = workspace.join(".bridle/daemon.json");
-    wait_for_file(&daemon_json, Duration::from_secs(20));
+    wait_for_file(&daemon_json);
 
     // Spawn a worker
     let (ok, out, err) = run_cli(
@@ -584,26 +590,7 @@ fn inbox_show_and_read_commands() {
     let _: serde_json::Value = serde_json::from_str(&out).expect("agent json");
 
     // Wait for the first turn to complete
-    let deadline = Instant::now() + Duration::from_secs(20);
-    loop {
-        let (ok, out, err) = run_cli(&repo, &home, &["agents", "--all", "--json"]);
-        assert!(ok, "agents failed: {err}");
-        let agents: serde_json::Value = serde_json::from_str(&out).expect("agents json");
-        let w1 = agents
-            .as_array()
-            .expect("array")
-            .iter()
-            .find(|a| a["name"] == "w1")
-            .expect("w1 present");
-        if w1["turns"].as_u64().unwrap_or(0) >= 1 && w1["state"] == "idle" {
-            break;
-        }
-        assert!(
-            Instant::now() < deadline,
-            "w1 never finished its first turn: {agents}"
-        );
-        std::thread::sleep(Duration::from_millis(200));
-    }
+    wait_for_first_turn(&repo, &home);
 
     // Send a message from w1 to human
     let (ok, out, err) = run_cli(&repo, &home, &["send", "human", "hello", "--json"]);
@@ -730,22 +717,17 @@ fn inbox_show_and_read_commands() {
     let _ = guard.0.kill();
 }
 
-/// A small extension so the foreground-daemon test can bound how long it
-/// waits for the child to exit after asking it to stop, without pulling in
-/// a whole process-management crate for one call.
-trait WaitTimeoutOrKill {
-    fn wait_timeout_or_kill(
-        &mut self,
-        timeout: Duration,
-    ) -> std::io::Result<std::process::ExitStatus>;
+/// A small extension so the foreground-daemon tests can wait for the child
+/// to exit after asking it to stop, without pulling in a whole
+/// process-management crate for one call. Only [`HANG_GUARD`] bounds it, and
+/// a child still running then is killed so it can't outlive the test.
+trait WaitOrKill {
+    fn wait_or_kill(&mut self) -> std::io::Result<std::process::ExitStatus>;
 }
 
-impl WaitTimeoutOrKill for Child {
-    fn wait_timeout_or_kill(
-        &mut self,
-        timeout: Duration,
-    ) -> std::io::Result<std::process::ExitStatus> {
-        let deadline = Instant::now() + timeout;
+impl WaitOrKill for Child {
+    fn wait_or_kill(&mut self) -> std::io::Result<std::process::ExitStatus> {
+        let deadline = Instant::now() + HANG_GUARD;
         loop {
             if let Some(status) = self.try_wait()? {
                 return Ok(status);

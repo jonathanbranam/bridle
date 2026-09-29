@@ -273,13 +273,14 @@ async fn spawn_with_prompt_waits_for_the_turn_to_start_before_returning() {
 
 /// The other side of the same fix: a spawn with no first message starts no
 /// turn, so there's no `system/init` to wait for, and `spawn` returns at
-/// once instead of waiting out `SPAWN_READY_TIMEOUT`.
+/// once instead of waiting out `SPAWN_READY_TIMEOUT`. Not timed: under load
+/// a wall-clock bound only measures the machine (ticket f1ky), so this checks
+/// that the spawn returns and the agent is `Idle`.
 #[tokio::test]
 async fn spawn_without_a_prompt_returns_promptly_and_stays_idle() {
     let (daemon, _tmp) = start_daemon(None).await;
 
-    let started = std::time::Instant::now();
-    let agent = daemon
+    let agent = tokio::time::timeout(support::HANG_GUARD_TIMEOUT, daemon
         .client
         .spawn(&SpawnRequest {
             components: Vec::new(),
@@ -292,13 +293,12 @@ async fn spawn_without_a_prompt_returns_promptly_and_stays_idle() {
             extra_env: Vec::new(),
             ignore_budget: false,
         })
-        .await
-        .expect("spawn");
+        }),
+    )
+    .await
+    .expect("spawn hung")
+    .expect("spawn");
 
-    assert!(
-        started.elapsed() < std::time::Duration::from_secs(5),
-        "an idle spawn should not wait for a turn that never starts"
-    );
     assert_eq!(agent.state, AgentState::Idle);
 }
 

@@ -15,12 +15,10 @@ use bridle_api::types::{Agent, AgentState, Event, EventQuery};
 use bridle_daemon::{Overrides, RunningDaemon, ServeOptions};
 use tokio::process::Command;
 
-/// The default per-poll wait and overall timeout for the `wait_*` helpers.
-/// Generous: the fake claude runs through a pyenv shim (~0.9s startup).
+/// The per-poll wait for the `wait_*` helpers.
 pub const POLL: Duration = Duration::from_millis(100);
-pub const TIMEOUT: Duration = Duration::from_secs(20);
 
-/// Hang guard timeout for waiting on the fake claude process or its events.
+/// Hang guard for every wait on the fake claude, its events, or a condition.
 /// A passing test should never be slowed by this; only a genuinely hung one waits longer.
 pub const HANG_GUARD_TIMEOUT: Duration = Duration::from_secs(60);
 
@@ -300,13 +298,13 @@ pub async fn start_daemon_verbatim_config(
     )
 }
 
-/// Polls `f` until it returns `Some`, or panics after [`TIMEOUT`].
+/// Polls `f` until it returns `Some`, or panics after [`HANG_GUARD_TIMEOUT`].
 pub async fn wait_for<T, F, Fut>(what: &str, mut f: F) -> T
 where
     F: FnMut() -> Fut,
     Fut: std::future::Future<Output = Option<T>>,
 {
-    let deadline = Instant::now() + TIMEOUT;
+    let deadline = Instant::now() + HANG_GUARD_TIMEOUT;
     loop {
         if let Some(v) = f().await {
             return v;
