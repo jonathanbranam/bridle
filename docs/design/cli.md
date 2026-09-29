@@ -11,6 +11,8 @@ bridle [--url URL] [--project NAME] [--token T] [--json] <command>
 
 bridle serve   [--repo PATH] [--workspace DIR] [--listen ADDR] [--detach]
 bridle stop-daemon
+bridle launchd install [--repo PATH] [--workspace DIR] [--force]   macOS: write the LaunchAgent plist, print launchctl commands
+bridle launchd uninstall                    remove the plist, print the bootout command
 bridle rebuild                               reconstructs tasks/edges/open_questions from the
                                               state branch alone; the migration path for a fresh
                                               clone with no bridle.db yet
@@ -227,6 +229,16 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   `{{commands.check}}`, substituted with `.bridle/config.toml`'s `[commands] check`
   (default `"just check"`, per-project — e.g. `"make check"`) so a base skill like
   `workflow/base/skills/worker/SKILL.md` doesn't hardcode one project's build tool.
+- **`launchd install|uninstall`** (macOS only): writes/removes
+  `~/Library/LaunchAgents/dev.bridle.<project>.plist` (project from `--project`, else the repo
+  directory name) and prints, but never runs, the `launchctl bootstrap`/`bootout` commands.
+  The plist runs the absolute path of the current `bridle` as `--project <name> serve --repo
+  <repo> --workspace <workspace>` with `WorkingDirectory` the clone, `RunAtLoad`, `KeepAlive`
+  only on a non-zero exit (a deliberate `stop-daemon` stays stopped), output to
+  `<workspace>/.bridle/daemon.log`, and `PATH`/`HOME` copied from the caller so `claude` and
+  `git` are found. `install` refuses to overwrite without `--force`. Why: a daemon started by
+  launchd has no GUI responsible app, so builds under it don't flash Gatekeeper's Verifying
+  window (ticket qr8z). Moving a running daemon: `docs/context/launchd-restart-plan.md`.
 - **`serve --detach`**: [[docs/design/agent-host/daemon#Running it|running the daemon]].
 - **`tui`** is a subcommand, not a separate binary, so it shares `bridle`'s discovery,
   token and `--url`/`--project` flags like every other command. It's a thin client of
