@@ -21,10 +21,10 @@ use crate::cli::{
     EventsArgs, InboxAction, InboxArgs, InboxReadArgs, InboxShowArgs, InterruptArgs, LogsArgs,
     PrimeArgs, PrimeRoleArg, QueueAction, QueueAddTierArgs, QueueArgs, QueueSetArgs, ReadyArgs,
     ReleaseArgs, RmArgs, RulesAction, RulesArgs, RulesDiffArgs, RulesExplainArgs, SendArgs,
-    ShowArgs, SpawnArgs, StopArgs, TaskAction, TaskArgs, TaskDoneArgs, TaskDropArgs, TaskEditArgs,
-    TaskKindArg, TaskListArgs, TaskNewArgs, TaskNoteArgs, TaskPlanArgs, TaskReopenArgs,
-    TaskSearchArgs, TaskShowArgs, TaskSizeArg, TaskSummaryArgs, TokenAction, TokenArgs, UsageArgs,
-    UsageByArg, WhenArg,
+    ShowArgs, SpawnArgs, SpecAction, SpecArgs, SpecFormatArg, StopArgs, TaskAction, TaskArgs,
+    TaskDoneArgs, TaskDropArgs, TaskEditArgs, TaskKindArg, TaskListArgs, TaskNewArgs, TaskNoteArgs,
+    TaskPlanArgs, TaskReopenArgs, TaskSearchArgs, TaskShowArgs, TaskSizeArg, TaskSummaryArgs,
+    TokenAction, TokenArgs, UsageArgs, UsageByArg, WhenArg,
 };
 use crate::error::CliError;
 use crate::render;
@@ -68,6 +68,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Prime(args) => prime(args).await,
         Command::Rules(args) => rules(&cli, args).await,
         Command::Sync => sync(&cli).await,
+        Command::Spec(args) => spec(&cli, args),
     }
 }
 
@@ -2360,4 +2361,80 @@ mod prime_tests {
         assert!(role_pos < state_pos);
         assert!(state_pos < steps_pos);
     }
+}
+
+/// `bridle spec export`: local, no daemon call (docs/design/specs-to-tests.md).
+fn spec(cli: &Cli, args: &SpecArgs) -> Result<(), CliError> {
+    let SpecAction::Export(args) = &args.action;
+    let files = crate::spec_paths::resolve(&args.paths, args.root.as_deref())?;
+
+    let mut specs = Vec::new();
+    let mut diagnostics = Vec::new();
+    for file in &files {
+        match bridle_spec::parse_file(file) {
+            Ok(spec) => specs.push((file, spec)),
+            Err(bridle_spec::ParseFileError::Diagnostics(ds)) => diagnostics.extend(ds),
+            Err(e) => return Err(anyhow::Error::new(e).into()),
+        }
+    }
+    if !diagnostics.is_empty() {
+        for d in &diagnostics {
+            eprintln!("{d}");
+        }
+        return Err(
+            anyhow::anyhow!("not exporting: {} spec diagnostic(s)", diagnostics.len()).into(),
+        );
+    }
+
+    let write = |dir: &Path, name: &str, text: &str| -> anyhow::Result<PathBuf> {
+        std::fs::create_dir_all(dir).with_context(|| format!("creating {}", dir.display()))?;
+        let path = dir.join(name);
+        std::fs::write(&path, text).with_context(|| format!("writing {}", path.display()))?;
+        Ok(path)
+    };
+    match args.format {
+        SpecFormatArg::Gherkin => {
+            let dir = args
+                .out
+                .clone()
+                .unwrap_or_else(|| PathBuf::from(".bridle/cache/features"));
+            let mut written = Vec::new();
+            for (file, spec) in &specs {
+                let cap = crate::spec_export::capability(file);
+                let path = write(
+                    &dir,
+                    &format!("{cap}.feature"),
+                    &crate::spec_export::gherkin(&cap, spec),
+                )?;
+                written.push(path.display().to_string());
+            }
+            if cli.json {
+                render::print_json(&written)?;
+            } else {
+                for p in &written {
+                    println!("{p}");
+                }
+            }
+        }
+        SpecFormatArg::Json => {
+            let doc = crate::spec_export::JsonExport {
+                version: crate::spec_export::JSON_VERSION,
+                specs: specs
+                    .iter()
+                    .map(|(f, s)| crate::spec_export::json_spec(f, s))
+                    .collect(),
+            };
+            match &args.out {
+                Some(dir) => {
+                    let text = serde_json::to_string_pretty(&doc).context("encoding json")?;
+                    println!(
+                        "{}",
+                        write(dir, "specs.json", &format!("{text}\n"))?.display()
+                    );
+                }
+                None => render::print_json(&doc)?,
+            }
+        }
+    }
+    Ok(())
 }

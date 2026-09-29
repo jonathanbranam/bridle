@@ -228,6 +228,7 @@ dependencies = [
  "anyhow",
  "bridle-api",
  "bridle-daemon",
+ "bridle-spec",
  "bridle-tui",
  "chrono",
  "clap",

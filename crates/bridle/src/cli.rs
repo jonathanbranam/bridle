@@ -132,6 +132,47 @@ pub enum Command {
     /// "Rendering into what the agent harness reads"). Local, like `rules
     /// explain`/`diff` — no daemon call.
     Sync,
+    /// Capability specs (docs/design/specs.md, specs-to-tests.md). Local, like
+    /// `rules` — no daemon call.
+    Spec(SpecArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct SpecArgs {
+    #[command(subcommand)]
+    pub action: SpecAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum SpecAction {
+    /// Export the specs for test runners; refuses (printing the diagnostics)
+    /// when any spec has errors.
+    Export(SpecExportArgs),
+}
+
+#[derive(Debug, Clone, Copy, clap::ValueEnum)]
+pub enum SpecFormatArg {
+    /// One `.feature` per capability, executable scenarios only.
+    Gherkin,
+    /// The whole AST, every scenario, as one document.
+    Json,
+}
+
+#[derive(Debug, Args)]
+pub struct SpecExportArgs {
+    #[arg(long, value_enum)]
+    pub format: SpecFormatArg,
+    /// Write files here. Default: gherkin goes to `.bridle/cache/features/`
+    /// (gitignored), json to stdout.
+    #[arg(long, value_name = "DIR")]
+    pub out: Option<PathBuf>,
+    /// Spec files, or directories searched recursively for `*.md`. Default:
+    /// the `--root` directory.
+    pub paths: Vec<PathBuf>,
+    /// The specs directory used when no paths are given (default
+    /// `design/specs`, relative to the current directory).
+    #[arg(long, value_name = "DIR")]
+    pub root: Option<PathBuf>,
 }
 
 #[derive(Debug, Args)]

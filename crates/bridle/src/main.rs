@@ -8,6 +8,8 @@ mod launchd;
 mod prime;
 mod render;
 mod serve;
+mod spec_export;
+mod spec_paths;
 mod statusline;
 mod stop_check;
 
