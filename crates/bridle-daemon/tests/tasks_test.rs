@@ -685,9 +685,12 @@ async fn search_matches_words_in_title_body_and_summary() {
         .expect("new task");
 
     let _summary = c
-        .set_task_summary(&t2.id, &SetSummaryRequest {
-            text: "Optimized the API endpoint and reduced latency".into(),
-        })
+        .set_task_summary(
+            &t2.id,
+            &SetSummaryRequest {
+                text: "Optimized the API endpoint and reduced latency".into(),
+            },
+        )
         .await
         .expect("set summary");
 
@@ -720,7 +723,10 @@ async fn search_matches_words_in_title_body_and_summary() {
     assert_eq!(results[0].id, t1.id);
 
     // Multiple words - AND logic, matches t1
-    let results = c.search_tasks(&["connection", "pool"]).await.expect("search");
+    let results = c
+        .search_tasks(&["connection", "pool"])
+        .await
+        .expect("search");
     assert_eq!(results.len(), 1);
     assert_eq!(results[0].id, t1.id);
 

@@ -452,7 +452,7 @@ impl Client {
                 search_words.iter().all(|word| {
                     title_lower.contains(word)
                         || body_lower.contains(word)
-                        || summary_lower.as_ref().map_or(false, |s| s.contains(word))
+                        || summary_lower.as_ref().is_some_and(|s| s.contains(word))
                 })
             })
             .collect();
