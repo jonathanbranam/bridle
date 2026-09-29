@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 - A role with no `system_prompt` now defaults to `<workflow>/base/roles/<role>.md` when `workflow` is set and the file exists; an explicit `system_prompt` still wins (ticket rl2v, br-f636).
+- `just test` (and so `just check`) runs git with an empty global config, like CI, so local runs no longer depend on your `init.defaultBranch` (g3ck, br-d0c3).
+- Fixed: `bridle renew` no longer waits on a budget hold (it replaces a session rather than adding load), so a hold can't leave the agent stopped; `--ignore-budget` is accepted and ignored on renew (ticket r3nh, br-1392).
 - With no product manager running, a newly filed task now sends the running manager a `system` note ("task <id> filed: <title>; open tasks: N. Plan it or queue it."), at most once a minute; the manager role prompt says to run `bridle queue` and `bridle task list --state open` when idle or woken (br-3bb4).
 - Fixed: `bridle sync` no longer creates an empty `.claude/settings.json` when there are no hooks to write (br-082f).
 - A reply from a principal in `[messages] answer_for_human` (default `external:orchestrator`) to a message addressed to the human now closes it: it leaves the unread count and `bridle inbox` and the TUI show "answered by <who>: <first line>"; `Message` gains `answered_by`, `answered_reply` and `answered_line` (ticket h5qd, br-b29c).
