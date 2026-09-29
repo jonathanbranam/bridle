@@ -26,6 +26,13 @@ Delivery to an agent is always a stdin user message:
 Reply with: bridle send human --reply-to m-0042 "<answer>"      ← questions only
 ```
 
+**A delegate's reply closes the human's question.** A message whose `reply_to` names a message
+addressed to the human, sent by a principal in `[messages] answer_for_human` (default
+`["external:orchestrator"]`; no agent unless listed), marks that message `read` and records
+`answered_by`, `answered_reply` (the reply's id) and `answered_line` (its first line) on it. It
+leaves the unread count; the human still reads it in full (`bridle inbox --all`, `inbox show`) and
+can overrule. The inbox and TUI show "answered by <who>: <first line>". Nothing un-answers it.
+
 The sender reads `human`, `agent w1` or `external orchestrator`.
 
 `--when` chooses the timing:

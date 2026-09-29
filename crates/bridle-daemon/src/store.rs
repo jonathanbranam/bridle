@@ -422,6 +422,26 @@ impl Store {
             .await
     }
 
+    /// Marks `id` read and answered by `by` with message `reply` (whose first line is `line`); does nothing if it's
+    /// already read.
+    pub async fn answer_message(
+        &self,
+        id: &str,
+        by: &str,
+        reply: &str,
+        line: &str,
+        at: DateTime<Utc>,
+    ) -> Result<(), StoreError> {
+        let (id, by, reply, line) = (
+            id.to_string(),
+            by.to_string(),
+            reply.to_string(),
+            line.to_string(),
+        );
+        self.with_conn(move |c| sync::answer_message(c, &id, &by, &reply, &line, at))
+            .await
+    }
+
     /// Like `set_message_state(id, Written, at)`, but only applies over
     /// `pending`: a message's replay confirmation (`Delivered`) can land
     /// concurrently from the agent's own event stream, on a separate task
@@ -937,9 +957,17 @@ mod sync {
         ALTER TABLE agents ADD COLUMN session_started INTEGER NOT NULL DEFAULT 1;
     "#;
 
+    // A question to the human closed by a delegate's reply (`[messages]
+    // answer_for_human`): who answered, and the reply's message id.
+    pub(super) const SCHEMA_V14: &str = r#"
+        ALTER TABLE messages ADD COLUMN answered_by TEXT;
+        ALTER TABLE messages ADD COLUMN answered_reply TEXT;
+        ALTER TABLE messages ADD COLUMN answered_line TEXT;
+    "#;
+
     const MIGRATIONS: &[&str] = &[
         SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7, SCHEMA_V8,
-        SCHEMA_V9, SCHEMA_V10, SCHEMA_V11, SCHEMA_V12, SCHEMA_V13,
+        SCHEMA_V9, SCHEMA_V10, SCHEMA_V11, SCHEMA_V12, SCHEMA_V13, SCHEMA_V14,
     ];
 
     pub(super) fn open(path: &Path) -> Result<Connection, StoreError> {
@@ -1648,7 +1676,8 @@ mod sync {
 
     const MESSAGE_SELECT: &str = "
         SELECT id, from_principal, to_kind, to_id, kind, body, reply_to, when_mode, state,
-               created_at, written_at, delivered_at, read_at
+               created_at, written_at, delivered_at, read_at, answered_by, answered_reply,
+               answered_line
         FROM messages";
 
     fn row_to_message(row: &Row<'_>) -> rusqlite::Result<Message> {
@@ -1672,6 +1701,9 @@ mod sync {
             written_at: parse_dt_opt(row.get(10)?)?,
             delivered_at: parse_dt_opt(row.get(11)?)?,
             read_at: parse_dt_opt(row.get(12)?)?,
+            answered_by: row.get(13)?,
+            answered_reply: row.get(14)?,
+            answered_line: row.get(15)?,
         })
     }
 
@@ -1715,6 +1747,9 @@ mod sync {
             written_at: None,
             delivered_at: None,
             read_at: None,
+            answered_by: None,
+            answered_reply: None,
+            answered_line: None,
         })
     }
 
@@ -1764,6 +1799,24 @@ mod sync {
         if n == 0 {
             return Err(StoreError::NotFound(id.to_string()));
         }
+        Ok(())
+    }
+
+    /// Closes a still-open message as answered; a no-op if it's already read.
+    pub(super) fn answer_message(
+        conn: &Connection,
+        id: &str,
+        by: &str,
+        reply: &str,
+        line: &str,
+        at: DateTime<Utc>,
+    ) -> Result<(), StoreError> {
+        conn.execute(
+            "UPDATE messages SET state = 'read', read_at = ?1, answered_by = ?2, answered_reply = ?3,
+                answered_line = ?4
+             WHERE id = ?5 AND state NOT IN ('read', 'dropped')",
+            params![fmt_dt(at), by, reply, line, id],
+        )?;
         Ok(())
     }
 
