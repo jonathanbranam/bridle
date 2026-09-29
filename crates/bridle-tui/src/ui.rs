@@ -30,6 +30,9 @@ pub fn draw(frame: &mut Frame, app: &App) {
     draw_logs(frame, chunks[3], app);
     draw_inbox(frame, chunks[4], app);
 
+    if let Some(msg) = &app.viewing {
+        draw_message(frame, frame.area(), msg);
+    }
     if let Some(compose) = &app.compose {
         draw_compose(frame, frame.area(), compose);
     }
@@ -41,7 +44,7 @@ fn draw_status_line(frame: &mut Frame, area: Rect, app: &App) {
         ConnectionStatus::Connected => "connected",
     };
     let line = Line::from(format!(
-        " bridle tui — {status} — Tab: switch view  j/k, ↑/↓: scroll  r: reply  q: quit"
+        " bridle tui — {status} — Tab: switch view  j/k, ↑/↓: scroll  Enter: open  r: reply  q: quit"
     ));
     frame.render_widget(line, area);
 }
@@ -145,6 +148,34 @@ fn draw_inbox(frame: &mut Frame, area: Rect, app: &App) {
         .block(border_block("Inbox", focused));
     let mut state = app.inbox_table_state;
     frame.render_stateful_widget(table, area, &mut state);
+}
+
+/// The opened message in full, same layout as `bridle inbox show`.
+fn draw_message(frame: &mut Frame, area: Rect, msg: &bridle_api::Message) {
+    let popup = centered_rect(area, 80, 80);
+    frame.render_widget(Clear, popup);
+
+    let kind = format!("{:?}", msg.kind).to_lowercase();
+    let time = msg.created_at.with_timezone(&chrono::Local);
+    let mut lines = vec![
+        Line::from(format!("From: {}", msg.from)),
+        Line::from(format!("Kind: {kind}")),
+        Line::from(format!("Time: {}", time.format("%Y-%m-%d %H:%M:%S %Z"))),
+    ];
+    if let Some(reply_to) = &msg.reply_to {
+        lines.push(Line::from(format!("Reply-To: {reply_to}")));
+    }
+    lines.push(Line::from(""));
+    lines.extend(msg.body.lines().map(|l| Line::from(l.to_string())));
+
+    let block = Block::default()
+        .title(format!("{} (r: reply, Esc/Enter: close)", msg.id))
+        .borders(Borders::ALL)
+        .border_style(Style::default().fg(Color::Cyan));
+    let paragraph = Paragraph::new(lines)
+        .block(block)
+        .wrap(Wrap { trim: false });
+    frame.render_widget(paragraph, popup);
 }
 
 /// A centered popup with the reply-in-progress body and a `|` cursor, drawn
