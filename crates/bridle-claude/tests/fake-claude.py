@@ -48,6 +48,9 @@ With `FAKE_CLAUDE_ENV_FILE` set, every invocation dumps its own environment
 (JSON object) to `<path>.<pid>`, same reasoning as above, so tests can assert
 on a per-spawn env var reaching (or not reaching) the child process.
 
+With `FAKE_CLAUDE_SESSIONS_DIR` set, `--resume ID` exits 1 with a "No
+conversation found" stderr line unless a process already ran with that id.
+
 `system/init` reports `claude_code_version` from a `.fake-claude-version` file
 in the working directory, or "fake".
 
@@ -492,7 +495,16 @@ def main():
     if env_file:
         with open(f"{env_file}.{os.getpid()}", "w") as f:
             json.dump(dict(os.environ), f)
-    session_id, _resume, replay_flag = parse_args(sys.argv[1:])
+    session_id, resume, replay_flag = parse_args(sys.argv[1:])
+    # Opt-in, like real claude: a session exists once a process has started
+    # it, and `--resume` of an unknown id dies at once (p4ks).
+    sessions_dir = os.environ.get("FAKE_CLAUDE_SESSIONS_DIR")
+    if sessions_dir:
+        marker = os.path.join(sessions_dir, session_id)
+        if resume and not os.path.exists(marker):
+            sys.stderr.write(f"No conversation found with session ID: {session_id}\n")
+            sys.exit(1)
+        open(marker, "w").close()
     state["session_id"] = session_id
     state["eof"] = False
     replay = replay_flag

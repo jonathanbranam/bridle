@@ -131,6 +131,12 @@ struct RuntimeState {
     /// `paused`, "now").
     wind_down_pending: bool,
     wind_down_deadline: Option<std::time::Instant>,
+    /// This process was started with `--resume` (p4ks); with `good_turn`
+    /// it tells `finish_agent` that claude died on a session it no longer
+    /// has, so the agent should come back on a fresh one.
+    resuming: bool,
+    /// Whether any turn of this process ended without `is_error`.
+    good_turn: bool,
 }
 
 struct AgentRuntime {
@@ -225,6 +231,7 @@ struct StartingAgent<'a> {
     session_id: &'a str,
     turns_so_far: u32,
     cost_so_far: f64,
+    resuming: bool,
 }
 
 impl AgentManager {
@@ -930,6 +937,7 @@ impl AgentManager {
                     session_id: &agent.session_id,
                     turns_so_far: agent.turns,
                     cost_so_far: agent.cost_usd_total,
+                    resuming: false,
                 },
                 spawned,
                 principal,
@@ -1023,6 +1031,7 @@ impl AgentManager {
             session_id,
             turns_so_far,
             cost_so_far,
+            resuming,
         } = start;
         let pid = spawned.handle.pid();
         let start = tokio::task::spawn_blocking(move || containment::start_time(pid))
@@ -1062,6 +1071,8 @@ impl AgentManager {
                 last_touch: std::time::Instant::now(),
                 wind_down_pending: false,
                 wind_down_deadline: None,
+                resuming,
+                good_turn: false,
             }),
             exited: exited_rx,
             task: AsyncMutex::new(None),
@@ -1112,13 +1123,23 @@ impl AgentManager {
             signal: None,
             stderr_tail: Vec::new(),
         });
-        self.finish_agent(&id, &runtime, outcome).await;
+        let retry = self.finish_agent(&id, &runtime, outcome).await;
         let _ = exited_tx.send(true);
         self.0
             .runtimes
             .lock()
             .expect("runtimes mutex poisoned")
             .remove(&id);
+        // After the runtime is gone, or the removal above would drop the
+        // retry's own.
+        if retry {
+            let this = self.clone();
+            tokio::spawn(async move {
+                if let Err(e) = this.resume(&id, true, &system_principal()).await {
+                    tracing::warn!(agent = %id, error = %e, "fresh-session retry failed");
+                }
+            });
+        }
     }
 
     async fn handle_claude_event(
@@ -1253,6 +1274,7 @@ impl AgentManager {
                     let cumulative = r.total_cost_usd.unwrap_or(st.last_cumulative);
                     let delta = cumulative - st.last_cumulative;
                     st.last_cumulative = cumulative;
+                    st.good_turn |= !r.is_error;
                     (delta, cumulative, st.turn_n, st.context_renew_pending)
                 };
                 let usage = r.usage.clone().unwrap_or_default();
@@ -1541,7 +1563,13 @@ impl AgentManager {
         }
     }
 
-    async fn finish_agent(&self, id: &str, runtime: &Arc<AgentRuntime>, outcome: ExitOutcome) {
+    /// Returns whether the caller should resume the agent on a fresh session.
+    async fn finish_agent(
+        &self,
+        id: &str,
+        runtime: &Arc<AgentRuntime>,
+        outcome: ExitOutcome,
+    ) -> bool {
         let snap = tokio::task::spawn_blocking(containment::snapshot)
             .await
             .ok()
@@ -1554,6 +1582,10 @@ impl AgentManager {
         let stop_requested = runtime.stop_requested.load(Ordering::SeqCst);
         let shutdown_requested = runtime.shutdown_requested.load(Ordering::SeqCst);
         let saw_any_line = st.saw_any_line;
+        // A `--resume` that died without one good turn: claude no longer has
+        // that session (p4ks), so retry below on a fresh one.
+        let dead_session = st.resuming && !st.good_turn && outcome.code != Some(0);
+        let dead_session_id = st.session_id.clone();
         drop(st);
 
         let (state, mut exit) =
@@ -1581,9 +1613,25 @@ impl AgentManager {
                 event_kind::AGENT_EXITED,
                 "system".to_string(),
                 Some(id.to_string()),
-                json!({"code": exit.code, "signal": exit.signal, "reason": exit.reason}),
+                json!({
+                    "code": exit.code, "signal": exit.signal, "reason": exit.reason,
+                    "stderr_tail": outcome.stderr_tail,
+                }),
             )
             .await;
+
+        let clean_stop = stop_requested
+            || shutdown_requested
+            || runtime.budget_exhausted.load(Ordering::SeqCst)
+            || runtime.budget_paused.load(Ordering::SeqCst);
+        if dead_session && !clean_stop {
+            tracing::warn!(
+                agent = %id, session = %dead_session_id,
+                "resumed session died before a good turn; retrying on a fresh session"
+            );
+            // Marks the session unstarted, so `resume` starts a new one.
+            let _ = self.0.store.set_agent_session(id, &dead_session_id).await;
+        }
 
         // Held messages go back to pending too: after a resume the agent is
         // idle, so `--when idle` has nothing left to wait for.
@@ -1601,6 +1649,7 @@ impl AgentManager {
                     .await;
             }
         }
+        dead_session && !clean_stop
     }
 
     // ---------- messages ----------
@@ -1924,7 +1973,20 @@ impl AgentManager {
             .ok_or_else(|| SupervisorError::Internal("agent vanished after stop".to_string()))
     }
 
-    pub async fn resume(
+    // Boxed for the same reason as `renew`: `finish_agent`'s dead-session
+    // retry (p4ks) calls this from `run_event_task`.
+    pub fn resume<'a>(
+        &'a self,
+        id_or_name: &'a str,
+        ignore_budget: bool,
+        principal: &'a Principal,
+    ) -> std::pin::Pin<
+        Box<dyn std::future::Future<Output = Result<Agent, SupervisorError>> + Send + 'a>,
+    > {
+        Box::pin(self.resume_inner(id_or_name, ignore_budget, principal))
+    }
+
+    async fn resume_inner(
         &self,
         id_or_name: &str,
         ignore_budget: bool,
@@ -1989,6 +2051,7 @@ impl AgentManager {
             (fresh, Session::New(fresh))
         };
         let session_id = session_uuid.to_string();
+        let resuming = matches!(session, Session::Resume(_));
         let cwd = std::path::PathBuf::from(&agent.cwd);
         let mut cmd = ClaudeCommand::new(cwd, session);
         cmd.program = self.0.claude_program.clone();
@@ -2041,6 +2104,7 @@ impl AgentManager {
                 session_id: &session_id,
                 turns_so_far: agent.turns,
                 cost_so_far: agent.cost_usd_total,
+                resuming,
             },
             spawned,
             principal,
@@ -2216,6 +2280,7 @@ impl AgentManager {
                 session_id: &session_id.to_string(),
                 turns_so_far: agent.turns,
                 cost_so_far: agent.cost_usd_total,
+                resuming: false,
             },
             spawned,
             principal,

@@ -24,3 +24,9 @@ than the inbox pane shows.
   `j`/`k` move the highlight but the view always starts at the first row; once the
   selection passes the pane's last visible row it can't be seen.
 - Related: [[tui-inbox-open-a-message-in-full-fgu6|reading a message in full]].
+
+## Resolution
+
+The renderer copied the `TableState` each frame, discarding the scroll offset. `App` now keeps the offset (`agents_offset`, `inbox_offset`) and `draw_agents`/`draw_inbox` restore and write it back (br-9e67).
+
+Resolved 2026-09-29.

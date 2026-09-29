@@ -4,6 +4,8 @@
 //! [`Key`] press, and assert on the resulting [`App`].
 
 use bridle_api::{Agent, AgentState, Event, Message as ApiMessage, TranscriptLine, event_kind};
+use std::cell::Cell;
+
 use ratatui::widgets::TableState;
 
 use crate::format::render_transcript_line;
@@ -149,6 +151,9 @@ pub struct App {
     pub selected_agent: usize,
     /// TableState for agents table to track view offset.
     pub agents_table_state: TableState,
+    /// First visible row, written back by the renderer (which only has `&App`): ratatui
+    /// derives the offset from the previous frame's, and `TableState` is copied per frame.
+    pub agents_offset: Cell<usize>,
     /// Lines scrolled up from the tail (0 = pinned to the newest event).
     pub event_scroll: usize,
     /// Id of the agent `log_lines` holds the transcript for, kept in step
@@ -166,6 +171,8 @@ pub struct App {
     pub selected_message: usize,
     /// TableState for inbox table to track view offset.
     pub inbox_table_state: TableState,
+    /// See `agents_offset`.
+    pub inbox_offset: Cell<usize>,
     /// Set while composing a reply to `messages[selected_message]`; `None`
     /// means the inbox view is just a list.
     pub compose: Option<Compose>,
