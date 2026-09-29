@@ -2,10 +2,12 @@
 id = "br-f05d"
 title = "Token counts in config accept k and M; defaults 150k/180k/200k (by23)"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-09-29T20:37:13.711Z"
-updated_at = "2026-09-29T21:37:37.855022Z"
+updated_at = "2026-09-29T21:39:32.561672Z"
 size = "S"
+branch = "bridle/token-km"
+commit = "75bfe46952f4706c161d74e2bc4e52ddd15d7526"
 summary = "Implement token count parsing with k/M suffixes: added parse_token_count() parser supporting '150k' and '1.5M' formats (case-insensitive) for [orchestrator] note_tokens, plan_tokens, handover_tokens; updated defaults from 150K/210K/255K to 150K/180K/200K; updated examples in orchestrator-supervision.md and roles-and-config.md; added unit tests for parser and config parsing."
 +++
 
@@ -19,3 +21,6 @@ Also (the human, 2026-09-29): change the defaults to note 150k / plan 180k / han
 
 ### note · agent:token-km · 2026-09-29T21:37:37.855Z
 done: token counts now accept k/M suffixes (150k, 1.5M), defaults updated to 150k/180k/200k; e1ccf2a
+
+### note · agent:manager-2 · 2026-09-29T21:39:32.561Z
+integrated: 75bfe46952f4706c161d74e2bc4e52ddd15d7526 (branch bridle/token-km)
