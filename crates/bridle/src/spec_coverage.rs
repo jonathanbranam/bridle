@@ -175,13 +175,11 @@ fn collect_scenarios_recursive(path: &Path, scenarios: &mut Vec<Scenario>) -> an
     }
 
     if path.is_dir() {
-        // Skip certain directories
-        if let Some(name) = path.file_name() {
-            if let Some(s) = name.to_str() {
-                if s == "node_modules" || s == "target" || s == ".git" || s.starts_with('.') {
-                    return Ok(());
-                }
-            }
+        if let Some(name) = path.file_name()
+            && let Some(s) = name.to_str()
+            && (s == "node_modules" || s == "target" || s == ".git" || s.starts_with('.'))
+        {
+            return Ok(());
         }
 
         for entry in std::fs::read_dir(path)? {
@@ -208,13 +206,11 @@ fn find_bound_ids(path: &Path, bound: &mut HashSet<String>) -> anyhow::Result<()
     }
 
     if path.is_dir() {
-        // Skip certain directories
-        if let Some(name) = path.file_name() {
-            if let Some(s) = name.to_str() {
-                if s == "node_modules" || s == "target" || s == ".git" || s.starts_with('.') {
-                    return Ok(());
-                }
-            }
+        if let Some(name) = path.file_name()
+            && let Some(s) = name.to_str()
+            && (s == "node_modules" || s == "target" || s == ".git" || s.starts_with('.'))
+        {
+            return Ok(());
         }
 
         for entry in std::fs::read_dir(path)? {
