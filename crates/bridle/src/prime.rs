@@ -6,25 +6,37 @@ use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
+use bridle_api::TaskKind;
 use bridle_daemon::config::Config;
 use bridle_daemon::rules::{self, Layer, LayerKind, Resolution, RuleState};
 
 /// README.md is printed in full only up to this many lines; longer, it's a pointer.
 const README_MAX_LINES: usize = 40;
 
+/// What an agent on an `explore` task is told first (docs/design/explorations.md).
+const EXPLORE_PARAGRAPH: &str = "You are exploring an alternative. Contradicting the \
+architecture, goals and specs is intended: don't bring the code back into line and \
+don't flag the divergence. Exploration code stays on `explore/<id>`; only the findings \
+doc merges, into `design/explore/<id>/`.";
+
 /// `role` is the rule-tag name (`worker`, `product-manager`), `title` what the heading says.
+/// `kind` is the kind of the task being worked, when known.
 pub fn render(
     repo: &Path,
     config: &Config,
     role: &str,
     title: &str,
     components: &[String],
+    kind: Option<TaskKind>,
 ) -> Result<String> {
     let workflow_root = config.workflow.as_deref().map(Path::new);
     let base_layers = rules::discover_layers(repo, workflow_root, &config.packs);
     let base = rules::load_and_resolve(&base_layers).context("resolving workflow rules")?;
 
     let mut out = format!("# Role: {title}\n\n");
+    if role == "worker" && kind == Some(TaskKind::Explore) {
+        let _ = write!(out, "{EXPLORE_PARAGRAPH}\n\n");
+    }
     out.push_str("## Rules\n\n");
     out.push_str(&rules_section(&base, role, None));
     out.push_str(&facts_and_guides(&base_layers));
@@ -199,8 +211,15 @@ mod tests {
     #[test]
     fn named_chain_shows_sibling_only_listed() {
         let (dir, config) = fixture();
-        let out =
-            render(dir.path(), &config, "worker", "worker", &["dungeon".into()]).expect("render");
+        let out = render(
+            dir.path(),
+            &config,
+            "worker",
+            "worker",
+            &["dungeon".into()],
+            None,
+        )
+        .expect("render");
         assert!(out.contains("project rule"), "{out}");
         assert!(
             out.contains("client rule") && out.contains("dungeon rule"),
@@ -229,6 +248,7 @@ mod tests {
             "worker",
             "worker",
             &["client-games".into()],
+            None,
         )
         .expect("render");
         assert!(out.contains("- docs/client/README.md"));
@@ -238,7 +258,8 @@ mod tests {
     #[test]
     fn rules_for_other_roles_are_left_out_and_no_components_prints_no_component_sections() {
         let (dir, config) = fixture();
-        let out = render(dir.path(), &config, "product-manager", "planner", &[]).expect("render");
+        let out =
+            render(dir.path(), &config, "product-manager", "planner", &[], None).expect("render");
         assert!(!out.contains("project rule"), "{out}");
         assert!(!out.contains("# Component:"), "{out}");
         assert!(out.contains("Other components: client-games (docs/client), client-play (docs/play), dungeon (docs/dungeon)"), "{out}");
@@ -247,6 +268,39 @@ mod tests {
     #[test]
     fn unknown_component_is_an_error() {
         let (dir, config) = fixture();
-        assert!(render(dir.path(), &config, "worker", "worker", &["nope".into()]).is_err());
+        assert!(
+            render(
+                dir.path(),
+                &config,
+                "worker",
+                "worker",
+                &["nope".into()],
+                None
+            )
+            .is_err()
+        );
+    }
+
+    #[test]
+    fn explore_task_gets_the_paragraph_and_a_feature_task_does_not() {
+        let (dir, config) = fixture();
+        let go = |kind| render(dir.path(), &config, "worker", "worker", &[], kind).expect("render");
+        let explore = go(Some(TaskKind::Explore));
+        assert!(
+            explore.contains("You are exploring an alternative"),
+            "{explore}"
+        );
+        assert!(!go(Some(TaskKind::Feature)).contains("exploring an alternative"));
+        assert!(!go(None).contains("exploring an alternative"));
+    }
+
+    #[test]
+    fn repo_base_explorations_rule_reaches_every_role() {
+        let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let config = Config::load(&repo).expect("config");
+        for role in ["worker", "product-manager"] {
+            let out = render(&repo, &config, role, role, &[], None).expect("render");
+            assert!(out.contains("- explorations [must, base"), "{role}: {out}");
+        }
     }
 }

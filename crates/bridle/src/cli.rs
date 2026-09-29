@@ -256,6 +256,10 @@ pub struct PrimeArgs {
     /// Component to scope to (repeatable); worker/planner only. Defaults to `BRIDLE_COMPONENTS`.
     #[arg(long = "component", value_name = "ID")]
     pub components: Vec<String>,
+    /// The task being worked; worker only. Its kind can add to the prime (an `explore`
+    /// task gets the exploring agent's paragraph).
+    #[arg(long, value_name = "ID")]
+    pub task: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
