@@ -1,7 +1,7 @@
 //! Dispatch and implementation for every subcommand except `serve` (see
 //! `serve.rs`). See docs/design/cli.md.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 use std::path::{Path, PathBuf};
 
 use anyhow::Context;
@@ -80,6 +80,9 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Prime(args) => prime(&cli, args).await,
         Command::Rules(args) => rules(&cli, args).await,
         Command::Sync => sync(&cli).await,
+        Command::Spec(SpecArgs {
+            action: SpecAction::Export(args),
+        }) => spec_export(&cli, args).await,
         Command::Spec(args) => spec(&cli, args),
         Command::Goals(args) => crate::goals::run(&cli, args).await,
         Command::Arch(args) => arch(&cli, args).await,
@@ -2900,7 +2903,7 @@ pub(crate) fn spec_inputs(paths: &[PathBuf], root: Option<&Path>) -> anyhow::Res
 fn spec(cli: &Cli, args: &SpecArgs) -> Result<(), CliError> {
     let args = match &args.action {
         SpecAction::Check(args) => args,
-        SpecAction::Export(args) => return spec_export(cli, args),
+        SpecAction::Export(_) => unreachable!("dispatched to spec_export"),
         SpecAction::Id(args) => return crate::specid::run(cli, args),
         SpecAction::Import(args) => return crate::spec_import::run(cli, args),
         SpecAction::Coverage(args) => return crate::spec_coverage::run(cli, args),
@@ -3085,15 +3088,42 @@ fn explore(action: &crate::cli::ExploreAction) -> Result<(), CliError> {
     Ok(())
 }
 
-/// `bridle spec export`: local, no daemon call (docs/design/specs-to-tests.md).
-fn spec_export(cli: &Cli, args: &SpecExportArgs) -> Result<(), CliError> {
+/// `bridle spec export`: local, except `--task`, which asks the daemon for the task's
+/// declared impact (docs/design/specs-to-tests.md).
+async fn spec_export(cli: &Cli, args: &SpecExportArgs) -> Result<(), CliError> {
     let files = spec_inputs(&args.paths, args.root.as_deref())?;
+
+    let mut selection: Option<HashSet<String>> = None;
+    if !args.scenario.is_empty() {
+        selection = Some(args.scenario.iter().cloned().collect());
+    }
+    if let Some(task) = &args.task {
+        let impact = client_for_read(cli).await?.get_task(task).await?.impact;
+        if impact.is_empty() {
+            return Err(anyhow::anyhow!("{task} declares no impact; nothing to select").into());
+        }
+        selection.get_or_insert_with(HashSet::new).extend(
+            impact
+                .modify
+                .into_iter()
+                .chain(impact.add_under)
+                .chain(impact.remove),
+        );
+    }
 
     let mut specs = Vec::new();
     let mut diagnostics = Vec::new();
     for file in &files {
         match bridle_spec::parse_file(file) {
-            Ok(spec) => specs.push((file, spec)),
+            Ok(mut spec) => {
+                if let Some(ids) = &selection {
+                    crate::spec_export::select(&mut spec, ids);
+                    if spec.requirements.is_empty() {
+                        continue;
+                    }
+                }
+                specs.push((file, spec));
+            }
             Err(bridle_spec::ParseFileError::Diagnostics(ds)) => diagnostics.extend(ds),
             Err(e) => return Err(anyhow::Error::new(e).into()),
         }

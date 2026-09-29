@@ -2,6 +2,7 @@
 //! (docs/design/specs-to-tests.md). Nothing here is committed; runners
 //! regenerate it at collection time.
 
+use std::collections::HashSet;
 use std::path::Path;
 
 use bridle_spec::{Keyword, Requirement, Scenario, Spec, Verification};
@@ -23,6 +24,19 @@ pub fn capability(path: &Path) -> String {
         return dir.to_string();
     }
     stem.to_string()
+}
+
+/// Narrows `spec` to the selected ids: an `s-` id keeps that scenario, an `r-` id keeps the
+/// requirement whole. A requirement with nothing selected is dropped.
+pub fn select(spec: &mut Spec, ids: &HashSet<String>) {
+    spec.requirements.retain_mut(|r| {
+        if r.id.as_ref().is_some_and(|id| ids.contains(id)) {
+            return true;
+        }
+        r.scenarios
+            .retain(|s| s.id.as_ref().is_some_and(|id| ids.contains(id)));
+        !r.scenarios.is_empty()
+    });
 }
 
 /// One `.feature`: a Rule per requirement, a Scenario per executable
@@ -202,5 +216,36 @@ fn json_scenario(s: &Scenario) -> JsonScenario {
             header: e.header.clone(),
             rows: e.rows.clone(),
         }),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const SPEC: &str = "## Requirements\n\n### Requirement: A {#r-0001}\n\ntext\n\n#### Scenario: One {#s-0001}\n\n*Verification*: **executable**\n\n- **WHEN** x\n- **THEN** y\n\n#### Scenario: Two {#s-0002}\n\n*Verification*: **executable**\n\n- **WHEN** x\n- **THEN** y\n\n### Requirement: B {#r-0002}\n\ntext\n\n#### Scenario: Three {#s-0003}\n\n*Verification*: **executable**\n\n- **WHEN** x\n- **THEN** y\n";
+
+    fn selected(ids: &[&str]) -> Vec<(String, usize)> {
+        let mut spec = bridle_spec::parse_str("t.md", SPEC).expect("parses");
+        select(&mut spec, &ids.iter().map(|s| s.to_string()).collect());
+        spec.requirements
+            .iter()
+            .map(|r| (r.title.clone(), r.scenarios.len()))
+            .collect()
+    }
+
+    #[test]
+    fn scenario_id_keeps_that_scenario_and_its_requirement_only() {
+        assert_eq!(selected(&["s-0002"]), [("A".to_string(), 1)]);
+    }
+
+    #[test]
+    fn requirement_id_keeps_all_its_scenarios() {
+        assert_eq!(selected(&["r-0001"]), [("A".to_string(), 2)]);
+    }
+
+    #[test]
+    fn unknown_id_selects_nothing() {
+        assert!(selected(&["s-ffff"]).is_empty());
     }
 }

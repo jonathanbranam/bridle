@@ -99,7 +99,7 @@ bridle spec id [paths...] [--root DIR] [--ledger FILE] [--dry-run]   writes a st
                                              ids are unique across the files processed and never reused
                                              (ledger `<root>/.ids`); idempotent; `--dry-run` prints
                                              the plan and writes nothing; local only, no daemon call
-bridle spec export --format gherkin|json [--out DIR] [paths...] [--root DIR]
+bridle spec export --format gherkin|json [--out DIR] [paths...] [--root DIR] [--scenario ID]... [--task ID]
                                              exports specs for test runners (same path defaults as
                                              `spec check`); gherkin: one <capability>.feature per spec
                                              (Rule per requirement, executable scenarios only, tagged
@@ -107,7 +107,13 @@ bridle spec export --format gherkin|json [--out DIR] [paths...] [--root DIR]
                                              default `.bridle/cache/features/` (gitignored); json: the
                                              whole AST (documented in specs-to-tests.md) on stdout, or
                                              `specs.json` in --out; refuses, printing the diagnostics,
-                                             when any spec has errors; local only, no daemon call
+                                             when any spec has errors; `--scenario s-xxxx|r-xxxx`
+                                             (repeatable) keeps only those scenarios (an `r-` id keeps
+                                             all its scenarios), dropping requirements and specs with
+                                             none selected; `--task ID` selects the scenarios in the
+                                             task's declared impact (modify, add-under, remove ids;
+                                             exits 1 if it declares none) and asks the daemon, else
+                                             local only
 bridle spec coverage [--root DIR] [--tests DIR ...] [--require-all] [--json]
                                              lists executable scenarios whose id does not appear in
                                              test sources; scans text files (skip binary, node_modules,
