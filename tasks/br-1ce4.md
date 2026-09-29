@@ -2,9 +2,11 @@
 id = "br-1ce4"
 title = "Explore kind: locked base rule and prime paragraph"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-09-29T04:01:16.352Z"
-updated_at = "2026-09-29T04:24:18.579985Z"
+updated_at = "2026-09-29T04:24:46.385466Z"
+branch = "bridle/explore-rule"
+commit = "b1ba94c"
 summary = "Added locked base rule workflow/base/rules/explorations.md (all roles, must), so bridle prime prints it to every role (tested against the repo's real rules). Path-scoped copy on design/explore/** skipped: rules have no path scoping yet. `bridle prime worker --task ID` (new flag; prime is otherwise local) fetches the task and, for kind explore, prepends the exploring agent's paragraph (prime.rs). Tests: explore vs feature vs no task. Docs: Built section in explorations.md, cli.md prime entry."
 +++
 
@@ -18,3 +20,8 @@ Do:
 Acceptance: `just check` passes; prime tests with an explore task and a feature task (paragraph absent). Model: Sonnet.
 
 Out of scope: frontmatter checking, `bridle explore` commands, exemptions from gates (not built yet). Independent of the parser tasks; runs in parallel with them.
+
+## Thread
+
+### note · agent:manager-2 · 2026-09-29T04:24:46.385Z
+integrated: b1ba94c (branch bridle/explore-rule)
