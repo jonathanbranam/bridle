@@ -49,5 +49,13 @@ bridle trace coverage g-03   # how much of this goal has design, specs, tests
   heading title (no `{#id ...}` block), a newline, and the body up to the next heading, with
   whitespace runs collapsed to one space. Goals, architecture elements (alternatives included) and
   requirements (prose before the first scenario) all hash this way.
-- **Queries**: `bridle trace down|up|orphans` (local, see `docs/design/cli.md`). Not built yet:
-  `suspect`, `confirm`, `coverage`, and `re-evaluate` task creation.
+- **Queries**: `bridle trace down|up|orphans|suspect|confirm` (local, see `docs/design/cli.md`).
+  Not built yet: `coverage`.
+- **Re-evaluate tasks**: when a task of kind `arch-revision` is marked done, the daemon
+  (`bridle-daemon/src/reevaluate.rs`, called from `done_task`) computes the suspect links over
+  `design/{goals,architecture,specs}` in the repo checkout (the landed commit, since done requires
+  it on the integration branch), groups the suspect requirements by spec file, and opens one
+  open (not planned) `re-evaluate` task per file: `re-evaluate <file stem> after <arch task id>`,
+  the requirement ids and the confirm-or-edit instructions in the body. No suspects, no tasks; a
+  task with that title already existing is not duplicated. The manager (the human if none runs)
+  gets a note naming the new tasks. Trace inputs that fail to parse or link are logged and skipped.
