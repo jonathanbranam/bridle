@@ -602,3 +602,4 @@
 {"actor":"agent:manager-2","at":"2026-09-29T18:01:24.200628Z","from":"planned","task":"br-a424","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-09-29T18:10:31.397683Z","from":"planned","task":"br-9fca","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-09-29T18:19:42.443007Z","from":"planned","task":"br-5c6c","to":"integrated"}
+{"actor":"human","at":"2026-09-29T18:20:36.018Z","from":"","task":"br-5e4b","to":"open"}
