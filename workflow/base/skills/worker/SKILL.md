@@ -32,6 +32,8 @@ what judgement applies.
   whoever gave you the task:
   `bridle send <sender> --task <task-id> "done: <one-line summary>; <commit sha>"`
   (the text goes on the task's thread; they get a short pointer).
+  Run these commands with Bash: printing them does nothing, and the manager only learns
+  you are done from the send.
 
 Never push, fetch, or merge from a remote, merge your own branch into
 anything, or touch files outside your worktree. Rules, guides and the
