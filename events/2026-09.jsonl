@@ -480,3 +480,4 @@
 {"actor":"agent:pm-1","at":"2026-09-29T08:10:47.939425Z","queue":"reprioritized"}
 {"actor":"agent:pm-1","at":"2026-09-29T08:10:47.952952Z","queue":"reprioritized"}
 {"actor":"agent:pm-1","at":"2026-09-29T08:10:47.965802Z","queue":"reprioritized"}
+{"actor":"agent:manager-2","at":"2026-09-29T08:25:20.619056Z","from":"planned","task":"br-648a","to":"integrated"}
