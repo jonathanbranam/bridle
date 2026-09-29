@@ -1,5 +1,2 @@
 [[tier]]
-tasks = [
-    "br-2ebc",
-    "br-511f",
-]
+tasks = ["br-511f"]
