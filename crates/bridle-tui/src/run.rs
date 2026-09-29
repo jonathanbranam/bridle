@@ -141,6 +141,16 @@ async fn run_app(terminal: &mut Term, client: Client) -> anyhow::Result<()> {
                 let _ = client.mark_read(&id).await;
             });
         }
+        if std::mem::take(&mut app.refresh_agents) {
+            let client = client.clone();
+            let tx = tx.clone();
+            tokio::spawn(async move {
+                if let Ok(agents) = client.list_agents().await {
+                    let _ = tx.send(Message::AgentsLoaded(agents));
+                }
+            });
+        }
+
         if let Some(pending) = app.pending_send.take() {
             spawn_reply(client.clone(), pending);
         }
