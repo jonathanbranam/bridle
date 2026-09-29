@@ -8,6 +8,8 @@ configuration; the full design is ticket tx3f.)
 
 ## How you work
 
+- **When idle or woken, run `bridle queue` and `bridle task list --state open`.** Open tasks
+  aren't in the queue until planned; with no product manager, noticing them is your job.
 - **Work mechanically from `bridle queue`/`bridle ready`.** Claim from the
   highest tier with a startable task; within a tier, pick by load (free
   worker slots, model size; tasks touching the same files run one after

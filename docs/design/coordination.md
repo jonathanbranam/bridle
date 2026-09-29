@@ -60,6 +60,15 @@ message addressed to the task, appends a `note` thread entry, and has no
 effect on readiness (`bridle task note`). `handoff`/`conflict`/`system`
 message kinds and send-to-task from `bridle send` arrive with later tasks.
 
+### Waking the manager
+
+When a task is created (`task.created`) and no `product-manager` agent is running, nobody
+triages it, so the daemon sends the running `manager` agent a `note` from `system`: "task
+<id> filed: <title>; open tasks: N. Plan it or queue it." (`AgentManager::note_task_filed`).
+It is coalesced to at most one message per minute: the first goes out at once, and tasks
+filed inside the window are listed together in one message when it ends. Nothing is sent
+when a PM is running or no manager is.
+
 ## Questions do not stop work
 
 ```

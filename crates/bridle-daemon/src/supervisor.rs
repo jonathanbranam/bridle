@@ -180,7 +180,21 @@ struct Inner {
     /// `[budget] max_workers` until cleared or the daemon restarts.
     /// usage-and-budget.md, Max-workers override.
     max_workers_override: std::sync::Mutex<Option<u32>>,
+    /// Tasks filed since the manager was last told; see `note_task_filed`.
+    task_wake: std::sync::Mutex<TaskWake>,
 }
+
+/// Coalescing state for the "new task filed" message to the manager.
+#[derive(Default)]
+struct TaskWake {
+    last_sent: Option<std::time::Instant>,
+    pending: Vec<(String, String)>,
+    open_count: usize,
+    flush_scheduled: bool,
+}
+
+/// At most one "task filed" message per manager per this long.
+const TASK_WAKE_WINDOW: std::time::Duration = std::time::Duration::from_secs(60);
 
 #[derive(Clone)]
 pub struct AgentManager(Arc<Inner>);
@@ -236,7 +250,88 @@ impl AgentManager {
             runtimes: std::sync::Mutex::new(HashMap::new()),
             governor,
             max_workers_override: std::sync::Mutex::new(None),
+            task_wake: std::sync::Mutex::new(TaskWake::default()),
         }))
+    }
+
+    /// A project with no product manager has nobody to triage a new `open`
+    /// task, so the running manager is told (at most once a minute, listing
+    /// every task filed since). Does nothing when a PM is running or no
+    /// manager is.
+    pub async fn note_task_filed(&self, id: &str, title: &str, open_count: usize) {
+        let Ok(agents) = self.0.store.list_agents(false).await else {
+            return;
+        };
+        let running = |role: &str| {
+            agents
+                .iter()
+                .any(|a| a.role == role && a.state.is_running())
+        };
+        if running("product-manager") || !running("manager") {
+            return;
+        }
+        let delay = {
+            let mut w = self.0.task_wake.lock().expect("task_wake mutex poisoned");
+            w.pending.push((id.to_string(), title.to_string()));
+            w.open_count = open_count;
+            match w.last_sent.map(|t| t.elapsed()) {
+                Some(e) if e < TASK_WAKE_WINDOW => {
+                    if w.flush_scheduled {
+                        return;
+                    }
+                    w.flush_scheduled = true;
+                    TASK_WAKE_WINDOW - e
+                }
+                _ => std::time::Duration::ZERO,
+            }
+        };
+        if delay.is_zero() {
+            self.flush_task_wake().await;
+        } else {
+            let this = self.clone();
+            tokio::spawn(async move {
+                tokio::time::sleep(delay).await;
+                this.flush_task_wake().await;
+            });
+        }
+    }
+
+    async fn flush_task_wake(&self) {
+        let (pending, open_count) = {
+            let mut w = self.0.task_wake.lock().expect("task_wake mutex poisoned");
+            w.flush_scheduled = false;
+            w.last_sent = Some(std::time::Instant::now());
+            (std::mem::take(&mut w.pending), w.open_count)
+        };
+        if pending.is_empty() {
+            return;
+        }
+        let Ok(agents) = self.0.store.list_agents(false).await else {
+            return;
+        };
+        let filed: Vec<String> = pending
+            .iter()
+            .map(|(id, title)| format!("task {id} filed: {title}"))
+            .collect();
+        let body = format!(
+            "{}; open tasks: {open_count}. Plan it or queue it.",
+            filed.join("; ")
+        );
+        for m in agents
+            .iter()
+            .filter(|a| a.role == "manager" && a.state.is_running())
+        {
+            let _ = self
+                .send(
+                    "system".to_string(),
+                    ToTarget::Agent(m.id.clone()),
+                    MessageKind::Note,
+                    body.clone(),
+                    bridle_api::types::When::Idle,
+                    None,
+                )
+                .await;
+        }
     }
 
     /// Any one live agent's control handle, for the governor's `get_usage`
