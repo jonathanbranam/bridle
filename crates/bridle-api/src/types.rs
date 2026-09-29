@@ -943,12 +943,15 @@ impl std::str::FromStr for TaskKind {
 /// A rough estimate of a task's size, so small ones can be picked when the
 /// budget runs short. Optional on a task; nothing derives or acts on it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
 pub enum TaskSize {
+    #[serde(rename = "S")]
     S,
+    #[serde(rename = "M")]
     M,
+    #[serde(rename = "L")]
     L,
     /// Marker used in EditTaskRequest to clear a task's size.
+    #[serde(rename = "none")]
     None,
 }
 
@@ -1356,5 +1359,23 @@ mod tests {
             let k: EdgeKind = s.parse().unwrap();
             assert_eq!(k.as_str(), s);
         }
+    }
+
+    #[test]
+    fn task_size_preserves_wire_format() {
+        assert_eq!(
+            serde_json::to_value(TaskSize::S).unwrap(),
+            serde_json::json!("S")
+        );
+        assert_eq!(
+            serde_json::to_value(TaskSize::M).unwrap(),
+            serde_json::json!("M")
+        );
+        assert_eq!(
+            serde_json::to_value(TaskSize::L).unwrap(),
+            serde_json::json!("L")
+        );
+        let s: TaskSize = serde_json::from_value(serde_json::json!("S")).unwrap();
+        assert_eq!(s, TaskSize::S);
     }
 }
