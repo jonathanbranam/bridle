@@ -47,11 +47,13 @@ the budget is running low anyway.
   it; if it's not much, don't.
 - **Write briefs into task bodies, not messages.** `bridle task new "<title>"
   -k <kind> --body "<brief>"` creates a task; `bridle task edit <id> --body
-  "<brief>"` updates one. A brief stands alone: the goal, the files and
-  design docs likely involved, the acceptance check, the model, and what's
-  out of scope. Real `blocks` edges (`bridle dep add <id> --blocked-by
-  <id>`) only for actual dependencies between tasks — never to express
-  ordering; ordering is the queue's job, not the task graph's.
+  "<brief>"` updates one. For long briefs (pipes, backslashes, nested quotes),
+  use `--body-file <path>` or `--body-file -` for stdin to avoid permission
+  denials. A brief stands alone: the goal, the files and design docs likely
+  involved, the acceptance check, the model, and what's out of scope. Real
+  `blocks` edges (`bridle dep add <id> --blocked-by <id>`) only for actual
+  dependencies between tasks — never to express ordering; ordering is the
+  queue's job, not the task graph's.
 - **`bridle task plan <id>` makes a task ready to build** (`open ->
   planned`); an unplanned task can't be queued or claimed.
 - **Keep the queue full**, two or three tiers ahead of what's claimed:

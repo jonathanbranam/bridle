@@ -573,23 +573,35 @@ async fn show(cli: &Cli, args: &ShowArgs) -> Result<(), CliError> {
     Ok(())
 }
 
-async fn send(cli: &Cli, args: &SendArgs) -> Result<(), CliError> {
-    let client = client_for(cli).await?;
-    let body = match (&args.text, &args.text_file) {
-        (Some(t), _) => t.clone(),
+fn read_text(
+    text: &Option<String>,
+    text_file: &Option<std::path::PathBuf>,
+    name: &str,
+) -> Result<String, CliError> {
+    match (text, text_file) {
+        (Some(t), _) => Ok(t.clone()),
         (None, Some(f)) => {
             if f.to_string_lossy() == "-" {
-                std::io::read_to_string(std::io::stdin()).context("reading from stdin")?
+                std::io::read_to_string(std::io::stdin())
+                    .context(format!("reading {} from stdin", name))
+                    .map_err(CliError::from)
             } else {
-                std::fs::read_to_string(f).with_context(|| format!("reading {}", f.display()))?
+                std::fs::read_to_string(f)
+                    .with_context(|| format!("reading {} from {}", name, f.display()))
+                    .map_err(CliError::from)
             }
         }
-        (None, None) => {
-            return Err(CliError::from(anyhow::anyhow!(
-                "specify TEXT or --text-file"
-            )));
-        }
-    };
+        (None, None) => Err(CliError::from(anyhow::anyhow!(
+            "specify {} or use --{}-file",
+            name,
+            name.replace(' ', "-").to_lowercase()
+        ))),
+    }
+}
+
+async fn send(cli: &Cli, args: &SendArgs) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let body = read_text(&args.text, &args.text_file, "text")?;
     let req = SendRequest {
         to: Some(args.to.clone()),
         body,
@@ -1672,10 +1684,15 @@ fn print_task_row(t: &Task) {
 
 async fn task_new(cli: &Cli, args: &TaskNewArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
+    let body = if args.body.is_some() || args.body_file.is_some() {
+        read_text(&args.body, &args.body_file, "body")?
+    } else {
+        String::new()
+    };
     let req = NewTaskRequest {
         title: args.title.clone(),
         kind: task_kind_arg(args.kind),
-        body: args.body.clone().unwrap_or_default(),
+        body,
         components: args.component.clone(),
     };
     let task = client.new_task(&req).await?;
@@ -1730,9 +1747,14 @@ async fn task_show(cli: &Cli, args: &TaskShowArgs) -> Result<(), CliError> {
 
 async fn task_edit(cli: &Cli, args: &TaskEditArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
+    let body = if args.body.is_some() || args.body_file.is_some() {
+        Some(read_text(&args.body, &args.body_file, "body")?)
+    } else {
+        None
+    };
     let req = EditTaskRequest {
         title: args.title.clone(),
-        body: args.body.clone(),
+        body,
         components: if args.no_component {
             Some(Vec::new())
         } else if args.component.is_empty() {
@@ -1812,7 +1834,8 @@ async fn task_reopen(cli: &Cli, args: &TaskReopenArgs) -> Result<(), CliError> {
 
 async fn task_note(cli: &Cli, args: &TaskNoteArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
-    let task = client.note_task(&args.task, &args.text).await?;
+    let text = read_text(&args.text, &args.text_file, "text")?;
+    let task = client.note_task(&args.task, &text).await?;
     if cli.json {
         render::print_json(&task)?;
     } else {
