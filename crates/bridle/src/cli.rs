@@ -141,6 +141,39 @@ pub enum Command {
     Goals(GoalsArgs),
     /// Architecture-tier elements (docs/design/architecture-tier.md). Local, no daemon call.
     Arch(ArchArgs),
+    /// Exploration findings docs (docs/design/explorations.md). Local, no daemon call.
+    Explore(ExploreArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct ExploreArgs {
+    #[command(subcommand)]
+    pub action: ExploreAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum ExploreAction {
+    /// Check findings frontmatter; exits non-zero on any error.
+    Check(ExploreCheckArgs),
+    /// Scaffold design/explore/<id>/findings.md with status open.
+    New(ExploreIdArgs),
+    /// Set the findings doc's status to concluded.
+    Conclude(ExploreIdArgs),
+    /// Set the findings doc's status to abandoned.
+    Abandon(ExploreIdArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct ExploreCheckArgs {
+    /// Findings files, or directories searched recursively for `*.md`
+    /// (default `design/explore`).
+    pub paths: Vec<PathBuf>,
+}
+
+#[derive(Debug, Args)]
+pub struct ExploreIdArgs {
+    /// The exploration's task id; its doc is design/explore/<id>/findings.md.
+    pub id: String,
 }
 
 #[derive(Debug, Args)]
