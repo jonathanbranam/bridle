@@ -1171,7 +1171,11 @@ mod tests {
         let repo_root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
         let workflow_root = repo_root.join("workflow");
         let repo = tempfile::tempdir().expect("tempdir");
-        let layers = discover_layers(repo.path(), Some(&workflow_root), &["typescript".to_string()]);
+        let layers = discover_layers(
+            repo.path(),
+            Some(&workflow_root),
+            &["typescript".to_string()],
+        );
         let resolution = load_and_resolve(&layers).expect("resolve");
         for id in [
             "typescript.check-command",
