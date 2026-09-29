@@ -2,8 +2,9 @@
 id: k3wp
 title: Bridle removes an agent and its worktree when its work lands, not the manager by hand
 opened: 2026-09-29
+resolved: 2026-09-29
 repos: [bridle]
-changes: []
+changes: [b0b9ab6, 61c52ff, ab158f6, e26c54d]
 specs: []
 needs: []
 see: [tr7k, sq4m]
@@ -36,3 +37,7 @@ bridle checks it happened.
   branch" is always one agent.
 - **A safety net.** `bridle status` (or the daemon on startup) lists stopped agents whose
   branch is merged, so leftovers show up instead of hiding.
+
+## Resolution
+
+Resolved by 61c52ff (br-7d81, b0b9ab6): `bridle task done --branch` removes the landed branch's agents, worktree and branch, and `bridle status` lists stopped agents whose branch has merged; and e26c54d (br-0589, ab158f6): spawn refuses a branch another agent holds, so a branch has one agent. The answer lives in docs/design/cli.md.

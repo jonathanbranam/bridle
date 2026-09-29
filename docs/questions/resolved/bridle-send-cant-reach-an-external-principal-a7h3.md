@@ -2,8 +2,9 @@
 id: a7h3
 title: bridle send can't reach an external principal
 opened: 2026-09-27
+resolved: 2026-09-29
 repos: [bridle]
-changes: []
+changes: [34e6268, d998a2a, 939b289]
 specs: []
 needs: []
 see: [hj4g]
@@ -21,3 +22,7 @@ behalf.
 Should external principals be addressable, with their own inbox, and how does
 the orchestrator (or anything else outside bridle) get woken when a message
 arrives for it?
+
+## Resolution
+
+Resolved by d998a2a (34e6268): `bridle send` and `bridle inbox` work for `external:<name>` principals, so the orchestrator has its own inbox; 939b289 has the advisor message the orchestrator directly rather than via the human's inbox. The answer lives in docs/design/agent-host/principals.md and docs/design/agent-host/messages.md.

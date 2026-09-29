@@ -28,3 +28,10 @@ to remind you or give you a hint."
   Check that the ledger is actually being fed for this session: `bridle usage --json`'s
   `interactive_today` was empty on 2026-09-29 even with the statusline running.
 - The same for the advisor's session, later.
+
+## Progress (2026-09-29)
+
+Built (037c6ee): `scripts/orchestrator-watch.sh` exits with `CONTEXT <tokens>` when the
+orchestrator's own session passes 140K, finding the session by the id
+`scripts/claude-orchestrator` records. Still open: the same for the advisor's session, and
+confirming the ledger is fed for sessions bridle doesn't host (`interactive_today` empty).

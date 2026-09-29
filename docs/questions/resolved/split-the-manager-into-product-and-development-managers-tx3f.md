@@ -2,8 +2,9 @@
 id: tx3f
 title: Split the manager into a product manager and a development manager
 opened: 2026-09-27
+resolved: 2026-09-29
 repos: [bridle]
-changes: []
+changes: [89b560e]
 specs: []
 needs: []
 see: [hj4g]
@@ -38,3 +39,7 @@ The manager's context fills with two unrelated jobs, and preparing work
 (reading the backlog, splitting and sizing tasks) competes with overseeing it
 (watching workers, reviewing, merging). The orchestrator also ends up doing
 triage the manager should own.
+
+## Resolution
+
+Resolved by 89b560e: a `product-manager` role (project-defined, `autostart = true` in bridle's own `.bridle/config.toml`, prompt `workflow/base/roles/product-manager.md`) owns the backlog, triage and right-sized task preparation; the `manager` runs the work. The answer lives in docs/design/roles-and-lifecycle.md.

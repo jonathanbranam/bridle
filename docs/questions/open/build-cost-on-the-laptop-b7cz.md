@@ -54,3 +54,10 @@ Measure load and wall time for one task before and after.
 The advisor's read, which the orchestrator agrees with: the NUC suits light project daemons
 (meta-notes: Vimscript and pytest), not bridle's Rust builds. The seven-day window (55% on
 2026-09-28) is more likely to be the long-run limit than CPU.
+
+## Progress (2026-09-29)
+
+Options 1 and 2 are built (db79e38): new worktrees' `target/` is warmed with an APFS clone
+(`[worktrees] warm_target`), and workers gate on `commands.check_worker` (e.g.
+`just check-affected`). Still open: the before-and-after measurement of load and wall time,
+and the NUC question (whether the NUC should run only light project daemons).
