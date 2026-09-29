@@ -177,3 +177,9 @@ exists in the project clone is copied (not symlinked) to the same path in the wo
 its mode, so a 0600 token file stays 0600; parent directories are created. A missing file is
 skipped with a logged warning and never fails the spawn. Absolute paths and paths containing
 `..` are rejected when the config is parsed. Files only: no directories or globs.
+
+## Ports
+
+`[ports] range = [4000, 4999]` (inclusive, the default) and `reserved = [..]` (default empty)
+bound what `bridle port alloc` hands out; `range` with low > high is a config error. See
+[[../worktrees-and-ports|Worktrees and ports]].

@@ -7,13 +7,13 @@ use std::path::{Path, PathBuf};
 use anyhow::Context;
 use bridle_api::discovery::{self, Env, ProcessEnv};
 use bridle_api::{
-    BudgetHoldRequest, BudgetOverrideRequest, Client, DoneTaskRequest, DropTaskRequest, Edge,
-    EdgeKind, EditTaskRequest, Event, EventQuery, Impact, ImpactCheckRequest, InterruptRequest,
-    MaxWorkersRequest, MessageKind, MessageQuery, NewEdgeRequest, NewTaskRequest, OverlapLevel,
-    ProbeOutcome, ProbeRequest, ProbeResult, RemoveEdgeQuery, RemoveQuery, RenewRequest,
-    ResolveConflictRequest, ResumeRequest, SendRequest, SetImpactRequest, SetSummaryRequest,
-    SpawnRequest, SpecRef, StopRequest, Task, TaskKind, TaskSize, TokenCreateRequest,
-    UsageBreakdownQuery, UsageGroupBy, Workdir, event_kind,
+    AllocPortRequest, BudgetHoldRequest, BudgetOverrideRequest, Client, DoneTaskRequest,
+    DropTaskRequest, Edge, EdgeKind, EditTaskRequest, Event, EventQuery, Impact,
+    ImpactCheckRequest, InterruptRequest, MaxWorkersRequest, MessageKind, MessageQuery,
+    NewEdgeRequest, NewTaskRequest, OverlapLevel, ProbeOutcome, ProbeRequest, ProbeResult,
+    RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, ResumeRequest, SendRequest,
+    SetImpactRequest, SetSummaryRequest, SpawnRequest, SpecRef, StopRequest, Task, TaskKind,
+    TaskSize, TokenCreateRequest, UsageBreakdownQuery, UsageGroupBy, Workdir, event_kind,
 };
 use chrono::{Local, TimeZone, Utc};
 use futures::StreamExt;
@@ -30,6 +30,7 @@ use crate::cli::{
     TaskPlanArgs, TaskReopenArgs, TaskSearchArgs, TaskShowArgs, TaskSizeArg, TaskSummaryArgs,
     TokenAction, TokenArgs, UsageArgs, UsageByArg, WaitArgs, WhenArg,
 };
+use crate::cli::{PortAction, PortArgs};
 use crate::error::CliError;
 use crate::render;
 use crate::serve;
@@ -64,6 +65,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Impact(args) => impact(&cli, args).await,
         Command::Probe(args) => probe(&cli, args).await,
         Command::Conflict(args) => conflict(&cli, args).await,
+        Command::Port(args) => port(&cli, args).await,
         Command::Dep(args) => dep(&cli, args).await,
         Command::Ask(args) => ask(&cli, args).await,
         Command::Answer(args) => answer(&cli, args).await,
@@ -2348,6 +2350,53 @@ fn resolve_edge_args(args: &DepEdgeArgs) -> Result<(String, String, EdgeKind), C
 
 fn print_edge_row(e: &Edge) {
     println!("{:<10} {:<16} {}", e.from, e.kind, e.to);
+}
+
+async fn port(cli: &Cli, args: &PortArgs) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    match &args.action {
+        PortAction::Alloc(a) => {
+            let p = client
+                .alloc_port(&AllocPortRequest {
+                    pid: a.pid,
+                    label: a.label.clone(),
+                })
+                .await?;
+            if cli.json {
+                render::print_json(&p)?;
+            } else {
+                println!("{}", p.port);
+            }
+        }
+        PortAction::Release(a) => {
+            let p = client.release_port(a.port).await?;
+            if cli.json {
+                render::print_json(&p)?;
+            } else {
+                println!("released {}", p.port);
+            }
+        }
+        PortAction::List => {
+            let list = client.list_ports().await?;
+            if cli.json {
+                render::print_json(&list)?;
+            } else if list.is_empty() {
+                println!("no ports allocated");
+            } else {
+                for p in &list {
+                    println!(
+                        "{:<6} {:<14} {:<10} {:<7} {}",
+                        p.port,
+                        p.agent,
+                        p.task.as_deref().unwrap_or("-"),
+                        p.pid.map(|n| n.to_string()).unwrap_or_else(|| "-".into()),
+                        p.label.as_deref().unwrap_or("")
+                    );
+                }
+            }
+        }
+    }
+    Ok(())
 }
 
 async fn conflict(cli: &Cli, args: &ConflictArgs) -> Result<(), CliError> {

@@ -100,6 +100,8 @@ pub enum Command {
     /// Conflicts opened by `impact check`: list and resolve
     /// (docs/design/impact-and-conflicts.md).
     Conflict(ConflictArgs),
+    /// Ports for dev servers: allocate, release, list (docs/design/worktrees-and-ports.md).
+    Port(PortArgs),
     /// Add or remove a coordination edge between two tasks
     /// (docs/design/coordination.md).
     Dep(DepArgs),
@@ -1023,6 +1025,37 @@ pub enum EdgeKindArg {
 }
 
 #[derive(Debug, Args)]
+pub struct PortArgs {
+    #[command(subcommand)]
+    pub action: PortAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum PortAction {
+    /// Allocate a free port from `[ports] range`; prints the number.
+    Alloc(PortAllocArgs),
+    /// Free a port you allocated.
+    Release(PortReleaseArgs),
+    /// List allocated ports.
+    List,
+}
+
+#[derive(Debug, Args)]
+pub struct PortAllocArgs {
+    /// The process using the port; the daemon frees the port once it exits.
+    #[arg(long)]
+    pub pid: Option<i32>,
+    /// What the port is for.
+    #[arg(long)]
+    pub label: Option<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct PortReleaseArgs {
+    pub port: u16,
+}
+
+#[derive(Debug, Args)]
 pub struct ConflictArgs {
     #[command(subcommand)]
     pub action: ConflictAction,
@@ -1754,6 +1787,19 @@ mod tests {
         };
         assert_eq!(a.task, "tw-1234");
         assert!(matches!(a.size, Some(TaskSizeArg::None)));
+    }
+
+    #[test]
+    fn port_alloc_parses() {
+        let cli = parse(&["port", "alloc", "--pid", "42", "--label", "web"]).unwrap();
+        let Command::Port(args) = cli.command else {
+            panic!("expected port")
+        };
+        let PortAction::Alloc(a) = args.action else {
+            panic!("expected alloc")
+        };
+        assert_eq!((a.pid, a.label.as_deref()), (Some(42), Some("web")));
+        assert!(parse(&["port", "release"]).is_err());
     }
 
     #[test]
