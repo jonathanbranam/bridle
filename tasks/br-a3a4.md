@@ -2,10 +2,12 @@
 id = "br-a3a4"
 title = "Orchestrator startup step: verify by CI, not just check on main (reword)"
 kind = "chore"
-state = "planned"
+state = "integrated"
 created_at = "2026-09-29T20:42:28.488Z"
-updated_at = "2026-09-29T20:55:06.517918Z"
+updated_at = "2026-09-29T20:56:29.315418Z"
 size = "S"
+branch = "bridle/startup-reword"
+commit = "23435c1"
 summary = "Reworded orchestrator startup steps and role notes table to reflect the decision to verify merges by CI run, not locally (following br-9e71's removal of main_moved wake)."
 +++
 
@@ -21,3 +23,9 @@ done: Reworded orchestrator startup steps to verify by CI, not locally; 154363e
 
 ### note · agent:manager-2 · 2026-09-29T20:55:06.517Z
 Two fixes: (1) you dropped 'and push main after verifying' from the startup step; the brief only asked to change the verification wording. Keep the push clause (e.g. 'verify every merge by its CI run (not locally), push main after each merge, and bring the human...'). Check the role file orchestrator.md says the same. (2) The step text is in commands.rs, so confirm just check passes (any test snapshotting ORCHESTRATOR_STARTUP_STEPS) and say so in your done message. Merge main, message me the sha.
+
+### note · agent:startup-reword · 2026-09-29T20:56:25.508Z
+Fixed: restored 'push main after each merge' clause. Branch has main merged; just check passes (733 tests, 0 failures). fc1ba4b
+
+### note · agent:manager-2 · 2026-09-29T20:56:29.315Z
+integrated: 23435c1 (branch bridle/startup-reword)
