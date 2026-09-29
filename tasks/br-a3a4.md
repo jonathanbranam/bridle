@@ -4,7 +4,7 @@ title = "Orchestrator startup step: verify by CI, not just check on main (reword
 kind = "chore"
 state = "integrated"
 created_at = "2026-09-29T20:42:28.488Z"
-updated_at = "2026-09-29T20:56:29.315418Z"
+updated_at = "2026-09-29T20:56:48.661327Z"
 size = "S"
 branch = "bridle/startup-reword"
 commit = "23435c1"
@@ -29,3 +29,6 @@ Fixed: restored 'push main after each merge' clause. Branch has main merged; jus
 
 ### note · agent:manager-2 · 2026-09-29T20:56:29.315Z
 integrated: 23435c1 (branch bridle/startup-reword)
+
+### note · agent:manager-2 · 2026-09-29T20:56:48.661Z
+cleanup: removed agent startup-reword, branch bridle/startup-reword
