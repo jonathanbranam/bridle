@@ -6,5 +6,6 @@ checked against the code and `CHANGELOG.md`, not the design docs (which can run 
 Ticket: [[docs/questions/open/product-briefs-of-how-bridle-works-today-8awb|8awb]].
 
 - [[docs/briefs/specs|Specs]]: what they're for, the flow, what a migration involves.
+- [[docs/briefs/tasks|Tasks]]: what a task is, the queue, claims, landing, storage.
 
-Later: the task system, the agent host, workflow layers.
+Later: the agent host, workflow layers.
