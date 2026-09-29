@@ -85,8 +85,9 @@ losing continuity, which is real but not measured.
 
 ## Open
 
-- **Thresholds.** The config is now note 150K / plan 180K / hand over 200K. The findings say
-  earlier is cheaper (~100–150K). Left to the human to decide once 1 and 2 cut the growth rate.
+- **Thresholds** (decided 2026-09-29): 150K / 180K / 200K, now also the defaults (by23). The
+  findings suggest earlier may be cheaper still (~100–150K); worth another look once 1 and 2 cut
+  the growth rate.
 - **Trimming startup** (prime prompt, startup calls): worth doing, least urgent (~10% of a
   session, less once restarts are rarer).
 - **Thinking tokens**: output tokens (96K in b2005ca8) far exceed the visible text and tool

@@ -33,3 +33,11 @@ The human, verbatim (2026-09-29, via the advisor), about the `[orchestrator]` co
   `RawOrchestrator`). One parser beside `parse_duration`, used by any future token key.
 - Update the examples in `docs/design/agent-host/orchestrator-supervision.md` and
   `roles-and-config.md` to `150k` style.
+
+## Defaults (the human, 2026-09-29)
+
+> I'm setting 150k/180k/200k in config. But yes, let's make those the defaults as well.
+
+The code's defaults change from 150K / 210K / 255K to **150K / 180K / 200K** (`note_tokens`,
+`plan_tokens`, `handover_tokens`, `crates/bridle-daemon/src/config.rs` and its tests), and so do
+the design docs that give them.
