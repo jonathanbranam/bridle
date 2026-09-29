@@ -310,6 +310,23 @@ pub async fn delete_branch(repo: &Path, branch: &str, force: bool) -> Result<(),
     run_git(repo, &["branch", flag, branch]).await.map(|_| ())
 }
 
+/// Whether `commit` names a commit reachable from the repo's `HEAD`, i.e. it
+/// is on the integration branch. An unknown revision is `false`, not an error.
+pub async fn is_on_head(repo: &Path, commit: &str) -> Result<bool, WorktreeError> {
+    let out = Command::new("git")
+        .arg("-C")
+        .arg(repo)
+        .args([
+            "merge-base",
+            "--is-ancestor",
+            &format!("{commit}^{{commit}}"),
+            "HEAD",
+        ])
+        .output()
+        .await?;
+    Ok(out.status.success())
+}
+
 /// Drop git's records of worktrees whose directories no longer exist.
 pub async fn prune(repo: &Path) -> Result<(), WorktreeError> {
     run_git(repo, &["worktree", "prune"]).await.map(|_| ())
@@ -320,19 +337,7 @@ pub async fn prune(repo: &Path) -> Result<(), WorktreeError> {
 /// `git merge --squash` isn't an ancestor, so a `Branch: <branch>` trailer on a
 /// commit reachable from `HEAD` (the manager's landing commit) counts too.
 pub async fn is_merged(repo: &Path, branch: &str) -> Result<bool, WorktreeError> {
-    let exists = Command::new("git")
-        .arg("-C")
-        .arg(repo)
-        .args([
-            "rev-parse",
-            "--verify",
-            "--quiet",
-            &format!("refs/heads/{branch}"),
-        ])
-        .output()
-        .await?
-        .status
-        .success();
+    let exists = branch_exists(repo, branch).await?;
     if !exists {
         return Ok(true);
     }
