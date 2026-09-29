@@ -2,9 +2,9 @@
 id = "br-a3a4"
 title = "Orchestrator startup step: verify by CI, not just check on main (reword)"
 kind = "chore"
-state = "open"
+state = "planned"
 created_at = "2026-09-29T20:42:28.488Z"
-updated_at = "2026-09-29T20:42:28.488Z"
+updated_at = "2026-09-29T20:42:30.985930Z"
 size = "S"
 +++
 
