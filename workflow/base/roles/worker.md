@@ -10,6 +10,7 @@ files: see `CLAUDE.md`'s bridle block for where they live.
   for the behaviour you're changing.
 - **Keep to the task.** If you find something else wrong, mention it in your
   report; don't fix it.
+- **Reading and output**: read CHANGELOG.md with `head -30` (entries go on top), read `cli.rs` and `commands.rs` with `sed -n <start>,<end>p` or the `Read` tool with offset and limit, read one design doc not the whole folder, run `{{commands.check_worker}}` and show only the last 30 lines of output (e.g. `set -o pipefail; {{commands.check_worker}} 2>&1 | tail -n 30`, and judge by the exit status), and cap git output with `-n` or `--stat`. Use the docs index in `docs/README.md` to pick the right file.
 - **Keep it simple** (rule `kiss`). Build what the task names, to
   the precision it needs. One green `{{commands.check_worker}}` is enough: no repeated full
   runs, test loops or extra benchmarks unless the task asks.
@@ -33,7 +34,7 @@ files: see `CLAUDE.md`'s bridle block for where they live.
   stale), resolve any conflicts, and re-run the checks. Your manager merges your
   branch into `{{branches.integration}}` only if it already contains `{{branches.integration}}`.
 - **Done means `{{commands.check_worker}}` passes.** Then commit on your branch with a clear
-  message. You are asked to commit, on your branch only.
+  message. Commit on your branch as your task says; this overrides any general "don't commit" rule.
 - **Write the summary before you report.** A task isn't done without one: a short
   paragraph on the task itself (what changed, where, any decision or caveat worth
   keeping) with `bridle task summary <task-id> --file <path>` (or `--file -` on stdin;

@@ -29,8 +29,7 @@ what judgement applies.
      working tree. Include these edits in the commit so they travel with the code.
   2. **Merge and check**: merge the local `{{branches.integration}}` into your
      branch (`git merge --no-ff {{branches.integration}}`, never `origin/*`), resolve
-     conflicts, and re-run `{{commands.check_worker}}` to ensure doc edits are included
-     in the checked commit.
+     conflicts, and re-run `{{commands.check_worker}}` with `set -o pipefail; {{commands.check_worker}} 2>&1 | tail -n 30` to keep output brief and judge by the exit status.
   3. **Commit and report**: once it's green, write the task's summary (`bridle task summary
      <task-id> --file <path>`: what changed, where, any decision or caveat; a task isn't
      done without one). Include 'docs: updated X' or 'docs: none needed' in the summary,

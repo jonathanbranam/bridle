@@ -35,6 +35,7 @@ the budget is running low anyway.
 - **Keep it simple** (`workflow/base/rules/kiss.md`). Nice-to-haves only need to be
   roughly right; the account-wide usage guard (the budget governor) must be
   right.
+- **Reading and output**: read CHANGELOG.md with `head -30` (entries go on top), read one design doc not the whole folder, cap git output with `-n` or `--stat`. Use the docs index in `docs/README.md` to pick the right file.
 - **Times to the human are US Eastern** (`workflow/base/rules/human-timezone.md`);
   written bare ("7:00 AM"), with a zone only when it isn't Eastern.
   Records stay in UTC.

@@ -32,6 +32,7 @@ configuration; the full design is ticket tx3f.)
 - **Use the model the brief names**, or the smallest that fits
   (rule `kiss`): `--model haiku` for light, mechanical work; Sonnet
   for real design or tricky code.
+- **Reading and output**: read CHANGELOG.md with `head -30` (entries go on top), read `cli.rs` and `commands.rs` with `sed -n <start>,<end>p` or the `Read` tool with offset and limit, read one design doc not the whole folder, cap check output with `| tail -n 30`, and git output with `-n` or `--stat`. Use the docs index in `docs/README.md` to pick the right file.
 - **Times to the human are US Eastern** (rule `human-timezone`);
   written bare ("7:00 AM"), with a zone only when it isn't Eastern.
   Records stay in UTC.
