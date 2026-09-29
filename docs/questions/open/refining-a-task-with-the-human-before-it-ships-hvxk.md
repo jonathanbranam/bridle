@@ -115,3 +115,23 @@ What this adds to the ask above:
    workflow is an option per task, not the default.
 8. **The refine agent doesn't idle.** It has a clean context, is focused on one task, starts
    when needed and doesn't keep running; its work is tracked on the task.
+
+## Refining needs no branch
+
+The human, verbatim (2026-09-29, via the advisor):
+
+> Just another thought to record: that ticket refinement or task refinement, in terms of
+> planning, writing a proposal, design, and specs, can all happen without needing a branch
+> because it's all either managed in the docs folder or within Bridal. That doesn't need a
+> worker agent with a branch, and the design shouldn't require that. If we're moving on to
+> building a prototype and reviewing it, then we would need a branch and a work tree for the
+> agent to work on.
+
+9. **Refining (plan, proposal, design, specs) needs no branch or worktree**: it lives on the
+   task in bridle or in the docs folder, and needs no worker. A branch and worktree come only
+   with building (a prototype to review, or the implementation).
+
+This conflicts with `docs/design/specs.md` today ("A task edits `design/specs/<capability>.md`
+**in place on its branch**. The plan commit's spec diff is the proposal."), where the spec
+proposal is a commit on the task's branch. Settling this ticket means deciding where a spec
+change under refinement lives before any branch exists.
