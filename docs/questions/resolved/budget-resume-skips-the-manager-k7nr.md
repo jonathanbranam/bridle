@@ -2,8 +2,9 @@
 id: k7nr
 title: After a budget pause, the governor may never resume the manager
 opened: 2026-09-28
+resolved: 2026-09-29
 repos: [bridle]
-changes: []
+changes: [c70b971]
 specs: []
 needs: []
 see: [y2eb, 6t29, incidents]
@@ -39,3 +40,10 @@ hand at 21:27. By 19:27 both resumed agents had finished and gone idle. python-p
   with y2eb, or straight after it.
 - A test: three agents paused, `max_workers = 2`, a manager among them paused last; after
   recovery the manager is resumed.
+
+## Resolution
+
+Fixed in c70b971 (y2eb, k7nr): `maybe_resume` in `crates/bridle-daemon/src/governor.rs` resumes
+every non-worker role unconditionally and applies `max_workers` to workers only, counting
+running workers. Documented in `docs/design/usage-and-budget.md` (Resuming). Test:
+`resume_brings_back_a_manager_even_when_workers_fill_max_workers`.

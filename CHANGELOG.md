@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+- Fixed: after a budget pause the governor resumes the manager and PM along with workers; `max_workers` limits workers only (ticket k7nr, br-0a50; code landed with y2eb).
 
 - The daemon logs a shutdown request at WARN, naming the caller for `POST /v1/shutdown` or the signal (SIGINT/SIGTERM); open event streams already end on shutdown and the HTTP drain is bounded at 5s (tickets sed3, zm95, br-36fa).
 - A role with no `system_prompt` now defaults to `<workflow>/base/roles/<role>.md` when `workflow` is set and the file exists; an explicit `system_prompt` still wins (ticket rl2v, br-f636).
