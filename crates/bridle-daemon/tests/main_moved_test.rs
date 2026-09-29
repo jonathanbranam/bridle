@@ -97,12 +97,6 @@ fn git(daemon: &support::TestDaemon, args: &[&str]) -> String {
     let out = std::process::Command::new("git")
         .arg("-C")
         .arg(&daemon.repo)
-        .args([
-            "-c",
-            "user.email=test@bridle.invalid",
-            "-c",
-            "user.name=bridle-test",
-        ])
         .args(args)
         .output()
         .expect("git");
