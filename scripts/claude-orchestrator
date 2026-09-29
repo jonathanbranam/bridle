@@ -6,8 +6,9 @@
 # one go. Usage: claude-orchestrator [extra claude args]
 cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
 # The daemon's supervisor (docs/design/agent-host/orchestrator-supervision.md) reads this pid file:
-# "<pid> <process start time> <launch epoch>". `exec` keeps the pid, so it is claude's. The start
-# time is `ps` lstart, the same identity check the daemon uses for agents.
+# "<pid> <process start time> <launch epoch>". The pid is this shell's, which lives exactly as long
+# as claude (no `exec`, so the exit can be recorded below). The start time is `ps` lstart, the same
+# identity check the daemon uses for agents.
 home=${BRIDLE_HOME:-$HOME/.bridle}
 mkdir -p $home
 print -r -- "$$ $(ps -o lstart= -p $$ | xargs) $(date +%s)" > $home/orchestrator.pid
@@ -17,4 +18,12 @@ hooks='{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"bridle o
 # Every bridle command in the session then acts as external:orchestrator, with the token for the
 # project it talks to from ~/.bridle/credentials.toml (`bridle token create orchestrator --project <p>`).
 export BRIDLE_AS=orchestrator
-exec claude --settings $hooks --name bridle-orch --remote-control bridle-orch "$@" "$(bridle prime orchestrator)"
+claude --settings $hooks --name bridle-orch --remote-control bridle-orch "$@" "$(bridle prime orchestrator)"
+# Sessions have ended unattended with no trace (fx7x): record when, and how (a status above 128 is a
+# signal), in the pane and in a log that outlives it.
+rc=$?
+how="exit $rc"
+(( rc > 128 )) && how="$how (SIG$(kill -l $((rc - 128))))"
+line="$(date -u +%FT%TZ) $(date '+%-I:%M:%S %p %Z') orchestrator claude ended: $how"
+print -r -- "$line" | tee -a $home/orchestrator.exits
+exit $rc

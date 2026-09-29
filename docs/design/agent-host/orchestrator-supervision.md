@@ -32,8 +32,11 @@ daemon: orchestrator supervisor     one task, ticks every 10 s
 bridle wait-for-wake                the in-session command
 ```
 
-The launcher (`scripts/claude-orchestrator`, changed) writes the pid file just before
-`exec claude` (`exec` keeps the pid, spike 07 #4) and passes
+The launcher (`scripts/claude-orchestrator`, changed) writes its own pid to the pid file and runs
+`claude` as its child, so the pid lives exactly as long as the session. It doesn't `exec`, so that
+when `claude` ends it can append the time and exit status (a signal, when above 128) to
+`$BRIDLE_HOME/orchestrator.exits` and print it in the pane: sessions had ended unattended with
+no trace (fx7x). It passes
 `--settings '{"hooks":{"SessionStart":[...]}}'` so that a hook, `bridle orchestrator note-session`
 (reads the hook's stdin, writes `orchestrator.session`), runs for this session only (#10). The
 hook exists because **`/clear` gives the same process a new session id** (#1, Surprises 1), and

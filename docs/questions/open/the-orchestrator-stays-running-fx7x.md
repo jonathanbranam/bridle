@@ -29,6 +29,10 @@ Remote Control:
   send it a message.
 - It's the orchestrator running outside bridle (an `external` principal in a terminal), so the
   daemon's `resume_on_restart` doesn't cover it. The advisor is in the same position.
+- **It happened again at ~18:26 UTC (2:26 PM, the human's report)**: the eleventh orchestrator
+  session (`d19c4df3-...`) died with no warning and no handover, after fx7x 1a had landed
+  but before the daemon was rebuilt, so nothing supervised it. The human restarted it by hand.
+  Cause under investigation (see below when found).
 
 ## Shape (for the orchestrator to design; KISS)
 
