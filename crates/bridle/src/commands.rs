@@ -89,6 +89,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
             crate::orchestrator::note_session(&input);
             Ok(())
         }
+        Command::WaitForWake => wait_for_wake(&cli).await,
         Command::Prime(args) => prime(&cli, args).await,
         Command::Rules(args) => rules(&cli, args).await,
         Command::Sync => sync(&cli).await,
@@ -1639,6 +1640,26 @@ async fn sync(cli: &Cli) -> Result<(), CliError> {
     println!("skills: {}", list(&report.skills));
     println!("agents: {}", list(&report.agents));
     println!("hooks: {}", list(&report.hook_events));
+    Ok(())
+}
+
+/// `bridle wait-for-wake`: the daemon holds the request until a wake is pending.
+async fn wait_for_wake(cli: &Cli) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let wakes = client.orchestrator_wake().await?.wakes;
+    if cli.json {
+        println!(
+            "{}",
+            serde_json::to_string(&wakes).map_err(anyhow::Error::from)?
+        );
+    } else if wakes.is_empty() {
+        println!("nothing");
+    } else {
+        for w in &wakes {
+            println!("{}: {}", w.reason, w.text);
+            println!("{}", w.detail);
+        }
+    }
     Ok(())
 }
 

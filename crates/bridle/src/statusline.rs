@@ -104,7 +104,7 @@ fn context_window(input: &Value) -> (Option<f64>, Option<u64>, Option<u64>) {
 }
 
 /// Write the session's context tokens to `~/.bridle/context/<session_id>` so
-/// `scripts/orchestrator-watch.sh` can read its own session's size without a
+/// `scripts/context-check.sh` can read its own session's size without a
 /// daemon call (c9zm; the daemon ledger is no longer fed, see s8kn). Best
 /// effort: a statusline must never fail or slow down over this.
 pub fn record_context(report: &StatusLineReport) {

@@ -18,6 +18,7 @@ use tokio::sync::Mutex;
 use crate::config::OrchestratorConfig;
 use crate::events::Emitter;
 use crate::supervisor::{AgentManager, ToTarget};
+use crate::wake::Waiters;
 
 pub const TICK_INTERVAL: Duration = Duration::from_secs(10);
 /// The tag the human sets on the orchestrator's pane: `tmux set -p @bridle orchestrator`.
@@ -79,6 +80,8 @@ struct State {
     shell_seen: Option<DateTime<Utc>>,
     /// The death of this session has been reported.
     dead_noted: bool,
+    /// No wake command has been running for longer than `waiter_grace`; reported once.
+    waiter_noted: bool,
     /// The last incident text, so a condition that persists across ticks is reported once.
     last_incident: Option<String>,
 }
@@ -88,6 +91,8 @@ pub struct Supervisor<T, P, I> {
     launcher: String,
     backoff: Vec<Duration>,
     stable_after: Duration,
+    waiter_grace: Duration,
+    waiters: Arc<Waiters>,
     tmux: T,
     procs: P,
     incidents: I,
@@ -100,6 +105,7 @@ impl<T: Tmux, P: Procs, I: Incidents> Supervisor<T, P, I> {
         home: PathBuf,
         launcher: String,
         cfg: &OrchestratorConfig,
+        waiters: Arc<Waiters>,
         tmux: T,
         procs: P,
         incidents: I,
@@ -109,6 +115,8 @@ impl<T: Tmux, P: Procs, I: Incidents> Supervisor<T, P, I> {
             launcher,
             backoff: cfg.relaunch_backoff.clone(),
             stable_after: cfg.stable_after,
+            waiter_grace: cfg.waiter_grace,
+            waiters,
             tmux,
             procs,
             incidents,
@@ -140,8 +148,10 @@ impl<T: Tmux, P: Procs, I: Incidents> Supervisor<T, P, I> {
             st.shell_seen = None;
             st.dead_noted = false;
             st.last_incident = None;
+            self.check_waiter(&mut st, now, rec.launched).await;
             return;
         }
+        st.waiter_noted = false;
 
         if !std::mem::replace(&mut st.dead_noted, true) {
             let text = format!(
@@ -236,6 +246,23 @@ impl<T: Tmux, P: Procs, I: Incidents> Supervisor<T, P, I> {
                 self.report(&mut st, format!("Relaunching the orchestrator failed: {e}"))
                     .await
             }
+        }
+    }
+
+    /// A live session with no wake command running (section 5): the human is told, the session
+    /// is left alone. Closed when a request arrives.
+    async fn check_waiter(&self, st: &mut State, now: DateTime<Utc>, launched: i64) {
+        let floor = DateTime::from_timestamp(launched, 0).unwrap_or(now);
+        match self.waiters.absent_since(now, self.waiter_grace, floor) {
+            None => st.waiter_noted = false,
+            Some(since) if !std::mem::replace(&mut st.waiter_noted, true) => {
+                let text = format!(
+                    "The orchestrator has no wake command running (`bridle wait-for-wake`) since {}.",
+                    since.format("%H:%M:%S UTC")
+                );
+                self.incidents.record(&text).await;
+            }
+            Some(_) => {}
         }
     }
 
@@ -384,6 +411,7 @@ pub fn real(
     home: PathBuf,
     launcher: String,
     cfg: &OrchestratorConfig,
+    waiters: Arc<Waiters>,
     manager: AgentManager,
     emitter: Emitter,
 ) -> Arc<RealSupervisor> {
@@ -391,6 +419,7 @@ pub fn real(
         home,
         launcher,
         cfg,
+        waiters,
         RealTmux,
         RealProcs,
         RealIncidents { manager, emitter },
@@ -445,6 +474,7 @@ mod tests {
         procs: Arc<FakeProcs>,
         incidents: Arc<FakeIncidents>,
         sup: Supervisor<Arc<FakeTmux>, Arc<FakeProcs>, Arc<FakeIncidents>>,
+        waiters: Arc<Waiters>,
         t0: DateTime<Utc>,
     }
 
@@ -464,21 +494,24 @@ mod tests {
                 stable_after: Duration::from_secs(600),
                 ..Default::default()
             };
+            let t0 = DateTime::from_timestamp(1_800_000_000, 0).unwrap();
+            let waiters = Waiters::new(t0);
             let sup = Supervisor::new(
                 dir.path().to_path_buf(),
                 "/x/launch".into(),
                 &cfg,
+                waiters.clone(),
                 tmux.clone(),
                 procs.clone(),
                 incidents.clone(),
             );
-            let t0 = DateTime::from_timestamp(1_800_000_000, 0).unwrap();
             Rig {
                 dir,
                 tmux,
                 procs,
                 incidents,
                 sup,
+                waiters,
                 t0,
             }
         }
@@ -545,6 +578,25 @@ mod tests {
         r.relaunch(0).await;
         assert_eq!(r.typed(), 0);
         assert!(r.incidents().is_empty());
+    }
+
+    #[tokio::test]
+    async fn live_session_without_a_waiter_is_one_incident_closed_by_a_request() {
+        let r = Rig::new();
+        r.write_pid(10, r.t0.timestamp());
+        r.procs.0.lock().unwrap().insert(10);
+        // Within the grace of the launch: nothing yet.
+        r.tick(60).await;
+        assert!(r.incidents().is_empty());
+        r.tick(200).await;
+        r.tick(210).await;
+        assert_eq!(r.incidents().len(), 1, "reported once");
+        assert!(r.incidents()[0].contains("wait-for-wake"));
+        // A request arrives: the incident closes, and doesn't repeat while it is open.
+        let guard = r.waiters.opened();
+        r.tick(5000).await;
+        assert_eq!(r.incidents().len(), 1);
+        drop(guard);
     }
 
     #[tokio::test]

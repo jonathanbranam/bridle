@@ -144,6 +144,10 @@ pub enum Command {
     ArchGuard,
     /// The orchestrator's supervision hooks (docs/design/agent-host/orchestrator-supervision.md).
     Orchestrator(OrchestratorArgs),
+    /// Wait for something the orchestrator should act on, print it and exit 0 (`nothing` after
+    /// 5 minutes of quiet). Run it in the background; run it again after each exit
+    /// (orchestrator-supervision.md, section 5). `external:orchestrator` only.
+    WaitForWake,
     /// Print a fresh session's opening context for a role: the role prompt,
     /// current state and startup steps.
     Prime(PrimeArgs),
@@ -2024,6 +2028,12 @@ mod tests {
     fn rebuild_parses() {
         let cli = parse(&["rebuild"]).unwrap();
         assert!(matches!(cli.command, Command::Rebuild));
+    }
+
+    #[test]
+    fn wait_for_wake_parses() {
+        let cli = parse(&["wait-for-wake"]).unwrap();
+        assert!(matches!(cli.command, Command::WaitForWake));
     }
 
     #[test]

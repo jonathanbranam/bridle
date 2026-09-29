@@ -20,7 +20,7 @@ use crate::types::{
     RenewRequest, ResolveConflictRequest, ResumeRequest, SendRequest, SetImpactRequest,
     SetQueueRequest, SetSummaryRequest, SpawnRequest, Status, StatusLineReport, StopRequest, Task,
     TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
-    UsageBreakdown, UsageBreakdownQuery,
+    UsageBreakdown, UsageBreakdownQuery, WakeResponse,
 };
 
 #[derive(Debug, Error)]
@@ -348,6 +348,12 @@ impl Client {
     ) -> Result<UsageBreakdown, ClientError> {
         self.get_json_query(&["v1", "usage", "breakdown"], query)
             .await
+    }
+
+    /// `GET /v1/orchestrator/wake`: holds until a wake is pending (or the daemon's 5 minutes
+    /// are up, answering empty). `external:orchestrator` only.
+    pub async fn orchestrator_wake(&self) -> Result<WakeResponse, ClientError> {
+        self.get_json(&["v1", "orchestrator", "wake"]).await
     }
 
     pub async fn budget(&self) -> Result<BudgetStatus, ClientError> {

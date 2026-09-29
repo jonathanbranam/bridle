@@ -73,9 +73,9 @@ split above.
   allowed to do it (v4nk), the voice may not need it at all.
 - **The orchestrator sleeps with the laptop** (hj4g, prvy), so the voice goes
   silent exactly when the human switches to the phone.
-- **The watcher is a shell script outside bridle** (`scripts/orchestrator-watch.sh`).
-  What it watches for (questions, `main` moving, crashes, all idle, usage) is
-  admin work that bridle could do itself and push to the voice.
+- **The watcher is `bridle wait-for-wake`** (br-e949; it was a shell script): the daemon
+  holds the conditions (questions, `main` moving, crashes, all idle, usage, holds, CI)
+  and the orchestrator waits on one command.
 
 ## Log
 

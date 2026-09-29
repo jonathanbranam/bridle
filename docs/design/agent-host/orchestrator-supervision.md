@@ -2,9 +2,9 @@
 
 Design for ticket [[the-orchestrator-stays-running-fx7x|fx7x]]; signals verified in
 [[docs/spikes/07-orchestrator-supervision-findings|spike 07]]. **Slice 1a built** (br-a424): liveness, relaunch and crash-loop backoff (sections 1 to 4, the
-interim incident of 8). Not built: wake conditions and `wait-for-wake` (5), context and uptime
-thresholds and the forced restart (6), handover records (7); config keys for those aren't
-accepted yet. The orchestrator
+interim incident of 8). **Slice 1b built** (br-e949): the wake conditions and `wait-for-wake`
+(5), `waiter_grace`. Not built: context and uptime thresholds and the forced restart (6),
+handover records (7); config keys for those aren't accepted yet. The orchestrator
 stays an interactive `claude` in the human's tmux pane (the human types to it, locally and over
 Remote Control). The daemon keeps it running, tells it when its context or uptime says to hand
 over, and carries its wake conditions, with no agent in the loop.
@@ -155,6 +155,17 @@ restarts the command isn't an incident). If the session is alive and there's bee
 longer than `waiter_grace`, record an incident once ("orchestrator has no wake command running");
 close it when a request arrives. The session isn't restarted for this: it is still the human's
 conversation, and the incident tells the human.
+
+**Built as** (`wake.rs`): the conditions that are facts in the event log (exits, crashes and stalls,
+`message.sent` to the orchestrator or a question to the human, a failed `ci.completed`, a
+`budget.state` away from `normal`) are derived from events after the cursor, which is one row in
+the `meta` table (`orchestrator_wake_cursor`, no schema change) and moves only when wakes are
+delivered, so a daemon restart re-derives what was queued. Idle, usage and main-moved are states
+kept in memory (a restart resets their baselines). The wake loop runs whether or not `[orchestrator]`
+is enabled. The waiter incident is measured from the later of the last request's close and the
+session's launch. `scripts/orchestrator-watch.sh` is deleted; `scripts/context-check.sh` stays until
+slice 2 (so the role file has the orchestrator run it after each wake), and with it its
+`~/.bridle-orchestrator-{ctx-level,session}` files.
 
 `scripts/orchestrator-watch.sh` and `scripts/context-check.sh` are deleted, and with them the
 `~/.bridle-orchestrator-{seen-questions,hold-state,ci-seen,ctx-level,session}` files. The

@@ -37,6 +37,7 @@ pub mod store;
 mod supervisor;
 pub mod sync;
 mod tasks;
+mod wake;
 pub mod worktree;
 
 pub use governor::Governor;
@@ -270,6 +271,12 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         overrides.governor_poll_interval_above_hold,
     );
 
+    let wakes = wake::Wakes::new(
+        store.clone(),
+        ws.repo.clone(),
+        config.branches.integration.clone(),
+    );
+    let waiters = wake::Waiters::new(Utc::now());
     let ci = ci::CiWatcher::new(
         config.ci.github,
         config.branches.integration.clone(),
@@ -304,6 +311,8 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         shutdown_tx: shutdown_tx.clone(),
         governor: governor.clone(),
         ci: ci.clone(),
+        wakes: wakes.clone(),
+        waiters: waiters.clone(),
         tasks: tasks.clone(),
         integration: config.branches.integration.clone(),
         ports: config.ports.clone(),
@@ -416,6 +425,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
             home,
             orchestrator::shell_word(&launcher),
             &config.orchestrator,
+            waiters.clone(),
             manager.clone(),
             emitter.clone(),
         );
@@ -427,6 +437,15 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
                 async move { sup.tick(Utc::now()).await }
             },
         )
+    });
+    // The baseline (cursor at the tail, main's head) is taken now, not a tick from now.
+    wakes.tick(Utc::now()).await;
+    let wake_task = spawn_loop(shutdown_rx.clone(), orchestrator::TICK_INTERVAL, {
+        let wakes = wakes.clone();
+        move || {
+            let wakes = wakes.clone();
+            async move { wakes.tick(Utc::now()).await }
+        }
     });
     let signal_task = signals.listen(shutdown_tx.clone());
 
@@ -489,6 +508,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         task_flush_task.abort();
         claim_lease_task.abort();
         ports_task.abort();
+        wake_task.abort();
     });
 
     Ok(RunningDaemon {

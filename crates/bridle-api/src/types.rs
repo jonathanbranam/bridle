@@ -86,6 +86,27 @@ pub struct CiStatus {
     pub completed_at: DateTime<Utc>,
 }
 
+// ---------- orchestrator wakes ----------
+
+/// One reason to wake the orchestrator (`GET /v1/orchestrator/wake`).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct WakeReason {
+    /// `agent_exited`, `agent_crashed`, `agent_stalled`, `question`, `message`, `all_idle`,
+    /// `usage`, `budget_hold`, `ci_failed` or `main_moved`.
+    pub reason: String,
+    /// One line for the model to read.
+    pub text: String,
+    /// The raw fact: the event, the message, the run.
+    #[serde(default)]
+    pub detail: Value,
+}
+
+/// The long poll's answer: empty when nothing came up before it timed out.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+pub struct WakeResponse {
+    pub wakes: Vec<WakeReason>,
+}
+
 // ---------- agents ----------
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

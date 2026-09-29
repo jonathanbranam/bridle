@@ -947,6 +947,8 @@ pub struct OrchestratorConfig {
     pub relaunch_backoff: Vec<Duration>,
     /// A session that stays up this long resets the relaunch count.
     pub stable_after: Duration,
+    /// No `wait-for-wake` connected for this long while the session is up is an incident.
+    pub waiter_grace: Duration,
 }
 
 impl Default for OrchestratorConfig {
@@ -960,6 +962,7 @@ impl Default for OrchestratorConfig {
                 Duration::from_secs(10 * 60),
             ],
             stable_after: Duration::from_secs(10 * 60),
+            waiter_grace: Duration::from_secs(2 * 60),
         }
     }
 }
@@ -988,6 +991,9 @@ impl OrchestratorConfig {
         }
         if let Some(s) = raw.stable_after {
             self.stable_after = parse_duration(&s)?;
+        }
+        if let Some(s) = raw.waiter_grace {
+            self.waiter_grace = parse_duration(&s)?;
         }
         Ok(self)
     }
@@ -1677,6 +1683,8 @@ struct RawOrchestrator {
     relaunch_backoff: Option<Vec<String>>,
     #[serde(default)]
     stable_after: Option<String>,
+    #[serde(default)]
+    waiter_grace: Option<String>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -2569,7 +2577,7 @@ mod tests {
         assert_eq!(d.relaunch_backoff.len(), 3);
         let cfg = Config::parse(
             "[orchestrator]\nenabled = true\nlauncher = \"/x/launch\"\n\
-             relaunch_backoff = [\"5s\", \"1m\"]\nstable_after = \"2m\"\n",
+             relaunch_backoff = [\"5s\", \"1m\"]\nstable_after = \"2m\"\nwaiter_grace = \"30s\"\n",
         )
         .unwrap();
         let o = cfg.orchestrator;
@@ -2580,6 +2588,8 @@ mod tests {
             vec![Duration::from_secs(5), Duration::from_secs(60)]
         );
         assert_eq!(o.stable_after, Duration::from_secs(120));
+        assert_eq!(o.waiter_grace, Duration::from_secs(30));
+        assert_eq!(d.waiter_grace, Duration::from_secs(120));
         assert!(Config::parse("[orchestrator]\nrelaunch_backoff = []\n").is_err());
         assert!(Config::parse("[orchestrator]\nrelaunch_backoff = [\"5\"]\n").is_err());
         assert!(Config::parse("[orchestrator]\nlauncher = \" \"\n").is_err());

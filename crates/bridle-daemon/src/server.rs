@@ -22,7 +22,8 @@ use bridle_api::types::{
     ScheduleOverrideStatus, SendRequest, SetImpactRequest, SetQueueRequest, SetSummaryRequest,
     SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery, TaskState,
     TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
-    UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, When, WindowStatus, event_kind,
+    UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, WakeResponse, When, WindowStatus,
+    event_kind,
 };
 use bridle_api::types::{PrincipalId, ThreadEntryKind};
 use chrono::Utc;
@@ -51,6 +52,8 @@ pub struct AppState {
     pub shutdown_tx: watch::Sender<bool>,
     pub governor: crate::governor::Governor,
     pub ci: crate::ci::CiWatcher,
+    pub wakes: std::sync::Arc<crate::wake::Wakes>,
+    pub waiters: std::sync::Arc<crate::wake::Waiters>,
     pub tasks: TaskManager,
     pub ports: crate::config::PortsConfig,
     /// `[branches] integration`, the branch `probe` merges against.
@@ -77,6 +80,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/messages/{id}/read", post(mark_read))
         .route("/v1/events", get(list_events))
         .route("/v1/events/stream", get(events_stream))
+        .route("/v1/orchestrator/wake", get(orchestrator_wake))
         .route("/v1/usage", get(usage))
         .route("/v1/usage/breakdown", get(usage_breakdown))
         .route("/v1/statusline", post(report_statusline))
@@ -310,6 +314,28 @@ async fn require_not_worker(state: &AppState, principal: &Principal) -> Result<(
     } else {
         Ok(())
     }
+}
+
+// ---------- orchestrator wake ----------
+
+/// The long poll behind `bridle wait-for-wake` (orchestrator-supervision.md, section 5).
+async fn orchestrator_wake(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+) -> Result<Json<WakeResponse>, ApiError> {
+    if principal.id != crate::wake::ORCHESTRATOR {
+        return Err(ApiError::forbidden(
+            "only external:orchestrator may wait for wakes",
+        ));
+    }
+    // Held while the request is open; a client that hangs up drops this future and the guard.
+    let _waiting = state.waiters.opened();
+    let mut shutdown = state.shutdown_tx.subscribe();
+    let wakes = tokio::select! {
+        w = state.wakes.wait(crate::wake::POLL_TIMEOUT) => w,
+        _ = shutdown.wait_for(|v| *v) => Vec::new(),
+    };
+    Ok(Json(WakeResponse { wakes }))
 }
 
 // ---------- health / status ----------

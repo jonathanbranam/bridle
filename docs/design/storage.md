@@ -40,7 +40,8 @@ interactive_usage(id PK AUTOINCREMENT, observed_at, session_id, model,
                    cost_usd, context_used_tokens, context_max_tokens,
                    context_used_percentage)          -- V10: Claude's own figure; right on 1M models
                                                      -- from `bridle statusline`; no agent id, nothing bridle hosts
-meta(key PK, value)                                  -- e.g. claude_version
+meta(key PK, value)                                  -- e.g. claude_version; orchestrator_wake_cursor
+                                                     -- (event seq the orchestrator's wakes were last delivered up to)
 ```
 
 Nothing here has to survive a lost database ([[docs/proposal/decisions|decision 2]]):

@@ -37,22 +37,22 @@ curl -s -H "Authorization: Bearer $tok" "$U/v1/messages?to=human&limit=50" \
   red `main`, a stuck merge) straight to the development manager. Use
   `bridle send <agent> "From orchestrator: ..."`. Keep **two workers busy**;
   a third is fine for an urgent bug when the machine is quiet.
-- **Watch, don't poll by hand.** Run `scripts/orchestrator-watch.sh <since-seq>`
-  in the background. It exits (waking you) on:
-  - a `question` to the human;
+- **Watch, don't poll by hand.** Run `bridle wait-for-wake` in the background. The
+  daemon holds it until something needs you, then it prints the reasons and exits:
+  - a `question` to the human, or a message to you;
   - `main` moving;
   - an unexpected exit, crash or stall;
   - all agents idle for 15 minutes;
-  - five_hour ≥ 93% or seven_day ≥ 85%.
+  - five_hour ≥ 93% or seven_day ≥ 85%;
   - a budget hold starting (the governor leaving `normal`);
-  - your own context passing 140K (`CONTEXT <tokens>`; `CONTEXT_WAKE` overrides),
-    once per crossing: propose a handover at the next quiet point. It reads the
-    size `bridle statusline` writes to `~/.bridle/context/<session id>`, for the
-    session id the launcher's SessionStart hook (`bridle orchestrator note-session`) records in
-    `~/.bridle-orchestrator-session`, so it only works in a session started by that script.
+  - a failed CI run on `main`.
 
-  After each wake, handle it and restart it with the last seq. Add a
-  heartbeat check every 30 minutes in case it hangs.
+  Nothing pending for 5 minutes prints `nothing`. On any exit, read what it printed,
+  act, and run it again; wakes that fired while it wasn't running are queued and come
+  back at once. If none is running for more than two minutes the daemon tells the human.
+  Your own context isn't part of it yet: run `scripts/context-check.sh` after each wake
+  and propose a handover at the next quiet point when it fires (it goes when the daemon
+  takes that over).
 - **Budget holds are the maintenance window** (the human, 2026-09-28: "when
   we are hitting a budget hold, then always use that opportunity for general
   cleanup"). Plan for it: keep a running list in the state file of what's

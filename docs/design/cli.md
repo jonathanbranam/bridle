@@ -62,6 +62,7 @@ bridle token revoke <name>                  human only, external tokens only (an
 bridle statusline                           Claude Code statusLine command; local only, no daemon call
 bridle orchestrator note-session            the orchestrator launcher's SessionStart hook: writes $BRIDLE_HOME/orchestrator.session
                                              from the hook JSON on stdin; local only; never fails
+bridle wait-for-wake                        the orchestrator's background watcher: waits for a wake condition, prints it and exits 0 (`nothing` after 5 min); external:orchestrator only
 bridle arch-guard                          Claude Code PreToolUse hook: blocks design/architecture/ edits outside an arch-revision task
 bridle stop-check                           Claude Code Stop hook for the worker role; refuses to stop
                                              with an unreleased claim and no thread entry since claiming
@@ -469,6 +470,11 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   `$BRIDLE_HOME/orchestrator.session` as `<session id> <transcript path>` (`/clear` gives the same
   process a new id). Local, silent, never fails; it also keeps `~/.bridle-orchestrator-session`
   current for `scripts/context-check.sh` until the daemon reads the context itself.
+- **`wait-for-wake`** is `GET /v1/orchestrator/wake` ([[orchestrator-supervision]] section 5),
+  replacing `scripts/orchestrator-watch.sh`. It prints each wake as `<reason>: <text>` and its
+  detail as JSON (`--json`: the list of wakes), exits 0, and prints `nothing` when the daemon's
+  5 minutes pass quietly. The orchestrator runs it in the background and starts it again on
+  every exit. Any other principal gets a 403.
 - **`statusline`** is Claude Code's `statusLine` command, configured in `settings.json`. It
   reads Claude Code's JSON on stdin and prints a short line back: model, context %
   (`context_window.used_percentage`) and token count (e.g., `40.0k`, `1.2M`) when available,
