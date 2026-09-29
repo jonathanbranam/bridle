@@ -10,7 +10,6 @@ fn git(dir: &std::path::Path, args: &[&str]) {
     let out = std::process::Command::new("git")
         .arg("-C")
         .arg(dir)
-        .args(["-c", "user.name=t", "-c", "user.email=t@bridle.invalid"])
         .args(args)
         .output()
         .expect("git");

@@ -41,21 +41,11 @@ pub fn fake_claude_path() -> PathBuf {
 pub async fn init_repo(dir: &Path) {
     std::fs::create_dir_all(dir).expect("mkdir repo");
     run_git(dir, &["init", "-q", "-b", "main"]).await;
-    run_git(
-        dir,
-        &[
-            "-c",
-            "user.email=test@example.com",
-            "-c",
-            "user.name=Test",
-            "commit",
-            "--allow-empty",
-            "-q",
-            "-m",
-            "init",
-        ],
-    )
-    .await;
+    // Repo-local identity (worktrees share it), so the daemon's own commits work on a machine
+    // with no global git config, as on CI.
+    run_git(dir, &["config", "user.email", "test@example.com"]).await;
+    run_git(dir, &["config", "user.name", "Test"]).await;
+    run_git(dir, &["commit", "--allow-empty", "-q", "-m", "init"]).await;
 }
 
 async fn run_git(dir: &Path, args: &[&str]) {
