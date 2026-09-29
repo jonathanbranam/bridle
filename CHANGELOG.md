@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- `just test` (and so `just check`) runs git with an empty global config, like CI, so local runs no longer depend on your `init.defaultBranch` (g3ck, br-d0c3).
 - Fixed: `bridle renew` no longer waits on a budget hold (it replaces a session rather than adding load), so a hold can't leave the agent stopped; `--ignore-budget` is accepted and ignored on renew (ticket r3nh, br-1392).
 - With no product manager running, a newly filed task now sends the running manager a `system` note ("task <id> filed: <title>; open tasks: N. Plan it or queue it."), at most once a minute; the manager role prompt says to run `bridle queue` and `bridle task list --state open` when idle or woken (br-3bb4).
 - Fixed: `bridle sync` no longer creates an empty `.claude/settings.json` when there are no hooks to write (br-082f).
