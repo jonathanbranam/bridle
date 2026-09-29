@@ -316,7 +316,9 @@ pub async fn prune(repo: &Path) -> Result<(), WorktreeError> {
 }
 
 /// Whether `branch` exists and is fully merged into the repo's `HEAD`, i.e.
-/// whether `git branch -d` would succeed. A missing branch counts as merged.
+/// whether it has landed. A missing branch counts as merged. A branch landed by
+/// `git merge --squash` isn't an ancestor, so a `Branch: <branch>` trailer on a
+/// commit reachable from `HEAD` (the manager's landing commit) counts too.
 pub async fn is_merged(repo: &Path, branch: &str) -> Result<bool, WorktreeError> {
     let exists = Command::new("git")
         .arg("-C")
@@ -341,7 +343,22 @@ pub async fn is_merged(repo: &Path, branch: &str) -> Result<bool, WorktreeError>
         .output()
         .await?
         .status;
-    Ok(status.success())
+    if status.success() {
+        return Ok(true);
+    }
+    let landed = run_git(
+        repo,
+        &[
+            "log",
+            "-1",
+            "--format=%H",
+            "--fixed-strings",
+            &format!("--grep=Branch: {branch}"),
+            "HEAD",
+        ],
+    )
+    .await?;
+    Ok(!landed.trim().is_empty())
 }
 
 /// Whether `path` is inside a git repository (worktree or main checkout).
@@ -641,6 +658,43 @@ mod tests {
             .expect("commit");
         assert!(out.status.success());
         assert!(!is_merged(&repo, "bridle/w2").await.expect("branch ahead"));
+
+        // A squash landing leaves the branch un-merged in git's eyes; the
+        // trailer on the landing commit is what marks it landed.
+        let git = |args: &[&str]| {
+            let mut c = std::process::Command::new("git");
+            c.arg("-C")
+                .arg(&repo)
+                .args(["-c", "user.email=t@e.com", "-c", "user.name=T"])
+                .args(args);
+            c
+        };
+        assert!(
+            git(&["merge", "--squash", "bridle/w2"])
+                .output()
+                .expect("squash")
+                .status
+                .success()
+        );
+        assert!(
+            !is_merged(&repo, "bridle/w2")
+                .await
+                .expect("not yet committed")
+        );
+        assert!(
+            git(&[
+                "commit",
+                "--allow-empty",
+                "-q",
+                "-m",
+                "t: x\n\nBranch: bridle/w2"
+            ])
+            .output()
+            .expect("land")
+            .status
+            .success()
+        );
+        assert!(is_merged(&repo, "bridle/w2").await.expect("squash-landed"));
 
         // An rm that already removed the directory can still finish.
         std::fs::remove_dir_all(&wt_path).expect("rm dir");
