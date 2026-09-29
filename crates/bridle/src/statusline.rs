@@ -410,6 +410,7 @@ mod tests {
             claude_version: None,
             budget_state: Default::default(),
             ci: None,
+            merged_leftovers: Vec::new(),
         }
     }
 

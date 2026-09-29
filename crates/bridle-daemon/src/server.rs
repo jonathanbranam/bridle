@@ -312,6 +312,18 @@ async fn status(
     let unread = state.store.unread_count("human").await?;
     let rate_limits = state.store.rate_limits().await?;
     let claude_version = state.store.get_meta("claude_version").await?;
+    let mut merged_leftovers = Vec::new();
+    for agent in state.store.list_agents(true).await? {
+        if agent.state == bridle_api::types::AgentState::Stopped
+            && let Some(branch) = &agent.branch
+            && matches!(
+                crate::worktree::is_merged(&state.workspace.repo, branch).await,
+                Ok(true)
+            )
+        {
+            merged_leftovers.push(agent.name);
+        }
+    }
     Ok(Json(Status {
         daemon: bridle_api::types::DaemonInfo {
             project: state.project.clone(),
@@ -329,6 +341,7 @@ async fn status(
         claude_version,
         budget_state: state.governor.snapshot().default.state,
         ci: state.ci.last(),
+        merged_leftovers,
     }))
 }
 
@@ -1163,10 +1176,34 @@ async fn done_task(
     Path(id): Path<String>,
     Json(req): Json<DoneTaskRequest>,
 ) -> Result<Json<Task>, ApiError> {
-    let task = state
+    let branch = req
+        .branch
+        .as_deref()
+        .map(str::trim)
+        .filter(|b| !b.is_empty());
+    // Landing removes the branch's agents, worktree and branch, so refuse
+    // before recording anything unless the work really is on the integration
+    // branch.
+    if branch.is_some() {
+        let commit = req.commit.trim();
+        if !crate::worktree::is_on_head(&state.workspace.repo, commit)
+            .await
+            .map_err(SupervisorError::from)?
+        {
+            return Err(TaskError::Conflict(format!(
+                "commit {commit} is not on the integration branch; land it before marking the task done"
+            ))
+            .into());
+        }
+    }
+    let mut task = state
         .tasks
         .done_task(&id, &req.commit, req.branch.as_deref(), &principal.id)
         .await?;
+    if let Some(branch) = branch {
+        let report = clean_up_landed_branch(&state, branch, &principal).await;
+        task = state.tasks.note_task(&id, &principal.id, &report).await?;
+    }
     let _ = state
         .emitter
         .emit(
@@ -1177,6 +1214,57 @@ async fn done_task(
         )
         .await;
     Ok(Json(task))
+}
+
+/// Removes every agent on `branch` (stopping any still running), their
+/// worktree and the branch itself, and reports what happened for the task's
+/// thread. One failure is recorded and doesn't stop the rest.
+async fn clean_up_landed_branch(state: &AppState, branch: &str, principal: &Principal) -> String {
+    let mut removed = Vec::new();
+    let mut failed = Vec::new();
+    match state.store.list_agents(true).await {
+        Ok(agents) => {
+            for agent in agents
+                .into_iter()
+                .filter(|a| a.branch.as_deref() == Some(branch))
+            {
+                // Forced: the work is on the integration branch, so what's
+                // left in the worktree is scratch.
+                match state
+                    .manager
+                    .remove(&agent.id, true, false, principal)
+                    .await
+                {
+                    Ok(()) => removed.push(format!("agent {}", agent.name)),
+                    Err(e) => failed.push(format!("agent {}: {e}", agent.name)),
+                }
+            }
+        }
+        Err(e) => failed.push(format!("listing agents: {e}")),
+    }
+    let repo = &state.workspace.repo;
+    if crate::worktree::branch_exists(repo, branch)
+        .await
+        .unwrap_or(false)
+    {
+        match crate::worktree::delete_branch(repo, branch, true).await {
+            Ok(()) => removed.push(format!("branch {branch}")),
+            Err(e) => failed.push(format!("branch {branch}: {e}")),
+        }
+    }
+    let mut report = format!("cleanup: removed {}", list_or_none(&removed));
+    if !failed.is_empty() {
+        report.push_str(&format!("; failed: {}", failed.join("; ")));
+    }
+    report
+}
+
+fn list_or_none(items: &[String]) -> String {
+    if items.is_empty() {
+        "nothing".to_string()
+    } else {
+        items.join(", ")
+    }
 }
 
 async fn reopen_task(
