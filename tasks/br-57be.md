@@ -4,7 +4,8 @@ title = "P5: port registry: bridle port alloc/release/list with reserved ports"
 kind = "feature"
 state = "planned"
 created_at = "2026-09-29T06:50:51.728Z"
-updated_at = "2026-09-29T06:50:53.775019Z"
+updated_at = "2026-09-29T07:06:38.519440Z"
+summary = "Port registry: `ports` table (SCHEMA_V16, runtime state, not on the state branch), `[ports] range/reserved` config, `POST/GET /v1/ports` + release, `bridle port alloc|release|list`. Alloc (crates/bridle-daemon/src/ports.rs) takes the lowest port in range not reserved, allocated or bind-failing on 127.0.0.1; owner is the agent's stable id (or principal id for non-agents), task is the caller's claimed task. Freed on agent exit (supervisor hook) and by a 30s tick (dead pid, owner not running). Adds a `label` column beyond the brief for --label. track-web's dev-servers rule was not found under /Volumes/Data/work, so its needs weren't checked. Not built: PORT env injection."
 +++
 
 Goal (docs/design/worktrees-and-ports.md; build-order P5): track-web workers run dev servers; the human's ports must never be taken and 'stop what you start' must be checkable. Find track-web's rule on it (its .bridle/rules/dev-servers.md under the workspace, /Volumes/Data/work/*, read-only) and match its needs.
