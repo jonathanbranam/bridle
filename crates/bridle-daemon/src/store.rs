@@ -13,7 +13,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
 use bridle_api::types::{
-    Agent, AgentState, AgentUsage, Edge, EdgeKind, Event, EventQuery, ExitInfo,
+    Agent, AgentState, AgentUsage, Conflict, Edge, EdgeKind, Event, EventQuery, ExitInfo,
     InteractiveUsageRow, Message, MessageKind, MessageState, PrincipalId, PrincipalKind, RateLimit,
     TaskKind, TaskState, TokenCreated, TokenInfo, TokenTotals, Usage, UsageBreakdown, UsageGroup,
     UsageGroupBy, When,
@@ -640,6 +640,36 @@ impl Store {
             .await
     }
 
+    // ---------- conflicts ----------
+
+    /// Opens a conflict for the overlap, or returns `None` if it's already known.
+    pub async fn open_conflict(
+        &self,
+        tasks: &[String; 2],
+        kind: &str,
+        key: &str,
+    ) -> Result<Option<Conflict>, StoreError> {
+        let (tasks, kind, key) = (tasks.clone(), kind.to_string(), key.to_string());
+        self.with_conn(move |c| sync::open_conflict(c, &tasks, &kind, &key))
+            .await
+    }
+
+    pub async fn get_conflict(&self, id: &str) -> Result<Option<Conflict>, StoreError> {
+        let id = id.to_string();
+        self.with_conn(move |c| sync::get_conflict(c, &id)).await
+    }
+
+    pub async fn list_conflicts(&self) -> Result<Vec<Conflict>, StoreError> {
+        self.with_conn(sync::list_conflicts).await
+    }
+
+    /// Marks an open conflict resolved; `Conflict` error if it already is.
+    pub async fn resolve_conflict(&self, id: &str, resolution: &str) -> Result<(), StoreError> {
+        let (id, resolution) = (id.to_string(), resolution.to_string());
+        self.with_conn(move |c| sync::resolve_conflict(c, &id, &resolution))
+            .await
+    }
+
     // ---------- rate limits / usage ----------
 
     pub async fn upsert_rate_limit(&self, rl: RateLimit) -> Result<(), StoreError> {
@@ -965,9 +995,27 @@ mod sync {
         ALTER TABLE messages ADD COLUMN answered_line TEXT;
     "#;
 
+    // Conflicts opened by `impact check` (impact-and-conflicts.md). The unique
+    // key makes reopening the same overlap a no-op, resolved or not. The id
+    // shown to users is `C<rowid>`.
+    pub(super) const SCHEMA_V15: &str = r#"
+        CREATE TABLE conflicts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            task_a TEXT NOT NULL,
+            task_b TEXT NOT NULL,
+            kind TEXT NOT NULL,
+            key TEXT NOT NULL,
+            state TEXT NOT NULL DEFAULT 'open',
+            resolution TEXT,
+            opened_at TEXT NOT NULL,
+            resolved_at TEXT,
+            UNIQUE (task_a, task_b, kind, key)
+        );
+    "#;
+
     const MIGRATIONS: &[&str] = &[
         SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7, SCHEMA_V8,
-        SCHEMA_V9, SCHEMA_V10, SCHEMA_V11, SCHEMA_V12, SCHEMA_V13, SCHEMA_V14,
+        SCHEMA_V9, SCHEMA_V10, SCHEMA_V11, SCHEMA_V12, SCHEMA_V13, SCHEMA_V14, SCHEMA_V15,
     ];
 
     pub(super) fn open(path: &Path) -> Result<Connection, StoreError> {
@@ -2157,6 +2205,90 @@ mod sync {
         )?;
         let rows = stmt.query_map([], row_to_edge)?;
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
+    // ---------- conflicts ----------
+
+    const CONFLICT_COLS: &str =
+        "id, task_a, task_b, kind, key, state, resolution, opened_at, resolved_at";
+
+    fn row_to_conflict(row: &Row<'_>) -> rusqlite::Result<Conflict> {
+        let resolved_at: Option<String> = row.get(8)?;
+        Ok(Conflict {
+            id: format!("C{}", row.get::<_, i64>(0)?),
+            tasks: [row.get(1)?, row.get(2)?],
+            kind: row.get(3)?,
+            key: row.get(4)?,
+            state: row.get(5)?,
+            resolution: row.get(6)?,
+            opened_at: parse_dt(&row.get::<_, String>(7)?)?,
+            resolved_at: resolved_at.as_deref().map(parse_dt).transpose()?,
+        })
+    }
+
+    pub(super) fn open_conflict(
+        conn: &Connection,
+        tasks: &[String; 2],
+        kind: &str,
+        key: &str,
+    ) -> Result<Option<Conflict>, StoreError> {
+        let n = conn.execute(
+            "INSERT OR IGNORE INTO conflicts(task_a, task_b, kind, key, opened_at) \
+             VALUES (?1, ?2, ?3, ?4, ?5)",
+            params![tasks[0], tasks[1], kind, key, fmt_dt(Utc::now())],
+        )?;
+        if n == 0 {
+            return Ok(None);
+        }
+        let id = format!("C{}", conn.last_insert_rowid());
+        get_conflict(conn, &id)
+    }
+
+    pub(super) fn get_conflict(
+        conn: &Connection,
+        id: &str,
+    ) -> Result<Option<Conflict>, StoreError> {
+        let Some(n) = id.strip_prefix('C').and_then(|n| n.parse::<i64>().ok()) else {
+            return Ok(None);
+        };
+        Ok(conn
+            .query_row(
+                &format!("SELECT {CONFLICT_COLS} FROM conflicts WHERE id = ?1"),
+                [n],
+                row_to_conflict,
+            )
+            .optional()?)
+    }
+
+    pub(super) fn list_conflicts(conn: &Connection) -> Result<Vec<Conflict>, StoreError> {
+        let mut stmt = conn.prepare(&format!(
+            "SELECT {CONFLICT_COLS} FROM conflicts ORDER BY id ASC"
+        ))?;
+        let rows = stmt.query_map([], row_to_conflict)?;
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
+    pub(super) fn resolve_conflict(
+        conn: &Connection,
+        id: &str,
+        resolution: &str,
+    ) -> Result<(), StoreError> {
+        let n = id
+            .strip_prefix('C')
+            .and_then(|n| n.parse::<i64>().ok())
+            .ok_or_else(|| StoreError::NotFound(format!("no such conflict: {id}")))?;
+        let changed = conn.execute(
+            "UPDATE conflicts SET state = 'resolved', resolution = ?1, resolved_at = ?2 \
+             WHERE id = ?3 AND state = 'open'",
+            params![resolution, fmt_dt(Utc::now()), n],
+        )?;
+        if changed == 0 {
+            return Err(match get_conflict(conn, id)? {
+                Some(_) => StoreError::Conflict(format!("conflict {id} is already resolved")),
+                None => StoreError::NotFound(format!("no such conflict: {id}")),
+            });
+        }
+        Ok(())
     }
 
     // ---------- open questions ----------

@@ -10,24 +10,24 @@ use bridle_api::{
     BudgetHoldRequest, BudgetOverrideRequest, Client, DoneTaskRequest, DropTaskRequest, Edge,
     EdgeKind, EditTaskRequest, Event, EventQuery, Impact, ImpactCheckRequest, InterruptRequest,
     MaxWorkersRequest, MessageKind, MessageQuery, NewEdgeRequest, NewTaskRequest, OverlapLevel,
-    RemoveEdgeQuery, RemoveQuery, RenewRequest, ResumeRequest, SendRequest, SetImpactRequest,
-    SetSummaryRequest, SpawnRequest, SpecRef, StopRequest, Task, TaskKind, TaskSize,
-    TokenCreateRequest, UsageBreakdownQuery, UsageGroupBy, Workdir, event_kind,
+    RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, ResumeRequest, SendRequest,
+    SetImpactRequest, SetSummaryRequest, SpawnRequest, SpecRef, StopRequest, Task, TaskKind,
+    TaskSize, TokenCreateRequest, UsageBreakdownQuery, UsageGroupBy, Workdir, event_kind,
 };
 use chrono::{Local, TimeZone, Utc};
 use futures::StreamExt;
 
 use crate::cli::{
     AgentsArgs, AnswerArgs, AskArgs, BudgetAction, BudgetArgs, BudgetHoldArgs, ClaimArgs, Cli,
-    Command, CostAction, CostArgs, CostAuditArgs, DepAction, DepArgs, DepEdgeArgs, EdgeKindArg,
-    EventsArgs, ImpactAction, ImpactArgs, InboxAction, InboxArgs, InboxReadArgs, InboxShowArgs,
-    InterruptArgs, LogsArgs, PrimeArgs, PrimeRoleArg, QueueAction, QueueAddTierArgs, QueueArgs,
-    QueueSetArgs, ReadyArgs, ReleaseArgs, RmArgs, RulesAction, RulesArgs, RulesDiffArgs,
-    RulesExplainArgs, SendArgs, ShowArgs, SpawnArgs, SpecAction, SpecArgs, SpecExportArgs,
-    SpecFormatArg, StopArgs, TaskAction, TaskArgs, TaskDoneArgs, TaskDropArgs, TaskEditArgs,
-    TaskKindArg, TaskListArgs, TaskNewArgs, TaskNoteArgs, TaskPlanArgs, TaskReopenArgs,
-    TaskSearchArgs, TaskShowArgs, TaskSizeArg, TaskSummaryArgs, TokenAction, TokenArgs, UsageArgs,
-    UsageByArg, WaitArgs, WhenArg,
+    Command, ConflictAction, ConflictArgs, CostAction, CostArgs, CostAuditArgs, DepAction, DepArgs,
+    DepEdgeArgs, EdgeKindArg, EventsArgs, ImpactAction, ImpactArgs, InboxAction, InboxArgs,
+    InboxReadArgs, InboxShowArgs, InterruptArgs, LogsArgs, PrimeArgs, PrimeRoleArg, QueueAction,
+    QueueAddTierArgs, QueueArgs, QueueSetArgs, ReadyArgs, ReleaseArgs, RmArgs, RulesAction,
+    RulesArgs, RulesDiffArgs, RulesExplainArgs, SendArgs, ShowArgs, SpawnArgs, SpecAction,
+    SpecArgs, SpecExportArgs, SpecFormatArg, StopArgs, TaskAction, TaskArgs, TaskDoneArgs,
+    TaskDropArgs, TaskEditArgs, TaskKindArg, TaskListArgs, TaskNewArgs, TaskNoteArgs, TaskPlanArgs,
+    TaskReopenArgs, TaskSearchArgs, TaskShowArgs, TaskSizeArg, TaskSummaryArgs, TokenAction,
+    TokenArgs, UsageArgs, UsageByArg, WaitArgs, WhenArg,
 };
 use crate::error::CliError;
 use crate::render;
@@ -61,6 +61,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Token(args) => token(&cli, args).await,
         Command::Task(args) => task(&cli, args).await,
         Command::Impact(args) => impact(&cli, args).await,
+        Command::Conflict(args) => conflict(&cli, args).await,
         Command::Dep(args) => dep(&cli, args).await,
         Command::Ask(args) => ask(&cli, args).await,
         Command::Answer(args) => answer(&cli, args).await,
@@ -2283,6 +2284,63 @@ fn resolve_edge_args(args: &DepEdgeArgs) -> Result<(String, String, EdgeKind), C
 
 fn print_edge_row(e: &Edge) {
     println!("{:<10} {:<16} {}", e.from, e.kind, e.to);
+}
+
+async fn conflict(cli: &Cli, args: &ConflictArgs) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    match &args.action {
+        ConflictAction::List => {
+            let mut list = client.list_conflicts().await?;
+            list.sort_by_key(|c| c.state != "open");
+            if cli.json {
+                render::print_json(&list)?;
+            } else if list.is_empty() {
+                println!("no conflicts");
+            }
+            if !cli.json {
+                for c in &list {
+                    println!(
+                        "{:<6}{:<9}{:<10}{}  {} {}{}",
+                        c.id,
+                        c.state,
+                        c.kind,
+                        c.key,
+                        c.tasks[0],
+                        c.tasks[1],
+                        c.resolution
+                            .as_deref()
+                            .map(|r| format!("  ({r})"))
+                            .unwrap_or_default()
+                    );
+                }
+            }
+        }
+        ConflictAction::Resolve(a) => {
+            let order = match a.order.as_deref() {
+                Some([x, y]) => Some([x.clone(), y.clone()]),
+                Some(_) => {
+                    return Err(CliError::Other(anyhow::anyhow!("--order takes A,B")));
+                }
+                None => None,
+            };
+            let c = client
+                .resolve_conflict(
+                    &a.id,
+                    &ResolveConflictRequest {
+                        compatible: a.compatible.clone(),
+                        order,
+                        merge_into: a.merge_into.clone(),
+                    },
+                )
+                .await?;
+            if cli.json {
+                render::print_json(&c)?;
+            } else {
+                println!("{} resolved: {}", c.id, c.resolution.unwrap_or_default());
+            }
+        }
+    }
+    Ok(())
 }
 
 async fn dep(cli: &Cli, args: &DepArgs) -> Result<(), CliError> {

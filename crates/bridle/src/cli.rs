@@ -95,6 +95,9 @@ pub enum Command {
     /// A task's declared impact: the spec ids and files it will touch
     /// (docs/design/impact-and-conflicts.md).
     Impact(ImpactArgs),
+    /// Conflicts opened by `impact check`: list and resolve
+    /// (docs/design/impact-and-conflicts.md).
+    Conflict(ConflictArgs),
     /// Add or remove a coordination edge between two tasks
     /// (docs/design/coordination.md).
     Dep(DepArgs),
@@ -1009,6 +1012,36 @@ pub enum EdgeKindArg {
 }
 
 #[derive(Debug, Args)]
+pub struct ConflictArgs {
+    #[command(subcommand)]
+    pub action: ConflictAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum ConflictAction {
+    /// List conflicts, open ones first.
+    List,
+    /// Record how a conflict was settled: exactly one of the three flags.
+    Resolve(ConflictResolveArgs),
+}
+
+#[derive(Debug, Args)]
+#[command(group = clap::ArgGroup::new("how").required(true))]
+pub struct ConflictResolveArgs {
+    /// The conflict id, e.g. C12.
+    pub id: String,
+    /// Not a real conflict; the reason is recorded.
+    #[arg(long, value_name = "REASON", group = "how")]
+    pub compatible: Option<String>,
+    /// `A,B`: adds a `blocks` edge, A blocks B.
+    #[arg(long, value_name = "A,B", value_delimiter = ',', group = "how")]
+    pub order: Option<Vec<String>>,
+    /// One task absorbs the other's change.
+    #[arg(long, value_name = "TASK", group = "how")]
+    pub merge_into: Option<String>,
+}
+
+#[derive(Debug, Args)]
 pub struct DepArgs {
     #[command(subcommand)]
     pub action: DepAction,
@@ -1710,6 +1743,31 @@ mod tests {
         };
         assert_eq!(a.task, "tw-1234");
         assert!(matches!(a.size, Some(TaskSizeArg::None)));
+    }
+
+    #[test]
+    fn conflict_resolve_parses() {
+        let cli = parse(&["conflict", "resolve", "C12", "--order", "tw-1,tw-2"]).unwrap();
+        let Command::Conflict(args) = cli.command else {
+            panic!("expected conflict")
+        };
+        let ConflictAction::Resolve(a) = args.action else {
+            panic!("expected resolve")
+        };
+        assert_eq!(a.order, Some(vec!["tw-1".to_string(), "tw-2".to_string()]));
+        assert!(parse(&["conflict", "resolve", "C12"]).is_err());
+        assert!(
+            parse(&[
+                "conflict",
+                "resolve",
+                "C12",
+                "--compatible",
+                "x",
+                "--merge-into",
+                "a"
+            ])
+            .is_err()
+        );
     }
 
     #[test]

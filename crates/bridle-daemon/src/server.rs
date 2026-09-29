@@ -12,15 +12,16 @@ use axum::routing::{get, post};
 use axum::{Extension, Json, Router};
 use bridle_api::types::{
     AddQueueTierRequest, Agent, AnswerQuestionRequest, ApiErrorResponse, AskQuestionRequest,
-    BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, DoneTaskRequest, DropTaskRequest, Edge,
-    EditTaskRequest, ErrorBody, Event, EventQuery, Health, HoldStatus, ImpactCheckRequest,
-    ImpactReport, InteractiveUsageRow, InterruptRequest, MaxWorkersRequest, Message, MessageQuery,
-    MessageState, NewEdgeRequest, NewTaskRequest, NoteTaskRequest, OpenQuestion, PrincipalKind,
-    Queue, RateLimit, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResumeRequest,
+    BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, Conflict, DoneTaskRequest,
+    DropTaskRequest, Edge, EdgeKind, EditTaskRequest, ErrorBody, Event, EventQuery, Health,
+    HoldStatus, ImpactCheckRequest, ImpactReport, InteractiveUsageRow, InterruptRequest,
+    MaxWorkersRequest, Message, MessageKind, MessageQuery, MessageState, NewEdgeRequest,
+    NewTaskRequest, NoteTaskRequest, OpenQuestion, OverlapLevel, PrincipalKind, Queue, RateLimit,
+    RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, ResumeRequest,
     ScheduleOverrideStatus, SendRequest, SetImpactRequest, SetQueueRequest, SetSummaryRequest,
     SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery, TokenCreateRequest,
     TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown,
-    UsageBreakdownQuery, UsageGroupBy, WindowStatus, event_kind,
+    UsageBreakdownQuery, UsageGroupBy, When, WindowStatus, event_kind,
 };
 use chrono::Utc;
 use futures::Stream;
@@ -86,6 +87,8 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/tasks/{id}/summary", post(set_summary))
         .route("/v1/tasks/{id}/impact", post(set_impact))
         .route("/v1/impact/check", post(impact_check))
+        .route("/v1/conflicts", get(list_conflicts))
+        .route("/v1/conflicts/{id}/resolve", post(resolve_conflict))
         .route("/v1/tasks/{id}/reopen", post(reopen_task))
         .route("/v1/tasks/{id}/ask", post(ask_task))
         .route("/v1/tasks/{id}/answer", post(answer_task))
@@ -1190,10 +1193,132 @@ async fn set_impact(
 async fn impact_check(
     State(state): State<AppState>,
     Json(req): Json<ImpactCheckRequest>,
-) -> Json<ImpactReport> {
-    Json(ImpactReport {
-        overlaps: crate::impact::check(&state.tasks.list_tasks(), &req.spec_map),
-    })
+) -> Result<Json<ImpactReport>, ApiError> {
+    let overlaps = crate::impact::check(&state.tasks.list_tasks(), &req.spec_map);
+    let mut opened = Vec::new();
+    for o in overlaps
+        .iter()
+        .filter(|o| o.level == OverlapLevel::Conflict)
+    {
+        if let Some(c) = state.store.open_conflict(&o.tasks, &o.kind, &o.key).await? {
+            announce_conflict(&state, &c).await;
+            opened.push(c.id);
+        }
+    }
+    Ok(Json(ImpactReport { overlaps, opened }))
+}
+
+/// Injects the conflict into each task's claimant, or the running managers for an
+/// unclaimed task, and notes it on both task threads. Best effort: a recipient that
+/// can't be reached doesn't fail the check.
+async fn announce_conflict(state: &AppState, c: &Conflict) {
+    for (i, task_id) in c.tasks.iter().enumerate() {
+        let other = &c.tasks[1 - i];
+        let body = format!(
+            "{}: conflict {} with {other} over {} {}. Settle it with the other task's claimant, \
+             then record it: bridle conflict resolve {} --compatible '<why>' | --order A,B | \
+             --merge-into <task>",
+            task_id, c.id, c.kind, c.key, c.id
+        );
+        let _ = state
+            .tasks
+            .note_task(task_id, &"system".to_string(), &body)
+            .await;
+        let claimant = state.tasks.get_task(task_id).and_then(|t| t.claimed_by);
+        let mut to = Vec::new();
+        if let Some(name) = claimant.as_deref().and_then(|p| p.strip_prefix("agent:"))
+            && let Ok(Some(a)) = state.store.get_agent(name).await
+        {
+            to.push(a.id);
+        } else if let Ok(agents) = state.store.list_agents(false).await {
+            to.extend(
+                agents
+                    .into_iter()
+                    .filter(|a| a.role == "manager" && a.state.is_running())
+                    .map(|a| a.id),
+            );
+        }
+        for id in to {
+            let _ = state
+                .manager
+                .send(
+                    "system".to_string(),
+                    ToTarget::Agent(id),
+                    MessageKind::Note,
+                    body.clone(),
+                    When::Now,
+                    None,
+                )
+                .await;
+        }
+    }
+}
+
+async fn list_conflicts(State(state): State<AppState>) -> Result<Json<Vec<Conflict>>, ApiError> {
+    Ok(Json(state.store.list_conflicts().await?))
+}
+
+async fn resolve_conflict(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path(id): Path<String>,
+    Json(req): Json<ResolveConflictRequest>,
+) -> Result<Json<Conflict>, ApiError> {
+    let c = state
+        .store
+        .get_conflict(&id)
+        .await?
+        .ok_or_else(|| ApiError::not_found(format!("no such conflict: {id}")))?;
+    if c.state != "open" {
+        return Err(ApiError::from(StoreError::Conflict(format!(
+            "conflict {id} is already resolved"
+        ))));
+    }
+    let in_pair = |t: &str| c.tasks.iter().any(|x| x == t);
+    let resolution = match (&req.compatible, &req.order, &req.merge_into) {
+        (Some(why), None, None) if !why.trim().is_empty() => format!("compatible: {why}"),
+        (None, Some([a, b]), None) => {
+            if !in_pair(a) || !in_pair(b) || a == b {
+                return Err(ApiError::bad_request(format!(
+                    "--order must name the conflict's two tasks: {}, {}",
+                    c.tasks[0], c.tasks[1]
+                )));
+            }
+            state.tasks.add_edge(a, b, EdgeKind::Blocks).await?;
+            format!("order: {a} blocks {b}")
+        }
+        (None, None, Some(t)) => {
+            if !in_pair(t) {
+                return Err(ApiError::bad_request(format!(
+                    "--merge-into must be one of {}, {}",
+                    c.tasks[0], c.tasks[1]
+                )));
+            }
+            format!("merge-into: {t}")
+        }
+        _ => {
+            return Err(ApiError::bad_request(
+                "give exactly one of compatible (with a reason), order, merge_into",
+            ));
+        }
+    };
+    state.store.resolve_conflict(&id, &resolution).await?;
+    for t in &c.tasks {
+        let _ = state
+            .tasks
+            .note_task(
+                t,
+                &principal.id,
+                &format!("conflict {id} resolved, {resolution}"),
+            )
+            .await;
+    }
+    let c = state
+        .store
+        .get_conflict(&id)
+        .await?
+        .ok_or_else(|| ApiError::not_found(format!("no such conflict: {id}")))?;
+    Ok(Json(c))
 }
 
 async fn done_task(
