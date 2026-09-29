@@ -43,6 +43,7 @@ allowed_tools     = ["Bash(bridle *)", "Bash(git log*)", "Bash(git diff*)", "Bas
 # which custom roles like this one start from.)
 disallowed_tools  = ["Bash(bridle spawn*)", "Bash(bridle stop*)", "Bash(bridle rm*)", "Bash(bridle resume*)", "Bash(bridle interrupt*)"]
 system_prompt     = "workflow/base/roles/product-manager.md"
+autostart         = true
 resume_on_restart = true
 max_budget_usd    = 50.0
 # Falls back to the built-in worker default (stop_check = true) since this is a custom
