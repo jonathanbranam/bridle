@@ -304,9 +304,9 @@ the plain config: the applied `five_hour` thresholds and their source
 span, the schedule's next change (when, and to which period's thresholds; the
 daemon steps by the minute to find the real boundary), and a `why` line per
 window above `normal` (the threshold crossed and/or the `status` that forced
-it). `allowed_warning` forces at least winding-down even when utilization is
-under the applied thresholds (ticket kv7d, open), and the `why` line says so
-rather than hiding it. Each reading shows its age and is `stale` when older
+it). `allowed_warning` is information only: the `why` line shows it, but the
+configured thresholds and overrides alone decide the state (ticket kv7d).
+`rejected` still forces paused. Each reading shows its age and is `stale` when older
 than `max_staleness` or missing. `bridle budget --schedule` prints every
 resolved period (span and thresholds). Times are the machine's local
 timezone in text; `--json` stays UTC.
@@ -419,9 +419,9 @@ Sources, best first:
 
 `get_usage` is undocumented, so the contract suite covers it, and if it stops
 working the governor falls back to 2 and 3 and holds at the staleness limits
-above. `allowed_warning` and `rejected` events trip the wind-down and
-`stop_at` respectively, whatever the percentages say; when Claude sends
-`allowed_warning` is unknown ([[usage-probe-and-wind-down-headroom-u7pw|spike u7pw]]).
+above. A `rejected` event trips `stop_at` whatever the percentages say;
+`allowed_warning` (sent near 90% of `five_hour`) is shown but never changes the
+state. When Claude sends `allowed_warning` exactly is unknown ([[usage-probe-and-wind-down-headroom-u7pw|spike u7pw]]).
 
 ### Model choice
 
