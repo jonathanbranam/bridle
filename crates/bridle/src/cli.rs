@@ -139,6 +139,8 @@ pub enum Command {
     Spec(SpecArgs),
     /// Goals (docs/design/goals-tier.md). Local — no daemon call.
     Goals(GoalsArgs),
+    /// Architecture-tier elements (docs/design/architecture-tier.md). Local, no daemon call.
+    Arch(ArchArgs),
 }
 
 #[derive(Debug, Args)]
@@ -164,6 +166,30 @@ pub struct GoalsListArgs {
     /// Only goals with this stance (build, keep-open, unaddressed).
     #[arg(long, value_name = "S")]
     pub stance: Option<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct ArchArgs {
+    #[command(subcommand)]
+    pub action: ArchAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum ArchAction {
+    /// List the elements (id, invariant flag, title); exits non-zero, printing
+    /// diagnostics, on a missing or duplicate id.
+    List(ArchListArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct ArchListArgs {
+    /// Only elements marked `invariant`.
+    #[arg(long)]
+    pub invariants: bool,
+    /// The architecture directory, searched recursively for `*.md` (default
+    /// `design/architecture`, relative to the current directory).
+    #[arg(long, value_name = "DIR", default_value = "design/architecture")]
+    pub root: PathBuf,
 }
 
 #[derive(Debug, Args)]

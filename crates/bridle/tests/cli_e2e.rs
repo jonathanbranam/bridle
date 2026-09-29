@@ -986,6 +986,54 @@ fn wait_returns_on_state_change_message_timeout_and_already_in_state() {
     assert_eq!(v["result"], "message");
 }
 
+fn arch_dir(files: &[(&str, &str)]) -> tempfile::TempDir {
+    let dir = tempfile::tempdir().expect("tempdir");
+    let root = dir.path().join("design/architecture");
+    std::fs::create_dir_all(&root).expect("mkdir");
+    for (name, text) in files {
+        std::fs::write(root.join(name), text).expect("write");
+    }
+    dir
+}
+
+#[test]
+fn arch_list_lists_and_filters_invariants() {
+    let dir = arch_dir(&[
+        ("a.md", "## Engine referees {#a-12cd invariant}\nx\n"),
+        (
+            "b.md",
+            "## Use SQLite {#a-00ff}\ny\n\n**Alternatives rejected:** Postgres\n",
+        ),
+    ]);
+    let home = tempfile::tempdir().expect("home");
+    let (ok, out, _) = run_cli(dir.path(), home.path(), &["arch", "list"]);
+    assert!(ok);
+    assert!(out.contains("a-12cd invariant  Engine referees"), "{out}");
+    assert!(out.contains("a-00ff  Use SQLite"), "{out}");
+    let (ok, out, _) = run_cli(
+        dir.path(),
+        home.path(),
+        &["--json", "arch", "list", "--invariants"],
+    );
+    assert!(ok);
+    let v: serde_json::Value = serde_json::from_str(&out).expect("json");
+    assert_eq!(v.as_array().map(Vec::len), Some(1));
+    assert_eq!(v[0]["id"], "a-12cd");
+}
+
+#[test]
+fn arch_list_rejects_duplicate_and_missing_ids() {
+    let dir = arch_dir(&[
+        ("a.md", "## X {#a-12cd}\n## No id\n"),
+        ("b.md", "## Y {#a-12cd}\n"),
+    ]);
+    let home = tempfile::tempdir().expect("home");
+    let (ok, _, err) = run_cli(dir.path(), home.path(), &["arch", "list"]);
+    assert!(!ok);
+    assert!(err.contains("a.md:2:9"), "{err}");
+    assert!(err.contains("duplicate id"), "{err}");
+}
+
 fn goals_fixture(name: &str) -> std::path::PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("tests/fixtures/goals")

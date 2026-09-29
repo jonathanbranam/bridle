@@ -61,6 +61,11 @@ bridle rules explain|diff ... --component <id>  the same on top of that componen
 bridle sync                                 renders resolved workflow layers into CLAUDE.md's
                                              managed block, .claude/skills, .claude/agents and
                                              .claude/settings.json's hooks; local only, no daemon call
+bridle arch list [--invariants] [--root DIR]   lists architecture elements (id, `invariant` flag, title,
+                                             file:line) from `*.md` under DIR (default
+                                             `design/architecture`); a missing or duplicate `a-` id
+                                             is an error (diagnostics on stderr, exit 1); --json
+                                             prints the elements with their text; local only
 bridle spec check [paths...] [--root DIR] [--require-ids]   validates spec files (dirs are searched for
                                              *.md; default `design/specs`, or --root) with the
                                              bridle-spec parser: prints file:line:col: message per
