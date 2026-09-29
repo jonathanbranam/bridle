@@ -58,3 +58,26 @@ produce them. Also `ps -o pid,ppid,command -p <daemon pid>` shows parent 1 (laun
 - The plist copies `PATH` from the shell that ran `install`; if you change toolchains, run
   `install --force` and reload.
 - Uninstall does not unload; it prints the `bootout` command.
+
+## Upgrading to a new bridle build (TBD: the human hasn't decided)
+
+The human, verbatim (2026-09-29, via the advisor): "won't launchd just restart it? Or we don't
+want to wait? There are plenty of tools to do this, right? restart something that stopped
+immediately." Then: "I'm not sure yet. file the options in the document as TBD".
+
+Today the plist restarts the daemon only after a crash, so the upgrade is: install the new
+build (the plist runs the absolute path it was given at install time, e.g. `~/.cargo/bin/bridle`),
+then per project:
+
+1. `bridle --project <p> stop-daemon` (graceful, up to about 35 s; it stays stopped).
+2. `launchctl kickstart gui/$(id -u)/dev.bridle.<p>` (starts it on the new binary).
+
+Options to make it one step:
+
+- **A. `KeepAlive` always.** `launchd install` writes an unconditional `KeepAlive`; then
+  `stop-daemon` is the restart (launchd waits at least 10 s between launches). To stop it for
+  good, `launchctl bootout`. Advisor's recommendation: least to remember.
+- **B. `launchctl kickstart -k gui/$(id -u)/dev.bridle.<p>`.** launchd's own kill-and-restart,
+  no plist change. Check first that its kill allows the daemon's graceful stop (about 35 s).
+- **C. `bridle restart-daemon`.** Stop, then kickstart when under launchd; one project or all.
+  A small command; only worth it if A or B isn't enough.
