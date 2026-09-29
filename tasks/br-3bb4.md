@@ -2,9 +2,11 @@
 id = "br-3bb4"
 title = "Manager learns of new tasks without a PM: wake on task.created or poll queue on idle"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-09-29T04:34:59.147Z"
-updated_at = "2026-09-29T04:53:36.452892Z"
+updated_at = "2026-09-29T04:56:14.213408Z"
+branch = "bridle/wake-manager"
+commit = "b76f487"
 summary = "On task.created with no running product-manager, AgentManager::note_task_filed (supervisor.rs, called from server.rs new_task) sends running managers a system note listing tasks filed and the open count; first message is immediate, later ones inside 60s coalesce into one delayed flush. Manager role prompt now says to run bridle queue and bridle task list --state open when idle or woken. Docs: coordination.md 'Waking the manager'. Tests: tests/task_wake_test.rs. Coalescing state is in-memory, not persisted."
 +++
 
@@ -15,3 +17,8 @@ Goal: the development manager is woken when a task is created (event task.create
 Also make sure an idle manager is not left with a queue it doesn't look at: if the manager role prompt (workflow/base/roles/manager*.md) lacks 'when idle or woken, run bridle queue and bridle task list --state open', add it.
 
 Acceptance: `just check` passes; daemon test with a fake manager agent: task.created with no PM -> one message; with a PM -> none; three creations within the minute -> one message. Update docs/design/agent-host or coordination.md (whichever documents daemon messages). Model: Sonnet. Out of scope: waking on other events, PM changes.
+
+## Thread
+
+### note · agent:manager-2 · 2026-09-29T04:56:14.213Z
+integrated: b76f487 (branch bridle/wake-manager)
