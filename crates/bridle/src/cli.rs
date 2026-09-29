@@ -529,12 +529,16 @@ pub enum TaskAction {
 }
 
 #[derive(Debug, Args)]
+#[command(group(ArgGroup::new("body_source").args(["body", "body_file"])))]
 pub struct TaskNewArgs {
     pub title: String,
     #[arg(short = 'k', long, value_enum)]
     pub kind: TaskKindArg,
     #[arg(long)]
     pub body: Option<String>,
+    /// Read the task body from a file (or `-` for stdin).
+    #[arg(long)]
+    pub body_file: Option<PathBuf>,
     /// Scope the task to this component (repeatable); none = repo-wide.
     #[arg(long = "component", value_name = "ID")]
     pub component: Vec<String>,
@@ -557,12 +561,16 @@ pub struct TaskShowArgs {
 }
 
 #[derive(Debug, Args)]
+#[command(group(ArgGroup::new("body_source").args(["body", "body_file"])))]
 pub struct TaskEditArgs {
     pub task: String,
     #[arg(long)]
     pub title: Option<String>,
     #[arg(long)]
     pub body: Option<String>,
+    /// Read the task body from a file (or `-` for stdin).
+    #[arg(long)]
+    pub body_file: Option<PathBuf>,
     /// Replace the task's components with these (repeatable).
     #[arg(long = "component", value_name = "ID")]
     pub component: Vec<String>,
@@ -589,9 +597,13 @@ pub struct TaskReopenArgs {
 }
 
 #[derive(Debug, Args)]
+#[command(group(ArgGroup::new("text_source").args(["text", "text_file"])))]
 pub struct TaskNoteArgs {
     pub task: String,
-    pub text: String,
+    pub text: Option<String>,
+    /// Read the note text from a file (or `-` for stdin).
+    #[arg(long)]
+    pub text_file: Option<PathBuf>,
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
@@ -941,6 +953,134 @@ mod tests {
         let cli = parse(&["send", "w1", "--text-file", "-"]).unwrap();
         let Command::Send(args) = cli.command else {
             panic!("expected send")
+        };
+        assert_eq!(args.text_file.as_deref(), Some(std::path::Path::new("-")));
+    }
+
+    #[test]
+    fn task_new_accepts_body_file() {
+        let cli = parse(&[
+            "task",
+            "new",
+            "title",
+            "-k",
+            "feature",
+            "--body-file",
+            "body.txt",
+        ])
+        .unwrap();
+        let Command::Task(TaskArgs {
+            action: TaskAction::New(args),
+            ..
+        }) = cli.command
+        else {
+            panic!("expected task new")
+        };
+        assert_eq!(args.title, "title");
+        assert_eq!(args.body, None);
+        assert_eq!(
+            args.body_file.as_deref(),
+            Some(std::path::Path::new("body.txt"))
+        );
+    }
+
+    #[test]
+    fn task_new_rejects_body_and_body_file_together() {
+        let err = parse(&[
+            "task",
+            "new",
+            "title",
+            "-k",
+            "feature",
+            "--body",
+            "text",
+            "--body-file",
+            "body.txt",
+        ])
+        .unwrap_err();
+        assert_eq!(err.kind(), clap::error::ErrorKind::ArgumentConflict);
+    }
+
+    #[test]
+    fn task_new_body_file_accepts_dash_for_stdin() {
+        let cli = parse(&["task", "new", "title", "-k", "feature", "--body-file", "-"]).unwrap();
+        let Command::Task(TaskArgs {
+            action: TaskAction::New(args),
+            ..
+        }) = cli.command
+        else {
+            panic!("expected task new")
+        };
+        assert_eq!(args.body_file.as_deref(), Some(std::path::Path::new("-")));
+    }
+
+    #[test]
+    fn task_edit_accepts_body_file() {
+        let cli = parse(&["task", "edit", "task-id", "--body-file", "body.txt"]).unwrap();
+        let Command::Task(TaskArgs {
+            action: TaskAction::Edit(args),
+            ..
+        }) = cli.command
+        else {
+            panic!("expected task edit")
+        };
+        assert_eq!(args.task, "task-id");
+        assert_eq!(args.body, None);
+        assert_eq!(
+            args.body_file.as_deref(),
+            Some(std::path::Path::new("body.txt"))
+        );
+    }
+
+    #[test]
+    fn task_edit_rejects_body_and_body_file_together() {
+        let err = parse(&[
+            "task",
+            "edit",
+            "task-id",
+            "--body",
+            "text",
+            "--body-file",
+            "body.txt",
+        ])
+        .unwrap_err();
+        assert_eq!(err.kind(), clap::error::ErrorKind::ArgumentConflict);
+    }
+
+    #[test]
+    fn task_note_accepts_text_file() {
+        let cli = parse(&["task", "note", "task-id", "--text-file", "note.txt"]).unwrap();
+        let Command::Task(TaskArgs {
+            action: TaskAction::Note(args),
+            ..
+        }) = cli.command
+        else {
+            panic!("expected task note")
+        };
+        assert_eq!(args.task, "task-id");
+        assert_eq!(args.text, None);
+        assert_eq!(
+            args.text_file.as_deref(),
+            Some(std::path::Path::new("note.txt"))
+        );
+    }
+
+    #[test]
+    fn task_note_rejects_text_and_text_file_together() {
+        let err =
+            parse(&["task", "note", "task-id", "text", "--text-file", "note.txt"]).unwrap_err();
+        assert_eq!(err.kind(), clap::error::ErrorKind::ArgumentConflict);
+    }
+
+    #[test]
+    fn task_note_text_file_accepts_dash_for_stdin() {
+        let cli = parse(&["task", "note", "task-id", "--text-file", "-"]).unwrap();
+        let Command::Task(TaskArgs {
+            action: TaskAction::Note(args),
+            ..
+        }) = cli.command
+        else {
+            panic!("expected task note")
         };
         assert_eq!(args.text_file.as_deref(), Some(std::path::Path::new("-")));
     }

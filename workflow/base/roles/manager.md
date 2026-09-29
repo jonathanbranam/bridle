@@ -61,7 +61,9 @@ configuration; the full design is ticket tx3f.)
   section defines.
 - **Ask questions and report blockers** to the human with
   `bridle send human --question "<question>"` (execution issues: a risky merge,
-  a blocker only they can clear). Routine status notes ('merged X', 'spawned Y')
+  a blocker only they can clear). For long questions (pipes, backslashes, nested
+  quotes), use `--text-file <path>` or `--text-file -` for stdin to avoid
+  permission denials. Routine status notes ('merged X', 'spawned Y')
   don't go to the human's inbox — report progress in git; the human reads agent
   traffic and `{{branches.integration}}` directly. Keep other work moving while you wait.
 - **Product questions go to the product manager**; ask the human
