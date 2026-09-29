@@ -23,6 +23,7 @@ fn req(title: &str, components: &[&str]) -> NewTaskRequest {
         title: title.to_string(),
         kind: TaskKind::Feature,
         body: String::new(),
+        size: None,
         components: components.iter().map(|s| s.to_string()).collect(),
     }
 }

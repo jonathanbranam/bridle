@@ -940,6 +940,31 @@ impl std::str::FromStr for TaskKind {
     }
 }
 
+/// A rough estimate of a task's size, so small ones can be picked when the
+/// budget runs short. Optional on a task; nothing derives or acts on it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum TaskSize {
+    S,
+    M,
+    L,
+}
+
+impl TaskSize {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::S => "S",
+            Self::M => "M",
+            Self::L => "L",
+        }
+    }
+}
+
+impl std::fmt::Display for TaskSize {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
 /// The lifecycle states this build knows about
 /// ([[docs/design/roles-and-lifecycle#Task lifecycle|task lifecycle]]).
 /// `in_review` and `accepted` arrive with later tasks that build on top of
@@ -1061,6 +1086,9 @@ pub struct Task {
     /// child implies its ancestors (docs/design/components.md).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub components: Vec<String>,
+    /// Estimated size; null when unset.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub size: Option<TaskSize>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -1069,6 +1097,8 @@ pub struct NewTaskRequest {
     pub kind: TaskKind,
     #[serde(default)]
     pub body: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub size: Option<TaskSize>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub components: Vec<String>,
 }
@@ -1082,6 +1112,8 @@ pub struct EditTaskRequest {
     /// Replaces the whole list; `Some(vec![])` clears it (repo-wide).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub components: Option<Vec<String>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub size: Option<TaskSize>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

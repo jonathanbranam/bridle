@@ -8,7 +8,7 @@ mod support;
 
 use bridle_api::ClientError;
 use bridle_api::types::{
-    AgentState, DropTaskRequest, EditTaskRequest, NewTaskRequest, SpawnRequest, TaskKind,
+    AgentState, DropTaskRequest, EditTaskRequest, NewTaskRequest, SpawnRequest, TaskKind, TaskSize,
     TaskState, ThreadEntryKind, Workdir,
 };
 use support::{start_daemon, wait_for_state};
@@ -19,6 +19,7 @@ fn new_req(title: &str, kind: TaskKind) -> NewTaskRequest {
         title: title.to_string(),
         kind,
         body: String::new(),
+        size: None,
     }
 }
 
@@ -33,6 +34,7 @@ async fn create_show_list_and_edit_a_task() {
             title: "Add foo".to_string(),
             kind: TaskKind::Feature,
             body: "a description".to_string(),
+            size: None,
         })
         .await
         .expect("new task");
@@ -56,6 +58,7 @@ async fn create_show_list_and_edit_a_task() {
             &task.id,
             &EditTaskRequest {
                 components: None,
+                size: None,
                 title: Some("Add foo, better".to_string()),
                 body: None,
             },
@@ -558,4 +561,47 @@ async fn rebuild_is_a_no_op_when_empty_and_refuses_once_populated() {
 
     let err = c.rebuild().await.unwrap_err();
     assert!(matches!(err, ClientError::Api { status: 409, .. }));
+}
+
+#[tokio::test]
+async fn size_is_set_on_new_shown_edited_and_kept_by_other_edits() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let c = &daemon.client;
+
+    let mut req = new_req("Small", TaskKind::Chore);
+    req.size = Some(TaskSize::S);
+    let task = c.new_task(&req).await.expect("new task");
+    assert_eq!(task.size, Some(TaskSize::S));
+    let unsized_task = c
+        .new_task(&new_req("Unsized", TaskKind::Chore))
+        .await
+        .expect("new task");
+    assert_eq!(unsized_task.size, None);
+
+    let edited = c
+        .edit_task(
+            &unsized_task.id,
+            &EditTaskRequest {
+                size: Some(TaskSize::L),
+                ..Default::default()
+            },
+        )
+        .await
+        .expect("edit size");
+    assert_eq!(edited.size, Some(TaskSize::L));
+    let retitled = c
+        .edit_task(
+            &edited.id,
+            &EditTaskRequest {
+                title: Some("Bigger".to_string()),
+                ..Default::default()
+            },
+        )
+        .await
+        .expect("edit title");
+    assert_eq!(retitled.size, Some(TaskSize::L));
+
+    let list = c.list_tasks().await.expect("list");
+    assert_eq!(list[0].size, Some(TaskSize::S));
+    assert_eq!(list[1].size, Some(TaskSize::L));
 }

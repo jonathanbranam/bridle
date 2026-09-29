@@ -15,7 +15,9 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
-use bridle_api::types::{Edge, EdgeKind, Task, TaskKind, TaskState, ThreadEntry, ThreadEntryKind};
+use bridle_api::types::{
+    Edge, EdgeKind, Task, TaskKind, TaskSize, TaskState, ThreadEntry, ThreadEntryKind,
+};
 use chrono::{DateTime, SecondsFormat, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -415,6 +417,9 @@ struct Frontmatter {
     /// Absent in records written before components existed.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     components: Vec<String>,
+    /// Absent in records written before size existed, or with none set.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    size: Option<TaskSize>,
 }
 
 /// `+++`-delimited TOML frontmatter (the same convention Hugo uses, picked
@@ -432,6 +437,7 @@ fn render_task(task: &Task) -> Result<String, StateBranchError> {
         created_at: task.created_at,
         updated_at: task.updated_at,
         components: task.components.clone(),
+        size: task.size,
     };
     let toml = toml::to_string_pretty(&fm)?;
     let mut out = String::new();
@@ -594,6 +600,7 @@ fn parse_task(text: &str) -> Result<Task, StateBranchError> {
         claimed_by: None,
         claimed_at: None,
         components: fm.components,
+        size: fm.size,
     })
 }
 
@@ -752,6 +759,7 @@ mod tests {
             claimed_by: None,
             claimed_at: None,
             components: vec!["client-games".to_string(), "dungeon".to_string()],
+            size: Some(TaskSize::S),
         }
     }
 
@@ -767,6 +775,7 @@ mod tests {
         assert_eq!(parsed.state, task.state);
         assert_eq!(parsed.body, task.body);
         assert!(parsed.thread.is_empty());
+        assert_eq!(parsed.size, Some(TaskSize::S));
         assert_eq!(parsed.created_at, task.created_at);
         assert_eq!(parsed.updated_at, task.updated_at);
     }
@@ -777,6 +786,8 @@ mod tests {
                     created_at = \"2026-01-01T00:00:00Z\"\nupdated_at = \"2026-01-01T00:00:00Z\"\n+++\n\nbody\n";
         let task = parse_task(text).expect("parse old record");
         assert!(task.components.is_empty());
+        assert_eq!(task.size, None);
+        assert!(!render_task(&task).expect("render").contains("size"));
         // And an empty list isn't written back out.
         assert!(!render_task(&task).expect("render").contains("components"));
     }
