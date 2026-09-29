@@ -55,6 +55,9 @@ established; S-numbers are its scenarios. Each agent is one headless
 - **Process group**: the agent is the leader of its own process group.
 - **cwd**: `wt/<name>` (a new worktree on branch `bridle/<name>` from the
   role's base ref), the clone itself, or an explicit path.
+  **One agent per branch**: an explicit path inside another agent's worktree
+  (running or stopped) is refused with a 409 naming the fix, `bridle renew`
+  that agent or `bridle remove` it first. Renew reuses its own branch.
 - **Names** are `[a-z0-9][a-z0-9-]{0,39}`, unique (409 on a clash), and
   default to `<role>-<n>`.
 - **Identity**: an agent's name, role, cwd and branch are always in its
