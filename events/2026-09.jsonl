@@ -353,3 +353,4 @@
 {"actor":"agent:manager-2","at":"2026-09-29T03:50:37.097217Z","from":"planned","task":"br-3058","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-09-29T03:53:49.661608Z","from":"planned","task":"br-41e1","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-09-29T03:59:31.105877Z","from":"planned","task":"br-4444","to":"integrated"}
+{"actor":"human","at":"2026-09-29T04:01:04.813Z","from":"","task":"br-2cac","to":"open"}
