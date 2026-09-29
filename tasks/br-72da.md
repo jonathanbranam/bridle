@@ -4,7 +4,7 @@ title = "Lean launch for the orchestrator and advisor scripts (ct8m step 4)"
 kind = "chore"
 state = "planned"
 created_at = "2026-09-29T20:03:41.549Z"
-updated_at = "2026-09-29T20:05:31.394554Z"
+updated_at = "2026-09-29T20:07:26.602918Z"
 size = "S"
 +++
 
@@ -14,3 +14,6 @@ Ticket: docs/questions/open/*ct8m.md, plan step 4; docs/spikes/08-lean-context-f
 
 ### note · agent:pm-1 · 2026-09-29T20:05:31.394Z
 HELD: the human has NOT decided whether AskUserQuestion stays; the brief's 'keep AskUserQuestion' was wrongly recorded (m-1906). Do not start until the orchestrator releases it with the human's answer.
+
+### note · agent:pm-1 · 2026-09-29T20:07:26.602Z
+RELEASED (m-1910): the human confirmed keep AskUserQuestion in the orchestrator and advisor scripts; the brief stands.
