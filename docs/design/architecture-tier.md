@@ -38,5 +38,6 @@ or an id used twice (within a file or across files) is an error reported as
 `Diagnostic` and the id rules with the spec parser.
 
 `bridle arch list [--invariants] [--root DIR] [--json]` prints the elements
-(local, no daemon); see [[docs/design/cli|the CLI]]. `arch propose`, the
+(local, no daemon); `bridle arch propose --title T --argument TEXT|-` creates an
+`arch-revision` task (daemon); see [[docs/design/cli|the CLI]]. The
 PreToolUse hook and the integrator check are not built.

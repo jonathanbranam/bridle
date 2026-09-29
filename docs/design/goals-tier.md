@@ -47,5 +47,6 @@ Base rules for goals (locked):
   is an error; an `unaddressed` goal without a `**Why unaddressed:**` line is a
   warning. Headings inside code fences are ignored.
 - `bridle goals list` (see `cli.md`) lists them, locally.
-- Not built: `bridle goals propose`, `serves:` link validation, gating changes to
-  goals, hooks.
+- `bridle goals propose <goal-id> --change KEY=VALUE --why TEXT` (repeatable `--change`)
+  creates a task proposing a change to the goal's firmness, priority, or stance (daemon).
+- Not built: `serves:` link validation, gating changes to goals, hooks.

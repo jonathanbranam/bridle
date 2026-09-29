@@ -1182,3 +1182,112 @@ fn impact_set_and_show() {
     assert!(!ok);
     assert!(err.contains("impact can only be set"), "{err}");
 }
+
+#[test]
+fn arch_propose_creates_arch_revision_task() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let repo = tmp.path().join("repo");
+    init_repo(&repo);
+
+    // Create design/architecture directory with a valid arch element
+    let arch_dir = repo.join("design/architecture");
+    std::fs::create_dir_all(&arch_dir).expect("mkdir arch");
+    std::fs::write(
+        arch_dir.join("elements.md"),
+        "## Example Element   {#a-1234}\nThis is an example.",
+    )
+    .expect("write arch file");
+
+    let (_guard, repo, home) = start_daemon(tmp.path());
+
+    // arch propose creates an arch-revision task
+    let (ok, out, err) = run_cli(
+        &repo,
+        &home,
+        &[
+            "arch",
+            "propose",
+            "--title",
+            "Change example",
+            "--argument",
+            "Reasoning",
+        ],
+    );
+    assert!(ok, "arch propose failed: {err}");
+    assert!(out.contains("arch-revision"), "{out}");
+
+    // arch propose --json returns task JSON
+    let (ok, out, err) = run_cli(
+        &repo,
+        &home,
+        &[
+            "arch",
+            "propose",
+            "--title",
+            "Change again",
+            "--argument",
+            "More reasoning",
+            "--json",
+        ],
+    );
+    assert!(ok, "arch propose --json failed: {err}");
+    let v: serde_json::Value = serde_json::from_str(&out).expect("task json");
+    assert_eq!(v["kind"], "arch-revision");
+    assert!(v["body"].as_str().unwrap().contains("More reasoning"));
+}
+
+#[test]
+fn goals_propose_creates_question_task() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let repo = tmp.path().join("repo");
+    init_repo(&repo);
+
+    // Create design/goals directory with a valid goal
+    let goals_dir = repo.join("design/goals");
+    std::fs::create_dir_all(&goals_dir).expect("mkdir goals");
+    std::fs::write(
+        goals_dir.join("example.md"),
+        "## Example Goal   {#g-01}\nfirmness: soft · priority: later · stance: unaddressed\n\nAn example goal.\n\n**Why unaddressed:** We don't need it yet.",
+    )
+    .expect("write goals file");
+
+    let (_guard, repo, home) = start_daemon(tmp.path());
+
+    // goals propose creates a question task
+    let (ok, out, err) = run_cli(
+        &repo,
+        &home,
+        &[
+            "goals",
+            "propose",
+            "g-01",
+            "--change",
+            "priority=now",
+            "--why",
+            "We need it sooner",
+        ],
+    );
+    assert!(ok, "goals propose failed: {err}");
+    assert!(out.contains("question"), "{out}");
+
+    // goals propose --json returns task JSON
+    let (ok, out, err) = run_cli(
+        &repo,
+        &home,
+        &[
+            "goals",
+            "propose",
+            "g-01",
+            "--change",
+            "stance=build",
+            "--why",
+            "Time to build it",
+            "--json",
+        ],
+    );
+    assert!(ok, "goals propose --json failed: {err}");
+    let v: serde_json::Value = serde_json::from_str(&out).expect("task json");
+    assert_eq!(v["kind"], "question");
+    assert!(v["body"].as_str().unwrap().contains("stance=build"));
+    assert!(v["body"].as_str().unwrap().contains("Time to build it"));
+}
