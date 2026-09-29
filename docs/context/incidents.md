@@ -66,8 +66,10 @@ battery fell from 99% to 70% in 27 minutes (about 1.1% a minute) with two worker
   new executable waited forever; a freshly compiled C program hung the same way, while
   programs run before kept working. Two earlier installs that evening had run fine. Why
   `syspolicyd` stopped is unknown.
-- **Fix:** `sudo launchctl kickstart -k system/com.apple.security.syspolicy` (the human);
-  hung calls then completed on their own.
+- **Fix:** none needed; `syspolicyd` came back by itself (launchd relaunched it around 01:40)
+  and the hung calls then completed. `sudo launchctl kickstart -k
+  system/com.apple.security.syspolicy` fails with "Operation not permitted" (SIP), so if it
+  happens again and doesn't recover, the fix is a reboot.
 - **Diagnosis tips:** `ps` itself hangs when it reads a process stuck in exec; use `pgrep -l`.
   Reach the daemons over HTTP (`curl` to the URL in `~/.bridle/daemons/<project>.json`) to send
   messages while the CLI is down.
