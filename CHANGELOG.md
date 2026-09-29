@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- New `bridle send <agent> --task <id>` and `bridle task note <id> --notify <agent>`: the text goes on the task's thread and the recipient gets a short message naming the task; role prompts and skills use it for briefs, done reports and findings (ticket n8tj, br-9474).
 - Fixed: dropping a claimed task now releases its claim, the claim lease check never moves a task that isn't `claimed`, and the daemon discards claims on non-`claimed` tasks when it loads, so a dropped task no longer lingers under "Claimed" in `bridle queue` (ticket b5br).
 - Tasks land as one squash commit each (`git merge --squash`, subject `<task id>: <task title>`, the worker's summary as body, `Task:` and `Branch:` trailers); `bridle rm --delete-branch` now accepts a squash-landed branch, recognised by its `Branch:` trailer (ticket sq4m).
 - Tasks record their landing: `bridle task done --branch` (with `--commit`) and the new `bridle task summary <id> --text|--file` are stored on the task and its state-branch file, `task show` prints branch, commit and summary, and `task done` warns when there is no summary (ticket tr7k).

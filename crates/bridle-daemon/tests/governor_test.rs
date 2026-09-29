@@ -128,6 +128,7 @@ async fn idle_message_is_held_not_written_while_governor_is_holding() {
                 kind: Default::default(),
                 when: When::Now,
                 reply_to: None,
+                task: None,
             },
         )
         .await
@@ -183,6 +184,7 @@ async fn held_message_for_idle_agent_is_delivered_when_governor_returns_to_norma
                 kind: Default::default(),
                 when: When::Now,
                 reply_to: None,
+                task: None,
             },
         )
         .await

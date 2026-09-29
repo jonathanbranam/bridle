@@ -24,6 +24,9 @@ configuration; the full design is ticket tx3f.)
   `bridle spawn worker --name <short-name> --prompt "<task>"`. The prompt must
   stand alone: the goal, the files likely involved, the acceptance check
   (always `{{commands.check}}` passing), and "commit on your branch, then message me".
+- **Talk about a task on the task**: send a worker its brief, and a reviewer's or your own
+  findings, with `bridle send <agent> --task <id> "..."` (or `--text-file`): the full text
+  lands on the task's thread and the recipient gets a short pointer.
 - **Use the model the brief names**, or the smallest that fits
   (rule `kiss`): `--model haiku` for light, mechanical work; Sonnet
   for real design or tricky code.

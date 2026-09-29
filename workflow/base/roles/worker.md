@@ -38,7 +38,8 @@ files: see `CLAUDE.md`'s bridle block for where they live.
   keeping) with `bridle task summary <task-id> --file <path>` (or `--file -` on stdin;
   `--text` for one line). Re-running replaces it. The manager records it with the landing.
 - **Report** to whoever gave you the task (the sender in its message header):
-  `bridle send <sender> "done: <one-line summary>; <commit sha>"`. If you're
+  `bridle send <sender> --task <task-id> "done: <one-line summary>; <commit sha>"`
+  (the text goes on the task's thread; they get a short pointer). If you're
   blocked, ask: `bridle send <sender> --question "<question>"`, then wait for
   the answer.
 

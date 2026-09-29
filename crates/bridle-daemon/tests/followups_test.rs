@@ -46,6 +46,7 @@ async fn a_held_message_survives_an_exit_and_is_delivered_on_resume() {
                 kind: MessageKind::Note,
                 when: When::Idle,
                 reply_to: None,
+                task: None,
             },
         )
         .await

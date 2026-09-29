@@ -3,7 +3,7 @@
 A message has a sender principal, a recipient (an agent, `human`, or an
 `external:<name>` principal — [[docs/design/agent-host/principals.md|principals]]),
 a kind (`note` or `question`), an optional `reply_to` naming the message it
-answers, a body and a delivery state:
+answers, an optional `task` (the body is then written in full as a note on that task's thread, and the recipient gets a short `<id>: note added` message with the first line; an unknown task is a 404 and sends nothing), a body and a delivery state:
 
 ```
 pending ─► written ─► delivered ─► read
