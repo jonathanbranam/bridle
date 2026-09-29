@@ -16,9 +16,11 @@
 //! async, no daemon, no I/O beyond [`parse_file`].
 
 pub mod arch;
+mod goals;
 mod ids;
 mod parse;
 
+pub use goals::{Firmness, Goal, Goals, Priority, Stance, parse_goals};
 pub use ids::{Assigned, assign_ids};
 
 use std::fmt;
