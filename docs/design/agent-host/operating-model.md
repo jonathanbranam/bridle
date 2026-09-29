@@ -196,11 +196,14 @@ the clone:
    branch and (trunk pattern) release tags; workers never push. The release
    branch, when a project has one, is never a target of this step at all
    (mechanically denied — see "Branch pattern", above).
-5. `bridle rm <agent> --delete-branch`: removes the worker, its worktree and
-   its now-landed branch. A squashed branch isn't a git ancestor of the
-   integration branch, so `--delete-branch` treats a `Branch: bridle/<agent>`
-   trailer on a commit reachable from `HEAD` as landed, and refuses any other
-   unmerged branch, so this can't lose work. Landed branches aren't kept; the
+5. `bridle task done <id> --commit <sha> --branch bridle/<agent>`: the daemon
+   refuses unless `<sha>` is reachable from the integration branch, then removes
+   every agent on that branch, its worktree and the now-landed branch (`-D`, since
+   a squashed branch isn't a git ancestor), and notes what it removed on the
+   task. Unmerged work can't be lost. `bridle rm --delete-branch` still works for
+   one agent, and treats a `Branch: bridle/<agent>` trailer on a commit
+   reachable from `HEAD` as landed. `bridle status` lists stopped agents whose
+   branch has merged (`merged_leftovers`), as a safety net. Landed branches aren't kept; the
    landing commit on the integration branch is the record (the human, 2026-09-28).
 
 The orchestrator verifies the integration branch after each merge (`just

@@ -630,11 +630,12 @@ async fn done_records_branch_commit_and_a_replaceable_summary() {
         .unwrap_err();
     assert!(matches!(err, ClientError::Api { status: 400, .. }));
 
+    let head = git_out(&daemon.repo, &["rev-parse", "HEAD"]);
     let done = c
         .done_task(
             &task.id,
             &DoneTaskRequest {
-                commit: "abc123".into(),
+                commit: head.clone(),
                 branch: Some("bridle/landed".into()),
             },
         )
@@ -642,7 +643,7 @@ async fn done_records_branch_commit_and_a_replaceable_summary() {
         .expect("done");
     let shown = c.get_task(&done.id).await.expect("show");
     assert_eq!(shown.branch.as_deref(), Some("bridle/landed"));
-    assert_eq!(shown.commit.as_deref(), Some("abc123"));
+    assert_eq!(shown.commit.as_deref(), Some(head.as_str()));
     assert_eq!(shown.summary.as_deref(), Some("v2"));
 }
 
@@ -855,4 +856,154 @@ async fn send_with_task_notes_the_thread_and_notifies_briefly() {
         .await
         .expect("list");
     assert_eq!(inbox.len(), 1, "the failed send must not notify");
+}
+
+fn git_out(dir: &std::path::Path, args: &[&str]) -> String {
+    let out = std::process::Command::new("git")
+        .arg("-C")
+        .arg(dir)
+        .args(["-c", "user.email=t@example.com", "-c", "user.name=T"])
+        .args(args)
+        .output()
+        .expect("run git");
+    assert!(
+        out.status.success(),
+        "git {args:?}: {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    String::from_utf8_lossy(&out.stdout).trim().to_string()
+}
+
+/// Spawns an idle worker `name` on its own worktree/branch, with one commit on it.
+async fn spawn_worker_with_commit(
+    daemon: &support::TestDaemon,
+    name: &str,
+) -> bridle_api::types::Agent {
+    let agent = daemon
+        .client
+        .spawn(&SpawnRequest {
+            components: Vec::new(),
+            role: "worker".to_string(),
+            name: Some(name.to_string()),
+            prompt: None,
+            workdir: Some(Workdir::Worktree { base: None }),
+            model: None,
+            extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
+            ignore_budget: false,
+        })
+        .await
+        .expect("spawn");
+    wait_for_state(&daemon.client, &agent.id, AgentState::Idle).await;
+    let wt = std::path::PathBuf::from(agent.worktree.clone().expect("worktree"));
+    std::fs::write(wt.join(format!("{name}.txt")), name).expect("write file");
+    git_out(&wt, &["add", "."]);
+    git_out(&wt, &["commit", "-q", "-m", name]);
+    agent
+}
+
+#[tokio::test]
+async fn done_with_a_landed_branch_removes_its_agents_worktree_and_branch() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let c = &daemon.client;
+    let agent = spawn_worker_with_commit(&daemon, "w1").await;
+    let wt = agent.worktree.clone().expect("worktree");
+    // Squash-landed: the branch isn't an ancestor of main afterwards.
+    git_out(&daemon.repo, &["merge", "--squash", "bridle/w1"]);
+    git_out(
+        &daemon.repo,
+        &["commit", "-q", "-m", "land w1\n\nBranch: bridle/w1"],
+    );
+    let head = git_out(&daemon.repo, &["rev-parse", "HEAD"]);
+
+    let task = c
+        .new_task(&new_req("Landed", TaskKind::Feature))
+        .await
+        .expect("new task");
+    let done = c
+        .done_task(
+            &task.id,
+            &DoneTaskRequest {
+                commit: head,
+                branch: Some("bridle/w1".into()),
+            },
+        )
+        .await
+        .expect("done");
+
+    assert_eq!(done.state, TaskState::Integrated);
+    assert!(c.get_agent("w1").await.is_err(), "agent should be removed");
+    assert!(
+        !std::path::Path::new(&wt).exists(),
+        "worktree should be gone"
+    );
+    assert!(git_out(&daemon.repo, &["branch", "--list", "bridle/w1"]).is_empty());
+    let note = done.thread.last().expect("cleanup note");
+    assert!(note.body.contains("agent w1"), "note: {}", note.body);
+    assert!(
+        note.body.contains("branch bridle/w1"),
+        "note: {}",
+        note.body
+    );
+}
+
+#[tokio::test]
+async fn done_refuses_a_commit_not_on_the_integration_branch() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let c = &daemon.client;
+    let agent = spawn_worker_with_commit(&daemon, "w1").await;
+    let wt = std::path::PathBuf::from(agent.worktree.clone().expect("worktree"));
+    let unmerged = git_out(&wt, &["rev-parse", "HEAD"]);
+
+    let task = c
+        .new_task(&new_req("Unlanded", TaskKind::Feature))
+        .await
+        .expect("new task");
+    let err = c
+        .done_task(
+            &task.id,
+            &DoneTaskRequest {
+                commit: unmerged,
+                branch: Some("bridle/w1".into()),
+            },
+        )
+        .await
+        .unwrap_err();
+    assert!(
+        matches!(err, ClientError::Api { status: 409, .. }),
+        "{err:?}"
+    );
+    assert_eq!(
+        c.get_task(&task.id).await.expect("show").state,
+        TaskState::Open
+    );
+    assert!(c.get_agent("w1").await.is_ok());
+    assert!(wt.exists());
+    assert!(!git_out(&daemon.repo, &["branch", "--list", "bridle/w1"]).is_empty());
+}
+
+#[tokio::test]
+async fn status_lists_stopped_agents_whose_branch_has_merged() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let c = &daemon.client;
+    let landed = spawn_worker_with_commit(&daemon, "landed").await;
+    let open = spawn_worker_with_commit(&daemon, "open").await;
+    git_out(&daemon.repo, &["merge", "-q", "bridle/landed"]);
+    assert!(
+        c.status()
+            .await
+            .expect("status")
+            .merged_leftovers
+            .is_empty()
+    );
+
+    for a in [&landed, &open] {
+        c.stop(&a.id, &bridle_api::types::StopRequest { now: false })
+            .await
+            .expect("stop");
+    }
+    assert_eq!(
+        c.status().await.expect("status").merged_leftovers,
+        vec!["landed".to_string()]
+    );
 }

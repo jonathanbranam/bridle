@@ -42,7 +42,7 @@ Land with `git merge --squash bridle/<name>` and one commit: subject `<task id>:
 body the worker's summary, trailers `Task: <id>` and `Branch: bridle/<name>`.
 After the push, record the landing:
 `bridle task done <task-id> --commit <landing sha> --branch bridle/<name>` (it warns if there is
-no summary), then `bridle rm <name> --delete-branch`.
+no summary). It also removes the branch's agents, worktree and branch; no separate `bridle rm`.
 
 Tasks touching the same files run one after another, never in parallel.
 Rules, guides and the concrete steps behind each command are delivered by

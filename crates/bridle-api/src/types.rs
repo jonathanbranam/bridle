@@ -69,6 +69,10 @@ pub struct Status {
     /// until one finishes, or when `[ci] github` is off.
     #[serde(default)]
     pub ci: Option<CiStatus>,
+    /// Names of stopped agents whose branch is already merged into the
+    /// integration branch: leftovers `bridle task done` would have removed.
+    #[serde(default)]
+    pub merged_leftovers: Vec<String>,
 }
 
 /// The outcome of GitHub Actions for one commit of the integration branch.
