@@ -770,7 +770,11 @@ async fn send_message(
                     serde_json::json!({"task": task.id}),
                 )
                 .await;
-            let first = req.body.lines().find(|l| !l.trim().is_empty()).unwrap_or("");
+            let first = req
+                .body
+                .lines()
+                .find(|l| !l.trim().is_empty())
+                .unwrap_or("");
             format!("{}: note added\n{first}", task.id)
         }
         None => req.body.clone(),
