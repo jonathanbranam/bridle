@@ -25,6 +25,7 @@ pub mod disk;
 mod events;
 pub mod governor;
 pub mod impact;
+mod integrator;
 pub mod paths;
 pub mod ports;
 pub mod reevaluate;
@@ -305,6 +306,8 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         tasks: tasks.clone(),
         integration: config.branches.integration.clone(),
         ports: config.ports.clone(),
+        integration_check: config.integration.check.clone(),
+        landing: Default::default(),
     };
     let app = server::router(state);
 

@@ -9,11 +9,11 @@ use bridle_api::discovery::{self, Env, ProcessEnv};
 use bridle_api::{
     AllocPortRequest, BudgetHoldRequest, BudgetOverrideRequest, Client, DoneTaskRequest,
     DropTaskRequest, Edge, EdgeKind, EditTaskRequest, Event, EventQuery, Impact,
-    ImpactCheckRequest, InterruptRequest, MaxWorkersRequest, MessageKind, MessageQuery,
-    NewEdgeRequest, NewTaskRequest, OverlapLevel, ProbeOutcome, ProbeRequest, ProbeResult,
-    RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, ResumeRequest, SendRequest,
-    SetImpactRequest, SetSummaryRequest, SpawnRequest, SpecRef, StopRequest, Task, TaskKind,
-    TaskSize, TokenCreateRequest, UsageBreakdownQuery, UsageGroupBy, Workdir, event_kind,
+    ImpactCheckRequest, InterruptRequest, LandRequest, MaxWorkersRequest, MessageKind,
+    MessageQuery, NewEdgeRequest, NewTaskRequest, OverlapLevel, ProbeOutcome, ProbeRequest,
+    ProbeResult, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, ResumeRequest,
+    SendRequest, SetImpactRequest, SetSummaryRequest, SpawnRequest, SpecRef, StopRequest, Task,
+    TaskKind, TaskSize, TokenCreateRequest, UsageBreakdownQuery, UsageGroupBy, Workdir, event_kind,
 };
 use chrono::{Local, TimeZone, Utc};
 use futures::StreamExt;
@@ -30,7 +30,7 @@ use crate::cli::{
     TaskNoteArgs, TaskPlanArgs, TaskReopenArgs, TaskSearchArgs, TaskShowArgs, TaskSizeArg,
     TaskSummaryArgs, TokenAction, TokenArgs, UsageArgs, UsageByArg, WaitArgs, WhenArg,
 };
-use crate::cli::{PortAction, PortArgs};
+use crate::cli::{LandArgs, PortAction, PortArgs};
 use crate::error::CliError;
 use crate::render;
 use crate::serve;
@@ -64,6 +64,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Task(args) => task(&cli, args).await,
         Command::Impact(args) => impact(&cli, args).await,
         Command::Probe(args) => probe(&cli, args).await,
+        Command::Land(args) => land(&cli, args).await,
         Command::Conflict(args) => conflict(&cli, args).await,
         Command::Port(args) => port(&cli, args).await,
         Command::Dep(args) => dep(&cli, args).await,
@@ -2098,6 +2099,28 @@ async fn task_drop(cli: &Cli, args: &TaskDropArgs) -> Result<(), CliError> {
         render::print_json(&task)?;
     } else {
         print_task_row(&task);
+    }
+    Ok(())
+}
+
+async fn land(cli: &Cli, args: &LandArgs) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let r = client
+        .land_task(
+            &args.task,
+            &LandRequest {
+                branch: args.branch.clone(),
+                check_cmd: args.check_cmd.clone(),
+            },
+        )
+        .await?;
+    if cli.json {
+        render::print_json(&r)?;
+    } else {
+        println!("landed {} as {}", r.task.id, r.commit);
+        for n in &r.notes {
+            println!("note: {n}");
+        }
     }
     Ok(())
 }

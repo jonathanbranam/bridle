@@ -483,6 +483,10 @@ pub mod event_kind {
     /// data: {free_bytes, total_bytes, target_bytes, worktrees_bytes, data_bytes}. The
     /// periodic disk usage reading (`[disk]`).
     pub const DISK_CHECKED: &str = "disk.checked";
+    /// data: {task, branch}. `bridle land` began merging.
+    pub const INTEGRATE_STARTED: &str = "integrate.started";
+    /// data: {task, branch, ok, commit?, error?}
+    pub const INTEGRATE_FINISHED: &str = "integrate.finished";
     pub const TASK_CREATED: &str = "task.created";
     /// data: {from, to}
     pub const TASK_STATE: &str = "task.state";
@@ -1346,6 +1350,25 @@ pub struct DoneTaskRequest {
     pub commit: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub branch: Option<String>,
+}
+
+/// `POST /v1/tasks/{id}/land`: the integrator merges the task's branch, checks it, and marks
+/// the task done.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct LandRequest {
+    /// Defaults to the claimant's branch.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub branch: Option<String>,
+    /// Overrides `[integration] check`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub check_cmd: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LandResult {
+    pub task: Task,
+    pub commit: String,
+    pub notes: Vec<String>,
 }
 
 /// `POST /v1/tasks/{id}/summary`: replaces any earlier summary.

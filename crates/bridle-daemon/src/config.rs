@@ -749,6 +749,13 @@ impl BranchesConfig {
     }
 }
 
+/// `[integration]`: how `bridle land` verifies a merge before moving the integration branch.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct IntegrationConfig {
+    /// Shell command run in the integration worktree; `None` skips the check.
+    pub check: Option<String>,
+}
+
 /// `[ci]`: opt-in watching of the integration branch's GitHub Actions runs (`crate::ci`).
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct CiConfig {
@@ -857,6 +864,7 @@ pub struct Config {
     pub ci: CiConfig,
     pub disk: DiskConfig,
     pub ports: PortsConfig,
+    pub integration: IntegrationConfig,
     pub messages: MessagesConfig,
     /// The prefix new task ids get (storage.md: `<prefix>-<4 hex chars>`,
     /// e.g. `tw-7fa2`). `None` means derive one from the project name
@@ -901,6 +909,7 @@ impl Default for Config {
             ci: CiConfig::default(),
             disk: DiskConfig::default(),
             ports: PortsConfig::default(),
+            integration: IntegrationConfig::default(),
             messages: MessagesConfig::default(),
             task_prefix: None,
             workflow: None,
@@ -1139,6 +1148,10 @@ impl Config {
             config.messages.answer_for_human = v;
         }
 
+        if let Some(c) = raw.integration.and_then(|i| i.check) {
+            config.integration.check = Some(c);
+        }
+
         if let Some(p) = raw.ports {
             if let Some([lo, hi]) = p.range {
                 if lo > hi {
@@ -1356,6 +1369,8 @@ struct RawConfig {
     #[serde(default)]
     ports: Option<RawPorts>,
     #[serde(default)]
+    integration: Option<RawIntegration>,
+    #[serde(default)]
     messages: Option<RawMessages>,
     #[serde(default)]
     tasks: Option<RawTasks>,
@@ -1423,6 +1438,13 @@ struct RawCi {
 struct RawMessages {
     #[serde(default)]
     answer_for_human: Option<Vec<String>>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawIntegration {
+    #[serde(default)]
+    check: Option<String>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -2246,6 +2268,13 @@ mod tests {
         assert!(night.matches(at(23, 30)));
         assert!(night.matches(at(6, 0)));
         assert!(!night.matches(at(12, 0)));
+    }
+
+    #[test]
+    fn integration_check_parses() {
+        assert_eq!(Config::default().integration.check, None);
+        let cfg = Config::parse("[integration]\ncheck = \"just check\"\n").unwrap();
+        assert_eq!(cfg.integration.check.as_deref(), Some("just check"));
     }
 
     #[test]

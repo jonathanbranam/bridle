@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Added: `bridle land <task> [--branch B] [--check-cmd CMD]`, the integrator: merges the branch in `<workspace>/integration`, runs `[integration] check`, moves the integration branch with a guarded `update-ref`, then marks the task done; refuses conflicts, failed checks, a moved main, and architecture changes outside an `arch-revision`; emits `integrate.started/finished` (br-6dd6).
 - Added: `[worktrees] layout = "root"` with `root = "/path/{task}"` (`{task}`, `{agent}`, `{project}`) puts new worktrees at a configured absolute path; `default` is unchanged; invalid roots are refused at config load (br-930e).
 - Added: `bridle arch-guard`, a PreToolUse hook (shipped in `workflow/base/hooks/`, rendered by `bridle sync`) denying worker edits under `design/architecture/` unless the worker has claimed an `arch-revision` task (br-7f7e).
 - Added: `bridle arch propose --title T --argument TEXT|-` creates an `arch-revision` task with the proposal; validates the architecture directory exists (br-357f).
