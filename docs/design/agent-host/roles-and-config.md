@@ -97,7 +97,7 @@ start_prompt      = "Check your inbox and tell the human you're ready."   # firs
   built-in role, and how to use `bridle send`, `inbox`, `status` and `agents`
   with `--json`. A role's own prompt file may use `{{commands.check}}`,
   `{{commands.check_worker}}` (the worker's own gate: `commands.check_worker`, defaulting to
-  `commands.check`; bridle's own project sets `just check-affected`),
+  `commands.check`; bridle's own project leaves it unset: the full `just check`),
   `{{branches.integration}}` and `{{branches.release}}` (left as-is when unset),
   substituted at render time, so the base `worker`/`manager` prompts name no
   project's build tool or branch. A missing prompt file is logged, not fatal. The preamble is
@@ -115,7 +115,11 @@ start_prompt      = "Check your inbox and tell the human you're ready."   # firs
   squash-merges the branch (one commit: `<task id>: <title>`, summary body, `Task:`/`Branch:` trailers) in `<workspace>/integration` (a worktree on scratch branch
   `integrate/<task>` cut from the integration tip, created on first use), runs
   `[integration] check = "..."` there (unset: skipped, with a note; `--check-cmd`
-  overrides), then moves the integration branch guarded by the tip it started from
+  overrides; also skipped, with a note, when the integration branch is an ancestor of the
+  branch tip, since the squash tree is then the tree the worker already checked; CI on `main`
+  is the backstop). When a check that ran passes and its output has a nextest `Summary ... N tests run` line, N is
+  sniff-checked against `<workspace>/last-full-test-count` (fail if 0, under half or over double the last count; with no
+  last count only 0 fails) and then written there for workers to read, then moves the integration branch guarded by the tip it started from
   (`<branch> moved, retry` if it changed): `git update-ref`, or, when a worktree (the
   clone, say) has the branch checked out, `git merge --ff-only` there so its files follow
   (refused if that worktree has uncommitted changes to tracked files), and marks the task done with

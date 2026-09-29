@@ -817,7 +817,7 @@ impl ContextConfig {
 pub struct CommandsConfig {
     pub check: String,
     /// What a worker runs as its own gate (`{{commands.check_worker}}`); `None` means the same
-    /// as `check`. Bridle's own project binds `just check-affected` here (ticket b7cz) while
+    /// as `check`. A project may bind a lighter gate here (e.g. `just check-affected`) while
     /// the manager and orchestrator keep the full `check`.
     pub check_worker: Option<String>,
 }

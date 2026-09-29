@@ -29,7 +29,7 @@ what judgement applies.
      working tree. Include these edits in the commit so they travel with the code.
   2. **Merge and check**: merge the local `{{branches.integration}}` into your
      branch (`git merge --no-ff {{branches.integration}}`, never `origin/*`), resolve
-     conflicts, and re-run `{{commands.check_worker}}` with `set -o pipefail; {{commands.check_worker}} 2>&1 | tail -n 30` to keep output brief and judge by the exit status.
+     conflicts, and re-run it as `{{commands.check_worker}} > /tmp/<task>-check.log 2>&1` and judge by the exit status alone; read the log's tail only on failure, and on success only its nextest `Summary` line, checking the count is not 0 and inside the band (half to double) of `$BRIDLE_WORKSPACE/last-full-test-count`.
   3. **Commit and report**: once it's green, write the task's summary (`bridle task summary
      <task-id> --file <path>`: what changed, where, any decision or caveat; a task isn't
      done without one). Include 'docs: updated X' or 'docs: none needed' in the summary,

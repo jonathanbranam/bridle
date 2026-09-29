@@ -188,7 +188,7 @@ the clone:
    asked and nothing else. Anything short of that goes back to the worker.
 3. `bridle land <task-id>` (the integrator, [[roles-and-config|roles and config]]): under a
    daemon-wide lock, it squash-merges the branch into one commit (subject `<task id>: <title>`, the task summary as
-   body, `Task:` and `Branch:` trailers) in `<workspace>/integration`, runs `[integration] check` there, and only then moves the
+   body, `Task:` and `Branch:` trailers) in `<workspace>/integration`, runs `[integration] check` there (skipped on a fast-forward of an unchanged base), and only then moves the
    integration branch, so a red or conflicting merge never lands. The branch is found from the
    task's claimant, or `--branch`. The integration branch reads as one commit per task (sq4m, tr7k); the
    `Branch:` trailer is how the landed branch is recognised as merged.

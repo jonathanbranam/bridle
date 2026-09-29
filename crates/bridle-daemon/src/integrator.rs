@@ -14,8 +14,20 @@ const ARCH_PREFIX: &str = "design/architecture/";
 /// Lines of check output reported on failure.
 const TAIL_LINES: usize = 40;
 
+/// File in the workspace root holding the test count of the last passing full-suite land; workers
+/// read it (`$BRIDLE_WORKSPACE/last-full-test-count`) to sanity-check their own run's count.
+pub const COUNT_FILE: &str = "last-full-test-count";
+
+/// A sniff check, not an exact match: a count under `1/BAND` or over `BAND` times the last
+/// full-suite count is a failure to look into.
+const BAND: u64 = 2;
+
 #[derive(Debug, thiserror::Error)]
 pub enum LandError {
+    #[error(
+        "check ran {count} tests, outside the sane band for the last full run of {last:?}; look into it"
+    )]
+    CountOutOfBand { count: u64, last: Option<u64> },
     #[error("{0}")]
     Refused(String),
     #[error("merge conflict in: {}", .0.join(", "))]
@@ -101,8 +113,26 @@ pub async fn land(i: &LandInput<'_>) -> Result<Landed, LandError> {
         });
     }
 
+    // When the integration branch is an ancestor of the task tip, the squash tree equals the tip
+    // tree: the worker already checked exactly this content. A moved base means a real merge.
+    // A git error here reads as "not an ancestor", so the check runs.
+    let mut count = None;
+    let fast_forward = run_git(i.repo, &["merge-base", "--is-ancestor", &old, i.branch])
+        .await
+        .is_ok();
     match i.check {
-        Some(cmd) => run_check(&wt, cmd).await?,
+        Some(_) if fast_forward => {
+            notes.push("check skipped: fast-forward of an unchanged base".to_string());
+        }
+        Some(cmd) => {
+            count = run_check(&wt, cmd).await?;
+            if let Some(n) = count {
+                band_check(n, read_count(i))?;
+            }
+            notes.push(
+                "check ran: the integration branch had moved past the task's base".to_string(),
+            );
+        }
         None => notes.push("no [integration] check configured: skipped".to_string()),
     }
 
@@ -111,6 +141,10 @@ pub async fn land(i: &LandInput<'_>) -> Result<Landed, LandError> {
         .trim()
         .to_string();
     advance(i, &old, &new).await?;
+    if let Some(n) = count {
+        // Best effort: a missed write only leaves the band looser.
+        let _ = std::fs::write(count_path(i), format!("{n}\n"));
+    }
     Ok(Landed { commit: new, notes })
 }
 
@@ -191,18 +225,49 @@ async fn prepare_worktree(i: &LandInput<'_>, tip: &str) -> Result<PathBuf, Workt
     Ok(i.dir.clone())
 }
 
-async fn run_check(wt: &Path, cmd: &str) -> Result<(), LandError> {
+fn count_path(i: &LandInput<'_>) -> PathBuf {
+    i.dir.with_file_name(COUNT_FILE)
+}
+
+fn read_count(i: &LandInput<'_>) -> Option<u64> {
+    std::fs::read_to_string(count_path(i))
+        .ok()?
+        .trim()
+        .parse()
+        .ok()
+}
+
+/// Zero always fails; with a last count, so does under half or over double of it.
+fn band_check(n: u64, last: Option<u64>) -> Result<(), LandError> {
+    let out = n == 0 || last.is_some_and(|l| n * BAND < l || n > l * BAND);
+    if out {
+        return Err(LandError::CountOutOfBand { count: n, last });
+    }
+    Ok(())
+}
+
+/// nextest's `Summary [..] N tests run: ...` line.
+fn parse_test_count(text: &str) -> Option<u64> {
+    let line = text
+        .lines()
+        .find(|l| l.trim_start().starts_with("Summary"))?;
+    let (before, _) = line.split_once(" tests run")?;
+    before.rsplit(' ').next()?.parse().ok()
+}
+
+/// The check's test count, when its output has a nextest summary line.
+async fn run_check(wt: &Path, cmd: &str) -> Result<Option<u64>, LandError> {
     let out = Command::new("sh")
         .arg("-c")
         .arg(cmd)
         .current_dir(wt)
         .output()
         .await?;
-    if out.status.success() {
-        return Ok(());
-    }
     let mut text = String::from_utf8_lossy(&out.stdout).into_owned();
     text.push_str(&String::from_utf8_lossy(&out.stderr));
+    if out.status.success() {
+        return Ok(parse_test_count(&text));
+    }
     let lines: Vec<&str> = text.lines().collect();
     let tail = lines[lines.len().saturating_sub(TAIL_LINES)..].join("\n");
     Err(LandError::CheckFailed {

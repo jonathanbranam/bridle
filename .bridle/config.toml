@@ -12,8 +12,6 @@ stall_after = "10m"
 # `make check` instead (docs/design/workflow-layers.md).
 [commands]
 check = "just check"
-# Workers gate on the affected crates only; CI and the manager run the full suite (ticket b7cz).
-check_worker = "just check-affected"
 
 [integration]
 check = "just check"

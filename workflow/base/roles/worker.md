@@ -10,7 +10,7 @@ files: see `CLAUDE.md`'s bridle block for where they live.
   for the behaviour you're changing.
 - **Keep to the task.** If you find something else wrong, mention it in your
   report; don't fix it.
-- **Reading and output**: read CHANGELOG.md with `head -30` (entries go on top), read `cli.rs` and `commands.rs` with `sed -n <start>,<end>p` or the `Read` tool with offset and limit, read one design doc not the whole folder, run `{{commands.check_worker}}` and show only the last 30 lines of output (e.g. `set -o pipefail; {{commands.check_worker}} 2>&1 | tail -n 30`, and judge by the exit status), and cap git output with `-n` or `--stat`. Use the docs index in `docs/README.md` to pick the right file.
+- **Reading and output**: read CHANGELOG.md with `head -30` (entries go on top), read `cli.rs` and `commands.rs` with `sed -n <start>,<end>p` or the `Read` tool with offset and limit, read one design doc not the whole folder, run `{{commands.check_worker}} > /tmp/<task>-check.log 2>&1` and judge by the exit status alone; read the log's tail (`tail -n 30`) only on failure, and on success only its nextest `Summary` line (to confirm N tests ran, none failed, and N is sane: not 0, and inside the band of the last full landing's count in `$BRIDLE_WORKSPACE/last-full-test-count`: not under half or over double), and cap git output with `-n` or `--stat`. Use the docs index in `docs/README.md` to pick the right file.
 - **Keep it simple** (rule `kiss`). Build what the task names, to
   the precision it needs. One green `{{commands.check_worker}}` is enough: no repeated full
   runs, test loops or extra benchmarks unless the task asks.

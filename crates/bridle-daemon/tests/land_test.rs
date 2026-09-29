@@ -133,6 +133,10 @@ async fn conflict_lands_nothing() {
 async fn failing_check_lands_nothing_and_reports_the_tail() {
     let (d, _tmp) = start_daemon(None).await;
     branch_with(&d, "b1", "f.txt", "x\n");
+    // Main has moved past the branch's base, so the check runs.
+    std::fs::write(d.repo.join("other.txt"), "y\n").expect("w");
+    git(&d.repo, &["add", "."]);
+    git(&d.repo, &["commit", "-qm", "main moves"]);
     let id = task(&d, TaskKind::Feature).await;
     let before = git(&d.repo, &["rev-parse", "main"]);
     let e = land_err(&d, &id, &req("b1", Some("echo boom; exit 1"))).await;
@@ -144,6 +148,10 @@ async fn failing_check_lands_nothing_and_reports_the_tail() {
 async fn a_moved_main_is_refused() {
     let (d, _tmp) = start_daemon(None).await;
     branch_with(&d, "b1", "f.txt", "x\n");
+    // Main has moved past the branch's base, so the check runs.
+    std::fs::write(d.repo.join("other.txt"), "y\n").expect("w");
+    git(&d.repo, &["add", "."]);
+    git(&d.repo, &["commit", "-qm", "main moves"]);
     let id = task(&d, TaskKind::Feature).await;
     // The check moves main out from under the landing.
     let repo = d.repo.to_str().expect("utf8");
@@ -213,4 +221,100 @@ async fn a_dirty_checked_out_branch_refuses_the_landing() {
         d.client.get_task(&id).await.expect("task").state,
         TaskState::Integrated
     );
+}
+
+#[tokio::test]
+async fn a_fast_forward_of_an_unchanged_base_skips_the_check() {
+    let (d, _tmp) = start_daemon(None).await;
+    branch_with(&d, "b1", "f.txt", "x\n");
+    let id = task(&d, TaskKind::Feature).await;
+    let r = d
+        .client
+        .land_task(&id, &req("b1", Some("exit 1")))
+        .await
+        .expect("a failing check must not run");
+    assert!(
+        r.notes
+            .iter()
+            .any(|n| n.contains("check skipped: fast-forward of an unchanged base")),
+        "{:?}",
+        r.notes
+    );
+}
+
+#[tokio::test]
+async fn a_moved_base_runs_the_check_and_says_so() {
+    let (d, _tmp) = start_daemon(None).await;
+    branch_with(&d, "b1", "f.txt", "x\n");
+    std::fs::write(d.repo.join("other.txt"), "y\n").expect("w");
+    git(&d.repo, &["add", "."]);
+    git(&d.repo, &["commit", "-qm", "main moves"]);
+    let id = task(&d, TaskKind::Feature).await;
+    let r = d
+        .client
+        .land_task(&id, &req("b1", Some("true")))
+        .await
+        .expect("land");
+    assert!(
+        r.notes.iter().any(|n| n.contains("check ran")),
+        "{:?}",
+        r.notes
+    );
+}
+
+/// A check whose output ends with nextest's summary line for `n` tests.
+fn counting(n: u64) -> String {
+    format!("echo '     Summary [   1.0s] {n} tests run: {n} passed, 0 skipped'")
+}
+
+fn count_file(d: &TestDaemon) -> std::path::PathBuf {
+    d.workspace.join("last-full-test-count")
+}
+
+/// Land a fresh branch whose base has moved, so the check runs.
+async fn land_moved(d: &TestDaemon, branch: &str, check: &str) -> Result<(), String> {
+    branch_with(d, branch, &format!("{branch}.txt"), "x\n");
+    std::fs::write(d.repo.join(format!("m-{branch}.txt")), "y\n").expect("w");
+    git(&d.repo, &["add", "."]);
+    git(&d.repo, &["commit", "-qm", "main moves"]);
+    let id = task(d, TaskKind::Feature).await;
+    d.client
+        .land_task(&id, &req(branch, Some(check)))
+        .await
+        .map(drop)
+        .map_err(|e| e.to_string())
+}
+
+#[tokio::test]
+async fn a_passing_full_run_records_its_test_count_and_bands_the_next() {
+    let (d, _tmp) = start_daemon(None).await;
+    land_moved(&d, "b1", &counting(100)).await.expect("land");
+    assert_eq!(
+        std::fs::read_to_string(count_file(&d))
+            .expect("count")
+            .trim(),
+        "100"
+    );
+    // Well inside the band: lands and updates the count.
+    land_moved(&d, "b2", &counting(120)).await.expect("land");
+    // Far above, far below and zero all fail, leaving the count alone.
+    for n in [500, 10, 0] {
+        let e = land_moved(&d, &format!("c{n}"), &counting(n))
+            .await
+            .expect_err("out of band");
+        assert!(e.contains("sane band"), "{e}");
+    }
+    assert_eq!(
+        std::fs::read_to_string(count_file(&d))
+            .expect("count")
+            .trim(),
+        "120"
+    );
+}
+
+#[tokio::test]
+async fn zero_tests_fail_even_without_a_last_count() {
+    let (d, _tmp) = start_daemon(None).await;
+    let e = land_moved(&d, "b1", &counting(0)).await.expect_err("zero");
+    assert!(e.contains("sane band"), "{e}");
 }
