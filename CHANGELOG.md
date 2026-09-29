@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `bridle init [--name N] [--integration BRANCH] [--stack python|typescript|rust]`: scaffolds `.bridle/config.toml` (integration branch from HEAD, `workflow`/`packs`, check command detected from `justfile`/`Cargo.toml`/`package.json`/`pyproject.toml`, worktree stubs) and the `.gitignore` entries; never overwrites, lists existing files as skipped (br-e0f4).
 - `bridle doctor [--repo PATH]`: checks a project's setup (git repo, integration branch, config and the files it references, role prompts, `.gitignore`, `[ports]`, git >= 2.38, `claude`, `gh` when `[ci]` is on), prints ok/warn/FAIL with a one-line fix each, exits 1 on a failure (br-5a5d).
 - landing an arch-revision task opens one re-evaluate task per capability with suspect requirements (listing the ids, to confirm or edit) and notifies the manager (br-beab).
 - the landing notice to running workers says `spec changed under you: <ids/files>` when the landed commit touches a claimed task's declared impact (spec ids changed in design/specs, file globs); other workers keep the generic notice (br-66e2).

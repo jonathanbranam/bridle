@@ -22,6 +22,12 @@ docs/
     resolved/        answered, with a Resolution section saying where the answer lives
 ```
 
+## Onboarding a project
+
+In the project's git repo: `bridle init` (scaffolds `.bridle/config.toml` and the `.gitignore`
+entries), then `bridle sync`, `bridle doctor`, `bridle serve`
+([[docs/design/cli|cli]]). Real onboardings: [[docs/context/onboarding-data-contracts|data-contracts]].
+
 ## How the folders work
 
 **Design and proposal docs are named by topic** and change in place, like

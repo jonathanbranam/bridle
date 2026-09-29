@@ -7,6 +7,7 @@ mod commands;
 mod doctor;
 mod error;
 mod goals;
+mod init;
 mod launchd;
 mod prime;
 mod render;
