@@ -65,7 +65,11 @@ async fn alloc_skips_reserved_taken_and_listening_ports_and_release_frees() {
     while c.alloc_port(&req(None)).await.is_ok() {
         allocated += 1;
     }
-    assert_eq!(allocated, usize::from(BLOCK) - 2, "every free port handed out");
+    assert_eq!(
+        allocated,
+        usize::from(BLOCK) - 2,
+        "every free port handed out"
+    );
     assert!(c.alloc_port(&req(None)).await.is_err(), "range exhausted");
     assert_eq!(c.list_ports().await.expect("list").len(), allocated);
 
