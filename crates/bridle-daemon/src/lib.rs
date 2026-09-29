@@ -26,6 +26,7 @@ mod events;
 pub mod governor;
 pub mod impact;
 pub mod paths;
+pub mod reevaluate;
 pub mod rules;
 mod server;
 pub mod state_branch;
