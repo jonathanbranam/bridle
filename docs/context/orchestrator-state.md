@@ -5,7 +5,7 @@ itself is in `workflow/base/roles/orchestrator.md`. Update this file whenever th
 queue, open items or decisions change. Last updated 2026-09-29 02:40 UTC (10:40 PM),
 at the handover from the eighth orchestrator session.
 
-## Ninth session, in progress (2026-09-29 from 02:50 UTC); read this first
+## Ninth session (2026-09-29 02:50-10:45 UTC); read this first
 
 - **Overnight plan** (the human: "what is our next work on the roadmap? ... We still have 40%
   weekly budget to burn"): pm-1 feeds manager-2 P3 (spec parser, check, id, export) and P1's
@@ -15,7 +15,15 @@ at the handover from the eighth orchestrator session.
   (3d8f986), task search, b5br claim release, n8tj `send --task`, c9zm (bb6bbf9, plus a fmt fix
   for a red main), qr8z/br-936d `bridle launchd` (069fae2), t6kq credentials (2e39995),
   `bridle-spec` parser, `spec check`, build-order, `spec export`.
-- **Installed: 2e39995** (03:3x UTC). Daemons still run cc9b612. **At the next restart** the
+- **Overnight (to 10:45 UTC), all merged and CI-green:** P3 done (spec parser/check/id/export/import/coverage,
+  goals, arch, explore, spec docs, Python and vitest adapters), P4 done (impact registry/check, conflict
+  threads, trace links/suspect, rebase notice, spec-changed notice, reevaluate, arch/goals propose,
+  arch-guard), P5 done (ports, merge probe, worktree layout, paired worktrees, `bridle land` + fix; the
+  manager prompt uses `land`), `bridle wait`, k3wp, h5qd, wake-manager, PM autostart, doctor, init, doc
+  audits, 22 stale tickets resolved. Five reds, all test-only (fmt twice, git identity twice, macOS port
+  race); each fixed at the cause. Watch: workers must run full `just check` after their last commit;
+  Haiku workers often print their report instead of sending it.
+- **Installed: 2780c95** (10:45 UTC), includes launchd/land/doctor/init. Daemons still run cc9b612. **At the next restart** the
   manager's squash/commit permissions and squash landing take effect; until then managers land
   with `--no-ff`. The human plans to move the daemons to launchd in the morning
   (`docs/context/launchd-restart-plan.md`; track-web first). Workers come back `lost`: resume them.
