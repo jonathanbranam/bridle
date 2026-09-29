@@ -40,6 +40,8 @@ pub enum Command {
     StopDaemon,
     /// Check the project's setup (git, config, tools, gitignore) and say what to fix; exit 1 on a failure.
     Doctor(DoctorArgs),
+    /// Scaffold `.bridle/config.toml` and `.gitignore` entries in a git repo; never overwrites.
+    Init(InitArgs),
     /// Write or remove a macOS LaunchAgent that runs the daemon (never runs launchctl).
     Launchd(LaunchdArgs),
     /// Reconstruct the tasks/edges/open_questions tables from the project's
@@ -476,6 +478,22 @@ pub struct DoctorArgs {
     /// The project's clone. Defaults to the current directory.
     #[arg(long)]
     pub repo: Option<PathBuf>,
+}
+
+#[derive(Debug, Args)]
+pub struct InitArgs {
+    /// The project's clone. Defaults to the current directory.
+    #[arg(long)]
+    pub repo: Option<PathBuf>,
+    /// Project name, recorded as a comment (bridle takes the name from the directory).
+    #[arg(long)]
+    pub name: Option<String>,
+    /// Integration branch. Defaults to the branch HEAD is on.
+    #[arg(long)]
+    pub integration: Option<String>,
+    /// Workflow pack to enable (`packs = [STACK]`).
+    #[arg(long, value_parser = ["python", "typescript", "rust"])]
+    pub stack: Option<String>,
 }
 
 #[derive(Debug, Args)]

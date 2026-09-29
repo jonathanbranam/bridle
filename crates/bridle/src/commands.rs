@@ -40,6 +40,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Serve(args) => serve::run(&cli, args).await,
         Command::StopDaemon => stop_daemon(&cli).await,
         Command::Doctor(args) => crate::doctor::run(&cli, args),
+        Command::Init(args) => crate::init::run(args),
         Command::Launchd(args) => crate::launchd::run(&cli, args),
         Command::Rebuild => rebuild(&cli).await,
         Command::Daemons => daemons(&cli).await,

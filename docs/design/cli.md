@@ -11,6 +11,7 @@ bridle [--url URL] [--project NAME] [--token T] [--json] <command>
 
 bridle serve   [--repo PATH] [--workspace DIR] [--listen ADDR] [--detach]
 bridle stop-daemon
+bridle init    [--repo PATH] [--name N] [--integration BRANCH] [--stack S]  scaffold .bridle/config.toml + .gitignore; never overwrites
 bridle doctor  [--repo PATH]                 check the project's setup, say what to fix; exit 1 on a failure
 bridle launchd install [--repo PATH] [--workspace DIR] [--force]   macOS: write the LaunchAgent plist, print launchctl commands
 bridle launchd uninstall                    remove the plist, print the bootout command
@@ -352,6 +353,18 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   `bridle.db` does (warn); `[ports]` range sane; git >= 2.38; `claude` on PATH; `gh` on PATH
   when `[ci] github` is on. Exits 1 if any check fails. It never fixes anything and does not
   talk to a daemon; a dry `sync` check isn't done because `sync` has no check mode.
+- **`init [--repo PATH] [--name N] [--integration BRANCH] [--stack python|typescript|rust]`**:
+  scaffolds a project, only what's absent and never overwriting (existing files are listed as
+  skipped). `.bridle/config.toml` gets `[branches] integration` (the branch HEAD is on, or
+  `--integration`), `workflow` (active only if the repo has `workflow/base/`, else a commented
+  stub), `packs = [STACK]` with `--stack`, empty `manager`/`worker` roles (prompts come from
+  `workflow` by default), and `[commands]`/`[integration] check` (`just check`, `cargo test`,
+  `npm test` or `pytest`, by which of `justfile`/`Cargo.toml`/`package.json`/`pyproject.toml`
+  exists; a commented stub if none) plus commented `[worktrees]` `setup`/`copy` stubs.
+  `--name` is only a comment: config has no name key. `.gitignore` gets `.bridle/*.db*`,
+  `.bridle/daemon.json` and `.bridle/cache/` appended if missing. Prints the next steps (`sync`,
+  `doctor`, `serve`) and suggests `--stack` from the files it found; it runs none of them and
+  asks nothing.
 - **`launchd install|uninstall`** (macOS only): writes/removes
   `~/Library/LaunchAgents/dev.bridle.<project>.plist` (project from `--project`, else the repo
   directory name) and prints, but never runs, the `launchctl bootstrap`/`bootout` commands.
@@ -525,7 +538,6 @@ Commands for the phases after v1 ([[docs/proposal/build-order|build order]]),
 as a first cut:
 
 ```
-bridle init                                      project scaffolding (`doctor` is built)
 bridle task <cmd> at in_review|accepted          states not built yet
 bridle handoff                                   bridle accept <id> (human only)
 bridle inbox --inject
