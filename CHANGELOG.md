@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Added: `[worktrees] layout = "root"` with `root = "/path/{task}"` (`{task}`, `{agent}`, `{project}`) puts new worktrees at a configured absolute path; `default` is unchanged; invalid roots are refused at config load (br-930e).
 - Added: `bridle arch propose --title T --argument TEXT|-` creates an `arch-revision` task with the proposal; validates the architecture directory exists (br-357f).
 - Added: `bridle goals propose <goal-id> --change KEY=VALUE --why TEXT` (repeatable `--change`) creates a task proposing a change to the goal's firmness, priority, or stance; validates the goal exists (br-357f).
 - Added: landing an `arch-revision` task opens one `re-evaluate` task per capability with suspect requirements (listing the ids, to confirm or edit) and notifies the manager (br-beab).
