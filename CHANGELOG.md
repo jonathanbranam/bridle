@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Added: the landing notice to running workers says `spec changed under you: <ids/files>` when the landed commit touches a claimed task's declared impact (spec ids changed in `design/specs`, file globs); other workers keep the generic notice (br-66e2).
 - Added: `bridle conflict list|resolve`: `impact check` opens a conflict (`C<n>`) for each shared scenario, once, and tells both claimants (or the managers, for an unclaimed task); resolve with `--compatible`, `--order A,B` or `--merge-into` (br-6774).
 - Added: `bridle trace suspect` lists links whose recorded hash is stale (exit 1 if any) and `bridle trace confirm <id>` rewrites them to current, line-edit only (br-dd44).
 - Added: `bridle impact check [--json]` reports overlaps between in-flight tasks' declared impact (conflict, warn, info; exit 1 on a conflict) (br-3584).

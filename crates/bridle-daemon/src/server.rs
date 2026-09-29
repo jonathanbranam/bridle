@@ -1387,7 +1387,7 @@ async fn notify_main_moved(
         .into_iter()
         .filter_map(|t| t.claimed_by)
         .collect();
-    let recipients: Vec<String> = agents
+    let recipients: Vec<&bridle_api::types::Agent> = agents
         .iter()
         .filter(|a| a.role == crate::supervisor::WORKER_ROLE && a.state.is_running())
         .filter(|a| {
@@ -1397,13 +1397,13 @@ async fn notify_main_moved(
             let busy = a.branch.is_some() || claims.contains(&principal);
             busy && !lander
         })
-        .map(|a| a.id.clone())
         .collect();
     if recipients.is_empty() {
         return;
     }
     let sha = task.commit.as_deref().unwrap_or_default();
-    let files = match crate::worktree::changed_files(&state.workspace.repo, sha).await {
+    let changed = crate::worktree::changed_files(&state.workspace.repo, sha).await;
+    let files = match &changed {
         Ok(f) => {
             let mut shown = f.iter().take(15).cloned().collect::<Vec<_>>().join(", ");
             if f.len() > 15 {
@@ -1414,7 +1414,54 @@ async fn notify_main_moved(
         Err(_) => String::new(),
     };
     let landing = format!("task {} ({}) landed at {sha}{files}", task.id, task.title);
-    state.manager.note_main_moved(recipients, landing).await;
+    // Agents whose declared impact overlaps the landing get told what, so they re-read
+    // before building on stale text; the rest keep the generic notice.
+    let changed = changed.unwrap_or_default();
+    let ids = landed_spec_ids(&state.workspace.repo, sha, &changed).await;
+    let mut by_claimant: std::collections::HashMap<String, bridle_api::types::Impact> =
+        std::collections::HashMap::new();
+    for t in state.tasks.list_tasks() {
+        if let (Some(c), bridle_api::types::TaskState::Claimed) = (t.claimed_by.clone(), t.state) {
+            by_claimant.insert(c, t.impact);
+        }
+    }
+    let recipients = recipients
+        .into_iter()
+        .map(|a| {
+            let overlap = by_claimant
+                .get(&format!("agent:{}", a.name))
+                .and_then(|i| crate::impact::landing_overlap(i, &ids, &changed));
+            let landing = match overlap {
+                Some(o) => format!("{landing}; spec changed under you: {o}"),
+                None => landing.clone(),
+            };
+            (a.id.clone(), landing)
+        })
+        .collect();
+    state.manager.note_main_moved(recipients).await;
+}
+
+/// Spec ids whose text the landed commit changed, from the `design/specs` files it touched.
+async fn landed_spec_ids(
+    repo: &std::path::Path,
+    sha: &str,
+    changed: &[String],
+) -> std::collections::BTreeSet<String> {
+    let mut ids = std::collections::BTreeSet::new();
+    for f in changed
+        .iter()
+        .filter(|f| f.starts_with("design/specs/") && f.ends_with(".md"))
+    {
+        let show =
+            |rev: String| async move { crate::worktree::run_git(repo, &["show", &rev]).await.ok() };
+        let new = show(format!("{sha}:{f}")).await;
+        let old = show(format!("{sha}^:{f}")).await;
+        ids.extend(crate::impact::changed_spec_ids(
+            old.as_deref(),
+            new.as_deref(),
+        ));
+    }
+    ids
 }
 
 /// Removes every agent on `branch` (stopping any still running), their

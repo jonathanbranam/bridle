@@ -282,6 +282,7 @@ dependencies = [
  "axum",
  "bridle-api",
  "bridle-claude",
+ "bridle-spec",
  "chrono",
  "futures",
  "hex",

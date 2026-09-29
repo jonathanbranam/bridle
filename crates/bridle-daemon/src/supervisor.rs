@@ -356,8 +356,8 @@ impl AgentManager {
     /// integration branch, at most once a minute per agent: landings inside
     /// the window are joined into the one message
     /// (impact-and-conflicts.md, conflict protocol step 4).
-    pub async fn note_main_moved(&self, recipients: Vec<String>, landing: String) {
-        for id in recipients {
+    pub async fn note_main_moved(&self, recipients: Vec<(String, String)>) {
+        for (id, landing) in recipients {
             let delay = {
                 let mut m = self.0.main_moved.lock().expect("main_moved mutex poisoned");
                 let slot = m.entry(id.clone()).or_default();

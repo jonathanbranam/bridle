@@ -92,3 +92,91 @@ async fn landing_notifies_the_other_worker_once_and_not_the_lander() {
     assert!(bodies[0].contains(&head), "got {bodies:?}");
     assert!(notices(&daemon, &lander).await.is_empty());
 }
+
+fn git(daemon: &support::TestDaemon, args: &[&str]) -> String {
+    let out = std::process::Command::new("git")
+        .arg("-C")
+        .arg(&daemon.repo)
+        .args(args)
+        .output()
+        .expect("git");
+    assert!(out.status.success(), "git {args:?}: {out:?}");
+    String::from_utf8(out.stdout)
+        .expect("utf8")
+        .trim()
+        .to_string()
+}
+
+#[tokio::test]
+async fn landing_names_the_overlap_only_to_the_worker_whose_impact_overlaps() {
+    use bridle_api::types::{Impact, SetImpactRequest};
+    let (daemon, _tmp) = start_daemon(None).await;
+    let w2 = worker(&daemon, "w2").await;
+    let w3 = worker(&daemon, "w3").await;
+    let mut tasks = Vec::new();
+    for (title, glob, agent) in [
+        ("Lands", "", None),
+        ("A", "src/a/**", Some(&w2)),
+        ("B", "docs/**", Some(&w3)),
+    ] {
+        let t = daemon
+            .client
+            .new_task(&NewTaskRequest {
+                components: Vec::new(),
+                title: title.to_string(),
+                kind: TaskKind::Feature,
+                body: String::new(),
+                size: None,
+            })
+            .await
+            .expect("new task");
+        if let Some(agent) = agent {
+            let impact = Impact {
+                files: vec![glob.to_string()],
+                ..Impact::default()
+            };
+            daemon
+                .client
+                .set_task_impact(&t.id, &SetImpactRequest { impact })
+                .await
+                .expect("impact");
+            daemon.client.plan_task(&t.id).await.expect("plan");
+            daemon
+                .agent_client(agent)
+                .claim_task(&t.id)
+                .await
+                .expect("claim");
+        }
+        tasks.push(t);
+    }
+    std::fs::create_dir_all(daemon.repo.join("src/a")).expect("mkdir");
+    std::fs::write(daemon.repo.join("src/a/x.rs"), "fn x() {}\n").expect("write");
+    git(&daemon, &["add", "."]);
+    git(&daemon, &["commit", "-m", "touch src/a"]);
+    let head = git(&daemon, &["rev-parse", "HEAD"]);
+    daemon
+        .client
+        .done_task(
+            &tasks[0].id,
+            &DoneTaskRequest {
+                commit: head,
+                branch: None,
+            },
+        )
+        .await
+        .expect("done");
+
+    let overlapping = notices(&daemon, &w2).await;
+    assert_eq!(overlapping.len(), 1, "got {overlapping:?}");
+    assert!(
+        overlapping[0].contains("spec changed under you: src/a/x.rs"),
+        "got {overlapping:?}"
+    );
+    let other = notices(&daemon, &w3).await;
+    assert_eq!(other.len(), 1, "got {other:?}");
+    assert!(other[0].contains("main moved"), "got {other:?}");
+    assert!(
+        !other[0].contains("spec changed under you"),
+        "got {other:?}"
+    );
+}
