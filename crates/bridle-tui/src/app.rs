@@ -169,6 +169,11 @@ pub struct App {
     /// Set while composing a reply to `messages[selected_message]`; `None`
     /// means the inbox view is just a list.
     pub compose: Option<Compose>,
+    /// The message opened in full (Enter on the inbox). A clone, so the view
+    /// survives the polled inbox dropping it once it's marked read.
+    pub viewing: Option<ApiMessage>,
+    /// An opened message for `run.rs` to mark read, like `bridle inbox show`.
+    pub pending_mark_read: Option<String>,
     /// A finished compose waiting for `run.rs` to send and mark the
     /// original read; taken (cleared) once `run.rs` has picked it up.
     pub pending_send: Option<PendingSend>,
@@ -221,12 +226,21 @@ impl App {
             self.on_compose_key(key);
             return;
         }
+        if self.viewing.is_some() {
+            match key {
+                Key::Esc | Key::Enter => self.viewing = None,
+                Key::Char('r') => self.start_reply(),
+                _ => {}
+            }
+            return;
+        }
         match key {
             Key::Char('q') | Key::Esc => self.should_quit = true,
             Key::Tab => self.focus = self.focus.next(),
             Key::Char('r') if self.focus == Focus::Inbox => self.start_reply(),
             Key::Char('k') | Key::Up => self.scroll_up(),
             Key::Char('j') | Key::Down => self.scroll_down(),
+            Key::Enter if self.focus == Focus::Inbox => self.open_message(),
             Key::Char(_) | Key::Left | Key::Right | Key::Enter | Key::Backspace => {}
         }
         self.sync_logs_target();
@@ -260,10 +274,21 @@ impl App {
         }
     }
 
-    /// Start composing a reply to the selected inbox message, addressed
-    /// back to its sender.
+    fn open_message(&mut self) {
+        if let Some(msg) = self.messages.get(self.selected_message) {
+            self.pending_mark_read = Some(msg.id.clone());
+            self.viewing = Some(msg.clone());
+        }
+    }
+
+    /// Start composing a reply to the opened message, or else the selected
+    /// inbox message, addressed back to its sender.
     fn start_reply(&mut self) {
-        let Some(msg) = self.messages.get(self.selected_message) else {
+        let Some(msg) = self
+            .viewing
+            .as_ref()
+            .or_else(|| self.messages.get(self.selected_message))
+        else {
             return;
         };
         self.compose = Some(Compose {
@@ -284,6 +309,7 @@ impl App {
             return;
         }
         let compose = self.compose.take().expect("checked above");
+        self.viewing = None;
         self.pending_send = Some(PendingSend {
             to: compose.to,
             reply_to: compose.reply_to,
@@ -849,6 +875,64 @@ mod tests {
         assert_eq!(compose.reply_to, "m-1");
         assert_eq!(compose.body, "");
         assert_eq!(compose.cursor, 0);
+    }
+
+    #[test]
+    fn enter_opens_the_selected_message_and_marks_it_read() {
+        let mut app = App::new();
+        app.on_message(Message::MessagesLoaded(vec![
+            inbox_message("m-1", "w1", "hi"),
+            inbox_message("m-2", "w2", "long body"),
+        ]));
+        focus_inbox(&mut app);
+        app.on_key(Key::Down);
+        app.on_key(Key::Enter);
+        assert_eq!(app.viewing.as_ref().map(|m| m.id.as_str()), Some("m-2"));
+        assert_eq!(app.pending_mark_read.as_deref(), Some("m-2"));
+        // Survives the poll dropping the now-read message.
+        app.on_message(Message::MessagesLoaded(vec![]));
+        assert!(app.viewing.is_some());
+    }
+
+    #[test]
+    fn esc_or_enter_dismisses_the_view_without_quitting() {
+        for key in [Key::Esc, Key::Enter] {
+            let mut app = App::new();
+            app.on_message(Message::MessagesLoaded(vec![inbox_message(
+                "m-1", "w1", "hi",
+            )]));
+            focus_inbox(&mut app);
+            app.on_key(Key::Enter);
+            app.on_key(key);
+            assert!(app.viewing.is_none());
+            assert!(!app.should_quit);
+        }
+    }
+
+    #[test]
+    fn r_in_the_view_replies_to_the_opened_message() {
+        let mut app = App::new();
+        app.on_message(Message::MessagesLoaded(vec![inbox_message(
+            "m-1", "w1", "hi",
+        )]));
+        focus_inbox(&mut app);
+        app.on_key(Key::Enter);
+        app.on_message(Message::MessagesLoaded(vec![])); // read, so gone from the list
+        app.on_key(Key::Char('r'));
+        let compose = app.compose.as_ref().expect("compose started");
+        assert_eq!(compose.reply_to, "m-1");
+        app.on_key(Key::Char('x'));
+        app.on_key(Key::Enter);
+        assert!(app.viewing.is_none());
+        assert_eq!(app.pending_send.as_ref().map(|p| p.to.as_str()), Some("w1"));
+    }
+
+    #[test]
+    fn enter_on_an_empty_inbox_opens_nothing() {
+        let mut app = App::new();
+        focus_inbox(&mut app);
+        app.on_key(Key::Enter);
+        assert!(app.viewing.is_none());
     }
 
     #[test]

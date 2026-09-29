@@ -218,8 +218,10 @@ bridle task note   <id> TEXT                     plain note to the task's thread
   from `Client::transcript` once a second, same model as `bridle logs --follow`), and
   an inbox of unread messages addressed to `me` (polled from `Client::list_messages`
   once a second, same query as `bridle inbox`). `Tab` switches between the four views,
-  `j`/`k`/arrow keys scroll the focused one, `q`/`Esc` quits. On the inbox view, `r`
-  starts composing a reply to the selected message (simple line editing: insert,
+  `j`/`k`/arrow keys scroll the focused one, `q`/`Esc` quits. On the inbox view, `Enter`
+  opens the selected message in full (header and body as `bridle inbox show` prints them,
+  and marks it read); `Esc`/`Enter` closes it. `r`, on the list or in the opened message,
+  starts composing a reply to the message (simple line editing: insert,
   backspace, left/right, `Enter` to send, `Esc` to cancel); a submitted reply goes out
   via `Client::send` with `reply_to` set and `when: now`, then the original is marked
   read via `Client::mark_read` so it drops out of the unread list. Lives in its own
