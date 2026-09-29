@@ -7,6 +7,19 @@ at the handover from the eighth orchestrator session.
 
 ## Ninth session (2026-09-29 02:50-10:45 UTC); read this first
 
+- **Handover at a full system reboot** (the human, ~11:00 UTC: "can we do a full system
+  reboot instead? I think it needs it"). Every agent was idle, nothing queued. After the reboot:
+  start the three daemons (or move them to launchd per `docs/context/launchd-restart-plan.md`),
+  then run `scripts/claude-orchestrator`. The managers and pm-1 resume by `resume_on_restart`;
+  renew manager-2 (~125K) and pm-1 (~120K) right after. `max-workers 3` is lost; the human
+  re-sets it if wanted. No workers are running, so none to resume.
+- **Open for the human:** try meta-notes mn-fbc0 and track-web's five Space golf tasks;
+  review the data-contracts trial (`.bridle/ADOPT-REVIEW.md`, four questions); answer
+  rs7p (email); the NUC comes online today (test load there).
+- **Next work once running:** the queue is empty. P3-P5 are done; P6 (migrating the human's
+  projects onto bridle specs) needs the human's approval per project. Ask the human; meanwhile
+  pm-1 can triage the open tickets.
+
 - **Overnight plan** (the human: "what is our next work on the roadmap? ... We still have 40%
   weekly budget to burn"): pm-1 feeds manager-2 P3 (spec parser, check, id, export) and P1's
   `bridle wait` (br-4444), then k3wp (br-7d81, br-0589), h5qd. Take/give parked (build-order

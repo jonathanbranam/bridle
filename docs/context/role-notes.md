@@ -165,3 +165,19 @@ Newest first. One line per item: what happened, who did it, what it says about r
   - The orchestrator caught a duplicate-manager bug (qun8) by reading the diff before
     asking for a restart. Reading a daemon-affecting diff before a restart is worth
     keeping as a habit.
+- **2026-09-29, ninth session (orchestrator):**
+  - By hand: resumed three `lost` workers after the restart; relayed four Haiku workers' done
+    reports that were printed or sent to a wrong address instead of to the manager; diagnosed
+    five red `main`s from CI logs (fmt twice, missing git identity twice, a macOS port race);
+    installed builds twice; restarted the watcher on every wake (~80 times).
+  - Role gaps: a project with no product manager left the human's five new tasks unseen
+    (fixed: wake-manager, br-3bb4); the track-web manager didn't `task done` until told; the
+    product manager queued already-fixed tickets as tasks and marked finished tickets "needs a
+    decision" (it can't move files, so stale tickets pile up); the managers keep asking the
+    orchestrator for "go" after CI instead of reading CI themselves (c8qw's daemon CI report
+    should make that mechanical).
+  - Workers reported done without the full `just check` after their last commit; the
+    manager now requires it in the report.
+  - `bridle budget max-workers` is human-only; the human had to run it for a third worker.
+  - Subagents did the data-contracts trial branch and the email research, keeping the
+    orchestrator's context small; worth repeating for any read-heavy job.
