@@ -615,15 +615,11 @@ async fn renew_agent(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
     Path(id): Path<String>,
-    Json(req): Json<RenewRequest>,
+    // `RenewRequest.ignore_budget` is accepted and ignored: renew never waits on a hold.
+    Json(_req): Json<RenewRequest>,
 ) -> Result<Json<Agent>, ApiError> {
     require_not_worker(&state, &principal).await?;
-    Ok(Json(
-        state
-            .manager
-            .renew(&id, req.ignore_budget, &principal)
-            .await?,
-    ))
+    Ok(Json(state.manager.renew(&id, &principal).await?))
 }
 
 async fn remove_agent(

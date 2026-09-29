@@ -130,8 +130,9 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   change, not carried by a later spawn or `resume`, and never logged or
   returned by read endpoints
   ([[docs/design/agent-host/roles-and-config#Per-spawn secrets|roles-and-config.md]]).
-- **`--ignore-budget`** on `spawn`/`resume`/`renew` skips the budget governor's
-  holding/paused refusal for that one call
+- **`--ignore-budget`** on `spawn`/`resume` skips the budget governor's
+  holding/paused refusal for that one call (`renew` never waits on a hold: it
+  replaces a session rather than adding load, so the flag is accepted and ignored)
   ([[docs/design/usage-and-budget#Resuming|the escape hatch]]).
 - **`budget hold`/`release`** apply to the current daemon only; see
   [[docs/design/usage-and-budget#The human's hold|the human's hold]] for the
