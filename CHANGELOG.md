@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Added: typescript pack's vitest adapter, `workflow/packs/typescript/adapters/vitest-bridle/`: `registerBridleSpecs({ steps })` registers executable scenarios from `bridle spec export --format json` as vitest tests with a given/when/then step registry (br-a54d).
 - Added: python pack pytest plugin `workflow/packs/python/adapters/bridle_specs.py`: registers pytest-bdd scenarios from `bridle spec export --format json` (ids in test names, tags as markers, examples parametrized, `--bridle-spec`/`--bridle-scenario` selection), replacing `spec-to-feature.py` + `run-specs.py` (br-3b72).
 - Added: `[worktrees] layout = "paired"` with `[worktrees.pair.<name>] path, mode = "worktree"|"symlink"` creates sibling repos' worktrees (or symlinks) beside the project's at `<root>/<name>`; setup runs in each, rm cleans all and refuses on a dirty member, the system prompt lists sibling paths (br-cc25).
 - Fixed: `bridle land` no longer leaves a worktree that has the integration branch checked out (the clone) showing the new tip as staged changes: it fast-forwards there (`merge --ff-only`) instead of `update-ref`, and refuses if that worktree has uncommitted changes.

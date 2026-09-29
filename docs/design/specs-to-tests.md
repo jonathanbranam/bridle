@@ -40,9 +40,10 @@ comes from the committed generated file.
   project, not synced; see its README). It registers one scenario per
   executable scenario, named with its id, tags as markers, examples as
   parametrization, selected by `--bridle-spec` / `--bridle-scenario`; a refused
-  export fails collection with the diagnostics. `typescript`
-  ships a vitest equivalent, needed by track-web, harness, otters and file-db's
-  TS side.
+  export fails collection with the diagnostics. `typescript` ships the vitest
+  equivalent, built: `workflow/packs/typescript/adapters/vitest-bridle/`
+  (`registerBridleSpecs({ steps })`, see its README), for track-web, harness,
+  otters and file-db's TS side.
 - **Scenario ids in test results.** Results report by `s-b310`, which lets
   `bridle test --task tw-7fa2` run only the scenarios in that task's impact,
   and `bridle spec coverage` list executable scenarios with no bound test
