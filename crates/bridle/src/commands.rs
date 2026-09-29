@@ -66,7 +66,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Queue(args) => queue(&cli, args).await,
         Command::Statusline => statusline(&cli).await,
         Command::StopCheck => stop_check(&cli).await,
-        Command::Prime(args) => prime(args).await,
+        Command::Prime(args) => prime(&cli, args).await,
         Command::Rules(args) => rules(&cli, args).await,
         Command::Sync => sync(&cli).await,
         Command::Spec(args) => spec(&cli, args),
@@ -205,18 +205,23 @@ The human will mostly reach you through Remote Control.";
 /// one-command-orchestrator-handover-d4mz.md, step 2), read from the current
 /// directory — run this from the repo root, as
 /// `scripts/claude-orchestrator` does. Purely local: no daemon call.
-async fn prime(args: &PrimeArgs) -> Result<(), CliError> {
+async fn prime(cli: &Cli, args: &PrimeArgs) -> Result<(), CliError> {
     match args.role {
         PrimeRoleArg::Orchestrator => prime_orchestrator().await,
-        PrimeRoleArg::Worker => prime_scoped(args, "worker", "worker"),
-        PrimeRoleArg::Planner => prime_scoped(args, "product-manager", "planner"),
+        PrimeRoleArg::Worker => prime_scoped(cli, args, "worker", "worker").await,
+        PrimeRoleArg::Planner => prime_scoped(cli, args, "product-manager", "planner").await,
     }
 }
 
 /// Worker/planner prime: rules, facts, guides and component scope (`--component`, else
 /// the agent's own `BRIDLE_COMPONENTS`). Prime is otherwise orchestrator-only; these two
 /// roles each get their own view.
-fn prime_scoped(args: &PrimeArgs, role: &str, title: &str) -> Result<(), CliError> {
+async fn prime_scoped(
+    cli: &Cli,
+    args: &PrimeArgs,
+    role: &str,
+    title: &str,
+) -> Result<(), CliError> {
     let repo = std::env::current_dir().context("current directory")?;
     let config =
         bridle_daemon::config::Config::load(&repo).context("loading .bridle/config.toml")?;
@@ -233,9 +238,20 @@ fn prime_scoped(args: &PrimeArgs, role: &str, title: &str) -> Result<(), CliErro
     let components = config
         .normalize_components(&raw)
         .map_err(|e| anyhow::anyhow!(e))?;
+    let kind = match &args.task {
+        Some(id) => Some(
+            client_for_read(cli)
+                .await?
+                .get_task(id)
+                .await
+                .with_context(|| format!("looking up task {id}"))?
+                .kind,
+        ),
+        None => None,
+    };
     print!(
         "{}",
-        crate::prime::render(&repo, &config, role, title, &components)?
+        crate::prime::render(&repo, &config, role, title, &components, kind)?
     );
     Ok(())
 }
