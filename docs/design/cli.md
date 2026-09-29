@@ -73,6 +73,11 @@ bridle trace down|up <id>  [--goals DIR] [--arch DIR] [--specs DIR]   walks the 
                                              rows with `depth`); an unknown id, an unknown link target or
                                              any parse error is an error (exit 1); local only
 bridle trace orphans                         requirements with no `traces=` (a warning on stderr, exit 0)
+bridle trace suspect                         links whose recorded `@hash` differs from the upstream element's
+                                             current hash (id, file:line, upstream, recorded, current; --json
+                                             prints them); exit 1 if any
+bridle trace confirm <id>                    rewrites that requirement's link hashes to the current ones; edits
+                                             only the heading line, the rest of the file byte-for-byte
 bridle explore check [paths...]              checks exploration findings frontmatter (default `design/explore`);
                                              diagnostics on stdout, exit 1 on any error; local only
 bridle explore new|conclude|abandon <id>     scaffolds `design/explore/<id>/findings.md` (status open;
@@ -474,7 +479,7 @@ bridle impact set|show|check bridle conflict list|resolve
 bridle spec check|id|export|coverage|import   `check`, `id`, `export`, `import openspec` are built (see Built)
 bridle rules show|propose                        `explain`/`diff --project-layer` are built (see Built)
 bridle goals propose            bridle arch propose   (`goals list` is built, see Built)
-bridle trace suspect|confirm|coverage   (`up`, `down`, `orphans` are built, see above)
+bridle trace coverage   (`up`, `down`, `orphans`, `suspect`, `confirm` are built, see above)
 bridle explore new|conclude|adopt|abandon
 bridle usage --by project|kind|task|trend|compare
 ```

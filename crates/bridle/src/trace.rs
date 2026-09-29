@@ -33,6 +33,43 @@ pub fn run(cli: &Cli, args: &TraceArgs) -> Result<(), CliError> {
             }
             Ok(())
         }
+        TraceAction::Suspect => {
+            let suspects = graph.suspects();
+            if cli.json {
+                render::print_json(&suspects)?;
+            } else {
+                for s in &suspects {
+                    println!(
+                        "{}  {}:{}  {}  recorded @{}  current @{}",
+                        s.id, s.file, s.line, s.upstream, s.recorded, s.current
+                    );
+                }
+            }
+            if suspects.is_empty() {
+                Ok(())
+            } else {
+                Err(anyhow!("{} suspect link(s)", suspects.len()).into())
+            }
+        }
+        TraceAction::Confirm { id } => {
+            let node = graph.get(id).ok_or_else(|| anyhow!("unknown id {id:?}"))?;
+            let edits: Vec<(String, String, String)> = graph
+                .suspects()
+                .into_iter()
+                .filter(|s| s.id == *id)
+                .map(|s| (s.upstream, s.recorded, s.current))
+                .collect();
+            if edits.is_empty() {
+                println!("{id}: no suspect links");
+                return Ok(());
+            }
+            let text = std::fs::read_to_string(&node.file)
+                .map_err(|e| anyhow!("reading {}: {e}", node.file))?;
+            let out = bridle_spec::trace::rewrite_links(&text, node.line, &edits);
+            std::fs::write(&node.file, out).map_err(|e| anyhow!("writing {}: {e}", node.file))?;
+            println!("{id}: confirmed {} link(s)", edits.len());
+            Ok(())
+        }
     }
 }
 
