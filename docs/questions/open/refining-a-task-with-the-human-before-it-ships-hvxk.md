@@ -135,3 +135,17 @@ This conflicts with `docs/design/specs.md` today ("A task edits `design/specs/<c
 **in place on its branch**. The plan commit's spec diff is the proposal."), where the spec
 proposal is a commit on the task's branch. Settling this ticket means deciding where a spec
 change under refinement lives before any branch exists.
+
+The human, verbatim (2026-09-29, via the advisor), on that conflict:
+
+> I think that tension of having a branch versus not having a branch might be okay. I think the
+> option to do either is probably what I would lean towards. If I want to take a more active
+> role in a particular task or ticket and review the specs before the agent is doing the work,
+> then we can add them to the task or to the ticket. In the perhaps more common case where the
+> agent is owning the entire ticket work and I don't need to be involved in the specs, then it
+> doesn't matter, really, if they wouldn't be specified in advance, and so the current guidance
+> would be fine.
+
+10. **Both, per task (the human's leaning).** When the human wants to review the specs before
+    the work, the proposed spec changes go on the task or ticket, with no branch. When the agent
+    owns the whole task, the current design stands: the spec is edited on the task's branch.
