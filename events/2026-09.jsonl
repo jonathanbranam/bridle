@@ -400,3 +400,4 @@
 {"actor":"agent:pm-1","at":"2026-09-29T04:59:30.651857Z","from":"open","task":"br-f636","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-09-29T04:59:30.666198Z","queue":"reprioritized"}
 {"actor":"agent:manager-2","at":"2026-09-29T05:03:48.739914Z","from":"planned","task":"br-c273","to":"integrated"}
+{"actor":"agent:manager-2","at":"2026-09-29T05:09:45.900073Z","from":"planned","task":"br-1392","to":"integrated"}
