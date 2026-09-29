@@ -73,3 +73,11 @@ battery fell from 99% to 70% in 27 minutes (about 1.1% a minute) with two worker
 - **Diagnosis tips:** `ps` itself hangs when it reads a process stuck in exec; use `pgrep -l`.
   Reach the daemons over HTTP (`curl` to the URL in `~/.bridle/daemons/<project>.json`) to send
   messages while the CLI is down.
+
+## 2026-09-29 01:50 UTC: the same hang again, and its cause
+
+- Right after the next `cargo install` (for the TUI highlight fix), `syspolicyd` died again and
+  new programs hung. Its crash reports show a SIGSEGV while validating the signature of an
+  unsigned Mach-O (`Security::Universal::architecture()`); the laptop is x86_64, where binaries
+  aren't ad-hoc signed by the linker. Ticket cs7x: sign at link time. Meanwhile the
+  orchestrator signs the installed binary by hand (`codesign -s - -f ~/.cargo/bin/bridle`).
