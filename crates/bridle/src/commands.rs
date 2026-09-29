@@ -75,6 +75,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Spec(args) => spec(&cli, args),
         Command::Goals(args) => crate::goals::run(&cli, args),
         Command::Arch(args) => arch(&cli, args),
+        Command::Trace(args) => crate::trace::run(&cli, args),
         Command::Explore(args) => explore(&args.action),
     }
 }

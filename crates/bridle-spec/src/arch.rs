@@ -5,7 +5,7 @@
 //! `invariant` flag; everything up to the next heading is its body:
 //!
 //! ```markdown
-//! ## The engine referees every rule   {#a-12cd invariant}
+//! ## The engine referees every rule   {#a-12cd invariant serves=g-03}
 //! text...
 //! **Alternatives rejected:** a paragraph, kept as text.
 //! ```
@@ -18,7 +18,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 use crate::Diagnostic;
-use crate::parse::{col, is_id, offset_in};
+use crate::parse::{col, is_id, is_link_id, offset_in};
 
 const ALTERNATIVES_LABEL: &str = "**Alternatives rejected:**";
 
@@ -27,6 +27,11 @@ pub struct Element {
     pub id: String,
     pub title: String,
     pub invariant: bool,
+    /// Goal ids from `serves=g-03,g-04`.
+    pub serves: Vec<String>,
+    /// Short text hash for trace links (`trace::text_hash` of the title and the
+    /// whole body, alternatives included).
+    pub hash: String,
     /// The body, minus the alternatives paragraph, trimmed.
     pub text: String,
     /// The text of the `**Alternatives rejected:**` paragraph, if any.
@@ -91,7 +96,7 @@ fn parse_all(inputs: &[(String, String)]) -> Result<Vec<Element>, Vec<Diagnostic
                     message,
                 });
             };
-            let (title, id, invariant) = heading(lines[i], rest, &mut diag);
+            let (title, id, invariant, serves) = heading(lines[i], rest, &mut diag);
             if let Some(id) = &id {
                 let here = format!("{file}:{}", i + 1);
                 if let Some(first) = seen.get(id) {
@@ -102,10 +107,13 @@ fn parse_all(inputs: &[(String, String)]) -> Result<Vec<Element>, Vec<Diagnostic
             }
             if let Some(id) = id {
                 let (text, alternatives_rejected) = body(&lines[i + 1..end]);
+                let hash = crate::trace::text_hash(&title, &lines[i + 1..end].join("\n"));
                 elements.push(Element {
                     id,
                     title,
                     invariant,
+                    serves,
+                    hash,
                     text,
                     alternatives_rejected,
                     file: file.clone(),
@@ -128,14 +136,14 @@ fn heading(
     line: &str,
     rest: &str,
     diag: &mut impl FnMut(usize, String),
-) -> (String, Option<String>, bool) {
+) -> (String, Option<String>, bool, Vec<String>) {
     let rest = rest.trim();
     let Some(open) = rest.find("{#") else {
         diag(
             col(line, line.len()),
             format!("expected '{{#a-xxxx}}' after the title, found {rest:?} with no id"),
         );
-        return (rest.to_string(), None, false);
+        return (rest.to_string(), None, false, Vec::new());
     };
     let block = &rest[open..];
     let title = rest[..open].trim_end().to_string();
@@ -146,7 +154,7 @@ fn heading(
                 "expected the '{{#id ...}}' block to end the heading with '}}', found {block:?}"
             ),
         );
-        return (title, None, false);
+        return (title, None, false, Vec::new());
     }
     if title.is_empty() {
         diag(
@@ -156,6 +164,7 @@ fn heading(
     }
     let mut id = None;
     let mut invariant = false;
+    let mut serves = Vec::new();
     for (n, tok) in block[1..block.len() - 1].split_whitespace().enumerate() {
         let c = col(line, offset_in(line, tok));
         if let Some(t) = tok.strip_prefix('#') {
@@ -178,14 +187,26 @@ fn heading(
             }
         } else if tok == "invariant" {
             invariant = true;
+        } else if let Some(list) = tok.strip_prefix("serves=") {
+            for item in list.split(',') {
+                if is_link_id(item) {
+                    serves.push(item.to_string());
+                } else {
+                    diag(
+                        c,
+                        format!("expected 'serves=<id>[,<id>]' like 'serves=g-03', found {tok:?}"),
+                    );
+                    break;
+                }
+            }
         } else {
             diag(
                 c,
-                format!("expected one of '#id', 'invariant', found {tok:?}"),
+                format!("expected one of '#id', 'invariant', 'serves=<id>', found {tok:?}"),
             );
         }
     }
-    (title, id, invariant)
+    (title, id, invariant, serves)
 }
 
 /// The body text, with the `**Alternatives rejected:**` paragraph (up to the
@@ -232,6 +253,16 @@ mod tests {
             Some("Postgres,\nbecause ops.")
         );
         assert_eq!(els[1].text, "Why.\n\nAfter.");
+    }
+
+    #[test]
+    fn serves_links_and_hash() {
+        let els =
+            parse_str("a.md", "## X {#a-12cd serves=g-03,g-04}\nBody  text.\n").expect("parses");
+        assert_eq!(els[0].serves, ["g-03", "g-04"]);
+        assert_eq!(els[0].hash, crate::trace::text_hash("X", "Body text."));
+        let ds = parse_str("a.md", "## X {#a-12cd serves=nope}\n").expect_err("fails");
+        assert!(ds[0].message.contains("serves="));
     }
 
     #[test]

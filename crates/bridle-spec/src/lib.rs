@@ -20,6 +20,7 @@ pub mod explore;
 mod goals;
 mod ids;
 mod parse;
+pub mod trace;
 
 pub use goals::{Firmness, Goal, Goals, Priority, Stance, parse_goals};
 pub use ids::{Assigned, assign_ids};

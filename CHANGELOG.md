@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Added: trace links: `serves=` on architecture elements, a 4-hex text hash for `traces=id@hash`, and `bridle trace down|up|orphans` over goals, architecture and specs (br-d226).
+
 - Added: `bridle impact set|show` declares and prints a task's impact (spec ids and file globs), stored on the task record and rebuilt by `bridle rebuild` (br-9821).
 
 - Fixed: after a budget pause the governor resumes the manager and PM along with workers; `max_workers` limits workers only (ticket k7nr, br-0a50; code landed with y2eb).
