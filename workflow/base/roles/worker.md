@@ -65,3 +65,4 @@ Any background process you start must satisfy all three of these requirements, o
   Merging `{{branches.integration}}` into your own branch is the one merge you do.
 - Change files outside your worktree.
 - Commit with `{{commands.check_worker}}` failing, or skip hooks.
+- Kill processes by name: rule `no-kill-by-name`.

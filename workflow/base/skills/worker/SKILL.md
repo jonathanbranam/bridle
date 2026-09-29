@@ -42,6 +42,6 @@ what judgement applies.
   you are done from the send.
 
 Never push, fetch, or merge from a remote, merge your own branch into
-anything, or touch files outside your worktree. Rules, guides and the
-conventions behind each command are delivered by `bridle prime`, not
-repeated here.
+anything, or touch files outside your worktree. Never kill processes by name
+(rule `no-kill-by-name`). Rules, guides and the conventions behind each
+command are delivered by `bridle prime`, not repeated here.
