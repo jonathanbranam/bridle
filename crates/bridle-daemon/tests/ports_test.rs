@@ -11,21 +11,29 @@ use bridle_api::types::{
 };
 use support::{default_overrides, start_daemon_with_config, wait_for, wait_for_state};
 
-/// The start of a run of six ports that are all free right now.
-fn free_base() -> u16 {
-    loop {
-        let start = TcpListener::bind("127.0.0.1:0")
-            .expect("bind")
-            .local_addr()
-            .expect("addr")
-            .port();
-        let held: Vec<_> = (start..start.saturating_add(6))
+const BLOCK: u16 = 16;
+
+/// Listeners holding a run of `BLOCK` ports that were all free. The block sits below 32768,
+/// outside every OS's ephemeral range (macOS starts at 49152, Linux at 32768), so no other
+/// test's outgoing connection can take a port in it. The scan starts at a pid-derived offset
+/// so tests running in parallel processes rarely pick the same block.
+fn free_block() -> Vec<TcpListener> {
+    let blocks = 10_000 / BLOCK;
+    let first = u16::try_from(std::process::id() % u32::from(blocks)).expect("fits");
+    for i in 0..blocks {
+        let start = 20_000 + ((first + i) % blocks) * BLOCK;
+        let held: Vec<_> = (start..start + BLOCK)
             .filter_map(|p| TcpListener::bind(("127.0.0.1", p)).ok())
             .collect();
-        if held.len() == 6 {
-            return start;
+        if held.len() == usize::from(BLOCK) {
+            return held;
         }
     }
+    panic!("no free block of {BLOCK} ports in 20000-29999");
+}
+
+fn free_base() -> u16 {
+    free_block()[0].local_addr().expect("addr").port()
 }
 
 fn req(pid: Option<i32>) -> AllocPortRequest {
@@ -34,31 +42,36 @@ fn req(pid: Option<i32>) -> AllocPortRequest {
 
 #[tokio::test]
 async fn alloc_skips_reserved_taken_and_listening_ports_and_release_frees() {
-    // Someone else is listening on base+1: bind it first (port 0) and build the range
-    // around the port we actually got, so nothing can take it between pick and bind.
-    let busy = TcpListener::bind("127.0.0.1:0").expect("listen");
-    let base = busy.local_addr().expect("addr").port() - 1;
-    let cfg = format!(
-        "[ports]\nrange = [{base}, {}]\nreserved = [{base}]\n",
-        base.saturating_add(3)
-    );
+    // Someone else is listening on base+1: keep that listener, free the rest of the block.
+    let mut held = free_block();
+    let base = held[0].local_addr().expect("addr").port();
+    let _busy = held.swap_remove(1);
+    drop(held);
+    let last = base + BLOCK - 1;
+    let cfg = format!("[ports]\nrange = [{base}, {last}]\nreserved = [{base}]\n");
     let (d, _tmp) = start_daemon_with_config(None, Some(&cfg)).await;
     let c = &d.client;
 
-    // Other tests' daemons may grab a port in the range meanwhile, so no exact numbers.
     let a = c.alloc_port(&req(None)).await.expect("alloc");
     assert!(
         a.port != base && a.port != base + 1,
         "skips the reserved and the listening port, got {}",
         a.port
     );
-    if let Ok(b) = c.alloc_port(&req(None)).await {
-        assert_ne!(b.port, a.port, "skips the allocated one");
-        assert!(b.port != base && b.port != base + 1);
+    let b = c.alloc_port(&req(None)).await.expect("second alloc");
+    assert_ne!(b.port, a.port, "skips the allocated one");
+    assert!(b.port != base && b.port != base + 1);
+    let mut allocated = 2;
+    while c.alloc_port(&req(None)).await.is_ok() {
+        allocated += 1;
     }
-    while c.alloc_port(&req(None)).await.is_ok() {}
+    assert_eq!(
+        allocated,
+        usize::from(BLOCK) - 2,
+        "every free port handed out"
+    );
     assert!(c.alloc_port(&req(None)).await.is_err(), "range exhausted");
-    assert!(c.list_ports().await.expect("list").len() <= 2);
+    assert_eq!(c.list_ports().await.expect("list").len(), allocated);
 
     let freed = c.release_port(a.port).await.expect("release");
     assert_eq!(freed.port, a.port);
@@ -69,7 +82,7 @@ async fn alloc_skips_reserved_taken_and_listening_ports_and_release_frees() {
 #[tokio::test]
 async fn an_agents_ports_are_freed_when_it_exits() {
     let base = free_base();
-    let cfg = format!("[ports]\nrange = [{base}, {}]\n", base.saturating_add(5));
+    let cfg = format!("[ports]\nrange = [{base}, {}]\n", base + BLOCK - 1);
     let (d, _tmp) = start_daemon_with_config(None, Some(&cfg)).await;
     let c = &d.client;
     let t = c
@@ -117,7 +130,7 @@ async fn an_agents_ports_are_freed_when_it_exits() {
 #[tokio::test]
 async fn a_dead_pid_frees_its_port_on_the_tick() {
     let base = free_base();
-    let cfg = format!("[ports]\nrange = [{base}, {}]\n", base.saturating_add(5));
+    let cfg = format!("[ports]\nrange = [{base}, {}]\n", base + BLOCK - 1);
     let mut o = default_overrides();
     o.port_check_interval = Duration::from_millis(100);
     let (d, _tmp) = start_daemon_with_config(Some(o), Some(&cfg)).await;
