@@ -66,6 +66,10 @@ bridle arch list [--invariants] [--root DIR]   lists architecture elements (id, 
                                              `design/architecture`); a missing or duplicate `a-` id
                                              is an error (diagnostics on stderr, exit 1); --json
                                              prints the elements with their text; local only
+bridle explore check [paths...]              checks exploration findings frontmatter (default `design/explore`);
+                                             diagnostics on stdout, exit 1 on any error; local only
+bridle explore new|conclude|abandon <id>     scaffolds `design/explore/<id>/findings.md` (status open;
+                                             refuses to overwrite) or rewrites just its `status:` line
 bridle spec check [paths...] [--root DIR] [--require-ids]   validates spec files (dirs are searched for
                                              *.md; default `design/specs`, or --root) with the
                                              bridle-spec parser: prints file:line:col: message per

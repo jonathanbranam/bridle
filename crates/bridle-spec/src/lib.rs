@@ -16,6 +16,7 @@
 //! async, no daemon, no I/O beyond [`parse_file`].
 
 pub mod arch;
+pub mod explore;
 mod ids;
 mod parse;
 
