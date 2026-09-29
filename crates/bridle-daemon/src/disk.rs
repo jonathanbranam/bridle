@@ -42,10 +42,7 @@ pub fn dir_size(path: &Path) -> u64 {
     let Ok(entries) = std::fs::read_dir(path) else {
         return own;
     };
-    own + entries
-        .flatten()
-        .map(|e| dir_size(&e.path()))
-        .sum::<u64>()
+    own + entries.flatten().map(|e| dir_size(&e.path())).sum::<u64>()
 }
 
 /// Blocking: walks three directory trees.
@@ -75,12 +72,7 @@ struct Inner {
 }
 
 impl DiskMonitor {
-    pub fn new(
-        ws: Workspace,
-        min_free_gb: u64,
-        emitter: Emitter,
-        manager: AgentManager,
-    ) -> Self {
+    pub fn new(ws: Workspace, min_free_gb: u64, emitter: Emitter, manager: AgentManager) -> Self {
         DiskMonitor(Arc::new(Inner {
             ws,
             min_free_bytes: min_free_gb * GB,
