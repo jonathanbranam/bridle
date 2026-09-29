@@ -103,6 +103,32 @@ fn context_window(input: &Value) -> (Option<f64>, Option<u64>, Option<u64>) {
     (used_percentage, used_tokens, max_tokens)
 }
 
+/// Write the session's context tokens to `~/.bridle/context/<session_id>` so
+/// `scripts/orchestrator-watch.sh` can read its own session's size without a
+/// daemon call (c9zm; the daemon ledger is no longer fed, see s8kn). Best
+/// effort: a statusline must never fail or slow down over this.
+pub fn record_context(report: &StatusLineReport) {
+    write_context_to(&bridle_api::discovery::bridle_home(), report);
+}
+
+fn write_context_to(home: &Path, report: &StatusLineReport) {
+    let (Some(id), Some(tokens)) = (report.session_id.as_deref(), report.context_used_tokens)
+    else {
+        return;
+    };
+    // Same rule as `discovery::session_context_path`: no path separators from a session id.
+    let Some(path) = bridle_api::discovery::session_context_path(id) else {
+        return;
+    };
+    let path = home
+        .join("context")
+        .join(path.file_name().expect("id is the file name"));
+    if let Some(dir) = path.parent() {
+        let _ = std::fs::create_dir_all(dir);
+    }
+    let _ = std::fs::write(path, tokens.to_string());
+}
+
 /// Either an RFC3339 string or epoch seconds, since it's undocumented which
 /// one the real field uses (bridle-claude's `resetsAt` is epoch seconds on
 /// the stream-json wire, but statusline JSON is meant for display).
@@ -468,5 +494,18 @@ mod tests {
         assert!(line.contains("ctx 0%"), "{line}");
         // Should not have token count in parentheses
         assert!(!line.contains("("), "{line}");
+    }
+
+    #[test]
+    fn record_context_writes_tokens_for_the_session() {
+        let home = tempfile::tempdir().expect("tempdir");
+        let report = StatusLineReport {
+            session_id: Some("abc-123".into()),
+            context_used_tokens: Some(141_000),
+            ..Default::default()
+        };
+        write_context_to(home.path(), &report);
+        let got = std::fs::read_to_string(home.path().join("context/abc-123")).expect("file");
+        assert_eq!(got, "141000");
     }
 }

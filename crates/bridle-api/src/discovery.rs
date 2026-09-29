@@ -108,6 +108,18 @@ pub fn statusline_token_path() -> PathBuf {
     bridle_home().join("statusline.token")
 }
 
+/// `~/.bridle/context/<session_id>`: the session's latest context size in
+/// tokens, written by `bridle statusline` for scripts (the orchestrator's
+/// watcher) that need it without a daemon call. Ids with anything but
+/// `[A-Za-z0-9_-]` are refused so a session id can't escape the directory.
+pub fn session_context_path(session_id: &str) -> Option<PathBuf> {
+    let ok = !session_id.is_empty()
+        && session_id
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_');
+    ok.then(|| bridle_home().join("context").join(session_id))
+}
+
 /// Walk up from `start` to the first ancestor (inclusive) containing
 /// `.bridle/daemon.json`, returning that ancestor.
 pub fn find_workspace(start: &Path) -> Option<PathBuf> {

@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- The orchestrator's watcher wakes it with `CONTEXT <tokens>` when its own session passes 140K (`CONTEXT_WAKE`), once per crossing; `bridle statusline` now writes the session's context size to `~/.bridle/context/<session id>` and `scripts/claude-orchestrator` pins and records its session id (ticket c9zm).
 - Tasks land as one squash commit each (`git merge --squash`, subject `<task id>: <task title>`, the worker's summary as body, `Task:` and `Branch:` trailers); `bridle rm --delete-branch` now accepts a squash-landed branch, recognised by its `Branch:` trailer (ticket sq4m).
 - Tasks record their landing: `bridle task done --branch` (with `--commit`) and the new `bridle task summary <id> --text|--file` are stored on the task and its state-branch file, `task show` prints branch, commit and summary, and `task done` warns when there is no summary (ticket tr7k).
 - New `bridle task search <words...>`: search for tasks by words in title, body, or summary (case-insensitive substring match, all words must match); includes done and dropped tasks; returns the same columns as `task list` (ticket br-f86f).

@@ -5,4 +5,7 @@
 # `bridle prime orchestrator`, which prints the role prompt, current state and startup steps in
 # one go. Usage: claude-orchestrator [extra claude args]
 cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
-exec claude --name bridle-orch --remote-control bridle-orch "$@" "$(bridle prime orchestrator)"
+# The session id is pinned and recorded so scripts/orchestrator-watch.sh can find this session's context size.
+sess=$(uuidgen | tr A-Z a-z)
+print -r -- $sess > ~/.bridle-orchestrator-session
+exec claude --session-id $sess --name bridle-orch --remote-control bridle-orch "$@" "$(bridle prime orchestrator)"
