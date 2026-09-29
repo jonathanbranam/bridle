@@ -280,9 +280,9 @@ async fn spawn_with_prompt_waits_for_the_turn_to_start_before_returning() {
 async fn spawn_without_a_prompt_returns_promptly_and_stays_idle() {
     let (daemon, _tmp) = start_daemon(None).await;
 
-    let agent = tokio::time::timeout(support::HANG_GUARD_TIMEOUT, daemon
-        .client
-        .spawn(&SpawnRequest {
+    let agent = tokio::time::timeout(
+        support::HANG_GUARD_TIMEOUT,
+        daemon.client.spawn(&SpawnRequest {
             components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
@@ -292,7 +292,6 @@ async fn spawn_without_a_prompt_returns_promptly_and_stays_idle() {
             extra_allowed_tools: Vec::new(),
             extra_env: Vec::new(),
             ignore_budget: false,
-        })
         }),
     )
     .await

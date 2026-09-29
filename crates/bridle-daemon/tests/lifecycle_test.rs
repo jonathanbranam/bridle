@@ -2,8 +2,6 @@
 
 mod support;
 
-use std::time::Duration;
-
 use bridle_api::types::{
     AgentState, InterruptRequest, RemoveQuery, RenewRequest, ResumeRequest, SendRequest,
     SpawnRequest, StopRequest, Workdir,

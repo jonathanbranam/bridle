@@ -906,7 +906,7 @@ fn start_daemon(tmp: &Path) -> (DaemonGuard, PathBuf, PathBuf) {
         .stderr(Stdio::null());
     strip_bridle_env(&mut serve_cmd);
     let guard = DaemonGuard(serve_cmd.spawn().expect("spawn bridle serve"));
-    wait_for_file(&tmp.join(".bridle/daemon.json"), Duration::from_secs(20));
+    wait_for_file(&tmp.join(".bridle/daemon.json"));
     (guard, repo, home)
 }
 
