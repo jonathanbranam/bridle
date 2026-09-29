@@ -56,7 +56,7 @@ Matt Pocock, "How to kill the bloat in Claude Code's system prompt"
 
 ## Plan
 
-1. **Spike (one worker, cheap live runs on Haiku in a scratch dir).** On the installed Claude
+1. **Spike, done: `docs/spikes/08-lean-context-findings.md`** (`--tools` is the lever; first turn 19K to 12.8K for a worker; strict MCP already blocks the connectors; the premise that every tool definition is loaded is mostly wrong, 11K are deferred). Original ask: **Spike (one worker, cheap live runs on Haiku in a scratch dir).** On the installed Claude
    Code, measure starting context (`get_context_usage`, kc4v) for a worker and a manager spawn:
    today's flags; plus `--tools <whitelist>`; plus bare-name `--disallowedTools`; plus the
    settings keys above in `--settings`. Rank tool sizes. Verify whether `--strict-mcp-config`
