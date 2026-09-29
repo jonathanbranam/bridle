@@ -805,6 +805,9 @@ mod tests {
             written_at: None,
             delivered_at: None,
             read_at: None,
+            answered_by: None,
+            answered_reply: None,
+            answered_line: None,
         }
     }
 

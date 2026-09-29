@@ -1538,6 +1538,27 @@ impl AgentManager {
                 state: MessageState::Pending,
             })
             .await?;
+        // A delegate's reply to a message addressed to the human closes it there.
+        if let Some(qid) = inserted.reply_to.as_deref()
+            && self.0.config.messages.answer_for_human.contains(&from)
+            && let Some(q) = self.0.store.get_message(qid).await?
+            && q.to == "human"
+        {
+            self.0
+                .store
+                .answer_message(
+                    qid,
+                    &from,
+                    &inserted.id,
+                    inserted
+                        .body
+                        .lines()
+                        .find(|l| !l.trim().is_empty())
+                        .unwrap_or(""),
+                    Utc::now(),
+                )
+                .await?;
+        }
         let _ = self
             .0
             .emitter
