@@ -2,9 +2,9 @@
 id = "br-cfe8"
 title = "Product brief: how bridle specs work today (8awb, part 1)"
 kind = "chore"
-state = "open"
+state = "planned"
 created_at = "2026-09-29T12:28:21.816Z"
-updated_at = "2026-09-29T12:28:21.816Z"
+updated_at = "2026-09-29T12:28:23.969815Z"
 size = "S"
 +++
 
