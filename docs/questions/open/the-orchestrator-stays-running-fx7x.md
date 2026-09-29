@@ -115,3 +115,40 @@ conversation in progress (proposal: it waits for idle, up to a deadline, then go
   handover, **255K** hand over now, then the forced restart.
 - Still open for the human: the pane name; whether a forced restart may interrupt a conversation
   (recommended: wait for idle up to a deadline, then go).
+
+## The human's review via the advisor (2026-09-29)
+
+The advisor proposed that bridle types into the pane only to relaunch a dead session, never to
+wake a live one. The human, verbatim:
+
+> why would bridle every enter text into the pane? Also, i need to talk to someone about build
+> progress and system issues, i need to be able to type to the orchestrator.
+
+> yes, definitely add the crash loop prevention. The other suggestions for enhancments can go in
+> a suggestions list for follow up later; we're going beying KISS here.
+
+Decided:
+- **The pane is the human's.** Bridle types there only to relaunch `scripts/claude-orchestrator`
+  when no `claude` is running (a shell prompt, so nobody gets interrupted). It never types into a
+  live session.
+- **Wakes stay inside the session, with the logic moved to the daemon.** The orchestrator keeps
+  one background command (e.g. `bridle wait-for-wake`) that waits on the daemon. The daemon
+  decides the wake conditions that `scripts/orchestrator-watch.sh` checks today. If nothing is
+  waiting, the daemon records an incident. If the session is gone, it relaunches it.
+- **Forced restart without send-keys.** At the hard limit the daemon tells the orchestrator to
+  hand over; if it doesn't by the deadline, the daemon stops the process and relaunches it.
+- **Crash-loop prevention is in scope.** Allow a few relaunches with growing waits between them,
+  then give up and record an incident for the human.
+
+## Suggestions for follow-up (not in scope now; KISS)
+
+- Move the daemons to launchd (`docs/context/launchd-restart-plan.md`, the human's steps) so
+  something restarts the daemon too; then check a launchd daemon can reach the tmux server.
+- After a crash, `claude --resume <session>` rather than a fresh session; fresh + `bridle prime`
+  only after a handover.
+- On finding the session dead, record the exit time and the last transcript entries in the
+  incident, so the cause isn't lost.
+- Check the pid still belongs to `claude` with that session id (pids get reused).
+- Thresholds as a percentage of the window, or fail loudly on a small window (the token
+  thresholds assume the 1M model).
+- The handover note as a bridle record (slice 3) can come later, separately.
