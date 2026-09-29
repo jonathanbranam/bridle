@@ -19,6 +19,8 @@ project-scoped, as usual:
 listen      = "127.0.0.1:0"        # 0 = any free port; the chosen URL goes in daemon.json
 stall_after = "10m"
 stop_grace  = "30s"                # how long `stop` waits after closing stdin
+claim_lease_after = "10m"          # a claimed task is released once its claimant has been
+                                   # inactive this long (storage.md, claims)
 
 [branches]
 integration = "main"               # work merges here; worktree roles branch from here too
@@ -35,6 +37,8 @@ allowed_tools    = ["Bash", "Read", "Edit", "Write", "Glob", "Grep"]
 disallowed_tools = []
 system_prompt    = "workflow/base/roles/worker.md"     # appended; bridle adds its own preamble
 max_budget_usd   = 3.0             # per process; see agents.md, Spend cap
+stop_check       = true            # registers the `bridle stop-check` Stop hook (coordination.md);
+                                    # true by default for `worker` and roles that start from it
 
 [roles.manager]
 model             = "sonnet"
@@ -119,6 +123,25 @@ start_prompt      = "Check your inbox and tell the human you're ready."   # firs
 - **`[messages] answer_for_human = [principal ids]`** names who may answer for the human
   (default `["external:orchestrator"]`): their `--reply-to` a message addressed to the human
   closes it. See [[messages]].
+
+## Other keys
+
+Also read from `.bridle/config.toml` (defaults in parentheses; each is documented where it acts):
+
+- `[commands] check` (`"just check"`) and `check_worker` (unset: same as `check`): the
+  `{{commands.*}}` substitutions above.
+- `[integration] check` (unset): the `bridle land` gate above.
+- `[context] wind_down_at = { default = 200000, worker = 120000 }` (context tokens) and
+  `wind_down_grace` (`"5m"`): an agent nearing its context limit is told to hand off, then
+  renewed ([[agents#Renewing|agents.md]]).
+- `[disk] check_interval` (`"1h"`), `min_free_gb` (20): [[operating-model#Disk monitor|disk monitor]].
+- `[tasks] prefix` (first two alphanumerics of the project name): task id prefix
+  ([[../storage|storage.md]]).
+- `workflow` (unset), `packs = []`: where the workflow layers live and which L2 packs to
+  include ([[../workflow-layers|workflow layers]]); `workflow` also drives the default role
+  prompts above.
+- `[components.<id>]` (`paths`, `parent`, `docs`, `consumers`, all optional): the component map
+  ([[../components|components]]); a parent that isn't defined, or a cycle, is a config error.
 
 ## Per-spawn tool overrides
 

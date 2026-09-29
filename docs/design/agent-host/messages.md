@@ -1,8 +1,9 @@
 # Messages and delivery
 
 A message has a sender principal, a recipient (an agent, `human`, or an
-`external:<name>` principal — [[docs/design/agent-host/principals.md|principals]]),
-a kind (`note` or `question`), an optional `reply_to` naming the message it
+`external:<name>` principal — [[docs/design/agent-host/principals.md|principals]]; or
+`role:<name>`, which fans out one message per live agent of that role, 404 if none),
+a kind (`note`, `question` or `answer`; the last is written by `task answer`), an optional `reply_to` naming the message it
 answers, an optional `task` (the body is then written in full as a note on that task's thread, and the recipient gets a short `<id>: note added` message with the first line; an unknown task is a 404 and sends nothing), a body and a delivery state:
 
 ```
@@ -56,6 +57,23 @@ mid-turn, and each hook costs about 0.9 s (S11).
 A message sent while the agent is generating *without* tool calls is expected
 to be taken at the turn's end. That isn't verified:
 [[mid-turn-message-during-tool-less-generation-akjw|spike akjw]].
+
+## System notices
+
+Bridle itself sends `note`s from `system`:
+
+- **`Context handoff:`** (`when now`), to an agent past its `[context] wind_down_at`
+  ([[agents#Renewing|renewing]]).
+- **`main moved: …`** (`when idle`), to workers whose branch or claimed task didn't just land, after each
+  landing, coalesced to one per agent per minute; a claimant whose declared impact overlaps the
+  landing also gets `spec changed under you: …`
+  ([[docs/design/coordination#Telling workers main moved|coordination.md]],
+  [[docs/design/impact-and-conflicts|impact and conflicts]]).
+- **`task <id> filed: …`** (`when idle`), to the running `manager` when no `product-manager` runs
+  ([[docs/design/coordination#Waking the manager|coordination.md]]).
+- **Conflict notices**, to both claimants (or the managers) when `impact check` opens a conflict.
+- **Budget wind-down and resume notices** ([[docs/design/usage-and-budget|usage and budget]]),
+  and the disk monitor's low-space note ([[operating-model#Disk monitor|disk monitor]]).
 
 ## Acks
 
