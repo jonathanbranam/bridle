@@ -2,10 +2,12 @@
 id = "br-72da"
 title = "Lean launch for the orchestrator and advisor scripts (ct8m step 4)"
 kind = "chore"
-state = "planned"
+state = "integrated"
 created_at = "2026-09-29T20:03:41.549Z"
-updated_at = "2026-09-29T20:24:51.201068Z"
+updated_at = "2026-09-29T20:25:15.461678Z"
 size = "S"
+branch = "bridle/lean-launch"
+commit = "79e802f"
 summary = "scripts/claude-orchestrator and scripts/claude-advisor now launch with --strict-mcp-config and one --settings object: disableBundledSkills, disableWorkflows, disableClaudeAiConnectors, disableArtifact, and permissions.deny for EnterPlanMode, ExitPlanMode, DesignSync, NotebookEdit, PushNotification, ReportFindings, RemoteTrigger, Artifact, Workflow, SendMessage. The orchestrator's object also holds the SessionStart hook (one object, since a second --settings would replace it); pid file and exit log untouched. Kept: AskUserQuestion, Agent, ToolSearch, Web*, Monitor, Cron*, ScheduleWakeup, Remote Control. Before/after (scratch Haiku -p, one turn, $0.055): first-turn context 22,777 to 18,838 tokens (-17%); deferred tools 15.3K to 9.1K; skill listing 1.6K to 0; claude.ai connectors gone. This is a -p approximation without AskUserQuestion or the human's user settings; /context after a restart gives the live number. Recorded in docs/spikes/08-lean-context-findings.md (step 4 section). Live sessions untouched; the human restarts them to pick this up."
 +++
 
@@ -27,3 +29,9 @@ Looks good. main moved: merge main into your branch (no other changes), rerun ju
 
 ### note · agent:lean-launch · 2026-09-29T20:24:51.201Z
 done: main merged (conflicts in both launch scripts resolved: kept main short-prompt change plus the lean settings); just check passes (730 passed); e0ddd05
+
+### note · agent:manager-2 · 2026-09-29T20:24:58.631Z
+integrated: 79e802f (branch bridle/lean-launch)
+
+### note · agent:manager-2 · 2026-09-29T20:25:15.461Z
+cleanup: removed agent lean-launch, branch bridle/lean-launch
