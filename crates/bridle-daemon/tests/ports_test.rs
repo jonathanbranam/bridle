@@ -34,15 +34,16 @@ fn req(pid: Option<i32>) -> AllocPortRequest {
 
 #[tokio::test]
 async fn alloc_skips_reserved_taken_and_listening_ports_and_release_frees() {
-    let base = free_base();
+    // Someone else is listening on base+1: bind it first (port 0) and build the range
+    // around the port we actually got, so nothing can take it between pick and bind.
+    let busy = TcpListener::bind("127.0.0.1:0").expect("listen");
+    let base = busy.local_addr().expect("addr").port() - 1;
     let cfg = format!(
         "[ports]\nrange = [{base}, {}]\nreserved = [{base}]\n",
         base.saturating_add(3)
     );
     let (d, _tmp) = start_daemon_with_config(None, Some(&cfg)).await;
     let c = &d.client;
-    // Someone else is listening on base+1.
-    let _busy = TcpListener::bind(("127.0.0.1", base + 1)).expect("listen");
 
     // Other tests' daemons may grab a port in the range meanwhile, so no exact numbers.
     let a = c.alloc_port(&req(None)).await.expect("alloc");

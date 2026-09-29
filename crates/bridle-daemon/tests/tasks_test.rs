@@ -603,8 +603,10 @@ async fn size_is_set_on_new_shown_edited_and_kept_by_other_edits() {
     assert_eq!(retitled.size, Some(TaskSize::L));
 
     let list = c.list_tasks().await.expect("list");
-    assert_eq!(list[0].size, Some(TaskSize::S));
-    assert_eq!(list[1].size, Some(TaskSize::L));
+    // list order isn't guaranteed for tasks created in the same instant
+    let size_of = |id: &str| list.iter().find(|t| t.id == id).expect("listed").size;
+    assert_eq!(size_of(&task.id), Some(TaskSize::S));
+    assert_eq!(size_of(&unsized_task.id), Some(TaskSize::L));
 }
 
 #[tokio::test]
