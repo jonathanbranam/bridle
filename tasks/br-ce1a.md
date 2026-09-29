@@ -2,9 +2,9 @@
 id = "br-ce1a"
 title = "Dropping a claimed task leaves its claim behind (b5br)"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-09-29T02:24:40.607Z"
-updated_at = "2026-09-29T02:24:40.607Z"
+updated_at = "2026-09-29T02:25:20.809927Z"
 +++
 
 ticket: docs/questions/open/dropping-a-claimed-task-leaves-its-claim-b5br.md
