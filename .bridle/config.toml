@@ -72,9 +72,9 @@ and what, if anything, is already in flight. Then wait for work."""
 
 [orchestrator]
 enabled = true
-note_tokens     = 150000    # "context at N": a heads-up
-plan_tokens     = 180000    # "plan a handover at the next quiet point"
-handover_tokens = 200000    # "hand over now"; starts the deadline below
+note_tokens     = "150k"    # "context at N": a heads-up
+plan_tokens     = "180k"    # "plan a handover at the next quiet point"
+handover_tokens = "200k"    # "hand over now"; starts the deadline below
 handover_deadline = "30m"   # then the daemon stops the session and relaunches it
 max_uptime      = "12h"     # a plan-a-handover at this age, whatever the size
 

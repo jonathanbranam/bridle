@@ -59,9 +59,9 @@ key**.
 [orchestrator]
 enabled            = true
 launcher           = "scripts/claude-orchestrator"   # relative to the repo, or absolute
-note_tokens        = 150000    # "context at N"
-plan_tokens        = 210000    # "plan a handover at the next quiet point"
-handover_tokens    = 255000    # "hand over now"; starts the deadline
+note_tokens        = "150k"    # "context at N"
+plan_tokens        = "180k"    # "plan a handover at the next quiet point"
+handover_tokens    = "200k"    # "hand over now"; starts the deadline
 handover_deadline  = "30m"     # after the "now" (or uptime) message; then the session is stopped
 max_uptime         = "12h"     # a plan-a-handover at this age; the deadline follows
 relaunch_backoff   = ["30s", "2m", "10m"]   # wait before relaunch 1, 2, 3; then give up
@@ -188,8 +188,8 @@ reading than before (`/compact`, `/clear`) resets the notes.
 | At | The daemon delivers (as a wake) | Then |
 |---|---|---|
 | >= `note_tokens` (150K) | `context at 150K of the window` | nothing |
-| >= `plan_tokens` (210K) | `plan a handover at the next quiet point` | nothing |
-| >= `handover_tokens` (255K) | `hand over now; the session is stopped at <deadline>` | deadline starts |
+| >= `plan_tokens` (180K) | `plan a handover at the next quiet point` | nothing |
+| >= `handover_tokens` (200K) | `hand over now; the session is stopped at <deadline>` | deadline starts |
 | uptime >= `max_uptime` | `uptime N h: plan a handover at the next quiet point; stopped at <deadline>` | deadline starts |
 
 Each once per session id and crossing. The notes are wakes, so they reach the model through the

@@ -973,8 +973,8 @@ impl Default for OrchestratorConfig {
             stable_after: Duration::from_secs(10 * 60),
             waiter_grace: Duration::from_secs(2 * 60),
             note_tokens: 150_000,
-            plan_tokens: 210_000,
-            handover_tokens: 255_000,
+            plan_tokens: 180_000,
+            handover_tokens: 200_000,
             handover_deadline: Duration::from_secs(30 * 60),
             max_uptime: Duration::from_secs(12 * 60 * 60),
         }
@@ -1010,13 +1010,13 @@ impl OrchestratorConfig {
             self.waiter_grace = parse_duration(&s)?;
         }
         if let Some(v) = raw.note_tokens {
-            self.note_tokens = v;
+            self.note_tokens = v.0;
         }
         if let Some(v) = raw.plan_tokens {
-            self.plan_tokens = v;
+            self.plan_tokens = v.0;
         }
         if let Some(v) = raw.handover_tokens {
-            self.handover_tokens = v;
+            self.handover_tokens = v.0;
         }
         if let Some(s) = raw.handover_deadline {
             self.handover_deadline = parse_duration(&s)?;
@@ -1580,6 +1580,31 @@ fn parse_duration(s: &str) -> Result<Duration, ConfigError> {
     Ok(Duration::from_secs(secs))
 }
 
+/// Parses token counts with optional suffix: "150000", "150k", "1.5M" (case-insensitive).
+/// `k` = 1,000, `M` = 1,000,000.
+fn parse_token_count(s: &str) -> Result<u64, ConfigError> {
+    let s = s.trim();
+    if s.is_empty() {
+        return Err(ConfigError::BadOrchestrator(
+            "token count must not be empty".into(),
+        ));
+    }
+    let (num_part, unit) = if let Some(c) = s.chars().last() {
+        match c.to_ascii_lowercase() {
+            'k' => (&s[..s.len() - 1], 1_000_u64),
+            'm' => (&s[..s.len() - 1], 1_000_000_u64),
+            _ => (s, 1_u64),
+        }
+    } else {
+        (s, 1_u64)
+    };
+    let n: f64 = num_part
+        .parse()
+        .map_err(|_| ConfigError::BadOrchestrator(format!("invalid token count {s:?}")))?;
+    let result = (n * unit as f64) as u64;
+    Ok(result)
+}
+
 #[derive(Debug, Default, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct RawConfig {
@@ -1714,6 +1739,63 @@ struct RawDisk {
     min_free_gb: Option<u64>,
 }
 
+#[derive(Debug, Clone, Copy)]
+struct TokenCount(u64);
+
+impl<'de> Deserialize<'de> for TokenCount {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::{self, Visitor};
+
+        struct TokenCountVisitor;
+
+        impl<'de> Visitor<'de> for TokenCountVisitor {
+            type Value = TokenCount;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("an integer or a string like \"150k\" or \"1.5M\"")
+            }
+
+            fn visit_u64<E>(self, value: u64) -> Result<TokenCount, E>
+            where
+                E: de::Error,
+            {
+                Ok(TokenCount(value))
+            }
+
+            fn visit_i64<E>(self, value: i64) -> Result<TokenCount, E>
+            where
+                E: de::Error,
+            {
+                if value < 0 {
+                    return Err(E::custom("token count must be non-negative"));
+                }
+                Ok(TokenCount(value as u64))
+            }
+
+            fn visit_str<E>(self, value: &str) -> Result<TokenCount, E>
+            where
+                E: de::Error,
+            {
+                parse_token_count(value)
+                    .map(TokenCount)
+                    .map_err(|e| E::custom(e.to_string()))
+            }
+
+            fn visit_string<E>(self, value: String) -> Result<TokenCount, E>
+            where
+                E: de::Error,
+            {
+                self.visit_str(&value)
+            }
+        }
+
+        deserializer.deserialize_any(TokenCountVisitor)
+    }
+}
+
 #[derive(Debug, Default, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct RawOrchestrator {
@@ -1728,11 +1810,11 @@ struct RawOrchestrator {
     #[serde(default)]
     waiter_grace: Option<String>,
     #[serde(default)]
-    note_tokens: Option<u64>,
+    note_tokens: Option<TokenCount>,
     #[serde(default)]
-    plan_tokens: Option<u64>,
+    plan_tokens: Option<TokenCount>,
     #[serde(default)]
-    handover_tokens: Option<u64>,
+    handover_tokens: Option<TokenCount>,
     #[serde(default)]
     handover_deadline: Option<String>,
     #[serde(default)]
@@ -2646,7 +2728,8 @@ mod tests {
         assert!(Config::parse("[orchestrator]\nrelaunch_backoff = [\"5\"]\n").is_err());
         assert!(Config::parse("[orchestrator]\nlauncher = \" \"\n").is_err());
         assert!(Config::parse("[orchestrator]\npane = \"%3\"\n").is_err());
-        assert_eq!(d.plan_tokens, 210_000);
+        assert_eq!(d.plan_tokens, 180_000);
+        assert_eq!(d.handover_tokens, 200_000);
         assert_eq!(d.handover_deadline, Duration::from_secs(1800));
         let o = Config::parse(
             "[orchestrator]\nnote_tokens = 1\nplan_tokens = 2\nhandover_tokens = 3\n\
@@ -2659,8 +2742,46 @@ mod tests {
         // Out of order, zero, or a zero duration.
         assert!(Config::parse("[orchestrator]\nplan_tokens = 100\n").is_err());
         assert!(Config::parse("[orchestrator]\nnote_tokens = 0\n").is_err());
-        assert!(Config::parse("[orchestrator]\nhandover_tokens = 200000\n").is_err());
+        assert!(Config::parse("[orchestrator]\nhandover_tokens = 170000\n").is_err());
         assert!(Config::parse("[orchestrator]\nmax_uptime = \"0s\"\n").is_err());
+    }
+
+    #[test]
+    fn token_count_parser() {
+        assert_eq!(parse_token_count("150000").unwrap(), 150_000);
+        assert_eq!(parse_token_count("150k").unwrap(), 150_000);
+        assert_eq!(parse_token_count("150K").unwrap(), 150_000);
+        assert_eq!(parse_token_count("1.5M").unwrap(), 1_500_000);
+        assert_eq!(parse_token_count("1.5m").unwrap(), 1_500_000);
+        assert_eq!(parse_token_count("2M").unwrap(), 2_000_000);
+        assert_eq!(parse_token_count("2m").unwrap(), 2_000_000);
+        assert_eq!(parse_token_count("1k").unwrap(), 1_000);
+        assert_eq!(parse_token_count(" 100k ").unwrap(), 100_000);
+        // Invalid formats
+        assert!(parse_token_count("").is_err());
+        assert!(parse_token_count("abc").is_err());
+        assert!(parse_token_count("150x").is_err());
+    }
+
+    #[test]
+    fn orchestrator_token_counts_accept_k_and_m_suffix() {
+        let cfg = Config::parse(
+            "[orchestrator]\nnote_tokens = \"150k\"\nplan_tokens = \"180k\"\nhandover_tokens = \"200k\"\n",
+        )
+        .unwrap();
+        let o = cfg.orchestrator;
+        assert_eq!(o.note_tokens, 150_000);
+        assert_eq!(o.plan_tokens, 180_000);
+        assert_eq!(o.handover_tokens, 200_000);
+
+        let cfg = Config::parse(
+            "[orchestrator]\nnote_tokens = \"0.15M\"\nplan_tokens = \"0.18M\"\nhandover_tokens = \"0.2M\"\n",
+        )
+        .unwrap();
+        let o = cfg.orchestrator;
+        assert_eq!(o.note_tokens, 150_000);
+        assert_eq!(o.plan_tokens, 180_000);
+        assert_eq!(o.handover_tokens, 200_000);
     }
 
     #[test]
