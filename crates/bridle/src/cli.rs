@@ -154,6 +154,33 @@ pub enum SpecAction {
     /// Export the specs for test runners; refuses (printing the diagnostics)
     /// when any spec has errors.
     Export(SpecExportArgs),
+    /// Migrate another spec system's files into `design/specs`.
+    Import(SpecImportArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct SpecImportArgs {
+    #[command(subcommand)]
+    pub source: SpecImportSource,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum SpecImportSource {
+    /// Move `<from>/<capability>/spec.md` to `<to>/<capability>.md` and assign ids.
+    Openspec(SpecImportOpenspecArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct SpecImportOpenspecArgs {
+    /// The OpenSpec specs directory (default `openspec/specs`).
+    #[arg(long, value_name = "DIR", default_value = "openspec/specs")]
+    pub from: PathBuf,
+    /// The bridle specs directory (default `design/specs`); its `.ids` is the id ledger.
+    #[arg(long, value_name = "DIR", default_value = "design/specs")]
+    pub to: PathBuf,
+    /// Print what would change; write nothing.
+    #[arg(long)]
+    pub dry_run: bool,
 }
 
 #[derive(Debug, Clone, Copy, clap::ValueEnum)]

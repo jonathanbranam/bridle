@@ -83,6 +83,13 @@ bridle spec export --format gherkin|json [--out DIR] [paths...] [--root DIR]
                                              whole AST (documented in specs-to-tests.md) on stdout, or
                                              `specs.json` in --out; refuses, printing the diagnostics,
                                              when any spec has errors; local only, no daemon call
+bridle spec import openspec [--from DIR] [--to DIR] [--dry-run]   moves each `<from>/<cap>/spec.md`
+                                             (default `openspec/specs`) to `<to>/<cap>.md` (default
+                                             `design/specs`) with `git mv` (plain rename if untracked),
+                                             then assigns ids as `spec id` does; parses first and
+                                             changes nothing on any error or existing target;
+                                             `.feature` files, changes, config left in place;
+                                             idempotent; local only, no daemon call
 bridle prime orchestrator                   fresh session's opening context: role prompt, current
                                              state, startup steps; local only, no daemon call
 bridle prime worker|planner [--component ID ...]   the role's rules, facts, guides, plus named components' scope
@@ -437,7 +444,7 @@ bridle inbox --inject        # `ask`/`answer` are built (see Built)
 bridle spawn <role> <task>   bridle review
 bridle take|give <agent>                         human takeover of a headless agent
 bridle impact set|show|check bridle conflict list|resolve
-bridle spec check|id|export|coverage|import   `check`, `export` are built (see Built)
+bridle spec check|id|export|coverage|import   `check`, `id`, `export`, `import openspec` are built (see Built)
 bridle rules show|propose                        `explain`/`diff --project-layer` are built (see Built)
 bridle goals list|propose       bridle arch propose
 bridle trace up|down|suspect|confirm|orphans|coverage

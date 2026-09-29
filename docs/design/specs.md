@@ -33,11 +33,17 @@ this part works.
 
 ## Migration from OpenSpec
 
-`bridle import openspec` handles it once per repo: move `openspec/specs/*/spec.md`
-to `design/specs/<capability>.md`, assign ids, convert active changes to tasks (their
-delta specs are applied on a task branch), and leave archived changes in git
-history without converting them. The current `*Verification*` marker grammar is
-kept, so data-contracts' scenarios carry over unchanged.
+`bridle spec import openspec [--from openspec/specs] [--to design/specs] [--dry-run]`
+(built, local, no daemon call) handles it once per repo: it moves
+`<from>/<capability>/spec.md` to `<to>/<capability>.md` (`git mv` for tracked
+files, a plain rename otherwise) and then assigns ids as `spec id` does, with
+`<to>/.ids` as the ledger. It parses every source first and changes nothing if
+any has an error or a target already exists. Generated `.feature` files,
+`openspec/changes/**`, config, schemas and skills are left where they are (a
+one-line note says how many files remain under `--from`). A second run finds
+nothing to move and does nothing. Converting active changes to tasks is not
+built; archived changes stay in git history. The `*Verification*` marker
+grammar is unchanged, so data-contracts' scenarios carry over as is.
 
 ## Checking
 
