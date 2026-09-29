@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Added: `bridle arch propose --title T --argument TEXT|-` creates an `arch-revision` task with the proposal; validates the architecture directory exists (br-357f).
+- Added: `bridle goals propose <goal-id> --change KEY=VALUE --why TEXT` (repeatable `--change`) creates a task proposing a change to the goal's firmness, priority, or stance; validates the goal exists (br-357f).
 - Added: landing an `arch-revision` task opens one `re-evaluate` task per capability with suspect requirements (listing the ids, to confirm or edit) and notifies the manager (br-beab).
 - Added: `bridle probe <task-or-agent>|--branch B` runs `git merge-tree` against the integration branch and reports clean or the conflicting paths; `impact check` lists non-clean probes of claimed tasks' branches (conflict vs integration, warn between tasks); needs git 2.38 (br-2612).
 - Added: port registry: `bridle port alloc [--pid N] [--label L]|release <port>|list`, `[ports] range`/`reserved` in config; the daemon frees a port when its owner agent exits or its pid dies (br-57be).

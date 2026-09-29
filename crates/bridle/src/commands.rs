@@ -19,16 +19,16 @@ use chrono::{Local, TimeZone, Utc};
 use futures::StreamExt;
 
 use crate::cli::{
-    AgentsArgs, AnswerArgs, AskArgs, BudgetAction, BudgetArgs, BudgetHoldArgs, ClaimArgs, Cli,
-    Command, ConflictAction, ConflictArgs, CostAction, CostArgs, CostAuditArgs, DepAction, DepArgs,
-    DepEdgeArgs, EdgeKindArg, EventsArgs, ImpactAction, ImpactArgs, InboxAction, InboxArgs,
-    InboxReadArgs, InboxShowArgs, InterruptArgs, LogsArgs, PrimeArgs, PrimeRoleArg, ProbeArgs,
-    QueueAction, QueueAddTierArgs, QueueArgs, QueueSetArgs, ReadyArgs, ReleaseArgs, RmArgs,
-    RulesAction, RulesArgs, RulesDiffArgs, RulesExplainArgs, SendArgs, ShowArgs, SpawnArgs,
-    SpecAction, SpecArgs, SpecExportArgs, SpecFormatArg, StopArgs, TaskAction, TaskArgs,
-    TaskDoneArgs, TaskDropArgs, TaskEditArgs, TaskKindArg, TaskListArgs, TaskNewArgs, TaskNoteArgs,
-    TaskPlanArgs, TaskReopenArgs, TaskSearchArgs, TaskShowArgs, TaskSizeArg, TaskSummaryArgs,
-    TokenAction, TokenArgs, UsageArgs, UsageByArg, WaitArgs, WhenArg,
+    AgentsArgs, AnswerArgs, ArchProposeArgs, AskArgs, BudgetAction, BudgetArgs, BudgetHoldArgs,
+    ClaimArgs, Cli, Command, ConflictAction, ConflictArgs, CostAction, CostArgs, CostAuditArgs,
+    DepAction, DepArgs, DepEdgeArgs, EdgeKindArg, EventsArgs, ImpactAction, ImpactArgs,
+    InboxAction, InboxArgs, InboxReadArgs, InboxShowArgs, InterruptArgs, LogsArgs, PrimeArgs,
+    PrimeRoleArg, ProbeArgs, QueueAction, QueueAddTierArgs, QueueArgs, QueueSetArgs, ReadyArgs,
+    ReleaseArgs, RmArgs, RulesAction, RulesArgs, RulesDiffArgs, RulesExplainArgs, SendArgs,
+    ShowArgs, SpawnArgs, SpecAction, SpecArgs, SpecExportArgs, SpecFormatArg, StopArgs, TaskAction,
+    TaskArgs, TaskDoneArgs, TaskDropArgs, TaskEditArgs, TaskKindArg, TaskListArgs, TaskNewArgs,
+    TaskNoteArgs, TaskPlanArgs, TaskReopenArgs, TaskSearchArgs, TaskShowArgs, TaskSizeArg,
+    TaskSummaryArgs, TokenAction, TokenArgs, UsageArgs, UsageByArg, WaitArgs, WhenArg,
 };
 use crate::cli::{PortAction, PortArgs};
 use crate::error::CliError;
@@ -79,8 +79,8 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Rules(args) => rules(&cli, args).await,
         Command::Sync => sync(&cli).await,
         Command::Spec(args) => spec(&cli, args),
-        Command::Goals(args) => crate::goals::run(&cli, args),
-        Command::Arch(args) => arch(&cli, args),
+        Command::Goals(args) => crate::goals::run(&cli, args).await,
+        Command::Arch(args) => arch(&cli, args).await,
         Command::Trace(args) => crate::trace::run(&cli, args),
         Command::Explore(args) => explore(&args.action),
     }
@@ -114,7 +114,7 @@ async fn resolve_endpoint_and_token(
 
 /// A client for a command that only ever writes (or both reads and writes):
 /// keeps today's client-side error when `$CLAUDECODE` is set with no token.
-async fn client_for(cli: &Cli) -> Result<Client, CliError> {
+pub async fn client_for(cli: &Cli) -> Result<Client, CliError> {
     let (url, token) = resolve_endpoint_and_token(cli, false).await?;
     Ok(Client::new(url, token))
 }
@@ -615,7 +615,7 @@ async fn show(cli: &Cli, args: &ShowArgs) -> Result<(), CliError> {
     Ok(())
 }
 
-fn read_text(
+pub fn read_text(
     text: &Option<String>,
     text_file: &Option<std::path::PathBuf>,
     name: &str,
@@ -1888,7 +1888,7 @@ fn task_size_arg_to_opt(arg: TaskSizeArg) -> Option<TaskSize> {
     }
 }
 
-fn print_task_row(t: &Task) {
+pub fn print_task_row(t: &Task) {
     println!(
         "{:<10} {:<9} {:<8} {:<4} {}",
         t.id,
@@ -2899,8 +2899,14 @@ fn spec(cli: &Cli, args: &SpecArgs) -> Result<(), CliError> {
 }
 
 /// `bridle arch list`: local, no daemon call (docs/design/architecture-tier.md).
-fn arch(cli: &Cli, args: &crate::cli::ArchArgs) -> Result<(), CliError> {
-    let crate::cli::ArchAction::List(args) = &args.action;
+async fn arch(cli: &Cli, args: &crate::cli::ArchArgs) -> Result<(), CliError> {
+    match &args.action {
+        crate::cli::ArchAction::List(args) => arch_list(cli, args),
+        crate::cli::ArchAction::Propose(args) => arch_propose(cli, args).await,
+    }
+}
+
+fn arch_list(cli: &Cli, args: &crate::cli::ArchListArgs) -> Result<(), CliError> {
     let files = spec_inputs(std::slice::from_ref(&args.root), None)?;
     let mut elements = match bridle_spec::arch::parse_files(&files) {
         Ok(els) => els,
@@ -2921,6 +2927,38 @@ fn arch(cli: &Cli, args: &crate::cli::ArchArgs) -> Result<(), CliError> {
             let flag = if e.invariant { " invariant" } else { "" };
             println!("{}{flag}  {}  ({}:{})", e.id, e.title, e.file, e.line);
         }
+    }
+    Ok(())
+}
+
+async fn arch_propose(cli: &Cli, args: &ArchProposeArgs) -> Result<(), CliError> {
+    let files = spec_inputs(std::slice::from_ref(&args.arch_root), None)?;
+    if let Err(ds) = bridle_spec::arch::parse_files(&files) {
+        for d in &ds {
+            eprintln!("{d}");
+        }
+        return Err(anyhow::anyhow!("arch parse found {} error(s)", ds.len()).into());
+    }
+
+    let argument = if args.argument.is_some() || args.argument_file.is_some() {
+        read_text(&args.argument, &args.argument_file, "argument")?
+    } else {
+        String::new()
+    };
+
+    let client = client_for(cli).await?;
+    let req = NewTaskRequest {
+        title: args.title.clone(),
+        kind: TaskKind::ArchRevision,
+        body: argument,
+        components: Vec::new(),
+        size: None,
+    };
+    let task = client.new_task(&req).await?;
+    if cli.json {
+        render::print_json(&task)?;
+    } else {
+        print_task_row(&task);
     }
     Ok(())
 }
