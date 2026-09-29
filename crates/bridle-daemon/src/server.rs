@@ -11,17 +11,17 @@ use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::{Extension, Json, Router};
 use bridle_api::types::{
-    AddQueueTierRequest, Agent, AnswerQuestionRequest, ApiErrorResponse, AskQuestionRequest,
-    BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, Conflict, DoneTaskRequest,
-    DropTaskRequest, Edge, EdgeKind, EditTaskRequest, ErrorBody, Event, EventQuery, Health,
-    HoldStatus, ImpactCheckRequest, ImpactReport, InteractiveUsageRow, InterruptRequest,
-    MaxWorkersRequest, Message, MessageKind, MessageQuery, MessageState, NewEdgeRequest,
-    NewTaskRequest, NoteTaskRequest, OpenQuestion, OverlapLevel, PrincipalKind, Queue, RateLimit,
-    RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, ResumeRequest,
-    ScheduleOverrideStatus, SendRequest, SetImpactRequest, SetQueueRequest, SetSummaryRequest,
-    SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery, TokenCreateRequest,
-    TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown,
-    UsageBreakdownQuery, UsageGroupBy, When, WindowStatus, event_kind,
+    AddQueueTierRequest, Agent, AllocPortRequest, AnswerQuestionRequest, ApiErrorResponse,
+    AskQuestionRequest, BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, Conflict,
+    DoneTaskRequest, DropTaskRequest, Edge, EdgeKind, EditTaskRequest, ErrorBody, Event,
+    EventQuery, Health, HoldStatus, ImpactCheckRequest, ImpactReport, InteractiveUsageRow,
+    InterruptRequest, MaxWorkersRequest, Message, MessageKind, MessageQuery, MessageState,
+    NewEdgeRequest, NewTaskRequest, NoteTaskRequest, OpenQuestion, OverlapLevel, PortAllocation,
+    PrincipalKind, Queue, RateLimit, RemoveEdgeQuery, RemoveQuery, RenewRequest,
+    ResolveConflictRequest, ResumeRequest, ScheduleOverrideStatus, SendRequest, SetImpactRequest,
+    SetQueueRequest, SetSummaryRequest, SpawnRequest, Status, StatusLineReport, StopRequest, Task,
+    TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
+    UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, When, WindowStatus, event_kind,
 };
 use chrono::Utc;
 use futures::Stream;
@@ -50,6 +50,7 @@ pub struct AppState {
     pub governor: crate::governor::Governor,
     pub ci: crate::ci::CiWatcher,
     pub tasks: TaskManager,
+    pub ports: crate::config::PortsConfig,
 }
 
 pub fn router(state: AppState) -> Router {
@@ -87,6 +88,8 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/tasks/{id}/summary", post(set_summary))
         .route("/v1/tasks/{id}/impact", post(set_impact))
         .route("/v1/impact/check", post(impact_check))
+        .route("/v1/ports", get(list_ports).post(alloc_port))
+        .route("/v1/ports/{port}/release", post(release_port))
         .route("/v1/conflicts", get(list_conflicts))
         .route("/v1/conflicts/{id}/resolve", post(resolve_conflict))
         .route("/v1/tasks/{id}/reopen", post(reopen_task))
@@ -1252,6 +1255,54 @@ async fn announce_conflict(state: &AppState, c: &Conflict) {
                 .await;
         }
     }
+}
+
+async fn alloc_port(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Json(req): Json<AllocPortRequest>,
+) -> Result<Json<PortAllocation>, ApiError> {
+    // An agent owns its ports by stable id, so they're freed when it exits.
+    let agent = if principal.kind == PrincipalKind::Agent {
+        let name = principal.id.strip_prefix("agent:").unwrap_or(&principal.id);
+        match state.store.get_agent(name).await? {
+            Some(a) => a.id,
+            None => principal.id.clone(),
+        }
+    } else {
+        principal.id.clone()
+    };
+    let task = state
+        .tasks
+        .list_tasks()
+        .into_iter()
+        .find(|t| t.claimed_by.as_deref() == Some(principal.id.as_str()))
+        .map(|t| t.id);
+    let p = crate::ports::alloc(&state.store, &state.ports, agent, task, req.pid, req.label)
+        .await?
+        .ok_or_else(|| {
+            ApiError::from(StoreError::Conflict(format!(
+                "no free port in {}-{}",
+                state.ports.range.0, state.ports.range.1
+            )))
+        })?;
+    Ok(Json(p))
+}
+
+async fn list_ports(State(state): State<AppState>) -> Result<Json<Vec<PortAllocation>>, ApiError> {
+    Ok(Json(state.store.list_ports().await?))
+}
+
+async fn release_port(
+    State(state): State<AppState>,
+    Path(port): Path<u16>,
+) -> Result<Json<PortAllocation>, ApiError> {
+    state
+        .store
+        .release_port(port)
+        .await?
+        .map(Json)
+        .ok_or_else(|| ApiError::not_found(format!("port {port} is not allocated")))
 }
 
 async fn list_conflicts(State(state): State<AppState>) -> Result<Json<Vec<Conflict>>, ApiError> {
