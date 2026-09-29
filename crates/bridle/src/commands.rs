@@ -7,10 +7,11 @@ use anyhow::Context;
 use bridle_api::discovery::{self, Env, ProcessEnv};
 use bridle_api::{
     BudgetHoldRequest, BudgetOverrideRequest, Client, DoneTaskRequest, DropTaskRequest, Edge,
-    EdgeKind, EditTaskRequest, Event, EventQuery, InterruptRequest, MaxWorkersRequest, MessageKind,
-    MessageQuery, NewEdgeRequest, NewTaskRequest, RemoveEdgeQuery, RemoveQuery, RenewRequest,
-    ResumeRequest, SendRequest, SetSummaryRequest, SpawnRequest, StopRequest, Task, TaskKind,
-    TaskSize, TokenCreateRequest, UsageBreakdownQuery, UsageGroupBy, Workdir, event_kind,
+    EdgeKind, EditTaskRequest, Event, EventQuery, Impact, InterruptRequest, MaxWorkersRequest,
+    MessageKind, MessageQuery, NewEdgeRequest, NewTaskRequest, RemoveEdgeQuery, RemoveQuery,
+    RenewRequest, ResumeRequest, SendRequest, SetImpactRequest, SetSummaryRequest, SpawnRequest,
+    StopRequest, Task, TaskKind, TaskSize, TokenCreateRequest, UsageBreakdownQuery, UsageGroupBy,
+    Workdir, event_kind,
 };
 use chrono::{Local, TimeZone, Utc};
 use futures::StreamExt;
@@ -18,13 +19,14 @@ use futures::StreamExt;
 use crate::cli::{
     AgentsArgs, AnswerArgs, AskArgs, BudgetAction, BudgetArgs, BudgetHoldArgs, ClaimArgs, Cli,
     Command, CostAction, CostArgs, CostAuditArgs, DepAction, DepArgs, DepEdgeArgs, EdgeKindArg,
-    EventsArgs, InboxAction, InboxArgs, InboxReadArgs, InboxShowArgs, InterruptArgs, LogsArgs,
-    PrimeArgs, PrimeRoleArg, QueueAction, QueueAddTierArgs, QueueArgs, QueueSetArgs, ReadyArgs,
-    ReleaseArgs, RmArgs, RulesAction, RulesArgs, RulesDiffArgs, RulesExplainArgs, SendArgs,
-    ShowArgs, SpawnArgs, SpecAction, SpecArgs, SpecExportArgs, SpecFormatArg, StopArgs, TaskAction,
-    TaskArgs, TaskDoneArgs, TaskDropArgs, TaskEditArgs, TaskKindArg, TaskListArgs, TaskNewArgs,
-    TaskNoteArgs, TaskPlanArgs, TaskReopenArgs, TaskSearchArgs, TaskShowArgs, TaskSizeArg,
-    TaskSummaryArgs, TokenAction, TokenArgs, UsageArgs, UsageByArg, WaitArgs, WhenArg,
+    EventsArgs, ImpactAction, ImpactArgs, InboxAction, InboxArgs, InboxReadArgs, InboxShowArgs,
+    InterruptArgs, LogsArgs, PrimeArgs, PrimeRoleArg, QueueAction, QueueAddTierArgs, QueueArgs,
+    QueueSetArgs, ReadyArgs, ReleaseArgs, RmArgs, RulesAction, RulesArgs, RulesDiffArgs,
+    RulesExplainArgs, SendArgs, ShowArgs, SpawnArgs, SpecAction, SpecArgs, SpecExportArgs,
+    SpecFormatArg, StopArgs, TaskAction, TaskArgs, TaskDoneArgs, TaskDropArgs, TaskEditArgs,
+    TaskKindArg, TaskListArgs, TaskNewArgs, TaskNoteArgs, TaskPlanArgs, TaskReopenArgs,
+    TaskSearchArgs, TaskShowArgs, TaskSizeArg, TaskSummaryArgs, TokenAction, TokenArgs, UsageArgs,
+    UsageByArg, WaitArgs, WhenArg,
 };
 use crate::error::CliError;
 use crate::render;
@@ -57,6 +59,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Budget(args) => budget(&cli, args).await,
         Command::Token(args) => token(&cli, args).await,
         Command::Task(args) => task(&cli, args).await,
+        Command::Impact(args) => impact(&cli, args).await,
         Command::Dep(args) => dep(&cli, args).await,
         Command::Ask(args) => ask(&cli, args).await,
         Command::Answer(args) => answer(&cli, args).await,
@@ -2064,6 +2067,48 @@ async fn task_done(cli: &Cli, args: &TaskDoneArgs) -> Result<(), CliError> {
         render::print_json(&task)?;
     } else {
         print_task_row(&task);
+    }
+    Ok(())
+}
+
+async fn impact(cli: &Cli, args: &ImpactArgs) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let (task, set) = match &args.action {
+        ImpactAction::Set(a) => {
+            let impact = Impact {
+                modify: a.modify.clone(),
+                add_under: a.add_under.clone(),
+                remove: a.remove.clone(),
+                files: a.files.clone(),
+            };
+            (
+                client
+                    .set_task_impact(&a.task, &SetImpactRequest { impact })
+                    .await?,
+                true,
+            )
+        }
+        ImpactAction::Show(a) => (client.get_task(&a.task).await?, false),
+    };
+    if cli.json {
+        render::print_json(&task.impact)?;
+    } else if task.impact.is_empty() {
+        println!("{}: no impact declared", task.id);
+    } else {
+        if set {
+            println!("{}: impact set", task.id);
+        }
+        let i = &task.impact;
+        for (label, ids) in [
+            ("modify", &i.modify),
+            ("add-under", &i.add_under),
+            ("remove", &i.remove),
+            ("files", &i.files),
+        ] {
+            if !ids.is_empty() {
+                println!("{label:<10}{}", ids.join(", "));
+            }
+        }
     }
     Ok(())
 }

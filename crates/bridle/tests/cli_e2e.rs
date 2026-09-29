@@ -1125,3 +1125,60 @@ fn goals_list_parse_error_exits_nonzero() {
     );
     assert!(out.contains("g-04"), "good goals still listed: {out}");
 }
+
+#[test]
+fn impact_set_and_show() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let (_guard, repo, home) = start_daemon(tmp.path());
+
+    let (ok, out, err) = run_cli(&repo, &home, &["task", "new", "t", "-k", "chore", "--json"]);
+    assert!(ok, "task new failed: {err}");
+    let id = serde_json::from_str::<serde_json::Value>(&out).expect("task json")["id"]
+        .as_str()
+        .expect("id")
+        .to_string();
+
+    let (ok, out, _) = run_cli(&repo, &home, &["impact", "show", &id]);
+    assert!(ok);
+    assert!(out.contains("no impact declared"), "{out}");
+
+    let (ok, _, err) = run_cli(
+        &repo,
+        &home,
+        &[
+            "impact",
+            "set",
+            &id,
+            "--modify",
+            "s-b310",
+            "--add-under",
+            "r-7fa2",
+            "--remove",
+            "s-11c0",
+            "--files",
+            "client/**",
+            "pkg/**",
+        ],
+    );
+    assert!(ok, "impact set failed: {err}");
+
+    let (ok, out, err) = run_cli(&repo, &home, &["impact", "show", &id, "--json"]);
+    assert!(ok, "impact show failed: {err}");
+    let v: serde_json::Value = serde_json::from_str(&out).expect("impact json");
+    assert_eq!(v["modify"][0], "s-b310");
+    assert_eq!(v["add_under"][0], "r-7fa2");
+    assert_eq!(v["remove"][0], "s-11c0");
+    assert_eq!(v["files"][1], "pkg/**");
+
+    // A malformed id is rejected and leaves the declaration alone.
+    let (ok, _, err) = run_cli(&repo, &home, &["impact", "set", &id, "--modify", "zzz"]);
+    assert!(!ok);
+    assert!(err.contains("bad spec id"), "{err}");
+
+    // A task that is no longer open/planned/claimed can't be changed.
+    let (ok, _, err) = run_cli(&repo, &home, &["task", "drop", &id, "--reason", "x"]);
+    assert!(ok, "drop failed: {err}");
+    let (ok, _, err) = run_cli(&repo, &home, &["impact", "set", &id, "--modify", "s-b310"]);
+    assert!(!ok);
+    assert!(err.contains("impact can only be set"), "{err}");
+}
