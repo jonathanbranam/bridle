@@ -49,3 +49,17 @@ each scope.
   project]]: who manages across projects.
 - [[finding-remote-daemons-from-the-laptop-xqvg|finding remote daemons]]: more than one machine
   (the NUC).
+
+## The orchestrator's supervisor is per project in code, machine-wide in the design (2026-09-29)
+
+`orchestrator-supervision.md` section 2 puts `[orchestrator]` in the machine config beside
+`[budget]`, but the daemon reads it from the project's `<repo>/.bridle/config.toml`
+(`Config::load`; only `[budget]` has a machine-wide loader), so a line in `~/.bridle/config.toml`
+does nothing. Only a daemon whose project enables it supervises; the pid, session and exits files
+are machine-wide under `$BRIDLE_HOME`, so enabling it in two projects would have two daemons
+relaunching one orchestrator. `bridle wait-for-wake` talks to one daemon, so wakes cover only
+that project. Today the orchestrator lives in the bridle clone and its host is the bridle
+daemon, which must be running even when no bridle work is. The human asked (2026-09-29) how this
+works when they aren't working on bridle itself; decide with this ticket: one machine-level
+orchestrator host (a machine daemon or a designated project) versus per project, and make the
+doc and code agree.
