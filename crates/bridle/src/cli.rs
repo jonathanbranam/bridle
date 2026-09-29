@@ -188,6 +188,10 @@ pub enum TraceAction {
     Up { id: String },
     /// Requirements that trace to nothing (a warning: exit 0).
     Orphans,
+    /// Links whose recorded hash differs from upstream's current one (exit 1 if any).
+    Suspect,
+    /// Rewrite a requirement's link hashes to the upstream elements' current ones.
+    Confirm { id: String },
 }
 
 #[derive(Debug, Args)]
