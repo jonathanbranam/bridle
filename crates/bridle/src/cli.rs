@@ -95,6 +95,8 @@ pub enum Command {
     /// A task's declared impact: the spec ids and files it will touch
     /// (docs/design/impact-and-conflicts.md).
     Impact(ImpactArgs),
+    /// Does a task's or agent's branch (or `--branch B`) merge cleanly into the integration branch; exits 1 if not.
+    Probe(ProbeArgs),
     /// Conflicts opened by `impact check`: list and resolve
     /// (docs/design/impact-and-conflicts.md).
     Conflict(ConflictArgs),
@@ -929,6 +931,15 @@ pub struct TaskSummaryArgs {
     /// Read the summary from a file (or `-` for stdin).
     #[arg(long)]
     pub file: Option<PathBuf>,
+}
+
+#[derive(Debug, Args)]
+pub struct ProbeArgs {
+    /// A claimed task id or an agent name.
+    #[arg(conflicts_with = "branch", required_unless_present = "branch")]
+    pub target: Option<String>,
+    #[arg(long, value_name = "BRANCH")]
+    pub branch: Option<String>,
 }
 
 #[derive(Debug, Args)]

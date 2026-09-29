@@ -15,12 +15,13 @@ use bridle_api::types::{
     AskQuestionRequest, BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, Conflict,
     DoneTaskRequest, DropTaskRequest, Edge, EdgeKind, EditTaskRequest, ErrorBody, Event,
     EventQuery, Health, HoldStatus, ImpactCheckRequest, ImpactReport, InteractiveUsageRow,
-    InterruptRequest, MaxWorkersRequest, Message, MessageKind, MessageQuery, MessageState,
-    NewEdgeRequest, NewTaskRequest, NoteTaskRequest, OpenQuestion, OverlapLevel, PortAllocation,
-    PrincipalKind, Queue, RateLimit, RemoveEdgeQuery, RemoveQuery, RenewRequest,
-    ResolveConflictRequest, ResumeRequest, ScheduleOverrideStatus, SendRequest, SetImpactRequest,
-    SetQueueRequest, SetSummaryRequest, SpawnRequest, Status, StatusLineReport, StopRequest, Task,
-    TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
+    InterruptRequest, MaxWorkersRequest, MergeProbe, Message, MessageKind, MessageQuery,
+    MessageState, NewEdgeRequest, NewTaskRequest, NoteTaskRequest, OpenQuestion, OverlapLevel,
+    PortAllocation, PrincipalKind, ProbeOutcome, ProbeRequest, ProbeResult, Queue, RateLimit,
+    RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, ResumeRequest,
+    ScheduleOverrideStatus, SendRequest, SetImpactRequest, SetQueueRequest, SetSummaryRequest,
+    SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery, TaskState,
+    TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
     UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, When, WindowStatus, event_kind,
 };
 use chrono::Utc;
@@ -51,6 +52,8 @@ pub struct AppState {
     pub ci: crate::ci::CiWatcher,
     pub tasks: TaskManager,
     pub ports: crate::config::PortsConfig,
+    /// `[branches] integration`, the branch `probe` merges against.
+    pub integration: String,
 }
 
 pub fn router(state: AppState) -> Router {
@@ -88,6 +91,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/tasks/{id}/summary", post(set_summary))
         .route("/v1/tasks/{id}/impact", post(set_impact))
         .route("/v1/impact/check", post(impact_check))
+        .route("/v1/probe", post(probe))
         .route("/v1/ports", get(list_ports).post(alloc_port))
         .route("/v1/ports/{port}/release", post(release_port))
         .route("/v1/conflicts", get(list_conflicts))
@@ -1208,7 +1212,113 @@ async fn impact_check(
             opened.push(c.id);
         }
     }
-    Ok(Json(ImpactReport { overlaps, opened }))
+    let probes = merge_probes(&state).await;
+    Ok(Json(ImpactReport {
+        overlaps,
+        opened,
+        probes,
+    }))
+}
+
+/// Merges two branches in memory and describes the outcome. A git failure (a branch that
+/// doesn't exist) is a bad request.
+async fn probe_branches(
+    state: &AppState,
+    branch: &str,
+    against: &str,
+) -> Result<ProbeResult, ApiError> {
+    use crate::worktree::MergeProbe as P;
+    let repo = &state.workspace.repo;
+    let (outcome, paths) = match crate::worktree::merge_probe(repo, against, branch)
+        .await
+        .map_err(|e| ApiError::bad_request(e.to_string()))?
+    {
+        P::Clean => (ProbeOutcome::Clean, Vec::new()),
+        P::Conflicts(p) => (ProbeOutcome::Conflict, p),
+        P::Unsupported => (ProbeOutcome::Unsupported, Vec::new()),
+    };
+    Ok(ProbeResult {
+        branch: branch.to_string(),
+        against: against.to_string(),
+        outcome,
+        paths,
+    })
+}
+
+/// The branch a claimed task's claimant works on.
+async fn claimed_branch(state: &AppState, task: &Task) -> Option<String> {
+    let name = task.claimed_by.as_deref()?.strip_prefix("agent:")?;
+    state.store.get_agent(name).await.ok()??.branch
+}
+
+/// Probes every claimed task's branch against the integration branch (`conflict`), and each
+/// pair of them against each other (`warn`). Clean merges are left out, and a probe that
+/// can't run (no such branch) is skipped.
+async fn merge_probes(state: &AppState) -> Vec<MergeProbe> {
+    let mut claimed = Vec::new();
+    for t in state.tasks.list_tasks() {
+        if t.state == TaskState::Claimed
+            && let Some(b) = claimed_branch(state, &t).await
+        {
+            claimed.push((t.id, b));
+        }
+    }
+    claimed.sort();
+    let mut out = Vec::new();
+    for (i, (id, branch)) in claimed.iter().enumerate() {
+        if let Ok(r) = probe_branches(state, branch, &state.integration).await
+            && r.outcome != ProbeOutcome::Clean
+        {
+            out.push(MergeProbe {
+                level: OverlapLevel::Conflict,
+                tasks: vec![id.clone()],
+                result: r,
+            });
+        }
+        for (other_id, other) in &claimed[i + 1..] {
+            if let Ok(r) = probe_branches(state, branch, other).await
+                && r.outcome == ProbeOutcome::Conflict
+            {
+                out.push(MergeProbe {
+                    level: OverlapLevel::Warn,
+                    tasks: vec![id.clone(), other_id.clone()],
+                    result: r,
+                });
+            }
+        }
+    }
+    out
+}
+
+/// `bridle probe`: does a task's (or agent's) branch, or a named branch, merge cleanly
+/// into the integration branch.
+async fn probe(
+    State(state): State<AppState>,
+    Json(req): Json<ProbeRequest>,
+) -> Result<Json<ProbeResult>, ApiError> {
+    let branch = match (&req.branch, &req.target) {
+        (Some(b), None) => b.clone(),
+        (None, Some(t)) => {
+            let task = state.tasks.get_task(t);
+            let by_task = match &task {
+                Some(task) => claimed_branch(&state, task).await,
+                None => None,
+            };
+            match by_task {
+                Some(b) => b,
+                None => state
+                    .store
+                    .get_agent(t)
+                    .await?
+                    .and_then(|a| a.branch)
+                    .ok_or_else(|| ApiError::not_found(format!("no branch for {t}")))?,
+            }
+        }
+        _ => return Err(ApiError::bad_request("give exactly one of target, branch")),
+    };
+    Ok(Json(
+        probe_branches(&state, &branch, &state.integration).await?,
+    ))
 }
 
 /// Injects the conflict into each task's claimant, or the running managers for an

@@ -1205,6 +1205,49 @@ pub struct ImpactReport {
     /// Ids (`C12`) of conflicts this check opened; already-known overlaps aren't repeated.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub opened: Vec<String>,
+    /// `git merge-tree` findings for claimed tasks' branches; clean merges aren't listed.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub probes: Vec<MergeProbe>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum ProbeOutcome {
+    Clean,
+    Conflict,
+    /// git older than 2.38, which has no `merge-tree --write-tree`.
+    Unsupported,
+}
+
+/// The result of merging two branches in memory (`git merge-tree --write-tree`).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ProbeResult {
+    pub branch: String,
+    /// The branch merged into: the integration branch, or another task's branch.
+    pub against: String,
+    pub outcome: ProbeOutcome,
+    /// Conflicting paths, for `conflict`.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub paths: Vec<String>,
+}
+
+/// One non-clean probe in an impact check. `conflict` level against the integration
+/// branch, `warn` between two tasks' branches.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct MergeProbe {
+    pub level: OverlapLevel,
+    /// The task, and the other task for a pairwise probe.
+    pub tasks: Vec<String>,
+    pub result: ProbeResult,
+}
+
+/// `POST /v1/probe`: one of a task id, an agent name or a branch.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct ProbeRequest {
+    #[serde(default)]
+    pub target: Option<String>,
+    #[serde(default)]
+    pub branch: Option<String>,
 }
 
 /// A conflict-level overlap between two tasks that the claimants must settle

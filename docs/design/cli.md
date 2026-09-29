@@ -129,7 +129,8 @@ bridle task search <words...>                                      search for ta
 bridle task drop   <id> --reason TEXT
 bridle task done   <id> --commit SHA [--branch NAME]                 -> integrated; records the sha (and branch) on the task and in the thread; with --branch removes the branch's agents, worktree and branch; warns if no summary
 bridle impact set  <task> [--modify ID].. [--add-under ID].. [--remove ID].. [--files GLOB..]  declares the task's impact, replacing any earlier one; only an open/planned/claimed task; ids checked by shape (r-/s-/g-/a- + hex) only
-bridle impact check [--specs DIR]                                overlaps between in-flight tasks' declared impact (`--json`: `{overlaps:[{level,tasks,kind,key}]}`); exit 1 if any is a conflict; see impact-and-conflicts.md
+bridle impact check [--specs DIR]                                overlaps between in-flight tasks' declared impact, plus merge probes of claimed tasks' branches (`--json`: `{overlaps:[{level,tasks,kind,key}]}`); exit 1 if any is a conflict; see impact-and-conflicts.md
+bridle probe <task-or-agent> | --branch B                       `git merge-tree` of the branch into the integration branch, no working-tree change (`--json`: `{branch,against,outcome,paths}`); exit 1 on a conflict; needs git 2.38
 bridle port alloc [--pid N] [--label L]                         allocate a free port from `[ports] range` (not reserved, allocated or listening); prints it (`--json`: the allocation); recorded against you and your claimed task
 bridle port release <port>                                      free a port
 bridle port list                                                allocated ports (`--json`: array of `{port,agent,task,pid,label,allocated_at}`)
