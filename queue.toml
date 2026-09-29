@@ -109,3 +109,19 @@ tasks = [
     "br-2612",
     "br-357f",
 ]
+
+[[tier]]
+tasks = [
+    "br-6dd6",
+    "br-7f7e",
+    "br-648a",
+]
+
+[[tier]]
+tasks = ["br-930e"]
+
+[[tier]]
+tasks = [
+    "br-cc25",
+    "br-5d2a",
+]
