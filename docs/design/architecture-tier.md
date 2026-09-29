@@ -46,4 +46,5 @@ PreToolUse hook shipped in `workflow/base/hooks/PreToolUse.json` (matcher
 `design/architecture/` unless one of its claimed tasks is an `arch-revision`; the denial
 tells it to run `bridle arch propose`. Paths are resolved lexically against the hook's
 `cwd`, so `../` tricks don't get around it. Non-worker principals are allowed, as is
-everything on any error of bridle's own. The integrator check is not built.
+everything on any error of bridle's own. The integrator check is built: `bridle land`
+refuses a branch touching `design/architecture/**` unless the task is an `arch-revision`.

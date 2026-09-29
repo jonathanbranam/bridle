@@ -97,6 +97,8 @@ pub enum Command {
     Impact(ImpactArgs),
     /// Does a task's or agent's branch (or `--branch B`) merge cleanly into the integration branch; exits 1 if not.
     Probe(ProbeArgs),
+    /// Merge a task's branch into the integration branch after the check passes.
+    Land(LandArgs),
     /// Conflicts opened by `impact check`: list and resolve
     /// (docs/design/impact-and-conflicts.md).
     Conflict(ConflictArgs),
@@ -972,6 +974,17 @@ pub struct TaskSummaryArgs {
     /// Read the summary from a file (or `-` for stdin).
     #[arg(long)]
     pub file: Option<PathBuf>,
+}
+
+#[derive(Debug, Args)]
+pub struct LandArgs {
+    pub task: String,
+    /// The branch to land; defaults to the claimant's.
+    #[arg(long)]
+    pub branch: Option<String>,
+    /// Overrides `[integration] check`.
+    #[arg(long, value_name = "CMD")]
+    pub check_cmd: Option<String>,
 }
 
 #[derive(Debug, Args)]
