@@ -37,6 +37,13 @@ pub struct Health {
     pub agent_count: u32,
 }
 
+/// Reply to `POST /v1/shutdown`: the daemon's cap on stopping its agents
+/// (`stop_grace` + 5 s), so `stop-daemon` can say how long to expect.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct ShutdownResponse {
+    pub stop_limit_secs: u64,
+}
+
 /// Written by the daemon to `<workspace>/.bridle/daemon.json` and to the
 /// machine registry `~/.bridle/daemons/<project>.json`.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

@@ -260,7 +260,7 @@ fn cli_end_to_end_against_a_foreground_daemon() {
     let (ok, out, err) = run_cli(&repo, &home, &["stop-daemon"]);
     assert!(ok, "stop-daemon failed: {err}");
     assert!(
-        out.contains("received; shutting down gracefully, may take up to 30s"),
+        out.contains("requested shutdown") && out.contains("shutdown complete"),
         "{out}"
     );
     assert!(

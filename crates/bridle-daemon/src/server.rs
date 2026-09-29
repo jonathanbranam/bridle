@@ -20,8 +20,8 @@ use bridle_api::types::{
     OverlapLevel, PortAllocation, PrincipalKind, ProbeOutcome, ProbeRequest, ProbeResult, Queue,
     RateLimit, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, ResumeRequest,
     ScheduleOverrideStatus, SendRequest, SetImpactRequest, SetQueueRequest, SetSummaryRequest,
-    SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery, TaskState,
-    TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
+    ShutdownResponse, SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery,
+    TaskState, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
     UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, WakeResponse, When, WindowStatus,
     WriteHandoverRequest, event_kind,
 };
@@ -57,6 +57,8 @@ pub struct AppState {
     pub handover: std::sync::Arc<crate::orchestrator::Handover>,
     pub tasks: TaskManager,
     pub ports: crate::config::PortsConfig,
+    /// `[daemon] stop_grace`; shutdown's cap on stopping agents is this + 5 s.
+    pub stop_grace: std::time::Duration,
     /// `[branches] integration`, the branch `probe` merges against.
     pub integration: String,
     /// `[integration] check`, run by `bridle land`.
@@ -2293,11 +2295,13 @@ async fn revoke_token(
 async fn shutdown(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
-) -> Result<StatusCode, ApiError> {
+) -> Result<Json<ShutdownResponse>, ApiError> {
     require_human(&principal)?;
     tracing::warn!(principal = %principal.id, "shutdown requested via POST /v1/shutdown");
     let _ = state.shutdown_tx.send(true);
-    Ok(StatusCode::NO_CONTENT)
+    Ok(Json(ShutdownResponse {
+        stop_limit_secs: (state.stop_grace + std::time::Duration::from_secs(5)).as_secs(),
+    }))
 }
 
 /// `bridle rebuild` (docs/design/overview.md, "`bridle rebuild` recreates

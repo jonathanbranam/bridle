@@ -51,7 +51,7 @@ JSON over HTTP, versioned under `/v1`. The contract is
 | `GET /v1/edges` · `POST /v1/edges` · `DELETE /v1/edges` | list · add (`{from, to, kind}`) · remove (same triple as query) |
 | `GET /v1/queue` · `POST /v1/queue` · `POST /v1/queue/tiers` | read · replace (`{tiers}`) · append a tier (`{tasks}`); writes are product-manager or human only |
 | `POST /v1/rebuild` | rebuild the database's task tables from the state branch (human only; 409 if they aren't empty) |
-| `POST /v1/shutdown` | graceful stop of all agents, then exit (human only) |
+| `POST /v1/shutdown` | graceful stop of all agents, then exit (human only); replies `{stop_limit_secs}`, the cap (`stop_grace` + 5 s) |
 
 Tasks ([[docs/design/storage#The state branch|storage.md]]) are scoped, for
 now, to `open`/`planned`/`claimed`/`dropped`/`integrated`/`reopened`

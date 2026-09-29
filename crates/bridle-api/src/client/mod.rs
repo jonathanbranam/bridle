@@ -18,10 +18,10 @@ use crate::types::{
     LandRequest, LandResult, MaxWorkersRequest, Message, MessageQuery, NewEdgeRequest,
     NewTaskRequest, NoteTaskRequest, OpenQuestion, PortAllocation, ProbeRequest, ProbeResult,
     Queue, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, ResumeRequest,
-    SendRequest, SetImpactRequest, SetQueueRequest, SetSummaryRequest, SpawnRequest, Status,
-    StatusLineReport, StopRequest, Task, TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo,
-    TranscriptLine, TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery, WakeResponse,
-    WriteHandoverRequest,
+    SendRequest, SetImpactRequest, SetQueueRequest, SetSummaryRequest, ShutdownResponse,
+    SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery, TokenCreateRequest,
+    TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown,
+    UsageBreakdownQuery, WakeResponse, WriteHandoverRequest,
 };
 
 #[derive(Debug, Error)]
@@ -672,9 +672,27 @@ impl Client {
         self.send_unit(req).await
     }
 
-    pub async fn shutdown(&self) -> Result<(), ClientError> {
-        let req = self.request(Method::POST, &["v1", "shutdown"])?;
-        self.send_unit(req).await
+    /// `None` when the daemon is older than the reply body and answered 204.
+    pub async fn shutdown(&self) -> Result<Option<ShutdownResponse>, ClientError> {
+        let resp = self
+            .request(Method::POST, &["v1", "shutdown"])?
+            .send()
+            .await
+            .map_err(map_send_err)?;
+        let status = resp.status();
+        let bytes = resp
+            .bytes()
+            .await
+            .map_err(|e| ClientError::Decode(e.to_string()))?;
+        if !status.is_success() {
+            return Err(parse_api_error(status, &bytes));
+        }
+        if bytes.is_empty() {
+            return Ok(None);
+        }
+        serde_json::from_slice(&bytes)
+            .map(Some)
+            .map_err(|e| ClientError::Decode(e.to_string()))
     }
 
     /// `bridle rebuild`: reconstructs `tasks`/`edges`/`open_questions` from

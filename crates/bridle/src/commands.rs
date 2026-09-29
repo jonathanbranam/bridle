@@ -459,19 +459,76 @@ async fn bridle_counts(cwd: &Path, env: &impl Env, token_path: &Path) -> Option<
 
 async fn stop_daemon(cli: &Cli) -> Result<(), CliError> {
     let client = client_for(cli).await?;
-    client.shutdown().await?;
-    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(60);
+    stop_daemon_with(
+        &client,
+        &mut std::io::stdout(),
+        std::time::Duration::from_secs(60),
+        std::time::Duration::from_millis(500),
+    )
+    .await
+}
+
+/// The daemon keeps answering health until its cleanup is done (agents
+/// stopped, registry entry removed), so a failed health call means it's gone.
+/// Prints as it goes because that can take most of `stop_grace` + 5 s.
+async fn stop_daemon_with(
+    client: &Client,
+    out: &mut impl std::io::Write,
+    limit: std::time::Duration,
+    poll: std::time::Duration,
+) -> Result<(), CliError> {
+    let started = std::time::Instant::now();
+    let deadline = started + limit;
+    let say = |out: &mut dyn std::io::Write, line: String| {
+        let _ = writeln!(out, "{line}");
+        let _ = out.flush();
+    };
+    say(out, "requested shutdown".into());
+    let reply = client.shutdown().await?;
+    let mut agents = client.health().await.ok().map(|h| h.agent_count);
+    let plural = |n: u32| if n == 1 { "agent" } else { "agents" };
+    say(
+        out,
+        match agents {
+            Some(n) => {
+                let limit = reply
+                    .map(|r| format!(", up to {}s", r.stop_limit_secs))
+                    .unwrap_or_default();
+                format!(
+                    "acknowledged; the daemon is stopping {n} {}{limit}",
+                    plural(n)
+                )
+            }
+            None => "acknowledged; the daemon is stopping".to_string(),
+        },
+    );
     loop {
-        if client.health().await.is_err() {
-            println!("received; shutting down gracefully, may take up to 30s");
-            return Ok(());
+        match client.health().await {
+            Err(_) => {
+                say(
+                    out,
+                    format!("shutdown complete ({}s)", started.elapsed().as_secs()),
+                );
+                return Ok(());
+            }
+            Ok(h) => {
+                if agents.is_some_and(|prev| h.agent_count < prev) {
+                    say(
+                        out,
+                        format!("{} {} still running", h.agent_count, plural(h.agent_count)),
+                    );
+                }
+                agents = Some(h.agent_count);
+            }
         }
         if std::time::Instant::now() >= deadline {
             return Err(CliError::Other(anyhow::anyhow!(
-                "daemon did not stop within 60s"
+                "the daemon did not stop within {}s; see `bridle daemons` and \
+                 <workspace>/.bridle/daemon.log",
+                limit.as_secs()
             )));
         }
-        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+        tokio::time::sleep(poll).await;
     }
 }
 
@@ -3391,4 +3448,117 @@ async fn spec_export(cli: &Cli, args: &SpecExportArgs) -> Result<(), CliError> {
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod stop_daemon_tests {
+    use super::*;
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+
+    /// A bare HTTP fake: `POST /v1/shutdown` answers the limit; each health
+    /// call pops the next agent count, and once `counts` is empty the
+    /// listener is dropped (`None` in `counts_then_close` = never close).
+    async fn fake_daemon(counts: Vec<u32>, close_after: bool) -> Client {
+        fake_daemon_with(counts, close_after, true).await
+    }
+
+    /// `with_limit: false` mimics an older daemon: 204, no body.
+    async fn fake_daemon_with(mut counts: Vec<u32>, close_after: bool, with_limit: bool) -> Client {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let url = format!("http://{}", listener.local_addr().unwrap());
+        counts.reverse();
+        tokio::spawn(async move {
+            loop {
+                let (mut sock, _) = listener.accept().await.unwrap();
+                let mut buf = [0u8; 2048];
+                let n = sock.read(&mut buf).await.unwrap();
+                let req = String::from_utf8_lossy(&buf[..n]).to_string();
+                let body = if req.starts_with("POST /v1/shutdown") {
+                    if !with_limit {
+                        let _ = sock
+                            .write_all(b"HTTP/1.1 204 No Content\r\nconnection: close\r\n\r\n")
+                            .await;
+                        continue;
+                    }
+                    r#"{"stop_limit_secs":35}"#.to_string()
+                } else {
+                    let c = match counts.len() {
+                        0 => {
+                            if close_after {
+                                return;
+                            }
+                            0
+                        }
+                        1 if !close_after => *counts.last().unwrap(),
+                        _ => counts.pop().unwrap(),
+                    };
+                    format!(r#"{{"ok":true,"version":"t","agent_count":{c}}}"#)
+                };
+                let resp = format!(
+                    "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
+                    body.len()
+                );
+                let _ = sock.write_all(resp.as_bytes()).await;
+            }
+        });
+        Client::new(url, None)
+    }
+
+    #[tokio::test]
+    async fn prints_the_shutdown_sequence() {
+        let client = fake_daemon(vec![2, 2, 1], true).await;
+        let mut out = Vec::new();
+        stop_daemon_with(
+            &client,
+            &mut out,
+            std::time::Duration::from_secs(10),
+            std::time::Duration::from_millis(10),
+        )
+        .await
+        .unwrap();
+        assert_eq!(
+            String::from_utf8(out).unwrap(),
+            "requested shutdown\n\
+             acknowledged; the daemon is stopping 2 agents, up to 35s\n\
+             1 agent still running\n\
+             shutdown complete (0s)\n"
+        );
+    }
+
+    #[tokio::test]
+    async fn an_old_daemon_with_no_limit_omits_up_to() {
+        let client = fake_daemon_with(vec![2, 2], true, false).await;
+        let mut out = Vec::new();
+        stop_daemon_with(
+            &client,
+            &mut out,
+            std::time::Duration::from_secs(10),
+            std::time::Duration::from_millis(10),
+        )
+        .await
+        .unwrap();
+        let out = String::from_utf8(out).unwrap();
+        assert!(
+            out.contains("acknowledged; the daemon is stopping 2 agents\n"),
+            "{out}"
+        );
+    }
+
+    #[tokio::test]
+    async fn timeout_points_at_daemons_and_the_log() {
+        let client = fake_daemon(vec![1], false).await;
+        let mut out = Vec::new();
+        let err = stop_daemon_with(
+            &client,
+            &mut out,
+            std::time::Duration::from_millis(100),
+            std::time::Duration::from_millis(10),
+        )
+        .await
+        .unwrap_err();
+        let msg = err.to_string();
+        assert!(msg.contains("did not stop"), "{msg}");
+        assert!(msg.contains("bridle daemons"), "{msg}");
+        assert!(msg.contains(".bridle/daemon.log"), "{msg}");
+    }
 }

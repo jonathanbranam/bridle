@@ -10,7 +10,10 @@ always use; humans get compact tables.
 bridle [--url URL] [--project NAME] [--token T] [--json] <command>
 
 bridle serve   [--repo PATH] [--workspace DIR] [--listen ADDR] [--detach]
-bridle stop-daemon
+bridle stop-daemon                            prints "requested shutdown", "acknowledged; the daemon is stopping N agents,
+                                              up to Ns" (the daemon's stop_grace + 5 s), "N agents still running" as the count drops,
+                                              then "shutdown complete (Ns)"; after 60 s it errors, pointing at `bridle daemons`
+                                              and <workspace>/.bridle/daemon.log
 bridle init    [--repo PATH] [--name N] [--integration BRANCH] [--stack S]  scaffold .bridle/config.toml + .gitignore; never overwrites
 bridle doctor  [--repo PATH]                 check the project's setup, say what to fix; exit 1 on a failure
 bridle launchd install [--repo PATH] [--workspace DIR] [--force]   macOS: write the LaunchAgent plist, print launchctl commands

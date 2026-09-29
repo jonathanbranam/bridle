@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- `bridle stop-daemon` prints progress as it goes (requested, acknowledged with the agent count and the daemon's cap, shutdown complete with elapsed time) instead of one misleading line at the end, and its 60 s timeout error points at `bridle daemons` and the daemon log (q23k). `POST /v1/shutdown` now replies with `{"stop_limit_secs"}`.
+
 ### Added
 
 - Orchestrator supervision slice 2 (br-65b8): the daemon reads the orchestrator's context (the statusline file, the transcript as a fallback) and sends `context` wakes at `note_tokens`, `plan_tokens` and `handover_tokens`, each once per session and again after a `/compact`; `max_uptime` asks for a handover too. `bridle handover done` (`POST /v1/orchestrator/handover`) or the `handover_deadline` stops the session (SIGTERM, SIGKILL after 15 s) and relaunches it without counting a crash. `scripts/context-check.sh` is gone.

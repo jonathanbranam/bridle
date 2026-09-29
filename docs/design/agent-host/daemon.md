@@ -87,7 +87,9 @@ On Ctrl-C, SIGTERM or `POST /v1/shutdown`, stopping every running agent
 `stop_grace` (default 30 s) plus 5 s. Right when the shutdown sequence
 starts, the daemon logs one line at `info` (so it lands on stderr in the
 foreground, and in `daemon.log` when detached) naming how many agents it's
-stopping and the actual cap, so a slow shutdown doesn't look hung.
+stopping and the actual cap, so a slow shutdown doesn't look hung. The HTTP listener stays up (health still
+answers) until cleanup is done, and `POST /v1/shutdown` replies with that cap, which is how
+`bridle stop-daemon` reports progress.
 
 ## Background loops
 

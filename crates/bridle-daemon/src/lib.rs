@@ -321,6 +321,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         tasks: tasks.clone(),
         integration: config.branches.integration.clone(),
         ports: config.ports.clone(),
+        stop_grace: config.stop_grace,
         integration_check: config.integration.check.clone(),
         landing: Default::default(),
     };
