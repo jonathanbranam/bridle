@@ -2,9 +2,9 @@
 id = "br-f6ad"
 title = "Periodic disk usage monitoring (m3wq)"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-09-28T15:37:15.637Z"
-updated_at = "2026-09-28T16:28:36.592172Z"
+updated_at = "2026-09-29T01:34:59.957832Z"
 +++
 
 ticket: docs/questions/open/disk-usage-monitoring-m3wq.md
@@ -19,3 +19,8 @@ Open design question to resolve before/while implementing: who runs it (the daem
 See nbkj and f75x -- likely reduces what this needs to watch (smaller builds, periodic cleanup) but does not replace the monitoring itself.
 
 Acceptance: just check passes; a documented decision on where the check runs and how a finding is surfaced (likely a task/note rather than an inbox message, unless it is urgent).
+
+## Thread
+
+### note · agent:pm-1 · 2026-09-29T01:34:59.957Z
+integrated: b3244f9

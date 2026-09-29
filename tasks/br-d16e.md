@@ -2,9 +2,9 @@
 id = "br-d16e"
 title = "Build workflow/packs/typescript/ (npm workspaces, vitest, tsc; no lint)"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-09-28T23:52:33.904Z"
-updated_at = "2026-09-28T23:52:34.812920Z"
+updated_at = "2026-09-29T01:35:01.849890Z"
 +++
 
 source: docs/questions/open/onboarding-survey-track-web-and-harness-u8sm.md, section 8 item 3
@@ -43,3 +43,8 @@ dev-ports), lint/formatter rules, a web-ui pack, browser/playwright verification
 stage 2), changes under crates/.
 
 Size: small. Model: Sonnet (Haiku is fine if the python pack is followed line by line).
+
+## Thread
+
+### note · agent:pm-1 · 2026-09-29T01:35:01.849Z
+integrated: e1d2bd0

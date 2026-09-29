@@ -2,9 +2,9 @@
 id = "br-42dd"
 title = "Worktree setup command: run a project's install step in each new worktree"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-09-28T23:52:23.825Z"
-updated_at = "2026-09-28T23:52:34.667472Z"
+updated_at = "2026-09-29T01:35:01.547513Z"
 +++
 
 source: docs/questions/open/onboarding-survey-track-web-and-harness-u8sm.md, section 8 item 4
@@ -46,3 +46,8 @@ Out of scope: paired/linked layouts, port registry, copying secrets, per-role se
 caching node_modules between worktrees (uu5e's spike).
 
 Size: small-medium. Model: Sonnet.
+
+## Thread
+
+### note · agent:pm-1 · 2026-09-29T01:35:01.547Z
+integrated: fadc11f
