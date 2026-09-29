@@ -440,3 +440,4 @@
 {"actor":"agent:pm-1","at":"2026-09-29T05:50:56.172871Z","queue":"reprioritized"}
 {"actor":"agent:pm-1","at":"2026-09-29T05:50:56.186734Z","queue":"reprioritized"}
 {"actor":"agent:pm-1","at":"2026-09-29T05:50:56.200350Z","queue":"reprioritized"}
+{"actor":"agent:manager-2","at":"2026-09-29T06:00:45.885909Z","from":"planned","task":"br-9821","to":"integrated"}
