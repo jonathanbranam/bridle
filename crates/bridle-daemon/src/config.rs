@@ -2134,7 +2134,7 @@ mod tests {
         );
         // Bridle's own project defaults to trunk on "main".
         assert!(rendered.contains("integration branch is `main`"));
-        assert!(rendered.contains("push origin main"));
+        assert!(rendered.contains("bridle land <task-id>"));
     }
 
     #[test]

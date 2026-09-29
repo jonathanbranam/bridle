@@ -52,29 +52,19 @@ configuration; the full design is ticket tx3f.)
 - **Don't accept a task without its summary.** Before merging, check `bridle task show <task-id>`
   has a summary the worker wrote; if not, send it back to write one
   (`bridle task summary`). Use it as the landing commit's body.
-- **Merge completed work** into `{{branches.integration}}` yourself, as follows:
-  the worker merges `{{branches.integration}}` into its own branch and
-  passes `{{commands.check}}`; you check
-  `git merge-base --is-ancestor {{branches.integration}} bridle/<name>`, a
-  clean worktree (`git -C ../wt/<name> status --short`) and the diff, then
-  `git grep -nE '^(<<<<<<< |>>>>>>> )' bridle/<name>` (refuse the merge if it finds markers), then
-  `git merge --squash bridle/<name>` and one commit, `git commit` with subject
-  `<task id>: <task title>`, the worker's summary as the body, then the trailers
-  `Task: <id>` and `Branch: bridle/<name>` (plus the co-author trailer), so the
-  integration branch reads as a list of completed tasks, then
-  `git grep -nE '^(<<<<<<< |>>>>>>> )' HEAD`, then
-  `git push origin {{branches.integration}}`, then
-  `bridle task done <task-id> --commit <landing sha> --branch bridle/<name>` (from `git rev-parse HEAD`);
-  it also removes the branch's agents, worktree and branch (landed branches aren't kept), so there
-  is no separate `bridle rm`. If `bridle status` lists merged leftovers, `bridle rm <name> --delete-branch` them. For each
-  user-visible change, add one line under "## Unreleased" in CHANGELOG.md in
-  the same commit. **Never merge unless
-  `git merge-base --is-ancestor {{branches.integration}} bridle/<name>`
-  passes**; a failed merge leaves the clone mid-conflict, and you can't
-  abort it. If a check fails, send it back to the worker, and tell it to
-  merge the local `{{branches.integration}}`, never `origin/*`. Escalate to
-  the human instead of merging only when the change is significant, as that
-  section defines.
+- **Land completed work** with `bridle land <task-id>`. The worker merges
+  `{{branches.integration}}` into its own branch and passes `{{commands.check}}`; before
+  landing, check: the task has a summary written (`bridle task show <id>`);
+  `git merge-base --is-ancestor {{branches.integration}} bridle/<name>`; a clean worktree
+  (`git -C ../wt/<name> status --short`); the diff with `git diff {{branches.integration}}...bridle/<name>`;
+  and `git grep -nE '^(<<<<<<< |>>>>>>> )' bridle/<name>` (refuse if found). For each
+  user-visible change, add one line under "## Unreleased" in CHANGELOG.md in the worker's
+  branch (not separately). `bridle land <task-id>` merges with `--no-ff`, runs the
+  `[integration] check` if configured, fast-forwards the integration branch (guarded against
+  moves), and marks the task done; it never pushes. On success, push with `git push origin
+  {{branches.integration}}`. On refusal (architecture file touched, tip moved, or uncommitted
+  changes in a checked-out integration branch), ask the human. On check failure, send the
+  worker back to fix it on the local `{{branches.integration}}`.
 - **Ask questions and report blockers** to the human with
   `bridle send human --question "<question>"` (execution issues: a risky merge,
   a blocker only they can clear). For long questions (pipes, backslashes, nested

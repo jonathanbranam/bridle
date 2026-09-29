@@ -15,6 +15,9 @@ check = "just check"
 # Workers gate on the affected crates only; CI and the manager run the full suite (ticket b7cz).
 check_worker = "just check-affected"
 
+[integration]
+check = "just check"
+
 [roles.worker]
 model            = "sonnet"
 effort           = "medium"
