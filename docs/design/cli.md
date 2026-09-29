@@ -65,7 +65,8 @@ bridle task show   <id>
 bridle task edit   <id> [--title TEXT] [--body TEXT | --body-file FILE] [--component ID ... | --no-component] [--size S|M|L|none]
 bridle task list   [--claimed-by WHO] [--component ID]             WHO: me|human|<agent name>|<principal id>; unclaimed tasks have no claimant to match
 bridle task drop   <id> --reason TEXT
-bridle task done   <id> --commit SHA                                 -> integrated; records the sha in the thread
+bridle task done   <id> --commit SHA [--branch NAME]                 -> integrated; records the sha (and branch) on the task and in the thread; warns if no summary
+bridle task summary <id> --text TEXT | --file FILE                    records how it was implemented; `-` reads stdin; replaces an earlier summary
 bridle task reopen <id>
 bridle task note   <id> [TEXT | --text-file FILE]                   plain note to the task's thread; no effect on readiness
 ```
@@ -115,6 +116,10 @@ bridle task note   <id> [TEXT | --text-file FILE]                   plain note t
   the database already has any tasks, edges or open questions. Claims are never
   reconstructed — they're SQLite-only, with no state-branch counterpart, so any in-flight
   claim is simply lost, which is correct here, not a gap.
+- **Landing record.** `task done --commit SHA [--branch NAME]` stores `commit` and `branch` on
+  the task; `task summary <id>` stores a short implementation summary (any state; a second call
+  replaces it). `task show` prints branch, commit and summary together, so a task id leads to
+  `git show --stat <commit>`. `task done` warns on stderr, but succeeds, when no summary exists.
 - **`--size S|M|L|none`** on `task new`/`task edit` sets the task's optional estimated size
   (case-insensitive), so small tasks can be picked when budget runs short. `--size none`
   on `task edit` clears the task's size. It's informational: nothing selects on it and the

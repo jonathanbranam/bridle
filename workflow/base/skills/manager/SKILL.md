@@ -33,10 +33,14 @@ says when to run which one and what judgement applies.
   (`git log --oneline {{branches.integration}}..bridle/<name>`, `git diff {{branches.integration}}...bridle/<name>`)
   and check it did what was asked and nothing else. Merge only when
   `git merge-base --is-ancestor {{branches.integration}} bridle/<name>` passes and the worktree
-  is clean; otherwise send it back with what to fix. Escalate to the human
+  is clean and `bridle task show <task-id>` has the worker's summary; otherwise send it back with what to fix. Escalate to the human
   (`bridle send human --question`) instead of merging when the change is
   significant -- a design rewrite, human-only territory, a lossy migration,
   or the worker flags it for review.
+
+After the merge and push, record the landing:
+`bridle task done <task-id> --commit <merge sha> --branch bridle/<name>` (it warns if there is
+no summary), then `bridle rm <name> --delete-branch`.
 
 Tasks touching the same files run one after another, never in parallel.
 Rules, guides and the concrete steps behind each command are delivered by

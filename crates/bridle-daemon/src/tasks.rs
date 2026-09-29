@@ -134,6 +134,9 @@ impl TaskManager {
                 claimed_at: None,
                 components: Vec::new(),
                 size: None,
+                branch: None,
+                commit: None,
+                summary: None,
             });
             cache.insert(task.id.clone(), task);
         }
@@ -299,6 +302,9 @@ impl TaskManager {
             claimed_at: None,
             components,
             size,
+            branch: None,
+            commit: None,
+            summary: None,
         };
         self.state.enqueue_task(&task)?;
         self.state
@@ -416,6 +422,7 @@ impl TaskManager {
         &self,
         id: &str,
         commit: &str,
+        branch: Option<&str>,
         actor: &PrincipalId,
     ) -> Result<Task, TaskError> {
         if commit.trim().is_empty() {
@@ -438,12 +445,36 @@ impl TaskManager {
         }
         self.transition(&mut task, TaskState::Integrated, actor)
             .await?;
+        let branch = branch.map(str::trim).filter(|b| !b.is_empty());
+        task.commit = Some(commit.trim().to_string());
+        task.branch = branch.map(str::to_string);
         task.thread.push(ThreadEntry {
             kind: ThreadEntryKind::Note,
             from: actor.clone(),
-            body: format!("integrated: {commit}"),
+            body: match branch {
+                Some(b) => format!("integrated: {commit} (branch {b})"),
+                None => format!("integrated: {commit}"),
+            },
             at: task.updated_at,
         });
+        self.state.enqueue_task(&task)?;
+        Ok(self.put(task))
+    }
+
+    /// Records how the task was implemented, replacing any earlier summary.
+    /// Allowed in any state: a worker writes it before the manager marks
+    /// the task done.
+    pub async fn set_summary(&self, id: &str, text: &str) -> Result<Task, TaskError> {
+        if text.trim().is_empty() {
+            return Err(TaskError::BadRequest(
+                "summary must not be empty".to_string(),
+            ));
+        }
+        let mut task = self
+            .get_task(id)
+            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+        task.summary = Some(text.trim().to_string());
+        task.updated_at = Utc::now();
         self.state.enqueue_task(&task)?;
         Ok(self.put(task))
     }
@@ -1358,13 +1389,13 @@ mod tests {
         assert!(!tm.is_ready(&tm.get_task(&blocked.id).expect("blocked")));
 
         let err = tm
-            .done_task(&blocker.id, " ", &human)
+            .done_task(&blocker.id, " ", None, &human)
             .await
             .expect_err("empty commit");
         assert!(matches!(err, TaskError::BadRequest(_)));
 
         let done = tm
-            .done_task(&blocker.id, "abc123", &human)
+            .done_task(&blocker.id, "abc123", None, &human)
             .await
             .expect("done");
         assert_eq!(done.state, TaskState::Integrated);
@@ -1375,7 +1406,7 @@ mod tests {
         assert_eq!(tm.live_queue_tiers(), vec![vec![blocked.id.clone()]]);
 
         let err = tm
-            .done_task(&blocker.id, "def456", &human)
+            .done_task(&blocker.id, "def456", None, &human)
             .await
             .expect_err("already integrated");
         assert!(matches!(err, TaskError::Conflict(_)));
@@ -1383,6 +1414,29 @@ mod tests {
         let reopened = tm.reopen_task(&blocker.id, &human).await.expect("reopen");
         assert_eq!(reopened.state, TaskState::Reopened);
         assert_eq!(tm.live_queue_tiers().len(), 2);
+    }
+
+    #[tokio::test]
+    async fn done_records_branch_and_commit_and_summary_replaces() {
+        let (tm, _tmp) = manager().await;
+        let human = "human".to_string();
+        let t = tm
+            .new_task("T", TaskKind::Chore, String::new(), vec![], None)
+            .await
+            .expect("new");
+        let err = tm.set_summary(&t.id, "  ").await.expect_err("empty");
+        assert!(matches!(err, TaskError::BadRequest(_)));
+        tm.set_summary(&t.id, "first").await.expect("summary");
+        let s = tm.set_summary(&t.id, "second\n").await.expect("replace");
+        assert_eq!(s.summary.as_deref(), Some("second"));
+        let done = tm
+            .done_task(&t.id, "abc123", Some("bridle/t"), &human)
+            .await
+            .expect("done");
+        assert_eq!(done.branch.as_deref(), Some("bridle/t"));
+        assert_eq!(done.commit.as_deref(), Some("abc123"));
+        assert_eq!(done.summary.as_deref(), Some("second"));
+        assert_eq!(done.thread[0].body, "integrated: abc123 (branch bridle/t)");
     }
 
     #[tokio::test]

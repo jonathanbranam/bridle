@@ -17,8 +17,8 @@ use bridle_api::types::{
     InterruptRequest, MaxWorkersRequest, Message, MessageQuery, MessageState, NewEdgeRequest,
     NewTaskRequest, NoteTaskRequest, OpenQuestion, PrincipalKind, Queue, RateLimit,
     RemoveEdgeQuery, RemoveQuery, RenewRequest, ResumeRequest, ScheduleOverrideStatus, SendRequest,
-    SetQueueRequest, SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery,
-    TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
+    SetQueueRequest, SetSummaryRequest, SpawnRequest, Status, StatusLineReport, StopRequest, Task,
+    TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
     UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, WindowStatus, event_kind,
 };
 use chrono::Utc;
@@ -82,6 +82,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/tasks/{id}/plan", post(plan_task))
         .route("/v1/tasks/{id}/drop", post(drop_task))
         .route("/v1/tasks/{id}/done", post(done_task))
+        .route("/v1/tasks/{id}/summary", post(set_summary))
         .route("/v1/tasks/{id}/reopen", post(reopen_task))
         .route("/v1/tasks/{id}/ask", post(ask_task))
         .route("/v1/tasks/{id}/answer", post(answer_task))
@@ -1122,6 +1123,14 @@ async fn drop_task(
     Ok(Json(task))
 }
 
+async fn set_summary(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+    Json(req): Json<SetSummaryRequest>,
+) -> Result<Json<Task>, ApiError> {
+    Ok(Json(state.tasks.set_summary(&id, &req.text).await?))
+}
+
 async fn done_task(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
@@ -1130,7 +1139,7 @@ async fn done_task(
 ) -> Result<Json<Task>, ApiError> {
     let task = state
         .tasks
-        .done_task(&id, &req.commit, &principal.id)
+        .done_task(&id, &req.commit, req.branch.as_deref(), &principal.id)
         .await?;
     let _ = state
         .emitter

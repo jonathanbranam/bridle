@@ -420,6 +420,13 @@ struct Frontmatter {
     /// Absent in records written before size existed, or with none set.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     size: Option<TaskSize>,
+    /// Absent in records written before the landing record existed, or unset.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    branch: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    commit: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    summary: Option<String>,
 }
 
 /// `+++`-delimited TOML frontmatter (the same convention Hugo uses, picked
@@ -438,6 +445,9 @@ fn render_task(task: &Task) -> Result<String, StateBranchError> {
         updated_at: task.updated_at,
         components: task.components.clone(),
         size: task.size,
+        branch: task.branch.clone(),
+        commit: task.commit.clone(),
+        summary: task.summary.clone(),
     };
     let toml = toml::to_string_pretty(&fm)?;
     let mut out = String::new();
@@ -601,6 +611,9 @@ fn parse_task(text: &str) -> Result<Task, StateBranchError> {
         claimed_at: None,
         components: fm.components,
         size: fm.size,
+        branch: fm.branch,
+        commit: fm.commit,
+        summary: fm.summary,
     })
 }
 
@@ -760,6 +773,9 @@ mod tests {
             claimed_at: None,
             components: vec!["client-games".to_string(), "dungeon".to_string()],
             size: Some(TaskSize::S),
+            branch: Some("bridle/x".to_string()),
+            commit: Some("abc123".to_string()),
+            summary: Some("Did a thing.\n\nSecond \"paragraph\".".to_string()),
         }
     }
 
@@ -776,6 +792,9 @@ mod tests {
         assert_eq!(parsed.body, task.body);
         assert!(parsed.thread.is_empty());
         assert_eq!(parsed.size, Some(TaskSize::S));
+        assert_eq!(parsed.branch, task.branch);
+        assert_eq!(parsed.commit, task.commit);
+        assert_eq!(parsed.summary, task.summary);
         assert_eq!(parsed.created_at, task.created_at);
         assert_eq!(parsed.updated_at, task.updated_at);
     }

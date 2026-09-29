@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Tasks record their landing: `bridle task done --branch` (with `--commit`) and the new `bridle task summary <id> --text|--file` are stored on the task and its state-branch file, `task show` prints branch, commit and summary, and `task done` warns when there is no summary (ticket tr7k).
 - Fixed: lists of tasks, edges, claims, open questions, agents and tokens now break `created_at` ties by insertion order, so rows created in the same millisecond no longer come back in either order; fixes a flaky components test (ticket f1ky).
 - On Intel Macs (x86_64), `.cargo/config.toml` now ad-hoc code-signs binaries at link time, preventing crashes in macOS's system policy daemon when executing unsigned Mach-O binaries; the flag is a no-op on arm64 (ticket cs7x).
 - Fixed: the TUI agents and inbox lists no longer lose the highlight on the selected row (regression from making them scroll).

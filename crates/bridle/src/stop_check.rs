@@ -63,6 +63,9 @@ mod tests {
         Task {
             components: Vec::new(),
             size: None,
+            branch: None,
+            commit: None,
+            summary: None,
             id: "tw-0001".to_string(),
             title: "do the thing".to_string(),
             kind: TaskKind::Chore,
