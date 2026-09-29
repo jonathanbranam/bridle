@@ -2,60 +2,73 @@
 
 The orchestrator's working notes for handing over between sessions. The role
 itself is in `workflow/base/roles/orchestrator.md`. Update this file whenever the
-queue, open items or decisions change. Last updated 2026-09-28 23:55 UTC (7:55 PM),
-at the handover from the seventh orchestrator session.
+queue, open items or decisions change. Last updated 2026-09-29 02:40 UTC (10:40 PM),
+at the handover from the eighth orchestrator session.
 
 ## First, for the incoming orchestrator
 
-- **Two projects are live.** bridle (`~/.bridle-orchestrator.token`) and meta-notes
-  (`--project meta-notes`, `BRIDLE_TOKEN=$(cat ~/.bridle-orchestrator-meta-notes.token)`).
-  Both daemons were restarted by the human at 23:45 UTC onto the installed build
-  **ce4e25d** (CI green). `main` has moved since only with p4ks (abacf6d, resume into a fresh
-  session) and docs; install it at the next maintenance window.
-- **meta-notes** (the human's priority): the daemon runs from
-  `/Volumes/Data/work/meta-notes-workspace/meta-notes`, which must stay on `bridle-adopt`
-  (the trial branch; `main` is never touched, `existing-projects` rule). Its manager is
-  `manager` (autostart, no PM); `max_workers = 1`. It has no CI: the worker's check
-  (`./run_tests.sh && pipenv run pytest test/unit/`) is the gate. In flight: **mn-efc9**
-  (OOO event not "mine"; worker `ooo-mine`), then **mn-bf7a** (daily-plan fills meetings
-  first). Both briefs are in the task bodies, from the human's write-ups. My watcher doesn't
-  cover this daemon: check `bridle agents --project meta-notes` and
-  `git -C <clone> log bridle-adopt` on heartbeats, and read its manager's messages to you
-  and to `human`. The project layer still carries its own role prompts and rules; w2rp (base
-  roles now project-neutral) and the new python/vim packs mean they can be trimmed later.
-- **The human's goal, which orders the queue** (2026-09-28): "Bridle should be working
-  well enough and useful enough that we can do productive work on my other projects."
-  Also, "keep our eyes on the prize". It's at the top of the product manager's role
-  prompt. Project order: **meta-notes, then track-web** (most of their games; a big
-  onboarding; y3sd's components parts 1-3 are merged), **then data-contracts** (lower).
-  Side tickets (y496, ksn2, kpgy) go to the backlog.
-- **Verify merges by CI only** (the human, 2026-09-28): no local `just check` on `main`.
-  The watcher wakes on a failed GitHub Actions run on main (interim until the daemon's
-  own CI watch, c8qw, merged in ce4e25d, has proved itself; then drop that part of the
-  watcher). The role says so.
-- **Open decision for the human:** kv7d. Should thresholds they set win over Claude Code's
-  `allowed_warning`? Recommended yes; it isn't answered yet. Their `burst` override was
-  defeated by it on 2026-09-28.
-- **Watcher:** `scripts/orchestrator-watch.sh <seq>`; start from seq ~26218. It takes
-  `FIVE_HOUR_WAKE=0.97` to raise the five_hour wake while an override is in force.
-  Keep it running through budget pauses; don't stop it to silence "all idle" wakes.
-  A background loop logs connectivity and battery once a minute to
-  `/Volumes/Data/work/bridle/.bridle/connectivity.log` (started at 22:04 UTC; it dies
-  with this session, which is useful: its last line marks when a session stopped).
-- **Incidents** go in `docs/context/incidents.md` (the human, 2026-09-28). One so far: Remote
-  Control and this session were lost from 19:23 to 21:27 UTC with the machine awake. The
-  hotspot trial on the drive home held.
-- **Renew:** pm-1 is at ~122K. Renew it when idle and above ~140K (not during a hold, r3nh).
-  manager-2 was renewed at 23:47 UTC.
-- **The standing rule on the human's projects** (`existing-projects`, 63rv): trials on
+- **Three projects are live**, each with its own daemon and token:
+  - bridle: `~/.bridle-orchestrator.token`.
+  - meta-notes: `--project meta-notes`, `~/.bridle-orchestrator-meta-notes.token`. Clone
+    `/Volumes/Data/work/meta-notes-workspace/meta-notes`, on `bridle-adopt`.
+  - **track-web (new, 2026-09-29):** `--project track-web`,
+    `~/.bridle-orchestrator-track-web.token`. Clone
+    `/Volumes/Data/work/track-web-workspace/track-web`, on `bridle-adopt` (cut from
+    `origin/dev`, no upstream; 7c9a6cb + 80d9d20, pushed). Scope: **client-games only, minus
+    Dungeon Tactics** (the human: "start with one client ... TBD onboarding other components
+    until that is vetted"); `.bridle/rules/scope.md`, `specs.md`, `dev-servers.md`; the
+    typescript pack; check `npx vitest run client-games && npm run build:games` (272 tests,
+    no `.env` needed); `[worktrees] setup = npm install` (~2 min); one worker; the manager can
+    push only `bridle-adopt`. Its manager is up and idle: **waiting on the human's first
+    task.** Recommended (a) Orbital Dodger proximity-scaled star bonus; (b) Ball Merge
+    pop-and-clear; (c) Orbital Dodger leaderboard only under the Default config (all from
+    `docs/games/planning.md`). Not answered: survey Q6 (OpenSpec interim assumed like
+    meta-notes: edit `openspec/specs/` directly, no CLI) and Q8 (`.env`/`.mcp.json` into
+    worktrees; `[worktrees] copy` exists now, unused).
+  - None of the three is covered by the watcher except bridle: on heartbeats check
+    `bridle agents --project <p>` and the managers' messages.
+- **All three daemons were restarted by the human at 01:26 UTC** onto ff0c64f. `main` has
+  since gained the TUI fixes, landing record (tr7k), signing (cs7x), ordering flake fix and
+  more; the next install/restart picks them up. **After every `cargo install`, check
+  `bridle --version` starts** (see incidents): until cs7x's build is installed, run
+  `codesign -s - -f ~/.cargo/bin/bridle` right after installing. The installed binary is
+  signed by hand.
+- **meta-notes:** out of tasks; its manager is idle. Five tasks merged and integrated with
+  summaries and commits (traceability backfilled): mn-efc9, mn-bf7a, mn-d160, mn-b6c5
+  (Time Block highlights), mn-dcc1 (time-of-day highlights removed; the human: "don't
+  really care about either"). The human owes more tasks.
+- **The human's goal orders the queue** (2026-09-28): "Bridle should be working well enough
+  and useful enough that we can do productive work on my other projects." Order: meta-notes,
+  track-web, then data-contracts.
+- **New principles from the human this session** (all ticketed, most queued):
+  - **Traceability** (tr7k, sq4m): from a task id, the brief, implementation summary, branch
+    and merge commit; one squash commit per task on the integration branch. The advisor must
+    be able to answer "what was done for X" precisely. tr7k merged (2349fc6); sq4m running
+    (`squash-land`).
+  - **Talk on the task, like JIRA** (rule `talk-on-the-task`, 958e43a; tooling n8tj): task
+    discussion goes on the task thread; messages only notify. All managers told.
+  - **Cleanup is mechanical** (k3wp): `task done` removes the task's agents, worktree and
+    branch; one agent per branch.
+  - **Questions the orchestrator answers for the human should close for them** (h5qd).
+  - **Watch your own context** (c9zm): the watcher should wake the orchestrator at ~140K.
+    Until then, check it yourself on every heartbeat and hand over before ~150K. This session
+    didn't, and the human called the handover.
+- **main:** green except ad1b485's Linux run, a flake (statusline_test race); worker
+  `statusline-flake` is fixing it. manager-2 holds merges until green.
+- **Verify merges by CI only** (no local `just check` on `main`).
+- **kv7d answered and merged** (538ca98): the human's thresholds win over `allowed_warning`.
+- **Watcher:** `scripts/orchestrator-watch.sh <seq>`; start from seq ~28650.
+- **Renew:** manager-2 renewed 02:38 UTC. pm-1 at ~88K.
+- **Cleanup:** manager-2 was asked to `bridle rm python-pack-2 --delete-branch` and
+  `bridle rm j2vq-orchestrator-perms` (keep its parked branch); check it happened. Send
+  cleanup to a manager, not the human.
+- **Incidents** (`docs/context/incidents.md`): two ~40-minute hangs of every new program
+  (syspolicyd crashing on unsigned binaries on this Intel Mac); fixed by cs7x.
+- **The standing rule on the human's projects** (`existing-projects`): trials on
   `bridle-adopt`; `main`/`dev` never touched until the human approves.
-- **Agents reach you directly** (a7h3), including the advisor. The human's inbox is only
-  for what they must act on (kp3f).
-- **The queue** (j479): pm-1 owns it; manager-2 is mechanical. pm-1 still has to drop
-  merged tasks by hand (no done state yet, br-789a).
-- **Local permissions** (`.claude/settings.local.json`, untracked): the watcher script,
-  and reads under `/Volumes/Data/work/data-contracts-workspace/`. The auto-mode classifier
-  sometimes refuses a routine read for a minute; ask the human to say "carry on".
+- **Agents reach you directly**; the human's inbox is only for what they must act on.
+- **Local permissions** (`.claude/settings.local.json`, untracked): the watcher script, and
+  reads under `/Volumes/Data/work/data-contracts-workspace/`.
 - **Managers may `bridle rm` finished workers themselves**; only the orchestrator's auto
   mode can't.
 
@@ -101,25 +114,33 @@ specs and a Python adapter replacing `spec-to-feature.py`); onboarding needs
 only an interim answer. Recommendations given: OpenSpec stays for specs until
 P3; new work goes in bridle's queue; old `docs/tickets/` stays as history.
 
-## Who's running
+## Who's running (02:40 UTC)
 
-- **bridle:** `pm-1` (product manager, Sonnet) and `manager-2` (development manager,
-  Sonnet, renewed 23:47 UTC). Worker `tui-open-msg` (br-0e14) at handover. Stopped, to
-  remove: `python-pack-2` (merged), `j2vq-orchestrator-perms` (parked).
-- **meta-notes:** `manager`; worker `ooo-mine` (mn-efc9).
+- **bridle:** `pm-1` (product manager), `manager-2` (development manager, renewed 02:38).
+  Workers `squash-land` (br-0b22, sq4m) and `statusline-flake` (the CI flake).
+- **meta-notes:** `manager`, idle, no tasks.
+- **track-web:** `manager`, idle, waiting on the first task.
 - **The advisor** (`external:advisor`): the human's chat and ticket session.
 
-## Queue (`bridle queue`, at 23:55 UTC)
+## Queue (`bridle queue`, 02:40 UTC)
 
-Tier 1: br-37b2 (p4ks; merged abacf6d, so drop it). Tier 2: br-1185 (r3nh). Tier 3: br-7bf8
-(TUI inbox scroll). Tier 4: br-0e14 (running), br-d5c8 (statusline tokens). Tier 5:
-br-3822, br-f6ad (m3wq). pm-1 should refill it by the goal: whatever meta-notes needs next,
-then track-web's onboarding (u8sm survey; components done), and kv7d once answered.
+Stale merged entries still listed (pm-1 must `task done` them: br-1ac1, br-d744, br-9cf3,
+br-b30d; br-29f9's stuck claim is b5br/br-ce1a). Open: br-ce1a (b5br), br-0b22 (sq4m,
+running), br-f86f (task search), br-9474 (n8tj), br-7d81 and br-0589 (k3wp), br-b29c (h5qd).
+To add: c9zm (the watcher and the orchestrator's context).
 
 Parked: `bridle/j2vq-orchestrator-perms`, `bridle/mcp-1` (u6wk).
 
-## The human's decisions (2026-09-27 and 28)
+## The human's decisions (2026-09-27 to 29)
 
+- 2026-09-29, eighth session:
+  - Onboard track-web now, client-games only; other components TBD once it's vetted.
+  - kv7d: "my settings override Claude warnings".
+  - Traceability: tasks carry brief, summary, branch and merge commit; one squash commit per
+    task (tr7k, sq4m). Talk about a task on the task, like JIRA comments (talk-on-the-task,
+    n8tj). Cleanup consistent and mechanical (k3wp). The orchestrator's own context is
+    watched (c9zm).
+  - meta-notes: drop the time-of-day highlights; the Time Block cell highlights stay.
 - 2026-09-28, seventh session:
   - meta-notes onboards now, on the fast path (project-layer rules, no packs), in a fresh
     clone; OpenSpec option B; the worker bumps the version, the manager tags (ajqa).
@@ -177,6 +198,21 @@ Parked: `bridle/j2vq-orchestrator-perms`, `bridle/mcp-1` (u6wk).
   running it**; if a worker is idle with a clean tree, read its log.
 - **Auto mode's classifier sometimes errors** for a minute or two; it hits
   the orchestrator and the advisor, not bridle's agents.
+
+## Tickets filed in the eighth session
+
+Orchestrator: n4vk, sq4m, tr7k, h5qd, cs7x, k3wp, n8tj, c9zm; rule `talk-on-the-task`;
+two incidents. The advisor: b5br and others.
+
+## Done on 2026-09-29, eighth session (merged, CI green, pushed)
+
+r3nh (renew vs hold), br-42dd (worktree setup), br-d16e (typescript pack), statusline
+tokens docs, n4vk (TUI shows new agents), br-0e14 (TUI open a message), m3wq (disk
+monitor), br-3822 (`--body-file`/`--text-file`), kv7d, br-789a (task done state), br-0685
+(task size), br-3309 (`[worktrees] copy`), br-e7f4 (CHANGELOG union merge), br-d744, br-b30d,
+the TUI highlight regression fix, cs7x (ad-hoc signing), the created_at tiebreak (f1ky), tr7k.
+meta-notes: five tasks. track-web onboarded. Installs: three, plus the human's restart of all
+three daemons at 01:26 UTC.
 
 ## Tickets filed this session (seventh)
 
