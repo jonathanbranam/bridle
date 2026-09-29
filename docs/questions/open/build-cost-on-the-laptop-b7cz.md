@@ -61,3 +61,26 @@ Options 1 and 2 are built (db79e38): new worktrees' `target/` is warmed with an 
 (`[worktrees] warm_target`), and workers gate on `commands.check_worker` (e.g.
 `just check-affected`). Still open: the before-and-after measurement of load and wall time,
 and the NUC question (whether the NUC should run only light project daemons).
+
+## The warm cache goes stale (the advisor, 2026-09-29)
+
+The human, verbatim (2026-09-29, via the advisor):
+
+> warm or shared build cache seems like a route to go; if that work is straightforward enough to
+> do, I'd start there.
+
+Option 2 is already live (`warm_target` defaults to on), but its source is the main clone's
+`target/`, last built 2026-09-28 17:45 (after the human's `cargo clean`). Nothing rebuilds it as
+`main` moves: the orchestrator no longer runs `just check` on `main`. So every new worktree
+starts from a day-old cache and recompiles whatever changed since. The integration worktree's
+`target/` (`<workspace>/integration`, built at every `land`) was fresh at 2026-09-29 17:13, but
+with qgma `land` stops building on a fast-forward, so it will go stale too.
+
+Next, cheapest first:
+
+1. **Measure** (still open): time and load for one task's first build, today.
+2. **Keep the warm source fresh**: e.g. after `land`, run an incremental `cargo build
+   --workspace --all-targets` in the integration worktree (or the clone) and warm from there.
+   One incremental build per landing, off the worker's critical path.
+3. **sccache** (option 3) only if 1 and 2 leave the build as the bottleneck: a new tool on every
+   host, and the workspace's own crates hit poorly across worktree paths.
