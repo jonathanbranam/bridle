@@ -84,3 +84,18 @@ Next, cheapest first:
    One incremental build per landing, off the worker's critical path.
 3. **sccache** (option 3) only if 1 and 2 leave the build as the bottleneck: a new tool on every
    host, and the workspace's own crates hit poorly across worktree paths.
+
+### Measure before building (the human, 2026-09-29)
+
+> yes, let's not build something on a whim; measure it when possible vefore commiting to more
+> work. Again I'm afraid I'm getting off task on the wrong things. Better to get bridle stablea
+> nd working then use it more.
+
+The advisor's second look: a fresh cache may save little. Third-party crates (most of a cold
+build) are already in even a stale copy, and nearly every task edits `bridle-daemon` or `bridle`,
+which the worker then recompiles with every test binary regardless. Freshness only saves changes
+that landed in the leaf crates (`bridle-api`, `bridle-claude`, `bridle-spec`) since the copy.
+
+So: no build work on "keep the warm source fresh" (step 2 above) or sccache until a measurement
+says it's worth it. When the machine is quiet, time one worker's first build from a fresh and from
+a stale `target/`. Low priority: stability comes first.
