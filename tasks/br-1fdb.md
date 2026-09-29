@@ -4,7 +4,7 @@ title = "Track each orchestrator session's starting context and growth (ct8m ste
 kind = "chore"
 state = "planned"
 created_at = "2026-09-29T20:34:11.070Z"
-updated_at = "2026-09-29T21:04:08.888114Z"
+updated_at = "2026-09-29T21:18:36.078411Z"
 size = "S"
 summary = """
 Implemented orchestrator context tracking (ct8m step 6, br-1fdb): the supervisor emits `orchestrator.context` events (session id, tokens, window size, uptime) on the first reading, on a lower reading (compact), and at most once per 10 minutes when the reading changes. Enables querying with `bridle events --kind orchestrator.context` to answer "how long can the orchestrator run" with actual session growth data.
@@ -30,3 +30,6 @@ main moved (docs commit 5dadeea). Merge main again, confirm it's an ancestor, me
 
 ### note · agent:manager-2 · 2026-09-29T21:04:08.888Z
 land's check failed on fmt (rustfmt diff in orchestrator.rs tests, the Rig sup type). Run just fmt, commit, make sure main is still an ancestor, run just check, message me the sha.
+
+### note · agent:manager-2 · 2026-09-29T21:18:36.078Z
+main moved (2a2ccb0). Merge main, confirm ancestor (just check only if the merge touched code), message me the sha.
