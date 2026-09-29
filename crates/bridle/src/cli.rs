@@ -341,6 +341,8 @@ pub enum SpecAction {
     Export(SpecExportArgs),
     /// Migrate another spec system's files into `design/specs`.
     Import(SpecImportArgs),
+    /// List executable scenarios whose id does not appear in test sources.
+    Coverage(SpecCoverageArgs),
 }
 
 #[derive(Debug, Args)]
@@ -443,6 +445,19 @@ pub struct SpecIdArgs {
     /// Print what would change; write nothing.
     #[arg(long)]
     pub dry_run: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct SpecCoverageArgs {
+    /// The specs directory (default `design/specs`).
+    #[arg(long, value_name = "DIR")]
+    pub root: Option<PathBuf>,
+    /// Directories to search for test sources (repeatable; default: `tests` and `test` if present).
+    #[arg(long, value_name = "DIR")]
+    pub tests: Vec<PathBuf>,
+    /// Exit 1 if any executable scenarios are unbound; default exit 0.
+    #[arg(long)]
+    pub require_all: bool,
 }
 
 #[derive(Debug, Args)]

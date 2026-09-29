@@ -10,6 +10,7 @@ mod launchd;
 mod prime;
 mod render;
 mod serve;
+mod spec_coverage;
 mod spec_export;
 mod spec_import;
 mod specid;

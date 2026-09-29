@@ -108,6 +108,15 @@ bridle spec export --format gherkin|json [--out DIR] [paths...] [--root DIR]
                                              whole AST (documented in specs-to-tests.md) on stdout, or
                                              `specs.json` in --out; refuses, printing the diagnostics,
                                              when any spec has errors; local only, no daemon call
+bridle spec coverage [--root DIR] [--tests DIR ...] [--require-all] [--json]
+                                             lists executable scenarios whose id does not appear in
+                                             test sources; scans text files (skip binary, node_modules,
+                                             target, .git) under --tests directories (default `tests`
+                                             and `test` if present) for the token 's-' plus hex ids
+                                             of scenarios; outputs counts (executable, bound, unbound)
+                                             and the unbound list as 'file:line: s-id title'; exits 1
+                                             with --require-all if any unbound (default exit 0); local
+                                             only, no daemon call
 bridle goals list [--root DIR] [--priority P] [--stance S]   lists goals (docs/design/goals-tier.md) from
                                              `*.md` under --root (default `design/goals`): id, firmness,
                                              priority, stance, title per line; the stance is defaulted from
