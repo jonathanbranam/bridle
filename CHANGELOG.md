@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Added: `bridle arch-guard`, a PreToolUse hook (shipped in `workflow/base/hooks/`, rendered by `bridle sync`) denying worker edits under `design/architecture/` unless the worker has claimed an `arch-revision` task (br-7f7e).
 - Added: `bridle arch propose --title T --argument TEXT|-` creates an `arch-revision` task with the proposal; validates the architecture directory exists (br-357f).
 - Added: `bridle goals propose <goal-id> --change KEY=VALUE --why TEXT` (repeatable `--change`) creates a task proposing a change to the goal's firmness, priority, or stance; validates the goal exists (br-357f).
 - Added: landing an `arch-revision` task opens one `re-evaluate` task per capability with suspect requirements (listing the ids, to confirm or edit) and notifies the manager (br-beab).

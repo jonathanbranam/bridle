@@ -1,6 +1,7 @@
 //! `bridle`: the CLI. A thin client of the daemon's API
 //! (docs/design/agent-host/api.md), plus `serve`, which runs the daemon itself.
 
+mod arch_guard;
 mod cli;
 mod commands;
 mod error;

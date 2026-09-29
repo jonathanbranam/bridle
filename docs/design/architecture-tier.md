@@ -10,7 +10,7 @@ never changes as a side effect of other work:
 
 - Any edit under `design/architecture/` requires a task of kind
   `arch-revision`, and that task's plan gate is the human ([[docs/design/gates|gates]]). This is
-  enforced, not only stated. A PreToolUse hook stops workers editing those files
+  enforced, not only stated. The `bridle arch-guard` PreToolUse hook stops workers editing those files
   outside an `arch-revision` task, and the integrator refuses to merge a branch
   that touches them without a linked, human-approved revision.
 - An agent that thinks the architecture is wrong runs `bridle arch propose`,
@@ -40,4 +40,10 @@ or an id used twice (within a file or across files) is an error reported as
 `bridle arch list [--invariants] [--root DIR] [--json]` prints the elements
 (local, no daemon); `bridle arch propose --title T --argument TEXT|-` creates an
 `arch-revision` task (daemon); see [[docs/design/cli|the CLI]]. The
-PreToolUse hook and the integrator check are not built.
+`bridle arch-guard`, the
+PreToolUse hook shipped in `workflow/base/hooks/PreToolUse.json` (matcher
+`Edit|Write|MultiEdit`, rendered by `bridle sync`), denies a worker's edit under
+`design/architecture/` unless one of its claimed tasks is an `arch-revision`; the denial
+tells it to run `bridle arch propose`. Paths are resolved lexically against the hook's
+`cwd`, so `../` tricks don't get around it. Non-worker principals are allowed, as is
+everything on any error of bridle's own. The integrator check is not built.
