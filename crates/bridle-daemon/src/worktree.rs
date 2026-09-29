@@ -101,6 +101,27 @@ pub async fn warm_target(repo: &Path, worktree: &Path) {
     }
 }
 
+/// Copies each `[worktrees] copy` file from the clone into the same path in the worktree
+/// (`std::fs::copy` keeps the mode, so a 0600 token file stays 0600). A missing or unsafe
+/// entry is skipped with a warning; this never fails the spawn.
+pub fn copy_files(repo: &Path, worktree: &Path, files: &[String]) {
+    for rel in files {
+        let src = repo.join(rel);
+        if !crate::config::is_safe_relative(rel) || !src.is_file() {
+            tracing::warn!(file = %rel, "worktree copy: not a repo-relative existing file; skipped");
+            continue;
+        }
+        let dst = worktree.join(rel);
+        let result = match dst.parent() {
+            Some(dir) => std::fs::create_dir_all(dir).and_then(|()| std::fs::copy(&src, &dst)),
+            None => std::fs::copy(&src, &dst),
+        };
+        if let Err(e) = result {
+            tracing::warn!(file = %rel, error = %e, "worktree copy failed; skipped");
+        }
+    }
+}
+
 /// Runs the project's `[worktrees] setup` command (`sh -c`, cwd = the worktree). The env is the
 /// daemon's minus `BRIDLE_*`, so a setup script never sees an agent token. Fails on non-zero
 /// exit or after `timeout`, with the command, status and the last ~20 lines of output.
@@ -391,6 +412,36 @@ mod tests {
             cfg!(target_os = "macos")
         );
         assert!(repo.join("target/debug/dep").exists());
+    }
+
+    #[test]
+    fn copy_files_copies_nested_keeps_mode_skips_missing_and_unsafe() {
+        use std::os::unix::fs::PermissionsExt;
+        let tmp = tempfile::tempdir().expect("tmp");
+        let (repo, wt) = (tmp.path().join("repo"), tmp.path().join("wt"));
+        std::fs::create_dir_all(repo.join("a")).expect("mk");
+        std::fs::create_dir_all(&wt).expect("mk");
+        std::fs::write(repo.join(".env"), "T=1").expect("w");
+        std::fs::set_permissions(repo.join(".env"), std::fs::Permissions::from_mode(0o600))
+            .expect("chmod");
+        std::fs::write(repo.join("a/b.json"), "{}").expect("w");
+        std::fs::write(tmp.path().join("outside"), "x").expect("w");
+        let files: Vec<String> = [".env", "missing", "a/b.json", "../outside"]
+            .map(String::from)
+            .into();
+        copy_files(&repo, &wt, &files);
+        assert_eq!(std::fs::read_to_string(wt.join(".env")).expect("r"), "T=1");
+        let mode = std::fs::metadata(wt.join(".env"))
+            .expect("m")
+            .permissions()
+            .mode();
+        assert_eq!(mode & 0o777, 0o600);
+        assert_eq!(
+            std::fs::read_to_string(wt.join("a/b.json")).expect("r"),
+            "{}"
+        );
+        assert!(!wt.join("missing").exists());
+        assert!(!wt.join("outside").exists());
     }
 
     #[tokio::test]
