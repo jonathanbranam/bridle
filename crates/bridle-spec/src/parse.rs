@@ -40,12 +40,12 @@ pub(crate) fn parse(file: &str, text: &str) -> Result<Spec, Vec<Diagnostic>> {
 }
 
 /// 1-based character column of byte `offset` in `line`.
-fn col(line: &str, offset: usize) -> usize {
+pub(crate) fn col(line: &str, offset: usize) -> usize {
     line[..offset].chars().count() + 1
 }
 
 /// Byte offset of `sub` (a subslice of `line`) within `line`.
-fn offset_in(line: &str, sub: &str) -> usize {
+pub(crate) fn offset_in(line: &str, sub: &str) -> usize {
     sub.as_ptr() as usize - line.as_ptr() as usize
 }
 
@@ -68,7 +68,7 @@ fn is_tag_name(s: &str) -> bool {
             .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-')
 }
 
-fn is_id(s: &str, prefix: char) -> bool {
+pub(crate) fn is_id(s: &str, prefix: char) -> bool {
     let mut it = s.chars();
     it.next() == Some(prefix) && it.next() == Some('-') && is_hex(it.as_str())
 }
