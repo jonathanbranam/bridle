@@ -60,6 +60,8 @@ bridle token revoke <name>                  human only, external tokens only (an
                                              revoked through `bridle rm`, not this); also removes its
                                              credentials.toml entry for the project
 bridle statusline                           Claude Code statusLine command; local only, no daemon call
+bridle orchestrator note-session            the orchestrator launcher's SessionStart hook: writes $BRIDLE_HOME/orchestrator.session
+                                             from the hook JSON on stdin; local only; never fails
 bridle arch-guard                          Claude Code PreToolUse hook: blocks design/architecture/ edits outside an arch-revision task
 bridle stop-check                           Claude Code Stop hook for the worker role; refuses to stop
                                              with an unreleased claim and no thread entry since claiming
@@ -462,6 +464,11 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
 - **`budget`'s** subcommands (`hold`, `release`, `override`, `override-clear`, `max-workers`)
   are described in [[docs/design/usage-and-budget|usage and budget]]. `max-workers` sets a live
   cap that never stops running workers, only blocks new spawns and resumes.
+- **`orchestrator note-session`** is the SessionStart hook `scripts/claude-orchestrator` registers for
+  its own session ([[orchestrator-supervision]]). It reads the hook JSON on stdin and writes
+  `$BRIDLE_HOME/orchestrator.session` as `<session id> <transcript path>` (`/clear` gives the same
+  process a new id). Local, silent, never fails; it also keeps `~/.bridle-orchestrator-session`
+  current for `scripts/context-check.sh` until the daemon reads the context itself.
 - **`statusline`** is Claude Code's `statusLine` command, configured in `settings.json`. It
   reads Claude Code's JSON on stdin and prints a short line back: model, context %
   (`context_window.used_percentage`) and token count (e.g., `40.0k`, `1.2M`) when available,

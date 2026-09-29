@@ -26,6 +26,7 @@ mod events;
 pub mod governor;
 pub mod impact;
 mod integrator;
+mod orchestrator;
 pub mod paths;
 pub mod ports;
 pub mod reevaluate;
@@ -405,6 +406,28 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
             }
         })
     });
+    let orchestrator_task = config.orchestrator.enabled.then(|| {
+        let home = overrides
+            .bridle_home
+            .clone()
+            .unwrap_or_else(discovery::bridle_home);
+        let launcher = ws.repo.join(&config.orchestrator.launcher);
+        let sup = orchestrator::real(
+            home,
+            orchestrator::shell_word(&launcher),
+            &config.orchestrator,
+            manager.clone(),
+            emitter.clone(),
+        );
+        spawn_loop(
+            shutdown_rx.clone(),
+            orchestrator::TICK_INTERVAL,
+            move || {
+                let sup = sup.clone();
+                async move { sup.tick(Utc::now()).await }
+            },
+        )
+    });
     let signal_task = signals.listen(shutdown_tx.clone());
 
     let join_handle = tokio::spawn(async move {
@@ -457,6 +480,9 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         governor_task.abort();
         ci_task.abort();
         if let Some(t) = disk_task {
+            t.abort();
+        }
+        if let Some(t) = orchestrator_task {
             t.abort();
         }
         prune_task.abort();

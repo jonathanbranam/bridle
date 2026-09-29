@@ -2,7 +2,7 @@
 # Has the orchestrator's own session crossed another CONTEXT_WAKE (default 140000) tokens since
 # last reported? Prints `CONTEXT <tokens>` and exits 0 on a crossing, else exits 1. Ticket c9zm.
 # Reads $BRIDLE_HOME/context/<session id> (written by `bridle statusline`), the id from
-# ~/.bridle-orchestrator-session (written by scripts/claude-orchestrator). The last reported level
+# ~/.bridle-orchestrator-session (written by the launcher's SessionStart hook, `bridle orchestrator note-session`, until the daemon reads it). The last reported level
 # lives in ~/.bridle-orchestrator-ctx-level as "<session> <level>", level = tokens / CONTEXT_WAKE,
 # so a wake happens once per crossing, and again at 280K; a drop (/compact) resets it.
 home=${BRIDLE_HOME:-$HOME/.bridle}

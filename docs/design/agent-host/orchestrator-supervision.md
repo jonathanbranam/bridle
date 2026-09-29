@@ -1,7 +1,10 @@
 # Orchestrator supervision
 
 Design for ticket [[the-orchestrator-stays-running-fx7x|fx7x]]; signals verified in
-[[docs/spikes/07-orchestrator-supervision-findings|spike 07]]. **Not built.** The orchestrator
+[[docs/spikes/07-orchestrator-supervision-findings|spike 07]]. **Slice 1a built** (br-a424): liveness, relaunch and crash-loop backoff (sections 1 to 4, the
+interim incident of 8). Not built: wake conditions and `wait-for-wake` (5), context and uptime
+thresholds and the forced restart (6), handover records (7); config keys for those aren't
+accepted yet. The orchestrator
 stays an interactive `claude` in the human's tmux pane (the human types to it, locally and over
 Remote Control). The daemon keeps it running, tells it when its context or uptime says to hand
 over, and carries its wake conditions, with no agent in the loop.
@@ -105,6 +108,10 @@ Crash loop: the supervisor keeps `attempts` and `last_attempt` in memory:
 - After `len(relaunch_backoff)` failed relaunches: record an incident ("orchestrator not staying
   up: N relaunches, last attempt <time>") and **stop trying** until a live pid appears (the human
   launching it by hand does that). The daemon restarting resets the count, which is acceptable.
+- Built as: the first relaunch goes at once, relaunch *n* after that waits `relaunch_backoff[n-2]`,
+  so `len(relaunch_backoff) + 1` relaunches in all before giving up (the incident says how many).
+  The two shell checks run on successive 10 s ticks (the first sets a timestamp; a later tick at
+  least 5 s on types), so nothing sleeps.
 - A relaunch the daemon caused on purpose (section 6) isn't a crash and doesn't count.
 
 When it finds the session dead the supervisor records, in the same incident text or a note to

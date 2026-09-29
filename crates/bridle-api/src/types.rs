@@ -483,6 +483,9 @@ pub mod event_kind {
     /// data: {free_bytes, total_bytes, target_bytes, worktrees_bytes, data_bytes}. The
     /// periodic disk usage reading (`[disk]`).
     pub const DISK_CHECKED: &str = "disk.checked";
+    /// data: {text}. The orchestrator supervisor needs the human (interim, until incidents
+    /// exist: docs/design/agent-host/orchestrator-supervision.md, section 8).
+    pub const ORCHESTRATOR_INCIDENT: &str = "orchestrator.incident";
     /// data: {task, branch}. `bridle land` began merging.
     pub const INTEGRATE_STARTED: &str = "integrate.started";
     /// data: {task, branch, ok, commit?, error?}

@@ -30,7 +30,7 @@ use crate::cli::{
     TaskNoteArgs, TaskPlanArgs, TaskReopenArgs, TaskSearchArgs, TaskShowArgs, TaskSizeArg,
     TaskSummaryArgs, TokenAction, TokenArgs, UsageArgs, UsageByArg, WaitArgs, WhenArg,
 };
-use crate::cli::{LandArgs, PortAction, PortArgs};
+use crate::cli::{LandArgs, OrchestratorAction, OrchestratorArgs, PortAction, PortArgs};
 use crate::error::CliError;
 use crate::render;
 use crate::serve;
@@ -79,6 +79,16 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Statusline => statusline(&cli).await,
         Command::StopCheck => stop_check(&cli).await,
         Command::ArchGuard => arch_guard(&cli).await,
+        Command::Orchestrator(OrchestratorArgs {
+            action: OrchestratorAction::NoteSession,
+        }) => {
+            let input: serde_json::Value = std::io::read_to_string(std::io::stdin())
+                .ok()
+                .and_then(|s| serde_json::from_str(&s).ok())
+                .unwrap_or(serde_json::Value::Null);
+            crate::orchestrator::note_session(&input);
+            Ok(())
+        }
         Command::Prime(args) => prime(&cli, args).await,
         Command::Rules(args) => rules(&cli, args).await,
         Command::Sync => sync(&cli).await,

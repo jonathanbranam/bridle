@@ -103,6 +103,7 @@ SSE event id:
 | `agent.text` (`{text}`, truncated to 2048 characters) · `tool.use` (`{name,input_summary}`) · `permission.denied` (`{denials}`) | what the agent is doing |
 | `message.sent` (`{message,to}`) · `message.delivered` · `message.read` · `message.dropped` | messaging |
 | `rate_limit` (`{info}`) | a `rate_limit_event` from any agent |
+| `orchestrator.incident` (`{text}`) | the orchestrator supervisor needs the human (interim until incidents exist; also a `system` note to the human) |
 | `disk.checked` (`{free_bytes,total_bytes,target_bytes,worktrees_bytes,data_bytes}`) | the periodic disk reading ([[operating-model#Disk monitor\|disk monitor]]) |
 | `integrate.started` (`{task,branch}`) · `integrate.finished` (`{task,branch,ok,commit?,error?}`) | `bridle land` began / ended |
 | `task.created` (`{task,kind,state}`) · `task.state` (`{task,to}`) · `task.edited` (`{fields}`) · `task.question_asked` / `task.question_answered` / `task.note_added` (`{task}`) | task changes |

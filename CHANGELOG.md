@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Orchestrator supervision, first half (br-a424): with `[orchestrator] enabled = true` the daemon watches `$BRIDLE_HOME/orchestrator.pid` (pid plus start time) and, when the session is dead and the pane tagged `@bridle=orchestrator` shows a shell on two checks 5 s apart, types the launcher into it, with crash-loop backoff (`relaunch_backoff`, `stable_after`) and an incident message to the human when it gives up, finds no tagged pane, or finds something else running. `scripts/claude-orchestrator` writes the pid file and registers a SessionStart hook, `bridle orchestrator note-session`, instead of pinning `--session-id`.
 - `bridle stop-check` runs the project's `check_worker` command for a finished-looking worker whose HEAD has no recorded pass, records the pass in the worktree's git dir, and blocks with the output tail on failure (br-f671).
 - `bridle stop-check` also blocks a worker whose tree looks finished (clean, commits ahead) but whose claimed task has no summary or `done:` report, telling it to run the commands rather than print them (br-d99e).
 - `bridle init [--name N] [--integration BRANCH] [--stack python|typescript|rust]`: scaffolds `.bridle/config.toml` (integration branch from HEAD, `workflow`/`packs`, check command detected from `justfile`/`Cargo.toml`/`package.json`/`pyproject.toml`, worktree stubs) and the `.gitignore` entries; never overwrites, lists existing files as skipped (br-e0f4).

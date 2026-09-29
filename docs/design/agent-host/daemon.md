@@ -93,7 +93,7 @@ stopping and the actual cap, so a slow shutdown doesn't look hung.
 
 Besides serving the API, the daemon runs: the stall and context checks (every 30 s), the process
 tracker (2 s), the budget governor (30 s tick; polls `get_usage` every 5 min, 30 s above
-`hold_at`), the CI watcher (when `[ci] github`), the disk monitor (`[disk] check_interval`), the
+`hold_at`), the CI watcher (when `[ci] github`), the disk monitor (`[disk] check_interval`), the orchestrator supervisor (`[orchestrator] enabled`; 10 s; [[orchestrator-supervision]]), the
 task state-branch flush (30 s), the claim-lease check (30 s) and the port sweep (30 s; frees
 ports whose owner is gone), plus the daily event prune. All stop on shutdown.
 

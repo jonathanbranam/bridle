@@ -48,7 +48,7 @@ curl -s -H "Authorization: Bearer $tok" "$U/v1/messages?to=human&limit=50" \
   - your own context passing 140K (`CONTEXT <tokens>`; `CONTEXT_WAKE` overrides),
     once per crossing: propose a handover at the next quiet point. It reads the
     size `bridle statusline` writes to `~/.bridle/context/<session id>`, for the
-    session id `scripts/claude-orchestrator` records in
+    session id the launcher's SessionStart hook (`bridle orchestrator note-session`) records in
     `~/.bridle-orchestrator-session`, so it only works in a session started by that script.
 
   After each wake, handle it and restart it with the last seq. Add a

@@ -142,6 +142,8 @@ pub enum Command {
     /// unless the calling worker has claimed an `arch-revision` task. Never
     /// fails: any error of bridle's own allows.
     ArchGuard,
+    /// The orchestrator's supervision hooks (docs/design/agent-host/orchestrator-supervision.md).
+    Orchestrator(OrchestratorArgs),
     /// Print a fresh session's opening context for a role: the role prompt,
     /// current state and startup steps.
     Prime(PrimeArgs),
@@ -1127,6 +1129,19 @@ pub enum EdgeKindArg {
     Related,
     Supersedes,
     Duplicates,
+}
+
+#[derive(Debug, Args)]
+pub struct OrchestratorArgs {
+    #[command(subcommand)]
+    pub action: OrchestratorAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum OrchestratorAction {
+    /// The launcher's SessionStart hook: reads the hook JSON on stdin and records the session
+    /// id and transcript path in `$BRIDLE_HOME/orchestrator.session`. Never fails.
+    NoteSession,
 }
 
 #[derive(Debug, Args)]

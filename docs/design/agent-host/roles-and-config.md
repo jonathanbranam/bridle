@@ -134,6 +134,7 @@ Also read from `.bridle/config.toml` (defaults in parentheses; each is documente
 - `[context] wind_down_at = { default = 200000, worker = 120000 }` (context tokens) and
   `wind_down_grace` (`"5m"`): an agent nearing its context limit is told to hand off, then
   renewed ([[agents#Renewing|agents.md]]).
+- `[orchestrator] enabled` (`false`), `launcher` (`"scripts/claude-orchestrator"`), `relaunch_backoff` (`["30s", "2m", "10m"]`), `stable_after` (`"10m"`): the orchestrator supervisor ([[orchestrator-supervision]]). The other keys in that design (thresholds, `waiter_grace`) come with later slices.
 - `[disk] check_interval` (`"1h"`), `min_free_gb` (20): [[operating-model#Disk monitor|disk monitor]].
 - `[tasks] prefix` (first two alphanumerics of the project name): task id prefix
   ([[../storage|storage.md]]).

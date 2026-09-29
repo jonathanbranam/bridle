@@ -37,6 +37,8 @@ pub enum ConfigError {
         value: f64,
         machine_value: f64,
     },
+    #[error("invalid [orchestrator]: {0}")]
+    BadOrchestrator(String),
     #[error("invalid [[budget.schedule]] {name:?}: {reason}")]
     BadSchedule { name: String, reason: String },
     #[error("[components.{id}] parent {parent:?} is not a defined component")]
@@ -905,6 +907,65 @@ impl Default for DiskConfig {
     }
 }
 
+/// `[orchestrator]`: the supervisor that keeps the human's interactive orchestrator running
+/// (docs/design/agent-host/orchestrator-supervision.md, sections 2 to 4).
+#[derive(Debug, Clone, PartialEq)]
+pub struct OrchestratorConfig {
+    /// Off by default: the supervisor doesn't run.
+    pub enabled: bool,
+    /// The launcher script, relative to the repo or absolute.
+    pub launcher: String,
+    /// Wait before relaunch 2, 3, ...; the first relaunch goes at once. After them all fail
+    /// the supervisor gives up.
+    pub relaunch_backoff: Vec<Duration>,
+    /// A session that stays up this long resets the relaunch count.
+    pub stable_after: Duration,
+}
+
+impl Default for OrchestratorConfig {
+    fn default() -> Self {
+        OrchestratorConfig {
+            enabled: false,
+            launcher: "scripts/claude-orchestrator".to_string(),
+            relaunch_backoff: vec![
+                Duration::from_secs(30),
+                Duration::from_secs(2 * 60),
+                Duration::from_secs(10 * 60),
+            ],
+            stable_after: Duration::from_secs(10 * 60),
+        }
+    }
+}
+
+impl OrchestratorConfig {
+    fn merge(mut self, raw: RawOrchestrator) -> Result<Self, ConfigError> {
+        if let Some(v) = raw.enabled {
+            self.enabled = v;
+        }
+        if let Some(v) = raw.launcher {
+            if v.trim().is_empty() {
+                return Err(ConfigError::BadOrchestrator("launcher is empty".into()));
+            }
+            self.launcher = v;
+        }
+        if let Some(v) = raw.relaunch_backoff {
+            if v.is_empty() {
+                return Err(ConfigError::BadOrchestrator(
+                    "relaunch_backoff needs at least one duration".into(),
+                ));
+            }
+            self.relaunch_backoff = v
+                .iter()
+                .map(|s| parse_duration(s))
+                .collect::<Result<_, _>>()?;
+        }
+        if let Some(s) = raw.stable_after {
+            self.stable_after = parse_duration(&s)?;
+        }
+        Ok(self)
+    }
+}
+
 impl Default for CommandsConfig {
     fn default() -> Self {
         CommandsConfig {
@@ -956,6 +1017,7 @@ pub struct Config {
     pub branches: BranchesConfig,
     pub ci: CiConfig,
     pub disk: DiskConfig,
+    pub orchestrator: OrchestratorConfig,
     pub ports: PortsConfig,
     pub integration: IntegrationConfig,
     pub messages: MessagesConfig,
@@ -1002,6 +1064,7 @@ impl Default for Config {
             branches: BranchesConfig::default(),
             ci: CiConfig::default(),
             disk: DiskConfig::default(),
+            orchestrator: OrchestratorConfig::default(),
             ports: PortsConfig::default(),
             integration: IntegrationConfig::default(),
             messages: MessagesConfig::default(),
@@ -1256,6 +1319,10 @@ impl Config {
             config.ports.reserved = p.reserved;
         }
 
+        if let Some(o) = raw.orchestrator {
+            config.orchestrator = config.orchestrator.merge(o)?;
+        }
+
         if let Some(d) = raw.disk {
             if let Some(s) = d.check_interval {
                 config.disk.check_interval = parse_duration(&s)?;
@@ -1462,6 +1529,8 @@ struct RawConfig {
     #[serde(default)]
     disk: Option<RawDisk>,
     #[serde(default)]
+    orchestrator: Option<RawOrchestrator>,
+    #[serde(default)]
     ports: Option<RawPorts>,
     #[serde(default)]
     integration: Option<RawIntegration>,
@@ -1568,6 +1637,19 @@ struct RawDisk {
     check_interval: Option<String>,
     #[serde(default)]
     min_free_gb: Option<u64>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawOrchestrator {
+    #[serde(default)]
+    enabled: Option<bool>,
+    #[serde(default)]
+    launcher: Option<String>,
+    #[serde(default)]
+    relaunch_backoff: Option<Vec<String>>,
+    #[serde(default)]
+    stable_after: Option<String>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -2407,6 +2489,30 @@ mod tests {
         let cfg = Config::parse("[disk]\ncheck_interval = \"0s\"\nmin_free_gb = 5\n").unwrap();
         assert!(cfg.disk.check_interval.is_zero());
         assert_eq!(cfg.disk.min_free_gb, 5);
+    }
+
+    #[test]
+    fn orchestrator_config_parses_and_validates() {
+        let d = Config::default().orchestrator;
+        assert!(!d.enabled);
+        assert_eq!(d.relaunch_backoff.len(), 3);
+        let cfg = Config::parse(
+            "[orchestrator]\nenabled = true\nlauncher = \"/x/launch\"\n\
+             relaunch_backoff = [\"5s\", \"1m\"]\nstable_after = \"2m\"\n",
+        )
+        .unwrap();
+        let o = cfg.orchestrator;
+        assert!(o.enabled);
+        assert_eq!(o.launcher, "/x/launch");
+        assert_eq!(
+            o.relaunch_backoff,
+            vec![Duration::from_secs(5), Duration::from_secs(60)]
+        );
+        assert_eq!(o.stable_after, Duration::from_secs(120));
+        assert!(Config::parse("[orchestrator]\nrelaunch_backoff = []\n").is_err());
+        assert!(Config::parse("[orchestrator]\nrelaunch_backoff = [\"5\"]\n").is_err());
+        assert!(Config::parse("[orchestrator]\nlauncher = \" \"\n").is_err());
+        assert!(Config::parse("[orchestrator]\npane = \"%3\"\n").is_err());
     }
 
     #[test]

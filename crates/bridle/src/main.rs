@@ -9,6 +9,7 @@ mod error;
 mod goals;
 mod init;
 mod launchd;
+mod orchestrator;
 mod prime;
 mod render;
 mod serve;
