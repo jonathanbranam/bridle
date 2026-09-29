@@ -2,8 +2,9 @@
 id: sq4m
 title: Land each task as one squash commit carrying the task's info
 opened: 2026-09-29
+resolved: 2026-09-29
 repos: [bridle]
-changes: []
+changes: [cb9ac71]
 specs: []
 needs: []
 see: [tr7k, m2fq]
@@ -58,3 +59,7 @@ the task.
 - The orchestrator's reading of "a series of merges ... squashes": one squash commit per task.
   If the human meant a `--no-ff` merge commit over a single squashed commit (a merge bubble
   per task), only the manager step differs.
+
+## Resolution
+
+Resolved by cb9ac71: tasks land as one squash commit, and `bridle rm --delete-branch` accepts a squash-landed branch.

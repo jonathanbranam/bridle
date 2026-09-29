@@ -2,8 +2,9 @@
 id: f1ky
 title: Two flaky test failures observed under high machine load
 opened: 2026-09-27
+resolved: 2026-09-29
 repos: [bridle]
-changes: []
+changes: [9455663]
 specs: []
 needs: []
 see: [n6gy]
@@ -145,3 +146,7 @@ matching a predicate. Applied to every caller of `fake_claude_argv_dump_wrapper`
 `BRIDLE_AGENT_NAME` filter to the two `spawn_messaging_test` callers that
 didn't already have one — they shared the same root cause but hadn't yet
 been observed to flake on it.
+
+## Resolution
+
+Resolved by 9455663: store lists break `created_at` ties by insertion order, fixing the flaky components test.

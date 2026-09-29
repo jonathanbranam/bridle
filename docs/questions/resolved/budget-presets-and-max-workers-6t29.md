@@ -2,8 +2,9 @@
 id: 6t29
 title: Budget presets with no schedule, and max_workers per period
 opened: 2026-09-28
+resolved: 2026-09-29
 repos: [bridle]
-changes: []
+changes: [d03ba39]
 specs: []
 needs: [y2eb]
 see: [n9qh, c424, nbkj, mt7r]
@@ -55,3 +56,7 @@ From [[docs/design/usage-and-budget|usage and budget]] @ 873af46, `### Schedule 
   than `claude` itself; not measured. Related: [[smaller-debug-builds-nbkj|nbkj]],
   [[run-only-the-tests-a-change-can-affect-mt7r|mt7r]].
 - Config is read only at daemon start, so today any change needs a restart.
+
+## Resolution
+
+Resolved by d03ba39: schedule-less budget periods usable only via `bridle budget override <name>`, and per-period `max_workers` through the live override.

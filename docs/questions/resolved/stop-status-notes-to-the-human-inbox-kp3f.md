@@ -2,8 +2,9 @@
 id: kp3f
 title: Stop status notes piling up in the human's inbox
 opened: 2026-09-28
+resolved: 2026-09-29
 repos: [bridle]
-changes: []
+changes: [3bd16dc]
 specs: []
 needs: []
 see: [8ups, fgu6]
@@ -61,3 +62,7 @@ human get lost among the notes (as with the 10 here).
   [[tui-inbox-open-a-message-in-full-fgu6|fgu6]].
 - The inbox could also filter by kind (show questions only by default), but fixing what
   gets sent is the simpler first step.
+
+## Resolution
+
+Resolved by 3bd16dc: the human's inbox restricted to actionable items, and CHANGELOG.md added for release notes.

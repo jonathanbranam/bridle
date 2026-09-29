@@ -2,8 +2,9 @@
 id: m3wq
 title: Disk usage monitoring
 opened: 2026-09-28
+resolved: 2026-09-29
 repos: [bridle]
-changes: []
+changes: [5e55d8b]
 specs: []
 needs: []
 see: [nbkj, f75x]
@@ -33,3 +34,7 @@ The human, verbatim (2026-09-28):
   where a finding goes. Under
   [[stop-status-notes-to-the-human-inbox-kp3f|kp3f]] the human's inbox is only for
   things they must act on, so only a real problem should reach it.
+
+## Resolution
+
+Resolved by 5e55d8b: the daemon's periodic disk usage monitor (`crates/bridle-daemon/src/disk.rs`), documented in docs/design/agent-host/operating-model.md.

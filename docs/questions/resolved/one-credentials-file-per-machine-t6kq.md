@@ -2,8 +2,9 @@
 id: t6kq
 title: One credentials file for external principals, picked by project automatically
 opened: 2026-09-29
+resolved: 2026-09-29
 repos: [bridle]
-changes: []
+changes: [76bee0a]
 specs: []
 needs: []
 see: [9c63, a7h3]
@@ -52,3 +53,7 @@ Today: one file per principal per project in `~` (`~/.bridle-orchestrator.token`
   Unix user, so the tokens mostly name who's speaking rather than keep anyone out. Keeping
   them (for attribution and the human-only actions) but making them invisible is the KISS
   answer; dropping them would be a bigger design change (principals.md).
+
+## Resolution
+
+Resolved by 76bee0a: one `~/.bridle/credentials.toml`, picked by `BRIDLE_AS`.

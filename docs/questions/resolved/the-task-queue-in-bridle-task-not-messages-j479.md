@@ -2,8 +2,9 @@
 id: j479
 title: The task queue lives in bridle task, not in messages
 opened: 2026-09-28
+resolved: 2026-09-29
 repos: [bridle]
-changes: []
+changes: [f401a7f]
 specs: []
 needs: []
 see: [kp3f, a7h3, tx3f]
@@ -88,3 +89,7 @@ The human agreed to the model below ("yes").
 - **Role prompts**: `product-manager.md` and `manager.md` change to match. No `Prepared
   task` messages; a message to the manager is only a nudge ("the queue changed"), never
   the only record.
+
+## Resolution
+
+Resolved by f401a7f: the task queue lives in `bridle task` (PM-owned tiers, `bridle queue`, `bridle ready`) instead of messages.

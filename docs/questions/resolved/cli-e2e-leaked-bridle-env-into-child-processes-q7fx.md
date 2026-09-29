@@ -2,8 +2,9 @@
 id: q7fx
 title: "cli_e2e.rs leaked BRIDLE_* env into child bridle processes (fixed)"
 opened: 2026-09-27
+resolved: 2026-09-29
 repos: [bridle]
-changes: []
+changes: [1980c84]
 specs: []
 needs: []
 see: []
@@ -28,3 +29,7 @@ helper that `env_remove`s `BRIDLE_URL`, `BRIDLE_TOKEN`, `BRIDLE_AGENT_ID`,
 `bridle_claude::command::env_removal_keys`.
 
 This is a dated record of what happened, not an open question.
+
+## Resolution
+
+Resolved by 1980c84: cli_e2e.rs no longer leaks `BRIDLE_*` env into child processes.

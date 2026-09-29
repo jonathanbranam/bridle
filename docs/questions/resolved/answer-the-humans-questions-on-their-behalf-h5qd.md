@@ -2,8 +2,9 @@
 id: h5qd
 title: The orchestrator answers a question to the human, and it closes for the human
 opened: 2026-09-29
+resolved: 2026-09-29
 repos: [bridle]
-changes: []
+changes: [7257285]
 specs: []
 needs: []
 see: [kp3f, a7h3]
@@ -37,3 +38,7 @@ somehow".
 
 - The roles already say questions a rule answers go to the orchestrator, not the human
   (told to pm-1 in m-1211). The product manager's role prompt could say so explicitly.
+
+## Resolution
+
+Resolved by 7257285: a delegate's reply closes the human's question (`[messages] answer_for_human`).

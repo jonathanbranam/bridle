@@ -2,8 +2,9 @@
 id: fgu6
 title: TUI inbox: open a message to read it in full
 opened: 2026-09-28
+resolved: 2026-09-29
 repos: [bridle]
-changes: []
+changes: [1f7429d]
 specs: []
 needs: []
 see: [8ups]
@@ -22,3 +23,7 @@ The human, verbatim (2026-09-28):
   body in a single-line cell, so long bodies are cut off. `r` already starts a reply to
   the selected message (`App::start_reply`, `crates/bridle-tui/src/app.rs`).
 - Related: [[tui-inbox-doesnt-scroll-8ups|the inbox doesn't scroll]].
+
+## Resolution
+
+Resolved by 1f7429d: TUI inbox: Enter opens a message in full, `r` replies.

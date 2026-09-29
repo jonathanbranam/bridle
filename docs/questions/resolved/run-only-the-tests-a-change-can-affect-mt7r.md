@@ -2,8 +2,9 @@
 id: mt7r
 title: Run only the tests a change can affect, by strict modularity
 opened: 2026-09-28
+resolved: 2026-09-29
 repos: [bridle]
-changes: []
+changes: [523a26e]
 specs: []
 needs: []
 see: []
@@ -86,3 +87,7 @@ unaffected" — is broader than this pass and unaddressed. In particular:
   is undecided.
 
 Leaving this ticket open for that broader question.
+
+## Resolution
+
+Resolved by 523a26e: `just check-affected`, a crate-level fast path for local iteration.

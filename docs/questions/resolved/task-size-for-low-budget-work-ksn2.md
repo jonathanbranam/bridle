@@ -2,8 +2,9 @@
 id: ksn2
 title: An estimated size on tasks, to pick small ones when budget runs short
 opened: 2026-09-28
+resolved: 2026-09-29
 repos: [bridle]
-changes: []
+changes: [144d8af]
 specs: []
 needs: []
 see: [yurx, 8ups, m7wn, 6t29, j479]
@@ -24,3 +25,7 @@ indicate small tickets that can be picked up when we're running short on budget.
   [[budget-presets-and-max-workers-6t29|budget presets and max_workers]].
 - First users: [[tui-agents-panel-doesnt-scroll-yurx|yurx]] and
   [[tui-inbox-doesnt-scroll-8ups|8ups]], small and to be fixed together.
+
+## Resolution
+
+Resolved by 144d8af: optional S/M/L task size (`bridle task new|edit --size`).

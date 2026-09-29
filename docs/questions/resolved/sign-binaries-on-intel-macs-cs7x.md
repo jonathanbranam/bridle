@@ -2,8 +2,9 @@
 id: cs7x
 title: Ad-hoc sign bridle's binaries on Intel Macs (syspolicyd crashes on unsigned ones)
 opened: 2026-09-29
+resolved: 2026-09-29
 repos: [bridle]
-changes: []
+changes: [0f4b23a]
 specs: []
 needs: []
 see: []
@@ -39,3 +40,7 @@ binaries, so bridle's binaries (and test binaries) have no signature at all.
   does this; done by hand once on 2026-09-29).
 - Not proven that signing prevents the crash; confirm by watching for new `syspolicyd-*.ips`
   after a few installs.
+
+## Resolution
+
+Resolved by 0f4b23a: `.cargo/config.toml` ad-hoc code-signs x86_64-apple-darwin binaries at link time.

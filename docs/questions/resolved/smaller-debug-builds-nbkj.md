@@ -2,8 +2,9 @@
 id: nbkj
 title: Smaller debug builds
 opened: 2026-09-28
+resolved: 2026-09-29
 repos: [bridle]
-changes: []
+changes: [58f6cef]
 specs: []
 needs: []
 see: [f75x, m3wq]
@@ -28,3 +29,7 @@ build is several times smaller. Measure `target` before and after on a clean bui
 
 - Low priority; after P2 (the human).
 - Worker worktrees build the same profile, so this shrinks `../wt` too.
+
+## Resolution
+
+Resolved by 58f6cef: `debug = "line-tables-only"` in the dev profile for smaller debug builds.
