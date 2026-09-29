@@ -10,6 +10,13 @@ bridle impact set tw-7fa2 \
   --files 'client-watch/**' 'packages/ratings/**'
 ```
 
+**Built:** the registry only. `bridle impact set` replaces a task's whole declared impact
+(`POST /v1/tasks/{id}/impact`) and `bridle impact show` prints it. It is a field on the task
+record, stored in the state branch frontmatter (storage.md) and restored by `bridle rebuild`. Only
+an open, planned or claimed task can be set; ids are checked by shape (`r-`/`s-`/`g-`/`a-` plus
+hex), not for existence. Checking overlaps and diffing actual against declared impact are not
+built.
+
 `bridle impact check` compares every in-flight task and reports:
 
 | Overlap | Level | Action |

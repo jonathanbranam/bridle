@@ -92,6 +92,9 @@ pub enum Command {
     /// dropped/integrated/reopened; in_review/accepted arrive with later
     /// tasks.
     Task(TaskArgs),
+    /// A task's declared impact: the spec ids and files it will touch
+    /// (docs/design/impact-and-conflicts.md).
+    Impact(ImpactArgs),
     /// Add or remove a coordination edge between two tasks
     /// (docs/design/coordination.md).
     Dep(DepArgs),
@@ -875,6 +878,42 @@ pub struct TaskSummaryArgs {
     /// Read the summary from a file (or `-` for stdin).
     #[arg(long)]
     pub file: Option<PathBuf>,
+}
+
+#[derive(Debug, Args)]
+pub struct ImpactArgs {
+    #[command(subcommand)]
+    pub action: ImpactAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum ImpactAction {
+    /// Declare the task's impact, replacing any earlier declaration.
+    Set(ImpactSetArgs),
+    /// Print the task's declared impact.
+    Show(ImpactShowArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct ImpactSetArgs {
+    pub task: String,
+    /// Scenario or requirement id the task changes (repeatable).
+    #[arg(long, value_name = "ID")]
+    pub modify: Vec<String>,
+    /// Requirement or capability id the task adds spec under (repeatable).
+    #[arg(long, value_name = "ID")]
+    pub add_under: Vec<String>,
+    /// Spec id the task removes (repeatable).
+    #[arg(long, value_name = "ID")]
+    pub remove: Vec<String>,
+    /// File glob the task touches (one or more).
+    #[arg(long, value_name = "GLOB", num_args = 1..)]
+    pub files: Vec<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct ImpactShowArgs {
+    pub task: String,
 }
 
 #[derive(Debug, Args)]
