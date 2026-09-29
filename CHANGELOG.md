@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 - Tasks record their landing: `bridle task done --branch` (with `--commit`) and the new `bridle task summary <id> --text|--file` are stored on the task and its state-branch file, `task show` prints branch, commit and summary, and `task done` warns when there is no summary (ticket tr7k).
+- Fixed: the TUI agents and inbox lists no longer lose the highlight on the selected row (regression from making them scroll).
 - `.gitattributes` sets CHANGELOG.md to use the union merge driver, so branches that append to the changelog can be merged without conflicts (ticket br-e7f4).
 - New `[worktrees] copy`: repo-relative files (e.g. gitignored `.env`, `.mcp.json`) copied from the project clone into each new worker worktree before setup runs, keeping their mode; a missing file is skipped with a warning; absolute or `..` paths are rejected (ticket br-3309).
 - Tasks have an optional estimated size, `S`, `M` or `L`, set with `bridle task new|edit --size` and shown in `task show`, `task list`, `queue` and `ready`, so small tasks can be picked when budget runs short; `bridle task edit --size none` clears a task's size (ticket br-0685, br-b30d).

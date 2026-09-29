@@ -15,6 +15,26 @@ The human's words are quoted in [[squash-merge-each-task-sq4m|sq4m]]: the task s
 the branch that did it (which is then deleted), the SHA of the merge that implemented it, and
 a summary of how it was implemented.
 
+## Why: traceability
+
+The human, verbatim (2026-09-29):
+
+> I want the advisor to be able to answer a query such as: What was done to implement the
+> ticket for vim time block highlighting? The advisor should be able to find the ticket which
+> has a note about the implementation; a summary; and then trace back to the merge commit
+> easily to see what files changes instead of grepping the codebase and looking at the recent
+> git log - it should be a precision inspection of what changed. E.g. if that were an openspec
+> change we would have a proposal, design, spec updates, and tasks PLUS the code changes to
+> inspect to see what was done. We're missing all of that. I don't think we *need* all of
+> that necessarily, but we need the traceability
+
+**Acceptance:** from a task id alone (any project; the advisor reads other projects' daemons
+without a token, 9c63), one command shows the brief (the task body), the implementation
+summary, the branch and the merge commit, and `git show --stat <commit>` gives exactly the
+files that task changed. With sq4m's one-commit-per-task that's precise; with `--no-ff` merges
+it's `git diff <commit>^1 <commit>`. Searching tasks by words ("time block") must find it,
+title or body.
+
 ## Today
 
 `bridle task done <id> --commit <sha>` (br-789a) records the merge commit in the task's

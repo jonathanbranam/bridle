@@ -49,6 +49,15 @@ fn draw_status_line(frame: &mut Frame, area: Rect, app: &App) {
     frame.render_widget(line, area);
 }
 
+/// The selected row is only marked in the focused pane.
+fn highlight_style(focused: bool) -> Style {
+    if focused {
+        Style::default().add_modifier(Modifier::REVERSED)
+    } else {
+        Style::default()
+    }
+}
+
 fn draw_agents(frame: &mut Frame, area: Rect, app: &App) {
     let focused = app.focus == Focus::Agents;
     let header = Row::new(vec![
@@ -84,6 +93,7 @@ fn draw_agents(frame: &mut Frame, area: Rect, app: &App) {
     let rows: Vec<Row> = rows.collect();
     let table = Table::new(rows, widths)
         .header(header)
+        .row_highlight_style(highlight_style(focused))
         .block(border_block("Agents", focused));
     let mut state = app.agents_table_state;
     frame.render_stateful_widget(table, area, &mut state);
@@ -145,6 +155,7 @@ fn draw_inbox(frame: &mut Frame, area: Rect, app: &App) {
     let rows: Vec<Row> = rows.collect();
     let table = Table::new(rows, widths)
         .header(header)
+        .row_highlight_style(highlight_style(focused))
         .block(border_block("Inbox", focused));
     let mut state = app.inbox_table_state;
     frame.render_stateful_widget(table, area, &mut state);
@@ -233,4 +244,77 @@ fn border_block(title: &'static str, focused: bool) -> Block<'static> {
         .title(title)
         .borders(Borders::ALL)
         .border_style(style)
+}
+
+#[cfg(test)]
+mod tests {
+    use ratatui::Terminal;
+    use ratatui::backend::TestBackend;
+    use ratatui::buffer::Buffer;
+
+    use super::*;
+    use crate::app::Message;
+
+    fn agent(id: &str) -> bridle_api::Agent {
+        serde_json::from_value(serde_json::json!({
+            "id": id, "name": id, "role": "worker", "state": "idle",
+            "model": "sonnet", "session_id": "s", "pid": null, "cwd": "/",
+            "worktree": null, "branch": null,
+            "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z",
+            "last_event_at": null, "turns": 0, "turn_started_at": null,
+            "cost_usd_total": 0.0, "exit": null, "created_by": "human",
+            "held_messages": 0, "unacked_messages": 0, "components": [],
+            "context_tokens": null,
+        }))
+        .expect("agent json")
+    }
+
+    fn inbox_message(id: &str) -> bridle_api::Message {
+        serde_json::from_value(serde_json::json!({
+            "id": id, "from": "w", "to": "human", "kind": "note", "body": "hi",
+            "reply_to": null, "when": "now", "state": "delivered",
+            "created_at": "2026-01-01T00:00:00Z", "written_at": null,
+            "delivered_at": null, "read_at": null,
+        }))
+        .expect("message json")
+    }
+
+    fn render(app: &App) -> Buffer {
+        let mut terminal = Terminal::new(TestBackend::new(140, 40)).expect("terminal");
+        terminal.draw(|f| draw(f, app)).expect("draw");
+        terminal.backend().buffer().clone()
+    }
+
+    /// Whether any cell on the row containing `needle` is reversed, and the
+    /// same for the row containing `other`.
+    fn reversed(buf: &Buffer, needle: &str) -> bool {
+        let w = buf.area.width;
+        (0..buf.area.height).any(|y| {
+            let line: String = (0..w).map(|x| buf[(x, y)].symbol()).collect();
+            line.contains(needle)
+                && (0..w).any(|x| buf[(x, y)].modifier.contains(Modifier::REVERSED))
+        })
+    }
+
+    #[test]
+    fn selected_agent_row_is_highlighted() {
+        let mut app = App::new();
+        app.on_message(Message::AgentsLoaded(vec![agent("sel-a"), agent("oth-b")]));
+        let buf = render(&app);
+        assert!(reversed(&buf, "sel-a"));
+        assert!(!reversed(&buf, "oth-b"));
+    }
+
+    #[test]
+    fn selected_inbox_row_is_highlighted_when_focused() {
+        let mut app = App::new();
+        app.on_message(Message::MessagesLoaded(vec![
+            inbox_message("m-sel"),
+            inbox_message("m-oth"),
+        ]));
+        app.focus = Focus::Inbox;
+        let buf = render(&app);
+        assert!(reversed(&buf, "m-sel"));
+        assert!(!reversed(&buf, "m-oth"));
+    }
 }
