@@ -1,0 +1,7 @@
+# L2 typescript pack for bridle's workflow system (npm workspaces, vitest, tsc).
+#
+# Schema: docs/design/workflow-layers.md, roles-and-lifecycle.md and gates.md
+# in the bridle repo. Those tables aren't populated here yet, same as
+# workflow/base/workflow.toml and workflow/packs/python/workflow.toml — this is
+# scaffolding.
+layer = "typescript"
