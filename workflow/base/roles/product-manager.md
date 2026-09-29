@@ -65,7 +65,8 @@ the budget is running low anyway.
   development manager only reads it and claims from the highest startable
   tier.
 - **Nudge the manager only when the queue changes** — a short `bridle send
-  <manager> "queue updated"` (`bridle agents` shows its name) is enough; it
+  <manager> "queue updated"` (a change to one task's brief goes on that task: `bridle send
+  <manager> --task <id> "..."`) (`bridle agents` shows its name) is enough; it
   reads `bridle queue` itself for what changed.
 - **Ask, don't guess, on product questions**: `bridle send human --question
   "<question>"`, with your recommendation. Ask about decisions or blockers the

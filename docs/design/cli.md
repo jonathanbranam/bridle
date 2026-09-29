@@ -22,7 +22,7 @@ bridle spawn   <role> [--name N] [--prompt TEXT | --prompt-file FILE]
                [--component ID ...]
 bridle agents  [--all]
 bridle show    <agent>
-bridle send    <agent|human|role:NAME> [TEXT | --text-file FILE] [--question] [--when now|idle] [--reply-to ID]
+bridle send    <agent|human|role:NAME> [TEXT | --text-file FILE] [--question] [--when now|idle] [--reply-to ID] [--task ID]
 bridle inbox   [--all] [--mark-read]        # messages to me, plus every task's open question (list)
 bridle inbox show <id> [--no-mark-read]     # show one message in full, mark read by default
 bridle inbox read <id>...                   # mark one or more messages read
@@ -69,7 +69,7 @@ bridle task drop   <id> --reason TEXT
 bridle task done   <id> --commit SHA [--branch NAME]                 -> integrated; records the sha (and branch) on the task and in the thread; warns if no summary
 bridle task summary <id> --text TEXT | --file FILE                    records how it was implemented; `-` reads stdin; replaces an earlier summary
 bridle task reopen <id>
-bridle task note   <id> [TEXT | --text-file FILE]                   plain note to the task's thread; no effect on readiness
+bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note to the task's thread; no effect on readiness
 ```
 
 - **`--allow-tool TOOL`** on `spawn` (repeatable) grants a tool beyond the
@@ -104,6 +104,7 @@ bridle task note   <id> [TEXT | --text-file FILE]                   plain note t
   role — one delivered message per matching agent, same as sending to each
   individually; `bridle send` prints one `sent <id> -> <to>` line per recipient.
   A role with no live agents is an error, same as an unknown agent name.
+  `--task <id>` (and `bridle task note <id> --notify <agent>`, the same call) writes the text as a note on the task's thread and sends the recipient `<id>: note added` plus its first line; an unknown task is an error and nothing is sent.
 
 - **`task new/edit/note`**: when given `--body-file FILE` or `--text-file FILE`, pass `-`
   as the filename to read from stdin instead. This avoids passing backticks and

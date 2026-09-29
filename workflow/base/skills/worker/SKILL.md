@@ -30,7 +30,8 @@ what judgement applies.
   summary (`bridle task summary <task-id> --file <path>`: what changed, where, any decision
   or caveat; a task isn't done without one), then report to
   whoever gave you the task:
-  `bridle send <sender> "done: <one-line summary>; <commit sha>"`.
+  `bridle send <sender> --task <task-id> "done: <one-line summary>; <commit sha>"`
+  (the text goes on the task's thread; they get a short pointer).
 
 Never push, fetch, or merge from a remote, merge your own branch into
 anything, or touch files outside your worktree. Rules, guides and the

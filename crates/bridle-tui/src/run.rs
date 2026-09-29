@@ -208,6 +208,7 @@ fn spawn_reply(client: Client, pending: crate::app::PendingSend) -> tokio::task:
             to: Some(pending.to),
             body: pending.body,
             reply_to: Some(pending.reply_to.clone()),
+            task: None,
             when: bridle_api::When::Now,
             ..Default::default()
         };

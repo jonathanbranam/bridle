@@ -57,6 +57,7 @@ async fn interrupt_during_sleep_ends_the_turn_and_agent_stays_usable() {
                 kind: bridle_api::types::MessageKind::Note,
                 when: bridle_api::types::When::Now,
                 reply_to: None,
+                task: None,
             },
         )
         .await
@@ -127,6 +128,7 @@ async fn stop_then_resume_keeps_the_session_and_answers_new_messages() {
                 kind: bridle_api::types::MessageKind::Note,
                 when: bridle_api::types::When::Now,
                 reply_to: None,
+                task: None,
             },
         )
         .await
@@ -344,6 +346,7 @@ async fn crash_is_reported_with_a_stderr_tail_and_pending_messages_deliver_on_re
                 kind: bridle_api::types::MessageKind::Note,
                 when: bridle_api::types::When::Now,
                 reply_to: None,
+                task: None,
             },
         )
         .await
