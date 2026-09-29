@@ -4,7 +4,8 @@ title = "Dropping a claimed task leaves its claim behind (b5br)"
 kind = "bug"
 state = "planned"
 created_at = "2026-09-29T02:24:40.607Z"
-updated_at = "2026-09-29T02:25:20.809927Z"
+updated_at = "2026-09-29T03:00:11.357187Z"
+summary = "Dropping a claimed task now clears its claim (row, in-memory entry, claims.toml) via new clear_claim; release_claim refuses non-claimed tasks so the lease check can't resurrect dropped ones; TaskManager::open deletes claims rows whose task isn't claimed. Tests for each in tasks.rs; storage.md and CHANGELOG updated. br-29f9 still needs reopen + done --commit c533cb0 after deploy."
 +++
 
 ticket: docs/questions/open/dropping-a-claimed-task-leaves-its-claim-b5br.md
