@@ -1030,7 +1030,7 @@ async fn new_task(
     let components = state.manager.normalize_components(&req.components)?;
     let task = state
         .tasks
-        .new_task(&req.title, req.kind, req.body, components)
+        .new_task(&req.title, req.kind, req.body, components, req.size)
         .await?;
     let _ = state
         .emitter
@@ -1068,7 +1068,7 @@ async fn edit_task(
         .transpose()?;
     let task = state
         .tasks
-        .edit_task(&id, req.title, req.body, components)
+        .edit_task(&id, req.title, req.body, components, req.size)
         .await?;
     let _ = state
         .emitter

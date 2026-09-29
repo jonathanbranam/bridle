@@ -9,8 +9,8 @@ use bridle_api::{
     BudgetHoldRequest, BudgetOverrideRequest, Client, DoneTaskRequest, DropTaskRequest, Edge,
     EdgeKind, EditTaskRequest, Event, EventQuery, InterruptRequest, MaxWorkersRequest, MessageKind,
     MessageQuery, NewEdgeRequest, NewTaskRequest, RemoveEdgeQuery, RemoveQuery, RenewRequest,
-    ResumeRequest, SendRequest, SpawnRequest, StopRequest, Task, TaskKind, TokenCreateRequest,
-    UsageBreakdownQuery, UsageGroupBy, Workdir,
+    ResumeRequest, SendRequest, SpawnRequest, StopRequest, Task, TaskKind, TaskSize,
+    TokenCreateRequest, UsageBreakdownQuery, UsageGroupBy, Workdir,
 };
 use chrono::{Local, TimeZone, Utc};
 use futures::StreamExt;
@@ -23,7 +23,7 @@ use crate::cli::{
     ReleaseArgs, RmArgs, RulesAction, RulesArgs, RulesDiffArgs, RulesExplainArgs, SendArgs,
     ShowArgs, SpawnArgs, StopArgs, TaskAction, TaskArgs, TaskDoneArgs, TaskDropArgs, TaskEditArgs,
     TaskKindArg, TaskListArgs, TaskNewArgs, TaskNoteArgs, TaskPlanArgs, TaskReopenArgs,
-    TaskShowArgs, TokenAction, TokenArgs, UsageArgs, UsageByArg, WhenArg,
+    TaskShowArgs, TaskSizeArg, TokenAction, TokenArgs, UsageArgs, UsageByArg, WhenArg,
 };
 use crate::error::CliError;
 use crate::render;
@@ -1679,8 +1679,27 @@ fn project_has_components() -> bool {
         .is_some_and(|c| !c.components.is_empty())
 }
 
+fn size_str(size: Option<TaskSize>) -> &'static str {
+    size.map_or("-", TaskSize::as_str)
+}
+
+fn task_size(arg: TaskSizeArg) -> TaskSize {
+    match arg {
+        TaskSizeArg::S => TaskSize::S,
+        TaskSizeArg::M => TaskSize::M,
+        TaskSizeArg::L => TaskSize::L,
+    }
+}
+
 fn print_task_row(t: &Task) {
-    println!("{:<10} {:<9} {:<8} {}", t.id, t.kind, t.state, t.title);
+    println!(
+        "{:<10} {:<9} {:<8} {:<4} {}",
+        t.id,
+        t.kind,
+        t.state,
+        size_str(t.size),
+        t.title
+    );
 }
 
 async fn task_new(cli: &Cli, args: &TaskNewArgs) -> Result<(), CliError> {
@@ -1695,6 +1714,7 @@ async fn task_new(cli: &Cli, args: &TaskNewArgs) -> Result<(), CliError> {
         kind: task_kind_arg(args.kind),
         body,
         components: args.component.clone(),
+        size: args.size.map(task_size),
     };
     let task = client.new_task(&req).await?;
     if args.component.is_empty() && project_has_components() {
@@ -1720,6 +1740,9 @@ async fn task_show(cli: &Cli, args: &TaskShowArgs) -> Result<(), CliError> {
         println!("title       {}", task.title);
         println!("kind        {}", task.kind);
         println!("state       {}", task.state);
+        if let Some(size) = task.size {
+            println!("size        {size}");
+        }
         println!("created     {}", task.created_at.to_rfc3339());
         println!("updated     {}", task.updated_at.to_rfc3339());
         if !task.components.is_empty() {
@@ -1763,6 +1786,7 @@ async fn task_edit(cli: &Cli, args: &TaskEditArgs) -> Result<(), CliError> {
         } else {
             Some(args.component.clone())
         },
+        size: args.size.map(task_size),
     };
     let task = client.edit_task(&args.task, &req).await?;
     if cli.json {
@@ -1789,7 +1813,10 @@ async fn task_list(cli: &Cli, args: &TaskListArgs) -> Result<(), CliError> {
     } else if tasks.is_empty() {
         println!("no tasks");
     } else {
-        println!("{:<10} {:<9} {:<8} TITLE", "ID", "KIND", "STATE");
+        println!(
+            "{:<10} {:<9} {:<8} {:<4} TITLE",
+            "ID", "KIND", "STATE", "SIZE"
+        );
         for t in &tasks {
             print_task_row(t);
         }
@@ -1921,8 +1948,13 @@ async fn dep_rm(cli: &Cli, args: &DepEdgeArgs) -> Result<(), CliError> {
 fn print_task_row_with_project(project: Option<&str>, t: &Task) {
     match project {
         Some(p) => println!(
-            "{:<16} {:<10} {:<9} {:<8} {}",
-            p, t.id, t.kind, t.state, t.title
+            "{:<16} {:<10} {:<9} {:<8} {:<4} {}",
+            p,
+            t.id,
+            t.kind,
+            t.state,
+            size_str(t.size),
+            t.title
         ),
         None => print_task_row(t),
     }
@@ -2024,6 +2056,8 @@ struct QueueTaskRow {
     title: String,
     kind: TaskKind,
     state: bridle_api::TaskState,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    size: Option<TaskSize>,
     /// Ready (deps met, no open question) and, since ready already implies
     /// `planned`, therefore unclaimed too (roles-and-lifecycle.md, "the
     /// queue").
@@ -2079,6 +2113,7 @@ async fn queue_show(cli: &Cli) -> Result<(), CliError> {
                     title: t.title.clone(),
                     kind: t.kind,
                     state: t.state,
+                    size: t.size,
                     startable: ready_ids.contains(&t.id),
                 })
                 .collect(),
@@ -2096,10 +2131,11 @@ async fn queue_show(cli: &Cli) -> Result<(), CliError> {
         println!("Claimed:");
         for t in &claimed {
             println!(
-                "  {:<10} {:<9} {:<8} {:<16} {}",
+                "  {:<10} {:<9} {:<8} {:<4} {:<16} {}",
                 t.id,
                 t.kind,
                 t.state,
+                size_str(t.size),
                 t.claimed_by.as_deref().unwrap_or(""),
                 t.title
             );
@@ -2115,8 +2151,13 @@ async fn queue_show(cli: &Cli) -> Result<(), CliError> {
         for t in &tier.tasks {
             let mark = if t.startable { "startable" } else { "blocked" };
             println!(
-                "  {:<10} {:<9} {:<8} {:<9} {}",
-                t.id, t.kind, t.state, mark, t.title
+                "  {:<10} {:<9} {:<8} {:<4} {:<9} {}",
+                t.id,
+                t.kind,
+                t.state,
+                size_str(t.size),
+                mark,
+                t.title
             );
         }
     }

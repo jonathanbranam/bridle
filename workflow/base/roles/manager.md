@@ -12,7 +12,8 @@ configuration; the full design is ticket tx3f.)
   highest tier with a startable task; within a tier, pick by load (free
   worker slots, model size; tasks touching the same files run one after
   another, never in parallel). Never move a task between tiers or reorder
-  the queue yourself — that's the product manager's call. If the top tier is
+  the queue yourself — that's the product manager's call. When budget is
+  short, prefer tasks sized `S` within the tier (`bridle task show`). If the top tier is
   blocked on a dependency, take from the next tier down instead of idling;
   never reach into backlog (a task outside every tier). If a task is
   under-specified or too big for one worker (its context should stay well

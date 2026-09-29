@@ -501,6 +501,14 @@ pub enum TaskKindArg {
     ReEvaluate,
 }
 
+#[derive(Debug, Clone, Copy, ValueEnum)]
+#[value(rename_all = "verbatim")]
+pub enum TaskSizeArg {
+    S,
+    M,
+    L,
+}
+
 #[derive(Debug, Args)]
 pub struct TaskArgs {
     #[command(subcommand)]
@@ -544,6 +552,9 @@ pub struct TaskNewArgs {
     /// Scope the task to this component (repeatable); none = repo-wide.
     #[arg(long = "component", value_name = "ID")]
     pub component: Vec<String>,
+    /// Estimated size, so small tasks can be picked when budget is short.
+    #[arg(long, value_enum, ignore_case = true)]
+    pub size: Option<TaskSizeArg>,
 }
 
 #[derive(Debug, Args)]
@@ -579,6 +590,9 @@ pub struct TaskEditArgs {
     /// Make the task repo-wide (clear its components).
     #[arg(long, conflicts_with = "component")]
     pub no_component: bool,
+    /// Set the task's estimated size.
+    #[arg(long, value_enum, ignore_case = true)]
+    pub size: Option<TaskSizeArg>,
 }
 
 #[derive(Debug, Args)]

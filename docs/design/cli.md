@@ -60,9 +60,9 @@ bridle sync                                 renders resolved workflow layers int
 bridle prime orchestrator                   fresh session's opening context: role prompt, current
                                              state, startup steps; local only, no daemon call
 bridle prime worker|planner [--component ID ...]   the role's rules, facts, guides, plus named components' scope
-bridle task new    <title> -k/--kind KIND [--body TEXT | --body-file FILE] [--component ID ...]
+bridle task new    <title> -k/--kind KIND [--body TEXT | --body-file FILE] [--component ID ...] [--size S|M|L]
 bridle task show   <id>
-bridle task edit   <id> [--title TEXT] [--body TEXT | --body-file FILE] [--component ID ... | --no-component]
+bridle task edit   <id> [--title TEXT] [--body TEXT | --body-file FILE] [--component ID ... | --no-component] [--size S|M|L]
 bridle task list   [--claimed-by WHO] [--component ID]             WHO: me|human|<agent name>|<principal id>; unclaimed tasks have no claimant to match
 bridle task drop   <id> --reason TEXT
 bridle task done   <id> --commit SHA                                 -> integrated; records the sha in the thread
@@ -115,6 +115,11 @@ bridle task note   <id> [TEXT | --text-file FILE]                   plain note t
   the database already has any tasks, edges or open questions. Claims are never
   reconstructed — they're SQLite-only, with no state-branch counterpart, so any in-flight
   claim is simply lost, which is correct here, not a gap.
+- **`--size S|M|L`** on `task new`/`task edit` sets the task's optional estimated size
+  (case-insensitive), so small tasks can be picked when budget runs short. It's
+  informational: nothing selects on it and the queue's order stays PM-owned.
+  `task show` prints it when set; `task list`, `queue` and `ready` rows have a SIZE
+  column (`-` when unset). `task edit` can change a size but not clear it.
 - **`--component ID`** (docs/design/components.md) scopes a task or spawn to a
   `[components.<id>]`. `task new`/`task edit`/`spawn` reject an unknown id (the
   daemon checks it against its config); repeats collapse. `task edit --component`

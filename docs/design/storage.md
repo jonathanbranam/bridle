@@ -233,6 +233,9 @@ events/2026-09.jsonl      append-only transitions, for history and rebuild
   in the frontmatter, as an optional `components = ["a", "b"]` array: omitted when
   empty, and a file written before the field existed loads with none. Like the body,
   the state branch is its only durable copy, so a rebuild round-trips it.
+- **A task's `size`** (`S`, `M` or `L`) lives only in the frontmatter, as an optional
+  `size = "S"` line: omitted when unset, and a file written before the field existed
+  loads with none. Like `components`, a rebuild round-trips it.
 - **The task file's frontmatter delimiter is `+++`** (TOML, Hugo's
   convention), not `---` (which reads as YAML). The thread section, when a
   task has one, is a `## Thread` heading followed by one
