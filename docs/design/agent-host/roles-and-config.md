@@ -102,6 +102,10 @@ start_prompt      = "Check your inbox and tell the human you're ready."   # firs
 - **`[ci] github = true` turns on the CI watcher** (off by default; nothing is
   auto-detected). See [[../agent-host/operating-model#CI watcher|operating-model.md, "CI watcher"]].
 
+- **`[messages] answer_for_human = [principal ids]`** names who may answer for the human
+  (default `["external:orchestrator"]`): their `--reply-to` a message addressed to the human
+  closes it. See [[messages]].
+
 ## Per-spawn tool overrides
 
 `bridle spawn <role> --allow-tool TOOL` (repeatable) grants a tool beyond the

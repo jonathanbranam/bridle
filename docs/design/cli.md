@@ -328,7 +328,8 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
     message after listing, marking every one read. In JSON mode, returns both messages and
     questions; plain text prints a compact line per message/question.
   - `bridle inbox show <id> [--no-mark-read]` (show one message in full) fetches a single
-    message to `me` by id, prints the full header (from, kind, time, reply-to), the body,
+    message to `me` by id (a question a delegate answered shows `Answered by:`; the list shows
+    "answered by <who>: <first line>", visible with `--all`), prints the full header (from, kind, time, reply-to), the body,
     and the reply command (formatted as `bridle send <from> --reply-to <id> "..."`). By
     default, calls `POST /v1/messages/{id}/read` to mark it read, just as reading an
     inbox message in most UI apps would; pass `--no-mark-read` to list cheaply without

@@ -68,6 +68,7 @@ the budget is running low anyway.
   <manager> "queue updated"` (a change to one task's brief goes on that task: `bridle send
   <manager> --task <id> "..."`) (`bridle agents` shows its name) is enough; it
   reads `bridle queue` itself for what changed.
+- **A question a standing rule answers goes to the orchestrator, not the human.**
 - **Ask, don't guess, on product questions**: `bridle send human --question
   "<question>"`, with your recommendation. Ask about decisions or blockers the
   human must clear. Keep preparing other work while you wait. Routine status

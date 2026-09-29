@@ -700,7 +700,16 @@ async fn inbox_list(cli: &Cli, args: &InboxArgs) -> Result<(), CliError> {
                 .ok()
                 .and_then(|v| v.as_str().map(str::to_owned))
                 .unwrap_or_default();
-            println!("{} [{kind}] from {}: {}", m.id, m.from, m.body);
+            match &m.answered_by {
+                Some(by) => {
+                    let line = m.answered_line.as_deref().unwrap_or_default();
+                    println!(
+                        "{} [{kind}] from {}: answered by {by}: {line}",
+                        m.id, m.from
+                    );
+                }
+                None => println!("{} [{kind}] from {}: {}", m.id, m.from, m.body),
+            }
         }
         for q in &questions {
             let age = Utc::now() - q.asked_at;
@@ -741,6 +750,12 @@ async fn inbox_show(cli: &Cli, args: &InboxShowArgs) -> Result<(), CliError> {
         println!("Time: {}", local_time.format("%Y-%m-%d %H:%M:%S %Z"));
         if let Some(reply_to) = &message.reply_to {
             println!("Reply-To: {}", reply_to);
+        }
+        if let Some(by) = &message.answered_by {
+            println!(
+                "Answered by: {by} ({})",
+                message.answered_reply.as_deref().unwrap_or("?")
+            );
         }
         println!();
         println!("{}", message.body);

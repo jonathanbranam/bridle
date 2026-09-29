@@ -694,6 +694,104 @@ async fn send_to_external_principal_lands_in_its_own_inbox() {
     ));
 }
 
+/// h5qd: a reply from a principal in `[messages] answer_for_human` (default
+/// `external:orchestrator`) closes a question addressed to the human; a reply
+/// from anyone else doesn't.
+#[tokio::test]
+async fn delegate_reply_closes_the_humans_question_but_others_do_not() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let mut clients = Vec::new();
+    for name in ["orchestrator", "pm"] {
+        let created = daemon
+            .client
+            .create_token(&TokenCreateRequest {
+                name: name.to_string(),
+            })
+            .await
+            .expect("create external token");
+        clients.push(Client::new(daemon.running.url.clone(), Some(created.token)));
+    }
+    let (orchestrator, pm) = (&clients[0], &clients[1]);
+
+    let send = |c: &Client, to: &str, kind, reply_to: Option<String>, body: &str| {
+        let req = SendRequest {
+            to: Some(to.to_string()),
+            body: body.to_string(),
+            kind,
+            when: When::Now,
+            reply_to,
+            task: None,
+        };
+        let c = c.clone();
+        async move { c.send(&req).await.expect("send").remove(0) }
+    };
+
+    let q1 = send(pm, "human", MessageKind::Question, None, "where?").await;
+    let q2 = send(pm, "human", MessageKind::Question, None, "when?").await;
+    assert_eq!(
+        daemon
+            .client
+            .status()
+            .await
+            .expect("status")
+            .unread_human_messages,
+        2
+    );
+
+    // Not on the list: q2 stays open.
+    let stray = send(pm, "human", MessageKind::Note, Some(q2.id.clone()), "self").await;
+    let q2_now = daemon
+        .client
+        .list_messages(&MessageQuery::default())
+        .await
+        .expect("list");
+    let q2_now = q2_now.iter().find(|m| m.id == q2.id).expect("q2");
+    assert!(q2_now.answered_by.is_none());
+    assert_ne!(q2_now.state, MessageState::Read);
+    assert_eq!(stray.answered_by, None);
+
+    let reply = send(
+        orchestrator,
+        "external:pm",
+        MessageKind::Note,
+        Some(q1.id.clone()),
+        "merge to main\nsee the rule",
+    )
+    .await;
+    let all = daemon
+        .client
+        .list_messages(&MessageQuery::default())
+        .await
+        .expect("list");
+    let q1_now = all.iter().find(|m| m.id == q1.id).expect("q1");
+    assert_eq!(q1_now.state, MessageState::Read);
+    assert_eq!(q1_now.answered_by.as_deref(), Some("external:orchestrator"));
+    assert_eq!(q1_now.answered_reply.as_deref(), Some(reply.id.as_str()));
+    assert_eq!(q1_now.answered_line.as_deref(), Some("merge to main"));
+    assert_eq!(q1_now.body, "where?");
+
+    // q1 left the count; q2 and the stray note remain.
+    assert_eq!(
+        daemon
+            .client
+            .status()
+            .await
+            .expect("status")
+            .unread_human_messages,
+        2
+    );
+    let unread = daemon
+        .client
+        .list_messages(&MessageQuery {
+            to: Some("human".to_string()),
+            unread: true,
+            ..Default::default()
+        })
+        .await
+        .expect("unread");
+    assert!(unread.iter().all(|m| m.id != q1.id));
+}
+
 async fn wait_for(client: &bridle_api::Client, id: &str) -> bridle_api::types::Message {
     support::wait_for(&format!("message {id} delivered"), || async {
         let m = client.list_messages(&MessageQuery::default()).await.ok()?;
