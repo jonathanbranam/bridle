@@ -10,14 +10,12 @@ publish.workspace = true
 [dependencies]
 anyhow.workspace = true
 bridle-api.workspace = true
+chrono.workspace = true
 crossterm.workspace = true
 futures.workspace = true
 ratatui.workspace = true
 serde_json.workspace = true
 tokio.workspace = true
-
-[dev-dependencies]
-chrono.workspace = true
 
 [lints]
 workspace = true
