@@ -26,6 +26,7 @@ mod events;
 pub mod governor;
 pub mod impact;
 pub mod paths;
+pub mod ports;
 pub mod reevaluate;
 pub mod rules;
 mod server;
@@ -96,6 +97,8 @@ pub struct Overrides {
     /// How often [`tasks::TaskManager::tick_claim_lease_check`] walks open
     /// claims for a stale lease.
     pub claim_lease_check_interval: Duration,
+    /// How often [`ports::tick`] frees ports whose pid or owner agent is gone.
+    pub port_check_interval: Duration,
 }
 
 impl Default for Overrides {
@@ -112,6 +115,7 @@ impl Default for Overrides {
             governor_poll_interval_above_hold: Duration::from_secs(30),
             task_flush_interval: Duration::from_secs(30),
             claim_lease_check_interval: Duration::from_secs(30),
+            port_check_interval: Duration::from_secs(30),
         }
     }
 }
@@ -299,6 +303,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         governor: governor.clone(),
         ci: ci.clone(),
         tasks: tasks.clone(),
+        ports: config.ports.clone(),
     };
     let app = server::router(state);
 
@@ -379,6 +384,13 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
             async move { tasks.tick_claim_lease_check(Utc::now()).await }
         }
     });
+    let ports_task = spawn_loop(shutdown_rx.clone(), overrides.port_check_interval, {
+        let store = store.clone();
+        move || {
+            let store = store.clone();
+            async move { ports::tick(&store).await }
+        }
+    });
     // A zero interval turns the monitor off.
     let disk_task = (!config.disk.check_interval.is_zero()).then(|| {
         spawn_loop(shutdown_rx.clone(), config.disk.check_interval, {
@@ -446,6 +458,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         prune_task.abort();
         task_flush_task.abort();
         claim_lease_task.abort();
+        ports_task.abort();
     });
 
     Ok(RunningDaemon {

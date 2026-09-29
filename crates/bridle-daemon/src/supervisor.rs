@@ -1676,6 +1676,7 @@ impl AgentManager {
             exit.reason = "budget_paused".to_string();
         }
         let _ = self.0.store.set_agent_exit(id, exit.clone()).await;
+        let _ = self.0.store.release_agent_ports(id).await;
         self.transition_state(id, runtime, state).await;
         let _ = self
             .0

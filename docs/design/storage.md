@@ -103,7 +103,11 @@ Claims get their own table too (`SCHEMA_V9`):
 claims(task_id TEXT PK, claimed_by, claimed_at)
 conflicts(id INTEGER PK -> shown as C<id>, task_a, task_b, kind, key, state, resolution,
           opened_at, resolved_at; UNIQUE(task_a, task_b, kind, key))
+ports(port INTEGER PK, agent, task, pid, label, allocated_at)     -- SCHEMA_V16
 ```
+
+`ports` is runtime state: not on the state branch and not rebuilt (see
+[[worktrees-and-ports]]).
 
 `task_id` is the primary key: a task has at most one claimant at a time, so
 `TaskManager::claim_task` on an already-claimed (or otherwise not-ready)
@@ -117,7 +121,7 @@ agent's own `last_event_at`/`turn_started_at` (the same signal
 activity is older than `config.claim_lease_after`. Only a `claimed` task is ever
 moved by a release: dropping or integrating a claimed task clears its claim, and
 `TaskManager::open` deletes any `claims` row whose task isn't `claimed`. The ephemeral tables
-`waits`, `ports`, `impact_cache` arrive with later tasks.
+`waits`, `impact_cache` arrive with later tasks.
 
 **Claims are durable now (j479):** unlike `tasks`/`edges`/`open_questions`,
 there's no per-claim file to key a targeted write on, so — the same

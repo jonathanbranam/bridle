@@ -11,15 +11,15 @@ use serde::de::DeserializeOwned;
 use thiserror::Error;
 
 use crate::types::{
-    AddQueueTierRequest, Agent, AnswerQuestionRequest, ApiErrorResponse, AskQuestionRequest,
-    BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, Conflict, DoneTaskRequest,
-    DropTaskRequest, Edge, EditTaskRequest, Event, EventQuery, Health, ImpactCheckRequest,
-    ImpactReport, InterruptRequest, InterruptResponse, MaxWorkersRequest, Message, MessageQuery,
-    NewEdgeRequest, NewTaskRequest, NoteTaskRequest, OpenQuestion, Queue, RemoveEdgeQuery,
-    RemoveQuery, RenewRequest, ResolveConflictRequest, ResumeRequest, SendRequest,
-    SetImpactRequest, SetQueueRequest, SetSummaryRequest, SpawnRequest, Status, StatusLineReport,
-    StopRequest, Task, TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine,
-    TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery,
+    AddQueueTierRequest, Agent, AllocPortRequest, AnswerQuestionRequest, ApiErrorResponse,
+    AskQuestionRequest, BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, Conflict,
+    DoneTaskRequest, DropTaskRequest, Edge, EditTaskRequest, Event, EventQuery, Health,
+    ImpactCheckRequest, ImpactReport, InterruptRequest, InterruptResponse, MaxWorkersRequest,
+    Message, MessageQuery, NewEdgeRequest, NewTaskRequest, NoteTaskRequest, OpenQuestion,
+    PortAllocation, Queue, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest,
+    ResumeRequest, SendRequest, SetImpactRequest, SetQueueRequest, SetSummaryRequest, SpawnRequest,
+    Status, StatusLineReport, StopRequest, Task, TaskQuery, TokenCreateRequest, TokenCreated,
+    TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery,
 };
 
 #[derive(Debug, Error)]
@@ -513,6 +513,20 @@ impl Client {
         req: &ResolveConflictRequest,
     ) -> Result<Conflict, ClientError> {
         self.post_json(&["v1", "conflicts", id, "resolve"], req)
+            .await
+    }
+
+    pub async fn alloc_port(&self, req: &AllocPortRequest) -> Result<PortAllocation, ClientError> {
+        self.post_json(&["v1", "ports"], req).await
+    }
+
+    pub async fn list_ports(&self) -> Result<Vec<PortAllocation>, ClientError> {
+        self.get_json(&["v1", "ports"]).await
+    }
+
+    /// Returns the allocation that was released.
+    pub async fn release_port(&self, port: u16) -> Result<PortAllocation, ClientError> {
+        self.post_empty(&["v1", "ports", &port.to_string(), "release"])
             .await
     }
 
