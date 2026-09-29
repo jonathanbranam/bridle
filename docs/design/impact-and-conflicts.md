@@ -64,7 +64,7 @@ didn't declare. An agent can't avoid a conflict by under-declaring.
    in-flight task whose impact overlaps what just merged, so those agents rebase
    and re-read before building on stale text.
 
-**Built: steps 1 and 2.** `impact check` (`POST /v1/impact/check`) opens one conflict per
+**Built: steps 1, 2 and 4.** `impact check` (`POST /v1/impact/check`) opens one conflict per
 conflict-level overlap, and each overlap only once, resolved or not (unique on the two tasks,
 kind and key). Conflicts live in the SQLite `conflicts` table only: a conflict is not a
 task thread and has no state-branch record, so `bridle rebuild` drops them and the next
@@ -73,7 +73,13 @@ message naming the other task and the overlap, and a note lands on both task thr
 an unclaimed task the message goes to the running `manager` agents. `bridle conflict list`
 and `resolve` (`GET /v1/conflicts`, `POST /v1/conflicts/{id}/resolve`) do the rest:
 `--order A,B` adds the `A blocks B` edge, and `--compatible` and `--merge-into` record only
-the outcome; the agents make the change. Not built: escalation (step 3), the `git merge-tree`
+the outcome; the agents make the change. Step 4 rides on the `main moved` notice sent when a task lands
+(`bridle task done`): for each running worker that claims a task with a declared impact, the
+daemon compares it with the landed commit's changed files (glob overlap, as in `impact check`)
+and with the spec ids whose text changed in the `design/specs/*.md` files it touched (parsed
+before and after with `bridle-spec`). An overlap adds `spec changed under you: <ids and
+files>` to that worker's notice; workers with no declared impact, or no overlap, get the
+generic notice. Edits to only the prose of a non-executable scenario aren't seen. Not built: escalation (step 3), the `git merge-tree`
 conflicts, and the handoff for the blocked task's claimant.
 
 This replaces the same-spec pile-up rule. Serialisation happens only when two

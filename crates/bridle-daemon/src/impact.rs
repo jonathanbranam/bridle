@@ -116,6 +116,71 @@ fn pair(a: &Task, b: &Task, map: &BTreeMap<String, SpecRef>, out: &mut Vec<Overl
     }
 }
 
+/// Ids whose text differs between two versions of one spec file (`None` = the file
+/// is absent on that side, or doesn't parse). Line numbers are ignored so an insertion
+/// doesn't flag everything below it. Prose of a non-executable scenario isn't parsed, so
+/// editing only that isn't seen. A changed scenario also flags its requirement.
+pub fn changed_spec_ids(old: Option<&str>, new: Option<&str>) -> BTreeSet<String> {
+    fn index(text: Option<&str>) -> BTreeMap<String, (String, Option<String>)> {
+        let mut m = BTreeMap::new();
+        let Some(spec) = text.and_then(|t| bridle_spec::parse_str("spec", t).ok()) else {
+            return m;
+        };
+        for r in spec.requirements {
+            let Some(rid) = r.id.clone() else { continue };
+            for mut s in r.scenarios.iter().cloned() {
+                s.line = 0;
+                if let Some(sid) = s.id.take() {
+                    m.insert(sid, (format!("{s:?}"), Some(rid.clone())));
+                }
+            }
+            let mut head = r.clone();
+            head.line = 0;
+            head.scenarios.clear();
+            m.insert(rid, (format!("{head:?}"), None));
+        }
+        m
+    }
+    let (old, new) = (index(old), index(new));
+    let mut out = BTreeSet::new();
+    for id in old.keys().chain(new.keys()) {
+        if old.get(id).map(|x| &x.0) != new.get(id).map(|x| &x.0) {
+            out.insert(id.clone());
+            if let Some(Some(r)) = old.get(id).or(new.get(id)).map(|x| &x.1) {
+                out.insert(r.clone());
+            }
+        }
+    }
+    out
+}
+
+/// What a landing touched that `impact` declares: the spec ids and file paths, as a
+/// short phrase, or `None` when there is no overlap (or no declared impact).
+pub fn landing_overlap(
+    impact: &Impact,
+    ids: &BTreeSet<String>,
+    files: &[String],
+) -> Option<String> {
+    let hit_ids: BTreeSet<&str> = impact
+        .modify
+        .iter()
+        .chain(&impact.remove)
+        .chain(&impact.add_under)
+        .filter(|i| ids.contains(*i))
+        .map(String::as_str)
+        .collect();
+    let hit_files: BTreeSet<&str> = files
+        .iter()
+        .filter(|f| impact.files.iter().any(|g| globs_overlap(g, f)))
+        .map(String::as_str)
+        .collect();
+    if hit_ids.is_empty() && hit_files.is_empty() {
+        return None;
+    }
+    let all: Vec<&str> = hit_ids.into_iter().chain(hit_files).collect();
+    Some(all.join(", "))
+}
+
 /// Two globs overlap when the literal text before the first wildcard of one is a
 /// prefix of the other's. Deliberately coarse (`src/a*.rs` vs `src/ab/**` overlaps;
 /// `src/a.rs` vs `src/a.rs.bak` too): an early warning, not a proof.
@@ -261,5 +326,33 @@ mod tests {
             task("c", TaskState::Open, i),
         ];
         assert!(check(&ts, &map()).is_empty());
+    }
+
+    const SPEC: &str = "### Requirement: A   {#r-aaaa}\n\nSHALL A.\n\n#### Scenario: S   {#s-bbbb}\n\n*Verification*: **executable**\n\n- **GIVEN** one\n- **WHEN** it runs\n- **THEN** ok\n";
+
+    #[test]
+    fn changed_ids_ignore_untouched_and_flag_edits() {
+        assert!(changed_spec_ids(Some(SPEC), Some(SPEC)).is_empty());
+        let edited = SPEC.replace("GIVEN** one", "GIVEN** two");
+        let ids = changed_spec_ids(Some(SPEC), Some(&edited));
+        assert_eq!(ids.into_iter().collect::<Vec<_>>(), ["r-aaaa", "s-bbbb"]);
+        // A new file: everything in it is new.
+        assert!(changed_spec_ids(None, Some(SPEC)).contains("s-bbbb"));
+    }
+
+    #[test]
+    fn landing_overlap_names_ids_and_files() {
+        let ids: BTreeSet<String> = ["s-bbbb".to_string()].into();
+        let files = vec!["src/a/x.rs".to_string(), "README.md".to_string()];
+        let i = imp(&["s-bbbb", "s-zzzz"], &[], &[], &["src/a/**"]);
+        assert_eq!(
+            landing_overlap(&i, &ids, &files).as_deref(),
+            Some("s-bbbb, src/a/x.rs")
+        );
+        assert_eq!(
+            landing_overlap(&imp(&[], &[], &[], &["docs/**"]), &ids, &files),
+            None
+        );
+        assert_eq!(landing_overlap(&Impact::default(), &ids, &files), None);
     }
 }
