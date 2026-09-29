@@ -1202,10 +1202,12 @@ async fn done_task(
             .into());
         }
     }
+    let claimant = state.tasks.get_task(&id).and_then(|t| t.claimed_by);
     let mut task = state
         .tasks
         .done_task(&id, &req.commit, req.branch.as_deref(), &principal.id)
         .await?;
+    notify_main_moved(&state, &task, claimant.as_deref(), branch).await;
     if let Some(branch) = branch {
         let report = clean_up_landed_branch(&state, branch, &principal).await;
         task = state.tasks.note_task(&id, &principal.id, &report).await?;
@@ -1220,6 +1222,54 @@ async fn done_task(
         )
         .await;
     Ok(Json(task))
+}
+
+/// Tells the other running workers that a landing moved the integration
+/// branch: those holding a claim or working on a branch, not the agent whose
+/// task landed. A git failure just drops the file list.
+async fn notify_main_moved(
+    state: &AppState,
+    task: &Task,
+    claimant: Option<&str>,
+    landed_branch: Option<&str>,
+) {
+    let Ok(agents) = state.store.list_agents(false).await else {
+        return;
+    };
+    let claims: Vec<String> = state
+        .tasks
+        .list_tasks()
+        .into_iter()
+        .filter_map(|t| t.claimed_by)
+        .collect();
+    let recipients: Vec<String> = agents
+        .iter()
+        .filter(|a| a.role == crate::supervisor::WORKER_ROLE && a.state.is_running())
+        .filter(|a| {
+            let principal = format!("agent:{}", a.name);
+            let lander = claimant == Some(principal.as_str())
+                || (landed_branch.is_some() && a.branch.as_deref() == landed_branch);
+            let busy = a.branch.is_some() || claims.contains(&principal);
+            busy && !lander
+        })
+        .map(|a| a.id.clone())
+        .collect();
+    if recipients.is_empty() {
+        return;
+    }
+    let sha = task.commit.as_deref().unwrap_or_default();
+    let files = match crate::worktree::changed_files(&state.workspace.repo, sha).await {
+        Ok(f) => {
+            let mut shown = f.iter().take(15).cloned().collect::<Vec<_>>().join(", ");
+            if f.len() > 15 {
+                shown.push_str(&format!(", +{} more", f.len() - 15));
+            }
+            format!("; files changed: {shown}")
+        }
+        Err(_) => String::new(),
+    };
+    let landing = format!("task {} ({}) landed at {sha}{files}", task.id, task.title);
+    state.manager.note_main_moved(recipients, landing).await;
 }
 
 /// Removes every agent on `branch` (stopping any still running), their
