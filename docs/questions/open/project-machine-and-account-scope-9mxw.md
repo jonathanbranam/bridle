@@ -63,3 +63,11 @@ daemon, which must be running even when no bridle work is. The human asked (2026
 works when they aren't working on bridle itself; decide with this ticket: one machine-level
 orchestrator host (a machine daemon or a designated project) versus per project, and make the
 doc and code agree.
+
+## `[context]` is ignored in the machine config too (2026-09-29)
+
+The same holds for `[context] wind_down_at`: the human set it, with `[orchestrator]`, in
+`~/.bridle/config.toml`, and the daemon silently ignored both (only `[budget]` is read there), so
+managers weren't renewed until the 200K default. The human then copied both into the bridle
+repo's `.bridle/config.toml`. They're not sure what should live where yet; left open for later.
+At the least, a section the daemon ignores in `~/.bridle/config.toml` should warn.
