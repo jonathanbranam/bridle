@@ -143,6 +143,31 @@ pub fn fake_claude_argv_dump_wrapper(dir: &Path, argv_path: &Path) -> PathBuf {
     wrapper
 }
 
+/// A wrapper script around fake-claude.py that sets
+/// `FAKE_CLAUDE_SESSIONS_DIR`, so `--resume` of a session no process has run
+/// dies like real claude's.
+pub fn fake_claude_sessions_wrapper(dir: &Path) -> PathBuf {
+    let sessions = dir.join("sessions");
+    std::fs::create_dir_all(&sessions).expect("create sessions dir");
+    let wrapper = dir.join("fake-claude-sessions-wrapper.sh");
+    std::fs::write(
+        &wrapper,
+        format!(
+            "#!/bin/sh\nexec env FAKE_CLAUDE_SESSIONS_DIR={:?} {:?} \"$@\"\n",
+            sessions.display(),
+            fake_claude_path().display(),
+        ),
+    )
+    .expect("write wrapper script");
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&wrapper, std::fs::Permissions::from_mode(0o755))
+            .expect("chmod wrapper script");
+    }
+    wrapper
+}
+
 /// A wrapper script around fake-claude.py that sets `FAKE_CLAUDE_ENV_FILE`
 /// before exec'ing it, so a test can inspect the real invocation's own
 /// environment (e.g. a per-spawn `--env` secret).

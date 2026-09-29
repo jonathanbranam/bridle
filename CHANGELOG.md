@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Fixed: a resumed agent whose Claude Code session is gone no longer dies on its first turn on every resume; the daemon retries once on a fresh session in the same worktree, and `agent.exited` carries the claude `stderr_tail` (ticket p4ks, br-3ec1).
 - Fixed: the TUI agents panel and inbox now scroll to keep the selected row visible (tickets yurx, 8ups, br-9e67).
 - The daemon logs a shutdown request at WARN, naming the caller for `POST /v1/shutdown` or the signal (SIGINT/SIGTERM); open event streams already end on shutdown and the HTTP drain is bounded at 5s (tickets sed3, zm95, br-36fa).
 - A role with no `system_prompt` now defaults to `<workflow>/base/roles/<role>.md` when `workflow` is set and the file exists; an explicit `system_prompt` still wins (ticket rl2v, br-f636).
