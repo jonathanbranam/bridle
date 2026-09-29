@@ -42,10 +42,12 @@ bridle usage   [--by role|model|agent] [--since DURATION]   # DURATION: <n>s|m|h
 bridle cost audit [--check]                 static: size of what bridle injects into agent context (usage-and-budget.md)
 bridle tui                                  interactive terminal UI: agents list, live event tail
 bridle budget [--schedule | hold [--for D|--until T] | release | override ...]   usage governor (usage-and-budget.md)
-bridle token create <name>
+bridle token create <name>                  with a known project (--project, or the cwd's daemon) the token is saved in
+                                             ~/.bridle/credentials.toml and not printed; with --url it's printed once
 bridle token list                           name, created-at, revoked-or-not; never the token itself
 bridle token revoke <name>                  human only, external tokens only (an agent's own token is
-                                             revoked through `bridle rm`, not this)
+                                             revoked through `bridle rm`, not this); also removes its
+                                             credentials.toml entry for the project
 bridle statusline                           Claude Code statusLine command; local only, no daemon call
 bridle stop-check                           Claude Code Stop hook for the worker role; refuses to stop
                                              with an unreleased claim and no thread entry since claiming
@@ -147,7 +149,7 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   is looked up as an agent name first, then matched against `claimed_by`
   verbatim, so a full principal id (`agent:w1`, `human`) works too. A task
   with no claim never matches any filter value.
-- **Discovery** of the daemon, and **which token** the CLI uses, are in
+- **Discovery** of the daemon, and **which token** the CLI uses (including `$BRIDLE_AS` and `~/.bridle/credentials.toml`), are in
   [[docs/design/agent-host/daemon#Workspace layout|workspace layout]] and
   [[docs/design/agent-host/principals#How the CLI picks a token|principals]].
   `--project` also reads `$BRIDLE_PROJECT`, including for `serve`, where it
@@ -344,7 +346,7 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   principal instead of the human's. The token is **not** scoped read-only or to this route —
   bridle has no per-route/per-token scoping yet, so it can do whatever an `external:*`
   principal can do (send messages, spawn agents, ...); that gap is real, just not solved
-  here. One-time setup: `bridle token create statusline > ~/.bridle/statusline.token` to mint
+  here. One-time setup: `bridle --url <daemon url> token create statusline > ~/.bridle/statusline.token` (`--url` so the token is printed, not saved in `credentials.toml`) to mint
   an `external:statusline` token and store it where `statusline` reads it (a fixed path under
   `$BRIDLE_HOME`/`~/.bridle`, not the workspace's own `.bridle/`, since this needs to work
   regardless of which project workspace Claude Code happens to be in).
