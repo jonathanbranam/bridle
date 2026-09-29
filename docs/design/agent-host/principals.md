@@ -40,8 +40,9 @@ replace that.
 Every event records its `actor`: the caller for spawn, send, read,
 interrupt, stop, resume and remove, and `system` for what agents do and for
 the state changes that follow. `token create` isn't recorded yet. Commands that are only
-the human's (`token create`, `shutdown`, and later `accept`) refuse other
-principals. A message can be marked read by its recipient or by the human.
+the human's (`token create`/`revoke`, `shutdown`, `rebuild`, and the `budget` writes: hold, release,
+override, max-workers) refuse other principals; the queue writes (`POST /v1/queue`, `/queue/tiers`)
+take only the human or an agent whose role is `product-manager`. A message can be marked read by its recipient or by the human.
 Agent lifecycle endpoints (spawn, interrupt, stop, resume, renew, remove)
 refuse an `agent` principal whose role is `worker`: the worker role has no
 lifecycle authority ([[docs/design/agent-host/roles-and-config|roles and

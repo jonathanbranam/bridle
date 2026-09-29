@@ -11,7 +11,7 @@ Split by what each role may decide (research 09 §4):
 | **Manager** | Opus/Fable-class, long-lived, hosted by bridle | decomposition, plans, ordering, conflict arbitration, what to ask the human | implement bulk code; accept |
 | **Worker** | Sonnet-class, per task | how to implement a planned task; negotiating conflicts with peers | change design silently; accept; talk to the human directly |
 | **Reviewer** | strong model, never the task's implementer | whether a diff matches its plan and specs | fix what it reviews |
-| **Integrator** | *not an agent* — bridle itself | merge order, conflict probes, rebase notices | resolve a semantic conflict |
+| **Integrator** | *not an agent* — bridle itself (`bridle land`, [[docs/design/agent-host/roles-and-config|roles and config]]) | conflict probes, the merge gate, `main moved` notices | resolve a semantic conflict |
 
 - **The orchestrator is the human's interface**, running anywhere (laptop,
   the workforce host, or hosted by bridle as a role like any other). Bridle
@@ -48,9 +48,8 @@ pattern".
 ```
 
 - **ready** is computed: planned, no open blockers, no unanswered questions.
-  A blocker counts as open unless it's `dropped` (`integrated`/`accepted`
-  don't exist yet, so there's no "done" state to check besides that one —
-  see coordination.md, Edges). `bridle task plan <id>` makes the `open ->
+  A blocker counts as open unless it's `dropped` or `integrated` (`accepted`
+  doesn't exist yet; see coordination.md, Edges). `bridle task plan <id>` makes the `open ->
   planned` transition (`TaskManager::plan_task`); `open` is the only state it
   accepts, so a task already planned, claimed, dropped or reopened is a
   conflict.
@@ -82,7 +81,7 @@ pattern".
   task marked startable or blocked.
 - **claimed** carries a lease renewed by the agent's activity, which the
   daemon already sees on every agent's stream, so no heartbeat hook is needed
-  for bridle-hosted agents. If the lease expires, the task returns to ready,
+  for bridle-hosted agents. If the lease expires (`[daemon] claim_lease_after`, default 10 min), the task returns to ready,
   and whatever the worker wrote on it goes to the next claimant (research 10
   §5). Claims are durable: mirrored to the state branch alongside the task
   and edge state, so `bridle rebuild` restores who's working what
@@ -90,6 +89,10 @@ pattern".
 - **Kinds** change the gates and the prime: `feature`, `bug`, `chore`,
   `question`, `research`, `explore` ([[docs/design/explorations|explorations]]), `arch-revision` ([[docs/design/architecture-tier|architecture]]) and
   `re-evaluate` ([[docs/design/traceability|traceability]]).
+- **The product manager** (`product-manager`) is a project-defined role, not a built-in: it
+  triages `open` tasks (`plan`) and owns the queue. Bridle's own `.bridle/config.toml`
+  defines it with `autostart = true`. While none runs, the daemon tells the manager when a task
+  is filed (coordination.md, "Waking the manager").
 - **integrated** means merged to the integration branch with tests green.
   **accepted** means the human said yes. They are separate states, so specs fold
   continuously while acceptance stays with the human (research 10 §3.2).

@@ -54,7 +54,9 @@ established; S-numbers are its scenarios. Each agent is one headless
   no-memory `--settings` above.
 - **Process group**: the agent is the leader of its own process group.
 - **cwd**: `wt/<name>` (a new worktree on branch `bridle/<name>` from the
-  role's base ref), the clone itself, or an explicit path.
+  role's base ref; the path follows `[worktrees] layout`, and a `paired` layout also
+  creates the sibling repos' worktrees, [[docs/design/worktrees-and-ports|worktrees and ports]]),
+  the clone itself, or an explicit path.
   **One agent per branch**: an explicit path inside another agent's worktree
   (running or stopped) is refused with a 409 naming the fix, `bridle renew`
   that agent or `bridle remove` it first. Renew reuses its own branch.
@@ -153,7 +155,8 @@ version. Instead:
 - **Exit codes don't mean crash.** After a stdin close the code is 0 or 1 by
   whether the *last turn* succeeded (S5). So:
   - if bridle asked it to stop, it is `stopped`, with reason `stdin_closed`,
-    `sigterm` or `sigkill` by the step that ended it, or `budget_exhausted`;
+    `sigterm` or `sigkill` by the step that ended it, or `budget_exhausted`,
+    `budget_paused` (governor wind-down) or `daemon_shutdown` (clean daemon stop);
   - otherwise exit code 0 or 1, no signal, after some output, is `exited`;
   - anything else is `crashed`, with the tail of stderr as the reason.
 
@@ -211,9 +214,13 @@ synthetic continuation note (a `Note` message, same delivery path as `spawn`'s
 first message) pointing the agent at its task thread and its own last handoff
 note (br-ab66). Emits `agent.renewed`.
 
-This is the mechanical primitive; the automatic wind-down trigger for an
-agent nearing its context limit (`[context]` config, `wind_down_at`, a
-"Context handoff:" message before the swap) is separate, later work.
+`renew` isn't refused by a budget hold (nothing new is spawned; it only swaps a process).
+
+This is also the mechanical primitive under the **context governor**: every 30 s the daemon
+compares each running agent's `context_tokens` (its latest `result`'s context size) with its
+role's `[context] wind_down_at`. Once past it, the agent gets a `Context handoff:` note
+(`when now`; commit WIP, send a handoff note) and is renewed when that turn ends, or after
+`[context] wind_down_grace` (default 5 min) regardless. One notice per crossing.
 
 ## Containment
 
