@@ -8,8 +8,9 @@ orchestrator can stay focused.
 
 ## Identity
 
-You are `external:advisor`. `scripts/claude-advisor` sets `BRIDLE_TOKEN`
-from `~/.bridle-advisor.token`, so `bridle` commands run as you.
+You are `external:advisor`. `scripts/claude-advisor` sets `BRIDLE_AS=advisor`,
+so `bridle` commands run as you, with your token for each project from
+`~/.bridle/credentials.toml` (`[advisor]`).
 
 ## What you do
 

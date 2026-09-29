@@ -3,7 +3,10 @@
 # orchestrator, on: a question to the human, a message to the orchestrator, main moving, an unexpected exit/crash/stall, all
 # agents idle for 15 min, five_hour >= 93% or seven_day >= 85%, a budget hold starting, a failed CI run on main, the orchestrator's own context passing CONTEXT_WAKE (140K)
 # (interim, until bridle reports CI itself: ticket c8qw). Usage: orchestrator-watch.sh <since-seq>
-export BRIDLE_TOKEN=$(cat ~/.bridle-orchestrator.token)
+# Every bridle command acts as external:orchestrator via ~/.bridle/credentials.toml (t6kq); the one
+# raw API call below (messages to the human, which the CLI can't list) needs the token itself.
+export BRIDLE_AS=orchestrator
+tok=$(awk -F' *= *' '/^\[orchestrator\]/{s=1;next} /^\[/{s=0} s && $1=="bridle"{gsub(/"/,"",$2);print $2}' ~/.bridle/credentials.toml)
 cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
 since=${1:-0}
 head0=$(git rev-parse main)
@@ -21,7 +24,7 @@ while true; do
     hit=$(print -r -- "$ev" | jq -c '[.[] | select((.kind=="agent.exited" and .data.reason!="stdin_closed" and .data.reason!="budget_paused") or (.kind=="agent.state" and (.data.to=="crashed" or .data.to=="stalled")))]')
     # Questions stay unread until the human reads them, and the orchestrator can't mark them, so
     # remember the ones already reported.
-    q=$(curl -s -H "Authorization: Bearer $BRIDLE_TOKEN" "$U/v1/messages?to=human&unread=true&limit=50" \
+    q=$(curl -s -H "Authorization: Bearer $tok" "$U/v1/messages?to=human&unread=true&limit=50" \
       | jq -c --rawfile seen <(cat $seen_file 2>/dev/null) '[.[] | select(.kind=="question" and (.id as $i | ($seen | split("\n") | index($i)) == null))]')
     [[ -n $q && $q != "[]" ]] && print -r -- "$q" | jq -r '.[].id' >> $seen_file
     util=$(bridle status --json | jq '[.rate_limits[]? | if .window=="five_hour" then (.utilization//0)/'"${FIVE_HOUR_WAKE:-0.93}"' else (.utilization//0)/0.85 end] | max')

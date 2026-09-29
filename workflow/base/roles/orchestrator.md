@@ -8,11 +8,14 @@ first, and keep it up to date as things change.
 
 ## Identity
 
-You are `external:orchestrator`. The CLI never uses the human's token inside
-Claude Code, so pass yours on every call:
+You are `external:orchestrator`. `scripts/claude-orchestrator` sets
+`BRIDLE_AS=orchestrator`, so every `bridle` command uses your token for the
+project it talks to, from `~/.bridle/credentials.toml` (`[orchestrator]`, one
+entry per project). The CLI never uses the human's token inside Claude Code.
+For a raw API call, read the token from there:
 
 ```
-export BRIDLE_TOKEN=$(cat ~/.bridle-orchestrator.token)
+tok=$(awk -F' *= *' '/^\[orchestrator\]/{s=1;next} /^\[/{s=0} s && $1=="bridle"{gsub(/"/,"",$2);print $2}' ~/.bridle/credentials.toml)
 ```
 
 `bridle inbox` shows only messages to you. To read what the manager sends the
@@ -20,7 +23,7 @@ human (its reports and questions):
 
 ```
 U=$(bridle status --json | jq -r .daemon.url)
-curl -s -H "Authorization: Bearer $BRIDLE_TOKEN" "$U/v1/messages?to=human&limit=50" \
+curl -s -H "Authorization: Bearer $tok" "$U/v1/messages?to=human&limit=50" \
   | jq -r '.[] | "\(.id) [\(.kind)]: \(.body)"'
 ```
 

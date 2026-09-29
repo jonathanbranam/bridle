@@ -48,8 +48,8 @@ at the handover from the eighth orchestrator session.
 - **data-contracts step 3 done** (a subagent): `bridle-adopt` 74f2aea + d73ce54, pushed; `main`
   untouched (b923c7e); clone back on `main`, clean. `.bridle/ADOPT-REVIEW.md` has four questions
   for the human (library tickets → tasks; `.claude/settings.json` that sync writes as `{}`;
-  acceptance-verifier; Python 3.12). Then the human starts its daemon and makes
-  `~/.bridle-orchestrator-data-contracts.token`. To ticket: `bridle sync` writes an empty
+  acceptance-verifier; Python 3.12). Then the human starts its daemon and adds a
+  `data-contracts` entry under `[orchestrator]` in `~/.bridle/credentials.toml`. To ticket: `bridle sync` writes an empty
   `.claude/settings.json`.
 - **NUC:** SSD installed, Ubuntu on it, online "tomorrow" (2026-09-29). Test load there with a
   timed `just check` and a real worker task; revisit b7cz (daemons-only) if builds are fast now.
@@ -58,12 +58,12 @@ at the handover from the eighth orchestrator session.
 
 ## First, for the incoming orchestrator (eighth session's handover)
 
-- **Three projects are live**, each with its own daemon and token:
-  - bridle: `~/.bridle-orchestrator.token`.
-  - meta-notes: `--project meta-notes`, `~/.bridle-orchestrator-meta-notes.token`. Clone
+- **Three projects are live**, each with its own daemon; tokens are in
+  `~/.bridle/credentials.toml` (`BRIDLE_AS=orchestrator`, set by `scripts/claude-orchestrator`):
+  - bridle.
+  - meta-notes: `--project meta-notes`. Clone
     `/Volumes/Data/work/meta-notes-workspace/meta-notes`, on `bridle-adopt`.
-  - **track-web (new, 2026-09-29):** `--project track-web`,
-    `~/.bridle-orchestrator-track-web.token`. Clone
+  - **track-web (new, 2026-09-29):** `--project track-web`. Clone
     `/Volumes/Data/work/track-web-workspace/track-web`, on `bridle-adopt` (cut from
     `origin/dev`, no upstream; 7c9a6cb + 80d9d20, pushed). Scope: **client-games only, minus
     Dungeon Tactics** (the human: "start with one client ... TBD onboarding other components
@@ -90,8 +90,9 @@ at the handover from the eighth orchestrator session.
 - **The human's goal orders the queue** (2026-09-28): "Bridle should be working well enough
   and useful enough that we can do productive work on my other projects." Order: meta-notes,
   track-web, then data-contracts.
-- **Tokens:** t6kq (one `~/.bridle/credentials.toml`) is queued; for now the advisor also
-  has `~/.bridle-advisor-meta-notes.token` and `~/.bridle-advisor-track-web.token`.
+- **Tokens:** done (t6kq). The human made `~/.bridle/credentials.toml` on 2026-09-29 with
+  `[orchestrator]` and `[advisor]` entries for all three projects; the old `~/.bridle-*.token`
+  files are no longer read.
 - **New principles from the human this session** (all ticketed, most queued):
   - **Traceability** (tr7k, sq4m): from a task id, the brief, implementation summary, branch
     and merge commit; one squash commit per task on the integration branch. The advisor must
