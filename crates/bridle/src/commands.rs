@@ -116,13 +116,15 @@ async fn client_for_read(cli: &Cli) -> Result<Client, CliError> {
 /// can produce a degraded line, never a slow or failed one. It no longer records a
 /// snapshot with the daemon (dropped per s8kn's scope change: the context governor
 /// gets account-wide windows from `get_usage` instead, and `POST /v1/statusline` /
-/// `interactive_usage` stay in the daemon unused for now, not removed).
+/// `interactive_usage` stay in the daemon unused for now, not removed). It does write the
+/// session's context size to a local file (`statusline::record_context`, ticket c9zm).
 async fn statusline(_cli: &Cli) -> Result<(), CliError> {
     let input: serde_json::Value = std::io::read_to_string(std::io::stdin())
         .ok()
         .and_then(|s| serde_json::from_str(&s).ok())
         .unwrap_or(serde_json::Value::Null);
     let report = crate::statusline::parse(&input);
+    crate::statusline::record_context(&report);
     let workspace_dir = crate::statusline::workspace_dir(&input);
     let folder = workspace_dir
         .as_deref()
