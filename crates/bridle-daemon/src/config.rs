@@ -882,17 +882,40 @@ impl Config {
     pub fn load_with_home(repo: &Path, home_override: Option<&Path>) -> Result<Self, ConfigError> {
         let machine_budget = Self::load_machine_budget(home_override)?;
         let path = repo.join(".bridle").join("config.toml");
-        match std::fs::read_to_string(&path) {
-            Ok(text) => Self::parse_with_budget(&text, machine_budget, &path),
+        let mut config = match std::fs::read_to_string(&path) {
+            Ok(text) => Self::parse_with_budget(&text, machine_budget, &path)?,
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
                 let mut config = Config {
                     budget: machine_budget,
                     ..Config::default()
                 };
                 apply_branches(&mut config);
-                Ok(config)
+                config
             }
-            Err(source) => Err(ConfigError::Read { path, source }),
+            Err(source) => return Err(ConfigError::Read { path, source }),
+        };
+        config.default_role_prompts(repo);
+        Ok(config)
+    }
+
+    /// A role with no `system_prompt` uses `<workflow>/base/roles/<role>.md` when the
+    /// project sets `workflow` and that file exists, so onboarding onto the base layer
+    /// needs no per-role line (docs/design/agent-host/roles-and-config.md). An explicit
+    /// `system_prompt` always wins; no file means no prompt, as before.
+    fn default_role_prompts(&mut self, repo: &Path) {
+        let Some(workflow) = self.workflow.as_deref() else {
+            return;
+        };
+        for (name, role) in &mut self.roles {
+            if role.system_prompt.is_some() {
+                continue;
+            }
+            let rel = Path::new(workflow)
+                .join("base/roles")
+                .join(format!("{name}.md"));
+            if repo.join(&rel).is_file() {
+                role.system_prompt = Some(rel);
+            }
         }
     }
 
@@ -2469,5 +2492,31 @@ mod tests {
         assert!(err.to_string().contains("cycle"), "{err}");
         let err = Config::parse("[components.a]\nbogus = 1").unwrap_err();
         assert!(matches!(err, ConfigError::Parse { .. }));
+    }
+
+    #[test]
+    fn unset_system_prompt_defaults_to_the_base_role_file() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let repo = dir.path();
+        std::fs::create_dir_all(repo.join(".bridle")).expect("mkdir");
+        std::fs::create_dir_all(repo.join("wf/base/roles")).expect("mkdir");
+        std::fs::write(repo.join("wf/base/roles/worker.md"), "w").expect("write");
+        std::fs::write(repo.join("wf/base/roles/manager.md"), "m").expect("write");
+        std::fs::write(
+            repo.join(".bridle/config.toml"),
+            "workflow = \"wf\"\n[roles.manager]\nsystem_prompt = \"mine.md\"\n",
+        )
+        .expect("write");
+        let cfg = Config::load_with_home(repo, Some(repo)).expect("load");
+        assert_eq!(
+            cfg.roles["worker"].system_prompt.as_deref(),
+            Some(Path::new("wf/base/roles/worker.md"))
+        );
+        assert_eq!(
+            cfg.roles["manager"].system_prompt.as_deref(),
+            Some(Path::new("mine.md"))
+        );
+        // No base file for the role: still no prompt.
+        assert_eq!(cfg.roles["orchestrator"].system_prompt, None);
     }
 }
