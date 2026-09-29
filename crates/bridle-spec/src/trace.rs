@@ -54,6 +54,35 @@ pub struct Node {
     pub up: Vec<Link>,
 }
 
+/// A link whose recorded hash differs from the upstream element's current one.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+pub struct Suspect {
+    pub id: String,
+    pub file: String,
+    pub line: usize,
+    pub upstream: String,
+    pub recorded: String,
+    pub current: String,
+}
+
+/// `text` with the `target@hash` links on 1-based `line` rewritten to the
+/// given `(target, old, new)` hashes; everything else stays byte-for-byte.
+pub fn rewrite_links(text: &str, line: usize, edits: &[(String, String, String)]) -> String {
+    let mut out = String::with_capacity(text.len());
+    for (n, raw) in text.split_inclusive('\n').enumerate() {
+        if n + 1 == line {
+            let mut l = raw.to_string();
+            for (t, old, new) in edits {
+                l = l.replace(&format!("{t}@{old}"), &format!("{t}@{new}"));
+            }
+            out.push_str(&l);
+        } else {
+            out.push_str(raw);
+        }
+    }
+    out
+}
+
 #[derive(Debug, Default)]
 pub struct Graph {
     nodes: Vec<Node>,
@@ -221,6 +250,30 @@ impl Graph {
         Some(out)
     }
 
+    /// Hash-carrying links whose recorded hash is stale, in file order.
+    pub fn suspects(&self) -> Vec<Suspect> {
+        let mut out = Vec::new();
+        for n in &self.nodes {
+            for l in &n.up {
+                let (Some(rec), Some(&t)) = (&l.hash, self.index.get(&l.target)) else {
+                    continue;
+                };
+                let cur = &self.nodes[t].hash;
+                if rec != cur {
+                    out.push(Suspect {
+                        id: n.id.clone(),
+                        file: n.file.clone(),
+                        line: n.line,
+                        upstream: l.target.clone(),
+                        recorded: rec.clone(),
+                        current: cur.clone(),
+                    });
+                }
+            }
+        }
+        out
+    }
+
     /// Requirements that trace to nothing.
     pub fn orphans(&self) -> Vec<&Node> {
         self.nodes
@@ -292,6 +345,36 @@ mod tests {
             ["r-0002"]
         );
         assert!(g.down("x-9999").is_none());
+    }
+
+    #[test]
+    fn suspect_and_confirm() {
+        let arch2 = ARCH.replace("Decides.", "Decides differently.");
+        let g = graph(SPEC, &arch2).expect("builds");
+        let s = g.suspects();
+        assert_eq!(s.len(), 1);
+        assert_eq!(
+            (s[0].id.as_str(), s[0].upstream.as_str()),
+            ("r-7fa2", "a-12cd")
+        );
+        assert_eq!(s[0].recorded, "3f9e");
+        let edits = [(
+            "a-12cd".to_string(),
+            s[0].recorded.clone(),
+            s[0].current.clone(),
+        )];
+        let spec2 = format!("## Requirements\n\n{SPEC}");
+        let out = rewrite_links(&spec2, s[0].line, &edits);
+        assert_eq!(out, spec2.replace("3f9e", &s[0].current));
+        let sp = parse_str("s.md", &out).expect("spec");
+        let els = arch::parse_str("a.md", &arch2).expect("arch");
+        let goals = parse_goals("g.md", GOALS)
+            .goals
+            .into_iter()
+            .map(|g| ("g.md".to_string(), g))
+            .collect::<Vec<_>>();
+        let g = Graph::build(&goals, &els, &[("s.md".into(), sp)]).expect("builds");
+        assert!(g.suspects().is_empty());
     }
 
     #[test]
