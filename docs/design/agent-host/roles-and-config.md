@@ -53,7 +53,7 @@ start_prompt      = "Check your inbox and tell the human you're ready."   # firs
   default `system_prompt`, `start_prompt` or `max_budget_usd`; the values
   above are examples. Only the manager has `autostart = true` by default (so a
   project with no role config gets a manager at daemon start); `autostart = false` in
-  `[roles.manager]` turns it off, and any other role can set it on. Autostart skips a role that already has an agent, whatever its name. Bridle's own `.bridle/` has a working set. A project can
+  `[roles.manager]` turns it off, and any other role can set it on. Autostart skips a role that already has an agent, whatever its name. A role a project always needs (bridle's own `product-manager`) opts in with `autostart = true`; a role that already has an agent is never spawned again, and a budget hold refuses the autostart spawn. Bridle's own `.bridle/` has a working set. A project can
   override the built-ins or add roles, which start from the worker's defaults.
 - **`disallowed_tools` defaults deny Claude Code's own built-ins that bypass
   bridle's coordination the same way as a direct `SendMessage` call would**
