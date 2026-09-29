@@ -57,6 +57,16 @@ gone. The watcher needs no token env: `scripts/orchestrator-watch.sh <seq>`.
   still in CI at handover: check `gh run list --branch main` first.
 - The watcher ignores my own open questions (969a361) and uses credentials.toml (9b87047).
 
+## For the next maintenance window (budget hold)
+
+- Rebuild (`cargo install --path crates/bridle`) and ask the human for one restart: fx7x 1a
+  (9368d8d) changed `scripts/claude-orchestrator` to a SessionStart hook that calls
+  `bridle orchestrator note-session`, which the installed binary lacks. Until the rebuild, a
+  relaunched orchestrator has no context wake (the hook fails; the session still starts).
+  `[orchestrator] enabled` stays off until the human opts in. The same rebuild brings ct8m
+  step 2's lean toolsets (f6a0b75); after it, check a fresh worker's first-turn size and that
+  research workers don't miss WebFetch/WebSearch (per-task tools: br-abc3).
+
 ## Watch
 
 - Managers sometimes don't push after a merge; check `git status -sb` after main moves.
