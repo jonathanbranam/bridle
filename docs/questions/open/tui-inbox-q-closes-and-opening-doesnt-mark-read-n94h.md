@@ -33,3 +33,17 @@ The human, verbatim (2026-09-29, via the advisor), about `bridle tui`'s inbox vi
    in the title bar.
 3. `bridle inbox show` matches: no mark-read by default (`--mark-read` to opt in), so reading a
    message never hides it. Update `docs/design/cli.md` and the TUI section.
+
+## The TUI doesn't show open questions (added 2026-09-29)
+
+The human, verbatim:
+
+> also - I see 3 inbox messages with bridle inbox, but none in bridle tui
+
+`bridle inbox` lists unread messages **plus every task's open question**
+(`crates/bridle/src/commands.rs`, `inbox_list`, `list_open_questions`). The TUI polls unread
+messages only (`crates/bridle-tui/src/run.rs`). The human had opened the three question messages
+(m-1959, m-1961, m-1963) in the TUI at 01:16–01:19Z, which marked them read, so the TUI showed
+nothing while the questions (br-33a3, br-c83e, br-88e1) were still unanswered.
+
+4. The TUI's inbox also lists open questions, as `bridle inbox` does, until they're answered.
