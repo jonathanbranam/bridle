@@ -40,3 +40,29 @@ A project needs a bridle clone on the same machine for:
   fetched from a git URL into `~/.bridle/` and updated by `bridle sync`.
 - The launch scripts become commands, e.g. `bridle session orchestrator|advisor`, runnable from
   any directory.
+
+## The human on the sketch (2026-09-29)
+
+> Yep. Sounds like a good sketch. It won't block anything but it should be a destination state
+> that we have. I'm fine with having the binary clone from GitHub in an initial step. It should
+> match the workflow versions to itself probably with a tag. That is something that would drift
+> though, unless the binary refreshed the local copy.
+>
+> OpenSpec works mostly like this. It vendors the skills into a project on init. Then you can
+> update them later by choice so that your workflow doesn't change unexpectedly on you. Opt-in.
+
+So (the advisor's reading):
+
+- **A destination state**, not blocking anything.
+- **Workflow version matches the binary**: the binary fetches the workflow from GitHub at the tag
+  of its own version (a first-run or `init` step is fine).
+- **Vendored on init, updated by choice** (like OpenSpec): `bridle init` copies the base
+  workflow into the project; the project keeps that version until the human runs an update
+  (e.g. `bridle workflow update`), so a new binary never silently changes a project's workflow.
+
+**Conflicts with a recorded decision.** `docs/design/workflow-layers.md` ("Updates apply
+automatically by default") records the human, 2026-09-28: no rev pinning; a project gets
+whatever `workflow` currently has at its next `bridle sync`. That fits projects that point at
+the local bridle clone (today's setup, where bridle's own workflow changes daily). Opt-in
+vendoring fits standalone installs. Possibly both: auto for a path to a local clone, opt-in for
+an installed binary. For the human to confirm when this is designed.
