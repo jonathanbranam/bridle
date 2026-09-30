@@ -923,3 +923,6 @@
 {"actor":"human","at":"2026-09-30T19:48:27.574Z","from":"","task":"br-01ff","to":"open"}
 {"actor":"human","at":"2026-09-30T19:49:01.109Z","from":"","task":"br-1e47","to":"open"}
 {"actor":"human","at":"2026-09-30T19:49:01.127Z","from":"","task":"br-ae32","to":"open"}
+{"actor":"agent:pm-1","at":"2026-09-30T19:52:37.325630Z","from":"open","task":"br-1e47","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-09-30T19:52:37.341187Z","from":"open","task":"br-ae32","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-09-30T19:52:37.388928Z","queue":"reprioritized"}
