@@ -1048,6 +1048,19 @@ async fn status_lists_stopped_agents_whose_branch_has_merged() {
             .await
             .expect("stop");
     }
+    // No commit of its own: "no work", not "merged", though it is an ancestor of HEAD.
+    let empty = c
+        .spawn(&SpawnRequest {
+            name: Some("empty".to_string()),
+            workdir: Some(Workdir::Worktree { base: None }),
+            ..spawn_req("empty")
+        })
+        .await
+        .expect("spawn empty");
+    wait_for_state(c, &empty.id, AgentState::Idle).await;
+    c.stop(&empty.id, &bridle_api::types::StopRequest { now: false })
+        .await
+        .expect("stop");
     assert_eq!(
         c.status().await.expect("status").merged_leftovers,
         vec!["landed".to_string()]

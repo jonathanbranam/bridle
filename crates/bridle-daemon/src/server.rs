@@ -447,6 +447,13 @@ async fn health(State(state): State<AppState>) -> Result<Json<Health>, ApiError>
     }))
 }
 
+fn stopped_by_daemon_shutdown(agent: &bridle_api::types::Agent) -> bool {
+    agent
+        .exit
+        .as_ref()
+        .is_some_and(|e| e.reason == crate::supervisor::DAEMON_SHUTDOWN_REASON)
+}
+
 async fn status(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
@@ -458,6 +465,8 @@ async fn status(
     let mut merged_leftovers = Vec::new();
     for agent in state.store.list_agents(true).await? {
         if agent.state == bridle_api::types::AgentState::Stopped
+            // Stopped by a daemon shutdown: due a resume, not a removal.
+            && !stopped_by_daemon_shutdown(&agent)
             && let Some(branch) = &agent.branch
             && matches!(
                 crate::worktree::is_merged(&state.workspace.repo, branch).await,
@@ -2734,6 +2743,50 @@ mod tests {
             .await
             .expect("open store");
         (store, tmp)
+    }
+
+    #[tokio::test]
+    async fn daemon_shutdown_stops_are_told_apart_from_other_stops() {
+        use crate::store::NewAgent;
+        let (store, _tmp) = store().await;
+        let mut flags = Vec::new();
+        for (name, reason) in [("a", "daemon_shutdown"), ("b", "sigterm")] {
+            let agent = store
+                .insert_agent(NewAgent {
+                    name: name.to_string(),
+                    role: "worker".to_string(),
+                    model: "sonnet".to_string(),
+                    session_id: format!("sess-{name}"),
+                    workdir_kind: "worktree".to_string(),
+                    cwd: "/ws".to_string(),
+                    worktree: None,
+                    branch: Some(format!("bridle/{name}")),
+                    created_by: "human".to_string(),
+                    extra_allowed_tools: Vec::new(),
+                    extra_env: Vec::new(),
+                    components: Vec::new(),
+                })
+                .await
+                .expect("insert");
+            store
+                .set_agent_exit(
+                    &agent.id,
+                    bridle_api::types::ExitInfo {
+                        code: None,
+                        signal: None,
+                        reason: reason.to_string(),
+                    },
+                )
+                .await
+                .expect("exit");
+            let agent = store
+                .get_agent(&agent.id)
+                .await
+                .expect("get")
+                .expect("some");
+            flags.push(stopped_by_daemon_shutdown(&agent));
+        }
+        assert_eq!(flags, [true, false]);
     }
 
     #[tokio::test]

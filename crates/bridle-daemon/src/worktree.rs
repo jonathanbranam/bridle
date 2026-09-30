@@ -443,7 +443,10 @@ pub async fn prune(repo: &Path) -> Result<(), WorktreeError> {
 }
 
 /// Whether `branch` exists and is fully merged into the repo's `HEAD`, i.e.
-/// whether it has landed. A missing branch counts as merged. A branch landed by
+/// whether it has landed. A missing branch counts as merged. A branch still at
+/// the commit it was created on has no work of its own, so it isn't merged (the
+/// creation commit comes from the branch's reflog; with no reflog we can't tell
+/// and fall back to ancestry alone). A branch landed by
 /// `git merge --squash` isn't an ancestor, so a `Branch: <branch>` trailer on a
 /// commit reachable from `HEAD` (the manager's landing commit) counts too.
 pub async fn is_merged(repo: &Path, branch: &str) -> Result<bool, WorktreeError> {
@@ -459,7 +462,7 @@ pub async fn is_merged(repo: &Path, branch: &str) -> Result<bool, WorktreeError>
         .await?
         .status;
     if status.success() {
-        return Ok(true);
+        return has_own_commits(repo, branch).await;
     }
     let landed = run_git(
         repo,
@@ -474,6 +477,23 @@ pub async fn is_merged(repo: &Path, branch: &str) -> Result<bool, WorktreeError>
     )
     .await?;
     Ok(!landed.trim().is_empty())
+}
+
+/// False only when the reflog shows `branch` still at the commit it was created on.
+async fn has_own_commits(repo: &Path, branch: &str) -> Result<bool, WorktreeError> {
+    let tip = run_git(repo, &["rev-parse", &format!("refs/heads/{branch}")]).await?;
+    let log = run_git(
+        repo,
+        &[
+            "reflog",
+            "show",
+            "--format=%H",
+            &format!("refs/heads/{branch}"),
+        ],
+    )
+    .await
+    .unwrap_or_default();
+    Ok(log.lines().last().is_none_or(|first| first != tip.trim()))
 }
 
 /// Whether `path` is inside a git repository (worktree or main checkout).
@@ -756,7 +776,7 @@ mod tests {
         add(&repo, &wt_path, "bridle/w2", "HEAD")
             .await
             .expect("add worktree");
-        assert!(is_merged(&repo, "bridle/w2").await.expect("fresh branch"));
+        assert!(!is_merged(&repo, "bridle/w2").await.expect("empty branch"));
         assert!(
             is_merged(&repo, "no-such-branch")
                 .await

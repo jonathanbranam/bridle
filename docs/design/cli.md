@@ -248,7 +248,9 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   reachable from the integration branch, then removes every agent on that branch (stopping running
   ones, forced), their worktree and the branch (`-D`; a squashed branch isn't an ancestor), and
   notes what it removed on the task's thread. A failed removal is noted, not fatal. `bridle status`
-  lists stopped agents whose branch has already merged, so leftovers show up.
+  lists stopped agents whose branch has already landed (at least one commit of its own reached
+  `HEAD`; an empty branch is no work) so leftovers show up, leaving out agents stopped by a daemon
+  shutdown, which are due a resume.
 - **Human to-dos.** `task new --for-human` creates the task `planned` and claimed by the
   `human` principal in one step and sends the human one inbox message naming it. The human
   finishes it with `task done <id>` (no `--commit`); `task list --claimed-by human` lists

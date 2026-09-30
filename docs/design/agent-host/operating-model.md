@@ -205,7 +205,8 @@ the clone:
    removed on the task. Unmerged work can't be lost. `bridle rm --delete-branch` still works for
    one agent, and treats a `Branch: bridle/<agent>` trailer on a commit
    reachable from `HEAD` as landed. `bridle status` lists stopped agents whose
-   branch has merged (`merged_leftovers`), as a safety net. Landed branches aren't kept; the
+   branch has landed (`merged_leftovers`; an empty branch isn't landed, and `daemon_shutdown`
+   agents are left out), as a safety net. Landed branches aren't kept; the
    landing commit on the integration branch is the record (the human, 2026-09-28).
 
 The orchestrator verifies the integration branch after each merge (`just

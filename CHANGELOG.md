@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `[orchestrator]` `note_tokens`, `plan_tokens`, `handover_tokens` accept abbreviated forms: `"150k"` or `"1.5M"` (case-insensitive; `k` = 1,000, `M` = 1,000,000) alongside plain numbers. Defaults changed from 150K / 210K / 255K to **150K / 180K / 200K** (by23, br-f05d).
 ### Fixed
 
+- `bridle status` no longer calls a stopped agent's empty branch merged, or lists agents stopped by a daemon shutdown (they're due a resume); `bridle rm --delete-branch` uses the same test (br-f919, z4hd).
 - `bridle stop-daemon` prints progress as it goes (requested, acknowledged with the agent count and the daemon's cap, shutdown complete with elapsed time) instead of one misleading line at the end, and its 60 s timeout error points at `bridle daemons` and the daemon log (q23k). `POST /v1/shutdown` now replies with `{"stop_limit_secs"}`.
 
 ### Added

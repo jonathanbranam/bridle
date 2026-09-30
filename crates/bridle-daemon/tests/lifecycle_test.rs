@@ -616,7 +616,8 @@ async fn manager_and_orchestrator_principals_keep_agent_lifecycle_authority() {
             .remove(
                 &victim.id,
                 &RemoveQuery {
-                    force: false,
+                    // The victim's branch is empty, so it isn't "merged"; this test is about authority.
+                    force: true,
                     delete_branch: true,
                 },
             )
