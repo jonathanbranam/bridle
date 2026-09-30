@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `bridle serve` listens on the port `[projects]` gives its project on this machine (`[machine] name`), on loopback plus the Tailscale address (`tailscale ip -4`; loopback only, with a log line, if absent), never `0.0.0.0`. `--listen` and `[daemon] listen` still override (k7mw).
+
 - `bridle token create` refuses `@` in a name, has `--print`, and `--machine <m>` mints a visitor principal `external:<name>@<m>` for another machine (k7mw); a visitor sends and reads its inbox but never acts as the daemon's `external:orchestrator`.
 - `[machine] name`, `[machines]` and `[projects]` in `~/.bridle/config.toml` say where each project's daemon is; `--project`/`$BRIDLE_PROJECT` for one on another machine goes to `http://<host>:<port>` (no probing), and its token comes from `[principal.<machine>]` in `credentials.toml`. Existing files keep working (br-32ea, k7mw).
 

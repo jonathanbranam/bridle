@@ -1128,6 +1128,8 @@ impl CommandsConfig {
 #[derive(Debug, Clone)]
 pub struct Config {
     pub listen: SocketAddr,
+    /// `[daemon] listen` was set, so it beats the port from `[projects]` (k7mw).
+    pub listen_set: bool,
     pub stall_after: Duration,
     /// How long a claimed task's lease survives without the claiming
     /// agent's own activity (`last_event_at`/`turn_started_at`) before it's
@@ -1191,6 +1193,7 @@ impl Default for Config {
         roles.insert("orchestrator".to_string(), Role::orchestrator_default());
         Config {
             listen: "127.0.0.1:0".parse().expect("valid default listen addr"),
+            listen_set: false,
             stall_after: Duration::from_secs(10 * 60),
             claim_lease_after: Duration::from_secs(10 * 60),
             self_upgrade: false,
@@ -1500,6 +1503,7 @@ impl Config {
                 config.listen = listen
                     .parse()
                     .map_err(|e| ConfigError::BadListen(listen.clone(), e))?;
+                config.listen_set = true;
             }
             if let Some(s) = d.stall_after {
                 config.stall_after = parse_duration(&s)?;

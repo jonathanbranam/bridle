@@ -11,6 +11,8 @@ bridle [--url URL] [--project NAME] [--token T] [--json] <command>
 
 bridle serve   [--repo PATH] [--workspace DIR] [--listen ADDR] [--detach] [--take-over]   --take-over: claim a project another host owns; refuses (both SHAs named) unless
                                               origin was reached and bridle/state + the integration branch fast-forward cleanly
+                                              listens on: `--listen`, else `[daemon] listen`, else the `[projects]` port for this project when it is on this
+                                              machine (127.0.0.1 + the Tailscale IPv4 address, never 0.0.0.0), else 127.0.0.1:0
 bridle stop-daemon                            prints "requested shutdown", "acknowledged; the daemon is stopping N agents,
                                               up to Ns" (the daemon's stop_grace + 5 s), "N agents still running" as the count drops,
                                               then "shutdown complete (Ns)"; after 60 s it errors, pointing at `bridle daemons`

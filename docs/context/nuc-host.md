@@ -31,6 +31,10 @@ So a bridle daemon on the NUC is reachable from the laptop by
 `ssh -L <port>:localhost:<port> nuc`, or directly on its Tailscale address if
 it listens there. Either way the traffic is encrypted.
 
+With `[machine] name = "nuc"` and `[projects] <name> = { machine = "nuc", port = N }` in
+`~/.bridle/config.toml`, `bridle serve` listens on 127.0.0.1:N and the NUC's Tailscale address
+(from `tailscale ip -4`), never `0.0.0.0`. Off loopback every request needs a token, reads included.
+
 ## How the human wants to use it
 
 - Bridle daemons for several projects run on the NUC.

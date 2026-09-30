@@ -205,6 +205,52 @@ async fn machine_host() -> String {
         .unwrap_or_else(|| "unknown".to_string())
 }
 
+/// The port `[projects]` gives `project` when it lives on this machine.
+fn this_machine_port(machines: &bridle_api::machines::MachineMap, project: &str) -> Option<u16> {
+    let place = machines.projects.get(project)?;
+    (machines.machine.name.as_deref() == Some(place.machine.as_str())).then_some(place.port)
+}
+
+/// Where the daemon listens. `--listen`, then `[daemon] listen`, then the port `[projects]`
+/// gives this machine's project on loopback plus the Tailscale address (never `0.0.0.0`),
+/// else `default` (k7mw).
+fn bind_addrs(
+    cli: Option<SocketAddr>,
+    configured: Option<SocketAddr>,
+    port: Option<u16>,
+    default: SocketAddr,
+    tailscale: Option<std::net::IpAddr>,
+) -> Vec<SocketAddr> {
+    if let Some(a) = cli.or(configured) {
+        return vec![a];
+    }
+    let Some(port) = port else {
+        return vec![default];
+    };
+    let mut addrs = vec![SocketAddr::from(([127, 0, 0, 1], port))];
+    addrs.extend(tailscale.map(|ip| SocketAddr::new(ip, port)));
+    addrs
+}
+
+/// This machine's Tailscale IPv4 address, if `tailscale` is installed and up.
+async fn tailscale_ip() -> Option<std::net::IpAddr> {
+    let out = tokio::process::Command::new("tailscale")
+        .args(["ip", "-4"])
+        .output()
+        .await
+        .ok()?;
+    if !out.status.success() {
+        return None;
+    }
+    String::from_utf8(out.stdout)
+        .ok()?
+        .lines()
+        .next()?
+        .trim()
+        .parse()
+        .ok()
+}
+
 /// Starts the daemon and returns once it's listening, autostart has run,
 /// and background tasks are up. Does not block for shutdown; see
 /// [`RunningDaemon::join`].
@@ -314,14 +360,43 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         .prune_handovers(Utc::now() - chrono::Duration::days(EVENT_RETENTION_DAYS))
         .await;
 
-    let listen_addr = opts.listen.unwrap_or(config.listen);
-    let listener = tokio::net::TcpListener::bind(listen_addr)
-        .await
-        .with_context(|| format!("binding {listen_addr}"))?;
-    let bound = listener.local_addr().context("reading bound address")?;
+    let machines = bridle_api::machines::MachineMap::load(
+        overrides
+            .bridle_home
+            .as_deref()
+            .unwrap_or(&discovery::bridle_home()),
+    )
+    .context("reading the machine config")?;
+    let configured_port = this_machine_port(&machines, &project);
+    let tailscale = match (opts.listen, configured_port) {
+        (None, Some(_)) if !config.listen_set => tailscale_ip().await,
+        _ => None,
+    };
+    let addrs = bind_addrs(
+        opts.listen,
+        config.listen_set.then_some(config.listen),
+        configured_port,
+        config.listen,
+        tailscale,
+    );
+    let mut listeners = Vec::new();
+    for addr in &addrs {
+        listeners.push(
+            tokio::net::TcpListener::bind(addr)
+                .await
+                .with_context(|| format!("binding {addr}"))?,
+        );
+    }
+    if configured_port.is_some() && addrs.len() == 1 && addrs[0].ip().is_loopback() {
+        tracing::info!("no Tailscale address found: listening on loopback only");
+    }
+    let bound = listeners[0].local_addr().context("reading bound address")?;
     let url = format!("http://{bound}");
-    if !bound.ip().is_loopback() {
-        tracing::warn!(%bound, "daemon listens beyond loopback: every request from another machine needs a bearer token, reads included");
+    for l in &listeners {
+        let a = l.local_addr().context("reading bound address")?;
+        if !a.ip().is_loopback() {
+            tracing::warn!(bound = %a, "daemon listens beyond loopback: every request from another machine needs a bearer token, reads included");
+        }
     }
 
     let info = DaemonInfo {
@@ -445,20 +520,28 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
     // `shutdown_rx` flips — otherwise a client polling health() can see the
     // listener go away and conclude shutdown is done while daemon.json still
     // exists.
-    let (serve_shutdown_tx, mut serve_shutdown_rx) = watch::channel(false);
+    let (serve_shutdown_tx, serve_shutdown_rx) = watch::channel(false);
     let serve_task = tokio::spawn(async move {
-        let graceful = async move {
-            let _ = serve_shutdown_rx.wait_for(|v| *v).await;
-        };
-        if let Err(e) = axum::serve(
-            listener,
-            app.into_make_service_with_connect_info::<SocketAddr>(),
-        )
-        .with_graceful_shutdown(graceful)
-        .await
-        {
-            tracing::error!(error = %e, "axum serve error");
+        let mut set = tokio::task::JoinSet::new();
+        for listener in listeners {
+            let app = app.clone();
+            let mut rx = serve_shutdown_rx.clone();
+            set.spawn(async move {
+                let graceful = async move {
+                    let _ = rx.wait_for(|v| *v).await;
+                };
+                if let Err(e) = axum::serve(
+                    listener,
+                    app.into_make_service_with_connect_info::<SocketAddr>(),
+                )
+                .with_graceful_shutdown(graceful)
+                .await
+                {
+                    tracing::error!(error = %e, "axum serve error");
+                }
+            });
         }
+        while set.join_next().await.is_some() {}
     });
 
     let stall_task = spawn_loop(shutdown_rx.clone(), overrides.stall_check_interval, {
@@ -874,5 +957,74 @@ impl Signals {
                 }
             }
         })
+    }
+}
+
+#[cfg(test)]
+mod bind_tests {
+    use super::*;
+    use std::net::IpAddr;
+
+    fn a(s: &str) -> SocketAddr {
+        s.parse().unwrap()
+    }
+    const DEFAULT: &str = "127.0.0.1:0";
+
+    #[test]
+    fn configured_port_binds_loopback_and_tailscale() {
+        let ts: IpAddr = "100.64.0.7".parse().unwrap();
+        let got = bind_addrs(None, None, Some(7402), a(DEFAULT), Some(ts));
+        assert_eq!(got, vec![a("127.0.0.1:7402"), a("100.64.0.7:7402")]);
+    }
+
+    #[test]
+    fn no_tailscale_is_loopback_only() {
+        let got = bind_addrs(None, None, Some(7402), a(DEFAULT), None);
+        assert_eq!(got, vec![a("127.0.0.1:7402")]);
+    }
+
+    #[test]
+    fn listen_overrides_the_port() {
+        let ts: IpAddr = "100.64.0.7".parse().unwrap();
+        let cfg = Some(a("127.0.0.1:9000"));
+        assert_eq!(
+            bind_addrs(None, cfg, Some(7402), a(DEFAULT), Some(ts)),
+            vec![a("127.0.0.1:9000")]
+        );
+        assert_eq!(
+            bind_addrs(
+                Some(a("127.0.0.1:9100")),
+                cfg,
+                Some(7402),
+                a(DEFAULT),
+                Some(ts)
+            ),
+            vec![a("127.0.0.1:9100")]
+        );
+    }
+
+    #[test]
+    fn unlisted_project_uses_the_default() {
+        assert_eq!(
+            bind_addrs(None, None, None, a(DEFAULT), None),
+            vec![a(DEFAULT)]
+        );
+    }
+
+    #[test]
+    fn port_only_when_the_project_is_on_this_machine() {
+        let m: bridle_api::machines::MachineMap = toml::from_str(
+            r#"
+            [machine]
+            name = "mbp"
+            [projects]
+            here = { machine = "mbp", port = 7401 }
+            there = { machine = "nuc", port = 7402 }
+            "#,
+        )
+        .unwrap();
+        assert_eq!(this_machine_port(&m, "here"), Some(7401));
+        assert_eq!(this_machine_port(&m, "there"), None);
+        assert_eq!(this_machine_port(&m, "other"), None);
     }
 }
