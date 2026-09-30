@@ -2200,6 +2200,7 @@ async fn task_new(cli: &Cli, args: &TaskNewArgs) -> Result<(), CliError> {
         String::new()
     };
     let req = NewTaskRequest {
+        for_human: args.for_human,
         title: args.title.clone(),
         kind: task_kind_arg(args.kind),
         body,
@@ -2207,6 +2208,21 @@ async fn task_new(cli: &Cli, args: &TaskNewArgs) -> Result<(), CliError> {
         size: args.size.and_then(task_size_arg_to_opt),
     };
     let task = client.new_task(&req).await?;
+    if args.for_human {
+        client
+            .send(&SendRequest {
+                to: Some("human".to_string()),
+                body: format!(
+                    "To-do for you: {}. Finish it with `bridle task done {}`.",
+                    task.title, task.id
+                ),
+                kind: MessageKind::Note,
+                when: bridle_api::When::Now,
+                reply_to: None,
+                task: Some(task.id.clone()),
+            })
+            .await?;
+    }
     if args.component.is_empty() && project_has_components() {
         eprintln!(
             "note: no --component given; this task is repo-wide (see `bridle task edit --component`)"
@@ -3296,6 +3312,7 @@ async fn arch_propose(cli: &Cli, args: &ArchProposeArgs) -> Result<(), CliError>
 
     let client = client_for(cli).await?;
     let req = NewTaskRequest {
+        for_human: false,
         title: args.title.clone(),
         kind: TaskKind::ArchRevision,
         body: argument,

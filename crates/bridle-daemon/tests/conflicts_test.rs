@@ -16,6 +16,7 @@ async fn planned_task(d: &TestDaemon, title: &str, scenario: &str) -> String {
     let c = &d.client;
     let t = c
         .new_task(&NewTaskRequest {
+            for_human: false,
             components: Vec::new(),
             title: title.to_string(),
             kind: TaskKind::Feature,

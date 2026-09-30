@@ -1408,6 +1408,10 @@ pub struct NewTaskRequest {
     pub size: Option<TaskSize>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub components: Vec<String>,
+    /// A human to-do: the task is created `planned` and claimed by the human
+    /// principal in one step (coordination.md, "Human to-dos").
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub for_human: bool,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -1431,6 +1435,8 @@ pub struct DropTaskRequest {
 /// `POST /v1/tasks/{id}/done`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DoneTaskRequest {
+    /// May be empty only for a task claimed by the human (a to-do, no code).
+    #[serde(default)]
     pub commit: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub branch: Option<String>,

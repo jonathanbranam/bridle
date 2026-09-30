@@ -969,6 +969,11 @@ pub struct TaskNewArgs {
     /// Estimated size, so small tasks can be picked when budget is short.
     #[arg(long, value_enum, ignore_case = true)]
     pub size: Option<TaskSizeArg>,
+    /// A to-do for the human: created planned and claimed by them, with one inbox
+    /// message pointing at it. Put `[at restart]` or `[at next reboot]` in the title
+    /// when it must wait for one.
+    #[arg(long)]
+    pub for_human: bool,
 }
 
 #[derive(Debug, Args)]
@@ -1024,7 +1029,8 @@ pub struct TaskDropArgs {
 #[derive(Debug, Args)]
 pub struct TaskDoneArgs {
     pub task: String,
-    #[arg(long)]
+    /// The merge commit. Optional only for a human to-do.
+    #[arg(long, default_value = "")]
     pub commit: String,
     /// The branch that did the work.
     #[arg(long)]
@@ -1870,9 +1876,12 @@ mod tests {
     }
 
     #[test]
-    fn task_done_requires_commit() {
-        let err = parse(&["task", "done", "tw-1234"]).unwrap_err();
-        assert_eq!(err.kind(), clap::error::ErrorKind::MissingRequiredArgument);
+    fn task_done_takes_an_optional_commit() {
+        let cli = parse(&["task", "done", "tw-1234"]).unwrap();
+        let Command::Task(args) = cli.command else {
+            panic!("expected task")
+        };
+        assert!(matches!(args.action, TaskAction::Done(a) if a.commit.is_empty()));
         let cli = parse(&["task", "done", "tw-1234", "--commit", "abc123"]).unwrap();
         let Command::Task(args) = cli.command else {
             panic!("expected task")

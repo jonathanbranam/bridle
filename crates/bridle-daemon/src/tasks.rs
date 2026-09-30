@@ -476,14 +476,17 @@ impl TaskManager {
         branch: Option<&str>,
         actor: &PrincipalId,
     ) -> Result<Task, TaskError> {
-        if commit.trim().is_empty() {
+        let mut task = self
+            .get_task(id)
+            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+        // A human to-do has no code to land, so the human finishes it bare.
+        let bare_ok =
+            task.state == TaskState::Claimed && task.claimed_by.as_deref() == Some("human");
+        if commit.trim().is_empty() && !bare_ok {
             return Err(TaskError::BadRequest(
                 "marking a task done requires a commit".to_string(),
             ));
         }
-        let mut task = self
-            .get_task(id)
-            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
         match task.state {
             TaskState::Dropped | TaskState::Integrated => {
                 return Err(TaskError::Conflict(format!(
@@ -497,14 +500,16 @@ impl TaskManager {
         self.transition(&mut task, TaskState::Integrated, actor)
             .await?;
         let branch = branch.map(str::trim).filter(|b| !b.is_empty());
-        task.commit = Some(commit.trim().to_string());
+        let commit = commit.trim();
+        task.commit = (!commit.is_empty()).then(|| commit.to_string());
         task.branch = branch.map(str::to_string);
         task.thread.push(ThreadEntry {
             kind: ThreadEntryKind::Note,
             from: actor.clone(),
-            body: match branch {
-                Some(b) => format!("integrated: {commit} (branch {b})"),
-                None => format!("integrated: {commit}"),
+            body: match (commit.is_empty(), branch) {
+                (true, _) => "done".to_string(),
+                (false, Some(b)) => format!("integrated: {commit} (branch {b})"),
+                (false, None) => format!("integrated: {commit}"),
             },
             at: task.updated_at,
         });
@@ -2061,6 +2066,51 @@ mod tests {
             .await
             .expect_err("no longer claimed");
         assert!(matches!(err, TaskError::Conflict(_)));
+    }
+
+    /// A human to-do: the lease check never releases the human's claim, and
+    /// the human finishes it with no commit.
+    #[tokio::test]
+    async fn human_claim_survives_the_lease_check_and_is_done_without_a_commit() {
+        let (tm, _tmp) = manager().await;
+        let t = tm
+            .new_task(
+                "[at restart] tokens",
+                TaskKind::Feature,
+                String::new(),
+                vec![],
+                None,
+            )
+            .await
+            .expect("new");
+        force_planned(&tm, &t.id);
+        let human = "human".to_string();
+        tm.claim_task(&t.id, &human).await.expect("claim");
+        tm.tick_claim_lease_check(Utc::now() + chrono::Duration::days(30))
+            .await;
+        assert_eq!(tm.get_task(&t.id).expect("task").state, TaskState::Claimed);
+
+        let done = tm.done_task(&t.id, "", None, &human).await.expect("done");
+        assert_eq!(done.state, TaskState::Integrated);
+        assert_eq!(done.commit, None);
+    }
+
+    #[tokio::test]
+    async fn done_without_a_commit_is_refused_for_an_agent_claim() {
+        let (tm, _tmp) = manager().await;
+        let t = tm
+            .new_task("A", TaskKind::Feature, String::new(), vec![], None)
+            .await
+            .expect("new");
+        force_planned(&tm, &t.id);
+        tm.claim_task(&t.id, &"agent:w1".to_string())
+            .await
+            .expect("claim");
+        let err = tm
+            .done_task(&t.id, "", None, &"human".to_string())
+            .await
+            .expect_err("needs a commit");
+        assert!(matches!(err, TaskError::BadRequest(_)));
     }
 
     /// `server.rs::list_tasks` filters `?claimed_by=` by matching

@@ -15,6 +15,7 @@ use support::{start_daemon, wait_for_state};
 
 fn new_req(title: &str, kind: TaskKind) -> NewTaskRequest {
     NewTaskRequest {
+        for_human: false,
         components: Vec::new(),
         title: title.to_string(),
         kind,
@@ -30,6 +31,7 @@ async fn create_show_list_and_edit_a_task() {
 
     let task = c
         .new_task(&NewTaskRequest {
+            for_human: false,
             components: Vec::new(),
             title: "Add foo".to_string(),
             kind: TaskKind::Feature,
@@ -417,6 +419,34 @@ async fn plan_then_claim_round_trips_through_the_http_surface() {
     assert_eq!(released.claimed_by, None);
 }
 
+/// `for_human` creates the task planned and claimed by the human; the human
+/// finishes it with `done` and no commit.
+#[tokio::test]
+async fn for_human_task_is_claimed_by_the_human_and_done_without_a_commit() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let c = &daemon.client;
+    let mut req = new_req("[at restart] move tokens", TaskKind::Feature);
+    req.for_human = true;
+    let task = c.new_task(&req).await.expect("new task");
+    assert_eq!(task.state, TaskState::Claimed);
+    assert_eq!(task.claimed_by.as_deref(), Some("human"));
+
+    let listed = c.list_tasks_claimed_by("human").await.expect("list");
+    assert!(listed.iter().any(|t| t.id == task.id));
+
+    let done = c
+        .done_task(
+            &task.id,
+            &DoneTaskRequest {
+                commit: String::new(),
+                branch: None,
+            },
+        )
+        .await
+        .expect("done");
+    assert_eq!(done.state, TaskState::Integrated);
+}
+
 /// `bridle queue`'s HTTP surface: empty by default, set by the PM/human
 /// (here, human), read back verbatim, and `?top_tier=true` picks the
 /// highest tier with a startable task — skipping one stuck on a dependency
@@ -657,6 +687,7 @@ async fn search_matches_words_in_title_body_and_summary() {
 
     let t1 = c
         .new_task(&NewTaskRequest {
+            for_human: false,
             components: Vec::new(),
             title: "Fix database connection pool".to_string(),
             kind: TaskKind::Bug,
@@ -668,6 +699,7 @@ async fn search_matches_words_in_title_body_and_summary() {
 
     let t2 = c
         .new_task(&NewTaskRequest {
+            for_human: false,
             components: Vec::new(),
             title: "Refactor API endpoint".to_string(),
             kind: TaskKind::Feature,
@@ -679,6 +711,7 @@ async fn search_matches_words_in_title_body_and_summary() {
 
     let t3 = c
         .new_task(&NewTaskRequest {
+            for_human: false,
             components: Vec::new(),
             title: "Add logging".to_string(),
             kind: TaskKind::Feature,
@@ -750,6 +783,7 @@ async fn search_includes_done_and_dropped_tasks() {
 
     let open_task = c
         .new_task(&NewTaskRequest {
+            for_human: false,
             components: Vec::new(),
             title: "Open task".to_string(),
             kind: TaskKind::Feature,
@@ -761,6 +795,7 @@ async fn search_includes_done_and_dropped_tasks() {
 
     let done_task = c
         .new_task(&NewTaskRequest {
+            for_human: false,
             components: Vec::new(),
             title: "Done task".to_string(),
             kind: TaskKind::Feature,
@@ -772,6 +807,7 @@ async fn search_includes_done_and_dropped_tasks() {
 
     let dropped_task = c
         .new_task(&NewTaskRequest {
+            for_human: false,
             components: Vec::new(),
             title: "Dropped task".to_string(),
             kind: TaskKind::Feature,

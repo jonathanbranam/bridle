@@ -135,6 +135,7 @@ async fn propose(cli: &Cli, args: &GoalsProposeProposeArgs) -> Result<(), CliErr
 
     let client = client_for(cli).await?;
     let req = NewTaskRequest {
+        for_human: false,
         title,
         kind: TaskKind::Question,
         body,

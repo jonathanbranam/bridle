@@ -94,6 +94,15 @@ manager answers, or forwards to human ─► answer lands on the task ─► tas
    ANY worker may claim it — not necessarily the one that asked
 ```
 
+## Human to-dos
+
+A to-do for the human is a task claimed by the `human` principal (`bridle task new
+--for-human`, which plans and claims it in one step and sends one inbox message pointing at
+it). Unlike an agent's claim it has no lease: the lease check measures an agent's activity,
+so a claim by `human` is never released. The human finishes it with `bridle task done <id>`,
+which needs no commit for a task the human claimed. The orchestrator lists
+`bridle task list --claimed-by human` at every start and tells the human first.
+
 ## How agents actually hear things (Claude Code integration)
 
 Workers are separate headless `claude -p` stream-json sessions that the daemon

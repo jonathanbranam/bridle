@@ -1199,6 +1199,13 @@ async fn new_task(
         .tasks
         .new_task(&req.title, req.kind, req.body, components, req.size)
         .await?;
+    let task = if req.for_human {
+        let human = "human".to_string();
+        state.tasks.plan_task(&task.id, &principal.id).await?;
+        state.tasks.claim_task(&task.id, &human).await?
+    } else {
+        task
+    };
     let _ = state
         .emitter
         .emit(
@@ -1631,7 +1638,9 @@ async fn done_task(
         .tasks
         .done_task(&id, &req.commit, req.branch.as_deref(), &principal.id)
         .await?;
-    notify_main_moved(&state, &task, claimant.as_deref(), branch).await;
+    if task.commit.is_some() {
+        notify_main_moved(&state, &task, claimant.as_deref(), branch).await;
+    }
     if task.kind == bridle_api::types::TaskKind::ArchRevision {
         open_reevaluate_tasks(&state, &task).await;
     }

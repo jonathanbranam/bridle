@@ -163,14 +163,14 @@ bridle spec import openspec [--from DIR] [--to DIR] [--dry-run]   moves each `<f
 bridle prime orchestrator                   fresh session's opening context: role prompt, current
                                              state, startup steps; local only, no daemon call
 bridle prime worker|planner [--component ID ...] [--task ID]   the role's rules, facts, guides, plus named components' scope; --task is worker only
-bridle task new    <title> -k/--kind KIND [--body TEXT | --body-file FILE] [--component ID ...] [--size S|M|L]
+bridle task new    <title> -k/--kind KIND [--body TEXT | --body-file FILE] [--component ID ...] [--size S|M|L] [--for-human]
 bridle task show   <id>
 bridle task plan   <id>                                                 open -> planned: ready to build, claimable once unblocked
 bridle task edit   <id> [--title TEXT] [--body TEXT | --body-file FILE] [--component ID ... | --no-component] [--size S|M|L|none]
 bridle task list   [--claimed-by WHO] [--component ID]             WHO: me|human|<agent name>|<principal id>; unclaimed tasks have no claimant to match
 bridle task search <words...>                                      search for tasks by words in title/body/summary (case-insensitive substring match, all words must match); includes done and dropped tasks
 bridle task drop   <id> --reason TEXT
-bridle task done   <id> --commit SHA [--branch NAME]                 -> integrated; records the sha (and branch) on the task and in the thread; with --branch removes the branch's agents, worktree and branch; warns if no summary
+bridle task done   <id> [--commit SHA] [--branch NAME]               -> integrated; `--commit` is required unless the human claimed the task (a to-do); records the sha (and branch) on the task and in the thread; with --branch removes the branch's agents, worktree and branch; warns if no summary
 bridle impact set  <task> [--modify ID].. [--add-under ID].. [--remove ID].. [--files GLOB..]  declares the task's impact, replacing any earlier one; only an open/planned/claimed task; ids checked by shape (r-/s-/g-/a- + hex) only
 bridle impact check [--specs DIR]                                overlaps between in-flight tasks' declared impact, plus merge probes of claimed tasks' branches (`--json`: `{overlaps:[{level,tasks,kind,key}]}`); exit 1 if any is a conflict; see impact-and-conflicts.md
 bridle land <task> [--branch B] [--check-cmd CMD]              the integrator: squash the branch into one commit (`<task id>: <title>`, the summary as body, `Task:`/`Branch:` trailers) in the integration worktree, run `[integration] check` (skipped, with a note, when the integration branch is an ancestor of the branch tip), fail if the nextest test count is outside the sane band around the last full run (`<workspace>/last-full-test-count`), fast-forward the integration branch (guarded), mark the task done; any failure lands nothing (exit 1); never pushes
@@ -245,6 +245,11 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   ones, forced), their worktree and the branch (`-D`; a squashed branch isn't an ancestor), and
   notes what it removed on the task's thread. A failed removal is noted, not fatal. `bridle status`
   lists stopped agents whose branch has already merged, so leftovers show up.
+- **Human to-dos.** `task new --for-human` creates the task `planned` and claimed by the
+  `human` principal in one step and sends the human one inbox message naming it. The human
+  finishes it with `task done <id>` (no `--commit`); `task list --claimed-by human` lists
+  the open ones. By convention the title starts `[at restart]` or `[at next reboot]` when it
+  must wait for one; nothing parses it. See coordination.md, "Human to-dos".
 - **`--size S|M|L|none`** on `task new`/`task edit` sets the task's optional estimated size
   (case-insensitive), so small tasks can be picked when budget runs short. `--size none`
   on `task edit` clears the task's size. It's informational: nothing selects on it and the

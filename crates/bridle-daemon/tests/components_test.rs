@@ -20,6 +20,7 @@ parent = "client"
 
 fn req(title: &str, components: &[&str]) -> NewTaskRequest {
     NewTaskRequest {
+        for_human: false,
         title: title.to_string(),
         kind: TaskKind::Feature,
         body: String::new(),

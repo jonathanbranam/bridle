@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Human to-dos: `bridle task new --for-human` creates a task claimed by the human (never leased away) and sends one inbox message; the human finishes it with `bridle task done <id>` with no `--commit`; the orchestrator role lists them at every start (ex9q, br-c83e).
 - The orchestrator's handover note is a bridle record: `bridle handover write --file <path>|-` (human and `external:orchestrator`), `handover list` and `show <id>`, `/v1/handovers`, schema version 17. The newest note wins and `bridle prime orchestrator` prints it with its age; older notes are kept and pruned with the events at 30 days, always keeping the newest. The role file's handover step uses it instead of committing the state file (br-4573).
 - Roles take a `tools` key, passed as `--tools`; the built-in worker and manager get lean defaults (worker: Bash, Read, Edit, Write, Glob, Grep; manager: no Edit/Write, plus Agent), cutting a spawned agent's first turn by about a third (br-9fca, ct8m step 2).
 

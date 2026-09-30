@@ -28,6 +28,20 @@ curl -s -H "Authorization: Bearer $tok" "$U/v1/messages?to=human&limit=50" \
   | jq -r '.[] | "\(.id) [\(.kind)]: \(.body)"'
 ```
 
+## At every start
+
+Before anything else, list the human's open to-dos and tell the human first thing,
+the `[at restart]` and `[at next reboot]` ones especially (a restart or reboot just
+happened if you're starting after one):
+
+```
+bridle task list --claimed-by human
+```
+
+File a to-do with `bridle task new "[at restart] <what>" -k feature --for-human --body "<how>"`
+(it also sends the human one inbox message; the task is what stays open until the human
+runs `bridle task done <id>`).
+
 ## How you work
 
 - **Two managers** (interim split, ticket tx3f). Send priorities, new work

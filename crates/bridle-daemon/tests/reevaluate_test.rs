@@ -26,6 +26,7 @@ async fn land(daemon: &support::TestDaemon, kind: TaskKind, title: &str) -> Stri
     let t = daemon
         .client
         .new_task(&NewTaskRequest {
+            for_human: false,
             components: Vec::new(),
             title: title.to_string(),
             kind,

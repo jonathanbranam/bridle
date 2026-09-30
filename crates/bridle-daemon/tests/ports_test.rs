@@ -87,6 +87,7 @@ async fn an_agents_ports_are_freed_when_it_exits() {
     let c = &d.client;
     let t = c
         .new_task(&NewTaskRequest {
+            for_human: false,
             components: Vec::new(),
             title: "web".to_string(),
             kind: TaskKind::Feature,
