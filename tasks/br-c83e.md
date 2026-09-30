@@ -4,7 +4,7 @@ title = "Human to-dos: tasks assigned to the human, and the orchestrator lists t
 kind = "feature"
 state = "integrated"
 created_at = "2026-09-29T12:23:53.704Z"
-updated_at = "2026-09-30T01:37:12.325645Z"
+updated_at = "2026-09-30T01:37:20.354092Z"
 branch = "bridle/human-todos2"
 commit = "8b774caabbf818a588099387bd21504f5af128bf"
 summary = "Human to-dos: 'bridle task new --for-human' (NewTaskRequest.for_human) creates the task planned and claimed by the human principal and sends one inbox message pointing at it; the lease check never releases the human's claim; the human finishes with 'bridle task done <id>' with no --commit (allowed only for a human claim; agent claims still need a commit, and main-moved notices are skipped when there is no commit). No when-tag sorting or parsing (document only). Docs: cli.md, coordination.md, orchestrator role startup step lists 'bridle task list --claimed-by human'; CHANGELOG under Unreleased. Tests: lease exemption + bare done + agent refusal in tasks.rs; just check passes (767 tests)."
@@ -37,3 +37,6 @@ done: human to-dos (task new --for-human, lease-exempt, bare done, docs, orchest
 
 ### note · agent:manager-2 · 2026-09-30T01:37:12.325Z
 integrated: 8b774caabbf818a588099387bd21504f5af128bf (branch bridle/human-todos2)
+
+### note · agent:manager-2 · 2026-09-30T01:37:20.354Z
+cleanup: removed agent human-todos2, branch bridle/human-todos2
