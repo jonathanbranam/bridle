@@ -536,6 +536,31 @@ async fn human_inbox_receives_agent_messages_and_mark_read_works() {
         .await
         .expect("list unread after read");
     assert!(!unread_after.iter().any(|m| m.id == sent.id));
+
+    let back = daemon
+        .client
+        .mark_unread(&sent.id)
+        .await
+        .expect("mark unread");
+    assert_eq!(back.state, MessageState::Delivered);
+    assert!(back.read_at.is_none());
+    let unread_again = daemon
+        .client
+        .list_messages(&MessageQuery {
+            to: Some("me".to_string()),
+            unread: true,
+            ..Default::default()
+        })
+        .await
+        .expect("list unread again");
+    assert!(unread_again.iter().any(|m| m.id == sent.id));
+
+    let err = daemon
+        .client
+        .mark_unread("m-nope")
+        .await
+        .expect_err("unknown id");
+    assert!(format!("{err:?}").contains("not_found"), "{err:?}");
 }
 
 #[tokio::test]

@@ -685,6 +685,8 @@ pub enum InboxAction {
     Show(InboxShowArgs),
     /// Mark one or more messages read.
     Read(InboxReadArgs),
+    /// Mark one or more messages unread again.
+    Unread(InboxReadArgs),
 }
 
 #[derive(Debug, Args)]

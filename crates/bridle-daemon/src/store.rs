@@ -1987,7 +1987,7 @@ mod sync {
             "UPDATE messages SET state = ?1,
                 written_at = CASE WHEN ?1 = 'written' THEN ?2 ELSE written_at END,
                 delivered_at = CASE WHEN ?1 = 'delivered' THEN ?2 ELSE delivered_at END,
-                read_at = CASE WHEN ?1 = 'read' THEN ?2 ELSE read_at END
+                read_at = CASE WHEN ?1 = 'read' THEN ?2 WHEN ?1 = 'delivered' THEN NULL ELSE read_at END
              WHERE id = ?3",
             params![msg_state_str(state), fmt_dt(at), id],
         )?;

@@ -35,6 +35,7 @@ bridle send    <agent|human|role:NAME> [TEXT | --text-file FILE] [--question] [-
 bridle inbox   [--all] [--mark-read]        # messages to me, plus every task's open question (list)
 bridle inbox show <id> [--mark-read]        # show one message in full; leaves it unread unless --mark-read
 bridle inbox read <id>...                   # mark one or more messages read
+bridle inbox unread <id>...                 # mark one or more messages unread again
 bridle ask     <task-id> TEXT [--to WHO]         question against a task; blocks it until answered, and sends a pointer message (kind question) to WHO (agent, role:NAME, external:NAME, human); default: the caller's spawner, or human
 bridle answer  <task-id> TEXT                    answers a task's open question; frees it to be ready again; sends the asker a pointer (kind answer)
 bridle claim   <task-id>                         claims a ready task for the caller: planned -> claimed
@@ -448,6 +449,8 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
     `POST /v1/messages/{id}/read` after showing it. In JSON mode, returns the message object; plain text returns the
     formatted rendering above. Fails with a 404-like error if the message doesn't exist
     or isn't addressed to `me`.
+  - `bridle inbox unread <id>...` calls `POST /v1/messages/{id}/unread` for each id, returning
+    a read message to the unread list (JSON: `{"marked_unread": [...]}`).
   - `bridle inbox read <id>... ` (mark read, one or more) calls `POST /v1/messages/{id}/read`
     for each id in turn (the same endpoint `--mark-read` on list uses per message). Accepts
     multiple ids; useful for marking specific messages read without listing/marking

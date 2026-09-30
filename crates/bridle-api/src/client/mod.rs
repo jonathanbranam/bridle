@@ -253,6 +253,10 @@ impl Client {
         self.post_empty(&["v1", "messages", id, "read"]).await
     }
 
+    pub async fn mark_unread(&self, id: &str) -> Result<Message, ClientError> {
+        self.post_empty(&["v1", "messages", id, "unread"]).await
+    }
+
     // ---------- events ----------
 
     pub async fn events(&self, query: &EventQuery) -> Result<Vec<Event>, ClientError> {

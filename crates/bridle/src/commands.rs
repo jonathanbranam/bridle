@@ -926,6 +926,7 @@ async fn inbox(cli: &Cli, args: &InboxArgs) -> Result<(), CliError> {
     match &args.action {
         Some(InboxAction::Show(show_args)) => inbox_show(cli, show_args).await,
         Some(InboxAction::Read(read_args)) => inbox_read(cli, read_args).await,
+        Some(InboxAction::Unread(args)) => inbox_unread(cli, args).await,
         None => inbox_list(cli, args).await,
     }
 }
@@ -1050,6 +1051,23 @@ async fn inbox_read(cli: &Cli, args: &InboxReadArgs) -> Result<(), CliError> {
     } else {
         for id in &args.ids {
             println!("marked {} read", id);
+        }
+    }
+    Ok(())
+}
+
+async fn inbox_unread(cli: &Cli, args: &InboxReadArgs) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    for id in &args.ids {
+        client.mark_unread(id).await?;
+    }
+    if cli.json {
+        render::print_json(&serde_json::json!({
+            "marked_unread": args.ids,
+        }))?;
+    } else {
+        for id in &args.ids {
+            println!("marked {} unread", id);
         }
     }
     Ok(())

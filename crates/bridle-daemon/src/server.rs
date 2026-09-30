@@ -83,6 +83,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/agents/{id}/transcript", get(transcript))
         .route("/v1/messages", get(list_messages).post(send_message))
         .route("/v1/messages/{id}/read", post(mark_read))
+        .route("/v1/messages/{id}/unread", post(mark_unread))
         .route("/v1/events", get(list_events))
         .route("/v1/events/stream", get(events_stream))
         .route("/v1/orchestrator/wake", get(orchestrator_wake))
@@ -964,9 +965,28 @@ async fn send_message(
 }
 
 async fn mark_read(
-    State(state): State<AppState>,
-    Extension(principal): Extension<Principal>,
-    Path(id): Path<String>,
+    state: State<AppState>,
+    principal: Extension<Principal>,
+    id: Path<String>,
+) -> Result<Json<Message>, ApiError> {
+    set_read_state(state.0, principal.0, id.0, true).await
+}
+
+/// Puts a read message back on the unread list (as `delivered`, the state a
+/// message has before it's read); a message that isn't read is left alone.
+async fn mark_unread(
+    state: State<AppState>,
+    principal: Extension<Principal>,
+    id: Path<String>,
+) -> Result<Json<Message>, ApiError> {
+    set_read_state(state.0, principal.0, id.0, false).await
+}
+
+async fn set_read_state(
+    state: AppState,
+    principal: Principal,
+    id: String,
+    read: bool,
 ) -> Result<Json<Message>, ApiError> {
     let msg = state
         .store
@@ -984,19 +1004,26 @@ async fn mark_read(
     if !is_recipient && principal.kind != PrincipalKind::Human {
         return Err(ApiError::forbidden("not the recipient of this message"));
     }
-    state
-        .store
-        .set_message_state(&id, MessageState::Read, Utc::now())
-        .await?;
-    let _ = state
-        .emitter
-        .emit(
-            bridle_api::types::event_kind::MESSAGE_READ,
-            principal.id,
-            None,
-            serde_json::json!({"message": id}),
-        )
-        .await;
+    if read {
+        state
+            .store
+            .set_message_state(&id, MessageState::Read, Utc::now())
+            .await?;
+        let _ = state
+            .emitter
+            .emit(
+                bridle_api::types::event_kind::MESSAGE_READ,
+                principal.id,
+                None,
+                serde_json::json!({"message": id}),
+            )
+            .await;
+    } else if msg.state == MessageState::Read {
+        state
+            .store
+            .set_message_state(&id, MessageState::Delivered, Utc::now())
+            .await?;
+    }
     Ok(Json(state.store.get_message(&id).await?.ok_or_else(
         || {
             ApiError::new(

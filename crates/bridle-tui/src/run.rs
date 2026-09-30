@@ -148,6 +148,12 @@ async fn run_app(terminal: &mut Term, client: Client) -> anyhow::Result<()> {
                 let _ = client.mark_read(&id).await;
             });
         }
+        if let Some(id) = app.pending_mark_unread.take() {
+            let client = client.clone();
+            tokio::spawn(async move {
+                let _ = client.mark_unread(&id).await;
+            });
+        }
         if std::mem::take(&mut app.refresh_agents) {
             let client = client.clone();
             let tx = tx.clone();

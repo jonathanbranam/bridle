@@ -191,6 +191,8 @@ pub struct App {
     pub viewing: Option<ApiMessage>,
     /// An opened message for `run.rs` to mark read, like `bridle inbox show`.
     pub pending_mark_read: Option<String>,
+    /// A message for `run.rs` to put back on the unread list.
+    pub pending_mark_unread: Option<String>,
     /// A finished compose waiting for `run.rs` to send and mark the
     /// original read; taken (cleared) once `run.rs` has picked it up.
     pub pending_send: Option<PendingSend>,
@@ -279,6 +281,11 @@ impl App {
                         self.mark_done(&msg);
                     }
                 }
+                Key::Char('u') => {
+                    if let Some(msg) = self.viewing.take() {
+                        self.mark_unread(&msg);
+                    }
+                }
                 _ => {}
             }
             return;
@@ -290,6 +297,11 @@ impl App {
             Key::Char('d') if self.focus == Focus::Inbox => {
                 if let Some(msg) = self.inbox_row(self.selected_message).cloned() {
                     self.mark_done(&msg);
+                }
+            }
+            Key::Char('u') if self.focus == Focus::Inbox => {
+                if let Some(msg) = self.inbox_row(self.selected_message).cloned() {
+                    self.mark_unread(&msg);
                 }
             }
             Key::Char('k') | Key::Up => self.scroll_up(),
@@ -354,6 +366,14 @@ impl App {
     fn mark_done(&mut self, msg: &ApiMessage) {
         if !self.is_question_row(msg) {
             self.pending_mark_read = Some(msg.id.clone());
+        }
+    }
+
+    /// Undoes a mark-read (say, one made from another client while this
+    /// message was open), so it comes back on the next poll.
+    fn mark_unread(&mut self, msg: &ApiMessage) {
+        if !self.is_question_row(msg) {
+            self.pending_mark_unread = Some(msg.id.clone());
         }
     }
 
@@ -987,6 +1007,22 @@ mod tests {
             assert!(app.viewing.is_none());
             assert!(!app.should_quit);
         }
+    }
+
+    #[test]
+    fn u_marks_unread_from_the_list_or_the_opened_message() {
+        let mut app = App::new();
+        app.on_message(Message::MessagesLoaded(vec![inbox_message(
+            "m-1", "w1", "hi",
+        )]));
+        focus_inbox(&mut app);
+        app.on_key(Key::Char('u'));
+        assert_eq!(app.pending_mark_unread.take().as_deref(), Some("m-1"));
+        app.on_key(Key::Enter);
+        app.on_key(Key::Char('u'));
+        assert_eq!(app.pending_mark_unread.as_deref(), Some("m-1"));
+        assert!(app.viewing.is_none());
+        assert_eq!(app.pending_mark_read, None);
     }
 
     #[test]
