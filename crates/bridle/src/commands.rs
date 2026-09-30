@@ -94,6 +94,9 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         }
         Command::Handover(args) => handover(&cli, args).await,
         Command::WaitForWake => wait_for_wake(&cli).await,
+        Command::Mail(args) => match args.action {
+            crate::cli::MailAction::Run => mail_run(&cli).await,
+        },
         Command::Prime(args) => prime(&cli, args).await,
         Command::Rules(args) => rules(&cli, args).await,
         Command::Sync => sync(&cli).await,
@@ -1860,6 +1863,39 @@ async fn sync(cli: &Cli) -> Result<(), CliError> {
 }
 
 /// `bridle wait-for-wake`: the daemon holds the request until a wake is pending.
+/// `bridle mail run`: the inbound bridge for this daemon's project, until interrupted.
+async fn mail_run(cli: &Cli) -> Result<(), CliError> {
+    let cwd = std::env::current_dir().context("current directory")?;
+    let endpoint = discovery::resolve_endpoint(
+        cli.url.as_deref(),
+        cli.project.as_deref(),
+        &cwd,
+        &ProcessEnv,
+    )
+    .map_err(|e| CliError::Unreachable(e.to_string()))?;
+    let (Some(project), Some(workspace)) = (endpoint.project.clone(), endpoint.workspace.clone())
+    else {
+        return Err(
+            anyhow::anyhow!("mail run needs --project (or a workspace), not just --url").into(),
+        );
+    };
+    let cfg = bridle_mail::MailConfig::load()?;
+    let store =
+        bridle_mail::S3Store::connect(&cfg.bucket, &cfg.prefix, cfg.region.as_deref()).await;
+    let attachments = discovery::state_dir(&workspace).join("inbox").join("mail");
+    let client = client_for(cli).await?;
+    bridle_mail::Bridge::new(
+        std::sync::Arc::new(store),
+        std::sync::Arc::new(bridle_mail::ClientSink(client)),
+        cfg,
+        project,
+        attachments,
+    )
+    .run()
+    .await?;
+    Ok(())
+}
+
 async fn wait_for_wake(cli: &Cli) -> Result<(), CliError> {
     let client = client_for(cli).await?;
     let wakes = client.orchestrator_wake().await?.wakes;

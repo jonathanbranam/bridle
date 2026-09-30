@@ -15,6 +15,7 @@ path = "src/main.rs"
 anyhow.workspace = true
 bridle-api.workspace = true
 bridle-daemon.workspace = true
+bridle-mail.workspace = true
 bridle-spec.workspace = true
 bridle-tui.workspace = true
 chrono.workspace = true

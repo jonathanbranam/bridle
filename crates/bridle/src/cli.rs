@@ -150,6 +150,8 @@ pub enum Command {
     /// 5 minutes of quiet). Run it in the background; run it again after each exit
     /// (orchestrator-supervision.md, section 5). `external:orchestrator` only.
     WaitForWake,
+    /// Email bridge (docs/design/mail.md). Runs as `external:mail`: `BRIDLE_AS=mail` or `--token`.
+    Mail(MailArgs),
     /// The orchestrator's handover note, kept as a record (orchestrator-supervision.md, section 7).
     Handover(HandoverArgs),
     /// Print a fresh session's opening context for a role: the role prompt,
@@ -1214,6 +1216,19 @@ pub enum OrchestratorAction {
     /// The launcher's SessionStart hook: reads the hook JSON on stdin and records the session
     /// id and transcript path in `$BRIDLE_HOME/orchestrator.session`. Never fails.
     NoteSession,
+}
+
+#[derive(Debug, Args)]
+pub struct MailArgs {
+    #[command(subcommand)]
+    pub action: MailAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum MailAction {
+    /// Poll the S3 inbound prefix and deliver the project's mail to the advisor or orchestrator
+    /// (`[mail]` in `~/.bridle/config.toml`; AWS credentials from the standard AWS chain).
+    Run,
 }
 
 #[derive(Debug, Args)]

@@ -1765,6 +1765,11 @@ struct RawConfig {
     packs: Option<Vec<String>>,
     #[serde(default)]
     components: Option<BTreeMap<String, Component>>,
+    /// `[mail]` belongs to `bridle mail run` (the `bridle-mail` crate parses it); the daemon
+    /// only has to accept it.
+    #[serde(default)]
+    #[allow(dead_code)]
+    mail: Option<toml::Value>,
     /// Machine scope only; a project's config may carry it but nothing reads it there.
     #[serde(default)]
     machine: Option<RawMachine>,

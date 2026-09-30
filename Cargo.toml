@@ -14,6 +14,7 @@ publish = false
 bridle-api = { path = "crates/bridle-api" }
 bridle-claude = { path = "crates/bridle-claude" }
 bridle-daemon = { path = "crates/bridle-daemon" }
+bridle-mail = { path = "crates/bridle-mail" }
 bridle-tui = { path = "crates/bridle-tui" }
 bridle-spec = { path = "crates/bridle-spec" }
 
