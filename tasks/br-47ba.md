@@ -4,7 +4,7 @@ title = "Orchestrator/advisor session names include the host (sfb3)"
 kind = "chore"
 state = "integrated"
 created_at = "2026-09-30T01:38:41.901Z"
-updated_at = "2026-09-30T01:47:46.338083Z"
+updated_at = "2026-09-30T01:48:24.863800Z"
 size = "S"
 branch = "bridle/session-host"
 commit = "8a1c3d41bee08ca8f106c27d035a583edb5d3301"
@@ -24,3 +24,6 @@ done: Added hostname to orchestrator and advisor session names for multi-machine
 
 ### note · agent:manager-2 · 2026-09-30T01:47:46.338Z
 integrated: 8a1c3d41bee08ca8f106c27d035a583edb5d3301 (branch bridle/session-host)
+
+### note · agent:manager-2 · 2026-09-30T01:48:24.863Z
+cleanup: removed agent session-host, branch bridle/session-host
