@@ -294,3 +294,25 @@ Newest first. One line per item: what happened, who did it, what it says about r
   the fix. The orchestrator is the only one watching `upgrade_failed`.
 - pm-1 couldn't close umbrella tasks (`task done` needs a commit of this repo) or move tickets
   (no file edits). I did both.
+
+## Seventeenth session (2026-09-30 ~14:45 UTC onward)
+
+- meta-notes' manager (on the laptop) was again denied `git push origin main` and believed it
+  couldn't message `external:orchestrator`; it could (I tested). I pushed its promotion step 5.
+- The human moved meta-notes to the NUC by hand (`stop-daemon`, then `serve --take-over`). Gaps
+  hit: the project's `workflow` path is machine-specific (the `~/.bridle/config.toml` override
+  fixes it); `tools-only-install` refused over the human's git-template hooks (ged2); the first
+  `bridle restart` after a port change reported failure though the daemon came back (6d5y).
+  Auto mode refused my edit of `~/.bridle/config.toml`, so machine config is the human's hand.
+- Cross-machine orchestrators now talk both ways (dalek 7401, NUC 7402, visitor tokens). The NUC
+  orchestrator relayed three bridle requests from the human: tickets through the binary (7gk7,
+  built the same afternoon), orchestrator may edit the queue with no PM (gnar), missing check
+  tools are a question (rule `missing-tools`). The human asked for a plan on bridle-wide vs
+  project-local updates and overlays: not done yet.
+- `main` was red on CI for ~90 minutes (a focus test that depended on the wall clock) and nothing
+  woke me: `[ci] github` had never been set for bridle, so the daemon's CI watcher was off
+  although the role doc said bridle watches CI. Enabled in 23f102b. I found it only by looking.
+- I didn't remind the human about work hours when they started a longer discussion (the role doc
+  asks for one reminder); they noticed. Focus hours, once the human configured them, did it.
+- A manager can't land a branch that has no task (`bridle land` needs one; manual ff is denied),
+  so the red-main fix came back to me to merge.
