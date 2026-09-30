@@ -7,6 +7,7 @@ mod cli;
 mod commands;
 mod doctor;
 mod error;
+mod focus;
 mod goals;
 mod init;
 mod launchd;

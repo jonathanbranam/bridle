@@ -32,7 +32,9 @@ use crate::cli::{
     TaskPriorityArgs, TaskReopenArgs, TaskSearchArgs, TaskShowArgs, TaskSizeArg, TaskSummaryArgs,
     TokenAction, TokenArgs, UsageArgs, UsageByArg, WaitArgs, WhenArg,
 };
-use crate::cli::{LandArgs, OrchestratorAction, OrchestratorArgs, PortAction, PortArgs};
+use crate::cli::{
+    FocusAction, FocusArgs, LandArgs, OrchestratorAction, OrchestratorArgs, PortAction, PortArgs,
+};
 use crate::error::CliError;
 use crate::render;
 use crate::serve;
@@ -91,6 +93,12 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
                 .and_then(|s| serde_json::from_str(&s).ok())
                 .unwrap_or(serde_json::Value::Null);
             crate::orchestrator::note_session(&input);
+            Ok(())
+        }
+        Command::Focus(FocusArgs {
+            action: FocusAction::Gate,
+        }) => {
+            crate::focus::run_gate();
             Ok(())
         }
         Command::Handover(args) => handover(&cli, args).await,

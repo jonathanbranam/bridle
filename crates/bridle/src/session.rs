@@ -18,16 +18,20 @@ use crate::error::CliError;
 /// disableRemoteControl: the human reaches the session through Remote Control.
 const LEAN: &str = r#""disableBundledSkills":true,"disableWorkflows":true,"disableClaudeAiConnectors":true,"disableArtifact":true,"permissions":{"deny":["EnterPlanMode","ExitPlanMode","DesignSync","NotebookEdit","PushNotification","ReportFindings","RemoteTrigger","Artifact","Workflow"]}"#;
 
+/// Focus hours (ticket cvaq): a no-op unless `~/.bridle/config.toml` has `[[focus]]`.
+const FOCUS_GATE: &str =
+    r#""UserPromptSubmit":[{"hooks":[{"type":"command","command":"bridle focus gate"}]}]"#;
+
 /// The SessionStart hook records the session id (it changes on /clear). One --settings object:
 /// a second would replace it.
 fn orchestrator_settings() -> String {
     format!(
-        r#"{{"hooks":{{"SessionStart":[{{"hooks":[{{"type":"command","command":"bridle orchestrator note-session"}}]}}]}},{LEAN}}}"#
+        r#"{{"hooks":{{"SessionStart":[{{"hooks":[{{"type":"command","command":"bridle orchestrator note-session"}}]}}],{FOCUS_GATE}}},{LEAN}}}"#
     )
 }
 
 fn advisor_settings() -> String {
-    format!("{{{LEAN}}}")
+    format!(r#"{{"hooks":{{{FOCUS_GATE}}},{LEAN}}}"#)
 }
 
 // The opening prompts only point at `bridle prime`: a long prompt in argv is matched by any

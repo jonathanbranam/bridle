@@ -76,6 +76,8 @@ bridle token revoke <name>                  human only, external tokens only (an
 bridle statusline                           Claude Code statusLine command; local only, no daemon call
 bridle orchestrator note-session            the orchestrator launcher's SessionStart hook: writes $BRIDLE_HOME/orchestrator.session
                                              from the hook JSON on stdin; local only; never fails
+bridle focus gate                           the UserPromptSubmit hook of focus hours (cvaq): in a `quiet` `[[focus]]` period prints
+                                             nudge context on the first prompt and every 5 min after; silent otherwise; never fails
 bridle handover done                       the orchestrator's state is written: the daemon stops and relaunches its session (marker only); human and external:orchestrator only
 bridle wait-for-wake --mail                  the advisor's mail-only waiter: returns when unread mail from external:mail arrives (`nothing` after 25 min); polls the inbox every 10 s
 bridle handover write --file <path>|-      record the orchestrator's handover note (human and external:orchestrator only); prints its id
@@ -549,6 +551,12 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   its own session (`bridle session orchestrator`; `scripts/claude-orchestrator` is a compat wrapper) ([[orchestrator-supervision]]). It reads the hook JSON on stdin and writes
   `$BRIDLE_HOME/orchestrator.session` as `<session id> <transcript path>` (`/clear` gives the same
   process a new id). Local, silent, never fails.
+- **`focus gate`** is the `UserPromptSubmit` hook `bridle session` passes for the advisor and
+  orchestrator. Inside a `quiet` `[[focus]]` period ([[roles-and-config]], Focus hours) it prints
+  hook JSON whose `additionalContext` is "Quiet hours (work) until 6:00 PM ET" plus the nudge
+  instruction, on the first prompt of a period and again once 5 minutes have passed
+  (last nudge in `$BRIDLE_HOME/focus-nudge`). With no `[[focus]]`, outside a period, or in a
+  project with `focus_hours = false`, it prints nothing. Local, never fails.
 - **`handover`** keeps the orchestrator's note as a record ([[orchestrator-supervision]] section 7):
   `write` reads a file or stdin (`-`), `list` shows id, time, author and first line, `show` the
   whole note. Latest wins; `bridle prime orchestrator` prints the newest under a heading with

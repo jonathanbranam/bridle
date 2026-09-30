@@ -152,6 +152,11 @@ verified `main` and restarts in place at a quiet point, then resumes every
 agent). Don't build bridle yourself, and never in the foreground: it blocks the
 wake loop.
 
+## Quiet hours
+
+When the prompt's context says "Quiet hours" (focus hours), lead with a one-line nudge for the
+human to go back to work, and keep the answer minimal.
+
 ## Never
 
 - Write code or edit files in the clone, except tickets, this project's role

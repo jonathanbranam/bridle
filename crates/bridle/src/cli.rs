@@ -148,6 +148,8 @@ pub enum Command {
     ArchGuard,
     /// The orchestrator's supervision hooks (docs/design/agent-host/orchestrator-supervision.md).
     Orchestrator(OrchestratorArgs),
+    /// Focus hours (ticket cvaq): the human's `[[focus]]` periods in `~/.bridle/config.toml`.
+    Focus(FocusArgs),
     /// Wait for something the orchestrator should act on, print it and exit 0 (`nothing` after
     /// 5 minutes of quiet). Run it in the background; run it again after each exit
     /// (orchestrator-supervision.md, section 5). `external:orchestrator` only.
@@ -1281,6 +1283,20 @@ pub enum OrchestratorAction {
     /// The launcher's SessionStart hook: reads the hook JSON on stdin and records the session
     /// id and transcript path in `$BRIDLE_HOME/orchestrator.session`. Never fails.
     NoteSession,
+}
+
+#[derive(Debug, Args)]
+pub struct FocusArgs {
+    #[command(subcommand)]
+    pub action: FocusAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum FocusAction {
+    /// The UserPromptSubmit hook: inside a `quiet` period, prints context that nudges the human
+    /// back to work on the first prompt and every 5 minutes after. Silent when no `[[focus]]`
+    /// is configured, outside a period, or in a project with `focus_hours = false`. Never fails.
+    Gate,
 }
 
 #[derive(Debug, Args)]

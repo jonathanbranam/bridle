@@ -630,16 +630,127 @@ impl SchedulePeriod {
         let (Some(start), Some(end)) = (self.start, self.end) else {
             return false;
         };
-        if !self.days.contains(&now.weekday()) {
-            return false;
-        }
-        let t = now.time();
-        if start <= end {
-            t >= start && t < end
-        } else {
-            t >= start || t < end
-        }
+        in_window(&self.days, start, end, now)
     }
+}
+
+/// Whether `now`'s weekday is in `days` and its time-of-day is within `start..end`, a range
+/// that may cross midnight. Shared by `[[budget.schedule]]` and `[[focus]]`.
+fn in_window(days: &[Weekday], start: NaiveTime, end: NaiveTime, now: DateTime<Local>) -> bool {
+    if !days.contains(&now.weekday()) {
+        return false;
+    }
+    let t = now.time();
+    if start <= end {
+        t >= start && t < end
+    } else {
+        t >= start || t < end
+    }
+}
+
+/// `[[focus]]` mode. `Locked` parses but nothing acts on it yet (ticket cvaq, slice C).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FocusMode {
+    Quiet,
+    Locked,
+}
+
+/// One `[[focus]]` period (ticket cvaq): host-local days and a time-of-day window, like a
+/// `[[budget.schedule]]` period, with a mode.
+#[derive(Debug, Clone, PartialEq)]
+pub struct FocusPeriod {
+    pub name: String,
+    pub days: Vec<Weekday>,
+    pub start: NaiveTime,
+    pub end: NaiveTime,
+    pub mode: FocusMode,
+}
+
+impl FocusPeriod {
+    pub fn matches(&self, now: DateTime<Local>) -> bool {
+        in_window(&self.days, self.start, self.end, now)
+    }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawFocusPeriod {
+    name: String,
+    days: RawDays,
+    start: String,
+    end: String,
+    #[serde(default)]
+    mode: Option<String>,
+}
+
+fn weekdays(days: RawDays, name: &str) -> Result<Vec<Weekday>, ConfigError> {
+    match days {
+        RawDays::All(s) if s.eq_ignore_ascii_case("all") => Ok(vec![
+            Weekday::Mon,
+            Weekday::Tue,
+            Weekday::Wed,
+            Weekday::Thu,
+            Weekday::Fri,
+            Weekday::Sat,
+            Weekday::Sun,
+        ]),
+        RawDays::All(s) => Err(ConfigError::BadSchedule {
+            name: name.to_string(),
+            reason: format!("invalid days {s:?}: expected \"all\" or a list of mon..sun"),
+        }),
+        RawDays::List(days) => days.iter().map(|d| parse_weekday(d, name)).collect(),
+    }
+}
+
+impl RawFocusPeriod {
+    fn into_period(self) -> Result<FocusPeriod, ConfigError> {
+        let mode = match self.mode.as_deref() {
+            None | Some("quiet") => FocusMode::Quiet,
+            Some("locked") => FocusMode::Locked,
+            Some(other) => {
+                return Err(ConfigError::BadSchedule {
+                    name: self.name,
+                    reason: format!("invalid mode {other:?}: expected \"quiet\" or \"locked\""),
+                });
+            }
+        };
+        Ok(FocusPeriod {
+            start: parse_time_of_day(&self.start, &self.name)?,
+            end: parse_time_of_day(&self.end, &self.name)?,
+            days: weekdays(self.days, &self.name)?,
+            name: self.name,
+            mode,
+        })
+    }
+}
+
+/// The `[[focus]]` periods of `<home>/config.toml`; empty when the file or section is absent,
+/// which turns focus hours off entirely.
+pub fn focus_periods(home: &Path) -> Result<Vec<FocusPeriod>, ConfigError> {
+    let path = home.join("config.toml");
+    let text = match std::fs::read_to_string(&path) {
+        Ok(t) => t,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
+        Err(source) => return Err(ConfigError::Read { path, source }),
+    };
+    let raw: RawConfig = toml::from_str(&text).map_err(|source| ConfigError::Parse {
+        path: path.clone(),
+        source: Box::new(source),
+    })?;
+    raw.focus
+        .unwrap_or_default()
+        .into_iter()
+        .map(RawFocusPeriod::into_period)
+        .collect()
+}
+
+/// Whether the project at `repo` opted out of focus hours with `focus_hours = false` in its
+/// `.bridle/config.toml`. Unreadable or absent config means no opt-out.
+pub fn focus_opted_out(repo: &Path) -> bool {
+    let Ok(text) = std::fs::read_to_string(repo.join(".bridle/config.toml")) else {
+        return false;
+    };
+    toml::from_str::<RawConfig>(&text).is_ok_and(|raw| raw.focus_hours == Some(false))
 }
 
 /// `[budget]`: the account-wide usage governor's thresholds
@@ -1823,6 +1934,12 @@ struct RawConfig {
     /// Read by `bridle advisor start` from the machine config only (`advisor_pane`).
     #[serde(default)]
     tmux: Option<RawTmux>,
+    /// Machine scope: the `[[focus]]` periods (ticket cvaq).
+    #[serde(default)]
+    focus: Option<Vec<RawFocusPeriod>>,
+    /// Project scope: `focus_hours = false` opts the project out of focus hours.
+    #[serde(default)]
+    focus_hours: Option<bool>,
 }
 
 #[derive(Debug, Default, Deserialize)]

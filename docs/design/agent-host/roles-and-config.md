@@ -172,6 +172,26 @@ Also read from `.bridle/config.toml` (defaults in parentheses; each is documente
 - `[components.<id>]` (`paths`, `parent`, `docs`, `consumers`, all optional): the component map
   ([[../components|components]]); a parent that isn't defined, or a cycle, is a config error.
 
+## Focus hours
+
+Ticket cvaq. `[[focus]]` periods in the machine `~/.bridle/config.toml` keep the human on their
+real work. Same shape as `[[budget.schedule]]` (`days` a list or `"all"`, `start`/`end` as
+host-local `HH:MM`, a range that may cross midnight), plus `name` and `mode`:
+
+```toml
+[[focus]]
+name  = "work"
+days  = ["mon", "tue", "wed", "thu", "fri"]
+start = "08:00"
+end   = "18:00"
+mode  = "quiet"          # default; "locked" parses but is not acted on yet
+```
+
+With no `[[focus]]` everything is off. In a `quiet` period `bridle focus gate` (see
+[[cli]]) nudges the human; the advisor and orchestrator role text says to lead with a one-line
+nudge back to work and keep the answer minimal. A project opts out with `focus_hours = false`
+in its `.bridle/config.toml`. Not built yet: the override file, `locked`, quiet-noise routing.
+
 ## Per-spawn tool overrides
 
 `bridle spawn <role> --allow-tool TOOL` (repeatable) grants a tool beyond the
