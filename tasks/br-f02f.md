@@ -4,7 +4,7 @@ title = "NUC B1: orchestrator and advisor scripts take a project, run on Linux (
 kind = "chore"
 state = "integrated"
 created_at = "2026-09-30T03:01:34.257Z"
-updated_at = "2026-09-30T03:44:20.556596Z"
+updated_at = "2026-09-30T03:44:39.318800Z"
 branch = "bridle/nuc-scripts"
 commit = "92a519a9487b56fd436b19dc2684e67c0f17d953"
 summary = "Added project support to scripts/claude-orchestrator and scripts/claude-advisor (--project flag, BRIDLE_PROJECT env var, default 'bridle'; project included in session names e.g. orch-meta-notes-nuc, advisor-alice-meta-notes-nuc). Converted both scripts to bash (#!/usr/bin/env bash) for Linux compatibility, no zsh-only syntax. Pass project to bridle for daemon/token selection. Tested syntax with bash -n, verified session name generation logic, verified command-line examples for two projects. Updated docs and CHANGELOG. just check: 788 tests passed."
@@ -25,3 +25,6 @@ Two things: (1) main moved: merge it, confirm ancestor, message me the sha. (2) 
 
 ### note · agent:manager-2 · 2026-09-30T03:44:20.556Z
 integrated: 92a519a9487b56fd436b19dc2684e67c0f17d953 (branch bridle/nuc-scripts)
+
+### note · agent:manager-2 · 2026-09-30T03:44:39.318Z
+cleanup: removed agent nuc-scripts, branch bridle/nuc-scripts
