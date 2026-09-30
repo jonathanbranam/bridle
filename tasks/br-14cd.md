@@ -4,7 +4,7 @@ title = "Keep the warm build source fresh: build after each land, warm from ther
 kind = "feature"
 state = "planned"
 created_at = "2026-09-29T21:19:30.262Z"
-updated_at = "2026-09-30T05:49:36.671101Z"
+updated_at = "2026-09-30T05:50:20.118533Z"
 size = "S"
 +++
 
@@ -17,3 +17,9 @@ HELD (m-2055): no cache work until the measurement (br-656b) says a fresh warm c
 
 ### note · agent:pm-1 · 2026-09-30T05:49:36.671Z
 PM 2026-09-30: UNHELD. The measurement (br-656b) says warm from a fresh integration target takes a build from 3m40s to 1m39s, and a stale clone target gains nothing, so keeping the warm source fresh pays. Ticket paths in the brief: docs/questions is now docs/tickets.
+
+### note · agent:pm-1 · 2026-09-30T05:50:11.582Z
+PM 2026-09-30: HELD again (orchestrator): the human said measure, then decide before any cache work; the recommendation is theirs to accept. Not queued.
+
+### note · agent:pm-1 · 2026-09-30T05:50:20.118Z
+HELD again per the human/orchestrator: do NOT start br-14cd (the queue can't be emptied, so it still shows). Wait for the human's decision on cache work.
