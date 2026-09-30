@@ -40,6 +40,18 @@ After the advisor's proposal (below), verbatim:
 >
 > file this - it isn't overly urgent but something that can be built in the next few days.
 
+A correction, verbatim, the same day:
+
+> sorry 8am to 5pm on weekdays should be quiet; and I'll likely disable quiet time through
+> config during travel; restarting the daemone is pretty easy now for config updates, yeah?
+> Otherwise, that will be annoying.
+
+So config edits must take effect without fuss: the gate hook is a short-lived CLI that can read
+`~/.bridle/config.toml` on every call, so it needs no restart; the daemon's side (holding the
+human's notes, shutting down advisors) should pick up a changed `[[focus]]` without a restart
+too, or at most with `bridle restart` (see
+[[reload-config-without-a-restart-9t54|reload config without a restart]]).
+
 ## Design, as agreed
 
 **Schedule.** `[[focus]]` periods in `~/.bridle/config.toml`, the same shape as
@@ -51,7 +63,7 @@ with a `mode`:
 name  = "work"
 days  = ["mon", "tue", "wed", "thu", "fri"]
 start = "08:00"
-end   = "18:00"
+end   = "17:00"
 mode  = "quiet"          # or "locked"
 ```
 
@@ -66,7 +78,7 @@ n9qh; not set here).
   summary when the period ends (the mail bridge's digest could carry it).
 - Interactive sessions (advisor, orchestrator, Remote Control) still work, but nudge: a
   `UserPromptSubmit` hook, `bridle focus gate`, adds context such as "Quiet hours (work) until
-  6:00 PM ET" on the **first prompt, then again when 5 minutes or more have passed** since the
+  5:00 PM ET" on the **first prompt, then again when 5 minutes or more have passed** since the
   last nudge. The role text says: lead with a one-line nudge to go back to work (or to bed), keep
   the answer minimal.
 - Optional: quote the current plan from the human's Time Block through meta-notes'
@@ -75,7 +87,7 @@ n9qh; not set here).
 **Locked.**
 
 - The orchestrator **keeps running**; the system doesn't work well without it. It does its
-  work but refuses all chat: the gate hook blocks every prompt with "Locked until 6:00 PM. Email
+  work but refuses all chat: the gate hook blocks every prompt with "Locked until 5:00 PM. Email
   bridle@dev.branam.us if it matters."
 - All advisors are shut down when the period starts, and `bridle session advisor` refuses to
   start one.
