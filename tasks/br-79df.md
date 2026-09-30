@@ -2,9 +2,9 @@
 id = "br-79df"
 title = "Base rule: check and update the docs as the last step of every change (3ndf)"
 kind = "chore"
-state = "planned"
+state = "dropped"
 created_at = "2026-09-30T23:27:11.171Z"
-updated_at = "2026-09-30T23:32:20.794260Z"
+updated_at = "2026-09-30T23:43:15.756467Z"
 size = "S"
 summary = "Added CHANGELOG entry for docs-current rule (br-987b had implemented the rule and worker handoff; br-0f46 already dropped). Commit ef33f8c."
 +++
@@ -21,3 +21,11 @@ Do:
 
 Acceptance: just check passes. Model: Haiku.
 Out of scope: a separate docs-checking agent; any code change; checking that the rule was followed.
+
+## Thread
+
+### note · agent:docs-rule · 2026-09-30T23:43:10.924Z
+done: Added CHANGELOG entry for docs-current rule (implementation was in br-987b, br-0f46 already dropped); ef33f8c. First check had parses_fast flake, retry passed all 933 tests.
+
+### note · agent:manager-2 · 2026-09-30T23:43:15.756Z
+dropped: Already implemented by br-987b (0541c98: workflow/base/rules/docs-current.md and the worker finish step); the worker found nothing left but a CHANGELOG line.
