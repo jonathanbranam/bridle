@@ -42,6 +42,20 @@ Then: "File this for investigation."
   found it dead at 23:15:28 and relaunched (session `56dad04b-...`, new pane `%68`), which came up
   fine.
 
+## How the 23:10 session started (the human, 2026-09-30)
+
+> I asked orch to show me how the handoff works. And context was around 150k, so that orch
+> session wrote the handoff and I guess bridle killed the process. then bridle restarted orch to
+> read the new handoff
+
+So `35c01381` wrote handover h-0003 (03:09 UTC, 23:09 ET) and ran `bridle handover done`. The
+daemon stopped it and started the 23:10 session. The escape codes came after that relaunch.
+Two consequences:
+
+- Reproduce first with `bridle handover done`: the daemon's stop-and-relaunch path.
+- That path left no `orchestrator.*` event and no `orchestrator.exits` line. That's a gap of
+  its own: a handover relaunch should be recorded like any other.
+
 ## Working theory (unproven)
 
 A terminal mode left on in the pane. Either the previous Claude Code ended without restoring its
