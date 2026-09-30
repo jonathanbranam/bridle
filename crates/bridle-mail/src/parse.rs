@@ -5,11 +5,14 @@ use mail_parser::{Address, MessageParser, MimeHeaders};
 
 use crate::config::MailConfig;
 
-/// Where a mail is addressed: `<project>@` or `<project>+t-<task>@`.
+/// Where a mail is addressed: `<project>@`, `<project>+t-<task>@`, or a reply address
+/// `<project>+r-<msgid>.<tag>@`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Route {
     pub project: String,
     pub task: Option<String>,
+    /// `(question message id, token)`; the token is checked by the bridge, which has the key.
+    pub reply: Option<(String, String)>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -49,6 +52,12 @@ pub enum Rejection {
     Verdict,
     #[error("auto-reply or bounce")]
     AutoReply,
+    /// A reply address whose token doesn't match the question, or that can't be checked.
+    #[error("invalid reply token")]
+    BadToken,
+    /// A valid token for a question that is already answered, or isn't an open question.
+    #[error("replayed reply: {0} is not an open question")]
+    Replayed(String),
 }
 
 /// Parses `local@domain` recipients on our domain into a route for `project`.
@@ -65,8 +74,19 @@ pub fn route_for(address: &str, domain: &str, project: &str) -> Option<Route> {
     if name != project.to_ascii_lowercase() {
         return None;
     }
+    let mut reply = None;
     let task = match tag {
         None => None,
+        Some(t) if t.starts_with("r-") => {
+            let (id, mac) = t[2..].split_once('.')?;
+            let plain =
+                |s: &str| !s.is_empty() && s.chars().all(|c| c.is_ascii_alphanumeric() || c == '-');
+            if !plain(id) || !plain(mac) {
+                return None;
+            }
+            reply = Some((id.to_string(), mac.to_string()));
+            None
+        }
         Some(t) => {
             let id = t.strip_prefix("t-")?;
             let ok = !id.is_empty()
@@ -82,6 +102,7 @@ pub fn route_for(address: &str, domain: &str, project: &str) -> Option<Route> {
     Some(Route {
         project: name.to_string(),
         task,
+        reply,
     })
 }
 

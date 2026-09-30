@@ -91,7 +91,7 @@ done
 | building and testing | `CLAUDE.md` (Conventions section) |
 | incidents (a task kind plus a broadcast notice) | `docs/design/agent-host/incidents.md` |
 | permissions, tools | `docs/design/agent-host/principals.md` |
-| inbound email bridge (`bridle mail run`) | `docs/design/mail.md` |
+| email bridge (`bridle mail run`) | `docs/design/mail.md` |
 
 ## Reading order
 

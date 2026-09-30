@@ -71,7 +71,7 @@ bridle orchestrator note-session            the orchestrator launcher's SessionS
 bridle handover done                       the orchestrator's state is written: the daemon stops and relaunches its session (marker only); human and external:orchestrator only
 bridle handover write --file <path>|-      record the orchestrator's handover note (human and external:orchestrator only); prints its id
 bridle handover list | show <id>           the notes, newest first · one note
-bridle mail run                              the inbound email bridge for this project (docs/design/mail.md); runs as external:mail
+bridle mail run                              the email bridge for this project: inbound mail, question mails, daily digest (docs/design/mail.md); runs as external:mail
 bridle wait-for-wake                        the orchestrator's background watcher: waits for a wake condition, prints it and exits 0 (`nothing` after 25 min); external:orchestrator only
 bridle arch-guard                          Claude Code PreToolUse hook: blocks design/architecture/ edits outside an arch-revision task
 bridle stop-check                           Claude Code Stop hook for the worker role; refuses to stop

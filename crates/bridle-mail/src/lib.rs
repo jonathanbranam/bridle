@@ -5,10 +5,17 @@
 
 mod bridge;
 mod config;
+mod outbound;
 mod parse;
 mod store;
+mod token;
 
-pub use bridge::{Bridge, ClientSink, Outcome, Sink};
+pub use bridge::{Bridge, ClientSink, Outbound, Outcome, Sink};
 pub use config::MailConfig;
+pub use outbound::{
+    FakeMailer, Feed, Mailer, OutMail, Sent, SesMailer, digest_due, digest_mail, is_open_question,
+    question_mail,
+};
 pub use parse::{Accepted, Attachment, Rejection, Route, evaluate};
 pub use store::{FakeStore, MailStore, S3Store};
+pub use token::Tokens;

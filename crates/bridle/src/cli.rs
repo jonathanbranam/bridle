@@ -1226,8 +1226,8 @@ pub struct MailArgs {
 
 #[derive(Debug, Subcommand)]
 pub enum MailAction {
-    /// Poll the S3 inbound prefix and deliver the project's mail to the advisor or orchestrator
-    /// (`[mail]` in `~/.bridle/config.toml`; AWS credentials from the standard AWS chain).
+    /// Poll the S3 inbound prefix and deliver the project's mail to the advisor or orchestrator;
+    /// mail the human's questions and a daily digest through SES (`[mail]` in `~/.bridle/config.toml`; AWS credentials from the standard AWS chain).
     Run,
 }
 

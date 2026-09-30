@@ -23,6 +23,11 @@ pub struct MailConfig {
     /// Largest attachment kept, in bytes.
     pub max_attachment_bytes: usize,
     pub poll_secs: u64,
+    /// Where question mails and the digest go (the apex is Google Workspace, not SES).
+    pub to: String,
+    /// The daily digest's time, `HH:MM`, on the bridge machine's clock (US Eastern for the
+    /// human's machines, as the budget schedule assumes).
+    pub digest_at: String,
 }
 
 impl Default for MailConfig {
@@ -37,6 +42,8 @@ impl Default for MailConfig {
             max_body_chars: 20_000,
             max_attachment_bytes: 1024 * 1024,
             poll_secs: 30,
+            to: "dev@branam.us".to_string(),
+            digest_at: "06:30".to_string(),
         }
     }
 }
@@ -55,7 +62,13 @@ impl MailConfig {
             !cfg.allow.is_empty(),
             "[mail] allow is empty: no sender could ever be accepted"
         );
+        cfg.digest_time()?;
         Ok(cfg)
+    }
+
+    pub fn digest_time(&self) -> anyhow::Result<chrono::NaiveTime> {
+        chrono::NaiveTime::parse_from_str(&self.digest_at, "%H:%M")
+            .map_err(|e| anyhow::anyhow!("[mail] digest_at {:?} is not HH:MM: {e}", self.digest_at))
     }
 
     pub fn load() -> anyhow::Result<Self> {

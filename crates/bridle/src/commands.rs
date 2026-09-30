@@ -1863,7 +1863,7 @@ async fn sync(cli: &Cli) -> Result<(), CliError> {
 }
 
 /// `bridle wait-for-wake`: the daemon holds the request until a wake is pending.
-/// `bridle mail run`: the inbound bridge for this daemon's project, until interrupted.
+/// `bridle mail run`: the mail bridge for this daemon's project, until interrupted.
 async fn mail_run(cli: &Cli) -> Result<(), CliError> {
     let cwd = std::env::current_dir().context("current directory")?;
     let endpoint = discovery::resolve_endpoint(
@@ -1882,15 +1882,26 @@ async fn mail_run(cli: &Cli) -> Result<(), CliError> {
     let cfg = bridle_mail::MailConfig::load()?;
     let store =
         bridle_mail::S3Store::connect(&cfg.bucket, &cfg.prefix, cfg.region.as_deref()).await;
-    let attachments = discovery::state_dir(&workspace).join("inbox").join("mail");
+    let state = discovery::state_dir(&workspace);
+    let attachments = state.join("inbox").join("mail");
     let client = client_for(cli).await?;
+    let mailer = bridle_mail::SesMailer::connect(cfg.region.as_deref()).await;
+    let tokens = bridle_mail::Tokens::load_or_create(&discovery::bridle_home().join("mail.key"))?;
+    let sent = bridle_mail::Sent::open(&state.join("mail"))?;
+    let sink = std::sync::Arc::new(bridle_mail::ClientSink(client));
     bridle_mail::Bridge::new(
         std::sync::Arc::new(store),
-        std::sync::Arc::new(bridle_mail::ClientSink(client)),
+        sink.clone(),
         cfg,
         project,
         attachments,
     )
+    .with_outbound(bridle_mail::Outbound {
+        mailer: std::sync::Arc::new(mailer),
+        feed: sink,
+        tokens,
+        sent,
+    })
     .run()
     .await?;
     Ok(())
