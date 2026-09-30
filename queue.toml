@@ -1,23 +1,8 @@
 [[tier]]
 tasks = [
-    "br-6441",
-    "br-df68",
+    "br-a03b",
+    "br-2b1b",
 ]
-
-[[tier]]
-tasks = ["br-92c0"]
-
-[[tier]]
-tasks = [
-    "br-c83e",
-    "br-264b",
-]
-
-[[tier]]
-tasks = ["br-70af"]
 
 [[tier]]
 tasks = ["br-656b"]
-
-[[tier]]
-tasks = ["br-2b1b"]
