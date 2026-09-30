@@ -603,6 +603,10 @@ pub struct ServeArgs {
     /// the old daemon has stopped and pushed.
     #[arg(long)]
     pub take_over: bool,
+    /// Load the config and exit 0 (or fail): the daemon runs this on a freshly built binary
+    /// before restarting into it.
+    #[arg(long, hide = true)]
+    pub check: bool,
 }
 
 #[derive(Debug, Args)]

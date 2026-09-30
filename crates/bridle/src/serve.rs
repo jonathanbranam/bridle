@@ -12,6 +12,10 @@ use crate::render;
 
 pub async fn run(cli: &Cli, args: &ServeArgs) -> Result<(), CliError> {
     crate::tools_only::refuse_serve(&canonical_repo(args)?)?;
+    if args.check {
+        bridle_daemon::rollback::preflight(&canonical_repo(args)?, None)?;
+        return Ok(());
+    }
     if args.detach {
         run_detached(cli, args).await
     } else {

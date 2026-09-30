@@ -175,7 +175,20 @@ upgrade at a time: wake `upgrade`, check the commit out into a throwaway detache
 (kept between upgrades so builds are incremental; one-hour cap), then restart in place as above,
 with the same quiet-point wait, recording the commit as built. A failed build, or no quiet point
 after it, leaves the running daemon untouched: wake `upgrade_failed` (with the build output's
-last lines) and a note to the human's inbox. Out of scope: other projects' daemons, rollback (q7rx).
+last lines) and a note to the human's inbox. Out of scope: other projects' daemons.
+
+**Rollback.** The running binary is copied to `<workspace>/.bridle/bridle.prev` before the build
+replaces it. After the build, the daemon runs the new binary's self-check (`bridle serve --check
+--repo .. --workspace ..`: loads the config, never opens the database, so a newer schema isn't
+applied before the restart is certain); a failure is reported like a failed build and the daemon
+stays as it is. Before the restart it writes `.bridle/upgrade-pending.json`; the new process marks
+it `started` as it begins and deletes it once `daemon.json` is written (serving). A new process
+that fails in `start`, or finds the marker already `started` (the last attempt died before
+serving, e.g. a crash), copies `bridle.prev` back over the installed binary, leaves
+`upgrade-rolled-back.txt` and execs it; the restored daemon wakes the orchestrator (`upgrade_failed`,
+stage `rolled_back`). A failed exec of the new binary rolls back the same way. Exec in place means
+nothing supervises the new process: a hard crash before serving is only caught by the next start
+(by hand), which then rolls back.
 
 **Automatic upgrade.** With `[daemon] self_upgrade = true` (default off; on in bridle's own
 `.bridle/config.toml`) the CI watcher's tick (every minute; no loop of its own) also checks for a

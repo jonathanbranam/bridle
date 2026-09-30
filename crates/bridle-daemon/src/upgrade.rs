@@ -32,6 +32,9 @@ const TAIL_LINES: usize = 15;
 pub struct UpgradeHooks {
     pub gh: Option<Arc<dyn Gh>>,
     pub build: Option<Vec<String>>,
+    /// Stand-in pre-flight (program then args). With `build` set and this not, none runs, so a
+    /// test's stand-in build never execs the test binary.
+    pub preflight: Option<Vec<String>>,
 }
 
 impl fmt::Debug for UpgradeHooks {
@@ -39,6 +42,7 @@ impl fmt::Debug for UpgradeHooks {
         f.debug_struct("UpgradeHooks")
             .field("gh", &self.gh.is_some())
             .field("build", &self.build)
+            .field("preflight", &self.preflight)
             .finish()
     }
 }
@@ -47,14 +51,33 @@ impl fmt::Debug for UpgradeHooks {
 pub struct Upgrader {
     gh: Arc<dyn Gh>,
     build: Vec<String>,
+    preflight: Preflight,
     /// One upgrade at a time: it builds for minutes before it restarts.
     busy: Arc<AtomicBool>,
     /// The last commit an upgrade failed on (memory only), so the automatic trigger skips it.
     failed: Arc<Mutex<Option<String>>>,
 }
 
+/// How a freshly built binary is checked before the daemon execs it.
+#[derive(Clone)]
+enum Preflight {
+    /// `<installed bridle> serve --check` with the daemon's own repo and workspace.
+    Real,
+    Command(Vec<String>),
+    Skip,
+}
+
 impl Upgrader {
-    pub fn new(gh: Arc<dyn Gh>, build: Option<Vec<String>>) -> Self {
+    pub fn new(
+        gh: Arc<dyn Gh>,
+        build: Option<Vec<String>>,
+        preflight: Option<Vec<String>>,
+    ) -> Self {
+        let preflight = match (preflight, build.is_some()) {
+            (Some(c), _) => Preflight::Command(c),
+            (None, true) => Preflight::Skip,
+            (None, false) => Preflight::Real,
+        };
         let build = build.unwrap_or_else(|| {
             ["cargo", "install", "--path", "crates/bridle"]
                 .map(String::from)
@@ -63,6 +86,7 @@ impl Upgrader {
         Upgrader {
             gh,
             build,
+            preflight,
             busy: Default::default(),
             failed: Default::default(),
         }
@@ -139,9 +163,61 @@ impl Upgrader {
         worktree::run_git(&ws.repo, &["worktree", "add", "--detach", &dir_str, sha])
             .await
             .map_err(|e| format!("checking out {sha}: {e}"))?;
-        let result = self.run_build(ws, &dir).await;
+        // The build replaces the installed binary; keep the running one to roll back to.
+        let result = match std::env::current_exe()
+            .map_err(anyhow::Error::from)
+            .and_then(|exe| crate::rollback::stash_previous(ws, &exe))
+        {
+            Ok(()) => self.run_build(ws, &dir).await,
+            Err(e) => Err(format!("keeping the previous binary: {e:#}")),
+        };
         let _ = worktree::remove(&ws.repo, &dir, true).await;
         result
+    }
+
+    /// Runs the new binary's self-check. `Err` means the daemon must stay as it is.
+    pub async fn check_built(&self, ws: &Workspace) -> Result<(), String> {
+        let (program, args): (String, Vec<String>) = match &self.preflight {
+            Preflight::Skip => return Ok(()),
+            Preflight::Command(c) => {
+                let (p, a) = c.split_first().ok_or("empty preflight command")?;
+                (p.clone(), a.to_vec())
+            }
+            Preflight::Real => (
+                std::env::current_exe()
+                    .map_err(|e| e.to_string())?
+                    .to_string_lossy()
+                    .into_owned(),
+                vec![
+                    "serve".into(),
+                    "--check".into(),
+                    "--repo".into(),
+                    ws.repo.to_string_lossy().into_owned(),
+                    "--workspace".into(),
+                    ws.workspace.to_string_lossy().into_owned(),
+                ],
+            ),
+        };
+        let out = tokio::time::timeout(
+            Duration::from_secs(60),
+            Command::new(&program)
+                .args(&args)
+                .kill_on_drop(true)
+                .output(),
+        )
+        .await
+        .map_err(|_| "the new binary's self-check timed out".to_string())?
+        .map_err(|e| format!("running the new binary {program}: {e}"))?;
+        if out.status.success() {
+            return Ok(());
+        }
+        let stderr = String::from_utf8_lossy(&out.stderr);
+        let lines: Vec<&str> = stderr.lines().collect();
+        let tail = lines[lines.len().saturating_sub(TAIL_LINES)..].join("\n");
+        Err(format!(
+            "the new binary's self-check failed ({}):\n{tail}",
+            out.status
+        ))
     }
 
     async fn run_build(&self, ws: &Workspace, dir: &Path) -> Result<(), String> {

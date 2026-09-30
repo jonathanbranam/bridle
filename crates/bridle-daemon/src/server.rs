@@ -2673,14 +2673,22 @@ async fn upgrade_in_background(
         serde_json::json!({"commit": sha, "stage": "building"}),
     )
     .await;
-    let outcome = match state.upgrader.build(&state.workspace, &sha).await {
+    let built = match state.upgrader.build(&state.workspace, &sha).await {
+        Ok(()) => state
+            .upgrader
+            .check_built(&state.workspace)
+            .await
+            .map_err(|e| format!("built {short} but refused to restart into it: {e}")),
+        Err(e) => Err(format!(
+            "build of {short} failed; the daemon is unchanged: {e}"
+        )),
+    };
+    let outcome = match built {
         Ok(()) => perform_restart(&state, &who, wait, Some(&sha))
             .await
             .map(|_| ())
             .map_err(|e| format!("built {short} but did not restart: {}", e.message)),
-        Err(e) => Err(format!(
-            "build of {short} failed; the daemon is unchanged: {e}"
-        )),
+        Err(e) => Err(e),
     };
     state.upgrader.release();
     if outcome.is_err() {
@@ -2751,6 +2759,13 @@ async fn perform_restart(
     let ids: Vec<String> = running.iter().map(|a| a.id.clone()).collect();
     crate::restart::record(&state.store, &ids).await?;
     if let Some(sha) = built {
+        crate::rollback::arm(&state.workspace).map_err(|e| {
+            ApiError::new(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "internal",
+                format!("not restarted: {e:#}"),
+            )
+        })?;
         crate::upgrade::record_built(&state.store, sha).await;
     }
     let commit = crate::restart::head(&state.workspace.repo, &state.integration).await;

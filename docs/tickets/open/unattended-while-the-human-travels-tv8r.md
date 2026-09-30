@@ -29,8 +29,8 @@ Anything below that ends in "the human restarts it" means the work stops until F
    Recommend: move at least bridle's daemon to launchd before the trip, track-web first as the
    rehearsal (the plan's own order). Human-only steps (they load the plist).
 2. **A bad self-upgrade.** `self_upgrade = true`: the daemon builds green `main` and restarts
-   itself in place. If the new binary fails to start, there is no automatic rollback (q7rx, "Out of
-   scope"); the daemon is dead. Recommend: `self_upgrade = false` for the trip (one planned restart
+   itself in place. If the new binary fails to start, there is a rollback (br-4524) for a failed pre-flight, start-up error or
+   failed exec, but not for a hard crash before serving (the daemon is dead). Recommend: `self_upgrade = false` for the trip (one planned restart
    before leaving), unless item 1 is done and verified to recover.
 3. **The laptop sleeps.** `pmset` shows `sleep 1` (one minute); sleep is prevented only by
    Claude Code's own short `caffeinate -i -t 300` calls while a session works. If every session is

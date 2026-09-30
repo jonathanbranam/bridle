@@ -58,5 +58,5 @@ config change can simply request a restart.
 
 - Upgrading other projects' daemons (one daemon per project today; each would restart itself by
   the same mechanism, but the trigger is per project).
-- Rolling back a bad binary automatically. If the new binary fails to start, the human restarts
-  by hand as today; worth a follow-up only if it happens.
+- Rolling back a bad binary: done (br-4524; daemon.md, "Rollback"). A hard crash before serving
+  is only recovered by the next manual start, which rolls back.

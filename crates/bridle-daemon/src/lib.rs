@@ -31,6 +31,7 @@ pub mod paths;
 pub mod ports;
 pub mod reevaluate;
 mod restart;
+pub mod rollback;
 pub mod rules;
 mod server;
 pub mod state_branch;
@@ -177,20 +178,62 @@ pub async fn run(opts: ServeOptions, take_over: bool) -> anyhow::Result<()> {
         take_over,
         ..Overrides::default()
     };
-    let running = start(opts, overrides).await?;
+    let ws = Workspace::new(opts.repo.clone(), opts.workspace.clone());
+    let pending = match rollback::begin(&ws) {
+        Ok(p) => p,
+        Err(reason) => return Err(roll_back(&ws, &reason)),
+    };
+    let running = match start(opts, overrides).await {
+        Ok(r) => r,
+        Err(e) if pending => return Err(roll_back(&ws, &format!("{e:#}"))),
+        Err(e) => return Err(e),
+    };
     let restart = running.restart_requested.clone();
     running.join().await?;
     if restart.load(std::sync::atomic::Ordering::SeqCst) {
         // Same PID and terminal; only returns on failure. The agents are already stopped and
-        // daemon.json is gone, so a failed exec leaves a clean stop for the human to start by hand.
-        use std::os::unix::process::CommandExt;
-        let exe = std::env::current_exe().context("finding the running binary to restart")?;
-        let err = std::process::Command::new(&exe)
-            .args(std::env::args_os().skip(1))
-            .exec();
-        anyhow::bail!("restart: exec {} failed: {err}", exe.display());
+        // daemon.json is gone, so a failed exec leaves a clean stop for the human to start by hand,
+        // unless an upgrade is pending, in which case the previous binary goes back first.
+        let err = exec_self();
+        if rollback::is_pending(&ws) {
+            return Err(roll_back(
+                &ws,
+                &format!("exec of the new binary failed: {err}"),
+            ));
+        }
+        anyhow::bail!("restart: {err}");
     }
     Ok(())
+}
+
+/// Replaces this process with the (possibly just replaced) binary at the same path; only
+/// returns, with the reason, on failure.
+fn exec_self() -> String {
+    use std::os::unix::process::CommandExt;
+    let exe = match std::env::current_exe() {
+        Ok(e) => e,
+        Err(e) => return format!("finding the running binary: {e}"),
+    };
+    let err = std::process::Command::new(&exe)
+        .args(std::env::args_os().skip(1))
+        .exec();
+    format!("exec {} failed: {err}", exe.display())
+}
+
+/// The upgraded binary can't start: put the previous one back and exec it. Only returns (the
+/// error to report) when even that fails.
+fn roll_back(ws: &Workspace, reason: &str) -> anyhow::Error {
+    tracing::error!(%reason, "upgraded binary failed to start; rolling back");
+    let exe = match std::env::current_exe() {
+        Ok(e) => e,
+        Err(e) => return anyhow::anyhow!("rollback: finding the running binary: {e}"),
+    };
+    let msg =
+        format!("the upgraded binary failed to start ({reason}); rolled back to the previous one");
+    if let Err(e) = rollback::restore(ws, &exe, &msg) {
+        return anyhow::anyhow!("rollback after `{reason}` failed: {e:#}");
+    }
+    anyhow::anyhow!("rollback: {}", exec_self())
 }
 
 /// This machine's hostname, for `owner.toml`.
@@ -409,6 +452,8 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         version: env!("CARGO_PKG_VERSION").to_string(),
     };
     discovery::write_daemon_json(&ws.workspace, &info).context("writing daemon.json")?;
+    // Serving: an upgrade that brought us here stands.
+    rollback::clear(&ws);
     if overrides.write_registry {
         discovery::write_registry(&info).context("writing registry entry")?;
     }
@@ -454,7 +499,11 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         .gh
         .clone()
         .unwrap_or_else(|| std::sync::Arc::new(ci::RealGh::new(ws.repo.clone())));
-    let upgrader = upgrade::Upgrader::new(gh.clone(), overrides.upgrade.build.clone());
+    let upgrader = upgrade::Upgrader::new(
+        gh.clone(),
+        overrides.upgrade.build.clone(),
+        overrides.upgrade.preflight.clone(),
+    );
     let ci = ci::CiWatcher::new(
         config.ci.github,
         config.branches.integration.clone(),
@@ -481,6 +530,16 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         &config.branches.integration,
     )
     .await;
+
+    if let Some(text) = rollback::take_notice(&ws) {
+        wakes
+            .push(bridle_api::types::WakeReason {
+                reason: "upgrade_failed".to_string(),
+                text: format!("upgrade: {text}"),
+                detail: serde_json::json!({"stage": "rolled_back"}),
+            })
+            .await;
+    }
 
     let (shutdown_tx, shutdown_rx) = watch::channel(false);
     let restart_requested = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));

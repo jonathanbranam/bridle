@@ -35,6 +35,7 @@ fn hooks(conclusion: &'static str, build: &str) -> bridle_daemon::Overrides {
     o.upgrade = UpgradeHooks {
         gh: Some(Arc::new(FakeGh(conclusion))),
         build: Some(vec!["sh".to_string(), "-c".to_string(), build.to_string()]),
+        preflight: None,
     };
     o
 }
@@ -212,5 +213,41 @@ async fn self_upgrade_waits_while_an_agent_is_mid_turn() {
         daemon.running.restart_requested().then_some(())
     })
     .await;
+    daemon.running.join().await.expect("join");
+}
+
+#[tokio::test]
+async fn failed_preflight_leaves_the_daemon_untouched() {
+    let mut o = hooks("success", "true");
+    o.upgrade.preflight = Some(vec![
+        "sh".into(),
+        "-c".into(),
+        "echo bad config >&2; exit 1".into(),
+    ]);
+    let (daemon, _tmp) = support::start_daemon(Some(o)).await;
+    let reply = daemon.client.restart(&upgrade()).await.expect("reply");
+    assert!(reply.message.unwrap().starts_with("building "));
+    let note = support::wait_for("the refusal note", || async {
+        daemon
+            .client
+            .list_messages(&MessageQuery {
+                to: Some("human".to_string()),
+                ..Default::default()
+            })
+            .await
+            .ok()?
+            .into_iter()
+            .find(|m| m.body.contains("self-check failed"))
+    })
+    .await;
+    assert!(note.body.contains("bad config"));
+    assert!(!daemon.running.restart_requested());
+    assert!(
+        !daemon
+            .workspace
+            .join(".bridle/upgrade-pending.json")
+            .exists()
+    );
+    daemon.running.shutdown();
     daemon.running.join().await.expect("join");
 }
