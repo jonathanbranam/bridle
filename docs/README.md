@@ -97,6 +97,18 @@ done
 | permissions, tools | `docs/design/agent-host/principals.md` |
 | email bridge (`bridle mail run`) | `docs/design/mail.md` |
 
+## Releases
+
+Pushing a `v*` tag runs `.github/workflows/release.yml`, which builds `bridle` and attaches to the
+GitHub release for the tag (creating it if missing):
+
+- `bridle-<tag>-<target>.tar.gz` for `x86_64-unknown-linux-gnu` (built on ubuntu-22.04),
+  `aarch64-apple-darwin` and `x86_64-apple-darwin`; each holds just the `bridle` binary.
+- `SHA256SUMS`, the `sha256sum` of every tarball.
+
+Running the workflow by hand (`workflow_dispatch`) builds the tarballs and uploads them as
+workflow artifacts without publishing. `scripts/package-release.sh` does the packaging.
+
 ## Reading order
 
 1. [[docs/proposal/problem|The problem]], [[docs/proposal/decisions|decisions]],

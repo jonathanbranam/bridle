@@ -1,0 +1,58 @@
+name: release
+on:
+  push:
+    tags: ["v*"]
+  # Builds and uploads the tarballs as workflow artifacts, without publishing.
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - { os: ubuntu-22.04, target: x86_64-unknown-linux-gnu }
+          - { os: macos-latest, target: aarch64-apple-darwin }
+          # Cross-compiled on arm64: Intel runners are being retired.
+          - { os: macos-latest, target: x86_64-apple-darwin }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - run: cargo build --release --locked -p bridle --target ${{ matrix.target }}
+      - name: Package
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          [ "$GITHUB_REF_TYPE" = tag ] || tag="dev-${GITHUB_SHA::7}"
+          scripts/package-release.sh "$tag" "${{ matrix.target }}" \
+            "target/${{ matrix.target }}/release/bridle" dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bridle-${{ matrix.target }}
+          path: dist/*.tar.gz
+          if-no-files-found: error
+  publish:
+    if: github.ref_type == 'tag'
+    needs: build
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Checksums
+        working-directory: dist
+        run: sha256sum *.tar.gz > SHA256SUMS
+      - name: Attach to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 \
+            || gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes
+          gh release upload "$GITHUB_REF_NAME" dist/*.tar.gz dist/SHA256SUMS --clobber
