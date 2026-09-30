@@ -66,3 +66,8 @@ whatever `workflow` currently has at its next `bridle sync`. That fits projects 
 the local bridle clone (today's setup, where bridle's own workflow changes daily). Opt-in
 vendoring fits standalone installs. Possibly both: auto for a path to a local clone, opt-in for
 an installed binary. For the human to confirm when this is designed.
+
+**Settled (the human, 2026-09-29):**
+
+> Agree with this completely: The two decisions can coexist: projects that point at a local
+> clone update automatically, and projects on an installed bridle update only when you choose.
