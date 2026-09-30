@@ -55,3 +55,17 @@ Option 1, in two steps (YAGNI: one consumer today):
   binaries. The setup action only after that.
 
 Not 2 or 3: both give up running the specs in CI, which is what the adapter is for.
+
+## Decided (2026-09-30)
+
+The human: "option 1 is good - but let's plan the work to publish releases; I want to add more
+projects in the next week and this will hit us again and again." So release binaries now; skip the
+cached `cargo install` step.
+
+1. A GitHub Actions release job: on a `v*` tag, build `bridle` for Linux x86_64 and macOS (arm64
+   and x86_64; the laptop is Intel) and attach tarballs and checksums to the GitHub release.
+2. The Python pack documents a pinned download step for consumers' CI (`curl` the tarball for the
+   runner's platform, put it on `PATH`), and the adapter's "cannot run bridle" error names that
+   section. A setup action only if the snippet gets copied into enough projects to hurt.
+3. Then cut v0.4.0 on verified `main` so the first release carries binaries; meta-notes adopts
+   the step and stops ignoring `test_specs_bdd.py`.
