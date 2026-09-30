@@ -105,3 +105,29 @@ def test_export_refusal_fails_collection(project: Path) -> None:
     r = run(project)
     assert r.returncode != 0
     assert "refused" in r.stdout + r.stderr
+
+
+def test_missing_bridle_error_mentions_readme(tmp_path: Path) -> None:
+    """Error when bridle is missing mentions the 'Running bridle in CI' README section."""
+    pytest.importorskip("pytest_bdd")
+
+    (tmp_path / "specs").mkdir()
+    (tmp_path / "specs" / "test.md").write_text(
+        "# Test\n\n## Requirement\n\nScenario: test\n  Given x\n"
+    )
+    (tmp_path / "conftest.py").write_text(CONFTEST + STEPS)
+    (tmp_path / "test_specs.py").write_text(TEST)
+
+    env = {**os.environ, "PYTHONPATH": str(ADAPTERS), "BRIDLE_BIN": "/nonexistent/bridle"}
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", "-p", "no:cacheprovider"],
+        cwd=tmp_path,
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    assert r.returncode != 0
+    output = r.stdout + r.stderr
+    assert "cannot run" in output
+    assert "Running bridle in CI" in output
+    assert "workflow/packs/python/README.md" in output

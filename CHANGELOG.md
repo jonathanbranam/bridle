@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The Python pack README documents "Running bridle in CI": a copy-pasteable GitHub Actions step that downloads and installs a pinned bridle release for the runner's platform (Linux x86_64, macOS arm64/x86_64), and the adapter's "cannot run bridle" error references it (wtyn part 2).
 - A release workflow: pushing a `v*` tag builds `bridle` for Linux x86_64 and macOS arm64/x86_64 and attaches `bridle-<tag>-<target>.tar.gz` tarballs and `SHA256SUMS` to the GitHub release (wtyn); see Releases in `docs/README.md`.
 - The daemon tells the running manager (else the orchestrator) "queue updated: re-read `bridle queue` before you next start something" after the queue settles (30 s trailing-edge debounce); the product manager no longer nudges by hand (f5ww).
 - `bridle machine tools-only-install` moves an existing non-bridle `pre-commit`/`pre-push` hook to `<hook>.pre-bridle` instead of refusing, and re-running it once the clone is no longer listed removes bridle's hooks and restores those (ged2).

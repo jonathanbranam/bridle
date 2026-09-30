@@ -82,7 +82,10 @@ def export(root: str, cwd: Path | None = None) -> dict:
             check=False,
         )
     except OSError as exc:
-        raise BridleSpecError(f"cannot run {binary!r} (set BRIDLE_BIN): {exc}") from exc
+        raise BridleSpecError(
+            f"cannot run {binary!r} (set BRIDLE_BIN): {exc}\n"
+            "See 'Running bridle in CI' in workflow/packs/python/README.md for CI setup"
+        ) from exc
     if proc.returncode != 0:
         raise BridleSpecError(
             f"`bridle spec export` refused (exit {proc.returncode}):\n"
