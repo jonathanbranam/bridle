@@ -45,6 +45,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Doctor(args) => crate::doctor::run(&cli, args),
         Command::Init(args) => crate::init::run(args),
         Command::Launchd(args) => crate::launchd::run(&cli, args),
+        Command::Systemd(args) => crate::systemd::run(&cli, args),
         Command::Rebuild(args) => rebuild(&cli, args.from_origin).await,
         Command::Daemons => daemons(&cli).await,
         Command::Status => status(&cli).await,

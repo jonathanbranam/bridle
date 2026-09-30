@@ -21,6 +21,7 @@ mod spec_import;
 mod specid;
 mod statusline;
 mod stop_check;
+mod systemd;
 mod tools_only;
 mod trace;
 mod vendor;

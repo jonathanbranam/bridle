@@ -46,6 +46,8 @@ pub enum Command {
     Init(InitArgs),
     /// Write or remove a macOS LaunchAgent that runs the daemon (never runs launchctl).
     Launchd(LaunchdArgs),
+    /// Write Linux systemd user units that run this machine's project daemons (never runs systemctl).
+    Systemd(SystemdArgs),
     /// Reconstruct the tasks/edges/open_questions tables from the project's
     /// state branch alone (docs/design/storage.md, "Rebuild"): the
     /// migration path for a fresh clone with no `bridle.db`. Refuses if the
@@ -581,6 +583,30 @@ pub struct LaunchdInstallArgs {
     #[arg(long)]
     pub workspace: Option<PathBuf>,
     /// Overwrite an existing plist.
+    #[arg(long)]
+    pub force: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct SystemdArgs {
+    #[command(subcommand)]
+    pub action: SystemdAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum SystemdAction {
+    /// Write `~/.config/systemd/user/bridle-<project>.service` for `--project`, or for every
+    /// project `[projects]` puts on this machine, and print the systemctl commands.
+    Install(SystemdInstallArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct SystemdInstallArgs {
+    /// Where the projects' clones live: each is `<dir>/<project>`, and `<dir>` is its
+    /// workspace. Defaults to the current directory's parent.
+    #[arg(long)]
+    pub projects_dir: Option<PathBuf>,
+    /// Overwrite existing unit files.
     #[arg(long)]
     pub force: bool,
 }

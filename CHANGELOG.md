@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `bridle systemd install` writes a systemd user unit per project `[projects]` puts on this machine (`Restart=on-failure`) and prints the `systemctl` and `enable-linger` commands; it starts nothing, Linux only (br-8a2a, 4r3k).
 - Self-upgrade rolls back: the running binary is kept (`.bridle/bridle.prev`) before the build, the new binary is self-checked (`serve --check`, config load) before the daemon execs into it, and a new binary that fails to start, or died before serving on the last try, is replaced by the kept one and exec'd (br-4524, q7rx).
 - `bridle serve` listens on the port `[projects]` gives its project on this machine (`[machine] name`), on loopback plus the Tailscale address (`tailscale ip -4`; loopback only, with a log line, if absent), never `0.0.0.0`. `--listen` and `[daemon] listen` still override (k7mw).
 

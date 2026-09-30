@@ -24,6 +24,7 @@ bridle workflow update [--repo PATH] [--to TAG]   re-fetch the vendored `.bridle
 bridle doctor  [--repo PATH]                 check the project's setup, say what to fix; exit 1 on a failure
 bridle launchd install [--repo PATH] [--workspace DIR] [--force]   macOS: write the LaunchAgent plist, print launchctl commands
 bridle launchd uninstall                    remove the plist, print the bootout command
+bridle systemd install [--project P] [--projects-dir DIR] [--force]   Linux: write a systemd user unit per project `[projects]` puts on this machine, print the systemctl and linger commands
 bridle rebuild [--from-origin]              first fetches origin/bridle/state (fast-forward only); reconstructs tasks/edges/open_questions/claims
                                               (claims.toml) from the state branch alone; the migration path for a fresh
                                               clone with no bridle.db yet; also restores the handover notes (handovers/<id>.md)
@@ -443,6 +444,17 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   `git` are found. `install` refuses to overwrite without `--force`. Why: a daemon started by
   launchd has no GUI responsible app, so builds under it don't flash Gatekeeper's Verifying
   window (ticket qr8z). Moving a running daemon: `docs/context/launchd-restart-plan.md`.
+- **`systemd install`** (Linux only; ticket 4r3k): writes
+  `~/.config/systemd/user/bridle-<project>.service` (`$XDG_CONFIG_HOME` honoured) for `--project`,
+  or for every project `[projects]` gives `[machine] name`, and prints, but never runs,
+  `systemctl --user daemon-reload`, `systemctl --user enable --now <units>` and `sudo loginctl
+  enable-linger <user>` (without linger the user manager, so the daemons, waits for a login).
+  Each unit runs the absolute path of the current `bridle` as `--project <name> serve --repo
+  <dir>/<name> --workspace <dir>` (`<dir>` is `--projects-dir`, default the current directory's
+  parent; the clone must exist), `Restart=on-failure` (a deliberate `stop-daemon` stays
+  stopped), output appended to `<dir>/.bridle/daemon.log`, `PATH`/`HOME` copied from the caller,
+  `WantedBy=default.target`. The port isn't in the unit: `serve` takes it from `[projects]`.
+  Refuses to overwrite without `--force`.
 - **`serve --detach`**: [[docs/design/agent-host/daemon#Running it|running the daemon]].
 - **`tui`** is a subcommand, not a separate binary, so it shares `bridle`'s discovery,
   token and `--url`/`--project` flags like every other command. It's a thin client of

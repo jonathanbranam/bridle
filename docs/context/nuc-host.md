@@ -23,9 +23,10 @@ The human expects it to be slow with many agents and doesn't mind a slow swarm.
   `tailscale0`.
 - **SSH** is plain OpenSSH with keys only, over Tailscale (`ssh nuc`). A
   reverse tunnel through an EC2 instance is the fallback if Tailscale is down.
-- **Remote Control:** `claude remote-control --name nuc` runs at boot in a tmux
-  session under a systemd user unit (`claude-rc`), with linger enabled so user
-  services start without a login.
+- **Remote Control:** the `claude-rc` systemd user unit (`claude remote-control --name
+  nuc` in tmux) was never set up and won't be. Linger is **off** (checked 2026-09-30), so user
+  services start only after a login. `bridle systemd install` writes the daemons' units and
+  prints the `sudo loginctl enable-linger` command (ticket 4r3k).
 
 So a bridle daemon on the NUC is reachable from the laptop by
 `ssh -L <port>:localhost:<port> nuc`, or directly on its Tailscale address if
