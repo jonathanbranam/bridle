@@ -44,6 +44,27 @@ pub struct ShutdownResponse {
     pub stop_limit_secs: u64,
 }
 
+/// `POST /v1/restart`: how long to wait for every agent to be idle before giving up.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
+pub struct RestartRequest {
+    /// Seconds; the daemon's default (10 minutes) when absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub wait_secs: Option<u64>,
+}
+
+/// Reply to `POST /v1/restart`, sent once the daemon has decided to go: it stops its agents and
+/// execs itself next, then resumes `agents`.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct RestartResponse {
+    /// The integration branch's head before the restart (short sha).
+    #[serde(default)]
+    pub commit: Option<String>,
+    /// Names of the agents that were running and will be resumed.
+    pub agents: Vec<String>,
+    /// The cap on stopping them (`stop_grace` + 5 s).
+    pub stop_limit_secs: u64,
+}
+
 /// Written by the daemon to `<workspace>/.bridle/daemon.json` and to the
 /// machine registry `~/.bridle/daemons/<project>.json`.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

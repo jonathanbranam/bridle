@@ -40,6 +40,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
     match &cli.command {
         Command::Serve(args) => serve::run(&cli, args).await,
         Command::StopDaemon => stop_daemon(&cli).await,
+        Command::Restart(args) => restart(&cli, args.wait).await,
         Command::Doctor(args) => crate::doctor::run(&cli, args),
         Command::Init(args) => crate::init::run(args),
         Command::Launchd(args) => crate::launchd::run(&cli, args),
@@ -454,6 +455,42 @@ async fn bridle_counts(cwd: &Path, env: &impl Env, token_path: &Path) -> Option<
             tracing::debug!("statusline: bridle status call failed: {e}");
             None
         }
+    }
+}
+
+/// The daemon answers once it has decided to go (a busy daemon answers 409 and stays up), then
+/// execs itself; the same URL comes back with the new binary, so wait for it to go and return.
+async fn restart(cli: &Cli, wait: Option<u64>) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let reply = client
+        .restart(&bridle_api::types::RestartRequest { wait_secs: wait })
+        .await?;
+    println!(
+        "restarting{}: {} agent{} to resume (stopping takes up to {}s)",
+        reply.commit.map(|c| format!(" at {c}")).unwrap_or_default(),
+        reply.agents.len(),
+        if reply.agents.len() == 1 { "" } else { "s" },
+        reply.stop_limit_secs
+    );
+    let deadline =
+        std::time::Instant::now() + std::time::Duration::from_secs(reply.stop_limit_secs + 60);
+    let mut down = false;
+    loop {
+        match (client.health().await.is_ok(), down) {
+            (false, _) => down = true,
+            (true, true) => {
+                println!("the daemon is back");
+                return Ok(());
+            }
+            (true, false) => {}
+        }
+        if std::time::Instant::now() >= deadline {
+            return Err(CliError::Other(anyhow::anyhow!(
+                "the daemon did not come back within {}s; see <workspace>/.bridle/daemon.log",
+                reply.stop_limit_secs + 60
+            )));
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
     }
 }
 

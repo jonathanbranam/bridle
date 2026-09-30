@@ -30,6 +30,7 @@ mod orchestrator;
 pub mod paths;
 pub mod ports;
 pub mod reevaluate;
+mod restart;
 pub mod rules;
 mod server;
 pub mod state_branch;
@@ -128,6 +129,7 @@ pub struct RunningDaemon {
     pub url: String,
     pub info: DaemonInfo,
     shutdown_tx: watch::Sender<bool>,
+    restart_requested: std::sync::Arc<std::sync::atomic::AtomicBool>,
     join_handle: tokio::task::JoinHandle<()>,
 }
 
@@ -136,6 +138,12 @@ impl RunningDaemon {
     /// `POST /v1/shutdown`.
     pub fn shutdown(&self) {
         let _ = self.shutdown_tx.send(true);
+    }
+
+    /// True once `POST /v1/restart` has triggered the shutdown: [`run`] then execs.
+    pub fn restart_requested(&self) -> bool {
+        self.restart_requested
+            .load(std::sync::atomic::Ordering::SeqCst)
     }
 
     /// Waits for the daemon to finish shutting down (which must have been
@@ -152,7 +160,19 @@ impl RunningDaemon {
 /// Writes `daemon.json` and the machine registry entry once listening.
 pub async fn run(opts: ServeOptions) -> anyhow::Result<()> {
     let running = start(opts, Overrides::default()).await?;
-    running.join().await
+    let restart = running.restart_requested.clone();
+    running.join().await?;
+    if restart.load(std::sync::atomic::Ordering::SeqCst) {
+        // Same PID and terminal; only returns on failure. The agents are already stopped and
+        // daemon.json is gone, so a failed exec leaves a clean stop for the human to start by hand.
+        use std::os::unix::process::CommandExt;
+        let exe = std::env::current_exe().context("finding the running binary to restart")?;
+        let err = std::process::Command::new(&exe)
+            .args(std::env::args_os().skip(1))
+            .exec();
+        anyhow::bail!("restart: exec {} failed: {err}", exe.display());
+    }
+    Ok(())
 }
 
 /// Starts the daemon and returns once it's listening, autostart has run,
@@ -310,8 +330,17 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
 
     manager.set_tasks(tasks.clone());
     run_autostart_and_resume(&store, &config, &manager).await;
+    restart::resume_all(
+        &store,
+        &manager,
+        &wakes,
+        &ws.repo,
+        &config.branches.integration,
+    )
+    .await;
 
     let (shutdown_tx, shutdown_rx) = watch::channel(false);
+    let restart_requested = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
 
     let state = server::AppState {
         store: store.clone(),
@@ -325,6 +354,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         started_at: info.started_at,
         pid: info.pid,
         shutdown_tx: shutdown_tx.clone(),
+        restart_requested: restart_requested.clone(),
         governor: governor.clone(),
         ci: ci.clone(),
         wakes: wakes.clone(),
@@ -537,6 +567,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         url,
         info,
         shutdown_tx,
+        restart_requested,
         join_handle,
     })
 }

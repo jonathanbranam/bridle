@@ -14,6 +14,8 @@ bridle stop-daemon                            prints "requested shutdown", "ackn
                                               up to Ns" (the daemon's stop_grace + 5 s), "N agents still running" as the count drops,
                                               then "shutdown complete (Ns)"; after 60 s it errors, pointing at `bridle daemons`
                                               and <workspace>/.bridle/daemon.log
+bridle restart [--wait SECS]                 restart the daemon in place once every agent is idle (orchestrator or human); prints the commit and the agents to
+                                              resume, then "the daemon is back". A busy daemon (nothing idle within --wait, default 600) errors and stays up
 bridle init    [--repo PATH] [--name N] [--integration BRANCH] [--stack S]  scaffold .bridle/config.toml + .gitignore; never overwrites
 bridle doctor  [--repo PATH]                 check the project's setup, say what to fix; exit 1 on a failure
 bridle launchd install [--repo PATH] [--workspace DIR] [--force]   macOS: write the LaunchAgent plist, print launchctl commands

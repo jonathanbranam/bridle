@@ -17,11 +17,11 @@ use crate::types::{
     HandoverDone, Health, ImpactCheckRequest, ImpactReport, InterruptRequest, InterruptResponse,
     LandRequest, LandResult, MaxWorkersRequest, Message, MessageQuery, NewEdgeRequest,
     NewTaskRequest, NoteTaskRequest, OpenQuestion, PortAllocation, ProbeRequest, ProbeResult,
-    Queue, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, ResumeRequest,
-    SendRequest, SetImpactRequest, SetQueueRequest, SetSummaryRequest, ShutdownResponse,
-    SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery, TokenCreateRequest,
-    TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown,
-    UsageBreakdownQuery, WakeResponse, WriteHandoverRequest,
+    Queue, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, RestartRequest,
+    RestartResponse, ResumeRequest, SendRequest, SetImpactRequest, SetQueueRequest,
+    SetSummaryRequest, ShutdownResponse, SpawnRequest, Status, StatusLineReport, StopRequest, Task,
+    TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
+    UsageBreakdown, UsageBreakdownQuery, WakeResponse, WriteHandoverRequest,
 };
 
 #[derive(Debug, Error)]
@@ -670,6 +670,12 @@ impl Client {
     pub async fn remove_edge(&self, query: &RemoveEdgeQuery) -> Result<(), ClientError> {
         let req = self.request(Method::DELETE, &["v1", "edges"])?.query(query);
         self.send_unit(req).await
+    }
+
+    /// Waits (up to `req.wait_secs`) for a quiet point, then the daemon restarts itself. A busy
+    /// daemon answers 409 and does nothing. Give the client a timeout longer than the wait.
+    pub async fn restart(&self, req: &RestartRequest) -> Result<RestartResponse, ClientError> {
+        self.post_json(&["v1", "restart"], req).await
     }
 
     /// `None` when the daemon is older than the reply body and answered 204.

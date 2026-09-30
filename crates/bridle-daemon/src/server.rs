@@ -50,6 +50,8 @@ pub struct AppState {
     pub started_at: chrono::DateTime<Utc>,
     pub pid: i32,
     pub shutdown_tx: watch::Sender<bool>,
+    /// Set by `POST /v1/restart` before it triggers shutdown: `run` execs instead of exiting.
+    pub restart_requested: std::sync::Arc<std::sync::atomic::AtomicBool>,
     pub governor: crate::governor::Governor,
     pub ci: crate::ci::CiWatcher,
     pub wakes: std::sync::Arc<crate::wake::Wakes>,
@@ -128,6 +130,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/queue/tiers", post(add_queue_tier))
         .route("/v1/rebuild", post(rebuild))
         .route("/v1/shutdown", post(shutdown))
+        .route("/v1/restart", post(restart))
         .layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware,
@@ -2381,6 +2384,93 @@ async fn shutdown(
     tracing::warn!(principal = %principal.id, "shutdown requested via POST /v1/shutdown");
     let _ = state.shutdown_tx.send(true);
     Ok(Json(ShutdownResponse {
+        stop_limit_secs: (state.stop_grace + std::time::Duration::from_secs(5)).as_secs(),
+    }))
+}
+
+/// Default wait for a quiet point (`RestartRequest::wait_secs`).
+const RESTART_WAIT: std::time::Duration = std::time::Duration::from_secs(600);
+
+/// Restart in place: wait until every agent is idle (never cutting a turn off), record who was
+/// running, then trigger the shutdown sequence with `restart_requested` set so `run` execs.
+async fn restart(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Json(req): Json<bridle_api::types::RestartRequest>,
+) -> Result<Json<bridle_api::types::RestartResponse>, ApiError> {
+    if principal.kind != PrincipalKind::Human && principal.id != crate::wake::ORCHESTRATOR {
+        return Err(ApiError::forbidden(
+            "only the human or external:orchestrator may restart the daemon",
+        ));
+    }
+    if state
+        .restart_requested
+        .load(std::sync::atomic::Ordering::SeqCst)
+    {
+        return Err(ApiError::new(
+            StatusCode::CONFLICT,
+            "conflict",
+            "a restart is already under way",
+        ));
+    }
+    let wait = req
+        .wait_secs
+        .map(std::time::Duration::from_secs)
+        .unwrap_or(RESTART_WAIT);
+    let deadline = tokio::time::Instant::now() + wait;
+    let running = loop {
+        let running: Vec<_> = state
+            .store
+            .list_agents(false)
+            .await?
+            .into_iter()
+            .filter(|a| a.state.is_running())
+            .collect();
+        let busy: Vec<_> = running
+            .iter()
+            .filter(|a| a.state != bridle_api::types::AgentState::Idle)
+            .map(|a| a.name.clone())
+            .collect();
+        if busy.is_empty() {
+            break running;
+        }
+        if tokio::time::Instant::now() >= deadline {
+            return Err(ApiError::new(
+                StatusCode::CONFLICT,
+                "conflict",
+                format!(
+                    "not restarted: no quiet point within {}s; still busy: {}",
+                    wait.as_secs(),
+                    busy.join(", ")
+                ),
+            ));
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+    };
+    let ids: Vec<String> = running.iter().map(|a| a.id.clone()).collect();
+    crate::restart::record(&state.store, &ids).await?;
+    let commit = crate::restart::head(&state.workspace.repo, &state.integration).await;
+    let names: Vec<String> = running.into_iter().map(|a| a.name).collect();
+    state
+        .wakes
+        .push(bridle_api::types::WakeReason {
+            reason: "restart".to_string(),
+            text: format!(
+                "daemon restarting at {} ({} agents to resume)",
+                commit.as_deref().unwrap_or("?"),
+                names.len()
+            ),
+            detail: serde_json::json!({"commit": commit, "agents": names}),
+        })
+        .await;
+    tracing::warn!(principal = %principal.id, "restart requested via POST /v1/restart");
+    state
+        .restart_requested
+        .store(true, std::sync::atomic::Ordering::SeqCst);
+    let _ = state.shutdown_tx.send(true);
+    Ok(Json(bridle_api::types::RestartResponse {
+        commit,
+        agents: names,
         stop_limit_secs: (state.stop_grace + std::time::Duration::from_secs(5)).as_secs(),
     }))
 }

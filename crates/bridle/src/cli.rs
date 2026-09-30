@@ -38,6 +38,8 @@ pub enum Command {
     Serve(ServeArgs),
     /// Ask the daemon to shut down gracefully.
     StopDaemon,
+    /// Restart the daemon in place once every agent is idle, then resume every agent that was running (orchestrator or human).
+    Restart(RestartArgs),
     /// Check the project's setup (git, config, tools, gitignore) and say what to fix; exit 1 on a failure.
     Doctor(DoctorArgs),
     /// Scaffold `.bridle/config.toml` and `.gitignore` entries in a git repo; never overwrites.
@@ -502,6 +504,14 @@ pub struct InitArgs {
     /// Workflow pack to enable (`packs = [STACK]`).
     #[arg(long, value_parser = ["python", "typescript", "rust"])]
     pub stack: Option<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct RestartArgs {
+    /// Give up, restarting nothing, if the agents aren't all idle within this many seconds
+    /// (the daemon's default is 600).
+    #[arg(long)]
+    pub wait: Option<u64>,
 }
 
 #[derive(Debug, Args)]

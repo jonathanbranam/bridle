@@ -132,8 +132,27 @@ On startup the daemon reconciles:
   budget `hold_at` refuses it (logged; the role isn't retried until the next start).
 - Events older than 30 days are pruned, then daily.
 
-Whether workers should resume too is open:
+Whether workers should resume too after a *crash* or plain restart is open:
 [[do-workers-resume-after-a-daemon-restart-2fkk|do workers resume after a restart]].
+
+### Restart in place
+
+`POST /v1/restart` (`bridle restart`; the human and `external:orchestrator` only) upgrades the
+daemon without the human: the request waits for a quiet point (every running agent `idle`, checked
+every 500 ms, up to `wait_secs`, default 600). At the timeout it answers 409 naming the busy agents
+and does nothing: work is never cut off. At a quiet point it records the running agents' ids
+(`meta` key `restart.resume`), wakes the orchestrator (`restart`, with the commit), sets the
+restart flag and runs the ordinary shutdown sequence above (agents stop as `daemon_shutdown`, the
+state branch is flushed and pushed, `daemon.json` removed). `run` then `exec`s `current_exe()` with
+the same args (safe Rust, `CommandExt::exec`), so the PID and the terminal stay and Ctrl-C still
+works; the new process rebinds the same `listen` address and clients retry through the gap. If the
+exec fails the daemon stays cleanly stopped, as after `stop-daemon`.
+
+The next start, after its own resume of `resume_on_restart` roles, reads and clears the record and
+resumes every recorded agent still not running, workers too, each with a note from `system` that the
+daemon restarted for an upgrade and to carry on. It wakes the orchestrator (`restart`: commit, who
+resumed, who failed); the human's inbox gets a message only if some agent failed to resume.
+Building the new binary and an automatic trigger are separate (q7rx).
 
 ## Crates
 
