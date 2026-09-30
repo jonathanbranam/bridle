@@ -914,3 +914,6 @@
 {"actor":"agent:pm-1","at":"2026-09-30T14:24:31.931958Z","from":"open","task":"br-180a","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-09-30T14:24:31.963128Z","from":"open","task":"br-efda","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-09-30T14:24:31.991361Z","queue":"reprioritized"}
+{"actor":"agent:pm-1","at":"2026-09-30T14:24:58.238802Z","from":"planned","task":"br-180a","to":"dropped"}
+{"actor":"agent:pm-1","at":"2026-09-30T14:24:58.274498Z","from":"planned","task":"br-efda","to":"dropped"}
+{"actor":"agent:pm-1","at":"2026-09-30T14:24:58.309813Z","queue":"reprioritized"}
