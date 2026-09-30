@@ -243,8 +243,16 @@ events/2026-09.jsonl      append-only transitions, for history and rebuild
   shutdown). There's no immediate-flush trigger yet — that arrives with
   `accept` — but `TaskManager::flush_now` already exists as the one function
   both the periodic tick and that future caller will call, so adding it
-  won't need a restructure. **Pushing on a configurable schedule is not yet
-  built**; this build only commits locally.
+  won't need a restructure. **Pushing is built, behind `[state] push`**
+  (default `false`; `true` only in bridle's own `.bridle/config.toml`, since pushing adds a
+  branch to a project's remote, rule `existing-projects`). After a flush that committed, the
+  daemon pushes `bridle/state` to `origin` in a background process, from the state branch's own
+  worktree, at most once a minute: a commit made inside the window is pushed when it ends (the
+  next flush tick), and once more on graceful shutdown (10 s cap). Never forced. A failed
+  push (network, auth) is retried on later ticks, WARN-logged once per change of reason, and
+  shown in `bridle status` (`state push failing: <reason>`, or the age of the last push). A
+  non-fast-forward reject means someone else wrote the branch: pushing stops for the daemon's
+  life, `status` says so, and nothing is fetched or merged automatically.
 - **Code branches never contain task state.** Task chatter can't cause a merge
   conflict with code, and main isn't committed to on every status change.
 - **The `bridle/state` branch doesn't exist on a project's first run.** The daemon

@@ -195,6 +195,11 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
     let state_branch = state_branch::StateBranch::open(&ws.repo, &ws.state_branch_dir())
         .await
         .context("opening the state branch")?;
+    let state_branch = if config.state_push {
+        state_branch.with_push(state_branch::PUSH_DEBOUNCE)
+    } else {
+        state_branch
+    };
     let task_prefix = config
         .task_prefix
         .clone()
@@ -485,6 +490,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         if let Err(e) = tasks.flush_now().await {
             tracing::warn!(error = %e, "flushing the task state branch on shutdown failed");
         }
+        tasks.push_on_shutdown(Duration::from_secs(10)).await;
 
         let _ = discovery::remove_registry(&project);
         let _ = std::fs::remove_file(ws.daemon_json());

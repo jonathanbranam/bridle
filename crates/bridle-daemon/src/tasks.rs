@@ -1101,6 +1101,15 @@ impl TaskManager {
     pub async fn flush_now(&self) -> Result<(), TaskError> {
         Ok(self.state.flush_now().await?)
     }
+
+    /// One last push after the shutdown flush (bounded; see `StateBranch::push_on_shutdown`).
+    pub async fn push_on_shutdown(&self, timeout: std::time::Duration) {
+        self.state.push_on_shutdown(timeout).await
+    }
+
+    pub fn state_push_status(&self) -> Option<bridle_api::types::StatePushStatus> {
+        self.state.push_status()
+    }
 }
 
 #[cfg(test)]

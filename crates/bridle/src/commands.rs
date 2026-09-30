@@ -614,6 +614,17 @@ async fn status(cli: &Cli) -> Result<(), CliError> {
                 ci.url.as_deref().unwrap_or("")
             );
         }
+        if let Some(sp) = &status.state_push {
+            match (&sp.failing, sp.last_pushed_at) {
+                (Some(why), _) if sp.diverged => println!("state      push stopped: {why}"),
+                (Some(why), _) => println!("state      state push failing: {why}"),
+                (None, Some(at)) => println!(
+                    "state      pushed {}m ago",
+                    (chrono::Utc::now() - at).num_minutes().max(0)
+                ),
+                (None, None) => println!("state      nothing pushed yet"),
+            }
+        }
         for (state, count) in &status.agents_by_state {
             println!("  {state:<10} {count}");
         }

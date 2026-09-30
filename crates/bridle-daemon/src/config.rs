@@ -1092,6 +1092,9 @@ pub struct Config {
     pub branches: BranchesConfig,
     pub ci: CiConfig,
     pub disk: DiskConfig,
+    /// `[state] push`: push `bridle/state` to origin after a flush that committed. Off by
+    /// default: pushing adds a branch to the project's remote (rule existing-projects).
+    pub state_push: bool,
     pub orchestrator: OrchestratorConfig,
     pub ports: PortsConfig,
     pub integration: IntegrationConfig,
@@ -1139,6 +1142,7 @@ impl Default for Config {
             branches: BranchesConfig::default(),
             ci: CiConfig::default(),
             disk: DiskConfig::default(),
+            state_push: false,
             orchestrator: OrchestratorConfig::default(),
             ports: PortsConfig::default(),
             integration: IntegrationConfig::default(),
@@ -1398,6 +1402,10 @@ impl Config {
             config.orchestrator = config.orchestrator.merge(o)?;
         }
 
+        if let Some(v) = raw.state.and_then(|s| s.push) {
+            config.state_push = v;
+        }
+
         if let Some(d) = raw.disk {
             if let Some(s) = d.check_interval {
                 config.disk.check_interval = parse_duration(&s)?;
@@ -1629,6 +1637,8 @@ struct RawConfig {
     #[serde(default)]
     disk: Option<RawDisk>,
     #[serde(default)]
+    state: Option<RawState>,
+    #[serde(default)]
     orchestrator: Option<RawOrchestrator>,
     #[serde(default)]
     ports: Option<RawPorts>,
@@ -1731,6 +1741,13 @@ struct RawPorts {
 }
 
 #[derive(Debug, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawState {
+    #[serde(default)]
+    push: Option<bool>,
+}
+
+#[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct RawDisk {
     #[serde(default)]
@@ -2692,6 +2709,12 @@ mod tests {
         assert_eq!(cfg.ports.range, (5000, 5010));
         assert_eq!(cfg.ports.reserved, vec![5001, 5002]);
         assert!(Config::parse("[ports]\nrange = [5010, 5000]\n").is_err());
+    }
+
+    #[test]
+    fn state_push_defaults_off_and_parses() {
+        assert!(!Config::default().state_push);
+        assert!(Config::parse("[state]\npush = true\n").unwrap().state_push);
     }
 
     #[test]

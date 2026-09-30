@@ -455,6 +455,7 @@ async fn status(
         budget_state: state.governor.snapshot().default.state,
         ci: state.ci.last(),
         merged_leftovers,
+        state_push: state.tasks.state_push_status(),
     }))
 }
 

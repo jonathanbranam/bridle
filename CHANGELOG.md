@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- `[state] push = true` pushes `bridle/state` to `origin` after flushes that committed (at most once a minute, trailing, and once on shutdown; never forced; a non-fast-forward stops it); failures and last push show in `bridle status`. Default off; on in bridle's own config (we2r, br-93ad).
+
 ### Changed
 
 - Bridle's own workers gate on the full `just check` again (`check_worker` binding removed from `.bridle/config.toml`; `just check-affected` stays as a recipe) (qgma, br-0e42).

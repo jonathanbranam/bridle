@@ -80,6 +80,23 @@ pub struct Status {
     /// integration branch: leftovers `bridle task done` would have removed.
     #[serde(default)]
     pub merged_leftovers: Vec<String>,
+    /// The state branch push (`[state] push`); `None` when pushing is off.
+    #[serde(default)]
+    pub state_push: Option<StatePushStatus>,
+}
+
+/// How pushing `bridle/state` to origin is going.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StatePushStatus {
+    /// The last successful push; `None` until one.
+    #[serde(default)]
+    pub last_pushed_at: Option<DateTime<Utc>>,
+    /// Why the latest attempt failed; `None` when it worked or none was made.
+    #[serde(default)]
+    pub failing: Option<String>,
+    /// The remote has commits this clone lacks: pushing has stopped.
+    #[serde(default)]
+    pub diverged: bool,
 }
 
 /// The outcome of GitHub Actions for one commit of the integration branch.

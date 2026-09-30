@@ -14,9 +14,11 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
+use std::time::{Duration, Instant};
 
 use bridle_api::types::{
-    Edge, EdgeKind, Impact, Task, TaskKind, TaskSize, TaskState, ThreadEntry, ThreadEntryKind,
+    Edge, EdgeKind, Impact, StatePushStatus, Task, TaskKind, TaskSize, TaskState, ThreadEntry,
+    ThreadEntryKind,
 };
 use chrono::{DateTime, SecondsFormat, Utc};
 use serde::{Deserialize, Serialize};
@@ -46,6 +48,52 @@ pub enum StateBranchError {
     De(#[from] toml::de::Error),
     #[error("parsing task file: {0}")]
     Parse(String),
+}
+
+enum PushFailure {
+    /// Rejected as a non-fast-forward.
+    Diverged(String),
+    Other(String),
+}
+
+/// `git push origin refs/heads/bridle/state:refs/heads/bridle/state` from the state
+/// branch's own worktree: never `--force`, never a `+` refspec.
+async fn run_push(dir: &Path, timeout: Duration) -> Result<(), PushFailure> {
+    let refspec = format!("refs/heads/{BRANCH}:refs/heads/{BRANCH}");
+    let mut cmd = tokio::process::Command::new("git");
+    cmd.arg("-C")
+        .arg(dir)
+        .args(["push", "--porcelain", REMOTE, &refspec])
+        // Fail rather than wait on a credential prompt nobody will answer.
+        .env("GIT_TERMINAL_PROMPT", "0")
+        .kill_on_drop(true);
+    let out = match tokio::time::timeout(timeout, cmd.output()).await {
+        Err(_) => return Err(PushFailure::Other("push timed out".into())),
+        Ok(Err(e)) => return Err(PushFailure::Other(format!("running git: {e}"))),
+        Ok(Ok(out)) => out,
+    };
+    if out.status.success() {
+        return Ok(());
+    }
+    let text = format!(
+        "{}{}",
+        String::from_utf8_lossy(&out.stdout),
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let reason = text
+        .lines()
+        .rev()
+        .map(str::trim)
+        .find(|l| l.starts_with("fatal:") || l.starts_with("error:") || l.starts_with('!'))
+        .unwrap_or("git push failed")
+        .to_string();
+    if text.contains("non-fast-forward") || text.contains("fetch first") {
+        Err(PushFailure::Diverged(format!(
+            "{BRANCH} on {REMOTE} has commits this clone lacks (non-fast-forward)"
+        )))
+    } else {
+        Err(PushFailure::Other(reason))
+    }
 }
 
 #[derive(Debug, Default)]
@@ -82,6 +130,61 @@ pub struct StateBranch {
     /// The state branch's own worktree, e.g. `<workspace>/.bridle/state`.
     dir: PathBuf,
     pending: Arc<Mutex<Pending>>,
+    /// `None` unless `[state] push = true`: then nothing below ever runs.
+    push: Option<Arc<Pusher>>,
+}
+
+/// How long after one push attempt the next may start (`[state]` has no key for it: a
+/// constant is enough until someone needs otherwise).
+pub const PUSH_DEBOUNCE: Duration = Duration::from_secs(60);
+/// A push that hangs (a stuck credential prompt, a dead network) is abandoned after this.
+const PUSH_TIMEOUT: Duration = Duration::from_secs(120);
+const REMOTE: &str = "origin";
+
+/// Best-effort push of the state branch to `origin` (ticket we2r). Fast-forward only: the
+/// command never carries a force flag or a `+` refspec.
+struct Pusher {
+    debounce: Duration,
+    inner: Mutex<PushState>,
+}
+
+#[derive(Default)]
+struct PushState {
+    /// A commit landed that the remote hasn't seen.
+    dirty: bool,
+    in_flight: bool,
+    last_attempt: Option<Instant>,
+    last_pushed_at: Option<DateTime<Utc>>,
+    /// The latest failure's reason; cleared by a successful push. Logged at WARN only when
+    /// it changes.
+    failing: Option<String>,
+    /// The remote refused a non-fast-forward: someone else wrote the branch. No more pushes.
+    diverged: bool,
+}
+
+impl Pusher {
+    fn record(&self, st: &mut PushState, result: Result<(), PushFailure>) {
+        match result {
+            Ok(()) => {
+                st.dirty = false;
+                st.failing = None;
+                st.last_pushed_at = Some(Utc::now());
+            }
+            Err(PushFailure::Diverged(reason)) => {
+                st.diverged = true;
+                if st.failing.as_deref() != Some(&reason) {
+                    tracing::warn!(%reason, "state branch push refused; no longer pushing");
+                }
+                st.failing = Some(reason);
+            }
+            Err(PushFailure::Other(reason)) => {
+                if st.failing.as_deref() != Some(&reason) {
+                    tracing::warn!(%reason, "pushing the state branch failed; will retry");
+                }
+                st.failing = Some(reason);
+            }
+        }
+    }
 }
 
 impl StateBranch {
@@ -103,7 +206,71 @@ impl StateBranch {
         Ok(StateBranch {
             dir: dir.to_path_buf(),
             pending: Arc::new(Mutex::new(Pending::default())),
+            push: None,
         })
+    }
+
+    /// Turns on pushing to `origin` after a flush that committed, at most once per `debounce`.
+    pub fn with_push(mut self, debounce: Duration) -> Self {
+        self.push = Some(Arc::new(Pusher {
+            debounce,
+            inner: Mutex::new(PushState::default()),
+        }));
+        self
+    }
+
+    /// What `bridle status` shows; `None` when pushing is off.
+    pub fn push_status(&self) -> Option<StatePushStatus> {
+        let p = self.push.as_ref()?;
+        let st = p.inner.lock().expect("state push lock");
+        Some(StatePushStatus {
+            last_pushed_at: st.last_pushed_at,
+            failing: st.failing.clone(),
+            diverged: st.diverged,
+        })
+    }
+
+    /// Starts a push in the background if one is due: something unpushed, none in flight, not
+    /// diverged, and the debounce has passed. Never awaits the push, so a flush doesn't wait
+    /// on the network.
+    fn poke_push(&self, committed: bool) {
+        let Some(p) = &self.push else { return };
+        {
+            let mut st = p.inner.lock().expect("state push lock");
+            st.dirty |= committed;
+            if !st.dirty
+                || st.in_flight
+                || st.diverged
+                || st.last_attempt.is_some_and(|t| t.elapsed() < p.debounce)
+            {
+                return;
+            }
+            st.in_flight = true;
+            st.last_attempt = Some(Instant::now());
+        }
+        let p = p.clone();
+        let dir = self.dir.clone();
+        tokio::spawn(async move {
+            let result = run_push(&dir, PUSH_TIMEOUT).await;
+            let mut st = p.inner.lock().expect("state push lock");
+            st.in_flight = false;
+            p.record(&mut st, result);
+        });
+    }
+
+    /// Pushes once now if anything is unpushed, ignoring the debounce, bounded by `timeout`.
+    /// For daemon shutdown, after the final flush; failure is logged, never returned.
+    pub async fn push_on_shutdown(&self, timeout: Duration) {
+        let Some(p) = &self.push else { return };
+        {
+            let st = p.inner.lock().expect("state push lock");
+            if !st.dirty || st.diverged {
+                return;
+            }
+        }
+        let result = run_push(&self.dir, timeout).await;
+        let mut st = p.inner.lock().expect("state push lock");
+        p.record(&mut st, result);
     }
 
     /// Renders `task` and queues it to overwrite `tasks/<id>.md` at the
@@ -210,6 +377,15 @@ impl StateBranch {
     /// racing this call can't be lost: it either lands in this flush or the
     /// next one.
     pub async fn flush_now(&self) -> Result<(), StateBranchError> {
+        let committed = self.flush_and_commit().await;
+        // Also on a flush that committed nothing: that's the timer that retries a failed or
+        // debounced push.
+        self.poke_push(matches!(committed, Ok(true)));
+        committed.map(|_| ())
+    }
+
+    /// Whether a commit was made.
+    async fn flush_and_commit(&self) -> Result<bool, StateBranchError> {
         let Pending {
             files,
             events,
@@ -226,7 +402,7 @@ impl StateBranch {
             && claims.is_none()
             && queue.is_none()
         {
-            return Ok(());
+            return Ok(false);
         }
 
         let tasks_dir = self.dir.join("tasks");
@@ -272,7 +448,7 @@ impl StateBranch {
         // error.
         let status = worktree::run_git(&self.dir, &["status", "--porcelain"]).await?;
         if status.trim().is_empty() {
-            return Ok(());
+            return Ok(false);
         }
         // Built from whatever actually changed, rather than a fixed match
         // arm per combination: with edges/claims/queue all independently
@@ -312,7 +488,7 @@ impl StateBranch {
             ],
         )
         .await?;
-        Ok(())
+        Ok(true)
     }
 
     /// Reads a task's file back from the worktree, if it exists. A plain
@@ -1116,5 +1292,180 @@ mod tests {
             }
         }
         out
+    }
+
+    // ---- pushing (ticket we2r) ----
+
+    async fn git(dir: &Path, args: &[&str]) -> String {
+        worktree::run_git(dir, args).await.expect("git")
+    }
+
+    /// A repo with a state branch pushing to a local bare `origin`.
+    async fn pushing(
+        tmp: &Path,
+        debounce: Option<Duration>,
+    ) -> (StateBranch, PathBuf, PathBuf, PathBuf) {
+        let repo = tmp.join("repo");
+        init_repo(&repo).await;
+        let origin = tmp.join("origin.git");
+        std::fs::create_dir_all(&origin).expect("mkdir origin");
+        git(&origin, &["init", "-q", "--bare"]).await;
+        git(
+            &repo,
+            &["remote", "add", "origin", origin.to_str().expect("utf8")],
+        )
+        .await;
+        let dir = tmp.join("state");
+        let mut sb = StateBranch::open(&repo, &dir).await.expect("open");
+        if let Some(d) = debounce {
+            sb = sb.with_push(d);
+        }
+        (sb, repo, origin, dir)
+    }
+
+    async fn edit(sb: &StateBranch, n: u32) {
+        sb.enqueue_task(&sample_task(&format!("tw-{n:04x}")))
+            .expect("enqueue");
+        sb.flush_now().await.expect("flush");
+    }
+
+    async fn origin_tip(origin: &Path) -> Option<String> {
+        worktree::run_git(
+            origin,
+            &["rev-parse", "--verify", "-q", "refs/heads/bridle/state"],
+        )
+        .await
+        .ok()
+        .map(|s| s.trim().to_string())
+    }
+
+    async fn wait_until_idle(sb: &StateBranch) {
+        let p = sb.push.as_ref().expect("push on");
+        for _ in 0..200 {
+            if !p.inner.lock().expect("lock").in_flight {
+                return;
+            }
+            tokio::time::sleep(Duration::from_millis(25)).await;
+        }
+        panic!("push still in flight");
+    }
+
+    #[tokio::test]
+    async fn a_flush_that_committed_pushes_the_state_branch() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let (sb, _repo, origin, dir) = pushing(tmp.path(), Some(Duration::from_millis(0))).await;
+        edit(&sb, 1).await;
+        wait_until_idle(&sb).await;
+        let head = git(&dir, &["rev-parse", "HEAD"]).await;
+        assert_eq!(origin_tip(&origin).await.as_deref(), Some(head.trim()));
+        let st = sb.push_status().expect("status");
+        assert!(st.last_pushed_at.is_some() && st.failing.is_none() && !st.diverged);
+    }
+
+    #[tokio::test]
+    async fn pushes_are_debounced_and_a_trailing_push_follows() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let (sb, _repo, origin, dir) = pushing(tmp.path(), Some(Duration::from_secs(3600))).await;
+        edit(&sb, 1).await;
+        wait_until_idle(&sb).await;
+        let first = origin_tip(&origin).await.expect("pushed");
+        edit(&sb, 2).await;
+        edit(&sb, 3).await;
+        wait_until_idle(&sb).await;
+        assert_eq!(
+            origin_tip(&origin).await.as_deref(),
+            Some(first.as_str()),
+            "coalesced"
+        );
+        // The window ends (backdated rather than slept, so the test is deterministic).
+        sb.push
+            .as_ref()
+            .expect("push on")
+            .inner
+            .lock()
+            .expect("lock")
+            .last_attempt = Instant::now().checked_sub(Duration::from_secs(7200));
+        // The next tick, with nothing new to commit, still pushes what's waiting.
+        sb.flush_now().await.expect("tick");
+        wait_until_idle(&sb).await;
+        let head = git(&dir, &["rev-parse", "HEAD"]).await;
+        assert_eq!(origin_tip(&origin).await.as_deref(), Some(head.trim()));
+        // Both edits went in one push: first + init + 2 commits, not one push each.
+        assert_ne!(head.trim(), first);
+    }
+
+    #[tokio::test]
+    async fn a_failed_push_shows_then_is_retried() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let (sb, _repo, origin, dir) = pushing(tmp.path(), Some(Duration::from_millis(0))).await;
+        let away = tmp.path().join("origin-away.git");
+        std::fs::rename(&origin, &away).expect("hide origin");
+        edit(&sb, 1).await;
+        wait_until_idle(&sb).await;
+        let st = sb.push_status().expect("status");
+        assert!(st.failing.is_some() && !st.diverged && st.last_pushed_at.is_none());
+        std::fs::rename(&away, &origin).expect("restore origin");
+        sb.flush_now().await.expect("tick");
+        wait_until_idle(&sb).await;
+        let st = sb.push_status().expect("status");
+        assert!(st.failing.is_none() && st.last_pushed_at.is_some());
+        let head = git(&dir, &["rev-parse", "HEAD"]).await;
+        assert_eq!(origin_tip(&origin).await.as_deref(), Some(head.trim()));
+    }
+
+    #[tokio::test]
+    async fn a_non_fast_forward_stops_pushing_and_never_forces() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let (sb, _repo, origin, _dir) = pushing(tmp.path(), Some(Duration::from_millis(0))).await;
+        // Someone else writes bridle/state on origin first.
+        let other = tmp.path().join("other");
+        init_repo(&other).await;
+        git(
+            &other,
+            &["remote", "add", "origin", origin.to_str().expect("utf8")],
+        )
+        .await;
+        git(&other, &["push", "-q", "origin", "main:bridle/state"]).await;
+        let theirs = origin_tip(&origin).await.expect("theirs");
+
+        edit(&sb, 1).await;
+        wait_until_idle(&sb).await;
+        let st = sb.push_status().expect("status");
+        assert!(st.diverged && st.failing.is_some());
+        edit(&sb, 2).await;
+        wait_until_idle(&sb).await;
+        assert_eq!(origin_tip(&origin).await.as_deref(), Some(theirs.as_str()));
+    }
+
+    #[tokio::test]
+    async fn push_off_pushes_nothing_and_has_no_status() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let (sb, _repo, origin, _dir) = pushing(tmp.path(), None).await;
+        edit(&sb, 1).await;
+        sb.push_on_shutdown(Duration::from_secs(5)).await;
+        assert!(sb.push_status().is_none());
+        assert_eq!(origin_tip(&origin).await, None);
+    }
+
+    #[tokio::test]
+    async fn shutdown_pushes_what_the_debounce_held_back() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let (sb, _repo, origin, dir) = pushing(tmp.path(), Some(Duration::from_secs(3600))).await;
+        edit(&sb, 1).await;
+        wait_until_idle(&sb).await;
+        edit(&sb, 2).await;
+        wait_until_idle(&sb).await;
+        let head = git(&dir, &["rev-parse", "HEAD"]).await;
+        assert_ne!(origin_tip(&origin).await.as_deref(), Some(head.trim()));
+        sb.push_on_shutdown(Duration::from_secs(10)).await;
+        assert_eq!(origin_tip(&origin).await.as_deref(), Some(head.trim()));
+    }
+
+    #[test]
+    fn the_push_command_never_forces() {
+        let src = include_str!("state_branch.rs");
+        let body = &src[src.find("async fn run_push").expect("run_push")..];
+        let body = &body[..body.find("\n}\n").expect("end")];
+        assert!(!body.contains("force") && !body.contains("\"+"));
     }
 }

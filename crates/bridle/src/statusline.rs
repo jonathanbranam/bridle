@@ -411,6 +411,7 @@ mod tests {
             budget_state: Default::default(),
             ci: None,
             merged_leftovers: Vec::new(),
+            state_push: None,
         }
     }
 
