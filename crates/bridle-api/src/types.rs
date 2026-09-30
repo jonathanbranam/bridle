@@ -634,6 +634,8 @@ pub mod event_kind {
     pub const TASK_STATE: &str = "task.state";
     /// data: {fields}, the names of the fields that changed.
     pub const TASK_EDITED: &str = "task.edited";
+    /// data: {task, from, to}
+    pub const TASK_PRIORITY: &str = "task.priority";
     /// data: {from, to, kind}
     pub const EDGE_ADDED: &str = "edge.added";
     /// data: {from, to, kind}
@@ -1140,6 +1142,43 @@ impl std::fmt::Display for TaskSize {
     }
 }
 
+/// How soon the requester wants a task done; ranks the human's to-dos. Agent work is ranked by
+/// the queue's tiers, not this.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum TaskPriority {
+    High,
+    #[default]
+    Normal,
+    Low,
+}
+
+impl TaskPriority {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::High => "high",
+            Self::Normal => "normal",
+            Self::Low => "low",
+        }
+    }
+
+    pub fn is_normal(&self) -> bool {
+        *self == Self::Normal
+    }
+}
+
+impl std::fmt::Display for TaskPriority {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+/// `POST /v1/tasks/{id}/priority`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SetPriorityRequest {
+    pub priority: TaskPriority,
+}
+
 /// The lifecycle states this build knows about
 /// ([[docs/design/roles-and-lifecycle#Task lifecycle|task lifecycle]]).
 /// `in_review` and `accepted` arrive with later tasks that build on top of
@@ -1263,6 +1302,9 @@ pub struct Task {
     /// Estimated size; null when unset.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub size: Option<TaskSize>,
+    /// Absent (normal) unless set; ranks the human's to-dos.
+    #[serde(default, skip_serializing_if = "TaskPriority::is_normal")]
+    pub priority: TaskPriority,
     /// Branch that did the work, recorded by `task done --branch`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub branch: Option<String>,
@@ -1473,6 +1515,9 @@ pub struct NewTaskRequest {
     /// principal in one step (coordination.md, "Human to-dos").
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub for_human: bool,
+    /// Default normal.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub priority: Option<TaskPriority>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

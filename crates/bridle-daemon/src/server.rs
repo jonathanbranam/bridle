@@ -19,11 +19,11 @@ use bridle_api::types::{
     MessageQuery, MessageState, NewEdgeRequest, NewTaskRequest, NoteTaskRequest, OpenQuestion,
     OverlapLevel, PortAllocation, PrincipalKind, ProbeOutcome, ProbeRequest, ProbeResult, Queue,
     RateLimit, RebuildResponse, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest,
-    ResumeRequest, ScheduleOverrideStatus, SendRequest, SetImpactRequest, SetQueueRequest,
-    SetSummaryRequest, ShutdownResponse, SpawnRequest, Status, StatusLineReport, StopRequest, Task,
-    TaskQuery, TaskState, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine,
-    TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, WakeResponse, When,
-    WindowStatus, WriteHandoverRequest, event_kind,
+    ResumeRequest, ScheduleOverrideStatus, SendRequest, SetImpactRequest, SetPriorityRequest,
+    SetQueueRequest, SetSummaryRequest, ShutdownResponse, SpawnRequest, Status, StatusLineReport,
+    StopRequest, Task, TaskQuery, TaskState, TokenCreateRequest, TokenCreated, TokenInfo,
+    TranscriptLine, TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery, UsageGroupBy,
+    WakeResponse, When, WindowStatus, WriteHandoverRequest, event_kind,
 };
 use bridle_api::types::{PrincipalId, ThreadEntryKind};
 use chrono::Utc;
@@ -112,6 +112,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/tasks/{id}/done", post(done_task))
         .route("/v1/tasks/{id}/land", post(land_task))
         .route("/v1/tasks/{id}/summary", post(set_summary))
+        .route("/v1/tasks/{id}/priority", post(set_priority))
         .route("/v1/tasks/{id}/impact", post(set_impact))
         .route("/v1/impact/check", post(impact_check))
         .route("/v1/probe", post(probe))
@@ -1277,7 +1278,17 @@ async fn new_task(
     let task = if req.for_human {
         let human = "human".to_string();
         state.tasks.plan_task(&task.id, &principal.id).await?;
-        state.tasks.claim_task(&task.id, &human).await?
+        state.tasks.claim_task(&task.id, &human).await?;
+        state
+            .tasks
+            .note_created(&task.id, req.priority.unwrap_or_default(), &principal.id)
+            .await?
+    } else if let Some(priority) = req.priority {
+        state
+            .tasks
+            .set_priority(&task.id, priority, &principal.id)
+            .await?
+            .0
     } else {
         task
     };
@@ -1287,7 +1298,10 @@ async fn new_task(
             event_kind::TASK_CREATED,
             principal.id,
             None,
-            serde_json::json!({"task": task.id, "kind": task.kind, "state": task.state}),
+            serde_json::json!({
+                "task": task.id, "kind": task.kind, "state": task.state,
+                "priority": task.priority,
+            }),
         )
         .await;
     let open = state
@@ -1381,12 +1395,24 @@ async fn drop_task(
         .tasks
         .get_task(&id)
         .is_some_and(|t| t.state == bridle_api::types::TaskState::Planned);
+    let was_human_todo = state.tasks.get_task(&id).is_some_and(|t| {
+        t.state == bridle_api::types::TaskState::Claimed && t.claimed_by.as_deref() == Some("human")
+    });
     let task = state
         .tasks
         .drop_task(&id, &req.reason, &principal.id)
         .await?;
     if task.kind == bridle_api::types::TaskKind::Incident && was_active {
         state.manager.incident_resolved(&task, &req.reason).await;
+    }
+    if was_human_todo && principal.id != "human" {
+        state
+            .manager
+            .note_to_human(format!(
+                "To-do {} withdrawn by {}: {}. It's off your list. Reason: {}",
+                task.id, principal.id, task.title, req.reason
+            ))
+            .await;
     }
     let _ = state
         .emitter
@@ -1397,6 +1423,30 @@ async fn drop_task(
             serde_json::json!({"task": task.id, "to": task.state}),
         )
         .await;
+    Ok(Json(task))
+}
+
+async fn set_priority(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path(id): Path<String>,
+    Json(req): Json<SetPriorityRequest>,
+) -> Result<Json<Task>, ApiError> {
+    let (task, from) = state
+        .tasks
+        .set_priority(&id, req.priority, &principal.id)
+        .await?;
+    if from != task.priority {
+        let _ = state
+            .emitter
+            .emit(
+                event_kind::TASK_PRIORITY,
+                principal.id,
+                None,
+                serde_json::json!({"task": task.id, "from": from, "to": task.priority}),
+            )
+            .await;
+    }
     Ok(Json(task))
 }
 

@@ -54,6 +54,7 @@ async fn landing_notifies_the_other_worker_once_and_not_the_lander() {
         .client
         .new_task(&NewTaskRequest {
             for_human: false,
+            priority: None,
             components: Vec::new(),
             title: "Landed".to_string(),
             kind: TaskKind::Feature,
@@ -125,6 +126,7 @@ async fn landing_names_the_overlap_only_to_the_worker_whose_impact_overlaps() {
             .client
             .new_task(&NewTaskRequest {
                 for_human: false,
+                priority: None,
                 components: Vec::new(),
                 title: title.to_string(),
                 kind: TaskKind::Feature,

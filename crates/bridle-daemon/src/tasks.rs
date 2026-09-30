@@ -31,7 +31,7 @@ use std::sync::{Arc, Mutex};
 
 use bridle_api::types::{
     Edge, EdgeKind, Handover, Impact, MessageKind, MessageState, OpenQuestion, PrincipalId, Task,
-    TaskKind, TaskSize, TaskState, ThreadEntry, ThreadEntryKind, When,
+    TaskKind, TaskPriority, TaskSize, TaskState, ThreadEntry, ThreadEntryKind, When,
 };
 use chrono::Utc;
 
@@ -144,6 +144,7 @@ impl TaskManager {
                 claimed_at: None,
                 components: Vec::new(),
                 size: None,
+                priority: TaskPriority::default(),
                 branch: None,
                 commit: None,
                 summary: None,
@@ -347,6 +348,7 @@ impl TaskManager {
             claimed_at: None,
             components,
             size,
+            priority: TaskPriority::default(),
             branch: None,
             commit: None,
             summary: None,
@@ -355,6 +357,53 @@ impl TaskManager {
         self.state.enqueue_task(&task)?;
         self.state
             .enqueue_event(&task.id, "", task.state.as_str(), "human", task.created_at);
+        Ok(self.put(task))
+    }
+
+    /// Sets the priority, recording who and when in the thread. The caller emits the event.
+    pub async fn set_priority(
+        &self,
+        id: &str,
+        priority: TaskPriority,
+        actor: &PrincipalId,
+    ) -> Result<(Task, TaskPriority), TaskError> {
+        let mut task = self
+            .get_task(id)
+            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+        let from = task.priority;
+        if from == priority {
+            return Ok((task, from));
+        }
+        task.priority = priority;
+        task.updated_at = Utc::now();
+        task.thread.push(ThreadEntry {
+            kind: ThreadEntryKind::Note,
+            from: actor.clone(),
+            body: format!("priority: {from} -> {priority}"),
+            at: task.updated_at,
+        });
+        self.state.enqueue_task(&task)?;
+        Ok((self.put(task), from))
+    }
+
+    /// Records the task's creation in its thread (who, when, priority); used for human to-dos.
+    pub async fn note_created(
+        &self,
+        id: &str,
+        priority: TaskPriority,
+        actor: &PrincipalId,
+    ) -> Result<Task, TaskError> {
+        let mut task = self
+            .get_task(id)
+            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+        task.priority = priority;
+        task.thread.push(ThreadEntry {
+            kind: ThreadEntryKind::Note,
+            from: actor.clone(),
+            body: format!("created for the human, priority {priority}"),
+            at: Utc::now(),
+        });
+        self.state.enqueue_task(&task)?;
         Ok(self.put(task))
     }
 

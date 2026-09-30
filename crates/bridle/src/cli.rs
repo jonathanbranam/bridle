@@ -943,6 +943,21 @@ pub enum TaskSizeArg {
     None,
 }
 
+#[derive(Debug, Clone, Copy, ValueEnum)]
+#[value(rename_all = "lowercase")]
+pub enum TaskPriorityArg {
+    High,
+    Normal,
+    Low,
+}
+
+#[derive(Debug, Args)]
+pub struct TaskPriorityArgs {
+    pub task: String,
+    #[arg(value_enum, ignore_case = true)]
+    pub priority: TaskPriorityArg,
+}
+
 #[derive(Debug, Args)]
 pub struct TaskArgs {
     #[command(subcommand)]
@@ -961,6 +976,8 @@ pub enum TaskAction {
     List(TaskListArgs),
     /// Mark a task ready to build: `open` -> `planned`.
     Plan(TaskPlanArgs),
+    /// Change a task's priority (high, normal, low); recorded in its thread and as an event.
+    Priority(TaskPriorityArgs),
     /// Drop a task (requires a reason, recorded in its thread).
     Drop(TaskDropArgs),
     /// Mark a task integrated (merged), recording the merge commit in its thread.
@@ -998,6 +1015,9 @@ pub struct TaskNewArgs {
     /// when it must wait for one.
     #[arg(long)]
     pub for_human: bool,
+    /// How soon it's wanted; ranks the human's to-dos (default normal).
+    #[arg(long, value_enum, ignore_case = true)]
+    pub priority: Option<TaskPriorityArg>,
 }
 
 #[derive(Debug, Args)]

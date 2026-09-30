@@ -43,6 +43,7 @@ async fn task(d: &TestDaemon, kind: TaskKind) -> String {
     d.client
         .new_task(&NewTaskRequest {
             for_human: false,
+            priority: None,
             components: Vec::new(),
             title: "t".to_string(),
             kind,

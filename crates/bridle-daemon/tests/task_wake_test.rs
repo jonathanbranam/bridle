@@ -36,6 +36,7 @@ async fn file(daemon: &support::TestDaemon, title: &str) {
         .client
         .new_task(&NewTaskRequest {
             for_human: false,
+            priority: None,
             components: Vec::new(),
             title: title.to_string(),
             kind: TaskKind::Feature,

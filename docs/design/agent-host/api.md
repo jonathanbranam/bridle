@@ -111,7 +111,7 @@ SSE event id:
 | `orchestrator.incident` (`{text}`) | the orchestrator supervisor needs the human (interim until incidents exist; also a `system` note to the human) |
 | `disk.checked` (`{free_bytes,total_bytes,target_bytes,worktrees_bytes,data_bytes}`) | the periodic disk reading ([[operating-model#Disk monitor\|disk monitor]]) |
 | `integrate.started` (`{task,branch}`) · `integrate.finished` (`{task,branch,ok,commit?,error?}`) | `bridle land` began / ended |
-| `task.created` (`{task,kind,state}`) · `task.state` (`{task,to}`) · `task.edited` (`{fields}`) · `task.question_asked` / `task.question_answered` / `task.note_added` (`{task}`) | task changes |
+| `task.created` (`{task,kind,state}`) · `task.state` (`{task,to}`) · `task.priority` (`{task,from,to}`) · `task.edited` (`{fields}`) · `task.question_asked` / `task.question_answered` / `task.note_added` (`{task}`) | task changes |
 | `edge.added` / `edge.removed` (`{from,to,kind}`) · `queue.changed` (`{tiers}`) | dependency and queue changes |
 | `claude.version` (`{version, previous}`) | an agent reports a Claude Code version the daemon hasn't seen last ([[docs/design/agent-host/agents#Claude Code upgrades|upgrades]]) |
 

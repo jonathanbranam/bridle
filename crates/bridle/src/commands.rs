@@ -12,8 +12,9 @@ use bridle_api::{
     ImpactCheckRequest, InterruptRequest, LandRequest, MaxWorkersRequest, MessageKind,
     MessageQuery, NewEdgeRequest, NewTaskRequest, OverlapLevel, ProbeOutcome, ProbeRequest,
     ProbeResult, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, ResumeRequest,
-    SendRequest, SetImpactRequest, SetSummaryRequest, SpawnRequest, SpecRef, StopRequest, Task,
-    TaskKind, TaskSize, TokenCreateRequest, UsageBreakdownQuery, UsageGroupBy, Workdir, event_kind,
+    SendRequest, SetImpactRequest, SetPriorityRequest, SetSummaryRequest, SpawnRequest, SpecRef,
+    StopRequest, Task, TaskKind, TaskPriority, TaskSize, TokenCreateRequest, UsageBreakdownQuery,
+    UsageGroupBy, Workdir, event_kind,
 };
 use chrono::{Local, TimeZone, Utc};
 use futures::StreamExt;
@@ -27,9 +28,9 @@ use crate::cli::{
     QueueArgs, QueueSetArgs, ReadyArgs, ReleaseArgs, RmArgs, RulesAction, RulesArgs, RulesDiffArgs,
     RulesExplainArgs, SendArgs, ShowArgs, SpawnArgs, SpecAction, SpecArgs, SpecExportArgs,
     SpecFormatArg, StopArgs, TaskAction, TaskArgs, TaskDoneArgs, TaskDropArgs, TaskEditArgs,
-    TaskKindArg, TaskListArgs, TaskNewArgs, TaskNoteArgs, TaskPlanArgs, TaskReopenArgs,
-    TaskSearchArgs, TaskShowArgs, TaskSizeArg, TaskSummaryArgs, TokenAction, TokenArgs, UsageArgs,
-    UsageByArg, WaitArgs, WhenArg,
+    TaskKindArg, TaskListArgs, TaskNewArgs, TaskNoteArgs, TaskPlanArgs, TaskPriorityArg,
+    TaskPriorityArgs, TaskReopenArgs, TaskSearchArgs, TaskShowArgs, TaskSizeArg, TaskSummaryArgs,
+    TokenAction, TokenArgs, UsageArgs, UsageByArg, WaitArgs, WhenArg,
 };
 use crate::cli::{LandArgs, OrchestratorAction, OrchestratorArgs, PortAction, PortArgs};
 use crate::error::CliError;
@@ -300,6 +301,7 @@ async fn arch_guard(cli: &Cli) -> Result<(), CliError> {
 const ORCHESTRATOR_STARTUP_STEPS: &str = "\
 Check in: `bridle status`, `bridle agents`, and recent messages to human (from the \
 managers).
+The human's open to-dos, highest priority first: `bridle task list --claimed-by human`.
 Start the watcher from the latest event seq.
 Keep the workforce's work moving, verify what gets merged, and bring the human only \
 what needs them.
@@ -2257,6 +2259,7 @@ async fn task(cli: &Cli, args: &TaskArgs) -> Result<(), CliError> {
         TaskAction::List(a) => task_list(cli, a).await,
         TaskAction::Plan(a) => task_plan(cli, a).await,
         TaskAction::Drop(a) => task_drop(cli, a).await,
+        TaskAction::Priority(a) => task_priority(cli, a).await,
         TaskAction::Done(a) => task_done(cli, a).await,
         TaskAction::Summary(a) => task_summary(cli, a).await,
         TaskAction::Reopen(a) => task_reopen(cli, a).await,
@@ -2290,11 +2293,12 @@ fn task_size_arg_to_opt(arg: TaskSizeArg) -> Option<TaskSize> {
 
 pub fn print_task_row(t: &Task) {
     println!(
-        "{:<10} {:<9} {:<8} {:<4} {}",
+        "{:<10} {:<9} {:<8} {:<4} {:<6} {}",
         t.id,
         t.kind,
         t.state,
         size_str(t.size),
+        t.priority,
         t.title
     );
 }
@@ -2313,6 +2317,7 @@ async fn task_new(cli: &Cli, args: &TaskNewArgs) -> Result<(), CliError> {
         body,
         components: args.component.clone(),
         size: args.size.and_then(task_size_arg_to_opt),
+        priority: args.priority.map(task_priority_arg),
     };
     let task = client.new_task(&req).await?;
     if args.for_human {
@@ -2320,8 +2325,8 @@ async fn task_new(cli: &Cli, args: &TaskNewArgs) -> Result<(), CliError> {
             .send(&SendRequest {
                 to: Some("human".to_string()),
                 body: format!(
-                    "To-do for you: {}. Finish it with `bridle task done {}`.",
-                    task.title, task.id
+                    "To-do for you ({} priority): {}. Finish it with `bridle task done {}`.",
+                    task.priority, task.title, task.id
                 ),
                 kind: MessageKind::Note,
                 when: bridle_api::When::Now,
@@ -2353,6 +2358,7 @@ async fn task_show(cli: &Cli, args: &TaskShowArgs) -> Result<(), CliError> {
         println!("title       {}", task.title);
         println!("kind        {}", task.kind);
         println!("state       {}", task.state);
+        println!("priority    {}", task.priority);
         if let Some(size) = task.size {
             println!("size        {size}");
         }
@@ -2436,14 +2442,16 @@ async fn task_list(cli: &Cli, args: &TaskListArgs) -> Result<(), CliError> {
         let kind = task_kind_arg(kind);
         tasks.retain(|t| t.kind == kind);
     }
+    // Stable: high first, ties stay oldest first.
+    tasks.sort_by_key(|t| t.priority);
     if cli.json {
         render::print_json(&tasks)?;
     } else if tasks.is_empty() {
         println!("no tasks");
     } else {
         println!(
-            "{:<10} {:<9} {:<8} {:<4} TITLE",
-            "ID", "KIND", "STATE", "SIZE"
+            "{:<10} {:<9} {:<8} {:<4} {:<6} TITLE",
+            "ID", "KIND", "STATE", "SIZE", "PRI"
         );
         for t in &tasks {
             print_task_row(t);
@@ -2455,6 +2463,28 @@ async fn task_list(cli: &Cli, args: &TaskListArgs) -> Result<(), CliError> {
 async fn task_plan(cli: &Cli, args: &TaskPlanArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
     let task = client.plan_task(&args.task).await?;
+    if cli.json {
+        render::print_json(&task)?;
+    } else {
+        print_task_row(&task);
+    }
+    Ok(())
+}
+
+fn task_priority_arg(arg: TaskPriorityArg) -> TaskPriority {
+    match arg {
+        TaskPriorityArg::High => TaskPriority::High,
+        TaskPriorityArg::Normal => TaskPriority::Normal,
+        TaskPriorityArg::Low => TaskPriority::Low,
+    }
+}
+
+async fn task_priority(cli: &Cli, args: &TaskPriorityArgs) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let req = SetPriorityRequest {
+        priority: task_priority_arg(args.priority),
+    };
+    let task = client.set_task_priority(&args.task, &req).await?;
     if cli.json {
         render::print_json(&task)?;
     } else {
@@ -3467,6 +3497,7 @@ async fn arch_propose(cli: &Cli, args: &ArchProposeArgs) -> Result<(), CliError>
     let client = client_for(cli).await?;
     let req = NewTaskRequest {
         for_human: false,
+        priority: None,
         title: args.title.clone(),
         kind: TaskKind::ArchRevision,
         body: argument,

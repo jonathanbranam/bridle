@@ -32,6 +32,7 @@ async fn file(client: &bridle_api::Client, title: &str) -> String {
     client
         .new_task(&NewTaskRequest {
             for_human: false,
+            priority: None,
             components: Vec::new(),
             title: title.to_string(),
             kind: TaskKind::Incident,

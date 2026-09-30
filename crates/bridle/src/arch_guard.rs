@@ -95,6 +95,7 @@ mod tests {
         Task {
             components: Vec::new(),
             size: None,
+            priority: Default::default(),
             branch: None,
             commit: None,
             summary: None,

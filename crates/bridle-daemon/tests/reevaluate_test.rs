@@ -27,6 +27,7 @@ async fn land(daemon: &support::TestDaemon, kind: TaskKind, title: &str) -> Stri
         .client
         .new_task(&NewTaskRequest {
             for_human: false,
+            priority: None,
             components: Vec::new(),
             title: title.to_string(),
             kind,

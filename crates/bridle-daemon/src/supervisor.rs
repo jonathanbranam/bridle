@@ -2019,6 +2019,23 @@ impl AgentManager {
     /// Resolve or drop while active: undelivered notices are dropped, and an
     /// agent that saw the incident gets one "resolved" note (unlinked, so it
     /// can't itself be dropped).
+    /// A system note to the human's inbox.
+    pub async fn note_to_human(&self, body: String) {
+        let sent = self
+            .send(
+                system_principal().id,
+                ToTarget::Human,
+                MessageKind::Note,
+                body,
+                bridle_api::types::When::Now,
+                None,
+            )
+            .await;
+        if let Err(e) = sent {
+            tracing::warn!("note to human: {e}");
+        }
+    }
+
     pub async fn incident_resolved(&self, task: &bridle_api::types::Task, line: &str) {
         let Ok(rows) = self.0.store.messages_for_incident(&task.id).await else {
             return;

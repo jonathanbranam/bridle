@@ -170,9 +170,10 @@ bridle spec import openspec [--from DIR] [--to DIR] [--dry-run]   moves each `<f
 bridle prime orchestrator                   fresh session's opening context: role prompt, current
                                              state, startup steps; local only, no daemon call
 bridle prime worker|planner [--component ID ...] [--task ID]   the role's rules, facts, guides, plus named components' scope; --task is worker only
-bridle task new    <title> -k/--kind KIND [--body TEXT | --body-file FILE] [--component ID ...] [--size S|M|L] [--for-human]
+bridle task new    <title> -k/--kind KIND [--body TEXT | --body-file FILE] [--component ID ...] [--size S|M|L] [--for-human] [--priority high|normal|low]
 bridle task show   <id>
 bridle task plan   <id>                                                 open -> planned: ready to build, claimable once unblocked
+bridle task priority <id> high|normal|low  change the priority; who and when go in the thread and a `task.priority` event
 bridle task edit   <id> [--title TEXT] [--body TEXT | --body-file FILE] [--component ID ... | --no-component] [--size S|M|L|none]
 bridle task list   [--claimed-by WHO] [--component ID] [-k KIND]             WHO: me|human|<agent name>|<principal id>; unclaimed tasks have no claimant to match
 bridle task search <words...>                                      search for tasks by words in title/body/summary (case-insensitive substring match, all words must match); includes done and dropped tasks
@@ -260,6 +261,11 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   finishes it with `task done <id>` (no `--commit`); `task list --claimed-by human` lists
   the open ones. By convention the title starts `[at restart]` or `[at next reboot]` when it
   must wait for one; nothing parses it. See coordination.md, "Human to-dos".
+- **`--priority high|normal|low`** on `task new` (default normal) and `task priority <id> <p>`
+  set the priority. `task list` and `task show` display it, and `task list` sorts high first
+  (oldest first within a priority), so `task list --claimed-by human` is the human's ranked
+  list. `task drop --reason` on a to-do the human holds also sends the human an inbox note
+  with the reason.
 - **`--size S|M|L|none`** on `task new`/`task edit` sets the task's optional estimated size
   (case-insensitive), so small tasks can be picked when budget runs short. `--size none`
   on `task edit` clears the task's size. It's informational: nothing selects on it and the

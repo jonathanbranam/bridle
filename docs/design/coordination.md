@@ -107,6 +107,14 @@ so a claim by `human` is never released. The human finishes it with `bridle task
 which needs no commit for a task the human claimed. The orchestrator lists
 `bridle task list --claimed-by human` at every start and tells the human first.
 
+A to-do has a priority (`high`, `normal` (default), `low`; `task new --priority`, changed with
+`bridle task priority`), and the list is sorted by it. Whoever asked can rescind it with
+`bridle task drop --reason`; the human gets an inbox note with the reason and the to-do leaves
+their list. The audit trail is the task's thread and the event log, each with who and when:
+created (with its priority), re-prioritized (`task.priority` event, `high -> low`), rescinded
+(`dropped: <reason>`) and done. Priority ranks only the human's to-dos; agent work is ranked by
+the queue's tiers.
+
 ## How agents actually hear things (Claude Code integration)
 
 Workers are separate headless `claude -p` stream-json sessions that the daemon

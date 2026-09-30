@@ -9,13 +9,15 @@ mod support;
 use bridle_api::ClientError;
 use bridle_api::types::{
     AgentState, DoneTaskRequest, DropTaskRequest, EditTaskRequest, NewTaskRequest,
-    SetSummaryRequest, SpawnRequest, TaskKind, TaskSize, TaskState, ThreadEntryKind, Workdir,
+    SetPriorityRequest, SetSummaryRequest, SpawnRequest, TaskKind, TaskPriority, TaskSize,
+    TaskState, ThreadEntryKind, Workdir,
 };
 use support::{start_daemon, wait_for_state};
 
 fn new_req(title: &str, kind: TaskKind) -> NewTaskRequest {
     NewTaskRequest {
         for_human: false,
+        priority: None,
         components: Vec::new(),
         title: title.to_string(),
         kind,
@@ -32,6 +34,7 @@ async fn create_show_list_and_edit_a_task() {
     let task = c
         .new_task(&NewTaskRequest {
             for_human: false,
+            priority: None,
             components: Vec::new(),
             title: "Add foo".to_string(),
             kind: TaskKind::Feature,
@@ -452,6 +455,85 @@ async fn for_human_task_is_claimed_by_the_human_and_done_without_a_commit() {
     assert_eq!(done.state, TaskState::Integrated);
 }
 
+/// A human to-do carries a priority; changing it and rescinding the to-do are each in the
+/// thread and events with who, and the human is told when it's withdrawn.
+#[tokio::test]
+async fn human_todo_priority_change_and_rescind_are_audited() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let c = &daemon.client;
+    let mut req = new_req("rotate the key", TaskKind::Chore);
+    req.for_human = true;
+    req.priority = Some(TaskPriority::High);
+    let task = c.new_task(&req).await.expect("new task");
+    assert_eq!(task.priority, TaskPriority::High);
+    assert!(task.thread[0].body.contains("priority high"));
+
+    let plain = c
+        .new_task(&new_req("plain", TaskKind::Chore))
+        .await
+        .expect("plain");
+    assert_eq!(plain.priority, TaskPriority::Normal);
+
+    let t = c
+        .set_task_priority(
+            &task.id,
+            &SetPriorityRequest {
+                priority: TaskPriority::Low,
+            },
+        )
+        .await
+        .expect("set priority");
+    assert_eq!(t.priority, TaskPriority::Low);
+    assert_eq!(
+        t.thread.last().expect("entry").body,
+        "priority: high -> low"
+    );
+    let events = c
+        .events(&bridle_api::types::EventQuery {
+            kind: Some("task.priority".to_string()),
+            ..Default::default()
+        })
+        .await
+        .expect("events");
+    assert_eq!(events.len(), 1);
+    assert_eq!(events[0].data["to"], "low");
+
+    let orch = daemon.external_client("orchestrator").await;
+    let dropped = orch
+        .drop_task(
+            &task.id,
+            &DropTaskRequest {
+                reason: "no longer needed".to_string(),
+            },
+        )
+        .await
+        .expect("drop");
+    assert_eq!(dropped.state, TaskState::Dropped);
+    assert!(
+        dropped
+            .thread
+            .last()
+            .expect("entry")
+            .body
+            .contains("no longer needed")
+    );
+    let notes = c
+        .list_messages(&bridle_api::types::MessageQuery {
+            to: Some("human".to_string()),
+            from: Some("system".to_string()),
+            unread: false,
+            limit: None,
+        })
+        .await
+        .expect("messages");
+    assert!(
+        notes
+            .iter()
+            .any(|m| m.body.contains(&task.id) && m.body.contains("no longer needed")),
+        "human not told: {notes:?}"
+    );
+}
+
 /// `bridle queue`'s HTTP surface: empty by default, set by the PM/human
 /// (here, human), read back verbatim, and `?top_tier=true` picks the
 /// highest tier with a startable task — skipping one stuck on a dependency
@@ -694,6 +776,7 @@ async fn search_matches_words_in_title_body_and_summary() {
     let t1 = c
         .new_task(&NewTaskRequest {
             for_human: false,
+            priority: None,
             components: Vec::new(),
             title: "Fix database connection pool".to_string(),
             kind: TaskKind::Bug,
@@ -706,6 +789,7 @@ async fn search_matches_words_in_title_body_and_summary() {
     let t2 = c
         .new_task(&NewTaskRequest {
             for_human: false,
+            priority: None,
             components: Vec::new(),
             title: "Refactor API endpoint".to_string(),
             kind: TaskKind::Feature,
@@ -718,6 +802,7 @@ async fn search_matches_words_in_title_body_and_summary() {
     let t3 = c
         .new_task(&NewTaskRequest {
             for_human: false,
+            priority: None,
             components: Vec::new(),
             title: "Add logging".to_string(),
             kind: TaskKind::Feature,
@@ -790,6 +875,7 @@ async fn search_includes_done_and_dropped_tasks() {
     let open_task = c
         .new_task(&NewTaskRequest {
             for_human: false,
+            priority: None,
             components: Vec::new(),
             title: "Open task".to_string(),
             kind: TaskKind::Feature,
@@ -802,6 +888,7 @@ async fn search_includes_done_and_dropped_tasks() {
     let done_task = c
         .new_task(&NewTaskRequest {
             for_human: false,
+            priority: None,
             components: Vec::new(),
             title: "Done task".to_string(),
             kind: TaskKind::Feature,
@@ -814,6 +901,7 @@ async fn search_includes_done_and_dropped_tasks() {
     let dropped_task = c
         .new_task(&NewTaskRequest {
             for_human: false,
+            priority: None,
             components: Vec::new(),
             title: "Dropped task".to_string(),
             kind: TaskKind::Feature,

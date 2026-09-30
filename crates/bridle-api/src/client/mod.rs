@@ -18,10 +18,11 @@ use crate::types::{
     LandRequest, LandResult, MaxWorkersRequest, Message, MessageQuery, NewEdgeRequest,
     NewTaskRequest, NoteTaskRequest, OpenQuestion, PortAllocation, ProbeRequest, ProbeResult,
     Queue, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, RestartRequest,
-    RestartResponse, ResumeRequest, SendRequest, SetImpactRequest, SetQueueRequest,
-    SetSummaryRequest, ShutdownResponse, SpawnRequest, Status, StatusLineReport, StopRequest, Task,
-    TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
-    UsageBreakdown, UsageBreakdownQuery, WakeResponse, WriteHandoverRequest,
+    RestartResponse, ResumeRequest, SendRequest, SetImpactRequest, SetPriorityRequest,
+    SetQueueRequest, SetSummaryRequest, ShutdownResponse, SpawnRequest, Status, StatusLineReport,
+    StopRequest, Task, TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine,
+    TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery, WakeResponse,
+    WriteHandoverRequest,
 };
 
 #[derive(Debug, Error)]
@@ -527,6 +528,14 @@ impl Client {
         req: &SetSummaryRequest,
     ) -> Result<Task, ClientError> {
         self.post_json(&["v1", "tasks", id, "summary"], req).await
+    }
+
+    pub async fn set_task_priority(
+        &self,
+        id: &str,
+        req: &SetPriorityRequest,
+    ) -> Result<Task, ClientError> {
+        self.post_json(&["v1", "tasks", id, "priority"], req).await
     }
 
     pub async fn set_task_impact(
