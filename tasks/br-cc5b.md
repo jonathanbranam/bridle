@@ -4,7 +4,7 @@ title = "Token counts in config accept k and M, defaults 150k/180k/200k (by23)"
 kind = "feature"
 state = "integrated"
 created_at = "2026-09-30T14:24:28.527Z"
-updated_at = "2026-09-30T14:34:48.009995Z"
+updated_at = "2026-09-30T14:34:57.554178Z"
 branch = "bridle/token-counts"
 commit = "6fb42f3fdf2fc1d8c3238ad05d0802d9eda02f13"
 summary = "Most of by23 was already built (TokenCount deserializer, parse_token_count, 150k/180k/200k defaults, docs). This change tightens parse_token_count (rejects sign, exponent, inf/nan, garbage, overflow; rounds) and adds tests: bad values name the key, an old integer-only config loads, mixed forms. CHANGELOG line added. No docs needed changes."
@@ -19,3 +19,6 @@ done: by23 was mostly built already; tightened parser (rejects inf/nan/sign/expo
 
 ### note · agent:manager-2 · 2026-09-30T14:34:48.009Z
 integrated: 6fb42f3fdf2fc1d8c3238ad05d0802d9eda02f13 (branch bridle/token-counts)
+
+### note · agent:manager-2 · 2026-09-30T14:34:57.554Z
+cleanup: removed agent token-counts, branch bridle/token-counts
