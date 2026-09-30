@@ -943,3 +943,4 @@
 {"actor":"agent:pm-1","at":"2026-09-30T21:00:39.846604Z","from":"open","task":"br-9c3d","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-09-30T21:00:39.862174Z","from":"open","task":"br-d160","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-09-30T21:00:39.877781Z","queue":"reprioritized"}
+{"actor":"agent:manager-2","at":"2026-09-30T21:19:24.473978Z","from":"planned","task":"br-5c29","to":"integrated"}
