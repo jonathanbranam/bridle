@@ -235,6 +235,13 @@ impl From<TaskError> for ApiError {
 
 // ---------- auth ----------
 
+/// Whether a token-less request is let in as `local`: a read whose peer is
+/// on loopback.
+fn grants_local(method: &axum::http::Method, peer: Option<std::net::SocketAddr>) -> bool {
+    matches!(method, &axum::http::Method::GET | &axum::http::Method::HEAD)
+        && peer.is_some_and(|p| p.ip().is_loopback())
+}
+
 async fn auth_middleware(
     State(state): State<AppState>,
     mut req: axum::extract::Request,
@@ -250,13 +257,15 @@ async fn auth_middleware(
         .and_then(|v| v.strip_prefix("Bearer "))
         .map(str::to_string);
     let Some(token) = token else {
-        // The daemon only listens on 127.0.0.1 (docs/design/agent-host/
-        // principals.md, "Read access without a token"): a request already
-        // on this machine can read without a token. Writes still need one.
-        if matches!(
-            req.method(),
-            &axum::http::Method::GET | &axum::http::Method::HEAD
-        ) {
+        // docs/design/agent-host/principals.md, "Read access without a
+        // token": a read from this machine needs no token. The peer address
+        // comes from the TCP handshake, so it can't be spoofed; a missing
+        // one (not served with connect info) fails closed.
+        let peer = req
+            .extensions()
+            .get::<axum::extract::ConnectInfo<std::net::SocketAddr>>()
+            .map(|c| c.0);
+        if grants_local(req.method(), peer) {
             req.extensions_mut().insert(Principal {
                 id: "local".to_string(),
                 kind: PrincipalKind::Local,
@@ -2792,6 +2801,19 @@ mod tests {
     //! end-to-end `?claimed_by=` filter is exercised at the `TaskManager`
     //! level instead (`tasks.rs`, `claim_blocks_ready_and_release_unblocks_it`).
     use super::*;
+
+    #[test]
+    fn token_less_local_only_for_loopback_reads() {
+        use axum::http::Method;
+        let lo = Some("127.0.0.1:5000".parse().expect("addr"));
+        let lo6 = Some("[::1]:5000".parse().expect("addr"));
+        let remote = Some("100.64.0.7:5000".parse().expect("addr"));
+        assert!(grants_local(&Method::GET, lo));
+        assert!(grants_local(&Method::HEAD, lo6));
+        assert!(!grants_local(&Method::GET, remote));
+        assert!(!grants_local(&Method::GET, None));
+        assert!(!grants_local(&Method::POST, lo));
+    }
 
     async fn store() -> (Store, tempfile::TempDir) {
         let tmp = tempfile::tempdir().expect("tempdir");

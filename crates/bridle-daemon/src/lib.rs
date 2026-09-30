@@ -307,6 +307,9 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         .with_context(|| format!("binding {listen_addr}"))?;
     let bound = listener.local_addr().context("reading bound address")?;
     let url = format!("http://{bound}");
+    if !bound.ip().is_loopback() {
+        tracing::warn!(%bound, "daemon listens beyond loopback: every request from another machine needs a bearer token, reads included");
+    }
 
     let info = DaemonInfo {
         project: project.clone(),
@@ -434,9 +437,12 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         let graceful = async move {
             let _ = serve_shutdown_rx.wait_for(|v| *v).await;
         };
-        if let Err(e) = axum::serve(listener, app)
-            .with_graceful_shutdown(graceful)
-            .await
+        if let Err(e) = axum::serve(
+            listener,
+            app.into_make_service_with_connect_info::<SocketAddr>(),
+        )
+        .with_graceful_shutdown(graceful)
+        .await
         {
             tracing::error!(error = %e, "axum serve error");
         }

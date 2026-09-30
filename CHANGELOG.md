@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Security
+
+- A token-less `GET`/`HEAD` is granted `local` only from a loopback peer; from any other address it is a 401. The daemon warns at startup when `listen` isn't loopback (br-d87c, fr6q).
+
 ### Added
 
 - `bridle advisor start <name> [--brief text|@file]` sends the brief to `external:advisor` as "For advisor <name>: ...", then starts `bridle session advisor <name>` in a tmux pane (a split of the orchestrator's pane, or a new window; `[tmux] advisor_pane`); outside tmux it prints the command. The orchestrator role uses it (br-284f, ervd).

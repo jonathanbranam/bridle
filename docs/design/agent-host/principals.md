@@ -15,10 +15,16 @@ file goes missing, the next start revokes the old token and mints a new one.
 
 ## Read access without a token
 
-The daemon only listens on 127.0.0.1
+The daemon listens on 127.0.0.1 by default
 ([[docs/tickets/open/read-only-access-without-a-token-9c63|ticket 9c63]]):
 any process on the machine can already reach it, so requiring a token just to
-read is friction without a security benefit. A `GET`/`HEAD` request with no
+read is friction without a security benefit. That holds only for a peer on this
+machine: the daemon grants `local` only when the TCP peer address is loopback
+(set by the handshake, so a client can't spoof it), and any token-less request
+from another address is a 401, reads included. Forwarding from this machine (an
+`ssh -L` tunnel) arrives from loopback and counts as local. Starting with a
+`listen` address that isn't loopback logs a warning. A `GET`/`HEAD` request from
+loopback with no
 `Authorization` header authenticates as a synthetic `local` principal instead
 of 401ing. `local` never passes `require_human` or the worker lifecycle gate,
 but it can't reach those anyway — both only guard
@@ -63,8 +69,8 @@ An agent's token is also kept in `.bridle/agents/<id>/token` (0600), so
 3. Otherwise, for a read-only command (`status`, `agents`, `show`, `logs`,
    `events`, `usage`, `inbox`, `task show`/`list`, `token list`, `budget`
    with no subcommand, `ready`), send the request with no token at all: the
-   daemon's own tolerance for a token-less `GET`/`HEAD` (above) then
-   authenticates it as `local`. The human token file is still never read
+   daemon's own tolerance for a token-less loopback `GET`/`HEAD` (above) then
+   authenticates it as `local`; a daemon on another machine answers 401. The human token file is still never read
    implicitly under `$CLAUDECODE` — the CLI just stops erring out ahead of a
    request that would have succeeded anyway.
 4. Otherwise (a write, or a non-read command that can't reach a workspace to
