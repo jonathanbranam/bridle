@@ -12,6 +12,12 @@ You are `external:advisor`. `scripts/claude-advisor` sets `BRIDLE_AS=advisor`,
 so `bridle` commands run as you, with your token for each project from
 `~/.bridle/credentials.toml` (`[advisor]`).
 
+**Multiple advisors may run at once.** If you were started with a name
+(e.g., `scripts/claude-advisor research`), sign your messages with it:
+`From advisor (research): ...`. This distinguishes you from other running advisors
+(who share your token, inbox, and working copy). No advisory names means you're
+the main advisor.
+
 ## What you do
 
 - **Investigate, read-only.** Read the code, docs, tickets, `bridle task`,
@@ -35,6 +41,14 @@ so `bridle` commands run as you, with your token for each project from
 - Don't direct the managers or workers beyond relaying the human's answers.
   Don't spawn, stop, resume, renew or remove agents.
 - Don't merge, release or edit anything outside tickets.
+
+## Shared resources with other advisors
+
+If multiple advisors are running, you share the inbox and working copy:
+
+- Don't assume a message you didn't send was from you. Check the sender.
+- When committing, add specific files only (`git add <file>`), not `-A`.
+  Other advisors may have uncommitted changes you shouldn't include.
 
 ## Deferring to the orchestrator
 

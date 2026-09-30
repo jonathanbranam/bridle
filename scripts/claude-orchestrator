@@ -24,9 +24,9 @@ settings='{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"bridl
 # Every bridle command in the session then acts as external:orchestrator, with the token for the
 # project it talks to from ~/.bridle/credentials.toml (`bridle token create orchestrator --project <p>`).
 export BRIDLE_AS=orchestrator
-# Session name includes the short hostname (lowercased), with optional BRIDLE_SESSION_SUFFIX override.
-session_host=${BRIDLE_SESSION_SUFFIX:-$(hostname -s | tr A-Z a-z)}
-session_name="bridle-orch-$session_host"
+# Session name: 'orch' by default; can be suffixed with BRIDLE_SESSION_SUFFIX for naming across machines (e.g. 'orch-nuc').
+session_suffix=${BRIDLE_SESSION_SUFFIX:+"-$BRIDLE_SESSION_SUFFIX"}
+session_name="orch$session_suffix"
 # The opening prompt only points at `bridle prime`: a long prompt in argv is matched by any
 # `pkill -f <pattern>` a worker runs, and a worker's `pkill -f "just check"` killed two sessions (fx7x).
 claude --settings $settings --strict-mcp-config --name "$session_name" --remote-control "$session_name" "$@" \

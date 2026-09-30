@@ -3,20 +3,31 @@
 # filing and question triage, reachable by Remote Control. Not an orchestrator: no watcher.
 # Needs an entry per project in ~/.bridle/credentials.toml, made once by the human with
 # `bridle token create advisor --project <p>`.
-# Usage: claude-advisor [extra claude args]
+# Usage: claude-advisor [name] [extra claude args]
 cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
 # Every bridle command in the session then acts as external:advisor, with the token for the
 # project it talks to from ~/.bridle/credentials.toml.
 export BRIDLE_AS=advisor
+# Optional advisor name: if provided, exported for the session to sign its messages.
+advisor_name="${1:-}"
+if [[ -n "$advisor_name" ]]; then
+  export BRIDLE_ADVISOR_NAME="$advisor_name"
+  shift
+fi
 # Lean start (ticket ct8m, docs/spikes/08-lean-context-findings.md): settings keys that drop bundled
 # skills, workflows and the claude.ai connectors, and bare-name denies for tools this role never uses
 # (spike 08's usage counts). Kept: AskUserQuestion, Agent, SendMessage (to talk to its subagents),
 # ToolSearch, Web*, Monitor and Bash background runs (wait-for-wake), Cron*, ScheduleWakeup. Not
 # disableRemoteControl: the human reaches this session through Remote Control.
 settings='{"disableBundledSkills":true,"disableWorkflows":true,"disableClaudeAiConnectors":true,"disableArtifact":true,"permissions":{"deny":["EnterPlanMode","ExitPlanMode","DesignSync","NotebookEdit","PushNotification","ReportFindings","RemoteTrigger","Artifact","Workflow"]}}'
-# Session name includes the short hostname (lowercased), with optional BRIDLE_SESSION_SUFFIX override.
-session_host=${BRIDLE_SESSION_SUFFIX:-$(hostname -s | tr A-Z a-z)}
-session_name="bridle-advisor-$session_host"
+# Session name: 'advisor' by default, 'advisor-<name>' if a name is given.
+# Can be suffixed with BRIDLE_SESSION_SUFFIX for naming across machines.
+session_suffix=${BRIDLE_SESSION_SUFFIX:+"-$BRIDLE_SESSION_SUFFIX"}
+if [[ -n "$advisor_name" ]]; then
+  session_name="advisor-$advisor_name$session_suffix"
+else
+  session_name="advisor$session_suffix"
+fi
 # A short prompt, not the role file's text: any `pkill -f <pattern>` a worker runs matches argv (fx7x).
 exec claude --settings $settings --strict-mcp-config --name "$session_name" --remote-control "$session_name" "$@" \
   "Read workflow/base/roles/advisor.md and follow it. Then check in: bridle status, and the open questions to the human. Say hello to the human in one line, then wait."

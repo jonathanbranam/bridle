@@ -43,7 +43,7 @@ The human, verbatim:
 So:
 
 - `scripts/claude-advisor [name]`: an optional name, added to the session name
-  (`bridle-advisor-<name>`, with the host per the above). No name is the main advisor.
+  (`advisor-<name>`, or `advisor` with no name; suffix with `BRIDLE_SESSION_SUFFIX` for machine naming).
 - One identity, one token, one shared inbox: all advisors are `external:advisor`. No per-advisor
   principals.
 - `workflow/base/roles/advisor.md`: other advisors may be running at the same time. Each signs
@@ -52,8 +52,9 @@ So:
   advisor doesn't assume a message it didn't send was its own, and commits only its own ticket
   files (`git add <file>`, never `-A`).
 
-## A shorter orchestrator name (2026-09-29)
+## Session name design (2026-09-29, applied)
 
-The human: "I'm chatting with orch (needs a shorter name btw)". So the orchestrator's session
-name becomes short, e.g. `orch` (`orch-nuc` on the NUC), and the advisors' likewise, e.g.
-`advisor`, `advisor-<name>`.
+Shorter names without 'bridle-' prefix:
+
+- Orchestrator: 'orch' by default; 'orch-<suffix>' when `BRIDLE_SESSION_SUFFIX` is set (replacing the host-based default from br-47ba).
+- Advisor: 'advisor' by default; 'advisor-<name>' when a name is given; can be suffixed with `BRIDLE_SESSION_SUFFIX` for machine naming.
