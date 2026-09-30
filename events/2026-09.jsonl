@@ -808,3 +808,5 @@
 {"actor":"agent:pm-1","at":"2026-09-30T05:50:28.337508Z","from":"open","task":"br-163f","to":"integrated"}
 {"actor":"agent:pm-1","at":"2026-09-30T05:50:28.536780Z","from":"open","task":"br-c8c0","to":"integrated"}
 {"actor":"agent:pm-1","at":"2026-09-30T05:50:28.798549Z","from":"open","task":"br-6694","to":"integrated"}
+{"actor":"external:orchestrator","at":"2026-09-30T05:51:02.520202Z","from":"integrated","task":"br-163f","to":"reopened"}
+{"actor":"external:orchestrator","at":"2026-09-30T05:51:02.572861Z","from":"integrated","task":"br-146a","to":"reopened"}
