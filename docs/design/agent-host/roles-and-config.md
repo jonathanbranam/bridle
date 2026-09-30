@@ -190,7 +190,22 @@ mode  = "quiet"          # default; "locked" parses but is not acted on yet
 With no `[[focus]]` everything is off. In a `quiet` period `bridle focus gate` (see
 [[cli]]) nudges the human; the advisor and orchestrator role text says to lead with a one-line
 nudge back to work and keep the answer minimal. A project opts out with `focus_hours = false`
-in its `.bridle/config.toml`. Not built yet: the override file, `locked`, quiet-noise routing.
+in its `.bridle/config.toml`. 
+**Override.** The human can write `~/.bridle/focus-override.toml` by hand (no CLI command):
+
+```toml
+until  = 2026-10-01T15:00:00Z   # UTC; capped at 2 hours after it takes effect
+reason = "deploy is broken"
+```
+
+It takes effect only `focus_override_delay_minutes` (top-level in `config.toml`, default 10)
+after the file was last written (its mtime), so tripping it is deliberate. (Not `[focus]
+override_delay`: `[[focus]]` is an array of tables, so `[focus]` can't also exist.) While active,
+the gate stays silent. A malformed file is logged and ignored. `bridle status` shows a `focus`
+line while an override is pending or active. Agents can't write it: every role denies
+`Edit`/`Write` of `~/.bridle/focus*` and `~/.bridle/config.toml` (`DENY_FOCUS_FILES`, and the
+advisor/orchestrator session settings), and their role text says never to create or edit it. Not
+built yet: `locked`, quiet-noise routing, an override event in the catch-up summary.
 
 ## Per-spawn tool overrides
 

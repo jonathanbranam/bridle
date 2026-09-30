@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Focus hours, slice A (br-e540, cvaq): `[[focus]]` periods in `~/.bridle/config.toml` (`days`, `start`, `end`, `mode = "quiet"|"locked"`) and `bridle focus gate`, a `UserPromptSubmit` hook that `bridle session` now passes. In a `quiet` period it adds a "Quiet hours (work) until 6:00 PM ET" nudge on the first prompt and every 5 minutes after. Off entirely without `[[focus]]`; a project opts out with `focus_hours = false`. `locked` parses but does nothing yet.
+- Focus hours, slice B (br-ff0d, cvaq): a hand-written `~/.bridle/focus-override.toml` (`until`, capped at 2 hours; `reason`) silences the gate, taking effect `focus_override_delay_minutes` (default 10) after it is written; malformed files are ignored. `bridle status` shows it. Agents are denied `Edit`/`Write` of `~/.bridle/focus*` and `config.toml`. Still off without `[[focus]]`.
 ### Changed
 
 - With no manager running (`[roles.manager] autostart = false`), the "task filed" note goes to the orchestrator instead of being dropped; the orchestrator role starts a manager on demand and stops it when the project is idle (w2hj).

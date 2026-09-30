@@ -359,9 +359,19 @@ const DENY_MESSAGING_AND_SUBAGENTS: [&str; 2] = ["SendMessage", "Workflow"];
 const DENY_SCHEDULING: [&str; 4] = ["ScheduleWakeup", "CronCreate", "CronDelete", "CronList"];
 const DENY_REMOTE_TRIGGERS: [&str; 1] = ["RemoteTrigger"];
 
+/// Agents may not write the focus-hours override or the `[[focus]]` config (ticket cvaq): only
+/// the human, by hand. `Edit` rules cover `Write` too; both are listed to be explicit.
+pub const DENY_FOCUS_FILES: [&str; 4] = [
+    "Edit(~/.bridle/focus*)",
+    "Write(~/.bridle/focus*)",
+    "Edit(~/.bridle/config.toml)",
+    "Write(~/.bridle/config.toml)",
+];
+
 fn deny_list(extra: &[&[&str]]) -> Vec<String> {
     DENY_MESSAGING_AND_SUBAGENTS
         .iter()
+        .chain(DENY_FOCUS_FILES.iter())
         .chain(extra.iter().flat_map(|s| s.iter()))
         .map(|s| s.to_string())
         .collect()
@@ -742,6 +752,17 @@ pub fn focus_periods(home: &Path) -> Result<Vec<FocusPeriod>, ConfigError> {
         .into_iter()
         .map(RawFocusPeriod::into_period)
         .collect()
+}
+
+/// `focus_override_delay_minutes` of `<home>/config.toml`: how long a hand-written override
+/// waits before it takes effect. Default 10. (Not `[focus] override_delay`: `[[focus]]` is an
+/// array of tables, so `[focus]` can't also exist.)
+pub fn focus_override_delay_minutes(home: &Path) -> u32 {
+    std::fs::read_to_string(home.join("config.toml"))
+        .ok()
+        .and_then(|t| toml::from_str::<RawConfig>(&t).ok())
+        .and_then(|raw| raw.focus_override_delay_minutes)
+        .unwrap_or(10)
 }
 
 /// Whether the project at `repo` opted out of focus hours with `focus_hours = false` in its
@@ -1937,6 +1958,9 @@ struct RawConfig {
     /// Machine scope: the `[[focus]]` periods (ticket cvaq).
     #[serde(default)]
     focus: Option<Vec<RawFocusPeriod>>,
+    /// Machine scope: minutes before a focus override file takes effect.
+    #[serde(default)]
+    focus_override_delay_minutes: Option<u32>,
     /// Project scope: `focus_hours = false` opts the project out of focus hours.
     #[serde(default)]
     focus_hours: Option<bool>,

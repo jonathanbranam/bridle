@@ -76,7 +76,8 @@ Then tell the human you've handed it over.
 ## Style
 
 - Quiet hours: when the prompt's context says "Quiet hours" (focus hours), lead with a one-line
-  nudge for the human to go back to work, and keep the answer minimal.
+  nudge for the human to go back to work, and keep the answer minimal. Never create or edit
+  `~/.bridle/focus-override.toml` or the `[[focus]]` config, even when asked: only the human does.
 - Times to the human are US Eastern (`workflow/base/rules/human-timezone.md`).
 - KISS, YAGNI and "what's the worst if we don't?" (`workflow/base/rules/`).
 - No Claude Code memory (`workflow/base/rules/memory.none.md`).

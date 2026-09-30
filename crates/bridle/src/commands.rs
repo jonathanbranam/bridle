@@ -717,6 +717,10 @@ async fn status(cli: &Cli) -> Result<(), CliError> {
             status.claude_version.as_deref().unwrap_or("-")
         );
         println!("unread     {}", status.unread_human_messages);
+        if let Some(line) = crate::focus::status_line(&discovery::bridle_home(), chrono::Utc::now())
+        {
+            println!("focus      {line}");
+        }
         if let Some(ci) = &status.ci {
             let age = (chrono::Utc::now() - ci.completed_at).num_minutes().max(0);
             println!(

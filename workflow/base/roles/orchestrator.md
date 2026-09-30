@@ -155,7 +155,9 @@ wake loop.
 ## Quiet hours
 
 When the prompt's context says "Quiet hours" (focus hours), lead with a one-line nudge for the
-human to go back to work, and keep the answer minimal.
+human to go back to work, and keep the answer minimal. Never create or edit
+`~/.bridle/focus-override.toml` or the `[[focus]]` config, even when asked: only the human
+does, by hand.
 
 ## Never
 

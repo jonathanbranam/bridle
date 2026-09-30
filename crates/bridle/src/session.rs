@@ -16,7 +16,7 @@ use crate::error::CliError;
 /// Lean start (ticket ct8m, docs/spikes/08-lean-context-findings.md): drops bundled skills,
 /// workflows and the claude.ai connectors, and denies tools these roles never use. Not
 /// disableRemoteControl: the human reaches the session through Remote Control.
-const LEAN: &str = r#""disableBundledSkills":true,"disableWorkflows":true,"disableClaudeAiConnectors":true,"disableArtifact":true,"permissions":{"deny":["EnterPlanMode","ExitPlanMode","DesignSync","NotebookEdit","PushNotification","ReportFindings","RemoteTrigger","Artifact","Workflow"]}"#;
+const LEAN: &str = r#""disableBundledSkills":true,"disableWorkflows":true,"disableClaudeAiConnectors":true,"disableArtifact":true,"permissions":{"deny":["EnterPlanMode","ExitPlanMode","DesignSync","NotebookEdit","PushNotification","ReportFindings","RemoteTrigger","Artifact","Workflow","Edit(~/.bridle/focus*)","Write(~/.bridle/focus*)","Edit(~/.bridle/config.toml)","Write(~/.bridle/config.toml)"]}"#;
 
 /// Focus hours (ticket cvaq): a no-op unless `~/.bridle/config.toml` has `[[focus]]`.
 const FOCUS_GATE: &str =
