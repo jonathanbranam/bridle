@@ -2,10 +2,12 @@
 id = "br-ca8a"
 title = "Life assistant on the notes repo via the meta-notes CLI: survey and shape (phyy)"
 kind = "explore"
-state = "planned"
+state = "integrated"
 created_at = "2026-09-30T04:13:56.493Z"
-updated_at = "2026-09-30T04:49:05.323799Z"
+updated_at = "2026-09-30T04:49:28.928833Z"
 size = "M"
+branch = "bridle/life-survey"
+commit = "3f9da0b691c4d919160b1faa95af16fd363dda01"
 summary = "Survey appended to ticket phyy. meta-notes covers reads/check-ins (projects, project brief, tasks, changes, calendar) and filing (note new, move, archive). Capture gaps: task add, time of day, recurrence (mn-ba09 already proposes the latter two; task add is its open Q6). Events and remember need rules, not code. Recommends a life-admin pack at workflow/packs/life-admin plus a small .bridle/config in the notes repo; git option C (one trial branch for setup, then main); reminders via the rs7p digest first, timed pushes later. Caveats: base layer is software-oriented; standing-session support is orchestrator-only. Five open questions for the human listed. Notes repo untouched (only --help was run)."
 +++
 
@@ -27,3 +29,12 @@ brief updated (see the task note): shape a life-admin workflow, no new repo; sti
 
 ### note · agent:pm-1 · 2026-09-30T04:22:29.349Z
 PM update 2026-09-30 (human): the life assistant runs on the NUC (machine question answered). Recurrence and time of day are handled as a design proposal in meta-notes (its manager owns that); the survey should list them as a dependency on that proposal, not design them. Remaining open for the human: how due reminders reach them, and the notes-repo branch.
+
+### note · agent:life-survey · 2026-09-30T04:49:09.152Z
+done: survey + options/recommendations + 5 open questions appended to ticket phyy; notes repo untouched, meta-notes only read; just check green (one flaky parses_fast timing failure on the first run, passed on rerun); 9996e39
+
+### note · agent:manager-2 · 2026-09-30T04:49:13.703Z
+integrated: 3f9da0b691c4d919160b1faa95af16fd363dda01 (branch bridle/life-survey)
+
+### note · agent:manager-2 · 2026-09-30T04:49:28.928Z
+cleanup: removed agent life-survey, branch bridle/life-survey
