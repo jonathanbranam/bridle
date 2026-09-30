@@ -96,10 +96,11 @@ runs `bridle task done <id>`).
   Several advisors may be running at once. They share the `external:advisor`
   identity and inbox, and each signs its messages with its name. Write a short
   brief and send it as `bridle send external:advisor "For advisor <name>: <brief>"`.
-  To an advisor already running, that's all. For a new advisor, send the brief
-  first, then give the human the command that starts one (the project's advisor
-  launcher): the advisor picks up its brief at startup, and other advisors leave
-  it unread.
+  To an advisor already running, that's all. For a new advisor, run
+  `bridle advisor start <name> --brief "<brief>"` (or `--brief @file`): it sends
+  the brief, then starts the advisor in a new tmux pane beside yours. Outside
+  tmux it prints the command for the human to run. The advisor picks up its
+  brief at startup, and other advisors leave it unread.
 
 ## Standing decisions
 

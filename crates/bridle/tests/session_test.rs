@@ -179,3 +179,83 @@ fn named_advisor_signs_tags_and_skips_the_pid_file() {
     assert!(r.tmux.contains("@bridle advisor-alice"), "{}", r.tmux);
     assert!(!r.home.path().join("advisor-p.pid").exists());
 }
+
+/// `bridle advisor start`, with a stub tmux that records its arguments.
+fn advisor_start(tmux_env: bool, panes: &str, config: &str, agent: bool) -> (Output, String) {
+    let bin = tempfile::tempdir().unwrap();
+    let home = tempfile::tempdir().unwrap();
+    fs::write(home.path().join("config.toml"), config).unwrap();
+    let rec = bin.path().join("tmux.rec");
+    stub(
+        bin.path(),
+        "tmux",
+        &format!(
+            "echo \"$@\" >> {rec}\n[ \"$1\" = list-panes ] && printf '%b' '{panes}'\nexit 0",
+            rec = rec.display()
+        ),
+    );
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_bridle"));
+    cmd.args(["advisor", "start", "fred"])
+        .env(
+            "PATH",
+            format!(
+                "{}:{}",
+                bin.path().display(),
+                std::env::var("PATH").unwrap_or_default()
+            ),
+        )
+        .env("BRIDLE_HOME", home.path())
+        .env_remove("BRIDLE_AGENT_ID")
+        .env_remove("TMUX");
+    if agent {
+        cmd.env("BRIDLE_AGENT_ID", "a-test");
+    }
+    if tmux_env {
+        cmd.env("TMUX", "/tmp/tmux-stub,1,0");
+    }
+    let out = cmd.output().unwrap();
+    (out, fs::read_to_string(&rec).unwrap_or_default())
+}
+
+#[test]
+fn advisor_start_splits_the_orchestrator_window() {
+    let (out, tmux) = advisor_start(true, "%1 \\n%4 orchestrator\\n", "", false);
+    assert!(out.status.success(), "{out:?}");
+    assert!(
+        tmux.contains("split-window -d -t %4 bridle session advisor --project bridle fred"),
+        "{tmux}"
+    );
+}
+
+#[test]
+fn advisor_start_window_mode_opens_a_window() {
+    let (out, tmux) = advisor_start(
+        true,
+        "%4 orchestrator\\n",
+        "[tmux]\nadvisor_pane = \"window\"\n",
+        false,
+    );
+    assert!(out.status.success(), "{out:?}");
+    assert!(
+        tmux.contains("new-window -d bridle session advisor --project bridle fred"),
+        "{tmux}"
+    );
+}
+
+#[test]
+fn advisor_start_outside_tmux_prints_the_command() {
+    let (out, tmux) = advisor_start(false, "", "", false);
+    assert!(out.status.success(), "{out:?}");
+    assert!(
+        String::from_utf8_lossy(&out.stdout)
+            .contains("bridle session advisor --project bridle fred")
+    );
+    assert_eq!(tmux, "");
+}
+
+#[test]
+fn advisor_start_refuses_a_worker() {
+    let (out, tmux) = advisor_start(true, "", "", true);
+    assert!(!out.status.success());
+    assert_eq!(tmux, "");
+}

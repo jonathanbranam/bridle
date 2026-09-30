@@ -112,6 +112,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Explore(args) => explore(&args.action),
         Command::Pane(args) => pane(&args.action),
         Command::Machine(args) => crate::tools_only::run(&args.action),
+        Command::Advisor(args) => crate::advisor::run(&cli, &args.action).await,
         Command::Session(args) => crate::session::run(&cli, &args.role).await,
     }
 }

@@ -37,6 +37,8 @@ pub enum ConfigError {
         value: f64,
         machine_value: f64,
     },
+    #[error("invalid [tmux]: {0}")]
+    BadTmux(String),
     #[error("invalid [orchestrator]: {0}")]
     BadOrchestrator(String),
     #[error("invalid [[budget.schedule]] {name:?}: {reason}")]
@@ -1806,6 +1808,46 @@ struct RawConfig {
     /// Machine scope only; a project's config may carry it but nothing reads it there.
     #[serde(default)]
     machine: Option<RawMachine>,
+    /// Read by `bridle advisor start` from the machine config only (`advisor_pane`).
+    #[serde(default)]
+    tmux: Option<RawTmux>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawTmux {
+    #[serde(default)]
+    advisor_pane: Option<String>,
+}
+
+/// Where `bridle advisor start` puts the advisor: `[tmux] advisor_pane` of `<home>/config.toml`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum AdvisorPane {
+    /// Split the orchestrator's window when its pane is found, else a new window.
+    #[default]
+    Split,
+    Window,
+}
+
+pub fn advisor_pane(home: &Path) -> Result<AdvisorPane, ConfigError> {
+    let path = home.join("config.toml");
+    let text = match std::fs::read_to_string(&path) {
+        Ok(t) => t,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(AdvisorPane::Split),
+        Err(source) => return Err(ConfigError::Read { path, source }),
+    };
+    let raw: RawConfig = toml::from_str(&text).map_err(|source| ConfigError::Parse {
+        path: path.clone(),
+        source: Box::new(source),
+    })?;
+    match raw.tmux.unwrap_or_default().advisor_pane.as_deref() {
+        None | Some("split") => Ok(AdvisorPane::Split),
+        Some("window") => Ok(AdvisorPane::Window),
+        Some(other) => Err(ConfigError::BadTmux(format!(
+            "advisor_pane = \"{other}\" in {}: expected \"split\" or \"window\"",
+            path.display()
+        ))),
+    }
 }
 
 #[derive(Debug, Default, Deserialize)]

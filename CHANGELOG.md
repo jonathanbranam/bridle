@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `bridle advisor start <name> [--brief text|@file]` sends the brief to `external:advisor` as "For advisor <name>: ...", then starts `bridle session advisor <name>` in a tmux pane (a split of the orchestrator's pane, or a new window; `[tmux] advisor_pane`); outside tmux it prints the command. The orchestrator role uses it (br-284f, ervd).
 - `bridle session orchestrator|advisor [name]` starts the role's Claude session from any directory (same names, pane tag, pid/exit files, refusals as the scripts; the advisor's opening prompt now comes from the new `bridle prime advisor`). `scripts/claude-orchestrator` and `scripts/claude-advisor` are thin wrappers around it (br-85bc, mrhe).
 - `bridle init` vendors the base workflow into `.bridle/workflow/` for a project with no `workflow` path (from the local clone, else the GitHub tag matching the binary's version), that copy is used when `workflow` is unset, and `bridle workflow update [--to TAG]` refreshes it and prints what changed (br-8411, mrhe).
 - Agents spawn with their own `BRIDLE_HOME` (`<workspace>/.bridle/agent-home/<id>`), and `scripts/claude-orchestrator` and `scripts/claude-advisor` refuse to start under a bridle agent (`BRIDLE_AGENT_ID` set) unless `BRIDLE_LAUNCHER_TEST=1`, so a worker's test can't reach the live orchestrator's pid/session files (br-5813, k6b3).

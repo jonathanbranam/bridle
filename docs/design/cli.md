@@ -185,6 +185,11 @@ bridle session orchestrator [claude args]   start the orchestrator's claude sess
                                              agent (unless BRIDLE_LAUNCHER_TEST=1) and in a tools-only clone
 bridle session advisor [name] [claude args] same for the advisor (advisor[-<name>]-<project>); sets BRIDLE_ADVISOR_NAME;
                                              the unnamed one keeps advisor-<project>.pid while it runs
+bridle advisor start <name> [--brief TEXT|@FILE]   send the brief to external:advisor as "For advisor <name>: ...", then run
+                                             `bridle session advisor <name>` in a tmux pane: a split of the pane tagged
+                                             @bridle=orchestrator, else a new window (`[tmux] advisor_pane = "split"|"window"`
+                                             in ~/.bridle/config.toml). Outside tmux prints the command, exit 0. Orchestrator
+                                             and human only (refuses under BRIDLE_AGENT_ID)
 bridle prime worker|planner [--component ID ...] [--task ID]   the role's rules, facts, guides, plus named components' scope; --task is worker only
 bridle task new    <title> -k/--kind KIND [--body TEXT | --body-file FILE] [--component ID ...] [--size S|M|L] [--for-human] [--priority high|normal|low]
 bridle task show   <id>

@@ -186,6 +186,8 @@ pub enum Command {
     /// Start the orchestrator or advisor session: `claude` with the role's settings, names and
     /// opening prompt, from any directory (replaces scripts/claude-orchestrator and -advisor).
     Session(SessionArgs),
+    /// Start an advisor in a new tmux pane (ticket ervd); orchestrator and human only.
+    Advisor(AdvisorArgs),
     /// Trace links from goals down to scenarios (docs/design/traceability.md). Local, no daemon call.
     Trace(TraceArgs),
 }
@@ -1499,6 +1501,27 @@ pub enum PaneAction {
     Tag { name: String },
     /// Clear the @bridle tmux pane option.
     Untag,
+}
+
+#[derive(Debug, Args)]
+pub struct AdvisorArgs {
+    #[command(subcommand)]
+    pub action: AdvisorAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum AdvisorAction {
+    /// Send the brief (if any) to `external:advisor` as "For advisor <name>: ...", then run
+    /// `bridle session advisor <name>` in a tmux pane: a split of the orchestrator's window, or
+    /// a new window (`[tmux] advisor_pane` in ~/.bridle/config.toml). Outside tmux, prints the
+    /// command to run.
+    Start {
+        /// The advisor's name (letters, digits, `-` and `_`).
+        name: String,
+        /// The brief: text, or `@path` to read it from a file.
+        #[arg(long)]
+        brief: Option<String>,
+    },
 }
 
 #[derive(Debug, Args)]
