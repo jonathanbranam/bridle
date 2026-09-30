@@ -205,6 +205,11 @@ above and, if there is one, starts the same background upgrade (wake `upgrade`, 
 the ten-minute quiet-point wait), so a turn is never cut off. A commit whose upgrade failed is not
 retried (in memory; a daemon restart or a newer commit tries again) so a broken build doesn't loop.
 
+While a built commit waits for its quiet point (manual or automatic), new worker spawns are refused
+with a 409 naming the build, and `bridle status` shows an `upgrade` line, so running workers drain
+instead of being replaced as they land. If the wait gives up, the refusal is lifted; a successful
+restart never lifts it (the process is exiting).
+
 ## Crates
 
 ```

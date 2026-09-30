@@ -742,6 +742,11 @@ async fn status(cli: &Cli) -> Result<(), CliError> {
                 (None, None) => println!("state      nothing pushed yet"),
             }
         }
+        if let Some(sha) = &status.upgrade_waiting {
+            println!(
+                "upgrade    {sha} built-green, waiting for a quiet point; new worker spawns refused"
+            );
+        }
         for inc in &status.incidents {
             println!(
                 "incident   {} {} ({}m)",

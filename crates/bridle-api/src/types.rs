@@ -128,6 +128,10 @@ pub struct Status {
     /// started if none has.
     #[serde(default)]
     pub last_wake_at: Option<DateTime<Utc>>,
+    /// Short sha of a green build waiting for a quiet point; new worker spawns are refused
+    /// until the daemon has restarted into it (or the upgrade gives up).
+    #[serde(default)]
+    pub upgrade_waiting: Option<String>,
 }
 
 /// One active incident, as `bridle status` lists it.

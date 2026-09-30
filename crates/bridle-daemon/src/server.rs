@@ -512,6 +512,7 @@ async fn status(
         incidents: state.tasks.active_incidents(),
         waiter_open,
         last_wake_at,
+        upgrade_waiting: state.manager.upgrade_waiting(),
     }))
 }
 
@@ -2701,10 +2702,19 @@ async fn upgrade_in_background(
         )),
     };
     let outcome = match built {
-        Ok(()) => perform_restart(&state, &who, wait, Some(&sha))
-            .await
-            .map(|_| ())
-            .map_err(|e| format!("built {short} but did not restart: {}", e.message)),
+        Ok(()) => {
+            // Refuse new workers so the running ones drain; stays set on success (the daemon is
+            // about to exec) and is lifted on any give-up so spawns are never blocked for good.
+            state.manager.set_upgrade_waiting(Some(short.clone()));
+            let r = perform_restart(&state, &who, wait, Some(&sha))
+                .await
+                .map(|_| ())
+                .map_err(|e| format!("built {short} but did not restart: {}", e.message));
+            if r.is_err() {
+                state.manager.set_upgrade_waiting(None);
+            }
+            r
+        }
         Err(e) => Err(e),
     };
     state.upgrader.release();

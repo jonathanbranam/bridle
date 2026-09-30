@@ -184,6 +184,9 @@ struct Inner {
     /// Spawns in flight. Until its first `system/init` an agent reads `idle` although its first
     /// turn is already on the way, so the quiet-point checks count these as busy.
     spawning: std::sync::atomic::AtomicUsize,
+    /// Short sha of a green build waiting for a quiet point (self-upgrade): new workers are
+    /// refused so the running ones drain. Lifted when the upgrade gives up.
+    upgrade_waiting: std::sync::Mutex<Option<String>>,
     governor: crate::governor::GovernorHandle,
     /// `bridle budget max-workers`: a live cap replacing
     /// `[budget] max_workers` until cleared or the daemon restarts.
@@ -272,6 +275,7 @@ impl AgentManager {
             emitter,
             runtimes: std::sync::Mutex::new(HashMap::new()),
             spawning: std::sync::atomic::AtomicUsize::new(0),
+            upgrade_waiting: std::sync::Mutex::new(None),
             governor,
             max_workers_override: std::sync::Mutex::new(None),
             task_wake: std::sync::Mutex::new(TaskWake::default()),
@@ -772,6 +776,19 @@ impl AgentManager {
         self.0.spawning.load(std::sync::atomic::Ordering::SeqCst) > 0
     }
 
+    /// Refuses (or, with `None`, stops refusing) new worker spawns for a build waiting on a quiet point.
+    pub fn set_upgrade_waiting(&self, short_sha: Option<String>) {
+        *self.0.upgrade_waiting.lock().expect("upgrade_waiting lock") = short_sha;
+    }
+
+    pub fn upgrade_waiting(&self) -> Option<String> {
+        self.0
+            .upgrade_waiting
+            .lock()
+            .expect("upgrade_waiting lock")
+            .clone()
+    }
+
     pub async fn spawn(
         &self,
         req: SpawnRequest,
@@ -805,6 +822,13 @@ impl AgentManager {
         };
         if !req.ignore_budget {
             self.refuse_if_holding(&model)?;
+        }
+        if req.role == WORKER_ROLE
+            && let Some(sha) = self.upgrade_waiting()
+        {
+            return Err(SupervisorError::Conflict(format!(
+                "not spawning: a green build ({sha}) is waiting for a quiet point to restart the daemon; retry once it has restarted"
+            )));
         }
         if req.role == WORKER_ROLE {
             let cap = self.effective_max_workers() as usize;

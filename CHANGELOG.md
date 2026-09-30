@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Self-upgrade: once a green build waits for a quiet point, new worker spawns are refused (named in the error and in `bridle status`) so running workers drain; lifted if the wait gives up (q7rx).
 - `bridle land --checked-commit <sha>`: the landing check is skipped only for a fast-forward whose tip is the commit the worker reported a green check on; otherwise it runs (qgma).
 
 - Focus hours, slice C (br-2e57, cvaq): `mode = "locked"` periods. `bridle focus gate` blocks every prompt ("Locked until 6:00 PM. Email bridle@dev.branam.us if it matters."), `bridle session advisor` and `bridle advisor start` refuse, and the daemon stops all advisor panes from its stall-check loop. The orchestrator keeps running; an active override lifts the lock; nothing changes without `[[focus]]`.

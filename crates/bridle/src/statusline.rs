@@ -415,6 +415,7 @@ mod tests {
             incidents: Vec::new(),
             waiter_open: false,
             last_wake_at: None,
+            upgrade_waiting: None,
         }
     }
 

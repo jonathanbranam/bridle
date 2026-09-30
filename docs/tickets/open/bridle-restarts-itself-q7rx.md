@@ -71,3 +71,6 @@ orchestrator told the manager to spawn nothing new until the restart. Proposed: 
 build is waiting, the daemon refuses new worker spawns (as a budget hold does, with a clear
 reason) until it has restarted, so running workers drain to a quiet point; the timeout then
 covers only a worker that never finishes.
+
+Done (br-e990): once a green build waits for a quiet point, worker spawns are refused (409, named in
+`bridle status`) until the restart; a timeout give-up lifts the refusal.

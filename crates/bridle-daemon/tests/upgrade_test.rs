@@ -259,3 +259,54 @@ async fn failed_preflight_leaves_the_daemon_untouched() {
     daemon.running.shutdown();
     daemon.running.join().await.expect("join");
 }
+
+#[tokio::test]
+async fn a_waiting_build_refuses_new_workers_until_it_gives_up() {
+    let (daemon, _tmp) = support::start_daemon(Some(hooks("success", "true"))).await;
+    let busy = daemon
+        .client
+        .spawn(&worker("SLEEP 8"))
+        .await
+        .expect("spawn");
+    support::wait_for_state(
+        &daemon.client,
+        &busy.id,
+        bridle_api::types::AgentState::Working,
+    )
+    .await;
+    daemon
+        .client
+        .restart(&RestartRequest {
+            wait_secs: Some(2),
+            upgrade: true,
+        })
+        .await
+        .expect("reply");
+    support::wait_for("the refusal in status", || async {
+        daemon.client.status().await.ok()?.upgrade_waiting
+    })
+    .await;
+    let mut second = worker("hi");
+    second.name = Some("w2".to_string());
+    let err = daemon.client.spawn(&second).await.expect_err("refused");
+    assert!(
+        err.to_string().contains("waiting for a quiet point"),
+        "{err}"
+    );
+    // The wait gives up (the worker is still busy): the refusal lifts.
+    support::wait_for("the refusal to lift", || async {
+        daemon
+            .client
+            .status()
+            .await
+            .ok()?
+            .upgrade_waiting
+            .is_none()
+            .then_some(())
+    })
+    .await;
+    assert!(!daemon.running.restart_requested());
+    daemon.client.spawn(&second).await.expect("spawn allowed");
+    daemon.running.shutdown();
+    daemon.running.join().await.expect("join");
+}
