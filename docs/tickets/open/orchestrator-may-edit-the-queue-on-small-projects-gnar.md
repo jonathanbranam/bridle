@@ -7,8 +7,13 @@ changes: []
 specs: []
 needs: []
 see: [w2hj]
-closed: 2026-09-30T21:30:07Z
 ---
+
+## Paused (2026-09-30)
+
+The human paused this after the first cut landed (82c42db, br-5c29) to discuss the proper
+approach with an advisor. The landed code stays until that discussion decides otherwise; no
+follow-up work on it until then.
 
 ## The ask
 
