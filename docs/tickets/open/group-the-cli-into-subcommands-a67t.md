@@ -69,3 +69,10 @@ plugins from other repos).
 Role prompts, skills, `scripts/`, hook settings, `docs/design/cli.md` and the tests all name
 commands. Keep the old names as hidden aliases for a release, update every reference in the same
 change, then drop the aliases. Do this before 6rh7 (completions), or regenerate after.
+
+## Decided (2026-09-30)
+
+The human, verbatim: "I approve the subdommand design". That covers the grouping above, one binary
+with a module per group (no git-style separate binaries), and the churn plan (old names kept as
+hidden aliases for a release, every reference updated in the same change, then the aliases
+dropped).
