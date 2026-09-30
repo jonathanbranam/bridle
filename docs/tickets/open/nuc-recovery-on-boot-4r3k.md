@@ -39,7 +39,8 @@ Advisors start on request. Their plan for tmux, verbatim:
 3. **Orchestrator in tmux**: after the restore, a boot step (e.g. `bridle up`) looks for a pane
    tagged `@bridle orchestrator`. If there's no resurrect file or no tagged pane, it creates a
    session (or window) and tags a pane. Then it runs `bridle session orchestrator` there; the
-   daemon's supervision relaunches it from then on.
+   daemon's supervision relaunches it from then on. One orchestrator for the whole machine (the
+   human's working rule, ma8e), whatever the number of projects.
    Catch: resurrect doesn't save pane options, so a restored pane loses its tag and (b) would
    always hold, leaving the old orchestrator pane as a stray shell. Save the tags with
    `@resurrect-hook-post-save-all` and put them back with `@resurrect-hook-post-restore-all`.

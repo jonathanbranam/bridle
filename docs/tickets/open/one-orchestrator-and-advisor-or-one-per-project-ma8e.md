@@ -42,3 +42,12 @@ thought and discussion, not a decision either way at this point."
   sessions to watch, and nothing weighs the projects against each other.
 - **A middle path:** one orchestrator for priorities and budget, with each project's
   manager and product manager running the day to day (roughly today's shape).
+
+## Working rule (the human, 2026-09-30)
+
+> I didn't think we made a decision on how many orchestrators exist; I am going with the "one
+> orchestrator per box" rule and planning to stick with that until we have a design consensus about
+> more than one.
+
+One orchestrator per machine, across the projects that machine owns, until there's a design
+consensus otherwise. Not a final answer to this question.

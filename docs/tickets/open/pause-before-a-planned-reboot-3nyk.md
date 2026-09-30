@@ -27,6 +27,20 @@ unattended-upgrades reboots at `Automatic-Reboot-Time` (04:00) **only when an in
 for it** (`/var/run/reboot-required`: kernel, libc, systemd and the like), not every day. The human
 wants to try different settings over a few weeks.
 
+## Track the reboots (the human, 2026-09-30)
+
+> I'd love to track that. the nuc is a new install so there won't be any history with the reboots
+> yet; it would be interesting to know how often they happen in reality; also a weekly reboot might
+> be a good thing to schedule as well.
+
+- Record each night a reboot is pending (`/var/run/reboot-required` and `.pkgs`) and each boot
+  (`journalctl --list-boots`; the journal is persistent). A few weeks of that shows how often.
+- As of 2026-09-30 12:30 UTC: 5 boots since the install on 2026-09-29 (all by hand, during setup),
+  and a reboot is **pending** (`gnome-shell`, flagged 06:58 UTC). The NUC is on UTC, so the 04:00
+  reboot is midnight Eastern, i.e. tonight's, unless it's turned off first (br-276e).
+- A **weekly scheduled reboot** (e.g. Sunday 04:00) is worth trying alongside, once 4r3k makes a
+  reboot recoverable.
+
 ## Shape
 
 - Short term: a standing rule for the NUC orchestrator: if `/var/run/reboot-required` exists, wind

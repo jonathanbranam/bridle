@@ -45,7 +45,27 @@ Clean that up and pick a proper workspace.
 2. **Per-arch configuration** (e.g. macOS arm64/x86_64 vs Linux). Per-box configuration is
    deferred; the human is still weighing it.
 
+## The fork (the human asked, 2026-09-30: "how will bridle be able to make a fork? we work in a
+single repo, is that possible by an agent? Or, will orch need to do that directly?")
+
+A worker only works in a worktree of the project's repo, so it can't create or push a second repo.
+Creating the fork (`gh repo fork tmux-plugins/tmux-resurrect --clone=false`) makes a public repo on
+the human's GitHub account: outward-facing, so the human does it, or the orchestrator on the
+human's explicit say-so. Options, simplest first:
+
+1. **The human forks and pushes the fix** (it already exists on the laptop: commit the two edited
+   files in `~/.tmux/plugins/tmux-resurrect` and push to the fork). The bridle task then only
+   changes dotfiles-local: point tpm at `jonathanbranam/tmux-resurrect`. The fix can also go
+   upstream as a PR later.
+2. **No fork**: dotfiles-local keeps the fix as a patch file and its install step applies it after
+   tpm installs the plugin. All inside the one repo, so a worker can do it, but it needs an install
+   step that re-applies the patch whenever tpm updates the plugin.
+
+Advisor's recommendation: 1.
+
 ## Human-only
 
 - `sudo loginctl enable-linger jbranam` on the NUC (`Linger=no` today), so the systemd user manager
   and tmux start at boot without a login.
+
+- If option 1 above: fork tmux-resurrect and push the laptop's fix to it.
