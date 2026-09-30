@@ -60,3 +60,14 @@ config change can simply request a restart.
   the same mechanism, but the trigger is per project).
 - Rolling back a bad binary: done (br-4524; daemon.md, "Rollback"). A hard crash before serving
   is only recovered by the next manual start, which rolls back.
+
+## Seen 2026-09-30: the upgrade starves while both worker slots stay busy
+
+Twice in a row (6e9fbf4 at ~12:25Z, 717a444 at ~13:50Z) the build succeeded but "no quiet point
+within 600s; still busy: <two workers>". The manager refills a slot as soon as a worker lands, so
+with a full queue there is never a moment when every agent is idle, and the fixes that most needed
+to be running (the rollback, 9d16b03; d3wq, e682bd7) weren't. Worked around by hand: the
+orchestrator told the manager to spawn nothing new until the restart. Proposed: once a green
+build is waiting, the daemon refuses new worker spawns (as a budget hold does, with a clear
+reason) until it has restarted, so running workers drain to a quiet point; the timeout then
+covers only a worker that never finishes.
