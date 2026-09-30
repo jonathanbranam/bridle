@@ -16,7 +16,7 @@ use crate::error::CliError;
 /// Lean start (ticket ct8m, docs/spikes/08-lean-context-findings.md): drops bundled skills,
 /// workflows and the claude.ai connectors, and denies tools these roles never use. Not
 /// disableRemoteControl: the human reaches the session through Remote Control.
-const LEAN: &str = r#""disableBundledSkills":true,"disableWorkflows":true,"disableClaudeAiConnectors":true,"disableArtifact":true,"permissions":{"deny":["EnterPlanMode","ExitPlanMode","DesignSync","NotebookEdit","PushNotification","ReportFindings","RemoteTrigger","Artifact","Workflow","Edit(~/.bridle/focus*)","Write(~/.bridle/focus*)","Edit(~/.bridle/config.toml)","Write(~/.bridle/config.toml)"]}"#;
+const LEAN: &str = r#""disableBundledSkills":true,"disableWorkflows":true,"disableClaudeAiConnectors":true,"disableArtifact":true,"permissions":{"deny":["EnterPlanMode","ExitPlanMode","DesignSync","NotebookEdit","PushNotification","ReportFindings","RemoteTrigger","Artifact","Workflow","Edit(~/.bridle/focus*)","Edit(~/.bridle/config.toml)"]}"#;
 
 /// Focus hours (ticket cvaq): a no-op unless `~/.bridle/config.toml` has `[[focus]]`.
 const FOCUS_GATE: &str =
@@ -250,6 +250,28 @@ mod tests {
     fn settings_are_valid_json() {
         for s in [orchestrator_settings(), advisor_settings()] {
             serde_json::from_str::<serde_json::Value>(&s).expect("json");
+        }
+    }
+
+    #[test]
+    fn lean_settings_deny_edit_focus_files_not_write() {
+        for s in [orchestrator_settings(), advisor_settings()] {
+            assert!(
+                s.contains("\"Edit(~/.bridle/focus*)\""),
+                "Edit(~/.bridle/focus*) should be denied"
+            );
+            assert!(
+                s.contains("\"Edit(~/.bridle/config.toml)\""),
+                "Edit(~/.bridle/config.toml) should be denied"
+            );
+            assert!(
+                !s.contains("\"Write(~/.bridle/focus*)\""),
+                "Write(~/.bridle/focus*) should not be denied"
+            );
+            assert!(
+                !s.contains("\"Write(~/.bridle/config.toml)\""),
+                "Write(~/.bridle/config.toml) should not be denied"
+            );
         }
     }
 

@@ -360,13 +360,8 @@ const DENY_SCHEDULING: [&str; 4] = ["ScheduleWakeup", "CronCreate", "CronDelete"
 const DENY_REMOTE_TRIGGERS: [&str; 1] = ["RemoteTrigger"];
 
 /// Agents may not write the focus-hours override or the `[[focus]]` config (ticket cvaq): only
-/// the human, by hand. `Edit` rules cover `Write` too; both are listed to be explicit.
-pub const DENY_FOCUS_FILES: [&str; 4] = [
-    "Edit(~/.bridle/focus*)",
-    "Write(~/.bridle/focus*)",
-    "Edit(~/.bridle/config.toml)",
-    "Write(~/.bridle/config.toml)",
-];
+/// the human, by hand. `Edit` rules cover `Write` too.
+pub const DENY_FOCUS_FILES: [&str; 2] = ["Edit(~/.bridle/focus*)", "Edit(~/.bridle/config.toml)"];
 
 fn deny_list(extra: &[&[&str]]) -> Vec<String> {
     DENY_MESSAGING_AND_SUBAGENTS
@@ -3763,5 +3758,23 @@ mod tests {
                 "{bad}: {err}"
             );
         }
+    }
+
+    #[test]
+    fn deny_focus_files_has_only_edit_rules() {
+        for rule in DENY_FOCUS_FILES {
+            assert!(
+                rule.starts_with("Edit("),
+                "DENY_FOCUS_FILES should only contain Edit rules, not {rule:?}"
+            );
+        }
+        assert!(
+            DENY_FOCUS_FILES.contains(&"Edit(~/.bridle/focus*)"),
+            "Edit(~/.bridle/focus*) should be in DENY_FOCUS_FILES"
+        );
+        assert!(
+            DENY_FOCUS_FILES.contains(&"Edit(~/.bridle/config.toml)"),
+            "Edit(~/.bridle/config.toml) should be in DENY_FOCUS_FILES"
+        );
     }
 }

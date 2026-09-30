@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `bridle restart` follows the daemon to a new port (a `[projects]` port or changed `[daemon] listen`) instead of timing out on the old URL, and its timeout error names `daemon.log` only if that file exists (6d5y).
 - A daemon restart or self-upgrade could fire while a freshly spawned agent's first turn was starting (it reads `idle` until its first init); the quiet-point checks now count in-flight spawns as busy (br-eb1f).
+- Removed redundant `Write(~/.bridle/focus*)` and `Write(~/.bridle/config.toml)` deny rules; `Edit` rules already cover these (m9cy).
 - Self-upgrade reports the commit it built (not the integration head) in its restart messages, and skips the build and restart, recording the commit as built, when nothing under `crates/`, `Cargo.toml`, `Cargo.lock` or `.cargo/` changed (br-ba5c, d3wq).
 
 ### Security
