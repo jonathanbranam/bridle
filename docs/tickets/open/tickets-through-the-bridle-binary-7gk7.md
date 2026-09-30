@@ -54,3 +54,12 @@ frontmatter `id: mn-ba09`, `title`, `status` only):
   but the folders stay; this ask keeps `open/` and `resolved/`.
 - [[tickets-and-tasks-why-both-k7tm|tickets and tasks, why both]].
 - [[questions-become-tickets-and-a-docs-folder-plan-xe5c|questions become tickets]].
+
+## File names keep the ID at the end (the human, 2026-09-30)
+
+> I need to know the FIRST letters of the ticket, not the LAST letters of the ticket. [...] OK,
+> let's keep the current convention of id at the end for now. I'll think about this more as I
+> use the system.
+
+Kept as `<descriptive-tail>-<id>.md`. Naming tickets to the human by the start of the file name
+is `workflow/base/rules/ticket-references.md`.
