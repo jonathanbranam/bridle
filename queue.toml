@@ -5,13 +5,11 @@ tasks = [
 ]
 
 [[tier]]
-tasks = [
-    "br-f02f",
-    "br-e182",
-]
+tasks = ["br-f02f"]
 
 [[tier]]
 tasks = [
+    "br-e182",
     "br-5c3a",
     "br-f3ec",
 ]
