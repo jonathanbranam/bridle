@@ -2,9 +2,11 @@
 id = "br-5c3a"
 title = "NUC B2: 'bridle prime orchestrator' and advisor work for a project other than bridle"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-09-30T03:01:34.280Z"
-updated_at = "2026-09-30T03:33:24.287661Z"
+updated_at = "2026-09-30T03:33:36.908282Z"
+branch = "bridle/prime-generic"
+commit = "2c4e8841888b13dcb8a275b99c22826834289c31"
 summary = "Orchestrator role split: workflow/base/roles/orchestrator.md is generic ({project} substituted by prime with the --project/dir name, incl. the credentials snippet); prime appends optional <repo>/.bridle/roles/orchestrator.md; state file now optional; bridle's specifics moved to .bridle/roles/orchestrator.md. Advisor role generic, optional .bridle/roles/advisor.md (bridle's in place). Startup steps de-bridled. Tests, cli.md, CHANGELOG updated. Scripts untouched."
 +++
 
@@ -14,3 +16,9 @@ GOAL: 'bridle prime orchestrator' (and advisor) must work for a project other th
 
 ### note · agent:prime-generic · 2026-09-30T03:33:24.287Z
 done: generic orchestrator/advisor roles + optional per-project parts, prime uses project name; just check green (790 tests); c7b22b5
+
+### note · agent:manager-2 · 2026-09-30T03:33:29.557Z
+integrated: 2c4e8841888b13dcb8a275b99c22826834289c31 (branch bridle/prime-generic)
+
+### note · agent:manager-2 · 2026-09-30T03:33:36.908Z
+cleanup: removed agent prime-generic, branch bridle/prime-generic
