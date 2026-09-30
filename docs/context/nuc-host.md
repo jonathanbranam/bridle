@@ -34,10 +34,25 @@ it listens there. Either way the traffic is encrypted.
 ## How the human wants to use it
 
 - Bridle daemons for several projects run on the NUC.
-- The human drives them remotely through **one** orchestrator agent, which may
+- The human drives them remotely through **one** orchestrator agent (possibly
+  per project, via `scripts/claude-orchestrator --project <name>`), which may
   run on the laptop or on the NUC, and uses Remote Control to talk to it.
 - The human regularly goes **mobile-only** and still wants to answer HITL
   questions and send new ideas.
+
+## Running sessions for specific projects
+
+The `scripts/claude-orchestrator` and `scripts/claude-advisor` scripts take a project name:
+
+```bash
+scripts/claude-orchestrator --project <name>    # e.g., --project meta-notes
+scripts/claude-advisor --project <name> [alias] # e.g., --project bridle alice
+```
+
+The project defaults to the `BRIDLE_PROJECT` environment variable, or `bridle` if unset.
+The project is included in the session name (e.g., `orch-meta-notes-nuc`, `advisor-alice-bridle-nuc`
+with suffix `nuc`) and passed to bridle for daemon discovery and token selection from
+`~/.bridle/credentials.toml`.
 
 ## How bridle is run for now
 

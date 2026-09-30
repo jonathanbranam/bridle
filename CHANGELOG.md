@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `scripts/claude-orchestrator` and `scripts/claude-advisor` now take a project (`--project <project>`, `BRIDLE_PROJECT` env, or default `bridle`) and include it in session names (e.g., `orch-meta-notes-nuc`, `advisor-alice-meta-notes-nuc`); they pass the project to bridle for daemon and token selection. Both scripts now run on Linux: `#!/usr/bin/env bash` with no zsh-only syntax (br-f02f).
 - `scripts/claude-orchestrator` and `scripts/claude-advisor` session names now include the short hostname (lowercased) to differentiate them across machines in Claude mobile; e.g., `bridle-orch-nuc` and `bridle-advisor-nuc`. The hostname can be overridden with `BRIDLE_SESSION_SUFFIX` (sfb3, br-47ba).
 - The TUI inbox lists every task's open question after the unread messages (as `bridle inbox` does), so an opened question stays until answered; `q` closes an opened message; opening a message no longer marks it read, `d` marks it done. `bridle inbox show` no longer marks read by default: `--no-mark-read` is replaced by `--mark-read` (n94h, br-6441).
 - Bridle's own workers gate on the full `just check` again (`check_worker` binding removed from `.bridle/config.toml`; `just check-affected` stays as a recipe) (qgma, br-0e42).

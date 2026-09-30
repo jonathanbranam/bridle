@@ -1,13 +1,30 @@
-#!/bin/zsh
+#!/usr/bin/env bash
 # Start the human's advisor session (workflow/base/roles/advisor.md): read-only investigation, ticket
 # filing and question triage, reachable by Remote Control. Not an orchestrator: no watcher.
 # Needs an entry per project in ~/.bridle/credentials.toml, made once by the human with
 # `bridle token create advisor --project <p>`.
-# Usage: claude-advisor [name] [extra claude args]
-cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
+# Usage: claude-advisor [--project <project>] [name] [extra claude args]
+# Project defaults to BRIDLE_PROJECT env var or 'bridle' if unset; it's used in session and
+# remote-control names (e.g. 'advisor-meta-notes-nuc' or 'advisor-alice-meta-notes-nuc') and
+# passed to bridle for daemon/token selection.
+cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)" || exit 1
 # Every bridle command in the session then acts as external:advisor, with the token for the
 # project it talks to from ~/.bridle/credentials.toml.
 export BRIDLE_AS=advisor
+
+project="${BRIDLE_PROJECT:-bridle}"
+# Parse --project flag if present
+while [[ $# -gt 0 ]]; do
+  if [[ "$1" == "--project" ]]; then
+    project="$2"
+    shift 2
+  else
+    break
+  fi
+done
+
+export BRIDLE_PROJECT="$project"
+
 # Optional advisor name: if provided, exported for the session to sign its messages.
 advisor_name="${1:-}"
 if [[ -n "$advisor_name" ]]; then
@@ -20,14 +37,14 @@ fi
 # ToolSearch, Web*, Monitor and Bash background runs (wait-for-wake), Cron*, ScheduleWakeup. Not
 # disableRemoteControl: the human reaches this session through Remote Control.
 settings='{"disableBundledSkills":true,"disableWorkflows":true,"disableClaudeAiConnectors":true,"disableArtifact":true,"permissions":{"deny":["EnterPlanMode","ExitPlanMode","DesignSync","NotebookEdit","PushNotification","ReportFindings","RemoteTrigger","Artifact","Workflow"]}}'
-# Session name: 'advisor' by default, 'advisor-<name>' if a name is given.
+# Session name: 'advisor-<project>' by default, 'advisor-<name>-<project>' if a name is given.
 # Can be suffixed with BRIDLE_SESSION_SUFFIX for naming across machines.
 session_suffix=${BRIDLE_SESSION_SUFFIX:+"-$BRIDLE_SESSION_SUFFIX"}
 if [[ -n "$advisor_name" ]]; then
-  session_name="advisor-$advisor_name$session_suffix"
+  session_name="advisor-$advisor_name-$project$session_suffix"
 else
-  session_name="advisor$session_suffix"
+  session_name="advisor-$project$session_suffix"
 fi
 # A short prompt, not the role file's text: any `pkill -f <pattern>` a worker runs matches argv (fx7x).
-exec claude --settings $settings --strict-mcp-config --name "$session_name" --remote-control "$session_name" "$@" \
+exec claude --settings "$settings" --strict-mcp-config --name "$session_name" --remote-control "$session_name" "$@" \
   "Read workflow/base/roles/advisor.md and follow it. Then check in: bridle status, and the open questions to the human. Say hello to the human in one line, then wait."
