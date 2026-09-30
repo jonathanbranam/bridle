@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.4.0] - 2026-09-30
+
 ### Added
 
 - The Python pack README documents "Running bridle in CI": a copy-pasteable GitHub Actions step that downloads and installs a pinned bridle release for the runner's platform (Linux x86_64, macOS arm64/x86_64), and the adapter's "cannot run bridle" error references it (wtyn part 2).

@@ -652,7 +652,7 @@ dependencies = [
 
 [[package]]
 name = "bridle"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "bridle-api",
@@ -675,7 +675,7 @@ dependencies = [
 
 [[package]]
 name = "bridle-api"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "axum",
  "bytes",
@@ -693,7 +693,7 @@ dependencies = [
 
 [[package]]
 name = "bridle-claude"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "nix 0.31.3",
  "serde",
@@ -707,7 +707,7 @@ dependencies = [
 
 [[package]]
 name = "bridle-daemon"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -733,7 +733,7 @@ dependencies = [
 
 [[package]]
 name = "bridle-mail"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -757,7 +757,7 @@ dependencies = [
 
 [[package]]
 name = "bridle-spec"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "serde",
  "sha2 0.11.0",
@@ -766,7 +766,7 @@ dependencies = [
 
 [[package]]
 name = "bridle-tui"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "bridle-api",
