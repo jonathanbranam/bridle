@@ -54,13 +54,12 @@ runs `bridle task done <id>`).
 - **Watch, don't poll by hand.** Run `bridle wait-for-wake` in the background. The
   daemon holds it until something needs you, then it prints the reasons and exits:
   - a `question` to the human, or a message to you;
-  - `main` moving;
   - an unexpected exit, crash or stall;
   - a created incident task;
   - all agents idle for 15 minutes;
   - five_hour ≥ 93% or seven_day ≥ 85%;
   - a budget hold starting (the governor leaving `normal`);
-  - a failed CI run on `main`.
+  - a failed CI run on `main` (only with `[ci] github = true` in the project config).
 
   Nothing pending for 25 minutes prints `nothing`. On any exit, **start it again
   first**, then read what it printed and act; wakes that fired while it wasn't running

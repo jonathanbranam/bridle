@@ -64,7 +64,8 @@ A project can run without a standing manager: `[roles.manager]` with `autostart 
 `resume_on_restart = false`. The orchestrator starts one (`bridle spawn manager`) when the
 human asks or there is work, and stops it when nothing is ready or running. Manager-bound notices
 meanwhile: "task filed" goes to the orchestrator; CI failures on `main` go to the human and wake the
-orchestrator; main-moved notes go to workers, not the manager, and `main` moving wakes the orchestrator.
+orchestrator; main-moved notes go to workers, not the manager; `main` moving doesn't wake the orchestrator
+(pdmd: it needs no decision).
 
 ## Disk monitor
 
