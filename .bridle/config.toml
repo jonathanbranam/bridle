@@ -78,7 +78,7 @@ plan_tokens     = "180k"    # "plan a handover at the next quiet point"
 handover_tokens = "200k"    # "hand over now"; starts the deadline below
 handover_deadline = "30m"   # then the daemon stops the session and relaunches it
 max_uptime      = "12h"     # a plan-a-handover at this age, whatever the size
-waiter_grace    = "4m"      # no wait-for-wake running this long tells the human (the human: 2x the 2m default)
+waiter_grace    = "15m"     # no wait-for-wake running this long tells the human (the human, v9t9)
 
 [context]
 wind_down_at = { default = 150000, worker = 120000 }
