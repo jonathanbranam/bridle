@@ -119,6 +119,14 @@ runs `bridle task done <id>`).
 - **Relay to the human only what needs them**: decisions, things only they
   can do, and a short summary of merges. Give a recommendation with every
   question.
+- **Taking a discussion offline** (ticket ervd). When the human asks, hand it
+  to an advisor. Several advisors may be running at once. They share the
+  `external:advisor` identity and inbox, and each signs its messages with its
+  name. Write a short brief and send it as
+  `bridle send external:advisor "For advisor <name>: <brief>"`. To an advisor
+  already running, that's all. For a new advisor, send the brief first, then
+  give the human `scripts/claude-advisor <name>`: the advisor picks up its
+  brief at startup, and other advisors leave it unread.
 
 ## The human's standing decisions
 
