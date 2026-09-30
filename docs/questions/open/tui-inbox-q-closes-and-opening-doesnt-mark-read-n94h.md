@@ -51,3 +51,16 @@ nothing while the questions (br-33a3, br-c83e, br-88e1) were still unanswered.
 Shape, as built (br-6441): the TUI polls `GET /v1/questions` with the unread messages and shows
 the questions after them (row id = task id). A question leaves only when answered: opening it,
 closing it or `d` never marks anything read, and `r` skips it (answer through the task).
+
+## Mark a message unread (added 2026-09-29)
+
+The human, verbatim:
+
+> also might be helpful if we can mark messages unread, if that doesn't exist yet
+
+It doesn't: the API has `POST /v1/messages/{id}/read` only (`docs/design/agent-host/api.md`), the
+CLI `bridle inbox read <id>...`.
+
+5. `POST /v1/messages/{id}/unread` (clears `read_at`), `bridle inbox unread <id>...`, and a key in
+   the TUI (e.g. `u`) on the list or in an opened message. Useful for advisors too: one that
+   opens a message meant for another advisor (ervd) can put it back.
