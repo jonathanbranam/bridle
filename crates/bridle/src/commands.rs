@@ -116,6 +116,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         }) => spec_export(&cli, args).await,
         Command::Spec(args) => spec(&cli, args),
         Command::Goals(args) => crate::goals::run(&cli, args).await,
+        Command::Ticket(args) => crate::ticket::run(&cli, args).await,
         Command::Arch(args) => arch(&cli, args).await,
         Command::Trace(args) => crate::trace::run(&cli, args),
         Command::Explore(args) => explore(&args.action),

@@ -168,6 +168,19 @@ bridle spec coverage [--root DIR] [--tests DIR ...] [--require-all] [--json]
                                              and the unbound list as 'file:line: s-id title'; exits 1
                                              with --require-all if any unbound (default exit 0); local
                                              only, no daemon call
+bridle ticket new "<title>" [--repos a,b] [--needs ids] [--see ids] [--no-task]   mints
+                                             `docs/tickets/open/<slug>-<id>.md` (repo root found via git): a
+                                             fresh 4-character ID unique across `open/` and `resolved/`,
+                                             frontmatter id, title, opened (UTC date), repos (default: the
+                                             project name), changes, specs, needs, see, and an empty
+                                             `## The ask`; creates the folders if missing; prints the path.
+                                             Also files the matching task (kind question, body
+                                             `original id: <id>` and the path) when a daemon is reachable;
+                                             an unreachable daemon is a warning, not an error
+bridle ticket resolve <id>                   stamps `closed: <UTC date-time>` into the frontmatter and moves
+                                             the ticket from `open/` to `resolved/` (a plain move: committing
+                                             is the caller's); errors on an unknown or ambiguous id; doesn't
+                                             touch the task. Both are local file work, no daemon start-up
 bridle goals list [--root DIR] [--priority P] [--stance S]   lists goals (docs/design/goals-tier.md) from
                                              `*.md` under --root (default `design/goals`): id, firmness,
                                              priority, stance, title per line; the stance is defaulted from

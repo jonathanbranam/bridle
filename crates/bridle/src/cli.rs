@@ -178,6 +178,9 @@ pub enum Command {
     Spec(SpecArgs),
     /// Goals (docs/design/goals-tier.md). Local — no daemon call.
     Goals(GoalsArgs),
+    /// Tickets under docs/tickets/ (docs/design/cli.md). Local files; `new` also files a task
+    /// when a daemon is reachable.
+    Ticket(TicketArgs),
     /// Architecture-tier elements (docs/design/architecture-tier.md). Local, no daemon call.
     Arch(ArchArgs),
     /// Exploration findings docs (docs/design/explorations.md). Local, no daemon call.
@@ -268,6 +271,42 @@ pub struct ExploreCheckArgs {
 #[derive(Debug, Args)]
 pub struct ExploreIdArgs {
     /// The exploration's task id; its doc is design/explore/<id>/findings.md.
+    pub id: String,
+}
+
+#[derive(Debug, Args)]
+pub struct TicketArgs {
+    #[command(subcommand)]
+    pub action: TicketAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum TicketAction {
+    /// Mint docs/tickets/open/<slug>-<id>.md with a fresh ID and print its path.
+    New(TicketNewArgs),
+    /// Stamp `closed:` and move an open ticket to docs/tickets/resolved/ (no commit, no task change).
+    Resolve(TicketResolveArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct TicketNewArgs {
+    pub title: String,
+    /// Repos the ticket concerns, comma-separated (default: the project name).
+    #[arg(long, value_delimiter = ',')]
+    pub repos: Vec<String>,
+    /// Ticket ids this one needs, comma-separated.
+    #[arg(long, value_delimiter = ',')]
+    pub needs: Vec<String>,
+    /// Related ticket ids, comma-separated.
+    #[arg(long, value_delimiter = ',')]
+    pub see: Vec<String>,
+    /// Don't create the matching bridle task.
+    #[arg(long)]
+    pub no_task: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct TicketResolveArgs {
     pub id: String,
 }
 

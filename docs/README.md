@@ -43,16 +43,16 @@ design moves on; the design docs cite them.
 `workflow-instructions/ticket-conventions.md`:
 
 - One file each, `<descriptive-tail>-<id>.md`, with a 4-character ID that
-  never changes. Create them with `workflow-instructions/scripts/new-ticket.sh`
-  (point `TICKETS_ROOT` at a folder with the right layout), or by hand with a
-  fresh ID unique across the repo.
+  never changes. Create them with `bridle ticket new "<title>"` (files the
+  matching task too; `--no-task` skips it), or by hand with a fresh ID unique
+  across the repo.
 - The same frontmatter: `id`, `title`, `opened`, `repos`, `changes`, `specs`,
   `needs`, `see`. `needs:` orders them.
 - The checker takes one ticket root, so `needs:` and `see:` only name tickets
   in the same tree (`questions/` or `spikes/open/`). A dependency across the
   two goes in the body as a `**Needs**` line with the ID and a link.
-- **The folder is the state.** Resolving a question is a `git mv` from `open/`
-  to `resolved/`, plus a `## Resolution` section naming the design doc the
+- **The folder is the state.** Resolving a question is `bridle ticket resolve <id>`
+  (stamps `closed:` and moves `open/` to `resolved/`; you commit), plus a `## Resolution` section naming the design doc the
   answer landed in. The design doc, not the ticket, is the durable record. A
   spike's ticket moves to `spikes/done/` once its findings doc exists beside
   the numbered spike docs. (Whether bridle's own task records should keep folder-as-state

@@ -23,6 +23,7 @@ mod specid;
 mod statusline;
 mod stop_check;
 mod systemd;
+mod ticket;
 mod tools_only;
 mod trace;
 mod vendor;
