@@ -293,3 +293,30 @@ async fn run_check(wt: &Path, cmd: &str) -> Result<Option<u64>, LandError> {
         tail,
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_the_count_from_a_nextest_summary() {
+        let out = "noise\n     Summary [  12.345s] 1234 tests run: 1234 passed, 3 skipped\n";
+        assert_eq!(parse_test_count(out), Some(1234));
+        assert_eq!(
+            parse_test_count("     Summary [   0.1s] 1 test run: 1 passed"),
+            None
+        );
+        assert_eq!(parse_test_count("cargo test: ok"), None);
+    }
+
+    #[test]
+    fn the_band_is_half_to_double_and_zero_always_fails() {
+        assert!(band_check(100, None).is_ok());
+        assert!(band_check(0, None).is_err());
+        assert!(band_check(0, Some(0)).is_err());
+        assert!(band_check(50, Some(100)).is_ok());
+        assert!(band_check(200, Some(100)).is_ok());
+        assert!(band_check(49, Some(100)).is_err());
+        assert!(band_check(201, Some(100)).is_err());
+    }
+}
