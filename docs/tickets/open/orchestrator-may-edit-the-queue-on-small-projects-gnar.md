@@ -29,3 +29,12 @@ agent with role `product-manager`. `external:orchestrator` is neither.
 
 [[small-projects-start-without-a-manager-w2hj|small projects start without a manager]]: the
 same direction, fewer standing roles on small projects.
+
+## Acting PM needs the PM's planning guidance (2026-09-30)
+
+On meta-notes the NUC's orchestrator then filed six ordered tasks with the order only in their
+bodies, so all six showed startable until the human asked why; it added the edges with
+`bridle dep add <task> --blocked-by <other>`. The human, relayed (m-2736): "that's minor; we
+might need a guide or workflow for you to reference if you are \"acting pm\"." So when the
+orchestrator acts as PM on a small project, it gets the PM's planning guidance (plan, dependency
+edges, queue tiers), from `workflow/base/roles/product-manager.md` or a shared excerpt of it.
