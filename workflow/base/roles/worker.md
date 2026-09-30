@@ -14,6 +14,9 @@ files: see `CLAUDE.md`'s bridle block for where they live.
 - **Keep it simple** (rule `kiss`). Build what the task names, to
   the precision it needs. One green `{{commands.check_worker}}` is enough: no repeated full
   runs, test loops or extra benchmarks unless the task asks.
+- **A missing check tool is a question** (rule `missing-tools`): if a tool the checks need
+  isn't installed, ask with `bridle send <manager> --question`; don't substitute a tool or
+  skip part of the check.
 - **Times to the human are US Eastern** (rule `human-timezone`);
   written bare ("7:00 AM"), with a zone only when it isn't Eastern.
   Records stay in UTC.
