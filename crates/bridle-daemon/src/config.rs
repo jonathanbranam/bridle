@@ -1758,6 +1758,14 @@ fn parse_token_count(s: &str) -> Result<u64, ConfigError> {
 #[derive(Debug, Default, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct RawConfig {
+    /// `[machines]` and `[projects]` (k7mw) are read through
+    /// `bridle_api::machines::MachineMap`; here they only have to parse.
+    #[serde(default)]
+    #[allow(dead_code)]
+    machines: Option<BTreeMap<String, String>>,
+    #[serde(default)]
+    #[allow(dead_code)]
+    projects: Option<BTreeMap<String, bridle_api::machines::ProjectPlace>>,
     #[serde(default)]
     daemon: Option<RawDaemon>,
     #[serde(default)]
@@ -1855,6 +1863,10 @@ pub fn advisor_pane(home: &Path) -> Result<AdvisorPane, ConfigError> {
 struct RawMachine {
     #[serde(default)]
     tools_only: Vec<String>,
+    /// This machine's name; read by `bridle_api::machines::MachineMap`, not the daemon.
+    #[serde(default)]
+    #[allow(dead_code)]
+    name: Option<String>,
 }
 
 /// Whether `repo` is listed in `[machine] tools_only` of `<home>/config.toml` (hw6c): a clone

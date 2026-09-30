@@ -3,6 +3,7 @@
 
 pub mod client;
 pub mod discovery;
+pub mod machines;
 pub mod types;
 
 pub use client::{Client, ClientError};

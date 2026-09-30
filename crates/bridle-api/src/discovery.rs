@@ -29,7 +29,7 @@ pub enum DiscoveryError {
 }
 
 impl DiscoveryError {
-    fn io(path: &Path, source: io::Error) -> Self {
+    pub(crate) fn io(path: &Path, source: io::Error) -> Self {
         Self::Io {
             path: path.to_path_buf(),
             source,
@@ -233,6 +233,9 @@ pub struct Endpoint {
     pub url: String,
     pub workspace: Option<PathBuf>,
     pub project: Option<String>,
+    /// The machine the project's daemon is on, when the machine config puts it on
+    /// another machine than this one (k7mw); `None` for a local daemon or a bare url.
+    pub machine: Option<String>,
 }
 
 /// Order: `--url`, `$BRIDLE_URL`, `--project`/`$BRIDLE_PROJECT` via the
@@ -243,11 +246,23 @@ pub fn resolve_endpoint(
     cwd: &Path,
     env: &impl Env,
 ) -> Result<Endpoint, DiscoveryError> {
+    let machines = crate::machines::MachineMap::load(&bridle_home())?;
+    resolve_endpoint_with(&machines, url_flag, project_flag, cwd, env)
+}
+
+fn resolve_endpoint_with(
+    machines: &crate::machines::MachineMap,
+    url_flag: Option<&str>,
+    project_flag: Option<&str>,
+    cwd: &Path,
+    env: &impl Env,
+) -> Result<Endpoint, DiscoveryError> {
     if let Some(url) = url_flag {
         return Ok(Endpoint {
             url: url.to_string(),
             workspace: None,
             project: None,
+            machine: None,
         });
     }
     if let Some(url) = env.var("BRIDLE_URL") {
@@ -255,12 +270,21 @@ pub fn resolve_endpoint(
             url,
             workspace: None,
             project: None,
+            machine: None,
         });
     }
     let project = project_flag
         .map(str::to_string)
         .or_else(|| env.var("BRIDLE_PROJECT"));
     if let Some(project) = project {
+        if let Some(remote) = machines.remote(&project)? {
+            return Ok(Endpoint {
+                url: remote.url,
+                workspace: None,
+                project: Some(project),
+                machine: Some(remote.machine),
+            });
+        }
         return list_registry()
             .into_iter()
             .find(|d| d.project == project)
@@ -268,6 +292,7 @@ pub fn resolve_endpoint(
                 url: d.url,
                 workspace: Some(PathBuf::from(d.workspace)),
                 project: Some(d.project),
+                machine: None,
             })
             .ok_or_else(|| {
                 DiscoveryError::Message(format!(
@@ -281,6 +306,7 @@ pub fn resolve_endpoint(
             url: info.url,
             workspace: Some(workspace),
             project: Some(info.project),
+            machine: None,
         });
     }
     Err(DiscoveryError::Message(
@@ -291,7 +317,8 @@ pub fn resolve_endpoint(
 }
 
 /// `~/.bridle/credentials.toml`: one table per external principal, one key per
-/// project, holding that principal's token for the project's daemon.
+/// project, holding that principal's token for the project's daemon on this machine.
+/// A sub-table `[principal.<machine>]` holds the same for that machine's daemons (k7mw).
 pub fn credentials_path() -> PathBuf {
     bridle_home().join("credentials.toml")
 }
@@ -394,6 +421,7 @@ pub fn resolve_token(
     token_flag: Option<&str>,
     workspace: Option<&Path>,
     project: Option<&str>,
+    machine: Option<&str>,
     env: &impl Env,
     allow_anonymous_read: bool,
 ) -> Result<Option<String>, DiscoveryError> {
@@ -402,6 +430,7 @@ pub fn resolve_token(
         token_flag,
         workspace,
         project,
+        machine,
         env,
         allow_anonymous_read,
     )
@@ -412,6 +441,7 @@ fn resolve_token_in(
     token_flag: Option<&str>,
     workspace: Option<&Path>,
     project: Option<&str>,
+    machine: Option<&str>,
     env: &impl Env,
     allow_anonymous_read: bool,
 ) -> Result<Option<String>, DiscoveryError> {
@@ -428,15 +458,25 @@ fn resolve_token_in(
                  URL): pass --project, or set $BRIDLE_TOKEN"
             )));
         };
-        let found = read_credentials(credentials)?
-            .get(&principal)
+        // A visitor's token on another machine's daemon sits under that machine's name.
+        let table = read_credentials(credentials)?;
+        let mut entry = table.get(&principal);
+        if let Some(m) = machine {
+            entry = entry.and_then(|v| v.get(m));
+        }
+        let found = entry
             .and_then(|v| v.get(project))
             .and_then(|v| v.as_str())
             .map(str::to_string);
         return found.map(Some).ok_or_else(|| {
+            let (place, section) = match machine {
+                Some(m) => (format!(" on machine '{m}'"), format!("[{principal}.{m}]")),
+                None => (String::new(), format!("[{principal}]")),
+            };
             DiscoveryError::Message(format!(
-                "no token for principal '{principal}' on project '{project}' in {}: run \
-                 `bridle token create {principal} --project {project}` (as the human)",
+                "no token for principal '{principal}' on project '{project}'{place} in {}: \
+                 mint one as the human and put it under {section}; on this machine \
+                 `bridle token create {principal} --project {project}` does it",
                 credentials.display()
             ))
         });
@@ -608,7 +648,7 @@ mod tests {
     #[test]
     fn resolve_token_prefers_flag_then_env() {
         assert_eq!(
-            resolve_token(Some("flag"), None, None, &empty_env(), false).unwrap(),
+            resolve_token(Some("flag"), None, None, None, &empty_env(), false).unwrap(),
             Some("flag".to_string())
         );
         let env = MapEnv(std::collections::HashMap::from([(
@@ -616,7 +656,7 @@ mod tests {
             "envtok",
         )]));
         assert_eq!(
-            resolve_token(None, None, None, &env, false).unwrap(),
+            resolve_token(None, None, None, None, &env, false).unwrap(),
             Some("envtok".to_string())
         );
     }
@@ -629,7 +669,7 @@ mod tests {
         fs::create_dir_all(token_path.parent().unwrap()).unwrap();
         fs::write(&token_path, "human-secret\n").unwrap();
 
-        let tok = resolve_token(None, Some(ws), None, &empty_env(), false).unwrap();
+        let tok = resolve_token(None, Some(ws), None, None, &empty_env(), false).unwrap();
         assert_eq!(tok, Some("human-secret".to_string()));
     }
 
@@ -642,14 +682,15 @@ mod tests {
         fs::write(&token_path, "human-secret").unwrap();
 
         let env = MapEnv(std::collections::HashMap::from([("CLAUDECODE", "1")]));
-        let err = resolve_token(None, Some(ws), None, &env, false).unwrap_err();
+        let err = resolve_token(None, Some(ws), None, None, &env, false).unwrap_err();
         assert!(err.to_string().contains("BRIDLE_TOKEN"));
     }
 
     #[test]
     fn resolve_token_errors_when_no_token_file_exists() {
         let root = tempdir().unwrap();
-        let err = resolve_token(None, Some(root.path()), None, &empty_env(), false).unwrap_err();
+        let err =
+            resolve_token(None, Some(root.path()), None, None, &empty_env(), false).unwrap_err();
         assert!(err.to_string().contains("BRIDLE_TOKEN"));
     }
 
@@ -666,7 +707,7 @@ mod tests {
         // CLAUDECODE: the request goes out with no token at all, not the
         // human's.
         assert_eq!(
-            resolve_token(None, Some(ws), None, &env, true).unwrap(),
+            resolve_token(None, Some(ws), None, None, &env, true).unwrap(),
             None
         );
     }
@@ -674,7 +715,7 @@ mod tests {
     #[test]
     fn resolve_token_write_still_errors_under_claudecode_even_with_anonymous_read_available() {
         let env = MapEnv(std::collections::HashMap::from([("CLAUDECODE", "1")]));
-        let err = resolve_token(None, None, None, &env, false).unwrap_err();
+        let err = resolve_token(None, None, None, None, &env, false).unwrap_err();
         assert!(err.to_string().contains("BRIDLE_TOKEN"));
     }
 
@@ -693,7 +734,7 @@ mod tests {
         store_credential(&path, "advisor", "demo", "from-file").unwrap();
         let both = creds_env(&[("BRIDLE_TOKEN", "envtok"), ("BRIDLE_AS", "advisor")]);
         let pick = |flag, env: &MapEnv| {
-            resolve_token_in(&path, flag, None, Some("demo"), env, false).unwrap()
+            resolve_token_in(&path, flag, None, Some("demo"), None, env, false).unwrap()
         };
         assert_eq!(pick(Some("flag"), &both), Some("flag".to_string()));
         assert_eq!(pick(None, &both), Some("envtok".to_string()));
@@ -707,12 +748,13 @@ mod tests {
         let path = creds_file(dir.path());
         store_credential(&path, "advisor", "demo", "t").unwrap();
         let env = creds_env(&[("BRIDLE_AS", "advisor")]);
-        let err = resolve_token_in(&path, None, None, Some("other"), &env, false).unwrap_err();
+        let err =
+            resolve_token_in(&path, None, None, Some("other"), None, &env, false).unwrap_err();
         let msg = err.to_string();
         assert!(msg.contains("credentials.toml"), "{msg}");
         assert!(msg.contains("advisor"), "{msg}");
         assert!(msg.contains("other"), "{msg}");
-        let err = resolve_token_in(&path, None, None, None, &env, false).unwrap_err();
+        let err = resolve_token_in(&path, None, None, None, None, &env, false).unwrap_err();
         assert!(err.to_string().contains("--project"));
     }
 
@@ -748,7 +790,69 @@ mod tests {
         store_credential(&path, "advisor", "demo", "t").unwrap();
         fs::set_permissions(&path, fs::Permissions::from_mode(0o644)).unwrap();
         let env = creds_env(&[("BRIDLE_AS", "advisor")]);
-        let err = resolve_token_in(&path, None, None, Some("demo"), &env, false).unwrap_err();
+        let err = resolve_token_in(&path, None, None, Some("demo"), None, &env, false).unwrap_err();
         assert!(err.to_string().contains("chmod 600"));
+    }
+
+    #[test]
+    fn a_project_on_another_machine_routes_to_its_host_and_port() {
+        let m: crate::machines::MachineMap = toml::from_str(
+            "[machine]\nname = \"mbp\"\n[machines]\nnuc = \"nuc\"\n\
+             [projects]\nmeta = { machine = \"nuc\", port = 7402 }",
+        )
+        .unwrap();
+        let cwd = tempdir().unwrap();
+        let ep = resolve_endpoint_with(&m, None, Some("meta"), cwd.path(), &empty_env()).unwrap();
+        assert_eq!(ep.url, "http://nuc:7402");
+        assert_eq!(ep.machine.as_deref(), Some("nuc"));
+        assert_eq!(ep.project.as_deref(), Some("meta"));
+        // $BRIDLE_PROJECT routes the same way.
+        let env = MapEnv(std::collections::HashMap::from([(
+            "BRIDLE_PROJECT",
+            "meta",
+        )]));
+        let ep = resolve_endpoint_with(&m, None, None, cwd.path(), &env).unwrap();
+        assert_eq!(ep.url, "http://nuc:7402");
+    }
+
+    #[test]
+    fn a_project_on_this_machine_is_not_routed_remotely() {
+        let m: crate::machines::MachineMap = toml::from_str(
+            "[machine]\nname = \"mbp\"\n[machines]\nmbp = \"h\"\n\
+             [projects]\nzz-no-such-project = { machine = \"mbp\", port = 1 }",
+        )
+        .unwrap();
+        let cwd = tempdir().unwrap();
+        let err = resolve_endpoint_with(
+            &m,
+            None,
+            Some("zz-no-such-project"),
+            cwd.path(),
+            &empty_env(),
+        )
+        .unwrap_err();
+        assert!(err.to_string().contains("no daemon registered"));
+    }
+
+    #[test]
+    fn credentials_pick_the_machine_sub_table_and_old_files_still_work() {
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("credentials.toml");
+        store_credential(&path, "advisor", "bridle", "local-tok").unwrap();
+        // Hand-written, as the human pastes it on the other box.
+        let mut text = fs::read_to_string(&path).unwrap();
+        text.push_str("\n[advisor.nuc]\nmeta = \"nuc-tok\"\n");
+        fs::write(&path, text).unwrap();
+        let env = MapEnv(std::collections::HashMap::from([("BRIDLE_AS", "advisor")]));
+        let get = |project, machine| {
+            resolve_token_in(&path, None, None, Some(project), machine, &env, false)
+        };
+        assert_eq!(get("bridle", None).unwrap().as_deref(), Some("local-tok"));
+        assert_eq!(
+            get("meta", Some("nuc")).unwrap().as_deref(),
+            Some("nuc-tok")
+        );
+        assert!(get("meta", None).is_err());
+        assert!(get("bridle", Some("nuc")).is_err());
     }
 }

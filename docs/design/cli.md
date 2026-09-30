@@ -316,6 +316,14 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   [[docs/design/agent-host/principals#How the CLI picks a token|principals]].
   `--project` also reads `$BRIDLE_PROJECT`, including for `serve`, where it
   names the project being served.
+- **Projects on other machines** (k7mw): `~/.bridle/config.toml`, the same on every box and
+  trusted (no probing), names this machine (`[machine] name = "mbp"`, a key of `[machines]`),
+  the host to reach each machine by (`[machines] nuc = "nuc"`) and where each project lives
+  (`[projects] meta-notes = { machine = "nuc", port = 7402 }`). `--project`/`$BRIDLE_PROJECT`
+  naming a project on another machine goes to `http://<host>:<port>` and takes its token from
+  `[principal.<machine>]` in `credentials.toml`; a project on this machine, or not listed, uses
+  the local registry as before. A listed project with no `[machine] name` is an error. Types:
+  `bridle_api::machines`.
 - **Exit codes**: 0 ok, 1 error, 2 usage error, 3 daemon unreachable (every
   discovery failure, including an unknown `--project`), 4 `wait` timed out.
 - **`wait <task> [--until <state>] [--or-message] [--timeout <secs>]`** blocks on the SSE

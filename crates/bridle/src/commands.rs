@@ -137,6 +137,7 @@ async fn resolve_endpoint_and_token(
         cli.token.as_deref(),
         endpoint.workspace.as_deref(),
         endpoint.project.as_deref(),
+        endpoint.machine.as_deref(),
         &env,
         allow_anonymous_read,
     )?;
@@ -3129,6 +3130,7 @@ async fn ready(cli: &Cli, args: &ReadyArgs) -> Result<(), CliError> {
             cli.token.as_deref(),
             Some(std::path::Path::new(&info.workspace)),
             Some(&info.project),
+            None,
             &ProcessEnv,
             true,
         )

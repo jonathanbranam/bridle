@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `[machine] name`, `[machines]` and `[projects]` in `~/.bridle/config.toml` say where each project's daemon is; `--project`/`$BRIDLE_PROJECT` for one on another machine goes to `http://<host>:<port>` (no probing), and its token comes from `[principal.<machine>]` in `credentials.toml`. Existing files keep working (br-32ea, k7mw).
+
 - `bridle serve --take-over` refuses, naming both SHAs, unless origin was reached and `bridle/state` is created, fast-forwarded or level; it also fast-forwards the integration branch (clean checkout only) and refuses if the local one isn't an ancestor of origin's. No override, no rebase, no force (br-33b3, 24mj part 1).
 
 - `bridle advisor start <name> [--brief text|@file]` sends the brief to `external:advisor` as "For advisor <name>: ...", then starts `bridle session advisor <name>` in a tmux pane (a split of the orchestrator's pane, or a new window; `[tmux] advisor_pane`); outside tmux it prints the command. The orchestrator role uses it (br-284f, ervd).

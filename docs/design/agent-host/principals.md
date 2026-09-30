@@ -91,6 +91,16 @@ track-web = "..."
 bridle = "..."
 ```
 
+A sub-table `[<principal>.<machine>]` holds the tokens for that machine's daemons; a plain
+`[<principal>]` key is a project on this machine, so files written before machines existed
+keep working. The CLI uses the sub-table when the machine config (below) puts the
+project's daemon on another machine (k7mw). The human pastes those in by hand:
+
+```toml
+[advisor.nuc]
+meta-notes = "..."
+```
+
 `bridle token create <name> --project <p>` adds `[name] p = token` (creating the
 directory and file 0600, keeping other entries) and prints no token; with no known project
 (`--url`) it prints the token as before. `bridle token revoke <name> --project <p>`
