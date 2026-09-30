@@ -2,9 +2,11 @@
 id = "br-2b1b"
 title = "wait-for-wake wakes the orchestrator on a created incident task"
 kind = "chore"
-state = "planned"
+state = "integrated"
 created_at = "2026-09-30T01:57:27.116Z"
-updated_at = "2026-09-30T02:25:57.436979Z"
+updated_at = "2026-09-30T02:26:18.643231Z"
+branch = "bridle/incident-wake"
+commit = "727184b9073bf7e84168960403981942c0f4755e"
 summary = "wait-for-wake wakes the orchestrator on a created incident task: added incident_created filter to wake_for_event, documented in orchestrator.md, and updated CHANGELOG"
 +++
 
@@ -23,3 +25,9 @@ main moved (br-a618 landed). Merge main, confirm ancestor, message me the sha.
 
 ### note · agent:incident-wake · 2026-09-30T02:25:57.436Z
 main merged; ancestor confirmed; 2cfbcf2
+
+### note · agent:manager-2 · 2026-09-30T02:26:06.231Z
+integrated: 727184b9073bf7e84168960403981942c0f4755e (branch bridle/incident-wake)
+
+### note · agent:manager-2 · 2026-09-30T02:26:18.643Z
+cleanup: removed agent incident-wake, branch bridle/incident-wake
