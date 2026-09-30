@@ -85,7 +85,8 @@ manager (systemd, launchd).
 A project has one serving machine ([[docs/design/storage#The state branch|storage]], "Ownership"):
 `serve` fetches `origin/bridle/state` first and refuses to start when its `owner.toml` names
 another host. `bridle serve --take-over` claims the project (after the old daemon stopped and
-pushed).
+pushed). It also refuses unless origin was reached and `bridle/state` and the integration
+branch fast-forward cleanly to it (errors name both SHAs; no override).
 
 On Ctrl-C, SIGTERM or `POST /v1/shutdown`, stopping every running agent
 ([[docs/design/agent-host/agents#Stopping|agents, stopping]]) can take up to

@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `bridle serve --take-over` refuses, naming both SHAs, unless origin was reached and `bridle/state` is created, fast-forwarded or level; it also fast-forwards the integration branch (clean checkout only) and refuses if the local one isn't an ancestor of origin's. No override, no rebase, no force (br-33b3, 24mj part 1).
+
 - `bridle advisor start <name> [--brief text|@file]` sends the brief to `external:advisor` as "For advisor <name>: ...", then starts `bridle session advisor <name>` in a tmux pane (a split of the orchestrator's pane, or a new window; `[tmux] advisor_pane`); outside tmux it prints the command. The orchestrator role uses it (br-284f, ervd).
 - `bridle session orchestrator|advisor [name]` starts the role's Claude session from any directory (same names, pane tag, pid/exit files, refusals as the scripts; the advisor's opening prompt now comes from the new `bridle prime advisor`). `scripts/claude-orchestrator` and `scripts/claude-advisor` are thin wrappers around it (br-85bc, mrhe).
 - `bridle init` vendors the base workflow into `.bridle/workflow/` for a project with no `workflow` path (from the local clone, else the GitHub tag matching the binary's version), that copy is used when `workflow` is unset, and `bridle workflow update [--to TAG]` refreshes it and prints what changed (br-8411, mrhe).

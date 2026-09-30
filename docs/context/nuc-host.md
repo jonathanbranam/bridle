@@ -90,7 +90,10 @@ To move one (old machine to new):
    origin; no manual `git fetch origin bridle/state:bridle/state`.
 4. **New machine, `bridle serve --take-over`** in the clone (add `--detach` to background it).
    Without `--take-over` it refuses, naming the old host, because `owner.toml` on `bridle/state`
-   still names it. The claim is pushed as a normal state flush.
+   still names it. It also refuses, naming both SHAs, if origin is unreachable, lacks
+   `bridle/state`, or `bridle/state` or the integration branch has diverged from origin's, or if
+   the integration branch needs a fast-forward and its checkout is dirty; fix that by hand
+   (nothing is rebased or forced), then rerun. The claim is pushed as a normal state flush.
 5. **Create tokens**: `bridle token create <name>` for each principal (e.g. `orchestrator`,
    `advisor`, `human`); with the project known they're saved in `~/.bridle/credentials.toml`
    rather than printed. Tokens don't move with the project.

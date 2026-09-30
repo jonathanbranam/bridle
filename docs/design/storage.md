@@ -365,9 +365,14 @@ opening the branch, on every start and not only the first: a fresh clone (a miss
 local branch) adopts origin's state, so no manual `git fetch origin bridle/state:bridle/state`
 is needed. If origin's `owner.toml` names another host the daemon refuses to start, saying which
 host and since when. `bridle serve --take-over` claims the project instead: run it on the new
-machine after the old daemon stopped and pushed. The claim is a normal flush and we2r push.
+machine after the old daemon stopped and pushed. `--take-over` is strict (24mj): it refuses,
+naming the local and origin SHAs, unless origin was reached and the local `bridle/state` was
+created, fast-forwarded or already level with it (diverged, unreachable, no remote branch and no
+`origin` remote are all errors), and it fetches the integration branch too, refusing unless the
+local one is an ancestor of origin's and fast-forwarding it only from a clean checkout. No flag
+overrides this; nothing is rebased, reset or forced. The claim is a normal flush and we2r push.
 `since` is when the host took the project over; a restart on the same host makes no commit. No
-origin, no `bridle/state` on it, an unreachable origin, no `owner.toml` (first serve, or a branch
+origin, no `bridle/state` on it, an unreachable origin (all without `--take-over`), no `owner.toml` (first serve, or a branch
 from before this) and the same host all start as before.
 
 ## The daemon registry

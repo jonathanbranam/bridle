@@ -250,7 +250,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         Some(h) => h.clone(),
         None => machine_host().await,
     };
-    if config.state_push {
+    if config.state_push || overrides.take_over {
         let outcome = state_branch::StateBranch::fetch_and_check_owner(
             &ws.repo,
             &ws.state_branch_dir(),
@@ -260,6 +260,19 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         )
         .await?;
         tracing::info!("state branch at start: {}", outcome.describe());
+        if overrides.take_over {
+            // Origin must have been reached and the state branch level with it before this
+            // host claims ownership, and the integration branch likewise (24mj).
+            let ws_state = ws.state_branch_dir();
+            let dir = if ws_state.join(".git").exists() {
+                ws_state
+            } else {
+                ws.repo.clone()
+            };
+            state_branch::require_state_synced(&dir, &outcome).await?;
+            state_branch::sync_integration_for_take_over(&ws.repo, &config.branches.integration)
+                .await?;
+        }
     }
     let state_branch = state_branch::StateBranch::open(&ws.repo, &ws.state_branch_dir())
         .await

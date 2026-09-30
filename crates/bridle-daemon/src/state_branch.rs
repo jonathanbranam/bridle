@@ -784,6 +784,168 @@ pub struct OwnerConflict {
     pub since: String,
 }
 
+/// `--take-over` refuses to start rather than run on a history it hasn't seen or has forked
+/// from. The message names both SHAs; there is no override, the human sorts it out by hand.
+#[derive(Debug, thiserror::Error)]
+pub enum TakeOverError {
+    #[error(
+        "--take-over refused: `{branch}` has diverged from origin (local {local}, origin \
+         {origin}); sort it out by hand, bridle never rebases or forces"
+    )]
+    Diverged {
+        branch: String,
+        local: String,
+        origin: String,
+    },
+    #[error(
+        "--take-over refused: `{branch}` not fetched from origin (local {local}, origin \
+         unknown): {reason}"
+    )]
+    NotFetched {
+        branch: String,
+        local: String,
+        reason: String,
+    },
+    #[error(
+        "--take-over refused: local `{branch}` ({local}) is not an ancestor of origin's \
+         ({origin}); sort it out by hand, bridle never rebases or forces"
+    )]
+    NotAncestor {
+        branch: String,
+        local: String,
+        origin: String,
+    },
+    #[error(
+        "--take-over refused: the checkout of `{branch}` at {dir} has uncommitted changes, so \
+         it can't be fast-forwarded to origin ({origin}); commit or discard them first"
+    )]
+    Dirty {
+        branch: String,
+        dir: String,
+        origin: String,
+    },
+    #[error("--take-over refused: {0}")]
+    Git(#[from] WorktreeError),
+}
+
+async fn local_sha(dir: &Path, branch: &str) -> String {
+    worktree::run_git(
+        dir,
+        &[
+            "rev-parse",
+            "--verify",
+            "-q",
+            &format!("refs/heads/{branch}"),
+        ],
+    )
+    .await
+    .map(|s| s.trim().to_string())
+    .unwrap_or_else(|_| "none".into())
+}
+
+/// Turns the start-up fetch's outcome into a take-over verdict: only a state branch that was
+/// created, fast-forwarded or already level with a reached origin may proceed. `dir` is where
+/// the fetch ran (its FETCH_HEAD holds origin's tip).
+pub async fn require_state_synced(dir: &Path, outcome: &FetchOutcome) -> Result<(), TakeOverError> {
+    let branch = BRANCH.to_string();
+    match outcome {
+        FetchOutcome::Created | FetchOutcome::FastForwarded | FetchOutcome::UpToDate => Ok(()),
+        FetchOutcome::Diverged => Err(TakeOverError::Diverged {
+            origin: worktree::run_git(dir, &["rev-parse", "FETCH_HEAD"])
+                .await?
+                .trim()
+                .to_string(),
+            local: local_sha(dir, BRANCH).await,
+            branch,
+        }),
+        FetchOutcome::NoRemoteBranch | FetchOutcome::Failed(_) => {
+            let has_origin = worktree::run_git(dir, &["remote", "get-url", REMOTE])
+                .await
+                .is_ok();
+            let reason = match outcome {
+                _ if !has_origin => {
+                    "no `origin` remote is configured; a take-over needs one".into()
+                }
+                FetchOutcome::Failed(e) => format!("origin unreachable: {e}"),
+                _ => "origin is unreachable or has no bridle/state branch".into(),
+            };
+            Err(TakeOverError::NotFetched {
+                local: local_sha(dir, BRANCH).await,
+                branch,
+                reason,
+            })
+        }
+    }
+}
+
+/// Fetches `origin`'s integration branch for `--take-over` and fast-forwards the local one to
+/// it. Refuses unless origin is reached and the local branch is an ancestor of (or equal to)
+/// origin's; moving a branch that is checked out in `repo` also needs a clean checkout, never
+/// a stash. Fast-forward only: no rebase, no reset, no force.
+pub async fn sync_integration_for_take_over(
+    repo: &Path,
+    branch: &str,
+) -> Result<(), TakeOverError> {
+    let local = local_sha(repo, branch).await;
+    let fetched = tokio::time::timeout(
+        PUSH_TIMEOUT,
+        worktree::run_git(
+            repo,
+            &["fetch", "--quiet", REMOTE, &format!("refs/heads/{branch}")],
+        ),
+    )
+    .await;
+    let failure = match fetched {
+        Ok(Ok(_)) => None,
+        Ok(Err(e)) => Some(format!("fetch of origin failed: {e}")),
+        Err(_) => Some("fetch timed out".to_string()),
+    };
+    if let Some(reason) = failure {
+        return Err(TakeOverError::NotFetched {
+            branch: branch.to_string(),
+            local,
+            reason,
+        });
+    }
+    let origin = worktree::run_git(repo, &["rev-parse", "FETCH_HEAD"])
+        .await?
+        .trim()
+        .to_string();
+    if local == origin {
+        return Ok(());
+    }
+    let ancestor = local != "none"
+        && worktree::run_git(repo, &["merge-base", "--is-ancestor", &local, &origin])
+            .await
+            .is_ok();
+    if !ancestor && local != "none" {
+        return Err(TakeOverError::NotAncestor {
+            branch: branch.to_string(),
+            local,
+            origin,
+        });
+    }
+    let checked_out = worktree::run_git(repo, &["symbolic-ref", "--short", "-q", "HEAD"])
+        .await
+        .is_ok_and(|b| b.trim() == branch);
+    if checked_out {
+        // Untracked files don't stop a fast-forward; git itself refuses if one would be overwritten.
+        let status =
+            worktree::run_git(repo, &["status", "--porcelain", "--untracked-files=no"]).await?;
+        if !status.trim().is_empty() {
+            return Err(TakeOverError::Dirty {
+                branch: branch.to_string(),
+                dir: repo.display().to_string(),
+                origin,
+            });
+        }
+        worktree::run_git(repo, &["merge", "--ff-only", "--quiet", &origin]).await?;
+    } else {
+        worktree::run_git(repo, &["branch", "-f", branch, &origin]).await?;
+    }
+    Ok(())
+}
+
 /// What [`StateBranch::fetch_from_origin`] did, for `bridle rebuild --from-origin` to say.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FetchOutcome {
@@ -2101,5 +2263,157 @@ mod tests {
             .await
             .expect("open");
         assert!(sb2.read_task("tw-0001").is_some());
+    }
+
+    async fn commit_on(dir: &Path, msg: &str) {
+        git(
+            dir,
+            &[
+                "-c",
+                "user.email=t@e.com",
+                "-c",
+                "user.name=T",
+                "commit",
+                "--allow-empty",
+                "-q",
+                "-m",
+                msg,
+            ],
+        )
+        .await;
+    }
+
+    /// `repo2` cloned-ish from `origin` with `main` pushed there from `repo`.
+    async fn take_over_pair(tmp: &Path) -> (PathBuf, PathBuf, PathBuf) {
+        let origin = origin_owned_by(tmp, "laptop").await;
+        let repo = tmp.join("repo");
+        git(&repo, &["push", "-q", "origin", "main"]).await;
+        let repo2 = tmp.join("repo2");
+        git(
+            tmp,
+            &[
+                "clone",
+                "-q",
+                "-b",
+                "main",
+                origin.to_str().expect("utf8"),
+                "repo2",
+            ],
+        )
+        .await;
+        (origin, repo, repo2)
+    }
+
+    async fn state_verdict(repo: &Path, state: &Path) -> Result<(), TakeOverError> {
+        let out = StateBranch::fetch_and_check_owner(repo, state, "p", "nuc", true)
+            .await
+            .expect("owner");
+        let dir = if state.join(".git").exists() {
+            state
+        } else {
+            repo
+        };
+        require_state_synced(dir, &out).await
+    }
+
+    #[tokio::test]
+    async fn take_over_happy_path_fast_forwards_both_branches() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let (_origin, repo, repo2) = take_over_pair(tmp.path()).await;
+        commit_on(&repo, "more").await;
+        git(&repo, &["push", "-q", "origin", "main"]).await;
+        state_verdict(&repo2, &tmp.path().join("s2"))
+            .await
+            .expect("state");
+        sync_integration_for_take_over(&repo2, "main")
+            .await
+            .expect("main");
+        assert_eq!(
+            git(&repo2, &["rev-parse", "main"]).await,
+            git(&repo, &["rev-parse", "main"]).await
+        );
+        // Level already: still fine.
+        sync_integration_for_take_over(&repo2, "main")
+            .await
+            .expect("level");
+    }
+
+    #[tokio::test]
+    async fn take_over_refuses_a_diverged_state_branch_naming_both_shas() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let (origin, _repo, repo2) = take_over_pair(tmp.path()).await;
+        let s2 = tmp.path().join("s2");
+        let sb = StateBranch::open(&repo2, &s2).await.expect("open");
+        drop(sb);
+        // A local commit on top of what origin has, and another pushed to origin behind it.
+        git(&s2, &["checkout", "-q", "--detach"]).await;
+        commit_on(&s2, "local only").await;
+        let local = git(&s2, &["rev-parse", "HEAD"]).await;
+        git(&s2, &["branch", "-f", "bridle/state", "HEAD"]).await;
+        git(&s2, &["checkout", "-q", "bridle/state"]).await;
+        let other = tmp.path().join("other");
+        git(
+            tmp.path(),
+            &["clone", "-q", origin.to_str().expect("utf8"), "other"],
+        )
+        .await;
+        git(&other, &["checkout", "-q", "bridle/state"]).await;
+        commit_on(&other, "origin only").await;
+        git(&other, &["push", "-q", "origin", "bridle/state"]).await;
+        let theirs = git(&other, &["rev-parse", "HEAD"]).await;
+        let err = state_verdict(&repo2, &s2).await.expect_err("refused");
+        let msg = err.to_string();
+        assert!(matches!(err, TakeOverError::Diverged { .. }), "{msg}");
+        assert!(
+            msg.contains(local.trim()) && msg.contains(theirs.trim()),
+            "{msg}"
+        );
+    }
+
+    #[tokio::test]
+    async fn take_over_refuses_unreachable_missing_and_no_origin() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        // Origin exists but has no bridle/state.
+        let (_sb, repo, origin, dir) = pushing(tmp.path(), None).await;
+        let err = state_verdict(&repo, &dir).await.expect_err("no branch");
+        assert!(matches!(err, TakeOverError::NotFetched { .. }), "{err}");
+        // Unreachable origin.
+        std::fs::remove_dir_all(&origin).expect("rm origin");
+        let err = state_verdict(&repo, &dir).await.expect_err("unreachable");
+        assert!(matches!(err, TakeOverError::NotFetched { .. }), "{err}");
+        assert!(sync_integration_for_take_over(&repo, "main").await.is_err());
+        // No origin configured at all.
+        let lone = tmp.path().join("lone");
+        init_repo(&lone).await;
+        let err = state_verdict(&lone, &tmp.path().join("ls"))
+            .await
+            .expect_err("none");
+        assert!(err.to_string().contains("no `origin` remote"), "{err}");
+    }
+
+    #[tokio::test]
+    async fn take_over_refuses_a_diverged_or_dirty_integration_branch() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let (_origin, repo, repo2) = take_over_pair(tmp.path()).await;
+        // Dirty checkout, origin ahead.
+        commit_on(&repo, "more").await;
+        git(&repo, &["push", "-q", "origin", "main"]).await;
+        std::fs::write(repo2.join("f"), "x").expect("write");
+        git(&repo2, &["add", "f"]).await;
+        let before = git(&repo2, &["rev-parse", "main"]).await;
+        let err = sync_integration_for_take_over(&repo2, "main")
+            .await
+            .expect_err("dirty");
+        assert!(matches!(err, TakeOverError::Dirty { .. }), "{err}");
+        assert_eq!(git(&repo2, &["rev-parse", "main"]).await, before);
+        git(&repo2, &["reset", "-q", "--hard"]).await;
+        // Diverged: a local commit origin doesn't have.
+        commit_on(&repo2, "local").await;
+        let local = git(&repo2, &["rev-parse", "main"]).await;
+        let err = sync_integration_for_take_over(&repo2, "main")
+            .await
+            .expect_err("diverged");
+        assert!(matches!(err, TakeOverError::NotAncestor { .. }), "{err}");
+        assert!(err.to_string().contains(local.trim()));
     }
 }
