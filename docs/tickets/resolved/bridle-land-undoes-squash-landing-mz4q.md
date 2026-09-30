@@ -25,3 +25,7 @@ br-f671) are plain merge commits.
 manager role and skill agree. `is_merged`'s `Branch:` trailer check (sq4m) keeps
 `task done --branch` and `rm --delete-branch` working. Don't rewrite the two merges
 already on `main`.
+
+## Resolution
+
+Already fixed by br-1d3d (8d078f4): `bridle land` squashes to one commit (subject `<id>: <title>`, summary body, `Task:`/`Branch:` trailers, single parent); `land_test` asserts the shape and `is_merged` via the trailer; `manager.md`, the manager skill, `cli.md` and the CHANGELOG agree. Verified 2026-09-30 by br-739a (dropped, no change needed).
