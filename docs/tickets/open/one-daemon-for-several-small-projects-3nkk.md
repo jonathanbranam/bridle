@@ -79,3 +79,12 @@ workflow layers and tokens are per repo.
 
 Recommendation: keep daemons per project; cut agent turns and processes with 1, 2, then 3. No
 existing ticket covers stopping idle agents or lazy resume.
+
+## The human on the findings (2026-09-30)
+
+> keep this as research results but don't act on it yet.
+
+Options 1 and 3 wait. Option 2 is taken up in
+[[small-projects-start-without-a-manager-w2hj|small projects start without a manager]]; the
+"box manager" idea is filed as research in
+[[a-box-manager-for-many-projects-m6qs|a box manager for many projects]].
