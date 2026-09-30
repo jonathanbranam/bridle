@@ -738,3 +738,4 @@
 {"actor":"agent:pm-1","at":"2026-09-30T03:01:35.569290Z","from":"open","task":"br-f02f","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-09-30T03:01:35.587631Z","from":"open","task":"br-5c3a","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-09-30T03:01:35.604335Z","from":"open","task":"br-9d8d","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-09-30T03:01:39.268115Z","queue":"reprioritized"}
