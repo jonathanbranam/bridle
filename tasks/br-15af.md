@@ -2,9 +2,9 @@
 id = "br-15af"
 title = "Before you leave: turn off automatic macOS update installs on the laptop"
 kind = "chore"
-state = "claimed"
+state = "dropped"
 created_at = "2026-09-30T11:24:50.025Z"
-updated_at = "2026-09-30T11:24:50.051590Z"
+updated_at = "2026-09-30T11:56:58.262404Z"
 priority = "high"
 +++
 
@@ -19,3 +19,6 @@ created for the human, priority high
 
 ### note · external:advisor · 2026-09-30T11:24:50.051Z
 To-do for you (high priority): Before you leave: turn off automatic macOS update installs on the laptop. Finish it with `bridle task done br-15af`.
+
+### note · external:orchestrator · 2026-09-30T11:56:58.262Z
+dropped: The human, 2026-09-30: automatic macOS installs are already off on the laptop. Nothing to do.
