@@ -4,8 +4,9 @@ title = "Calmer orchestrator wake loop: restart first, 25m poll, 15m alert, last
 kind = "chore"
 state = "planned"
 created_at = "2026-09-30T02:52:58.072Z"
-updated_at = "2026-09-30T02:53:32.459074Z"
+updated_at = "2026-09-30T03:22:11.773592Z"
 size = "S"
+summary = """wait-for-wake poll is 25m (wake.rs POLL_TIMEOUT); waiter_grace code default is now 15m (main's 11ea64c only changed .bridle/config.toml; the orchestrator incident test's ticks moved to match). Role file: restart the waiter first on every wake; heartbeat lines dropped from the handover steps and ORCHESTRATOR_STARTUP_STEPS. Status gains waiter_open and last_wake_at (in memory in Waiters, set when a poll answers with wakes; a daemon restart clears it), shown by `bridle status` as a "wake" line. Docs and CHANGELOG updated. just check passes (788 tests)."""
 +++
 
 original id: v9t9
