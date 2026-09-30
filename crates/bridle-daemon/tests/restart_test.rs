@@ -88,6 +88,7 @@ async fn restart_marks_a_stale_running_agent_lost_and_kills_its_process() {
         port_check_interval: std::time::Duration::from_secs(3600),
         upgrade: Default::default(),
         ci_tick_interval: std::time::Duration::from_secs(3600),
+        queue_nudge_debounce: std::time::Duration::from_secs(3600),
         take_over: false,
         host: None,
     };
@@ -176,6 +177,7 @@ async fn resume_on_restart_role_comes_back_after_a_clean_shutdown_then_restart()
         port_check_interval: std::time::Duration::from_secs(3600),
         upgrade: Default::default(),
         ci_tick_interval: std::time::Duration::from_secs(3600),
+        queue_nudge_debounce: std::time::Duration::from_secs(3600),
         take_over: false,
         host: None,
     };

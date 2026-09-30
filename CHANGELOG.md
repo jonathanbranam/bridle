@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The daemon tells the running manager (else the orchestrator) "queue updated: re-read `bridle queue` before you next start something" after the queue settles (30 s trailing-edge debounce); the product manager no longer nudges by hand (f5ww).
 - `bridle machine tools-only-install` moves an existing non-bridle `pre-commit`/`pre-push` hook to `<hook>.pre-bridle` instead of refusing, and re-running it once the clone is no longer listed removes bridle's hooks and restores those (ged2).
 - The orchestrator (exactly `external:orchestrator`, not a visitor) may edit the queue (`queue set`/`add-tier`) as acting PM on a small project; the PM's planning guidance is now the shared rule `planning-the-queue`.
 - Bridle's own tickets now pass `bridle ticket check`: `closed` backfilled on resolved tickets, three invalid ids reminted, dangling `needs`/`see` fixed; the check ignores `[[...]]` inside inline code.

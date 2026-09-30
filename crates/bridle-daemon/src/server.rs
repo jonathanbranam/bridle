@@ -70,6 +70,7 @@ pub struct AppState {
     pub integration_check: Option<String>,
     /// Held for the length of a landing: one at a time.
     pub landing: std::sync::Arc<tokio::sync::Mutex<()>>,
+    pub queue_nudge: crate::queue_nudge::QueueNudge,
 }
 
 pub fn router(state: AppState) -> Router {
@@ -2428,16 +2429,18 @@ async fn set_queue(
     Json(req): Json<SetQueueRequest>,
 ) -> Result<Json<Queue>, ApiError> {
     require_pm_or_human(&state, &principal).await?;
-    let tiers = state.tasks.set_queue(req.tiers, &principal.id).await?;
+    let actor = principal.id.clone();
+    let tiers = state.tasks.set_queue(req.tiers, &actor).await?;
     let _ = state
         .emitter
         .emit(
             event_kind::QUEUE_CHANGED,
-            principal.id,
+            actor.clone(),
             None,
             serde_json::json!({"tiers": tiers.len()}),
         )
         .await;
+    state.queue_nudge.changed(&actor).await;
     Ok(Json(Queue { tiers }))
 }
 
@@ -2447,16 +2450,18 @@ async fn add_queue_tier(
     Json(req): Json<AddQueueTierRequest>,
 ) -> Result<Json<Queue>, ApiError> {
     require_pm_or_human(&state, &principal).await?;
-    let tiers = state.tasks.add_queue_tier(req.tasks, &principal.id).await?;
+    let actor = principal.id.clone();
+    let tiers = state.tasks.add_queue_tier(req.tasks, &actor).await?;
     let _ = state
         .emitter
         .emit(
             event_kind::QUEUE_CHANGED,
-            principal.id,
+            actor.clone(),
             None,
             serde_json::json!({"tiers": tiers.len()}),
         )
         .await;
+    state.queue_nudge.changed(&actor).await;
     Ok(Json(Queue { tiers }))
 }
 

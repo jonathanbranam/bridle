@@ -25,5 +25,5 @@ as PM on a small project with none) plans like this:
   whole queue to reorder. `bridle queue` shows claimed tasks, then the tiers, each task marked
   startable or blocked. Keep it two or three tiers ahead of what's claimed. The manager claims
   from the highest startable tier.
-- **Nudge the manager only when the queue changes**: `bridle send <manager> "queue updated"`;
-  a change to one brief goes on that task (`--task <id>`).
+- **The daemon nudges the manager** when the queue changes; don't send "queue updated" by hand.
+  A change to one brief goes on that task (`bridle send <manager> --task <id> ...`).

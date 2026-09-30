@@ -30,6 +30,7 @@ mod integrator;
 mod orchestrator;
 pub mod paths;
 pub mod ports;
+mod queue_nudge;
 pub mod reevaluate;
 mod restart;
 pub mod rollback;
@@ -111,6 +112,8 @@ pub struct Overrides {
     pub upgrade: UpgradeHooks,
     /// The CI watcher's tick, which also carries the self-upgrade check.
     pub ci_tick_interval: Duration,
+    /// How long the queue stays unchanged before the manager is nudged.
+    pub queue_nudge_debounce: Duration,
     /// `bridle serve --take-over`: claim a project another host owns (hw6c).
     pub take_over: bool,
     /// This machine's name for `owner.toml`. `None` asks `hostname`.
@@ -134,6 +137,7 @@ impl Default for Overrides {
             port_check_interval: Duration::from_secs(30),
             upgrade: UpgradeHooks::default(),
             ci_tick_interval: ci::TICK_INTERVAL,
+            queue_nudge_debounce: queue_nudge::DEBOUNCE,
             take_over: false,
             host: None,
         }
@@ -570,6 +574,11 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         stop_grace: config.stop_grace,
         integration_check: config.integration.check.clone(),
         landing: Default::default(),
+        queue_nudge: queue_nudge::QueueNudge::new(
+            store.clone(),
+            manager.clone(),
+            overrides.queue_nudge_debounce,
+        ),
         self_upgrade: config.self_upgrade,
     };
     let tick_state = state.clone();
