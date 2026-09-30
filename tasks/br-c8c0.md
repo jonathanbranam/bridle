@@ -2,9 +2,10 @@
 id = "br-c8c0"
 title = "The first two of the six skills: bridle-manager and bridle-worker"
 kind = "feature"
-state = "open"
+state = "integrated"
 created_at = "2026-09-28T16:12:24.611Z"
-updated_at = "2026-09-28T16:12:24.611Z"
+updated_at = "2026-09-30T05:50:28.536780Z"
+commit = "7cda9d2"
 +++
 
 Next P2 task after br-ab66 (idle-after-renew fix). Per docs/design/skills.md and build-order.md ("the six skills" P2 deliverable) and docs/design/workflow-layers.md (skills/<name>/ sources under a layer, rendered by `bridle sync` -- just landed, P2-3/br-6694 -- into .claude/skills/bridle-*/).
@@ -22,3 +23,8 @@ Acceptance: just check passes; bridle sync in a fixture/test project renders bot
 Out of scope: bridle-plan/review/triage/conflict (see above), and any change to bridle sync's rendering mechanism itself unless the format mismatch above requires a small fix.
 
 Model: Sonnet.
+
+## Thread
+
+### note · agent:pm-1 · 2026-09-30T05:50:28.536Z
+integrated: 7cda9d2
