@@ -210,6 +210,10 @@ impl Wakes {
                     d["to"].as_str().unwrap_or("?")
                 ),
             ),
+            event_kind::TASK_CREATED if d["kind"] == "incident" => {
+                let task_id = d["task"].as_str().unwrap_or("?");
+                ("incident_created", format!("incident {task_id} created"))
+            }
             event_kind::MESSAGE_SENT => return self.wake_for_message(ev).await,
             _ => return None,
         };
@@ -598,6 +602,28 @@ mod tests {
             &["commit", "-q", "--allow-empty", "-m", "two"],
         );
         assert!(r.reasons(Utc::now()).await.is_empty());
+    }
+
+    #[tokio::test]
+    async fn incident_created_wakes_but_feature_task_does_not() {
+        let r = rig().await;
+        // Feature task creation should not wake
+        r.event(
+            event_kind::TASK_CREATED,
+            None,
+            json!({"task": "br-1234", "kind": "feature", "state": "open"}),
+        )
+        .await;
+        assert!(r.reasons(Utc::now()).await.is_empty());
+
+        // Incident task creation should wake
+        r.event(
+            event_kind::TASK_CREATED,
+            None,
+            json!({"task": "br-5678", "kind": "incident", "state": "open"}),
+        )
+        .await;
+        assert_eq!(r.reasons(Utc::now()).await, ["incident_created"]);
     }
 
     #[test]

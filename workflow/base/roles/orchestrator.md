@@ -57,6 +57,7 @@ runs `bridle task done <id>`).
   - a `question` to the human, or a message to you;
   - `main` moving;
   - an unexpected exit, crash or stall;
+  - a created incident task;
   - all agents idle for 15 minutes;
   - five_hour ≥ 93% or seven_day ≥ 85%;
   - a budget hold starting (the governor leaving `normal`);
