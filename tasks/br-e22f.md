@@ -4,8 +4,9 @@ title = "xe5c: rename docs/questions to docs/tickets (bridle; meta-notes uses ti
 kind = "chore"
 state = "planned"
 created_at = "2026-09-30T03:20:35.033Z"
-updated_at = "2026-09-30T03:21:11.978090Z"
+updated_at = "2026-09-30T05:09:05.789618Z"
 size = "S"
+summary = "Renamed docs/questions/ to docs/tickets/ with git mv (history preserved). Updated 37 references across CLAUDE.md, docs/, workflow/base/roles, and crates/ (code and tests). Left 11 historical references in old task bodies unchanged. Added CHANGELOG entry. All checks passing."
 +++
 
 See docs/questions/open/questions-become-tickets-and-a-docs-folder-plan-xe5c.md. The name is the human's decision; the wider docs-folder layout waits for a planning session with the human.
