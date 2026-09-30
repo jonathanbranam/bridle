@@ -414,7 +414,11 @@ fn fixture_with_examples_outline() {
 }
 
 #[test]
+#[ignore = "wall-clock benchmark; run with --ignored"]
 fn parses_fast() {
+    // Pathological-slowdown guard: verifies that parsing every fixture 20 times
+    // doesn't degrade to quadratic or worse behavior. Wall-clock bounds are too
+    // load-sensitive for just check; run with `cargo nextest run -p bridle-spec --run-ignored only parses_fast`.
     let start = Instant::now();
     for _ in 0..20 {
         for p in fixtures() {
