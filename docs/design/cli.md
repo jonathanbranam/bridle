@@ -24,7 +24,7 @@ bridle rebuild [--from-origin]              first fetches origin/bridle/state (f
                                               (claims.toml) from the state branch alone; the migration path for a fresh
                                               clone with no bridle.db yet; also restores the handover notes (handovers/<id>.md)
 bridle daemons                              # every running project daemon on this machine, with agent counts
-bridle status                               # daemon, agents, active incidents, Claude Code version, last CI result (sha, conclusion, age, url) when [ci] github is on; state branch push (age, or the failure) when [state] push is on
+bridle status                               # daemon, agents, active incidents, Claude Code version, the last wake delivered and whether a waiter is open, last CI result (sha, conclusion, age, url) when [ci] github is on; state branch push (age, or the failure) when [state] push is on
 bridle spawn   <role> [--name N] [--prompt TEXT | --prompt-file FILE]
                [--worktree [--base REF] | --in-repo | --cwd PATH] [--model M]
                [--allow-tool TOOL ...] [--env KEY=VALUE ...] [--ignore-budget]
@@ -71,7 +71,7 @@ bridle orchestrator note-session            the orchestrator launcher's SessionS
 bridle handover done                       the orchestrator's state is written: the daemon stops and relaunches its session (marker only); human and external:orchestrator only
 bridle handover write --file <path>|-      record the orchestrator's handover note (human and external:orchestrator only); prints its id
 bridle handover list | show <id>           the notes, newest first · one note
-bridle wait-for-wake                        the orchestrator's background watcher: waits for a wake condition, prints it and exits 0 (`nothing` after 5 min); external:orchestrator only
+bridle wait-for-wake                        the orchestrator's background watcher: waits for a wake condition, prints it and exits 0 (`nothing` after 25 min); external:orchestrator only
 bridle arch-guard                          Claude Code PreToolUse hook: blocks design/architecture/ edits outside an arch-revision task
 bridle stop-check                           Claude Code Stop hook for the worker role; refuses to stop
                                              with an unreleased claim and no thread entry since claiming
@@ -503,7 +503,7 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
 - **`wait-for-wake`** is `GET /v1/orchestrator/wake` ([[orchestrator-supervision]] section 5),
   replacing `scripts/orchestrator-watch.sh`. It prints each wake as `<reason>: <text>` and its
   detail as JSON (`--json`: the list of wakes), exits 0, and prints `nothing` when the daemon's
-  5 minutes pass quietly. The orchestrator runs it in the background and starts it again on
+  25 minutes pass quietly. The orchestrator runs it in the background and starts it again on
   every exit. Any other principal gets a 403.
 - **`events --kind orchestrator.context`** queries the orchestrator's context tracking (ct8m
   step 6, br-1fdb): emitted on the first reading of a session's tokens, on a lower reading
@@ -568,7 +568,7 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   go (docs/questions/open/one-command-orchestrator-handover-d4mz.md, step 2): the role
   prompt (`workflow/base/roles/orchestrator.md`), the newest handover
   note with its age (or, with none, `docs/context/orchestrator-state.md`), then the startup steps (check in with
-  `status`/`agents`/messages, start the watcher and a heartbeat, keep both managers'
+  `status`/`agents`/messages, start the watcher, keep both managers'
   work moving, verify merges, watch context). The note is fetched from the daemon
   best-effort (no daemon or no note: the state file); the files are read from the current directory, so run it from the repo root, as
   `scripts/claude-orchestrator` does when it uses this as `claude`'s opening prompt.

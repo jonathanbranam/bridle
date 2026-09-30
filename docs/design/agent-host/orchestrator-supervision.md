@@ -66,7 +66,7 @@ handover_deadline  = "30m"     # after the "now" (or uptime) message; then the s
 max_uptime         = "12h"     # a plan-a-handover at this age; the deadline follows
 relaunch_backoff   = ["30s", "2m", "10m"]   # wait before relaunch 1, 2, 3; then give up
 stable_after       = "10m"     # a session that lasts this long resets the relaunch count
-waiter_grace       = "2m"      # no wait-for-wake connected for this long (session up) = incident
+waiter_grace       = "15m"     # no wait-for-wake connected for this long (session up) = incident
 ```
 
 The pid and session files live under `$BRIDLE_HOME` (default `~/.bridle`), the place the context
@@ -150,8 +150,8 @@ event stream, `api.md`) that the daemon holds until a wake is pending, then answ
 reasons and their details as JSON, marks them delivered and closes. The command prints them and
 exits 0; the orchestrator's Claude Code background task exits, the harness reports the exit to
 the model, the model acts and starts the command again, exactly as the script does today. If
-nothing is pending the poll is answered empty after 5 min and the command exits 0 with
-`nothing` (so a hung TCP connection can't linger); the model restarts it. Auth: the
+nothing is pending the poll is answered empty after 25 min and the command exits 0 with
+`nothing` (so a hung TCP connection can't linger); the model restarts it (first thing on any wake, so the gap is seconds). Auth: the
 `external:orchestrator` token, as for the other CLI calls; other principals get 403.
 
 **"Nobody is waiting" = an incident.** The daemon counts a waiter as present while a
@@ -168,7 +168,8 @@ the `meta` table (`orchestrator_wake_cursor`, no schema change) and moves only w
 delivered, so a daemon restart re-derives what was queued. Idle and usage are states
 kept in memory (a restart resets their baselines). The wake loop runs whether or not `[orchestrator]`
 is enabled. The waiter incident is measured from the later of the last request's close and the
-session's launch. `scripts/orchestrator-watch.sh` is deleted; `scripts/context-check.sh` was
+session's launch. `bridle status` shows `waiter_open` and `last_wake_at` (when a poll last
+answered with wakes; in memory, so a daemon restart clears it). `scripts/orchestrator-watch.sh` is deleted; `scripts/context-check.sh` was
 deleted in slice 2 (with `~/.bridle-orchestrator-{ctx-level,session}`).
 
 `scripts/orchestrator-watch.sh` and `scripts/context-check.sh` are deleted, and with them the

@@ -26,7 +26,7 @@ const ALL_IDLE_AFTER: i64 = 15 * 60;
 const FIVE_HOUR_WAKE: f64 = 0.93;
 const SEVEN_DAY_WAKE: f64 = 0.85;
 /// A poll nothing wakes is answered empty after this long.
-pub const POLL_TIMEOUT: Duration = Duration::from_secs(5 * 60);
+pub const POLL_TIMEOUT: Duration = Duration::from_secs(25 * 60);
 
 /// Who is waiting: a `wait-for-wake` request open now, or one that closed within the grace.
 pub struct Waiters {
@@ -38,6 +38,8 @@ pub struct Waiters {
 struct WaiterState {
     open: u32,
     last_closed: Option<DateTime<Utc>>,
+    /// When a poll last answered with wakes (not an empty timeout); in memory only.
+    last_delivered: Option<DateTime<Utc>>,
 }
 
 /// Held for as long as a wake request is open; dropping it (also when the client hangs up)
@@ -63,6 +65,17 @@ impl Waiters {
     pub fn opened(self: &Arc<Self>) -> WaiterGuard {
         self.state.lock().expect("waiters lock").open += 1;
         WaiterGuard(self.clone())
+    }
+
+    /// A poll answered with wakes just now.
+    pub fn delivered(&self, at: DateTime<Utc>) {
+        self.state.lock().expect("waiters lock").last_delivered = Some(at);
+    }
+
+    /// Whether a request is open now, and when wakes were last delivered.
+    pub fn snapshot(&self) -> (bool, Option<DateTime<Utc>>) {
+        let st = self.state.lock().expect("waiters lock");
+        (st.open > 0, st.last_delivered)
     }
 
     /// Since when nobody has been waiting, if that is longer than `grace`. `floor` is when

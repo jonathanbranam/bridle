@@ -1043,8 +1043,8 @@ mod tests {
         // Within the grace of the launch: nothing yet.
         r.tick(60).await;
         assert!(r.incidents().is_empty());
-        r.tick(200).await;
-        r.tick(210).await;
+        r.tick(1000).await;
+        r.tick(1010).await;
         assert_eq!(r.incidents().len(), 1, "reported once");
         assert!(r.incidents()[0].contains("wait-for-wake"));
         // A request arrives: the incident closes, and doesn't repeat while it is open.

@@ -121,6 +121,13 @@ pub struct Status {
     /// Active incidents (tasks of kind `incident`, `planned`).
     #[serde(default)]
     pub incidents: Vec<IncidentSummary>,
+    /// A `wait-for-wake` request is open now (the orchestrator is listening).
+    #[serde(default)]
+    pub waiter_open: bool,
+    /// When the orchestrator's wake poll last answered with wakes; `None` since the daemon
+    /// started if none has.
+    #[serde(default)]
+    pub last_wake_at: Option<DateTime<Utc>>,
 }
 
 /// One active incident, as `bridle status` lists it.

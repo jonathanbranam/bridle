@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Calmer orchestrator wake loop (v9t9): `wait-for-wake` polls 25 minutes (was 5), and the role file says to restart it first on every wake; `[orchestrator] waiter_grace` defaults to 15m (was 2m); the startup and handover steps drop the separate heartbeat; `bridle status` shows when the last wake was delivered and whether a waiter is open (`Status.waiter_open`, `last_wake_at`).
 - Workflow path per machine (br-4fd6): `workflow` expands `~` and `$VAR`, `~/.bridle/config.toml` may override it (machine beats project), and a missing or unreadable workflow directory is an error at `serve`/`sync`/`prime`/`rules` and a failing `bridle doctor` check instead of silently dropping the base rules and skills.
 - Automatic upgrade (q7rx 3, br-38c8): `[daemon] self_upgrade = true` (default off; on in bridle's own config) makes the daemon, on the CI watcher's minute tick and only when no agent is mid-turn, run the `restart --upgrade` path when a newer green commit is on main. A failed commit isn't retried until main moves on.
 - `bridle restart --upgrade` / `upgrade: true` on `POST /v1/restart` (q7rx 2, br-b21b): builds the newest commit on main whose GitHub CI is green (`cargo install --path crates/bridle` in a throwaway worktree, in the background), then restarts in place. Nothing newer than the last upgrade means it says so and does nothing; a failed build leaves the daemon running and wakes the orchestrator and messages the human.

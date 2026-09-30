@@ -63,9 +63,11 @@ runs `bridle task done <id>`).
   - a budget hold starting (the governor leaving `normal`);
   - a failed CI run on `main`.
 
-  Nothing pending for 5 minutes prints `nothing`. On any exit, read what it printed,
-  act, and run it again; wakes that fired while it wasn't running are queued and come
-  back at once. If none is running for more than two minutes the daemon tells the human.
+  Nothing pending for 25 minutes prints `nothing`. On any exit, **start it again
+  first**, then read what it printed and act; wakes that fired while it wasn't running
+  are queued and come back at once, so nothing is lost and the gap is seconds. If none
+  is running for more than 15 minutes the daemon tells the human. `bridle status` shows
+  when the last wake was delivered and whether a waiter is open.
   Your own context and uptime come through it too, as `context` wakes: "context at N"
   needs nothing; "plan a handover" means finish what you're doing and stop starting big
   things; "hand over now" (or the uptime note) means write your handover note now (`bridle handover write`, step 2 of
@@ -176,7 +178,7 @@ The human should only have to agree and run one command (ticket d4mz):
    commit those, plus this session's entries in `docs/context/role-notes.md`.
    When the daemon asked for it (a `context` wake), run `bridle handover done` last and
    stop there: it stops and relaunches this session itself, so skip 3 and 4.
-3. Stop your watcher (`TaskStop`) and heartbeat (`CronDelete`).
+3. Stop your watcher (`TaskStop`).
 4. Tell the human to run `scripts/claude-orchestrator` from the clone. It
    starts `claude` with Remote Control on, opened with `bridle prime orchestrator`
    (this file, the newest handover note, and the startup steps).

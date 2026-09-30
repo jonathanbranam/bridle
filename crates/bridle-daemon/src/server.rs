@@ -417,6 +417,9 @@ async fn orchestrator_wake(
         w = state.wakes.wait(crate::wake::POLL_TIMEOUT) => w,
         _ = shutdown.wait_for(|v| *v) => Vec::new(),
     };
+    if !wakes.is_empty() {
+        state.waiters.delivered(chrono::Utc::now());
+    }
     Ok(Json(WakeResponse { wakes }))
 }
 
@@ -476,6 +479,7 @@ async fn status(
             merged_leftovers.push(agent.name);
         }
     }
+    let (waiter_open, last_wake_at) = state.waiters.snapshot();
     Ok(Json(Status {
         daemon: bridle_api::types::DaemonInfo {
             project: state.project.clone(),
@@ -496,6 +500,8 @@ async fn status(
         merged_leftovers,
         state_push: state.tasks.state_push_status(),
         incidents: state.tasks.active_incidents(),
+        waiter_open,
+        last_wake_at,
     }))
 }
 

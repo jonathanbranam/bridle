@@ -1029,7 +1029,7 @@ impl Default for OrchestratorConfig {
                 Duration::from_secs(10 * 60),
             ],
             stable_after: Duration::from_secs(10 * 60),
-            waiter_grace: Duration::from_secs(2 * 60),
+            waiter_grace: Duration::from_secs(15 * 60),
             note_tokens: 150_000,
             plan_tokens: 180_000,
             handover_tokens: 200_000,
@@ -2862,7 +2862,7 @@ mod tests {
         );
         assert_eq!(o.stable_after, Duration::from_secs(120));
         assert_eq!(o.waiter_grace, Duration::from_secs(30));
-        assert_eq!(d.waiter_grace, Duration::from_secs(120));
+        assert_eq!(d.waiter_grace, Duration::from_secs(900));
         assert!(Config::parse("[orchestrator]\nrelaunch_backoff = []\n").is_err());
         assert!(Config::parse("[orchestrator]\nrelaunch_backoff = [\"5\"]\n").is_err());
         assert!(Config::parse("[orchestrator]\nlauncher = \" \"\n").is_err());

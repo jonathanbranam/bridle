@@ -299,7 +299,7 @@ async fn arch_guard(cli: &Cli) -> Result<(), CliError> {
 const ORCHESTRATOR_STARTUP_STEPS: &str = "\
 Check in: `bridle status`, `bridle agents`, and recent messages to human (from the \
 product manager and the development manager).
-Start the watcher from the latest event seq, plus a 30-minute heartbeat.
+Start the watcher from the latest event seq.
 Keep both managers' work moving, verify every merge by its CI run (not locally), \
 push main after each merge, and bring the human only what needs them.
 Watch your own context: hand over well before 200K.
@@ -686,6 +686,18 @@ async fn status(cli: &Cli) -> Result<(), CliError> {
                 inc.title,
                 (chrono::Utc::now() - inc.since).num_minutes().max(0)
             );
+        }
+        let waiting = if status.waiter_open {
+            "waiting"
+        } else {
+            "no waiter"
+        };
+        match status.last_wake_at {
+            Some(at) => println!(
+                "wake       last delivered {}m ago; {waiting}",
+                (chrono::Utc::now() - at).num_minutes().max(0)
+            ),
+            None => println!("wake       none delivered yet; {waiting}"),
         }
         for (state, count) in &status.agents_by_state {
             println!("  {state:<10} {count}");
@@ -3190,7 +3202,7 @@ mod prime_tests {
         assert!(out.contains("You're my orchestrator for bridle."));
         assert!(out.contains("## Handover, 2026-09-28"));
         assert!(out.contains("bridle status"));
-        assert!(out.contains("30-minute heartbeat"));
+        assert!(out.contains("Start the watcher"));
         // Sections appear in a fixed, readable order.
         let role_pos = out.find("# Role: orchestrator").unwrap();
         let state_pos = out.find("# Current state").unwrap();
