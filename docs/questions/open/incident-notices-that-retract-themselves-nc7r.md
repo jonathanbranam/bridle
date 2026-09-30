@@ -97,3 +97,34 @@ wait-for-wake`) since 01:34:39 UTC." The orchestrator was busy (a burst of advis
 restarted its waiter within minutes; the notice stayed unread in the human's inbox anyway. The
 human asked for the grace to double (2m to 4m, `[orchestrator] waiter_grace`); this ticket's part
 is that a notice whose condition has cleared should withdraw itself.
+
+## Example: the main clone off `main` during a build (2026-09-29)
+
+At 22:57 ET the orchestrator ran, in the foreground in the main clone, `git checkout -q 7d29cfd;
+cargo install --path crates/bridle; git checkout -q main` to install the CI-verified commit
+rather than `main`'s newer tip. For the minutes the build ran under load, two things were wrong
+and nothing said so except one side effect:
+
+- **The clone was detached from `main`.** `bridle land` is safe (with `main` checked out nowhere
+  it moves the ref by `update-ref`, `integrator.rs` `advance`), but a commit made in the clone by
+  the orchestrator or an advisor would have gone on the detached HEAD and been dropped by the
+  checkout back to `main`. Had the session died mid-command (as the orchestrator did at 08:36
+  that day), the clone would have stayed detached with no one told. A self-retracting "clone not
+  on `main`" notice would cover it.
+- **The orchestrator was tied up.** m-2257 to the human at 03:00Z: "The orchestrator has no wake
+  command running (`bridle wait-for-wake`) since 02:58:22 UTC", the moment the build started.
+  That alert was the only visible sign. Both conditions cleared on their own when the build
+  finished, so both notices should have withdrawn themselves.
+
+The human, verbatim:
+
+> that looks like a bad decision; we should not be moving this clone off of main like that, it
+> could be a big problem and who knows how long a build might take under load. it's very
+> possible the manager could merge something
+
+> orch shouldn't be tied up building and if a build is done, doing it on main might be ok, but
+> we've also had a merge happen during a build which broke the build! so, IDK, builds during
+> heavy work time might need to be done on a worktree.
+
+Passed to the orchestrator as a standing rule (m-2258): the main clone stays on `main`; a pinned
+build goes in its own worktree, as `bridle restart --upgrade` does (`upgrade.rs`).
