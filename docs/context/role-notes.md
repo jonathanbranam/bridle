@@ -316,3 +316,22 @@ Newest first. One line per item: what happened, who did it, what it says about r
   asks for one reminder); they noticed. Focus hours, once the human configured them, did it.
 - A manager can't land a branch that has no task (`bridle land` needs one; manual ff is denied),
   so the red-main fix came back to me to merge.
+
+## Eighteenth session (2026-09-30 ~21:30 to ~23:20 UTC)
+
+- Releases need the human's hands: auto mode denies `gh workflow run release.yml` (and would deny
+  pushing a `v*` tag) as "Create Public Surface". chvf wants about daily releases, so either the
+  human adds a permission rule or cutting releases becomes theirs.
+- After that denial, the classifier denied nearly every Bash call for a while, even `bridle
+  status`, reading a watcher's output file and restarting `wait-for-wake`, all citing the same
+  reason. It cleared by itself ~20 minutes later. No wakes were lost (they queue).
+- One `wait-for-wake` ran 30 minutes without printing `nothing` and hit Claude Code's default
+  background limit. Run it with `timeout: 7200000`.
+- I assumed work hours ended at 6 PM from the role doc; the human's `[[focus]]` says 5 PM and
+  they corrected me. The role doc now points at `[[focus]]` (44c8671).
+- "Pause gnar" came after gnar had already landed; reopening the ticket and starting an advisor
+  confused the human. Say plainly what's already merged before acting on a pause.
+- Reading a NUC daemon's `/proc/<pid>/environ` over ssh is denied (it holds secrets); ask the NUC
+  orchestrator to check its own daemon instead.
+- The NUC orchestrator is now a steady source of bridle requests (f5ww, wtyn, chvf, jf9u in one
+  evening). Filing them as tickets and relaying to pm-1 is most of this role's evening work.
