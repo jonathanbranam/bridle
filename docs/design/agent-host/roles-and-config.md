@@ -62,7 +62,7 @@ start_prompt      = "Check your inbox and tell the human you're ready."   # firs
   `<workflow>/base/roles/<role>.md` when the project sets `workflow` and that file exists;
   an explicit `system_prompt` wins, and with no file there is no role prompt. Only the manager has `autostart = true` by default (so a
   project with no role config gets a manager at daemon start); `autostart = false` in
-  `[roles.manager]` turns it off, and any other role can set it on. Autostart skips a role that already has an agent, whatever its name. A role a project always needs (bridle's own `product-manager`) opts in with `autostart = true`; a role that already has an agent is never spawned again, and a budget hold refuses the autostart spawn. Bridle's own `.bridle/` has a working set. A project can
+  `[roles.manager]` turns it off (pair it with `resume_on_restart = false`: otherwise an existing manager still resumes, and takes a costly turn, on every daemon restart), and any other role can set it on. Autostart skips a role that already has an agent, whatever its name. A role a project always needs (bridle's own `product-manager`) opts in with `autostart = true`; a role that already has an agent is never spawned again, and a budget hold refuses the autostart spawn. Bridle's own `.bridle/` has a working set. A project can
   override the built-ins or add roles, which start from the worker's defaults.
 - **`disallowed_tools` defaults deny Claude Code's own built-ins that bypass
   bridle's coordination the same way as a direct `SendMessage` call would**

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- With no manager running (`[roles.manager] autostart = false`), the "task filed" note goes to the orchestrator instead of being dropped; the orchestrator role starts a manager on demand and stops it when the project is idle (w2hj).
+
 ### Fixed
 
 - Self-upgrade reports the commit it built (not the integration head) in its restart messages, and skips the build and restart, recording the commit as built, when nothing under `crates/`, `Cargo.toml`, `Cargo.lock` or `.cargo/` changed (br-ba5c, d3wq).

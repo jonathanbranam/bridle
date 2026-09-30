@@ -202,12 +202,15 @@ async fn self_upgrade_waits_while_an_agent_is_mid_turn() {
         bridle_api::types::AgentState::Working,
     )
     .await;
-    let marker_file = daemon.workspace.join(".bridle/upgrade-target.txt");
-    let before = marker_file.exists();
+    // The build itself may start in the gap between the tick's quiet check and the spawn (the
+    // skip-check's git calls widen it), so only the restart is held to the turn.
+    let before = daemon.running.restart_requested();
     tokio::time::sleep(Duration::from_secs(1)).await;
     if !before {
-        assert!(!marker_file.exists(), "built while a turn was running");
-        assert!(!daemon.running.restart_requested());
+        assert!(
+            !daemon.running.restart_requested(),
+            "restarted while a turn was running"
+        );
     }
     support::wait_for("the restart after the turn", || async {
         daemon.running.restart_requested().then_some(())

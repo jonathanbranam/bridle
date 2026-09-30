@@ -282,8 +282,9 @@ impl AgentManager {
 
     /// A project with no product manager has nobody to triage a new `open`
     /// task, so the running manager is told (at most once a minute, listing
-    /// every task filed since). Does nothing when a PM is running or no
-    /// manager is.
+    /// every task filed since). With no manager running (the `autostart =
+    /// false` mode) the orchestrator is told instead, so the task isn't
+    /// missed and it can start a manager. Does nothing when a PM is running.
     pub async fn note_task_filed(&self, id: &str, title: &str, open_count: usize) {
         let Ok(agents) = self.0.store.list_agents(false).await else {
             return;
@@ -293,7 +294,7 @@ impl AgentManager {
                 .iter()
                 .any(|a| a.role == role && a.state.is_running())
         };
-        if running("product-manager") || !running("manager") {
+        if running("product-manager") {
             return;
         }
         let delay = {
@@ -343,14 +344,19 @@ impl AgentManager {
             "{}; open tasks: {open_count}. Plan it or queue it.",
             filed.join("; ")
         );
-        for m in agents
+        let mut to: Vec<ToTarget> = agents
             .iter()
             .filter(|a| a.role == "manager" && a.state.is_running())
-        {
+            .map(|m| ToTarget::Agent(m.id.clone()))
+            .collect();
+        if to.is_empty() {
+            to.push(ToTarget::External(crate::wake::ORCHESTRATOR.to_string()));
+        }
+        for t in to {
             let _ = self
                 .send(
                     "system".to_string(),
-                    ToTarget::Agent(m.id.clone()),
+                    t,
                     MessageKind::Note,
                     body.clone(),
                     bridle_api::types::When::Idle,

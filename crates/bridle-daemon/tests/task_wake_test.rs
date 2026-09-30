@@ -86,18 +86,11 @@ async fn a_running_pm_means_no_message() {
 }
 
 #[tokio::test]
-async fn no_running_manager_means_no_message() {
+async fn no_running_manager_means_the_message_goes_to_the_orchestrator() {
     let (daemon, _tmp) = start_daemon_with_config(None, Some(CONFIG)).await;
     file(&daemon, "first").await;
-    let all = daemon
-        .client
-        .list_messages(&MessageQuery {
-            to: None,
-            from: Some("system".to_string()),
-            unread: false,
-            limit: None,
-        })
-        .await
-        .expect("messages");
-    assert!(all.is_empty());
+    file(&daemon, "second").await;
+    let bodies = wakes(&daemon, "external:orchestrator").await;
+    assert_eq!(bodies.len(), 1, "got {bodies:?}");
+    assert!(bodies[0].contains("first"), "got {bodies:?}");
 }

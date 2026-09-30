@@ -58,6 +58,14 @@ Events for the live stream. It listens on `127.0.0.1` by default. Listening on
 another interface is one flag, which lets the workforce run remotely while the
 orchestrator and TUI stay on the laptop.
 
+## No-manager mode
+
+A project can run without a standing manager: `[roles.manager]` with `autostart = false` and
+`resume_on_restart = false`. The orchestrator starts one (`bridle spawn manager`) when the
+human asks or there is work, and stops it when nothing is ready or running. Manager-bound notices
+meanwhile: "task filed" goes to the orchestrator; CI failures on `main` go to the human and wake the
+orchestrator; main-moved notes go to workers, not the manager, and `main` moving wakes the orchestrator.
+
 ## Disk monitor
 
 Decision (ticket m3wq): the daemon runs the check, on a timer, not a role polling, because it

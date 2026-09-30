@@ -72,6 +72,10 @@ runs `bridle task done <id>`).
   things; "hand over now" (or the uptime note) means write your handover note now (`bridle handover write`, step 2 of
   "Handing over"; no need to wait for a yes), then run `bridle handover done`. The daemon stops this session at once and relaunches it, so
   run it last. If you don't, the session is stopped at the deadline the wake names.
+- **No manager running?** Some projects set `autostart = false` (no standing manager, to save its
+  idle cost). Start one (`bridle spawn manager`) when the human asks or there is work: a ready
+  task, a message for the manager, a question, a "task filed" note to you. Stop it (`bridle stop`)
+  once the project is idle (nothing ready, nothing running). Roughly right is fine.
 - **The manager sometimes asks in a `note`, not a `question`**, then idles.
   If everything goes idle, read its latest messages and answer.
 - **Idle isn't always idle.** A worker waiting on its own background shell

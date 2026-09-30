@@ -73,7 +73,8 @@ triages it, so the daemon sends the running `manager` agent a `note` from `syste
 <id> filed: <title>; open tasks: N. Plan it or queue it." (`AgentManager::note_task_filed`).
 It is coalesced to at most one message per minute: the first goes out at once, and tasks
 filed inside the window are listed together in one message when it ends. Nothing is sent
-when a PM is running or no manager is.
+when a PM is running. With no manager running (`autostart = false`), the note goes to
+`external:orchestrator` instead, which wakes it to start one.
 
 ### Telling workers main moved
 
