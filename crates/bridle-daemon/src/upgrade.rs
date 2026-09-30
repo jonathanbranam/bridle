@@ -246,6 +246,40 @@ impl Upgrader {
     }
 }
 
+/// Paths the binary is built from. The `include_*!` uses in the crates all sit in tests, so
+/// nothing under `workflow/` or `docs/` reaches the binary; if one is added outside tests, add
+/// its path here.
+fn feeds_binary(path: &str) -> bool {
+    path.starts_with("crates/")
+        || path.starts_with(".cargo/")
+        || matches!(
+            path,
+            "Cargo.toml" | "Cargo.lock" | "rust-toolchain" | "rust-toolchain.toml"
+        )
+}
+
+/// The commit the last upgrade built, if any.
+pub async fn built(store: &Store) -> Option<String> {
+    store
+        .get_meta(BUILT_KEY)
+        .await
+        .ok()
+        .flatten()
+        .filter(|b| !b.is_empty())
+}
+
+/// Whether the diff from the last built commit to `sha` changes anything the binary is built
+/// from. `true` (build) whenever that can't be told: nothing built yet, or git can't diff.
+pub async fn needs_build(store: &Store, repo: &Path, sha: &str) -> bool {
+    let Some(built) = built(store).await else {
+        return true;
+    };
+    match worktree::run_git(repo, &["diff", "--name-only", &format!("{built}..{sha}")]).await {
+        Ok(out) => out.lines().any(feeds_binary),
+        Err(_) => true,
+    }
+}
+
 /// Records the commit the daemon is about to restart into.
 pub async fn record_built(store: &Store, sha: &str) {
     let _ = store.swap_meta(BUILT_KEY, sha).await;
@@ -255,4 +289,62 @@ async fn is_ancestor(repo: &Path, ancestor: &str, of: &str) -> bool {
     worktree::run_git(repo, &["merge-base", "--is-ancestor", ancestor, of])
         .await
         .is_ok()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    async fn git(repo: &Path, args: &[&str]) -> String {
+        let out = tokio::process::Command::new("git")
+            .args(["-c", "user.name=t", "-c", "user.email=t@t"])
+            .args(args)
+            .current_dir(repo)
+            .output()
+            .await
+            .expect("git");
+        assert!(out.status.success(), "git {args:?}");
+        String::from_utf8_lossy(&out.stdout).trim().to_string()
+    }
+
+    async fn commit(repo: &Path, file: &str) -> String {
+        let p = repo.join(file);
+        std::fs::create_dir_all(p.parent().expect("parent")).expect("mkdir");
+        std::fs::write(&p, file).expect("write");
+        git(repo, &["add", "-A"]).await;
+        git(repo, &["commit", "-m", file]).await;
+        git(repo, &["rev-parse", "HEAD"]).await
+    }
+
+    #[tokio::test]
+    async fn only_files_the_binary_is_built_from_need_a_build() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let repo = tmp.path().join("repo");
+        std::fs::create_dir_all(&repo).expect("mkdir");
+        git(&repo, &["init", "-q"]).await;
+        let store = Store::open(tmp.path().join("bridle.db"))
+            .await
+            .expect("store");
+        let base = commit(&repo, "crates/a/src/lib.rs").await;
+        // Nothing built yet: build.
+        assert!(needs_build(&store, &repo, &base).await);
+        record_built(&store, &base).await;
+
+        let docs = commit(&repo, "docs/tickets/open/x.md").await;
+        let flow = commit(&repo, "workflow/base/rules/x.md").await;
+        assert!(!needs_build(&store, &repo, &docs).await);
+        assert!(!needs_build(&store, &repo, &flow).await);
+
+        for (i, file) in ["crates/a/src/main.rs", "Cargo.lock", "Cargo.toml"]
+            .into_iter()
+            .enumerate()
+        {
+            let sha = commit(&repo, file).await;
+            assert!(needs_build(&store, &repo, &sha).await, "{file} (#{i})");
+            // A mixed range still builds: the docs commit before it doesn't hide it.
+            record_built(&store, &docs).await;
+            assert!(needs_build(&store, &repo, &sha).await);
+            record_built(&store, &base).await;
+        }
+    }
 }

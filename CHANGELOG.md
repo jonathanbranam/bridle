@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- Self-upgrade reports the commit it built (not the integration head) in its restart messages, and skips the build and restart, recording the commit as built, when nothing under `crates/`, `Cargo.toml`, `Cargo.lock` or `.cargo/` changed (br-ba5c, d3wq).
+
 ### Security
 
 - A token-less `GET`/`HEAD` is granted `local` only from a loopback peer; from any other address it is a 401. The daemon warns at startup when `listen` isn't loopback (br-d87c, fr6q).

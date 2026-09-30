@@ -26,6 +26,17 @@ pub async fn head(repo: &Path, integration: &str) -> Option<String> {
     .map(|s| s.trim().to_string())
 }
 
+/// The commit the daemon runs, short: the one the last upgrade built, which can trail the
+/// integration head (commits land during a build). Before any upgrade, the head.
+pub async fn running_commit(store: &Store, repo: &Path, integration: &str) -> Option<String> {
+    if let Some(built) = crate::upgrade::built(store).await
+        && let Ok(short) = worktree::run_git(repo, &["rev-parse", "--short", &built]).await
+    {
+        return Some(short.trim().to_string());
+    }
+    head(repo, integration).await
+}
+
 pub async fn record(store: &Store, ids: &[String]) -> Result<(), crate::store::StoreError> {
     store
         .swap_meta(RESUME_KEY, &serde_json::to_string(ids).unwrap_or_default())
@@ -59,7 +70,7 @@ pub async fn resume_all(
         return;
     }
     let system = system_principal();
-    let commit = head(repo, integration).await;
+    let commit = running_commit(store, repo, integration).await;
     let (mut resumed, mut failed) = (Vec::new(), Vec::new());
     for id in &ids {
         let Ok(Some(agent)) = store.get_agent(id).await else {
@@ -123,5 +134,50 @@ pub async fn resume_all(
                 None,
             )
             .await;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn running_commit_is_the_built_one_not_the_head() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let repo = tmp.path();
+        let git = |args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .args(["-c", "user.name=t", "-c", "user.email=t@t"])
+                .args(args)
+                .current_dir(repo)
+                .output()
+                .expect("git");
+            assert!(out.status.success(), "git {args:?}");
+            String::from_utf8_lossy(&out.stdout).trim().to_string()
+        };
+        git(&["init", "-q", "-b", "main"]);
+        git(&["commit", "-q", "--allow-empty", "-m", "built"]);
+        let built = git(&["rev-parse", "HEAD"]);
+        git(&[
+            "commit",
+            "-q",
+            "--allow-empty",
+            "-m",
+            "landed during the build",
+        ]);
+        let head_short = git(&["rev-parse", "--short", "HEAD"]);
+        let store = Store::open(tmp.path().join("bridle.db"))
+            .await
+            .expect("store");
+
+        // No upgrade yet: the head.
+        assert_eq!(
+            running_commit(&store, repo, "main").await.as_deref(),
+            Some(head_short.as_str())
+        );
+        crate::upgrade::record_built(&store, &built).await;
+        let got = running_commit(&store, repo, "main").await.expect("commit");
+        assert!(built.starts_with(&got));
+        assert_ne!(got, head_short);
     }
 }

@@ -2666,6 +2666,19 @@ async fn upgrade_in_background(
     wait: std::time::Duration,
 ) {
     let short: String = sha.chars().take(9).collect();
+    if !crate::upgrade::needs_build(&state.store, &state.workspace.repo, &sha).await {
+        // Nothing the binary is built from changed: count the commit as built, don't restart.
+        crate::upgrade::record_built(&state.store, &sha).await;
+        state.upgrader.release();
+        upgrade_wake(
+            &state,
+            "upgrade",
+            format!("upgrade: skipped {short}: no change to anything the binary is built from"),
+            serde_json::json!({"commit": sha, "stage": "skipped"}),
+        )
+        .await;
+        return;
+    }
     upgrade_wake(
         &state,
         "upgrade",
@@ -2768,7 +2781,9 @@ async fn perform_restart(
         })?;
         crate::upgrade::record_built(&state.store, sha).await;
     }
-    let commit = crate::restart::head(&state.workspace.repo, &state.integration).await;
+    let commit =
+        crate::restart::running_commit(&state.store, &state.workspace.repo, &state.integration)
+            .await;
     let names: Vec<String> = running.into_iter().map(|a| a.name).collect();
     state
         .wakes

@@ -190,6 +190,13 @@ stage `rolled_back`). A failed exec of the new binary rolls back the same way. E
 nothing supervises the new process: a hard crash before serving is only caught by the next start
 (by hand), which then rolls back.
 
+**Docs-only commits skip the build.** Before building, the daemon runs `git diff --name-only
+<built>..<candidate>`. If nothing under `crates/`, `.cargo/`, `Cargo.toml`, `Cargo.lock` or
+`rust-toolchain*` changed (the binary embeds no workflow or docs files outside tests), it records the
+candidate as built, wakes `upgrade` ("skipped") and does not restart. With no built commit yet, or if
+git can't diff, it builds. **The restart's commit** (message to agents, `restart` wakes) is the
+built commit (`upgrade.built`), not the integration head, which can have moved during the build.
+
 **Automatic upgrade.** With `[daemon] self_upgrade = true` (default off; on in bridle's own
 `.bridle/config.toml`) the CI watcher's tick (every minute; no loop of its own) also checks for a
 quiet point: no running agent mid-turn (a budget hold winds workers down to idle or stopped, which
