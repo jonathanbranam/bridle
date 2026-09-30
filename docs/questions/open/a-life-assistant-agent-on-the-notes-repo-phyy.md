@@ -85,3 +85,48 @@ The human, verbatim:
 Still open: Q4 (how due reminders reach the human), Q5 (which machine; the NUC suggested), and
 Q6's branch (straight to `main`, or a `bridle-adopt` trial first per 63rv; the advisor suggests a
 short trial for the setup commit only, then `main`).
+
+## More answers, and recurrence (2026-09-30)
+
+The human, verbatim:
+
+> Also exact time for things. But it could be added easily.
+>
+> The nuc yes
+>
+> I need to recited the design for recurrences. An agent can make a proposal. Or you can
+> research. I use an obsidian plugin that supers this. In like three syntax of it.
+
+(Read as: meta-notes also lacks exact times, easily added; "I need to revisit the design for
+recurrences ... an Obsidian plugin that supports this. I like the syntax of it.")
+
+- **Q5: the NUC.**
+- **Exact times** (a reminder at 3 PM, not just a date) are a second small meta-notes gap.
+- **Recurrence: an agent proposes the design**, modelled on the syntax the human likes.
+
+**What the human uses today (advisor, checked):** the **Obsidian Tasks** plugin
+(`obsidian-tasks-plugin`), in the iCloud vault `Zettel-1`: `Personal/Home Maintenance.md` (about
+130 recurring lines, most completed) and `Areas/Templates/Repeat Monthly.md`. The vault also has
+dataview, templater, calendar and kanban. Real lines:
+
+```
+- [ ] replace whole house water filter 🔁 every 3 months 📅 2026-07-01
+- [ ] Buy 4 bags of salt 🔁 every month when done 📅 2025-07-24
+- [ ] check attic for mice 🔁 every 2 weeks when done 📅 2024-12-09
+```
+
+Rules in use: `🔁 every [N] day|week|month` (3 months, 2 and 4 weeks, month, week), with or
+without `when done`, and a `📅` due date. Completing one stamps `✅ <date>` and writes the next
+occurrence as a new open line: from the due date, or from the completion date with `when done`.
+Only `📅` and `✅` appear; no `⏳` scheduled or `🛫` start. The Tasks plugin has no time of day, so
+exact times are an extension.
+
+**The proposal (for meta-notes):** recurrence in meta-notes' task lines, compatible with that
+syntax (so the human's existing maintenance list could move over as is), plus a time of day,
+e.g. `📅 2026-10-01 15:00` or a separate `⏰ 15:00` (the proposal picks one). It covers: what
+`meta-notes task done` does to a recurring line, which rules to support in v1 (the ones above,
+then `on Monday`, `every weekday`, and so on), and how the life assistant reads what's due.
+Filed as a meta-notes design task in meta-notes' `tickets/`, for the human's review before any
+build.
+
+Still open: Q4 (how due reminders reach the human) and the notes repo's branch.
