@@ -4,7 +4,7 @@ title = "Human to-dos: priority, rescind, full audit trail (ex9q follow-up)"
 kind = "feature"
 state = "integrated"
 created_at = "2026-09-30T03:47:17.742Z"
-updated_at = "2026-09-30T04:03:25.858132Z"
+updated_at = "2026-09-30T04:03:43.534720Z"
 branch = "bridle/todo-priority"
 commit = "1224b2cb2ae52b5a28d2da4514fef608d660dccd"
 summary = "Tasks have a priority (high/normal/low, default normal; TaskPriority in bridle-api types.rs), stored in the task file frontmatter (omitted when normal, so rebuild keeps it and old files load as normal). 'task new --priority' and 'bridle task priority <id> <p>' (POST /v1/tasks/{id}/priority) set it; a change writes a thread note (who/when) and a task.priority event. Human to-dos get a 'created' thread entry. task list/show display it and list sorts high first; the orchestrator startup steps point at 'task list --claimed-by human'. task drop on a human-claimed task sends the human a system inbox note with the reason, unless the human dropped it themself. Done already had thread+event. Priority is not set for agent work. Docs: cli.md, storage.md, coordination.md, api.md, CHANGELOG."
@@ -19,3 +19,6 @@ done: task priority (high/normal/low) with set command, rescind inbox note to th
 
 ### note · agent:manager-2 · 2026-09-30T04:03:25.858Z
 integrated: 1224b2cb2ae52b5a28d2da4514fef608d660dccd (branch bridle/todo-priority)
+
+### note · agent:manager-2 · 2026-09-30T04:03:43.534Z
+cleanup: removed agent todo-priority, branch bridle/todo-priority
