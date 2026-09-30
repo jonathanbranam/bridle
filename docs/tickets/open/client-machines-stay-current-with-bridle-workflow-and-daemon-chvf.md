@@ -42,11 +42,16 @@ command its binary lacks (mrhe's "workflow version matches the binary").
    release, download the binary for this platform, check its SHA256, swap it in, and restart at
    a quiet point with q7rx's machinery (rollback and pre-flight included). No build on the
    client, so seconds instead of ~11 minutes.
-3. **The workflow checkout follows the binary**: when the daemon upgrades to `vX.Y.Z`, it runs
-   `git fetch --tags` and checks out `vX.Y.Z` in the workflow checkout, if it's a clean
-   git clone, and refuses (with a notice) if it has local changes. Project overlays in
-   `.bridle/` are untouched. Bridle's own machine keeps tracking `main` (the local-clone rule in
-   mrhe's settled decision).
+3. **The daemon keeps its own workflow checkout, at the binary's tag.** Today one clone does
+   both jobs on the NUC: the human pulls it to build, and projects' `workflow` paths point into
+   it, so a pull changes every agent's workflow at once, before the new binary exists (the
+   human, 2026-09-30: "we'd need to separate clones of bridle, right?"). Instead, when the daemon
+   upgrades to `vX.Y.Z`, it fetches that tag into `~/.bridle/workflow/vX.Y.Z` (a shallow fetch
+   or a `git worktree` from any clone; read-only by convention) and points the base layer there.
+   Project overlays in `.bridle/` are untouched. With release binaries (step 2) the client
+   doesn't build, so it needs no clone of its own; a clone the human keeps for development is
+   never read by the daemon. Bridle's own machine keeps tracking `main` in its clone (the
+   local-clone rule in mrhe's settled decision).
 
 Until 1-3 land: when a bridle change matters to the NUC, dalek's orchestrator tells the NUC's
 orchestrator to `git pull` its checkout, and to build in the background and ask for a restart
