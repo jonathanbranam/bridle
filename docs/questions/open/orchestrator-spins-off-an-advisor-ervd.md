@@ -48,8 +48,7 @@ brief). It also knows several advisors may be running, each signing its messages
   orchestrator's pane tag (`docs/design/agent-host/orchestrator-supervision.md`: the daemon
   already finds a tagged pane and types into it with `tmux send-keys`), e.g. "split the
   orchestrator's window" or "a new window in its session".
-- The brief goes in a file the advisor's opening prompt points at, not in argv (a long argv is
-  matched by a worker's `pkill -f`, fx7x).
+- The brief is a message, not a file (settled below).
 - Remote: the session shows up in Claude mobile by its Remote Control name like any other; the
   pane still lives in tmux on that machine.
 - The orchestrator can run it itself when the human asks.
@@ -58,3 +57,21 @@ brief). It also knows several advisors may be running, each signing its messages
 
 The human finds `bridle-orch` too long for the orchestrator's session name; a shorter one (e.g.
 `orch`, with the host per sfb3) belongs with sfb3.
+
+## The brief is a message to the advisor by name (the human, 2026-09-29)
+
+> It should be a message addressed to the advisors name. Orch and I would say "spin up advisor
+> Fred and we'll talk about worker pooling" or whatever then the advisor knows he is Fred and the
+> message is probably waiting for him when he starts.
+
+So:
+
+- The orchestrator sends the brief first, addressed to the name:
+  `bridle send external:advisor "For advisor fred: <the topic, what's known, links>"`, then starts
+  (or asks the human to start) `scripts/claude-advisor fred`.
+- The advisor knows its name from the script (e.g. `BRIDLE_ADVISOR_NAME`). Its opening step reads
+  the inbox for messages addressed to its name, and starts on the waiting brief.
+- Advisors share one inbox (sfb3), so a message "For advisor <name>" is for that advisor only; the
+  others leave it alone, and don't mark it read.
+- If shared-inbox addressing gets messy, a later step is a real per-name recipient (e.g.
+  `external:advisor:fred`); not now.
