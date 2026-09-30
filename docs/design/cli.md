@@ -16,7 +16,8 @@ bridle stop-daemon                            prints "requested shutdown", "ackn
                                               and <workspace>/.bridle/daemon.log
 bridle restart [--wait SECS] [--upgrade]                restart the daemon in place once every agent is idle (orchestrator or human); prints the commit and the agents to
                                               resume, then "the daemon is back". A busy daemon (nothing idle within --wait, default 600) errors and stays up. --upgrade first builds the newest green-CI commit on main (background; prints "building <sha>" or "nothing to upgrade" and returns; the daemon restarts itself after the build)
-bridle init    [--repo PATH] [--name N] [--integration BRANCH] [--stack S]  scaffold .bridle/config.toml + .gitignore; never overwrites
+bridle init    [--repo PATH] [--name N] [--integration BRANCH] [--stack S]  scaffold .bridle/config.toml + .gitignore; never overwrites. A project with no `workflow` (and no `workflow/base/` in the repo) also gets the base workflow vendored into `.bridle/workflow/` (uncommitted; you commit it): copied from the clone this binary was built from if it's still there, else `git clone --depth 1 --branch v<version>` of `workflow_url` (machine `~/.bridle/config.toml`; default the bridle GitHub repo). A fetch failure is an error.
+bridle workflow update [--repo PATH] [--to TAG]   re-fetch the vendored `.bridle/workflow/` (from the local clone, or the tag: `--to`, else this binary's) and print added/changed/removed files; the only thing that ever changes it. Errors if the project isn't vendored.
 bridle doctor  [--repo PATH]                 check the project's setup, say what to fix; exit 1 on a failure
 bridle launchd install [--repo PATH] [--workspace DIR] [--force]   macOS: write the LaunchAgent plist, print launchctl commands
 bridle launchd uninstall                    remove the plist, print the bootout command

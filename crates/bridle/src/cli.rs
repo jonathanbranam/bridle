@@ -166,6 +166,9 @@ pub enum Command {
     /// "Rendering into what the agent harness reads"). Local, like `rules
     /// explain`/`diff` — no daemon call.
     Sync,
+    /// Refresh the workflow `bridle init` vendored into `.bridle/workflow/` (never automatic).
+    #[command(subcommand)]
+    Workflow(WorkflowAction),
     /// Validate capability spec files (docs/design/specs.md) and print each
     /// diagnostic as file:line:col: message. Local, like `rules` — no daemon call.
     Spec(SpecArgs),
@@ -495,6 +498,22 @@ pub struct DoctorArgs {
     /// The project's clone. Defaults to the current directory.
     #[arg(long)]
     pub repo: Option<PathBuf>,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum WorkflowAction {
+    /// Re-fetch the vendored workflow and print what changed.
+    Update(WorkflowUpdateArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct WorkflowUpdateArgs {
+    /// The project's clone. Defaults to the current directory.
+    #[arg(long)]
+    pub repo: Option<PathBuf>,
+    /// Fetch this tag of the bridle repo instead of the one matching this binary.
+    #[arg(long)]
+    pub to: Option<String>,
 }
 
 #[derive(Debug, Args)]

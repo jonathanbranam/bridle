@@ -21,6 +21,7 @@ mod statusline;
 mod stop_check;
 mod tools_only;
 mod trace;
+mod vendor;
 
 use std::process::ExitCode;
 

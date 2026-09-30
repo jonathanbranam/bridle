@@ -101,6 +101,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Prime(args) => prime(&cli, args).await,
         Command::Rules(args) => rules(&cli, args).await,
         Command::Sync => sync(&cli).await,
+        Command::Workflow(action) => crate::vendor::run(action),
         Command::Spec(SpecArgs {
             action: SpecAction::Export(args),
         }) => spec_export(&cli, args).await,

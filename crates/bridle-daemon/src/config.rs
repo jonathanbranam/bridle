@@ -61,6 +61,9 @@ pub enum ConfigError {
     WorkflowDirMissing { path: PathBuf, reason: String },
 }
 
+/// Where `bridle init` vendors the base workflow, repo-relative.
+pub const VENDORED_WORKFLOW: &str = ".bridle/workflow";
+
 /// Expands a leading `~` (to `$HOME`) and `$VAR` / `${VAR}` in a `workflow` value.
 /// An unset variable is an error, not an empty string: that would silently point the
 /// workflow at the wrong directory.
@@ -1290,6 +1293,28 @@ impl Config {
         }
     }
 
+    /// The machine's `workflow_url` from `<home>/config.toml`, if any.
+    pub fn machine_workflow_url(
+        home_override: Option<&Path>,
+    ) -> Result<Option<String>, ConfigError> {
+        let home = home_override
+            .map(Path::to_path_buf)
+            .unwrap_or_else(bridle_api::discovery::bridle_home);
+        let path = home.join("config.toml");
+        match std::fs::read_to_string(&path) {
+            Ok(text) => {
+                let raw: RawConfig =
+                    toml::from_str(&text).map_err(|source| ConfigError::Parse {
+                        path: path.clone(),
+                        source: Box::new(source),
+                    })?;
+                Ok(raw.workflow_url)
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
+            Err(source) => Err(ConfigError::Read { path, source }),
+        }
+    }
+
     /// The workflow checkout's directory: `workflow` with `~`/`$VAR` expanded, relative
     /// paths taken against `repo`. `None` if unset or a git url (nothing clones those
     /// yet). A directory that isn't there is an error: silently dropping the base layer
@@ -1339,6 +1364,10 @@ impl Config {
         };
         if let Some(w) = Self::load_machine_workflow(home_override)? {
             config.workflow = Some(w);
+        }
+        // A project with no `workflow` uses the copy `bridle init` vendored, if there is one.
+        if config.workflow.is_none() && repo.join(VENDORED_WORKFLOW).join("base").is_dir() {
+            config.workflow = Some(VENDORED_WORKFLOW.to_string());
         }
         config.workflow = config.workflow.as_deref().map(expand_path).transpose()?;
         config.default_role_prompts(repo);
@@ -1761,6 +1790,10 @@ struct RawConfig {
     tasks: Option<RawTasks>,
     #[serde(default)]
     workflow: Option<String>,
+    /// Machine scope only: the git url `bridle init` / `bridle workflow update` fetch the
+    /// base workflow from when there's no local clone.
+    #[serde(default)]
+    workflow_url: Option<String>,
     #[serde(default)]
     packs: Option<Vec<String>>,
     #[serde(default)]

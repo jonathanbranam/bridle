@@ -42,7 +42,13 @@ applies: change a base rule, commit, and every project picks it up on its
 next `bridle sync` (which the SessionStart hook runs). Nothing is copied into
 projects, so nothing goes stale.
 
-**Updates apply automatically by default.** The human's words, 2026-09-28:
+**Two modes** (2026-09-29, ticket mrhe). A project whose `workflow` is a path to a local
+bridle clone updates automatically, as below. A project on an installed binary has the base
+workflow vendored into `.bridle/workflow/` by `bridle init` (used whenever `workflow` is
+unset) and it changes only when the human runs `bridle workflow update [--to <tag>]`: opt-in,
+so the workflow never shifts under them. The vendored copy is committed by the human.
+
+**Updates apply automatically by default** (the path mode). The human's words, 2026-09-28:
 there's no rev pinning for the common case — a project just gets whatever
 `workflow` currently has next time it syncs. A project that wants to know
 what changed reads a changelog (e.g. `workflow/CHANGELOG.md`); `bridle sync`

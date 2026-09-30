@@ -25,6 +25,12 @@ pub fn run(args: &InitArgs) -> Result<(), CliError> {
     for f in &report.skipped {
         println!("skipped  {f} (already there)");
     }
+    if !repo.join("workflow/base").is_dir() {
+        let changes = crate::vendor::init_vendor(&repo)?;
+        if let Some(c) = changes {
+            crate::vendor::print_changes(&c);
+        }
+    }
     println!(
         "\nNext:\n  bridle sync     render the workflow layers into .claude/\n  bridle doctor   check the setup\n  bridle serve    start the daemon"
     );
