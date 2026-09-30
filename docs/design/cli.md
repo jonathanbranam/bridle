@@ -178,6 +178,13 @@ bridle spec import openspec [--from DIR] [--to DIR] [--dry-run]   moves each `<f
                                              idempotent; local only, no daemon call
 bridle prime orchestrator                   fresh session's opening context: role prompt, current
                                              state, startup steps; local only, no daemon call
+bridle prime advisor                        the advisor role file (workflow, then .bridle/roles/advisor.md); local
+bridle session orchestrator [claude args]   start the orchestrator's claude session from any directory: lean
+                                             settings, names orch-<project>[-<BRIDLE_SESSION_SUFFIX>], pane tag,
+                                             pid/exit files; `--project` picks the project; refuses under a bridle
+                                             agent (unless BRIDLE_LAUNCHER_TEST=1) and in a tools-only clone
+bridle session advisor [name] [claude args] same for the advisor (advisor[-<name>]-<project>); sets BRIDLE_ADVISOR_NAME;
+                                             the unnamed one keeps advisor-<project>.pid while it runs
 bridle prime worker|planner [--component ID ...] [--task ID]   the role's rules, facts, guides, plus named components' scope; --task is worker only
 bridle task new    <title> -k/--kind KIND [--body TEXT | --body-file FILE] [--component ID ...] [--size S|M|L] [--for-human] [--priority high|normal|low]
 bridle task show   <id>
@@ -508,7 +515,7 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   are described in [[docs/design/usage-and-budget|usage and budget]]. `max-workers` sets a live
   cap that never stops running workers, only blocks new spawns and resumes.
 - **`orchestrator note-session`** is the SessionStart hook `scripts/claude-orchestrator` registers for
-  its own session ([[orchestrator-supervision]]). It reads the hook JSON on stdin and writes
+  its own session (`bridle session orchestrator`; `scripts/claude-orchestrator` is a compat wrapper) ([[orchestrator-supervision]]). It reads the hook JSON on stdin and writes
   `$BRIDLE_HOME/orchestrator.session` as `<session id> <transcript path>` (`/clear` gives the same
   process a new id). Local, silent, never fails.
 - **`handover`** keeps the orchestrator's note as a record ([[orchestrator-supervision]] section 7):
@@ -595,7 +602,7 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   (`workflow/base/roles/advisor.md`) is generic the same way and points at an optional
   `.bridle/roles/advisor.md`. The note is fetched from the daemon
   best-effort (no daemon or no note: the state file); the files are read from the current directory, so run it from the repo root, as
-  `scripts/claude-orchestrator` does when it uses this as `claude`'s opening prompt.
+  `bridle session orchestrator` does when it uses this as `claude`'s opening prompt.
   Any other role is a clap `InvalidValue` error, not a silent no-op.
 - **`prime worker|planner`** (planner = the `product-manager` rule tag) opens prime to
   those two roles, each for its own role only, to deliver component scope

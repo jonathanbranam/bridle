@@ -47,6 +47,16 @@ pub fn run(action: &MachineAction) -> Result<(), CliError> {
     }
 }
 
+/// The session launcher's guard: refuses in a tools-only clone, passes outside any repository
+/// (a session may start from anywhere).
+pub fn check_here() -> Result<(), CliError> {
+    let args = ToolsOnlyArgs { repo: None };
+    if repo_of(&args).is_err() {
+        return Ok(());
+    }
+    run(&MachineAction::ToolsOnlyCheck(args))
+}
+
 fn repo_of(a: &ToolsOnlyArgs) -> anyhow::Result<PathBuf> {
     let dir = match &a.repo {
         Some(r) => r.clone(),

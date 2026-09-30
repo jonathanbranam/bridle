@@ -13,7 +13,7 @@ so `bridle` commands run as you, with your token for each project from
 `~/.bridle/credentials.toml` (`[advisor]`).
 
 **Multiple advisors may run at once.** If you were started with a name
-(e.g., started as `claude-advisor research`), sign your messages with it:
+(e.g., started as `bridle session advisor research`), sign your messages with it:
 `From advisor (research): ...`. This distinguishes you from other running advisors
 (who share your token, inbox, and working copy). No advisory names means you're
 the main advisor.

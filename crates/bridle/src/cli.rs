@@ -183,6 +183,9 @@ pub enum Command {
     Pane(PaneArgs),
     /// Machine-scope settings for this clone (hw6c).
     Machine(MachineArgs),
+    /// Start the orchestrator or advisor session: `claude` with the role's settings, names and
+    /// opening prompt, from any directory (replaces scripts/claude-orchestrator and -advisor).
+    Session(SessionArgs),
     /// Trace links from goals down to scenarios (docs/design/traceability.md). Local, no daemon call.
     Trace(TraceArgs),
 }
@@ -460,6 +463,7 @@ pub struct PrimeArgs {
 #[value(rename_all = "lower")]
 pub enum PrimeRoleArg {
     Orchestrator,
+    Advisor,
     Worker,
     Planner,
 }
@@ -1495,6 +1499,29 @@ pub enum PaneAction {
     Tag { name: String },
     /// Clear the @bridle tmux pane option.
     Untag,
+}
+
+#[derive(Debug, Args)]
+pub struct SessionArgs {
+    #[command(subcommand)]
+    pub role: SessionRole,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum SessionRole {
+    /// `bridle session orchestrator [--project <p>] [claude args]`. Records the pid and exit
+    /// files the daemon's orchestrator supervisor reads.
+    Orchestrator {
+        /// Passed to `claude` as they are.
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        claude_args: Vec<String>,
+    },
+    /// `bridle session advisor [--project <p>] [name] [claude args]`. A first argument is the
+    /// advisor's name; the rest goes to `claude`.
+    Advisor {
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        args: Vec<String>,
+    },
 }
 
 #[derive(Debug, Args)]

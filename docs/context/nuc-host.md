@@ -35,18 +35,19 @@ it listens there. Either way the traffic is encrypted.
 
 - Bridle daemons for several projects run on the NUC.
 - The human drives them remotely through **one** orchestrator agent (possibly
-  per project, via `scripts/claude-orchestrator --project <name>`), which may
+  per project, via `bridle session orchestrator --project <name>`), which may
   run on the laptop or on the NUC, and uses Remote Control to talk to it.
 - The human regularly goes **mobile-only** and still wants to answer HITL
   questions and send new ideas.
 
 ## Running sessions for specific projects
 
-The `scripts/claude-orchestrator` and `scripts/claude-advisor` scripts take a project name:
+`bridle session orchestrator` and `bridle session advisor` take a project name and run from any
+directory (the old `scripts/claude-*` are wrappers around them):
 
 ```bash
-scripts/claude-orchestrator --project <name>    # e.g., --project meta-notes
-scripts/claude-advisor --project <name> [alias] # e.g., --project bridle alice
+bridle session orchestrator --project <name>    # e.g., --project meta-notes
+bridle session advisor --project <name> [alias] # e.g., --project bridle alice
 ```
 
 The project defaults to the `BRIDLE_PROJECT` environment variable, or `bridle` if unset.
@@ -93,9 +94,9 @@ To move one (old machine to new):
 5. **Create tokens**: `bridle token create <name>` for each principal (e.g. `orchestrator`,
    `advisor`, `human`); with the project known they're saved in `~/.bridle/credentials.toml`
    rather than printed. Tokens don't move with the project.
-6. **Start the sessions** with the project-aware scripts, as in "Running sessions for specific
-   projects" above: `scripts/claude-orchestrator --project <name>` and
-   `scripts/claude-advisor --project <name> [alias]`.
+6. **Start the sessions** with the project-aware commands, as in "Running sessions for specific
+   projects" above: `bridle session orchestrator --project <name>` and
+   `bridle session advisor --project <name> [alias]`.
 7. **Old machine, mark its clone tools-only** (below) so nobody starts a second daemon there.
 
 Messages (the inbox) live in SQLite, not on the state branch, and do not move; read anything

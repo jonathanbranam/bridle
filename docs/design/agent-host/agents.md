@@ -39,7 +39,7 @@ established; S-numbers are its scenarios. Each agent is one headless
   `BRIDLE_WORKSPACE` and `BRIDLE_PROJECT`, and `BRIDLE_HOME` set to the agent's own
   `<workspace>/.bridle/agent-home/<agent id>` (not created by bridle), so nothing an agent runs
   can touch the machine's live `~/.bridle` (orchestrator pid/session files, credentials; ticket
-  k6b3). `scripts/claude-orchestrator` and `scripts/claude-advisor` also refuse to start when
+  k6b3). `bridle session orchestrator|advisor` (and the `scripts/claude-*` wrappers) also refuse to start when
   `BRIDLE_AGENT_ID` is set, unless `BRIDLE_LAUNCHER_TEST=1` (tests: stub `claude` on `PATH`,
   temporary `BRIDLE_HOME`). Plus `BRIDLE_COMPONENTS`
   (comma-separated component ids, only when the spawn named any; see

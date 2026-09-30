@@ -89,7 +89,7 @@ bridle = "..."
 directory and file 0600, keeping other entries) and prints no token; with no known project
 (`--url`) it prints the token as before. `bridle token revoke <name> --project <p>`
 removes the entry. The CLI refuses to read a file that group or others can access, and
-says to `chmod 600` it. `scripts/claude-orchestrator` and `scripts/claude-advisor` set
+says to `chmod 600` it. `bridle session orchestrator` and `bridle session advisor` set
 `BRIDLE_AS` so a session never handles a token.
 
 Rule 2 means a Claude Code session (the human's orchestrator, or any agent)

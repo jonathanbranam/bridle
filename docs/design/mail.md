@@ -100,7 +100,7 @@ Every machine may run a bridge for the projects it has; all read the same bucket
   gets a reply listing the valid ones (`projects` plus the bridge's own), and the object is
   deleted. Only the bridge of the first name in `projects` answers, so several bridges don't
   each reply; strangers get nothing.
-- **Advisor liveness.** `scripts/claude-advisor` (unnamed advisor only) writes
+- **Advisor liveness.** `bridle session advisor` (unnamed advisor only) writes
   `$BRIDLE_HOME/advisor-<project>.pid` (`<pid> <ps lstart> <epoch>`, as `orchestrator.pid`) and
   removes it when claude ends. The bridge treats the advisor as running only while that pid exists
   with that start time. Running: mail goes to `external:advisor`, whose session runs

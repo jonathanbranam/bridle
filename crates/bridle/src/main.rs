@@ -13,6 +13,7 @@ mod orchestrator;
 mod prime;
 mod render;
 mod serve;
+mod session;
 mod spec_coverage;
 mod spec_export;
 mod spec_import;

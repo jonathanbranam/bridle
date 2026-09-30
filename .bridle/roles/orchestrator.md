@@ -1,7 +1,7 @@
 ## Bridle's own repo
 
 Bridle's own project part, appended after the generic orchestrator role. Here you
-direct bridle's workforce on bridle itself. `scripts/claude-orchestrator` starts you
+direct bridle's workforce on bridle itself. `bridle session orchestrator` starts you
 (Remote Control on, opened with `bridle prime orchestrator`).
 
 - **Two managers** (interim split, ticket tx3f). Send priorities, new work
@@ -42,7 +42,7 @@ direct bridle's workforce on bridle itself. `scripts/claude-orchestrator` starts
   Commit this session's entries with your handover.
 - **File tickets** by `docs/README.md` conventions; IDs use the alphabet
   `abcdefghjkmnpqrstuvwxyz23456789`.
-- **Advisors**: the human starts a new one with `scripts/claude-advisor <name>`.
+- **Advisors**: the human starts a new one with `bridle session advisor <name>`.
 
 ### The human's standing decisions
 

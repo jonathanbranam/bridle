@@ -112,6 +112,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Explore(args) => explore(&args.action),
         Command::Pane(args) => pane(&args.action),
         Command::Machine(args) => crate::tools_only::run(&args.action),
+        Command::Session(args) => crate::session::run(&cli, &args.role).await,
     }
 }
 
@@ -322,6 +323,7 @@ The human will mostly reach you through Remote Control.";
 async fn prime(cli: &Cli, args: &PrimeArgs) -> Result<(), CliError> {
     match args.role {
         PrimeRoleArg::Orchestrator => prime_orchestrator(cli).await,
+        PrimeRoleArg::Advisor => prime_advisor(),
         PrimeRoleArg::Worker => prime_scoped(cli, args, "worker", "worker").await,
         PrimeRoleArg::Planner => prime_scoped(cli, args, "product-manager", "planner").await,
     }
@@ -402,6 +404,27 @@ async fn prime_orchestrator(cli: &Cli) -> Result<(), CliError> {
             chrono::Utc::now()
         )
     );
+    Ok(())
+}
+
+/// The advisor's role file from the resolved workflow, then the project's own
+/// `.bridle/roles/advisor.md` when present. Local: the advisor session's opening prompt.
+fn prime_advisor() -> Result<(), CliError> {
+    let repo = std::env::current_dir().context("current directory")?;
+    let config =
+        bridle_daemon::config::Config::load(&repo).context("loading .bridle/config.toml")?;
+    let workflow = config
+        .workflow_root(&repo)
+        .map_err(anyhow::Error::new)?
+        .unwrap_or_else(|| repo.join("workflow"));
+    let path = workflow.join("base/roles/advisor.md");
+    print!(
+        "{}",
+        std::fs::read_to_string(&path).with_context(|| format!("reading {}", path.display()))?
+    );
+    if let Ok(part) = std::fs::read_to_string(repo.join(".bridle/roles/advisor.md")) {
+        print!("\n{part}");
+    }
     Ok(())
 }
 

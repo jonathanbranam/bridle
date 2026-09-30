@@ -26,7 +26,7 @@ over, and carries its wake conditions, with no agent in the loop.
 ## 1. Pieces
 
 ```
-scripts/claude-orchestrator   launches the session; writes the pid file; adds a SessionStart hook (in one --settings object with the lean keys, ct8m)
+bridle session orchestrator   launches the session; writes the pid file; adds a SessionStart hook (in one --settings object with the lean keys, ct8m)
 $BRIDLE_HOME/orchestrator.pid       "<pid> <process start time> <launch epoch>"   (launcher)
 $BRIDLE_HOME/orchestrator.session   the current session id                        (the hook)
 $BRIDLE_HOME/context/<session id>   context tokens                                (bridle statusline, exists)
@@ -34,7 +34,7 @@ daemon: orchestrator supervisor     one task, ticks every 10 s
 bridle wait-for-wake                the in-session command
 ```
 
-The launcher (`scripts/claude-orchestrator`, changed) writes its own pid to the pid file and runs
+The launcher (`bridle session orchestrator`; `scripts/claude-orchestrator` wraps it) writes its own pid to the pid file and runs
 `claude` as its child, so the pid lives exactly as long as the session. It doesn't `exec`, so that
 when `claude` ends it can append the time and exit status (a signal, when above 128) to
 `$BRIDLE_HOME/orchestrator.exits` and print it in the pane: sessions had ended unattended with
