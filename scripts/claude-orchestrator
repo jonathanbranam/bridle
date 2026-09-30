@@ -52,6 +52,9 @@ claude --settings "$settings" --strict-mcp-config --name "$session_name" --remot
 # Sessions have ended unattended with no trace (fx7x): record when, and how (a status above 128 is a
 # signal), in the pane and in a log that outlives it.
 rc=$?
+# A killed claude can't restore the pane's terminal modes; left on they make the next session's
+# input fill with focus reports (csfe). Off: focus reporting, bracketed paste, mouse; pop kitty keys.
+printf '\e[?1004l\e[?2004l\e[?1000l\e[?1006l\e[>4;0m\e[<u'
 how="exit $rc"
 if (( rc > 128 )); then
   sig=$((rc - 128))

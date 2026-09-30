@@ -72,3 +72,20 @@ keyboard levels, or other modes (mouse, bracketed paste).
 - If a mode leak is confirmed: reset the pane before relaunching (e.g. the mode resets, or
   `tmux respawn-pane`/`clear-history` + `reset`), in the daemon's relaunch and/or
   `scripts/claude-orchestrator`.
+
+## Findings (br-7798, 2026-09-30)
+
+Reproduced in tmux with a stand-in script: the supervisor's stop (`SIGTERM` to the pid in
+`orchestrator.pid`) goes to the launcher script, which is a non-interactive zsh with `claude` as
+its foreground child. The script dies at once; `claude` is reparented to init and keeps running,
+now in a background process group, while the pane's shell takes the tty back (`icanon echo`, as the
+advisor saw) and the daemon types the launcher into it. Two Claude Codes then share the tty: the
+orphan's focus-reporting mode is still on, and the new session's input gets `ESC[I`/`ESC[O`. It
+also explains no `orchestrator.exits` line (the script never reached it) and, with the old session
+still running, the "no stop event" gap. So it wasn't a leaked mode in the usual sense; the mode
+reset attempts only helped a little because the orphan kept setting them.
+
+Fixed: the daemon signals the script's children (`claude`), so the script logs the exit and
+finishes; SIGKILL takes both. The script also resets the pane's modes after `claude` ends (a
+SIGKILLed `claude` can't). Not done: a `handover`-relaunch event (the exit line now covers the
+trace). Not verified against a real `claude`.

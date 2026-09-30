@@ -732,8 +732,23 @@ impl Procs for RealProcs {
             } else {
                 nix::sys::signal::Signal::SIGTERM
             };
-            if let Err(e) = nix::sys::signal::kill(nix::unistd::Pid::from_raw(pid), sig) {
-                tracing::warn!(pid, error = %e, "signalling the orchestrator failed");
+            // The pid is the launcher script's; SIGTERM to it alone kills the script and orphans
+            // `claude`, which keeps the pane's tty while the shell and the relaunch take it back
+            // (csfe: focus reports typed into the input). Signal the children so the script
+            // sees claude end, records it and exits; SIGKILL also takes the script.
+            let mut targets: Vec<i32> = crate::containment::snapshot()
+                .map(|snap| crate::containment::descendants(pid, &snap))
+                .unwrap_or_default()
+                .into_iter()
+                .map(|p| p.pid)
+                .collect();
+            if kill || targets.is_empty() {
+                targets.push(pid);
+            }
+            for t in targets {
+                if let Err(e) = nix::sys::signal::kill(nix::unistd::Pid::from_raw(t), sig) {
+                    tracing::warn!(pid = t, error = %e, "signalling the orchestrator failed");
+                }
             }
         })
         .await;
@@ -1393,5 +1408,36 @@ mod tests {
         r.tick(20).await;
         assert_eq!(r.events().len(), 2);
         assert_eq!(r.events()[1].1["tokens"], 50);
+    }
+    /// csfe: SIGTERM must reach the launcher's child (claude), not just the launcher, or claude
+    /// is orphaned on the pane's tty.
+    #[tokio::test]
+    async fn real_sigterm_goes_to_the_child_and_spares_the_launcher() {
+        let mut script = std::process::Command::new("sh")
+            .args(["-c", "sleep 60; sleep 60"])
+            .spawn()
+            .unwrap();
+        let pid = script.id() as i32;
+        // The child has to exist before it can be found.
+        let mut has_child = false;
+        for _ in 0..50 {
+            let snap = crate::containment::snapshot().unwrap();
+            if !crate::containment::descendants(pid, &snap).is_empty() {
+                has_child = true;
+                break;
+            }
+            tokio::time::sleep(Duration::from_millis(100)).await;
+        }
+        assert!(has_child);
+        let start = crate::containment::start_time(pid).unwrap();
+        RealProcs.signal(pid, &start, false).await;
+        // sh started the next sleep after the first died: it was the child that got the signal.
+        tokio::time::sleep(Duration::from_millis(500)).await;
+        assert!(
+            script.try_wait().unwrap().is_none(),
+            "the launcher must outlive the TERM"
+        );
+        RealProcs.signal(pid, &start, true).await;
+        script.wait().unwrap();
     }
 }

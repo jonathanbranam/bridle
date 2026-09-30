@@ -209,7 +209,9 @@ not only after a message: an orchestrator that hands over early is fine.
 once, there's nothing left to wait for) or the **deadline passes** (30 min after the "now"
 or uptime message: it may interrupt a conversation, and that's the bound the human agreed
 to; there's no idle detection, so the `Stop` hook isn't used). To stop: `SIGTERM` to the
-recorded pid (if start time matches), `SIGKILL` after 15 s. The pane is a shell again;
+recorded pid's children, i.e. `claude` (the pid is the launcher script's; TERM to it alone orphans
+`claude` on the pane's tty, csfe), or to the pid if it has none; `SIGKILL` to both after 15 s (if
+start time matches). The pane is a shell again;
 the relaunch of 4 runs at once and isn't counted as a crash. The new session starts from `bridle
 prime orchestrator`, which prints the handover.
 
