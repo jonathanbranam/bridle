@@ -35,18 +35,19 @@ Anything below that ends in "the human restarts it" means the work stops until F
 3. **The laptop sleeps.** `pmset` shows `sleep 1` (one minute); sleep is prevented only by
    Claude Code's own short `caffeinate -i -t 300` calls while a session works. If every session is
    idle, the machine may sleep, and the wake loop, Remote Control and CI polling all stop.
-   Recommend: `sudo pmset -c sleep 0` (on power) for the trip, and `sudo pmset autorestart 1`
-   (power back after an outage). Human-only (sudo).
-4. **A reboot.** macOS automatic updates, or a power cut: after a reboot nothing comes back (tmux,
-   daemons, the orchestrator's Remote Control session). Recommend: turn off automatic macOS update
-   installs until Saturday. The NUC reboots itself at 04:00 when an update needs it
-   (unattended-upgrades, `docs/context/nuc-host.md`; t39j): recommend
-   `Unattended-Upgrade::Automatic-Reboot "false"` for the trip.
+   Human to-do br-1b47: `sudo pmset -c sleep 0` for the trip.
+4. **A reboot.** Automatic macOS installs are already off (the human, 2026-09-30; to-do br-15af
+   dropped). FileVault is on, so any reboot (a power cut, a crash) stops at the unlock screen and
+   nothing comes back until the human types the password: no remote recovery, so no point in
+   `pmset autorestart`. The NUC reboots itself at 04:00 when an update needs it
+   (unattended-upgrades, `docs/context/nuc-host.md`; t39j): human to-do br-276e turns that off.
+   The NUC's Remote Control unit is inactive: br-769d; test both from the phone: br-be96.
 5. **The orchestrator session dies.** The daemon relaunches it in its tmux pane with backoff (30 s,
    2 m, 10 m), then gives up (orchestrator-supervision.md section 4). The launch path changed on
    2026-09-30 (mrhe 1, `bridle session orchestrator`) and a relaunch hasn't been watched since.
    Remote Control must come back with it, or the human loses their only way in.
-6. **Budget.** The governor holds, winds down and resumes by itself; nothing to do.
+6. **Budget.** The governor holds, winds down and resumes by itself. A usage reading older than
+   `max_staleness` (600 s) also holds (seen 2026-09-30 11:42Z, cleared at the next reading): safe.
 7. **Disk.** 405 GiB free on /Volumes/Data (worktrees 16 GiB); nothing to do.
 
 ## Drills (before Thursday noon ET)
@@ -55,8 +56,7 @@ Anything below that ends in "the human restarts it" means the work stops until F
   and it shows up in Remote Control on the phone under its name, with the wake loop running.
 - **Daemon crash under launchd** (after item 1): `kill -9` the track-web daemon. Pass: launchd
   restarts it, `bridle daemons` lists it, its manager resumes.
-- **Reboot** (optional, only if items 1, 3 and 4 are done): restart the laptop and see what comes
-  back without a login. Probably not everything; if not, that's the case to write down for the human.
+- No reboot drill: with FileVault, a reboot always needs the human at the keyboard.
 
 ## State
 
