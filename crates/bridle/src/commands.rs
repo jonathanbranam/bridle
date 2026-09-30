@@ -986,7 +986,7 @@ async fn inbox_show(cli: &Cli, args: &InboxShowArgs) -> Result<(), CliError> {
         );
     }
 
-    if !args.no_mark_read {
+    if args.mark_read {
         client.mark_read(&message.id).await?;
     }
 

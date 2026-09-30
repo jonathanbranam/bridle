@@ -598,8 +598,8 @@ fn inbox_show_and_read_commands() {
     let msgs: serde_json::Value = serde_json::from_str(&out).expect("message json");
     let msg_id = msgs[0]["id"].as_str().expect("message id").to_string();
 
-    // Test `bridle inbox show <id>` (marks read by default)
-    let (ok, out, err) = run_cli(&repo, &home, &["inbox", "show", &msg_id]);
+    // Test `bridle inbox show <id> --mark-read`
+    let (ok, out, err) = run_cli(&repo, &home, &["inbox", "show", &msg_id, "--mark-read"]);
     assert!(ok, "inbox show failed: {err}");
     assert!(
         out.contains("From:"),
@@ -635,9 +635,9 @@ fn inbox_show_and_read_commands() {
     let msgs: serde_json::Value = serde_json::from_str(&out).expect("message json");
     let msg_id2 = msgs[0]["id"].as_str().expect("message id").to_string();
 
-    // Test `bridle inbox show <id> --no-mark-read`
-    let (ok, out, err) = run_cli(&repo, &home, &["inbox", "show", &msg_id2, "--no-mark-read"]);
-    assert!(ok, "inbox show --no-mark-read failed: {err}");
+    // `bridle inbox show <id>` leaves the message unread by default
+    let (ok, out, err) = run_cli(&repo, &home, &["inbox", "show", &msg_id2]);
+    assert!(ok, "inbox show failed: {err}");
     assert!(
         out.contains("hello2"),
         "expected message body in output: {out}"

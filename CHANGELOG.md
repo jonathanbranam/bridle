@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The TUI inbox lists every task's open question after the unread messages (as `bridle inbox` does), so an opened question stays until answered; `q` closes an opened message; opening a message no longer marks it read, `d` marks it done. `bridle inbox show` no longer marks read by default: `--no-mark-read` is replaced by `--mark-read` (n94h, br-6441).
 - Bridle's own workers gate on the full `just check` again (`check_worker` binding removed from `.bridle/config.toml`; `just check-affected` stays as a recipe) (qgma, br-0e42).
 - `bridle land` skips `[integration] check` when the integration branch is an ancestor of the task branch (a fast-forward of an unchanged base; the notes say so) and runs it when the base has moved. Worker and manager prompts send check output to `/tmp/<task>-check.log`, judge by exit status, and read the tail only on failure A passing check's nextest test count is recorded in `<workspace>/last-full-test-count`; a count of 0, or under half or over double the last one, fails the landing, and workers are told to sanity-check their own count against it (qgma, br-0e42).
 - The orchestrator is no longer woken when `main` moves (`main_moved` wake removed): a merge arrives as the manager's message and a red main as the CI-failure wake. The role no longer tells it to `gh run watch` (br-9e71, pdmd).

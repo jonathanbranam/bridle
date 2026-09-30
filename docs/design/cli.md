@@ -31,7 +31,7 @@ bridle agents  [--all]
 bridle show    <agent>
 bridle send    <agent|human|role:NAME> [TEXT | --text-file FILE] [--question] [--when now|idle] [--reply-to ID] [--task ID]
 bridle inbox   [--all] [--mark-read]        # messages to me, plus every task's open question (list)
-bridle inbox show <id> [--no-mark-read]     # show one message in full, mark read by default
+bridle inbox show <id> [--mark-read]        # show one message in full; leaves it unread unless --mark-read
 bridle inbox read <id>...                   # mark one or more messages read
 bridle ask     <task-id> TEXT [--to WHO]         question against a task; blocks it until answered, and sends a pointer message (kind question) to WHO (agent, role:NAME, external:NAME, human); default: the caller's spawner, or human
 bridle answer  <task-id> TEXT                    answers a task's open question; frees it to be ready again; sends the asker a pointer (kind answer)
@@ -397,9 +397,12 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   from `Client::transcript` once a second, same model as `bridle logs --follow`), and
   an inbox of unread messages addressed to `me` (polled from `Client::list_messages`
   once a second, same query as `bridle inbox`). `Tab` switches between the four views,
-  `j`/`k`/arrow keys scroll the focused one, `q`/`Esc` quits. On the inbox view, `Enter`
-  opens the selected message in full (header and body as `bridle inbox show` prints them,
-  and marks it read); `Esc`/`Enter` closes it. `r`, on the list or in the opened message,
+  `j`/`k`/arrow keys scroll the focused one, `q`/`Esc` quits. The inbox view lists unread
+  messages then every task's open question (as `bridle inbox` does), a question staying
+  until it's answered. `Enter` opens the selected row in full (header and body as
+  `bridle inbox show` prints them; opening doesn't mark it read); `q`/`Esc`/`Enter` closes
+  it. `d`, on the list or in the opened message, marks a message done (read) without
+  replying; questions are answered through the task, so `d` and `r` skip them. `r`, on the list or in the opened message,
   starts composing a reply to the message (simple line editing: insert,
   backspace, left/right, `Enter` to send, `Esc` to cancel); a submitted reply goes out
   via `Client::send` with `reply_to` set and `when: now`, then the original is marked
@@ -429,13 +432,12 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
     (shows read messages too); `--mark-read` calls `POST /v1/messages/{id}/read` on each
     message after listing, marking every one read. In JSON mode, returns both messages and
     questions; plain text prints a compact line per message/question.
-  - `bridle inbox show <id> [--no-mark-read]` (show one message in full) fetches a single
+  - `bridle inbox show <id> [--mark-read]` (show one message in full) fetches a single
     message to `me` by id (a question a delegate answered shows `Answered by:`; the list shows
     "answered by <who>: <first line>", visible with `--all`), prints the full header (from, kind, time, reply-to), the body,
-    and the reply command (formatted as `bridle send <from> --reply-to <id> "..."`). By
-    default, calls `POST /v1/messages/{id}/read` to mark it read, just as reading an
-    inbox message in most UI apps would; pass `--no-mark-read` to list cheaply without
-    side effects. In JSON mode, returns the message object; plain text returns the
+    and the reply command (formatted as `bridle send <from> --reply-to <id> "..."`). It
+    leaves the message unread (reading isn't handling); `--mark-read` calls
+    `POST /v1/messages/{id}/read` after showing it. In JSON mode, returns the message object; plain text returns the
     formatted rendering above. Fails with a 404-like error if the message doesn't exist
     or isn't addressed to `me`.
   - `bridle inbox read <id>... ` (mark read, one or more) calls `POST /v1/messages/{id}/read`

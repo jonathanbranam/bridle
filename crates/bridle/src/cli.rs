@@ -680,9 +680,9 @@ pub enum InboxAction {
 #[derive(Debug, Args)]
 pub struct InboxShowArgs {
     pub id: String,
-    /// Don't mark the message as read.
+    /// Mark the message read after showing it (by default reading it leaves it unread).
     #[arg(long)]
-    pub no_mark_read: bool,
+    pub mark_read: bool,
 }
 
 #[derive(Debug, Args)]
@@ -2160,12 +2160,12 @@ mod tests {
             panic!("expected show action")
         };
         assert_eq!(show.id, "m-1234");
-        assert!(!show.no_mark_read);
+        assert!(!show.mark_read);
     }
 
     #[test]
-    fn inbox_show_with_no_mark_read_parses() {
-        let cli = parse(&["inbox", "show", "m-1234", "--no-mark-read"]).unwrap();
+    fn inbox_show_with_mark_read_parses() {
+        let cli = parse(&["inbox", "show", "m-1234", "--mark-read"]).unwrap();
         let Command::Inbox(args) = cli.command else {
             panic!("expected inbox")
         };
@@ -2173,7 +2173,7 @@ mod tests {
             panic!("expected show action")
         };
         assert_eq!(show.id, "m-1234");
-        assert!(show.no_mark_read);
+        assert!(show.mark_read);
     }
 
     #[test]

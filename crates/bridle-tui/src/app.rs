@@ -3,7 +3,10 @@
 //! [`Message`] (from `events_stream`, or the initial agents list) or a
 //! [`Key`] press, and assert on the resulting [`App`].
 
-use bridle_api::{Agent, AgentState, Event, Message as ApiMessage, TranscriptLine, event_kind};
+use bridle_api::{
+    Agent, AgentState, Event, Message as ApiMessage, MessageKind, OpenQuestion, TranscriptLine,
+    event_kind,
+};
 use std::cell::Cell;
 
 use ratatui::widgets::TableState;
@@ -138,6 +141,9 @@ pub enum Message {
     /// One poll's worth of the unread inbox (`to: "me"`, unread only --
     /// same query as `bridle inbox`).
     MessagesLoaded(Vec<ApiMessage>),
+    /// One poll's worth of every task's open question (same source as
+    /// `bridle inbox`), which stays listed until answered.
+    QuestionsLoaded(Vec<OpenQuestion>),
 }
 
 /// Everything on screen. Rendering (`ui.rs`) only ever reads this; only
@@ -167,7 +173,11 @@ pub struct App {
     pub log_scroll: usize,
     /// Unread messages addressed to `me`, same query as `bridle inbox`.
     pub messages: Vec<ApiMessage>,
-    /// Index into `messages` of the selected row.
+    /// Open questions, shown after `messages` as rows of kind question with
+    /// the task id as the row id. Answered through the task, not replied to
+    /// or marked read here.
+    pub questions: Vec<ApiMessage>,
+    /// Index into the inbox rows (`messages`, then `questions`) of the selected row.
     pub selected_message: usize,
     /// TableState for inbox table to track view offset.
     pub inbox_table_state: TableState,
@@ -189,6 +199,28 @@ pub struct App {
     pub refresh_agents: bool,
     pub connection: ConnectionStatus,
     pub should_quit: bool,
+}
+
+/// An open question as an inbox row, so the list and the opened view treat
+/// it like a message.
+fn question_row(q: OpenQuestion) -> ApiMessage {
+    ApiMessage {
+        id: q.task_id,
+        from: q.asked_by,
+        to: "human".to_string(),
+        kind: MessageKind::Question,
+        body: q.body,
+        reply_to: None,
+        when: bridle_api::When::Now,
+        state: bridle_api::MessageState::Delivered,
+        created_at: q.asked_at,
+        written_at: None,
+        delivered_at: None,
+        read_at: None,
+        answered_by: None,
+        answered_reply: None,
+        answered_line: None,
+    }
 }
 
 impl App {
@@ -224,6 +256,10 @@ impl App {
                 self.messages = messages;
                 self.clamp_selected_message();
             }
+            Message::QuestionsLoaded(questions) => {
+                self.questions = questions.into_iter().map(question_row).collect();
+                self.clamp_selected_message();
+            }
         }
         self.sync_logs_target();
     }
@@ -235,8 +271,13 @@ impl App {
         }
         if self.viewing.is_some() {
             match key {
-                Key::Esc | Key::Enter => self.viewing = None,
+                Key::Esc | Key::Enter | Key::Char('q') => self.viewing = None,
                 Key::Char('r') => self.start_reply(),
+                Key::Char('d') => {
+                    if let Some(msg) = self.viewing.take() {
+                        self.mark_done(&msg);
+                    }
+                }
                 _ => {}
             }
             return;
@@ -245,6 +286,11 @@ impl App {
             Key::Char('q') | Key::Esc => self.should_quit = true,
             Key::Tab => self.focus = self.focus.next(),
             Key::Char('r') if self.focus == Focus::Inbox => self.start_reply(),
+            Key::Char('d') if self.focus == Focus::Inbox => {
+                if let Some(msg) = self.inbox_row(self.selected_message).cloned() {
+                    self.mark_done(&msg);
+                }
+            }
             Key::Char('k') | Key::Up => self.scroll_up(),
             Key::Char('j') | Key::Down => self.scroll_down(),
             Key::Enter if self.focus == Focus::Inbox => self.open_message(),
@@ -282,9 +328,31 @@ impl App {
     }
 
     fn open_message(&mut self) {
-        if let Some(msg) = self.messages.get(self.selected_message) {
+        self.viewing = self.inbox_row(self.selected_message).cloned();
+    }
+
+    /// The inbox rows: unread messages, then open questions.
+    pub fn inbox_row(&self, i: usize) -> Option<&ApiMessage> {
+        self.messages
+            .get(i)
+            .or_else(|| self.questions.get(i.checked_sub(self.messages.len())?))
+    }
+
+    pub fn inbox_len(&self) -> usize {
+        self.messages.len() + self.questions.len()
+    }
+
+    /// Whether `msg` is an open-question row (answered via its task, so it
+    /// can't be replied to or marked read).
+    pub fn is_question_row(&self, msg: &ApiMessage) -> bool {
+        self.questions.iter().any(|q| q.id == msg.id)
+    }
+
+    /// Handled without replying: `run.rs` marks it read so it leaves the
+    /// unread list. Open questions leave only by being answered.
+    fn mark_done(&mut self, msg: &ApiMessage) {
+        if !self.is_question_row(msg) {
             self.pending_mark_read = Some(msg.id.clone());
-            self.viewing = Some(msg.clone());
         }
     }
 
@@ -294,10 +362,13 @@ impl App {
         let Some(msg) = self
             .viewing
             .as_ref()
-            .or_else(|| self.messages.get(self.selected_message))
+            .or_else(|| self.inbox_row(self.selected_message))
         else {
             return;
         };
+        if self.is_question_row(msg) {
+            return;
+        }
         self.compose = Some(Compose {
             to: msg.from.clone(),
             reply_to: msg.id.clone(),
@@ -325,11 +396,9 @@ impl App {
     }
 
     fn clamp_selected_message(&mut self) {
-        if self.messages.is_empty() {
-            self.selected_message = 0;
-        } else {
-            self.selected_message = self.selected_message.min(self.messages.len() - 1);
-        }
+        self.selected_message = self
+            .selected_message
+            .min(self.inbox_len().saturating_sub(1));
         self.sync_inbox_table_state();
     }
 
@@ -342,7 +411,7 @@ impl App {
     }
 
     fn sync_inbox_table_state(&mut self) {
-        if self.messages.is_empty() {
+        if self.inbox_len() == 0 {
             self.inbox_table_state.select(None);
         } else {
             self.inbox_table_state.select(Some(self.selected_message));
@@ -400,9 +469,8 @@ impl App {
             Focus::Events => self.event_scroll = self.event_scroll.saturating_sub(1),
             Focus::Logs => self.log_scroll = self.log_scroll.saturating_sub(1),
             Focus::Inbox => {
-                if !self.messages.is_empty() {
-                    self.selected_message =
-                        (self.selected_message + 1).min(self.messages.len() - 1);
+                if self.inbox_len() > 0 {
+                    self.selected_message = (self.selected_message + 1).min(self.inbox_len() - 1);
                 }
                 self.sync_inbox_table_state();
             }
@@ -888,7 +956,7 @@ mod tests {
     }
 
     #[test]
-    fn enter_opens_the_selected_message_and_marks_it_read() {
+    fn enter_opens_the_selected_message_without_marking_it_read() {
         let mut app = App::new();
         app.on_message(Message::MessagesLoaded(vec![
             inbox_message("m-1", "w1", "hi"),
@@ -898,15 +966,15 @@ mod tests {
         app.on_key(Key::Down);
         app.on_key(Key::Enter);
         assert_eq!(app.viewing.as_ref().map(|m| m.id.as_str()), Some("m-2"));
-        assert_eq!(app.pending_mark_read.as_deref(), Some("m-2"));
-        // Survives the poll dropping the now-read message.
+        assert_eq!(app.pending_mark_read, None);
+        // Survives the poll dropping the message.
         app.on_message(Message::MessagesLoaded(vec![]));
         assert!(app.viewing.is_some());
     }
 
     #[test]
     fn esc_or_enter_dismisses_the_view_without_quitting() {
-        for key in [Key::Esc, Key::Enter] {
+        for key in [Key::Esc, Key::Enter, Key::Char('q')] {
             let mut app = App::new();
             app.on_message(Message::MessagesLoaded(vec![inbox_message(
                 "m-1", "w1", "hi",
@@ -917,6 +985,66 @@ mod tests {
             assert!(app.viewing.is_none());
             assert!(!app.should_quit);
         }
+    }
+
+    #[test]
+    fn d_marks_done_from_the_list_or_the_opened_message() {
+        let mut app = App::new();
+        app.on_message(Message::MessagesLoaded(vec![inbox_message(
+            "m-1", "w1", "hi",
+        )]));
+        focus_inbox(&mut app);
+        app.on_key(Key::Char('d'));
+        assert_eq!(app.pending_mark_read.take().as_deref(), Some("m-1"));
+        app.on_key(Key::Enter);
+        app.on_key(Key::Char('d'));
+        assert_eq!(app.pending_mark_read.as_deref(), Some("m-1"));
+        assert!(app.viewing.is_none());
+    }
+
+    fn open_question(task: &str) -> bridle_api::OpenQuestion {
+        bridle_api::OpenQuestion {
+            task_id: task.to_string(),
+            asked_by: "w1".to_string(),
+            body: "which way?".to_string(),
+            asked_at: Utc::now(),
+        }
+    }
+
+    #[test]
+    fn an_opened_but_unanswered_question_stays_listed() {
+        let mut app = App::new();
+        app.on_message(Message::QuestionsLoaded(vec![open_question("br-1")]));
+        focus_inbox(&mut app);
+        assert_eq!(app.inbox_len(), 1);
+        app.on_key(Key::Enter);
+        assert_eq!(app.viewing.as_ref().map(|m| m.id.as_str()), Some("br-1"));
+        // Neither opening, closing nor `d` marks it read or drops it; the
+        // messages poll coming back empty doesn't either.
+        app.on_key(Key::Char('d'));
+        app.on_key(Key::Enter);
+        app.on_key(Key::Char('r'));
+        assert_eq!(app.pending_mark_read, None);
+        assert!(app.compose.is_none());
+        app.on_message(Message::MessagesLoaded(vec![]));
+        assert_eq!(app.inbox_len(), 1);
+        // Answering removes it from the next poll.
+        app.on_message(Message::QuestionsLoaded(vec![]));
+        assert_eq!(app.inbox_len(), 0);
+    }
+
+    #[test]
+    fn questions_follow_messages_in_the_inbox() {
+        let mut app = App::new();
+        app.on_message(Message::MessagesLoaded(vec![inbox_message(
+            "m-1", "w1", "hi",
+        )]));
+        app.on_message(Message::QuestionsLoaded(vec![open_question("br-1")]));
+        focus_inbox(&mut app);
+        app.on_key(Key::Down);
+        app.on_key(Key::Down);
+        assert_eq!(app.selected_message, 1);
+        assert_eq!(app.inbox_row(1).map(|m| m.id.as_str()), Some("br-1"));
     }
 
     #[test]

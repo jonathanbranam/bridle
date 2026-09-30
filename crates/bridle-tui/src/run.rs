@@ -82,7 +82,7 @@ async fn run_app(terminal: &mut Term, client: Client) -> anyhow::Result<()> {
     {
         // Same polling model as spawn_transcript_poll: there's no SSE stream
         // for messages, so poll the unread inbox (`to: "me"`, same query as
-        // `bridle inbox`) once a second.
+        // `bridle inbox`) and open questions once a second.
         let client = client.clone();
         let tx = tx.clone();
         tokio::spawn(async move {
@@ -94,6 +94,13 @@ async fn run_app(terminal: &mut Term, client: Client) -> anyhow::Result<()> {
             loop {
                 if let Ok(messages) = client.list_messages(&query).await
                     && tx.send(Message::MessagesLoaded(messages)).is_err()
+                {
+                    break;
+                }
+                // Open questions aren't "to me", so `bridle inbox` lists them
+                // separately; do the same so an opened question stays listed.
+                if let Ok(questions) = client.list_open_questions().await
+                    && tx.send(Message::QuestionsLoaded(questions)).is_err()
                 {
                     break;
                 }

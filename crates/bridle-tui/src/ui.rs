@@ -31,7 +31,7 @@ pub fn draw(frame: &mut Frame, app: &App) {
     draw_inbox(frame, chunks[4], app);
 
     if let Some(msg) = &app.viewing {
-        draw_message(frame, frame.area(), msg);
+        draw_message(frame, frame.area(), msg, app.is_question_row(msg));
     }
     if let Some(compose) = &app.compose {
         draw_compose(frame, frame.area(), compose);
@@ -139,7 +139,7 @@ fn draw_inbox(frame: &mut Frame, area: Rect, app: &App) {
     let focused = app.focus == Focus::Inbox;
     let header = Row::new(vec!["ID", "FROM", "KIND", "BODY"])
         .style(Style::default().add_modifier(Modifier::BOLD));
-    let rows = app.messages.iter().map(|m| {
+    let rows = app.messages.iter().chain(&app.questions).map(|m| {
         Row::new(vec![
             Cell::from(m.id.clone()),
             Cell::from(m.from.clone()),
@@ -163,14 +163,17 @@ fn draw_inbox(frame: &mut Frame, area: Rect, app: &App) {
     let table = Table::new(rows, widths)
         .header(header)
         .row_highlight_style(highlight_style(focused))
-        .block(border_block("Inbox", focused));
+        .block(border_block(
+            "Inbox (Enter: open, r: reply, d: done)",
+            focused,
+        ));
     let mut state = app.inbox_table_state.with_offset(app.inbox_offset.get());
     frame.render_stateful_widget(table, area, &mut state);
     app.inbox_offset.set(state.offset());
 }
 
 /// The opened message in full, same layout as `bridle inbox show`.
-fn draw_message(frame: &mut Frame, area: Rect, msg: &bridle_api::Message) {
+fn draw_message(frame: &mut Frame, area: Rect, msg: &bridle_api::Message, is_question: bool) {
     let popup = centered_rect(area, 80, 80);
     frame.render_widget(Clear, popup);
 
@@ -192,7 +195,11 @@ fn draw_message(frame: &mut Frame, area: Rect, msg: &bridle_api::Message) {
     lines.extend(msg.body.lines().map(|l| Line::from(l.to_string())));
 
     let block = Block::default()
-        .title(format!("{} (r: reply, Esc/Enter: close)", msg.id))
+        .title(if is_question {
+            format!("{} (answer via the task; q/Esc/Enter: close)", msg.id)
+        } else {
+            format!("{} (r: reply, d: done, q/Esc/Enter: close)", msg.id)
+        })
         .borders(Borders::ALL)
         .border_style(Style::default().fg(Color::Cyan));
     let paragraph = Paragraph::new(lines)

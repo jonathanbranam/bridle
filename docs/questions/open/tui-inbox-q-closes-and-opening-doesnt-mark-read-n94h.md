@@ -47,3 +47,7 @@ messages only (`crates/bridle-tui/src/run.rs`). The human had opened the three q
 nothing while the questions (br-33a3, br-c83e, br-88e1) were still unanswered.
 
 4. The TUI's inbox also lists open questions, as `bridle inbox` does, until they're answered.
+
+Shape, as built (br-6441): the TUI polls `GET /v1/questions` with the unread messages and shows
+the questions after them (row id = task id). A question leaves only when answered: opening it,
+closing it or `d` never marks anything read, and `r` skips it (answer through the task).
