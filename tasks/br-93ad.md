@@ -4,7 +4,7 @@ title = "Push bridle/state to origin after a flush (we2r shape 1), behind a conf
 kind = "feature"
 state = "integrated"
 created_at = "2026-09-30T00:54:57.873Z"
-updated_at = "2026-09-30T01:04:02.733273Z"
+updated_at = "2026-09-30T01:04:15.450795Z"
 size = "S"
 branch = "bridle/state-push"
 commit = "881a90c0ea5b65135a2f46c6e7fbe772e8db116c"
@@ -29,3 +29,6 @@ done: state branch push behind [state] push (default false, on in bridle's own c
 
 ### note · agent:manager-2 · 2026-09-30T01:04:02.733Z
 integrated: 881a90c0ea5b65135a2f46c6e7fbe772e8db116c (branch bridle/state-push)
+
+### note · agent:manager-2 · 2026-09-30T01:04:15.450Z
+cleanup: removed agent state-push, branch bridle/state-push
