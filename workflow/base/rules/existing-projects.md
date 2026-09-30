@@ -26,3 +26,7 @@ Bridle's own repo is not an existing project in this sense: its merge model is
 in `docs/design/agent-host/operating-model.md`. Until
 [[branch-rules-per-project-rxe8|rxe8]] makes the integration branch a project
 setting, no agent works in any other project.
+
+**State branch pushing** (2026-09-29): the human approved pushing `bridle/state` to all projects'
+remotes, including trials (meta-notes, track-web). Projects may opt-out with `[state] push = false` in
+`.bridle/config.toml`. The default is `true` as of br-e70f.

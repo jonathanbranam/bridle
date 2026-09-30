@@ -246,8 +246,8 @@ events/2026-09.jsonl      append-only transitions, for history and rebuild
   `accept` — but `TaskManager::flush_now` already exists as the one function
   both the periodic tick and that future caller will call, so adding it
   won't need a restructure. **Pushing is built, behind `[state] push`**
-  (default `false`; `true` only in bridle's own `.bridle/config.toml`, since pushing adds a
-  branch to a project's remote, rule `existing-projects`). After a flush that committed, the
+  (default `true`; set `push = false` to opt-out, per rule `existing-projects`
+  and approved 2026-09-29 to push to all projects). After a flush that committed, the
   daemon pushes `bridle/state` to `origin` in a background process, from the state branch's own
   worktree, at most once a minute: a commit made inside the window is pushed when it ends (the
   next flush tick), and once more on graceful shutdown (10 s cap). Never forced. A failed
@@ -342,12 +342,11 @@ resume above the highest); a note already in the table is skipped, and they don'
 the refusal above.
 
 **Fetching from origin.** With `bridle rebuild --from-origin`, or on a daemon's first start with
-no local `bridle/state` when `[state] push = true`, the daemon first fetches
+no local `bridle/state` when `[state] push = true` (the default, or explicit `push = false` opt-out), the daemon first fetches
 `origin/bridle/state` (`StateBranch::fetch_from_origin`). It only reads from the remote and never
 overwrites: a missing local branch is created from it; a local branch that is behind it, or is
 only the empty seed commit the daemon creates, is fast-forwarded; if both exist and differ,
-nothing changes and the command says so. A project with neither the switch nor the flag never
-fetches.
+nothing changes and the command says so. A project with `push = false` and no flag never fetches.
 
 ## The daemon registry
 

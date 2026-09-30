@@ -1805,4 +1805,72 @@ mod tests {
         let body = &body[..body.find("\n}\n").expect("end")];
         assert!(!body.contains("force") && !body.contains("\"+"));
     }
+
+    #[tokio::test]
+    async fn origin_already_has_bridle_state_fast_forwards() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let (sb, _repo, origin, dir) = pushing(tmp.path(), Some(Duration::from_millis(0))).await;
+        // First edit: push to origin.
+        edit(&sb, 1).await;
+        wait_until_idle(&sb).await;
+        let first_commit = git(&dir, &["rev-parse", "HEAD"]).await;
+        assert_eq!(
+            origin_tip(&origin).await.as_deref(),
+            Some(first_commit.trim()),
+            "first commit pushed"
+        );
+
+        // Second edit: push again, should fast-forward (not force).
+        edit(&sb, 2).await;
+        wait_until_idle(&sb).await;
+        let second_commit = git(&dir, &["rev-parse", "HEAD"]).await;
+        assert_ne!(first_commit.trim(), second_commit.trim());
+        assert_eq!(
+            origin_tip(&origin).await.as_deref(),
+            Some(second_commit.trim()),
+            "second commit fast-forward"
+        );
+        let st = sb.push_status().expect("status");
+        assert!(st.last_pushed_at.is_some() && st.failing.is_none() && !st.diverged);
+    }
+
+    #[tokio::test]
+    async fn origin_equals_local_no_error_no_force() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let (sb, _repo, origin, dir) = pushing(tmp.path(), Some(Duration::from_millis(0))).await;
+        // Push to origin.
+        edit(&sb, 1).await;
+        wait_until_idle(&sb).await;
+        let commit = git(&dir, &["rev-parse", "HEAD"]).await;
+        assert_eq!(origin_tip(&origin).await.as_deref(), Some(commit.trim()));
+
+        // A second flush when nothing changed should not error or force.
+        sb.flush_now().await.expect("second flush");
+        wait_until_idle(&sb).await;
+        let st = sb.push_status().expect("status");
+        assert!(st.last_pushed_at.is_some() && st.failing.is_none() && !st.diverged);
+        assert_eq!(origin_tip(&origin).await.as_deref(), Some(commit.trim()));
+    }
+
+    #[tokio::test]
+    async fn no_remote_configured_stays_quiet_no_warn_spam() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let repo = tmp.path().join("repo");
+        init_repo(&repo).await;
+        // No remote added.
+        let dir = tmp.path().join("state");
+        let sb = StateBranch::open(&repo, &dir)
+            .await
+            .expect("open")
+            .with_push(Duration::from_millis(0));
+
+        // Edit and flush should not panic even though there's no remote.
+        edit(&sb, 1).await;
+        wait_until_idle(&sb).await;
+        // Push status should show a failure reason (e.g., no remote configured).
+        let st = sb.push_status();
+        assert!(st.is_some(), "push status exists");
+        let st = st.expect("status");
+        assert!(st.failing.is_some(), "push fails when no remote configured");
+    }
 }

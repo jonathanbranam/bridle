@@ -80,6 +80,3 @@ max_uptime      = "12h"     # a plan-a-handover at this age, whatever the size
 
 [context]
 wind_down_at = { default = 150000, worker = 120000 }
-
-[state]
-push = true   # bridle's own repo only; the default is false (rule existing-projects)

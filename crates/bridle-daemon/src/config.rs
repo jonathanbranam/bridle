@@ -1092,8 +1092,8 @@ pub struct Config {
     pub branches: BranchesConfig,
     pub ci: CiConfig,
     pub disk: DiskConfig,
-    /// `[state] push`: push `bridle/state` to origin after a flush that committed. Off by
-    /// default: pushing adds a branch to the project's remote (rule existing-projects).
+    /// `[state] push`: push `bridle/state` to origin after a flush that committed. On by
+    /// default: set to false to opt-out (rule existing-projects, human-approved 2026-09-29).
     pub state_push: bool,
     pub orchestrator: OrchestratorConfig,
     pub ports: PortsConfig,
@@ -1142,7 +1142,7 @@ impl Default for Config {
             branches: BranchesConfig::default(),
             ci: CiConfig::default(),
             disk: DiskConfig::default(),
-            state_push: false,
+            state_push: true,
             orchestrator: OrchestratorConfig::default(),
             ports: PortsConfig::default(),
             integration: IntegrationConfig::default(),
@@ -2712,9 +2712,9 @@ mod tests {
     }
 
     #[test]
-    fn state_push_defaults_off_and_parses() {
-        assert!(!Config::default().state_push);
-        assert!(Config::parse("[state]\npush = true\n").unwrap().state_push);
+    fn state_push_defaults_on_and_parses() {
+        assert!(Config::default().state_push);
+        assert!(!Config::parse("[state]\npush = false\n").unwrap().state_push);
     }
 
     #[test]

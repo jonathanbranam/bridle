@@ -58,3 +58,10 @@ The human, verbatim:
   builds on it as a fast-forward). The repo is public; the advisor's keyword scan found no
   secrets in it.
 - Projects on trial (meta-notes, track-web, later ones) push `bridle/state` too: approved.
+
+## Implementation (br-e70f, 2026-09-30)
+
+Default changed to `[state] push = true` in crates/bridle-daemon/src/config.rs; explicit `push = false`
+remains an opt-out. Redundant line removed from bridle's own `.bridle/config.toml`. Tests added for
+origin already having bridle/state (fast-forward or no-op), and for no remote configured (quiet, no
+WARN). Docs updated: storage.md, roles-and-config.md.

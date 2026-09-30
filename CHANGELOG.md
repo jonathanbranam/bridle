@@ -9,8 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Handover notes are also written to the state branch as `handovers/<id>.md` (backfilled at start), and `bridle rebuild` restores them with ids and seq kept; `bridle rebuild --from-origin`, and a first start with `[state] push = true` and no local branch, fetch `origin/bridle/state` (fast-forward only, never overwriting a local branch) (we2r, br-011b).
-- `[state] push = true` pushes `bridle/state` to `origin` after flushes that committed (at most once a minute, trailing, and once on shutdown; never forced; a non-fast-forward stops it); failures and last push show in `bridle status`. Default off; on in bridle's own config (we2r, br-93ad).
+- Handover notes are also written to the state branch as `handovers/<id>.md` (backfilled at start), and `bridle rebuild` restores them with ids and seq kept; `bridle rebuild --from-origin`, and a first start with `[state] push` on (default, or explicit opt-out) and no local branch, fetch `origin/bridle/state` (fast-forward only, never overwriting a local branch) (we2r, br-011b).
+- `[state] push` pushes `bridle/state` to `origin` after flushes that committed (at most once a minute, trailing, and once on shutdown; never forced; a non-fast-forward stops it); failures and last push show in `bridle status` (we2r, br-93ad, br-e70f). **Default on as of br-e70f** (human-approved 2026-09-29); projects opt out with `push = false`.
 
 ### Changed
 
