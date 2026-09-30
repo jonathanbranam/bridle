@@ -1884,11 +1884,20 @@ fn parse_token_count(s: &str) -> Result<u64, ConfigError> {
     } else {
         (s, 1_u64)
     };
-    let n: f64 = num_part
-        .parse()
-        .map_err(|_| ConfigError::BadOrchestrator(format!("invalid token count {s:?}")))?;
-    let result = (n * unit as f64) as u64;
-    Ok(result)
+    let bad = || ConfigError::BadOrchestrator(format!("invalid token count {s:?}"));
+    // Plain digits with an optional fraction: no sign, exponent, "inf" or "nan", which
+    // f64's parser would let through.
+    let (whole, frac) = num_part.split_once('.').unwrap_or((num_part, ""));
+    let digits = |p: &str| p.bytes().all(|b| b.is_ascii_digit());
+    if (whole.is_empty() && frac.is_empty()) || !digits(whole) || !digits(frac) {
+        return Err(bad());
+    }
+    let n: f64 = num_part.parse().map_err(|_| bad())?;
+    let result = n * unit as f64;
+    if result >= u64::MAX as f64 {
+        return Err(bad());
+    }
+    Ok(result.round() as u64)
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -3172,6 +3181,64 @@ mod tests {
         assert!(parse_token_count("").is_err());
         assert!(parse_token_count("abc").is_err());
         assert!(parse_token_count("150x").is_err());
+        assert_eq!(parse_token_count("0.5k").unwrap(), 500);
+        assert_eq!(parse_token_count("1.").unwrap(), 1);
+        for bad in [
+            "k",
+            "M",
+            ".",
+            ".k",
+            "-5k",
+            "+5k",
+            "1e3k",
+            "inf",
+            "nan",
+            "1kk",
+            "1 k",
+            "1_000",
+            "1.2.3k",
+            "99999999999999999999999M",
+        ] {
+            assert!(
+                parse_token_count(bad).is_err(),
+                "{bad:?} should be rejected"
+            );
+        }
+    }
+
+    #[test]
+    fn bad_token_counts_name_the_key() {
+        for key in ["note_tokens", "plan_tokens", "handover_tokens"] {
+            for bad in ["\"lots\"", "\"150x\"", "\"\"", "-5", "1.5", "true"] {
+                let err = Config::parse(&format!("[orchestrator]\n{key} = {bad}\n"))
+                    .expect_err(bad)
+                    .to_string();
+                assert!(err.contains(key), "{key} = {bad}: {err}");
+            }
+        }
+    }
+
+    #[test]
+    fn old_integer_only_orchestrator_config_still_loads() {
+        let o = Config::parse(
+            "[orchestrator]\nenabled = true\nnote_tokens = 150000\nplan_tokens = 210000\n\
+             handover_tokens = 255000\n",
+        )
+        .unwrap()
+        .orchestrator;
+        assert_eq!(
+            (o.note_tokens, o.plan_tokens, o.handover_tokens),
+            (150_000, 210_000, 255_000)
+        );
+        // Mixed integer and string forms are fine, and order is still checked.
+        let o = Config::parse("[orchestrator]\nnote_tokens = 100000\nplan_tokens = \"1.5M\"\nhandover_tokens = \"2M\"\n")
+            .unwrap()
+            .orchestrator;
+        assert_eq!(o.plan_tokens, 1_500_000);
+        assert!(
+            Config::parse("[orchestrator]\nnote_tokens = \"200k\"\nplan_tokens = \"180k\"\n")
+                .is_err()
+        );
     }
 
     #[test]
