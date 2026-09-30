@@ -190,7 +190,14 @@ mode  = "quiet"          # default; "locked" parses but is not acted on yet
 With no `[[focus]]` everything is off. In a `quiet` period `bridle focus gate` (see
 [[cli]]) nudges the human; the advisor and orchestrator role text says to lead with a one-line
 nudge back to work and keep the answer minimal. A project opts out with `focus_hours = false`
-in its `.bridle/config.toml`. 
+in its `.bridle/config.toml`.
+
+**Locked.** In a `locked` period the gate blocks every prompt, the orchestrator keeps running,
+`bridle session advisor` / `bridle advisor start` refuse, and the daemon kills every advisor tmux
+pane (`@bridle` = `advisor*`) from its stall-check loop, so a period that starts is caught within
+one tick (`bridle_daemon::focus`). An active override lifts the lock the same way it silences the
+nudge.
+
 **Override.** The human can write `~/.bridle/focus-override.toml` by hand (no CLI command):
 
 ```toml
@@ -205,7 +212,7 @@ the gate stays silent. A malformed file is logged and ignored. `bridle status` s
 line while an override is pending or active. Agents can't write it: every role denies
 `Edit`/`Write` of `~/.bridle/focus*` and `~/.bridle/config.toml` (`DENY_FOCUS_FILES`, and the
 advisor/orchestrator session settings), and their role text says never to create or edit it. Not
-built yet: `locked`, quiet-noise routing, an override event in the catch-up summary.
+built yet: quiet-noise routing, an override event in the catch-up summary.
 
 ## Per-spawn tool overrides
 

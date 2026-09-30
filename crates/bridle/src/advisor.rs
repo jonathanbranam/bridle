@@ -24,6 +24,10 @@ pub async fn run(cli: &Cli, action: &AdvisorAction) -> Result<(), CliError> {
         )
         .into());
     }
+    crate::focus::refuse_advisor_if_locked(
+        &bridle_api::discovery::bridle_home(),
+        chrono::Local::now(),
+    )?;
     if name.is_empty()
         || !name
             .chars()

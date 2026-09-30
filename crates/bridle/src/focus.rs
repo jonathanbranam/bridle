@@ -4,71 +4,15 @@
 
 use std::path::Path;
 
-use bridle_daemon::config::{
-    FocusMode, FocusPeriod, focus_opted_out, focus_override_delay_minutes, focus_periods,
-};
-use chrono::{DateTime, Duration, Local, Utc};
-use serde::Deserialize;
+use bridle_daemon::config::{FocusMode, FocusPeriod, focus_opted_out, focus_periods};
+use bridle_daemon::focus::{locked_period, read_override};
+use chrono::{DateTime, Local, Utc};
 
 /// Repeat the nudge once this long has passed since the last one (the human's call: 30 min is
 /// too long).
 const NUDGE_EVERY_SECS: i64 = 5 * 60;
 
 const STATE_FILE: &str = "focus-nudge";
-const OVERRIDE_FILE: &str = "focus-override.toml";
-
-/// The longest an override lasts from when it takes effect, whatever `until` says.
-const OVERRIDE_MAX: Duration = Duration::hours(2);
-
-/// `<home>/focus-override.toml`, written by the human by hand (no CLI, agents are denied it).
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct RawOverride {
-    until: toml::value::Datetime,
-    reason: String,
-}
-
-/// A parsed override: it takes effect at `from` (the file's write time plus the delay) and ends
-/// at `until`, capped at `OVERRIDE_MAX` after `from`.
-#[derive(Debug, PartialEq)]
-pub struct Override {
-    pub from: DateTime<Utc>,
-    pub until: DateTime<Utc>,
-    pub reason: String,
-}
-
-impl Override {
-    fn active(&self, now: DateTime<Utc>) -> bool {
-        self.from <= now && now < self.until
-    }
-}
-
-/// The override file, if present and well-formed. A malformed file is logged and ignored, so a
-/// typo never silently disables focus hours (or crashes the hook).
-pub fn read_override(home: &Path) -> Option<Override> {
-    let path = home.join(OVERRIDE_FILE);
-    let text = std::fs::read_to_string(&path).ok()?;
-    let written: DateTime<Utc> = std::fs::metadata(&path).ok()?.modified().ok()?.into();
-    parse_override(&text, written, focus_override_delay_minutes(home)).or_else(|| {
-        tracing::warn!("ignoring malformed {}", path.display());
-        None
-    })
-}
-
-fn parse_override(text: &str, written: DateTime<Utc>, delay_minutes: u32) -> Option<Override> {
-    let raw: RawOverride = toml::from_str(text).ok()?;
-    let from = written + Duration::minutes(i64::from(delay_minutes));
-    Some(Override {
-        from,
-        until: raw
-            .until
-            .to_string()
-            .parse::<DateTime<Utc>>()
-            .ok()?
-            .min(from + OVERRIDE_MAX),
-        reason: raw.reason,
-    })
-}
 
 /// The `bridle status` line for an override, if a file exists and focus hours are configured.
 pub fn status_line(home: &Path, now: DateTime<Utc>) -> Option<String> {
@@ -100,6 +44,10 @@ pub fn gate(home: &Path, repo: &Path, now: DateTime<Local>) -> Option<String> {
     let periods = focus_periods(home).ok()?;
     if periods.is_empty() || focus_opted_out(repo) {
         return None;
+    }
+    // Locked blocks every prompt (an active override lifts it, inside `locked_period`).
+    if let Some(p) = locked_period(home, now) {
+        return Some(block_output(&p));
     }
     let period = periods
         .iter()
@@ -138,6 +86,17 @@ fn nudge_text(period: &FocusPeriod) -> String {
     )
 }
 
+fn block_output(period: &FocusPeriod) -> String {
+    serde_json::json!({
+        "decision": "block",
+        "reason": format!(
+            "Locked until {}. Email bridle@dev.branam.us if it matters.",
+            period.end.format("%-I:%M %p"),
+        ),
+    })
+    .to_string()
+}
+
 fn hook_output(context: &str) -> String {
     serde_json::json!({
         "hookSpecificOutput": {
@@ -146,6 +105,19 @@ fn hook_output(context: &str) -> String {
         }
     })
     .to_string()
+}
+
+/// Locked mode refuses to start an advisor (`bridle session advisor`, `bridle advisor start`).
+pub fn refuse_advisor_if_locked(home: &Path, now: DateTime<Local>) -> Result<(), anyhow::Error> {
+    match locked_period(home, now) {
+        Some(p) => Err(anyhow::anyhow!(
+            "focus hours ({}) are locked until {}: no advisors. Email bridle@dev.branam.us if it \
+             matters.",
+            p.name,
+            p.end.format("%-I:%M %p"),
+        )),
+        None => Ok(()),
+    }
 }
 
 /// The hook entry point. Never fails: a hook that errors would show in the human's session.
@@ -162,7 +134,8 @@ pub fn run_gate() {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::TimeZone;
+    use bridle_daemon::focus::OVERRIDE_FILE;
+    use chrono::{Duration, TimeZone};
 
     fn at(y: i32, mo: u32, d: u32, h: u32, mi: u32) -> DateTime<Local> {
         Local
@@ -242,9 +215,50 @@ mod tests {
     }
 
     #[test]
-    fn locked_parses_but_does_not_act_yet() {
+    fn locked_blocks_every_prompt() {
         let home = home_with(Some(&WORK.replace("quiet", "locked")));
-        assert_eq!(gate(home.path(), home.path(), at(2026, 9, 30, 10, 0)), None);
+        for m in [0, 1, 30] {
+            let out = gate(home.path(), home.path(), at(2026, 9, 30, 10, m)).expect("blocks");
+            let v: serde_json::Value = serde_json::from_str(&out).expect("json");
+            assert_eq!(v["decision"], "block");
+            assert_eq!(
+                v["reason"],
+                "Locked until 6:00 PM. Email bridle@dev.branam.us if it matters."
+            );
+        }
+        assert_eq!(gate(home.path(), home.path(), at(2026, 9, 30, 18, 0)), None);
+    }
+
+    #[test]
+    fn advisors_are_refused_only_while_locked() {
+        let home = home_with(Some(&WORK.replace("quiet", "locked")));
+        let err = refuse_advisor_if_locked(home.path(), at(2026, 9, 30, 10, 0)).unwrap_err();
+        assert!(err.to_string().contains("locked until 6:00 PM"), "{err}");
+        assert!(refuse_advisor_if_locked(home.path(), at(2026, 9, 30, 19, 0)).is_ok());
+        let quiet = home_with(Some(WORK));
+        assert!(refuse_advisor_if_locked(quiet.path(), at(2026, 9, 30, 10, 0)).is_ok());
+        assert!(refuse_advisor_if_locked(home_with(None).path(), at(2026, 9, 30, 10, 0)).is_ok());
+    }
+
+    #[test]
+    fn a_project_opt_out_and_an_active_override_lift_the_lock() {
+        let home = home_with(Some(&WORK.replace("quiet", "locked")));
+        let repo = tempfile::tempdir().expect("tempdir");
+        std::fs::create_dir(repo.path().join(".bridle")).expect("mkdir");
+        std::fs::write(
+            repo.path().join(".bridle/config.toml"),
+            "focus_hours = false\n",
+        )
+        .expect("write");
+        assert_eq!(gate(home.path(), repo.path(), at(2026, 9, 30, 10, 0)), None);
+        std::fs::write(
+            home.path().join(OVERRIDE_FILE),
+            "until = 2099-01-01T00:00:00Z\nreason = \"deploy\"\n",
+        )
+        .expect("write");
+        let o = read_override(home.path()).expect("parses");
+        let t = (o.from + chrono::Duration::minutes(1)).with_timezone(&Local);
+        assert_eq!(gate(home.path(), home.path(), t), None);
     }
 
     #[test]
@@ -260,45 +274,8 @@ mod tests {
         assert_eq!(gate(home.path(), repo.path(), at(2026, 9, 30, 10, 0)), None);
     }
 
-    fn utc(h: u32, m: u32) -> DateTime<Utc> {
-        at(2026, 9, 30, h, m).with_timezone(&Utc)
-    }
-
-    #[test]
-    fn override_takes_effect_after_the_delay_and_expires() {
-        let written = utc(10, 0);
-        let o = parse_override("until = 2026-09-30T20:00:00Z\nreason = \"x\"", written, 10)
-            .expect("parses");
-        assert!(!o.active(utc(10, 9)));
-        assert!(o.active(utc(10, 10)));
-        assert!(o.active(o.until - Duration::seconds(1)));
-        assert!(!o.active(o.until));
-        // A short `until` wins over the cap.
-        let short = parse_override(
-            &format!(
-                "until = {}\nreason = \"x\"",
-                (written + Duration::minutes(30)).to_rfc3339()
-            ),
-            written,
-            10,
-        )
-        .expect("parses");
-        assert_eq!(short.until, written + Duration::minutes(30));
-    }
-
-    #[test]
-    fn override_is_capped_at_two_hours_from_effect() {
-        let written = utc(10, 0);
-        let o = parse_override("until = 2099-01-01T00:00:00Z\nreason = \"x\"", written, 10)
-            .expect("parses");
-        assert_eq!(o.until, o.from + Duration::hours(2));
-    }
-
     #[test]
     fn malformed_override_is_ignored() {
-        let w = utc(10, 0);
-        assert_eq!(parse_override("until = \"soon\"", w, 10), None);
-        assert_eq!(parse_override("until = 2026-09-30T20:00:00Z", w, 10), None);
         let home = home_with(Some(WORK));
         std::fs::write(home.path().join(OVERRIDE_FILE), "garbage [").expect("write");
         assert!(read_override(home.path()).is_none());

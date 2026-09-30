@@ -100,6 +100,7 @@ pub async fn run(cli: &Cli, role: &SessionRole) -> Result<(), CliError> {
                 Some((n, rest)) => (Some(n.as_str()), rest),
                 None => (None, &[][..]),
             };
+            crate::focus::refuse_advisor_if_locked(&home, chrono::Local::now())?;
             let name = session_name("advisor", adv, &project, &suffix);
             let args = claude_args(&advisor_settings(), &name, extra, ADVISOR_PROMPT);
             advisor(&home, &project, adv, &args).await?

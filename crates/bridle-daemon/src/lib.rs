@@ -23,6 +23,7 @@ pub mod containment;
 pub mod cost_audit;
 pub mod disk;
 mod events;
+pub mod focus;
 pub mod governor;
 pub mod impact;
 mod integrator;
@@ -605,11 +606,21 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
 
     let stall_task = spawn_loop(shutdown_rx.clone(), overrides.stall_check_interval, {
         let manager = manager.clone();
+        let home = overrides
+            .bridle_home
+            .clone()
+            .unwrap_or_else(discovery::bridle_home);
         move || {
             let manager = manager.clone();
+            let home = home.clone();
             async move {
                 manager.tick_stall_check().await;
                 manager.tick_context_check().await;
+                // Locked focus hours: advisors don't run (ticket cvaq). Cheap when unconfigured.
+                let _ = tokio::task::spawn_blocking(move || {
+                    focus::stop_advisors_if_locked(&home, chrono::Local::now());
+                })
+                .await;
             }
         }
     });

@@ -556,7 +556,9 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   hook JSON whose `additionalContext` is "Quiet hours (work) until 6:00 PM ET" plus the nudge
   instruction, on the first prompt of a period and again once 5 minutes have passed
   (last nudge in `$BRIDLE_HOME/focus-nudge`). With no `[[focus]]`, outside a period, or in a
-  project with `focus_hours = false`, it prints nothing. Local, never fails. An active override file (roles-and-config, Focus hours) silences it, and
+  project with `focus_hours = false`, it prints nothing. In a `locked` period it blocks every prompt
+  (`{"decision":"block"}`, reason "Locked until 6:00 PM. Email bridle@dev.branam.us if it
+  matters."). `bridle session advisor` and `bridle advisor start` refuse while locked. Local, never fails. An active override file (roles-and-config, Focus hours) silences it, and
   `bridle status` prints a `focus` line while one is pending or active.
 - **`handover`** keeps the orchestrator's note as a record ([[orchestrator-supervision]] section 7):
   `write` reads a file or stdin (`-`), `list` shows id, time, author and first line, `show` the
