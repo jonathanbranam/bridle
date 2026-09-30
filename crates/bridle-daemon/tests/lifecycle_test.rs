@@ -214,6 +214,43 @@ async fn rm_refuses_a_dirty_worktree_without_force() {
 }
 
 #[tokio::test]
+async fn rm_delete_branch_refuses_an_empty_branch_without_force() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let agent = daemon
+        .client
+        .spawn(&SpawnRequest {
+            components: Vec::new(),
+            role: "worker".to_string(),
+            name: Some("w1".to_string()),
+            prompt: None,
+            workdir: Some(Workdir::Worktree { base: None }),
+            model: None,
+            extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
+            ignore_budget: false,
+        })
+        .await
+        .expect("spawn");
+    wait_for_state(&daemon.client, &agent.id, AgentState::Idle).await;
+    // No commit of its own: an ancestor of HEAD, but "no work", not "merged" (z4hd).
+    let err = daemon
+        .client
+        .remove(
+            &agent.id,
+            &RemoveQuery {
+                force: false,
+                delete_branch: true,
+            },
+        )
+        .await
+        .unwrap_err();
+    assert!(matches!(
+        err,
+        bridle_api::ClientError::Api { status: 409, .. }
+    ));
+}
+
+#[tokio::test]
 async fn rm_refuses_a_worktree_with_open_files_without_force() {
     let (daemon, _tmp) = start_daemon(None).await;
     let agent = daemon
