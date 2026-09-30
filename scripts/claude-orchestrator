@@ -7,6 +7,12 @@
 # Usage: claude-orchestrator [--project <project>] [extra claude args]
 # Project defaults to BRIDLE_PROJECT env var or 'bridle' if unset; it's used in session and
 # remote-control names (e.g. 'orch-meta-notes-nuc') and passed to bridle for daemon/token selection.
+# Never under a bridle agent (k6b3): a worker's test run once overwrote the live orchestrator's
+# pid/session files and used its Remote Control name. Tests stub `claude` and set BRIDLE_LAUNCHER_TEST=1.
+if [[ -n "${BRIDLE_AGENT_ID:-}" && -z "${BRIDLE_LAUNCHER_TEST:-}" ]]; then
+  echo "$(basename "$0"): refusing to start under a bridle agent (BRIDLE_AGENT_ID is set). Test with 'bash -n', or a stub claude on PATH, a temporary BRIDLE_HOME and BRIDLE_LAUNCHER_TEST=1." >&2
+  exit 1
+fi
 cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)" || exit 1
 # A tools-only clone (hw6c, [machine] tools_only in ~/.bridle/config.toml) is not the project's home.
 bridle machine tools-only-check || exit 1

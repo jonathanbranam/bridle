@@ -2867,6 +2867,18 @@ fn agent_env(
             ws.workspace.to_string_lossy().into_owned(),
         ),
         ("BRIDLE_PROJECT".to_string(), project.to_string()),
+        // Its own machine dir (k6b3): the live ~/.bridle's orchestrator pid/session files and
+        // credentials are out of reach of anything an agent runs. It talks to its daemon by
+        // BRIDLE_URL/BRIDLE_TOKEN, not by discovery, so it doesn't need the real one. Not
+        // created here: whatever writes there does `mkdir -p`.
+        (
+            "BRIDLE_HOME".to_string(),
+            bridle_api::discovery::state_dir(&ws.workspace)
+                .join("agent-home")
+                .join(id)
+                .to_string_lossy()
+                .into_owned(),
+        ),
         ("PATH".to_string(), agent_path()),
     ];
     if !components.is_empty() {

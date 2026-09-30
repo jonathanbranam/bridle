@@ -168,6 +168,12 @@ async fn spawn_records_components_and_passes_them_in_the_env() {
         env.get("BRIDLE_COMPONENTS").map(String::as_str),
         Some("client-games,server")
     );
+    // k6b3: an agent's BRIDLE_HOME is its own, never the machine's live one.
+    let home = env.get("BRIDLE_HOME").expect("BRIDLE_HOME in agent env");
+    assert!(
+        home.ends_with(&format!("agent-home/{}", agent.id)),
+        "{home}"
+    );
     let shown = daemon.client.get_agent("w1").await.expect("get");
     assert_eq!(shown.components, vec!["client-games", "server"]);
 }

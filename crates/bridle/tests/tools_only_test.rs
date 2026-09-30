@@ -110,6 +110,15 @@ fn hooks_install_refuses_outside_the_list() {
 
 /// Runs a launch script with a stub `claude` that records having started.
 fn run_script(script: &str, home: &Path) -> (Output, bool) {
+    run_script_env(script, home, None)
+}
+
+/// Same, with BRIDLE_AGENT_ID set as under a bridle agent, and the test flag if `flag`.
+fn run_script_as_agent(script: &str, home: &Path, flag: bool) -> (Output, bool) {
+    run_script_env(script, home, Some(flag))
+}
+
+fn run_script_env(script: &str, home: &Path, agent: Option<bool>) -> (Output, bool) {
     let bin = tempfile::tempdir().unwrap();
     let ran = bin.path().join("ran");
     let stub = bin.path().join("claude");
@@ -121,7 +130,17 @@ fn run_script(script: &str, home: &Path) -> (Output, bool) {
         bridle_bin().parent().unwrap().display(),
         std::env::var("PATH").unwrap_or_default()
     );
-    let out = Command::new("bash")
+    let mut cmd = Command::new("bash");
+    // This suite may itself run under a bridle agent.
+    cmd.env_remove("BRIDLE_AGENT_ID")
+        .env_remove("BRIDLE_LAUNCHER_TEST");
+    if let Some(flag) = agent {
+        cmd.env("BRIDLE_AGENT_ID", "a-test");
+        if flag {
+            cmd.env("BRIDLE_LAUNCHER_TEST", "1");
+        }
+    }
+    let out = cmd
         .arg(repo_root().join("scripts").join(script))
         .env("PATH", path)
         .env("BRIDLE_HOME", home)
@@ -146,5 +165,24 @@ fn launch_scripts_refuse_in_a_tools_only_clone() {
 fn launch_scripts_start_elsewhere() {
     let home = tempfile::tempdir().unwrap();
     let (_, started) = run_script("claude-orchestrator", home.path());
+    assert!(started);
+}
+
+#[test]
+fn launch_scripts_refuse_under_a_bridle_agent_without_the_test_flag() {
+    for script in ["claude-orchestrator", "claude-advisor"] {
+        let home = tempfile::tempdir().unwrap();
+        let (out, started) = run_script_as_agent(script, home.path(), false);
+        assert!(!out.status.success(), "{script}");
+        assert!(!started, "{script} started claude");
+        assert!(String::from_utf8_lossy(&out.stderr).contains("bridle agent"));
+        assert!(!home.path().join("orchestrator.pid").exists());
+    }
+}
+
+#[test]
+fn launch_scripts_run_under_a_bridle_agent_with_the_test_flag() {
+    let home = tempfile::tempdir().unwrap();
+    let (_, started) = run_script_as_agent("claude-orchestrator", home.path(), true);
     assert!(started);
 }
