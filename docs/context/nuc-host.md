@@ -75,6 +75,34 @@ Each of these is an open ticket:
 - Machine-level capacity, filed under
   [[how-project-daemons-share-one-budget-xypj|how project daemons share one budget]]
 
+## Moving a project to another machine
+
+A project has one serving machine ([[docs/design/storage#The state branch|storage]], "Ownership").
+To move one (old machine to new):
+
+1. **Old machine, push the work.** Push the integration branch and any working branches you want to
+   keep (`git push origin main <branch>...`). Uncommitted worktree changes don't move.
+2. **Old machine, stop the daemon** with `bridle stop-daemon`. One writer only: don't start the new
+   daemon first. Shutdown stops the agents, flushes tasks and pushes `bridle/state` (bounded to
+   10 s); check that `git push origin bridle/state` says up to date, or run it yourself.
+3. **New machine, clone** the repo and build or install `bridle`. `bridle/state` comes with it from
+   origin; no manual `git fetch origin bridle/state:bridle/state`.
+4. **New machine, `bridle serve --take-over`** in the clone (add `--detach` to background it).
+   Without `--take-over` it refuses, naming the old host, because `owner.toml` on `bridle/state`
+   still names it. The claim is pushed as a normal state flush.
+5. **Create tokens**: `bridle token create <name>` for each principal (e.g. `orchestrator`,
+   `advisor`, `human`); with the project known they're saved in `~/.bridle/credentials.toml`
+   rather than printed. Tokens don't move with the project.
+6. **Start the sessions** with the project-aware scripts, as in "Running sessions for specific
+   projects" above: `scripts/claude-orchestrator --project <name>` and
+   `scripts/claude-advisor --project <name> [alias]`.
+7. **Old machine, mark its clone tools-only** (below) so nobody starts a second daemon there.
+
+Messages (the inbox) live in SQLite, not on the state branch, and do not move; read anything
+still needed on the old machine first. Tasks, edges, open questions and claims come from the state
+branch (`bridle rebuild` if the new machine's database looks stale). Cross-machine message sync is
+not built. Ticket hw6c.
+
 ## Tools-only clones
 
 A clone kept only for its tools (not the project's home) is listed in `~/.bridle/config.toml`:

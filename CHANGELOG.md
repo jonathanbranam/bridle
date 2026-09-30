@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Runbook for moving a project to another machine in `docs/context/nuc-host.md` (br-9d8d, hw6c).
 - hw6c 2: tools-only clones. `[machine] tools_only = [paths]` in `~/.bridle/config.toml` marks a clone kept for its tools: `bridle serve` refuses there, `bridle machine tools-only-install` adds refusing pre-commit/pre-push hooks (re-runnable, won't overwrite a user's hook), and `claude-orchestrator`/`claude-advisor` refuse to start (br-2828).
 - Human to-dos are prioritized, rescindable and audited (br-ff39, ex9q): tasks have a `priority` (`high`/`normal`/`low`, default normal) set with `bridle task new --priority` or `bridle task priority`, shown in `task list`/`show` (list sorted high first) and stored in the task file on the state branch. A change records who and when in the thread and as a `task.priority` event; a to-do is created with a thread entry; `task drop --reason` on a to-do the human holds sends the human an inbox note with the reason. `POST /v1/tasks/{id}/priority`.
 - One machine owns a project (br-f3ec, hw6c 1): the state branch carries `owner.toml` (host, since); `bridle serve` fetches `origin/bridle/state` first (on every start, so a fresh clone adopts origin's state instead of reporting Diverged, and the NUC runbook's manual fetch is unnecessary) and refuses to start when another host owns the project. `bridle serve --take-over` claims it. No origin, the same host, or a first serve are unchanged.
