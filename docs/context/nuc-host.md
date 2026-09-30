@@ -117,4 +117,5 @@ not built. Ticket hw6c.
 A clone kept only for its tools (not the project's home) is listed in `~/.bridle/config.toml`:
 `[machine] tools_only = ["/home/<user>/src/bridle"]`. Then run `bridle machine tools-only-install`
 in it once. `bridle serve` and the orchestrator and advisor scripts refuse there; the git hooks
-refuse commits and pushes (`--no-verify` is the deliberate override). Ticket hw6c.
+refuse commits and pushes (`--no-verify` is the deliberate override). An existing hook is moved
+to `<hook>.pre-bridle`; unlist the clone and re-run the install to restore it. Tickets hw6c, ged2.

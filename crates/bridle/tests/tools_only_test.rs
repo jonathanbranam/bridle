@@ -88,14 +88,27 @@ fn hooks_install_is_idempotent_and_blocks_a_commit() {
 }
 
 #[test]
-fn hooks_install_never_clobbers_a_users_hook() {
+fn hooks_install_moves_a_users_hook_aside_and_unlisting_restores_it() {
     let (_d, repo) = temp_repo();
     let home = home_listing(&repo);
     let hook = repo.join(".git/hooks/pre-push");
+    let aside = repo.join(".git/hooks/pre-push.pre-bridle");
     fs::write(&hook, "#!/bin/sh\nexit 0\n").unwrap();
     let out = bridle(home.path(), &repo, &["machine", "tools-only-install"]);
-    assert!(!out.status.success());
+    assert!(out.status.success());
+    assert_eq!(fs::read_to_string(&aside).unwrap(), "#!/bin/sh\nexit 0\n");
+    assert!(
+        fs::read_to_string(&hook)
+            .unwrap()
+            .contains("bridle-tools-only-hook")
+    );
+
+    // Unlisted: re-running undoes the install.
+    fs::write(home.path().join("config.toml"), "").unwrap();
+    let out = bridle(home.path(), &repo, &["machine", "tools-only-install"]);
+    assert!(out.status.success());
     assert_eq!(fs::read_to_string(&hook).unwrap(), "#!/bin/sh\nexit 0\n");
+    assert!(!aside.exists());
     assert!(!repo.join(".git/hooks/pre-commit").exists());
 }
 

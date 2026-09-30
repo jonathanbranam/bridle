@@ -1676,7 +1676,8 @@ pub enum MachineAction {
     /// Exit 1, saying why, if this clone is listed in `[machine] tools_only` of ~/.bridle/config.toml.
     ToolsOnlyCheck(ToolsOnlyArgs),
     /// Install pre-commit and pre-push hooks that refuse in a tools-only clone. Safe to re-run;
-    /// refuses to overwrite a hook that isn't bridle's.
+    /// moves a hook that isn't bridle's to `<hook>.pre-bridle`. Run again once the clone is no
+    /// longer listed to remove bridle's hooks and restore the moved ones.
     ToolsOnlyInstall(ToolsOnlyArgs),
 }
 

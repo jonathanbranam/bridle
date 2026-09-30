@@ -129,8 +129,10 @@ bridle machine tools-only-check [--repo P]   exit 1, saying why, if the clone is
                                              `[machine] tools_only = [paths]` (~ and $VAR expand); the
                                              launch scripts call it. `bridle serve` refuses there too
 bridle machine tools-only-install [--repo P] install pre-commit and pre-push hooks that refuse in a
-                                             tools-only clone (`--no-verify` overrides); re-runnable,
-                                             never overwrites a hook that isn't bridle's (hw6c)
+                                             tools-only clone (`--no-verify` overrides); re-runnable;
+                                             moves a hook that isn't bridle's to `<hook>.pre-bridle` (refuses if that
+                                             exists); once the clone is no longer listed, re-running removes bridle's
+                                             hooks and restores those, keeping both if a different hook appeared (hw6c, ged2)
 bridle spec check [paths...] [--root DIR] [--require-ids]   validates spec files (dirs are searched for
                                              *.md; default `design/specs`, or --root) with the
                                              bridle-spec parser: prints file:line:col: message per
