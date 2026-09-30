@@ -170,6 +170,7 @@ bridle task edit   <id> [--title TEXT] [--body TEXT | --body-file FILE] [--compo
 bridle task list   [--claimed-by WHO] [--component ID]             WHO: me|human|<agent name>|<principal id>; unclaimed tasks have no claimant to match
 bridle task search <words...>                                      search for tasks by words in title/body/summary (case-insensitive substring match, all words must match); includes done and dropped tasks
 bridle task drop   <id> --reason TEXT
+                                                                        incidents (not built) are `-k incident` tasks; `task list` gains `-k KIND`; see agent-host/incidents.md
 bridle task done   <id> [--commit SHA] [--branch NAME]               -> integrated; `--commit` is required unless the human claimed the task (a to-do); records the sha (and branch) on the task and in the thread; with --branch removes the branch's agents, worktree and branch; warns if no summary
 bridle impact set  <task> [--modify ID].. [--add-under ID].. [--remove ID].. [--files GLOB..]  declares the task's impact, replacing any earlier one; only an open/planned/claimed task; ids checked by shape (r-/s-/g-/a- + hex) only
 bridle impact check [--specs DIR]                                overlaps between in-flight tasks' declared impact, plus merge probes of claimed tasks' branches (`--json`: `{overlaps:[{level,tasks,kind,key}]}`); exit 1 if any is a conflict; see impact-and-conflicts.md

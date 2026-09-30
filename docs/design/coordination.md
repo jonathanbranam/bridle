@@ -22,6 +22,10 @@ kinds are recorded but not yet acted on (`parent` doesn't yet close a parent
 when its children close). `ready [--all] [--role]` is built too; `--role` is
 presently a no-op, since tasks don't carry a role field yet.
 
+**Incidents are a task kind** (`incident`; potential = `open`, active = `planned`, resolved =
+`integrated`), not a separate record; the only extra is a broadcast notice while one is active
+([[docs/design/agent-host/incidents|incidents]], not built).
+
 ## Messages
 
 A message goes to an agent, a task (all current and future claimants), a role

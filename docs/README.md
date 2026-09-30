@@ -89,6 +89,7 @@ done
 | git branches, release branches | `docs/design/agent-host/operating-model.md` or the project's `[branches]` config |
 | roles and what they do | `workflow/base/roles/<role>.md` (worker, manager, product-manager, orchestrator, advisor) |
 | building and testing | `CLAUDE.md` (Conventions section) |
+| incidents (a task kind plus a broadcast notice; not built) | `docs/design/agent-host/incidents.md` |
 | permissions, tools | `docs/design/agent-host/principals.md` |
 
 ## Reading order

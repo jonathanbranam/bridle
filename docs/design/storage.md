@@ -213,6 +213,12 @@ one startable task, skipping a tier stuck on a dependency rather than
 returning nothing — the manager takes from the next tier down instead of
 idling on a blocked one, and never moves a task between tiers itself.
 
+## Incidents
+
+Not built. Incidents add no table: they are tasks of kind `incident`, stored like any task. The
+one schema change is a nullable `messages.incident_task` column linking a notice to its task
+([[docs/design/agent-host/incidents|incidents]]).
+
 ## The state branch
 
 Built for task records at the `open`/`planned`/`claimed`/`dropped`/`integrated`/`reopened`
