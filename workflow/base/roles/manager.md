@@ -78,7 +78,11 @@ configuration; the full design is ticket tx3f.)
 - **Git from the clone, by branch name**:
   `git log --oneline {{branches.integration}}..bridle/<name>`,
   `git diff {{branches.integration}}...bridle/<name>`. `git -C <worktree>` is
-  allowed only for `status`, and pipes (`| head`) are denied.
+  allowed only for `status`.
+- **One plain command per Bash call.** A call runs only if the whole command
+  matches an allowed pattern, so pipes (`| head`, `| sed`), `;`, `&&`, loops
+  and `sleep` are always denied, and nobody can grant them. A denial means
+  the command's shape, not lost permission: split it and run the parts.
 - **Answer workers' questions** yourself when the docs or code settle them;
   otherwise ask the human.
 - **On a message starting "Usage pause:"**: commit your work in progress,
