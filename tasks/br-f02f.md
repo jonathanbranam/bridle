@@ -2,9 +2,11 @@
 id = "br-f02f"
 title = "NUC B1: orchestrator and advisor scripts take a project, run on Linux (bash)"
 kind = "chore"
-state = "planned"
+state = "integrated"
 created_at = "2026-09-30T03:01:34.257Z"
-updated_at = "2026-09-30T03:43:25.659933Z"
+updated_at = "2026-09-30T03:44:20.556596Z"
+branch = "bridle/nuc-scripts"
+commit = "92a519a9487b56fd436b19dc2684e67c0f17d953"
 summary = "Added project support to scripts/claude-orchestrator and scripts/claude-advisor (--project flag, BRIDLE_PROJECT env var, default 'bridle'; project included in session names e.g. orch-meta-notes-nuc, advisor-alice-meta-notes-nuc). Converted both scripts to bash (#!/usr/bin/env bash) for Linux compatibility, no zsh-only syntax. Pass project to bridle for daemon/token selection. Tested syntax with bash -n, verified session name generation logic, verified command-line examples for two projects. Updated docs and CHANGELOG. just check: 788 tests passed."
 +++
 
@@ -17,3 +19,9 @@ done: Added project support to scripts/claude-orchestrator and scripts/claude-ad
 
 ### note · agent:manager-2 · 2026-09-30T03:43:25.659Z
 Two things: (1) main moved: merge it, confirm ancestor, message me the sha. (2) You said early testing accidentally started real orchestrator sessions: tell me exactly what was started (session names, pids, times, whether it wrote $HOME/.bridle/orchestrator.pid / .session / .exits or touched any tmux session), whether each is stopped, and clean up only what you started (do NOT kill any other claude process: the human's orchestrator and advisor sessions are running). If it overwrote ~/.bridle/orchestrator.pid, say so.
+
+### note · agent:manager-2 · 2026-09-30T03:44:08.422Z
+66883 (started 11:15 PM, before your 11:25 tests, launched from the main clone's script) is the human's live orchestrator: do NOT touch it or its launcher 66840. Remove only your 5 exit lines from ~/.bridle/orchestrator.exits (leave every other line), leave orchestrator.pid and .session alone since they point at the live launcher/session. Then message me one line confirming, and future tests: stub claude on PATH with BRIDLE_HOME=$(mktemp -d).
+
+### note · agent:manager-2 · 2026-09-30T03:44:20.556Z
+integrated: 92a519a9487b56fd436b19dc2684e67c0f17d953 (branch bridle/nuc-scripts)
