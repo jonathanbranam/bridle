@@ -50,6 +50,14 @@ it shouldn't:
 
 ## Part 2: a coordinated transfer (later)
 
+The human (2026-09-30): "I agree on hardening take over now. The transfer process can be manual for
+now. I prompt the owning orch to shut down, wait and then check. It doesn't have to be enforced all
+yet but it's useful future work to have."
+
+Until then the move is manual: the human tells the owning orchestrator to wind down and push, waits,
+checks, and runs `bridle serve --take-over` on the new machine (with part 1's checks).
+
+
 The human tells either machine to move a project, and authorizes it. Sketch:
 
 1. **Release on the old machine.** Its orchestrator winds down: no new work; running agents finish

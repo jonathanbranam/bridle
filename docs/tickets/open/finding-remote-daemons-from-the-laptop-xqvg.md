@@ -37,3 +37,9 @@ Raised on 2026-09-27 while checking the NUC plan ([[docs/context/nuc-host|NUC ho
   environment variables by default.
 - If the orchestrator lives on the NUC ([[where-the-single-orchestrator-lives-hj4g|where it lives]]), most of this
   goes away.
+
+## Answer (2026-09-30)
+
+Approved by the human: [[projects-on-other-machines-by-config-k7mw|projects on other machines, by
+machine config]]. A hand-written machine config names each project's machine and port; tokens are
+keyed by machine; remote principals are `<name>@<machine>`. Resolve this ticket when k7mw lands.
