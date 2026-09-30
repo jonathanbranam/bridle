@@ -55,6 +55,11 @@ The advisor's read, which the orchestrator agrees with: the NUC suits light proj
 (meta-notes: Vimscript and pytest), not bridle's Rust builds. The seven-day window (55% on
 2026-09-28) is more likely to be the long-run limit than CPU.
 
+Measured by the human (2026-09-30), with nothing else running on the NUC: `cargo clean`, then
+`cargo install --path crates/bridle` took **10m53s** wall (2426s user, 71s system, 382% CPU).
+That's the release binary only, no tests. The laptop's cold debug build of the whole workspace
+takes about 3m36s (below).
+
 ## Progress (2026-09-29)
 
 Options 1 and 2 are built (db79e38): new worktrees' `target/` is warmed with an APFS clone
