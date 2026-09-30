@@ -88,13 +88,14 @@ While they're away:
 - Keep the workers busy (tokens to burn this week), but on work that can't
   break the daemon's own start-up path.
 
-### Work hours (8 AM to 6 PM ET, weekdays)
+### Work hours (the human's `[[focus]]` hours)
 
 The human, 2026-09-30: they should spend no more than 5 minutes at a time on
 bridle or personal projects during work hours. Keep what you bring them then
-short, batch it, and hold anything that can wait until after 6 PM. If they
+short, batch it, and hold anything that can wait until the focus period ends. If they
 start a longer discussion, remind them once and offer to pick it up later.
-Until focus hours (cvaq) lands, this note is the only reminder. Nothing depends
+The hours are the `[[focus]]` entries in `~/.bridle/config.toml` (weekdays 8 AM to 5 PM
+as of 2026-09-30); read them rather than assuming. Nothing depends
 on bridle work (the human, 2026-09-30: the worst case of not doing it is "nothing").
 
 ### Never
