@@ -57,8 +57,7 @@ yet but it's useful future work to have."
 Until then the move is manual: the human tells the owning orchestrator to wind down and push, waits,
 checks, and runs `bridle serve --take-over` on the new machine (with part 1's checks).
 
-
-The human tells either machine to move a project, and authorizes it. Sketch:
+Later, the human tells either machine to move a project, and authorizes it. Sketch:
 
 1. **Release on the old machine.** Its orchestrator winds down: no new work; running agents finish
    or park, with their branches pushed; the queue and handover notes are flushed. The daemon pushes
