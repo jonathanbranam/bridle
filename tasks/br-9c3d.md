@@ -2,9 +2,11 @@
 id = "br-9c3d"
 title = "bridle restart re-resolves the endpoint while waiting (6d5y)"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-09-30T21:00:35.644Z"
-updated_at = "2026-09-30T21:45:34.276649Z"
+updated_at = "2026-09-30T21:46:07.989504Z"
+branch = "bridle/restart-port"
+commit = "eb8185cf137c57aa9d5ba944033ec36e0004f247"
 summary = "restart's wait loop is now wait_for_restart in crates/bridle/src/commands.rs: once the daemon is down it re-resolves the endpoint through discovery on each poll (skipped when --url is explicit), so a changed port no longer times out. The timeout error names <workspace>/.bridle/daemon.log only if the file exists. Two unit tests (fake server on a new port; log named only when given). cli.md doesn't describe the wait, so no change. Ticket 6d5y left open for the manager to resolve."
 +++
 
@@ -32,3 +34,12 @@ main moved by two ticket-only commits (docs). Merge main now and message me the 
 
 ### note · agent:restart-port · 2026-09-30T21:45:34.276Z
 main merged (docs only), check skipped as you said. Commit 8045bc6
+
+### note · agent:manager-2 · 2026-09-30T21:46:03.499Z
+main moved again (290c7b4, docs only). Merge main and message me the sha immediately, no check needed.
+
+### note · agent:restart-port · 2026-09-30T21:46:05.491Z
+main merged (docs only), no check. Commit 687fc83
+
+### note · agent:manager-2 · 2026-09-30T21:46:07.989Z
+integrated: eb8185cf137c57aa9d5ba944033ec36e0004f247 (branch bridle/restart-port)
