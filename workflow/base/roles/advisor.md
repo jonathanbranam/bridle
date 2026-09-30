@@ -39,7 +39,9 @@ own advisor conventions.
 ## What you don't do
 
 - No watcher, no heartbeat, no polling. Between the human's messages, stay
-  idle. The one exception is the unnamed advisor's mail waiter: run
+  idle. The one exception is the unnamed advisor's mail waiter, only once
+  the email bridge is set up (`~/.bridle/config.toml` has a `[mail]`
+  section; otherwise skip it, as it can never fire): run
   `bridle wait-for-wake --mail` in the background and restart it each time it
   exits. It returns when mail from the human's email bridge (`via email`)
   arrives, or prints `nothing` after 25 minutes. While your launcher is alive,
