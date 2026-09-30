@@ -42,4 +42,7 @@ doesn't need the daemon: it's a local tmux call.
   Then a new terminal needs no step at all, and the command is for fixing things by hand.
   Recommendation: yes. The launcher already knows its role, and a pane running the orchestrator
   is the one the daemon should type into.
+  **Settled (the human, 2026-09-30): "yes, approved".** The launchers tag their own pane at start.
+  `claude-orchestrator` sets `orchestrator`; `claude-advisor <name>` sets `advisor-<name>`
+  (`advisor` without a name), matching the session names.
 - A `bridle pane list` (tagged panes)? Not asked for; leave it out until it's needed.
