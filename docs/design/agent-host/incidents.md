@@ -1,8 +1,8 @@
 # Incidents
 
 Design for ticket [[incident-notices-that-retract-themselves-nc7r|nc7r]], revised to the human's
-decision (2026-09-29, in nc7r and ex9q): **an incident is a task of kind `incident`.** **Not
-built.** There is no incidents table and no new record type: an incident has a state, an owner,
+decision (2026-09-29, in nc7r and ex9q): **an incident is a task of kind `incident`.** **Built**
+(br-70af). There is no incidents table and no new record type: an incident has a state, an owner,
 a body and a thread (comments, updates), which is what a task already is. The only new
 machinery is the **notice**: a persistent broadcast to every agent while an incident is active.
 The notice is a `system` note in the existing message queue ([[messages]]), withdrawn if it's

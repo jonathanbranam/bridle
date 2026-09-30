@@ -81,6 +81,7 @@ async fn landing_notifies_the_other_worker_once_and_not_the_lander() {
             &DoneTaskRequest {
                 commit: head.clone(),
                 branch: Some("bridle/w1".to_string()),
+                ..Default::default()
             },
         )
         .await
@@ -163,6 +164,7 @@ async fn landing_names_the_overlap_only_to_the_worker_whose_impact_overlaps() {
             &DoneTaskRequest {
                 commit: head,
                 branch: None,
+                ..Default::default()
             },
         )
         .await

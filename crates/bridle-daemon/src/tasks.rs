@@ -419,7 +419,9 @@ impl TaskManager {
         let mut task = self
             .get_task(id)
             .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
-        if task.state != TaskState::Open {
+        // A recurred incident goes active again from `reopened`.
+        let recurred = task.kind == TaskKind::Incident && task.state == TaskState::Reopened;
+        if task.state != TaskState::Open && !recurred {
             return Err(TaskError::Conflict(format!(
                 "task {id} is {}, not open; only an open task can be planned",
                 task.state
@@ -480,8 +482,9 @@ impl TaskManager {
             .get_task(id)
             .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
         // A human to-do has no code to land, so the human finishes it bare.
-        let bare_ok =
-            task.state == TaskState::Claimed && task.claimed_by.as_deref() == Some("human");
+        let bare_ok = (task.state == TaskState::Claimed
+            && task.claimed_by.as_deref() == Some("human"))
+            || task.kind == TaskKind::Incident;
         if commit.trim().is_empty() && !bare_ok {
             return Err(TaskError::BadRequest(
                 "marking a task done requires a commit".to_string(),
@@ -666,7 +669,8 @@ impl TaskManager {
     /// `planned`, no open `blocks` edge naming an unresolved blocker, and no
     /// unanswered question.
     pub fn is_ready(&self, task: &Task) -> bool {
-        if task.state != TaskState::Planned {
+        // An incident is nobody's to build or claim (incidents.md).
+        if task.state != TaskState::Planned || task.kind == TaskKind::Incident {
             return false;
         }
         if self.has_open_questions(task) {
@@ -984,6 +988,19 @@ impl TaskManager {
         }
     }
 
+    /// Incidents that are `planned`, oldest first, for `bridle status`.
+    pub fn active_incidents(&self) -> Vec<bridle_api::types::IncidentSummary> {
+        self.list_tasks()
+            .into_iter()
+            .filter(|t| t.kind == TaskKind::Incident && t.state == TaskState::Planned)
+            .map(|t| bridle_api::types::IncidentSummary {
+                id: t.id,
+                title: t.title,
+                since: t.updated_at,
+            })
+            .collect()
+    }
+
     pub fn ready_tasks(&self) -> Vec<Task> {
         self.list_tasks()
             .into_iter()
@@ -1030,8 +1047,13 @@ impl TaskManager {
                 ));
             }
             for id in tier {
-                if self.get_task(id).is_none() {
+                let Some(task) = self.get_task(id) else {
                     return Err(TaskError::NotFound(format!("no such task: {id}")));
+                };
+                if task.kind == TaskKind::Incident {
+                    return Err(TaskError::BadRequest(format!(
+                        "task {id} is an incident; incidents aren't queued"
+                    )));
                 }
                 if !seen.insert(id) {
                     return Err(TaskError::Conflict(format!(

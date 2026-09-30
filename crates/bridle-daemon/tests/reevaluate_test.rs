@@ -43,6 +43,7 @@ async fn land(daemon: &support::TestDaemon, kind: TaskKind, title: &str) -> Stri
             &DoneTaskRequest {
                 commit,
                 branch: None,
+                ..Default::default()
             },
         )
         .await

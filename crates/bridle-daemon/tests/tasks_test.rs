@@ -440,6 +440,7 @@ async fn for_human_task_is_claimed_by_the_human_and_done_without_a_commit() {
             &DoneTaskRequest {
                 commit: String::new(),
                 branch: None,
+                ..Default::default()
             },
         )
         .await
@@ -670,6 +671,7 @@ async fn done_records_branch_commit_and_a_replaceable_summary() {
             &DoneTaskRequest {
                 commit: head.clone(),
                 branch: Some("bridle/landed".into()),
+                ..Default::default()
             },
         )
         .await
@@ -823,6 +825,7 @@ async fn search_includes_done_and_dropped_tasks() {
         &DoneTaskRequest {
             commit: "abc123".into(),
             branch: None,
+            ..Default::default()
         },
     )
     .await
@@ -965,6 +968,7 @@ async fn done_with_a_landed_branch_removes_its_agents_worktree_and_branch() {
             &DoneTaskRequest {
                 commit: head,
                 branch: Some("bridle/w1".into()),
+                ..Default::default()
             },
         )
         .await
@@ -1004,6 +1008,7 @@ async fn done_refuses_a_commit_not_on_the_integration_branch() {
             &DoneTaskRequest {
                 commit: unmerged,
                 branch: Some("bridle/w1".into()),
+                ..Default::default()
             },
         )
         .await

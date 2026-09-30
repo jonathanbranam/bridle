@@ -275,6 +275,28 @@ async fn auth_middleware(
     }
 }
 
+/// An incident's owner is the orchestrator; the human may do anything it may
+/// (incidents.md). Applies to promoting, resolving, dropping and reopening.
+fn require_incident_owner(
+    state: &AppState,
+    principal: &Principal,
+    id: &str,
+) -> Result<(), ApiError> {
+    let is_incident = state
+        .tasks
+        .get_task(id)
+        .is_some_and(|t| t.kind == bridle_api::types::TaskKind::Incident);
+    if is_incident
+        && principal.kind != PrincipalKind::Human
+        && principal.id != crate::wake::ORCHESTRATOR
+    {
+        return Err(ApiError::forbidden(
+            "only the human or external:orchestrator may change an incident's state",
+        ));
+    }
+    Ok(())
+}
+
 fn require_human(principal: &Principal) -> Result<(), ApiError> {
     if principal.kind == PrincipalKind::Human {
         Ok(())
@@ -457,6 +479,7 @@ async fn status(
         ci: state.ci.last(),
         merged_leftovers,
         state_push: state.tasks.state_push_status(),
+        incidents: state.tasks.active_incidents(),
     }))
 }
 
@@ -1176,6 +1199,10 @@ async fn list_tasks(
             .collect(),
         None => tasks,
     };
+    let tasks: Vec<Task> = match q.kind {
+        Some(kind) => tasks.into_iter().filter(|t| t.kind == kind).collect(),
+        None => tasks,
+    };
     let tasks = match q.claimed_by.as_deref() {
         Some(raw) => {
             let claimed_by = resolve_claimed_by(&state.store, &principal, raw).await?;
@@ -1250,10 +1277,17 @@ async fn edit_task(
         .as_deref()
         .map(|c| state.manager.normalize_components(c))
         .transpose()?;
+    let edited_notice_text = req.title.is_some() || req.body.is_some();
     let task = state
         .tasks
         .edit_task(&id, req.title, req.body, components, req.size)
         .await?;
+    if task.kind == bridle_api::types::TaskKind::Incident
+        && task.state == bridle_api::types::TaskState::Planned
+        && edited_notice_text
+    {
+        state.manager.incident_updated(&task).await;
+    }
     let _ = state
         .emitter
         .emit(
@@ -1271,7 +1305,11 @@ async fn plan_task(
     Extension(principal): Extension<Principal>,
     Path(id): Path<String>,
 ) -> Result<Json<Task>, ApiError> {
+    require_incident_owner(&state, &principal, &id)?;
     let task = state.tasks.plan_task(&id, &principal.id).await?;
+    if task.kind == bridle_api::types::TaskKind::Incident {
+        state.manager.incident_activated(&task).await;
+    }
     let _ = state
         .emitter
         .emit(
@@ -1290,10 +1328,18 @@ async fn drop_task(
     Path(id): Path<String>,
     Json(req): Json<DropTaskRequest>,
 ) -> Result<Json<Task>, ApiError> {
+    require_incident_owner(&state, &principal, &id)?;
+    let was_active = state
+        .tasks
+        .get_task(&id)
+        .is_some_and(|t| t.state == bridle_api::types::TaskState::Planned);
     let task = state
         .tasks
         .drop_task(&id, &req.reason, &principal.id)
         .await?;
+    if task.kind == bridle_api::types::TaskKind::Incident && was_active {
+        state.manager.incident_resolved(&task, &req.reason).await;
+    }
     let _ = state
         .emitter
         .emit(
@@ -1633,11 +1679,33 @@ async fn done_task(
             .into());
         }
     }
+    require_incident_owner(&state, &principal, &id)?;
     let claimant = state.tasks.get_task(&id).and_then(|t| t.claimed_by);
+    let was_active = state
+        .tasks
+        .get_task(&id)
+        .is_some_and(|t| t.state == bridle_api::types::TaskState::Planned);
     let mut task = state
         .tasks
         .done_task(&id, &req.commit, req.branch.as_deref(), &principal.id)
         .await?;
+    if task.kind == bridle_api::types::TaskKind::Incident {
+        let resolution = req.resolution.as_deref().map(str::trim).unwrap_or("");
+        if !resolution.is_empty() {
+            task = state
+                .tasks
+                .note_task(&id, &principal.id, &format!("resolution: {resolution}"))
+                .await?;
+        }
+        if was_active {
+            let line = if resolution.is_empty() {
+                task.title.as_str()
+            } else {
+                resolution
+            };
+            state.manager.incident_resolved(&task, line).await;
+        }
+    }
     if task.commit.is_some() {
         notify_main_moved(&state, &task, claimant.as_deref(), branch).await;
     }
@@ -1741,6 +1809,7 @@ async fn land_task(
         Json(DoneTaskRequest {
             commit: landed.commit.clone(),
             branch: Some(branch),
+            ..Default::default()
         }),
     )
     .await?;
@@ -1973,6 +2042,7 @@ async fn reopen_task(
     Extension(principal): Extension<Principal>,
     Path(id): Path<String>,
 ) -> Result<Json<Task>, ApiError> {
+    require_incident_owner(&state, &principal, &id)?;
     let task = state.tasks.reopen_task(&id, &principal.id).await?;
     let _ = state
         .emitter

@@ -908,6 +908,7 @@ pub enum TaskKindArg {
     Explore,
     ArchRevision,
     ReEvaluate,
+    Incident,
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
@@ -985,6 +986,9 @@ pub struct TaskListArgs {
     /// Only tasks naming this component or any descendant.
     #[arg(long, value_name = "ID")]
     pub component: Option<String>,
+    /// Only tasks of this kind (`incident` lists the open incidents).
+    #[arg(short = 'k', long, value_enum)]
+    pub kind: Option<TaskKindArg>,
 }
 
 #[derive(Debug, Args)]
@@ -1029,12 +1033,15 @@ pub struct TaskDropArgs {
 #[derive(Debug, Args)]
 pub struct TaskDoneArgs {
     pub task: String,
-    /// The merge commit. Optional only for a human to-do.
+    /// The merge commit. Optional only for a human to-do or an incident.
     #[arg(long, default_value = "")]
     pub commit: String,
     /// The branch that did the work.
     #[arg(long)]
     pub branch: Option<String>,
+    /// For an incident: how it ended, sent to the agents that saw it.
+    #[arg(long)]
+    pub resolution: Option<String>,
 }
 
 #[derive(Debug, Args)]

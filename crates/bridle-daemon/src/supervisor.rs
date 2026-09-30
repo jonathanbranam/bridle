@@ -190,6 +190,9 @@ struct Inner {
     task_wake: std::sync::Mutex<TaskWake>,
     /// Per-agent "main moved" notices; see `note_main_moved`.
     main_moved: std::sync::Mutex<HashMap<String, MainMovedSlot>>,
+    /// Set once at startup (the task manager is built before this one but
+    /// shares no owner): where active incidents are read for notices.
+    tasks: std::sync::OnceLock<crate::tasks::TaskManager>,
 }
 
 /// Coalescing state for one agent's "main moved" message.
@@ -269,7 +272,12 @@ impl AgentManager {
             max_workers_override: std::sync::Mutex::new(None),
             task_wake: std::sync::Mutex::new(TaskWake::default()),
             main_moved: std::sync::Mutex::new(HashMap::new()),
+            tasks: std::sync::OnceLock::new(),
         }))
+    }
+
+    pub fn set_tasks(&self, tasks: crate::tasks::TaskManager) {
+        let _ = self.0.tasks.set(tasks);
     }
 
     /// A project with no product manager has nobody to triage a new `open`
@@ -1098,6 +1106,8 @@ impl AgentManager {
             .await?;
         }
 
+        self.fill_incident_notices(&agent.id).await;
+
         // Wait for the process to prove it's actually up before answering:
         // its first `system/init` (a turn-start marker, re-emitted before
         // every turn, not a startup handshake — spike 01, S2) or its exit,
@@ -1789,6 +1799,22 @@ impl AgentManager {
         when: bridle_api::types::When,
         reply_to: Option<String>,
     ) -> Result<Message, SupervisorError> {
+        self.send_linked(from, to, kind, body, when, reply_to, None)
+            .await
+    }
+
+    /// [`Self::send`], with the message linked to the incident it announces.
+    #[allow(clippy::too_many_arguments)]
+    async fn send_linked(
+        &self,
+        from: PrincipalId,
+        to: ToTarget,
+        kind: MessageKind,
+        body: String,
+        when: bridle_api::types::When,
+        reply_to: Option<String>,
+        incident: Option<&str>,
+    ) -> Result<Message, SupervisorError> {
         let (to_id, to_kind) = match &to {
             ToTarget::Human => ("human".to_string(), crate::store::RecipientKind::Human),
             ToTarget::Agent(id) => (id.clone(), crate::store::RecipientKind::Agent),
@@ -1808,6 +1834,12 @@ impl AgentManager {
                 state: MessageState::Pending,
             })
             .await?;
+        if let Some(task) = incident {
+            self.0
+                .store
+                .set_message_incident(&inserted.id, task)
+                .await?;
+        }
         // A delegate's reply to a message addressed to the human closes it there.
         if let Some(qid) = inserted.reply_to.as_deref()
             && self.0.config.messages.answer_for_human.contains(&from)
@@ -1885,6 +1917,157 @@ impl AgentManager {
             .get_message(&inserted.id)
             .await?
             .ok_or_else(|| SupervisorError::Internal("message vanished after insert".to_string()))
+    }
+
+    // ---------- incident notices (incidents.md) ----------
+
+    fn incident_notice(task: &bridle_api::types::Task, updated: bool) -> String {
+        let verb = if updated { " updated" } else { "" };
+        format!("Incident {}{verb}: {}\n{}", task.id, task.title, task.body)
+    }
+
+    /// Sends `task`'s notice to `agent_id` (a `note`, `when idle`, from `system`).
+    async fn send_incident_notice(
+        &self,
+        agent_id: &str,
+        task: &bridle_api::types::Task,
+        updated: bool,
+    ) -> Result<(), SupervisorError> {
+        self.send_linked(
+            system_principal().id,
+            ToTarget::Agent(agent_id.to_string()),
+            MessageKind::Note,
+            Self::incident_notice(task, updated),
+            bridle_api::types::When::Idle,
+            None,
+            Some(&task.id),
+        )
+        .await?;
+        Ok(())
+    }
+
+    /// Promote: one notice to every live-or-resumable agent.
+    pub async fn incident_activated(&self, task: &bridle_api::types::Task) {
+        let Ok(agents) = self.0.store.list_agents(true).await else {
+            return;
+        };
+        for a in agents
+            .into_iter()
+            .filter(|a| a.state.is_running() || a.state.is_resumable())
+        {
+            if let Err(e) = self.send_incident_notice(&a.id, task, false).await {
+                tracing::warn!(agent = %a.id, incident = %task.id, "incident notice: {e}");
+            }
+        }
+    }
+
+    /// Spawn, resume and renew: gives `agent_id` a notice for each active
+    /// incident it has none for. Never fails the start.
+    async fn fill_incident_notices(&self, agent_id: &str) {
+        let Some(tasks) = self.0.tasks.get() else {
+            return;
+        };
+        for inc in tasks.active_incidents() {
+            let Some(task) = tasks.get_task(&inc.id) else {
+                continue;
+            };
+            let has = match self.0.store.messages_for_incident(&task.id).await {
+                Ok(rows) => rows
+                    .iter()
+                    .any(|m| m.to == agent_id && m.state != MessageState::Dropped),
+                Err(_) => continue,
+            };
+            if !has && let Err(e) = self.send_incident_notice(agent_id, &task, false).await {
+                tracing::warn!(agent = %agent_id, incident = %task.id, "incident notice: {e}");
+            }
+        }
+    }
+
+    /// Edit of an active incident: an unwritten notice takes the new text;
+    /// an agent whose notice is already out gets an "updated" note.
+    pub async fn incident_updated(&self, task: &bridle_api::types::Task) {
+        let Ok(rows) = self.0.store.messages_for_incident(&task.id).await else {
+            return;
+        };
+        let mut by_agent: std::collections::BTreeMap<String, Vec<Message>> = Default::default();
+        for m in rows {
+            by_agent.entry(m.to.clone()).or_default().push(m);
+        }
+        for (agent, msgs) in by_agent {
+            let unwritten: Vec<&Message> = msgs
+                .iter()
+                .filter(|m| matches!(m.state, MessageState::Pending | MessageState::Held))
+                .collect();
+            if unwritten.is_empty() {
+                if msgs.iter().any(|m| m.state != MessageState::Dropped)
+                    && let Err(e) = self.send_incident_notice(&agent, task, true).await
+                {
+                    tracing::warn!(%agent, incident = %task.id, "incident update: {e}");
+                }
+                continue;
+            }
+            for m in unwritten {
+                let body = Self::incident_notice(
+                    task,
+                    m.body.starts_with(&format!("Incident {} updated", task.id)),
+                );
+                let _ = self.0.store.rewrite_unwritten_body(&m.id, &body).await;
+            }
+        }
+    }
+
+    /// Resolve or drop while active: undelivered notices are dropped, and an
+    /// agent that saw the incident gets one "resolved" note (unlinked, so it
+    /// can't itself be dropped).
+    pub async fn incident_resolved(&self, task: &bridle_api::types::Task, line: &str) {
+        let Ok(rows) = self.0.store.messages_for_incident(&task.id).await else {
+            return;
+        };
+        let mut seen: std::collections::BTreeSet<String> = Default::default();
+        for m in rows {
+            match m.state {
+                MessageState::Pending | MessageState::Held => {
+                    if self
+                        .0
+                        .store
+                        .set_message_state(&m.id, MessageState::Dropped, Utc::now())
+                        .await
+                        .is_ok()
+                    {
+                        let _ = self
+                            .0
+                            .emitter
+                            .emit(
+                                event_kind::MESSAGE_DROPPED,
+                                system_principal().id,
+                                Some(m.to.clone()),
+                                json!({"message": m.id}),
+                            )
+                            .await;
+                    }
+                }
+                MessageState::Dropped => {}
+                _ => {
+                    seen.insert(m.to);
+                }
+            }
+        }
+        for agent in seen {
+            let sent = self
+                .send(
+                    system_principal().id,
+                    ToTarget::Agent(agent.clone()),
+                    MessageKind::Note,
+                    format!("Incident {} resolved: {line}", task.id),
+                    bridle_api::types::When::Idle,
+                    None,
+                )
+                .await;
+            if let Err(e) = sent {
+                tracing::warn!(%agent, incident = %task.id, "incident resolved note: {e}");
+            }
+        }
+        let _ = self.0.store.clear_incident_links(&task.id).await;
     }
 
     // ---------- budget governor wind-down ----------
@@ -2254,6 +2437,8 @@ impl AgentManager {
             )
             .await;
 
+        self.fill_incident_notices(&agent.id).await;
+
         let pending = self
             .0
             .store
@@ -2435,6 +2620,8 @@ impl AgentManager {
                 json!({"from": from_state.as_str()}),
             )
             .await;
+
+        self.fill_incident_notices(&agent.id).await;
 
         let pending = self
             .0

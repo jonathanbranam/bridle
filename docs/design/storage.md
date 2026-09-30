@@ -31,8 +31,9 @@ turns(agent_id, agent_name, role, model,           -- no FK: turns outlive rm
 messages(seq INTEGER PK AUTOINCREMENT, id UNIQUE,    -- id = m-0042 from seq
          from_principal, to_kind, to_id, kind, body, reply_to,
          when_mode, state, created_at, written_at, delivered_at, read_at,
-         answered_by, answered_reply, answered_line)  -- SCHEMA_V14: a question to the human closed
+         answered_by, answered_reply, answered_line,  -- SCHEMA_V14: a question to the human closed
                                                       -- by a delegate's reply (`answer_for_human`)
+         incident_task)                               -- SCHEMA_V18: the incident a broadcast notice announces
 events(seq INTEGER PK AUTOINCREMENT, ts, kind, actor, agent_id, data JSON)
                                                      -- agent_id has no FK: events outlive agents
 rate_limits(window PK, status, utilization, resets_at, observed_at)
@@ -215,8 +216,9 @@ idling on a blocked one, and never moves a task between tiers itself.
 
 ## Incidents
 
-Not built. Incidents add no table: they are tasks of kind `incident`, stored like any task. The
-one schema change is a nullable `messages.incident_task` column linking a notice to its task
+Incidents add no table: they are tasks of kind `incident`, stored like any task. The
+one schema change (SCHEMA_V18) is a nullable, indexed `messages.incident_task` column linking a notice to its task,
+cleared when the incident resolves
 ([[docs/design/agent-host/incidents|incidents]]).
 
 ## The state branch

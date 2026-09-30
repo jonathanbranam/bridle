@@ -473,6 +473,52 @@ impl Store {
             .await
     }
 
+    /// Links message `id` to the incident `task` it announces.
+    pub async fn set_message_incident(&self, id: &str, task: &str) -> Result<(), StoreError> {
+        let (id, task) = (id.to_string(), task.to_string());
+        self.with_conn(move |c| {
+            c.execute(
+                "UPDATE messages SET incident_task = ?1 WHERE id = ?2",
+                rusqlite::params![task, id],
+            )?;
+            Ok(())
+        })
+        .await
+    }
+
+    pub async fn messages_for_incident(&self, task: &str) -> Result<Vec<Message>, StoreError> {
+        let task = task.to_string();
+        self.with_conn(move |c| sync::messages_for_incident(c, &task))
+            .await
+    }
+
+    /// Rewrites the body of message `id` while it's still `pending` or `held`;
+    /// reports whether it did.
+    pub async fn rewrite_unwritten_body(&self, id: &str, body: &str) -> Result<bool, StoreError> {
+        let (id, body) = (id.to_string(), body.to_string());
+        self.with_conn(move |c| {
+            let n = c.execute(
+                "UPDATE messages SET body = ?1 WHERE id = ?2 AND state IN ('pending', 'held')",
+                rusqlite::params![body, id],
+            )?;
+            Ok(n > 0)
+        })
+        .await
+    }
+
+    /// Unlinks every notice for `task`, so a later activation starts clean.
+    pub async fn clear_incident_links(&self, task: &str) -> Result<(), StoreError> {
+        let task = task.to_string();
+        self.with_conn(move |c| {
+            c.execute(
+                "UPDATE messages SET incident_task = NULL WHERE incident_task = ?1",
+                rusqlite::params![task],
+            )?;
+            Ok(())
+        })
+        .await
+    }
+
     // ---------- events ----------
 
     pub async fn append_event(
@@ -1105,10 +1151,16 @@ mod sync {
         );
     "#;
 
+    // The incident task a broadcast notice announces (incidents.md); NULL for every other message.
+    pub(super) const SCHEMA_V18: &str = r#"
+        ALTER TABLE messages ADD COLUMN incident_task TEXT;
+        CREATE INDEX messages_incident ON messages(incident_task) WHERE incident_task IS NOT NULL;
+    "#;
+
     const MIGRATIONS: &[&str] = &[
         SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7, SCHEMA_V8,
         SCHEMA_V9, SCHEMA_V10, SCHEMA_V11, SCHEMA_V12, SCHEMA_V13, SCHEMA_V14, SCHEMA_V15,
-        SCHEMA_V16, SCHEMA_V17,
+        SCHEMA_V16, SCHEMA_V17, SCHEMA_V18,
     ];
 
     pub(super) fn open(path: &Path) -> Result<Connection, StoreError> {
@@ -1818,7 +1870,7 @@ mod sync {
     const MESSAGE_SELECT: &str = "
         SELECT id, from_principal, to_kind, to_id, kind, body, reply_to, when_mode, state,
                created_at, written_at, delivered_at, read_at, answered_by, answered_reply,
-               answered_line
+               answered_line, incident_task
         FROM messages";
 
     fn row_to_message(row: &Row<'_>) -> rusqlite::Result<Message> {
@@ -1845,6 +1897,7 @@ mod sync {
             answered_by: row.get(13)?,
             answered_reply: row.get(14)?,
             answered_line: row.get(15)?,
+            incident_task: row.get(16)?,
         })
     }
 
@@ -1891,6 +1944,7 @@ mod sync {
             answered_by: None,
             answered_reply: None,
             answered_line: None,
+            incident_task: None,
         })
     }
 
@@ -1990,6 +2044,17 @@ mod sync {
         let mut all_params: Vec<String> = vec![agent_id.to_string()];
         all_params.extend(states.iter().map(|s| msg_state_str(*s).to_string()));
         let rows = stmt.query_map(params_from_iter(all_params.iter()), row_to_message)?;
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
+    /// Every message announcing `task`, oldest first.
+    pub(super) fn messages_for_incident(
+        conn: &Connection,
+        task: &str,
+    ) -> Result<Vec<Message>, StoreError> {
+        let sql = format!("{MESSAGE_SELECT} WHERE incident_task = ?1 ORDER BY seq ASC");
+        let mut stmt = conn.prepare(&sql)?;
+        let rows = stmt.query_map(params![task], row_to_message)?;
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
     }
 

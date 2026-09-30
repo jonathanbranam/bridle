@@ -83,6 +83,18 @@ pub struct Status {
     /// The state branch push (`[state] push`); `None` when pushing is off.
     #[serde(default)]
     pub state_push: Option<StatePushStatus>,
+    /// Active incidents (tasks of kind `incident`, `planned`).
+    #[serde(default)]
+    pub incidents: Vec<IncidentSummary>,
+}
+
+/// One active incident, as `bridle status` lists it.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IncidentSummary {
+    pub id: String,
+    pub title: String,
+    /// When it became active (its last state change).
+    pub since: DateTime<Utc>,
 }
 
 /// How pushing `bridle/state` to origin is going.
@@ -459,6 +471,9 @@ pub struct Message {
     /// The reply's first line, for showing in the inbox without a second fetch.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub answered_line: Option<String>,
+    /// The incident task this notice announces; see incidents.md.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub incident_task: Option<String>,
 }
 
 /// `POST /v1/agents/{id}/messages` uses this with `to` ignored;
@@ -1016,6 +1031,9 @@ pub enum TaskKind {
     Explore,
     ArchRevision,
     ReEvaluate,
+    /// Owned by the orchestrator; active while `planned`, and never queued
+    /// (docs/design/agent-host/incidents.md).
+    Incident,
 }
 
 impl TaskKind {
@@ -1029,6 +1047,7 @@ impl TaskKind {
             Self::Explore => "explore",
             Self::ArchRevision => "arch-revision",
             Self::ReEvaluate => "re-evaluate",
+            Self::Incident => "incident",
         }
     }
 }
@@ -1433,13 +1452,16 @@ pub struct DropTaskRequest {
 }
 
 /// `POST /v1/tasks/{id}/done`.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct DoneTaskRequest {
     /// May be empty only for a task claimed by the human (a to-do, no code).
     #[serde(default)]
     pub commit: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub branch: Option<String>,
+    /// For an incident: how it ended, recorded in its thread and sent in the "resolved" note.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub resolution: Option<String>,
 }
 
 /// `POST /v1/tasks/{id}/land`: the integrator merges the task's branch, checks it, and marks
@@ -1517,6 +1539,9 @@ pub struct TaskQuery {
     /// `?component=<id>`: tasks naming that component or any descendant.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub component: Option<String>,
+    /// `?kind=<kind>`: only tasks of that kind.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kind: Option<TaskKind>,
 }
 
 // ---------- queue ----------
@@ -1669,6 +1694,7 @@ mod tests {
             "explore",
             "arch-revision",
             "re-evaluate",
+            "incident",
         ] {
             let k: TaskKind = s.parse().unwrap();
             assert_eq!(k.as_str(), s);

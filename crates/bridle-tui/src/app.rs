@@ -220,6 +220,7 @@ fn question_row(q: OpenQuestion) -> ApiMessage {
         answered_by: None,
         answered_reply: None,
         answered_line: None,
+        incident_task: None,
     }
 }
 
@@ -883,6 +884,7 @@ mod tests {
             answered_by: None,
             answered_reply: None,
             answered_line: None,
+            incident_task: None,
         }
     }
 

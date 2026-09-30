@@ -22,7 +22,7 @@ bridle rebuild [--from-origin]              first fetches origin/bridle/state (f
                                               (claims.toml) from the state branch alone; the migration path for a fresh
                                               clone with no bridle.db yet; also restores the handover notes (handovers/<id>.md)
 bridle daemons                              # every running project daemon on this machine, with agent counts
-bridle status                               # daemon, agents, Claude Code version, last CI result (sha, conclusion, age, url) when [ci] github is on; state branch push (age, or the failure) when [state] push is on
+bridle status                               # daemon, agents, active incidents, Claude Code version, last CI result (sha, conclusion, age, url) when [ci] github is on; state branch push (age, or the failure) when [state] push is on
 bridle spawn   <role> [--name N] [--prompt TEXT | --prompt-file FILE]
                [--worktree [--base REF] | --in-repo | --cwd PATH] [--model M]
                [--allow-tool TOOL ...] [--env KEY=VALUE ...] [--ignore-budget]
@@ -167,11 +167,11 @@ bridle task new    <title> -k/--kind KIND [--body TEXT | --body-file FILE] [--co
 bridle task show   <id>
 bridle task plan   <id>                                                 open -> planned: ready to build, claimable once unblocked
 bridle task edit   <id> [--title TEXT] [--body TEXT | --body-file FILE] [--component ID ... | --no-component] [--size S|M|L|none]
-bridle task list   [--claimed-by WHO] [--component ID]             WHO: me|human|<agent name>|<principal id>; unclaimed tasks have no claimant to match
+bridle task list   [--claimed-by WHO] [--component ID] [-k KIND]             WHO: me|human|<agent name>|<principal id>; unclaimed tasks have no claimant to match
 bridle task search <words...>                                      search for tasks by words in title/body/summary (case-insensitive substring match, all words must match); includes done and dropped tasks
 bridle task drop   <id> --reason TEXT
-                                                                        incidents (not built) are `-k incident` tasks; `task list` gains `-k KIND`; see agent-host/incidents.md
-bridle task done   <id> [--commit SHA] [--branch NAME]               -> integrated; `--commit` is required unless the human claimed the task (a to-do); records the sha (and branch) on the task and in the thread; with --branch removes the branch's agents, worktree and branch; warns if no summary
+                                                                        incidents are `-k incident` tasks (`task list -k incident` lists them); plan/done/drop/reopen of one is orchestrator/human only, and `plan` sends the notice to every agent; see agent-host/incidents.md
+bridle task done   <id> [--commit SHA] [--branch NAME] [--resolution TEXT]  -> integrated; `--commit` is required unless the human claimed the task (a to-do) or the task is an incident (`--resolution` goes in its thread and the "resolved" note); records the sha (and branch) on the task and in the thread; with --branch removes the branch's agents, worktree and branch; warns if no summary
 bridle impact set  <task> [--modify ID].. [--add-under ID].. [--remove ID].. [--files GLOB..]  declares the task's impact, replacing any earlier one; only an open/planned/claimed task; ids checked by shape (r-/s-/g-/a- + hex) only
 bridle impact check [--specs DIR]                                overlaps between in-flight tasks' declared impact, plus merge probes of claimed tasks' branches (`--json`: `{overlaps:[{level,tasks,kind,key}]}`); exit 1 if any is a conflict; see impact-and-conflicts.md
 bridle land <task> [--branch B] [--check-cmd CMD]              the integrator: squash the branch into one commit (`<task id>: <title>`, the summary as body, `Task:`/`Branch:` trailers) in the integration worktree, run `[integration] check` (skipped, with a note, when the integration branch is an ancestor of the branch tip), fail if the nextest test count is outside the sane band around the last full run (`<workspace>/last-full-test-count`), fast-forward the integration branch (guarded), mark the task done; any failure lands nothing (exit 1); never pushes

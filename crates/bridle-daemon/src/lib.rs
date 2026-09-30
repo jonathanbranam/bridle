@@ -308,6 +308,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         manager.clone(),
     );
 
+    manager.set_tasks(tasks.clone());
     run_autostart_and_resume(&store, &config, &manager).await;
 
     let (shutdown_tx, shutdown_rx) = watch::channel(false);

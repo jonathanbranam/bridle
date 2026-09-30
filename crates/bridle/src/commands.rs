@@ -628,6 +628,14 @@ async fn status(cli: &Cli) -> Result<(), CliError> {
                 (None, None) => println!("state      nothing pushed yet"),
             }
         }
+        for inc in &status.incidents {
+            println!(
+                "incident   {} {} ({}m)",
+                inc.id,
+                inc.title,
+                (chrono::Utc::now() - inc.since).num_minutes().max(0)
+            );
+        }
         for (state, count) in &status.agents_by_state {
             println!("  {state:<10} {count}");
         }
@@ -2139,6 +2147,7 @@ fn task_kind_arg(k: TaskKindArg) -> TaskKind {
         TaskKindArg::Explore => TaskKind::Explore,
         TaskKindArg::ArchRevision => TaskKind::ArchRevision,
         TaskKindArg::ReEvaluate => TaskKind::ReEvaluate,
+        TaskKindArg::Incident => TaskKind::Incident,
     }
 }
 
@@ -2325,6 +2334,10 @@ async fn task_list(cli: &Cli, args: &TaskListArgs) -> Result<(), CliError> {
         let scoped = client.list_tasks_component(component).await?;
         tasks.retain(|t| scoped.iter().any(|s| s.id == t.id));
     }
+    if let Some(kind) = args.kind {
+        let kind = task_kind_arg(kind);
+        tasks.retain(|t| t.kind == kind);
+    }
     if cli.json {
         render::print_json(&tasks)?;
     } else if tasks.is_empty() {
@@ -2393,6 +2406,7 @@ async fn task_done(cli: &Cli, args: &TaskDoneArgs) -> Result<(), CliError> {
     let req = DoneTaskRequest {
         commit: args.commit.clone(),
         branch: args.branch.clone(),
+        resolution: args.resolution.clone(),
     };
     let task = match client.done_task(&args.task, &req).await {
         Ok(t) => t,

@@ -412,6 +412,7 @@ mod tests {
             ci: None,
             merged_leftovers: Vec::new(),
             state_push: None,
+            incidents: Vec::new(),
         }
     }
 
