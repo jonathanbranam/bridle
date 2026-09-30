@@ -162,6 +162,13 @@ Also read from `.bridle/config.toml` (defaults in parentheses; each is documente
 - `workflow` (unset), `packs = []`: where the workflow layers live and which L2 packs to
   include ([[../workflow-layers|workflow layers]]); `workflow` also drives the default role
   prompts above.
+- `workflow` precedence and paths: `~/.bridle/config.toml`'s `workflow` (the machine layer;
+  `$BRIDLE_HOME/config.toml`) beats the project's `.bridle/config.toml`, since a project's
+  path is written for one machine. A leading `~` and `$VAR`/`${VAR}` are expanded (an unset
+  variable is an error); a relative path is taken against the repo. A workflow directory
+  that is missing or unreadable is an error at `bridle serve`, `sync`, `prime` and `rules`,
+  and a failing `bridle doctor` check ("referenced files"), never a silent empty base
+  layer. A git url is still not resolved. One resolver: `Config::workflow_root`.
 - `[components.<id>]` (`paths`, `parent`, `docs`, `consumers`, all optional): the component map
   ([[../components|components]]); a parent that isn't defined, or a cycle, is a config error.
 

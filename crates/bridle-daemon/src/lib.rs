@@ -196,6 +196,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
     ws.ensure_dirs().context("creating workspace directories")?;
     let config = Config::load_with_home(&opts.repo, overrides.bridle_home.as_deref())
         .context("loading .bridle/config.toml")?;
+    config.workflow_root(&opts.repo)?;
     // An unset `[branches] integration` means `main`; a repo on `master` would otherwise
     // fail every spawn with `invalid reference` (g3ck). No guessing from HEAD.
     if !config.branches.integration_set

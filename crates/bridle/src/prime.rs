@@ -29,8 +29,8 @@ pub fn render(
     components: &[String],
     kind: Option<TaskKind>,
 ) -> Result<String> {
-    let workflow_root = config.workflow.as_deref().map(Path::new);
-    let base_layers = rules::discover_layers(repo, workflow_root, &config.packs);
+    let workflow_root = config.workflow_root(repo)?;
+    let base_layers = rules::discover_layers(repo, workflow_root.as_deref(), &config.packs);
     let base = rules::load_and_resolve(&base_layers).context("resolving workflow rules")?;
 
     let mut out = format!("# Role: {title}\n\n");

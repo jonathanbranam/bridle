@@ -365,8 +365,14 @@ async fn prime_scoped(
 /// a daemon) the state file's pointer stands in (orchestrator-supervision.md, section 7).
 async fn prime_orchestrator(cli: &Cli) -> Result<(), CliError> {
     let repo = std::env::current_dir().context("current directory")?;
-    let role_prompt = std::fs::read_to_string(repo.join("workflow/base/roles/orchestrator.md"))
-        .context("reading workflow/base/roles/orchestrator.md")?;
+    let config =
+        bridle_daemon::config::Config::load(&repo).context("loading .bridle/config.toml")?;
+    let workflow = config
+        .workflow_root(&repo)
+        .map_err(anyhow::Error::new)?
+        .unwrap_or_else(|| repo.join("workflow"));
+    let role_prompt = std::fs::read_to_string(workflow.join("base/roles/orchestrator.md"))
+        .with_context(|| format!("reading {}/base/roles/orchestrator.md", workflow.display()))?;
     let state = std::fs::read_to_string(repo.join("docs/context/orchestrator-state.md"))
         .context("reading docs/context/orchestrator-state.md")?;
     let note = match client_for_read(cli).await {
@@ -1674,8 +1680,8 @@ fn resolve_workflow_rules(
     use bridle_daemon::rules;
 
     let config = Config::load(repo).context("loading .bridle/config.toml")?;
-    let workflow_root = config.workflow.as_deref().map(Path::new);
-    let mut layers = rules::discover_layers(repo, workflow_root, &config.packs);
+    let workflow_root = config.workflow_root(repo).map_err(anyhow::Error::new)?;
+    let mut layers = rules::discover_layers(repo, workflow_root.as_deref(), &config.packs);
     if let Some(id) = component {
         let chain = rules::discover_component_layers(repo, &config, id)
             .ok_or_else(|| anyhow::anyhow!("no component {id:?} in .bridle/config.toml"))?;
@@ -1790,8 +1796,8 @@ async fn sync(cli: &Cli) -> Result<(), CliError> {
 
     let repo = std::env::current_dir().context("current directory")?;
     let config = Config::load(&repo).context("loading .bridle/config.toml")?;
-    let workflow_root = config.workflow.as_deref().map(Path::new);
-    let layers = rules::discover_layers(&repo, workflow_root, &config.packs);
+    let workflow_root = config.workflow_root(&repo).map_err(anyhow::Error::new)?;
+    let layers = rules::discover_layers(&repo, workflow_root.as_deref(), &config.packs);
     let report = bridle_daemon::sync::sync(&repo, &layers, &config.commands, &config.branches)
         .map_err(|e| CliError::from(anyhow::Error::new(e).context("syncing workflow layers")))?;
 

@@ -51,6 +51,64 @@ pub enum ConfigError {
     BadCopyPath(String),
     #[error("[worktrees] {0}")]
     BadWorktreeLayout(String),
+    #[error("workflow path {value:?}: {reason}")]
+    BadWorkflowPath { value: String, reason: String },
+    #[error(
+        "workflow directory {} is missing or unreadable ({reason}); set `workflow` in \
+         ~/.bridle/config.toml to this machine's checkout, or fix it in .bridle/config.toml",
+        path.display()
+    )]
+    WorkflowDirMissing { path: PathBuf, reason: String },
+}
+
+/// Expands a leading `~` (to `$HOME`) and `$VAR` / `${VAR}` in a `workflow` value.
+/// An unset variable is an error, not an empty string: that would silently point the
+/// workflow at the wrong directory.
+pub fn expand_path(value: &str) -> Result<String, ConfigError> {
+    let bad = |reason: String| ConfigError::BadWorkflowPath {
+        value: value.to_string(),
+        reason,
+    };
+    let lookup = |name: &str| {
+        std::env::var(name)
+            .ok()
+            .filter(|v| !v.is_empty())
+            .ok_or_else(|| bad(format!("${name} is not set")))
+    };
+    let mut out = String::new();
+    let mut rest = value;
+    if rest == "~" || rest.starts_with("~/") {
+        out.push_str(&lookup("HOME")?);
+        rest = &rest[1..];
+    }
+    let mut chars = rest.char_indices().peekable();
+    while let Some((i, c)) = chars.next() {
+        if c != '$' {
+            out.push(c);
+            continue;
+        }
+        let tail = &rest[i + 1..];
+        let (name, consumed) = if let Some(inner) = tail.strip_prefix('{') {
+            let end = inner
+                .find('}')
+                .ok_or_else(|| bad("unterminated ${".to_string()))?;
+            (&inner[..end], end + 2)
+        } else {
+            let end = tail
+                .find(|c: char| !(c.is_ascii_alphanumeric() || c == '_'))
+                .unwrap_or(tail.len());
+            (&tail[..end], end)
+        };
+        if name.is_empty() {
+            out.push('$');
+            continue;
+        }
+        out.push_str(&lookup(name)?);
+        for _ in 0..consumed {
+            chars.next();
+        }
+    }
+    Ok(out)
 }
 
 /// `[worktrees] layout`: where a new worker worktree is created.
@@ -1211,6 +1269,48 @@ impl Config {
         }
     }
 
+    /// The machine's `workflow` override from `<home>/config.toml`, if any. A machine
+    /// beats the project because the project's path is written for one machine.
+    fn load_machine_workflow(home_override: Option<&Path>) -> Result<Option<String>, ConfigError> {
+        let home = home_override
+            .map(Path::to_path_buf)
+            .unwrap_or_else(bridle_api::discovery::bridle_home);
+        let path = home.join("config.toml");
+        match std::fs::read_to_string(&path) {
+            Ok(text) => {
+                let raw: RawConfig =
+                    toml::from_str(&text).map_err(|source| ConfigError::Parse {
+                        path: path.clone(),
+                        source: Box::new(source),
+                    })?;
+                Ok(raw.workflow)
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
+            Err(source) => Err(ConfigError::Read { path, source }),
+        }
+    }
+
+    /// The workflow checkout's directory: `workflow` with `~`/`$VAR` expanded, relative
+    /// paths taken against `repo`. `None` if unset or a git url (nothing clones those
+    /// yet). A directory that isn't there is an error: silently dropping the base layer
+    /// leaves agents without rules and `bridle sync` without skills.
+    pub fn workflow_root(&self, repo: &Path) -> Result<Option<PathBuf>, ConfigError> {
+        let Some(w) = self.workflow.as_deref() else {
+            return Ok(None);
+        };
+        if w.contains("://") || w.starts_with("git@") {
+            return Ok(None);
+        }
+        let root = repo.join(w);
+        match std::fs::read_dir(&root) {
+            Ok(_) => Ok(Some(root)),
+            Err(e) => Err(ConfigError::WorkflowDirMissing {
+                path: root,
+                reason: e.to_string(),
+            }),
+        }
+    }
+
     /// Loads `<repo>/.bridle/config.toml` over the built-in defaults,
     /// merged with the machine-wide `[budget]` section. Missing file is not
     /// an error: the file is optional (docs/design/agent-host/operating-model.md).
@@ -1237,6 +1337,10 @@ impl Config {
             }
             Err(source) => return Err(ConfigError::Read { path, source }),
         };
+        if let Some(w) = Self::load_machine_workflow(home_override)? {
+            config.workflow = Some(w);
+        }
+        config.workflow = config.workflow.as_deref().map(expand_path).transpose()?;
         config.default_role_prompts(repo);
         Ok(config)
     }
@@ -3125,6 +3229,68 @@ mod tests {
         assert_eq!(Config::parse("").expect("parse").workflow, None);
         let cfg = Config::parse(r#"workflow = "workflow""#).expect("parse");
         assert_eq!(cfg.workflow.as_deref(), Some("workflow"));
+    }
+
+    #[test]
+    fn workflow_path_expands_tilde_and_vars() {
+        let home = std::env::var("HOME").expect("HOME");
+        assert_eq!(expand_path("~/wf").expect("tilde"), format!("{home}/wf"));
+        assert_eq!(
+            expand_path("$HOME/a/${HOME}").expect("vars"),
+            format!("{home}/a/{home}")
+        );
+        assert_eq!(expand_path("rel/~x/$").expect("plain"), "rel/~x/$");
+        let err = expand_path("$BRIDLE_SURELY_UNSET_VAR/wf").expect_err("unset");
+        assert!(err.to_string().contains("BRIDLE_SURELY_UNSET_VAR"), "{err}");
+    }
+
+    #[test]
+    fn machine_workflow_overrides_the_project_and_is_expanded() {
+        let repo = tempfile::tempdir().expect("repo");
+        let home = tempfile::tempdir().expect("home");
+        std::fs::create_dir_all(repo.path().join(".bridle")).expect("mkdir");
+        std::fs::write(
+            repo.path().join(".bridle/config.toml"),
+            "workflow = \"/elsewhere/workflow\"\n",
+        )
+        .expect("write");
+        let cfg = Config::load_with_home(repo.path(), Some(home.path())).expect("load");
+        assert_eq!(cfg.workflow.as_deref(), Some("/elsewhere/workflow"));
+
+        std::fs::write(
+            home.path().join("config.toml"),
+            "workflow = \"$HOME/machine-wf\"\n",
+        )
+        .expect("write");
+        let cfg = Config::load_with_home(repo.path(), Some(home.path())).expect("load");
+        let h = std::env::var("HOME").expect("HOME");
+        assert_eq!(
+            cfg.workflow.as_deref(),
+            Some(format!("{h}/machine-wf").as_str())
+        );
+    }
+
+    #[test]
+    fn workflow_root_errors_on_a_missing_dir_and_resolves_an_existing_one() {
+        let repo = tempfile::tempdir().expect("repo");
+        let mut cfg = Config::parse("").expect("parse");
+        assert_eq!(cfg.workflow_root(repo.path()).expect("unset"), None);
+
+        cfg.workflow = Some("wf".to_string());
+        let err = cfg.workflow_root(repo.path()).expect_err("missing");
+        assert!(
+            matches!(err, ConfigError::WorkflowDirMissing { .. }),
+            "{err}"
+        );
+
+        std::fs::create_dir(repo.path().join("wf")).expect("mkdir");
+        assert_eq!(
+            cfg.workflow_root(repo.path()).expect("present"),
+            Some(repo.path().join("wf"))
+        );
+
+        cfg.workflow = Some("https://example.com/wf.git".to_string());
+        assert_eq!(cfg.workflow_root(repo.path()).expect("url"), None);
     }
 
     #[test]

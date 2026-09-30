@@ -231,8 +231,8 @@ fn config_file_checks(repo: &Path, config: &Config) -> Vec<Check> {
     }
     if let Some(w) = config.workflow.as_deref().filter(|w| !is_remote(w)) {
         let root = repo.join(w);
-        if !root.is_dir() {
-            missing.push(format!("workflow {w}"));
+        if let Err(e) = config.workflow_root(repo) {
+            missing.push(format!("workflow {w} ({e})"));
         } else {
             for pack in &config.packs {
                 if !root.join("packs").join(pack).is_dir() {
@@ -444,6 +444,21 @@ mod tests {
         let c = get(&checks, "referenced files");
         assert_eq!(c.status, Status::Fail);
         assert!(c.detail.contains("workflow nowhere"), "{}", c.detail);
+    }
+
+    #[test]
+    fn machine_workflow_override_satisfies_a_project_path_that_is_missing() {
+        let d = repo(Some("workflow = \"/nowhere/on/this/machine\"\n"));
+        let home = tempfile::tempdir().expect("home");
+        let wf = tempfile::tempdir().expect("wf");
+        std::fs::write(
+            home.path().join("config.toml"),
+            format!("workflow = \"{}\"\n", wf.path().display()),
+        )
+        .expect("write");
+        let (checks, _) = local_checks(d.path(), Some(home.path()));
+        let c = get(&checks, "referenced files");
+        assert!(!c.detail.contains("workflow"), "{}", c.detail);
     }
 
     #[test]
