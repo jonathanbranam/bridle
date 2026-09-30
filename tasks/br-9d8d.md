@@ -4,7 +4,7 @@ title = "NUC C: runbook for moving a project to another machine"
 kind = "chore"
 state = "planned"
 created_at = "2026-09-30T03:01:34.299Z"
-updated_at = "2026-09-30T03:01:35.604335Z"
+updated_at = "2026-09-30T03:06:13.314195Z"
 +++
 
-GOAL: add a runbook section to docs/context/nuc-host.md: moving a project to another machine. Steps: push bridle/state and working branches from the old machine; stop the old daemon (one writer); clone on the new machine; 'git fetch origin bridle/state:bridle/state' BEFORE the first 'bridle serve' (otherwise rebuild reports Diverged: crates/bridle-daemon/src/state_branch.rs try_fetch only accepts an empty seed); serve; create tokens; start orchestrator and advisor (scripts take a project, see NUC B1). Note messages stay in SQLite and do not move. Verify each command against docs/design/cli.md and the code rather than assuming. Optional, only if a few lines: make rebuild/first serve fetch bridle/state before the first flush; otherwise file it as a ticket in docs/questions/open/. CHANGELOG line if code changed. Acceptance: just check passes. Model: Haiku. Out of scope: cross-machine message sync.
+GOAL: runbook section in docs/context/nuc-host.md: moving a project to another machine. Steps: push bridle/state and working branches from the old machine; stop the old daemon (one writer; its shutdown pushes state); clone on the new machine; 'bridle serve --take-over' (hw6c 1, replaces the manual git fetch of bridle/state before first serve; see docs/questions/open/one-machine-owns-a-project-hw6c.md); create tokens; start orchestrator and advisor with the project-aware scripts (NUC B1). Also: how to mark a bridle clone tools-only (hw6c 2). Note messages stay in SQLite and do not move. Verify each command against docs/design/cli.md and the merged code, not assumptions. Acceptance: just check passes. Model: Haiku. Out of scope: cross-machine message sync. Run after the hw6c tasks.
