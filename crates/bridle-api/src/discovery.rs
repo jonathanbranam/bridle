@@ -493,7 +493,8 @@ fn resolve_token_in(
     }
     let Some(workspace) = workspace else {
         return Err(DiscoveryError::Message(
-            "no workspace found to read the human token from: set $BRIDLE_TOKEN".to_string(),
+            "no workspace found to read the human token from: pass --token, set $BRIDLE_TOKEN, or $BRIDLE_AS"
+                .to_string(),
         ));
     };
     let path = human_token_path(workspace);
@@ -691,7 +692,8 @@ mod tests {
         let root = tempdir().unwrap();
         let err =
             resolve_token(None, Some(root.path()), None, None, &empty_env(), false).unwrap_err();
-        assert!(err.to_string().contains("BRIDLE_TOKEN"));
+        let msg = err.to_string();
+        assert!(msg.contains("BRIDLE_TOKEN") || msg.contains("--token"));
     }
 
     #[test]

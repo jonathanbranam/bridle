@@ -629,10 +629,13 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   principal instead of the human's. The token is **not** scoped read-only or to this route —
   bridle has no per-route/per-token scoping yet, so it can do whatever an `external:*`
   principal can do (send messages, spawn agents, ...); that gap is real, just not solved
-  here. One-time setup: `bridle --url <daemon url> token create statusline > ~/.bridle/statusline.token` (`--url` so the token is printed, not saved in `credentials.toml`) to mint
-  an `external:statusline` token and store it where `statusline` reads it (a fixed path under
+  here. One-time setup: if you know the project name and it is registered on this machine,
+  run `bridle --project <name> token create statusline --print > ~/.bridle/statusline.token; chmod 600 ~/.bridle/statusline.token`
+  to mint an `external:statusline` token and store it where `statusline` reads it (a fixed path under
   `$BRIDLE_HOME`/`~/.bridle`, not the workspace's own `.bridle/`, since this needs to work
-  regardless of which project workspace Claude Code happens to be in).
+  regardless of which project workspace Claude Code happens to be in). If you must use `--url`
+  (for a daemon found by bare URL, not in the registry), pass `--url <daemon url> --token "$(cat <workspace>/.bridle/tokens/human)" token create statusline --print > ~/.bridle/statusline.token; chmod 600 ~/.bridle/statusline.token`
+  instead — the `--token` is required because `--url` drops the workspace context that the human token is normally read from, and `--print` ensures the token is written to the file.
 - **`arch-guard`** is Claude Code's `PreToolUse` hook (`workflow/base/hooks/PreToolUse.json`,
   matcher `Edit|Write|MultiEdit`, rendered by `bridle sync`). It reads the hook JSON on stdin
   and, for an edit whose path (resolved lexically against `cwd`) is under `design/architecture/`,

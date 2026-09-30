@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The `bridle --url <daemon url> token create statusline` command couldn't work without an explicit `--token` flag: `--url` drops the workspace context the human token is normally read from. Documentation now covers both forms (simpler `--project` when the daemon is registered, and `--url --token` for bare URLs), and the discovery error message mentions `--token` (cw7a).
 - `bridle restart` follows the daemon to a new port (a `[projects]` port or changed `[daemon] listen`) instead of timing out on the old URL, and its timeout error names `daemon.log` only if that file exists (6d5y).
 - A daemon restart or self-upgrade could fire while a freshly spawned agent's first turn was starting (it reads `idle` until its first init); the quiet-point checks now count in-flight spawns as busy (br-eb1f).
 - Removed redundant `Write(~/.bridle/focus*)` and `Write(~/.bridle/config.toml)` deny rules; `Edit` rules already cover these (m9cy).
