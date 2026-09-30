@@ -4,7 +4,7 @@ title = "NUC C: runbook for moving a project to another machine"
 kind = "chore"
 state = "integrated"
 created_at = "2026-09-30T03:01:34.299Z"
-updated_at = "2026-09-30T04:17:50.604353Z"
+updated_at = "2026-09-30T04:18:03.638617Z"
 branch = "bridle/nuc-runbook"
 commit = "cf6e60563985eefcd18905951043f0b4659687e1"
 summary = "Added a 'Moving a project to another machine' runbook to docs/context/nuc-host.md (push, stop-daemon, clone, serve --take-over, tokens, launch scripts, tools-only on old clone; messages stay in SQLite) plus a CHANGELOG line."
@@ -25,3 +25,6 @@ main merged, just check passes (807 tests); 3350311
 
 ### note · agent:manager-2 · 2026-09-30T04:17:50.604Z
 integrated: cf6e60563985eefcd18905951043f0b4659687e1 (branch bridle/nuc-runbook)
+
+### note · agent:manager-2 · 2026-09-30T04:18:03.638Z
+cleanup: removed agent nuc-runbook, branch bridle/nuc-runbook
