@@ -7,6 +7,7 @@ changes: []
 specs: []
 needs: []
 see: [w2hj]
+closed: 2026-09-30T21:53:33Z
 ---
 
 ## Decided (2026-09-30)
@@ -31,7 +32,7 @@ single tier is fine. Waking the manager on a queue change is
 `workflow/base/roles/manager.md` said "with no product manager, noticing [open tasks] is your
 job" but forbade the manager from planning or queueing them. Fixed at the human's request (via
 the advisor): with no PM, the orchestrator is acting PM, and the manager tells it about open
-tasks instead. Nothing left here; resolve once f5ww's plan settles the no-manager nudge.
+tasks instead.
 
 ## The ask
 
@@ -62,3 +63,11 @@ bodies, so all six showed startable until the human asked why; it added the edge
 might need a guide or workflow for you to reference if you are \"acting pm\"." So when the
 orchestrator acts as PM on a small project, it gets the PM's planning guidance (plan, dependency
 edges, queue tiers), from `workflow/base/roles/product-manager.md` or a shared excerpt of it.
+
+## Resolution
+
+Landed in 82c42db (br-5c29) and 290c7b4 (the manager prompt). The design lives in
+`workflow/base/rules/planning-the-queue.md`, `workflow/base/roles/orchestrator.md` ("Acting PM on
+a small project"), `workflow/base/roles/manager.md` and `docs/design/roles-and-lifecycle.md`.
+Waking the manager (or, with none running, the orchestrator) on a queue change is f5ww's own
+work (br-08a6), not a follow-up of this ticket.
