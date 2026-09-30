@@ -832,3 +832,15 @@
 {"actor":"agent:pm-1","at":"2026-09-30T11:04:29.414637Z","queue":"reprioritized"}
 {"actor":"agent:manager-2","at":"2026-09-30T11:19:46.872364Z","from":"planned","task":"br-32ea","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-09-30T11:23:52.297940Z","from":"planned","task":"br-2377","to":"integrated"}
+{"actor":"human","at":"2026-09-30T11:24:50.025Z","from":"","task":"br-15af","to":"open"}
+{"actor":"external:advisor","at":"2026-09-30T11:24:50.048073Z","from":"open","task":"br-15af","to":"planned"}
+{"actor":"human","at":"2026-09-30T11:24:50.072Z","from":"","task":"br-1b47","to":"open"}
+{"actor":"external:advisor","at":"2026-09-30T11:24:50.073510Z","from":"open","task":"br-1b47","to":"planned"}
+{"actor":"human","at":"2026-09-30T11:24:50.096Z","from":"","task":"br-276e","to":"open"}
+{"actor":"external:advisor","at":"2026-09-30T11:24:50.098218Z","from":"open","task":"br-276e","to":"planned"}
+{"actor":"human","at":"2026-09-30T11:24:50.122Z","from":"","task":"br-769d","to":"open"}
+{"actor":"external:advisor","at":"2026-09-30T11:24:50.123066Z","from":"open","task":"br-769d","to":"planned"}
+{"actor":"human","at":"2026-09-30T11:24:50.146Z","from":"","task":"br-be96","to":"open"}
+{"actor":"external:advisor","at":"2026-09-30T11:24:50.146886Z","from":"open","task":"br-be96","to":"planned"}
+{"actor":"human","at":"2026-09-30T11:24:50.171Z","from":"","task":"br-3354","to":"open"}
+{"actor":"external:advisor","at":"2026-09-30T11:24:50.172544Z","from":"open","task":"br-3354","to":"planned"}
