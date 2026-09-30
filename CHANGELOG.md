@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `bridle ticket set <id> <field> <value>` edits a ticket's frontmatter and `bridle ticket check [--quiet]` verifies every ticket's frontmatter, IDs, `needs`/`see` and `[[links]]` (exit 1 listing problems); new base rule `tickets` and a line in the worker and manager roles (7gk7, slice B).
 - `bridle ticket new "<title>"` mints a ticket under `docs/tickets/open/` (fresh ID, frontmatter, matching task when a daemon is up) and `bridle ticket resolve <id>` stamps `closed:` and moves it to `resolved/`; local, works in any project (7gk7, slice A).
 - Token counts in `[orchestrator]` config (`note_tokens`, `plan_tokens`, `handover_tokens`) accept an integer or a string like `"150k"` / `"1.5M"`; anything else is an error naming the key. Defaults are 150k/180k/200k (by23).
 - Self-upgrade: once a green build waits for a quiet point, new worker spawns are refused (named in the error and in `bridle status`) so running workers drain; lifted if the wait gives up (q7rx).

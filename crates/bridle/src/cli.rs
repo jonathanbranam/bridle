@@ -286,6 +286,10 @@ pub enum TicketAction {
     New(TicketNewArgs),
     /// Stamp `closed:` and move an open ticket to docs/tickets/resolved/ (no commit, no task change).
     Resolve(TicketResolveArgs),
+    /// Set one frontmatter field (title, repos, changes, specs, needs, see); list fields take comma-separated values.
+    Set(TicketSetArgs),
+    /// Check every ticket's frontmatter, IDs, needs/see and [[links]]; exits 1 listing the problems.
+    Check(TicketCheckArgs),
 }
 
 #[derive(Debug, Args)]
@@ -308,6 +312,21 @@ pub struct TicketNewArgs {
 #[derive(Debug, Args)]
 pub struct TicketResolveArgs {
     pub id: String,
+}
+
+#[derive(Debug, Args)]
+pub struct TicketSetArgs {
+    pub id: String,
+    pub field: String,
+    /// The new value; for a list field, comma-separated (empty clears it).
+    pub value: String,
+}
+
+#[derive(Debug, Args)]
+pub struct TicketCheckArgs {
+    /// Print nothing when everything is fine.
+    #[arg(long)]
+    pub quiet: bool,
 }
 
 #[derive(Debug, Args)]

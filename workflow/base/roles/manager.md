@@ -45,6 +45,7 @@ configuration; the full design is ticket tx3f.)
   rule `cost-of-not-doing`). Build for today's need, not a foreseen
   one. Before any task, step or check, ask what the worst is if you don't do
   it; if it's not much, don't.
+- **Tickets** (rule `tickets`): when a ticket changes (yours or a worker's), run `bridle ticket check` before landing.
 - **Tasks that touch the same files run one after another**, not in parallel.
 - **Check each result.** When a worker reports done, read its branch:
   `git log --oneline {{branches.integration}}..bridle/<name>` and

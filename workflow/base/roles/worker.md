@@ -24,6 +24,7 @@ files: see `CLAUDE.md`'s bridle block for where they live.
   `cost-of-not-doing`). Build for today's need, not a foreseen
   one. Before any task, step or check, ask what the worst is if you don't do
   it; if it's not much, don't.
+- **Tickets** (rule `tickets`): when a ticket changes, run `bridle ticket check`.
 - **Tests**: add or update tests for what you change. Never run live tests
   that cost tokens (real `claude`) unless the task asks.
 - **Docs** (rule `docs-current`): when you finish a change, check and update the

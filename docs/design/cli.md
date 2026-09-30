@@ -181,6 +181,18 @@ bridle ticket resolve <id>                   stamps `closed: <UTC date-time>` in
                                              the ticket from `open/` to `resolved/` (a plain move: committing
                                              is the caller's); errors on an unknown or ambiguous id; doesn't
                                              touch the task. Both are local file work, no daemon start-up
+bridle ticket set <id> <field> <value>       edits one frontmatter field of an open or resolved ticket: `title`,
+                                             or a list field (`repos`, `changes`, `specs`, `needs`, `see`) given
+                                             comma-separated (empty clears it); refuses `id`, `opened`, `closed`
+                                             and unknown fields. Local file work
+bridle ticket check [--quiet]                checks every ticket in `docs/tickets/{open,resolved}`: all of id,
+                                             title, opened, repos, changes, specs, needs, see present; `closed`
+                                             present under `resolved/` and only there; the id matches the file
+                                             name's tail and is unique; `needs`/`see` name existing tickets (id or
+                                             full stem); `[[stem|text]]` links outside code fences point at a file
+                                             (stem anywhere under `docs/`, or a path from the repo root or
+                                             `docs/`). Problems go to stderr, one per line, exit 1; `--quiet`
+                                             prints nothing when clean. Local, no daemon
 bridle goals list [--root DIR] [--priority P] [--stance S]   lists goals (docs/design/goals-tier.md) from
                                              `*.md` under --root (default `design/goals`): id, firmness,
                                              priority, stance, title per line; the stance is defaulted from

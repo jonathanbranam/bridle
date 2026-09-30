@@ -46,6 +46,9 @@ design moves on; the design docs cite them.
   never changes. Create them with `bridle ticket new "<title>"` (files the
   matching task too; `--no-task` skips it), or by hand with a fresh ID unique
   across the repo.
+- `bridle ticket set <id> <field> <value>` edits the frontmatter and `bridle ticket check`
+  verifies frontmatter, IDs, `needs`/`see` and links; shipped to every project as the `tickets`
+  rule (`workflow/base/rules/tickets.md`).
 - The same frontmatter: `id`, `title`, `opened`, `repos`, `changes`, `specs`,
   `needs`, `see`. `needs:` orders them.
 - The checker takes one ticket root, so `needs:` and `see:` only name tickets
