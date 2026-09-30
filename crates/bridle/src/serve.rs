@@ -11,6 +11,7 @@ use crate::error::CliError;
 use crate::render;
 
 pub async fn run(cli: &Cli, args: &ServeArgs) -> Result<(), CliError> {
+    crate::tools_only::refuse_serve(&canonical_repo(args)?)?;
     if args.detach {
         run_detached(cli, args).await
     } else {

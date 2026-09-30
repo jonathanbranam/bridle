@@ -8,6 +8,8 @@
 # Project defaults to BRIDLE_PROJECT env var or 'bridle' if unset; it's used in session and
 # remote-control names (e.g. 'orch-meta-notes-nuc') and passed to bridle for daemon/token selection.
 cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)" || exit 1
+# A tools-only clone (hw6c, [machine] tools_only in ~/.bridle/config.toml) is not the project's home.
+bridle machine tools-only-check || exit 1
 # The daemon's supervisor (docs/design/agent-host/orchestrator-supervision.md) reads this pid file:
 # "<pid> <process start time> <launch epoch>". The pid is this shell's, which lives exactly as long
 # as claude (no `exec`, so the exit can be recorded below). The start time is `ps` lstart, the same

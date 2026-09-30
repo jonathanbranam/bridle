@@ -8,6 +8,8 @@
 # remote-control names (e.g. 'advisor-meta-notes-nuc' or 'advisor-alice-meta-notes-nuc') and
 # passed to bridle for daemon/token selection.
 cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)" || exit 1
+# A tools-only clone (hw6c, [machine] tools_only in ~/.bridle/config.toml) is not the project's home.
+bridle machine tools-only-check || exit 1
 # Every bridle command in the session then acts as external:advisor, with the token for the
 # project it talks to from ~/.bridle/credentials.toml.
 export BRIDLE_AS=advisor

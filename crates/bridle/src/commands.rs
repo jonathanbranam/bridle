@@ -106,6 +106,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Trace(args) => crate::trace::run(&cli, args),
         Command::Explore(args) => explore(&args.action),
         Command::Pane(args) => pane(&args.action),
+        Command::Machine(args) => crate::tools_only::run(&args.action),
     }
 }
 

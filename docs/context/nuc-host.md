@@ -74,3 +74,10 @@ Each of these is an open ticket:
 - [[remote-control-for-a-hosted-orchestrator-bagg|Remote Control for a hosted orchestrator]] (spike)
 - Machine-level capacity, filed under
   [[how-project-daemons-share-one-budget-xypj|how project daemons share one budget]]
+
+## Tools-only clones
+
+A clone kept only for its tools (not the project's home) is listed in `~/.bridle/config.toml`:
+`[machine] tools_only = ["/home/<user>/src/bridle"]`. Then run `bridle machine tools-only-install`
+in it once. `bridle serve` and the orchestrator and advisor scripts refuse there; the git hooks
+refuse commits and pushes (`--no-verify` is the deliberate override). Ticket hw6c.

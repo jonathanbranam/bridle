@@ -1765,6 +1765,41 @@ struct RawConfig {
     packs: Option<Vec<String>>,
     #[serde(default)]
     components: Option<BTreeMap<String, Component>>,
+    /// Machine scope only; a project's config may carry it but nothing reads it there.
+    #[serde(default)]
+    machine: Option<RawMachine>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawMachine {
+    #[serde(default)]
+    tools_only: Vec<String>,
+}
+
+/// Whether `repo` is listed in `[machine] tools_only` of `<home>/config.toml` (hw6c): a clone
+/// kept for its tools, where the daemon must not serve and nothing should commit. Entries
+/// expand `~`/`$VAR` and are compared canonicalized, so symlinks and trailing slashes match.
+/// A missing config file or section means no.
+pub fn is_tools_only(repo: &Path, home: &Path) -> Result<bool, ConfigError> {
+    let path = home.join("config.toml");
+    let text = match std::fs::read_to_string(&path) {
+        Ok(t) => t,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(false),
+        Err(source) => return Err(ConfigError::Read { path, source }),
+    };
+    let raw: RawConfig = toml::from_str(&text).map_err(|source| ConfigError::Parse {
+        path: path.clone(),
+        source: Box::new(source),
+    })?;
+    let repo = repo.canonicalize().unwrap_or_else(|_| repo.to_path_buf());
+    for entry in raw.machine.unwrap_or_default().tools_only {
+        let p = PathBuf::from(expand_path(&entry)?);
+        if p.canonicalize().unwrap_or(p) == repo {
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }
 
 #[derive(Debug, Default, Deserialize)]

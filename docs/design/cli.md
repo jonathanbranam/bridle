@@ -113,6 +113,12 @@ bridle pane tag <name>                       set the @bridle tmux pane option to
                                              if not in a tmux pane); used by launcher scripts
 bridle pane untag                            clear the @bridle tmux pane option (errors if not in a
                                              tmux pane)
+bridle machine tools-only-check [--repo P]   exit 1, saying why, if the clone is listed in ~/.bridle/config.toml
+                                             `[machine] tools_only = [paths]` (~ and $VAR expand); the
+                                             launch scripts call it. `bridle serve` refuses there too
+bridle machine tools-only-install [--repo P] install pre-commit and pre-push hooks that refuse in a
+                                             tools-only clone (`--no-verify` overrides); re-runnable,
+                                             never overwrites a hook that isn't bridle's (hw6c)
 bridle spec check [paths...] [--root DIR] [--require-ids]   validates spec files (dirs are searched for
                                              *.md; default `design/specs`, or --root) with the
                                              bridle-spec parser: prints file:line:col: message per

@@ -176,6 +176,8 @@ pub enum Command {
     /// Tag the current tmux pane with the @bridle option (orchestrator panes use this).
     /// Local, no daemon call.
     Pane(PaneArgs),
+    /// Machine-scope settings for this clone (hw6c).
+    Machine(MachineArgs),
     /// Trace links from goals down to scenarios (docs/design/traceability.md). Local, no daemon call.
     Trace(TraceArgs),
 }
@@ -1451,6 +1453,28 @@ pub enum PaneAction {
     Tag { name: String },
     /// Clear the @bridle tmux pane option.
     Untag,
+}
+
+#[derive(Debug, Args)]
+pub struct MachineArgs {
+    #[command(subcommand)]
+    pub action: MachineAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum MachineAction {
+    /// Exit 1, saying why, if this clone is listed in `[machine] tools_only` of ~/.bridle/config.toml.
+    ToolsOnlyCheck(ToolsOnlyArgs),
+    /// Install pre-commit and pre-push hooks that refuse in a tools-only clone. Safe to re-run;
+    /// refuses to overwrite a hook that isn't bridle's.
+    ToolsOnlyInstall(ToolsOnlyArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct ToolsOnlyArgs {
+    /// The clone (default: the current directory's repository).
+    #[arg(long)]
+    pub repo: Option<std::path::PathBuf>,
 }
 
 #[cfg(test)]
