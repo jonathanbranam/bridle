@@ -52,6 +52,7 @@ pub struct AppState {
     pub shutdown_tx: watch::Sender<bool>,
     /// Set by `POST /v1/restart` before it triggers shutdown: `run` execs instead of exiting.
     pub restart_requested: std::sync::Arc<std::sync::atomic::AtomicBool>,
+    pub upgrader: crate::upgrade::Upgrader,
     pub governor: crate::governor::Governor,
     pub ci: crate::ci::CiWatcher,
     pub wakes: std::sync::Arc<crate::wake::Wakes>,
@@ -2418,8 +2419,8 @@ async fn shutdown(
 /// Default wait for a quiet point (`RestartRequest::wait_secs`).
 const RESTART_WAIT: std::time::Duration = std::time::Duration::from_secs(600);
 
-/// Restart in place: wait until every agent is idle (never cutting a turn off), record who was
-/// running, then trigger the shutdown sequence with `restart_requested` set so `run` execs.
+/// Restart in place, or (`upgrade`) build the newest green commit first and then restart. Only
+/// the human and the orchestrator may ask.
 async fn restart(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
@@ -2444,6 +2445,138 @@ async fn restart(
         .wait_secs
         .map(std::time::Duration::from_secs)
         .unwrap_or(RESTART_WAIT);
+    if !req.upgrade {
+        return perform_restart(&state, &principal.id, wait, None)
+            .await
+            .map(Json);
+    }
+
+    if !state.upgrader.claim() {
+        return Err(ApiError::new(
+            StatusCode::CONFLICT,
+            "conflict",
+            "an upgrade is already under way",
+        ));
+    }
+    let found = state
+        .upgrader
+        .newest_green(&state.store, &state.workspace.repo, &state.integration)
+        .await;
+    let sha = match found {
+        Ok(Some(sha)) => sha,
+        other => {
+            state.upgrader.release();
+            let message = match other {
+                Ok(_) => format!(
+                    "nothing to upgrade to: no commit on {} with green CI is newer than the running binary",
+                    state.integration
+                ),
+                Err(e) => {
+                    return Err(ApiError::new(
+                        StatusCode::BAD_GATEWAY,
+                        "upgrade_failed",
+                        format!("could not find a green commit: {e}"),
+                    ));
+                }
+            };
+            return Ok(Json(upgrade_reply(&state, false, message).await));
+        }
+    };
+    let short = sha.chars().take(9).collect::<String>();
+    let message =
+        format!("building {short} (green CI); the daemon restarts itself when it's built");
+    let reply = upgrade_reply(&state, false, message.clone()).await;
+    let bg = state.clone();
+    let who = principal.id.clone();
+    tokio::spawn(async move {
+        upgrade_in_background(bg, who, sha, wait).await;
+    });
+    Ok(Json(reply))
+}
+
+async fn upgrade_reply(
+    state: &AppState,
+    restarting: bool,
+    message: String,
+) -> bridle_api::types::RestartResponse {
+    bridle_api::types::RestartResponse {
+        commit: crate::restart::head(&state.workspace.repo, &state.integration).await,
+        agents: Vec::new(),
+        stop_limit_secs: (state.stop_grace + std::time::Duration::from_secs(5)).as_secs(),
+        restarting,
+        message: Some(message),
+    }
+}
+
+async fn upgrade_wake(state: &AppState, reason: &str, text: String, detail: serde_json::Value) {
+    state
+        .wakes
+        .push(bridle_api::types::WakeReason {
+            reason: reason.to_string(),
+            text,
+            detail,
+        })
+        .await;
+}
+
+/// Build, then restart; a failure at either step leaves the running daemon as it was, wakes the
+/// orchestrator and tells the human.
+async fn upgrade_in_background(
+    state: AppState,
+    who: String,
+    sha: String,
+    wait: std::time::Duration,
+) {
+    let short: String = sha.chars().take(9).collect();
+    upgrade_wake(
+        &state,
+        "upgrade",
+        format!("upgrade: building {short} (green CI)"),
+        serde_json::json!({"commit": sha, "stage": "building"}),
+    )
+    .await;
+    let outcome = match state.upgrader.build(&state.workspace, &sha).await {
+        Ok(()) => perform_restart(&state, &who, wait, Some(&sha))
+            .await
+            .map(|_| ())
+            .map_err(|e| format!("built {short} but did not restart: {}", e.message)),
+        Err(e) => Err(format!(
+            "build of {short} failed; the daemon is unchanged: {e}"
+        )),
+    };
+    state.upgrader.release();
+    if let Err(text) = outcome {
+        tracing::warn!(%text, "upgrade failed");
+        upgrade_wake(
+            &state,
+            "upgrade_failed",
+            format!("upgrade: {text}"),
+            serde_json::json!({"commit": sha, "stage": "failed", "error": text}),
+        )
+        .await;
+        let _ = state
+            .manager
+            .send(
+                "system".to_string(),
+                ToTarget::Human,
+                MessageKind::Note,
+                format!("upgrade: {text}"),
+                When::Idle,
+                None,
+            )
+            .await;
+    }
+}
+
+/// Wait until every agent is idle (never cutting a turn off), record who was running, then
+/// trigger the shutdown sequence with `restart_requested` set so `run` execs. `built` is the
+/// commit an upgrade built, remembered once the restart is certain.
+async fn perform_restart(
+    state: &AppState,
+    who: &str,
+    wait: std::time::Duration,
+    built: Option<&str>,
+) -> Result<bridle_api::types::RestartResponse, ApiError> {
     let deadline = tokio::time::Instant::now() + wait;
     let running = loop {
         let running: Vec<_> = state
@@ -2476,6 +2609,9 @@ async fn restart(
     };
     let ids: Vec<String> = running.iter().map(|a| a.id.clone()).collect();
     crate::restart::record(&state.store, &ids).await?;
+    if let Some(sha) = built {
+        crate::upgrade::record_built(&state.store, sha).await;
+    }
     let commit = crate::restart::head(&state.workspace.repo, &state.integration).await;
     let names: Vec<String> = running.into_iter().map(|a| a.name).collect();
     state
@@ -2490,16 +2626,18 @@ async fn restart(
             detail: serde_json::json!({"commit": commit, "agents": names}),
         })
         .await;
-    tracing::warn!(principal = %principal.id, "restart requested via POST /v1/restart");
+    tracing::warn!(principal = %who, "restart requested via POST /v1/restart");
     state
         .restart_requested
         .store(true, std::sync::atomic::Ordering::SeqCst);
     let _ = state.shutdown_tx.send(true);
-    Ok(Json(bridle_api::types::RestartResponse {
+    Ok(bridle_api::types::RestartResponse {
         commit,
         agents: names,
         stop_limit_secs: (state.stop_grace + std::time::Duration::from_secs(5)).as_secs(),
-    }))
+        restarting: true,
+        message: None,
+    })
 }
 
 #[derive(serde::Deserialize)]

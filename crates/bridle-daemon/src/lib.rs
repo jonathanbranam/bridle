@@ -38,11 +38,13 @@ pub mod store;
 mod supervisor;
 pub mod sync;
 mod tasks;
+mod upgrade;
 mod wake;
 pub mod worktree;
 
 pub use governor::Governor;
 pub use supervisor::{AgentManager, DAEMON_SHUTDOWN_REASON, SupervisorError, ToTarget};
+pub use upgrade::UpgradeHooks;
 
 use config::Config;
 use events::Emitter;
@@ -103,6 +105,8 @@ pub struct Overrides {
     pub claim_lease_check_interval: Duration,
     /// How often [`ports::tick`] frees ports whose pid or owner agent is gone.
     pub port_check_interval: Duration,
+    /// Canned CI status and build command for `restart --upgrade` (tests).
+    pub upgrade: UpgradeHooks,
 }
 
 impl Default for Overrides {
@@ -120,6 +124,7 @@ impl Default for Overrides {
             task_flush_interval: Duration::from_secs(30),
             claim_lease_check_interval: Duration::from_secs(30),
             port_check_interval: Duration::from_secs(30),
+            upgrade: UpgradeHooks::default(),
         }
     }
 }
@@ -312,10 +317,16 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
     let wakes = wake::Wakes::new(store.clone());
     let waiters = wake::Waiters::new(Utc::now());
     let handover: std::sync::Arc<orchestrator::Handover> = Default::default();
+    let gh: std::sync::Arc<dyn ci::Gh> = overrides
+        .upgrade
+        .gh
+        .clone()
+        .unwrap_or_else(|| std::sync::Arc::new(ci::RealGh::new(ws.repo.clone())));
+    let upgrader = upgrade::Upgrader::new(gh.clone(), overrides.upgrade.build.clone());
     let ci = ci::CiWatcher::new(
         config.ci.github,
         config.branches.integration.clone(),
-        std::sync::Arc::new(ci::RealGh::new(ws.repo.clone())),
+        gh,
         store.clone(),
         manager.clone(),
         emitter.clone(),
@@ -355,6 +366,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         pid: info.pid,
         shutdown_tx: shutdown_tx.clone(),
         restart_requested: restart_requested.clone(),
+        upgrader,
         governor: governor.clone(),
         ci: ci.clone(),
         wakes: wakes.clone(),

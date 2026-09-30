@@ -57,7 +57,10 @@ async fn a_busy_agent_means_no_restart_after_the_wait() {
     support::wait_for_state(&daemon.client, &agent.id, AgentState::Working).await;
     let orch = daemon.external_client("orchestrator").await;
     let err = orch
-        .restart(&RestartRequest { wait_secs: Some(1) })
+        .restart(&RestartRequest {
+            wait_secs: Some(1),
+            ..Default::default()
+        })
         .await
         .expect_err("busy");
     assert!(err.to_string().contains("still busy: busy"), "{err}");
@@ -82,6 +85,7 @@ async fn a_restart_stops_the_daemon_and_the_next_start_resumes_the_worker_with_a
     let reply = orch
         .restart(&RestartRequest {
             wait_secs: Some(30),
+            ..Default::default()
         })
         .await
         .expect("restart accepted");

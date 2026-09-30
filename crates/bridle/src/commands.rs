@@ -40,7 +40,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
     match &cli.command {
         Command::Serve(args) => serve::run(&cli, args).await,
         Command::StopDaemon => stop_daemon(&cli).await,
-        Command::Restart(args) => restart(&cli, args.wait).await,
+        Command::Restart(args) => restart(&cli, args.wait, args.upgrade).await,
         Command::Doctor(args) => crate::doctor::run(&cli, args),
         Command::Init(args) => crate::init::run(args),
         Command::Launchd(args) => crate::launchd::run(&cli, args),
@@ -460,11 +460,19 @@ async fn bridle_counts(cwd: &Path, env: &impl Env, token_path: &Path) -> Option<
 
 /// The daemon answers once it has decided to go (a busy daemon answers 409 and stays up), then
 /// execs itself; the same URL comes back with the new binary, so wait for it to go and return.
-async fn restart(cli: &Cli, wait: Option<u64>) -> Result<(), CliError> {
+async fn restart(cli: &Cli, wait: Option<u64>, upgrade: bool) -> Result<(), CliError> {
     let client = client_for(cli).await?;
     let reply = client
-        .restart(&bridle_api::types::RestartRequest { wait_secs: wait })
+        .restart(&bridle_api::types::RestartRequest {
+            wait_secs: wait,
+            upgrade,
+        })
         .await?;
+    if !reply.restarting {
+        // Nothing newer, or the build runs on in the daemon and it restarts itself after.
+        println!("{}", reply.message.unwrap_or_default());
+        return Ok(());
+    }
     println!(
         "restarting{}: {} agent{} to resume (stopping takes up to {}s)",
         reply.commit.map(|c| format!(" at {c}")).unwrap_or_default(),

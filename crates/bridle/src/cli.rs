@@ -512,6 +512,10 @@ pub struct RestartArgs {
     /// (the daemon's default is 600).
     #[arg(long)]
     pub wait: Option<u64>,
+    /// First build the newest commit on main with green CI (`cargo install`, in the
+    /// background), then restart into it; does nothing if none is newer than the last upgrade.
+    #[arg(long)]
+    pub upgrade: bool,
 }
 
 #[derive(Debug, Args)]

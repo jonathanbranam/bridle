@@ -50,6 +50,14 @@ pub struct RestartRequest {
     /// Seconds; the daemon's default (10 minutes) when absent.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub wait_secs: Option<u64>,
+    /// Build the newest green commit on the integration branch first, then restart into it. The
+    /// reply comes at once; the build runs in the background and the wait starts after it.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub upgrade: bool,
+}
+
+fn yes() -> bool {
+    true
 }
 
 /// Reply to `POST /v1/restart`, sent once the daemon has decided to go: it stops its agents and
@@ -63,6 +71,12 @@ pub struct RestartResponse {
     pub agents: Vec<String>,
     /// The cap on stopping them (`stop_grace` + 5 s).
     pub stop_limit_secs: u64,
+    /// False for an upgrade that isn't restarting yet: nothing newer to build (`message` says
+    /// so) or a build under way (the daemon restarts itself when it's done).
+    #[serde(default = "yes")]
+    pub restarting: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub message: Option<String>,
 }
 
 /// Written by the daemon to `<workspace>/.bridle/daemon.json` and to the

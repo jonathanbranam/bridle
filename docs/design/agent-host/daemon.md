@@ -152,7 +152,25 @@ The next start, after its own resume of `resume_on_restart` roles, reads and cle
 resumes every recorded agent still not running, workers too, each with a note from `system` that the
 daemon restarted for an upgrade and to carry on. It wakes the orchestrator (`restart`: commit, who
 resumed, who failed); the human's inbox gets a message only if some agent failed to resume.
-Building the new binary and an automatic trigger are separate (q7rx).
+
+#### Upgrade
+
+`bridle restart --upgrade` (`upgrade: true` in the request) builds before it restarts. The daemon
+walks the integration branch's first-parent history (30 commits back) for the newest commit whose
+GitHub Actions runs (the CI watcher's `gh` calls, `Gh::runs`) have all finished green; unpushed
+commits have no runs and are skipped. The commit the last upgrade built is kept in `meta` key
+`upgrade.built`; if the candidate is that commit or an ancestor of it there is nothing newer, and
+the reply says so and nothing happens (a daemon that has never upgraded builds the newest green
+commit; the binary carries no commit of its own). Otherwise the reply comes at once
+(`restarting: false`, `message: "building <sha> ..."`) and the rest runs in the background, one
+upgrade at a time: wake `upgrade`, check the commit out into a throwaway detached worktree
+(`<workspace>/.bridle/upgrade-src`; the human's checkout is never touched), run `cargo install
+--path crates/bridle` there at normal priority with `CARGO_TARGET_DIR=<workspace>/.bridle/upgrade-target`
+(kept between upgrades so builds are incremental; one-hour cap), then restart in place as above,
+with the same quiet-point wait, recording the commit as built. A failed build, or no quiet point
+after it, leaves the running daemon untouched: wake `upgrade_failed` (with the build output's
+last lines) and a note to the human's inbox. Out of scope: an automatic trigger, other projects'
+daemons, rollback (q7rx).
 
 ## Crates
 
