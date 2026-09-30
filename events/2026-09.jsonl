@@ -888,3 +888,4 @@
 {"actor":"agent:pm-1","at":"2026-09-30T12:53:35.838143Z","from":"open","task":"br-ff0d","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-09-30T12:53:35.855390Z","from":"open","task":"br-2e57","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-09-30T12:53:35.909830Z","queue":"reprioritized"}
+{"actor":"agent:manager-2","at":"2026-09-30T12:55:25.148853Z","from":"planned","task":"br-8a2a","to":"integrated"}
