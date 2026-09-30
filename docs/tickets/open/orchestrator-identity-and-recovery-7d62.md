@@ -29,17 +29,16 @@ session and told the human the orchestrator was dead, m-2319).
 (orchestrator-supervision.md section 2). Liveness is pid plus start time, so a reboot leaves a dead
 pid that is read as "dead, relaunch": that part is fine and needs no cleanup. The problems are:
 
-- several daemons on one machine (the NUC) each supervise from the same pid file, with no rule
-  for which one acts;
 - anything that runs the launcher overwrites the files; nothing refuses a second orchestrator;
 - when the files and reality disagree, the daemon only acts on the files.
 
 ## Shape (sketch)
 
 - **One orchestrator per machine** (the human's working rule, 2026-09-30, recorded in ma8e): the
-  per-machine files stay, but several daemons on one box then read the same pid file. Decide which
-  daemon supervises it (one named in the machine config, or whichever holds a lock) so two daemons
-  never relaunch it at once.
+  per-machine files stay. Only one daemon supervises it, the one whose project sets `[orchestrator]
+  enabled = true`, as on the laptop today (bridle's; meta-notes and track-web don't set it). On the
+  NUC that's one of the projects it owns. Nothing new is needed; at most a warning when two daemons
+  on one machine both enable it.
 - **One at a time**: the launcher refuses to start when the pid file names a live orchestrator (with an explicit `--replace`), and refuses when run by a bridle agent (k6b3's
   second option).
 - **Cross-check, then ask**: the daemon compares the pid file with what it sees of
