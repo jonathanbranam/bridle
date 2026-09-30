@@ -205,6 +205,7 @@ fn advisor_start(tmux_env: bool, panes: &str, config: &str, agent: bool) -> (Out
             ),
         )
         .env("BRIDLE_HOME", home.path())
+        .env("BRIDLE_PROJECT", "bridle")
         .env_remove("BRIDLE_AGENT_ID")
         .env_remove("TMUX");
     if agent {
