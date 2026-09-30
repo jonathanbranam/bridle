@@ -847,3 +847,4 @@
 {"actor":"external:orchestrator","at":"2026-09-30T11:56:58.262404Z","from":"claimed","task":"br-15af","to":"dropped"}
 {"actor":"external:orchestrator","at":"2026-09-30T11:56:58.346494Z","from":"claimed","task":"br-3354","to":"dropped"}
 {"actor":"external:advisor","at":"2026-09-30T12:02:40.591171Z","from":"claimed","task":"br-769d","to":"dropped"}
+{"actor":"agent:manager-2","at":"2026-09-30T12:04:52.506878Z","from":"planned","task":"br-dabd","to":"integrated"}
