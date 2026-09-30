@@ -4,7 +4,7 @@ title = "k7mw-c: daemon listens on its configured port, loopback + Tailscale add
 kind = "feature"
 state = "integrated"
 created_at = "2026-09-30T11:04:27.113Z"
-updated_at = "2026-09-30T12:04:52.506878Z"
+updated_at = "2026-09-30T12:05:35.004801Z"
 branch = "bridle/k7mw-c"
 commit = "cbaf6c009e3152fd6490b08ed7e1312ea57240aa"
 summary = "bridle serve now binds the [projects] port for its project when [machine] name matches, on 127.0.0.1 plus the tailscale ip -4 address (loopback only with a log line if absent), never 0.0.0.0; --listen then [daemon] listen (new Config.listen_set) still override. Daemon serves one axum listener per address (lib.rs bind_addrs/this_machine_port/tailscale_ip, unit-tested). fr6q loopback-only token-less reads unchanged. Docs: cli.md, nuc-host.md, CHANGELOG."
@@ -19,3 +19,6 @@ done: serve binds [projects] port on loopback + Tailscale, listen overrides, tes
 
 ### note · agent:manager-2 · 2026-09-30T12:04:52.506Z
 integrated: cbaf6c009e3152fd6490b08ed7e1312ea57240aa (branch bridle/k7mw-c)
+
+### note · agent:manager-2 · 2026-09-30T12:05:35.004Z
+cleanup: removed agent k7mw-c, branch bridle/k7mw-c
