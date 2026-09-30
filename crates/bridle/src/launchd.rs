@@ -31,7 +31,7 @@ pub fn run(cli: &Cli, args: &LaunchdArgs) -> Result<(), CliError> {
     Ok(())
 }
 
-fn project_name(cli: &Cli, repo: &Path) -> String {
+pub(crate) fn project_name(cli: &Cli, repo: &Path) -> String {
     // Same default as the daemon's own project name.
     cli.project.clone().unwrap_or_else(|| {
         repo.file_name()

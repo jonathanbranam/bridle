@@ -298,10 +298,10 @@ async fn arch_guard(cli: &Cli) -> Result<(), CliError> {
 /// orchestrator` for its opening prompt.
 const ORCHESTRATOR_STARTUP_STEPS: &str = "\
 Check in: `bridle status`, `bridle agents`, and recent messages to human (from the \
-product manager and the development manager).
+managers).
 Start the watcher from the latest event seq.
-Keep both managers' work moving, verify every merge by its CI run (not locally), \
-push main after each merge, and bring the human only what needs them.
+Keep the workforce's work moving, verify what gets merged, and bring the human only \
+what needs them.
 Watch your own context: hand over well before 200K.
 The human will mostly reach you through Remote Control.";
 
@@ -362,7 +362,9 @@ async fn prime_scoped(
 }
 
 /// Best-effort: the newest handover note comes from the daemon, and without one (or without
-/// a daemon) the state file's pointer stands in (orchestrator-supervision.md, section 7).
+/// a daemon) the state file's pointer stands in, when the project has one
+/// (orchestrator-supervision.md, section 7). The generic role file is followed by the
+/// project's own `.bridle/roles/orchestrator.md`, when present.
 async fn prime_orchestrator(cli: &Cli) -> Result<(), CliError> {
     let repo = std::env::current_dir().context("current directory")?;
     let config =
@@ -373,15 +375,23 @@ async fn prime_orchestrator(cli: &Cli) -> Result<(), CliError> {
         .unwrap_or_else(|| repo.join("workflow"));
     let role_prompt = std::fs::read_to_string(workflow.join("base/roles/orchestrator.md"))
         .with_context(|| format!("reading {}/base/roles/orchestrator.md", workflow.display()))?;
-    let state = std::fs::read_to_string(repo.join("docs/context/orchestrator-state.md"))
-        .context("reading docs/context/orchestrator-state.md")?;
+    let project_part = std::fs::read_to_string(repo.join(".bridle/roles/orchestrator.md")).ok();
+    let state = std::fs::read_to_string(repo.join("docs/context/orchestrator-state.md")).ok();
     let note = match client_for_read(cli).await {
         Ok(c) => c.latest_handover().await.ok().flatten(),
         Err(_) => None,
     };
+    let project = crate::launchd::project_name(cli, &repo);
     print!(
         "{}",
-        render_prime_orchestrator(&role_prompt, &state, note.as_ref(), chrono::Utc::now())
+        render_prime_orchestrator(
+            &project,
+            &role_prompt,
+            project_part.as_deref(),
+            state.as_deref(),
+            note.as_ref(),
+            chrono::Utc::now()
+        )
     );
     Ok(())
 }
@@ -394,9 +404,12 @@ fn note_age(d: chrono::Duration) -> String {
     }
 }
 
+/// `{project}` in the role file is the current project's name (its credentials entry).
 fn render_prime_orchestrator(
+    project: &str,
     role_prompt: &str,
-    state: &str,
+    project_part: Option<&str>,
+    state: Option<&str>,
     note: Option<&bridle_api::Handover>,
     now: chrono::DateTime<chrono::Utc>,
 ) -> String {
@@ -410,13 +423,16 @@ fn render_prime_orchestrator(
         ),
         None => format!(
             "# Current state (no handover note recorded yet)\n\n{}",
-            state.trim_end()
+            state.map_or("(no state file either)", str::trim_end)
         ),
     };
+    let mut role = role_prompt.trim_end().replace("{project}", project);
+    if let Some(part) = project_part {
+        role.push_str("\n\n");
+        role.push_str(part.trim_end());
+    }
     format!(
-        "# Role: orchestrator\n\n{}\n\n{current}\n\n# Startup steps\n\n{}\n",
-        role_prompt.trim_end(),
-        ORCHESTRATOR_STARTUP_STEPS,
+        "# Role: orchestrator\n\n{role}\n\n{current}\n\n# Startup steps\n\n{ORCHESTRATOR_STARTUP_STEPS}\n"
     )
 }
 
@@ -3194,8 +3210,10 @@ mod prime_tests {
     #[test]
     fn includes_role_prompt_state_and_startup_steps() {
         let out = render_prime_orchestrator(
+            "bridle",
             "You're my orchestrator for bridle.",
-            "## Handover, 2026-09-28",
+            None,
+            Some("## Handover, 2026-09-28"),
             None,
             chrono::Utc::now(),
         );
@@ -3212,6 +3230,39 @@ mod prime_tests {
     }
 
     #[test]
+    fn generic_role_file_has_no_bridle_repo_specifics_and_names_the_project() {
+        let role = include_str!("../../../workflow/base/roles/orchestrator.md");
+        let out =
+            render_prime_orchestrator("meta-notes", role, None, None, None, chrono::Utc::now());
+        for s in [
+            "cargo install",
+            "role-notes",
+            "role notes",
+            "two managers",
+            "GitHub Actions",
+        ] {
+            assert!(!out.contains(s), "{s}");
+        }
+        assert!(out.contains("$1==\"meta-notes\""), "{out}");
+        assert!(!out.contains("{project}"));
+        assert!(out.contains("(no state file either)"));
+    }
+
+    #[test]
+    fn project_part_is_appended_after_the_role_file() {
+        let out = render_prime_orchestrator(
+            "p",
+            "generic",
+            Some("PROJECT PART\n"),
+            None,
+            None,
+            chrono::Utc::now(),
+        );
+        assert!(out.find("generic").unwrap() < out.find("PROJECT PART").unwrap());
+        assert!(out.find("PROJECT PART").unwrap() < out.find("# Startup steps").unwrap());
+    }
+
+    #[test]
     fn prints_the_note_with_its_age_instead_of_the_state_file() {
         let now = chrono::Utc::now();
         let note = bridle_api::Handover {
@@ -3222,7 +3273,14 @@ mod prime_tests {
             created_at: now - chrono::Duration::hours(3),
             created_by: "external:orchestrator".into(),
         };
-        let out = render_prime_orchestrator("role", "the state file", Some(&note), now);
+        let out = render_prime_orchestrator(
+            "bridle",
+            "role",
+            None,
+            Some("the state file"),
+            Some(&note),
+            now,
+        );
         assert!(out.contains("# Handover note (h-0007, written 3h ago"));
         assert!(out.contains("Carry on with br-1."));
         assert!(!out.contains("the state file"));

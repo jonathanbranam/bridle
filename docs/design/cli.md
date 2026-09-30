@@ -566,10 +566,15 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   agent from stopping.
 - **`prime orchestrator`** prints a fresh orchestrator session's opening context in one
   go (docs/questions/open/one-command-orchestrator-handover-d4mz.md, step 2): the role
-  prompt (`workflow/base/roles/orchestrator.md`), the newest handover
-  note with its age (or, with none, `docs/context/orchestrator-state.md`), then the startup steps (check in with
-  `status`/`agents`/messages, start the watcher, keep both managers'
-  work moving, verify merges, watch context). The note is fetched from the daemon
+  prompt (`workflow/base/roles/orchestrator.md`, generic: `{project}` becomes the current
+  project's name, the `--project` value or the directory name, e.g. in the credentials-entry
+  snippet), followed by the project's own `.bridle/roles/orchestrator.md` when present, the
+  newest handover note with its age (or, with none, `docs/context/orchestrator-state.md` when
+  the project has one), then the startup steps (check in with
+  `status`/`agents`/messages, start the watcher, keep the workforce's
+  work moving, verify merges, watch context). The advisor role
+  (`workflow/base/roles/advisor.md`) is generic the same way and points at an optional
+  `.bridle/roles/advisor.md`. The note is fetched from the daemon
   best-effort (no daemon or no note: the state file); the files are read from the current directory, so run it from the repo root, as
   `scripts/claude-orchestrator` does when it uses this as `claude`'s opening prompt.
   Any other role is a clap `InvalidValue` error, not a silent no-op.
