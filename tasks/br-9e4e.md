@@ -4,7 +4,7 @@ title = "Clean bridle's own tickets so 'bridle ticket check' passes (7gk7 follow
 kind = "chore"
 state = "integrated"
 created_at = "2026-09-30T20:12:31.211Z"
-updated_at = "2026-09-30T20:21:19.450344Z"
+updated_at = "2026-09-30T20:21:29.432187Z"
 branch = "bridle/ticket-clean"
 commit = "cc893d0188c7099705d010e427d0b7e8b87aab68"
 summary = "Bridle's tickets now pass `bridle ticket check` (exit 0). Checker fix: `[[...]]` inside inline code is ignored (crates/bridle/src/ticket.rs, test extended). Backfilled `closed` on 78 resolved tickets from the last git commit touching each file (UTC; one-off script, not committed). hb0q, rl2v and f1ky weren't a format problem in the name: their ids contain characters outside the id alphabet (0, l, 1), so they were reminted: hb0q->dv9u, rl2v->4f34, f1ky->5heh; files renamed, frontmatter id and wiki links/see entries updated (usage-and-budget.md, mt7r, g3ck, agent-host brief). Prose mentions of the old ids (orchestrator-history, a test comment, a ticket body) were left as history. Dangling needs/see: repointed kc4v -> context-tokens-overcounts-multi-call-turns-kc4v and mrhe -> bridle-without-a-clone-of-its-repo-mrhe. Removed: `existing-projects` (a rule) from push-the-state-branch-we2r; `d99e` from routine-notes-reach-the-humans-inbox-hx7t; `u7pw` (a spike) from allowed-warning-overrides-the-override-kv7d; `incidents` from budget-resume-skips-the-manager-k7nr."
@@ -19,3 +19,6 @@ done: bridle ticket check exits 0 on docs/tickets; checker skips inline code; cl
 
 ### note · agent:manager-2 · 2026-09-30T20:21:19.450Z
 integrated: cc893d0188c7099705d010e427d0b7e8b87aab68 (branch bridle/ticket-clean)
+
+### note · agent:manager-2 · 2026-09-30T20:21:29.432Z
+cleanup: removed agent ticket-clean, branch bridle/ticket-clean
