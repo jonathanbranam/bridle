@@ -1179,6 +1179,10 @@ pub struct LandArgs {
     /// Overrides `[integration] check`.
     #[arg(long, value_name = "CMD")]
     pub check_cmd: Option<String>,
+    /// The commit the worker reported a green check on; a fast-forward landing of exactly this
+    /// tip skips the check. Without it the check always runs.
+    #[arg(long, value_name = "SHA")]
+    pub checked_commit: Option<String>,
 }
 
 #[derive(Debug, Args)]

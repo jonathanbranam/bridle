@@ -53,6 +53,8 @@ pub struct LandInput<'a> {
     pub summary: Option<&'a str>,
     pub is_arch_revision: bool,
     pub check: Option<&'a str>,
+    /// The commit the worker reported a green check on.
+    pub checked_commit: Option<&'a str>,
 }
 
 pub struct Landed {
@@ -114,24 +116,40 @@ pub async fn land(i: &LandInput<'_>) -> Result<Landed, LandError> {
     }
 
     // When the integration branch is an ancestor of the task tip, the squash tree equals the tip
-    // tree: the worker already checked exactly this content. A moved base means a real merge.
-    // A git error here reads as "not an ancestor", so the check runs.
+    // tree, so the worker's green check covers it if it was on this very tip. A moved base means
+    // a real merge. A git error here reads as "not an ancestor", so the check runs.
     let mut count = None;
     let fast_forward = run_git(i.repo, &["merge-base", "--is-ancestor", &old, i.branch])
         .await
         .is_ok();
+    let tip = run_git(i.repo, &["rev-parse", &format!("{}^{{commit}}", i.branch)])
+        .await
+        .map(|t| t.trim().to_string())
+        .unwrap_or_default();
+    let reported = i.checked_commit.map(str::trim).filter(|c| !c.is_empty());
+    // A short sha from the worker's report is fine, but not an empty or unrelated prefix.
+    let tip_checked = reported.is_some_and(|c| !tip.is_empty() && tip.starts_with(c));
     match i.check {
-        Some(_) if fast_forward => {
-            notes.push("check skipped: fast-forward of an unchanged base".to_string());
+        Some(_) if fast_forward && tip_checked => {
+            notes.push(
+                "check skipped: fast-forward of an unchanged base, tip is the commit the worker \
+                 reported a green check on"
+                    .to_string(),
+            );
         }
         Some(cmd) => {
             count = run_check(&wt, cmd).await?;
             if let Some(n) = count {
                 band_check(n, read_count(i))?;
             }
-            notes.push(
-                "check ran: the integration branch had moved past the task's base".to_string(),
-            );
+            notes.push(if !fast_forward {
+                "check ran: the integration branch had moved past the task's base".to_string()
+            } else if reported.is_none() {
+                "check ran: no checked commit reported (--checked-commit)".to_string()
+            } else {
+                "check ran: the branch tip is not the commit the worker reported checked"
+                    .to_string()
+            });
         }
         None => notes.push("no [integration] check configured: skipped".to_string()),
     }

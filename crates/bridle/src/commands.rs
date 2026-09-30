@@ -2675,6 +2675,7 @@ async fn land(cli: &Cli, args: &LandArgs) -> Result<(), CliError> {
             &LandRequest {
                 branch: args.branch.clone(),
                 check_cmd: args.check_cmd.clone(),
+                checked_commit: args.checked_commit.clone(),
             },
         )
         .await?;

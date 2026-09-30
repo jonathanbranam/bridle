@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `bridle land --checked-commit <sha>`: the landing check is skipped only for a fast-forward whose tip is the commit the worker reported a green check on; otherwise it runs (qgma).
+
 - Focus hours, slice C (br-2e57, cvaq): `mode = "locked"` periods. `bridle focus gate` blocks every prompt ("Locked until 6:00 PM. Email bridle@dev.branam.us if it matters."), `bridle session advisor` and `bridle advisor start` refuse, and the daemon stops all advisor panes from its stall-check loop. The orchestrator keeps running; an active override lifts the lock; nothing changes without `[[focus]]`.
 - Focus hours, slice A (br-e540, cvaq): `[[focus]]` periods in `~/.bridle/config.toml` (`days`, `start`, `end`, `mode = "quiet"|"locked"`) and `bridle focus gate`, a `UserPromptSubmit` hook that `bridle session` now passes. In a `quiet` period it adds a "Quiet hours (work) until 6:00 PM ET" nudge on the first prompt and every 5 minutes after. Off entirely without `[[focus]]`; a project opts out with `focus_hours = false`. `locked` parses but does nothing yet.
 - Focus hours, slice B (br-ff0d, cvaq): a hand-written `~/.bridle/focus-override.toml` (`until`, capped at 2 hours; `reason`) silences the gate, taking effect `focus_override_delay_minutes` (default 10) after it is written; malformed files are ignored. `bridle status` shows it. Agents are denied `Edit`/`Write` of `~/.bridle/focus*` and `config.toml`. Still off without `[[focus]]`.

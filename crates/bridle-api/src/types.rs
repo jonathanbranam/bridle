@@ -1564,6 +1564,10 @@ pub struct LandRequest {
     /// Overrides `[integration] check`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub check_cmd: Option<String>,
+    /// The commit the worker reported a green `just check` on. The check is skipped only when
+    /// the branch tip is exactly this commit and the landing is a fast-forward.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub checked_commit: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

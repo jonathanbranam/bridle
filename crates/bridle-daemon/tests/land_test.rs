@@ -59,6 +59,7 @@ fn req(branch: &str, check: Option<&str>) -> LandRequest {
     LandRequest {
         branch: Some(branch.to_string()),
         check_cmd: check.map(str::to_string),
+        checked_commit: None,
     }
 }
 
@@ -225,14 +226,22 @@ async fn a_dirty_checked_out_branch_refuses_the_landing() {
     );
 }
 
+fn checked(branch: &str, sha: Option<String>) -> LandRequest {
+    LandRequest {
+        checked_commit: sha,
+        ..req(branch, Some("exit 1"))
+    }
+}
+
 #[tokio::test]
-async fn a_fast_forward_of_an_unchanged_base_skips_the_check() {
+async fn a_fast_forward_of_the_reported_checked_commit_skips_the_check() {
     let (d, _tmp) = start_daemon(None).await;
     branch_with(&d, "b1", "f.txt", "x\n");
     let id = task(&d, TaskKind::Feature).await;
+    let tip = git(&d.repo, &["rev-parse", "b1"]);
     let r = d
         .client
-        .land_task(&id, &req("b1", Some("exit 1")))
+        .land_task(&id, &checked("b1", Some(tip)))
         .await
         .expect("a failing check must not run");
     assert!(
@@ -242,6 +251,50 @@ async fn a_fast_forward_of_an_unchanged_base_skips_the_check() {
         "{:?}",
         r.notes
     );
+}
+
+#[tokio::test]
+async fn a_newer_commit_than_the_reported_one_runs_the_check() {
+    let (d, _tmp) = start_daemon(None).await;
+    branch_with(&d, "b1", "f.txt", "x\n");
+    let reported = git(&d.repo, &["rev-parse", "b1"]);
+    let wt = d.workspace.join("scratch-more");
+    git(
+        &d.repo,
+        &["worktree", "add", wt.to_str().expect("utf8"), "b1"],
+    );
+    std::fs::write(wt.join("g.txt"), "z\n").expect("write");
+    git(&wt, &["add", "."]);
+    git(&wt, &["commit", "-qm", "later"]);
+    git(
+        &d.repo,
+        &["worktree", "remove", "--force", wt.to_str().expect("utf8")],
+    );
+    let id = task(&d, TaskKind::Feature).await;
+    let e = land_err(&d, &id, &checked("b1", Some(reported))).await;
+    assert!(e.contains("check failed"), "{e}");
+}
+
+#[tokio::test]
+async fn no_reported_commit_runs_the_check() {
+    let (d, _tmp) = start_daemon(None).await;
+    branch_with(&d, "b1", "f.txt", "x\n");
+    let id = task(&d, TaskKind::Feature).await;
+    let e = land_err(&d, &id, &checked("b1", None)).await;
+    assert!(e.contains("check failed"), "{e}");
+}
+
+#[tokio::test]
+async fn a_moved_base_runs_the_check_even_with_the_tip_reported() {
+    let (d, _tmp) = start_daemon(None).await;
+    branch_with(&d, "b1", "f.txt", "x\n");
+    std::fs::write(d.repo.join("other.txt"), "y\n").expect("w");
+    git(&d.repo, &["add", "."]);
+    git(&d.repo, &["commit", "-qm", "main moves"]);
+    let id = task(&d, TaskKind::Feature).await;
+    let tip = git(&d.repo, &["rev-parse", "b1"]);
+    let e = land_err(&d, &id, &checked("b1", Some(tip))).await;
+    assert!(e.contains("check failed"), "{e}");
 }
 
 #[tokio::test]

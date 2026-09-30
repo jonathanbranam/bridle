@@ -1886,6 +1886,7 @@ async fn land_task(
         summary: task.summary.as_deref(),
         is_arch_revision: task.kind == bridle_api::types::TaskKind::ArchRevision,
         check,
+        checked_commit: req.checked_commit.as_deref(),
     })
     .await;
     let landed = match landed {

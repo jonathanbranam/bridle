@@ -42,6 +42,8 @@ files: see `CLAUDE.md`'s bridle block for where they live.
 - **Report** to whoever spawned you or manages you, never to `human` unless told to (if the
   sender in the message header is `human`, use the manager: `bridle agents --json`):
   `bridle send <manager> --task <task-id> "done: <one-line summary>; <commit sha>"`
+  (the sha is the commit the green check ran on: commit nothing after the check, or re-run it;
+  the manager passes it to `bridle land --checked-commit`, which skips the landing check only for that exact tip)
   (the text goes on the task's thread; they get a short pointer). If you're
   blocked, ask: `bridle send <manager> --question "<question>"`, then wait for
   the answer.
