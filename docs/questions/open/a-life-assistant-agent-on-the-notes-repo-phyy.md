@@ -62,3 +62,26 @@ code. The human talks to it; it reads and writes the notes repo only through the
    Remote Control, or both?
 5. **Which machine:** the NUC (runs meta-notes, always on) seems the natural home.
 6. **Git:** does the agent commit and push the notes repo itself, and on which branch?
+
+## The human's answers (2026-09-30)
+
+The human, verbatim:
+
+> Hmm yeah. Just use bridle but build a different workflow system? I love it.
+>
+> Yes use the notes repo. Agent would push that repo and set it up in bridle.
+>
+> I think it would work. Meta notes has most of what we need. Recurrence is missing.
+
+- **Q1: bridle with a different workflow.** No new code repo: bridle runs it, with its own
+  workflow (roles, rules, skills for life admin instead of software), kept in bridle's
+  `workflow/` like the other packs.
+- **Q2: the notes repo becomes a bridle project.** The agent sets it up in bridle and commits and
+  pushes the notes repo itself. That's the human's approval for the agent's own writes to this
+  repo under the existing-projects rule.
+- **Q3: meta-notes has most of it; recurrence is missing.** Recurring tasks and reminders
+  (maintenance) are a meta-notes feature, filed in meta-notes' own `tickets/`.
+
+Still open: Q4 (how due reminders reach the human), Q5 (which machine; the NUC suggested), and
+Q6's branch (straight to `main`, or a `bridle-adopt` trial first per 63rv; the advisor suggests a
+short trial for the setup commit only, then `main`).
