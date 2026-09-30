@@ -229,3 +229,24 @@ Newest first. One line per item: what happened, who did it, what it says about r
   decision (fixed, br-a3a4). Prime text lives in code: role decisions have two copies.
 - Most of the session was the queue waiting on the human's three questions: bridle had no work
   it could start without them.
+
+## Fourteenth session (2026-09-30 00:45 UTC onward)
+
+- The session opened on a daemon that wouldn't start: the installed binary predated br-f05d, which
+  changed `.bridle/config.toml` to `"200k"` and the parser in one commit. The last handover said
+  the config used plain numbers; it didn't. A config-format change needs a rebuild before the
+  next start, and the handover note has to check the file, not recall it. Self-upgrade (q7rx)
+  retires the whole class.
+- I relayed `bridle rm mark-unread --delete-branch` from `bridle status`'s "merged" line; the
+  branch was empty (stopped by the restart before its first commit) and held uncommitted work.
+  Filed z4hd (fixed, br-f919). Check the branch yourself before handing the human an `rm`.
+- By hand: two `cargo install` builds, one in the foreground from a detached checkout of the
+  clone. The human saw `HEAD` detached and a no-watcher alert fired while it built. The human's
+  rule now: the orchestrator doesn't build; bridle upgrades itself (role doc, ed3ce11).
+- Two watchers ran at once: I chained `bridle send ... && bridle wait-for-wake` while one was
+  already waiting. Now: restart the watcher first on every wake, one at a time (v9t9).
+- The human's decisions arrived faster than the queue drained (we2r, q7rx, NUC); relaying the
+  advisor's notes to pm-1 was most of the work. Much of it is the "voice of bridle" admin role:
+  relay, ticket filing, config edits for the human.
+- A subagent did the NUC gap analysis (~85K of reading kept out of this context). Worth repeating
+  for any cross-ticket readiness question.
