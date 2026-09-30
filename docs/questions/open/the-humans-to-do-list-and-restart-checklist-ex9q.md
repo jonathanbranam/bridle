@@ -72,3 +72,37 @@ The human, verbatim (2026-09-29, via the advisor):
    just be that I need to click a button").
 5. **[now] Restart the orchestrator** (`scripts/claude-orchestrator`); it disappeared at 08:36 ET
    (ticket [[the-orchestrator-stays-running-fx7x|the orchestrator stays running]]).
+
+## The human's decision: incidents and to-dos are tasks (2026-09-29, br-c83e)
+
+Asked by the orchestrator (br-c83e): one "open request" record for incidents (nc7r) and human
+to-dos (ex9q), keep them separate, or discuss? The human, verbatim:
+
+> An incident seems unique to me - it should broadcast everywhere, and probably orch should own
+> resolving it. Most likely, orch owns incidents I think. If someone detects or suspects and
+> incident, they could file a "potential incident" which goes to orch to evaluate and promote to
+> active incident. All agents can check pending incidents so they search before creating a new
+> one; incidents should have comments and status and updates. They are like tasks. I think many
+> things are like this: they have a state, owner, a description, and comments. Incidents feel
+> more like a special case of a task and so does a todo sent to me - it's a task someone is
+> asking me to do.
+>
+> I feel better about enhancing the task solution to support incidents as a means of tracking
+> them since that machinery exists. The only other machinery that is needed is the broadcast and
+> persistent messsage that gets sent to any cycled workesr.
+
+What that means (the advisor's reading):
+
+- **Neither is a new record type; both are bridle tasks.** The "open request" record and the
+  separate `incidents` table in [[docs/design/agent-host/incidents|incidents]] are superseded.
+- **A to-do for the human** is a task assigned to the human (ex9q's Shape; WIP 648321e on
+  `bridle/human-todos` fits this).
+- **An incident** is a task of its own kind, owned by the orchestrator, with the usual body,
+  thread (comments and updates) and state. Anyone who detects or suspects one files it as a
+  *potential* incident, after searching open ones first (`bridle task search`/`list`); the
+  orchestrator evaluates it and promotes it to *active*, or drops it, and resolves it.
+- **The only new machinery** is the broadcast: while an incident is active, a persistent notice
+  goes to every agent, including any that start, resume or renew (cycled workers) while it's
+  open. The drop-if-undelivered and "resolved" behaviour from the incidents design carries
+  over.
+- `docs/design/agent-host/incidents.md` needs revising to this.
