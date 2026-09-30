@@ -250,3 +250,27 @@ Newest first. One line per item: what happened, who did it, what it says about r
   relay, ticket filing, config edits for the human.
 - A subagent did the NUC gap analysis (~85K of reading kept out of this context). Worth repeating
   for any cross-ticket readiness question.
+
+## Fifteenth session (2026-09-30 03:15 UTC onward)
+
+- The relaunch after `handover done` brought up a pane full of escape codes (csfe). Cause: the
+  daemon's stop killed the launcher script but left `claude` running as an orphan. Fixed in br-7798.
+- A worker (`nuc-scripts`) tested `scripts/claude-orchestrator` by running it for real. It
+  overwrote `orchestrator.pid` and `orchestrator.session` and sent test prompts into this session
+  through Remote Control. Auto mode refused my repair of `~/.bridle`; the human ran it from
+  Termius. Fixed by k6b3: workers get their own `BRIDLE_HOME`, and the launchers refuse to run
+  under an agent.
+- Commands for the human: no leading `!`. They run them from Termius, where the `!` gets
+  copied along and breaks the command.
+- pm-1's sweep of stale task records matched tasks to ticket commits and closed a67t and 6rh7,
+  which were never built. I reopened them. Check that an implementing commit exists before
+  closing a task.
+- pm-1 unheld br-14cd (the warm build cache) on its own reading of the measurement. The human had
+  said they'd decide after seeing the numbers, so I held it again. A PM turns "measure, then
+  decide" into "measure, then do" unless it's told whose decision it is.
+- Red main from a test that passed only in agents' environments (`BRIDLE_PROJECT` inherited).
+  CI caught it within the hour, and one worker fixed it (br-2c99).
+- Self-upgrade restarted the daemon four times overnight, with clean resumes. Its restart wake
+  names the clone's HEAD, not the commit it built.
+- By 06:00 UTC the queue was empty: everything left waits on the human (meta-notes and track-web
+  trial reviews, the phyy answers, email AWS setup, a67t grouping, the b7cz cache decision).
