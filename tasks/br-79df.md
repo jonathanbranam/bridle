@@ -4,8 +4,9 @@ title = "Base rule: check and update the docs as the last step of every change (
 kind = "chore"
 state = "planned"
 created_at = "2026-09-30T23:27:11.171Z"
-updated_at = "2026-09-30T23:27:17.030413Z"
+updated_at = "2026-09-30T23:32:20.794260Z"
 size = "S"
+summary = "Added CHANGELOG entry for docs-current rule (br-987b had implemented the rule and worker handoff; br-0f46 already dropped). Commit ef33f8c."
 +++
 
 Ticket: docs/tickets/open/docs-kept-current-as-part-of-every-change-3ndf.md (supersedes the stale imported task br-0f46; drop br-0f46 with a note when done).
