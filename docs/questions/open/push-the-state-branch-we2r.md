@@ -45,6 +45,16 @@ The human, verbatim:
 
 - **Existing projects** (`workflow/base/rules/existing-projects.md`): pushing adds a new branch,
   `bridle/state`, to meta-notes' and track-web's GitHub repos. It touches no existing branch.
-  Is that approved for projects in trial, or bridle's own repo only at first?
+  Is that approved for projects in trial, or bridle's own repo only at first? Settled, below.
 - Task bodies go to GitHub wherever the repo lives; fine for private repos, worth a thought for
   public ones.
+
+## The human's answers (2026-09-29)
+
+> I pushed it; yes trials should push state too, no reason not to, branches can be deleted later
+> as needed.
+
+- The human pushed bridle's `bridle/state` to `origin` by hand (a snapshot; the daemon's push
+  builds on it as a fast-forward). The repo is public; the advisor's keyword scan found no
+  secrets in it.
+- Projects on trial (meta-notes, track-web, later ones) push `bridle/state` too: approved.
