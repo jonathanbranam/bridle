@@ -8,6 +8,7 @@ changes: [74603a5]
 specs: []
 needs: []
 see: [sign-binaries-on-intel-macs-cs7x]
+closed: 2026-09-30T05:12:44Z
 ---
 
 ## What the human said

@@ -1,5 +1,5 @@
 ---
-id: hb0q
+id: dv9u
 title: How does `bridle budget hold` identify itself to other projects' daemons?
 opened: 2026-09-27
 repos: [bridle]

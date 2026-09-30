@@ -7,6 +7,7 @@ changes: []
 specs: [docs/design/agent-host/roles-and-config.md]
 needs: []
 see: [93u2]
+closed: 2026-09-30T05:12:44Z
 ---
 
 ## The question

@@ -34,7 +34,7 @@ The human's words, 2026-09-28:
 
 Full runs take minutes each, compete with workers' builds for the CPU, and
 make the load-sensitive flakes in
-[[two-flaky-test-failures-under-load-f1ky|f1ky]] more likely. The workspace
+[[two-flaky-test-failures-under-load-5heh|5heh]] more likely. The workspace
 is already split into crates (`bridle-claude`, `bridle-api`, `bridle-daemon`,
 `bridle`), but most of the tests, and most of the change, sit in
 `bridle-daemon`.

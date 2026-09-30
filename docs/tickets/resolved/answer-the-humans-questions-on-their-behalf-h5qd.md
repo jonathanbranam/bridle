@@ -8,6 +8,7 @@ changes: [7257285]
 specs: []
 needs: []
 see: [kp3f, a7h3]
+closed: 2026-09-30T05:12:44Z
 ---
 
 ## What happened

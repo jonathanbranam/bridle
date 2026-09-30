@@ -7,6 +7,7 @@ changes: []
 specs: []
 needs: []
 see: [n6gy]
+closed: 2026-09-30T05:12:44Z
 ---
 
 ## The question

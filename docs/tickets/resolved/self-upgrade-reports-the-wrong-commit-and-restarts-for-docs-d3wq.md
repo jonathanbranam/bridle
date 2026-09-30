@@ -7,6 +7,7 @@ changes: []
 specs: []
 needs: []
 see: [bridle-restarts-itself-q7rx, unattended-while-the-human-travels-tv8r]
+closed: 2026-09-30T12:48:28Z
 ---
 
 ## What happened (2026-09-30, orchestrator)

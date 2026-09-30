@@ -7,6 +7,7 @@ changes: []
 specs: [docs/design/agent-host/messages.md]
 needs: []
 see: []
+closed: 2026-09-30T05:12:44Z
 ---
 
 ## The question

@@ -7,7 +7,8 @@ repos: [bridle]
 changes: [8d7a9e5]
 specs: []
 needs: []
-see: [6t29, u7pw, y2eb]
+see: [6t29, y2eb]
+closed: 2026-09-30T05:12:44Z
 ---
 
 ## What happened

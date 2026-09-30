@@ -7,6 +7,7 @@ changes: []
 specs: []
 needs: []
 see: [78sp, j2vq]
+closed: 2026-09-30T05:12:44Z
 ---
 
 ## The question

@@ -7,6 +7,7 @@ changes: []
 specs: []
 needs: []
 see: [mt7r]
+closed: 2026-09-30T05:12:44Z
 ---
 
 ## The question

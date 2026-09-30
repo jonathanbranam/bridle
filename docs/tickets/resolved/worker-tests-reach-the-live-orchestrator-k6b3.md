@@ -7,6 +7,7 @@ changes: []
 specs: []
 needs: []
 see: [the-orchestrator-stays-running-fx7x, orchestrator-pane-full-of-escape-codes-csfe]
+closed: 2026-09-30T05:12:44Z
 ---
 
 ## What happened

@@ -6,7 +6,7 @@ repos: [bridle]
 changes: []
 specs: []
 needs: []
-see: [project-machine-and-account-scope-9mxw, existing-projects]
+see: [project-machine-and-account-scope-9mxw]
 ---
 
 ## The ask

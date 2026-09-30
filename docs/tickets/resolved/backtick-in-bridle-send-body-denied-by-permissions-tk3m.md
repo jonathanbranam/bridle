@@ -8,6 +8,7 @@ changes: [b1f4750]
 specs: []
 needs: []
 see: []
+closed: 2026-09-30T05:12:44Z
 ---
 
 ## Resolution

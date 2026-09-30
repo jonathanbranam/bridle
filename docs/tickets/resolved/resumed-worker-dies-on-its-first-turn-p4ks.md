@@ -7,6 +7,7 @@ changes: []
 specs: []
 needs: []
 see: [r3nh]
+closed: 2026-09-30T05:12:44Z
 ---
 
 ## What happened

@@ -8,6 +8,7 @@ changes: [5e55d8b]
 specs: []
 needs: []
 see: [nbkj, f75x]
+closed: 2026-09-30T05:12:44Z
 ---
 
 ## What happened

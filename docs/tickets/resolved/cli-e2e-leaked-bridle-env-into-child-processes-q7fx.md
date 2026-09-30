@@ -8,6 +8,7 @@ changes: [1980c84]
 specs: []
 needs: []
 see: []
+closed: 2026-09-30T05:12:44Z
 ---
 
 ## What happened

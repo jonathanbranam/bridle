@@ -6,7 +6,7 @@ repos: [bridle]
 changes: []
 specs: []
 needs: []
-see: [kp3f, d99e]
+see: [kp3f]
 ---
 
 ## What happened

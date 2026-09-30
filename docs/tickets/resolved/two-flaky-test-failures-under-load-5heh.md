@@ -1,5 +1,5 @@
 ---
-id: f1ky
+id: 5heh
 title: Two flaky test failures observed under high machine load
 opened: 2026-09-27
 repos: [bridle]
@@ -7,6 +7,7 @@ changes: []
 specs: []
 needs: []
 see: [n6gy]
+closed: 2026-09-30T05:12:44Z
 ---
 
 ## The question

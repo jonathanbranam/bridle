@@ -7,7 +7,8 @@ repos: [bridle]
 changes: [c70b971]
 specs: []
 needs: []
-see: [y2eb, 6t29, incidents]
+see: [y2eb, 6t29]
+closed: 2026-09-30T05:12:44Z
 ---
 
 ## What happened

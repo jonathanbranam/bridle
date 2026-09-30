@@ -8,6 +8,7 @@ changes: [89b560e]
 specs: []
 needs: []
 see: [hj4g]
+closed: 2026-09-30T05:12:44Z
 ---
 
 ## The question

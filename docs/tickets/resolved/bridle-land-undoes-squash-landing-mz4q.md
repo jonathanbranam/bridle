@@ -7,6 +7,7 @@ changes: []
 specs: []
 needs: []
 see: [sq4m, tr7k]
+closed: 2026-09-30T12:53:59Z
 ---
 
 ## What happened

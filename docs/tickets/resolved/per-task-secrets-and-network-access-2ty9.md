@@ -8,6 +8,7 @@ changes: [9ee5f5d, f925ef2, 5d39325]
 specs: []
 needs: []
 see: [per-task-tools-and-model-k8dw]
+closed: 2026-09-30T05:12:44Z
 ---
 
 ## What happened

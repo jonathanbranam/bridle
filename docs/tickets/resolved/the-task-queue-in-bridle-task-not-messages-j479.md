@@ -8,6 +8,7 @@ changes: [f401a7f]
 specs: []
 needs: []
 see: [kp3f, a7h3, tx3f]
+closed: 2026-09-30T05:12:44Z
 ---
 
 ## What happened

@@ -396,7 +396,7 @@ to every daemon in the registry; today it only reaches the current daemon
 (`POST /v1/budget/hold` on the daemon the CLI is already talking to). Reaching
 every other project's daemon needs a cross-project credential the CLI
 doesn't have yet:
-[[how-does-bridle-budget-hold-identify-itself-to-other-daemons-hb0q|how does
+[[how-does-bridle-budget-hold-identify-itself-to-other-daemons-dv9u|how does
 `bridle budget hold` identify itself to other daemons]]. Without `--for` or
 `--until` it lasts until `release`.
 

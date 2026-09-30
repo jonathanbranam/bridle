@@ -6,7 +6,7 @@ repos: [bridle]
 changes: []
 specs: []
 needs: []
-see: [push-the-state-branch-we2r, bridle-without-a-local-clone-mrhe, project-machine-and-account-scope-9mxw]
+see: [push-the-state-branch-we2r, bridle-without-a-clone-of-its-repo-mrhe, project-machine-and-account-scope-9mxw]
 ---
 
 ## The ask

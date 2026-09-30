@@ -298,7 +298,7 @@ fn list_items(raw: &str) -> Option<Vec<String>> {
     )
 }
 
-/// `[[stem]]` / `[[stem|text]]` targets in `body`, outside fenced code blocks.
+/// `[[stem]]` / `[[stem|text]]` targets in `body`, outside fenced code blocks and inline code.
 fn wiki_links(body: &str) -> Vec<String> {
     let mut out = Vec::new();
     let mut fenced = false;
@@ -309,7 +309,9 @@ fn wiki_links(body: &str) -> Vec<String> {
         if fenced {
             continue;
         }
-        let mut rest = line;
+        // Odd-numbered pieces between backticks are inline code.
+        let line: String = line.split('`').step_by(2).collect::<Vec<_>>().join(" ");
+        let mut rest = line.as_str();
         while let Some(i) = rest.find("[[") {
             rest = &rest[i + 2..];
             let Some(j) = rest.find("]]") else { break };
@@ -690,7 +692,7 @@ mod tests {
             "links-ffff.md",
             "ffff",
             "",
-            "[[nowhere|x]] and [[dup-eeee]]\n```\n[[in-code]]\n```",
+            "[[nowhere|x]] and [[dup-eeee]] `[[inline-code]]`\n```\n[[in-code]]\n```",
         );
         let f = std::fs::read_to_string(t.join("open/links-ffff.md")).unwrap();
         std::fs::write(
@@ -713,7 +715,7 @@ mod tests {
         ] {
             assert!(p.contains(want), "missing {want:?} in:\n{p}");
         }
-        assert!(!p.contains("in-code"), "{p}");
+        assert!(!p.contains("in-code") && !p.contains("inline-code"), "{p}");
         assert!(!p.contains("see names"), "{p}");
     }
 

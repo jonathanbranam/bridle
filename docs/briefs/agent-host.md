@@ -78,7 +78,7 @@ project may lower a threshold, never raise it. Stale readings (over 10 minutes) 
 you: hold, then wind down. `bridle budget` shows the state and why; `budget --schedule` and
 `budget override <period>` swap thresholds by time of day (`[[budget.schedule]]`). `budget hold` and
 `release` idle the whole account for you. After a pause the manager, PM and orchestrator resume
-first. All **built**. The cross-daemon sharing of one budget is **planned** (`xypj`, `hb0q`).
+first. All **built**. The cross-daemon sharing of one budget is **planned** (`xypj`, `dv9u`).
 
 ## Context governing and renewal
 
