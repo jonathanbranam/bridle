@@ -27,6 +27,7 @@ docs/
 In the project's git repo: `bridle init` (scaffolds `.bridle/config.toml` and the `.gitignore`
 entries), then `bridle sync`, `bridle doctor`, `bridle serve`
 ([[docs/design/cli|cli]]). Real onboardings: [[docs/context/onboarding-data-contracts|data-contracts]].
+Step by step on dalek or the NUC, with the machine config and tokens: [[docs/context/adding-a-project|adding a project]].
 
 ## How the folders work
 
