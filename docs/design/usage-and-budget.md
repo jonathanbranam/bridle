@@ -234,6 +234,7 @@ stop_at      = 95
   entries in the thresholds above for that evaluation only. No match, or no
   `[[budget.schedule]]` at all, falls back to the plain `[budget]` thresholds
   unchanged.
+  **When a window crosses midnight, the part after midnight is matched against the next day's `days` entry.** To cover an overnight block like "Sunday–Thursday nights," split it into two: `sun..thu 23:00–00:00` (or `23:00–23:59`, leaving the last minute uncovered) and `mon..fri 00:00–07:00`.
 - **`seven_day` (and every other window) is never affected** — only
   `five_hour` has a schedule.
 - Schedule periods live under `[budget]`, so the same machine-wide/project

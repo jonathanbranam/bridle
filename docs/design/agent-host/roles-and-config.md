@@ -176,7 +176,8 @@ Also read from `.bridle/config.toml` (defaults in parentheses; each is documente
 
 Ticket cvaq. `[[focus]]` periods in the machine `~/.bridle/config.toml` keep the human on their
 real work. Same shape as `[[budget.schedule]]` (`days` a list or `"all"`, `start`/`end` as
-host-local `HH:MM`, a range that may cross midnight), plus `name` and `mode`:
+host-local `HH:MM`, a range that may cross midnight — when it does, the part after midnight is matched
+against the **next day's** `days` entry), plus `name` and `mode`:
 
 ```toml
 [[focus]]
@@ -184,7 +185,22 @@ name  = "work"
 days  = ["mon", "tue", "wed", "thu", "fri"]
 start = "08:00"
 end   = "18:00"
-mode  = "quiet"          # default; "locked" parses but is not acted on yet
+mode  = "quiet"          # default; "locked" blocks prompts (see below)
+
+# overnight example: a range crossing midnight needs two blocks
+[[focus]]
+name   = "sleep"
+days   = ["sun", "mon", "tue", "wed", "thu"]
+start  = "21:30"
+end    = "00:00"                                     # covers 21:30–23:59 (midnight wraps to next day)
+mode   = "quiet"
+
+[[focus]]
+name   = "sleep"
+days   = ["mon", "tue", "wed", "thu", "fri"]
+start  = "00:00"
+end    = "06:00"
+mode   = "quiet"
 ```
 
 With no `[[focus]]` everything is off. In a `quiet` period `bridle focus gate` (see
