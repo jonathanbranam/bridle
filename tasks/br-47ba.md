@@ -4,8 +4,9 @@ title = "Orchestrator/advisor session names include the host (sfb3)"
 kind = "chore"
 state = "planned"
 created_at = "2026-09-30T01:38:41.901Z"
-updated_at = "2026-09-30T01:39:35.934521Z"
+updated_at = "2026-09-30T01:44:43.677861Z"
 size = "S"
+summary = "Updated scripts/claude-orchestrator and scripts/claude-advisor to include hostname in session names (bridle-orch-<hostname> and bridle-advisor-<hostname>), with optional BRIDLE_SESSION_SUFFIX env override. Updated docs and CHANGELOG. Resulting command lines: on 'MacBook': --name bridle-orch-macbook; on 'NUC': --name bridle-orch-nuc; with override: BRIDLE_SESSION_SUFFIX=home-lab uses --name bridle-orch-home-lab. Tasks br-47ba (sfb3)."
 +++
 
 original id: sfb3
