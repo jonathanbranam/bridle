@@ -4,7 +4,7 @@ title = "NUC A: workflow path per machine (expand ~/$VAR, ~/.bridle/config.toml 
 kind = "bug"
 state = "integrated"
 created_at = "2026-09-30T03:01:34.219Z"
-updated_at = "2026-09-30T03:13:22.284404Z"
+updated_at = "2026-09-30T03:13:33.351131Z"
 branch = "bridle/workflow-path"
 commit = "6b0d0388e1d299e6f606417314ccb6bcd722dfe1"
 summary = "The project's workflow path now expands ~ and $VAR/${VAR} (unset var is an error), and ~/.bridle/config.toml's workflow overrides the project's (machine beats project). Config::workflow_root is the shared resolver: a missing or unreadable dir is an error at serve, sync, prime and rules, and fails doctor's 'referenced files' check. The orchestrator prime now reads its role file from the resolved workflow. Docs in roles-and-config.md, CHANGELOG. Git-url workflows are still unresolved."
@@ -19,3 +19,6 @@ done: workflow path expands ~/$VAR, machine config overrides project, missing di
 
 ### note · agent:manager-2 · 2026-09-30T03:13:22.284Z
 integrated: 6b0d0388e1d299e6f606417314ccb6bcd722dfe1 (branch bridle/workflow-path)
+
+### note · agent:manager-2 · 2026-09-30T03:13:33.351Z
+cleanup: removed agent workflow-path, branch bridle/workflow-path
