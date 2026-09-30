@@ -27,3 +27,11 @@ orchestrator, m-2811): "yes, I think that makes a lot of sense."
 - Skip it when the manager made the change, and when no manager is running (w2hj: the
   orchestrator starts one when there's work, so it may need the nudge instead).
 - Drop the hand nudge from the product manager's role once this lands.
+
+## The human on it (2026-09-30, via the advisor, in the gnar discussion)
+
+> there's a new ticket also that nobody is waking the manager and the manager should be woken when
+> the queue changes - this is good; I think we just keep a queue I don't see a downside to it; one
+> way of working is fine
+
+Every project keeps a queue, so this nudge is the one path to the manager, PM or not.

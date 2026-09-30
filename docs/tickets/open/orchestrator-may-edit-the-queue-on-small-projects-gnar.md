@@ -9,11 +9,28 @@ needs: []
 see: [w2hj]
 ---
 
-## Paused (2026-09-30)
+## Decided (2026-09-30)
 
-The human paused this after the first cut landed (82c42db, br-5c29) to discuss the proper
-approach with an advisor. The landed code stays until that discussion decides otherwise; no
-follow-up work on it until then.
+The human paused this after the first cut landed (82c42db, br-5c29) and discussed it with the
+advisor. Options were: the orchestrator acts as PM (as landed), the manager plans when there's no
+PM, or no queue on small projects (the empty queue reads as one tier). The human, verbatim:
+
+> ok, yes, (1) is fine; I think orch takes over for PM is good; I dont' want to bloat orch
+> responsibilities but it seems liek a reasonable tradeoff. there's a new ticket also that nobody
+> is waking the manager and the manager should be woken when the queue changes - this is good; I
+> think we just keep a queue I don't see a downside to it; one way of working is fine; all tasks
+> can be the same tier if orch approves or whatever makes sense.
+
+So the landed cut stands: with no PM, the orchestrator is acting PM and follows rule
+`planning-the-queue`. Every project keeps a queue (one way of working); on a small project a
+single tier is fine. Waking the manager on a queue change is
+[[the-daemon-tells-the-manager-when-the-queue-changes-f5ww|f5ww]].
+
+## Left to do
+
+- `workflow/base/roles/manager.md` says "with no product manager, noticing [open tasks] is your
+  job" but forbids the manager from planning or queueing them. With no PM it should tell the
+  orchestrator (the acting PM) about open tasks, not plan them itself.
 
 ## The ask
 
