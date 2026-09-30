@@ -190,7 +190,8 @@ async fn self_upgrade_waits_while_an_agent_is_mid_turn() {
     let marker = "echo ran > \"$CARGO_TARGET_DIR.txt\"";
     let (daemon, _tmp) =
         support::start_daemon_with_config(Some(auto(marker)), Some(SELF_UPGRADE)).await;
-    // Spawned in the same instant the first tick may fire; the tick is 100 ms, the turn 3 s.
+    // Spawned in the same instant the first tick may fire (the tick is 100 ms): the quiet check
+    // must count the spawn itself, before the agent reads as working.
     let agent = daemon
         .client
         .spawn(&worker("SLEEP 3"))
@@ -202,15 +203,19 @@ async fn self_upgrade_waits_while_an_agent_is_mid_turn() {
         bridle_api::types::AgentState::Working,
     )
     .await;
-    // The build itself may start in the gap between the tick's quiet check and the spawn (the
-    // skip-check's git calls widen it), so only the restart is held to the turn.
-    let before = daemon.running.restart_requested();
-    tokio::time::sleep(Duration::from_secs(1)).await;
-    if !before {
+    // Polls until the turn ends. The flag is read before the state, so a restart seen alongside a
+    // still-working agent really did happen mid-turn, however slow the machine is.
+    loop {
+        let restarted = daemon.running.restart_requested();
+        let a = daemon.client.get_agent(&agent.id).await.expect("agent");
         assert!(
-            !daemon.running.restart_requested(),
+            !(restarted && a.state == bridle_api::types::AgentState::Working),
             "restarted while a turn was running"
         );
+        if a.state != bridle_api::types::AgentState::Working {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(20)).await;
     }
     support::wait_for("the restart after the turn", || async {
         daemon.running.restart_requested().then_some(())

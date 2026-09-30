@@ -181,6 +181,9 @@ struct Inner {
     project: String,
     emitter: Emitter,
     runtimes: std::sync::Mutex<HashMap<String, Arc<AgentRuntime>>>,
+    /// Spawns in flight. Until its first `system/init` an agent reads `idle` although its first
+    /// turn is already on the way, so the quiet-point checks count these as busy.
+    spawning: std::sync::atomic::AtomicUsize,
     governor: crate::governor::GovernorHandle,
     /// `bridle budget max-workers`: a live cap replacing
     /// `[budget] max_workers` until cleared or the daemon restarts.
@@ -268,6 +271,7 @@ impl AgentManager {
             project,
             emitter,
             runtimes: std::sync::Mutex::new(HashMap::new()),
+            spawning: std::sync::atomic::AtomicUsize::new(0),
             governor,
             max_workers_override: std::sync::Mutex::new(None),
             task_wake: std::sync::Mutex::new(TaskWake::default()),
@@ -763,7 +767,30 @@ impl AgentManager {
         !self.0.config.components.is_empty()
     }
 
+    /// Whether any spawn hasn't returned yet (see `Inner::spawning`).
+    pub fn spawning(&self) -> bool {
+        self.0.spawning.load(std::sync::atomic::Ordering::SeqCst) > 0
+    }
+
     pub async fn spawn(
+        &self,
+        req: SpawnRequest,
+        principal: &Principal,
+    ) -> Result<Agent, SupervisorError> {
+        struct InFlight<'a>(&'a std::sync::atomic::AtomicUsize);
+        impl Drop for InFlight<'_> {
+            fn drop(&mut self) {
+                self.0.fetch_sub(1, std::sync::atomic::Ordering::SeqCst);
+            }
+        }
+        self.0
+            .spawning
+            .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        let _in_flight = InFlight(&self.0.spawning);
+        self.spawn_agent(req, principal).await
+    }
+
+    async fn spawn_agent(
         &self,
         req: SpawnRequest,
         principal: &Principal,

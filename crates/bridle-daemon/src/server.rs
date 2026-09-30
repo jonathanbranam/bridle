@@ -2600,12 +2600,15 @@ pub async fn self_upgrade_tick(state: &AppState) {
     {
         return;
     }
+    // Read before the list: a spawn that ends in between is then in the list as working.
+    let spawning = state.manager.spawning();
     let Ok(agents) = state.store.list_agents(false).await else {
         return;
     };
-    if agents
-        .iter()
-        .any(|a| a.state.is_running() && a.state != bridle_api::types::AgentState::Idle)
+    if spawning
+        || agents
+            .iter()
+            .any(|a| a.state.is_running() && a.state != bridle_api::types::AgentState::Idle)
     {
         return;
     }
@@ -2741,6 +2744,7 @@ async fn perform_restart(
 ) -> Result<bridle_api::types::RestartResponse, ApiError> {
     let deadline = tokio::time::Instant::now() + wait;
     let running = loop {
+        let spawning = state.manager.spawning();
         let running: Vec<_> = state
             .store
             .list_agents(false)
@@ -2753,7 +2757,7 @@ async fn perform_restart(
             .filter(|a| a.state != bridle_api::types::AgentState::Idle)
             .map(|a| a.name.clone())
             .collect();
-        if busy.is_empty() {
+        if busy.is_empty() && !spawning {
             break running;
         }
         if tokio::time::Instant::now() >= deadline {
@@ -2763,7 +2767,11 @@ async fn perform_restart(
                 format!(
                     "not restarted: no quiet point within {}s; still busy: {}",
                     wait.as_secs(),
-                    busy.join(", ")
+                    if busy.is_empty() {
+                        "a spawning agent".to_string()
+                    } else {
+                        busy.join(", ")
+                    }
                 ),
             ));
         }
