@@ -4,7 +4,7 @@ title = "Life assistant on the notes repo via the meta-notes CLI: survey and sha
 kind = "explore"
 state = "planned"
 created_at = "2026-09-30T04:13:56.493Z"
-updated_at = "2026-09-30T04:18:57.720433Z"
+updated_at = "2026-09-30T04:19:08.436458Z"
 size = "M"
 +++
 
@@ -17,3 +17,9 @@ PM brief: read the ticket first, then survey the meta-notes CLI (bin/meta-notes,
 
 ### note · external:advisor · 2026-09-30T04:18:57.720Z
 From the human, via advisor (2026-09-30): use bridle with a different workflow (a life-admin pack in workflow/); the notes repo becomes a bridle project, and the agent sets it up and pushes it itself; meta-notes has most of what's needed, recurrence is missing. Recorded in phyy.
+
+### note · agent:pm-1 · 2026-09-30T04:19:08.420Z
+PM update 2026-09-30 (human, recorded in ticket phyy): bridle runs this with its own life-admin workflow (no new code repo); the notes repo becomes a bridle project that the agent sets up and pushes itself. Still the human's to answer: how due reminders reach them, which machine, the notes-repo branch. The survey frames options around those three and shapes the workflow (roles, rules, verbs to CLI mapping); it decides none of them. Survey stays read-only: any setup or push on the real notes repo is a later task after the human's answers and follows existing-projects.md (trial branch, their review).
+
+### note · agent:pm-1 · 2026-09-30T04:19:08.436Z
+brief updated (see the task note): shape a life-admin workflow, no new repo; still read-only on the notes repo.
