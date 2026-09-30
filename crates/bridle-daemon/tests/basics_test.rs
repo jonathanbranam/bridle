@@ -146,6 +146,7 @@ async fn agent_token_cannot_create_tokens() {
     let err = agent_client
         .create_token(&bridle_api::types::TokenCreateRequest {
             name: "x".to_string(),
+            machine: None,
         })
         .await
         .unwrap_err();
@@ -204,6 +205,7 @@ async fn token_list_and_revoke() {
         .client
         .create_token(&bridle_api::types::TokenCreateRequest {
             name: "orchestrator".to_string(),
+            machine: None,
         })
         .await
         .expect("create token");

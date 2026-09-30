@@ -61,8 +61,11 @@ bridle budget [--schedule]                  usage governor status, or the whole 
 bridle budget hold [--for D | --until HH:MM] | release          idle the account for the human / end the hold early
 bridle budget override <period|default> [--until HH:MM] | override-clear   force a schedule period's thresholds / revert
 bridle budget max-workers <N> | --clear     live worker cap, lost on daemon restart
-bridle token create <name>                  with a known project (--project, or the cwd's daemon) the token is saved in
-                                             ~/.bridle/credentials.toml and not printed; with --url it's printed once
+bridle token create <name> [--print]        with a known project (--project, or the cwd's daemon) the token is saved in
+                                             ~/.bridle/credentials.toml and not printed unless --print; with --url it's
+                                             printed once. A name with `@` is refused
+bridle token create <name> --machine <m>    a visitor, `external:<name>@<m>`, for a principal on another machine: always
+                                             printed once, never saved here; paste it into that machine's credentials.toml
 bridle token list                           name, created-at, revoked-or-not; never the token itself
 bridle token revoke <name>                  human only, external tokens only (an agent's own token is
                                              revoked through `bridle rm`, not this); also removes its

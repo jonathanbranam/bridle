@@ -667,6 +667,7 @@ async fn send_to_external_principal_lands_in_its_own_inbox() {
         .client
         .create_token(&TokenCreateRequest {
             name: "orchestrator".to_string(),
+            machine: None,
         })
         .await
         .expect("create external token");
@@ -730,6 +731,7 @@ async fn delegate_reply_closes_the_humans_question_but_others_do_not() {
             .client
             .create_token(&TokenCreateRequest {
                 name: name.to_string(),
+                machine: None,
             })
             .await
             .expect("create external token");
@@ -841,4 +843,80 @@ async fn send_with_an_empty_body_is_rejected() {
             .expect_err("empty body");
         assert!(err.to_string().contains("must not be empty"), "{err}");
     }
+}
+
+/// k7mw: `name@machine` is a visitor. It sends and reads its own inbox, is not the
+/// daemon's `external:orchestrator`, and `@` can't be smuggled into a local name.
+#[tokio::test]
+async fn visitor_principal_sends_and_reads_but_is_not_the_orchestrator() {
+    let (daemon, _tmp) = start_daemon(None).await;
+
+    let err = daemon
+        .client
+        .create_token(&TokenCreateRequest {
+            name: "orchestrator@nuc".to_string(),
+            machine: None,
+        })
+        .await
+        .unwrap_err();
+    assert!(
+        matches!(err, bridle_api::ClientError::Api { status: 400, .. }),
+        "{err:?}"
+    );
+
+    let created = daemon
+        .client
+        .create_token(&TokenCreateRequest {
+            name: "orchestrator".to_string(),
+            machine: Some("nuc".to_string()),
+        })
+        .await
+        .expect("create visitor token");
+    assert_eq!(created.principal, "external:orchestrator@nuc");
+    assert!(!created.token.is_empty());
+    let visitor = Client::new(daemon.running.url.clone(), Some(created.token));
+
+    daemon
+        .client
+        .send(&SendRequest {
+            to: Some("external:orchestrator@nuc".to_string()),
+            body: "bridle 0.4 is out".to_string(),
+            kind: MessageKind::Note,
+            when: When::Now,
+            reply_to: None,
+            task: None,
+        })
+        .await
+        .expect("send to visitor");
+    let inbox = visitor
+        .list_messages(&MessageQuery {
+            to: Some("me".to_string()),
+            ..Default::default()
+        })
+        .await
+        .expect("visitor reads its inbox");
+    assert_eq!(inbox.len(), 1);
+
+    visitor
+        .send(&SendRequest {
+            to: Some("human".to_string()),
+            body: "thanks".to_string(),
+            kind: MessageKind::Note,
+            when: When::Now,
+            reply_to: None,
+            task: None,
+        })
+        .await
+        .expect("visitor sends");
+
+    let err = visitor.orchestrator_wake().await.unwrap_err();
+    assert!(
+        matches!(err, bridle_api::ClientError::Api { status: 403, .. }),
+        "{err:?}"
+    );
+    let err = visitor.handover_done().await.unwrap_err();
+    assert!(
+        matches!(err, bridle_api::ClientError::Api { status: 403, .. }),
+        "{err:?}"
+    );
 }

@@ -105,7 +105,14 @@ meta-notes = "..."
 directory and file 0600, keeping other entries) and prints no token; with no known project
 (`--url`) it prints the token as before. `bridle token revoke <name> --project <p>`
 removes the entry. The CLI refuses to read a file that group or others can access, and
-says to `chmod 600` it. `bridle session orchestrator` and `bridle session advisor` set
+says to `chmod 600` it. `--print` prints the token as well.
+
+A principal named `<name>@<machine>` is a **visitor**: another machine's principal on this
+daemon, minted with `bridle token create <name> --machine <machine>` (printed once, to paste into
+that machine's `credentials.toml`; plain `token create` refuses `@` in a name, so the suffix always
+means a visitor). It sends, reads its own inbox and queries like any external principal. The
+daemon's own `external:orchestrator` (wake long poll, liveness watch, handovers) is matched by
+exact name, so a visitor never takes those over. `bridle session orchestrator` and `bridle session advisor` set
 `BRIDLE_AS` so a session never handles a token.
 
 Rule 2 means a Claude Code session (the human's orchestrator, or any agent)

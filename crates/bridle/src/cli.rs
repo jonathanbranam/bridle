@@ -940,8 +940,18 @@ pub struct TokenArgs {
 
 #[derive(Debug, Subcommand)]
 pub enum TokenAction {
-    /// Mint an `external:<name>` token (human only).
-    Create { name: String },
+    /// Mint an `external:<name>` token (human only). It is saved in `credentials.toml` when
+    /// the project is known, and printed only with `--print` (or when it can't be saved).
+    Create {
+        name: String,
+        /// Mint a visitor, `external:<name>@<machine>`, for a principal on another machine.
+        /// Always printed, to paste into that machine's `credentials.toml`.
+        #[arg(long)]
+        machine: Option<String>,
+        /// Print the token even when it is saved.
+        #[arg(long)]
+        print: bool,
+    },
     /// List external tokens: name, created-at, revoked-or-not (human only).
     List,
     /// Revoke an `external:<name>` token (human only). An agent's own token
@@ -1918,7 +1928,7 @@ mod tests {
         let Command::Token(t) = cli.command else {
             panic!("expected token")
         };
-        let TokenAction::Create { name } = t.action else {
+        let TokenAction::Create { name, .. } = t.action else {
             panic!("expected create")
         };
         assert_eq!(name, "orchestrator");

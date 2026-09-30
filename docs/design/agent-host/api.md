@@ -32,7 +32,7 @@ JSON over HTTP, versioned under `/v1`. The contract is
 | `POST /v1/budget/hold` · `/release` | hold spawns/resumes until `{until?}` (no `until`: until released) · lift it (human only) |
 | `POST /v1/budget/max-workers` | override `[budget] max_workers` (`{max_workers?}`, none clears; human only) |
 | `POST /v1/budget/override` · `/override/clear` | force a `[[budget.schedule]]` period's (or `default`'s) `five_hour` thresholds until `until` or the schedule's next change (`{period?, until?}`) · cancel it now (human only; [[../usage-and-budget#Schedule override\|schedule override]]) |
-| `GET /v1/tokens` · `POST /v1/tokens` | list external tokens (name, created-at, revoked-or-not; never the token itself) · mint one (human only) |
+| `GET /v1/tokens` · `POST /v1/tokens` | list external tokens (name, created-at, revoked-or-not; never the token itself) · mint one (human only); `name` refuses `@`, and an optional `machine` mints the visitor `external:name@machine` |
 | `DELETE /v1/tokens/{name}` | revoke `external:{name}` (human only; an agent's own token isn't revoked this way — see `rm`) |
 | `GET /v1/tasks` · `POST /v1/tasks` | list (`?ready=`, `?claimed_by=` (`me`), `?top_tier=`, `?component=`) · create (`{title, kind, body?, size?, components?}`), starting `open`; emits `task.created`, and wakes the manager ([[../coordination#Waking the manager|coordination.md]]) |
 | `GET /v1/tasks/{id}` · `PATCH /v1/tasks/{id}` | one task, including its body and thread · change `title`/`body`/`components`/`size` (`{title?, body?, components?, size?}`; never state) |

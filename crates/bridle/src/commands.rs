@@ -2293,13 +2293,27 @@ async fn token(cli: &Cli, args: &TokenArgs) -> Result<(), CliError> {
         client_for(cli).await?
     };
     match &args.action {
-        TokenAction::Create { name } => {
+        TokenAction::Create {
+            name,
+            machine,
+            print,
+        } => {
             let created = client
-                .create_token(&TokenCreateRequest { name: name.clone() })
+                .create_token(&TokenCreateRequest {
+                    name: name.clone(),
+                    machine: machine.clone(),
+                })
                 .await?;
             // Stored for the project this command talked to, so the token never has
             // to be seen; with no project (daemon found by URL) it's printed as before.
-            let stored_in = match token_project(cli)? {
+            // A visitor's token is for another machine's credentials.toml, so it is never
+            // saved here.
+            let project = if machine.is_some() {
+                None
+            } else {
+                token_project(cli)?
+            };
+            let stored_in = match project {
                 Some(project) => {
                     let path = discovery::credentials_path();
                     discovery::store_credential(&path, name, &project, &created.token).map_err(
@@ -2322,6 +2336,9 @@ async fn token(cli: &Cli, args: &TokenArgs) -> Result<(), CliError> {
                     created.principal,
                     path.display()
                 );
+                if *print {
+                    println!("{}", created.token);
+                }
             } else {
                 println!("{}", created.token);
                 eprintln!(

@@ -2459,7 +2459,21 @@ async fn create_token(
     Json(req): Json<TokenCreateRequest>,
 ) -> Result<Json<TokenCreated>, ApiError> {
     require_human(&principal)?;
-    Ok(Json(state.store.create_external_token(&req.name).await?))
+    if req.name.is_empty() || req.name.contains('@') {
+        return Err(ApiError::bad_request(
+            "a principal name is non-empty and has no '@' (it marks a visitor: --machine)",
+        ));
+    }
+    // A visitor is matched by its full name, so it never equals the daemon's own
+    // `external:orchestrator` (wake poll, handovers).
+    let name = match req.machine.as_deref() {
+        None => req.name.clone(),
+        Some(m) if m.is_empty() || m.contains('@') => {
+            return Err(ApiError::bad_request("machine is non-empty and has no '@'"));
+        }
+        Some(m) => format!("{}@{m}", req.name),
+    };
+    Ok(Json(state.store.create_external_token(&name).await?))
 }
 
 async fn list_tokens(

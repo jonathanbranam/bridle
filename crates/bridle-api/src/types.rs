@@ -1035,8 +1035,11 @@ pub struct ScheduleOverrideStatus {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TokenCreateRequest {
-    /// Becomes principal `external:<name>`.
+    /// Becomes principal `external:<name>`; `@` is refused (it marks a visitor).
     pub name: String,
+    /// Mints a visitor, `external:<name>@<machine>`: another machine's principal on this daemon.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub machine: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
