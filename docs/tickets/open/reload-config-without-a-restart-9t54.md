@@ -29,3 +29,10 @@ window alongside rebuilds.
 - Where the answer to 9mxw (which sections are machine vs project) changes what reloads from where.
 
 Not urgent: restarts are cheap while agents resume cleanly.
+
+## Update (2026-09-30)
+
+The human asked again: "config changes should be reloaded more often." Focus hours (cvaq) already
+re-read `[[focus]]` on every prompt; everything else is read only at daemon start. Self-restart
+(q7rx) makes a restart cheap but still waits for a quiet point, so it isn't a substitute for
+settings that are safe to read per tick. Start with the sections that are read on each tick.
