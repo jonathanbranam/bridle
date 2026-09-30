@@ -42,3 +42,9 @@ sessions ([[docs/design/usage-and-budget|usage and budget]]).
   winds down at the same point without coordinating
   ([[docs/design/usage-and-budget#Across projects|across projects]]). What's
   left is sharing `max_workers` and the dispatch rate below `hold_at`.
+
+## Machine load (the human, 2026-09-30)
+
+Load can't be scheduled in advance; the machine's one orchestrator coordinates it across projects
+at run time, winding down agents by the projects' relative priority when the machine is bogged
+down. Quoted in [[one-orchestrator-and-advisor-or-one-per-project-ma8e|ma8e]].

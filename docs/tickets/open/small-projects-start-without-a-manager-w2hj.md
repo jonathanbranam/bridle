@@ -44,3 +44,10 @@ turn) on every restart.
    approves each (existing-projects rule); meta-notes and track-web first, on their `bridle-adopt`
    branches.
 4. Docs: `roles-and-config.md` notes the pairing; `operating-model.md` the no-manager mode.
+
+## The human on it (2026-09-30)
+
+> I think likely having autostart false will be the norm if this system works well. we'll see what
+> happens in practice.
+
+So "small projects" may become every project: build it as the general mode, not a special case.

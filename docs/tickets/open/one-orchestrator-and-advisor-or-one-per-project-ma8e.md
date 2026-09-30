@@ -51,3 +51,14 @@ thought and discussion, not a decision either way at this point."
 
 One orchestrator per machine, across the projects that machine owns, until there's a design
 consensus otherwise. Not a final answer to this question.
+
+The human's reason, verbatim (2026-09-30, via the advisor):
+
+> yes, the machine load is a primary reason why I think we need one orch per machine possibly; one
+> orch needs to coordinate load among projects; not something we can schedule in advance; if the
+> machine is bogged down, the orch should coordinate project work and spin down agents based on
+> relative priority to keep some work happening.
+
+So the machine's orchestrator also balances load across its projects at run time: when the machine
+is bogged down, it winds down agents by the projects' relative priority so some work keeps
+moving. Related: [[how-project-daemons-share-one-budget-xypj|xypj]] (machine capacity).
