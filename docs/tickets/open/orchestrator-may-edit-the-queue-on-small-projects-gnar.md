@@ -26,11 +26,12 @@ So the landed cut stands: with no PM, the orchestrator is acting PM and follows 
 single tier is fine. Waking the manager on a queue change is
 [[the-daemon-tells-the-manager-when-the-queue-changes-f5ww|f5ww]].
 
-## Left to do
+## Manager prompt (2026-09-30)
 
-- `workflow/base/roles/manager.md` says "with no product manager, noticing [open tasks] is your
-  job" but forbids the manager from planning or queueing them. With no PM it should tell the
-  orchestrator (the acting PM) about open tasks, not plan them itself.
+`workflow/base/roles/manager.md` said "with no product manager, noticing [open tasks] is your
+job" but forbade the manager from planning or queueing them. Fixed at the human's request (via
+the advisor): with no PM, the orchestrator is acting PM, and the manager tells it about open
+tasks instead. Nothing left here; resolve once f5ww's plan settles the no-manager nudge.
 
 ## The ask
 
