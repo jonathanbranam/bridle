@@ -109,6 +109,10 @@ bridle explore check [paths...]              checks exploration findings frontma
                                              diagnostics on stdout, exit 1 on any error; local only
 bridle explore new|conclude|abandon <id>     scaffolds `design/explore/<id>/findings.md` (status open;
                                              refuses to overwrite) or rewrites just its `status:` line
+bridle pane tag <name>                       set the @bridle tmux pane option to the given name (errors
+                                             if not in a tmux pane); used by launcher scripts
+bridle pane untag                            clear the @bridle tmux pane option (errors if not in a
+                                             tmux pane)
 bridle spec check [paths...] [--root DIR] [--require-ids]   validates spec files (dirs are searched for
                                              *.md; default `design/specs`, or --root) with the
                                              bridle-spec parser: prints file:line:col: message per

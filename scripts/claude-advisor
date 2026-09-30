@@ -27,10 +27,16 @@ export BRIDLE_PROJECT="$project"
 
 # Optional advisor name: if provided, exported for the session to sign its messages.
 advisor_name="${1:-}"
+pane_tag="advisor"
 if [[ -n "$advisor_name" ]]; then
   export BRIDLE_ADVISOR_NAME="$advisor_name"
+  pane_tag="advisor-$advisor_name"
   shift
 fi
+
+# Tag this pane so the human can find advisor sessions.
+bridle pane tag "$pane_tag" 2>/dev/null || true
+
 # Lean start (ticket ct8m, docs/spikes/08-lean-context-findings.md): settings keys that drop bundled
 # skills, workflows and the claude.ai connectors, and bare-name denies for tools this role never uses
 # (spike 08's usage counts). Kept: AskUserQuestion, Agent, SendMessage (to talk to its subagents),

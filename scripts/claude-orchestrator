@@ -42,6 +42,9 @@ done
 
 export BRIDLE_PROJECT="$project"
 
+# Tag this pane so the daemon's orchestrator supervisor can find it.
+bridle pane tag orchestrator 2>/dev/null || true
+
 # Session name: 'orch-<project>' by default; can be suffixed with BRIDLE_SESSION_SUFFIX for naming across machines (e.g. 'orch-meta-notes-nuc').
 session_suffix=${BRIDLE_SESSION_SUFFIX:+"-$BRIDLE_SESSION_SUFFIX"}
 session_name="orch-$project$session_suffix"

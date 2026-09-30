@@ -173,6 +173,9 @@ pub enum Command {
     Arch(ArchArgs),
     /// Exploration findings docs (docs/design/explorations.md). Local, no daemon call.
     Explore(ExploreArgs),
+    /// Tag the current tmux pane with the @bridle option (orchestrator panes use this).
+    /// Local, no daemon call.
+    Pane(PaneArgs),
     /// Trace links from goals down to scenarios (docs/design/traceability.md). Local, no daemon call.
     Trace(TraceArgs),
 }
@@ -1414,6 +1417,20 @@ pub struct QueueAddTierArgs {
     /// The new tier's task ids, equally ranked.
     #[arg(required = true)]
     pub tasks: Vec<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct PaneArgs {
+    #[command(subcommand)]
+    pub action: PaneAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum PaneAction {
+    /// Set the @bridle tmux pane option to the given name.
+    Tag { name: String },
+    /// Clear the @bridle tmux pane option.
+    Untag,
 }
 
 #[cfg(test)]

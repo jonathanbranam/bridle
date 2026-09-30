@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Incidents design revised: an incident is a task of kind `incident` (potential/active/resolved on the existing task states) plus a persistent, self-retracting broadcast notice; no incidents table or commands (nc7r, br-264b).
 - Handover notes are also written to the state branch as `handovers/<id>.md` (backfilled at start), and `bridle rebuild` restores them with ids and seq kept; `bridle rebuild --from-origin`, and a first start with `[state] push` on (default, or explicit opt-out) and no local branch, fetch `origin/bridle/state` (fast-forward only, never overwriting a local branch) (we2r, br-011b).
 - `[state] push` pushes `bridle/state` to `origin` after flushes that committed (at most once a minute, trailing, and once on shutdown; never forced; a non-fast-forward stops it); failures and last push show in `bridle status` (we2r, br-93ad, br-e70f). **Default on as of br-e70f** (human-approved 2026-09-29); projects opt out with `push = false`.
+- `bridle pane tag <name>` and `bridle pane untag` set and clear the `@bridle` tmux pane option on the current pane (`$TMUX_PANE`), allowing launcher scripts and the human to organize advisor and orchestrator sessions by role. Both error if not in a tmux pane. `scripts/claude-orchestrator` and `scripts/claude-advisor` now tag their pane before starting claude, skipping silently if tmux is unavailable (butk, br-e182).
 
 ### Changed
 
