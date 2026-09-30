@@ -954,3 +954,5 @@
 {"actor":"agent:pm-1","at":"2026-09-30T21:36:15.138221Z","queue":"reprioritized"}
 {"actor":"agent:manager-2","at":"2026-09-30T21:39:51.652535Z","from":"planned","task":"br-d160","to":"integrated"}
 {"actor":"human","at":"2026-09-30T21:43:04.965Z","from":"","task":"br-08a6","to":"open"}
+{"actor":"agent:pm-1","at":"2026-09-30T21:43:38.536548Z","from":"open","task":"br-08a6","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-09-30T21:43:38.580388Z","queue":"reprioritized"}
