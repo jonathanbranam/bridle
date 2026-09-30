@@ -678,3 +678,4 @@
 {"actor":"agent:pm-1","at":"2026-09-30T01:17:39.727378Z","queue":"reprioritized"}
 {"actor":"agent:pm-1","at":"2026-09-30T01:17:40.665412Z","from":"open","task":"br-9307","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-09-30T01:17:40.679126Z","from":"open","task":"br-92c0","to":"planned"}
+{"actor":"human","at":"2026-09-30T01:20:39.477Z","from":"","task":"br-6441","to":"open"}
