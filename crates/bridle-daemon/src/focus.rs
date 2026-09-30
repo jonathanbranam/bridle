@@ -181,11 +181,16 @@ mod tests {
     #[test]
     fn an_active_override_lifts_the_lock() {
         let home = home_with(LOCKED);
-        std::fs::write(
-            home.path().join(OVERRIDE_FILE),
-            "until = 2099-01-01T00:00:00Z\nreason = \"deploy\"\n",
-        )
-        .expect("write");
+        let file = home.path().join(OVERRIDE_FILE);
+        std::fs::write(&file, "until = 2099-01-01T00:00:00Z\nreason = \"deploy\"\n")
+            .expect("write");
+        // A fixed mtime inside the locked period, so the test doesn't depend on the wall clock.
+        std::fs::File::options()
+            .write(true)
+            .open(&file)
+            .expect("open")
+            .set_modified(utc(10, 0).into())
+            .expect("set mtime");
         let o = read_override(home.path()).expect("parses");
         let t = |u: DateTime<Utc>| u.with_timezone(&Local);
         assert!(locked_period(home.path(), t(o.from - Duration::minutes(1))).is_some());

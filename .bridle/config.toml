@@ -14,6 +14,9 @@ self_upgrade = true
 [commands]
 check = "just check"
 
+[ci]
+github = true
+
 [integration]
 check = "just check"
 
