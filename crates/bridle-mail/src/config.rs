@@ -15,9 +15,11 @@ pub struct MailConfig {
     /// Addresses (`me@example.com`) and domains (`@example.com`). A domain entry still needs
     /// DMARC `pass` for that domain, like every sender.
     pub allow: Vec<String>,
-    /// Route mail to `external:advisor` instead of `external:orchestrator`. A switch until
-    /// advisor liveness is detected (the pid file in the rs7p ticket).
-    pub advisor_running: bool,
+    /// Every project name mail may be addressed to, on any machine. The bridge of the first
+    /// one replies to a mail for a name not listed here (with the list); empty: no such reply.
+    pub projects: Vec<String>,
+    /// How long mail may wait for its project's owner before the sender is told, in seconds.
+    pub not_delivered_after_secs: u64,
     /// Longest body kept, in characters; the rest is cut and marked.
     pub max_body_chars: usize,
     /// Largest attachment kept, in bytes.
@@ -38,7 +40,8 @@ impl Default for MailConfig {
             region: None,
             domain: "dev.branam.us".to_string(),
             allow: Vec::new(),
-            advisor_running: false,
+            projects: Vec::new(),
+            not_delivered_after_secs: 3600,
             max_body_chars: 20_000,
             max_attachment_bytes: 1024 * 1024,
             poll_secs: 30,
@@ -76,6 +79,22 @@ impl MailConfig {
         let text = std::fs::read_to_string(&path)
             .map_err(|e| anyhow::anyhow!("reading {}: {e}", path.display()))?;
         Self::parse(&text).map_err(|e| anyhow::anyhow!("{}: {e}", path.display()))
+    }
+
+    /// The names mail is valid for: `projects` plus the bridge's own.
+    pub fn valid_projects(&self, own: &str) -> Vec<String> {
+        let mut all = self.projects.clone();
+        if !all.iter().any(|p| p.eq_ignore_ascii_case(own)) {
+            all.push(own.to_string());
+        }
+        all
+    }
+
+    /// Whether this bridge is the one that answers mail to an unknown project name.
+    pub fn answers_unknown(&self, own: &str) -> bool {
+        self.projects
+            .first()
+            .is_some_and(|p| p.eq_ignore_ascii_case(own))
     }
 
     pub fn poll_interval(&self) -> Duration {

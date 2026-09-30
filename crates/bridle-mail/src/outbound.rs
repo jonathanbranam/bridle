@@ -140,6 +140,50 @@ impl Sent {
         writeln!(f, "{id}").with_context(|| format!("writing {}", path.display()))
     }
 
+    /// Whether the sender was already told this mail is waiting.
+    pub fn notified(&self, key: &str) -> bool {
+        self.lines("notified").iter().any(|l| l == key)
+    }
+
+    pub fn mark_notified(&self, key: &str) -> anyhow::Result<()> {
+        self.append("notified", key)
+    }
+
+    /// Remembers who wrote the mail delivered as message `id`, so the recipient's "got it"
+    /// reply (a message with `reply_to: id`) can go back to them.
+    pub fn remember_sender(&self, id: &str, from: &str, subject: &str) -> anyhow::Result<()> {
+        self.append(
+            "senders",
+            &format!("{id}\t{from}\t{}", subject.replace(['\t', '\n', '\r'], " ")),
+        )
+    }
+
+    /// `(from, subject)` of the mail delivered as message `id`.
+    pub fn sender_of(&self, id: &str) -> Option<(String, String)> {
+        self.lines("senders").into_iter().find_map(|l| {
+            let mut f = l.splitn(3, '\t');
+            (f.next()? == id).then(|| Some((f.next()?.to_string(), f.next()?.to_string())))?
+        })
+    }
+
+    fn lines(&self, name: &str) -> Vec<String> {
+        std::fs::read_to_string(self.dir.join(name))
+            .unwrap_or_default()
+            .lines()
+            .map(str::to_string)
+            .collect()
+    }
+
+    fn append(&self, name: &str, line: &str) -> anyhow::Result<()> {
+        use std::io::Write;
+        let path = self.dir.join(name);
+        let mut f = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&path)?;
+        writeln!(f, "{line}").with_context(|| format!("writing {}", path.display()))
+    }
+
     pub fn last_digest(&self) -> Option<NaiveDate> {
         std::fs::read_to_string(self.dir.join("digest"))
             .ok()

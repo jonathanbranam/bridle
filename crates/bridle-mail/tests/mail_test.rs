@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
 use bridle_api::types::SendRequest;
-use bridle_mail::{Bridge, FakeStore, MailConfig, Outcome, Rejection, Sink, evaluate};
+use bridle_mail::{Bridge, FakeStore, FixedLocal, MailConfig, Outcome, Rejection, Sink, evaluate};
 
 fn cfg() -> MailConfig {
     MailConfig {
@@ -266,9 +266,9 @@ struct Recorder(Arc<Mutex<Vec<SendRequest>>>);
 
 #[async_trait]
 impl Sink for Recorder {
-    async fn send(&self, req: SendRequest) -> anyhow::Result<()> {
+    async fn send(&self, req: SendRequest) -> anyhow::Result<Vec<String>> {
         self.0.lock().expect("lock").push(req);
-        Ok(())
+        Ok(vec!["m-9000".to_string()])
     }
 }
 
@@ -276,7 +276,7 @@ struct Down;
 
 #[async_trait]
 impl Sink for Down {
-    async fn send(&self, _: SendRequest) -> anyhow::Result<()> {
+    async fn send(&self, _: SendRequest) -> anyhow::Result<Vec<String>> {
         anyhow::bail!("daemon down")
     }
 }
@@ -327,11 +327,11 @@ async fn routes_to_the_orchestrator_or_the_advisor_and_deletes() {
     }
 
     store.put("inbound/ses2", Spec::default().raw());
-    let advisor = MailConfig {
-        advisor_running: true,
-        ..cfg()
-    };
-    let out = bridge(&store, Arc::new(rec.clone()), advisor, dir.path())
+    let out = bridge(&store, Arc::new(rec.clone()), cfg(), dir.path())
+        .with_local(Arc::new(FixedLocal {
+            owns: true,
+            advisor: true,
+        }))
         .poll_once()
         .await
         .expect("poll");
@@ -408,10 +408,9 @@ async fn rejected_and_foreign_mail_is_not_delivered_and_a_down_daemon_keeps_the_
 
 #[test]
 fn config_reads_the_mail_table() {
-    let c =
-        MailConfig::parse("[mail]\nbucket = \"b\"\nallow = [\"a@b.c\"]\nadvisor_running = true\n")
-            .expect("parse");
-    assert!(c.advisor_running && c.allows("a@b.c") && !c.allows("z@b.c"));
+    let c = MailConfig::parse("[mail]\nbucket = \"b\"\nallow = [\"a@b.c\"]\nprojects = [\"x\"]\n")
+        .expect("parse");
+    assert!(c.answers_unknown("x") && c.allows("a@b.c") && !c.allows("z@b.c"));
     assert!(
         MailConfig::parse("[mail]\nbucket = \"b\"\n").is_err(),
         "empty allow"

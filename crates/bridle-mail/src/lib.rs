@@ -5,6 +5,7 @@
 
 mod bridge;
 mod config;
+mod local;
 mod outbound;
 mod parse;
 mod store;
@@ -12,6 +13,7 @@ mod token;
 
 pub use bridge::{Bridge, ClientSink, Outbound, Outcome, Sink};
 pub use config::MailConfig;
+pub use local::{FileLocal, FixedLocal, Local};
 pub use outbound::{
     FakeMailer, Feed, Mailer, OutMail, Sent, SesMailer, digest_due, digest_mail, is_open_question,
     question_mail,

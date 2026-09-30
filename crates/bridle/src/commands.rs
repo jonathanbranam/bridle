@@ -93,7 +93,8 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
             Ok(())
         }
         Command::Handover(args) => handover(&cli, args).await,
-        Command::WaitForWake => wait_for_wake(&cli).await,
+        Command::WaitForWake(args) if args.mail => wait_for_mail(&cli).await,
+        Command::WaitForWake(_) => wait_for_wake(&cli).await,
         Command::Mail(args) => match args.action {
             crate::cli::MailAction::Run => mail_run(&cli).await,
         },
@@ -1889,6 +1890,7 @@ async fn mail_run(cli: &Cli) -> Result<(), CliError> {
     let tokens = bridle_mail::Tokens::load_or_create(&discovery::bridle_home().join("mail.key"))?;
     let sent = bridle_mail::Sent::open(&state.join("mail"))?;
     let sink = std::sync::Arc::new(bridle_mail::ClientSink(client));
+    let advisor_pid = format!("advisor-{project}.pid");
     bridle_mail::Bridge::new(
         std::sync::Arc::new(store),
         sink.clone(),
@@ -1896,6 +1898,11 @@ async fn mail_run(cli: &Cli) -> Result<(), CliError> {
         project,
         attachments,
     )
+    .with_local(std::sync::Arc::new(bridle_mail::FileLocal {
+        owner_file: state.join("state").join("owner.toml"),
+        advisor_pid_file: discovery::bridle_home().join(advisor_pid),
+        host: local_hostname(),
+    }))
     .with_outbound(bridle_mail::Outbound {
         mailer: std::sync::Arc::new(mailer),
         feed: sink,
@@ -1905,6 +1912,55 @@ async fn mail_run(cli: &Cli) -> Result<(), CliError> {
     .run()
     .await?;
     Ok(())
+}
+
+/// This machine's name as `bridle serve` records it in `owner.toml`.
+fn local_hostname() -> String {
+    std::process::Command::new("hostname")
+        .output()
+        .ok()
+        .and_then(|o| String::from_utf8(o.stdout).ok())
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| "unknown".to_string())
+}
+
+/// Unread mail from the email bridge, for `wait-for-wake --mail`.
+fn unread_mail(messages: Vec<bridle_api::types::Message>) -> Vec<bridle_api::types::Message> {
+    messages
+        .into_iter()
+        .filter(|m| m.from == "external:mail")
+        .collect()
+}
+
+/// `bridle wait-for-wake --mail`: the advisor's mail-only waiter. Polls its own inbox for mail
+/// from the bridge and prints it; `nothing` after 25 minutes, like the orchestrator's waiter.
+async fn wait_for_mail(cli: &Cli) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let query = MessageQuery {
+        to: Some("me".to_string()),
+        unread: true,
+        ..Default::default()
+    };
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(25 * 60);
+    loop {
+        let mail = unread_mail(client.list_messages(&query).await?);
+        if !mail.is_empty() {
+            if cli.json {
+                render::print_json(&mail)?;
+            } else {
+                for m in &mail {
+                    println!("{} from {}:\n{}", m.id, m.from, m.body);
+                }
+            }
+            return Ok(());
+        }
+        if std::time::Instant::now() >= deadline {
+            println!("nothing");
+            return Ok(());
+        }
+        tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+    }
 }
 
 async fn wait_for_wake(cli: &Cli) -> Result<(), CliError> {

@@ -149,7 +149,7 @@ pub enum Command {
     /// Wait for something the orchestrator should act on, print it and exit 0 (`nothing` after
     /// 5 minutes of quiet). Run it in the background; run it again after each exit
     /// (orchestrator-supervision.md, section 5). `external:orchestrator` only.
-    WaitForWake,
+    WaitForWake(WaitForWakeArgs),
     /// Email bridge (docs/design/mail.md). Runs as `external:mail`: `BRIDLE_AS=mail` or `--token`.
     Mail(MailArgs),
     /// The orchestrator's handover note, kept as a record (orchestrator-supervision.md, section 7).
@@ -1219,6 +1219,14 @@ pub enum OrchestratorAction {
 }
 
 #[derive(Debug, Args)]
+pub struct WaitForWakeArgs {
+    /// The advisor's mail-only waiter: return when unread mail from the email bridge arrives
+    /// (`nothing` after 25 minutes). `external:advisor`.
+    #[arg(long)]
+    pub mail: bool,
+}
+
+#[derive(Debug, Args)]
 pub struct MailArgs {
     #[command(subcommand)]
     pub action: MailAction,
@@ -2199,7 +2207,9 @@ mod tests {
     #[test]
     fn wait_for_wake_parses() {
         let cli = parse(&["wait-for-wake"]).unwrap();
-        assert!(matches!(cli.command, Command::WaitForWake));
+        assert!(matches!(cli.command, Command::WaitForWake(ref a) if !a.mail));
+        let cli = parse(&["wait-for-wake", "--mail"]).unwrap();
+        assert!(matches!(cli.command, Command::WaitForWake(ref a) if a.mail));
     }
 
     #[test]

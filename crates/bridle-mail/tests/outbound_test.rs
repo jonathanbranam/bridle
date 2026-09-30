@@ -63,9 +63,9 @@ struct Recorder(Mutex<Vec<SendRequest>>);
 
 #[async_trait]
 impl Sink for Recorder {
-    async fn send(&self, req: SendRequest) -> anyhow::Result<()> {
+    async fn send(&self, req: SendRequest) -> anyhow::Result<Vec<String>> {
         self.0.lock().expect("lock").push(req);
-        Ok(())
+        Ok(vec!["m-9000".to_string()])
     }
 }
 

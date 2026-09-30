@@ -40,6 +40,10 @@ pub enum Rejection {
     /// Addressed to another project (or none on our domain): another bridge's, so untouched.
     #[error("not for this project")]
     NotOurs,
+    /// An allowlisted, authenticated sender wrote to a name that is no project: the bridge
+    /// answers with the valid names.
+    #[error("{from} wrote to unknown project {name}")]
+    UnknownProject { name: String, from: String },
     #[error("unparseable message")]
     Malformed,
     #[error("no usable From address")]
@@ -106,6 +110,20 @@ pub fn route_for(address: &str, domain: &str, project: &str) -> Option<Route> {
     })
 }
 
+/// The first recipient on our domain whose name is no project.
+fn unknown_name(recipients: &[String], cfg: &MailConfig, project: &str) -> Option<String> {
+    let valid = cfg.valid_projects(project);
+    recipients.iter().find_map(|a| {
+        let (local, d) = a.rsplit_once('@')?;
+        if !d.eq_ignore_ascii_case(&cfg.domain) {
+            return None;
+        }
+        let name = local.split('+').next().unwrap_or(local);
+        (!name.is_empty() && !valid.iter().any(|p| p.eq_ignore_ascii_case(name)))
+            .then(|| name.to_string())
+    })
+}
+
 fn addresses(a: Option<&Address<'_>>) -> Vec<String> {
     a.map(|a| {
         a.iter()
@@ -121,11 +139,21 @@ pub fn evaluate(raw: &[u8], cfg: &MailConfig, project: &str) -> Result<Accepted,
         .parse(raw)
         .ok_or(Rejection::Malformed)?;
 
-    let route = addresses(msg.to())
+    let recipients: Vec<String> = addresses(msg.to())
         .into_iter()
         .chain(addresses(msg.cc()))
-        .find_map(|a| route_for(&a, &cfg.domain, project))
-        .ok_or(Rejection::NotOurs)?;
+        .collect();
+    let route = recipients
+        .iter()
+        .find_map(|a| route_for(a, &cfg.domain, project));
+    let unknown = match route {
+        Some(_) => None,
+        None if cfg.answers_unknown(project) => unknown_name(&recipients, cfg, project),
+        None => None,
+    };
+    if route.is_none() && unknown.is_none() {
+        return Err(Rejection::NotOurs);
+    }
 
     let from = addresses(msg.from())
         .into_iter()
@@ -160,6 +188,12 @@ pub fn evaluate(raw: &[u8], cfg: &MailConfig, project: &str) -> Result<Accepted,
     if is_auto_reply(&header, &from) {
         return Err(Rejection::AutoReply);
     }
+    let Some(route) = route else {
+        return Err(Rejection::UnknownProject {
+            name: unknown.unwrap_or_default(),
+            from,
+        });
+    };
 
     let body = msg.body_text(0).map(|c| c.into_owned()).unwrap_or_default();
     let text = cap(&strip_quoted(&body), cfg.max_body_chars);
@@ -246,7 +280,7 @@ fn safe_name(name: &str) -> String {
     }
 }
 
-fn cap(text: &str, max_chars: usize) -> String {
+pub(crate) fn cap(text: &str, max_chars: usize) -> String {
     if text.chars().count() <= max_chars {
         return text.to_string();
     }

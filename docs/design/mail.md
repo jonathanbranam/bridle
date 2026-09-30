@@ -5,7 +5,7 @@ answers): inbound mail from S3, then outbound question mails and a daily digest 
 out of the daemon. It holds an `external:mail` token (mint one, put it in `credentials.toml`, run
 with `BRIDLE_AS=mail` or `--token`) and only calls `POST /v1/messages`.
 
-Out of scope so far: project ownership gating, "got it" replies to senders, advisor liveness.
+Mail follows the project's owner (see "Following the owner" below); "got it" replies go back to the sender.
 
 ## Config
 
@@ -19,7 +19,8 @@ the standard AWS chain, never from bridle's files.
 | `region` | AWS default | |
 | `domain` | `dev.branam.us` | only recipients on this domain count |
 | `allow` | required | addresses and `@domains`; a domain entry still needs DMARC pass for that domain |
-| `advisor_running` | `false` | route to `external:advisor` instead of `external:orchestrator` (a switch until the advisor pid file exists) |
+| `projects` | none | every project name mail may go to, on any machine; the bridge of the first one answers mail to any other name |
+| `not_delivered_after_secs` | 3600 | how long mail may wait for its project's owner before the sender is told |
 | `max_body_chars` | 20000 | longer bodies are cut and marked |
 | `max_attachment_bytes` | 1048576 | per attachment |
 | `poll_secs` | 30 | |
@@ -43,7 +44,7 @@ lists the prefix and, per object:
    history and signature stripped, HTML converted to text, capped). `.md`, `.txt` and `text/*`
    attachments up to the cap are written to `<workspace>/.bridle/inbox/mail/<id>/<name>` and listed
    by path; others are dropped and listed as dropped.
-4. Sent to `external:orchestrator` or `external:advisor`; with a task address, as a note on that
+4. Sent to `external:advisor` while the unnamed advisor is running (below), else `external:orchestrator`; with a task address, as a note on that
    task's thread (`task`). The object is deleted only after the daemon accepted it, so a down
    daemon just means a retry on the next poll.
 
@@ -82,3 +83,29 @@ verify, or when the question is no longer open (already answered or read): a rep
 is marked read only when the answer arrives. For the answer to close the question as the human's,
 `external:mail` must be in `[messages] answer_for_human`; the thread then shows the
 answer from `external:mail` with the SES message id, i.e. the audit trail of the channel.
+
+## Following the owner
+
+Every machine may run a bridge for the projects it has; all read the same bucket.
+
+- **Ownership.** A bridge takes its project's mail only while this machine owns the project: the
+  host in `<workspace>/.bridle/state/owner.toml` (hw6c) is this machine's `hostname`, or there is
+  no record. Otherwise the mail is left in the bucket for the owner.
+- **Waiting mail.** Mail this bridge can't deliver (not the owner, or the daemon won't take it)
+  is timed from when the bridge first saw it (in memory, so a restart restarts the clock). After
+  `not_delivered_after_secs` the allowlisted sender gets one reply, `not delivered yet: no machine
+  is running <project>`, and the mail stays for the owner. The notified keys are in
+  `<state dir>/mail/notified`.
+- **Unknown names.** Mail from an allowlisted, DMARC-passing sender to a name that is no project
+  gets a reply listing the valid ones (`projects` plus the bridge's own), and the object is
+  deleted. Only the bridge of the first name in `projects` answers, so several bridges don't
+  each reply; strangers get nothing.
+- **Advisor liveness.** `scripts/claude-advisor` (unnamed advisor only) writes
+  `$BRIDLE_HOME/advisor-<project>.pid` (`<pid> <ps lstart> <epoch>`, as `orchestrator.pid`) and
+  removes it when claude ends. The bridge treats the advisor as running only while that pid exists
+  with that start time. Running: mail goes to `external:advisor`, whose session runs
+  `bridle wait-for-wake --mail`; otherwise to `external:orchestrator`.
+- **"Got it".** Each delivered message id is kept with its sender in `<state dir>/mail/senders`. A
+  message to `external:mail` with `reply_to` set to that id (the recipient's `bridle send
+  external:mail "got it: ..." --reply-to <id>`) is emailed to the sender as `Re: <subject>` from
+  `<project>@domain` and marked read.

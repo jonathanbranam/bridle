@@ -69,6 +69,7 @@ bridle statusline                           Claude Code statusLine command; loca
 bridle orchestrator note-session            the orchestrator launcher's SessionStart hook: writes $BRIDLE_HOME/orchestrator.session
                                              from the hook JSON on stdin; local only; never fails
 bridle handover done                       the orchestrator's state is written: the daemon stops and relaunches its session (marker only); human and external:orchestrator only
+bridle wait-for-wake --mail                  the advisor's mail-only waiter: returns when unread mail from external:mail arrives (`nothing` after 25 min); polls the inbox every 10 s
 bridle handover write --file <path>|-      record the orchestrator's handover note (human and external:orchestrator only); prints its id
 bridle handover list | show <id>           the notes, newest first · one note
 bridle mail run                              the email bridge for this project: inbound mail, question mails, daily digest (docs/design/mail.md); runs as external:mail

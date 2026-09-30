@@ -36,6 +36,15 @@ if [[ -n "$advisor_name" ]]; then
   shift
 fi
 
+# The unnamed advisor records its pid, in the format `claude-orchestrator` uses ("<pid> <ps lstart>
+# <launch epoch>"), so `bridle mail run` sends mail to it only while it is alive (rs7p). This shell's
+# pid lives exactly as long as claude (no `exec`); a stale file is harmless, the start time is checked.
+if [[ -z "$advisor_name" ]]; then
+  home=${BRIDLE_HOME:-$HOME/.bridle}
+  mkdir -p "$home" || exit 1
+  echo "$$ $(ps -o lstart= -p $$ | xargs) $(date +%s)" > "$home/advisor-$project.pid"
+fi
+
 # Tag this pane so the human can find advisor sessions.
 bridle pane tag "$pane_tag" 2>/dev/null || true
 
@@ -54,5 +63,8 @@ else
   session_name="advisor-$project$session_suffix"
 fi
 # A short prompt, not the role file's text: any `pkill -f <pattern>` a worker runs matches argv (fx7x).
-exec claude --settings "$settings" --strict-mcp-config --name "$session_name" --remote-control "$session_name" "$@" \
+claude --settings "$settings" --strict-mcp-config --name "$session_name" --remote-control "$session_name" "$@" \
   "Read workflow/base/roles/advisor.md and follow it. Then check in: bridle status, and the open questions to the human. Say hello to the human in one line, then wait."
+status=$?
+[[ -z "$advisor_name" ]] && rm -f "$home/advisor-$project.pid"
+exit $status

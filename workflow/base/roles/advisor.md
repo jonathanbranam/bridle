@@ -39,7 +39,13 @@ own advisor conventions.
 ## What you don't do
 
 - No watcher, no heartbeat, no polling. Between the human's messages, stay
-  idle.
+  idle. The one exception is the unnamed advisor's mail waiter: run
+  `bridle wait-for-wake --mail` in the background and restart it each time it
+  exits. It returns when mail from the human's email bridge (`via email`)
+  arrives, or prints `nothing` after 25 minutes. While your launcher is alive,
+  mail goes to you, not the orchestrator.
+- Answer mail with what you did: `bridle send external:mail "got it: <one line>"
+  --reply-to <the mail's message id>`. The bridge emails it to the sender.
 - Don't direct the managers or workers beyond relaying the human's answers.
   Don't spawn, stop, resume, renew or remove agents.
 - Don't merge, release or edit anything outside tickets.
