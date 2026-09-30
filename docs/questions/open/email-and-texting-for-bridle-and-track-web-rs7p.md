@@ -145,6 +145,92 @@ the gaps (the advisor's reading):
   machine is running `<project>`" reply, rather than silence.
 - **An unknown project name** gets a reply listing the valid ones (allowlisted senders only).
 
+## The human's answers (2026-09-30)
+
+The human, verbatim:
+
+> Yeah they're all fine. I should be able to email any domain from work. If not we can do a Gmail
+> forward setup. We can use dev.branam.us. Email goes to advisor. He can talk to orch if needed
+> or just file tasks and tickets. If no advisor running then send to orch? Idk if that is
+> possible.
+>
+> We should allow list domains and emails and be careful with this, but yeah I'll email from work
+> or my gmail and give explicit instructions about scheduling the work priority - I may email
+> ideas or just anything. Files will come on the email. I found markdown works best. Our filters
+> will block most other formats. Or the info will be in the body in plain text otherwise.
+>
+> Digest can go to dev@branam.us. Idk any time maybe morning? 6:30am.
+
+> Telegram later - I don't have it any remote control works fine for now. I can't telegram from
+> my work laptop anyway.
+
+So, against section 5:
+
+1. **Work mail:** the human can mail any domain from work. Fallback: forward through Gmail.
+2. **Subdomain: `dev.branam.us`**, one subdomain with plus addressing (`<project>@dev.branam.us`,
+   `<project>+t-<task>@dev.branam.us`). track-web keeps its own subdomain later.
+3. **Emailed work goes to the advisor** (not the manager), who files tickets and tasks or talks to
+   the orchestrator. With no advisor running, it goes to the orchestrator. See "Delivery to the
+   advisor" below.
+4. **No confirm step.** The human gives priority and scheduling instructions in the mail itself;
+   mail may be ideas or anything.
+5. **Digest at 6:30 AM ET to `dev@branam.us`** (the apex, still Google Workspace). Questions mail
+   right away, as proposed.
+6. **An email answer is recorded as the human**, with `via email` provenance (the SES message id)
+   in the thread: the allowlist plus DMARC make it the human, and the audit trail shows the
+   channel. (Recommendation accepted with the rest.)
+7. **No texting for now.** Remote Control covers it; the human can't use Telegram from the work
+   laptop. Drop section 4 from v1.
+
+**Changes to the v1 shape:**
+
+- **The allowlist takes domains and addresses** (`[mail] allow = ["dev@branam.us", "<gmail>",
+  "@<employer domain>"]`). A domain entry still needs DMARC `pass` for that domain; if the
+  employer publishes no DMARC policy, list the work address, not the domain.
+- **Attachments are kept when they're Markdown or plain text** (`.md`, `.txt`, `text/*`), capped
+  (1 MB each), and stored with the message (a file under the project's inbox, path in the note).
+  Anything else is dropped and the drop is noted to the recipient. The body is plain text; HTML
+  is converted, not trusted.
+
+## Delivery to the advisor (the advisor's reading)
+
+The advisor has no waiter by rule (it idles between the human's messages), so a note in its
+inbox is only seen at its next turn. Recommended:
+
+- The advisor launcher records a pid file (like `orchestrator.pid`); the bridge treats the main
+  (unnamed) advisor as "running" only when that pid is alive.
+- Running: mail goes to `external:advisor`, and the advisor runs a mail-only waiter (`bridle
+  wait-for-wake --mail`), a narrow exception to "no watcher" that the human approves by accepting
+  this. Not running: mail goes to `external:orchestrator`, whose waiter already wakes it.
+- Either way the message says `via email` and quotes the mail; the recipient replies to the
+  sender with a one-line "got it: <what was done>" through the bridge, so the human knows it
+  landed.
+
+## Setup the human does (task in bridle, `--for-human`)
+
+Checked 2026-09-30: `dev.branam.us` has no MX or TXT; it resolves to the EC2 only through the
+`*.branam.us` wildcard, and no Caddy site serves it. Adding records at `dev.branam.us` ends the
+wildcard A for that one name, which nothing uses. `branam.us` has no DMARC record.
+
+1. **AWS (us-east-1), SES:** create the domain identity `dev.branam.us` with Easy DKIM; verify
+   `dev@branam.us` and the work address as recipient identities (sandbox).
+2. **DNS (Google Cloud DNS, `branam.us` zone):**
+   - `dev.branam.us MX 10 inbound-smtp.us-east-1.amazonaws.com`
+   - the three SES DKIM CNAMEs from step 1
+   - `dev.branam.us TXT "v=spf1 include:amazonses.com ~all"`
+   - `_dmarc.dev.branam.us TXT "v=DMARC1; p=none; rua=mailto:dev@branam.us"`
+3. **S3:** a bucket (e.g. `branam-bridle-mail`), SSE on, a 30-day lifecycle on `inbound/`, and a
+   bucket policy letting SES write there.
+4. **SES receipt rule set** (active): recipient `dev.branam.us`, spam and virus scanning on,
+   action "deliver to S3" `inbound/`.
+5. **IAM:** one user (or key) per machine (laptop, NUC): `s3:ListBucket`, `s3:GetObject`,
+   `s3:DeleteObject` on `inbound/`, and `ses:SendEmail` from `dev.branam.us`. Put the keys in each
+   machine's `~/.bridle/credentials.toml` (never in the repo).
+6. **Check the work domain's DMARC:** `host -t TXT _dmarc.<employer domain>`, and tell the advisor
+   the result (decides domain vs. address allowlist).
+7. **Send a test mail** from work and from Gmail to `test@dev.branam.us` and check it lands in
+   the bucket.
+
 ## 4. Texting
 
 - **Real SMS is heavy for one person.** US A2P 10DLC as a sole proprietor on Twilio

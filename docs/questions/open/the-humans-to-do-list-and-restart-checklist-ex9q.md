@@ -106,3 +106,16 @@ What that means (the advisor's reading):
   open. The drop-if-undelivered and "resolved" behaviour from the incidents design carries
   over.
 - `docs/design/agent-host/incidents.md` needs revising to this.
+
+## The human: to-dos are prioritized and can be rescinded (2026-09-30)
+
+The human, verbatim: "Tasks or tickets for me need to be prioritized! And able to be rescinded.
+(With a fully audit trail of course)"
+
+- **Priority:** tasks have no priority field today; the queue's tiers rank agent work only. A
+  to-do for the human needs a priority the human sees (the list sorted by it, the orchestrator's
+  startup list too).
+- **Rescind:** whoever asked can withdraw it (`bridle task drop` with a reason does this today);
+  the human sees it leave the list, with the reason.
+- **Audit trail:** every change (created, re-prioritized, rescinded, done) is in the task's thread
+  and events, with who and when. Drop already records its reason; priority changes must too.
