@@ -57,7 +57,12 @@ Until 1-3 land: when a bridle change matters to the NUC, dalek's orchestrator te
 orchestrator to `git pull` its checkout, and to build in the background and ask for a restart
 when the binary matters.
 
+## Decided (2026-09-30)
+
+The human approved the design, with step 3 as revised (the daemon's own workflow checkout at the
+binary's tag) and the "at most about daily" release cadence. Steps 2 and 3 change the daemon's
+upgrade and start-up path, so they land after the human's trip (not before Sat 2026-10-03).
+
 ## To decide
 
-- The human: approve the proposal, and the "at most about daily" release cadence.
 - Whether step 2 also replaces building on dalek (probably not: bridle's own daemon builds `main`).
