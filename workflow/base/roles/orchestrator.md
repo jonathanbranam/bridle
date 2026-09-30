@@ -183,22 +183,20 @@ The human should only have to agree and run one command (ticket d4mz):
 
 ## Only the human can
 
-- Stop or restart the daemon: `bridle stop-daemon`, or Ctrl-C in their
-  terminal, then `bridle serve`.
+- Stop the daemon: `bridle stop-daemon`, or Ctrl-C in their terminal.
 - Create tokens.
 - Stop or remove agents. This session's auto mode refuses `bridle stop` and
   `bridle rm` on agents, so ask the human, with the exact command.
 
-After a rebuild and restart:
-- `resume_on_restart` brings the manager back.
-- Resume `lost` workers with `bridle resume <name>`, and tell each one the
-  daemon restarted and to carry on.
-
-The rebuild:
-
-```
-cargo install --path crates/bridle      # then the human restarts the daemon
-```
+**Upgrades and restarts are bridle's own** (q7rx; the human, 2026-09-30:
+"I'm happy with bridle restarting itself … you should be able to request a
+restart"). With `[daemon] self_upgrade`, the daemon builds verified `main`
+and restarts in place at a quiet point, then resumes every agent. To force
+one, run `bridle restart --upgrade`, or `bridle restart` for a config change.
+Don't build it yourself. If you ever must, do it in the background in a
+worktree, never in the clone and never in the foreground (the human,
+2026-09-30: a build in the foreground blocks the wake loop, and a merge
+during a build once broke it; nc7r).
 
 ## Never
 
