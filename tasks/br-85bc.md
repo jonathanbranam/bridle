@@ -2,9 +2,11 @@
 id = "br-85bc"
 title = "mrhe 1: 'bridle session orchestrator|advisor' replaces the launch scripts, runnable from any directory"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-09-30T05:20:27.654Z"
-updated_at = "2026-09-30T05:37:07.879747Z"
+updated_at = "2026-09-30T05:39:13.079985Z"
+branch = "bridle/session-cmd"
+commit = "0fba12439c0ecbd933930836178a2cb3d218b2a9"
 summary = '''
 `bridle session orchestrator|advisor [name] [claude args]` (crates/bridle/src/session.rs) replaces the two launch scripts and runs from any directory; --project comes from the global flag/BRIDLE_PROJECT (default bridle). It keeps every script behavior: names orch-<p> / advisor[-<name>]-<p> plus -$BRIDLE_SESSION_SUFFIX, the lean --settings (orchestrator with the note-session hook), pane tag, orchestrator.pid/.exits (with the terminal reset and signal naming), the unnamed advisor's advisor-<p>.pid, BRIDLE_AS/BRIDLE_PROJECT/BRIDLE_ADVISOR_NAME, the agent refusal (BRIDLE_LAUNCHER_TEST) and the tools-only refusal (skipped outside a git repo). No exec, so exits can be recorded; SIGINT is left to claude.
 Command lines, same as the scripts: `claude --settings <json> --strict-mcp-config --name orch-bridle --remote-control orch-bridle [extra] "Run \`bridle prime orchestrator\` and follow what it prints."`; advisor: same with advisor-bridle (or advisor-alice-bridle) and no hook in settings.
@@ -12,3 +14,14 @@ One deliberate change: the advisor's opening prompt now says "Run `bridle prime 
 +++
 
 Ticket: docs/tickets/open/bridle-without-a-clone-of-its-repo-mrhe.md (Shape, third bullet; read it). The launch scripts scripts/claude-orchestrator and scripts/claude-advisor become 'bridle session orchestrator|advisor [name]' (crates/bridle), runnable from any directory, so a project needs no bridle clone for them. Keep every behavior the scripts have now: project-aware session names and remote-control names with the host suffix (BRIDLE_PROJECT, BRIDLE_SESSION_SUFFIX, advisor [name]), pane tag via 'bridle pane tag', refusing under a bridle agent unless the test flag is set, the tools-only refusal (hw6c 2), the advisor pid file and BRIDLE_ADVISOR_NAME, bash-free (works on Linux and macOS). The role prompt comes from 'bridle prime' (which already reads the resolved workflow), not a path relative to a clone. Keep the scripts as thin wrappers that exec the new command (compat, remove later). Read the scripts first and port their tests (stub claude/tmux on PATH). Docs (cli.md, docs/context/nuc-host.md, role files that cite the scripts), CHANGELOG. Acceptance: just check passes; same command lines as the scripts produced for orchestrator, advisor and named advisor, shown in the summary. Model: Sonnet. Out of scope: workflow vendoring (mrhe 2), installing without cargo, the tmux-pane advisor start (ervd 2).
+
+## Thread
+
+### note · agent:session-cmd · 2026-09-30T05:38:55.020Z
+done: bridle session orchestrator|advisor [name] replaces the launch scripts (scripts/claude-* are now wrappers), advisor prompt via new 'bridle prime advisor', tests/docs/CHANGELOG done, main merged, just check green (852 tests); 86aa059
+
+### note · agent:manager-2 · 2026-09-30T05:38:58.931Z
+integrated: 0fba12439c0ecbd933930836178a2cb3d218b2a9 (branch bridle/session-cmd)
+
+### note · agent:manager-2 · 2026-09-30T05:39:13.079Z
+cleanup: removed agent session-cmd, branch bridle/session-cmd
