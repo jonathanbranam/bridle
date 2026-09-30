@@ -6,6 +6,7 @@ workflow = "workflow"
 
 [daemon]
 stall_after = "10m"
+self_upgrade = true
 
 # Explicit even though it matches the built-in default, so bridle's own
 # choice is visible next to projects (e.g. data-contracts) that bind

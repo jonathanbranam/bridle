@@ -1070,6 +1070,9 @@ pub struct Config {
     /// agent's own activity (`last_event_at`/`turn_started_at`) before it's
     /// released back to `planned` (docs/design/storage.md, claims).
     pub claim_lease_after: Duration,
+    /// `[daemon] self_upgrade`: at a quiet point, when a newer green commit is on the integration
+    /// branch, run what `bridle restart --upgrade` runs (docs/design/agent-host/daemon.md, Upgrade).
+    pub self_upgrade: bool,
     pub stop_grace: Duration,
     pub roles: BTreeMap<String, Role>,
     pub budget: BudgetConfig,
@@ -1127,6 +1130,7 @@ impl Default for Config {
             listen: "127.0.0.1:0".parse().expect("valid default listen addr"),
             stall_after: Duration::from_secs(10 * 60),
             claim_lease_after: Duration::from_secs(10 * 60),
+            self_upgrade: false,
             stop_grace: Duration::from_secs(30),
             roles,
             budget: BudgetConfig::default(),
@@ -1367,6 +1371,9 @@ impl Config {
             }
             if let Some(s) = d.claim_lease_after {
                 config.claim_lease_after = parse_duration(&s)?;
+            }
+            if let Some(v) = d.self_upgrade {
+                config.self_upgrade = v;
             }
             if let Some(s) = d.stop_grace {
                 config.stop_grace = parse_duration(&s)?;
@@ -1956,6 +1963,8 @@ struct RawDaemon {
     #[serde(default)]
     claim_lease_after: Option<String>,
     #[serde(default)]
+    self_upgrade: Option<bool>,
+    #[serde(default)]
     stop_grace: Option<String>,
 }
 
@@ -2305,6 +2314,7 @@ mod tests {
             listen = "0.0.0.0:7433"
             stall_after = "5m"
             claim_lease_after = "15m"
+            self_upgrade = true
             stop_grace = "45s"
 
             [roles.worker]
@@ -2322,6 +2332,8 @@ mod tests {
         assert_eq!(cfg.listen, "0.0.0.0:7433".parse().expect("addr"));
         assert_eq!(cfg.stall_after, Duration::from_secs(5 * 60));
         assert_eq!(cfg.claim_lease_after, Duration::from_secs(15 * 60));
+        assert!(cfg.self_upgrade);
+        assert!(!Config::default().self_upgrade);
         assert_eq!(cfg.stop_grace, Duration::from_secs(45));
 
         // Overridden field changes; untouched fields keep the built-in default.

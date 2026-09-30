@@ -342,6 +342,7 @@ async fn a_task_created_before_restart_is_still_there_after() {
         claim_lease_check_interval: std::time::Duration::from_secs(3600),
         port_check_interval: std::time::Duration::from_secs(3600),
         upgrade: Default::default(),
+        ci_tick_interval: std::time::Duration::from_secs(3600),
     };
     let running = bridle_daemon::start(opts, overrides)
         .await

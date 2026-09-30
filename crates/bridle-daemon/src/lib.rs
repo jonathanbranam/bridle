@@ -107,6 +107,8 @@ pub struct Overrides {
     pub port_check_interval: Duration,
     /// Canned CI status and build command for `restart --upgrade` (tests).
     pub upgrade: UpgradeHooks,
+    /// The CI watcher's tick, which also carries the self-upgrade check.
+    pub ci_tick_interval: Duration,
 }
 
 impl Default for Overrides {
@@ -125,6 +127,7 @@ impl Default for Overrides {
             claim_lease_check_interval: Duration::from_secs(30),
             port_check_interval: Duration::from_secs(30),
             upgrade: UpgradeHooks::default(),
+            ci_tick_interval: ci::TICK_INTERVAL,
         }
     }
 }
@@ -378,7 +381,9 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         stop_grace: config.stop_grace,
         integration_check: config.integration.check.clone(),
         landing: Default::default(),
+        self_upgrade: config.self_upgrade,
     };
+    let tick_state = state.clone();
     let app = server::router(state);
 
     // The axum listener must close only after the cleanup sequence below
@@ -423,11 +428,15 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
             async move { governor.tick().await }
         }
     });
-    let ci_task = spawn_loop(shutdown_rx.clone(), ci::TICK_INTERVAL, {
+    let ci_task = spawn_loop(shutdown_rx.clone(), overrides.ci_tick_interval, {
         let ci = ci.clone();
         move || {
             let ci = ci.clone();
-            async move { ci.tick().await }
+            let state = tick_state.clone();
+            async move {
+                ci.tick().await;
+                server::self_upgrade_tick(&state).await;
+            }
         }
     });
     let prune_task = spawn_loop(shutdown_rx.clone(), Duration::from_secs(24 * 60 * 60), {

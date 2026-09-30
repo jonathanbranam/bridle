@@ -53,6 +53,8 @@ pub struct AppState {
     /// Set by `POST /v1/restart` before it triggers shutdown: `run` execs instead of exiting.
     pub restart_requested: std::sync::Arc<std::sync::atomic::AtomicBool>,
     pub upgrader: crate::upgrade::Upgrader,
+    /// `[daemon] self_upgrade`.
+    pub self_upgrade: bool,
     pub governor: crate::governor::Governor,
     pub ci: crate::ci::CiWatcher,
     pub wakes: std::sync::Arc<crate::wake::Wakes>,
@@ -2494,6 +2496,54 @@ async fn restart(
     Ok(Json(reply))
 }
 
+/// How long an automatic upgrade waits for a quiet point once its build is done (the tick only
+/// starts one at a quiet point, so this covers work that began during the build).
+const SELF_UPGRADE_WAIT: std::time::Duration = std::time::Duration::from_secs(600);
+
+/// The automatic upgrade (`[daemon] self_upgrade`), run on the CI watcher's tick: at a quiet point
+/// (no running agent mid-turn; a budget hold has wound the workers down to idle or stopped) and
+/// with a newer green commit, start the same background upgrade as `restart --upgrade`. A commit
+/// whose upgrade failed isn't retried until main moves on, so a broken build doesn't loop.
+pub async fn self_upgrade_tick(state: &AppState) {
+    if !state.self_upgrade
+        || state
+            .restart_requested
+            .load(std::sync::atomic::Ordering::SeqCst)
+    {
+        return;
+    }
+    let Ok(agents) = state.store.list_agents(false).await else {
+        return;
+    };
+    if agents
+        .iter()
+        .any(|a| a.state.is_running() && a.state != bridle_api::types::AgentState::Idle)
+    {
+        return;
+    }
+    if !state.upgrader.claim() {
+        return;
+    }
+    let sha = match state
+        .upgrader
+        .newest_green(&state.store, &state.workspace.repo, &state.integration)
+        .await
+    {
+        Ok(Some(sha)) if !state.upgrader.failed_before(&sha) => sha,
+        other => {
+            state.upgrader.release();
+            if let Err(e) = other {
+                tracing::debug!(error = %e, "self-upgrade: no green commit found");
+            }
+            return;
+        }
+    };
+    let bg = state.clone();
+    tokio::spawn(async move {
+        upgrade_in_background(bg, "system".to_string(), sha, SELF_UPGRADE_WAIT).await;
+    });
+}
+
 async fn upgrade_reply(
     state: &AppState,
     restarting: bool,
@@ -2545,6 +2595,9 @@ async fn upgrade_in_background(
         )),
     };
     state.upgrader.release();
+    if outcome.is_err() {
+        state.upgrader.note_failed(&sha);
+    }
     if let Err(text) = outcome {
         tracing::warn!(%text, "upgrade failed");
         upgrade_wake(

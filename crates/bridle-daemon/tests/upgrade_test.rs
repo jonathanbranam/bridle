@@ -132,3 +132,85 @@ async fn a_failed_build_leaves_the_daemon_running_and_tells_the_human() {
     daemon.running.shutdown();
     daemon.running.join().await.expect("join");
 }
+
+/// `hooks` with the CI tick (which carries the self-upgrade check) running every 100 ms.
+fn auto(build: &str) -> bridle_daemon::Overrides {
+    let mut o = hooks("success", build);
+    o.ci_tick_interval = Duration::from_millis(100);
+    o
+}
+
+const SELF_UPGRADE: &str = "[daemon]\nself_upgrade = true\n";
+
+fn worker(prompt: &str) -> bridle_api::types::SpawnRequest {
+    bridle_api::types::SpawnRequest {
+        components: Vec::new(),
+        role: "worker".to_string(),
+        name: Some("w".to_string()),
+        prompt: Some(prompt.to_string()),
+        workdir: Some(bridle_api::types::Workdir::Repo),
+        model: None,
+        extra_allowed_tools: Vec::new(),
+        extra_env: Vec::new(),
+        ignore_budget: false,
+    }
+}
+
+#[tokio::test]
+async fn self_upgrade_off_does_nothing() {
+    let marker = "echo ran > \"$CARGO_TARGET_DIR.txt\"";
+    let (daemon, _tmp) = support::start_daemon(Some(auto(marker))).await;
+    tokio::time::sleep(Duration::from_secs(1)).await;
+    assert!(!daemon.running.restart_requested());
+    assert!(!daemon.workspace.join(".bridle/upgrade-target.txt").exists());
+    daemon.running.shutdown();
+    daemon.running.join().await.expect("join");
+}
+
+#[tokio::test]
+async fn self_upgrade_at_a_quiet_point_builds_and_restarts_once() {
+    // Appends, so a second build would show as a second line.
+    let build = "echo ran >> \"$CARGO_TARGET_DIR.txt\"";
+    let (daemon, _tmp) =
+        support::start_daemon_with_config(Some(auto(build)), Some(SELF_UPGRADE)).await;
+    support::wait_for("the restart", || async {
+        daemon.running.restart_requested().then_some(())
+    })
+    .await;
+    tokio::time::sleep(Duration::from_millis(500)).await;
+    let log = std::fs::read_to_string(daemon.workspace.join(".bridle/upgrade-target.txt"))
+        .expect("the build ran");
+    assert_eq!(log.lines().count(), 1);
+    daemon.running.join().await.expect("join");
+}
+
+#[tokio::test]
+async fn self_upgrade_waits_while_an_agent_is_mid_turn() {
+    let marker = "echo ran > \"$CARGO_TARGET_DIR.txt\"";
+    let (daemon, _tmp) =
+        support::start_daemon_with_config(Some(auto(marker)), Some(SELF_UPGRADE)).await;
+    // Spawned in the same instant the first tick may fire; the tick is 100 ms, the turn 3 s.
+    let agent = daemon
+        .client
+        .spawn(&worker("SLEEP 3"))
+        .await
+        .expect("spawn");
+    support::wait_for_state(
+        &daemon.client,
+        &agent.id,
+        bridle_api::types::AgentState::Working,
+    )
+    .await;
+    let marker_file = daemon.workspace.join(".bridle/upgrade-target.txt");
+    let before = marker_file.exists();
+    tokio::time::sleep(Duration::from_secs(1)).await;
+    if !before {
+        assert!(!marker_file.exists(), "built while a turn was running");
+        assert!(!daemon.running.restart_requested());
+    }
+    support::wait_for("the restart after the turn", || async {
+        daemon.running.restart_requested().then_some(())
+    })
+    .await;
+    daemon.running.join().await.expect("join");
+}

@@ -169,8 +169,15 @@ upgrade at a time: wake `upgrade`, check the commit out into a throwaway detache
 (kept between upgrades so builds are incremental; one-hour cap), then restart in place as above,
 with the same quiet-point wait, recording the commit as built. A failed build, or no quiet point
 after it, leaves the running daemon untouched: wake `upgrade_failed` (with the build output's
-last lines) and a note to the human's inbox. Out of scope: an automatic trigger, other projects'
-daemons, rollback (q7rx).
+last lines) and a note to the human's inbox. Out of scope: other projects' daemons, rollback (q7rx).
+
+**Automatic upgrade.** With `[daemon] self_upgrade = true` (default off; on in bridle's own
+`.bridle/config.toml`) the CI watcher's tick (every minute; no loop of its own) also checks for a
+quiet point: no running agent mid-turn (a budget hold winds workers down to idle or stopped, which
+counts). If so, and no restart or upgrade is under way, it looks for a newer green commit exactly as
+above and, if there is one, starts the same background upgrade (wake `upgrade`, build, restart with
+the ten-minute quiet-point wait), so a turn is never cut off. A commit whose upgrade failed is not
+retried (in memory; a daemon restart or a newer commit tries again) so a broken build doesn't loop.
 
 ## Crates
 

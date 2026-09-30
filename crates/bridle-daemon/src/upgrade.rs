@@ -5,8 +5,8 @@
 
 use std::fmt;
 use std::path::Path;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use tokio::process::Command;
@@ -49,6 +49,8 @@ pub struct Upgrader {
     build: Vec<String>,
     /// One upgrade at a time: it builds for minutes before it restarts.
     busy: Arc<AtomicBool>,
+    /// The last commit an upgrade failed on (memory only), so the automatic trigger skips it.
+    failed: Arc<Mutex<Option<String>>>,
 }
 
 impl Upgrader {
@@ -62,6 +64,7 @@ impl Upgrader {
             gh,
             build,
             busy: Default::default(),
+            failed: Default::default(),
         }
     }
 
@@ -72,6 +75,14 @@ impl Upgrader {
 
     pub fn release(&self) {
         self.busy.store(false, Ordering::SeqCst);
+    }
+
+    pub fn note_failed(&self, sha: &str) {
+        *self.failed.lock().expect("failed-sha lock") = Some(sha.to_string());
+    }
+
+    pub fn failed_before(&self, sha: &str) -> bool {
+        self.failed.lock().expect("failed-sha lock").as_deref() == Some(sha)
     }
 
     /// The newest commit on `integration` (first-parent, at most [`LOOKBACK`] back) whose runs

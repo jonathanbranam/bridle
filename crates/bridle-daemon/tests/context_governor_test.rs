@@ -26,6 +26,7 @@ fn fast_overrides() -> Overrides {
         claim_lease_check_interval: Duration::from_secs(3600),
         port_check_interval: Duration::from_secs(3600),
         upgrade: Default::default(),
+        ci_tick_interval: std::time::Duration::from_secs(3600),
     }
 }
 
