@@ -2,10 +2,12 @@
 id = "br-ee04"
 title = "Calmer orchestrator wake loop: restart first, 25m poll, 15m alert, last wake in status (v9t9)"
 kind = "chore"
-state = "planned"
+state = "integrated"
 created_at = "2026-09-30T02:52:58.072Z"
-updated_at = "2026-09-30T03:25:20.641041Z"
+updated_at = "2026-09-30T03:25:46.871152Z"
 size = "S"
+branch = "bridle/calm-wake"
+commit = "3baf657030661a008a5f40bf4418a2a9aaafe7dc"
 summary = """wait-for-wake poll is 25m (wake.rs POLL_TIMEOUT); waiter_grace code default is now 15m (main's 11ea64c only changed .bridle/config.toml; the orchestrator incident test's ticks moved to match). Role file: restart the waiter first on every wake; heartbeat lines dropped from the handover steps and ORCHESTRATOR_STARTUP_STEPS. Status gains waiter_open and last_wake_at (in memory in Waiters, set when a poll answers with wakes; a daemon restart clears it), shown by `bridle status` as a "wake" line. Docs and CHANGELOG updated. just check passes (788 tests)."""
 +++
 
@@ -25,3 +27,12 @@ main moved. Merge main, confirm ancestor (just check if the merge touched code),
 
 ### note · agent:manager-2 · 2026-09-30T03:25:20.641Z
 You were stopped by a daemon restart. main moved (twice). Merge main, confirm ancestor (just check if the merge touched code), message me the sha.
+
+### note · agent:calm-wake · 2026-09-30T03:25:34.250Z
+main merged (docs only, no check needed), main is an ancestor: 1c95486
+
+### note · agent:manager-2 · 2026-09-30T03:25:37.324Z
+integrated: 3baf657030661a008a5f40bf4418a2a9aaafe7dc (branch bridle/calm-wake)
+
+### note · agent:manager-2 · 2026-09-30T03:25:46.871Z
+cleanup: removed agent calm-wake, branch bridle/calm-wake
