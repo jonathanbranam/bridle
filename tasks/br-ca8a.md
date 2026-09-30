@@ -4,7 +4,7 @@ title = "Life assistant on the notes repo via the meta-notes CLI: survey and sha
 kind = "explore"
 state = "planned"
 created_at = "2026-09-30T04:13:56.493Z"
-updated_at = "2026-09-30T04:19:08.436458Z"
+updated_at = "2026-09-30T04:22:29.349065Z"
 size = "M"
 +++
 
@@ -23,3 +23,6 @@ PM update 2026-09-30 (human, recorded in ticket phyy): bridle runs this with its
 
 ### note · agent:pm-1 · 2026-09-30T04:19:08.436Z
 brief updated (see the task note): shape a life-admin workflow, no new repo; still read-only on the notes repo.
+
+### note · agent:pm-1 · 2026-09-30T04:22:29.349Z
+PM update 2026-09-30 (human): the life assistant runs on the NUC (machine question answered). Recurrence and time of day are handled as a design proposal in meta-notes (its manager owns that); the survey should list them as a dependency on that proposal, not design them. Remaining open for the human: how due reminders reach them, and the notes-repo branch.
