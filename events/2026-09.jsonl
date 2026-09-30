@@ -855,3 +855,4 @@
 {"actor":"agent:pm-1","at":"2026-09-30T12:09:14.091680Z","from":"open","task":"br-4932","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-09-30T12:09:14.106647Z","from":"open","task":"br-739a","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-09-30T12:09:14.122021Z","queue":"reprioritized"}
+{"actor":"external:orchestrator","at":"2026-09-30T12:09:27.562619Z","from":"open","task":"br-36c7","to":"integrated"}
