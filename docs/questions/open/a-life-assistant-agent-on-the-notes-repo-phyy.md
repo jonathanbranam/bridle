@@ -130,3 +130,92 @@ Filed as a meta-notes design task in meta-notes' `tickets/`, for the human's rev
 build.
 
 Still open: Q4 (how due reminders reach the human) and the notes repo's branch.
+
+## Survey and recommendation (br-ca8a, 2026-09-30)
+
+Read-only survey: `meta-notes --help` and the meta-notes checkout's `tickets/` (nothing run
+against the real notes repo, nothing written to it or to meta-notes). The recurrence design
+proposal already exists as meta-notes `tickets/recurrence-and-time-of-day.md` (mn-ba09, awaiting
+the human's review); this survey depends on it and does not redo it.
+
+### Verbs against the CLI
+
+| Verb | meta-notes today | Gap |
+|---|---|---|
+| Create a task or reminder | none: `task update` edits an existing checkbox line; no `task add` | **`task add`** (mn-ba09 open question 6). Until then the agent would hand-edit markdown, which the CLI's conventions are meant to prevent |
+| Reminder with a time | dates only (`📅`), day precision | time of day (mn-ba09 proposes `⏰ HH:MM`); "what is due now" query (`--at`) |
+| Recurring maintenance | none; the human's Obsidian Tasks lines (`🔁 every 3 months`) are inert | recurrence: mn-ba09 (Obsidian syntax as is; completing spawns the next line) |
+| Record an event | none as such. `note new <path>` creates a note from a template; daily/weekly notes exist | probably no CLI gap: an event is a dated line in the daily note or a note under `area/`. Needs a convention in the workflow's rules, not code |
+| Remember something | `note new` (files a note anywhere, from a template); `move`, `rename`, `archive` | none for filing; a rule saying where things go (PARA) |
+| Check in on projects | `projects [--warnings]`, `project brief`, `changes`, `tasks --overdue/--ready/...`, `ceremony status` | none |
+| Check in on maintenance | `tasks` with `--overdue`, `--folder area/...` | works once recurrence lands; before that a done maintenance line never comes back |
+| Calendar context | `calendar` (Google Calendar export) | none |
+
+So: reads and check-ins are covered today. Capture needs `task add`, time of day and recurrence.
+Events and "remember" need only rules.
+
+### Options
+
+**Shape (Q1): where the workflow lives.**
+- A. *Life-admin pack* `workflow/packs/life-admin/` (rules, skills, a `roles/` prompt), listed in the
+  notes repo's `.bridle/config.toml`. Follows the human's answer and needs no new code repo.
+- B. Project layer only (`.bridle/` inside the notes repo). Puts bridle files in the human's repo
+  with nothing shareable.
+- **Recommend A**, plus a small `.bridle/config.toml` in the notes repo (packs, and a
+  `system_prompt` pointing at the pack's role prompt). Caveat to check when building: the base layer
+  (`workflow/base/`) is software-oriented (worker/manager roles, `just check`-style rules) and
+  applies to every project; confirm the notes project can opt out of, or override, base rules that
+  make no sense there. Per workflow-layers.md, role prompts are not overlaid, so the pack ships one
+  role prompt, wired by the project's `system_prompt`.
+
+**What the pack holds.** One standing role (the life assistant), rules such as "only edit notes through
+`meta-notes`", "confirm before archiving or deleting", "capture goes to `area/` or `project/` by these
+rules", skills mapping verbs to commands (capture task, capture event, remember, project check-in,
+maintenance check-in, daily digest), and the reading of due items from `meta-notes tasks`.
+
+**Machine (Q5): answered, the NUC.** It runs meta-notes and the bridle daemon (docs/context/nuc-host.md).
+The notes repo needs a clone there.
+
+**Git (Q6).**
+- A. Agent commits and pushes straight to `main`. Simple; a bad edit lands at once.
+- B. Agent works on a branch and the human merges. Safe; too heavy for "remind me to buy salt".
+- C. One `bridle-adopt` trial branch for the setup commit (`.bridle/`, per existing-projects.md),
+  then the agent commits and pushes to `main` for routine capture, one commit per change.
+- **Recommend C.** Also: the agent pulls before it works and pushes after, since the human edits
+  the same repo from their laptop and Obsidian; a rule to never force-push and to stop and ask on
+  a conflict. Committing is cheap to undo; the notes are plain text under git.
+
+**Reminders reach the human (Q4).**
+- A. rs7p daily digest (6:30 AM) gains a "due today and overdue" section. Cheap, but a 3 PM reminder
+  arrives at 6:30.
+- B. Remote Control / chat: the assistant pushes a message when something is due. Needs a clock
+  (a scheduled wake) and depends on the bagg spike, whether a bridle-hosted session can be
+  reached remotely.
+- C. Both: digest for dated items, a timed push for items with `⏰`.
+- **Recommend A first**, since day-precision reminders need nothing new, then B for timed ones once
+  time of day exists and bagg is answered. Timed pushes could also be an rs7p mail rather than
+  Remote Control, which avoids the bagg dependency.
+
+**How the human talks to it.** Remote Control first (as the ticket says), depends on spike bagg.
+Email to a notes address (rs7p) is the fallback that works with the mail work already built.
+
+### Dependencies (listed, not designed)
+
+1. meta-notes mn-ba09: recurrence and time of day, awaiting the human's review.
+2. meta-notes `task add` (mn-ba09 open question 6; needed for any capture).
+3. bridle: a standing non-software role. The orchestrator's standing-session support (fx7x) is built
+   for the orchestrator only; hosting a second standing agent for another project is a change to
+   check before building.
+4. Spike bagg (Remote Control on a bridle-supervised session) for chat-style delivery.
+5. rs7p digest section for due reminders, if Q4 is A or C.
+
+### Remaining open questions for the human
+
+1. **Q4:** digest only, chat push, or both? (Recommend digest first.)
+2. **Q6 branch:** approve option C (one trial branch for setup, then `main`)?
+3. **`task add` now?** Approve it as the first meta-notes build ahead of recurrence, since no capture
+   works without it.
+4. Do you still edit the notes in Obsidian? It affects mn-ba09's time syntax (`⏰`) and how often
+   pull conflicts will arise.
+5. Should the assistant act unprompted (nag about overdue maintenance) or only answer when asked
+   and in the digest?
