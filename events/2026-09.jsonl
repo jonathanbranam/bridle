@@ -655,3 +655,4 @@
 {"actor":"agent:manager-2","at":"2026-09-29T21:26:11.978107Z","from":"planned","task":"br-1fdb","to":"integrated"}
 {"actor":"agent:pm-1","at":"2026-09-29T21:27:04.268802Z","queue":"reprioritized"}
 {"actor":"agent:manager-2","at":"2026-09-29T21:39:32.561672Z","from":"planned","task":"br-f05d","to":"integrated"}
+{"actor":"human","at":"2026-09-30T00:54:22.013Z","from":"","task":"br-8f47","to":"open"}
