@@ -213,3 +213,19 @@ Newest first. One line per item: what happened, who did it, what it says about r
   a spawn hold the daemon enforces, not a message.
 - The auto-typed prompt suggestion in a dead session's input box looked like the human's
   answer; it wasn't. Don't read a dead pane's input line as intent.
+
+## Thirteenth session (2026-09-29 20:45 UTC onward)
+
+- By hand: renewed manager-2 at 149K (`bridle renew`) and briefed it from its own handoff note.
+  The context governor wouldn't have: `[context] wind_down_at` defaults to 200K and the human's
+  150K was in `~/.bridle/config.toml`, where the daemon reads only `[budget]` (9mxw note).
+- The human's uncommitted edit to `.bridle/config.toml` blocked landing (the manager asked in a
+  question). Committed it for them (2a2ccb0); auto mode then refused my reply to the manager as
+  an "unrequested commit" until the human said to go on. An uncommitted change in the clone
+  stalls the merger: the manager should say which file, as it did.
+- By hand: two rebuilds (`cargo install`) while the machine was busy; the human's load concern
+  (b7cz) is the Rust build. The restart waited on the human.
+- The startup steps in the binary still said "just check twice" against the human's CI-only
+  decision (fixed, br-a3a4). Prime text lives in code: role decisions have two copies.
+- Most of the session was the queue waiting on the human's three questions: bridle had no work
+  it could start without them.
