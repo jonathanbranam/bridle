@@ -27,7 +27,7 @@ async fn run_foreground(cli: &Cli, args: &ServeArgs) -> Result<(), CliError> {
         project: cli.project.clone(),
         listen: args.listen,
     };
-    bridle_daemon::run(opts).await?;
+    bridle_daemon::run(opts, args.take_over).await?;
     Ok(())
 }
 

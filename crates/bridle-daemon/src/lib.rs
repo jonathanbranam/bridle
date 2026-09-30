@@ -109,6 +109,10 @@ pub struct Overrides {
     pub upgrade: UpgradeHooks,
     /// The CI watcher's tick, which also carries the self-upgrade check.
     pub ci_tick_interval: Duration,
+    /// `bridle serve --take-over`: claim a project another host owns (hw6c).
+    pub take_over: bool,
+    /// This machine's name for `owner.toml`. `None` asks `hostname`.
+    pub host: Option<String>,
 }
 
 impl Default for Overrides {
@@ -128,6 +132,8 @@ impl Default for Overrides {
             port_check_interval: Duration::from_secs(30),
             upgrade: UpgradeHooks::default(),
             ci_tick_interval: ci::TICK_INTERVAL,
+            take_over: false,
+            host: None,
         }
     }
 }
@@ -166,8 +172,12 @@ impl RunningDaemon {
 
 /// Run the daemon until shutdown (SIGINT/SIGTERM or `POST /v1/shutdown`).
 /// Writes `daemon.json` and the machine registry entry once listening.
-pub async fn run(opts: ServeOptions) -> anyhow::Result<()> {
-    let running = start(opts, Overrides::default()).await?;
+pub async fn run(opts: ServeOptions, take_over: bool) -> anyhow::Result<()> {
+    let overrides = Overrides {
+        take_over,
+        ..Overrides::default()
+    };
+    let running = start(opts, overrides).await?;
     let restart = running.restart_requested.clone();
     running.join().await?;
     if restart.load(std::sync::atomic::Ordering::SeqCst) {
@@ -181,6 +191,18 @@ pub async fn run(opts: ServeOptions) -> anyhow::Result<()> {
         anyhow::bail!("restart: exec {} failed: {err}", exe.display());
     }
     Ok(())
+}
+
+/// This machine's hostname, for `owner.toml`.
+async fn machine_host() -> String {
+    tokio::process::Command::new("hostname")
+        .output()
+        .await
+        .ok()
+        .and_then(|o| String::from_utf8(o.stdout).ok())
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| "unknown".to_string())
 }
 
 /// Starts the daemon and returns once it's listening, autostart has run,
@@ -221,17 +243,32 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
     let store = Store::open(ws.db()).await.context("opening the store")?;
     ensure_human_token(&store, &ws).await?;
 
-    // First start with no local state branch: a project that opted in to pushing may already
-    // have one on origin (a clone on a new machine). Never touched otherwise (we2r).
-    if config.state_push && !worktree::branch_exists(&ws.repo, "bridle/state").await? {
-        let outcome = state_branch::StateBranch::fetch_from_origin(&ws.repo).await;
-        tracing::info!("state branch first start: {}", outcome.describe());
+    // Fetch before anything is written, so a clone on a new machine adopts origin's state
+    // rather than diverging from it, and so a project another host owns is refused (hw6c).
+    // Never touched when the project doesn't push (we2r).
+    let host = match &overrides.host {
+        Some(h) => h.clone(),
+        None => machine_host().await,
+    };
+    if config.state_push {
+        let outcome = state_branch::StateBranch::fetch_and_check_owner(
+            &ws.repo,
+            &ws.state_branch_dir(),
+            &project,
+            &host,
+            overrides.take_over,
+        )
+        .await?;
+        tracing::info!("state branch at start: {}", outcome.describe());
     }
     let state_branch = state_branch::StateBranch::open(&ws.repo, &ws.state_branch_dir())
         .await
         .context("opening the state branch")?;
     let state_branch = if config.state_push {
-        state_branch.with_push(state_branch::PUSH_DEBOUNCE)
+        let sb = state_branch.with_push(state_branch::PUSH_DEBOUNCE);
+        sb.claim_owner(&host, chrono::Utc::now())
+            .context("recording this host as the project's owner")?;
+        sb
     } else {
         state_branch
     };

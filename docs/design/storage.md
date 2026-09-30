@@ -356,6 +356,17 @@ overwrites: a missing local branch is created from it; a local branch that is be
 only the empty seed commit the daemon creates, is fast-forwarded; if both exist and differ,
 nothing changes and the command says so. A project with `push = false` and no flag never fetches.
 
+**Ownership (hw6c).** One file, `owner.toml` (`host`, `since`), records the machine whose daemon
+serves the project. Every `bridle serve` with pushing on fetches `origin/bridle/state` before
+opening the branch, on every start and not only the first: a fresh clone (a missing or seed-only
+local branch) adopts origin's state, so no manual `git fetch origin bridle/state:bridle/state`
+is needed. If origin's `owner.toml` names another host the daemon refuses to start, saying which
+host and since when. `bridle serve --take-over` claims the project instead: run it on the new
+machine after the old daemon stopped and pushed. The claim is a normal flush and we2r push.
+`since` is when the host took the project over; a restart on the same host makes no commit. No
+origin, no `bridle/state` on it, an unreachable origin, no `owner.toml` (first serve, or a branch
+from before this) and the same host all start as before.
+
 ## The daemon registry
 
 `~/.bridle/daemons/<project>.json` lists each running daemon with its

@@ -123,6 +123,8 @@ struct Pending {
     /// handover id -> rendered `handovers/<id>.md`. One file per note, never rewritten
     /// once flushed, so the newest by seq (the current note) is the last of the history.
     handovers: HashMap<String, String>,
+    /// The full rendered `owner.toml` (hw6c), written by [`StateBranch::claim_owner`].
+    owner: Option<String>,
 }
 
 /// A handle onto the state branch's worktree. Cheap to clone (an `Arc`
@@ -414,6 +416,61 @@ impl StateBranch {
         Ok(out)
     }
 
+    /// Records `host` as the project's owner in `owner.toml` (written at the next flush) unless
+    /// the worktree already says so. `since` is when this host took the project over, not the
+    /// daemon's latest start, so an ordinary restart makes no commit.
+    pub fn claim_owner(&self, host: &str, now: DateTime<Utc>) -> Result<(), StateBranchError> {
+        if read_owner_file(&self.dir).is_some_and(|o| o.host == host) {
+            return Ok(());
+        }
+        let rendered = toml::to_string(&Owner {
+            host: host.to_string(),
+            since: now.to_rfc3339_opts(SecondsFormat::Secs, true),
+        })?;
+        self.pending
+            .lock()
+            .expect("state branch pending lock")
+            .owner = Some(rendered);
+        Ok(())
+    }
+
+    /// The fetch-first half of starting a served project (hw6c): fetches `origin`'s
+    /// `bridle/state` (adopting it into a missing or untouched local branch) and refuses when
+    /// its `owner.toml` names a host other than `host`, unless `take_over`. `state_dir` is the
+    /// state worktree, used when it exists. An unreachable origin or one without the branch
+    /// doesn't block: there is nothing to conflict with.
+    pub async fn fetch_and_check_owner(
+        repo: &Path,
+        state_dir: &Path,
+        project: &str,
+        host: &str,
+        take_over: bool,
+    ) -> Result<FetchOutcome, OwnerConflict> {
+        let dir = if state_dir.join(".git").exists() {
+            state_dir
+        } else {
+            repo
+        };
+        let outcome = Self::fetch_from_origin(dir).await;
+        if matches!(
+            outcome,
+            FetchOutcome::NoRemoteBranch | FetchOutcome::Failed(_)
+        ) {
+            return Ok(outcome);
+        }
+        // `fetch_from_origin` leaves the fetched tip in FETCH_HEAD, whatever it did to the branch.
+        let shown = worktree::run_git(dir, &["show", &format!("FETCH_HEAD:{OWNER_FILE}")]).await;
+        let owner = shown.ok().and_then(|t| toml::from_str::<Owner>(&t).ok());
+        match owner {
+            Some(o) if o.host != host && !take_over => Err(OwnerConflict {
+                project: project.to_string(),
+                host: o.host,
+                since: o.since,
+            }),
+            _ => Ok(outcome),
+        }
+    }
+
     /// Fetches `origin`'s `bridle/state` when that can't lose anything (ticket we2r, shape 3).
     /// Only ever reads from the remote and never overwrites: a missing local branch is created
     /// from it; a local branch that is an ancestor of it (or only the untouched seed commit
@@ -468,9 +525,16 @@ impl StateBranch {
         if !seed && !ancestor {
             return Ok(FetchOutcome::Diverged);
         }
-        // The state worktree is the only checkout of the branch; without one (never at first
-        // start, when the branch is missing) there is nothing else to move.
-        worktree::run_git(dir, &["reset", "--hard", "-q", remote]).await?;
+        // The state worktree is the only checkout of the branch. From anywhere else (the
+        // project's checkout, on `main`) only the ref moves: a hard reset there would clobber it.
+        let checked_out = worktree::run_git(dir, &["symbolic-ref", "--short", "-q", "HEAD"])
+            .await
+            .is_ok_and(|b| b.trim() == BRANCH);
+        if checked_out {
+            worktree::run_git(dir, &["reset", "--hard", "-q", remote]).await?;
+        } else {
+            worktree::run_git(dir, &["branch", "-f", BRANCH, remote]).await?;
+        }
         Ok(FetchOutcome::FastForwarded)
     }
 
@@ -497,6 +561,7 @@ impl StateBranch {
             claims,
             queue,
             handovers,
+            owner,
         } = {
             let mut guard = self.pending.lock().expect("state branch pending lock");
             std::mem::take(&mut *guard)
@@ -507,6 +572,7 @@ impl StateBranch {
             && claims.is_none()
             && queue.is_none()
             && handovers.is_empty()
+            && owner.is_none()
         {
             return Ok(false);
         }
@@ -531,6 +597,9 @@ impl StateBranch {
         }
         if let Some(contents) = &queue {
             std::fs::write(self.dir.join("queue.toml"), contents)?;
+        }
+        if let Some(contents) = &owner {
+            std::fs::write(self.dir.join(OWNER_FILE), contents)?;
         }
 
         if !events.is_empty() {
@@ -581,6 +650,9 @@ impl StateBranch {
         }
         if !handovers.is_empty() {
             parts.push(format!("{} handover(s)", handovers.len()));
+        }
+        if owner.is_some() {
+            parts.push("owner".to_string());
         }
         // Nothing but events changed (or, since `flush_now` already returned
         // early with nothing pending at all, unreachable in practice); keep
@@ -685,6 +757,31 @@ impl StateBranch {
         };
         parse_queue(&text).unwrap_or_default()
     }
+}
+
+const OWNER_FILE: &str = "owner.toml";
+
+/// `owner.toml` on the state branch: the one host whose daemon serves the project (hw6c).
+#[derive(Debug, Serialize, Deserialize)]
+struct Owner {
+    host: String,
+    since: String,
+}
+
+fn read_owner_file(dir: &Path) -> Option<Owner> {
+    toml::from_str(&std::fs::read_to_string(dir.join(OWNER_FILE)).ok()?).ok()
+}
+
+/// Another host owns the project's state branch on origin.
+#[derive(Debug, thiserror::Error)]
+#[error(
+    "project `{project}` is owned by host `{host}` (since {since}); stop its daemon, let it \
+     push, then run `bridle serve --take-over` here"
+)]
+pub struct OwnerConflict {
+    pub project: String,
+    pub host: String,
+    pub since: String,
 }
 
 /// What [`StateBranch::fetch_from_origin`] did, for `bridle rebuild --from-origin` to say.
@@ -1872,5 +1969,129 @@ mod tests {
         assert!(st.is_some(), "push status exists");
         let st = st.expect("status");
         assert!(st.failing.is_some(), "push fails when no remote configured");
+    }
+    async fn origin_owned_by(tmp: &Path, host: &str) -> PathBuf {
+        let (sb, _repo, origin, _dir) = pushing(tmp, Some(Duration::from_millis(0))).await;
+        sb.claim_owner(host, Utc::now()).expect("claim");
+        edit(&sb, 1).await;
+        wait_until_idle(&sb).await;
+        origin
+    }
+
+    async fn second_clone(tmp: &Path, origin: &Path) -> PathBuf {
+        let repo2 = tmp.join("repo2");
+        init_repo(&repo2).await;
+        git(
+            &repo2,
+            &["remote", "add", "origin", origin.to_str().expect("utf8")],
+        )
+        .await;
+        repo2
+    }
+
+    #[tokio::test]
+    async fn another_hosts_project_is_refused_and_says_who() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let origin = origin_owned_by(tmp.path(), "laptop").await;
+        let repo2 = second_clone(tmp.path(), &origin).await;
+        let err = StateBranch::fetch_and_check_owner(
+            &repo2,
+            &tmp.path().join("state2"),
+            "bridle",
+            "nuc",
+            false,
+        )
+        .await
+        .expect_err("refused");
+        assert_eq!(err.host, "laptop");
+        assert!(err.to_string().contains("--take-over"));
+    }
+
+    #[tokio::test]
+    async fn take_over_claims_and_pushes_the_new_owner() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let origin = origin_owned_by(tmp.path(), "laptop").await;
+        let repo2 = second_clone(tmp.path(), &origin).await;
+        let dir2 = tmp.path().join("state2");
+        let outcome = StateBranch::fetch_and_check_owner(&repo2, &dir2, "bridle", "nuc", true)
+            .await
+            .expect("take over");
+        assert_eq!(outcome, FetchOutcome::Created);
+        let sb2 = StateBranch::open(&repo2, &dir2)
+            .await
+            .expect("open")
+            .with_push(Duration::from_millis(0));
+        sb2.claim_owner("nuc", Utc::now()).expect("claim");
+        sb2.flush_now().await.expect("flush");
+        wait_until_idle(&sb2).await;
+        let owner = git(&origin, &["show", "bridle/state:owner.toml"]).await;
+        assert!(owner.contains("host = \"nuc\""), "{owner}");
+        // ...and the task history came along.
+        assert!(sb2.read_task("tw-0001").is_some());
+    }
+
+    #[tokio::test]
+    async fn the_owning_host_and_a_first_serve_start_unchanged() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let origin = origin_owned_by(tmp.path(), "laptop").await;
+        let repo2 = second_clone(tmp.path(), &origin).await;
+        StateBranch::fetch_and_check_owner(&repo2, &tmp.path().join("s2"), "p", "laptop", false)
+            .await
+            .expect("same host");
+        // No origin at all, then an origin with no state branch or owner file.
+        let tmp2 = tempfile::tempdir().expect("tempdir");
+        let lone = tmp2.path().join("lone");
+        init_repo(&lone).await;
+        let out =
+            StateBranch::fetch_and_check_owner(&lone, &tmp2.path().join("s"), "p", "h", false)
+                .await
+                .expect("no origin");
+        assert!(matches!(
+            out,
+            FetchOutcome::NoRemoteBranch | FetchOutcome::Failed(_)
+        ));
+        let (_sb, repo, _origin, dir) = pushing(tmp2.path(), None).await;
+        StateBranch::fetch_and_check_owner(&repo, &dir, "p", "h", false)
+            .await
+            .expect("first serve");
+    }
+
+    #[tokio::test]
+    async fn a_claim_by_the_recorded_host_makes_no_commit() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let (sb, _repo, _origin, dir) = pushing(tmp.path(), None).await;
+        sb.claim_owner("laptop", Utc::now()).expect("claim");
+        sb.flush_now().await.expect("flush");
+        let tip = git(&dir, &["rev-parse", "HEAD"]).await;
+        sb.claim_owner("laptop", Utc::now()).expect("claim again");
+        sb.flush_now().await.expect("flush");
+        assert_eq!(git(&dir, &["rev-parse", "HEAD"]).await, tip);
+    }
+
+    #[tokio::test]
+    async fn a_fresh_clone_adopts_origins_state_even_with_the_branch_only_a_ref() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let origin = origin_owned_by(tmp.path(), "laptop").await;
+        let repo2 = second_clone(tmp.path(), &origin).await;
+        // A seed-only local branch with no worktree (an earlier start that never flushed).
+        worktree::ensure_orphan_branch(&repo2, BRANCH, "initial bridle state")
+            .await
+            .expect("seed");
+        let head = git(&repo2, &["rev-parse", "HEAD"]).await;
+        let out = StateBranch::fetch_and_check_owner(
+            &repo2,
+            &tmp.path().join("state2"),
+            "bridle",
+            "laptop",
+            false,
+        )
+        .await
+        .expect("adopt");
+        assert_eq!(out, FetchOutcome::FastForwarded);
+        assert_eq!(git(&repo2, &["rev-parse", "HEAD"]).await, head);
+        let sb2 = StateBranch::open(&repo2, &tmp.path().join("state2"))
+            .await
+            .expect("open");
+        assert!(sb2.read_task("tw-0001").is_some());
     }
 }

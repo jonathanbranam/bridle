@@ -567,6 +567,10 @@ pub struct ServeArgs {
     /// Re-exec into the background; logs to `<workspace>/.bridle/daemon.log`.
     #[arg(long)]
     pub detach: bool,
+    /// Claim a project whose state branch on origin names another host as owner. Run it after
+    /// the old daemon has stopped and pushed.
+    #[arg(long)]
+    pub take_over: bool,
 }
 
 #[derive(Debug, Args)]

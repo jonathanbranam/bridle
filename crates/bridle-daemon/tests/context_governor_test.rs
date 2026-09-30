@@ -27,6 +27,8 @@ fn fast_overrides() -> Overrides {
         port_check_interval: Duration::from_secs(3600),
         upgrade: Default::default(),
         ci_tick_interval: std::time::Duration::from_secs(3600),
+        take_over: false,
+        host: None,
     }
 }
 
