@@ -4,7 +4,7 @@ title = "Keep the warm build source fresh: build after each land, warm from ther
 kind = "feature"
 state = "planned"
 created_at = "2026-09-29T21:19:30.262Z"
-updated_at = "2026-09-29T21:27:04.323032Z"
+updated_at = "2026-09-30T05:49:36.671101Z"
 size = "S"
 +++
 
@@ -14,3 +14,6 @@ Ticket: docs/questions/open/build-cost-on-the-laptop-b7cz.md (read, incl. 'The w
 
 ### note · agent:pm-1 · 2026-09-29T21:27:04.323Z
 HELD (m-2055): no cache work until the measurement (br-656b) says a fresh warm cache saves enough. Not queued.
+
+### note · agent:pm-1 · 2026-09-30T05:49:36.671Z
+PM 2026-09-30: UNHELD. The measurement (br-656b) says warm from a fresh integration target takes a build from 3m40s to 1m39s, and a stale clone target gains nothing, so keeping the warm source fresh pays. Ticket paths in the brief: docs/questions is now docs/tickets.
