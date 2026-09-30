@@ -525,7 +525,7 @@ async fn bridle_counts(cwd: &Path, env: &impl Env, token_path: &Path) -> Option<
 }
 
 /// The daemon answers once it has decided to go (a busy daemon answers 409 and stays up), then
-/// execs itself; the same URL comes back with the new binary, so wait for it to go and return.
+/// execs itself with the new binary, so wait for it to go and return (possibly on a new port).
 async fn restart(cli: &Cli, wait: Option<u64>, upgrade: bool) -> Result<(), CliError> {
     let client = client_for(cli).await?;
     let reply = client
@@ -546,8 +546,44 @@ async fn restart(cli: &Cli, wait: Option<u64>, upgrade: bool) -> Result<(), CliE
         if reply.agents.len() == 1 { "" } else { "s" },
         reply.stop_limit_secs
     );
-    let deadline =
-        std::time::Instant::now() + std::time::Duration::from_secs(reply.stop_limit_secs + 60);
+    let limit = std::time::Duration::from_secs(reply.stop_limit_secs + 60);
+    // An explicit --url is used as given; otherwise the daemon may come back on another port
+    // (a new [projects] port or [daemon] listen), so look it up again through discovery.
+    let explicit = cli.url.is_some();
+    let log = std::env::current_dir()
+        .ok()
+        .and_then(|cwd| {
+            discovery::resolve_endpoint(None, cli.project.as_deref(), &cwd, &ProcessEnv).ok()
+        })
+        .and_then(|e| e.workspace)
+        .map(|w| w.join(".bridle/daemon.log"))
+        .filter(|p| p.exists());
+    wait_for_restart(
+        &client,
+        async || {
+            if explicit {
+                return None;
+            }
+            client_for(cli).await.ok()
+        },
+        limit,
+        std::time::Duration::from_millis(500),
+        log.as_deref(),
+    )
+    .await
+}
+
+/// Wait for the daemon to go down and answer again. Once it is down, each poll asks `resolve`
+/// for a fresh client (`None` keeps the current one), since the restart may move the port.
+async fn wait_for_restart(
+    first: &Client,
+    mut resolve: impl AsyncFnMut() -> Option<Client>,
+    limit: std::time::Duration,
+    poll: std::time::Duration,
+    log: Option<&std::path::Path>,
+) -> Result<(), CliError> {
+    let deadline = std::time::Instant::now() + limit;
+    let mut client = first.clone();
     let mut down = false;
     loop {
         match (client.health().await.is_ok(), down) {
@@ -558,13 +594,19 @@ async fn restart(cli: &Cli, wait: Option<u64>, upgrade: bool) -> Result<(), CliE
             }
             (true, false) => {}
         }
+        if down && let Some(fresh) = resolve().await {
+            client = fresh;
+        }
         if std::time::Instant::now() >= deadline {
+            let see = log
+                .map(|p| format!("; see {}", p.display()))
+                .unwrap_or_default();
             return Err(CliError::Other(anyhow::anyhow!(
-                "the daemon did not come back within {}s; see <workspace>/.bridle/daemon.log",
-                reply.stop_limit_secs + 60
+                "the daemon did not come back within {}s{see}",
+                limit.as_secs()
             )));
         }
-        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+        tokio::time::sleep(poll).await;
     }
 }
 
@@ -3973,5 +4015,74 @@ mod stop_daemon_tests {
         assert!(msg.contains("did not stop"), "{msg}");
         assert!(msg.contains("bridle daemons"), "{msg}");
         assert!(msg.contains(".bridle/daemon.log"), "{msg}");
+    }
+}
+
+#[cfg(test)]
+mod restart_wait_tests {
+    use super::*;
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+
+    async fn health_server() -> String {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let url = format!("http://{}", listener.local_addr().unwrap());
+        tokio::spawn(async move {
+            loop {
+                let (mut sock, _) = listener.accept().await.unwrap();
+                let mut buf = [0u8; 2048];
+                let _ = sock.read(&mut buf).await;
+                let body = r#"{"ok":true,"version":"t","agent_count":0}"#;
+                let resp = format!(
+                    "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
+                    body.len()
+                );
+                let _ = sock.write_all(resp.as_bytes()).await;
+            }
+        });
+        url
+    }
+
+    fn dead_url() -> String {
+        // Bind then drop so nothing listens on the port.
+        let l = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        format!("http://{}", l.local_addr().unwrap())
+    }
+
+    #[tokio::test]
+    async fn follows_the_daemon_to_a_new_port() {
+        let new = health_server().await;
+        let old = Client::new(dead_url(), None);
+        wait_for_restart(
+            &old,
+            async || Some(Client::new(new.clone(), None)),
+            std::time::Duration::from_secs(5),
+            std::time::Duration::from_millis(10),
+            None,
+        )
+        .await
+        .unwrap();
+    }
+
+    #[tokio::test]
+    async fn timeout_names_the_log_only_when_given() {
+        let old = Client::new(dead_url(), None);
+        let run = async |log: Option<&std::path::Path>| {
+            wait_for_restart(
+                &old,
+                async || None,
+                std::time::Duration::from_millis(50),
+                std::time::Duration::from_millis(10),
+                log,
+            )
+            .await
+            .unwrap_err()
+            .to_string()
+        };
+        assert!(!run(None).await.contains("daemon.log"));
+        assert!(
+            run(Some(std::path::Path::new("/w/.bridle/daemon.log")))
+                .await
+                .contains("see /w/.bridle/daemon.log")
+        );
     }
 }
