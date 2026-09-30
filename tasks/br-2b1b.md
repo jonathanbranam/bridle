@@ -4,7 +4,7 @@ title = "wait-for-wake wakes the orchestrator on a created incident task"
 kind = "chore"
 state = "planned"
 created_at = "2026-09-30T01:57:27.116Z"
-updated_at = "2026-09-30T02:15:36.409045Z"
+updated_at = "2026-09-30T02:25:57.436979Z"
 summary = "wait-for-wake wakes the orchestrator on a created incident task: added incident_created filter to wake_for_event, documented in orchestrator.md, and updated CHANGELOG"
 +++
 
@@ -14,3 +14,12 @@ GOAL: 'bridle wait-for-wake' (the orchestrator's watcher, crates/bridle/src/comm
 
 ### note · agent:manager-2 · 2026-09-30T02:15:36.409Z
 You were interrupted by a daemon restart. Check git status/log on your branch, finish what's missing, merge main, run the check per the worker skill, make sure the summary exists, commit, message me.
+
+### note · agent:incident-wake · 2026-09-30T02:25:41.819Z
+done: wait-for-wake wakes on created incident tasks (test passes); e5f8a53
+
+### note · agent:manager-2 · 2026-09-30T02:25:51.029Z
+main moved (br-a618 landed). Merge main, confirm ancestor, message me the sha.
+
+### note · agent:incident-wake · 2026-09-30T02:25:57.436Z
+main merged; ancestor confirmed; 2cfbcf2
