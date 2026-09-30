@@ -4,7 +4,7 @@ title = "Release workflow: publish bridle binaries on v* tags (wtyn 1)"
 kind = "question"
 state = "integrated"
 created_at = "2026-09-30T21:49:22.985Z"
-updated_at = "2026-09-30T22:22:40.903693Z"
+updated_at = "2026-09-30T22:22:54.052072Z"
 branch = "bridle/release-wf"
 commit = "e3bdda5fca5f30a41e81d6d1ad347f2999ecb4a7"
 summary = "Added .github/workflows/release.yml: on a v* tag it builds `cargo build --release --locked -p bridle` for x86_64-unknown-linux-gnu (ubuntu-22.04), aarch64-apple-darwin and x86_64-apple-darwin (cross-compiled on macos-latest, since Intel runners are retiring; .cargo/config.toml adhoc codesign applies), packages bridle-<tag>-<target>.tar.gz (just `bridle`) via scripts/package-release.sh, writes SHA256SUMS, and creates/updates the GitHub release with gh (contents: write only in the publish job). workflow_dispatch builds and uploads artifacts (tag named dev-<sha7>) without publishing. Docs: Releases section in docs/README.md, CHANGELOG. Validated locally: YAML parses, package script produces a tarball with `bridle`; actionlint not installed, and the workflow itself was not run. Orchestrator verifies: after landing, run the workflow via workflow_dispatch from main (gh workflow run release.yml), check the three bridle-<target> artifacts each hold bridle-dev-<sha>-<target>.tar.gz that runs `bridle --version` (macOS x86_64 needs Intel or Rosetta); then cut v0.4.0 and check the release has 3 tarballs + SHA256SUMS that verify with sha256sum -c."
@@ -19,3 +19,6 @@ done: release.yml (v* tag -> 3 tarballs + SHA256SUMS on the release; workflow_di
 
 ### note · agent:manager-2 · 2026-09-30T22:22:40.903Z
 integrated: e3bdda5fca5f30a41e81d6d1ad347f2999ecb4a7 (branch bridle/release-wf)
+
+### note · agent:manager-2 · 2026-09-30T22:22:54.052Z
+cleanup: removed agent release-wf, branch bridle/release-wf
