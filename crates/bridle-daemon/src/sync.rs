@@ -22,7 +22,7 @@
 //!
 //! Skips L4 component/path-scoped rule rendering: workflow-layers.md flags
 //! the Claude Code mechanism for that as unverified (see
-//! docs/questions/open/ — filed as a follow-up, not guessed at here).
+//! docs/tickets/open/ — filed as a follow-up, not guessed at here).
 //!
 //! `hooks/<event>.json` and the "later layer replaces wholesale" convention
 //! for both it and `agents/<role>.md` are this module's own convention, not

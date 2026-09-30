@@ -55,7 +55,7 @@ fn init_repo(dir: &Path) {
 /// agents), which sets these in its own environment. The `bridle` child
 /// processes spawned here must not inherit them — otherwise they'd talk to
 /// that real daemon instead of the one this test starts, as happened once
-/// (see docs/questions/open/v1-follow-ups-from-the-build-9c6e.md).
+/// (see docs/tickets/open/v1-follow-ups-from-the-build-9c6e.md).
 /// Mirrors the CLAUDE*/BRIDLE_TOKEN stripping in
 /// `bridle_claude::command::env_removal_keys`, extended to every BRIDLE_*
 /// var the CLI itself reads for discovery.

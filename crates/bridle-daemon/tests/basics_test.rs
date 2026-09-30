@@ -21,7 +21,7 @@ async fn health_needs_no_auth_and_status_needs_a_token() {
     assert!(!status.daemon.project.is_empty());
 }
 
-/// docs/questions/open/read-only-access-without-a-token-9c63.md: a GET with
+/// docs/tickets/open/read-only-access-without-a-token-9c63.md: a GET with
 /// no bearer token reads as a synthetic `local` principal rather than
 /// 401ing, since the daemon only listens on 127.0.0.1. A GET with a valid
 /// token still authenticates normally and keeps real attribution.

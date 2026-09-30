@@ -5,7 +5,7 @@
 //! the JSON into a [`bridle_api::types::StatusLineReport`] for the daemon.
 //!
 //! Field names below are confirmed against Claude Code's own docs
-//! (docs/questions/open/statusline-real-context-and-a-tighter-layout-s8kn.md);
+//! (docs/tickets/open/statusline-real-context-and-a-tighter-layout-s8kn.md);
 //! anything not confirmed (`rate_limits.*`'s exact shape beyond the windows
 //! bridle cares about) still stays tolerant, matching bridle-claude's event
 //! model (`crates/bridle-claude/src/events.rs`): walk the raw `Value` for the
@@ -243,7 +243,7 @@ pub fn render_line(
 /// Bridle's own counts for the human: agents currently working (`working`
 /// and `starting`, both "in progress" from the outside) and messages
 /// waiting for the human
-/// (docs/questions/resolved/statusline-bridle-counts-with-a-read-only-token-r7cs.md).
+/// (docs/tickets/resolved/statusline-bridle-counts-with-a-read-only-token-r7cs.md).
 pub fn render_counts(status: &Status) -> String {
     let working: u32 = ["working", "starting"]
         .iter()

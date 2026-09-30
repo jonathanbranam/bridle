@@ -1068,7 +1068,7 @@ mod sync {
     "#;
 
     // Claude Code's real statusline schema has `context_window.used_percentage`
-    // precomputed (docs/questions/open/statusline-real-context-and-a-tighter-layout-s8kn.md):
+    // precomputed (docs/tickets/open/statusline-real-context-and-a-tighter-layout-s8kn.md):
     // shown directly instead of recomputed from context_used_tokens/context_max_tokens,
     // since that recomputation is wrong on extended-context (1M) models.
     pub(super) const SCHEMA_V10: &str = r#"

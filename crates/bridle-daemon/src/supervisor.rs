@@ -33,7 +33,7 @@ const INTERRUPT_TIMEOUT: Duration = Duration::from_secs(10);
 const TERMINATE_GRACE: Duration = Duration::from_secs(3);
 const SWEEP_GRACE: Duration = Duration::from_secs(2);
 /// How long `spawn` waits for the process's first `system/init` (or its
-/// exit) before answering anyway (docs/questions/open/v1-follow-ups-from-the-build-9c6e.md).
+/// exit) before answering anyway (docs/tickets/open/v1-follow-ups-from-the-build-9c6e.md).
 const SPAWN_READY_TIMEOUT: Duration = Duration::from_secs(8);
 /// `result.subtype` when `--max-budget-usd` is spent (docs/spikes/02-budget-cap-findings.md).
 const BUDGET_EXHAUSTED_SUBTYPE: &str = "error_max_budget_usd";

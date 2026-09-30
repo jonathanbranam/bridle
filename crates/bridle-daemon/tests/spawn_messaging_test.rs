@@ -231,7 +231,7 @@ async fn spawn_with_prompt_runs_a_turn_and_creates_a_worktree() {
     assert!(done.cost_usd_total > 0.0, "expected nonzero cost");
 }
 
-/// Fix for docs/questions/open/v1-follow-ups-from-the-build-9c6e.md's spawn
+/// Fix for docs/tickets/open/v1-follow-ups-from-the-build-9c6e.md's spawn
 /// readiness gap: with a first message, `spawn` waits for that turn's
 /// `system/init` before answering, so the response (and the store, and the
 /// event log) already reflect the turn having started — no extra polling

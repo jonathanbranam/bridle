@@ -356,7 +356,7 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   workflow = "path"` (relative paths resolve against the repo root) and `packs =
   ["name", ...]` in `.bridle/config.toml`; with no `workflow` set, or a `workflow`/pack
   directory that doesn't exist on disk, resolution just sees the project layer, not an
-  error — `bridle-workflow`'s real location is still provisional (docs/questions/open/
+  error — `bridle-workflow`'s real location is still provisional (docs/tickets/open/
   where-bridle-workflow-lives-r2uq.md), so nothing is guessed here. Pack layers are
   mechanism only for now: reading multiple `<workflow>/packs/<name>/rules` directories
   in listed order, with no real pack content yet (out of scope per workflow-layers.md).
@@ -583,7 +583,7 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   error) allows rather than blocks: a bug in bridle's own tooling must never trap an
   agent from stopping.
 - **`prime orchestrator`** prints a fresh orchestrator session's opening context in one
-  go (docs/questions/open/one-command-orchestrator-handover-d4mz.md, step 2): the role
+  go (docs/tickets/open/one-command-orchestrator-handover-d4mz.md, step 2): the role
   prompt (`workflow/base/roles/orchestrator.md`, generic: `{project}` becomes the current
   project's name, the `--project` value or the directory name, e.g. in the credentials-entry
   snippet), followed by the project's own `.bridle/roles/orchestrator.md` when present, the

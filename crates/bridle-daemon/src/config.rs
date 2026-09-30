@@ -338,7 +338,7 @@ pub struct Role {
 }
 
 /// Claude Code built-ins that let an agent bypass bridle's own coordination
-/// the way `SendMessage` did (docs/questions/open/agents-can-use-claude-codes-own-sendmessage-78sp.md):
+/// the way `SendMessage` did (docs/tickets/open/agents-can-use-claude-codes-own-sendmessage-78sp.md):
 /// reporting straight to another session instead of `bridle send`, or
 /// spawning subagents bridle never sees. `SendMessage` and `Workflow` are denied for
 /// every built-in role; `Agent` is allowed since subagents run inside the same
@@ -447,7 +447,7 @@ impl Role {
             // No whitelist until the orchestrator's launch is measured (ct8m step 4).
             tools: None,
             // Scheduling is exempted: the orchestrator paces its own loop
-            // with `ScheduleWakeup` (docs/questions/open/agents-can-use-claude-codes-own-sendmessage-78sp.md).
+            // with `ScheduleWakeup` (docs/tickets/open/agents-can-use-claude-codes-own-sendmessage-78sp.md).
             disallowed_tools: deny_list(&[&DENY_REMOTE_TRIGGERS]),
             system_prompt: None,
             autostart: false,
@@ -892,7 +892,7 @@ impl CommandsConfig {
 /// own pattern) or dev+release (`release` set — work merges into `integration`, and `release`
 /// only moves when `integration` is merged into it for a release, done by whoever cuts
 /// releases, not by workers or the manager's normal merge). A project trial
-/// (docs/questions/open/trial-adoption-*.md, 63rv) sets `integration` to its trial branch
+/// (docs/tickets/open/trial-adoption-*.md, 63rv) sets `integration` to its trial branch
 /// (e.g. `bridle-adopt`) with `release` left unset, so nothing here ever targets the
 /// project's real `main`/`dev`.
 #[derive(Debug, Clone, PartialEq)]
@@ -2292,7 +2292,7 @@ fn substitute_role_text(
 /// The rendered `--append-system-prompt-file` contents for one agent:
 /// [`stable_system_prompt`], then a short identity sentence (name, role,
 /// cwd, branch) appended last, so an agent always knows these facts even
-/// with no first message (docs/questions/open/v1-follow-ups-from-the-build-9c6e.md).
+/// with no first message (docs/tickets/open/v1-follow-ups-from-the-build-9c6e.md).
 /// The identity sentence goes at the end, not the start, so the long shared
 /// prefix above it still matches across agents of the same role and the
 /// prompt cache still holds for that part.

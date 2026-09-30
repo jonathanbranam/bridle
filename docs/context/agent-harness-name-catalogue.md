@@ -1,6 +1,6 @@
 # Agent harness / orchestrator name catalogue
 
-Purpose: for `docs/questions/open/a-new-name-for-the-project-geem.md`. Collects the names
+Purpose: for `docs/tickets/open/a-new-name-for-the-project-geem.md`. Collects the names
 of existing agentic harnesses, coding-agent CLIs, multi-agent orchestrators and agent
 frameworks, so a new name for bridle can be checked against them. It does not propose
 names; choosing is the human's.

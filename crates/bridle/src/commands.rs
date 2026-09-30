@@ -298,7 +298,7 @@ async fn arch_guard(cli: &Cli) -> Result<(), CliError> {
 }
 
 /// The orchestrator's startup steps, printed by `bridle prime orchestrator`
-/// alongside the role prompt and current state (docs/questions/open/
+/// alongside the role prompt and current state (docs/tickets/open/
 /// one-command-orchestrator-handover-d4mz.md). Kept in the binary, not
 /// `scripts/claude-orchestrator`, so there's one source of truth for what a
 /// fresh orchestrator session does first; the script just runs `bridle prime
@@ -314,7 +314,7 @@ Watch your own context: hand over well before 200K.
 The human will mostly reach you through Remote Control.";
 
 /// `bridle prime orchestrator`: a fresh orchestrator session's opening
-/// context in one command (docs/questions/open/
+/// context in one command (docs/tickets/open/
 /// one-command-orchestrator-handover-d4mz.md, step 2), read from the current
 /// directory — run this from the repo root, as
 /// `scripts/claude-orchestrator` does. Purely local: no daemon call.
@@ -444,7 +444,7 @@ fn render_prime_orchestrator(
     )
 }
 
-/// Bridle's own counts for the human (docs/questions/resolved/
+/// Bridle's own counts for the human (docs/tickets/resolved/
 /// statusline-bridle-counts-with-a-read-only-token-r7cs.md): agents working
 /// and messages waiting. Attempted only when `token_path` holds a token —
 /// deliberately not `$BRIDLE_TOKEN` or the workspace's human token file,

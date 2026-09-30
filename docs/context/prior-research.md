@@ -13,7 +13,7 @@ sibling checkouts.
 
 | Where | What |
 |---|---|
-| `workflow-instructions/` | the markdown driver workflow and ticket system bridle succeeds. Its `ticket-conventions.md` is the model for `docs/questions/` and `docs/spikes/open/` here |
+| `workflow-instructions/` | the markdown driver workflow and ticket system bridle succeeds. Its `ticket-conventions.md` is the model for `docs/tickets/` and `docs/spikes/open/` here |
 | `workflow/research/` | the numbered research below |
 | `workflow-tools/` | the Gherkin tooling that [[docs/design/specs-to-tests|specs to tests]] replaces |
 

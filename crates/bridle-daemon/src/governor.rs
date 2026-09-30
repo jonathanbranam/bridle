@@ -826,7 +826,7 @@ fn parse_get_usage(v: &Value, observed_at: DateTime<Utc>) -> Vec<RateLimit> {
                 .map(|p| p / 100.0);
             let resets_at = parse_iso(entry.get("resets_at"));
             // Internal codenames and non-window fields share this object
-            // (docs/questions/open/v1-follow-ups-from-the-build-9c6e.md);
+            // (docs/tickets/open/v1-follow-ups-from-the-build-9c6e.md);
             // only entries actually shaped like a window have either field.
             if utilization.is_none() && resets_at.is_none() {
                 continue;

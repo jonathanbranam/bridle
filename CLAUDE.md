@@ -8,9 +8,9 @@ Claude Code agents. Read these before changing behaviour:
   in step when behaviour changes.
 - `docs/README.md`: the docs index and reading order. The rest of `docs/design/` (tasks,
   workflow layers, specs) is future work; `docs/proposal/build-order.md` says what's next.
-- `docs/questions/open/` and `docs/spikes/open/`: open questions and spikes, one ticket each.
+- `docs/tickets/open/` and `docs/spikes/open/`: open tickets and spikes, one ticket each.
   File new ones by the conventions in `docs/README.md`. Known v1 bugs and gaps:
-  `docs/questions/open/v1-follow-ups-from-the-build-9c6e.md`.
+  `docs/tickets/open/v1-follow-ups-from-the-build-9c6e.md`.
 - `docs/spikes/01-stream-json-findings.md`: verified Claude Code stream-json behaviour.
   Cite it rather than assuming how `claude` behaves.
 - **If you are the human's orchestrator** (directing bridle's workforce on this repo):
@@ -64,4 +64,4 @@ cargo test -p <crate>   # when working on one crate
 On Intel Macs (x86_64), binaries must be ad-hoc code-signed at link time to avoid crashes in macOS's
 system policy daemon. `.cargo/config.toml` adds `rustflags = ["-C", "link-arg=-Wl,-adhoc_codesign"]`
 for the x86_64-apple-darwin target. This applies to `cargo install`, test binaries, and worker builds.
-The flag is a no-op on arm64 (which signs automatically). See `docs/questions/resolved/sign-binaries-on-intel-macs-cs7x.md`.
+The flag is a no-op on arm64 (which signs automatically). See `docs/tickets/resolved/sign-binaries-on-intel-macs-cs7x.md`.

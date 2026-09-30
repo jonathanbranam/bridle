@@ -8,7 +8,7 @@
 //! part ([`config::stable_system_prompt`]; see that function's own doc comment for why
 //! the agent-specific identity sentence appended after it is excluded). Prime and
 //! skills are unbuilt; the MCP server and hooks are deferred nice-to-haves
-//! (docs/questions/open/v1-follow-ups-from-the-build-9c6e.md). [`measure`] folds each
+//! (docs/tickets/open/v1-follow-ups-from-the-build-9c6e.md). [`measure`] folds each
 //! in once it exists, rather than reporting a placeholder zero for it now.
 
 use std::collections::BTreeMap;

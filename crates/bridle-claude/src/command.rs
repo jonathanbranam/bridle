@@ -129,7 +129,7 @@ impl ClaudeCommand {
             "none",
             // `project` only: excludes the human's `~/.claude/settings.json`
             // and the clone's untracked `.claude/settings.local.json` from
-            // ever loading into a spawned agent (docs/questions/open/
+            // ever loading into a spawned agent (docs/tickets/open/
             // per-role-claude-settings-for-spawned-agents-4eep.md).
             "--setting-sources",
             "project",

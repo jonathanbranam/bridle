@@ -1,4 +1,4 @@
-//! Fixes from the v1 follow-ups (docs/questions/open/v1-follow-ups-from-the-build-9c6e.md):
+//! Fixes from the v1 follow-ups (docs/tickets/open/v1-follow-ups-from-the-build-9c6e.md):
 //! held messages across an exit, events by agent name, `rm` ordering and
 //! usage history, caller provenance, the spend cap, Claude Code version
 //! tracking and autostart prompts.

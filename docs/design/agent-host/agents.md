@@ -54,7 +54,7 @@ established; S-numbers are its scenarios. Each agent is one headless
 - **`--setting-sources project`**: every agent loads only the project's
   checked-in `.claude/settings.json`, never the human's own
   `~/.claude/settings.json` or a clone's untracked `.claude/settings.local.json`
-  (docs/questions/open/per-role-claude-settings-for-spawned-agents-4eep.md).
+  (docs/tickets/open/per-role-claude-settings-for-spawned-agents-4eep.md).
   Per-role scoping beyond that stays `allowed_tools`/`disallowed_tools`
   ([[docs/design/agent-host/roles-and-config|roles and config]]) plus the
   no-memory `--settings` above.

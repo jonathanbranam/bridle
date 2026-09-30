@@ -16,7 +16,7 @@ file goes missing, the next start revokes the old token and mints a new one.
 ## Read access without a token
 
 The daemon only listens on 127.0.0.1
-([[docs/questions/open/read-only-access-without-a-token-9c63|ticket 9c63]]):
+([[docs/tickets/open/read-only-access-without-a-token-9c63|ticket 9c63]]):
 any process on the machine can already reach it, so requiring a token just to
 read is friction without a security benefit. A `GET`/`HEAD` request with no
 `Authorization` header authenticates as a synthetic `local` principal instead

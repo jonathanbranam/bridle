@@ -17,8 +17,8 @@ docs/
   research/          bridle's own research reports (dated records)
   spikes/            finished spike briefs and findings (NN-*.md, dated records)
     open/            spikes not yet run, one ticket each
-  questions/
-    open/            open design questions, one ticket each
+  tickets/
+    open/            open tickets, one ticket each
     resolved/        answered, with a Resolution section saying where the answer lives
 ```
 
@@ -74,7 +74,7 @@ which stays open.
 Check links and IDs with:
 
 ```bash
-for t in docs/questions docs/spikes/open; do
+for t in docs/tickets docs/spikes/open; do
   python3 ../workflow-instructions/scripts/check-tickets.py --root . --tickets $t --quiet
 done
 ```
@@ -123,6 +123,6 @@ done
    [[docs/design/specs-to-tests|specs to tests]], [[docs/design/spec-flow|the spec flow]],
    [[docs/design/worktrees-and-ports|worktrees and ports]],
    [[docs/design/skills|skills]].
-6. `questions/open/` and `spikes/open/` for what isn't settled.
+6. `tickets/open/` and `spikes/open/` for what isn't settled.
 
 For a plain-language read of one part as built today, see [[docs/briefs/README|the briefs]].
