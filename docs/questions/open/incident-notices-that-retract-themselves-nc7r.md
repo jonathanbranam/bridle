@@ -89,3 +89,11 @@ What that means (the advisor's reading):
   open. The drop-if-undelivered and "resolved" behaviour from the incidents design carries
   over.
 - `docs/design/agent-host/incidents.md` needs revising to this.
+
+## Example: an alert that didn't retract itself (2026-09-29)
+
+m-2136 to the human at 01:36Z: "The orchestrator has no wake command running (`bridle
+wait-for-wake`) since 01:34:39 UTC." The orchestrator was busy (a burst of advisor messages) and
+restarted its waiter within minutes; the notice stayed unread in the human's inbox anyway. The
+human asked for the grace to double (2m to 4m, `[orchestrator] waiter_grace`); this ticket's part
+is that a notice whose condition has cleared should withdraw itself.
