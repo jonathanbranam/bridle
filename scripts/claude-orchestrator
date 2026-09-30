@@ -24,9 +24,12 @@ settings='{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"bridl
 # Every bridle command in the session then acts as external:orchestrator, with the token for the
 # project it talks to from ~/.bridle/credentials.toml (`bridle token create orchestrator --project <p>`).
 export BRIDLE_AS=orchestrator
+# Session name includes the short hostname (lowercased), with optional BRIDLE_SESSION_SUFFIX override.
+session_host=${BRIDLE_SESSION_SUFFIX:-$(hostname -s | tr A-Z a-z)}
+session_name="bridle-orch-$session_host"
 # The opening prompt only points at `bridle prime`: a long prompt in argv is matched by any
 # `pkill -f <pattern>` a worker runs, and a worker's `pkill -f "just check"` killed two sessions (fx7x).
-claude --settings $settings --strict-mcp-config --name bridle-orch --remote-control bridle-orch "$@" \
+claude --settings $settings --strict-mcp-config --name "$session_name" --remote-control "$session_name" "$@" \
   "Run \`bridle prime orchestrator\` and follow what it prints."
 # Sessions have ended unattended with no trace (fx7x): record when, and how (a status above 128 is a
 # signal), in the pane and in a log that outlives it.

@@ -20,7 +20,7 @@ Remote Control:
 ## What happened (advisor, 2026-09-29)
 
 - The orchestrator (`scripts/claude-orchestrator`, session `61113e23-...`, Remote Control name
-  `bridle-orch`) was gone: no `claude` process for it at 08:41 ET.
+  `bridle-orch-<hostname>`) was gone: no `claude` process for it at 08:41 ET.
 - Its transcript's last real turn is 12:32 UTC (08:32 ET): it sent m-1718/m-1719 to the
   managers (pausing two builds for the incident/open-requests design) and replied to the human.
   The transcript ends at 12:36 UTC with its background task `b71x7i5bz` reported `killed`. No

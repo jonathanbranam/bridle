@@ -24,7 +24,7 @@ to remind you or give you a hint."
 - The number comes from what Claude Code already reports: the `bridle statusline` hook
   (s8kn) sends the session's context to the daemon's ledger for sessions bridle doesn't host.
   The watcher needs to know which session is the orchestrator's (e.g. the session id written
-  by `scripts/claude-orchestrator` at start, or the Remote Control name `bridle-orch`).
+  by `scripts/claude-orchestrator` at start, or the Remote Control name `bridle-orch-<hostname>`).
   Check that the ledger is actually being fed for this session: `bridle usage --json`'s
   `interactive_today` was empty on 2026-09-29 even with the statusline running.
 - The same for the advisor's session, later.
