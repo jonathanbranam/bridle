@@ -99,3 +99,34 @@ that landed in the leaf crates (`bridle-api`, `bridle-claude`, `bridle-spec`) si
 So: no build work on "keep the warm source fresh" (step 2 above) or sccache until a measurement
 says it's worth it. When the machine is quiet, time one worker's first build from a fresh and from
 a stale `target/`. Low priority: stability comes first.
+
+## Measured (2026-09-29)
+
+Step 1 of "Measure before building". Scratch worktree of `main` on the same APFS volume as
+the workspace (a scratch dir under `$TMPDIR` is another volume: `cp -c` fails there with
+"Cross-device link", so those runs were discarded). 16 CPUs. `cargo build --workspace
+--all-targets`, one build at a time. **The machine was not quiet**: idle load was 20 to 40
+(Obsidian, Spotlight `mds`) and other agents' work overlapped some runs (a daemon self-upgrade
+build interrupted one run, which was redone), so peak loads are inflated and wall times are
+noisy: read them as rough.
+
+| Case | Wall | Peak 1-min load | Notes |
+|---|---|---|---|
+| a. cold, empty `target/` | 3m36s (an earlier run on another volume: 2m41s, load 67) | 122 | full workspace |
+| b. warmed from the main clone's `target/` | 3m40s + 7s clone | 117 | 210 crates recompiled |
+| c. warmed from `integration/target/` | 1m39s + 35s clone | 69 | 6 crates recompiled |
+| d. `just check` on c's warm state | 2m38s | 119 | nextest 53.8s, 784 tests, 1 failed |
+
+- The main clone's `target/` was last built 2026-09-28 17:46 (`debug/deps`); the integration
+  worktree's 2026-09-29 17:38. The clone is a day old and about `main` as of before the `cargo
+  clean`'s rebuild: the warm copy saved nothing measurable over cold (b is about a). The
+  integration copy left only 6 crates to rebuild.
+- Cloning is not free: 7s for the clone's `target/`, 35s for the integration one (larger, 38k
+  files in `deps`), both under load.
+- d's one failure was `bridle-spec` `parses_fast`, a timing assertion that fails at load 118, not
+  a regression. No `last-full-test-count` file exists to compare the 784 against.
+
+Recommendation: keeping the warm source fresh is worth it: a fresh copy (c) roughly halved the
+first build against a stale one (b), which was no better than cold.
+Do step 2 (an incremental build in the integration worktree after each `land`, warm from
+there), and do not add sccache yet.
