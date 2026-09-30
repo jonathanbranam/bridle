@@ -115,8 +115,10 @@ handovers(seq INTEGER PK AUTOINCREMENT, id UNIQUE -> h-0007, role, project, body
           created_at, created_by)                                  -- SCHEMA_V17
 ```
 
-`handovers` are the orchestrator's notes ([[orchestrator-supervision]] section 7): runtime, not
-on the state branch and not rebuilt. The highest `seq` is the current note; older rows stay for
+`handovers` are the orchestrator's notes ([[orchestrator-supervision]] section 7): also on the
+state branch as `handovers/<id>.md` (frontmatter + body, one file per note, written by the same
+flush; notes missing there are backfilled at daemon start) and restored by `bridle rebuild` with
+their ids and `seq`. The highest `seq` is the current note; older rows stay for
 `handover list` and `show`, and the daily prune deletes those older than the events' 30 days but
 always keeps the newest.
 
@@ -334,6 +336,18 @@ thread entry recording the question's body/from/timestamp does. Rather than
 leave the column unfillable, rebuild synthesizes a stand-in id from the task
 id (`m-rebuilt-<task id>`). Nothing downstream looks a message up by this id
 after a rebuild, since there's no message row behind it to find.
+
+`handovers/<id>.md` files are restored too, keeping each note's id and `seq` (so new notes
+resume above the highest); a note already in the table is skipped, and they don't count towards
+the refusal above.
+
+**Fetching from origin.** With `bridle rebuild --from-origin`, or on a daemon's first start with
+no local `bridle/state` when `[state] push = true`, the daemon first fetches
+`origin/bridle/state` (`StateBranch::fetch_from_origin`). It only reads from the remote and never
+overwrites: a missing local branch is created from it; a local branch that is behind it, or is
+only the empty seed commit the daemon creates, is fast-forwarded; if both exist and differ,
+nothing changes and the command says so. A project with neither the switch nor the flag never
+fetches.
 
 ## The daemon registry
 

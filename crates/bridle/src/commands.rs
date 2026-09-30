@@ -43,7 +43,7 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Doctor(args) => crate::doctor::run(&cli, args),
         Command::Init(args) => crate::init::run(args),
         Command::Launchd(args) => crate::launchd::run(&cli, args),
-        Command::Rebuild => rebuild(&cli).await,
+        Command::Rebuild(args) => rebuild(&cli, args.from_origin).await,
         Command::Daemons => daemons(&cli).await,
         Command::Status => status(&cli).await,
         Command::Spawn(args) => spawn(&cli, args).await,
@@ -532,13 +532,16 @@ async fn stop_daemon_with(
     }
 }
 
-async fn rebuild(cli: &Cli) -> Result<(), CliError> {
+async fn rebuild(cli: &Cli, from_origin: bool) -> Result<(), CliError> {
     let client = client_for(cli).await?;
-    client.rebuild().await?;
+    let done = client.rebuild(from_origin).await?;
     if cli.json {
-        render::print_json(&serde_json::json!({"ok": true}))?;
+        render::print_json(&serde_json::json!({"ok": true, "origin": done.origin}))?;
     } else {
-        println!("rebuilt tasks/edges/open_questions from the state branch");
+        if let Some(o) = &done.origin {
+            println!("{o}");
+        }
+        println!("rebuilt tasks/edges/open_questions/handovers from the state branch");
     }
     Ok(())
 }

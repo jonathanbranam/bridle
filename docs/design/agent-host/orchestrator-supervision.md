@@ -247,8 +247,13 @@ tasks, CI), and that is printed live by `bridle prime orchestrator`. What is lef
   with the events at 30 days but always keeping the newest.
 - `bridle handover done` (6) is the separate marker, so writing a note early doesn't restart.
 - `bridle prime orchestrator` prints the note under a heading, its age, then the live views.
-- Not on the state branch: like messages and incidents it is runtime. The human's **decisions
-  stay in the repo** (rules, tickets, the role file), where they're reviewed.
+- Also on the state branch, unlike messages and incidents: each note is written as
+  `handovers/<id>.md` (TOML frontmatter with id, role, project, created_at, created_by; then the
+  body) by the same batched flush, so it is pushed with it (we2r). Files are history, never
+  rewritten; the newest by seq is current. `bridle rebuild` restores the table from them, ids
+  and seq kept, so new notes number above the highest. Notes already in SQLite are written on
+  the daemon's next start if missing. The human's **decisions stay in the repo** (rules,
+  tickets, the role file), where they're reviewed.
 - Built (slice 3). Prime prints the note's heading and age, then the startup steps, which point
   at the live views (`bridle status`, `agents`, the queue) rather than embedding them. With no
   note, prime prints the state file's pointer (`docs/context/orchestrator-state.md`).

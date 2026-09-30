@@ -48,7 +48,7 @@ pub enum Command {
     /// state branch alone (docs/design/storage.md, "Rebuild"): the
     /// migration path for a fresh clone with no `bridle.db`. Refuses if the
     /// database already has rows in any of those tables.
-    Rebuild,
+    Rebuild(RebuildArgs),
     /// List every running project daemon on this machine.
     Daemons,
     /// Daemon + agents summary.
@@ -502,6 +502,14 @@ pub struct InitArgs {
     /// Workflow pack to enable (`packs = [STACK]`).
     #[arg(long, value_parser = ["python", "typescript", "rust"])]
     pub stack: Option<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct RebuildArgs {
+    /// First fetch `origin/bridle/state`: fast-forward only, never overwrites a local branch
+    /// that has state of its own (it says so and leaves both). Otherwise nothing is fetched.
+    #[arg(long)]
+    pub from_origin: bool,
 }
 
 #[derive(Debug, Args)]
@@ -2054,7 +2062,7 @@ mod tests {
     #[test]
     fn rebuild_parses() {
         let cli = parse(&["rebuild"]).unwrap();
-        assert!(matches!(cli.command, Command::Rebuild));
+        assert!(matches!(cli.command, Command::Rebuild(_)));
     }
 
     #[test]

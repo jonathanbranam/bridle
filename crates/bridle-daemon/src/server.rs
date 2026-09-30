@@ -18,12 +18,12 @@ use bridle_api::types::{
     InteractiveUsageRow, InterruptRequest, MaxWorkersRequest, MergeProbe, Message, MessageKind,
     MessageQuery, MessageState, NewEdgeRequest, NewTaskRequest, NoteTaskRequest, OpenQuestion,
     OverlapLevel, PortAllocation, PrincipalKind, ProbeOutcome, ProbeRequest, ProbeResult, Queue,
-    RateLimit, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, ResumeRequest,
-    ScheduleOverrideStatus, SendRequest, SetImpactRequest, SetQueueRequest, SetSummaryRequest,
-    ShutdownResponse, SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery,
-    TaskState, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
-    UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, WakeResponse, When, WindowStatus,
-    WriteHandoverRequest, event_kind,
+    RateLimit, RebuildResponse, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest,
+    ResumeRequest, ScheduleOverrideStatus, SendRequest, SetImpactRequest, SetQueueRequest,
+    SetSummaryRequest, ShutdownResponse, SpawnRequest, Status, StatusLineReport, StopRequest, Task,
+    TaskQuery, TaskState, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine,
+    TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, WakeResponse, When,
+    WindowStatus, WriteHandoverRequest, event_kind,
 };
 use bridle_api::types::{PrincipalId, ThreadEntryKind};
 use chrono::Utc;
@@ -343,6 +343,7 @@ async fn write_handover(
         .store
         .insert_handover("orchestrator", &state.project, &req.body, &principal.id)
         .await?;
+    state.tasks.enqueue_handover(&h)?;
     Ok(Json(h))
 }
 
@@ -2305,6 +2306,12 @@ async fn shutdown(
     }))
 }
 
+#[derive(serde::Deserialize)]
+struct RebuildQuery {
+    #[serde(default)]
+    from_origin: bool,
+}
+
 /// `bridle rebuild` (docs/design/overview.md, "`bridle rebuild` recreates
 /// the database from the project's state branch"): reconstructs
 /// `tasks`/`edges`/`open_questions` from the state branch alone. Human-only,
@@ -2313,10 +2320,16 @@ async fn shutdown(
 async fn rebuild(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
-) -> Result<StatusCode, ApiError> {
+    Query(q): Query<RebuildQuery>,
+) -> Result<Json<RebuildResponse>, ApiError> {
     require_human(&principal)?;
+    let origin = if q.from_origin {
+        Some(state.tasks.fetch_state_from_origin().await.describe())
+    } else {
+        None
+    };
     state.tasks.rebuild_from_state_branch().await?;
-    Ok(StatusCode::NO_CONTENT)
+    Ok(Json(RebuildResponse { origin }))
 }
 
 #[cfg(test)]

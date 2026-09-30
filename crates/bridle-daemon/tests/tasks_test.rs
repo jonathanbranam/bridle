@@ -553,14 +553,14 @@ async fn rebuild_is_a_no_op_when_empty_and_refuses_once_populated() {
     let (daemon, _tmp) = start_daemon(None).await;
     let c = &daemon.client;
 
-    c.rebuild().await.expect("rebuild against an empty db");
+    c.rebuild(false).await.expect("rebuild against an empty db");
     assert!(c.list_tasks().await.expect("list tasks").is_empty());
 
     c.new_task(&new_req("Add foo", TaskKind::Feature))
         .await
         .expect("new task");
 
-    let err = c.rebuild().await.unwrap_err();
+    let err = c.rebuild(false).await.unwrap_err();
     assert!(matches!(err, ClientError::Api { status: 409, .. }));
 }
 

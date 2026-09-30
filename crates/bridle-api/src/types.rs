@@ -152,6 +152,14 @@ pub struct Handover {
     pub created_by: String,
 }
 
+/// The answer to `POST /v1/rebuild`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct RebuildResponse {
+    /// What the fetch of `origin/bridle/state` did; absent unless `?from_origin=true`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub origin: Option<String>,
+}
+
 /// `POST /v1/handovers`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct WriteHandoverRequest {

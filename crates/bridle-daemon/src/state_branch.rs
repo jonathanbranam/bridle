@@ -17,8 +17,8 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use bridle_api::types::{
-    Edge, EdgeKind, Impact, StatePushStatus, Task, TaskKind, TaskSize, TaskState, ThreadEntry,
-    ThreadEntryKind,
+    Edge, EdgeKind, Handover, Impact, StatePushStatus, Task, TaskKind, TaskSize, TaskState,
+    ThreadEntry, ThreadEntryKind,
 };
 use chrono::{DateTime, SecondsFormat, Utc};
 use serde::{Deserialize, Serialize};
@@ -120,6 +120,9 @@ struct Pending {
     /// PM-owned record (roles-and-lifecycle.md, "the queue"), not per-task
     /// files.
     queue: Option<String>,
+    /// handover id -> rendered `handovers/<id>.md`. One file per note, never rewritten
+    /// once flushed, so the newest by seq (the current note) is the last of the history.
+    handovers: HashMap<String, String>,
 }
 
 /// A handle onto the state branch's worktree. Cheap to clone (an `Arc`
@@ -370,6 +373,107 @@ impl StateBranch {
         Ok(())
     }
 
+    pub fn dir(&self) -> &Path {
+        &self.dir
+    }
+
+    /// Queues a handover note to be written as `handovers/<id>.md` at the next flush.
+    pub fn enqueue_handover(&self, h: &Handover) -> Result<(), StateBranchError> {
+        let rendered = render_handover(h)?;
+        self.pending
+            .lock()
+            .expect("state branch pending lock")
+            .handovers
+            .insert(h.id.clone(), rendered);
+        Ok(())
+    }
+
+    /// Whether `handovers/<id>.md` is already in the worktree, for the idempotent backfill.
+    pub fn has_handover(&self, id: &str) -> bool {
+        self.dir.join("handovers").join(format!("{id}.md")).exists()
+    }
+
+    /// Every handover file, parsed, oldest first (by seq, which is the id's number). Strict,
+    /// like [`StateBranch::list_tasks`]: only `bridle rebuild` reads it.
+    pub fn list_handovers(&self) -> Result<Vec<Handover>, StateBranchError> {
+        let dir = self.dir.join("handovers");
+        let mut out = Vec::new();
+        match std::fs::read_dir(&dir) {
+            Ok(entries) => {
+                for entry in entries {
+                    let path = entry?.path();
+                    if path.extension().and_then(|e| e.to_str()) == Some("md") {
+                        out.push(parse_handover(&std::fs::read_to_string(&path)?)?);
+                    }
+                }
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+            Err(e) => return Err(e.into()),
+        }
+        out.sort_by_key(|h| handover_seq(&h.id));
+        Ok(out)
+    }
+
+    /// Fetches `origin`'s `bridle/state` when that can't lose anything (ticket we2r, shape 3).
+    /// Only ever reads from the remote and never overwrites: a missing local branch is created
+    /// from it; a local branch that is an ancestor of it (or only the untouched seed commit
+    /// [`StateBranch::open`] makes) is fast-forwarded; anything else is left alone and said so.
+    /// `dir` is the state worktree when it exists, else the project's checkout.
+    pub async fn fetch_from_origin(dir: &Path) -> FetchOutcome {
+        match Self::try_fetch(dir).await {
+            Ok(o) => o,
+            Err(e) => FetchOutcome::Failed(e.to_string()),
+        }
+    }
+
+    async fn try_fetch(dir: &Path) -> Result<FetchOutcome, WorktreeError> {
+        let fetched = tokio::time::timeout(
+            PUSH_TIMEOUT,
+            worktree::run_git(
+                dir,
+                &["fetch", "--quiet", REMOTE, &format!("refs/heads/{BRANCH}")],
+            ),
+        )
+        .await;
+        match fetched {
+            Err(_) => return Ok(FetchOutcome::Failed("fetch timed out".into())),
+            Ok(Err(_)) => return Ok(FetchOutcome::NoRemoteBranch),
+            Ok(Ok(_)) => {}
+        }
+        let remote = worktree::run_git(dir, &["rev-parse", "FETCH_HEAD"]).await?;
+        let remote = remote.trim();
+        if !worktree::branch_exists(dir, BRANCH).await? {
+            worktree::run_git(dir, &["branch", BRANCH, remote]).await?;
+            return Ok(FetchOutcome::Created);
+        }
+        let local = worktree::run_git(dir, &["rev-parse", &format!("refs/heads/{BRANCH}")]).await?;
+        let local = local.trim();
+        if local == remote {
+            return Ok(FetchOutcome::UpToDate);
+        }
+        let seed = worktree::run_git(
+            dir,
+            &["rev-list", "--count", &format!("refs/heads/{BRANCH}")],
+        )
+        .await?
+        .trim()
+            == "1"
+            && worktree::run_git(dir, &["ls-tree", "-r", "--name-only", local])
+                .await?
+                .trim()
+                .is_empty();
+        let ancestor = worktree::run_git(dir, &["merge-base", "--is-ancestor", local, remote])
+            .await
+            .is_ok();
+        if !seed && !ancestor {
+            return Ok(FetchOutcome::Diverged);
+        }
+        // The state worktree is the only checkout of the branch; without one (never at first
+        // start, when the branch is missing) there is nothing else to move.
+        worktree::run_git(dir, &["reset", "--hard", "-q", remote]).await?;
+        Ok(FetchOutcome::FastForwarded)
+    }
+
     /// Writes every pending file, event line, and the edges/claims/queue
     /// snapshots, then makes one commit, if anything is pending; a pure
     /// no-op (no git calls at all) otherwise. Takes what's pending under the
@@ -392,6 +496,7 @@ impl StateBranch {
             edges,
             claims,
             queue,
+            handovers,
         } = {
             let mut guard = self.pending.lock().expect("state branch pending lock");
             std::mem::take(&mut *guard)
@@ -401,6 +506,7 @@ impl StateBranch {
             && edges.is_none()
             && claims.is_none()
             && queue.is_none()
+            && handovers.is_empty()
         {
             return Ok(false);
         }
@@ -409,6 +515,13 @@ impl StateBranch {
         std::fs::create_dir_all(&tasks_dir)?;
         for (id, contents) in &files {
             std::fs::write(tasks_dir.join(format!("{id}.md")), contents)?;
+        }
+        if !handovers.is_empty() {
+            let dir = self.dir.join("handovers");
+            std::fs::create_dir_all(&dir)?;
+            for (id, contents) in &handovers {
+                std::fs::write(dir.join(format!("{id}.md")), contents)?;
+            }
         }
         if let Some(contents) = &edges {
             std::fs::write(self.dir.join("edges.toml"), contents)?;
@@ -465,6 +578,9 @@ impl StateBranch {
         }
         if queue.is_some() {
             parts.push("queue".to_string());
+        }
+        if !handovers.is_empty() {
+            parts.push(format!("{} handover(s)", handovers.len()));
         }
         // Nothing but events changed (or, since `flush_now` already returned
         // early with nothing pending at all, unreachable in practice); keep
@@ -569,6 +685,81 @@ impl StateBranch {
         };
         parse_queue(&text).unwrap_or_default()
     }
+}
+
+/// What [`StateBranch::fetch_from_origin`] did, for `bridle rebuild --from-origin` to say.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum FetchOutcome {
+    /// No local branch; created from `origin/bridle/state`.
+    Created,
+    /// The local branch was behind (or only the seed commit); moved up to origin's.
+    FastForwarded,
+    UpToDate,
+    /// Both exist and differ; nothing changed.
+    Diverged,
+    NoRemoteBranch,
+    Failed(String),
+}
+
+impl FetchOutcome {
+    pub fn describe(&self) -> String {
+        match self {
+            Self::Created => "created bridle/state from origin".into(),
+            Self::FastForwarded => "fast-forwarded bridle/state from origin".into(),
+            Self::UpToDate => "bridle/state already matches origin".into(),
+            Self::Diverged => {
+                "local bridle/state and origin/bridle/state differ; left both alone".into()
+            }
+            Self::NoRemoteBranch => "origin has no bridle/state; nothing fetched".into(),
+            Self::Failed(e) => format!("fetching bridle/state from origin failed: {e}"),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+struct HandoverFrontmatter {
+    id: String,
+    role: String,
+    project: String,
+    created_at: DateTime<Utc>,
+    created_by: String,
+}
+
+/// `h-0007` -> 7; unparseable ids sort first.
+pub fn handover_seq(id: &str) -> i64 {
+    id.strip_prefix("h-")
+        .and_then(|n| n.parse().ok())
+        .unwrap_or(0)
+}
+
+/// `+++` TOML frontmatter (as tasks), then the note's body verbatim.
+fn render_handover(h: &Handover) -> Result<String, StateBranchError> {
+    let fm = toml::to_string(&HandoverFrontmatter {
+        id: h.id.clone(),
+        role: h.role.clone(),
+        project: h.project.clone(),
+        created_at: h.created_at,
+        created_by: h.created_by.clone(),
+    })?;
+    Ok(format!("+++\n{fm}+++\n{}", h.body))
+}
+
+fn parse_handover(text: &str) -> Result<Handover, StateBranchError> {
+    let after_open = text
+        .strip_prefix("+++\n")
+        .ok_or_else(|| StateBranchError::Parse("missing opening +++ frontmatter fence".into()))?;
+    let (fm_str, body) = after_open
+        .split_once("\n+++\n")
+        .ok_or_else(|| StateBranchError::Parse("missing closing +++ frontmatter fence".into()))?;
+    let fm: HandoverFrontmatter = toml::from_str(fm_str)?;
+    Ok(Handover {
+        id: fm.id,
+        role: fm.role,
+        project: fm.project,
+        body: body.to_string(),
+        created_at: fm.created_at,
+        created_by: fm.created_by,
+    })
 }
 
 /// One row of `claims.toml`: a task id, its claimant, and when it was
@@ -1459,6 +1650,152 @@ mod tests {
         assert_ne!(origin_tip(&origin).await.as_deref(), Some(head.trim()));
         sb.push_on_shutdown(Duration::from_secs(10)).await;
         assert_eq!(origin_tip(&origin).await.as_deref(), Some(head.trim()));
+    }
+
+    // ---- handovers and fetching (ticket we2r, shapes 2 and 3) ----
+
+    fn sample_handover(seq: u32, body: &str) -> Handover {
+        Handover {
+            id: format!("h-{seq:04}"),
+            role: "orchestrator".into(),
+            project: "p".into(),
+            body: body.into(),
+            created_at: Utc::now(),
+            created_by: "human".into(),
+        }
+    }
+
+    #[tokio::test]
+    async fn a_handover_becomes_a_file_after_flush_and_reads_back() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let (sb, _repo, _origin, dir) = pushing(tmp.path(), None).await;
+        let h = sample_handover(7, "# Note\n\nbody with\n+++\nfence\n");
+        sb.enqueue_handover(&h).expect("enqueue");
+        assert!(!dir.join("handovers/h-0007.md").exists());
+        sb.flush_now().await.expect("flush");
+        let text = std::fs::read_to_string(dir.join("handovers/h-0007.md")).expect("file");
+        assert!(text.starts_with("+++\n") && text.contains("created_by = \"human\""));
+        assert_eq!(sb.list_handovers().expect("list"), vec![h]);
+    }
+
+    /// Origin holding a `bridle/state` with one task, pushed from a first repo; returns
+    /// (origin path, a second repo with the origin remote and no state branch).
+    async fn origin_with_state(tmp: &Path) -> (PathBuf, PathBuf) {
+        let (sb, _repo, origin, _dir) = pushing(tmp, Some(Duration::from_millis(0))).await;
+        edit(&sb, 1).await;
+        wait_until_idle(&sb).await;
+        assert!(origin_tip(&origin).await.is_some());
+        let repo2 = tmp.join("repo2");
+        init_repo(&repo2).await;
+        git(
+            &repo2,
+            &["remote", "add", "origin", origin.to_str().expect("utf8")],
+        )
+        .await;
+        (origin, repo2)
+    }
+
+    #[tokio::test]
+    async fn fetch_creates_a_missing_local_branch_from_origin() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let (_origin, repo2) = origin_with_state(tmp.path()).await;
+        assert_eq!(
+            StateBranch::fetch_from_origin(&repo2).await,
+            FetchOutcome::Created
+        );
+        let dir2 = tmp.path().join("state2");
+        let sb2 = StateBranch::open(&repo2, &dir2).await.expect("open");
+        assert!(sb2.read_task("tw-0001").is_some());
+        assert_eq!(
+            StateBranch::fetch_from_origin(&dir2).await,
+            FetchOutcome::UpToDate
+        );
+    }
+
+    #[tokio::test]
+    async fn open_alone_never_fetches() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let (_origin, repo2) = origin_with_state(tmp.path()).await;
+        let sb2 = StateBranch::open(&repo2, &tmp.path().join("state2"))
+            .await
+            .expect("open");
+        assert!(sb2.read_task("tw-0001").is_none());
+    }
+
+    #[tokio::test]
+    async fn fetch_never_overwrites_a_local_branch_with_its_own_state() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let (_origin, repo2) = origin_with_state(tmp.path()).await;
+        let dir2 = tmp.path().join("state2");
+        let sb2 = StateBranch::open(&repo2, &dir2).await.expect("open");
+        edit(&sb2, 2).await;
+        let before = git(&dir2, &["rev-parse", "HEAD"]).await;
+        assert_eq!(
+            StateBranch::fetch_from_origin(&dir2).await,
+            FetchOutcome::Diverged
+        );
+        assert_eq!(git(&dir2, &["rev-parse", "HEAD"]).await, before);
+        assert!(sb2.read_task("tw-0002").is_some());
+    }
+
+    #[tokio::test]
+    async fn fetch_moves_a_seed_only_branch_and_a_behind_branch_forward() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let (_origin, repo2) = origin_with_state(tmp.path()).await;
+        // The daemon's own first start leaves just the seed commit.
+        let dir2 = tmp.path().join("state2");
+        let sb2 = StateBranch::open(&repo2, &dir2).await.expect("open");
+        assert_eq!(
+            StateBranch::fetch_from_origin(&dir2).await,
+            FetchOutcome::FastForwarded
+        );
+        assert!(sb2.read_task("tw-0001").is_some());
+        // Behind: origin gains a commit.
+        let clone = tmp.path().join("clone");
+        git(
+            tmp.path(),
+            &[
+                "clone",
+                "-q",
+                "-b",
+                "bridle/state",
+                _origin.to_str().expect("utf8"),
+                clone.to_str().expect("utf8"),
+            ],
+        )
+        .await;
+        std::fs::write(clone.join("more.txt"), "x").expect("write");
+        git(&clone, &["add", "-A"]).await;
+        git(
+            &clone,
+            &[
+                "-c",
+                "user.email=a@b",
+                "-c",
+                "user.name=a",
+                "commit",
+                "-q",
+                "-m",
+                "more",
+            ],
+        )
+        .await;
+        git(&clone, &["push", "-q", "origin", "HEAD:bridle/state"]).await;
+        assert_eq!(
+            StateBranch::fetch_from_origin(&dir2).await,
+            FetchOutcome::FastForwarded
+        );
+        assert!(dir2.join("more.txt").exists());
+    }
+
+    #[tokio::test]
+    async fn fetch_with_no_remote_branch_says_so() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let (_sb, repo, _origin, _dir) = pushing(tmp.path(), None).await;
+        assert_eq!(
+            StateBranch::fetch_from_origin(&repo).await,
+            FetchOutcome::NoRemoteBranch
+        );
     }
 
     #[test]

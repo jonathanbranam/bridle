@@ -192,6 +192,12 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
     let store = Store::open(ws.db()).await.context("opening the store")?;
     ensure_human_token(&store, &ws).await?;
 
+    // First start with no local state branch: a project that opted in to pushing may already
+    // have one on origin (a clone on a new machine). Never touched otherwise (we2r).
+    if config.state_push && !worktree::branch_exists(&ws.repo, "bridle/state").await? {
+        let outcome = state_branch::StateBranch::fetch_from_origin(&ws.repo).await;
+        tracing::info!("state branch first start: {}", outcome.describe());
+    }
     let state_branch = state_branch::StateBranch::open(&ws.repo, &ws.state_branch_dir())
         .await
         .context("opening the state branch")?;
@@ -212,6 +218,10 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
     )
     .await
     .context("loading tasks")?;
+    tasks
+        .backfill_handovers()
+        .await
+        .context("writing existing handover notes to the state branch")?;
 
     let emitter = Emitter::new(store.clone());
     reconcile(&store, &emitter)

@@ -18,9 +18,9 @@ bridle init    [--repo PATH] [--name N] [--integration BRANCH] [--stack S]  scaf
 bridle doctor  [--repo PATH]                 check the project's setup, say what to fix; exit 1 on a failure
 bridle launchd install [--repo PATH] [--workspace DIR] [--force]   macOS: write the LaunchAgent plist, print launchctl commands
 bridle launchd uninstall                    remove the plist, print the bootout command
-bridle rebuild                               reconstructs tasks/edges/open_questions/claims
+bridle rebuild [--from-origin]              first fetches origin/bridle/state (fast-forward only); reconstructs tasks/edges/open_questions/claims
                                               (claims.toml) from the state branch alone; the migration path for a fresh
-                                              clone with no bridle.db yet
+                                              clone with no bridle.db yet; also restores the handover notes (handovers/<id>.md)
 bridle daemons                              # every running project daemon on this machine, with agent counts
 bridle status                               # daemon, agents, Claude Code version, last CI result (sha, conclusion, age, url) when [ci] github is on; state branch push (age, or the failure) when [state] push is on
 bridle spawn   <role> [--name N] [--prompt TEXT | --prompt-file FILE]
@@ -230,7 +230,9 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
 
 - **`rebuild`** is `TaskManager::rebuild_from_state_branch` (docs/design/storage.md,
   "Rebuild"): the migration path for a fresh clone with no `bridle.db` — clone the repo,
-  start the daemon, `bridle rebuild`. Human-only; refuses (409) rather than overwrites if
+  start the daemon, `bridle rebuild`. `--from-origin` first fetches `origin/bridle/state`
+  (`POST /v1/rebuild?from_origin=true`; fast-forward only, never overwrites a local branch with
+  state of its own, and says what it did). Human-only; refuses (409) rather than overwrites if
   the database already has any tasks, edges or open questions. Claims are never
   reconstructed — they're SQLite-only, with no state-branch counterpart, so any in-flight
   claim is simply lost, which is correct here, not a gap.

@@ -30,8 +30,8 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use bridle_api::types::{
-    Edge, EdgeKind, Impact, MessageKind, MessageState, OpenQuestion, PrincipalId, Task, TaskKind,
-    TaskSize, TaskState, ThreadEntry, ThreadEntryKind, When,
+    Edge, EdgeKind, Handover, Impact, MessageKind, MessageState, OpenQuestion, PrincipalId, Task,
+    TaskKind, TaskSize, TaskState, ThreadEntry, ThreadEntryKind, When,
 };
 use chrono::Utc;
 
@@ -212,6 +212,11 @@ impl TaskManager {
     /// id; nothing downstream looks a message up by this id after a
     /// rebuild, since there's no message row behind it to find.
     pub async fn rebuild_from_state_branch(&self) -> Result<(), TaskError> {
+        // Handover notes aren't in the refusal check below (a note alone is no reason to
+        // refuse); `restore_handover` skips any already there.
+        for h in self.state.list_handovers()? {
+            self.store.restore_handover(&h).await?;
+        }
         if !self.store.list_tasks().await?.is_empty()
             || !self.store.list_edges().await?.is_empty()
             || !self.store.list_open_questions().await?.is_empty()
@@ -286,6 +291,27 @@ impl TaskManager {
         *self.claims.lock().expect("claims lock") = claims;
         *self.queue.lock().expect("queue lock") = self.state.read_queue();
         Ok(())
+    }
+
+    /// Queues a handover note for the state branch's next flush.
+    pub fn enqueue_handover(&self, h: &Handover) -> Result<(), TaskError> {
+        Ok(self.state.enqueue_handover(h)?)
+    }
+
+    /// Writes every note in SQLite that the state branch doesn't have yet (notes from before
+    /// this existed). Idempotent: a note already on the branch is skipped.
+    pub async fn backfill_handovers(&self) -> Result<(), TaskError> {
+        for h in self.store.list_handovers().await? {
+            if !self.state.has_handover(&h.id) {
+                self.state.enqueue_handover(&h)?;
+            }
+        }
+        Ok(())
+    }
+
+    /// `bridle rebuild --from-origin`: see [`StateBranch::fetch_from_origin`].
+    pub async fn fetch_state_from_origin(&self) -> crate::state_branch::FetchOutcome {
+        StateBranch::fetch_from_origin(self.state.dir()).await
     }
 
     fn put(&self, task: Task) -> Task {
@@ -2465,6 +2491,62 @@ mod tests {
             .expect("db open questions");
         assert_eq!(db_open_qs.len(), 1);
         assert_eq!(db_open_qs[0].task_id, c.id);
+    }
+
+    #[tokio::test]
+    async fn rebuild_restores_handovers_with_their_seq_and_new_notes_do_not_collide() {
+        let (tm, tmp) = manager().await;
+        let store = tm.store.clone();
+        for body in ["one", "two", "three"] {
+            let h = store
+                .insert_handover("orchestrator", "p", body, "human")
+                .await
+                .expect("insert");
+            tm.enqueue_handover(&h).expect("enqueue");
+        }
+        tm.flush_now().await.expect("flush");
+
+        let fresh = Store::open(tmp.path().join("fresh.db"))
+            .await
+            .expect("store");
+        let state = StateBranch::open(&tmp.path().join("repo"), &tmp.path().join("state"))
+            .await
+            .expect("state");
+        let tm2 = TaskManager::open(
+            fresh.clone(),
+            state,
+            "tw".to_string(),
+            std::time::Duration::from_secs(600),
+        )
+        .await
+        .expect("open");
+        tm2.rebuild_from_state_branch().await.expect("rebuild");
+        let list = fresh.list_handovers().await.expect("list");
+        let ids: Vec<_> = list.iter().map(|h| h.id.as_str()).collect();
+        assert_eq!(ids, ["h-0003", "h-0002", "h-0001"]);
+        assert_eq!(list[0].body, "three");
+        let next = fresh
+            .insert_handover("orchestrator", "p", "four", "human")
+            .await
+            .expect("insert");
+        assert_eq!(next.id, "h-0004");
+    }
+
+    #[tokio::test]
+    async fn backfill_writes_only_the_missing_notes() {
+        let (tm, _tmp) = manager().await;
+        let h1 = tm
+            .store
+            .insert_handover("orchestrator", "p", "one", "human")
+            .await
+            .expect("insert");
+        tm.backfill_handovers().await.expect("backfill");
+        tm.flush_now().await.expect("flush");
+        assert!(tm.state.has_handover(&h1.id));
+        // Nothing missing: nothing pending, so no new commit.
+        tm.backfill_handovers().await.expect("backfill again");
+        tm.flush_now().await.expect("flush");
+        assert_eq!(tm.state.list_handovers().expect("list").len(), 1);
     }
 
     #[tokio::test]

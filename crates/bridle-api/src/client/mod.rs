@@ -698,9 +698,17 @@ impl Client {
     /// `bridle rebuild`: reconstructs `tasks`/`edges`/`open_questions` from
     /// the project's state branch. Human-only; fails if the database
     /// already has rows in any of those tables.
-    pub async fn rebuild(&self) -> Result<(), ClientError> {
-        let req = self.request(Method::POST, &["v1", "rebuild"])?;
-        self.send_unit(req).await
+    /// With `from_origin`, first fetches `origin/bridle/state` (fast-forward only; never
+    /// overwrites a local branch) and says what happened in the response.
+    pub async fn rebuild(
+        &self,
+        from_origin: bool,
+    ) -> Result<crate::types::RebuildResponse, ClientError> {
+        let mut req = self.request(Method::POST, &["v1", "rebuild"])?;
+        if from_origin {
+            req = req.query(&[("from_origin", "true")]);
+        }
+        self.send_json(req).await
     }
 
     /// `bridle statusline`'s only network call. Build the client with

@@ -667,6 +667,13 @@ impl Store {
     }
 
     /// Newest first.
+    /// Puts back a note read from the state branch, keeping its id and seq so new notes resume
+    /// above the highest (AUTOINCREMENT follows an explicit rowid). A note already there is left.
+    pub async fn restore_handover(&self, h: &Handover) -> Result<(), StoreError> {
+        let h = h.clone();
+        self.with_conn(move |c| sync::restore_handover(c, &h)).await
+    }
+
     pub async fn list_handovers(&self) -> Result<Vec<Handover>, StoreError> {
         self.with_conn(sync::list_handovers).await
     }
@@ -1084,8 +1091,8 @@ mod sync {
         );
     "#;
 
-    // Orchestrator handover notes: runtime, not on the state branch (orchestrator-supervision.md,
-    // section 7). `id` is `h-<seq>`, filled in after the insert like messages'.
+    // Orchestrator handover notes: also written to the state branch and restored by rebuild
+    // (orchestrator-supervision.md, section 7). `id` is `h-<seq>`, filled in after the insert like messages'.
     pub(super) const SCHEMA_V17: &str = r#"
         CREATE TABLE handovers (
             seq INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -2387,6 +2394,23 @@ mod sync {
             created_at: now,
             created_by: created_by.to_string(),
         })
+    }
+
+    pub(super) fn restore_handover(conn: &Connection, h: &Handover) -> Result<(), StoreError> {
+        conn.execute(
+            "INSERT OR IGNORE INTO handovers(seq, id, role, project, body, created_at, created_by)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+            params![
+                crate::state_branch::handover_seq(&h.id),
+                h.id,
+                h.role,
+                h.project,
+                h.body,
+                fmt_dt(h.created_at),
+                h.created_by
+            ],
+        )?;
+        Ok(())
     }
 
     pub(super) fn list_handovers(conn: &Connection) -> Result<Vec<Handover>, StoreError> {
