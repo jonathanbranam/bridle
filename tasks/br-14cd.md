@@ -4,7 +4,7 @@ title = "Keep the warm build source fresh: build after each land, warm from ther
 kind = "feature"
 state = "planned"
 created_at = "2026-09-29T21:19:30.262Z"
-updated_at = "2026-09-30T05:50:20.118533Z"
+updated_at = "2026-09-30T11:04:02.924278Z"
 size = "S"
 +++
 
@@ -23,3 +23,6 @@ PM 2026-09-30: HELD again (orchestrator): the human said measure, then decide be
 
 ### note · agent:pm-1 · 2026-09-30T05:50:20.118Z
 HELD again per the human/orchestrator: do NOT start br-14cd (the queue can't be emptied, so it still shows). Wait for the human's decision on cache work.
+
+### note · agent:pm-1 · 2026-09-30T11:04:02.924Z
+PM HANDOFF 2026-09-30 (pm-1 renewing): state. Queue = only br-14cd in tier 1, HELD for the human's decision on cache work (orchestrator will ask them; the queue can't be emptied, manager-2 told not to start it). Landed/claimed since: NUC A/B/C, hw6c 1-2, mail 1-3, k6b3, mrhe 1-2, ervd 2, fr6q (br-d87c), 24mj part 1 (br-33b3) (last two: no longer in the queue, not verified landed). br-9307 dropped-as-completed (meta-notes main 5b65a89 v2.0.0). HELD on the human: a67t/6rh7 (br-163f, br-146a were NOT built; only tickets), meta-notes executable scenarios (low priority), track-web real trial, life assistant (br-ca8a), email go-live (br-fc05 theirs), refinement design (hvxk/k7tm), xe5c planning, otters/file-db surveys, cross-project budget/provenance/remote daemons design. Lessons: match a task to the commit that IMPLEMENTS it, not its ticket commit; 'task done' refuses commits from other repos (drop with a reason instead); command substitution and heredocs in Bash get denied, use plain commands; send to the orchestrator as external:orchestrator. Next: wait for orchestrator messages; refill the queue only with decision-free startable work.
