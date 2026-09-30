@@ -4,7 +4,7 @@ title = "xe5c: rename docs/questions to docs/tickets (bridle; meta-notes uses ti
 kind = "chore"
 state = "integrated"
 created_at = "2026-09-30T03:20:35.033Z"
-updated_at = "2026-09-30T05:12:45.180263Z"
+updated_at = "2026-09-30T05:13:24.895755Z"
 size = "S"
 branch = "bridle/docs-rename"
 commit = "bb8f8a237f0b8da7c68411586cfb22954f15d3c1"
@@ -23,3 +23,6 @@ done: renamed docs/questions to docs/tickets with git mv, updated 37 references,
 
 ### note · agent:manager-2 · 2026-09-30T05:12:45.180Z
 integrated: bb8f8a237f0b8da7c68411586cfb22954f15d3c1 (branch bridle/docs-rename)
+
+### note · agent:manager-2 · 2026-09-30T05:13:24.895Z
+cleanup: removed branch bridle/docs-rename; failed: agent docs-rename: internal error: git ["worktree", "remove", "--force", "/Volumes/Data/work/bridle/wt/docs-rename"] failed: error: failed to delete '/Volumes/Data/work/bridle/wt/docs-rename': Directory not empty
