@@ -4,8 +4,9 @@ title = "Life assistant on the notes repo via the meta-notes CLI: survey and sha
 kind = "explore"
 state = "planned"
 created_at = "2026-09-30T04:13:56.493Z"
-updated_at = "2026-09-30T04:22:29.349065Z"
+updated_at = "2026-09-30T04:49:05.323799Z"
 size = "M"
+summary = "Survey appended to ticket phyy. meta-notes covers reads/check-ins (projects, project brief, tasks, changes, calendar) and filing (note new, move, archive). Capture gaps: task add, time of day, recurrence (mn-ba09 already proposes the latter two; task add is its open Q6). Events and remember need rules, not code. Recommends a life-admin pack at workflow/packs/life-admin plus a small .bridle/config in the notes repo; git option C (one trial branch for setup, then main); reminders via the rs7p digest first, timed pushes later. Caveats: base layer is software-oriented; standing-session support is orchestrator-only. Five open questions for the human listed. Notes repo untouched (only --help was run)."
 +++
 
 See docs/questions/open/a-life-assistant-agent-on-the-notes-repo-phyy.md. Survey the meta-notes CLI against capture/check-in verbs (tasks, reminders, events, remember, project and maintenance check-ins), propose the shape (pack vs project, machine, git), and bring the open questions to the human. Read-only on the notes repo.
