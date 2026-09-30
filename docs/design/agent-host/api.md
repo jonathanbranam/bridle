@@ -49,7 +49,7 @@ JSON over HTTP, versioned under `/v1`. The contract is
 | `GET /v1/conflicts` · `POST /v1/conflicts/{id}/resolve` | conflicts opened by `impact check` · resolve one with exactly one of `{compatible}`, `{order: [a,b]}` (adds a `blocks` edge) or `{merge_into}` |
 | `POST /v1/tasks/{id}/ask` · `/answer` · `/note` · `GET /v1/questions` | ask a question of a task (`{body}`) · answer it · add a thread note · list open questions |
 | `GET /v1/edges` · `POST /v1/edges` · `DELETE /v1/edges` | list · add (`{from, to, kind}`) · remove (same triple as query) |
-| `GET /v1/queue` · `POST /v1/queue` · `POST /v1/queue/tiers` | read · replace (`{tiers}`) · append a tier (`{tasks}`); writes are product-manager or human only |
+| `GET /v1/queue` · `POST /v1/queue` · `POST /v1/queue/tiers` | read · replace (`{tiers}`) · append a tier (`{tasks}`); writes are product-manager, `external:orchestrator` or human only |
 | `POST /v1/rebuild` | rebuild the database's task tables from the state branch (human only; 409 if they aren't empty) |
 | `POST /v1/restart` | restart in place (human and `external:orchestrator` only); body `{wait_secs?, upgrade?}` (default 600). `upgrade: true` first builds the newest commit on the integration branch with green CI, in the background (the reply is `restarting: false` with a `message`: building, or nothing newer; failure wakes `upgrade_failed`) Waits for every agent to be idle, else 409 naming the busy agents and nothing happens. Replies `{commit, agents, stop_limit_secs, restarting, message?}` once it has decided to go; see [[docs/design/agent-host/daemon#Restart in place|restart in place]] |
 | `POST /v1/shutdown` | graceful stop of all agents, then exit (human only); replies `{stop_limit_secs}`, the cap (`stop_grace` + 5 s) |

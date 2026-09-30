@@ -325,10 +325,15 @@ fn require_human(principal: &Principal) -> Result<(), ApiError> {
 /// The queue is PM-owned; the human can override it, and every other
 /// principal (the manager included) only reads it
 /// (roles-and-lifecycle.md, "the queue"). Unlike [`require_not_worker`]'s
-/// blocklist, this is an allowlist: only `human` and an agent whose role is
-/// `product-manager` pass.
+/// blocklist, this is an allowlist: `human`, an agent whose role is
+/// `product-manager`, and exactly `external:orchestrator` (acting PM on a
+/// small project with none; a visitor's `external:orchestrator@machine` is a
+/// different principal and doesn't pass).
 async fn require_pm_or_human(state: &AppState, principal: &Principal) -> Result<(), ApiError> {
     if principal.kind == PrincipalKind::Human {
+        return Ok(());
+    }
+    if principal.id == crate::wake::ORCHESTRATOR {
         return Ok(());
     }
     let name = principal.id.strip_prefix("agent:").unwrap_or(&principal.id);
@@ -337,7 +342,7 @@ async fn require_pm_or_human(state: &AppState, principal: &Principal) -> Result<
         Ok(())
     } else {
         Err(ApiError::forbidden(
-            "only the product manager or the human may edit the queue",
+            "only the product manager, the orchestrator or the human may edit the queue",
         ))
     }
 }

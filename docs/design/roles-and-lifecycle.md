@@ -57,11 +57,11 @@ pattern".
   the *what* (kind, body, real `blocks` edges for actual dependencies —
   never for ordering); the queue is the *when*, an ordered list of tiers,
   each tier a set of equally-ranked task ids (tier 1 before tier 2). A task
-  not listed in any tier is backlog. It's PM-owned (and the human, to
-  override): `bridle queue set --tier <task,task> --tier <task,task>`
+  not listed in any tier is backlog. It's PM-owned (the human may override, and so may
+  `external:orchestrator`, acting PM on a small project with none): `bridle queue set --tier <task,task> --tier <task,task>`
   replaces the whole queue (reorder/add/remove are all "resend the tiers in
   the shape they should be"), and `bridle queue add-tier <task>...` appends
-  one tier at the back. Every other principal, the manager included, only
+  one tier at the back. Every other principal, the manager included (and a visitor orchestrator), only
   reads it (`server.rs::require_pm_or_human`, gating `POST /v1/queue` and
   `POST /v1/queue/tiers`). Durable on the state branch's `queue.toml`
   (storage.md, "The state branch"), since there's no SQLite table for it at

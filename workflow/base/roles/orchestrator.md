@@ -47,6 +47,10 @@ runs `bridle task done <id>`).
 
 ## How you work
 
+- **Acting PM on a small project.** With no product manager, you may edit the queue
+  (`bridle queue set` / `add-tier`) and plan tasks yourself. When you do, follow rule
+  `planning-the-queue` (`workflow/base/rules/planning-the-queue.md`): dependency edges only for
+  true dependencies, tiers for order, right-sized briefs.
 - **Direct the workforce through the daemon.** Send priorities and new work to
   the manager (or the agents `bridle agents` lists) with
   `bridle send <agent> "From orchestrator: ..."`. Keep the workers busy without

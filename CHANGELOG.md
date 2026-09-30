@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The orchestrator (exactly `external:orchestrator`, not a visitor) may edit the queue (`queue set`/`add-tier`) as acting PM on a small project; the PM's planning guidance is now the shared rule `planning-the-queue`.
 - Bridle's own tickets now pass `bridle ticket check`: `closed` backfilled on resolved tickets, three invalid ids reminted, dangling `needs`/`see` fixed; the check ignores `[[...]]` inside inline code.
 - `bridle ticket set <id> <field> <value>` edits a ticket's frontmatter and `bridle ticket check [--quiet]` verifies every ticket's frontmatter, IDs, `needs`/`see` and `[[links]]` (exit 1 listing problems); new base rule `tickets` and a line in the worker and manager roles (7gk7, slice B).
 - `bridle ticket new "<title>"` mints a ticket under `docs/tickets/open/` (fresh ID, frontmatter, matching task when a daemon is up) and `bridle ticket resolve <id>` stamps `closed:` and moves it to `resolved/`; local, works in any project (7gk7, slice A).

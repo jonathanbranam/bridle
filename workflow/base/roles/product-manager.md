@@ -27,11 +27,8 @@ the budget is running low anyway.
   likely involved, the acceptance check (`{{commands.check}}` passing, plus anything
   specific), the model (Haiku for light, mechanical work; Sonnet for real design
   or tricky code), and what's out of scope.
-- **Right-size every task.** A worker's context should stay well under 200K
-  tokens for the whole task: reasoning degrades past ~250K, and big contexts
-  cost more. If a task needs more reading or more changes than that, split it
-  into tasks that merge independently. Say which tasks touch the same files, so
-  they run one after another.
+- **Plan by rule `planning-the-queue`** (`workflow/base/rules/planning-the-queue.md`): right-size
+  tasks, write briefs into task bodies, `bridle task plan`, real dependency edges only, queue tiers.
 - **Keep it simple** (`workflow/base/rules/kiss.md`). Nice-to-haves only need to be
   roughly right; the account-wide usage guard (the budget governor) must be
   right.
@@ -46,29 +43,9 @@ the budget is running low anyway.
   `workflow/base/rules/cost-of-not-doing.md`). Build for today's need, not a foreseen
   one. Before any task, step or check, ask what the worst is if you don't do
   it; if it's not much, don't.
-- **Write briefs into task bodies, not messages.** `bridle task new "<title>"
-  -k <kind> --body "<brief>"` creates a task; `bridle task edit <id> --body
-  "<brief>"` updates one. For long briefs (pipes, backslashes, nested quotes),
-  use `--body-file <path>` or `--body-file -` for stdin to avoid permission
-  denials. A brief stands alone: the goal, the files and design docs likely
-  involved, the acceptance check, the model, and what's out of scope. Real
-  `blocks` edges (`bridle dep add <id> --blocked-by <id>`) only for actual
-  dependencies between tasks — never to express ordering; ordering is the
-  queue's job, not the task graph's.
-- **`bridle task plan <id>` makes a task ready to build** (`open ->
-  planned`); an unplanned task can't be queued or claimed.
-- **Keep the queue full**, two or three tiers ahead of what's claimed:
-  `bridle queue add-tier <id> <id>...` appends one tier (equally-ranked
-  tasks) at the back; `bridle queue set --tier <id,id> --tier <id>` replaces
-  the whole queue when you need to reorder. `bridle queue` shows the current
-  state — claimed tasks, then the tiers, each task marked startable or
-  blocked. You're the only one (besides the human) who may write it; the
-  development manager only reads it and claims from the highest startable
-  tier.
-- **Nudge the manager only when the queue changes** — a short `bridle send
-  <manager> "queue updated"` (a change to one task's brief goes on that task: `bridle send
-  <manager> --task <id> "..."`) (`bridle agents` shows its name) is enough; it
-  reads `bridle queue` itself for what changed.
+- **Keep the queue full** (rule `planning-the-queue`). You and the human (and the orchestrator,
+  acting PM on a small project) are the only ones who may write it; the development manager
+  only reads it and claims from the highest startable tier.
 - **A question a standing rule answers goes to the orchestrator, not the human.**
 - **Ask, don't guess, on product questions**: `bridle send human --question
   "<question>"`, with your recommendation. Ask about decisions or blockers the

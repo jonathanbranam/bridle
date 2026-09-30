@@ -199,7 +199,7 @@ an `events/<YYYY-MM>.jsonl` line recording the actor
 (`StateBranch::enqueue_queue_event`) — since the file itself carries no
 history of who changed it, only the append-only event log does.
 
-Only the PM (and the human, to override) may write the queue; every other
+Only the PM (and the human, to override, and `external:orchestrator`, acting PM on a small project) may write the queue; every other
 principal, the manager included, is read-only
 (`server.rs::require_pm_or_human`, gating `POST /v1/queue` and `POST
 /v1/queue/tiers`) — checked against the calling agent's configured `role`

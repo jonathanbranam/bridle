@@ -658,6 +658,36 @@ async fn only_pm_or_human_may_write_the_queue() {
         .set_queue(vec![vec![task.id.clone()]])
         .await
         .expect("human can write the queue");
+
+    // So can the orchestrator (acting PM on a small project).
+    let orch = daemon.external_client("orchestrator").await;
+    orch.set_queue(vec![vec![task.id.clone()]])
+        .await
+        .expect("orchestrator can set the queue");
+    let other = daemon
+        .client
+        .new_task(&new_req("Add bar", TaskKind::Feature))
+        .await
+        .expect("new task");
+    orch.add_queue_tier(vec![other.id.clone()])
+        .await
+        .expect("orchestrator can add a tier");
+
+    // A visitor (`external:orchestrator@machine`) can't.
+    let created = daemon
+        .client
+        .create_token(&bridle_api::types::TokenCreateRequest {
+            name: "orchestrator".to_string(),
+            machine: Some("laptop".to_string()),
+        })
+        .await
+        .expect("create visitor token");
+    let visitor = bridle_api::Client::new(daemon.running.url.clone(), Some(created.token));
+    let err = visitor
+        .set_queue(vec![vec![task.id.clone()]])
+        .await
+        .expect_err("visitor can't write the queue");
+    assert!(matches!(err, ClientError::Api { status: 403, .. }));
 }
 
 /// `bridle rebuild`'s HTTP surface: a no-op against an empty database

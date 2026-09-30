@@ -47,8 +47,8 @@ bridle claim   <task-id>                         claims a ready task for the cal
 bridle release <task-id>                         releases the caller's own claim: claimed -> planned
 bridle ready   [--all] [--role R]                the highest queue tier with a startable task (planned, deps met, no open question, unclaimed)
 bridle queue                                     read-only: claimed tasks with their worker, then the tiers in rank order
-bridle queue set --tier T,T... [--tier T,T...]   replace the whole queue, one --tier per tier (PM or human only)
-bridle queue add-tier <task>...                  append one tier at the back (PM or human only)
+bridle queue set --tier T,T... [--tier T,T...]   replace the whole queue, one --tier per tier (PM, orchestrator or human only)
+bridle queue add-tier <task>...                  append one tier at the back (PM, orchestrator or human only)
 bridle dep add|rm <task> (--to OTHER [--kind K] | --blocked-by OTHER)   K: blocks (default)|parent|discovered-from|related|supersedes|duplicates
 bridle wait    <task> [--until STATE] [--or-message] [--timeout SECS]   block until the task changes state; exit 4 on timeout
 bridle interrupt <agent> [--drop-held]
@@ -566,7 +566,7 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   discovery-resolved token, instead of just the one daemon `--url`/`--project`/cwd
   discovery would pick. `--role` is accepted but a no-op: tasks don't carry a role field
   yet (a gap, not a design decision).
-- **`queue`** without a subcommand is the read-only view; `set` and `add-tier` are PM-or-human
+- **`queue`** without a subcommand is the read-only view; `set` and `add-tier` are PM, orchestrator or human
   only and stored in the state branch's `queue.toml` (roles-and-lifecycle.md, "the queue").
   `queue set` takes one `--tier a,b` per tier, in rank order, and replaces the whole queue.
 - **`budget`'s** subcommands (`hold`, `release`, `override`, `override-clear`, `max-workers`)
