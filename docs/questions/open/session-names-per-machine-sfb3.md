@@ -51,3 +51,9 @@ So:
   script (e.g. `BRIDLE_ADVISOR_NAME`). The shared inbox and working copy are the known costs: an
   advisor doesn't assume a message it didn't send was its own, and commits only its own ticket
   files (`git add <file>`, never `-A`).
+
+## A shorter orchestrator name (2026-09-29)
+
+The human: "I'm chatting with orch (needs a shorter name btw)". So the orchestrator's session
+name becomes short, e.g. `orch` (`orch-nuc` on the NUC), and the advisors' likewise, e.g.
+`advisor`, `advisor-<name>`.
