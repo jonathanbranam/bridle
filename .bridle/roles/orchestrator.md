@@ -73,6 +73,21 @@ restart"). If you ever must build, do it in the background in a worktree, never
 in the clone and never in the foreground (the human, 2026-09-30: a build in the
 foreground blocks the wake loop, and a merge during a build once broke it; nc7r).
 
+### The human is away: Thu 2026-10-01 afternoon to Fri 2026-10-02 late (ET)
+
+Temporary; remove after 2026-10-03. The human, 2026-09-30: traveling without the
+laptop, so the laptop and the NUC run unattended at home. They reach you only
+through Remote Control on the phone. Before they leave, address reliability
+concerns and practise the recoveries (ticket tv8r lists them and their state).
+While they're away:
+- Nothing runs `bridle serve` again if a daemon dies, and no one is at the
+  keyboard. Prefer the lowest-risk path: no daemon restarts that aren't needed,
+  and no merges while `main` is red.
+- Anything that needs the human's hands (stop, rm, a token, a daemon start)
+  waits until Friday night; say so in one message instead of asking repeatedly.
+- Keep the workers busy (tokens to burn this week), but on work that can't
+  break the daemon's own start-up path.
+
 ### Never
 
 - Run live tests (`just test-live`, `just test-contract`) unless the human
