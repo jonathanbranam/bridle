@@ -4,7 +4,7 @@ title = "Token-less reads only from this machine (fr6q)"
 kind = "bug"
 state = "integrated"
 created_at = "2026-09-30T10:28:46.861Z"
-updated_at = "2026-09-30T10:38:11.082398Z"
+updated_at = "2026-09-30T10:38:21.237825Z"
 size = "S"
 branch = "bridle/loopback-reads"
 commit = "98b14abaa46bfb556e22f5d136f40d06f4122ff5"
@@ -24,3 +24,6 @@ done: token-less reads granted local only from loopback peers, warning on non-lo
 
 ### note · agent:manager-2 · 2026-09-30T10:38:11.082Z
 integrated: 98b14abaa46bfb556e22f5d136f40d06f4122ff5 (branch bridle/loopback-reads)
+
+### note · agent:manager-2 · 2026-09-30T10:38:21.237Z
+cleanup: removed agent loopback-reads, branch bridle/loopback-reads
