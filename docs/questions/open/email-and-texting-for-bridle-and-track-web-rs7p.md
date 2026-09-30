@@ -6,7 +6,7 @@ repos: [bridle, track-web]
 changes: []
 specs: []
 needs: []
-see: [t6kq]
+see: [t6kq, hw6c]
 ---
 
 The human, verbatim (2026-09-29): "a follow up general ability to consider is email and texting for both the life tracking app and for bridle. Actual email would be handy sometimes. I could send you work directly from my work laptop then. So, send and receive. That could go through my EC2 that runs track-web. Come up with some ideas and research. Email first"
@@ -125,6 +125,25 @@ calls the send and inbox endpoints.
 `inbound-track/` and publishes to SNS. The EC2 is public, so SNS can push over HTTPS
 straight to `/api/mail/inbound`, after verifying the SNS signature. It sends with the
 SES API using an instance role. No Postfix and no relay.
+
+## The human: mail reaches the machine running the project (2026-09-30)
+
+The human, verbatim: "I would want my email to find the right box that is working on the right
+project."
+
+So routing is by project, and the machine is whichever one serves that project now: the human
+addresses a project (`meta-notes@…`), never a machine. How the v1 shape above meets it, and
+the gaps (the advisor's reading):
+
+- Every bridge polls the same bucket and takes only mail for the projects in its own registry
+  (section 3, "Several daemons"). So mail follows the project to whichever box runs it.
+- **Ownership must be unambiguous.** Two bridges must never both claim a project, and when a
+  project moves the old bridge must let go. That's the owner record on `bridle/state` in hw6c:
+  a bridge takes a project's mail only while its daemon owns the project.
+- **Mail for a project no box is serving** (daemon down, machine lost, mid-move) waits in the
+  bucket for the owner, and after some time (an hour?) the human gets a "not delivered yet: no
+  machine is running `<project>`" reply, rather than silence.
+- **An unknown project name** gets a reply listing the valid ones (allowlisted senders only).
 
 ## 4. Texting
 
