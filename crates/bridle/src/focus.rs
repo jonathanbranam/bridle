@@ -399,10 +399,13 @@ mod tests {
             "until = 2099-01-01T00:00:00Z\nreason = \"deploy\"\n",
         )
         .expect("write");
-        // A period that always matches: pending nudges, active is silent, expired nudges.
-        let always = home_with(Some(
+        // A period that always matches: pending nudges, active is silent, expired nudges. The
+        // times come from the real clock (the override is capped at two hours after the file's
+        // write time), so a second period covers 23:59..24:00 that the first leaves out.
+        let always = home_with(Some(concat!(
             "[[focus]]\nname = \"all\"\ndays = \"all\"\nstart = \"00:00\"\nend = \"23:59\"\n",
-        ));
+            "[[focus]]\nname = \"late\"\ndays = \"all\"\nstart = \"23:00\"\nend = \"00:00\"\n",
+        )));
         std::fs::copy(
             home.path().join(OVERRIDE_FILE),
             always.path().join(OVERRIDE_FILE),
