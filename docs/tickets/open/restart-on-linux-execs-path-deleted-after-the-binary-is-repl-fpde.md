@@ -49,3 +49,8 @@ macOS returns the real path, which is why the laptop never hit this.
 - Still open: staying up when the exec fails. Today a failed exec still exits after a clean
   shutdown. Fixing that needs an in-process restart or a supervisor, so it was out of
   br-7b79's scope.
+- Also still open: `agent_path()` in `supervisor.rs` (about line 2952) still calls
+  `current_exe()`. On Linux, after the binary is replaced, agents spawned from then on could be
+  given the ` (deleted)` path. It should use `crate::exe_path()` too.
+- `bridle/self-upgrade` (dbdc47f) uses `exe_path()` in `server.rs`'s release upgrade as well;
+  rebased 2026-10-01.
