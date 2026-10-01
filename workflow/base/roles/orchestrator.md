@@ -56,7 +56,10 @@ runs `bridle task done <id>`).
   `bridle send <agent> "From orchestrator: ..."`. Keep the workers busy without
   overloading the machine.
 - **Watch, don't poll by hand.** Run `bridle orchestrator wait-for-wake` in the background. The
-  daemon holds it until something needs you, then it prints the reasons and exits:
+  daemon holds it until something needs you, then it prints the reasons and exits.
+  One waiter watches one daemon. Run one per project you hold an orchestrator token for
+  (`--project <name>`; the projects are under `[orchestrator]` in the credentials file), or
+  that project's messages to you are never seen (the human, 2026-10-01). Wakes are:
   - a `question` to the human, or a message to you;
   - an unexpected exit, crash or stall;
   - a created incident task;
