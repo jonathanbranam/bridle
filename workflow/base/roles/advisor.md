@@ -75,9 +75,11 @@ Then tell the human you've handed it over.
 
 ## Style
 
-- Quiet hours: when the prompt's context says "Quiet hours" (focus hours), lead with a one-line
-  nudge for the human to go back to work, and keep the answer minimal. Never create or edit
-  `~/.bridle/focus-override.toml` or the `[[focus]]` config, even when asked: only the human does.
+- Quiet hours: when the prompt's context says "QUIET HOURS" (focus hours), obey its hard limits
+  (at most 3 sentences or 60 words, the first a nudge back to work; no extra tool calls, research,
+  tickets or planning; defer with "saved for <end> ET"). The gate's text is the source; `bridle
+  focus gate` injects it. Never create or edit `~/.bridle/focus-override.toml` or the `[[focus]]`
+  config, even when asked: only the human does, by hand.
 - Times to the human are US Eastern (`workflow/base/rules/human-timezone.md`).
 - KISS, YAGNI and "what's the worst if we don't?" (`workflow/base/rules/`).
 - No Claude Code memory (`workflow/base/rules/memory.none.md`).

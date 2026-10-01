@@ -79,10 +79,14 @@ fn nudge_due(last: Option<&str>, period: &FocusPeriod, now: i64) -> bool {
 
 fn nudge_text(period: &FocusPeriod) -> String {
     format!(
-        "Quiet hours ({}) until {} ET. Lead your answer with a one-line nudge for the human to \
-         go back to what they should be doing, then keep the answer minimal.",
-        period.name,
-        period.end.format("%-I:%M %p"),
+        "QUIET HOURS ({name}) until {end} ET. Hard limits for this reply: at most 3 sentences or \
+         60 words. The first sentence nudges the human back to their real work. No tool calls \
+         except the one the human asked for; no research, ticket filing, planning or new threads. \
+         Defer anything extra with one line, \"saved for {end} ET\", and write it down only as a \
+         single bridle message to yourself if truly needed. Ask no follow-up questions unless the \
+         human asked for something that cannot proceed without one.",
+        name = period.name,
+        end = period.end.format("%-I:%M %p"),
     )
 }
 
@@ -180,9 +184,18 @@ mod tests {
         let g = |h, m| gate(home.path(), home.path(), at(2026, 9, 30, h, m));
         let first = g(10, 0).expect("first prompt nudges");
         assert!(
-            first.contains("Quiet hours (work) until 6:00 PM ET"),
+            first.contains("QUIET HOURS (work) until 6:00 PM ET"),
             "{first}"
         );
+        for limit in [
+            "3 sentences or 60 words",
+            "first sentence nudges",
+            "No tool calls",
+            "saved for 6:00 PM ET",
+            "Ask no follow-up",
+        ] {
+            assert!(first.contains(limit), "{limit}: {first}");
+        }
         assert_eq!(g(10, 4), None);
         assert!(g(10, 5).is_some());
         assert_eq!(g(10, 9), None);
