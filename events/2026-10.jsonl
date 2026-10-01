@@ -107,3 +107,4 @@
 {"actor":"agent:pm-1","at":"2026-10-01T23:20:52.429464Z","queue":"reprioritized"}
 {"actor":"agent:manager-2","at":"2026-10-01T23:25:05.713634Z","from":"planned","task":"br-ba9e","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-10-01T23:26:27.803940Z","from":"planned","task":"br-7e5a","to":"integrated"}
+{"actor":"agent:manager-2","at":"2026-10-01T23:39:46.172198Z","from":"planned","task":"br-b6e1","to":"integrated"}
