@@ -2,10 +2,12 @@
 id = "br-ba9e"
 title = "Interactive sessions A: advisors register with the daemon; context tracked and reported per session (jttf 1)"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-01T22:51:22.633Z"
-updated_at = "2026-10-01T23:21:46.422215Z"
+updated_at = "2026-10-01T23:25:05.713634Z"
 size = "M"
+branch = "bridle/jttf-a"
+commit = "10f6e7ab3d4b67239d4791a828d11f14232a1237"
 summary = "Advisor sessions register with the daemon: new in-memory registry (bridle-daemon/src/sessions.rs), POST/GET /v1/sessions and POST /v1/sessions/end, a 10 s watcher task that drops sessions whose pid is gone (session.ended) and reads $BRIDLE_HOME/context/<id>, emitting session.context at the orchestrator's three token thresholds (re-armed on a lower reading); 'bridle status' gets a session line per advisor. 'bridle session advisor' registers at launch and ends at exit, 3 s best-effort so a daemon down never fails it; a hidden 'bridle session note' SessionStart hook (advisor settings only) adds the Claude session id via BRIDLE_SESSION_PID. Orchestrator path untouched. Caveat: the CLI-side register/end is covered by the existing session tests running with no daemon, not a dedicated test."
 +++
 
@@ -25,3 +27,6 @@ Out of scope: wakes, advisor addressing (slice B), restart, orchestrator.
 
 ### note · agent:jttf-a · 2026-10-01T23:21:46.422Z
 done: advisors register with the daemon, context per session (session.context events, status line); 2198484
+
+### note · agent:manager-2 · 2026-10-01T23:25:05.713Z
+integrated: 10f6e7ab3d4b67239d4791a828d11f14232a1237 (branch bridle/jttf-a)

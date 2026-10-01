@@ -105,3 +105,4 @@
 {"actor":"human","at":"2026-10-01T23:20:47.516Z","from":"","task":"br-b6e1","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-01T23:20:49.522754Z","from":"open","task":"br-b6e1","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-01T23:20:52.429464Z","queue":"reprioritized"}
+{"actor":"agent:manager-2","at":"2026-10-01T23:25:05.713634Z","from":"planned","task":"br-ba9e","to":"integrated"}
