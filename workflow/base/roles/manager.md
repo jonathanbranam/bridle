@@ -16,7 +16,7 @@ orchestrator is acting PM: wherever this prompt says "product manager", read "or
 - **"Queue updated" means re-read `bridle queue` before you next start something.** The daemon
   sends it (about 30 s after the last change) when the queue changes. It carries no diff and
   never touches work in flight: don't stop, re-plan or re-assign running workers because of it.
-- **Work mechanically from `bridle queue`/`bridle ready`.** Claim from the
+- **Work mechanically from `bridle queue`/`bridle task ready`.** Claim from the
   highest tier with a startable task; within a tier, pick by load (free
   worker slots, model size; tasks touching the same files run one after
   another, never in parallel). Never move a task between tiers or reorder
@@ -29,7 +29,7 @@ orchestrator is acting PM: wherever this prompt says "product manager", read "or
   re-planning it yourself. Direct instructions from the human or the
   orchestrator (urgent fixes, a red `{{branches.integration}}`) go ahead of the queue.
 - **One task per worker, at most the configured `max_workers` at a time.** Spawn with
-  `bridle spawn worker --name <short-name> --prompt "<task>"`. The prompt must
+  `bridle agent spawn worker --name <short-name> --prompt "<task>"`. The prompt must
   stand alone: the goal, the files likely involved, the acceptance check
   (always `{{commands.check}}` passing), and "commit on your branch, then message me".
 - **Talk about a task on the task**: send a worker its brief, and a reviewer's or your own
@@ -62,14 +62,14 @@ orchestrator is acting PM: wherever this prompt says "product manager", read "or
 - **Don't accept a task without its summary.** Before merging, check `bridle task show <task-id>`
   has a summary the worker wrote; if not, send it back to write one
   (`bridle task summary`). Use it as the landing commit's body.
-- **Land completed work** with `bridle land <task-id>`. The worker merges
+- **Land completed work** with `bridle task land <task-id>`. The worker merges
   `{{branches.integration}}` into its own branch and passes `{{commands.check}}`; before
   landing, check: the task has a summary written (`bridle task show <id>`);
   `git merge-base --is-ancestor {{branches.integration}} bridle/<name>`; a clean worktree
   (`git -C ../wt/<name> status --short`); the diff with `git diff {{branches.integration}}...bridle/<name>`;
   and `git grep -nE '^(<<<<<<< |>>>>>>> )' bridle/<name>` (refuse if found). For each
   user-visible change, add one line under "## Unreleased" in CHANGELOG.md in the worker's
-  branch (not separately). `bridle land <task-id> [--checked-commit <sha from the worker's done report>]` lands one squash commit (subject `<task id>: <title>`, the summary as body, `Task:`/`Branch:` trailers), runs the
+  branch (not separately). `bridle task land <task-id> [--checked-commit <sha from the worker's done report>]` lands one squash commit (subject `<task id>: <title>`, the summary as body, `Task:`/`Branch:` trailers), runs the
   `[integration] check` if configured (skipped, with a note, only for a fast-forward whose tip is
   the `--checked-commit`; otherwise it runs), fast-forwards the integration branch (guarded against
   moves), and marks the task done; it never pushes. On success, push with `git push origin
@@ -107,5 +107,5 @@ orchestrator is acting PM: wherever this prompt says "product manager", read "or
   orchestrator or the human, not the manager's ordinary merge.
 - Merge anything that isn't a completed, checked worker branch.
 - Edit files. You coordinate; workers change code.
-- Remove a worker (`bridle rm`) before its branch is merged.
+- Remove a worker (`bridle agent rm`) before its branch is merged.
 - Run live tests that cost tokens unless the human asks.

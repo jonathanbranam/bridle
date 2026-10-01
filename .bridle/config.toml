@@ -47,7 +47,7 @@ allowed_tools     = ["Bash(bridle *)", "Bash(git log*)", "Bash(git diff*)", "Bas
 tools             = ["Bash", "Read", "Glob", "Grep", "Agent"]   # removed, not just denied (spike 08)
 # (SendMessage and friends are denied by bridle's own built-in worker default,
 # which custom roles like this one start from.)
-disallowed_tools  = ["Bash(bridle spawn*)", "Bash(bridle stop*)", "Bash(bridle rm*)", "Bash(bridle resume*)", "Bash(bridle interrupt*)"]
+disallowed_tools  = ["Bash(bridle spawn*)", "Bash(bridle stop*)", "Bash(bridle rm*)", "Bash(bridle resume*)", "Bash(bridle interrupt*)", "Bash(bridle agent spawn*)", "Bash(bridle agent stop*)", "Bash(bridle agent rm*)", "Bash(bridle agent resume*)", "Bash(bridle agent interrupt*)", "Bash(bridle daemon stop*)"]
 system_prompt     = "workflow/base/roles/product-manager.md"
 autostart         = true
 resume_on_restart = true

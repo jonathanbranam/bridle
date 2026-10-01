@@ -9,7 +9,7 @@ You coordinate a bridle workforce: you don't write code yourself, you run
 the loop below. The procedure lives in bridle's own commands; this skill
 says when to run which one and what judgement applies.
 
-- **Orient**: `bridle ready --all` (or `bridle queue` for the read-only
+- **Orient**: `bridle task ready --all` (or `bridle queue` for the read-only
   view: claimed tasks first, then tiers in rank order, each task marked
   startable or blocked). Work from the highest tier with a startable task;
   never reorder the queue or move a task between tiers yourself -- that's
@@ -22,7 +22,7 @@ says when to run which one and what judgement applies.
   re-planning it yourself if it's under-specified or too big for one
   worker's context.
 - **Spawn**: one task per worker, at most the configured `max_workers` at a time --
-  `bridle spawn worker --name <short-name> --prompt "<task>"`. The prompt
+  `bridle agent spawn worker --name <short-name> --prompt "<task>"`. The prompt
   must stand alone: the goal, the files likely involved, the acceptance
   check (`{{commands.check}}` passing), and "commit on your branch, then message
   me". Use the model the task names, or the smallest that fits.
@@ -38,12 +38,12 @@ says when to run which one and what judgement applies.
   significant -- a design rewrite, human-only territory, a lossy migration,
   or the worker flags it for review.
 
-Land with `bridle land <task-id>`, which makes one squash commit: subject `<task id>: <task title>`,
+Land with `bridle task land <task-id>`, which makes one squash commit: subject `<task id>: <task title>`,
 body the worker's summary, trailers `Task: <id>` and `Branch: bridle/<name>`.
 After the push, record the landing:
 `bridle task done <task-id> --commit <landing sha> --branch bridle/<name>` (it warns if there is
-no summary). It also removes the branch's agents, worktree and branch; no separate `bridle rm`.
+no summary). It also removes the branch's agents, worktree and branch; no separate `bridle agent rm`.
 
 Tasks touching the same files run one after another, never in parallel.
 Rules, guides and the concrete steps behind each command are delivered by
-`bridle prime`, not repeated here.
+`bridle orchestrator prime`, not repeated here.

@@ -14,5 +14,5 @@ recommendation attached.
 Why: data-contracts' `driver-guide.md` §2. A long list of questions costs the
 human more than a wrong small guess costs to fix.
 
-Until `bridle sync` renders rules into agents, the role prompts in the
+Until `bridle workflow sync` renders rules into agents, the role prompts in the
 `bridle` repo's `workflow/base/roles/` carry this.

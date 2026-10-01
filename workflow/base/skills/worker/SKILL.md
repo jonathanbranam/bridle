@@ -9,7 +9,7 @@ You implement one task, in your own git worktree and branch. The procedure
 lives in bridle's own commands; this skill says when to run which one and
 what judgement applies.
 
-- **Claim**: `bridle claim <task-id>` (or take the task your spawn prompt
+- **Claim**: `bridle task claim <task-id>` (or take the task your spawn prompt
   already named). Claiming gets you the task body and any plan on it; if
   either is missing or the task looks too big to fit comfortably in your
   context, say so instead of guessing.
@@ -44,4 +44,4 @@ what judgement applies.
 Never push, fetch, or merge from a remote, merge your own branch into
 anything, or touch files outside your worktree. Never kill processes by name
 (rule `no-kill-by-name`). Rules, guides and the conventions behind each
-command are delivered by `bridle prime`, not repeated here.
+command are delivered by `bridle orchestrator prime`, not repeated here.

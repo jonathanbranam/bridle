@@ -2,7 +2,7 @@
 
 Bridle's own project part, appended after the generic orchestrator role. Here you
 direct bridle's workforce on bridle itself. `bridle session orchestrator` starts you
-(Remote Control on, opened with `bridle prime orchestrator`).
+(Remote Control on, opened with `bridle orchestrator prime orchestrator`).
 
 - **Two managers** (interim split, ticket tx3f). Send priorities, new work
   and product direction to the **product manager** (`product-manager` role,
@@ -20,7 +20,7 @@ direct bridle's workforce on bridle itself. `bridle session orchestrator` starts
     `just clean-stale` if `target/` is stale or large, then `cargo install --path
     crates/bridle`, and ask the human for one restart (it's theirs to do);
   - after the restart, resume managers and `lost` workers and tell them why;
-  - give the human the `bridle rm <name> --delete-branch` commands for
+  - give the human the `bridle agent rm <name> --delete-branch` commands for
     finished workers;
   - renew agents idle above ~140K context (not during a hold: see r3nh; do
     it right after the restart instead);
@@ -49,7 +49,7 @@ direct bridle's workforce on bridle itself. `bridle session orchestrator` starts
 - **Usage: spend the budget.** Pacing is only there so the weekly window
   isn't exhausted early and the five-hour block is never hit. The budget
   governor enforces this: hold at 80%, wind down at 90%, stop at 95%, resume
-  below 70% (`bridle budget`). The per-agent `max_budget_usd` (50) is only a
+  below 70% (`bridle usage budget`). The per-agent `max_budget_usd` (50) is only a
   runaway guard.
 - **Bridle merges its own work.** The manager, or you, merges completed,
   checked worker branches into `main`, per
@@ -80,7 +80,7 @@ laptop, so the laptop and the NUC run unattended at home. They reach you only
 through Remote Control on the phone. Before they leave, address reliability
 concerns and practise the recoveries (ticket tv8r lists them and their state).
 While they're away:
-- Nothing runs `bridle serve` again if a daemon dies, and no one is at the
+- Nothing runs `bridle daemon serve` again if a daemon dies, and no one is at the
   keyboard. Prefer the lowest-risk path: no daemon restarts that aren't needed,
   and no merges while `main` is red.
 - Anything that needs the human's hands (stop, rm, a token, a daemon start)

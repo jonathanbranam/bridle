@@ -34,51 +34,75 @@ pub struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub enum Command {
+    /// The daemon: run, stop, restart, set up and inspect it.
+    Daemon(DaemonArgs),
+    /// Agents: spawn, list, show, interrupt, stop, resume, renew, remove, read logs.
+    Agent(AgentArgs),
+    /// Claude Code hooks bridle installs (not for typing by hand).
+    #[command(hide = true)]
+    Hook(HookArgs),
     /// Run the daemon.
+    #[command(hide = true)]
     Serve(ServeArgs),
     /// Ask the daemon to shut down gracefully.
+    #[command(hide = true)]
     StopDaemon,
     /// Restart the daemon in place once every agent is idle, then resume every agent that was running (orchestrator or human).
+    #[command(hide = true)]
     Restart(RestartArgs),
     /// Check the project's setup (git, config, tools, gitignore) and say what to fix; exit 1 on a failure.
+    #[command(hide = true)]
     Doctor(DoctorArgs),
     /// Scaffold `.bridle/config.toml` and `.gitignore` entries in a git repo; never overwrites.
+    #[command(hide = true)]
     Init(InitArgs),
     /// Write or remove a macOS LaunchAgent that runs the daemon (never runs launchctl).
+    #[command(hide = true)]
     Launchd(LaunchdArgs),
     /// Write Linux systemd user units that run this machine's project daemons (never runs systemctl).
+    #[command(hide = true)]
     Systemd(SystemdArgs),
     /// Reconstruct the tasks/edges/open_questions tables from the project's
     /// state branch alone (docs/design/storage.md, "Rebuild"): the
     /// migration path for a fresh clone with no `bridle.db`. Refuses if the
     /// database already has rows in any of those tables.
+    #[command(hide = true)]
     Rebuild(RebuildArgs),
     /// List every running project daemon on this machine.
+    #[command(hide = true)]
     Daemons,
     /// Daemon + agents summary.
     Status,
     /// Spawn a new agent.
+    #[command(hide = true)]
     Spawn(SpawnArgs),
     /// List agents.
     Agents(AgentsArgs),
     /// Show one agent's detail.
+    #[command(hide = true)]
     Show(ShowArgs),
     /// Send a message to an agent or the human inbox.
     Send(SendArgs),
     /// Messages addressed to me (the calling principal).
     Inbox(InboxArgs),
     /// Interrupt a running agent's turn.
+    #[command(hide = true)]
     Interrupt(InterruptArgs),
     /// Stop an agent.
+    #[command(hide = true)]
     Stop(StopArgs),
     /// Resume a stopped/exited/crashed/lost agent.
+    #[command(hide = true)]
     Resume(ResumeArgs),
     /// Stop an agent and start its replacement fresh, in the same
     /// worktree/branch/role/model.
+    #[command(hide = true)]
     Renew(RenewArgs),
     /// Remove an agent and its worktree.
+    #[command(hide = true)]
     Rm(RmArgs),
     /// Readable rendering of an agent's transcript.
+    #[command(hide = true)]
     Logs(LogsArgs),
     /// The event log.
     Events(EventsArgs),
@@ -87,11 +111,13 @@ pub enum Command {
     /// Usage and cost summary.
     Usage(UsageArgs),
     /// Static checks on what bridle injects into agent context.
+    #[command(hide = true)]
     Cost(CostArgs),
     /// Interactive terminal UI: agents list and live event tail.
     Tui,
     /// The budget governor: windows, thresholds and state; `hold`/`release`
     /// idle the account for the human.
+    #[command(hide = true)]
     Budget(BudgetArgs),
     /// Token management.
     Token(TokenArgs),
@@ -101,31 +127,40 @@ pub enum Command {
     Task(TaskArgs),
     /// A task's declared impact: the spec ids and files it will touch
     /// (docs/design/impact-and-conflicts.md).
+    #[command(hide = true)]
     Impact(ImpactArgs),
     /// Does a task's or agent's branch (or `--branch B`) merge cleanly into the integration branch; exits 1 if not.
     Probe(ProbeArgs),
     /// Merge a task's branch into the integration branch after the check passes.
+    #[command(hide = true)]
     Land(LandArgs),
     /// Conflicts opened by `impact check`: list and resolve
     /// (docs/design/impact-and-conflicts.md).
+    #[command(hide = true)]
     Conflict(ConflictArgs),
     /// Ports for dev servers: allocate, release, list (docs/design/worktrees-and-ports.md).
     Port(PortArgs),
     /// Add or remove a coordination edge between two tasks
     /// (docs/design/coordination.md).
+    #[command(hide = true)]
     Dep(DepArgs),
     /// Ask a question against a task: blocks it from being ready until
     /// answered (docs/design/coordination.md, "Questions do not stop work").
+    #[command(hide = true)]
     Ask(AskArgs),
     /// Answer a task's open question, clearing the block `ask` set.
+    #[command(hide = true)]
     Answer(AnswerArgs),
     /// Claim a ready task for the calling principal: `planned` -> `claimed`.
+    #[command(hide = true)]
     Claim(ClaimArgs),
     /// Release the calling principal's own claim: `claimed` -> `planned`.
+    #[command(hide = true)]
     Release(ReleaseArgs),
     /// The highest queue tier with a startable task: planned, deps met, no
     /// open question, unclaimed (roles-and-lifecycle.md, "the queue"). A
     /// task outside the queue is backlog and never shown here.
+    #[command(hide = true)]
     Ready(ReadyArgs),
     /// The queue: claimed tasks with their worker, then the tiers in rank
     /// order (roles-and-lifecycle.md, "the queue"). Read-only; `queue set`/
@@ -134,17 +169,20 @@ pub enum Command {
     /// Claude Code's statusLine command: reads its JSON on stdin and prints a
     /// line back. Never fails or blocks: see docs/design/usage-and-budget.md
     /// ("Where bridle can see usage").
+    #[command(hide = true)]
     Statusline,
     /// Claude Code's Stop hook for the worker role (docs/design/
     /// coordination.md, docs/spikes/05-stop-hook-findings.md): reads its
     /// JSON on stdin and blocks the stop if the calling principal has a
     /// claimed task with no thread entry since claiming it. Never fails: any
     /// error of bridle's own allows the stop rather than trapping the agent.
+    #[command(hide = true)]
     StopCheck,
     /// Claude Code's PreToolUse hook: reads the hook JSON on stdin and denies
     /// an Edit/Write/MultiEdit/NotebookEdit under `design/architecture/`
     /// unless the calling worker has claimed an `arch-revision` task. Never
     /// fails: any error of bridle's own allows.
+    #[command(hide = true)]
     ArchGuard,
     /// The orchestrator's supervision hooks (docs/design/agent-host/orchestrator-supervision.md).
     Orchestrator(OrchestratorArgs),
@@ -153,37 +191,46 @@ pub enum Command {
     /// Wait for something the orchestrator should act on, print it and exit 0 (`nothing` after
     /// 5 minutes of quiet). Run it in the background; run it again after each exit
     /// (orchestrator-supervision.md, section 5). `external:orchestrator` only.
+    #[command(hide = true)]
     WaitForWake(WaitForWakeArgs),
     /// Email bridge (docs/design/mail.md). Runs as `external:mail`: `BRIDLE_AS=mail` or `--token`.
     Mail(MailArgs),
     /// The orchestrator's handover note, kept as a record (orchestrator-supervision.md, section 7).
+    #[command(hide = true)]
     Handover(HandoverArgs),
     /// Print a fresh session's opening context for a role: the role prompt,
     /// current state and startup steps.
+    #[command(hide = true)]
     Prime(PrimeArgs),
     /// Layer resolution over the workflow rules (docs/design/workflow-layers.md):
     /// which layer wins each rule id, and what a project changes.
+    #[command(hide = true)]
     Rules(RulesArgs),
     /// Renders the resolved workflow layers into what Claude Code reads:
     /// CLAUDE.md's managed block, .claude/skills, .claude/agents and
     /// .claude/settings.json's hooks (docs/design/workflow-layers.md,
     /// "Rendering into what the agent harness reads"). Local, like `rules
     /// explain`/`diff` — no daemon call.
+    #[command(hide = true)]
     Sync,
     /// Refresh the workflow `bridle init` vendored into `.bridle/workflow/` (never automatic).
     #[command(subcommand)]
     Workflow(WorkflowAction),
     /// Validate capability spec files (docs/design/specs.md) and print each
     /// diagnostic as file:line:col: message. Local, like `rules` — no daemon call.
+    #[command(hide = true)]
     Spec(SpecArgs),
     /// Goals (docs/design/goals-tier.md). Local — no daemon call.
+    #[command(hide = true)]
     Goals(GoalsArgs),
     /// Tickets under docs/tickets/ (docs/design/cli.md). Local files; `new` also files a task
     /// when a daemon is reachable.
     Ticket(TicketArgs),
     /// Architecture-tier elements (docs/design/architecture-tier.md). Local, no daemon call.
+    #[command(hide = true)]
     Arch(ArchArgs),
     /// Exploration findings docs (docs/design/explorations.md). Local, no daemon call.
+    #[command(hide = true)]
     Explore(ExploreArgs),
     /// Tag the current tmux pane with the @bridle option (orchestrator panes use this).
     /// Local, no daemon call.
@@ -196,7 +243,88 @@ pub enum Command {
     /// Start an advisor in a new tmux pane (ticket ervd); orchestrator and human only.
     Advisor(AdvisorArgs),
     /// Trace links from goals down to scenarios (docs/design/traceability.md). Local, no daemon call.
+    #[command(hide = true)]
     Trace(TraceArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct DaemonArgs {
+    #[command(subcommand)]
+    pub action: DaemonAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum DaemonAction {
+    /// Run the daemon.
+    Serve(ServeArgs),
+    /// Ask the daemon to shut down gracefully.
+    Stop,
+    /// Restart the daemon in place once every agent is idle, then resume every agent that was running.
+    Restart(RestartArgs),
+    /// Check the project's setup and say what to fix; exit 1 on a failure.
+    Doctor(DoctorArgs),
+    /// Scaffold `.bridle/config.toml` and `.gitignore` entries in a git repo; never overwrites.
+    Init(InitArgs),
+    /// Write or remove a macOS LaunchAgent that runs the daemon.
+    Launchd(LaunchdArgs),
+    /// Write Linux systemd user units that run this machine's project daemons.
+    Systemd(SystemdArgs),
+    /// Reconstruct the tasks/edges/open_questions tables from the state branch alone.
+    Rebuild(RebuildArgs),
+    /// List every running project daemon on this machine.
+    List,
+}
+
+#[derive(Debug, Args)]
+pub struct AgentArgs {
+    #[command(subcommand)]
+    pub action: AgentAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum AgentAction {
+    /// Spawn a new agent.
+    Spawn(SpawnArgs),
+    /// List agents.
+    List(AgentsArgs),
+    /// Show one agent's detail.
+    Show(ShowArgs),
+    /// Interrupt a running agent's turn.
+    Interrupt(InterruptArgs),
+    /// Stop an agent.
+    Stop(StopArgs),
+    /// Resume a stopped/exited/crashed/lost agent.
+    Resume(ResumeArgs),
+    /// Stop an agent and start its replacement fresh.
+    Renew(RenewArgs),
+    /// Remove an agent and its worktree.
+    Rm(RmArgs),
+    /// Readable rendering of an agent's transcript.
+    Logs(LogsArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct HookArgs {
+    #[command(subcommand)]
+    pub action: HookAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum HookAction {
+    /// Claude Code's statusLine command.
+    Statusline,
+    /// Claude Code's Stop hook for the worker role.
+    StopCheck,
+    /// Claude Code's PreToolUse hook guarding `design/architecture/`.
+    ArchGuard,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum UsageSub {
+    /// Static checks on what bridle injects into agent context.
+    Cost(CostArgs),
+    /// The budget governor: windows, thresholds and state.
+    Budget(BudgetArgs),
 }
 
 #[derive(Debug, Args)]
@@ -572,6 +700,20 @@ pub struct DoctorArgs {
 pub enum WorkflowAction {
     /// Re-fetch the vendored workflow and print what changed.
     Update(WorkflowUpdateArgs),
+    /// Layer resolution over the workflow rules.
+    Rules(RulesArgs),
+    /// Render the resolved workflow layers into what Claude Code reads.
+    Sync,
+    /// Validate capability spec files.
+    Spec(SpecArgs),
+    /// Goals (docs/design/goals-tier.md). Local.
+    Goals(GoalsArgs),
+    /// Architecture-tier elements. Local.
+    Arch(ArchArgs),
+    /// Exploration findings docs. Local.
+    Explore(ExploreArgs),
+    /// Trace links from goals down to scenarios. Local.
+    Trace(TraceArgs),
 }
 
 #[derive(Debug, Args)]
@@ -922,6 +1064,8 @@ pub struct WaitArgs {
 
 #[derive(Debug, Args)]
 pub struct UsageArgs {
+    #[command(subcommand)]
+    pub sub: Option<UsageSub>,
     /// Group by role, model, or agent instead of the default per-agent breakdown.
     #[arg(long)]
     pub by: Option<UsageByArg>,
@@ -1120,6 +1264,26 @@ pub enum TaskAction {
     Note(TaskNoteArgs),
     /// Search for tasks by words in title, body, or summary.
     Search(TaskSearchArgs),
+    /// Claim a ready task for the calling principal.
+    Claim(ClaimArgs),
+    /// Release the calling principal's own claim.
+    Release(ReleaseArgs),
+    /// The highest queue tier with a startable task.
+    Ready(ReadyArgs),
+    /// The queue: claimed tasks, then the tiers in rank order.
+    Queue(QueueArgs),
+    /// Add or remove a coordination edge between two tasks.
+    Dep(DepArgs),
+    /// Merge a task's branch into the integration branch after the check passes.
+    Land(LandArgs),
+    /// Conflicts opened by `impact check`: list and resolve.
+    Conflict(ConflictArgs),
+    /// A task's declared impact: the spec ids and files it will touch.
+    Impact(ImpactArgs),
+    /// Ask a question against a task: blocks it until answered.
+    Ask(AskArgs),
+    /// Answer a task's open question.
+    Answer(AnswerArgs),
 }
 
 #[derive(Debug, Args)]
@@ -1345,6 +1509,12 @@ pub enum OrchestratorAction {
     /// The launcher's SessionStart hook: reads the hook JSON on stdin and records the session
     /// id and transcript path in `$BRIDLE_HOME/orchestrator.session`. Never fails.
     NoteSession,
+    /// The orchestrator's handover note, kept as a record.
+    Handover(HandoverArgs),
+    /// Print a fresh session's opening context for a role.
+    Prime(PrimeArgs),
+    /// Wait for something the orchestrator should act on, print it and exit 0.
+    WaitForWake(WaitForWakeArgs),
 }
 
 #[derive(Debug, Args)]

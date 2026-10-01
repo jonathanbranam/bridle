@@ -4,66 +4,80 @@ Every command is a thin client of the daemon's API
 ([[docs/design/agent-host/api|API]]). Every command takes `--json`, which agents
 always use; humans get compact tables.
 
+## Grouping
+
+Commands are grouped (ticket a67t): `daemon` (serve, stop, restart, doctor, init, launchd,
+systemd, rebuild, list), `agent` (spawn, list, show, interrupt, stop, resume, renew, rm, logs),
+`task` (the task records plus claim, release, ready, queue, dep, land, conflict, impact, ask,
+answer), `usage` (the summary, plus `cost` and `budget`), `orchestrator` (note-session, handover,
+prime, wait-for-wake), `workflow` (update, rules, sync, spec, goals, arch, explore, trace) and
+the hidden `hook` (statusline, stop-check, arch-guard). `status`, `send`, `inbox`, `agents`,
+`queue`, `events`, `wait`, `tui`, `token`, `port` and `probe` stay at the top level. Every old
+top-level name (`bridle claim`, `bridle serve`, `bridle statusline`, `bridle stop-daemon`,
+`bridle daemons`, ...) is a hidden alias that dispatches to the same code (`normalize` in
+`commands/mod.rs`); hook settings, launchd/systemd units and scripts still spell the old names.
+The aliases are dropped in a later release. The sections below use the grouped names.
+
 ## Built
 
 ```
 bridle [--url URL] [--project NAME] [--token T] [--json] <command>
 
-bridle serve   [--repo PATH] [--workspace DIR] [--listen ADDR] [--detach] [--take-over]   --take-over: claim a project another host owns; refuses (both SHAs named) unless
+bridle daemon serve   [--repo PATH] [--workspace DIR] [--listen ADDR] [--detach] [--take-over]   --take-over: claim a project another host owns; refuses (both SHAs named) unless
                                               origin was reached and bridle/state + the integration branch fast-forward cleanly
                                               listens on: `--listen`, else `[daemon] listen`, else the `[projects]` port for this project when it is on this
                                               machine (127.0.0.1 + the Tailscale IPv4 address, never 0.0.0.0), else 127.0.0.1:0
-bridle stop-daemon                            prints "requested shutdown", "acknowledged; the daemon is stopping N agents,
+bridle daemon stop                            prints "requested shutdown", "acknowledged; the daemon is stopping N agents,
                                               up to Ns" (the daemon's stop_grace + 5 s), "N agents still running" as the count drops,
-                                              then "shutdown complete (Ns)"; after 60 s it errors, pointing at `bridle daemons`
+                                              then "shutdown complete (Ns)"; after 60 s it errors, pointing at `bridle daemon list`
                                               and <workspace>/.bridle/daemon.log
-bridle restart [--wait SECS] [--upgrade]                restart the daemon in place once every agent is idle (orchestrator or human); prints the commit and the agents to
+bridle daemon restart [--wait SECS] [--upgrade]                restart the daemon in place once every agent is idle (orchestrator or human); prints the commit and the agents to
                                               resume, then "the daemon is back". A busy daemon (nothing idle within --wait, default 600) errors and stays up. --upgrade first builds the newest green-CI commit on main (background; prints "building <sha>" or "nothing to upgrade" and returns; the daemon restarts itself after the build)
 bridle init    [--repo PATH] [--name N] [--integration BRANCH] [--stack S]  scaffold .bridle/config.toml + .gitignore; never overwrites. A project with no `workflow` (and no `workflow/base/` in the repo) also gets the base workflow vendored into `.bridle/workflow/` (uncommitted; you commit it): copied from the clone this binary was built from if it's still there, else `git clone --depth 1 --branch v<version>` of `workflow_url` (machine `~/.bridle/config.toml`; default the bridle GitHub repo). A fetch failure is an error.
 bridle workflow update [--repo PATH] [--to TAG]   re-fetch the vendored `.bridle/workflow/` (from the local clone, or the tag: `--to`, else this binary's) and print added/changed/removed files; the only thing that ever changes it. Errors if the project isn't vendored.
-bridle doctor  [--repo PATH]                 check the project's setup, say what to fix; exit 1 on a failure
-bridle launchd install [--repo PATH] [--workspace DIR] [--force]   macOS: write the LaunchAgent plist, print launchctl commands
-bridle launchd uninstall                    remove the plist, print the bootout command
-bridle systemd install [--project P] [--projects-dir DIR] [--force]   Linux: write a systemd user unit per project `[projects]` puts on this machine, print the systemctl and linger commands
-bridle rebuild [--from-origin]              first fetches origin/bridle/state (fast-forward only); reconstructs tasks/edges/open_questions/claims
+bridle daemon doctor  [--repo PATH]                 check the project's setup, say what to fix; exit 1 on a failure
+bridle daemon launchd install [--repo PATH] [--workspace DIR] [--force]   macOS: write the LaunchAgent plist, print launchctl commands
+bridle daemon launchd uninstall                    remove the plist, print the bootout command
+bridle daemon systemd install [--project P] [--projects-dir DIR] [--force]   Linux: write a systemd user unit per project `[projects]` puts on this machine, print the systemctl and linger commands
+bridle daemon rebuild [--from-origin]              first fetches origin/bridle/state (fast-forward only); reconstructs tasks/edges/open_questions/claims
                                               (claims.toml) from the state branch alone; the migration path for a fresh
                                               clone with no bridle.db yet; also restores the handover notes (handovers/<id>.md)
-bridle daemons                              # every running project daemon on this machine, with agent counts
+bridle daemon list                              # every running project daemon on this machine, with agent counts
 bridle status                               # daemon, agents, active incidents, Claude Code version, the last wake delivered and whether a waiter is open, last CI result (sha, conclusion, age, url) when [ci] github is on; state branch push (age, or the failure) when [state] push is on
-bridle spawn   <role> [--name N] [--prompt TEXT | --prompt-file FILE]
+bridle agent spawn   <role> [--name N] [--prompt TEXT | --prompt-file FILE]
                [--worktree [--base REF] | --in-repo | --cwd PATH] [--model M]
                [--allow-tool TOOL ...] [--env KEY=VALUE ...] [--ignore-budget]
                [--component ID ...]
 bridle agents  [--all]
-bridle show    <agent>
+bridle agent show    <agent>
 bridle send    <agent|human|role:NAME> [TEXT | --text-file FILE] [--question] [--when now|idle] [--reply-to ID] [--task ID]
 bridle inbox   [--all] [--mark-read]        # messages to me, plus every task's open question (list)
 bridle inbox show <id> [--mark-read]        # show one message in full; leaves it unread unless --mark-read
 bridle inbox read <id>...                   # mark one or more messages read
 bridle inbox unread <id>...                 # mark one or more messages unread again
-bridle ask     <task-id> TEXT [--to WHO]         question against a task; blocks it until answered, and sends a pointer message (kind question) to WHO (agent, role:NAME, external:NAME, human); default: the caller's spawner, or human
-bridle answer  <task-id> TEXT                    answers a task's open question; frees it to be ready again; sends the asker a pointer (kind answer)
-bridle claim   <task-id>                         claims a ready task for the caller: planned -> claimed
-bridle release <task-id>                         releases the caller's own claim: claimed -> planned
-bridle ready   [--all] [--role R]                the highest queue tier with a startable task (planned, deps met, no open question, unclaimed)
+bridle task ask     <task-id> TEXT [--to WHO]         question against a task; blocks it until answered, and sends a pointer message (kind question) to WHO (agent, role:NAME, external:NAME, human); default: the caller's spawner, or human
+bridle task answer  <task-id> TEXT                    answers a task's open question; frees it to be ready again; sends the asker a pointer (kind answer)
+bridle task claim   <task-id>                         claims a ready task for the caller: planned -> claimed
+bridle task release <task-id>                         releases the caller's own claim: claimed -> planned
+bridle task ready   [--all] [--role R]                the highest queue tier with a startable task (planned, deps met, no open question, unclaimed)
 bridle queue                                     read-only: claimed tasks with their worker, then the tiers in rank order
 bridle queue set --tier T,T... [--tier T,T...]   replace the whole queue, one --tier per tier (PM, orchestrator or human only)
 bridle queue add-tier <task>...                  append one tier at the back (PM, orchestrator or human only)
-bridle dep add|rm <task> (--to OTHER [--kind K] | --blocked-by OTHER)   K: blocks (default)|parent|discovered-from|related|supersedes|duplicates
+bridle task dep add|rm <task> (--to OTHER [--kind K] | --blocked-by OTHER)   K: blocks (default)|parent|discovered-from|related|supersedes|duplicates
 bridle wait    <task> [--until STATE] [--or-message] [--timeout SECS]   block until the task changes state; exit 4 on timeout
-bridle interrupt <agent> [--drop-held]
-bridle stop    <agent> [--now]      bridle resume <agent> [--ignore-budget]
-bridle renew   <agent> [--ignore-budget]    stop + fresh process/session, same worktree/branch/role/model
-bridle rm      <agent> [--force] [--delete-branch]
-bridle logs    <agent> [--follow] [--raw] [--since LINE]
+bridle agent interrupt <agent> [--drop-held]
+bridle agent stop    <agent> [--now]      bridle agent resume <agent> [--ignore-budget]
+bridle agent renew   <agent> [--ignore-budget]    stop + fresh process/session, same worktree/branch/role/model
+bridle agent rm      <agent> [--force] [--delete-branch]
+bridle agent logs    <agent> [--follow] [--raw] [--since LINE]
 bridle events  [--follow] [--since SEQ] [--agent A] [--kind PREFIX]
 bridle usage   [--by role|model|agent] [--since DURATION]   # DURATION: <n>s|m|h|d, e.g. 30d
-bridle cost audit [--check]                 static: size of what bridle injects into agent context (usage-and-budget.md)
+bridle usage cost audit [--check]                 static: size of what bridle injects into agent context (usage-and-budget.md)
 bridle tui                                  interactive terminal UI: agents list, live event tail
-bridle budget [--schedule]                  usage governor status, or the whole resolved schedule (usage-and-budget.md)
-bridle budget hold [--for D | --until HH:MM] | release          idle the account for the human / end the hold early
-bridle budget override <period|default> [--until HH:MM] | override-clear   force a schedule period's thresholds / revert
-bridle budget max-workers <N> | --clear     live worker cap, lost on daemon restart
+bridle usage budget [--schedule]                  usage governor status, or the whole resolved schedule (usage-and-budget.md)
+bridle usage budget hold [--for D | --until HH:MM] | release          idle the account for the human / end the hold early
+bridle usage budget override <period|default> [--until HH:MM] | override-clear   force a schedule period's thresholds / revert
+bridle usage budget max-workers <N> | --clear     live worker cap, lost on daemon restart
 bridle token create <name> [--print]        with a known project (--project, or the cwd's daemon) the token is saved in
                                              ~/.bridle/credentials.toml and not printed unless --print; with --url it's
                                              printed once. A name with `@` is refused
@@ -71,55 +85,55 @@ bridle token create <name> --machine <m>    a visitor, `external:<name>@<m>`, fo
                                              printed once, never saved here; paste it into that machine's credentials.toml
 bridle token list                           name, created-at, revoked-or-not; never the token itself
 bridle token revoke <name>                  human only, external tokens only (an agent's own token is
-                                             revoked through `bridle rm`, not this); also removes its
+                                             revoked through `bridle agent rm`, not this); also removes its
                                              credentials.toml entry for the project
 bridle statusline                           Claude Code statusLine command; local only, no daemon call
 bridle orchestrator note-session            the orchestrator launcher's SessionStart hook: writes $BRIDLE_HOME/orchestrator.session
                                              from the hook JSON on stdin; local only; never fails
 bridle focus gate                           the UserPromptSubmit hook of focus hours (cvaq): in a `quiet` `[[focus]]` period prints
                                              nudge context on the first prompt and every 5 min after; silent otherwise; never fails
-bridle handover done                       the orchestrator's state is written: the daemon stops and relaunches its session (marker only); human and external:orchestrator only
-bridle wait-for-wake --mail                  the advisor's mail-only waiter: returns when unread mail from external:mail arrives (`nothing` after 25 min); polls the inbox every 10 s
-bridle handover write --file <path>|-      record the orchestrator's handover note (human and external:orchestrator only); prints its id
-bridle handover list | show <id>           the notes, newest first · one note
+bridle orchestrator handover done                       the orchestrator's state is written: the daemon stops and relaunches its session (marker only); human and external:orchestrator only
+bridle orchestrator wait-for-wake --mail                  the advisor's mail-only waiter: returns when unread mail from external:mail arrives (`nothing` after 25 min); polls the inbox every 10 s
+bridle orchestrator handover write --file <path>|-      record the orchestrator's handover note (human and external:orchestrator only); prints its id
+bridle orchestrator handover list | show <id>           the notes, newest first · one note
 bridle mail run                              the email bridge for this project: inbound mail, question mails, daily digest (docs/design/mail.md); runs as external:mail
-bridle wait-for-wake                        the orchestrator's background watcher: waits for a wake condition, prints it and exits 0 (`nothing` after 25 min); external:orchestrator only
+bridle orchestrator wait-for-wake                        the orchestrator's background watcher: waits for a wake condition, prints it and exits 0 (`nothing` after 25 min); external:orchestrator only
 bridle arch-guard                          Claude Code PreToolUse hook: blocks design/architecture/ edits outside an arch-revision task
 bridle stop-check                           Claude Code Stop hook for the worker role; refuses to stop
                                              with an unreleased claim and no thread entry since claiming
                                              it (docs/design/coordination.md); never fails
-bridle rules explain <id>                   which layer wins a rule id, and what it shadowed
-bridle rules diff --project-layer           everything the project layer does differently from
+bridle workflow rules explain <id>                   which layer wins a rule id, and what it shadowed
+bridle workflow rules diff --project-layer           everything the project layer does differently from
                                              the base/pack layers below it
-bridle rules explain|diff ... --component <id>  the same on top of that component's chain (L4,
+bridle workflow rules explain|diff ... --component <id>  the same on top of that component's chain (L4,
                                              root-most ancestor first); diff shows what each
                                              component layer changes instead of the project layer
-bridle sync                                 renders resolved workflow layers into CLAUDE.md's
+bridle workflow sync                                 renders resolved workflow layers into CLAUDE.md's
                                              managed block, .claude/skills, .claude/agents and
                                              .claude/settings.json's hooks; local only, no daemon call
-bridle arch list [--invariants] [--root DIR]   lists architecture elements (id, `invariant` flag, title,
+bridle workflow arch list [--invariants] [--root DIR]   lists architecture elements (id, `invariant` flag, title,
                                              file:line) from `*.md` under DIR (default
                                              `design/architecture`); a missing or duplicate `a-` id
                                              is an error (diagnostics on stderr, exit 1); --json
                                              prints the elements with their text; local only
-bridle arch propose --title T (--argument TEXT | --argument-file FILE|-) [--arch-root DIR]   creates an `arch-revision` task with the proposal
+bridle workflow arch propose --title T (--argument TEXT | --argument-file FILE|-) [--arch-root DIR]   creates an `arch-revision` task with the proposal
                                              (daemon call); validates that the architecture
                                              directory exists locally
-bridle trace down|up <id>  [--goals DIR] [--arch DIR] [--specs DIR]   walks the trace links across
+bridle workflow trace down|up <id>  [--goals DIR] [--arch DIR] [--specs DIR]   walks the trace links across
                                              `design/goals`, `design/architecture` and `design/specs`:
                                              `down` lists everything depending on the element, `up` what it
                                              rests on, up to the goals (indented by distance; --json gives
                                              rows with `depth`); an unknown id, an unknown link target or
                                              any parse error is an error (exit 1); local only
-bridle trace orphans                         requirements with no `traces=` (a warning on stderr, exit 0)
-bridle trace suspect                         links whose recorded `@hash` differs from the upstream element's
+bridle workflow trace orphans                         requirements with no `traces=` (a warning on stderr, exit 0)
+bridle workflow trace suspect                         links whose recorded `@hash` differs from the upstream element's
                                              current hash (id, file:line, upstream, recorded, current; --json
                                              prints them); exit 1 if any
-bridle trace confirm <id>                    rewrites that requirement's link hashes to the current ones; edits
+bridle workflow trace confirm <id>                    rewrites that requirement's link hashes to the current ones; edits
                                              only the heading line, the rest of the file byte-for-byte
-bridle explore check [paths...]              checks exploration findings frontmatter (default `design/explore`);
+bridle workflow explore check [paths...]              checks exploration findings frontmatter (default `design/explore`);
                                              diagnostics on stdout, exit 1 on any error; local only
-bridle explore new|conclude|abandon <id>     scaffolds `design/explore/<id>/findings.md` (status open;
+bridle workflow explore new|conclude|abandon <id>     scaffolds `design/explore/<id>/findings.md` (status open;
                                              refuses to overwrite) or rewrites just its `status:` line
 bridle pane tag <name>                       set the @bridle tmux pane option to the given name (errors
                                              if not in a tmux pane); used by launcher scripts
@@ -127,26 +141,26 @@ bridle pane untag                            clear the @bridle tmux pane option 
                                              tmux pane)
 bridle machine tools-only-check [--repo P]   exit 1, saying why, if the clone is listed in ~/.bridle/config.toml
                                              `[machine] tools_only = [paths]` (~ and $VAR expand); the
-                                             launch scripts call it. `bridle serve` refuses there too
+                                             launch scripts call it. `bridle daemon serve` refuses there too
 bridle machine tools-only-install [--repo P] install pre-commit and pre-push hooks that refuse in a
                                              tools-only clone (`--no-verify` overrides); re-runnable;
                                              moves a hook that isn't bridle's to `<hook>.pre-bridle` (refuses if that
                                              exists); once the clone is no longer listed, re-running removes bridle's
                                              hooks and restores those, keeping both if a different hook appeared (hw6c, ged2)
-bridle spec check [paths...] [--root DIR] [--require-ids]   validates spec files (dirs are searched for
+bridle workflow spec check [paths...] [--root DIR] [--require-ids]   validates spec files (dirs are searched for
                                              *.md; default `design/specs`, or --root) with the
                                              bridle-spec parser: prints file:line:col: message per
                                              diagnostic and a summary, exit 1 on any error; a
                                              requirement without an id is a warning (an error with
                                              --require-ids); --json prints them as structured output;
                                              local only, no daemon call
-bridle spec id [paths...] [--root DIR] [--ledger FILE] [--dry-run]   writes a stable id (`{#r-xxxx}` /
+bridle workflow spec id [paths...] [--root DIR] [--ledger FILE] [--dry-run]   writes a stable id (`{#r-xxxx}` /
                                              `{#s-xxxx}`) into every requirement and scenario heading
                                              lacking one, in place, touching only those heading lines;
                                              ids are unique across the files processed and never reused
                                              (ledger `<root>/.ids`); idempotent; `--dry-run` prints
                                              the plan and writes nothing; local only, no daemon call
-bridle spec export --format gherkin|json [--out DIR] [paths...] [--root DIR] [--scenario ID]... [--task ID]
+bridle workflow spec export --format gherkin|json [--out DIR] [paths...] [--root DIR] [--scenario ID]... [--task ID]
                                              exports specs for test runners (same path defaults as
                                              `spec check`); gherkin: one <capability>.feature per spec
                                              (Rule per requirement, executable scenarios only, tagged
@@ -161,7 +175,7 @@ bridle spec export --format gherkin|json [--out DIR] [paths...] [--root DIR] [--
                                              task's declared impact (modify, add-under, remove ids;
                                              exits 1 if it declares none) and asks the daemon, else
                                              local only
-bridle spec coverage [--root DIR] [--tests DIR ...] [--require-all] [--json]
+bridle workflow spec coverage [--root DIR] [--tests DIR ...] [--require-all] [--json]
                                              lists executable scenarios whose id does not appear in
                                              test sources; scans text files (skip binary, node_modules,
                                              target, .git) under --tests directories (default `tests`
@@ -195,26 +209,26 @@ bridle ticket check [--quiet]                checks every ticket in `docs/ticket
                                              (stem anywhere under `docs/`, or a path from the repo root or
                                              `docs/`). Problems go to stderr, one per line, exit 1; `--quiet`
                                              prints nothing when clean. Local, no daemon
-bridle goals list [--root DIR] [--priority P] [--stance S]   lists goals (docs/design/goals-tier.md) from
+bridle workflow goals list [--root DIR] [--priority P] [--stance S]   lists goals (docs/design/goals-tier.md) from
                                              `*.md` under --root (default `design/goals`): id, firmness,
                                              priority, stance, title per line; the stance is defaulted from
                                              the priority when not written; --json prints the goals and
                                              diagnostics; diagnostics go to stderr as file:line:col: message
                                              (an unaddressed goal without a why is a warning); exit 1 on
                                              any error; local only, no daemon call
-bridle goals propose <goal-id> --change KEY=VALUE --why TEXT [--goals-root DIR]  creates a task proposing a change to the goal's
+bridle workflow goals propose <goal-id> --change KEY=VALUE --why TEXT [--goals-root DIR]  creates a task proposing a change to the goal's
                                              firmness, priority, or stance (repeatable --change;
                                              daemon call); validates that the goal exists
-bridle spec import openspec [--from DIR] [--to DIR] [--dry-run]   moves each `<from>/<cap>/spec.md`
+bridle workflow spec import openspec [--from DIR] [--to DIR] [--dry-run]   moves each `<from>/<cap>/spec.md`
                                              (default `openspec/specs`) to `<to>/<cap>.md` (default
                                              `design/specs`) with `git mv` (plain rename if untracked),
                                              then assigns ids as `spec id` does; parses first and
                                              changes nothing on any error or existing target;
                                              `.feature` files, changes, config left in place;
                                              idempotent; local only, no daemon call
-bridle prime orchestrator                   fresh session's opening context: role prompt, current
+bridle orchestrator prime orchestrator                   fresh session's opening context: role prompt, current
                                              state, startup steps; local only, no daemon call
-bridle prime advisor                        the advisor role file (workflow, then .bridle/roles/advisor.md); local
+bridle orchestrator prime advisor                        the advisor role file (workflow, then .bridle/roles/advisor.md); local
 bridle session orchestrator [claude args]   start the orchestrator's claude session from any directory: lean
                                              settings, names orch-<project>[-<BRIDLE_SESSION_SUFFIX>], pane tag,
                                              pid/exit files; `--project` picks the project; refuses under a bridle
@@ -226,7 +240,7 @@ bridle advisor start <name> [--brief TEXT|@FILE]   send the brief to external:ad
                                              @bridle=orchestrator, else a new window (`[tmux] advisor_pane = "split"|"window"`
                                              in ~/.bridle/config.toml). Outside tmux prints the command, exit 0. Orchestrator
                                              and human only (refuses under BRIDLE_AGENT_ID)
-bridle prime worker|planner [--component ID ...] [--task ID]   the role's rules, facts, guides, plus named components' scope; --task is worker only
+bridle orchestrator prime worker|planner [--component ID ...] [--task ID]   the role's rules, facts, guides, plus named components' scope; --task is worker only
 bridle task new    <title> -k/--kind KIND [--body TEXT | --body-file FILE] [--component ID ...] [--size S|M|L] [--for-human] [--priority high|normal|low]
 bridle task show   <id>
 bridle task plan   <id>                                                 open -> planned: ready to build, claimable once unblocked
@@ -237,16 +251,16 @@ bridle task search <words...>                                      search for ta
 bridle task drop   <id> --reason TEXT
                                                                         incidents are `-k incident` tasks (`task list -k incident` lists them); plan/done/drop/reopen of one is orchestrator/human only, and `plan` sends the notice to every agent; see agent-host/incidents.md
 bridle task done   <id> [--commit SHA] [--branch NAME] [--resolution TEXT]  -> integrated; `--commit` is required unless the human claimed the task (a to-do) or the task is an incident (`--resolution` goes in its thread and the "resolved" note); records the sha (and branch) on the task and in the thread; with --branch removes the branch's agents, worktree and branch; warns if no summary
-bridle impact set  <task> [--modify ID].. [--add-under ID].. [--remove ID].. [--files GLOB..]  declares the task's impact, replacing any earlier one; only an open/planned/claimed task; ids checked by shape (r-/s-/g-/a- + hex) only
-bridle impact check [--specs DIR]                                overlaps between in-flight tasks' declared impact, plus merge probes of claimed tasks' branches (`--json`: `{overlaps:[{level,tasks,kind,key}]}`); exit 1 if any is a conflict; see impact-and-conflicts.md
-bridle land <task> [--branch B] [--check-cmd CMD] [--checked-commit SHA]              the integrator: squash the branch into one commit (`<task id>: <title>`, the summary as body, `Task:`/`Branch:` trailers) in the integration worktree, run `[integration] check` (skipped, with a note, only when the integration branch is an ancestor of the branch tip and the tip is `--checked-commit`, the commit the worker reported a green check on; otherwise it runs and the note says why), fail if the nextest test count is outside the sane band around the last full run (`<workspace>/last-full-test-count`), fast-forward the integration branch (guarded), mark the task done; any failure lands nothing (exit 1); never pushes
+bridle task impact set  <task> [--modify ID].. [--add-under ID].. [--remove ID].. [--files GLOB..]  declares the task's impact, replacing any earlier one; only an open/planned/claimed task; ids checked by shape (r-/s-/g-/a- + hex) only
+bridle task impact check [--specs DIR]                                overlaps between in-flight tasks' declared impact, plus merge probes of claimed tasks' branches (`--json`: `{overlaps:[{level,tasks,kind,key}]}`); exit 1 if any is a conflict; see impact-and-conflicts.md
+bridle task land <task> [--branch B] [--check-cmd CMD] [--checked-commit SHA]              the integrator: squash the branch into one commit (`<task id>: <title>`, the summary as body, `Task:`/`Branch:` trailers) in the integration worktree, run `[integration] check` (skipped, with a note, only when the integration branch is an ancestor of the branch tip and the tip is `--checked-commit`, the commit the worker reported a green check on; otherwise it runs and the note says why), fail if the nextest test count is outside the sane band around the last full run (`<workspace>/last-full-test-count`), fast-forward the integration branch (guarded), mark the task done; any failure lands nothing (exit 1); never pushes
 bridle probe <task-or-agent> | --branch B                       `git merge-tree` of the branch into the integration branch, no working-tree change (`--json`: `{branch,against,outcome,paths}`); exit 1 on a conflict; needs git 2.38
 bridle port alloc [--pid N] [--label L]                         allocate a free port from `[ports] range` (not reserved, allocated or listening); prints it (`--json`: the allocation); recorded against you and your claimed task
 bridle port release <port>                                      free a port
 bridle port list                                                allocated ports (`--json`: array of `{port,agent,task,pid,label,allocated_at}`)
-bridle conflict list                                            conflicts opened by `impact check`, open first (`--json`: array of `{id,tasks,kind,key,state,resolution,opened_at,resolved_at}`)
-bridle conflict resolve <C12> --compatible <reason> | --order A,B | --merge-into <task>   record the outcome (exactly one flag); `--order` adds an `A blocks B` edge; A, B and the task must be the conflict's two tasks; a resolved conflict can't be resolved again
-bridle impact show <task>                                         prints the declared impact (`--json`: the impact object)
+bridle task conflict list                                            conflicts opened by `impact check`, open first (`--json`: array of `{id,tasks,kind,key,state,resolution,opened_at,resolved_at}`)
+bridle task conflict resolve <C12> --compatible <reason> | --order A,B | --merge-into <task>   record the outcome (exactly one flag); `--order` adds an `A blocks B` edge; A, B and the task must be the conflict's two tasks; a resolved conflict can't be resolved again
+bridle task impact show <task>                                         prints the declared impact (`--json`: the impact object)
 bridle task summary <id> --text TEXT | --file FILE                    records how it was implemented; `-` reads stdin; replaces an earlier summary
 bridle task reopen <id>
 bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note to the task's thread; no effect on readiness
@@ -296,7 +310,7 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
 
 - **`rebuild`** is `TaskManager::rebuild_from_state_branch` (docs/design/storage.md,
   "Rebuild"): the migration path for a fresh clone with no `bridle.db` — clone the repo,
-  start the daemon, `bridle rebuild`. `--from-origin` first fetches `origin/bridle/state`
+  start the daemon, `bridle daemon rebuild`. `--from-origin` first fetches `origin/bridle/state`
   (`POST /v1/rebuild?from_origin=true`; fast-forward only, never overwrites a local branch with
   state of its own, and says what it did). Human-only; refuses (409) rather than overwrites if
   the database already has any tasks, edges or open questions. Claims are never
@@ -434,7 +448,7 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   exactly which entries the last sync wrote, so re-syncing (or a layer's hooks
   changing) only ever touches those, never a hook a human added by hand — a
   pre-existing hook entry sync didn't write is always left alone. Renders no L4
-  component rules (delivered by `bridle prime` instead, docs/design/components.md), same as `rules explain`/`diff` above; wiring a
+  component rules (delivered by `bridle orchestrator prime` instead, docs/design/components.md), same as `rules explain`/`diff` above; wiring a
   `SessionStart` hook to run `sync` automatically is a follow-up, not built yet — for
   now it's a command you run yourself. `hooks/<event>.json`, and the "later layer wins
   wholesale" convention it and `agents/<role>.md` use, are this command's own
@@ -491,7 +505,7 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   /v1/agents`, kept live by `agent.state`/`agent.removed` events), a scrolling event
   tail (`events_stream`, which already reconnects on its own — see
   `crates/bridle-api/src/client/mod.rs`), the selected agent's transcript tail (polled
-  from `Client::transcript` once a second, same model as `bridle logs --follow`), and
+  from `Client::transcript` once a second, same model as `bridle agent logs --follow`), and
   an inbox of unread messages addressed to `me` (polled from `Client::list_messages`
   once a second, same query as `bridle inbox`). `Tab` switches between the four views,
   `j`/`k`/arrow keys scroll the focused one, `q`/`Esc` quits. The inbox view lists unread
@@ -516,8 +530,8 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   `in_review` and `accepted`, and everything that depends on those, arrive with later
   tasks — see the `Planned` block below.
 - **`dep add|rm`** creates or removes one coordination edge (docs/design/coordination.md).
-  `bridle dep add <task> --to <other> --kind <kind>` draws `<task> --kind--> <other>`;
-  `bridle dep add <task> --blocked-by <other>` is sugar for `--kind blocks` with `from`
+  `bridle task dep add <task> --to <other> --kind <kind>` draws `<task> --kind--> <other>`;
+  `bridle task dep add <task> --blocked-by <other>` is sugar for `--kind blocks` with `from`
   and `to` swapped (`<task>` is blocked by `<other>`, so the edge runs the other way) and
   can't be combined with `--to`/`--kind`. `dep rm` takes the same shape. Edges can't
   connect a task to itself, and a repeat of the same `(from, to, kind)` triple is a
@@ -564,7 +578,7 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   unresolved blocker (roles-and-lifecycle.md, "ready is computed" and "the queue"; see
   coordination.md for exactly what "unresolved" means in this build). A task in no tier
   is backlog and never shown, even if it is ready. `--all` fans out
-  across every daemon in the registry (`bridle daemons`), each with its own
+  across every daemon in the registry (`bridle daemon list`), each with its own
   discovery-resolved token, instead of just the one daemon `--url`/`--project`/cwd
   discovery would pick. `--role` is accepted but a no-op: tasks don't carry a role field
   yet (a gap, not a design decision).
@@ -589,7 +603,7 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   `bridle status` prints a `focus` line while one is pending or active.
 - **`handover`** keeps the orchestrator's note as a record ([[orchestrator-supervision]] section 7):
   `write` reads a file or stdin (`-`), `list` shows id, time, author and first line, `show` the
-  whole note. Latest wins; `bridle prime orchestrator` prints the newest under a heading with
+  whole note. Latest wins; `bridle orchestrator prime orchestrator` prints the newest under a heading with
   its age, and falls back to `docs/context/orchestrator-state.md` when there is no note (or no
   daemon to ask). **`handover done`** is `POST /v1/orchestrator/handover`
   ([[orchestrator-supervision]] section 6): the orchestrator runs it after writing its state, and
@@ -637,10 +651,10 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   (for a daemon found by bare URL, not in the registry), pass `--url <daemon url> --token "$(cat <workspace>/.bridle/tokens/human)" token create statusline --print > ~/.bridle/statusline.token; chmod 600 ~/.bridle/statusline.token`
   instead — the `--token` is required because `--url` drops the workspace context that the human token is normally read from, and `--print` ensures the token is written to the file.
 - **`arch-guard`** is Claude Code's `PreToolUse` hook (`workflow/base/hooks/PreToolUse.json`,
-  matcher `Edit|Write|MultiEdit`, rendered by `bridle sync`). It reads the hook JSON on stdin
+  matcher `Edit|Write|MultiEdit`, rendered by `bridle workflow sync`). It reads the hook JSON on stdin
   and, for an edit whose path (resolved lexically against `cwd`) is under `design/architecture/`,
   prints a `hookSpecificOutput` `permissionDecision: "deny"` unless the caller is not a worker
-  agent or has claimed an `arch-revision` task; the reason tells it to run `bridle arch propose`
+  agent or has claimed an `arch-revision` task; the reason tells it to run `bridle workflow arch propose`
   ([[docs/design/architecture-tier|architecture tier]]). Any error of bridle's own allows.
 - **`stop-check`** is Claude Code's `Stop` hook, registered only for the worker role
   ([[docs/design/coordination#How agents actually hear things (Claude Code integration)|coordination.md]],
@@ -651,7 +665,7 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   (`?claimed_by=me`) and blocks — printing the flat `{"decision":"block","reason":"..."}`
   spike 05 confirmed, not the `hookSpecificOutput` wrapper — on the first one with no
   thread entry (note, question or answer) from itself at or after `claimed_at`; naming
-  the task and telling the agent to `bridle release` it or leave a `bridle task note`
+  the task and telling the agent to `bridle task release` it or leave a `bridle task note`
   first. It also blocks when the tree looks finished (clean, commits ahead of local `main`/`master`)
   and a claimed task has no summary or no thread entry from itself starting `done:`, telling
   the agent to *run* `bridle task summary` and `bridle send ... done:` (workers were printing
@@ -700,11 +714,11 @@ as a first cut:
 bridle task <cmd> at in_review|accepted          states not built yet
 bridle handoff                                   bridle accept <id> (human only)
 bridle inbox --inject
-bridle spawn <role> <task>   bridle review
+bridle agent spawn <role> <task>   bridle review
 bridle take|give <agent>                         human takeover of a headless agent
-bridle rules show|propose                        `explain`/`diff --project-layer` are built (see Built)
-bridle trace coverage                            the other `trace` commands are built
-bridle explore adopt                             `new`/`conclude`/`abandon` are built
+bridle workflow rules show|propose                        `explain`/`diff --project-layer` are built (see Built)
+bridle workflow trace coverage                            the other `trace` commands are built
+bridle workflow explore adopt                             `new`/`conclude`/`abandon` are built
 bridle usage --by project|kind|task|trend|compare   `role|model|agent` are built
 ```
 

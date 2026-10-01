@@ -76,6 +76,7 @@ pub(super) async fn task(cli: &Cli, args: &TaskArgs) -> Result<(), CliError> {
         TaskAction::Reopen(a) => task_reopen(cli, a).await,
         TaskAction::Note(a) => task_note(cli, a).await,
         TaskAction::Search(a) => task_search(cli, a).await,
+        _ => unreachable!("normalize forwards the queue and coordination actions"),
     }
 }
 

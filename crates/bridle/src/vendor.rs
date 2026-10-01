@@ -143,7 +143,10 @@ pub fn init_vendor(repo: &Path) -> anyhow::Result<Option<Changes>> {
 }
 
 pub fn run(action: &WorkflowAction) -> Result<(), CliError> {
-    let WorkflowAction::Update(args) = action;
+    // `commands::normalize` has already forwarded the grouped forms; only `update` is left.
+    let WorkflowAction::Update(args) = action else {
+        unreachable!("normalize forwards every other workflow action")
+    };
     let repo = match &args.repo {
         Some(p) => p.clone(),
         None => std::env::current_dir().context("current directory")?,

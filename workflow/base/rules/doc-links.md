@@ -15,5 +15,5 @@ Why: the onboarding survey (`docs/context/onboarding-data-contracts.md` §3)
 found data-contracts already following this and bridle's docs doing the same.
 Whether a checker enforces it is an open question (Q7).
 
-Until `bridle sync` renders rules into agents, the role prompts in the
+Until `bridle workflow sync` renders rules into agents, the role prompts in the
 `bridle` repo's `workflow/base/roles/` carry this.

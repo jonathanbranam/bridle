@@ -18,5 +18,5 @@ don't need it until you need it; it's a gut feeling things where some kinds of
 early abstraction are worth it; we'll come back in the future when the rules
 and constraints are implemented in bridle and fill them out further".
 
-Until `bridle sync` renders rules into agents, the role prompts in the
+Until `bridle workflow sync` renders rules into agents, the role prompts in the
 `bridle` repo's `workflow/base/roles/` carry this.

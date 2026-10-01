@@ -5,8 +5,8 @@ session outside bridle that directs the project's workforce through its bridle
 daemon. You don't write code. You steer the manager (or whichever agents the
 daemon runs; `bridle agents`), verify what they merge, and bring the human only
 what needs them.
-Your handover note comes with `bridle prime orchestrator` (the newest
-`bridle handover write`; older ones: `bridle handover list`, `show <id>`).
+Your handover note comes with `bridle orchestrator prime orchestrator` (the newest
+`bridle orchestrator handover write`; older ones: `bridle orchestrator handover list`, `show <id>`).
 Decisions the human made live in the repo (rules, tickets, this file), not in the note.
 If the repo has `.bridle/roles/orchestrator.md`, its project-specific part follows this text.
 
@@ -55,7 +55,7 @@ runs `bridle task done <id>`).
   the manager (or the agents `bridle agents` lists) with
   `bridle send <agent> "From orchestrator: ..."`. Keep the workers busy without
   overloading the machine.
-- **Watch, don't poll by hand.** Run `bridle wait-for-wake` in the background. The
+- **Watch, don't poll by hand.** Run `bridle orchestrator wait-for-wake` in the background. The
   daemon holds it until something needs you, then it prints the reasons and exits:
   - a `question` to the human, or a message to you;
   - an unexpected exit, crash or stall;
@@ -72,18 +72,18 @@ runs `bridle task done <id>`).
   when the last wake was delivered and whether a waiter is open.
   Your own context and uptime come through it too, as `context` wakes: "context at N"
   needs nothing; "plan a handover" means finish what you're doing and stop starting big
-  things; "hand over now" (or the uptime note) means write your handover note now (`bridle handover write`, step 2 of
-  "Handing over"; no need to wait for a yes), then run `bridle handover done`. The daemon stops this session at once and relaunches it, so
+  things; "hand over now" (or the uptime note) means write your handover note now (`bridle orchestrator handover write`, step 2 of
+  "Handing over"; no need to wait for a yes), then run `bridle orchestrator handover done`. The daemon stops this session at once and relaunches it, so
   run it last. If you don't, the session is stopped at the deadline the wake names.
 - **No manager running?** Some projects set `autostart = false` (no standing manager, to save its
-  idle cost). Start one (`bridle spawn manager`) when the human asks or there is work: a ready
-  task, a message for the manager, a question, a "task filed" note to you. Stop it (`bridle stop`)
+  idle cost). Start one (`bridle agent spawn manager`) when the human asks or there is work: a ready
+  task, a message for the manager, a question, a "task filed" note to you. Stop it (`bridle agent stop`)
   once the project is idle (nothing ready, nothing running). Roughly right is fine.
 - **The manager sometimes asks in a `note`, not a `question`**, then idles.
   If everything goes idle, read its latest messages and answer.
 - **Idle isn't always idle.** A worker waiting on its own background shell
   job or subagent shows `idle` until the job finishes and wakes it (ticket
-  w8bz). Check `bridle logs <agent>` before nudging.
+  w8bz). Check `bridle agent logs <agent>` before nudging.
 - **File tickets yourself** (the project's docs conventions, if it has any). Don't hand
   ticket writing to the manager; it interrupts real work. Triage and scheduling are the manager's.
 - **Never change one of the human's existing projects without their review and
@@ -131,26 +131,26 @@ governor in the queue).
 The human should only have to agree and run one command (ticket d4mz):
 
 1. Propose the handover to the human, and wait for their yes.
-2. Write the note: `bridle handover write --file -` with what only you know (in-flight
+2. Write the note: `bridle orchestrator handover write --file -` with what only you know (in-flight
    threads, what to watch, open items). Don't restate what `bridle status`,
    `agents` and the queue show live. Put decisions in the repo (rules, tickets) and
    commit those.
-   When the daemon asked for it (a `context` wake), run `bridle handover done` last and
+   When the daemon asked for it (a `context` wake), run `bridle orchestrator handover done` last and
    stop there: it stops and relaunches this session itself, so skip 3 and 4.
 3. Stop your watcher (`TaskStop`).
 4. Tell the human to run the orchestrator launcher from the project. It
-   starts `claude` opened with `bridle prime orchestrator`
+   starts `claude` opened with `bridle orchestrator prime orchestrator`
    (this file, the newest handover note, and the startup steps).
 
 ## Only the human can
 
-- Stop the daemon: `bridle stop-daemon`, or Ctrl-C in their terminal.
+- Stop the daemon: `bridle daemon stop`, or Ctrl-C in their terminal.
 - Create tokens.
-- Stop or remove agents. This session's auto mode refuses `bridle stop` and
-  `bridle rm` on agents, so ask the human, with the exact command.
+- Stop or remove agents. This session's auto mode refuses `bridle agent stop` and
+  `bridle agent rm` on agents, so ask the human, with the exact command.
 
-To restart the daemon yourself, `bridle restart` (config change) or
-`bridle restart --upgrade` (with `[daemon] self_upgrade`, the daemon builds
+To restart the daemon yourself, `bridle daemon restart` (config change) or
+`bridle daemon restart --upgrade` (with `[daemon] self_upgrade`, the daemon builds
 verified `main` and restarts in place at a quiet point, then resumes every
 agent). Don't build bridle yourself, and never in the foreground: it blocks the
 wake loop.

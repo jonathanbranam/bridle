@@ -17,7 +17,7 @@ as PM on a small project with none) plans like this:
   tricky code), and what's out of scope.
 - **`bridle task plan <id>` makes a task ready to build** (`open -> planned`); an unplanned
   task can't be queued or claimed.
-- **Dependency edges only for true dependencies.** `bridle dep add <id> --blocked-by <id>` when
+- **Dependency edges only for true dependencies.** `bridle task dep add <id> --blocked-by <id>` when
   one task can't start before another merges. Ordering in the task body alone isn't an edge:
   both tasks show startable. Never use edges to express mere priority; that's the queue's job.
 - **Queue tiers order the work.** `bridle queue add-tier <id> <id>...` appends one tier

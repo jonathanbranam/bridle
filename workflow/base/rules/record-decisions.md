@@ -12,5 +12,5 @@ Record a decision where it outlives the change that produced it.
 Why: data-contracts' `driver-guide.md` §2 and `README.md` rule 5. Tickets are
 archived; the record of why must not go with them. Git is the source of truth.
 
-Until `bridle sync` renders rules into agents, the role prompts in the
+Until `bridle workflow sync` renders rules into agents, the role prompts in the
 `bridle` repo's `workflow/base/roles/` carry this.

@@ -19,6 +19,7 @@ use bridle_api::{
 use chrono::{Local, TimeZone, Utc};
 use futures::StreamExt;
 
+use crate::cli::{AgentArgs, DaemonArgs, HookArgs, WorkflowAction};
 use crate::cli::{
     AgentsArgs, AnswerArgs, ArchProposeArgs, AskArgs, BudgetAction, BudgetArgs, BudgetHoldArgs,
     ClaimArgs, Cli, Command, ConflictAction, ConflictArgs, CostAction, CostArgs, CostAuditArgs,
@@ -58,7 +59,79 @@ use usage::*;
 pub(crate) use workflow::spec_inputs;
 use workflow::*;
 
-pub async fn run(cli: Cli) -> Result<(), CliError> {
+/// Rewrite a grouped command line (`task claim`, `agent spawn`, ...) into the flat
+/// command it forwards to, so the old top-level names and the new groups share one
+/// dispatch and can't drift apart.
+fn normalize(cmd: Command) -> Command {
+    use crate::cli::{AgentAction as A, DaemonAction as D, HookAction as H, UsageSub};
+    match cmd {
+        Command::Daemon(DaemonArgs { action }) => match action {
+            D::Serve(a) => Command::Serve(a),
+            D::Stop => Command::StopDaemon,
+            D::Restart(a) => Command::Restart(a),
+            D::Doctor(a) => Command::Doctor(a),
+            D::Init(a) => Command::Init(a),
+            D::Launchd(a) => Command::Launchd(a),
+            D::Systemd(a) => Command::Systemd(a),
+            D::Rebuild(a) => Command::Rebuild(a),
+            D::List => Command::Daemons,
+        },
+        Command::Agent(AgentArgs { action }) => match action {
+            A::Spawn(a) => Command::Spawn(a),
+            A::List(a) => Command::Agents(a),
+            A::Show(a) => Command::Show(a),
+            A::Interrupt(a) => Command::Interrupt(a),
+            A::Stop(a) => Command::Stop(a),
+            A::Resume(a) => Command::Resume(a),
+            A::Renew(a) => Command::Renew(a),
+            A::Rm(a) => Command::Rm(a),
+            A::Logs(a) => Command::Logs(a),
+        },
+        Command::Hook(HookArgs { action }) => match action {
+            H::Statusline => Command::Statusline,
+            H::StopCheck => Command::StopCheck,
+            H::ArchGuard => Command::ArchGuard,
+        },
+        Command::Usage(UsageArgs { sub: Some(sub), .. }) => match sub {
+            UsageSub::Cost(a) => Command::Cost(a),
+            UsageSub::Budget(a) => Command::Budget(a),
+        },
+        Command::Task(TaskArgs { action }) => match action {
+            TaskAction::Claim(a) => Command::Claim(a),
+            TaskAction::Release(a) => Command::Release(a),
+            TaskAction::Ready(a) => Command::Ready(a),
+            TaskAction::Queue(a) => Command::Queue(a),
+            TaskAction::Dep(a) => Command::Dep(a),
+            TaskAction::Land(a) => Command::Land(a),
+            TaskAction::Conflict(a) => Command::Conflict(a),
+            TaskAction::Impact(a) => Command::Impact(a),
+            TaskAction::Ask(a) => Command::Ask(a),
+            TaskAction::Answer(a) => Command::Answer(a),
+            action => Command::Task(TaskArgs { action }),
+        },
+        Command::Orchestrator(OrchestratorArgs { action }) => match action {
+            OrchestratorAction::Handover(a) => Command::Handover(a),
+            OrchestratorAction::Prime(a) => Command::Prime(a),
+            OrchestratorAction::WaitForWake(a) => Command::WaitForWake(a),
+            action => Command::Orchestrator(OrchestratorArgs { action }),
+        },
+        Command::Workflow(action) => match action {
+            WorkflowAction::Rules(a) => Command::Rules(a),
+            WorkflowAction::Sync => Command::Sync,
+            WorkflowAction::Spec(a) => Command::Spec(a),
+            WorkflowAction::Goals(a) => Command::Goals(a),
+            WorkflowAction::Arch(a) => Command::Arch(a),
+            WorkflowAction::Explore(a) => Command::Explore(a),
+            WorkflowAction::Trace(a) => Command::Trace(a),
+            action => Command::Workflow(action),
+        },
+        other => other,
+    }
+}
+
+pub async fn run(mut cli: Cli) -> Result<(), CliError> {
+    let command = normalize(std::mem::replace(&mut cli.command, Command::Status));
+    let cli = Cli { command, ..cli };
     match &cli.command {
         Command::Serve(args) => serve::run(&cli, args).await,
         Command::StopDaemon => stop_daemon(&cli).await,
@@ -143,6 +216,9 @@ pub async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Machine(args) => crate::tools_only::run(&args.action),
         Command::Advisor(args) => crate::advisor::run(&cli, &args.action).await,
         Command::Session(args) => crate::session::run(&cli, &args.role).await,
+        Command::Orchestrator(_) | Command::Daemon(_) | Command::Agent(_) | Command::Hook(_) => {
+            unreachable!("normalize forwards the grouped forms")
+        }
     }
 }
 

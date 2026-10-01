@@ -13,5 +13,5 @@ Why: on meta-notes (2026-09-30) `pipenv` and `vader.vim` weren't installed. The 
 through `uv`, skipped the Vader tests, said so only in its done line, and the manager merged. The
 human: "that needs to be done for the overall workflow, not just our local fork."
 
-Until `bridle sync` renders rules into agents, the role prompts in the
+Until `bridle workflow sync` renders rules into agents, the role prompts in the
 `bridle` repo's `workflow/base/roles/` carry this.

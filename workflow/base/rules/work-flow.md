@@ -19,5 +19,5 @@ already enforces the plan-before-code and filing parts by construction (task
 states and the plan gate); this rule states the invariant they serve, and
 covers the parts they do not: acceptance and verification.
 
-Until `bridle sync` renders rules into agents, the role prompts in the
+Until `bridle workflow sync` renders rules into agents, the role prompts in the
 `bridle` repo's `workflow/base/roles/` carry this.

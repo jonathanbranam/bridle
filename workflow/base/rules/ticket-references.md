@@ -12,5 +12,5 @@ find in Obsidian or looking through a file explorer tree. I need to know the FIR
 ticket, not the LAST letters of the ticket." And: "let's keep the current convention of id at the
 end for now. I'll think about this more as I use the system."
 
-Until `bridle sync` renders rules into agents, the role prompts in the
+Until `bridle workflow sync` renders rules into agents, the role prompts in the
 `bridle` repo's `workflow/base/roles/` carry this.
