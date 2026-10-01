@@ -41,3 +41,11 @@ macOS returns the real path, which is why the laptop never hit this.
   machine must never lose its daemon to a restart.
 - Add a unit test for the suffix handling. A Linux-only test that replaces the binary is welcome
   if it's cheap.
+
+## Status
+
+- 2026-10-01: the path fix landed as 8edb6ed (br-7b79). The path is resolved once and
+  ` (deleted)` is stripped for exec, rollback and preflight.
+- Still open: staying up when the exec fails. Today a failed exec still exits after a clean
+  shutdown. Fixing that needs an in-process restart or a supervisor, so it was out of
+  br-7b79's scope.
