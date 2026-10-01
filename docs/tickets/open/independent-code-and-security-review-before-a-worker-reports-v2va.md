@@ -6,7 +6,7 @@ repos: [bridle]
 changes: []
 specs: []
 needs: []
-see: [hvxk]
+see: [hvxk, 2bzw]
 ---
 
 ## The ask
@@ -30,6 +30,14 @@ The human, 2026-10-01, verbatim (follow-up):
 > review. Or it could be optional and left to the discretion of the PM or whoever creates the
 > ticket / task could indicate that a specific review is necessary.
 
+The human, 2026-10-01, verbatim (second follow-up):
+
+> Independent reviews should be signed and added to the task including the commit sha and the
+> task body - particularly important for security reviews.
+>
+> If a human review is required (same options apply) that also should be signed which the humans
+> token in the same way.
+
 ## What's there now (at 0c741f6)
 
 - `docs/design/roles-and-lifecycle.md` (future work) has a **Reviewer** role: "strong model,
@@ -42,3 +50,8 @@ The human, 2026-10-01, verbatim (follow-up):
 - Today a worker runs `just check`, hands off, and the manager lands. No review step between.
 - Components (`docs/design/components.md`, `bridle task new --component`) already scope a task
   to part of a repo.
+- Signing: today the daemon records each call's `actor` from its bearer token, and the store
+  keeps only token hashes. `docs/design/agent-host/principals.md` ("What this is and isn't")
+  calls that "attribution that honest agents can't get wrong by accident, not a security
+  boundary". How strong provenance should be is open in
+  [[how-strong-agent-provenance-should-be-2bzw|2bzw]].
