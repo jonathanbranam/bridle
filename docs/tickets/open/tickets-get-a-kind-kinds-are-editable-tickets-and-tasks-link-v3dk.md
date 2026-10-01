@@ -5,7 +5,7 @@ opened: 2026-10-01
 repos: [bridle]
 changes: []
 specs: []
-needs: []
+needs: [project-migrations-one-command-applies-pending-bridle-upgrad-xebc]
 see: [focus-override-accept-local-time-in-until-like-the-focus-con-hesj, questions-become-tickets-and-a-docs-folder-plan-xe5c]
 ---
 
@@ -65,9 +65,18 @@ Then, on the advisor's suggestion of no default:
    fails on a link present on one side only.
 5. **A task's kind is editable early and frozen once planned.**
 
-## Advisor's recommendation for 5 (not yet confirmed)
+## 5, as approved
+
+The advisor's recommendation; the human, 2026-10-01: "Yeah, approved. That all looks good."
 
 `bridle task kind <id> <kind>`, like `bridle task priority`: allowed only while the task is
 `open`, refused in every other state (`planned`, `claimed`, `dropped`, `integrated`, and
 `reopened`, since a reopened task was planned before), and recorded in the thread and as an
 event.
+
+## Migration
+
+Existing tickets in every bridle project need `kind:` backfilled (from each ticket's task, where it
+has one) and the two-way links added. That ships as a migration through
+[[project-migrations-one-command-applies-pending-bridle-upgrad-xebc|project migrations]], so this
+ticket needs it.
