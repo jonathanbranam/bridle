@@ -910,6 +910,10 @@ async fn list_messages(
     Ok(Json(msgs))
 }
 
+fn is_known_external_principal(name: &str) -> bool {
+    matches!(name, "advisor" | "orchestrator" | "human")
+}
+
 /// Resolves a `to` string (`human`, `external:NAME`, `role:NAME` or an agent) to
 /// its delivery targets; unknown recipients are a 404.
 async fn resolve_targets(state: &AppState, to_raw: &str) -> Result<Vec<ToTarget>, ApiError> {
@@ -936,11 +940,16 @@ async fn resolve_targets(state: &AppState, to_raw: &str) -> Result<Vec<ToTarget>
         }
         matching
     } else {
-        let agent = state
-            .store
-            .get_agent(to_raw)
-            .await?
-            .ok_or_else(|| ApiError::not_found(format!("no such recipient: {to_raw}")))?;
+        let agent = state.store.get_agent(to_raw).await?.ok_or_else(|| {
+            // Check if the bare name is a known external principal
+            if is_known_external_principal(to_raw) {
+                ApiError::not_found(format!(
+                    "no such recipient: {to_raw}; did you mean external:{to_raw}?"
+                ))
+            } else {
+                ApiError::not_found(format!("no such recipient: {to_raw}"))
+            }
+        })?;
         vec![ToTarget::Agent(agent.id)]
     })
 }
@@ -2971,5 +2980,14 @@ mod tests {
             "agent:w2",
             "an explicit claimant id not naming a known agent passes through unchanged"
         );
+    }
+
+    #[test]
+    fn is_known_external_principal_recognizes_valid_names() {
+        assert!(is_known_external_principal("advisor"));
+        assert!(is_known_external_principal("orchestrator"));
+        assert!(is_known_external_principal("human"));
+        assert!(!is_known_external_principal("unknown"));
+        assert!(!is_known_external_principal("advisor-2"));
     }
 }

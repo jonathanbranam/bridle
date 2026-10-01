@@ -50,7 +50,7 @@ bridle agent spawn   <role> [--name N] [--prompt TEXT | --prompt-file FILE]
                [--component ID ...]
 bridle agents  [--all]
 bridle agent show    <agent>
-bridle send    <agent|human|role:NAME> [TEXT | --text-file FILE] [--question] [--when now|idle] [--reply-to ID] [--task ID]
+bridle send    <agent|human|role:NAME|external:NAME> [TEXT | --text-file FILE] [--question] [--when now|idle] [--reply-to ID] [--task ID]
 bridle inbox   [--all] [--mark-read]        # messages to me, plus every task's open question (list)
 bridle inbox show <id> [--mark-read]        # show one message in full; leaves it unread unless --mark-read
 bridle inbox read <id>...                   # mark one or more messages read
