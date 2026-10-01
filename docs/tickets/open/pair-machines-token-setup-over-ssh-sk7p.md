@@ -48,13 +48,27 @@ orchestrator, advisor), every project and both directions.
   permissions deny `bridle token *` (check the session/worker deny lists).
 - `--dry-run` lists what would be minted and written.
 
+## Decided (2026-10-01)
+
+The human, verbatim: "Yes I should be addressable and traceable from machine to machine. I need
+replies sent to human@NUC if that's where I'm connected. I assume if we drop the @ then it will be
+same-machine."
+
+- The human on another machine is a principal of its own, `human@<machine>` (e.g. `human@nuc`),
+  following k7mw's `<name>@<machine>` naming. It acts with the human's authority, but it is recorded,
+  traceable and revocable separately from the local `human`.
+- A bare `human` always means the human on the daemon's own machine (workspace token).
+- Replies go back to the principal that sent: a message from `human@nuc` is answered to
+  `human@nuc`, and shows in the human's inbox on the NUC, not only on the daemon's machine.
+- 3ehu part 1 (br-8b98) mints and reads exactly this principal: `[human.<machine>]` holds the
+  `human@<machine>` token.
+
 ## Open questions
 
-- The human's own cross-machine token: is it a `human` principal, or `external:human@<machine>`
-  (it can't be `human` itself, which is minted from the workspace file)? Settle this together with
-  3ehu part 1 (br-8b98), which adds the `[human.<machine>]` fallback this command would fill.
 - Whether a remote `bridle` is on SSH's non-interactive PATH (`~/.cargo/bin`). Allow
   `--remote-bridle <path>`.
+- Which human-only commands `human@<machine>` may run (`token create`, `shutdown`). The default
+  should be the same as `human`, since SSH already proved it's them. Check with the human.
 
 ## Done when
 
