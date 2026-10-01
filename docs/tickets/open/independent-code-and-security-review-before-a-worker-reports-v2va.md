@@ -23,6 +23,13 @@ The human, 2026-10-01, verbatim (via the advisor):
 > Don't rush these but note that it should be something available. These should pass before a
 > worker reports back to manager that the work is done.
 
+The human, 2026-10-01, verbatim (follow-up):
+
+> A task can require certain reviews and a workflow can require certain reviews. Eg a workflow
+> might dictate: every change to module/component/entire project needs an independent security
+> review. Or it could be optional and left to the discretion of the PM or whoever creates the
+> ticket / task could indicate that a specific review is necessary.
+
 ## What's there now (at 0c741f6)
 
 - `docs/design/roles-and-lifecycle.md` (future work) has a **Reviewer** role: "strong model,
@@ -33,3 +40,5 @@ The human, 2026-10-01, verbatim (via the advisor):
 - How consumers opt in or out: `docs/design/workflow-layers.md`. Base rules apply by default,
   and a project opts out with `override: disable` and a `reason`; packs (L2) are opt-in.
 - Today a worker runs `just check`, hands off, and the manager lands. No review step between.
+- Components (`docs/design/components.md`, `bridle task new --component`) already scope a task
+  to part of a repo.
