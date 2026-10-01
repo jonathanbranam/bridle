@@ -33,3 +33,6 @@
 {"actor":"agent:pm-1","at":"2026-10-01T02:16:28.941598Z","from":"open","task":"br-8c25","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-01T02:16:28.991420Z","queue":"reprioritized"}
 {"actor":"human","at":"2026-10-01T02:25:32.858Z","from":"","task":"br-e5b1","to":"open"}
+{"actor":"human","at":"2026-10-01T02:26:13.127Z","from":"","task":"br-79c3","to":"open"}
+{"actor":"agent:pm-1","at":"2026-10-01T02:26:16.904492Z","from":"open","task":"br-79c3","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-01T02:26:16.934844Z","queue":"reprioritized"}
