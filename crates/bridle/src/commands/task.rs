@@ -344,6 +344,12 @@ pub(super) async fn land(cli: &Cli, args: &LandArgs) -> Result<(), CliError> {
 
 pub(super) async fn task_done(cli: &Cli, args: &TaskDoneArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
+    let original_task = client.get_task(&args.task).await.ok();
+    let was_human_claimed = original_task
+        .as_ref()
+        .and_then(|t| t.claimed_by.as_deref())
+        .map(|c| c == "human")
+        .unwrap_or(false);
     let req = DoneTaskRequest {
         commit: args.commit.clone(),
         branch: args.branch.clone(),
@@ -368,7 +374,7 @@ pub(super) async fn task_done(cli: &Cli, args: &TaskDoneArgs) -> Result<(), CliE
             return Err(e.into());
         }
     };
-    if task.summary.is_none() {
+    if task.summary.is_none() && !was_human_claimed {
         eprintln!(
             "warning: {} has no summary; record one with `bridle task summary {} --text ...`",
             task.id, task.id

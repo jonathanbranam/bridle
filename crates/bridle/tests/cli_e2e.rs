@@ -1382,3 +1382,119 @@ fn goals_propose_creates_question_task() {
     assert!(v["body"].as_str().unwrap().contains("stance=build"));
     assert!(v["body"].as_str().unwrap().contains("Time to build it"));
 }
+
+#[test]
+fn task_done_skips_warning_for_human_claimed_tasks() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let repo = tmp.path().join("repo");
+    init_repo(&repo);
+    let workspace = tmp.path().to_path_buf();
+    let home = tmp.path().join("home");
+
+    let mut serve_cmd = Command::new(bridle_bin());
+    serve_cmd
+        .arg("serve")
+        .arg("--repo")
+        .arg(&repo)
+        .arg("--listen")
+        .arg("127.0.0.1:0")
+        .env("BRIDLE_CLAUDE_BIN", fake_claude_path())
+        .env("BRIDLE_HOME", &home)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null());
+    strip_bridle_env(&mut serve_cmd);
+    let child = serve_cmd.spawn().expect("spawn bridle serve");
+    let _guard = DaemonGuard(child);
+
+    let daemon_json = workspace.join(".bridle/daemon.json");
+    wait_for_file(&daemon_json);
+
+    // Create a human to-do
+    let (ok, out, err) = run_cli(
+        &repo,
+        &home,
+        &[
+            "task",
+            "new",
+            "--kind",
+            "bug",
+            "--for-human",
+            "human-task",
+            "--json",
+        ],
+    );
+    assert!(ok, "task new failed: {err}");
+    let task: serde_json::Value = serde_json::from_str(&out).expect("task json");
+    let task_id = task["id"].as_str().expect("task id").to_string();
+
+    // Done the human task and check that no warning is printed
+    let (ok, _out, err) = run_cli(&repo, &home, &["task", "done", &task_id]);
+    assert!(ok, "task done failed");
+    assert!(
+        !err.contains("has no summary"),
+        "human-claimed task should not warn about missing summary; stderr: {err}"
+    );
+}
+
+#[test]
+fn task_done_warns_for_agent_claimed_tasks_without_summary() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let repo = tmp.path().join("repo");
+    init_repo(&repo);
+    let workspace = tmp.path().to_path_buf();
+    let home = tmp.path().join("home");
+
+    let mut serve_cmd = Command::new(bridle_bin());
+    serve_cmd
+        .arg("serve")
+        .arg("--repo")
+        .arg(&repo)
+        .arg("--listen")
+        .arg("127.0.0.1:0")
+        .env("BRIDLE_CLAUDE_BIN", fake_claude_path())
+        .env("BRIDLE_HOME", &home)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null());
+    strip_bridle_env(&mut serve_cmd);
+    let child = serve_cmd.spawn().expect("spawn bridle serve");
+    let _guard = DaemonGuard(child);
+
+    let daemon_json = workspace.join(".bridle/daemon.json");
+    wait_for_file(&daemon_json);
+
+    // Create a regular task that is not claimed by a human
+    let (ok, out, err) = run_cli(
+        &repo,
+        &home,
+        &["task", "new", "--kind", "bug", "regular-task", "--json"],
+    );
+    assert!(ok, "task new failed: {err}");
+    let task: serde_json::Value = serde_json::from_str(&out).expect("task json");
+    let task_id = task["id"].as_str().expect("task id").to_string();
+
+    // Create a commit to mark the task as done
+    let commit_output = std::process::Command::new("git")
+        .arg("-C")
+        .arg(&repo)
+        .arg("rev-parse")
+        .arg("HEAD")
+        .output()
+        .expect("get HEAD commit");
+    let commit = String::from_utf8_lossy(&commit_output.stdout)
+        .trim()
+        .to_string();
+
+    // Done the unclaimed task and check that a warning IS printed (since it wasn't claimed by human)
+    let (ok, _out, err) = run_cli(
+        &repo,
+        &home,
+        &["task", "done", &task_id, "--commit", &commit],
+    );
+    assert!(ok, "task done failed");
+    assert!(
+        err.contains("has no summary"),
+        "unclaimed task should warn about missing summary; stderr: {err}"
+    );
+}
