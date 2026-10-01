@@ -4,8 +4,9 @@ title = "Rename bridle task note to bridle task comment, hidden alias kept (c7mn
 kind = "chore"
 state = "planned"
 created_at = "2026-10-01T01:04:29.370Z"
-updated_at = "2026-10-01T01:04:31.497324Z"
+updated_at = "2026-10-01T01:10:13.430462Z"
 size = "S"
+summary = "Renamed 'bridle task note' to 'bridle task comment' with hidden alias for backward compatibility. Updated all role prompts, rules, skills, and design docs to use the new name. Added test for alias and CHANGELOG entry. User-facing message updated from 'note added' to 'comment added'."
 +++
 
 Ticket: docs/tickets/open/rename-task-note-to-task-comment-c7mn.md (read it).
