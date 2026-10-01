@@ -55,3 +55,13 @@ The human, 2026-10-01, verbatim (second follow-up):
   calls that "attribution that honest agents can't get wrong by accident, not a security
   boundary". How strong provenance should be is open in
   [[how-strong-agent-provenance-should-be-2bzw|2bzw]].
+
+## Decided (2026-10-01)
+
+The human, verbatim: "Right so the tokens aren't secure and that will be hard. But let's assume
+the tokens are secure and then use them for cryptographic signing. This isn't a truly secure hard
+system but we are experimenting with important functionality."
+
+So reviews (agent and human) are cryptographically signed using the reviewer's bridle token,
+on the working assumption that tokens are secure. Hardening token storage isn't part of this
+ticket (2bzw).
