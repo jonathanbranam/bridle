@@ -6,7 +6,7 @@ repos: [bridle]
 changes: []
 specs: []
 needs: []
-see: [[cvaq, phyy]]
+see: [cvaq, phyy]
 ---
 
 ## The ask
