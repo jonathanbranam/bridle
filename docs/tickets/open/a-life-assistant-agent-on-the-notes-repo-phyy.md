@@ -242,6 +242,12 @@ orchestrator drives the project with `--project notes`. The gaps it found (m-314
    would watch, hand over and relaunch the same session. So `notes` runs with supervision off.
    A per-project assistant needs the files named per project or per role. See ma8e (one
    orchestrator per machine).
+   The human, 2026-10-01 (m-3172), verbatim: "For restart, we should likely just generalize that
+   to any agent based on local configuration. It seems like something useful. The orch can launch
+   advisors, but it seems reasonable to put that on bridle instead of overloading the orchestrator
+   with things to do." So bridle supervises any external session a project's config names
+   (orchestrator, advisors, a concierge): it launches them, restarts them on a crash and hands
+   them over at the context limit. Each session gets its own pid, session and exits files.
 3. **Wake on any message.** `wait-for-wake` serves `external:orchestrator` only. `--mail` returns
    only on mail from the email bridge, and `bridle wait` needs a task. The stopgap is a loop
    polling `bridle inbox --json`. Wanted: a message waiter for any external principal.
