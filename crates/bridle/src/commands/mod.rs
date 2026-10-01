@@ -12,9 +12,9 @@ use bridle_api::{
     ImpactCheckRequest, InterruptRequest, LandRequest, MaxWorkersRequest, MessageKind,
     MessageQuery, NewEdgeRequest, NewTaskRequest, OverlapLevel, ProbeOutcome, ProbeRequest,
     ProbeResult, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, ResumeRequest,
-    SendRequest, SetImpactRequest, SetPriorityRequest, SetSummaryRequest, SpawnRequest, SpecRef,
-    StopRequest, Task, TaskKind, TaskPriority, TaskSize, TokenCreateRequest, UsageBreakdownQuery,
-    UsageGroupBy, Workdir, event_kind,
+    SendRequest, SetImpactRequest, SetKindRequest, SetPriorityRequest, SetSummaryRequest,
+    SpawnRequest, SpecRef, StopRequest, Task, TaskKind, TaskPriority, TaskSize, TokenCreateRequest,
+    UsageBreakdownQuery, UsageGroupBy, Workdir, event_kind,
 };
 use chrono::{Local, TimeZone, Utc};
 use clap::CommandFactory;
@@ -30,10 +30,10 @@ use crate::cli::{
     QueueAction, QueueAddTierArgs, QueueArgs, QueueSetArgs, ReadyArgs, ReleaseArgs, RmArgs,
     RulesAction, RulesArgs, RulesDiffArgs, RulesExplainArgs, SendArgs, ShowArgs, SpawnArgs,
     SpecAction, SpecArgs, SpecExportArgs, SpecFormatArg, StopArgs, TaskAction, TaskArgs,
-    TaskCommentArgs, TaskDoneArgs, TaskDropArgs, TaskEditArgs, TaskKindArg, TaskListArgs,
-    TaskNewArgs, TaskPlanArgs, TaskPriorityArg, TaskPriorityArgs, TaskReopenArgs, TaskSearchArgs,
-    TaskShowArgs, TaskSizeArg, TaskSummaryArgs, TokenAction, TokenArgs, UsageArgs, UsageByArg,
-    WaitArgs, WhenArg,
+    TaskCommentArgs, TaskDoneArgs, TaskDropArgs, TaskEditArgs, TaskKindArg, TaskKindArgs,
+    TaskListArgs, TaskNewArgs, TaskPlanArgs, TaskPriorityArg, TaskPriorityArgs, TaskReopenArgs,
+    TaskSearchArgs, TaskShowArgs, TaskSizeArg, TaskSummaryArgs, TokenAction, TokenArgs, UsageArgs,
+    UsageByArg, WaitArgs, WhenArg,
 };
 use crate::cli::{
     FocusAction, FocusArgs, LandArgs, OrchestratorAction, OrchestratorArgs, PortAction, PortArgs,

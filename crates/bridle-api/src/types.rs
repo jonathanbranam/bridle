@@ -640,6 +640,8 @@ pub mod event_kind {
     pub const TASK_EDITED: &str = "task.edited";
     /// data: {task, from, to}
     pub const TASK_PRIORITY: &str = "task.priority";
+    /// data: {task, from, to}
+    pub const TASK_KIND: &str = "task.kind";
     /// data: {from, to, kind}
     pub const EDGE_ADDED: &str = "edge.added";
     /// data: {from, to, kind}
@@ -1195,6 +1197,12 @@ impl std::fmt::Display for TaskPriority {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SetPriorityRequest {
     pub priority: TaskPriority,
+}
+
+/// `POST /v1/tasks/{id}/kind`; only while the task is `open`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SetKindRequest {
+    pub kind: TaskKind,
 }
 
 /// The lifecycle states this build knows about

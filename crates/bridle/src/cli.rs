@@ -419,7 +419,7 @@ pub enum TicketAction {
     New(TicketNewArgs),
     /// Stamp `closed:` and move an open ticket to docs/tickets/resolved/ (no commit, no task change).
     Resolve(TicketResolveArgs),
-    /// Set one frontmatter field (title, repos, changes, specs, needs, see); list fields take comma-separated values.
+    /// Set one frontmatter field (title, kind, repos, changes, specs, needs, see, tasks); list fields take comma-separated values.
     Set(TicketSetArgs),
     /// Check every ticket's frontmatter, IDs, needs/see and [[links]]; exits 1 listing the problems.
     Check(TicketCheckArgs),
@@ -437,6 +437,9 @@ pub struct TicketNewArgs {
     /// Related ticket ids, comma-separated.
     #[arg(long, value_delimiter = ',')]
     pub see: Vec<String>,
+    /// The ticket's kind, and its task's: there is no default.
+    #[arg(short = 'k', long, value_enum)]
+    pub kind: TaskKindArg,
     /// Don't create the matching bridle task.
     #[arg(long)]
     pub no_task: bool,
@@ -1237,6 +1240,13 @@ pub struct TaskPriorityArgs {
 }
 
 #[derive(Debug, Args)]
+pub struct TaskKindArgs {
+    pub task: String,
+    #[arg(value_enum, ignore_case = true)]
+    pub kind: TaskKindArg,
+}
+
+#[derive(Debug, Args)]
 pub struct TaskArgs {
     #[command(subcommand)]
     pub action: TaskAction,
@@ -1256,6 +1266,8 @@ pub enum TaskAction {
     Plan(TaskPlanArgs),
     /// Change a task's priority (high, normal, low); recorded in its thread and as an event.
     Priority(TaskPriorityArgs),
+    /// Change a task's kind; only while it is `open`. Recorded in its thread and as an event.
+    Kind(TaskKindArgs),
     /// Drop a task (requires a reason, recorded in its thread).
     Drop(TaskDropArgs),
     /// Mark a task integrated (merged), recording the merge commit in its thread.

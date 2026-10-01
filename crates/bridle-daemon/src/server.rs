@@ -20,10 +20,11 @@ use bridle_api::types::{
     OpenQuestion, OverlapLevel, PortAllocation, PrincipalKind, ProbeOutcome, ProbeRequest,
     ProbeResult, Queue, RateLimit, RebuildResponse, RemoveEdgeQuery, RemoveQuery, RenewRequest,
     ResolveConflictRequest, ResumeRequest, ScheduleOverrideStatus, SendRequest, SetImpactRequest,
-    SetPriorityRequest, SetQueueRequest, SetSummaryRequest, ShutdownResponse, SpawnRequest, Status,
-    StatusLineReport, StopRequest, Task, TaskQuery, TaskState, TokenCreateRequest, TokenCreated,
-    TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery,
-    UsageGroupBy, WakeResponse, When, WindowStatus, WriteHandoverRequest, event_kind,
+    SetKindRequest, SetPriorityRequest, SetQueueRequest, SetSummaryRequest, ShutdownResponse,
+    SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery, TaskState,
+    TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
+    UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, WakeResponse, When, WindowStatus,
+    WriteHandoverRequest, event_kind,
 };
 use bridle_api::types::{PrincipalId, ThreadEntryKind};
 use chrono::Utc;
@@ -114,6 +115,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/tasks/{id}/land", post(land_task))
         .route("/v1/tasks/{id}/summary", post(set_summary))
         .route("/v1/tasks/{id}/priority", post(set_priority))
+        .route("/v1/tasks/{id}/kind", post(set_kind))
         .route("/v1/tasks/{id}/impact", post(set_impact))
         .route("/v1/impact/check", post(impact_check))
         .route("/v1/probe", post(probe))
@@ -1470,6 +1472,27 @@ async fn set_priority(
                 principal.id,
                 None,
                 serde_json::json!({"task": task.id, "from": from, "to": task.priority}),
+            )
+            .await;
+    }
+    Ok(Json(task))
+}
+
+async fn set_kind(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path(id): Path<String>,
+    Json(req): Json<SetKindRequest>,
+) -> Result<Json<Task>, ApiError> {
+    let (task, from) = state.tasks.set_kind(&id, req.kind, &principal.id).await?;
+    if from != task.kind {
+        let _ = state
+            .emitter
+            .emit(
+                event_kind::TASK_KIND,
+                principal.id,
+                None,
+                serde_json::json!({"task": task.id, "from": from, "to": task.kind}),
             )
             .await;
     }

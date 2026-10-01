@@ -2,16 +2,18 @@
 //! `docs/tickets/open/` and move it to `resolved/`. The file logic (id mint, frontmatter, find by
 //! id) takes a tickets root and does no I/O beyond it, so `check`/`set`/`link` can reuse it.
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::hash::{BuildHasher, RandomState};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use anyhow::{Context, anyhow, bail};
 use bridle_api::{NewTaskRequest, TaskKind};
+use clap::ValueEnum;
 
 use crate::cli::{
-    Cli, TicketAction, TicketArgs, TicketCheckArgs, TicketNewArgs, TicketResolveArgs, TicketSetArgs,
+    Cli, TaskKindArg, TicketAction, TicketArgs, TicketCheckArgs, TicketNewArgs, TicketResolveArgs,
+    TicketSetArgs,
 };
 use crate::commands::client_for;
 use crate::error::CliError;
@@ -21,13 +23,21 @@ const ID_ALPHABET: &[u8] = b"abcdefghjkmnpqrstuvwxyz23456789";
 const ID_LEN: usize = 4;
 const MAX_SLUG: usize = 60;
 
+/// Whether a ticket with no `kind:` or a one-sided/missing ticket<->task link fails
+/// `ticket check` (true) or only warns (false). Off until the backfill migration
+/// (ticket v3dk, slice B) has run in every project; it flips this to true.
+const MISSING_KIND_OR_LINK_IS_ERROR: bool = false;
+
+/// First line of a task body made from a ticket: `original id: <ticket id>`.
+const TASK_ORIGIN_PREFIX: &str = "original id: ";
+
 pub async fn run(cli: &Cli, args: &TicketArgs) -> Result<(), CliError> {
     let repo = repo_root()?;
     match &args.action {
         TicketAction::New(a) => new(cli, &repo, a).await,
         TicketAction::Resolve(a) => resolve_cmd(&repo, a),
         TicketAction::Set(a) => set_cmd(&repo, a),
-        TicketAction::Check(a) => check_cmd(&repo, a),
+        TicketAction::Check(a) => check_cmd(cli, &repo, a).await,
     }
 }
 
@@ -52,8 +62,10 @@ async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<(), CliErro
     } else {
         args.repos.clone()
     };
+    let kind = kind_of(args.kind);
     let fields = Fields {
         title: &args.title,
+        kind,
         repos: &repos,
         needs: &args.needs,
         see: &args.see,
@@ -69,27 +81,62 @@ async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<(), CliErro
 
     if !args.no_task {
         let id = id_of(&path).expect("create names the file <slug>-<id>.md");
-        if let Err(e) = make_task(cli, &args.title, &id, &rel).await {
-            eprintln!("warning: ticket written, but no bridle task was created: {e}");
+        match make_task(cli, &args.title, kind, &id, &rel).await {
+            Ok(task_id) => {
+                // The ticket records every task made from it; the task records the ticket.
+                set(&tickets_root(repo), &id, "tasks", &task_id)?;
+            }
+            Err(e) => eprintln!("warning: ticket written, but no bridle task was created: {e}"),
         }
     }
     Ok(())
 }
 
-async fn make_task(cli: &Cli, title: &str, id: &str, rel: &str) -> Result<(), CliError> {
+fn kind_of(arg: TaskKindArg) -> TaskKind {
+    let name = arg.to_possible_value().expect("no skipped kinds");
+    name.get_name().parse().expect("CLI kinds are task kinds")
+}
+
+/// Creates the task for a ticket and returns its id.
+async fn make_task(
+    cli: &Cli,
+    title: &str,
+    kind: TaskKind,
+    id: &str,
+    rel: &str,
+) -> Result<String, CliError> {
     let client = client_for(cli).await?;
-    client
+    let task = client
         .new_task(&NewTaskRequest {
             for_human: false,
             priority: None,
             title: title.to_string(),
-            kind: TaskKind::Question,
-            body: format!("original id: {id}\n{rel}"),
+            kind,
+            body: format!("{TASK_ORIGIN_PREFIX}{id}\n{rel}"),
             components: Vec::new(),
             size: None,
         })
         .await?;
-    Ok(())
+    Ok(task.id)
+}
+
+/// Task id -> the ticket id its body names, for every task made from a ticket. `None` when
+/// the daemon isn't reachable: the task side of the link can't be checked then.
+async fn task_links(cli: &Cli) -> Option<HashMap<String, String>> {
+    let client = client_for(cli).await.ok()?;
+    let tasks = client.list_tasks().await.ok()?;
+    Some(
+        tasks
+            .into_iter()
+            .filter_map(|t| {
+                let first = t.body.lines().next()?;
+                Some((
+                    t.id,
+                    first.strip_prefix(TASK_ORIGIN_PREFIX)?.trim().to_string(),
+                ))
+            })
+            .collect(),
+    )
 }
 
 fn resolve_cmd(repo: &Path, args: &TicketResolveArgs) -> Result<(), CliError> {
@@ -105,23 +152,28 @@ fn set_cmd(repo: &Path, args: &TicketSetArgs) -> Result<(), CliError> {
     Ok(())
 }
 
-fn check_cmd(repo: &Path, args: &TicketCheckArgs) -> Result<(), CliError> {
+async fn check_cmd(cli: &Cli, repo: &Path, args: &TicketCheckArgs) -> Result<(), CliError> {
     let root = tickets_root(repo);
-    let problems = check(&root, &repo.join("docs"));
-    if problems.is_empty() {
-        if !args.quiet {
+    let links = task_links(cli).await;
+    let report = check(&root, &repo.join("docs"), links.as_ref());
+    for w in &report.warnings {
+        eprintln!("warning: {w}");
+    }
+    if report.errors.is_empty() {
+        if !args.quiet && report.warnings.is_empty() {
             println!("tickets ok");
         }
         return Ok(());
     }
-    for p in &problems {
+    for p in &report.errors {
         eprintln!("{p}");
     }
-    Err(anyhow!("ticket check: {} problem(s)", problems.len()).into())
+    Err(anyhow!("ticket check: {} problem(s)", report.errors.len()).into())
 }
 
 pub struct Fields<'a> {
     pub title: &'a str,
+    pub kind: TaskKind,
     pub repos: &'a [String],
     pub needs: &'a [String],
     pub see: &'a [String],
@@ -141,8 +193,9 @@ pub fn create(root: &Path, f: &Fields, today: &str) -> anyhow::Result<PathBuf> {
         format!("{slug}-{id}.md")
     };
     let text = format!(
-        "---\nid: {id}\ntitle: {}\nopened: {today}\nrepos: {}\nchanges: []\nspecs: []\nneeds: {}\nsee: {}\n---\n\n## The ask\n\n",
+        "---\nid: {id}\ntitle: {}\nkind: {}\nopened: {today}\nrepos: {}\nchanges: []\nspecs: []\nneeds: {}\nsee: {}\ntasks: []\n---\n\n## The ask\n\n",
         yaml_scalar(f.title),
+        f.kind,
         list(f.repos),
         list(f.needs),
         list(f.see),
@@ -207,7 +260,7 @@ pub fn id_of(path: &Path) -> Option<String> {
     (id.len() == ID_LEN && id.bytes().all(|b| ID_ALPHABET.contains(&b))).then(|| id.to_string())
 }
 
-const LIST_FIELDS: [&str; 5] = ["repos", "changes", "specs", "needs", "see"];
+const LIST_FIELDS: [&str; 6] = ["repos", "changes", "specs", "needs", "see", "tasks"];
 const REQUIRED: [&str; 8] = [
     "id", "title", "opened", "repos", "changes", "specs", "needs", "see",
 ];
@@ -218,8 +271,13 @@ pub fn set(root: &Path, id: &str, field: &str, value: &str) -> anyhow::Result<Pa
         bail!("{field} is not editable (resolve stamps closed; id and opened never change)");
     }
     let is_list = LIST_FIELDS.contains(&field);
-    if !is_list && field != "title" {
-        bail!("unknown field {field}; one of title, repos, changes, specs, needs, see");
+    if !is_list && field != "title" && field != "kind" {
+        bail!(
+            "unknown field {field}; one of title, kind, repos, changes, specs, needs, see, tasks"
+        );
+    }
+    if field == "kind" {
+        value.parse::<TaskKind>().map_err(|e| anyhow!(e))?;
     }
     let path = find_by_id(&root.join("open"), id)
         .or_else(|_| find_by_id(&root.join("resolved"), id))
@@ -359,10 +417,18 @@ fn link_exists(link: &str, docs: &Path, stems: &HashSet<String>) -> bool {
             .any(|base| base.join(&with_md).is_file())
 }
 
+#[derive(Debug, Default)]
+pub struct Report {
+    pub errors: Vec<String>,
+    pub warnings: Vec<String>,
+}
+
 /// Every problem in the tickets under `root/{open,resolved}`; `docs` is where `[[links]]` may
-/// point (by file stem, anywhere beneath it).
-pub fn check(root: &Path, docs: &Path) -> Vec<String> {
+/// point (by file stem, anywhere beneath it). `task_links` maps task id -> the ticket id it was
+/// made from; `None` skips the task side of the two-way link.
+pub fn check(root: &Path, docs: &Path, task_links: Option<&HashMap<String, String>>) -> Report {
     let mut problems = Vec::new();
+    let mut warnings = Vec::new();
     let mut files: Vec<(bool, PathBuf)> = Vec::new();
     for (resolved, dir) in [(false, "open"), (true, "resolved")] {
         let Ok(rd) = std::fs::read_dir(root.join(dir)) else {
@@ -393,20 +459,29 @@ pub fn check(root: &Path, docs: &Path) -> Vec<String> {
 
     for (resolved, path) in &files {
         let at = shown(path);
-        let mut bad = |msg: String| problems.push(format!("{at}: {msg}"));
+        // `soft` gaps are ones the backfill migration will fill: warnings until
+        // MISSING_KIND_OR_LINK_IS_ERROR.
+        let mut note = |error: bool, msg: String| {
+            let line = format!("{at}: {msg}");
+            if error {
+                problems.push(line);
+            } else {
+                warnings.push(line);
+            }
+        };
         let file_id = id_of(path);
         if file_id.is_none() {
-            bad("file name doesn't end in -<4-character id>.md".into());
+            note(true, "file name doesn't end in -<4-character id>.md".into());
         }
         let text = match std::fs::read_to_string(path) {
             Ok(t) => t,
             Err(e) => {
-                bad(format!("unreadable: {e}"));
+                note(true, format!("unreadable: {e}"));
                 continue;
             }
         };
         let Some((front, body)) = split_front(&text) else {
-            bad("no frontmatter".into());
+            note(true, "no frontmatter".into());
             continue;
         };
         let get = |k: &str| {
@@ -417,43 +492,90 @@ pub fn check(root: &Path, docs: &Path) -> Vec<String> {
         };
         for k in REQUIRED {
             if get(k).is_none_or(str::is_empty) && !(LIST_FIELDS.contains(&k) && get(k).is_some()) {
-                bad(format!("missing {k}"));
+                note(true, format!("missing {k}"));
+            }
+        }
+        match get("kind") {
+            None | Some("") => note(MISSING_KIND_OR_LINK_IS_ERROR, "missing kind".into()),
+            Some(k) if k.parse::<TaskKind>().is_err() => note(true, format!("unknown kind {k}")),
+            Some(_) => {}
+        }
+        let tasks = get("tasks").and_then(list_items);
+        if get("tasks").is_none() {
+            note(
+                MISSING_KIND_OR_LINK_IS_ERROR,
+                "missing tasks (the tasks made from this ticket)".into(),
+            );
+        }
+        if let (Some(links), Some(me)) = (task_links, get("id")) {
+            for t in tasks.iter().flatten() {
+                match links.get(t) {
+                    None => note(
+                        true,
+                        format!("tasks names {t}, which is not a task made from a ticket"),
+                    ),
+                    Some(o) if o != me => {
+                        note(true, format!("tasks names {t}, which names ticket {o}"))
+                    }
+                    Some(_) => {}
+                }
+            }
+            let mut mine: Vec<&String> = links
+                .iter()
+                .filter(|(_, o)| *o == me)
+                .map(|(t, _)| t)
+                .collect();
+            mine.sort();
+            for t in mine {
+                if !tasks.iter().flatten().any(|x| x == t) {
+                    let msg = format!("task {t} names this ticket, but tasks doesn't list it");
+                    if tasks.is_some() {
+                        note(true, msg)
+                    } else {
+                        note(MISSING_KIND_OR_LINK_IS_ERROR, msg)
+                    }
+                }
             }
         }
         match (resolved, get("closed")) {
-            (true, None | Some("")) => bad("missing closed (required under resolved/)".into()),
-            (false, Some(_)) => bad("closed is set but the ticket is under open/".into()),
+            (true, None | Some("")) => {
+                note(true, "missing closed (required under resolved/)".into())
+            }
+            (false, Some(_)) => note(true, "closed is set but the ticket is under open/".into()),
             _ => {}
         }
         if let Some(id) = get("id") {
             if file_id.as_deref().is_some_and(|f| f != id) {
-                bad(format!("id {id} doesn't match the file name"));
+                note(true, format!("id {id} doesn't match the file name"));
             }
             if let Some(other) = seen.insert(id.to_string(), path.clone()) {
-                bad(format!("id {id} is also used by {}", shown(&other)));
+                note(true, format!("id {id} is also used by {}", shown(&other)));
             }
         }
         for k in LIST_FIELDS {
             let Some(raw) = get(k) else { continue };
             let Some(items) = list_items(raw) else {
-                bad(format!("{k} is not a [a, b] list"));
+                note(true, format!("{k} is not a [a, b] list"));
                 continue;
             };
             if k == "needs" || k == "see" {
                 for it in items {
                     if !ids.contains(&it) && !stems.contains(&it) {
-                        bad(format!("{k} names {it}, which is not a ticket"));
+                        note(true, format!("{k} names {it}, which is not a ticket"));
                     }
                 }
             }
         }
         for link in wiki_links(&body) {
             if !link_exists(&link, docs, &doc_stems) {
-                bad(format!("link [[{link}]] points at no file"));
+                note(true, format!("link [[{link}]] points at no file"));
             }
         }
     }
-    problems
+    Report {
+        errors: problems,
+        warnings,
+    }
 }
 
 fn existing_ids(root: &Path) -> HashSet<String> {
@@ -547,6 +669,7 @@ mod tests {
     fn fields<'a>(title: &'a str, repos: &'a [String]) -> Fields<'a> {
         Fields {
             title,
+            kind: TaskKind::Feature,
             repos,
             needs: &[],
             see: &[],
@@ -574,7 +697,7 @@ mod tests {
         assert_eq!(
             text,
             format!(
-                "---\nid: {id}\ntitle: \"Fix the: thing (now)\"\nopened: 2026-09-30\nrepos: [proj]\nchanges: []\nspecs: []\nneeds: []\nsee: []\n---\n\n## The ask\n\n"
+                "---\nid: {id}\ntitle: \"Fix the: thing (now)\"\nkind: feature\nopened: 2026-09-30\nrepos: [proj]\nchanges: []\nspecs: []\nneeds: []\nsee: []\ntasks: []\n---\n\n## The ask\n\n"
             )
         );
     }
@@ -612,7 +735,7 @@ mod tests {
         assert_eq!(dest.parent().unwrap(), dir.path().join("resolved"));
         let text = std::fs::read_to_string(&dest).unwrap();
         assert!(
-            text.contains("see: []\nclosed: 2026-10-01T12:00:00Z\n---\n"),
+            text.contains("tasks: []\nclosed: 2026-10-01T12:00:00Z\n---\n"),
             "{text}"
         );
         assert!(resolve(dir.path(), &id, "x").is_err());
@@ -649,8 +772,12 @@ mod tests {
         std::fs::write(d.join(name), text).unwrap();
     }
 
+    fn report(root: &Path, links: Option<&HashMap<String, String>>) -> Report {
+        check(&root.join("docs/tickets"), &root.join("docs"), links)
+    }
+
     fn problems(root: &Path) -> String {
-        check(&root.join("docs/tickets"), &root.join("docs")).join("\n")
+        report(root, None).errors.join("\n")
     }
 
     #[test]
@@ -720,6 +847,114 @@ mod tests {
     }
 
     #[test]
+    fn check_warns_on_missing_kind_and_tasks_and_errors_on_unknown_kind() {
+        let dir = tempfile::tempdir().unwrap();
+        let t = dir.path().join("docs/tickets");
+        write(&t, "open", "a-aaaa.md", "aaaa", "", "");
+        write(
+            &t,
+            "open",
+            "b-bbbb.md",
+            "bbbb",
+            "kind: nonsense\ntasks: []\n",
+            "",
+        );
+        write(
+            &t,
+            "open",
+            "c-cccc.md",
+            "cccc",
+            "kind: bug\ntasks: []\n",
+            "",
+        );
+        let r = report(dir.path(), None);
+        assert_eq!(r.errors.len(), 1, "{:?}", r.errors);
+        assert!(r.errors[0].contains("b-bbbb.md: unknown kind nonsense"));
+        let w = r.warnings.join("\n");
+        assert!(w.contains("a-aaaa.md: missing kind"), "{w}");
+        assert!(w.contains("a-aaaa.md: missing tasks"), "{w}");
+        assert!(!w.contains("c-cccc"), "{w}");
+    }
+
+    #[test]
+    fn check_flags_a_link_present_on_one_side_only() {
+        let dir = tempfile::tempdir().unwrap();
+        let t = dir.path().join("docs/tickets");
+        let ok = "kind: bug\n";
+        write(
+            &t,
+            "open",
+            "a-aaaa.md",
+            "aaaa",
+            &format!("{ok}tasks: [br-1111, br-2222]\n"),
+            "",
+        );
+        write(
+            &t,
+            "open",
+            "b-bbbb.md",
+            "bbbb",
+            &format!("{ok}tasks: []\n"),
+            "",
+        );
+        write(&t, "open", "c-cccc.md", "cccc", ok, "");
+        let links: HashMap<String, String> = [
+            ("br-1111", "aaaa"), // both sides
+            ("br-2222", "bbbb"), // aaaa lists a task naming another ticket
+            ("br-3333", "bbbb"), // bbbb doesn't list it
+            ("br-4444", "cccc"), // cccc has no tasks field yet: a warning
+        ]
+        .map(|(a, b)| (a.to_string(), b.to_string()))
+        .into();
+        let r = report(dir.path(), Some(&links));
+        let e = r.errors.join("\n");
+        assert!(
+            e.contains("a-aaaa.md: tasks names br-2222, which names ticket bbbb"),
+            "{e}"
+        );
+        assert!(
+            e.contains("b-bbbb.md: task br-3333 names this ticket"),
+            "{e}"
+        );
+        assert_eq!(r.errors.len(), 3, "{e}"); // br-2222 is wrong on both sides
+        assert!(
+            r.warnings
+                .iter()
+                .any(|w| w.contains("c-cccc.md: task br-4444"))
+        );
+        let unknown = HashMap::new();
+        let e = report(dir.path(), Some(&unknown)).errors.join("\n");
+        assert!(
+            e.contains("tasks names br-1111, which is not a task"),
+            "{e}"
+        );
+    }
+
+    #[test]
+    fn set_kind_edits_and_validates() {
+        let dir = tempfile::tempdir().unwrap();
+        let repos = vec!["p".to_string()];
+        let p = create(dir.path(), &fields("Thing", &repos), "2026-09-30").unwrap();
+        let id = id_of(&p).unwrap();
+        set(dir.path(), &id, "kind", "question").unwrap();
+        assert!(
+            std::fs::read_to_string(&p)
+                .unwrap()
+                .contains("kind: question\n")
+        );
+        let e = set(dir.path(), &id, "kind", "nope")
+            .unwrap_err()
+            .to_string();
+        assert!(e.contains("unknown task kind"), "{e}");
+        set(dir.path(), &id, "tasks", "br-1111, br-2222").unwrap();
+        assert!(
+            std::fs::read_to_string(&p)
+                .unwrap()
+                .contains("tasks: [br-1111, br-2222]\n")
+        );
+    }
+
+    #[test]
     fn set_edits_fields_and_refuses_the_rest() {
         let dir = tempfile::tempdir().unwrap();
         let repos = vec!["p".to_string()];
@@ -732,7 +967,10 @@ mod tests {
         let text = std::fs::read_to_string(&p).unwrap();
         assert!(text.contains("title: \"New: title\"\n"), "{text}");
         assert!(text.contains("repos: [a, b]\n"), "{text}");
-        assert!(text.contains("needs: [xxxx]\nsee: []\n---\n"), "{text}");
+        assert!(
+            text.contains("needs: [xxxx]\nsee: []\ntasks: []\n---\n"),
+            "{text}"
+        );
         assert!(text.ends_with("## The ask\n\n"));
         // A resolved ticket is editable too, and `closed:` stays last.
         let dest = resolve(dir.path(), &id, "2026-10-01T00:00:00Z").unwrap();

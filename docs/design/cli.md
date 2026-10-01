@@ -186,21 +186,22 @@ bridle workflow spec coverage [--root DIR] [--tests DIR ...] [--require-all] [--
                                              and the unbound list as 'file:line: s-id title'; exits 1
                                              with --require-all if any unbound (default exit 0); local
                                              only, no daemon call
-bridle ticket new "<title>" [--repos a,b] [--needs ids] [--see ids] [--no-task]   mints
+bridle ticket new "<title>" --kind <kind> [--repos a,b] [--needs ids] [--see ids] [--no-task]   mints
                                              `docs/tickets/open/<slug>-<id>.md` (repo root found via git): a
                                              fresh 4-character ID unique across `open/` and `resolved/`,
-                                             frontmatter id, title, opened (UTC date), repos (default: the
-                                             project name), changes, specs, needs, see, and an empty
+                                             frontmatter id, title, kind (required, no default: the task kinds), opened (UTC date), repos (default: the
+                                             project name), changes, specs, needs, see, tasks, and an empty
                                              `## The ask`; creates the folders if missing; prints the path.
-                                             Also files the matching task (kind question, body
-                                             `original id: <id>` and the path) when a daemon is reachable;
-                                             an unreachable daemon is a warning, not an error
+                                             Also files the matching task (the same kind, body
+                                             `original id: <id>` and the path) when a daemon is reachable and
+                                             records its id in the ticket's `tasks:`; an unreachable daemon
+                                             is a warning, not an error
 bridle ticket resolve <id>                   stamps `closed: <UTC date-time>` into the frontmatter and moves
                                              the ticket from `open/` to `resolved/` (a plain move: committing
                                              is the caller's); errors on an unknown or ambiguous id; doesn't
                                              touch the task. Both are local file work, no daemon start-up
 bridle ticket set <id> <field> <value>       edits one frontmatter field of an open or resolved ticket: `title`,
-                                             or a list field (`repos`, `changes`, `specs`, `needs`, `see`) given
+                                             `kind` (any time; independent of its tasks' kinds), or a list field (`repos`, `changes`, `specs`, `needs`, `see`, `tasks`) given
                                              comma-separated (empty clears it); refuses `id`, `opened`, `closed`
                                              and unknown fields. Local file work
 bridle ticket check [--quiet]                checks every ticket in `docs/tickets/{open,resolved}`: all of id,
@@ -209,7 +210,9 @@ bridle ticket check [--quiet]                checks every ticket in `docs/ticket
                                              name's tail and is unique; `needs`/`see` name existing tickets (id or
                                              full stem); `[[stem|text]]` links outside code fences point at a file
                                              (stem anywhere under `docs/`, or a path from the repo root or
-                                             `docs/`). Problems go to stderr, one per line, exit 1; `--quiet`
+                                             `docs/`); `kind` is a task kind; `tasks` and the tasks' `original id:` agree (task side checked only
+                                             when the daemon is up; a missing `kind`/`tasks` is a warning for now, see
+                                             `MISSING_KIND_OR_LINK_IS_ERROR` in `ticket.rs`). Problems go to stderr, one per line, exit 1; `--quiet`
                                              prints nothing when clean. Local, no daemon
 bridle workflow goals list [--root DIR] [--priority P] [--stance S]   lists goals (docs/design/goals-tier.md) from
                                              `*.md` under --root (default `design/goals`): id, firmness,
@@ -247,6 +250,7 @@ bridle task new    <title> -k/--kind KIND [--body TEXT | --body-file FILE] [--co
 bridle task show   <id>
 bridle task plan   <id>                                                 open -> planned: ready to build, claimable once unblocked
 bridle task priority <id> high|normal|low  change the priority; who and when go in the thread and a `task.priority` event
+bridle task kind <id> <kind>             change the kind, only while `open` (refused planned, claimed, dropped, integrated, reopened); who and when go in the thread and a `task.kind` event
 bridle task edit   <id> [--title TEXT] [--body TEXT | --body-file FILE] [--component ID ... | --no-component] [--size S|M|L|none]
 bridle task list   [--claimed-by WHO] [--component ID] [-k KIND]             WHO: me|human|<agent name>|<principal id>; unclaimed tasks have no claimant to match
 bridle task search <words...>                                      search for tasks by words in title/body/summary (case-insensitive substring match, all words must match); includes done and dropped tasks

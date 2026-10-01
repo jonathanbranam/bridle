@@ -71,6 +71,7 @@ pub(super) async fn task(cli: &Cli, args: &TaskArgs) -> Result<(), CliError> {
         TaskAction::Plan(a) => task_plan(cli, a).await,
         TaskAction::Drop(a) => task_drop(cli, a).await,
         TaskAction::Priority(a) => task_priority(cli, a).await,
+        TaskAction::Kind(a) => task_kind(cli, a).await,
         TaskAction::Done(a) => task_done(cli, a).await,
         TaskAction::Summary(a) => task_summary(cli, a).await,
         TaskAction::Reopen(a) => task_reopen(cli, a).await,
@@ -297,6 +298,20 @@ pub(super) async fn task_priority(cli: &Cli, args: &TaskPriorityArgs) -> Result<
         priority: task_priority_arg(args.priority),
     };
     let task = client.set_task_priority(&args.task, &req).await?;
+    if cli.json {
+        render::print_json(&task)?;
+    } else {
+        print_task_row(&task);
+    }
+    Ok(())
+}
+
+pub(super) async fn task_kind(cli: &Cli, args: &TaskKindArgs) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let req = SetKindRequest {
+        kind: task_kind_arg(args.kind),
+    };
+    let task = client.set_task_kind(&args.task, &req).await?;
     if cli.json {
         render::print_json(&task)?;
     } else {

@@ -386,6 +386,40 @@ impl TaskManager {
         Ok((self.put(task), from))
     }
 
+    /// Sets the kind, only while the task is `open` (a planned task's kind is frozen, and a
+    /// reopened one was planned before). The caller emits the event.
+    pub async fn set_kind(
+        &self,
+        id: &str,
+        kind: TaskKind,
+        actor: &PrincipalId,
+    ) -> Result<(Task, TaskKind), TaskError> {
+        let mut task = self
+            .get_task(id)
+            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+        if task.state != TaskState::Open {
+            return Err(TaskError::Conflict(format!(
+                "{id} is {}; a task's kind can only change while it is open",
+                task.state
+            )));
+        }
+        let from = task.kind;
+        if from == kind {
+            return Ok((task, from));
+        }
+        self.store.set_task_kind(id, kind).await?;
+        task.kind = kind;
+        task.updated_at = Utc::now();
+        task.thread.push(ThreadEntry {
+            kind: ThreadEntryKind::Note,
+            from: actor.clone(),
+            body: format!("kind: {from} -> {kind}"),
+            at: task.updated_at,
+        });
+        self.state.enqueue_task(&task)?;
+        Ok((self.put(task), from))
+    }
+
     /// Records the task's creation in its thread (who, when, priority); used for human to-dos.
     pub async fn note_created(
         &self,

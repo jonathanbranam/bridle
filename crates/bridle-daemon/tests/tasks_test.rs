@@ -8,7 +8,7 @@ mod support;
 
 use bridle_api::ClientError;
 use bridle_api::types::{
-    AgentState, DoneTaskRequest, DropTaskRequest, EditTaskRequest, NewTaskRequest,
+    AgentState, DoneTaskRequest, DropTaskRequest, EditTaskRequest, NewTaskRequest, SetKindRequest,
     SetPriorityRequest, SetSummaryRequest, SpawnRequest, TaskKind, TaskPriority, TaskSize,
     TaskState, ThreadEntryKind, Workdir,
 };
@@ -1320,4 +1320,55 @@ async fn ask_defaults_to_the_spawner_or_the_human() {
         .await
         .expect("ask as human");
     assert_eq!(inbox(c, "human").await.len(), 1);
+}
+
+/// A task's kind changes only while it is `open`: recorded in the thread and as an event, and
+/// refused once planned, dropped, or reopened (a reopened task was planned before).
+#[tokio::test]
+async fn task_kind_changes_only_while_open() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let c = &daemon.client;
+    let req = |kind| SetKindRequest { kind };
+    let task = c
+        .new_task(&new_req("Mislabelled", TaskKind::Feature))
+        .await
+        .expect("new task");
+
+    let t = c
+        .set_task_kind(&task.id, &req(TaskKind::Bug))
+        .await
+        .expect("open task");
+    assert_eq!(t.kind, TaskKind::Bug);
+    assert_eq!(t.thread.last().expect("entry").body, "kind: feature -> bug");
+    let events = c
+        .events(&bridle_api::types::EventQuery {
+            kind: Some("task.kind".to_string()),
+            ..Default::default()
+        })
+        .await
+        .expect("events");
+    assert_eq!(events.len(), 1);
+    assert_eq!(events[0].data["to"], "bug");
+
+    let refused = |e: ClientError| matches!(e, ClientError::Api { status: 409, .. });
+    c.plan_task(&task.id).await.expect("plan");
+    let e = c.set_task_kind(&task.id, &req(TaskKind::Chore)).await;
+    assert!(refused(e.expect_err("planned")));
+
+    let orch = daemon.external_client("orchestrator").await;
+    orch.drop_task(
+        &task.id,
+        &DropTaskRequest {
+            reason: "x".to_string(),
+        },
+    )
+    .await
+    .expect("drop");
+    let e = c.set_task_kind(&task.id, &req(TaskKind::Chore)).await;
+    assert!(refused(e.expect_err("dropped")));
+
+    c.reopen_task(&task.id).await.expect("reopen");
+    let e = c.set_task_kind(&task.id, &req(TaskKind::Chore)).await;
+    assert!(refused(e.expect_err("reopened")));
+    assert_eq!(c.get_task(&task.id).await.expect("get").kind, TaskKind::Bug);
 }

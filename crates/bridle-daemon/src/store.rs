@@ -582,6 +582,12 @@ impl Store {
             .await
     }
 
+    pub async fn set_task_kind(&self, id: &str, kind: TaskKind) -> Result<(), StoreError> {
+        let id = id.to_string();
+        self.with_conn(move |c| sync::set_task_kind(c, &id, kind))
+            .await
+    }
+
     pub async fn set_task_state(&self, id: &str, state: TaskState) -> Result<(), StoreError> {
         let id = id.to_string();
         self.with_conn(move |c| sync::set_task_state(c, &id, state))
@@ -2251,6 +2257,21 @@ mod sync {
         let n = conn.execute(
             "UPDATE tasks SET title = ?1, updated_at = ?2 WHERE id = ?3",
             params![title, fmt_dt(Utc::now()), id],
+        )?;
+        if n == 0 {
+            return Err(StoreError::NotFound(format!("no such task: {id}")));
+        }
+        Ok(())
+    }
+
+    pub(super) fn set_task_kind(
+        conn: &Connection,
+        id: &str,
+        kind: TaskKind,
+    ) -> Result<(), StoreError> {
+        let n = conn.execute(
+            "UPDATE tasks SET kind = ?1, updated_at = ?2 WHERE id = ?3",
+            params![kind.as_str(), fmt_dt(Utc::now()), id],
         )?;
         if n == 0 {
             return Err(StoreError::NotFound(format!("no such task: {id}")));

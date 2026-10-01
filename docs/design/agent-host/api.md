@@ -111,7 +111,7 @@ SSE event id:
 | `orchestrator.incident` (`{text}`) | the orchestrator supervisor needs the human (interim until incidents exist; also a `system` note to the human) |
 | `disk.checked` (`{free_bytes,total_bytes,target_bytes,worktrees_bytes,data_bytes}`) | the periodic disk reading ([[operating-model#Disk monitor\|disk monitor]]) |
 | `integrate.started` (`{task,branch}`) · `integrate.finished` (`{task,branch,ok,commit?,error?}`) | `bridle land` began / ended |
-| `task.created` (`{task,kind,state}`) · `task.state` (`{task,to}`) · `task.priority` (`{task,from,to}`) · `task.edited` (`{fields}`) · `task.question_asked` / `task.question_answered` / `task.note_added` (`{task}`) | task changes |
+| `task.created` (`{task,kind,state}`) · `task.state` (`{task,to}`) · `task.priority` (`{task,from,to}`) · `task.kind` (`{task,from,to}`) · `task.edited` (`{fields}`) · `task.question_asked` / `task.question_answered` / `task.note_added` (`{task}`) | task changes |
 | `edge.added` / `edge.removed` (`{from,to,kind}`) · `queue.changed` (`{tiers}`) | dependency and queue changes. A queue change also sends a `system` note ("queue updated: re-read `bridle queue`…") to the running manager, else `external:orchestrator`: trailing-edge debounce of 30 s, none when a manager made the change |
 | `claude.version` (`{version, previous}`) | an agent reports a Claude Code version the daemon hasn't seen last ([[docs/design/agent-host/agents#Claude Code upgrades|upgrades]]) |
 

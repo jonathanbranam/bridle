@@ -44,14 +44,16 @@ design moves on; the design docs cite them.
 `workflow-instructions/ticket-conventions.md`:
 
 - One file each, `<descriptive-tail>-<id>.md`, with a 4-character ID that
-  never changes. Create them with `bridle ticket new "<title>"` (files the
+  never changes. Create them with `bridle ticket new "<title>" --kind <kind>` (files the
   matching task too; `--no-task` skips it), or by hand with a fresh ID unique
   across the repo.
 - `bridle ticket set <id> <field> <value>` edits the frontmatter and `bridle ticket check`
   verifies frontmatter, IDs, `needs`/`see` and links; shipped to every project as the `tickets`
   rule (`workflow/base/rules/tickets.md`).
-- The same frontmatter: `id`, `title`, `opened`, `repos`, `changes`, `specs`,
-  `needs`, `see`. `needs:` orders them.
+- The same frontmatter: `id`, `title`, `kind` (a task kind; editable with `ticket set`),
+  `opened`, `repos`, `changes`, `specs`, `needs`, `see`, `tasks` (every task made from the
+  ticket; the task's body starts `original id: <id>`, so the link is two-way and `ticket check`
+  flags one side only). A missing `kind`/`tasks` is a warning until the backfill migration. `needs:` orders them.
 - The checker takes one ticket root, so `needs:` and `see:` only name tickets
   in the same tree (`questions/` or `spikes/open/`). A dependency across the
   two goes in the body as a `**Needs**` line with the ID and a link.
