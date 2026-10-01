@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+- `bridle completions <zsh|bash|fish|elvish|powershell>` prints the shell completion script generated from the clap definition, so it never drifts from the CLI. Static completions only (subcommands, flags, enum values). Install once with `bridle completions zsh > ~/.zfunc/_bridle` or `bridle completions bash > ~/.local/share/bash-completion/completions/bridle` (6rh7).
+
 ### Changed
 - The CLI is grouped into subcommands (a67t): `bridle daemon`, `agent`, `task`, `usage`, `orchestrator`, `workflow` and a hidden `hook`, e.g. `bridle task claim`, `bridle agent spawn`, `bridle daemon serve`. `status`, `send`, `inbox`, `agents`, `queue`, `events`, `wait`, `tui`, `token`, `port` and `probe` stay at the top level. Every old command line (`bridle claim`, `bridle serve`, `bridle statusline`, ...) keeps working as a hidden alias with identical flags and behaviour; the aliases will be dropped in a later release. Role prompts, rules, skills and `docs/design/cli.md` use the new names.
 

@@ -88,6 +88,7 @@ bridle token revoke <name>                  human only, external tokens only (an
                                              revoked through `bridle agent rm`, not this); also removes its
                                              credentials.toml entry for the project
 bridle statusline                           Claude Code statusLine command; local only, no daemon call
+bridle completions <zsh|bash|fish|elvish|powershell>   print the shell completion script generated from the clap definition, never drifting from the CLI. Static completions only (subcommands, flags, enum values like `--kind`). Install once with `bridle completions zsh > ~/.zfunc/_bridle` (and add `fpath=(~/.zfunc $fpath)` to ~/.zshrc); bash via `bridle completions bash > ~/.local/share/bash-completion/completions/bridle`; local only, no daemon call
 bridle orchestrator note-session            the orchestrator launcher's SessionStart hook: writes $BRIDLE_HOME/orchestrator.session
                                              from the hook JSON on stdin; local only; never fails
 bridle focus gate                           the UserPromptSubmit hook of focus hours (cvaq): in a `quiet` `[[focus]]` period prints

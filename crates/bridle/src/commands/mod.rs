@@ -17,21 +17,22 @@ use bridle_api::{
     UsageGroupBy, Workdir, event_kind,
 };
 use chrono::{Local, TimeZone, Utc};
+use clap::CommandFactory;
 use futures::StreamExt;
 
 use crate::cli::{AgentArgs, DaemonArgs, HookArgs, WorkflowAction};
 use crate::cli::{
     AgentsArgs, AnswerArgs, ArchProposeArgs, AskArgs, BudgetAction, BudgetArgs, BudgetHoldArgs,
-    ClaimArgs, Cli, Command, ConflictAction, ConflictArgs, CostAction, CostArgs, CostAuditArgs,
-    DepAction, DepArgs, DepEdgeArgs, EdgeKindArg, EventsArgs, HandoverAction, HandoverArgs,
-    ImpactAction, ImpactArgs, InboxAction, InboxArgs, InboxReadArgs, InboxShowArgs, InterruptArgs,
-    LogsArgs, PaneAction, PrimeArgs, PrimeRoleArg, ProbeArgs, QueueAction, QueueAddTierArgs,
-    QueueArgs, QueueSetArgs, ReadyArgs, ReleaseArgs, RmArgs, RulesAction, RulesArgs, RulesDiffArgs,
-    RulesExplainArgs, SendArgs, ShowArgs, SpawnArgs, SpecAction, SpecArgs, SpecExportArgs,
-    SpecFormatArg, StopArgs, TaskAction, TaskArgs, TaskDoneArgs, TaskDropArgs, TaskEditArgs,
-    TaskKindArg, TaskListArgs, TaskNewArgs, TaskNoteArgs, TaskPlanArgs, TaskPriorityArg,
-    TaskPriorityArgs, TaskReopenArgs, TaskSearchArgs, TaskShowArgs, TaskSizeArg, TaskSummaryArgs,
-    TokenAction, TokenArgs, UsageArgs, UsageByArg, WaitArgs, WhenArg,
+    ClaimArgs, Cli, Command, CompletionsArgs, ConflictAction, ConflictArgs, CostAction, CostArgs,
+    CostAuditArgs, DepAction, DepArgs, DepEdgeArgs, EdgeKindArg, EventsArgs, HandoverAction,
+    HandoverArgs, ImpactAction, ImpactArgs, InboxAction, InboxArgs, InboxReadArgs, InboxShowArgs,
+    InterruptArgs, LogsArgs, PaneAction, PrimeArgs, PrimeRoleArg, ProbeArgs, QueueAction,
+    QueueAddTierArgs, QueueArgs, QueueSetArgs, ReadyArgs, ReleaseArgs, RmArgs, RulesAction,
+    RulesArgs, RulesDiffArgs, RulesExplainArgs, SendArgs, ShowArgs, SpawnArgs, SpecAction,
+    SpecArgs, SpecExportArgs, SpecFormatArg, StopArgs, TaskAction, TaskArgs, TaskDoneArgs,
+    TaskDropArgs, TaskEditArgs, TaskKindArg, TaskListArgs, TaskNewArgs, TaskNoteArgs, TaskPlanArgs,
+    TaskPriorityArg, TaskPriorityArgs, TaskReopenArgs, TaskSearchArgs, TaskShowArgs, TaskSizeArg,
+    TaskSummaryArgs, TokenAction, TokenArgs, UsageArgs, UsageByArg, WaitArgs, WhenArg,
 };
 use crate::cli::{
     FocusAction, FocusArgs, LandArgs, OrchestratorAction, OrchestratorArgs, PortAction, PortArgs,
@@ -216,6 +217,7 @@ pub async fn run(mut cli: Cli) -> Result<(), CliError> {
         Command::Machine(args) => crate::tools_only::run(&args.action),
         Command::Advisor(args) => crate::advisor::run(&cli, &args.action).await,
         Command::Session(args) => crate::session::run(&cli, &args.role).await,
+        Command::Completions(args) => completions(args),
         Command::Orchestrator(_) | Command::Daemon(_) | Command::Agent(_) | Command::Hook(_) => {
             unreachable!("normalize forwards the grouped forms")
         }
@@ -289,4 +291,12 @@ fn format_age(age: chrono::Duration) -> String {
     } else {
         format!("{}d ago", secs / 86400)
     }
+}
+
+fn completions(args: &CompletionsArgs) -> Result<(), CliError> {
+    use clap_complete::generate;
+    let mut cmd = Cli::command();
+    let mut stdout = std::io::stdout();
+    generate(args.shell, &mut cmd, "bridle", &mut stdout);
+    Ok(())
 }

@@ -4,6 +4,7 @@ use std::net::SocketAddr;
 use std::path::PathBuf;
 
 use clap::{ArgGroup, Args, Parser, Subcommand, ValueEnum};
+use clap_complete::Shell;
 
 #[derive(Debug, Parser)]
 #[command(
@@ -245,6 +246,8 @@ pub enum Command {
     /// Trace links from goals down to scenarios (docs/design/traceability.md). Local, no daemon call.
     #[command(hide = true)]
     Trace(TraceArgs),
+    /// Print shell completions (zsh, bash, fish, elvish, or powershell); install once with `bridle completions <shell> > <dest>`.
+    Completions(CompletionsArgs),
 }
 
 #[derive(Debug, Args)]
@@ -1858,6 +1861,13 @@ pub struct ToolsOnlyArgs {
     pub repo: Option<std::path::PathBuf>,
 }
 
+#[derive(Debug, Args)]
+pub struct CompletionsArgs {
+    /// The shell to generate completions for.
+    #[arg(value_enum)]
+    pub shell: Shell,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -2724,5 +2734,32 @@ mod tests {
     fn usage_help_parses_without_panic() {
         let cli = parse(&["usage", "--help"]).unwrap_err();
         assert_eq!(cli.kind(), clap::error::ErrorKind::DisplayHelp);
+    }
+
+    #[test]
+    fn completions_zsh_parses() {
+        let cli = parse(&["completions", "zsh"]).unwrap();
+        let Command::Completions(args) = cli.command else {
+            panic!("expected completions")
+        };
+        assert_eq!(args.shell, clap_complete::Shell::Zsh);
+    }
+
+    #[test]
+    fn completions_bash_parses() {
+        let cli = parse(&["completions", "bash"]).unwrap();
+        let Command::Completions(args) = cli.command else {
+            panic!("expected completions")
+        };
+        assert_eq!(args.shell, clap_complete::Shell::Bash);
+    }
+
+    #[test]
+    fn completions_fish_parses() {
+        let cli = parse(&["completions", "fish"]).unwrap();
+        let Command::Completions(args) = cli.command else {
+            panic!("expected completions")
+        };
+        assert_eq!(args.shell, clap_complete::Shell::Fish);
     }
 }
