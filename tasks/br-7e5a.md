@@ -4,8 +4,9 @@ title = "Interactive sessions D: advisor sessions tag their tmux pane with their
 kind = "feature"
 state = "planned"
 created_at = "2026-10-01T22:51:22.652Z"
-updated_at = "2026-10-01T22:51:25.267836Z"
+updated_at = "2026-10-01T23:20:01.519344Z"
 size = "S"
+summary = "Extract pane tagging logic into shared module; advisor sessions now tag their pane using the same code path as 'bridle pane tag'. Adds pane.rs module with tag/untag functions, updates session.rs and workflow.rs to use shared code. Docs and tests updated; all related tests pass."
 +++
 
 original id: jttf
@@ -17,3 +18,8 @@ SAFETY: advisors only; do NOT touch 'bridle session orchestrator' or the relaunc
 Acceptance: just check passes. Model: Haiku.
 Migration plan: none.
 Out of scope: stale-tag cleanup of hand-tagged panes, panes-per-window, restart.
+
+## Thread
+
+### note · agent:jttf-d · 2026-10-01T23:20:01.519Z
+done: Extract pane tagging logic into shared module; advisor sessions now tag their pane with their identifier using the same code path as 'bridle pane tag' command. All tests pass (session_test and pane_test). Docs and CHANGELOG updated; 3e42fdaaaf02e1c0e84ef2a11f53a3611a3e9ece
