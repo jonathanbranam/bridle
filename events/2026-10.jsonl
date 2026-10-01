@@ -76,3 +76,4 @@
 {"actor":"human","at":"2026-10-01T19:21:23.829Z","from":"","task":"br-e25d","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-01T19:22:40.151554Z","from":"open","task":"br-e25d","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-01T19:22:40.167948Z","queue":"reprioritized"}
+{"actor":"agent:manager-2","at":"2026-10-01T19:32:31.579569Z","from":"planned","task":"br-e25d","to":"integrated"}
