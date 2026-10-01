@@ -354,3 +354,23 @@ Newest first. One line per item: what happened, who did it, what it says about r
   replaces the binary under a running daemon.
 - A second daemon restart at 17:58Z, at the same commit, left no event saying who asked for it.
   Unexplained; probably the human.
+
+## Twenty-first orchestrator session (2026-10-01, ~18:15Z to ~00:00Z)
+
+- **By hand: a second watcher, for track-web.** A waiter watches one daemon, and this session's
+  only waiter was on bridle's. So track-web's messages to the orchestrator (m-0008, m-0051,
+  m-0061) sat unread for days, and its wakes queued from 2026-09-30. Its work still moved,
+  because filing a task notifies the manager directly. The human caught it. The role now says
+  to run one waiter per project (7b22c1e). Bridle should do this itself (one orchestrator, wakes
+  from every project).
+- **By hand: two advisors in a tmux window called `advisors`.** `bridle advisor start` would have
+  split the orchestrator's pane in an already full window. I ran `bridle session advisor` in a
+  new window, then split it for track-web. The new advisor never read its brief (jb4e, fixed
+  in br-6d49). I typed a pointer into its pane.
+- **By hand: a trust prompt.** The first advisor started in a repo needs the folder trust dialog,
+  and its default is "No, exit". My Enter quit the session. Pressing Down, then Enter, works.
+- **Role fit:** pm-1 planned tasks twice without queueing them or telling manager-2, so
+  everything sat idle until I relayed. Planned work should reach the queue and the manager in
+  one step.
+- **By hand: closing a GitHub issue.** The human filed #1 from Claude Code on mobile, and I
+  commented on it and closed it.
