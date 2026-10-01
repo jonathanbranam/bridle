@@ -1,0 +1,17 @@
++++
+id = "br-7ee4"
+title = "Other projects submit bridle work directly: 'bridle ticket submit' files an open task marked with its submitter (93xm)"
+kind = "feature"
+state = "planned"
+created_at = "2026-10-01T23:54:53.934Z"
+updated_at = "2026-10-01T23:54:56.276029Z"
+size = "S"
++++
+
+Ticket: docs/tickets/open/other-projects-submit-bridle-tickets-directly-for-triage-93xm.md (the human's ask is verbatim there). Design decision made by the PM, KISS: an OPEN task is already 'proposed': only the PM plans tasks, so no new state or table. Code: 'bridle task new' and the task-create route in crates/bridle-daemon, principal permissions (docs/design/agent-host/principals.md), crates/bridle/src/ticket.rs for the CLI shape.
+
+Goal: any principal with a token on the daemon, visitors included (external:advisor@nuc, external:orchestrator@nuc), can run 'bridle ticket submit --project bridle --kind <kind> "<title>" --body-file -' and get back a task id. It creates an OPEN task (never planned, never queued) whose thread's first note and first body line record the submitter ('submitted by <principal>') and the PM/orchestrator is notified by one inbox message to the product-manager role (or the orchestrator when there is no PM) pointing at the task. The PM triages: accept (turn it into a ticket with 'ticket new' and plan it), merge (comment, drop with reason naming the ticket), or decline (drop with a reason; the daemon sends the reason to the submitter as a message, if that is not already what drop does, add it). Submitters may not plan, claim, drop or edit others' tasks (check the permission table; add only 'create open task' for visitors if it is missing, and a comment on their own submission).
+Docs: principals.md permissions, cli.md, a short section in the 93xm ticket ('Built'), CHANGELOG. Tests: a visitor token submits and gets an open task with the submitter recorded; it cannot plan or claim it; the PM is messaged; decline-by-drop notifies the submitter.
+Acceptance: just check passes. Model: Sonnet.
+Migration plan: none (no project files).
+SAFETY: no start-up or orchestrator-path change; lands normally. Out of scope: automatic dedupe, a separate proposed state, submissions of ticket files.
