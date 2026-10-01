@@ -49,6 +49,44 @@ reach existing projects:
 The [[tickets-get-a-kind-kinds-are-editable-tickets-and-tasks-link-v3dk|ticket kinds]] backfill
 is the first migration it would carry.
 
+## Automatic by default (the human, 2026-10-01)
+
+The human, verbatim (via the advisor; "Bridal" is bridle, "the Nook" is the NUC):
+
+> I'm not sure where we landed on the migration question, but I want to see that applied
+> automatically. I mean, maybe a project could opt in or out with configuration, but I think the
+> default is, I know we haven't shipped the change to upgrade Bridal automatically, and there's
+> some other things we haven't shipped yet, but my expectation is because I own all these projects
+> right now and I'm comfortable with the changes I'm making to Bridal along the way, that
+> everything gets upgraded always. So if I install, you know, once we have this kind of
+> installation upgrade thing working, like I want migration to run on every every registered
+> project on Dalek, and then I want migration to run on the Nook as soon as the bridal is upgraded
+> on the Nook. Every project, every registered project should be upgraded. And if a daemon is down,
+> if that's a problem, if the daemon's down for a specific project, when the upgrade happens, then
+> when that daemon comes up, bridal serve happens again, the upgrades should all happen
+> automatically. The only time this shouldn't be the case is if we should be able to mark a
+> specific upgrade as like dangerous or opt in, and then that might be a manual or manual, you
+> know, maybe just the manual. Is the right thing. That would be something people opt into, but
+> for now, we want all the upgrading to happen all the time, automatically.
+
+Decided:
+
+1. **Migrations run automatically**, with no command needed. When bridle is installed or upgraded
+   on a machine (dalek, the NUC), every project registered on that machine gets its pending
+   migrations.
+2. **A project whose daemon is down catches up when it next starts.** `bridle serve` applies
+   whatever is pending, so starting the daemon always applies pending migrations, not just
+   upgrading bridle.
+3. **A project may opt out in config.** The default is on.
+4. **A single migration can be marked opt-in** (for example, a dangerous one). Opt-in migrations
+   never run automatically. They run only when someone runs them by hand.
+5. Recording what ran, plus auditable output that agents can read (asks 2 and 3 above), still
+   applies to every automatic run.
+
+How bridle installs and upgrades itself on each machine is separate work. The daemon's
+self-upgrade (`bridle restart --upgrade`, [[docs/design/agent-host/daemon|daemon]], "Upgrade")
+covers one project's daemon. Running migrations when `bridle serve` starts covers both paths.
+
 ## Product-manager review (handed to the orchestrator, 2026-10-01)
 
 Separately, the product manager's review of a task or ticket should check that a change to
