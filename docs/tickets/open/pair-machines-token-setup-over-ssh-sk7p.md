@@ -60,6 +60,8 @@ same-machine."
 - A bare `human` always means the human on the daemon's own machine (workspace token).
 - Replies go back to the principal that sent: a message from `human@nuc` is answered to
   `human@nuc`, and shows in the human's inbox on the NUC, not only on the daemon's machine.
+- `human@<machine>` may run every human-only command `human` can (`token create`, `shutdown`,
+  ...): SSH already proved it's the human (the human, 2026-10-01: "Yes agree").
 - 3ehu part 1 (br-8b98) mints and reads exactly this principal: `[human.<machine>]` holds the
   `human@<machine>` token.
 
@@ -67,8 +69,6 @@ same-machine."
 
 - Whether a remote `bridle` is on SSH's non-interactive PATH (`~/.cargo/bin`). Allow
   `--remote-bridle <path>`.
-- Which human-only commands `human@<machine>` may run (`token create`, `shutdown`). The default
-  should be the same as `human`, since SSH already proved it's them. Check with the human.
 
 ## Done when
 
