@@ -65,3 +65,48 @@ system but we are experimenting with important functionality."
 So reviews (agent and human) are cryptographically signed using the reviewer's bridle token,
 on the working assumption that tokens are secure. Hardening token storage isn't part of this
 ticket (2bzw).
+
+## Decided: bridle runs reviews, on the task (2026-10-01)
+
+pm-1 asked (via the orchestrator): "Should reviews run before the merge, not before the worker
+reports done? Workers can't spawn agents, so the manager would start two read-only reviewers, one
+for code and one for security, after the worker hands off and before the merge. Projects opt out
+by rule. Reviews are skipped for changes under about 30 lines, docs-only changes, and when the
+budget is winding down." It recommended yes, with the manager running the gate.
+
+The human, verbatim:
+
+> bridle should spawn the agents, not the manager; IDK how things are written today, but when the
+> worker is done with his part, he should mark the task as "ready for review" or whatever and then
+> bridle evaluates some metadata on the task, looks at the workflow rules, and starts any required
+> review agents. they should do their job, sending reports to the worker, they can communicate,
+> but the review agent must approve the work, then sign the task, when reviews are all signed,
+> then bridle messages the manager;
+>
+> The system should be enforcing this not an agent. If I set a policy of security review on every
+> task or I set a task as "requires security review" then I should be able to see that it was done
+> correctly.
+>
+> Also - sorry I misspoke earlier; really the agents should not message each other directly, they
+> should communicate using the task itself - adding comments to the task and updating the task
+> status when they're done; the security review agents interactions with the worker should be
+> permanent record on the task so that we can audit and review what happened - I want to learn
+> from these interactions so that the worker guidelines and reviewer guidelines can be improved.
+>
+> E.g. if the security reviewer is too lenient, we want to know; if it is too strict, same; if we
+> spend $10 on code review between two agents, I want to have a record of their interactions and
+> fix the instructions for them so we spend a reasonable amount on this.
+
+So, in short:
+
+- The daemon, not the manager or any agent, enforces reviews. The worker moves the task to a
+  "ready for review" state. Bridle reads the task's metadata and the workflow rules, spawns the
+  required reviewers, and tells the manager only when every required review has signed.
+- Reviewers and the worker talk only on the task: comments and status changes, no direct
+  messages. That's the permanent, auditable record, kept so reviewer and worker guidelines and
+  their cost can be tuned.
+- A reviewer must approve and sign before the task moves on.
+
+Not answered by the human: pm-1's proposed skips (under about 30 lines, docs-only, budget
+winding down). The human's "If I set a policy of security review on every task ... I should be
+able to see that it was done correctly" suggests a required review isn't silently skipped.
