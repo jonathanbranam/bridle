@@ -416,28 +416,13 @@ pub(super) fn explore(action: &crate::cli::ExploreAction) -> Result<(), CliError
 }
 
 pub(super) fn pane(action: &PaneAction) -> Result<(), CliError> {
-    use std::process::Command;
-    let pane = std::env::var("TMUX_PANE")
-        .map_err(|_| anyhow::anyhow!("not in a tmux pane (TMUX_PANE not set)"))?;
     match action {
         PaneAction::Tag { name } => {
-            let status = Command::new("tmux")
-                .args(["set-option", "-p", "-t", &pane, "@bridle", name])
-                .status()
-                .context("running tmux set-option")?;
-            if !status.success() {
-                return Err(anyhow::anyhow!("tmux set-option failed").into());
-            }
+            crate::pane::tag_pane_with_error(name)?;
             println!("pane tagged: @bridle={name}");
         }
         PaneAction::Untag => {
-            let status = Command::new("tmux")
-                .args(["set-option", "-p", "-t", &pane, "-u", "@bridle"])
-                .status()
-                .context("running tmux set-option")?;
-            if !status.success() {
-                return Err(anyhow::anyhow!("tmux set-option failed").into());
-            }
+            crate::pane::untag_pane_with_error()?;
             println!("pane untagged");
         }
     }

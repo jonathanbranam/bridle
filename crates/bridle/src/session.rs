@@ -243,7 +243,7 @@ async fn advisor(
         std::fs::create_dir_all(home)?;
         write_pid_file(&pid_file)?;
     }
-    tag_pane(&match name {
+    crate::pane::tag_pane(&match name {
         Some(n) => format!("advisor-{n}"),
         None => "advisor".into(),
     });

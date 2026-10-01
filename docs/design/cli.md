@@ -238,7 +238,8 @@ bridle session orchestrator [claude args]   start the orchestrator's claude sess
                                              settings, names orch-<project>[-<BRIDLE_SESSION_SUFFIX>], pane tag,
                                              pid/exit files; `--project` picks the project; refuses under a bridle
                                              agent (unless BRIDLE_LAUNCHER_TEST=1) and in a tools-only clone
-bridle session advisor [name] [claude args] same for the advisor (advisor[-<name>]-<project>); sets BRIDLE_ADVISOR_NAME;
+bridle session advisor [name] [claude args] same for the advisor (advisor[-<name>]-<project>): lean
+                                             settings, pane tag (advisor or advisor-<name>), sets BRIDLE_ADVISOR_NAME;
                                              the unnamed one keeps advisor-<project>.pid while it runs
 bridle advisor start <name> [--brief TEXT|@FILE]   send the brief to external:advisor as "For advisor <name>: ...", then run
                                              `bridle session advisor <name>` in a tmux pane: a split of the pane tagged

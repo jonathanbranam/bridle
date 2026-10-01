@@ -13,6 +13,7 @@ mod init;
 mod launchd;
 mod migrate;
 mod orchestrator;
+mod pane;
 mod prime;
 mod render;
 mod serve;

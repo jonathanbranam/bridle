@@ -260,3 +260,57 @@ fn advisor_start_refuses_a_worker() {
     assert!(!out.status.success());
     assert_eq!(tmux, "");
 }
+
+#[test]
+fn advisor_session_tags_its_pane() {
+    let r = session(&["--project", "p", "advisor", "test"], &[], 0);
+    // Verify tmux was called with the tag
+    assert!(
+        r.tmux.contains("set-option -p -t %9 @bridle advisor-test"),
+        "{}",
+        r.tmux
+    );
+}
+
+#[test]
+fn advisor_session_without_tmux_succeeds() {
+    let bin = tempfile::tempdir().unwrap();
+    let home = tempfile::tempdir().unwrap();
+    let rec = bin.path().join("claude.rec");
+    stub(
+        bin.path(),
+        "claude",
+        &format!(
+            "for a in \"$@\"; do printf '%s\\n' \"$a\"; done > {rec}\n\
+             echo \"AS=$BRIDLE_AS PROJECT=$BRIDLE_PROJECT ADVISOR=$BRIDLE_ADVISOR_NAME\" >> {rec}\n\
+             exit 0",
+            rec = rec.display()
+        ),
+    );
+    // NO tmux stub - session should succeed anyway since tagging is best-effort
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_bridle"));
+    cmd.args(["session", "--project", "p", "advisor", "test"])
+        .current_dir(tempfile::tempdir().unwrap().keep())
+        .env(
+            "PATH",
+            format!(
+                "{}:{}",
+                bin.path().display(),
+                std::env::var("PATH").unwrap_or_default()
+            ),
+        )
+        .env("BRIDLE_HOME", home.path())
+        .env("BRIDLE_AGENT_ID", "a-test")
+        .env("BRIDLE_LAUNCHER_TEST", "1")
+        // Explicitly remove TMUX_PANE to simulate being outside tmux
+        .env_remove("TMUX_PANE")
+        .env_remove("BRIDLE_PROJECT")
+        .env_remove("BRIDLE_SESSION_SUFFIX");
+    let out = cmd.output().unwrap();
+    // Session should succeed even without tmux
+    assert!(
+        out.status.success(),
+        "advisor session failed outside tmux: {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+}
