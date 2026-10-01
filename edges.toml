@@ -261,3 +261,9 @@ from = "br-bb5a"
 to = "br-146a"
 kind = "blocks"
 created_at = "2026-09-30T23:30:20.929Z"
+
+[[edge]]
+from = "br-8b98"
+to = "br-8c25"
+kind = "blocks"
+created_at = "2026-10-01T02:16:28.974Z"

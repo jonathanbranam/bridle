@@ -27,3 +27,8 @@
 {"actor":"agent:manager-2","at":"2026-10-01T01:26:05.656585Z","from":"planned","task":"br-9c3b","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-10-01T01:39:51.395020Z","from":"planned","task":"br-a911","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-10-01T01:44:47.935251Z","from":"planned","task":"br-010a","to":"integrated"}
+{"actor":"human","at":"2026-10-01T02:16:26.855Z","from":"","task":"br-6b8a","to":"open"}
+{"actor":"human","at":"2026-10-01T02:16:26.874Z","from":"","task":"br-8c25","to":"open"}
+{"actor":"agent:pm-1","at":"2026-10-01T02:16:28.924196Z","from":"open","task":"br-6b8a","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-01T02:16:28.941598Z","from":"open","task":"br-8c25","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-01T02:16:28.991420Z","queue":"reprioritized"}
