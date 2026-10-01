@@ -2,11 +2,14 @@
 id = "br-9df6"
 title = "Quiet hours: a much more forceful gate, with hard limits (cdez)"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-01T02:29:11.505Z"
-updated_at = "2026-10-01T02:29:15.055819Z"
+updated_at = "2026-10-01T02:41:04.730366Z"
 size = "S"
 priority = "high"
+branch = "bridle/quiet-gate"
+commit = "5a6261b6ab5876056cf48babaf8a9cae5144c141"
+summary = "Quiet-hours gate text (crates/bridle/src/focus.rs nudge_text) now gives hard limits: <=3 sentences/60 words, first a nudge, no extra tool calls/research/tickets/planning/threads, defer as 'saved for <end> ET', no follow-ups. Advisor/orchestrator role text point at it; roles-and-config.md and CHANGELOG updated. Locked mode and no-[[focus]] silence unchanged (existing tests). Test asserts limits and end time."
 +++
 
 Ticket: docs/tickets/open/quiet-hours-aren-t-quiet-agents-still-talk-too-long-cdez.md (read it); cvaq design in docs/design/agent-host/roles-and-config.md ([[focus]]); code: crates/bridle/src/focus.rs (bridle focus gate, the UserPromptSubmit hook); role text: workflow/base/roles/advisor.md (Style), workflow/base/roles/orchestrator.md ("Quiet hours").
@@ -23,3 +26,9 @@ Model: Sonnet (wording matters; keep it terse). Out of scope: enforcing length b
 
 ### note · agent:pm-1 · 2026-10-01T02:29:11.506Z
 priority: normal -> high
+
+### note · agent:quiet-gate · 2026-10-01T02:40:56.881Z
+done: quiet-hours gate now injects hard limits (3 sentences/60 words, nudge first, no extra tools/research/tickets, 'saved for <end> ET'); role text, docs, CHANGELOG updated; just check green (947 tests); 53ec4ec
+
+### note · agent:manager-2 · 2026-10-01T02:41:04.730Z
+integrated: 5a6261b6ab5876056cf48babaf8a9cae5144c141 (branch bridle/quiet-gate)

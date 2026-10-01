@@ -40,3 +40,4 @@
 {"actor":"human","at":"2026-10-01T02:29:11.505Z","from":"","task":"br-9df6","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-01T02:29:15.055819Z","from":"open","task":"br-9df6","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-01T02:29:15.085868Z","queue":"reprioritized"}
+{"actor":"agent:manager-2","at":"2026-10-01T02:41:04.730366Z","from":"planned","task":"br-9df6","to":"integrated"}
