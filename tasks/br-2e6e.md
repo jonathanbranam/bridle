@@ -2,9 +2,12 @@
 id = "br-2e6e"
 title = "Ticket kinds and two-way ticket-task links: ticket new --kind, ticket set kind, task kind, link check (v3dk slice A)"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-01T18:52:53.340Z"
-updated_at = "2026-10-01T19:46:09.421070Z"
+updated_at = "2026-10-01T20:01:32.118917Z"
+branch = "bridle/ticket-kinds"
+commit = "fcee4cb24fb047e198bf9f508528cac8cea638a7"
+summary = """Slice A of v3dk. `ticket new` requires --kind (no default); ticket gets `kind:` and `tasks: []` frontmatter, the task gets the same kind and its id is written into `tasks:`. `ticket set <id> kind <kind>` (validated) and `tasks` are editable. `bridle task kind <id> <kind>`: new SetKindRequest, POST /v1/tasks/{id}/kind, TaskManager::set_kind (open only, else 409), thread note and `task.kind` event. `ticket check` returns errors and warnings: unknown kind and one-sided links are errors (task side checked via the daemon's task bodies "original id: <id>", skipped when the daemon is unreachable); missing kind/tasks (and a task naming a ticket with no tasks field) are warnings behind MISSING_KIND_OR_LINK_IS_ERROR in ticket.rs, which slice B flips. Only `ticket new` writes the link; no other task-from-ticket path exists yet. Docs: cli.md, api.md, docs/README.md, the tickets rule, CHANGELOG."""
 +++
 
 Ticket: docs/tickets/open/tickets-get-a-kind-kinds-are-editable-tickets-and-tasks-link-v3dk.md (read it all: 'Decided by the human' and '5, as approved'). Code: crates/bridle/src/ticket.rs (line ~86 hardcodes TaskKind::Question), the 'bridle task priority' command and its daemon route as the pattern for 'task kind', crates/bridle-api/src/types.rs, docs/design/cli.md, docs/design/storage.md, docs/README.md (ticket conventions).
@@ -20,3 +23,14 @@ Tests: ticket new without --kind fails; kind in frontmatter and task; ticket set
 Acceptance: just check passes. Model: Sonnet.
 Migration plan: slice B (the backfill migration, blocked on this task and on the automatic run). Nothing in this slice may make an existing project's checks fail.
 Out of scope: the backfill; making missing kind an error.
+
+## Thread
+
+### note · agent:ticket-kinds · 2026-10-01T20:01:11.219Z
+done: ticket kinds, task kind, two-way link check (missing kind/link only warns, MISSING_KIND_OR_LINK_IS_ERROR); just check exit 0, 966 tests; 2370858
+
+### note · agent:manager-2 · 2026-10-01T20:01:20.988Z
+integrated: fcee4cb24fb047e198bf9f508528cac8cea638a7 (branch bridle/ticket-kinds)
+
+### note · agent:manager-2 · 2026-10-01T20:01:32.118Z
+cleanup: removed agent ticket-kinds, branch bridle/ticket-kinds
