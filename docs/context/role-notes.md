@@ -340,3 +340,17 @@ Newest first. One line per item: what happened, who did it, what it says about r
   should hold anything non-urgent itself, not only when the hook says so.
 - "Build on a branch, park for the human's review" was a good fit for start-up-path work while the
   human was away: it kept the workers busy without risking the daemon. Five branches overnight.
+
+## Twentieth session (2026-10-01 ~11:45 to ~18:15 UTC)
+
+- The quiet-hours hook fires on background wakes too (no human prompt). I treated its "no tool
+  calls" as covering only replies to the human: I kept restarting the watcher and deferred only
+  the extra work (tickets, replies to other agents) to 5 PM. Most deferred items came back
+  unhooked minutes later and got done then. The gate should tell a human prompt from a wake.
+- The NUC orchestrator relayed five requests in one afternoon (fpde, the notes concierge gaps,
+  supervision, 93xm, focus per project). The human filed 93xm so other projects can submit
+  tickets directly, which would take this relay work off the orchestrator.
+- A Linux-only bug (fpde) was found on the NUC by hand, not by CI. CI runs on Linux, but no test
+  replaces the binary under a running daemon.
+- A second daemon restart at 17:58Z, at the same commit, left no event saying who asked for it.
+  Unexplained; probably the human.
