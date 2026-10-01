@@ -335,3 +335,8 @@ Newest first. One line per item: what happened, who did it, what it says about r
   orchestrator to check its own daemon instead.
 - The NUC orchestrator is now a steady source of bridle requests (f5ww, wtyn, chvf, jf9u in one
   evening). Filing them as tickets and relaying to pm-1 is most of this role's evening work.
+- 2026-10-01 (nineteenth session): the orchestrator ran long in quiet hours (tickets, explanations)
+  and the human called quiet hours "a bust" (cdez). The hook cap now does the work, but the role
+  should hold anything non-urgent itself, not only when the hook says so.
+- "Build on a branch, park for the human's review" was a good fit for start-up-path work while the
+  human was away: it kept the workers busy without risking the daemon. Five branches overnight.
