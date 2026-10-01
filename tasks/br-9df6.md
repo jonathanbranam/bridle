@@ -4,7 +4,7 @@ title = "Quiet hours: a much more forceful gate, with hard limits (cdez)"
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-01T02:29:11.505Z"
-updated_at = "2026-10-01T02:41:04.730366Z"
+updated_at = "2026-10-01T02:41:23.758688Z"
 size = "S"
 priority = "high"
 branch = "bridle/quiet-gate"
@@ -32,3 +32,6 @@ done: quiet-hours gate now injects hard limits (3 sentences/60 words, nudge firs
 
 ### note · agent:manager-2 · 2026-10-01T02:41:04.730Z
 integrated: 5a6261b6ab5876056cf48babaf8a9cae5144c141 (branch bridle/quiet-gate)
+
+### note · agent:manager-2 · 2026-10-01T02:41:23.758Z
+cleanup: removed agent quiet-gate, branch bridle/quiet-gate
