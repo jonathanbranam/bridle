@@ -65,10 +65,11 @@ same-machine."
 - 3ehu part 1 (br-8b98) mints and reads exactly this principal: `[human.<machine>]` holds the
   `human@<machine>` token.
 
-## Open questions
+## Answered (2026-10-01)
 
-- Whether a remote `bridle` is on SSH's non-interactive PATH (`~/.cargo/bin`). Allow
-  `--remote-bridle <path>`.
+- Whether a remote `bridle` is on SSH's non-interactive PATH (`~/.cargo/bin`). The human,
+  verbatim: "Yes. We should assume proper bridle setup on both machines." So `bridle` is assumed
+  on the remote PATH; no `--remote-bridle` flag is needed.
 
 ## Done when
 
