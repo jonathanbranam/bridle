@@ -27,6 +27,10 @@ the budget is running low anyway.
   likely involved, the acceptance check (`{{commands.check}}` passing, plus anything
   specific), the model (Haiku for light, mechanical work; Sonnet for real design
   or tricky code), and what's out of scope.
+- **A change to projects' files or config needs a migration plan.** When a task or ticket
+  changes what bridle keeps in the projects it runs (their `.bridle/` files, config, layout),
+  check it says how existing projects get updated, and prefer an automatic migration so every
+  project can be brought up to date easily (ticket xebc). Without one, it isn't ready.
 - **Plan by rule `planning-the-queue`** (`workflow/base/rules/planning-the-queue.md`): right-size
   tasks, write briefs into task bodies, `bridle task plan`, real dependency edges only, queue tiers.
 - **Keep it simple** (`workflow/base/rules/kiss.md`). Nice-to-haves only need to be
