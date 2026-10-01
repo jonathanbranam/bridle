@@ -2949,7 +2949,7 @@ fn agent_env(
 /// even when it isn't installed (e.g. `cargo run`).
 fn agent_path() -> String {
     let inherited = std::env::var("PATH").unwrap_or_default();
-    match std::env::current_exe()
+    match crate::exe_path()
         .ok()
         .and_then(|p| p.parent().map(|d| d.to_path_buf()))
     {
@@ -3109,5 +3109,33 @@ fn truncate_chars(s: &str, max_chars: usize) -> String {
         s.to_string()
     } else {
         s.chars().take(max_chars).collect()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_agent_path() {
+        let result = agent_path();
+        let inherited = std::env::var("PATH").unwrap_or_default();
+        let expected_dir = crate::exe_path()
+            .ok()
+            .and_then(|p| p.parent().map(|d| d.to_path_buf()))
+            .map(|d| d.to_string_lossy().into_owned());
+
+        match expected_dir {
+            Some(dir) if inherited.is_empty() => {
+                assert_eq!(result, dir);
+            }
+            Some(dir) => {
+                let expected = format!("{}:{inherited}", dir);
+                assert_eq!(result, expected);
+            }
+            None => {
+                assert_eq!(result, inherited);
+            }
+        }
     }
 }

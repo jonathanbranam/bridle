@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Restart and self-upgrade on Linux no longer exec `<path> (deleted)` after the binary is replaced: the path is resolved once at start-up with the suffix stripped, and a failed exec is logged as an error (fpde).
+- Agent PATH construction now uses the pre-resolved `exe_path()` instead of `current_exe()`, so agents always see the correct daemon binary directory even after it is replaced on Linux (fpde follow-up).
 - `bridle task done` no longer warns about a missing summary on human-claimed to-dos, since humans don't write task summaries (p4xd).
 
 ## [0.4.0] - 2026-09-30
