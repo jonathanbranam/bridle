@@ -68,7 +68,23 @@ Fix direction: compare start times as instants, not strings. Read them in a fixe
 second of slack, or share one helper so both sides produce the same string. Start-up/relaunch
 path: schedule it with chvf after the trip (Sat 2026-10-03), not before.
 
+### The human's diagnosis agrees (m-3010)
+
+The human traced the relaunch to a timezone change. To the daemon, the session looked about 4 hours
+old (the UTC/EDT offset), so it took the dead-session path and started a second orchestrator
+beside the live one. The age and uptime arithmetic itself is consistent: it uses the pid file's
+launch epoch against `Utc::now()`. What moves with the zone is the `lstart` string. Render the same
+instant in another TZ and the identity check fails, which is the mismatch above. So it's one bug.
+The human asks for both of these:
+
+1. Process identity and age use one clock (UTC or monotonic), never a local-time string.
+2. The daemon never starts a second orchestrator while the first is alive. Before relaunching
+   after "found dead", it double-checks: if the recorded pid is alive and is a `bridle session`
+   (or its child `claude`), but its start string doesn't match, file an incident and don't
+   relaunch.
+
 ## Done when
 
 The cause is found and fixed, and a client-machine orchestrator gets `context` wakes, with a test
-for whichever split caused it.
+for whichever split caused it. A timezone change (or a daemon running in a different TZ) doesn't
+make a live session look dead, and a live session is never doubled; both are covered by tests.
