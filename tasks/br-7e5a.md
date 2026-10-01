@@ -2,10 +2,12 @@
 id = "br-7e5a"
 title = "Interactive sessions D: advisor sessions tag their tmux pane with their identifier (jttf 4, advisors only)"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-01T22:51:22.652Z"
-updated_at = "2026-10-01T23:23:23.723046Z"
+updated_at = "2026-10-01T23:26:27.803940Z"
 size = "S"
+branch = "bridle/jttf-d"
+commit = "133b2f565aad469b3e72c14dcb4731ad5b5126bb"
 summary = "Create shared pane module with tag_pane(), tag_pane_with_error(), and untag_pane_with_error(). Advisor sessions use crate::pane::tag_pane() to tag their pane (advisor or advisor-<name>) before launching claude. Tagging is best-effort: fails silently if outside tmux. Orchestrator keeps local tag_pane (untouched per SAFETY). Added tests verify advisor sessions tag correctly and don't error outside tmux. All 971 tests pass."
 +++
 
@@ -29,3 +31,6 @@ Not landable yet. (1) Advisor sessions already tagged their pane before your cha
 
 ### note · agent:jttf-d · 2026-10-01T23:23:23.723Z
 done: Advisor sessions tag their tmux pane using shared crate::pane module. Best-effort tagging with no error outside tmux. Orchestrator untouched. Two new tests verify behavior. All 971 tests pass; 6864621cde2491090f3ebc2ba07a10a114b795e0
+
+### note · agent:manager-2 · 2026-10-01T23:26:27.803Z
+integrated: 133b2f565aad469b3e72c14dcb4731ad5b5126bb (branch bridle/jttf-d)
