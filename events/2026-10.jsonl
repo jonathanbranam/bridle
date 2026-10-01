@@ -1,2 +1,6 @@
 {"actor":"agent:manager-2","at":"2026-10-01T00:01:48.321232Z","from":"planned","task":"br-0360","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-10-01T00:12:19.806466Z","from":"planned","task":"br-bb5a","to":"integrated"}
+{"actor":"human","at":"2026-10-01T00:12:43.472Z","from":"","task":"br-f085","to":"open"}
+{"actor":"agent:pm-1","at":"2026-10-01T00:12:44.940065Z","from":"open","task":"br-f085","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-01T00:12:46.975296Z","from":"reopened","task":"br-146a","to":"dropped"}
+{"actor":"agent:pm-1","at":"2026-10-01T00:12:46.995594Z","queue":"reprioritized"}
