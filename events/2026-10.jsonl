@@ -37,3 +37,6 @@
 {"actor":"agent:pm-1","at":"2026-10-01T02:26:16.904492Z","from":"open","task":"br-79c3","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-01T02:26:16.934844Z","queue":"reprioritized"}
 {"actor":"human","at":"2026-10-01T02:28:40.033Z","from":"","task":"br-f218","to":"open"}
+{"actor":"human","at":"2026-10-01T02:29:11.505Z","from":"","task":"br-9df6","to":"open"}
+{"actor":"agent:pm-1","at":"2026-10-01T02:29:15.055819Z","from":"open","task":"br-9df6","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-01T02:29:15.085868Z","queue":"reprioritized"}
