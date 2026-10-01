@@ -4,7 +4,7 @@ title = "Interactive sessions D: advisor sessions tag their tmux pane with their
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-01T22:51:22.652Z"
-updated_at = "2026-10-01T23:26:27.803940Z"
+updated_at = "2026-10-01T23:27:08.116811Z"
 size = "S"
 branch = "bridle/jttf-d"
 commit = "133b2f565aad469b3e72c14dcb4731ad5b5126bb"
@@ -34,3 +34,6 @@ done: Advisor sessions tag their tmux pane using shared crate::pane module. Best
 
 ### note · agent:manager-2 · 2026-10-01T23:26:27.803Z
 integrated: 133b2f565aad469b3e72c14dcb4731ad5b5126bb (branch bridle/jttf-d)
+
+### note · agent:manager-2 · 2026-10-01T23:27:08.116Z
+cleanup: removed agent jttf-d, branch bridle/jttf-d
