@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `bridle task note` renamed to `bridle task comment` (c7mn): a more intuitive name matching JIRA, GitHub and other tools. The old `task note` command and its flags stay available as a hidden alias. Role prompts, skills, rules and design docs updated.
 
 ### Fixed
+- `bridle task edit --body` keeps a ticket-born task's `original id:` first line (unless the new body has its own), so `ticket check` stays green; its error for a task without that link now names the lost line as a possible cause (br-0e64).
 - A named advisor now reads its brief at startup: the opening prompt tells it to check its inbox for "For advisor <name>:" messages and start from the brief when present (jb4e).
 - Restart and self-upgrade on Linux no longer exec `<path> (deleted)` after the binary is replaced: the path is resolved once at start-up with the suffix stripped, and a failed exec is logged as an error (fpde).
 - Agent PATH construction now uses the pre-resolved `exe_path()` instead of `current_exe()`, so agents always see the correct daemon binary directory even after it is replaced on Linux (fpde follow-up).

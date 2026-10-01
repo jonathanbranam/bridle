@@ -512,7 +512,10 @@ pub fn check(root: &Path, docs: &Path, task_links: Option<&HashMap<String, Strin
                 match links.get(t) {
                     None => note(
                         true,
-                        format!("tasks names {t}, which is not a task made from a ticket"),
+                        format!(
+                            "tasks names {t}, which is not a task made from a ticket \
+                             (or its task body lost its `original id:` first line)"
+                        ),
                     ),
                     Some(o) if o != me => {
                         note(true, format!("tasks names {t}, which names ticket {o}"))

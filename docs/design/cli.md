@@ -343,6 +343,9 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   (oldest first within a priority), so `task list --claimed-by human` is the human's ranked
   list. `task drop --reason` on a to-do the human holds also sends the human an inbox note
   with the reason.
+- **`task edit --body`** keeps a ticket-born task's first line `original id: <ticket>` (the link
+  `ticket check` reads) when the new body doesn't start with its own such line; a body that does
+  wins.
 - **`--size S|M|L|none`** on `task new`/`task edit` sets the task's optional estimated size
   (case-insensitive), so small tasks can be picked when budget runs short. `--size none`
   on `task edit` clears the task's size. It's informational: nothing selects on it and the

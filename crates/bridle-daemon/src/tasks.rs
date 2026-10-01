@@ -477,7 +477,7 @@ impl TaskManager {
             task.title = title;
         }
         if let Some(body) = body {
-            task.body = body;
+            task.body = keep_origin_line(&task.body, body);
         }
         if let Some(components) = components {
             task.components = components;
@@ -1248,6 +1248,17 @@ impl TaskManager {
     }
 }
 
+/// `ticket new` links a task to its ticket by a first body line `original id: <ticket>`; a body
+/// rewrite that doesn't carry its own such line keeps the old one, so `ticket check` stays green.
+fn keep_origin_line(old: &str, new: String) -> String {
+    const PREFIX: &str = "original id: ";
+    let origin = |b: &str| b.lines().next().is_some_and(|l| l.starts_with(PREFIX));
+    match old.lines().next() {
+        Some(first) if origin(old) && !origin(&new) => format!("{first}\n{new}"),
+        _ => new,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1355,6 +1366,43 @@ mod tests {
             .expect("edit body");
         assert_eq!(edited.body, "new body");
         assert_eq!(edited.title, "Add foo, better");
+    }
+
+    #[tokio::test]
+    async fn body_edit_keeps_the_original_id_first_line() {
+        let (tm, _tmp) = manager().await;
+        let body = "original id: abcd\nold".to_string();
+        let task = tm
+            .new_task("T", TaskKind::Feature, body, vec![], None)
+            .await
+            .expect("new task");
+        let edited = tm
+            .edit_task(&task.id, None, Some("brief".to_string()), None, None)
+            .await
+            .expect("edit");
+        assert_eq!(edited.body, "original id: abcd\nbrief");
+        // A body with its own origin line wins.
+        let edited = tm
+            .edit_task(
+                &task.id,
+                None,
+                Some("original id: wxyz\nbrief".to_string()),
+                None,
+                None,
+            )
+            .await
+            .expect("edit");
+        assert_eq!(edited.body, "original id: wxyz\nbrief");
+        // A task without an origin line is unaffected.
+        let plain = tm
+            .new_task("P", TaskKind::Feature, "plain".to_string(), vec![], None)
+            .await
+            .expect("new task");
+        let edited = tm
+            .edit_task(&plain.id, None, Some("brief".to_string()), None, None)
+            .await
+            .expect("edit");
+        assert_eq!(edited.body, "brief");
     }
 
     #[tokio::test]
