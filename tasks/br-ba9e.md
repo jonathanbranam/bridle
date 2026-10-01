@@ -4,8 +4,9 @@ title = "Interactive sessions A: advisors register with the daemon; context trac
 kind = "feature"
 state = "planned"
 created_at = "2026-10-01T22:51:22.633Z"
-updated_at = "2026-10-01T22:51:24.795510Z"
+updated_at = "2026-10-01T23:21:46.422215Z"
 size = "M"
+summary = "Advisor sessions register with the daemon: new in-memory registry (bridle-daemon/src/sessions.rs), POST/GET /v1/sessions and POST /v1/sessions/end, a 10 s watcher task that drops sessions whose pid is gone (session.ended) and reads $BRIDLE_HOME/context/<id>, emitting session.context at the orchestrator's three token thresholds (re-armed on a lower reading); 'bridle status' gets a session line per advisor. 'bridle session advisor' registers at launch and ends at exit, 3 s best-effort so a daemon down never fails it; a hidden 'bridle session note' SessionStart hook (advisor settings only) adds the Claude session id via BRIDLE_SESSION_PID. Orchestrator path untouched. Caveat: the CLI-side register/end is covered by the existing session tests running with no daemon, not a dedicated test."
 +++
 
 original id: jttf
@@ -19,3 +20,8 @@ SAFETY: advisors only. Do NOT touch 'bridle session orchestrator', the orchestra
 Tests: register/end round trip; context event at a threshold from a fake context file; daemon down doesn't fail the session; pid gone marks ended. Acceptance: just check passes. Model: Sonnet.
 Migration plan: none (no project files; any DB table migrates itself).
 Out of scope: wakes, advisor addressing (slice B), restart, orchestrator.
+
+## Thread
+
+### note · agent:jttf-a · 2026-10-01T23:21:46.422Z
+done: advisors register with the daemon, context per session (session.context events, status line); 2198484
