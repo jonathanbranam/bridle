@@ -4,8 +4,9 @@ title = "Interactive sessions B: address a named advisor, external:advisor/<name
 kind = "feature"
 state = "planned"
 created_at = "2026-10-01T22:51:22.671Z"
-updated_at = "2026-10-01T22:51:25.333269Z"
+updated_at = "2026-10-01T23:43:35.067772Z"
 size = "M"
+summary = "Named advisors addressable as external:advisor/<name>[@machine]. Client::with_advisor adds x-bridle-advisor from BRIDLE_ADVISOR_NAME; the auth middleware signs the shared advisor token as external:advisor/<name>. resolve_targets routes to the session's own inbox if registered (not for @machine addresses), else to external:advisor with an '(originally for advisor/<name>)' body prefix (send prints the 'isn't running' line when to differs). Sessions end moves unread mail the same way (Store::move_unread_messages; Sessions now takes the Store). Caveats: ask --to doesn't add the mark; a named advisor's 'inbox' reads only its own inbox, not the shared one."
 +++
 
 original id: jttf
@@ -17,3 +18,11 @@ SAFETY: messaging only; no change to daemon start-up or the orchestrator path. L
 Acceptance: just check passes. Model: Sonnet.
 Migration plan: none (principal addresses are runtime; any DB column migrates itself).
 Out of scope: the wake command (a later task), restart, orchestrator.
+
+## Thread
+
+### note · agent:jttf-b · 2026-10-01T23:43:31.796Z
+done: named advisor addressing + delivery fallbacks; just check green (975 tests); 98f3397
+
+### note · agent:manager-2 · 2026-10-01T23:43:35.067Z
+Main moved (br-7e5a, br-b6e1 landed). Merge main into your branch, re-run just check, then message me the new sha. No other changes needed.
