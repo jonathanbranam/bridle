@@ -257,7 +257,7 @@ async fn resolve_endpoint_and_token(
 /// keeps today's client-side error when `$CLAUDECODE` is set with no token.
 pub async fn client_for(cli: &Cli) -> Result<Client, CliError> {
     let (url, token) = resolve_endpoint_and_token(cli, false).await?;
-    Ok(Client::new(url, token))
+    Ok(Client::new(url, token).with_advisor(std::env::var("BRIDLE_ADVISOR_NAME").ok()))
 }
 
 /// A client for a read-only command: proceeds with no token when `$CLAUDECODE`
@@ -265,7 +265,7 @@ pub async fn client_for(cli: &Cli) -> Result<Client, CliError> {
 /// token-less GET/HEAD requests.
 async fn client_for_read(cli: &Cli) -> Result<Client, CliError> {
     let (url, token) = resolve_endpoint_and_token(cli, true).await?;
-    Ok(Client::new(url, token))
+    Ok(Client::new(url, token).with_advisor(std::env::var("BRIDLE_ADVISOR_NAME").ok()))
 }
 
 /// `1h23m`-style rendering for a duration in whole seconds, for the `usage`

@@ -15,6 +15,15 @@ use chrono::{DateTime, Utc};
 use serde_json::json;
 
 use crate::events::Emitter;
+use crate::store::Store;
+
+/// The shared advisor principal: where a named advisor's mail goes when it isn't running.
+pub const ADVISOR: &str = "external:advisor";
+
+/// `body` marked as meant for the named advisor, for the shared inbox.
+pub fn originally_for(name: &str, body: &str) -> String {
+    format!("(originally for advisor/{name})\n{body}")
+}
 
 struct Entry {
     info: SessionInfo,
@@ -26,15 +35,17 @@ pub struct Sessions {
     home: PathBuf,
     tokens: [u64; 3],
     emitter: Emitter,
+    store: Store,
     entries: Mutex<Vec<Entry>>,
 }
 
 impl Sessions {
-    pub fn new(home: PathBuf, tokens: [u64; 3], emitter: Emitter) -> Self {
+    pub fn new(home: PathBuf, tokens: [u64; 3], emitter: Emitter, store: Store) -> Self {
         Sessions {
             home,
             tokens,
             emitter,
+            store,
             entries: Mutex::new(Vec::new()),
         }
     }
@@ -79,6 +90,13 @@ impl Sessions {
         if let Some(e) = gone {
             self.emit_ended(&e).await;
         }
+    }
+
+    /// Whether a session named `advisor/<name>` is registered.
+    pub fn is_running(&self, name: &str) -> bool {
+        let identity = format!("advisor/{name}");
+        let entries = self.entries.lock().expect("sessions lock");
+        entries.iter().any(|e| e.info.identity == identity)
     }
 
     pub fn list(&self) -> Vec<SessionInfo> {
@@ -163,6 +181,14 @@ impl Sessions {
     }
 
     async fn emit_ended(&self, e: &Entry) {
+        // Mail it hadn't read goes to the shared inbox, marked, so someone sees it.
+        if let Some(name) = e.info.identity.strip_prefix("advisor/") {
+            let from = format!("{ADVISOR}/{name}");
+            let mark = originally_for(name, "");
+            if let Err(err) = self.store.move_unread_messages(&from, ADVISOR, &mark).await {
+                tracing::warn!("moving {from}'s unread messages: {err}");
+            }
+        }
         let _ = self
             .emitter
             .emit(
@@ -189,6 +215,7 @@ mod tests {
             dir.path().to_path_buf(),
             [100, 200, 300],
             Emitter::new(store.clone()),
+            store.clone(),
         );
         (s, dir, store)
     }

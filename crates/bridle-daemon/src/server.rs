@@ -288,6 +288,7 @@ async fn auth_middleware(
     };
     match state.store.authenticate(&token).await {
         Ok(Some(principal)) => {
+            let principal = named_advisor(principal, req.headers());
             req.extensions_mut().insert(principal);
             next.run(req).await
         }
@@ -297,6 +298,45 @@ async fn auth_middleware(
         Err(e) => ApiError::new(StatusCode::INTERNAL_SERVER_ERROR, "internal", e.to_string())
             .into_response(),
     }
+}
+
+/// A named advisor's CLI adds its name (`BRIDLE_ADVISOR_NAME`) to the shared advisor token's
+/// requests; it signs as `external:advisor/<name>` (`@machine` kept). A label, not proof.
+fn named_advisor(mut principal: Principal, headers: &axum::http::HeaderMap) -> Principal {
+    let rest = principal.id.strip_prefix(crate::sessions::ADVISOR);
+    let name = headers
+        .get(bridle_api::client::ADVISOR_HEADER)
+        .and_then(|v| v.to_str().ok())
+        .filter(|n| valid_advisor_name(n));
+    if let (Some(rest), Some(name)) = (rest, name)
+        && (rest.is_empty() || rest.starts_with('@'))
+    {
+        principal.id = format!("{}/{name}{rest}", crate::sessions::ADVISOR);
+    }
+    principal
+}
+
+fn valid_advisor_name(n: &str) -> bool {
+    !n.is_empty()
+        && n.chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+}
+
+/// Splits `external:advisor/<name>[@machine]` into the principal that owns the inbox
+/// (`advisor[@machine]`) and the advisor's name.
+fn split_named(external: &str) -> Option<(String, String)> {
+    let (base, rest) = external.split_once('/')?;
+    let (name, machine) = match rest.split_once('@') {
+        Some((n, m)) => (n, Some(m)),
+        None => (rest, None),
+    };
+    Some((
+        match machine {
+            Some(m) => format!("{base}@{m}"),
+            None => base.to_string(),
+        },
+        name.to_string(),
+    ))
 }
 
 /// An incident's owner is the orchestrator; the human may do anything it may
@@ -946,10 +986,23 @@ async fn resolve_targets(state: &AppState, to_raw: &str) -> Result<Vec<ToTarget>
     Ok(if to_raw == "human" {
         vec![ToTarget::Human]
     } else if let Some(name) = to_raw.strip_prefix("external:") {
-        if !state.store.external_exists(name).await? {
+        let (owner, advisor) = match split_named(name) {
+            Some((o, a)) => (o, Some(a)),
+            None => (name.to_string(), None),
+        };
+        if advisor.as_deref().is_some_and(|a| !valid_advisor_name(a))
+            || !state.store.external_exists(&owner).await?
+        {
             return Err(ApiError::not_found(format!("no such recipient: {to_raw}")));
         }
-        vec![ToTarget::External(to_raw.to_string())]
+        // A named session that isn't running gets its mail at the shared inbox.
+        match advisor {
+            Some(a) if !to_raw.contains('@') && state.sessions.is_running(&a) => {
+                vec![ToTarget::External(to_raw.to_string())]
+            }
+            Some(_) => vec![ToTarget::External(format!("external:{owner}"))],
+            None => vec![ToTarget::External(to_raw.to_string())],
+        }
     } else if let Some(role) = to_raw.strip_prefix("role:") {
         let matching: Vec<ToTarget> = state
             .store
@@ -990,6 +1043,13 @@ async fn send_message(
         return Err(ApiError::bad_request("`to` is required"));
     };
     let targets = resolve_targets(&state, to_raw).await?;
+    let fell_back = match (
+        to_raw.strip_prefix("external:").and_then(split_named),
+        targets.first(),
+    ) {
+        (Some((_, name)), Some(ToTarget::External(to))) if !to.contains('/') => Some(name),
+        _ => None,
+    };
     // The full text goes on the task's thread (an unknown task fails here,
     // before anything is sent); recipients get a short pointer to it.
     let body = match req.task.as_deref() {
@@ -1015,6 +1075,10 @@ async fn send_message(
             format!("{}: comment added\n{first}", task.id)
         }
         None => req.body.clone(),
+    };
+    let body = match &fell_back {
+        Some(name) => crate::sessions::originally_for(name, &body),
+        None => body,
     };
     let mut msgs = Vec::with_capacity(targets.len());
     for target in targets {

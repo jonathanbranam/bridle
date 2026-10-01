@@ -920,3 +920,114 @@ async fn visitor_principal_sends_and_reads_but_is_not_the_orchestrator() {
         "{err:?}"
     );
 }
+
+/// jttf B: `external:advisor/<name>` reaches a running named advisor; otherwise the shared
+/// advisor inbox, marked; unread mail follows when the session ends; unknown owner 404s.
+#[tokio::test]
+async fn named_advisor_addressing_and_delivery_fallbacks() {
+    use bridle_api::types::SessionRegister;
+    let (daemon, _tmp) = start_daemon(None).await;
+    let token = daemon
+        .client
+        .create_token(&TokenCreateRequest {
+            name: "advisor".to_string(),
+            machine: None,
+        })
+        .await
+        .expect("create advisor token")
+        .token;
+    let url = daemon.running.url.clone();
+    let research =
+        Client::new(url.clone(), Some(token.clone())).with_advisor(Some("research".into()));
+    let shared = Client::new(url, Some(token));
+    let send = |to: &str, reply_to: Option<String>| SendRequest {
+        to: Some(to.to_string()),
+        body: "hello".to_string(),
+        kind: MessageKind::Note,
+        when: When::Now,
+        reply_to,
+        task: None,
+    };
+    let inbox = |c: &Client| {
+        let c = c.clone();
+        async move {
+            c.list_messages(&MessageQuery {
+                to: Some("me".to_string()),
+                ..Default::default()
+            })
+            .await
+            .expect("inbox")
+        }
+    };
+
+    // Never existed: the shared inbox, marked, and the sender can tell by `to`.
+    let m = daemon
+        .client
+        .send(&send("external:advisor/research", None))
+        .await
+        .expect("send")[0]
+        .clone();
+    assert_eq!(m.to, "external:advisor");
+    assert_eq!(m.body, "(originally for advisor/research)\nhello");
+    assert_eq!(inbox(&shared).await.len(), 1);
+    assert!(inbox(&research).await.is_empty());
+
+    // Running: its own inbox, unmarked.
+    research
+        .session_register(&SessionRegister {
+            identity: "advisor/research".into(),
+            pid: 4_000_001,
+            pid_start: "t0".into(),
+            pane: None,
+            claude_session_id: None,
+        })
+        .await
+        .expect("register");
+    let m = daemon
+        .client
+        .send(&send("external:advisor/research", None))
+        .await
+        .expect("send")[0]
+        .clone();
+    assert_eq!(
+        (m.to.as_str(), m.body.as_str()),
+        ("external:advisor/research", "hello")
+    );
+    assert_eq!(inbox(&research).await.len(), 1);
+    assert_eq!(inbox(&shared).await.len(), 1);
+
+    // Attribution, and a reply returns to the named advisor.
+    let q = research.send(&send("human", None)).await.expect("send")[0].clone();
+    assert_eq!(q.from, "external:advisor/research");
+    let r = daemon
+        .client
+        .send(&send("external:advisor/research", Some(q.id.clone())))
+        .await
+        .expect("reply")[0]
+        .clone();
+    assert_eq!(r.to, "external:advisor/research");
+
+    // Ending moves what's unread, marked; what it read stays.
+    let msgs = inbox(&research).await;
+    research.mark_read(&msgs[0].id).await.expect("read");
+    research.session_end(4_000_001).await.expect("end");
+    let shared_inbox = inbox(&shared).await;
+    assert_eq!(shared_inbox.len(), 2, "{shared_inbox:?}");
+    assert!(
+        shared_inbox
+            .iter()
+            .all(|m| m.body.starts_with("(originally for advisor/research)\n"))
+    );
+    assert_eq!(inbox(&research).await.len(), 1);
+
+    // The part before `/` must be an active principal.
+    let err = daemon
+        .client
+        .send(&send("external:nobody/research", None))
+        .await
+        .expect_err("404");
+    assert!(matches!(
+        err,
+        bridle_api::ClientError::Api { status: 404, .. }
+    ));
+}

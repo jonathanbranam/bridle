@@ -305,7 +305,9 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   permission denials in Claude Code. Example: `echo "message" | bridle send w1 --text-file -`.
   `role:NAME` fans the message out to every live agent currently holding that
   role — one delivered message per matching agent, same as sending to each
-  individually; `bridle send` prints one `sent <id> -> <to>` line per recipient.
+  individually; `external:advisor/<name>` (`@machine` allowed) addresses one advisor session: if
+  it isn't running the message goes to `external:advisor`, marked "(originally for advisor/<name>)",
+  and `send` adds "<name> isn't running; delivered to advisor"; `bridle send` prints one `sent <id> -> <to>` line per recipient.
   A role with no live agents is an error, same as an unknown agent name.
   `--task <id>` (and `bridle task comment <id> --notify <agent>`, the same call) writes the text as a comment on the task's thread and sends the recipient `<id>: comment added` plus its first line; an unknown task is an error and nothing is sent.
 

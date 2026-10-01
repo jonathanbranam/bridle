@@ -281,6 +281,18 @@ impl Store {
             .await
     }
 
+    /// Re-addresses `from`'s unread messages to `to`, putting `mark` before each body.
+    pub async fn move_unread_messages(
+        &self,
+        from: &str,
+        to: &str,
+        mark: &str,
+    ) -> Result<usize, StoreError> {
+        let (from, to, mark) = (from.to_string(), to.to_string(), mark.to_string());
+        self.with_conn(move |c| sync::move_unread_messages(c, &from, &to, &mark))
+            .await
+    }
+
     /// Revokes `external:<name>`, failing with `NotFound` if no such
     /// external-token principal exists (an agent's own token isn't revoked
     /// this way; that happens through `rm`).
@@ -3032,6 +3044,19 @@ mod sync {
             params![key, value],
         )?;
         Ok(previous)
+    }
+
+    pub(super) fn move_unread_messages(
+        conn: &Connection,
+        from: &str,
+        to: &str,
+        mark: &str,
+    ) -> Result<usize, StoreError> {
+        Ok(conn.execute(
+            "UPDATE messages SET to_id = ?2, body = ?3 || body
+             WHERE to_id = ?1 AND state NOT IN ('read', 'dropped')",
+            params![from, to, mark],
+        )?)
     }
 
     pub(super) fn unread_count(conn: &Connection, to: &str) -> Result<u32, StoreError> {

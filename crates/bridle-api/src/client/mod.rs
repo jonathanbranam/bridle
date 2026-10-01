@@ -47,7 +47,12 @@ pub struct Client {
     http: reqwest::Client,
     base_url: String,
     token: Option<String>,
+    /// A named advisor's label (`BRIDLE_ADVISOR_NAME`), sent as [`ADVISOR_HEADER`].
+    advisor: Option<String>,
 }
+
+/// Header a named advisor's CLI adds so the daemon signs its messages `external:advisor/<name>`.
+pub const ADVISOR_HEADER: &str = "x-bridle-advisor";
 
 impl Client {
     pub fn new(base_url: impl Into<String>, token: Option<String>) -> Self {
@@ -59,6 +64,7 @@ impl Client {
             http: reqwest::Client::new(),
             base_url,
             token,
+            advisor: None,
         }
     }
 
@@ -82,7 +88,14 @@ impl Client {
                 .expect("building a plain http client with a timeout never fails"),
             base_url,
             token,
+            advisor: None,
         }
+    }
+
+    /// Sends as the named advisor `name` (a label on the shared advisor token, not proof).
+    pub fn with_advisor(mut self, name: Option<String>) -> Self {
+        self.advisor = name.filter(|n| !n.is_empty());
+        self
     }
 
     fn build_url(&self, segments: &[&str]) -> Result<reqwest::Url, ClientError> {
@@ -102,6 +115,9 @@ impl Client {
         let mut req = self.http.request(method, url);
         if let Some(t) = &self.token {
             req = req.bearer_auth(t);
+        }
+        if let Some(a) = &self.advisor {
+            req = req.header(ADVISOR_HEADER, a);
         }
         Ok(req)
     }

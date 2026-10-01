@@ -542,6 +542,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
             config.orchestrator.handover_tokens,
         ],
         emitter.clone(),
+        store.clone(),
     ));
     let gh: std::sync::Arc<dyn ci::Gh> = overrides
         .upgrade

@@ -153,6 +153,17 @@ pub(super) async fn send(cli: &Cli, args: &SendArgs) -> Result<(), CliError> {
     } else {
         for msg in &msgs {
             println!("sent {} -> {}", msg.id, msg.to);
+            if let Some(name) = args
+                .to
+                .strip_prefix("external:")
+                .and_then(|t| t.split_once('/'))
+                && !msg.to.contains('/')
+            {
+                println!(
+                    "{} isn't running; delivered to advisor",
+                    name.1.split('@').next().unwrap_or(name.1)
+                );
+            }
         }
     }
     Ok(())
