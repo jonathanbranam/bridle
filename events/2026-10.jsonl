@@ -6,3 +6,4 @@
 {"actor":"agent:pm-1","at":"2026-10-01T00:12:46.995594Z","queue":"reprioritized"}
 {"actor":"human","at":"2026-10-01T00:17:30.553Z","from":"","task":"br-b647","to":"open"}
 {"actor":"external:orchestrator","at":"2026-10-01T00:17:30.555512Z","from":"open","task":"br-b647","to":"planned"}
+{"actor":"agent:manager-2","at":"2026-10-01T00:21:32.844799Z","from":"planned","task":"br-f085","to":"integrated"}
