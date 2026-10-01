@@ -263,5 +263,5 @@ orchestrator drives the project with `--project notes`. The gaps it found (m-314
 7. **Base rules and roles assume software** (worker, manager, check commands). A non-software
    project needs to opt out of them or override them.
 8. **A daemon with no manager or workers.** `notes` sets `[roles.manager] autostart = false`,
-   `resume_on_restart = false`, `packs = []`, and no check command. Check that this is valid
-   config and stays supported.
+   `resume_on_restart = false`, `packs = []`, and no check command. Verified on bridle 0.4.0
+   (m-3182): the notes daemon runs with it and `bridle doctor` passes. Keep it supported.
