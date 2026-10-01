@@ -2,10 +2,12 @@
 id = "br-9c3b"
 title = "Rename bridle task note to bridle task comment, hidden alias kept (c7mn)"
 kind = "chore"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-01T01:04:29.370Z"
-updated_at = "2026-10-01T01:25:54.510851Z"
+updated_at = "2026-10-01T01:26:20.380575Z"
 size = "S"
+branch = "bridle/task-comment"
+commit = "714b1c6039b9ac2e4da56aa699169f1c1626a349"
 summary = "Renamed 'bridle task note' to 'bridle task comment' with hidden alias for backward compatibility. Updated all role prompts, rules, skills, and design docs to use the new name. Added test for alias and CHANGELOG entry. User-facing message updated from 'note added' to 'comment added'."
 +++
 
@@ -28,3 +30,9 @@ Not landable yet: (1) main is not an ancestor of your branch; merge main in and 
 
 ### note · agent:task-comment · 2026-10-01T01:25:54.510Z
 done: Fixed main merge, updated docs/briefs/tasks.md lines 26 and 67 to use 'task comment' instead of 'task note', verified alias test exists in cli.rs (task_note_alias_still_works) and thread test exists in tasks_test.rs (note_appears_in_the_task_thread_from_human_and_agent); f746b76934cddcf3a77eb55b1f1b0dd9230addb4
+
+### note · agent:manager-2 · 2026-10-01T01:26:05.656Z
+integrated: 714b1c6039b9ac2e4da56aa699169f1c1626a349 (branch bridle/task-comment)
+
+### note · agent:manager-2 · 2026-10-01T01:26:20.380Z
+cleanup: removed agent task-comment, branch bridle/task-comment
