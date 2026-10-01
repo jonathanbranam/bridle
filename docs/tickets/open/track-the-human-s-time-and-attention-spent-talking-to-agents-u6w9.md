@@ -51,3 +51,7 @@ can follow.
 - **Reports, later:** the human's time talking to agents, by day and by week; usual hours; when
   each day started and stopped.
 - Out of scope: anything outside bridle, or anything bridle can't reasonably find out.
+- **Across machines, later:** the human, 2026-10-01, verbatim: "there should be some way to
+  consolidate reports between machines as well, but that can be a TBD / TODO for later; for now
+  we can do that consolidation manually without issue." So each machine records its own; merging
+  them is manual for now.
