@@ -37,3 +37,8 @@ external principal. The human asked who can create agents.
 - Role names in `workflow/base/roles/`: advisor, manager, orchestrator, product-manager, worker. Named advisors already use the
   `advisor-<name>` form, as the tmux tag (`@bridle` = `advisor` or `advisor-<name>`,
   `bridle_daemon::focus`) and in `bridle session advisor <name>`.
+
+## Decided (2026-10-01)
+
+The human, verbatim: "Use \"pm\" for product mangager. Shorter is better". The reserved name for
+the `product-manager` role is `pm` (as in today's `pm-1`), not `product-manager`.
