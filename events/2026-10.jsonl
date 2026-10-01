@@ -54,3 +54,4 @@
 {"actor":"agent:pm-1","at":"2026-10-01T11:48:05.429403Z","from":"open","task":"br-46fe","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-01T11:48:05.445937Z","from":"open","task":"br-cf00","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-01T11:48:05.462840Z","from":"open","task":"br-f610","to":"planned"}
+{"actor":"human","at":"2026-10-01T11:51:40.948Z","from":"","task":"br-d772","to":"open"}
