@@ -66,3 +66,4 @@
 {"actor":"agent:pm-1","at":"2026-10-01T16:38:58.510267Z","queue":"reprioritized"}
 {"actor":"agent:manager-2","at":"2026-10-01T16:48:13.121791Z","from":"planned","task":"br-7b79","to":"integrated"}
 {"actor":"human","at":"2026-10-01T16:53:49.504Z","from":"","task":"br-b0d1","to":"open"}
+{"actor":"human","at":"2026-10-01T17:12:38.248Z","from":"","task":"br-415f","to":"open"}
