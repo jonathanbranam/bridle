@@ -1,0 +1,138 @@
+---
+id: jttf
+title: "Interactive sessions: context for all, daemon-decided wakes, restart with handover, one tagged pane each"
+kind: feature
+opened: 2026-10-01
+repos: [bridle]
+changes: []
+specs: []
+needs: []
+see: [a-life-assistant-agent-on-the-notes-repo-phyy, hold-the-orchestrator-relaunch-8fsx, tag-a-tmux-pane-from-bridle-butk, orchestrator-spins-off-an-advisor-ervd, orchestrator-identity-and-recovery-7d62, orchestrator-watches-its-own-context-c9zm]
+tasks: [br-b4ac]
+---
+
+## The ask
+
+
+The human, verbatim (2026-10-01, via the advisor), first the question:
+
+> So what kind of tracking and work do we have for agents, interactive agents besides the
+> orchestrator? I'm really trying to send all my questions to advisor agents wherever possible.
+> But I think they don't wake on messages and they don't have context tracking. They don't have
+> automatic restart or handoff procedures, which is not entirely a problem, but the handoff maybe
+> could be something we could consider, but I'm just not sure how much we want to add there, but I
+> think we can, it'd be nice if we can at least report on their context usage and restart them
+> with or without a handoff.
+
+The advisor proposed four steps (context reporting, wake on messages, restart on request with or
+without a handover, automatic crash restart and handover). The human's answer, verbatim ("Bridal"
+is bridle, "pain" is pane):
+
+> Number one is definitely approved. Let's track context. For every interactive agent.
+>
+> For the second one, I think what we want is a new command in Bridal for called maybe like Agent
+> Wake or something. I, I'm not familiar with the redesign of all the Bridal subcommands, but
+> something like that. And it would take, I don't know exactly how this is handled right now, but
+> um, it would take the name of the agent, its identifier, and then the bridal daemon can be
+> programmatically determine if that particular agent needs to wake up. That way we can move the
+> handling of this into bridal itself instead of the agents making decisions on when they should
+> wake up. So, um, so if we change the rule later, we just rewrite bridal and not worry about the
+> agent prompts or anything. So that way, yeah, bridal could wake an agent because a message is
+> ready or because, you know, a ticket has a comment added on it that they should know about or a
+> ticket changes status or, sorry, a task changes status or just any, any external condition that
+> um, in bridal identifies that should wake the agent. Um, it could wake it on, you know, a
+> schedule if it needed to. So let's go ahead and uh, I think that's a better design, more
+> flexible and reusable design.
+>
+> For restart on request, that also sounds fine. I think we need to give a more robust solution to
+> the tmux pain problem. So let's just go ahead and assume all interactive agents start in a tmux
+> pain somewhere. And we may have to figure out how to, you know, not put too many panes in a
+> window. Um, we can come back to that particular problem. But then for now, let's just say that
+> whenever we use Bridal to start up an agent, it always tags its window, its, I'm sorry, it tags
+> its pane with its identifier. The biggest problem here is that we've already run into this a few
+> times, that when an agent ends, that tag on the session pane stays around. In some cases, that's
+> a good solution, because then we can restart the agent in the right pane. But in other cases, it
+> can be a problem, because there may be two panes tagged with the same identifier. So I'm not
+> sure how to resolve that, but it's something to think about.
+>
+> for crash restart. Yeah, again, I think this is something that needs to be a decision. We really
+> need like a better management of these interactive sessions. So in some cases, we don't want it
+> to restart. And in other cases, maybe we do. So I think we need something a little more nuanced.
+> But I'm not sure exactly how to design that. One example of this is we have like a race
+> condition when I am working with the orchestrator and let's say I want to shut it down or
+> restart it or do something. Maybe I just am having a system problem and need to turn off, exit
+> the agent. When I do that, the daemon starts it back up again. That's my only recourse is to
+> shut down the daemon to stop it from doing that. I think. I don't know if there's a way to to
+> disable that quickly. The other race condition is when I start a new daemon, if there's no
+> orchestrator running, it can start looking for one and start one up. Meanwhile, I'm probably
+> starting the orchestrator in a different terminal at the same time. And the other race
+> condition is if I go ahead and say, oh, I should start the orchestrator first, then the
+> orchestrator can't talk to Bridal at all and starts reporting the daemons down and doesn't know
+> what to do. So those two things are, are kind of problematic. And I'm not exactly sure how to
+> resolve them because I don't know how Bridal determines the difference between, hey, the human
+> shut down the orchestrator on purpose or some other agent versus the agent crashed. It's hard to
+> tell the difference. And, you know, the orchestrator, or the, yeah, all of those race conditions
+> are just complex.
+>
+> So I think the main thing I'm saying here is it's already hard enough with the orchestrator with
+> these race conditions, so let's not add automatic restart yet. Um, let's keep that with the
+> orchestrator and think about a good solution in the future. For the advisors, I do think having
+> a handoff would be a good choice. We don't have to rush to implement that, but I think it would
+> be valuable. I want to be able to work with an advisor for a while and then have it hand off and
+> restart. Or even just restart without context would be acceptable as a first pass. The handoff
+> doesn't need to be anything too fancy. I think another issue we have immediately is the inbox
+> problem with advisors. If I'm running multiple advisors and they all share an inbox, it might be
+> kind of weird. But then again, if I turn the advisor off, then nobody's ever going to read the
+> message. So I feel like I'm a little bit stuck there in the best solution. If I have temporary
+> advisors, should they be sending messages around? I think they can send messages out, it's fine,
+> but the receiving of messages is kind of an interesting problem.
+
+## Today (advisor, checked 2026-10-01)
+
+- **Context:** the global statusline (`bridle statusline`, `~/.claude/settings.json`) already
+  writes every session's tokens to `$BRIDLE_HOME/context/<session id>`, advisors included. Only
+  the orchestrator's session id is known to the daemon, so only it gets thresholds and
+  `orchestrator.context` events ([[docs/design/agent-host/orchestrator-supervision|supervision]]).
+- **Wakes:** `bridle orchestrator wait-for-wake` serves `external:orchestrator` only; the daemon
+  already decides its wake reasons. `--mail` returns only on email-bridge mail; `bridle wait`
+  needs a task. Advisors see messages only when the human next types to them (phyy gap 3).
+- **Session files:** `orchestrator.pid`/`.session`/`.exits` are one per machine (phyy gap 2,
+  7d62). Only the unnamed advisor writes a pid file (`advisor-<project>.pid`), for mail.
+- **Panes:** `bridle pane tag <name>` (butk, built) moves a tag: tagging a pane clears it from any
+  other pane, so tags set through bridle are unique. Panes tagged by hand, or a stale tag left
+  after a session ends, aren't cleaned up.
+- **Relaunch race:** the human exiting the orchestrator gets it relaunched; 8fsx
+  (`bridle orchestrator hold`/`release`, br-96a6, open) is the fix for that one.
+
+## Decided by the human
+
+1. **Context tracking for every interactive session** (orchestrator, advisors, any external
+   session): bridle knows each session's id and reports its context (events, `bridle status`).
+2. **Wakes are decided by the daemon, for any agent.** One command (name TBD, e.g. `bridle agent
+   wake <identifier>`) that an interactive session runs and that returns when the daemon decides
+   that agent should wake: a message for it, a comment on or state change of a task it should know
+   about, a schedule, or any other condition. The rules live in bridle, not in role prompts, so
+   changing them is a bridle change. Generalizes `wait-for-wake` (phyy gap 3).
+3. **Restart on request, with a handover or without.** Restart with no context is an acceptable
+   first pass; the handover needn't be fancy. Not urgent.
+4. **Every interactive session bridle starts runs in a tmux pane tagged with its identifier.**
+   Too many panes in one window is a later problem. Stale tags left after a session ends are
+   useful (restart in the same pane) but can leave two panes with one identifier; to be designed.
+5. **No automatic crash restart or handover for anything but the orchestrator.** The
+   orchestrator's races stay with it for a future design: the human exits it and it's relaunched
+   (8fsx); a new daemon launches one while the human starts one in another terminal; an
+   orchestrator started before its daemon can't reach it and reports the daemon down. The daemon
+   can't tell a deliberate exit from a crash.
+
+## Open: the advisors' inbox
+
+Advisors share one principal (`external:advisor`) and so one inbox. With several advisors it's
+unclear which should read a message; with none running, nobody reads it. Temporary advisors may
+send freely; receiving is the open question.
+
+Advisor's recommendation (not yet decided): keep `external:advisor` as the standing address. Its
+messages wait in the inbox while no advisor runs, and the next unnamed advisor reads them at
+startup, as it does today. A named advisor (`bridle session advisor research`) gets its own
+address, e.g. `external:advisor/research`, so replies to what it sent come back to it. When it ends,
+its unread messages move to `external:advisor` so nothing is lost. Decision 2's wake command is
+what makes a running advisor notice its messages.
