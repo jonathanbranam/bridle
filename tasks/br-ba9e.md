@@ -4,7 +4,7 @@ title = "Interactive sessions A: advisors register with the daemon; context trac
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-01T22:51:22.633Z"
-updated_at = "2026-10-01T23:25:05.713634Z"
+updated_at = "2026-10-01T23:25:16.329625Z"
 size = "M"
 branch = "bridle/jttf-a"
 commit = "10f6e7ab3d4b67239d4791a828d11f14232a1237"
@@ -30,3 +30,6 @@ done: advisors register with the daemon, context per session (session.context ev
 
 ### note · agent:manager-2 · 2026-10-01T23:25:05.713Z
 integrated: 10f6e7ab3d4b67239d4791a828d11f14232a1237 (branch bridle/jttf-a)
+
+### note · agent:manager-2 · 2026-10-01T23:25:16.329Z
+cleanup: removed agent jttf-a, branch bridle/jttf-a
