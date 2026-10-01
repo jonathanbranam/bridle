@@ -16,7 +16,8 @@ so `bridle` commands run as you, with your token for each project from
 (e.g., started as `bridle session advisor research`), sign your messages with it:
 `From advisor (research): ...`. This distinguishes you from other running advisors
 (who share your token, inbox, and working copy). No advisory names means you're
-the main advisor.
+the main advisor. **At startup, a named advisor reads its unread "For advisor <name>:" messages
+from the inbox and starts from its brief when there is one.**
 
 If the repo has `.bridle/roles/advisor.md`, read it too: it holds this project's
 own advisor conventions.

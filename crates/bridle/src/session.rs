@@ -37,7 +37,16 @@ fn advisor_settings() -> String {
 // The opening prompts only point at `bridle prime`: a long prompt in argv is matched by any
 // `pkill -f <pattern>` a worker runs (fx7x).
 const ORCHESTRATOR_PROMPT: &str = "Run `bridle prime orchestrator` and follow what it prints.";
-const ADVISOR_PROMPT: &str = "Run `bridle prime advisor` and follow what it prints. Then check in: bridle status, and the open questions to the human. Say hello to the human in one line, then wait.";
+
+fn advisor_prompt(name: Option<&str>) -> String {
+    let base = "Run `bridle prime advisor` and follow what it prints. Then check in: bridle status, and the open questions to the human. Say hello to the human in one line, then wait.";
+    match name {
+        Some(n) => format!(
+            "You are advisor {n}: first read your unread inbox messages (bridle inbox --json) starting \"For advisor {n}:\" and start from that brief. Then run `bridle prime advisor` and follow what it prints. Then check in: bridle status, and the open questions to the human. Say hello to the human in one line, then wait."
+        ),
+        None => base.to_string(),
+    }
+}
 
 /// 'orch-<project>' or 'advisor[-<name>]-<project>', plus '-<suffix>' when `suffix` is non-empty.
 fn session_name(role: &str, name: Option<&str>, project: &str, suffix: &str) -> String {
@@ -102,7 +111,8 @@ pub async fn run(cli: &Cli, role: &SessionRole) -> Result<(), CliError> {
             };
             crate::focus::refuse_advisor_if_locked(&home, chrono::Local::now())?;
             let name = session_name("advisor", adv, &project, &suffix);
-            let args = claude_args(&advisor_settings(), &name, extra, ADVISOR_PROMPT);
+            let prompt = advisor_prompt(adv);
+            let args = claude_args(&advisor_settings(), &name, extra, &prompt);
             advisor(&home, &project, adv, &args).await?
         }
     };
@@ -279,5 +289,29 @@ mod tests {
     fn signals_are_named() {
         assert_eq!(how_ended(0), "exit 0");
         assert_eq!(how_ended(143), "exit 143 (SIGTERM)");
+    }
+
+    #[test]
+    fn advisor_prompt_with_name_includes_name_and_inbox_instruction() {
+        let prompt = advisor_prompt(Some("alice"));
+        assert!(
+            prompt.contains("You are advisor alice"),
+            "prompt should contain advisor name"
+        );
+        assert!(
+            prompt.contains("bridle inbox --json"),
+            "prompt should instruct reading inbox"
+        );
+        assert!(
+            prompt.contains("For advisor alice:"),
+            "prompt should filter for messages to this advisor"
+        );
+    }
+
+    #[test]
+    fn advisor_prompt_without_name_is_unchanged() {
+        let prompt = advisor_prompt(None);
+        let expected = "Run `bridle prime advisor` and follow what it prints. Then check in: bridle status, and the open questions to the human. Say hello to the human in one line, then wait.";
+        assert_eq!(prompt, expected);
     }
 }
