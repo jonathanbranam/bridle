@@ -124,15 +124,31 @@ is bridle, "pain" is pane):
    orchestrator started before its daemon can't reach it and reports the daemon down. The daemon
    can't tell a deliberate exit from a crash.
 
-## Open: the advisors' inbox
+## The advisors' inbox: decided (the human, 2026-10-01)
 
 Advisors share one principal (`external:advisor`) and so one inbox. With several advisors it's
-unclear which should read a message; with none running, nobody reads it. Temporary advisors may
-send freely; receiving is the open question.
+unclear which should read a message; with none running, nobody reads it. The advisor's design,
+which the human approved: "Yes, definitely. I approve the design. I think that looks really good."
 
-Advisor's recommendation (not yet decided): keep `external:advisor` as the standing address. Its
-messages wait in the inbox while no advisor runs, and the next unnamed advisor reads them at
-startup, as it does today. A named advisor (`bridle session advisor research`) gets its own
-address, e.g. `external:advisor/research`, so replies to what it sent come back to it. When it ends,
-its unread messages move to `external:advisor` so nothing is lost. Decision 2's wake command is
-what makes a running advisor notice its messages.
+- **Address:** `external:advisor/<name>`, e.g. `external:advisor/research`, or
+  `external:advisor/research@nuc` from another machine (the visitor suffix is unchanged). `/` can't
+  appear in a principal name today, so the form is unambiguous: what follows `/` names one session
+  of the principal before it.
+- **How bridle knows it:** `bridle session advisor <name>` registers the session (`advisor/<name>`,
+  pid, session id, pane) with the daemon at launch, the same session tracking decision 1 needs.
+  The daemon watches the pid as it does the orchestrator's and marks the session ended when it's
+  gone.
+- **No new token:** a named advisor uses the shared advisor token. Its CLI adds the name from
+  `BRIDLE_ADVISOR_NAME` (already set by `bridle session`), so it sends as
+  `from: external:advisor/<name>` and replies come back to it.
+- **Delivery:**
+
+  | Case | What happens |
+  |---|---|
+  | The session is running | Delivered to its inbox; the wake command (decision 2) wakes it |
+  | Ended, or never existed | Delivered to `external:advisor`, marked "originally for advisor/<name>"; the sender is told "<name> isn't running; delivered to advisor" |
+  | It ends with unread messages | They move to `external:advisor` with the same mark |
+  | The part before `/` isn't an active principal | 404, as today |
+
+- **Attribution, not security:** advisors share a token, so the name is an honest label (like
+  today's hand-signed "From advisor (research)"), not proof.
