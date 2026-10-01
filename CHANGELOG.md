@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `bridle task note` renamed to `bridle task comment` (c7mn): a more intuitive name matching JIRA, GitHub and other tools. The old `task note` command and its flags stay available as a hidden alias. Role prompts, skills, rules and design docs updated.
 
 ### Fixed
+- Restart and self-upgrade on Linux no longer exec `<path> (deleted)` after the binary is replaced: the path is resolved once at start-up with the suffix stripped, and a failed exec is logged as an error (fpde).
 - `bridle task done` no longer warns about a missing summary on human-claimed to-dos, since humans don't write task summaries (p4xd).
 
 ## [0.4.0] - 2026-09-30

@@ -179,6 +179,8 @@ impl RunningDaemon {
 /// Run the daemon until shutdown (SIGINT/SIGTERM or `POST /v1/shutdown`).
 /// Writes `daemon.json` and the machine registry entry once listening.
 pub async fn run(opts: ServeOptions, take_over: bool) -> anyhow::Result<()> {
+    // Before anything can replace the binary on disk.
+    let _ = exe_path();
     let overrides = Overrides {
         take_over,
         ..Overrides::default()
@@ -211,25 +213,54 @@ pub async fn run(opts: ServeOptions, take_over: bool) -> anyhow::Result<()> {
     Ok(())
 }
 
+/// This binary's path, resolved once. On Linux `current_exe()` reads `/proc/self/exe`, which
+/// says `<path> (deleted)` after `cargo install` replaces the file, so a later call would name a
+/// path that doesn't exist (fpde).
+pub fn exe_path() -> std::io::Result<PathBuf> {
+    static EXE: std::sync::OnceLock<PathBuf> = std::sync::OnceLock::new();
+    if let Some(p) = EXE.get() {
+        return Ok(p.clone());
+    }
+    let p = strip_deleted(std::env::current_exe()?);
+    Ok(EXE.get_or_init(|| p).clone())
+}
+
+/// Drops the ` (deleted)` suffix Linux appends to the path of a replaced binary.
+fn strip_deleted(p: PathBuf) -> PathBuf {
+    match p.to_str().and_then(|s| s.strip_suffix(" (deleted)")) {
+        Some(s) => PathBuf::from(s),
+        None => p,
+    }
+}
+
 /// Replaces this process with the (possibly just replaced) binary at the same path; only
 /// returns, with the reason, on failure.
 fn exec_self() -> String {
+    match exe_path() {
+        Ok(exe) => exec_path(&exe),
+        Err(e) => {
+            let msg = format!("finding the running binary: {e}");
+            tracing::error!(%msg, "restart exec failed");
+            msg
+        }
+    }
+}
+
+fn exec_path(exe: &Path) -> String {
     use std::os::unix::process::CommandExt;
-    let exe = match std::env::current_exe() {
-        Ok(e) => e,
-        Err(e) => return format!("finding the running binary: {e}"),
-    };
-    let err = std::process::Command::new(&exe)
+    let err = std::process::Command::new(exe)
         .args(std::env::args_os().skip(1))
         .exec();
-    format!("exec {} failed: {err}", exe.display())
+    let msg = format!("exec {} failed: {err}", exe.display());
+    tracing::error!(%msg, "restart exec failed");
+    msg
 }
 
 /// The upgraded binary can't start: put the previous one back and exec it. Only returns (the
 /// error to report) when even that fails.
 fn roll_back(ws: &Workspace, reason: &str) -> anyhow::Error {
     tracing::error!(%reason, "upgraded binary failed to start; rolling back");
-    let exe = match std::env::current_exe() {
+    let exe = match exe_path() {
         Ok(e) => e,
         Err(e) => return anyhow::anyhow!("rollback: finding the running binary: {e}"),
     };
@@ -1047,6 +1078,20 @@ mod bind_tests {
     fn a(s: &str) -> SocketAddr {
         s.parse().unwrap()
     }
+    #[test]
+    fn strip_deleted_only_drops_a_trailing_suffix() {
+        let f = |s: &str| strip_deleted(s.into()).to_string_lossy().into_owned();
+        assert_eq!(f("/usr/bin/bridle (deleted)"), "/usr/bin/bridle");
+        assert_eq!(f("/usr/bin/bridle"), "/usr/bin/bridle");
+        assert_eq!(f("/a (deleted)/bridle"), "/a (deleted)/bridle");
+    }
+
+    #[test]
+    fn failed_exec_returns_instead_of_exiting() {
+        let msg = exec_path(Path::new("/nonexistent/bridle-fpde"));
+        assert!(msg.contains("failed"), "{msg}");
+    }
+
     const DEFAULT: &str = "127.0.0.1:0";
 
     #[test]

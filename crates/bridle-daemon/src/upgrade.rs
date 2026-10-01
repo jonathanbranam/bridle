@@ -164,7 +164,7 @@ impl Upgrader {
             .await
             .map_err(|e| format!("checking out {sha}: {e}"))?;
         // The build replaces the installed binary; keep the running one to roll back to.
-        let result = match std::env::current_exe()
+        let result = match crate::exe_path()
             .map_err(anyhow::Error::from)
             .and_then(|exe| crate::rollback::stash_previous(ws, &exe))
         {
@@ -184,7 +184,7 @@ impl Upgrader {
                 (p.clone(), a.to_vec())
             }
             Preflight::Real => (
-                std::env::current_exe()
+                crate::exe_path()
                     .map_err(|e| e.to_string())?
                     .to_string_lossy()
                     .into_owned(),

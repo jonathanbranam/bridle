@@ -149,7 +149,7 @@ every 500 ms, up to `wait_secs`, default 600). At the timeout it answers 409 nam
 and does nothing: work is never cut off. At a quiet point it records the running agents' ids
 (`meta` key `restart.resume`), wakes the orchestrator (`restart`, with the commit), sets the
 restart flag and runs the ordinary shutdown sequence above (agents stop as `daemon_shutdown`, the
-state branch is flushed and pushed, `daemon.json` removed). `run` then `exec`s `current_exe()` with
+state branch is flushed and pushed, `daemon.json` removed). `run` then `exec`s the binary path resolved once at start-up (`exe_path()`: Linux's `<path> (deleted)` suffix, left after a reinstall, is stripped) with
 the same args (safe Rust, `CommandExt::exec`), so the PID and the terminal stay and Ctrl-C still
 works; the new process rebinds the same `listen` address and clients retry through the gap. If the
 exec fails the daemon stays cleanly stopped, as after `stop-daemon`.
