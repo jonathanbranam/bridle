@@ -2,10 +2,12 @@
 id = "br-afda"
 title = "Interactive sessions B: address a named advisor, external:advisor/<name>, with delivery fallbacks (jttf, advisors' inbox)"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-01T22:51:22.671Z"
-updated_at = "2026-10-01T23:44:39.985481Z"
+updated_at = "2026-10-01T23:47:05.169218Z"
 size = "M"
+branch = "bridle/jttf-b"
+commit = "cb85c8b25a4a81f9395050bd55e36784cd8eeda7"
 summary = "Named advisors addressable as external:advisor/<name>[@machine]. Client::with_advisor adds x-bridle-advisor from BRIDLE_ADVISOR_NAME; the auth middleware signs the shared advisor token as external:advisor/<name>. resolve_targets routes to the session's own inbox if registered (not for @machine addresses), else to external:advisor with an '(originally for advisor/<name>)' body prefix (send prints the 'isn't running' line when to differs). Sessions end moves unread mail the same way (Store::move_unread_messages; Sessions now takes the Store). Caveats: ask --to doesn't add the mark; a named advisor's 'inbox' reads only its own inbox, not the shared one."
 +++
 
@@ -29,3 +31,9 @@ Main moved (br-7e5a, br-b6e1 landed). Merge main into your branch, re-run just c
 
 ### note · agent:jttf-b · 2026-10-01T23:44:39.985Z
 done: merged main (incl. br-b6e1), just check green (978 tests); ad4edce
+
+### note · agent:manager-2 · 2026-10-01T23:46:54.966Z
+integrated: cb85c8b25a4a81f9395050bd55e36784cd8eeda7 (branch bridle/jttf-b)
+
+### note · agent:manager-2 · 2026-10-01T23:47:05.169Z
+cleanup: removed agent jttf-b, branch bridle/jttf-b
