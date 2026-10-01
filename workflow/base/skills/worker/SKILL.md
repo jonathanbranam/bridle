@@ -18,7 +18,7 @@ what judgement applies.
   editing, not just the task text.
 - **Implement**: keep to the task -- note anything else you find wrong
   rather than fixing it. Add or update tests for what you change.
-- **Report as you go**: `bridle task note <task-id> "<progress>"` for
+- **Report as you go**: `bridle task comment <task-id> "<progress>"` for
   anything worth recording (blocked, made a judgement call, found the
   daemon isn't running the code yet). Ask a question with
   `bridle send <manager> --question "<question>"` and wait for the answer

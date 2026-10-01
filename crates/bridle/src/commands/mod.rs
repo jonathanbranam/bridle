@@ -29,8 +29,8 @@ use crate::cli::{
     InterruptArgs, LogsArgs, PaneAction, PrimeArgs, PrimeRoleArg, ProbeArgs, QueueAction,
     QueueAddTierArgs, QueueArgs, QueueSetArgs, ReadyArgs, ReleaseArgs, RmArgs, RulesAction,
     RulesArgs, RulesDiffArgs, RulesExplainArgs, SendArgs, ShowArgs, SpawnArgs, SpecAction,
-    SpecArgs, SpecExportArgs, SpecFormatArg, StopArgs, TaskAction, TaskArgs, TaskDoneArgs,
-    TaskDropArgs, TaskEditArgs, TaskKindArg, TaskListArgs, TaskNewArgs, TaskNoteArgs, TaskPlanArgs,
+    SpecArgs, SpecExportArgs, SpecFormatArg, StopArgs, TaskAction, TaskArgs, TaskCommentArgs,
+    TaskDoneArgs, TaskDropArgs, TaskEditArgs, TaskKindArg, TaskListArgs, TaskNewArgs, TaskPlanArgs,
     TaskPriorityArg, TaskPriorityArgs, TaskReopenArgs, TaskSearchArgs, TaskShowArgs, TaskSizeArg,
     TaskSummaryArgs, TokenAction, TokenArgs, UsageArgs, UsageByArg, WaitArgs, WhenArg,
 };

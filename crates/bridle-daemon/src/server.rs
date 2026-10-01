@@ -977,7 +977,7 @@ async fn send_message(
                 .lines()
                 .find(|l| !l.trim().is_empty())
                 .unwrap_or("");
-            format!("{}: note added\n{first}", task.id)
+            format!("{}: comment added\n{first}", task.id)
         }
         None => req.body.clone(),
     };

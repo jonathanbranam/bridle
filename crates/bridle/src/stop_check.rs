@@ -144,7 +144,7 @@ pub fn reason_for(task: &Task) -> String {
     format!(
         "You have an unreleased claim on {} ({}) with no note since claiming it. \
          Release it with `bridle release {}` or leave a handoff note with \
-         `bridle task note {} <text>` before stopping.",
+         `bridle task comment {} <text>` before stopping.",
         task.id, task.title, task.id, task.id
     )
 }

@@ -264,7 +264,7 @@ bridle task conflict resolve <C12> --compatible <reason> | --order A,B | --merge
 bridle task impact show <task>                                         prints the declared impact (`--json`: the impact object)
 bridle task summary <id> --text TEXT | --file FILE                    records how it was implemented; `-` reads stdin; replaces an earlier summary
 bridle task reopen <id>
-bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note to the task's thread; no effect on readiness
+bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comment on the task's thread; no effect on readiness
 ```
 
 - **`--allow-tool TOOL`** on `spawn` (repeatable) grants a tool beyond the
@@ -293,7 +293,7 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   ([[docs/design/usage-and-budget#Seeing what applies|details]]).
 
 - **`send`**: an empty or whitespace-only text is refused (by the CLI, and by the daemon
-  with 400), here and in `task note`. When given `--text-file FILE` or `--prompt-file FILE`, pass `-`
+  with 400), here and in `task comment`. When given `--text-file FILE` or `--prompt-file FILE`, pass `-`
   as the filename to read from stdin instead. This avoids passing backticks and
   other shell metacharacters as command-line arguments, which can trigger
   permission denials in Claude Code. Example: `echo "message" | bridle send w1 --text-file -`.
@@ -301,9 +301,9 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   role — one delivered message per matching agent, same as sending to each
   individually; `bridle send` prints one `sent <id> -> <to>` line per recipient.
   A role with no live agents is an error, same as an unknown agent name.
-  `--task <id>` (and `bridle task note <id> --notify <agent>`, the same call) writes the text as a note on the task's thread and sends the recipient `<id>: note added` plus its first line; an unknown task is an error and nothing is sent.
+  `--task <id>` (and `bridle task comment <id> --notify <agent>`, the same call) writes the text as a comment on the task's thread and sends the recipient `<id>: comment added` plus its first line; an unknown task is an error and nothing is sent.
 
-- **`task new/edit/note`**: when given `--body-file FILE` or `--text-file FILE`, pass `-`
+- **`task new/edit/comment`**: when given `--body-file FILE` or `--text-file FILE`, pass `-`
   as the filename to read from stdin instead. This avoids passing backticks and
   other shell metacharacters as command-line arguments, which can trigger
   permission denials in Claude Code. Example: `cat long-body.txt | bridle task new "title" -k feature --body-file -`.
@@ -666,7 +666,7 @@ bridle task note   <id> [TEXT | --text-file FILE] [--notify AGENT]  plain note t
   (`?claimed_by=me`) and blocks — printing the flat `{"decision":"block","reason":"..."}`
   spike 05 confirmed, not the `hookSpecificOutput` wrapper — on the first one with no
   thread entry (note, question or answer) from itself at or after `claimed_at`; naming
-  the task and telling the agent to `bridle task release` it or leave a `bridle task note`
+  the task and telling the agent to `bridle task release` it or leave a `bridle task comment`
   first. It also blocks when the tree looks finished (clean, commits ahead of local `main`/`master`)
   and a claimed task has no summary or no thread entry from itself starting `done:`, telling
   the agent to *run* `bridle task summary` and `bridle send ... done:` (workers were printing

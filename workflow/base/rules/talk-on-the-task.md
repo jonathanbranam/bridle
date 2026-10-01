@@ -8,11 +8,11 @@ notification.
 
 - **Anything about a task goes on its thread**: the brief and changes to it,
   questions and answers, review findings, "sent back because ...", decisions
-  made along the way, and the landing summary. Use `bridle task note <id>`
+  made along the way, and the landing summary. Use `bridle task comment <id>`
   (`--text-file` for long or quoted text), `bridle task ask` / `bridle task answer`
   for questions that block it.
 - **Then notify with a short message that names the task**: `bridle send
-  <agent> "tw-1234: note added (review findings)"`. The recipient reads the
+  <agent> "tw-1234: comment added (review findings)"`. The recipient reads the
   thread with `bridle task show <id>`.
 - **Direct messages are for what isn't about one task**: coordination,
   startup and ready notes, "main is red", budget and restarts.

@@ -74,7 +74,7 @@ pub(super) async fn task(cli: &Cli, args: &TaskArgs) -> Result<(), CliError> {
         TaskAction::Done(a) => task_done(cli, a).await,
         TaskAction::Summary(a) => task_summary(cli, a).await,
         TaskAction::Reopen(a) => task_reopen(cli, a).await,
-        TaskAction::Note(a) => task_note(cli, a).await,
+        TaskAction::Comment(a) => task_comment(cli, a).await,
         TaskAction::Search(a) => task_search(cli, a).await,
         _ => unreachable!("normalize forwards the queue and coordination actions"),
     }
@@ -522,7 +522,7 @@ pub(super) async fn task_reopen(cli: &Cli, args: &TaskReopenArgs) -> Result<(), 
     Ok(())
 }
 
-pub(super) async fn task_note(cli: &Cli, args: &TaskNoteArgs) -> Result<(), CliError> {
+pub(super) async fn task_comment(cli: &Cli, args: &TaskCommentArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
     let text = require_body(read_text(&args.text, &args.text_file, "text")?)?;
     if let Some(to) = &args.notify {
@@ -537,7 +537,7 @@ pub(super) async fn task_note(cli: &Cli, args: &TaskNoteArgs) -> Result<(), CliE
         if cli.json {
             render::print_json(&msgs)?;
         } else {
-            println!("noted on {}, notified {to}", args.task);
+            println!("commented on {}, notified {to}", args.task);
         }
         return Ok(());
     }
@@ -545,7 +545,7 @@ pub(super) async fn task_note(cli: &Cli, args: &TaskNoteArgs) -> Result<(), CliE
     if cli.json {
         render::print_json(&task)?;
     } else {
-        println!("noted on {}", task.id);
+        println!("commented on {}", task.id);
     }
     Ok(())
 }

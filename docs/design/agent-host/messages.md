@@ -4,7 +4,7 @@ A message has a sender principal, a recipient (an agent, `human`, or an
 `external:<name>` principal — [[docs/design/agent-host/principals.md|principals]]; or
 `role:<name>`, which fans out one message per live agent of that role, 404 if none),
 a kind (`note`, `question` or `answer`; the last is written by `task answer`), an optional `reply_to` naming the message it
-answers, an optional `task` (the body is then written in full as a note on that task's thread, and the recipient gets a short `<id>: note added` message with the first line; an unknown task is a 404 and sends nothing), a body and a delivery state:
+answers, an optional `task` (the body is then written in full as a note on that task's thread, and the recipient gets a short `<id>: comment added` message with the first line; an unknown task is a 404 and sends nothing), a body and a delivery state:
 
 ```
 pending ─► written ─► delivered ─► read

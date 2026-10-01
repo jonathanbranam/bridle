@@ -62,7 +62,7 @@ without walking the state branch, per
 [[where-questions-live-on-the-state-branch-c5a8|decided]]. `TaskManager::note_task`
 is the same shape without the open-question bookkeeping: it inserts a `note`
 message addressed to the task, appends a `note` thread entry, and has no
-effect on readiness (`bridle task note`). `handoff`/`conflict`/`system`
+effect on readiness (`bridle task comment`). `handoff`/`conflict`/`system`
 message kinds and send-to-task from `bridle send` are not built: bridle's own notices are
 `note`s from the `system` principal.
 

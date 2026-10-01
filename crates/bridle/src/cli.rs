@@ -1262,9 +1262,10 @@ pub enum TaskAction {
     Summary(TaskSummaryArgs),
     /// Bring a dropped or integrated task back.
     Reopen(TaskReopenArgs),
-    /// Add a plain note to a task's thread (no question/answer semantics,
+    /// Add a comment to a task's thread (no question/answer semantics,
     /// doesn't affect readiness).
-    Note(TaskNoteArgs),
+    #[command(alias = "note")]
+    Comment(TaskCommentArgs),
     /// Search for tasks by words in title, body, or summary.
     Search(TaskSearchArgs),
     /// Claim a ready task for the calling principal.
@@ -1472,10 +1473,10 @@ pub struct TaskReopenArgs {
 
 #[derive(Debug, Args)]
 #[command(group(ArgGroup::new("text_source").args(["text", "text_file"])))]
-pub struct TaskNoteArgs {
+pub struct TaskCommentArgs {
     pub task: String,
     pub text: Option<String>,
-    /// Read the note text from a file (or `-` for stdin).
+    /// Read the comment text from a file (or `-` for stdin).
     #[arg(long)]
     pub text_file: Option<PathBuf>,
     /// Also send this agent a short message naming the task (same as
@@ -2164,41 +2165,61 @@ mod tests {
     }
 
     #[test]
-    fn task_note_accepts_text_file() {
-        let cli = parse(&["task", "note", "task-id", "--text-file", "note.txt"]).unwrap();
+    fn task_comment_accepts_text_file() {
+        let cli = parse(&["task", "comment", "task-id", "--text-file", "comment.txt"]).unwrap();
         let Command::Task(TaskArgs {
-            action: TaskAction::Note(args),
+            action: TaskAction::Comment(args),
             ..
         }) = cli.command
         else {
-            panic!("expected task note")
+            panic!("expected task comment")
         };
         assert_eq!(args.task, "task-id");
         assert_eq!(args.text, None);
         assert_eq!(
             args.text_file.as_deref(),
-            Some(std::path::Path::new("note.txt"))
+            Some(std::path::Path::new("comment.txt"))
         );
     }
 
     #[test]
-    fn task_note_rejects_text_and_text_file_together() {
-        let err =
-            parse(&["task", "note", "task-id", "text", "--text-file", "note.txt"]).unwrap_err();
+    fn task_comment_rejects_text_and_text_file_together() {
+        let err = parse(&[
+            "task",
+            "comment",
+            "task-id",
+            "text",
+            "--text-file",
+            "comment.txt",
+        ])
+        .unwrap_err();
         assert_eq!(err.kind(), clap::error::ErrorKind::ArgumentConflict);
     }
 
     #[test]
-    fn task_note_text_file_accepts_dash_for_stdin() {
-        let cli = parse(&["task", "note", "task-id", "--text-file", "-"]).unwrap();
+    fn task_comment_text_file_accepts_dash_for_stdin() {
+        let cli = parse(&["task", "comment", "task-id", "--text-file", "-"]).unwrap();
         let Command::Task(TaskArgs {
-            action: TaskAction::Note(args),
+            action: TaskAction::Comment(args),
             ..
         }) = cli.command
         else {
-            panic!("expected task note")
+            panic!("expected task comment")
         };
         assert_eq!(args.text_file.as_deref(), Some(std::path::Path::new("-")));
+    }
+
+    #[test]
+    fn task_note_alias_still_works() {
+        let cli = parse(&["task", "note", "task-id", "--text-file", "comment.txt"]).unwrap();
+        let Command::Task(TaskArgs {
+            action: TaskAction::Comment(args),
+            ..
+        }) = cli.command
+        else {
+            panic!("expected task comment (via note alias)")
+        };
+        assert_eq!(args.task, "task-id");
     }
 
     #[test]

@@ -997,7 +997,10 @@ async fn send_with_task_notes_the_thread_and_notifies_briefly() {
         .await
         .expect("send with task");
     assert_eq!(msgs.len(), 1);
-    assert_eq!(msgs[0].body, format!("{}: note added\nfirst line", task.id));
+    assert_eq!(
+        msgs[0].body,
+        format!("{}: comment added\nfirst line", task.id)
+    );
 
     let fetched = c.get_task(&task.id).await.expect("get task");
     assert_eq!(fetched.thread.len(), 1);

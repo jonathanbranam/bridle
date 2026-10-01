@@ -23,7 +23,7 @@ a dropped or integrated task back) are the side exits. **Built.**
 ## Creating and planning
 
 `bridle task new "title" --kind feature [--size s] --body-file f` creates an `open` task.
-`task edit` changes title or body, `task note` adds a plain note, `task list` and
+`task edit` changes title or body, `task comment` adds a plain note, `task list` and
 `task search <words>` find tasks, `task show` prints one in full. `bridle task plan <id>`
 moves `open` -> `planned`; the code lets any principal do it, so "the PM plans" is a role
 convention, not a rule the daemon enforces. **Built.**
@@ -64,7 +64,7 @@ check. **Built.**
 ## Messages tied to tasks
 
 `bridle send <agent> --task <id> "text"` puts the text on the task's thread and sends the
-recipient a short pointer; `task note <id> --notify <agent>` does the same. Briefs, done
+recipient a short pointer; `task comment <id> --notify <agent>` does the same. Briefs, done
 reports and findings travel this way, so the thread is the task's record. `bridle wait
 <task> [--until state] [--or-message]` blocks until the task changes or a message arrives.
 **Built.**
