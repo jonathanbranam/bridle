@@ -1,6 +1,6 @@
 //! Event- and transcript-line formatting, mirroring `bridle`'s
 //! `render_event_line` and `print_transcript_line`/`render_stream_json_line`
-//! (crates/bridle/src/render.rs, crates/bridle/src/commands.rs) so the tail
+//! (crates/bridle/src/render.rs, crates/bridle/src/commands/) so the tail
 //! reads the same in `bridle events --follow`/`bridle logs --follow` and the
 //! TUI's views. bridle-tui can't depend on the `bridle` binary crate, so
 //! this is a close copy rather than shared code.

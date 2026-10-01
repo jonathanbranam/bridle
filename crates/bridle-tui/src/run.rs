@@ -180,7 +180,7 @@ async fn run_app(terminal: &mut Term, client: Client) -> anyhow::Result<()> {
 }
 
 /// Poll `Client::transcript` for `agent`'s tail once a second, same model as
-/// `bridle logs --follow` (crates/bridle/src/commands.rs's `logs`): track
+/// `bridle logs --follow` (crates/bridle/src/commands/agent.rs's `logs`): track
 /// the last-seen line number locally and pass it as `since`. There's no SSE
 /// stream for transcript lines, only for events.
 fn spawn_transcript_poll(

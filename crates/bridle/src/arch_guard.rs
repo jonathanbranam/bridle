@@ -1,7 +1,7 @@
 //! `bridle arch-guard`: Claude Code's PreToolUse hook that keeps workers out
 //! of `design/architecture/` unless their claimed task is an `arch-revision`
 //! (docs/design/architecture-tier.md). Pure decision functions over
-//! already-fetched data, like `stop_check`; `commands.rs` does the stdin
+//! already-fetched data, like `stop_check`; `commands/hook.rs` does the stdin
 //! parsing and API calls, and allows on any error of bridle's own.
 
 use std::path::{Component, Path, PathBuf};

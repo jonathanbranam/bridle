@@ -5,7 +5,7 @@
 //! unreleased claim with no handoff.
 //!
 //! Kept as pure functions over already-fetched data so the decision itself
-//! is unit-testable without a daemon; `commands.rs` does the stdin parsing
+//! is unit-testable without a daemon; `commands/hook.rs` does the stdin parsing
 //! and the API calls, and never lets an error here block a stop (the
 //! protocol: any bug in bridle's own tooling must allow, not block).
 
