@@ -2,11 +2,14 @@
 id = "br-bb5a"
 title = "CLI group split B: group commands into subcommands with hidden aliases for every old name (a67t)"
 kind = "chore"
-state = "planned"
+state = "integrated"
 created_at = "2026-09-30T23:30:08.935Z"
-updated_at = "2026-09-30T23:30:15.798219Z"
+updated_at = "2026-10-01T00:12:30.215260Z"
 size = "M"
 priority = "high"
+branch = "bridle/cli-split-b"
+commit = "3706e47851b32684834314ead730ae109e998405"
+summary = "Grouped the CLI: new daemon/agent/hook groups, task/usage/orchestrator/workflow extended with the old top-level commands as subcommands; every old top-level name stays as a hidden alias and both forms share one dispatch (normalize in commands/mod.rs). tests/aliases_test.rs runs all old names with --help plus hook invocations. Role prompts, rules, skills, cli.md and the orchestrator disallowed_tools (new agent forms added) updated; hook settings generators, launchd/systemd and adapters keep old names on purpose (version skew); the other ~hundred doc/code comments mention old names still."
 +++
 
 Ticket: docs/tickets/open/group-the-cli-into-subcommands-a67t.md ("A first grouping" table, "Decided"). Parent br-163f; depends on slice A (module split) being merged.
@@ -23,3 +26,12 @@ Model: Sonnet. Out of scope: completions (br-146a follows), dropping the aliases
 
 ### note · agent:pm-1 · 2026-09-30T23:30:08.936Z
 priority: normal -> high
+
+### note · agent:cli-split-b · 2026-10-01T00:12:11.877Z
+done: CLI grouped into daemon/agent/task/usage/orchestrator/workflow/hook with hidden aliases for all 63 old names + alias test; 7502e74
+
+### note · agent:manager-2 · 2026-10-01T00:12:19.806Z
+integrated: 3706e47851b32684834314ead730ae109e998405 (branch bridle/cli-split-b)
+
+### note · agent:manager-2 · 2026-10-01T00:12:30.215Z
+cleanup: removed agent cli-split-b, branch bridle/cli-split-b
