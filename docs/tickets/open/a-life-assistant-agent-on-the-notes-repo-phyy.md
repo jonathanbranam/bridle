@@ -219,3 +219,43 @@ Email to a notes address (rs7p) is the fallback that works with the mail work al
    pull conflicts will arise.
 5. Should the assistant act unprompted (nag about overdue maintenance) or only answer when asked
    and in the digest?
+
+## The concierge, and what bridle lacks for it (2026-10-01)
+
+The human (via the NUC's orchestrator, m-3169), verbatim: "the notes needs a concierge-style
+personal orchestrator that is unique from the 'software management' orchestrator solution we have
+now. TBD on the full design and capabilities, but this is an outline."
+
+Today the notes project is set up as bridle project `notes` on the NUC
+(`/srv/shared/work/notes-work/notes`, branch `bridle-adopt`; the human's to-do is mn-7951 on
+meta-notes). An advisor runs in it with `notes/.bridle/roles/advisor.md`, and the NUC's
+orchestrator drives the project with `--project notes`. The gaps it found (m-3148, m-3169):
+
+1. **A project-defined external role.** `bridle session` knows only `orchestrator` and `advisor`.
+   A project's `.bridle/roles/orchestrator.md` can only append to the base orchestrator text, which
+   is about running software (don't edit the clone; managers; merges). Wanted:
+   `bridle session <role> --project p` for a role the project defines, whose own prime text
+   replaces the base, with wakes and supervision like the orchestrator's.
+2. **Several supervised sessions per machine.** The supervision files are machine-wide:
+   `$BRIDLE_HOME/orchestrator.pid`, `.session`, `.exits` (`crates/bridle/src/session.rs:161`,
+   `crates/bridle-daemon/src/orchestrator.rs:231`). Two daemons with `[orchestrator]` enabled
+   would watch, hand over and relaunch the same session. So `notes` runs with supervision off.
+   A per-project assistant needs the files named per project or per role. See ma8e (one
+   orchestrator per machine).
+3. **Wake on any message.** `wait-for-wake` serves `external:orchestrator` only. `--mail` returns
+   only on mail from the email bridge, and `bridle wait` needs a task. The stopgap is a loop
+   polling `bridle inbox --json`. Wanted: a message waiter for any external principal.
+4. **Durable timers.** The concierge should act on times set in the notes (meta-notes has `⏰`
+   times and `tasks --overdue --due --at now`). Today only Claude Code's `CronCreate` and
+   `ScheduleWakeup` exist, and they're lost on restart. Wanted: a scheduled wake the daemon owns,
+   e.g. per-project timers, or a wake source that runs `meta-notes tasks --at now --json`.
+5. **Google Calendar through MCP or a connector**, read-only first. Today `bridle session` blocks
+   it: `--strict-mcp-config` and `disableClaudeAiConnectors` (`session.rs`, LEAN). Wanted:
+   per-role MCP config or allowed connectors (see u6wk). The fallback is meta-notes `calendar`
+   from a Google export. No Gmail; email goes through the rs7p bridge.
+6. **Per-project focus hours.** Filed on its own as cvaq's follow-up (below).
+7. **Base rules and roles assume software** (worker, manager, check commands). A non-software
+   project needs to opt out of them or override them.
+8. **A daemon with no manager or workers.** `notes` sets `[roles.manager] autostart = false`,
+   `resume_on_restart = false`, `packs = []`, and no check command. Check that this is valid
+   config and stays supported.
