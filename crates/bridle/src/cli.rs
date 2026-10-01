@@ -248,6 +248,8 @@ pub enum Command {
     Trace(TraceArgs),
     /// Print shell completions (zsh, bash, fish, elvish, or powershell); install once with `bridle completions <shell> > <dest>`.
     Completions(CompletionsArgs),
+    /// Apply the project migrations this bridle ships that the project hasn't had yet (docs/design/migrations.md). Never runs by itself.
+    Migrate(MigrateArgs),
 }
 
 #[derive(Debug, Args)]
@@ -1860,6 +1862,16 @@ pub struct ToolsOnlyArgs {
     /// The clone (default: the current directory's repository).
     #[arg(long)]
     pub repo: Option<std::path::PathBuf>,
+}
+
+#[derive(Debug, Args)]
+pub struct MigrateArgs {
+    /// Print what each pending migration would change; write nothing.
+    #[arg(long)]
+    pub dry_run: bool,
+    /// Every project in the daemon registry (`bridle daemon list`), one at a time, stopping at the first failure. Default: the current directory's repository, or `--project NAME`.
+    #[arg(long, conflicts_with = "project")]
+    pub all: bool,
 }
 
 #[derive(Debug, Args)]

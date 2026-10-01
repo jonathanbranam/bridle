@@ -26,13 +26,14 @@ use crate::cli::{
     ClaimArgs, Cli, Command, CompletionsArgs, ConflictAction, ConflictArgs, CostAction, CostArgs,
     CostAuditArgs, DepAction, DepArgs, DepEdgeArgs, EdgeKindArg, EventsArgs, HandoverAction,
     HandoverArgs, ImpactAction, ImpactArgs, InboxAction, InboxArgs, InboxReadArgs, InboxShowArgs,
-    InterruptArgs, LogsArgs, PaneAction, PrimeArgs, PrimeRoleArg, ProbeArgs, QueueAction,
-    QueueAddTierArgs, QueueArgs, QueueSetArgs, ReadyArgs, ReleaseArgs, RmArgs, RulesAction,
-    RulesArgs, RulesDiffArgs, RulesExplainArgs, SendArgs, ShowArgs, SpawnArgs, SpecAction,
-    SpecArgs, SpecExportArgs, SpecFormatArg, StopArgs, TaskAction, TaskArgs, TaskCommentArgs,
-    TaskDoneArgs, TaskDropArgs, TaskEditArgs, TaskKindArg, TaskListArgs, TaskNewArgs, TaskPlanArgs,
-    TaskPriorityArg, TaskPriorityArgs, TaskReopenArgs, TaskSearchArgs, TaskShowArgs, TaskSizeArg,
-    TaskSummaryArgs, TokenAction, TokenArgs, UsageArgs, UsageByArg, WaitArgs, WhenArg,
+    InterruptArgs, LogsArgs, MigrateArgs, PaneAction, PrimeArgs, PrimeRoleArg, ProbeArgs,
+    QueueAction, QueueAddTierArgs, QueueArgs, QueueSetArgs, ReadyArgs, ReleaseArgs, RmArgs,
+    RulesAction, RulesArgs, RulesDiffArgs, RulesExplainArgs, SendArgs, ShowArgs, SpawnArgs,
+    SpecAction, SpecArgs, SpecExportArgs, SpecFormatArg, StopArgs, TaskAction, TaskArgs,
+    TaskCommentArgs, TaskDoneArgs, TaskDropArgs, TaskEditArgs, TaskKindArg, TaskListArgs,
+    TaskNewArgs, TaskPlanArgs, TaskPriorityArg, TaskPriorityArgs, TaskReopenArgs, TaskSearchArgs,
+    TaskShowArgs, TaskSizeArg, TaskSummaryArgs, TokenAction, TokenArgs, UsageArgs, UsageByArg,
+    WaitArgs, WhenArg,
 };
 use crate::cli::{
     FocusAction, FocusArgs, LandArgs, OrchestratorAction, OrchestratorArgs, PortAction, PortArgs,
@@ -218,6 +219,7 @@ pub async fn run(mut cli: Cli) -> Result<(), CliError> {
         Command::Advisor(args) => crate::advisor::run(&cli, &args.action).await,
         Command::Session(args) => crate::session::run(&cli, &args.role).await,
         Command::Completions(args) => completions(args),
+        Command::Migrate(args) => migrate(&cli, args).await,
         Command::Orchestrator(_) | Command::Daemon(_) | Command::Agent(_) | Command::Hook(_) => {
             unreachable!("normalize forwards the grouped forms")
         }
@@ -291,6 +293,120 @@ fn format_age(age: chrono::Duration) -> String {
     } else {
         format!("{}d ago", secs / 86400)
     }
+}
+
+/// `bridle migrate`: resolve the project(s), apply, then (best effort) tell each project's daemon.
+async fn migrate(cli: &Cli, args: &MigrateArgs) -> Result<(), CliError> {
+    use crate::migrate::{MIGRATIONS, apply};
+
+    struct Target {
+        name: String,
+        repo: PathBuf,
+        client: Option<Client>,
+    }
+    let registry = discovery::list_registry();
+    let targets: Vec<Target> = if args.all {
+        registry
+            .iter()
+            .map(|d| {
+                let token = discovery::resolve_token(
+                    None,
+                    Some(Path::new(&d.workspace)),
+                    Some(&d.project),
+                    None,
+                    &ProcessEnv,
+                    false,
+                )
+                .ok()
+                .flatten();
+                Target {
+                    name: d.project.clone(),
+                    repo: PathBuf::from(&d.repo),
+                    client: Some(Client::new(d.url.clone(), token)),
+                }
+            })
+            .collect()
+    } else if let Some(name) = &cli.project {
+        let d = registry
+            .iter()
+            .find(|d| &d.project == name)
+            .ok_or_else(|| anyhow::anyhow!("no running daemon registered for project {name}"))?;
+        vec![Target {
+            name: name.clone(),
+            repo: PathBuf::from(&d.repo),
+            client: client_for(cli).await.ok(),
+        }]
+    } else {
+        let out = std::process::Command::new("git")
+            .args(["rev-parse", "--show-toplevel"])
+            .output()
+            .context("running git")?;
+        if !out.status.success() {
+            return Err(anyhow::anyhow!("not in a git repository").into());
+        }
+        let repo = PathBuf::from(String::from_utf8_lossy(&out.stdout).trim());
+        vec![Target {
+            name: repo
+                .file_name()
+                .map(|n| n.to_string_lossy().into_owned())
+                .unwrap_or_default(),
+            repo,
+            client: client_for(cli).await.ok(),
+        }]
+    };
+    if targets.is_empty() {
+        println!("no daemons running: nothing to migrate");
+        return Ok(());
+    }
+
+    let mut finished = vec![];
+    for t in &targets {
+        let out = apply(&t.repo, MIGRATIONS, args.dry_run, Utc::now())
+            .with_context(|| format!("project {}", t.name))?;
+        // A daemon being down never fails a migration; the log in the project is the record.
+        if !args.dry_run
+            && let Some(client) = &t.client
+        {
+            for rec in &out.done {
+                if let Err(e) = client.record_migration(rec).await {
+                    tracing::warn!("{}: couldn't record {} as an event: {e}", t.name, rec.id);
+                }
+            }
+        }
+        if cli.json {
+            render::print_json(&serde_json::json!({
+                "project": t.name,
+                "dry_run": args.dry_run,
+                "applied": out.done,
+                "failed": out.failed.as_ref().map(|(id, e)| serde_json::json!({"id": id, "error": format!("{e:#}")})),
+            }))?;
+        } else {
+            let verb = if args.dry_run {
+                "would apply"
+            } else {
+                "applied"
+            };
+            if out.done.is_empty() && out.failed.is_none() {
+                println!("{}: up to date", t.name);
+            }
+            for r in &out.done {
+                println!("{}: {verb} {}: {}", t.name, r.id, r.summary);
+                for f in &r.files {
+                    println!("    {f}");
+                }
+            }
+        }
+        if let Some((id, e)) = out.failed {
+            let done = if finished.is_empty() {
+                String::new()
+            } else {
+                format!(" (done before it: {})", finished.join(", "))
+            };
+            return Err(anyhow::anyhow!("{}: {id} failed: {e:#}{done}", t.name).into());
+        }
+        finished.push(t.name.clone());
+    }
+    Ok(())
 }
 
 fn completions(args: &CompletionsArgs) -> Result<(), CliError> {

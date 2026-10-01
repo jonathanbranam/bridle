@@ -16,14 +16,14 @@ use bridle_api::types::{
     DoneTaskRequest, DropTaskRequest, Edge, EdgeKind, EditTaskRequest, ErrorBody, Event,
     EventQuery, Handover, Health, HoldStatus, ImpactCheckRequest, ImpactReport,
     InteractiveUsageRow, InterruptRequest, MaxWorkersRequest, MergeProbe, Message, MessageKind,
-    MessageQuery, MessageState, NewEdgeRequest, NewTaskRequest, NoteTaskRequest, OpenQuestion,
-    OverlapLevel, PortAllocation, PrincipalKind, ProbeOutcome, ProbeRequest, ProbeResult, Queue,
-    RateLimit, RebuildResponse, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest,
-    ResumeRequest, ScheduleOverrideStatus, SendRequest, SetImpactRequest, SetPriorityRequest,
-    SetQueueRequest, SetSummaryRequest, ShutdownResponse, SpawnRequest, Status, StatusLineReport,
-    StopRequest, Task, TaskQuery, TaskState, TokenCreateRequest, TokenCreated, TokenInfo,
-    TranscriptLine, TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery, UsageGroupBy,
-    WakeResponse, When, WindowStatus, WriteHandoverRequest, event_kind,
+    MessageQuery, MessageState, MigrationRecord, NewEdgeRequest, NewTaskRequest, NoteTaskRequest,
+    OpenQuestion, OverlapLevel, PortAllocation, PrincipalKind, ProbeOutcome, ProbeRequest,
+    ProbeResult, Queue, RateLimit, RebuildResponse, RemoveEdgeQuery, RemoveQuery, RenewRequest,
+    ResolveConflictRequest, ResumeRequest, ScheduleOverrideStatus, SendRequest, SetImpactRequest,
+    SetPriorityRequest, SetQueueRequest, SetSummaryRequest, ShutdownResponse, SpawnRequest, Status,
+    StatusLineReport, StopRequest, Task, TaskQuery, TaskState, TokenCreateRequest, TokenCreated,
+    TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery,
+    UsageGroupBy, WakeResponse, When, WindowStatus, WriteHandoverRequest, event_kind,
 };
 use bridle_api::types::{PrincipalId, ThreadEntryKind};
 use chrono::Utc;
@@ -134,6 +134,7 @@ pub fn router(state: AppState) -> Router {
         )
         .route("/v1/queue", get(get_queue).post(set_queue))
         .route("/v1/queue/tiers", post(add_queue_tier))
+        .route("/v1/migrations", post(record_migration))
         .route("/v1/rebuild", post(rebuild))
         .route("/v1/shutdown", post(shutdown))
         .route("/v1/restart", post(restart))
@@ -2472,6 +2473,24 @@ async fn add_queue_tier(
         .await;
     state.queue_nudge.changed(&actor).await;
     Ok(Json(Queue { tiers }))
+}
+
+async fn record_migration(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Json(req): Json<MigrationRecord>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    let data = serde_json::to_value(&req).map_err(|e| ApiError::bad_request(e.to_string()))?;
+    state
+        .emitter
+        .emit(
+            event_kind::PROJECT_MIGRATED,
+            principal.id.clone(),
+            None,
+            data,
+        )
+        .await?;
+    Ok(Json(serde_json::json!({})))
 }
 
 async fn create_token(

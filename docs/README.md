@@ -90,6 +90,7 @@ done
 | daemon, API, agent host | `docs/design/agent-host/*.md` (operating model, daemon, agents, messages, principals, API, roles and config) |
 | CLI commands and flags | `docs/design/cli.md` |
 | storage, database, state | `docs/design/storage.md` |
+| project migrations (`bridle migrate`) | `docs/design/migrations.md` |
 | git branches, release branches | `docs/design/agent-host/operating-model.md` or the project's `[branches]` config |
 | roles and what they do | `workflow/base/roles/<role>.md` (worker, manager, product-manager, orchestrator, advisor) |
 | building and testing | `CLAUDE.md` (Conventions section) |

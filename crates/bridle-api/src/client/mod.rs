@@ -670,6 +670,15 @@ impl Client {
             .await
     }
 
+    /// `POST /v1/migrations`: record an applied project migration as an event.
+    pub async fn record_migration(
+        &self,
+        rec: &crate::types::MigrationRecord,
+    ) -> Result<(), ClientError> {
+        let _: serde_json::Value = self.post_json(&["v1", "migrations"], rec).await?;
+        Ok(())
+    }
+
     // ---------- edges ----------
 
     pub async fn list_edges(&self) -> Result<Vec<Edge>, ClientError> {

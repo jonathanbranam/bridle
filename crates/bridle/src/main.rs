@@ -11,6 +11,7 @@ mod focus;
 mod goals;
 mod init;
 mod launchd;
+mod migrate;
 mod orchestrator;
 mod prime;
 mod render;

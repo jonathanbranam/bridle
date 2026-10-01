@@ -652,6 +652,17 @@ pub mod event_kind {
     pub const TASK_NOTE_ADDED: &str = "task.note_added";
     /// data: {tiers} (the tier count after the change)
     pub const QUEUE_CHANGED: &str = "queue.changed";
+    /// data: [`MigrationRecord`]. `bridle migrate` applied one project migration.
+    pub const PROJECT_MIGRATED: &str = "project.migrated";
+}
+
+/// Body of `POST /v1/migrations`: one applied project migration, recorded as a
+/// `project.migrated` event so agents can read it (`bridle events --kind project.migrated`).
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct MigrationRecord {
+    pub id: String,
+    pub files: Vec<String>,
+    pub summary: String,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
