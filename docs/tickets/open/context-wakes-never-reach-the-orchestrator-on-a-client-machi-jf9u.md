@@ -41,6 +41,33 @@ to check on the NUC in this order:
 - One `orchestrator.pid` per home can't serve two orchestrators on one machine; 7d62 (per-project
   pid files) covers that.
 
+## Likely cause: the pid file's start time never matches (2026-10-01)
+
+The NUC's handover relaunch test (m-2992, h-0002) came back partial: the new session started, but
+the old one (pid 110487) was never stopped, and at 00:54:35Z the daemon filed "The orchestrator
+session (pid 110487) is not running; found dead" while it was alive. One cause fits all three
+symptoms: the supervisor never sees the session as alive.
+
+- `write_pid_file` (`crates/bridle/src/session.rs`) records `ps -o lstart= -p <pid>` from the
+  session's own environment.
+- `RealProcs::is_alive` (`crates/bridle-daemon/src/orchestrator.rs`) compares it with
+  `containment::start_time`, which reads `ps -axo pid=,ppid=,pgid=,lstart=` from the daemon's
+  environment, and needs an exact string match.
+- `lstart` is local time and follows `TZ` and `LC_TIME`. A daemon started differently from the tmux
+  shell (systemd vs. a login shell; the NUC is on UTC) prints a different string. On Linux,
+  procps also derives `lstart` from boot time plus jiffies, so it can drift by a second.
+- If they never match, the session reads as dead. No context wakes are sent (this ticket), a
+  "dead" incident is filed and a relaunch typed, and `signal` refuses to touch the "reused" pid.
+  That's why the old session survived the handover.
+
+To confirm on the NUC: compare the pid file's start time with `ps -o lstart= -p <pid>` run from
+the daemon's environment (`/proc/<daemon pid>/environ`: TZ, LANG, LC_*).
+
+Fix direction: compare start times as instants, not strings. Read them in a fixed locale and zone
+(`LC_ALL=C TZ=UTC`) on both sides, or on Linux use `/proc/<pid>/stat` starttime. Allow a
+second of slack, or share one helper so both sides produce the same string. Start-up/relaunch
+path: schedule it with chvf after the trip (Sat 2026-10-03), not before.
+
 ## Done when
 
 The cause is found and fixed, and a client-machine orchestrator gets `context` wakes, with a test
