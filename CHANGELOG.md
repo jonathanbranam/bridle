@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `bridle task note` renamed to `bridle task comment` (c7mn): a more intuitive name matching JIRA, GitHub and other tools. The old `task note` command and its flags stay available as a hidden alias. Role prompts, skills, rules and design docs updated.
 
 ### Fixed
+- Pane tags are now unique: `bridle pane tag` and session tagging first clear the same tag from all other panes (`tmux list-panes -a`, then `set -u` on others), printing "moved <tag> from <pane>" when it does; failure to list or clear is a warning, never fails the tag itself (br-b6e1, butk gap).
 - `bridle task edit --body` keeps a ticket-born task's `original id:` first line (unless the new body has its own), so `ticket check` stays green; its error for a task without that link now names the lost line as a possible cause (br-0e64).
 - A named advisor now reads its brief at startup: the opening prompt tells it to check its inbox for "For advisor <name>:" messages and start from the brief when present (jb4e).
 - Restart and self-upgrade on Linux no longer exec `<path> (deleted)` after the binary is replaced: the path is resolved once at start-up with the suffix stripped, and a failed exec is logged as an error (fpde).
