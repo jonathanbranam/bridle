@@ -128,19 +128,20 @@ governor in the queue).
 
 ## Handing over
 
-The human should only have to agree and run one command (ticket d4mz):
+Handing over needs nothing from the human (the human, 2026-10-01: "You should hand over when
+context is nearing full without confirmation"). When your context nears full (a `context` wake
+at or above ~170K, or sooner at a natural break), don't ask:
 
-1. Propose the handover to the human, and wait for their yes.
-2. Write the note: `bridle orchestrator handover write --file -` with what only you know (in-flight
+1. Write the note: `bridle orchestrator handover write --file -` with what only you know (in-flight
    threads, what to watch, open items). Don't restate what `bridle status`,
    `agents` and the queue show live. Put decisions in the repo (rules, tickets) and
    commit those.
-   When the daemon asked for it (a `context` wake), run `bridle orchestrator handover done` last and
-   stop there: it stops and relaunches this session itself, so skip 3 and 4.
-3. Stop your watcher (`TaskStop`).
-4. Tell the human to run the orchestrator launcher from the project. It
-   starts `claude` opened with `bridle orchestrator prime orchestrator`
+2. Run `bridle orchestrator handover done` last and stop there: the daemon stops this session
+   and relaunches the orchestrator itself, opened with `bridle orchestrator prime orchestrator`
    (this file, the newest handover note, and the startup steps).
+
+If the daemon can't relaunch (no orchestrator supervisor), stop your watcher (`TaskStop`) and
+tell the human to run the orchestrator launcher from the project.
 
 ## Only the human can
 
