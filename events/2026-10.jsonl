@@ -23,3 +23,4 @@
 {"actor":"agent:pm-1","at":"2026-10-01T01:18:15.196151Z","from":"open","task":"br-8b98","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-01T01:18:15.212015Z","from":"open","task":"br-a911","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-01T01:18:15.228596Z","queue":"reprioritized"}
+{"actor":"agent:pm-1","at":"2026-10-01T01:18:33.540286Z","queue":"reprioritized"}
