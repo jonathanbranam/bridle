@@ -42,3 +42,14 @@ same way the orchestrator and advisor tokens were set up.
 Two asks: the human's plain commands reach a project on another machine, the way the agents'
 do; and a bare role name such as `advisor` as a `send` recipient is either accepted or
 rejected with an error that names `external:advisor`.
+
+## Decided: bare names are rejected (the human, 2026-10-01)
+
+The human, verbatim (via the advisor), on whether `send` should accept a bare `advisor`:
+
+> Sure, just it should require the full name. That's fine. It's a convention right now. Let's
+> stick to it. Just return an error in that case. Maybe suggesting that the prefix is missing.
+
+So the second ask is: `bridle send advisor ...` fails, and when the bare name matches an active
+external principal, the error suggests the full address ("no recipient `advisor`; did you mean
+`external:advisor`?"). No bare-name resolution.
