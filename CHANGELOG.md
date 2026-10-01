@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - `bridle completions <zsh|bash|fish|elvish|powershell>` prints the shell completion script generated from the clap definition, so it never drifts from the CLI. Static completions only (subcommands, flags, enum values). Install once with `bridle completions zsh > ~/.zfunc/_bridle` or `bridle completions bash > ~/.local/share/bash-completion/completions/bridle` (6rh7).
+- The `bridle focus gate` hook records each prompt to `~/.bridle/prompts.jsonl` (u6w9, collection only): one JSON line per prompt in interactive sessions with timestamp (RFC3339 UTC), session id, role, machine hostname, and project name. Failures are silent; the gate output is unchanged. Reports are a later task.
 
 ### Changed
 - Quiet hours gate text is now firm and measurable (cdez): at most 3 sentences or 60 words, the first a nudge back to work, no extra tool calls, research, tickets or planning, extras deferred with "saved for <end> ET". Advisor and orchestrator role text point at it. Locked mode and projects without `[[focus]]` are unchanged.

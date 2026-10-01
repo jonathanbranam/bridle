@@ -231,6 +231,13 @@ line while an override is pending or active. Agents can't write it: every role d
 advisor/orchestrator session settings), and their role text says never to create or edit it. Not
 built yet: quiet-noise routing, an override event in the catch-up summary.
 
+**Prompt recording.** Ticket u6w9 (collection only, no reports yet). The `bridle focus gate`
+hook appends one JSON line to `~/.bridle/prompts.jsonl` on every prompt in interactive sessions
+(orchestrator and advisor), recording the time, session id, role, machine hostname, and project name
+(no prompt text or other content). The file grows one short line per prompt and is meant for later
+reporting on the human's time. Failures (missing directory, read-only home, bad stdin, clock errors)
+are silent: the hook still exits 0 and prints its normal gate output unchanged.
+
 ## Per-spawn tool overrides
 
 `bridle spawn <role> --allow-tool TOOL` (repeatable) grants a tool beyond the

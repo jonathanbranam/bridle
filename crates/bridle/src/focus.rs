@@ -1,7 +1,9 @@
 //! `bridle focus gate`: the UserPromptSubmit hook of focus hours (ticket cvaq, slice A).
 //! With no `[[focus]]` in `~/.bridle/config.toml`, or outside every period, or in a project
 //! that set `focus_hours = false`, it prints nothing and does nothing.
+//! Also records one JSON line per prompt to `<bridle_home>/prompts.jsonl` (ticket u6w9).
 
+use std::io::Write as _;
 use std::path::Path;
 
 use bridle_daemon::config::{FocusMode, FocusPeriod, focus_opted_out, focus_periods};
@@ -124,13 +126,107 @@ pub fn refuse_advisor_if_locked(home: &Path, now: DateTime<Local>) -> Result<(),
     }
 }
 
+/// Record one JSON line to <bridle_home>/prompts.jsonl with the prompt timestamp and metadata.
+/// Fails open: any error is swallowed. Never blocks on stdin if it's absent or a tty.
+/// Called before the gate's early returns so it records on every prompt.
+fn record_prompt(home: &Path) {
+    let now = Utc::now();
+    let session_id = read_stdin_session_id();
+    let role = role_from_env();
+    let machine = get_machine_hostname();
+    let project = std::env::var("BRIDLE_PROJECT").ok();
+
+    let record = serde_json::json!({
+        "at": now.to_rfc3339_opts(chrono::SecondsFormat::Secs, true),
+        "session": session_id,
+        "role": role,
+        "machine": if machine.is_empty() { serde_json::Value::Null } else { serde_json::Value::String(machine) },
+        "project": project,
+    });
+
+    let _ = std::fs::create_dir_all(home);
+    let path = home.join("prompts.jsonl");
+    if let Ok(mut file) = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(&path)
+    {
+        let line = format!("{}\n", record);
+        let _ = file.write_all(line.as_bytes());
+    }
+}
+
+/// Get the machine hostname from HOSTNAME env var or by running the hostname command.
+fn get_machine_hostname() -> String {
+    if let Ok(name) = std::env::var("HOSTNAME") {
+        return name;
+    }
+    std::process::Command::new("hostname")
+        .output()
+        .ok()
+        .and_then(|out| String::from_utf8(out.stdout).ok())
+        .map(|s| s.trim().to_string())
+        .unwrap_or_default()
+}
+
+/// Extract session_id from stdin JSON if present. Returns None if stdin is absent, is a tty,
+/// or JSON parsing fails. Bounded to 200 ms to avoid blocking the human's prompt.
+fn read_stdin_session_id() -> Option<String> {
+    use std::io::Read;
+    use std::sync::mpsc;
+    use std::time::Duration;
+
+    let stdin = std::io::stdin();
+    if nix::unistd::isatty(&stdin).unwrap_or(false) {
+        return None;
+    }
+
+    let (tx, rx) = mpsc::channel();
+    std::thread::spawn(move || {
+        let mut buf = String::new();
+        match stdin.lock().read_to_string(&mut buf) {
+            Ok(0) | Err(_) => {
+                let _ = tx.send(None);
+            }
+            Ok(_) => {
+                let result = serde_json::from_str::<serde_json::Value>(&buf)
+                    .ok()
+                    .and_then(|v| v.get("session_id")?.as_str().map(|s| s.to_string()));
+                let _ = tx.send(result);
+            }
+        }
+    });
+
+    rx.recv_timeout(Duration::from_millis(200)).ok().flatten()
+}
+
+/// Get the role from BRIDLE_AS environment variable, with optional advisor name.
+fn role_from_env() -> Option<String> {
+    std::env::var("BRIDLE_AS").ok().and_then(|role| {
+        if role == "advisor" {
+            if let Ok(name) = std::env::var("BRIDLE_ADVISOR_NAME") {
+                Some(format!("advisor-{}", name))
+            } else {
+                Some("advisor".to_string())
+            }
+        } else if role == "orchestrator" {
+            Some("orchestrator".to_string())
+        } else {
+            None
+        }
+    })
+}
+
 /// The hook entry point. Never fails: a hook that errors would show in the human's session.
 pub fn run_gate() {
+    let home = bridle_api::discovery::bridle_home();
+    record_prompt(&home);
+
     let repo = std::env::var_os("CLAUDE_PROJECT_DIR")
         .map(std::path::PathBuf::from)
         .or_else(|| std::env::current_dir().ok())
         .unwrap_or_default();
-    if let Some(out) = gate(&bridle_api::discovery::bridle_home(), &repo, Local::now()) {
+    if let Some(out) = gate(&home, &repo, Local::now()) {
         println!("{out}");
     }
 }
@@ -326,5 +422,83 @@ mod tests {
     fn a_bad_mode_is_silent_not_an_error() {
         let home = home_with(Some(&WORK.replace("quiet", "loud")));
         assert_eq!(gate(home.path(), home.path(), at(2026, 9, 30, 10, 0)), None);
+    }
+
+    #[test]
+    fn records_line_to_prompts_jsonl() {
+        let home = tempfile::tempdir().expect("tempdir");
+        record_prompt(home.path());
+
+        let path = home.path().join("prompts.jsonl");
+        assert!(path.exists(), "prompts.jsonl should be created");
+
+        let content = std::fs::read_to_string(&path).expect("read prompts.jsonl");
+        let lines: Vec<&str> = content.lines().collect();
+        assert_eq!(lines.len(), 1);
+
+        let record: serde_json::Value = serde_json::from_str(lines[0]).expect("valid JSON");
+        assert!(
+            record["at"].is_string(),
+            "at field should be present and a string"
+        );
+        assert!(
+            record.get("session").is_some(),
+            "session field should be present"
+        );
+        assert!(record.get("role").is_some(), "role field should be present");
+        assert!(
+            record.get("machine").is_some(),
+            "machine field should be present"
+        );
+        assert!(
+            record.get("project").is_some(),
+            "project field should be present"
+        );
+    }
+
+    #[test]
+    fn records_two_lines_on_two_calls() {
+        let home = tempfile::tempdir().expect("tempdir");
+        record_prompt(home.path());
+        record_prompt(home.path());
+
+        let content =
+            std::fs::read_to_string(home.path().join("prompts.jsonl")).expect("read prompts.jsonl");
+        let lines: Vec<&str> = content.lines().collect();
+        assert_eq!(lines.len(), 2, "should have exactly two lines");
+
+        let record1: serde_json::Value = serde_json::from_str(lines[0]).expect("valid JSON");
+        let record2: serde_json::Value = serde_json::from_str(lines[1]).expect("valid JSON");
+        assert!(record1["at"].is_string());
+        assert!(record2["at"].is_string());
+    }
+
+    #[test]
+    fn unwritable_home_does_not_panic() {
+        let home = tempfile::tempdir().expect("tempdir");
+        let file_path = home.path().join("regular_file");
+        std::fs::write(&file_path, "regular file").expect("write file");
+        let unwritable_home = file_path.join("subdir");
+
+        record_prompt(&unwritable_home);
+    }
+
+    #[test]
+    fn missing_home_does_not_panic() {
+        let missing_home = std::path::Path::new("/nonexistent/path/that/does/not/exist");
+        record_prompt(missing_home);
+    }
+
+    #[test]
+    fn gate_output_unchanged_despite_record_prompt_errors() {
+        let home = tempfile::tempdir().expect("tempdir");
+        let file_path = home.path().join("regular_file");
+        std::fs::write(&file_path, "regular file").expect("write file");
+        let unwritable_home = file_path.join("subdir");
+
+        record_prompt(&unwritable_home);
+
+        let gate_before = gate(home.path(), home.path(), at(2026, 9, 30, 10, 0));
+        assert_eq!(gate_before, None, "gate output should be unchanged");
     }
 }
