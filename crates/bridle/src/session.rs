@@ -30,8 +30,13 @@ fn orchestrator_settings() -> String {
     )
 }
 
+/// The advisor's SessionStart hook tells the daemon the Claude session id (it changes on /clear)
+/// so it can read the session's context (jttf).
+const ADVISOR_NOTE: &str =
+    r#""SessionStart":[{"hooks":[{"type":"command","command":"bridle session note"}]}]"#;
+
 fn advisor_settings() -> String {
-    format!(r#"{{"hooks":{{{FOCUS_GATE}}},{LEAN}}}"#)
+    format!(r#"{{"hooks":{{{ADVISOR_NOTE},{FOCUS_GATE}}},{LEAN}}}"#)
 }
 
 // The opening prompts only point at `bridle prime`: a long prompt in argv is matched by any
@@ -82,6 +87,10 @@ fn claude_args(settings: &str, name: &str, extra: &[String], prompt: &str) -> Ve
 }
 
 pub async fn run(cli: &Cli, role: &SessionRole) -> Result<(), CliError> {
+    if matches!(role, SessionRole::Note) {
+        note(cli).await;
+        return Ok(());
+    }
     // Never under a bridle agent (k6b3): a worker's test run once overwrote the live
     // orchestrator's pid/session files and used its Remote Control name.
     if std::env::var_os("BRIDLE_AGENT_ID").is_some()
@@ -113,8 +122,9 @@ pub async fn run(cli: &Cli, role: &SessionRole) -> Result<(), CliError> {
             let name = session_name("advisor", adv, &project, &suffix);
             let prompt = advisor_prompt(adv);
             let args = claude_args(&advisor_settings(), &name, extra, &prompt);
-            advisor(&home, &project, adv, &args).await?
+            advisor(cli, &home, &project, adv, &args).await?
         }
+        SessionRole::Note => unreachable!("handled above"),
     };
     if code != 0 {
         std::process::exit(code);
@@ -211,12 +221,18 @@ fn how_ended(rc: i32) -> String {
 }
 
 async fn advisor(
+    cli: &Cli,
     home: &Path,
     project: &str,
     name: Option<&str>,
     args: &[String],
 ) -> anyhow::Result<i32> {
-    let mut env = vec![("BRIDLE_AS", "advisor"), ("BRIDLE_PROJECT", project)];
+    let pid = std::process::id().to_string();
+    let mut env = vec![
+        ("BRIDLE_AS", "advisor"),
+        ("BRIDLE_PROJECT", project),
+        ("BRIDLE_SESSION_PID", pid.as_str()),
+    ];
     if let Some(n) = name {
         env.push(("BRIDLE_ADVISOR_NAME", n));
     }
@@ -231,11 +247,87 @@ async fn advisor(
         Some(n) => format!("advisor-{n}"),
         None => "advisor".into(),
     });
+    register(cli, std::process::id() as i32, name, None).await;
     let rc = run_claude(&env, args).await;
+    end(cli).await;
     if name.is_none() {
         let _ = std::fs::remove_file(&pid_file);
     }
     rc
+}
+
+/// The daemon's wait for a session call: a daemon that is down or slow never holds a session up.
+const DAEMON_WAIT: std::time::Duration = std::time::Duration::from_secs(3);
+
+/// Registers this launcher's session with the daemon, or adds the Claude session id to it.
+/// Best effort: every failure is dropped.
+async fn register(cli: &Cli, pid: i32, name: Option<&str>, claude_session_id: Option<String>) {
+    let Some(pid_start) = process_start(pid) else {
+        return;
+    };
+    let req = bridle_api::types::SessionRegister {
+        identity: match name {
+            Some(n) => format!("advisor/{n}"),
+            None => "advisor".into(),
+        },
+        pid,
+        pid_start,
+        pane: std::env::var("TMUX_PANE").ok(),
+        claude_session_id,
+    };
+    let _ = tokio::time::timeout(DAEMON_WAIT, async {
+        crate::commands::client_for(cli)
+            .await?
+            .session_register(&req)
+            .await
+            .map_err(CliError::from)
+    })
+    .await;
+}
+
+async fn end(cli: &Cli) {
+    let pid = std::process::id() as i32;
+    let _ = tokio::time::timeout(DAEMON_WAIT, async {
+        crate::commands::client_for(cli)
+            .await?
+            .session_end(pid)
+            .await
+            .map_err(CliError::from)
+    })
+    .await;
+}
+
+/// `bridle session note`, run by claude's SessionStart hook inside an advisor session: the
+/// launcher's pid comes in `BRIDLE_SESSION_PID`.
+async fn note(cli: &Cli) {
+    let Some(pid) = std::env::var("BRIDLE_SESSION_PID")
+        .ok()
+        .and_then(|p| p.parse::<i32>().ok())
+    else {
+        return;
+    };
+    let id = std::io::read_to_string(std::io::stdin())
+        .ok()
+        .and_then(|s| serde_json::from_str::<serde_json::Value>(&s).ok())
+        .and_then(|v| v.get("session_id")?.as_str().map(String::from));
+    let Some(id) = id.filter(|s| !s.is_empty()) else {
+        return;
+    };
+    let name = std::env::var("BRIDLE_ADVISOR_NAME").ok();
+    register(cli, pid, name.as_deref(), Some(id)).await;
+}
+
+/// `ps` lstart of `pid`, the identity check the daemon uses for processes.
+fn process_start(pid: i32) -> Option<String> {
+    let out = Command::new("ps")
+        .args(["-o", "lstart=", "-p", &pid.to_string()])
+        .output()
+        .ok()?;
+    let s = String::from_utf8_lossy(&out.stdout)
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ");
+    (!s.is_empty()).then_some(s)
 }
 
 #[cfg(test)]

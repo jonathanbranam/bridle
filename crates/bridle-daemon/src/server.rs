@@ -61,6 +61,7 @@ pub struct AppState {
     pub wakes: std::sync::Arc<crate::wake::Wakes>,
     pub waiters: std::sync::Arc<crate::wake::Waiters>,
     pub handover: std::sync::Arc<crate::orchestrator::Handover>,
+    pub sessions: std::sync::Arc<crate::sessions::Sessions>,
     pub tasks: TaskManager,
     pub ports: crate::config::PortsConfig,
     /// `[daemon] stop_grace`; shutdown's cap on stopping agents is this + 5 s.
@@ -93,6 +94,8 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/events/stream", get(events_stream))
         .route("/v1/orchestrator/wake", get(orchestrator_wake))
         .route("/v1/orchestrator/handover", post(orchestrator_handover))
+        .route("/v1/sessions", get(list_sessions).post(register_session))
+        .route("/v1/sessions/end", post(end_session))
         .route("/v1/handovers", get(list_handovers).post(write_handover))
         .route("/v1/handovers/latest", get(latest_handover))
         .route("/v1/handovers/{id}", get(get_handover))
@@ -442,6 +445,25 @@ async fn orchestrator_wake(
     Ok(Json(WakeResponse { wakes }))
 }
 
+async fn register_session(
+    State(state): State<AppState>,
+    Json(req): Json<bridle_api::types::SessionRegister>,
+) -> Json<bridle_api::types::SessionInfo> {
+    Json(state.sessions.register(req, chrono::Utc::now()))
+}
+
+async fn end_session(
+    State(state): State<AppState>,
+    Json(req): Json<bridle_api::types::SessionEnd>,
+) -> Json<serde_json::Value> {
+    state.sessions.end(req).await;
+    Json(serde_json::json!({}))
+}
+
+async fn list_sessions(State(state): State<AppState>) -> Json<Vec<bridle_api::types::SessionInfo>> {
+    Json(state.sessions.list())
+}
+
 /// `bridle handover done`: only the marker (slice 3 stores the note). The supervisor stops and
 /// relaunches the session on its next tick.
 async fn orchestrator_handover(
@@ -522,6 +544,7 @@ async fn status(
         waiter_open,
         last_wake_at,
         upgrade_waiting: state.manager.upgrade_waiting(),
+        sessions: state.sessions.list(),
     }))
 }
 

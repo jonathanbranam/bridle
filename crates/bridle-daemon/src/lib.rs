@@ -36,6 +36,7 @@ mod restart;
 pub mod rollback;
 pub mod rules;
 mod server;
+mod sessions;
 pub mod state_branch;
 pub mod store;
 mod supervisor;
@@ -530,6 +531,18 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
     let wakes = wake::Wakes::new(store.clone());
     let waiters = wake::Waiters::new(Utc::now());
     let handover: std::sync::Arc<orchestrator::Handover> = Default::default();
+    let sessions = std::sync::Arc::new(sessions::Sessions::new(
+        overrides
+            .bridle_home
+            .clone()
+            .unwrap_or_else(discovery::bridle_home),
+        [
+            config.orchestrator.note_tokens,
+            config.orchestrator.plan_tokens,
+            config.orchestrator.handover_tokens,
+        ],
+        emitter.clone(),
+    ));
     let gh: std::sync::Arc<dyn ci::Gh> = overrides
         .upgrade
         .gh
@@ -599,6 +612,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         wakes: wakes.clone(),
         waiters: waiters.clone(),
         handover: handover.clone(),
+        sessions: sessions.clone(),
         tasks: tasks.clone(),
         integration: config.branches.integration.clone(),
         ports: config.ports.clone(),
@@ -769,6 +783,14 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
             async move { wakes.tick(Utc::now()).await }
         }
     });
+    // Cannot fail startup: it only reads files and emits events.
+    let sessions_task = spawn_loop(shutdown_rx.clone(), orchestrator::TICK_INTERVAL, {
+        let sessions = sessions.clone();
+        move || {
+            let sessions = sessions.clone();
+            async move { sessions.tick().await }
+        }
+    });
     let signal_task = signals.listen(shutdown_tx.clone());
 
     let join_handle = tokio::spawn(async move {
@@ -832,6 +854,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         claim_lease_task.abort();
         ports_task.abort();
         wake_task.abort();
+        sessions_task.abort();
     });
 
     Ok(RunningDaemon {

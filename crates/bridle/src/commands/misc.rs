@@ -55,6 +55,13 @@ pub(super) async fn status(cli: &Cli) -> Result<(), CliError> {
                 (chrono::Utc::now() - inc.since).num_minutes().max(0)
             );
         }
+        for sess in &status.sessions {
+            println!(
+                "session    {} {}",
+                sess.identity,
+                format_context_tokens(sess.tokens)
+            );
+        }
         let waiting = if status.waiter_open {
             "waiting"
         } else {

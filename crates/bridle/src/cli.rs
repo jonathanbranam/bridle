@@ -1851,6 +1851,10 @@ pub enum SessionRole {
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
         args: Vec<String>,
     },
+    /// An advisor session's SessionStart hook: reads the hook JSON on stdin and tells the daemon
+    /// the Claude session id. Never fails.
+    #[command(hide = true)]
+    Note,
 }
 
 #[derive(Debug, Args)]

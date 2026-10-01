@@ -18,11 +18,11 @@ use crate::types::{
     LandRequest, LandResult, MaxWorkersRequest, Message, MessageQuery, NewEdgeRequest,
     NewTaskRequest, NoteTaskRequest, OpenQuestion, PortAllocation, ProbeRequest, ProbeResult,
     Queue, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, RestartRequest,
-    RestartResponse, ResumeRequest, SendRequest, SetImpactRequest, SetKindRequest,
-    SetPriorityRequest, SetQueueRequest, SetSummaryRequest, ShutdownResponse, SpawnRequest, Status,
-    StatusLineReport, StopRequest, Task, TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo,
-    TranscriptLine, TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery, WakeResponse,
-    WriteHandoverRequest,
+    RestartResponse, ResumeRequest, SendRequest, SessionEnd, SessionInfo, SessionRegister,
+    SetImpactRequest, SetKindRequest, SetPriorityRequest, SetQueueRequest, SetSummaryRequest,
+    ShutdownResponse, SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery,
+    TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
+    UsageBreakdown, UsageBreakdownQuery, WakeResponse, WriteHandoverRequest,
 };
 
 #[derive(Debug, Error)]
@@ -389,6 +389,27 @@ impl Client {
     /// stops the session and relaunches it. Human and `external:orchestrator` only.
     pub async fn handover_done(&self) -> Result<HandoverDone, ClientError> {
         self.post_empty(&["v1", "orchestrator", "handover"]).await
+    }
+
+    /// `POST /v1/sessions`: register an interactive session, or update the one with this pid.
+    pub async fn session_register(
+        &self,
+        req: &SessionRegister,
+    ) -> Result<SessionInfo, ClientError> {
+        self.post_json(&["v1", "sessions"], req).await
+    }
+
+    /// `POST /v1/sessions/end`.
+    pub async fn session_end(&self, pid: i32) -> Result<(), ClientError> {
+        let _: serde_json::Value = self
+            .post_json(&["v1", "sessions", "end"], &SessionEnd { pid })
+            .await?;
+        Ok(())
+    }
+
+    /// `GET /v1/sessions`.
+    pub async fn sessions(&self) -> Result<Vec<SessionInfo>, ClientError> {
+        self.get_json(&["v1", "sessions"]).await
     }
 
     pub async fn budget(&self) -> Result<BudgetStatus, ClientError> {

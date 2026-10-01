@@ -623,6 +623,11 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   detail as JSON (`--json`: the list of wakes), exits 0, and prints `nothing` when the daemon's
   25 minutes pass quietly. The orchestrator runs it in the background and starts it again on
   every exit. Any other principal gets a 403.
+- **`bridle session advisor`** registers the session with the daemon and ends it at exit
+  (best effort; see orchestrator-supervision.md, section 6). `bridle status` shows a
+  `session    <identity> <tokens>` line per running advisor; `--json` has `sessions`. The hidden
+  `bridle session note` is the advisor's SessionStart hook. `events --kind session.context`
+  has the threshold crossings.
 - **`events --kind orchestrator.context`** queries the orchestrator's context tracking (ct8m
   step 6, br-1fdb): emitted on the first reading of a session's tokens, on a lower reading
   (when compacted), and at most once per 10 minutes when the tokens change. Each event carries

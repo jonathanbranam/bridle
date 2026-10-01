@@ -132,6 +132,45 @@ pub struct Status {
     /// until the daemon has restarted into it (or the upgrade gives up).
     #[serde(default)]
     pub upgrade_waiting: Option<String>,
+    /// Registered interactive sessions (advisors) still running.
+    #[serde(default)]
+    pub sessions: Vec<SessionInfo>,
+}
+
+/// `POST /v1/sessions`: registers an interactive session, or updates the one with this pid
+/// (the SessionStart hook adds the Claude session id; `/clear` changes it).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SessionRegister {
+    /// `advisor` or `advisor/<name>`.
+    pub identity: String,
+    pub pid: i32,
+    /// The pid's start time (`ps` lstart), so a reused pid is not the session.
+    pub pid_start: String,
+    #[serde(default)]
+    pub pane: Option<String>,
+    #[serde(default)]
+    pub claude_session_id: Option<String>,
+}
+
+/// `POST /v1/sessions/end`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SessionEnd {
+    pub pid: i32,
+}
+
+/// One registered interactive session.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SessionInfo {
+    pub identity: String,
+    pub pid: i32,
+    #[serde(default)]
+    pub pane: Option<String>,
+    #[serde(default)]
+    pub claude_session_id: Option<String>,
+    pub started_at: DateTime<Utc>,
+    /// The latest context reading; `None` until the session has reported one.
+    #[serde(default)]
+    pub tokens: Option<u64>,
 }
 
 /// One active incident, as `bridle status` lists it.
@@ -629,6 +668,11 @@ pub mod event_kind {
     pub const ORCHESTRATOR_INCIDENT: &str = "orchestrator.incident";
     /// data: {session, tokens, window_size, uptime_secs}. Session's starting context and growth.
     pub const ORCHESTRATOR_CONTEXT: &str = "orchestrator.context";
+    /// data: {identity, session, tokens, threshold}. A registered interactive session's context
+    /// crossed one of the orchestrator's token thresholds (interactive sessions, jttf).
+    pub const SESSION_CONTEXT: &str = "session.context";
+    /// data: {identity, pid}. A registered interactive session ended (or its pid is gone).
+    pub const SESSION_ENDED: &str = "session.ended";
     /// data: {task, branch}. `bridle land` began merging.
     pub const INTEGRATE_STARTED: &str = "integrate.started";
     /// data: {task, branch, ok, commit?, error?}

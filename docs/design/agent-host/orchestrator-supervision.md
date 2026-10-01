@@ -201,6 +201,18 @@ on a lower reading (compact), and at most once per 10 minutes when the tokens ch
 querying with `bridle events --kind orchestrator.context` to answer "how long can the orchestrator
 run" with actual data.
 
+**Interactive sessions (advisors, jttf).** `bridle session advisor [name]` registers with the
+daemon at launch (`POST /v1/sessions`: identity `advisor` or `advisor/<name>`, the launcher's pid
+and start time, the tmux pane) and ends at exit (`POST /v1/sessions/end`), best effort with a 3 s
+wait: a daemon that is down never blocks or fails the session. The advisor's SessionStart hook
+(`bridle session note`) adds the Claude session id, which changes on `/clear`. The registry is in
+memory only. Every tick (10 s) the daemon drops sessions whose pid is gone (`session.ended`),
+reads each live session's `$BRIDLE_HOME/context/<id>` file and emits `session.context`
+(`identity`, `session`, `tokens`, `threshold`) once per crossing of this section's three token
+thresholds, re-armed by a lower reading. Tokens per session show in `bridle status`
+(`session    advisor/alice 123K`) and `GET /v1/sessions`. No wakes and no restart for
+advisors; those are later slices.
+
 **Handover done.** The orchestrator writes its state and runs `bridle handover done`
 (`POST /v1/orchestrator/handover`), which marks "handover done for this session". At any point,
 not only after a message: an orchestrator that hands over early is fine.
