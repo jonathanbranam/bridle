@@ -107,6 +107,22 @@ So, in short:
   their cost can be tuned.
 - A reviewer must approve and sign before the task moves on.
 
-Not answered by the human: pm-1's proposed skips (under about 30 lines, docs-only, budget
-winding down). The human's "If I set a policy of security review on every task ... I should be
-able to see that it was done correctly" suggests a required review isn't silently skipped.
+## Decided: review thresholds (2026-10-01)
+
+On pm-1's proposed skips (under about 30 lines, docs-only, budget winding down), the human,
+verbatim:
+
+> I didn't rule on those. sorry the answer is: the workflow should define that; I am fine with
+> those guidelines as defaults EXCEPT budget running low; if budget is low then the work shouldn't
+> merge. a required review should not be skipped for that reason. Human is authority here, so they
+> can override that if they want to. general guideline though is that if the review is listed as
+> required, it should be done.
+>
+> The review thresholds should be part of the workflow and enforced and tracked by the system.
+
+So:
+
+- The workflow defines the review thresholds, and the system enforces and tracks them.
+- Defaults: no review for changes under about 30 lines or docs-only changes.
+- A low budget never skips a required review. The work waits and doesn't merge.
+- A required review is always done. Only the human can override that.
