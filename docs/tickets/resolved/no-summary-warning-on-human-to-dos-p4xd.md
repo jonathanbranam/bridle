@@ -7,6 +7,7 @@ changes: []
 specs: []
 needs: []
 see: []
+closed: 2026-10-02T00:43:36.408935Z
 ---
 
 ## The ask
@@ -31,3 +32,7 @@ agent. Keep it for agent-claimed work, where it matters. Small CLI-only change, 
 ## Done when
 
 `bridle task done` on a human to-do prints no warning; on an agent's task it still does.
+
+## Resolution
+
+Resolved by: br-010a (e925b36)

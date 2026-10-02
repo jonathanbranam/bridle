@@ -64,3 +64,4 @@ CLI `bridle inbox read <id>...`.
 5. `POST /v1/messages/{id}/unread` (clears `read_at`), `bridle inbox unread <id>...`, and a key in
    the TUI (e.g. `u`) on the list or in an opened message. Useful for advisors too: one that
    opens a message meant for another advisor (ervd) can put it back.
+Work status: 2 integrated task(s); 1 dropped: br-180a.

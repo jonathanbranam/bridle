@@ -46,3 +46,4 @@ worked because the port no longer changed.
 After the daemon goes down, re-resolve the endpoint (discovery: registry or `[projects]`) on each
 poll instead of reusing the first URL. Small. The error also names `<workspace>/.bridle/daemon.log`,
 which didn't exist on dalek (a daemon started in the foreground logs to its terminal).
+Work status: 1 integrated task(s); 1 dropped: br-d605.

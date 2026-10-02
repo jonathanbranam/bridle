@@ -7,6 +7,7 @@ changes: []
 specs: []
 needs: []
 see: [cvaq]
+closed: 2026-10-02T00:43:36.330002Z
 ---
 
 ## The ask
@@ -40,3 +41,7 @@ Also in the same Focus hours section: the example's `mode` comment reads
 `# default; "locked" parses but is not acted on yet`, and the `FocusMode` doc comment in
 `config.rs` says the same. The section's **Locked** paragraph and `bridle_daemon::focus`
 show that locked mode is built.
+
+## Resolution
+
+Resolved by: br-905b (ce396e6)

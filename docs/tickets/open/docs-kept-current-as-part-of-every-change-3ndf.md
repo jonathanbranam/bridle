@@ -34,3 +34,5 @@ The human, verbatim (2026-09-29, via the advisor):
   in its done report that none needed it.
 - Made a step of the worker's finish (the worker skill), not only a line in the role.
 - For now workers only. A separate docs-checking agent is a possible later step, not now.
+
+Work status: br-987b (integrated) created docs-current rule and updated worker SKILL/role; br-0f46 and br-79df (both dropped) were later tasks; check if CHANGELOG entry needed.

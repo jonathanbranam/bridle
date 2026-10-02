@@ -7,6 +7,7 @@ changes: []
 specs: []
 needs: []
 see: [u8sm]
+closed: 2026-10-02T00:43:36.539963Z
 ---
 
 ## The question
@@ -89,3 +90,7 @@ Follow-ups worth filing (not done; importer changes were out of scope):
 4. Where do spec tests live and should `spec coverage` learn track-web's layout?
 5. The 4 active OpenSpec changes (`add-from-tmdb-search`, `dungeon-tactics-sprite-rendering`, `food`, `watch-ratings-filter-search-prototype`): finish in OpenSpec first, or convert by hand? (Bridle doesn't convert them.)
 6. Keep the OpenSpec CLI and skills for track-web during the trial, or drop them on the branch?
+
+## Resolution
+
+Resolved by: br-92c0 (ff4c045)

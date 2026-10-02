@@ -7,6 +7,7 @@ changes: []
 specs: []
 needs: []
 see: [project-machine-and-account-scope-9mxw]
+closed: 2026-10-02T00:43:36.645518Z
 ---
 
 ## The ask
@@ -65,3 +66,7 @@ Default changed to `[state] push = true` in crates/bridle-daemon/src/config.rs; 
 remains an opt-out. Redundant line removed from bridle's own `.bridle/config.toml`. Tests added for
 origin already having bridle/state (fast-forward or no-op), and for no remote configured (quiet, no
 WARN). Docs updated: storage.md, roles-and-config.md.
+
+## Resolution
+
+Resolved by: br-8f47 (ad85660), br-93ad (881a90c), br-011b (d732259), br-e70f (ad85660), br-a618 (40f26fc), br-f3ec (440a4b0), br-9e4e (cc893d0)

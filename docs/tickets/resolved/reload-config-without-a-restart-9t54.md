@@ -7,6 +7,7 @@ changes: []
 specs: []
 needs: []
 see: [project-machine-and-account-scope-9mxw]
+closed: 2026-10-02T00:43:35.989404Z
 ---
 
 ## The ask
@@ -36,3 +37,7 @@ The human asked again: "config changes should be reloaded more often." Focus hou
 re-read `[[focus]]` on every prompt; everything else is read only at daemon start. Self-restart
 (q7rx) makes a restart cheap but still waits for a quiet point, so it isn't a substitute for
 settings that are safe to read per tick. Start with the sections that are read on each tick.
+
+## Resolution
+
+Resolved by: br-a618 (40f26fc)

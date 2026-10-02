@@ -41,3 +41,4 @@ One simple option: move the existing hook aside (for example `pre-commit.pre-bri
 have the uninstall path (or a re-run with the clone no longer listed) put it back. The
 meta-notes laptop clone lost its template hooks this way; `git init` in it re-copies them from
 the template if they're wanted back.
+Work status: 1 integrated task(s); 1 dropped: br-3efd.

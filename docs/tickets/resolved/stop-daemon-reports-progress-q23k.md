@@ -7,6 +7,7 @@ changes: []
 specs: []
 needs: []
 see: []
+closed: 2026-10-02T00:43:36.487917Z
 ---
 
 ## The ask
@@ -54,3 +55,7 @@ shutdown complete (8s)
   drops ("2 agents still running") is optional.
 - On the 60 s timeout, say so and point at `bridle daemons` and `<workspace>/.bridle/daemon.log`.
 - Update `docs/design/cli.md` to match.
+
+## Resolution
+
+Resolved by: br-7101 (1059ed6), br-ef49 (1059ed6)

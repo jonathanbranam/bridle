@@ -7,6 +7,7 @@ changes: []
 specs: []
 needs: []
 see: [one-machine-owns-a-project-hw6c, push-the-state-branch-we2r, finding-remote-daemons-from-the-laptop-xqvg]
+closed: 2026-10-02T00:43:35.883728Z
 ---
 
 ## The ask
@@ -75,3 +76,7 @@ Later, the human tells either machine to move a project, and authorizes it. Sket
 Open: whether the old machine can start the new daemon itself (over SSH) or only authorize it;
 what happens to a worktree with uncommitted work (commit it to its branch as WIP, or refuse to
 release).
+
+## Resolution
+
+Resolved by: br-33b3 (482f131)

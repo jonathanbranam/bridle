@@ -7,6 +7,7 @@ changes: []
 specs: []
 needs: []
 see: [kp3f]
+closed: 2026-10-02T00:43:36.277998Z
 ---
 
 ## What happened
@@ -28,3 +29,7 @@ The orchestrator can't mark them read (only the recipient can), so the human has
 2. `bridle send` (and the API) refuses an empty body.
 3. Optional, only if cheap: the orchestrator can mark a message to `human` read, since
    it's the human's delegate. Otherwise the human clears these by hand.
+
+## Resolution
+
+Resolved by: br-1d3d (8d078f4), br-6fd7 (47ec3b5), br-b966 (f864a5e), br-9e4e (cc893d0)

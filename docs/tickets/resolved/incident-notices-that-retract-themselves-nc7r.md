@@ -7,6 +7,7 @@ changes: []
 specs: []
 needs: []
 see: [kp3f, ex9q]
+closed: 2026-10-02T00:43:36.382765Z
 ---
 
 ## The ask
@@ -128,3 +129,7 @@ The human, verbatim:
 
 Passed to the orchestrator as a standing rule (m-2258): the main clone stays on `main`; a pinned
 build goes in its own worktree, as `bridle restart --upgrade` does (`upgrade.rs`).
+
+## Resolution
+
+Resolved by: br-ae78 (c086457), br-2ebc (277e495), br-a424 (9368d8d), br-65b8 (ce991ff), br-264b (4e290bf)

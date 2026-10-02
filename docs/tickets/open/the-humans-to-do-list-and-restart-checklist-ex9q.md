@@ -119,3 +119,4 @@ The human, verbatim: "Tasks or tickets for me need to be prioritized! And able t
   the human sees it leave the list, with the reason.
 - **Audit trail:** every change (created, re-prioritized, rescinded, done) is in the task's thread
   and events, with who and when. Drop already records its reason; priority changes must too.
+Work status: 4 integrated task(s); 1 dropped: br-9434.

@@ -7,6 +7,7 @@ changes: []
 specs: []
 needs: []
 see: [hv8e, p2ys, k7tm]
+closed: 2026-10-02T00:43:36.697552Z
 ---
 
 ## The ask
@@ -45,3 +46,7 @@ more". The session decides which stay, which merge (e.g. `research` into `spikes
 into `design`?), and the layout new projects get. Related: hv8e (which docs live in bridle's
 records and which in markdown), p2ys (ticket state without moving files between `open/` and
 `resolved/`), k7tm (tickets and tasks, why both).
+
+## Resolution
+
+Resolved by: br-e22f (bb8f8a2), br-1e47 (edbf91b), br-ae32 (2fbb2cd)

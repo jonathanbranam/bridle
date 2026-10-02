@@ -111,3 +111,5 @@ that remain, for the human to say which to drop (none dropped):
 - **Thinking tokens**: output tokens (96K in b2005ca8) far exceed the visible text and tool
   inputs (~16K tokens). Most output is thinking, which isn't in the transcript. Not examined
   further.
+
+Status: br-9e71 removed main_moved wake. Remaining: decide on agent_exited/crashed/stalled, budget_hold, usage, all_idle wakes; trim startup context; examine thinking tokens.

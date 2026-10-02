@@ -7,6 +7,7 @@ changes: []
 specs: []
 needs: []
 see: [yghs]
+closed: 2026-10-02T00:43:36.671415Z
 ---
 
 ## The ask
@@ -69,3 +70,7 @@ cached `cargo install` step.
    section. A setup action only if the snippet gets copied into enough projects to hurt.
 3. Then cut v0.4.0 on verified `main` so the first release carries binaries; meta-notes adopts
    the step and stops ignoring `test_specs_bdd.py`.
+
+## Resolution
+
+Resolved by: br-ce9f (e3bdda5), br-44e3 (651e3ff)

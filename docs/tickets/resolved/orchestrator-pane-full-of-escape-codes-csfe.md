@@ -7,6 +7,7 @@ changes: []
 specs: []
 needs: []
 see: [fx7x]
+closed: 2026-10-02T00:43:36.093579Z
 ---
 
 ## The ask
@@ -89,3 +90,7 @@ Fixed: the daemon signals the script's children (`claude`), so the script logs t
 finishes; SIGKILL takes both. The script also resets the pane's modes after `claude` ends (a
 SIGKILLed `claude` can't). Not done: a `handover`-relaunch event (the exit line now covers the
 trace). Not verified against a real `claude`.
+
+## Resolution
+
+Resolved by: br-7798 (c8569bf)

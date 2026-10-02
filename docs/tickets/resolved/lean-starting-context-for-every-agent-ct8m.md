@@ -7,6 +7,7 @@ changes: []
 specs: []
 needs: []
 see: [the-orchestrator-stays-running-fx7x, context-tokens-overcounts-multi-call-turns-kc4v]
+closed: 2026-10-02T00:43:36.120033Z
 ---
 
 ## The ask
@@ -83,3 +84,7 @@ Matt Pocock, "How to kill the bloat in Claude Code's system prompt"
    it), so "how long can the orchestrator run" has a number.
 
 Workers must never touch the live orchestrator session or the human's `~/.claude/settings.json`.
+
+## Resolution
+
+Resolved by: br-60ec (dfd3fa8), br-9fca (f6a0b75), br-5c6c (344eb74), br-5e4b (8541ced), br-72da (79e802f), br-1fdb (e365c04)

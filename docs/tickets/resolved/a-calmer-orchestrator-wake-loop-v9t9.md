@@ -7,6 +7,7 @@ changes: []
 specs: []
 needs: []
 see: [a-leaner-orchestrator-pdmd, incident-notices-that-retract-themselves-nc7r]
+closed: 2026-10-02T00:43:36.592312Z
 ---
 
 ## The ask
@@ -63,3 +64,7 @@ advisor):
    delivered (and whether a waiter is open).
 5. **No separate heartbeat.** The 25-minute poll does its job; drop "plus a 30-minute heartbeat"
    from the startup steps and the heartbeat line from the handover steps.
+
+## Resolution
+
+Resolved by: br-ee04 (3baf657)

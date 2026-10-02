@@ -7,6 +7,7 @@ changes: []
 specs: []
 needs: []
 see: [where-the-single-orchestrator-lives-hj4g]
+closed: 2026-10-02T00:43:36.513986Z
 ---
 
 ## The ask
@@ -58,3 +59,7 @@ Shorter names without 'bridle-' prefix:
 
 - Orchestrator: 'orch' by default; 'orch-<suffix>' when `BRIDLE_SESSION_SUFFIX` is set (replacing the host-based default from br-47ba).
 - Advisor: 'advisor' by default; 'advisor-<name>' when a name is given; can be suffixed with `BRIDLE_SESSION_SUFFIX` for machine naming.
+
+## Resolution
+
+Resolved by: br-47ba (8a1c3d4), br-df68 (a443618)

@@ -7,6 +7,7 @@ changes: []
 specs: []
 needs: []
 see: [finding-remote-daemons-from-the-laptop-xqvg]
+closed: 2026-10-02T00:43:36.199360Z
 ---
 
 ## The ask
@@ -41,3 +42,7 @@ by the client.
   the CLI's token rule 3, which relies on the daemon's tolerance.
 
 Tests: a token-less `GET` from a non-loopback peer is 401; from loopback it still passes.
+
+## Resolution
+
+Resolved by: br-d87c (98b14ab), br-dabd (cbaf6c0)

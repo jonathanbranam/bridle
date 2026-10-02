@@ -27,3 +27,4 @@ The human, verbatim (2026-09-29, via the advisor):
   completions zsh > ~/.zfunc/_bridle`); document that in `docs/design/cli.md`.
 - Static completions (subcommands, flags, enum values like `--kind`) first. Dynamic ones (agent
   names, task IDs, project names from `~/.bridle/daemons/`) are a nice-to-have, only if cheap.
+Work status: 2 integrated task(s); 2 dropped: br-146a, br-efda.

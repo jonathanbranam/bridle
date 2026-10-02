@@ -7,6 +7,7 @@ changes: []
 specs: []
 needs: []
 see: [the-orchestrator-stays-running-fx7x, orchestrator-pane-full-of-escape-codes-csfe]
+closed: 2026-10-02T00:43:36.016411Z
 ---
 
 ## The ask
@@ -46,3 +47,7 @@ doesn't need the daemon: it's a local tmux call.
   `claude-orchestrator` sets `orchestrator`; `claude-advisor <name>` sets `advisor-<name>`
   (`advisor` without a name), matching the session names.
 - A `bridle pane list` (tagged panes)? Not asked for; leave it out until it's needed.
+
+## Resolution
+
+Resolved by: br-e182 (44cd276), br-7e5a (133b2f5), br-b6e1 (11fb7dd)

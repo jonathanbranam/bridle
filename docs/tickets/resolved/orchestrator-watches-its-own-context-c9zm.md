@@ -7,6 +7,7 @@ changes: []
 specs: []
 needs: []
 see: [d4mz, s8kn]
+closed: 2026-10-02T00:43:36.067904Z
 ---
 
 ## What happened
@@ -35,3 +36,7 @@ Built (037c6ee): `scripts/orchestrator-watch.sh` exits with `CONTEXT <tokens>` w
 orchestrator's own session passes 140K, finding the session by the id
 `scripts/claude-orchestrator` records. Still open: the same for the advisor's session, and
 confirming the ledger is fed for sessions bridle doesn't host (`interactive_today` empty).
+
+## Resolution
+
+Resolved by: br-f025 (bb6bbf9), br-8a3f (c81c4cf), br-5575 (037c6ee), br-47ba (8a1c3d4)

@@ -7,6 +7,7 @@ changes: []
 specs: []
 needs: []
 see: [xypj]
+closed: 2026-10-02T00:43:36.146315Z
 ---
 
 ## The question
@@ -45,3 +46,7 @@ cross-project identification scheme.
   human-only, machine-wide action.
 - Whatever is decided should probably also cover `bridle daemons`, which
   already lists every registry entry without touching them.
+
+## Resolution
+
+Resolved by: br-9e4e (cc893d0)

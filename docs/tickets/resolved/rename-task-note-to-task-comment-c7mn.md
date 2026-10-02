@@ -7,6 +7,7 @@ changes: []
 specs: []
 needs: []
 see: [group-the-cli-into-subcommands-a67t]
+closed: 2026-10-02T00:43:36.041801Z
 ---
 
 ## The ask
@@ -35,3 +36,7 @@ Leave alone: the wire format and storage (a rename there has no user benefit), a
 
 `bridle task comment` works, `task note` still works but is hidden, no doc or role tells anyone to
 use `task note`, and a test covers the alias.
+
+## Resolution
+
+Resolved by: br-9c3b (714b1c6)

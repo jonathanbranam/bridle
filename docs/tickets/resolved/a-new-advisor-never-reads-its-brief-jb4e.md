@@ -9,6 +9,7 @@ specs: []
 needs: []
 see: []
 tasks: [br-6d49]
+closed: 2026-10-02T00:43:36.303638Z
 ---
 
 ## The ask
@@ -28,3 +29,7 @@ a pointer to the brief into the advisor's pane by hand.
 The fix: at startup an advisor with a name reads its unread "For advisor <name>:" messages
 (the prompt can carry the name, or prime can look the brief up) and starts from the brief when
 there is one. Without a brief, today's greeting is fine.
+
+## Resolution
+
+Resolved by: br-6d49 (7bf90f6), br-0e64 (2d722e8)

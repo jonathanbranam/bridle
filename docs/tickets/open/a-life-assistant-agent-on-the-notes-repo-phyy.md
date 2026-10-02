@@ -265,3 +265,5 @@ orchestrator drives the project with `--project notes`. The gaps it found (m-314
 8. **A daemon with no manager or workers.** `notes` sets `[roles.manager] autostart = false`,
    `resume_on_restart = false`, `packs = []`, and no check command. Verified on bridle 0.4.0
    (m-3182): the notes daemon runs with it and `bridle doctor` passes. Keep it supported.
+
+Status: br-ca8a (survey/shape), br-a4a6 (agent wake), br-c877 (advisor wake) completed; implementation of capture/check-in/talk-to-it still needed; open questions remain (new project vs meta-notes role; notes repo as bridle project).
