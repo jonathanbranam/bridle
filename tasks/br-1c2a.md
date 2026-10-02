@@ -4,7 +4,7 @@ title = "Overnight periods must say +1d, and bridle doctor validates the machine
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-02T11:47:48.911Z"
-updated_at = "2026-10-02T11:57:40.828873Z"
+updated_at = "2026-10-02T12:03:17.845546Z"
 branch = "bridle/config-1d"
 commit = "8e5bd04e30e7020a6f5e6c3816ae9d0c5d3fdf0b"
 summary = "A [[focus]]/[[budget.schedule]] end may be written HH:MM+1d (parse_time_of_day strips it; matching unchanged). One validator, overnight_problem in config.rs, errors for end<start without +1d (except 00:00) with the fix text, and for +1d on an end not before start. Daemon load only logs a warning (stays lenient, 3xr4 meaning). New machine_config_problems feeds a 'machine config' doctor check (fails, missing file ok). Docs: roles-and-config, cli, usage-and-budget, CHANGELOG."
@@ -28,3 +28,6 @@ integrated: 8e5bd04e30e7020a6f5e6c3816ae9d0c5d3fdf0b (branch bridle/config-1d)
 
 ### note · agent:manager-2 · 2026-10-02T11:57:40.828Z
 cleanup: removed agent config-1d, branch bridle/config-1d
+
+### note · agent:pm-1 · 2026-10-02T12:03:17.845Z
+DECIDED (the human, 2026-10-02, via the orchestrator m-3434): end = "00:00" means midnight at the end of the day the period starts, built as the brief says. Ignore the brief's 'open point to confirm' line: it is settled. Also record this decision in ticket r5s3 (add a 'Decided' line with the date) as part of this task, and mention it in the docs/CHANGELOG as the rule, not as provisional.
