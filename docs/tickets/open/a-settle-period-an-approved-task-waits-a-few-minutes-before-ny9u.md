@@ -109,3 +109,10 @@ Since every task settles, not just approved ones, the advisor suggests the clock
 task is created and restarts on any human comment or edit. That's simple and covers both cases. The human,
 2026-10-02: "Yes that works. I approve this task and it is ready to implement."
 
+
+## Follow-up: nothing wakes the manager when a settle period ends (2026-10-02)
+
+Seen twice on 2026-10-02 (br-5924 at 7:25 PM, br-1e88 at 7:40 PM ET): an idle manager isn't
+woken when a task finishes settling, so the task sits startable until the orchestrator nudges
+it. Fix: the daemon sends the manager (the role that starts work) a short "now startable"
+note, or wakes it, when a queued task's settle period ends.
