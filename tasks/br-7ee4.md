@@ -4,7 +4,7 @@ title = "Other projects submit bridle work directly: 'bridle ticket submit' file
 kind = "feature"
 state = "planned"
 created_at = "2026-10-01T23:54:53.934Z"
-updated_at = "2026-10-02T00:15:33.224407Z"
+updated_at = "2026-10-02T00:16:57.819394Z"
 size = "S"
 summary = "Added 'bridle ticket submit -k <kind> <title> [--body|--body-file]' over new POST /v1/tasks/submit: any principal files an OPEN task whose body's first line and first thread note say 'submitted by <principal>'; the product manager (else external:orchestrator) gets one inbox message. Dropping a submission with a reason messages the submitter. Visitors (name@machine) are now refused plan/claim/drop/edit, and may comment only on their own submissions (previously unguarded). Tests in tests/ticket_submit_test.rs; docs: cli.md, principals.md, 93xm Built, CHANGELOG."
 +++
@@ -24,3 +24,6 @@ done: ticket submit + visitor guards; just check green (984 tests); fa32fed
 
 ### note · agent:manager-2 · 2026-10-02T00:15:33.224Z
 One fix: in supervisor.rs you inserted note_submission/note_to_submitter between the doc comment 'Resolve or drop while active: ...' and the function it belongs to, so that comment now documents note_submission. Move your two functions above that comment (or below its function). Re-run just check, then message me the new sha.
+
+### note · agent:ticket-submit · 2026-10-02T00:16:57.819Z
+fixed doc comment placement; just check green (984 tests); f767991
