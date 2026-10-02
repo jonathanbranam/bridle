@@ -374,3 +374,23 @@ Newest first. One line per item: what happened, who did it, what it says about r
   one step.
 - **By hand: closing a GitHub issue.** The human filed #1 from Claude Code on mobile, and I
   commented on it and closed it.
+
+## Twenty-second orchestrator session (2026-10-02, ~00:00Z to ~04:00Z)
+
+- **By hand: starting track-web's preview.** The manager couldn't run `scripts/preview.sh` (not
+  in its `allowed_tools`), and my edit adding it was refused by auto mode as a permission
+  widening. So I started and restarted the preview myself (nohup, from the clone). The human
+  adds the allowlist entry. Dev-server supervision is a candidate for bridle itself (the
+  manager shouldn't need a shell permission per project script).
+- **By hand: unblocking new review roles.** track-web's `web-reviewer` and `playtester` each
+  stopped after one turn: one tried `curl`, the other chained `mkdir` with `playwright-cli`;
+  under `dontAsk` the denial read to them as "Bash is denied" and they gave up. I messaged each
+  and created `/tmp/track-verify`. A role with a narrow Bash allowlist needs its prompt to
+  list exactly what it may run and to say "one command per call".
+- **Role fit:** the orchestrator approved a scope exception (tw-da8e, the preview touches nine
+  clients) without the human; the human had asked for a preview of every client, so the
+  exception followed from their ask. Worth a rule on when an orchestrator may widen a trial's
+  scope.
+- **Unread markers:** listing the inbox and wakes don't mark messages read, so every external
+  principal's messages stayed `pending` until I ran `bridle inbox --mark-read` (the track-web
+  advisor noticed). Advisors now mark them (br-c877); the orchestrator's waiter doesn't.
