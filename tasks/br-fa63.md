@@ -2,9 +2,9 @@
 id = "br-fa63"
 title = "Gateway 8/10: serve the UI folder (~/.bridle/ui/) and check the API version"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-10-02T23:36:00.629Z"
-updated_at = "2026-10-02T23:36:00.629Z"
+updated_at = "2026-10-02T23:36:10.741715Z"
 size = "S"
 +++
 

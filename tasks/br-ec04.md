@@ -2,9 +2,9 @@
 id = "br-ec04"
 title = "Gateway 3/10: list the human's to-dos and task questions across projects"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-10-02T23:35:47.667Z"
-updated_at = "2026-10-02T23:35:47.667Z"
+updated_at = "2026-10-02T23:36:09.073386Z"
 size = "M"
 +++
 
