@@ -9,6 +9,7 @@ specs: []
 needs: []
 see: [focus-hours-an-overnight-period-belongs-to-the-day-it-starts-3xr4, focus-hours-quiet-and-locked-cvaq, project-migrations-one-command-applies-pending-bridle-upgrad-xebc]
 tasks: [br-1c2a]
+closed: 2026-10-02T12:04:32Z
 ---
 
 ## The ask
@@ -39,7 +40,8 @@ The advisor listed formats for an explicit next-day end, numbered 1–5. Option 
    (`end = "06:00+1d"`). An `end` before `start` without `+1d` is a config error naming the block
    and the fix ("night: end 08:00 is before start 23:00; write \"08:00+1d\""). Same for
    `[[focus]]` and `[[budget.schedule]]`.
-2. **`end = "00:00"` is midnight at the end of the start day** and needs no `+1d`. The human's two focus blocks stay valid as written. Only budget `night`
+2. **`end = "00:00"` is midnight at the end of the start day** and needs no `+1d` (Decided (the human,
+   2026-10-02)). The human's two focus blocks stay valid as written. Only budget `night`
    needs `08:00+1d`.
 3. **`start == end` stays empty** (the `days = []` presets are untouched).
 4. **`bridle doctor` validates the machine config:** a check that parses every section of
@@ -53,3 +55,11 @@ The advisor listed formats for an explicit next-day end, numbered 1–5. Option 
 
 The human, verbatim, on the summary of items 1–3 above (strict `+1d`, `00:00` as midnight of the
 start day, `bridle doctor` checking the machine config): "Yes on 3. All of that looks good."
+
+## Built (br-1c2a, 8e5bd04)
+
+All changes are built: strict overnight validation in `config.rs`, the `00:00` special case settled, machine config doctor check, and daemon stays lenient on load (error in doctor only).
+
+## Resolution
+
+All changes are in `docs/design/agent-host/roles-and-config.md`, which states the overnight rule as settled: `end = "00:00"` means midnight at the end of the start day and needs no `+1d`, and ends before start are written with `+1d` (enforced in `bridle doctor`, with daemon lenient on load).
