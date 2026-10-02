@@ -394,3 +394,24 @@ Newest first. One line per item: what happened, who did it, what it says about r
 - **Unread markers:** listing the inbox and wakes don't mark messages read, so every external
   principal's messages stayed `pending` until I ran `bridle inbox --mark-read` (the track-web
   advisor noticed). Advisors now mark them (br-c877); the orchestrator's waiter doesn't.
+
+## Twenty-third orchestrator session (2026-10-02, ~04:20Z to ~16:20Z)
+
+- **Role fit, again:** pm-1 planned br-761a (the web UI design) but didn't queue it, so
+  manager-2 saw nothing ready and everyone idled. I added the tier with `bridle queue add-tier`.
+  Third time (see the twenty-first session): planning should queue the task in the same step,
+  or `bridle task plan` should warn when the task isn't in the queue.
+- **By hand: renewing agents.** pm-1 asked to be renewed at ~140K; the track-web manager sat
+  idle at 141K. I ran `bridle agent renew` on both (manager-2 renewed itself). A context
+  governor would do this without anyone asking.
+- **Quiet hours vs the watcher:** the quiet-hours gate says "no tool calls except the one the
+  human asked for", but every wake needs two (read the output, start the waiter again). I kept
+  the waiters running through the night and kept the replies within the limits. The gate's text
+  should exempt the waiter loop, or wakes during quiet hours should be held by the daemon.
+- **Watcher churn:** with nothing happening, two waiters each exit every 25 minutes with
+  `nothing`, about 50 turns overnight. A longer quiet timeout (or one waiter for both projects,
+  cy2v) would cut it.
+- **Human question on login:** the human ran `claude` in the track-web workspace (probably over
+  SSH) and was asked to log in. `claude auth status` on the laptop showed logged in (keychain,
+  refreshed that morning) and agents spawned fine; an SSH session can't read the locked login
+  keychain. Worth a line in the operating docs.
