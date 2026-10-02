@@ -70,3 +70,48 @@ The gaps:
 [[docs/design/human-web-ui|The human web UI]] (design only, for the human's review): screens, fan-out across
 projects and machines, a separate `bridle ui` process, loopback-first auth, a server-rendered
 stack, build tasks.
+
+## The UI is a separate program (the human, 2026-10-02)
+
+The advisor laid out four options: A, a browser app calling the daemons directly; B, a separate UI
+server in its own repo; C, a `bridle-ui` crate in bridle's workspace; D, served by a daemon. The
+human, verbatim (via the advisor):
+
+> I prefer B - but that raises a unique problem that may be interesting to solve - how is work
+> scheduled between projects that have inter-dependencies?
+>
+> I would take a very hard line on the API - it's fine to version it, but only one previous
+> version maintained or NONE. A version is good regardless in the API, but bridle is changing
+> rapidly and I own all parts so we don't need to support any other clients or users.
+>
+> I would plan to collocate the bridle and UI projects and have the advisor and orchestrators
+> collaborate to make changes nearly simultaneously.
+>
+> Something missing here though in a separate UI is that I want to be able to read and edit or
+> comment on literally everything bridle eventually - tasks, tickets, roadmaps, config, messages,
+> incidents, etc. eventually everything is visible in the UI organized by machine and project.
+>
+> That goes beyond what bridle serves today since some of that is stored only as files on disk.
+
+Decided:
+
+5. **Option B: a separate UI server in its own repo**, not part of the `bridle` binary or
+   workspace. It reads the daemon list and the human's credentials, calls the daemons over HTTP,
+   and serves the page. The browser never holds a bridle token. Reachable daemons are queried;
+   defined but unreachable daemons and projects are reported as such. Several UIs may run
+   anywhere that can reach the daemons.
+6. **The API is versioned, with at most one previous version kept**, or none. Bridle changes
+   fast and the human owns every client, so there's no wider compatibility to keep.
+7. **The bridle and UI repos sit side by side**, and the advisor and orchestrators work on both so
+   paired changes land nearly together. Scheduling across the two:
+   [[scheduling-work-across-projects-that-depend-on-each-other-ztss|ztss]].
+8. **Eventually everything is in the UI**, organized by machine and project, readable,
+   editable and commentable: tasks, tickets, roadmaps, config, messages, incidents. Much of it is
+   files on disk today:
+   [[everything-readable-and-editable-through-the-daemons-file-ba-v8kn|v8kn]].
+
+**The design doc needs revising:** `docs/design/human-web-ui.md` (br-761a, 82df110) recommends
+`bridle ui` as a Rust crate in bridle's workspace (option C) and says v1 needs no new daemon
+endpoints. Decision 5 replaces that. What bridle then provides: generated API types and a version
+(decision 6), a machine-readable daemon list (e.g. `bridle projects --json`), and 3ehu for the
+human's token across machines.
