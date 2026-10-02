@@ -96,7 +96,7 @@ human, verbatim (via the advisor):
 Decided:
 
 5. **Option B: a separate UI server in its own repo**, not part of the `bridle` binary or
-   workspace. It reads the daemon list and the human's credentials, calls the daemons over HTTP,
+   workspace. (Superseded by option F below, the same day.) It reads the daemon list and the human's credentials, calls the daemons over HTTP,
    and serves the page. The browser never holds a bridle token. Reachable daemons are queried;
    defined but unreachable daemons and projects are reported as such. Several UIs may run
    anywhere that can reach the daemons.
@@ -115,3 +115,49 @@ Decided:
 endpoints. Decision 5 replaces that. What bridle then provides: generated API types and a version
 (decision 6), a machine-readable daemon list (e.g. `bridle projects --json`), and 3ehu for the
 human's token across machines.
+
+## Option F: a bridle gateway and a TypeScript UI (decided, the human, 2026-10-02)
+
+The human asked to slow down and hear the case for option C first, then asked, verbatim (via the
+advisor):
+
+> is there any benefit in having a, a bridal API that lives within our project? So like, not
+> something that doesn't serve the HTML or JavaScript, but just serves the UI and handles all the
+> token and auth and everything. And then the UI would be like a separate project. You know,
+> probably in TypeScript is what I would reach for naturally. I don't know, it, it feels like a
+> stretch to put the HTML host in Rust.
+
+After the advisor's answers (below), verbatim: "Yeah, no, I think this is a great solution. I feel
+really good with it. Let's write this up and we can, I think, begin work on the gateway." This
+replaces decision 5 and the design doc's option C.
+
+- **`bridle gateway`**: a subcommand of the `bridle` binary, in bridle's workspace, run as its own
+  process (not inside a daemon), one per machine where the human wants the UI, as a launchd or
+  systemd service like the daemons. Separate because daemons are per project and restart often
+  (self-upgrades); the gateway spans projects and must outlive those restarts. It also keeps UI
+  load off the daemons.
+- **What it does:** finds every defined daemon (local registry and `[projects]`/`[machines]`),
+  fans out, and serves one API built for the UI, across projects and machines, with unreachable
+  daemons and projects reported. It holds the human's tokens (per machine, 3ehu) and the browser
+  login; the browser and the TypeScript code never hold a bridle token. It's where file-backed
+  records arrive (v8kn). The TUI or the orchestrator could use it later.
+- **Contract:** the gateway uses `bridle-api` like the CLI, so daemon API changes are compiler-
+  checked in `just check`, and the daemon API stays internal. The gateway's API is the one the UI
+  depends on: versioned, at most one previous version kept (decision 6), with TypeScript types
+  generated from its Rust types (ts-rs; utoipa plus openapi-typescript if a full endpoint spec
+  becomes worth it).
+- **Login:** username and password, `argon2` hash in machine config, an `HttpOnly`,
+  `SameSite=Strict` session cookie. Reached over Tailscale (encrypted; `tailscale serve` can add
+  HTTPS). No external hosting planned. Alternative: trust Tailscale identity via `tailscale serve`.
+- **The UI**: its own TypeScript repo beside bridle's. Its build (`dist/`) is installed into a
+  folder the gateway serves (e.g. `~/.bridle/ui/`), so page and API share an origin. The build
+  records the API version it targets; the gateway refuses or warns on a mismatch. Install for now
+  by a script in the UI repo; later the automatic upgrade builds it too (ztss). In development the
+  UI's dev server (Vite) proxies API calls to the gateway. Not compiled into the `bridle` binary
+  (that would put Node in bridle's build and tie the releases).
+- **Gateways don't talk to each other.** Each reaches the daemons its machine's config defines and
+  its credentials allow. One gateway, e.g. on the NUC only, can reach every project if the NUC's
+  config lists dalek's projects, holds the human's tokens for dalek, and dalek's daemons listen
+  on its Tailscale address (k7mw). A sleeping laptop's projects show as unreachable.
+
+`docs/design/human-web-ui.md` is to be revised to this before build tasks.
