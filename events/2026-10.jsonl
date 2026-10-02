@@ -152,3 +152,5 @@
 {"actor":"agent:pm-1","at":"2026-10-02T12:15:15.560010Z","from":"open","task":"br-3c71","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-02T12:15:21.386638Z","queue":"reprioritized"}
 {"actor":"agent:manager-2","at":"2026-10-02T12:17:32.049734Z","from":"planned","task":"br-7216","to":"integrated"}
+{"actor":"human","at":"2026-10-02T12:30:27.911Z","from":"","task":"br-a4ea","to":"open"}
+{"actor":"human","at":"2026-10-02T12:30:27.968Z","from":"","task":"br-1665","to":"open"}
