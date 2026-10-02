@@ -239,12 +239,20 @@ pub struct PrincipalWakeQuery {
 }
 
 /// One reason a principal should wake.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct PrincipalWakeReason {
-    /// `message` (the principal has unread messages).
+    /// `message` (the principal has unread messages) or `task` (someone else touched a task
+    /// it created or claimed).
     pub reason: String,
-    /// The messages behind it.
+    /// The messages behind a `message` reason.
+    #[serde(default)]
     pub message_ids: Vec<String>,
+    /// The task behind a `task` reason.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub task: Option<String>,
+    /// What happened to it: the event kind, e.g. `task.note_added`, `task.state`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub event: Option<String>,
 }
 
 /// The answer to `GET /v1/wake`: no reasons means the timeout came first.

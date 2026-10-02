@@ -227,7 +227,10 @@ pub(super) async fn wake(cli: &Cli, args: &WakeArgs) -> Result<(), CliError> {
         render::print_json(&got)?;
     } else {
         for r in &got.reasons {
-            println!("{}: {}", r.reason, r.message_ids.join(" "));
+            match (&r.task, &r.event) {
+                (Some(task), Some(event)) => println!("{}: {task} {event}", r.reason),
+                _ => println!("{}: {}", r.reason, r.message_ids.join(" ")),
+            }
         }
     }
     Ok(())

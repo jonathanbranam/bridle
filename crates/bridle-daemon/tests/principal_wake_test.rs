@@ -1,11 +1,14 @@
-//! `GET /v1/wake`: the daemon decides when a principal wakes; the one reason so far is an
-//! unread message (`principal_wake.rs`).
+//! `GET /v1/wake`: the daemon decides when a principal wakes: an unread message, or someone
+//! else touching a task it created or claimed (`principal_wake.rs`).
 
 mod support;
 
 use std::time::Duration;
 
-use bridle_api::types::{MessageKind, PrincipalWakeQuery, SendRequest, When};
+use bridle_api::types::{
+    MessageKind, NewTaskRequest, PrincipalWakeQuery, PrincipalWakeResponse, SendRequest, TaskKind,
+    When,
+};
 use bridle_api::{Client, ClientError};
 
 fn query(principal: &str, timeout_secs: u64) -> PrincipalWakeQuery {
@@ -101,4 +104,104 @@ async fn only_that_principal_or_the_human_may_wait() {
         .principal_wake(&query("external:advisor", 1))
         .await
         .expect("the human may");
+}
+
+async fn new_task(client: &Client) -> String {
+    client
+        .new_task(&NewTaskRequest {
+            title: "t".to_string(),
+            kind: TaskKind::Feature,
+            body: String::new(),
+            size: None,
+            components: Vec::new(),
+            for_human: false,
+            priority: None,
+        })
+        .await
+        .expect("new task")
+        .id
+}
+
+/// Starts the advisor's wake, runs `act` once it is waiting, and returns the answer (after
+/// `timeout_secs` at most).
+async fn wake_after(
+    advisor: &Client,
+    timeout_secs: u64,
+    act: impl std::future::Future<Output = ()>,
+) -> PrincipalWakeResponse {
+    let advisor = advisor.clone();
+    let waiting = tokio::spawn(async move {
+        advisor
+            .principal_wake(&query("external:advisor", timeout_secs))
+            .await
+            .expect("wake")
+    });
+    tokio::time::sleep(Duration::from_millis(300)).await;
+    act.await;
+    waiting.await.expect("join")
+}
+
+#[tokio::test]
+async fn another_principals_comment_on_a_task_it_created_wakes_it() {
+    let (daemon, _tmp) = support::start_daemon(None).await;
+    let advisor = daemon.external_client("advisor").await;
+    let task = new_task(&advisor).await;
+    let got = wake_after(&advisor, 10, async {
+        daemon.client.note_task(&task, "hi").await.expect("note");
+    })
+    .await;
+    assert_eq!(got.reasons.len(), 1, "{got:?}");
+    assert_eq!(got.reasons[0].reason, "task");
+    assert_eq!(got.reasons[0].task.as_deref(), Some(task.as_str()));
+    assert_eq!(got.reasons[0].event.as_deref(), Some("task.note_added"));
+}
+
+#[tokio::test]
+async fn a_state_change_on_a_claimed_task_wakes_it() {
+    let (daemon, _tmp) = support::start_daemon(None).await;
+    let advisor = daemon.external_client("advisor").await;
+    let task = new_task(&daemon.client).await;
+    daemon.client.plan_task(&task).await.expect("plan");
+    advisor.claim_task(&task).await.expect("claim");
+    let got = wake_after(&advisor, 10, async {
+        daemon.client.note_task(&task, "x").await.expect("note");
+    })
+    .await;
+    assert_eq!(got.reasons[0].task.as_deref(), Some(task.as_str()));
+}
+
+#[tokio::test]
+async fn a_state_change_wakes_it() {
+    let (daemon, _tmp) = support::start_daemon(None).await;
+    let advisor = daemon.external_client("advisor").await;
+    let task = new_task(&advisor).await;
+    let got = wake_after(&advisor, 10, async {
+        daemon.client.plan_task(&task).await.expect("plan");
+    })
+    .await;
+    assert_eq!(got.reasons[0].event.as_deref(), Some("task.state"));
+}
+
+#[tokio::test]
+async fn its_own_comment_does_not_wake_it() {
+    let (daemon, _tmp) = support::start_daemon(None).await;
+    let advisor = daemon.external_client("advisor").await;
+    let task = new_task(&advisor).await;
+    let got = wake_after(&advisor, 2, async {
+        advisor.note_task(&task, "mine").await.expect("note");
+    })
+    .await;
+    assert!(got.reasons.is_empty(), "{got:?}");
+}
+
+#[tokio::test]
+async fn a_task_it_neither_created_nor_claimed_does_not_wake_it() {
+    let (daemon, _tmp) = support::start_daemon(None).await;
+    let advisor = daemon.external_client("advisor").await;
+    let task = new_task(&daemon.client).await;
+    let got = wake_after(&advisor, 2, async {
+        daemon.client.note_task(&task, "x").await.expect("note");
+    })
+    .await;
+    assert!(got.reasons.is_empty(), "{got:?}");
 }
