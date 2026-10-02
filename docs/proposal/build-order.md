@@ -14,6 +14,8 @@ project. Every phase sits on the daemon and API that v1 built.
 | **P4** | impact registry, conflict protocol, post-merge rebase notices; trace links with suspect tracking; `arch-revision` → `re-evaluate` flow | two workers on one capability at once; an architecture change traced to the specs it affects | |
 | **P5** | worktree layouts (incl. paired), port registry, merge-tree probes, integration branch, the integrator | harness + track-web in parallel | plain per-agent worktrees built in v1 |
 | **P6** | TS test adapter; migrate track-web, harness, meta-notes, file-db | everything on bridle | vitest adapter built (`workflow/packs/typescript/adapters/vitest-bridle/`); migrations not started |
+| **P7** | prototyper role (workflow/base/roles/); strong guidance: prototype prompt is the whole brief; prototypes differ significantly | agents can focus on constraints without rethinking from existing design | **planned** (br-a4ea) |
+| **P8** | web UI for the human: to-dos and decisions to run through and check off; TUI preserved | the human can manage their workflow from the web | **planned** (br-1665) |
 
 Don't start at P5. Research 09 §7 still applies.
 
