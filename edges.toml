@@ -381,3 +381,9 @@ from = "br-761a"
 to = "br-1665"
 kind = "blocks"
 created_at = "2026-10-02T13:24:29.506Z"
+
+[[edge]]
+from = "br-5924"
+to = "br-1665"
+kind = "blocks"
+created_at = "2026-10-02T23:20:35.446Z"
