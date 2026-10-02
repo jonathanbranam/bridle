@@ -106,5 +106,6 @@ The human, verbatim (via the advisor), on the notes above:
    (who, why, when): the human asks for it, or an urgent fix for downtime.
 
 Since every task settles, not just approved ones, the advisor suggests the clock starts when the
-task is created and restarts on any human comment or edit. That's simple and covers both cases.
-Still to confirm in the design.
+task is created and restarts on any human comment or edit. That's simple and covers both cases. The human,
+2026-10-02: "Yes that works. I approve this task and it is ready to implement."
+
