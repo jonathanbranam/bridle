@@ -174,3 +174,4 @@
 {"actor":"human","at":"2026-10-02T23:20:34.238Z","from":"","task":"br-5924","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-02T23:20:35.430598Z","from":"open","task":"br-5924","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-02T23:20:41.283307Z","queue":"reprioritized"}
+{"actor":"external:advisor","at":"2026-10-02T23:26:40.952917Z","from":"planned","task":"br-be96","to":"integrated"}
