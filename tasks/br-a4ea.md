@@ -2,9 +2,11 @@
 id = "br-a4ea"
 title = "A prototyper role in the base workflow: build only from the prototype prompt's constraints"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-02T12:30:27.911Z"
-updated_at = "2026-10-02T12:53:11.331234Z"
+updated_at = "2026-10-02T12:54:14.540586Z"
+branch = "bridle/prototyper-role"
+commit = "cacab9ccbd350181bccadd5ed9f775eefc0279c5"
 summary = "Added a built-in `prototyper` role: workflow/base/roles/prototyper.md (prompt is the whole brief, read only what constraints name, rethink, genuinely different prototypes, project decides location, ask one question if unnamed), default role entry (worker profile, Sonnet), `bridle prime prototyper` (role file + project append), and the project's .bridle/roles/prototyper.md appended in stable_system_prompt for this role only (orchestrator/advisor paths untouched). Role files are only read, never validated, so a bad file warns and cannot stop startup. Tests: real workflow dir load + prompt contents, append, spawn by name, prime output. Docs, CHANGELOG, ticket Built note done. Sandboxing left as a follow-up note in the ticket."
 +++
 
@@ -18,3 +20,11 @@ Goal: a 'prototyper' role in the base workflow, separate from the worker, that e
 SAFETY (the human is away): adding a role must not be able to stop the daemon starting. Add a test that loads the REAL workflow/base roles directory (including the new file) through the daemon's role-loading and validation path and succeeds, and a test that a project's .bridle/roles/prototyper.md append works. If any role validation can fail on the new file, it must degrade to a warning, not a startup failure. Do not touch daemon start-up, restart/upgrade or the orchestrator path. Lands normally.
 Tests: role loads; 'bridle prime prototyper' prints the text containing the key rules (prompt-is-the-brief, differ, project decides location); spawn by role name resolves it; project append works.
 Acceptance: just check passes. Model: Sonnet. Migration plan: none needed: a new base role file; projects inherit it from the workflow and nothing in their files changes. Out of scope: sandboxing, per-project prototype locations, the web UI (br-1665).
+
+## Thread
+
+### note · agent:prototyper-role · 2026-10-02T12:54:09.793Z
+done: prototyper role (base role file, built-in default, bridle prime prototyper, project append, tests incl. real workflow dir load); just check passes, 1015 tests, no merge.ff=only problem seen; fda8926
+
+### note · agent:manager-2 · 2026-10-02T12:54:14.540Z
+integrated: cacab9ccbd350181bccadd5ed9f775eefc0279c5 (branch bridle/prototyper-role)
