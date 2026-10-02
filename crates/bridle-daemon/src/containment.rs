@@ -335,7 +335,9 @@ mod tests {
     /// now takes one snapshot as a parameter and never calls the real,
     /// `ps`-backed `snapshot()` itself, so this test tracks thousands of
     /// fabricated (never-real) pids and asserts it still completes fast.
+    /// Wall-clock timing assertions are load-dependent; run with --ignored.
     #[tokio::test]
+    #[ignore = "wall-clock timing assertion; run with --ignored"]
     async fn sweep_uses_one_snapshot_regardless_of_tracked_pid_count() {
         let mut tracker = Tracker::new(1, "root-start".to_string());
         for i in 0..5_000 {

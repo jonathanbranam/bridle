@@ -147,7 +147,7 @@ async fn turns_acks_exit_codes_and_resume() {
 /// A mid-turn stdin message is folded into the running turn (S3), and an
 /// interrupt gets a receipt and ends the turn as aborted (S4).
 #[tokio::test]
-#[ignore = "spends real tokens against the real claude binary"]
+#[ignore = "spends real tokens against the real claude binary; includes wall-clock timing assertions"]
 async fn mid_turn_fold_and_interrupt() {
     if !live() {
         return;
