@@ -4,7 +4,8 @@ title = "A prototyper role in the base workflow: build only from the prototype p
 kind = "feature"
 state = "planned"
 created_at = "2026-10-02T12:30:27.911Z"
-updated_at = "2026-10-02T12:31:28.673943Z"
+updated_at = "2026-10-02T12:53:11.331234Z"
+summary = "Added a built-in `prototyper` role: workflow/base/roles/prototyper.md (prompt is the whole brief, read only what constraints name, rethink, genuinely different prototypes, project decides location, ask one question if unnamed), default role entry (worker profile, Sonnet), `bridle prime prototyper` (role file + project append), and the project's .bridle/roles/prototyper.md appended in stable_system_prompt for this role only (orchestrator/advisor paths untouched). Role files are only read, never validated, so a bad file warns and cannot stop startup. Tests: real workflow dir load + prompt contents, append, spawn by name, prime output. Docs, CHANGELOG, ticket Built note done. Sandboxing left as a follow-up note in the ticket."
 +++
 
 original id: 6yb4
