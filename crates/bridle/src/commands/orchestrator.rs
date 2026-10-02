@@ -27,6 +27,7 @@ pub(super) async fn prime(cli: &Cli, args: &PrimeArgs) -> Result<(), CliError> {
     match args.role {
         PrimeRoleArg::Orchestrator => prime_orchestrator(cli).await,
         PrimeRoleArg::Advisor => prime_advisor(),
+        PrimeRoleArg::Prototyper => prime_prototyper(),
         PrimeRoleArg::Worker => prime_scoped(cli, args, "worker", "worker").await,
         PrimeRoleArg::Planner => prime_scoped(cli, args, "product-manager", "planner").await,
     }
@@ -126,6 +127,26 @@ pub(super) fn prime_advisor() -> Result<(), CliError> {
         std::fs::read_to_string(&path).with_context(|| format!("reading {}", path.display()))?
     );
     if let Ok(part) = std::fs::read_to_string(repo.join(".bridle/roles/advisor.md")) {
+        print!("\n{part}");
+    }
+    Ok(())
+}
+
+/// The prototyper's role file, then the project's own `.bridle/roles/prototyper.md`.
+pub(super) fn prime_prototyper() -> Result<(), CliError> {
+    let repo = std::env::current_dir().context("current directory")?;
+    let config =
+        bridle_daemon::config::Config::load(&repo).context("loading .bridle/config.toml")?;
+    let workflow = config
+        .workflow_root(&repo)
+        .map_err(anyhow::Error::new)?
+        .unwrap_or_else(|| repo.join("workflow"));
+    let path = workflow.join("base/roles/prototyper.md");
+    print!(
+        "{}",
+        std::fs::read_to_string(&path).with_context(|| format!("reading {}", path.display()))?
+    );
+    if let Ok(part) = std::fs::read_to_string(repo.join(".bridle/roles/prototyper.md")) {
         print!("\n{part}");
     }
     Ok(())

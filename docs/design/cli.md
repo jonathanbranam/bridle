@@ -252,6 +252,7 @@ bridle advisor start <name> [--brief TEXT|@FILE]   send the brief to external:ad
                                              @bridle=orchestrator, else a new window (`[tmux] advisor_pane = "split"|"window"`
                                              in ~/.bridle/config.toml). Outside tmux prints the command, exit 0. Orchestrator
                                              and human only (refuses under BRIDLE_AGENT_ID)
+bridle orchestrator prime prototyper         the prototyper role file, then the project's .bridle/roles/prototyper.md
 bridle orchestrator prime worker|planner [--component ID ...] [--task ID]   the role's rules, facts, guides, plus named components' scope; --task is worker only
 bridle task new    <title> -k/--kind KIND [--body TEXT | --body-file FILE] [--component ID ...] [--size S|M|L] [--for-human] [--priority high|normal|low]
 bridle task show   <id>

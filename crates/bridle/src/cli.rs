@@ -686,6 +686,7 @@ pub enum PrimeRoleArg {
     Advisor,
     Worker,
     Planner,
+    Prototyper,
 }
 
 #[derive(Debug, Args)]

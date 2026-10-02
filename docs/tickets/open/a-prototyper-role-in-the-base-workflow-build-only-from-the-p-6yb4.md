@@ -72,3 +72,10 @@ rethink the design when asked to.
   empty or sparse worktree, or with read access limited to what the prompt names. To weigh in the
   design.
 - hvxk (refining a task with the human) mentions building a prototype to review as one step.
+
+## Built
+
+`workflow/base/roles/prototyper.md`, a built-in `prototyper` role (worker defaults), `bridle prime
+prototyper`, and the project's `.bridle/roles/prototyper.md` appended to its prompt (br-a4ea).
+Instructions only. Follow-up idea, not built (YAGNI): start the role in an empty or sparse
+worktree, or limit its reads to what the prompt names.

@@ -1372,6 +1372,7 @@ impl Default for Config {
         roles.insert("worker".to_string(), Role::worker_default());
         roles.insert("manager".to_string(), Role::manager_default());
         roles.insert("orchestrator".to_string(), Role::orchestrator_default());
+        roles.insert("prototyper".to_string(), Role::worker_default());
         Config {
             listen: "127.0.0.1:0".parse().expect("valid default listen addr"),
             listen_set: false,
@@ -2590,6 +2591,9 @@ fn role_preamble_suffix(role_name: &str) -> Option<&'static str> {
         "orchestrator" => Some(
             "\nYou are the orchestrator: you are the human's delegate, driving bridle's agents to get work done.\n",
         ),
+        "prototyper" => Some(
+            "\nYou are a prototyper: build the prototype in your own worktree and branch, from the prompt's constraints only, and report back to whoever gave you the task.\n",
+        ),
         _ => None,
     }
 }
@@ -2625,6 +2629,14 @@ pub fn stable_system_prompt(
                 tracing::warn!(path = %path.display(), error = %e, "role system_prompt file not readable; using preamble only");
             }
         }
+    }
+    // The project's own prototype conventions (where prototypes live) are appended to the
+    // shared role; a missing file is the normal case. Other roles don't read this dir here.
+    if role_name == "prototyper"
+        && let Ok(text) = std::fs::read_to_string(repo.join(".bridle/roles/prototyper.md"))
+    {
+        out.push('\n');
+        out.push_str(&substitute_role_text(&text, branches, commands));
     }
     out
 }
