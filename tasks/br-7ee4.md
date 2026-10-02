@@ -4,8 +4,9 @@ title = "Other projects submit bridle work directly: 'bridle ticket submit' file
 kind = "feature"
 state = "planned"
 created_at = "2026-10-01T23:54:53.934Z"
-updated_at = "2026-10-01T23:54:56.276029Z"
+updated_at = "2026-10-02T00:15:27.037995Z"
 size = "S"
+summary = "Added 'bridle ticket submit -k <kind> <title> [--body|--body-file]' over new POST /v1/tasks/submit: any principal files an OPEN task whose body's first line and first thread note say 'submitted by <principal>'; the product manager (else external:orchestrator) gets one inbox message. Dropping a submission with a reason messages the submitter. Visitors (name@machine) are now refused plan/claim/drop/edit, and may comment only on their own submissions (previously unguarded). Tests in tests/ticket_submit_test.rs; docs: cli.md, principals.md, 93xm Built, CHANGELOG."
 +++
 
 Ticket: docs/tickets/open/other-projects-submit-bridle-tickets-directly-for-triage-93xm.md (the human's ask is verbatim there). Design decision made by the PM, KISS: an OPEN task is already 'proposed': only the PM plans tasks, so no new state or table. Code: 'bridle task new' and the task-create route in crates/bridle-daemon, principal permissions (docs/design/agent-host/principals.md), crates/bridle/src/ticket.rs for the CLI shape.
@@ -15,3 +16,8 @@ Docs: principals.md permissions, cli.md, a short section in the 93xm ticket ('Bu
 Acceptance: just check passes. Model: Sonnet.
 Migration plan: none (no project files).
 SAFETY: no start-up or orchestrator-path change; lands normally. Out of scope: automatic dedupe, a separate proposed state, submissions of ticket files.
+
+## Thread
+
+### note · agent:ticket-submit · 2026-10-02T00:15:27.037Z
+done: ticket submit + visitor guards; just check green (984 tests); fa32fed
