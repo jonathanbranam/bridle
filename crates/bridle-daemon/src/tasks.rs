@@ -33,7 +33,16 @@ use bridle_api::types::{
     Edge, EdgeKind, Handover, Impact, MessageKind, MessageState, OpenQuestion, PrincipalId, Task,
     TaskKind, TaskPriority, TaskSize, TaskState, ThreadEntry, ThreadEntryKind, When,
 };
-use chrono::Utc;
+use chrono::{DateTime, Utc};
+
+/// Prefix of the thread note `skip_settle` records; `note_task` refuses it
+/// from a plain note so nobody can forge a skip.
+const SETTLE_SKIP_PREFIX: &str = "settle skipped by ";
+
+/// The human's principal id; their comments and edits restart the settle clock.
+const HUMAN: &str = "human";
+
+use bridle_api::types::settle_clock_text;
 
 /// Shape check only: `r-`/`s-`/`g-`/`a-` plus hex digits.
 fn valid_spec_id(id: &str) -> bool {
@@ -114,9 +123,19 @@ pub struct TaskManager {
     /// cache — kept current on every [`TaskManager::set_queue`] — is the
     /// only in-memory copy.
     queue: Arc<Mutex<Vec<Vec<String>>>>,
+    /// The settle period (`[tasks] settle`, ny9u); zero turns it off. Set by
+    /// [`TaskManager::with_settle`]; `open` leaves it off.
+    settle: chrono::Duration,
 }
 
 impl TaskManager {
+    /// Sets the settle period. Not in `open`'s arguments so every existing
+    /// caller keeps today's behaviour until it opts in.
+    pub fn with_settle(mut self, settle: std::time::Duration) -> Self {
+        self.settle = chrono::Duration::from_std(settle).unwrap_or(chrono::Duration::zero());
+        self
+    }
+
     /// Loads every task the database knows about, hydrating each from its
     /// state-branch file. A task whose file is missing (a crash between
     /// `insert_task` and the first flush that would have written it) falls
@@ -149,6 +168,7 @@ impl TaskManager {
                 commit: None,
                 summary: None,
                 impact: Impact::default(),
+                settle_until: None,
             });
             cache.insert(task.id.clone(), task);
         }
@@ -191,6 +211,7 @@ impl TaskManager {
             claim_lease_after: chrono::Duration::from_std(claim_lease_after)
                 .unwrap_or_else(|_| chrono::Duration::zero()),
             queue: Arc::new(Mutex::new(queue)),
+            settle: chrono::Duration::zero(),
         })
     }
 
@@ -320,7 +341,66 @@ impl TaskManager {
             .lock()
             .expect("task cache lock")
             .insert(task.id.clone(), task.clone());
+        self.decorate(task)
+    }
+
+    /// Fills in the computed `settle_until`; the cache (and so the state
+    /// branch) never holds it.
+    fn decorate(&self, mut task: Task) -> Task {
+        task.settle_until = self.settle_until(&task, Utc::now());
         task
+    }
+
+    /// When `task` becomes startable on the settle clock, if that's after
+    /// `now`: `max(created_at, the human's latest thread entry) + settle`,
+    /// unless a skip note is in the thread. Computed from the thread alone,
+    /// so old tasks need no migration (ny9u).
+    pub fn settle_until(&self, task: &Task, now: DateTime<Utc>) -> Option<DateTime<Utc>> {
+        if self.settle.is_zero() || !matches!(task.state, TaskState::Open | TaskState::Planned) {
+            return None;
+        }
+        if task
+            .thread
+            .iter()
+            .any(|e| e.body.starts_with(SETTLE_SKIP_PREFIX))
+        {
+            return None;
+        }
+        let start = task
+            .thread
+            .iter()
+            .filter(|e| e.from == HUMAN)
+            .map(|e| e.at)
+            .fold(task.created_at, DateTime::max);
+        Some(start + self.settle).filter(|until| *until > now)
+    }
+
+    /// Records that the settle period was skipped, so the task counts as
+    /// settled. Who may is the caller's check; `reason` is required.
+    pub async fn skip_settle(
+        &self,
+        id: &str,
+        by: &PrincipalId,
+        reason: &str,
+    ) -> Result<Task, TaskError> {
+        if reason.trim().is_empty() {
+            return Err(TaskError::BadRequest(
+                "skipping the settle period requires a reason".to_string(),
+            ));
+        }
+        let mut task = self
+            .get_task(id)
+            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+        let now = Utc::now();
+        task.thread.push(ThreadEntry {
+            kind: ThreadEntryKind::Note,
+            from: by.clone(),
+            body: format!("{SETTLE_SKIP_PREFIX}{by}: {}", reason.trim()),
+            at: now,
+        });
+        task.updated_at = now;
+        self.state.enqueue_task(&task)?;
+        Ok(self.put(task))
     }
 
     pub async fn new_task(
@@ -353,6 +433,7 @@ impl TaskManager {
             commit: None,
             summary: None,
             impact: Impact::default(),
+            settle_until: None,
         };
         self.state.enqueue_task(&task)?;
         self.state
@@ -442,20 +523,24 @@ impl TaskManager {
     }
 
     pub fn get_task(&self, id: &str) -> Option<Task> {
-        self.cache.lock().expect("task cache lock").get(id).cloned()
+        let task = self.cache.lock().expect("task cache lock").get(id).cloned();
+        task.map(|t| self.decorate(t))
     }
 
     pub fn list_tasks(&self) -> Vec<Task> {
         let cache = self.cache.lock().expect("task cache lock");
-        let mut tasks: Vec<Task> = cache.values().cloned().collect();
+        let mut tasks: Vec<Task> = cache.values().cloned().map(|t| self.decorate(t)).collect();
         tasks.sort_by_key(|t| t.created_at);
         tasks
     }
 
     /// Changes `title`, `body`, `components` and/or `size`. Neither changes the task's state.
+    /// A human edit of the title or body is recorded as a thread note, which
+    /// restarts the settle clock.
     pub async fn edit_task(
         &self,
         id: &str,
+        actor: &PrincipalId,
         title: Option<String>,
         body: Option<String>,
         components: Option<Vec<String>>,
@@ -471,6 +556,14 @@ impl TaskManager {
         }
         if title.is_none() && body.is_none() && components.is_none() && size.is_none() {
             return Ok(task);
+        }
+        if actor == HUMAN && (title.is_some() || body.is_some()) {
+            task.thread.push(ThreadEntry {
+                kind: ThreadEntryKind::Note,
+                from: actor.clone(),
+                body: "edited the title or body".to_string(),
+                at: Utc::now(),
+            });
         }
         if let Some(title) = title {
             self.store.set_task_title(id, &title).await?;
@@ -749,9 +842,14 @@ impl TaskManager {
             .is_some_and(|b| matches!(b.state, TaskState::Dropped | TaskState::Integrated))
     }
 
-    /// `planned`, no open `blocks` edge naming an unresolved blocker, and no
-    /// unanswered question.
+    /// `planned`, no open `blocks` edge naming an unresolved blocker, no
+    /// unanswered question, and settled.
     pub fn is_ready(&self, task: &Task) -> bool {
+        self.is_ready_unsettled(task) && self.settle_until(task, Utc::now()).is_none()
+    }
+
+    /// [`TaskManager::is_ready`] ignoring the settle period.
+    fn is_ready_unsettled(&self, task: &Task) -> bool {
         // An incident is nobody's to build or claim (incidents.md).
         if task.state != TaskState::Planned || task.kind == TaskKind::Incident {
             return false;
@@ -905,6 +1003,11 @@ impl TaskManager {
         if body.trim().is_empty() {
             return Err(TaskError::BadRequest("a note requires a body".to_string()));
         }
+        if body.starts_with(SETTLE_SKIP_PREFIX) {
+            return Err(TaskError::BadRequest(
+                "that note is reserved for `task skip-settle`".to_string(),
+            ));
+        }
         let mut task = self
             .get_task(id)
             .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
@@ -961,12 +1064,37 @@ impl TaskManager {
     /// like every other task state change, and enqueues the claim set's new
     /// state to the state branch for the next flush (storage.md, "claims").
     pub async fn claim_task(&self, id: &str, by: &PrincipalId) -> Result<Task, TaskError> {
+        self.claim_inner(id, by, true).await
+    }
+
+    /// [`TaskManager::claim_task`] without the settle check: for the human's
+    /// own to-dos, which are created already claimed.
+    pub async fn claim_task_unsettled(
+        &self,
+        id: &str,
+        by: &PrincipalId,
+    ) -> Result<Task, TaskError> {
+        self.claim_inner(id, by, false).await
+    }
+
+    async fn claim_inner(
+        &self,
+        id: &str,
+        by: &PrincipalId,
+        must_be_settled: bool,
+    ) -> Result<Task, TaskError> {
         let mut task = self
             .get_task(id)
             .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
-        if !self.is_ready(&task) {
+        if !self.is_ready_unsettled(&task) {
             return Err(TaskError::Conflict(format!(
                 "task {id} is not ready to claim"
+            )));
+        }
+        if must_be_settled && let Some(until) = task.settle_until {
+            return Err(TaskError::Conflict(format!(
+                "task {id} is settling until {}",
+                settle_clock_text(until)
             )));
         }
         let now = Utc::now();
@@ -1296,6 +1424,10 @@ mod tests {
         assert!(out.status.success());
     }
 
+    fn agent() -> PrincipalId {
+        "agent:w".to_string()
+    }
+
     async fn manager() -> (TaskManager, tempfile::TempDir) {
         let tmp = tempfile::tempdir().expect("tempdir");
         let repo = tmp.path().join("repo");
@@ -1350,6 +1482,7 @@ mod tests {
         let edited = tm
             .edit_task(
                 &task.id,
+                &agent(),
                 Some("Add foo, better".to_string()),
                 None,
                 None,
@@ -1361,7 +1494,14 @@ mod tests {
         assert_eq!(edited.state, TaskState::Open);
 
         let edited = tm
-            .edit_task(&task.id, None, Some("new body".to_string()), None, None)
+            .edit_task(
+                &task.id,
+                &agent(),
+                None,
+                Some("new body".to_string()),
+                None,
+                None,
+            )
             .await
             .expect("edit body");
         assert_eq!(edited.body, "new body");
@@ -1377,7 +1517,14 @@ mod tests {
             .await
             .expect("new task");
         let edited = tm
-            .edit_task(&task.id, None, Some("brief".to_string()), None, None)
+            .edit_task(
+                &task.id,
+                &agent(),
+                None,
+                Some("brief".to_string()),
+                None,
+                None,
+            )
             .await
             .expect("edit");
         assert_eq!(edited.body, "original id: abcd\nbrief");
@@ -1385,6 +1532,7 @@ mod tests {
         let edited = tm
             .edit_task(
                 &task.id,
+                &agent(),
                 None,
                 Some("original id: wxyz\nbrief".to_string()),
                 None,
@@ -1399,7 +1547,14 @@ mod tests {
             .await
             .expect("new task");
         let edited = tm
-            .edit_task(&plain.id, None, Some("brief".to_string()), None, None)
+            .edit_task(
+                &plain.id,
+                &agent(),
+                None,
+                Some("brief".to_string()),
+                None,
+                None,
+            )
             .await
             .expect("edit");
         assert_eq!(edited.body, "brief");
@@ -1413,7 +1568,14 @@ mod tests {
             .await
             .expect("new task");
         let err = tm
-            .edit_task(&task.id, Some("   ".to_string()), None, None, None)
+            .edit_task(
+                &task.id,
+                &agent(),
+                Some("   ".to_string()),
+                None,
+                None,
+                None,
+            )
             .await
             .expect_err("blank title");
         assert!(matches!(err, TaskError::BadRequest(_)));
@@ -1435,7 +1597,7 @@ mod tests {
         assert_eq!(task.size, Some(TaskSize::M));
 
         let edited = tm
-            .edit_task(&task.id, None, None, None, Some(TaskSize::None))
+            .edit_task(&task.id, &agent(), None, None, None, Some(TaskSize::None))
             .await
             .expect("clear size");
         assert_eq!(edited.size, None);
@@ -1938,7 +2100,7 @@ mod tests {
         let (tm, _tmp) = manager().await;
         assert!(tm.get_task("tw-nope").is_none());
         assert!(matches!(
-            tm.edit_task("tw-nope", Some("x".to_string()), None, None, None)
+            tm.edit_task("tw-nope", &agent(), Some("x".to_string()), None, None, None)
                 .await
                 .expect_err("no such task"),
             TaskError::NotFound(_)
@@ -2769,5 +2931,132 @@ mod tests {
         // Untouched: still exactly the one task from before the refused
         // rebuild attempt.
         assert_eq!(tm.list_tasks().len(), 1);
+    }
+
+    // ---------- settle period (ny9u) ----------
+
+    /// A manager with a 5 minute settle period and a planned task created
+    /// `age` ago (the injected clock: shifting `created_at`/thread times back).
+    async fn settling(age_mins: i64) -> (TaskManager, Task, tempfile::TempDir) {
+        let (tm, tmp) = manager().await;
+        let tm = tm.with_settle(std::time::Duration::from_secs(300));
+        let t = tm
+            .new_task("T", TaskKind::Chore, String::new(), vec![], None)
+            .await
+            .expect("new");
+        force_planned(&tm, &t.id);
+        shift_back(&tm, &t.id, age_mins);
+        (tm, t, tmp)
+    }
+
+    fn shift_back(tm: &TaskManager, id: &str, mins: i64) {
+        let mut cache = tm.cache.lock().expect("task cache lock");
+        let t = cache.get_mut(id).expect("task");
+        let d = chrono::Duration::minutes(mins);
+        t.created_at -= d;
+        for e in &mut t.thread {
+            e.at -= d;
+        }
+    }
+
+    fn ready(tm: &TaskManager, id: &str) -> bool {
+        tm.is_ready(&tm.get_task(id).expect("task"))
+    }
+
+    #[tokio::test]
+    async fn a_new_task_is_not_ready_until_the_period_passes() {
+        let (tm, t, _tmp) = settling(0).await;
+        assert!(!ready(&tm, &t.id));
+        let task = tm.get_task(&t.id).expect("task");
+        let until = task.settle_until.expect("settling");
+        assert!(tm.settle_until(&task, until).is_none());
+        assert!(
+            tm.settle_until(&task, until - chrono::Duration::seconds(1))
+                .is_some()
+        );
+        // Same task, but created 6 minutes ago.
+        let (tm, t, _tmp) = settling(6).await;
+        assert!(ready(&tm, &t.id));
+        assert!(tm.get_task(&t.id).expect("task").settle_until.is_none());
+    }
+
+    #[tokio::test]
+    async fn only_a_human_comment_or_edit_restarts_the_clock() {
+        let (tm, t, _tmp) = settling(6).await;
+        tm.note_task(&t.id, &agent(), "fyi")
+            .await
+            .expect("agent note");
+        assert!(ready(&tm, &t.id));
+        tm.note_task(&t.id, &"human".to_string(), "wait")
+            .await
+            .expect("human note");
+        assert!(!ready(&tm, &t.id));
+
+        let (tm, t, _tmp) = settling(6).await;
+        tm.edit_task(&t.id, &agent(), Some("x".into()), None, None, None)
+            .await
+            .expect("agent edit");
+        assert!(ready(&tm, &t.id));
+        tm.edit_task(
+            &t.id,
+            &"human".to_string(),
+            Some("y".into()),
+            None,
+            None,
+            None,
+        )
+        .await
+        .expect("human edit");
+        let task = tm.get_task(&t.id).expect("task");
+        assert!(task.settle_until.is_some());
+        assert_eq!(task.thread.last().expect("note").from, "human");
+    }
+
+    #[tokio::test]
+    async fn skip_settle_is_recorded_needs_a_reason_and_cannot_be_forged() {
+        let (tm, t, _tmp) = settling(0).await;
+        let by = "human".to_string();
+        assert!(matches!(
+            tm.skip_settle(&t.id, &by, " ").await,
+            Err(TaskError::BadRequest(_))
+        ));
+        let forged = tm
+            .note_task(&t.id, &agent(), "settle skipped by me: sure")
+            .await;
+        assert!(matches!(forged, Err(TaskError::BadRequest(_))));
+        assert!(!ready(&tm, &t.id));
+        let task = tm
+            .skip_settle(&t.id, &by, "human asked")
+            .await
+            .expect("skip");
+        assert!(task.settle_until.is_none());
+        assert!(
+            task.thread
+                .last()
+                .expect("entry")
+                .body
+                .contains("human asked")
+        );
+        assert!(ready(&tm, &t.id));
+    }
+
+    #[tokio::test]
+    async fn settle_zero_turns_it_off() {
+        let (tm, t, _tmp) = settling(0).await;
+        assert!(!ready(&tm, &t.id));
+        let tm = tm.with_settle(std::time::Duration::ZERO);
+        assert!(ready(&tm, &t.id));
+    }
+
+    #[tokio::test]
+    async fn claim_refuses_while_settling_but_not_for_a_human_todo() {
+        let (tm, t, _tmp) = settling(0).await;
+        let err = tm.claim_task(&t.id, &agent()).await.expect_err("settling");
+        assert!(err.to_string().contains("settling until"), "{err}");
+        tm.claim_task_unsettled(&t.id, &"human".to_string())
+            .await
+            .expect("human to-do claim");
+        let (tm, t, _tmp) = settling(6).await;
+        tm.claim_task(&t.id, &agent()).await.expect("settled claim");
     }
 }

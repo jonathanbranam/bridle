@@ -162,6 +162,13 @@ pub fn local_checks(repo: &Path, home: Option<&Path>) -> (Vec<Check>, Option<Con
     if let Some(config) = &config {
         out.extend(config_file_checks(repo, config));
         out.push(ports_check(config));
+        if let Some(problem) = &config.tasks_settle_problem {
+            out.push(Check::warn(
+                "tasks settle",
+                format!("{problem}; the daemon uses 5m"),
+                "fix [tasks] settle in .bridle/config.toml",
+            ));
+        }
     }
     (out, config)
 }

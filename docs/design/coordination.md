@@ -16,6 +16,17 @@ first, host second" into something the tool enforces.
 add|rm`, durable the same way a task is: a SQLite fast index plus a copy on
 the state branch, written in the same logical operation
 ([[docs/design/agent-host/storage|storage.md]]). Only `blocks` is acted on:
+**Settling.** Every task settles before anyone can start it: `ready`, the queue's startable flag
+and `claim` also require `now >= max(created_at, the human's latest thread entry) + [tasks] settle`
+(default 5m, `0` off), unless a settle-skip note is in the thread. Computed from existing data (no
+schema change), so old tasks are settled. A human comment, question/answer or title/body edit
+restarts the clock (an edit records a human thread note). The PM can still plan a settling task;
+the human's own to-dos (`--for-human`, claimed at creation) are exempt. `bridle task skip-settle
+<id> --reason` records a note and event `task.settle_skipped`; allowed for the human, and for the
+orchestrator or PM only with a reason saying the human asked or it's an urgent downtime fix. It is
+not an approval gate: the period just expires. A hard gate stays the required-human-approval
+mechanism. Refusals say `settling until <time>` (US Eastern).
+
 `ready` (below) treats any `blocks` edge whose `from` task isn't `dropped` or
 `integrated` as still blocking the `to` task (`accepted` doesn't exist yet). The other four
 kinds are recorded but not yet acted on (`parent` doesn't yet close a parent

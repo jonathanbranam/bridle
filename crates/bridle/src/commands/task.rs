@@ -75,6 +75,7 @@ pub(super) async fn task(cli: &Cli, args: &TaskArgs) -> Result<(), CliError> {
         TaskAction::Done(a) => task_done(cli, a).await,
         TaskAction::Summary(a) => task_summary(cli, a).await,
         TaskAction::Reopen(a) => task_reopen(cli, a).await,
+        TaskAction::SkipSettle(a) => task_skip_settle(cli, a).await,
         TaskAction::Comment(a) => task_comment(cli, a).await,
         TaskAction::Search(a) => task_search(cli, a).await,
         _ => unreachable!("normalize forwards the queue and coordination actions"),
@@ -103,6 +104,8 @@ pub(super) fn task_size_arg_to_opt(arg: TaskSizeArg) -> Option<TaskSize> {
         TaskSizeArg::None => Some(TaskSize::None),
     }
 }
+
+use bridle_api::settle_clock_text;
 
 pub fn print_task_row(t: &Task) {
     println!(
@@ -183,6 +186,9 @@ pub(super) async fn task_show(cli: &Cli, args: &TaskShowArgs) -> Result<(), CliE
         }
         println!("created     {}", task.created_at.to_rfc3339());
         println!("updated     {}", task.updated_at.to_rfc3339());
+        if let Some(until) = task.settle_until {
+            println!("settling    until {}", settle_clock_text(until));
+        }
         if !task.components.is_empty() {
             println!("components  {}", task.components.join(", "));
         }
@@ -543,6 +549,17 @@ pub(super) async fn task_reopen(cli: &Cli, args: &TaskReopenArgs) -> Result<(), 
     Ok(())
 }
 
+pub(super) async fn task_skip_settle(cli: &Cli, args: &TaskSkipSettleArgs) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let task = client.skip_settle(&args.task, &args.reason).await?;
+    if cli.json {
+        render::print_json(&task)?;
+    } else {
+        println!("skipped the settle period on {}", task.id);
+    }
+    Ok(())
+}
+
 pub(super) async fn task_comment(cli: &Cli, args: &TaskCommentArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
     let text = require_body(read_text(&args.text, &args.text_file, "text")?)?;
@@ -833,6 +850,8 @@ pub(super) struct QueueTaskRow {
     /// `planned`, therefore unclaimed too (roles-and-lifecycle.md, "the
     /// queue").
     startable: bool,
+    /// Still settling (ny9u): when it becomes startable; null once settled.
+    settle_until: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 #[derive(serde::Serialize)]
@@ -886,6 +905,7 @@ pub(super) async fn queue_show(cli: &Cli) -> Result<(), CliError> {
                     state: t.state,
                     size: t.size,
                     startable: ready_ids.contains(&t.id),
+                    settle_until: t.settle_until,
                 })
                 .collect(),
         })
@@ -920,7 +940,11 @@ pub(super) async fn queue_show(cli: &Cli) -> Result<(), CliError> {
         println!();
         println!("Tier {}:", tier.rank);
         for t in &tier.tasks {
-            let mark = if t.startable { "startable" } else { "blocked" };
+            let mark = match t.settle_until {
+                Some(until) => format!("settling until {}", settle_clock_text(until)),
+                None if t.startable => "startable".to_string(),
+                None => "blocked".to_string(),
+            };
             println!(
                 "  {:<10} {:<9} {:<8} {:<4} {:<9} {}",
                 t.id,

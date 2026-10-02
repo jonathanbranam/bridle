@@ -32,8 +32,8 @@ use crate::cli::{
     SpecAction, SpecArgs, SpecExportArgs, SpecFormatArg, StopArgs, TaskAction, TaskArgs,
     TaskCommentArgs, TaskDoneArgs, TaskDropArgs, TaskEditArgs, TaskKindArg, TaskKindArgs,
     TaskListArgs, TaskNewArgs, TaskPlanArgs, TaskPriorityArg, TaskPriorityArgs, TaskReopenArgs,
-    TaskSearchArgs, TaskShowArgs, TaskSizeArg, TaskSummaryArgs, TokenAction, TokenArgs, UsageArgs,
-    UsageByArg, WaitArgs, WakeArgs, WhenArg,
+    TaskSearchArgs, TaskShowArgs, TaskSizeArg, TaskSkipSettleArgs, TaskSummaryArgs, TokenAction,
+    TokenArgs, UsageArgs, UsageByArg, WaitArgs, WakeArgs, WhenArg,
 };
 use crate::cli::{
     FocusAction, FocusArgs, LandArgs, OrchestratorAction, OrchestratorArgs, PortAction, PortArgs,

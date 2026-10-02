@@ -21,10 +21,10 @@ use bridle_api::types::{
     ProbeResult, Queue, RateLimit, RebuildResponse, RemoveEdgeQuery, RemoveQuery, RenewRequest,
     ResolveConflictRequest, ResumeRequest, ScheduleOverrideStatus, SendRequest, SetImpactRequest,
     SetKindRequest, SetPriorityRequest, SetQueueRequest, SetSummaryRequest, ShutdownResponse,
-    SpawnRequest, Status, StatusLineReport, StopRequest, SubmitTaskRequest, Task, TaskQuery,
-    TaskState, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
-    UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, WakeResponse, When, WindowStatus,
-    WriteHandoverRequest, event_kind,
+    SkipSettleRequest, SpawnRequest, Status, StatusLineReport, StopRequest, SubmitTaskRequest,
+    Task, TaskQuery, TaskState, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine,
+    TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, WakeResponse, When,
+    WindowStatus, WriteHandoverRequest, event_kind,
 };
 use bridle_api::types::{PrincipalId, ThreadEntryKind};
 use chrono::Utc;
@@ -132,6 +132,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/tasks/{id}/ask", post(ask_task))
         .route("/v1/tasks/{id}/answer", post(answer_task))
         .route("/v1/tasks/{id}/note", post(note_task))
+        .route("/v1/tasks/{id}/skip-settle", post(skip_settle))
         .route("/v1/tasks/{id}/claim", post(claim_task))
         .route("/v1/tasks/{id}/release", post(release_task))
         .route("/v1/questions", get(list_open_questions))
@@ -1453,7 +1454,7 @@ async fn new_task(
     let task = if req.for_human {
         let human = "human".to_string();
         state.tasks.plan_task(&task.id, &principal.id).await?;
-        state.tasks.claim_task(&task.id, &human).await?;
+        state.tasks.claim_task_unsettled(&task.id, &human).await?;
         state
             .tasks
             .note_created(&task.id, req.priority.unwrap_or_default(), &principal.id)
@@ -1556,7 +1557,14 @@ async fn edit_task(
     let edited_notice_text = req.title.is_some() || req.body.is_some();
     let task = state
         .tasks
-        .edit_task(&id, req.title, req.body, components, req.size)
+        .edit_task(
+            &id,
+            &principal.id,
+            req.title,
+            req.body,
+            components,
+            req.size,
+        )
         .await?;
     if task.kind == bridle_api::types::TaskKind::Incident
         && task.state == bridle_api::types::TaskState::Planned
@@ -2544,6 +2552,38 @@ async fn answer_task(
         )
         .await?;
     }
+    Ok(Json(task))
+}
+
+/// The human may skip freely; the orchestrator and the PM only with a
+/// reason (required for everyone, and recorded): that the human asked, or an
+/// urgent downtime fix.
+async fn skip_settle(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path(id): Path<String>,
+    Json(req): Json<SkipSettleRequest>,
+) -> Result<Json<Task>, ApiError> {
+    if principal.kind != PrincipalKind::Human {
+        require_pm_or_human(&state, &principal).await.map_err(|_| {
+            ApiError::forbidden(
+                "only the human, the orchestrator or the product manager may skip the settle period",
+            )
+        })?;
+    }
+    let task = state
+        .tasks
+        .skip_settle(&id, &principal.id, &req.reason)
+        .await?;
+    let _ = state
+        .emitter
+        .emit(
+            event_kind::TASK_SETTLE_SKIPPED,
+            principal.id,
+            None,
+            serde_json::json!({"task": task.id, "reason": req.reason}),
+        )
+        .await;
     Ok(Json(task))
 }
 

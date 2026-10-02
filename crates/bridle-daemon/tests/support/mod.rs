@@ -243,6 +243,14 @@ pub async fn start_daemon_with_config(
     if !text.contains("[roles.manager]") {
         text.push_str("\n[roles.manager]\nautostart = false\n");
     }
+    // Tests that build and start tasks at once don't wait out the settle
+    // period; the ones that exercise it set `[tasks] settle` themselves.
+    if !text.contains("settle") {
+        match text.find("[tasks]") {
+            Some(at) => text.insert_str(at + "[tasks]".len(), "\nsettle = \"0\""),
+            None => text.push_str("\n[tasks]\nsettle = \"0\"\n"),
+        }
+    }
     start_daemon_verbatim_config(overrides, Some(&text)).await
 }
 

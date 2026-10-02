@@ -1250,6 +1250,7 @@ fn parse_task(text: &str) -> Result<Task, StateBranchError> {
         commit: fm.commit,
         summary: fm.summary,
         impact: fm.impact,
+        settle_until: None,
     })
 }
 
@@ -1419,6 +1420,7 @@ mod tests {
                 remove: Vec::new(),
                 files: vec!["client/**".to_string()],
             },
+            settle_until: None,
         }
     }
 

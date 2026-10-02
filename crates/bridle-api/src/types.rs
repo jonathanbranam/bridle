@@ -727,6 +727,8 @@ pub mod event_kind {
     pub const TASK_QUESTION_ASKED: &str = "task.question_asked";
     /// data: {task}
     pub const TASK_QUESTION_ANSWERED: &str = "task.question_answered";
+    /// data: {task, reason}
+    pub const TASK_SETTLE_SKIPPED: &str = "task.settle_skipped";
     /// data: {task}
     pub const TASK_NOTE_ADDED: &str = "task.note_added";
     /// data: {tiers} (the tier count after the change)
@@ -1421,6 +1423,10 @@ pub struct Task {
     /// `impact set` (docs/design/impact-and-conflicts.md). Empty = undeclared.
     #[serde(default, skip_serializing_if = "Impact::is_empty")]
     pub impact: Impact,
+    /// While the task is still settling (ny9u): when it becomes startable.
+    /// Computed by the daemon, never stored; null once settled.
+    #[serde(default)]
+    pub settle_until: Option<DateTime<Utc>>,
 }
 
 /// A task's declared impact. Ids are validated by shape only (`r-`/`s-`/`g-`/`a-`
@@ -1706,6 +1712,20 @@ pub struct AskQuestionRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnswerQuestionRequest {
     pub body: String,
+}
+
+/// A time of day in the human's zone (this machine's local zone, which
+/// the daemon already treats as Eastern), written bare: "10:42 AM".
+pub fn settle_clock_text(at: DateTime<Utc>) -> String {
+    at.with_timezone(&chrono::Local)
+        .format("%-I:%M %p")
+        .to_string()
+}
+
+/// `POST /v1/tasks/{id}/skip-settle`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SkipSettleRequest {
+    pub reason: String,
 }
 
 /// `POST /v1/tasks/{id}/note`.

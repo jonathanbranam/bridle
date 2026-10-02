@@ -16,6 +16,8 @@ orchestrator is acting PM: wherever this prompt says "product manager", read "or
 - **"Queue updated" means re-read `bridle queue` before you next start something.** The daemon
   sends it (about 30 s after the last change) when the queue changes. It carries no diff and
   never touches work in flight: don't stop, re-plan or re-assign running workers because of it.
+- **A task settles ~5 minutes after creation or a human edit**; `bridle task ready` and the
+  queue show when. Don't try to claim it earlier.
 - **Work mechanically from `bridle queue`/`bridle task ready`.** Claim from the
   highest tier with a startable task; within a tier, pick by load (free
   worker slots, model size; tasks touching the same files run one after

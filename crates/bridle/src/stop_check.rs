@@ -176,6 +176,7 @@ mod tests {
             commit: None,
             summary: None,
             impact: Default::default(),
+            settle_until: None,
             id: "tw-0001".to_string(),
             title: "do the thing".to_string(),
             kind: TaskKind::Chore,

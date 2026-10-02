@@ -157,6 +157,9 @@ Also read from `.bridle/config.toml` (defaults in parentheses; each is documente
 - `[orchestrator] enabled` (`false`), `launcher` (`"scripts/claude-orchestrator"`), `relaunch_backoff` (`["30s", "2m", "10m"]`), `stable_after` (`"10m"`), `waiter_grace` (`"15m"`), `note_tokens` (`"150k"`), `plan_tokens` (`"180k"`), `handover_tokens` (`"200k"`; each at least the one before), `handover_deadline` (`"30m"`), `max_uptime` (`"12h"`): the orchestrator supervisor ([[orchestrator-supervision]]).
 - `[state] push` (`true`): push `bridle/state` to `origin` after flushes; set to `false` to opt-out; see [[storage#The state branch]].
 - `[disk] check_interval` (`"1h"`), `min_free_gb` (20): [[operating-model#Disk monitor|disk monitor]].
+- `[tasks] settle` (`"5m"`; `0` turns it off): how long a task waits after creation or a human
+  comment/edit before it can be claimed or listed ready. An invalid value warns, falls back to
+  5m and is reported by `bridle doctor`; it never stops the daemon starting (coordination.md, "Settling").
 - `[tasks] prefix` (first two alphanumerics of the project name): task id prefix
   ([[../storage|storage.md]]).
 - `workflow` (unset), `packs = []`: where the workflow layers live and which L2 packs to

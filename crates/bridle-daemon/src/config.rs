@@ -1345,6 +1345,13 @@ pub struct Config {
     /// e.g. `tw-7fa2`). `None` means derive one from the project name
     /// ([`default_task_prefix`]).
     pub task_prefix: Option<String>,
+    /// `[tasks] settle`: how long a task waits after creation or a human
+    /// edit/comment before anyone can start it (ny9u). Zero turns it off.
+    pub tasks_settle: Duration,
+    /// Set when `[tasks] settle` didn't parse and `tasks_settle` fell back to
+    /// the default; `bridle doctor` reports it. Never fatal: a typo here must
+    /// not stop the daemon starting.
+    pub tasks_settle_problem: Option<String>,
     /// Where the L1/L2 workflow layers live (docs/design/workflow-layers.md):
     /// a path (relative to the repo root) or a git url. `None` until a
     /// project opts in. Read by `bridle_daemon::rules::discover_layers` as
@@ -1392,6 +1399,8 @@ impl Default for Config {
             integration: IntegrationConfig::default(),
             messages: MessagesConfig::default(),
             task_prefix: None,
+            tasks_settle: DEFAULT_SETTLE,
+            tasks_settle_problem: None,
             workflow: None,
             packs: Vec::new(),
             components: BTreeMap::new(),
@@ -1799,6 +1808,15 @@ impl Config {
 
         if let Some(t) = raw.tasks {
             config.task_prefix = t.prefix;
+            if let Some(v) = t.settle {
+                match parse_settle(&v) {
+                    Ok(d) => config.tasks_settle = d,
+                    Err(problem) => {
+                        tracing::warn!("{problem}; using 5m (`bridle doctor` reports this)");
+                        config.tasks_settle_problem = Some(problem);
+                    }
+                }
+            }
         }
 
         config.workflow = raw.workflow;
@@ -1948,6 +1966,22 @@ pub fn machine_config_problems(home: &Path) -> Result<Vec<String>, ConfigError> 
         }
     }
     Ok(out)
+}
+
+/// The settle period when `[tasks] settle` is unset or invalid.
+const DEFAULT_SETTLE: Duration = Duration::from_secs(5 * 60);
+
+/// `[tasks] settle`: a duration string ("5m", "0s") or the integer 0.
+fn parse_settle(v: &toml::Value) -> Result<Duration, String> {
+    match v {
+        toml::Value::Integer(0) => Ok(Duration::ZERO),
+        toml::Value::String(s) if s.trim() == "0" => Ok(Duration::ZERO),
+        toml::Value::String(s) => parse_duration(s)
+            .map_err(|_| format!("[tasks] settle = {s:?} is not a duration like \"5m\" (or 0)")),
+        other => Err(format!(
+            "[tasks] settle = {other} is not a duration like \"5m\" (or 0)"
+        )),
+    }
 }
 
 /// Parses "10m"-style durations: an integer followed by `s`, `m` or `h`.
@@ -2335,6 +2369,9 @@ struct RawOrchestrator {
 struct RawTasks {
     #[serde(default)]
     prefix: Option<String>,
+    /// A duration like "5m", or the integer 0.
+    #[serde(default)]
+    settle: Option<toml::Value>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -3563,6 +3600,21 @@ mod tests {
 
         let cfg = Config::default();
         assert_eq!(cfg.task_prefix, None);
+    }
+
+    #[test]
+    fn tasks_settle_parses_defaults_and_falls_back_on_a_bad_value() {
+        let secs = |t: &str| Config::parse(t).expect("parse").tasks_settle.as_secs();
+        assert_eq!(secs(""), 300);
+        assert_eq!(secs("[tasks]\nsettle = \"10m\"\n"), 600);
+        assert_eq!(secs("[tasks]\nsettle = 0\n"), 0);
+        assert_eq!(secs("[tasks]\nsettle = \"0\"\n"), 0);
+        for bad in ["\"soon\"", "7", "true"] {
+            let cfg = Config::parse(&format!("[tasks]\nsettle = {bad}\n")).expect("still loads");
+            assert_eq!(cfg.tasks_settle.as_secs(), 300);
+            let problem = cfg.tasks_settle_problem.expect("problem recorded");
+            assert!(problem.contains("[tasks] settle"), "{problem}");
+        }
     }
 
     #[test]

@@ -1305,6 +1305,8 @@ pub enum TaskAction {
     Summary(TaskSummaryArgs),
     /// Bring a dropped or integrated task back.
     Reopen(TaskReopenArgs),
+    /// Skip a task's settle period so it can start now (recorded in its thread).
+    SkipSettle(TaskSkipSettleArgs),
     /// Add a comment to a task's thread (no question/answer semantics,
     /// doesn't affect readiness).
     #[command(alias = "note")]
@@ -1507,6 +1509,15 @@ pub struct ImpactSetArgs {
 #[derive(Debug, Args)]
 pub struct ImpactShowArgs {
     pub task: String,
+}
+
+#[derive(Debug, Args)]
+pub struct TaskSkipSettleArgs {
+    pub task: String,
+    /// Why. The orchestrator and PM may skip only because the human asked or for an
+    /// urgent downtime fix, and the reason must say which.
+    #[arg(long)]
+    pub reason: String,
 }
 
 #[derive(Debug, Args)]

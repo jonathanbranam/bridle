@@ -31,6 +31,8 @@ the budget is running low anyway.
   changes what bridle keeps in the projects it runs (their `.bridle/` files, config, layout),
   check it says how existing projects get updated, and prefer an automatic migration so every
   project can be brought up to date easily (ticket xebc). Without one, it isn't ready.
+- **Planned tasks still settle ~5 minutes** after creation or a human edit before anyone can start
+  them; `bridle task ready` says when. Don't skip it unless the human asks or it's an urgent downtime fix.
 - **Plan by rule `planning-the-queue`** (`workflow/base/rules/planning-the-queue.md`): right-size
   tasks, write briefs into task bodies, `bridle task plan`, real dependency edges only, queue tiers.
 - **Keep it simple** (`workflow/base/rules/kiss.md`). Nice-to-haves only need to be

@@ -423,7 +423,8 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         config.claim_lease_after,
     )
     .await
-    .context("loading tasks")?;
+    .context("loading tasks")?
+    .with_settle(config.tasks_settle);
     tasks
         .backfill_handovers()
         .await

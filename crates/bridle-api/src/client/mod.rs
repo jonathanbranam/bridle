@@ -20,10 +20,10 @@ use crate::types::{
     PrincipalWakeResponse, ProbeRequest, ProbeResult, Queue, RemoveEdgeQuery, RemoveQuery,
     RenewRequest, ResolveConflictRequest, RestartRequest, RestartResponse, ResumeRequest,
     SendRequest, SessionEnd, SessionInfo, SessionRegister, SetImpactRequest, SetKindRequest,
-    SetPriorityRequest, SetQueueRequest, SetSummaryRequest, ShutdownResponse, SpawnRequest, Status,
-    StatusLineReport, StopRequest, SubmitTaskRequest, Task, TaskQuery, TokenCreateRequest,
-    TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown,
-    UsageBreakdownQuery, WakeResponse, WriteHandoverRequest,
+    SetPriorityRequest, SetQueueRequest, SetSummaryRequest, ShutdownResponse, SkipSettleRequest,
+    SpawnRequest, Status, StatusLineReport, StopRequest, SubmitTaskRequest, Task, TaskQuery,
+    TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
+    UsageBreakdown, UsageBreakdownQuery, WakeResponse, WriteHandoverRequest,
 };
 
 #[derive(Debug, Error)]
@@ -683,6 +683,17 @@ impl Client {
             &["v1", "tasks", id, "note"],
             &NoteTaskRequest {
                 body: body.to_string(),
+            },
+        )
+        .await
+    }
+
+    /// Skips the task's settle period, recording `reason` in its thread.
+    pub async fn skip_settle(&self, id: &str, reason: &str) -> Result<Task, ClientError> {
+        self.post_json(
+            &["v1", "tasks", id, "skip-settle"],
+            &SkipSettleRequest {
+                reason: reason.to_string(),
             },
         )
         .await
