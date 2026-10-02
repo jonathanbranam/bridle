@@ -528,4 +528,48 @@ mod prime_tests {
         assert!(!out.contains("the state file"));
         assert!(out.find("# Handover note").unwrap() < out.find("# Startup steps").unwrap());
     }
+
+    #[test]
+    fn advisor_prime_includes_wake_command_for_unnamed_advisor() {
+        let role = include_str!("../../../../workflow/base/roles/advisor.md");
+        assert!(
+            role.contains("bridle agent wake external:advisor --timeout 300"),
+            "advisor prime should include wake command for unnamed advisor"
+        );
+    }
+
+    #[test]
+    fn advisor_prime_includes_wake_command_for_named_advisor() {
+        let role = include_str!("../../../../workflow/base/roles/advisor.md");
+        assert!(
+            role.contains("bridle agent wake external:advisor/$BRIDLE_ADVISOR_NAME --timeout 300"),
+            "advisor prime should include wake command for named advisor"
+        );
+    }
+
+    #[test]
+    fn advisor_prime_includes_inbox_and_loop_instructions() {
+        let role = include_str!("../../../../workflow/base/roles/advisor.md");
+        assert!(
+            role.contains("bridle inbox --json --mark-read"),
+            "advisor prime should instruct reading inbox with --mark-read flag"
+        );
+        assert!(
+            role.contains("loop back"),
+            "advisor prime should mention looping"
+        );
+    }
+
+    #[test]
+    fn advisor_prime_includes_mark_read_instruction() {
+        let role = include_str!("../../../../workflow/base/roles/advisor.md");
+        assert!(
+            role.contains("bridle inbox --json --mark-read"),
+            "advisor prime should instruct to mark messages read after acting"
+        );
+        assert!(
+            role.contains("re-fires forever"),
+            "advisor prime should explain why marking read is important"
+        );
+    }
 }

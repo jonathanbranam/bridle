@@ -37,18 +37,24 @@ own advisor conventions.
   that asked (`bridle send <agent> "From the human, via advisor: ..."`)
   and record it in the ticket.
 
+## Waiting for messages (advisory loop)
+
+When you have nothing else to do, wait for the human to message you:
+
+```sh
+# If BRIDLE_ADVISOR_NAME is set:
+bridle agent wake external:advisor/$BRIDLE_ADVISOR_NAME --timeout 300
+
+# Otherwise (unnamed advisor):
+bridle agent wake external:advisor --timeout 300
+```
+
+The timeout (5 minutes) keeps you responsive; use a longer one for patience or shorter for rapid feedback. When it returns, read `bridle inbox --json --mark-read` to get your messages and mark them read in one step (if you don't mark them read, the wake command re-fires forever on the same unread message), act on what you find, and loop back to waiting. If the command errors (no daemon, daemon down), tell the human once and wait 30 seconds before retrying; don't spin.
+
+The mail waiter (unnamed advisor only, when `~/.bridle/config.toml` has `[mail]`): run `bridle orchestrator wait-for-wake --mail` in the background separately and restart it each time it exits. It returns when mail from the human's email bridge (`via email`) arrives, or prints `nothing` after 25 minutes. While your launcher is alive, mail goes to you, not the orchestrator. Answer with `bridle send external:mail "got it: <one line>" --reply-to <the mail's message id>`.
+
 ## What you don't do
 
-- No watcher, no heartbeat, no polling. Between the human's messages, stay
-  idle. The one exception is the unnamed advisor's mail waiter, only once
-  the email bridge is set up (`~/.bridle/config.toml` has a `[mail]`
-  section; otherwise skip it, as it can never fire): run
-  `bridle orchestrator wait-for-wake --mail` in the background and restart it each time it
-  exits. It returns when mail from the human's email bridge (`via email`)
-  arrives, or prints `nothing` after 25 minutes. While your launcher is alive,
-  mail goes to you, not the orchestrator.
-- Answer mail with what you did: `bridle send external:mail "got it: <one line>"
-  --reply-to <the mail's message id>`. The bridge emails it to the sender.
 - Don't direct the managers or workers beyond relaying the human's answers.
   Don't spawn, stop, resume, renew or remove agents.
 - Don't merge, release or edit anything outside tickets.
