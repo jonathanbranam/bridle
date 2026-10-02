@@ -7,7 +7,7 @@ repos: [bridle, bridle-ui]
 changes: []
 specs: []
 needs: []
-see: [essy, v8kn, hvxk, 6yb4, k4wq]
+see: [essy, v8kn, hvxk, 6yb4, k4wq, yyzm, yj38]
 tasks: [br-2ec0]
 ---
 
@@ -86,27 +86,125 @@ The human, verbatim (2026-10-02, via the advisor):
 4. **Experiment first, then codify it in bridle** as a repeatable workflow: presenting something
    to the human and taking their responses is a core loop, for documents, UIs and understanding
    an architecture.
-5. **Later: the same loop for diagrams.** An interactive surface where the agent draws a
-   diagram and the human comments on it or edits it; the human's edits go back to the agent as a
-   diff plus the new diagram. Simple and custom is fine; Draw.io was tried elsewhere and didn't
-   come out well. Prior work to look at: interactively building a presentation with an agent in
-   the PyHarness project.
+5. **Diagrams are split out:** the same loop for diagrams is
+   [[draw-and-edit-diagrams-with-an-agent-comments-human-edits-se-yyzm|yyzm]] (the human,
+   2026-10-02).
 
 ## How it fits (advisor, checked 2026-10-02)
 
-- Nothing on file covers inline, anchored review. Nearest:
+- Related tickets (none yet says how comments on a document work):
   - [[a-web-ui-for-the-human-my-to-dos-and-decisions-to-run-throug-essy|essy]]: the human web
     UI (bridle gateway plus `bridle-ui` in TypeScript). Its v1 is to-dos and decisions; this
     would be a later screen there.
-  - [[everything-readable-and-editable-through-the-daemons-file-ba-v8kn|v8kn]]: tickets and docs
-    readable, editable and commentable through the daemons ("read-only first, then ticket edits
-    and comments"). This needs its read and write of ticket and doc files, and adds comments
-    anchored to a passage, with threads and resolve.
+  - [[everything-readable-and-editable-through-the-daemons-file-ba-v8kn|v8kn]]: closely related.
+    The UI is a separate program, so it can read and write tickets and docs (files in a clone)
+    only through the daemons' API; v8kn adds that, and lists "ticket edits and comments" as its
+    second step. A UI for this ticket needs v8kn's reads and writes. v8kn doesn't say what a
+    comment is; this ticket does.
   - [[refining-a-task-with-the-human-before-it-ships-hvxk|hvxk]]: refining a proposal with an
     agent before it ships (an OpenSpec-like loop). This review surface is a likely way to do it.
   - [[a-prototyper-role-in-the-base-workflow-build-only-from-the-p-6yb4|6yb4]] (prototyper) and
     [[a-human-surface-beyond-the-cli-k4wq|k4wq]] (a human surface beyond the CLI).
-- Open points for the design, not decided: where comments live (the task thread, beside the
-  file, or the daemon's store), how a comment stays anchored when the agent rewrites the passage,
-  which agent answers (a fresh one per review, focused on that document, fits hvxk's clean
-  context), and how a revision shows the human what changed.
+
+## Comments live in the document, as plain text (the human, 2026-10-02)
+
+The human, verbatim (via the advisor):
+
+> Yeah, I think maybe review how comments are stored along with a task. You know, I, th I think
+> we want to KISS, keep this as simple as possible. Um, my first thought would be, you know, use
+> something like uh, how MIME types are attached to an email. Just uh, throw a couple dashes in
+> there or some other kind of separator and then put the comment information in the doc right
+> along with it. Um, maybe track it, track it by line number or uh, I don't know, maybe even just
+> you know, the comment follows the standard markdown syntax. That, that might be best, really.
+> Um, you know, after a passage, um, uh, you know, after the line that I've highlighted, or part
+> of a line that I've highlighted, just add a indent there, and maybe repeat, you know, in quotes,
+> the part that was highlighted, or the characters or something in quotation marks and then uh,
+> put my comment there say you know from human or whatever and then just thread it right in place
+> I'm not sure uh, but I definitely want to keep it simple I definitely want to keep everything in
+> that document um, I, I think I love plain text I think it's a great way to do it and that just
+> means that if I browse it by myself I can read it no problem and if we Uh, when we build the UI,
+> the UI just needs to be able to detect that those are comments that float off to the side, and
+> again, no problem. Um, comments, you know, they get resolved, possibly just go away completely,
+> or um, could be tracked maybe at the bottom of the document saying, you know, the human left a
+> comment on this section and uh, that section was rewritten so the comments resolved something
+> along those lines maybe it would work um, but I would I would also like definitely be supportive
+> of throwing away resolved comments after a turn or two or just having a oh maybe a command that
+> just uh, cleans them up at a later point in time you know we're using Git to version these
+> documents anyway, and changes should be committed. Um, so whenever, anytime we delete like
+> something like that, a resolved comment, it's always discoverable in the Git history.
+
+The direction (not yet a format):
+
+- **Keep it simple; everything stays in the document, in plain text** that reads fine without
+  the UI. The UI only has to recognize comments and show them to the side.
+- **A comment sits right after the line it's on**, quotes the highlighted text, says who wrote
+  it, and its replies thread in place below it. Plain markdown, no separate store and no line
+  numbers (they drift when the agent rewrites).
+- **Resolved comments go away**: deleted at once, after a turn or two, or by a cleanup command;
+  maybe a short line at the bottom noting what was resolved. Documents are committed, so git
+  history keeps every deleted comment.
+
+Advisor's sketch of a format, to try: an Obsidian-style callout, which is plain markdown, reads
+fine raw, and renders as a box in Obsidian (the human uses Obsidian for notes):
+
+```markdown
+The gateway acts with the human's token; nothing records that an action came through it.
+
+> [!comment] human, 2026-10-02, on "nothing records"
+> Why not? Wouldn't an audit want it?
+>
+> **advisor:** The task's history already names the principal (the human); the route it
+> came by doesn't change who acted. Rewrote the line to say so.
+```
+
+A side effect worth using: **the first experiment needs no UI.** The human can type comments in
+this form in any editor, and an agent can answer them in the file. The UI (essy, through v8kn)
+then becomes a nicer way to write and read the same text.
+
+## Which agent answers (the human, 2026-10-02)
+
+The human, verbatim (via the advisor):
+
+> Which agent answers is a great question. I hadn't thought about that one. I don't think a brand
+> new agent for every comment is appropriate at all. So maybe, I don't know. Let's give me some
+> ideas here. The, I was thinking that, you know, it's, this is kind of the advisor's job. So I
+> don't know if that means literally the, an interactive advisor, or maybe we spin up an advisor
+> agent when I'm working on a ticket. I feel like that might, that might be good. Like we have, if
+> Brewin Bridal sees that comments are coming in on a document, it would create an advisor type. I
+> mean, it would probably be a different role a little bit, you know, maybe it's a, maybe it's a
+> unique role here, but similar to advisor, not dealing with current issues or anything, but like
+> a, a specific agent that would spin up that would be related just to this document. That we're
+> working on, and it And that agent would be assigned to questions about that ticket. And it, it
+> must be able to like read other tickets and do the normal things that an advisor would do. I
+> think it, it would have general permissions over certainly all the tickets and tasks and things
+> to be able to inspect the state of the system and be able to like send messages and create new
+> tickets, possibly create tasks as well. You know, I'm, I'm sure that I would make a highlight and
+> say, you know, create a new ticket for this part of the document and then delete it. That seems
+> really likely. I'd have to think through what else I might want this to do. But this, that agent
+> handling something like this is going to be another repeated things that comes up. Not an
+> interactive agent, but a specific kind of agent to respond to something.
+
+The human's direction:
+
+- **Not a new agent per comment.** One agent per document under review, of a role like the
+  advisor's but focused on that document, not on current issues. Bridle starts it when comments
+  arrive on the document.
+- **Advisor-like powers:** read every ticket and task, inspect the system's state, send
+  messages, file tickets, maybe create tasks. A likely ask: "make a ticket from this part, then
+  delete it here".
+- **It's one case of a general pattern**, an agent of a specific kind that responds to
+  something: [[responder-agents-an-agent-for-each-kind-of-incoming-item-wit-yj38|yj38]].
+
+Options (advisor), with a recommendation:
+
+- **A. The interactive advisor answers.** Nothing new to build, but it competes with the chat
+  and carries every other topic in its context.
+- **B. One agent per document, kept for the review (recommended).** Started on the first
+  comment, it stops when idle and is resumed (same session, so it remembers earlier rounds) when
+  the next comment arrives; closed when the review ends or the ticket resolves. Its record goes
+  on the ticket's task thread. Clean context per document fits hvxk.
+- **C. One standing responder per project** for every document. Fewer agents, but documents
+  share and crowd one context.
+
+- Still open: how a revision shows the human what changed (git diff of the commit, or the UI
+  marks changed passages), and batching comments into one review round.
