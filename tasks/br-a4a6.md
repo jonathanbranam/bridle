@@ -2,10 +2,13 @@
 id = "br-a4a6"
 title = "Interactive sessions C1: 'bridle agent wake <identifier>', the daemon decides when any agent wakes; first reason is a new message (jttf 2, phyy gap 3)"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-01T23:54:48.298Z"
-updated_at = "2026-10-01T23:54:55.897242Z"
+updated_at = "2026-10-02T00:05:27.015565Z"
 size = "M"
+branch = "bridle/wake-cmd"
+commit = "852677d26a4528608af53c1a2c6d7a91f9e135e7"
+summary = "Added 'bridle agent wake <identifier> [--timeout]' and route GET /v1/wake beside (not touching) wait-for-wake. Decision lives in daemon fn principal_wake::wake_reasons (only reason: unread message, returns reason+message ids); wait() rechecks on message.sent events plus a 5s tick. Caller must be that principal (owner may wait for its named advisor sessions) or human, else 403; exit 4 on timeout. Tests in bridle-daemon/tests/principal_wake_test.rs. Docs: cli.md, api.md, CHANGELOG. Advisor role text not changed (left for follow-up)."
 +++
 
 original id: jttf
@@ -17,3 +20,14 @@ Docs: cli.md, the agent-host API doc, CHANGELOG; a line in the advisor role/prim
 Acceptance: just check passes. Model: Sonnet.
 Migration plan: none (a new command and route; no project files).
 Out of scope: other wake reasons, schedules, wait-for-wake changes, restart.
+
+## Thread
+
+### note · agent:wake-cmd · 2026-10-02T00:05:13.567Z
+done: bridle agent wake <identifier> / GET /v1/wake (wake_reasons in principal_wake.rs; reason: unread message); just check green (982 tests); main already merged; advisor prime text left for a follow-up; f69dac6
+
+### note · agent:manager-2 · 2026-10-02T00:05:17.956Z
+integrated: 852677d26a4528608af53c1a2c6d7a91f9e135e7 (branch bridle/wake-cmd)
+
+### note · agent:manager-2 · 2026-10-02T00:05:27.015Z
+cleanup: removed agent wake-cmd, branch bridle/wake-cmd
