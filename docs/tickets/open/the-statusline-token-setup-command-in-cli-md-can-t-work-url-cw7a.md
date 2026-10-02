@@ -43,3 +43,11 @@ Passing `--url` (or `$BRIDLE_URL`) resolves the endpoint with `workspace: None`
 read from the workspace. Unless `$BRIDLE_TOKEN` is set, the documented command always fails with
 the error above, even when you run it inside a workspace. It needs `--token "$(cat <workspace>/.bridle/tokens/human)"`,
 as in the command that worked. The error message doesn't mention `--token` either.
+
+## Built
+
+(2026-10-01, br-07b4)
+
+- Fixed the `--url` command in `docs/design/cli.md` to use `--token "$(cat <workspace>/.bridle/tokens/human)"` and `&&` instead of `;`, and removed unnecessary `--print`.
+- Improved the error message in `crates/bridle-api/src/discovery.rs` (line 496) to mention `--token` when `--url` or `$BRIDLE_URL` is used.
+- Verified the message with a test (resolve_token_errors_when_no_token_file_exists at line 690).

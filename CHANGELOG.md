@@ -59,6 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The error message when no workspace is found and `--url`/`$BRIDLE_URL` is set now explicitly mentions `--token` as required, so the `bridle --url <daemon url> token create statusline` command's dependency is documented both in cli.md and in the error (br-07b4).
 - `crates/bridle-spec/tests/spec.rs::parses_fast` flaked under load because it asserted a wall-clock bound (20 fixture parses under 1 s). Marked `#[ignore]` and run with `cargo nextest run -p bridle-spec --run-ignored only parses_fast`; still catches pathological slowdowns (e.g., quadratic parsing), but no longer fails on a busy machine (k562).
 - The `bridle --url <daemon url> token create statusline` command couldn't work without an explicit `--token` flag: `--url` drops the workspace context the human token is normally read from. Documentation now covers both forms (simpler `--project` when the daemon is registered, and `--url --token` for bare URLs), and the discovery error message mentions `--token` (cw7a).
 - `bridle restart` follows the daemon to a new port (a `[projects]` port or changed `[daemon] listen`) instead of timing out on the old URL, and its timeout error names `daemon.log` only if that file exists (6d5y).

@@ -493,7 +493,7 @@ fn resolve_token_in(
     }
     let Some(workspace) = workspace else {
         return Err(DiscoveryError::Message(
-            "no workspace found to read the human token from: pass --token, set $BRIDLE_TOKEN, or $BRIDLE_AS"
+            "no workspace found to read the human token from: pass --token (required with --url or $BRIDLE_URL), set $BRIDLE_TOKEN, or $BRIDLE_AS"
                 .to_string(),
         ));
     };
@@ -694,6 +694,16 @@ mod tests {
             resolve_token(None, Some(root.path()), None, None, &empty_env(), false).unwrap_err();
         let msg = err.to_string();
         assert!(msg.contains("BRIDLE_TOKEN") || msg.contains("--token"));
+    }
+
+    #[test]
+    fn resolve_token_no_workspace_and_no_token_mentions_url_requirement() {
+        // When --url is used (workspace is None) and no token is set, the error
+        // should mention both --token and that it's required with --url/$BRIDLE_URL
+        let err = resolve_token(None, None, None, None, &empty_env(), false).unwrap_err();
+        let msg = err.to_string();
+        assert!(msg.contains("--token"), "error message: {}", msg);
+        assert!(msg.contains("--url"), "error message: {}", msg);
     }
 
     #[test]
