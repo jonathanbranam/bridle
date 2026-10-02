@@ -30,6 +30,7 @@ mod integrator;
 mod orchestrator;
 pub mod paths;
 pub mod ports;
+mod principal_wake;
 mod queue_nudge;
 pub mod reevaluate;
 mod restart;

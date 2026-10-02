@@ -105,6 +105,9 @@ pub enum Command {
     /// Readable rendering of an agent's transcript.
     #[command(hide = true)]
     Logs(LogsArgs),
+    /// Block until the daemon decides a principal should wake.
+    #[command(hide = true)]
+    Wake(WakeArgs),
     /// The event log.
     Events(EventsArgs),
     /// Block until a task changes state (or reaches one), or a message arrives.
@@ -306,6 +309,8 @@ pub enum AgentAction {
     Rm(RmArgs),
     /// Readable rendering of an agent's transcript.
     Logs(LogsArgs),
+    /// Block until the daemon decides a principal should wake (exit 4 on timeout).
+    Wake(WakeArgs),
 }
 
 #[derive(Debug, Args)]
@@ -1025,6 +1030,15 @@ pub struct RmArgs {
     /// Delete the agent's branch too (default: keep it).
     #[arg(long)]
     pub delete_branch: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct WakeArgs {
+    /// `external:advisor`, `external:advisor/<name>`, `human` or an agent name; must be you.
+    pub identifier: String,
+    /// Give up after this many seconds (exit 4); default and cap are 25 minutes.
+    #[arg(long)]
+    pub timeout: Option<u64>,
 }
 
 #[derive(Debug, Args)]

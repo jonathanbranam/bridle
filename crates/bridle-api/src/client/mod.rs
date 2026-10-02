@@ -16,13 +16,14 @@ use crate::types::{
     DoneTaskRequest, DropTaskRequest, Edge, EditTaskRequest, Event, EventQuery, Handover,
     HandoverDone, Health, ImpactCheckRequest, ImpactReport, InterruptRequest, InterruptResponse,
     LandRequest, LandResult, MaxWorkersRequest, Message, MessageQuery, NewEdgeRequest,
-    NewTaskRequest, NoteTaskRequest, OpenQuestion, PortAllocation, ProbeRequest, ProbeResult,
-    Queue, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, RestartRequest,
-    RestartResponse, ResumeRequest, SendRequest, SessionEnd, SessionInfo, SessionRegister,
-    SetImpactRequest, SetKindRequest, SetPriorityRequest, SetQueueRequest, SetSummaryRequest,
-    ShutdownResponse, SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery,
-    TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
-    UsageBreakdown, UsageBreakdownQuery, WakeResponse, WriteHandoverRequest,
+    NewTaskRequest, NoteTaskRequest, OpenQuestion, PortAllocation, PrincipalWakeQuery,
+    PrincipalWakeResponse, ProbeRequest, ProbeResult, Queue, RemoveEdgeQuery, RemoveQuery,
+    RenewRequest, ResolveConflictRequest, RestartRequest, RestartResponse, ResumeRequest,
+    SendRequest, SessionEnd, SessionInfo, SessionRegister, SetImpactRequest, SetKindRequest,
+    SetPriorityRequest, SetQueueRequest, SetSummaryRequest, ShutdownResponse, SpawnRequest, Status,
+    StatusLineReport, StopRequest, Task, TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo,
+    TranscriptLine, TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery, WakeResponse,
+    WriteHandoverRequest,
 };
 
 #[derive(Debug, Error)]
@@ -399,6 +400,15 @@ impl Client {
     /// are up, answering empty). `external:orchestrator` only.
     pub async fn orchestrator_wake(&self) -> Result<WakeResponse, ClientError> {
         self.get_json(&["v1", "orchestrator", "wake"]).await
+    }
+
+    /// `GET /v1/wake`: holds until the daemon decides `query.principal` should wake; empty
+    /// when `timeout_secs` ran out first. The caller must be that principal (or the human).
+    pub async fn principal_wake(
+        &self,
+        query: &PrincipalWakeQuery,
+    ) -> Result<PrincipalWakeResponse, ClientError> {
+        self.get_json_query(&["v1", "wake"], query).await
     }
 
     /// `POST /v1/orchestrator/handover`: the orchestrator has written its state; the daemon

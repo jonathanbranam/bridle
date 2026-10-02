@@ -65,6 +65,7 @@ bridle queue set --tier T,T... [--tier T,T...]   replace the whole queue, one --
 bridle queue add-tier <task>...                  append one tier at the back (PM, orchestrator or human only)
 bridle task dep add|rm <task> (--to OTHER [--kind K] | --blocked-by OTHER)   K: blocks (default)|parent|discovered-from|related|supersedes|duplicates
 bridle wait    <task> [--until STATE] [--or-message] [--timeout SECS]   block until the task changes state; exit 4 on timeout
+bridle agent wake <identifier> [--timeout SECS]   blocks until the daemon decides that principal should wake (now: it has an unread message); prints the reason and message ids (`--json`: `{reasons:[{reason,message_ids}]}`); exit 0 woken, 4 timed out; caller must be that principal (or the human), else 403
 bridle agent interrupt <agent> [--drop-held]
 bridle agent stop    <agent> [--now]      bridle agent resume <agent> [--ignore-budget]
 bridle agent renew   <agent> [--ignore-budget]    stop + fresh process/session, same worktree/branch/role/model

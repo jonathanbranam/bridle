@@ -228,6 +228,31 @@ pub struct WakeResponse {
     pub wakes: Vec<WakeReason>,
 }
 
+/// `GET /v1/wake`: hold until the daemon decides `principal` should wake.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct PrincipalWakeQuery {
+    /// `external:advisor`, `external:advisor/<name>`, `human` or an agent name.
+    pub principal: String,
+    /// Give up after this many seconds (the daemon caps it at 25 minutes; absent is the cap).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub timeout_secs: Option<u64>,
+}
+
+/// One reason a principal should wake.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PrincipalWakeReason {
+    /// `message` (the principal has unread messages).
+    pub reason: String,
+    /// The messages behind it.
+    pub message_ids: Vec<String>,
+}
+
+/// The answer to `GET /v1/wake`: no reasons means the timeout came first.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+pub struct PrincipalWakeResponse {
+    pub reasons: Vec<PrincipalWakeReason>,
+}
+
 /// The answer to `POST /v1/orchestrator/handover`.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct HandoverDone {

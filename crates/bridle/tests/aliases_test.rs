@@ -106,6 +106,7 @@ fn new_groups_parse() {
         &["agent", "spawn"],
         &["agent", "list"],
         &["agent", "logs"],
+        &["agent", "wake"],
         &["task", "claim"],
         &["task", "queue"],
         &["task", "land"],

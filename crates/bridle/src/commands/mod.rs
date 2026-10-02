@@ -33,7 +33,7 @@ use crate::cli::{
     TaskCommentArgs, TaskDoneArgs, TaskDropArgs, TaskEditArgs, TaskKindArg, TaskKindArgs,
     TaskListArgs, TaskNewArgs, TaskPlanArgs, TaskPriorityArg, TaskPriorityArgs, TaskReopenArgs,
     TaskSearchArgs, TaskShowArgs, TaskSizeArg, TaskSummaryArgs, TokenAction, TokenArgs, UsageArgs,
-    UsageByArg, WaitArgs, WhenArg,
+    UsageByArg, WaitArgs, WakeArgs, WhenArg,
 };
 use crate::cli::{
     FocusAction, FocusArgs, LandArgs, OrchestratorAction, OrchestratorArgs, PortAction, PortArgs,
@@ -88,6 +88,7 @@ fn normalize(cmd: Command) -> Command {
             A::Renew(a) => Command::Renew(a),
             A::Rm(a) => Command::Rm(a),
             A::Logs(a) => Command::Logs(a),
+            A::Wake(a) => Command::Wake(a),
         },
         Command::Hook(HookArgs { action }) => match action {
             H::Statusline => Command::Statusline,
@@ -156,6 +157,7 @@ pub async fn run(mut cli: Cli) -> Result<(), CliError> {
         Command::Renew(args) => renew(&cli, args).await,
         Command::Rm(args) => rm(&cli, args).await,
         Command::Logs(args) => logs(&cli, args).await,
+        Command::Wake(args) => wake(&cli, args).await,
         Command::Events(args) => events(&cli, args).await,
         Command::Wait(args) => wait(&cli, args).await,
         Command::Usage(args) => usage(&cli, args).await,

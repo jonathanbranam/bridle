@@ -93,6 +93,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/events", get(list_events))
         .route("/v1/events/stream", get(events_stream))
         .route("/v1/orchestrator/wake", get(orchestrator_wake))
+        .route("/v1/wake", get(principal_wake))
         .route("/v1/orchestrator/handover", post(orchestrator_handover))
         .route("/v1/sessions", get(list_sessions).post(register_session))
         .route("/v1/sessions/end", post(end_session))
@@ -483,6 +484,39 @@ async fn orchestrator_wake(
         state.waiters.delivered(chrono::Utc::now());
     }
     Ok(Json(WakeResponse { wakes }))
+}
+
+/// The long poll behind `bridle agent wake <identifier>`: the daemon decides when
+/// `crate::principal_wake::wake_reasons` has something for that principal.
+async fn principal_wake(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Query(q): Query<bridle_api::types::PrincipalWakeQuery>,
+) -> Result<Json<bridle_api::types::PrincipalWakeResponse>, ApiError> {
+    let target = resolve_to(&state.store, &principal, Some(&q.principal))
+        .await?
+        .unwrap_or_default();
+    let mine = resolve_to(&state.store, &principal, Some("me")).await?;
+    let owner = split_named(&target).map(|(o, _)| o);
+    // A named advisor session shares its owner's token, so the owner may wait for it too.
+    let allowed = match principal.kind {
+        PrincipalKind::Human => true,
+        PrincipalKind::Local => false,
+        _ => mine.as_deref() == Some(target.as_str()) || owner.as_deref() == mine.as_deref(),
+    };
+    if !allowed {
+        return Err(ApiError::forbidden(
+            "a principal may only wait for its own wake (or the human for any)",
+        ));
+    }
+    let timeout =
+        Duration::from_secs(q.timeout_secs.unwrap_or(u64::MAX)).min(crate::wake::POLL_TIMEOUT);
+    let mut shutdown = state.shutdown_tx.subscribe();
+    let reasons = tokio::select! {
+        r = crate::principal_wake::wait(&state.store, &state.emitter, &target, timeout) => r?,
+        _ = shutdown.wait_for(|v| *v) => Vec::new(),
+    };
+    Ok(Json(bridle_api::types::PrincipalWakeResponse { reasons }))
 }
 
 async fn register_session(

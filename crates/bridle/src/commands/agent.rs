@@ -204,6 +204,35 @@ pub(super) async fn rm(cli: &Cli, args: &RmArgs) -> Result<(), CliError> {
     Ok(())
 }
 
+/// `bridle agent wake <identifier>`: the daemon holds the request until it decides the
+/// principal should wake. Exit 0 woken, 4 timed out.
+pub(super) async fn wake(cli: &Cli, args: &WakeArgs) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let got = client
+        .principal_wake(&bridle_api::types::PrincipalWakeQuery {
+            principal: args.identifier.clone(),
+            timeout_secs: args.timeout,
+        })
+        .await?;
+    if got.reasons.is_empty() {
+        if cli.json {
+            println!("{{\"reasons\":[]}}");
+        }
+        return Err(CliError::Timeout(format!(
+            "nothing woke {} before the timeout",
+            args.identifier
+        )));
+    }
+    if cli.json {
+        render::print_json(&got)?;
+    } else {
+        for r in &got.reasons {
+            println!("{}: {}", r.reason, r.message_ids.join(" "));
+        }
+    }
+    Ok(())
+}
+
 pub(super) async fn logs(cli: &Cli, args: &LogsArgs) -> Result<(), CliError> {
     let client = client_for_read(cli).await?;
     let mut since = args.since;
