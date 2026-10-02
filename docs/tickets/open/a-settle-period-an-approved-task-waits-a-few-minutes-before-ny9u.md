@@ -69,3 +69,42 @@ filed, scheduled and landed the same evening. Nothing in the task lifecycle (`op
 - Open: what exactly starts the clock (task created, `plan`, or an explicit "approved" entry in
   the thread), and whether it applies to tasks no human approved (agent-filed chores, bugs a
   worker found).
+
+## Decided (the human, 2026-10-02)
+
+The human, verbatim (via the advisor), on the notes above:
+
+> Yes, I agree on all of those points and and approve all of them. Um, a task from an agent, a
+> task from a worker, everything should have this pause so that, um, because what happens is the
+> orchestrator will tell me, hey, someone found this, this, this, and I've already scheduled a
+> fix. And if I'm sitting there, even if I'm sitting at my keyboard and I read the message, um,
+> often I still can't even respond before the fix is implemented. And that's another case where
+> um, the five minute pause would be great. Of course, in many instances, the system is working
+> without me. And these pauses um, will just expire and the ticket will be done anyway. And I'm
+> perfectly fine with that. I don't want, again, I do not want a, an approval gate. Um, but an
+> approval gate obviously should be something the system supports. So for if somebody is using
+> Bridal and wants a hard approval gate for every ticket, Um, they should be able to do that, but
+> that's not what I want with any of my projects. um, and uh, yeah, I think currently, you know,
+> the orchestrator or the product manager both should be able to enforce an approval, a human
+> approval. I think that already exists and has been happened on several occasions, so that's
+> good. Um, but yeah, I, I think that's a great design. Um, If the if the if I ask if some if I
+> ask for the time to be skipped, then it can be skipped explicitly, and that should be recorded.
+> And then if the if, if there's an urgent fix due to downtime, then the time can be skipped as
+> well.
+
+1. **The advisor's notes are approved:** the daemon enforces it; a human comment or edit restarts
+   the clock; `task show`/`queue` show "settling until"; it's configurable, and `0` turns it off.
+2. **Every task settles**, whoever filed it: the human, the advisor, the orchestrator, the PM, a
+   manager, a worker. The common case is "someone found X and I've already scheduled a fix",
+   which today is built before the human can reply even when they're at the keyboard.
+3. **Not an approval gate.** Unanswered, the period expires and work goes ahead. None of the
+   human's projects get a gate.
+4. **A hard approval gate stays supported** for projects that want one (the human approves every
+   task before it's built). The orchestrator and PM can already require human approval on a
+   task; that stays.
+5. **Skipping the period** is allowed in two cases, and each skip is recorded on the task
+   (who, why, when): the human asks for it, or an urgent fix for downtime.
+
+Since every task settles, not just approved ones, the advisor suggests the clock starts when the
+task is created and restarts on any human comment or edit. That's simple and covers both cases.
+Still to confirm in the design.
