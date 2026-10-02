@@ -40,3 +40,27 @@ The human, verbatim (2026-10-02, via the advisor; the full message is in
   board as a later option.
 - Related: u6wk (answering questions from mobile; a web UI on the local network or behind HTTPS
   could serve that), y496 (TUI panels).
+
+## Across projects and machines (the human, 2026-10-02)
+
+The human, verbatim (via the advisor):
+
+> So for the web UI, also, I really wanted to show tasks and to-dos across projects. It should be
+> organized by project. Um, I still don't actually understand how the system for all of that
+> works. But um, yeah, I only want one UI to load up for all my projects, if possible, even
+> projects and other machines.
+
+4. **One UI for every project**, including projects on other machines, organized by project.
+   Tasks and to-dos from all of them in one place.
+
+How it fits today (advisor, checked 2026-10-02): each project runs its own daemon on its own port.
+A machine knows its local daemons from `~/.bridle/daemons/<project>.json` and its remote ones from
+`~/.bridle/config.toml` (`[machines]`, and `[projects]` entries with `machine` and `port`, k7mw).
+So a UI can list every project the way `bridle --project` finds them, and query each daemon's API.
+The gaps:
+- **Writes from another machine need a token there.** The human's token works only on the
+  daemon's own machine ([[the-human-s-token-works-only-on-the-daemon-s-own-machine-3ehu|3ehu]]),
+  so checking off a NUC to-do from dalek's UI needs 3ehu first. Reads from another machine need
+  a token too; only loopback reads go without one.
+- **Where the UI runs:** one process (e.g. `bridle ui`, or served by one daemon) that fans out to
+  every daemon, rather than a UI per daemon. To settle in the design and the prototypes.
