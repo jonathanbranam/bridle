@@ -161,3 +161,60 @@ replaces decision 5 and the design doc's option C.
   on its Tailscale address (k7mw). A sleeping laptop's projects show as unreachable.
 
 `docs/design/human-web-ui.md` is to be revised to this before build tasks.
+
+## Gateway v1: the human's answers (2026-10-02)
+
+The human, verbatim (via the advisor), on the advisor's six questions:
+
+> Agree on login, that's fine. I store all my passwords in 1Password anyway, and it automatically
+> logs in, so it's no issue at all to me if I have to log in every time.
+>
+> It should use my token. I don't really see any need to record the fact that this came through
+> the gateway or not. That doesn't make any difference. Yeah, just use my token.
+>
+> Yeah, the main thing for version one is my tasks or to-dos, the things I need to follow up on.
+> Um, specifically, like, the orchestrator keeps telling me the things I need to do, and it's a
+> waste of context for the orchestrator. They just scroll out of view when I'm busy, so they just
+> scroll, scroll, scroll, scroll, scroll. There's a whole bunch of things that need my decision
+> that I never go look at. And I can't find them. They're, it's just like not a useful or a very
+> functional way for me to review what needs done. The biggest thing for this is that they need to
+> be retractable. Um, I, I don't know if, for sure if that's done, but that'd be separate work, of
+> course. But if your orchestrator asks me to do something and then another ticket comes along or
+> another, you know, it gets resolved in some other way, then. should be able to retract that and
+> we, we should have you know an audit trail that that happened but I don't want to see it anymore
+> I don't want to show up with 20 messages that were resolved by some other process just because I
+> didn't read them so um, that's a problem I think we already have with the inbox thing um, I'm
+> not sure how to deal with that we'll, we'll leave that inbox aside for now but I, You know, like
+> my Gmail, it grows forever because I, there's things I just don't care about. And it's, it takes
+> me time and effort to go mark them off and get rid of them.
+>
+> The folder name bridal-ui is fine. For the name of this, why bridal gateway instead of bridal
+> API? I guess because it's a gateway to multiple projects. I don't know, I'm totally fine with
+> either.
+>
+> Yeah, I don't know what is involved with the cross machine token for me exactly, or, or like
+> where we're at with that. Are we waiting on decisions or just work just hasn't been planned yet?
+> But it's needed, right? I'm just gonna run this on one machine, well again once, and I just want
+> to be able to manage everything from there. That's part of the attraction of this.
+
+Decided:
+
+1. **Login from v1**: username and password (the human uses 1Password; logging in each time is fine).
+2. **The gateway acts with the human's token**; nothing records that an action came through it.
+3. **v1 scope: the human's to-dos and decisions**, the things to follow up on, so the
+   orchestrator stops relaying them into a scrolling conversation where they get lost.
+4. **Retracted items disappear.** When a to-do or decision is resolved some other way, its asker
+   retracts it: it leaves the human's list, with an audit trail on the record. What exists
+   (advisor, checked): to-dos are tasks, and withdrawing one exists ("To-do withdrawn by ...",
+   reason recorded, m-2550). Questions sent as messages to `human` can't be retracted; the
+   human inbox (it grows forever, like Gmail) is set aside for now. So v1 shows to-dos and task
+   questions; retractable message questions are separate work.
+5. **The UI repo is `bridle-ui`**, beside `bridle/` (`/Volumes/Data/work/bridle/bridle-ui`).
+6. **Name: `bridle gateway`** (the advisor's suggestion; the human is fine with either):
+   "bridle API" already names the daemons' `/v1` API and the `bridle-api` crate, and the
+   gateway fronts many daemons.
+7. **One gateway, on one machine, manages everything** from there. That needs 3ehu part 1
+   (br-8b98, planned, size S: the human's token for another machine's daemons), which waits on no
+   decision. Checked: dalek's bridle daemon already listens on its Tailscale address and the NUC's
+   daemons answer over Tailscale (k7mw built). A project on a random port, e.g. track-web, needs a
+   `[projects]` entry with a fixed port to be reachable from another machine.
