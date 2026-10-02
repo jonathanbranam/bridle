@@ -21,9 +21,9 @@ use crate::types::{
     RenewRequest, ResolveConflictRequest, RestartRequest, RestartResponse, ResumeRequest,
     SendRequest, SessionEnd, SessionInfo, SessionRegister, SetImpactRequest, SetKindRequest,
     SetPriorityRequest, SetQueueRequest, SetSummaryRequest, ShutdownResponse, SpawnRequest, Status,
-    StatusLineReport, StopRequest, Task, TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo,
-    TranscriptLine, TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery, WakeResponse,
-    WriteHandoverRequest,
+    StatusLineReport, StopRequest, SubmitTaskRequest, Task, TaskQuery, TokenCreateRequest,
+    TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown,
+    UsageBreakdownQuery, WakeResponse, WriteHandoverRequest,
 };
 
 #[derive(Debug, Error)]
@@ -551,6 +551,10 @@ impl Client {
 
     pub async fn new_task(&self, req: &NewTaskRequest) -> Result<Task, ClientError> {
         self.post_json(&["v1", "tasks"], req).await
+    }
+
+    pub async fn submit_task(&self, req: &SubmitTaskRequest) -> Result<Task, ClientError> {
+        self.post_json(&["v1", "tasks", "submit"], req).await
     }
 
     pub async fn get_task(&self, id: &str) -> Result<Task, ClientError> {

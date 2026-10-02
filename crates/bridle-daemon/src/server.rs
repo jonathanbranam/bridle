@@ -21,8 +21,8 @@ use bridle_api::types::{
     ProbeResult, Queue, RateLimit, RebuildResponse, RemoveEdgeQuery, RemoveQuery, RenewRequest,
     ResolveConflictRequest, ResumeRequest, ScheduleOverrideStatus, SendRequest, SetImpactRequest,
     SetKindRequest, SetPriorityRequest, SetQueueRequest, SetSummaryRequest, ShutdownResponse,
-    SpawnRequest, Status, StatusLineReport, StopRequest, Task, TaskQuery, TaskState,
-    TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
+    SpawnRequest, Status, StatusLineReport, StopRequest, SubmitTaskRequest, Task, TaskQuery,
+    TaskState, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
     UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, WakeResponse, When, WindowStatus,
     WriteHandoverRequest, event_kind,
 };
@@ -112,6 +112,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/tokens", get(list_tokens).post(create_token))
         .route("/v1/tokens/{name}", axum::routing::delete(revoke_token))
         .route("/v1/tasks", get(list_tasks).post(new_task))
+        .route("/v1/tasks/submit", post(submit_task))
         .route("/v1/tasks/{id}", get(get_task).patch(edit_task))
         .route("/v1/tasks/{id}/plan", post(plan_task))
         .route("/v1/tasks/{id}/drop", post(drop_task))
@@ -360,6 +361,31 @@ fn require_incident_owner(
         ));
     }
     Ok(())
+}
+
+/// First body line of a submitted task: `submitted by <principal>`.
+const SUBMITTED_BY: &str = "submitted by ";
+
+fn is_visitor(principal: &Principal) -> bool {
+    principal.id.contains('@')
+}
+
+fn submitter_of(task: &Task) -> Option<&str> {
+    task.body
+        .lines()
+        .next()
+        .and_then(|l| l.strip_prefix(SUBMITTED_BY))
+}
+
+/// A visitor (`external:<name>@<machine>`) may only submit and comment on its own submission.
+fn require_not_visitor(principal: &Principal) -> Result<(), ApiError> {
+    if is_visitor(principal) {
+        Err(ApiError::forbidden(
+            "a visitor may only submit tasks and comment on its own submissions",
+        ))
+    } else {
+        Ok(())
+    }
 }
 
 fn require_human(principal: &Principal) -> Result<(), ApiError> {
@@ -1466,6 +1492,44 @@ async fn new_task(
     Ok(Json(task))
 }
 
+/// Any principal files an `open` task for the PM to triage; the task records who sent it.
+async fn submit_task(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Json(req): Json<SubmitTaskRequest>,
+) -> Result<Json<Task>, ApiError> {
+    let body = format!("{SUBMITTED_BY}{}\n\n{}", principal.id, req.body);
+    let task = state
+        .tasks
+        .new_task(&req.title, req.kind, body, Vec::new(), None)
+        .await?;
+    let task = state
+        .tasks
+        .note_task(
+            &task.id,
+            &principal.id,
+            &format!("{SUBMITTED_BY}{}", principal.id),
+        )
+        .await?;
+    let _ = state
+        .emitter
+        .emit(
+            event_kind::TASK_CREATED,
+            principal.id.clone(),
+            None,
+            serde_json::json!({
+                "task": task.id, "kind": task.kind, "state": task.state,
+                "priority": task.priority,
+            }),
+        )
+        .await;
+    state
+        .manager
+        .note_submission(&task.id, &task.title, &principal.id)
+        .await;
+    Ok(Json(task))
+}
+
 async fn get_task(
     State(state): State<AppState>,
     Path(id): Path<String>,
@@ -1483,6 +1547,7 @@ async fn edit_task(
     Path(id): Path<String>,
     Json(req): Json<EditTaskRequest>,
 ) -> Result<Json<Task>, ApiError> {
+    require_not_visitor(&principal)?;
     let components = req
         .components
         .as_deref()
@@ -1516,6 +1581,7 @@ async fn plan_task(
     Extension(principal): Extension<Principal>,
     Path(id): Path<String>,
 ) -> Result<Json<Task>, ApiError> {
+    require_not_visitor(&principal)?;
     require_incident_owner(&state, &principal, &id)?;
     let task = state.tasks.plan_task(&id, &principal.id).await?;
     if task.kind == bridle_api::types::TaskKind::Incident {
@@ -1539,6 +1605,7 @@ async fn drop_task(
     Path(id): Path<String>,
     Json(req): Json<DropTaskRequest>,
 ) -> Result<Json<Task>, ApiError> {
+    require_not_visitor(&principal)?;
     require_incident_owner(&state, &principal, &id)?;
     let was_active = state
         .tasks
@@ -1553,6 +1620,20 @@ async fn drop_task(
         .await?;
     if task.kind == bridle_api::types::TaskKind::Incident && was_active {
         state.manager.incident_resolved(&task, &req.reason).await;
+    }
+    if let Some(submitter) = submitter_of(&task)
+        && submitter != principal.id
+    {
+        state
+            .manager
+            .note_to_submitter(
+                submitter,
+                format!(
+                    "Your submission {} ({}) was declined by {}: {}",
+                    task.id, task.title, principal.id, req.reason
+                ),
+            )
+            .await;
     }
     if was_human_todo && principal.id != "human" {
         state
@@ -2472,6 +2553,17 @@ async fn note_task(
     Path(id): Path<String>,
     Json(req): Json<NoteTaskRequest>,
 ) -> Result<Json<Task>, ApiError> {
+    if is_visitor(&principal) {
+        let own = state
+            .tasks
+            .get_task(&id)
+            .is_some_and(|t| submitter_of(&t) == Some(principal.id.as_str()));
+        if !own {
+            return Err(ApiError::forbidden(
+                "a visitor may only comment on its own submissions",
+            ));
+        }
+    }
     let task = state.tasks.note_task(&id, &principal.id, &req.body).await?;
     let _ = state
         .emitter
@@ -2496,6 +2588,7 @@ async fn claim_task(
     Extension(principal): Extension<Principal>,
     Path(id): Path<String>,
 ) -> Result<Json<Task>, ApiError> {
+    require_not_visitor(&principal)?;
     let task = state.tasks.claim_task(&id, &principal.id).await?;
     let _ = state
         .emitter

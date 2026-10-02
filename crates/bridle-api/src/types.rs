@@ -1615,6 +1615,15 @@ pub struct NewTaskRequest {
     pub priority: Option<TaskPriority>,
 }
 
+/// A submission to the project's triage (`POST /v1/tasks/submit`): always an `open` task.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SubmitTaskRequest {
+    pub title: String,
+    pub kind: TaskKind,
+    #[serde(default)]
+    pub body: String,
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct EditTaskRequest {
     #[serde(default, skip_serializing_if = "Option::is_none")]

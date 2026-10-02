@@ -215,6 +215,11 @@ bridle ticket check [--quiet]                checks every ticket in `docs/ticket
                                              when the daemon is up; a missing `kind`/`tasks` is a warning for now, see
                                              `MISSING_KIND_OR_LINK_IS_ERROR` in `ticket.rs`). Problems go to stderr, one per line, exit 1; `--quiet`
                                              prints nothing when clean. Local, no daemon
+bridle ticket submit -k <kind> <title> [--body S | --body-file F|-]
+                                              files an `open` task on the project's daemon (any principal with a token,
+                                              visitors included; no ticket file) and prints its id. The body starts
+                                              `submitted by <principal>`; the product manager (else the orchestrator)
+                                              gets one inbox message. Dropping it with a reason tells the submitter.
 bridle workflow goals list [--root DIR] [--priority P] [--stance S]   lists goals (docs/design/goals-tier.md) from
                                              `*.md` under --root (default `design/goals`): id, firmness,
                                              priority, stance, title per line; the stance is defaulted from

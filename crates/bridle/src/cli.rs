@@ -428,6 +428,21 @@ pub enum TicketAction {
     Set(TicketSetArgs),
     /// Check every ticket's frontmatter, IDs, needs/see and [[links]]; exits 1 listing the problems.
     Check(TicketCheckArgs),
+    /// File an open task on the project's daemon for its product manager to triage (any principal with a token; no ticket file).
+    Submit(TicketSubmitArgs),
+}
+
+#[derive(Debug, Args)]
+#[command(group(ArgGroup::new("body_source").args(["body", "body_file"])))]
+pub struct TicketSubmitArgs {
+    pub title: String,
+    #[arg(short = 'k', long, value_enum)]
+    pub kind: TaskKindArg,
+    #[arg(long)]
+    pub body: Option<String>,
+    /// Read the body from a file (or `-` for stdin).
+    #[arg(long)]
+    pub body_file: Option<PathBuf>,
 }
 
 #[derive(Debug, Args)]

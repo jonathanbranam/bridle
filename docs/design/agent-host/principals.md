@@ -124,6 +124,10 @@ daemon's own `external:orchestrator` (wake long poll, liveness watch, handovers)
 exact name, so a visitor never takes those over. `bridle session orchestrator` and `bridle session advisor` set
 `BRIDLE_AS` so a session never handles a token.
 
+A visitor may also **submit** (`POST /v1/tasks/submit`, `bridle ticket submit`, ticket 93xm): an `open` task whose body starts
+`submitted by <principal>`, with a first thread note saying so. It may comment on its own submissions only; planning,
+claiming, dropping and editing a task are refused for any visitor.
+
 Rule 2 means a Claude Code session (the human's orchestrator, or any agent)
 never silently acts as the human. It has to be given an identity to write;
 rule 3 only ever gets it as far as `local` can reach, which is reads.

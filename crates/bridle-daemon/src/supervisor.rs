@@ -2073,9 +2073,62 @@ impl AgentManager {
         }
     }
 
-    /// Resolve or drop while active: undelivered notices are dropped, and an
-    /// agent that saw the incident gets one "resolved" note (unlinked, so it
-    /// can't itself be dropped).
+    /// Tells the product manager (the orchestrator when none runs) that `submitter` filed task `id`.
+    pub async fn note_submission(&self, id: &str, title: &str, submitter: &str) {
+        let Ok(agents) = self.0.store.list_agents(false).await else {
+            return;
+        };
+        let to = agents
+            .iter()
+            .find(|a| a.role == "product-manager" && a.state.is_running())
+            .map(|a| ToTarget::Agent(a.id.clone()))
+            .unwrap_or_else(|| ToTarget::External(crate::wake::ORCHESTRATOR.to_string()));
+        let body = format!(
+            "{submitter} submitted task {id}: {title}. Triage it: accept (ticket new + plan), merge \
+             (comment, then drop naming the ticket) or decline (drop with a reason; the submitter is told)."
+        );
+        let sent = self
+            .send(
+                "system".to_string(),
+                to,
+                MessageKind::Note,
+                body,
+                bridle_api::types::When::Idle,
+                None,
+            )
+            .await;
+        if let Err(e) = sent {
+            tracing::warn!("submission note: {e}");
+        }
+    }
+
+    /// A system note to a principal named by its id (`human`, `external:...`, `agent:<name>`).
+    pub async fn note_to_submitter(&self, principal: &str, body: String) {
+        let to = if principal == "human" {
+            ToTarget::Human
+        } else if let Some(name) = principal.strip_prefix("agent:") {
+            match self.0.store.get_agent(name).await {
+                Ok(Some(a)) => ToTarget::Agent(a.id),
+                _ => return,
+            }
+        } else {
+            ToTarget::External(principal.to_string())
+        };
+        let sent = self
+            .send(
+                "system".to_string(),
+                to,
+                MessageKind::Note,
+                body,
+                bridle_api::types::When::Now,
+                None,
+            )
+            .await;
+        if let Err(e) = sent {
+            tracing::warn!("note to submitter: {e}");
+        }
+    }
+
     /// A system note to the human's inbox.
     pub async fn note_to_human(&self, body: String) {
         let sent = self
@@ -2093,6 +2146,9 @@ impl AgentManager {
         }
     }
 
+    /// Resolve or drop while active: undelivered notices are dropped, and an
+    /// agent that saw the incident gets one "resolved" note (unlinked, so it
+    /// can't itself be dropped).
     pub async fn incident_resolved(&self, task: &bridle_api::types::Task, line: &str) {
         let Ok(rows) = self.0.store.messages_for_incident(&task.id).await else {
             return;

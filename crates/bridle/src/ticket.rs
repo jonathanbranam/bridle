@@ -8,12 +8,12 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use anyhow::{Context, anyhow, bail};
-use bridle_api::{NewTaskRequest, TaskKind};
+use bridle_api::{NewTaskRequest, SubmitTaskRequest, TaskKind};
 use clap::ValueEnum;
 
 use crate::cli::{
     Cli, TaskKindArg, TicketAction, TicketArgs, TicketCheckArgs, TicketNewArgs, TicketResolveArgs,
-    TicketSetArgs,
+    TicketSetArgs, TicketSubmitArgs,
 };
 use crate::commands::client_for;
 use crate::error::CliError;
@@ -32,12 +32,17 @@ const MISSING_KIND_OR_LINK_IS_ERROR: bool = false;
 const TASK_ORIGIN_PREFIX: &str = "original id: ";
 
 pub async fn run(cli: &Cli, args: &TicketArgs) -> Result<(), CliError> {
+    // Submitting talks to a daemon only, so it works outside a git checkout of the project.
+    if let TicketAction::Submit(a) = &args.action {
+        return submit(cli, a).await;
+    }
     let repo = repo_root()?;
     match &args.action {
         TicketAction::New(a) => new(cli, &repo, a).await,
         TicketAction::Resolve(a) => resolve_cmd(&repo, a),
         TicketAction::Set(a) => set_cmd(&repo, a),
         TicketAction::Check(a) => check_cmd(cli, &repo, a).await,
+        TicketAction::Submit(_) => unreachable!("handled above"),
     }
 }
 
@@ -89,6 +94,24 @@ async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<(), CliErro
             Err(e) => eprintln!("warning: ticket written, but no bridle task was created: {e}"),
         }
     }
+    Ok(())
+}
+
+async fn submit(cli: &Cli, args: &TicketSubmitArgs) -> Result<(), CliError> {
+    let body = if args.body.is_some() || args.body_file.is_some() {
+        crate::commands::read_text(&args.body, &args.body_file, "body")?
+    } else {
+        String::new()
+    };
+    let client = client_for(cli).await?;
+    let task = client
+        .submit_task(&SubmitTaskRequest {
+            title: args.title.clone(),
+            kind: kind_of(args.kind),
+            body,
+        })
+        .await?;
+    println!("{}", task.id);
     Ok(())
 }
 

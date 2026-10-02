@@ -30,3 +30,11 @@ The human, 2026-10-01 (via the NUC's orchestrator, m-3179), verbatim:
   ticket, or decline it with a reply to the submitter.
 - It fits 7gk7 (bridle manages tickets). It would replace relays like m-3148, m-3169, m-3172
   and this one.
+
+## Built
+
+`bridle ticket submit -k <kind> "<title>" --body-file -` (`POST /v1/tasks/submit`) files an `open` task
+(no new state: only the PM plans) whose body's first line is `submitted by <principal>`, with the same as its
+first thread note. The product manager, else `external:orchestrator`, gets one inbox message. Dropping it with a
+reason sends the reason to the submitter. Visitors (`name@machine`) can no longer plan, claim, drop or edit tasks,
+and may comment only on their own submissions. Not built: dedupe, a proposed state.
