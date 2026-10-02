@@ -2,9 +2,12 @@
 id = "br-1c2a"
 title = "Overnight periods must say +1d, and bridle doctor validates the machine config"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-02T11:47:48.911Z"
-updated_at = "2026-10-02T11:49:01.262074Z"
+updated_at = "2026-10-02T11:57:40.828873Z"
+branch = "bridle/config-1d"
+commit = "8e5bd04e30e7020a6f5e6c3816ae9d0c5d3fdf0b"
+summary = "A [[focus]]/[[budget.schedule]] end may be written HH:MM+1d (parse_time_of_day strips it; matching unchanged). One validator, overnight_problem in config.rs, errors for end<start without +1d (except 00:00) with the fix text, and for +1d on an end not before start. Daemon load only logs a warning (stays lenient, 3xr4 meaning). New machine_config_problems feeds a 'machine config' doctor check (fails, missing file ok). Docs: roles-and-config, cli, usage-and-budget, CHANGELOG."
 +++
 
 original id: r5s3
@@ -14,3 +17,14 @@ Goal: (1) A period's end may be written 'HH:MM+1d' ('06:00+1d') in [[focus]] and
 Tests: '+1d' parses and matches the morning after, for both focus and budget callers; end<start without +1d: validator error text names block and fix, daemon-load still accepts with the old meaning and warns; 00:00 end valid; start==end empty; doctor reports each bad block and exits non-zero, and passes on a clean file and a missing file; the human's current three blocks give exactly one doctor error (night).
 Acceptance: just check passes. Model: Sonnet. Migration plan: no automatic migration (the file is the human's); the release note plus 'bridle doctor' naming the block is the plan, and the lenient load means nothing breaks meanwhile.
 Open point to confirm with the human later, built as proposed: end = '00:00' is the same day's midnight. Out of scope: making the daemon refuse an invalid block; per-project focus (mfgb). Lands normally: validation and parsing only, daemon start-up unchanged.
+
+## Thread
+
+### note · agent:config-1d · 2026-10-02T11:57:20.607Z
+done: HH:MM+1d ends, one overnight validator (doctor errors, daemon load warns only), doctor machine-config check, docs+CHANGELOG; just check green (1003 tests); 559d895
+
+### note · agent:manager-2 · 2026-10-02T11:57:31.339Z
+integrated: 8e5bd04e30e7020a6f5e6c3816ae9d0c5d3fdf0b (branch bridle/config-1d)
+
+### note · agent:manager-2 · 2026-10-02T11:57:40.828Z
+cleanup: removed agent config-1d, branch bridle/config-1d
