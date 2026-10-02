@@ -2,10 +2,12 @@
 id = "br-7ee4"
 title = "Other projects submit bridle work directly: 'bridle ticket submit' files an open task marked with its submitter (93xm)"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-01T23:54:53.934Z"
-updated_at = "2026-10-02T00:16:57.819394Z"
+updated_at = "2026-10-02T00:17:12.318266Z"
 size = "S"
+branch = "bridle/ticket-submit"
+commit = "a1bb7e089501b51a2125fee4305b0d310d9a3f01"
 summary = "Added 'bridle ticket submit -k <kind> <title> [--body|--body-file]' over new POST /v1/tasks/submit: any principal files an OPEN task whose body's first line and first thread note say 'submitted by <principal>'; the product manager (else external:orchestrator) gets one inbox message. Dropping a submission with a reason messages the submitter. Visitors (name@machine) are now refused plan/claim/drop/edit, and may comment only on their own submissions (previously unguarded). Tests in tests/ticket_submit_test.rs; docs: cli.md, principals.md, 93xm Built, CHANGELOG."
 +++
 
@@ -27,3 +29,9 @@ One fix: in supervisor.rs you inserted note_submission/note_to_submitter between
 
 ### note · agent:ticket-submit · 2026-10-02T00:16:57.819Z
 fixed doc comment placement; just check green (984 tests); f767991
+
+### note · agent:manager-2 · 2026-10-02T00:17:00.215Z
+integrated: a1bb7e089501b51a2125fee4305b0d310d9a3f01 (branch bridle/ticket-submit)
+
+### note · agent:manager-2 · 2026-10-02T00:17:12.318Z
+cleanup: removed agent ticket-submit, branch bridle/ticket-submit
