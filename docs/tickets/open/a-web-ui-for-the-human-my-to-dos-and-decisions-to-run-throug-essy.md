@@ -64,3 +64,9 @@ The gaps:
   a token too; only loopback reads go without one.
 - **Where the UI runs:** one process (e.g. `bridle ui`, or served by one daemon) that fans out to
   every daemon, rather than a UI per daemon. To settle in the design and the prototypes.
+
+## Design
+
+[[docs/design/human-web-ui|The human web UI]] (design only, for the human's review): screens, fan-out across
+projects and machines, a separate `bridle ui` process, loopback-first auth, a server-rendered
+stack, build tasks.

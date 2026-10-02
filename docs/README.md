@@ -99,6 +99,7 @@ done
 | incidents (a task kind plus a broadcast notice) | `docs/design/agent-host/incidents.md` |
 | permissions, tools | `docs/design/agent-host/principals.md` |
 | email bridge (`bridle mail run`) | `docs/design/mail.md` |
+| human web UI (design, not built) | `docs/design/human-web-ui.md` |
 
 ## Releases
 
