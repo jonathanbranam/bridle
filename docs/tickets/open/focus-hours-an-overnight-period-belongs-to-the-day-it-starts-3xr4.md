@@ -74,3 +74,21 @@ start = "23:30"
 end   = "06:00"
 mode  = "quiet"
 ```
+
+## Follow-up (the human, 2026-10-02)
+
+The human, verbatim (via the advisor), after asking whether the fix had landed:
+
+> It's likely fine as-is, but I would also accept a solution where the end has to be explicit such
+> as +1 or +1d or something.
+>
+> Also whoever reads these blocks should union them all together and use that result to indicate
+> how long the block runs. So that way any contiguous blocks would be clearly described and
+> accurately.
+
+The advisor checked br-14d6 as landed (761d545). The implicit rule (`end < start` means the next
+day) stays; the human accepts it, so an explicit `+1d` isn't needed. `focus_end`
+(`crates/bridle-daemon/src/config.rs`) gives the union's end. From the matching period it follows
+any period of the same mode that matches at each end instant, so touching and overlapping blocks,
+on any day, report one end (capped at 7 days). Blocks of different modes (`quiet` then `locked`)
+aren't joined. The notice still names only the first block (`QUIET HOURS (<name>)`).
