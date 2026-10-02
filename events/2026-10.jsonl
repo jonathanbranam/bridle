@@ -204,3 +204,4 @@
 {"actor":"agent:pm-1","at":"2026-10-02T23:36:20.362318Z","queue":"reprioritized"}
 {"actor":"human","at":"2026-10-02T23:44:04.679Z","from":"","task":"br-96cc","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-02T23:44:06.854894Z","from":"open","task":"br-96cc","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-02T23:44:08.310458Z","queue":"reprioritized"}
