@@ -639,17 +639,19 @@ impl SchedulePeriod {
     }
 }
 
-/// Whether `now`'s weekday is in `days` and its time-of-day is within `start..end`, a range
-/// that may cross midnight. Shared by `[[budget.schedule]]` and `[[focus]]`.
+/// Whether `now` is within a period, which belongs to the day it starts: `start < end` is one
+/// day; `end < start` runs from `start` on a listed day to `end` the next day, so the part after
+/// midnight is matched against the previous day's `days`. `start == end` is empty. Shared by
+/// `[[budget.schedule]]` and `[[focus]]`.
 fn in_window(days: &[Weekday], start: NaiveTime, end: NaiveTime, now: DateTime<Local>) -> bool {
-    if !days.contains(&now.weekday()) {
-        return false;
-    }
     let t = now.time();
-    if start <= end {
-        t >= start && t < end
+    if start < end {
+        days.contains(&now.weekday()) && t >= start && t < end
+    } else if start > end {
+        (t >= start && days.contains(&now.weekday()))
+            || (t < end && days.contains(&now.weekday().pred()))
     } else {
-        t >= start || t < end
+        false
     }
 }
 
@@ -674,6 +676,50 @@ pub struct FocusPeriod {
 impl FocusPeriod {
     pub fn matches(&self, now: DateTime<Local>) -> bool {
         in_window(&self.days, self.start, self.end, now)
+    }
+
+    /// The instant the matching run containing `now` ends: this period's own end.
+    fn end_instant(&self, now: DateTime<Local>) -> Option<DateTime<Local>> {
+        let mut date = now.date_naive();
+        if self.start > self.end && now.time() >= self.start {
+            date = date.succ_opt()?;
+        }
+        date.and_time(self.end).and_local_timezone(Local).earliest()
+    }
+}
+
+/// How far `focus_end` follows touching or overlapping periods before giving up.
+const FOCUS_FOLLOW_CAP_DAYS: i64 = 7;
+
+/// When quiet (or locked) actually ends: starting from `first`, which matches `now`, follow
+/// periods of the same mode that match at the end instant to the last end. The flag is true when
+/// the follow hit the 7-day cap (periods covering the whole week), and the end is then `now`
+/// plus the cap.
+pub fn focus_end(
+    periods: &[FocusPeriod],
+    first: &FocusPeriod,
+    now: DateTime<Local>,
+) -> (DateTime<Local>, bool) {
+    let cap = now + chrono::Duration::days(FOCUS_FOLLOW_CAP_DAYS);
+    let mut at = now;
+    let mut period = first;
+    loop {
+        let Some(end) = period.end_instant(at) else {
+            return (at, false);
+        };
+        if end >= cap {
+            return (cap, true);
+        }
+        match periods
+            .iter()
+            .find(|p| p.mode == first.mode && p.matches(end))
+        {
+            Some(next) => {
+                at = end;
+                period = next;
+            }
+            None => return (end, false),
+        }
     }
 }
 
@@ -3023,6 +3069,138 @@ mod tests {
         "#;
         let err = Config::parse(toml).expect_err("raising the ceiling should fail");
         assert!(matches!(err, ConfigError::ThresholdTooHigh { .. }), "{err}");
+    }
+
+    /// 2024-01-01 is a Monday; `d` is the day of January.
+    fn jan(d: u32, h: u32, m: u32) -> DateTime<Local> {
+        use chrono::{NaiveDate, TimeZone};
+        Local
+            .from_local_datetime(
+                &NaiveDate::from_ymd_opt(2024, 1, d)
+                    .expect("date")
+                    .and_hms_opt(h, m, 0)
+                    .expect("time"),
+            )
+            .single()
+            .expect("unambiguous")
+    }
+
+    fn hm(h: u32, m: u32) -> NaiveTime {
+        NaiveTime::from_hms_opt(h, m, 0).expect("time")
+    }
+
+    fn focus(days: Vec<Weekday>, start: NaiveTime, end: NaiveTime, mode: FocusMode) -> FocusPeriod {
+        FocusPeriod {
+            name: "f".to_string(),
+            days,
+            start,
+            end,
+            mode,
+        }
+    }
+
+    fn sched(days: Vec<Weekday>, start: NaiveTime, end: NaiveTime) -> SchedulePeriod {
+        SchedulePeriod {
+            name: "s".to_string(),
+            days,
+            start: Some(start),
+            end: Some(end),
+            hold_at: 85.0,
+            wind_down_at: 92.0,
+            stop_at: 95.0,
+            max_workers: None,
+        }
+    }
+
+    #[test]
+    fn overnight_period_belongs_to_the_day_it_starts() {
+        // Sunday 23:00 to 07:00; Monday is not listed. Sun is Dec 31 2023, Mon Jan 1.
+        let sun = vec![Weekday::Sun];
+        let f = focus(sun.clone(), hm(23, 0), hm(7, 0), FocusMode::Quiet);
+        let s = sched(sun, hm(23, 0), hm(7, 0));
+        let sun_23 = jan(1, 23, 0) - chrono::Duration::days(1);
+        let mon_03 = jan(1, 3, 0);
+        for (name, got) in [
+            ("focus sun 23:00", f.matches(sun_23)),
+            ("focus mon 03:00", f.matches(mon_03)),
+            ("sched sun 23:00", s.matches(sun_23)),
+            ("sched mon 03:00", s.matches(mon_03)),
+        ] {
+            assert!(got, "{name}");
+        }
+        // Monday 23:00 and Tuesday 03:00: Monday isn't a listed start day.
+        assert!(!f.matches(jan(1, 23, 0)) && !s.matches(jan(1, 23, 0)));
+        assert!(!f.matches(jan(2, 3, 0)) && !s.matches(jan(2, 3, 0)));
+        // Listing Monday too as a start day does not stop Sunday's night covering Monday morning.
+        let both = focus(
+            vec![Weekday::Mon, Weekday::Sun],
+            hm(23, 0),
+            hm(7, 0),
+            FocusMode::Quiet,
+        );
+        assert!(both.matches(mon_03) && both.matches(jan(2, 3, 0)));
+        // The end is exclusive.
+        assert!(!f.matches(jan(1, 7, 0)));
+    }
+
+    #[test]
+    fn same_day_and_empty_periods_are_unchanged() {
+        let mon = vec![Weekday::Mon];
+        let f = focus(mon.clone(), hm(9, 0), hm(17, 0), FocusMode::Quiet);
+        let s = sched(mon.clone(), hm(9, 0), hm(17, 0));
+        assert!(f.matches(jan(1, 9, 0)) && s.matches(jan(1, 16, 59)));
+        assert!(!f.matches(jan(1, 17, 0)) && !s.matches(jan(1, 8, 59)));
+        assert!(!f.matches(jan(2, 10, 0)) && !s.matches(jan(2, 10, 0)));
+        // start == end never matched, and still doesn't.
+        let f = focus(mon.clone(), hm(9, 0), hm(9, 0), FocusMode::Quiet);
+        let s = sched(mon, hm(9, 0), hm(9, 0));
+        assert!(!f.matches(jan(1, 9, 0)) && !s.matches(jan(1, 12, 0)));
+    }
+
+    #[test]
+    fn focus_end_follows_touching_and_overlapping_periods() {
+        let all = vec![
+            Weekday::Mon,
+            Weekday::Tue,
+            Weekday::Wed,
+            Weekday::Thu,
+            Weekday::Fri,
+            Weekday::Sat,
+            Weekday::Sun,
+        ];
+        let evening = focus(all.clone(), hm(21, 30), hm(0, 0), FocusMode::Quiet);
+        let night = focus(all.clone(), hm(0, 0), hm(6, 0), FocusMode::Quiet);
+        let periods = [evening.clone(), night.clone()];
+        let (end, capped) = focus_end(&periods, &evening, jan(1, 22, 0));
+        assert_eq!((end, capped), (jan(2, 6, 0), false));
+        // Overlapping: the second starts before the first ends and ends later.
+        let a = focus(all.clone(), hm(22, 0), hm(1, 0), FocusMode::Quiet);
+        let b = focus(all.clone(), hm(23, 0), hm(5, 0), FocusMode::Quiet);
+        let (end, _) = focus_end(&[a.clone(), b], &a, jan(1, 22, 30));
+        assert_eq!(end, jan(2, 5, 0));
+        // A lone period, and a period of another mode, aren't followed.
+        let locked = focus(all, hm(0, 0), hm(6, 0), FocusMode::Locked);
+        let (end, _) = focus_end(&[evening.clone(), locked], &evening, jan(1, 22, 0));
+        assert_eq!(end, jan(2, 0, 0));
+    }
+
+    #[test]
+    fn focus_end_terminates_when_periods_cover_the_whole_week() {
+        let all = vec![
+            Weekday::Mon,
+            Weekday::Tue,
+            Weekday::Wed,
+            Weekday::Thu,
+            Weekday::Fri,
+            Weekday::Sat,
+            Weekday::Sun,
+        ];
+        let day = focus(all.clone(), hm(0, 0), hm(12, 0), FocusMode::Quiet);
+        let pm = focus(all, hm(12, 0), hm(0, 0), FocusMode::Quiet);
+        let now = jan(1, 1, 0);
+        let (end, capped) = focus_end(&[day.clone(), pm], &day, now);
+        assert!(capped);
+        assert_eq!(end, now + chrono::Duration::days(7));
     }
 
     #[test]

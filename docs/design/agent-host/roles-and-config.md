@@ -176,8 +176,14 @@ Also read from `.bridle/config.toml` (defaults in parentheses; each is documente
 
 Ticket cvaq. `[[focus]]` periods in the machine `~/.bridle/config.toml` keep the human on their
 real work. Same shape as `[[budget.schedule]]` (`days` a list or `"all"`, `start`/`end` as
-host-local `HH:MM`, a range that may cross midnight — when it does, the part after midnight is matched
-against the **next day's** `days` entry), plus `name` and `mode`:
+host-local `HH:MM`), plus `name` and `mode`. A period belongs to the day it starts: with
+`start < end` it is that day; with `end < start` it runs from `start` on a listed day to `end` the
+**next** day, whatever that day is (so the part after midnight is matched against the previous
+day's `days`; `sun` 23:00–07:00 covers Monday morning even if `mon` isn't listed). `start == end`
+is empty. `[[budget.schedule]]` uses the same rule. The end a prompt, lock message or advisor
+refusal reports is when quiet actually ends: periods of the same mode that touch or overlap are
+followed to the last end (21:30–00:00 then 00:00–06:00 reports 6:00 AM), capped at 7 days when
+periods cover the whole week.
 
 ```toml
 [[focus]]
@@ -187,18 +193,11 @@ start = "08:00"
 end   = "18:00"
 mode  = "quiet"          # default; "locked" blocks prompts (see below)
 
-# overnight example: a range crossing midnight needs two blocks
+# overnight example: one block covers the night (Sunday 21:30 to Monday 06:00, ...)
 [[focus]]
 name   = "sleep"
 days   = ["sun", "mon", "tue", "wed", "thu"]
 start  = "21:30"
-end    = "00:00"                                     # covers 21:30–23:59 (midnight wraps to next day)
-mode   = "quiet"
-
-[[focus]]
-name   = "sleep"
-days   = ["mon", "tue", "wed", "thu", "fri"]
-start  = "00:00"
 end    = "06:00"
 mode   = "quiet"
 ```

@@ -6,7 +6,7 @@
 use std::io::Write as _;
 use std::path::Path;
 
-use bridle_daemon::config::{FocusMode, FocusPeriod, focus_opted_out, focus_periods};
+use bridle_daemon::config::{FocusMode, FocusPeriod, focus_end, focus_opted_out, focus_periods};
 use bridle_daemon::focus::{locked_period, read_override};
 use chrono::{DateTime, Local, Utc};
 
@@ -49,7 +49,7 @@ pub fn gate(home: &Path, repo: &Path, now: DateTime<Local>) -> Option<String> {
     }
     // Locked blocks every prompt (an active override lifts it, inside `locked_period`).
     if let Some(p) = locked_period(home, now) {
-        return Some(block_output(&p));
+        return Some(block_output(&end_text(&periods, &p, now)));
     }
     let period = periods
         .iter()
@@ -64,7 +64,10 @@ pub fn gate(home: &Path, repo: &Path, now: DateTime<Local>) -> Option<String> {
     }
     let _ = std::fs::create_dir_all(home);
     let _ = std::fs::write(&state, format!("{} {}\n", now.timestamp(), period.name));
-    Some(hook_output(&nudge_text(period)))
+    Some(hook_output(&nudge_text(
+        period,
+        &end_text(&periods, period, now),
+    )))
 }
 
 /// Due on the first prompt of a period (no record, or the record is of another period) and
@@ -79,7 +82,7 @@ fn nudge_due(last: Option<&str>, period: &FocusPeriod, now: i64) -> bool {
     name != period.name || !(0..NUDGE_EVERY_SECS).contains(&(now - secs))
 }
 
-fn nudge_text(period: &FocusPeriod) -> String {
+fn nudge_text(period: &FocusPeriod, end: &str) -> String {
     format!(
         "QUIET HOURS ({name}) until {end} ET. Hard limits for this reply: at most 3 sentences or \
          60 words. The first sentence nudges the human back to their real work. No tool calls \
@@ -88,16 +91,27 @@ fn nudge_text(period: &FocusPeriod) -> String {
          single bridle message to yourself if truly needed. Ask no follow-up questions unless the \
          human asked for something that cannot proceed without one.",
         name = period.name,
-        end = period.end.format("%-I:%M %p"),
+        end = end,
     )
 }
 
-fn block_output(period: &FocusPeriod) -> String {
+/// The time quiet actually ends, following periods that touch or overlap; says so when the
+/// follow hit its 7-day cap.
+fn end_text(periods: &[FocusPeriod], period: &FocusPeriod, now: DateTime<Local>) -> String {
+    let (end, capped) = focus_end(periods, period, now);
+    let t = end.format("%-I:%M %p");
+    if capped {
+        format!("{t} (capped at 7 days: periods cover the whole week)")
+    } else {
+        t.to_string()
+    }
+}
+
+fn block_output(end: &str) -> String {
     serde_json::json!({
         "decision": "block",
         "reason": format!(
-            "Locked until {}. Email bridle@dev.branam.us if it matters.",
-            period.end.format("%-I:%M %p"),
+            "Locked until {end}. Email bridle@dev.branam.us if it matters.",
         ),
     })
     .to_string()
@@ -120,7 +134,7 @@ pub fn refuse_advisor_if_locked(home: &Path, now: DateTime<Local>) -> Result<(),
             "focus hours ({}) are locked until {}: no advisors. Email bridle@dev.branam.us if it \
              matters.",
             p.name,
-            p.end.format("%-I:%M %p"),
+            end_text(&focus_periods(home).unwrap_or_default(), &p, now),
         )),
         None => Ok(()),
     }
