@@ -657,6 +657,7 @@ dependencies = [
  "anyhow",
  "bridle-api",
  "bridle-daemon",
+ "bridle-gateway",
  "bridle-mail",
  "bridle-spec",
  "bridle-tui",
@@ -730,6 +731,22 @@ dependencies = [
  "toml",
  "tracing",
  "uuid",
+]
+
+[[package]]
+name = "bridle-gateway"
+version = "0.4.0"
+dependencies = [
+ "axum",
+ "bridle-api",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.21",
+ "tokio",
+ "toml",
+ "tracing",
 ]
 
 [[package]]

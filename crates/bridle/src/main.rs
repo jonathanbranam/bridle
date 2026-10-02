@@ -8,6 +8,7 @@ mod commands;
 mod doctor;
 mod error;
 mod focus;
+mod gateway;
 mod goals;
 mod init;
 mod launchd;

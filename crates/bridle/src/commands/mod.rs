@@ -138,6 +138,7 @@ pub async fn run(mut cli: Cli) -> Result<(), CliError> {
     let cli = Cli { command, ..cli };
     match &cli.command {
         Command::Serve(args) => serve::run(&cli, args).await,
+        Command::Gateway => crate::gateway::run().await,
         Command::StopDaemon => stop_daemon(&cli).await,
         Command::Restart(args) => restart(&cli, args.wait, args.upgrade).await,
         Command::Doctor(args) => crate::doctor::run(&cli, args),

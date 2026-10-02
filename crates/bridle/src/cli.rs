@@ -45,6 +45,8 @@ pub enum Command {
     /// Run the daemon.
     #[command(hide = true)]
     Serve(ServeArgs),
+    /// Run the gateway: the human web UI's API (`[gateway]` in ~/.bridle/config.toml).
+    Gateway,
     /// Ask the daemon to shut down gracefully.
     #[command(hide = true)]
     StopDaemon,
