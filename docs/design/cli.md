@@ -478,7 +478,9 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   each printed `ok`/`warn`/`FAIL` with a one-line fix (`--json`: the list). Git repo; the
   integration branch exists (the g3ck failure mode); `.bridle/config.toml` loads (the
   config loader's own error text); files it references exist (role `system_prompt`, `workflow`,
-  packs, component `docs`); every role has a prompt (warn); `.gitignore` covers
+  packs, component `docs`); the machine `~/.bridle/config.toml` (a missing file is fine): each
+  `[[focus]]` and `[[budget.schedule]]` block whose end is before its start without `+1d` is a
+  failure naming the block and the fix; every role has a prompt (warn); `.gitignore` covers
   `.bridle/cache/`, `bridle.db` and `daemon.json` (warn); `bridle/state` exists once a
   `bridle.db` does (warn); `[ports]` range sane; git >= 2.38; `claude` on PATH; `gh` on PATH
   when `[ci] github` is on. Exits 1 if any check fails. It never fixes anything and does not

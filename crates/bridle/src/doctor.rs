@@ -157,11 +157,31 @@ pub fn local_checks(repo: &Path, home: Option<&Path>) -> (Vec<Check>, Option<Con
         out.push(state_branch_check(repo));
     }
 
+    out.push(machine_config_check(home));
+
     if let Some(config) = &config {
         out.extend(config_file_checks(repo, config));
         out.push(ports_check(config));
     }
     (out, config)
+}
+
+/// `~/.bridle/config.toml`: each `[[focus]]` / `[[budget.schedule]]` block whose overnight end
+/// lacks `+1d` is a failure with its fix. The daemon only warns about these; doctor is where
+/// they're errors. A missing file is fine.
+fn machine_config_check(home: Option<&Path>) -> Check {
+    let home = home
+        .map(Path::to_path_buf)
+        .unwrap_or_else(bridle_api::discovery::bridle_home);
+    match bridle_daemon::config::machine_config_problems(&home) {
+        Ok(p) if p.is_empty() => Check::ok("machine config", "config.toml blocks are valid"),
+        Ok(p) => Check::fail(
+            "machine config",
+            p.join("; "),
+            "edit the block(s) in ~/.bridle/config.toml as named",
+        ),
+        Err(e) => Check::fail("machine config", e.to_string(), "fix ~/.bridle/config.toml"),
+    }
 }
 
 fn gitignore_check(repo: &Path) -> Option<Check> {
@@ -413,6 +433,62 @@ mod tests {
         );
         assert_eq!(get(&checks, "integration branch").status, Status::Ok);
         assert_eq!(get(&checks, ".gitignore").status, Status::Ok);
+    }
+
+    fn machine_check(toml: Option<&str>) -> Check {
+        let d = repo(Some("[commands]\ncheck = \"just check\"\n"));
+        let home = tempfile::tempdir().expect("home");
+        if let Some(t) = toml {
+            std::fs::write(home.path().join("config.toml"), t).expect("write");
+        }
+        let (checks, _) = local_checks(d.path(), Some(home.path()));
+        checks
+            .into_iter()
+            .find(|c| c.name == "machine config")
+            .expect("check present")
+    }
+
+    const BLOCKS: &str = r#"
+[[focus]]
+name = "evening"
+days = "all"
+start = "21:30"
+end = "00:00"
+
+[[budget.schedule]]
+name = "night"
+days = "all"
+start = "23:00"
+end = "08:00"
+hold_at = 70
+wind_down_at = 80
+stop_at = 90
+
+[[budget.schedule]]
+name = "preset"
+hold_at = 70
+wind_down_at = 80
+stop_at = 90
+"#;
+
+    #[test]
+    fn machine_config_names_each_bad_block_with_its_fix() {
+        let c = machine_check(Some(BLOCKS));
+        assert_eq!(c.status, Status::Fail);
+        assert!(
+            c.detail
+                .contains("night: end 08:00 is before start 23:00; write \"08:00+1d\""),
+            "{}",
+            c.detail
+        );
+        assert_eq!(c.detail.matches("before start").count(), 1, "{}", c.detail);
+    }
+
+    #[test]
+    fn machine_config_passes_when_fixed_or_missing() {
+        let fixed = BLOCKS.replace("\"08:00\"", "\"08:00+1d\"");
+        assert_eq!(machine_check(Some(&fixed)).status, Status::Ok);
+        assert_eq!(machine_check(None).status, Status::Ok);
     }
 
     #[test]

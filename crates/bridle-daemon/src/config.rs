@@ -765,6 +765,7 @@ impl RawFocusPeriod {
                 });
             }
         };
+        warn_overnight(&self.name, &self.start, &self.end);
         Ok(FocusPeriod {
             start: parse_time_of_day(&self.start, &self.name)?,
             end: parse_time_of_day(&self.end, &self.name)?,
@@ -1884,11 +1885,69 @@ fn parse_weekday(s: &str, period_name: &str) -> Result<Weekday, ConfigError> {
     }
 }
 
+/// `HH:MM`, or `HH:MM+1d` for an end on the day after the start day. The suffix doesn't change
+/// the parsed time: an end before its start already means the next day when matching, and the
+/// suffix is what `overnight_problem` asks for.
 fn parse_time_of_day(s: &str, period_name: &str) -> Result<NaiveTime, ConfigError> {
+    let s = s.strip_suffix("+1d").unwrap_or(s);
     NaiveTime::parse_from_str(s, "%H:%M").map_err(|_| ConfigError::BadSchedule {
         name: period_name.to_string(),
         reason: format!("invalid time {s:?}: expected HH:MM"),
     })
+}
+
+/// What is wrong with a period's `start`/`end` as written, with the fix, or `None`. An end
+/// before its start must say `+1d` (`00:00` is the midnight ending the start day, so it needs
+/// none); `+1d` on an end that isn't before the start can't mean the next day's earlier time.
+/// Unparseable times are left to `parse_time_of_day`. Called by `bridle doctor` as an error and
+/// by the loaders as a warning only: a surprising block must never stop the daemon.
+fn overnight_problem(name: &str, start: &str, end: &str) -> Option<String> {
+    let plus = end.ends_with("+1d");
+    let end_t = parse_time_of_day(end, name).ok()?;
+    let start_t = parse_time_of_day(start, name).ok()?;
+    let end_s = end.strip_suffix("+1d").unwrap_or(end);
+    if plus && end_t >= start_t {
+        Some(format!(
+            "{name}: end {end_s}+1d is not before start {start}; drop the \"+1d\" (or make the end earlier than the start)"
+        ))
+    } else if !plus && end_t < start_t && end_t != NaiveTime::MIN {
+        Some(format!(
+            "{name}: end {end} is before start {start}; write \"{end}+1d\""
+        ))
+    } else {
+        None
+    }
+}
+
+fn warn_overnight(name: &str, start: &str, end: &str) {
+    if let Some(problem) = overnight_problem(name, start, end) {
+        tracing::warn!("{problem} (read as the next day; `bridle doctor` reports this)");
+    }
+}
+
+/// Every overnight problem in `<home>/config.toml`'s `[[focus]]` and `[[budget.schedule]]`
+/// blocks, for `bridle doctor`. Empty when the file is absent.
+pub fn machine_config_problems(home: &Path) -> Result<Vec<String>, ConfigError> {
+    let path = home.join("config.toml");
+    let text = match std::fs::read_to_string(&path) {
+        Ok(t) => t,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
+        Err(source) => return Err(ConfigError::Read { path, source }),
+    };
+    let raw: RawConfig = toml::from_str(&text).map_err(|source| ConfigError::Parse {
+        path: path.clone(),
+        source: Box::new(source),
+    })?;
+    let mut out = Vec::new();
+    for f in raw.focus.iter().flatten() {
+        out.extend(overnight_problem(&f.name, &f.start, &f.end));
+    }
+    for p in raw.budget.iter().flat_map(|b| b.schedule.iter().flatten()) {
+        if let (Some(s), Some(e)) = (&p.start, &p.end) {
+            out.extend(overnight_problem(&p.name, s, e));
+        }
+    }
+    Ok(out)
 }
 
 /// Parses "10m"-style durations: an integer followed by `s`, `m` or `h`.
@@ -2354,6 +2413,9 @@ impl RawSchedulePeriod {
                 .map(|d| parse_weekday(d, &self.name))
                 .collect::<Result<Vec<_>, _>>()?,
         };
+        if let (Some(s), Some(e)) = (&start, &end) {
+            warn_overnight(&self.name, s, e);
+        }
         let start = start
             .map(|t| parse_time_of_day(&t, &self.name))
             .transpose()?;
@@ -3110,6 +3172,55 @@ mod tests {
             stop_at: 95.0,
             max_workers: None,
         }
+    }
+
+    const NIGHT: &str = r#"
+        [[budget.schedule]]
+        name = "night"
+        days = "all"
+        start = "23:00"
+        end = "END"
+        hold_at = 70
+        wind_down_at = 80
+        stop_at = 90
+    "#;
+
+    #[test]
+    fn plus_1d_end_parses_and_matches_the_morning_after() {
+        let cfg = Config::parse(&NIGHT.replace("END", "08:00+1d")).expect("parses");
+        let p = &cfg.budget.schedule[0];
+        assert_eq!(p.end, Some(hm(8, 0)));
+        assert!(p.matches(jan(2, 3, 0)) && !p.matches(jan(2, 9, 0)));
+        let raw = RawFocusPeriod {
+            name: "f".into(),
+            days: RawDays::All("all".into()),
+            start: "23:00".into(),
+            end: "08:00+1d".into(),
+            mode: None,
+        };
+        let f = raw.into_period().expect("focus parses");
+        assert!(f.matches(jan(2, 3, 0)) && !f.matches(jan(2, 9, 0)));
+    }
+
+    #[test]
+    fn overnight_end_without_plus_1d_is_a_validator_error_but_still_loads() {
+        let msg = overnight_problem("night", "23:00", "08:00").expect("problem");
+        assert_eq!(
+            msg,
+            "night: end 08:00 is before start 23:00; write \"08:00+1d\""
+        );
+        // Daemon load stays lenient: the 3xr4 next-day meaning, only a warning.
+        let cfg = Config::parse(&NIGHT.replace("END", "08:00")).expect("still loads");
+        assert!(cfg.budget.schedule[0].matches(jan(2, 3, 0)));
+    }
+
+    #[test]
+    fn midnight_end_is_valid_and_start_equals_end_is_empty() {
+        assert_eq!(overnight_problem("e", "21:30", "00:00"), None);
+        assert_eq!(overnight_problem("e", "09:00", "09:00"), None);
+        assert!(overnight_problem("e", "09:00", "17:00+1d").is_some());
+        let s = sched(vec![Weekday::Mon], hm(9, 0), hm(9, 0));
+        assert!(!s.matches(jan(1, 9, 0)));
     }
 
     #[test]

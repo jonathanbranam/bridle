@@ -229,7 +229,7 @@ stop_at      = 95
   running elsewhere is a future ticket, not handled here.
 - **Resolution**: periods are walked in order; the first whose `days`
   includes today's host-local weekday and whose `start..end` window (which
-  may cross midnight, e.g. `23:00..07:00`) contains the current host-local
+  may cross midnight, e.g. `23:00..07:00`; write the end `07:00+1d`) contains the current host-local
   time wins. Its `hold_at`/`wind_down_at`/`stop_at` replace the `five_hour`
   entries in the thresholds above for that evaluation only. No match, or no
   `[[budget.schedule]]` at all, falls back to the plain `[budget]` thresholds

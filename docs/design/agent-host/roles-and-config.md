@@ -185,6 +185,14 @@ refusal reports is when quiet actually ends: periods of the same mode that touch
 followed to the last end (21:30–00:00 then 00:00–06:00 reports 6:00 AM), capped at 7 days when
 periods cover the whole week.
 
+An end before its start is written with `+1d` (`end = "06:00+1d"`: that time on the day after the
+start day). `end = "00:00"` is the midnight ending the start day and needs no `+1d`, so
+`21:30`–`00:00` is valid. The daemon is lenient on load: an end before the start without `+1d`
+still means the next day and only logs a warning, so a surprising block never stops the daemon or
+the budget governor. `bridle daemon doctor` is where it is an error (naming the block and the
+fix, e.g. `night: end 08:00 is before start 23:00; write "08:00+1d"`); run it after any change
+to `~/.bridle/config.toml`.
+
 ```toml
 [[focus]]
 name  = "work"
