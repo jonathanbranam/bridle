@@ -24,6 +24,41 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-03 12:09: the NUC's daemons restarted cleanly on Linux (a data point, no fault)
+
+- **What happened:** after the update below, the NUC's three daemons (meta-notes, notes,
+  dotfiles-local) restarted in place at 12:09, with the human's approval: same pids,
+  `/proc/<pid>/exe` the new binary with no `(deleted)`, the manager resumed (1 of 1). Reported by
+  the NUC orchestrator (m-3846 on bridle's daemon).
+- **Impact:** none. Recorded because the
+  [[restart-on-linux-execs-path-deleted-after-the-binary-is-repl-fpde|fpde]] fix held on a real
+  Linux restart.
+- **Cause:** n/a.
+- **Category:** `daemon`, `host`.
+- **Follow-up:** none.
+
+## 2026-10-03 ~12:00: the NUC's bridle drifted two days with nobody updating it
+
+- **What happened:** the NUC's `~/.cargo/bin/bridle` dated from 2026-10-01 16:23, and its checkout
+  `/srv/shared/work/bridle-work/bridle` (also the `workflow` path for meta-notes, notes and
+  dotfiles-local) was 108 commits behind `origin/main`. Found by the NUC orchestrator when the
+  human asked how the NUC gets updates (m-3841). Nobody owned pulling or building there, so the
+  NUC's daemons still sent the `all_idle` wake (removed in br-6c6a) and its `wait-for-wake` had no
+  `--timeout`, while the role docs moved on. Also: the NUC orchestrator's handover note named
+  `bridle wait-for-wake --project X` for the notes and dotfiles-local watchers; in the new binary
+  that alias defaults to 5 minutes, unlike `bridle orchestrator wait-for-wake --timeout`. The
+  watchers now use `bridle orchestrator wait-for-wake --project X --timeout 5400`. (The base
+  role text names only the `orchestrator` form; the short alias was only in the handover note.)
+- **Impact:** about two days of the NUC's agents running old behaviour against newer role docs.
+  No work lost.
+- **Cause:** the interim rule in
+  [[client-machines-stay-current-with-bridle-workflow-and-daemon-chvf|chvf]] (the NUC orchestrator
+  pulls and builds, the human approves the restart) needed someone to trigger it; nothing did.
+- **Category:** `coordination`, `host`.
+- **Follow-up:** resolved by the chvf interim rule: the NUC orchestrator pulled to 4bec8b6, ran
+  `just install` (3m 40s), and the human approved restarting the three daemons. The lasting fix is
+  chvf's release upgrades (br-88d4, br-751e), planned.
+
 ## 2026-10-03 01:59: a daemon restart ended the advisor's wait as a "timeout"
 
 - **What happened:** the advisor's `bridle agent wake external:advisor --timeout 5400`, started at
