@@ -4,7 +4,7 @@ title = "Supervise every interactive session like the orchestrator: context warn
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-03T21:19:06.442Z"
-updated_at = "2026-10-03T22:50:20.179774Z"
+updated_at = "2026-10-03T22:51:25.144179Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
 branch = "bridle/session-context"
@@ -28,3 +28,6 @@ done: [sessions] warn steps 150/200/250/300k for advisors+triage, warnings to se
 
 ### note · agent:manager-2 · 2026-10-03T22:50:20.179Z
 integrated: c769c0dc76d85bc217a42f9885aa046b90c8629a (branch bridle/session-context)
+
+### note · agent:manager-2 · 2026-10-03T22:51:25.144Z
+cleanup: removed agent session-context, branch bridle/session-context
