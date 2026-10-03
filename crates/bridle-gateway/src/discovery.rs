@@ -36,16 +36,23 @@ pub struct Projects {
 }
 
 /// A daemon to probe, before probing.
-struct Target {
-    project: String,
-    machine: Option<String>,
-    url: Option<String>,
+pub(crate) struct Target {
+    pub project: String,
+    pub machine: Option<String>,
+    pub url: Option<String>,
+    /// The daemon's workspace, known only for one on this machine; where its human token lives.
+    pub workspace: Option<String>,
     /// Set when the config alone says it can't be reached.
-    problem: Option<String>,
+    pub problem: Option<String>,
 }
 
 /// Discovers from this machine's registry and `~/.bridle/config.toml`, and probes.
 pub async fn discover() -> Projects {
+    probe_all(current_targets().await, PROBE_TIMEOUT).await
+}
+
+/// Every daemon this machine knows of, unprobed.
+pub(crate) async fn current_targets() -> Vec<Target> {
     let machines = match MachineMap::load(&bridle_home()) {
         Ok(m) => m,
         Err(e) => {
@@ -57,7 +64,7 @@ pub async fn discover() -> Projects {
     let registry = tokio::task::spawn_blocking(list_registry)
         .await
         .unwrap_or_default();
-    discover_from(&machines, registry, PROBE_TIMEOUT).await
+    targets(&machines, registry)
 }
 
 /// The injectable core: the same inputs `discover` reads, so a test needs no home directory.
@@ -66,9 +73,11 @@ pub async fn discover_from(
     registry: Vec<DaemonInfo>,
     timeout: Duration,
 ) -> Projects {
-    let probes = targets(machines, registry)
-        .into_iter()
-        .map(|t| probe(t, timeout));
+    probe_all(targets(machines, registry), timeout).await
+}
+
+async fn probe_all(targets: Vec<Target>, timeout: Duration) -> Projects {
+    let probes = targets.into_iter().map(|t| probe(t, timeout));
     let mut projects = futures::future::join_all(probes).await;
     projects.sort_by(|a, b| a.project.cmp(&b.project));
     Projects { projects }
@@ -83,6 +92,7 @@ fn targets(machines: &MachineMap, registry: Vec<DaemonInfo>) -> Vec<Target> {
                 project: d.project,
                 machine: machines.machine.name.clone(),
                 url: Some(d.url),
+                workspace: Some(d.workspace),
                 problem: None,
             },
         );
@@ -96,6 +106,7 @@ fn targets(machines: &MachineMap, registry: Vec<DaemonInfo>) -> Vec<Target> {
                         project: project.clone(),
                         machine: Some(remote.machine),
                         url: Some(remote.url),
+                        workspace: None,
                         problem: None,
                     },
                 );
@@ -106,6 +117,7 @@ fn targets(machines: &MachineMap, registry: Vec<DaemonInfo>) -> Vec<Target> {
                     project: project.clone(),
                     machine: Some(place.machine.clone()),
                     url: None,
+                    workspace: None,
                     problem: Some("no daemon is running for it".to_string()),
                 });
             }
@@ -116,6 +128,7 @@ fn targets(machines: &MachineMap, registry: Vec<DaemonInfo>) -> Vec<Target> {
                         project: project.clone(),
                         machine: Some(place.machine.clone()),
                         url: None,
+                        workspace: None,
                         problem: Some(e.to_string()),
                     },
                 );
@@ -131,6 +144,7 @@ async fn probe(target: Target, timeout: Duration) -> ProjectStatus {
         machine,
         url,
         problem,
+        ..
     } = target;
     let outcome = match (&url, problem) {
         (_, Some(problem)) => Err(problem),

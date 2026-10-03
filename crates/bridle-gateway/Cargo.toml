@@ -11,6 +11,7 @@ publish.workspace = true
 argon2 = "0.6.0"
 axum.workspace = true
 bridle-api.workspace = true
+chrono.workspace = true
 getrandom = "0.4"
 futures.workspace = true
 serde.workspace = true

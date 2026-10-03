@@ -4,6 +4,7 @@
 pub mod auth;
 pub mod config;
 pub mod discovery;
+pub mod items;
 pub mod types;
 pub mod ui;
 
@@ -31,6 +32,7 @@ pub fn router(login: Option<Login>, ui: UiConfig) -> Router {
     let protected = Router::new()
         .route("/session", get(auth::session))
         .route("/projects", get(projects))
+        .route("/items", get(items))
         .fallback(|| async { axum::http::StatusCode::NOT_FOUND })
         .layer(middleware::from_fn_with_state(
             auth.clone(),
@@ -57,6 +59,10 @@ fn health(ui: &UiConfig) -> Json<Value> {
 
 async fn projects() -> Json<discovery::Projects> {
     Json(discovery::discover().await)
+}
+
+async fn items() -> Json<items::Items> {
+    Json(items::items().await)
 }
 
 /// Binds the configured address; split from [`serve`] so a caller (and a test) can learn the
