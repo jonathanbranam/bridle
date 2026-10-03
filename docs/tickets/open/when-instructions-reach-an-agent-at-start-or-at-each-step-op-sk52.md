@@ -7,7 +7,7 @@ repos: [bridle]
 changes: []
 specs: []
 needs: []
-see: [vp9e, 34bw]
+see: [vp9e, 34bw, 7r2c]
 tasks: [br-b8ff]
 ---
 
@@ -134,3 +134,30 @@ it for now"; 34bw steps 1-3 go ahead as approved.
    actually happens today.
 
 Depends on vp9e (one kind of layered text) and 34bw step 1.
+
+## More from the human (2026-10-02)
+
+> So I'm not terribly worried about what the workers are doing today. I think we, I think we have
+> an idea. […] Yeah, and I agree they should be usable by anyone. OpenSpec uses skills, of course.
+> The the thing that it does that's unique is when you invoke a skill, it reads the files in the
+> repo, it reads the instructions, and it reads the template, and it reads um, the rules and
+> layers those things together. and then provides it in a structured prompt. It also tells the
+> agent, you know, um, it also defines a workflow, which steps come before which other steps, and
+> then it provides context. So um, I think those are all things that we need.
+
+So point 6 above (measure how much workers decide) is dropped. The product-manager naming point
+from the same message is [[the-product-manager-role-is-really-a-project-manager-who-hel-7r2c|7r2c]].
+
+What a step needs, per the human (all of it):
+
+| Piece | What it is | Layered? |
+|---|---|---|
+| Instructions | how to do this step | yes (OpenSpec: replace only) |
+| Rules | constraints for this step | yes, including `disable` |
+| Template | the document the step produces | yes |
+| Context | the repo files the step needs: the ticket, the specs it touches, the design | read at invocation |
+| Workflow | which steps come before which (ticket → design → specs → tasks → implement → archive), and which are done | defined in the layers |
+
+The skill is thin: it runs one bridle command (e.g. `bridle step design <ticket>`) that reads and
+layers all five, and prints them as one structured prompt. The resolution engine already exists
+(rules); this adds templates, step ordering and context gathering to it.
