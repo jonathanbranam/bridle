@@ -5,7 +5,7 @@
 //!
 //! The steps are `[sessions] warn` (150k, 200k, 250k, 300k): warn, plan a handover, the normal
 //! ceiling, the hard limit. Reaching a step emits `session.context` and messages the session and
-//! the human (through `external:triage`), once until the reading drops (/compact, /clear); a
+//! the human (through `external:aide`), once until the reading drops (/compact, /clear); a
 //! reading that jumps several steps announces only the highest. The human's override
 //! ([`Sessions::keep`]) is recorded and the next step asks again; the hard limit has none: it
 //! runs `bridle session restart` (a handover first, a fresh start if the note never comes).
@@ -24,7 +24,7 @@ use crate::events::Emitter;
 use crate::store::{NewMessage, RecipientKind, Store};
 
 /// The principal the human's warnings go to.
-const TRIAGE: &str = "external:triage";
+const AIDE: &str = "external:aide";
 
 /// The shared advisor principal: where a named advisor's mail goes when it isn't running.
 pub const ADVISOR: &str = "external:advisor";
@@ -348,12 +348,12 @@ impl Sessions {
                 format!("{id} is at {k}k tokens, the hard limit: it is being restarted."),
             ),
         };
-        // Triage's own session is the human's channel: one message, not two.
-        if id == "triage" {
-            self.tell(TRIAGE, format!("{session} {human}")).await;
+        // Aide's own session is the human's channel: one message, not two.
+        if id == "aide" {
+            self.tell(AIDE, format!("{session} {human}")).await;
         } else {
             self.tell(&format!("external:{id}"), session).await;
-            self.tell(TRIAGE, human).await;
+            self.tell(AIDE, human).await;
         }
         if r.step == 3 {
             self.force_restart(r);
@@ -392,7 +392,7 @@ impl Sessions {
                 }
             }
             let body = format!("Hard-limit restart of {identity}: {out}");
-            insert_note(&store, &emitter, TRIAGE, body).await;
+            insert_note(&store, &emitter, AIDE, body).await;
         });
     }
 
@@ -542,7 +542,7 @@ mod tests {
         assert_eq!(s.list()[0].tokens, Some(300));
         assert!(s.list()[0].last_activity.is_some());
         let to_session = notes_to(&store, "external:advisor/alice").await;
-        let to_human = notes_to(&store, TRIAGE).await;
+        let to_human = notes_to(&store, AIDE).await;
         assert_eq!((to_session.len(), to_human.len()), (1, 1));
         assert!(to_session[0].contains("normal ceiling"), "{to_session:?}");
         assert!(to_human[0].contains("bridle session keep advisor/alice"));
@@ -552,7 +552,7 @@ mod tests {
         write_context(&dir, "sess-1", 100);
         s.tick().await;
         assert_eq!(count().await, 2);
-        assert!(notes_to(&store, TRIAGE).await[1].contains("restart"));
+        assert!(notes_to(&store, AIDE).await[1].contains("restart"));
     }
 
     #[tokio::test]
@@ -601,7 +601,7 @@ mod tests {
         let to_session = notes_to(&store, "external:advisor/alice").await;
         assert!(to_session[0].contains("hard limit"), "{to_session:?}");
         for _ in 0..50 {
-            if notes_to(&store, TRIAGE).await.len() == 2 {
+            if notes_to(&store, AIDE).await.len() == 2 {
                 break;
             }
             tokio::time::sleep(std::time::Duration::from_millis(100)).await;
@@ -615,9 +615,9 @@ mod tests {
             ]
         );
         assert!(
-            notes_to(&store, TRIAGE).await[1].contains("restarted"),
+            notes_to(&store, AIDE).await[1].contains("restarted"),
             "{:?}",
-            notes_to(&store, TRIAGE).await
+            notes_to(&store, AIDE).await
         );
     }
 

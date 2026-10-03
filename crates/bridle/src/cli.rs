@@ -700,7 +700,7 @@ pub struct PrimeArgs {
 pub enum PrimeRoleArg {
     Orchestrator,
     Advisor,
-    Triage,
+    Aide,
     Worker,
     Planner,
     Prototyper,
@@ -1959,9 +1959,9 @@ pub enum SessionRole {
         /// The session's identifier as `bridle status` lists it.
         identifier: String,
     },
-    /// `bridle session triage [--project <p>] [claude args]`: the session that talks to the human
-    /// about the running system (`external:triage`, token under `[triage]`).
-    Triage {
+    /// `bridle session aide [--project <p>] [claude args]`: the session that talks to the human
+    /// about the running system (`external:aide`, token under `[aide]`).
+    Aide {
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
         claude_args: Vec<String>,
     },

@@ -212,13 +212,13 @@ reads each live session's `$BRIDLE_HOME/context/<id>` file and emits `session.co
 (`identity`, `session`, `tokens`, `threshold`, `step`) once per step reached (below), re-armed by
 a lower reading. Tokens per session show in `bridle status`
 with project, machine, uptime and last activity (the context file's mtime) and in
-`GET /v1/sessions`. `bridle session triage` registers the same way (identity `triage`). No
+`GET /v1/sessions`. `bridle session aide` registers the same way (identity `aide`). No
 wakes for advisors yet.
 
 **Context steps for every interactive session (jttf).** Not the orchestrator's thresholds: the
 human's, `[sessions] warn = ["150k", "200k", "250k", "300k"]` (four increasing counts; per role
-in `[sessions.advisor]` and `[sessions.triage]`). Reaching a step sends a `system` note to the
-session and one to the human, through `external:triage`, and asks again at every step; a reading
+in `[sessions.advisor]` and `[sessions.aide]`). Reaching a step sends a `system` note to the
+session and one to the human, through `external:aide`, and asks again at every step; a reading
 that jumps steps announces only the highest.
 
 | Step | Context | Session is told | Human is told |
@@ -233,8 +233,8 @@ that jumps steps announces only the highest.
 before the first step and at step 3. Restarting without a handover stays the human's choice
 (`session restart --fresh`) at any point. At step 3 the daemon runs `bridle session restart
 <identity>` itself (a handover first, up to the command's 10 minute wait; `--fresh` if the note
-never comes) in the repo, and tells triage the outcome, including "run this in a terminal" when
-the session has no pane. A registered `triage` session is the human's channel, so its own
+never comes) in the repo, and tells aide the outcome, including "run this in a terminal" when
+the session has no pane. A registered `aide` session is the human's channel, so its own
 warnings are one note. Rejected: percentage thresholds (the window size isn't known per session),
 and relaunching from the daemon without the CLI (the pane logic lives in the command).
 
@@ -249,11 +249,11 @@ its opening prompt and renames the note `.read`. A stale note is removed at the 
 restart. Not for the orchestrator (its own handover above); no crash restart (tabled).
 
 **Who talks to the human (r8kv).** The orchestrator session doesn't: it reaches the human only by
-messaging `external:triage` (`bridle session triage`, `workflow/base/roles/triage.md`), which
+messaging `external:aide` (`bridle session aide`, `workflow/base/roles/aide.md`), which
 reads the human's to-dos, the workforce's questions and `bridle status`, and relays the human's
 answers back, quoted. Advisors only talk, research and file tickets. The daemon's `system` notes
 and `question` wakes still go to `human` and `external:orchestrator` as before; moving them to
-triage is a later slice.
+aide is a later slice.
 
 **Handover done.** The orchestrator writes its state and runs `bridle handover done`
 (`POST /v1/orchestrator/handover`), which marks "handover done for this session". At any point,

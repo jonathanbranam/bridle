@@ -42,7 +42,7 @@ direct bridle's workforce on bridle itself. `bridle session orchestrator` starts
   Commit this session's entries with your handover.
 - **File tickets** by `docs/README.md` conventions; IDs use the alphabet
   `abcdefghjkmnpqrstuvwxyz23456789`.
-- **Advisors and triage**: the human starts them (`bridle session advisor <name>`, `bridle session triage`). You message `external:triage`, not the human.
+- **Advisors and aide**: the human starts them (`bridle session advisor <name>`, `bridle session aide`). You message `external:aide`, not the human.
 
 ### The human's standing decisions
 

@@ -1295,12 +1295,12 @@ pub type SessionSteps = [u64; 4];
 
 const DEFAULT_SESSION_STEPS: SessionSteps = [150_000, 200_000, 250_000, 300_000];
 
-/// `[sessions] warn` and the per-role `[sessions.advisor] warn` / `[sessions.triage] warn`.
+/// `[sessions] warn` and the per-role `[sessions.advisor] warn` / `[sessions.aide] warn`.
 #[derive(Debug, Clone, PartialEq)]
 pub struct SessionsConfig {
     pub warn: SessionSteps,
     pub advisor: Option<SessionSteps>,
-    pub triage: Option<SessionSteps>,
+    pub aide: Option<SessionSteps>,
 }
 
 impl Default for SessionsConfig {
@@ -1308,18 +1308,18 @@ impl Default for SessionsConfig {
         SessionsConfig {
             warn: DEFAULT_SESSION_STEPS,
             advisor: None,
-            triage: None,
+            aide: None,
         }
     }
 }
 
 impl SessionsConfig {
-    /// The steps for a session identity (`advisor`, `advisor/<name>`, `triage`).
+    /// The steps for a session identity (`advisor`, `advisor/<name>`, `aide`).
     pub fn steps_for(&self, identity: &str) -> SessionSteps {
         let role = identity.split('/').next().unwrap_or(identity);
         match role {
             "advisor" => self.advisor,
-            "triage" => self.triage,
+            "aide" => self.aide,
             _ => None,
         }
         .unwrap_or(self.warn)
@@ -1332,8 +1332,8 @@ impl SessionsConfig {
         if let Some(w) = raw.advisor.and_then(|r| r.warn) {
             self.advisor = Some(session_steps(&w)?);
         }
-        if let Some(w) = raw.triage.and_then(|r| r.warn) {
-            self.triage = Some(session_steps(&w)?);
+        if let Some(w) = raw.aide.and_then(|r| r.warn) {
+            self.aide = Some(session_steps(&w)?);
         }
         Ok(self)
     }
@@ -1362,7 +1362,7 @@ struct RawSessions {
     #[serde(default)]
     advisor: Option<RawSessionRole>,
     #[serde(default)]
-    triage: Option<RawSessionRole>,
+    aide: Option<RawSessionRole>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -3692,7 +3692,7 @@ mod tests {
         );
         let c = Config::parse(
             "[sessions]\nwarn = [\"100k\", \"150k\", 200000, \"1M\"]\n\
-             [sessions.triage]\nwarn = [1, 2, 3, 4]\n",
+             [sessions.aide]\nwarn = [1, 2, 3, 4]\n",
         )
         .unwrap()
         .sessions;
@@ -3700,7 +3700,7 @@ mod tests {
             c.steps_for("advisor"),
             [100_000, 150_000, 200_000, 1_000_000]
         );
-        assert_eq!(c.steps_for("triage"), [1, 2, 3, 4]);
+        assert_eq!(c.steps_for("aide"), [1, 2, 3, 4]);
         assert!(Config::parse("[sessions]\nwarn = [1, 2, 3]\n").is_err());
         assert!(Config::parse("[sessions]\nwarn = [1, 3, 2, 4]\n").is_err());
         assert!(Config::parse("[sessions]\nwarn = [0, 1, 2, 3]\n").is_err());

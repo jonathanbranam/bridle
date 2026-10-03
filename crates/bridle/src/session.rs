@@ -1,4 +1,4 @@
-//! `bridle session orchestrator|advisor|triage`: starts the role's `claude` session (ticket mrhe). Ports
+//! `bridle session orchestrator|advisor|aide`: starts the role's `claude` session (ticket mrhe). Ports
 //! `scripts/claude-orchestrator` and `scripts/claude-advisor`, which are now wrappers around it.
 //! No `exec`: bridle stays as the parent so the pid file can be removed and the exit recorded.
 
@@ -48,7 +48,7 @@ fn advisor_settings() -> String {
 // `pkill -f <pattern>` a worker runs (fx7x).
 const ORCHESTRATOR_PROMPT: &str = "Run `bridle prime orchestrator` and follow what it prints.";
 
-const TRIAGE_PROMPT: &str = "Run `bridle prime triage` and follow what it prints.";
+const AIDE_PROMPT: &str = "Run `bridle prime aide` and follow what it prints.";
 
 fn advisor_prompt(name: Option<&str>) -> String {
     let base = "Run `bridle prime advisor` and follow what it prints. Say hello to the human in one line, then wait.";
@@ -149,18 +149,18 @@ pub async fn run(cli: &Cli, role: &SessionRole) -> Result<(), CliError> {
             let args = claude_args(&advisor_settings(), &name, extra, &prompt);
             advisor(cli, &home, &project, adv, &args).await?
         }
-        SessionRole::Triage { claude_args: extra } => {
+        SessionRole::Aide { claude_args: extra } => {
             crate::focus::refuse_advisor_if_locked(&home, chrono::Local::now())?;
-            let name = session_name("triage", None, &project, &suffix);
-            let mut prompt = TRIAGE_PROMPT.to_string();
-            if let Some(path) = take_handover(&home, "triage") {
+            let name = session_name("aide", None, &project, &suffix);
+            let mut prompt = AIDE_PROMPT.to_string();
+            if let Some(path) = take_handover(&home, "aide") {
                 prompt = format!(
                     "{prompt} Your previous session left a handover note at {}: read it first.",
                     path.display()
                 );
             }
             let args = claude_args(&advisor_settings(), &name, extra, &prompt);
-            triage(cli, &project, &args).await?
+            aide(cli, &project, &args).await?
         }
         SessionRole::Note | SessionRole::Restart { .. } | SessionRole::Keep { .. } => {
             unreachable!("handled above")
@@ -260,15 +260,15 @@ fn how_ended(rc: i32) -> String {
     format!("exit {rc} (SIG{name})")
 }
 
-/// Triage is one session per project, signed `external:triage` through `BRIDLE_AS`. It is
+/// Aide is one session per project, signed `external:aide` through `BRIDLE_AS`. It is
 /// registered with the daemon like an advisor (context warnings, restart) but keeps no pid file.
-async fn triage(cli: &Cli, project: &str, args: &[String]) -> anyhow::Result<i32> {
+async fn aide(cli: &Cli, project: &str, args: &[String]) -> anyhow::Result<i32> {
     let pid = std::process::id().to_string();
-    crate::pane::tag_pane("triage");
-    register(cli, std::process::id() as i32, "triage", None).await;
+    crate::pane::tag_pane("aide");
+    register(cli, std::process::id() as i32, "aide", None).await;
     let rc = run_claude(
         &[
-            ("BRIDLE_AS", "triage"),
+            ("BRIDLE_AS", "aide"),
             ("BRIDLE_PROJECT", project),
             ("BRIDLE_SESSION_PID", pid.as_str()),
         ],
@@ -377,18 +377,18 @@ async fn note(cli: &Cli) {
     let Some(id) = id.filter(|s| !s.is_empty()) else {
         return;
     };
-    let identity = if std::env::var("BRIDLE_AS").is_ok_and(|a| a == "triage") {
-        "triage".to_string()
+    let identity = if std::env::var("BRIDLE_AS").is_ok_and(|a| a == "aide") {
+        "aide".to_string()
     } else {
         advisor_identity(std::env::var("BRIDLE_ADVISOR_NAME").ok().as_deref())
     };
     register(cli, pid, &identity, Some(id)).await;
 }
 
-/// A session as the human names it: `alice` is `advisor/alice`; `advisor`, `triage` and anything
+/// A session as the human names it: `alice` is `advisor/alice`; `advisor`, `aide` and anything
 /// with a `/` stand as they are.
 fn session_identity(identifier: &str) -> String {
-    if identifier.contains('/') || matches!(identifier, "advisor" | "triage") {
+    if identifier.contains('/') || matches!(identifier, "advisor" | "aide") {
         identifier.to_string()
     } else {
         format!("advisor/{identifier}")
@@ -441,8 +441,8 @@ fn relaunch_command(identity: &str, project: Option<&str>) -> String {
     if let Some(p) = project {
         c.push_str(&format!(" --project {p}"));
     }
-    if identity == "triage" {
-        c.push_str(" session triage");
+    if identity == "aide" {
+        c.push_str(" session aide");
         return c;
     }
     c.push_str(" session advisor");

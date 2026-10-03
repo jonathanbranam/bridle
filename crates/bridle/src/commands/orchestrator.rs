@@ -27,7 +27,7 @@ pub(super) async fn prime(cli: &Cli, args: &PrimeArgs) -> Result<(), CliError> {
     match args.role {
         PrimeRoleArg::Orchestrator => prime_orchestrator(cli).await,
         PrimeRoleArg::Advisor => prime_advisor(),
-        PrimeRoleArg::Triage => prime_triage(),
+        PrimeRoleArg::Aide => prime_aide(),
         PrimeRoleArg::Prototyper => prime_prototyper(),
         PrimeRoleArg::Worker => prime_scoped(cli, args, "worker", "worker").await,
         PrimeRoleArg::Planner => prime_scoped(cli, args, "product-manager", "planner").await,
@@ -137,10 +137,10 @@ fn prime_role_file(role: &str) -> Result<(), CliError> {
     Ok(())
 }
 
-/// The triage role's file from the resolved workflow, then the project's own
-/// `.bridle/roles/triage.md` when present. Local: the triage session's opening prompt.
-pub(super) fn prime_triage() -> Result<(), CliError> {
-    prime_role_file("triage")
+/// The aide role's file from the resolved workflow, then the project's own
+/// `.bridle/roles/aide.md` when present. Local: the aide session's opening prompt.
+pub(super) fn prime_aide() -> Result<(), CliError> {
+    prime_role_file("aide")
 }
 
 /// The prototyper's role file, then the project's own `.bridle/roles/prototyper.md`.
@@ -563,12 +563,12 @@ mod prime_tests {
     }
 
     #[test]
-    fn triage_prime_waits_as_triage_and_the_orchestrator_defers_to_it() {
-        let triage = include_str!("../../../../workflow/base/roles/triage.md");
-        assert!(triage.contains("bridle agent wake external:triage --timeout 5400"));
-        assert!(triage.contains("bridle task list --claimed-by human"));
+    fn aide_prime_waits_as_aide_and_the_orchestrator_defers_to_it() {
+        let aide = include_str!("../../../../workflow/base/roles/aide.md");
+        assert!(aide.contains("bridle agent wake external:aide --timeout 5400"));
+        assert!(aide.contains("bridle task list --claimed-by human"));
         let orch = include_str!("../../../../workflow/base/roles/orchestrator.md");
-        assert!(orch.contains("external:triage"));
+        assert!(orch.contains("external:aide"));
         assert!(!orch.contains("tell the human first thing"));
         let advisor = include_str!("../../../../workflow/base/roles/advisor.md");
         assert!(!advisor.contains("GET /v1/messages?to=human"));

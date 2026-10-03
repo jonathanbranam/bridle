@@ -256,7 +256,7 @@ bridle workflow spec import openspec [--from DIR] [--to DIR] [--dry-run]   moves
 bridle orchestrator prime orchestrator                   fresh session's opening context: role prompt, current
                                              state, startup steps; local only, no daemon call
 bridle orchestrator prime advisor                        the advisor role file (workflow, then .bridle/roles/advisor.md); local
-bridle orchestrator prime triage                        the triage role file (workflow, then .bridle/roles/triage.md); local
+bridle orchestrator prime aide                        the aide role file (workflow, then .bridle/roles/aide.md); local
 bridle session orchestrator [claude args]   start the orchestrator's claude session from any directory: lean
                                              settings, names orch-<project>[-<BRIDLE_SESSION_SUFFIX>], pane tag,
                                              pid/exit files; `--project` picks the project; refuses under a bridle
@@ -264,9 +264,9 @@ bridle session orchestrator [claude args]   start the orchestrator's claude sess
 bridle session advisor [name] [claude args] same for the advisor (advisor[-<name>]-<project>): lean
                                              settings, pane tag (advisor or advisor-<name>), sets BRIDLE_ADVISOR_NAME;
                                              the unnamed one keeps advisor-<project>.pid while it runs
-bridle session triage [claude args]         start the triage session (triage-<project>): lean settings, pane tag
-                                             `triage`, BRIDLE_AS=triage so it signs `external:triage` (token under
-                                             [triage]). It talks with the human about the running system; the
+bridle session aide [claude args]         start the aide session (aide-<project>): lean settings, pane tag
+                                             `aide`, BRIDLE_AS=aide so it signs `external:aide` (token under
+                                             [aide]). It talks with the human about the running system; the
                                              orchestrator reaches the human only by messaging it. Not registered
                                              with the daemon; refuses while focus hours are locked
 bridle advisor start <name> [--brief TEXT|@FILE]   send the brief to external:advisor as "For advisor <name>: ...", then run
@@ -656,7 +656,7 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   (last nudge in `$BRIDLE_HOME/focus-nudge`). With no `[[focus]]`, outside a period, or in a
   project with `focus_hours = false`, it prints nothing. In a `locked` period it blocks every prompt
   (`{"decision":"block"}`, reason "Locked until 6:00 PM. Email bridle@dev.branam.us if it
-  matters."). `bridle session advisor`, `bridle session triage` and `bridle advisor start` refuse while locked. Local, never fails. An active override file (roles-and-config, Focus hours) silences it, and
+  matters."). `bridle session advisor`, `bridle session aide` and `bridle advisor start` refuse while locked. Local, never fails. An active override file (roles-and-config, Focus hours) silences it, and
   `bridle status` prints a `focus` line while one is pending or active.
 - **`handover`** keeps the orchestrator's note as a record ([[orchestrator-supervision]] section 7):
   `write` reads a file or stdin (`-`), `list` shows id, time, author and first line, `show` the
