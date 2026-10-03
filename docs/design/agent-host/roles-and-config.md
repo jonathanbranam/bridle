@@ -174,7 +174,7 @@ Also read from `.bridle/config.toml` (defaults in parentheses; each is documente
   variable is an error); a relative path is taken against the repo. A workflow directory
   that is missing or unreadable is an error at `bridle serve`, `sync`, `prime` and `rules`,
   and a failing `bridle doctor` check ("referenced files"), never a silent empty base
-  layer. A git url is still not resolved. One resolver: `Config::workflow_root`.
+  layer. A git url is an error (`WorkflowGitUrl`) at the same places: it is not resolved. One resolver: `Config::workflow_root`.
 - `[components.<id>]` (`paths`, `parent`, `docs`, `consumers`, all optional): the component map
   ([[../components|components]]); a parent that isn't defined, or a cycle, is a config error.
 

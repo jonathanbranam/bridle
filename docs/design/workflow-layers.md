@@ -162,9 +162,9 @@ written down anywhere else yet:
   anything a human added by hand: a gitignored sidecar,
   `.claude/.bridle-sync-hooks.json`, records exactly which entries the previous sync
   wrote, and only those are removed before the current ones go in.
-- **No real skill/agent/hook content exists in `workflow/` yet** (P2-1/P2-2 only
-  scaffolded `rules/` and `workflow.toml`); the conventions above are sync's contract for
-  when it does.
+- **Little skill/agent/hook content exists in `workflow/` yet**: `base/hooks/PreToolUse.json`
+  and the `manager`/`worker` skills; no `agents/<role>.md`. The conventions above are
+  sync's contract for the rest.
 - **Per-project command bindings**: a skill source can reference `{{commands.check}}`
   instead of hardcoding a build tool. `bridle sync` substitutes it from
   `.bridle/config.toml`'s `[commands] check` (default `"just check"`, so bridle's own

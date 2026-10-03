@@ -108,14 +108,10 @@ fn git_head_branch(repo: &Path) -> Option<String> {
 }
 
 fn detect_stack(repo: &Path) -> Option<&'static str> {
-    [
-        ("Cargo.toml", "rust"),
-        ("package.json", "typescript"),
-        ("pyproject.toml", "python"),
-    ]
-    .into_iter()
-    .find(|(f, _)| repo.join(f).is_file())
-    .map(|(_, s)| s)
+    [("package.json", "typescript"), ("pyproject.toml", "python")]
+        .into_iter()
+        .find(|(f, _)| repo.join(f).is_file())
+        .map(|(_, s)| s)
 }
 
 fn detect_check(repo: &Path) -> Option<&'static str> {
@@ -156,7 +152,7 @@ fn render_config(repo: &Path, args: &InitArgs, integration: &str) -> String {
     }
     match &args.stack {
         Some(st) => s.push_str(&format!("packs = [\"{st}\"]\n")),
-        None => s.push_str("# packs = [\"python\"]   # or typescript, rust\n"),
+        None => s.push_str("# packs = [\"python\"]   # or typescript\n"),
     }
 
     s.push_str("\n[branches]\n");
@@ -220,12 +216,12 @@ mod tests {
         let d = repo();
         std::fs::write(d.path().join("Cargo.toml"), "").expect("write");
         std::fs::write(d.path().join(".gitignore"), "target").expect("write");
-        let r = scaffold(d.path(), &args(Some("rust"))).expect("init");
+        let r = scaffold(d.path(), &args(Some("python"))).expect("init");
         assert_eq!(r.created.len(), 2);
 
         let config = std::fs::read_to_string(d.path().join(".bridle/config.toml")).expect("read");
         assert!(config.contains("integration = \"trunk\""), "{config}");
-        assert!(config.contains("packs = [\"rust\"]"), "{config}");
+        assert!(config.contains("packs = [\"python\"]"), "{config}");
         assert!(config.contains("check = \"cargo test\""), "{config}");
         let gi = std::fs::read_to_string(d.path().join(".gitignore")).expect("read");
         assert!(gi.starts_with("target\n"), "{gi}");
@@ -238,7 +234,7 @@ mod tests {
             "{checks:#?}"
         );
 
-        let r = scaffold(d.path(), &args(Some("rust"))).expect("rerun");
+        let r = scaffold(d.path(), &args(Some("python"))).expect("rerun");
         assert!(r.created.is_empty(), "{r:?}");
         assert_eq!(r.skipped.len(), 2);
         assert_eq!(

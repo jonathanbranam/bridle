@@ -769,7 +769,7 @@ pub struct InitArgs {
     #[arg(long)]
     pub integration: Option<String>,
     /// Workflow pack to enable (`packs = [STACK]`).
-    #[arg(long, value_parser = ["python", "typescript", "rust"])]
+    #[arg(long, value_parser = ["python", "typescript"])]
     pub stack: Option<String>,
 }
 

@@ -61,6 +61,12 @@ pub enum ConfigError {
         path.display()
     )]
     WorkflowDirMissing { path: PathBuf, reason: String },
+
+    #[error(
+        "workflow = {url:?} is a git url, which bridle does not resolve; set `workflow` in \
+         ~/.bridle/config.toml to a local checkout of it, or fix it in .bridle/config.toml"
+    )]
+    WorkflowGitUrl { url: String },
 }
 
 /// Where `bridle init` vendors the base workflow, repo-relative.
@@ -1505,15 +1511,15 @@ impl Config {
     }
 
     /// The workflow checkout's directory: `workflow` with `~`/`$VAR` expanded, relative
-    /// paths taken against `repo`. `None` if unset or a git url (nothing clones those
-    /// yet). A directory that isn't there is an error: silently dropping the base layer
+    /// paths taken against `repo`. `None` if unset; a git url is an error (nothing clones
+    /// those yet). A directory that isn't there is an error: silently dropping the base layer
     /// leaves agents without rules and `bridle sync` without skills.
     pub fn workflow_root(&self, repo: &Path) -> Result<Option<PathBuf>, ConfigError> {
         let Some(w) = self.workflow.as_deref() else {
             return Ok(None);
         };
         if w.contains("://") || w.starts_with("git@") {
-            return Ok(None);
+            return Err(ConfigError::WorkflowGitUrl { url: w.to_string() });
         }
         let root = repo.join(w);
         match std::fs::read_dir(&root) {
@@ -3958,7 +3964,7 @@ mod tests {
     }
 
     #[test]
-    fn workflow_root_errors_on_a_missing_dir_and_resolves_an_existing_one() {
+    fn workflow_root_errors_on_a_missing_dir_or_git_url_and_resolves_an_existing_one() {
         let repo = tempfile::tempdir().expect("repo");
         let mut cfg = Config::parse("").expect("parse");
         assert_eq!(cfg.workflow_root(repo.path()).expect("unset"), None);
@@ -3977,7 +3983,8 @@ mod tests {
         );
 
         cfg.workflow = Some("https://example.com/wf.git".to_string());
-        assert_eq!(cfg.workflow_root(repo.path()).expect("url"), None);
+        let err = cfg.workflow_root(repo.path()).expect_err("url");
+        assert!(matches!(err, ConfigError::WorkflowGitUrl { .. }), "{err}");
     }
 
     #[test]

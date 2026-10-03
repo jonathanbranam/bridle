@@ -26,7 +26,8 @@
 //!
 //! `hooks/<event>.json` and the "later layer replaces wholesale" convention
 //! for both it and `agents/<role>.md` are this module's own convention, not
-//! yet written down anywhere else; nothing in `workflow/` uses either yet.
+//! yet written down anywhere else; `workflow/base/hooks/PreToolUse.json` uses
+//! the first, nothing uses `agents/` yet.
 
 use std::collections::BTreeMap;
 use std::fs;

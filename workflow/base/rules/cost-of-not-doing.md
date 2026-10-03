@@ -16,5 +16,6 @@ if I DON'T do this? - what is the actual cost of NOT doing this? Everything we
 do has a cost - tokens, time, energy, water, oil, money; we save all of that by
 NOT doing something."
 
-Until `bridle workflow sync` renders rules into agents, the role prompts in the
-`bridle` repo's `workflow/base/roles/` carry this.
+Agents read the rule files themselves (`bridle sync` writes the CLAUDE.md pointer
+to them; rules are not rendered into the prompt), and the role prompts in the
+`bridle` repo's `workflow/base/roles/` carry this too.

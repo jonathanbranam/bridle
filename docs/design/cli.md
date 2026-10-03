@@ -495,7 +495,7 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   `bridle.db` does (warn); `[ports]` range sane; git >= 2.38; `claude` on PATH; `gh` on PATH
   when `[ci] github` is on. Exits 1 if any check fails. It never fixes anything and does not
   talk to a daemon; a dry `sync` check isn't done because `sync` has no check mode.
-- **`init [--repo PATH] [--name N] [--integration BRANCH] [--stack python|typescript|rust]`**:
+- **`init [--repo PATH] [--name N] [--integration BRANCH] [--stack python|typescript]`**:
   scaffolds a project, only what's absent and never overwriting (existing files are listed as
   skipped). `.bridle/config.toml` gets `[branches] integration` (the branch HEAD is on, or
   `--integration`), `workflow` (active only if the repo has `workflow/base/`, else a commented
