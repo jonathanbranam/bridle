@@ -373,3 +373,43 @@ Open, for building this: a command to make a ticket from a task with its ID (e.g
 `bridle ticket new --from-task <id>`; task IDs minted before br-9e15 use hex and may contain `0`
 or `1`, which the ticket alphabet lacks); the rules and role text (tickets rule, worker, manager,
 PM, docs/README.md) for decisions 7-10.
+
+## Names: keep "ticket" and "task" (the human, 2026-10-03)
+
+The advisor's case: "task" is right (a unit of work, which decision 7 makes it) and the costliest
+to change (CLI, database, API types, roles). If anything were renamed it would be "ticket", since in
+Jira and help desks a ticket is the work item, closer to a bridle task. Recommended keeping both:
+decisions 7-10 and one ID (`k7tm` and `br-k7tm`) draw the line in practice, and a rename costs the
+`bridle ticket` command, the `docs/tickets/` folders, every role and rule, and a migration in every
+project. If ever renamed, ride along with [[ticket-frontmatter-fields-have-unclear-names-rename-them-wit-zkbb|zkbb]]'s migration.
+
+The human, verbatim:
+
+> Yeah, it's a pretty convincing argument. Right, I'm, issue is a good second. Well, be sure to
+> record these options. Issue is a good second option. And I think the main thing with issue for me
+> is it on the positive side, it starts with a different letter. So it's just easier for me to say
+> issue. Task and ticket, I start to say one of them, and then the T kind of comes out the wrong way.
+> But the thing about an issue that I don't like is it just doesn't, it sounds like something's
+> wrong. And there's nothing wrong when we're creating, when we're making a feature. So that's why I
+> don't like issue. Ticket is very general and I think it covers every case. Jira, which I use the
+> most is, you know, we create stories, but to me, a story is a type of ticket. It's basically a
+> feature ticket or something like that. So, I wouldn't want to adopt story for everything. And, I
+> don't think case makes any sense. Yeah, I think the, you know, ticket, task, and issue are kind of
+> the best. Jira, you can create things that aren't stories as well. But we call everything a
+> ticket. What's the Jira ticket number? What's the Jira? Yeah, we always use ticket. And I like
+> ticket better than issue. So keep, keep this discussion. In the document about the different
+> options we evaluated and discarded so we can come back to it.
+
+Kept: **ticket** and **task**. Options evaluated and set aside, to come back to:
+
+| Name | For | Against |
+|---|---|---|
+| **issue** (for ticket; the runner-up) | Neutral, fits every kind; starts with a different letter, so it's easier to say than ticket/task | Sounds like something's wrong, and a feature isn't; collides with GitHub issues; often read as a work item |
+| **case** (for ticket) | A case file: history and decisions, many actions under one case | Makes no sense to the human; unfamiliar in software; common word (test case) |
+| **topic** (for ticket) | Fits rambling discussion tickets; unused in bridle | Weak for a bug or a feature |
+| **story** (for ticket) | Familiar from Jira | A story is one kind of ticket (a feature), not everything |
+| **proposal**, **brief**, **note**, **record** (for ticket) | | Each already means something in bridle |
+| **RFC**, **ADR** (for ticket) | | Each fits one kind only |
+| **job** (for task) | Short | Used ~30 times in bridle already; reads as a CI job |
+| **work item** (for task) | Exact | Clunky to type and say |
+| **errand** (for task) | | Suggests something trivial |
