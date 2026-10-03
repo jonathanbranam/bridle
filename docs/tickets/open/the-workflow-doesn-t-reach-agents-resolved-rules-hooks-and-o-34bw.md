@@ -113,3 +113,10 @@ Stop hook), not `arch-guard` itself. Sent to the orchestrator.
 The role-addendum question moved to
 [[are-roles-and-rules-the-same-thing-one-layered-kind-of-promp-vp9e|vp9e]]: the human doubts roles
 and rules are different things. Not sent to the orchestrator.
+
+Skills: the human expects them delivered the same way (2026-10-03, relayed by the NUC
+orchestrator from the notes advisor): "bridle should be providing a skill to this project in the
+rules overlay, which probably isn't built yet". The case is a time-block editing skill for their
+notes, which ships with meta-notes for now (meta-notes ticket zqqb). Layer skills reaching agents
+(like the rules in step 1 and the hooks in step 3, not via gitignored `.claude/skills/`) is still
+held under step 6; this is the first concrete need for it. Not planned: needs the human's go.
