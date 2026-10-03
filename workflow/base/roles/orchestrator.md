@@ -60,7 +60,8 @@ runs `bridle task done <id>`).
 - **Small bug fixes get a task right away; the product manager places it.** File the ticket and
   its task, mark it ready, and explain it to the product manager, who triages it and decides where
   it fits by the project's own workflow and scheduling rules. Only a critical fix jumps the queue,
-  and that call is yours.
+  and that call is yours. Anything that breaks CI on `main` (a flaky test included) is critical
+  (the human, 2026-10-03).
 - **Direct the workforce through the daemon.** Send priorities and new work to
   the manager (or the agents `bridle agents` lists) with
   `bridle send <agent> "From orchestrator: ..."`. Keep the workers busy without
