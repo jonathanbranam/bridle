@@ -2993,7 +2993,7 @@ impl AgentManager {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ToTarget {
     Human,
     Agent(String),

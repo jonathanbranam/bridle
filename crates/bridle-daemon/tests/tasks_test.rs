@@ -1321,7 +1321,8 @@ async fn ask_defaults_to_the_spawner_or_the_human() {
     c.ask_question(&task.id, "and you?", None)
         .await
         .expect("ask as human");
-    assert_eq!(inbox(c, "human").await.len(), 1);
+    // The human also holds the watcher's `task_update` for w1's question.
+    assert_eq!(questions(inbox(c, "human").await), 1);
 }
 
 /// A task's kind changes only while it is `open`: recorded in the thread and as an event, and

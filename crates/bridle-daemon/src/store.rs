@@ -1361,6 +1361,7 @@ mod sync {
             MessageKind::Note => "note",
             MessageKind::Question => "question",
             MessageKind::Answer => "answer",
+            MessageKind::TaskUpdate => "task_update",
         }
     }
 
@@ -1368,6 +1369,7 @@ mod sync {
         match s {
             "question" => MessageKind::Question,
             "answer" => MessageKind::Answer,
+            "task_update" => MessageKind::TaskUpdate,
             _ => MessageKind::Note,
         }
     }

@@ -7,7 +7,7 @@ use std::time::Duration;
 
 use bridle_api::types::{
     MessageKind, MessageQuery, NewTaskRequest, PrincipalWakeQuery, PrincipalWakeResponse,
-    SendRequest, TaskKind, When,
+    SendRequest, SetKindRequest, SetPriorityRequest, TaskKind, TaskPriority, When,
 };
 use bridle_api::{Client, ClientError};
 
@@ -141,8 +141,23 @@ async fn wake_after(
     waiting.await.expect("join")
 }
 
+/// The `task_update` lines `to` has received, oldest first, without marking them read.
+async fn updates(client: &Client, to: &str) -> Vec<String> {
+    client
+        .list_messages(&MessageQuery {
+            to: Some(to.to_string()),
+            ..Default::default()
+        })
+        .await
+        .expect("messages")
+        .into_iter()
+        .filter(|m| m.kind == MessageKind::TaskUpdate)
+        .map(|m| m.body)
+        .collect()
+}
+
 #[tokio::test]
-async fn another_principals_comment_on_a_task_it_created_wakes_it() {
+async fn another_principals_comment_on_a_task_it_created_is_a_message_and_wakes_it() {
     let (daemon, _tmp) = support::start_daemon(None).await;
     let advisor = daemon.external_client("advisor").await;
     let task = new_task(&advisor).await;
@@ -151,59 +166,94 @@ async fn another_principals_comment_on_a_task_it_created_wakes_it() {
     })
     .await;
     assert_eq!(got.reasons.len(), 1, "{got:?}");
-    assert_eq!(got.reasons[0].reason, "task");
-    assert_eq!(got.reasons[0].task.as_deref(), Some(task.as_str()));
-    assert_eq!(got.reasons[0].event.as_deref(), Some("task.note_added"));
+    assert_eq!(got.reasons[0].reason, "message");
+    assert_eq!(got.reasons[0].task, None, "task wake reasons are gone");
+    let m = &got.reasons[0].messages[0];
+    assert_eq!(m.kind, MessageKind::TaskUpdate);
+    assert!(m.body.starts_with(&format!("{task} (t): ")), "{}", m.body);
+    assert!(m.body.ends_with("comment by human: hi"), "{}", m.body);
+    assert!(!m.body.contains('\n'));
 }
 
 #[tokio::test]
-async fn a_state_change_on_a_claimed_task_wakes_it() {
-    let (daemon, _tmp) = support::start_daemon(None).await;
-    let advisor = daemon.external_client("advisor").await;
-    let task = new_task(&daemon.client).await;
-    daemon.client.plan_task(&task).await.expect("plan");
-    advisor.claim_task(&task).await.expect("claim");
-    let got = wake_after(&advisor, 10, async {
-        daemon.client.note_task(&task, "x").await.expect("note");
-    })
-    .await;
-    assert_eq!(got.reasons[0].task.as_deref(), Some(task.as_str()));
-}
-
-#[tokio::test]
-async fn a_state_change_wakes_it() {
+async fn each_kind_of_change_is_its_own_line() {
     let (daemon, _tmp) = support::start_daemon(None).await;
     let advisor = daemon.external_client("advisor").await;
     let task = new_task(&advisor).await;
-    let got = wake_after(&advisor, 10, async {
-        daemon.client.plan_task(&task).await.expect("plan");
-    })
-    .await;
-    assert_eq!(got.reasons[0].event.as_deref(), Some("task.state"));
+    let h = &daemon.client;
+    h.plan_task(&task).await.expect("plan");
+    h.set_task_priority(
+        &task,
+        &SetPriorityRequest {
+            priority: TaskPriority::High,
+        },
+    )
+    .await
+    .expect("priority");
+    h.ask_question(&task, "which way?\nsecond line", Some("human"))
+        .await
+        .expect("ask");
+    h.answer_question(&task, "that way").await.expect("answer");
+    h.note_task(&task, &"x".repeat(300)).await.expect("note");
+    let lines = updates(&advisor, "me").await;
+    let tails: Vec<_> = lines
+        .iter()
+        .map(|l| l.split_once("): ").expect("prefix").1.to_string())
+        .collect();
+    assert_eq!(tails.len(), 5, "{lines:?}");
+    assert_eq!(
+        tails[0],
+        "planned -> planned by human".replace("planned -> ", "open -> ")
+    );
+    assert_eq!(tails[1], "priority normal -> high by human");
+    assert_eq!(tails[2], "question asked by human: which way? second line");
+    assert_eq!(tails[3], "question answered by human: that way");
+    assert!(
+        tails[4].starts_with("comment by human: xxx"),
+        "{}",
+        tails[4]
+    );
+    assert_eq!(tails[4].chars().count(), "comment by human: ".len() + 201);
 }
 
 #[tokio::test]
-async fn its_own_comment_does_not_wake_it() {
+async fn a_kind_change_is_a_line() {
     let (daemon, _tmp) = support::start_daemon(None).await;
     let advisor = daemon.external_client("advisor").await;
     let task = new_task(&advisor).await;
-    let got = wake_after(&advisor, 2, async {
-        advisor.note_task(&task, "mine").await.expect("note");
-    })
-    .await;
-    assert!(got.reasons.is_empty(), "{got:?}");
+    daemon
+        .client
+        .set_task_kind(
+            &task,
+            &SetKindRequest {
+                kind: TaskKind::Bug,
+            },
+        )
+        .await
+        .expect("kind");
+    let lines = updates(&advisor, "me").await;
+    assert!(
+        lines[0].ends_with("kind feature -> bug by human"),
+        "{lines:?}"
+    );
 }
 
 #[tokio::test]
-async fn a_task_it_neither_created_nor_claimed_does_not_wake_it() {
+async fn the_actor_and_non_watchers_are_not_told_and_unwatching_stops_it() {
     let (daemon, _tmp) = support::start_daemon(None).await;
     let advisor = daemon.external_client("advisor").await;
-    let task = new_task(&daemon.client).await;
-    let got = wake_after(&advisor, 2, async {
-        daemon.client.note_task(&task, "x").await.expect("note");
-    })
-    .await;
-    assert!(got.reasons.is_empty(), "{got:?}");
+    let other = daemon.external_client("other").await;
+    let task = new_task(&advisor).await;
+    advisor.note_task(&task, "mine").await.expect("own note");
+    daemon.client.note_task(&task, "one").await.expect("note");
+    assert_eq!(updates(&advisor, "me").await.len(), 1, "own change skipped");
+    assert!(updates(&other, "me").await.is_empty(), "not a watcher");
+    advisor.unwatch_task(&task).await.expect("unwatch");
+    daemon.client.note_task(&task, "two").await.expect("note");
+    assert_eq!(updates(&advisor, "me").await.len(), 1, "unwatched");
+    other.watch_task(&task).await.expect("watch");
+    daemon.client.note_task(&task, "three").await.expect("note");
+    assert_eq!(updates(&other, "me").await.len(), 1);
 }
 
 #[tokio::test]

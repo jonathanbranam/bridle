@@ -1146,15 +1146,7 @@ async fn send_message(
                 .tasks
                 .note_task(task_id, &principal.id, &req.body)
                 .await?;
-            let _ = state
-                .emitter
-                .emit(
-                    event_kind::TASK_NOTE_ADDED,
-                    principal.id.clone(),
-                    None,
-                    serde_json::json!({"task": task.id}),
-                )
-                .await;
+            emit_comment(&state, principal.id.clone(), &task, &req.body, &targets).await;
             let first = req
                 .body
                 .lines()
@@ -1651,19 +1643,12 @@ async fn plan_task(
 ) -> Result<Json<Task>, ApiError> {
     require_not_visitor(&principal)?;
     require_incident_owner(&state, &principal, &id)?;
+    let from = state.tasks.get_task(&id).map(|t| t.state);
     let task = state.tasks.plan_task(&id, &principal.id).await?;
     if task.kind == bridle_api::types::TaskKind::Incident {
         state.manager.incident_activated(&task).await;
     }
-    let _ = state
-        .emitter
-        .emit(
-            event_kind::TASK_STATE,
-            principal.id,
-            None,
-            serde_json::json!({"task": task.id, "to": task.state}),
-        )
-        .await;
+    emit_state_change(&state, principal.id, &task, from).await;
     Ok(Json(task))
 }
 
@@ -1675,6 +1660,7 @@ async fn drop_task(
 ) -> Result<Json<Task>, ApiError> {
     require_not_visitor(&principal)?;
     require_incident_owner(&state, &principal, &id)?;
+    let from = state.tasks.get_task(&id).map(|t| t.state);
     let was_active = state
         .tasks
         .get_task(&id)
@@ -1712,15 +1698,7 @@ async fn drop_task(
             ))
             .await;
     }
-    let _ = state
-        .emitter
-        .emit(
-            event_kind::TASK_STATE,
-            principal.id,
-            None,
-            serde_json::json!({"task": task.id, "to": task.state}),
-        )
-        .await;
+    emit_state_change(&state, principal.id, &task, from).await;
     Ok(Json(task))
 }
 
@@ -1735,15 +1713,21 @@ async fn set_priority(
         .set_priority(&id, req.priority, &principal.id)
         .await?;
     if from != task.priority {
-        let _ = state
-            .emitter
-            .emit(
-                event_kind::TASK_PRIORITY,
-                principal.id,
-                None,
-                serde_json::json!({"task": task.id, "from": from, "to": task.priority}),
-            )
-            .await;
+        let change = format!(
+            "priority {from} -> {} by {}",
+            task.priority.as_str(),
+            principal.id
+        );
+        emit_task_change(
+            &state,
+            event_kind::TASK_PRIORITY,
+            principal.id,
+            &task,
+            serde_json::json!({"from": from, "to": task.priority}),
+            change,
+            &[],
+        )
+        .await;
     }
     Ok(Json(task))
 }
@@ -1756,15 +1740,17 @@ async fn set_kind(
 ) -> Result<Json<Task>, ApiError> {
     let (task, from) = state.tasks.set_kind(&id, req.kind, &principal.id).await?;
     if from != task.kind {
-        let _ = state
-            .emitter
-            .emit(
-                event_kind::TASK_KIND,
-                principal.id,
-                None,
-                serde_json::json!({"task": task.id, "from": from, "to": task.kind}),
-            )
-            .await;
+        let change = format!("kind {from} -> {} by {}", task.kind, principal.id);
+        emit_task_change(
+            &state,
+            event_kind::TASK_KIND,
+            principal.id,
+            &task,
+            serde_json::json!({"from": from, "to": task.kind}),
+            change,
+            &[],
+        )
+        .await;
     }
     Ok(Json(task))
 }
@@ -2097,6 +2083,7 @@ async fn done_task(
         }
     }
     require_incident_owner(&state, &principal, &id)?;
+    let from = state.tasks.get_task(&id).map(|t| t.state);
     let claimant = state.tasks.get_task(&id).and_then(|t| t.claimed_by);
     let was_active = state
         .tasks
@@ -2133,15 +2120,7 @@ async fn done_task(
         let report = clean_up_landed_branch(&state, branch, &principal).await;
         task = state.tasks.note_task(&id, &principal.id, &report).await?;
     }
-    let _ = state
-        .emitter
-        .emit(
-            event_kind::TASK_STATE,
-            principal.id,
-            None,
-            serde_json::json!({"task": task.id, "to": task.state}),
-        )
-        .await;
+    emit_state_change(&state, principal.id, &task, from).await;
     Ok(Json(task))
 }
 
@@ -2462,17 +2441,114 @@ async fn reopen_task(
     Path(id): Path<String>,
 ) -> Result<Json<Task>, ApiError> {
     require_incident_owner(&state, &principal, &id)?;
+    let from = state.tasks.get_task(&id).map(|t| t.state);
     let task = state.tasks.reopen_task(&id, &principal.id).await?;
-    let _ = state
-        .emitter
-        .emit(
-            event_kind::TASK_STATE,
-            principal.id,
-            None,
-            serde_json::json!({"task": task.id, "to": task.state}),
-        )
-        .await;
+    emit_state_change(&state, principal.id, &task, from).await;
     Ok(Json(task))
+}
+
+/// How much of a comment or question a change line carries.
+const CHANGE_EXCERPT_CHARS: usize = 200;
+
+/// `text` on one line, cut to [`CHANGE_EXCERPT_CHARS`].
+fn excerpt(text: &str) -> String {
+    let flat = text.split_whitespace().collect::<Vec<_>>().join(" ");
+    match flat.char_indices().nth(CHANGE_EXCERPT_CHARS) {
+        Some((end, _)) => format!("{}…", &flat[..end]),
+        None => flat,
+    }
+}
+
+/// Records a change to `task` as an event and tells each of its watchers (never the actor)
+/// with one `task_update` message: `change` is the whole line after the task's id and title.
+/// `extra` joins `{"task": id}` in the event payload; `told` already got this change another
+/// way (a question's pointer) and are skipped.
+async fn emit_task_change(
+    state: &AppState,
+    kind: &str,
+    actor: PrincipalId,
+    task: &Task,
+    extra: serde_json::Value,
+    change: String,
+    told: &[ToTarget],
+) {
+    let mut data = serde_json::json!({"task": task.id});
+    if let (Some(d), serde_json::Value::Object(x)) = (data.as_object_mut(), extra) {
+        d.extend(x);
+    }
+    let _ = state.emitter.emit(kind, actor.clone(), None, data).await;
+    let line = format!("{} ({}): {change}", task.id, task.title);
+    for watcher in crate::tasks::notified_of(task)
+        .into_iter()
+        .filter(|w| *w != actor)
+    {
+        match target_for_principal(state, &watcher).await {
+            Ok(Some(target)) if told.contains(&target) => {}
+            Ok(Some(target)) => {
+                if let Err(e) = state
+                    .manager
+                    .send(
+                        actor.clone(),
+                        target,
+                        MessageKind::TaskUpdate,
+                        line.clone(),
+                        Default::default(),
+                        None,
+                    )
+                    .await
+                {
+                    tracing::warn!(task = %task.id, %watcher, "task update not sent: {e}");
+                }
+            }
+            Ok(None) => {}
+            Err(_) => {
+                tracing::warn!(task = %task.id, %watcher, "task update: recipient lookup failed")
+            }
+        }
+    }
+}
+
+async fn emit_state_change(
+    state: &AppState,
+    actor: PrincipalId,
+    task: &Task,
+    from: Option<bridle_api::types::TaskState>,
+) {
+    let change = match from {
+        Some(f) => format!("{f} -> {} by {actor}", task.state),
+        None => format!("now {} by {actor}", task.state),
+    };
+    emit_task_change(
+        state,
+        event_kind::TASK_STATE,
+        actor,
+        task,
+        serde_json::json!({"from": from, "to": task.state}),
+        change,
+        &[],
+    )
+    .await;
+}
+
+/// `told` already get a pointer to this comment (`send --task`).
+async fn emit_comment(
+    state: &AppState,
+    actor: PrincipalId,
+    task: &Task,
+    body: &str,
+    told: &[ToTarget],
+) {
+    let change = format!("comment by {actor}: {}", excerpt(body));
+    emit_task_change(
+        state,
+        event_kind::TASK_NOTE_ADDED,
+        actor,
+        task,
+        serde_json::json!({"text": body}),
+        change,
+        told,
+    )
+    .await;
 }
 
 /// Sends the recipients of a question or answer a short pointer to the task
@@ -2551,15 +2627,16 @@ async fn ask_task(
         .tasks
         .ask_question(&id, &principal.id, &req.body)
         .await?;
-    let _ = state
-        .emitter
-        .emit(
-            event_kind::TASK_QUESTION_ASKED,
-            principal.id.clone(),
-            None,
-            serde_json::json!({"task": task.id}),
-        )
-        .await;
+    emit_task_change(
+        &state,
+        event_kind::TASK_QUESTION_ASKED,
+        principal.id.clone(),
+        &task,
+        serde_json::json!({"text": req.body}),
+        format!("question asked by {}: {}", principal.id, excerpt(&req.body)),
+        &targets,
+    )
+    .await;
     send_task_pointer(
         &state,
         &principal.id,
@@ -2586,22 +2663,30 @@ async fn answer_task(
             .find(|e| e.kind == ThreadEntryKind::Question)
             .map(|e| e.from.clone())
     });
+    let asker_target = match asker.filter(|a| *a != principal.id) {
+        Some(asker) => target_for_principal(&state, &asker).await?,
+        None => None,
+    };
     let task = state
         .tasks
         .answer_question(&id, &principal.id, &req.body)
         .await?;
-    let _ = state
-        .emitter
-        .emit(
-            event_kind::TASK_QUESTION_ANSWERED,
-            principal.id.clone(),
-            None,
-            serde_json::json!({"task": task.id}),
-        )
-        .await;
-    if let Some(asker) = asker.filter(|a| *a != principal.id)
-        && let Some(target) = target_for_principal(&state, &asker).await?
-    {
+    let asker_target: Vec<ToTarget> = asker_target.into_iter().collect();
+    emit_task_change(
+        &state,
+        event_kind::TASK_QUESTION_ANSWERED,
+        principal.id.clone(),
+        &task,
+        serde_json::json!({"text": req.body}),
+        format!(
+            "question answered by {}: {}",
+            principal.id,
+            excerpt(&req.body)
+        ),
+        &asker_target,
+    )
+    .await;
+    if let Some(target) = asker_target.into_iter().next() {
         send_task_pointer(
             &state,
             &principal.id,
@@ -2666,15 +2751,7 @@ async fn note_task(
         }
     }
     let task = state.tasks.note_task(&id, &principal.id, &req.body).await?;
-    let _ = state
-        .emitter
-        .emit(
-            event_kind::TASK_NOTE_ADDED,
-            principal.id,
-            None,
-            serde_json::json!({"task": task.id}),
-        )
-        .await;
+    emit_comment(&state, principal.id, &task, &req.body, &[]).await;
     Ok(Json(task))
 }
 
@@ -2690,16 +2767,9 @@ async fn claim_task(
     Path(id): Path<String>,
 ) -> Result<Json<Task>, ApiError> {
     require_not_visitor(&principal)?;
+    let from = state.tasks.get_task(&id).map(|t| t.state);
     let task = state.tasks.claim_task(&id, &principal.id).await?;
-    let _ = state
-        .emitter
-        .emit(
-            event_kind::TASK_STATE,
-            principal.id,
-            None,
-            serde_json::json!({"task": task.id, "to": task.state}),
-        )
-        .await;
+    emit_state_change(&state, principal.id, &task, from).await;
     Ok(Json(task))
 }
 
@@ -2747,16 +2817,9 @@ async fn release_task(
     Extension(principal): Extension<Principal>,
     Path(id): Path<String>,
 ) -> Result<Json<Task>, ApiError> {
+    let from = state.tasks.get_task(&id).map(|t| t.state);
     let task = state.tasks.release_task(&id, &principal.id).await?;
-    let _ = state
-        .emitter
-        .emit(
-            event_kind::TASK_STATE,
-            principal.id,
-            None,
-            serde_json::json!({"task": task.id, "to": task.state}),
-        )
-        .await;
+    emit_state_change(&state, principal.id, &task, from).await;
     Ok(Json(task))
 }
 

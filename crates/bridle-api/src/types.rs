@@ -249,8 +249,8 @@ pub struct PrincipalWakeQuery {
 /// One reason a principal should wake.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct PrincipalWakeReason {
-    /// `message` (the principal has unread messages) or `task` (someone else touched a task
-    /// it created or claimed).
+    /// `message` (the principal has unread messages, task updates included). `task` is no
+    /// longer emitted: a task change is a `task_update` message to its watchers.
     pub reason: String,
     /// The messages behind a `message` reason.
     #[serde(default)]
@@ -259,6 +259,7 @@ pub struct PrincipalWakeReason {
     /// by the same call; the human's stay unread until they say so.
     #[serde(default)]
     pub messages: Vec<Message>,
+    /// Unused since task changes became messages; kept so old clients still parse.
     /// The task behind a `task` reason.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub task: Option<String>,
@@ -542,10 +543,14 @@ pub struct TranscriptQuery {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum MessageKind {
-    #[default]
-    Note,
     Question,
     Answer,
+    /// One line about a change to a task the recipient watches.
+    TaskUpdate,
+    /// Also what a kind this build doesn't know reads as (`other` must be last).
+    #[default]
+    #[serde(other)]
+    Note,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]

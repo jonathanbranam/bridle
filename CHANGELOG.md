@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Changed
+- Task watchers 3/3 (br-7605, xxxq): a task change is now a message, not a wake reason. For each change (comment, question asked or answered, priority, kind, state) the daemon sends every watcher except the actor one `task_update` message, one line: `<id> (<title>): <change>`, e.g. `br-1 (x): open -> planned by human`, `comment by human: <first 200 chars>`, `question asked by agent:w: <text>`, `priority normal -> high by human`. Each change is its own message; the unread message rings the wake and the agent reads the text on receipt. `GET /v1/wake` no longer returns `task` reasons (the `task` / `event` fields stay for old clients); the created-or-claimed rule and its 1,000,000-event scan are gone. Task events now also carry `from` (state, priority, kind) and `text` (comment, question, answer). New `MessageKind::TaskUpdate` (`task_update`); an unknown kind now deserializes as `note`. No migration.
 - Role prompts (`workflow/base/roles/`: worker, manager, product-manager) no longer repeat summaries of rules the role's resolved rules already carry (br-899d, 34bw step 2); only the procedure and role-specific details stay.
 
 ### Fixed

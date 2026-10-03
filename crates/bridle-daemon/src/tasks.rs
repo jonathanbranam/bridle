@@ -139,8 +139,7 @@ fn add_watcher(watchers: &mut Vec<PrincipalId>, who: &PrincipalId) -> bool {
 }
 
 /// Who is told about a change to `task`: its watchers. The one place that answers it, so the
-/// notification code (br-7605) doesn't re-derive it from the creator and claimer.
-#[allow(dead_code)] // first caller: the notification work (br-7605)
+/// notification code doesn't re-derive it from the creator and claimer.
 pub fn notified_of(task: &Task) -> Vec<PrincipalId> {
     task.watchers.clone()
 }
