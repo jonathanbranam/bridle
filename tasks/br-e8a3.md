@@ -5,6 +5,8 @@ kind = "question"
 state = "dropped"
 created_at = "2026-09-28T04:38:17.519Z"
 updated_at = "2026-09-28T12:45:40.515305Z"
+created_by = "agent:p0-6b-tskm-import"
+watchers = ["agent:p0-6b-tskm-import"]
 +++
 
 ticket: docs/questions/open/where-bridle-workflow-lives-r2uq.md

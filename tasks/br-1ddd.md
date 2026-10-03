@@ -5,6 +5,8 @@ kind = "feature"
 state = "planned"
 created_at = "2026-10-02T00:21:16.323Z"
 updated_at = "2026-10-02T00:22:10.586621Z"
+created_by = "external:orchestrator"
+watchers = ["external:orchestrator"]
 +++
 
 original id: cy2v

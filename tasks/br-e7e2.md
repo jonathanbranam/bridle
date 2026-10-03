@@ -5,6 +5,8 @@ kind = "feature"
 state = "planned"
 created_at = "2026-10-01T19:46:02.983Z"
 updated_at = "2026-10-01T19:46:09.706964Z"
+created_by = "agent:pm-1"
+watchers = ["agent:pm-1"]
 size = "S"
 +++
 

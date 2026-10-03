@@ -5,6 +5,8 @@ kind = "feature"
 state = "integrated"
 created_at = "2026-09-28T23:52:23.825Z"
 updated_at = "2026-09-29T01:35:01.547513Z"
+created_by = "agent:pm-1"
+watchers = ["agent:pm-1"]
 +++
 
 source: docs/questions/open/onboarding-survey-track-web-and-harness-u8sm.md, section 8 item 4

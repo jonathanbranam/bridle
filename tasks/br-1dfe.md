@@ -5,6 +5,8 @@ kind = "feature"
 state = "dropped"
 created_at = "2026-09-28T18:07:52.175Z"
 updated_at = "2026-09-28T22:21:37.771324Z"
+created_by = "agent:pm-1"
+watchers = ["agent:pm-1"]
 +++
 
 ticket: docs/questions/open/enforce-max-workers-y2eb.md

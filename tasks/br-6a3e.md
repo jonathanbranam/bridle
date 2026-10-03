@@ -5,6 +5,8 @@ kind = "question"
 state = "open"
 created_at = "2026-10-01T18:01:40.516Z"
 updated_at = "2026-10-01T18:01:53.823973Z"
+created_by = "external:advisor"
+watchers = ["external:advisor"]
 priority = "low"
 +++
 

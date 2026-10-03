@@ -5,6 +5,8 @@ kind = "feature"
 state = "dropped"
 created_at = "2026-09-28T18:03:15.588Z"
 updated_at = "2026-09-28T23:36:35.043602Z"
+created_by = "external:advisor"
+watchers = ["external:advisor"]
 +++
 
 ticket: docs/questions/open/budget-presets-and-max-workers-6t29.md

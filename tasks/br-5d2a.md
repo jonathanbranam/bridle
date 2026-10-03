@@ -5,6 +5,8 @@ kind = "chore"
 state = "integrated"
 created_at = "2026-09-29T08:10:45.501Z"
 updated_at = "2026-09-29T09:11:18.816485Z"
+created_by = "agent:pm-1"
+watchers = ["agent:pm-1"]
 branch = "bridle/land-prompt"
 commit = "ecc875055766784ad1890965328db0e699159153"
 summary = """Updated workflow/base/roles/manager.md to use 'bridle land <task-id>' for landing completed work instead of manual merge steps. Added [integration] check = "just check" to .bridle/config.toml. Updated config test to verify 'bridle land' appears in manager prompt. All tests pass."""

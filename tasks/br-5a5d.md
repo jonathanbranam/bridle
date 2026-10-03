@@ -5,6 +5,8 @@ kind = "feature"
 state = "integrated"
 created_at = "2026-09-29T09:35:40.702Z"
 updated_at = "2026-09-29T10:33:35.009127Z"
+created_by = "agent:pm-1"
+watchers = ["agent:pm-1"]
 branch = "bridle/doctor"
 commit = "423431e6d3a45d01d5bf0dadffcc668060b2e6b9"
 summary = "Added `bridle doctor [--repo PATH] [--json]` (crates/bridle/src/doctor.rs, cli.rs). Local-only checks, each ok/warn/FAIL with a one-line fix: git repo, integration branch exists, config loads (loader's own error text), referenced files (system_prompt, workflow, packs, component docs), role prompts (warn), .gitignore coverage (git check-ignore; warn), bridle/state once bridle.db exists (warn), [ports] sanity, git >= 2.38, claude on PATH, gh when [ci] is on. Exit 1 on any FAIL. Caveats: no daemon checks and no dry `bridle sync` check (sync has no check mode). Tests on temp repos (healthy, missing integration branch, bad config, missing files, gitignore). docs/design/cli.md and CHANGELOG updated; two lost CHANGELOG entries (br-beab, br-66e2) restored under Added."

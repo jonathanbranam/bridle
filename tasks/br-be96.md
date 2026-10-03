@@ -5,6 +5,8 @@ kind = "chore"
 state = "integrated"
 created_at = "2026-09-30T11:24:50.146Z"
 updated_at = "2026-10-02T23:26:40.952917Z"
+created_by = "external:advisor"
+watchers = ["external:advisor"]
 +++
 
 Mobile is your only channel this week: the email bridge isn't running (its setup is br-fc05). From your phone, open the laptop's orchestrator session and send it something, and the NUC's (after claude-rc is up). Confirm you get replies.

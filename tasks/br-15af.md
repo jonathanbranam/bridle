@@ -5,6 +5,8 @@ kind = "chore"
 state = "dropped"
 created_at = "2026-09-30T11:24:50.025Z"
 updated_at = "2026-09-30T11:56:58.262404Z"
+created_by = "external:advisor"
+watchers = ["external:advisor"]
 priority = "high"
 +++
 

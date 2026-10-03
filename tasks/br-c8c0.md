@@ -5,6 +5,8 @@ kind = "feature"
 state = "integrated"
 created_at = "2026-09-28T16:12:24.611Z"
 updated_at = "2026-09-30T05:50:28.536780Z"
+created_by = "agent:pm-1"
+watchers = ["agent:pm-1"]
 commit = "7cda9d2"
 +++
 

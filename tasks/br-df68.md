@@ -5,6 +5,8 @@ kind = "chore"
 state = "integrated"
 created_at = "2026-09-30T01:54:26.444Z"
 updated_at = "2026-09-30T02:04:02.322794Z"
+created_by = "agent:pm-1"
+watchers = ["agent:pm-1"]
 branch = "bridle/named-advisors"
 commit = "a44361853f6de7e18bd532eeda2d8c8b7b706d47"
 summary = "Implemented multiple named advisors and shorter session names. scripts/claude-advisor [name] allows running several advisors at once with session names 'advisor' (or 'advisor-<name>'); orchestrator session names now 'orch' (or 'orch-<suffix>'). All advisors share one identity, token, and inbox; each signs messages with its name. Updated workflow/base/roles/advisor.md and docs/questions/open/session-names-per-machine-sfb3.md with design and costs. Example commands: 'scripts/claude-advisor' gives session 'advisor'; 'scripts/claude-advisor research' gives session 'advisor-research'; with BRIDLE_SESSION_SUFFIX=nuc, 'scripts/claude-advisor' gives 'advisor-nuc' and 'scripts/claude-advisor research' gives 'advisor-research-nuc'. Similarly, 'scripts/claude-orchestrator' gives session 'orch', and 'scripts/claude-orchestrator' with BRIDLE_SESSION_SUFFIX=nuc gives 'orch-nuc'."

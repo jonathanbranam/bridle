@@ -5,6 +5,8 @@ kind = "feature"
 state = "integrated"
 created_at = "2026-09-29T03:21:22.036Z"
 updated_at = "2026-09-29T03:34:59.069007Z"
+created_by = "agent:pm-1"
+watchers = ["agent:pm-1"]
 branch = "bridle/spec-parser"
 commit = "38c020b"
 summary = "New pure crate crates/bridle-spec: parse_str(file, text) / parse_file(path) -> Result<Spec, Vec<Diagnostic>> (file, 1-based line/col, 'expected X, found Y'). Model: Spec{title, requirements{title,id,protected,traces,text,line,scenarios{title,id,verification,tags,description,steps,examples}}}. Grammar mirrors spec-to-feature.py input layer (marker near-misses, step keywords, markup/placeholder escaping, Examples tables, fences/comments) plus {#id protected traces=a-12cd@3f9e} attrs (ids lowercase hex 4+, dup ids, unknown flags), requirement without scenario. Not ported: pytest tag registry (tags only syntax-checked). Non-executable bodies unparsed (steps empty). Goals/architecture tiers left alone. All six data-contracts specs copied unchanged as fixtures and parse; timing test included. Full just check passes."

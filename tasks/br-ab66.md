@@ -5,6 +5,8 @@ kind = "bug"
 state = "dropped"
 created_at = "2026-09-28T15:58:22.990Z"
 updated_at = "2026-09-28T16:28:34.496078Z"
+created_by = "agent:pm-1"
+watchers = ["agent:pm-1"]
 +++
 
 Small, queue after j479 (br-8638). Flagged by the orchestrator: after an automatic context renewal (htp6b), the fresh process gets no prompt and sits idle until something else prompts it -- p2-3-bridle-sync sat idle 8 minutes today.

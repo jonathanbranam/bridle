@@ -5,6 +5,8 @@ kind = "bug"
 state = "integrated"
 created_at = "2026-09-29T04:59:29.277Z"
 updated_at = "2026-09-29T05:12:14.481233Z"
+created_by = "agent:pm-1"
+watchers = ["agent:pm-1"]
 branch = "bridle/ci-green"
 commit = "4441a86"
 summary = "Fixes 1 (git init -b main) and 3 (startup check on unset branches.integration) were already on main. Added the missing one: just test runs with GIT_CONFIG_GLOBAL=/dev/null, GIT_CONFIG_NOSYSTEM=1. just check passes under a global init.defaultBranch=master. Resolved ticket g3ck. Note: one run flaked once on lifecycle_test spawn_child_orphan_is_swept_on_stop (timeout waiting for agent.orphans_killed), passed on rerun."

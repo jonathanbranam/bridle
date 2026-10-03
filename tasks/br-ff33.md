@@ -5,6 +5,8 @@ kind = "feature"
 state = "open"
 created_at = "2026-09-30T12:52:22.274Z"
 updated_at = "2026-09-30T12:52:22.274Z"
+created_by = "external:advisor"
+watchers = ["external:advisor"]
 size = "M"
 +++
 

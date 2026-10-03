@@ -5,6 +5,8 @@ kind = "question"
 state = "open"
 created_at = "2026-10-01T16:53:49.504Z"
 updated_at = "2026-10-01T16:53:49.504Z"
+created_by = "external:orchestrator"
+watchers = ["external:orchestrator"]
 +++
 
 original id: mfgb

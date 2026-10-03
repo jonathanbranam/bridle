@@ -5,6 +5,8 @@ kind = "chore"
 state = "dropped"
 created_at = "2026-09-28T15:35:21.186Z"
 updated_at = "2026-09-28T16:28:34.518518Z"
+created_by = "external:advisor"
+watchers = ["external:advisor"]
 +++
 
 ticket: docs/questions/open/smaller-debug-builds-nbkj.md

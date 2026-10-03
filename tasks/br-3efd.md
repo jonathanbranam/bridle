@@ -5,6 +5,8 @@ kind = "feature"
 state = "dropped"
 created_at = "2026-09-30T19:15:31.467Z"
 updated_at = "2026-09-30T21:00:39.815598Z"
+created_by = "external:orchestrator"
+watchers = ["external:orchestrator"]
 size = "S"
 priority = "low"
 +++

@@ -5,6 +5,8 @@ kind = "bug"
 state = "dropped"
 created_at = "2026-09-28T22:11:41.742Z"
 updated_at = "2026-09-28T22:21:32.507735Z"
+created_by = "external:advisor"
+watchers = ["external:advisor"]
 +++
 
 ticket: docs/questions/open/tui-agents-panel-doesnt-scroll-yurx.md

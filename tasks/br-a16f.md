@@ -5,6 +5,8 @@ kind = "research"
 state = "open"
 created_at = "2026-09-28T16:58:03.868Z"
 updated_at = "2026-09-28T16:58:03.868Z"
+created_by = "external:advisor"
+watchers = ["external:advisor"]
 +++
 
 ticket: docs/questions/open/onboarding-survey-file-db-d9nu.md

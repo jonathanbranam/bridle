@@ -5,6 +5,8 @@ kind = "feature"
 state = "integrated"
 created_at = "2026-09-30T19:49:01.127Z"
 updated_at = "2026-09-30T20:12:17.719593Z"
+created_by = "agent:pm-1"
+watchers = ["agent:pm-1"]
 branch = "bridle/ticket-b"
 commit = "2fbb2cd7f09f30bafa92035e5b2fbd51d6d3736e"
 summary = "Slice B of 7gk7. `bridle ticket set <id> <field> <value>` (title or list fields, comma-separated; refuses id/opened/closed and unknown fields; works on open and resolved; closed stays last) and `bridle ticket check [--quiet]` (required frontmatter, closed only/required under resolved/, id = file-name tail and unique, needs/see name an existing id or stem, [[links]] outside code fences resolve by stem under docs/ or as a path from repo root/docs/) in crates/bridle/src/ticket.rs; problems to stderr, exit 1. New rule workflow/base/rules/tickets.md (points at ticket-references), a line in worker and manager roles, cli.md, docs/README.md, CHANGELOG. Tests cover each check failure, set happy path and refusals. Decision: links to non-file targets count as problems. `bridle ticket check` on bridle's own tickets reports 95 real problems, none fixed: 78 resolved tickets lack `closed:`; 3 file names lack a valid id tail (hb0q-ticket how-does-bridle-budget-hold..., rl2v sync-does-not-render-role-prompts, f1ky two-flaky-test-failures, whose id has '1' outside the alphabet); dangling needs/see (kc4v accurate-context, mrhe bridle-without-a-local-clone, existing-projects, d99e, u7pw, incidents, f1ky); dangling [[focus]] / [[budget.schedule]] links (TOML names, not files) in cvaq, 6t29, n9qh."

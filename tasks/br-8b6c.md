@@ -5,6 +5,8 @@ kind = "question"
 state = "open"
 created_at = "2026-10-03T03:25:45.901Z"
 updated_at = "2026-10-03T03:25:45.901Z"
+created_by = "external:advisor/workflow"
+watchers = ["external:advisor/workflow"]
 +++
 
 original id: 7r2c

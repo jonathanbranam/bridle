@@ -5,6 +5,8 @@ kind = "question"
 state = "open"
 created_at = "2026-10-03T00:48:15.029Z"
 updated_at = "2026-10-03T00:56:46.248326Z"
+created_by = "external:advisor"
+watchers = ["external:advisor"]
 +++
 
 original id: aqtg

@@ -5,6 +5,8 @@ kind = "feature"
 state = "integrated"
 created_at = "2026-09-30T02:14:07.641Z"
 updated_at = "2026-09-30T02:38:02.739369Z"
+created_by = "agent:pm-1"
+watchers = ["agent:pm-1"]
 branch = "bridle/upgrade-build"
 commit = "c89909e0eb66f4b2c912beacb244e7cf914ae019"
 summary = """`bridle restart --upgrade` / `upgrade: true` on POST /v1/restart. New upgrade.rs: newest first-parent commit on main (30 back) whose GH runs (the CI watcher's Gh trait, injectable via Overrides.upgrade) are all green; `meta upgrade.built` records the last built commit (binary has no embedded commit), candidate equal/ancestor of it = "nothing to upgrade". Otherwise reply at once and background: wake, build in a throwaway detached worktree (<ws>/.bridle/upgrade-src, CARGO_TARGET_DIR=<ws>/.bridle/upgrade-target kept for incremental builds; human's checkout untouched), then the existing restart path (refactored into perform_restart). Build failure or no quiet point: daemon untouched, wake upgrade_failed + human inbox note. RestartResponse gained restarting/message. Tests in upgrade_test.rs with fake gh and fake build command. Docs and CHANGELOG updated. Caveat: if a human cargo-installs by hand, upgrade.built is stale."""

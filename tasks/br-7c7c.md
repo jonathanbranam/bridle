@@ -5,6 +5,8 @@ kind = "question"
 state = "open"
 created_at = "2026-10-03T02:28:55.737Z"
 updated_at = "2026-10-03T02:28:55.737Z"
+created_by = "external:advisor"
+watchers = ["external:advisor"]
 +++
 
 original id: fbfy

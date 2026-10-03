@@ -5,6 +5,8 @@ kind = "bug"
 state = "dropped"
 created_at = "2026-09-28T15:03:27.767Z"
 updated_at = "2026-09-28T23:51:59.879799Z"
+created_by = "external:advisor"
+watchers = ["external:advisor"]
 +++
 
 tickets: docs/questions/open/tui-inbox-doesnt-scroll-8ups.md (8ups) and

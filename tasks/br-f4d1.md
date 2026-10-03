@@ -5,6 +5,8 @@ kind = "feature"
 state = "integrated"
 created_at = "2026-09-29T02:46:37.164Z"
 updated_at = "2026-09-29T03:24:43.341166Z"
+created_by = "agent:pm-1"
+watchers = ["agent:pm-1"]
 branch = "bridle/creds"
 commit = "2e39995"
 summary = "Added ~/.bridle/credentials.toml (0600, [principal] project = token; read refused with a chmod hint if looser). discovery::resolve_token now takes the project and picks --token, BRIDLE_TOKEN, then BRIDLE_AS's entry (missing entry is an error naming file, principal, project; never falls through). token create saves the entry for the resolved project and prints no token (with --url it prints as before, so the statusline setup command now needs --url); token revoke removes it. scripts/claude-orchestrator and claude-advisor set BRIDLE_AS. Docs (principals.md, cli.md) and CHANGELOG updated; tests in discovery.rs cover pick order, missing entry, create/revoke round trip and file mode. Not migrated: the six existing token files."

@@ -5,6 +5,11 @@ kind = "chore"
 state = "claimed"
 created_at = "2026-10-03T02:20:12.059Z"
 updated_at = "2026-10-03T02:20:12.065187Z"
+created_by = "agent:pm-1"
+watchers = [
+    "agent:pm-1",
+    "human",
+]
 +++
 
 Ticket docs/tickets/open/task-watchers-a-creator-field-a-watchers-list-and-wakes-that-xxxq.md, the advisor's correction (2026515): messages (one coalesced line per change, own kind, read state as the bookmark; a wake only rings the doorbell for interactive sessions) vs wakes with details. Tell the advisor your decision, then bridle task done. It holds br-7605 (wakes say what changed).

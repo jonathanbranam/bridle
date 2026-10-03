@@ -5,6 +5,8 @@ kind = "bug"
 state = "planned"
 created_at = "2026-10-01T02:16:26.855Z"
 updated_at = "2026-10-02T12:54:52.237434Z"
+created_by = "agent:pm-1"
+watchers = ["agent:pm-1"]
 size = "M"
 priority = "high"
 summary = "Orchestrator pid file now records `@<start epoch>`, read by one helper (containment::start_epoch, LC_ALL=C TZ=UTC) in both the launcher and the daemon and compared with 1 s slack, so TZ/LC_TIME no longer make a live session look dead. Old-format pid files (local lstart string) are treated as alive when the pid is a `bridle session`. In the supervisor, a pid that fails the match but is a live `bridle session` files one incident and does not relaunch. Agents' own start-string identity (DB, containment tracker) is untouched to avoid breaking stored strings on upgrade. Docs: orchestrator-supervision.md, CHANGELOG. Not landed, per brief."

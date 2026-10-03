@@ -5,6 +5,8 @@ kind = "feature"
 state = "integrated"
 created_at = "2026-09-29T08:10:45.474Z"
 updated_at = "2026-09-29T09:03:20.752021Z"
+created_by = "agent:pm-1"
+watchers = ["agent:pm-1"]
 branch = "bridle/paired-worktree"
 commit = "514a1b96357e24a49bcf2b1061576bfdc717983b"
 summary = 'Added [worktrees] layout = "paired" with [worktrees.pair.<name>] path/mode (worktree|symlink): spawn creates <root>/<project> plus each sibling (worktree on bridle/<agent> from sibling HEAD, or symlink), setup runs in each worktree member, sibling paths are in the system prompt, rm removes all members and refuses on a dirty one by name. Members are found at rm time from current config beside the recorded worktree (no schema change). Config key is [worktrees] (existing table), not [worktree] as the brief wrote. Docs and CHANGELOG updated.'

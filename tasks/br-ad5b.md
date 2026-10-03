@@ -5,6 +5,8 @@ kind = "question"
 state = "dropped"
 created_at = "2026-09-28T04:38:16.862Z"
 updated_at = "2026-09-28T09:33:38.382296Z"
+created_by = "agent:p0-6b-tskm-import"
+watchers = ["agent:p0-6b-tskm-import"]
 +++
 
 ticket: docs/questions/open/backtick-in-bridle-send-body-denied-by-permissions-tk3m.md

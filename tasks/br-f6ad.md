@@ -5,6 +5,8 @@ kind = "feature"
 state = "integrated"
 created_at = "2026-09-28T15:37:15.637Z"
 updated_at = "2026-09-29T01:34:59.957832Z"
+created_by = "agent:pm-1"
+watchers = ["agent:pm-1"]
 +++
 
 ticket: docs/questions/open/disk-usage-monitoring-m3wq.md

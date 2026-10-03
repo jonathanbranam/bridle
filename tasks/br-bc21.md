@@ -5,6 +5,8 @@ kind = "feature"
 state = "dropped"
 created_at = "2026-09-28T16:42:02.250Z"
 updated_at = "2026-09-28T22:21:06.869536Z"
+created_by = "agent:pm-1"
+watchers = ["agent:pm-1"]
 +++
 
 Part of onboarding data-contracts (docs/context/onboarding-data-contracts.md §3, §7 step 2;

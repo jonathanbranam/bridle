@@ -5,6 +5,8 @@ kind = "feature"
 state = "open"
 created_at = "2026-09-30T19:48:27.574Z"
 updated_at = "2026-09-30T19:48:27.574Z"
+created_by = "external:orchestrator"
+watchers = ["external:orchestrator"]
 size = "M"
 +++
 

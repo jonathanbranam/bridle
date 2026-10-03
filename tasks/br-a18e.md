@@ -5,6 +5,8 @@ kind = "chore"
 state = "dropped"
 created_at = "2026-09-28T04:38:24.599Z"
 updated_at = "2026-09-28T05:54:18.653570Z"
+created_by = "agent:p0-6b-tskm-import"
+watchers = ["agent:p0-6b-tskm-import"]
 +++
 
 Small polish items pm-1 was holding for free slots (no ticket file; tracked

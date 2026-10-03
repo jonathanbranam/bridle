@@ -5,6 +5,8 @@ kind = "feature"
 state = "dropped"
 created_at = "2026-09-30T12:39:38.324Z"
 updated_at = "2026-09-30T12:40:24.413683Z"
+created_by = "external:advisor"
+watchers = ["external:advisor"]
 size = "S"
 +++
 

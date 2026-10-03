@@ -5,6 +5,8 @@ kind = "bug"
 state = "dropped"
 created_at = "2026-09-28T17:54:36.959Z"
 updated_at = "2026-09-29T01:24:44.215081Z"
+created_by = "external:orchestrator"
+watchers = ["external:orchestrator"]
 +++
 
 original id: p4ks

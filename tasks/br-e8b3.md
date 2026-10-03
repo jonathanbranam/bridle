@@ -5,6 +5,8 @@ kind = "chore"
 state = "dropped"
 created_at = "2026-09-28T15:37:14.739Z"
 updated_at = "2026-09-28T22:21:07.763413Z"
+created_by = "agent:pm-1"
+watchers = ["agent:pm-1"]
 +++
 
 ticket: docs/questions/open/clean-stale-build-output-f75x.md

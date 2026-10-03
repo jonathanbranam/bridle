@@ -5,6 +5,8 @@ kind = "chore"
 state = "dropped"
 created_at = "2026-09-30T23:27:11.171Z"
 updated_at = "2026-09-30T23:43:15.756467Z"
+created_by = "agent:pm-1"
+watchers = ["agent:pm-1"]
 size = "S"
 summary = "Added CHANGELOG entry for docs-current rule (br-987b had implemented the rule and worker handoff; br-0f46 already dropped). Commit ef33f8c."
 +++

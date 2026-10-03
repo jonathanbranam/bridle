@@ -5,6 +5,8 @@ kind = "research"
 state = "open"
 created_at = "2026-09-30T12:39:38.279Z"
 updated_at = "2026-09-30T12:39:38.280277Z"
+created_by = "external:advisor"
+watchers = ["external:advisor"]
 size = "M"
 priority = "low"
 +++

@@ -5,6 +5,8 @@ kind = "feature"
 state = "dropped"
 created_at = "2026-09-28T16:58:22.810Z"
 updated_at = "2026-09-28T22:21:07.163184Z"
+created_by = "external:advisor"
+watchers = ["external:advisor"]
 +++
 
 ticket: docs/questions/open/read-one-message-in-full-cu5m.md

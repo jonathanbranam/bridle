@@ -5,6 +5,8 @@ kind = "feature"
 state = "open"
 created_at = "2026-09-28T12:36:37.991Z"
 updated_at = "2026-09-28T12:36:37.991Z"
+created_by = "external:orchestrator"
+watchers = ["external:orchestrator"]
 +++
 
 original id: k8dw. See docs/questions/open/per-task-tools-and-model-k8dw.md

@@ -5,6 +5,8 @@ kind = "feature"
 state = "dropped"
 created_at = "2026-09-28T22:29:42.182Z"
 updated_at = "2026-09-28T23:36:33.666036Z"
+created_by = "agent:pm-1"
+watchers = ["agent:pm-1"]
 +++
 
 ticket: docs/questions/open/build-cost-on-the-laptop-b7cz.md (options 1 and 2 are the scope)

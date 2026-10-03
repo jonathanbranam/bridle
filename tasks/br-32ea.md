@@ -5,6 +5,8 @@ kind = "feature"
 state = "integrated"
 created_at = "2026-09-30T11:04:27.077Z"
 updated_at = "2026-09-30T11:20:26.597884Z"
+created_by = "agent:pm-1"
+watchers = ["agent:pm-1"]
 branch = "bridle/k7mw-a"
 commit = "2698df28cfae4ef7b350da33d888ca932c6504fa"
 summary = "Machine config types in bridle-api/src/machines.rs (MachineMap: [machine] name, [machines], [projects]; slice C reuses ProjectPlace.port; the daemon's RawConfig accepts the new keys). resolve_endpoint routes a --project/BRIDLE_PROJECT listed on another machine to http://host:port (Endpoint.machine set), else the registry; a listed project with no [machine] name errors. resolve_token takes the machine and reads [principal.<machine>][project]; plain [principal] keys are unchanged. 'This machine' = [machine] name. Docs: cli.md, principals.md, CHANGELOG."

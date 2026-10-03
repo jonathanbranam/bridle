@@ -5,6 +5,8 @@ kind = "feature"
 state = "integrated"
 created_at = "2026-09-30T12:20:53.357Z"
 updated_at = "2026-09-30T12:55:43.000338Z"
+created_by = "agent:pm-1"
+watchers = ["agent:pm-1"]
 branch = "bridle/systemd-install"
 commit = "dfed2936f848049a02b5810898263d7be71a2dee"
 summary = "Added `bridle systemd install [--project P] [--projects-dir DIR] [--force]` (crates/bridle/src/systemd.rs, new; cli.rs/commands.rs/main.rs wiring only, no daemon code). Linux only. Writes ~/.config/systemd/user/bridle-<project>.service (XDG_CONFIG_HOME honoured) for --project, or every project [projects] puts on [machine] name; errors if the machine is unnamed or the project isn't here. Unit: ExecStart=<current bridle> --project P serve --repo <dir>/P --workspace <dir>, Restart=on-failure, PATH/HOME copied, log appended to <dir>/.bridle/daemon.log, WantedBy=default.target; port is left to serve's [projects] lookup. Prints daemon-reload, enable --now and sudo loginctl enable-linger commands; runs nothing. Decision: the config has no clone path, so clones are assumed at <projects-dir>/<project> (default: cwd's parent). No uninstall (not asked). Tests use no systemd; selection takes the project as an argument because BRIDLE_PROJECT leaks into Cli::parse in agent envs. Docs: cli.md, nuc-host.md (linger claim corrected), CHANGELOG. Caveat: bridle-spec parses_fast (1s timing assert) failed twice in just check under load ~117; it passes alone, all else green."

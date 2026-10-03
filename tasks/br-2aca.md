@@ -5,6 +5,8 @@ kind = "question"
 state = "dropped"
 created_at = "2026-09-28T04:38:17.173Z"
 updated_at = "2026-09-28T09:33:38.477722Z"
+created_by = "agent:p0-6b-tskm-import"
+watchers = ["agent:p0-6b-tskm-import"]
 +++
 
 ticket: docs/questions/open/is-the-driver-opus-by-default-3nqf.md

@@ -5,6 +5,8 @@ kind = "feature"
 state = "open"
 created_at = "2026-09-29T12:03:18.395Z"
 updated_at = "2026-09-29T12:03:18.395Z"
+created_by = "external:advisor"
+watchers = ["external:advisor"]
 +++
 
 original id: 8awb

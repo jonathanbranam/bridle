@@ -5,6 +5,8 @@ kind = "feature"
 state = "dropped"
 created_at = "2026-09-28T22:30:03.573Z"
 updated_at = "2026-09-28T23:36:34.199664Z"
+created_by = "agent:pm-1"
+watchers = ["agent:pm-1"]
 +++
 
 design: docs/design/components.md, section "Scope by the task or spawn, not the cwd";

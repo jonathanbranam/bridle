@@ -5,6 +5,8 @@ kind = "chore"
 state = "dropped"
 created_at = "2026-09-28T16:22:37.013Z"
 updated_at = "2026-09-29T11:30:40.497683Z"
+created_by = "external:advisor"
+watchers = ["external:advisor"]
 +++
 
 ticket: docs/questions/open/log-shutdown-requests-at-warn-sed3.md

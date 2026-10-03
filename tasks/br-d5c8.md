@@ -5,6 +5,8 @@ kind = "feature"
 state = "integrated"
 created_at = "2026-09-28T14:56:35.636Z"
 updated_at = "2026-09-29T01:35:02.366100Z"
+created_by = "external:advisor"
+watchers = ["external:advisor"]
 +++
 
 ticket: docs/questions/open/statusline-context-as-a-token-count-xpuc.md

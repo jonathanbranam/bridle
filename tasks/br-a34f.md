@@ -5,6 +5,8 @@ kind = "bug"
 state = "dropped"
 created_at = "2026-10-03T02:07:01.118Z"
 updated_at = "2026-10-03T02:30:37.722390Z"
+created_by = "agent:pm-1"
+watchers = ["agent:pm-1"]
 size = "M"
 +++
 
