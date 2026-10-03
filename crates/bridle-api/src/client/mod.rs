@@ -14,16 +14,17 @@ use crate::types::{
     AddQueueTierRequest, Agent, AllocPortRequest, AnswerQuestionRequest, ApiErrorResponse,
     AskQuestionRequest, BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, Conflict,
     DoneTaskRequest, DropTaskRequest, Edge, EditTaskRequest, Event, EventQuery, Handover,
-    HandoverDone, Health, ImpactCheckRequest, ImpactReport, InterruptRequest, InterruptResponse,
-    LandRequest, LandResult, MaxWorkersRequest, Message, MessageQuery, NewEdgeRequest,
-    NewTaskRequest, NoteTaskRequest, OpenQuestion, OrchestratorWakeQuery, PortAllocation,
-    PrincipalWakeQuery, PrincipalWakeResponse, ProbeRequest, ProbeResult, Queue, RemoveEdgeQuery,
-    RemoveQuery, RenewRequest, ResolveConflictRequest, RestartRequest, RestartResponse,
-    ResumeRequest, SendRequest, SessionEnd, SessionInfo, SessionRegister, SetImpactRequest,
-    SetKindRequest, SetPriorityRequest, SetQueueRequest, SetSummaryRequest, ShutdownResponse,
-    SkipSettleRequest, SpawnRequest, Status, StatusLineReport, StopRequest, SubmitTaskRequest,
-    Task, TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery,
-    Usage, UsageBreakdown, UsageBreakdownQuery, WakeResponse, WriteHandoverRequest,
+    HandoverDone, Health, ImpactCheckRequest, ImpactReport, Interaction, InteractionsQuery,
+    InterruptRequest, InterruptResponse, LandRequest, LandResult, MaxWorkersRequest, Message,
+    MessageQuery, NewEdgeRequest, NewTaskRequest, NoteTaskRequest, OpenQuestion,
+    OrchestratorWakeQuery, PortAllocation, PrincipalWakeQuery, PrincipalWakeResponse, ProbeRequest,
+    ProbeResult, Queue, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest,
+    RestartRequest, RestartResponse, ResumeRequest, SendRequest, SessionEnd, SessionInfo,
+    SessionRegister, SetImpactRequest, SetKindRequest, SetPriorityRequest, SetQueueRequest,
+    SetSummaryRequest, ShutdownResponse, SkipSettleRequest, SpawnRequest, Status, StatusLineReport,
+    StopRequest, SubmitTaskRequest, Task, TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo,
+    TranscriptLine, TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery, WakeResponse,
+    WriteHandoverRequest,
 };
 
 #[derive(Debug, Error)]
@@ -371,6 +372,15 @@ impl Client {
     ) -> Result<UsageBreakdown, ClientError> {
         self.get_json_query(&["v1", "usage", "breakdown"], query)
             .await
+    }
+
+    /// `GET /v1/interactions`: this machine's prompt log, oldest first. `human` and local
+    /// readers only.
+    pub async fn interactions(
+        &self,
+        query: &InteractionsQuery,
+    ) -> Result<Vec<Interaction>, ClientError> {
+        self.get_json_query(&["v1", "interactions"], query).await
     }
 
     /// `POST /v1/handovers`: `human` and `external:orchestrator` only.

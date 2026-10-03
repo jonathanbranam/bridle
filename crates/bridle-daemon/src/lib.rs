@@ -641,6 +641,10 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         integration: config.branches.integration.clone(),
         ports: config.ports.clone(),
         stop_grace: config.stop_grace,
+        bridle_home: overrides
+            .bridle_home
+            .clone()
+            .unwrap_or_else(discovery::bridle_home),
         integration_check: config.integration.check.clone(),
         warm_build: warm_build::WarmBuild::new(
             config.integration.warm_build.clone(),

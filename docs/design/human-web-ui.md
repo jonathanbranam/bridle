@@ -55,6 +55,15 @@ rest, so a stolen session can answer and check off, not run work.
   the page must load to show its login form; every API route stays guarded. Not compiled into the `bridle` binary (no Node in bridle's build). In development
   the UI's dev server proxies API calls to the gateway.
 
+**Human time (ticket u6w9; types only so far).** The wire types of `/api/v1/interactions/*` live in
+`crates/bridle-gateway/src/interactions.rs` and are exported to `bindings/` like the rest:
+`InteractionReport` (`report`: totals per group per day or week, plus the human's total),
+`DayReport` (`day`: per-session intervals, overlaps, peak concurrency, minutes at 1, 2 and 3+),
+`HoursReport` (`hours`: minutes per hour of day, averaged over the matching days),
+`IntervalsReport` (raw intervals). Each carries `unreachable` machines. Times are RFC 3339 UTC
+strings; days split at US Eastern midnight. Collection from the daemons' `GET /v1/interactions`,
+the interval math and the handlers are not built yet.
+
 ## 4. Multi-machine
 
 The human runs one gateway on one machine and manages everything from there. That needs the

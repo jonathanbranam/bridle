@@ -14,17 +14,17 @@ use bridle_api::types::{
     AddQueueTierRequest, Agent, AllocPortRequest, AnswerQuestionRequest, ApiErrorResponse,
     AskQuestionRequest, BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, Conflict,
     DoneTaskRequest, DropTaskRequest, Edge, EdgeKind, EditTaskRequest, ErrorBody, Event,
-    EventQuery, Handover, Health, HoldStatus, ImpactCheckRequest, ImpactReport,
-    InteractiveUsageRow, InterruptRequest, MaxWorkersRequest, MergeProbe, Message, MessageKind,
-    MessageQuery, MessageState, MigrationRecord, NewEdgeRequest, NewTaskRequest, NoteTaskRequest,
-    OpenQuestion, OverlapLevel, PortAllocation, PrincipalKind, ProbeOutcome, ProbeRequest,
-    ProbeResult, Queue, RateLimit, RebuildResponse, RemoveEdgeQuery, RemoveQuery, RenewRequest,
-    ResolveConflictRequest, ResumeRequest, ScheduleOverrideStatus, SendRequest, SetImpactRequest,
-    SetKindRequest, SetPriorityRequest, SetQueueRequest, SetSummaryRequest, ShutdownResponse,
-    SkipSettleRequest, SpawnRequest, Status, StatusLineReport, StopRequest, SubmitTaskRequest,
-    Task, TaskQuery, TaskState, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine,
-    TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, WakeResponse, When,
-    WindowStatus, WriteHandoverRequest, event_kind,
+    EventQuery, Handover, Health, HoldStatus, ImpactCheckRequest, ImpactReport, Interaction,
+    InteractionsQuery, InteractiveUsageRow, InterruptRequest, MaxWorkersRequest, MergeProbe,
+    Message, MessageKind, MessageQuery, MessageState, MigrationRecord, NewEdgeRequest,
+    NewTaskRequest, NoteTaskRequest, OpenQuestion, OverlapLevel, PortAllocation, PrincipalKind,
+    ProbeOutcome, ProbeRequest, ProbeResult, Queue, RateLimit, RebuildResponse, RemoveEdgeQuery,
+    RemoveQuery, RenewRequest, ResolveConflictRequest, ResumeRequest, ScheduleOverrideStatus,
+    SendRequest, SetImpactRequest, SetKindRequest, SetPriorityRequest, SetQueueRequest,
+    SetSummaryRequest, ShutdownResponse, SkipSettleRequest, SpawnRequest, Status, StatusLineReport,
+    StopRequest, SubmitTaskRequest, Task, TaskQuery, TaskState, TokenCreateRequest, TokenCreated,
+    TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery,
+    UsageGroupBy, WakeResponse, When, WindowStatus, WriteHandoverRequest, event_kind,
 };
 use bridle_api::types::{PrincipalId, ThreadEntryKind};
 use chrono::Utc;
@@ -67,6 +67,8 @@ pub struct AppState {
     pub ports: crate::config::PortsConfig,
     /// `[daemon] stop_grace`; shutdown's cap on stopping agents is this + 5 s.
     pub stop_grace: std::time::Duration,
+    /// The machine's `~/.bridle`, where `prompts.jsonl` lives.
+    pub bridle_home: std::path::PathBuf,
     /// `[branches] integration`, the branch `probe` merges against.
     pub integration: String,
     /// `[integration] check`, run by `bridle land`.
@@ -103,6 +105,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/handovers", get(list_handovers).post(write_handover))
         .route("/v1/handovers/latest", get(latest_handover))
         .route("/v1/handovers/{id}", get(get_handover))
+        .route("/v1/interactions", get(interactions))
         .route("/v1/usage", get(usage))
         .route("/v1/usage/breakdown", get(usage_breakdown))
         .route("/v1/statusline", post(report_statusline))
@@ -1386,6 +1389,40 @@ fn to_sse(ev: &Event) -> SseEvent {
 
 async fn usage(State(state): State<AppState>) -> Result<Json<Usage>, ApiError> {
     Ok(Json(state.store.usage().await?))
+}
+
+/// The machine's prompt log (docs/design/agent-host/roles-and-config.md), for the gateway's
+/// human-time reports. Not for agents: it records when the human talks to bridle.
+async fn interactions(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Query(q): Query<InteractionsQuery>,
+) -> Result<Json<Vec<Interaction>>, ApiError> {
+    if !matches!(principal.kind, PrincipalKind::Human | PrincipalKind::Local) {
+        return Err(ApiError::forbidden(
+            "only the human or a local reader may read the interaction log",
+        ));
+    }
+    let path = state.bridle_home.join("prompts.jsonl");
+    let text = match tokio::fs::read_to_string(&path).await {
+        Ok(t) => t,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => String::new(),
+        Err(e) => {
+            return Err(ApiError::new(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "internal",
+                format!("reading {}: {e}", path.display()),
+            ));
+        }
+    };
+    // Bad lines (a torn append, hand edits) are skipped: the log is append-only and best-effort.
+    let mut out: Vec<Interaction> = text
+        .lines()
+        .filter_map(|l| serde_json::from_str::<Interaction>(l).ok())
+        .filter(|i| q.since.is_none_or(|s| i.at >= s))
+        .collect();
+    out.sort_by_key(|i| i.at);
+    Ok(Json(out))
 }
 
 async fn usage_breakdown(

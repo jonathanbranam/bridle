@@ -1,7 +1,8 @@
 //! `bridle focus gate`: the UserPromptSubmit hook of focus hours (ticket cvaq, slice A).
 //! With no `[[focus]]` in `~/.bridle/config.toml`, or outside every period, or in a project
 //! that set `focus_hours = false`, it prints nothing and does nothing.
-//! Also records one JSON line per prompt to `<bridle_home>/prompts.jsonl` (ticket u6w9).
+//! Also records one JSON line per prompt, and (`bridle focus reply`, the Stop hook) per reply, to
+//! `<bridle_home>/prompts.jsonl` (ticket u6w9).
 
 use std::io::Write as _;
 use std::path::Path;
@@ -140,10 +141,16 @@ pub fn refuse_advisor_if_locked(home: &Path, now: DateTime<Local>) -> Result<(),
     }
 }
 
-/// Record one JSON line to <bridle_home>/prompts.jsonl with the prompt timestamp and metadata.
+/// Record one `prompt` line to <bridle_home>/prompts.jsonl with the prompt timestamp and metadata.
 /// Fails open: any error is swallowed. Never blocks on stdin if it's absent or a tty.
 /// Called before the gate's early returns so it records on every prompt.
 fn record_prompt(home: &Path) {
+    record_event(home, "prompt");
+}
+
+/// `event` is `prompt` (the human sent one) or `reply` (the agent finished answering: the Stop
+/// hook). Lines from before the field existed are prompts.
+fn record_event(home: &Path, event: &str) {
     let now = Utc::now();
     let session_id = read_stdin_session_id();
     let role = role_from_env();
@@ -156,6 +163,7 @@ fn record_prompt(home: &Path) {
         "role": role,
         "machine": if machine.is_empty() { serde_json::Value::Null } else { serde_json::Value::String(machine) },
         "project": project,
+        "event": event,
     });
 
     let _ = std::fs::create_dir_all(home);
@@ -243,6 +251,12 @@ pub fn run_gate() {
     if let Some(out) = gate(&home, &repo, Local::now()) {
         println!("{out}");
     }
+}
+
+/// The Stop hook's entry point: records that the agent finished replying, so the human's reading
+/// time can start there. Prints nothing and never blocks the stop.
+pub fn run_reply() {
+    record_event(&bridle_api::discovery::bridle_home(), "reply");
 }
 
 #[cfg(test)]
@@ -471,6 +485,24 @@ mod tests {
             record.get("project").is_some(),
             "project field should be present"
         );
+    }
+
+    #[test]
+    fn prompt_and_reply_lines_carry_their_event() {
+        let home = tempfile::tempdir().expect("tempdir");
+        record_prompt(home.path());
+        record_event(home.path(), "reply");
+
+        let content =
+            std::fs::read_to_string(home.path().join("prompts.jsonl")).expect("read prompts.jsonl");
+        let events: Vec<String> = content
+            .lines()
+            .map(|l| {
+                let v: serde_json::Value = serde_json::from_str(l).expect("valid JSON");
+                v["event"].as_str().expect("event").to_string()
+            })
+            .collect();
+        assert_eq!(events, ["prompt", "reply"]);
     }
 
     #[test]

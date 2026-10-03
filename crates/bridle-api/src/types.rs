@@ -913,6 +913,44 @@ pub struct UsageBreakdown {
     pub total_cost_usd: f64,
 }
 
+// ---------- interactions ----------
+
+/// One line of the machine's `~/.bridle/prompts.jsonl` (written by `bridle focus gate`,
+/// docs/design/agent-host/roles-and-config.md): the human sent a prompt in an interactive
+/// session, or (`event: reply`) the agent finished answering. Every field but `at` may be
+/// missing in the log.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Interaction {
+    pub at: DateTime<Utc>,
+    /// Lines from before the field existed are prompts.
+    #[serde(default)]
+    pub event: InteractionEvent,
+    #[serde(default)]
+    pub session: Option<String>,
+    #[serde(default)]
+    pub role: Option<String>,
+    #[serde(default)]
+    pub machine: Option<String>,
+    #[serde(default)]
+    pub project: Option<String>,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum InteractionEvent {
+    #[default]
+    Prompt,
+    Reply,
+}
+
+/// `GET /v1/interactions` query.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct InteractionsQuery {
+    /// Only prompts at or after this time.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub since: Option<DateTime<Utc>>,
+}
+
 // ---------- statusline ----------
 
 /// `POST /v1/statusline` body: one snapshot from `bridle statusline`, read

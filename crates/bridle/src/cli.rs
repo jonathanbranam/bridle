@@ -1627,6 +1627,9 @@ pub enum FocusAction {
     /// back to work on the first prompt and every 5 minutes after. Silent when no `[[focus]]`
     /// is configured, outside a period, or in a project with `focus_hours = false`. Never fails.
     Gate,
+    /// The Stop hook: records that the agent finished replying to `~/.bridle/prompts.jsonl`
+    /// (`event: "reply"`). Prints nothing. Never fails.
+    Reply,
 }
 
 #[derive(Debug, Args)]

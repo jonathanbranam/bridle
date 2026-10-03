@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+- `GET /v1/interactions?since=` serves the machine's prompt log (human and local readers), and `bridle focus reply`, a `Stop` hook in `bridle session`'s settings, logs when an agent finishes replying (`event: reply`; prompt lines get `event: prompt`); the gateway's human-time API types are generated for the UI (br-bhcp, u6w9).
+
 ### Changed
 - `bridle ticket new` no longer files a task (br-6c69, k7tm): the task raced the ticket's commit. `bridle ticket task <id>` files it once the ticket is committed on `main` with a non-empty ask; `ticket new --body`/`--body-file` write the ask; `--no-task` is a hidden no-op.
 - One id space for tickets and tasks (br-9e15, k7tm): new task ids use the ticket alphabet (`abcdefghjkmnpqrstuvwxyz23456789`) instead of hex; a ticket's first task takes the ticket's id (`br-k7tm`), later ones get fresh ids; `bridle ticket new` never mints an id a task already has. Existing task ids are unchanged; no migration.

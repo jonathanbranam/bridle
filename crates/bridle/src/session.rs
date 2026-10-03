@@ -22,11 +22,16 @@ const LEAN: &str = r#""disableBundledSkills":true,"disableWorkflows":true,"disab
 const FOCUS_GATE: &str =
     r#""UserPromptSubmit":[{"hooks":[{"type":"command","command":"bridle focus gate"}]}]"#;
 
+/// The Stop hook records when the agent finishes replying, the other end of the human's reading
+/// time (ticket u6w9).
+const REPLY_HOOK: &str =
+    r#""Stop":[{"hooks":[{"type":"command","command":"bridle focus reply"}]}]"#;
+
 /// The SessionStart hook records the session id (it changes on /clear). One --settings object:
 /// a second would replace it.
 fn orchestrator_settings() -> String {
     format!(
-        r#"{{"hooks":{{"SessionStart":[{{"hooks":[{{"type":"command","command":"bridle orchestrator note-session"}}]}}],{FOCUS_GATE}}},{LEAN}}}"#
+        r#"{{"hooks":{{"SessionStart":[{{"hooks":[{{"type":"command","command":"bridle orchestrator note-session"}}]}}],{FOCUS_GATE},{REPLY_HOOK}}},{LEAN}}}"#
     )
 }
 
@@ -36,7 +41,7 @@ const ADVISOR_NOTE: &str =
     r#""SessionStart":[{"hooks":[{"type":"command","command":"bridle session note"}]}]"#;
 
 fn advisor_settings() -> String {
-    format!(r#"{{"hooks":{{{ADVISOR_NOTE},{FOCUS_GATE}}},{LEAN}}}"#)
+    format!(r#"{{"hooks":{{{ADVISOR_NOTE},{FOCUS_GATE},{REPLY_HOOK}}},{LEAN}}}"#)
 }
 
 // The opening prompts only point at `bridle prime`: a long prompt in argv is matched by any
@@ -352,6 +357,13 @@ mod tests {
     fn settings_are_valid_json() {
         for s in [orchestrator_settings(), advisor_settings()] {
             serde_json::from_str::<serde_json::Value>(&s).expect("json");
+        }
+    }
+
+    #[test]
+    fn session_settings_have_the_reply_hook() {
+        for s in [orchestrator_settings(), advisor_settings()] {
+            assert!(s.contains("bridle focus reply"));
         }
     }
 
