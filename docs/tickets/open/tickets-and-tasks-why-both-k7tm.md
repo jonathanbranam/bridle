@@ -33,3 +33,26 @@ The human, verbatim (2026-09-29, via the advisor):
 Whether the long-term plan is one record per piece of work (the task, with its markdown
 readable and editable in vim or Obsidian, per p2ys) or keeping both, and what each is for if
 both stay.
+
+## The human, again (2026-10-03, via the advisor)
+
+After the advisor filed four raw ideas (8r5x, z485, 2tpm, 67qw) and each got a task straight
+away, verbatim:
+
+> Yeah, interesting. I don't know that they need tasks yet. Um, so I kind of want to understand
+> that. Why you created tasks for them immediately. When I, I, like I was hoping to just create
+> tickets only. Um, the task can stay open. I think it's, uh, it's fine. Uh, since they're
+> already... created and uh, I yeah this the delineation between tickets and tasks is still
+> actually if, if there isn't a ticket to talk about that then make make a make one of make a
+> question uh, I think ticket um, for that that like do we really need both of these things and
+> what lives on a ticket versus a task.
+
+Why the tasks were made: the advisor role says to file each ticket "with its `bridle task new`",
+`docs/README.md` says every ticket has a task (since tskm), and `bridle ticket new` creates the
+task by default (`--no-task` skips it). Nothing distinguishes a raw idea, one that needs
+refinement with the human before anyone could build it, from work ready to queue.
+
+Added questions:
+
+- Does a raw idea need a task at all, or only a ticket until it's refined and specified?
+- What lives on a ticket and what on a task?
