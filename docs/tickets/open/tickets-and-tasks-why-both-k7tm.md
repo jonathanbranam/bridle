@@ -147,3 +147,11 @@ options):
 
 Relayed to pm-1 the same day: drop at once what it judges shouldn't be worked (the ticket stays);
 send the human one list of the rest; plan only what the human approves.
+
+## A kind for "design before build"? (2026-10-03)
+
+Filing [[scheduled-messages-an-agent-or-the-human-schedules-a-message-hrcn|hrcn]], the human
+asked for a kind meaning "a design for a new feature", "because that's something we need to have
+a lot of", then: "Maybe that's just called a feature ticket, but there's no task." Under the rule
+above, a `feature` ticket with no task already means "not ready to build". Open: add a `design`
+kind anyway, or let "no task" carry it.

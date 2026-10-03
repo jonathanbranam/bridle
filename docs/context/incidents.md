@@ -24,6 +24,27 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-03 ~04:00-13:00: the orchestrator slept through the night with no wait running
+
+- **What happened:** around midnight ET (04:00 UTC) during quiet hours, the orchestrator said it
+  was quiet time, nothing was happening, and it would pick up at 6 a.m., but it ran no background
+  wait, so nothing could wake it. It did nothing from about midnight to 9 a.m. ET. The daemon's
+  liveness watch noticed and told the human's inbox ("no wake command running": m-3797 at 03:54
+  UTC, m-3817 at 04:37), but the human was asleep. Reported by the human (2026-10-03).
+- **Impact:** about nine hours with no supervision of the workforce. A message the human later
+  wrote to it was lost when it handed off to a new session mid-composition (no harm, re-sent to
+  the advisor).
+- **Cause:** the orchestrator chose to stop without a wait; nothing wakes a session at a given
+  time. Likely contributor (not verified): the quiet-hours gate text (`crates/bridle/src/focus.rs`)
+  tells the session "No tool calls except the one the human asked for", and the orchestrator
+  role says to obey it, so restarting its own wait looks forbidden. The advisor did the same that
+  night, skipping its wait restart under the gate.
+- **Category:** `role`, `coordination`.
+- **Follow-up:** the human's rule (the orchestrator never sleeps without a wait, and checks the
+  system at least every two hours) sent to the orchestrator for its role and the gate text;
+  [[scheduled-messages-an-agent-or-the-human-schedules-a-message-hrcn|hrcn]] (scheduled messages,
+  design); [[the-orchestrator-stays-running-fx7x|fx7x]].
+
 ## 2026-10-03 12:09: the NUC's daemons restarted cleanly on Linux (a data point, no fault)
 
 - **What happened:** after the update below, the NUC's three daemons (meta-notes, notes,
