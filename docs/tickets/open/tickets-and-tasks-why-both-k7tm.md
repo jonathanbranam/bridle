@@ -444,12 +444,13 @@ The human, verbatim, on slicing and the rule:
     only `open` tasks. The orchestrator's critical fixes (decision 5) it readies itself.
 13. Existing `open` tasks stay `open` (pm-1's sort already cleared the ones not to work).
 
-Advisor's call, not the human's (the human left it open; override if wrong): a manager may ready
-its own small fix inside work already approved (a test flake, a merge fix, a bug found in the
-branch, like br-e210), so routine CI fixes don't wait on the human. Never new features.
+14. Approved by the human (2026-10-03, verbatim, to "Should the manager's small fixes inside
+    approved work skip pending"): "Yes, approved." A manager may ready
+    its own small fix inside work already approved (a test flake, a merge fix, a bug found in the
+    branch, like br-e210), so routine CI fixes don't wait on the human. Never new features.
 
 Slicing (advisor's call, as the human asked): two tasks, independent.
-- **A. `pending` state** (decisions 11-13): store, API types, CLI (`task ready`, `task new`
+- **A. `pending` state** (decisions 11-14): store, API types, CLI (`task ready`, `task new`
   default), daemon queue and PM wakes, surfacing pending in `bridle status` and the orchestrator's
   startup, docs (storage.md, coordination, cli.md), roles. Migration: none (new state; existing
   rows keep theirs).
