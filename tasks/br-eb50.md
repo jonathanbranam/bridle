@@ -2,9 +2,9 @@
 id = "br-eb50"
 title = "Task watchers 3/4: a watchers list on tasks; wakes go to watchers"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-10-03T02:07:11.774Z"
-updated_at = "2026-10-03T02:07:11.774Z"
+updated_at = "2026-10-03T02:07:20.928505Z"
 size = "M"
 +++
 

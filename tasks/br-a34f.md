@@ -2,9 +2,9 @@
 id = "br-a34f"
 title = "Task watchers 1/4: persistent per-principal wake cursor (task changes are lost between waits)"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-03T02:07:01.118Z"
-updated_at = "2026-10-03T02:07:01.118Z"
+updated_at = "2026-10-03T02:07:20.226716Z"
 size = "M"
 +++
 
