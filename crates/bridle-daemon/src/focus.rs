@@ -85,7 +85,7 @@ pub fn advisor_panes(list_panes: &str) -> Vec<&str> {
         .filter_map(|l| {
             let (id, tag) = l.split_once(' ')?;
             let tag = tag.trim();
-            (tag == "advisor" || tag.starts_with("advisor-")).then_some(id)
+            (tag == "advisor" || tag == "triage" || tag.starts_with("advisor-")).then_some(id)
         })
         .collect()
 }

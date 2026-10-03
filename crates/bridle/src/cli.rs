@@ -700,6 +700,7 @@ pub struct PrimeArgs {
 pub enum PrimeRoleArg {
     Orchestrator,
     Advisor,
+    Triage,
     Worker,
     Planner,
     Prototyper,
@@ -1937,6 +1938,12 @@ pub enum SessionRole {
     Advisor {
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
         args: Vec<String>,
+    },
+    /// `bridle session triage [--project <p>] [claude args]`: the session that talks to the human
+    /// about the running system (`external:triage`, token under `[triage]`).
+    Triage {
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        claude_args: Vec<String>,
     },
     /// An advisor session's SessionStart hook: reads the hook JSON on stdin and tells the daemon
     /// the Claude session id. Never fails.

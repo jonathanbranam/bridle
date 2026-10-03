@@ -1071,7 +1071,7 @@ async fn list_messages(
 }
 
 fn is_known_external_principal(name: &str) -> bool {
-    matches!(name, "advisor" | "orchestrator" | "human")
+    matches!(name, "advisor" | "orchestrator" | "triage" | "human")
 }
 
 /// Resolves a `to` string (`human`, `external:NAME`, `role:NAME` or an agent) to

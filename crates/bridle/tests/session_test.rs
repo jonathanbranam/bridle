@@ -165,6 +165,19 @@ fn advisor_unnamed_has_a_pid_file_only_while_running() {
 }
 
 #[test]
+fn triage_signs_as_triage_and_tags_its_pane() {
+    let r = session(&["--project", "p", "triage"], &[], 0);
+    let l = lines(&r);
+    assert_eq!(
+        &l[3..7],
+        ["--name", "triage-p", "--remote-control", "triage-p"]
+    );
+    assert_eq!(l[7], "Run `bridle prime triage` and follow what it prints.");
+    assert_eq!(l[8], "AS=triage PROJECT=p ADVISOR=");
+    assert!(r.tmux.contains("@bridle triage\n"), "{}", r.tmux);
+}
+
+#[test]
 fn named_advisor_signs_tags_and_skips_the_pid_file() {
     let r = session(
         &["--project", "p", "advisor", "alice", "--model", "m"],

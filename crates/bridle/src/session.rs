@@ -1,4 +1,4 @@
-//! `bridle session orchestrator|advisor`: starts the role's `claude` session (ticket mrhe). Ports
+//! `bridle session orchestrator|advisor|triage`: starts the role's `claude` session (ticket mrhe). Ports
 //! `scripts/claude-orchestrator` and `scripts/claude-advisor`, which are now wrappers around it.
 //! No `exec`: bridle stays as the parent so the pid file can be removed and the exit recorded.
 
@@ -48,11 +48,13 @@ fn advisor_settings() -> String {
 // `pkill -f <pattern>` a worker runs (fx7x).
 const ORCHESTRATOR_PROMPT: &str = "Run `bridle prime orchestrator` and follow what it prints.";
 
+const TRIAGE_PROMPT: &str = "Run `bridle prime triage` and follow what it prints.";
+
 fn advisor_prompt(name: Option<&str>) -> String {
-    let base = "Run `bridle prime advisor` and follow what it prints. Then check in: bridle status, and the open questions to the human. Say hello to the human in one line, then wait.";
+    let base = "Run `bridle prime advisor` and follow what it prints. Say hello to the human in one line, then wait.";
     match name {
         Some(n) => format!(
-            "You are advisor {n}: first read your unread inbox messages (bridle inbox --json) starting \"For advisor {n}:\" and start from that brief. Then run `bridle prime advisor` and follow what it prints. Then check in: bridle status, and the open questions to the human. Say hello to the human in one line, then wait."
+            "You are advisor {n}: first read your unread inbox messages (bridle inbox --json) starting \"For advisor {n}:\" and start from that brief. Then run `bridle prime advisor` and follow what it prints. Say hello to the human in one line, then wait."
         ),
         None => base.to_string(),
     }
@@ -128,6 +130,12 @@ pub async fn run(cli: &Cli, role: &SessionRole) -> Result<(), CliError> {
             let prompt = advisor_prompt(adv);
             let args = claude_args(&advisor_settings(), &name, extra, &prompt);
             advisor(cli, &home, &project, adv, &args).await?
+        }
+        SessionRole::Triage { claude_args: extra } => {
+            crate::focus::refuse_advisor_if_locked(&home, chrono::Local::now())?;
+            let name = session_name("triage", None, &project, &suffix);
+            let args = claude_args(&advisor_settings(), &name, extra, TRIAGE_PROMPT);
+            triage(&project, &args).await?
         }
         SessionRole::Note => unreachable!("handled above"),
     };
@@ -223,6 +231,17 @@ fn how_ended(rc: i32) -> String {
         n => n.to_string(),
     };
     format!("exit {rc} (SIG{name})")
+}
+
+/// Triage is one session per project, signed `external:triage` through `BRIDLE_AS`. It isn't
+/// registered with the daemon (that is the advisors' session list) and keeps no pid file.
+async fn triage(project: &str, args: &[String]) -> anyhow::Result<i32> {
+    crate::pane::tag_pane("triage");
+    run_claude(
+        &[("BRIDLE_AS", "triage"), ("BRIDLE_PROJECT", project)],
+        args,
+    )
+    .await
 }
 
 async fn advisor(
@@ -415,7 +434,7 @@ mod tests {
     #[test]
     fn advisor_prompt_without_name_is_unchanged() {
         let prompt = advisor_prompt(None);
-        let expected = "Run `bridle prime advisor` and follow what it prints. Then check in: bridle status, and the open questions to the human. Say hello to the human in one line, then wait.";
+        let expected = "Run `bridle prime advisor` and follow what it prints. Say hello to the human in one line, then wait.";
         assert_eq!(prompt, expected);
     }
 }

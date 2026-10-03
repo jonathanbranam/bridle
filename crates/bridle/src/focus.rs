@@ -231,8 +231,8 @@ fn role_from_env() -> Option<String> {
             } else {
                 Some("advisor".to_string())
             }
-        } else if role == "orchestrator" {
-            Some("orchestrator".to_string())
+        } else if role == "orchestrator" || role == "triage" {
+            Some(role)
         } else {
             None
         }

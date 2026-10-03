@@ -121,7 +121,7 @@ daemon, minted with `bridle token create <name> --machine <machine>` (printed on
 that machine's `credentials.toml`; plain `token create` refuses `@` in a name, so the suffix always
 means a visitor). It sends, reads its own inbox and queries like any external principal. The
 daemon's own `external:orchestrator` (wake long poll, liveness watch, handovers) is matched by
-exact name, so a visitor never takes those over. `bridle session orchestrator` and `bridle session advisor` set
+exact name, so a visitor never takes those over. `bridle session orchestrator`, `bridle session advisor` and `bridle session triage` (`external:triage`, `[triage]` in `credentials.toml`) set
 `BRIDLE_AS` so a session never handles a token.
 
 A visitor may also **submit** (`POST /v1/tasks/submit`, `bridle ticket submit`, ticket 93xm): an `open` task whose body starts

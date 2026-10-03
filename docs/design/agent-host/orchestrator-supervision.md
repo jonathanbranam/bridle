@@ -214,6 +214,13 @@ thresholds, re-armed by a lower reading. Tokens per session show in `bridle stat
 (`session    advisor/alice 123K`) and `GET /v1/sessions`. No wakes and no restart for
 advisors; those are later slices.
 
+**Who talks to the human (r8kv).** The orchestrator session doesn't: it reaches the human only by
+messaging `external:triage` (`bridle session triage`, `workflow/base/roles/triage.md`), which
+reads the human's to-dos, the workforce's questions and `bridle status`, and relays the human's
+answers back, quoted. Advisors only talk, research and file tickets. The daemon's `system` notes
+and `question` wakes still go to `human` and `external:orchestrator` as before; moving them to
+triage is a later slice.
+
 **Handover done.** The orchestrator writes its state and runs `bridle handover done`
 (`POST /v1/orchestrator/handover`), which marks "handover done for this session". At any point,
 not only after a message: an orchestrator that hands over early is fine.
