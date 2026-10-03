@@ -4,7 +4,7 @@ title = "Gateway 3/10: list the human's to-dos and task questions across project
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-02T23:35:47.667Z"
-updated_at = "2026-10-03T00:37:32.445332Z"
+updated_at = "2026-10-03T00:37:45.132062Z"
 size = "M"
 branch = "bridle/gateway-list"
 commit = "2f425545d21d73a286ae75a0ae7bef442c86e606"
@@ -32,3 +32,6 @@ done: merged main (br-fa63 f360d56; one conflict in types.rs, both imports kept,
 
 ### note · agent:manager-2 · 2026-10-03T00:37:32.445Z
 integrated: 2f425545d21d73a286ae75a0ae7bef442c86e606 (branch bridle/gateway-list)
+
+### note · agent:manager-2 · 2026-10-03T00:37:45.132Z
+cleanup: removed agent gateway-list, branch bridle/gateway-list
