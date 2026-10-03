@@ -8,7 +8,7 @@ changes: []
 specs: []
 needs: []
 see: [jttf, ma8e, xxxq, r9vh, pdmd]
-tasks: [br-7810, br-r8kv]
+tasks: [br-7810, br-r8kv, br-feyk]
 ---
 
 ## The ask
@@ -274,3 +274,23 @@ Three roles:
 already means the product manager's triage of open tasks and a planned `bridle-triage` skill.
 Working name **triage** until the human picks (check it against `docs/context/naming.md`); a
 rename before it lands is cheap.
+
+## Renamed: triage is now aide (the human, 2026-10-03)
+
+Verbatim (via the advisor), after br-r8kv landed as "triage":
+
+> Thanks, that's really good. Yeah, I hate to do this, but let's rename triage to aid. I think
+> that's a better name. A-I-D-E. Sounds good. Unless you have a better suggestion. Let's see.
+> following our test transcription agent. Test transcriptions for the agent name aid and the first
+> couple are from Claude Code's transcription and the next few are from Whisperflow's
+> transcription.
+>
+> Send this message to my aide. I have to go to the bathroom.
+>
+> Tell my aide that I have to go to the bathroom.
+>
+> Tell the aide that he needs to get some work scheduled. Tell the aide that the server has been
+> down for a week.
+
+Dictation test: in a sentence ("my aide", "the aide") both Claude's transcription and Wispr Flow
+wrote "aide"; said on its own, Claude's wrote "aid". Readable either way. Rename task: br-feyk.

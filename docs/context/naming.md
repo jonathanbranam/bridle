@@ -157,6 +157,7 @@ Known mis-transcriptions:
 | Yegge | Yeggy, Yegius, Yankee |
 | NUC | Nook |
 | 3d, 4d (in IDs) | 30, 40 |
+| aide (said alone) | aid (Claude's transcription; "my aide" in a sentence comes out right) |
 
 **IDs get spoken too.** Random IDs are the worst case: no dictionary entry can fix them, and
 some are ambiguous in English. The human (2026-10-03): "the number 3, the letter D, and then the
