@@ -263,3 +263,15 @@ principle. Don't don't build it yet. But let's write that up in the ticket". The
   review) is the existing question.
 - Open: ticket vs task as the thing that carries the workflow (k7tm's question, `br-3724`). The
   human says "call it a ticket" for now.
+
+### Clarified: a workflow is replaced whole (2026-10-02)
+
+The human, verbatim: "If a project is changing a workflow, they should just replace the whole
+thing. They don't need to do anything like add a step here, remove a step here. That's just too
+complicated to handle. And this, it's basically a DAG, so we don't need to get into making changes
+to a DAG. They just have to define a whole new one if they want to change the workflow, and I
+don't think that's a problem."
+
+This supersedes point 1's "a layer can add or remove steps": a workflow (the DAG of steps) is
+replaced wholesale by a later layer, or a project defines a new one under its own name. The
+pieces a step points at (instructions, rules, templates) still layer as before.
