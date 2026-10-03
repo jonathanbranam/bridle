@@ -86,3 +86,35 @@ task watchers ([[task-watchers-a-creator-field-a-watchers-list-and-wakes-that-xx
   and the daemon records the caller as `external:advisor/<name>` (`server.rs`, `named_advisor`: "a
   label, not proof"). So anything keyed by principal (messages, a task's creator, watchers, a wake
   bookmark) already separates named advisors.
+
+## The human, later (2026-10-02 evening ET, via the advisor)
+
+Verbatim, on splitting the advisor (to take up "tomorrow"):
+
+> Okay, so I don't know where this landed, but I was discussing splitting roles up and coming up
+> with better roles. So I want to call this out right now. Your prompt tells you to look for
+> messages for me. So I definitely want to split that out of into two separate roles. Like I want
+> to, I want a role that is something like a what the advisor is today in your prompt, which is
+> check for messages, check for tasks that I have to do. Check on bridal status. Like, actually,
+> anyway, we will probably deal with this tomorrow. But this is like a an agent that's taking
+> place of the conversations I usually have with the orchestrator, so the orchestrator can focus on
+> keeping things running and not talking to me. So, like all the types of things as I talk to the
+> orchestrator about, I really want those sent. Probably to like a triage role or a, something up,
+> I don't know what to call it, somebody who's triaging issues with the human instead of the
+> orchestrator because he's busy. But then I need a separate role that is not doing any of those
+> things, not checking bridal status, not, you know, reading my messages, doesn't waste any context
+> on those things and is just working with me on designing and playing tickets or doing research
+> or anything along those lines and is not not messing around with status updates or anything like
+> that.
+
+("bridal" is bridle; "playing tickets" is likely "planning tickets".)
+
+This sharpens question 1 into two roles:
+
+- **A triage role** (name open): today's advisor prompt minus design work. Checks the human's
+  messages, their to-dos and `bridle status`; takes over **all** the conversations the human now
+  has with the orchestrator, so the orchestrator only keeps things running.
+- **A design / research role:** no status checks, no inbox, no wake loop, nothing that spends
+  context on status. Works with the human on designing and planning tickets, and research.
+  Today's advisor prompt makes every advisor do the status and inbox work at start-up; this role
+  must not.
