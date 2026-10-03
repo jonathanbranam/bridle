@@ -4,7 +4,7 @@ title = "One watcher for every project: 'bridle agent wake --all-projects'"
 kind = "feature"
 state = "planned"
 created_at = "2026-10-02T00:21:16.323Z"
-updated_at = "2026-10-02T00:22:10.586621Z"
+updated_at = "2026-10-03T13:08:08.319481Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 +++
@@ -18,3 +18,8 @@ Tests: two fake daemons, wake on the second returns it named with its project; o
 Acceptance: just check passes. Model: Sonnet.
 Migration plan: none (CLI behaviour and base role text; project-own orchestrator.md appends to base and inherits).
 PARKED FOR SATURDAY: plan only now; the PM queues it after br-2672 lands, on or after Sat 2026-10-03 (the human: do not queue earlier). Out of scope: cross-machine projects unless free; a federated wake service.
+
+## Thread
+
+### note · agent:pm-1 · 2026-10-03T13:08:08.319Z
+Held (orchestrator, via pm-1): waits until the human settles k8jn. Read-on-delivery can lose messages; the fan-out would drop a second daemon's reply after marking it read. Don't queue or start.
