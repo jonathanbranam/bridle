@@ -2,9 +2,11 @@
 id = "br-c4f4"
 title = "Agent wake gets its own 2h cap; advisor waits 90 minutes, not 5 (789x)"
 kind = "chore"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-03T00:00:32.650Z"
-updated_at = "2026-10-03T01:12:48.427429Z"
+updated_at = "2026-10-03T01:13:55.924468Z"
+branch = "bridle/wake-cap"
+commit = "e22e2d8b248e6ddf0264071a586e257a9d3af78f"
 summary = "Both wake routes now clamp timeout_secs with one shared wake::clamp_timeout to wake::MAX_WAKE_TIMEOUT (6900 s, 1 h 55 min). Agent wake defaults to the cap; the orchestrator wake keeps its 25 min default (POLL_TIMEOUT) and gains a timeout_secs query parameter (OrchestratorWakeQuery) plus `--timeout` on `bridle orchestrator wait-for-wake` (and --mail, clamped to 6900 in the CLI). The client has no total HTTP timeout (plain reqwest::Client::new), so a long wait doesn't die client-side; no change needed there. Advisor role prompt uses --timeout 5400 as a fallback only. Tests: a unit test of the clamp, and a CLI parse test. Docs: api.md, cli.md, CHANGELOG. The orchestrator role prompt now tells the orchestrator to choose its own --timeout (long when quiet, shorter when busy, max 6900)."
 +++
 
@@ -35,3 +37,12 @@ done: orchestrator role now says to choose --timeout (max 6900); main already me
 
 ### note · agent:manager-2 · 2026-10-03T01:12:45.162Z
 Two things: (1) update the task summary (bridle task summary br-c4f4): it still says the orchestrator prompt is not done; (2) main moved, merge it, run just check, message me sha and result.
+
+### note · agent:wake-cap · 2026-10-03T01:13:43.886Z
+done: summary updated; main merged; just check passed (1046 tests); 766363f
+
+### note · agent:manager-2 · 2026-10-03T01:13:46.048Z
+integrated: e22e2d8b248e6ddf0264071a586e257a9d3af78f (branch bridle/wake-cap)
+
+### note · agent:manager-2 · 2026-10-03T01:13:55.924Z
+cleanup: removed agent wake-cap, branch bridle/wake-cap
