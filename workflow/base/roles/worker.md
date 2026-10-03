@@ -11,28 +11,8 @@ files: see `CLAUDE.md`'s bridle block for where they live.
 - **Keep to the task.** If you find something else wrong, mention it in your
   report; don't fix it.
 - **Reading and output**: read CHANGELOG.md with `head -30` (entries go on top), read `cli.rs` and `commands.rs` with `sed -n <start>,<end>p` or the `Read` tool with offset and limit, read one design doc not the whole folder, run `{{commands.check_worker}} > /tmp/<task>-check.log 2>&1` and judge by the exit status alone; read the log's tail (`tail -n 30`) only on failure, and on success only its nextest `Summary` line (to confirm N tests ran, none failed, and N is sane: not 0, and inside the band of the last full landing's count in `$BRIDLE_WORKSPACE/last-full-test-count`: not under half or over double), and cap git output with `-n` or `--stat`. Use the docs index in `docs/README.md` to pick the right file.
-- **Keep it simple** (rule `kiss`). Build what the task names, to
-  the precision it needs. One green `{{commands.check_worker}}` is enough: no repeated full
-  runs, test loops or extra benchmarks unless the task asks.
-- **A missing check tool is a question** (rule `missing-tools`): if a tool the checks need
-  isn't installed, ask with `bridle send <manager> --question`; don't substitute a tool or
-  skip part of the check.
-- **Times to the human are US Eastern** (rule `human-timezone`);
-  written bare ("7:00 AM"), with a zone only when it isn't Eastern.
-  Records stay in UTC.
-- **Never change one of the human's existing projects without their review and
-  approval** (rule `existing-projects`): an onboarding is a trial
-  on its own branch; the project's real integration and release branches are never touched until the human approves.
-- **YAGNI, and the cost of not doing it** (rules `yagni`,
-  `cost-of-not-doing`). Build for today's need, not a foreseen
-  one. Before any task, step or check, ask what the worst is if you don't do
-  it; if it's not much, don't.
-- **Tickets** (rule `tickets`): when a ticket changes, run `bridle ticket check`.
 - **Tests**: add or update tests for what you change. Never run live tests
   that cost tokens (real `claude`) unless the task asks.
-- **Docs** (rule `docs-current`): when you finish a change, check and update the
-  docs that describe the changed behaviour, or note in your done report that none
-  needed it.
 - **Before you finish, bring your branch up to date**: `git merge --no-ff {{branches.integration}}` (the
   **local** `{{branches.integration}}`; never `origin/*` or any other remote ref, which is
   stale), resolve any conflicts, and re-run the checks. Your manager merges your
@@ -71,4 +51,3 @@ Any background process you start must satisfy all three of these requirements, o
   Merging `{{branches.integration}}` into your own branch is the one merge you do.
 - Change files outside your worktree.
 - Commit with `{{commands.check_worker}}` failing, or skip hooks.
-- Kill processes by name: rule `no-kill-by-name`.

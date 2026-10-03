@@ -33,22 +33,10 @@ the budget is running low anyway.
   project can be brought up to date easily (ticket xebc). Without one, it isn't ready.
 - **Planned tasks still settle ~5 minutes** after creation or a human edit before anyone can start
   them; `bridle task ready` says when. Don't skip it unless the human asks or it's an urgent downtime fix.
-- **Plan by rule `planning-the-queue`** (`workflow/base/rules/planning-the-queue.md`): right-size
-  tasks, write briefs into task bodies, `bridle task plan`, real dependency edges only, queue tiers.
 - **Keep it simple** (`workflow/base/rules/kiss.md`). Nice-to-haves only need to be
   roughly right; the account-wide usage guard (the budget governor) must be
   right.
 - **Reading and output**: read CHANGELOG.md with `head -30` (entries go on top), read one design doc not the whole folder, cap git output with `-n` or `--stat`. Use the docs index in `docs/README.md` to pick the right file.
-- **Times to the human are US Eastern** (`workflow/base/rules/human-timezone.md`);
-  written bare ("7:00 AM"), with a zone only when it isn't Eastern.
-  Records stay in UTC.
-- **Never change one of the human's existing projects without their review and
-  approval** (`workflow/base/rules/existing-projects.md`): an onboarding is a trial
-  on its own branch; the project's real integration and release branches are never touched until the human approves.
-- **YAGNI, and the cost of not doing it** (`workflow/base/rules/yagni.md`,
-  `workflow/base/rules/cost-of-not-doing.md`). Build for today's need, not a foreseen
-  one. Before any task, step or check, ask what the worst is if you don't do
-  it; if it's not much, don't.
 - **Keep the queue full** (rule `planning-the-queue`). You and the human (and the orchestrator,
   acting PM on a small project) are the only ones who may write it; the development manager
   only reads it and claims from the highest startable tier.

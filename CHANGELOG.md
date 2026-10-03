@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+- Role prompts (`workflow/base/roles/`: worker, manager, product-manager) no longer repeat summaries of rules the role's resolved rules already carry (br-899d, 34bw step 2); only the procedure and role-specific details stay.
+
 ### Fixed
 - Small workflow breaks (br-66a0, 5u9d): a git-url `workflow` is now a config error (`WorkflowGitUrl`) where a missing directory already was (`serve`, `sync`, `prime`, `rules`, `doctor`), not a silent empty base layer; `init --stack rust` is no longer accepted (there is no rust pack) and `init` no longer suggests it from `Cargo.toml`; stale lines in `sync.rs`, `workflow-layers.md` and the `work-flow` / `cost-of-not-doing` rules corrected.
 
