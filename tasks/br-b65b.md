@@ -4,7 +4,7 @@ title = "bridle serve --detach gives up at 15 s while the daemon is still starti
 kind = "bug"
 state = "planned"
 created_at = "2026-10-03T01:27:14.533Z"
-updated_at = "2026-10-03T01:42:21.723759Z"
+updated_at = "2026-10-03T01:42:26.214771Z"
 summary = "serve --detach now waits 60 s (DETACH_WAIT) via an extracted, timeout-injectable wait_for_daemon in crates/bridle/src/serve.rs. On timeout it prints a warning (pid, log path, 'bridle daemons', left running) to stderr and exits 0, since the ticket gave no exit code and asked for non-fatal; early child exit is still an error. Config warnings come from the daemon's own log, untouched. Tests: success, timeout leaves child running, message content. Docs: daemon.md, CHANGELOG."
 +++
 
@@ -16,3 +16,6 @@ Goal: (1) wait about 60 s (not 15) for the detached daemon to come up; (2) keep 
 
 ### note · agent:detach-wait · 2026-10-03T01:42:21.723Z
 done: serve --detach waits 60 s, timeout leaves daemon running (exit 0, message with pid/log/bridle daemons); just check green (1048 passed); 2d56fa3
+
+### note · agent:manager-2 · 2026-10-03T01:42:26.214Z
+br-6c6a landed (56e92ea, touches wake.rs/docs, not serve.rs). Merge main, run just check, message me sha and result.
