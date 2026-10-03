@@ -55,14 +55,29 @@ rest, so a stolen session can answer and check off, not run work.
   the page must load to show its login form; every API route stays guarded. Not compiled into the `bridle` binary (no Node in bridle's build). In development
   the UI's dev server proxies API calls to the gateway.
 
-**Human time (ticket u6w9; types only so far).** The wire types of `/api/v1/interactions/*` live in
+**Human time (ticket u6w9; types, collection and interval math built; handlers not yet).** The wire types of `/api/v1/interactions/*` live in
 `crates/bridle-gateway/src/interactions.rs` and are exported to `bindings/` like the rest:
 `InteractionReport` (`report`: totals per group per day or week, plus the human's total),
 `DayReport` (`day`: per-session intervals, overlaps, peak concurrency, minutes at 1, 2 and 3+),
 `HoursReport` (`hours`: minutes per hour of day, averaged over the matching days),
 `IntervalsReport` (raw intervals). Each carries `unreachable` machines. Times are RFC 3339 UTC
-strings; days split at US Eastern midnight. Collection from the daemons' `GET /v1/interactions`,
-the interval math and the handlers are not built yet.
+strings; days split at US Eastern midnight.
+
+*Collection* (`collect.rs`, started by `bridle gateway`): every 5 minutes the gateway reads each
+machine's prompt log (`GET /v1/interactions?since=`, one answering daemon per machine) and each
+project's messages `from=human` (a message is a point prompt in a session `message:<recipient>`,
+agent = the recipient), and merges them into its own append-only store,
+`<bridle home>/gateway-interactions.jsonl`, deduped by (machine, session, time, event) or
+(machine, project, message id). A daemon that doesn't answer is reported in the poll's
+`unreachable`, not fatal; its data catches up when it is back.
+
+*Intervals* (`intervals.rs`, pure functions), per session: a prompt counts through the agent's
+turn (waiting is the human's attention) and on to the next prompt if that comes within `gap` of
+the reply finishing, else the run ends at reply end + `tail`. With no reply recorded, a prompt
+counts to the next prompt if within `gap` of it, else `tail`. A run's first prompt gets `lead`
+before it. Human time is the union of all sessions' intervals; concurrency is how many sessions
+cover a moment. `[interactions] gap`, `tail`, `lead` in `config.toml` (defaults 10m, 2m, 1m).
+Bucketing into US Eastern days belongs to the handlers.
 
 ## 4. Multi-machine
 

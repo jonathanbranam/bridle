@@ -3,9 +3,11 @@
 
 pub mod actions;
 pub mod auth;
+pub mod collect;
 pub mod config;
 pub mod discovery;
 pub mod interactions;
+pub mod intervals;
 pub mod items;
 pub mod types;
 pub mod ui;
@@ -229,6 +231,7 @@ mod tests {
             bind: "127.0.0.1:0".parse().expect("addr"),
             login: None,
             ui: no_ui(),
+            interactions: Default::default(),
         };
         let listener = bind(&config).await.expect("bind");
         let addr = listener.local_addr().expect("addr");

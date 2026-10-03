@@ -94,7 +94,7 @@ pub async fn items() -> Items {
     items_from(sources, PROBE_TIMEOUT).await
 }
 
-fn source(t: Target) -> Source {
+pub(crate) fn source(t: Target) -> Source {
     let (token, token_problem) = match resolve_token(
         None,
         t.workspace.as_deref().map(std::path::Path::new),

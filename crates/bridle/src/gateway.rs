@@ -21,6 +21,10 @@ pub async fn run(args: &GatewayArgs) -> Result<(), CliError> {
     let listener = bridle_gateway::bind(&config)
         .await
         .with_context(|| format!("binding the gateway to {}", config.bind))?;
+    // Not part of `serve`: its tests must not poll the developer's real daemons.
+    let store = bridle_gateway::collect::Store::open(&bridle_gateway::collect::store_path(&home))
+        .context("opening the interactions store")?;
+    let _collector = bridle_gateway::collect::spawn(store);
     bridle_gateway::serve(listener, config.login, config.ui)
         .await
         .context("gateway")?;

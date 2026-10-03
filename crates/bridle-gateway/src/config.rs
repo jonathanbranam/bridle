@@ -4,6 +4,7 @@
 
 use std::net::SocketAddr;
 use std::path::{Path, PathBuf};
+use std::time::Duration;
 
 use serde::Deserialize;
 
@@ -36,6 +37,8 @@ pub enum ConfigError {
     AnyInterface(SocketAddr),
     #[error("[gateway] ui_version_mismatch is {0:?}; use \"warn\" or \"refuse\"")]
     BadMismatch(String),
+    #[error("[interactions] {key} is {value:?}; use a number and s, m or h, like \"10m\"")]
+    BadDuration { key: String, value: String },
     #[error("[gateway] needs both `username` and `password_hash`, or neither")]
     HalfLogin,
     #[error(
@@ -59,9 +62,57 @@ struct GatewaySection {
     ui_version_mismatch: Option<String>,
 }
 
+/// The `[interactions]` section: the knobs of the human-time interval rules.
+#[derive(Debug, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct InteractionsSection {
+    gap: Option<String>,
+    tail: Option<String>,
+    lead: Option<String>,
+}
+
 #[derive(Debug, Default, Deserialize)]
 struct File {
     gateway: Option<GatewaySection>,
+    interactions: Option<InteractionsSection>,
+}
+
+/// How prompts and replies turn into human time (docs/design/human-web-ui.md "Human time").
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct InteractionsConfig {
+    /// A prompt within this long of the previous reply finishing continues the run.
+    pub gap: Duration,
+    /// What the last prompt or reply of a run counts after it.
+    pub tail: Duration,
+    /// What the first prompt of a run counts before it (composing it).
+    pub lead: Duration,
+}
+
+impl Default for InteractionsConfig {
+    fn default() -> Self {
+        Self {
+            gap: Duration::from_secs(600),
+            tail: Duration::from_secs(120),
+            lead: Duration::from_secs(60),
+        }
+    }
+}
+
+/// Parses "10m"-style durations: an integer followed by `s`, `m` or `h`.
+fn parse_duration(key: &str, s: &str) -> Result<Duration, ConfigError> {
+    let bad = || ConfigError::BadDuration {
+        key: key.to_string(),
+        value: s.to_string(),
+    };
+    let unit = s.chars().last().ok_or_else(bad)?;
+    let n: u64 = s[..s.len() - 1].parse().map_err(|_| bad())?;
+    let per = match unit {
+        's' => 1,
+        'm' => 60,
+        'h' => 3600,
+        _ => return Err(bad()),
+    };
+    Ok(Duration::from_secs(n * per))
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -70,6 +121,7 @@ pub struct GatewayConfig {
     /// `None` is the safe default: the gateway then answers nothing but health.
     pub login: Option<Login>,
     pub ui: UiConfig,
+    pub interactions: InteractionsConfig,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -129,7 +181,24 @@ impl GatewayConfig {
             dir: section.ui_dir.unwrap_or_else(|| home.join("ui")),
             on_mismatch,
         };
-        Ok(Self { bind, login, ui })
+        let mut interactions = InteractionsConfig::default();
+        if let Some(i) = file.interactions {
+            for (key, text, slot) in [
+                ("gap", i.gap, &mut interactions.gap),
+                ("tail", i.tail, &mut interactions.tail),
+                ("lead", i.lead, &mut interactions.lead),
+            ] {
+                if let Some(text) = text {
+                    *slot = parse_duration(key, &text)?;
+                }
+            }
+        }
+        Ok(Self {
+            bind,
+            login,
+            ui,
+            interactions,
+        })
     }
 }
 
@@ -162,6 +231,19 @@ mod tests {
         assert!(c.bind.ip().is_loopback());
         let c = parse_at("[budget]\nx = 1\n").expect("other sections ignored");
         assert!(c.bind.ip().is_loopback());
+    }
+
+    #[test]
+    fn interactions_defaults_and_overrides() {
+        let c = parse_at("").expect("parse");
+        assert_eq!(c.interactions, InteractionsConfig::default());
+        let c = parse_at("[interactions]\ngap = \"5m\"\ntail = \"30s\"\nlead = \"1h\"\n")
+            .expect("parse");
+        assert_eq!(c.interactions.gap, Duration::from_secs(300));
+        assert_eq!(c.interactions.tail, Duration::from_secs(30));
+        assert_eq!(c.interactions.lead, Duration::from_secs(3600));
+        let e = parse_at("[interactions]\ngap = \"soon\"\n").expect_err("bad");
+        assert!(matches!(e, ConfigError::BadDuration { .. }), "{e}");
     }
 
     #[test]
