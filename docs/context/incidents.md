@@ -73,6 +73,21 @@ Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or los
 - **Follow-up:** none yet; candidate: report "daemon restarting" with its own exit code, or have the
   CLI reconnect and keep waiting until the original deadline.
 
+## 2026-10-03 03:30: the orchestrator's watchers were down all night (quiet hours)
+
+- **What happened:** from about 03:30 to 13:07 (23:30 to 09:07 ET) none of the orchestrator's three
+  watchers ran. Each exited during quiet hours, and the focus gate's text ("no tool calls except the
+  one the human asked for") stopped the orchestrator from restarting them. Found when the human
+  asked at 09:07 why they'd heard nothing.
+- **Impact:** wakes queued, so nothing was lost, but none were seen for about 9.5 hours. Among
+  them: a red CI run on `main` (93362e5; later green after br-5669), a manager-2 question about
+  landing br-01a4 (resolved by others), pm-1's question with 11 candidate tasks (m-3910, still
+  waiting for the human), and an idea from the NUC to file.
+- **Cause:** the quiet-hours gate applies to every submitted prompt, including the background-task
+  notification turns that drive the watch loop, and it bans all tool calls.
+- **Category:** `role`, `config`.
+- **Follow-up:** [[quiet-hours-stop-the-orchestrator-restarting-its-watchers-so-cc45|cc45]].
+
 ## 2026-10-03 01:46: bridle-ui's manager was logged out of Claude Code and silently did nothing
 
 - **What happened:** the bridle-ui manager answered every message (01:31 to 01:46) with "Not
