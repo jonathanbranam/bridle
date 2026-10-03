@@ -4,7 +4,7 @@ title = "Agent wake gets its own 2h cap; advisor waits 90 minutes, not 5 (789x)"
 kind = "chore"
 state = "planned"
 created_at = "2026-10-03T00:00:32.650Z"
-updated_at = "2026-10-03T01:11:24.726342Z"
+updated_at = "2026-10-03T01:11:26.946389Z"
 summary = "Both wake routes now clamp timeout_secs with one shared wake::clamp_timeout to wake::MAX_WAKE_TIMEOUT (6900 s, 1 h 55 min). Agent wake defaults to the cap; the orchestrator wake keeps its 25 min default (POLL_TIMEOUT) and gains a timeout_secs query parameter (OrchestratorWakeQuery) plus `--timeout` on `bridle orchestrator wait-for-wake` (and --mail, clamped to 6900 in the CLI). The client has no total HTTP timeout (plain reqwest::Client::new), so a long wait doesn't die client-side; no change needed there. Advisor role prompt uses --timeout 5400 as a fallback only. Tests: a unit test of the clamp, and a CLI parse test. Docs: api.md, cli.md, CHANGELOG. Not done: the orchestrator role prompt does not yet tell the orchestrator to choose a timeout."
 +++
 
@@ -26,3 +26,6 @@ From advisor: overlap with br-2672 (parked branch, lands Sat after review): it t
 
 ### note · agent:wake-cap · 2026-10-03T01:11:24.726Z
 done: wake cap 6900 s via one shared clamp (both routes), wait-for-wake/--mail --timeout, advisor prompt 5400; just check passed (1046 tests); 1681313. Not done: orchestrator role prompt doesn't yet say to choose a timeout.
+
+### note · agent:manager-2 · 2026-10-03T01:11:26.946Z
+Please finish the last item: the advisor note says the orchestrator role prompt (workflow/base/roles/orchestrator.md) must say to choose its own wait-for-wake --timeout (long when quiet, shorter when busy or unstable, max 6900). Add one or two lines, merge main, run just check, message me sha and result.
