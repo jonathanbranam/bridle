@@ -2,6 +2,7 @@
 //! See docs/design/human-web-ui.md. It never touches a daemon's start-up path.
 
 pub mod config;
+pub mod discovery;
 
 use axum::{Json, Router, routing::get};
 use serde_json::{Value, json};
@@ -13,12 +14,18 @@ pub use config::{ConfigError, GatewayConfig};
 pub const API_PREFIX: &str = "/api/v1";
 
 pub fn router() -> Router {
-    let v1 = Router::new().route("/health", get(health));
+    let v1 = Router::new()
+        .route("/health", get(health))
+        .route("/projects", get(projects));
     Router::new().nest(API_PREFIX, v1)
 }
 
 async fn health() -> Json<Value> {
     Json(json!({ "status": "ok" }))
+}
+
+async fn projects() -> Json<discovery::Projects> {
+    Json(discovery::discover().await)
 }
 
 /// Binds the configured address; split from [`serve`] so a caller (and a test) can learn the
