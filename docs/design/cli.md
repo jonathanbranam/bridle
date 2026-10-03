@@ -342,7 +342,7 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   claim is simply lost, which is correct here, not a gap.
 - **Landing record.** `task done --commit SHA [--branch NAME]` stores `commit` and `branch` on
   the task; `task summary <id>` stores a short implementation summary (any state; a second call
-  replaces it). `task show` prints branch, commit and summary together, so a task id leads to
+  replaces it). `task show` prints the creator (`created by`; `unknown` for an old task whose creator was never recorded), and prints branch, commit and summary together, so a task id leads to
   `git show --stat <commit>`. `task done` warns on stderr, but succeeds, when no summary exists.
   With `--branch`, `task done` also cleans up in the daemon: it refuses (409) unless `--commit` is
   reachable from the integration branch, then removes every agent on that branch (stopping running

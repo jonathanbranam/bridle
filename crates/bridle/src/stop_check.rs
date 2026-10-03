@@ -185,6 +185,7 @@ mod tests {
             thread,
             created_at: now,
             updated_at: now,
+            created_by: "human".to_string(),
             claimed_by: claimed_by.map(String::from),
             claimed_at,
         }

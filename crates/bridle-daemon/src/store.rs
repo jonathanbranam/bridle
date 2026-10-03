@@ -118,6 +118,8 @@ pub struct TaskRow {
     pub state: TaskState,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    /// `None` = creator unknown (a task from before the column, nothing to recover it from).
+    pub created_by: Option<String>,
 }
 
 /// A message's concrete recipient kind (`messages.to_kind`). The caller
@@ -563,9 +565,14 @@ impl Store {
         prefix: &str,
         title: &str,
         kind: TaskKind,
+        created_by: &str,
     ) -> Result<TaskRow, StoreError> {
-        let (prefix, title) = (prefix.to_string(), title.to_string());
-        self.with_conn(move |c| sync::insert_task(c, &prefix, &title, kind))
+        let (prefix, title, created_by) = (
+            prefix.to_string(),
+            title.to_string(),
+            created_by.to_string(),
+        );
+        self.with_conn(move |c| sync::insert_task(c, &prefix, &title, kind, &created_by))
             .await
     }
 
@@ -586,6 +593,20 @@ impl Store {
 
     pub async fn list_tasks(&self) -> Result<Vec<TaskRow>, StoreError> {
         self.with_conn(sync::list_tasks).await
+    }
+
+    /// Records a creator recovered from the state branch for a row the event backfill left
+    /// unknown; never overwrites a known one.
+    pub async fn fill_task_created_by(&self, id: &str, by: &str) -> Result<(), StoreError> {
+        let (id, by) = (id.to_string(), by.to_string());
+        self.with_conn(move |c| {
+            c.execute(
+                "UPDATE tasks SET created_by = ?2 WHERE id = ?1 AND created_by IS NULL",
+                rusqlite::params![id, by],
+            )?;
+            Ok(())
+        })
+        .await
     }
 
     pub async fn set_task_title(&self, id: &str, title: &str) -> Result<(), StoreError> {
@@ -1175,10 +1196,16 @@ mod sync {
         CREATE INDEX messages_incident ON messages(incident_task) WHERE incident_task IS NOT NULL;
     "#;
 
-    const MIGRATIONS: &[&str] = &[
+    // Who created the task (task watchers, xxxq). Nullable: NULL means unknown, and
+    // `backfill_task_creators` fills what it can from the `task.created` events.
+    pub(super) const SCHEMA_V19: &str = r#"
+        ALTER TABLE tasks ADD COLUMN created_by TEXT;
+    "#;
+
+    pub(super) const MIGRATIONS: &[&str] = &[
         SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7, SCHEMA_V8,
         SCHEMA_V9, SCHEMA_V10, SCHEMA_V11, SCHEMA_V12, SCHEMA_V13, SCHEMA_V14, SCHEMA_V15,
-        SCHEMA_V16, SCHEMA_V17, SCHEMA_V18,
+        SCHEMA_V16, SCHEMA_V17, SCHEMA_V18, SCHEMA_V19,
     ];
 
     pub(super) fn open(path: &Path) -> Result<Connection, StoreError> {
@@ -1189,7 +1216,44 @@ mod sync {
         conn.pragma_update(None, "journal_mode", "WAL")?;
         conn.pragma_update(None, "foreign_keys", true)?;
         migrate(&conn)?;
+        // Best effort: an unfilled creator stays unknown, and must never stop start-up.
+        if let Err(e) = backfill_task_creators(&conn) {
+            tracing::warn!("backfilling tasks.created_by from events failed: {e}");
+        }
         Ok(conn)
+    }
+
+    /// Fills `tasks.created_by` from each unfilled task's earliest `task.created` event's
+    /// actor. Idempotent (only touches NULLs) and one pass over the kind index, not a scan
+    /// per task. A task with no such event (or a bad row) stays NULL.
+    pub(super) fn backfill_task_creators(conn: &Connection) -> Result<(), StoreError> {
+        let mut stmt = conn.prepare(
+            "SELECT json_extract(data, '$.task'), actor FROM events
+             WHERE kind = 'task.created' AND json_valid(data) ORDER BY seq DESC",
+        )?;
+        // Newest first so the earliest event's actor wins the insert-overwrite.
+        let mut creators: BTreeMap<String, String> = BTreeMap::new();
+        let rows = stmt.query_map([], |r| {
+            Ok((r.get::<_, Option<String>>(0)?, r.get::<_, String>(1)?))
+        })?;
+        for row in rows {
+            match row {
+                Ok((Some(task), actor)) => {
+                    creators.insert(task, actor);
+                }
+                Ok((None, _)) => {}
+                Err(e) => tracing::warn!("skipping a task.created event: {e}"),
+            }
+        }
+        for (task, actor) in creators {
+            if let Err(e) = conn.execute(
+                "UPDATE tasks SET created_by = ?2 WHERE id = ?1 AND created_by IS NULL",
+                params![task, actor],
+            ) {
+                tracing::warn!(task, "backfilling created_by failed: {e}");
+            }
+        }
+        Ok(())
     }
 
     pub(super) fn migrate(conn: &Connection) -> Result<(), StoreError> {
@@ -2169,6 +2233,7 @@ mod sync {
             })?,
             created_at: parse_dt(&row.get::<_, String>(4)?)?,
             updated_at: parse_dt(&row.get::<_, String>(5)?)?,
+            created_by: row.get(6)?,
         })
     }
 
@@ -2182,6 +2247,7 @@ mod sync {
         prefix: &str,
         title: &str,
         kind: TaskKind,
+        created_by: &str,
     ) -> Result<TaskRow, StoreError> {
         // Truncate to millisecond precision (matching fmt_dt's on-disk format) so the
         // returned in-memory value can't be strictly less than a later floor-truncated
@@ -2190,14 +2256,15 @@ mod sync {
         for _ in 0..TASK_ID_ATTEMPTS {
             let id = new_task_id(prefix);
             let result = conn.execute(
-                "INSERT INTO tasks(id, title, kind, state, created_at, updated_at)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?5)",
+                "INSERT INTO tasks(id, title, kind, state, created_at, updated_at, created_by)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?5, ?6)",
                 params![
                     id,
                     title,
                     kind.as_str(),
                     TaskState::Open.as_str(),
-                    fmt_dt(now)
+                    fmt_dt(now),
+                    created_by
                 ],
             );
             match result {
@@ -2209,6 +2276,7 @@ mod sync {
                         state: TaskState::Open,
                         created_at: now,
                         updated_at: now,
+                        created_by: Some(created_by.to_string()),
                     });
                 }
                 Err(e) if is_unique_violation(&e) => continue,
@@ -2222,8 +2290,8 @@ mod sync {
 
     pub(super) fn insert_task_row(conn: &Connection, row: &TaskRow) -> Result<(), StoreError> {
         let result = conn.execute(
-            "INSERT INTO tasks(id, title, kind, state, created_at, updated_at)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            "INSERT INTO tasks(id, title, kind, state, created_at, updated_at, created_by)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
             params![
                 row.id,
                 row.title,
@@ -2231,6 +2299,7 @@ mod sync {
                 row.state.as_str(),
                 fmt_dt(row.created_at),
                 fmt_dt(row.updated_at),
+                row.created_by,
             ],
         );
         match result {
@@ -2246,7 +2315,7 @@ mod sync {
     pub(super) fn get_task(conn: &Connection, id: &str) -> Result<Option<TaskRow>, StoreError> {
         Ok(conn
             .query_row(
-                "SELECT id, title, kind, state, created_at, updated_at FROM tasks WHERE id = ?1",
+                "SELECT id, title, kind, state, created_at, updated_at, created_by FROM tasks WHERE id = ?1",
                 params![id],
                 row_to_task,
             )
@@ -2255,7 +2324,7 @@ mod sync {
 
     pub(super) fn list_tasks(conn: &Connection) -> Result<Vec<TaskRow>, StoreError> {
         let mut stmt = conn.prepare(
-            "SELECT id, title, kind, state, created_at, updated_at FROM tasks ORDER BY created_at ASC, rowid ASC",
+            "SELECT id, title, kind, state, created_at, updated_at, created_by FROM tasks ORDER BY created_at ASC, rowid ASC",
         )?;
         let rows = stmt.query_map([], row_to_task)?;
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
@@ -3137,6 +3206,56 @@ mod tests {
         assert_eq!(windows, vec!["five_hour".to_string()]);
     }
 
+    #[tokio::test]
+    async fn new_task_records_its_creator() {
+        let (store, _tmp) = store().await;
+        let row = store
+            .insert_task("tw", "A", TaskKind::Chore, "external:advisor")
+            .await
+            .expect("insert");
+        assert_eq!(row.created_by.as_deref(), Some("external:advisor"));
+        let got = store.get_task(&row.id).await.expect("get").expect("row");
+        assert_eq!(got.created_by.as_deref(), Some("external:advisor"));
+    }
+
+    /// An un-migrated (v18) database with old tasks opens fine; the backfill fills the task
+    /// that has a `task.created` event (the earliest one) and leaves the other unknown.
+    #[test]
+    fn opening_an_unmigrated_db_backfills_creators_and_leaves_the_rest_unknown() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let path = tmp.path().join("bridle.db");
+        {
+            let conn = Connection::open(&path).expect("open");
+            for sql in &sync::MIGRATIONS[..18] {
+                conn.execute_batch(sql).expect("schema");
+            }
+            conn.pragma_update(None, "user_version", 18)
+                .expect("set version");
+            conn.execute_batch(
+                "INSERT INTO tasks(id, title, kind, state, created_at, updated_at) VALUES
+                    ('t-a', 'A', 'chore', 'open', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z'),
+                    ('t-b', 'B', 'chore', 'open', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z');
+                 INSERT INTO events(ts, kind, actor, agent_id, data) VALUES
+                    ('t', 'task.created', 'agent-1', NULL, '{\"task\": \"t-a\"}'),
+                    ('t', 'task.created', 'agent-2', NULL, '{\"task\": \"t-a\"}'),
+                    ('t', 'task.created', 'agent-3', NULL, 'not json');",
+            )
+            .expect("old rows");
+        }
+        let conn = sync::open(&path).expect("start-up succeeds");
+        let by = |id: &str| {
+            sync::get_task(&conn, id)
+                .expect("get")
+                .expect("row")
+                .created_by
+        };
+        assert_eq!(by("t-a").as_deref(), Some("agent-1"));
+        assert_eq!(by("t-b"), None);
+        // Idempotent: a second pass changes nothing.
+        sync::backfill_task_creators(&conn).expect("again");
+        assert_eq!(by("t-a").as_deref(), Some("agent-1"));
+    }
+
     /// Reproduces the real `JoinError::Cancelled` that `Store::open` and
     /// `with_conn` await: caps the blocking pool at one thread, occupies
     /// it, queues a second blocking task behind it, then cancels that
@@ -3226,6 +3345,7 @@ mod tests {
                     state: TaskState::Open,
                     created_at: at,
                     updated_at: at,
+                    created_by: None,
                 })
                 .await
                 .expect("insert task");
@@ -4106,7 +4226,7 @@ mod tests {
     async fn insert_task_uses_the_prefix_and_four_hex_chars() {
         let (store, _tmp) = store().await;
         let task = store
-            .insert_task("tw", "Add foo", TaskKind::Feature)
+            .insert_task("tw", "Add foo", TaskKind::Feature, "human")
             .await
             .expect("insert");
         assert!(task.id.starts_with("tw-"));
@@ -4129,7 +4249,7 @@ mod tests {
         let mut ids = std::collections::HashSet::new();
         for i in 0..50 {
             let t = store
-                .insert_task("tw", &format!("task {i}"), TaskKind::Chore)
+                .insert_task("tw", &format!("task {i}"), TaskKind::Chore, "human")
                 .await
                 .expect("insert");
             assert!(ids.insert(t.id), "duplicate task id generated");
@@ -4140,7 +4260,7 @@ mod tests {
     async fn get_list_edit_and_transition_a_task() {
         let (store, _tmp) = store().await;
         let task = store
-            .insert_task("tw", "Add foo", TaskKind::Bug)
+            .insert_task("tw", "Add foo", TaskKind::Bug, "human")
             .await
             .expect("insert");
 
@@ -4186,11 +4306,11 @@ mod tests {
     async fn insert_list_and_delete_edges() {
         let (store, _tmp) = store().await;
         let a = store
-            .insert_task("tw", "A", TaskKind::Chore)
+            .insert_task("tw", "A", TaskKind::Chore, "human")
             .await
             .expect("insert a");
         let b = store
-            .insert_task("tw", "B", TaskKind::Chore)
+            .insert_task("tw", "B", TaskKind::Chore, "human")
             .await
             .expect("insert b");
 
@@ -4229,7 +4349,7 @@ mod tests {
     async fn insert_list_and_delete_open_questions() {
         let (store, _tmp) = store().await;
         let task = store
-            .insert_task("tw", "Add foo", TaskKind::Feature)
+            .insert_task("tw", "Add foo", TaskKind::Feature, "human")
             .await
             .expect("insert task");
         let msg = store
@@ -4283,7 +4403,7 @@ mod tests {
     async fn insert_list_and_delete_claims() {
         let (store, _tmp) = store().await;
         let task = store
-            .insert_task("tw", "Add foo", TaskKind::Feature)
+            .insert_task("tw", "Add foo", TaskKind::Feature, "human")
             .await
             .expect("insert task");
 

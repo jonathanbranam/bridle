@@ -185,6 +185,7 @@ pub(super) async fn task_show(cli: &Cli, args: &TaskShowArgs) -> Result<(), CliE
             println!("commit      {commit}");
         }
         println!("created     {}", task.created_at.to_rfc3339());
+        println!("created by  {}", task.created_by);
         println!("updated     {}", task.updated_at.to_rfc3339());
         if let Some(until) = task.settle_until {
             println!("settling    until {}", settle_clock_text(until));

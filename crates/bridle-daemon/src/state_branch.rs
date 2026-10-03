@@ -18,7 +18,7 @@ use std::time::{Duration, Instant};
 
 use bridle_api::types::{
     Edge, EdgeKind, Handover, Impact, StatePushStatus, Task, TaskKind, TaskPriority, TaskSize,
-    TaskState, ThreadEntry, ThreadEntryKind,
+    TaskState, ThreadEntry, ThreadEntryKind, UNKNOWN_CREATOR,
 };
 use chrono::{DateTime, SecondsFormat, Utc};
 use serde::{Deserialize, Serialize};
@@ -1040,6 +1040,10 @@ struct Frontmatter {
     state: String,
     created_at: DateTime<Utc>,
     updated_at: DateTime<Utc>,
+    /// Absent in records written before the field existed; `parse_task` then falls back to
+    /// the thread's first entry.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    created_by: Option<String>,
     /// Absent in records written before components existed.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     components: Vec<String>,
@@ -1075,6 +1079,7 @@ fn render_task(task: &Task) -> Result<String, StateBranchError> {
         state: task.state.as_str().to_string(),
         created_at: task.created_at,
         updated_at: task.updated_at,
+        created_by: (task.created_by != UNKNOWN_CREATOR).then(|| task.created_by.clone()),
         components: task.components.clone(),
         size: task.size,
         priority: task.priority,
@@ -1230,6 +1235,10 @@ fn parse_task(text: &str) -> Result<Task, StateBranchError> {
         });
     }
 
+    let created_by = fm
+        .created_by
+        .or_else(|| thread_first_author(&thread))
+        .unwrap_or_else(|| UNKNOWN_CREATOR.to_string());
     Ok(Task {
         id: fm.id,
         title: fm.title,
@@ -1239,6 +1248,9 @@ fn parse_task(text: &str) -> Result<Task, StateBranchError> {
         thread,
         created_at: fm.created_at,
         updated_at: fm.updated_at,
+        // The first thread entry is the best guess for a record from before the field: the
+        // submitter's note, or whoever planned it.
+        created_by,
         // Not this file's job: `TaskManager` layers the current claim (from
         // `claims.toml`/SQLite, storage.md) on top of what this parses.
         claimed_by: None,
@@ -1252,6 +1264,10 @@ fn parse_task(text: &str) -> Result<Task, StateBranchError> {
         impact: fm.impact,
         settle_until: None,
     })
+}
+
+fn thread_first_author(thread: &[ThreadEntry]) -> Option<String> {
+    thread.first().map(|e| e.from.clone())
 }
 
 #[derive(Serialize)]
@@ -1406,6 +1422,7 @@ mod tests {
             thread: vec![],
             created_at: now,
             updated_at: now,
+            created_by: "human".to_string(),
             claimed_by: None,
             claimed_at: None,
             components: vec!["client-games".to_string(), "dungeon".to_string()],
@@ -1443,6 +1460,21 @@ mod tests {
         assert_eq!(parsed.summary, task.summary);
         assert_eq!(parsed.created_at, task.created_at);
         assert_eq!(parsed.updated_at, task.updated_at);
+        assert_eq!(parsed.created_by, "human");
+    }
+
+    #[test]
+    fn a_record_without_created_by_falls_back_to_the_first_thread_entry_then_unknown() {
+        let head = "+++\nid = \"tw-1\"\ntitle = \"Old\"\nkind = \"feature\"\nstate = \"open\"\n\
+                    created_at = \"2026-01-01T00:00:00Z\"\nupdated_at = \"2026-01-01T00:00:00Z\"\n+++\n\nbody\n";
+        assert_eq!(parse_task(head).expect("parse").created_by, UNKNOWN_CREATOR);
+        let threaded = format!(
+            "{head}\n## Thread\n\n### note \u{b7} agent-9 \u{b7} 2026-01-01T00:00:01.000Z\nhi\n"
+        );
+        assert_eq!(parse_task(&threaded).expect("parse").created_by, "agent-9");
+        // And an unknown creator isn't written out.
+        let task = parse_task(head).expect("parse");
+        assert!(!render_task(&task).expect("render").contains("created_by"));
     }
 
     #[test]

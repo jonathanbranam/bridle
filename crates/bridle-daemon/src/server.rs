@@ -1450,7 +1450,14 @@ async fn new_task(
     let components = state.manager.normalize_components(&req.components)?;
     let task = state
         .tasks
-        .new_task(&req.title, req.kind, req.body, components, req.size)
+        .new_task_by(
+            &req.title,
+            req.kind,
+            req.body,
+            components,
+            req.size,
+            &principal.id,
+        )
         .await?;
     let task = if req.for_human {
         let human = "human".to_string();
@@ -1503,7 +1510,7 @@ async fn submit_task(
     let body = format!("{SUBMITTED_BY}{}\n\n{}", principal.id, req.body);
     let task = state
         .tasks
-        .new_task(&req.title, req.kind, body, Vec::new(), None)
+        .new_task_by(&req.title, req.kind, body, Vec::new(), None, &principal.id)
         .await?;
     let task = state
         .tasks
@@ -2210,12 +2217,13 @@ async fn open_reevaluate_tasks(state: &AppState, arch: &Task) {
         }
         match state
             .tasks
-            .new_task(
+            .new_task_by(
                 &title,
                 bridle_api::types::TaskKind::ReEvaluate,
                 crate::reevaluate::body(&ids),
                 Vec::new(),
                 None,
+                "bridle",
             )
             .await
         {

@@ -1386,6 +1386,13 @@ pub struct ThreadEntry {
     pub at: DateTime<Utc>,
 }
 
+/// `Task::created_by` when the creator isn't known.
+pub const UNKNOWN_CREATOR: &str = "unknown";
+
+fn unknown_creator() -> PrincipalId {
+    UNKNOWN_CREATOR.to_string()
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Task {
     /// e.g. `tw-7fa2`: a per-project prefix and a random suffix
@@ -1401,6 +1408,11 @@ pub struct Task {
     pub thread: Vec<ThreadEntry>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    /// The principal that created the task; [`UNKNOWN_CREATOR`] for a task from before the
+    /// field existed whose creator couldn't be recovered. Old task files and old daemons
+    /// omit it, hence the default.
+    #[serde(default = "unknown_creator")]
+    pub created_by: PrincipalId,
     /// The claim, if any. Null when unclaimed. Kept in SQLite and mirrored
     /// to `claims.toml` on the state branch (docs/design/storage.md); the
     /// task file itself carries no claim, so it comes from the claim set.

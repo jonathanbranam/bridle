@@ -109,6 +109,7 @@ mod tests {
             thread: Vec::new(),
             created_at: now,
             updated_at: now,
+            created_by: "human".to_string(),
             claimed_by: Some("agent:w1".to_string()),
             claimed_at: Some(now),
         }

@@ -31,7 +31,8 @@ use std::sync::{Arc, Mutex};
 
 use bridle_api::types::{
     Edge, EdgeKind, Handover, Impact, MessageKind, MessageState, OpenQuestion, PrincipalId, Task,
-    TaskKind, TaskPriority, TaskSize, TaskState, ThreadEntry, ThreadEntryKind, When,
+    TaskKind, TaskPriority, TaskSize, TaskState, ThreadEntry, ThreadEntryKind, UNKNOWN_CREATOR,
+    When,
 };
 use chrono::{DateTime, Utc};
 
@@ -150,8 +151,8 @@ impl TaskManager {
         let rows = store.list_tasks().await?;
         let mut cache = HashMap::with_capacity(rows.len());
         for row in rows {
-            let task = state.read_task(&row.id).unwrap_or(Task {
-                id: row.id,
+            let mut task = state.read_task(&row.id).unwrap_or(Task {
+                id: row.id.clone(),
                 title: row.title,
                 kind: row.kind,
                 state: row.state,
@@ -159,6 +160,10 @@ impl TaskManager {
                 thread: Vec::new(),
                 created_at: row.created_at,
                 updated_at: row.updated_at,
+                created_by: row
+                    .created_by
+                    .clone()
+                    .unwrap_or_else(|| UNKNOWN_CREATOR.to_string()),
                 claimed_by: None,
                 claimed_at: None,
                 components: Vec::new(),
@@ -170,6 +175,23 @@ impl TaskManager {
                 impact: Impact::default(),
                 settle_until: None,
             });
+            // The database (backfilled from events) wins; where it's unknown, the task file's
+            // value (which may itself have fallen back to the thread) fills it in. Either
+            // direction is best effort: it must not fail start-up.
+            match &row.created_by {
+                Some(by) if *by != task.created_by => {
+                    task.created_by = by.clone();
+                    if let Err(e) = state.enqueue_task(&task) {
+                        tracing::warn!(task = %task.id, "recording created_by in the task file: {e}");
+                    }
+                }
+                None if task.created_by != UNKNOWN_CREATOR => {
+                    if let Err(e) = store.fill_task_created_by(&task.id, &task.created_by).await {
+                        tracing::warn!(task = %task.id, "recording created_by: {e}");
+                    }
+                }
+                _ => {}
+            }
             cache.insert(task.id.clone(), task);
         }
         let edges = store.list_edges().await?;
@@ -262,6 +284,8 @@ impl TaskManager {
                     state: task.state,
                     created_at: task.created_at,
                     updated_at: task.updated_at,
+                    created_by: (task.created_by != UNKNOWN_CREATOR)
+                        .then(|| task.created_by.clone()),
                 })
                 .await?;
             if let Some(entry) = task
@@ -403,6 +427,8 @@ impl TaskManager {
         Ok(self.put(task))
     }
 
+    /// [`TaskManager::new_task_by`] with an unknown creator; for tests and callers that have no
+    /// principal.
     pub async fn new_task(
         &self,
         title: &str,
@@ -411,10 +437,26 @@ impl TaskManager {
         components: Vec<String>,
         size: Option<TaskSize>,
     ) -> Result<Task, TaskError> {
+        self.new_task_by(title, kind, body, components, size, UNKNOWN_CREATOR)
+            .await
+    }
+
+    pub async fn new_task_by(
+        &self,
+        title: &str,
+        kind: TaskKind,
+        body: String,
+        components: Vec<String>,
+        size: Option<TaskSize>,
+        created_by: &str,
+    ) -> Result<Task, TaskError> {
         if title.trim().is_empty() {
             return Err(TaskError::BadRequest("title must not be empty".to_string()));
         }
-        let row = self.store.insert_task(&self.prefix, title, kind).await?;
+        let row = self
+            .store
+            .insert_task(&self.prefix, title, kind, created_by)
+            .await?;
         let task = Task {
             id: row.id,
             title: row.title,
@@ -424,6 +466,9 @@ impl TaskManager {
             thread: Vec::new(),
             created_at: row.created_at,
             updated_at: row.updated_at,
+            created_by: row
+                .created_by
+                .unwrap_or_else(|| UNKNOWN_CREATOR.to_string()),
             claimed_by: None,
             claimed_at: None,
             components,
@@ -2634,7 +2679,14 @@ mod tests {
         .expect("open task manager");
 
         let task = tm
-            .new_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
+            .new_task_by(
+                "Add foo",
+                TaskKind::Feature,
+                String::new(),
+                vec![],
+                None,
+                "external:advisor",
+            )
             .await
             .expect("new task");
         tm.plan_task(&task.id, &"human".to_string())
@@ -2665,6 +2717,13 @@ mod tests {
         assert_eq!(rehydrated.state, TaskState::Claimed);
         assert_eq!(rehydrated.claimed_by.as_deref(), Some("agent:w1"));
         assert!(rehydrated.claimed_at.is_some());
+        assert_eq!(rehydrated.created_by, "external:advisor");
+        let row = fresh_store
+            .get_task(&task.id)
+            .await
+            .expect("row")
+            .expect("row");
+        assert_eq!(row.created_by.as_deref(), Some("external:advisor"));
 
         let db_claims = fresh_store.list_claims().await.expect("db claims");
         assert_eq!(db_claims.len(), 1);
