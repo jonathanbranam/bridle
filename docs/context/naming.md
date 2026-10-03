@@ -73,6 +73,19 @@ Then (2026-10-03):
    - **The NUC needs a real name.** It took "NUC" for lack of one, and dictation hears "Nook".
      Renaming it is wanted (not yet done).
 
+## A design rule
+
+The human (2026-10-03, verbatim):
+
+> This isn't a rule at all, I don't think. Actually, let me take that back. I think this is an
+> architectural rule or a design rule. It's a design rule that should be part of designing the
+> solution or the proposal. Yes, in that sense, this is a design rule. It's not a worker rule, I
+> don't think at all, because the names of things should be decided in the design.
+
+So names are settled in the design or proposal, by whoever designs (the orchestrator, advisors,
+the product manager, and the design/research role to come), not by managers or workers while
+building. A worker who finds a thing without a good name raises it; it doesn't invent one.
+
 ## Remind the human
 
 Whenever we're choosing a name (a role, a command, a state, a project, a machine), point the
