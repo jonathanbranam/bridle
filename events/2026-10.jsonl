@@ -412,3 +412,4 @@
 {"actor":"external:orchestrator","at":"2026-10-03T13:16:02.507462Z","from":"planned","task":"br-37d3","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-10-03T13:25:09.737265Z","from":"planned","task":"br-e5f1","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-10-03T13:34:22.437091Z","from":"planned","task":"br-14cd","to":"integrated"}
+{"actor":"human","at":"2026-10-03T14:43:32.156Z","from":"","task":"br-e210","to":"open"}
