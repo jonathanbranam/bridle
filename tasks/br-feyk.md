@@ -4,7 +4,7 @@ title = "Rename the triage role to aide (r8kv)"
 kind = "chore"
 state = "integrated"
 created_at = "2026-10-03T22:52:27.602Z"
-updated_at = "2026-10-03T23:19:56.616788Z"
+updated_at = "2026-10-03T23:21:10.973255Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
 branch = "bridle/aide-rename"
@@ -28,3 +28,6 @@ done: triage role renamed to aide, just check green (1112 tests); b9e6588
 
 ### note · agent:manager-2 · 2026-10-03T23:19:56.616Z
 integrated: 6164a550e992fd8b1c8c082c6402364634ebfcbc (branch bridle/aide-rename)
+
+### note · agent:manager-2 · 2026-10-03T23:21:10.973Z
+cleanup: removed agent aide-rename, branch bridle/aide-rename
