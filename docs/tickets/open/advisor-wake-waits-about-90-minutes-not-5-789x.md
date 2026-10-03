@@ -59,3 +59,21 @@ The human, verbatim (via the advisor):
 Decided: `bridle agent wake` accepts any `--timeout` up to **6900 s (1 h 55 min)** and clamps
 above it, safely under Claude Code's 2-hour background-task limit. Each caller picks its own
 timeout within that. The orchestrator's 25-minute poll is unchanged.
+
+## The orchestrator's wait too (the human, 2026-10-03)
+
+After the advisor explained the orchestrator's 25-minute `wait-for-wake` poll (set by v9t9 to
+stop 5-minute wakes; its stated reason is "so a hung TCP connection can't linger"), the human,
+verbatim (via the advisor):
+
+> Yeah, I think that makes sense. If if we have a lot of work going on Or if we have other
+> stability concerns, the orchestrator can always pick a shorter timeout. I know what the
+> orchestrator on the other machine is doing. It wrapped the call for wake up in a script that
+> checks if the response was nothing. And if the response is nothing, it immediately starts
+> another wait. And it does that like four times or something, three times maybe. So that way,
+> effectively, the orchestrator can sleep for like four batches of 25 minutes.
+
+Decided: `bridle orchestrator wait-for-wake` (and its `--mail` form) gets a `--timeout`, with the
+same 6900 s maximum. The orchestrator picks its own: long when things are quiet, shorter when a
+lot of work is running or stability is a concern. The NUC orchestrator's workaround (a script
+that re-waits after each `nothing`, three or four times) is then unnecessary.
