@@ -95,3 +95,12 @@ worker` doesn't match today's output; it's likely characters at an earlier commi
 
 Most of the size is each rule's "Why" (the human's words, history). An option if it matters:
 render only the statement at spawn and leave the Why in the file, roughly halving it.
+
+## Decided (2026-10-02)
+
+The human, verbatim, on steps 1 and 2: "I'm pretty sure that I agree and understand one and
+two", and after the measurement: "Yep, that's good. Let's get that out there and fixed."
+
+Approved: steps 1 (resolved rules into the spawn prompt), 2 (cut the restatements from
+`roles/*.md`) and 4 (the small breaks). Sent to the orchestrator to plan. Step 3 (layer hooks at
+spawn) and the role-addendum question are still open.
