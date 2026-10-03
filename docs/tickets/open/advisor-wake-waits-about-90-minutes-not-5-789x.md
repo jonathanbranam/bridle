@@ -41,6 +41,21 @@ The human, verbatim (2026-10-02, via the advisor):
 
 1. The role prompt: wait about 90 minutes (e.g. `--timeout 5400`), and say the timeout is only a
    fallback; a message ends the wait at once. Same for named advisors.
-2. Raise the wake cap from 25 minutes to at least 90 (or about 2 hours, below the background-task
-   limit), in the daemon and the CLI, with the API doc.
+2. Raise the agent wake cap from 25 minutes to **1 hour 55 minutes (6900 s)**, in the daemon
+   and the CLI, with the API doc (decided below).
 3. Until then, the advisor uses the current cap, 25 minutes (`--timeout 1500`).
+
+## The cap: 1 hour 55 minutes (the human, 2026-10-03)
+
+The human, verbatim (via the advisor):
+
+> Everyone keeps saying about two hours. If we're scheduling a ticket, why is it about two hours?
+> Let's, what, is that what the ticket actually says? Why are we leaving that up for a decision by
+> somebody else? Um, my understanding is that Claude Code kills something that goes over two
+> hours. Personally, I want to avoid my process is being killed for any reason so let's just set a
+> cap at one hour and 55 minutes and then people can set each agent can set the timeout they
+> desire but that's the max
+
+Decided: `bridle agent wake` accepts any `--timeout` up to **6900 s (1 h 55 min)** and clamps
+above it, safely under Claude Code's 2-hour background-task limit. Each caller picks its own
+timeout within that. The orchestrator's 25-minute poll is unchanged.
