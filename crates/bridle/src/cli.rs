@@ -424,6 +424,8 @@ pub struct TicketArgs {
 pub enum TicketAction {
     /// Mint docs/tickets/open/<slug>-<id>.md with a fresh ID and print its path.
     New(TicketNewArgs),
+    /// File the bridle task for a committed ticket with a non-empty ask (two-way link).
+    Task(TicketTaskArgs),
     /// Stamp `closed:` and move an open ticket to docs/tickets/resolved/ (no commit, no task change).
     Resolve(TicketResolveArgs),
     /// Set one frontmatter field (title, kind, repos, changes, specs, needs, see, tasks); list fields take comma-separated values.
@@ -448,6 +450,7 @@ pub struct TicketSubmitArgs {
 }
 
 #[derive(Debug, Args)]
+#[command(group(ArgGroup::new("body_source").args(["body", "body_file"])))]
 pub struct TicketNewArgs {
     pub title: String,
     /// Repos the ticket concerns, comma-separated (default: the project name).
@@ -462,9 +465,20 @@ pub struct TicketNewArgs {
     /// The ticket's kind, and its task's: there is no default.
     #[arg(short = 'k', long, value_enum)]
     pub kind: TaskKindArg,
-    /// Don't create the matching bridle task.
+    /// Text for the ticket's "The ask" section.
     #[arg(long)]
+    pub body: Option<String>,
+    /// Read the ask from a file (or `-` for stdin).
+    #[arg(long)]
+    pub body_file: Option<PathBuf>,
+    /// Deprecated no-op: `ticket new` never files a task (use `ticket task <id>`).
+    #[arg(long, hide = true)]
     pub no_task: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct TicketTaskArgs {
+    pub id: String,
 }
 
 #[derive(Debug, Args)]

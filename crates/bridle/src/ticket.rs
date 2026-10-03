@@ -13,7 +13,7 @@ use clap::ValueEnum;
 
 use crate::cli::{
     Cli, TaskKindArg, TicketAction, TicketArgs, TicketCheckArgs, TicketNewArgs, TicketResolveArgs,
-    TicketSetArgs, TicketSubmitArgs,
+    TicketSetArgs, TicketSubmitArgs, TicketTaskArgs,
 };
 use crate::commands::client_for;
 use crate::error::CliError;
@@ -39,6 +39,7 @@ pub async fn run(cli: &Cli, args: &TicketArgs) -> Result<(), CliError> {
     let repo = repo_root()?;
     match &args.action {
         TicketAction::New(a) => new(cli, &repo, a).await,
+        TicketAction::Task(a) => task_cmd(cli, &repo, a).await,
         TicketAction::Resolve(a) => resolve_cmd(&repo, a),
         TicketAction::Set(a) => set_cmd(&repo, a),
         TicketAction::Check(a) => check_cmd(cli, &repo, a).await,
@@ -68,8 +69,14 @@ async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<(), CliErro
         args.repos.clone()
     };
     let kind = kind_of(args.kind);
+    let ask = if args.body.is_some() || args.body_file.is_some() {
+        crate::commands::read_text(&args.body, &args.body_file, "body")?
+    } else {
+        String::new()
+    };
     let fields = Fields {
         title: &args.title,
+        ask: &ask,
         kind,
         repos: &repos,
         needs: &args.needs,
@@ -89,15 +96,66 @@ async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<(), CliErro
         .to_string();
     println!("{rel}");
 
-    if !args.no_task {
-        let id = id_of(&path).expect("create names the file <slug>-<id>.md");
-        match make_task(cli, &args.title, kind, &id, &rel).await {
-            Ok(task_id) => {
-                // The ticket records every task made from it; the task records the ticket.
-                set(&tickets_root(repo), &id, "tasks", &task_id)?;
-            }
-            Err(e) => eprintln!("warning: ticket written, but no bridle task was created: {e}"),
-        }
+    Ok(())
+}
+
+/// `bridle ticket task <id>`: file the task for a ticket that is committed and has an ask. The
+/// task is filed only now so it can never reach an agent before its brief is in git (k7tm).
+async fn task_cmd(cli: &Cli, repo: &Path, args: &TicketTaskArgs) -> Result<(), CliError> {
+    let root = tickets_root(repo);
+    let path = find_by_id(&root.join("open"), &args.id)?;
+    let text =
+        std::fs::read_to_string(&path).with_context(|| format!("reading {}", path.display()))?;
+    let (title, kind) = task_source(&text)?;
+    let rel = path.strip_prefix(repo).unwrap_or(&path).to_path_buf();
+    ensure_committed(repo, &rel)?;
+    let rel = rel.display().to_string();
+    // The daemon gives the task the ticket's id from the `original id:` line (br-9e15).
+    let task_id = make_task(cli, &title, kind, &args.id, &rel).await?;
+    set(&root, &args.id, "tasks", &task_id)?;
+    println!("{task_id}");
+    Ok(())
+}
+
+/// The title and kind of a ticket's text; refuses an empty "The ask".
+fn task_source(text: &str) -> anyhow::Result<(String, TaskKind)> {
+    let (pairs, body) = split_front(text).ok_or_else(|| anyhow!("ticket has no frontmatter"))?;
+    let get = |k: &str| pairs.iter().find(|(n, _)| n == k).map(|(_, v)| v.as_str());
+    let title = get("title")
+        .map(|t| t.trim_matches(|c| c == '"' || c == '\'').to_string())
+        .filter(|t| !t.is_empty())
+        .ok_or_else(|| anyhow!("ticket has no title"))?;
+    let kind = get("kind")
+        .ok_or_else(|| anyhow!("ticket has no kind (bridle ticket set <id> kind <kind>)"))?
+        .parse::<TaskKind>()
+        .map_err(|_| anyhow!("ticket has an unknown kind"))?;
+    let ask = body
+        .split_once("## The ask")
+        .map(|(_, rest)| rest.split("\n## ").next().unwrap_or(""))
+        .unwrap_or("");
+    if ask.trim().is_empty() {
+        bail!(
+            "the ticket's \"The ask\" section is empty: write the ask, commit it, then file the task"
+        );
+    }
+    Ok((title, kind))
+}
+
+/// Errors unless `rel` (relative to `repo`) is in the tip of the local `main`.
+fn ensure_committed(repo: &Path, rel: &Path) -> anyhow::Result<()> {
+    let spec = format!("main:{}", rel.display());
+    let in_main = Command::new("git")
+        .current_dir(repo)
+        .args(["cat-file", "-e", &spec])
+        .output()
+        .context("running git")?
+        .status
+        .success();
+    if !in_main {
+        bail!(
+            "{} is not committed on main: commit it there first, so the task never outruns its brief",
+            rel.display()
+        );
     }
     Ok(())
 }
@@ -216,6 +274,8 @@ async fn check_cmd(cli: &Cli, repo: &Path, args: &TicketCheckArgs) -> Result<(),
 
 pub struct Fields<'a> {
     pub title: &'a str,
+    /// Text of "The ask" (may be empty).
+    pub ask: &'a str,
     pub kind: TaskKind,
     pub repos: &'a [String],
     pub needs: &'a [String],
@@ -245,12 +305,17 @@ pub fn create(
         format!("{slug}-{id}.md")
     };
     let text = format!(
-        "---\nid: {id}\ntitle: {}\nkind: {}\nopened: {today}\nrepos: {}\nchanges: []\nspecs: []\nneeds: {}\nsee: {}\ntasks: []\n---\n\n## The ask\n\n",
+        "---\nid: {id}\ntitle: {}\nkind: {}\nopened: {today}\nrepos: {}\nchanges: []\nspecs: []\nneeds: {}\nsee: {}\ntasks: []\n---\n\n## The ask\n\n{}",
         yaml_scalar(f.title),
         f.kind,
         list(f.repos),
         list(f.needs),
         list(f.see),
+        if f.ask.trim().is_empty() {
+            String::new()
+        } else {
+            format!("{}\n", f.ask.trim_end())
+        },
     );
     let path = open.join(name);
     std::fs::write(&path, text).with_context(|| format!("writing {}", path.display()))?;
@@ -724,6 +789,7 @@ mod tests {
     fn fields<'a>(title: &'a str, repos: &'a [String]) -> Fields<'a> {
         Fields {
             title,
+            ask: "",
             kind: TaskKind::Feature,
             repos,
             needs: &[],
@@ -1087,5 +1153,55 @@ mod tests {
             .unwrap_err()
             .to_string();
         assert!(e.contains("no ticket"), "{e}");
+    }
+
+    #[test]
+    fn new_with_a_body_fills_the_ask() {
+        let dir = tempfile::tempdir().unwrap();
+        let repos = vec!["p".to_string()];
+        let mut f = fields("Thing", &repos);
+        f.ask = "Do the thing.\n";
+        let p = create(dir.path(), &f, "2026-10-03", &HashSet::new()).unwrap();
+        let text = std::fs::read_to_string(p).unwrap();
+        assert!(text.ends_with("## The ask\n\nDo the thing.\n"), "{text}");
+        let (title, kind) = task_source(&text).unwrap();
+        assert_eq!((title.as_str(), kind), ("Thing", TaskKind::Feature));
+    }
+
+    #[test]
+    fn ticket_task_refuses_an_empty_ask() {
+        let dir = tempfile::tempdir().unwrap();
+        let repos = vec!["p".to_string()];
+        let p = create(
+            dir.path(),
+            &fields("Thing", &repos),
+            "2026-10-03",
+            &HashSet::new(),
+        )
+        .unwrap();
+        let err = task_source(&std::fs::read_to_string(p).unwrap()).unwrap_err();
+        assert!(err.to_string().contains("empty"), "{err}");
+    }
+
+    #[test]
+    fn ticket_task_refuses_an_uncommitted_ticket() {
+        let dir = tempfile::tempdir().unwrap();
+        let git = |args: &[&str]| {
+            let out = Command::new("git")
+                .current_dir(dir.path())
+                .args(["-c", "user.name=t", "-c", "user.email=t@t"])
+                .args(args)
+                .output()
+                .unwrap();
+            assert!(out.status.success(), "{args:?}");
+        };
+        git(&["init", "-q", "-b", "main"]);
+        std::fs::write(dir.path().join("a.md"), "x").unwrap();
+        git(&["add", "a.md"]);
+        git(&["commit", "-q", "-m", "a"]);
+        std::fs::write(dir.path().join("b.md"), "y").unwrap();
+        assert!(ensure_committed(dir.path(), Path::new("a.md")).is_ok());
+        let err = ensure_committed(dir.path(), Path::new("b.md")).unwrap_err();
+        assert!(err.to_string().contains("not committed"), "{err}");
     }
 }

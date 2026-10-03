@@ -197,18 +197,22 @@ bridle workflow spec coverage [--root DIR] [--tests DIR ...] [--require-all] [--
                                              and the unbound list as 'file:line: s-id title'; exits 1
                                              with --require-all if any unbound (default exit 0); local
                                              only, no daemon call
-bridle ticket new "<title>" --kind <kind> [--repos a,b] [--needs ids] [--see ids] [--no-task]   mints
+bridle ticket new "<title>" --kind <kind> [--repos a,b] [--needs ids] [--see ids] [--body t | --body-file f]   mints
                                              `docs/tickets/open/<slug>-<id>.md` (repo root found via git): a
                                              fresh 4-character ID unique across `open/` and `resolved/`,
                                              frontmatter id, title, kind (required, no default: the task kinds), opened (UTC date), repos (default: the
                                              project name), changes, specs, needs, see, tasks, and an empty
                                              `## The ask`; creates the folders if missing; prints the path.
-                                             Also files the matching task (the same kind, body
-                                             `original id: <id>` and the path) when a daemon is reachable and
-                                             records its id in the ticket's `tasks:` (the first task from a ticket takes the ticket's id,
-                                             `br-k7tm` for `k7tm`; later ones get fresh ids). The new ticket's id is
-                                             never a task's id either (one id space); an unreachable daemon
-                                             is a warning, not an error
+                                             `--body`/`--body-file` (`-` = stdin) write the ask into the stub. Files no
+                                             task (the task would race the ticket's commit; k7tm); `--no-task`
+                                             is a hidden no-op. The new ticket's id is never a task's id either
+                                             (one id space)
+bridle ticket task <id>                      files the task for an open ticket (its title and kind, body
+                                             `original id: <id>` and the path) and records its id in the
+                                             ticket's `tasks:` (the first task from a ticket takes the ticket's id,
+                                             `br-k7tm` for `k7tm`; later ones get fresh ids). Refuses an empty
+                                             `## The ask` and a ticket file not in the tip of local `main`
+                                             (commit it first); needs a daemon; prints the task id
 bridle ticket resolve <id>                   stamps `closed: <UTC date-time>` into the frontmatter and moves
                                              the ticket from `open/` to `resolved/` (a plain move: committing
                                              is the caller's); errors on an unknown or ambiguous id; doesn't

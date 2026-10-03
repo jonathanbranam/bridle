@@ -49,8 +49,8 @@ design moves on; the design docs cite them.
 `workflow-instructions/ticket-conventions.md`:
 
 - One file each, `<descriptive-tail>-<id>.md`, with a 4-character ID that
-  never changes. Create them with `bridle ticket new "<title>" --kind <kind>` (files the
-  matching task too; `--no-task` skips it), or by hand with a fresh ID unique
+  never changes. Create them with `bridle ticket new "<title>" --kind <kind>` (files no task;
+  once the ticket with its ask is committed on `main`, `bridle ticket task <id>` files it), or by hand with a fresh ID unique
   across the repo.
 - `bridle ticket set <id> <field> <value>` edits the frontmatter and `bridle ticket check`
   verifies frontmatter, IDs, `needs`/`see` and links; shipped to every project as the `tickets`
