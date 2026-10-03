@@ -56,6 +56,7 @@ pub struct AppState {
     pub upgrader: crate::upgrade::Upgrader,
     /// `[daemon] self_upgrade`.
     pub self_upgrade: bool,
+    pub self_upgrade_wait: std::time::Duration,
     pub governor: crate::governor::Governor,
     pub ci: crate::ci::CiWatcher,
     pub wakes: std::sync::Arc<crate::wake::Wakes>,
@@ -3064,10 +3065,6 @@ async fn restart(
     Ok(Json(reply))
 }
 
-/// How long an automatic upgrade waits for a quiet point once its build is done (the tick only
-/// starts one at a quiet point, so this covers work that began during the build).
-const SELF_UPGRADE_WAIT: std::time::Duration = std::time::Duration::from_secs(600);
-
 /// The automatic upgrade (`[daemon] self_upgrade`), run on the CI watcher's tick: at a quiet point
 /// (no running agent mid-turn; a budget hold has wound the workers down to idle or stopped) and
 /// with a newer green commit, start the same background upgrade as `restart --upgrade`. A commit
@@ -3109,9 +3106,12 @@ pub async fn self_upgrade_tick(state: &AppState) {
             return;
         }
     };
+    // The tick only starts one at a quiet point, so the wait covers work that began during the
+    // build.
+    let wait = state.self_upgrade_wait;
     let bg = state.clone();
     tokio::spawn(async move {
-        upgrade_in_background(bg, "system".to_string(), sha, SELF_UPGRADE_WAIT).await;
+        upgrade_in_background(bg, "system".to_string(), sha, wait).await;
     });
 }
 
@@ -3140,33 +3140,50 @@ async fn upgrade_wake(state: &AppState, reason: &str, text: String, detail: serd
         .await;
 }
 
-/// Build, then restart; a failure at either step leaves the running daemon as it was, wakes the
-/// orchestrator and tells the human.
+async fn upgrade_event(state: &AppState, kind: &str, actor: &str, data: serde_json::Value) {
+    let _ = state
+        .emitter
+        .emit(kind, actor.to_string(), None, data)
+        .await;
+}
+
+/// Prefix of the `perform_restart` error for a wait that ended with agents still busy.
+const NO_QUIET_POINT: &str = "not restarted: no quiet point";
+
+/// Build, then restart. Every step is an `upgrade.*` event; only what needs attention wakes the
+/// orchestrator: the `restart` wake from `perform_restart`, and a real failure (also told to the
+/// human). For the automatic upgrade (`who == "system"`) a wait that finds no quiet point is
+/// "try later": silent, retried on the next tick, escalated (a wake, no human note) after
+/// [`crate::upgrade::GIVE_UP_AFTER`].
 async fn upgrade_in_background(
     state: AppState,
     who: String,
     sha: String,
     wait: std::time::Duration,
 ) {
+    use bridle_api::types::event_kind as ek;
     let short: String = sha.chars().take(9).collect();
     if !crate::upgrade::needs_build(&state.store, &state.workspace.repo, &sha).await {
         // Nothing the binary is built from changed: count the commit as built, don't restart.
         crate::upgrade::record_built(&state.store, &sha).await;
         state.upgrader.release();
-        upgrade_wake(
+        upgrade_event(
             &state,
-            "upgrade",
-            format!("upgrade: skipped {short}: no change to anything the binary is built from"),
-            serde_json::json!({"commit": sha, "stage": "skipped"}),
+            ek::UPGRADE_SKIPPED,
+            &who,
+            serde_json::json!({
+                "commit": sha,
+                "reason": "no change to anything the binary is built from",
+            }),
         )
         .await;
         return;
     }
-    upgrade_wake(
+    upgrade_event(
         &state,
-        "upgrade",
-        format!("upgrade: building {short} (green CI)"),
-        serde_json::json!({"commit": sha, "stage": "building"}),
+        ek::UPGRADE_BUILDING,
+        &who,
+        serde_json::json!({"commit": sha}),
     )
     .await;
     let built = match state.upgrader.build(&state.workspace, &sha).await {
@@ -3179,15 +3196,28 @@ async fn upgrade_in_background(
             "build of {short} failed; the daemon is unchanged: {e}"
         )),
     };
+    let mut quiet_wait = None;
     let outcome = match built {
         Ok(()) => {
+            upgrade_event(
+                &state,
+                ek::UPGRADE_BUILT,
+                &who,
+                serde_json::json!({"commit": sha}),
+            )
+            .await;
             // Refuse new workers so the running ones drain; stays set on success (the daemon is
             // about to exec) and is lifted on any give-up so spawns are never blocked for good.
             state.manager.set_upgrade_waiting(Some(short.clone()));
             let r = perform_restart(&state, &who, wait, Some(&sha))
                 .await
                 .map(|_| ())
-                .map_err(|e| format!("built {short} but did not restart: {}", e.message));
+                .map_err(|e| {
+                    if e.message.starts_with(NO_QUIET_POINT) {
+                        quiet_wait = Some(e.message.clone());
+                    }
+                    format!("built {short} but did not restart: {}", e.message)
+                });
             if r.is_err() {
                 state.manager.set_upgrade_waiting(None);
             }
@@ -3196,30 +3226,57 @@ async fn upgrade_in_background(
         Err(e) => Err(e),
     };
     state.upgrader.release();
-    if outcome.is_err() {
+    let Err(text) = outcome else { return };
+    if let (Some(msg), "system") = (&quiet_wait, who.as_str()) {
+        let busy = msg.split_once("still busy: ").map_or("", |(_, b)| b);
+        let data = serde_json::json!({"commit": sha, "busy": busy, "error": text});
+        let waited = state.upgrader.note_waiting(&sha);
+        if waited < crate::upgrade::GIVE_UP_AFTER {
+            tracing::info!(%text, "upgrade waiting for a quiet point; will retry");
+            upgrade_event(&state, ek::UPGRADE_WAITING, &who, data).await;
+            return;
+        }
         state.upgrader.note_failed(&sha);
-    }
-    if let Err(text) = outcome {
-        tracing::warn!(%text, "upgrade failed");
+        let hours = waited.as_secs() / 3600;
+        let mut data = data;
+        data["hours"] = hours.into();
+        upgrade_event(&state, ek::UPGRADE_GAVE_UP, &who, data).await;
         upgrade_wake(
             &state,
             "upgrade_failed",
-            format!("upgrade: {text}"),
-            serde_json::json!({"commit": sha, "stage": "failed", "error": text}),
+            format!("upgrade: {short} found no quiet point for {hours}h; not retrying it: {text}"),
+            serde_json::json!({"commit": sha, "stage": "gave_up", "error": text}),
         )
         .await;
-        let _ = state
-            .manager
-            .send(
-                "system".to_string(),
-                ToTarget::Human,
-                MessageKind::Note,
-                format!("upgrade: {text}"),
-                When::Idle,
-                None,
-            )
-            .await;
+        return;
     }
+    state.upgrader.note_failed(&sha);
+    tracing::warn!(%text, "upgrade failed");
+    upgrade_event(
+        &state,
+        ek::UPGRADE_FAILED,
+        &who,
+        serde_json::json!({"commit": sha, "error": text}),
+    )
+    .await;
+    upgrade_wake(
+        &state,
+        "upgrade_failed",
+        format!("upgrade: {text}"),
+        serde_json::json!({"commit": sha, "stage": "failed", "error": text}),
+    )
+    .await;
+    let _ = state
+        .manager
+        .send(
+            "system".to_string(),
+            ToTarget::Human,
+            MessageKind::Note,
+            format!("upgrade: {text}"),
+            When::Idle,
+            None,
+        )
+        .await;
 }
 
 /// Wait until every agent is idle (never cutting a turn off), record who was running, then
@@ -3254,7 +3311,7 @@ async fn perform_restart(
                 StatusCode::CONFLICT,
                 "conflict",
                 format!(
-                    "not restarted: no quiet point within {}s; still busy: {}",
+                    "{NO_QUIET_POINT} within {}s; still busy: {}",
                     wait.as_secs(),
                     if busy.is_empty() {
                         "a spawning agent".to_string()

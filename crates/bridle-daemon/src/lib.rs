@@ -114,6 +114,8 @@ pub struct Overrides {
     pub upgrade: UpgradeHooks,
     /// The CI watcher's tick, which also carries the self-upgrade check.
     pub ci_tick_interval: Duration,
+    /// How long an automatic upgrade waits for a quiet point once built.
+    pub self_upgrade_wait: Duration,
     /// How often a task finishing its settle period is looked for.
     pub settle_wake_interval: Duration,
     /// How long the queue stays unchanged before the manager is nudged.
@@ -141,6 +143,7 @@ impl Default for Overrides {
             port_check_interval: Duration::from_secs(30),
             upgrade: UpgradeHooks::default(),
             ci_tick_interval: ci::TICK_INTERVAL,
+            self_upgrade_wait: Duration::from_secs(600),
             settle_wake_interval: Duration::from_secs(30),
             queue_nudge_debounce: queue_nudge::DEBOUNCE,
             take_over: false,
@@ -587,6 +590,14 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
     .await;
 
     if let Some(text) = rollback::take_notice(&ws) {
+        let _ = emitter
+            .emit(
+                bridle_api::types::event_kind::UPGRADE_ROLLED_BACK,
+                "system".to_string(),
+                None,
+                serde_json::json!({"error": text}),
+            )
+            .await;
         wakes
             .push(bridle_api::types::WakeReason {
                 reason: "upgrade_failed".to_string(),
@@ -633,6 +644,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         landing: Default::default(),
         queue_nudge: queue_nudge.clone(),
         self_upgrade: config.self_upgrade,
+        self_upgrade_wait: overrides.self_upgrade_wait,
     };
     let tick_state = state.clone();
     let app = server::router(state);

@@ -670,6 +670,21 @@ pub struct Event {
 pub mod event_kind {
     pub const DAEMON_STARTED: &str = "daemon.started";
     pub const DAEMON_STOPPING: &str = "daemon.stopping";
+    /// Self-upgrade steps (actor: whoever asked, `system` for the automatic one). data always has
+    /// `commit`. Skipped: {reason}, nothing the binary is built from changed.
+    pub const UPGRADE_SKIPPED: &str = "upgrade.skipped";
+    pub const UPGRADE_BUILDING: &str = "upgrade.building";
+    /// The build passed its self-check; the restart waits for a quiet point.
+    pub const UPGRADE_BUILT: &str = "upgrade.built";
+    /// No quiet point in time; the automatic upgrade retries later. data: {busy, error}.
+    pub const UPGRADE_WAITING: &str = "upgrade.waiting";
+    /// The automatic upgrade kept finding no quiet point for hours and stopped retrying that
+    /// commit. data: {busy, error, hours}.
+    pub const UPGRADE_GAVE_UP: &str = "upgrade.gave_up";
+    /// Build, self-check or restart failed. data: {error}.
+    pub const UPGRADE_FAILED: &str = "upgrade.failed";
+    /// The upgraded binary failed to start and the previous one is back. data: {error}.
+    pub const UPGRADE_ROLLED_BACK: &str = "upgrade.rolled_back";
     pub const AGENT_SPAWNED: &str = "agent.spawned";
     /// data: {from, to}
     pub const AGENT_STATE: &str = "agent.state";

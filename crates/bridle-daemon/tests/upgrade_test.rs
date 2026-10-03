@@ -6,6 +6,7 @@ mod support;
 use std::sync::Arc;
 use std::time::Duration;
 
+use bridle_api::Client;
 use bridle_api::types::{MessageQuery, RestartRequest};
 use bridle_daemon::UpgradeHooks;
 use bridle_daemon::ci::{Gh, Run};
@@ -124,6 +125,16 @@ async fn a_failed_build_leaves_the_daemon_running_and_tells_the_human() {
     })
     .await;
     assert!(note.body.contains("the daemon is unchanged"));
+    // A real failure still wakes the orchestrator.
+    let orch = daemon.external_client("orchestrator").await;
+    let wakes = orch.orchestrator_wake(Some(5)).await.expect("wake").wakes;
+    assert!(
+        wakes.iter().any(|w| w.reason == "upgrade_failed"),
+        "{wakes:?}"
+    );
+    let ev = upgrade_events(&daemon).await;
+    assert!(ev.contains(&"upgrade.building".to_string()), "{ev:?}");
+    assert!(ev.contains(&"upgrade.failed".to_string()), "{ev:?}");
     assert!(!daemon.running.restart_requested());
     daemon.client.health().await.expect("still serving");
     // The slot is free again: a second try builds (and fails) rather than being refused.
@@ -308,5 +319,161 @@ async fn a_waiting_build_refuses_new_workers_until_it_gives_up() {
     assert!(!daemon.running.restart_requested());
     daemon.client.spawn(&second).await.expect("spawn allowed");
     daemon.running.shutdown();
+    daemon.running.join().await.expect("join");
+}
+
+async fn upgrade_events(daemon: &support::TestDaemon) -> Vec<String> {
+    daemon
+        .client
+        .events(&bridle_api::types::EventQuery {
+            kind: Some("upgrade.".to_string()),
+            ..Default::default()
+        })
+        .await
+        .expect("events")
+        .into_iter()
+        .map(|e| e.kind)
+        .collect()
+}
+
+#[tokio::test]
+async fn a_docs_only_commit_is_an_event_and_wakes_no_one() {
+    let build = "true";
+    let (daemon, tmp) = support::start_daemon(Some(hooks("success", build))).await;
+    daemon.client.restart(&upgrade()).await.expect("reply");
+    support::wait_for("the restart", || async {
+        daemon.running.restart_requested().then_some(())
+    })
+    .await;
+    let (workspace, repo) = (daemon.workspace.clone(), daemon.repo.clone());
+    daemon.running.join().await.expect("join");
+    std::fs::write(repo.join("NOTES.md"), "docs\n").expect("write");
+    for args in [
+        vec!["add", "NOTES.md"],
+        vec![
+            "-c",
+            "user.name=t",
+            "-c",
+            "user.email=t@t",
+            "commit",
+            "-m",
+            "docs",
+        ],
+    ] {
+        let out = tokio::process::Command::new("git")
+            .arg("-C")
+            .arg(&repo)
+            .args(&args)
+            .output()
+            .await
+            .expect("git");
+        assert!(out.status.success(), "{args:?}");
+    }
+    let opts = bridle_daemon::ServeOptions {
+        repo,
+        workspace: Some(workspace.clone()),
+        project: None,
+        listen: Some("127.0.0.1:0".parse().expect("valid addr")),
+    };
+    let mut overrides = hooks("success", build);
+    overrides.bridle_home = Some(support::machine_home_dir(tmp.path()));
+    let running = bridle_daemon::start(opts, overrides).await.expect("start");
+    let token =
+        std::fs::read_to_string(workspace.join(".bridle/tokens/human")).expect("human token");
+    let client = bridle_api::Client::new(running.url.clone(), Some(token.trim().to_string()));
+    let reply = client.restart(&upgrade()).await.expect("reply");
+    assert!(reply.message.unwrap().starts_with("building "));
+    let kinds = support::wait_for("the skipped event", || async {
+        let ev = client
+            .events(&bridle_api::types::EventQuery {
+                kind: Some("upgrade.skipped".to_string()),
+                ..Default::default()
+            })
+            .await
+            .ok()?;
+        (!ev.is_empty()).then_some(ev)
+    })
+    .await;
+    assert!(kinds[0].data["commit"].is_string());
+    assert!(kinds[0].data["reason"].is_string());
+    assert!(!running.restart_requested());
+    let orch = Client::new(
+        running.url.clone(),
+        Some(
+            client
+                .create_token(&bridle_api::types::TokenCreateRequest {
+                    name: "orchestrator".to_string(),
+                    machine: None,
+                })
+                .await
+                .expect("token")
+                .token,
+        ),
+    );
+    let wakes = orch.orchestrator_wake(Some(1)).await.expect("wake").wakes;
+    assert!(
+        wakes.iter().all(|w| !w.reason.starts_with("upgrade")),
+        "{wakes:?}"
+    );
+    running.shutdown();
+    running.join().await.expect("join");
+}
+
+#[tokio::test]
+async fn automatic_no_quiet_point_is_silent_and_retried() {
+    let mut o = auto("sleep 1");
+    o.self_upgrade_wait = Duration::from_secs(1);
+    let (daemon, _tmp) = support::start_daemon_with_config(Some(o), Some(SELF_UPGRADE)).await;
+    // Busy from during the build, so the post-build wait finds no quiet point.
+    support::wait_for("the build to start", || async {
+        upgrade_events(&daemon)
+            .await
+            .contains(&"upgrade.building".to_string())
+            .then_some(())
+    })
+    .await;
+    let agent = daemon
+        .client
+        .spawn(&worker("SLEEP 5"))
+        .await
+        .expect("spawn");
+    support::wait_for("the give-up", || async {
+        upgrade_events(&daemon)
+            .await
+            .contains(&"upgrade.waiting".to_string())
+            .then_some(())
+    })
+    .await;
+    assert!(!daemon.running.restart_requested());
+    let notes = daemon
+        .client
+        .list_messages(&MessageQuery {
+            to: Some("human".to_string()),
+            ..Default::default()
+        })
+        .await
+        .expect("messages");
+    assert!(
+        notes.iter().all(|m| !m.body.contains("upgrade")),
+        "{notes:?}"
+    );
+    let orch = daemon.external_client("orchestrator").await;
+    let wakes = orch.orchestrator_wake(Some(1)).await.expect("wake").wakes;
+    assert!(
+        wakes.iter().all(|w| !w.reason.starts_with("upgrade")),
+        "{wakes:?}"
+    );
+    let _ = agent;
+    // Once the worker is idle the next tick builds again and restarts.
+    support::wait_for("the retry's restart", || async {
+        daemon.running.restart_requested().then_some(())
+    })
+    .await;
+    let kinds = upgrade_events(&daemon).await;
+    assert_eq!(
+        kinds.iter().filter(|k| *k == "upgrade.building").count(),
+        2,
+        "{kinds:?}"
+    );
     daemon.running.join().await.expect("join");
 }

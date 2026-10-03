@@ -56,7 +56,13 @@ pub struct Upgrader {
     busy: Arc<AtomicBool>,
     /// The last commit an upgrade failed on (memory only), so the automatic trigger skips it.
     failed: Arc<Mutex<Option<String>>>,
+    /// The commit the automatic upgrade first found no quiet point for, and when (memory only):
+    /// it retries silently until this is [`GIVE_UP_AFTER`] old.
+    waiting: Arc<Mutex<Option<(String, std::time::Instant)>>>,
 }
+
+/// How long the automatic upgrade keeps retrying a commit that never finds a quiet point.
+pub const GIVE_UP_AFTER: Duration = Duration::from_secs(3 * 60 * 60);
 
 /// How a freshly built binary is checked before the daemon execs it.
 #[derive(Clone)]
@@ -89,6 +95,7 @@ impl Upgrader {
             preflight,
             busy: Default::default(),
             failed: Default::default(),
+            waiting: Default::default(),
         }
     }
 
@@ -103,6 +110,18 @@ impl Upgrader {
 
     pub fn note_failed(&self, sha: &str) {
         *self.failed.lock().expect("failed-sha lock") = Some(sha.to_string());
+    }
+
+    /// Notes a no-quiet-point give-up on `sha`; how long it has been giving up on it.
+    pub fn note_waiting(&self, sha: &str) -> Duration {
+        let mut w = self.waiting.lock().expect("waiting lock");
+        match &*w {
+            Some((s, since)) if s == sha => since.elapsed(),
+            _ => {
+                *w = Some((sha.to_string(), std::time::Instant::now()));
+                Duration::ZERO
+            }
+        }
     }
 
     pub fn failed_before(&self, sha: &str) -> bool {

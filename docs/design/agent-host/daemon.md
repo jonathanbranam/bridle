@@ -173,13 +173,22 @@ commits have no runs and are skipped. The commit the last upgrade built is kept 
 the reply says so and nothing happens (a daemon that has never upgraded builds the newest green
 commit; the binary carries no commit of its own). Otherwise the reply comes at once
 (`restarting: false`, `message: "building <sha> ..."`) and the rest runs in the background, one
-upgrade at a time: wake `upgrade`, check the commit out into a throwaway detached worktree
+upgrade at a time: event `upgrade.building` (no wake), check the commit out into a throwaway detached worktree
 (`<workspace>/.bridle/upgrade-src`; the human's checkout is never touched), run `cargo install
 --path crates/bridle` there at normal priority with `CARGO_TARGET_DIR=<workspace>/.bridle/upgrade-target`
 (kept between upgrades so builds are incremental; one-hour cap), then restart in place as above,
-with the same quiet-point wait, recording the commit as built. A failed build, or no quiet point
-after it, leaves the running daemon untouched: wake `upgrade_failed` (with the build output's
-last lines) and a note to the human's inbox. Out of scope: other projects' daemons.
+with the same quiet-point wait, recording the commit as built. A failed build or self-check, or
+(for a manual upgrade) no quiet point after the build, leaves the running daemon untouched: event
+`upgrade.failed`, wake `upgrade_failed` (with the build output's last lines) and a note to the
+human's inbox. Out of scope: other projects' daemons.
+
+**Events, and what wakes.** Every step is an event (`bridle events --kind upgrade.`):
+`upgrade.skipped` (`{commit, reason}`), `upgrade.building`, `upgrade.built`, `upgrade.waiting`
+and `upgrade.gave_up` (`{commit, busy, error}`), `upgrade.failed` (`{commit, error}`) and
+`upgrade.rolled_back` (`{error}`). Only what needs attention wakes the orchestrator: the `restart`
+wake of a successful upgrade, `upgrade_failed` for a real failure (build, self-check, rollback,
+manual no-quiet-point) which also notes the human, and `upgrade_failed` (no human note) when the
+automatic upgrade has found no quiet point for three hours. Skipped and building wake no one.
 
 **Rollback.** The running binary is copied to `<workspace>/.bridle/bridle.prev` before the build
 replaces it. After the build, the daemon runs the new binary's self-check (`bridle serve --check
@@ -190,14 +199,14 @@ it `started` as it begins and deletes it once `daemon.json` is written (serving)
 that fails in `start`, or finds the marker already `started` (the last attempt died before
 serving, e.g. a crash), copies `bridle.prev` back over the installed binary, leaves
 `upgrade-rolled-back.txt` and execs it; the restored daemon wakes the orchestrator (`upgrade_failed`,
-stage `rolled_back`). A failed exec of the new binary rolls back the same way. Exec in place means
+stage `rolled_back`; event `upgrade.rolled_back`). A failed exec of the new binary rolls back the same way. Exec in place means
 nothing supervises the new process: a hard crash before serving is only caught by the next start
 (by hand), which then rolls back.
 
 **Docs-only commits skip the build.** Before building, the daemon runs `git diff --name-only
 <built>..<candidate>`. If nothing under `crates/`, `.cargo/`, `Cargo.toml`, `Cargo.lock` or
 `rust-toolchain*` changed (the binary embeds no workflow or docs files outside tests), it records the
-candidate as built, wakes `upgrade` ("skipped") and does not restart. With no built commit yet, or if
+candidate as built, records `upgrade.skipped` (no wake) and does not restart. With no built commit yet, or if
 git can't diff, it builds. **The restart's commit** (message to agents, `restart` wakes) is the
 built commit (`upgrade.built`), not the integration head, which can have moved during the build.
 
@@ -205,9 +214,12 @@ built commit (`upgrade.built`), not the integration head, which can have moved d
 `.bridle/config.toml`) the CI watcher's tick (every minute; no loop of its own) also checks for a
 quiet point: no running agent mid-turn (a budget hold winds workers down to idle or stopped, which
 counts). If so, and no restart or upgrade is under way, it looks for a newer green commit exactly as
-above and, if there is one, starts the same background upgrade (wake `upgrade`, build, restart with
+above and, if there is one, starts the same background upgrade (build, restart with
 the ten-minute quiet-point wait), so a turn is never cut off. A commit whose upgrade failed is not
 retried (in memory; a daemon restart or a newer commit tries again) so a broken build doesn't loop.
+A wait that ends with agents still busy is not a failure: `upgrade.waiting`, no wake, no human
+note, and the next quiet tick builds (incrementally) and tries again. After three hours of that for
+one commit it records `upgrade.gave_up`, wakes `upgrade_failed` once and stops retrying it.
 
 While a built commit waits for its quiet point (manual or automatic), new worker spawns are refused
 with a 409 naming the build, and `bridle status` shows an `upgrade` line, so running workers drain
