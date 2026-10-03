@@ -6,6 +6,7 @@ use std::path::Path;
 
 use ts_rs::{Config, TS};
 
+use crate::actions::{ActionRequest, ActionResult};
 use crate::auth::{Credentials, SessionInfo};
 use crate::discovery::{ProjectStatus, Projects};
 use crate::items::{Decision, Items, Priority, ProjectItems, Todo};
@@ -24,6 +25,8 @@ pub fn export_all(dir: &Path) -> Result<(), ts_rs::ExportError> {
     Credentials::export_all(&config)?;
     SessionInfo::export_all(&config)?;
     UiHealth::export_all(&config)?;
+    ActionRequest::export_all(&config)?;
+    ActionResult::export_all(&config)?;
     Ok(())
 }
 

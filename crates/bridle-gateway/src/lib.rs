@@ -1,6 +1,7 @@
 //! The bridle gateway: one versioned HTTP API (`/api/v1`) for the human's web UI.
 //! See docs/design/human-web-ui.md. It never touches a daemon's start-up path.
 
+pub mod actions;
 pub mod auth;
 pub mod config;
 pub mod discovery;
@@ -33,6 +34,10 @@ pub fn router(login: Option<Login>, ui: UiConfig) -> Router {
         .route("/session", get(auth::session))
         .route("/projects", get(projects))
         .route("/items", get(items))
+        .route(
+            "/projects/{project}/tasks/{id}/{action}",
+            post(actions::act_route),
+        )
         .fallback(|| async { axum::http::StatusCode::NOT_FOUND })
         .layer(middleware::from_fn_with_state(
             auth.clone(),
@@ -332,6 +337,29 @@ mod tests {
             .expect("post");
         assert_eq!(r.status(), 204);
         assert_eq!(session_status(&base, Some(&cookie)).await, 401);
+    }
+
+    #[tokio::test]
+    async fn actions_need_a_session_and_unknown_ones_are_refused() {
+        let base = start(Some(login())).await;
+        let url = |a: &str| format!("{base}/projects/p/tasks/t-1/{a}");
+        let anon = reqwest::Client::new().post(url("done")).send().await;
+        assert_eq!(anon.expect("post").status(), 401);
+        let cookie = cookie_pair(&post_login(&base, "jo", "right").await);
+        let r = reqwest::Client::new()
+            .post(url("land"))
+            .header(reqwest::header::COOKIE, &cookie)
+            .send()
+            .await
+            .expect("post");
+        assert_eq!(r.status(), 404);
+        let body: Value = r.json().await.expect("json");
+        assert!(
+            body["error"]
+                .as_str()
+                .expect("str")
+                .contains("unknown action")
+        );
     }
 
     #[tokio::test]
