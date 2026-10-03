@@ -387,31 +387,30 @@ pub fn tool_checks(config: Option<&Config>) -> Vec<Check> {
 /// kind of session answers every turn "Not logged in" (nrbf); on macOS the usual cause is a
 /// daemon started over SSH, which can't read the login keychain. `cmd` is the program to run
 /// (tests inject a stand-in); `auth status` is appended.
-fn claude_login_check(mut cmd: Command) -> Check {
-    let Ok(o) = cmd.args(["auth", "status"]).output() else {
-        return Check::warn(
-            "claude login",
-            "could not run `claude auth status`",
-            "run `claude auth status` yourself",
-        );
-    };
-    let out = String::from_utf8_lossy(&o.stdout);
-    match serde_json::from_str::<serde_json::Value>(&out)
-        .ok()
-        .and_then(|v| v["loggedIn"].as_bool())
-    {
+fn claude_login_check(cmd: Command) -> Check {
+    match claude_logged_in(cmd) {
         Some(true) => Check::ok("claude login", "logged in"),
-        Some(false) => Check::fail(
-            "claude login",
-            "NOT LOGGED IN: agents spawned from this session would silently do nothing",
-            "run `claude auth login`; on macOS start the daemon from a local terminal or tmux, not over SSH (which can't read the keychain)",
-        ),
+        Some(false) => Check::fail("claude login", NOT_LOGGED_IN_DETAIL, NOT_LOGGED_IN_FIX),
         None => Check::warn(
             "claude login",
-            "could not read `claude auth status` output",
+            "could not read `claude auth status`",
             "run `claude auth status` yourself",
         ),
     }
+}
+
+pub const NOT_LOGGED_IN_DETAIL: &str =
+    "NOT LOGGED IN: agents spawned from this session would silently do nothing";
+pub const NOT_LOGGED_IN_FIX: &str = "run `claude auth login`; on macOS start the daemon from a local terminal or tmux, not over SSH (which can't read the keychain)";
+
+/// `Some(logged_in)`, or `None` when the answer is unknown (can't run, unreadable output).
+/// Shared by doctor and the start-up warning in `serve`.
+pub fn claude_logged_in(mut cmd: Command) -> Option<bool> {
+    let o = cmd.args(["auth", "status"]).output().ok()?;
+    serde_json::from_slice::<serde_json::Value>(&o.stdout)
+        .ok()?
+        .get("loggedIn")?
+        .as_bool()
 }
 
 /// "git version 2.39.3 (Apple Git-145)" -> (2, 39).

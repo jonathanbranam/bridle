@@ -119,6 +119,10 @@ of those stops as shutdown-triggered, so it exits `stopped` with reason
 same as `lost` for the resume step below, so a `resume_on_restart` role comes
 back after a clean restart, not only after a crash.
 
+`bridle serve` also runs `claude auth status` in the background at start-up (5 s limit) and logs a
+warning with the fix if claude isn't logged in (nrbf). A missing claude, a timeout or any error is
+"unknown" and silent; it never delays or fails start-up.
+
 On startup the daemon reconciles:
 
 - For every agent recorded as running, it kills the process group if the pid

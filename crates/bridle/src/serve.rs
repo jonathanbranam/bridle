@@ -32,8 +32,35 @@ async fn run_foreground(cli: &Cli, args: &ServeArgs) -> Result<(), CliError> {
         project: cli.project.clone(),
         listen: args.listen,
     };
+    tokio::spawn(warn_if_not_logged_in(
+        std::process::Command::new("claude"),
+        LOGIN_CHECK_TIMEOUT,
+    ));
     bridle_daemon::run(opts, args.take_over).await?;
     Ok(())
+}
+
+const LOGIN_CHECK_TIMEOUT: Duration = Duration::from_secs(5);
+
+/// Off the start-up path: a daemon not logged in to claude runs agents that silently do
+/// nothing (nrbf), so say so loudly. A timeout, a missing `claude` or any error is "unknown"
+/// and stays silent; this never affects start-up.
+async fn warn_if_not_logged_in(cmd: std::process::Command, timeout: Duration) {
+    if known_logged_out(cmd, timeout).await {
+        tracing::warn!(
+            "{}; {}",
+            crate::doctor::NOT_LOGGED_IN_DETAIL,
+            crate::doctor::NOT_LOGGED_IN_FIX
+        );
+    }
+}
+
+async fn known_logged_out(cmd: std::process::Command, timeout: Duration) -> bool {
+    let check = tokio::task::spawn_blocking(move || crate::doctor::claude_logged_in(cmd));
+    matches!(
+        tokio::time::timeout(timeout, check).await,
+        Ok(Ok(Some(false)))
+    )
 }
 
 fn init_tracing() {
@@ -240,5 +267,29 @@ mod tests {
         assert!(r.is_ok());
         child.kill().unwrap();
         child.wait().unwrap();
+    }
+
+    fn fake_claude(dir: &Path, body: &str) -> std::process::Command {
+        use std::os::unix::fs::PermissionsExt;
+        let p = dir.join("claude");
+        std::fs::write(&p, format!("#!/bin/sh\n{body}\n")).expect("write");
+        std::fs::set_permissions(&p, std::fs::Permissions::from_mode(0o755)).expect("chmod");
+        std::process::Command::new(p)
+    }
+
+    #[tokio::test]
+    async fn login_warning_only_when_known_logged_out() {
+        let d = tempfile::tempdir().expect("tmp");
+        let t = Duration::from_secs(5);
+        let out = fake_claude(d.path(), "echo '{\"loggedIn\": false}'; exit 1");
+        assert!(known_logged_out(out, t).await);
+        let ok = fake_claude(d.path(), "echo '{\"loggedIn\": true}'");
+        assert!(!known_logged_out(ok, t).await);
+        let junk = fake_claude(d.path(), "echo huh");
+        assert!(!known_logged_out(junk, t).await);
+        let missing = std::process::Command::new(d.path().join("nope"));
+        assert!(!known_logged_out(missing, t).await);
+        let slow = fake_claude(d.path(), "sleep 2; echo '{\"loggedIn\": false}'");
+        assert!(!known_logged_out(slow, Duration::from_millis(100)).await);
     }
 }
