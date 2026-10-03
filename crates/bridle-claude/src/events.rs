@@ -176,6 +176,19 @@ pub struct ResultEvent {
     pub permission_denials: Vec<Value>,
 }
 
+impl ResultEvent {
+    /// Claude Code's answer when its login isn't readable (e.g. a daemon started over SSH
+    /// on macOS can't reach the keychain): an error result whose text is "Not logged in ·
+    /// Please run /login". Narrow on purpose, so no ordinary result matches.
+    pub fn is_not_logged_in(&self) -> bool {
+        self.is_error
+            && self.result.as_deref().is_some_and(|t| {
+                let t = t.trim();
+                t.starts_with("Not logged in") && t.contains("Please run /login")
+            })
+    }
+}
+
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct Usage {
     #[serde(default)]
@@ -415,5 +428,27 @@ mod tests {
     fn not_json_falls_back() {
         let ev = Event::parse(0, "not json".to_string());
         assert!(matches!(ev.kind, EventKind::NotJson));
+    }
+
+    #[test]
+    fn not_logged_in_matches_only_the_logged_out_error_result() {
+        let r = |is_error: bool, text: &str| ResultEvent {
+            subtype: "success".into(),
+            is_error,
+            duration_ms: None,
+            num_turns: None,
+            session_id: "s".into(),
+            result: Some(text.into()),
+            total_cost_usd: None,
+            usage: None,
+            model_usage: None,
+            terminal_reason: None,
+            stop_reason: None,
+            permission_denials: Vec::new(),
+        };
+        assert!(r(true, "Not logged in \u{b7} Please run /login").is_not_logged_in());
+        assert!(!r(false, "Not logged in \u{b7} Please run /login").is_not_logged_in());
+        assert!(!r(true, "echo: hi").is_not_logged_in());
+        assert!(!r(false, "the docs say: Not logged in").is_not_logged_in());
     }
 }

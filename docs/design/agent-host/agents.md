@@ -169,6 +169,10 @@ version. Instead:
     `sigterm` or `sigkill` by the step that ended it, or `budget_exhausted`,
     `budget_paused` (governor wind-down) or `daemon_shutdown` (clean daemon stop);
   - otherwise exit code 0 or 1, no signal, after some output, is `exited`;
+  - a turn whose result is claude's logged-out text (an error result reading "Not logged in ·
+    Please run /login") is `crashed` with reason `claude is not logged in in this daemon's
+    session` (a crash wake), not an idle: on macOS a daemon started over SSH can't read the
+    login keychain, and every turn would answer the same (nrbf);
   - anything else is `crashed`, with the tail of stderr as the reason.
 
 ## Stopping

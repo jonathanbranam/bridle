@@ -340,6 +340,32 @@ async fn rm_refuses_a_worktree_with_open_files_without_force() {
 }
 
 #[tokio::test]
+async fn a_not_logged_in_result_crashes_the_agent_with_a_clear_reason() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let agent = daemon
+        .client
+        .spawn(&SpawnRequest {
+            components: Vec::new(),
+            role: "worker".to_string(),
+            name: Some("w1".to_string()),
+            prompt: Some("NOT_LOGGED_IN".to_string()),
+            workdir: Some(Workdir::Repo),
+            model: None,
+            extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
+            ignore_budget: false,
+        })
+        .await
+        .expect("spawn");
+
+    let crashed = wait_for_state(&daemon.client, &agent.id, AgentState::Crashed).await;
+    assert_eq!(
+        crashed.exit.expect("exit info").reason,
+        "claude is not logged in in this daemon's session"
+    );
+}
+
+#[tokio::test]
 async fn crash_is_reported_with_a_stderr_tail_and_pending_messages_deliver_on_resume() {
     let (daemon, _tmp) = start_daemon(None).await;
     let agent = daemon

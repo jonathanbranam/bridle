@@ -23,6 +23,9 @@ message text (matched exactly, or as a prefix where noted) change behaviour:
                   error_during_execution result). Messages that were folded
                   in but not yet consumed when the interrupt lands each run
                   as their own next turn, in order.
+    NOT_LOGGED_IN Answer with Claude Code's logged-out result (an is_error
+                  "success" result whose text is "Not logged in · Please run
+                  /login", no model call), and keep the process running.
     EXIT n        Exit immediately with code n. No result is emitted.
     CRASH         Write a line to stderr and exit(3) immediately. No result.
     SPAWN_CHILD   Start a detached `sleep 300` in a new session (its own
@@ -304,6 +307,22 @@ def run_turn(text):
 
     command = command_line(text)
 
+    if command == "NOT_LOGGED_IN":
+        emit(
+            {
+                "type": "result",
+                "subtype": "success",
+                "is_error": True,
+                "num_turns": 1,
+                "result": "Not logged in \u00b7 Please run /login",
+                "session_id": state["session_id"],
+                "total_cost_usd": 0,
+                "usage": USAGE,
+                "terminal_reason": "completed",
+                "permission_denials": [],
+            }
+        )
+        return
     if command == "CRASH":
         print("fake-claude: CRASH requested", file=sys.stderr, flush=True)
         sys.exit(3)

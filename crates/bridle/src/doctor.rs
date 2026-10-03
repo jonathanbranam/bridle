@@ -368,6 +368,8 @@ pub fn tool_checks(config: Option<&Config>) -> Vec<Check> {
         )),
     }
 
+    out.push(claude_login_check(Command::new("claude")));
+
     if config.is_some_and(|c| c.ci.github) {
         match Command::new("gh").arg("--version").output() {
             Ok(o) if o.status.success() => out.push(Check::ok("gh", "on PATH")),
@@ -379,6 +381,37 @@ pub fn tool_checks(config: Option<&Config>) -> Vec<Check> {
         }
     }
     out
+}
+
+/// `claude auth status` (JSON) in doctor's own environment. A daemon started from the same
+/// kind of session answers every turn "Not logged in" (nrbf); on macOS the usual cause is a
+/// daemon started over SSH, which can't read the login keychain. `cmd` is the program to run
+/// (tests inject a stand-in); `auth status` is appended.
+fn claude_login_check(mut cmd: Command) -> Check {
+    let Ok(o) = cmd.args(["auth", "status"]).output() else {
+        return Check::warn(
+            "claude login",
+            "could not run `claude auth status`",
+            "run `claude auth status` yourself",
+        );
+    };
+    let out = String::from_utf8_lossy(&o.stdout);
+    match serde_json::from_str::<serde_json::Value>(&out)
+        .ok()
+        .and_then(|v| v["loggedIn"].as_bool())
+    {
+        Some(true) => Check::ok("claude login", "logged in"),
+        Some(false) => Check::fail(
+            "claude login",
+            "NOT LOGGED IN: agents spawned from this session would silently do nothing",
+            "run `claude auth login`; on macOS start the daemon from a local terminal or tmux, not over SSH (which can't read the keychain)",
+        ),
+        None => Check::warn(
+            "claude login",
+            "could not read `claude auth status` output",
+            "run `claude auth status` yourself",
+        ),
+    }
 }
 
 /// "git version 2.39.3 (Apple Git-145)" -> (2, 39).
@@ -420,6 +453,30 @@ mod tests {
         sh(d.path(), &["add", "-A"]);
         sh(d.path(), &["commit", "-q", "-m", "init"]);
         d
+    }
+
+    fn fake_claude(dir: &Path, body: &str) -> Command {
+        use std::os::unix::fs::PermissionsExt;
+        let p = dir.join("claude");
+        std::fs::write(&p, format!("#!/bin/sh\n{body}\n")).expect("write");
+        std::fs::set_permissions(&p, std::fs::Permissions::from_mode(0o755)).expect("chmod");
+        Command::new(p)
+    }
+
+    #[test]
+    fn claude_login_check_reports_logged_out_loudly() {
+        let d = tempfile::tempdir().expect("tmp");
+        let out = claude_login_check(fake_claude(
+            d.path(),
+            "echo '{\"loggedIn\": false}'; exit 1",
+        ));
+        assert_eq!(out.status, Status::Fail);
+        assert!(out.detail.contains("NOT LOGGED IN"));
+        assert!(out.fix.contains("not over SSH"));
+        let ok = claude_login_check(fake_claude(d.path(), "echo '{\"loggedIn\": true}'"));
+        assert_eq!(ok.status, Status::Ok);
+        let junk = claude_login_check(fake_claude(d.path(), "echo huh"));
+        assert_eq!(junk.status, Status::Warn);
     }
 
     fn get<'a>(checks: &'a [Check], name: &str) -> &'a Check {

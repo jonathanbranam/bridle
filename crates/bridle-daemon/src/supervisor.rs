@@ -36,6 +36,8 @@ const SWEEP_GRACE: Duration = Duration::from_secs(2);
 /// exit) before answering anyway (docs/tickets/open/v1-follow-ups-from-the-build-9c6e.md).
 const SPAWN_READY_TIMEOUT: Duration = Duration::from_secs(8);
 /// `result.subtype` when `--max-budget-usd` is spent (docs/spikes/02-budget-cap-findings.md).
+/// `agent.exited` reason for an agent whose claude answered "Not logged in" (nrbf).
+pub const NOT_LOGGED_IN_REASON: &str = "claude is not logged in in this daemon's session";
 const BUDGET_EXHAUSTED_SUBTYPE: &str = "error_max_budget_usd";
 /// How long the turn-end `get_context_usage` probe waits before falling back
 /// to `result.usage` (kc4v).
@@ -145,6 +147,9 @@ struct AgentRuntime {
     /// Set when claude reported its `--max-budget-usd` spent; the agent is
     /// then stopped, and a resume grants a fresh allowance.
     budget_exhausted: AtomicBool,
+    /// Set when a turn's result was claude's "Not logged in" text; the agent is
+    /// stopped and recorded as crashed with `NOT_LOGGED_IN_REASON` (nrbf).
+    not_logged_in: AtomicBool,
     /// Set when the account-wide budget governor is stopping this agent
     /// (idle at once, or a notified working agent whose turn ended or grace
     /// expired); gives `agent.exited` the `budget_paused` reason, distinct
@@ -1245,6 +1250,7 @@ impl AgentManager {
             handle: spawned.handle,
             stop_requested: AtomicBool::new(false),
             budget_exhausted: AtomicBool::new(false),
+            not_logged_in: AtomicBool::new(false),
             budget_paused: AtomicBool::new(false),
             shutdown_requested: AtomicBool::new(false),
             context_renew_claimed: AtomicBool::new(false),
@@ -1558,6 +1564,19 @@ impl AgentManager {
                     )
                     .await;
 
+                // Every later turn would answer the same, so end the agent as
+                // crashed (a crash wake) instead of leaving it idle (nrbf).
+                if r.is_not_logged_in() {
+                    if !runtime.not_logged_in.swap(true, Ordering::SeqCst) {
+                        let this = self.clone();
+                        let id = id.to_string();
+                        tokio::spawn(async move {
+                            let _ = this.stop(&id, false, &system_principal()).await;
+                        });
+                    }
+                    return;
+                }
+
                 // Every later turn would fail at once without calling the
                 // model, so stop the agent instead of leaving it idle and
                 // useless. Its messages wait, pending, for a resume.
@@ -1780,8 +1799,13 @@ impl AgentManager {
         let dead_session_id = st.session_id.clone();
         drop(st);
 
-        let (state, mut exit) =
+        let (mut state, mut exit) =
             classify_exit(stop_requested, shutdown_requested, saw_any_line, &outcome);
+        let not_logged_in = runtime.not_logged_in.load(Ordering::SeqCst);
+        if not_logged_in {
+            state = AgentState::Crashed;
+            exit.reason = NOT_LOGGED_IN_REASON.to_string();
+        }
         // Otherwise a claude that dies on start (e.g. a `--resume` it can't
         // find) leaves its reason only in the transcript.
         if !stop_requested && !shutdown_requested && outcome.code != Some(0) {
@@ -1791,9 +1815,9 @@ impl AgentManager {
                 "claude exited abnormally"
             );
         }
-        if runtime.budget_exhausted.load(Ordering::SeqCst) {
+        if !not_logged_in && runtime.budget_exhausted.load(Ordering::SeqCst) {
             exit.reason = "budget_exhausted".to_string();
-        } else if runtime.budget_paused.load(Ordering::SeqCst) {
+        } else if !not_logged_in && runtime.budget_paused.load(Ordering::SeqCst) {
             exit.reason = "budget_paused".to_string();
         }
         let _ = self.0.store.set_agent_exit(id, exit.clone()).await;
