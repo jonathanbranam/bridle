@@ -9,6 +9,7 @@ pub mod discovery;
 pub mod interactions;
 pub mod intervals;
 pub mod items;
+pub mod report;
 pub mod types;
 pub mod ui;
 
@@ -31,9 +32,16 @@ pub const API_VERSION: u32 = 1;
 
 /// Only health and login are open; everything else, even a path that doesn't exist yet, needs
 /// a session. With no `login` nobody can get one, so only health answers.
-pub fn router(login: Option<Login>, ui: UiConfig) -> Router {
+pub fn router(login: Option<Login>, ui: UiConfig, interactions: report::Interactions) -> Router {
     let auth = auth::Auth::new(login);
+    let human_time = Router::new()
+        .route("/interactions/report", get(report::report))
+        .route("/interactions/day", get(report::day))
+        .route("/interactions/hours", get(report::hours))
+        .route("/interactions/intervals", get(report::raw_intervals))
+        .with_state(interactions);
     let protected = Router::new()
+        .merge(human_time)
         .route("/session", get(auth::session))
         .route("/projects", get(projects))
         .route("/items", get(items))
@@ -83,12 +91,13 @@ pub async fn serve(
     listener: TcpListener,
     login: Option<Login>,
     ui: UiConfig,
+    interactions: report::Interactions,
 ) -> std::io::Result<()> {
     if let Ok(addr) = listener.local_addr() {
         tracing::info!(%addr, "gateway listening");
     }
     ui::log_status(&ui);
-    axum::serve(listener, router(login, ui)).await
+    axum::serve(listener, router(login, ui, interactions)).await
 }
 
 #[cfg(test)]
@@ -97,6 +106,13 @@ mod tests {
 
     fn no_ui() -> UiConfig {
         UiConfig::new("/nonexistent/bridle-ui".into())
+    }
+
+    fn no_interactions() -> report::Interactions {
+        report::Interactions {
+            store: collect::Store::in_memory(),
+            config: Default::default(),
+        }
     }
 
     fn ui_dir(version: Option<&str>) -> tempfile::TempDir {
@@ -235,7 +251,7 @@ mod tests {
         };
         let listener = bind(&config).await.expect("bind");
         let addr = listener.local_addr().expect("addr");
-        let server = tokio::spawn(serve(listener, None, no_ui()));
+        let server = tokio::spawn(serve(listener, None, no_ui(), no_interactions()));
         let body: Value = reqwest::get(format!("http://{addr}/api/v1/health"))
             .await
             .expect("get")
@@ -257,7 +273,7 @@ mod tests {
     async fn start_ui(login: Option<Login>, ui: UiConfig) -> String {
         let listener = TcpListener::bind("127.0.0.1:0").await.expect("bind");
         let addr = listener.local_addr().expect("addr");
-        tokio::spawn(serve(listener, login, ui));
+        tokio::spawn(serve(listener, login, ui, no_interactions()));
         format!("http://{addr}{API_PREFIX}")
     }
 
@@ -373,5 +389,48 @@ mod tests {
         assert_eq!(session_status(&base, None).await, 401);
         let health = reqwest::get(format!("{base}/health")).await.expect("get");
         assert_eq!(health.status(), 200);
+    }
+
+    #[tokio::test]
+    async fn interactions_need_a_session_and_refuse_bad_parameters() {
+        let base = start(Some(login())).await;
+        let url = format!("{base}/interactions/report?from=2026-10-01&to=2026-10-03");
+        assert_eq!(reqwest::get(&url).await.expect("get").status(), 401);
+        let cookie = cookie_pair(&post_login(&base, "jo", "right").await);
+        let get = |u: String| {
+            reqwest::Client::new()
+                .get(u)
+                .header(reqwest::header::COOKIE, &cookie)
+                .send()
+        };
+        let ok = get(url).await.expect("get");
+        assert_eq!(ok.status(), 200);
+        let body: Value = ok.json().await.expect("json");
+        assert_eq!(body["buckets"].as_array().expect("array").len(), 3);
+        assert_eq!(body["group"], "project");
+        for path in [
+            "report?from=2026-10-01",
+            "report?from=2026-10-01&to=2026-10-03&group=color",
+            "day?date=soon",
+            "hours?from=2026-10-01&to=2026-10-03&days=funday",
+            "intervals?from=2026-10-03&to=2026-10-01",
+        ] {
+            let r = get(format!("{base}/interactions/{path}"))
+                .await
+                .expect("get");
+            assert_eq!(r.status(), 400, "{path}");
+            let b: Value = r.json().await.expect("json");
+            assert!(b["error"].is_string(), "{path}");
+        }
+        for path in [
+            "day?date=2026-10-03",
+            "hours?from=2026-10-01&to=2026-10-03",
+            "intervals?from=2026-10-01&to=2026-10-03",
+        ] {
+            let r = get(format!("{base}/interactions/{path}"))
+                .await
+                .expect("get");
+            assert_eq!(r.status(), 200, "{path}");
+        }
     }
 }

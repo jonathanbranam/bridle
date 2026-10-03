@@ -44,6 +44,8 @@ struct Inner {
     path: Option<PathBuf>,
     keys: HashSet<String>,
     records: Vec<Record>,
+    /// Who the last poll couldn't read.
+    unreachable: Vec<String>,
 }
 
 impl Store {
@@ -58,6 +60,7 @@ impl Store {
             path: Some(path.to_path_buf()),
             keys: HashSet::new(),
             records: Vec::new(),
+            unreachable: Vec::new(),
         };
         for r in text
             .lines()
@@ -79,6 +82,7 @@ impl Store {
                 path: None,
                 keys: HashSet::new(),
                 records: Vec::new(),
+                unreachable: Vec::new(),
             })),
         }
     }
@@ -126,6 +130,34 @@ impl Store {
                 kind: if r.reply { Kind::Reply } else { Kind::Prompt },
             })
             .collect()
+    }
+
+    /// Machines (or projects) the last poll couldn't read, for the reports to flag.
+    pub fn unreachable(&self) -> Vec<String> {
+        self.inner.lock().expect("store lock").unreachable.clone()
+    }
+
+    /// A store holding `events`, for tests of what is built on it.
+    #[cfg(test)]
+    pub(crate) fn from_events(events: &[Event], unreachable: &[&str]) -> Self {
+        let store = Self::in_memory();
+        let records = events
+            .iter()
+            .enumerate()
+            .map(|(i, e)| Record {
+                key: format!("t{i}"),
+                machine: e.machine.clone(),
+                project: e.project.clone(),
+                agent: e.agent.clone(),
+                session: e.session.clone(),
+                at: e.at,
+                reply: e.kind == Kind::Reply,
+            })
+            .collect();
+        store.merge(records).expect("merge");
+        store.inner.lock().expect("store lock").unreachable =
+            unreachable.iter().map(|s| s.to_string()).collect();
+        store
     }
 
     /// The newest record of a machine: where its next poll can start.
@@ -271,6 +303,7 @@ pub(crate) async fn poll_from(store: &Store, sources: Vec<Source>, timeout: Dura
     }
     polled.unreachable.sort();
     polled.unreachable.dedup();
+    store.inner.lock().expect("store lock").unreachable = polled.unreachable.clone();
     polled
 }
 

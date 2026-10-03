@@ -55,7 +55,7 @@ rest, so a stolen session can answer and check off, not run work.
   the page must load to show its login form; every API route stays guarded. Not compiled into the `bridle` binary (no Node in bridle's build). In development
   the UI's dev server proxies API calls to the gateway.
 
-**Human time (ticket u6w9; types, collection and interval math built; handlers not yet).** The wire types of `/api/v1/interactions/*` live in
+**Human time (ticket u6w9; built: types, collection, interval math, handlers).** The wire types of `/api/v1/interactions/*` live in
 `crates/bridle-gateway/src/interactions.rs` and are exported to `bindings/` like the rest:
 `InteractionReport` (`report`: totals per group per day or week, plus the human's total),
 `DayReport` (`day`: per-session intervals, overlaps, peak concurrency, minutes at 1, 2 and 3+),
@@ -77,7 +77,20 @@ the reply finishing, else the run ends at reply end + `tail`. With no reply reco
 counts to the next prompt if within `gap` of it, else `tail`. A run's first prompt gets `lead`
 before it. Human time is the union of all sessions' intervals; concurrency is how many sessions
 cover a moment. `[interactions] gap`, `tail`, `lead` in `config.toml` (defaults 10m, 2m, 1m).
-Bucketing into US Eastern days belongs to the handlers.
+
+*Handlers* (`report.rs`, all behind the session login like the rest of `/api/v1`; dates are
+`YYYY-MM-DD` in US Eastern, `to` inclusive, a range at most 400 days; a bad or missing parameter
+is a 400 with `{"error"}`):
+`GET /interactions/report?from&to&group=project|agent|machine&bucket=day|week` (defaults project
+and day; weeks start Monday and their `start` is that Monday; intervals are cut at Eastern
+midnight, so a run over midnight counts on both days; groups sorted by minutes);
+`GET /interactions/day?date=` (that day's intervals per session, overlaps, peak and minutes at
+1, 2 and 3+ at once);
+`GET /interactions/hours?from&to&days=weekday|weekend|mon,tue,...` (minutes of human time per
+Eastern hour of day, averaged over the matching days, default all days);
+`GET /interactions/intervals?from&to` (raw intervals touching the range, uncut). Eastern uses
+the US daylight rule (second Sunday of March to first Sunday of November) in code, no timezone
+database. `unreachable` is who the last poll couldn't read.
 
 ## 4. Multi-machine
 

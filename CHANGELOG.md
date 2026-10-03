@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- The gateway serves the human-time reports: `/api/v1/interactions/report` (per project, agent or machine; per day or week), `day` (timeline, overlaps, concurrency), `hours` (minutes per hour of day, filterable by weekday) and `intervals`, with days split at US Eastern midnight (br-59vt, u6w9).
 - The gateway collects the human's interactions every 5 minutes from every daemon it knows (prompt logs and messages from the human) into its own store, and computes per-session intervals, human time and concurrency from them; `[interactions] gap`, `tail`, `lead` in the config (br-25nn, u6w9).
 - `GET /v1/interactions?since=` serves the machine's prompt log (human and local readers), and `bridle focus reply`, a `Stop` hook in `bridle session`'s settings, logs when an agent finishes replying (`event: reply`; prompt lines get `event: prompt`); the gateway's human-time API types are generated for the UI (br-bhcp, u6w9).
 
