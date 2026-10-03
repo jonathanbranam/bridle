@@ -4,7 +4,7 @@ title = "jttf part 2: 'bridle session restart <id> [--handover|--fresh]' and eve
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-03T21:20:11.151Z"
-updated_at = "2026-10-03T22:32:41.016889Z"
+updated_at = "2026-10-03T22:34:25.119226Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 branch = "bridle/session-restart"
@@ -21,3 +21,6 @@ done: bridle session restart (--handover default, --fresh human-only; relaunch i
 
 ### note · agent:manager-2 · 2026-10-03T22:32:41.016Z
 integrated: 7f2d779fe151220ff6a421440908b04a3458a0ef (branch bridle/session-restart)
+
+### note · agent:manager-2 · 2026-10-03T22:34:25.119Z
+cleanup: removed agent session-restart, branch bridle/session-restart
