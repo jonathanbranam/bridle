@@ -137,3 +137,13 @@ Still open: the 112 tasks open on 2026-10-03, most made automatically from ticke
 decision (including br-2b0b, br-ab3a, br-fd74, br-4eaf, raw ideas marked "do not build"). Under
 rule 6 they'd all count as ready; they need sorting (keep the ones the human approved, drop or
 park the rest). And the rest of this ticket: whether tickets and tasks stay separate.
+
+Sorting them (the human, 2026-10-03, verbatim, choosing "pm-1 lists them" from the advisor's
+options):
+
+> Sure, let's go with number two, but for any tasks that the PM decides shouldn't be worked on,
+> just immediately drop the tasks. Don't confirm with me. Only confirm with me for the tasks that
+> the PM thinks do need to be worked on.
+
+Relayed to pm-1 the same day: drop at once what it judges shouldn't be worked (the ticket stays);
+send the human one list of the rest; plan only what the human approves.
