@@ -76,3 +76,22 @@ whether BitLocker is on, and that it's on wired network.
 - It needs a proper name, not "Windows" ([[docs/context/naming|naming]]: a type is not a name).
 - Client-machine updates apply as for the NUC
   ([[client-machines-stay-current-with-bridle-workflow-and-daemon-chvf|chvf]]).
+
+## The human's answers (2026-10-03, verbatim)
+
+> BitLocker should be off, and it should be Windows Home. Otherwise, I don't remember. Should have
+> plenty of free disk space. I would want Bridal to probably to stop running when somebody's
+> playing a game, and and it's really rare. Like nobody uses it again. Like most of the time, it's
+> sitting idle. 90% of the year, it's sitting idle basically. So. What I would probably want is
+> just a way for someone, it would probably be me, but maybe a, a big green button, big red button
+> for somebody to push to tell Bridal to go ahead and shut down. We don't have to build that, but
+> just like, that's kind of the idea. Also, Bridal's pretty resilient, so if somebody shuts it
+> down, we don't lose that much.
+
+So: Windows Home (rules out Hyper-V; WSL2 works on Home), BitLocker off, plenty of disk. CPU and RAM
+still unknown.
+
+**Gaming means bridle stops, not shares.** Rather than tuning WSL to share with a game, give the
+PC a **big red / big green button**: red stops bridle (and WSL, freeing its memory), green starts
+it again. Not to build now; the idea. A simple first form: two desktop shortcuts that run
+`wsl --shutdown` and the start-up task. Bridle's restart resilience means a stop loses little.
