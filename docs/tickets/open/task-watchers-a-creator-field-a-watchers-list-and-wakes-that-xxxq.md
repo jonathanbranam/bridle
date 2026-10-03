@@ -113,3 +113,11 @@ Advisor's recommendation: **task changes are wakes with details**, and messages 
 someone says. Then a wake is "here's everything that changed since you last looked", and nothing
 needs marking read. Open for the human; the alternative is a `task_update` message kind that is
 marked read on delivery.
+
+## Ready to schedule (the human, 2026-10-03)
+
+The human, verbatim (via the advisor): "I think the design of the watchers solution is fine and
+is ready to be filed. The question of wakes and messages, I want to talk about even more."
+
+So 1 to 5 are approved, delivered as wakes (today's mechanism) for now. The wake-or-message
+question stays open and may change how notifications are delivered later, not what they carry.
