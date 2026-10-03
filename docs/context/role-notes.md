@@ -415,3 +415,20 @@ Newest first. One line per item: what happened, who did it, what it says about r
   SSH) and was asked to log in. `claude auth status` on the laptop showed logged in (keychain,
   refreshed that morning) and agents spawned fine; an SSH session can't read the locked login
   keychain. Worth a line in the operating docs.
+
+## Twenty-fourth orchestrator session (2026-10-02, ~16:20Z to ~01:35Z)
+
+- **Settle periods need a nudge.** Twice (br-5924, br-1e88) an idle manager didn't start a task
+  when its settle period ended; I nudged by hand each time (ny9u follow-up, br-96cc).
+- **A hold by message masked the queue.** br-96cc, held by my message, stayed startable in a
+  higher tier, so `task ready` hid br-6c6a below it. pm-1 now holds tasks with a blocking edge
+  (a human to-do, br-3c58). Rule for every role: holds go in the queue, not in messages.
+- **Advisor relays and the auto-mode classifier.** Scheduling a daemon change on the human's
+  word relayed by the advisor was denied once; the human confirmed directly and it went through.
+  Expect to ask the human directly for daemon changes they made through an advisor.
+- **Incident log is now a duty.** The human asked for every failure to be logged with its cause;
+  `docs/context/incidents.md` was widened and backfilled (60 entries) by a subagent, and the
+  generic orchestrator role gained the duty.
+- **By hand: project setup.** For bridle-ui I cloned the repo into its own workspace; the human
+  added the `[projects]` entry, started the daemon and minted the token. A `bridle project add`
+  would cover most of it.
