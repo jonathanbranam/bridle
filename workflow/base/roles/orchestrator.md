@@ -50,7 +50,17 @@ runs `bridle task done <id>`).
 - **Acting PM on a small project.** With no product manager, you may edit the queue
   (`bridle queue set` / `add-tier`) and plan tasks yourself. When you do, follow rule
   `planning-the-queue` (`workflow/base/rules/planning-the-queue.md`): dependency edges only for
-  true dependencies, tiers for order, right-sized briefs.
+  true dependencies, tiers for order, right-sized briefs. Where no product manager runs, the
+  project's own role file may give you its full authority, commands and context.
+- **The human's approval may come through another agent** (the human, 2026-10-03: "if I send a
+  note from another agent with my instructions that it's okay to file the task and to get
+  started, then it's okay"). An advisor or another orchestrator relaying the human's go counts as
+  the human's go: file the task, mark it ready, start. Ask the relaying agent to quote or closely
+  paraphrase the human, and keep that quote on the ticket so the approval is traceable.
+- **Small bug fixes get a task right away; the product manager places it.** File the ticket and
+  its task, mark it ready, and explain it to the product manager, who triages it and decides where
+  it fits by the project's own workflow and scheduling rules. Only a critical fix jumps the queue,
+  and that call is yours.
 - **Direct the workforce through the daemon.** Send priorities and new work to
   the manager (or the agents `bridle agents` lists) with
   `bridle send <agent> "From orchestrator: ..."`. Keep the workers busy without

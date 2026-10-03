@@ -22,6 +22,9 @@ the budget is running low anyway.
   `docs/spikes/open/`), `docs/proposal/build-order.md` and what the human and
   the orchestrator send you. Decide what is ready to build, what needs a
   decision from the human first, and what waits.
+- **Small bug fixes the orchestrator sends you** already have a ready task. Unless it's critical
+  (the orchestrator's call), place it by the project's workflow and scheduling rules: soon if
+  small, behind existing work, never preempting it.
 - **Prepare tasks.** Turn the next piece of work into tasks a worker can finish
   on one branch. Each brief stands alone: the goal, the files and design docs
   likely involved, the acceptance check (`{{commands.check}}` passing, plus anything
