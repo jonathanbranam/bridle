@@ -24,6 +24,20 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-03 13:45: self-upgrade refused a binary that couldn't read the newer config
+
+- **What happened:** the daemon's self-upgrade built `1afcb9d` and refused to restart into it,
+  because the new binary's self-check couldn't parse the clone's `.bridle/config.toml`: `dd7400b`
+  (br-14cd) had landed during the build and added `[integration] warm_build`, which the older
+  binary doesn't know (config structs deny unknown fields). Discovered by the orchestrator (an
+  `upgrade_failed` wake).
+- **Impact:** one wasted build; the upgrade waits for the next green `main`. Until it lands, the
+  installed binary can't start against the clone's config if the daemon dies.
+- **Cause:** the self-check reads the clone's config at its current commit, not at the commit it
+  built.
+- **Category:** `daemon`, `config`.
+- **Follow-up:** [[self-upgrade-checks-a-new-binary-against-the-clone-s-newer-c-yhe7|yhe7]].
+
 ## 2026-10-03 ~04:00-13:00: the orchestrator slept through the night with no wait running
 
 - **What happened:** around midnight ET (04:00 UTC) during quiet hours, the orchestrator said it
