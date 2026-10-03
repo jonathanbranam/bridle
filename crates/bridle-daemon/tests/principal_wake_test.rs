@@ -6,8 +6,8 @@ mod support;
 use std::time::Duration;
 
 use bridle_api::types::{
-    MessageKind, NewTaskRequest, PrincipalWakeQuery, PrincipalWakeResponse, SendRequest, TaskKind,
-    When,
+    MessageKind, MessageQuery, NewTaskRequest, PrincipalWakeQuery, PrincipalWakeResponse,
+    SendRequest, TaskKind, When,
 };
 use bridle_api::{Client, ClientError};
 
@@ -204,4 +204,96 @@ async fn a_task_it_neither_created_nor_claimed_does_not_wake_it() {
     })
     .await;
     assert!(got.reasons.is_empty(), "{got:?}");
+}
+
+#[tokio::test]
+async fn the_wake_returns_the_text_and_marks_it_read_once() {
+    let (daemon, _tmp) = support::start_daemon(None).await;
+    let advisor = daemon.external_client("advisor").await;
+    let id = send(&daemon.client, "external:advisor", "hello there").await;
+    let got = advisor
+        .principal_wake(&query("external:advisor", 60))
+        .await
+        .expect("wake");
+    let msgs = &got.reasons[0].messages;
+    assert_eq!(msgs.len(), 1, "{got:?}");
+    assert_eq!(
+        (msgs[0].id.as_str(), msgs[0].body.as_str()),
+        (&*id, "hello there")
+    );
+    // Read now, so the next wake has nothing to repeat.
+    let again = advisor
+        .principal_wake(&query("external:advisor", 1))
+        .await
+        .expect("wake");
+    assert!(again.reasons.is_empty(), "{again:?}");
+}
+
+#[tokio::test]
+async fn the_humans_wake_leaves_messages_unread() {
+    let (daemon, _tmp) = support::start_daemon(None).await;
+    let _advisor = daemon.external_client("advisor").await;
+    send(&daemon.client, "external:advisor", "hello").await;
+    let got = daemon
+        .client
+        .principal_wake(&query("external:advisor", 60))
+        .await
+        .expect("wake");
+    assert!(got.reasons[0].messages.is_empty(), "{got:?}");
+    let got = daemon
+        .client
+        .principal_wake(&query("external:advisor", 60))
+        .await
+        .expect("wake again");
+    assert_eq!(got.reasons.len(), 1, "still unread: {got:?}");
+}
+
+#[tokio::test]
+async fn a_non_human_inbox_marks_what_it_lists_read_and_cannot_unread() {
+    let (daemon, _tmp) = support::start_daemon(None).await;
+    let advisor = daemon.external_client("advisor").await;
+    let a = send(&daemon.client, "external:advisor", "one").await;
+    let b = send(&daemon.client, "external:advisor", "two").await;
+    // `show` of one message marks only that one.
+    let shown = advisor
+        .list_messages(&MessageQuery {
+            to: Some("me".into()),
+            id: Some(a.clone()),
+            mark_read: true,
+            ..Default::default()
+        })
+        .await
+        .expect("show");
+    assert_eq!(shown.len(), 1);
+    let unread = |c: Client| async move {
+        c.list_messages(&MessageQuery {
+            to: Some("me".into()),
+            unread: true,
+            ..Default::default()
+        })
+        .await
+        .expect("list")
+        .into_iter()
+        .map(|m| m.id)
+        .collect::<Vec<_>>()
+    };
+    assert_eq!(unread(advisor.clone()).await, vec![b.clone()]);
+    // A plain list marks nothing unless asked; the marking list takes the rest.
+    advisor
+        .list_messages(&MessageQuery {
+            to: Some("me".into()),
+            unread: true,
+            mark_read: true,
+            ..Default::default()
+        })
+        .await
+        .expect("inbox");
+    assert!(unread(advisor.clone()).await.is_empty());
+    // An agent or external principal can't put it back; the human can.
+    let err = advisor.mark_unread(&a).await.expect_err("refused");
+    assert!(
+        matches!(err, ClientError::Api { status: 403, .. }),
+        "{err:?}"
+    );
+    daemon.client.mark_unread(&a).await.expect("human unread");
 }

@@ -65,7 +65,7 @@ async fn interrupt_during_sleep_ends_the_turn_and_agent_stays_usable() {
         async move {
             let list = client.list_messages(&Default::default()).await.ok()?;
             list.into_iter()
-                .find(|m| m.id == id && m.state == bridle_api::types::MessageState::Delivered)
+                .find(|m| m.id == id && m.state == bridle_api::types::MessageState::Read)
         }
     })
     .await;
@@ -136,7 +136,7 @@ async fn stop_then_resume_keeps_the_session_and_answers_new_messages() {
         async move {
             let list = client.list_messages(&Default::default()).await.ok()?;
             list.into_iter()
-                .find(|m| m.id == id && m.state == bridle_api::types::MessageState::Delivered)
+                .find(|m| m.id == id && m.state == bridle_api::types::MessageState::Read)
         }
     })
     .await;
@@ -424,7 +424,7 @@ async fn crash_is_reported_with_a_stderr_tail_and_pending_messages_deliver_on_re
         async move {
             let list = client.list_messages(&Default::default()).await.ok()?;
             list.into_iter()
-                .find(|m| m.id == id && m.state == bridle_api::types::MessageState::Delivered)
+                .find(|m| m.id == id && m.state == bridle_api::types::MessageState::Read)
         }
     })
     .await;

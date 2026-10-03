@@ -989,7 +989,8 @@ pub struct InboxArgs {
     /// Include already-read messages too (default: unread only). Only used by list.
     #[arg(long)]
     pub all: bool,
-    /// Mark every listed message read. Only used by list.
+    /// Mark every listed message read. Only used by list. Agents' messages are read as soon
+    /// as they list them, so only the human needs this.
     #[arg(long)]
     pub mark_read: bool,
 }
@@ -1000,14 +1001,15 @@ pub enum InboxAction {
     Show(InboxShowArgs),
     /// Mark one or more messages read.
     Read(InboxReadArgs),
-    /// Mark one or more messages unread again.
+    /// Mark one or more messages unread again (the human only: what reaches an agent is read).
     Unread(InboxReadArgs),
 }
 
 #[derive(Debug, Args)]
 pub struct InboxShowArgs {
     pub id: String,
-    /// Mark the message read after showing it (by default reading it leaves it unread).
+    /// Mark the message read after showing it (the human's show leaves it unread; an agent's
+    /// show marks it read already).
     #[arg(long)]
     pub mark_read: bool,
 }

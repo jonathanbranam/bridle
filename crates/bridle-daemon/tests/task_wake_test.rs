@@ -55,6 +55,7 @@ async fn wakes(daemon: &support::TestDaemon, agent: &str) -> Vec<String> {
             from: Some("system".to_string()),
             unread: false,
             limit: None,
+            ..Default::default()
         })
         .await
         .expect("messages")

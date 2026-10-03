@@ -525,6 +525,7 @@ async fn human_todo_priority_change_and_rescind_are_audited() {
             from: Some("system".to_string()),
             unread: false,
             limit: None,
+            ..Default::default()
         })
         .await
         .expect("messages");

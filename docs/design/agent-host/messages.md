@@ -80,8 +80,9 @@ Bridle itself sends `note`s from `system`:
 With `--replay-user-messages`, claude echoes each stdin user message at the
 moment the model is about to see it (S3). Bridle keeps a FIFO of
 written-but-unacked messages per agent, and matches each echo to the oldest
-one with identical text. The match sets `delivered_at` and emits
-`message.delivered`. A message whose agent exits before the ack goes back to
+one with identical text. The match sets `delivered_at`, emits `message.delivered`, and then
+marks the message `read` (`message.read`, actor `system`): a message that reaches an agent's
+conversation is read, with no separate step. A message whose agent exits before the ack goes back to
 `pending` and is re-delivered on resume, and so does a held one. A message to an agent that isn't
 running stays `pending` until it is resumed.
 
@@ -106,9 +107,21 @@ revoked) or the send 404s. There's no live process to deliver to, so
 `--when`/held/written/ack don't apply — an external principal reads its
 inbox on its own schedule.
 
-The inbox lists every message not yet `read`, so an agent's inbox also shows
-messages already delivered to it over stdin until it runs
-`bridle inbox --mark-read`.
+## Read
+
+**What reaches an agent's context is read, automatically.** Headless agents: at the ack above.
+Interactive sessions (the orchestrator, advisors): `bridle agent wake` returns the unread
+messages in full (`messages`: id, from, body) and marks them read in the same store call, so a
+second wake never repeats them and none is lost; the orchestrator's `wait-for-wake` marks the
+message behind each `message` wake read as it answers; `bridle inbox` run by a non-human marks
+what it lists read (not what it filtered out), and `inbox show <id>` marks that one. Only the
+recipient's own messages are touched. `--mark-read` still works and is a no-op for them.
+Messages read before this change and left `delivered` need no migration.
+
+**The human's reads are explicit**, as before (the inbox is their task list): their wake,
+`inbox` and `inbox show` leave messages unread until `inbox read` or `--mark-read`, and only
+the human can `inbox unread` (an agent is refused with 403: an unread message would just be
+delivered again).
 
 ## Interrupt
 

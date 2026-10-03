@@ -570,28 +570,15 @@ mod prime_tests {
     }
 
     #[test]
-    fn advisor_prime_includes_inbox_and_loop_instructions() {
+    fn advisor_prime_includes_loop_instructions_and_no_mark_read_step() {
         let role = include_str!("../../../../workflow/base/roles/advisor.md");
-        assert!(
-            role.contains("bridle inbox --json --mark-read"),
-            "advisor prime should instruct reading inbox with --mark-read flag"
-        );
         assert!(
             role.contains("loop back"),
             "advisor prime should mention looping"
         );
-    }
-
-    #[test]
-    fn advisor_prime_includes_mark_read_instruction() {
-        let role = include_str!("../../../../workflow/base/roles/advisor.md");
         assert!(
-            role.contains("bridle inbox --json --mark-read"),
-            "advisor prime should instruct to mark messages read after acting"
-        );
-        assert!(
-            role.contains("re-fires forever"),
-            "advisor prime should explain why marking read is important"
+            !role.contains("--mark-read"),
+            "what reaches an agent is read: no mark-read step in the advisor prime"
         );
     }
 }

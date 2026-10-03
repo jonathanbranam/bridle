@@ -367,7 +367,7 @@ async fn message_now_mid_turn_folds_into_the_running_turn() {
         .expect("send mid-turn message");
 
     let delivered = wait_for(&daemon.client, &msg.id).await;
-    assert_eq!(delivered.state, MessageState::Delivered);
+    assert_eq!(delivered.state, MessageState::Read);
 
     let final_agent = wait_for_state(&daemon.client, &agent.id, AgentState::Idle).await;
     // The fold-in means the sleep turn is the only turn; the CLAUDE.md docs
@@ -455,7 +455,7 @@ async fn message_idle_is_held_until_the_turn_ends_then_starts_its_own_turn() {
     wait_for_agent(&daemon.client, &agent.id, |a| a.turns >= 1).await;
     // ...and the held message starts its own turn.
     let delivered = wait_for(&daemon.client, &msg.id).await;
-    assert_eq!(delivered.state, MessageState::Delivered);
+    assert_eq!(delivered.state, MessageState::Read);
     let done = wait_for_agent(&daemon.client, &agent.id, |a| {
         a.turns >= 2 && a.state == AgentState::Idle
     })
@@ -822,7 +822,7 @@ async fn wait_for(client: &bridle_api::Client, id: &str) -> bridle_api::types::M
     support::wait_for(&format!("message {id} delivered"), || async {
         let m = client.list_messages(&MessageQuery::default()).await.ok()?;
         m.into_iter()
-            .find(|m| m.id == id && m.state == MessageState::Delivered)
+            .find(|m| m.id == id && m.state == MessageState::Read)
     })
     .await
 }

@@ -436,6 +436,18 @@ impl Store {
             .await
     }
 
+    /// Marks every unread message to `to` read and returns them, oldest first: the select and
+    /// the update run under one hold of the connection, so two callers never get the same one.
+    pub async fn take_unread_messages(
+        &self,
+        to: &str,
+        at: DateTime<Utc>,
+    ) -> Result<Vec<Message>, StoreError> {
+        let to = to.to_string();
+        self.with_conn(move |c| sync::take_unread_messages(c, &to, at))
+            .await
+    }
+
     /// Marks `id` read and answered by `by` with message `reply` (whose first line is `line`); does nothing if it's
     /// already read.
     pub async fn answer_message(
@@ -2056,6 +2068,27 @@ mod sync {
         )?;
         let mut msgs = rows.collect::<Result<Vec<_>, _>>()?;
         msgs.reverse(); // chronological order, oldest first
+        Ok(msgs)
+    }
+
+    pub(super) fn take_unread_messages(
+        conn: &Connection,
+        to: &str,
+        at: DateTime<Utc>,
+    ) -> Result<Vec<Message>, StoreError> {
+        let mut msgs = list_messages(
+            conn,
+            &ListMessages {
+                to: Some(to.to_string()),
+                unread: true,
+                ..Default::default()
+            },
+        )?;
+        for m in &mut msgs {
+            set_message_state(conn, &m.id, MessageState::Read, at)?;
+            m.state = MessageState::Read;
+            m.read_at = Some(at);
+        }
         Ok(msgs)
     }
 

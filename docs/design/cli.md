@@ -58,10 +58,10 @@ bridle agent spawn   <role> [--name N] [--prompt TEXT | --prompt-file FILE]
 bridle agents  [--all]
 bridle agent show    <agent>
 bridle send    <agent|human|role:NAME|external:NAME> [TEXT | --text-file FILE] [--question] [--when now|idle] [--reply-to ID] [--task ID]
-bridle inbox   [--all] [--mark-read]        # messages to me, plus every task's open question (list)
-bridle inbox show <id> [--mark-read]        # show one message in full; leaves it unread unless --mark-read
+bridle inbox   [--all] [--mark-read]        # messages to me, plus every task's open question (list); an agent's or external principal's listed messages are marked read
+bridle inbox show <id> [--mark-read]        # show one message in full; for the human it leaves it unread unless --mark-read, for an agent or external principal it marks it read
 bridle inbox read <id>...                   # mark one or more messages read
-bridle inbox unread <id>...                 # mark one or more messages unread again
+bridle inbox unread <id>...                 # mark one or more messages unread again (human only; others get 403)
 bridle task ask     <task-id> TEXT [--to WHO]         question against a task; blocks it until answered, and sends a pointer message (kind question) to WHO (agent, role:NAME, external:NAME, human); default: the caller's spawner, or human
 bridle task answer  <task-id> TEXT                    answers a task's open question; frees it to be ready again; sends the asker a pointer (kind answer)
 bridle task claim   <task-id>                         claims a ready task for the caller: planned -> claimed
@@ -72,7 +72,7 @@ bridle queue set --tier T,T... [--tier T,T...]   replace the whole queue, one --
 bridle queue add-tier <task>...                  append one tier at the back (PM, orchestrator or human only)
 bridle task dep add|rm <task> (--to OTHER [--kind K] | --blocked-by OTHER)   K: blocks (default)|parent|discovered-from|related|supersedes|duplicates
 bridle wait    <task> [--until STATE] [--or-message] [--timeout SECS]   block until the task changes state; exit 4 on timeout
-bridle agent wake <identifier> [--timeout SECS]   (cap and default 6900 s = 1 h 55 min) blocks until the daemon decides that principal should wake (reasons: it has an unread message, or someone else touched a task it created or claimed since the call started); prints each reason with its message ids, or the task id and event kind (`--json`: `{reasons:[{reason,message_ids,task?,event?}]}`); exit 0 woken, 4 timed out; caller must be that principal (or the human), else 403
+bridle agent wake <identifier> [--timeout SECS]   (cap and default 6900 s = 1 h 55 min) blocks until the daemon decides that principal should wake (reasons: it has an unread message, or someone else touched a task it created or claimed since the call started); prints each message (id, sender, text) or the task id and event kind (`--json`: `{reasons:[{reason,message_ids,messages,task?,event?}]}`); a non-human caller's messages are marked read by the call, the human's are not; exit 0 woken, 4 timed out; caller must be that principal (or the human), else 403
 bridle agent interrupt <agent> [--drop-held]
 bridle agent stop    <agent> [--now]      bridle agent resume <agent> [--ignore-budget]
 bridle agent renew   <agent> [--ignore-budget]    stop + fresh process/session, same worktree/branch/role/model
@@ -570,13 +570,16 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
     `me` plus every task's open question: reads `GET /v1/messages` (with `to=me`,
     `unread=true` by default) and `GET /v1/questions`. `--all` drops the `unread` filter
     (shows read messages too); `--mark-read` calls `POST /v1/messages/{id}/read` on each
-    message after listing, marking every one read. In JSON mode, returns both messages and
+    message after listing, marking every one read. It also sends `mark_read=true`, which makes
+    the daemon mark what it lists read for an agent or external principal (the human's reads
+    stay explicit). In JSON mode, returns both messages and
     questions; plain text prints a compact line per message/question.
   - `bridle inbox show <id> [--mark-read]` (show one message in full) fetches a single
     message to `me` by id (a question a delegate answered shows `Answered by:`; the list shows
     "answered by <who>: <first line>", visible with `--all`), prints the full header (from, kind, time, reply-to), the body,
     and the reply command (formatted as `bridle send <from> --reply-to <id> "..."`). It
-    leaves the message unread (reading isn't handling); `--mark-read` calls
+    leaves the human's message unread (reading isn't handling; an agent's or external
+    principal's is marked read, via `id=` and `mark_read=true`); `--mark-read` calls
     `POST /v1/messages/{id}/read` after showing it. In JSON mode, returns the message object; plain text returns the
     formatted rendering above. Fails with a 404-like error if the message doesn't exist
     or isn't addressed to `me`.

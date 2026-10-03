@@ -255,6 +255,10 @@ pub struct PrincipalWakeReason {
     /// The messages behind a `message` reason.
     #[serde(default)]
     pub message_ids: Vec<String>,
+    /// The messages themselves, in full. Returned to a non-human caller they are marked read
+    /// by the same call; the human's stay unread until they say so.
+    #[serde(default)]
+    pub messages: Vec<Message>,
     /// The task behind a `task` reason.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub task: Option<String>,
@@ -571,7 +575,7 @@ pub enum MessageState {
     Dropped,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Message {
     /// e.g. `m-0042`
     pub id: String,
@@ -633,6 +637,13 @@ pub struct MessageQuery {
     pub unread: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub limit: Option<u32>,
+    /// Only this message.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
+    /// Mark what is listed read, when the caller is an agent or an external principal and the
+    /// messages are its own. Ignored for the human, whose reads are explicit.
+    #[serde(default)]
+    pub mark_read: bool,
 }
 
 // ---------- events ----------

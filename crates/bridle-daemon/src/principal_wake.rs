@@ -27,23 +27,33 @@ const TASK_EVENTS: [&str; 6] = [
 
 /// Why `principal` (a resolved message address) should wake now; empty means it shouldn't.
 /// `since_seq` is the event cursor for task reasons: the caller's last wake, or call start.
+/// With `take` (a caller that isn't the human) the unread messages are returned in full and
+/// marked read in the same store call, so the next wake doesn't repeat them and none is lost.
 pub async fn wake_reasons(
     store: &Store,
     principal: &str,
     since_seq: i64,
+    take: bool,
 ) -> Result<Vec<PrincipalWakeReason>, StoreError> {
     let mut reasons = Vec::new();
-    let unread = store
-        .list_messages(ListMessages {
-            to: Some(principal.to_string()),
-            unread: true,
-            ..Default::default()
-        })
-        .await?;
+    let unread = if take {
+        store
+            .take_unread_messages(principal, chrono::Utc::now())
+            .await?
+    } else {
+        store
+            .list_messages(ListMessages {
+                to: Some(principal.to_string()),
+                unread: true,
+                ..Default::default()
+            })
+            .await?
+    };
     if !unread.is_empty() {
         reasons.push(PrincipalWakeReason {
             reason: "message".to_string(),
-            message_ids: unread.into_iter().map(|m| m.id).collect(),
+            message_ids: unread.iter().map(|m| m.id.clone()).collect(),
+            messages: if take { unread } else { Vec::new() },
             ..Default::default()
         });
     }
@@ -116,6 +126,7 @@ pub async fn wait(
     emitter: &Emitter,
     principal: &str,
     timeout: Duration,
+    take: bool,
 ) -> Result<Vec<PrincipalWakeReason>, StoreError> {
     let deadline = Instant::now() + timeout;
     // Subscribe before the first look so a message sent in between isn't missed.
@@ -129,7 +140,7 @@ pub async fn wait(
         .last()
         .map_or(0, |e| e.seq);
     loop {
-        let reasons = wake_reasons(store, principal, since_seq).await?;
+        let reasons = wake_reasons(store, principal, since_seq, take).await?;
         if !reasons.is_empty() || Instant::now() >= deadline {
             return Ok(reasons);
         }
@@ -210,13 +221,34 @@ mod tests {
             })
             .await
             .expect("message");
-        let got = wake_reasons(&store, me, since).await.expect("reasons");
+        let got = wake_reasons(&store, me, since, false)
+            .await
+            .expect("reasons");
         let kinds: Vec<_> = got.iter().map(|r| r.reason.as_str()).collect();
         assert_eq!(kinds, ["message", "task"], "{got:?}");
         assert_eq!(got[1].task.as_deref(), Some("t-1"));
         assert_eq!(got[1].event.as_deref(), Some("task.note_added"));
         // Nothing newer than the note: only the unread message is left.
-        let got = wake_reasons(&store, me, i64::MAX).await.expect("reasons");
+        let got = wake_reasons(&store, me, i64::MAX, false)
+            .await
+            .expect("reasons");
         assert_eq!(got.len(), 1, "{got:?}");
+        assert!(
+            got[0].messages.is_empty(),
+            "the human's wake carries ids only"
+        );
+
+        // A taking wake returns the text and marks it read; a second one finds nothing.
+        let got = wake_reasons(&store, me, i64::MAX, true)
+            .await
+            .expect("reasons");
+        assert_eq!(got[0].messages.len(), 1, "{got:?}");
+        assert_eq!(got[0].messages[0].body, "hi");
+        assert_eq!(got[0].messages[0].state, MessageState::Read);
+        let got = wake_reasons(&store, me, i64::MAX, true)
+            .await
+            .expect("reasons");
+        assert!(got.is_empty(), "{got:?}");
+        assert_eq!(store.unread_count(me).await.expect("count"), 0);
     }
 }

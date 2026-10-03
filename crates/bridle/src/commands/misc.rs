@@ -187,6 +187,9 @@ pub(super) async fn inbox_list(cli: &Cli, args: &InboxArgs) -> Result<(), CliErr
     let query = MessageQuery {
         to: Some("me".to_string()),
         unread: !args.all,
+        // The daemon marks what it lists read for an agent or external principal (what reaches
+        // them is read) and ignores this for the human, whose reads are explicit.
+        mark_read: true,
         ..Default::default()
     };
     let messages = client.list_messages(&query).await?;
@@ -242,6 +245,8 @@ pub(super) async fn inbox_show(cli: &Cli, args: &InboxShowArgs) -> Result<(), Cl
     let client = client_for_read(cli).await?;
     let query = MessageQuery {
         to: Some("me".to_string()),
+        id: Some(args.id.clone()),
+        mark_read: true,
         ..Default::default()
     };
     let messages = client.list_messages(&query).await?;

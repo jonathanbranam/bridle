@@ -1430,21 +1430,27 @@ impl AgentManager {
                         pos.map(|i| st.fifo.remove(i).expect("position just found"))
                     };
                     if let Some((mid, _)) = matched {
-                        let _ = self
-                            .0
-                            .store
-                            .set_message_state(&mid, MessageState::Delivered, Utc::now())
-                            .await;
-                        let _ = self
-                            .0
-                            .emitter
-                            .emit(
-                                event_kind::MESSAGE_DELIVERED,
-                                "system".to_string(),
-                                Some(id.to_string()),
-                                json!({"message": mid}),
-                            )
-                            .await;
+                        // Reaching the agent's conversation is reading it: no separate step.
+                        // `delivered` is passed through so `delivered_at` is still stamped.
+                        for state in [MessageState::Delivered, MessageState::Read] {
+                            let _ = self
+                                .0
+                                .store
+                                .set_message_state(&mid, state, Utc::now())
+                                .await;
+                        }
+                        for kind in [event_kind::MESSAGE_DELIVERED, event_kind::MESSAGE_READ] {
+                            let _ = self
+                                .0
+                                .emitter
+                                .emit(
+                                    kind,
+                                    "system".to_string(),
+                                    Some(id.to_string()),
+                                    json!({"message": mid}),
+                                )
+                                .await;
+                        }
                     } else {
                         tracing::debug!(agent = id, "unmatched replayed user message");
                     }

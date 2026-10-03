@@ -51,6 +51,7 @@ async fn notes(d: &TestDaemon, agent: &str) -> Vec<Message> {
             from: Some("system".to_string()),
             unread: false,
             limit: None,
+            ..Default::default()
         })
         .await
         .expect("messages")

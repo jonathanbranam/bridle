@@ -43,6 +43,7 @@ async fn nudges(daemon: &support::TestDaemon, to: &str) -> Vec<String> {
             from: Some("system".to_string()),
             unread: false,
             limit: None,
+            ..Default::default()
         })
         .await
         .expect("messages")

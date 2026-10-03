@@ -229,6 +229,11 @@ pub(super) async fn wake(cli: &Cli, args: &WakeArgs) -> Result<(), CliError> {
         for r in &got.reasons {
             match (&r.task, &r.event) {
                 (Some(task), Some(event)) => println!("{}: {task} {event}", r.reason),
+                _ if !r.messages.is_empty() => {
+                    for m in &r.messages {
+                        println!("message {} from {}:\n{}", m.id, m.from, m.body);
+                    }
+                }
                 _ => println!("{}: {}", r.reason, r.message_ids.join(" ")),
             }
         }

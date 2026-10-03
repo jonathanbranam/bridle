@@ -512,6 +512,13 @@ async fn orchestrator_wake(
     if !wakes.is_empty() {
         state.waiters.delivered(chrono::Utc::now());
     }
+    // The wakes were taken off the queue above, so each is answered here exactly once; their
+    // messages (in `detail`, text included) are read now that they're being returned.
+    for w in wakes.iter().filter(|w| w.reason == "message") {
+        if let Some(id) = w.detail["id"].as_str() {
+            mark_read_by(&state, id, &principal.id).await;
+        }
+    }
     Ok(Json(WakeResponse { wakes }))
 }
 
@@ -539,9 +546,11 @@ async fn principal_wake(
         ));
     }
     let timeout = crate::wake::clamp_timeout(q.timeout_secs, crate::wake::MAX_WAKE_TIMEOUT);
+    // Messages handed to a non-human are read; the human's reads are explicit.
+    let take = principal.kind != PrincipalKind::Human;
     let mut shutdown = state.shutdown_tx.subscribe();
     let reasons = tokio::select! {
-        r = crate::principal_wake::wait(&state.store, &state.emitter, &target, timeout) => r?,
+        r = crate::principal_wake::wait(&state.store, &state.emitter, &target, timeout, take) => r?,
         _ = shutdown.wait_for(|v| *v) => Vec::new(),
     };
     Ok(Json(bridle_api::types::PrincipalWakeResponse { reasons }))
@@ -1026,7 +1035,7 @@ async fn list_messages(
 ) -> Result<Json<Vec<Message>>, ApiError> {
     let to = resolve_to(&state.store, &principal, q.to.as_deref()).await?;
     let from = resolve_from(&state.store, q.from.as_deref()).await?;
-    let msgs = state
+    let mut msgs = state
         .store
         .list_messages(crate::store::ListMessages {
             to,
@@ -1035,6 +1044,21 @@ async fn list_messages(
             limit: q.limit,
         })
         .await?;
+    if let Some(id) = &q.id {
+        msgs.retain(|m| &m.id == id);
+    }
+    // What an agent or external principal is handed from its own inbox is read; messages the
+    // query filtered out never were handed over, so they stay as they are.
+    if q.mark_read && !matches!(principal.kind, PrincipalKind::Human | PrincipalKind::Local) {
+        let mine = resolve_to(&state.store, &principal, Some("me")).await?;
+        for m in msgs.iter_mut().filter(|m| {
+            Some(&m.to) == mine.as_ref()
+                && !matches!(m.state, MessageState::Read | MessageState::Dropped)
+        }) {
+            mark_read_by(&state, &m.id, &principal.id).await;
+            m.state = MessageState::Read;
+        }
+    }
     Ok(Json(msgs))
 }
 
@@ -1178,12 +1202,38 @@ async fn mark_unread(
     set_read_state(state.0, principal.0, id.0, false).await
 }
 
+/// Marks `id` read on behalf of `actor` and says so on the event stream.
+async fn mark_read_by(state: &AppState, id: &str, actor: &str) {
+    if let Err(e) = state
+        .store
+        .set_message_state(id, MessageState::Read, Utc::now())
+        .await
+    {
+        tracing::warn!(message = id, error = %e, "marking a returned message read failed");
+        return;
+    }
+    let _ = state
+        .emitter
+        .emit(
+            bridle_api::types::event_kind::MESSAGE_READ,
+            actor.to_string(),
+            None,
+            serde_json::json!({"message": id}),
+        )
+        .await;
+}
+
 async fn set_read_state(
     state: AppState,
     principal: Principal,
     id: String,
     read: bool,
 ) -> Result<Json<Message>, ApiError> {
+    if !read && principal.kind != PrincipalKind::Human {
+        return Err(ApiError::forbidden(
+            "only the human can mark a message unread: what reaches an agent is read",
+        ));
+    }
     let msg = state
         .store
         .get_message(&id)

@@ -93,6 +93,7 @@ async fn crossing_wind_down_at_sends_handoff_and_renews_once() {
             from: None,
             unread: false,
             limit: None,
+            ..Default::default()
         })
         .await
         .expect("list messages");
