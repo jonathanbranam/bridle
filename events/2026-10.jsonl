@@ -308,3 +308,4 @@
 {"actor":"external:advisor","at":"2026-10-03T11:04:49.804370Z","from":"open","task":"br-9667","to":"planned"}
 {"actor":"human","at":"2026-10-03T11:20:11.641Z","from":"","task":"br-5669","to":"open"}
 {"actor":"agent:manager-2","at":"2026-10-03T11:20:17.038502Z","from":"open","task":"br-5669","to":"integrated"}
+{"actor":"human","at":"2026-10-03T12:25:23.496Z","from":"","task":"br-e5f1","to":"open"}
