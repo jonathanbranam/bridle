@@ -7,7 +7,7 @@ repos: [bridle]
 changes: []
 specs: []
 needs: []
-see: [mrhe, 34bw]
+see: [mrhe, 34bw, vp9e]
 tasks: [br-d207]
 ---
 

@@ -7,7 +7,7 @@ repos: [bridle]
 changes: []
 specs: []
 needs: []
-see: [5u9d, mrhe, chvf]
+see: [5u9d, mrhe, chvf, vp9e]
 tasks: [br-86c6]
 ---
 
@@ -109,3 +109,7 @@ Step 3 approved too. The human, verbatim (2026-10-02): "I don't care much about 
 hook or rule, to, but the idea is sound and the implementation is sound and let's make it work so
 we can have additional hooks." The point is the mechanism (layer hooks passed at spawn, beside the
 Stop hook), not `arch-guard` itself. Sent to the orchestrator.
+
+The role-addendum question moved to
+[[are-roles-and-rules-the-same-thing-one-layered-kind-of-promp-vp9e|vp9e]]: the human doubts roles
+and rules are different things. Not sent to the orchestrator.
