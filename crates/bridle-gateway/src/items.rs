@@ -175,8 +175,15 @@ async fn read_project(s: Source, timeout: Duration) -> Result<ProjectItems, Proj
         })
         .collect();
     todos.sort_by_key(|(t, at)| (t.priority, *at));
+    // A withdrawn task can still have its question open in the daemon; the withdrawal stays on
+    // the task's record, the human just isn't asked.
     let mut decisions: Vec<_> = questions
         .iter()
+        .filter(|q| {
+            by_id
+                .get(q.task_id.as_str())
+                .is_none_or(|t| t.state != TaskState::Dropped)
+        })
         .map(|q| {
             let task = by_id.get(q.task_id.as_str());
             let d = Decision {
@@ -303,6 +310,59 @@ mod tests {
         assert_eq!(decisions, ["q-hi", "q-old", "q-new", "q-lo"]);
         assert_eq!(p.decisions[0].title, "high one");
         assert_eq!(p.decisions[0].priority, Priority::High);
+    }
+
+    #[tokio::test]
+    async fn withdrawn_todo_and_question_are_hidden_but_stay_on_the_record() {
+        // The fake daemon's record is the `all` list; the gateway only reads it.
+        let record = vec![
+            task(
+                "t-gone",
+                "gone",
+                "dropped",
+                "normal",
+                "2026-01-01T00:00:00Z",
+            ),
+            task(
+                "q-gone",
+                "gone q",
+                "dropped",
+                "normal",
+                "2026-01-01T00:00:00Z",
+            ),
+            task(
+                "q-live",
+                "live q",
+                "planned",
+                "normal",
+                "2026-01-01T00:00:00Z",
+            ),
+        ];
+        let claimed = vec![record[0].clone()];
+        let questions = vec![
+            question("q-gone", "2026-01-01T00:00:00Z"),
+            question("q-live", "2026-01-02T00:00:00Z"),
+        ];
+        let url = fake(claimed, record.clone(), questions).await;
+        let got = items_from(
+            vec![src("p", Some(url.clone()), None)],
+            Duration::from_secs(2),
+        )
+        .await;
+        let p = &got.projects[0];
+        assert!(p.todos.is_empty());
+        let decisions: Vec<_> = p.decisions.iter().map(|d| d.task_id.as_str()).collect();
+        assert_eq!(decisions, ["q-live"]);
+        // Nothing was deleted: the daemon still serves the withdrawn tasks.
+        let all = Client::new_with_timeout(url, None, Duration::from_secs(2))
+            .list_tasks()
+            .await
+            .expect("list");
+        assert!(
+            all.iter()
+                .any(|t| t.id == "t-gone" && t.state == TaskState::Dropped)
+        );
+        assert!(all.iter().any(|t| t.id == "q-gone"));
     }
 
     #[tokio::test]
