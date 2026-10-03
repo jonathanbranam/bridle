@@ -2,10 +2,11 @@
 id = "br-ee78"
 title = "A message an agent receives is read: no separate mark-read step, no unread for agents"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-10-03T02:28:55.666Z"
-updated_at = "2026-10-03T02:28:55.666Z"
+updated_at = "2026-10-03T02:30:09.943761Z"
 +++
 
 original id: rmpq
-docs/tickets/open/a-message-an-agent-receives-is-read-no-separate-mark-read-st-rmpq.md
+Ticket: docs/tickets/open/a-message-an-agent-receives-is-read-no-separate-mark-read-st-rmpq.md (read it all: the human's words, 'Today', 'Decided'). Docs: docs/design/agent-host/messages.md (states pending -> written -> delivered -> read), cli.md, api.md. Code: the message store and delivery in crates/bridle-daemon (the stdin delivery/ack of headless agents, the principal wake in principal_wake.rs and the orchestrator wake in wake.rs), 'bridle inbox' and 'bridle agent wake' in crates/bridle, bridle-api types.
+Goal (decided by the human 2026-10-03): a message that reaches an agent's context is read automatically. (1) Headless agents: marked read when delivered into the conversation (the stdin ack), i.e. 'delivered' becomes 'read' for agent recipients. (2) Interactive sessions (orchestrator, advisors): the wake returns the messages themselves (text, from, id, not just ids) and marks them read; 'bridle inbox' run by a non-human principal marks what it LISTS read (not messages it filters out; 'inbox show' of one message marks that one read). (3) Agents cannot mark a message unread: 'bridle inbox unread' refuses for non-human principals with a clear error. (4) The human keeps read/unread exactly as today (inbox as a task list; their reads are explicit). (5) Drop '--mark-read' from the role prompts (workflow/base/roles/*, e.g. the advisor loop and the orchestrator) and any role text that tells agents to mark messages read; keep the --mark-read flag working for compatibility (no-op for agents is fine). Careful with the wake: a message must be marked read only after it is returned to the caller, in the same call (no race that returns it twice or loses it); unread messages still ring the wake. Tests: headless delivery marks read; wake returns text and marks read, a second wake doesn't repeat them; non-human inbox marks what it lists; agent 'unread' refused; human 'unread' still works; human reading unchanged. Existing already-delivered-unread messages need no migration. Docs: messages.md, cli.md, api.md, CHANGELOG. Acceptance: just check passes. Model: Sonnet. Migration: none (state semantics only; no schema change). Out of scope: task-change messages (a separate task), fbfy delivery-system question, the human's inbox UI. OVERLAP: br-2672 (parked) touches orchestrator wakes; whichever lands second reconciles. This task goes AHEAD of the watcher tasks.
