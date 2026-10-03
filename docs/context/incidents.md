@@ -38,11 +38,16 @@ Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or los
   serve.rs`, deadline 15 s, polled every 200 ms), then reports failure without stopping the
   child, which keeps starting. This start-up took about 15.4 s from reading config to listening.
   Why it took that long is unknown; the human thinks system load (the laptop builds Rust for
-  workers, b7cz). Not verified.
+  workers, b7cz).
+- **Load (advisor, checked at 01:26):** load averages 9.4 / 9.4 / **17.8** (1, 5, 15 minutes) on
+  16 logical CPUs (8 cores): the 15-minute window covering the start-up was saturated. In that
+  window bridle's daemon landed br-c4f4 (01:13:46), built its self-upgrade and restarted
+  (01:17:20), and two `rustc` processes were still compiling at 01:26; `syspolicyd` (which
+  checks new binaries, cs7x) was at 26% CPU. Load, not a daemon fault, is the likely cause of
+  the slow start.
 - **Category:** `daemon`, `host`.
-- **Follow-up:** none yet (logged as a potential issue). Candidates: a longer wait, or on timeout
-  say the daemon is still starting and is left running (with its pid and the log path) rather
-  than "did not become healthy"; and log the start-up steps' durations to find what was slow.
+- **Follow-up:** [[bridle-serve-detach-gives-up-at-15-s-while-the-daemon-is-sti-cy5v|cy5v]]
+  (wait longer; on timeout say it's still starting and left running).
 
 ## 2026-10-03 01:15: a held task hid a startable one from the manager
 
