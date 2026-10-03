@@ -4,7 +4,7 @@ title = "Remove the all_idle orchestrator wake (aqtg decision)"
 kind = "chore"
 state = "integrated"
 created_at = "2026-10-03T00:57:27.429Z"
-updated_at = "2026-10-03T01:33:50.549592Z"
+updated_at = "2026-10-03T01:34:06.552962Z"
 size = "S"
 branch = "bridle/drop-all-idle"
 commit = "56e92ea2be9d4cf37820639492a164664f9a7125"
@@ -35,3 +35,6 @@ done: merged main again; it brought only docs files (docs/tickets plus docs/cont
 
 ### note · agent:manager-2 · 2026-10-03T01:33:50.549Z
 integrated: 56e92ea2be9d4cf37820639492a164664f9a7125 (branch bridle/drop-all-idle)
+
+### note · agent:manager-2 · 2026-10-03T01:34:06.552Z
+cleanup: removed agent drop-all-idle, branch bridle/drop-all-idle
