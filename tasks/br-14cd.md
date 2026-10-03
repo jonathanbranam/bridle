@@ -4,10 +4,11 @@ title = "Keep the warm build source fresh: build after each land, warm from ther
 kind = "feature"
 state = "planned"
 created_at = "2026-09-29T21:19:30.262Z"
-updated_at = "2026-10-03T13:16:07.109723Z"
+updated_at = "2026-10-03T13:31:59.882409Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 size = "S"
+summary = "New [integration] warm_build (unset = off; set in this repo's .bridle/config.toml): new warm_build.rs runs it niced in the integration worktree after each land (trigger spawns and returns; one at a time, triggers during a build coalesce into one more; failures logged only). warm_target now takes the integration dir and prefers its target/ when it exists and no build runs (or it is newer than the clone's), logging source and age. A process-wide BUILDING flag lets the supervisor read build state without a handle. Tests: fake shell commands for non-blocking/coalescing/failure, warm_source selection, config parse. Docs: roles-and-config.md, CHANGELOG, b7cz."
 +++
 
 Ticket: docs/questions/open/build-cost-on-the-laptop-b7cz.md (read, incl. 'The warm cache goes stale' and the measurement section the previous task adds). Problem: workers warm their target/ from the main clone's target/ (crates/bridle-daemon/src/worktree.rs warm_target, on by default on macOS), which was last built 2026-09-28 and is never refreshed; and the integration worktree's target/ (<workspace>/integration, built at each land) will go stale too once qgma's land skips the check on a fast-forward (br-0e42). Build: 1) after every successful land (including a skipped-check fast-forward), in the daemon (crates/bridle-daemon/src/integrator.rs), run one incremental 'cargo build --workspace --all-targets' in the integration worktree in the background: off land's critical path (land returns first), niced, at most one at a time (a landing during a build queues one more, not many), failures logged and never failing land. Read the build command from config, not hardcoded for non-Rust projects: add [integration] warm_build (default unset = no background build; set to 'cargo build --workspace --all-targets' in this repo's .bridle/config.toml); keep it one small config key. 2) warm_target's source: prefer the integration worktree's target/ when it exists and its warm build is not running (or is newer than the clone's), else the clone's; never write to the source. Log which source and its age at spawn. 3) Docs: cli.md/agent-host docs for the config key and behaviour, b7cz ticket section, CHANGELOG. Acceptance: just check passes; tests: build is triggered after land and not blocking it, coalescing (two lands during one build make one more build), failure ignored, warm source selection prefers the fresh integration target. No live cargo in tests: inject the command (a fake script). Model: Sonnet. Out of scope: sccache, Linux (warm_target stays macOS-only), touching the human's clone.
@@ -31,3 +32,9 @@ PM HANDOFF 2026-09-30 (pm-1 renewing): state. Queue = only br-14cd in tier 1, HE
 
 ### note · agent:pm-1 · 2026-10-03T13:16:07.109Z
 Released: the human approved the cache work (br-37d3). Startable now; manager-2 may start it in the free second worker slot.
+
+### note · agent:warm-source · 2026-10-03T13:31:51.681Z
+done: warm build after each land + warm_target prefers fresh integration target; 62c976a
+
+### note · agent:manager-2 · 2026-10-03T13:31:59.882Z
+Your diff has no CHANGELOG.md entry (summary says there is). Add one line under Unreleased, merge main if it moved, run just check, message me sha and result.
