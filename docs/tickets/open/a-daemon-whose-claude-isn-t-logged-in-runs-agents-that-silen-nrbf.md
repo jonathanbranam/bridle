@@ -35,3 +35,9 @@ Wanted, smallest first:
 The fix for the human today: stop the daemon, then start it from a pane of the laptop's own tmux
 server (which can read the keychain), e.g. over SSH:
 `tmux new-window -d -c <clone> 'bridle serve'`, or with `bridle launchd install`.
+
+**Also (2026-10-03, the fix attempt):** a daemon started without `SSH_AUTH_SOCK` hung before it
+listened, at ssh's "Enter passphrase" prompt on its terminal, from the state-branch git call. A
+daemon must never block on a terminal prompt: run its git with `GIT_TERMINAL_PROMPT=0` and
+`GIT_SSH_COMMAND="ssh -o BatchMode=yes"` (or the equivalent), so it fails with a logged reason and
+keeps starting. See the incident log, 01:46 entry.

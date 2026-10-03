@@ -43,14 +43,29 @@ Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or los
 - **What happened:** the bridle-ui manager answered every message (01:31 to 01:46) with "Not
   logged in · Please run /login", each recorded as a successful $0 turn. Found by the
   orchestrator after the `all_idle` wake, from `bridle agent logs manager`.
-- **Impact:** about 15 minutes of bridle-ui's first tasks not starting. The work wasn't lost.
 - **Cause:** the human started the daemon (pid 32152) with `bridle serve --detach` over SSH
   (its environment has `SSH_CONNECTION` and no `TMUX`). An SSH session can't read the macOS login
   keychain where Claude Code keeps its login. The orchestrator's `daemon restart` kept the same
   session. The bridle and track-web daemons were started in the laptop's tmux and work fine.
+- **Second failure, the fix attempt (02:31 to 02:39):** the human stopped it and, over SSH,
+  started `bridle serve` in a new window of the laptop's tmux. That daemon had **no
+  `SSH_AUTH_SOCK`**, so its first git-over-SSH call (the state branch) stopped at "Enter passphrase
+  for key ~/.ssh/id_ed25519" in the pane, before the daemon listened or registered. The human typed
+  the passphrase about ten times from the phone and it never took (cause unknown: possibly several
+  git processes competing for the tty, or the phone's input). `ssh-add` failed too, since that
+  shell had no agent to talk to. The first daemon had the same gap: its state-branch push failed
+  ("Could not read from remote repository"). What worked: starting it with the launchd agent that
+  already holds the key, `SSH_AUTH_SOCK=/private/tmp/com.apple.launchd.<id>/Listeners bridle serve`
+  (the value from the bridle daemon's environment; pid 41455, 02:39). The new manager-1 was
+  logged in.
+- **Impact:** about an hour of bridle-ui not starting, and about 20 minutes of the human's time
+  on the phone while back from travel.
 - **Category:** `host`, `daemon`, `human-process`.
 - **Follow-up:** [[a-daemon-whose-claude-isn-t-logged-in-runs-agents-that-silen-nrbf|nrbf]]
-  (br-5b39: fail loudly, check at start-up); a gotcha in `docs/context/adding-a-project.md`.
+  (br-5b39: fail loudly, check at start-up); a gotcha in `docs/context/adding-a-project.md`; the
+  SSH key in the Keychain ([[the-humans-to-do-list-and-restart-checklist-ex9q|ex9q]] item 2) would
+  remove the passphrase prompt. A daemon should never block on a terminal prompt
+  (`GIT_TERMINAL_PROMPT=0`, ssh `BatchMode=yes`): added to nrbf.
 
 ## 2026-10-03 01:28: the orchestrator role named a flag the installed binary didn't have
 
