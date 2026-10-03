@@ -1117,6 +1117,9 @@ impl BranchesConfig {
 pub struct IntegrationConfig {
     /// Shell command run in the integration worktree; `None` skips the check.
     pub check: Option<String>,
+    /// Shell command run in the integration worktree, in the background, after each land, to
+    /// keep its `target/` fresh for `[worktrees] warm_target`; `None` runs nothing.
+    pub warm_build: Option<String>,
 }
 
 /// `[ci]`: opt-in watching of the integration branch's GitHub Actions runs (`crate::ci`).
@@ -1720,8 +1723,13 @@ impl Config {
             config.messages.answer_for_human = v;
         }
 
-        if let Some(c) = raw.integration.and_then(|i| i.check) {
-            config.integration.check = Some(c);
+        if let Some(i) = raw.integration {
+            if let Some(c) = i.check {
+                config.integration.check = Some(c);
+            }
+            if let Some(c) = i.warm_build {
+                config.integration.warm_build = Some(c);
+            }
         }
 
         if let Some(p) = raw.ports {
@@ -2262,6 +2270,8 @@ struct RawMessages {
 struct RawIntegration {
     #[serde(default)]
     check: Option<String>,
+    #[serde(default)]
+    warm_build: Option<String>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -3497,6 +3507,13 @@ mod tests {
         assert!(night.matches(at(23, 30)));
         assert!(night.matches(at(6, 0)));
         assert!(!night.matches(at(12, 0)));
+    }
+
+    #[test]
+    fn integration_warm_build_parses() {
+        assert_eq!(Config::default().integration.warm_build, None);
+        let cfg = Config::parse("[integration]\nwarm_build = \"cargo build\"\n").unwrap();
+        assert_eq!(cfg.integration.warm_build.as_deref(), Some("cargo build"));
     }
 
     #[test]

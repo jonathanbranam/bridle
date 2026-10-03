@@ -135,3 +135,7 @@ Recommendation: keeping the warm source fresh is worth it: a fresh copy (c) roug
 first build against a stale one (b), which was no better than cold.
 Do step 2 (an incremental build in the integration worktree after each `land`, warm from
 there), and do not add sccache yet.
+
+## Step 2 built (br-14cd)
+
+`[integration] warm_build` runs after each land in the integration worktree (background, niced, coalesced, failures ignored), and `warm_target` prefers that `target/` when its build is idle. See "Warm worktree `target/`" in `docs/design/agent-host/roles-and-config.md`.

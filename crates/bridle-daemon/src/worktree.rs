@@ -1,7 +1,7 @@
 //! Git worktree management for agents. Shells out to the `git` CLI via
 //! `tokio::process::Command`. See docs/design/agent-host/daemon.md, agents.md.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use tokio::process::Command;
 
@@ -123,15 +123,40 @@ pub async fn remove_pair(
     Ok(())
 }
 
-/// Clones the clone's `target/` into the new worktree so its first build is incremental, not
-/// cold (ticket b7cz). `cp -cR` is an APFS copy-on-write clone: near-instant, no extra disk.
-/// macOS only; elsewhere a no-op. Best effort: a missing `target/` or a failed copy is logged
-/// and never fails the spawn. Never writes to the clone's `target/`.
-pub async fn warm_target(repo: &Path, worktree: &Path) {
+/// Where `warm_target` copies from: the integration worktree's `target/` (kept fresh by the
+/// background warm build) when it exists and no build is running in it, or it is newer than the
+/// clone's; else the clone's.
+pub fn warm_source(repo: &Path, integration: &Path, building: bool) -> PathBuf {
+    let clone = repo.join("target");
+    let fresh = integration.join("target");
+    if !fresh.is_dir() {
+        return clone;
+    }
+    let newer = || match (mtime(&fresh), mtime(&clone)) {
+        (Some(f), Some(c)) => f > c,
+        (Some(_), None) => true,
+        _ => false,
+    };
+    if !building || newer() { fresh } else { clone }
+}
+
+fn mtime(p: &Path) -> Option<std::time::SystemTime> {
+    p.metadata().ok()?.modified().ok()
+}
+
+/// Clones a prior build's `target/` (see `warm_source`) into the new worktree so its first
+/// build is incremental, not cold (ticket b7cz). `cp -cR` is an APFS copy-on-write clone:
+/// near-instant, no extra disk. macOS only; elsewhere a no-op. Best effort: a missing `target/`
+/// or a failed copy is logged and never fails the spawn. Never writes to the source.
+pub async fn warm_target(repo: &Path, integration: &Path, worktree: &Path) {
     if !cfg!(target_os = "macos") {
         return;
     }
-    let src = repo.join("target");
+    let src = warm_source(repo, integration, crate::warm_build::building());
+    let age_secs = mtime(&src)
+        .and_then(|m| m.elapsed().ok())
+        .map(|d| d.as_secs());
+    tracing::info!(source = %src.display(), ?age_secs, "warming worktree target/");
     let dst = worktree.join("target");
     if !src.is_dir() || dst.exists() {
         return;
@@ -553,17 +578,41 @@ mod tests {
         std::fs::create_dir_all(&wt).expect("mk");
         std::fs::create_dir_all(&repo).expect("mk");
         // No target/ in the clone: no-op, no panic.
-        warm_target(&repo, &wt).await;
+        let integ = tmp.path().join("integration");
+        warm_target(&repo, &integ, &wt).await;
         assert!(!wt.join("target").exists());
 
         std::fs::create_dir_all(repo.join("target/debug")).expect("mk");
         std::fs::write(repo.join("target/debug/dep"), "x").expect("w");
-        warm_target(&repo, &wt).await;
+        warm_target(&repo, &integ, &wt).await;
         assert_eq!(
             wt.join("target/debug/dep").exists(),
             cfg!(target_os = "macos")
         );
         assert!(repo.join("target/debug/dep").exists());
+    }
+
+    #[test]
+    fn warm_source_prefers_fresh_integration_target() {
+        let tmp = tempfile::tempdir().expect("tmp");
+        let (repo, integ) = (tmp.path().join("repo"), tmp.path().join("integration"));
+        std::fs::create_dir_all(repo.join("target")).expect("mk");
+        // No integration target: the clone's.
+        assert_eq!(warm_source(&repo, &integ, false), repo.join("target"));
+        std::fs::create_dir_all(integ.join("target")).expect("mk");
+        // Idle build: the integration target.
+        assert_eq!(warm_source(&repo, &integ, false), integ.join("target"));
+        // Building and not newer than the clone's: the clone's.
+        let old = std::time::SystemTime::now() - Duration::from_secs(3600);
+        std::fs::File::open(integ.join("target"))
+            .and_then(|f| f.set_modified(old))
+            .expect("age");
+        assert_eq!(warm_source(&repo, &integ, true), repo.join("target"));
+        // Building but newer than the clone's: still the integration target.
+        std::fs::File::open(repo.join("target"))
+            .and_then(|f| f.set_modified(old - Duration::from_secs(3600)))
+            .expect("age");
+        assert_eq!(warm_source(&repo, &integ, true), integ.join("target"));
     }
 
     #[test]

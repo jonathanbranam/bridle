@@ -71,6 +71,8 @@ pub struct AppState {
     pub integration: String,
     /// `[integration] check`, run by `bridle land`.
     pub integration_check: Option<String>,
+    /// Background build in the integration worktree after each land (`[integration] warm_build`).
+    pub warm_build: crate::warm_build::WarmBuild,
     /// Held for the length of a landing: one at a time.
     pub landing: std::sync::Arc<tokio::sync::Mutex<()>>,
     pub queue_nudge: crate::queue_nudge::QueueNudge,
@@ -2200,6 +2202,7 @@ async fn land_task(
     )
     .await;
     drop(one_at_a_time);
+    state.warm_build.trigger();
     let Json(task) = done_task(
         State(state),
         Extension(principal),

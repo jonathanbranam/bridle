@@ -45,6 +45,7 @@ pub mod sync;
 mod tasks;
 mod upgrade;
 mod wake;
+pub mod warm_build;
 pub mod worktree;
 
 pub use governor::Governor;
@@ -641,6 +642,10 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         ports: config.ports.clone(),
         stop_grace: config.stop_grace,
         integration_check: config.integration.check.clone(),
+        warm_build: warm_build::WarmBuild::new(
+            config.integration.warm_build.clone(),
+            ws.workspace.join("integration"),
+        ),
         landing: Default::default(),
         queue_nudge: queue_nudge.clone(),
         self_upgrade: config.self_upgrade,

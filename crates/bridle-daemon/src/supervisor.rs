@@ -892,7 +892,12 @@ impl AgentManager {
                 let base_ref = base.unwrap_or_else(|| role.base.clone());
                 worktree::add(&self.0.workspace.repo, &path, &branch, &base_ref).await?;
                 if self.0.config.warm_target {
-                    worktree::warm_target(&self.0.workspace.repo, &path).await;
+                    worktree::warm_target(
+                        &self.0.workspace.repo,
+                        &self.0.workspace.workspace.join("integration"),
+                        &path,
+                    )
+                    .await;
                 }
                 created_worktree = Some((path.clone(), branch.clone()));
                 worktree::copy_files(&self.0.workspace.repo, &path, &self.0.config.copy);

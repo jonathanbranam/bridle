@@ -154,6 +154,7 @@ Also read from `.bridle/config.toml` (defaults in parentheses; each is documente
 - `[commands] check` (`"just check"`) and `check_worker` (unset: same as `check`): the
   `{{commands.*}}` substitutions above.
 - `[integration] check` (unset): the `bridle land` gate above.
+- `[integration] warm_build` (unset): background build after each land; see "Warm worktree `target/`".
 - `[context] wind_down_at = { default = 200000, worker = 120000 }` (context tokens) and
   `wind_down_grace` (`"5m"`): an agent nearing its context limit is told to hand off, then
   renewed ([[agents#Renewing|agents.md]]).
@@ -298,11 +299,19 @@ step-down rule. A project may replace a role's list outright; a role with no
 ## Warm worktree `target/`
 
 `[worktrees] warm_target` (default `true`): after `git worktree add` for a worktree role,
-macOS clones the clone's `target/` into the worktree with `cp -cR` (APFS copy-on-write:
+macOS clones a prior build's `target/` into the worktree with `cp -cR` (APFS copy-on-write:
 near-instant, no extra disk), so the first build is incremental. Elsewhere it does nothing. It
 never fails a spawn (a missing `target/` or failed copy is a logged warning) and never writes to
-the clone's `target/`. Cargo fingerprints embed absolute paths, so some workspace crates still
+the source. The source is the integration worktree's `target/` when it exists and no warm
+build is running there (or it is newer than the clone's), else the clone's; the spawn logs which
+and its age. Cargo fingerprints embed absolute paths, so some workspace crates still
 rebuild; dependencies hit.
+
+`[integration] warm_build` (unset: nothing runs) keeps the integration source fresh: after each
+successful `bridle land` (including a skipped-check fast-forward) the daemon runs this shell
+command, niced, in `<workspace>/integration`, in the background. Land returns first; at most
+one build runs at a time and landings during a build queue exactly one more; a failure is
+logged and never fails a land. This repo sets `cargo build --workspace --all-targets`.
 
 ## Worktree setup command
 
