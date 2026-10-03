@@ -303,3 +303,73 @@ On "The task races the ticket body" and "A kind for design before build", verbat
 So: the four-part proposal under "The task races the ticket body" is approved as one small fix
 (sent to the orchestrator). No `design` kind: a `feature` ticket with no task already means "not
 ready to build".
+
+## Advisor (tickets) recommendation (2026-10-03)
+
+From six sampled tasks (br-e210, br-6ba3, br-9c3d, br-3c58, br-c83e, br-2ebc) and counts over all
+476: task bodies are a median 810 characters; about 790 of 1,131 thread entries are lifecycle
+records (integrated, done, dropped, cleanup); the real comments are coordination ("main moved,
+merge again", "check green, sha ..."); only 4 questions were ever asked on tasks. The durable text
+(the human's words, decisions) is on tickets, but rulings sometimes land in a task's thread or body
+(br-c83e, br-2ebc) and must be copied back by hand. Tasks carry what needs the daemon (claims,
+queue, settle, wakes, deps, blocking questions, the human's to-dos).
+
+Recommended: keep both records; with one ID (br-9e15) treat them as one item with two halves, the
+ticket for what and why, the task for status and chatter; a hard content rule (decisions go on the
+ticket, the task body points and scopes, the thread coordinates); keep ticketless tasks for small
+agent-found work; no rename yet. Not a full merge: claims, wakes and the queue don't fit markdown
+in git, and tickets would lose vim, Obsidian and review in commits.
+
+## Decided: tickets hold the why, tasks hold the work (the human, 2026-10-03)
+
+Verbatim:
+
+> Yeah, I think we're getting there. So a couple more points on this. You said, you know, when
+> there's design discussions for the task, it needs to go back on the ticket. So a couple things
+> that I can see happening here. One is that if we have a ticket that is more of like a research or
+> question ticket that kind of rambles and keeps a bunch of conversation that we did along the way,
+> and then we want to create a task, we decide what to implement, and we're ready to write a task.
+> What we're implementing, I think, is going to need to be written as a new ticket. I think that's
+> fine. I think that's a good choice. Um, so we would then create a new ticket and associate it with
+> the, the you know, rambling discussion research type ticket. And then we create the task based off
+> that. And that way, the task can hold just the status as it moves through the system, and the like
+> feature ticket can hold the decisions and discussions. The other case that I can see happening is
+> if a task without a ticket suddenly needs a design review, has an issue, has some sort of other
+> kind of problem, and needs a lot of discussion. In that case, we just go the opposite way. We just
+> create a ticket from the task. And that works because we share IDs and we share one naming system.
+> So we can just, that we already know that ID is free because we claimed it for this ticket. So, or
+> we claimed it for the task, that means it's free for a ticket and no task or ticket will ever use
+> the same name. So I think that resolves several of my concerns. About having like shorter tasks
+> that, that don't contain any just like decision information. Yeah, so so there's kind of an
+> interesting distinction here that we're gonna drill really hard in on. Tickets are for design
+> decisions. The why, the what. You know, what we're doing, what we're building, and then tasks are
+> connected to a ticket in most cases. And they're for getting small, for getting work done that's
+> on a ticket, or they're, they contain a small piece of work that lives just in a task. And then for
+> the comments, when communicating about a task that's a fairly mechanical type of thing that goes
+> on the task itself and is managed the same way it is today. When there's a question about design,
+> intent, decisions, you know, architectural decisions or whatever kinds of major decisions, then we
+> add a comment to the task that says, you know, needs design review or whatever, see the ticket. And
+> then we go back to the ticket and say, you know, explain what happened. While implementing the
+> task, the worker discovered that, you know, blah, blah, blah, and needs more clarification.
+
+So:
+
+7. **Tickets are for design decisions: the why and the what.** Tasks are for getting work done:
+   mostly a ticket's work, sometimes a small piece of work that lives only in a task. Tasks and
+   tickets stay separate records.
+8. **From discussion to build: a new ticket.** When a research or question ticket (one that
+   rambles and keeps the conversation) reaches "this is what we'll build", the build is written as
+   a new ticket linked to the discussion ticket, and the task is made from that new ticket. The
+   task then holds only status; the new ticket holds the decisions.
+9. **From task to ticket: the same ID.** When a ticketless task needs design review, hits a real
+   problem or needs a lot of discussion, a ticket is made from the task with the task's ID. One
+   alphabet and one ID space (br-9e15) guarantee it's free.
+10. **Comments by kind.** Mechanical coordination about a task stays in the task's thread, as
+    today. A question of design, intent or a major decision gets a short task comment ("needs
+    design review, see the ticket") and the substance goes on the ticket: what happened, what the
+    worker found, what needs clarifying.
+
+Open, for building this: a command to make a ticket from a task with its ID (e.g.
+`bridle ticket new --from-task <id>`; task IDs minted before br-9e15 use hex and may contain `0`
+or `1`, which the ticket alphabet lacks); the rules and role text (tickets rule, worker, manager,
+PM, docs/README.md) for decisions 7-10.
