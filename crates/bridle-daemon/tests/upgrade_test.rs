@@ -465,15 +465,16 @@ async fn automatic_no_quiet_point_is_silent_and_retried() {
     );
     let _ = agent;
     // Once the worker is idle the next tick builds again and restarts.
+    // Read the events before the restart: once it's requested the server shuts
+    // down, and an HTTP read races that. The second build precedes the restart.
+    support::wait_for("the retry's build", || async {
+        let kinds = upgrade_events(&daemon).await;
+        (kinds.iter().filter(|k| *k == "upgrade.building").count() == 2).then_some(())
+    })
+    .await;
     support::wait_for("the retry's restart", || async {
         daemon.running.restart_requested().then_some(())
     })
     .await;
-    let kinds = upgrade_events(&daemon).await;
-    assert_eq!(
-        kinds.iter().filter(|k| *k == "upgrade.building").count(),
-        2,
-        "{kinds:?}"
-    );
     daemon.running.join().await.expect("join");
 }
