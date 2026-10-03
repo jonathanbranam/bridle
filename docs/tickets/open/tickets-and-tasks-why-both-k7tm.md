@@ -291,3 +291,15 @@ The human, verbatim (2026-10-03), to take up in a fresh session:
 Already decided above, and unaffected by the answer: a ticket without a task gets no work; a
 task existing means ready; the human approves feature work.
 
+
+## Approved: `ticket task` as its own step; no `design` kind (the human, 2026-10-03)
+
+On "The task races the ticket body" and "A kind for design before build", verbatim:
+
+> Okay, I agree in point number one, that can be built as a small fix. to point number two. A
+> ticket that requests a new feature is implicitly not ready to be built until, in the current
+> system, until the task is created. We might be changing that, but I agree.
+
+So: the four-part proposal under "The task races the ticket body" is approved as one small fix
+(sent to the orchestrator). No `design` kind: a `feature` ticket with no task already means "not
+ready to build".
