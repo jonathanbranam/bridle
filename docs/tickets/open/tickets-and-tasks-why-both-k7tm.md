@@ -413,3 +413,46 @@ Kept: **ticket** and **task**. Options evaluated and set aside, to come back to:
 | **job** (for task) | Short | Used ~30 times in bridle already; reads as a CI job |
 | **work item** (for task) | Exact | Clunky to type and say |
 | **errand** (for task) | | Suggests something trivial |
+
+## Decided: every task starts `pending` (the human, 2026-10-03)
+
+The human, verbatim, raising it:
+
+> My one more question is, I am really starting to think that tasks need a pending status and that
+> when a task is created, it should be created in pending.
+
+The advisor agreed: under decision 6 every task is ready the moment it exists, so decision 2 (no
+work without the human's approval) only holds where someone remembers it, while agents file most
+ticketless tasks (101 of 131). A `pending` state makes the gate a state the daemon enforces; `open`
+then means one thing, "approved, ready". Unlike the rejected held/draft state, this removes the
+ambiguity instead of adding it. Risk: a pending pile nobody sees, so pending tasks must surface
+(`bridle status`, the orchestrator's startup list).
+
+The human, verbatim, on slicing and the rule:
+
+> So that question, I don't care. Um, they can go as one piece of work or separate it out. You can
+> either ask the orchestrator or make your own decision. Um, or you, yeah, this is going to be
+> something that the product, I think, managers should decide or maybe, yeah, um, in the future.
+> But we don't have that role yet and it's not really a problem. Um, so just make a decision on how
+> to slice it. And, but I do think, yeah, unless you disagree that all tickets starting with pending
+> is a good move. Sorry, all tasks starting with pending.
+
+11. **Every task is created `pending`.** States: pending -> open -> planned -> claimed ->
+    integrated. This replaces decision 6: a task's existence no longer means ready; `open` does.
+12. **pending -> open is the deliberate "ready for work" step** (e.g. `bridle task ready <id>`),
+    taken by the orchestrator or an advisor with the human's approval (decision 2). The PM plans
+    only `open` tasks. The orchestrator's critical fixes (decision 5) it readies itself.
+13. Existing `open` tasks stay `open` (pm-1's sort already cleared the ones not to work).
+
+Advisor's call, not the human's (the human left it open; override if wrong): a manager may ready
+its own small fix inside work already approved (a test flake, a merge fix, a bug found in the
+branch, like br-e210), so routine CI fixes don't wait on the human. Never new features.
+
+Slicing (advisor's call, as the human asked): two tasks, independent.
+- **A. `pending` state** (decisions 11-13): store, API types, CLI (`task ready`, `task new`
+  default), daemon queue and PM wakes, surfacing pending in `bridle status` and the orchestrator's
+  startup, docs (storage.md, coordination, cli.md), roles. Migration: none (new state; existing
+  rows keep theirs).
+- **B. Ticket from task, and the content rules** (decisions 7-10): `bridle ticket new --from-task
+  <id>` reusing the task's ID (a fresh ID, linked, when a pre-br-9e15 hex ID has `0`/`1`); the
+  tickets rule, worker, manager and PM roles, `docs/README.md`.
