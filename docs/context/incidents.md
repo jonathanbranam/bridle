@@ -44,6 +44,19 @@ Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or los
   say the daemon is still starting and is left running (with its pid and the log path) rather
   than "did not become healthy"; and log the start-up steps' durations to find what was slow.
 
+## 2026-10-03 01:15: a held task hid a startable one from the manager
+
+- **What happened:** br-6c6a (tier 7) was startable, but `bridle task ready` shows only the
+  highest tier with a startable task: tier 6's br-96cc, which the orchestrator had told the
+  manager to hold until the human is back. The manager saw nothing to start and went idle.
+  Found by the orchestrator reading `bridle queue`.
+- **Impact:** about 10 minutes with both workers' slots empty; overnight it could have been hours.
+- **Cause:** a hold given only in a message, not in the queue: the task stayed startable, so it
+  masked the tiers below it.
+- **Category:** `coordination`.
+- **Follow-up:** hold tasks in the queue, not by message (move a held task out of the queue or
+  below the work that should run); none filed yet.
+
 ## 2026-10-02 23:25 and 23:40: ready tasks sat until the orchestrator nudged
 
 - **What happened:** br-5924 finished its settle period at 23:25 and br-1e88 at 23:40, but the
