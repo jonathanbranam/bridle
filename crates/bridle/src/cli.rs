@@ -1324,6 +1324,10 @@ pub enum TaskAction {
     Reopen(TaskReopenArgs),
     /// Skip a task's settle period so it can start now (recorded in its thread).
     SkipSettle(TaskSkipSettleArgs),
+    /// Start watching a task as the calling principal (recorded in its thread).
+    Watch(TaskWatchArgs),
+    /// Stop watching a task as the calling principal.
+    Unwatch(TaskWatchArgs),
     /// Add a comment to a task's thread (no question/answer semantics,
     /// doesn't affect readiness).
     #[command(alias = "note")]
@@ -1535,6 +1539,11 @@ pub struct TaskSkipSettleArgs {
     /// urgent downtime fix, and the reason must say which.
     #[arg(long)]
     pub reason: String,
+}
+
+#[derive(Debug, Args)]
+pub struct TaskWatchArgs {
+    pub task: String,
 }
 
 #[derive(Debug, Args)]

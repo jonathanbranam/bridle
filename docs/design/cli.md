@@ -284,6 +284,7 @@ bridle task conflict resolve <C12> --compatible <reason> | --order A,B | --merge
 bridle task impact show <task>                                         prints the declared impact (`--json`: the impact object)
 bridle task summary <id> --text TEXT | --file FILE                    records how it was implemented; `-` reads stdin; replaces an earlier summary
 bridle task reopen <id>
+bridle task watch <id> · unwatch <id>                               add/remove yourself as a watcher (`task show` lists them; the creator and claimer are added automatically)
 bridle task skip-settle <id> --reason TEXT                            skip the settle period (recorded); human, or orchestrator/PM with a reason saying the human asked or an urgent downtime fix
 bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comment on the task's thread; no effect on readiness
 ```

@@ -748,6 +748,9 @@ pub mod event_kind {
     pub const TASK_QUESTION_ANSWERED: &str = "task.question_answered";
     /// data: {task, reason}
     pub const TASK_SETTLE_SKIPPED: &str = "task.settle_skipped";
+    /// data: {task, watching} (false: stopped watching). The actor is the principal that
+    /// changed its own watching.
+    pub const TASK_WATCHING: &str = "task.watching";
     /// data: {task}
     pub const TASK_NOTE_ADDED: &str = "task.note_added";
     /// data: {tiers} (the tier count after the change)
@@ -1424,6 +1427,10 @@ pub struct Task {
     /// omit it, hence the default.
     #[serde(default = "unknown_creator")]
     pub created_by: PrincipalId,
+    /// Principals who follow the task: the creator and the claimer are added automatically,
+    /// anyone can `task watch`/`unwatch` themselves. Old task files and old daemons omit it.
+    #[serde(default)]
+    pub watchers: Vec<PrincipalId>,
     /// The claim, if any. Null when unclaimed. Kept in SQLite and mirrored
     /// to `claims.toml` on the state branch (docs/design/storage.md); the
     /// task file itself carries no claim, so it comes from the claim set.

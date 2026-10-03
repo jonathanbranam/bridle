@@ -688,6 +688,18 @@ impl StateBranch {
         parse_task(&text).ok()
     }
 
+    /// Whether the task's file has a watchers record: false for one written before watchers
+    /// existed, which `TaskManager::open` then backfills.
+    pub fn task_records_watchers(&self, id: &str) -> bool {
+        let path = self.dir.join("tasks").join(format!("{id}.md"));
+        std::fs::read_to_string(path).is_ok_and(|text| {
+            text.strip_prefix("+++\n")
+                .and_then(|t| t.split_once("\n+++\n"))
+                .and_then(|(fm, _)| toml::from_str::<Frontmatter>(fm).ok())
+                .is_some_and(|fm| fm.watchers.is_some())
+        })
+    }
+
     /// Every task file under `tasks/`, parsed, sorted by id for a
     /// deterministic order. Unlike [`StateBranch::read_task`] (which treats
     /// a missing or unparseable file as "nothing to hydrate", tolerating a
@@ -1044,6 +1056,10 @@ struct Frontmatter {
     /// the thread's first entry.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     created_by: Option<String>,
+    /// Absent in records written before watchers existed (`task_records_watchers`); written
+    /// even when empty, so a task nobody watches isn't mistaken for one awaiting backfill.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    watchers: Option<Vec<String>>,
     /// Absent in records written before components existed.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     components: Vec<String>,
@@ -1080,6 +1096,7 @@ fn render_task(task: &Task) -> Result<String, StateBranchError> {
         created_at: task.created_at,
         updated_at: task.updated_at,
         created_by: (task.created_by != UNKNOWN_CREATOR).then(|| task.created_by.clone()),
+        watchers: Some(task.watchers.clone()),
         components: task.components.clone(),
         size: task.size,
         priority: task.priority,
@@ -1251,6 +1268,7 @@ fn parse_task(text: &str) -> Result<Task, StateBranchError> {
         // The first thread entry is the best guess for a record from before the field: the
         // submitter's note, or whoever planned it.
         created_by,
+        watchers: fm.watchers.unwrap_or_default(),
         // Not this file's job: `TaskManager` layers the current claim (from
         // `claims.toml`/SQLite, storage.md) on top of what this parses.
         claimed_by: None,
@@ -1423,6 +1441,7 @@ mod tests {
             created_at: now,
             updated_at: now,
             created_by: "human".to_string(),
+            watchers: vec![],
             claimed_by: None,
             claimed_at: None,
             components: vec!["client-games".to_string(), "dungeon".to_string()],

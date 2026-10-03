@@ -129,6 +129,22 @@ pub struct TaskManager {
     settle: chrono::Duration,
 }
 
+/// Adds `who` unless already there; whether the list changed.
+fn add_watcher(watchers: &mut Vec<PrincipalId>, who: &PrincipalId) -> bool {
+    if watchers.contains(who) {
+        return false;
+    }
+    watchers.push(who.clone());
+    true
+}
+
+/// Who is told about a change to `task`: its watchers. The one place that answers it, so the
+/// notification code (br-7605) doesn't re-derive it from the creator and claimer.
+#[allow(dead_code)] // first caller: the notification work (br-7605)
+pub fn notified_of(task: &Task) -> Vec<PrincipalId> {
+    task.watchers.clone()
+}
+
 impl TaskManager {
     /// Sets the settle period. Not in `open`'s arguments so every existing
     /// caller keeps today's behaviour until it opts in.
@@ -150,6 +166,7 @@ impl TaskManager {
     ) -> Result<Self, TaskError> {
         let rows = store.list_tasks().await?;
         let mut cache = HashMap::with_capacity(rows.len());
+        let mut unrecorded = Vec::new();
         for row in rows {
             let mut task = state.read_task(&row.id).unwrap_or(Task {
                 id: row.id.clone(),
@@ -164,6 +181,7 @@ impl TaskManager {
                     .created_by
                     .clone()
                     .unwrap_or_else(|| UNKNOWN_CREATOR.to_string()),
+                watchers: Vec::new(),
                 claimed_by: None,
                 claimed_at: None,
                 components: Vec::new(),
@@ -192,6 +210,11 @@ impl TaskManager {
                 }
                 _ => {}
             }
+            // A task file with no watchers record (or none at all) is backfilled below, once
+            // the claims are laid on.
+            if !state.task_records_watchers(&task.id) {
+                unrecorded.push(task.id.clone());
+            }
             cache.insert(task.id.clone(), task);
         }
         let edges = store.list_edges().await?;
@@ -219,6 +242,21 @@ impl TaskManager {
             if let Some(task) = cache.get_mut(task_id) {
                 task.claimed_by = Some(claimant.clone());
                 task.claimed_at = Some(*claimed_at);
+            }
+        }
+        // Watchers backfill: the creator and the current claimer. Best effort, like the
+        // `created_by` fill above: a failure logs and leaves the list as it is.
+        for id in unrecorded {
+            if let Some(task) = cache.get_mut(&id) {
+                if task.created_by != UNKNOWN_CREATOR {
+                    add_watcher(&mut task.watchers, &task.created_by.clone());
+                }
+                if let Some(claimant) = task.claimed_by.clone() {
+                    add_watcher(&mut task.watchers, &claimant);
+                }
+                if let Err(e) = state.enqueue_task(task) {
+                    tracing::warn!(task = %id, "backfilling watchers: {e}");
+                }
             }
         }
         let queue = state.read_queue();
@@ -469,6 +507,11 @@ impl TaskManager {
             created_by: row
                 .created_by
                 .unwrap_or_else(|| UNKNOWN_CREATOR.to_string()),
+            watchers: if created_by == UNKNOWN_CREATOR {
+                Vec::new()
+            } else {
+                vec![created_by.to_string()]
+            },
             claimed_by: None,
             claimed_at: None,
             components,
@@ -1080,6 +1123,49 @@ impl TaskManager {
         Ok(self.put(task))
     }
 
+    // ---------- watchers ----------
+
+    /// Adds (`watch`) or removes `who` from the task's watchers, recorded in its thread.
+    /// Idempotent: a change that is already true is a no-op, with no thread entry. Returns the
+    /// task and whether anything changed.
+    pub async fn set_watching(
+        &self,
+        id: &str,
+        who: &PrincipalId,
+        watch: bool,
+    ) -> Result<(Task, bool), TaskError> {
+        let mut task = self
+            .get_task(id)
+            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+        let changed = if watch {
+            add_watcher(&mut task.watchers, who)
+        } else {
+            let before = task.watchers.len();
+            task.watchers.retain(|w| w != who);
+            task.watchers.len() != before
+        };
+        if !changed {
+            return Ok((task, false));
+        }
+        let now = Utc::now();
+        task.thread.push(ThreadEntry {
+            kind: ThreadEntryKind::Note,
+            from: who.clone(),
+            body: format!(
+                "{} the task",
+                if watch {
+                    "watching"
+                } else {
+                    "stopped watching"
+                }
+            ),
+            at: now,
+        });
+        task.updated_at = now;
+        self.state.enqueue_task(&task)?;
+        Ok((self.put(task), true))
+    }
+
     // ---------- claims ----------
 
     /// Enqueues the full current claim set to the state branch's
@@ -1154,6 +1240,8 @@ impl TaskManager {
         task.updated_at = now;
         task.claimed_by = Some(by.clone());
         task.claimed_at = Some(now);
+        add_watcher(&mut task.watchers, by);
+        self.state.enqueue_task(&task)?;
         Ok(self.put(task))
     }
 
@@ -2204,6 +2292,135 @@ mod tests {
         let rehydrated = tm2.get_task(&task.id).expect("rehydrated");
         assert_eq!(rehydrated.title, "Add foo");
         assert_eq!(rehydrated.body, "a description");
+    }
+
+    async fn reopen_manager(store: Store, state: StateBranch) -> TaskManager {
+        TaskManager::open(
+            store,
+            state,
+            "tw".to_string(),
+            std::time::Duration::from_secs(600),
+        )
+        .await
+        .expect("reopen task manager")
+    }
+
+    #[tokio::test]
+    async fn watchers_creator_claimer_watch_unwatch_rebuild_and_backfill() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let repo = tmp.path().join("repo");
+        init_repo(&repo).await;
+        let store = Store::open(tmp.path().join("bridle.db"))
+            .await
+            .expect("open store");
+        let state = StateBranch::open(&repo, &tmp.path().join("state"))
+            .await
+            .expect("open state branch");
+        let tm = reopen_manager(store.clone(), state.clone()).await;
+
+        let task = tm
+            .new_task_by("T", TaskKind::Feature, String::new(), vec![], None, "human")
+            .await
+            .expect("new task");
+        assert_eq!(task.watchers, vec!["human".to_string()]);
+        let anon = tm
+            .new_task("A", TaskKind::Feature, String::new(), vec![], None)
+            .await
+            .expect("new task");
+        assert!(
+            anon.watchers.is_empty(),
+            "an unknown creator isn't a watcher"
+        );
+
+        tm.plan_task(&task.id, &"human".to_string())
+            .await
+            .expect("plan");
+        let claimed = tm.claim_task(&task.id, &agent()).await.expect("claim");
+        assert_eq!(claimed.watchers, vec!["human".to_string(), agent()]);
+        assert_eq!(notified_of(&claimed), claimed.watchers);
+
+        // Idempotent, and recorded in the thread only when something changed.
+        let (_, changed) = tm
+            .set_watching(&task.id, &agent(), true)
+            .await
+            .expect("watch");
+        assert!(!changed);
+        let (t, changed) = tm
+            .set_watching(&task.id, &agent(), false)
+            .await
+            .expect("unwatch");
+        assert!(changed);
+        assert_eq!(t.watchers, vec!["human".to_string()]);
+        assert!(
+            t.thread
+                .last()
+                .expect("entry")
+                .body
+                .contains("stopped watching")
+        );
+        let (t, _) = tm
+            .set_watching(&task.id, &"agent:w2".to_string(), true)
+            .await
+            .expect("watch");
+        assert!(t.thread.last().expect("entry").body.contains("watching"));
+        assert_eq!(t.thread.len(), 2);
+        let (t, _) = tm
+            .set_watching(&anon.id, &"human".to_string(), false)
+            .await
+            .expect("noop");
+        assert!(t.thread.is_empty());
+        tm.flush_now().await.expect("flush");
+
+        // A restart keeps the list, including an emptied one (not mistaken for an old record).
+        tm.set_watching(&anon.id, &"human".to_string(), true)
+            .await
+            .expect("watch");
+        tm.set_watching(&anon.id, &"human".to_string(), false)
+            .await
+            .expect("unwatch");
+        tm.flush_now().await.expect("flush");
+        let tm2 = reopen_manager(store.clone(), state.clone()).await;
+        assert_eq!(
+            tm2.get_task(&task.id).expect("task").watchers,
+            vec!["human".to_string(), "agent:w2".to_string()]
+        );
+        assert!(tm2.get_task(&anon.id).expect("anon").watchers.is_empty());
+
+        // A rebuild from the state branch alone restores them.
+        let fresh = Store::open(tmp.path().join("bridle2.db"))
+            .await
+            .expect("store");
+        let tm3 = reopen_manager(fresh, state.clone()).await;
+        tm3.rebuild_from_state_branch().await.expect("rebuild");
+        assert_eq!(
+            tm3.get_task(&task.id).expect("task").watchers,
+            vec!["human".to_string(), "agent:w2".to_string()]
+        );
+
+        // Old records (no watchers line) are backfilled with the creator and the claimer.
+        let file = state.dir().join("tasks").join(format!("{}.md", task.id));
+        let text = std::fs::read_to_string(&file).expect("read");
+        let old: String = text
+            .lines()
+            .filter(|l| !l.starts_with("watchers"))
+            .map(|l| format!("{l}\n"))
+            .collect();
+        std::fs::write(&file, old).expect("write");
+        let tm4 = reopen_manager(store.clone(), state.clone()).await;
+        assert_eq!(
+            tm4.get_task(&task.id).expect("task").watchers,
+            vec!["human".to_string(), agent()]
+        );
+        // Idempotent: the backfill recorded itself, and a later removal sticks.
+        tm4.set_watching(&task.id, &agent(), false)
+            .await
+            .expect("unwatch");
+        tm4.flush_now().await.expect("flush");
+        let tm5 = reopen_manager(store, state).await;
+        assert_eq!(
+            tm5.get_task(&task.id).expect("task").watchers,
+            vec!["human".to_string()]
+        );
     }
 
     #[tokio::test]

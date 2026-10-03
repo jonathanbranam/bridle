@@ -76,6 +76,8 @@ pub(super) async fn task(cli: &Cli, args: &TaskArgs) -> Result<(), CliError> {
         TaskAction::Summary(a) => task_summary(cli, a).await,
         TaskAction::Reopen(a) => task_reopen(cli, a).await,
         TaskAction::SkipSettle(a) => task_skip_settle(cli, a).await,
+        TaskAction::Watch(a) => task_watch(cli, a, true).await,
+        TaskAction::Unwatch(a) => task_watch(cli, a, false).await,
         TaskAction::Comment(a) => task_comment(cli, a).await,
         TaskAction::Search(a) => task_search(cli, a).await,
         _ => unreachable!("normalize forwards the queue and coordination actions"),
@@ -186,6 +188,9 @@ pub(super) async fn task_show(cli: &Cli, args: &TaskShowArgs) -> Result<(), CliE
         }
         println!("created     {}", task.created_at.to_rfc3339());
         println!("created by  {}", task.created_by);
+        if !task.watchers.is_empty() {
+            println!("watchers    {}", task.watchers.join(", "));
+        }
         println!("updated     {}", task.updated_at.to_rfc3339());
         if let Some(until) = task.settle_until {
             println!("settling    until {}", settle_clock_text(until));
@@ -557,6 +562,30 @@ pub(super) async fn task_skip_settle(cli: &Cli, args: &TaskSkipSettleArgs) -> Re
         render::print_json(&task)?;
     } else {
         println!("skipped the settle period on {}", task.id);
+    }
+    Ok(())
+}
+
+pub(super) async fn task_watch(
+    cli: &Cli,
+    args: &TaskWatchArgs,
+    watch: bool,
+) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let task = if watch {
+        client.watch_task(&args.task).await?
+    } else {
+        client.unwatch_task(&args.task).await?
+    };
+    if cli.json {
+        render::print_json(&task)?;
+    } else {
+        let verb = if watch {
+            "watching"
+        } else {
+            "no longer watching"
+        };
+        println!("{verb} {}", task.id);
     }
     Ok(())
 }

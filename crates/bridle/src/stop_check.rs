@@ -186,6 +186,7 @@ mod tests {
             created_at: now,
             updated_at: now,
             created_by: "human".to_string(),
+            watchers: vec![],
             claimed_by: claimed_by.map(String::from),
             claimed_at,
         }

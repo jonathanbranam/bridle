@@ -283,6 +283,11 @@ events/2026-09.jsonl      append-only transitions, for history and rebuild
 - **A task's `size`** (`S`, `M` or `L`) lives only in the frontmatter, as an optional
   `size = "S"` line: omitted when unset, and a file written before the field existed
   loads with none. Like `components`, a rebuild round-trips it.
+- **A task's `watchers`** (principals following it) are a `watchers = [...]` frontmatter line, in
+  the task file only (no SQLite column), written even when empty. A file without the line predates
+  watchers: `TaskManager::open` gives it the creator (unless `unknown`) and the current claimer, and
+  enqueues the file, so it runs once. A failure logs and leaves the list as parsed; it never fails
+  start-up. A rebuild round-trips the line; a claim also rewrites the file to add the claimer.
 - **A task's `created_by`** (the creating principal) is an optional `created_by = "..."` frontmatter
   line, omitted when unknown. The `tasks.created_by` column is nullable (NULL = unknown). At every
   daemon start, `Store::open` fills NULLs from the earliest `task.created` event's actor (one

@@ -133,6 +133,8 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/tasks/{id}/answer", post(answer_task))
         .route("/v1/tasks/{id}/note", post(note_task))
         .route("/v1/tasks/{id}/skip-settle", post(skip_settle))
+        .route("/v1/tasks/{id}/watch", post(watch_task))
+        .route("/v1/tasks/{id}/unwatch", post(unwatch_task))
         .route("/v1/tasks/{id}/claim", post(claim_task))
         .route("/v1/tasks/{id}/release", post(release_task))
         .route("/v1/questions", get(list_open_questions))
@@ -2698,6 +2700,45 @@ async fn claim_task(
             serde_json::json!({"task": task.id, "to": task.state}),
         )
         .await;
+    Ok(Json(task))
+}
+
+async fn watch_task(
+    state: State<AppState>,
+    principal: Extension<Principal>,
+    id: Path<String>,
+) -> Result<Json<Task>, ApiError> {
+    set_watching(state, principal, id, true).await
+}
+
+async fn unwatch_task(
+    state: State<AppState>,
+    principal: Extension<Principal>,
+    id: Path<String>,
+) -> Result<Json<Task>, ApiError> {
+    set_watching(state, principal, id, false).await
+}
+
+/// The calling principal starts or stops watching the task: recorded in the thread and as an
+/// event only when something changed.
+async fn set_watching(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path(id): Path<String>,
+    watch: bool,
+) -> Result<Json<Task>, ApiError> {
+    let (task, changed) = state.tasks.set_watching(&id, &principal.id, watch).await?;
+    if changed {
+        let _ = state
+            .emitter
+            .emit(
+                event_kind::TASK_WATCHING,
+                principal.id,
+                None,
+                serde_json::json!({"task": task.id, "watching": watch}),
+            )
+            .await;
+    }
     Ok(Json(task))
 }
 

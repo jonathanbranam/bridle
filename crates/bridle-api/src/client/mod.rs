@@ -720,6 +720,16 @@ impl Client {
     /// Releases the caller's own claim: `claimed` -> `planned`. A 409 means
     /// the caller isn't the current claimant, including if the task isn't
     /// claimed at all.
+    /// The calling principal starts watching the task (a no-op if it already does).
+    pub async fn watch_task(&self, id: &str) -> Result<Task, ClientError> {
+        self.post_empty(&["v1", "tasks", id, "watch"]).await
+    }
+
+    /// The calling principal stops watching the task.
+    pub async fn unwatch_task(&self, id: &str) -> Result<Task, ClientError> {
+        self.post_empty(&["v1", "tasks", id, "unwatch"]).await
+    }
+
     pub async fn release_task(&self, id: &str) -> Result<Task, ClientError> {
         self.post_empty(&["v1", "tasks", id, "release"]).await
     }
