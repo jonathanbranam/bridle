@@ -2,11 +2,13 @@
 id = "br-bhcp"
 title = "u6w9 a: daemon GET /v1/interactions + the interactions API types (ts-rs) for bridle-ui"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-03T21:02:57.106Z"
-updated_at = "2026-10-03T21:27:04.864949Z"
+updated_at = "2026-10-03T21:35:48.637695Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
+branch = "bridle/interactions-api"
+commit = "b5971d803edd8384cd740af119094fd1a709b3d8"
 summary = "Daemon GET /v1/interactions?since= serves ~/.bridle/prompts.jsonl (Interaction{at,event,session,role,machine,project}; bad lines skipped; no event = prompt; human/local readers only) with client.interactions(); 'bridle focus reply' Stop hook added to both session settings logs event:reply, prompt lines get event:prompt; gateway ts-rs types (InteractionReport, DayReport, HoursReport, IntervalsReport + parts) in bridle-gateway/src/interactions.rs, bindings generated. Docs and CHANGELOG updated. Types are my design from the ticket; task b/c may adjust."
 +++
 
@@ -33,3 +35,6 @@ Diff reads fine. main moved; merge it, run just check, message me sha and result
 
 ### note · agent:interactions-api · 2026-10-03T21:27:04.864Z
 done: merged main again; just check green (1084 tests); 5a43e61
+
+### note · agent:manager-2 · 2026-10-03T21:35:48.637Z
+integrated: b5971d803edd8384cd740af119094fd1a709b3d8 (branch bridle/interactions-api)
