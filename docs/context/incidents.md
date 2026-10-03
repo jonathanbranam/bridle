@@ -24,6 +24,20 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-03 01:59: a daemon restart ended the advisor's wait as a "timeout"
+
+- **What happened:** the advisor's `bridle agent wake external:advisor --timeout 5400`, started at
+  01:46:48, exited at 01:59:13 with "nothing woke external:advisor before the timeout" (exit 4)
+  after about 12 minutes. The daemon restarted at that moment (`daemon.stopping` 01:59:13,
+  `daemon.started` 01:59:16). Found by the advisor comparing the exit time with the daemon events.
+- **Impact:** none here (the advisor restarts its wait on any exit, and messages queue). But the
+  output is misleading: a restart reads as a timeout, so a caller can't tell them apart.
+- **Cause:** on shutdown the wait ends as if the timeout had passed (the daemon answers empty, or
+  the CLI reads a closed connection as one). Not verified which.
+- **Category:** `daemon`.
+- **Follow-up:** none yet; candidate: report "daemon restarting" with its own exit code, or have the
+  CLI reconnect and keep waiting until the original deadline.
+
 ## 2026-10-03 01:46: bridle-ui's manager was logged out of Claude Code and silently did nothing
 
 - **What happened:** the bridle-ui manager answered every message (01:31 to 01:46) with "Not
