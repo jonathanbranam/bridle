@@ -7,6 +7,8 @@ use std::path::{Path, PathBuf};
 
 use serde::Deserialize;
 
+use crate::ui::{OnMismatch, UiConfig};
+
 /// Loopback, so a gateway with no config is never reachable from another machine.
 pub const DEFAULT_BIND: &str = "127.0.0.1:7878";
 
@@ -32,6 +34,8 @@ pub enum ConfigError {
          or set `allow_any_interface = true` to mean it"
     )]
     AnyInterface(SocketAddr),
+    #[error("[gateway] ui_version_mismatch is {0:?}; use \"warn\" or \"refuse\"")]
+    BadMismatch(String),
     #[error("[gateway] needs both `username` and `password_hash`, or neither")]
     HalfLogin,
     #[error(
@@ -49,6 +53,10 @@ struct GatewaySection {
     username: Option<String>,
     /// An argon2 PHC string; `bridle gateway hash-password` makes one.
     password_hash: Option<String>,
+    /// Folder of the built UI; default `<bridle home>/ui`.
+    ui_dir: Option<PathBuf>,
+    /// "warn" (default) or "refuse" when the UI's recorded API version differs.
+    ui_version_mismatch: Option<String>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -61,6 +69,7 @@ pub struct GatewayConfig {
     pub bind: SocketAddr,
     /// `None` is the safe default: the gateway then answers nothing but health.
     pub login: Option<Login>,
+    pub ui: UiConfig,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -78,14 +87,14 @@ impl GatewayConfig {
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => String::new(),
             Err(source) => return Err(ConfigError::Read { path, source }),
         };
-        Self::parse(&text).map_err(|e| match e {
+        Self::parse(&text, home).map_err(|e| match e {
             // Parse errors need the path; the rest already say what is wrong.
             ConfigError::Parse { source, .. } => ConfigError::Parse { path, source },
             other => other,
         })
     }
 
-    fn parse(text: &str) -> Result<Self, ConfigError> {
+    fn parse(text: &str, home: &Path) -> Result<Self, ConfigError> {
         let file: File = toml::from_str(text).map_err(|source| ConfigError::Parse {
             path: PathBuf::new(),
             source: Box::new(source),
@@ -111,7 +120,16 @@ impl GatewayConfig {
             }
             _ => return Err(ConfigError::HalfLogin),
         };
-        Ok(Self { bind, login })
+        let on_mismatch = match section.ui_version_mismatch.as_deref() {
+            None | Some("warn") => OnMismatch::Warn,
+            Some("refuse") => OnMismatch::Refuse,
+            Some(other) => return Err(ConfigError::BadMismatch(other.to_string())),
+        };
+        let ui = UiConfig {
+            dir: section.ui_dir.unwrap_or_else(|| home.join("ui")),
+            on_mismatch,
+        };
+        Ok(Self { bind, login, ui })
     }
 }
 
@@ -119,33 +137,50 @@ impl GatewayConfig {
 mod tests {
     use super::*;
 
+    fn parse_at(text: &str) -> Result<GatewayConfig, ConfigError> {
+        GatewayConfig::parse(text, Path::new("/home"))
+    }
+
+    #[test]
+    fn ui_defaults_and_overrides() {
+        let c = parse_at("").expect("parse");
+        assert_eq!(c.ui.dir, Path::new("/home/ui"));
+        assert_eq!(c.ui.on_mismatch, OnMismatch::Warn);
+        let c = parse_at("[gateway]\nui_dir = \"/x\"\nui_version_mismatch = \"refuse\"\n")
+            .expect("parse");
+        assert_eq!(c.ui.dir, Path::new("/x"));
+        assert_eq!(c.ui.on_mismatch, OnMismatch::Refuse);
+        let e = parse_at("[gateway]\nui_version_mismatch = \"x\"\n").expect_err("bad");
+        assert!(matches!(e, ConfigError::BadMismatch(_)), "{e}");
+    }
+
     #[test]
     fn absent_file_and_section_give_loopback_default() {
         let dir = tempfile::tempdir().expect("tempdir");
         let c = GatewayConfig::load(dir.path()).expect("load");
         assert_eq!(c.bind, DEFAULT_BIND.parse().expect("addr"));
         assert!(c.bind.ip().is_loopback());
-        let c = GatewayConfig::parse("[budget]\nx = 1\n").expect("other sections ignored");
+        let c = parse_at("[budget]\nx = 1\n").expect("other sections ignored");
         assert!(c.bind.ip().is_loopback());
     }
 
     #[test]
     fn bind_is_read() {
-        let c = GatewayConfig::parse("[gateway]\nbind = \"127.0.0.1:9000\"\n").expect("parse");
+        let c = parse_at("[gateway]\nbind = \"127.0.0.1:9000\"\n").expect("parse");
         assert_eq!(c.bind.port(), 9000);
     }
 
     #[test]
     fn login_needs_both_halves_and_a_real_hash() {
-        let c = GatewayConfig::parse("").expect("parse");
+        let c = parse_at("").expect("parse");
         assert!(c.login.is_none());
-        let e = GatewayConfig::parse("[gateway]\nusername = \"a\"\n").expect_err("half");
+        let e = parse_at("[gateway]\nusername = \"a\"\n").expect_err("half");
         assert!(matches!(e, ConfigError::HalfLogin), "{e}");
-        let e = GatewayConfig::parse("[gateway]\nusername = \"a\"\npassword_hash = \"x\"\n")
-            .expect_err("bad hash");
+        let e =
+            parse_at("[gateway]\nusername = \"a\"\npassword_hash = \"x\"\n").expect_err("bad hash");
         assert!(matches!(e, ConfigError::BadHash), "{e}");
         let hash = crate::auth::hash_password("pw").expect("hash");
-        let c = GatewayConfig::parse(&format!(
+        let c = parse_at(&format!(
             "[gateway]\nusername = \"a\"\npassword_hash = \"{hash}\"\n"
         ))
         .expect("ok");
@@ -154,18 +189,16 @@ mod tests {
 
     #[test]
     fn bad_bind_is_rejected() {
-        let e = GatewayConfig::parse("[gateway]\nbind = \"nope\"\n").expect_err("bad");
+        let e = parse_at("[gateway]\nbind = \"nope\"\n").expect_err("bad");
         assert!(matches!(e, ConfigError::BadBind { .. }), "{e}");
     }
 
     #[test]
     fn any_interface_needs_explicit_opt_in() {
-        let e = GatewayConfig::parse("[gateway]\nbind = \"0.0.0.0:7878\"\n").expect_err("refused");
+        let e = parse_at("[gateway]\nbind = \"0.0.0.0:7878\"\n").expect_err("refused");
         assert!(matches!(e, ConfigError::AnyInterface(_)), "{e}");
-        let c = GatewayConfig::parse(
-            "[gateway]\nbind = \"0.0.0.0:7878\"\nallow_any_interface = true\n",
-        )
-        .expect("allowed");
+        let c = parse_at("[gateway]\nbind = \"0.0.0.0:7878\"\nallow_any_interface = true\n")
+            .expect("allowed");
         assert!(c.bind.ip().is_unspecified());
     }
 

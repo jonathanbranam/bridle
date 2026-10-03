@@ -21,7 +21,7 @@ pub async fn run(args: &GatewayArgs) -> Result<(), CliError> {
     let listener = bridle_gateway::bind(&config)
         .await
         .with_context(|| format!("binding the gateway to {}", config.bind))?;
-    bridle_gateway::serve(listener, config.login)
+    bridle_gateway::serve(listener, config.login, config.ui)
         .await
         .context("gateway")?;
     Ok(())

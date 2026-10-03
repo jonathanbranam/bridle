@@ -27,7 +27,8 @@ bridle gateway                                                  run the human we
                                              `~/.bridle/config.toml`: `bind` (default `127.0.0.1:7878`; `0.0.0.0` refused unless `allow_any_interface = true`).
                                              Only this command reads that section, so a bad one fails here and nowhere else. `GET /api/v1/health`
                                              is open; `username` + `password_hash` (argon2) enable `POST /api/v1/login` (JSON `username`, `password`; sets an `HttpOnly`,
-                                             `SameSite=Strict` session cookie) and `/logout`; every other `/api/v1` route needs that session, and with no login configured only health answers
+                                             `SameSite=Strict` session cookie) and `/logout`; every other `/api/v1` route needs that session, and with no login configured only health answers.
+                                             Every other path serves the UI folder (`ui_dir`, default `~/.bridle/ui/`; open, so the login page can load; index fallback; no `..`); its `api-version` file is checked against the gateway's, `ui_version_mismatch` = `warn` (default; logged, shown in health's `ui`) or `refuse` (503 at `/`)
 bridle gateway hash-password                                    read a password on stdin, print its argon2 hash for `[gateway] password_hash`
 bridle daemon serve   [--repo PATH] [--workspace DIR] [--listen ADDR] [--detach] [--take-over]   --take-over: claim a project another host owns; refuses (both SHAs named) unless
                                               origin was reached and bridle/state + the integration branch fast-forward cleanly

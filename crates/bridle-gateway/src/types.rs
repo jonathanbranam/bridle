@@ -8,6 +8,7 @@ use ts_rs::{Config, TS};
 
 use crate::auth::{Credentials, SessionInfo};
 use crate::discovery::{ProjectStatus, Projects};
+use crate::ui::UiHealth;
 
 /// Writes every API type (and what it depends on) into `dir`.
 pub fn export_all(dir: &Path) -> Result<(), ts_rs::ExportError> {
@@ -16,6 +17,7 @@ pub fn export_all(dir: &Path) -> Result<(), ts_rs::ExportError> {
     Projects::export_all(&config)?;
     Credentials::export_all(&config)?;
     SessionInfo::export_all(&config)?;
+    UiHealth::export_all(&config)?;
     Ok(())
 }
 

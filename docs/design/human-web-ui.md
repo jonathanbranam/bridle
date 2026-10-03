@@ -49,7 +49,8 @@ rest, so a stolen session can answer and check off, not run work.
 - **The UI** is its own TypeScript repo, `bridle-ui`, beside `bridle/`. Its build output is
   installed into a folder the gateway serves, **`~/.bridle/ui/`**, so page and API share an
   origin. The build records the API version it targets; the gateway warns or refuses on a
-  mismatch. Not compiled into the `bridle` binary (no Node in bridle's build). In development
+  mismatch (`ui_version_mismatch`, default warn). The UI files are served without a session, since
+  the page must load to show its login form; every API route stays guarded. Not compiled into the `bridle` binary (no Node in bridle's build). In development
   the UI's dev server proxies API calls to the gateway.
 
 ## 4. Multi-machine
