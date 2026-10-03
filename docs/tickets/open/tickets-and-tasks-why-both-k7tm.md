@@ -8,7 +8,7 @@ changes: []
 specs: []
 needs: []
 see: [ticket-state-without-moving-files-p2ys, which-docs-live-in-bridle-and-which-in-markdown-hv8e, refining-a-task-with-the-human-before-it-ships-hvxk]
-tasks: [br-3724, br-9e15]
+tasks: [br-3724, br-9e15, br-6c69]
 ---
 
 ## The ask
