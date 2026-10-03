@@ -220,3 +220,6 @@
 {"actor":"human","at":"2026-10-03T00:48:15.029Z","from":"","task":"br-fef3","to":"open"}
 {"actor":"agent:manager-2","at":"2026-10-03T00:50:49.343528Z","from":"planned","task":"br-a913","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-10-03T00:56:30.951846Z","from":"planned","task":"br-55f6","to":"integrated"}
+{"actor":"human","at":"2026-10-03T00:57:27.429Z","from":"","task":"br-6c6a","to":"open"}
+{"actor":"agent:pm-1","at":"2026-10-03T00:57:28.429066Z","from":"open","task":"br-6c6a","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-03T00:57:29.208539Z","queue":"reprioritized"}
