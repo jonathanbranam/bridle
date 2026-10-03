@@ -24,6 +24,22 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-03 21:36-22:15: three merges sat on local main, unpushed
+
+- **What happened:** manager-2 merged br-bhcp (b5971d8), br-25nn and br-59vt (9bd4587) into the
+  clone's `main` and reported each as landed, but none were pushed: `main` was 3 ahead of
+  `origin/main` and CI never ran on them, while `bridle status` still said "pushed 0m ago". Found
+  by the orchestrator looking for the CI run of 9bd4587; it pushed at ~22:15.
+- **Impact:** about 40 minutes of the human's same-day u6w9 work unverified by CI and invisible
+  on GitHub; bridle-ui was told to sync types from a commit not on the remote.
+- **Cause:** manager-2 (m-4073): after earlier landings `git push origin main` said "Everything
+  up-to-date" (something else had already pushed), and it took that to mean landing pushes on its
+  own, so it stopped pushing. The status "pushed" line is the state repo, not the clone's `main`,
+  so it hid the gap.
+- **Category:** `merge`, `role`.
+- **Follow-up:** none; manager-2 pushes after every land again. If it recurs, make landing push
+  itself.
+
 ## 2026-10-03 ~15:30: the main advisor took a named advisor's brief
 
 - **What happened:** the orchestrator sent a brief "For advisor tickets: ..." (m-3985) to
