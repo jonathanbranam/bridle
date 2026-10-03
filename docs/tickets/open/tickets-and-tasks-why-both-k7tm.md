@@ -107,6 +107,16 @@ So, for now:
    manager may get that call; not now.
 4. Kind-based automatic tasks: not now.
 
+The human, clarifying (2026-10-03, verbatim):
+
+> none of this should change some of our standing rules, which is that you know if there's a
+> critical issue, the orchestrator can create a task and schedule the work to fix something.
+> That's still within the orchestrator's set of permissions and allowed things to do. But for work
+> that's you know like feature work or larger changes, they should always be run by me first.
+
+5. **Unchanged: critical fixes.** For a critical issue the orchestrator still creates a task and
+   schedules the fix itself. Feature work and larger changes always go to the human first.
+
 Still open: which existing state means "ready" (`planned`, or a new one), what happens to open
 tasks already made from tickets, and the rest of this ticket (whether tickets and tasks stay
 separate).
