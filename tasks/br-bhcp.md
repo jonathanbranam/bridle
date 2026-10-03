@@ -4,7 +4,7 @@ title = "u6w9 a: daemon GET /v1/interactions + the interactions API types (ts-rs
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-03T21:02:57.106Z"
-updated_at = "2026-10-03T21:35:48.637695Z"
+updated_at = "2026-10-03T21:36:42.958650Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 branch = "bridle/interactions-api"
@@ -38,3 +38,6 @@ done: merged main again; just check green (1084 tests); 5a43e61
 
 ### note · agent:manager-2 · 2026-10-03T21:35:48.637Z
 integrated: b5971d803edd8384cd740af119094fd1a709b3d8 (branch bridle/interactions-api)
+
+### note · agent:manager-2 · 2026-10-03T21:36:42.958Z
+cleanup: removed agent interactions-api, branch bridle/interactions-api
