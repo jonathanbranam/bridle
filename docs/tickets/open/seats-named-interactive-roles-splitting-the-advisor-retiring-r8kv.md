@@ -245,3 +245,32 @@ to the new name. Least churn, and the word already fits; **consultant** if a cle
 
 Recommendation: **seat**: borrowing the term makes Yegge's essays and curia directly readable as
 prior art.
+
+## Decided: split the roles, start now (the human, 2026-10-03)
+
+Verbatim (via the advisor):
+
+> Also push ahead with the work to remove use interactions from orchestrator. We will keep the role
+> interactive for now but I want a clear split. A new triage kind of role that talks to me about
+> the running system and the orchestrator role becomes less communicative and more only keeping
+> the system running. The orch should reach me through the triage role only with messages and not
+> expect to send and receive messages to me interactively.
+>
+> Also as a follow on to that remove the prompts that make the advisors get involved in running
+> work - they should be only handling talking to me doing research and send and receiving
+> messages. Not checking on bridle status. They still wait amd wake however.
+
+("use interactions" is "user interactions".)
+
+Three roles:
+
+| Role | Talks to the human about | Does | Doesn't |
+|---|---|---|---|
+| **triage** (working name; see below) | the running system: status, the human's to-dos, the workforce's questions, incidents, approvals | reads the human's inbox and to-dos, `bridle status`, relays the human's answers and approvals to the orchestrator and agents; waits and wakes | run the workforce itself |
+| **orchestrator** | nobody interactively | keeps the system running; reaches the human only by **messages to triage**; still an interactive session for now | expect to talk with the human |
+| **advisor** | anything the human brings: design, tickets, research | talks, researches, files tickets, sends and receives messages; waits and wakes | check `bridle status`, triage the human's inbox or questions, get involved in running work |
+
+**Name.** The human says "triage"; the naming research above recommended "aide" because "triage"
+already means the product manager's triage of open tasks and a planned `bridle-triage` skill.
+Working name **triage** until the human picks (check it against `docs/context/naming.md`); a
+rename before it lands is cheap.
