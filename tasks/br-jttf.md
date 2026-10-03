@@ -2,11 +2,14 @@
 id = "br-jttf"
 title = "Supervise every interactive session like the orchestrator: context warnings every 50k from 150k, handover and restart on request (jttf)"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-03T21:19:06.442Z"
-updated_at = "2026-10-03T21:20:15.415169Z"
+updated_at = "2026-10-03T22:50:20.179774Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
+branch = "bridle/session-context"
+commit = "c769c0dc76d85bc217a42f9885aa046b90c8629a"
+summary = "Every interactive session (advisors, named advisors, triage) now gets context steps at [sessions] warn (default 150k/200k/250k/300k; per role in [sessions.advisor]/[sessions.triage]; config.rs SessionsConfig). sessions.rs: each step fires once (highest only on a jump, re-armed by a lower reading), emits session.context (+step), and sends a system note to the session and to external:triage (one note for triage itself), asking again each step. 'bridle session keep <id>' (POST /v1/sessions/keep, session.override event) records the human's override and tells the session; refused before step 0 and at the hard limit. At 300k the daemon runs 'bridle session restart <id>' (current_exe, in the repo; handover first, then --fresh if no note) and tells triage the outcome. Triage now registers as a session (identity 'triage'), reads a handover note at start, and relaunches via 'session triage'. Caveats: the restart is tested with a stub program, not a live tmux; the daemon's restart needs a resolvable human/daemon token from the repo cwd; per-role config covers advisor and triage only. Docs: orchestrator-supervision, roles-and-config, cli, CHANGELOG."
 +++
 
 original id: jttf
@@ -19,3 +22,9 @@ Files: crates/bridle-daemon (supervisor, session registry), crates/bridle-api/sr
 
 ### note · agent:pm-1 · 2026-10-03T21:20:15.415Z
 Split: this is part 1 (thresholds); part 2 is br-qe4d (restart command, session listing). Part 1's hard-limit restart uses part 2's command, so br-jttf is blocked by br-qe4d.
+
+### note · agent:session-context · 2026-10-03T22:50:14.770Z
+done: [sessions] warn steps 150/200/250/300k for advisors+triage, warnings to session and triage, 'session keep' override, forced restart at 300k; just check green (1112 tests); 9f67724
+
+### note · agent:manager-2 · 2026-10-03T22:50:20.179Z
+integrated: c769c0dc76d85bc217a42f9885aa046b90c8629a (branch bridle/session-context)
