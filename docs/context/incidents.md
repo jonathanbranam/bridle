@@ -1,13 +1,39 @@
 # Incidents
 
-A log of lost connections and sessions that stopped unexpectedly, so patterns show up over
-time (the human, 2026-09-28: "Record this as an incident of losing connection so that we can
-keep track of these"). Newest first. Times are UTC. Add an entry whenever a session, Remote
-Control connection, daemon or agent is lost for no known reason. Related:
-[[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
+A running log of every failure or problem we find, so patterns show up and we learn from them
+(the human, 2026-10-02: "Anytime there's an incident or an issue that we discover, we should log
+it and explain the reason for it ... so we can analyze it and learn from our failures"). It began
+as a log of lost connections and sessions (the human, 2026-09-28); it now covers anything that
+went wrong: something the human reports to the orchestrator or an advisor, or anything a role
+discovers (a crash, a stall, a red `main`, a bad merge, work that sat stuck, a role that did the
+wrong thing, a wrong assumption that cost time).
 
-Each entry covers what was lost, when, what still worked, the evidence, the impact and the
-cause (or "unknown").
+This is a record, not a to-do list. Work that comes out of an incident is a ticket or task,
+linked from the entry. An active incident that agents must know about is also an `incident`
+task (`docs/design/agent-host/incidents.md`); this log is the after-the-fact record of it.
+
+Newest first. Times are UTC. Each entry has:
+
+- **What happened** and when, and how it was found (reported by whom, or discovered how).
+- **Impact:** what it cost (time, work, money, trust).
+- **Cause:** the root cause, or "unknown".
+- **Category:** one or more of `connectivity`, `host` (OS, machine, power), `daemon`, `ci`,
+  `merge`, `coordination` (work stuck or dropped between roles), `role` (a role or prompt did
+  the wrong thing), `config`, `external` (Claude Code, GitHub, network), `human-process`.
+- **Follow-up:** the ticket or task, or "none" and why.
+
+Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
+
+## 2026-10-02 23:25 and 23:40: ready tasks sat until the orchestrator nudged
+
+- **What happened:** br-5924 finished its settle period at 23:25 and br-1e88 at 23:40, but the
+  idle development manager (manager-2) started neither until the orchestrator sent a nudge
+  (found by the orchestrator checking `bridle agents` after each settle time).
+- **Impact:** a few minutes each; overnight, with no one watching, a ready task could sit for hours.
+- **Cause:** nothing wakes an idle manager when a task's settle period ends; the settle period
+  (ny9u, br-3c71) made tasks startable later without a matching event.
+- **Category:** `coordination`, `daemon`.
+- **Follow-up:** ny9u follow-up (7f28faa), task br-96cc (held until the human is back).
 
 ## 2026-09-28, from 22:03: the laptop on battery and a phone hotspot (observation)
 

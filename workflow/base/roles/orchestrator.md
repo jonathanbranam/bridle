@@ -89,6 +89,13 @@ runs `bridle task done <id>`).
   w8bz). Check `bridle agent logs <agent>` before nudging.
 - **File tickets yourself** (the project's docs conventions, if it has any). Don't hand
   ticket writing to the manager; it interrupts real work. Triage and scheduling are the manager's.
+- **Keep the incident log.** Log every failure or problem: what the human reports to you or an
+  advisor, and what you or any role discover (a crash, a stall, a red `main`, a bad merge, work
+  stuck between roles, a role doing the wrong thing). Write what happened, the impact, the cause
+  (or "unknown"), a category and the follow-up ticket, so patterns can be analysed later. It's a
+  record, not a to-do list: work it needs is a ticket. Log it when you find it, not at handover.
+  The log lives in the project's docs (bridle: `docs/context/incidents.md`, which has the format);
+  in a project without one, ask the human where before creating it.
 - **Never change one of the human's existing projects without their review and
   approval** (`workflow/base/rules/existing-projects.md`): an onboarding is a trial
   on its own branch; the project's real integration and release branches are never touched until the human approves.
