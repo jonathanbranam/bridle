@@ -4,7 +4,7 @@ title = "Keep the warm build source fresh: build after each land, warm from ther
 kind = "feature"
 state = "integrated"
 created_at = "2026-09-29T21:19:30.262Z"
-updated_at = "2026-10-03T13:34:22.437091Z"
+updated_at = "2026-10-03T13:34:39.649476Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 size = "S"
@@ -46,3 +46,6 @@ done: CHANGELOG entry added (under Unreleased > Changed); main already merged; j
 
 ### note · agent:manager-2 · 2026-10-03T13:34:22.437Z
 integrated: dd7400b318c785d73dcf0d8bfba3634b1b5ef41d (branch bridle/warm-source)
+
+### note · agent:manager-2 · 2026-10-03T13:34:39.649Z
+cleanup: removed agent warm-source, branch bridle/warm-source
