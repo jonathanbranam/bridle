@@ -1,4 +1,13 @@
 [[tier]]
+tasks = ["br-bhcp"]
+
+[[tier]]
+tasks = ["br-25nn"]
+
+[[tier]]
+tasks = ["br-59vt"]
+
+[[tier]]
 tasks = [
     "br-88d4",
     "br-6b8a",
@@ -17,39 +26,7 @@ tasks = [
 tasks = ["br-79c3"]
 
 [[tier]]
-tasks = ["br-14cd"]
-
-[[tier]]
 tasks = [
     "br-7172",
     "br-c657",
 ]
-
-[[tier]]
-tasks = [
-    "br-2242",
-    "br-ee78",
-    "br-c078",
-    "br-66a0",
-]
-
-[[tier]]
-tasks = [
-    "br-eb50",
-    "br-899d",
-]
-
-[[tier]]
-tasks = ["br-7605"]
-
-[[tier]]
-tasks = ["br-01a4"]
-
-[[tier]]
-tasks = ["br-e5f1"]
-
-[[tier]]
-tasks = ["br-9e15"]
-
-[[tier]]
-tasks = ["br-6c69"]

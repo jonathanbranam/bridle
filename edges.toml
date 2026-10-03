@@ -537,3 +537,21 @@ from = "br-6c69"
 to = "br-9e15"
 kind = "blocks"
 created_at = "2026-10-03T19:32:59.011Z"
+
+[[edge]]
+from = "br-bhcp"
+to = "br-25nn"
+kind = "blocks"
+created_at = "2026-10-03T21:03:04.489Z"
+
+[[edge]]
+from = "br-bhcp"
+to = "br-59vt"
+kind = "blocks"
+created_at = "2026-10-03T21:03:04.506Z"
+
+[[edge]]
+from = "br-25nn"
+to = "br-59vt"
+kind = "blocks"
+created_at = "2026-10-03T21:03:04.523Z"
