@@ -74,3 +74,24 @@ override mechanism, already explainable with `rules explain`.
 
 Related: chvf (`br-751e`) changes where the base layer is read from, not how it reaches agents;
 it doesn't conflict.
+
+## Measured: what step 1 adds (2026-10-02)
+
+The human, verbatim: "if you want to measure it, measure it. Do it right now."
+
+`bridle prime worker` prints exactly the resolved worker rules (id, severity, layer, full body),
+so its output is what step 1 would add. Tokens estimated at ~3.5 characters each.
+
+| Project | Worker rules | Characters | ~Tokens |
+|---|---|---|---|
+| bridle | 18 (all base) | 15,907 | ~4.5K |
+| meta-notes | 25 (18 base + 7 of its own) | 21,702 | ~6K |
+
+Against spike 08's worker: first call 17.5K tokens (system prompt 5.0K), whole session ~55K
+mean. Step 1 adds ~25-35% to the first call and ~8-11% to an average session's context.
+It's the stable, cached prefix, so the cost is mostly cache reads. Step 2 takes back little:
+`worker.md`'s rule summaries are ~1.1K characters (~300 tokens). Spike 08's "12.5K" for `prime
+worker` doesn't match today's output; it's likely characters at an earlier commit.
+
+Most of the size is each rule's "Why" (the human's words, history). An option if it matters:
+render only the statement at spawn and leave the Why in the file, roughly halving it.
