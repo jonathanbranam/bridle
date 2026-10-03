@@ -104,3 +104,8 @@ two", and after the measurement: "Yep, that's good. Let's get that out there and
 Approved: steps 1 (resolved rules into the spawn prompt), 2 (cut the restatements from
 `roles/*.md`) and 4 (the small breaks). Sent to the orchestrator to plan. Step 3 (layer hooks at
 spawn) and the role-addendum question are still open.
+
+Step 3 approved too. The human, verbatim (2026-10-02): "I don't care much about this particular
+hook or rule, to, but the idea is sound and the implementation is sound and let's make it work so
+we can have additional hooks." The point is the mechanism (layer hooks passed at spawn, beside the
+Stop hook), not `arch-guard` itself. Sent to the orchestrator.
