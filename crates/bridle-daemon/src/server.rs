@@ -494,6 +494,7 @@ async fn get_handover(
 async fn orchestrator_wake(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
+    Query(q): Query<bridle_api::types::OrchestratorWakeQuery>,
 ) -> Result<Json<WakeResponse>, ApiError> {
     if principal.id != crate::wake::ORCHESTRATOR {
         return Err(ApiError::forbidden(
@@ -502,9 +503,10 @@ async fn orchestrator_wake(
     }
     // Held while the request is open; a client that hangs up drops this future and the guard.
     let _waiting = state.waiters.opened();
+    let timeout = crate::wake::clamp_timeout(q.timeout_secs, crate::wake::POLL_TIMEOUT);
     let mut shutdown = state.shutdown_tx.subscribe();
     let wakes = tokio::select! {
-        w = state.wakes.wait(crate::wake::POLL_TIMEOUT) => w,
+        w = state.wakes.wait(timeout) => w,
         _ = shutdown.wait_for(|v| *v) => Vec::new(),
     };
     if !wakes.is_empty() {
@@ -536,8 +538,7 @@ async fn principal_wake(
             "a principal may only wait for its own wake (or the human for any)",
         ));
     }
-    let timeout =
-        Duration::from_secs(q.timeout_secs.unwrap_or(u64::MAX)).min(crate::wake::POLL_TIMEOUT);
+    let timeout = crate::wake::clamp_timeout(q.timeout_secs, crate::wake::MAX_WAKE_TIMEOUT);
     let mut shutdown = state.shutdown_tx.subscribe();
     let reasons = tokio::select! {
         r = crate::principal_wake::wait(&state.store, &state.emitter, &target, timeout) => r?,

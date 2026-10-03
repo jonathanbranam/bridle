@@ -1066,7 +1066,7 @@ pub struct RmArgs {
 pub struct WakeArgs {
     /// `external:advisor`, `external:advisor/<name>`, `human` or an agent name; must be you.
     pub identifier: String,
-    /// Give up after this many seconds (exit 4); default and cap are 25 minutes.
+    /// Give up after this many seconds (exit 4); the cap (and default) is 6900 s (1 h 55 min).
     #[arg(long)]
     pub timeout: Option<u64>,
 }
@@ -1607,9 +1607,13 @@ pub enum FocusAction {
 #[derive(Debug, Args)]
 pub struct WaitForWakeArgs {
     /// The advisor's mail-only waiter: return when unread mail from the email bridge arrives
-    /// (`nothing` after 25 minutes). `external:advisor`.
+    /// (`nothing` at the timeout). `external:advisor`.
     #[arg(long)]
     pub mail: bool,
+    /// Give up after this many seconds and print `nothing`; default 25 minutes, cap 6900 s
+    /// (1 h 55 min).
+    #[arg(long)]
+    pub timeout: Option<u64>,
 }
 
 #[derive(Debug, Args)]
@@ -2680,6 +2684,8 @@ mod tests {
     fn wait_for_wake_parses() {
         let cli = parse(&["wait-for-wake"]).unwrap();
         assert!(matches!(cli.command, Command::WaitForWake(ref a) if !a.mail));
+        let cli = parse(&["wait-for-wake", "--timeout", "6900"]).unwrap();
+        assert!(matches!(cli.command, Command::WaitForWake(ref a) if a.timeout == Some(6900)));
         let cli = parse(&["wait-for-wake", "--mail"]).unwrap();
         assert!(matches!(cli.command, Command::WaitForWake(ref a) if a.mail));
     }

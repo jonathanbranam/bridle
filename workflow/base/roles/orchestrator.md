@@ -57,6 +57,8 @@ runs `bridle task done <id>`).
   overloading the machine.
 - **Watch, don't poll by hand.** Run `bridle orchestrator wait-for-wake` in the background. The
   daemon holds it until something needs you, then it prints the reasons and exits.
+  Choose its `--timeout SECS` yourself (default 25 minutes, max 6900): long when the work is
+  quiet, shorter when it is busy or unstable. A wake ends the wait at once either way.
   One waiter watches one daemon. Run one per project you hold an orchestrator token for
   (`--project <name>`; the projects are under `[orchestrator]` in the credentials file), or
   that project's messages to you are never seen (the human, 2026-10-01). Wakes are:

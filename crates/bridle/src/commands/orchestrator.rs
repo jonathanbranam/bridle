@@ -310,14 +310,15 @@ pub(super) fn unread_mail(
 
 /// `bridle wait-for-wake --mail`: the advisor's mail-only waiter. Polls its own inbox for mail
 /// from the bridge and prints it; `nothing` after 25 minutes, like the orchestrator's waiter.
-pub(super) async fn wait_for_mail(cli: &Cli) -> Result<(), CliError> {
+pub(super) async fn wait_for_mail(cli: &Cli, timeout: Option<u64>) -> Result<(), CliError> {
     let client = client_for(cli).await?;
     let query = MessageQuery {
         to: Some("me".to_string()),
         unread: true,
         ..Default::default()
     };
-    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(25 * 60);
+    let deadline = std::time::Instant::now()
+        + std::time::Duration::from_secs(timeout.unwrap_or(25 * 60).min(6900));
     loop {
         let mail = unread_mail(client.list_messages(&query).await?);
         if !mail.is_empty() {
@@ -338,9 +339,9 @@ pub(super) async fn wait_for_mail(cli: &Cli) -> Result<(), CliError> {
     }
 }
 
-pub(super) async fn wait_for_wake(cli: &Cli) -> Result<(), CliError> {
+pub(super) async fn wait_for_wake(cli: &Cli, timeout: Option<u64>) -> Result<(), CliError> {
     let client = client_for(cli).await?;
-    let wakes = client.orchestrator_wake().await?.wakes;
+    let wakes = client.orchestrator_wake(timeout).await?.wakes;
     if cli.json {
         println!(
             "{}",
@@ -554,7 +555,7 @@ mod prime_tests {
     fn advisor_prime_includes_wake_command_for_unnamed_advisor() {
         let role = include_str!("../../../../workflow/base/roles/advisor.md");
         assert!(
-            role.contains("bridle agent wake external:advisor --timeout 300"),
+            role.contains("bridle agent wake external:advisor --timeout 5400"),
             "advisor prime should include wake command for unnamed advisor"
         );
     }
@@ -563,7 +564,7 @@ mod prime_tests {
     fn advisor_prime_includes_wake_command_for_named_advisor() {
         let role = include_str!("../../../../workflow/base/roles/advisor.md");
         assert!(
-            role.contains("bridle agent wake external:advisor/$BRIDLE_ADVISOR_NAME --timeout 300"),
+            role.contains("bridle agent wake external:advisor/$BRIDLE_ADVISOR_NAME --timeout 5400"),
             "advisor prime should include wake command for named advisor"
         );
     }

@@ -72,7 +72,7 @@ bridle queue set --tier T,T... [--tier T,T...]   replace the whole queue, one --
 bridle queue add-tier <task>...                  append one tier at the back (PM, orchestrator or human only)
 bridle task dep add|rm <task> (--to OTHER [--kind K] | --blocked-by OTHER)   K: blocks (default)|parent|discovered-from|related|supersedes|duplicates
 bridle wait    <task> [--until STATE] [--or-message] [--timeout SECS]   block until the task changes state; exit 4 on timeout
-bridle agent wake <identifier> [--timeout SECS]   blocks until the daemon decides that principal should wake (reasons: it has an unread message, or someone else touched a task it created or claimed since the call started); prints each reason with its message ids, or the task id and event kind (`--json`: `{reasons:[{reason,message_ids,task?,event?}]}`); exit 0 woken, 4 timed out; caller must be that principal (or the human), else 403
+bridle agent wake <identifier> [--timeout SECS]   (cap and default 6900 s = 1 h 55 min) blocks until the daemon decides that principal should wake (reasons: it has an unread message, or someone else touched a task it created or claimed since the call started); prints each reason with its message ids, or the task id and event kind (`--json`: `{reasons:[{reason,message_ids,task?,event?}]}`); exit 0 woken, 4 timed out; caller must be that principal (or the human), else 403
 bridle agent interrupt <agent> [--drop-held]
 bridle agent stop    <agent> [--now]      bridle agent resume <agent> [--ignore-budget]
 bridle agent renew   <agent> [--ignore-budget]    stop + fresh process/session, same worktree/branch/role/model
@@ -103,11 +103,11 @@ bridle orchestrator note-session            the orchestrator launcher's SessionS
 bridle focus gate                           the UserPromptSubmit hook of focus hours (cvaq): in a `quiet` `[[focus]]` period prints
                                              nudge context on the first prompt and every 5 min after; silent otherwise; never fails
 bridle orchestrator handover done                       the orchestrator's state is written: the daemon stops and relaunches its session (marker only); human and external:orchestrator only
-bridle orchestrator wait-for-wake --mail                  the advisor's mail-only waiter: returns when unread mail from external:mail arrives (`nothing` after 25 min); polls the inbox every 10 s
+bridle orchestrator wait-for-wake --mail [--timeout SECS]                  the advisor's mail-only waiter: returns when unread mail from external:mail arrives (`nothing` at the timeout, default 25 min, cap 6900 s); polls the inbox every 10 s
 bridle orchestrator handover write --file <path>|-      record the orchestrator's handover note (human and external:orchestrator only); prints its id
 bridle orchestrator handover list | show <id>           the notes, newest first · one note
 bridle mail run                              the email bridge for this project: inbound mail, question mails, daily digest (docs/design/mail.md); runs as external:mail
-bridle orchestrator wait-for-wake                        the orchestrator's background watcher: waits for a wake condition, prints it and exits 0 (`nothing` after 25 min); external:orchestrator only
+bridle orchestrator wait-for-wake [--timeout SECS]                  the orchestrator's background watcher: waits for a wake condition, prints it and exits 0 (`nothing` at the timeout, default 25 min, cap 6900 s); external:orchestrator only
 bridle arch-guard                          Claude Code PreToolUse hook: blocks design/architecture/ edits outside an arch-revision task
 bridle stop-check                           Claude Code Stop hook for the worker role; refuses to stop
                                              with an unreleased claim and no thread entry since claiming

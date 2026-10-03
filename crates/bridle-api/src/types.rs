@@ -228,12 +228,20 @@ pub struct WakeResponse {
     pub wakes: Vec<WakeReason>,
 }
 
+/// `GET /v1/orchestrator/wake`.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct OrchestratorWakeQuery {
+    /// Give up after this many seconds (default 25 minutes; the daemon caps it at 1 h 55 min).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub timeout_secs: Option<u64>,
+}
+
 /// `GET /v1/wake`: hold until the daemon decides `principal` should wake.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PrincipalWakeQuery {
     /// `external:advisor`, `external:advisor/<name>`, `human` or an agent name.
     pub principal: String,
-    /// Give up after this many seconds (the daemon caps it at 25 minutes; absent is the cap).
+    /// Give up after this many seconds (the daemon caps it at 1 h 55 min; absent is the cap).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub timeout_secs: Option<u64>,
 }

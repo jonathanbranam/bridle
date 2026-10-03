@@ -909,7 +909,7 @@ async fn visitor_principal_sends_and_reads_but_is_not_the_orchestrator() {
         .await
         .expect("visitor sends");
 
-    let err = visitor.orchestrator_wake().await.unwrap_err();
+    let err = visitor.orchestrator_wake(None).await.unwrap_err();
     assert!(
         matches!(err, bridle_api::ClientError::Api { status: 403, .. }),
         "{err:?}"

@@ -27,6 +27,17 @@ const FIVE_HOUR_WAKE: f64 = 0.93;
 const SEVEN_DAY_WAKE: f64 = 0.85;
 /// A poll nothing wakes is answered empty after this long.
 pub const POLL_TIMEOUT: Duration = Duration::from_secs(25 * 60);
+/// The longest any wake request may ask to wait: 1 h 55 min, under Claude Code's 2-hour kill of
+/// background tasks. Both wake routes clamp a caller's `timeout_secs` to it.
+pub const MAX_WAKE_TIMEOUT: Duration = Duration::from_secs(6900);
+
+/// A wake request's wait: `requested` seconds, or `default` when absent, never over
+/// [`MAX_WAKE_TIMEOUT`]. Shared by both wake routes.
+pub fn clamp_timeout(requested: Option<u64>, default: Duration) -> Duration {
+    requested
+        .map_or(default, Duration::from_secs)
+        .min(MAX_WAKE_TIMEOUT)
+}
 
 /// Who is waiting: a `wait-for-wake` request open now, or one that closed within the grace.
 pub struct Waiters {
@@ -359,6 +370,18 @@ mod tests {
 
     use super::*;
     use crate::store::{NewMessage, RecipientKind};
+
+    #[test]
+    fn wake_timeouts_are_honoured_up_to_the_cap_and_clamped_above() {
+        let min = |m: u64| Duration::from_secs(m * 60);
+        assert_eq!(clamp_timeout(Some(90 * 60), POLL_TIMEOUT), min(90));
+        assert_eq!(clamp_timeout(Some(6900), POLL_TIMEOUT), min(115));
+        assert_eq!(clamp_timeout(Some(7200), POLL_TIMEOUT), min(115));
+        assert_eq!(clamp_timeout(Some(u64::MAX), POLL_TIMEOUT), min(115));
+        // Absent: the orchestrator's 25 minutes stay its default; an agent's default is the cap.
+        assert_eq!(clamp_timeout(None, POLL_TIMEOUT), min(25));
+        assert_eq!(clamp_timeout(None, MAX_WAKE_TIMEOUT), min(115));
+    }
 
     struct Rig {
         store: Store,
