@@ -579,13 +579,31 @@ impl Store {
         kind: TaskKind,
         created_by: &str,
     ) -> Result<TaskRow, StoreError> {
+        self.insert_task_wanting(prefix, title, kind, created_by, None)
+            .await
+    }
+
+    /// [`Store::insert_task`], but with `<prefix>-<ticket>` as the id when `ticket` is given
+    /// and no task has it yet (a ticket's first task takes its id; later ones fall back to a
+    /// fresh id).
+    pub async fn insert_task_wanting(
+        &self,
+        prefix: &str,
+        title: &str,
+        kind: TaskKind,
+        created_by: &str,
+        ticket: Option<&str>,
+    ) -> Result<TaskRow, StoreError> {
         let (prefix, title, created_by) = (
             prefix.to_string(),
             title.to_string(),
             created_by.to_string(),
         );
-        self.with_conn(move |c| sync::insert_task(c, &prefix, &title, kind, &created_by))
-            .await
+        let wanted = ticket.map(|t| format!("{prefix}-{t}"));
+        self.with_conn(move |c| {
+            sync::insert_task(c, &prefix, &title, kind, &created_by, wanted.as_deref())
+        })
+        .await
     }
 
     pub async fn get_task(&self, id: &str) -> Result<Option<TaskRow>, StoreError> {
@@ -1324,16 +1342,23 @@ mod sync {
         format!("a-{}", random_base36(5))
     }
 
-    /// `len` hex characters, from a fresh v4 UUID's own hex text (already a
-    /// CSPRNG draw; see `random_base36` above for why there's no `rand`
-    /// dependency here). Used for task ids (storage.md: `tw-7fa2`), whose
-    /// example suffixes are hex, not base36.
-    fn random_hex(len: usize) -> String {
-        Uuid::new_v4().simple().to_string()[..len].to_string()
+    /// The id alphabet shared with tickets (`bridle ticket new`): no `i`, `l`, `o`, `0`, `1`.
+    const ID_ALPHABET: &[u8] = b"abcdefghjkmnpqrstuvwxyz23456789";
+
+    /// `len` characters of [`ID_ALPHABET`], drawn from a fresh v4 UUID's bytes (a CSPRNG draw;
+    /// see `random_base36` above for why there's no `rand` dependency here). The modulo bias
+    /// (256 % 31) is irrelevant for ids.
+    fn random_id_chars(len: usize) -> String {
+        Uuid::new_v4()
+            .as_bytes()
+            .iter()
+            .take(len)
+            .map(|b| ID_ALPHABET[*b as usize % ID_ALPHABET.len()] as char)
+            .collect()
     }
 
     fn new_task_id(prefix: &str) -> String {
-        format!("{prefix}-{}", random_hex(4))
+        format!("{prefix}-{}", random_id_chars(4))
     }
 
     /// 64 hex characters from two v4 UUIDs, per principals.md.
@@ -2273,7 +2298,7 @@ mod sync {
     }
 
     /// Retries the id up to this many times on a unique-constraint
-    /// collision (4 hex chars is 65536 values, so this is generous) before
+    /// collision (31^4 is ~920k values, so this is generous) before
     /// giving up.
     const TASK_ID_ATTEMPTS: u32 = 8;
 
@@ -2283,13 +2308,19 @@ mod sync {
         title: &str,
         kind: TaskKind,
         created_by: &str,
+        wanted: Option<&str>,
     ) -> Result<TaskRow, StoreError> {
         // Truncate to millisecond precision (matching fmt_dt's on-disk format) so the
         // returned in-memory value can't be strictly less than a later floor-truncated
         // read of the same row.
         let now = Utc::now().trunc_subsecs(3);
-        for _ in 0..TASK_ID_ATTEMPTS {
-            let id = new_task_id(prefix);
+        for attempt in 0..TASK_ID_ATTEMPTS {
+            // Only the first attempt tries the ticket's id: a unique violation means a task
+            // already has it.
+            let id = match wanted {
+                Some(w) if attempt == 0 => w.to_string(),
+                _ => new_task_id(prefix),
+            };
             let result = conn.execute(
                 "INSERT INTO tasks(id, title, kind, state, created_at, updated_at, created_by)
                  VALUES (?1, ?2, ?3, ?4, ?5, ?5, ?6)",
@@ -4258,7 +4289,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn insert_task_uses_the_prefix_and_four_hex_chars() {
+    async fn insert_task_uses_the_prefix_and_four_ticket_alphabet_chars() {
         let (store, _tmp) = store().await;
         let task = store
             .insert_task("tw", "Add foo", TaskKind::Feature, "human")
@@ -4267,7 +4298,11 @@ mod tests {
         assert!(task.id.starts_with("tw-"));
         let suffix = task.id.strip_prefix("tw-").expect("prefix");
         assert_eq!(suffix.len(), 4);
-        assert!(suffix.chars().all(|c| c.is_ascii_hexdigit()));
+        assert!(
+            suffix
+                .bytes()
+                .all(|b| b"abcdefghjkmnpqrstuvwxyz23456789".contains(&b))
+        );
         assert_eq!(task.title, "Add foo");
         assert_eq!(task.kind, TaskKind::Feature);
         assert_eq!(task.state, TaskState::Open);

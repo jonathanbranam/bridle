@@ -57,8 +57,11 @@ tasks(id TEXT PK, title, kind, state, created_at, updated_at, created_by)  -- cr
 ```
 
 deliberately narrow: it's the fast index (id, title, kind, state,
-timestamps), not the record itself. `id` is `<project prefix>-<4 hex
-characters>` (e.g. `tw-7fa2`), generated with a collision retry; the prefix
+timestamps), not the record itself. `id` is `<project prefix>-<4
+characters>` (e.g. `tw-k7tm`) from the ticket alphabet (`abcdefghjkmnpqrstuvwxyz23456789`; tasks
+made before 2026-10-03 have hex ids, unchanged), generated with a collision retry. A task whose body
+starts `original id: <ticket>` (a ticket's task) takes `<prefix>-<ticket>` if no task has it yet, so
+a ticket's first task shares its id; later ones get a fresh id. The prefix
 is `[tasks] prefix` in config, defaulting to the project name's first two
 alphanumeric characters (`bridle` -> `br`) if unset
 (`config::default_task_prefix`). The body and thread live only on the state

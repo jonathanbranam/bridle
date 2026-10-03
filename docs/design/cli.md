@@ -205,7 +205,9 @@ bridle ticket new "<title>" --kind <kind> [--repos a,b] [--needs ids] [--see ids
                                              `## The ask`; creates the folders if missing; prints the path.
                                              Also files the matching task (the same kind, body
                                              `original id: <id>` and the path) when a daemon is reachable and
-                                             records its id in the ticket's `tasks:`; an unreachable daemon
+                                             records its id in the ticket's `tasks:` (the first task from a ticket takes the ticket's id,
+                                             `br-k7tm` for `k7tm`; later ones get fresh ids). The new ticket's id is
+                                             never a task's id either (one id space); an unreachable daemon
                                              is a warning, not an error
 bridle ticket resolve <id>                   stamps `closed: <UTC date-time>` into the frontmatter and moves
                                              the ticket from `open/` to `resolved/` (a plain move: committing

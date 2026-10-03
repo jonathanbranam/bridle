@@ -76,7 +76,12 @@ async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<(), CliErro
         see: &args.see,
     };
     let today = chrono::Utc::now().date_naive().to_string();
-    let path = create(&tickets_root(repo), &fields, &today)?;
+    let path = create(
+        &tickets_root(repo),
+        &fields,
+        &today,
+        &task_id_tails(cli).await,
+    )?;
     let rel = path
         .strip_prefix(repo)
         .unwrap_or(&path)
@@ -143,6 +148,21 @@ async fn make_task(
     Ok(task.id)
 }
 
+/// The id tails of every task (`br-k7tm` -> `k7tm`). Empty when the daemon isn't reachable
+/// (no tasks can be filed then either).
+async fn task_id_tails(cli: &Cli) -> HashSet<String> {
+    let Ok(client) = client_for(cli).await else {
+        return HashSet::new();
+    };
+    let Ok(tasks) = client.list_tasks().await else {
+        return HashSet::new();
+    };
+    tasks
+        .into_iter()
+        .filter_map(|t| Some(t.id.rsplit_once('-')?.1.to_string()))
+        .collect()
+}
+
 /// Task id -> the ticket id its body names, for every task made from a ticket. `None` when
 /// the daemon isn't reachable: the task side of the link can't be checked then.
 async fn task_links(cli: &Cli) -> Option<HashMap<String, String>> {
@@ -203,12 +223,21 @@ pub struct Fields<'a> {
 }
 
 /// Write a new ticket into `<root>/open/`, creating the folders; returns its path.
-pub fn create(root: &Path, f: &Fields, today: &str) -> anyhow::Result<PathBuf> {
+/// `task_ids` are the id tails of existing tasks (`br-k7tm` -> `k7tm`): tickets and tasks share
+/// one id space, so a new ticket never takes one.
+pub fn create(
+    root: &Path,
+    f: &Fields,
+    today: &str,
+    task_ids: &HashSet<String>,
+) -> anyhow::Result<PathBuf> {
     let (open, resolved) = (root.join("open"), root.join("resolved"));
     for d in [&open, &resolved] {
         std::fs::create_dir_all(d).with_context(|| format!("creating {}", d.display()))?;
     }
-    let id = mint_id(&existing_ids(root));
+    let mut taken = existing_ids(root);
+    taken.extend(task_ids.iter().cloned());
+    let id = mint_id(&taken);
     let slug = slugify(f.title);
     let name = if slug.is_empty() {
         format!("ticket-{id}.md")
@@ -710,6 +739,7 @@ mod tests {
             dir.path(),
             &fields("Fix the: thing (now)", &repos),
             "2026-09-30",
+            &HashSet::new(),
         )
         .unwrap();
         assert!(dir.path().join("resolved").is_dir());
@@ -734,7 +764,13 @@ mod tests {
         let repos = vec!["p".to_string()];
         let mut seen = HashSet::new();
         for i in 0..200 {
-            let p = create(dir.path(), &fields(&format!("t{i}"), &repos), "2026-09-30").unwrap();
+            let p = create(
+                dir.path(),
+                &fields(&format!("t{i}"), &repos),
+                "2026-09-30",
+                &HashSet::new(),
+            )
+            .unwrap();
             let id = id_of(&p).unwrap();
             assert!(seen.insert(id.clone()));
             if i % 2 == 0 {
@@ -751,10 +787,32 @@ mod tests {
     }
 
     #[test]
+    fn a_new_ticket_never_takes_a_task_id() {
+        let repos = vec!["p".to_string()];
+        // Every id but one is a task's.
+        let mut tasks: HashSet<String> = ID_ALPHABET
+            .iter()
+            .map(|c| format!("{0}{0}{0}{0}", *c as char))
+            .collect();
+        tasks.remove("aaaa");
+        for _ in 0..50 {
+            let d = tempfile::tempdir().unwrap();
+            let p = create(d.path(), &fields("t", &repos), "2026-09-30", &tasks).unwrap();
+            assert!(!tasks.contains(&id_of(&p).unwrap()));
+        }
+    }
+
+    #[test]
     fn resolve_moves_and_stamps_closed() {
         let dir = tempfile::tempdir().unwrap();
         let repos = vec!["p".to_string()];
-        let p = create(dir.path(), &fields("Thing", &repos), "2026-09-30").unwrap();
+        let p = create(
+            dir.path(),
+            &fields("Thing", &repos),
+            "2026-09-30",
+            &HashSet::new(),
+        )
+        .unwrap();
         let id = id_of(&p).unwrap();
         let dest = resolve(dir.path(), &id, "2026-10-01T12:00:00Z").unwrap();
         assert!(!p.exists());
@@ -960,7 +1018,13 @@ mod tests {
     fn set_kind_edits_and_validates() {
         let dir = tempfile::tempdir().unwrap();
         let repos = vec!["p".to_string()];
-        let p = create(dir.path(), &fields("Thing", &repos), "2026-09-30").unwrap();
+        let p = create(
+            dir.path(),
+            &fields("Thing", &repos),
+            "2026-09-30",
+            &HashSet::new(),
+        )
+        .unwrap();
         let id = id_of(&p).unwrap();
         set(dir.path(), &id, "kind", "question").unwrap();
         assert!(
@@ -984,7 +1048,13 @@ mod tests {
     fn set_edits_fields_and_refuses_the_rest() {
         let dir = tempfile::tempdir().unwrap();
         let repos = vec!["p".to_string()];
-        let p = create(dir.path(), &fields("Thing", &repos), "2026-09-30").unwrap();
+        let p = create(
+            dir.path(),
+            &fields("Thing", &repos),
+            "2026-09-30",
+            &HashSet::new(),
+        )
+        .unwrap();
         let id = id_of(&p).unwrap();
         set(dir.path(), &id, "repos", "a, b").unwrap();
         set(dir.path(), &id, "title", "New: title").unwrap();

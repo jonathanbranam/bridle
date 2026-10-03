@@ -93,7 +93,7 @@ impl From<StateBranchError> for TaskError {
 pub struct TaskManager {
     store: Store,
     state: StateBranch,
-    /// The id prefix new tasks get (storage.md: `<prefix>-<4 hex chars>`).
+    /// The id prefix new tasks get (storage.md: `<prefix>-<4 chars of the ticket alphabet>`).
     prefix: String,
     /// Full records, including body/thread, which the database doesn't
     /// carry. Hydrated from the state branch at [`TaskManager::open`], kept
@@ -490,9 +490,17 @@ impl TaskManager {
         if title.trim().is_empty() {
             return Err(TaskError::BadRequest("title must not be empty".to_string()));
         }
+        // A task made from a ticket starts its body `original id: <ticket>`; the first one
+        // takes the ticket's id.
+        let ticket = body
+            .lines()
+            .next()
+            .and_then(|l| l.strip_prefix("original id: "))
+            .map(str::trim)
+            .filter(|t| !t.is_empty());
         let row = self
             .store
-            .insert_task(&self.prefix, title, kind, created_by)
+            .insert_task_wanting(&self.prefix, title, kind, created_by, ticket)
             .await?;
         let task = Task {
             id: row.id,
@@ -1601,6 +1609,40 @@ mod tests {
         let fetched = tm.get_task(&task.id).expect("get");
         assert_eq!(fetched.title, "Add foo");
         assert_eq!(tm.list_tasks().len(), 1);
+    }
+
+    #[tokio::test]
+    async fn new_task_ids_use_the_ticket_alphabet() {
+        let (tm, _tmp) = manager().await;
+        for _ in 0..40 {
+            let t = tm
+                .new_task("A", TaskKind::Chore, String::new(), vec![], None)
+                .await
+                .expect("new task");
+            let tail = t.id.strip_prefix("tw-").expect("prefix");
+            assert_eq!(tail.len(), 4);
+            assert!(
+                tail.bytes()
+                    .all(|b| b"abcdefghjkmnpqrstuvwxyz23456789".contains(&b))
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn a_tickets_first_task_takes_its_id_and_the_second_gets_a_fresh_one() {
+        let (tm, _tmp) = manager().await;
+        let body = "original id: k7tm\ndocs/tickets/open/x-k7tm.md".to_string();
+        let first = tm
+            .new_task("A", TaskKind::Feature, body.clone(), vec![], None)
+            .await
+            .expect("first");
+        assert_eq!(first.id, "tw-k7tm");
+        let second = tm
+            .new_task("B", TaskKind::Feature, body, vec![], None)
+            .await
+            .expect("second");
+        assert_ne!(second.id, "tw-k7tm");
+        assert!(second.id.starts_with("tw-"));
     }
 
     #[tokio::test]

@@ -58,7 +58,8 @@ design moves on; the design docs cite them.
 - The same frontmatter: `id`, `title`, `kind` (a task kind; editable with `ticket set`),
   `opened`, `repos`, `changes`, `specs`, `needs`, `see`, `tasks` (every task made from the
   ticket; the task's body starts `original id: <id>`, so the link is two-way and `ticket check`
-  flags one side only). A missing `kind`/`tasks` is a warning until the backfill migration. `needs:` orders them.
+  flags one side only). Tickets and tasks share one id alphabet and space: a ticket's first task
+  takes its id (`br-<id>`). A missing `kind`/`tasks` is a warning until the backfill migration. `needs:` orders them.
 - The checker takes one ticket root, so `needs:` and `see:` only name tickets
   in the same tree (`questions/` or `spikes/open/`). A dependency across the
   two goes in the body as a `**Needs**` line with the ID and a link.
