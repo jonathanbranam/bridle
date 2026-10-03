@@ -32,6 +32,64 @@ via Homebrew and Cargo.
 | Beads | Yegge's git-backed, dependency-aware graph issue tracker, used as memory for coding agents (now Dolt-backed; hash IDs like `bd-a1b2`). Gas Town, Gas City and Wheelhouse are all built on it. | https://github.com/gastownhall/beads (was steveyegge/beads) | `bd` | yes 2026-09-28 |
 | beads_rust | Rust port of Beads by Jeffrey Emanuel (Dicklesworthstone): SQLite plus JSONL export, never runs git, has an MCP serve mode. | https://github.com/Dicklesworthstone/beads_rust | `br` | yes 2026-09-28 |
 
+## Roles in Yegge's harnesses
+
+For the role-naming question in
+`docs/tickets/open/seats-named-interactive-roles-splitting-the-advisor-retiring-r8kv.md`
+(which maps them onto bridle's roles). Checked 2026-10-02.
+
+**Gas Town** (from the repo's
+[overview.md](https://github.com/gastownhall/gastown/blob/main/docs/overview.md),
+[glossary.md](https://github.com/gastownhall/gastown/blob/main/docs/glossary.md),
+[concepts/identity.md](https://github.com/gastownhall/gastown/blob/main/docs/concepts/identity.md),
+[concepts/polecat-lifecycle.md](https://github.com/gastownhall/gastown/blob/main/docs/concepts/polecat-lifecycle.md);
+the Medium launch post returned 403):
+
+| Role | Identity (`BD_ACTOR`) | What it does | Lifetime |
+|---|---|---|---|
+| Overseer | *(the human; no `GT_ROLE`)* | the human; last stop for escalations | n/a |
+| Mayor | `mayor` | "chief-of-staff": the human's main interface; starts convoys, dispatches, notifies | singleton, persistent |
+| Deacon | `deacon` | town-wide watchdog daemon: patrols, recovery, escalation (Deacon, then Mayor, then Overseer) | singleton, persistent |
+| Dogs | *(Deacon's)* | maintenance helpers (cleanup, health checks); "not workers" | one task, identity kept |
+| Boot | *(a Dog)* | checks the Deacon every 5 minutes | short |
+| Witness | `<rig>/witness` | per rig: watches polecats, nudges or hands off stuck ones, cleans up | per rig, persistent |
+| Refinery | `<rig>/refinery` | per rig merge queue: batches, gates, bisects, merges | per rig, persistent |
+| Polecat | `<rig>/polecats/<name>` | worker in its own worktree; identity, sandbox and session have separate lifetimes; `gt done` retires the session, the identity and CV persist | session per task |
+| Crew | `<rig>/crew/<name>` | long-lived named agents the human directs; own clone, push to main, unmonitored | persistent, user-managed |
+
+Vocabulary: town (workspace), rig (a project repo), bead, hook (an agent's pinned work bead;
+GUPP: "if there is work on your hook, you must run it"), convoy, molecule, wisp, formula, sling
+(assign), nudge (real-time message), mail, handoff (session refresh carrying work state),
+seance (query a predecessor session's log).
+
+**Wheelhouse** (closed source; from
+[The Shape of Things to Come, Part 1](https://yegge.ai/essays/the-shape-of-things-to-come/) and
+[Part 2: Model Welfare](https://yegge.ai/essays/model-welfare/)):
+
+- **Crew** (Fable, the human's direct reports, 18): 16 seats named for Aesop animals (those named in the essays: Ant, Bat,
+  Eagle, Crow, Fly, Goose, Mouse, Cicada, Bee, Wolf, Fox, Stork, Lion, Tortoise, Hare, Lark
+  (was Spider)), plus **Seneschal** (concierge; reached from his phone; may dispatch to the crew
+  while he's away) and **Marshal** (runs the fleet; "our Witness").
+- **Fleet** (Opus, named for authors: Homer, Plato, Austen, Twain, ...): implementers with their
+  own clones; only the Marshal talks to them. A fallback fleet of five Codex workers named for
+  sun gods.
+- **Production roles** (mostly Sonnet, unattended): Gargoyle (SRE), Drawbridge (deploy-red
+  monitor), Warden (player abuse), Scryer (intake from Discord, Slack, logs), Sheriff (chief of
+  staff for the Mac Mini fleet), Envoy (volunteer admins), Sage (in-game admin support),
+  Wanderer (QA), Trivia Master (weekly event), Herald (patch notes), Limner (Hall of Fame
+  images), Reeve (forge manager), Builder Familiar (map building, experimental).
+- **Non-model units** (~45 launchd/systemd): reapers, roombas, Portcullis (land queue),
+  Castellan (service dashboard); Beadle (finds stuck work, nudges) in development.
+- **Seats:** "A seat is a named role with persistent identity (addressability) and
+  history/memory ... Sessions are days, and seats are people." Seats survive model upgrades and
+  renames. Handoff is a request the agent consents to; it writes notes, asks to restart, and
+  wakes primed with them. "Laurels" (player praise) are injected at start-up.
+
+Related: [curia](https://github.com/harrymunro/curia) (third party, after Yegge's essays):
+"persistent seats" for Claude Code that wake "primed with its charter, its authority, its last
+handoff and its mail"; seats are parked (`active = false`) before deletion; offices Lictor,
+Censor, Portcullis, Intake.
+
 ## Coding-agent CLIs and single-agent harnesses
 
 | Name | What it is | Link | CLI command | Verified |

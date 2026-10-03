@@ -118,3 +118,130 @@ This sharpens question 1 into two roles:
   context on status. Works with the human on designing and planning tickets, and research.
   Today's advisor prompt makes every advisor do the status and inbox work at start-up; this role
   must not.
+
+## Research: role names (Gas Town, Wheelhouse, others)
+
+Checked 2026-10-02 against the Gas Town repo docs and Yegge's essays (Gas Town's Medium launch
+post returned 403; its roles are taken from the repo). Fuller notes, including Wheelhouse's
+production roles: `docs/context/agent-harness-name-catalogue.md`, "Roles in Yegge's harnesses".
+The older workflow research (`workflow/research/03-gastown.md`, `06-wheelhouse-wyvern.md`)
+covers both but says nothing about seats.
+
+### Gas Town
+
+Sources: [overview.md](https://github.com/gastownhall/gastown/blob/main/docs/overview.md),
+[glossary.md](https://github.com/gastownhall/gastown/blob/main/docs/glossary.md),
+[concepts/identity.md](https://github.com/gastownhall/gastown/blob/main/docs/concepts/identity.md),
+[concepts/polecat-lifecycle.md](https://github.com/gastownhall/gastown/blob/main/docs/concepts/polecat-lifecycle.md).
+
+| Role | What it does | Lifetime | Talks to the human? | Nearest in bridle |
+|---|---|---|---|---|
+| Overseer | The human (`gt whoami`: no `GT_ROLE` means you are the overseer); top of escalation | n/a | is the human | the human |
+| Mayor | "Chief-of-staff": the human's main interface; plans, starts convoys, dispatches, reports, notifies | singleton, persistent | yes, the main one | orchestrator **plus** the triage role |
+| Deacon | Town-wide watchdog daemon: patrols, health checks, recovery, escalation | singleton, persistent | no (escalates) | the daemon's supervisor; the orchestrator's watching |
+| Boot (a Dog) | Checks the Deacon every 5 minutes | short | no | none |
+| Dogs | The Deacon's helpers for cleanup and maintenance; "not workers" | per task (identity kept) | no | none |
+| Witness | Per-rig: watches polecats, nudges or hands off stuck ones, cleans up | one per rig, persistent | no | manager |
+| Refinery | Per-rig merge queue: batches, gates, bisects, merges | one per rig, persistent | no | the manager's merge step |
+| Polecat | Worker: persistent identity (`<rig>/polecats/<name>`, a CV), ephemeral session, own worktree | session per task | no | worker |
+| Crew | "Long-lived, named agents for persistent collaboration"; human-directed, own clone, pushes to main, no monitoring | persistent, user-managed | yes, directly | **design / research role** (but long-lived) |
+
+### Wheelhouse (closed source, Wyvern)
+
+Sources: [The Shape of Things to Come, Part 1](https://yegge.ai/essays/the-shape-of-things-to-come/),
+[Part 2: Model Welfare for Agentic Engineers](https://yegge.ai/essays/model-welfare/).
+
+| Role | What it does | Lifetime | Talks to the human? | Nearest in bridle |
+|---|---|---|---|---|
+| Crew (16 seats named for Aesop animals: Ant, Bat, Crow, Fox, Lark, ...) | Fable; the human's "direct reports": long conversations, designs, implementation plans | long-lived seats, sessions handed off | yes, directly | **design / research role**, PM |
+| Seneschal (crew) | "Concierge"; the one session he reaches from his phone; may dispatch work to the crew while he's away | long-lived seat | yes | **triage role** |
+| Marshal (crew) | Runs the fleet ("our Witness"); the human never talks to the fleet | long-lived seat | yes | orchestrator |
+| Fleet (authors: Homer, Plato, Austen, Twain, ...) | Opus implementers, each with its own clone; consume the crew's plans | non-ephemeral | no | worker |
+| ~13 production roles (Gargoyle, Drawbridge, Warden, Scryer, Sheriff, Envoy, Sage, Wanderer, Herald, ...) | Unattended ops: SRE, deploys, abuse, intake, QA, patch notes | 24x7 | no | none (bridle has no ops roles) |
+
+The pattern in both: **the human talks to a few named, long-lived roles** (Mayor or Seneschal
+for the running of things; Crew for design); **workers are anonymous to the human** and managed
+by a watcher. That is the split the human asked for: the Seneschal-like triage role takes the
+human's conversations off the orchestrator (Marshal), and the design role is crew.
+
+One difference: Yegge's crew are long-lived seats; the human's design / research sessions are
+several at once and short-lived. Closer to a Gas Town polecat's lifecycle (named, discarded
+when done) with a crew member's job.
+
+### What Yegge means by a seat
+
+From Part 2: "A session is just a day in the life of an agent ... A seat is a named role with
+persistent identity (addressability) and history/memory, which accumulates accomplishments over
+time. Seats survive model upgrades, and even renaming. Sessions are days, and seats are
+people." He renamed the Spider seat to Lark; Lark "inherited all of Spider's history, including
+the name change on the record". A handoff is a request the agent consents to, not a SIGTERM:
+it finishes, writes notes to a handoff cache, asks to restart, and the harness restarts it
+"priming it with its own handoff notes". He also injects "laurels" (praise for its past work)
+at start-up. Gas Town says the same of polecats: identity (name, CV, ledger), sandbox
+(worktree) and session (context window) are three lifetimes that were wrongly conflated.
+
+[curia](https://github.com/harrymunro/curia) (not Yegge's; built on his essays) spells out what a
+seat owns: it "wakes primed with its charter, its authority, its last handoff and its mail";
+retiring is two steps, **parked** (`active = false`: memory kept, no launches) before deleted;
+renames go through a command because the registry finds seats by name.
+
+Worth borrowing for bridle:
+
+- **Identity:** the seat is the principal (`external:<role>/<name>`, as named advisors are today),
+  so messages, task creator, watchers and the wake bookmark already key on it.
+- **Inbox:** belongs to the seat, not the session; a new session reads unread mail first.
+- **Memory / handoff:** one handover note per seat, in the repo or daemon (like the
+  orchestrator's handover notes, jttf), read first on start. No Claude Code memory.
+- **Retirement:** park then delete. Parking keeps the handover and history but stops wakes,
+  drops it from watcher lists and refuses new messages (or forwards them to the main seat).
+- **Not every role needs a seat.** The design / research role, as the human describes it, has
+  no inbox and no wakes; a named session with a brief and a final handover is enough.
+
+### Name options
+
+Existing bridle names to avoid: roles `orchestrator`, `manager`, `worker`, `product-manager`,
+`prototyper`, `advisor`; `planner` (the PM's prime target, `bridle orchestrator prime planner`,
+and a model-role key); **"triage"** is already the PM's job (`product-manager.md`, the submit
+endpoint "for its product manager to triage", the planned `bridle-triage` skill in
+`docs/design/skills.md`); principals `external:orchestrator`, `external:advisor[/name]`,
+`external:mail`; CLI `bridle session advisor <name>`. "Seat" is unused (one turn of phrase in
+`roles-and-lifecycle.md`).
+
+**(a) The triage role** (the human's operator: inbox, to-dos, status, talks for the human)
+
+- **aide** — the human's own assistant, short, reads well as `external:aide`. Con: a little
+  generic.
+- **chief of staff** — Gas Town's own word for the Mayor; exactly "handles the boss's
+  conversations so the operator can run things". Con: three words (`chief-of-staff`).
+- **concierge** — Yegge's description of the Seneschal. Con: suggests service desk more than
+  running the human's work.
+- **liaison** — between the human and the workforce. Con: sounds passive; hard to spell.
+- **triage** — the working name. Con: collides with the PM's triage of open tasks.
+
+Recommendation: **aide** (or chief of staff if the human wants the authority to be obvious).
+
+**(b) The design / research role** (no status, no inbox, several at once, short-lived)
+
+- **advisor** (keep it) — already means "talk things through", and the human floated "we keep
+  advisor here"; the existing named-advisor launcher fits. Con: today's advisor prompt does the
+  inbox and status work, so the name carries old habits until the prompt is rewritten.
+- **consultant** — the human's own word ("a research or consultant type of position"); clearly
+  temporary and outside the line. Con: long; a new name everywhere.
+- **researcher** — plain. Con: undersells design and ticket planning.
+- **designer** / **architect** — fits design work. Con: undersells research; "designer" is used
+  loosely in `workflow-layers.md`.
+- **planner** — Con: taken (the PM's prime target).
+
+Recommendation: **advisor**, rewritten as the no-status, no-inbox role, and the triage work moves
+to the new name. Least churn, and the word already fits; **consultant** if a clean break is wanted.
+
+**(c) The seat concept** (a named, lasting position sessions occupy)
+
+- **seat** — Yegge's and curia's word; unused in bridle. Con: also means a licence seat.
+- **post** — a position someone holds; short. Con: also a verb (and HTTP POST).
+- **desk** — concrete, has an inbox ("the aide's desk"). Con: informal.
+- **chair** — as in "who's in the chair". Con: odd for agents.
+- **position** — plainest. Con: long, vague.
+
+Recommendation: **seat**: borrowing the term makes Yegge's essays and curia directly readable as
+prior art.
