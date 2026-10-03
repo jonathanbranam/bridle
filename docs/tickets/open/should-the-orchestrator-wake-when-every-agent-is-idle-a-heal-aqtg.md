@@ -79,3 +79,33 @@ From dalek's orchestrator transcripts (`~/.claude/projects/-Volumes-Data-work-br
 
 Open: whether some failures can only be spotted by a model, and which; the human doubts it. Any
 found should become deterministic checks (incidents) rather than a timed model wake.
+
+## Decided: remove it (the human, 2026-10-03)
+
+The human, verbatim (via the advisor):
+
+> Yeah, my feeling is is that, well, first of all, it's 15 minutes after the last agent stops.
+> That's kind of useless. So I think it should be removed. If it was 15 minutes always, then
+> yeah, it's actually doing something, but that's super excessive. I guess it would catch a
+> merge. Like if, if the manager ran into something and did merge or, I don't know, yeah, it
+> just, it just seems kind of silly. But I see what you're saying, actually, it's really just a
+> check after work quiets down that everything's right.
+>
+> When phrased that way, it doesn't concern me as much. OTOH The orchestrator can choose its own
+> timeout. It doesn't have to set an hour and 55 minutes every time. So if there's a lot of work
+> going on or something happening, the orchestrator could always set a shorter timeout and check
+> on things. Um, yeah, I don't know. Write it up in the ticket. I'm gonna. I actually, yeah.
+> Let's just let's just go ahead and remove it, and leave a decision up to the orchestrator. If it
+> feels like a shorter timeout's needed for some particular case, that's still an option.
+
+Decided:
+
+1. **Remove the `all_idle` wake** (option A): the daemon no longer wakes the orchestrator when
+   every agent has been idle 15 minutes. Remove it from `wake.rs`, the design doc
+   (`orchestrator-supervision.md` section 5), `api.md`'s reason list and the orchestrator role's
+   wake list.
+2. **The orchestrator decides when to look.** With its own wait timeout (789x, up to 1 h 55 min),
+   it picks a shorter one when a lot of work is running or something needs watching, as a
+   check after work quiets down. Say so in the orchestrator role.
+3. Option B's deterministic checks aren't asked for now; f5ww already nudges the manager on
+   queue changes.
