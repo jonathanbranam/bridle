@@ -4,6 +4,13 @@
 The machine config: [[docs/design/cli|cli]] ("Projects on other machines", k7mw). Tokens:
 [[docs/design/agent-host/principals|principals]].*
 
+> **Status (checked 2026-10-03):** Built and in use: every step below (init, serve, tokens,
+> sessions, doctor) · Built, not wired in: the `packs` line `init` writes and the project's
+> `.bridle/rules/` reach spawned agents only from 9561950 on, once the daemon runs a binary from
+> that commit; `bridle sync` renders files, but nothing runs it for you and its skills are
+> gitignored ([[the-workflow-doesn-t-reach-agents-resolved-rules-hooks-and-o-34bw|34bw]]) ·
+> Planned: `bridle project add` (below).
+
 Short answer: yes, you can add a project straight on the NUC. No single command does it all.
 `bridle init` only writes two files. The rest is a few commands of yours, then an orchestrator
 session that prepares the project. Your flow (make a workspace folder, clone the repo, ask the
@@ -26,7 +33,8 @@ another machine" in [[docs/context/nuc-host|nuc host]].
 Run inside a clone. It:
 
 - writes `.bridle/config.toml`: the integration branch (defaults to the branch you're on),
-  `packs = ["<stack>"]` with `--stack python|typescript|rust`, and a `check` command guessed
+  `packs = ["<stack>"]` with `--stack python|typescript` (0.4.0 binaries also accept `rust`, a pack
+  that doesn't exist; dropped in f55537d), and a `check` command guessed
   from a justfile, `Cargo.toml`, `package.json` or `pyproject.toml`. It never overwrites.
 - appends bridle's runtime files to `.gitignore`.
 - vendors the base workflow into `.bridle/workflow/`, but only if nothing names a workflow

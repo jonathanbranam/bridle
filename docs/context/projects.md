@@ -1,5 +1,10 @@
 # The projects bridle has to serve
 
+> **Status (checked 2026-10-03):** On bridle today: meta-notes (bridle tasks and specs on `main`),
+> track-web (a trial on `bridle-adopt`, `client-games` only, since 2026-09-29) · Prepared, not
+> running: data-contracts (a `bridle-adopt` branch, no daemon) · Not started: pi/harness, otters,
+> file-db. The "Tracking today" column is as surveyed on 2026-09-27.
+
 The layering ([[docs/design/workflow-layers|workflow layers]]) is justified by how different these are:
 
 | Project | Stack | What makes it distinct | Tracking today |

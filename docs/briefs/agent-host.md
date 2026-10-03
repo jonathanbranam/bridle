@@ -1,5 +1,11 @@
 # Brief: the agent host and daemon
 
+> **Status (checked 2026-10-03):** Built and in use: the daemon, spawning, messages, containment,
+> the budget governor, renewal, roles, the Stop hook, status and the TUI · Built, not wired in:
+> `bridle sync`, the `arch-guard` hook, the port registry, paired worktrees; workflow rules reach
+> spawned agents only from 9561950 on, once the daemon runs it · Planned: cgroups, cross-daemon
+> budget, orchestrator pane supervision. "Built" below means in the code; it doesn't mean in use.
+
 As of 2026-09-29. Status words: **built** (in the code and CHANGELOG), **partly built**,
 **planned** (design docs only). Companion to [[docs/briefs/specs|specs]] and
 [[docs/briefs/tasks|tasks]]. Source of truth for the details: `docs/design/agent-host/`.
@@ -37,7 +43,8 @@ run a setup command in each new worktree, copy files like `.env`, clone the `tar
 (macOS), place worktrees elsewhere, or create paired sibling-repo worktrees. A failed spawn is
 rolled back. `bridle rm` stops the agent and removes the worktree, refusing if it is dirty, has
 open files or holds an unmerged branch unless `--force`. Ports for dev servers come from
-`bridle port`. **Built.** `max_workers` (default 2) caps *worker* spawns and resumes (409 at the
+`bridle port`. **Built**; paired worktrees and `bridle port` are **built, not wired in**: no
+project configures a pair, and no port has been allocated in any project. `max_workers` (default 2) caps *worker* spawns and resumes (409 at the
 cap); change it live with `bridle budget max-workers`. **Built.**
 
 ## Agent states
@@ -95,8 +102,11 @@ launcher script; **partly built** (`c9zm`).
 Built-in roles: `worker` (edits files, `acceptEdits`), `manager` and `orchestrator` (`dontAsk`,
 mostly `bridle` and `git` commands, read-only tools); the PM is set in bridle's config. Claude
 Code's own messaging, scheduling and remote-trigger tools are denied by default; memory is off;
-agents load only project settings. Roles come from `.bridle/config.toml` and the shared workflow
-layers (`bridle sync` renders them into `CLAUDE.md`, skills and hooks). Enforcement is by role in
+agents load only project settings. Roles come from `.bridle/config.toml` and the role prompt files. The shared workflow
+layers' rules reach a spawned agent only from 9561950 (2026-10-03) on, appended to its system
+prompt; before that, only the role prompt's own prose did. `bridle sync` renders the layers into
+`CLAUDE.md`, skills and hooks, but nothing runs it and its skills are gitignored: **built, not
+wired in** ([[the-workflow-doesn-t-reach-agents-resolved-rules-hooks-and-o-34bw|34bw]]). Enforcement is by role in
 a few places: workers may not use agent lifecycle endpoints, only the PM or human edits the queue,
 and budget hold and token management are human-only. Otherwise permissions are prompts plus
 tool allowlists, not a general system. **Built.**
@@ -105,7 +115,10 @@ Hooks: **`bridle stop-check`** (Stop hook, worker role) blocks a worker from end
 a claimed task with no thread note, no summary or `done:` report, or (when the project sets
 `commands.check_worker`) no recorded passing check for its HEAD. **`bridle arch-guard`** denies
 edits under `design/architecture/` unless the worker claimed an `arch-revision` task. Both fail
-open on their own errors. **Built.**
+open on their own errors. `stop-check`: **built and in use** (passed at spawn). `arch-guard`:
+**built, not wired in**: only `bridle sync` writes it into `.claude/settings.json`, which nothing
+runs (34bw step 3 passes layer hooks at spawn; approved, not built). Landing's own refusal of
+architecture edits is wired, but no project has `design/architecture/` yet.
 
 ## Usage, status and the TUI
 

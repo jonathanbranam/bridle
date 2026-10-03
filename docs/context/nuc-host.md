@@ -4,6 +4,12 @@
 setup guide is the human's
 [NUC Server Rebuild artifact](https://claude.ai/artifact/1Csq9NwiFu4NcuDN4bMBG9).*
 
+> **Status (checked 2026-10-03):** Built and in use: the NUC hosts meta-notes, notes and
+> dotfiles-local, started by hand (only dotfiles-local's daemon was up at this check); bridle's
+> own daemon, track-web and bridle-ui run on dalek (the laptop), not here ·
+> Built, not wired in: `bridle systemd install` (linger off, no units enabled) · Planned:
+> cross-machine message sync (hw6c), Remote Control (never set up).
+
 ## The machine
 
 | | |

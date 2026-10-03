@@ -1,5 +1,10 @@
 # Brief: how the bridle task system works
 
+> **Status (checked 2026-10-03):** Built and in use: tasks, states, the queue, dependencies,
+> ask/answer, claims and leases, messages on tasks, landing, the state branch · Built, not wired
+> in: `bridle wait`, the `arch-guard` hook, `re-evaluate` tasks, "spec changed under you" (no
+> role declares impact) · Planned: the plan gate for protected requirements.
+
 As of 2026-09-29. Status words: **built** (in the code and CHANGELOG), **partly built**,
 **planned** (design docs only). Companion to [[docs/briefs/specs|the specs brief]].
 
@@ -12,8 +17,9 @@ the project's prefix plus four hex characters), a title, a **kind** (`feature`, 
 brief: goal, files, acceptance, out of scope), a **thread** (notes, questions, answers,
 the merge commit) and a **summary** (how it was implemented, written by the worker at the
 end and used as the landing commit's body). **Built.** Two kinds do something: only an
-`arch-revision` task may change `design/architecture/**` (a hook blocks the edit, and
-landing refuses it otherwise), and landing one opens `re-evaluate` tasks. The kind
+`arch-revision` task may change `design/architecture/**` (landing refuses it otherwise; the
+`arch-guard` hook that would block the edit itself is built, not wired in), and landing one
+opens `re-evaluate` tasks. No project has `design/architecture/` yet, so neither has fired. The kind
 `question` is a label only. Size is stored and shown; nothing acts on it yet.
 
 **States:** `open` (idea, being written up) -> `planned` (ready to build) -> `claimed` (a
@@ -67,7 +73,7 @@ check. **Built.**
 recipient a short pointer; `task comment <id> --notify <agent>` does the same. Briefs, done
 reports and findings travel this way, so the thread is the task's record. `bridle wait
 <task> [--until state] [--or-message]` blocks until the task changes or a message arrives.
-**Built.**
+**Built**; `wait` is **built, not wired in** (no role or rule uses it).
 
 ## Roles and the trip from idea to landed
 
@@ -88,7 +94,7 @@ body, `Task:` and `Branch:` trailers), runs the project's check on that result, 
 the branch only if the check passes and the branch hasn't moved, then marks the task done
 (`task done --commit C --branch B`, which also removes the branch's agents and worktree)
 and notifies running workers ("spec changed under you" when their declared impact was
-touched). **Built.** The roles' split of duties is prompts and `require_not_worker`-style
+touched; nobody declares impact today, so this never fires). **Built.** The roles' split of duties is prompts and `require_not_worker`-style
 checks on agent lifecycle, not a general permission system. Landing is refused if the
 check fails; the check is skipped (with a note) if none is configured.
 

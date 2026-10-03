@@ -1,5 +1,11 @@
 # Brief: bridle specs
 
+> **Status (checked 2026-10-03):** Built and in use: spec check, ids, export, import and the
+> pytest adapter, on meta-notes (imported in `15bfb81`; `spec check --require-ids` in its check
+> command), which answers decision 1 below · Built, not wired in: the vitest adapter, impact and
+> conflicts (no role declares impact), traceability and `re-evaluate` (no project has goals or
+> architecture files) · Planned: `trace coverage`, the protected-requirement gate.
+
 As of 2026-09-29. Status words: **built** (in the code and CHANGELOG), **partly built**,
 **planned** (design docs only).
 
