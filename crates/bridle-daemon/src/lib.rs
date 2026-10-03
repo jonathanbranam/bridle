@@ -540,19 +540,20 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
     let wakes = wake::Wakes::new(store.clone());
     let waiters = wake::Waiters::new(Utc::now());
     let handover: std::sync::Arc<orchestrator::Handover> = Default::default();
-    let sessions = std::sync::Arc::new(sessions::Sessions::new(
+    let sessions = sessions::Sessions::new(
         overrides
             .bridle_home
             .clone()
             .unwrap_or_else(discovery::bridle_home),
-        [
-            config.orchestrator.note_tokens,
-            config.orchestrator.plan_tokens,
-            config.orchestrator.handover_tokens,
-        ],
+        config.sessions.clone(),
         emitter.clone(),
         store.clone(),
-    ));
+    );
+    // Tests that start a daemon without a real binary to restart with just don't restart.
+    let sessions = std::sync::Arc::new(match std::env::current_exe() {
+        Ok(exe) if overrides.bridle_home.is_none() => sessions.with_restart(exe, opts.repo.clone()),
+        _ => sessions,
+    });
     let gh: std::sync::Arc<dyn ci::Gh> = overrides
         .upgrade
         .gh

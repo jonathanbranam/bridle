@@ -20,11 +20,11 @@ use crate::types::{
     OrchestratorWakeQuery, PortAllocation, PrincipalWakeQuery, PrincipalWakeResponse, ProbeRequest,
     ProbeResult, Queue, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest,
     RestartRequest, RestartResponse, ResumeRequest, SendRequest, SessionEnd, SessionInfo,
-    SessionRegister, SetImpactRequest, SetKindRequest, SetPriorityRequest, SetQueueRequest,
-    SetSummaryRequest, ShutdownResponse, SkipSettleRequest, SpawnRequest, Status, StatusLineReport,
-    StopRequest, SubmitTaskRequest, Task, TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo,
-    TranscriptLine, TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery, WakeResponse,
-    WriteHandoverRequest,
+    SessionKeep, SessionRegister, SetImpactRequest, SetKindRequest, SetPriorityRequest,
+    SetQueueRequest, SetSummaryRequest, ShutdownResponse, SkipSettleRequest, SpawnRequest, Status,
+    StatusLineReport, StopRequest, SubmitTaskRequest, Task, TaskQuery, TokenCreateRequest,
+    TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown,
+    UsageBreakdownQuery, WakeResponse, WriteHandoverRequest,
 };
 
 #[derive(Debug, Error)]
@@ -446,6 +446,19 @@ impl Client {
     pub async fn session_end(&self, pid: i32) -> Result<(), ClientError> {
         let _: serde_json::Value = self
             .post_json(&["v1", "sessions", "end"], &SessionEnd { pid })
+            .await?;
+        Ok(())
+    }
+
+    /// `POST /v1/sessions/keep`: carry on past the session's current step.
+    pub async fn session_keep(&self, identity: &str) -> Result<(), ClientError> {
+        let _: serde_json::Value = self
+            .post_json(
+                &["v1", "sessions", "keep"],
+                &SessionKeep {
+                    identity: identity.to_string(),
+                },
+            )
             .await?;
         Ok(())
     }

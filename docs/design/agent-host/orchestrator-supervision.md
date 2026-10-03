@@ -1,6 +1,6 @@
 # Orchestrator supervision
 
-> **Status (checked 2026-10-03):** Built and in use: slices 1a, 1b, 2 and 3 (liveness, relaunch and backoff, wake conditions and `wait-for-wake`, context and uptime notes, forced restart, `handover done`, the handover note as a record), advisor session registration and `session.context` events · Planned: `bridle orchestrator pause`, wakes and restarts for advisors, percentage thresholds, filing supervisor incidents as `incident` tasks (it still sends a `system` note plus an `orchestrator.incident` event)
+> **Status (checked 2026-10-03):** Built and in use: slices 1a, 1b, 2 and 3 (liveness, relaunch and backoff, wake conditions and `wait-for-wake`, context and uptime notes, forced restart, `handover done`, the handover note as a record), advisor session registration, `session.context` steps with warnings, `session keep` and the forced restart at the hard limit · Planned: `bridle orchestrator pause`, wakes for advisors, automatic crash restart for advisors (tabled), percentage thresholds, filing supervisor incidents as `incident` tasks (it still sends a `system` note plus an `orchestrator.incident` event)
 
 Design for ticket [[the-orchestrator-stays-running-fx7x|fx7x]]; signals verified in
 [[docs/spikes/07-orchestrator-supervision-findings|spike 07]]. **Slice 1a built** (br-a424): liveness, relaunch and crash-loop backoff (sections 1 to 4, the
@@ -209,10 +209,34 @@ wait: a daemon that is down never blocks or fails the session. The advisor's Ses
 (`bridle session note`) adds the Claude session id, which changes on `/clear`. The registry is in
 memory only. Every tick (10 s) the daemon drops sessions whose pid is gone (`session.ended`),
 reads each live session's `$BRIDLE_HOME/context/<id>` file and emits `session.context`
-(`identity`, `session`, `tokens`, `threshold`) once per crossing of this section's three token
-thresholds, re-armed by a lower reading. Tokens per session show in `bridle status`
+(`identity`, `session`, `tokens`, `threshold`, `step`) once per step reached (below), re-armed by
+a lower reading. Tokens per session show in `bridle status`
 with project, machine, uptime and last activity (the context file's mtime) and in
-`GET /v1/sessions`. No wakes for advisors yet.
+`GET /v1/sessions`. `bridle session triage` registers the same way (identity `triage`). No
+wakes for advisors yet.
+
+**Context steps for every interactive session (jttf).** Not the orchestrator's thresholds: the
+human's, `[sessions] warn = ["150k", "200k", "250k", "300k"]` (four increasing counts; per role
+in `[sessions.advisor]` and `[sessions.triage]`). Reaching a step sends a `system` note to the
+session and one to the human, through `external:triage`, and asks again at every step; a reading
+that jumps steps announces only the highest.
+
+| Step | Context | Session is told | Human is told |
+|---|---|---|---|
+| 0 | 150k | its size | the size, and the restart commands |
+| 1 | 200k | plan a handover (note at `$BRIDLE_HOME/handover/<identity>.md`) unless the human overrides | `bridle session keep` to carry on, `bridle session restart` to go now |
+| 2 | 250k | the normal ceiling: hand over or shut down unless the human overrides | the same |
+| 3 | 300k | the hard limit: write the note now | it is being restarted |
+
+`bridle session keep <identifier>` (`POST /v1/sessions/keep`) is the override: recorded as
+`session.override`, told to the session, and the next step says so and asks again. It is refused
+before the first step and at step 3. Restarting without a handover stays the human's choice
+(`session restart --fresh`) at any point. At step 3 the daemon runs `bridle session restart
+<identity>` itself (a handover first, up to the command's 10 minute wait; `--fresh` if the note
+never comes) in the repo, and tells triage the outcome, including "run this in a terminal" when
+the session has no pane. A registered `triage` session is the human's channel, so its own
+warnings are one note. Rejected: percentage thresholds (the window size isn't known per session),
+and relaunching from the daemon without the CLI (the pane logic lives in the command).
 
 **Restart on request (jttf).** `bridle session restart <identifier> [--handover|--fresh]`, run by
 the human (or the orchestrator for a handover): `--handover`, the default, messages the session to

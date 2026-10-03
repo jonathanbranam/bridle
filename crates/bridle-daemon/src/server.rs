@@ -102,6 +102,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/orchestrator/handover", post(orchestrator_handover))
         .route("/v1/sessions", get(list_sessions).post(register_session))
         .route("/v1/sessions/end", post(end_session))
+        .route("/v1/sessions/keep", post(keep_session))
         .route("/v1/handovers", get(list_handovers).post(write_handover))
         .route("/v1/handovers/latest", get(latest_handover))
         .route("/v1/handovers/{id}", get(get_handover))
@@ -577,6 +578,18 @@ async fn end_session(
 ) -> Json<serde_json::Value> {
     state.sessions.end(req).await;
     Json(serde_json::json!({}))
+}
+
+async fn keep_session(
+    State(state): State<AppState>,
+    Json(req): Json<bridle_api::types::SessionKeep>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    state
+        .sessions
+        .keep(&req.identity)
+        .await
+        .map_err(ApiError::bad_request)?;
+    Ok(Json(serde_json::json!({})))
 }
 
 async fn list_sessions(State(state): State<AppState>) -> Json<Vec<bridle_api::types::SessionInfo>> {

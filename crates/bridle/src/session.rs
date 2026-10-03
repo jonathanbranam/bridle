@@ -98,6 +98,12 @@ pub async fn run(cli: &Cli, role: &SessionRole) -> Result<(), CliError> {
         note(cli).await;
         return Ok(());
     }
+    if let SessionRole::Keep { identifier } = role {
+        let client = crate::commands::client_for(cli).await?;
+        client.session_keep(&session_identity(identifier)).await?;
+        println!("{identifier} will carry on; it is asked again at the next step");
+        return Ok(());
+    }
     if let SessionRole::Restart {
         identifier, fresh, ..
     } = role
@@ -146,10 +152,19 @@ pub async fn run(cli: &Cli, role: &SessionRole) -> Result<(), CliError> {
         SessionRole::Triage { claude_args: extra } => {
             crate::focus::refuse_advisor_if_locked(&home, chrono::Local::now())?;
             let name = session_name("triage", None, &project, &suffix);
-            let args = claude_args(&advisor_settings(), &name, extra, TRIAGE_PROMPT);
-            triage(&project, &args).await?
+            let mut prompt = TRIAGE_PROMPT.to_string();
+            if let Some(path) = take_handover(&home, "triage") {
+                prompt = format!(
+                    "{prompt} Your previous session left a handover note at {}: read it first.",
+                    path.display()
+                );
+            }
+            let args = claude_args(&advisor_settings(), &name, extra, &prompt);
+            triage(cli, &project, &args).await?
         }
-        SessionRole::Note | SessionRole::Restart { .. } => unreachable!("handled above"),
+        SessionRole::Note | SessionRole::Restart { .. } | SessionRole::Keep { .. } => {
+            unreachable!("handled above")
+        }
     };
     if code != 0 {
         std::process::exit(code);
@@ -245,15 +260,23 @@ fn how_ended(rc: i32) -> String {
     format!("exit {rc} (SIG{name})")
 }
 
-/// Triage is one session per project, signed `external:triage` through `BRIDLE_AS`. It isn't
-/// registered with the daemon (that is the advisors' session list) and keeps no pid file.
-async fn triage(project: &str, args: &[String]) -> anyhow::Result<i32> {
+/// Triage is one session per project, signed `external:triage` through `BRIDLE_AS`. It is
+/// registered with the daemon like an advisor (context warnings, restart) but keeps no pid file.
+async fn triage(cli: &Cli, project: &str, args: &[String]) -> anyhow::Result<i32> {
+    let pid = std::process::id().to_string();
     crate::pane::tag_pane("triage");
-    run_claude(
-        &[("BRIDLE_AS", "triage"), ("BRIDLE_PROJECT", project)],
+    register(cli, std::process::id() as i32, "triage", None).await;
+    let rc = run_claude(
+        &[
+            ("BRIDLE_AS", "triage"),
+            ("BRIDLE_PROJECT", project),
+            ("BRIDLE_SESSION_PID", pid.as_str()),
+        ],
         args,
     )
-    .await
+    .await;
+    end(cli).await;
+    rc
 }
 
 async fn advisor(
@@ -283,7 +306,13 @@ async fn advisor(
         Some(n) => format!("advisor-{n}"),
         None => "advisor".into(),
     });
-    register(cli, std::process::id() as i32, name, None).await;
+    register(
+        cli,
+        std::process::id() as i32,
+        &advisor_identity(name),
+        None,
+    )
+    .await;
     let rc = run_claude(&env, args).await;
     end(cli).await;
     if name.is_none() {
@@ -297,12 +326,12 @@ const DAEMON_WAIT: std::time::Duration = std::time::Duration::from_secs(3);
 
 /// Registers this launcher's session with the daemon, or adds the Claude session id to it.
 /// Best effort: every failure is dropped.
-async fn register(cli: &Cli, pid: i32, name: Option<&str>, claude_session_id: Option<String>) {
+async fn register(cli: &Cli, pid: i32, identity: &str, claude_session_id: Option<String>) {
     let Some(pid_start) = process_start(pid) else {
         return;
     };
     let req = bridle_api::types::SessionRegister {
-        identity: advisor_identity(name),
+        identity: identity.to_string(),
         pid,
         pid_start,
         pane: std::env::var("TMUX_PANE").ok(),
@@ -348,8 +377,22 @@ async fn note(cli: &Cli) {
     let Some(id) = id.filter(|s| !s.is_empty()) else {
         return;
     };
-    let name = std::env::var("BRIDLE_ADVISOR_NAME").ok();
-    register(cli, pid, name.as_deref(), Some(id)).await;
+    let identity = if std::env::var("BRIDLE_AS").is_ok_and(|a| a == "triage") {
+        "triage".to_string()
+    } else {
+        advisor_identity(std::env::var("BRIDLE_ADVISOR_NAME").ok().as_deref())
+    };
+    register(cli, pid, &identity, Some(id)).await;
+}
+
+/// A session as the human names it: `alice` is `advisor/alice`; `advisor`, `triage` and anything
+/// with a `/` stand as they are.
+fn session_identity(identifier: &str) -> String {
+    if identifier.contains('/') || matches!(identifier, "advisor" | "triage") {
+        identifier.to_string()
+    } else {
+        format!("advisor/{identifier}")
+    }
 }
 
 fn advisor_identity(name: Option<&str>) -> String {
@@ -398,6 +441,10 @@ fn relaunch_command(identity: &str, project: Option<&str>) -> String {
     if let Some(p) = project {
         c.push_str(&format!(" --project {p}"));
     }
+    if identity == "triage" {
+        c.push_str(" session triage");
+        return c;
+    }
     c.push_str(" session advisor");
     if let Some(n) = identity.strip_prefix("advisor/") {
         c.push(' ');
@@ -425,11 +472,7 @@ async fn restart(cli: &Cli, identifier: &str, fresh: bool) -> Result<(), CliErro
     }
     let client = crate::commands::client_for(cli).await?;
     let sessions = client.sessions().await?;
-    let wanted = if identifier.contains('/') || identifier == "advisor" {
-        identifier.to_string()
-    } else {
-        format!("advisor/{identifier}")
-    };
+    let wanted = session_identity(identifier);
     let info = sessions
         .iter()
         .find(|s| s.identity == wanted)

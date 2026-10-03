@@ -164,6 +164,12 @@ pub struct SessionEnd {
     pub pid: i32,
 }
 
+/// `POST /v1/sessions/keep`: the human's override of a session's planned handover.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SessionKeep {
+    pub identity: String,
+}
+
 /// One registered interactive session.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SessionInfo {
@@ -754,9 +760,12 @@ pub mod event_kind {
     pub const ORCHESTRATOR_INCIDENT: &str = "orchestrator.incident";
     /// data: {session, tokens, window_size, uptime_secs}. Session's starting context and growth.
     pub const ORCHESTRATOR_CONTEXT: &str = "orchestrator.context";
-    /// data: {identity, session, tokens, threshold}. A registered interactive session's context
-    /// crossed one of the orchestrator's token thresholds (interactive sessions, jttf).
+    /// data: {identity, session, tokens, threshold, step}. A registered interactive session's
+    /// context crossed one of its `[sessions] warn` steps (0 warn, 1 plan a handover, 2 ceiling,
+    /// 3 hard limit: interactive sessions, jttf).
     pub const SESSION_CONTEXT: &str = "session.context";
+    /// data: {identity, tokens, step}. The human said to carry on past a session's last step.
+    pub const SESSION_OVERRIDE: &str = "session.override";
     /// data: {identity, pid}. A registered interactive session ended (or its pid is gone).
     pub const SESSION_ENDED: &str = "session.ended";
     /// data: {task, branch}. `bridle land` began merging.

@@ -3,19 +3,28 @@
 //! In memory only: a session re-registers when its launcher restarts, and the daemon
 //! forgetting across its own restart costs one missing status line until the next hook.
 //!
-//! The thresholds are the orchestrator's (`[orchestrator] note_tokens, plan_tokens,
-//! handover_tokens`); crossing one emits `session.context`, once until the reading drops
-//! (/compact, /clear).
+//! The steps are `[sessions] warn` (150k, 200k, 250k, 300k): warn, plan a handover, the normal
+//! ceiling, the hard limit. Reaching a step emits `session.context` and messages the session and
+//! the human (through `external:triage`), once until the reading drops (/compact, /clear); a
+//! reading that jumps several steps announces only the highest. The human's override
+//! ([`Sessions::keep`]) is recorded and the next step asks again; the hard limit has none: it
+//! runs `bridle session restart` (a handover first, a fresh start if the note never comes).
 
 use std::path::PathBuf;
 use std::sync::Mutex;
 
-use bridle_api::types::{SessionEnd, SessionInfo, SessionRegister, event_kind};
+use bridle_api::types::{
+    MessageKind, MessageState, SessionEnd, SessionInfo, SessionRegister, When, event_kind,
+};
 use chrono::{DateTime, Utc};
 use serde_json::json;
 
+use crate::config::{SessionSteps, SessionsConfig};
 use crate::events::Emitter;
-use crate::store::Store;
+use crate::store::{NewMessage, RecipientKind, Store};
+
+/// The principal the human's warnings go to.
+const TRIAGE: &str = "external:triage";
 
 /// The shared advisor principal: where a named advisor's mail goes when it isn't running.
 pub const ADVISOR: &str = "external:advisor";
@@ -28,26 +37,64 @@ pub fn originally_for(name: &str, body: &str) -> String {
 struct Entry {
     info: SessionInfo,
     pid_start: String,
-    fired: [bool; 3],
+    fired: [bool; 4],
+    /// The human said to carry on past the last step that fired.
+    kept: bool,
+}
+
+/// How the hard limit restarts a session: this program with `[--project p] session restart ...`,
+/// run in `cwd` (the daemon's own binary, in tests a stub).
+struct Restarter {
+    program: PathBuf,
+    cwd: PathBuf,
 }
 
 pub struct Sessions {
     home: PathBuf,
-    tokens: [u64; 3],
+    config: SessionsConfig,
     emitter: Emitter,
     store: Store,
+    restarter: Option<std::sync::Arc<Restarter>>,
     entries: Mutex<Vec<Entry>>,
 }
 
+/// A step a session just reached.
+struct Reached {
+    identity: String,
+    project: Option<String>,
+    session: String,
+    tokens: u64,
+    threshold: u64,
+    step: usize,
+    kept: bool,
+}
+
 impl Sessions {
-    pub fn new(home: PathBuf, tokens: [u64; 3], emitter: Emitter, store: Store) -> Self {
+    pub fn new(home: PathBuf, config: SessionsConfig, emitter: Emitter, store: Store) -> Self {
         Sessions {
             home,
-            tokens,
+            config,
             emitter,
             store,
+            restarter: None,
             entries: Mutex::new(Vec::new()),
         }
+    }
+
+    /// Lets the hard limit restart sessions with `program` (run in `cwd`).
+    pub fn with_restart(mut self, program: PathBuf, cwd: PathBuf) -> Self {
+        self.restarter = Some(std::sync::Arc::new(Restarter { program, cwd }));
+        self
+    }
+
+    fn steps(&self, identity: &str) -> SessionSteps {
+        self.config.steps_for(identity)
+    }
+
+    fn handover_note(&self, identity: &str) -> PathBuf {
+        self.home
+            .join("handover")
+            .join(format!("{}.md", identity.replace('/', "-")))
     }
 
     /// Registers the session, or fills in what the later call knows for the same pid.
@@ -63,7 +110,8 @@ impl Sessions {
             {
                 e.info.claude_session_id = req.claude_session_id;
                 e.info.tokens = None;
-                e.fired = [false; 3];
+                e.fired = [false; 4];
+                e.kept = false;
             }
             return e.info.clone();
         }
@@ -81,7 +129,8 @@ impl Sessions {
         entries.push(Entry {
             info: info.clone(),
             pid_start: req.pid_start,
-            fired: [false; 3],
+            fired: [false; 4],
+            kept: false,
         });
         info
     }
@@ -129,7 +178,7 @@ impl Sessions {
                 self.end(SessionEnd { pid }).await;
             }
         }
-        let mut crossed = Vec::new();
+        let mut reached = Vec::new();
         {
             let mut entries = self.entries.lock().expect("sessions lock");
             for e in entries.iter_mut() {
@@ -156,23 +205,32 @@ impl Sessions {
                     .ok()
                     .map(DateTime::<Utc>::from);
                 if e.info.tokens.is_some_and(|last| tokens < last) {
-                    e.fired = [false; 3]; // /compact
+                    e.fired = [false; 4]; // /compact
+                    e.kept = false;
                 }
                 e.info.tokens = Some(tokens);
-                for i in 0..3 {
-                    if tokens >= self.tokens[i] && !e.fired[i] {
-                        e.fired[i] = true;
-                        crossed.push((
-                            e.info.identity.clone(),
-                            id.to_string(),
-                            tokens,
-                            self.tokens[i],
-                        ));
-                    }
+                let steps = self.steps(&e.info.identity);
+                let Some(step) = (0..4).rev().find(|&i| tokens >= steps[i]) else {
+                    continue;
+                };
+                if e.fired[step] {
+                    continue;
                 }
+                for f in &mut e.fired[..=step] {
+                    *f = true;
+                }
+                reached.push(Reached {
+                    identity: e.info.identity.clone(),
+                    project: e.info.project.clone(),
+                    session: id.to_string(),
+                    tokens,
+                    threshold: steps[step],
+                    step,
+                    kept: std::mem::replace(&mut e.kept, false),
+                });
             }
         }
-        for (identity, session, tokens, threshold) in crossed {
+        for r in reached {
             let _ = self
                 .emitter
                 .emit(
@@ -180,14 +238,166 @@ impl Sessions {
                     "system".to_string(),
                     None,
                     json!({
-                        "identity": identity,
-                        "session": session,
-                        "tokens": tokens,
-                        "threshold": threshold,
+                        "identity": r.identity,
+                        "session": r.session,
+                        "tokens": r.tokens,
+                        "threshold": r.threshold,
+                        "step": r.step,
                     }),
                 )
                 .await;
+            self.warn(&r).await;
         }
+    }
+
+    /// The human's override: carry on past the step the session is at. Recorded as an event and
+    /// told to the session; the next step asks again. There is none at the hard limit.
+    pub async fn keep(&self, identity: &str) -> Result<(), String> {
+        let (tokens, step) = {
+            let mut entries = self.entries.lock().expect("sessions lock");
+            let e = entries
+                .iter_mut()
+                .find(|e| e.info.identity == identity)
+                .ok_or_else(|| format!("no running session {identity:?} (see `bridle status`)"))?;
+            if e.fired[3] {
+                return Err(
+                    "at the hard limit the handover is forced; there is no override".into(),
+                );
+            }
+            let step = e.fired.iter().rposition(|f| *f).ok_or_else(|| {
+                format!("{identity} hasn't reached a warning step yet; nothing to override")
+            })?;
+            e.kept = true;
+            (e.info.tokens.unwrap_or_default(), step)
+        };
+        let _ = self
+            .emitter
+            .emit(
+                event_kind::SESSION_OVERRIDE,
+                "system".to_string(),
+                None,
+                json!({ "identity": identity, "tokens": tokens, "step": step }),
+            )
+            .await;
+        let hard = self.steps(identity)[3] / 1000;
+        self.tell(
+            &format!("external:{identity}"),
+            format!(
+                "The human says to carry on: no handover now. You'll be asked again at the next \
+                 step; at {hard}k the handover is forced."
+            ),
+        )
+        .await;
+        Ok(())
+    }
+
+    /// The message to the session and to the human for a step reached; the hard limit then
+    /// restarts the session.
+    async fn warn(&self, r: &Reached) {
+        let k = r.tokens / 1000;
+        let steps = self.steps(&r.identity);
+        let (next, hard) = (steps.get(r.step + 1).map(|t| t / 1000), steps[3] / 1000);
+        let id = &r.identity;
+        let note = self.handover_note(id).display().to_string();
+        let kept = if r.kept {
+            " (You carried on at the last step; asking again.)"
+        } else {
+            ""
+        };
+        let (session, human) = match r.step {
+            0 => (
+                format!(
+                    "Your context is {k}k tokens. Nothing to do yet; the human has been told, and \
+                     you'll be told again at {}k.",
+                    next.unwrap_or(hard)
+                ),
+                format!(
+                    "{id} is at {k}k tokens of context. `bridle session restart {id} --fresh` \
+                     restarts it clean; `--handover` asks for a note first."
+                ),
+            ),
+            1 => (
+                format!(
+                    "Your context is {k}k tokens. Plan a handover at the next quiet point: write \
+                     a short note (what you were doing, open threads, what the next session \
+                     needs) to {note}. The human may override this.{kept}"
+                ),
+                format!(
+                    "{id} is at {k}k tokens and will plan a handover. Carry on instead with \
+                     `bridle session keep {id}`; restart now with `bridle session restart {id}` \
+                     (`--fresh` for no handover).{kept}"
+                ),
+            ),
+            2 => (
+                format!(
+                    "Your context is {k}k tokens: the normal ceiling. Hand over (write {note}) or \
+                     shut down, unless the human overrides. At {hard}k the handover is forced.{kept}"
+                ),
+                format!(
+                    "{id} is at {k}k tokens, the normal ceiling: it will hand over or shut down. \
+                     Override with `bridle session keep {id}` (forced at {hard}k), or restart now \
+                     with `bridle session restart {id}` (`--fresh` for no handover).{kept}"
+                ),
+            ),
+            _ => (
+                format!(
+                    "Your context is {k}k tokens: the hard limit. Write your handover note to \
+                     {note} now; the session is restarted when it appears, and in any case \
+                     within minutes. No override."
+                ),
+                format!("{id} is at {k}k tokens, the hard limit: it is being restarted."),
+            ),
+        };
+        // Triage's own session is the human's channel: one message, not two.
+        if id == "triage" {
+            self.tell(TRIAGE, format!("{session} {human}")).await;
+        } else {
+            self.tell(&format!("external:{id}"), session).await;
+            self.tell(TRIAGE, human).await;
+        }
+        if r.step == 3 {
+            self.force_restart(r);
+        }
+    }
+
+    /// The hard limit: `bridle session restart <id>` (a handover first); if the note never comes,
+    /// again with `--fresh`. The outcome goes to the human.
+    fn force_restart(&self, r: &Reached) {
+        let Some(rs) = self.restarter.clone() else {
+            return;
+        };
+        let (store, emitter) = (self.store.clone(), self.emitter.clone());
+        let (identity, project) = (r.identity.clone(), r.project.clone());
+        tokio::spawn(async move {
+            let mut out = String::new();
+            for fresh in [false, true] {
+                let mut cmd = tokio::process::Command::new(&rs.program);
+                if let Some(p) = &project {
+                    cmd.args(["--project", p]);
+                }
+                cmd.args(["session", "restart", &identity])
+                    .current_dir(&rs.cwd)
+                    .env_remove("BRIDLE_AGENT_ID")
+                    .env_remove("BRIDLE_AS");
+                if fresh {
+                    cmd.arg("--fresh");
+                }
+                match cmd.output().await {
+                    Ok(o) if o.status.success() => {
+                        out = String::from_utf8_lossy(&o.stdout).trim().to_string();
+                        break;
+                    }
+                    Ok(o) => out = String::from_utf8_lossy(&o.stderr).trim().to_string(),
+                    Err(e) => out = e.to_string(),
+                }
+            }
+            let body = format!("Hard-limit restart of {identity}: {out}");
+            insert_note(&store, &emitter, TRIAGE, body).await;
+        });
+    }
+
+    async fn tell(&self, to: &str, body: String) {
+        insert_note(&self.store, &self.emitter, to, body).await;
     }
 
     async fn emit_ended(&self, e: &Entry) {
@@ -211,6 +421,35 @@ impl Sessions {
     }
 }
 
+/// A note from the system to an external principal, delivered at once.
+async fn insert_note(store: &Store, emitter: &Emitter, to: &str, body: String) {
+    let m = store
+        .insert_message(NewMessage {
+            from: "system".into(),
+            to: to.into(),
+            to_kind: RecipientKind::External,
+            kind: MessageKind::Note,
+            body,
+            reply_to: None,
+            when: When::Now,
+            state: MessageState::Written,
+        })
+        .await;
+    match m {
+        Ok(m) => {
+            let _ = emitter
+                .emit(
+                    event_kind::MESSAGE_SENT,
+                    "system".to_string(),
+                    None,
+                    json!({ "message": m.id, "to": to }),
+                )
+                .await;
+        }
+        Err(e) => tracing::warn!("session warning to {to}: {e}"),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -223,7 +462,10 @@ mod tests {
             .expect("store");
         let s = Sessions::new(
             dir.path().to_path_buf(),
-            [100, 200, 300],
+            SessionsConfig {
+                warn: [100, 200, 300, 400],
+                ..Default::default()
+            },
             Emitter::new(store.clone()),
             store.clone(),
         );
@@ -260,34 +502,123 @@ mod tests {
         assert!(s.list().is_empty());
     }
 
-    #[tokio::test]
-    async fn context_events_fire_once_per_threshold_and_reset_on_a_lower_reading() {
-        let (s, dir, store) = fixture().await;
+    async fn events(store: &Store, kind: &str) -> usize {
+        let q = bridle_api::types::EventQuery {
+            kind: Some(kind.into()),
+            ..Default::default()
+        };
+        store.list_events(q).await.expect("events").len()
+    }
+
+    async fn notes_to(store: &Store, to: &str) -> Vec<String> {
+        let q = crate::store::ListMessages {
+            to: Some(to.into()),
+            ..Default::default()
+        };
+        let m = store.list_messages(q).await.expect("messages");
+        m.into_iter().map(|m| m.body).collect()
+    }
+
+    fn register_self(s: &Sessions) {
         s.register(
             reg(std::process::id() as i32, &real_start(), Some("sess-1")),
             Utc::now(),
         );
-        let count = || async {
-            let q = bridle_api::types::EventQuery {
-                kind: Some(event_kind::SESSION_CONTEXT.into()),
-                ..Default::default()
-            };
-            store.list_events(q).await.expect("events").len()
-        };
+    }
+
+    #[tokio::test]
+    async fn each_step_fires_once_warns_both_and_resets_on_a_lower_reading() {
+        let (s, dir, store) = fixture().await;
+        register_self(&s);
+        let count = || events(&store, event_kind::SESSION_CONTEXT);
         write_context(&dir, "sess-1", 50);
         s.tick().await;
         assert_eq!(count().await, 0);
-        write_context(&dir, "sess-1", 250);
+        // A jump over two steps announces only the highest.
+        write_context(&dir, "sess-1", 300);
         s.tick().await;
         s.tick().await;
-        assert_eq!(count().await, 2);
-        assert_eq!(s.list()[0].tokens, Some(250));
+        assert_eq!(count().await, 1);
+        assert_eq!(s.list()[0].tokens, Some(300));
         assert!(s.list()[0].last_activity.is_some());
+        let to_session = notes_to(&store, "external:advisor/alice").await;
+        let to_human = notes_to(&store, TRIAGE).await;
+        assert_eq!((to_session.len(), to_human.len()), (1, 1));
+        assert!(to_session[0].contains("normal ceiling"), "{to_session:?}");
+        assert!(to_human[0].contains("bridle session keep advisor/alice"));
+        // The next step asks again; /compact resets.
         write_context(&dir, "sess-1", 10);
         s.tick().await;
-        write_context(&dir, "sess-1", 150);
+        write_context(&dir, "sess-1", 100);
         s.tick().await;
-        assert_eq!(count().await, 3);
+        assert_eq!(count().await, 2);
+        assert!(notes_to(&store, TRIAGE).await[1].contains("restart"));
+    }
+
+    #[tokio::test]
+    async fn an_override_is_recorded_and_the_next_step_asks_again() {
+        let (s, dir, store) = fixture().await;
+        register_self(&s);
+        assert!(
+            s.keep("advisor/alice").await.is_err(),
+            "no step reached yet"
+        );
+        assert!(s.keep("advisor/bob").await.is_err(), "no such session");
+        write_context(&dir, "sess-1", 200);
+        s.tick().await;
+        s.keep("advisor/alice").await.expect("keep");
+        assert_eq!(events(&store, event_kind::SESSION_OVERRIDE).await, 1);
+        let to_session = notes_to(&store, "external:advisor/alice").await;
+        assert!(to_session[1].contains("carry on"), "{to_session:?}");
+        write_context(&dir, "sess-1", 300);
+        s.tick().await;
+        let to_session = notes_to(&store, "external:advisor/alice").await;
+        assert!(to_session[2].contains("You carried on"), "{to_session:?}");
+    }
+
+    #[tokio::test]
+    async fn the_hard_limit_has_no_override_and_forces_a_restart() {
+        let (s, dir, store) = fixture().await;
+        // A stub `bridle`: records its arguments; the handover attempt fails, so --fresh follows.
+        let log = dir.path().join("calls");
+        let stub = dir.path().join("stub.sh");
+        std::fs::write(
+            &stub,
+            format!(
+                "#!/bin/sh\necho \"$@\" >> {}\ncase \"$*\" in *--fresh*) echo restarted;; \
+                 *) echo no note >&2; exit 1;; esac\n",
+                log.display()
+            ),
+        )
+        .expect("stub");
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&stub, std::fs::Permissions::from_mode(0o755)).expect("chmod");
+        let s = s.with_restart(stub, dir.path().to_path_buf());
+        register_self(&s);
+        write_context(&dir, "sess-1", 400);
+        s.tick().await;
+        assert!(s.keep("advisor/alice").await.is_err());
+        let to_session = notes_to(&store, "external:advisor/alice").await;
+        assert!(to_session[0].contains("hard limit"), "{to_session:?}");
+        for _ in 0..50 {
+            if notes_to(&store, TRIAGE).await.len() == 2 {
+                break;
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+        }
+        let calls = std::fs::read_to_string(&log).expect("calls");
+        assert_eq!(
+            calls.lines().collect::<Vec<_>>(),
+            [
+                "--project bridle session restart advisor/alice",
+                "--project bridle session restart advisor/alice --fresh"
+            ]
+        );
+        assert!(
+            notes_to(&store, TRIAGE).await[1].contains("restarted"),
+            "{:?}",
+            notes_to(&store, TRIAGE).await
+        );
     }
 
     #[tokio::test]

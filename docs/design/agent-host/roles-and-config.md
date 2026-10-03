@@ -159,6 +159,7 @@ Also read from `.bridle/config.toml` (defaults in parentheses; each is documente
   `wind_down_grace` (`"5m"`): an agent nearing its context limit is told to hand off, then
   renewed ([[agents#Renewing|agents.md]]).
 - `[orchestrator] enabled` (`false`), `launcher` (`"scripts/claude-orchestrator"`), `relaunch_backoff` (`["30s", "2m", "10m"]`), `stable_after` (`"10m"`), `waiter_grace` (`"15m"`), `note_tokens` (`"150k"`), `plan_tokens` (`"180k"`), `handover_tokens` (`"200k"`; each at least the one before), `handover_deadline` (`"30m"`), `max_uptime` (`"12h"`): the orchestrator supervisor ([[orchestrator-supervision]]).
+- `[sessions] warn` (`["150k", "200k", "250k", "300k"]`; four increasing counts) and `[sessions.advisor] warn` / `[sessions.triage] warn`: the context steps of interactive sessions: warn, plan a handover, the normal ceiling, the hard limit that forces a restart ([[orchestrator-supervision]], Interactive sessions).
 - `[state] push` (`true`): push `bridle/state` to `origin` after flushes; set to `false` to opt-out; see [[storage#The state branch]].
 - `[disk] check_interval` (`"1h"`), `min_free_gb` (20): [[operating-model#Disk monitor|disk monitor]].
 - `[tasks] settle` (`"5m"`; `0` turns it off): how long a task waits after creation or a human

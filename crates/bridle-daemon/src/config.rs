@@ -41,6 +41,8 @@ pub enum ConfigError {
     BadTmux(String),
     #[error("invalid [orchestrator]: {0}")]
     BadOrchestrator(String),
+    #[error("invalid [sessions]: {0}")]
+    BadSessions(String),
     #[error("invalid [[budget.schedule]] {name:?}: {reason}")]
     BadSchedule { name: String, reason: String },
     #[error("[components.{id}] parent {parent:?} is not a defined component")]
@@ -1287,6 +1289,89 @@ impl OrchestratorConfig {
     }
 }
 
+/// The context steps of an interactive session (docs/design/agent-host/orchestrator-supervision.md,
+/// "Every interactive session"): warn, plan a handover, the normal ceiling, the hard limit.
+pub type SessionSteps = [u64; 4];
+
+const DEFAULT_SESSION_STEPS: SessionSteps = [150_000, 200_000, 250_000, 300_000];
+
+/// `[sessions] warn` and the per-role `[sessions.advisor] warn` / `[sessions.triage] warn`.
+#[derive(Debug, Clone, PartialEq)]
+pub struct SessionsConfig {
+    pub warn: SessionSteps,
+    pub advisor: Option<SessionSteps>,
+    pub triage: Option<SessionSteps>,
+}
+
+impl Default for SessionsConfig {
+    fn default() -> Self {
+        SessionsConfig {
+            warn: DEFAULT_SESSION_STEPS,
+            advisor: None,
+            triage: None,
+        }
+    }
+}
+
+impl SessionsConfig {
+    /// The steps for a session identity (`advisor`, `advisor/<name>`, `triage`).
+    pub fn steps_for(&self, identity: &str) -> SessionSteps {
+        let role = identity.split('/').next().unwrap_or(identity);
+        match role {
+            "advisor" => self.advisor,
+            "triage" => self.triage,
+            _ => None,
+        }
+        .unwrap_or(self.warn)
+    }
+
+    fn merge(mut self, raw: RawSessions) -> Result<Self, ConfigError> {
+        if let Some(w) = raw.warn {
+            self.warn = session_steps(&w)?;
+        }
+        if let Some(w) = raw.advisor.and_then(|r| r.warn) {
+            self.advisor = Some(session_steps(&w)?);
+        }
+        if let Some(w) = raw.triage.and_then(|r| r.warn) {
+            self.triage = Some(session_steps(&w)?);
+        }
+        Ok(self)
+    }
+}
+
+fn session_steps(raw: &[TokenCount]) -> Result<SessionSteps, ConfigError> {
+    let steps: SessionSteps = raw
+        .iter()
+        .map(|t| t.0)
+        .collect::<Vec<_>>()
+        .try_into()
+        .map_err(|_| ConfigError::BadSessions("warn needs exactly four token counts".into()))?;
+    if steps[0] == 0 || steps.windows(2).any(|w| w[0] >= w[1]) {
+        return Err(ConfigError::BadSessions(
+            "warn must be four increasing, nonzero token counts".into(),
+        ));
+    }
+    Ok(steps)
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawSessions {
+    #[serde(default)]
+    warn: Option<Vec<TokenCount>>,
+    #[serde(default)]
+    advisor: Option<RawSessionRole>,
+    #[serde(default)]
+    triage: Option<RawSessionRole>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawSessionRole {
+    #[serde(default)]
+    warn: Option<Vec<TokenCount>>,
+}
+
 impl Default for CommandsConfig {
     fn default() -> Self {
         CommandsConfig {
@@ -1347,6 +1432,7 @@ pub struct Config {
     /// default: set to false to opt-out (rule existing-projects, human-approved 2026-09-29).
     pub state_push: bool,
     pub orchestrator: OrchestratorConfig,
+    pub sessions: SessionsConfig,
     pub ports: PortsConfig,
     pub integration: IntegrationConfig,
     pub messages: MessagesConfig,
@@ -1405,6 +1491,7 @@ impl Default for Config {
             disk: DiskConfig::default(),
             state_push: true,
             orchestrator: OrchestratorConfig::default(),
+            sessions: SessionsConfig::default(),
             ports: PortsConfig::default(),
             integration: IntegrationConfig::default(),
             messages: MessagesConfig::default(),
@@ -1745,6 +1832,9 @@ impl Config {
         if let Some(o) = raw.orchestrator {
             config.orchestrator = config.orchestrator.merge(o)?;
         }
+        if let Some(r) = raw.sessions {
+            config.sessions = config.sessions.merge(r)?;
+        }
 
         if let Some(v) = raw.state.and_then(|s| s.push) {
             config.state_push = v;
@@ -2084,6 +2174,8 @@ struct RawConfig {
     state: Option<RawState>,
     #[serde(default)]
     orchestrator: Option<RawOrchestrator>,
+    #[serde(default)]
+    sessions: Option<RawSessions>,
     #[serde(default)]
     ports: Option<RawPorts>,
     #[serde(default)]
@@ -3589,6 +3681,29 @@ mod tests {
         assert!(Config::parse("[orchestrator]\nnote_tokens = 0\n").is_err());
         assert!(Config::parse("[orchestrator]\nhandover_tokens = 170000\n").is_err());
         assert!(Config::parse("[orchestrator]\nmax_uptime = \"0s\"\n").is_err());
+    }
+
+    #[test]
+    fn session_steps_default_override_per_role_and_validate() {
+        let d = Config::parse("").unwrap().sessions;
+        assert_eq!(
+            d.steps_for("advisor/x"),
+            [150_000, 200_000, 250_000, 300_000]
+        );
+        let c = Config::parse(
+            "[sessions]\nwarn = [\"100k\", \"150k\", 200000, \"1M\"]\n\
+             [sessions.triage]\nwarn = [1, 2, 3, 4]\n",
+        )
+        .unwrap()
+        .sessions;
+        assert_eq!(
+            c.steps_for("advisor"),
+            [100_000, 150_000, 200_000, 1_000_000]
+        );
+        assert_eq!(c.steps_for("triage"), [1, 2, 3, 4]);
+        assert!(Config::parse("[sessions]\nwarn = [1, 2, 3]\n").is_err());
+        assert!(Config::parse("[sessions]\nwarn = [1, 3, 2, 4]\n").is_err());
+        assert!(Config::parse("[sessions]\nwarn = [0, 1, 2, 3]\n").is_err());
     }
 
     #[test]

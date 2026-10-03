@@ -1953,6 +1953,12 @@ pub enum SessionRole {
         #[arg(long)]
         fresh: bool,
     },
+    /// Carry on past a session's context warning: `bridle session keep advisor/alice` records the
+    /// human's override of the planned handover (none at the hard limit) and tells the session.
+    Keep {
+        /// The session's identifier as `bridle status` lists it.
+        identifier: String,
+    },
     /// `bridle session triage [--project <p>] [claude args]`: the session that talks to the human
     /// about the running system (`external:triage`, token under `[triage]`).
     Triage {
