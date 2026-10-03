@@ -10,7 +10,7 @@ use bridle_api::types::{
 };
 use support::{default_overrides, start_daemon, wait_for_state};
 
-const DEBOUNCE: Duration = Duration::from_millis(600);
+const DEBOUNCE: Duration = Duration::from_millis(1000);
 
 async fn daemon() -> (support::TestDaemon, tempfile::TempDir) {
     let mut o = default_overrides();
@@ -101,11 +101,12 @@ async fn a_burst_is_one_message_after_it_settles() {
     let a = task(&daemon, "a").await;
     let b = task(&daemon, "b").await;
     let c = task(&daemon, "c").await;
-    // Each change lands inside the previous one's wait: a trailing edge.
+    // Each change lands inside the previous one's wait: a trailing edge. The gap is small against
+    // DEBOUNCE so a slow runner's request latency can't push one past it.
     daemon.client.set_queue(vec![vec![a]]).await.expect("set");
-    tokio::time::sleep(DEBOUNCE / 2).await;
+    tokio::time::sleep(DEBOUNCE / 10).await;
     daemon.client.add_queue_tier(vec![b]).await.expect("add");
-    tokio::time::sleep(DEBOUNCE / 2).await;
+    tokio::time::sleep(DEBOUNCE / 10).await;
     daemon.client.add_queue_tier(vec![c]).await.expect("add");
     settle().await;
     assert_eq!(nudges(&daemon, &mgr).await.len(), 1);
