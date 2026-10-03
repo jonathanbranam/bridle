@@ -117,6 +117,23 @@ The human, clarifying (2026-10-03, verbatim):
 5. **Unchanged: critical fixes.** For a critical issue the orchestrator still creates a task and
    schedules the fix itself. Feature work and larger changes always go to the human first.
 
-Still open: which existing state means "ready" (`planned`, or a new one), what happens to open
-tasks already made from tickets, and the rest of this ticket (whether tickets and tasks stay
-separate).
+The human, settling what "ready" means (2026-10-03, verbatim):
+
+> I thought that, I don't know, explain how it works today. I think what you said is that an open
+> task can be scheduled by the PM and the PM is who decides when to plan it. I think that's true.
+> Um, in some cases, the orchestrator can, you know, plan a urgent task. But generally, tasks
+> should be marked as ready to work. I think that means open. And then either the PM should plan
+> them. And then that's when the manager gets involved. Unless we're fast tracking a bug fix or of
+> some kind. Does that answer the question? I, I think that's correct. So a ticket doesn't get any
+> work on it because there's no task. But as soon, yeah, I'm a little fuzzy on the difference
+> between a task and a ticket still. So let's stick with this for now. A task, if we've created a
+> task, that means it's ready for work.
+
+6. **A task's existence means ready for work.** No new state: an `open` task is ready; the PM
+   plans it (`open` -> `planned`) and tiers it; then the manager picks it up. The orchestrator
+   can plan an urgent fix itself. A ticket with no task gets no work.
+
+Still open: the 112 tasks open on 2026-10-03, most made automatically from tickets before this
+decision (including br-2b0b, br-ab3a, br-fd74, br-4eaf, raw ideas marked "do not build"). Under
+rule 6 they'd all count as ready; they need sorting (keep the ones the human approved, drop or
+park the rest). And the rest of this ticket: whether tickets and tasks stay separate.
