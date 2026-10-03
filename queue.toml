@@ -50,3 +50,6 @@ tasks = ["br-e5f1"]
 
 [[tier]]
 tasks = ["br-9e15"]
+
+[[tier]]
+tasks = ["br-6c69"]
