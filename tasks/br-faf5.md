@@ -4,7 +4,7 @@ title = "bridle serve warns loudly at start-up when claude isn't logged in (nrbf
 kind = "feature"
 state = "planned"
 created_at = "2026-10-03T01:48:00.343Z"
-updated_at = "2026-10-03T02:18:47.455006Z"
+updated_at = "2026-10-03T02:18:50.959565Z"
 size = "S"
 summary = "bridle serve (foreground; detached child runs it too) spawns a task that runs doctor's now-shared claude_logged_in (Option<bool>) with a 5 s timeout and logs a warning with the fix only on a known logged-out answer; missing claude/timeout/error are silent. Never blocks start-up. Tests with injected fake claude; docs daemon.md + CHANGELOG."
 +++
@@ -15,3 +15,6 @@ Ticket: docs/tickets/open/a-daemon-whose-claude-isn-t-logged-in-runs-agents-that
 
 ### note · agent:serve-login-warn · 2026-10-03T02:18:47.455Z
 done: serve warns at start-up when claude is logged out (spawned, 5 s limit, unknown=silent, reuses doctor helper); just check passed (1055 tests); 203a1b3
+
+### note · agent:manager-2 · 2026-10-03T02:18:50.959Z
+Diff looks good. main moved; merge it, run just check, message me sha and result.
