@@ -69,6 +69,8 @@ established; S-numbers are its scenarios. Each agent is one headless
   starting-context saving comes from (docs/spikes/08-lean-context-findings.md);
   `--allowedTools`/`--disallowedTools` still gate the calls. If the list holds
   `Skill`, `--settings` also carries `disableBundledSkills: true`.
+  `--settings` also carries the workflow layers' `hooks/<event>.json` for every role,
+  after bridle's own `Stop` entry (workflow-layers.md, Hooks).
 - **Process group**: the agent is the leader of its own process group.
 - **cwd**: `wt/<name>` (a new worktree on branch `bridle/<name>` from the
   role's base ref; the path follows `[worktrees] layout`, and a `paired` layout also

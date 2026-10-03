@@ -175,6 +175,16 @@ written down anywhere else yet:
   anything a human added by hand: a gitignored sidecar,
   `.claude/.bridle-sync-hooks.json`, records exactly which entries the previous sync
   wrote, and only those are removed before the current ones go in.
+- **Layer hooks are live at spawn, without `bridle sync`**: the daemon resolves the same
+  overlay (base, packs, project; `sync::discover_hooks_lossy`) and merges it into the
+  `--settings` of every spawned agent, beside bridle's own hooks. An event with both keeps all
+  of them: arrays concatenate, bridle's `Stop` check first, so a layer can't drop or override
+  it. A malformed, unreadable or non-array hook file is skipped with a tracing warning and
+  never fails a spawn (`bridle sync` still errors on it). Entries identical to ones already
+  in the project's committed `.claude/settings.json` (what `bridle sync` writes) are dropped,
+  so a synced project doesn't run a hook twice; sync's own output is untouched. Commands
+  resolve on the agent's `PATH`, which points at the daemon's own binary, so
+  `bridle arch-guard` works from any worktree.
 - **Little skill/agent/hook content exists in `workflow/` yet**: `base/hooks/PreToolUse.json`
   and the `manager`/`worker` skills; no `agents/<role>.md`. The conventions above are
   sync's contract for the rest.

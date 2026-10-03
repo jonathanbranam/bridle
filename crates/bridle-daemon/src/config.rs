@@ -2653,6 +2653,37 @@ pub fn stable_system_prompt(
 }
 
 impl Config {
+    /// The layers' `hooks/<event>.json` (base, packs, project: the overlay
+    /// `bridle sync` uses) for the spawn's `--settings`. Entries already in
+    /// the project's committed `.claude/settings.json` (where `bridle sync`
+    /// puts the same hooks) are dropped so they don't run twice. Never
+    /// fails: a problem yields fewer hooks and a warning.
+    pub fn layer_hooks(&self, repo: &Path) -> BTreeMap<String, serde_json::Value> {
+        let root = match self.workflow_root(repo) {
+            Ok(r) => r,
+            Err(e) => {
+                tracing::warn!(error = %e, "workflow root not resolvable; no layer hooks");
+                return BTreeMap::new();
+            }
+        };
+        let layers = crate::rules::discover_layers(repo, root.as_deref(), &self.packs);
+        let mut hooks = crate::sync::discover_hooks_lossy(&layers);
+        let committed: Option<serde_json::Value> =
+            std::fs::read_to_string(repo.join(".claude").join("settings.json"))
+                .ok()
+                .and_then(|t| serde_json::from_str(&t).ok());
+        hooks.retain(|event, value| {
+            let existing = committed
+                .as_ref()
+                .and_then(|c| c["hooks"][event.as_str()].as_array());
+            if let (Some(existing), Some(entries)) = (existing, value.as_array_mut()) {
+                entries.retain(|e| !existing.contains(e));
+            }
+            value.as_array().is_some_and(|a| !a.is_empty())
+        });
+        hooks
+    }
+
     /// The role's resolved workflow rules (L1 base, packs, project; no components) as
     /// `bridle prime <role>` prints them, for [`stable_system_prompt`]. Never fails: rules
     /// that can't be resolved (missing workflow dir or pack, a bad rule file) log a warning
@@ -4268,5 +4299,66 @@ mod tests {
         let (dir, cfg) = rules_repo();
         write_rule(dir.path(), ".bridle/rules/dup.md", "base-rule", "[]");
         assert_eq!(cfg.role_rules_text(dir.path(), "worker"), "");
+    }
+
+    fn write_hook(root: &Path, rel: &str, text: &str) {
+        let p = root.join(rel);
+        std::fs::create_dir_all(p.parent().expect("parent")).expect("mkdir");
+        std::fs::write(p, text).expect("write");
+    }
+
+    const GUARD: &str =
+        r#"[{"matcher":"Edit","hooks":[{"type":"command","command":"bridle arch-guard"}]}]"#;
+
+    #[test]
+    fn layer_hooks_include_base_and_project_events() {
+        let (dir, cfg) = rules_repo();
+        let r = dir.path();
+        write_hook(r, "wf/base/hooks/PreToolUse.json", GUARD);
+        write_hook(
+            r,
+            ".bridle/hooks/PostToolUse.json",
+            r#"[{"hooks":[{"type":"command","command":"proj-post"}]}]"#,
+        );
+        let hooks = cfg.layer_hooks(r);
+        assert_eq!(
+            hooks.keys().map(String::as_str).collect::<Vec<_>>(),
+            ["PostToolUse", "PreToolUse"]
+        );
+        assert_eq!(
+            hooks["PreToolUse"][0]["hooks"][0]["command"],
+            "bridle arch-guard"
+        );
+    }
+
+    #[test]
+    fn layer_hooks_skip_malformed_files_and_keep_the_rest() {
+        let (dir, cfg) = rules_repo();
+        let r = dir.path();
+        write_hook(r, "wf/base/hooks/PreToolUse.json", GUARD);
+        write_hook(r, ".bridle/hooks/Stop.json", "{not json");
+        write_hook(r, ".bridle/hooks/PostToolUse.json", r#"{"not":"an array"}"#);
+        let hooks = cfg.layer_hooks(r);
+        assert_eq!(hooks.len(), 1);
+        assert!(hooks.contains_key("PreToolUse"));
+    }
+
+    #[test]
+    fn no_hooks_dir_means_no_layer_hooks() {
+        let (dir, cfg) = rules_repo();
+        assert!(cfg.layer_hooks(dir.path()).is_empty());
+    }
+
+    #[test]
+    fn layer_hooks_already_in_committed_settings_are_not_doubled() {
+        let (dir, cfg) = rules_repo();
+        let r = dir.path();
+        write_hook(r, "wf/base/hooks/PreToolUse.json", GUARD);
+        write_hook(
+            r,
+            ".claude/settings.json",
+            &format!(r#"{{"hooks":{{"PreToolUse":{GUARD}}}}}"#),
+        );
+        assert!(cfg.layer_hooks(r).is_empty());
     }
 }

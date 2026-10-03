@@ -3,6 +3,7 @@
 //! `Vec<String>`) so the flag set is unit-testable without spawning
 //! anything.
 
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 
 use uuid::Uuid;
@@ -44,6 +45,10 @@ pub struct ClaudeCommand {
     /// coordination.md, docs/spikes/05-stop-hook-findings.md): worker role
     /// only, set from `Role::stop_check`.
     pub stop_check: bool,
+    /// Layer hooks (`hooks/<event>.json`, event -> array of hook entries),
+    /// merged into the `--settings` hooks. Bridle's own `Stop` entry stays
+    /// first in its event's array; layer entries follow it.
+    pub layer_hooks: BTreeMap<String, serde_json::Value>,
     pub extra_args: Vec<String>,
 }
 
@@ -62,7 +67,11 @@ const STOP_CHECK_TIMEOUT_SECS: u64 = 1800;
 /// and other agents can read it (docs/proposal/decisions.md, no assistant
 /// memory). `stop_check` adds the `Stop` hook shape confirmed by spike 05
 /// (flat `decision`/`reason`, not `hookSpecificOutput`).
-fn settings_json(stop_check: bool, keeps_skill: bool) -> String {
+fn settings_json(
+    stop_check: bool,
+    keeps_skill: bool,
+    layer_hooks: &BTreeMap<String, serde_json::Value>,
+) -> String {
     let mut settings = serde_json::json!({
         "autoMemoryEnabled": false,
         "autoDreamEnabled": false,
@@ -88,6 +97,19 @@ fn settings_json(stop_check: bool, keeps_skill: bool) -> String {
             ]
         });
     }
+    for (event, entries) in layer_hooks {
+        let Some(entries) = entries.as_array().filter(|a| !a.is_empty()) else {
+            continue;
+        };
+        let slot = &mut settings["hooks"];
+        if slot.is_null() {
+            *slot = serde_json::json!({});
+        }
+        match slot[event.as_str()].as_array_mut() {
+            Some(existing) => existing.extend(entries.iter().cloned()),
+            None => slot[event.as_str()] = entries.clone().into(),
+        }
+    }
     settings.to_string()
 }
 
@@ -108,6 +130,7 @@ impl ClaudeCommand {
             max_budget_usd: None,
             env: Vec::new(),
             stop_check: false,
+            layer_hooks: BTreeMap::new(),
             extra_args: Vec::new(),
         }
     }
@@ -143,6 +166,7 @@ impl ClaudeCommand {
             self.tools
                 .as_ref()
                 .is_some_and(|t| t.iter().any(|x| x == "Skill")),
+            &self.layer_hooks,
         ));
 
         match &self.session {
@@ -290,6 +314,37 @@ mod tests {
         let settings: serde_json::Value =
             serde_json::from_str(&args[i + 1]).expect("--settings is JSON");
         assert!(settings.get("hooks").is_none());
+    }
+
+    #[test]
+    fn layer_hooks_follow_the_stop_hook_and_add_other_events() {
+        let mut cmd = ClaudeCommand::new("/tmp", Session::New(uuid(11)));
+        cmd.stop_check = true;
+        cmd.layer_hooks.insert(
+            "Stop".into(),
+            serde_json::json!([{"hooks": [{"type": "command", "command": "layer-stop"}]}]),
+        );
+        cmd.layer_hooks.insert(
+            "PreToolUse".into(),
+            serde_json::json!([{"matcher": "Edit", "hooks": [{"type": "command", "command": "bridle arch-guard"}]}]),
+        );
+        let settings = settings_of(&cmd.args());
+        let stop = settings["hooks"]["Stop"].as_array().expect("Stop array");
+        assert_eq!(stop.len(), 2);
+        assert_eq!(stop[0]["hooks"][0]["command"], STOP_CHECK_HOOK_COMMAND);
+        assert_eq!(stop[1]["hooks"][0]["command"], "layer-stop");
+        assert_eq!(
+            settings["hooks"]["PreToolUse"][0]["hooks"][0]["command"],
+            "bridle arch-guard"
+        );
+    }
+
+    #[test]
+    fn layer_hooks_alone_create_the_hooks_object() {
+        let mut cmd = ClaudeCommand::new("/tmp", Session::New(uuid(12)));
+        cmd.layer_hooks
+            .insert("PreToolUse".into(), serde_json::json!([{"hooks": []}]));
+        assert!(settings_of(&cmd.args())["hooks"]["PreToolUse"].is_array());
     }
 
     #[test]

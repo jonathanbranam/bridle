@@ -389,9 +389,37 @@ fn write_agents(repo: &Path, agents: &BTreeMap<String, Vec<u8>>) -> Result<(), S
 /// replacing earlier ones wholesale, same as agents.
 pub fn discover_hooks(layers: &[Layer]) -> Result<BTreeMap<String, Value>, SyncError> {
     let mut hooks = BTreeMap::new();
+    for (event, path) in hook_files(layers) {
+        hooks.insert(event.clone(), read_hook_file(&path, event)?);
+    }
+    Ok(hooks)
+}
+
+/// [`discover_hooks`] for spawn time: the same overlay, but an unreadable,
+/// malformed or non-array hook file is skipped with a warning (the earlier
+/// layer's entry for that event, if any, stays), because a bad hook file
+/// must never fail a spawn.
+pub fn discover_hooks_lossy(layers: &[Layer]) -> BTreeMap<String, Value> {
+    let mut hooks = BTreeMap::new();
+    for (event, path) in hook_files(layers) {
+        match read_hook_file(&path, event.clone()) {
+            Ok(value) => {
+                hooks.insert(event, value);
+            }
+            Err(e) => {
+                tracing::warn!(path = %path.display(), error = %e, "skipping layer hook file");
+            }
+        }
+    }
+    hooks
+}
+
+/// Every layer's `hooks/*.json` as `(event, path)`, in overlay order
+/// (layers first to last, files sorted within a layer).
+fn hook_files(layers: &[Layer]) -> Vec<(String, PathBuf)> {
+    let mut out = Vec::new();
     for layer in layers {
-        let hooks_dir = layer_root(layer).join("hooks");
-        let Ok(entries) = fs::read_dir(&hooks_dir) else {
+        let Ok(entries) = fs::read_dir(layer_root(layer).join("hooks")) else {
             continue;
         };
         let mut paths: Vec<PathBuf> = entries
@@ -406,24 +434,28 @@ pub fn discover_hooks(layers: &[Layer]) -> Result<BTreeMap<String, Value>, SyncE
                 .expect("filtered to .json files")
                 .to_string_lossy()
                 .to_string();
-            let text = fs::read_to_string(&path).map_err(|source| SyncError::Io {
-                path: path.clone(),
-                source,
-            })?;
-            let value: Value = serde_json::from_str(&text).map_err(|source| SyncError::Json {
-                path: path.clone(),
-                source,
-            })?;
-            if !value.is_array() {
-                return Err(SyncError::HookNotArray {
-                    path: path.clone(),
-                    event,
-                });
-            }
-            hooks.insert(event, value);
+            out.push((event, path));
         }
     }
-    Ok(hooks)
+    out
+}
+
+fn read_hook_file(path: &Path, event: String) -> Result<Value, SyncError> {
+    let text = fs::read_to_string(path).map_err(|source| SyncError::Io {
+        path: path.to_path_buf(),
+        source,
+    })?;
+    let value: Value = serde_json::from_str(&text).map_err(|source| SyncError::Json {
+        path: path.to_path_buf(),
+        source,
+    })?;
+    if !value.is_array() {
+        return Err(SyncError::HookNotArray {
+            path: path.to_path_buf(),
+            event,
+        });
+    }
+    Ok(value)
 }
 
 fn read_json_object(path: &Path) -> Result<Map<String, Value>, SyncError> {
