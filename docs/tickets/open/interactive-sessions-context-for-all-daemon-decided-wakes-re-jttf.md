@@ -190,3 +190,46 @@ Advisor's proposal for the numbers (the human to set): warn the session and the 
 warn again at 300k ("hand over or shut down?"); ceiling at 400k: the session writes a handover and
 stops after a deadline, unless the human has said to shut it down. Configurable per role.
 
+### Decided (the human, 2026-10-03)
+
+The human, verbatim:
+
+> Okay, I want to think about this again. I think there are two kinds of situations I run into:
+>
+> 1. I'm talking to an advisor about a whole lot of things. It's not a single-track conversation,
+>    so I'd be real happy with a restart around 150. I would do a restart without a handoff,
+>    probably. I just don't need a handoff for a lot of those sessions. That's a lot of what I use
+>    this session for. I trust bridle to handle everything else, really. I'm kind of happy with a
+>    clean slate, so it should always be the human's choice. The human can always choose a
+>    restart without a handoff.
+> 2. I'm thinking we should start getting warnings around 150 just so that you and I are aware,
+>    because when I'm on my phone or somewhere else, it's not easy to see the context at all. I
+>    think we could go over 200 by a little bit, so I'd probably warn at 150 and 200. At 250,
+>    probably tell it to hand over or shut down. The ceiling is 300. I don't know. The thing is, I
+>    don't actually want to go that high. I think what I really want is the ceiling at 250, but
+>    warnings at 150 and 200. At 200, it should say you should go ahead and plan a handoff unless
+>    the human overrides that. What we want is the ability for the human to override the handoff
+>    up until, let's say, 300. If we go over 300, the handoff is forced and the session restarts.
+> 3. Let's warn every 50.
+
+> Yeah, ask again at every 50, and I think that looks good. I think the other thing we had in that
+> ticket was auto-restarting advisors after a crash, and I want to table that decision for now. I
+> think in the future, we're going to have a slightly different system and per-project rules on
+> what gets restarted after a crash, but that's too much complexity for right now.
+
+So, for every interactive session (the orchestrator keeps its own numbers):
+
+- **Restart without a handover is always the human's choice**, at any point (a clean slate).
+- **Every 50k from 150k, warn the session and the human** (the human can't see context from the
+  phone), and ask again each time:
+
+| Context | What happens |
+|---|---|
+| 150k | Warn |
+| 200k | Warn; plan a handover unless the human overrides |
+| 250k | The normal ceiling: hand over or shut down, unless the human overrides again |
+| 300k | Hard limit: no override; hand over and restart |
+
+- **Crash restart for advisors: tabled.** Later, per-project rules on what restarts after a crash
+  (decision 5 above stands meanwhile: no automatic crash restart except the orchestrator).
+
