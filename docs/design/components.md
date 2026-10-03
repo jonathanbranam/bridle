@@ -1,8 +1,10 @@
 # Components: scoped work contexts
 
+> **Status (checked 2026-10-03):** Built, not wired in: `[components.<id>]` config with validation, `LayerKind::Component` chains, `components` on tasks and spawns (`bridle task new|list --component`, `bridle agent spawn --component`, `BRIDLE_COMPONENTS`), `bridle prime worker|planner --component`, `bridle rules explain|diff --component`. Nothing delivers component rules to a spawned agent: its system prompt carries L1–L3 only (`config.rs` `role_rules_text`), and workers don't run `bridle prime`. No project declares components yet · Planned: everything under "Deferred"
+
 Design for the L4 layer of [[docs/design/workflow-layers|workflow layers]], from
 [[components-as-scoped-work-contexts-y3sd|y3sd]] (the human's ask and settled
-answers are quoted there; not re-argued here). Designed, not built. It supersedes
+answers are quoted there; not re-argued here). Built as far as the status line above says. It supersedes
 the render target suggested in [[docs/spikes/06-path-scoped-rules-findings|spike 06]].
 
 The case is track-web: one server shared by many clients (`client-games`,
@@ -72,9 +74,10 @@ the human is, so cwd says nothing about which client is meant. The scope is name
 
 ## What an agent is handed (gaps 1 and 4)
 
-`bridle prime <role>` (built today for `orchestrator` only) is the delivery
-mechanism, as workflow-layers already says for most rule content. Given the named
-components, prime prints, sized to the role:
+`bridle prime worker|planner` is the designed delivery mechanism. It is built, but no
+spawned agent runs it, and the spawn-time system prompt (which is how L1–L3 rules reach
+agents today) leaves components out, so this delivery is not wired in yet. Given the named
+components, prime prints:
 
 1. L1–L3 as it does now (resolved rules tagged for the role, facts, guides).
 2. For each named component, its chain's rules, facts and guide pointers, resolved
@@ -103,14 +106,13 @@ small spike verifies the mechanism first (below).
 
 `rules::resolve` (`crates/bridle-daemon/src/rules.rs`) takes an ordered list of
 layers and folds them in order; nothing in it is specific to base/pack/project. A
-two-deep chain is therefore just two more layers after L3:
+two-deep chain is therefore just two more layers after L3 (built, with tests):
 `base, packs…, project, client-games, dungeon-tactics`. A game rule replaces or
 appends to a client rule by id with an explicit `override`, disables need a
 `reason`, and a locked client rule can't be overridden by a game, exactly as for
-the existing layers. (Read from the code, not yet run; the follow-up's first test
-proves it.)
+the existing layers.
 
-What it needs:
+What it took:
 
 - `LayerKind::Component` and a `Layer` for `.bridle/components/<id>/rules`, and a
   helper that builds the chain for one component from config.
@@ -160,7 +162,8 @@ first, because the onboarding's config shape depends on it.
 
 ## Build now, defer
 
-**Follow-up implementation task** (one task; L4 layer plus prime, no renderer):
+**The implementation task** (built; L4 layer plus prime, no renderer). What it left out is how
+a spawned agent receives its components' rules:
 
 > Components as scoped work contexts. Implement docs/design/components.md:
 > (1) `[components.<id>]` in config (`paths`, `parent`, `docs`, `consumers`), with

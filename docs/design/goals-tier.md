@@ -1,5 +1,7 @@
 # Goals: direction, not scope
 
+> **Status (checked 2026-10-03):** Built, not wired in: the goal parser (`bridle-spec` `goals`), `bridle goals list`, `bridle goals propose`; no role or rule tells agents to use them and no project has a `design/goals/` tree yet · Planned: the locked base rules below (not in `workflow/base/rules/`), `serves:` validation, human gating of goal changes
+
 Goals are the long-term direction. They are **not a backlog**: most of them are
 not being built now, and some are deliberately left out of the current design
 because building toward them now would be too complex. Each goal is
@@ -27,7 +29,7 @@ The stance defaults from priority (`now`→`build`, `next`→`keep-open`,
 `later`/`someday`→`unaddressed`) and can be set explicitly. `unaddressed` needs a
 one-line *why*.
 
-Base rules for goals (locked):
+Base rules for goals (locked; planned, not yet in `workflow/base/rules/`):
 
 - **A worker never implements a goal its task does not link to.** Goals are
   context, not instructions.

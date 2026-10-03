@@ -1,8 +1,10 @@
-# The human web UI: the bridle gateway (design, not built)
+# The human web UI: the bridle gateway
+
+> **Status (checked 2026-10-03):** Built and in use: `bridle gateway` (`crates/bridle-gateway`), build tasks 1–8 below: config and serve, discovery and fan-out, listing, local actions, retract handling, login, `/api/v1` with ts-rs types (`crates/bridle-gateway/bindings/`), serving `~/.bridle/ui/` with the version check; `bridle-ui` is its own project under bridle (`/Volumes/Data/work/bridle-ui-workspace`) · Planned: task 9 (remote actions; `actions.rs` refuses a project on another machine) and task 10 (service install; `launchd.rs`/`systemd.rs` don't know the gateway)
 
 Ticket: [[docs/tickets/open/a-web-ui-for-the-human-my-to-dos-and-decisions-to-run-throug-essy|essy]]
-("Option F" and "Gateway v1: the human's answers", decided by the human, 2026-10-02). Nothing
-here is built. This replaces the earlier option C (a Rust-rendered page, `bridle ui`).
+("Option F" and "Gateway v1: the human's answers", decided by the human, 2026-10-02). This
+replaces the earlier option C (a Rust-rendered page, `bridle ui`).
 
 The shape: a **`bridle gateway`** process in bridle's workspace serves one versioned API; a
 separate **TypeScript UI** (`bridle-ui`, a later project) is a client of it. The browser never
@@ -57,13 +59,13 @@ rest, so a stolen session can answer and check off, not run work.
 
 The human runs one gateway on one machine and manages everything from there. That needs the
 human's token for other machines' daemons: **br-8b98** (3ehu part 1, `[human.<machine>]`
-fallback), built but unlanded until the human's Saturday review. The multi-machine build task
-comes after it. A project on a random port needs a `[projects]` entry with a fixed port to be
+fallback), still `planned` as a task, not landed. The multi-machine build task comes after it. A project on a random port needs a `[projects]` entry with a fixed port to be
 reachable from another machine. Until then the gateway works for local projects.
 
 ## 5. Build tasks, in order
 
-Each is one branch and one worker. None touches the daemon.
+Each is one branch and one worker. None touches the daemon. Tasks 1–8 are built; 9 and 10 are
+planned.
 
 1. **Skeleton, config, serve**: `bridle gateway` subcommand, a `crates/bridle-gateway` library
    (axum), the optional gateway config section, bind address, `GET /api/v1/health`. Tests: the
@@ -87,7 +89,7 @@ Each is one branch and one worker. None touches the daemon.
    actions. Tests: a remote fake daemon with its own token.
 10. **Service install** (launchd/systemd unit, `bridle gateway` beside the daemons' install).
 
-`bridle-ui` itself (and an install script) is a later project, not part of these tasks.
+`bridle-ui` itself (and an install script) is a separate project, not part of these tasks.
 
 ## 6. Migration
 

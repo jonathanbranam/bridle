@@ -1,6 +1,8 @@
 # Gates: where the human is and isn't
 
-Each gate is configured, not hardcoded:
+> **Status (checked 2026-10-03):** Built and in use: questions on a task block it while the asker takes other work (`bridle task ask|answer`); `bridle task plan` (`open` -> `planned`, by the PM); the settle period before a task can start ([[docs/design/coordination|coordination]]) · Planned: everything configurable here. Nothing parses `[gates.*]` (not in `crates/`, not in any `workflow.toml`); there is no `accepted` state, no `reopened`-on-reject flow and no `bridle review`. Human approval today is by role prompt and convention, not a mechanism
+
+Each gate is configured, not hardcoded (planned):
 
 ```toml
 [gates.plan]
@@ -24,8 +26,8 @@ Where each current human check goes:
 | Approve every plan | **manager**, unless the plan touches a spec requirement marked `protected`, creates a capability, or the manager chooses to escalate |
 | Blocking question stops the lead agent | **async**: the question goes on the task, the task blocks, and the agent claims other work ([questions do not stop work](docs/design/coordination.md)) |
 | Archive after "land the work" | **gone**. Specs fold on merge; acceptance is a state change |
-| Finish one same-capability change before starting the next | **gone**. The impact registry decides ([impact registry](docs/design/impact-and-conflicts.md)) |
-| Accept finished work | **kept**, as a batched queue: `bridle review` |
+| Finish one same-capability change before starting the next | **gone**. The impact registry decides ([impact registry](docs/design/impact-and-conflicts.md); built, but no role declares impact yet) |
+| Accept finished work | **kept**, as a batched queue: `bridle review` (planned) |
 | *(new)* Revise the architecture | **human, always**, via an `arch-revision` task ([architecture](docs/design/architecture-tier.md)) |
 | *(new)* Change a goal's firmness, priority or stance | **human**; agents may propose ([goals](docs/design/goals-tier.md)) |
 | *(new)* Divergence introduced by an exploration | **not a human check**. The human hears about it when the exploration concludes ([explorations](docs/design/explorations.md)) |

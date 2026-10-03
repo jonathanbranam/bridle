@@ -1,5 +1,7 @@
 # Worktrees and ports
 
+> **Status (checked 2026-10-03):** Built and in use: worktrees at `<workspace>/wt/<agent>` with `[worktrees] setup`/`copy`/`warm_target` · Built, not wired in: `layout = "root"` and `"paired"` (no project sets them yet); the port registry (`bridle port alloc|release|list`; the daemon frees ports on exit, but no role or rule tells agents to allocate) · Planned: injecting `PORT` into an agent's env
+
 `bridle spawn` creates the task's worktree according to a layout the project
 declares, including harness's **paired** sibling layout (research 09 §2.2):
 

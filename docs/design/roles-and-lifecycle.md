@@ -1,5 +1,7 @@
 # Roles and the task lifecycle
 
+> **Status (checked 2026-10-03):** Built and in use: the human, orchestrator, manager, worker, product-manager and integrator (`bridle task land`) roles; task states `open`, `planned`, `claimed`, `dropped`, `integrated`, `reopened` with `ready` derived; claim leases; the queue (`bridle queue`, `queue set|add-tier`, `bridle ready`); task kinds, including `re-evaluate` tasks opened when an `arch-revision` is done · Planned: the reviewer role (no role file or config), `in_review` and `accepted` states, `needs-input`, per-kind gates, roles and models from `workflow.toml`, `bridle review`
+
 ## Roles
 
 Split by what each role may decide (research 09 §4):
@@ -10,7 +12,7 @@ Split by what each role may decide (research 09 §4):
 | **Orchestrator** | the human's own agent, *not part of bridle*, optional | whatever the human delegates to it: relaying, summarising, steering | act as the human (it has its own `external` identity) |
 | **Manager** | Opus/Fable-class, long-lived, hosted by bridle | decomposition, plans, ordering, conflict arbitration, what to ask the human | implement bulk code; accept |
 | **Worker** | Sonnet-class, per task | how to implement a planned task; negotiating conflicts with peers | change design silently; accept; talk to the human directly |
-| **Reviewer** | strong model, never the task's implementer | whether a diff matches its plan and specs | fix what it reviews |
+| **Reviewer** (planned) | strong model, never the task's implementer | whether a diff matches its plan and specs | fix what it reviews |
 | **Integrator** | *not an agent* — bridle itself (`bridle land`, [[docs/design/agent-host/roles-and-config|roles and config]]) | conflict probes, the merge gate, `main moved` notices | resolve a semantic conflict |
 
 - **The orchestrator is the human's interface**, running anywhere (laptop,
@@ -21,8 +23,8 @@ Split by what each role may decide (research 09 §4):
   delivers, supervises, records and integrates. Deciding what to work on is
   the manager's job. "Start working" means starting the manager.
 
-Models and roles are set in `workflow.toml` per layer, so a project can make its
-reviewer cheaper or its worker stronger. Until the layers exist, they are set
+Models and roles are to be set in `workflow.toml` per layer (planned), so a project can make its
+reviewer cheaper or its worker stronger. Today they are set
 in `[roles.*]` in `<repo>/.bridle/config.toml`
 ([[docs/design/agent-host/roles-and-config|roles and config]]).
 
@@ -46,6 +48,10 @@ pattern".
  blocked        derived: an open `blocks` edge, or an unanswered question
  needs-input    derived: a question addressed to the human
 ```
+
+Built states: `open`, `planned`, `claimed`, `dropped`, `integrated`, `reopened`
+(`TaskState`, `bridle-api/src/types.rs`); `ready` and `blocked` are derived.
+`in_review`, `accepted` and `needs-input` are planned.
 
 - **ready** is computed: planned, no open blockers, no unanswered questions.
   A blocker counts as open unless it's `dropped` or `integrated` (`accepted`
@@ -86,7 +92,8 @@ pattern".
   §5). Claims are durable: mirrored to the state branch alongside the task
   and edge state, so `bridle rebuild` restores who's working what
   (storage.md, "claims").
-- **Kinds** change the gates and the prime: `feature`, `bug`, `chore`,
+- **Kinds** are to change the gates (planned) and the prime (today only `explore`, via
+  `bridle prime worker --task`, which no spawned worker runs): `feature`, `bug`, `chore`,
   `question`, `research`, `explore` ([[docs/design/explorations|explorations]]), `arch-revision` ([[docs/design/architecture-tier|architecture]]) and
   `re-evaluate` ([[docs/design/traceability|traceability]]).
 - **The product manager** (`product-manager`) is a project-defined role, not a built-in: it
@@ -106,13 +113,14 @@ bridle task new "Watch: ratings filter" -k feature      → tw-7fa2
 bridle dep add tw-7fa2 --blocked-by tw-c0f1
 bridle task plan tw-7fa2                # PM: open -> planned, ready to build
 bridle queue add-tier tw-c0f1 tw-7fa2   # PM: queues them, tw-c0f1 first
-bridle spawn worker tw-c0f1             # worktree + session, claims the task
+bridle spawn worker --prompt "Claim tw-c0f1 …"   # worktree + session; the worker claims it
 bridle wait tw-c0f1 --until integrated  # run as background Bash; manager is woken
 …
-bridle spawn worker tw-7fa2             # now ready
-bridle review                           # human's batch: diffs, scenarios, verification notes
+bridle spawn worker --prompt "Claim tw-7fa2 …"   # now ready
+bridle review                           # planned: human's batch: diffs, scenarios, verification notes
 ```
 
 The manager does not have to stay alive for this. The edge, the wait and the
-plan are all in the store, so a new manager session can run `bridle prime` and
+plan are all in the store, so a new manager session can read them back
+(`bridle queue`, `bridle task list`; there is no `bridle prime manager`) and
 pick up where the last one stopped.

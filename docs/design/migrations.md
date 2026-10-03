@@ -1,5 +1,7 @@
 # Project migrations
 
+> **Status (checked 2026-10-03):** Built, not wired in: `bridle migrate` with `.bridle/migrations.toml`/`.log` and the `project.migrated` event (`crates/bridle/src/migrate.rs`); never automatic, by design. The only migration is `0000-baseline`, and bridle's own repo hasn't run it (no `.bridle/migrations.toml`)
+
 Some bridle changes alter what a project keeps in its own repo for bridle: ticket frontmatter,
 `.bridle/config.toml`, the docs layout. `bridle migrate` brings a project up to date with the
 running binary (ticket xebc). The daemon's SQLite database is separate: it migrates itself

@@ -1,8 +1,10 @@
 # Impact and conflicts
 
+> **Status (checked 2026-10-03):** Built and in use: the merge probe inside `bridle task land` (refuses a conflicting branch) · Built, not wired in: `bridle task impact set|show|check`, `bridle task conflict list|resolve`, `bridle probe`, and the `spec changed under you` line on the `main moved` notice. No role or rule tells agents to declare impact or run `impact check`, and no task has a declared impact yet, so none of it fires · Planned: checking declared against actual impact, escalation (step 3), the handoff for the blocked claimant
+
 ## The impact registry
 
-Every planned task declares its impact:
+Every planned task is to declare its impact (nothing asks for it yet):
 
 ```
 bridle impact set tw-7fa2 \
@@ -52,7 +54,7 @@ file yields no map, so `s-` ids only match themselves, `r-` ids still match, and
 | Same files | warn | early warning (research 09 tier 1) |
 | Real textual conflict from `git merge-tree` | **conflict** | same as the first row (research 09 tier 2) |
 
-**Declared impact is checked against actual impact.** When a branch changes,
+**Declared impact is checked against actual impact** (planned). When a branch changes,
 bridle diffs the spec ids and file paths it touched and flags anything the task
 didn't declare. An agent can't avoid a conflict by under-declaring.
 

@@ -1,5 +1,7 @@
 # Cleaning stale build artifacts
 
+> **Status (checked 2026-10-03):** Built and in use: `just clean-stale [days]` (justfile), run by bridle's orchestrator in a budget-hold window per its project role note (`.bridle/roles/orchestrator.md`, appended by `bridle prime orchestrator`). Bridle's own repo only; nothing runs it automatically
+
 The main clone's `target/` directory grows without bound during development because cargo retains artifacts from all historical build hashes. On macOS, debug `.o` files are particularly problematic: each incremental rebuild adds new `.o` files for stale hashes without removing the old ones.
 
 Observed: 28G in `target/` (21G in `target/debug/deps` alone, ~186,000 `.o` files), and ~400s `just check` time. After `cargo clean`, time dropped to ~35s.

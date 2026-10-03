@@ -1,5 +1,7 @@
 # The workflow as layered, modifiable data
 
+> **Status (checked 2026-10-03):** Built and in use: rule resolution over base, packs and project (`rules/<id>.md`, overrides, `locked`), and its delivery: every spawned, resumed or renewed agent gets its role's resolved rules in its system prompt (`config.rs` `stable_system_prompt`); `bridle rules explain|diff`; `bridle prime orchestrator|advisor` at session start · Built, not wired in: `bridle sync` (run by hand; no hook runs it, and rendered skills and hooks don't reach worktrees); `bridle prime worker|planner` (workers never run it, so facts, guides and L4 component rules don't reach them); L4 components (`rules explain|diff --component`, `BRIDLE_COMPONENTS`); layer `workflow.toml` (only `layer = ...`; nothing parses roles, gates or models from it) · Planned: layer hooks passed at spawn (34bw step 3), `bridle rules propose`, the sync changelog
+
 ## The layers
 
 ```
@@ -14,7 +16,9 @@ L4  component   <repo>/.bridle/components/<n>/  scoped by task/spawn; nests (cli
 L4 is built for rule resolution: `[components.<id>]` in config declares the nesting
 (`parent`, validated), each component's chain is layered after L3 and resolved on its own
 (never several components in one list), and `bridle rules explain|diff --component <id>`
-shows it. Delivery to agents (`bridle prime`, task/spawn scoping) is still to come; see
+shows it. Tasks and spawns carry the component list (`--component`, `BRIDLE_COMPONENTS`) and
+`bridle prime worker|planner` prints the chains, but a spawned agent's system prompt carries
+only L1–L3 and workers don't run prime, so component rules don't reach agents yet; see
 [[docs/design/components|components]].
 
 Later layers win. A project lists its packs in `.bridle/config.toml`, and
@@ -38,9 +42,10 @@ consumers = ["harness"]                  # a cross-project edge the tool knows a
 
 **The base layer is edited in one place.** Whether `workflow` is a directory
 in this repo or a separate git repo shared across projects, the same rule
-applies: change a base rule, commit, and every project picks it up on its
-next `bridle sync` (which the SessionStart hook runs). Nothing is copied into
-projects, so nothing goes stale.
+applies: change a base rule, commit, and every project's agents pick it up at
+their next spawn, resume or renew, when the daemon resolves the rules into the
+system prompt. Skills and hooks change only when someone runs `bridle sync`;
+no hook runs it. Nothing is copied into projects, so nothing goes stale.
 
 **Two modes** (2026-09-29, ticket mrhe). A project whose `workflow` is a path to a local
 bridle clone updates automatically, as below. A project on an installed binary has the base
@@ -51,9 +56,8 @@ so the workflow never shifts under them. The vendored copy is committed by the h
 **Updates apply automatically by default** (the path mode). The human's words, 2026-09-28:
 there's no rev pinning for the common case — a project just gets whatever
 `workflow` currently has next time it syncs. A project that wants to know
-what changed reads a changelog (e.g. `workflow/CHANGELOG.md`); `bridle sync`
-can print the entries new since the project's last sync (exact mechanism is
-implementation work, not designed here). A project that disagrees with a
+what changed reads a changelog (planned: there is no `workflow/CHANGELOG.md`
+yet, and `bridle sync` doesn't print what's new since the last sync). A project that disagrees with a
 specific base rule doesn't pin or fork — it opts out with a local
 `override: disable` and a `reason` (below), which stays visible instead of
 silently drifting behind.
@@ -73,6 +77,11 @@ roles/<role>.md      driver-facing role prompts (bridle's own worker/manager/etc
 hooks/               hook scripts, if any beyond bridle's own
 facts.md             short operational facts, loaded every session (the bd prime idea)
 ```
+
+What exists in `workflow/` today: `rules/` (base and every pack), `roles/` and `skills/` (base),
+`hooks/PreToolUse.json` (base), and a `workflow.toml` per layer that holds only `layer = ...`.
+No layer has `guides/`, `agents/` or `facts.md` yet; `bridle prime worker|planner` prints facts
+and guide paths when they exist, but the spawn-time system prompt carries rules only.
 
 `agents/<role>.md` and `roles/<role>.md` are easy to confuse but not the same thing:
 `agents/` is Claude Code's own subagent mechanism (the `Agent` tool, `.claude/agents/`);
@@ -112,8 +121,8 @@ Verify with `npm run cli -- …` against the fixture world, not playwright.
 - A base rule may be `locked: true` (e.g. *only the human accepts work*). A
   project can't override a locked rule; it has to be changed in base.
 - `bridle rules explain <id>` shows which layer won and what it shadowed.
-  `bridle rules diff --project otters` shows everything that project does
-  differently. This fixes the current state where CLAUDE.md, the plan of
+  `bridle rules diff --project-layer` (run in the project) shows everything that
+  project does differently. This fixes the current state where CLAUDE.md, the plan of
   record and a skill all restate a rule with no stated precedence.
 
 SwarmForge's layering (research 14 §1.1) forbade shadowing shared files. Bridle
@@ -123,7 +132,11 @@ keeps from SwarmForge is that each override is visible and has an owner.
 ## Rendering into what the agent harness reads
 
 Claude Code reads `CLAUDE.md`, `.claude/skills/`, `.claude/agents/`,
-`.claude/settings.json`. `bridle sync` renders the resolved layers into them:
+`.claude/settings.json`. `bridle sync` renders the resolved layers into them, when someone runs
+it by hand in a clone. The rendered skills are gitignored, so a worker's fresh worktree has none,
+and the hook entries go into `.claude/settings.json` only where sync ran and the result was
+committed (bridle's own committed settings have no `hooks`, so the base `arch-guard` hook isn't
+live here):
 
 | Output | Content | Committed? |
 |---|---|---|
@@ -176,17 +189,23 @@ written down anywhere else yet:
 - L4 component rules aren't rendered into files: scope comes from the task or spawn, and
   `bridle prime worker|planner` delivers them ([[docs/design/components|components]]).
 
-Most rule content is not rendered into a file at all. It is delivered by
-`bridle prime` at session start, sized to the role: a worker gets its task,
-the rules tagged for `worker`, the facts, the guides its task's components
-point to, the architecture invariants, the goals its task serves, and the
-standing rule about explorations ([[docs/design/explorations|explorations]]). Built so far:
-`prime worker|planner` prints the role's rules, facts and guide paths and the named
-components' scope (see cli.md); the task, invariants, goals and explorations rule aren't
-in it yet. It does not get every rule in the
-tree, and it does not get the full goals document.
+Most rule content is not rendered into a file at all. For agents bridle spawns, the daemon
+appends the role's resolved rules (L1–L3, the rules tagged for the role) to the system prompt
+under `## Workflow rules`; that is how rules reach workers, managers and the PM today. The
+orchestrator and advisor sessions get theirs from `bridle prime orchestrator|advisor`, which
+`bridle session` tells them to run.
 
-## Rules improve through the workflow itself
+The design goes further (planned): a worker is primed with its task, the rules tagged for
+`worker`, the facts, the guides its task's components point to, the architecture invariants,
+the goals its task serves, and the standing rule about explorations
+([[docs/design/explorations|explorations]]), sized to the role. Built so far:
+`prime worker|planner` prints the role's rules, facts and guide paths and the named
+components' scope (see cli.md), but nothing in a worker's lifecycle runs it; the task,
+invariants and goals aren't in it. The explorations rule is a base rule, so it reaches every
+spawned agent with the rest. A worker does not get every rule in the tree, and it does not get
+the full goals document.
+
+## Rules improve through the workflow itself (planned)
 
 When an agent hits a gotcha it can file a proposed rule against a layer:
 
@@ -195,7 +214,7 @@ bridle rules propose --layer project --id tests.fixture-world \
   "The 20×20 fixture world is the only one fast enough for unit tests"
 ```
 
-This creates a task on the right repo (the project, or `bridle-workflow` for
-base or pack changes), and the proposed rule takes effect once that task is
+`bridle rules propose` doesn't exist yet. It would create a task on the right repo (the project, or `bridle-workflow` for
+base or pack changes), and the proposed rule would take effect once that task is
 accepted. It's `bd remember` with review attached, so operational memory can't
 go stale unnoticed (research 06 §8).

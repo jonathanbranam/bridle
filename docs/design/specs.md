@@ -1,5 +1,7 @@
 # Specs: keep the model, replace the lifecycle
 
+> **Status (checked 2026-10-03):** Built, not wired in: `bridle spec check|id|import openspec` (local, `bridle-spec` parser, `.ids` ledger); no onboarded project uses them yet (track-web, bridle-ui and data-contracts have no `design/specs/`), and no role or rule tells agents to edit specs in place · Planned: the human plan gate for `protected` requirements (the marker is parsed; no gate exists), converting active OpenSpec changes to tasks
+
 See [[docs/design/spec-flow|the spec flow]] for the whole path from adoption to CI.
 
 ## What stays
@@ -30,7 +32,7 @@ this part works.
    alternatives considered, and checklist items are subtasks or a checklist in
    the body. The spec is the only artifact that outlives the task.
 4. **Protection is per requirement.** `{#r-7fa2 protected}` means any task that
-   modifies it goes through the human plan gate ([[docs/design/gates|gates]]). The governing invariants
+   modifies it goes through the human plan gate ([[docs/design/gates|gates]], planned). The governing invariants
    get this marker; most requirements don't.
 
 ## Migration from OpenSpec

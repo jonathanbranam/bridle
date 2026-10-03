@@ -1,5 +1,7 @@
 # Usage limits and token efficiency
 
+> **Status (checked 2026-10-03):** Built and in use: the turns ledger, `bridle usage [--by role|model|agent --since]`, context size and context renewal, the budget governor (thresholds, schedule, overrides, `max-workers`, hold/release, wind-down, resume, `get_usage` probes), `[models]` step-down, `--strict-mcp-config` · Built, not wired in: `bridle cost audit [--check]` (nothing runs it: not in `just check` or CI) · Planned: the ledger's task, kind, project and workflow-revision columns and what needs them (`usage task|trend|compare`, `--by project|kind`), `paused:limit`, a prime size budget, the bridle MCP server, cross-daemon `budget hold`
+
 ## The constraint
 
 **The ceiling is one $100/month subscription (Max 5x), with no API overage.**
@@ -88,8 +90,7 @@ summing several agents' turns together and calling the result "wall time"
 would silently overlap or double-count their timelines, so `role`/`model`
 groups omit it. `--since` accepts a plain `<n><unit>` duration (`s`/`m`/`h`/`d`,
 e.g. `30d`) and keeps only turns started within it. Task, project and kind
-grouping, and `bridle usage task`/`trend`/`compare` and `bridle cost audit`
-below, are not built: they need the ledger's task, kind and
+grouping, and `bridle usage task`/`trend`/`compare` below, are not built: they need the ledger's task, kind and
 workflow-revision columns, which don't exist yet (below).
 
 Not built: the full usage ledger's task, role and workflow-revision columns.
@@ -360,8 +361,9 @@ When any window crosses `wind_down_at`, or the human asks for a hold:
    `budget_paused`. After `wind_down_grace`, or at once past `stop_at` or on a
    `rejected` rate-limit event, it's interrupted and stopped instead.
 6. The governor is then `paused`. Each paused agent keeps its session id,
-   worktree, branch and pending messages, as any `stopped` agent does. Once
-   tasks exist, its task moves to `paused:limit` and keeps its claim.
+   worktree, branch and pending messages, as any `stopped` agent does. A
+   `paused:limit` task state that keeps the claim is planned; today the claim
+   lapses with its lease like any quiet claimant's.
 
 The manager and orchestrator bridle hosts are agents like any other and wind
 down the same way.
@@ -498,14 +500,14 @@ Rules the design follows, and that the build is reviewed against:
    list as the rules section of `bridle prime`, no components), under `## Workflow rules`;
    rules that can't be resolved are left out with a warning rather than failing a spawn.
    The task-specific content goes in the first user message.
-3. **Prime is role-scoped and has a size budget.** `bridle prime` has a token
+3. **Prime is role-scoped and has a size budget** (planned). `bridle prime` is to have a token
    budget per role, e.g. a worker's prime ≤ 3k tokens. Guides are pointed to,
    not included, unless the task's components need them.
 4. **Injections are silent by default.** Hooks print nothing when there's
    nothing new. Messages are summarised with a pointer, not pasted in full,
    when they're long.
-5. **Tool schemas cost tokens on every turn.** The bridle MCP server exposes a
-   small set of tools, and workers launch with `--strict-mcp-config` so they
+5. **Tool schemas cost tokens on every turn.** The bridle MCP server (planned) is to expose a
+   small set of tools, and agents launch with `--strict-mcp-config` (built) so they
    don't inherit every MCP server the human has configured.
 6. **Output is terse.** Bridle's `--json` output is compact, and skills tell
    agents to use quiet or summary flags on test runners and linters.
@@ -517,8 +519,9 @@ Rules the design follows, and that the build is reviewed against:
 
 ## Tracking token use over time
 
-Every `result` and status-line snapshot goes into a **usage ledger** in the
-database. Each row records: time, project, task, task kind, role, agent,
+Every `result` goes into a **usage ledger** in the database (built as the
+turns ledger). Each row is to record (planned beyond agent, role via the agent,
+model, tokens, cost and turn): time, project, task, task kind, role, agent,
 model, the four token counts, the cost equivalent, turn count, and the
 **workflow revision**, i.e. the bridle version plus the `bridle-workflow` git
 revision in effect.
@@ -534,8 +537,9 @@ bridle cost audit [--check]       # static: size of everything bridle injects
 
 `--by project` and `--by kind`, and everything below this line, need the
 ledger's task, project and workflow-revision columns, which don't exist yet
-("What bridle records today" above). The last two of the built ones answer
-*"are new systems increasing the token budget?"* directly:
+("What bridle records today" above). `bridle cost audit` (built) and
+`bridle usage compare` (planned) answer *"are new systems increasing the token
+budget?"* directly:
 
 - **`bridle cost audit`** counts the tokens bridle adds to each role's context
   with no work done: prime, the rendered system-prompt file, skill
@@ -562,7 +566,7 @@ ledger's task, project and workflow-revision columns, which don't exist yet
 - **Cache hit ratio** (cache-read ÷ total input) is reported per role. A drop
   means something broke the stable prefix in rule 2 above.
 
-**Measure the baseline first.** `bridle statusline` and the ledger are
+**Measure the baseline first.** The ledger is
 deliberately early in the build order ([[docs/proposal/build-order|build order]]), so the current OpenSpec workflow's
 usage gets recorded before bridle replaces it. Without that baseline there's
 nothing to compare against.

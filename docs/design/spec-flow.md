@@ -1,7 +1,9 @@
 # The spec flow, start to finish
 
+> **Status (checked 2026-10-03):** Built, not wired in: every command on this page (`bridle spec`, `goals`, `arch`, `explore`), `spec coverage`, `spec export --task`, `goals propose` and `arch propose` (these two call the daemon), and the pytest and vitest adapters; no onboarded project uses them yet (track-web, bridle-ui and data-contracts have no `design/specs/`) · Planned: `explore adopt`, converting active OpenSpec changes to tasks
+
 One page for a project adopting bridle's spec tooling. Every command here is
-built, local, and makes no daemon call. Details live in
+built, local, and makes no daemon call, except `goals propose` and `arch propose`. Details live in
 [[docs/design/specs|specs]], [[docs/design/specs-to-tests|specs to tests]],
 [[docs/design/goals-tier|goals]], [[docs/design/architecture-tier|architecture]]
 and [[docs/design/explorations|explorations]]; `bridle help <command>` is the
@@ -66,7 +68,8 @@ adapters never see half-valid input.
 **data-contracts:** this replaces `tools/spec-to-feature.py`. The `.feature`
 output has the same shape (a `Rule:` per requirement, executable scenarios
 only, tagged by `@tags` then id), minus the Purpose paragraph. The Python
-adapter that consumes the JSON is a stack-pack job; until it exists,
+adapter that consumes the JSON is built (`workflow/packs/python/adapters/bridle_specs.py`,
+vendored by the project); until data-contracts adopts it,
 `spec-to-feature.py`, `check-specs.py` and their tests stay. See
 [[docs/context/onboarding-data-contracts]].
 
@@ -91,10 +94,17 @@ For work that deliberately diverges from the design:
 3. `bridle explore conclude <id>` or `bridle explore abandon <id>` sets the status.
 4. `bridle explore check` validates every findings doc's frontmatter.
 
-## Not yet
+## Also built
 
-- `bridle spec coverage` and `bridle test --task`: need bound tests and impact.
+- `bridle spec coverage [--tests DIR] [--require-all]`: executable scenarios
+  whose id appears in no test source.
+- `bridle spec export --task ID` / `--scenario ID`: the export narrowed to a
+  task's declared impact or one scenario (what `bridle test --task` was to do).
+- `bridle goals propose` and `bridle arch propose`: create a task proposing the
+  change (daemon call). The human gates they lead to are planned.
+- The pytest and vitest adapters, in the `python` and `typescript` packs.
+
+## Not yet (planned)
+
 - Converting active OpenSpec changes to tasks (archived changes stay in git).
-- `bridle goals propose`, `bridle arch propose`, `bridle explore adopt`: need
-  the arch-revision flow and its human gates.
-- The pytest and vitest adapters (stack packs).
+- `bridle explore adopt`: needs the arch-revision flow and its human gates.

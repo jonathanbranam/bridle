@@ -1,5 +1,7 @@
 # Mail
 
+> **Status (checked 2026-10-03):** Built and in use: `bridle mail run` (`crates/bridle-mail`): inbound from S3, outbound questions and the daily digest through SES, signed replies, following the owner, "got it" replies; it runs only on a machine whose `~/.bridle/config.toml` has `[mail]`, started by hand or by a service the human sets up
+
 `bridle mail run` is bridle's email bridge (ticket rs7p, which holds the design and the human's
 answers): inbound mail from S3, then outbound question mails and a daily digest through SES. It lives in the `bridle-mail` crate so the AWS SDK and the parsing of untrusted MIME stay
 out of the daemon. It holds an `external:mail` token (mint one, put it in `credentials.toml`, run

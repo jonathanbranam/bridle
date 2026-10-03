@@ -1,5 +1,7 @@
 # Coordination and communication
 
+> **Status (checked 2026-10-03):** Built and in use: edges (`bridle task dep`; only `blocks` affects readiness), the settle period, task questions and answers, notes, human to-dos, incidents, messages to agents, roles and `human`, waking the manager, `main moved` notices, `bridle wait`, the Stop hook, the role's resolved rules in each agent's system prompt · Built, not wired in: the `arch-guard` PreToolUse hook (live only where `bridle sync` installed it) · Planned: cross-project edges, acting on `parent` and the provenance edges, `handoff`/`conflict` message kinds and send-to-task from `bridle send`, layer hooks passed at spawn, `bridle prime` output as a worker's first message
+
 ## Edges
 
 | Edge | Meaning | Affects ready? |
@@ -9,13 +11,20 @@
 | `discovered-from` | found while working on another task | no |
 | `related`, `supersedes`, `duplicates` | provenance | no |
 
-Edges can cross projects (`hx-19ab blocked-by tw-7fa2`), which turns "engine
-first, host second" into something the tool enforces.
+Edges are to cross projects (`hx-19ab blocked-by tw-7fa2`; planned, today an
+edge joins two tasks of one project), which turns "engine first, host second"
+into something the tool enforces.
 
 **Built so far:** the edges table (`from`, `to`, `kind`) and `bridle dep
 add|rm`, durable the same way a task is: a SQLite fast index plus a copy on
 the state branch, written in the same logical operation
 ([[docs/design/agent-host/storage|storage.md]]). Only `blocks` is acted on:
+`ready` (below) treats any `blocks` edge whose `from` task isn't `dropped` or
+`integrated` as still blocking the `to` task (`accepted` doesn't exist yet). The other four
+kinds are recorded but not yet acted on (`parent` doesn't yet close a parent
+when its children close). `ready [--all] [--role]` is built too; `--role` is
+presently a no-op, since tasks don't carry a role field yet.
+
 **Settling.** Every task settles before anyone can start it: `ready`, the queue's startable flag
 and `claim` also require `now >= max(created_at, the human's latest thread entry) + [tasks] settle`
 (default 5m, `0` off), unless a settle-skip note is in the thread. Computed from existing data (no
@@ -24,20 +33,14 @@ restarts the clock (an edit records a human thread note). The PM can still plan 
 the human's own to-dos (`--for-human`, claimed at creation) are exempt. `bridle task skip-settle
 <id> --reason` records a note and event `task.settle_skipped`; allowed for the human, and for the
 orchestrator or PM only with a reason saying the human asked or it's an urgent downtime fix. It is
-not an approval gate: the period just expires. A hard gate stays the required-human-approval
-mechanism. Refusals say `settling until <time>` (US Eastern). When a planned, otherwise-ready task
+not an approval gate: the period just expires. A required human approval needs a gate, which is
+planned ([[docs/design/gates|gates]]). Refusals say `settling until <time>` (US Eastern). When a planned, otherwise-ready task
 finishes settling, a daemon tick (30 s) sends the running manager (else the orchestrator) the note
 "<id> is now startable", once; it remembers only the last tick, so a restart may miss one.
 
-`ready` (below) treats any `blocks` edge whose `from` task isn't `dropped` or
-`integrated` as still blocking the `to` task (`accepted` doesn't exist yet). The other four
-kinds are recorded but not yet acted on (`parent` doesn't yet close a parent
-when its children close). `ready [--all] [--role]` is built too; `--role` is
-presently a no-op, since tasks don't carry a role field yet.
-
 **Incidents are a task kind** (`incident`; potential = `open`, active = `planned`, resolved =
 `integrated`), not a separate record; the only extra is a broadcast notice while one is active
-([[docs/design/agent-host/incidents|incidents]], not built).
+([[docs/design/agent-host/incidents|incidents]], built).
 
 ## Messages
 
@@ -140,10 +143,10 @@ stdin and stdout directly:
 | **stdin user message** | a message to the agent. If the agent is working, it is folded into the running turn at the next tool boundary; if idle, it starts a turn. Acked by `--replay-user-messages` | built |
 | **stdout stream** | status, turn boundaries, tool use, usage, and liveness for leases | built |
 | **the first user message** | task-specific context at spawn (today: the spawn prompt; later: `bridle prime` output) | built (prompt only) |
-| **`--append-system-prompt-file`** | role-scoped rules and guides, identical for every agent in a role so the prompt cache holds | built (role prompt + bridle preamble) |
+| **`--append-system-prompt-file`** | role-scoped rules and guides, identical for every agent in a role so the prompt cache holds | built (bridle preamble + role prompt + the role's resolved rules; no guides) |
 | **Stop hook** → `bridle stop-check` | refuses to let a worker stop with an unreleased claim and no handoff note, a finished tree whose HEAD hasn't passed `commands.check_worker` (the hook runs it), or a finished tree with no task summary and `done:` report | built |
-| **`bridle wait` as background Bash** | an agent is re-invoked when a task reaches a state or a message arrives. For bridle-hosted agents a stdin message does the same | with tasks |
-| **PreToolUse hooks** | enforce locked rules mechanically, e.g. workers can't run `git push` or `bridle accept` | with layers |
+| **`bridle wait` as background Bash** | an agent is re-invoked when a task reaches a state or a message arrives. For bridle-hosted agents a stdin message does the same | built |
+| **PreToolUse hooks** | enforce locked rules mechanically, e.g. `bridle arch-guard` on edits under `design/architecture/` | built, but live only where `bridle sync` installed it; passing layer hooks at spawn is planned. `git push` is denied by the role's `disallowed_tools`, not a hook, and `bridle accept` doesn't exist |
 
 Hooks cost about 0.9 s each ([spike 01](docs/spikes/01-stream-json-findings.md),
 S11), so they're kept for enforcement, not delivery. An agent bridle doesn't

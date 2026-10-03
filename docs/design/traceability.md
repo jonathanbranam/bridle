@@ -1,5 +1,7 @@
 # Traceability: from goals down to tests
 
+> **Status (checked 2026-10-03):** Built, not wired in: link syntax and text hashes (`bridle-spec` `trace`), `bridle trace down|up|orphans|suspect|confirm`, and `re-evaluate` tasks opened when an `arch-revision` task is done (`reevaluate.rs`); no project has a `design/` tree yet, so none of it has anything to trace · Planned: `bridle trace coverage`, an `arch-revision`'s impact as its whole downstream set
+
 Each tier links upward to the one above it:
 
 ```
@@ -28,7 +30,7 @@ link was last confirmed**. That is what makes change tracing mechanical (the
 - For each requirement, the worker on that task either **confirms** it
   (`bridle trace confirm r-7fa2`, which rewrites the hash and records that it is
   still valid) or **edits** it, which may in turn make its scenarios suspect.
-- An `arch-revision` task's impact ([[docs/design/impact-and-conflicts#The impact registry|impact registry]]) is the whole downstream set, so the
+- An `arch-revision` task's impact ([[docs/design/impact-and-conflicts#The impact registry|impact registry]]) is to be the whole downstream set (planned), so the
   conflict check warns every in-flight task on an affected spec before the
   revision merges, not afterwards.
 
