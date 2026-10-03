@@ -133,3 +133,12 @@ messages** (one coalesced line per change, a kind of their own, marked read on d
 message's read state is the bookmark (stored per recipient, so nothing is lost and named advisors
 each get their own), and **a wake is only the doorbell** that tells an interactive session it has
 unread messages. Still open for the human.
+
+### Decided: messages (the human, 2026-10-03)
+
+The human, verbatim (via the advisor): "Right, okay, so your recommendation is to use messages. I
+feel like we need one thing. So if that one thing is messages, then I agree."
+
+Task-change notifications are **messages** (one line per change, their own kind), read on
+delivery (rmpq). A wake is only the doorbell for interactive sessions. With messages, the
+persistent bookmark (4) is the recipient's read state, so it needs no separate cursor.
