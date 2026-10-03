@@ -238,3 +238,4 @@
 {"actor":"agent:manager-2","at":"2026-10-03T01:33:50.549592Z","from":"planned","task":"br-6c6a","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-10-03T01:43:28.627627Z","from":"planned","task":"br-b65b","to":"integrated"}
 {"actor":"external:advisor","at":"2026-10-03T01:43:56.369082Z","from":"planned","task":"br-3c58","to":"integrated"}
+{"actor":"external:advisor","at":"2026-10-03T01:45:15.150099Z","from":"planned","task":"br-d56b","to":"integrated"}
