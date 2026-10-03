@@ -45,3 +45,13 @@ orchestrator's own loop). Then the orchestrator role drops "one waiter per proje
 
 Cross-machine projects (`[orchestrator.<machine>]` tokens) unless they come free; a
 federated wake service.
+
+## Added (2026-10-03, advisor)
+
+- **Start-up, not just waits.** The human asked whether sessions read messages from other
+  machines at start-up; they don't: an advisor checks only its own project's daemon, and `bridle
+  inbox` has no all-projects form. Add `bridle inbox --all-projects` alongside the wake, and have
+  the advisor and orchestrator roles run it at start-up.
+- **Since rmpq the fan-out can lose messages** (a second daemon's reply marks them read, then the
+  CLI drops it): see [[read-on-delivery-can-lose-messages-marked-read-before-the-re-k8jn|k8jn]].
+  Settle that before building this.
