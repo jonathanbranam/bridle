@@ -114,6 +114,8 @@ pub struct Overrides {
     pub upgrade: UpgradeHooks,
     /// The CI watcher's tick, which also carries the self-upgrade check.
     pub ci_tick_interval: Duration,
+    /// How often a task finishing its settle period is looked for.
+    pub settle_wake_interval: Duration,
     /// How long the queue stays unchanged before the manager is nudged.
     pub queue_nudge_debounce: Duration,
     /// `bridle serve --take-over`: claim a project another host owns (hw6c).
@@ -139,6 +141,7 @@ impl Default for Overrides {
             port_check_interval: Duration::from_secs(30),
             upgrade: UpgradeHooks::default(),
             ci_tick_interval: ci::TICK_INTERVAL,
+            settle_wake_interval: Duration::from_secs(30),
             queue_nudge_debounce: queue_nudge::DEBOUNCE,
             take_over: false,
             host: None,
@@ -596,6 +599,12 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
     let (shutdown_tx, shutdown_rx) = watch::channel(false);
     let restart_requested = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
 
+    let queue_nudge = queue_nudge::QueueNudge::new(
+        store.clone(),
+        manager.clone(),
+        overrides.queue_nudge_debounce,
+    );
+    let settle_wake = queue_nudge::SettleWake::new(queue_nudge.clone(), tasks.clone());
     let state = server::AppState {
         store: store.clone(),
         manager: manager.clone(),
@@ -622,11 +631,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         stop_grace: config.stop_grace,
         integration_check: config.integration.check.clone(),
         landing: Default::default(),
-        queue_nudge: queue_nudge::QueueNudge::new(
-            store.clone(),
-            manager.clone(),
-            overrides.queue_nudge_debounce,
-        ),
+        queue_nudge: queue_nudge.clone(),
         self_upgrade: config.self_upgrade,
     };
     let tick_state = state.clone();
@@ -726,6 +731,13 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
                     tracing::warn!(error = %e, "flushing the task state branch failed");
                 }
             }
+        }
+    });
+    // spawn_loop sleeps before its first tick, so this never runs ahead of start-up.
+    let settle_wake_task = spawn_loop(shutdown_rx.clone(), overrides.settle_wake_interval, {
+        move || {
+            let settle_wake = settle_wake.clone();
+            async move { settle_wake.tick().await }
         }
     });
     let claim_lease_task = spawn_loop(shutdown_rx.clone(), overrides.claim_lease_check_interval, {
@@ -854,6 +866,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         }
         prune_task.abort();
         task_flush_task.abort();
+        settle_wake_task.abort();
         claim_lease_task.abort();
         ports_task.abort();
         wake_task.abort();

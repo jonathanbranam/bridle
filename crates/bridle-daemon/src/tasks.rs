@@ -849,7 +849,7 @@ impl TaskManager {
     }
 
     /// [`TaskManager::is_ready`] ignoring the settle period.
-    fn is_ready_unsettled(&self, task: &Task) -> bool {
+    pub(crate) fn is_ready_unsettled(&self, task: &Task) -> bool {
         // An incident is nobody's to build or claim (incidents.md).
         if task.state != TaskState::Planned || task.kind == TaskKind::Incident {
             return false;

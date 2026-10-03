@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- Settle wake (br-96cc, ny9u): when a planned task's settle period ends, the daemon notes the running manager (else the orchestrator) "<id> is now startable", once, from a 30 s tick with in-memory state only; dependency-blocked and already-settled tasks make no note. No schema change.
 - Wake timeouts (br-c4f4, 789x): `bridle agent wake --timeout` and `GET /v1/wake` accept up to 6900 s (1 h 55 min, under Claude Code's 2-hour background-task kill) and clamp above; `bridle orchestrator wait-for-wake` (and `--mail`) gets `--timeout` with the same cap (default still 25 min), and `GET /v1/orchestrator/wake` a `timeout_secs` parameter. The advisor role waits `--timeout 5400` as a fallback only.
 - Gateway actions (br-55f6, essy 4/10): `POST /api/v1/projects/{project}/tasks/{id}/{done|drop|answer}` checks off a to-do, declines one (body `{"text": reason}`) or answers a task question (`{"text": answer}`) on that project's daemon, with the human's token found the way the CLI finds it. Any other action is refused (404); a missing token is a clear 503; this machine's projects only. No daemon change; nothing to migrate.
 - Gateway hides withdrawn items (br-a913, essy 5/10): a dropped to-do and a question on a dropped task no longer appear in `GET /api/v1/items`; the daemon keeps the withdrawal and its reason on the record. Tasks have no separate retracted-question state, so only dropped is hidden.

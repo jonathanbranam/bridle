@@ -25,7 +25,9 @@ the human's own to-dos (`--for-human`, claimed at creation) are exempt. `bridle 
 <id> --reason` records a note and event `task.settle_skipped`; allowed for the human, and for the
 orchestrator or PM only with a reason saying the human asked or it's an urgent downtime fix. It is
 not an approval gate: the period just expires. A hard gate stays the required-human-approval
-mechanism. Refusals say `settling until <time>` (US Eastern).
+mechanism. Refusals say `settling until <time>` (US Eastern). When a planned, otherwise-ready task
+finishes settling, a daemon tick (30 s) sends the running manager (else the orchestrator) the note
+"<id> is now startable", once; it remembers only the last tick, so a restart may miss one.
 
 `ready` (below) treats any `blocks` edge whose `from` task isn't `dropped` or
 `integrated` as still blocking the `to` task (`accepted` doesn't exist yet). The other four
