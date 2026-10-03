@@ -12,8 +12,9 @@ use axum::extract::{Request, State};
 use axum::http::{HeaderMap, StatusCode, header};
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
+use ts_rs::TS;
 
 use crate::config::Login;
 
@@ -93,7 +94,7 @@ pub async fn require_session(State(auth): State<Auth>, req: Request, next: Next)
     next.run(req).await
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, TS)]
 pub struct Credentials {
     username: String,
     password: String,
@@ -156,10 +157,15 @@ pub async fn logout(State(auth): State<Auth>, headers: HeaderMap) -> Response {
     ([(header::SET_COOKIE, cookie)], StatusCode::NO_CONTENT).into_response()
 }
 
+#[derive(Serialize, TS)]
+pub struct SessionInfo {
+    pub username: String,
+}
+
 /// Who the session belongs to; the UI's "am I logged in" probe.
 pub async fn session(State(auth): State<Auth>, headers: HeaderMap) -> Response {
     match auth.session_user(&headers) {
-        Some(username) => Json(json!({ "username": username })).into_response(),
+        Some(username) => Json(SessionInfo { username }).into_response(),
         None => unauthorized(),
     }
 }

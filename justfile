@@ -128,3 +128,7 @@ clean-stale days='7':
         echo "cargo sweep not found; falling back to cargo clean" >&2
         cargo clean
     fi
+
+# Regenerate the gateway's TypeScript types (crates/bridle-gateway/bindings/) for bridle-ui.
+gateway-types:
+    BRIDLE_UPDATE_TYPES=1 cargo nextest run -p bridle-gateway committed_types_are_current

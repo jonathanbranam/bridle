@@ -4,6 +4,7 @@
 pub mod auth;
 pub mod config;
 pub mod discovery;
+pub mod types;
 
 use axum::{
     Json, Router, middleware,
@@ -16,6 +17,10 @@ pub use config::{ConfigError, GatewayConfig, Login};
 
 /// Every route lives under this prefix from the start.
 pub const API_PREFIX: &str = "/api/v1";
+
+/// The API version the generated types describe; `bridle-ui` records the one it was built
+/// against and the gateway compares them (task 8). Bump with `API_PREFIX`.
+pub const API_VERSION: u32 = 1;
 
 /// Only health and login are open; everything else, even a path that doesn't exist yet, needs
 /// a session. With no `login` nobody can get one, so only health answers.

@@ -10,13 +10,14 @@ use bridle_api::discovery::{bridle_home, list_registry};
 use bridle_api::machines::MachineMap;
 use bridle_api::types::DaemonInfo;
 use serde::Serialize;
+use ts_rs::TS;
 
 /// Long enough for a daemon on a LAN or tailnet, short enough that a sleeping laptop doesn't
 /// hold up the page.
 pub const PROBE_TIMEOUT: Duration = Duration::from_secs(2);
 
 /// One project's daemon, as the gateway saw it just now.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
 pub struct ProjectStatus {
     pub project: String,
     /// The machine it lives on; `None` when that is this machine and the config doesn't name it.
@@ -25,10 +26,11 @@ pub struct ProjectStatus {
     pub reachable: bool,
     /// Why it is unreachable, for the UI to show; absent when reachable.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub reason: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
 pub struct Projects {
     pub projects: Vec<ProjectStatus>,
 }
