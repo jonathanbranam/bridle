@@ -74,8 +74,8 @@ names the `claude` executable the daemon runs.
 
 `bridle serve` runs in the foreground and logs to stderr. `bridle serve
 --detach` re-executes itself in a new process group with output going to
-`.bridle/daemon.log`, waits up to 15 s for `/v1/health` to answer, prints the
-URL and pid, and exits. The daemon installs its signal handlers before
+`.bridle/daemon.log`, waits up to 60 s for `/v1/health` to answer, prints the
+URL and pid, and exits. If the daemon is still starting then, it says so (pid, log path, `bridle daemons`), leaves it running and exits 0. The daemon installs its signal handlers before
 anything else, and ignores SIGHUP. It is a new process group, not a new session (`setsid`
 would need `unsafe`), and surviving a closed terminal is unverified:
 [[detached-daemon-and-its-terminal-mnzh|spike mnzh]]. On a host that should
