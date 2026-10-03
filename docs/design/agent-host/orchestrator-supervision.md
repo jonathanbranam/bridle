@@ -134,7 +134,6 @@ The conditions in `scripts/orchestrator-watch.sh` move into the daemon:
 | an agent exited unexpectedly, crashed or stalled (events) | the event log, from a per-orchestrator cursor |
 | a question to the human not yet reported | messages, from a cursor of the last reported message |
 | a message to the orchestrator | its inbox: any message with seq past the cursor (no dependence on `--mark-read`) |
-| all agents idle for 15 min | the agent table |
 | `five_hour` >= 93% or `seven_day` >= 85% | the usage the governor already polls |
 | a budget hold begins | the governor's state change |
 | a failed CI run on main | the `[ci]` watcher's records (no `gh` polling from the session) |

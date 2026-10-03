@@ -58,14 +58,14 @@ runs `bridle task done <id>`).
 - **Watch, don't poll by hand.** Run `bridle orchestrator wait-for-wake` in the background. The
   daemon holds it until something needs you, then it prints the reasons and exits.
   Choose its `--timeout SECS` yourself (default 25 minutes, max 6900): long when the work is
-  quiet, shorter when it is busy or unstable. A wake ends the wait at once either way.
+  quiet, shorter when it is busy or unstable, or when you want a check after work quiets down
+  (the daemon no longer wakes you when every agent is idle). A wake ends the wait at once either way.
   One waiter watches one daemon. Run one per project you hold an orchestrator token for
   (`--project <name>`; the projects are under `[orchestrator]` in the credentials file), or
   that project's messages to you are never seen (the human, 2026-10-01). Wakes are:
   - a `question` to the human, or a message to you;
   - an unexpected exit, crash or stall;
   - a created incident task;
-  - all agents idle for 15 minutes;
   - five_hour ≥ 93% or seven_day ≥ 85%;
   - a budget hold starting (the governor leaving `normal`);
   - a failed CI run on `main` (only with `[ci] github = true` in the project config).

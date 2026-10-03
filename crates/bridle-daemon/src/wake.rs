@@ -4,7 +4,7 @@
 //!
 //! Most conditions are facts in the event log (an exit, a message, a failed CI run, a budget
 //! hold), so the persisted cursor is "events up to here have been delivered": a daemon restart
-//! re-derives whatever was queued and undelivered. The rest are states (idle, usage) kept in
+//! re-derives whatever was queued and undelivered. The rest are states (usage) kept in
 //! memory; each fires once per crossing. `main` moving is not a wake: it needs no decision.
 
 use std::collections::HashSet;
@@ -13,7 +13,7 @@ use std::time::Duration;
 
 use bridle_api::types::{AgentState, Event, EventQuery, MessageKind, WakeReason, event_kind};
 use chrono::{DateTime, Utc};
-use serde_json::{Value, json};
+use serde_json::Value;
 use tokio::sync::{Mutex, Notify};
 
 use crate::store::Store;
@@ -22,7 +22,6 @@ use crate::store::Store;
 const CURSOR_KEY: &str = "orchestrator_wake_cursor";
 /// The principal the orchestrator's CLI calls act as, and the recipient of its messages.
 pub const ORCHESTRATOR: &str = "external:orchestrator";
-const ALL_IDLE_AFTER: i64 = 15 * 60;
 const FIVE_HOUR_WAKE: f64 = 0.93;
 const SEVEN_DAY_WAKE: f64 = 0.85;
 /// A poll nothing wakes is answered empty after this long.
@@ -113,8 +112,6 @@ struct State {
     /// Events up to here have been looked at; `None` until the first tick.
     scanned: Option<i64>,
     pending: Vec<WakeReason>,
-    idle_since: Option<DateTime<Utc>>,
-    idle_fired: bool,
     usage_fired: HashSet<String>,
 }
 
@@ -134,9 +131,9 @@ impl Wakes {
     }
 
     /// Looks for new wake conditions and queues them.
-    pub async fn tick(&self, now: DateTime<Utc>) {
+    pub async fn tick(&self, _now: DateTime<Utc>) {
         let mut st = self.state.lock().await;
-        if let Err(e) = self.scan(&mut st, now).await {
+        if let Err(e) = self.scan(&mut st).await {
             tracing::warn!(error = %e, "orchestrator wake scan failed; retrying next tick");
         }
         if !st.pending.is_empty() {
@@ -144,11 +141,7 @@ impl Wakes {
         }
     }
 
-    async fn scan(
-        &self,
-        st: &mut State,
-        now: DateTime<Utc>,
-    ) -> Result<(), crate::store::StoreError> {
+    async fn scan(&self, st: &mut State) -> Result<(), crate::store::StoreError> {
         let mut since = match st.scanned {
             Some(s) => s,
             None => {
@@ -187,7 +180,6 @@ impl Wakes {
             st.scanned = Some(last);
         }
 
-        self.check_idle(st, now).await?;
         self.check_usage(st).await?;
         Ok(())
     }
@@ -277,34 +269,6 @@ impl Wakes {
         })
     }
 
-    async fn check_idle(
-        &self,
-        st: &mut State,
-        now: DateTime<Utc>,
-    ) -> Result<(), crate::store::StoreError> {
-        let busy = self
-            .store
-            .list_agents(false)
-            .await?
-            .iter()
-            .any(|a| matches!(a.state, AgentState::Working | AgentState::Starting));
-        if busy {
-            st.idle_since = None;
-            st.idle_fired = false;
-            return Ok(());
-        }
-        let since = *st.idle_since.get_or_insert(now);
-        if !st.idle_fired && (now - since).num_seconds() >= ALL_IDLE_AFTER {
-            st.idle_fired = true;
-            st.pending.push(WakeReason {
-                reason: "all_idle".to_string(),
-                text: "all agents have been idle for 15 minutes".to_string(),
-                detail: json!({ "since": since }),
-            });
-        }
-        Ok(())
-    }
-
     async fn check_usage(&self, st: &mut State) -> Result<(), crate::store::StoreError> {
         for rl in self.store.rate_limits().await? {
             let limit = match rl.window.as_str() {
@@ -367,6 +331,7 @@ impl Wakes {
 #[cfg(test)]
 mod tests {
     use bridle_api::types::{RateLimit, When};
+    use serde_json::json;
 
     use super::*;
     use crate::store::{NewMessage, RecipientKind};
@@ -584,27 +549,6 @@ mod tests {
         let after = Wakes::new(r.store.clone());
         after.tick(Utc::now()).await;
         assert!(after.take().await.is_empty());
-    }
-
-    #[tokio::test]
-    async fn all_idle_fires_once_after_15_minutes() {
-        let r = rig().await;
-        let t0 = Utc::now();
-        assert!(r.reasons(t0).await.is_empty());
-        assert!(
-            r.reasons(t0 + chrono::Duration::minutes(14))
-                .await
-                .is_empty()
-        );
-        assert_eq!(
-            r.reasons(t0 + chrono::Duration::minutes(16)).await,
-            ["all_idle"]
-        );
-        assert!(
-            r.reasons(t0 + chrono::Duration::minutes(40))
-                .await
-                .is_empty()
-        );
     }
 
     #[tokio::test]

@@ -212,8 +212,8 @@ pub struct CiStatus {
 /// One reason to wake the orchestrator (`GET /v1/orchestrator/wake`).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct WakeReason {
-    /// `agent_exited`, `agent_crashed`, `agent_stalled`, `question`, `message`, `all_idle`,
-    /// `usage`, `budget_hold`, `ci_failed`, or `context` (a context or uptime note).
+    /// `agent_exited`, `agent_crashed`, `agent_stalled`, `question`, `message`, `usage`,
+    /// `budget_hold`, `ci_failed`, or `context` (a context or uptime note).
     pub reason: String,
     /// One line for the model to read.
     pub text: String,
