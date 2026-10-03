@@ -108,6 +108,26 @@ describes the role (maybe) and dictates well, but is awkward to type, so the hum
 A short form is fine **if everyone knows it**: write it down here, and agents read it as the full
 name.
 
+**Short forms are for typing and tight spaces, not for prose to the human.** The human, verbatim
+(2026-10-03):
+
+> I wanted to clarify something. You started saying "orch" in your writing back to me. I actually
+> don't like that at all. I don't have any problem reading the word "orchestrator." I just have a
+> problem typing it. I think it's kind of like a shorthand that I would use with you, or a
+> shorthand that we might use when assigning a name, like in a UI.
+>
+> One of the reasons to add this to that context naming document is to favor short names for
+> things or abbreviations. We're going to run up against this: we put things in lists in a user
+> interface, and we put things in lists in a document. We might be making tables, naming
+> projects, and if you spell out every single word really long, then scrolling horizontally
+> always becomes a problem. That's another thing for the naming context stack.
+
+- **Agents write the full name to the human** ("orchestrator", not "orch"). The human may type
+  the short form; agents read it as the full name and don't echo it back.
+- **Short forms belong where space is tight:** UI lists and columns, table cells, identifiers,
+  project and agent names. Long names in lists and tables force horizontal scrolling, so favour a
+  short name, or an agreed short form, there.
+
 Agreed short forms:
 
 | Short | Means |
