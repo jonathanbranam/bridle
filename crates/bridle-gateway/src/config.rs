@@ -32,6 +32,12 @@ pub enum ConfigError {
          or set `allow_any_interface = true` to mean it"
     )]
     AnyInterface(SocketAddr),
+    #[error("[gateway] needs both `username` and `password_hash`, or neither")]
+    HalfLogin,
+    #[error(
+        "[gateway] password_hash is not an argon2 hash; make one with `bridle gateway hash-password`"
+    )]
+    BadHash,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -40,6 +46,9 @@ struct GatewaySection {
     bind: Option<String>,
     #[serde(default)]
     allow_any_interface: bool,
+    username: Option<String>,
+    /// An argon2 PHC string; `bridle gateway hash-password` makes one.
+    password_hash: Option<String>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -50,6 +59,14 @@ struct File {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GatewayConfig {
     pub bind: SocketAddr,
+    /// `None` is the safe default: the gateway then answers nothing but health.
+    pub login: Option<Login>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Login {
+    pub username: String,
+    pub password_hash: String,
 }
 
 impl GatewayConfig {
@@ -81,7 +98,20 @@ impl GatewayConfig {
         if bind.ip().is_unspecified() && !section.allow_any_interface {
             return Err(ConfigError::AnyInterface(bind));
         }
-        Ok(Self { bind })
+        let login = match (section.username, section.password_hash) {
+            (None, None) => None,
+            (Some(username), Some(password_hash)) => {
+                if !crate::auth::is_valid_hash(&password_hash) {
+                    return Err(ConfigError::BadHash);
+                }
+                Some(Login {
+                    username,
+                    password_hash,
+                })
+            }
+            _ => return Err(ConfigError::HalfLogin),
+        };
+        Ok(Self { bind, login })
     }
 }
 
@@ -103,6 +133,23 @@ mod tests {
     fn bind_is_read() {
         let c = GatewayConfig::parse("[gateway]\nbind = \"127.0.0.1:9000\"\n").expect("parse");
         assert_eq!(c.bind.port(), 9000);
+    }
+
+    #[test]
+    fn login_needs_both_halves_and_a_real_hash() {
+        let c = GatewayConfig::parse("").expect("parse");
+        assert!(c.login.is_none());
+        let e = GatewayConfig::parse("[gateway]\nusername = \"a\"\n").expect_err("half");
+        assert!(matches!(e, ConfigError::HalfLogin), "{e}");
+        let e = GatewayConfig::parse("[gateway]\nusername = \"a\"\npassword_hash = \"x\"\n")
+            .expect_err("bad hash");
+        assert!(matches!(e, ConfigError::BadHash), "{e}");
+        let hash = crate::auth::hash_password("pw").expect("hash");
+        let c = GatewayConfig::parse(&format!(
+            "[gateway]\nusername = \"a\"\npassword_hash = \"{hash}\"\n"
+        ))
+        .expect("ok");
+        assert_eq!(c.login.expect("login").username, "a");
     }
 
     #[test]

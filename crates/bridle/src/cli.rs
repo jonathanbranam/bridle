@@ -46,7 +46,7 @@ pub enum Command {
     #[command(hide = true)]
     Serve(ServeArgs),
     /// Run the gateway: the human web UI's API (`[gateway]` in ~/.bridle/config.toml).
-    Gateway,
+    Gateway(GatewayArgs),
     /// Ask the daemon to shut down gracefully.
     #[command(hide = true)]
     StopDaemon,
@@ -771,6 +771,18 @@ pub struct InitArgs {
     /// Workflow pack to enable (`packs = [STACK]`).
     #[arg(long, value_parser = ["python", "typescript", "rust"])]
     pub stack: Option<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct GatewayArgs {
+    #[command(subcommand)]
+    pub command: Option<GatewayCommand>,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum GatewayCommand {
+    /// Read a password from stdin and print its argon2 hash for `[gateway] password_hash`.
+    HashPassword,
 }
 
 #[derive(Debug, Args)]
