@@ -152,3 +152,41 @@ which the human approved: "Yes, definitely. I approve the design. I think that l
 
 - **Attribution, not security:** advisors share a token, so the name is an honest label (like
   today's hand-signed "From advisor (research)"), not proof.
+
+## Context warnings and a ceiling for every interactive session (the human, 2026-10-03)
+
+Asked after a table of dalek's seven interactive sessions (contexts 39k to 190k, memory 225 to
+626 MB), verbatim:
+
+> Okay, and remind me: can you restart yourself? I don't know where we ended up with this, but
+> for all these interactive remote control sessions, we need to start issuing context limit
+> warnings and a handoff-type solution of some kind. In some cases, I want a warning before I
+> hand off this force, because as the human, I may decide just to shut it down instead of doing a
+> handoff. I do want, probably, an upper ceiling on this, but the upper ceiling is going to be
+> higher than with the orchestrator to allow me a little more flexibility.
+
+("hand off this force" is likely "a handoff is forced".)
+
+State on 2026-10-03:
+
+- An advisor can't restart itself: nothing relaunches an advisor, and a session can't restart
+  its own process. Today the human exits it and starts a new one (`bridle session advisor`); it
+  can write a handover note into the repo first.
+- Built: advisor session registration and `session.context` events (supervision doc status line).
+  Planned, not built: thresholds, warnings and restarts for advisors.
+- This ticket's task br-b4ac was **dropped** in pm-1's k7tm sort (2026-10-03); the human's
+  decisions above still stand.
+- The orchestrator's thresholds, for comparison: note at 150k, plan a handover at 180k, hand over
+  at 200k with a 30-minute deadline, and at 12 h uptime.
+
+Wanted (the human's):
+
+1. **Warnings for every interactive session**, Remote Control ones included, as context grows.
+2. **A warning before any forced handover**, to the human, so they can choose to shut the session
+   down instead of handing over.
+3. **A hard ceiling**, higher than the orchestrator's, for more flexibility.
+
+Advisor's proposal for the numbers (the human to set): warn the session and the human at 200k;
+warn again at 300k ("hand over or shut down?"); ceiling at 400k: the session writes a handover and
+stops after a deadline, unless the human has said to shut it down. Configurable per role.
+
