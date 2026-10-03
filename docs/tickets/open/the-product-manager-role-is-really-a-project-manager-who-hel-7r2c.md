@@ -48,3 +48,14 @@ The human, verbatim (2026-10-02, via advisor workflow), in the discussion of
 
 Advisor's lean: 3 once sk52's skills exist; the rename alone is cheap but touches an existing
 project's config (meta-notes, track-web), so it needs a migration (xebc).
+
+## Decided (2026-10-02)
+
+The human, verbatim: "Yeah let's rename it to project manager can be shortened to proj-mgr if
+needed in naming."
+
+Rename `product-manager` to `project-manager` (`proj-mgr` where a short name is needed). Bridle's
+own repo, and the existing projects through a migration (xebc; they're the human's existing
+projects, so the migration is reviewed). Sent to the orchestrator. The product-partner work
+(option 2) waits on sk52. Renaming or splitting the advisor is handled elsewhere, by another
+session.

@@ -161,3 +161,105 @@ What a step needs, per the human (all of it):
 The skill is thin: it runs one bridle command (e.g. `bridle step design <ticket>`) that reads and
 layers all five, and prints them as one structured prompt. The resolution engine already exists
 (rules); this adds templates, step ordering and context gathering to it.
+
+## Workflows per ticket, and who does which step (2026-10-02)
+
+The human, verbatim, on the step command above: "I agree on like the bridal step design thing in
+principle. Don't don't build it yet. But let's write that up in the ticket". Then:
+
+> Something else to note here is that there's open spec, they call this a schema, but I prefer the
+> term workflow. Every change in open spec can have a different schema. There's generally a
+> default schema called spec driven, but you can create a change with a different schema, a
+> different workflow. And I think that's super valuable. And there's a couple ways to do it, but
+> basically you can customize that workflow and you can add and remove steps. And you can, you can
+> kind of add and remove what context is applied. And when you do that, when you define your own
+> steps, and you can change the instructions. So I still like our layering system better, but you
+> can do that and you can then you can also with that change or separately from that, you can
+> change the templates. So I think all that's really good. I had a better different point though.
+> Oh, so if you're in a particular workflow or schema, you have to go through the steps that are
+> listed in the order they're listed. Although it's not necessarily linear, they have they support
+> some branching. And so this is this is true whether the agent does all of the steps itself or
+> whether the human walks through the steps. And I, I love that because sometimes, you know,
+> there's basically four steps before you apply a change. Proposal, write the specs, write the
+> design, then write the tasks. And I can stop, I can go forwards and, and backwards in that. You
+> know, generally you go forwards, but you can, you can go back a little bit. You can change the
+> proposal after it's, after you've written the design and then update everything. Or you can
+> take a few steps, with the human and then you can say, pass the rest off to the agent to do, but
+> all the steps are always done. And, I think that's, that's super valuable. And for our system, I
+> really want to be able to do, have that kind of flexibility to say, you know, for this ticket,
+> for this, for us, I think it's maybe a task or a ticket. I don't know. That whole thing is
+> confusing, but call it a ticket. For this ticket, or whatever, this is the workflow we're using.
+> So we're going to follow it. But I can say, hey, have the agent do steps A, B, and C. Or I can
+> say, oh, let's do A together. OK, that's done. Let's do B together. OK, that's done. All right.
+> Agent, you take over all the rest of these steps. Just go and just send it off. Or I could say,
+> you know, if we have, I could say agent, do steps A and B, and then come back to me for review.
+> Don't go on to C until I look at A and B. So I think that's super, super valuable. There's times
+> when. I just don't care, and I want the agent to go do it all and ship it. But I do want the
+> workflow followed. but then the flexibility to say, for this particular use case, the workflow
+> is different. And this is particularly true for, you know, like document changes or, yeah, I
+> don't know what else, but. You know, a feature versus a bug, or like a hotfix, or like a
+> vulnerability fix, a security fix. What else do we do? You know, we do like, like package
+> version upgrades, right? There's a bunch of things we do that the workflow should just be like,
+> upgrade all the packages, run CI, and ship it. It's still a workflow, but it's, it's a very
+> simple workflow. Or like a bug fix, a bug fix, probably doesn't contain any changes to the specs
+> because the specs were right in the first place. There's just a bug. So we don't need to update
+> any specs, but they should all pass and we should still like, you know, maybe design the
+> solution, maybe. But if it's a simple bug fix, you know, just go fix it. Yeah, or but for a new
+> feature, depending on how complex the feature is or how critical it is, I might say that I want
+> to review the design first. But in other cases, I, I don't. I just want the agent to finish the
+> whole thing. Now, we do have the ability, and, I, and we need to retain this for the agent to
+> say, like, hey, I wrote the design, and I think it needs a human review. So that, that should
+> still be like a, a possible thing. Yeah, and I think that covers it really. Like, there are
+> cases that we've talked about in, in other sessions about wanting a fresh agent with a fresh
+> context to do like an adversarial review or security review. Those are still true and still
+> things we can consider later. I've been calling those roles, and I think that's, that's kind of
+> accurate because we don't want the same agent to write the code and do the security review. The
+> agent's just too biased. All the stuff is, all the decisions it made are in its memory, in its
+> context, and it doesn't challenge itself enough.
+
+**Don't build yet.** Design notes only.
+
+### What the human wants, distilled
+
+1. **Workflows are named and layered.** A workflow (OpenSpec's "schema") is an ordered set of
+   steps, with some branching. Each step has instructions, rules, a template and context (the
+   table above). A layer can add or remove steps, change context, instructions and templates,
+   through bridle's layering, not OpenSpec's replace-wholesale.
+2. **Each ticket picks its workflow,** usually by kind, overridable per ticket. Examples from the
+   human:
+
+   | Ticket | Workflow |
+   |---|---|
+   | new feature | ticket → specs → design → tasks → implement → review |
+   | bug fix | maybe a design; no spec changes (the specs were right); every spec still passes |
+   | package upgrades | upgrade, run CI, ship |
+   | hotfix, security fix, docs change | their own short workflows |
+
+3. **Every step is always done, in order.** Going back is allowed (edit the proposal after the
+   design, then update what follows); skipping isn't. This holds whether the human or an agent
+   does the step.
+4. **Who does each step is chosen per ticket, and can change midway.** Some patterns:
+   - The agent does everything and ships it.
+   - Do A together, then B together, then the agent takes the rest.
+   - The agent does A and B, then stops for the human's review before C.
+5. **An agent can always ask for review:** "I wrote the design, and I think it needs a human
+   review" stays possible in any workflow.
+6. **Some steps need a fresh agent:** an adversarial or security review by a separate role with
+   a clean context, never the agent that wrote the code. Later.
+
+### How it might map onto bridle (advisor, not decided)
+
+- A workflow is a file in the layers, e.g. `workflows/feature.toml`: steps, order, branches, and
+  per step its instructions, template, context and rule tag (`steps:` on rules, above).
+  Projects override by id like rules. Kinds pick defaults (`feature` → `feature`).
+- The ticket records its workflow and each step's state (done, who did it, when). `bridle step
+  <step> <ticket>` prints the layered prompt for the next step and refuses one whose earlier
+  steps aren't done. Going back reopens the later steps.
+- The handoff is a per-ticket field: `agent through: design`, then human review; or a gate on a
+  step (`review: human`). This is where `docs/design/gates.md` (plan, merge, accept gates) folds
+  in: a gate becomes "the human does or reviews this step".
+- Review roles (adversarial, security) are steps whose `role` is a fresh agent: the daemon
+  spawns it, so it can't be the implementer. Ticket `br-4034` (independent code and security
+  review) is the existing question.
+- Open: ticket vs task as the thing that carries the workflow (k7tm's question, `br-3724`). The
+  human says "call it a ticket" for now.
