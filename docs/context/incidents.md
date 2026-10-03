@@ -24,6 +24,26 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-03 01:20: `bridle serve --detach` reported a failure, but the daemon started
+
+- **What happened:** the human ran `bridle serve --detach` for bridle-ui
+  (`/Volumes/Data/work/bridle-ui-workspace/bridle-ui`) on dalek and got "error: daemon did not
+  become healthy within 15s", with a log tail showing only a config warning (the `night` focus
+  period's end before its start). Reported by the human to the advisor. The daemon was fine: the
+  same process (pid 32152, started 01:20:01) logged its listen address at 01:20:17.3, about
+  0.4 s after the CLI gave up, and was serving on port 7405 afterwards (`bridle daemons`).
+- **Impact:** none to the daemon; a misleading error, and the human had to check whether it was
+  running.
+- **Cause:** `--detach` waits a fixed 15 s for the child's health check (`crates/bridle/src/
+  serve.rs`, deadline 15 s, polled every 200 ms), then reports failure without stopping the
+  child, which keeps starting. This start-up took about 15.4 s from reading config to listening.
+  Why it took that long is unknown; the human thinks system load (the laptop builds Rust for
+  workers, b7cz). Not verified.
+- **Category:** `daemon`, `host`.
+- **Follow-up:** none yet (logged as a potential issue). Candidates: a longer wait, or on timeout
+  say the daemon is still starting and is left running (with its pid and the log path) rather
+  than "did not become healthy"; and log the start-up steps' durations to find what was slow.
+
 ## 2026-10-02 23:25 and 23:40: ready tasks sat until the orchestrator nudged
 
 - **What happened:** br-5924 finished its settle period at 23:25 and br-1e88 at 23:40, but the
