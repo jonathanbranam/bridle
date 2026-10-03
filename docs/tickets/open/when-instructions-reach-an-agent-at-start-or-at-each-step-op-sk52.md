@@ -275,3 +275,8 @@ don't think that's a problem."
 This supersedes point 1's "a layer can add or remove steps": a workflow (the DAG of steps) is
 replaced wholesale by a later layer, or a project defines a new one under its own name. The
 pieces a step points at (instructions, rules, templates) still layer as before.
+
+The human, confirming (verbatim): "When I mean workflow, I just mean the DAG itself. A, B, C, you
+know, B depends on A, C depends on A, and D depends on B and C. That's the thing that they have to
+replace wholesale. But A, B, C, and D can all contain, you know, these layerings of rules within
+them."
