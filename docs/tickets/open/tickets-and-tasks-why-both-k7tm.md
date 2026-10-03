@@ -236,3 +236,56 @@ Proposed (one small task, needs the human's go):
 
 Rejected: a draft/held task state. Decision 6 says a task's existence means ready; a held state
 brings back the ambiguity the human wants gone.
+
+## Approved: one alphabet, one ID space (the human, 2026-10-03)
+
+> Okay, so I'm comfortable with the change to have tickets and tasks use the same alphabet and use
+> the same IDs. That's fine. That, that work, I don't think, should be blocking anything else. Um,
+> so it can go ahead.
+
+Task **br-9e15** (open): new task IDs use the ticket alphabet; a ticket's first task takes its ID;
+`ticket new` and the daemon share one collision space.
+
+## The question to explore next: merge tasks into tickets?
+
+The human, verbatim (2026-10-03), to take up in a fresh session:
+
+> The other question is essentially there are tickets that don't need to be worked and that's
+> something that will stay around forever. There may be some tasks occasionally that don't have
+> tickets associated with them. I don't, I think that's okay, but I guess that would be a question
+> is how often does that occur? Is that something we still need to support? And then the next
+> question is like, what's the dividing line between a ticket and a task? We're only scheduling
+> tasks, but what else does a task do? You know, I feel like a task is a work item and it makes
+> sense that a work item has a different workflow. But is that distinction like something we need
+> to keep? Like, what could we just, you know, take the functionality of tasks and add it to
+> tickets and then get rid of tasks entirely. That's the question I want to explore.
+
+**The main question: could tickets take over what tasks do, and tasks go away?** Sub-questions:
+
+1. **Tasks without tickets: how often, and do we still need them?** Count on 2026-10-03 (475 tasks,
+   rough, by the task body and title):
+   - 103 linked formally (body starts `original id: <ticket>`);
+   - about 241 more name a ticket loosely (a `(xxxq)` in the title, or `Ticket: docs/tickets/...`
+     in the body);
+   - about **131 (28%) have no ticket at all**, 101 of them created by agents (follow-ups, fixes,
+     test flakes, worker-found bugs) and 30 by external principals (the orchestrator, advisors).
+2. **What does a task do besides being scheduled?** Inventory for the exploration: states
+   (open, planned, claimed, integrated, dropped, reopened), settle period, claim and release,
+   queue tiers, edges (`blocks`, deps), questions and answers that block it, a thread
+   (notes, comments), watchers and wakes, priority and size, the human's to-dos (`--for-human`),
+   impact and conflicts, `land`, incidents (a task kind), submissions from other projects
+   (visitors), the summary, events. Which of these need a database record, and which could live
+   in a ticket's markdown?
+3. **The dividing line.** A ticket is a lasting record (the human's words, the reasoning,
+   decisions) that may never be worked; a task is a work item with its own workflow. Is that
+   difference worth two records, or one record with an optional work workflow?
+4. **What merging would cost:** tickets are markdown files in git (readable in vim and Obsidian,
+   reviewed in commits); tasks are daemon state (fast queries, wakes, concurrency, the state
+   branch). Related: [[ticket-state-without-moving-files-p2ys|p2ys]],
+   [[which-docs-live-in-bridle-and-which-in-markdown-hv8e|hv8e]],
+   [[everything-readable-and-editable-through-the-daemons-file-ba-v8kn|v8kn]],
+   [[tickets-and-docs-in-bridle-s-repo-or-a-separate-repo-or-subm-tkav|tkav]].
+
+Already decided above, and unaffected by the answer: a ticket without a task gets no work; a
+task existing means ready; the human approves feature work.
+
