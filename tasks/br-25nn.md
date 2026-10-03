@@ -2,11 +2,13 @@
 id = "br-25nn"
 title = "u6w9 b: gateway collects interactions and human messages every 5 min, stores them, computes intervals"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-03T21:03:00.106Z"
-updated_at = "2026-10-03T21:50:10.411668Z"
+updated_at = "2026-10-03T21:58:19.703915Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
+branch = "bridle/interactions-collect"
+commit = "62488ad84c8932becd4d4760708b5f7920acfd50"
 summary = "Gateway collects interactions: collect.rs polls every 5 min (one daemon per machine for the prompt log via GET /v1/interactions?since=, every project daemon for from=human messages, modelled as point prompts in session message:<recipient>), merges into an append-only JSONL store <home>/gateway-interactions.jsonl deduped by key, reports unreachable machines/projects. intervals.rs: pure intervals/union/human_time/concurrency per the brief (gap from reply end, waiting counts, lead, tail; no-reply fallback: next prompt if within gap else tail). Config [interactions] gap/tail/lead (defaults 10m/2m/1m). bridle gateway spawns the collector (not serve(), so tests don't poll real daemons). Caveats: Eastern-day bucketing left to handlers (c); handlers need the Store, which gateway.rs currently doesn't pass to serve."
 +++
 
@@ -21,3 +23,6 @@ Folded the advisor's 'Gaps between writing and reading' additions into this brie
 
 ### note · agent:interactions-collect · 2026-10-03T21:50:10.411Z
 done: gateway collector (5-min poll, append-only store, dedupe, unreachable reported), pure interval/union/concurrency math, [interactions] gap/tail/lead config, docs+CHANGELOG; just check green (1096 tests); f8ecc9e. Note for c: Store is created in crates/bridle/src/gateway.rs and not yet passed to serve(); Eastern-day bucketing is left to the handlers.
+
+### note · agent:manager-2 · 2026-10-03T21:58:19.703Z
+integrated: 62488ad84c8932becd4d4760708b5f7920acfd50 (branch bridle/interactions-collect)
