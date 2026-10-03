@@ -7,7 +7,7 @@ repos: [bridle, bridle-ui]
 changes: []
 specs: []
 needs: []
-see: [essy, v8kn, hvxk, 6yb4, k4wq, yyzm, yj38]
+see: [essy, v8kn, hvxk, 6yb4, k4wq, yyzm, yj38, r9vh]
 tasks: [br-2ec0]
 ---
 
@@ -70,7 +70,9 @@ The human, verbatim (2026-10-02, via the advisor):
 > changed, like recording. I think it sends a diff of the diagram, um, so. that the agent
 > understands the changes that I've made and can, of course, see the new diagram.
 
-("bridal" is "bridle"; "bash them up" is likely "batch them up".)
+("bridal" is "bridle"; "bash them up" is likely "batch them up". "PyHarness" is **pi/harness**,
+`/Volumes/Data/work/pi/harness`: the human's interactive web-based harness for experimenting with
+the Pi coding harness and other models, e.g. Kimi 2.7; the human, 2026-10-02.)
 
 ## What it asks for
 
@@ -206,5 +208,64 @@ Options (advisor), with a recommendation:
 - **C. One standing responder per project** for every document. Fewer agents, but documents
   share and crowd one context.
 
+**Decided (the human, 2026-10-02): B.** The human, verbatim (via the advisor):
+
+> I definitely like B in general. I think it's the right approach. Probably the we need a kind of
+> an expiry for this agent.
+
+> I think number A is kind of a nifty option. You know, maybe I'm having an interactive chat and
+> I want to add some comments just for the chat and take it back to chat, but it kind of seems
+> like just mixing two different things up too much. So I think my preference is with B.
+
+- **B: one agent per document**, with an **expiry**, and a **governor** so commenting on many
+  documents at once doesn't start many agents. Putting agents to sleep and waking them, the
+  expiry and the cap are [[put-background-agents-to-sleep-and-wake-them-on-demand-with-r9vh|r9vh]].
+- A (the interactive advisor) stays a possible extra for comments made during a chat, not the
+  design.
+
 - Still open: how a revision shows the human what changed (git diff of the commit, or the UI
   marks changed passages), and batching comments into one review round.
+
+## Example: one review round (advisor, 2026-10-02)
+
+The human asked to see what it looks like (they were on a plane, no trial possible). A passage
+from essy's design, after the human commented twice and the document agent answered:
+
+```markdown
+- **Login:** username and password, `argon2` hash in machine config, an `HttpOnly`,
+  `SameSite=Strict` session cookie.
+
+> [!comment] human, 2026-10-02 14:05, on "`SameSite=Strict`"
+> What does this mean? Plain words please.
+>
+> **docs agent, 14:06:** The browser sends the login cookie only to pages the gateway itself
+> served, never to requests started by another site, so a malicious page can't act as you.
+> Want that sentence added to the doc?
+>
+> **human, 14:20:** yes
+
+- **Reached over Tailscale**, encrypted; nothing is exposed to the internet.
+
+> [!comment] human, 2026-10-02 14:07, on "Reached over Tailscale"
+> Make a ticket for serving this over HTTPS on the internet later, then delete this line.
+>
+> **docs agent, 14:08:** Filed ticket abcd ("serve the gateway over HTTPS"). I'll delete the line
+> once you resolve this.
+```
+
+After the human's "yes", the agent adds the sentence, deletes the first thread, and commits with
+the comments in the message; a resolved note goes at the bottom of the document:
+
+```markdown
+---
+Resolved comments (deleted, see git history):
+- 2026-10-02, human on "SameSite=Strict": explained; sentence added under Login.
+```
+
+What the example shows:
+
+- The raw file reads fine in any editor; in Obsidian each `[!comment]` is a box.
+- Replies are bold names inside the quote: no nesting to track.
+- The quoted words anchor the comment; if a rewrite removes them, the comment is still right
+  after its passage, and the agent resolves it in the same commit.
+- A thread can end in an action (a ticket filed, a line deleted) as well as an answer.

@@ -43,8 +43,10 @@ for diagrams. The human, verbatim (2026-10-02, via the advisor; the full message
    the new diagram, so the agent knows what changed.
 4. **Simple and custom** is fine; no need for a full diagramming tool. Draw.io was tried in
    another project and didn't come out well.
-5. **Prior work:** the PyHarness project, building a presentation interactively with an agent,
-   and some diagram work.
+5. **Prior work:** "PyHarness" is **pi/harness** (`/Volumes/Data/work/pi/harness`; the human,
+   2026-10-02): an interactive web-based harness for experimenting with the Pi coding harness and
+   other models (e.g. Kimi 2.7), where they built a presentation interactively with an agent and
+   did some diagram work.
 
 ## Notes (advisor)
 
