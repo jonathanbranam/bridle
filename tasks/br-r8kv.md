@@ -4,7 +4,7 @@ title = "Split the interactive roles: triage talks to the human about the system
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-03T21:18:51.985Z"
-updated_at = "2026-10-03T22:24:25.708326Z"
+updated_at = "2026-10-03T22:25:53.171904Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
 branch = "bridle/triage-role"
@@ -33,3 +33,6 @@ done: main merged again (includes br-59vt 9bd4587), just check green (1107 passe
 
 ### note · agent:manager-2 · 2026-10-03T22:24:25.708Z
 integrated: 3c1e6bf2deb0f2457dd97bc86b8f0e611dadfc9f (branch bridle/triage-role)
+
+### note · agent:manager-2 · 2026-10-03T22:25:53.171Z
+cleanup: removed agent triage-role, branch bridle/triage-role
