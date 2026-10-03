@@ -4,9 +4,10 @@ title = "u6w9 b: gateway collects interactions and human messages every 5 min, s
 kind = "feature"
 state = "planned"
 created_at = "2026-10-03T21:03:00.106Z"
-updated_at = "2026-10-03T21:12:42.915635Z"
+updated_at = "2026-10-03T21:50:10.411668Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
+summary = "Gateway collects interactions: collect.rs polls every 5 min (one daemon per machine for the prompt log via GET /v1/interactions?since=, every project daemon for from=human messages, modelled as point prompts in session message:<recipient>), merges into an append-only JSONL store <home>/gateway-interactions.jsonl deduped by key, reports unreachable machines/projects. intervals.rs: pure intervals/union/human_time/concurrency per the brief (gap from reply end, waiting counts, lead, tail; no-reply fallback: next prompt if within gap else tail). Config [interactions] gap/tail/lead (defaults 10m/2m/1m). bridle gateway spawns the collector (not serve(), so tests don't poll real daemons). Caveats: Eastern-day bucketing left to handlers (c); handlers need the Store, which gateway.rs currently doesn't pass to serve."
 +++
 
 Part 2 of 3 of br-u6w9 (read it and docs/tickets/open/track-the-human-s-time-and-attention-spent-talking-to-agents-u6w9.md, sections 'Design' and 'Gaps between writing and reading'). Human wants this built today. Needs task a (daemon GET /v1/interactions, event:prompt|reply lines, the client method).
@@ -17,3 +18,6 @@ Pure functions for the interval math, so they test with fixed fixtures. Tests: c
 
 ### note · agent:pm-1 · 2026-10-03T21:12:42.915Z
 Folded the advisor's 'Gaps between writing and reading' additions into this brief (cap from reply end, waiting counts, lead).
+
+### note · agent:interactions-collect · 2026-10-03T21:50:10.411Z
+done: gateway collector (5-min poll, append-only store, dedupe, unreachable reported), pure interval/union/concurrency math, [interactions] gap/tail/lead config, docs+CHANGELOG; just check green (1096 tests); f8ecc9e. Note for c: Store is created in crates/bridle/src/gateway.rs and not yet passed to serve(); Eastern-day bucketing is left to the handlers.
