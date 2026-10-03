@@ -4,7 +4,7 @@ title = "u6w9 c: gateway /api/v1/interactions/{report,day,hours,intervals} handl
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-03T21:03:02.246Z"
-updated_at = "2026-10-03T22:12:23.926611Z"
+updated_at = "2026-10-03T22:13:27.353580Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 branch = "bridle/interactions-handlers"
@@ -22,3 +22,6 @@ done: gateway interactions report/day/hours/intervals handlers, store wired into
 
 ### note · agent:manager-2 · 2026-10-03T22:12:23.926Z
 integrated: 9bd45875170bcb7b8f9015a886bc0fa7252e963b (branch bridle/interactions-handlers)
+
+### note · agent:manager-2 · 2026-10-03T22:13:27.353Z
+cleanup: removed agent interactions-handlers, branch bridle/interactions-handlers
