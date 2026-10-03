@@ -431,3 +431,4 @@
 {"actor":"agent:pm-1","at":"2026-10-03T21:03:04.471543Z","from":"open","task":"br-59vt","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-03T21:03:10.021175Z","queue":"reprioritized"}
 {"actor":"human","at":"2026-10-03T21:18:51.985Z","from":"","task":"br-r8kv","to":"open"}
+{"actor":"human","at":"2026-10-03T21:19:06.442Z","from":"","task":"br-jttf","to":"open"}
