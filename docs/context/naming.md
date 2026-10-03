@@ -156,6 +156,14 @@ Known mis-transcriptions:
 | bridle | bridal, bridal shower |
 | Yegge | Yeggy, Yegius, Yankee |
 | NUC | Nook |
+| 3d, 4d (in IDs) | 30, 40 |
+
+**IDs get spoken too.** Random IDs are the worst case: no dictionary entry can fix them, and
+some are ambiguous in English. The human (2026-10-03): "the number 3, the letter D, and then the
+number 4 and the letter D ... when I say that out loud, it's 3D, 4D ... it basically sounds
+identical to 30, 40." When we design an ID, check how it sounds, or let the human refer to things
+by name instead. See [[ids-the-human-can-say-aloud-task-and-ticket-ids-that-survive-nkd9|the
+speakable-IDs ticket (nkd9)]].
 
 ## Same name, blurred boundary
 
