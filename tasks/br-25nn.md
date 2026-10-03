@@ -4,7 +4,7 @@ title = "u6w9 b: gateway collects interactions and human messages every 5 min, s
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-03T21:03:00.106Z"
-updated_at = "2026-10-03T21:58:19.703915Z"
+updated_at = "2026-10-03T21:59:17.619268Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 branch = "bridle/interactions-collect"
@@ -26,3 +26,6 @@ done: gateway collector (5-min poll, append-only store, dedupe, unreachable repo
 
 ### note · agent:manager-2 · 2026-10-03T21:58:19.703Z
 integrated: 62488ad84c8932becd4d4760708b5f7920acfd50 (branch bridle/interactions-collect)
+
+### note · agent:manager-2 · 2026-10-03T21:59:17.619Z
+cleanup: removed agent interactions-collect, branch bridle/interactions-collect
