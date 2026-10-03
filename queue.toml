@@ -64,3 +64,6 @@ tasks = [
 
 [[tier]]
 tasks = ["br-96cc"]
+
+[[tier]]
+tasks = ["br-c4f4"]
