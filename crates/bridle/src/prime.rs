@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
 use bridle_api::TaskKind;
 use bridle_daemon::config::Config;
-use bridle_daemon::rules::{self, Layer, LayerKind, Resolution, RuleState};
+use bridle_daemon::rules::{self, Layer, LayerKind};
 
 /// README.md is printed in full only up to this many lines; longer, it's a pointer.
 const README_MAX_LINES: usize = 40;
@@ -38,7 +38,7 @@ pub fn render(
         let _ = write!(out, "{EXPLORE_PARAGRAPH}\n\n");
     }
     out.push_str("## Rules\n\n");
-    out.push_str(&rules_section(&base, role, None));
+    out.push_str(&rules::rules_section(&base, role, None));
     out.push_str(&facts_and_guides(&base_layers));
 
     for id in components {
@@ -54,7 +54,11 @@ pub fn render(
             "\n# Component: {id} ({})\n\n## Rules\n\n",
             chain_names.join(" -> ")
         );
-        out.push_str(&rules_section(&res, role, Some(LayerKind::Component)));
+        out.push_str(&rules::rules_section(
+            &res,
+            role,
+            Some(LayerKind::Component),
+        ));
         out.push_str(&facts_and_guides(&chain));
         out.push_str(&docs_section(repo, config, id));
     }
@@ -72,39 +76,6 @@ pub fn render(
         let _ = write!(out, "\nOther components: {}\n", others.join(", "));
     }
     Ok(out)
-}
-
-/// Active rules tagged for `role` (or untagged). With `only_kind`, just those a layer of
-/// that kind wins, plus disables it made: the delta on top of what's already printed.
-fn rules_section(res: &Resolution, role: &str, only_kind: Option<LayerKind>) -> String {
-    let mut out = String::new();
-    for rule in res.rules.values() {
-        let winner = rule.winning_layer();
-        if only_kind.is_some_and(|k| winner.kind != k) {
-            continue;
-        }
-        match rule.state() {
-            RuleState::Active {
-                severity,
-                roles,
-                body,
-                ..
-            } => {
-                if !roles.is_empty() && !roles.iter().any(|r| r == role) {
-                    continue;
-                }
-                let sev = severity.map(|s| format!("{s}, ")).unwrap_or_default();
-                let _ = writeln!(out, "- {} [{sev}{winner}]: {}", rule.id, body.trim());
-            }
-            RuleState::Disabled { reason } => {
-                let _ = writeln!(out, "- {} disabled by {winner}: {reason}", rule.id);
-            }
-        }
-    }
-    if out.is_empty() {
-        out.push_str("(none)\n");
-    }
-    out
 }
 
 /// Facts (`facts.md`) and guide paths (`guides/*.md`) beside each layer's `rules/` dir.

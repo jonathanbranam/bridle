@@ -2618,6 +2618,7 @@ pub fn stable_system_prompt(
     repo: &Path,
     branches: &BranchesConfig,
     commands: &CommandsConfig,
+    rules: &str,
 ) -> String {
     let mut out = String::from(PREAMBLE);
     if let Some(suffix) = role_preamble_suffix(role_name) {
@@ -2644,7 +2645,42 @@ pub fn stable_system_prompt(
         out.push('\n');
         out.push_str(&substitute_role_text(&text, branches, commands));
     }
+    if !rules.is_empty() {
+        out.push_str("\n## Workflow rules\n\n");
+        out.push_str(rules);
+    }
     out
+}
+
+impl Config {
+    /// The role's resolved workflow rules (L1 base, packs, project; no components) as
+    /// `bridle prime <role>` prints them, for [`stable_system_prompt`]. Never fails: rules
+    /// that can't be resolved (missing workflow dir or pack, a bad rule file) log a warning
+    /// and give an empty string, so a spawn or restart never depends on them.
+    pub fn role_rules_text(&self, repo: &Path, role_name: &str) -> String {
+        let resolved = self
+            .workflow_root(repo)
+            .map_err(|e| e.to_string())
+            .and_then(|root| {
+                let layers = crate::rules::discover_layers(repo, root.as_deref(), &self.packs);
+                crate::rules::load_and_resolve(&layers).map_err(|e| e.to_string())
+            });
+        match resolved {
+            Ok(res) => {
+                let text = crate::rules::rules_section(&res, role_name, None);
+                // prime's "(none)" placeholder would be noise in a prompt.
+                if text == crate::rules::NO_RULES {
+                    String::new()
+                } else {
+                    text
+                }
+            }
+            Err(e) => {
+                tracing::warn!(role = role_name, error = %e, "workflow rules not resolvable; system prompt omits them");
+                String::new()
+            }
+        }
+    }
 }
 
 /// A short, project-scoped statement of the branch pattern (`[branches]`,
@@ -2702,12 +2738,13 @@ pub fn render_system_prompt(
     repo: &Path,
     branches: &BranchesConfig,
     commands: &CommandsConfig,
+    rules: &str,
     agent_name: &str,
     cwd: &Path,
     branch: Option<&str>,
     siblings: &[(String, PathBuf)],
 ) -> String {
-    let mut out = stable_system_prompt(role_name, role, repo, branches, commands);
+    let mut out = stable_system_prompt(role_name, role, repo, branches, commands, rules);
     let branch_clause = branch
         .map(|b| format!(" on branch {b}"))
         .unwrap_or_default();
@@ -2963,7 +3000,7 @@ mod tests {
                 system_prompt: Some(format!("workflow/base/roles/{name}.md").into()),
                 ..Role::worker_default()
             };
-            let rendered = stable_system_prompt(name, &role, &repo, &branches, &commands);
+            let rendered = stable_system_prompt(name, &role, &repo, &branches, &commands, "");
             assert!(rendered.contains("make ci"), "{name}: check command");
             assert!(rendered.contains("trunk-x"), "{name}: integration branch");
             assert!(
@@ -2994,6 +3031,7 @@ mod tests {
             &repo,
             &config.branches,
             &config.commands,
+            "",
         );
         assert!(
             !rendered.contains("{{branches."),
@@ -3653,8 +3691,14 @@ mod tests {
         let repo = Path::new("/does/not/matter");
         let branches = BranchesConfig::default();
         for (name, role) in Config::default().roles {
-            let rendered =
-                stable_system_prompt(&name, &role, repo, &branches, &CommandsConfig::default());
+            let rendered = stable_system_prompt(
+                &name,
+                &role,
+                repo,
+                &branches,
+                &CommandsConfig::default(),
+                "",
+            );
             assert!(
                 !rendered.contains("BRIDLE_AGENT_ID="),
                 "stable prompt must not embed an id"
@@ -3675,8 +3719,22 @@ mod tests {
         let repo = Path::new("/repo/a");
         let branches = BranchesConfig::default();
         let role = Role::worker_default();
-        let a = stable_system_prompt("worker", &role, repo, &branches, &CommandsConfig::default());
-        let b = stable_system_prompt("worker", &role, repo, &branches, &CommandsConfig::default());
+        let a = stable_system_prompt(
+            "worker",
+            &role,
+            repo,
+            &branches,
+            &CommandsConfig::default(),
+            "",
+        );
+        let b = stable_system_prompt(
+            "worker",
+            &role,
+            repo,
+            &branches,
+            &CommandsConfig::default(),
+            "",
+        );
         assert_eq!(a, b);
     }
 
@@ -3690,6 +3748,7 @@ mod tests {
             repo,
             &branches,
             &CommandsConfig::default(),
+            "",
         );
         let manager = stable_system_prompt(
             "manager",
@@ -3697,6 +3756,7 @@ mod tests {
             repo,
             &branches,
             &CommandsConfig::default(),
+            "",
         );
         assert_ne!(worker, manager);
     }
@@ -3706,14 +3766,21 @@ mod tests {
         let repo = Path::new("/repo/a");
         let branches = BranchesConfig::default();
         let role = Role::worker_default();
-        let stable =
-            stable_system_prompt("worker", &role, repo, &branches, &CommandsConfig::default());
+        let stable = stable_system_prompt(
+            "worker",
+            &role,
+            repo,
+            &branches,
+            &CommandsConfig::default(),
+            "",
+        );
         let a = render_system_prompt(
             "worker",
             &role,
             repo,
             &branches,
             &CommandsConfig::default(),
+            "",
             "worker-1",
             Path::new("/repo/a/wt/worker-1"),
             Some("bridle/worker-1"),
@@ -3725,6 +3792,7 @@ mod tests {
             repo,
             &branches,
             &CommandsConfig::default(),
+            "",
             "worker-2",
             Path::new("/repo/a/wt/worker-2"),
             Some("bridle/worker-2"),
@@ -3997,6 +4065,7 @@ mod tests {
             repo,
             &BranchesConfig::default(),
             &CommandsConfig::default(),
+            "",
             "manager-1",
             repo,
             None,
@@ -4136,5 +4205,68 @@ mod tests {
             DENY_FOCUS_FILES.contains(&"Edit(~/.bridle/config.toml)"),
             "Edit(~/.bridle/config.toml) should be in DENY_FOCUS_FILES"
         );
+    }
+
+    fn write_rule(root: &Path, rel: &str, id: &str, roles: &str) {
+        let p = root.join(rel);
+        std::fs::create_dir_all(p.parent().expect("parent")).expect("mkdir");
+        std::fs::write(
+            p,
+            format!("---\nid: {id}\nroles: {roles}\n---\nbody of {id}\n"),
+        )
+        .expect("write");
+    }
+
+    fn rules_repo() -> (tempfile::TempDir, Config) {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let r = dir.path();
+        write_rule(r, "wf/base/rules/base-rule.md", "base-rule", "[]");
+        write_rule(r, "wf/packs/p/rules/pack-rule.md", "pack-rule", "[worker]");
+        write_rule(r, ".bridle/rules/proj-rule.md", "proj-rule", "[worker]");
+        write_rule(r, ".bridle/rules/mgr-rule.md", "mgr-rule", "[manager]");
+        let mut cfg = Config::parse("").expect("parse");
+        cfg.workflow = Some("wf".to_string());
+        cfg.packs = vec!["p".to_string()];
+        (dir, cfg)
+    }
+
+    #[test]
+    fn role_rules_reach_the_stable_prompt_and_differ_only_by_role_tags() {
+        let (dir, cfg) = rules_repo();
+        let repo = dir.path();
+        let prompt = |role: &str| {
+            let rules = cfg.role_rules_text(repo, role);
+            stable_system_prompt(
+                role,
+                &Role::worker_default(),
+                repo,
+                &cfg.branches,
+                &cfg.commands,
+                &rules,
+            )
+        };
+        let worker = prompt("worker");
+        assert_eq!(
+            worker,
+            prompt("worker"),
+            "same bytes for every agent of a role"
+        );
+        for id in ["base-rule", "pack-rule", "proj-rule"] {
+            assert!(worker.contains(&format!("- {id} [")), "{id}");
+        }
+        assert!(!worker.contains("mgr-rule"));
+        let manager = prompt("manager");
+        assert!(manager.contains("base-rule") && manager.contains("mgr-rule"));
+        assert!(!manager.contains("pack-rule") && !manager.contains("proj-rule"));
+    }
+
+    #[test]
+    fn unresolvable_rules_give_no_rules_text() {
+        let (dir, mut cfg) = rules_repo();
+        cfg.workflow = Some("missing-dir".to_string());
+        assert_eq!(cfg.role_rules_text(dir.path(), "worker"), "");
+        let (dir, cfg) = rules_repo();
+        write_rule(dir.path(), ".bridle/rules/dup.md", "base-rule", "[]");
+        assert_eq!(cfg.role_rules_text(dir.path(), "worker"), "");
     }
 }

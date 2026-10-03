@@ -57,6 +57,45 @@ pub struct Layer {
     pub dir: PathBuf,
 }
 
+/// What [`rules_section`] returns when nothing applies.
+pub const NO_RULES: &str = "(none)\n";
+
+/// Active rules tagged for `role` (or untagged), one line each, in id order. With
+/// `only_kind`, just those a layer of that kind wins, plus disables it made: the delta
+/// on top of what's already printed. Shared by `bridle prime` and the spawn-time system
+/// prompt ([`crate::config::role_rules_text`]) so the two can't drift.
+pub fn rules_section(res: &Resolution, role: &str, only_kind: Option<LayerKind>) -> String {
+    use std::fmt::Write as _;
+    let mut out = String::new();
+    for rule in res.rules.values() {
+        let winner = rule.winning_layer();
+        if only_kind.is_some_and(|k| winner.kind != k) {
+            continue;
+        }
+        match rule.state() {
+            RuleState::Active {
+                severity,
+                roles,
+                body,
+                ..
+            } => {
+                if !roles.is_empty() && !roles.iter().any(|r| r == role) {
+                    continue;
+                }
+                let sev = severity.map(|s| format!("{s}, ")).unwrap_or_default();
+                let _ = writeln!(out, "- {} [{sev}{winner}]: {}", rule.id, body.trim());
+            }
+            RuleState::Disabled { reason } => {
+                let _ = writeln!(out, "- {} disabled by {winner}: {reason}", rule.id);
+            }
+        }
+    }
+    if out.is_empty() {
+        out.push_str(NO_RULES);
+    }
+    out
+}
+
 /// Builds the layer list for a repo from `workflow`/`packs` in
 /// `<repo>/.bridle/config.toml` (`config::Config`): L1 base and L2 packs
 /// from the workflow checkout, if one is configured, then L3 project from

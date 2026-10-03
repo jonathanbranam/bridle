@@ -35,6 +35,7 @@ fn prompt(cfg: &Config, repo: &Path) -> String {
         repo,
         &BranchesConfig::default(),
         &CommandsConfig::default(),
+        "",
     )
 }
 

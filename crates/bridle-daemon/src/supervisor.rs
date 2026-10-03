@@ -1038,6 +1038,10 @@ impl AgentManager {
             &self.0.workspace.repo,
             &self.0.config.branches,
             &self.0.config.commands,
+            &self
+                .0
+                .config
+                .role_rules_text(&self.0.workspace.repo, &req.role),
             &agent.name,
             &cwd,
             branch.as_deref(),
@@ -2496,6 +2500,10 @@ impl AgentManager {
             &self.0.workspace.repo,
             &self.0.config.branches,
             &self.0.config.commands,
+            &self
+                .0
+                .config
+                .role_rules_text(&self.0.workspace.repo, &agent.role),
             &agent.name,
             std::path::Path::new(&agent.cwd),
             agent.branch.as_deref(),
@@ -2692,6 +2700,10 @@ impl AgentManager {
             &self.0.workspace.repo,
             &self.0.config.branches,
             &self.0.config.commands,
+            &self
+                .0
+                .config
+                .role_rules_text(&self.0.workspace.repo, &agent.role),
             &agent.name,
             std::path::Path::new(&agent.cwd),
             agent.branch.as_deref(),

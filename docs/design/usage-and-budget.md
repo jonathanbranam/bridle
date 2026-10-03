@@ -494,6 +494,9 @@ Rules the design follows, and that the build is reviewed against:
    `--append-system-prompt-file`, identical for every agent in that role and
    project up to a short identity sentence (name, cwd, branch) appended last;
    that keeps the long, role-scoped part of the prefix cached across agents.
+   That part ends with the role's resolved workflow rules (base, packs, project; the same
+   list as the rules section of `bridle prime`, no components), under `## Workflow rules`;
+   rules that can't be resolved are left out with a warning rather than failing a spawn.
    The task-specific content goes in the first user message.
 3. **Prime is role-scoped and has a size budget.** `bridle prime` has a token
    budget per role, e.g. a worker's prime ≤ 3k tokens. Guides are pointed to,
