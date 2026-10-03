@@ -298,3 +298,11 @@
 {"actor":"human","at":"2026-10-03T11:04:16.326Z","from":"","task":"br-ab3a","to":"open"}
 {"actor":"human","at":"2026-10-03T11:04:16.371Z","from":"","task":"br-fd74","to":"open"}
 {"actor":"human","at":"2026-10-03T11:04:16.417Z","from":"","task":"br-4eaf","to":"open"}
+{"actor":"human","at":"2026-10-03T11:04:49.731Z","from":"","task":"br-7575","to":"open"}
+{"actor":"external:advisor","at":"2026-10-03T11:04:49.732209Z","from":"open","task":"br-7575","to":"planned"}
+{"actor":"human","at":"2026-10-03T11:04:49.755Z","from":"","task":"br-3a42","to":"open"}
+{"actor":"external:advisor","at":"2026-10-03T11:04:49.756383Z","from":"open","task":"br-3a42","to":"planned"}
+{"actor":"human","at":"2026-10-03T11:04:49.779Z","from":"","task":"br-da2b","to":"open"}
+{"actor":"external:advisor","at":"2026-10-03T11:04:49.779985Z","from":"open","task":"br-da2b","to":"planned"}
+{"actor":"human","at":"2026-10-03T11:04:49.803Z","from":"","task":"br-9667","to":"open"}
+{"actor":"external:advisor","at":"2026-10-03T11:04:49.804370Z","from":"open","task":"br-9667","to":"planned"}
