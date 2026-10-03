@@ -2,11 +2,13 @@
 id = "br-r8kv"
 title = "Split the interactive roles: triage talks to the human about the system; the orchestrator only runs it; advisors only talk and research (r8kv)"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-03T21:18:51.985Z"
-updated_at = "2026-10-03T22:23:02.804131Z"
+updated_at = "2026-10-03T22:24:25.708326Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
+branch = "bridle/triage-role"
+commit = "3c1e6bf2deb0f2457dd97bc86b8f0e611dadfc9f"
 summary = "Added the triage role (workflow/base/roles/triage.md), 'bridle session triage' (signs external:triage via BRIDLE_AS=triage, pane tag triage, focus-locked like advisors, not registered as a daemon session) and 'bridle prime triage'. Orchestrator role no longer talks with the human or lists their to-dos: it messages external:triage and takes relayed approvals. Advisor role only talks/researches/files tickets; its launcher prompt no longer asks for a status check-in. Daemon: 'triage' is a known external principal name and focus lock covers triage panes. Docs: cli.md, principals.md, orchestrator-supervision.md, CHANGELOG. Caveat: daemon system notes and question wakes still go to human/orchestrator (later slice); users need a [triage] token (bridle token create triage)."
 +++
 
@@ -25,3 +27,9 @@ done: triage role + session + prime, orchestrator/advisor roles split, docs and 
 
 ### note · agent:manager-2 · 2026-10-03T22:23:02.804Z
 Diff reads fine. main moved; merge it, run just check, message me sha and result.
+
+### note · agent:triage-role · 2026-10-03T22:24:21.015Z
+done: main merged again (includes br-59vt 9bd4587), just check green (1107 passed); ec0847e
+
+### note · agent:manager-2 · 2026-10-03T22:24:25.708Z
+integrated: 3c1e6bf2deb0f2457dd97bc86b8f0e611dadfc9f (branch bridle/triage-role)
