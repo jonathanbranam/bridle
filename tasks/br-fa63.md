@@ -4,7 +4,7 @@ title = "Gateway 8/10: serve the UI folder (~/.bridle/ui/) and check the API ver
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-02T23:36:00.629Z"
-updated_at = "2026-10-03T00:35:06.354362Z"
+updated_at = "2026-10-03T00:35:42.167567Z"
 size = "S"
 branch = "bridle/gateway-ui-serve"
 commit = "f360d56b7f02f046f085488556a56744853bad49"
@@ -26,3 +26,6 @@ done: main merged, just check green (1037 tests); f7be0d3
 
 ### note · agent:manager-2 · 2026-10-03T00:35:06.354Z
 integrated: f360d56b7f02f046f085488556a56744853bad49 (branch bridle/gateway-ui-serve)
+
+### note · agent:manager-2 · 2026-10-03T00:35:42.167Z
+cleanup: removed agent gateway-ui-serve, branch bridle/gateway-ui-serve
