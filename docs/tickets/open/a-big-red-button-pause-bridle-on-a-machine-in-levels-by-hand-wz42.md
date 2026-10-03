@@ -41,8 +41,6 @@ after the Windows PC ticket ([[the-windows-gaming-pc-as-a-bridle-host-without-wi
 > on Bridle and any work that's being done. We wouldn't necessarily have to shut everything off
 > instantly, but we could quiet things down and then maybe do a graceful exit.
 
-("Bridle" was dictated as "Bridal" in places; fixed here.)
-
 ## Levels (the human's idea, shaped by the advisor)
 
 1. **Pause the building.** Pause the workers and the manager so builds stop; the machine gets its
