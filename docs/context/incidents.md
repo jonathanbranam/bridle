@@ -24,6 +24,20 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-03 01:28: the orchestrator role named a flag the installed binary didn't have
+
+- **What happened:** the twenty-fifth orchestrator session started its three watchers with
+  `bridle orchestrator wait-for-wake --timeout ...`, as the role prompt says. All three exited at
+  once: "unexpected argument '--timeout'". The role text came from `main`'s workflow (path mode),
+  which br-c4f4 had just updated, but `~/.cargo/bin/bridle` (0.4.0) predates br-c4f4. Found by
+  the orchestrator.
+- **Impact:** seconds; the watchers were restarted without the flag (default 25 minutes).
+- **Cause:** prompts and rules are read live from the checkout's `main` while the binary only
+  changes at an upgrade, so docs can describe a CLI that isn't installed yet.
+- **Category:** `role`, `config`.
+- **Follow-up:** br-751e (chvf 3, the daemon keeps a workflow checkout at the binary's tag);
+  the next upgrade brings the flag.
+
 ## 2026-10-03 01:20: `bridle serve --detach` reported a failure, but the daemon started
 
 - **What happened:** the human ran `bridle serve --detach` for bridle-ui
