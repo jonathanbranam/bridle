@@ -144,6 +144,10 @@ manager. That needs a daemon built from that commit or later.
 
 ## Gotchas today
 
+- **On dalek, never start a daemon over SSH** (ticket nrbf). Claude Code's login is in the
+  macOS login keychain, which an SSH session can't read, so every agent that daemon spawns is
+  logged out and silently does nothing. Start it in a local terminal, or from SSH inside the
+  laptop's own tmux server: `tmux new-window -d -c <clone> 'bridle serve'`.
 - The first `bridle restart` after a project's port changes reports failure, although the daemon
   came back (ticket 6d5y). Check with `bridle --project P status`. A new project that starts on
   its `[projects]` port doesn't hit this.

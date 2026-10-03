@@ -24,6 +24,20 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-03 01:46: bridle-ui's manager was logged out of Claude Code and silently did nothing
+
+- **What happened:** the bridle-ui manager answered every message (01:31 to 01:46) with "Not
+  logged in · Please run /login", each recorded as a successful $0 turn. Found by the
+  orchestrator after the `all_idle` wake, from `bridle agent logs manager`.
+- **Impact:** about 15 minutes of bridle-ui's first tasks not starting. The work wasn't lost.
+- **Cause:** the human started the daemon (pid 32152) with `bridle serve --detach` over SSH
+  (its environment has `SSH_CONNECTION` and no `TMUX`). An SSH session can't read the macOS login
+  keychain where Claude Code keeps its login. The orchestrator's `daemon restart` kept the same
+  session. The bridle and track-web daemons were started in the laptop's tmux and work fine.
+- **Category:** `host`, `daemon`, `human-process`.
+- **Follow-up:** [[a-daemon-whose-claude-isn-t-logged-in-runs-agents-that-silen-nrbf|nrbf]]
+  (br-5b39: fail loudly, check at start-up); a gotcha in `docs/context/adding-a-project.md`.
+
 ## 2026-10-03 01:28: the orchestrator role named a flag the installed binary didn't have
 
 - **What happened:** the twenty-fifth orchestrator session started its three watchers with
