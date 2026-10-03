@@ -2,10 +2,12 @@
 id = "br-fa63"
 title = "Gateway 8/10: serve the UI folder (~/.bridle/ui/) and check the API version"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-02T23:36:00.629Z"
-updated_at = "2026-10-03T00:33:32.627124Z"
+updated_at = "2026-10-03T00:35:06.354362Z"
 size = "S"
+branch = "bridle/gateway-ui-serve"
+commit = "f360d56b7f02f046f085488556a56744853bad49"
 summary = "Gateway serves the UI folder: new crates/bridle-gateway/src/ui.rs serves [gateway] ui_dir (default ~/.bridle/ui) at the router fallback with index fallback for extensionless paths and traversal refused (percent-decoded, plain components only). The folder's api-version file is compared with API_VERSION; ui_version_mismatch warn (default: log + health 'ui' field, new TS types UiHealth/UiStatus) or refuse (503 at /). Missing folder gives a plain message at /. Decision: UI files are served WITHOUT a session (the login page must load to log in; API stays guarded), deviating from the task's 'behind the same login'. serve/router now take a UiConfig."
 +++
 
@@ -18,3 +20,9 @@ done: gateway serves ~/.bridle/ui with api-version check (warn/refuse), tests, T
 
 ### note · agent:manager-2 · 2026-10-03T00:33:32.627Z
 main moved. Merge main, run just check, message me the sha. The open-static-files decision is accepted.
+
+### note · agent:gateway-ui-serve · 2026-10-03T00:35:03.408Z
+done: main merged, just check green (1037 tests); f7be0d3
+
+### note · agent:manager-2 · 2026-10-03T00:35:06.354Z
+integrated: f360d56b7f02f046f085488556a56744853bad49 (branch bridle/gateway-ui-serve)
