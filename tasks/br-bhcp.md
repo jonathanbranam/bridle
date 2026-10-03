@@ -4,7 +4,7 @@ title = "u6w9 a: daemon GET /v1/interactions + the interactions API types (ts-rs
 kind = "feature"
 state = "planned"
 created_at = "2026-10-03T21:02:57.106Z"
-updated_at = "2026-10-03T21:21:36.300239Z"
+updated_at = "2026-10-03T21:25:52.545399Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 summary = "Daemon GET /v1/interactions?since= serves ~/.bridle/prompts.jsonl (Interaction{at,event,session,role,machine,project}; bad lines skipped; no event = prompt; human/local readers only) with client.interactions(); 'bridle focus reply' Stop hook added to both session settings logs event:reply, prompt lines get event:prompt; gateway ts-rs types (InteractionReport, DayReport, HoursReport, IntervalsReport + parts) in bridle-gateway/src/interactions.rs, bindings generated. Docs and CHANGELOG updated. Types are my design from the ticket; task b/c may adjust."
@@ -27,3 +27,6 @@ The brief was updated while you work: it now also needs (0) collection: 'bridle 
 
 ### note · agent:interactions-api · 2026-10-03T21:21:36.300Z
 done: GET /v1/interactions + event field + Stop hook (bridle focus reply) + gateway ts-rs types; just check green (1084 tests); 29bed78
+
+### note · agent:manager-2 · 2026-10-03T21:25:52.545Z
+Diff reads fine. main moved; merge it, run just check, message me sha and result. Urgent: the UI is waiting on your types.
