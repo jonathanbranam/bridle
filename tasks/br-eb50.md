@@ -1,15 +1,15 @@
 +++
 id = "br-eb50"
-title = "Task watchers 3/4: a watchers list on tasks; wakes go to watchers"
+title = "Task watchers 2/3: a watchers list on tasks (no delivery change)"
 kind = "feature"
 state = "planned"
 created_at = "2026-10-03T02:07:11.774Z"
-updated_at = "2026-10-03T02:20:15.613304Z"
+updated_at = "2026-10-03T02:30:25.960570Z"
 size = "M"
 +++
 
-Ticket: docs/tickets/open/task-watchers-a-creator-field-a-watchers-list-and-wakes-that-xxxq.md (decided item 2, and item 5). Code: crates/bridle-daemon/src/principal_wake.rs (task_reasons: today 'created or claimed', with a 1M-event scan), the task store/API (crates/bridle-api types.rs), CLI in crates/bridle, docs/design/storage.md (task records, state branch, rebuild).
-Goal: (1) a watchers list on the task (principals), in the task record on the state branch too (rebuild restores it; old records without it parse as empty). (2) The creator is added at creation (uses created_by from task 2); claiming a task adds the claimer as a watcher (removable). (3) 'bridle task watch <id>' and 'bridle task unwatch <id>' add/remove the CALLING principal; the API has the matching endpoints; recorded in the thread/event so it is auditable. 'task show' and JSON list watchers. (4) principal_wake task_reasons uses the watchers list: a principal wakes for changes to tasks it watches, never its own changes; the 'created or claimed' scan and the 1,000,000-event read are deleted. (5) Backfill: existing tasks get watchers = created_by plus the current claimer (automatic, idempotent, never blocks daemon start-up; a failure logs and leaves the list empty). Tests: creator watches at creation; claim adds the claimer; unwatch stops wakes; watch starts them; own changes never wake; old tasks backfilled; rebuild keeps watchers. Docs: storage.md, api.md, cli.md, messages.md, CHANGELOG. Acceptance: just check passes. Model: Sonnet. Migration: the automatic backfill above. Out of scope: what a wake says (task 4), the human as watcher (9nrt), wake-vs-message. Depends on tasks 1 and 2 (br-a34f, created_by task).
+Ticket: docs/tickets/open/task-watchers-a-creator-field-a-watchers-list-and-wakes-that-xxxq.md (decided items 2 and 5; the notification design changed 2026-10-03: task changes will be MESSAGES, built in the next task br-7605; this task is the list only). Code: the task store/API (crates/bridle-api types.rs), CLI in crates/bridle, docs/design/storage.md (task records, state branch, rebuild).
+Goal: (1) a watchers list on the task (principals), also in the task record on the state branch (rebuild restores it; old records without it parse as empty). (2) The creator is added at creation (created_by from br-c078); claiming a task adds the claimer as a watcher (removable). (3) 'bridle task watch <id>' and 'bridle task unwatch <id>' add/remove the CALLING principal; matching API endpoints; recorded in the thread and as an event. 'task show' and JSON list watchers. (4) One function in the daemon, 'who is notified of this task', that br-7605 will use. (5) Backfill existing tasks: watchers = created_by plus the current claimer; automatic, idempotent, never blocks daemon start-up (a failure logs and leaves the list empty). DO NOT change wakes or add any delivery (br-7605 does that and deletes the old 'created or claimed' scan in principal_wake.rs). Tests: creator watches at creation; claim adds the claimer; watch/unwatch work and are recorded; old tasks backfilled; rebuild keeps watchers. Docs: storage.md, api.md, cli.md, CHANGELOG. Acceptance: just check passes. Model: Sonnet. Migration: the automatic backfill above. Depends on br-c078.
 
 ## Thread
 

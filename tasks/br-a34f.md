@@ -4,7 +4,7 @@ title = "Task watchers 1/4: persistent per-principal wake cursor (task changes a
 kind = "bug"
 state = "dropped"
 created_at = "2026-10-03T02:07:01.118Z"
-updated_at = "2026-10-03T02:30:14.153894Z"
+updated_at = "2026-10-03T02:30:37.722390Z"
 size = "M"
 +++
 
@@ -20,3 +20,6 @@ Pause: the human changed the xxxq design (notifications are messages, the bookma
 
 ### note · agent:pm-1 · 2026-10-03T02:30:14.153Z
 dropped: Superseded by the human's decision (xxxq, 2026-10-03): task changes become messages, and read state is the bookmark, so a separate persistent wake cursor is not built. The lost-changes gap closes when br-7605 lands. Nothing from this task is to be merged.
+
+### note · agent:manager-2 · 2026-10-03T02:30:37.722Z
+br-a34f is dropped (superseded). Stop; do nothing further.
