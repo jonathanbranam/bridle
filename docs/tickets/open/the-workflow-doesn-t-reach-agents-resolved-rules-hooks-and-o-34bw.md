@@ -120,3 +120,20 @@ rules overlay, which probably isn't built yet". The case is a time-block editing
 notes, which ships with meta-notes for now (meta-notes ticket zqqb). Layer skills reaching agents
 (like the rules in step 1 and the hooks in step 3, not via gitignored `.claude/skills/`) is still
 held under step 6; this is the first concrete need for it. Not planned: needs the human's go.
+
+## Landed (checked 2026-10-03)
+
+| Step | Commit | Task |
+|---|---|---|
+| 1. resolved rules in the spawn prompt | `9561950` | br-2242 |
+| 2. rule summaries removed from `roles/*.md` | `5a0593f` | br-899d |
+| 3. layer hooks passed at spawn via `--settings` | `c4cd9af` | br-01a4 |
+| 4. small breaks (`--stack rust` dropped, stale lines) | `f55537d` | |
+
+Merged isn't live: each daemon gets them on its next restart onto a build at or after `c4cd9af`.
+Still not reaching agents: component (L4) rules, facts and guides (`role_rules_text` passes no
+component); rules for interactive orchestrator/advisor sessions (`prime orchestrator|advisor` has
+no rules section, ticket
+[[role-and-rule-files-misstate-how-rules-reach-agents-orchestr-98xt|98xt]]); skills (above).
+Stale "until `bridle workflow sync` renders rules" lines in 11 rule files: 98xt. The docs fact-check
+that found this: [[docs-design-much-of-not-built-is-built-but-unwired-and-claud-ntca|ntca]].
