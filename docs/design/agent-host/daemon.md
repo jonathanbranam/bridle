@@ -21,8 +21,8 @@
 - **The daemon is the only writer** of bridle state. The CLI never opens the
   database.
 - **Agents talk back through the same API**, by running `bridle` with their
-  own token, which bridle injects into their environment. Later they can use a
-  bridle MCP server exposing the same operations.
+  own token, which bridle injects into their environment. A bridle MCP server
+  exposing the same operations is planned, not built.
 - **Agents are the daemon's children**, connected by pipes, so something
   long-lived has to own them. That is why bridle is a daemon and not only a
   CLI.
@@ -225,8 +225,11 @@ crates/
                    with SSE, and daemon discovery. Shared by the daemon, the CLI,
                    and future TUI/GUI/MCP.
   bridle-daemon/   store, supervisor, containment, worktrees, config, axum server.
+  bridle-tui/      `bridle tui`; depends only on bridle-api (cli.md, `tui`).
+  bridle-gateway/  `bridle gateway`, the human web UI's API (human-web-ui.md).
+  bridle-mail/     `bridle mail run`, the email bridge (mail.md).
+  bridle-spec/     the spec-file parser behind `bridle workflow spec` (specs.md).
   bridle/          the binary: clap CLI; `serve` runs bridle-daemon.
 ```
 
-A TUI will be another crate that depends only on `bridle-api`, and so will an
-MCP server.
+An MCP server (planned, not built) would be another crate depending only on `bridle-api`.

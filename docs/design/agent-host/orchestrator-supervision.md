@@ -1,5 +1,7 @@
 # Orchestrator supervision
 
+> **Status (checked 2026-10-03):** Built and in use: slices 1a, 1b, 2 and 3 (liveness, relaunch and backoff, wake conditions and `wait-for-wake`, context and uptime notes, forced restart, `handover done`, the handover note as a record), advisor session registration and `session.context` events · Planned: `bridle orchestrator pause`, wakes and restarts for advisors, percentage thresholds, filing supervisor incidents as `incident` tasks (it still sends a `system` note plus an `orchestrator.incident` event)
+
 Design for ticket [[the-orchestrator-stays-running-fx7x|fx7x]]; signals verified in
 [[docs/spikes/07-orchestrator-supervision-findings|spike 07]]. **Slice 1a built** (br-a424): liveness, relaunch and crash-loop backoff (sections 1 to 4, the
 interim incident of 8). **Slice 1b built** (br-e949): the wake conditions and `wait-for-wake`
@@ -51,7 +53,7 @@ must match), so a reused pid is never signalled.
 
 ## 2. Config
 
-A new `[orchestrator]` table in the machine config (`roles-and-config.md`), beside `[budget]`.
+An `[orchestrator]` table in the project's `.bridle/config.toml` (`roles-and-config.md`, "Other keys").
 Absent or `enabled = false`: the supervisor doesn't run (today's behaviour). There is **no pane
 key**.
 
@@ -283,8 +285,9 @@ tasks, CI), and that is printed live by `bridle prime orchestrator`. What is lef
 - Stopping the orchestrator on purpose (the human quitting it) makes the supervisor relaunch it
   within the first backoff. To stop supervision, set `enabled = false` and restart the daemon.
   A `bridle orchestrator pause` isn't built; it is a small addition if that hurts.
-- Incidents (nc7r) aren't built. Until they are, "record an incident" is a `system` message to
-  the human plus an `orchestrator.incident` event, through one function that nc7r replaces.
+- "Record an incident" here is a `system` message to the human plus an `orchestrator.incident`
+  event (`orchestrator.rs`). Incident tasks ([[incidents]], nc7r) are built since, but the
+  supervisor doesn't file them; switching it over is not built.
 - Not in scope, per the human: the incidents design itself (nc7r), human to-dos (ex9q), and the
   follow-up suggestions in fx7x (launchd, `--resume` after a crash, pid identity beyond start
   time, percentage thresholds).

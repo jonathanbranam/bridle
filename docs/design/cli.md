@@ -1,8 +1,11 @@
 # The CLI
 
-Every command is a thin client of the daemon's API
-([[docs/design/agent-host/api|API]]). Every command takes `--json`, which agents
-always use; humans get compact tables.
+> **Status (checked 2026-10-03):** Built and in use: the commands under "Built", except the next ones · Built, not wired in: `workflow sync` and the `arch-guard` hook it installs (run by hand only; bridle's own repo never runs it, so its `.claude/settings.json` has no hooks), `orchestrator prime worker|planner` (no role, hook or skill runs it; the daemon puts the same resolved rules, without facts, guides or components, into every spawned agent's system prompt), `task ready --role` (accepted, ignored) · Planned: the "Planned" block at the end
+
+Most commands are thin clients of the daemon's API
+([[docs/design/agent-host/api|API]]); the local ones (`ticket`, `workflow rules|sync|spec|goals|arch|explore|trace`,
+`orchestrator prime`, `hook`, `daemon init|doctor|launchd|systemd`, `completions`) say so below.
+Every command takes `--json`, which agents always use; humans get compact tables.
 
 ## Grouping
 
@@ -40,7 +43,7 @@ bridle daemon stop                            prints "requested shutdown", "ackn
                                               and <workspace>/.bridle/daemon.log
 bridle daemon restart [--wait SECS] [--upgrade]                restart the daemon in place once every agent is idle (orchestrator or human); prints the commit and the agents to
                                               resume, then "the daemon is back". A busy daemon (nothing idle within --wait, default 600) errors and stays up. --upgrade first builds the newest green-CI commit on main (background; prints "building <sha>" or "nothing to upgrade" and returns; the daemon restarts itself after the build)
-bridle init    [--repo PATH] [--name N] [--integration BRANCH] [--stack S]  scaffold .bridle/config.toml + .gitignore; never overwrites. A project with no `workflow` (and no `workflow/base/` in the repo) also gets the base workflow vendored into `.bridle/workflow/` (uncommitted; you commit it): copied from the clone this binary was built from if it's still there, else `git clone --depth 1 --branch v<version>` of `workflow_url` (machine `~/.bridle/config.toml`; default the bridle GitHub repo). A fetch failure is an error.
+bridle daemon init [--repo PATH] [--name N] [--integration BRANCH] [--stack S]  scaffold .bridle/config.toml + .gitignore; never overwrites. A project with no `workflow` (and no `workflow/base/` in the repo) also gets the base workflow vendored into `.bridle/workflow/` (uncommitted; you commit it): copied from the clone this binary was built from if it's still there, else `git clone --depth 1 --branch v<version>` of `workflow_url` (machine `~/.bridle/config.toml`; default the bridle GitHub repo). A fetch failure is an error.
 bridle workflow update [--repo PATH] [--to TAG]   re-fetch the vendored `.bridle/workflow/` (from the local clone, or the tag: `--to`, else this binary's) and print added/changed/removed files; the only thing that ever changes it. Errors if the project isn't vendored.
 bridle daemon doctor  [--repo PATH]                 check the project's setup, say what to fix; exit 1 on a failure
 bridle daemon launchd install [--repo PATH] [--workspace DIR] [--force]   macOS: write the LaunchAgent plist, print launchctl commands
@@ -95,7 +98,7 @@ bridle token list                           name, created-at, revoked-or-not; ne
 bridle token revoke <name>                  human only, external tokens only (an agent's own token is
                                              revoked through `bridle agent rm`, not this); also removes its
                                              credentials.toml entry for the project
-bridle statusline                           Claude Code statusLine command; local only, no daemon call
+bridle hook statusline                      Claude Code statusLine command; local only, no daemon call
 bridle completions <zsh|bash|fish|elvish|powershell>   print the shell completion script generated from the clap definition, never drifting from the CLI. Static completions only (subcommands, flags, enum values like `--kind`). Install once with `bridle completions zsh > ~/.zfunc/_bridle` (and add `fpath=(~/.zfunc $fpath)` to ~/.zshrc); bash via `bridle completions bash > ~/.local/share/bash-completion/completions/bridle`; local only, no daemon call
 bridle migrate [--dry-run] [--project NAME | --all]   apply the project migrations this bridle ships that the project hasn't had yet, in order, once each ([[docs/design/migrations|migrations]]). Default: the current repository; `--all`: every registry project, one at a time, stopping at the first failure and naming the ones done. `--dry-run` prints what would change and writes nothing. Never runs by itself. Records in the project (`.bridle/migrations.toml`, `.bridle/migrations.log`) and, if its daemon answers, as a `project.migrated` event
 bridle orchestrator note-session            the orchestrator launcher's SessionStart hook: writes $BRIDLE_HOME/orchestrator.session
@@ -108,8 +111,8 @@ bridle orchestrator handover write --file <path>|-      record the orchestrator'
 bridle orchestrator handover list | show <id>           the notes, newest first · one note
 bridle mail run                              the email bridge for this project: inbound mail, question mails, daily digest (docs/design/mail.md); runs as external:mail
 bridle orchestrator wait-for-wake [--timeout SECS]                  the orchestrator's background watcher: waits for a wake condition, prints it and exits 0 (`nothing` at the timeout, default 25 min, cap 6900 s); external:orchestrator only
-bridle arch-guard                          Claude Code PreToolUse hook: blocks design/architecture/ edits outside an arch-revision task
-bridle stop-check                           Claude Code Stop hook for the worker role; refuses to stop
+bridle hook arch-guard                      Claude Code PreToolUse hook: blocks design/architecture/ edits outside an arch-revision task
+bridle hook stop-check                      Claude Code Stop hook for the worker role; refuses to stop
                                              with an unreleased claim and no thread entry since claiming
                                              it (docs/design/coordination.md); never fails
 bridle workflow rules explain <id>                   which layer wins a rule id, and what it shadowed
@@ -435,7 +438,10 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
 - **`rules explain`/`rules diff`** are local and static, like `cost audit`: no daemon
   call, just `.bridle/config.toml` and the layer directories it points at, read from
   the current directory ([[docs/design/workflow-layers|workflow layers]],
-  `bridle_daemon::rules`). They resolve L1 base, L2 packs and L3 project rule layers
+  `bridle_daemon::rules`). The same resolution (L1-L3, no components) goes into every
+  daemon-spawned agent's system prompt as `## Workflow rules`
+  ([[docs/design/agent-host/roles-and-config|roles and config]]), so what `explain` reports is
+  what a spawned agent is told. They resolve L1 base, L2 packs and L3 project rule layers
   by id, later layers winning unless an earlier one marks the id `locked: true`; a
   layer that redefines an id must give an `override` kind (`replace`, `append` or
   `disable`) — silent redefinition is an error, and `disable` requires a `reason`.
@@ -451,14 +457,15 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   base/pack layers below it — the flag is `--project-layer`, not `--project` as
   workflow-layers.md's own example reads, because `--project` is already the global
   flag that selects a daemon by project name and clap can't have both share that name
-  with different value types. The L1 base and L2 pack layers come from `[rules]
-  workflow = "path"` (relative paths resolve against the repo root) and `packs =
-  ["name", ...]` in `.bridle/config.toml`; with no `workflow` set, or a `workflow`/pack
-  directory that doesn't exist on disk, resolution just sees the project layer, not an
-  error — `bridle-workflow`'s real location is still provisional (docs/tickets/open/
-  where-bridle-workflow-lives-r2uq.md), so nothing is guessed here. Pack layers are
-  mechanism only for now: reading multiple `<workflow>/packs/<name>/rules` directories
-  in listed order, with no real pack content yet (out of scope per workflow-layers.md).
+  with different value types. The L1 base and L2 pack layers come from the top-level
+  `workflow = "path"` (relative paths resolve against the repo root; the machine config's
+  `workflow` wins, roles-and-config.md) and `packs = ["name", ...]` in `.bridle/config.toml` (or, with no `workflow`, the copy `bridle daemon init`
+  vendored into `.bridle/workflow/`). With none of those, resolution sees only the project layer.
+  A `workflow` directory that doesn't exist, or a git url, is an error (`Config::workflow_root`);
+  a listed pack whose directory is missing loads as empty (`bridle daemon doctor` flags it).
+  Packs read `<workflow>/packs/<name>/rules` in listed order; `workflow/packs/` has `python`,
+  `typescript` and `vim`. Bridle's own workflow lives in-repo (`workflow = "workflow"`,
+  [[where-bridle-workflow-lives-r2uq|r2uq]]).
 - **`sync`** is local and static too, like `rules explain`/`diff`: no daemon call, just
   the layers `bridle_daemon::rules::discover_layers` finds, rendered by
   `bridle_daemon::sync` (docs/design/workflow-layers.md, "Rendering into what the agent
@@ -476,11 +483,16 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   exactly which entries the last sync wrote, so re-syncing (or a layer's hooks
   changing) only ever touches those, never a hook a human added by hand — a
   pre-existing hook entry sync didn't write is always left alone. Renders no L4
-  component rules (delivered by `bridle orchestrator prime` instead, docs/design/components.md), same as `rules explain`/`diff` above; wiring a
-  `SessionStart` hook to run `sync` automatically is a follow-up, not built yet — for
-  now it's a command you run yourself. `hooks/<event>.json`, and the "later layer wins
-  wholesale" convention it and `agents/<role>.md` use, are this command's own
-  convention; nothing in `workflow/` uses either yet. Skill sources may reference
+  component rules (`bridle orchestrator prime worker --component` prints them; nothing delivers
+  them to agents yet, docs/design/components.md), same as `rules explain`/`diff` above. Nothing
+  runs `sync` automatically (a `SessionStart` hook is not built): it's a command you run
+  yourself, and bridle's own repo doesn't. Its output reaches a spawned agent only through what
+  is committed, since agents load only the checked-in `.claude/settings.json`
+  (`--setting-sources project`) and `.claude/skills/`, `.claude/agents/` are gitignored. So in
+  bridle's repo neither the hooks nor the skills reach agents (passing layer hooks at spawn is
+  34bw step 3, not built). `hooks/<event>.json`, and the "later layer wins wholesale" convention
+  it and `agents/<role>.md` use, are this command's own convention; `workflow/base/hooks/PreToolUse.json`
+  (arch-guard) is the one hook file, and nothing uses `agents/`. Skill sources may reference
   `{{commands.check}}`, substituted with `.bridle/config.toml`'s `[commands] check`
   (default `"just check"`, per-project — e.g. `"make check"`) so a base skill like
   `workflow/base/skills/worker/SKILL.md` doesn't hardcode one project's build tool.
@@ -594,10 +606,10 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
 - **`ask`/`answer`** are thin clients of `TaskManager::ask_question`/`answer_question`
   (docs/design/coordination.md, "Questions do not stop work"): `ask` appends a `question`
   thread entry and blocks the task's readiness until answered (`Conflict` if one is
-  already open); `answer` appends an `answer` entry and clears the block. Neither takes a
-  recipient — a question addressed to a task has no single recipient, per
-  coordination.md's message table — so there's no `--to`; send-to-task is a
-  later task.
+  already open); `answer` appends an `answer` entry and clears the block. `ask --to WHO`
+  (an agent, `role:NAME`, `external:NAME` or `human`; default the caller's spawner, else the
+  human) also sends WHO a pointer message of kind `question`; `answer` sends the asker one of
+  kind `answer`.
 - **`claim`/`release`** are thin clients of `TaskManager::claim_task`/`release_task`
   (docs/design/storage.md, "claims and leases"): `claim` moves a `planned`, unblocked
   task to `claimed` for the calling principal (`Conflict` if it isn't ready to claim —
@@ -694,6 +706,8 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   prints a `hookSpecificOutput` `permissionDecision: "deny"` unless the caller is not a worker
   agent or has claimed an `arch-revision` task; the reason tells it to run `bridle workflow arch propose`
   ([[docs/design/architecture-tier|architecture tier]]). Any error of bridle's own allows.
+  Built, not wired in: it runs only where `sync` was run and the resulting `.claude/settings.json`
+  committed; bridle's own repo hasn't (no `hooks` in its settings).
 - **`stop-check`** is Claude Code's `Stop` hook, registered only for the worker role
   ([[docs/design/coordination#How agents actually hear things (Claude Code integration)|coordination.md]],
   [[docs/spikes/05-stop-hook-findings|spike 05]]). It reads the hook's JSON on stdin; if
@@ -727,7 +741,9 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   `.bridle/roles/advisor.md`. The note is fetched from the daemon
   best-effort (no daemon or no note: the state file); the files are read from the current directory, so run it from the repo root, as
   `bridle session orchestrator` does when it uses this as `claude`'s opening prompt.
-  Any other role is a clap `InvalidValue` error, not a silent no-op.
+  It carries no resolved workflow rules (neither does `prime advisor`): the orchestrator and
+  advisor sessions see rules only where their role file names them. Roles other than
+  orchestrator, advisor, prototyper, worker and planner are a clap `InvalidValue` error.
 - **`prime worker|planner`** (planner = the `product-manager` rule tag) opens prime to
   those two roles, each for its own role only, to deliver component scope
   ([[docs/design/components|components]]). It prints the rules tagged for the role (or
@@ -740,8 +756,10 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   A last line lists the components not named with their docs folders, which is what
   makes the scoping soft. Local, reads the current directory, renders nothing to files;
   an unknown component id is an error. `--task ID` (worker) fetches the task, and an `explore` one
-  gets the exploring agent's paragraph first ([[docs/design/explorations|explorations]]). The role scope and the rest of the "commands still to build" surface (`init`) stays
-  in `Planned` below; `sync` is built (see above).
+  gets the exploring agent's paragraph first ([[docs/design/explorations|explorations]]).
+  Built, not wired in: no role prompt, hook or skill tells a worker or product manager to run it.
+  Their resolved rules reach them anyway, in the system prompt; the facts, guides, component
+  sections and the explore paragraph reach no agent.
 
 ## Planned
 

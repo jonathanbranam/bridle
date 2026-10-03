@@ -39,8 +39,8 @@ the agents bridle hosts, and later a TUI, GUI or MCP server all share:
    it autostarts with the daemon by default. Bridle is
    mechanism: it spawns, delivers, supervises, records and (later) integrates.
    Deciding what to work on is judgement, so it's the manager's job
-   ([[docs/design/roles-and-lifecycle|roles]]). Until tasks exist, "the
-   project's tasks" is whatever the manager's role prompt points it at.
+   ([[docs/design/roles-and-lifecycle|roles]]). The work comes from the task queue
+   (`bridle queue`, `bridle task ready`), which the product manager (or the orchestrator) fills.
 5. **The orchestrator talks to bridle through the CLI**, with a token that
    identifies it as `external:orchestrator`. It never needs the repo: when
    bridle is remote, its only view of the code is through bridle and the
@@ -135,11 +135,15 @@ uses (docs/design/workflow-layers.md, "Per-project command bindings") — so
 no prompt hardcodes a branch name. The role prompts and skills likewise use
 `{{commands.check}}` for the definition-of-done command.
 
-**Rules reach every role by file, not by `prime`.** `bridle prime` is
-orchestrator-only (it prints orchestrator state), so the CLAUDE.md block
-`bridle sync` writes points every role at the rule files themselves: the project's
-`.bridle/rules/` and the workflow checkout's `base/rules/` (config `workflow`). Role
-prompts cite rules by id (`kiss`, `yagni`), not by bridle's own paths.
+**Rules reach daemon-spawned agents in the system prompt.** After the role prompt, every
+spawned, resumed or renewed agent's system prompt carries `## Workflow rules`: its role's
+resolved rules from the base, pack and project layers (`Config::role_rules_text`, called from
+`supervisor.rs` on spawn, resume and renew; [[roles-and-config]]). Role prompts cite rules by
+id (`kiss`, `yagni`), not by bridle's own paths. Component (L4) rules, facts and guides are not
+included. The orchestrator and advisor sessions are not daemon-spawned: their opening prompt is
+`bridle prime orchestrator|advisor`, which carries no resolved rules. `bridle sync`'s CLAUDE.md
+block, which points at the rule files, only exists where someone ran `sync`; bridle's own
+CLAUDE.md has none.
 
 **Enforcement, not just prose.** When `release` is set, every role except
 `orchestrator` gets `Bash(git push origin <release>)` added to its
@@ -173,8 +177,8 @@ day-to-day for the project's real branches. Checking that clone out to
 `bridle-adopt` would disturb whatever the human has checked out there. The
 simpler alternative — and the one bridle uses — is to leave the main clone
 alone and give the trial's manager a `workdir` pointing at a dedicated
-worktree checked out on `bridle-adopt` instead (`bridle spawn manager
---workdir path:<trial-worktree>`; `Workdir::Path` already exists for exactly
+worktree checked out on `bridle-adopt` instead (`bridle agent spawn manager
+--cwd <trial-worktree>`; `Workdir::Path` already exists for exactly
 this, `supervisor.rs`). No new mechanism: the trial just uses the spawn-time
 override every role already has, instead of the role's own `workdir =
 "repo"` default.
@@ -264,7 +268,7 @@ To make that workable from one terminal, TUI or orchestrator:
   pruned by any reader. `project` defaults to the clone's directory name and is
   set with `--project`. Two daemons can't claim the same name.
 - **Selection.** `bridle --project <name> …` (or `$BRIDLE_PROJECT`) targets a
-  daemon from the registry. `bridle daemons` lists them. Inside a workspace,
+  daemon from the registry. `bridle daemon list` lists them. Inside a workspace,
   the cwd walk picks the right one without flags.
 - **Ports.** Each daemon listens on `127.0.0.1:0` by default, so they never
   collide. The actual URL is in `daemon.json` and the registry.

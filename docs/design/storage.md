@@ -45,9 +45,9 @@ meta(key PK, value)                                  -- e.g. claude_version; orc
                                                      -- (event seq the orchestrator's wakes were last delivered up to)
 ```
 
-Nothing here has to survive a lost database ([[docs/proposal/decisions|decision 2]]):
-there are no tasks yet, transcripts are files, and the conversations live in
-Claude Code's session store, resumable by session id.
+Nothing in these tables has to survive a lost database ([[docs/proposal/decisions|decision 2]]):
+transcripts are files, the conversations live in Claude Code's session store, resumable by
+session id, and the task records below are recovered from the state branch (see Rebuild).
 
 With tasks, the database also indexes the project's task records
 (`crates/bridle-daemon/src/store.rs`, `SCHEMA_V5`):
@@ -328,8 +328,8 @@ above) so `bridle inbox` can show them without walking the state branch
 ([[where-questions-live-on-the-state-branch-c5a8|decided]]). Built:
 `TaskManager::ask_question`/`answer_question` write both the thread entry
 and the SQLite index in the same call, and `is_ready` excludes a task with
-an open question. Not yet built: the `bridle ask`/`bridle answer` CLI and
-`bridle inbox` reading this index — both arrive with the next task.
+an open question. `bridle task ask`/`task answer` drive it, and `bridle inbox` lists open
+questions from this index (`GET /v1/questions`).
 
 ## Rebuild
 
@@ -356,8 +356,8 @@ the same as any other startup — there was never a SQLite table for it to
 refuse a rebuild over.
 
 A rebuilt open question's `message_id` doesn't point at a real `messages`
-row: messages don't survive on the state branch at all — the durability
-table above lists them as SQLite-only, "no durability, by design" — only the
+row: messages don't survive on the state branch at all (they're SQLite-only, by
+design) — only the
 thread entry recording the question's body/from/timestamp does. Rather than
 leave the column unfillable, rebuild synthesizes a stand-in id from the task
 id (`m-rebuilt-<task id>`). Nothing downstream looks a message up by this id

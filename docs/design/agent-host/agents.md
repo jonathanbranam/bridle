@@ -21,7 +21,7 @@ established; S-numbers are its scenarios. Each agent is one headless
 [--tools <a,b,c>]                            # role.tools: only these built-ins exist (lean context)
 --name <agent name>
 --setting-sources project
---settings '{"autoMemoryEnabled":false,"autoDreamEnabled":false}'
+--settings '{"autoMemoryEnabled":false,"autoDreamEnabled":false[,"hooks":{"Stop":...}]}'
 [--max-budget-usd <role.max_budget_usd>]
 ```
 
@@ -51,6 +51,12 @@ established; S-numbers are its scenarios. Each agent is one headless
   `--settings '{"autoMemoryEnabled":false,"autoDreamEnabled":false}'`, so
   Claude Code's auto memory is off whatever the project's or user's settings
   say ([[docs/proposal/decisions|decision 8]]).
+- **Hooks**: a role with `stop_check = true` (the worker, by default) gets the `bridle hook
+  stop-check` `Stop` hook in the same `--settings` object (30-minute timeout,
+  `crates/bridle-claude/src/command.rs`). It is the only hook bridle passes. Workflow layer hooks
+  (`workflow/base/hooks/`, e.g. `arch-guard`) are not passed at spawn; they reach an agent only if
+  `bridle workflow sync` wrote them into a committed `.claude/settings.json`
+  ([[docs/design/cli|cli]], `sync`). Passing them at spawn is planned (34bw step 3).
 - **`--setting-sources project`**: every agent loads only the project's
   checked-in `.claude/settings.json`, never the human's own
   `~/.claude/settings.json` or a clone's untracked `.claude/settings.local.json`

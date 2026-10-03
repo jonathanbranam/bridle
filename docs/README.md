@@ -2,8 +2,10 @@
 
 The decisions in [[docs/proposal/decisions|decisions]] are the designer's.
 Everything else is a recommendation to be argued with. The agent host
-(`design/agent-host/`) is built and describes the code; the rest of `design/`
-is designed and not yet built ([[docs/proposal/build-order|build order]]).
+(`design/agent-host/`), `design/cli.md` and `design/storage.md` describe the code as built
+(planned parts are marked). The rest of `design/` mixes built and planned: each doc opens with a
+`Status` line (built and in use · built, not wired in · planned), and what's next is in the
+[[docs/proposal/build-order|build order]].
 
 ## Layout
 
@@ -24,8 +26,11 @@ docs/
 
 ## Onboarding a project
 
-In the project's git repo: `bridle init` (scaffolds `.bridle/config.toml` and the `.gitignore`
-entries), then `bridle sync`, `bridle doctor`, `bridle serve`
+In the project's git repo: `bridle daemon init` (scaffolds `.bridle/config.toml` and the `.gitignore`
+entries, and vendors the base workflow), then `bridle daemon doctor`, `bridle daemon serve`. Daemon-spawned
+agents (not the orchestrator or advisor sessions) get their role's resolved rules (base, `packs`, the project's `.bridle/rules/`) in the system prompt
+without any other step; `bridle workflow sync` (CLAUDE.md block, skills, hooks) is optional and only
+matters if you commit its output
 ([[docs/design/cli|cli]]). Real onboardings: [[docs/context/onboarding-data-contracts|data-contracts]].
 Step by step on dalek or the NUC, with the machine config and tokens: [[docs/context/adding-a-project|adding a project]].
 
@@ -99,7 +104,7 @@ done
 | incidents (a task kind plus a broadcast notice) | `docs/design/agent-host/incidents.md` |
 | permissions, tools | `docs/design/agent-host/principals.md` |
 | email bridge (`bridle mail run`) | `docs/design/mail.md` |
-| human web UI (design, not built) | `docs/design/human-web-ui.md` |
+| human web UI (gateway built; the UI is a separate project) | `docs/design/human-web-ui.md` |
 
 ## Releases
 
@@ -127,7 +132,7 @@ workflow artifacts without publishing. `scripts/package-release.sh` does the pac
    [[docs/design/agent-host/messages|messages]],
    [[docs/design/agent-host/principals|principals]],
    [[docs/design/agent-host/api|API and events]],
-   [[docs/design/agent-host/orchestrator-supervision|orchestrator supervision]] (not built),
+   [[docs/design/agent-host/orchestrator-supervision|orchestrator supervision]],
    [[docs/design/agent-host/roles-and-config|roles and config]],
    [[docs/design/cli|CLI]].
 5. The rest of the design as needed:

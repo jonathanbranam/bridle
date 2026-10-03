@@ -6,8 +6,10 @@ Claude Code agents. Read these before changing behaviour:
 - `docs/design/agent-host/`: the daemon, API and agent host, as built. **Source of truth for
   the code**, with `docs/design/cli.md` and `docs/design/storage.md` (the database). Keep them
   in step when behaviour changes.
-- `docs/README.md`: the docs index and reading order. The rest of `docs/design/` (tasks,
-  workflow layers, specs) is future work; `docs/proposal/build-order.md` says what's next.
+- `docs/README.md`: the docs index and reading order. The rest of `docs/design/` mixes built
+  and planned; each doc opens with a Status line saying which (built and in use, built but not
+  wired in, planned). Don't treat a designed thing as working, or a planned one as a
+  prerequisite, without checking that line or the code. `docs/proposal/build-order.md` says what's next.
 - `docs/tickets/open/` and `docs/spikes/open/`: open tickets and spikes, one ticket each.
   File new ones by the conventions in `docs/README.md`. Known v1 bugs and gaps:
   `docs/tickets/open/v1-follow-ups-from-the-build-9c6e.md`.
@@ -22,6 +24,10 @@ Claude Code agents. Read these before changing behaviour:
 crates/bridle-claude   stream-json client (no daemon knowledge)
 crates/bridle-api      wire types (types.rs is the contract) + HTTP/SSE client + discovery
 crates/bridle-daemon   store (SQLite), supervisor, containment, worktrees, config, axum server
+crates/bridle-tui      `bridle tui` (bridle-api only)
+crates/bridle-gateway  `bridle gateway`: the human web UI's API
+crates/bridle-mail     `bridle mail run`: the email bridge
+crates/bridle-spec     spec-file parser behind `bridle workflow spec`
 crates/bridle          the `bridle` binary: clap CLI; `serve` runs the daemon
 spikes/stream-json     spike 01 (standalone, excluded from the workspace; don't modify)
 ```
