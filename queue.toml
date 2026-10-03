@@ -8,6 +8,15 @@ tasks = ["br-25nn"]
 tasks = ["br-59vt"]
 
 [[tier]]
+tasks = ["br-r8kv"]
+
+[[tier]]
+tasks = ["br-qe4d"]
+
+[[tier]]
+tasks = ["br-jttf"]
+
+[[tier]]
 tasks = [
     "br-88d4",
     "br-6b8a",

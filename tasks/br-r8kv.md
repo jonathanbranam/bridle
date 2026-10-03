@@ -2,9 +2,9 @@
 id = "br-r8kv"
 title = "Split the interactive roles: triage talks to the human about the system; the orchestrator only runs it; advisors only talk and research (r8kv)"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-10-03T21:18:51.985Z"
-updated_at = "2026-10-03T21:18:51.985Z"
+updated_at = "2026-10-03T21:20:15.224661Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
 +++
