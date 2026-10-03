@@ -432,3 +432,24 @@ Newest first. One line per item: what happened, who did it, what it says about r
 - **By hand: project setup.** For bridle-ui I cloned the repo into its own workspace; the human
   added the `[projects]` entry, started the daemon and minted the token. A `bridle project add`
   would cover most of it.
+
+## Twenty-fifth orchestrator session (2026-10-03, ~01:25Z to ~13:20Z)
+
+- **Onboarding bridle-ui by hand, again.** `bridle init` vendored the workflow; I removed it for
+  path mode, wrote the config from track-web's and wrote CLAUDE.md. Two mistakes cost a restart
+  each: `[worktrees] setup = npm install` fails before the scaffold makes a package.json (now
+  `test ! -f package.json || ...`), and the config only loads at restart. The `bridle project
+  add` idea in `adding-a-project.md` would remove most of this.
+- **The human's hands on the daemon over SSH.** Starting a dalek daemon from the phone failed
+  twice: no keychain (claude logged out), then no SSH agent (a passphrase prompt that never took).
+  A daemon start is human-only, but the fix was a tmux one-liner the orchestrator could have run
+  (incident 01:46, nrbf).
+- **Restarting an advisor** (the human asked; no handover): `/exit` in its tmux pane, confirm
+  "Exit and stop tasks", then `bridle session advisor` in the same pane. No command does it; an
+  admin task the orchestrator can do with tmux.
+- **Advisor context** isn't visible in bridle (`bridle agents` lists only headless agents). I read
+  it from `~/.claude/sessions/<pid>.json` and the transcript's last usage. Worth a `bridle
+  sessions` view.
+- **Quiet hours vs the watch loop**: the gate blocked restarting the watchers all night (cc45).
+- **pm-1 shipped fast**: the 34bw, xxxq, rmpq and nrbf work went from approval to landed within
+  hours. The orchestrator's job was mostly relaying the human's decisions from advisors to pm-1.
