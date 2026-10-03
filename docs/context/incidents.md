@@ -24,6 +24,25 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-03 ~15:30: the main advisor took a named advisor's brief
+
+- **What happened:** the orchestrator sent a brief "For advisor tickets: ..." (m-3985) to
+  `external:advisor` for a new named advisor ("tickets", pid 30082, the human's fresh session for
+  the tickets-and-tasks question). The main advisor's background `bridle agent wake
+  external:advisor` returned it and marked it read, so the tickets advisor's start-up step ("read
+  unread 'For advisor <name>:' messages") wouldn't find it. Found by the main advisor reading the
+  wake output.
+- **Impact:** the tickets advisor started without its brief; the human pointed it at the message
+  by hand. The main advisor stopped its wait loop so as not to take more of its messages.
+- **Cause:** all advisors share one principal and inbox (`external:advisor`), and since rmpq
+  (21bd096) a non-human wake marks what it returns read; the named-advisor convention assumes the
+  named advisor is the first to look. A cousin of
+  [[read-on-delivery-can-lose-messages-marked-read-before-the-re-k8jn|k8jn]].
+- **Category:** `coordination`, `role`.
+- **Follow-up:** seats ([[seats-named-interactive-roles-splitting-the-advisor-retiring-r8kv|r8kv]]:
+  each seat its own inbox) and k8jn. Meanwhile, address a named advisor as
+  `external:advisor/<name>` if the daemon routes it, or let the human hand over the brief.
+
 ## 2026-10-03 13:45: self-upgrade refused a binary that couldn't read the newer config
 
 - **What happened:** the daemon's self-upgrade built `1afcb9d` and refused to restart into it,
