@@ -452,7 +452,13 @@ pub struct TicketSubmitArgs {
 #[derive(Debug, Args)]
 #[command(group(ArgGroup::new("body_source").args(["body", "body_file"])))]
 pub struct TicketNewArgs {
-    pub title: String,
+    /// Required unless --from-task (then the task's title).
+    #[arg(required_unless_present = "from_task")]
+    pub title: Option<String>,
+    /// Make the ticket from this task, with the task's ID (a fresh ID, linked both ways, when the
+    /// task's ID has a character the ticket alphabet lacks); title and kind default to the task's.
+    #[arg(long)]
+    pub from_task: Option<String>,
     /// Repos the ticket concerns, comma-separated (default: the project name).
     #[arg(long, value_delimiter = ',')]
     pub repos: Vec<String>,
@@ -463,8 +469,8 @@ pub struct TicketNewArgs {
     #[arg(long, value_delimiter = ',')]
     pub see: Vec<String>,
     /// The ticket's kind, and its task's: there is no default.
-    #[arg(short = 'k', long, value_enum)]
-    pub kind: TaskKindArg,
+    #[arg(short = 'k', long, value_enum, required_unless_present = "from_task")]
+    pub kind: Option<TaskKindArg>,
     /// Text for the ticket's "The ask" section.
     #[arg(long)]
     pub body: Option<String>,

@@ -59,7 +59,10 @@ design moves on; the design docs cite them.
   `opened`, `repos`, `changes`, `specs`, `needs`, `see`, `tasks` (every task made from the
   ticket; the task's body starts `original id: <id>`, so the link is two-way and `ticket check`
   flags one side only). Tickets and tasks share one id alphabet and space: a ticket's first task
-  takes its id (`br-<id>`). A missing `kind`/`tasks` is a warning until the backfill migration. `needs:` orders them.
+  takes its id (`br-<id>`); `bridle ticket new --from-task <task-id>` goes the other way, making
+  a ticket from a task with the task's id (a fresh, linked id when an old hex task id has `0` or `1`).
+  Tickets hold design decisions (the why and the what), tasks the work and its status; a build that
+  comes out of a discussion ticket gets its own feature ticket, linked, and its task is made from that. A missing `kind`/`tasks` is a warning until the backfill migration. `needs:` orders them.
 - The checker takes one ticket root, so `needs:` and `see:` only name tickets
   in the same tree (`questions/` or `spikes/open/`). A dependency across the
   two goes in the body as a `**Needs**` line with the ID and a link.

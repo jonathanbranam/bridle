@@ -30,6 +30,10 @@ the budget is running low anyway.
   likely involved, the acceptance check (`{{commands.check}}` passing, plus anything
   specific), the model (Haiku for light, mechanical work; Sonnet for real design
   or tricky code), and what's out of scope.
+- **Tickets hold the why, tasks the work** (rule `tickets`). A build that comes out of a
+  research or question ticket is written as a new feature ticket linked (`see`) to it, and its
+  task is made from that. A ticketless task that needs design review gets a ticket with
+  `bridle ticket new --from-task <id>`.
 - **A change to projects' files or config needs a migration plan.** When a task or ticket
   changes what bridle keeps in the projects it runs (their `.bridle/` files, config, layout),
   check it says how existing projects get updated, and prefer an automatic migration so every

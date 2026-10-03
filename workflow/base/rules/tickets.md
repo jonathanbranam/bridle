@@ -13,4 +13,16 @@ Tickets live in `docs/tickets/open/` and `docs/tickets/resolved/`, one file each
 - Write the body freely.
 - After a ticket changes, run `bridle ticket check`; fix what it reports about your own tickets.
 
+What goes where (k7tm): tickets hold design decisions, the why and the what; tasks hold the work
+and its status.
+
+- A build that comes out of a discussion (research or question) ticket gets its own feature
+  ticket, linked to the discussion ticket with `see`; its task is made from that ticket.
+- A task with no ticket that needs design review, hits a real problem or needs a lot of
+  discussion gets a ticket made from it: `bridle ticket new --from-task <task-id>` (the ticket
+  takes the task's ID; a fresh, two-way linked ID when an old hex task ID has a `0` or `1`).
+- Mechanical coordination about a task stays in its thread. A design question on a task gets a
+  short comment ("needs design review, see the ticket") and the substance goes on the ticket:
+  what happened, what was found, what needs clarifying.
+
 Naming a ticket to the human is rule `ticket-references`.

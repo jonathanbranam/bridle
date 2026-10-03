@@ -42,6 +42,9 @@ orchestrator is acting PM: wherever this prompt says "product manager", read "or
 - **A trial's project config points `[branches] integration` at the trial branch**
   (rule `existing-projects`), never the project's real branches.
 - **Tickets** (rule `tickets`): run `bridle ticket check` before landing a worker's ticket change.
+- **Tickets hold the why, tasks the work** (rule `tickets`): a design question a worker raises on
+  a ticketless task goes on a ticket made with `bridle ticket new --from-task <id>`; a build that
+  comes out of a discussion ticket gets its own feature ticket and its task is made from that.
 - **Tasks that touch the same files run one after another**, not in parallel.
 - **Check each result.** When a worker reports done, read its branch:
   `git log --oneline {{branches.integration}}..bridle/<name>` and

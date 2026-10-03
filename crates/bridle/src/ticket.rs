@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use anyhow::{Context, anyhow, bail};
-use bridle_api::{NewTaskRequest, SubmitTaskRequest, TaskKind};
+use bridle_api::{EditTaskRequest, NewTaskRequest, SubmitTaskRequest, TaskKind};
 use clap::ValueEnum;
 
 use crate::cli::{
@@ -68,14 +68,30 @@ async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<(), CliErro
     } else {
         args.repos.clone()
     };
-    let kind = kind_of(args.kind);
+    let from = match &args.from_task {
+        Some(id) => Some(client_for(cli).await?.get_task(id).await?),
+        None => None,
+    };
+    let title = args
+        .title
+        .clone()
+        .or_else(|| from.as_ref().map(|t| t.title.clone()))
+        .ok_or_else(|| anyhow!("a title is required"))?;
+    let kind = match (args.kind, &from) {
+        (Some(k), _) => kind_of(k),
+        (None, Some(t)) => t.kind,
+        (None, None) => return Err(anyhow!("a kind is required").into()),
+    };
+    let root = tickets_root(repo);
+    let id = from.as_ref().and_then(|t| reusable_id(&root, &t.id));
     let ask = if args.body.is_some() || args.body_file.is_some() {
         crate::commands::read_text(&args.body, &args.body_file, "body")?
     } else {
         String::new()
     };
     let fields = Fields {
-        title: &args.title,
+        title: &title,
+        id: id.as_deref(),
         ask: &ask,
         kind,
         repos: &repos,
@@ -83,17 +99,33 @@ async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<(), CliErro
         see: &args.see,
     };
     let today = chrono::Utc::now().date_naive().to_string();
-    let path = create(
-        &tickets_root(repo),
-        &fields,
-        &today,
-        &task_id_tails(cli).await,
-    )?;
+    let path = create(&root, &fields, &today, &task_id_tails(cli).await)?;
     let rel = path
         .strip_prefix(repo)
         .unwrap_or(&path)
         .display()
         .to_string();
+    if let Some(task) = &from {
+        // Link both ways: the ticket lists the task, and the task body names the ticket (what
+        // `ticket check` reads); the ticket's id is the task's tail unless that couldn't be reused.
+        let ticket_id = id_of(&path).ok_or_else(|| anyhow!("new ticket has no id"))?;
+        set(&root, &ticket_id, "tasks", &task.id)?;
+        let body = if task.body.starts_with(TASK_ORIGIN_PREFIX) {
+            task.body.clone()
+        } else {
+            format!("{TASK_ORIGIN_PREFIX}{ticket_id}\n{rel}\n\n{}", task.body)
+        };
+        client_for(cli)
+            .await?
+            .edit_task(
+                &task.id,
+                &EditTaskRequest {
+                    body: Some(body),
+                    ..Default::default()
+                },
+            )
+            .await?;
+    }
     println!("{rel}");
 
     Ok(())
@@ -273,6 +305,8 @@ async fn check_cmd(cli: &Cli, repo: &Path, args: &TicketCheckArgs) -> Result<(),
 }
 
 pub struct Fields<'a> {
+    /// Use this id instead of minting one (see `reusable_id`).
+    pub id: Option<&'a str>,
     pub title: &'a str,
     /// Text of "The ask" (may be empty).
     pub ask: &'a str,
@@ -295,9 +329,14 @@ pub fn create(
     for d in [&open, &resolved] {
         std::fs::create_dir_all(d).with_context(|| format!("creating {}", d.display()))?;
     }
-    let mut taken = existing_ids(root);
-    taken.extend(task_ids.iter().cloned());
-    let id = mint_id(&taken);
+    let id = match f.id {
+        Some(id) => id.to_string(),
+        None => {
+            let mut taken = existing_ids(root);
+            taken.extend(task_ids.iter().cloned());
+            mint_id(&taken)
+        }
+    };
     let slug = slugify(f.title);
     let name = if slug.is_empty() {
         format!("ticket-{id}.md")
@@ -698,6 +737,14 @@ pub fn check(root: &Path, docs: &Path, task_links: Option<&HashMap<String, Strin
     }
 }
 
+/// The ticket id a task gives its ticket: its id tail, when that is in the ticket alphabet (task
+/// ids minted before br-9e15 are hex and may hold `0` or `1`) and no ticket has it yet.
+fn reusable_id(root: &Path, task_id: &str) -> Option<String> {
+    let tail = task_id.rsplit_once('-')?.1;
+    let ok = tail.len() == ID_LEN && tail.bytes().all(|b| ID_ALPHABET.contains(&b));
+    (ok && !existing_ids(root).contains(tail)).then(|| tail.to_string())
+}
+
 fn existing_ids(root: &Path) -> HashSet<String> {
     ["open", "resolved"]
         .iter()
@@ -788,6 +835,7 @@ mod tests {
 
     fn fields<'a>(title: &'a str, repos: &'a [String]) -> Fields<'a> {
         Fields {
+            id: None,
             title,
             ask: "",
             kind: TaskKind::Feature,
@@ -866,6 +914,24 @@ mod tests {
             let p = create(d.path(), &fields("t", &repos), "2026-09-30", &tasks).unwrap();
             assert!(!tasks.contains(&id_of(&p).unwrap()));
         }
+    }
+
+    #[test]
+    fn a_task_id_is_reused_unless_hex_or_taken() {
+        let d = tempfile::tempdir().unwrap();
+        let root = d.path();
+        assert_eq!(reusable_id(root, "br-k7tm").as_deref(), Some("k7tm"));
+        // Pre-br-9e15 hex ids with 0 or 1 can't be ticket ids.
+        assert_eq!(reusable_id(root, "br-a1b2"), None);
+        assert_eq!(reusable_id(root, "br-e70f"), None);
+        let repos = vec!["p".to_string()];
+        let f = Fields {
+            id: Some("k7tm"),
+            ..fields("t", &repos)
+        };
+        let p = create(root, &f, "2026-10-03", &HashSet::from(["k7tm".to_string()])).unwrap();
+        assert_eq!(id_of(&p).as_deref(), Some("k7tm"));
+        assert_eq!(reusable_id(root, "br-k7tm"), None);
     }
 
     #[test]

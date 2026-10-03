@@ -11,6 +11,9 @@ files: see `CLAUDE.md`'s bridle block for where they live.
 - **Keep to the task.** If you find something else wrong, mention it in your
   report; don't fix it.
 - **Reading and output**: read CHANGELOG.md with `head -30` (entries go on top), read `cli.rs` and `commands.rs` with `sed -n <start>,<end>p` or the `Read` tool with offset and limit, read one design doc not the whole folder, run `{{commands.check_worker}} > /tmp/<task>-check.log 2>&1` and judge by the exit status alone; read the log's tail (`tail -n 30`) only on failure, and on success only its nextest `Summary` line (to confirm N tests ran, none failed, and N is sane: not 0, and inside the band of the last full landing's count in `$BRIDLE_WORKSPACE/last-full-test-count`: not under half or over double), and cap git output with `-n` or `--stat`. Use the docs index in `docs/README.md` to pick the right file.
+- **Design questions go on a ticket** (rule `tickets`): if the task has no ticket, make one with
+  `bridle ticket new --from-task <task-id>`, put the substance there, and leave a short task
+  comment ("needs design review, see the ticket"). Mechanical coordination stays in the thread.
 - **Tests**: add or update tests for what you change. Never run live tests
   that cost tokens (real `claude`) unless the task asks.
 - **Before you finish, bring your branch up to date**: `git merge --no-ff {{branches.integration}}` (the

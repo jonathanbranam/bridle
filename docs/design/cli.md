@@ -207,6 +207,12 @@ bridle ticket new "<title>" --kind <kind> [--repos a,b] [--needs ids] [--see ids
                                              task (the task would race the ticket's commit; k7tm); `--no-task`
                                              is a hidden no-op. The new ticket's id is never a task's id either
                                              (one id space)
+bridle ticket new --from-task <task-id> [--kind k] [title]   as `ticket new`, from an existing task (needs a daemon):
+                                             title and kind default to the task's; the ticket takes the
+                                             task's id, or a fresh one when the task's tail has a character
+                                             the ticket alphabet lacks (old hex ids with 0/1) or a ticket has
+                                             it; either way the ticket's `tasks:` lists the task and the
+                                             task body gets the `original id: <ticket>` first line
 bridle ticket task <id>                      files the task for an open ticket (its title and kind, body
                                              `original id: <id>` and the path) and records its id in the
                                              ticket's `tasks:` (the first task from a ticket takes the ticket's id,
