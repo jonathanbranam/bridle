@@ -444,3 +444,5 @@
 {"actor":"agent:manager-2","at":"2026-10-03T22:32:41.016889Z","from":"planned","task":"br-qe4d","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-10-03T22:50:20.179774Z","from":"planned","task":"br-jttf","to":"integrated"}
 {"actor":"human","at":"2026-10-03T22:52:27.602Z","from":"","task":"br-feyk","to":"open"}
+{"actor":"agent:pm-1","at":"2026-10-03T22:52:58.304953Z","from":"open","task":"br-feyk","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-03T22:52:58.324674Z","queue":"reprioritized"}
