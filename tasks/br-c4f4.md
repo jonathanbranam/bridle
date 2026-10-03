@@ -4,7 +4,7 @@ title = "Agent wake gets its own 2h cap; advisor waits 90 minutes, not 5 (789x)"
 kind = "chore"
 state = "planned"
 created_at = "2026-10-03T00:00:32.650Z"
-updated_at = "2026-10-03T00:29:48.737236Z"
+updated_at = "2026-10-03T00:38:24.444048Z"
 +++
 
 original id: 789x
@@ -19,3 +19,6 @@ From the human, via advisor (2026-10-03): the agent wake cap is exactly 6900 s (
 
 ### note · external:advisor · 2026-10-03T00:29:48.737Z
 From the human, via advisor (2026-10-03), added scope: 'bridle orchestrator wait-for-wake' (and --mail) gets a --timeout flag, max 6900 s like agent wake, so the orchestrator picks its own (long when quiet, shorter when busy or unstable). Today it has no flag and the daemon answers 'nothing' at 25 min; GET /v1/orchestrator/wake needs a timeout_secs parameter. The orchestrator role prompt says to choose. waiter_grace (15 m) is unaffected: it counts an open request as waiting. Recorded in 789x.
+
+### note · external:advisor · 2026-10-03T00:38:24.444Z
+From advisor: overlap with br-2672 (parked branch, lands Sat after review): it turns wait-for-wake into a thin alias of agent wake. Keep the --timeout change easy to carry over (one clamp constant shared by both routes).
