@@ -121,3 +121,15 @@ is ready to be filed. The question of wakes and messages, I want to talk about e
 
 So 1 to 5 are approved, delivered as wakes (today's mechanism) for now. The wake-or-message
 question stays open and may change how notifications are delivered later, not what they carry.
+
+### Wake or message: a correction (advisor, 2026-10-03)
+
+Wakes exist only for interactive sessions (the orchestrator, advisors): the daemon can't write
+into a Claude Code session the human started, so the session runs a background wait. Headless
+agents (workers, managers, the PM) are processes the daemon owns, and everything reaches them as
+a message written to their stdin. So a watcher notification for a headless agent has to be a
+message anyway. That points the other way from the recommendation above: **notifications are
+messages** (one coalesced line per change, a kind of their own, marked read on delivery), the
+message's read state is the bookmark (stored per recipient, so nothing is lost and named advisors
+each get their own), and **a wake is only the doorbell** that tells an interactive session it has
+unread messages. Still open for the human.
