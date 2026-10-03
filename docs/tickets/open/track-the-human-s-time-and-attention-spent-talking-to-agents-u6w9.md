@@ -130,3 +130,24 @@ Choices persist in the browser.
 
 **Out of scope for today:** the human's CLI reads (`bridle status` etc.), anything outside bridle,
 backfill before 2026-10-01.
+
+## Gaps between writing and reading (the human, 2026-10-03)
+
+> Yes and one thing - are times spas filled between writing and reading?
+
+("spas" is likely "gaps".) With only prompt-submit times: reading and writing between prompts
+counts (up to the cap); composing the first prompt of a run doesn't; a long agent turn followed by
+the human's reply is cut off at the cap, which runs from the prompt.
+
+Revised (the advisor's decision on the human's go-ahead):
+
+- **Record when each reply finishes:** `bridle session` adds a `Stop` hook that appends
+  `{"at","machine","project","role","session","event":"reply"}` to the same
+  `~/.bridle/prompts.jsonl` (prompt lines get `"event":"prompt"`; old lines without `event` are
+  prompts).
+- **The gap cap runs from the reply's end:** after a prompt, time counts through the agent's turn
+  and on to the next prompt if that comes within `gap` (10m) of the reply finishing; otherwise
+  the run ends at reply end + `tail` (2m). No reply recorded: as before.
+- **Waiting counts:** the agent's working time after a prompt is the human's time (attention), as
+  part of that session's interval; the union still prevents double counting.
+- **Composing:** the first prompt of a run gets a `lead` of 1 minute before it (config).
