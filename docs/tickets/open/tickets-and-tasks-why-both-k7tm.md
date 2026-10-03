@@ -155,3 +155,51 @@ asked for a kind meaning "a design for a new feature", "because that's something
 a lot of", then: "Maybe that's just called a feature ticket, but there's no task." Under the rule
 above, a `feature` ticket with no task already means "not ready to build". Open: add a `design`
 kind anyway, or let "no task" carry it.
+
+## The first task takes the ticket's ID (the human, 2026-10-03)
+
+After learning that task IDs (`br-` + 4 hex) and ticket IDs (4 from
+`abcdefghjkmnpqrstuvwxyz23456789`) use different alphabets (see
+[[ids-the-human-can-say-aloud-task-and-ticket-ids-that-survive-nkd9|the speakable-IDs ticket]]),
+verbatim:
+
+> Okay, that's too bad that task IDs and ticket IDs have a different alphabet. That's definitely
+> something to follow up on, so let's make a ticket about that. There's already a ticket about
+> the difference between tasks and tickets, so add that information there.
+>
+> Another comment or suggestion from me is that when we're creating a task from a ticket, we
+> should just use the ticket ID for the task. That's not going to always work, but I think in the
+> majority of cases, we have one task for most tickets. I guess I would say we do. I'd have called
+> out that not every ticket will have exactly one task, and that's still definitely true.
+>
+> I think it would be useful to have a mapping, too. Now that we still have a map between tickets
+> and tasks that's explicit, we should keep that. I think we should have a rule that the first
+> task that gets created from a ticket uses the ticket's ID. That'll make things a lot easier for
+> me.
+>
+> That has a couple of implications, obviously:
+>
+> * Aligning the alphabets.
+> * When creating a ticket, it should check for tasks that collide as well, if that's
+>   straightforward enough.
+>
+> I don't know. Is the ticket ID a superset of the task ID? I presume it is. What are the letters
+> that are left out of task IDs behind me? It's probably L and O or something.
+
+Proposed (not built; needs design and the human's go-ahead):
+
+1. **The first task made from a ticket uses the ticket's ID** (`br-k7tm` for ticket `k7tm`).
+   Later tasks from the same ticket get fresh IDs. The explicit map stays both ways: the ticket's
+   `tasks:` frontmatter and the task body's `original id:`.
+2. **One alphabet for both.** Today they differ:
+   - Ticket IDs: 31 characters, `a-z` and `2-9` without `i`, `l`, `o`, `0`, `1`.
+   - Task IDs: 16 characters, hex `0-9a-f`.
+   - **Not a superset:** every hex letter (`a-f`) and the digits `2-9` are in the ticket alphabet,
+     but task IDs also use `0` and `1`, which ticket IDs leave out. So about 41% of today's task
+     IDs couldn't be ticket IDs. Moving new task IDs to the ticket alphabet fixes that;
+     existing task IDs keep theirs.
+   - The speakable-IDs ticket may change the alphabet again; settle the two together.
+3. **One ID space for collisions.** `bridle ticket new` checks the new ID against existing task
+   IDs too (it already talks to the daemon to file a task, so a lookup is cheap), and the daemon
+   refuses a new task whose ID is a ticket's unless it is that ticket's first task.
+
