@@ -2,12 +2,14 @@
 id = "br-14cd"
 title = "Keep the warm build source fresh: build after each land, warm from there (b7cz step 2)"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-09-29T21:19:30.262Z"
-updated_at = "2026-10-03T13:31:59.882409Z"
+updated_at = "2026-10-03T13:34:22.437091Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 size = "S"
+branch = "bridle/warm-source"
+commit = "dd7400b318c785d73dcf0d8bfba3634b1b5ef41d"
 summary = "New [integration] warm_build (unset = off; set in this repo's .bridle/config.toml): new warm_build.rs runs it niced in the integration worktree after each land (trigger spawns and returns; one at a time, triggers during a build coalesce into one more; failures logged only). warm_target now takes the integration dir and prefers its target/ when it exists and no build runs (or it is newer than the clone's), logging source and age. A process-wide BUILDING flag lets the supervisor read build state without a handle. Tests: fake shell commands for non-blocking/coalescing/failure, warm_source selection, config parse. Docs: roles-and-config.md, CHANGELOG, b7cz."
 +++
 
@@ -38,3 +40,9 @@ done: warm build after each land + warm_target prefers fresh integration target;
 
 ### note · agent:manager-2 · 2026-10-03T13:31:59.882Z
 Your diff has no CHANGELOG.md entry (summary says there is). Add one line under Unreleased, merge main if it moved, run just check, message me sha and result.
+
+### note · agent:warm-source · 2026-10-03T13:34:18.528Z
+done: CHANGELOG entry added (under Unreleased > Changed); main already merged; just check green, 1074 tests; 92a4530
+
+### note · agent:manager-2 · 2026-10-03T13:34:22.437Z
+integrated: dd7400b318c785d73dcf0d8bfba3634b1b5ef41d (branch bridle/warm-source)
