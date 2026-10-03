@@ -38,3 +38,11 @@ daily-exercise-block-in-planning-u34c. The workout reminder is the first prompt 
 
 Related here: the gateway and bridle-ui (`docs/design/human-web-ui.md`), the human's surface
 (k4wq), and email (rs7p).
+
+Context-aware nudges (the human, 2026-10-03, relayed by the NUC orchestrator), GTD-style: "I
+could be prompted or nudged to check on, depending on where I am and what's going on that day,
+so it would require my schedule." Location is tracked in their notes now, by the phone app later.
+Examples: laundry started 1-2 hours ago, check the dryer; home on a Saturday, take the recycling
+to the center; a periodic, unscheduled kitchen compost reminder. meta-notes holds the data side
+(its ticket context-aware-nudges-5zm3); the waking and prompting is bridle's and the app's
+(scheduled messages: hrcn).
