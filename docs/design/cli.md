@@ -673,7 +673,9 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   every exit. Any other principal gets a 403.
 - **`bridle session advisor`** registers the session with the daemon and ends it at exit
   (best effort; see orchestrator-supervision.md, section 6). `bridle status` shows a
-  `session    <identity> <tokens>` line per running advisor; `--json` has `sessions`. The hidden
+  `session    <identity> <project>@<machine> <tokens> up <n>m active <n>m ago` line per running
+  advisor; `--json` has `sessions`. `bridle session restart <identifier> [--handover|--fresh]`
+  restarts one (orchestrator-supervision.md, section 6). The hidden
   `bridle session note` is the advisor's SessionStart hook. `events --kind session.context`
   has the threshold crossings.
 - **`events --kind orchestrator.context`** queries the orchestrator's context tracking (ct8m

@@ -980,6 +980,8 @@ async fn named_advisor_addressing_and_delivery_fallbacks() {
             pid_start: "t0".into(),
             pane: None,
             claude_session_id: None,
+            project: None,
+            machine: None,
         })
         .await
         .expect("register");

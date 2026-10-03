@@ -56,10 +56,17 @@ pub(super) async fn status(cli: &Cli) -> Result<(), CliError> {
             );
         }
         for sess in &status.sessions {
+            let now = chrono::Utc::now();
+            let mins = |t: chrono::DateTime<chrono::Utc>| (now - t).num_minutes().max(0);
             println!(
-                "session    {} {}",
+                "session    {} {}@{} {} up {}m active {}",
                 sess.identity,
-                format_context_tokens(sess.tokens)
+                sess.project.as_deref().unwrap_or("?"),
+                sess.machine.as_deref().unwrap_or("?"),
+                format_context_tokens(sess.tokens),
+                mins(sess.started_at),
+                sess.last_activity
+                    .map_or("never".into(), |t| format!("{}m ago", mins(t)))
             );
         }
         let waiting = if status.waiter_open {

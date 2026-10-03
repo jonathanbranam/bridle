@@ -150,6 +150,12 @@ pub struct SessionRegister {
     pub pane: Option<String>,
     #[serde(default)]
     pub claude_session_id: Option<String>,
+    /// The launcher's project (`bridle session --project`).
+    #[serde(default)]
+    pub project: Option<String>,
+    /// The launcher's host name.
+    #[serde(default)]
+    pub machine: Option<String>,
 }
 
 /// `POST /v1/sessions/end`.
@@ -171,6 +177,14 @@ pub struct SessionInfo {
     /// The latest context reading; `None` until the session has reported one.
     #[serde(default)]
     pub tokens: Option<u64>,
+    #[serde(default)]
+    pub project: Option<String>,
+    #[serde(default)]
+    pub machine: Option<String>,
+    /// When the context file last changed (the statusline writes it on every update); `None`
+    /// until the session has reported a context.
+    #[serde(default)]
+    pub last_activity: Option<DateTime<Utc>>,
 }
 
 /// One active incident, as `bridle status` lists it.

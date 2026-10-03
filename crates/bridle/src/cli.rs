@@ -1939,6 +1939,20 @@ pub enum SessionRole {
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
         args: Vec<String>,
     },
+    /// Restart a running advisor session in its tmux pane: `bridle session restart advisor/alice`.
+    /// `--handover` (the default) asks the session to write a handover note first and waits for
+    /// it; `--fresh` restarts at once with no context (the human's choice only). Without a
+    /// pane, prints the command to run.
+    Restart {
+        /// The session's identifier as `bridle status` lists it (`advisor/<name>` or `advisor`).
+        identifier: String,
+        /// Have the session write a handover note first; the new session reads it (default).
+        #[arg(long, conflicts_with = "fresh")]
+        handover: bool,
+        /// Restart with no handover: a clean slate.
+        #[arg(long)]
+        fresh: bool,
+    },
     /// `bridle session triage [--project <p>] [claude args]`: the session that talks to the human
     /// about the running system (`external:triage`, token under `[triage]`).
     Triage {

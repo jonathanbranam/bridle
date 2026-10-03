@@ -57,6 +57,8 @@ impl Sessions {
         entries.retain(|e| e.info.pid != req.pid || e.pid_start == req.pid_start);
         if let Some(e) = entries.iter_mut().find(|e| e.info.pid == req.pid) {
             e.info.pane = req.pane.or(e.info.pane.take());
+            e.info.project = req.project.or(e.info.project.take());
+            e.info.machine = req.machine.or(e.info.machine.take());
             if req.claude_session_id.is_some() && req.claude_session_id != e.info.claude_session_id
             {
                 e.info.claude_session_id = req.claude_session_id;
@@ -72,6 +74,9 @@ impl Sessions {
             claude_session_id: req.claude_session_id,
             started_at: now,
             tokens: None,
+            project: req.project,
+            machine: req.machine,
+            last_activity: None,
         };
         entries.push(Entry {
             info: info.clone(),
@@ -139,12 +144,17 @@ impl Sessions {
                 {
                     continue;
                 }
-                let Some(tokens) = std::fs::read_to_string(self.home.join("context").join(id))
+                let file = self.home.join("context").join(id);
+                let Some(tokens) = std::fs::read_to_string(&file)
                     .ok()
                     .and_then(|t| t.trim().parse::<u64>().ok())
                 else {
                     continue;
                 };
+                e.info.last_activity = std::fs::metadata(&file)
+                    .and_then(|m| m.modified())
+                    .ok()
+                    .map(DateTime::<Utc>::from);
                 if e.info.tokens.is_some_and(|last| tokens < last) {
                     e.fired = [false; 3]; // /compact
                 }
@@ -227,6 +237,8 @@ mod tests {
             pid_start: start.into(),
             pane: Some("%3".into()),
             claude_session_id: sid.map(Into::into),
+            project: Some("bridle".into()),
+            machine: Some("nuc".into()),
         }
     }
 
@@ -270,6 +282,7 @@ mod tests {
         s.tick().await;
         assert_eq!(count().await, 2);
         assert_eq!(s.list()[0].tokens, Some(250));
+        assert!(s.list()[0].last_activity.is_some());
         write_context(&dir, "sess-1", 10);
         s.tick().await;
         write_context(&dir, "sess-1", 150);

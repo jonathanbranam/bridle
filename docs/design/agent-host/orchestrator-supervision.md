@@ -211,8 +211,18 @@ memory only. Every tick (10 s) the daemon drops sessions whose pid is gone (`ses
 reads each live session's `$BRIDLE_HOME/context/<id>` file and emits `session.context`
 (`identity`, `session`, `tokens`, `threshold`) once per crossing of this section's three token
 thresholds, re-armed by a lower reading. Tokens per session show in `bridle status`
-(`session    advisor/alice 123K`) and `GET /v1/sessions`. No wakes and no restart for
-advisors; those are later slices.
+with project, machine, uptime and last activity (the context file's mtime) and in
+`GET /v1/sessions`. No wakes for advisors yet.
+
+**Restart on request (jttf).** `bridle session restart <identifier> [--handover|--fresh]`, run by
+the human (or the orchestrator for a handover): `--handover`, the default, messages the session to
+write a note to `$BRIDLE_HOME/handover/<identity, / as ->.md` and waits for it (10 min, then it
+fails and nothing is restarted); `--fresh` skips that and is refused inside a session
+(`BRIDLE_AS`). Then it SIGTERMs the launcher's children, waits for the launcher to exit and runs
+`bridle [--project p] session advisor [name]` in the registered tmux pane with `send-keys`; with
+no pane, or a pane that is gone, it prints the command. The new launcher adds the note's path to
+its opening prompt and renames the note `.read`. A stale note is removed at the start of each
+restart. Not for the orchestrator (its own handover above); no crash restart (tabled).
 
 **Who talks to the human (r8kv).** The orchestrator session doesn't: it reaches the human only by
 messaging `external:triage` (`bridle session triage`, `workflow/base/roles/triage.md`), which

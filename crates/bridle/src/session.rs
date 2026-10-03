@@ -4,7 +4,7 @@
 
 use std::io::Write as _;
 use std::os::unix::process::ExitStatusExt;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use anyhow::Context;
@@ -98,6 +98,12 @@ pub async fn run(cli: &Cli, role: &SessionRole) -> Result<(), CliError> {
         note(cli).await;
         return Ok(());
     }
+    if let SessionRole::Restart {
+        identifier, fresh, ..
+    } = role
+    {
+        return restart(cli, identifier, *fresh).await;
+    }
     // Never under a bridle agent (k6b3): a worker's test run once overwrote the live
     // orchestrator's pid/session files and used its Remote Control name.
     if std::env::var_os("BRIDLE_AGENT_ID").is_some()
@@ -127,7 +133,13 @@ pub async fn run(cli: &Cli, role: &SessionRole) -> Result<(), CliError> {
             };
             crate::focus::refuse_advisor_if_locked(&home, chrono::Local::now())?;
             let name = session_name("advisor", adv, &project, &suffix);
-            let prompt = advisor_prompt(adv);
+            let mut prompt = advisor_prompt(adv);
+            if let Some(path) = take_handover(&home, &advisor_identity(adv)) {
+                prompt = format!(
+                    "{prompt} Your previous session left a handover note at {}: read it first.",
+                    path.display()
+                );
+            }
             let args = claude_args(&advisor_settings(), &name, extra, &prompt);
             advisor(cli, &home, &project, adv, &args).await?
         }
@@ -137,7 +149,7 @@ pub async fn run(cli: &Cli, role: &SessionRole) -> Result<(), CliError> {
             let args = claude_args(&advisor_settings(), &name, extra, TRIAGE_PROMPT);
             triage(&project, &args).await?
         }
-        SessionRole::Note => unreachable!("handled above"),
+        SessionRole::Note | SessionRole::Restart { .. } => unreachable!("handled above"),
     };
     if code != 0 {
         std::process::exit(code);
@@ -290,14 +302,13 @@ async fn register(cli: &Cli, pid: i32, name: Option<&str>, claude_session_id: Op
         return;
     };
     let req = bridle_api::types::SessionRegister {
-        identity: match name {
-            Some(n) => format!("advisor/{n}"),
-            None => "advisor".into(),
-        },
+        identity: advisor_identity(name),
         pid,
         pid_start,
         pane: std::env::var("TMUX_PANE").ok(),
         claude_session_id,
+        project: std::env::var("BRIDLE_PROJECT").ok(),
+        machine: hostname(),
     };
     let _ = tokio::time::timeout(DAEMON_WAIT, async {
         crate::commands::client_for(cli)
@@ -341,6 +352,172 @@ async fn note(cli: &Cli) {
     register(cli, pid, name.as_deref(), Some(id)).await;
 }
 
+fn advisor_identity(name: Option<&str>) -> String {
+    match name {
+        Some(n) => format!("advisor/{n}"),
+        None => "advisor".into(),
+    }
+}
+
+fn hostname() -> Option<String> {
+    let out = Command::new("hostname").output().ok()?;
+    let h = String::from_utf8_lossy(&out.stdout).trim().to_string();
+    (!h.is_empty()).then_some(h)
+}
+
+/// Where a restart's handover note goes: `$BRIDLE_HOME/handover/<identity, '/' as '-'>.md`.
+fn handover_path(home: &Path, identity: &str) -> PathBuf {
+    home.join("handover")
+        .join(format!("{}.md", identity.replace('/', "-")))
+}
+
+/// The handover note a restart left for this session, renamed `.read` so a later plain launch
+/// doesn't read it again. `None` when there isn't one.
+fn take_handover(home: &Path, identity: &str) -> Option<PathBuf> {
+    let path = handover_path(home, identity);
+    if !path.is_file() {
+        return None;
+    }
+    let read = path.with_extension("md.read");
+    std::fs::rename(&path, &read).ok()?;
+    Some(read)
+}
+
+/// How long `--handover` waits for the session to write its note.
+fn handover_wait() -> std::time::Duration {
+    let secs = std::env::var("BRIDLE_HANDOVER_WAIT_SECS")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(600);
+    std::time::Duration::from_secs(secs)
+}
+
+/// The command that starts the session again.
+fn relaunch_command(identity: &str, project: Option<&str>) -> String {
+    let mut c = String::from("bridle");
+    if let Some(p) = project {
+        c.push_str(&format!(" --project {p}"));
+    }
+    c.push_str(" session advisor");
+    if let Some(n) = identity.strip_prefix("advisor/") {
+        c.push(' ');
+        c.push_str(n);
+    }
+    c
+}
+
+/// `bridle session restart`: stop the session's claude and start the launcher again in its tmux
+/// pane. A handover asks the session to write a note first. Restarting with no handover is
+/// the human's choice: refused for a session or agent (BRIDLE_AS / BRIDLE_AGENT_ID).
+async fn restart(cli: &Cli, identifier: &str, fresh: bool) -> Result<(), CliError> {
+    let test = std::env::var_os("BRIDLE_LAUNCHER_TEST").is_some();
+    if std::env::var_os("BRIDLE_AGENT_ID").is_some() && !test {
+        return Err(anyhow::anyhow!(
+            "bridle session restart: refusing under a bridle agent (BRIDLE_AGENT_ID is set)"
+        )
+        .into());
+    }
+    if fresh && std::env::var_os("BRIDLE_AS").is_some() {
+        return Err(anyhow::anyhow!(
+            "bridle session restart --fresh is the human's choice: run it from your own terminal"
+        )
+        .into());
+    }
+    let client = crate::commands::client_for(cli).await?;
+    let sessions = client.sessions().await?;
+    let wanted = if identifier.contains('/') || identifier == "advisor" {
+        identifier.to_string()
+    } else {
+        format!("advisor/{identifier}")
+    };
+    let info = sessions
+        .iter()
+        .find(|s| s.identity == wanted)
+        .ok_or_else(|| anyhow::anyhow!("no running session {wanted:?} (see `bridle status`)"))?;
+    let home = bridle_home();
+    let note = handover_path(&home, &info.identity);
+    let _ = std::fs::remove_file(&note); // a stale note is not this restart's
+    if !fresh {
+        std::fs::create_dir_all(note.parent().expect("handover dir"))
+            .map_err(anyhow::Error::from)?;
+        let to = format!("external:{}", info.identity);
+        let body = format!(
+            "The human is restarting this session. Write a handover note (what you were doing,              open threads, what the next session needs) to {} and say nothing more; the              restart follows when the file appears.",
+            note.display()
+        );
+        client
+            .send(&bridle_api::SendRequest {
+                to: Some(to),
+                body,
+                kind: bridle_api::MessageKind::Note,
+                when: bridle_api::When::Now,
+                reply_to: None,
+                task: None,
+            })
+            .await?;
+        println!(
+            "asked {} to write {}; waiting",
+            info.identity,
+            note.display()
+        );
+        let deadline = std::time::Instant::now() + handover_wait();
+        while !note.metadata().is_ok_and(|m| m.len() > 0) {
+            if std::time::Instant::now() >= deadline {
+                return Err(anyhow::anyhow!(
+                    "no handover note after {}s; nothing restarted. Use --fresh to restart with                      no context",
+                    handover_wait().as_secs()
+                )
+                .into());
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+        }
+    }
+    stop_session(info.pid).await;
+    let cmd = relaunch_command(&info.identity, info.project.as_deref());
+    match &info.pane {
+        Some(pane) => {
+            let ok = Command::new("tmux")
+                .args(["send-keys", "-t", pane, &cmd, "Enter"])
+                .status()
+                .is_ok_and(|s| s.success());
+            if ok {
+                println!("restarted {} in pane {pane}", info.identity);
+            } else {
+                println!("pane {pane} is gone; run in a terminal: {cmd}");
+            }
+        }
+        None => println!(
+            "{} had no tmux pane; run in a terminal: {cmd}",
+            info.identity
+        ),
+    }
+    Ok(())
+}
+
+/// SIGTERM to the launcher's children (claude), then wait for the launcher to exit so the pane
+/// is back at its shell. Only this pid's own children, never by name (no-kill-by-name).
+async fn stop_session(pid: i32) {
+    let kids = Command::new("pgrep")
+        .args(["-P", &pid.to_string()])
+        .output()
+        .map(|o| String::from_utf8_lossy(&o.stdout).into_owned())
+        .unwrap_or_default();
+    for kid in kids.split_whitespace() {
+        let _ = Command::new("kill").args(["-TERM", kid]).status();
+    }
+    for _ in 0..40 {
+        let alive = Command::new("kill")
+            .args(["-0", &pid.to_string()])
+            .stderr(std::process::Stdio::null())
+            .status()
+            .is_ok_and(|s| s.success());
+        if !alive {
+            return;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+    }
+}
+
 /// `ps` lstart of `pid`, the identity check the daemon uses for processes.
 fn process_start(pid: i32) -> Option<String> {
     let out = Command::new("ps")
@@ -357,6 +534,28 @@ fn process_start(pid: i32) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn relaunch_names_the_advisor_and_project() {
+        assert_eq!(
+            relaunch_command("advisor/alice", Some("meta")),
+            "bridle --project meta session advisor alice"
+        );
+        assert_eq!(relaunch_command("advisor", None), "bridle session advisor");
+    }
+
+    #[test]
+    fn a_handover_note_is_read_once() {
+        let home = tempfile::tempdir().unwrap();
+        let p = handover_path(home.path(), "advisor/alice");
+        assert!(p.ends_with("handover/advisor-alice.md"));
+        assert!(take_handover(home.path(), "advisor/alice").is_none());
+        std::fs::create_dir_all(p.parent().unwrap()).unwrap();
+        std::fs::write(&p, "state").unwrap();
+        let read = take_handover(home.path(), "advisor/alice").unwrap();
+        assert!(read.is_file() && !p.exists());
+        assert!(take_handover(home.path(), "advisor/alice").is_none());
+    }
 
     #[test]
     fn names_follow_project_and_suffix() {
