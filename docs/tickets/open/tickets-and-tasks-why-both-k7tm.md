@@ -203,3 +203,36 @@ Proposed (not built; needs design and the human's go-ahead):
    IDs too (it already talks to the daemon to file a task, so a lookup is cheap), and the daemon
    refuses a new task whose ID is a ticket's unless it is that ticket's first task.
 
+
+## The task races the ticket body (2026-10-03)
+
+Reported by the NUC orchestrator for the human (m-3977). On meta-notes, `bridle ticket new`
+(without `--no-task`) minted the stub (empty "The ask") and its `open` task at once; the manager
+picked the task up within seconds, twice (mn-caa0, mn-bfc6: tickets bmen, gjf6), before the body
+was written and pushed, and asked why the ticket was empty. The human, verbatim: "if we have the
+ability to create a task immediately from the ticket, that task goes immediately to open, and
+that's going to cause the manager or somebody to pick it up. I don't think that makes a lot of
+sense. There's something wrong there in how we've designed this solution."
+
+Cause: decision 1 above (`ticket new` creates no task) isn't built yet; `crates/bridle/src/ticket.rs`
+still files the task unless `--no-task`. Under decision 6 an `open` task means ready, so a task
+born with the stub is ready before the ticket says anything. The 5-minute settle applies only to
+`planned` tasks, so it doesn't help here.
+
+Proposed (one small task, needs the human's go):
+
+1. **Build decision 1.** `ticket new` never files a task; drop `--no-task` (accept it as a no-op
+   for a while so scripts and role text don't break).
+2. **Creating the task is its own step, after the commit:** `bridle ticket task <id>` files the
+   task from the ticket (title, kind, link both ways, as `new` does today). It refuses when the
+   ticket's "The ask" is empty or the ticket file isn't committed on the integration branch, so a
+   worker can never find an empty or unpushed ticket. This is the intentional "now it's ready"
+   step decisions 2 and 6 describe.
+3. **`ticket new --body`/`--body-file`** (optional, cheap): write the ask at creation so a stub is
+   never empty to begin with.
+4. Docs: `docs/README.md`, the `tickets` rule, cli.md, the advisor and orchestrator roles (who may
+   run `ticket task`: the orchestrator or an advisor with the human's approval, or for a critical
+   fix).
+
+Rejected: a draft/held task state. Decision 6 says a task's existence means ready; a held state
+brings back the ambiguity the human wants gone.
