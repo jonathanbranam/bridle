@@ -7,7 +7,7 @@ repos: [bridle]
 changes: []
 specs: []
 needs: []
-see: [34bw, 5u9d, xebc]
+see: [34bw, 5u9d, xebc, sk52]
 tasks: [br-9889]
 ---
 
@@ -118,3 +118,7 @@ mechanism, costs little more than 1 (the resolver already exists; add `order` an
 and leaves 3 as a later, incremental step. Not decided.
 
 Depends on 34bw step 1 (rules into the spawn prompt), which is approved and being planned.
+
+Continued in [[when-instructions-reach-an-agent-at-start-or-at-each-step-op-sk52|sk52]]: the human
+agrees roles feel different but may share tooling, and raises when text reaches an agent (start vs
+each step, as in OpenSpec).
