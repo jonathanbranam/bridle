@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+- `bridle prime orchestrator|advisor|aide|prototyper|document-reviewer` (and so the opening prompt of `bridle session`) now ends with the role's resolved rules, project `.bridle/rules/` included and each rule's `roles:` honored, the same as spawned agents get in their system prompt. A project adds a rule to specific roles by listing them in the rule's `roles:` (br-m7mp).
+
 ### Fixed
 - `bridle agent rm` works when git no longer lists the agent's worktree (record pruned, directory left): the directory is removed (without `--force` only if nothing but the `.git` pointer is left), and a branch that is already gone doesn't error (br-4f8y).
 - Document review can start an agent for a real ticket: the agent is `doc-<id>` (other files get a cut slug plus a path hash), instead of `doc-<whole stem>`, which exceeded the 40-character agent-name limit (br-wjhp).

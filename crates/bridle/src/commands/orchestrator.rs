@@ -95,7 +95,15 @@ pub(super) async fn prime_orchestrator(cli: &Cli) -> Result<(), CliError> {
         .unwrap_or_else(|| repo.join("workflow"));
     let role_prompt = std::fs::read_to_string(workflow.join("base/roles/orchestrator.md"))
         .with_context(|| format!("reading {}/base/roles/orchestrator.md", workflow.display()))?;
-    let project_part = std::fs::read_to_string(repo.join(".bridle/roles/orchestrator.md")).ok();
+    let mut project_part = std::fs::read_to_string(repo.join(".bridle/roles/orchestrator.md")).ok();
+    let rules = rules_section(&config, &repo, "orchestrator");
+    if !rules.is_empty() {
+        let part = project_part.get_or_insert_with(String::new);
+        if !part.is_empty() {
+            part.push_str("\n\n");
+        }
+        part.push_str(&rules);
+    }
     let state = std::fs::read_to_string(repo.join("docs/context/orchestrator-state.md")).ok();
     let note = match client_for_read(cli).await {
         Ok(c) => c.latest_handover().await.ok().flatten(),
@@ -138,6 +146,10 @@ fn prime_role_file(role: &str) -> Result<(), CliError> {
     if let Ok(part) = std::fs::read_to_string(repo.join(format!(".bridle/roles/{role}.md"))) {
         print!("\n{part}");
     }
+    let rules = rules_section(&config, &repo, role);
+    if !rules.is_empty() {
+        print!("\n{rules}\n");
+    }
     Ok(())
 }
 
@@ -149,22 +161,20 @@ pub(super) fn prime_aide() -> Result<(), CliError> {
 
 /// The prototyper's role file, then the project's own `.bridle/roles/prototyper.md`.
 pub(super) fn prime_prototyper() -> Result<(), CliError> {
-    let repo = std::env::current_dir().context("current directory")?;
-    let config =
-        bridle_daemon::config::Config::load(&repo).context("loading .bridle/config.toml")?;
-    let workflow = config
-        .workflow_root(&repo)
-        .map_err(anyhow::Error::new)?
-        .unwrap_or_else(|| repo.join("workflow"));
-    let path = workflow.join("base/roles/prototyper.md");
-    print!(
-        "{}",
-        std::fs::read_to_string(&path).with_context(|| format!("reading {}", path.display()))?
-    );
-    if let Ok(part) = std::fs::read_to_string(repo.join(".bridle/roles/prototyper.md")) {
-        print!("\n{part}");
+    prime_role_file("prototyper")
+}
+
+/// The role's resolved workflow rules for this project (base, packs, `.bridle/rules/`,
+/// honoring each rule's `roles:`), as a `## Rules` section, or nothing when none apply.
+/// The same resolver the daemon uses for spawned agents' system prompts, so the
+/// interactive roles (which no daemon spawns) get what spawned ones do.
+fn rules_section(config: &bridle_daemon::config::Config, repo: &Path, role: &str) -> String {
+    let text = config.role_rules_text(repo, role);
+    if text.is_empty() {
+        String::new()
+    } else {
+        format!("## Rules\n\n{}", text.trim_end())
     }
-    Ok(())
 }
 
 pub(super) fn note_age(d: chrono::Duration) -> String {

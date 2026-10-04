@@ -105,6 +105,13 @@ roles: [manager, worker]
 Never kill or restart a dev server the human is running. …
 ```
 
+A project adds a rule for specific roles with a file in its own `.bridle/rules/`, listing them in
+`roles:`; each role gets it at startup (spawned roles in the system prompt, interactive roles in
+`bridle prime <role>`), and a role not listed doesn't. For example
+`.bridle/rules/worked-on-log.md` with `roles: [advisor, orchestrator, manager, worker]` reaches
+those four and not the aide. Role names are the tags the roles use: `orchestrator`, `advisor`,
+`aide`, `manager`, `worker`, `project-manager`, `reviewer`, `prototyper`, `document-reviewer`.
+
 A project overrides by id:
 
 ```markdown
@@ -211,8 +218,9 @@ written down anywhere else yet:
 Most rule content is not rendered into a file at all. For agents bridle spawns, the daemon
 appends the role's resolved rules (L1–L3, the rules tagged for the role) to the system prompt
 under `## Workflow rules`; that is how rules reach workers, managers and the PM today. The
-orchestrator and advisor sessions get theirs from `bridle prime orchestrator|advisor`, which
-`bridle session` tells them to run.
+orchestrator, advisor, aide, prototyper and document-reviewer sessions get theirs as a `## Rules`
+section of `bridle prime <role>` (the same resolver, so the same L1–L3 rules, filtered by each
+rule's `roles:`), which `bridle session` tells them to run.
 
 The design goes further (planned): a worker is primed with its task, the rules tagged for
 `worker`, the facts, the guides its task's components point to, the architecture invariants,
