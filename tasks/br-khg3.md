@@ -4,10 +4,11 @@ title = "Fix flaky serve::tests::login_warning_only_when_known_logged_out (5s ti
 kind = "bug"
 state = "pending"
 created_at = "2026-10-04T14:10:18.285Z"
-updated_at = "2026-10-04T14:10:22.218953Z"
+updated_at = "2026-10-04T14:15:57.631016Z"
 created_by = "agent:manager-2"
 watchers = ["agent:manager-2"]
 size = "S"
+summary = "login_warning_only_when_known_logged_out passed the production 5s timeout to known_logged_out; under a loaded suite the exec of the fake claude exceeded it. The test now injects 60s (production LOGIN_CHECK_TIMEOUT unchanged; the slow-case 100ms check is untouched). Full just check green once (1147 passed); the other two named tests did not fail in that run, so not touched."
 +++
 
 Fails 4/4 in the full suite on dalek, including on plain main (found by gateway-config on br-jmpf; the landing check fails on it too). known_logged_out's 5 s limit (crates/bridle/src/serve.rs ~285, the test in the same file) is hit by the spawn_blocking exec when the suite is loaded (session tests take 10 s here). Fix: make the test robust, not the product timeout: inject a generous timeout for the test (or a pure async fake), keep the production 5 s. Also check launchers_refuse_in_a_tools_only_clone and sessions::tests::the_hard_limit_has_no_override_and_forces_a_restart (ENOENT once) for the same cause; fix only if the same small cause. Acceptance: full just check passes 3 times in a row on this host. This blocks landing the critical br-jmpf.
