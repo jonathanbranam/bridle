@@ -42,6 +42,8 @@ pub(crate) struct Target {
     pub url: Option<String>,
     /// The daemon's workspace, known only for one on this machine; where its human token lives.
     pub workspace: Option<String>,
+    /// The daemon's repository (the human's working tree), known only for one on this machine.
+    pub repo: Option<String>,
     /// Set when the config alone says it can't be reached.
     pub problem: Option<String>,
 }
@@ -93,6 +95,7 @@ fn targets(machines: &MachineMap, registry: Vec<DaemonInfo>) -> Vec<Target> {
                 machine: machines.machine.name.clone(),
                 url: Some(d.url),
                 workspace: Some(d.workspace),
+                repo: Some(d.repo),
                 problem: None,
             },
         );
@@ -107,6 +110,7 @@ fn targets(machines: &MachineMap, registry: Vec<DaemonInfo>) -> Vec<Target> {
                         machine: Some(remote.machine),
                         url: Some(remote.url),
                         workspace: None,
+                        repo: None,
                         problem: None,
                     },
                 );
@@ -118,6 +122,7 @@ fn targets(machines: &MachineMap, registry: Vec<DaemonInfo>) -> Vec<Target> {
                     machine: Some(place.machine.clone()),
                     url: None,
                     workspace: None,
+                    repo: None,
                     problem: Some("no daemon is running for it".to_string()),
                 });
             }
@@ -129,6 +134,7 @@ fn targets(machines: &MachineMap, registry: Vec<DaemonInfo>) -> Vec<Target> {
                         machine: Some(place.machine.clone()),
                         url: None,
                         workspace: None,
+                        repo: None,
                         problem: Some(e.to_string()),
                     },
                 );

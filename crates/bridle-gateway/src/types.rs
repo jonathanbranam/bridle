@@ -9,6 +9,7 @@ use ts_rs::{Config, TS};
 use crate::actions::{ActionRequest, ActionResult};
 use crate::auth::{Credentials, SessionInfo};
 use crate::discovery::{ProjectStatus, Projects};
+use crate::documents::{Document, DocumentSaved, DocumentWrite};
 use crate::interactions::{DayReport, HoursReport, InteractionReport, IntervalsReport};
 use crate::items::{Decision, Items, Priority, ProjectItems, Todo};
 use crate::ui::UiHealth;
@@ -32,6 +33,9 @@ pub fn export_all(dir: &Path) -> Result<(), ts_rs::ExportError> {
     DayReport::export_all(&config)?;
     HoursReport::export_all(&config)?;
     IntervalsReport::export_all(&config)?;
+    Document::export_all(&config)?;
+    DocumentWrite::export_all(&config)?;
+    DocumentSaved::export_all(&config)?;
     Ok(())
 }
 

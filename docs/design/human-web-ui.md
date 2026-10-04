@@ -55,6 +55,22 @@ rest, so a stolen session can answer and check off, not run work.
   the page must load to show its login form; every API route stays guarded. Not compiled into the `bridle` binary (no Node in bridle's build). In development
   the UI's dev server proxies API calls to the gateway.
 
+**Documents (br-5paw, ticket x8jt; a narrow piece of v8kn, built).** For the UI's document view
+(`documents.rs`), behind the session like the rest: `GET /api/v1/projects/{project}/documents/{path}`
+returns `Document` (`content`, `hash` = SHA-256 hex of it, and the `branch` checked out in the
+project's working tree); `PUT` the same URL with `DocumentWrite` (`content` = the whole file,
+`hash` = the hash it was read at) writes the file and commits just that file as
+`review: human comments on <path>`, returning `DocumentSaved` (new `hash`, `branch`, `commit`).
+A write whose `hash` no longer matches the file is a 409 and changes nothing; unchanged content
+commits nothing. Refused: a path with `..`, an absolute path, `.git`, or one that resolves
+(symlinks included) outside the repo (400); a missing file (404, a write never creates one);
+a non-text file (NUL or invalid UTF-8) or over 2 MB (415); and any write while the working
+tree is on `main`, `master`, `dev` or a detached HEAD (403): the gateway commits only on the
+branch checked out in the project's working tree and never on a project's main or dev (rule
+existing-projects), so a trial's document is reviewed on its bridle branch. This machine's
+projects only (the repo comes from the daemon's registry entry). No browsing and no search.
+The commit uses the repo's git identity.
+
 **Human time (ticket u6w9; built: types, collection, interval math, handlers).** The wire types of `/api/v1/interactions/*` live in
 `crates/bridle-gateway/src/interactions.rs` and are exported to `bindings/` like the rest:
 `InteractionReport` (`report`: totals per group per day or week, plus the human's total),

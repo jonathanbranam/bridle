@@ -6,6 +6,7 @@ pub mod auth;
 pub mod collect;
 pub mod config;
 pub mod discovery;
+pub mod documents;
 pub mod interactions;
 pub mod intervals;
 pub mod items;
@@ -45,6 +46,10 @@ pub fn router(login: Option<Login>, ui: UiConfig, interactions: report::Interact
         .route("/session", get(auth::session))
         .route("/projects", get(projects))
         .route("/items", get(items))
+        .route(
+            "/projects/{project}/documents/{*path}",
+            get(documents::read_route).put(documents::write_route),
+        )
         .route(
             "/projects/{project}/tasks/{id}/{action}",
             post(actions::act_route),
@@ -380,6 +385,28 @@ mod tests {
                 .expect("str")
                 .contains("unknown action")
         );
+    }
+
+    #[tokio::test]
+    async fn documents_need_a_session() {
+        let base = start(Some(login())).await;
+        let url = format!("{base}/projects/p/documents/docs/a.md");
+        assert_eq!(reqwest::get(&url).await.expect("get").status(), 401);
+        let put = reqwest::Client::new()
+            .put(&url)
+            .json(&json!({ "content": "x", "hash": "h" }))
+            .send()
+            .await
+            .expect("put");
+        assert_eq!(put.status(), 401);
+        let cookie = cookie_pair(&post_login(&base, "jo", "right").await);
+        let r = reqwest::Client::new()
+            .get(&url)
+            .header(reqwest::header::COOKIE, &cookie)
+            .send()
+            .await
+            .expect("get");
+        assert_ne!(r.status(), 401, "a session reaches the handler");
     }
 
     #[tokio::test]
