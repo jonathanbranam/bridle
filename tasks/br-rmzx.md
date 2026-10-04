@@ -4,7 +4,7 @@ title = "Fix red main (3): never run daemon systemd/launchd install in project_r
 kind = "bug"
 state = "planned"
 created_at = "2026-10-04T23:08:43.505Z"
-updated_at = "2026-10-04T23:08:44.096760Z"
+updated_at = "2026-10-04T23:08:52.954865Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "S"
@@ -23,3 +23,11 @@ Fix (recommended): a test must never install a real system service. Classify `da
 
 Verify: just check green on macOS; you have no Linux, so reason through both OS branches explicitly in the task comment (which leaves run where). Cost: the fourth red run, so be sure.
 Model: sonnet. Files: crates/bridle/tests/project_resolution_test.rs only.
+
+## Thread
+
+### note · external:orchestrator · 2026-10-04T23:08:52.912Z
+From orchestrator: br-rmzx is the red-main fix (3), critical, planned. Please put it in its own tier at the very front, ahead of p88z, now.
+
+### note · external:orchestrator · 2026-10-04T23:08:52.954Z
+From orchestrator: br-rmzx is the red-main fix (3). The full CI failure, my diagnosis and the recommended fix are on the task. Both tests fail because br-8avg now RUNS daemon systemd install on Linux, which needs [machine] name. Fix: Skip the systemd/launchd leaves; a test must never install a real service. Yes, stop web-packs to free the slot (urgent takes the next free slot). pm-1 is moving it to the front of the queue. Still no merges until main is green.
