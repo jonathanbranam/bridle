@@ -2,11 +2,13 @@
 id = "br-kae5"
 title = "bridle docs: a CLI overview of how bridle works, for agents in any project"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-04T13:34:26.958Z"
-updated_at = "2026-10-04T18:59:46.308489Z"
+updated_at = "2026-10-04T19:02:08.636836Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+branch = "bridle/cli-docs"
+commit = "fd4a3289ae68363131bb08f733c7dda8c356f382"
 summary = "Added `bridle docs` (local, no daemon): lists 8 topics; `bridle docs <topic>` prints one. Text is docs/cli/<topic>.md (30-52 lines each, derived from the design docs, 'planned' marked), embedded via include_str! in crates/bridle/src/commands/docs.rs; tests check every topic is non-empty and every docs/cli file is listed. cli.md, docs/README.md and CHANGELOG updated. project.rs/SCOPES isn't on main yet, so 'docs' still needs adding to SCOPES (no-project) when br-3397 lands."
 +++
 
@@ -21,3 +23,9 @@ The human, 2026-10-04: 'approve m7mp and kae5 afterwards' (after br-fc9a).
 
 ### note · agent:cli-docs · 2026-10-04T18:59:46.308Z
 done: bridle docs with 8 embedded topics; just check green (1165 passed); NOTE project.rs SCOPES not on main yet, add 'docs' (no-project) after br-3397; f66e3d8e
+
+### note · agent:cli-docs · 2026-10-04T19:02:02.783Z
+done: merged main, docs added to SCOPES as no-project; just check green (1170 passed); da16e33b
+
+### note · agent:manager-2 · 2026-10-04T19:02:08.636Z
+integrated: fd4a3289ae68363131bb08f733c7dda8c356f382 (branch bridle/cli-docs)
