@@ -42,6 +42,8 @@ folder targets that project, and outside any workspace it refuses.
 ```
 bridle [--url URL] [--project NAME] [--token T] [--json] <command>
 
+bridle docs [TOPIC]                                             local, no daemon: with no topic, list the topics; with one, print its overview (embedded from `docs/cli/<topic>.md`, written for agents in any project)
+
 bridle gateway                                                  run the human web UI's gateway in the foreground (docs/design/human-web-ui.md); `[gateway]` in
                                              `~/.bridle/config.toml`: `bind` (default `127.0.0.1:7878`; `0.0.0.0` refused unless `allow_any_interface = true`).
                                              Only this command reads that section, so a bad one fails here and nowhere else. `GET /api/v1/health`

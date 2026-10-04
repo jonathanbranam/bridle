@@ -70,6 +70,10 @@ mod tests {
             "serve",
             NoProject("creates the project: its name is the repo's"),
         ),
+        (
+            "docs",
+            NoProject("static text embedded in the binary; no daemon"),
+        ),
         ("gateway", NoProject("serves every project")),
         ("stop-daemon", Daemon),
         ("restart", Daemon),

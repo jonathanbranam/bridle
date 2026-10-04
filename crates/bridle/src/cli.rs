@@ -45,6 +45,8 @@ pub enum Command {
     /// Run the daemon.
     #[command(hide = true)]
     Serve(ServeArgs),
+    /// How bridle works: `bridle docs` lists topics, `bridle docs <topic>` prints one.
+    Docs(DocsArgs),
     /// Run the gateway: the human web UI's API (`[gateway]` in ~/.bridle/config.toml).
     Gateway(GatewayArgs),
     /// Ask the daemon to shut down gracefully.
@@ -797,6 +799,12 @@ pub struct InitArgs {
     /// Workflow pack to enable (`packs = [STACK]`).
     #[arg(long, value_parser = ["python", "typescript"])]
     pub stack: Option<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct DocsArgs {
+    /// The topic to print; omit to list them.
+    pub topic: Option<String>,
 }
 
 #[derive(Debug, Args)]

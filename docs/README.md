@@ -100,6 +100,7 @@ done
 |-------|----------|
 | daemon, API, agent host | `docs/design/agent-host/*.md` (operating model, daemon, agents, messages, principals, API, roles and config) |
 | CLI commands and flags | `docs/design/cli.md` |
+| `bridle docs` topic text (embedded in the binary) | `docs/cli/*.md` |
 | storage, database, state | `docs/design/storage.md` |
 | project migrations (`bridle migrate`) | `docs/design/migrations.md` |
 | git branches, release branches | `docs/design/agent-host/operating-model.md` or the project's `[branches]` config |
