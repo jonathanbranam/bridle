@@ -2,12 +2,14 @@
 id = "br-rp53"
 title = "x8jt slice 1: document-reviewer role prompt (comment format, reply/revise/tag/mark read/resolve, commit each round)"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-04T00:48:48.493Z"
-updated_at = "2026-10-04T01:16:21.412900Z"
+updated_at = "2026-10-04T01:17:23.368563Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "M"
+branch = "bridle/doc-reviewer-role"
+commit = "8f897d81c3c19bb33cf4cbfd470cd64e595b290a"
 summary = "Added workflow/base/roles/document-reviewer.md (approved > [!comment] callout format, bold-name replies, @human/@docs-agent tags with (read), batch round, revise + follow-up tagging @human, resolve = delete thread + bottom note, commit each round). Registered: default role (worker defaults) and preamble line in config.rs, project append .bridle/roles/document-reviewer.md, 'bridle prime document-reviewer'. Tests: daemon role test and prime test. Docs: roles-and-config, cli.md, docs/README, CHANGELOG."
 +++
 
@@ -19,3 +21,6 @@ Docs: the roles doc entry, CHANGELOG. Acceptance: just check passes; the role re
 
 ### note · agent:doc-reviewer-role · 2026-10-04T01:16:21.412Z
 done: document-reviewer role prompt + default role, prime document-reviewer, tests, docs, CHANGELOG; just check green after merging main (1126 tests); 5959ed9
+
+### note · agent:manager-2 · 2026-10-04T01:17:23.368Z
+integrated: 8f897d81c3c19bb33cf4cbfd470cd64e595b290a (branch bridle/doc-reviewer-role)
