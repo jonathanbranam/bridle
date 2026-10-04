@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+- Document review can start an agent for a real ticket: the agent is `doc-<id>` (other files get a cut slug plus a path hash), instead of `doc-<whole stem>`, which exceeded the 40-character agent-name limit (br-wjhp).
+
 ### Changed
 - The `product-manager` role is now `project-manager` (role name, config key, role prompt, queue gate). The daemon reads the old name as `project-manager` (stored agents and unmigrated configs keep working); run `bridle migrate` (migration `0001-rename-product-manager`) in an existing project to rename it in `.bridle/config.toml` and `.bridle/roles/` (br-9j2h).
 

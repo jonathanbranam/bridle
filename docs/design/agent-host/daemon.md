@@ -113,7 +113,7 @@ A document is under review when its repo-relative path is a line in `.bridle/rev
 `workflow/base/roles/document-reviewer.md`) is *pending* when its last reply is the human's; an author with
 "agent" in the name is the document agent. When a document's pending threads have not changed for
 `[review] quiet_minutes` (default 7), the pending threads go as one batch to that document's agent
-(`doc-<file stem>`, role `document-reviewer`, in the main checkout): spawned if there is none,
+(role `document-reviewer`, in the main checkout; named `doc-<id>` when the file stem ends in a ticket ID, else `doc-<slug>-<hash>` with the slug cut to fit the 40-character name limit and a hash of the path): spawned if there is none,
 resumed if stopped, else sent as a message. Its own replies end the pending state, so it is not woken
 for its own edits, and a restart doesn't resend answered threads. `[review] max_agents` (default 3)
 caps document agents running at once (a document needing a start waits, still due, until a slot

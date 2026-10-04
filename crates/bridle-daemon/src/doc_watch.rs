@@ -12,6 +12,7 @@ use std::path::{Path, PathBuf};
 
 use bridle_api::types::{AgentState, MessageKind, SpawnRequest, When, Workdir};
 use chrono::{DateTime, Datelike, Duration, NaiveDate, Utc, Weekday};
+use sha2::Digest;
 
 use crate::config::ReviewConfig;
 use crate::store::Store;
@@ -54,7 +55,14 @@ pub fn set_registered(repo: &Path, path: &str, on: bool) -> std::io::Result<bool
     Ok(true)
 }
 
-/// The agent's name for a document: `doc-<file stem>`.
+/// Agent names are at most 40 characters (`worktree.rs`).
+const NAME_MAX: usize = 40;
+/// The ticket ID alphabet (`bridle ticket new`).
+const ID_ALPHABET: &str = "abcdefghjkmnpqrstuvwxyz23456789";
+
+/// The agent's name for a document. A ticket (stem ending `-<id>`) is `doc-<id>`: short and
+/// stable. Any other file is `doc-<slug>-<hash>`, the slug cut to fit and the hash of the path
+/// keeping two long names apart.
 pub fn agent_name(path: &str) -> String {
     let stem = Path::new(path)
         .file_stem()
@@ -64,7 +72,20 @@ pub fn agent_name(path: &str) -> String {
         .chars()
         .map(|c| if c.is_ascii_alphanumeric() { c } else { '-' })
         .collect();
-    format!("doc-{}", slug.trim_matches('-'))
+    let slug = slug.trim_matches('-');
+    if let Some((_, id)) = slug.rsplit_once('-')
+        && id.len() == 4
+        && id.chars().all(|c| ID_ALPHABET.contains(c))
+    {
+        return format!("doc-{id}");
+    }
+    let hash: String = sha2::Sha256::digest(path.as_bytes())[..3]
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect();
+    let room = NAME_MAX - "doc-".len() - "-".len() - hash.len();
+    let cut = &slug[..slug.len().min(room)];
+    format!("doc-{}-{hash}", cut.trim_end_matches('-'))
 }
 
 /// What bridle appends to a thread's newest human entry when it sends the thread to the agent:
@@ -506,7 +527,7 @@ mod tests {
         };
         let go = admit(
             vec![due("a.md"), due("b.md"), due("c.md")],
-            |n| n == "doc-c",
+            |n| n == agent_name("c.md"),
             2,
             3,
         );
@@ -525,7 +546,22 @@ mod tests {
     fn names_and_registry() {
         assert_eq!(
             agent_name("docs/tickets/open/My Ticket_x8jt.md"),
-            "doc-my-ticket-x8jt"
+            "doc-x8jt"
+        );
+        let real = agent_name(
+            "docs/tickets/open/daemons-deliver-mail-to-each-other-across-machines-store-and-3haz.md",
+        );
+        assert_eq!(real, "doc-3haz");
+        assert!(crate::worktree::validate_agent_name(&real).is_ok());
+        let (a, b) = (
+            agent_name("docs/a-very-long-document-name-that-keeps-going-and-going-one.md"),
+            agent_name("docs/a-very-long-document-name-that-keeps-going-and-going-two.md"),
+        );
+        assert!(a.len() <= 40 && b.len() <= 40 && a != b);
+        assert!(crate::worktree::validate_agent_name(&a).is_ok());
+        let short = agent_name("notes/Plan.md");
+        assert!(
+            short.starts_with("doc-plan-") && crate::worktree::validate_agent_name(&short).is_ok()
         );
         let dir = tempfile::tempdir().unwrap();
         std::fs::create_dir_all(dir.path().join(".bridle")).unwrap();

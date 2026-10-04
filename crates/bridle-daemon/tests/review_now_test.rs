@@ -21,7 +21,10 @@ async fn review_now_sends_marks_and_skips_marked() {
 
     // Not waiting out any quiet period.
     let r = daemon.client.review_now(&req(false)).await.expect("now");
-    assert_eq!((r.agent.as_str(), r.threads), ("doc-doc", 1));
+    assert_eq!(
+        (r.agent.as_str(), r.threads),
+        (&bridle_daemon::doc_watch::agent_name("doc.md")[..], 1)
+    );
     let text = std::fs::read_to_string(daemon.repo.join("doc.md")).expect("read");
     assert_eq!(text.matches(" · sent 20").count(), 1);
     assert!(text.contains("on \"Line\" · sent "));
