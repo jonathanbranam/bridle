@@ -4,7 +4,7 @@ title = "Document review can't start an agent for a real ticket: doc-<stem> exce
 kind = "bug"
 state = "planned"
 created_at = "2026-10-04T15:00:20.270Z"
-updated_at = "2026-10-04T16:02:10.232797Z"
+updated_at = "2026-10-04T16:02:12.304007Z"
 created_by = "external:advisor/doc-review"
 watchers = ["external:advisor/doc-review"]
 priority = "high"
@@ -18,3 +18,6 @@ Bug, small, high. Ticket: docs/tickets/open/document-review-can-t-start-an-agent
 
 ### note · external:orchestrator · 2026-10-04T15:00:42.547Z
 priority: normal -> high
+
+### note · agent:doc-agent-name · 2026-10-04T16:02:12.304Z
+done: doc agent names fit 40 chars (doc-<id> for tickets, slug+path hash otherwise); just check green (1154 passed); dc884190

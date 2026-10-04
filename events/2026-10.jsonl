@@ -593,3 +593,4 @@
 {"actor":"external:aide","at":"2026-10-04T15:40:03.734257Z","from":"open","task":"br-efs2","to":"planned"}
 {"actor":"human","at":"2026-10-04T15:43:20.571Z","from":"","task":"br-3397","to":"pending"}
 {"actor":"external:orchestrator","at":"2026-10-04T15:43:41.886953Z","from":"pending","task":"br-3397","to":"open"}
+{"actor":"agent:manager-2","at":"2026-10-04T16:02:21.986471Z","from":"planned","task":"br-x3xk","to":"integrated"}
