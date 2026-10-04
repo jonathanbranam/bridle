@@ -24,6 +24,21 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-04 01:51 and 02:02: daemon restarts dropped every interactive session
+
+- **What happened:** the daemon self-upgraded twice (to 9d0f0f6, then 941312c). Afterwards
+  `bridle status` listed no sessions though six advisor launchers and the aide ran. The
+  orchestrator's `bridle send external:aide` failed ("no such recipient"), and its x8jt messages
+  for advisor doc-review (m-4237, m-4240) fell back to the shared advisor inbox. Found by the
+  orchestrator (the aide send) and diagnosed by the main advisor (m-4249).
+- **Impact:** about 30 minutes of messages misrouted or refused; context warnings off for every
+  interactive session until its launcher restarts; the orchestrator wrongly concluded the aide
+  had never been set up.
+- **Cause:** the session registry is in memory only, and a session registers only when its
+  launcher starts, so any daemon restart forgets them. Self-upgrade made restarts routine.
+- **Category:** `daemon`.
+- **Follow-up:** e35h (stopgap: keep the registry across restarts); gtzx (seats) for good.
+
 ## 2026-10-04 00:27: the main advisor took a named advisor's brief, again
 
 - **What happened:** `bridle advisor start doc-review --brief @file` sent the brief (m-4174) to
