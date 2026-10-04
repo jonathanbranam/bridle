@@ -4,7 +4,7 @@ title = "bridle docs: a CLI overview of how bridle works, for agents in any proj
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-04T13:34:26.958Z"
-updated_at = "2026-10-04T19:02:08.636836Z"
+updated_at = "2026-10-04T19:06:03.666059Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 branch = "bridle/cli-docs"
@@ -29,3 +29,6 @@ done: merged main, docs added to SCOPES as no-project; just check green (1170 pa
 
 ### note · agent:manager-2 · 2026-10-04T19:02:08.636Z
 integrated: fd4a3289ae68363131bb08f733c7dda8c356f382 (branch bridle/cli-docs)
+
+### note · agent:manager-2 · 2026-10-04T19:06:03.666Z
+cleanup: removed agent cli-docs, branch bridle/cli-docs
