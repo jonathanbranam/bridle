@@ -24,6 +24,20 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-03: an approved rename was dropped as unapproved in the backlog sort
+
+- **What happened:** the human approved renaming `product-manager` to `project-manager` on
+  2026-10-02 (ticket 7r2c, "Decided"); the workflow advisor sent it to the orchestrator (m-3788).
+  No build task was filed. pm-1 then dropped the question task br-8b6c in the k7tm sort on
+  2026-10-03 as "not approved for work now". The workflow advisor caught it while retiring
+  (m-4387, 2026-10-04 12:26).
+- **Impact:** an approved change sat unbuilt for two days; no work lost.
+- **Cause:** the decision lived only in the question ticket. Nobody turned it into a build task,
+  and pm-1 judged approval from the task, not the ticket's Decided section.
+- **Category:** `coordination`, `role`.
+- **Follow-up:** [[rename-the-product-manager-role-to-project-manager-proj-mgr-9j2h|9j2h]] (task
+  br-9j2h, ready).
+
 ## 2026-10-04 03:31 to the morning: quiet hours stopped the watchers again (third time)
 
 - **What happened:** from 03:31 UTC each watcher's exit notification arrived with the quiet-hours
