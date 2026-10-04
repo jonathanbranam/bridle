@@ -210,6 +210,9 @@ worktree:
 - It refuses if a process still has a file open under the worktree
   (`lsof +D`), unless `--force`, so removal can't yank the directory out from
   under a straggler the containment sweep missed.
+- A directory git no longer lists (record pruned) is deleted directly; without
+  `--force` only if nothing but the `.git` pointer is left. A branch that is
+  already gone is not an error.
 - It keeps the branch unless `--delete-branch`. It refuses an unmerged branch
   (one not an ancestor of the clone's `HEAD`) up front, with 409, before
   stopping or removing anything, unless `--force` too.

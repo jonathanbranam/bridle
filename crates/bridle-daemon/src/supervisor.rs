@@ -2966,7 +2966,7 @@ impl AgentManager {
             if delete_branch && let Some(branch) = &agent.branch {
                 // Past the merged check above (or forced), so `-D`: git itself
                 // doesn't see a squash-landed branch as merged.
-                worktree::delete_branch(&self.0.workspace.repo, branch, true).await?;
+                worktree::delete_branch_if_exists(&self.0.workspace.repo, branch).await?;
             }
         }
         let _ = self

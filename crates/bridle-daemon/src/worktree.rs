@@ -116,7 +116,7 @@ pub async fn remove_pair(
                 prune(&member.path).await?;
             }
             if let Some(branch) = branch {
-                delete_branch(&member.path, branch, true).await?;
+                delete_branch_if_exists(&member.path, branch).await?;
             }
         }
     }
@@ -335,7 +335,27 @@ async fn ensure_orphan_branch_with_env(
 
 /// Removes a worktree. `force` matches `git worktree remove --force`, needed
 /// when the worktree has uncommitted changes.
+///
+/// A directory git no longer lists (its record was pruned) can't go through
+/// `git worktree remove`; it is deleted directly, and without `force` only when
+/// nothing but the `.git` pointer file is left, since there is no index to say
+/// what else is safe to lose.
 pub async fn remove(repo: &Path, path: &Path, force: bool) -> Result<(), WorktreeError> {
+    if !is_registered(repo, path).await? {
+        if !force {
+            let leftover = std::fs::read_dir(path)?
+                .filter_map(Result::ok)
+                .any(|e| e.file_name() != ".git");
+            if leftover {
+                return Err(WorktreeError::Git {
+                    args: vec!["worktree".into(), "remove".into(), path.to_string_lossy().into()],
+                    stderr: "directory is no longer a registered git worktree and holds files git can't account for; use --force".into(),
+                });
+            }
+        }
+        std::fs::remove_dir_all(path)?;
+        return Ok(());
+    }
     let path_str = path.to_string_lossy().into_owned();
     let mut args = vec!["worktree", "remove"];
     if force {
@@ -343,6 +363,25 @@ pub async fn remove(repo: &Path, path: &Path, force: bool) -> Result<(), Worktre
     }
     args.push(&path_str);
     run_git(repo, &args).await.map(|_| ())
+}
+
+/// Whether git's worktree list for `repo` includes `path` (compared canonicalised,
+/// since git prints resolved paths).
+async fn is_registered(repo: &Path, path: &Path) -> Result<bool, WorktreeError> {
+    let want = path.canonicalize()?;
+    let out = run_git(repo, &["worktree", "list", "--porcelain"]).await?;
+    Ok(out
+        .lines()
+        .filter_map(|l| l.strip_prefix("worktree "))
+        .any(|p| Path::new(p).canonicalize().is_ok_and(|p| p == want)))
+}
+
+/// Deletes `branch` from `repo` if it exists (`-D`); a branch that is already gone is fine.
+pub async fn delete_branch_if_exists(repo: &Path, branch: &str) -> Result<(), WorktreeError> {
+    if branch_exists(repo, branch).await? {
+        delete_branch(repo, branch, true).await?;
+    }
+    Ok(())
 }
 
 /// Whether `path` (a worktree or repo checkout) has any changes, tracked or
@@ -761,6 +800,46 @@ mod tests {
         delete_branch(&repo, "bridle/w1", true)
             .await
             .expect("delete branch");
+    }
+
+    #[tokio::test]
+    async fn remove_handles_a_worktree_git_no_longer_lists() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let repo = tmp.path().join("repo");
+        init_repo(&repo).await;
+
+        // Record pruned, directory (with the checkout) left.
+        let wt_path = tmp.path().join("wt").join("w1");
+        add(&repo, &wt_path, "bridle/w1", "HEAD")
+            .await
+            .expect("add");
+        std::fs::remove_dir_all(repo.join(".git/worktrees")).expect("drop record");
+        assert!(wt_path.exists());
+
+        // Files git can't account for: refused without force.
+        std::fs::write(wt_path.join("scratch.txt"), "x").expect("scratch");
+        assert!(remove(&repo, &wt_path, false).await.is_err());
+        assert!(wt_path.exists());
+        remove(&repo, &wt_path, true).await.expect("force remove");
+        assert!(!wt_path.exists());
+
+        // Only the .git pointer left: removed without force.
+        let w2 = tmp.path().join("wt").join("w2");
+        std::fs::create_dir_all(&w2).expect("mkdir");
+        std::fs::write(w2.join(".git"), "gitdir: /nowhere").expect("pointer");
+        remove(&repo, &w2, false)
+            .await
+            .expect("remove bare pointer");
+        assert!(!w2.exists());
+
+        // A branch that is already gone doesn't error; an existing one is deleted.
+        delete_branch_if_exists(&repo, "bridle/missing")
+            .await
+            .expect("missing branch");
+        delete_branch_if_exists(&repo, "bridle/w1")
+            .await
+            .expect("existing branch");
+        assert!(!branch_exists(&repo, "bridle/w1").await.expect("exists"));
     }
 
     #[tokio::test]

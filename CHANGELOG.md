@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Fixed
+- `bridle agent rm` works when git no longer lists the agent's worktree (record pruned, directory left): the directory is removed (without `--force` only if nothing but the `.git` pointer is left), and a branch that is already gone doesn't error (br-4f8y).
 - Document review can start an agent for a real ticket: the agent is `doc-<id>` (other files get a cut slug plus a path hash), instead of `doc-<whole stem>`, which exceeded the 40-character agent-name limit (br-wjhp).
 
 ### Changed
