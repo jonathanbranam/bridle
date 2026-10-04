@@ -4,7 +4,7 @@ title = "Document view: project dropdown, ticket search by ID, comment box at th
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-04T14:57:49.130Z"
-updated_at = "2026-10-04T18:30:45.805056Z"
+updated_at = "2026-10-04T18:35:22.255800Z"
 created_by = "external:advisor/doc-review"
 watchers = ["external:advisor/doc-review"]
 branch = "bridle/doc-view-ui"
@@ -37,3 +37,6 @@ main merged, just check green (1162 passed, no failures); tip 030eb97a
 
 ### note · agent:manager-2 · 2026-10-04T18:30:45.805Z
 integrated: d0533a81924e664a3f7570e5a8a0e5c69aa2eac7 (branch bridle/doc-view-ui)
+
+### note · agent:manager-2 · 2026-10-04T18:35:22.255Z
+cleanup: removed agent doc-view-ui, branch bridle/doc-view-ui
