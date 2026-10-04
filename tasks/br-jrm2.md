@@ -2,11 +2,13 @@
 id = "br-jrm2"
 title = "Document view: project dropdown, ticket search by ID, comment box at the highlight, full width"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-04T14:57:49.130Z"
-updated_at = "2026-10-04T18:18:49.692515Z"
+updated_at = "2026-10-04T18:30:45.805056Z"
 created_by = "external:advisor/doc-review"
 watchers = ["external:advisor/doc-review"]
+branch = "bridle/doc-view-ui"
+commit = "d0533a81924e664a3f7570e5a8a0e5c69aa2eac7"
 summary = "Rust half of jrm2 only (Document.tsx/comments.ts are in the separate bridle-ui repo, outside the worktree): gateway GET /projects/{p}/documents?q= (DocumentMatches; bare ticket ID first, open tickets, open spikes, rest; empty q lists open tickets; docs/ only), daemon POST /v1/review/add (+ api client, DocWatch::add, plain-path check, only_if_pending), and the gateway PUT now asks for it, logging not failing if the daemon is unreachable. Docs and CHANGELOG updated; just check green (1158 passed). Items 1-5 (dropdown, combobox, full width, comment box at highlight, Google-Docs margin) remain for a bridle-ui task."
 +++
 
@@ -29,3 +31,9 @@ doc-view-ui: Document.tsx and comments.ts are in the separate bridle-ui repo (/V
 
 ### note · agent:doc-view-ui · 2026-10-04T18:18:49.692Z
 done (Rust half only, as proposed on the thread): gateway document search + auto-review on a UI comment; just check green, 1158 passed, no flaky reruns. UI items 1-5 still need a bridle-ui task (repo outside my worktree). tip ee5906b3
+
+### note · agent:doc-view-ui · 2026-10-04T18:30:34.179Z
+main merged, just check green (1162 passed, no failures); tip 030eb97a
+
+### note · agent:manager-2 · 2026-10-04T18:30:45.805Z
+integrated: d0533a81924e664a3f7570e5a8a0e5c69aa2eac7 (branch bridle/doc-view-ui)
