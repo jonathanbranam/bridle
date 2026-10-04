@@ -504,3 +504,15 @@ Newest first. One line per item: what happened, who did it, what it says about r
 - **I review worker output the manager doesn't.** I caught br-5paw refusing commits on `main` and
   br-e35h's shared `~/.bridle/sessions.json` (three daemons per machine) from the workers' summaries
   before landing. Reading each "done:" summary for scope and machine-wide assumptions pays.
+- **Admin in the human's projects by hand (2026-10-04).** I pushed track-web's `bridle-adopt` to
+  `dev` (the manager's tools forbid pushes) and moved the clone and its config to integrate into
+  `dev`, granting the manager `git push origin dev` with the human's go. That's a per-project admin
+  task (branches, a role's tools) with no role that owns it; the advisor drafted it and I applied it.
+- **A held landing still reached origin.** The manager kept br-9j2h unpushed on my hold, but a
+  ticket commit from another session pushed `main` on top of it; I pushed a revert. Anyone who
+  pushes the shared clone pushes whatever is landed. A hold has to be a revert or a branch, not
+  "don't push".
+- **No way to hold a self-upgrade.** With a config every daemon rejected, the only lever was
+  keeping an agent busy (the restart waits for a quiet point) until the human fixed the file.
+- **Aide not registered all morning**, so I brought decisions to the human in this session (they
+  were here) and filed br-bedz as their to-do.
