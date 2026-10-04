@@ -11,7 +11,7 @@ use bridle_api::types::{
 use support::{start_daemon_with_config, wait_for_state};
 
 const CONFIG: &str =
-    "[roles.manager]\nautostart = false\n[roles.project-manager]\nmodel = \"sonnet\"\n";
+    "[roles.manager]\nautostart = false\n[roles.product-manager]\nmodel = \"sonnet\"\n";
 
 async fn visitor(daemon: &support::TestDaemon) -> Client {
     let created = daemon
@@ -56,7 +56,7 @@ async fn a_visitor_submits_a_pending_task_and_cannot_ready_plan_or_claim_it() {
         .client
         .spawn(&SpawnRequest {
             components: Vec::new(),
-            role: "project-manager".to_string(),
+            role: "product-manager".to_string(),
             name: Some("pm".to_string()),
             prompt: None,
             workdir: Some(Workdir::Repo),

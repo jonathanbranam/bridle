@@ -12,6 +12,8 @@ use bridle_api::types::MigrationRecord;
 use chrono::{DateTime, SecondsFormat, Utc};
 use serde::{Deserialize, Serialize};
 
+// Read by real migrations (the baseline ignores its context), and by the tests.
+#[cfg_attr(not(test), expect(dead_code))]
 pub struct Ctx<'a> {
     /// The project's repository root. A migration touches only bridle's own files under it.
     pub repo: &'a Path,
@@ -19,7 +21,6 @@ pub struct Ctx<'a> {
     pub dry_run: bool,
 }
 
-#[derive(Debug)]
 pub struct Report {
     /// Paths relative to the repo root.
     pub files: Vec<String>,
@@ -35,102 +36,16 @@ pub struct Migration {
 }
 
 /// Append only; ids never change or move once shipped.
-pub const MIGRATIONS: &[Migration] = &[
-    Migration {
-        id: "0000-baseline",
-        description: "Start tracking migrations in this project; changes nothing else.",
-        run: |_| {
-            Ok(Report {
-                files: vec![],
-                summary: "baseline: nothing to change".into(),
-            })
-        },
+pub const MIGRATIONS: &[Migration] = &[Migration {
+    id: "0000-baseline",
+    description: "Start tracking migrations in this project; changes nothing else.",
+    run: |_| {
+        Ok(Report {
+            files: vec![],
+            summary: "baseline: nothing to change".into(),
+        })
     },
-    Migration {
-        id: "0001-rename-product-manager",
-        description: "Rename the product-manager role to project-manager (ticket 9j2h).",
-        run: rename_product_manager,
-    },
-];
-
-const OLD_ROLE: &str = "product-manager";
-const NEW_ROLE: &str = "project-manager";
-
-/// Renames the role in `.bridle/config.toml` (the `[roles.*]` table and any path or value that
-/// names it) and moves a `.bridle/roles/product-manager.md` override. The config doesn't keep
-/// the old name as an alias: the smaller option, since a migration is how a project moves over.
-fn rename_product_manager(ctx: &Ctx) -> anyhow::Result<Report> {
-    let config_rel = ".bridle/config.toml";
-    let old_role_rel = format!(".bridle/roles/{OLD_ROLE}.md");
-    let new_role_rel = format!(".bridle/roles/{NEW_ROLE}.md");
-    let config_path = ctx.repo.join(config_rel);
-    let old_role = ctx.repo.join(&old_role_rel);
-    let new_role = ctx.repo.join(&new_role_rel);
-
-    let config = match std::fs::read_to_string(&config_path) {
-        Ok(s) => Some(s),
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => None,
-        Err(e) => return Err(e).with_context(|| format!("reading {}", config_path.display())),
-    };
-    let config_changes = config.as_ref().is_some_and(|s| s.contains(OLD_ROLE));
-    let role_moves = old_role.exists();
-    if role_moves && new_role.exists() {
-        bail!("both {old_role_rel} and {new_role_rel} exist; merge them by hand, then rerun");
-    }
-
-    let mut files = vec![];
-    if config_changes {
-        files.push(config_rel.to_string());
-    }
-    if role_moves {
-        files.push(old_role_rel.clone());
-        files.push(new_role_rel.clone());
-    }
-    if files.is_empty() {
-        return Ok(Report {
-            files,
-            summary: "no product-manager role in this project".into(),
-        });
-    }
-    refuse_if_uncommitted(ctx.repo, &files)?;
-    if !ctx.dry_run {
-        if let (true, Some(s)) = (config_changes, &config) {
-            std::fs::write(&config_path, s.replace(OLD_ROLE, NEW_ROLE))
-                .with_context(|| format!("writing {}", config_path.display()))?;
-        }
-        if role_moves {
-            std::fs::rename(&old_role, &new_role)
-                .with_context(|| format!("moving {}", old_role.display()))?;
-        }
-    }
-    Ok(Report {
-        files,
-        summary: format!("renamed {OLD_ROLE} to {NEW_ROLE}"),
-    })
-}
-
-/// Refuses when git reports uncommitted changes in any of `files`, so a migration's edit is
-/// never mixed with the human's. Outside a git repository there is nothing to check.
-fn refuse_if_uncommitted(repo: &Path, files: &[String]) -> anyhow::Result<()> {
-    let out = std::process::Command::new("git")
-        .arg("-C")
-        .arg(repo)
-        .args(["status", "--porcelain", "--"])
-        .args(files)
-        .output();
-    let Ok(out) = out else { return Ok(()) };
-    if !out.status.success() {
-        return Ok(());
-    }
-    let dirty = String::from_utf8_lossy(&out.stdout);
-    if !dirty.trim().is_empty() {
-        bail!(
-            "uncommitted changes in files this migration edits; commit or stash them first:\n{}",
-            dirty.trim_end()
-        );
-    }
-    Ok(())
-}
+}];
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 struct State {
@@ -375,98 +290,6 @@ mod tests {
     fn refuses_a_directory_that_is_not_a_project() {
         let d = tempfile::tempdir().unwrap();
         assert!(apply(d.path(), MIGRATIONS, false, Utc::now()).is_err());
-    }
-
-    fn git_project(config: &str, role_file: bool) -> tempfile::TempDir {
-        let p = project();
-        std::fs::write(p.path().join(".bridle/config.toml"), config).unwrap();
-        if role_file {
-            std::fs::create_dir(p.path().join(".bridle/roles")).unwrap();
-            std::fs::write(p.path().join(".bridle/roles/product-manager.md"), "# PM\n").unwrap();
-        }
-        let git = |args: &[&str]| {
-            let ok = std::process::Command::new("git")
-                .arg("-C")
-                .arg(p.path())
-                .args(["-c", "user.name=t", "-c", "user.email=t@t"])
-                .args(args)
-                .output()
-                .unwrap()
-                .status
-                .success();
-            assert!(ok, "git {args:?}");
-        };
-        git(&["init", "-q"]);
-        git(&["add", "."]);
-        git(&["commit", "-q", "-m", "init"]);
-        p
-    }
-
-    const OLD_CONFIG: &str =
-        "[roles.product-manager]\nsystem_prompt = \"workflow/base/roles/product-manager.md\"\n";
-
-    #[test]
-    fn rename_migration_moves_config_and_role_file_and_is_idempotent() {
-        let p = git_project(OLD_CONFIG, true);
-        let ctx = Ctx {
-            repo: p.path(),
-            dry_run: false,
-        };
-        let r = rename_product_manager(&ctx).unwrap();
-        assert_eq!(r.files.len(), 3);
-        let cfg = std::fs::read_to_string(p.path().join(".bridle/config.toml")).unwrap();
-        assert_eq!(
-            cfg,
-            "[roles.project-manager]\nsystem_prompt = \"workflow/base/roles/project-manager.md\"\n"
-        );
-        assert!(!p.path().join(".bridle/roles/product-manager.md").exists());
-        assert!(p.path().join(".bridle/roles/project-manager.md").exists());
-        // The changes are now uncommitted, so a second run must find nothing to do (and so
-        // not refuse).
-        let again = rename_product_manager(&ctx).unwrap();
-        assert!(again.files.is_empty());
-    }
-
-    #[test]
-    fn rename_migration_dry_run_writes_nothing() {
-        let p = git_project(OLD_CONFIG, true);
-        let ctx = Ctx {
-            repo: p.path(),
-            dry_run: true,
-        };
-        assert_eq!(rename_product_manager(&ctx).unwrap().files.len(), 3);
-        assert_eq!(
-            std::fs::read_to_string(p.path().join(".bridle/config.toml")).unwrap(),
-            OLD_CONFIG
-        );
-        assert!(p.path().join(".bridle/roles/product-manager.md").exists());
-    }
-
-    #[test]
-    fn rename_migration_refuses_uncommitted_edits() {
-        let p = git_project(OLD_CONFIG, false);
-        let edited = format!("{OLD_CONFIG}# mine\n");
-        std::fs::write(p.path().join(".bridle/config.toml"), &edited).unwrap();
-        let ctx = Ctx {
-            repo: p.path(),
-            dry_run: false,
-        };
-        let err = rename_product_manager(&ctx).unwrap_err().to_string();
-        assert!(err.contains("uncommitted"), "{err}");
-        assert_eq!(
-            std::fs::read_to_string(p.path().join(".bridle/config.toml")).unwrap(),
-            edited
-        );
-    }
-
-    #[test]
-    fn rename_migration_leaves_a_project_without_the_role_alone() {
-        let p = git_project("[roles.worker]\nmodel = \"sonnet\"\n", false);
-        let ctx = Ctx {
-            repo: p.path(),
-            dry_run: false,
-        };
-        assert!(rename_product_manager(&ctx).unwrap().files.is_empty());
     }
 
     #[test]

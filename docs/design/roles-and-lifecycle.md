@@ -1,6 +1,6 @@
 # Roles and the task lifecycle
 
-> **Status (checked 2026-10-03):** Built and in use: the human, orchestrator, manager, worker, project-manager and integrator (`bridle task land`) roles; task states `pending`, `open`, `planned`, `claimed`, `dropped`, `integrated`, `reopened` with `ready` derived; claim leases; the queue (`bridle queue`, `queue set|add-tier`, `bridle ready`); task kinds, including `re-evaluate` tasks opened when an `arch-revision` is done · Planned: the reviewer role (no role file or config), `in_review` and `accepted` states, `needs-input`, per-kind gates, roles and models from `workflow.toml`, `bridle review`
+> **Status (checked 2026-10-03):** Built and in use: the human, orchestrator, manager, worker, product-manager and integrator (`bridle task land`) roles; task states `pending`, `open`, `planned`, `claimed`, `dropped`, `integrated`, `reopened` with `ready` derived; claim leases; the queue (`bridle queue`, `queue set|add-tier`, `bridle ready`); task kinds, including `re-evaluate` tasks opened when an `arch-revision` is done · Planned: the reviewer role (no role file or config), `in_review` and `accepted` states, `needs-input`, per-kind gates, roles and models from `workflow.toml`, `bridle review`
 
 ## Roles
 
@@ -103,7 +103,7 @@ Built states: `pending`, `open`, `planned`, `claimed`, `dropped`, `integrated`, 
   `bridle prime worker --task`, which no spawned worker runs): `feature`, `bug`, `chore`,
   `question`, `research`, `explore` ([[docs/design/explorations|explorations]]), `arch-revision` ([[docs/design/architecture-tier|architecture]]) and
   `re-evaluate` ([[docs/design/traceability|traceability]]).
-- **The project manager** (`project-manager`) is a project-defined role, not a built-in: it
+- **The product manager** (`product-manager`) is a project-defined role, not a built-in: it
   triages `open` tasks (`plan`) and owns the queue. Bridle's own `.bridle/config.toml`
   defines it with `autostart = true`. While none runs, the daemon tells the manager when a task
   is filed (coordination.md, "Waking the manager").

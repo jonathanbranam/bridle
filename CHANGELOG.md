@@ -7,9 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-### Changed
-- The `product-manager` role is now `project-manager` (role name, config key, role prompt, queue gate). The config does not keep the old name as an alias: run `bridle migrate` (migration `0001-rename-product-manager`) in an existing project to rename it in `.bridle/config.toml` and `.bridle/roles/` (br-9j2h).
-
 ### Fixed
 - Landing no longer refuses a checked-out integration branch for uncommitted edits to files the landing doesn't touch; it refuses only on an overlap and names the files (br-tgdn).
 - The quiet-hours focus gate no longer runs on background-task notifications (they are not the human), and its text says restarting watchers is always allowed, so the orchestrator keeps its wake loops overnight (br-cc45).

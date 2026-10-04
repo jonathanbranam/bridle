@@ -165,7 +165,7 @@ On startup the daemon reconciles:
   and orchestrator roles) is resumed with `--resume`, if it's either `lost`
   (the case above) or `stopped` with reason `daemon_shutdown` (a clean
   shutdown before this restart).
-- For every role with `autostart = true` (by default only the built-in `manager`; bridle's own `project-manager` sets it in config), an agent named after the role is
+- For every role with `autostart = true` (by default only the built-in `manager`; bridle's own `product-manager` sets it in config), an agent named after the role is
   spawned with the role's `start_prompt`, unless an agent with that *role* already
   exists in any state (so a manager named `manager-2` suppresses it). Autostart goes through the normal spawn, so a
   budget `hold_at` refuses it (logged; the role isn't retried until the next start).

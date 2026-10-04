@@ -245,7 +245,7 @@ bridle ticket check [--quiet]                checks every ticket in `docs/ticket
 bridle ticket submit -k <kind> <title> [--body S | --body-file F|-]
                                               files a `pending` task on the project's daemon (any principal with a token,
                                               visitors included; no ticket file) and prints its id. The body starts
-                                              `submitted by <principal>`; the project manager (else the orchestrator)
+                                              `submitted by <principal>`; the product manager (else the orchestrator)
                                               gets one inbox message. Dropping it with a reason tells the submitter.
 bridle workflow goals list [--root DIR] [--priority P] [--stance S]   lists goals (docs/design/goals-tier.md) from
                                              `*.md` under --root (default `design/goals`): id, firmness,
@@ -774,7 +774,7 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   It carries no resolved workflow rules (neither does `prime advisor`): the orchestrator and
   advisor sessions see rules only where their role file names them. Roles other than
   orchestrator, advisor, prototyper, document-reviewer, worker and planner are a clap `InvalidValue` error.
-- **`prime worker|planner`** (planner = the `project-manager` rule tag) opens prime to
+- **`prime worker|planner`** (planner = the `product-manager` rule tag) opens prime to
   those two roles, each for its own role only, to deliver component scope
   ([[docs/design/components|components]]). It prints the rules tagged for the role (or
   untagged), the facts and guide paths from L1–L3; then, for each component named by
@@ -787,7 +787,7 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   makes the scoping soft. Local, reads the current directory, renders nothing to files;
   an unknown component id is an error. `--task ID` (worker) fetches the task, and an `explore` one
   gets the exploring agent's paragraph first ([[docs/design/explorations|explorations]]).
-  Built, not wired in: no role prompt, hook or skill tells a worker or project manager to run it.
+  Built, not wired in: no role prompt, hook or skill tells a worker or product manager to run it.
   Their resolved rules reach them anyway, in the system prompt; the facts, guides, component
   sections and the explore paragraph reach no agent.
 

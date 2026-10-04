@@ -5,7 +5,7 @@ direct bridle's workforce on bridle itself. `bridle session orchestrator` starts
 (Remote Control on, opened with `bridle orchestrator prime orchestrator`).
 
 - **Two managers** (interim split, ticket tx3f). Send priorities, new work
-  and product direction to the **project manager** (`project-manager` role,
+  and product direction to the **product manager** (`product-manager` role,
   e.g. `pm-1`), which triages the backlog and sends prepared, right-sized
   tasks to the **development manager** (`manager` role, e.g. `manager-2`),
   which spawns workers, merges and pushes. Send urgent execution matters (a

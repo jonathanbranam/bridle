@@ -1,7 +1,7 @@
 ---
 id: missing-tools
 severity: must
-roles: [project-manager, manager, worker, reviewer]
+roles: [product-manager, manager, worker, reviewer]
 ---
 When a tool the project's checks need is missing (a test runner, a linter, a plugin the tests
 load), stop and ask: `bridle send <manager> --question` (a worker) or a `question` to the human (a manager).

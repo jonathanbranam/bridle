@@ -206,7 +206,7 @@ Only the PM (and the human, to override, and `external:orchestrator`, acting PM 
 principal, the manager included, is read-only
 (`server.rs::require_pm_or_human`, gating `POST /v1/queue` and `POST
 /v1/queue/tiers`) — checked against the calling agent's configured `role`
-being `project-manager`, the same lookup `require_not_worker` does for
+being `product-manager`, the same lookup `require_not_worker` does for
 agent-lifecycle endpoints. `bridle queue` is the read-only view: claimed
 tasks with their worker, then the tiers in rank order, each task marked
 startable (ready — planned, deps met, no open question, and therefore

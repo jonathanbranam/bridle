@@ -413,7 +413,7 @@ fn require_human(principal: &Principal) -> Result<(), ApiError> {
 /// principal (the manager included) only reads it
 /// (roles-and-lifecycle.md, "the queue"). Unlike [`require_not_worker`]'s
 /// blocklist, this is an allowlist: `human`, an agent whose role is
-/// `project-manager`, and exactly `external:orchestrator` (acting PM on a
+/// `product-manager`, and exactly `external:orchestrator` (acting PM on a
 /// small project with none; a visitor's `external:orchestrator@machine` is a
 /// different principal and doesn't pass).
 async fn require_pm_or_human(state: &AppState, principal: &Principal) -> Result<(), ApiError> {
@@ -425,11 +425,11 @@ async fn require_pm_or_human(state: &AppState, principal: &Principal) -> Result<
     }
     let name = principal.id.strip_prefix("agent:").unwrap_or(&principal.id);
     let role = state.store.get_agent(name).await?.map(|a| a.role);
-    if role.as_deref() == Some("project-manager") {
+    if role.as_deref() == Some("product-manager") {
         Ok(())
     } else {
         Err(ApiError::forbidden(
-            "only the project manager, the orchestrator or the human may edit the queue",
+            "only the product manager, the orchestrator or the human may edit the queue",
         ))
     }
 }
@@ -1726,7 +1726,7 @@ async fn ready_task(
     if principal.kind == PrincipalKind::Agent {
         let name = principal.id.strip_prefix("agent:").unwrap_or(&principal.id);
         let role = state.store.get_agent(name).await?.map(|a| a.role);
-        if matches!(role.as_deref(), Some("worker" | "project-manager")) {
+        if matches!(role.as_deref(), Some("worker" | "product-manager")) {
             return Err(ApiError::forbidden(
                 "only the human, the orchestrator, an advisor or a manager may ready a task",
             ));
@@ -2826,7 +2826,7 @@ async fn skip_settle(
     if principal.kind != PrincipalKind::Human {
         require_pm_or_human(&state, &principal).await.map_err(|_| {
             ApiError::forbidden(
-                "only the human, the orchestrator or the project manager may skip the settle period",
+                "only the human, the orchestrator or the product manager may skip the settle period",
             )
         })?;
     }

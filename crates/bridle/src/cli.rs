@@ -435,7 +435,7 @@ pub enum TicketAction {
     Set(TicketSetArgs),
     /// Check every ticket's frontmatter, IDs, needs/see and [[links]]; exits 1 listing the problems.
     Check(TicketCheckArgs),
-    /// File an open task on the project's daemon for its project manager to triage (any principal with a token; no ticket file).
+    /// File an open task on the project's daemon for its product manager to triage (any principal with a token; no ticket file).
     Submit(TicketSubmitArgs),
 }
 

@@ -40,7 +40,7 @@ the agents bridle hosts, and later a TUI, GUI or MCP server all share:
    mechanism: it spawns, delivers, supervises, records and (later) integrates.
    Deciding what to work on is judgement, so it's the manager's job
    ([[docs/design/roles-and-lifecycle|roles]]). The work comes from the task queue
-   (`bridle queue`, `bridle task ready`), which the project manager (or the orchestrator) fills.
+   (`bridle queue`, `bridle task ready`), which the product manager (or the orchestrator) fills.
 5. **The orchestrator talks to bridle through the CLI**, with a token that
    identifies it as `external:orchestrator`. It never needs the repo: when
    bridle is remote, its only view of the code is through bridle and the

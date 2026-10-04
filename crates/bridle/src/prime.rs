@@ -19,7 +19,7 @@ architecture, goals and specs is intended: don't bring the code back into line a
 don't flag the divergence. Exploration code stays on `explore/<id>`; only the findings \
 doc merges, into `design/explore/<id>/`.";
 
-/// `role` is the rule-tag name (`worker`, `project-manager`), `title` what the heading says.
+/// `role` is the rule-tag name (`worker`, `product-manager`), `title` what the heading says.
 /// `kind` is the kind of the task being worked, when known.
 pub fn render(
     repo: &Path,
@@ -230,7 +230,7 @@ mod tests {
     fn rules_for_other_roles_are_left_out_and_no_components_prints_no_component_sections() {
         let (dir, config) = fixture();
         let out =
-            render(dir.path(), &config, "project-manager", "planner", &[], None).expect("render");
+            render(dir.path(), &config, "product-manager", "planner", &[], None).expect("render");
         assert!(!out.contains("project rule"), "{out}");
         assert!(!out.contains("# Component:"), "{out}");
         assert!(out.contains("Other components: client-games (docs/client), client-play (docs/play), dungeon (docs/dungeon)"), "{out}");
@@ -269,7 +269,7 @@ mod tests {
     fn repo_base_explorations_rule_reaches_every_role() {
         let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
         let config = Config::load(&repo).expect("config");
-        for role in ["worker", "project-manager"] {
+        for role in ["worker", "product-manager"] {
             let out = render(&repo, &config, role, role, &[], None).expect("render");
             assert!(out.contains("- explorations [must, base"), "{role}: {out}");
         }

@@ -79,7 +79,7 @@ reports and findings travel this way, so the thread is the task's record. `bridl
 
 - **Human**: sets direction, answers questions, approves what touches their projects.
 - **Orchestrator**: the human's assistant (bridle's supervision of it is **planned**).
-- **PM** (`project-manager`): triages tickets, writes task briefs, plans them, owns the queue.
+- **PM** (`product-manager`): triages tickets, writes task briefs, plans them, owns the queue.
 - **Manager**: takes from `bridle ready`, spawns a worker per task, reviews, lands. Cannot
   reorder the queue.
 - **Worker**: claims the task in its own worktree and branch, builds, writes the summary,

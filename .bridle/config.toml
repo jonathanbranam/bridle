@@ -38,7 +38,7 @@ system_prompt    = "workflow/base/roles/worker.md"
 # governor), not to this cap, so it's set well above a normal task.
 max_budget_usd   = 50.0
 
-[roles.project-manager]
+[roles.product-manager]
 # Owns the backlog and prepares right-sized tasks; the manager (development manager) runs them.
 # Interim split by configuration (ticket tx3f). Read-only on the repo; talks through bridle.
 model             = "sonnet"
@@ -49,7 +49,7 @@ tools             = ["Bash", "Read", "Glob", "Grep", "Agent"]   # removed, not j
 # (SendMessage and friends are denied by bridle's own built-in worker default,
 # which custom roles like this one start from.)
 disallowed_tools  = ["Bash(bridle spawn*)", "Bash(bridle stop*)", "Bash(bridle rm*)", "Bash(bridle resume*)", "Bash(bridle interrupt*)", "Bash(bridle agent spawn*)", "Bash(bridle agent stop*)", "Bash(bridle agent rm*)", "Bash(bridle agent resume*)", "Bash(bridle agent interrupt*)", "Bash(bridle daemon stop*)"]
-system_prompt     = "workflow/base/roles/project-manager.md"
+system_prompt     = "workflow/base/roles/product-manager.md"
 autostart         = true
 resume_on_restart = true
 max_budget_usd    = 50.0

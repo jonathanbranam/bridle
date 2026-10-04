@@ -1,7 +1,7 @@
 ---
 id: existing-projects
 severity: must
-roles: [orchestrator, project-manager, manager, worker, reviewer, advisor]
+roles: [orchestrator, product-manager, manager, worker, reviewer, advisor]
 locked: true
 ---
 Never change one of the human's existing projects without their clear review

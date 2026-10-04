@@ -1,7 +1,7 @@
 ---
 id: explorations
 severity: must
-roles: [orchestrator, project-manager, manager, worker, reviewer, advisor]
+roles: [orchestrator, product-manager, manager, worker, reviewer, advisor]
 locked: true
 ---
 Material under `design/explore/`, or marked `exploratory: true`, deliberately

@@ -1,7 +1,7 @@
 ---
 id: yagni
 severity: should
-roles: [orchestrator, project-manager, manager, worker, reviewer]
+roles: [orchestrator, product-manager, manager, worker, reviewer]
 ---
 You ain't gonna need it. Build for the need in front of you, not the one you
 foresee.
