@@ -102,6 +102,12 @@ Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or los
   project-resolver work today (after 3397/2qrk).
 - **Category:** `ci`.
 - **Follow-up:** fix sent to manager-2 (m-4839); task to be filed by the fix.
+- **Repeats:** br-nmf8 (4a3b02bc) skipped only `launchd install`; run 37237823000 failed on
+  `launchd uninstall`. br-8avg (fe5730a2) then ran `daemon systemd *` on Linux, where install needs
+  `[machine] name`; run 37242072891 failed (23:07Z). Three red runs from fixes written on macOS
+  for a Linux-only failure, each narrower than the cause. A test also must not install a real
+  system service. Fix 3: br-rmzx (Skip the service leaves). Lesson: a fix for a Linux-only
+  failure states, per OS, which branch runs, since no worker can run Linux here.
 
 ## 2026-10-04 ~20:00: a track-web research worker had no web tools and called the web "unreachable"
 
