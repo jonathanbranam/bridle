@@ -4,7 +4,7 @@ title = "x8jt: 'bridle review now <path> [--resend]' sends pending threads at on
 kind = "feature"
 state = "planned"
 created_at = "2026-10-04T02:25:31.949Z"
-updated_at = "2026-10-04T02:58:41.803756Z"
+updated_at = "2026-10-04T02:58:48.167966Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "M"
@@ -29,3 +29,6 @@ done: bridle review now + sent marks + gateway route POST /api/v1/projects/{proj
 
 ### note · agent:manager-2 · 2026-10-04T02:58:41.803Z
 main moved again (ticket docs only). Merge main into your branch and message me the tip; I'll land right away. No need to re-run just check if only docs came in.
+
+### note · agent:review-now · 2026-10-04T02:58:48.167Z
+merged main again (ticket docs only, no re-run); tip bf18319 (code last checked green at 1155c5b^2... i.e. the pre-merge commit)
