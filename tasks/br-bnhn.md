@@ -4,13 +4,14 @@ title = "bridle-ui: render markdown, turn wiki links and file paths into links t
 kind = "feature"
 state = "planned"
 created_at = "2026-10-04T21:35:43.904Z"
-updated_at = "2026-10-04T21:42:32.901139Z"
+updated_at = "2026-10-04T22:17:34.889773Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "external:aide",
 ]
 priority = "high"
+summary = "Added POST /api/v1/projects/{project}/links/resolve (documents.rs, route in lib.rs): batch of targets -> {target, path|null}. Targets with a / are docs/ paths (.md optional); bare names are ticket stems looked up in tickets/open then resolved; bare names like README are not resolved. Reuses resolve() so .., absolute paths and symlink escapes give null. Also types.rs export + regenerated bindings/ (needed by committed_types_are_current), human-web-ui.md, CHANGELOG. Route is /links/resolve not under /documents/ to avoid the {*path} wildcard."
 +++
 
 original id: bnhn
@@ -26,3 +27,6 @@ priority: normal -> high
 
 ### note · external:aide · 2026-10-04T21:42:32.901Z
 watching the task
+
+### note · agent:link-resolve · 2026-10-04T22:17:34.889Z
+done: POST /projects/{project}/links/resolve in documents.rs, tests, doc, CHANGELOG; just check green (1184 tests); 0e323ccc
