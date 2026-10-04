@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- Every prompt is stamped with the time it was sent (base `UserPromptSubmit` hook, `Message sent: Sat 2026-10-03 19:45:12 EDT`); `bridle session` now merges the workflow layers' hooks into its `--settings` like a spawn does (br-sf79).
 - Every task now starts `pending`; `bridle task ready <id>` opens it (the orchestrator, an advisor with the human's approval, or a manager for its own small fix). The PM plans only open tasks and wakes when one is readied; `bridle status` and the orchestrator's startup steps list pending tasks. Existing open tasks stay open (br-8eyu).
 - `bridle ticket new --from-task <id>` makes a ticket from a task, reusing its ID (a fresh, linked ID when an old hex task ID has `0` or `1`); the tickets rule and the worker, manager and product-manager roles say tickets hold the why and tasks the work (k7tm).
 - The `triage` role is renamed `aide` (`bridle session aide`, `bridle prime aide`, `external:aide`, `[aide]` credentials, `[sessions.aide]`); no alias, as nothing used the old name.

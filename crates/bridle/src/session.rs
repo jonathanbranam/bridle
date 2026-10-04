@@ -76,6 +76,44 @@ fn session_name(role: &str, name: Option<&str>, project: &str, suffix: &str) -> 
     s
 }
 
+/// Merges the workflow layers' hooks (the spawn path's overlay, br-01a4) into a session's
+/// `--settings` JSON: per event the arrays concatenate, bridle's own first, so a layer can't
+/// drop the focus gate or the reply hook. This is also how the base `UserPromptSubmit` time
+/// stamp reaches the sessions where the human types.
+fn with_layer_hooks(
+    settings: &str,
+    layer_hooks: &std::collections::BTreeMap<String, serde_json::Value>,
+) -> String {
+    let Ok(mut v) = serde_json::from_str::<serde_json::Value>(settings) else {
+        return settings.to_string();
+    };
+    for (event, entries) in layer_hooks {
+        let Some(entries) = entries.as_array() else {
+            continue;
+        };
+        if let Some(own) = v["hooks"][event.as_str()].as_array_mut() {
+            own.extend(entries.iter().cloned());
+        } else {
+            v["hooks"][event.as_str()] = serde_json::Value::Array(entries.clone());
+        }
+    }
+    v.to_string()
+}
+
+/// The layer hooks for the project in the current directory; none (with a warning) when its
+/// config can't be loaded, so a session never fails to start over them.
+fn session_layer_hooks() -> std::collections::BTreeMap<String, serde_json::Value> {
+    let load = || -> anyhow::Result<_> {
+        let repo = std::env::current_dir()?;
+        let config = bridle_daemon::config::Config::load(&repo)?;
+        Ok(config.layer_hooks(&repo))
+    };
+    load().unwrap_or_else(|e| {
+        tracing::warn!(error = %e, "no layer hooks for this session");
+        Default::default()
+    })
+}
+
 fn claude_args(settings: &str, name: &str, extra: &[String], prompt: &str) -> Vec<String> {
     let mut a: Vec<String> = [
         "--settings",
@@ -126,10 +164,16 @@ pub async fn run(cli: &Cli, role: &SessionRole) -> Result<(), CliError> {
     let project = cli.project.clone().unwrap_or_else(|| "bridle".into());
     let suffix = std::env::var("BRIDLE_SESSION_SUFFIX").unwrap_or_default();
     let home = bridle_home();
+    let layer_hooks = session_layer_hooks();
     let code = match role {
         SessionRole::Orchestrator { claude_args: extra } => {
             let name = session_name("orch", None, &project, &suffix);
-            let args = claude_args(&orchestrator_settings(), &name, extra, ORCHESTRATOR_PROMPT);
+            let args = claude_args(
+                &with_layer_hooks(&orchestrator_settings(), &layer_hooks),
+                &name,
+                extra,
+                ORCHESTRATOR_PROMPT,
+            );
             orchestrator(&home, &project, &args).await?
         }
         SessionRole::Advisor { args } => {
@@ -146,7 +190,12 @@ pub async fn run(cli: &Cli, role: &SessionRole) -> Result<(), CliError> {
                     path.display()
                 );
             }
-            let args = claude_args(&advisor_settings(), &name, extra, &prompt);
+            let args = claude_args(
+                &with_layer_hooks(&advisor_settings(), &layer_hooks),
+                &name,
+                extra,
+                &prompt,
+            );
             advisor(cli, &home, &project, adv, &args).await?
         }
         SessionRole::Aide { claude_args: extra } => {
@@ -159,7 +208,12 @@ pub async fn run(cli: &Cli, role: &SessionRole) -> Result<(), CliError> {
                     path.display()
                 );
             }
-            let args = claude_args(&advisor_settings(), &name, extra, &prompt);
+            let args = claude_args(
+                &with_layer_hooks(&advisor_settings(), &layer_hooks),
+                &name,
+                extra,
+                &prompt,
+            );
             aide(cli, &project, &args).await?
         }
         SessionRole::Note | SessionRole::Restart { .. } | SessionRole::Keep { .. } => {
@@ -619,6 +673,28 @@ mod tests {
         for s in [orchestrator_settings(), advisor_settings()] {
             serde_json::from_str::<serde_json::Value>(&s).expect("json");
         }
+    }
+
+    #[test]
+    fn layer_hooks_merge_after_bridles_own() {
+        let mut layer = std::collections::BTreeMap::new();
+        layer.insert(
+            "UserPromptSubmit".to_string(),
+            serde_json::json!([{"hooks":[{"type":"command","command":"date"}]}]),
+        );
+        layer.insert(
+            "PreToolUse".to_string(),
+            serde_json::json!([{"hooks":[{"type":"command","command":"guard"}]}]),
+        );
+        let v: serde_json::Value =
+            serde_json::from_str(&with_layer_hooks(&advisor_settings(), &layer)).expect("json");
+        let ups = v["hooks"]["UserPromptSubmit"].as_array().expect("array");
+        assert_eq!(ups.len(), 2);
+        assert_eq!(ups[0]["hooks"][0]["command"], "bridle focus gate");
+        assert_eq!(ups[1]["hooks"][0]["command"], "date");
+        assert_eq!(v["hooks"]["PreToolUse"][0]["hooks"][0]["command"], "guard");
+        assert!(v["hooks"]["Stop"].is_array() && v["hooks"]["SessionStart"].is_array());
+        assert!(v["permissions"]["deny"].is_array());
     }
 
     #[test]

@@ -185,6 +185,13 @@ written down anywhere else yet:
   so a synced project doesn't run a hook twice; sync's own output is untouched. Commands
   resolve on the agent's `PATH`, which points at the daemon's own binary, so
   `bridle arch-guard` works from any worktree.
+  `bridle session orchestrator|advisor|aide` merges the same overlay into its `--settings`
+  (current directory's project; bridle's own focus, reply and session-note hooks first), so the
+  human's interactive sessions get layer hooks too. Base ships `hooks/UserPromptSubmit.json`,
+  which stamps every prompt with `Message sent: <weekday date time zone>` (the hook's stdout
+  joins the prompt's context). Whether `UserPromptSubmit` fires for the stream-json input of
+  spawned agents is unverified (spike 01 doesn't cover it), so the stamp is only known to work
+  in the interactive sessions.
 - **Little skill/agent/hook content exists in `workflow/` yet**: `base/hooks/PreToolUse.json`
   and the `manager`/`worker` skills; no `agents/<role>.md`. The conventions above are
   sync's contract for the rest.

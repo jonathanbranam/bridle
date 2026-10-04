@@ -1,0 +1,5 @@
+[
+  {
+    "hooks": [{ "type": "command", "command": "date '+Message sent: %a %Y-%m-%d %H:%M:%S %Z'" }]
+  }
+]
