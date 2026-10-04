@@ -516,3 +516,4 @@
 {"actor":"agent:manager-2","at":"2026-10-04T12:46:45.144842Z","from":"planned","task":"br-9j2h","to":"integrated"}
 {"actor":"human","at":"2026-10-04T12:47:28.413Z","from":"","task":"br-anmx","to":"pending"}
 {"actor":"external:advisor","at":"2026-10-04T12:47:31.514922Z","from":"pending","task":"br-anmx","to":"open"}
+{"actor":"human","at":"2026-10-04T12:48:42.938Z","from":"","task":"br-v3d7","to":"pending"}

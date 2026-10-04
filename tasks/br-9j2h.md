@@ -4,7 +4,7 @@ title = "Rename the product-manager role to project-manager (proj-mgr), with a r
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-04T12:26:59.333Z"
-updated_at = "2026-10-04T12:46:45.144842Z"
+updated_at = "2026-10-04T12:48:36.839399Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 branch = "bridle/role-rename"
@@ -28,3 +28,6 @@ done: product-manager -> project-manager rename + migration 0001, own repo migra
 
 ### note · agent:manager-2 · 2026-10-04T12:46:45.144Z
 integrated: 4656be004373b3776710dd5eaf6e5658bc12d7b2 (branch bridle/role-rename)
+
+### note · agent:manager-2 · 2026-10-04T12:48:36.839Z
+cleanup: removed agent role-rename, branch bridle/role-rename
