@@ -24,6 +24,25 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-04 ~14:00: `bridle status` told the human to remove a branch with unlanded work
+
+- **What happened:** `bridle status` listed `self-upgrade` and `docs-rename` as "stopped agents
+  whose branch has landed" with the hint `bridle rm <name> --delete-branch`; the orchestrator
+  passed the commands to the human. `rm self-upgrade` refused (uncommitted changes, "use
+  --force"); `rm docs-rename` failed (git no longer knew the worktree). Checking before advising
+  `--force`, the orchestrator found `bridle/self-upgrade` holds two commits not on `main`
+  (br-88d4's release upgrade, 98615ed8 and dbdc47f6) plus staged changes.
+- **Impact:** none: the uncommitted-changes guard stopped it. With `--force`, br-88d4's work would
+  have been deleted.
+- **Cause:** `is_merged` accepts any `Branch: <branch>` trailer on `main`; an earlier landing from
+  the same branch (br-38c8, 7d29cfd4) carried it, and the worker kept committing there. The
+  orchestrator also relayed the status hint without checking it. docs-rename: git's worktree
+  record had been pruned while the directory stayed.
+- **Category:** `daemon`, `role`.
+- **Follow-up:** [[is-merged-calls-a-reused-branch-landed-an-old-branch-trailer-x3xk|x3xk]],
+  [[agent-rm-fails-when-git-no-longer-knows-the-agent-s-worktree-4f8y|4f8y]]. Check a branch
+  with `git cherry main <branch>` before handing the human an `rm --delete-branch`.
+
 ## 2026-10-04 12:48: a held landing reached origin through another session's ticket push
 
 - **What happened:** manager-2 landed br-9j2h (the product-manager to project-manager rename,
