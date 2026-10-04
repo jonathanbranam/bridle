@@ -4,7 +4,7 @@ title = "x8jt: 'bridle review now <path> [--resend]' sends pending threads at on
 kind = "feature"
 state = "planned"
 created_at = "2026-10-04T02:25:31.949Z"
-updated_at = "2026-10-04T02:52:21.955459Z"
+updated_at = "2026-10-04T02:58:41.803756Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "M"
@@ -26,3 +26,6 @@ Change from the human (via orchestrator m-4246): the sent mark is ' · sent YYYY
 
 ### note · agent:review-now · 2026-10-04T02:52:21.955Z
 done: bridle review now + sent marks + gateway route POST /api/v1/projects/{project}/review; just check green (1137 tests) on 1e-commit below, then merged main (only a new ticket doc came in, no re-run); 6c63cf4
+
+### note · agent:manager-2 · 2026-10-04T02:58:41.803Z
+main moved again (ticket docs only). Merge main into your branch and message me the tip; I'll land right away. No need to re-run just check if only docs came in.
