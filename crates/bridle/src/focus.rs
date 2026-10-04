@@ -90,7 +90,9 @@ fn nudge_text(period: &FocusPeriod, end: &str) -> String {
          except the one the human asked for; no research, ticket filing, planning or new threads. \
          Defer anything extra with one line, \"saved for {end} ET\", and write it down only as a \
          single bridle message to yourself if truly needed. Ask no follow-up questions unless the \
-         human asked for something that cannot proceed without one.",
+         human asked for something that cannot proceed without one. Restarting watchers (wake \
+         loops, background tasks) is always allowed in quiet hours; it is not the human's request \
+         and the limits above do not apply to it.",
         name = period.name,
         end = end,
     )
@@ -144,15 +146,14 @@ pub fn refuse_advisor_if_locked(home: &Path, now: DateTime<Local>) -> Result<(),
 /// Record one `prompt` line to <bridle_home>/prompts.jsonl with the prompt timestamp and metadata.
 /// Fails open: any error is swallowed. Never blocks on stdin if it's absent or a tty.
 /// Called before the gate's early returns so it records on every prompt.
-fn record_prompt(home: &Path) {
-    record_event(home, "prompt");
+fn record_prompt(home: &Path, session_id: Option<String>) {
+    record_event(home, "prompt", session_id);
 }
 
 /// `event` is `prompt` (the human sent one) or `reply` (the agent finished answering: the Stop
 /// hook). Lines from before the field existed are prompts.
-fn record_event(home: &Path, event: &str) {
+fn record_event(home: &Path, event: &str, session_id: Option<String>) {
     let now = Utc::now();
-    let session_id = read_stdin_session_id();
     let role = role_from_env();
     let machine = get_machine_hostname();
     let project = std::env::var("BRIDLE_PROJECT").ok();
@@ -191,9 +192,9 @@ fn get_machine_hostname() -> String {
         .unwrap_or_default()
 }
 
-/// Extract session_id from stdin JSON if present. Returns None if stdin is absent, is a tty,
-/// or JSON parsing fails. Bounded to 200 ms to avoid blocking the human's prompt.
-fn read_stdin_session_id() -> Option<String> {
+/// The hook's stdin JSON. Returns None if stdin is absent, is a tty, or JSON parsing fails.
+/// Bounded to 200 ms to avoid blocking the human's prompt.
+fn read_stdin_json() -> Option<serde_json::Value> {
     use std::io::Read;
     use std::sync::mpsc;
     use std::time::Duration;
@@ -211,10 +212,7 @@ fn read_stdin_session_id() -> Option<String> {
                 let _ = tx.send(None);
             }
             Ok(_) => {
-                let result = serde_json::from_str::<serde_json::Value>(&buf)
-                    .ok()
-                    .and_then(|v| v.get("session_id")?.as_str().map(|s| s.to_string()));
-                let _ = tx.send(result);
+                let _ = tx.send(serde_json::from_str::<serde_json::Value>(&buf).ok());
             }
         }
     });
@@ -242,7 +240,13 @@ fn role_from_env() -> Option<String> {
 /// The hook entry point. Never fails: a hook that errors would show in the human's session.
 pub fn run_gate() {
     let home = bridle_api::discovery::bridle_home();
-    record_prompt(&home);
+    let input = read_stdin_json();
+    // Background-task notifications (a watcher finishing) arrive as prompts too; they are not
+    // the human, so they are neither logged nor gated (cc45).
+    if !input.as_ref().is_none_or(is_human_prompt) {
+        return;
+    }
+    record_prompt(&home, session_id_of(input.as_ref()));
 
     let repo = std::env::var_os("CLAUDE_PROJECT_DIR")
         .map(std::path::PathBuf::from)
@@ -253,10 +257,27 @@ pub fn run_gate() {
     }
 }
 
+fn session_id_of(input: Option<&serde_json::Value>) -> Option<String> {
+    input?.get("session_id")?.as_str().map(str::to_string)
+}
+
+/// False for the harness's own prompts (`<task-notification>`), which carry no human input.
+/// Anything else, including stdin without a `prompt` field, counts as the human (fail open).
+fn is_human_prompt(input: &serde_json::Value) -> bool {
+    !input
+        .get("prompt")
+        .and_then(|p| p.as_str())
+        .is_some_and(|p| p.trim_start().starts_with("<task-notification>"))
+}
+
 /// The Stop hook's entry point: records that the agent finished replying, so the human's reading
 /// time can start there. Prints nothing and never blocks the stop.
 pub fn run_reply() {
-    record_event(&bridle_api::discovery::bridle_home(), "reply");
+    record_event(
+        &bridle_api::discovery::bridle_home(),
+        "reply",
+        session_id_of(read_stdin_json().as_ref()),
+    );
 }
 
 #[cfg(test)]
@@ -303,6 +324,16 @@ mod tests {
     }
 
     #[test]
+    fn task_notifications_are_not_human_prompts() {
+        let j = |p: &str| serde_json::json!({"session_id": "s", "prompt": p});
+        assert!(!is_human_prompt(&j(
+            "<task-notification>\n<task-id>x</task-id>"
+        )));
+        assert!(is_human_prompt(&j("what is the status?")));
+        assert!(is_human_prompt(&serde_json::json!({"session_id": "s"})));
+    }
+
+    #[test]
     fn nudges_first_prompt_then_every_five_minutes() {
         let home = home_with(Some(WORK));
         let g = |h, m| gate(home.path(), home.path(), at(2026, 9, 30, h, m));
@@ -317,6 +348,7 @@ mod tests {
             "No tool calls",
             "saved for 6:00 PM ET",
             "Ask no follow-up",
+            "Restarting watchers",
         ] {
             assert!(first.contains(limit), "{limit}: {first}");
         }
@@ -458,7 +490,7 @@ mod tests {
     #[test]
     fn records_line_to_prompts_jsonl() {
         let home = tempfile::tempdir().expect("tempdir");
-        record_prompt(home.path());
+        record_prompt(home.path(), None);
 
         let path = home.path().join("prompts.jsonl");
         assert!(path.exists(), "prompts.jsonl should be created");
@@ -490,8 +522,8 @@ mod tests {
     #[test]
     fn prompt_and_reply_lines_carry_their_event() {
         let home = tempfile::tempdir().expect("tempdir");
-        record_prompt(home.path());
-        record_event(home.path(), "reply");
+        record_prompt(home.path(), None);
+        record_event(home.path(), "reply", None);
 
         let content =
             std::fs::read_to_string(home.path().join("prompts.jsonl")).expect("read prompts.jsonl");
@@ -508,8 +540,8 @@ mod tests {
     #[test]
     fn records_two_lines_on_two_calls() {
         let home = tempfile::tempdir().expect("tempdir");
-        record_prompt(home.path());
-        record_prompt(home.path());
+        record_prompt(home.path(), None);
+        record_prompt(home.path(), None);
 
         let content =
             std::fs::read_to_string(home.path().join("prompts.jsonl")).expect("read prompts.jsonl");
@@ -529,13 +561,13 @@ mod tests {
         std::fs::write(&file_path, "regular file").expect("write file");
         let unwritable_home = file_path.join("subdir");
 
-        record_prompt(&unwritable_home);
+        record_prompt(&unwritable_home, None);
     }
 
     #[test]
     fn missing_home_does_not_panic() {
         let missing_home = std::path::Path::new("/nonexistent/path/that/does/not/exist");
-        record_prompt(missing_home);
+        record_prompt(missing_home, None);
     }
 
     #[test]
@@ -545,7 +577,7 @@ mod tests {
         std::fs::write(&file_path, "regular file").expect("write file");
         let unwritable_home = file_path.join("subdir");
 
-        record_prompt(&unwritable_home);
+        record_prompt(&unwritable_home, None);
 
         let gate_before = gate(home.path(), home.path(), at(2026, 9, 30, 10, 0));
         assert_eq!(gate_before, None, "gate output should be unchanged");

@@ -224,7 +224,9 @@ mode   = "quiet"
 With no `[[focus]]` everything is off. In a `quiet` period `bridle focus gate` (see
 [[cli]]) injects firm limits (at most 3 sentences or 60 words, the first a nudge back to work; no
 extra tool calls, research, tickets, planning or threads; defer with "saved for <end> ET"; no
-follow-up questions); the advisor and orchestrator role text points at it as the source. A project opts out with `focus_hours = false`
+follow-up questions; restarting watchers such as wake loops and background tasks is always allowed); the hook ignores
+prompts that are not the human's (`<task-notification>` prompts from finished background tasks:
+no gate text, no block, no `prompts.jsonl` line; cc45); the advisor and orchestrator role text points at it as the source. A project opts out with `focus_hours = false`
 in its `.bridle/config.toml`.
 
 **Locked.** In a `locked` period the gate blocks every prompt, the orchestrator keeps running,

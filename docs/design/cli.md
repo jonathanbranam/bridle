@@ -664,7 +664,8 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   `$BRIDLE_HOME/orchestrator.session` as `<session id> <transcript path>` (`/clear` gives the same
   process a new id). Local, silent, never fails.
 - **`focus gate`** is the `UserPromptSubmit` hook `bridle session` passes for the advisor and
-  orchestrator. Inside a `quiet` `[[focus]]` period ([[roles-and-config]], Focus hours) it prints
+  orchestrator. It does nothing on a `<task-notification>` prompt (not the human), and its quiet-hours text
+  says restarting watchers is always allowed. Inside a `quiet` `[[focus]]` period ([[roles-and-config]], Focus hours) it prints
   hook JSON whose `additionalContext` is "Quiet hours (work) until 6:00 PM ET" plus the nudge
   instruction, on the first prompt of a period and again once 5 minutes have passed
   (last nudge in `$BRIDLE_HOME/focus-nudge`). With no `[[focus]]`, outside a period, or in a

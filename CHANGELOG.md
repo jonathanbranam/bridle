@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Landing no longer refuses a checked-out integration branch for uncommitted edits to files the landing doesn't touch; it refuses only on an overlap and names the files (br-tgdn).
+- The quiet-hours focus gate no longer runs on background-task notifications (they are not the human), and its text says restarting watchers is always allowed, so the orchestrator keeps its wake loops overnight (br-cc45).
 - The base `UserPromptSubmit` hook (br-sf79, v0.5.0) that stamped every agent's and session's prompts with the time sent is removed; projects that want the timestamp can add `hooks/UserPromptSubmit.json` in their own layer (br-b795).
 
 ### Added
