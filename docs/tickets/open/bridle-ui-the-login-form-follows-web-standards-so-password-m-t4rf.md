@@ -37,3 +37,7 @@ required>`.
 
 The human's rule applies beyond this form: "every time we have a username and password, it should
 have those tags", and "Follow web standards wherever we're building something".
+
+## Work
+
+bridle-ui task ui-yj6m (filed and readied by orchestrator, 2026-10-04).
