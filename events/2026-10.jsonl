@@ -653,3 +653,5 @@
 {"actor":"external:aide","at":"2026-10-04T22:06:36.692607Z","from":"pending","task":"br-26m3","to":"open"}
 {"actor":"external:aide","at":"2026-10-04T22:06:36.693063Z","from":"open","task":"br-26m3","to":"planned"}
 {"actor":"human","at":"2026-10-04T22:06:38.716Z","from":"","task":"br-xz4f","to":"pending"}
+{"actor":"human","at":"2026-10-04T22:08:01.389Z","from":"","task":"br-8avg","to":"pending"}
+{"actor":"agent:manager-2","at":"2026-10-04T22:08:04.256425Z","from":"pending","task":"br-8avg","to":"open"}
