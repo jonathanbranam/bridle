@@ -620,3 +620,6 @@
 {"actor":"agent:manager-2","at":"2026-10-04T19:43:28.496116Z","from":"planned","task":"br-ehv6","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-10-04T19:58:45.763309Z","from":"open","task":"br-2qrk","to":"integrated"}
 {"actor":"human","at":"2026-10-04T20:12:38.062Z","from":"","task":"br-2mtr","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-10-04T20:13:04.077565Z","from":"pending","task":"br-2mtr","to":"open"}
+{"actor":"agent:pm-1","at":"2026-10-04T20:13:14.530241Z","from":"open","task":"br-2mtr","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-04T20:13:14.679846Z","queue":"reprioritized"}
