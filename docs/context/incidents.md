@@ -24,6 +24,25 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-04 ~20:00: a track-web research worker had no web tools and called the web "unreachable"
+
+- **What happened:** track-web's tw-sxfh (h679, research Hole.io gameplay and reviews) went to
+  worker `holeio-research`. It reported "web search and the game wiki were unreachable", and the
+  orchestrator told the human "web search was partly unreachable". The human questioned it via
+  track-web's aide (~20:30), which found the cause in the transcript.
+- **Impact:** a research ticket landed with its key numbers (growth curve, level count, bot
+  tuning) unsourced, and the human was told something false about the network. Reviews came only
+  from the App Store feed and Wikipedia; no general search was possible.
+- **Cause:** the worker role has no `WebSearch`/`WebFetch` (`allowed_tools` is Bash, Read, Edit,
+  Write, Glob, Grep: bridle's default, copied into track-web). The worker fell back to `curl`,
+  two sites blocked it (fandom's Cloudflare challenge, IGN's bot block), and it didn't say a tool
+  was missing. Nobody checked the role's tools against a research task when planning or
+  assigning it, and the manager and orchestrator passed the failure on as an aside.
+- **Category:** `role`, `config`, `coordination`.
+- **Follow-up:** [[workers-report-missing-tools-and-failed-fetches-plainly-a-re-2mtr|2mtr]]:
+  workers record and report missing tools and failed fetches (the human's ask), and research
+  tasks get a role with web tools (to decide).
+
 ## 2026-10-04 19:05: `main` red after br-3397 (launcher tests need a project)
 
 - **What happened:** CI on d3803242 (br-3397, one project resolver for every command) failed on
