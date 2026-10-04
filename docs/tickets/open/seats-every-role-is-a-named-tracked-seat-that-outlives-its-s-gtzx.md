@@ -160,7 +160,9 @@ question so nothing builds it before then.
   on this daemon". Also lost with the registry: the `session.context` warnings for all of them.
   Cause: the in-memory registry (`sessions.rs`: "a session re-registers when its launcher
   restarts"; the launchers don't restart when the daemon does). P2 (seats in the database) and
-  P4 (mail stays in the seat's inbox) fix it.
+  P4 (mail stays in the seat's inbox) fix it; the stopgap is
+  [[interactive-sessions-survive-a-daemon-restart-the-registry-i-e35h|e35h]] (keep the registry
+  across restarts).
 - **2026-10-01, starting advisors by hand went wrong twice:** a new advisor never read its brief
   ([[a-new-advisor-never-reads-its-brief-jb4e|jb4e]]).
 - **2026-10-03 01:59, a daemon restart ended the advisor's wait as a "timeout"**: the session

@@ -33,7 +33,9 @@ Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or los
   orchestrator (the aide send) and diagnosed by the main advisor (m-4249).
 - **Impact:** about 30 minutes of messages misrouted or refused; context warnings off for every
   interactive session until its launcher restarts; the orchestrator wrongly concluded the aide
-  had never been set up.
+  had never been set up. The doc-review advisor missed both messages until the human pointed it
+  at them ("That advisor is up and running"). Probably on every daemon restart since sessions were
+  registered (also 2026-10-03 20:08 and 23:24), unnoticed.
 - **Cause:** the session registry is in memory only, and a session registers only when its
   launcher starts, so any daemon restart forgets them. Self-upgrade made restarts routine.
 - **Category:** `daemon`.
