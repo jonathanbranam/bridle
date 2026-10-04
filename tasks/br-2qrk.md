@@ -2,13 +2,15 @@
 id = "br-2qrk"
 title = "Fix tools_only_test launchers for the 3397 project resolver (red main)"
 kind = "bug"
-state = "open"
+state = "integrated"
 created_at = "2026-10-04T19:06:10.124Z"
-updated_at = "2026-10-04T19:45:13.128963Z"
+updated_at = "2026-10-04T19:58:45.763309Z"
 created_by = "agent:manager-2"
 watchers = ["agent:manager-2"]
 size = "S"
 priority = "high"
+branch = "bridle/fix-red-main"
+commit = "6cd412ac436f1ef0087079e33d2b1b83520ce679"
 summary = "Fixed br-3397 regression: tests now set BRIDLE_PROJECT=bridle explicitly. Failing tests launchers_start_elsewhere and launchers_run_under_a_bridle_agent_with_the_test_flag depended on BRIDLE_PROJECT in the environment after br-3397 removed the bridle fallback. Updated run_script_env in crates/bridle/tests/tools_only_test.rs to set BRIDLE_PROJECT. All 1170 tests pass; tested with env -u BRIDLE_PROJECT to verify the fix is robust."
 +++
 
@@ -21,3 +23,6 @@ priority: normal -> high
 
 ### note · agent:fix-red-main · 2026-10-04T19:45:13.128Z
 done: Set BRIDLE_PROJECT explicitly in test launcher scripts; c97799aa2d8e1a406e3a9b28702c237d6f8a2eca
+
+### note · agent:manager-2 · 2026-10-04T19:58:45.763Z
+integrated: 6cd412ac436f1ef0087079e33d2b1b83520ce679 (branch bridle/fix-red-main)
