@@ -6,8 +6,8 @@ opened: 2026-10-04
 repos: [bridle-ui]
 changes: []
 specs: []
-needs: []
-see: [a3yd, bnhn, xqvg]
+needs: [xebc]
+see: [a3yd, bnhn, xqvg, xebc]
 tasks: []
 ---
 
@@ -39,3 +39,26 @@ The human, verbatim (2026-10-04 evening, to the bridle-ui aide; dictated; the UI
   id (`br-<id>`)" (`docs/README.md`).
 - Tickets for more than one project live in one repo: bridle-ui's tickets (k3qx, bnhn, t4rf, ...)
   are in the bridle repo, while their tasks are `ui-` tasks in bridle-ui's daemon.
+
+## The human, again (2026-10-04 ~7:30 PM ET, via bridle's aide)
+
+> Secondly, we've in building the UI, I realized that we have a the potential. We're going to have
+> ticket name collisions between projects. Since the ticket doesn't have the project identifier on
+> it. So that's something that needs to get fixed, but it's gonna take a, it's gonna take some work
+> and a migration, I think. So it should probably be dependent on that migration. And then the other
+> problem is that we use the project name as a prefix for the tasks, but not the tickets. So right
+> now you can tell if a link is a task or a ticket, but if we use the project ID for both, then we're
+> not going to be able to tell a task from a ticket in terms of a link or what we're referring to.
+> So that means we're going to have to have some way to tell that this is a task versus a ticket.
+
+So the decision is made in principle: **ticket IDs get a project identifier**. What's left is how:
+
+1. **Collisions:** two projects can mint the same 4-character ticket ID. A ticket ID must be unique
+   across projects, so it carries the project.
+2. **A migration:** existing tickets (file names, `id:`, `see:`/`needs:`, `[[links]]`, task bodies'
+   `original id:`) get rewritten. This depends on the project-migrations work
+   ([[project-migrations-one-command-applies-pending-bridle-upgrad-xebc|xebc]]).
+3. **Telling a task from a ticket:** today `br-p88z` is a task and `p88z` its ticket. With a project
+   prefix on both, the form has to say which one it is: for example a kind marker (`br-t-p88z` /
+   `br-k-p88z`), a different separator (`br-p88z` task vs `br/p88z` ticket), or ticket and task never
+   sharing an ID. To weigh in the design, along with what links in the UI (a3yd) and Obsidian need.

@@ -24,6 +24,22 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-04 (all day): wake waiters in interactive sessions die with exit 144
+
+- **What happened:** `bridle agent wake` commands run in the background by advisors and aides
+  ended `exited with code 144` with no output, at least 9 times between 16:53Z and 22:20Z. Kills
+  came in pairs at the same second in separate sessions and projects (two bridle advisors at 16:53:23Z;
+  bridle's and track-web's aides at 21:28:01Z and 22:20:07Z). The human saw it in other agents too
+  and called it an incident; the aide collected the evidence from Claude Code's task outputs.
+- **Impact:** each session stopped listening until it noticed and re-armed. The aides did; a
+  session that doesn't goes deaf to messages and task changes.
+- **Cause:** unknown. Not a daemon restart (bridle's daemon ran from 16:08Z), not a bridle exit code,
+  not the binary install (21:09Z). The same-second pairs across daemons point outside bridle (Claude
+  Code, tmux or the OS). 144 = 128 + 16, `SIGURG` on macOS, which doesn't normally kill.
+- **Category:** `external`, `host`.
+- **Follow-up:** [[wake-waiters-in-interactive-sessions-die-with-exit-144-in-pa-h3ar|h3ar]]: find the
+  sender; extend the "no wake command running" notice to every interactive session.
+
 ## 2026-10-04 13:18: br-p88z (stable Mac signing) approved but never planned for 9 hours
 
 - **What happened:** the advisor filed and opened br-p88z at 13:18. It was never planned, so it
