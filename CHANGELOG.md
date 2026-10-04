@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `product-manager` role is now `project-manager` (role name, config key, role prompt, queue gate). The daemon reads the old name as `project-manager` (stored agents and unmigrated configs keep working); run `bridle migrate` (migration `0001-rename-product-manager`) in an existing project to rename it in `.bridle/config.toml` and `.bridle/roles/` (br-9j2h).
 
 ### Fixed
+- A `[gateway]` or `[interactions]` section in `~/.bridle/config.toml` no longer stops every daemon from starting; the daemon accepts both (br-jmpf).
 - Landing no longer refuses a checked-out integration branch for uncommitted edits to files the landing doesn't touch; it refuses only on an overlap and names the files (br-tgdn).
 - The quiet-hours focus gate no longer runs on background-task notifications (they are not the human), and its text says restarting watchers is always allowed, so the orchestrator keeps its wake loops overnight (br-cc45).
 - The base `UserPromptSubmit` hook (br-sf79, v0.5.0) that stamped every agent's and session's prompts with the time sent is removed; projects that want the timestamp can add `hooks/UserPromptSubmit.json` in their own layer (br-b795).

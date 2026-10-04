@@ -182,6 +182,9 @@ Also read from `.bridle/config.toml` (defaults in parentheses; each is documente
   layer. A git url is an error (`WorkflowGitUrl`) at the same places: it is not resolved. One resolver: `Config::workflow_root`.
 - `[components.<id>]` (`paths`, `parent`, `docs`, `consumers`, all optional): the component map
   ([[../components|components]]); a parent that isn't defined, or a cycle, is a config error.
+- `[mail]`, `[gateway]` and `[interactions]` belong to `bridle mail run` and `bridle gateway`
+  (their crates parse them); the daemon only accepts them, so adding one never stops a daemon
+  starting.
 
 ## Focus hours
 

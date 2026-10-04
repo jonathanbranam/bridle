@@ -2248,6 +2248,15 @@ struct RawConfig {
     #[serde(default)]
     #[allow(dead_code)]
     mail: Option<toml::Value>,
+    /// `[gateway]` and `[interactions]` belong to `bridle gateway` (the `bridle-gateway` crate
+    /// parses them); the daemon only has to accept them, or adding either stops every daemon
+    /// starting (br-jmpf).
+    #[serde(default)]
+    #[allow(dead_code)]
+    gateway: Option<toml::Value>,
+    #[serde(default)]
+    #[allow(dead_code)]
+    interactions: Option<toml::Value>,
     /// Machine scope only; a project's config may carry it but nothing reads it there.
     #[serde(default)]
     machine: Option<RawMachine>,
@@ -2961,6 +2970,17 @@ pub fn render_system_prompt(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn accepts_sections_owned_by_other_crates() {
+        for text in [
+            "[gateway]\nport = 1\n",
+            "[interactions]\ngap = \"5m\"\n",
+            "[mail]\nx = 1\n[gateway]\nport = 1\n[interactions]\ngap = \"5m\"\n",
+        ] {
+            Config::parse(text).unwrap_or_else(|e| panic!("{text}: {e}"));
+        }
+    }
 
     #[test]
     fn defaults_match_builtin_roles() {
