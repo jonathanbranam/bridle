@@ -21,6 +21,22 @@ top-level name (`bridle claim`, `bridle serve`, `bridle statusline`, `bridle sto
 `commands/mod.rs`); hook settings, launchd/systemd units and scripts still spell the old names.
 The aliases are dropped in a later release. The sections below use the grouped names.
 
+## Project resolution
+
+Every command that acts on a project picks it the same way (br-3397): `--project`, then
+`$BRIDLE_PROJECT`, then the project of the workspace containing the cwd (`.bridle/daemon.json`
+walking up, else a registered daemon whose workspace holds the cwd). There is no default project:
+with none of the three, a command refuses and names `--project`. Commands that reach a daemon get
+this from `discovery::resolve_endpoint` (after `--url` and `$BRIDLE_URL`); the rest (`session`,
+`advisor`, `prime`, `ticket`, `launchd`, `systemd`) call `project::resolve` (`crates/bridle/src/project.rs`).
+A command that acts on no project (or only on the cwd's repo) says so.
+
+Enforced by tests in `project.rs`: every top-level command in the clap tree must be listed in
+its `SCOPES` table as daemon-backed, resolver-backed or no-project with a reason (a new command
+fails until its author chooses), and no source file may hard-code a project name as a fallback.
+`tests/session_test.rs` covers the behaviour: `bridle session` run from another project's
+folder targets that project, and outside any workspace it refuses.
+
 ## Built
 
 ```
@@ -271,7 +287,7 @@ bridle orchestrator prime advisor                        the advisor role file (
 bridle orchestrator prime aide                        the aide role file (workflow, then .bridle/roles/aide.md); local
 bridle session orchestrator [claude args]   start the orchestrator's claude session from any directory: lean
                                              settings, names orch-<project>[-<BRIDLE_SESSION_SUFFIX>], pane tag,
-                                             pid/exit files; `--project` picks the project; refuses under a bridle
+                                             pid/exit files; project per Project resolution (no default); refuses under a bridle
                                              agent (unless BRIDLE_LAUNCHER_TEST=1) and in a tools-only clone
                                              (all `bridle session` roles also merge the workflow layers' hooks into
                                              --settings, e.g. base's prompt time stamp; workflow-layers.md; they also set

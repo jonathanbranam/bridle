@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Changed
+- Every command finds its project the same way: `--project`, then `$BRIDLE_PROJECT`, then the workspace containing the current folder, with no default. `bridle session` (and `advisor start`, `prime orchestrator`, `ticket new`, `launchd`) no longer falls back to `bridle`, so `bridle session aide` in another project's folder starts that project's aide; outside any workspace it refuses and names `--project`. Tests over the clap tree enforce it (br-3397).
 - The budget governor reads usage over HTTP (the OAuth usage endpoint, via `curl`) and only starts a `claude -p` probe, for that poll alone, when HTTP fails; no probe stays resident and working agents are never asked. A stale reading matters less at low usage: the allowed age slides from `max_staleness` at `hold_at` up to 6x it at half of `hold_at`, so a 20% reading no longer holds spawns after 10 minutes. Poll failures log at `warn`, and each poll logs its source and `model_calls=0` (br-puaf).
 
 ### Added

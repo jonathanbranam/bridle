@@ -64,7 +64,7 @@ pub fn tickets_root(repo: &Path) -> PathBuf {
 
 async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<(), CliError> {
     let repos = if args.repos.is_empty() {
-        vec![project_name(cli, repo)]
+        vec![project_name(cli, repo)?]
     } else {
         args.repos.clone()
     };

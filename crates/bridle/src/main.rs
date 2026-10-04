@@ -16,6 +16,7 @@ mod migrate;
 mod orchestrator;
 mod pane;
 mod prime;
+mod project;
 mod render;
 mod review;
 mod serve;

@@ -171,7 +171,7 @@ pub async fn run(cli: &Cli, role: &SessionRole) -> Result<(), CliError> {
     }
     // A tools-only clone (hw6c) is not the project's home.
     crate::tools_only::check_here()?;
-    let project = cli.project.clone().unwrap_or_else(|| "bridle".into());
+    let project = crate::project::resolve(cli)?;
     let suffix = std::env::var("BRIDLE_SESSION_SUFFIX").unwrap_or_default();
     let home = bridle_home();
     let layer_hooks = session_layer_hooks();

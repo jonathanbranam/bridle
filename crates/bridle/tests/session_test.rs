@@ -65,7 +65,12 @@ fn session(args: &[&str], envs: &[(&str, &str)], claude_exit: i32) -> Run {
         .env_remove("BRIDLE_PROJECT")
         .env_remove("BRIDLE_SESSION_SUFFIX");
     for (k, v) in envs {
-        cmd.env(k, v);
+        // "CWD" is not an env var: it moves the run into that folder.
+        if *k == "CWD" {
+            cmd.current_dir(v);
+        } else {
+            cmd.env(k, v);
+        }
     }
     let out = cmd.output().unwrap();
     Run {
@@ -83,7 +88,7 @@ fn lines(r: &Run) -> Vec<&str> {
 
 #[test]
 fn orchestrator_command_line_matches_the_script() {
-    let r = session(&["orchestrator"], &[], 0);
+    let r = session(&["--project", "bridle", "orchestrator"], &[], 0);
     let l = lines(&r);
     assert_eq!(l[0], "--settings");
     assert!(l[1].contains("bridle orchestrator note-session") && l[1].contains("disableWorkflows"));
@@ -139,7 +144,7 @@ fn orchestrator_uses_project_suffix_and_passes_extra_args() {
 
 #[test]
 fn orchestrator_records_a_nonzero_exit() {
-    let r = session(&["orchestrator"], &[], 3);
+    let r = session(&["--project", "p", "orchestrator"], &[], 3);
     assert_eq!(r.out.status.code(), Some(3));
     let exits = fs::read_to_string(r.home.path().join("orchestrator.exits")).unwrap();
     assert!(exits.contains("exit 3"), "{exits}");
@@ -323,4 +328,35 @@ fn advisor_session_without_tmux_succeeds() {
         "advisor session failed outside tmux: {}",
         String::from_utf8_lossy(&out.stderr)
     );
+}
+
+#[test]
+fn session_targets_the_project_of_the_folder_it_runs_in() {
+    let ws = tempfile::tempdir().unwrap();
+    let clone = ws.path().join("clone");
+    fs::create_dir_all(ws.path().join(".bridle")).unwrap();
+    fs::create_dir_all(&clone).unwrap();
+    fs::write(
+        ws.path().join(".bridle/daemon.json"),
+        format!(
+            r#"{{"project":"other","workspace":"{}","repo":"","url":"http://127.0.0.1:1","pid":1,"started_at":"2026-01-01T00:00:00Z","version":""}}"#,
+            ws.path().display()
+        ),
+    )
+    .unwrap();
+    let r = session(&["aide"], &[("CWD", clone.to_str().unwrap())], 0);
+    assert!(
+        r.out.status.success(),
+        "{}",
+        String::from_utf8_lossy(&r.out.stderr)
+    );
+    assert!(r.claude.contains("AS=aide PROJECT=other"), "{}", r.claude);
+}
+
+#[test]
+fn session_outside_any_workspace_refuses_instead_of_defaulting_to_bridle() {
+    let r = session(&["aide"], &[], 0);
+    assert!(!r.out.status.success());
+    assert!(r.claude.is_empty(), "claude must not start: {}", r.claude);
+    assert!(String::from_utf8_lossy(&r.out.stderr).contains("--project"));
 }

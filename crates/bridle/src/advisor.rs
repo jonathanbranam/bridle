@@ -58,7 +58,7 @@ pub async fn run(cli: &Cli, action: &AdvisorAction) -> Result<(), CliError> {
             .await?;
         println!("sent the brief to external:advisor for advisor {name}");
     }
-    let command = session_command(cli.project.as_deref(), name);
+    let command = session_command(crate::project::resolve(cli).ok().as_deref(), name);
     if std::env::var_os("TMUX").is_none() {
         println!("Not inside tmux. In a terminal, run:\n  {command}");
         return Ok(());

@@ -31,13 +31,18 @@ pub fn run(cli: &Cli, args: &LaunchdArgs) -> Result<(), CliError> {
     Ok(())
 }
 
-pub(crate) fn project_name(cli: &Cli, repo: &Path) -> String {
-    // Same default as the daemon's own project name.
-    cli.project.clone().unwrap_or_else(|| {
-        repo.file_name()
-            .map(|n| n.to_string_lossy().into_owned())
-            .unwrap_or_else(|| "bridle".to_string())
-    })
+/// `--project`, then the project of the workspace containing `repo`, then the daemon's own
+/// default for a repo not yet served (its folder name). Never a hard-coded name.
+pub(crate) fn project_name(cli: &Cli, repo: &Path) -> Result<String, CliError> {
+    if let Some(p) = &cli.project {
+        return Ok(p.clone());
+    }
+    if let Some(p) = crate::project::from_cwd(repo) {
+        return Ok(p);
+    }
+    repo.file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        .ok_or_else(|| anyhow::anyhow!("no project: pass --project <name>").into())
 }
 
 fn label(project: &str) -> String {
@@ -129,7 +134,7 @@ fn install(
             .map(Path::to_path_buf)
             .unwrap_or_else(|| repo.clone()),
     };
-    let project = project_name(cli, &repo);
+    let project = project_name(cli, &repo)?;
     let label = label(&project);
     let plist_path = agents_dir.join(format!("{label}.plist"));
     if plist_path.exists() && !a.force {
@@ -179,7 +184,7 @@ fn install(
 
 fn uninstall(cli: &Cli, agents_dir: &Path) -> Result<serde_json::Value, CliError> {
     let repo = std::env::current_dir().context("current directory")?;
-    let label = label(&project_name(cli, &repo));
+    let label = label(&project_name(cli, &repo)?);
     let plist_path = agents_dir.join(format!("{label}.plist"));
     if !plist_path.exists() {
         return Err(CliError::Other(anyhow!(

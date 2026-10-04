@@ -109,7 +109,7 @@ pub(super) async fn prime_orchestrator(cli: &Cli) -> Result<(), CliError> {
         Ok(c) => c.latest_handover().await.ok().flatten(),
         Err(_) => None,
     };
-    let project = crate::launchd::project_name(cli, &repo);
+    let project = crate::launchd::project_name(cli, &repo)?;
     print!(
         "{}",
         render_prime_orchestrator(
