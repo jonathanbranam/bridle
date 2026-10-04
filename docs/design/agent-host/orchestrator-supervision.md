@@ -206,8 +206,9 @@ run" with actual data.
 daemon at launch (`POST /v1/sessions`: identity `advisor` or `advisor/<name>`, the launcher's pid
 and start time, the tmux pane) and ends at exit (`POST /v1/sessions/end`), best effort with a 3 s
 wait: a daemon that is down never blocks or fails the session. The advisor's SessionStart hook
-(`bridle session note`) adds the Claude session id, which changes on `/clear`. The registry is in
-memory only. Every tick (10 s) the daemon drops sessions whose pid is gone (`session.ended`),
+(`bridle session note`) adds the Claude session id, which changes on `/clear`. The registry is
+kept in the daemon's state directory, `sessions.json` beside its database (rewritten on every change, read at daemon start, so a
+self-upgrade restart forgets no session; a stopgap until the seats table, gtzx). Every tick (10 s) the daemon drops sessions whose pid is gone or whose start time differs, a reused pid (`session.ended`),
 reads each live session's `$BRIDLE_HOME/context/<id>` file and emits `session.context`
 (`identity`, `session`, `tokens`, `threshold`, `step`) once per step reached (below), re-armed by
 a lower reading. Tokens per session show in `bridle status`

@@ -1,7 +1,10 @@
 //! Interactive sessions (advisors) registered by `bridle session advisor` (ticket jttf): the
 //! daemon knows each running one, reads its context file and reports tokens per session.
-//! In memory only: a session re-registers when its launcher restarts, and the daemon
-//! forgetting across its own restart costs one missing status line until the next hook.
+//! The registry is kept in the daemon's state directory (`sessions.json`, beside its database: daemons share `$BRIDLE_HOME`),
+//! rewritten on every change and read at
+//! start, so a daemon restart (self-upgrade) forgets nobody; the tick drops entries whose process
+//! is gone, start time included, so a reused pid isn't adopted. Stopgap until the seats table
+//! (gtzx).
 //!
 //! The steps are `[sessions] warn` (150k, 200k, 250k, 300k): warn, plan a handover, the normal
 //! ceiling, the hard limit. Reaching a step emits `session.context` and messages the session and
@@ -17,6 +20,7 @@ use bridle_api::types::{
     MessageKind, MessageState, SessionEnd, SessionInfo, SessionRegister, When, event_kind,
 };
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 use crate::config::{SessionSteps, SessionsConfig};
@@ -34,6 +38,7 @@ pub fn originally_for(name: &str, body: &str) -> String {
     format!("(originally for advisor/{name})\n{body}")
 }
 
+#[derive(Serialize, Deserialize)]
 struct Entry {
     info: SessionInfo,
     pid_start: String,
@@ -51,6 +56,7 @@ struct Restarter {
 
 pub struct Sessions {
     home: PathBuf,
+    registry: PathBuf,
     config: SessionsConfig,
     emitter: Emitter,
     store: Store,
@@ -70,14 +76,39 @@ struct Reached {
 }
 
 impl Sessions {
-    pub fn new(home: PathBuf, config: SessionsConfig, emitter: Emitter, store: Store) -> Self {
+    pub fn new(
+        home: PathBuf,
+        registry: PathBuf,
+        config: SessionsConfig,
+        emitter: Emitter,
+        store: Store,
+    ) -> Self {
+        // A missing or unreadable file is an empty registry.
+        let entries = std::fs::read(&registry)
+            .ok()
+            .and_then(|b| serde_json::from_slice(&b).ok())
+            .unwrap_or_default();
         Sessions {
             home,
+            registry,
             config,
             emitter,
             store,
             restarter: None,
-            entries: Mutex::new(Vec::new()),
+            entries: Mutex::new(entries),
+        }
+    }
+
+    /// Writes the registry (atomically); best effort, a failed write only costs a restart's memory.
+    fn persist(&self, entries: &[Entry]) {
+        let path = &self.registry;
+        let tmp = path.with_extension("json.tmp");
+        let write = serde_json::to_vec(entries)
+            .map_err(std::io::Error::other)
+            .and_then(|b| std::fs::write(&tmp, b))
+            .and_then(|()| std::fs::rename(&tmp, path));
+        if let Err(e) = write {
+            tracing::warn!("saving the session registry: {e}");
         }
     }
 
@@ -113,7 +144,9 @@ impl Sessions {
                 e.fired = [false; 4];
                 e.kept = false;
             }
-            return e.info.clone();
+            let info = e.info.clone();
+            self.persist(&entries);
+            return info;
         }
         let info = SessionInfo {
             identity: req.identity,
@@ -132,6 +165,7 @@ impl Sessions {
             fired: [false; 4],
             kept: false,
         });
+        self.persist(&entries);
         info
     }
 
@@ -139,7 +173,11 @@ impl Sessions {
         let gone = {
             let mut entries = self.entries.lock().expect("sessions lock");
             let at = entries.iter().position(|e| e.info.pid == req.pid);
-            at.map(|i| entries.remove(i))
+            let gone = at.map(|i| entries.remove(i));
+            if gone.is_some() {
+                self.persist(&entries);
+            }
+            gone
         };
         if let Some(e) = gone {
             self.emit_ended(&e).await;
@@ -229,6 +267,7 @@ impl Sessions {
                     kept: std::mem::replace(&mut e.kept, false),
                 });
             }
+            self.persist(&entries);
         }
         for r in reached {
             let _ = self
@@ -268,7 +307,9 @@ impl Sessions {
                 format!("{identity} hasn't reached a warning step yet; nothing to override")
             })?;
             e.kept = true;
-            (e.info.tokens.unwrap_or_default(), step)
+            let out = (e.info.tokens.unwrap_or_default(), step);
+            self.persist(&entries);
+            out
         };
         let _ = self
             .emitter
@@ -462,6 +503,7 @@ mod tests {
             .expect("store");
         let s = Sessions::new(
             dir.path().to_path_buf(),
+            dir.path().join("sessions.json"),
             SessionsConfig {
                 warn: [100, 200, 300, 400],
                 ..Default::default()
@@ -500,6 +542,59 @@ mod tests {
         assert_eq!(s.list().len(), 1);
         s.end(SessionEnd { pid: 42 }).await;
         assert!(s.list().is_empty());
+    }
+
+    #[tokio::test]
+    async fn the_registry_survives_a_restart_and_drops_the_dead_and_the_reused() {
+        let (s, dir, store) = fixture().await;
+        let me = i32::try_from(std::process::id()).expect("pid");
+        let start = real_start();
+        s.register(reg(me, &start, Some("sess-1")), Utc::now());
+        // A pid that is gone, and one that is alive with a different start time.
+        s.register(reg(i32::MAX - 1, "never", None), Utc::now());
+        let mut reused = reg(1, "not-init's-start", None);
+        reused.identity = "advisor/bob".into();
+        s.register(reused, Utc::now());
+        drop(s);
+
+        let s = Sessions::new(
+            dir.path().to_path_buf(),
+            dir.path().join("sessions.json"),
+            SessionsConfig::default(),
+            Emitter::new(store.clone()),
+            store.clone(),
+        );
+        assert_eq!(s.list().len(), 3, "reloaded");
+        s.tick().await;
+        let left = s.list();
+        assert_eq!(left.len(), 1);
+        assert_eq!(left[0].pid, me);
+        assert_eq!(left[0].claude_session_id.as_deref(), Some("sess-1"));
+        // The drop is persisted too.
+        let s2 = Sessions::new(
+            dir.path().to_path_buf(),
+            dir.path().join("sessions.json"),
+            SessionsConfig::default(),
+            Emitter::new(store.clone()),
+            store,
+        );
+        assert_eq!(s2.list().len(), 1);
+    }
+
+    #[tokio::test]
+    async fn registries_with_their_own_files_do_not_see_each_other() {
+        let (a, dir, store) = fixture().await;
+        a.register(reg(42, "t0", None), Utc::now());
+        let b = Sessions::new(
+            dir.path().to_path_buf(),
+            dir.path().join("other-sessions.json"),
+            SessionsConfig::default(),
+            Emitter::new(store.clone()),
+            store,
+        );
+        assert!(b.list().is_empty());
+        b.register(reg(43, "t1", None), Utc::now());
+        assert_eq!(a.list().len(), 1);
     }
 
     async fn events(store: &Store, kind: &str) -> usize {

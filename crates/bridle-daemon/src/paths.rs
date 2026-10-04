@@ -33,6 +33,11 @@ impl Workspace {
         self.state_dir().join("bridle.db")
     }
 
+    /// The interactive-session registry, per daemon (several daemons share one `$BRIDLE_HOME`).
+    pub fn sessions_json(&self) -> PathBuf {
+        self.state_dir().join("sessions.json")
+    }
+
     pub fn daemon_json(&self) -> PathBuf {
         self.state_dir().join("daemon.json")
     }

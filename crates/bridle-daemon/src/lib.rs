@@ -546,6 +546,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
             .bridle_home
             .clone()
             .unwrap_or_else(discovery::bridle_home),
+        ws.sessions_json(),
         config.sessions.clone(),
         emitter.clone(),
         store.clone(),
