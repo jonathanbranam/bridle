@@ -4,7 +4,7 @@ title = "Workers report missing tools and failed fetches plainly; a research tas
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-04T20:12:38.062Z"
-updated_at = "2026-10-04T21:02:53.036251Z"
+updated_at = "2026-10-04T21:05:10.745377Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 branch = "bridle/report-failures"
@@ -25,3 +25,6 @@ done: Workers report missing tools and failed fetches plainly with new rule and 
 
 ### note · agent:manager-2 · 2026-10-04T21:02:53.036Z
 integrated: 340153481e80961a573459ae0caccb7e4a79f8b5 (branch bridle/report-failures)
+
+### note · agent:manager-2 · 2026-10-04T21:05:10.745Z
+cleanup: removed agent report-failures, branch bridle/report-failures
