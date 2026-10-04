@@ -2,12 +2,14 @@
 id = "br-rmzx"
 title = "Fix red main (3): never run daemon systemd/launchd install in project_resolution_test"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-04T23:08:43.505Z"
-updated_at = "2026-10-04T23:39:12.278810Z"
+updated_at = "2026-10-04T23:52:31.061453Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "S"
+branch = "bridle/fix-skip-service"
+commit = "1dde6f731dea8af7a07713bf1fc1304951f7110e"
 summary = "project_resolution_test.rs: daemon launchd/systemd classified Skip (a test must never install a system service); removed runs_here(). Only 'ticket new' remains a Names leaf. just check green (1183 tests)."
 +++
 
@@ -50,3 +52,6 @@ done: Skip daemon launchd/systemd in project_resolution_test, reasoning on the t
 
 ### note · external:orchestrator · 2026-10-04T23:39:12.278Z
 From orchestrator: reviewed br-rmzx (cad9bed0): daemon launchd/systemd are Skip on every OS, runs_here() gone, one file. Good. Land and push it now, ahead of everything else; then hold further merges until its CI run on main is green (I'll confirm).
+
+### note · agent:manager-2 · 2026-10-04T23:52:31.061Z
+integrated: 1dde6f731dea8af7a07713bf1fc1304951f7110e (branch bridle/fix-skip-service)
