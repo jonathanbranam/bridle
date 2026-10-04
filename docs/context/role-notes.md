@@ -470,3 +470,21 @@ Newest first. One line per item: what happened, who did it, what it says about r
   advisor started, so the human had to point it at the message. k8jn/r8kv; the advisor logged it.
 - **Pushing what the manager landed.** manager-2 landed br-14cd and br-6c69 but hadn't pushed
   yet; I pushed both. Harmless, but the "merger pushes right after" rule lags by a turn.
+
+## Twenty-seventh orchestrator session (2026-10-03 ~20:15Z to 2026-10-04 ~00:45Z)
+
+- **Relaying approvals was most of the job.** The advisors brought six human approvals (u6w9, r8kv,
+  jttf, feyk, k7tm A and B); I filed or forwarded each to pm-1 with the quote, and all landed the
+  same evening. A relay role (aide, r8kv) should take this over.
+- **I filed a task in another project for an advisor.** Advisors have no bridle-ui token, so the
+  bridle-ui Time page task (ui-89b4) and its follow-up went through me, as did skipping its settle.
+- **The manager stopped pushing.** manager-2 landed three u6w9 branches without pushing (one
+  "Everything up-to-date" convinced it landing pushes). I found it looking for a CI run, and pushed.
+  `bridle status`'s "pushed" line is the state repo, which hid it (incident).
+- **Restarting an advisor, by tmux, again.** The human asked twice tonight (restart the main
+  advisor; start doc-review). `bridle session restart` (br-qe4d) now exists for the first.
+- **Briefs to a new advisor go through its pane, not the inbox** (the human, 2026-10-04): the
+  shared inbox ate a second brief (incident). Start the advisor, wait ~30 s, type the brief in.
+- **A visitor orchestrator can't wait on another machine's daemon.** meta-notes (NUC) refuses
+  `wait-for-wake` from `external:orchestrator@dalek`, so the NUC's messages to me there went
+  unseen until the human pointed at one. I check `bridle inbox --project meta-notes` by hand.

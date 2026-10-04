@@ -24,6 +24,22 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-04 00:27: the main advisor took a named advisor's brief, again
+
+- **What happened:** `bridle advisor start doc-review --brief @file` sent the brief (m-4174) to
+  `external:advisor` before the new session was up; the main advisor's background wake returned
+  it and marked it read. The main advisor didn't act on it and told the orchestrator (m-4175).
+  A repeat of the 2026-10-03 ~15:30 entry below.
+- **Impact:** a few minutes; the orchestrator typed the brief into the doc-review pane instead.
+  The human, 2026-10-04: "don't send the message as a brief. Wait until the advisor comes up or
+  give it about 30 seconds and then send the message."
+- **Cause:** one shared `external:advisor` inbox; `advisor start --brief` sends before the
+  named session can look.
+- **Category:** `coordination`, `role`.
+- **Follow-up:** [[seats-every-role-is-a-named-tracked-seat-that-outlives-its-s-gtzx|gtzx]]
+  (per-seat inboxes), waiting on the human's review. Until then: start the advisor with no
+  `--brief`, then type the brief into its pane once it's up.
+
 ## 2026-10-03 21:36-22:15: three merges sat on local main, unpushed
 
 - **What happened:** manager-2 merged br-bhcp (b5971d8), br-25nn and br-59vt (9bd4587) into the
