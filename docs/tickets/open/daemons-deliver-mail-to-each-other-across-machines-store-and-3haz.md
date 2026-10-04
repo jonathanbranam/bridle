@@ -23,7 +23,8 @@ The human, verbatim (2026-10-03 ~22:45 ET, via the advisor):
 > a ticket, and this is a continual problem, so it needs to be worked soon.
 
 **Priority:** soon ("a continual problem"). The human isn't sure of the best design; the
-proposals below are the advisor's, for review.
+proposals below are the advisor's, for review. Q1-Q4 are answered ("Decided: Q1-Q4"); P1-P8 are
+still for review.
 
 ## What's wanted (summary)
 
@@ -33,7 +34,7 @@ proposals below are the advisor's, for review.
    daemon.
 3. **When the other daemon is offline, the message waits** and the sending daemon keeps retrying
    ("a polling mechanism"), then delivers when it's back. Nothing is lost.
-4. Between machines first. Between daemons on the same machine is "maybe not" in scope (Q1).
+4. Every message, between any two daemons, same machine included (decided, Q1).
 
 ## Today (advisor, checked 2026-10-04 at 575bcea)
 
@@ -111,7 +112,50 @@ into the same change.
 4. Status, the aide's report, `message show` (P6), and the role prompts and `bridle send --help`
    (bp2v).
 
-## Open for the human
+## Decided: Q1-Q4 (the human, 2026-10-04)
+
+Verbatim (via the advisor):
+
+> Q1 - all messages need to arrive timely and guaranteed, be marked read reliably, and so should
+> responses.
+>
+> Q2 - I agree to build ourselves.
+>
+> Q3 - task wakes are now messages, or should be, so irrelevant. That said I'm not sure if an
+> agent on another machine or project can watch a task - that should be built though if not
+> isn't - and task wakes will send a message.
+>
+> Q4 - do you mean actively with another message? No, but they should be able to check I think
+> delivered and read. Delivered should mean it reached the correct daemon and the agent was awake
+> and running and received the message. For now, I think we should mark delivered messages as
+> read also - but I'm still considering that design.
+
+What that means for the build:
+
+- **Q1, scope: every message, not only between machines.** Same machine, other project, other
+  machine: each arrives promptly and surely, is marked read reliably, and so does its reply. So
+  the outbox carries mail between any two daemons, same machine included (it can retire cy2v's
+  one-waiter-per-project rule). The proposals' "between machines first" is withdrawn.
+- **Q2: build it ourselves.** fbfy's question is answered for messages.
+- **Q3: task wakes are messages** (`task_update`), so they ride the same delivery. **Watching a
+  task from another project or machine must work.** Checked 2026-10-04 at 3da7155: a visitor
+  (`<name>@<machine>`) *can* `bridle task watch` (`set_watching` in `server.rs` has no visitor
+  check), but its `task_update` messages land in the visitor's inbox on the task's daemon, which
+  nobody watches; P2 (mail for a visitor is forwarded home) fixes that. An agent of another
+  project (a worker, a manager) has no token on another project's daemon, so it can't watch there
+  at all; that needs building (a peer daemon watching on its agent's behalf, through P5's peer
+  token, is the advisor's guess).
+- **Q4: no "read" receipt message**, but the sender can check a message's state:
+  - **delivered** = it reached the right daemon **and** the recipient was awake and running and
+    received it (its wake or inbox returned it), not just "stored on the daemon";
+  - **read**: for now, a delivered message is also marked read (the human is "still considering
+    that design"; related: [[read-on-delivery-can-lose-messages-marked-read-before-the-re-k8jn|k8jn]],
+    where read-on-delivery can lose messages);
+  - so a message has at least: queued (in the sender's outbox), arrived (stored on the
+    recipient's daemon, recipient not yet woken), delivered (= read, for now). P6's `bridle
+    message show <id>` reports which.
+
+## The questions as asked (answered in "Decided: Q1-Q4" above)
 
 - **Q1. Daemons on the same machine too?** The human: "maybe not between daemons, but between
   machines". The same outbox would carry mail between projects' daemons on one machine and could
