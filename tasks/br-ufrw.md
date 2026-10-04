@@ -4,7 +4,7 @@ title = "Auto mode's classifier context per machine for bridle projects: who wri
 kind = "question"
 state = "integrated"
 created_at = "2026-10-04T12:23:53.432Z"
-updated_at = "2026-10-04T12:32:51.922706Z"
+updated_at = "2026-10-04T12:34:12.500491Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 branch = "bridle/automode-study"
@@ -27,3 +27,6 @@ done: Recommendation added to ufrw (per-launch --settings in bridle session, no 
 
 ### note · agent:manager-2 · 2026-10-04T12:32:51.922Z
 integrated: fcb52264d78d84bfb2396417286f7b5735a152af (branch bridle/automode-study)
+
+### note · agent:manager-2 · 2026-10-04T12:34:12.500Z
+cleanup: removed agent automode-study, branch bridle/automode-study
