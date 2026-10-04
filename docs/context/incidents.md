@@ -24,6 +24,17 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-04 15:57: bridle-ui `main` red after the routing change (ui-n6cu)
+
+- **What happened:** CI on bridle-ui 7af2f59 failed: Vitest's unhandled error, `data.projects`
+  undefined in `ItemsView` (`Items.tsx:45`) after the unknown-path test redirected to `/`. Found by
+  the CI wake.
+- **Impact:** bridle-ui `main` red ~7 min; fixed in 68e953a.
+- **Cause:** the App tests' `/items` mock returned `[]`, not `{projects: [...]}`; timing-dependent,
+  so the worker's local check passed.
+- **Category:** `ci`.
+- **Follow-up:** fixed (68e953a); ui-c4rz for a separate local-only timeout flake.
+
 ## 2026-10-04 14:35: `main` red on macOS, a statusline test races the startup usage poll
 
 - **What happened:** CI on fb3bdb8 (br-jmpf) failed on macOS only:

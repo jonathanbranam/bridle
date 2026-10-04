@@ -516,3 +516,19 @@ Newest first. One line per item: what happened, who did it, what it says about r
   keeping an agent busy (the restart waits for a quiet point) until the human fixed the file.
 - **Aide not registered all morning**, so I brought decisions to the human in this session (they
   were here) and filed br-bedz as their to-do.
+
+## Thirtieth orchestrator session (2026-10-04 ~13:35Z to ~16:30Z)
+
+- **I relayed a status hint without checking it.** `bridle status` said self-upgrade's branch had
+  landed and I passed the `rm --delete-branch` commands to the human; the branch held unlanded
+  br-88d4 work (x3xk). Before giving the human a destructive command, verify it
+  (`git cherry main <branch>`).
+- **My ticket pushes break landings.** manager-2: ticket commits on `main` make a worker's landing
+  fail with "main moved". Batch ticket commits, push fewer times.
+- **Cross-project filing has no owner.** The NUC's requests reached me through meta-notes' inbox;
+  the human's bridle-ui ask was filed as a bridle ticket (k3qx) with its task in bridle-ui
+  (ui-n6cu). Neither path is a role's job; I did both by hand.
+- **pm-1 dropped readied tasks across its renewal.** k22s, puaf, 3397, ehv6, jrm2 stayed `open`
+  after its handoff; I re-listed them. A renewed planner should sweep `open` tasks on start.
+- **A haiku ci-triage worker called a flake a regression** without comparing the other OS or the
+  next run. Triage needs those two checks.
