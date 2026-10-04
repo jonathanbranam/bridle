@@ -522,3 +522,4 @@
 {"actor":"external:advisor/workflow","at":"2026-10-04T12:49:58.215402Z","from":"open","task":"br-tkph","to":"planned"}
 {"actor":"agent:manager-2","at":"2026-10-04T13:01:56.462347Z","from":"pending","task":"br-v3d7","to":"integrated"}
 {"actor":"agent:pm-1","at":"2026-10-04T13:06:22.798957Z","queue":"reprioritized"}
+{"actor":"human","at":"2026-10-04T13:11:47.608Z","from":"","task":"br-jmpf","to":"pending"}
