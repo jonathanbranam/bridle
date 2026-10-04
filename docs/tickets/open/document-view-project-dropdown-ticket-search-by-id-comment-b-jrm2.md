@@ -76,6 +76,21 @@ human if it matters.)
    [[everything-readable-and-editable-through-the-daemons-file-ba-v8kn|v8kn]] and the
    CodeMirror step in bridle-ui's plan.
 
+7. **Commenting in the UI puts the document under review by itself** (the human, 2026-10-04,
+   verbatim, via advisor doc-review):
+
+   > If I use the user interface to add comments to the doc, that should automatically set the
+   > document for review without me doing anything. If I edit it by hand, I guess it makes sense
+   > that I have to add it for review, because I don't think we want something scanning the
+   > entire file system for documents that need reviews. That's a TBD, maybe to consider.
+
+   - A save from the UI that adds a comment thread runs the equivalent of `bridle review add`
+     for that path, unless it's already under review.
+   - Comments added by hand still need `bridle review add`. Nothing scans the repo for them.
+     Whether anything should is TBD and out of scope here.
+   - Today you have to add it by hand first, and "Request review" returns 400 on a document
+     that isn't under review (`docs/design/human-web-ui.md`). Found on 3haz.
+
 ## Likely shape (advisor; for the planner, not decided)
 
 - Gateway: one search route per project, e.g. `GET /api/v1/projects/{project}/documents?q=`,
@@ -83,3 +98,6 @@ human if it matters.)
   (spikes too). Start with open tickets and `docs/`, and widen it later.
 - bridle-ui: a `<select>` from `/projects`, a combobox over the search route, a responsive
   comment box placed by the selection, and a wider layout for the document page.
+- Auto-review (item 7): the gateway's document `PUT` asks the daemon to add the path to review
+  when the new content has more comment threads than the old, with the human's token, as the
+  review route already does. The UI changes nothing for this.
