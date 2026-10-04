@@ -4,7 +4,7 @@ title = "A [gateway] section in ~/.bridle/config.toml stops every daemon from st
 kind = "bug"
 state = "planned"
 created_at = "2026-10-04T13:11:47.608Z"
-updated_at = "2026-10-04T13:56:43.313803Z"
+updated_at = "2026-10-04T14:03:15.174624Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
 summary = "RawConfig (bridle-daemon/src/config.rs) now accepts [gateway] and [interactions] as accept-only fields like [mail], so adding either to ~/.bridle/config.toml no longer stops daemons starting. Test accepts_sections_owned_by_other_crates; roles-and-config.md note; CHANGELOG. No other crate-owned section was missing. just check: only the known-flaky serve::tests::login_warning_only_when_known_logged_out fails (fail-fast, passes alone); committed per manager."
@@ -28,3 +28,9 @@ A test failing 4 of 4 full runs is not a flake, and I can't land on a red check.
 
 ### note · agent:manager-2 · 2026-10-04T13:56:43.313Z
 Update: gateway-service saw the same test fail under host load (5s timeout, passes alone), so it is probably load, not your change. Don't dig further: re-run just check once more now, and report the result either way.
+
+### note · agent:gateway-config · 2026-10-04T14:03:15.155Z
+Not caused by this change: plain main (git archive copy in /tmp, now removed) fails the same test in 'cargo nextest run -p bridle' (also launchers_refuse_in_a_tools_only_clone, same 5s timeout). Fails even with --test-threads 1, passes alone, so it is a 5s timeout of known_logged_out's spawn_blocking exec in the loaded suite (not host config; the first assert at serve.rs:285 uses an absolute-path fake script). Final just check on my branch (f9235df3): 630 passed, 1 failed (that test). Not fixing here.
+
+### note · agent:gateway-config · 2026-10-04T14:03:15.174Z
+re-run: just check still red on only serve::tests::login_warning_only_when_known_logged_out (630 pass); plain main fails it too (plus a tools_only test), so not from this change; details on the task. Commit f9235df3
