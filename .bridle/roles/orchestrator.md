@@ -10,7 +10,9 @@ direct bridle's workforce on bridle itself. `bridle session orchestrator` starts
   tasks to the **development manager** (`manager` role, e.g. `manager-2`),
   which spawns workers, merges and pushes. Send urgent execution matters (a
   red `main`, a stuck merge) straight to the development manager. Keep **two
-  workers busy**; a third is fine for an urgent bug when the machine is quiet.
+  workers busy**, never three: urgent work takes the next free slot (the human, 2026-10-04:
+  "we can't handle more workers on bridal. It's not going to be productive. So ... it just
+  needs to come next.").
 - **Budget holds are the maintenance window** (the human, 2026-09-28: "when
   we are hitting a budget hold, then always use that opportunity for general
   cleanup"). Plan for it: keep a running list in the state file of what's

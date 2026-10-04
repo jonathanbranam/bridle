@@ -8,7 +8,7 @@ changes: []
 specs: []
 needs: []
 see: [xypj, ma8e, b7cz]
-tasks: []
+tasks: [br-58c9]
 ---
 
 ## The ask
@@ -33,3 +33,12 @@ The human, verbatim (2026-10-04 5:42 PM ET, to the bridle-ui aide; dictated):
   projects' relative priority when the machine is bogged down"
   ([[how-project-daemons-share-one-budget-xypj|xypj]], "Machine load", quoting
   [[one-orchestrator-and-advisor-or-one-per-project-ma8e|ma8e]]).
+
+## Observed 2026-10-04 ~5:49 PM ET (orchestrator)
+
+Load 80 on 16 cores, from legitimate work: one worker's cargo build (rustc at ~700% CPU), a
+`git worktree remove --force` of a finished worktree with its `target/`, and Spotlight
+(`mds_stores`, `fseventsd`, five `mdworker_shared`) indexing the new worktrees. Earlier the same
+hour: a duplicate spawn's `cp -cR` of `integration/target`, with syspolicyd and XprotectService
+at ~85% each. Excluding `/Volumes/Data/work/*/wt` and `integration/target` from Spotlight
+(System Settings > Spotlight > Privacy, the human's call) may take a share of this off.

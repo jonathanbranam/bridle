@@ -8,7 +8,8 @@ changes: []
 specs: []
 needs: []
 see: [x8jt, jrm2, essy]
-tasks: []
+tasks: [ui-n6cu]
+closed: 2026-10-04T21:21:51Z
 ---
 
 ## The ask
@@ -32,3 +33,11 @@ The human, verbatim (2026-10-04, to the bridle-ui aide):
   document is identified by `project` + repo-relative `path` (`src/api/generated/Document.ts`),
   and those paths end in `.md`, so a URL whose last segment is the raw document path
   (`/doc/bridle/docs/tickets/open/foo-k3qx.md`) gets a 404 on refresh.
+
+## Resolution
+
+Built as bridle-ui task ui-n6cu, landed on bridle-ui `main` as 7af2f59 (2026-10-04, ~11:56 AM ET):
+react-router, the tabs at `/`, `/time` and `/document`, the open document in
+`?project=&path=`. Its App-test mock broke CI briefly; fixed in 68e953a (green). Not yet checked
+in a browser against the real gateway's fallback route. The orchestrator didn't report the
+landing to aide, so the human was told twice it hadn't started (incident ui-wdp3).

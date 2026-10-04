@@ -547,3 +547,15 @@ Newest first. One line per item: what happened, who did it, what it says about r
   another repo should be split when it's planned.
 - **Reviewing a worker's "fixed the race" claim paid off.** k22s's first fix left the startup
   poll racing; 20 quiet runs would have passed it.
+
+## Thirty-second orchestrator session (2026-10-04 from ~20:10Z)
+
+- **I passed a tool failure to the human as a caveat.** tw-sxfh's worker had no WebSearch or
+  WebFetch (bridle's default worker tools), and its "web search unreachable" reached the human
+  through me as a footnote on the research. It was a failure: the role lacked the tools the task
+  needed. Incident and br-2mtr (Ask 1 approved); a role check against a task's needs is Ask 2,
+  the human's call.
+- **Landings the human asked for weren't reported to aide** (incident ui-wdp3). The orchestrator
+  role says both "aide's inbox only for what the human must act on" and "a short summary of
+  merges"; the first won. I'm now sending aide one line when human-asked work lands. Worth
+  settling in the role file, with the human's word on it.
