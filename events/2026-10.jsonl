@@ -635,3 +635,4 @@
 {"actor":"agent:pm-1","at":"2026-10-04T21:28:06.913981Z","from":"open","task":"br-bek3","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-04T21:28:07.351511Z","from":"open","task":"br-tc7t","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-04T21:28:11.904028Z","queue":"reprioritized"}
+{"actor":"human","at":"2026-10-04T21:28:54.526Z","from":"","task":"br-ckvz","to":"pending"}
