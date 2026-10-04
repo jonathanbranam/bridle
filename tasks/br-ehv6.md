@@ -2,11 +2,13 @@
 id = "br-ehv6"
 title = "Comment threads: explicit ASCII status and time zone on every entry, thread IDs, resolve, 'human via <agent>"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-04T15:25:24.347Z"
-updated_at = "2026-10-04T19:41:54.263841Z"
+updated_at = "2026-10-04T19:43:28.496116Z"
 created_by = "external:advisor/doc-review"
 watchers = ["external:advisor/doc-review"]
+branch = "bridle/comment-threads"
+commit = "c7a657fb0eaef8d87317d4e6ac10515553d8f8ea"
 summary = "Rust/daemon/CLI/rules side of ehv6. doc_watch.rs: entries carry one ASCII status `[pending|sent|read YYYY-MM-DD HH:MM EDT]` (pending = none or [pending]); thread IDs `c<n>` assigned at send (highest+1) and shown to the agent; `is_human` is now exactly `human` / `human via <agent>`; resolved threads never go; tick sweep turns `[sent]` into `[read]` once the doc agent has no unread message (spawned agents read at once; stateless, restart-safe) and rewrites old middle-dot marks. `bridle review resolve <path> c3` appends `resolved by human, <stamp>`. Role document-reviewer.md rewritten for the new format; new rules ascii-in-editable-text and human-via-agent; docs (daemon.md, cli.md, human-web-ui.md, x8jt note) and CHANGELOG updated. Decisions: Eastern zones only (YAGNI); no new gateway route, since the UI can save marks/resolve lines through the existing document save; cleanup of resolved threads not built (ticket leaves its shape to the planner)."
 +++
 
@@ -31,3 +33,6 @@ Not built: deleting resolved threads (cleanup); the ticket leaves its shape open
 
 ### note · agent:comment-threads · 2026-10-04T19:41:54.263Z
 done: ehv6 Rust side (marks, IDs, read-by-agent, resolve, 2 rules, role, docs); UI task proposal in the task comment; 5dc72866
+
+### note · agent:manager-2 · 2026-10-04T19:43:28.496Z
+integrated: c7a657fb0eaef8d87317d4e6ac10515553d8f8ea (branch bridle/comment-threads)
