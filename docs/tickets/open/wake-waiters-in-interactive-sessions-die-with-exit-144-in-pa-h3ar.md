@@ -114,3 +114,9 @@ the killed command (pkill sends SIGTERM).
 3. **Identities unique per machine**, or patterns can't collide: covered by the j28f/kuw2 discussions
    (project in the identity).
 4. Keep the mitigation above: warn any interactive session with no waiter, not just the orchestrator.
+
+**Gap found by bridle-ui's aide (2026-10-04):** `workflow/base/rules/no-kill-by-name.md` lists its
+roles as orchestrator, project-manager, manager, worker, reviewer and advisor, **not aide**, so the
+aide's priming never includes it. Fix 1 must add `aide` (and check every interactive role). Both
+other aides confirmed they ran the `pkill -f` to clear a waiter they'd started wrongly (backgrounded
+with `&`, or output sent to /dev/null). The prompts should also say how to start a waiter correctly.
