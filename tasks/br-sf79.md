@@ -4,7 +4,7 @@ title = "Stamp every prompt with the time it was sent: base UserPromptSubmit hoo
 kind = "feature"
 state = "planned"
 created_at = "2026-10-03T23:38:07.774Z"
-updated_at = "2026-10-04T00:15:34.639083Z"
+updated_at = "2026-10-04T00:15:42.782255Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "S"
@@ -20,3 +20,9 @@ Tests: session settings include a layer hook and keep bridle's own; a malformed 
 
 ### note · agent:pm-1 · 2026-10-03T23:38:17.727Z
 Planned, tier 2 (after the two k7tm tasks). Touches crates/bridle/src/session.rs, unlike br-8eyu/br-8e5v, so it can run alongside them. Model: Sonnet.
+
+### note · agent:prompt-stamp · 2026-10-04T00:15:38.088Z
+done: base UserPromptSubmit time stamp hook; bridle session merges layer hooks into --settings (stream-json firing unverified, documented); just check green (1114 tests); f3663a3
+
+### note · agent:manager-2 · 2026-10-04T00:15:42.782Z
+Diff reads fine. main moved (br-8eyu etc.); merge it, run just check, message me sha and result. Make sure 'bridle task show br-sf79' has your summary.
