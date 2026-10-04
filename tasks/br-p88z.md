@@ -4,7 +4,7 @@ title = "Sign bridle with a stable local certificate on Macs, so the firewall's 
 kind = "feature"
 state = "open"
 created_at = "2026-10-04T13:18:34.357Z"
-updated_at = "2026-10-04T22:06:55.352784Z"
+updated_at = "2026-10-04T22:08:39.152979Z"
 created_by = "external:advisor"
 watchers = [
     "external:advisor",
@@ -14,7 +14,7 @@ priority = "high"
 +++
 
 original id: p88z
-docs/tickets/open/sign-bridle-with-a-stable-local-certificate-on-macs-so-the-f-p88z.md
+Build docs/tickets/open/sign-bridle-with-a-stable-local-certificate-on-macs-so-the-f-p88z.md (read it and the task thread: the human calls this critical and wants it next, one worker at a time). Two halves. (A) Code, no human needed: every build on a Mac signs with a named identity (default name 'bridle local signing', overridable by env/config) via codesign --force -s when that identity exists in the keychain, and falls back to today's ad-hoc signature when it does not (CI, other machines); covers just install, daemon self-upgrade builds and worker builds (see .cargo/config.toml link-arg and wherever the ad-hoc codesign happens; the post-build step probably has to be an explicit sign, since a link arg cannot name an identity). Works on arm64 and x86_64. (B) One-time setup the human can run over SSH tonight with no GUI dialog: a just recipe or bridle command that creates a self-signed code-signing certificate in the login keychain using the security CLI, trusts it for code signing, and sets the key partition list (security set-key-partition-list -S apple-tool:,apple:,codesign:) so codesign signs unattended with no keychain prompt, including from launchd-started daemons. It may need the keychain password once; say so in the output. Idempotent. Docs: CLAUDE.md Build configuration, docs/context/adding-a-project.md or the machine setup doc. Acceptance: just check passes; unit-test the identity-exists/absent selection; do not touch the real keychain in tests. Verification on dalek across a self-upgrade is the human's follow-up: end the done summary with the exact commands. Model: Sonnet. Out of scope: Windows/Linux, notarization.
 
 ## Thread
 
