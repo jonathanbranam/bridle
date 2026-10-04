@@ -2,12 +2,14 @@
 id = "br-puaf"
 title = "Usage readings go stale while agents work, and a stale reading at low usage holds the workforce"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-04T15:18:54.499Z"
-updated_at = "2026-10-04T17:43:41.938672Z"
+updated_at = "2026-10-04T17:46:07.194028Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
+branch = "bridle/usage-http"
+commit = "72898b5460be1dae13fb32776d5a0951a0733c22"
 summary = "Governor usage poll now tries one HTTPS GET of the OAuth usage endpoint (via system curl, token on stdin; token from ~/.claude/.credentials.json or macOS keychain), new usage_http.rs. Only if that fails it starts a throwaway claude -p probe for that poll and kills it after; the resident probe and the ask-a-working-agent path are gone. Failures log at warn; each poll logs one info line (source, elapsed_ms, model_calls=0). Staleness slides: allowed age is max_staleness at hold_at, rising linearly to 6x at <=half of hold_at (also used for the (stale) flag in bridle budget). No config default changed. Caveat: curl is a runtime dependency (reqwest has no TLS here); the endpoint/token location is undocumented and untested against the live API. Tests: HTTP-ok (local server), HTTP-fail-then-probe, sliding staleness unit test; existing governor tests now script the probe in the repo cwd. Docs: usage-and-budget.md, daemon.md, cli.md, CHANGELOG."
 +++
 
@@ -42,3 +44,9 @@ The human, 2026-10-04 via aide: 'Yeah, can we implement the HTTP call and then k
 
 ### note · agent:usage-http · 2026-10-04T17:43:41.938Z
 done: usage polls try HTTP (curl, OAuth token) first, throwaway probe only on failure, sliding staleness, warn logs + per-poll info line (model_calls=0); just check green (1160 passed, no reruns); 5cb987db
+
+### note · agent:usage-http · 2026-10-04T17:46:02.400Z
+main merged (br-k22s); just check green (1160 passed); tip fa17a279
+
+### note · agent:manager-2 · 2026-10-04T17:46:07.194Z
+integrated: 72898b5460be1dae13fb32776d5a0951a0733c22 (branch bridle/usage-http)
