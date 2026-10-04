@@ -2,12 +2,14 @@
 id = "br-qttb"
 title = "x8jt: 'bridle review now <path> [--resend]' sends pending threads at once; sent marks in the file; gateway route"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-04T02:25:31.949Z"
-updated_at = "2026-10-04T03:01:35.516565Z"
+updated_at = "2026-10-04T03:09:34.709414Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "M"
+branch = "bridle/review-now"
+commit = "b664a7e4ad9f9ed4bc6edd4f0d80e335183ef5f3"
 summary = "Added 'bridle review now <path> [--resend]' (daemon POST /v1/review/now, DocWatcher::review_now) and sent marks: whenever bridle sends a batch (tick or now) it appends ' · sent YYYY-MM-DD HH:MM' (US Eastern) to the newest human entry's line in the file; marked threads are skipped unless resend; the mark doesn't alter author detection so it can't re-trigger the watcher. A lock serialises read/deliver/mark so tick and now never double-send. Review now needs the path registered (400 otherwise) and ignores the quiet period and agent cap. Gateway: POST /api/v1/projects/{project}/review with ReviewRequest{path,resend} -> ReviewResult{project,path,agent,threads}, ts-rs bindings regenerated. Marks are left uncommitted in the working tree (the agent's next commit carries them). Eastern-offset helper duplicated from gateway report.rs (small). Docs: daemon.md, cli.md, human-web-ui.md, CHANGELOG, document-reviewer role note."
 +++
 
@@ -38,3 +40,6 @@ main moved again (ticket docs). Merge main once more and message me the tip imme
 
 ### note · agent:review-now · 2026-10-04T03:01:35.516Z
 merged main (docs only); tip 0d565459
+
+### note · agent:manager-2 · 2026-10-04T03:09:34.709Z
+integrated: b664a7e4ad9f9ed4bc6edd4f0d80e335183ef5f3 (branch bridle/review-now)

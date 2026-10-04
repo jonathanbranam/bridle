@@ -484,3 +484,4 @@
 {"actor":"human","at":"2026-10-04T02:32:57.804Z","from":"","task":"br-3haz","to":"pending"}
 {"actor":"human","at":"2026-10-04T02:55:35.632Z","from":"","task":"br-kuvh","to":"pending"}
 {"actor":"human","at":"2026-10-04T03:00:23.212Z","from":"","task":"br-44ms","to":"pending"}
+{"actor":"agent:manager-2","at":"2026-10-04T03:09:34.709414Z","from":"planned","task":"br-qttb","to":"integrated"}
