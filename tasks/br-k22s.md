@@ -4,7 +4,7 @@ title = "statusline_test: no-rate-limits test races the startup get_usage poll (
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-04T14:36:31.255Z"
-updated_at = "2026-10-04T17:30:30.360090Z"
+updated_at = "2026-10-04T17:33:47.608161Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 priority = "high"
@@ -29,3 +29,6 @@ done: Properly fixed test by waiting for startup poll, capturing rate_limits bef
 
 ### note · agent:manager-2 · 2026-10-04T17:30:30.360Z
 integrated: 088f8decf1ffff59dbf8b6ff6249e6a1eda7144b (branch bridle/statusline-flake)
+
+### note · agent:manager-2 · 2026-10-04T17:33:47.608Z
+cleanup: removed agent statusline-flake, branch bridle/statusline-flake
