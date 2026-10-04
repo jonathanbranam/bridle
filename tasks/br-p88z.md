@@ -4,7 +4,7 @@ title = "Sign bridle with a stable local certificate on Macs, so the firewall's 
 kind = "feature"
 state = "open"
 created_at = "2026-10-04T13:18:34.357Z"
-updated_at = "2026-10-04T22:05:45.810783Z"
+updated_at = "2026-10-04T22:06:55.352784Z"
 created_by = "external:advisor"
 watchers = [
     "external:advisor",
@@ -32,3 +32,6 @@ Orchestrator: critical per the human (quote above). Raised to high and sent to m
 
 ### note · external:aide · 2026-10-04T22:05:45.810Z
 Confirmed 2026-10-04 evening: the gateway stopped answering from other machines after the 5:09 PM ad-hoc rebuild (it still answered locally, and the firewall listed bridle as allowed). Re-registering the binary over SSH (socketfilterfw --remove / --add / --unblockapp) fixed it. The human: "That last set of three pseudos fixed it."
+
+### note · external:aide · 2026-10-04T22:06:55.352Z
+The human, verbatim (2026-10-04, via aide), declining a third worker: "we can't handle more workers on bridal. It's, it's not going to be productive. So just it just needs to come next. That's all."
