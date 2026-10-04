@@ -63,3 +63,18 @@ session.
 ## Next steps (advisor workflow, retiring, 2026-10-04)
 
 The rename is the human's decision (2026-10-02, "Yeah let's rename it to project manager"), sent to the orchestrator as m-3788, but no implementation task exists: pm-1 dropped this ticket's question task br-8b6c on 2026-10-03 in the k7tm sort ("not approved for work now"). The orchestrator was asked again to file and queue the rename task, with the migration for existing projects reviewed by the human first. The product-partner half waits on sk52.
+
+## The product manager's job, per the human (2026-10-04)
+
+The human, verbatim: "I need all of these things listed out somewhere for follow up; what's the
+best place? I think a todo (human claimed task for me); in the future this should be managed by a
+product manager - their role and resp. is to keep an eye on open tickets; tasks that need follow
+up; and who is responsible so I can ask them: what's the latest with feature xyz or ticket kj3d
+and get an answer."
+
+So the product role (distinct from the renamed project manager, which runs the queue and
+delivery) would own: the open tickets, which need follow-up, who is responsible for each, and
+answering the human's "what's the latest with <feature or ticket>?". Interactive, per the human's
+earlier "an interactive product manager possibly who can talk to me about the plan" (2026-10-03).
+The case that prompted it: the follow-ups from 34bw were tracked by hand in the human to-do
+`br-tkph`, because their question tasks were dropped in the k7tm sort. Not decided; not sent.
