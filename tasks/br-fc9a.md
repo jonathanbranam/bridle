@@ -2,11 +2,13 @@
 id = "br-fc9a"
 title = "bridle session launches with autoMode.environment in its --settings (ufrw, conservative variant)"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-04T13:39:51.820Z"
-updated_at = "2026-10-04T15:15:28.270367Z"
+updated_at = "2026-10-04T15:17:29.892070Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+branch = "bridle/auto-mode-env"
+commit = "d83ce70a613f821a1a837d0ec1982052c87f84e2"
 summary = "Added config::auto_mode_environment (+_for) and [auto_mode] environment in the machine and project files (RawConfig accepts both). Output: $defaults, derived trusted-repo line (clone, wt/, .bridle/state), machine lines, then project lines kept only if they start 'Sensitive:' or 'Prod host:' (others dropped with a warning), so a committed project file can tighten but not trust. session.rs adds autoMode.environment to orchestrator/advisor/aide --settings via with_auto_mode. Daemon spawn --settings and 'bridle auto-mode print' deferred per ufrw. Docs: cli.md, workflow-layers.md, CHANGELOG."
 +++
 
@@ -21,3 +23,9 @@ Acceptance: just check passes. Model: Sonnet. Migration: none (no existing proje
 
 ### note · agent:auto-mode-env · 2026-10-04T15:15:28.270Z
 done: bridle session adds autoMode.environment ($defaults, derived workspace line, machine lines, project lines only if Sensitive:/Prod host:); just check green (1154 passed, after 2 load-timing reruns); cbba3206
+
+### note · agent:auto-mode-env · 2026-10-04T15:17:23.676Z
+done: merged main, just check green (1154 passed); tip cdaf251e
+
+### note · agent:manager-2 · 2026-10-04T15:17:29.892Z
+integrated: d83ce70a613f821a1a837d0ec1982052c87f84e2 (branch bridle/auto-mode-env)
