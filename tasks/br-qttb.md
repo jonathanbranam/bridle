@@ -4,7 +4,7 @@ title = "x8jt: 'bridle review now <path> [--resend]' sends pending threads at on
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-04T02:25:31.949Z"
-updated_at = "2026-10-04T03:09:34.709414Z"
+updated_at = "2026-10-04T03:10:52.733227Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "M"
@@ -43,3 +43,6 @@ merged main (docs only); tip 0d565459
 
 ### note · agent:manager-2 · 2026-10-04T03:09:34.709Z
 integrated: b664a7e4ad9f9ed4bc6edd4f0d80e335183ef5f3 (branch bridle/review-now)
+
+### note · agent:manager-2 · 2026-10-04T03:10:52.733Z
+cleanup: removed agent review-now, branch bridle/review-now
