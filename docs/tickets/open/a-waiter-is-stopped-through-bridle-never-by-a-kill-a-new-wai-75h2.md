@@ -100,13 +100,29 @@ for the rest of the human's ask.
 P3 first. It's small, needs no daemon change, and stops a third occurrence on its own. Then P1
 with P2 (one daemon change: track open waits by session), then P5 and P6.
 
-## Questions
+## Decided (the human, 2026-10-04 ~7:40 PM ET, approving)
 
-- **Q1.** The command's name: `bridle agent wake --stop` (next to the wait it ends), or `bridle
-  waiter stop` (the human's suggestion), or both? Recommendation: `--stop`. It keeps waiting and
-  stopping in one place, and the identity argument already means the same thing there.
-- **Q2.** Deny plain `kill` to interactive sessions as well? They don't need it (`TaskStop`), but
-  the human sometimes asks a session to stop something by hand. Recommendation: no, for now. P3
-  removes the dangerous forms.
-- **Q3.** Is P5 worth having alongside P1 and P2? Recommendation: yes. It's a few lines, and it
-  turns a lost handle into an exact pid instead of a search.
+The human, verbatim, to the advisor:
+
+> Yeah, for 75 Hotel 2, I think I agree with 1. I just don't see any reason for `kill` or `kill
+> -all`, and I agree with 2. That seems good. We need to explain that behavior clearly in the rule,
+> and I also think 3 is a great idea, something to add. I think the syntax there is fine, and I don't
+> see a problem with 4 either. I think it's great for traceability.
+>
+> [...]
+>
+> Doesn't seem like we need to block plain kill for interactive sessions or anything like that.
+>
+> I approve that ticket with those changes.
+
+The human's 1 to 4 are the advisor's summary of this ticket, in the Order above: 1 is P3, 2 is P1, 3 is
+P2 and 4 is P5.
+
+- **P3 approved:** deny `pkill` and `killall` to every role.
+- **P1 approved, with a change:** the rule must explain the replacement clearly. `no-kill-by-name`
+  (and the waiting sections in P6) say that a new wait from the same session replaces the old one,
+  and that this is matched by session, not identity. They also say what the old waiter prints and
+  its exit code, and how to stop a waiter without replacing it (P2).
+- **P2 approved, as `bridle agent wake --stop`** (Q1).
+- **P5 approved,** for traceability (Q3).
+- **Q2: no.** Plain `kill <pid>` isn't blocked, for interactive sessions or anyone else.
