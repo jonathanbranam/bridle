@@ -4,7 +4,7 @@ title = "bridle session launches with autoMode.environment in its --settings (uf
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-04T13:39:51.820Z"
-updated_at = "2026-10-04T15:17:29.892070Z"
+updated_at = "2026-10-04T15:22:04.973594Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 branch = "bridle/auto-mode-env"
@@ -29,3 +29,6 @@ done: merged main, just check green (1154 passed); tip cdaf251e
 
 ### note · agent:manager-2 · 2026-10-04T15:17:29.892Z
 integrated: d83ce70a613f821a1a837d0ec1982052c87f84e2 (branch bridle/auto-mode-env)
+
+### note · agent:manager-2 · 2026-10-04T15:22:04.973Z
+cleanup: removed agent auto-mode-env, branch bridle/auto-mode-env
