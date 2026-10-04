@@ -4,10 +4,11 @@ title = "Stamp every prompt with the time it was sent: base UserPromptSubmit hoo
 kind = "feature"
 state = "planned"
 created_at = "2026-10-03T23:38:07.774Z"
-updated_at = "2026-10-03T23:38:17.727974Z"
+updated_at = "2026-10-04T00:15:34.639083Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "S"
+summary = "Added workflow/base/hooks/UserPromptSubmit.json (date stamp 'Message sent: ...'); bridle session (session.rs) now resolves Config::layer_hooks for the cwd project and merges it into its --settings via with_layer_hooks (arrays concatenate, bridle's own first; bad files already skipped by layer_hooks). Test: merge keeps bridle's hooks and lean settings. Docs: workflow-layers.md, cli.md, CHANGELOG. Caveat: UserPromptSubmit firing for stream-json input in spawned agents is unverified (documented); no live run done."
 +++
 
 Human-approved, asked directly of the orchestrator (2026-10-03, ~7:45 PM ET): "We need to inject the time when I send the message because he's tracking the times very accurately." Origin: the NUC orchestrator (meta-notes m-0288): the human wants a UserPromptSubmit hook for every role: date '+Message sent: %a %Y-%m-%d %H:%M %Z'.
