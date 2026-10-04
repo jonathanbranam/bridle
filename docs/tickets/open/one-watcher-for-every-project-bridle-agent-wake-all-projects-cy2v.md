@@ -7,7 +7,7 @@ repos: [bridle]
 changes: []
 specs: []
 needs: []
-see: [interactive-sessions-context-for-all-daemon-decided-wakes-re-jttf, a-life-assistant-agent-on-the-notes-repo-phyy]
+see: [interactive-sessions-context-for-all-daemon-decided-wakes-re-jttf, a-life-assistant-agent-on-the-notes-repo-phyy, daemons-deliver-mail-to-each-other-across-machines-store-and-3haz]
 tasks: [br-1ddd]
 ---
 
@@ -55,3 +55,11 @@ federated wake service.
 - **Since rmpq the fan-out can lose messages** (a second daemon's reply marks them read, then the
   CLI drops it): see [[read-on-delivery-can-lose-messages-marked-read-before-the-re-k8jn|k8jn]].
   Settle that before building this.
+
+## Likely superseded by 3haz (2026-10-04)
+
+The human approved (2026-10-04, via the advisor) daemons forwarding each principal's messages to
+its home daemon, with every wake reason sent as a message, so one waiter per principal is enough:
+"Great yes. Cutting down waiters would be great." See
+[[daemons-deliver-mail-to-each-other-across-machines-store-and-3haz|3haz]]. Don't build this
+fan-out; resolve it when 3haz lands.

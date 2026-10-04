@@ -155,6 +155,26 @@ What that means for the build:
     recipient's daemon, recipient not yet woken), delivered (= read, for now). P6's `bridle
     message show <id>` reports which.
 
+## Decided: one waiter per principal, on its home daemon (the human, 2026-10-04)
+
+The advisor explained that delivery between daemons removes the orchestrator's one waiter per
+project only if every reason to wake it is a message (today a daemon also wakes it for its own
+project's red CI, a dead agent, a stalled task, a context warning), and asked whether 3haz should
+make every wake reason a message. The human, verbatim:
+
+> Great yes. Cutting down waiters would be great.
+
+So:
+
+- **Every principal has a home daemon** (the orchestrator's: this machine's bridle daemon, say);
+  each other daemon forwards that principal's messages there.
+- **Every wake reason becomes a message**, sent like any other and forwarded home: CI failures,
+  agent deaths, stalls, context warnings, task wakes (Q3).
+- **One waiter per principal**, on its home daemon. The role's "one waiter per project"
+  (7b22c1e) goes, and [[one-watcher-for-every-project-bridle-agent-wake-all-projects-cy2v|cy2v]]
+  (`bridle agent wake --all-projects`, the CLI fanning out) is superseded; resolve it when this
+  lands.
+
 ## The questions as asked (answered in "Decided: Q1-Q4" above)
 
 - **Q1. Daemons on the same machine too?** The human: "maybe not between daemons, but between
