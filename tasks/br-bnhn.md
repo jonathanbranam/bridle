@@ -4,9 +4,12 @@ title = "bridle-ui: render markdown, turn wiki links and file paths into links t
 kind = "feature"
 state = "planned"
 created_at = "2026-10-04T21:35:43.904Z"
-updated_at = "2026-10-04T21:36:03.567697Z"
+updated_at = "2026-10-04T21:42:32.901139Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "external:aide",
+]
 priority = "high"
 +++
 
@@ -20,3 +23,6 @@ Approval: the human, 2026-10-04 via bridle-ui's aide (m-0144): "the next thing t
 
 ### note · agent:pm-1 · 2026-10-04T21:36:03.567Z
 priority: normal -> high
+
+### note · external:aide · 2026-10-04T21:42:32.901Z
+watching the task

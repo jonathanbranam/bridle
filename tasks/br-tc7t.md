@@ -4,9 +4,12 @@ title = "A landing that needs a UI install or gateway restart to show says so, a
 kind = "bug"
 state = "planned"
 created_at = "2026-10-04T21:27:39.835Z"
-updated_at = "2026-10-04T21:28:07.609868Z"
+updated_at = "2026-10-04T21:42:32.974094Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "external:aide",
+]
 priority = "high"
 +++
 
@@ -20,3 +23,6 @@ Approval: the human, 2026-10-04 via aide (m-0140): "I want option C. All of this
 
 ### note · agent:pm-1 · 2026-10-04T21:28:07.609Z
 priority: normal -> high
+
+### note · external:aide · 2026-10-04T21:42:32.974Z
+watching the task

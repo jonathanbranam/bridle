@@ -4,9 +4,12 @@ title = "The gateway runs detached and keeps itself current, like the daemon, on
 kind = "feature"
 state = "planned"
 created_at = "2026-10-04T21:27:39.949Z"
-updated_at = "2026-10-04T21:28:07.474265Z"
+updated_at = "2026-10-04T21:42:33.030508Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "external:aide",
+]
 priority = "high"
 +++
 
@@ -20,3 +23,6 @@ Approval: the human, 2026-10-04 via aide (m-0141): "let's get the work spec'd ou
 
 ### note · agent:pm-1 · 2026-10-04T21:28:07.474Z
 priority: normal -> high
+
+### note · external:aide · 2026-10-04T21:42:33.030Z
+watching the task
