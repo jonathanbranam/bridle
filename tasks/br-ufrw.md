@@ -2,11 +2,14 @@
 id = "br-ufrw"
 title = "Auto mode's classifier context per machine for bridle projects: who writes autoMode.environment, and how it stays current"
 kind = "question"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-04T12:23:53.432Z"
-updated_at = "2026-10-04T12:24:07.829147Z"
+updated_at = "2026-10-04T12:32:51.922706Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+branch = "bridle/automode-study"
+commit = "fcb52264d78d84bfb2396417286f7b5735a152af"
+summary = "Added a Recommendation to ticket ufrw: launch `bridle session` with a generated `--settings` autoMode.environment (derived workspace paths + machine `~/.bridle/config.toml` + project `[auto_mode]`), don't write ~/.claude/settings.json (optional print-only command for plain claude). Finding: spawned agents run dontAsk/acceptEdits with --setting-sources project, so only the human's interactive sessions are affected. Smallest slice, files, rejected alternatives, migration, and unverified points (no live run) are in the ticket. Recommend conservative variant: project config may only tighten, trust lines from machine file."
 +++
 
 original id: ufrw
@@ -18,3 +21,9 @@ Acceptance: the ticket has the section; bridle ticket check passes. Model: Sonne
 
 ### note · external:orchestrator · 2026-10-04T12:23:59.255Z
 The human 2026-10-04, relayed by track-web-f5: 'investigate how to configure Claude Code auto-mode settings for bridle projects on a per-machine basis.'
+
+### note · agent:automode-study · 2026-10-04T12:32:46.254Z
+done: Recommendation added to ufrw (per-launch --settings in bridle session, no global-file writes; spawned agents don't use auto mode as built); docs only; d2d5c27f
+
+### note · agent:manager-2 · 2026-10-04T12:32:51.922Z
+integrated: fcb52264d78d84bfb2396417286f7b5735a152af (branch bridle/automode-study)
