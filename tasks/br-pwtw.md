@@ -4,7 +4,7 @@ title = "br-5paw follow-up: gateway document PUT commits on main too"
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-04T01:15:10.719Z"
-updated_at = "2026-10-04T01:29:31.499065Z"
+updated_at = "2026-10-04T01:30:47.426971Z"
 created_by = "agent:manager-2"
 watchers = ["agent:manager-2"]
 size = "S"
@@ -22,3 +22,6 @@ done: PUT commits on any branch, detached HEAD still refused; tests, docs, CHANG
 
 ### note · agent:manager-2 · 2026-10-04T01:29:31.499Z
 integrated: 9d0f0f60b9ff5506c5a52cca4a02ce064b43fade (branch bridle/doc-gateway2)
+
+### note · agent:manager-2 · 2026-10-04T01:30:47.426Z
+cleanup: removed agent doc-gateway2, branch bridle/doc-gateway2
