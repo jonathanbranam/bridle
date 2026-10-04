@@ -20,8 +20,9 @@ phone; dictated):
 > Hmm... highlighting does work on mobile. The native highlight probably doesn't trigger the same
 > as on desktop.
 
-(The aide read "does work" as "doesn't work", given the second sentence. The human hasn't yet
-confirmed that reading.)
+and, confirming:
+
+> Right doesn't work on mobile
 
 ## Context
 
