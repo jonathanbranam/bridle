@@ -8,7 +8,7 @@ changes: []
 specs: []
 needs: []
 see: [s6cj, essy]
-tasks: []
+tasks: [br-7sd9]
 ---
 
 ## The ask
@@ -63,3 +63,7 @@ split into [[bridle-ui-a-tasks-page-every-project-s-open-tasks-with-statu-s6cj|s
   not run work" (`docs/design/human-web-ui.md`, section 2). Read-only views of agents and status
   keep that property (no control), but the doc needs updating to the human's ask.
 - Queued after the work already in flight, as for the Tasks page.
+
+## Work
+
+Gateway routes: br-7sd9 (bridle). UI: bridle-ui task ui-ng82, started once br-7sd9 lands. Decision (orchestrator, 2026-10-04, on the human's "resolve any questions"): the gateway may expose read-only views of tasks, agents and status, still with no agent control; br-7sd9 updates docs/design/human-web-ui.md to record it.

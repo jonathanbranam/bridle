@@ -8,7 +8,7 @@ changes: []
 specs: []
 needs: []
 see: [7sd9, a3yd, bnhn, j28f, essy]
-tasks: []
+tasks: [br-s6cj]
 ---
 
 ## The ask
@@ -67,3 +67,7 @@ split into this ticket, the tasks, and [[bridle-ui-a-system-page-each-project-s-
   ui-pmkd does ([[bridle-ui-render-front-matter-and-auto-link-urls-file-paths-a3yd|a3yd]]).
 - The human asked that this be queued after the work already in flight (p88z, bek3, tc7t, bnhn,
   a3yd/ui-pmkd).
+
+## Work
+
+Gateway routes: br-s6cj (bridle). UI: bridle-ui task ui-umaq, started once br-s6cj lands. Decision (orchestrator, 2026-10-04, on the human's "resolve any questions"): the gateway may expose read-only views of tasks, agents and status, still with no agent control; br-s6cj updates docs/design/human-web-ui.md to record it.
