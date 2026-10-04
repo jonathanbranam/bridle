@@ -581,9 +581,14 @@ fn a_repo_not_yet_served_is_named_after_its_folder() {
     }
 }
 
-/// `daemon systemd` writes only on Linux; elsewhere it refuses, naming no project.
+/// `daemon systemd` writes only on Linux and `daemon launchd` only on macOS; elsewhere they
+/// refuse, naming no project.
 fn runs_here(leaf: &[String]) -> bool {
-    cfg!(target_os = "linux") || leaf_name(leaf) != "daemon systemd install"
+    match leaf_name(leaf).as_str() {
+        "daemon systemd install" => cfg!(target_os = "linux"),
+        "daemon launchd install" => cfg!(target_os = "macos"),
+        _ => true,
+    }
 }
 
 /// What a naming command wrote or printed: its output, plus the ticket it minted.
