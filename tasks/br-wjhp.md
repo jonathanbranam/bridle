@@ -4,10 +4,11 @@ title = "Document review can't start an agent for a real ticket: doc-<stem> exce
 kind = "bug"
 state = "planned"
 created_at = "2026-10-04T15:00:20.270Z"
-updated_at = "2026-10-04T15:00:52.070777Z"
+updated_at = "2026-10-04T16:02:10.232797Z"
 created_by = "external:advisor/doc-review"
 watchers = ["external:advisor/doc-review"]
 priority = "high"
+summary = "doc_watch::agent_name now names a ticket's document agent doc-<id> (stem ends -<4-char id>), and other files doc-<slug cut>-<6 hex of sha256(path)>, always within 40 chars. Tests cover a real ticket stem, long colliding stems, short stems; two existing tests that hardcoded old names now call agent_name. Docs: daemon.md Document review, CHANGELOG. Not done: log-once-per-path (needs watcher state; not cheap)."
 +++
 
 original id: wjhp
