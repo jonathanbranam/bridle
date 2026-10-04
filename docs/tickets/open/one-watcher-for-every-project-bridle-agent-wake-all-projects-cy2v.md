@@ -61,5 +61,6 @@ federated wake service.
 The human approved (2026-10-04, via the advisor) daemons forwarding each principal's messages to
 its home daemon, with every wake reason sent as a message, so one waiter per principal is enough:
 "Great yes. Cutting down waiters would be great." See
-[[daemons-deliver-mail-to-each-other-across-machines-store-and-3haz|3haz]]. Don't build this
-fan-out; resolve it when 3haz lands.
+[[daemons-deliver-mail-to-each-other-across-machines-store-and-3haz|3haz]]. Whether to build
+this fan-out meanwhile isn't decided: "Orch is special today. I'm not sure. . But other agents
+only wake on messages." (the orchestrator is the only one with wakes that aren't messages).

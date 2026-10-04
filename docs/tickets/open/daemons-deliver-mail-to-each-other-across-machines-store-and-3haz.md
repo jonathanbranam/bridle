@@ -175,6 +175,13 @@ So:
   (`bridle agent wake --all-projects`, the CLI fanning out) is superseded; resolve it when this
   lands.
 
+Asked whether to hold cy2v's planned task (br-1ddd) meanwhile, the human, verbatim:
+
+> Orch is special today. I'm not sure. . But other agents only wake on messages.
+
+So the non-message wake reasons are the orchestrator's alone: every other agent wakes only on
+messages, and 3haz's forwarding is all they need. br-1ddd is left as it is (not decided).
+
 ## The questions as asked (answered in "Decided: Q1-Q4" above)
 
 - **Q1. Daemons on the same machine too?** The human: "maybe not between daemons, but between
