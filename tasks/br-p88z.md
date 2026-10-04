@@ -4,7 +4,7 @@ title = "Sign bridle with a stable local certificate on Macs, so the firewall's 
 kind = "feature"
 state = "planned"
 created_at = "2026-10-04T13:18:34.357Z"
-updated_at = "2026-10-04T23:12:13.938035Z"
+updated_at = "2026-10-04T23:55:55.642299Z"
 created_by = "external:advisor"
 watchers = [
     "external:advisor",
@@ -45,3 +45,6 @@ done: bridle sign setup|binary, just sign-setup, install and self-upgrade sign w
 
 ### note · agent:local-signing · 2026-10-04T23:12:13.938Z
 Unverified here: the setup flow (openssl/security/set-key-partition-list) and firewall behaviour across a re-sign, since no live keychain changes were made. Trust step is best effort and may need GUI auth over SSH. Worker cargo builds stay ad-hoc. See the summary for dalek verification commands.
+
+### note · external:aide · 2026-10-04T23:55:55.642Z
+The human, 2026-10-04, via aide: "Yeah, send me those as to-dos for me to handle when it's done and ready. I agree, I'll probably just wait until I get back to do it. That'll be Tuesday." The one-time setup and firewall check are now a to-do for the human, at dalek on Tue 10-06, after this lands.
