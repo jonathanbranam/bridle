@@ -67,7 +67,19 @@ commits nothing. Refused: a path with `..`, an absolute path, `.git`, or one tha
 a non-text file (NUL or invalid UTF-8) or over 2 MB (415); and any write while the working
 tree is on a detached HEAD (403): the gateway commits on whatever branch is checked out in the
 project's working tree, including `main`. This machine's
-projects only (the repo comes from the daemon's registry entry). No browsing and no search.
+projects only (the repo comes from the daemon's registry entry).
+
+**Document search and auto-review (br-jrm2, ticket jrm2).** `GET /api/v1/projects/{project}/documents?q=`
+returns `DocumentMatches {project, paths}`: up to 30 `.md` paths under `docs/` containing `q`
+(case-insensitive), best first: a ticket whose ID is exactly `q` (a bare `x8jt` finds
+`docs/tickets/*/<slug>-x8jt.md`), then open tickets, then open spikes, then the rest. An empty `q`
+lists the open tickets. Only `docs/` for now; widening it is later. After a `PUT` the gateway asks
+the daemon to put the path under review if the saved text has a pending thread (`POST
+/v1/review/add` with `only_if_pending`, the human's token, as for review now), so a comment saved
+from the UI needs no `bridle review add`. Adding a path already under review changes nothing, a
+daemon that can't be reached is logged and doesn't fail the save, and a comment added by hand
+still needs `bridle review add` (nothing scans the repo for them; whether anything should is
+undecided). The UI side (project dropdown, search box, margin layout) is bridle-ui's.
 
 **Review now (br-qttb, ticket x8jt).** `POST /api/v1/projects/{project}/review` with
 `ReviewRequest {path, resend}` (`resend` defaults to false) asks the project's daemon to send the

@@ -11,7 +11,7 @@ use std::path::{Component, Path as FsPath, PathBuf};
 use std::process::Command;
 
 use axum::Json;
-use axum::extract::Path;
+use axum::extract::{Path, Query};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use serde::{Deserialize, Serialize};
@@ -19,7 +19,11 @@ use serde_json::json;
 use sha2::{Digest, Sha256};
 use ts_rs::TS;
 
-use crate::discovery::current_targets;
+use bridle_api::client::Client;
+use bridle_api::types::ReviewAddRequest;
+
+use crate::actions::resolve as resolve_daemon;
+use crate::discovery::{PROBE_TIMEOUT, current_targets};
 
 /// Bigger than any document worth reviewing in a browser.
 const MAX_BYTES: usize = 2 * 1024 * 1024;
@@ -104,8 +108,51 @@ pub async fn write_route(
     Json(req): Json<DocumentWrite>,
 ) -> Result<Json<DocumentSaved>, DocError> {
     let repo = repo_of(&project).await?;
-    let saved = blocking(move || write_document(&repo, &project, &path, &req)).await?;
+    let (p, rel) = (project.clone(), path.clone());
+    let saved = blocking(move || write_document(&repo, &p, &rel, &req)).await?;
+    // A comment saved from the UI puts the document under review (jrm2). The save is already
+    // committed, so a daemon that can't be reached is logged, not an error.
+    if let Err(e) = add_to_review(&project, &path).await {
+        tracing::warn!("{project}: not added to review: {path}: {e}");
+    }
     Ok(Json(saved))
+}
+
+/// Asks the project's daemon to put the document under review if it has a pending thread.
+async fn add_to_review(project: &str, path: &str) -> Result<(), String> {
+    let (url, token) = resolve_daemon(project).await.map_err(|e| e.to_string())?;
+    Client::new_with_timeout(url, Some(token), PROBE_TIMEOUT * 5)
+        .review_add(&ReviewAddRequest {
+            path: path.to_string(),
+            only_if_pending: true,
+        })
+        .await
+        .map(|_| ())
+        .map_err(|e| e.to_string())
+}
+
+/// What `GET .../documents?q=` returns: repo-relative paths, best first.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
+pub struct DocumentMatches {
+    pub project: String,
+    pub paths: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SearchQuery {
+    #[serde(default)]
+    q: String,
+}
+
+/// `GET /api/v1/projects/{project}/documents?q=`: the document picker's search. Matches the
+/// markdown under `docs/`; open tickets come first, and a bare ticket ID finds its ticket.
+pub async fn search_route(
+    Path(project): Path<String>,
+    Query(query): Query<SearchQuery>,
+) -> Result<Json<DocumentMatches>, DocError> {
+    let repo = repo_of(&project).await?;
+    let paths = blocking(move || Ok(search_documents(&repo, &query.q))).await?;
+    Ok(Json(DocumentMatches { project, paths }))
 }
 
 async fn blocking<T: Send + 'static>(
@@ -190,6 +237,66 @@ fn git(repo: &FsPath, args: &[&str]) -> Result<String, DocError> {
 
 fn branch_of(repo: &FsPath) -> Result<String, DocError> {
     git(repo, &["rev-parse", "--abbrev-ref", "HEAD"])
+}
+
+/// Most paths a search returns.
+const MAX_MATCHES: usize = 30;
+
+/// Markdown files under `docs/` whose path contains `q` (case-insensitive), best first: a ticket
+/// whose ID is exactly `q`, then open tickets, then open spikes, then the rest, each alphabetical.
+/// An empty `q` lists the open tickets.
+pub fn search_documents(repo: &FsPath, q: &str) -> Vec<String> {
+    let q = q.trim().to_lowercase();
+    let mut found = Vec::new();
+    collect_markdown(repo, &repo.join("docs"), &mut found);
+    let mut ranked: Vec<(u8, String)> = found
+        .into_iter()
+        .filter(|p| {
+            if q.is_empty() {
+                p.starts_with("docs/tickets/open/")
+            } else {
+                p.to_lowercase().contains(&q)
+            }
+        })
+        .map(|p| {
+            let stem = p.rsplit('/').next().unwrap_or("").trim_end_matches(".md");
+            let rank = if !q.is_empty() && stem.to_lowercase().ends_with(&format!("-{q}")) {
+                0
+            } else if p.starts_with("docs/tickets/open/") {
+                1
+            } else if p.starts_with("docs/spikes/open/") {
+                2
+            } else {
+                3
+            };
+            (rank, p)
+        })
+        .collect();
+    ranked.sort();
+    ranked
+        .into_iter()
+        .take(MAX_MATCHES)
+        .map(|(_, p)| p)
+        .collect()
+}
+
+/// Repo-relative paths of the `.md` files under `dir`, not following symlinks.
+fn collect_markdown(repo: &FsPath, dir: &FsPath, out: &mut Vec<String>) {
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return;
+    };
+    for e in entries.flatten() {
+        let path = e.path();
+        match e.file_type() {
+            Ok(t) if t.is_dir() => collect_markdown(repo, &path, out),
+            Ok(t) if t.is_file() && path.extension().is_some_and(|x| x == "md") => {
+                if let Ok(rel) = path.strip_prefix(repo) {
+                    out.push(rel.to_string_lossy().into_owned());
+                }
+            }
+            _ => {}
+        }
+    }
 }
 
 pub fn read_document(repo: &FsPath, project: &str, rel: &str) -> Result<Document, DocError> {
@@ -363,6 +470,42 @@ mod tests {
             read_document(d.path(), "p", "nope.md"),
             Err(DocError::NotFound(_))
         ));
+    }
+
+    #[test]
+    fn search_ranks_the_id_then_open_tickets_then_the_rest() {
+        let d = repo("review");
+        for f in [
+            "docs/tickets/open/alpha-x8jt.md",
+            "docs/tickets/open/x8jt-guide-zzzz.md",
+            "docs/tickets/resolved/old-x8jt.md",
+            "docs/spikes/open/spike-x8jt-notes.md",
+            "docs/design/x8jt.md",
+            "docs/tickets/open/beta-b2b2.md",
+            "docs/notes.txt",
+        ] {
+            std::fs::create_dir_all(d.path().join(f).parent().expect("parent")).expect("mkdir");
+            std::fs::write(d.path().join(f), "x").expect("write");
+        }
+        assert_eq!(
+            search_documents(d.path(), "X8JT"),
+            [
+                "docs/tickets/open/alpha-x8jt.md",
+                "docs/tickets/resolved/old-x8jt.md",
+                "docs/tickets/open/x8jt-guide-zzzz.md",
+                "docs/spikes/open/spike-x8jt-notes.md",
+                "docs/design/x8jt.md",
+            ]
+        );
+        assert_eq!(
+            search_documents(d.path(), ""),
+            [
+                "docs/tickets/open/alpha-x8jt.md",
+                "docs/tickets/open/beta-b2b2.md",
+                "docs/tickets/open/x8jt-guide-zzzz.md",
+            ]
+        );
+        assert!(search_documents(d.path(), "nothing").is_empty());
     }
 
     #[test]

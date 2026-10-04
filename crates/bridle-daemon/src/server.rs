@@ -105,6 +105,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/sessions/end", post(end_session))
         .route("/v1/sessions/keep", post(keep_session))
         .route("/v1/review/now", post(review_now))
+        .route("/v1/review/add", post(review_add))
         .route("/v1/handovers", get(list_handovers).post(write_handover))
         .route("/v1/handovers/latest", get(latest_handover))
         .route("/v1/handovers/{id}", get(get_handover))
@@ -610,6 +611,21 @@ async fn review_now(
         path: req.path,
         agent: r.agent,
         threads: r.threads,
+    }))
+}
+
+/// `bridle review add`, for the gateway: a UI comment puts its document under review.
+async fn review_add(
+    State(state): State<AppState>,
+    Json(req): Json<bridle_api::types::ReviewAddRequest>,
+) -> Result<Json<bridle_api::types::ReviewAddResponse>, ApiError> {
+    let under_review = state
+        .doc_watch
+        .add(&req.path, req.only_if_pending)
+        .map_err(ApiError::bad_request)?;
+    Ok(Json(bridle_api::types::ReviewAddResponse {
+        path: req.path,
+        under_review,
     }))
 }
 

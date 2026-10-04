@@ -200,6 +200,23 @@ pub struct ReviewNowResponse {
     pub threads: usize,
 }
 
+/// `POST /v1/review/add`: put a document under review, like `bridle review add`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReviewAddRequest {
+    /// Repo-relative path of an existing file.
+    pub path: String,
+    /// Add it only if it has a pending comment thread (the gateway's save of a UI comment).
+    #[serde(default)]
+    pub only_if_pending: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReviewAddResponse {
+    pub path: String,
+    /// Whether the document is under review now.
+    pub under_review: bool,
+}
+
 /// One registered interactive session.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SessionInfo {

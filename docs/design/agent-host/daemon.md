@@ -130,6 +130,9 @@ the marks. `POST /v1/review/now` (`ReviewNowRequest {path, resend}` → `{path, 
 `bridle review now <path> [--resend]`; the gateway's `POST /api/v1/projects/{project}/review`)
 sends the document's unmarked pending threads at once (all pending ones with `resend`), skipping
 the quiet period and the agent cap, then marks them (a resent thread's old mark is replaced).
+`POST /v1/review/add` (`ReviewAddRequest {path, only_if_pending}` → `{path, under_review}`) is
+`bridle review add` over the API, for the gateway: the path must be a plain repo-relative existing
+file (400 otherwise), and with `only_if_pending` a document with no pending thread is left alone.
 `threads: 0` means nothing was unsent. The path must be one registered for review (400
 otherwise). A tick and a review-now never send the same thread twice (one lock around read,
 deliver and mark). Design: x8jt.

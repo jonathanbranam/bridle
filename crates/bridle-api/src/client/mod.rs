@@ -19,12 +19,13 @@ use crate::types::{
     MessageQuery, NewEdgeRequest, NewTaskRequest, NoteTaskRequest, OpenQuestion,
     OrchestratorWakeQuery, PortAllocation, PrincipalWakeQuery, PrincipalWakeResponse, ProbeRequest,
     ProbeResult, Queue, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest,
-    RestartRequest, RestartResponse, ResumeRequest, ReviewNowRequest, ReviewNowResponse,
-    SendRequest, SessionEnd, SessionInfo, SessionKeep, SessionRegister, SetImpactRequest,
-    SetKindRequest, SetPriorityRequest, SetQueueRequest, SetSummaryRequest, ShutdownResponse,
-    SkipSettleRequest, SpawnRequest, Status, StatusLineReport, StopRequest, SubmitTaskRequest,
-    Task, TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery,
-    Usage, UsageBreakdown, UsageBreakdownQuery, WakeResponse, WriteHandoverRequest,
+    RestartRequest, RestartResponse, ResumeRequest, ReviewAddRequest, ReviewAddResponse,
+    ReviewNowRequest, ReviewNowResponse, SendRequest, SessionEnd, SessionInfo, SessionKeep,
+    SessionRegister, SetImpactRequest, SetKindRequest, SetPriorityRequest, SetQueueRequest,
+    SetSummaryRequest, ShutdownResponse, SkipSettleRequest, SpawnRequest, Status, StatusLineReport,
+    StopRequest, SubmitTaskRequest, Task, TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo,
+    TranscriptLine, TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery, WakeResponse,
+    WriteHandoverRequest,
 };
 
 #[derive(Debug, Error)]
@@ -469,6 +470,14 @@ impl Client {
         req: &ReviewNowRequest,
     ) -> Result<ReviewNowResponse, ClientError> {
         self.post_json(&["v1", "review", "now"], req).await
+    }
+
+    /// `POST /v1/review/add`.
+    pub async fn review_add(
+        &self,
+        req: &ReviewAddRequest,
+    ) -> Result<ReviewAddResponse, ClientError> {
+        self.post_json(&["v1", "review", "add"], req).await
     }
 
     /// `GET /v1/sessions`.

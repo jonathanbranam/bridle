@@ -371,6 +371,27 @@ impl DocWatcher {
         }
     }
 
+    /// `bridle review add`. With `only_if_pending`, a document with no pending thread is left
+    /// as it is. Adding one already under review changes nothing. Returns whether the document
+    /// is under review afterwards.
+    pub fn add(&self, path: &str, only_if_pending: bool) -> Result<bool, String> {
+        if Path::new(path)
+            .components()
+            .any(|c| !matches!(c, std::path::Component::Normal(_)))
+        {
+            return Err(format!("{path} is not a path inside the repo"));
+        }
+        let file = self.repo.join(path);
+        let text = std::fs::read_to_string(&file)
+            .map_err(|e| format!("{path} is not a readable file under the repo: {e}"))?;
+        if only_if_pending && pending_threads(&text, false).is_empty() {
+            return Ok(read_registry(&self.repo).iter().any(|p| p == path));
+        }
+        set_registered(&self.repo, path, true)
+            .map_err(|e| format!("writing the review list: {e}"))?;
+        Ok(true)
+    }
+
     /// `bridle review now`: sends the document's pending threads at once, skipping the quiet
     /// period (and the agent cap: the human asked). Threads already marked sent stay out unless
     /// `resend`.
