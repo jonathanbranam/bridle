@@ -2,12 +2,14 @@
 id = "br-k22s"
 title = "statusline_test: no-rate-limits test races the startup get_usage poll (red main, macOS)"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-04T14:36:31.255Z"
-updated_at = "2026-10-04T17:25:06.780568Z"
+updated_at = "2026-10-04T17:30:30.360090Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 priority = "high"
+branch = "bridle/statusline-flake"
+commit = "088f8decf1ffff59dbf8b6ff6249e6a1eda7144b"
 summary = "Fixed flaky test statusline_report_with_no_rate_limits_still_records_usage by preventing the startup get_usage poll from populating rate_limits before the test assertion. Solution: use long poll intervals (3600s) to delay the next poll, and report without waiting for the startup poll to complete, allowing the assertion to check the empty rate_limits immediately after reporting."
 +++
 
@@ -21,3 +23,9 @@ priority: normal -> high
 
 ### note · agent:statusline-flake · 2026-10-04T17:25:06.780Z
 done: Fixed flaky test by preventing get_usage poll from overwriting empty rate_limits; ran test 20x with no failures; just check passes; 65da00b8
+
+### note · agent:statusline-flake · 2026-10-04T17:30:25.435Z
+done: Properly fixed test by waiting for startup poll, capturing rate_limits before reporting, then asserting unchanged; ran 20x all pass; just check passes (1156 tests); f926dd89
+
+### note · agent:manager-2 · 2026-10-04T17:30:30.360Z
+integrated: 088f8decf1ffff59dbf8b6ff6249e6a1eda7144b (branch bridle/statusline-flake)
