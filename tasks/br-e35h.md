@@ -2,11 +2,13 @@
 id = "br-e35h"
 title = "Interactive sessions survive a daemon restart (the registry is lost on every self-upgrade)"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-04T02:29:11.334Z"
-updated_at = "2026-10-04T03:10:59.185204Z"
+updated_at = "2026-10-04T03:14:41.304861Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+branch = "bridle/sessions-persist"
+commit = "7ab2ab8b4a235a42b1b1e4322fd3043142ea16fa"
 summary = "The session registry is written to sessions.json in the daemon's own state directory (beside bridle.db; per daemon, since daemons share $BRIDLE_HOME) on every change (register, end, keep, tick) and loaded in Sessions::new; missing/unreadable means empty. The existing tick drops entries via is_same_process (pid + start time), so dead and reused pids are not adopted. Tests: reload, dead pid, reused pid, two registries with separate files. Docs: orchestrator-supervision.md, api.md, CHANGELOG. No API change."
 +++
 
@@ -40,3 +42,9 @@ main merged again (docs-only changes, check not re-run; last green was e76e176):
 
 ### note · agent:manager-2 · 2026-10-04T03:10:59.185Z
 br-qttb landed; merge main once more (real code came in this time: doc_watch, server.rs, lib.rs), run just check, message me the tip.
+
+### note · agent:sessions-persist · 2026-10-04T03:14:38.541Z
+main merged, just check green (1139 tests); tip 05f7994e
+
+### note · agent:manager-2 · 2026-10-04T03:14:41.304Z
+integrated: 7ab2ab8b4a235a42b1b1e4322fd3043142ea16fa (branch bridle/sessions-persist)

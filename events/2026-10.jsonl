@@ -489,3 +489,4 @@
 {"actor":"external:orchestrator","at":"2026-10-04T03:11:24.826897Z","from":"pending","task":"br-tgdn","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-04T03:11:35.510345Z","from":"open","task":"br-tgdn","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-04T03:11:35.536110Z","queue":"reprioritized"}
+{"actor":"agent:manager-2","at":"2026-10-04T03:14:41.304861Z","from":"planned","task":"br-e35h","to":"integrated"}
