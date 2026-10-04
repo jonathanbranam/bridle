@@ -4,7 +4,7 @@ title = "Every task starts pending; 'bridle task ready <id>' opens it (k7tm A)"
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-03T23:28:37.330Z"
-updated_at = "2026-10-04T00:04:30.140053Z"
+updated_at = "2026-10-04T00:06:21.613407Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 branch = "bridle/task-pending"
@@ -28,3 +28,6 @@ done: every task starts pending, 'bridle task ready <id>' opens it (just check g
 
 ### note · agent:manager-2 · 2026-10-04T00:04:30.140Z
 integrated: 07f7a54788624277f6ecff4bac3e305fd68d53e0 (branch bridle/task-pending)
+
+### note · agent:manager-2 · 2026-10-04T00:06:21.613Z
+cleanup: removed agent task-pending, branch bridle/task-pending
