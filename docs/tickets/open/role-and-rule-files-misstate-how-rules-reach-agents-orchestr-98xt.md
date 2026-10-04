@@ -65,3 +65,7 @@ which is now redundant for spawned agents and leaves out packs.
    it can't. This is the same question as
    [[are-roles-and-rules-the-same-thing-one-layered-kind-of-promp-vp9e|vp9e]]'s role addendum,
    from the other side. Recommended: yes (rules as the one per-project mechanism).
+
+## Next steps (advisor workflow, retiring, 2026-10-04)
+
+Two parts. The stale "until bridle workflow sync renders rules" lines in 11 rule files, the dead CLAUDE.md-block pointer in worker.md and sync.rs's stale managed block are plain fixes, now that 34bw step 1 has landed; they need only a go to queue. The question (should prime orchestrator|advisor include resolved rules; recommended yes) waits on the human. Task br-0473 was dropped in pm-1's k7tm sort.

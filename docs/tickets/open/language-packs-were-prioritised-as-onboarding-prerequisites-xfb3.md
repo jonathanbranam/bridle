@@ -112,3 +112,7 @@ approved, not built.
 4. **Don't write more packs ahead of an onboarding** until (3) passes on track-web. How rules
    reach an agent at each step is still open in
    [[when-instructions-reach-an-agent-at-start-or-at-each-step-op-sk52|sk52]].
+
+## Next steps (advisor workflow, retiring, 2026-10-04)
+
+Waiting on the human's review of the three recommendations (a base rule that agents verify "built" against the code before ranking work on it; a post-restart check that a rule reaches a spawned worker's prompt; no new packs until that check passes on track-web). Task br-e839 was dropped in pm-1's k7tm sort, so nothing moves until the human decides. Steps 1-4 of 34bw have since landed, so packs reach spawned agents once daemons restart onto c4cd9af or later.

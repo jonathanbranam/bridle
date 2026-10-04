@@ -68,3 +68,7 @@ with a status line under its H1, and defines the words. The briefs, `docs/contex
    and the daemon.
 3. **Report what's live, not just merged**: `bridle status` could show when the daemon's binary
    is older than `main`'s tip. Not filed as a task; the human's call.
+
+## Next steps (advisor workflow, retiring, 2026-10-04)
+
+Waiting on the human: who owns build-order.md's status column (the project manager, 7r2c, once renamed) and whether bridle status should flag a daemon binary older than main. Task br-dcf2 was dropped in pm-1's k7tm sort. build-order.md itself was already corrected (5aca429).

@@ -122,3 +122,7 @@ Depends on 34bw step 1 (rules into the spawn prompt), which is approved and bein
 Continued in [[when-instructions-reach-an-agent-at-start-or-at-each-step-op-sk52|sk52]]: the human
 agrees roles feel different but may share tooling, and raises when text reaches an agent (start vs
 each step, as in OpenSpec).
+
+## Next steps (advisor workflow, retiring, 2026-10-04)
+
+Open for the human: are role prompts rules (one layered mechanism; the advisor leans to option 2, coarse) or a separate layered thing? 34bw steps 1-3 have landed, so the base for either is in place. Talk it through with the next advisor; nothing is sent.

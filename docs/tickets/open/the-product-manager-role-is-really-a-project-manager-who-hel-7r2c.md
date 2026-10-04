@@ -59,3 +59,7 @@ own repo, and the existing projects through a migration (xebc; they're the human
 projects, so the migration is reviewed). Sent to the orchestrator. The product-partner work
 (option 2) waits on sk52. Renaming or splitting the advisor is handled elsewhere, by another
 session.
+
+## Next steps (advisor workflow, retiring, 2026-10-04)
+
+The rename is the human's decision (2026-10-02, "Yeah let's rename it to project manager"), sent to the orchestrator as m-3788, but no implementation task exists: pm-1 dropped this ticket's question task br-8b6c on 2026-10-03 in the k7tm sort ("not approved for work now"). The orchestrator was asked again to file and queue the rename task, with the migration for existing projects reviewed by the human first. The product-partner half waits on sk52.

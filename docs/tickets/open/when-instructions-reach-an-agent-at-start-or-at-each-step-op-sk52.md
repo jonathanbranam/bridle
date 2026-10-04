@@ -280,3 +280,7 @@ The human, confirming (verbatim): "When I mean workflow, I just mean the DAG its
 know, B depends on A, C depends on A, and D depends on B and C. That's the thing that they have to
 replace wholesale. But A, B, C, and D can all contain, you know, these layerings of rules within
 them."
+
+## Next steps (advisor workflow, retiring, 2026-10-04)
+
+Design notes only, by the human's instruction ("Don't don't build it yet"). Next is a design doc (step workflows as a replaceable DAG; layered instructions, rules, templates and context per step; per-ticket handoff points) once vp9e is settled. Related: br-4034 (independent review), k7tm/br-3724 (ticket vs task).

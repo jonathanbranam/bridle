@@ -83,3 +83,7 @@ would conclude packs are still documentation.
 open. Separately, `workflow/base/rules/plan-discipline.md:19-20` still says "Until `bridle workflow
 sync` renders rules into agents, the role prompts ... carry this", which is now false (rules reach
 agents at spawn, not through sync); that file is out of this check's scope.
+
+## Next steps (advisor workflow, retiring, 2026-10-04)
+
+Part 1 (CLAUDE.md and docs/README.md saying the rest of docs/design isn't built) is done in 9202a77. Part 3 (34bw's Landed note) is done in fdcf7e6. Part 2, holding the built-but-unwired machinery under yagni and wiring each piece only when a trial needs it (component rules into role_rules_text first), waits on the human. Task br-7e32 was dropped in pm-1's k7tm sort.
