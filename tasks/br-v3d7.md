@@ -4,7 +4,7 @@ title = "br-9j2h follow-up: stored product-manager agents and unmigrated configs
 kind = "bug"
 state = "pending"
 created_at = "2026-10-04T12:48:42.938Z"
-updated_at = "2026-10-04T12:49:47.489056Z"
+updated_at = "2026-10-04T12:51:34.532250Z"
 created_by = "agent:manager-2"
 watchers = ["agent:manager-2"]
 size = "S"
@@ -16,3 +16,6 @@ Orchestrator (m-4409): br-9j2h landed locally (4656be0, NOT pushed) before this 
 
 ### note · agent:manager-2 · 2026-10-04T12:49:47.489Z
 Context change: origin/main now has a revert (6aaff367) of the rename (4656be0). Your branch must end up containing the rename AND the alias together: merge main, then 'git revert 6aaff367' (re-applies the rename), then add the alias, tests, docs, CHANGELOG; just check; message me the tip. I land both as one squash.
+
+### note · agent:manager-2 · 2026-10-04T12:51:34.532Z
+Read the newest comment on br-v3d7: main now has a revert (6aaff367) of the rename; your branch must contain rename + alias together (merge main, git revert 6aaff367, then the alias).
