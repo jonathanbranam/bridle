@@ -4,7 +4,7 @@ title = "is_merged calls a reused branch landed: an old Branch: trailer hides ne
 kind = "bug"
 state = "planned"
 created_at = "2026-10-04T13:39:51.920Z"
-updated_at = "2026-10-04T15:33:52.260875Z"
+updated_at = "2026-10-04T15:48:57.629531Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 summary = "worktree::is_merged: a 'Branch:' trailer on HEAD now counts only if no commit in HEAD..branch has a committer date after the landing commit (reused branches stay unmerged). No change to landing; both callers (status/rm gate) get the fix. Test extended for landed-then-reused; docs (operating-model) and CHANGELOG updated. Caveat: date-based, second resolution."
@@ -17,3 +17,6 @@ Bug. Ticket: docs/tickets/open/is-merged-calls-a-reused-branch-landed-an-old-bra
 
 ### note · agent:merged-trailer · 2026-10-04T15:33:52.260Z
 done: is_merged ignores an old Branch: trailer when the branch has commits newer than the landing; just check green (1151 passed); c62904cb
+
+### note · agent:merged-trailer · 2026-10-04T15:48:57.629Z
+main merged; just check green (1154 passed; two load-timing tests failed once, passed on re-run); tip 997e2dae
