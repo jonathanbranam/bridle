@@ -78,3 +78,24 @@ log the failure at `info`/`warn` with which target was asked.
 
 Suggested: D plus A, plus `warn`-level logging of probe failures. Keep C as a fallback to research
 if A proves flaky.
+
+## The human on option A, 2026-10-04
+
+Measured on dalek: an idle `claude -p` probe holds about 150 MB (RSS); agents hold 240–370 MB.
+One probe per daemon, three daemons, so about 0.5 GB always on. The human, verbatim:
+
+> Let's pause that, then. That's way too much memory, especially, and that's always on, always
+> going, and scales with every project. I do not like that solution. Let's find a better one.
+
+So option A (always use a long-lived probe per daemon) is **rejected**. Wanted: a usage source
+with no long-lived `claude` process, and no per-project cost. Candidates still to weigh
+(research, not settled):
+
+- **C, direct HTTP** to the endpoint `/usage` and `get_usage` read, with the account's OAuth
+  token: no process at all. Questions: which endpoint, where the token lives (macOS keychain on
+  dalek, a file on Linux), who refreshes it, and how breakage is caught (the contract suite).
+- **One machine-wide source** shared by every daemon (see xypj): at most one reader per machine,
+  not one per project, whatever the reader is.
+- **Spawn per poll, then exit:** about 1–2 s of startup per poll and no memory between polls.
+  Still a `claude` process, but not an always-on one.
+- **D, sliding staleness**, still wanted on its own: it makes fewer polls safe at low usage.
