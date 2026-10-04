@@ -581,14 +581,13 @@ fn a_repo_not_yet_served_is_named_after_its_folder() {
     }
 }
 
-/// `daemon systemd` writes only on Linux and `daemon launchd` only on macOS; elsewhere they
-/// refuse, naming no project.
+/// `daemon systemd` acts only on Linux and `daemon launchd` only on macOS; elsewhere every one of
+/// their leaves (install, uninstall, ...) refuses, naming no project.
 fn runs_here(leaf: &[String]) -> bool {
-    match leaf_name(leaf).as_str() {
-        "daemon systemd install" => cfg!(target_os = "linux"),
-        "daemon launchd install" => cfg!(target_os = "macos"),
-        _ => true,
-    }
+    let name = leaf_name(leaf);
+    let os = std::env::consts::OS;
+    (!name.starts_with("daemon systemd") || os == "linux")
+        && (!name.starts_with("daemon launchd") || os == "macos")
 }
 
 /// What a naming command wrote or printed: its output, plus the ticket it minted.
