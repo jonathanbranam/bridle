@@ -595,3 +595,4 @@
 {"actor":"external:orchestrator","at":"2026-10-04T15:43:41.886953Z","from":"pending","task":"br-3397","to":"open"}
 {"actor":"agent:manager-2","at":"2026-10-04T16:02:21.986471Z","from":"planned","task":"br-x3xk","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-10-04T16:15:27.066949Z","from":"planned","task":"br-wjhp","to":"integrated"}
+{"actor":"agent:manager-2","at":"2026-10-04T16:35:15.641600Z","from":"planned","task":"br-4f8y","to":"integrated"}
