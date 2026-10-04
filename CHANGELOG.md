@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- The gateway reads and writes one document file in a project's repo for the UI's document view: `GET`/`PUT /api/v1/projects/{project}/documents/{path}`, a write needs the hash it read (409 if the file changed), commits only that file on the branch checked out in the working tree, and is refused on a detached HEAD (br-5paw, br-pwtw, x8jt).
 
 - A `document-reviewer` role (`workflow/base/roles/document-reviewer.md`, `bridle prime document-reviewer`): one agent per document answers the human's `> [!comment]` callouts in the file, revises it, tags `@human`, resolves threads and commits each round.
 - The gateway reads and writes one document file in a project's repo for the UI's document view: `GET`/`PUT /api/v1/projects/{project}/documents/{path}`, a write needs the hash it read (409 if the file changed), commits only that file on the branch checked out in the working tree, and is refused on `main`, `master`, `dev` or a detached HEAD (br-5paw, x8jt).

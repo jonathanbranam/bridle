@@ -65,9 +65,8 @@ A write whose `hash` no longer matches the file is a 409 and changes nothing; un
 commits nothing. Refused: a path with `..`, an absolute path, `.git`, or one that resolves
 (symlinks included) outside the repo (400); a missing file (404, a write never creates one);
 a non-text file (NUL or invalid UTF-8) or over 2 MB (415); and any write while the working
-tree is on `main`, `master`, `dev` or a detached HEAD (403): the gateway commits only on the
-branch checked out in the project's working tree and never on a project's main or dev (rule
-existing-projects), so a trial's document is reviewed on its bridle branch. This machine's
+tree is on a detached HEAD (403): the gateway commits on whatever branch is checked out in the
+project's working tree, including `main`. This machine's
 projects only (the repo comes from the daemon's registry entry). No browsing and no search.
 The commit uses the repo's git identity.
 

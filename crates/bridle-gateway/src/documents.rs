@@ -5,8 +5,7 @@
 //! Safety: the path is repo-relative plain names only and must resolve inside the repo; the
 //! file must already exist and be text; a write must carry the hash it read (409 if the file
 //! has changed since); and it only commits on the branch checked out in the project's working
-//! tree, never on `main`, `master` or `dev` (rule existing-projects: a trial's own branches
-//! only). See docs/design/human-web-ui.md section 3.
+//! tree, whichever it is, and never on a detached HEAD. See docs/design/human-web-ui.md section 3.
 
 use std::path::{Component, Path as FsPath, PathBuf};
 use std::process::Command;
@@ -24,9 +23,6 @@ use crate::discovery::current_targets;
 
 /// Bigger than any document worth reviewing in a browser.
 const MAX_BYTES: usize = 2 * 1024 * 1024;
-
-/// Branches the gateway never commits to.
-const PROTECTED_BRANCHES: [&str; 3] = ["main", "master", "dev"];
 
 /// A document as read: its text, and the hash to send back with an edit.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
@@ -72,8 +68,8 @@ pub enum DocError {
     NotText(String),
     #[error("the file changed since it was read; reload it and apply the edit again")]
     Stale,
-    #[error("the working tree is on '{0}', which the gateway doesn't commit to")]
-    ProtectedBranch(String),
+    #[error("the working tree is on a detached HEAD, which the gateway doesn't commit to")]
+    DetachedHead,
     #[error("{0}")]
     Internal(String),
 }
@@ -85,7 +81,7 @@ impl IntoResponse for DocError {
             Self::BadPath(_) => StatusCode::BAD_REQUEST,
             Self::NotText(_) => StatusCode::UNSUPPORTED_MEDIA_TYPE,
             Self::Stale => StatusCode::CONFLICT,
-            Self::ProtectedBranch(_) => StatusCode::FORBIDDEN,
+            Self::DetachedHead => StatusCode::FORBIDDEN,
             Self::NotAvailable(_) => StatusCode::SERVICE_UNAVAILABLE,
             Self::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
         };
@@ -217,8 +213,8 @@ pub fn write_document(
     let full = resolve(repo, rel)?;
     let branch = branch_of(repo)?;
     // A detached HEAD reads as "HEAD": no branch to commit to.
-    if branch == "HEAD" || PROTECTED_BRANCHES.contains(&branch.as_str()) {
-        return Err(DocError::ProtectedBranch(branch));
+    if branch == "HEAD" {
+        return Err(DocError::DetachedHead);
     }
     if req.content.len() > MAX_BYTES || req.content.contains('\0') {
         return Err(DocError::NotText(rel.to_string()));
@@ -379,20 +375,20 @@ mod tests {
     }
 
     #[test]
-    fn protected_and_detached_branches_are_never_written() {
-        for branch in ["main", "dev"] {
+    fn writes_on_any_branch_but_not_a_detached_head() {
+        for branch in ["main", "dev", "review"] {
             let d = repo(branch);
             let doc = read_document(d.path(), "p", "docs/doc.md").expect("read");
-            let err = write_document(d.path(), "p", "docs/doc.md", &write("x", &doc.hash))
-                .expect_err(branch);
-            assert!(matches!(err, DocError::ProtectedBranch(_)), "{branch}");
+            let saved =
+                write_document(d.path(), "p", "docs/doc.md", &write("x", &doc.hash)).expect(branch);
+            assert_eq!(saved.branch, branch);
         }
         let d = repo("review");
         run(d.path(), &["checkout", "-q", "--detach"]);
         let doc = read_document(d.path(), "p", "docs/doc.md").expect("read");
         assert!(matches!(
             write_document(d.path(), "p", "docs/doc.md", &write("x", &doc.hash)),
-            Err(DocError::ProtectedBranch(_))
+            Err(DocError::DetachedHead)
         ));
     }
 }
