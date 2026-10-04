@@ -4,7 +4,7 @@ title = "Ticket from task with the same ID; tickets hold the why, tasks the work
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-03T23:28:37.352Z"
-updated_at = "2026-10-03T23:59:22.119767Z"
+updated_at = "2026-10-04T00:00:33.208509Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 branch = "bridle/ticket-from-task"
@@ -27,3 +27,6 @@ done: ticket new --from-task, tickets rule and role text, docs and CHANGELOG; ju
 
 ### note · agent:manager-2 · 2026-10-03T23:59:22.119Z
 integrated: 7de2bc9dfd10ff4fbdde9963924db6c6c024fc12 (branch bridle/ticket-from-task)
+
+### note · agent:manager-2 · 2026-10-04T00:00:33.208Z
+cleanup: removed agent ticket-from-task, branch bridle/ticket-from-task
