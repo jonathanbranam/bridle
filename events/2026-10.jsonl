@@ -514,3 +514,5 @@
 {"actor":"external:orchestrator","at":"2026-10-04T12:34:39.588900Z","from":"pending","task":"br-bedz","to":"open"}
 {"actor":"external:orchestrator","at":"2026-10-04T12:34:39.589690Z","from":"open","task":"br-bedz","to":"planned"}
 {"actor":"agent:manager-2","at":"2026-10-04T12:46:45.144842Z","from":"planned","task":"br-9j2h","to":"integrated"}
+{"actor":"human","at":"2026-10-04T12:47:28.413Z","from":"","task":"br-anmx","to":"pending"}
+{"actor":"external:advisor","at":"2026-10-04T12:47:31.514922Z","from":"pending","task":"br-anmx","to":"open"}
