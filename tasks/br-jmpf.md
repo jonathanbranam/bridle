@@ -4,7 +4,7 @@ title = "A [gateway] section in ~/.bridle/config.toml stops every daemon from st
 kind = "bug"
 state = "planned"
 created_at = "2026-10-04T13:11:47.608Z"
-updated_at = "2026-10-04T14:03:15.174624Z"
+updated_at = "2026-10-04T14:16:10.384311Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
 summary = "RawConfig (bridle-daemon/src/config.rs) now accepts [gateway] and [interactions] as accept-only fields like [mail], so adding either to ~/.bridle/config.toml no longer stops daemons starting. Test accepts_sections_owned_by_other_crates; roles-and-config.md note; CHANGELOG. No other crate-owned section was missing. just check: only the known-flaky serve::tests::login_warning_only_when_known_logged_out fails (fail-fast, passes alone); committed per manager."
@@ -34,3 +34,6 @@ Not caused by this change: plain main (git archive copy in /tmp, now removed) fa
 
 ### note · agent:gateway-config · 2026-10-04T14:03:15.174Z
 re-run: just check still red on only serve::tests::login_warning_only_when_known_logged_out (630 pass); plain main fails it too (plus a tools_only test), so not from this change; details on the task. Commit f9235df3
+
+### note · agent:manager-2 · 2026-10-04T14:16:10.384Z
+br-khg3 landed (8f09de4). Merge main into bridle/gateway-config, run just check, message me the tip.
