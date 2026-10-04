@@ -488,3 +488,10 @@ Newest first. One line per item: what happened, who did it, what it says about r
 - **A visitor orchestrator can't wait on another machine's daemon.** meta-notes (NUC) refuses
   `wait-for-wake` from `external:orchestrator@dalek`, so the NUC's messages to me there went
   unseen until the human pointed at one. I check `bridle inbox --project meta-notes` by hand.
+- **No aide to reach.** The role says to reach the human only through `external:aide`, but there
+  is no `[aide]` in `credentials.toml` and the daemon refuses `external:aide` ("no such
+  recipient"), so the x8jt summary went through advisor doc-review, the session the human was
+  using for it. Until the human starts `bridle session aide`, the advisors are the route.
+- **Filing a relayed approval across two repos.** x8jt slice 3 spanned the gateway (bridle) and
+  the UI (bridle-ui); I split it into br-5paw and ui-acf0 and told bridle-ui's manager when the
+  first landed. The handoff between the two managers ran through me.

@@ -8,7 +8,7 @@ changes: []
 specs: []
 needs: []
 see: [essy, v8kn, hvxk, 6yb4, k4wq, yyzm, yj38, r9vh]
-tasks: [br-rp53, br-aj9d, br-5paw, ui-acf0]
+tasks: [br-rp53, br-aj9d, br-5paw, ui-acf0, br-qttb, ui-c39e]
 ---
 
 ## The ask
@@ -363,3 +363,6 @@ The human, verbatim (2026-10-04):
 - To build: `bridle review now <path> [--resend]` and the mark (bridle: daemon `doc_watch.rs`,
   CLI, a gateway route the UI button calls, docs/design daemon.md and cli.md), and the button in
   bridle-ui's document view.
+
+Review now and sent marks: br-qttb (bridle: command, sent marks, gateway route) and ui-c39e
+(bridle-ui: the button, after br-qttb lands).
