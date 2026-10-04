@@ -4,7 +4,7 @@ title = "Quiet hours stop the orchestrator restarting its watchers, so wakes pil
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-04T11:39:06.282Z"
-updated_at = "2026-10-04T12:09:47.813115Z"
+updated_at = "2026-10-04T12:11:13.793044Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 branch = "bridle/focus-gate"
@@ -39,3 +39,6 @@ main (br-b795) merged cleanly; just check green (1141 tests); tip 6afda6b9
 
 ### note · agent:manager-2 · 2026-10-04T12:09:47.813Z
 integrated: 83b97c2b961f78ac312dee327a097b63123a222f (branch bridle/focus-gate)
+
+### note · agent:manager-2 · 2026-10-04T12:11:13.793Z
+cleanup: removed agent focus-gate, branch bridle/focus-gate
