@@ -135,6 +135,18 @@ pub struct Status {
     /// Registered interactive sessions (advisors) still running.
     #[serde(default)]
     pub sessions: Vec<SessionInfo>,
+    /// Tasks waiting for `bridle task ready`; created tasks start here, so a pile is
+    /// something nobody has approved yet.
+    #[serde(default)]
+    pub pending_tasks: Vec<PendingTask>,
+}
+
+/// One `pending` task in [`Status::pending_tasks`].
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PendingTask {
+    pub id: String,
+    pub title: String,
+    pub created_by: String,
 }
 
 /// `POST /v1/sessions`: registers an interactive session, or updates the one with this pid
@@ -1394,6 +1406,9 @@ pub struct SetKindRequest {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum TaskState {
+    /// Every task starts here. Nobody plans it until `bridle task ready` opens it (k7tm
+    /// decisions 11-14).
+    Pending,
     Open,
     Planned,
     /// A worker holds this task's lease (storage.md, "claims"). Only
@@ -1412,6 +1427,7 @@ pub enum TaskState {
 impl TaskState {
     pub fn as_str(self) -> &'static str {
         match self {
+            Self::Pending => "pending",
             Self::Open => "open",
             Self::Planned => "planned",
             Self::Claimed => "claimed",
@@ -2045,7 +2061,7 @@ mod tests {
 
     #[test]
     fn task_state_round_trip() {
-        for s in ["open", "planned", "dropped", "reopened"] {
+        for s in ["pending", "open", "planned", "dropped", "reopened"] {
             let st: TaskState = s.parse().unwrap();
             assert_eq!(st.as_str(), s);
         }

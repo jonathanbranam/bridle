@@ -3,6 +3,7 @@
 //! and `conflict resolve` records each of the three outcomes.
 
 mod support;
+use support::ClientExt as _;
 
 use std::collections::BTreeMap;
 
@@ -15,7 +16,7 @@ use support::{TestDaemon, start_daemon, wait_for_state};
 async fn planned_task(d: &TestDaemon, title: &str, scenario: &str) -> String {
     let c = &d.client;
     let t = c
-        .new_task(&NewTaskRequest {
+        .new_open_task(&NewTaskRequest {
             for_human: false,
             priority: None,
             components: Vec::new(),

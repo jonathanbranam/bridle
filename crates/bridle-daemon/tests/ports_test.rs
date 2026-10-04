@@ -2,6 +2,7 @@
 //! and listening ports, release frees one, and an agent's ports go when it exits.
 
 mod support;
+use support::ClientExt as _;
 
 use std::net::TcpListener;
 use std::time::Duration;
@@ -86,7 +87,7 @@ async fn an_agents_ports_are_freed_when_it_exits() {
     let (d, _tmp) = start_daemon_with_config(None, Some(&cfg)).await;
     let c = &d.client;
     let t = c
-        .new_task(&NewTaskRequest {
+        .new_open_task(&NewTaskRequest {
             for_human: false,
             priority: None,
             components: Vec::new(),

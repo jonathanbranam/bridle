@@ -1,6 +1,6 @@
 # Roles and the task lifecycle
 
-> **Status (checked 2026-10-03):** Built and in use: the human, orchestrator, manager, worker, product-manager and integrator (`bridle task land`) roles; task states `open`, `planned`, `claimed`, `dropped`, `integrated`, `reopened` with `ready` derived; claim leases; the queue (`bridle queue`, `queue set|add-tier`, `bridle ready`); task kinds, including `re-evaluate` tasks opened when an `arch-revision` is done · Planned: the reviewer role (no role file or config), `in_review` and `accepted` states, `needs-input`, per-kind gates, roles and models from `workflow.toml`, `bridle review`
+> **Status (checked 2026-10-03):** Built and in use: the human, orchestrator, manager, worker, product-manager and integrator (`bridle task land`) roles; task states `pending`, `open`, `planned`, `claimed`, `dropped`, `integrated`, `reopened` with `ready` derived; claim leases; the queue (`bridle queue`, `queue set|add-tier`, `bridle ready`); task kinds, including `re-evaluate` tasks opened when an `arch-revision` is done · Planned: the reviewer role (no role file or config), `in_review` and `accepted` states, `needs-input`, per-kind gates, roles and models from `workflow.toml`, `bridle review`
 
 ## Roles
 
@@ -40,7 +40,7 @@ pattern".
 ```
           ┌────────── question posted ─────────┐
           ▼                                     │
- open ─► planned ─► ready ─► claimed ─► in_review ─► integrated ─► accepted
+ pending ─► open ─► planned ─► ready ─► claimed ─► in_review ─► integrated ─► accepted
    │                  ▲         │           │             │
    │                  └─ lease lapses / released           └─► reopened
    └──────────────────────────────► dropped (reason required)
@@ -49,7 +49,7 @@ pattern".
  needs-input    derived: a question addressed to the human
 ```
 
-Built states: `open`, `planned`, `claimed`, `dropped`, `integrated`, `reopened`
+Built states: `pending`, `open`, `planned`, `claimed`, `dropped`, `integrated`, `reopened`
 (`TaskState`, `bridle-api/src/types.rs`); `ready` and `blocked` are derived.
 `in_review`, `accepted` and `needs-input` are planned.
 
@@ -59,6 +59,13 @@ Built states: `open`, `planned`, `claimed`, `dropped`, `integrated`, `reopened`
   planned` transition (`TaskManager::plan_task`); `open` is the only state it
   accepts, so a task already planned, claimed, dropped or reopened is a
   conflict.
+- **Every task is created `pending`** (k7tm decisions 11-14). `bridle task ready <id>`
+  (`TaskManager::ready_task`) makes `pending -> open`, and the PM plans only `open` tasks.
+  The orchestrator, or an advisor with the human's approval, readies; a manager may ready its
+  own small fix inside work already approved, never a new feature. Human to-dos
+  (`--for-human`) skip the gate. The PM wakes when a task is readied, not when one is filed;
+  `bridle status` and the orchestrator's startup steps list the pending ones. Tasks that were
+  `open` before this stay `open`.
 - **The queue is a separate record, not a field on the task.** Tasks stay
   the *what* (kind, body, real `blocks` edges for actual dependencies —
   never for ordering); the queue is the *when*, an ordered list of tiers,

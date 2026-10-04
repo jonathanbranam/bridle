@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- Every task now starts `pending`; `bridle task ready <id>` opens it (the orchestrator, an advisor with the human's approval, or a manager for its own small fix). The PM plans only open tasks and wakes when one is readied; `bridle status` and the orchestrator's startup steps list pending tasks. Existing open tasks stay open (br-8eyu).
 - `bridle ticket new --from-task <id>` makes a ticket from a task, reusing its ID (a fresh, linked ID when an old hex task ID has `0` or `1`); the tickets rule and the worker, manager and product-manager roles say tickets hold the why and tasks the work (k7tm).
 - The `triage` role is renamed `aide` (`bridle session aide`, `bridle prime aide`, `external:aide`, `[aide]` credentials, `[sessions.aide]`); no alias, as nothing used the old name.
 - Every interactive session (advisors, aide) is warned about context at 150k, 200k, 250k and 300k (`[sessions] warn`): the session and the human, through aide, are told at each step. `bridle session keep <id>` carries on past a step; at 300k the handover is forced and the session restarted. Triage now registers as a session too (jttf).

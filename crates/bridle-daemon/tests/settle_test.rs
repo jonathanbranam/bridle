@@ -3,6 +3,7 @@
 //! may skip it. See docs/design/coordination.md.
 
 mod support;
+use support::ClientExt as _;
 
 use bridle_api::ClientError;
 use bridle_api::types::{NewTaskRequest, TaskKind};
@@ -13,7 +14,7 @@ async fn a_new_task_settles_and_skip_settle_is_gated() {
     let (daemon, _tmp) = start_daemon_with_config(None, Some("[tasks]\nsettle = \"5m\"\n")).await;
     let c = &daemon.client;
     let task = c
-        .new_task(&NewTaskRequest {
+        .new_open_task(&NewTaskRequest {
             for_human: false,
             priority: None,
             components: Vec::new(),
@@ -53,7 +54,7 @@ async fn a_human_todo_is_claimed_at_creation_despite_settling() {
     let (daemon, _tmp) = start_daemon_with_config(None, Some("[tasks]\nsettle = \"5m\"\n")).await;
     let task = daemon
         .client
-        .new_task(&NewTaskRequest {
+        .new_open_task(&NewTaskRequest {
             for_human: true,
             priority: None,
             components: Vec::new(),

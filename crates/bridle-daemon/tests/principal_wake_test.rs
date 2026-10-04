@@ -2,6 +2,7 @@
 //! else touching a task it created or claimed (`principal_wake.rs`).
 
 mod support;
+use support::ClientExt as _;
 
 use std::time::Duration;
 
@@ -108,7 +109,7 @@ async fn only_that_principal_or_the_human_may_wait() {
 
 async fn new_task(client: &Client) -> String {
     client
-        .new_task(&NewTaskRequest {
+        .new_open_task(&NewTaskRequest {
             title: "t".to_string(),
             kind: TaskKind::Feature,
             body: String::new(),

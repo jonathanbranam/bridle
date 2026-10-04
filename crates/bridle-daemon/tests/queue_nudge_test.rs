@@ -2,6 +2,7 @@
 //! the queue, one message per settled burst (f5ww).
 
 mod support;
+use support::ClientExt as _;
 
 use std::time::Duration;
 
@@ -21,7 +22,7 @@ async fn daemon() -> (support::TestDaemon, tempfile::TempDir) {
 async fn task(daemon: &support::TestDaemon, title: &str) -> String {
     daemon
         .client
-        .new_task(&NewTaskRequest {
+        .new_open_task(&NewTaskRequest {
             for_human: false,
             priority: None,
             components: Vec::new(),

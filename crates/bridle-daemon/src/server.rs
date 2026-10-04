@@ -121,6 +121,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/tasks", get(list_tasks).post(new_task))
         .route("/v1/tasks/submit", post(submit_task))
         .route("/v1/tasks/{id}", get(get_task).patch(edit_task))
+        .route("/v1/tasks/{id}/ready", post(ready_task))
         .route("/v1/tasks/{id}/plan", post(plan_task))
         .route("/v1/tasks/{id}/drop", post(drop_task))
         .route("/v1/tasks/{id}/done", post(done_task))
@@ -673,6 +674,17 @@ async fn status(
         merged_leftovers,
         state_push: state.tasks.state_push_status(),
         incidents: state.tasks.active_incidents(),
+        pending_tasks: state
+            .tasks
+            .list_tasks()
+            .into_iter()
+            .filter(|t| t.state == bridle_api::types::TaskState::Pending)
+            .map(|t| bridle_api::types::PendingTask {
+                id: t.id,
+                title: t.title,
+                created_by: t.created_by,
+            })
+            .collect(),
         waiter_open,
         last_wake_at,
         upgrade_waiting: state.manager.upgrade_waiting(),
@@ -1558,6 +1570,8 @@ async fn new_task(
         .await?;
     let task = if req.for_human {
         let human = "human".to_string();
+        // A to-do is the requester's own, already approved: skip the pending gate.
+        state.tasks.ready_task(&task.id, &principal.id).await?;
         state.tasks.plan_task(&task.id, &principal.id).await?;
         state.tasks.claim_task_unsettled(&task.id, &human).await?;
         state
@@ -1585,20 +1599,11 @@ async fn new_task(
             }),
         )
         .await;
-    let open = state
-        .tasks
-        .list_tasks()
-        .iter()
-        .filter(|t| t.state == bridle_api::types::TaskState::Open)
-        .count();
-    state
-        .manager
-        .note_task_filed(&task.id, &task.title, open)
-        .await;
+    // The PM wakes when a task is readied (`ready_task`), not when one is filed pending.
     Ok(Json(task))
 }
 
-/// Any principal files an `open` task for the PM to triage; the task records who sent it.
+/// Any principal files a `pending` task for the PM to triage; the task records who sent it.
 async fn submit_task(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
@@ -1685,6 +1690,40 @@ async fn edit_task(
             None,
             serde_json::json!({"task": task.id}),
         )
+        .await;
+    Ok(Json(task))
+}
+
+/// `pending` -> `open`. Not for visitors, and not for workers or the PM: the PM plans what has
+/// been readied, it doesn't decide what's wanted.
+async fn ready_task(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path(id): Path<String>,
+) -> Result<Json<Task>, ApiError> {
+    require_not_visitor(&principal)?;
+    require_incident_owner(&state, &principal, &id)?;
+    if principal.kind == PrincipalKind::Agent {
+        let name = principal.id.strip_prefix("agent:").unwrap_or(&principal.id);
+        let role = state.store.get_agent(name).await?.map(|a| a.role);
+        if matches!(role.as_deref(), Some("worker" | "product-manager")) {
+            return Err(ApiError::forbidden(
+                "only the human, the orchestrator, an advisor or a manager may ready a task",
+            ));
+        }
+    }
+    let from = state.tasks.get_task(&id).map(|t| t.state);
+    let task = state.tasks.ready_task(&id, &principal.id).await?;
+    emit_state_change(&state, principal.id, &task, from).await;
+    let open = state
+        .tasks
+        .list_tasks()
+        .iter()
+        .filter(|t| t.state == bridle_api::types::TaskState::Open)
+        .count();
+    state
+        .manager
+        .note_task_filed(&task.id, &task.title, open)
         .await;
     Ok(Json(task))
 }

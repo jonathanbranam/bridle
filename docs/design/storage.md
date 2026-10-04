@@ -229,7 +229,7 @@ cleared when the incident resolves
 `settle_until` on a task is computed from `created_at` and the thread, never stored (coordination.md,
 "Settling"), so the settle period needs no column, file field or migration.
 
-Built for task records at the `open`/`planned`/`claimed`/`dropped`/`integrated`/`reopened`
+Built for task records at the `pending`/`open`/`planned`/`claimed`/`dropped`/`integrated`/`reopened`
 states (`TaskState`) (`crates/bridle-daemon/src/state_branch.rs`, `src/tasks.rs`),
 including claims and the queue now (above); `in_review` and
 `accepted`, and the edges/questions that go with them, are still only

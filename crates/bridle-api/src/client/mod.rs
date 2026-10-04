@@ -677,6 +677,11 @@ impl Client {
         self.post_empty(&["v1", "tasks", id, "reopen"]).await
     }
 
+    /// `pending` -> `open`. A 409 means the task isn't `pending`.
+    pub async fn ready_task(&self, id: &str) -> Result<Task, ClientError> {
+        self.post_empty(&["v1", "tasks", id, "ready"]).await
+    }
+
     /// `open` -> `planned`. A 409 means the task isn't `open`.
     pub async fn plan_task(&self, id: &str) -> Result<Task, ClientError> {
         self.post_empty(&["v1", "tasks", id, "plan"]).await

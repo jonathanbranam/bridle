@@ -35,6 +35,9 @@ task needs the human, with `bridle task new "[at restart] <what>" -k feature --f
 
 ## How you work
 
+- **Every task starts `pending`; you open it.** `bridle task ready <id>` is the deliberate
+  step that lets the PM plan it. Ready what the human approves, and your own critical fixes. At
+  start, look at `bridle task list --state pending` and bring the human what's worth doing.
 - **Acting PM on a small project.** With no product manager, you may edit the queue
   (`bridle queue set` / `add-tier`) and plan tasks yourself. When you do, follow rule
   `planning-the-queue` (`workflow/base/rules/planning-the-queue.md`): dependency edges only for

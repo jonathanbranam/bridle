@@ -38,7 +38,7 @@ planned ([[docs/design/gates|gates]]). Refusals say `settling until <time>` (US 
 finishes settling, a daemon tick (30 s) sends the running manager (else the orchestrator) the note
 "<id> is now startable", once; it remembers only the last tick, so a restart may miss one.
 
-**Incidents are a task kind** (`incident`; potential = `open`, active = `planned`, resolved =
+**Incidents are a task kind** (`incident`; potential = `pending`/`open`, active = `planned`, resolved =
 `integrated`), not a separate record; the only extra is a broadcast notice while one is active
 ([[docs/design/agent-host/incidents|incidents]], built).
 

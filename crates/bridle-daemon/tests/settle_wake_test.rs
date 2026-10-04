@@ -2,6 +2,7 @@
 //! (ny9u follow-up). Already-settled and dependency-blocked tasks aren't.
 
 mod support;
+use support::ClientExt as _;
 
 use std::time::Duration;
 
@@ -20,7 +21,7 @@ async fn daemon(settle: &str) -> (support::TestDaemon, tempfile::TempDir) {
 async fn planned_task(daemon: &support::TestDaemon, title: &str) -> String {
     let id = daemon
         .client
-        .new_task(&NewTaskRequest {
+        .new_open_task(&NewTaskRequest {
             for_human: false,
             priority: None,
             components: Vec::new(),

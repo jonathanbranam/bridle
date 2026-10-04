@@ -5,6 +5,7 @@
 //! and the PM-owned queue record (roles-and-lifecycle.md, "the queue").
 
 mod support;
+use support::ClientExt as _;
 
 use bridle_api::ClientError;
 use bridle_api::types::{
@@ -32,7 +33,7 @@ async fn create_show_list_and_edit_a_task() {
     let c = &daemon.client;
 
     let task = c
-        .new_task(&NewTaskRequest {
+        .new_open_task(&NewTaskRequest {
             for_human: false,
             priority: None,
             components: Vec::new(),
@@ -91,7 +92,7 @@ async fn new_task_rejects_a_blank_title() {
     let (daemon, _tmp) = start_daemon(None).await;
     let err = daemon
         .client
-        .new_task(&new_req("   ", TaskKind::Chore))
+        .new_open_task(&new_req("   ", TaskKind::Chore))
         .await
         .expect_err("blank title");
     assert!(matches!(err, ClientError::Api { status: 400, .. }));
@@ -102,7 +103,7 @@ async fn drop_requires_a_reason() {
     let (daemon, _tmp) = start_daemon(None).await;
     let task = daemon
         .client
-        .new_task(&new_req("Add foo", TaskKind::Bug))
+        .new_open_task(&new_req("Add foo", TaskKind::Bug))
         .await
         .expect("new task");
 
@@ -138,7 +139,7 @@ async fn reopen_only_applies_to_a_dropped_task() {
     let (daemon, _tmp) = start_daemon(None).await;
     let c = &daemon.client;
     let task = c
-        .new_task(&new_req("Add foo", TaskKind::Research))
+        .new_open_task(&new_req("Add foo", TaskKind::Research))
         .await
         .expect("new task");
 
@@ -179,7 +180,7 @@ async fn ask_blocks_a_task_and_answer_frees_it_again() {
     let c = &daemon.client;
 
     let task = c
-        .new_task(&new_req("Add foo", TaskKind::Feature))
+        .new_open_task(&new_req("Add foo", TaskKind::Feature))
         .await
         .expect("new task");
     assert!(c.list_open_questions().await.expect("list").is_empty());
@@ -239,7 +240,7 @@ async fn note_appears_in_the_task_thread_from_human_and_agent() {
     let c = &daemon.client;
 
     let task = c
-        .new_task(&new_req("Add foo", TaskKind::Feature))
+        .new_open_task(&new_req("Add foo", TaskKind::Feature))
         .await
         .expect("new task");
 
@@ -287,7 +288,7 @@ async fn claim_of_a_task_that_is_not_ready_is_a_conflict() {
     let (daemon, _tmp) = start_daemon(None).await;
     let c = &daemon.client;
     let task = c
-        .new_task(&new_req("Add foo", TaskKind::Feature))
+        .new_open_task(&new_req("Add foo", TaskKind::Feature))
         .await
         .expect("new task");
     assert_eq!(task.state, TaskState::Open);
@@ -304,7 +305,7 @@ async fn release_of_an_unclaimed_task_is_a_conflict() {
     let (daemon, _tmp) = start_daemon(None).await;
     let c = &daemon.client;
     let task = c
-        .new_task(&new_req("Add foo", TaskKind::Feature))
+        .new_open_task(&new_req("Add foo", TaskKind::Feature))
         .await
         .expect("new task");
 
@@ -317,7 +318,7 @@ async fn a_task_created_before_restart_is_still_there_after() {
     let (daemon, tmp) = start_daemon(None).await;
     let task = daemon
         .client
-        .new_task(&new_req("Add foo", TaskKind::Feature))
+        .new_open_task(&new_req("Add foo", TaskKind::Feature))
         .await
         .expect("new task");
     // A graceful shutdown flushes the state branch (lib.rs::start), so the
@@ -372,11 +373,34 @@ async fn a_task_created_before_restart_is_still_there_after() {
 }
 
 #[tokio::test]
-async fn plan_moves_open_to_planned_and_rejects_a_second_plan() {
+async fn a_new_task_is_pending_until_readied() {
     let (daemon, _tmp) = start_daemon(None).await;
     let c = &daemon.client;
     let task = c
         .new_task(&new_req("Add foo", TaskKind::Feature))
+        .await
+        .expect("new task");
+    assert_eq!(task.state, TaskState::Pending);
+    let status = c.status().await.expect("status");
+    assert!(status.pending_tasks.iter().any(|t| t.id == task.id));
+
+    let err = c.plan_task(&task.id).await.expect_err("pending can't plan");
+    assert!(matches!(err, ClientError::Api { status: 409, .. }));
+
+    let open = c.ready_task(&task.id).await.expect("ready");
+    assert_eq!(open.state, TaskState::Open);
+    let status = c.status().await.expect("status");
+    assert!(status.pending_tasks.iter().all(|t| t.id != task.id));
+    let err = c.ready_task(&task.id).await.expect_err("already open");
+    assert!(matches!(err, ClientError::Api { status: 409, .. }));
+}
+
+#[tokio::test]
+async fn plan_moves_open_to_planned_and_rejects_a_second_plan() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let c = &daemon.client;
+    let task = c
+        .new_open_task(&new_req("Add foo", TaskKind::Feature))
         .await
         .expect("new task");
     assert_eq!(task.state, TaskState::Open);
@@ -415,7 +439,7 @@ async fn plan_then_claim_round_trips_through_the_http_surface() {
     let (daemon, _tmp) = start_daemon(None).await;
     let c = &daemon.client;
     let task = c
-        .new_task(&new_req("Add foo", TaskKind::Feature))
+        .new_open_task(&new_req("Add foo", TaskKind::Feature))
         .await
         .expect("new task");
     c.plan_task(&task.id).await.expect("plan");
@@ -437,7 +461,7 @@ async fn for_human_task_is_claimed_by_the_human_and_done_without_a_commit() {
     let c = &daemon.client;
     let mut req = new_req("[at restart] move tokens", TaskKind::Feature);
     req.for_human = true;
-    let task = c.new_task(&req).await.expect("new task");
+    let task = c.new_open_task(&req).await.expect("new task");
     assert_eq!(task.state, TaskState::Claimed);
     assert_eq!(task.claimed_by.as_deref(), Some("human"));
 
@@ -467,12 +491,12 @@ async fn human_todo_priority_change_and_rescind_are_audited() {
     let mut req = new_req("rotate the key", TaskKind::Chore);
     req.for_human = true;
     req.priority = Some(TaskPriority::High);
-    let task = c.new_task(&req).await.expect("new task");
+    let task = c.new_open_task(&req).await.expect("new task");
     assert_eq!(task.priority, TaskPriority::High);
     assert!(task.thread[0].body.contains("priority high"));
 
     let plain = c
-        .new_task(&new_req("plain", TaskKind::Chore))
+        .new_open_task(&new_req("plain", TaskKind::Chore))
         .await
         .expect("plain");
     assert_eq!(plain.priority, TaskPriority::Normal);
@@ -556,15 +580,15 @@ async fn queue_set_get_and_top_tier_pick_the_right_tier_when_blocked() {
     );
 
     let blocker = c
-        .new_task(&new_req("Blocker", TaskKind::Chore))
+        .new_open_task(&new_req("Blocker", TaskKind::Chore))
         .await
         .expect("new blocker");
     let blocked = c
-        .new_task(&new_req("Blocked", TaskKind::Feature))
+        .new_open_task(&new_req("Blocked", TaskKind::Feature))
         .await
         .expect("new blocked");
     let next = c
-        .new_task(&new_req("Next", TaskKind::Feature))
+        .new_open_task(&new_req("Next", TaskKind::Feature))
         .await
         .expect("new next");
     c.add_edge(&bridle_api::types::NewEdgeRequest {
@@ -622,7 +646,7 @@ async fn only_pm_or_human_may_write_the_queue() {
     let (daemon, _tmp) = start_daemon(None).await;
     let task = daemon
         .client
-        .new_task(&new_req("Add foo", TaskKind::Feature))
+        .new_open_task(&new_req("Add foo", TaskKind::Feature))
         .await
         .expect("new task");
 
@@ -670,7 +694,7 @@ async fn only_pm_or_human_may_write_the_queue() {
         .expect("orchestrator can set the queue");
     let other = daemon
         .client
-        .new_task(&new_req("Add bar", TaskKind::Feature))
+        .new_open_task(&new_req("Add bar", TaskKind::Feature))
         .await
         .expect("new task");
     orch.add_queue_tier(vec![other.id.clone()])
@@ -707,7 +731,7 @@ async fn rebuild_is_a_no_op_when_empty_and_refuses_once_populated() {
     c.rebuild(false).await.expect("rebuild against an empty db");
     assert!(c.list_tasks().await.expect("list tasks").is_empty());
 
-    c.new_task(&new_req("Add foo", TaskKind::Feature))
+    c.new_open_task(&new_req("Add foo", TaskKind::Feature))
         .await
         .expect("new task");
 
@@ -722,10 +746,10 @@ async fn size_is_set_on_new_shown_edited_and_kept_by_other_edits() {
 
     let mut req = new_req("Small", TaskKind::Chore);
     req.size = Some(TaskSize::S);
-    let task = c.new_task(&req).await.expect("new task");
+    let task = c.new_open_task(&req).await.expect("new task");
     assert_eq!(task.size, Some(TaskSize::S));
     let unsized_task = c
-        .new_task(&new_req("Unsized", TaskKind::Chore))
+        .new_open_task(&new_req("Unsized", TaskKind::Chore))
         .await
         .expect("new task");
     assert_eq!(unsized_task.size, None);
@@ -766,7 +790,7 @@ async fn done_records_branch_commit_and_a_replaceable_summary() {
     let c = &daemon.client;
 
     let task = c
-        .new_task(&new_req("Landed", TaskKind::Feature))
+        .new_open_task(&new_req("Landed", TaskKind::Feature))
         .await
         .expect("new task");
     assert!(task.summary.is_none());
@@ -808,7 +832,7 @@ async fn search_matches_words_in_title_body_and_summary() {
     let c = &daemon.client;
 
     let t1 = c
-        .new_task(&NewTaskRequest {
+        .new_open_task(&NewTaskRequest {
             for_human: false,
             priority: None,
             components: Vec::new(),
@@ -821,7 +845,7 @@ async fn search_matches_words_in_title_body_and_summary() {
         .expect("new task");
 
     let t2 = c
-        .new_task(&NewTaskRequest {
+        .new_open_task(&NewTaskRequest {
             for_human: false,
             priority: None,
             components: Vec::new(),
@@ -834,7 +858,7 @@ async fn search_matches_words_in_title_body_and_summary() {
         .expect("new task");
 
     let t3 = c
-        .new_task(&NewTaskRequest {
+        .new_open_task(&NewTaskRequest {
             for_human: false,
             priority: None,
             components: Vec::new(),
@@ -907,7 +931,7 @@ async fn search_includes_done_and_dropped_tasks() {
     let c = &daemon.client;
 
     let open_task = c
-        .new_task(&NewTaskRequest {
+        .new_open_task(&NewTaskRequest {
             for_human: false,
             priority: None,
             components: Vec::new(),
@@ -920,7 +944,7 @@ async fn search_includes_done_and_dropped_tasks() {
         .expect("new task");
 
     let done_task = c
-        .new_task(&NewTaskRequest {
+        .new_open_task(&NewTaskRequest {
             for_human: false,
             priority: None,
             components: Vec::new(),
@@ -933,7 +957,7 @@ async fn search_includes_done_and_dropped_tasks() {
         .expect("new task");
 
     let dropped_task = c
-        .new_task(&NewTaskRequest {
+        .new_open_task(&NewTaskRequest {
             for_human: false,
             priority: None,
             components: Vec::new(),
@@ -984,7 +1008,7 @@ async fn send_with_task_notes_the_thread_and_notifies_briefly() {
     let (daemon, _tmp) = start_daemon(None).await;
     let c = &daemon.client;
     let task = c
-        .new_task(&new_req("Add foo", TaskKind::Feature))
+        .new_open_task(&new_req("Add foo", TaskKind::Feature))
         .await
         .expect("new task");
     let external = daemon.external_client("w1").await;
@@ -1088,7 +1112,7 @@ async fn done_with_a_landed_branch_removes_its_agents_worktree_and_branch() {
     let head = git_out(&daemon.repo, &["rev-parse", "HEAD"]);
 
     let task = c
-        .new_task(&new_req("Landed", TaskKind::Feature))
+        .new_open_task(&new_req("Landed", TaskKind::Feature))
         .await
         .expect("new task");
     let done = c
@@ -1128,7 +1152,7 @@ async fn done_refuses_a_commit_not_on_the_integration_branch() {
     let unmerged = git_out(&wt, &["rev-parse", "HEAD"]);
 
     let task = c
-        .new_task(&new_req("Unlanded", TaskKind::Feature))
+        .new_open_task(&new_req("Unlanded", TaskKind::Feature))
         .await
         .expect("new task");
     let err = c
@@ -1235,7 +1259,7 @@ async fn ask_with_to_notifies_that_recipient_and_answer_notifies_the_asker() {
     let c = &daemon.client;
     let boss = c.spawn(&spawn_req("boss")).await.expect("spawn boss");
     let task = c
-        .new_task(&new_req("Add foo", TaskKind::Feature))
+        .new_open_task(&new_req("Add foo", TaskKind::Feature))
         .await
         .expect("new task");
 
@@ -1298,7 +1322,7 @@ async fn ask_defaults_to_the_spawner_or_the_human() {
         .await
         .expect("boss spawns w1");
     let task = c
-        .new_task(&new_req("Add foo", TaskKind::Feature))
+        .new_open_task(&new_req("Add foo", TaskKind::Feature))
         .await
         .expect("new task");
 
@@ -1334,7 +1358,7 @@ async fn task_kind_changes_only_while_open() {
     let c = &daemon.client;
     let req = |kind| SetKindRequest { kind };
     let task = c
-        .new_task(&new_req("Mislabelled", TaskKind::Feature))
+        .new_open_task(&new_req("Mislabelled", TaskKind::Feature))
         .await
         .expect("new task");
 

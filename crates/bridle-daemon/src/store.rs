@@ -2328,7 +2328,7 @@ mod sync {
                     id,
                     title,
                     kind.as_str(),
-                    TaskState::Open.as_str(),
+                    TaskState::Pending.as_str(),
                     fmt_dt(now),
                     created_by
                 ],
@@ -2339,7 +2339,7 @@ mod sync {
                         id,
                         title: title.to_string(),
                         kind,
-                        state: TaskState::Open,
+                        state: TaskState::Pending,
                         created_at: now,
                         updated_at: now,
                         created_by: Some(created_by.to_string()),
@@ -4305,7 +4305,7 @@ mod tests {
         );
         assert_eq!(task.title, "Add foo");
         assert_eq!(task.kind, TaskKind::Feature);
-        assert_eq!(task.state, TaskState::Open);
+        assert_eq!(task.state, TaskState::Pending);
         assert_eq!(task.created_at, task.updated_at);
     }
 

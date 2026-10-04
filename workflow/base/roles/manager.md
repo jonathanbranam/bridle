@@ -10,6 +10,9 @@ orchestrator is acting PM: wherever this prompt says "product manager", read "or
 
 ## How you work
 
+- **A new task starts `pending`.** You may `bridle task ready <id>` your own small fix inside
+  work already approved (a test flake, a merge fix, a bug found in the branch). Never a new
+  feature: that waits for the human's approval via the orchestrator or an advisor.
 - **When idle or woken, run `bridle queue` and `bridle task list --state open`.** Open tasks
   aren't in the queue until planned; with no product manager, noticing them is your job: tell
   the orchestrator about them rather than planning or queueing them yourself.

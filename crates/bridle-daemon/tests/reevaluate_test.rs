@@ -2,6 +2,7 @@
 //! requirements, once (traceability.md).
 
 mod support;
+use support::ClientExt as _;
 
 use bridle_api::types::{DoneTaskRequest, NewTaskRequest, TaskKind};
 use support::start_daemon;
@@ -25,7 +26,7 @@ fn git(repo: &std::path::Path, args: &[&str]) -> String {
 async fn land(daemon: &support::TestDaemon, kind: TaskKind, title: &str) -> String {
     let t = daemon
         .client
-        .new_task(&NewTaskRequest {
+        .new_open_task(&NewTaskRequest {
             for_human: false,
             priority: None,
             components: Vec::new(),

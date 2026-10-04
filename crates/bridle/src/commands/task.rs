@@ -285,6 +285,17 @@ pub(super) async fn task_list(cli: &Cli, args: &TaskListArgs) -> Result<(), CliE
     Ok(())
 }
 
+async fn task_ready(cli: &Cli, id: &str) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let task = client.ready_task(id).await?;
+    if cli.json {
+        render::print_json(&task)?;
+    } else {
+        print_task_row(&task);
+    }
+    Ok(())
+}
+
 pub(super) async fn task_plan(cli: &Cli, args: &TaskPlanArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
     let task = client.plan_task(&args.task).await?;
@@ -781,6 +792,10 @@ pub(super) async fn ready(cli: &Cli, args: &ReadyArgs) -> Result<(), CliError> {
     // (P0-1 gap, docs/design/cli.md). Accepted, not rejected, so a caller
     // scripting ahead of that field landing doesn't need to special-case it.
     let _ = &args.role;
+
+    if let Some(id) = &args.task {
+        return task_ready(cli, id).await;
+    }
 
     if !args.all {
         let client = client_for_read(cli).await?;

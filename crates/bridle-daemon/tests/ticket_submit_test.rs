@@ -50,7 +50,7 @@ async fn inbox(client: &Client, to: &str) -> Vec<String> {
 }
 
 #[tokio::test]
-async fn a_visitor_submits_an_open_task_and_cannot_plan_or_claim_it() {
+async fn a_visitor_submits_a_pending_task_and_cannot_ready_plan_or_claim_it() {
     let (daemon, _tmp) = start_daemon_with_config(None, Some(CONFIG)).await;
     let pm = daemon
         .client
@@ -70,7 +70,7 @@ async fn a_visitor_submits_an_open_task_and_cannot_plan_or_claim_it() {
     wait_for_state(&daemon.client, &pm.id, AgentState::Idle).await;
     let v = visitor(&daemon).await;
     let task = v.submit_task(&req()).await.expect("submit");
-    assert_eq!(task.state, TaskState::Open);
+    assert_eq!(task.state, TaskState::Pending);
     assert!(task.body.starts_with("submitted by external:advisor@nuc\n"));
     assert!(
         task.thread[0]
@@ -78,6 +78,7 @@ async fn a_visitor_submits_an_open_task_and_cannot_plan_or_claim_it() {
             .contains("submitted by external:advisor@nuc")
     );
 
+    assert!(v.ready_task(&task.id).await.is_err());
     assert!(v.plan_task(&task.id).await.is_err());
     assert!(v.claim_task(&task.id).await.is_err());
     // It may comment on its own submission, but not on another task.

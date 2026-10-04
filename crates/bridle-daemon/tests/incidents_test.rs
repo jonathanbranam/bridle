@@ -71,9 +71,10 @@ async fn anyone_files_a_potential_incident_but_only_the_owner_moves_it() {
 
     let id = file(&worker, "main is red").await;
     let t = d.client.get_task(&id).await.expect("task");
-    assert_eq!((t.kind, t.state), (TaskKind::Incident, TaskState::Open));
+    assert_eq!((t.kind, t.state), (TaskKind::Incident, TaskState::Pending));
 
     for c in [&worker, &advisor] {
+        assert!(c.ready_task(&id).await.is_err(), "ready must be refused");
         assert!(c.plan_task(&id).await.is_err(), "plan must be refused");
         assert!(
             c.drop_task(
@@ -92,10 +93,11 @@ async fn anyone_files_a_potential_incident_but_only_the_owner_moves_it() {
     }
     assert_eq!(
         d.client.get_task(&id).await.expect("task").state,
-        TaskState::Open
+        TaskState::Pending
     );
 
     // The orchestrator and the human may; no commit is needed to resolve.
+    orch.ready_task(&id).await.expect("ready");
     assert_eq!(
         orch.plan_task(&id).await.expect("plan").state,
         TaskState::Planned
@@ -140,6 +142,7 @@ async fn a_running_agent_gets_the_notice_and_then_a_resolved_note() {
     let w = spawn(&d, "w1").await;
     let orch = d.external_client("orchestrator").await;
     let id = file(&orch, "main is red").await;
+    orch.ready_task(&id).await.expect("ready");
     orch.plan_task(&id).await.expect("plan");
 
     let got = wait_for("notice delivered", || async {
@@ -173,6 +176,7 @@ async fn an_agent_started_while_active_gets_the_notice() {
     let (d, _tmp) = start_daemon(None).await;
     let orch = d.external_client("orchestrator").await;
     let id = file(&orch, "main is red").await;
+    orch.ready_task(&id).await.expect("ready");
     orch.plan_task(&id).await.expect("plan");
 
     let w = spawn(&d, "late").await;
@@ -191,6 +195,7 @@ async fn an_undelivered_notice_is_dropped_on_resolve_and_never_announced() {
     wait_for_state(&d.client, &w, AgentState::Stopped).await;
     let orch = d.external_client("orchestrator").await;
     let id = file(&orch, "main is red").await;
+    orch.ready_task(&id).await.expect("ready");
     orch.plan_task(&id).await.expect("plan");
     let n = notes(&d, &w).await;
     assert_eq!(n.len(), 1);
@@ -220,6 +225,7 @@ async fn editing_an_active_incident_updates_the_pending_notice_in_place() {
     wait_for_state(&d.client, &w, AgentState::Stopped).await;
     let orch = d.external_client("orchestrator").await;
     let id = file(&orch, "main is red").await;
+    orch.ready_task(&id).await.expect("ready");
     orch.plan_task(&id).await.expect("plan");
     orch.edit_task(
         &id,

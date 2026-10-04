@@ -2,6 +2,7 @@
 //! task or spawn, not the cwd").
 
 mod support;
+use support::ClientExt as _;
 
 use bridle_api::types::{EditTaskRequest, NewTaskRequest, SpawnRequest, TaskKind, Workdir};
 use support::{
@@ -40,17 +41,17 @@ async fn task_components_round_trip_validate_and_filter_by_descendant() {
     let c = &daemon.client;
 
     let games = c
-        .new_task(&req("games", &["client-games"]))
+        .new_open_task(&req("games", &["client-games"]))
         .await
         .expect("games");
     assert_eq!(games.components, vec!["client-games"]);
-    c.new_task(&req("both", &["client-play", "server", "server"]))
+    c.new_open_task(&req("both", &["client-play", "server", "server"]))
         .await
         .expect("both");
-    c.new_task(&req("wide", &[])).await.expect("wide");
+    c.new_open_task(&req("wide", &[])).await.expect("wide");
 
     // Unknown ids are rejected, on create and on edit.
-    let err = c.new_task(&req("bad", &["nope"])).await.unwrap_err();
+    let err = c.new_open_task(&req("bad", &["nope"])).await.unwrap_err();
     assert!(err.to_string().contains("no component"), "{err}");
     let err = c
         .edit_task(
@@ -109,10 +110,10 @@ async fn task_components_round_trip_validate_and_filter_by_descendant() {
 async fn a_project_without_components_behaves_as_before() {
     let (daemon, _tmp) = start_daemon(None).await;
     let c = &daemon.client;
-    let t = c.new_task(&req("plain", &[])).await.expect("new");
+    let t = c.new_open_task(&req("plain", &[])).await.expect("new");
     assert!(t.components.is_empty());
     // Naming one is still rejected: there are none to name.
-    assert!(c.new_task(&req("x", &["a"])).await.is_err());
+    assert!(c.new_open_task(&req("x", &["a"])).await.is_err());
     assert!(c.list_tasks_component("a").await.expect("list").is_empty());
     assert_eq!(c.list_tasks().await.expect("list").len(), 1);
 }

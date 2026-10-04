@@ -562,7 +562,7 @@ impl TaskManager {
         Ok((self.put(task), from))
     }
 
-    /// Sets the kind, only while the task is `open` (a planned task's kind is frozen, and a
+    /// Sets the kind, only while the task is `pending` or `open` (a planned task's kind is frozen, and a
     /// reopened one was planned before). The caller emits the event.
     pub async fn set_kind(
         &self,
@@ -573,9 +573,9 @@ impl TaskManager {
         let mut task = self
             .get_task(id)
             .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
-        if task.state != TaskState::Open {
+        if !matches!(task.state, TaskState::Pending | TaskState::Open) {
             return Err(TaskError::Conflict(format!(
-                "{id} is {}; a task's kind can only change while it is open",
+                "{id} is {}; a task's kind can only change while it is pending or open",
                 task.state
             )));
         }
@@ -680,6 +680,38 @@ impl TaskManager {
         task.updated_at = Utc::now();
         self.state.enqueue_task(&task)?;
         Ok(self.put(task))
+    }
+
+    /// `pending` -> `open`: someone with the authority (the human's approval, or the manager's
+    /// own small fix) has said this task is ready for the PM. Every task is created `pending`.
+    pub async fn ready_task(&self, id: &str, actor: &PrincipalId) -> Result<Task, TaskError> {
+        let mut task = self
+            .get_task(id)
+            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+        if task.state != TaskState::Pending {
+            return Err(TaskError::Conflict(format!(
+                "task {id} is {}, not pending; only a pending task can be readied",
+                task.state
+            )));
+        }
+        self.transition(&mut task, TaskState::Open, actor).await?;
+        self.state.enqueue_task(&task)?;
+        Ok(self.put(task))
+    }
+
+    /// [`TaskManager::new_task`] then [`TaskManager::ready_task`], for tests that start from
+    /// an `open` task.
+    pub async fn new_open_task(
+        &self,
+        title: &str,
+        kind: TaskKind,
+        body: String,
+        components: Vec<String>,
+        size: Option<TaskSize>,
+    ) -> Result<Task, TaskError> {
+        let task = self.new_task(title, kind, body, components, size).await?;
+        self.ready_task(&task.id, &UNKNOWN_CREATOR.to_string())
+            .await
     }
 
     /// `open` -> `planned`: the PM has decided this task is ready to build.
@@ -810,17 +842,17 @@ impl TaskManager {
     }
 
     /// Replaces the task's declared impact (impact-and-conflicts.md). Only
-    /// while the task can still be worked: open, planned or claimed.
+    /// while the task can still be worked: pending, open, planned or claimed.
     pub async fn set_impact(&self, id: &str, impact: Impact) -> Result<Task, TaskError> {
         let mut task = self
             .get_task(id)
             .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
         if !matches!(
             task.state,
-            TaskState::Open | TaskState::Planned | TaskState::Claimed
+            TaskState::Pending | TaskState::Open | TaskState::Planned | TaskState::Claimed
         ) {
             return Err(TaskError::Conflict(format!(
-                "task {id} is {}; impact can only be set on an open, planned or claimed task",
+                "task {id} is {}; impact can only be set on a pending, open, planned or claimed task",
                 task.state
             )));
         }
@@ -1593,7 +1625,7 @@ mod tests {
     async fn new_task_is_open_and_visible_before_any_flush() {
         let (tm, _tmp) = manager().await;
         let task = tm
-            .new_task(
+            .new_open_task(
                 "Add foo",
                 TaskKind::Feature,
                 "a description".to_string(),
@@ -1616,7 +1648,7 @@ mod tests {
         let (tm, _tmp) = manager().await;
         for _ in 0..40 {
             let t = tm
-                .new_task("A", TaskKind::Chore, String::new(), vec![], None)
+                .new_open_task("A", TaskKind::Chore, String::new(), vec![], None)
                 .await
                 .expect("new task");
             let tail = t.id.strip_prefix("tw-").expect("prefix");
@@ -1633,12 +1665,12 @@ mod tests {
         let (tm, _tmp) = manager().await;
         let body = "original id: k7tm\ndocs/tickets/open/x-k7tm.md".to_string();
         let first = tm
-            .new_task("A", TaskKind::Feature, body.clone(), vec![], None)
+            .new_open_task("A", TaskKind::Feature, body.clone(), vec![], None)
             .await
             .expect("first");
         assert_eq!(first.id, "tw-k7tm");
         let second = tm
-            .new_task("B", TaskKind::Feature, body, vec![], None)
+            .new_open_task("B", TaskKind::Feature, body, vec![], None)
             .await
             .expect("second");
         assert_ne!(second.id, "tw-k7tm");
@@ -1649,7 +1681,7 @@ mod tests {
     async fn edit_changes_title_and_body_without_changing_state() {
         let (tm, _tmp) = manager().await;
         let task = tm
-            .new_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
             .await
             .expect("new task");
 
@@ -1687,7 +1719,7 @@ mod tests {
         let (tm, _tmp) = manager().await;
         let body = "original id: abcd\nold".to_string();
         let task = tm
-            .new_task("T", TaskKind::Feature, body, vec![], None)
+            .new_open_task("T", TaskKind::Feature, body, vec![], None)
             .await
             .expect("new task");
         let edited = tm
@@ -1717,7 +1749,7 @@ mod tests {
         assert_eq!(edited.body, "original id: wxyz\nbrief");
         // A task without an origin line is unaffected.
         let plain = tm
-            .new_task("P", TaskKind::Feature, "plain".to_string(), vec![], None)
+            .new_open_task("P", TaskKind::Feature, "plain".to_string(), vec![], None)
             .await
             .expect("new task");
         let edited = tm
@@ -1738,7 +1770,7 @@ mod tests {
     async fn edit_rejects_a_blank_title() {
         let (tm, _tmp) = manager().await;
         let task = tm
-            .new_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
             .await
             .expect("new task");
         let err = tm
@@ -1759,7 +1791,7 @@ mod tests {
     async fn edit_clears_size_with_none() {
         let (tm, _tmp) = manager().await;
         let task = tm
-            .new_task(
+            .new_open_task(
                 "Add foo",
                 TaskKind::Feature,
                 String::new(),
@@ -1781,7 +1813,7 @@ mod tests {
     async fn drop_requires_a_reason_and_reopen_only_applies_to_dropped() {
         let (tm, _tmp) = manager().await;
         let task = tm
-            .new_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
             .await
             .expect("new task");
 
@@ -1828,7 +1860,7 @@ mod tests {
     async fn plan_moves_open_to_planned_and_rejects_every_other_state() {
         let (tm, _tmp) = manager().await;
         let task = tm
-            .new_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
             .await
             .expect("new task");
         assert_eq!(task.state, TaskState::Open);
@@ -1888,11 +1920,11 @@ mod tests {
     async fn add_edge_rejects_self_loops_and_unknown_tasks_and_duplicates() {
         let (tm, _tmp) = manager().await;
         let a = tm
-            .new_task("A", TaskKind::Chore, String::new(), vec![], None)
+            .new_open_task("A", TaskKind::Chore, String::new(), vec![], None)
             .await
             .expect("new a");
         let b = tm
-            .new_task("B", TaskKind::Chore, String::new(), vec![], None)
+            .new_open_task("B", TaskKind::Chore, String::new(), vec![], None)
             .await
             .expect("new b");
 
@@ -1933,11 +1965,11 @@ mod tests {
     async fn remove_edge_drops_it_and_errors_when_missing() {
         let (tm, _tmp) = manager().await;
         let a = tm
-            .new_task("A", TaskKind::Chore, String::new(), vec![], None)
+            .new_open_task("A", TaskKind::Chore, String::new(), vec![], None)
             .await
             .expect("new a");
         let b = tm
-            .new_task("B", TaskKind::Chore, String::new(), vec![], None)
+            .new_open_task("B", TaskKind::Chore, String::new(), vec![], None)
             .await
             .expect("new b");
         tm.add_edge(&a.id, &b.id, EdgeKind::Blocks)
@@ -1971,11 +2003,11 @@ mod tests {
         let (tm, _tmp) = manager().await;
         let human = "human".to_string();
         let blocker = tm
-            .new_task("Blocker", TaskKind::Chore, String::new(), vec![], None)
+            .new_open_task("Blocker", TaskKind::Chore, String::new(), vec![], None)
             .await
             .expect("new blocker");
         let blocked = tm
-            .new_task("Blocked", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Blocked", TaskKind::Feature, String::new(), vec![], None)
             .await
             .expect("new blocked");
         tm.add_edge(&blocker.id, &blocked.id, EdgeKind::Blocks)
@@ -2024,7 +2056,7 @@ mod tests {
         let (tm, _tmp) = manager().await;
         let human = "human".to_string();
         let t = tm
-            .new_task("T", TaskKind::Chore, String::new(), vec![], None)
+            .new_open_task("T", TaskKind::Chore, String::new(), vec![], None)
             .await
             .expect("new");
         let err = tm.set_summary(&t.id, "  ").await.expect_err("empty");
@@ -2046,15 +2078,15 @@ mod tests {
     async fn ready_tasks_excludes_unplanned_and_blocked_tasks() {
         let (tm, _tmp) = manager().await;
         let blocker = tm
-            .new_task("Blocker", TaskKind::Chore, String::new(), vec![], None)
+            .new_open_task("Blocker", TaskKind::Chore, String::new(), vec![], None)
             .await
             .expect("new blocker");
         let blocked = tm
-            .new_task("Blocked", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Blocked", TaskKind::Feature, String::new(), vec![], None)
             .await
             .expect("new blocked");
         let unplanned = tm
-            .new_task("Unplanned", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Unplanned", TaskKind::Feature, String::new(), vec![], None)
             .await
             .expect("new unplanned");
 
@@ -2090,11 +2122,11 @@ mod tests {
     async fn set_queue_validates_unknown_ids_duplicates_and_empty_tiers() {
         let (tm, _tmp) = manager().await;
         let a = tm
-            .new_task("A", TaskKind::Chore, String::new(), vec![], None)
+            .new_open_task("A", TaskKind::Chore, String::new(), vec![], None)
             .await
             .expect("new a");
         let b = tm
-            .new_task("B", TaskKind::Chore, String::new(), vec![], None)
+            .new_open_task("B", TaskKind::Chore, String::new(), vec![], None)
             .await
             .expect("new b");
 
@@ -2131,11 +2163,11 @@ mod tests {
     async fn add_queue_tier_appends_after_whatever_is_already_there() {
         let (tm, _tmp) = manager().await;
         let a = tm
-            .new_task("A", TaskKind::Chore, String::new(), vec![], None)
+            .new_open_task("A", TaskKind::Chore, String::new(), vec![], None)
             .await
             .expect("new a");
         let b = tm
-            .new_task("B", TaskKind::Chore, String::new(), vec![], None)
+            .new_open_task("B", TaskKind::Chore, String::new(), vec![], None)
             .await
             .expect("new b");
 
@@ -2156,15 +2188,15 @@ mod tests {
     async fn highest_startable_tier_skips_a_tier_blocked_on_a_dependency() {
         let (tm, _tmp) = manager().await;
         let blocker = tm
-            .new_task("Blocker", TaskKind::Chore, String::new(), vec![], None)
+            .new_open_task("Blocker", TaskKind::Chore, String::new(), vec![], None)
             .await
             .expect("new blocker");
         let blocked = tm
-            .new_task("Blocked", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Blocked", TaskKind::Feature, String::new(), vec![], None)
             .await
             .expect("new blocked");
         let next = tm
-            .new_task("Next", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Next", TaskKind::Feature, String::new(), vec![], None)
             .await
             .expect("new next");
         tm.add_edge(&blocker.id, &blocked.id, EdgeKind::Blocks)
@@ -2211,7 +2243,7 @@ mod tests {
         // A task exists and is even ready, but it's backlog: not in any
         // tier, so it's never returned here.
         let task = tm
-            .new_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
             .await
             .expect("new task");
         force_planned(&tm, &task.id);
@@ -2240,11 +2272,11 @@ mod tests {
         .expect("open task manager");
 
         let a = tm
-            .new_task("A", TaskKind::Chore, String::new(), vec![], None)
+            .new_open_task("A", TaskKind::Chore, String::new(), vec![], None)
             .await
             .expect("new a");
         let b = tm
-            .new_task("B", TaskKind::Chore, String::new(), vec![], None)
+            .new_open_task("B", TaskKind::Chore, String::new(), vec![], None)
             .await
             .expect("new b");
         tm.set_queue(
@@ -2308,7 +2340,7 @@ mod tests {
         .expect("open task manager");
 
         let task = tm
-            .new_task(
+            .new_open_task(
                 "Add foo",
                 TaskKind::Feature,
                 "a description".to_string(),
@@ -2365,7 +2397,7 @@ mod tests {
             .expect("new task");
         assert_eq!(task.watchers, vec!["human".to_string()]);
         let anon = tm
-            .new_task("A", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("A", TaskKind::Feature, String::new(), vec![], None)
             .await
             .expect("new task");
         assert!(
@@ -2373,6 +2405,9 @@ mod tests {
             "an unknown creator isn't a watcher"
         );
 
+        tm.ready_task(&task.id, &"human".to_string())
+            .await
+            .expect("ready");
         tm.plan_task(&task.id, &"human".to_string())
             .await
             .expect("plan");
@@ -2468,7 +2503,7 @@ mod tests {
     async fn asking_a_question_blocks_ready_and_answering_unblocks_it() {
         let (tm, _tmp) = manager().await;
         let task = tm
-            .new_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
             .await
             .expect("new task");
         force_planned(&tm, &task.id);
@@ -2519,7 +2554,7 @@ mod tests {
     async fn ask_and_answer_reject_blank_bodies() {
         let (tm, _tmp) = manager().await;
         let task = tm
-            .new_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
             .await
             .expect("new task");
 
@@ -2543,7 +2578,7 @@ mod tests {
     async fn note_adds_a_thread_entry_without_affecting_readiness() {
         let (tm, _tmp) = manager().await;
         let task = tm
-            .new_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
             .await
             .expect("new task");
         force_planned(&tm, &task.id);
@@ -2575,7 +2610,7 @@ mod tests {
     async fn note_rejects_a_blank_body() {
         let (tm, _tmp) = manager().await;
         let task = tm
-            .new_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
             .await
             .expect("new task");
         let err = tm
@@ -2606,7 +2641,7 @@ mod tests {
         .expect("open task manager");
 
         let task = tm
-            .new_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
             .await
             .expect("new task");
         force_planned(&tm, &task.id);
@@ -2640,7 +2675,7 @@ mod tests {
     async fn claim_blocks_ready_and_release_unblocks_it() {
         let (tm, _tmp) = manager().await;
         let task = tm
-            .new_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
             .await
             .expect("new task");
         force_planned(&tm, &task.id);
@@ -2692,7 +2727,7 @@ mod tests {
     async fn human_claim_survives_the_lease_check_and_is_done_without_a_commit() {
         let (tm, _tmp) = manager().await;
         let t = tm
-            .new_task(
+            .new_open_task(
                 "[at restart] tokens",
                 TaskKind::Feature,
                 String::new(),
@@ -2717,7 +2752,7 @@ mod tests {
     async fn done_without_a_commit_is_refused_for_an_agent_claim() {
         let (tm, _tmp) = manager().await;
         let t = tm
-            .new_task("A", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("A", TaskKind::Feature, String::new(), vec![], None)
             .await
             .expect("new");
         force_planned(&tm, &t.id);
@@ -2739,11 +2774,11 @@ mod tests {
     async fn claimed_by_filters_to_the_matching_claimant() {
         let (tm, _tmp) = manager().await;
         let a = tm
-            .new_task("A", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("A", TaskKind::Feature, String::new(), vec![], None)
             .await
             .expect("new a");
         let b = tm
-            .new_task("B", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("B", TaskKind::Feature, String::new(), vec![], None)
             .await
             .expect("new b");
         force_planned(&tm, &a.id);
@@ -2772,7 +2807,7 @@ mod tests {
     async fn claim_by_another_agent_is_rejected() {
         let (tm, _tmp) = manager().await;
         let task = tm
-            .new_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
             .await
             .expect("new task");
         force_planned(&tm, &task.id);
@@ -2793,7 +2828,7 @@ mod tests {
 
     async fn claimed_task(tm: &TaskManager, agent: &str) -> Task {
         let task = tm
-            .new_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
             .await
             .expect("new task");
         force_planned(tm, &task.id);
@@ -2867,7 +2902,7 @@ mod tests {
         let (tm, _tmp) = manager().await;
         let store = tm.store.clone();
         let task = tm
-            .new_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
             .await
             .expect("new task");
         force_planned(&tm, &task.id);
@@ -2947,6 +2982,9 @@ mod tests {
             )
             .await
             .expect("new task");
+        tm.ready_task(&task.id, &"human".to_string())
+            .await
+            .expect("ready");
         tm.plan_task(&task.id, &"human".to_string())
             .await
             .expect("plan");
@@ -3009,7 +3047,7 @@ mod tests {
         .await
         .expect("open task manager");
         let task = tm
-            .new_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
             .await
             .expect("new task");
 
@@ -3075,15 +3113,15 @@ mod tests {
         .expect("open task manager");
 
         let a = tm
-            .new_task("A", TaskKind::Chore, "body a".to_string(), vec![], None)
+            .new_open_task("A", TaskKind::Chore, "body a".to_string(), vec![], None)
             .await
             .expect("new a");
         let b = tm
-            .new_task("B", TaskKind::Feature, "body b".to_string(), vec![], None)
+            .new_open_task("B", TaskKind::Feature, "body b".to_string(), vec![], None)
             .await
             .expect("new b");
         let c = tm
-            .new_task("C", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("C", TaskKind::Feature, String::new(), vec![], None)
             .await
             .expect("new c");
         tm.add_edge(&a.id, &b.id, EdgeKind::Blocks)
@@ -3234,7 +3272,7 @@ mod tests {
     #[tokio::test]
     async fn rebuild_refuses_against_an_already_populated_database() {
         let (tm, _tmp) = manager().await;
-        tm.new_task("A", TaskKind::Chore, String::new(), vec![], None)
+        tm.new_open_task("A", TaskKind::Chore, String::new(), vec![], None)
             .await
             .expect("new a");
         tm.flush_now().await.expect("flush");
@@ -3258,7 +3296,7 @@ mod tests {
         let (tm, tmp) = manager().await;
         let tm = tm.with_settle(std::time::Duration::from_secs(300));
         let t = tm
-            .new_task("T", TaskKind::Chore, String::new(), vec![], None)
+            .new_open_task("T", TaskKind::Chore, String::new(), vec![], None)
             .await
             .expect("new");
         force_planned(&tm, &t.id);

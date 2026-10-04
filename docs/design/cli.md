@@ -70,6 +70,7 @@ bridle task answer  <task-id> TEXT                    answers a task's open ques
 bridle task claim   <task-id>                         claims a ready task for the caller: planned -> claimed
 bridle task release <task-id>                         releases the caller's own claim: claimed -> planned
 bridle task ready   [--all] [--role R]                the highest queue tier with a startable task (planned, deps met, no open question, unclaimed)
+bridle task ready   <id>                                 pending -> open: approve the task for the PM (orchestrator or an advisor with the human's approval; a manager for its own small fix inside approved work; not workers, the PM or visitors). `bridle status` lists pending tasks
 bridle queue                                     read-only: claimed tasks with their worker, then the tiers in rank order
 bridle queue set --tier T,T... [--tier T,T...]   replace the whole queue, one --tier per tier (PM, orchestrator or human only)
 bridle queue add-tier <task>...                  append one tier at the back (PM, orchestrator or human only)
@@ -238,7 +239,7 @@ bridle ticket check [--quiet]                checks every ticket in `docs/ticket
                                              `MISSING_KIND_OR_LINK_IS_ERROR` in `ticket.rs`). Problems go to stderr, one per line, exit 1; `--quiet`
                                              prints nothing when clean. Local, no daemon
 bridle ticket submit -k <kind> <title> [--body S | --body-file F|-]
-                                              files an `open` task on the project's daemon (any principal with a token,
+                                              files a `pending` task on the project's daemon (any principal with a token,
                                               visitors included; no ticket file) and prints its id. The body starts
                                               `submitted by <principal>`; the product manager (else the orchestrator)
                                               gets one inbox message. Dropping it with a reason tells the submitter.
@@ -286,14 +287,14 @@ bridle task new    <title> -k/--kind KIND [--body TEXT | --body-file FILE] [--co
 bridle task show   <id>
 bridle task plan   <id>                                                 open -> planned: ready to build, claimable once unblocked
 bridle task priority <id> high|normal|low  change the priority; who and when go in the thread and a `task.priority` event
-bridle task kind <id> <kind>             change the kind, only while `open` (refused planned, claimed, dropped, integrated, reopened); who and when go in the thread and a `task.kind` event
+bridle task kind <id> <kind>             change the kind, only while `pending` or `open` (refused planned, claimed, dropped, integrated, reopened); who and when go in the thread and a `task.kind` event
 bridle task edit   <id> [--title TEXT] [--body TEXT | --body-file FILE] [--component ID ... | --no-component] [--size S|M|L|none]
 bridle task list   [--claimed-by WHO] [--component ID] [-k KIND]             WHO: me|human|<agent name>|<principal id>; unclaimed tasks have no claimant to match
 bridle task search <words...>                                      search for tasks by words in title/body/summary (case-insensitive substring match, all words must match); includes done and dropped tasks
 bridle task drop   <id> --reason TEXT
                                                                         incidents are `-k incident` tasks (`task list -k incident` lists them); plan/done/drop/reopen of one is orchestrator/human only, and `plan` sends the notice to every agent; see agent-host/incidents.md
 bridle task done   <id> [--commit SHA] [--branch NAME] [--resolution TEXT]  -> integrated; `--commit` is required unless the human claimed the task (a to-do) or the task is an incident (`--resolution` goes in its thread and the "resolved" note); records the sha (and branch) on the task and in the thread; with --branch removes the branch's agents, worktree and branch; warns if no summary
-bridle task impact set  <task> [--modify ID].. [--add-under ID].. [--remove ID].. [--files GLOB..]  declares the task's impact, replacing any earlier one; only an open/planned/claimed task; ids checked by shape (r-/s-/g-/a- + hex) only
+bridle task impact set  <task> [--modify ID].. [--add-under ID].. [--remove ID].. [--files GLOB..]  declares the task's impact, replacing any earlier one; only a pending/open/planned/claimed task; ids checked by shape (r-/s-/g-/a- + hex) only
 bridle task impact check [--specs DIR]                                overlaps between in-flight tasks' declared impact, plus merge probes of claimed tasks' branches (`--json`: `{overlaps:[{level,tasks,kind,key}]}`); exit 1 if any is a conflict; see impact-and-conflicts.md
 bridle task land <task> [--branch B] [--check-cmd CMD] [--checked-commit SHA]              the integrator: squash the branch into one commit (`<task id>: <title>`, the summary as body, `Task:`/`Branch:` trailers) in the integration worktree, run `[integration] check` (skipped, with a note, only when the integration branch is an ancestor of the branch tip and the tip is `--checked-commit`, the commit the worker reported a green check on; otherwise it runs and the note says why), fail if the nextest test count is outside the sane band around the last full run (`<workspace>/last-full-test-count`), fast-forward the integration branch (guarded), mark the task done; any failure lands nothing (exit 1); never pushes
 bridle probe <task-or-agent> | --branch B                       `git merge-tree` of the branch into the integration branch, no working-tree change (`--json`: `{branch,against,outcome,paths}`); exit 1 on a conflict; needs git 2.38
@@ -581,8 +582,8 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   crate, `crates/bridle-tui`, split Elm-style: a plain state struct and update function
   with no terminal/ratatui dependency (so it's unit-tested without a terminal),
   rendered by a separate `ui` module.
-- **`task`** covers the `open`/`planned`/`claimed`/`dropped`/`integrated`/`reopened` states
-  (docs/design/roles-and-lifecycle.md, Task lifecycle): create, show, edit (title/body,
+- **`task`** covers the `pending`/`open`/`planned`/`claimed`/`dropped`/`integrated`/`reopened` states
+  (docs/design/roles-and-lifecycle.md, Task lifecycle): create (always `pending`; `task ready <id>` opens it), show, edit (title/body,
   never state), list (id/title/kind/state), plan (`open` -> `planned`), drop (a reason is
   required, recorded in the task's thread), done (`--commit` required, recorded in the
   thread; the task becomes `integrated`, which resolves its `blocks` edges and drops it from

@@ -417,6 +417,7 @@ mod tests {
             last_wake_at: None,
             upgrade_waiting: None,
             sessions: Vec::new(),
+            pending_tasks: Vec::new(),
         }
     }
 

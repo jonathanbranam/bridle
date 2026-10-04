@@ -128,7 +128,7 @@ pub enum Command {
     /// Token management.
     Token(TokenArgs),
     /// Task records: create/show/edit/list/drop/done/reopen/plan/summary.
-    /// Plan changes state: `open` -> `planned`. See docs/design/storage.md
+    /// Ready changes state `pending` -> `open`, plan `open` -> `planned`. See docs/design/storage.md
     /// for state machine and docs/design/coordination.md for the task lifecycle.
     Task(TaskArgs),
     /// A task's declared impact: the spec ids and files it will touch
@@ -1321,7 +1321,7 @@ pub struct TaskArgs {
 
 #[derive(Debug, Subcommand)]
 pub enum TaskAction {
-    /// Create a task, open, with title and kind.
+    /// Create a task, `pending` until someone runs `task ready`, with title and kind.
     New(TaskNewArgs),
     /// Show one task in full, including its body and thread.
     Show(TaskShowArgs),
@@ -1359,7 +1359,8 @@ pub enum TaskAction {
     Claim(ClaimArgs),
     /// Release the calling principal's own claim.
     Release(ReleaseArgs),
-    /// The highest queue tier with a startable task.
+    /// The highest queue tier with a startable task; with a task id, approve that `pending`
+    /// task for work instead (`pending` -> `open`; the PM plans only open tasks).
     Ready(ReadyArgs),
     /// The queue: claimed tasks, then the tiers in rank order.
     Queue(QueueArgs),
@@ -1847,6 +1848,8 @@ pub struct RulesDiffArgs {
 
 #[derive(Debug, Args)]
 pub struct ReadyArgs {
+    /// A `pending` task to open. Without it, list the highest startable queue tier.
+    pub task: Option<String>,
     /// Fan out across every daemon registered on this machine (`bridle
     /// daemons`), not just the one `--url`/`--project`/discovery resolves.
     #[arg(long)]

@@ -55,6 +55,18 @@ pub(super) async fn status(cli: &Cli) -> Result<(), CliError> {
                 (chrono::Utc::now() - inc.since).num_minutes().max(0)
             );
         }
+        if !status.pending_tasks.is_empty() {
+            println!(
+                "pending    {} task(s) awaiting `bridle task ready`: {}",
+                status.pending_tasks.len(),
+                status
+                    .pending_tasks
+                    .iter()
+                    .map(|t| t.id.as_str())
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            );
+        }
         for sess in &status.sessions {
             let now = chrono::Utc::now();
             let mins = |t: chrono::DateTime<chrono::Utc>| (now - t).num_minutes().max(0);

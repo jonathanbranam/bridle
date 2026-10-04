@@ -2,6 +2,7 @@
 //! to triage it (coordination.md, "Waking the manager").
 
 mod support;
+use support::ClientExt as _;
 
 use bridle_api::types::{
     AgentState, MessageQuery, NewTaskRequest, SpawnRequest, TaskKind, Workdir,
@@ -34,7 +35,7 @@ async fn spawn_role(daemon: &support::TestDaemon, role: &str, name: &str) -> Str
 async fn file(daemon: &support::TestDaemon, title: &str) {
     daemon
         .client
-        .new_task(&NewTaskRequest {
+        .new_open_task(&NewTaskRequest {
             for_human: false,
             priority: None,
             components: Vec::new(),

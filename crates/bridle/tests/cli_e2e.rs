@@ -1050,6 +1050,8 @@ fn wait_returns_on_state_change_message_timeout_and_already_in_state() {
     // Returns on a state change.
     let waiter = spawn_cli(&repo, &home, &["wait", &id, "--until", "planned"]);
     std::thread::sleep(Duration::from_millis(800));
+    let (ok, _, err) = run_cli(&repo, &home, &["task", "ready", &id]);
+    assert!(ok, "ready failed: {err}");
     let (ok, _, err) = run_cli(&repo, &home, &["task", "plan", &id]);
     assert!(ok, "plan failed: {err}");
     let out = waiter.wait_with_output().expect("wait output");

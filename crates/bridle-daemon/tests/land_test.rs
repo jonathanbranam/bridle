@@ -2,6 +2,7 @@
 //! moves the integration branch (docs/design/agent-host/roles-and-config.md).
 
 mod support;
+use support::ClientExt as _;
 
 use bridle_api::types::{LandRequest, NewTaskRequest, TaskKind, TaskState};
 use support::{TestDaemon, start_daemon};
@@ -41,7 +42,7 @@ fn branch_with(d: &TestDaemon, branch: &str, file: &str, content: &str) {
 
 async fn task(d: &TestDaemon, kind: TaskKind) -> String {
     d.client
-        .new_task(&NewTaskRequest {
+        .new_open_task(&NewTaskRequest {
             for_human: false,
             priority: None,
             components: Vec::new(),

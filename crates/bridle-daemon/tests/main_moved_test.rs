@@ -3,6 +3,7 @@
 //! none to the agent whose task landed.
 
 mod support;
+use support::ClientExt as _;
 
 use bridle_api::types::{
     AgentState, DoneTaskRequest, MessageQuery, NewTaskRequest, SpawnRequest, TaskKind, Workdir,
@@ -53,7 +54,7 @@ async fn landing_notifies_the_other_worker_once_and_not_the_lander() {
     let other = worker(&daemon, "w2").await;
     let task = daemon
         .client
-        .new_task(&NewTaskRequest {
+        .new_open_task(&NewTaskRequest {
             for_human: false,
             priority: None,
             components: Vec::new(),
@@ -125,7 +126,7 @@ async fn landing_names_the_overlap_only_to_the_worker_whose_impact_overlaps() {
     ] {
         let t = daemon
             .client
-            .new_task(&NewTaskRequest {
+            .new_open_task(&NewTaskRequest {
                 for_human: false,
                 priority: None,
                 components: Vec::new(),

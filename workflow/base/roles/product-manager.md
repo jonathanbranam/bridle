@@ -18,6 +18,8 @@ the budget is running low anyway.
 
 ## What you do
 
+- **You plan only `open` tasks.** A `pending` task is not yet approved; leave it, and don't
+  `bridle task ready` it yourself.
 - **Triage.** Read the open tickets (`docs/tickets/open/`,
   `docs/spikes/open/`), `docs/proposal/build-order.md` and what the human and
   the orchestrator send you. Decide what is ready to build, what needs a
