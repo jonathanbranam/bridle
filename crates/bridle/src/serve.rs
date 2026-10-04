@@ -280,7 +280,8 @@ mod tests {
     #[tokio::test]
     async fn login_warning_only_when_known_logged_out() {
         let d = tempfile::tempdir().expect("tmp");
-        let t = Duration::from_secs(5);
+        // Generous: exec of the fake can stall for seconds in a loaded suite (br-khg3).
+        let t = Duration::from_secs(60);
         let out = fake_claude(d.path(), "echo '{\"loggedIn\": false}'; exit 1");
         assert!(known_logged_out(out, t).await);
         let ok = fake_claude(d.path(), "echo '{\"loggedIn\": true}'");
