@@ -4,10 +4,11 @@ title = "x8jt slice 1: document-reviewer role prompt (comment format, reply/revi
 kind = "feature"
 state = "planned"
 created_at = "2026-10-04T00:48:48.493Z"
-updated_at = "2026-10-04T00:49:30.051628Z"
+updated_at = "2026-10-04T01:14:04.556504Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "M"
+summary = "Added workflow/base/roles/document-reviewer.md (approved > [!comment] callout format, bold-name replies, @human/@docs-agent tags with (read), batch round, revise + follow-up tagging @human, resolve = delete thread + bottom note, commit each round). Registered: default role (worker defaults) and preamble line in config.rs, project append .bridle/roles/document-reviewer.md, 'bridle prime document-reviewer'. Tests: daemon role test and prime test. Docs: roles-and-config, cli.md, docs/README, CHANGELOG."
 +++
 
 x8jt slice 1 of 3 (human approved 2026-10-03: 'Approve all three to build. Approve tag format', 'I want to get this moving quickly').
