@@ -4,7 +4,7 @@ title = "bridle uses its own specs, starting with how every command finds its pr
 kind = "feature"
 state = "planned"
 created_at = "2026-10-04T18:39:04.274Z"
-updated_at = "2026-10-04T20:44:58.608694Z"
+updated_at = "2026-10-04T20:45:00.302654Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
@@ -24,3 +24,6 @@ priority: normal -> high
 
 ### note · agent:specs-first · 2026-10-04T20:44:58.608Z
 done: design/specs/project-resolution.md + executable scenarios over every command; just check green (1181 tests), spec check/coverage clean; c0a89072a72afd4ba82108a62b8ae90668c5d506
+
+### note · agent:specs-first · 2026-10-04T20:45:00.302Z
+Open question (as the ticket asked): should the spec flow (tasks edit design/specs/ in place) become a rule for bridle's own tasks, and which capability is spec'd next? Findings not fixed: migrate and review add|list|remove|resolve act on the cwd repo (SCOPES says Daemon); orchestrator prime succeeds outside a workspace; advisor start outside a workspace prints a command without --project. See the task summary.
