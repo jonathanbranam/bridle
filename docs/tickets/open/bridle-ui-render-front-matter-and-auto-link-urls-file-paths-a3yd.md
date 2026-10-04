@@ -44,3 +44,7 @@ The ID-scheme half of this (project identifiers on tickets, telling tickets from
 - IDs today: a task ID has the project's prefix (`br-bnhn`, `ui-yj6m`, `tw-...`, `mn-...`);
   a ticket ID is four characters with no prefix (`bnhn`), and a ticket's first task takes its id
   (`br-bnhn`). bridle-ui's tickets live in the bridle repo.
+
+## Work (UI)
+
+bridle-ui task ui-pmkd renders markdown and front matter and links targets for both bnhn and a3yd (orchestrator, 2026-10-04). It starts once br-bnhn and br-a3yd land.

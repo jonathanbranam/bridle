@@ -51,3 +51,7 @@ The human, verbatim (2026-10-04, to the bridle-ui aide; dictated):
   searches them (`GET /api/v1/projects/{project}/documents?q=`), in
   `crates/bridle-gateway/src/documents.rs`. The open document's URL is
   `/document?project=..&path=..` (k3qx, ui-n6cu).
+
+## Work (UI)
+
+bridle-ui task ui-pmkd renders markdown and front matter and links targets for both bnhn and a3yd (orchestrator, 2026-10-04). It starts once br-bnhn and br-a3yd land.
