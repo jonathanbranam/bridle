@@ -61,6 +61,10 @@ From [[projects-on-other-machines-by-config-k7mw|k7mw]] (built) and
   (`bridle inbox --project meta-notes`), or the NUC's orchestrator sends it to the laptop's daemon
   instead". So the sender must poll the other machine's daemon to see a reply, which is what the
   human wants gone.
+
+> [!comment] human, 2026-10-04 10:58, on "external:orchestrator@dalek"
+> Test: change this example to be for the aide at nuc instead; do this edit actually so i can see the result of applying an edit.
+
 - **Waiters watch one daemon each.** `bridle agent wake` and `wait-for-wake` long-poll one daemon;
   the orchestrator runs one per project ([[one-watcher-for-every-project-bridle-agent-wake-all-projects-cy2v|cy2v]],
   `--all-projects`, not built). Nothing watches a visitor's inbox on a remote daemon.
