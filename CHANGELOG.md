@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+- Landing no longer refuses a checked-out integration branch for uncommitted edits to files the landing doesn't touch; it refuses only on an overlap and names the files (br-tgdn).
+
 ### Added
 - Interactive sessions survive a daemon restart: the registry is kept in the daemon's own `sessions.json` (beside its database, one per daemon) and reloaded at start; the tick drops entries whose pid is gone or reused (br-e35h).
 - `bridle review now <path> [--resend]` (and `POST /api/v1/projects/{project}/review` for the UI's button) sends a document's pending comment threads to its agent at once; whenever bridle sends threads it marks them ` · sent YYYY-MM-DD HH:MM` in the file, and marked threads aren't sent again unless resent (br-qttb, x8jt).

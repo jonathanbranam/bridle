@@ -210,23 +210,53 @@ async fn landing_into_a_checked_out_branch_leaves_it_clean() {
     );
 }
 
-#[tokio::test]
-async fn a_dirty_checked_out_branch_refuses_the_landing() {
-    let (d, _tmp) = start_daemon(None).await;
-    branch_with(&d, "b1", "f.txt", "x\n");
-    let id = task(&d, TaskKind::Feature).await;
+/// Commits `tracked.txt` on main, then dirties it.
+fn dirty_tracked(d: &TestDaemon) {
     std::fs::write(d.repo.join("tracked.txt"), "clean\n").expect("write");
     git(&d.repo, &["add", "tracked.txt"]);
     git(&d.repo, &["commit", "-qm", "track"]);
     std::fs::write(d.repo.join("tracked.txt"), "dirty\n").expect("dirty");
+}
+
+#[tokio::test]
+async fn a_dirty_file_the_landing_touches_refuses_it_naming_the_file() {
+    let (d, _tmp) = start_daemon(None).await;
+    std::fs::write(d.repo.join("tracked.txt"), "clean\n").expect("write");
+    git(&d.repo, &["add", "tracked.txt"]);
+    git(&d.repo, &["commit", "-qm", "track"]);
+    branch_with(&d, "b1", "tracked.txt", "theirs\n");
+    let id = task(&d, TaskKind::Feature).await;
+    std::fs::write(d.repo.join("tracked.txt"), "dirty\n").expect("dirty");
     let before = git(&d.repo, &["rev-parse", "main"]);
     let e = land_err(&d, &id, &req("b1", None)).await;
-    assert!(e.contains("uncommitted"), "{e}");
+    assert!(
+        e.contains("uncommitted") && e.contains("tracked.txt"),
+        "{e}"
+    );
     assert_eq!(git(&d.repo, &["rev-parse", "main"]), before);
     assert_ne!(
         d.client.get_task(&id).await.expect("task").state,
         TaskState::Integrated
     );
+}
+
+#[tokio::test]
+async fn a_dirty_file_the_landing_does_not_touch_is_left_alone() {
+    let (d, _tmp) = start_daemon(None).await;
+    dirty_tracked(&d);
+    branch_with(&d, "b1", "f.txt", "x\n");
+    let id = task(&d, TaskKind::Feature).await;
+    let r = d
+        .client
+        .land_task(&id, &req("b1", None))
+        .await
+        .expect("land");
+    assert_eq!(git(&d.repo, &["rev-parse", "HEAD"]), r.commit);
+    assert_eq!(
+        std::fs::read_to_string(d.repo.join("tracked.txt")).expect("dirty file"),
+        "dirty\n"
+    );
+    assert!(d.repo.join("f.txt").exists());
 }
 
 fn checked(branch: &str, sha: Option<String>) -> LandRequest {

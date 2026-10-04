@@ -197,11 +197,24 @@ async fn advance(i: &LandInput<'_>, old: &str, new: &str) -> Result<(), LandErro
         return Err(moved());
     }
     let dirty = run_git(&dir, &["status", "--porcelain", "--untracked-files=no"]).await?;
-    if !dirty.trim().is_empty() {
+    // Git fast-forwards past dirty files the merge doesn't touch, so only an overlap refuses.
+    let touched = run_git(&dir, &["diff", "--name-only", old, new]).await?;
+    let touched: Vec<&str> = touched.lines().collect();
+    let overlap: Vec<&str> = dirty
+        .lines()
+        .filter_map(|l| l.get(3..))
+        // A rename shows as `old -> new`; either side counts.
+        .flat_map(|p| p.split(" -> "))
+        .map(|p| p.trim_matches('"'))
+        .filter(|p| touched.contains(p))
+        .collect();
+    if !overlap.is_empty() {
         return Err(LandError::Refused(format!(
-            "{} is checked out at {} with uncommitted changes; commit or stash them, then retry",
+            "{} is checked out at {} with uncommitted changes to files the landing touches ({}); \
+             commit or stash them, then retry",
             i.integration,
-            dir.display()
+            dir.display(),
+            overlap.join(", ")
         )));
     }
     run_git(&dir, &["merge", "--ff-only", new])

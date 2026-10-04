@@ -130,7 +130,7 @@ start_prompt      = "Check your inbox and tell the human you're ready."   # firs
   last count only 0 fails) and then written there for workers to read, then moves the integration branch guarded by the tip it started from
   (`<branch> moved, retry` if it changed): `git update-ref`, or, when a worktree (the
   clone, say) has the branch checked out, `git merge --ff-only` there so its files follow
-  (refused if that worktree has uncommitted changes to tracked files), and marks the task done with
+  (refused only if that worktree has uncommitted changes to a file the landing touches, which the error names; other dirty files are left as they are), and marks the task done with
   the merge commit. A conflict (probed first with `merge-tree`), a failed check, a moved
   tip, or a branch touching `design/architecture/**` for a task that isn't an
   `arch-revision` lands nothing (409). It never pushes. Events: `integrate.started`, `integrate.finished`
