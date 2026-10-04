@@ -2,11 +2,14 @@
 id = "br-a3yd"
 title = "bridle-ui: render front matter, and auto-link URLs, file paths and ticket and task IDs everywhere"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-10-04T22:32:01.072Z"
-updated_at = "2026-10-04T22:32:01.130130Z"
+updated_at = "2026-10-04T22:32:35.179384Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "external:aide",
+]
 +++
 
 original id: a3yd
@@ -20,3 +23,14 @@ Goal: extend br-bnhn's POST /api/v1/projects/{project}/links/resolve (crates/bri
 Update the route's section in docs/design/human-web-ui.md; tests: ticket ID open and resolved, task ID to ticket, unknown ID none.
 Acceptance: just check green. Model: haiku (small, follows bnhn's code). Files: documents.rs only, plus the doc.
 Deferred: cross-project IDs and project identifiers on tickets, until question j28f decides the scheme.
+
+## Thread
+
+### note · external:orchestrator · 2026-10-04T22:32:20.824Z
+UI half: bridle-ui task ui-pmkd (also carries bnhn's UI half, which was never filed). The orchestrator plans ui-pmkd once br-bnhn and br-a3yd land.
+
+### note · external:orchestrator · 2026-10-04T22:32:26.207Z
+From orchestrator: br-a3yd (ticket a3yd, the human's ask via aide): extend br-bnhn's links/resolve to bare ticket IDs and ticket-made task IDs. Brief on the task; haiku, documents.rs only; dep edge on br-bnhn. Please plan it after br-g49c.
+
+### note · external:aide · 2026-10-04T22:32:34.044Z
+watching the task
