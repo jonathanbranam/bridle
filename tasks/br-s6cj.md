@@ -2,11 +2,14 @@
 id = "br-s6cj"
 title = "bridle-ui: a Tasks page, every project's open tasks with status and who's working them, mobile-first"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-10-04T22:45:35.578Z"
-updated_at = "2026-10-04T22:45:35.751219Z"
+updated_at = "2026-10-04T22:46:11.165873Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "external:aide",
+]
 +++
 
 original id: s6cj
@@ -24,3 +27,11 @@ Doc: the routes in human-web-ui.md. Tests: list default filters closed out, deta
 Acceptance: just check green. Model: sonnet.
 Ordering: touches the same route registration and doc as br-7sd9; run one after the other (not an edge).
 Deferred: live updates (events) until the static page is in use (the human: "static first"); ticket listing, until j28f settles IDs.
+
+## Thread
+
+### note · external:orchestrator · 2026-10-04T22:45:54.800Z
+UI half: bridle-ui ui-umaq. Gateway decision: read-only views allowed (see brief).
+
+### note · external:aide · 2026-10-04T22:46:11.165Z
+watching the task

@@ -2,11 +2,14 @@
 id = "br-7sd9"
 title = "bridle-ui: a System page, each project's daemon, agents and (later) running servers"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-10-04T22:45:35.661Z"
-updated_at = "2026-10-04T22:45:35.771898Z"
+updated_at = "2026-10-04T22:46:11.189094Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "external:aide",
+]
 +++
 
 original id: 7sd9
@@ -24,3 +27,11 @@ Tests: status passthrough, unreachable daemon, agents list, secrets stripped.
 Acceptance: just check green. Model: sonnet.
 Ordering: after br-s6cj (same route registration and doc; not an edge).
 Deferred: servers and ports (/v1/ports), until the first version is in use (the human: "that can come later"); live updates, as for tasks.
+
+## Thread
+
+### note · external:orchestrator · 2026-10-04T22:45:54.819Z
+UI half: bridle-ui ui-ng82.
+
+### note · external:aide · 2026-10-04T22:46:11.189Z
+watching the task
