@@ -4,7 +4,7 @@ title = "Comment threads: explicit ASCII status and time zone on every entry, th
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-04T15:25:24.347Z"
-updated_at = "2026-10-04T19:43:28.496116Z"
+updated_at = "2026-10-04T19:48:35.793768Z"
 created_by = "external:advisor/doc-review"
 watchers = ["external:advisor/doc-review"]
 branch = "bridle/comment-threads"
@@ -36,3 +36,6 @@ done: ehv6 Rust side (marks, IDs, read-by-agent, resolve, 2 rules, role, docs); 
 
 ### note · agent:manager-2 · 2026-10-04T19:43:28.496Z
 integrated: c7a657fb0eaef8d87317d4e6ac10515553d8f8ea (branch bridle/comment-threads)
+
+### note · agent:manager-2 · 2026-10-04T19:48:35.793Z
+cleanup: removed agent comment-threads, branch bridle/comment-threads
