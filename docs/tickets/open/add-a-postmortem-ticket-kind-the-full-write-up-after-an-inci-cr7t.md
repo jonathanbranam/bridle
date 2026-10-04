@@ -41,30 +41,39 @@ worth learning from: the timeline, how it happened, the permissions and rules th
 went well, the learnings, and the actions with links. It's written after the cause is known and kept
 to refer back to.
 
+## Decided
+
+The human, verbatim (2026-10-04 ~7:30 PM ET, to the advisor), on where postmortems live:
+
+> Yeah, I don't know where postmortems live. It doesn't seem like a ticket, or it's a resolved
+> ticket, so I don't really know, but I want it written down somewhere. It seems like it could be in
+> a docs folder, but I do want them to follow the syntax of the ticket, I think.
+
+So: a docs folder of their own, written in the ticket syntax.
+
 ## Proposals
 
-- **P1.** A `postmortem` kind in `TaskKind` (`crates/bridle-api/src/types.rs`), in `bridle ticket
-  new --kind` and `bridle task new`, and in the ticket checker. That is a wire-format change, so
-  every client changes together.
-- **P2.** It's never queued: no PM plans it and no worker claims it. Its task starts `pending`, as
-  the human's review of the write-up. The human closes it, or approves it with `ready`, after reading
-  it, and then the ticket is resolved. Its actions are separate tickets and tasks, linked from its
-  Actions table.
-- **P3.** Sections, in order: The ask (if someone asked for it), Summary, Impact, Timeline, How it
+- **P1. A folder, in ticket syntax.** Postmortems live in `docs/postmortems/<slug>-<id>.md`. They
+  have the ticket frontmatter (`id`, `title`, `kind: postmortem`, `opened`, `repos`, `see`,
+  `tasks`, and so on) and an ID from the shared ID alphabet and space, so `[[...-<id>|<id>]]` links
+  and `see:` work as they do for tickets. They are never moved: unlike `open/` and `resolved/`,
+  where the folder is the state, a postmortem is a dated record like a research report.
+  `docs/README.md`'s layout and "How the folders work" gain the folder.
+- **P2. Tooling.** A `postmortem` kind in `TaskKind` (`crates/bridle-api/src/types.rs`), in
+  `bridle ticket new --kind` and `bridle task new`. `bridle ticket new --kind postmortem` writes to
+  `docs/postmortems/`. `bridle ticket check` checks that folder as well: IDs unique across every
+  folder, and `see:` resolves into and out of it. The kind change touches the wire format, so every
+  client changes together.
+- **P3. Its task is the human's review.** It's never queued: no PM plans it and no worker claims it.
+  The task starts `pending` and is closed once the human has read it. The file stays where it is.
+  Its actions are separate tickets and tasks, linked from its Actions table.
+- **P4. Sections**, in order: The ask (if someone asked for it), Summary, Impact, Timeline, How it
   happened, The permissions that allowed it, The rules that allowed it, What went well, Learnings,
-  Actions. Times in UTC with ET in brackets. A short template goes in `docs/README.md`, next to the
-  ticket conventions.
-- **P4.** The incident log entry (`docs/context/incidents.md`) links the postmortem, and the
+  Actions. Times in UTC with ET in brackets. A short template goes in `docs/README.md`.
+- **P5.** The incident log entry (`docs/context/incidents.md`) links the postmortem, and the
   postmortem links its incident ticket.
-- **P5.** When to write one: when the human asks; when an incident repeats one already in the log
+- **P6. When to write one:** when the human asks; when an incident repeats one already in the log
   (as h3ar repeated fx7x); or when the orchestrator judges the cost worth it. The orchestrator files
   it, or an advisor if the human asks.
-- **P6.** Retype mvtz to `postmortem` once this lands.
-
-## Questions
-
-- **Q1.** Ticket, or a separate folder? The human: "making this a ticket might be kind of weird".
-  Tickets are resolved and moved, while a postmortem is a dated record like a research report. The
-  alternative is `docs/postmortems/<date>-<slug>.md`, never moved, with a task for the review. The
-  proposals above assume a ticket, as the human asked "for now". Recommendation: keep the ticket for
-  now. Moving to a folder later is a rename.
+- **P7.** Move mvtz to `docs/postmortems/` with `kind: postmortem` once this lands. Until then it
+  stays in `docs/tickets/open/` as `research`, where the checker and its task's path find it.
