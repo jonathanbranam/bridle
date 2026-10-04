@@ -4,7 +4,7 @@ title = "x8jt slice 3a: gateway reads, writes and commits one document file (nar
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-04T00:48:48.535Z"
-updated_at = "2026-10-04T01:13:18.136288Z"
+updated_at = "2026-10-04T01:15:05.553809Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "M"
@@ -24,3 +24,6 @@ done: gateway GET/PUT /api/v1/projects/{project}/documents/{path} with hash-chec
 
 ### note · agent:manager-2 · 2026-10-04T01:13:18.136Z
 integrated: 651a2065fe5e2ee63f8014a782ddf22631adc453 (branch bridle/doc-gateway)
+
+### note · agent:manager-2 · 2026-10-04T01:15:05.553Z
+cleanup: removed agent doc-gateway, branch bridle/doc-gateway
