@@ -197,6 +197,7 @@ pub async fn run(cli: &Cli, role: &SessionRole) -> Result<(), CliError> {
                 None => (None, &[][..]),
             };
             crate::focus::refuse_advisor_if_locked(&home, chrono::Local::now())?;
+            refuse_if_running(cli, &advisor_identity(adv), &project).await?;
             let name = session_name("advisor", adv, &project, &suffix);
             let mut prompt = advisor_prompt(adv);
             if let Some(path) = take_handover(&home, &advisor_identity(adv)) {
@@ -219,6 +220,7 @@ pub async fn run(cli: &Cli, role: &SessionRole) -> Result<(), CliError> {
         }
         SessionRole::Aide { claude_args: extra } => {
             crate::focus::refuse_advisor_if_locked(&home, chrono::Local::now())?;
+            refuse_if_running(cli, "aide", &project).await?;
             let name = session_name("aide", None, &project, &suffix);
             let mut prompt = AIDE_PROMPT.to_string();
             if let Some(path) = take_handover(&home, "aide") {
@@ -424,6 +426,41 @@ async fn register(cli: &Cli, pid: i32, identity: &str, claude_session_id: Option
             .map_err(CliError::from)
     })
     .await;
+}
+
+/// Refuses a second live session of one identity in a project (krz8). A registered session whose
+/// process is gone, one on another machine (its pid means nothing here), and a daemon that is
+/// down or slow never block: the check is best effort like the registration.
+async fn refuse_if_running(cli: &Cli, identity: &str, project: &str) -> Result<(), CliError> {
+    let listed = tokio::time::timeout(DAEMON_WAIT, async {
+        crate::commands::client_for(cli)
+            .await?
+            .sessions()
+            .await
+            .map_err(CliError::from)
+    })
+    .await;
+    let Ok(Ok(sessions)) = listed else {
+        return Ok(());
+    };
+    let here = hostname();
+    let running = sessions.iter().find(|s| {
+        s.identity == identity
+            && s.project.as_deref().is_none_or(|p| p == project)
+            && (s.machine.is_none() || s.machine == here)
+            && process_start(s.pid).is_some()
+    });
+    if let Some(s) = running {
+        return Err(anyhow::anyhow!(
+            "bridle session: {identity} is already running in {project} (pid {}, pane {}, machine {}). \
+             To replace it: bridle session restart {identity}",
+            s.pid,
+            s.pane.as_deref().unwrap_or("none"),
+            s.machine.as_deref().unwrap_or("unknown"),
+        )
+        .into());
+    }
+    Ok(())
 }
 
 async fn end(cli: &Cli) {

@@ -300,12 +300,16 @@ bridle session orchestrator [claude args]   start the orchestrator's claude sess
                                              `Prod host:`, others are dropped; never writes ~/.claude/settings.json)
 bridle session advisor [name] [claude args] same for the advisor (advisor[-<name>]-<project>): lean
                                              settings, pane tag (advisor or advisor-<name>), sets BRIDLE_ADVISOR_NAME;
-                                             the unnamed one keeps advisor-<project>.pid while it runs
+                                             the unnamed one keeps advisor-<project>.pid while it runs; refuses
+                                             (and names pid, pane, machine and `bridle session restart <identity>`)
+                                             when a session of that identity is registered with a live process in
+                                             the project; a registered one whose process is gone does not block
 bridle session aide [claude args]         start the aide session (aide-<project>): lean settings, pane tag
                                              `aide`, BRIDLE_AS=aide so it signs `external:aide` (token under
                                              [aide]). It talks with the human about the running system; the
                                              orchestrator reaches the human only by messaging it. Not registered
-                                             with the daemon; refuses while focus hours are locked
+                                             with the daemon; refuses while focus hours are locked, and while a live
+                                             `aide` session is registered (as for the advisor)
 bridle advisor start <name> [--brief TEXT|@FILE]   send the brief to external:advisor as "For advisor <name>: ...", then run
                                              `bridle session advisor <name>` in a tmux pane: a split of the pane tagged
                                              @bridle=orchestrator, else a new window (`[tmux] advisor_pane = "split"|"window"`

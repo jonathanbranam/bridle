@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+- `bridle session advisor|aide` refuses to start a second session of an identity that is already registered with a live process in the project; the message names the running one (pid, pane, machine) and says to use `bridle session restart <identity>`. A registered session whose process is gone does not block (br-krz8, ticket krz8).
+
 ### Added
 - Comment threads in documents under review: every entry carries a US zone (`2026-10-04 11:02 EDT`) and one ASCII status, `[pending|sent|read <time>]`; threads get IDs (`c3`); the daemon marks a thread `[read]` once the agent has read it and rewrites the old `· sent` marks; only `human` and `human via <agent>` count as the human. `bridle review resolve <path> c3` closes a thread. Two new rules: `ascii-in-editable-text` and `human-via-agent` (br-ehv6, ticket ehv6).
 

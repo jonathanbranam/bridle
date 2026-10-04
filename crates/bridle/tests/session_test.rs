@@ -63,6 +63,8 @@ fn session(args: &[&str], envs: &[(&str, &str)], claude_exit: i32) -> Run {
         .env("BRIDLE_LAUNCHER_TEST", "1")
         .env("TMUX_PANE", "%9")
         .env_remove("BRIDLE_PROJECT")
+        .env_remove("BRIDLE_URL")
+        .env_remove("BRIDLE_TOKEN")
         .env_remove("BRIDLE_SESSION_SUFFIX");
     for (k, v) in envs {
         // "CWD" is not an env var: it moves the run into that folder.
@@ -320,6 +322,8 @@ fn advisor_session_without_tmux_succeeds() {
         // Explicitly remove TMUX_PANE to simulate being outside tmux
         .env_remove("TMUX_PANE")
         .env_remove("BRIDLE_PROJECT")
+        .env_remove("BRIDLE_URL")
+        .env_remove("BRIDLE_TOKEN")
         .env_remove("BRIDLE_SESSION_SUFFIX");
     let out = cmd.output().unwrap();
     // Session should succeed even without tmux
@@ -359,4 +363,74 @@ fn session_outside_any_workspace_refuses_instead_of_defaulting_to_bridle() {
     assert!(!r.out.status.success());
     assert!(r.claude.is_empty(), "claude must not start: {}", r.claude);
     assert!(String::from_utf8_lossy(&r.out.stderr).contains("--project"));
+}
+
+/// A one-shot-per-connection fake daemon that answers every request with `body`.
+fn fake_daemon(body: String) -> String {
+    use std::io::{Read, Write};
+    let l = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let url = format!("http://{}", l.local_addr().unwrap());
+    std::thread::spawn(move || {
+        for mut c in l.incoming().flatten() {
+            let mut buf = [0u8; 4096];
+            let _ = c.read(&mut buf);
+            let _ = write!(
+                c,
+                "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
+                body.len()
+            );
+        }
+    });
+    url
+}
+
+fn registered(identity: &str, pid: u32) -> String {
+    format!(
+        r#"[{{"identity":"{identity}","pid":{pid},"pane":"%3","started_at":"2026-01-01T00:00:00Z","project":"p"}}]"#
+    )
+}
+
+#[test]
+fn a_second_live_session_of_an_identity_is_refused() {
+    let url = fake_daemon(registered("aide", std::process::id()));
+    let r = session(
+        &["--project", "p", "--url", &url, "--token", "t", "aide"],
+        &[],
+        0,
+    );
+    assert!(!r.out.status.success());
+    assert!(r.claude.is_empty(), "claude must not start: {}", r.claude);
+    let err = String::from_utf8_lossy(&r.out.stderr);
+    assert!(
+        err.contains(&format!("pid {}", std::process::id())),
+        "{err}"
+    );
+    assert!(err.contains("%3"), "{err}");
+    assert!(err.contains("bridle session restart aide"), "{err}");
+}
+
+#[test]
+fn a_registered_session_whose_process_is_gone_does_not_block() {
+    // Above any pid the OS hands out, so nothing can be running as it.
+    let url = fake_daemon(registered("advisor/alice", 2_000_000_000));
+    let r = session(
+        &[
+            "--project",
+            "p",
+            "--url",
+            &url,
+            "--token",
+            "t",
+            "advisor",
+            "alice",
+        ],
+        &[],
+        0,
+    );
+    assert!(
+        r.out.status.success(),
+        "{}",
+        String::from_utf8_lossy(&r.out.stderr)
+    );
+    assert!(!r.claude.is_empty());
 }
