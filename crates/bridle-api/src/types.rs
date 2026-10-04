@@ -182,6 +182,24 @@ pub struct SessionKeep {
     pub identity: String,
 }
 
+/// `POST /v1/review/now`: send a document's pending comment threads to its agent at once.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReviewNowRequest {
+    /// Repo-relative path, as registered with `bridle review add`.
+    pub path: String,
+    /// Send threads already marked sent too.
+    #[serde(default)]
+    pub resend: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReviewNowResponse {
+    pub path: String,
+    pub agent: String,
+    /// Threads sent; 0 when nothing was pending.
+    pub threads: usize,
+}
+
 /// One registered interactive session.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SessionInfo {

@@ -68,6 +68,15 @@ a non-text file (NUL or invalid UTF-8) or over 2 MB (415); and any write while t
 tree is on a detached HEAD (403): the gateway commits on whatever branch is checked out in the
 project's working tree, including `main`. This machine's
 projects only (the repo comes from the daemon's registry entry). No browsing and no search.
+
+**Review now (br-qttb, ticket x8jt).** `POST /api/v1/projects/{project}/review` with
+`ReviewRequest {path, resend}` (`resend` defaults to false) asks the project's daemon to send the
+document's unsent comment threads to its agent at once, like `bridle review now`; returns
+`ReviewResult {project, path, agent, threads}`. `threads: 0` means nothing was unsent (the UI can
+say so). The path must be one under review (`bridle review add`), else 400 with the daemon's
+message; the daemon is reached with the human's token like the task actions. Sent threads are
+marked in the file (`· sent YYYY-MM-DD HH:MM`), so re-reading the document shows what went. The UI
+button is bridle-ui's ui-c39e.
 The commit uses the repo's git identity.
 
 **Human time (ticket u6w9; built: types, collection, interval math, handlers).** The wire types of `/api/v1/interactions/*` live in

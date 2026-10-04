@@ -646,6 +646,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         handover: handover.clone(),
         sessions: sessions.clone(),
         tasks: tasks.clone(),
+        doc_watch: doc_watch.clone(),
         integration: config.branches.integration.clone(),
         ports: config.ports.clone(),
         stop_grace: config.stop_grace,

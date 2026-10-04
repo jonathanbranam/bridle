@@ -10,7 +10,7 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use bridle_api::client::{Client, ClientError};
 use bridle_api::discovery::{ProcessEnv, resolve_token};
-use bridle_api::types::{DoneTaskRequest, DropTaskRequest};
+use bridle_api::types::{DoneTaskRequest, DropTaskRequest, ReviewNowRequest};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use ts_rs::TS;
@@ -105,7 +105,7 @@ pub async fn act_route(
 }
 
 /// The daemon's address and the human's token for one of this machine's projects.
-async fn resolve(project: &str) -> Result<(String, String), ActionError> {
+pub(crate) async fn resolve(project: &str) -> Result<(String, String), ActionError> {
     let targets = current_targets().await;
     let t = targets
         .into_iter()
@@ -194,6 +194,54 @@ pub(crate) async fn act(
         } => ActionError::Refused { status, message },
         other => ActionError::Daemon(other.to_string()),
     })
+}
+
+/// The body of a review request: the document, and whether to send threads already marked sent.
+#[derive(Debug, Clone, Deserialize, Serialize, TS)]
+pub struct ReviewRequest {
+    /// Repo-relative path of a document under review.
+    pub path: String,
+    #[serde(default)]
+    pub resend: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
+pub struct ReviewResult {
+    pub project: String,
+    pub path: String,
+    /// The document's agent.
+    pub agent: String,
+    /// Threads sent now; 0 when none were pending (or all were already marked sent).
+    pub threads: u32,
+}
+
+/// `POST /api/v1/projects/{project}/review`: the UI's "review now" button. Same as
+/// `bridle review now`: the daemon sends the document's unsent comment threads to its agent at
+/// once and marks them sent in the file.
+pub async fn review_route(
+    Path(project): Path<String>,
+    Json(req): Json<ReviewRequest>,
+) -> Result<Json<ReviewResult>, ActionError> {
+    let (url, token) = resolve(&project).await?;
+    let client = Client::new_with_timeout(url, Some(token), PROBE_TIMEOUT * 5);
+    let r = client
+        .review_now(&ReviewNowRequest {
+            path: req.path,
+            resend: req.resend,
+        })
+        .await
+        .map_err(|e| match e {
+            ClientError::Api {
+                status, message, ..
+            } => ActionError::Refused { status, message },
+            other => ActionError::Daemon(other.to_string()),
+        })?;
+    Ok(Json(ReviewResult {
+        project,
+        path: r.path,
+        agent: r.agent,
+        threads: r.threads as u32,
+    }))
 }
 
 #[cfg(test)]

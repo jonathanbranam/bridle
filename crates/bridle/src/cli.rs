@@ -1642,6 +1642,14 @@ pub enum ReviewAction {
     Remove { path: String },
     /// The documents under review.
     List,
+    /// Send a document's pending comment threads to its agent now, without waiting out the quiet
+    /// period. Threads already marked "sent" stay out unless --resend.
+    Now {
+        path: String,
+        /// Send threads already marked sent too.
+        #[arg(long)]
+        resend: bool,
+    },
 }
 
 #[derive(Debug, Args)]

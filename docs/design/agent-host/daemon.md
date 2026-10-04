@@ -118,7 +118,21 @@ resumed if stopped, else sent as a message. Its own replies end the pending stat
 for its own edits, and a restart doesn't resend answered threads. `[review] max_agents` (default 3)
 caps document agents running at once (a document needing a start waits, still due, until a slot
 frees); `[review] idle_hours` (default 4) stops an idle document agent, which resumes with its next
-batch. Design: x8jt.
+batch.
+
+**Sent marks and review now.** When bridle sends a batch it appends ` · sent YYYY-MM-DD HH:MM` (US
+Eastern) to the line of each thread's newest human entry (the `[!comment]` header or the human's
+latest reply), in the file; plain text, so a restart doesn't resend. The quiet-period send skips a
+thread whose newest entry is marked. The mark doesn't change who a thread's last author is, so it
+never makes a thread pending or answered, and a later human reply is unmarked, so pending again.
+The file is edited in the working tree and not committed by bridle: the agent's next commit carries
+the marks. `POST /v1/review/now` (`ReviewNowRequest {path, resend}` → `{path, agent, threads}`;
+`bridle review now <path> [--resend]`; the gateway's `POST /api/v1/projects/{project}/review`)
+sends the document's unmarked pending threads at once (all pending ones with `resend`), skipping
+the quiet period and the agent cap, then marks them (a resent thread's old mark is replaced).
+`threads: 0` means nothing was unsent. The path must be one registered for review (400
+otherwise). A tick and a review-now never send the same thread twice (one lock around read,
+deliver and mark). Design: x8jt.
 
 ## Restart and recovery
 

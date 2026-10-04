@@ -39,6 +39,9 @@ appending `(read)` to the tag: `@docs-agent (read)`.
 - You never mark `@human` read; the human, or the UI when they open the thread, does. Until the
   UI exists, a reply from the human in the thread counts as having read it.
 
+Bridle may append ` · sent YYYY-MM-DD HH:MM` to a human's header or reply line when it sends you
+a thread. Leave it as it is; it isn't part of the comment.
+
 ## A round
 
 When told "go" (or sent a batch), the human has stopped commenting. Take **every** new comment

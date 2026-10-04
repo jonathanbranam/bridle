@@ -5,12 +5,32 @@ use std::path::PathBuf;
 use std::process::Command;
 
 use anyhow::{Context, bail};
+use bridle_api::types::ReviewNowRequest;
 use bridle_daemon::doc_watch::{read_registry, set_registered};
 
 use crate::cli::{Cli, ReviewAction, ReviewArgs};
+use crate::commands::client_for;
 use crate::error::CliError;
+use crate::render;
 
-pub fn run(_cli: &Cli, args: &ReviewArgs) -> Result<(), CliError> {
+pub async fn run(cli: &Cli, args: &ReviewArgs) -> Result<(), CliError> {
+    if let ReviewAction::Now { path, resend } = &args.action {
+        let client = client_for(cli).await?;
+        let r = client
+            .review_now(&ReviewNowRequest {
+                path: path.trim_start_matches("./").to_string(),
+                resend: *resend,
+            })
+            .await?;
+        if cli.json {
+            render::print_json(&r)?;
+        } else if r.threads == 0 {
+            println!("nothing to send: no unsent comment threads in {}", r.path);
+        } else {
+            println!("sent {} thread(s) in {} to {}", r.threads, r.path, r.agent);
+        }
+        return Ok(());
+    }
     Ok(edit(args)?)
 }
 
@@ -33,6 +53,7 @@ fn edit(args: &ReviewArgs) -> anyhow::Result<()> {
         ReviewAction::Remove { path } => {
             set_registered(&repo, path, false).context("writing the review list")?;
         }
+        ReviewAction::Now { .. } => unreachable!("handled in run"),
         ReviewAction::List => {
             for p in read_registry(&repo) {
                 println!("{p}");

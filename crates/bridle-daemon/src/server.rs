@@ -64,6 +64,7 @@ pub struct AppState {
     pub handover: std::sync::Arc<crate::orchestrator::Handover>,
     pub sessions: std::sync::Arc<crate::sessions::Sessions>,
     pub tasks: TaskManager,
+    pub doc_watch: crate::doc_watch::DocWatcher,
     pub ports: crate::config::PortsConfig,
     /// `[daemon] stop_grace`; shutdown's cap on stopping agents is this + 5 s.
     pub stop_grace: std::time::Duration,
@@ -103,6 +104,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/sessions", get(list_sessions).post(register_session))
         .route("/v1/sessions/end", post(end_session))
         .route("/v1/sessions/keep", post(keep_session))
+        .route("/v1/review/now", post(review_now))
         .route("/v1/handovers", get(list_handovers).post(write_handover))
         .route("/v1/handovers/latest", get(latest_handover))
         .route("/v1/handovers/{id}", get(get_handover))
@@ -591,6 +593,24 @@ async fn keep_session(
         .await
         .map_err(ApiError::bad_request)?;
     Ok(Json(serde_json::json!({})))
+}
+
+/// `bridle review now`: the document's pending threads go to its agent without waiting out the
+/// quiet period.
+async fn review_now(
+    State(state): State<AppState>,
+    Json(req): Json<bridle_api::types::ReviewNowRequest>,
+) -> Result<Json<bridle_api::types::ReviewNowResponse>, ApiError> {
+    let r = state
+        .doc_watch
+        .review_now(&req.path, req.resend)
+        .await
+        .map_err(ApiError::bad_request)?;
+    Ok(Json(bridle_api::types::ReviewNowResponse {
+        path: req.path,
+        agent: r.agent,
+        threads: r.threads,
+    }))
 }
 
 async fn list_sessions(State(state): State<AppState>) -> Json<Vec<bridle_api::types::SessionInfo>> {
