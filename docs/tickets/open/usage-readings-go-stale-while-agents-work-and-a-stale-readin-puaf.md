@@ -7,7 +7,7 @@ repos: [bridle]
 changes: []
 specs: []
 needs: []
-see: [xypj]
+see: [xypj, kuw2]
 tasks: [br-puaf]
 ---
 
@@ -99,3 +99,22 @@ with no long-lived `claude` process, and no per-project cost. Candidates still t
 - **Spawn per poll, then exit:** about 1–2 s of startup per poll and no memory between polls.
   Still a `claude` process, but not an always-on one.
 - **D, sliding staleness**, still wanted on its own: it makes fewer polls safe at low usage.
+
+## Decided, 2026-10-04
+
+The human, verbatim:
+
+> Yeah, can we implement the HTTP call and then keep the probe implementation as a fallback? If
+> the HTTP call is failing, then use the probe. Don't leave it running. Start it every 5 minutes.
+>
+> Ideally, this would be one machine, not one per project, so that's an enhancement to consider.
+
+So the build is:
+
+- **C, direct HTTP**, as the primary source.
+- **The probe as a fallback** when HTTP fails: started for a poll and exited afterwards, never left
+  running. The existing keep-alive probe goes.
+- **D, sliding staleness**, and `warn`-level logs for failed polls, as above.
+
+One reader per machine, rather than per daemon, is left to the machine-daemon ticket
+[[a-machine-daemon-one-per-machine-doing-machine-wide-work-onc-kuw2|kuw2]].
