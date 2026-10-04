@@ -215,8 +215,11 @@ Shown the caveats, verbatim:
 > Leave all-projects for now. It'll be a NOOP after this lands. We can warn and remove later. Add
 > a follow up ticket to remove it after this lands and rolls out so we don't forget
 
-Read as: every orchestrator wake becomes a message, caveats accepted (the advisor's reading: "it'll
-be a NOOP after this lands" assumes it). cy2v's `--all-projects` (br-1ddd) is still built
+Then, explicitly (verbatim):
+
+> Approve every wake is a message. I think this simplifies a lot of things.
+
+So: every orchestrator wake becomes a message, the caveats above accepted. cy2v's `--all-projects` (br-1ddd) is still built
 meanwhile; its removal after rollout is
 [[remove-bridle-agent-wake-all-projects-once-3haz-lands-and-ro-kuvh|kuvh]].
 
