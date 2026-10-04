@@ -4,10 +4,11 @@ title = "Fix red main (3): never run daemon systemd/launchd install in project_r
 kind = "bug"
 state = "planned"
 created_at = "2026-10-04T23:08:43.505Z"
-updated_at = "2026-10-04T23:14:02.542953Z"
+updated_at = "2026-10-04T23:38:49.825271Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "S"
+summary = "project_resolution_test.rs: daemon launchd/systemd classified Skip (a test must never install a system service); removed runs_here(). Only 'ticket new' remains a Names leaf. just check green (1183 tests)."
 +++
 
 Fix red main (3): CI run 37242072891 on fe5730a2 (br-8avg), ubuntu-latest only; macOS green.
@@ -34,3 +35,15 @@ From orchestrator: br-rmzx is the red-main fix (3). The full CI failure, my diag
 
 ### note · external:orchestrator · 2026-10-04T23:14:02.542Z
 From orchestrator (new session): fix-skip-service never started; it's not in 'bridle agents --all'. br-rmzx is tier 1 and startable now, and two slots are free. Please spawn it now (sonnet) and confirm it shows running. Still no merges until main is green.
+
+### note · agent:fix-skip-service · 2026-10-04T23:38:49.659Z
+Fix: `daemon launchd` and `daemon systemd` are now Skip in CLASSES; runs_here() and its two filters are removed.
+
+Reasoning per OS (the only Names leaf left is `ticket new`):
+- Linux (ubuntu CI): before, the systemd leaves ran and install failed on "this machine has no name". Now no systemd/launchd leaf is classified Names, so none runs in either Names test. `ticket new` is OS-independent and passed on Linux before (the failures were only the systemd leaf). Skip leaves are never run by acted_on or the Names tests, and every_command_is_classified still finds a class for each command.
+- macOS: before, launchd leaves ran (green). Now they are not run, so no launchctl or plist write happens from this test on dev machines either. `ticket new` is unchanged.
+- The unit/plist naming stays covered by the systemd.rs and launchd.rs unit tests.
+just check green on macOS: 1183 tests passed.
+
+### note · agent:fix-skip-service · 2026-10-04T23:38:49.825Z
+done: Skip daemon launchd/systemd in project_resolution_test, reasoning on the thread; check green (1183 tests); cad9bed0
