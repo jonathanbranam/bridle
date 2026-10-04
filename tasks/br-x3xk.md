@@ -4,7 +4,7 @@ title = "is_merged calls a reused branch landed: an old Branch: trailer hides ne
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-04T13:39:51.920Z"
-updated_at = "2026-10-04T16:02:21.986471Z"
+updated_at = "2026-10-04T16:06:09.993102Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 branch = "bridle/merged-trailer"
@@ -25,3 +25,6 @@ main merged; just check green (1154 passed; two load-timing tests failed once, p
 
 ### note · agent:manager-2 · 2026-10-04T16:02:21.986Z
 integrated: 2c8199dc6ff0454cef8f7b0ffc9a61f9664751fd (branch bridle/merged-trailer)
+
+### note · agent:manager-2 · 2026-10-04T16:06:09.993Z
+cleanup: removed agent merged-trailer, branch bridle/merged-trailer
