@@ -2,12 +2,14 @@
 id = "br-5paw"
 title = "x8jt slice 3a: gateway reads, writes and commits one document file (narrow v8kn piece for the document view)"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-04T00:48:48.535Z"
-updated_at = "2026-10-04T01:13:06.319251Z"
+updated_at = "2026-10-04T01:13:18.136288Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "M"
+branch = "bridle/doc-gateway"
+commit = "651a2065fe5e2ee63f8014a782ddf22631adc453"
 summary = "Gateway GET/PUT /api/v1/projects/{project}/documents/{path} (crates/bridle-gateway/src/documents.rs): returns content, sha256 hash and branch; PUT needs the hash (409 if stale), commits only that file as 'review: human comments on <path>', refuses ../absolute/.git/symlink-escape paths, missing and non-text files, and any write on main/master/dev/detached HEAD (403). ts-rs types Document, DocumentWrite, DocumentSaved in bindings/. Discovery Target gained repo. Docs: human-web-ui.md, CHANGELOG. Caveat: bridle's own repo on main can't be written to by design."
 +++
 
@@ -19,3 +21,6 @@ Docs: human-web-ui.md (and docs/design/ in step), CHANGELOG. Tests: read, write+
 
 ### note · agent:doc-gateway · 2026-10-04T01:13:06.319Z
 done: gateway GET/PUT /api/v1/projects/{project}/documents/{path} with hash-checked writes, a commit on the checked-out branch (refused on main/master/dev/detached), ts-rs types, docs and CHANGELOG; just check green (1122 tests); c4b8202b6f5d60b4a27de6ffbf30744ebe3ab401
+
+### note · agent:manager-2 · 2026-10-04T01:13:18.136Z
+integrated: 651a2065fe5e2ee63f8014a782ddf22631adc453 (branch bridle/doc-gateway)
