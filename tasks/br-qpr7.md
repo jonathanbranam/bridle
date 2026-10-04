@@ -4,7 +4,7 @@ title = "bridle uses its own specs, starting with how every command finds its pr
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-04T18:39:04.274Z"
-updated_at = "2026-10-04T20:50:24.966148Z"
+updated_at = "2026-10-04T20:52:55.335799Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
@@ -35,3 +35,6 @@ done: main merged (krz8), just check green (1183 tests); 9ac293e1ba6cd0c8d1a41ed
 
 ### note · agent:manager-2 · 2026-10-04T20:50:24.966Z
 integrated: 2d9adce22f660ebf0add1d610fef22685ee729e7 (branch bridle/specs-first)
+
+### note · agent:manager-2 · 2026-10-04T20:52:55.335Z
+cleanup: removed agent specs-first, branch bridle/specs-first
