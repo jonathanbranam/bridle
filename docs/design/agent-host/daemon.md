@@ -103,7 +103,22 @@ Besides serving the API, the daemon runs: the stall and context checks (every 30
 tracker (2 s), the budget governor (30 s tick; polls `get_usage` every 5 min, 30 s above
 `hold_at`), the CI watcher (when `[ci] github`), the disk monitor (`[disk] check_interval`), the orchestrator supervisor (`[orchestrator] enabled`; 10 s; [[orchestrator-supervision]]), the orchestrator wake conditions (always; 10 s; the same design), the
 task state-branch flush (30 s), the claim-lease check (30 s) and the port sweep (30 s; frees
-ports whose owner is gone), plus the daily event prune. All stop on shutdown.
+ports whose owner is gone) and the document watcher (30 s), plus the daily event prune. All stop on shutdown.
+
+## Document review
+
+A document is under review when its repo-relative path is a line in `.bridle/review-documents.txt`
+(`bridle review add|remove|list <path>`; the daemon re-reads the file each tick). The watcher
+(`doc_watch.rs`) looks at each file in the main checkout. A comment thread (the callout format in
+`workflow/base/roles/document-reviewer.md`) is *pending* when its last reply is the human's; an author with
+"agent" in the name is the document agent. When a document's pending threads have not changed for
+`[review] quiet_minutes` (default 7), the pending threads go as one batch to that document's agent
+(`doc-<file stem>`, role `document-reviewer`, in the main checkout): spawned if there is none,
+resumed if stopped, else sent as a message. Its own replies end the pending state, so it is not woken
+for its own edits, and a restart doesn't resend answered threads. `[review] max_agents` (default 3)
+caps document agents running at once (a document needing a start waits, still due, until a slot
+frees); `[review] idle_hours` (default 4) stops an idle document agent, which resumes with its next
+batch. Design: x8jt.
 
 ## Restart and recovery
 

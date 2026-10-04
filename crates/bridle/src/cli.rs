@@ -119,6 +119,9 @@ pub enum Command {
     /// Static checks on what bridle injects into agent context.
     #[command(hide = true)]
     Cost(CostArgs),
+    /// Documents under review: the daemon wakes a document's agent when the human's comments
+    /// have been still for a few minutes.
+    Review(ReviewArgs),
     /// Interactive terminal UI: agents list and live event tail.
     Tui,
     /// The budget governor: windows, thresholds and state; `hold`/`release`
@@ -1623,6 +1626,22 @@ pub enum OrchestratorAction {
     Prime(PrimeArgs),
     /// Wait for something the orchestrator should act on, print it and exit 0.
     WaitForWake(WaitForWakeArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct ReviewArgs {
+    #[command(subcommand)]
+    pub action: ReviewAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum ReviewAction {
+    /// Put a document (path from the repo root) under review.
+    Add { path: String },
+    /// Take a document out of review.
+    Remove { path: String },
+    /// The documents under review.
+    List,
 }
 
 #[derive(Debug, Args)]

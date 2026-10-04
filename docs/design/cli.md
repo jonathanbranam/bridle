@@ -104,6 +104,8 @@ bridle completions <zsh|bash|fish|elvish|powershell>   print the shell completio
 bridle migrate [--dry-run] [--project NAME | --all]   apply the project migrations this bridle ships that the project hasn't had yet, in order, once each ([[docs/design/migrations|migrations]]). Default: the current repository; `--all`: every registry project, one at a time, stopping at the first failure and naming the ones done. `--dry-run` prints what would change and writes nothing. Never runs by itself. Records in the project (`.bridle/migrations.toml`, `.bridle/migrations.log`) and, if its daemon answers, as a `project.migrated` event
 bridle orchestrator note-session            the orchestrator launcher's SessionStart hook: writes $BRIDLE_HOME/orchestrator.session
                                              from the hook JSON on stdin; local only; never fails
+bridle review add|remove|list <path>          documents under review (x8jt): edits `.bridle/review-documents.txt`; the daemon wakes a document's
+                                             agent on new comments (docs/design/agent-host/daemon.md, Document review)
 bridle focus gate                           the UserPromptSubmit hook of focus hours (cvaq): in a `quiet` `[[focus]]` period prints
                                              nudge context on the first prompt and every 5 min after; silent otherwise; never fails
 bridle orchestrator handover done                       the orchestrator's state is written: the daemon stops and relaunches its session (marker only); human and external:orchestrator only

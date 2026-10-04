@@ -22,6 +22,7 @@ pub mod config;
 pub mod containment;
 pub mod cost_audit;
 pub mod disk;
+pub mod doc_watch;
 mod events;
 pub mod focus;
 pub mod governor;
@@ -618,6 +619,12 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         overrides.queue_nudge_debounce,
     );
     let settle_wake = queue_nudge::SettleWake::new(queue_nudge.clone(), tasks.clone());
+    let doc_watch = doc_watch::DocWatcher::new(
+        store.clone(),
+        manager.clone(),
+        ws.repo.clone(),
+        config.review.clone(),
+    );
     let state = server::AppState {
         store: store.clone(),
         manager: manager.clone(),
@@ -762,6 +769,12 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
             async move { settle_wake.tick().await }
         }
     });
+    let doc_watch_task = spawn_loop(shutdown_rx.clone(), Duration::from_secs(30), {
+        move || {
+            let doc_watch = doc_watch.clone();
+            async move { doc_watch.tick().await }
+        }
+    });
     let claim_lease_task = spawn_loop(shutdown_rx.clone(), overrides.claim_lease_check_interval, {
         let tasks = tasks.clone();
         move || {
@@ -889,6 +902,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         prune_task.abort();
         task_flush_task.abort();
         settle_wake_task.abort();
+        doc_watch_task.abort();
         claim_lease_task.abort();
         ports_task.abort();
         wake_task.abort();

@@ -205,6 +205,7 @@ pub async fn run(mut cli: Cli) -> Result<(), CliError> {
             crate::focus::run_reply();
             Ok(())
         }
+        Command::Review(args) => crate::review::run(&cli, args),
         Command::Handover(args) => handover(&cli, args).await,
         Command::WaitForWake(args) if args.mail => wait_for_mail(&cli, args.timeout).await,
         Command::WaitForWake(args) => wait_for_wake(&cli, args.timeout).await,

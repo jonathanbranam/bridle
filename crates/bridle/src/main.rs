@@ -17,6 +17,7 @@ mod orchestrator;
 mod pane;
 mod prime;
 mod render;
+mod review;
 mod serve;
 mod session;
 mod spec_coverage;

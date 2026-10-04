@@ -1164,6 +1164,27 @@ impl Default for PortsConfig {
     }
 }
 
+/// `[review]`: documents under review (docs/design/agent-host/daemon.md, Document review).
+#[derive(Debug, Clone)]
+pub struct ReviewConfig {
+    /// How long a document's pending comments must be still before its agent is woken.
+    pub quiet: Duration,
+    /// Document agents running at once; a further document waits.
+    pub max_agents: u32,
+    /// An idle document agent stops after this long.
+    pub idle: Duration,
+}
+
+impl Default for ReviewConfig {
+    fn default() -> Self {
+        Self {
+            quiet: Duration::from_secs(7 * 60),
+            max_agents: 3,
+            idle: Duration::from_secs(4 * 3600),
+        }
+    }
+}
+
 /// `[disk]`: the periodic disk usage check (`crate::disk`).
 #[derive(Debug, Clone, PartialEq)]
 pub struct DiskConfig {
@@ -1428,6 +1449,7 @@ pub struct Config {
     pub branches: BranchesConfig,
     pub ci: CiConfig,
     pub disk: DiskConfig,
+    pub review: ReviewConfig,
     /// `[state] push`: push `bridle/state` to origin after a flush that committed. On by
     /// default: set to false to opt-out (rule existing-projects, human-approved 2026-09-29).
     pub state_push: bool,
@@ -1490,6 +1512,7 @@ impl Default for Config {
             branches: BranchesConfig::default(),
             ci: CiConfig::default(),
             disk: DiskConfig::default(),
+            review: ReviewConfig::default(),
             state_push: true,
             orchestrator: OrchestratorConfig::default(),
             sessions: SessionsConfig::default(),
@@ -1850,6 +1873,18 @@ impl Config {
             }
         }
 
+        if let Some(r) = raw.review {
+            if let Some(m) = r.quiet_minutes {
+                config.review.quiet = Duration::from_secs(m * 60);
+            }
+            if let Some(n) = r.max_agents {
+                config.review.max_agents = n;
+            }
+            if let Some(h) = r.idle_hours {
+                config.review.idle = Duration::from_secs(h * 3600);
+            }
+        }
+
         // A role's own `model` pins the step-down floor unless the project
         // also gives that role an explicit `[models]` list (which wins
         // outright, below). Collect those names before merging `[models]`
@@ -2172,6 +2207,8 @@ struct RawConfig {
     #[serde(default)]
     disk: Option<RawDisk>,
     #[serde(default)]
+    review: Option<RawReview>,
+    #[serde(default)]
     state: Option<RawState>,
     #[serde(default)]
     orchestrator: Option<RawOrchestrator>,
@@ -2390,6 +2427,17 @@ struct RawDisk {
     check_interval: Option<String>,
     #[serde(default)]
     min_free_gb: Option<u64>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawReview {
+    #[serde(default)]
+    quiet_minutes: Option<u64>,
+    #[serde(default)]
+    max_agents: Option<u32>,
+    #[serde(default)]
+    idle_hours: Option<u64>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -3634,6 +3682,18 @@ mod tests {
     fn state_push_defaults_on_and_parses() {
         assert!(Config::default().state_push);
         assert!(!Config::parse("[state]\npush = false\n").unwrap().state_push);
+    }
+
+    #[test]
+    fn review_config_parses() {
+        let d = Config::default().review;
+        assert_eq!(d.quiet, Duration::from_secs(7 * 60));
+        assert_eq!((d.max_agents, d.idle), (3, Duration::from_secs(4 * 3600)));
+        let cfg =
+            Config::parse("[review]\nquiet_minutes = 5\nmax_agents = 1\nidle_hours = 2\n").unwrap();
+        assert_eq!(cfg.review.quiet, Duration::from_secs(300));
+        assert_eq!(cfg.review.max_agents, 1);
+        assert_eq!(cfg.review.idle, Duration::from_secs(7200));
     }
 
     #[test]
