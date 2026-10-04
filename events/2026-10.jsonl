@@ -582,3 +582,4 @@
 {"actor":"external:advisor/doc-review","at":"2026-10-04T15:01:41.153166Z","from":"pending","task":"br-jrm2","to":"open"}
 {"actor":"agent:manager-2","at":"2026-10-04T15:17:29.892070Z","from":"planned","task":"br-fc9a","to":"integrated"}
 {"actor":"human","at":"2026-10-04T15:18:54.499Z","from":"","task":"br-puaf","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-10-04T15:19:27.906260Z","from":"pending","task":"br-puaf","to":"open"}

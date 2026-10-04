@@ -2,12 +2,21 @@
 id = "br-puaf"
 title = "Usage readings go stale while agents work, and a stale reading at low usage holds the workforce"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-10-04T15:18:54.499Z"
-updated_at = "2026-10-04T15:18:54.499Z"
+updated_at = "2026-10-04T15:19:28.007444Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+priority = "high"
 +++
 
 original id: puaf
 docs/tickets/open/usage-readings-go-stale-while-agents-work-and-a-stale-readin-puaf.md
+
+## Thread
+
+### note · external:orchestrator · 2026-10-04T15:19:27.972Z
+priority: normal -> high
+
+### note · external:orchestrator · 2026-10-04T15:19:28.007Z
+The human, 2026-10-04 via aide: 'This is a noisy alert that shouldn't be happening ... If we're at 20% or 30% usage, I don't care if the [reading] is probably an hour old. If we're at 80% usage, then the sampling makes sense.' Readied by the orchestrator (bug fix). Default config changes only; ~/.bridle/config.toml is the human's.
