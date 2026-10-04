@@ -458,3 +458,4 @@
 {"actor":"agent:manager-2","at":"2026-10-03T23:59:22.119767Z","from":"planned","task":"br-8e5v","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-10-04T00:04:30.140053Z","from":"planned","task":"br-8eyu","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-10-04T00:24:41.992068Z","from":"planned","task":"br-sf79","to":"integrated"}
+{"actor":"human","at":"2026-10-04T00:28:01.262Z","from":"","task":"br-gtzx","to":"open"}
