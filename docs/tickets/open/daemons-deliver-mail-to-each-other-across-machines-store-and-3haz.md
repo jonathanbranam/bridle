@@ -208,6 +208,18 @@ warnings are already messages (`sessions.rs`). None looks like a blocker; each h
 5. **"Nobody is waiting" stays.** The waiter incident (no wake command running) is about the
    waiter, not a message; it moves to the home daemon, per principal.
 
+### Decided (the human, 2026-10-04)
+
+Shown the caveats, verbatim:
+
+> Leave all-projects for now. It'll be a NOOP after this lands. We can warn and remove later. Add
+> a follow up ticket to remove it after this lands and rolls out so we don't forget
+
+Read as: every orchestrator wake becomes a message, caveats accepted (the advisor's reading: "it'll
+be a NOOP after this lands" assumes it). cy2v's `--all-projects` (br-1ddd) is still built
+meanwhile; its removal after rollout is
+[[remove-bridle-agent-wake-all-projects-once-3haz-lands-and-ro-kuvh|kuvh]].
+
 ## The questions as asked (answered in "Decided: Q1-Q4" above)
 
 - **Q1. Daemons on the same machine too?** The human: "maybe not between daemons, but between

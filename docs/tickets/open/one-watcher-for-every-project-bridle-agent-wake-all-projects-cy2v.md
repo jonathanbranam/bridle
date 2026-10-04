@@ -64,3 +64,11 @@ its home daemon, with every wake reason sent as a message, so one waiter per pri
 [[daemons-deliver-mail-to-each-other-across-machines-store-and-3haz|3haz]]. Whether to build
 this fan-out meanwhile isn't decided: "Orch is special today. I'm not sure. . But other agents
 only wake on messages." (the orchestrator is the only one with wakes that aren't messages).
+
+Then (the human, 2026-10-04, verbatim):
+
+> Leave all-projects for now. It'll be a NOOP after this lands. We can warn and remove later. Add
+> a follow up ticket to remove it after this lands and rolls out so we don't forget
+
+So br-1ddd stays as planned; removal after 3haz rolls out is
+[[remove-bridle-agent-wake-all-projects-once-3haz-lands-and-ro-kuvh|kuvh]].
