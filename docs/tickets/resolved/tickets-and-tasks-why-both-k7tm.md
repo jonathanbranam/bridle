@@ -8,7 +8,8 @@ changes: []
 specs: []
 needs: []
 see: [ticket-state-without-moving-files-p2ys, which-docs-live-in-bridle-and-which-in-markdown-hv8e, refining-a-task-with-the-human-before-it-ships-hvxk, ticket-frontmatter-fields-have-unclear-names-rename-them-wit-zkbb]
-tasks: [br-3724, br-9e15, br-6c69]
+tasks: [br-3724, br-9e15]
+closed: 2026-10-04T13:13:48Z
 ---
 
 ## The ask
@@ -457,3 +458,33 @@ Slicing (advisor's call, as the human asked): two tasks, independent.
 - **B. Ticket from task, and the content rules** (decisions 7-10): `bridle ticket new --from-task
   <id>` reusing the task's ID (a fresh ID, linked, when a pre-br-9e15 hex ID has `0`/`1`); the
   tickets rule, worker, manager and PM roles, `docs/README.md`.
+
+## Follow-up and who owns it (the human, 2026-10-04)
+
+The human, verbatim, on resolving this ticket:
+
+> yes resolve it; if there is any further follow up, create a todo for me (in the future - this
+> would go to the product manager to handle pending ticket and status updates and follow up on work
+> that needs human decision or has other dependencies)
+
+No follow-up to-do was needed: everything decided here has landed, and the field renames have their
+own ticket, [[ticket-frontmatter-fields-have-unclear-names-rename-them-wit-zkbb|zkbb]] (it waits on
+migrations, xebc and br-2718). The future product manager's part (watching pending tickets and
+tasks, status updates, chasing work that needs the human's decision or waits on dependencies) is
+recorded on [[the-product-manager-role-is-really-a-project-manager-who-hel-7r2c|7r2c]].
+
+## Resolution
+
+Resolved 2026-10-04. Tickets and tasks stay separate records with one ID system: the ticket holds
+the why and the what (decisions, the human's words), the task holds the work (status, coordination).
+Every task starts `pending`; `bridle task ready <id>` is the deliberate, human-approved step to open
+it. Names kept: ticket and task (options set aside are in "Names" above). Where it landed:
+
+- `docs/README.md` and the `tickets` rule (`workflow/base/rules/tickets.md`); the worker, manager
+  and product-manager roles (decisions 7-10).
+- `docs/design/coordination.md`, `docs/design/storage.md`, `docs/design/cli.md` (the `pending`
+  state and `task ready`, decisions 11-14).
+- Built by: br-9e15 (one ID alphabet and space), br-6c69 (`ticket new` files no task; `ticket task`
+  files it after the commit), br-8e5v (`ticket new --from-task`, content rules), br-8eyu (`pending`
+  and `task ready`). br-6c69, br-8e5v and br-8eyu link here from their bodies, not by
+  `original id:`, so they're named here rather than in `tasks:`.

@@ -78,3 +78,17 @@ answering the human's "what's the latest with <feature or ticket>?". Interactive
 earlier "an interactive product manager possibly who can talk to me about the plan" (2026-10-03).
 The case that prompted it: the follow-ups from 34bw were tracked by hand in the human to-do
 `br-tkph`, because their question tasks were dropped in the k7tm sort. Not decided; not sent.
+
+## A job for the future product manager (the human, 2026-10-04, via advisor (tickets))
+
+Said while resolving [[tickets-and-tasks-why-both-k7tm|k7tm]], verbatim:
+
+> yes resolve it; if there is any further follow up, create a todo for me (in the future - this
+> would go to the product manager to handle pending ticket and status updates and follow up on work
+> that needs human decision or has other dependencies)
+
+So the reworked product manager would own: pending tickets and tasks (what waits for the human's
+`task ready`), status updates, and following up on work that needs the human's decision or waits on
+other dependencies, filing the human's to-dos for those. Until that role exists, advisors file the
+to-dos.
+
