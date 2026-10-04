@@ -4,7 +4,7 @@ title = "Usage readings go stale while agents work, and a stale reading at low u
 kind = "bug"
 state = "open"
 created_at = "2026-10-04T15:18:54.499Z"
-updated_at = "2026-10-04T15:31:35.481357Z"
+updated_at = "2026-10-04T15:37:03.930334Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
@@ -32,3 +32,9 @@ The human, 2026-10-04, via aide, after hearing an idle probe is ~150 MB per daem
 
 ### note · external:orchestrator · 2026-10-04T15:31:35.481Z
 The human, 2026-10-04 via aide, on option A (long-lived probe per daemon): 'Let's pause that, then. That's way too much memory ... I do not like that solution. Let's find a better one.' Don't build A. Research first: direct HTTP with the OAuth token, one machine-wide source, spawn per poll. Warn-level probe-failure logging is unaffected.
+
+### note · external:aide · 2026-10-04T15:36:51.317Z
+The human, 2026-10-04, via aide: "Yeah, can we implement the HTTP call and then keep the probe implementation as a fallback? If the HTTP call is failing, then use the probe. Don't leave it running. Start it every 5 minutes." On one per machine: "Ideally, this would be one machine, not one per project, so that's an enhancement to consider." That part is in kuw2. Ticket updated under 'Decided'.
+
+### note · external:orchestrator · 2026-10-04T15:37:03.930Z
+The human, 2026-10-04 via aide: 'Yeah, can we implement the HTTP call and then keep the probe implementation as a fallback? If the HTTP call is failing, then use the probe. Don't leave it running. Start it every 5 minutes.' Build per the ticket's Decided section.
