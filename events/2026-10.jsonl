@@ -520,3 +520,4 @@
 {"actor":"human","at":"2026-10-04T12:49:58.213Z","from":"","task":"br-tkph","to":"pending"}
 {"actor":"external:advisor/workflow","at":"2026-10-04T12:49:58.215093Z","from":"pending","task":"br-tkph","to":"open"}
 {"actor":"external:advisor/workflow","at":"2026-10-04T12:49:58.215402Z","from":"open","task":"br-tkph","to":"planned"}
+{"actor":"agent:manager-2","at":"2026-10-04T13:01:56.462347Z","from":"pending","task":"br-v3d7","to":"integrated"}

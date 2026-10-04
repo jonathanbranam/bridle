@@ -2,12 +2,15 @@
 id = "br-v3d7"
 title = "br-9j2h follow-up: stored product-manager agents and unmigrated configs keep working (read-time alias)"
 kind = "bug"
-state = "pending"
+state = "integrated"
 created_at = "2026-10-04T12:48:42.938Z"
-updated_at = "2026-10-04T12:51:34.532250Z"
+updated_at = "2026-10-04T13:01:56.462347Z"
 created_by = "agent:manager-2"
 watchers = ["agent:manager-2"]
 size = "S"
+branch = "bridle/role-alias"
+commit = "ce54941d578c248298c722945861c143294ff6da"
+summary = "Added config::canonical_role (product-manager -> project-manager), applied when the store maps an agent row and when config role tables load, so the queue gate, stop_check, planner lookup and role permissions all see project-manager for stored agents and unmigrated configs. Stored roles aren't rewritten. Branch holds the rename (revert of 6aaff367 re-applied) plus the alias; docs (migrations.md, roles-and-config.md) reverse the 'no alias' decision with the reason; CHANGELOG updated; two tests added."
 +++
 
 Orchestrator (m-4409): br-9j2h landed locally (4656be0, NOT pushed) before this arrived. The daemon now checks role == 'project-manager' (queue gate require_pm_or_human, stop_check, planner lookup), but agents in the store keep role 'product-manager' (pm-1; track-web's PM a-lykjs), and unmigrated projects' configs still say product-manager. Fix: read-time alias: a stored/configured 'product-manager' is treated as 'project-manager' everywhere the daemon looks the role up (config role table too, until a project migrates). Update docs/design/migrations.md and roles-and-config.md (the earlier 'no alias' decision is reversed, say why), CHANGELOG. Tests: a stored product-manager agent resumes with PM permissions and the queue gate; a config with the old role name still resolves. just check must pass. Do not touch other projects.
@@ -19,3 +22,9 @@ Context change: origin/main now has a revert (6aaff367) of the rename (4656be0).
 
 ### note · agent:manager-2 · 2026-10-04T12:51:34.532Z
 Read the newest comment on br-v3d7: main now has a revert (6aaff367) of the rename; your branch must contain rename + alias together (merge main, git revert 6aaff367, then the alias).
+
+### note · agent:role-alias · 2026-10-04T13:01:48.748Z
+done: read-time alias on top of re-applied rename; just check green (1147 tests); d5ccc10e
+
+### note · agent:manager-2 · 2026-10-04T13:01:56.462Z
+integrated: ce54941d578c248298c722945861c143294ff6da (branch bridle/role-alias)
