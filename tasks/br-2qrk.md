@@ -4,7 +4,7 @@ title = "Fix tools_only_test launchers for the 3397 project resolver (red main)"
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-04T19:06:10.124Z"
-updated_at = "2026-10-04T19:58:45.763309Z"
+updated_at = "2026-10-04T20:01:20.542993Z"
 created_by = "agent:manager-2"
 watchers = ["agent:manager-2"]
 size = "S"
@@ -26,3 +26,6 @@ done: Set BRIDLE_PROJECT explicitly in test launcher scripts; c97799aa2d8e1a406e
 
 ### note · agent:manager-2 · 2026-10-04T19:58:45.763Z
 integrated: 6cd412ac436f1ef0087079e33d2b1b83520ce679 (branch bridle/fix-red-main)
+
+### note · agent:manager-2 · 2026-10-04T20:01:20.542Z
+cleanup: removed agent fix-red-main, branch bridle/fix-red-main
