@@ -29,8 +29,16 @@ use Kind::*;
 
 /// Longest matching prefix wins. A command matching none fails `every_command_is_classified`.
 const CLASSES: &[(&str, Kind, &str)] = &[
-    ("daemon launchd", Names, ""),
-    ("daemon systemd", Names, ""),
+    (
+        "daemon launchd",
+        Skip,
+        "installs a system service; the plist naming is covered by launchd.rs unit tests",
+    ),
+    (
+        "daemon systemd",
+        Skip,
+        "installs a system service; the unit naming is covered by systemd.rs unit tests",
+    ),
     (
         "daemon serve",
         Skip,
@@ -508,7 +516,7 @@ fn inside_a_workspace_every_command_acts_on_its_project() {
     let seen = acted_on(&w, &w.inside, &[], &[]);
     assert_all(&seen, "x");
     // The naming commands name the workspace's project too.
-    for leaf in of_kind(Names).into_iter().filter(|l| runs_here(l)) {
+    for leaf in of_kind(Names).into_iter() {
         let r = run(&w, leaf, &w.inside, &[], &[]);
         let text = names(&w, leaf, &w.inside, &r);
         assert!(
@@ -565,7 +573,7 @@ fn outside_a_workspace_every_command_refuses() {
 #[test]
 fn a_repo_not_yet_served_is_named_after_its_folder() {
     let w = world();
-    for leaf in of_kind(Names).into_iter().filter(|l| runs_here(l)) {
+    for leaf in of_kind(Names).into_iter() {
         let r = run(&w, leaf, &w.outside, &[], &[]);
         let text = names(&w, leaf, &w.outside, &r);
         assert!(
@@ -579,15 +587,6 @@ fn a_repo_not_yet_served_is_named_after_its_folder() {
             leaf_name(leaf)
         );
     }
-}
-
-/// `daemon systemd` acts only on Linux and `daemon launchd` only on macOS; elsewhere every one of
-/// their leaves (install, uninstall, ...) refuses, naming no project.
-fn runs_here(leaf: &[String]) -> bool {
-    let name = leaf_name(leaf);
-    let os = std::env::consts::OS;
-    (!name.starts_with("daemon systemd") || os == "linux")
-        && (!name.starts_with("daemon launchd") || os == "macos")
 }
 
 /// What a naming command wrote or printed: its output, plus the ticket it minted.
