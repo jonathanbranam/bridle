@@ -4,7 +4,7 @@ title = "x8jt slice 1: document-reviewer role prompt (comment format, reply/revi
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-04T00:48:48.493Z"
-updated_at = "2026-10-04T01:17:23.368563Z"
+updated_at = "2026-10-04T01:18:57.848771Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "M"
@@ -24,3 +24,6 @@ done: document-reviewer role prompt + default role, prime document-reviewer, tes
 
 ### note · agent:manager-2 · 2026-10-04T01:17:23.368Z
 integrated: 8f897d81c3c19bb33cf4cbfd470cd64e595b290a (branch bridle/doc-reviewer-role)
+
+### note · agent:manager-2 · 2026-10-04T01:18:57.848Z
+cleanup: removed agent doc-reviewer-role, branch bridle/doc-reviewer-role
