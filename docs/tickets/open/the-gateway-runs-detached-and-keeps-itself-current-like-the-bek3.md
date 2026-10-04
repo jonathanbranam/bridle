@@ -7,7 +7,7 @@ repos: [bridle-ui]
 changes: []
 specs: []
 needs: []
-see: [tc7t, chvf, jmpf, essy, mnzh]
+see: [tc7t, chvf, jmpf, essy]
 tasks: []
 ---
 
