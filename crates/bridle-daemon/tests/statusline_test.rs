@@ -67,7 +67,29 @@ async fn statusline_report_feeds_rate_limits_and_usage() {
 
 #[tokio::test]
 async fn statusline_report_with_no_rate_limits_still_records_usage() {
-    let (daemon, _tmp) = support::start_daemon(None).await;
+    // The default test daemon polls the fake `get_usage` (five_hour 1%) on
+    // every governor tick, which would overwrite the statusline reading;
+    // an hour-long interval leaves only the report as a source. The first
+    // poll still fires at startup, so wait for it before reporting.
+    let (daemon, _tmp) = support::start_daemon(Some(bridle_daemon::Overrides {
+        governor_poll_interval_normal: Duration::from_secs(3600),
+        governor_poll_interval_above_hold: Duration::from_secs(3600),
+        ..support::default_overrides()
+    }))
+    .await;
+    support::wait_for("first get_usage poll", || async {
+        let usage = daemon.client.usage().await.ok()?;
+        usage
+            .rate_limits
+            .iter()
+            .find(|rl| rl.window == "five_hour")?;
+        Some(())
+    })
+    .await;
+
+    // Capture the rate limits from the poll before reporting.
+    let usage_before = daemon.client.usage().await.expect("usage before report");
+    let rate_limits_before = usage_before.rate_limits.clone();
 
     daemon
         .client
@@ -77,7 +99,9 @@ async fn statusline_report_with_no_rate_limits_still_records_usage() {
 
     let usage = daemon.client.usage().await.expect("usage");
     assert_eq!(usage.interactive_today.len(), 1);
-    assert!(usage.rate_limits.is_empty());
+    // The report with no rate limits should not have added new rate limits.
+    // Assert that rate_limits is unchanged from what the poll wrote.
+    assert_eq!(usage.rate_limits, rate_limits_before);
 
     daemon.running.shutdown();
     daemon.running.join().await.expect("join");
