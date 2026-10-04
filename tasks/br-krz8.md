@@ -4,7 +4,7 @@ title = "bridle session refuses a second session of an identity that's already r
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-04T18:39:04.359Z"
-updated_at = "2026-10-04T20:37:04.929875Z"
+updated_at = "2026-10-04T20:42:11.478608Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 branch = "bridle/dup-session"
@@ -28,3 +28,6 @@ main merged, just check green (1177 tests); 3052e6f6
 
 ### note · agent:manager-2 · 2026-10-04T20:37:04.929Z
 integrated: 3734cbc5c7bd23f5f7b839a482dcb1ff243b41b3 (branch bridle/dup-session)
+
+### note · agent:manager-2 · 2026-10-04T20:42:11.478Z
+cleanup: removed agent dup-session, branch bridle/dup-session
