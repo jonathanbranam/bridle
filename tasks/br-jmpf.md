@@ -4,7 +4,7 @@ title = "A [gateway] section in ~/.bridle/config.toml stops every daemon from st
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-04T13:11:47.608Z"
-updated_at = "2026-10-04T14:22:18.855637Z"
+updated_at = "2026-10-04T14:24:16.171119Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
 branch = "bridle/gateway-config"
@@ -45,3 +45,6 @@ done: main merged, just check green (1148 passed); tip 3a7fba3a on bridle/gatewa
 
 ### note · agent:manager-2 · 2026-10-04T14:22:18.855Z
 integrated: fb3bdb8316ad793032981c175e426f364ba3e682 (branch bridle/gateway-config)
+
+### note · agent:manager-2 · 2026-10-04T14:24:16.171Z
+cleanup: removed agent gateway-config, branch bridle/gateway-config
