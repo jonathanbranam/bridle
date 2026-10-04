@@ -4,7 +4,7 @@ title = "x8jt slice 2: bridle notices new comments in documents under review, de
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-04T00:48:48.514Z"
-updated_at = "2026-10-04T01:46:21.976790Z"
+updated_at = "2026-10-04T01:47:53.866412Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "M"
@@ -34,3 +34,6 @@ done: daemon watches documents listed in .bridle/review-documents.txt, debounces
 
 ### note · agent:manager-2 · 2026-10-04T01:46:21.976Z
 integrated: 941312c5f1b319852eec39e2f4f3fb9009674fef (branch bridle/doc-watcher)
+
+### note · agent:manager-2 · 2026-10-04T01:47:53.866Z
+cleanup: removed agent doc-watcher, branch bridle/doc-watcher
