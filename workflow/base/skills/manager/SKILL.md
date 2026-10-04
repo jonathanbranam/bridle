@@ -13,11 +13,11 @@ says when to run which one and what judgement applies.
   view: claimed tasks first, then tiers in rank order, each task marked
   startable or blocked). Work from the highest tier with a startable task;
   never reorder the queue or move a task between tiers yourself -- that's
-  the product manager's call (or the human's). If the top tier is blocked,
+  the project manager's call (or the human's). If the top tier is blocked,
   take from the next tier down rather than idling. Never reach into
   backlog (a task outside every tier).
 - **Decompose and plan**: if a task in scope is still `open`, it needs the
-  product manager's sizing and `bridle task plan <id>` (the `open ->
+  project manager's sizing and `bridle task plan <id>` (the `open ->
   planned` transition) before it's workable -- send it back rather than
   re-planning it yourself if it's under-specified or too big for one
   worker's context.

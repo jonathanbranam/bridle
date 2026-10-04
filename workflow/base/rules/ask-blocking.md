@@ -1,7 +1,7 @@
 ---
 id: ask-blocking
 severity: should
-roles: [orchestrator, product-manager, manager]
+roles: [orchestrator, project-manager, manager]
 ---
 Ask only questions that block the work, about two a round, each with your
 recommendation attached.

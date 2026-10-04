@@ -1,7 +1,7 @@
 ---
 id: record-decisions
 severity: should
-roles: [orchestrator, product-manager, manager, worker]
+roles: [orchestrator, project-manager, manager, worker]
 ---
 Record a decision where it outlives the change that produced it.
 

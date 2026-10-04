@@ -84,7 +84,7 @@ message kinds and send-to-task from `bridle send` are not built: bridle's own no
 
 ### Waking the manager
 
-When a task is created (`task.created`) and no `product-manager` agent is running, nobody
+When a task is created (`task.created`) and no `project-manager` agent is running, nobody
 triages it, so the daemon sends the running `manager` agent a `note` from `system`: "task
 <id> filed: <title>; open tasks: N. Plan it or queue it." (`AgentManager::note_task_filed`).
 It is coalesced to at most one message per minute: the first goes out at once, and tasks

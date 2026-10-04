@@ -3164,10 +3164,10 @@ mod tests {
             let prompt = config.roles[role].system_prompt.as_ref().expect("prompt");
             assert!(repo.join(prompt).is_file(), "{} exists", prompt.display());
         }
-        // product-manager is a custom role, so it falls back to
+        // project-manager is a custom role, so it falls back to
         // Role::worker_default() as its merge base (stop_check: true); config
         // must turn it back off explicitly, since it isn't the worker role.
-        assert!(!config.roles["product-manager"].stop_check);
+        assert!(!config.roles["project-manager"].stop_check);
     }
 
     #[test]
@@ -3181,7 +3181,7 @@ mod tests {
             check: "make ci".to_string(),
             check_worker: None,
         };
-        for name in ["worker", "manager", "product-manager"] {
+        for name in ["worker", "manager", "project-manager"] {
             let role = Role {
                 system_prompt: Some(format!("workflow/base/roles/{name}.md").into()),
                 ..Role::worker_default()
@@ -3231,12 +3231,12 @@ mod tests {
     #[test]
     fn custom_role_falling_back_to_worker_default_can_turn_stop_check_back_off() {
         let toml = r#"
-            [roles.product-manager]
+            [roles.project-manager]
             model = "sonnet"
             stop_check = false
         "#;
         let cfg = Config::parse(toml).expect("parse");
-        let pm = &cfg.roles["product-manager"];
+        let pm = &cfg.roles["project-manager"];
         // Confirms the fallback base really is worker_default (stop_check: true)
         // and that the project config can override it.
         assert!(Role::worker_default().stop_check);

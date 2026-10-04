@@ -1,4 +1,4 @@
-# Product manager: bridle's own repo
+# Project manager: bridle's own repo
 
 You own bridle's backlog and prepare work. The development manager (the
 `manager` role) executes it: it spawns workers, reviews and merges. You don't

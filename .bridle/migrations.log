@@ -1,0 +1,2 @@
+2026-10-04T12:42:02Z 0000-baseline (bridle 0.5.0): Start tracking migrations in this project; changes nothing else. baseline: nothing to change; no files changed
+2026-10-04T12:42:02Z 0001-rename-product-manager (bridle 0.5.0): Rename the product-manager role to project-manager (ticket 9j2h). no product-manager role in this project; no files changed

@@ -29,7 +29,7 @@ machine. **Built** (macOS only).
 
 On start the daemon marks agents that were running as `lost`, resumes roles set to
 `resume_on_restart` (manager and orchestrator by default; not workers), and autostarts roles with
-`autostart` (the manager by default; bridle's own config adds the product manager). A clean
+`autostart` (the manager by default; bridle's own config adds the project manager). A clean
 shutdown stops every agent first, so a restart brings the same roles back. **Built.** Workers do
 not come back after a restart; whether they should is open (`2fkk`). It also runs background loops:
 stall and context checks, budget governor, disk monitor, claim leases, port sweep, a CI watcher

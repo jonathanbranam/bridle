@@ -69,7 +69,7 @@ Bridle itself sends `note`s from `system`:
   landing also gets `spec changed under you: …`
   ([[docs/design/coordination#Telling workers main moved|coordination.md]],
   [[docs/design/impact-and-conflicts|impact and conflicts]]).
-- **`task <id> filed: …`** (`when idle`), to the running `manager` when no `product-manager` runs
+- **`task <id> filed: …`** (`when idle`), to the running `manager` when no `project-manager` runs
   ([[docs/design/coordination#Waking the manager|coordination.md]]).
 - **Conflict notices**, to both claimants (or the managers) when `impact check` opens a conflict.
 - **Budget wind-down and resume notices** ([[docs/design/usage-and-budget|usage and budget]]),

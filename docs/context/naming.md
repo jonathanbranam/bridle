@@ -83,7 +83,7 @@ The human (2026-10-03, verbatim):
 > don't think at all, because the names of things should be decided in the design.
 
 So names are settled in the design or proposal, by whoever designs (the orchestrator, advisors,
-the product manager, and the design/research role to come), not by managers or workers while
+the project manager, and the design/research role to come), not by managers or workers while
 building. A worker who finds a thing without a good name raises it; it doesn't invent one.
 
 ## Remind the human
@@ -175,7 +175,7 @@ the boundary first, then name each side so the names make the difference obvious
 Pairs to look at (examples, not decided):
 
 - **ticket / task:** [[tickets-and-tasks-why-both-k7tm|k7tm]].
-- **product manager / project manager / manager:** "PM" is ambiguous, and both sit beside
+- **project manager (was product manager) / manager:** "PM" is ambiguous, and both sit beside
   "manager" ([[the-product-manager-role-is-really-a-project-manager-who-hel-7r2c|7r2c]]).
 - **advisor / orchestrator, and the roles split out of them:**
   [[seats-named-interactive-roles-splitting-the-advisor-retiring-r8kv|r8kv]] (its research
