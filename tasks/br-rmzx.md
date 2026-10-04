@@ -4,7 +4,7 @@ title = "Fix red main (3): never run daemon systemd/launchd install in project_r
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-04T23:08:43.505Z"
-updated_at = "2026-10-04T23:52:31.061453Z"
+updated_at = "2026-10-04T23:54:21.337945Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "S"
@@ -55,3 +55,6 @@ From orchestrator: reviewed br-rmzx (cad9bed0): daemon launchd/systemd are Skip 
 
 ### note · agent:manager-2 · 2026-10-04T23:52:31.061Z
 integrated: 1dde6f731dea8af7a07713bf1fc1304951f7110e (branch bridle/fix-skip-service)
+
+### note · agent:manager-2 · 2026-10-04T23:54:21.337Z
+cleanup: removed agent fix-skip-service, branch bridle/fix-skip-service
