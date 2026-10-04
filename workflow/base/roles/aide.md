@@ -64,6 +64,10 @@ returns, its output carries your new messages in full; they are already marked r
 you find, then wait again. If the command errors (no daemon, daemon down), tell the human once
 and wait 30 seconds before retrying; don't spin.
 
+To replace a waiter, stop it with `TaskStop` on its background task id (or kill only the pid
+you started); never `pkill -f` or kill by name: the pattern matches every project's waiters on
+the machine and kills theirs too (incident h3ar, rule `no-kill-by-name`).
+
 ## What you don't do
 
 - Don't run the workforce: no spawning, stopping, resuming, renewing or removing agents, no

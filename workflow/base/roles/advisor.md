@@ -50,6 +50,10 @@ bridle agent wake external:advisor --timeout 5400
 
 Run it as one background command, with no shell loop. The timeout (90 minutes) is only a fallback: a message or task change ends the wait at once. The daemon caps it at 6900 s (1 h 55 min). When it returns, its output carries your new messages in full (from, id, text); they are already marked read, so there is nothing to mark. Act on what you find, and loop back to waiting. `bridle inbox --json` lists any you missed and marks what it lists read. If the command errors (no daemon, daemon down), tell the human once and wait 30 seconds before retrying; don't spin.
 
+To replace a waiter, stop it with `TaskStop` on its background task id (or kill only the pid
+you started); never `pkill -f` or kill by name: the pattern matches every project's waiters on
+the machine and kills theirs too (incident h3ar, rule `no-kill-by-name`).
+
 The mail waiter (unnamed advisor only, when `~/.bridle/config.toml` has `[mail]`): run `bridle orchestrator wait-for-wake --mail` in the background separately and restart it each time it exits. It returns when mail from the human's email bridge (`via email`) arrives, or prints `nothing` after 25 minutes. While your launcher is alive, mail goes to you, not the orchestrator. Answer with `bridle send external:mail "got it: <one line>" --reply-to <the mail's message id>`.
 
 ## What you don't do
