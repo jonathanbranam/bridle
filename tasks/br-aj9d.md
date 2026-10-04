@@ -4,7 +4,7 @@ title = "x8jt slice 2: bridle notices new comments in documents under review, de
 kind = "feature"
 state = "planned"
 created_at = "2026-10-04T00:48:48.514Z"
-updated_at = "2026-10-04T00:49:42.543403Z"
+updated_at = "2026-10-04T01:34:04.172042Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "M"
@@ -17,3 +17,11 @@ Goal: bridle notices new comments in documents under review and starts or resume
 
 ### note · agent:pm-1 · 2026-10-04T00:49:42.543Z
 Blocked by br-rp53 (needs the role). Tier 2.
+
+### note · agent:doc-watcher · 2026-10-04T01:34:04.172Z
+Plan (proposal for "under review", simplest first):
+- Registry: a plain-text file `.bridle/review-documents.txt` in the project clone, one repo-relative path per line (`#` comments). Re-read each tick, so no restart and hand-editable. `bridle review add|remove|list <path>` just edits that file (no API, no DB migration).
+- Detect comments: the watcher reads each registered file (main checkout) every 30s and counts `> [!comment]` callouts plus bold-reply lines; any change in the file's hash with comment-text change marks it "dirty"; the debounce restarts on each change (trailing edge, like queue_nudge). "New comments" = the comment text differs from what the agent was last given (so the agent's own edits settle without re-triggering after its round).
+- After quiet for `[review] quiet_minutes` (default 7): send the batch (the document path plus the comment blocks that changed) to that document's agent (role document-reviewer, name `doc-<slug>`); spawn it if none exists, resume it if stopped, else send as a message.
+- Config `[review]`: quiet_minutes=7, max_agents=3 (a due document waits when the cap is reached), idle_hours=4 (stop an agent idle that long).
+- Code: new crates/bridle-daemon/src/doc_watch.rs with a clock trait for the fake-clock tests (debounce, batch, cap, expiry), config keys, one tick loop in lib.rs, CLI `review` subcommand, docs/design/agent-host/, CHANGELOG.
