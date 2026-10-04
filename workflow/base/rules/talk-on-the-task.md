@@ -1,7 +1,7 @@
 ---
 id: talk-on-the-task
 severity: must
-roles: [orchestrator, advisor, product-manager, manager, worker, reviewer]
+roles: [orchestrator, advisor, project-manager, manager, worker, reviewer]
 ---
 Discuss a task on the task, not in direct messages. A message is only the
 notification.

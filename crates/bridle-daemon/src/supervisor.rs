@@ -293,7 +293,7 @@ impl AgentManager {
         let _ = self.0.tasks.set(tasks);
     }
 
-    /// A project with no product manager has nobody to triage a new `open`
+    /// A project with no project manager has nobody to triage a new `open`
     /// task, so the running manager is told (at most once a minute, listing
     /// every task filed since). With no manager running (the `autostart =
     /// false` mode) the orchestrator is told instead, so the task isn't
@@ -307,7 +307,7 @@ impl AgentManager {
                 .iter()
                 .any(|a| a.role == role && a.state.is_running())
         };
-        if running("product-manager") {
+        if running("project-manager") {
             return;
         }
         let delay = {
@@ -2113,14 +2113,14 @@ impl AgentManager {
         }
     }
 
-    /// Tells the product manager (the orchestrator when none runs) that `submitter` filed task `id`.
+    /// Tells the project manager (the orchestrator when none runs) that `submitter` filed task `id`.
     pub async fn note_submission(&self, id: &str, title: &str, submitter: &str) {
         let Ok(agents) = self.0.store.list_agents(false).await else {
             return;
         };
         let to = agents
             .iter()
-            .find(|a| a.role == "product-manager" && a.state.is_running())
+            .find(|a| a.role == "project-manager" && a.state.is_running())
             .map(|a| ToTarget::Agent(a.id.clone()))
             .unwrap_or_else(|| ToTarget::External(crate::wake::ORCHESTRATOR.to_string()));
         let body = format!(

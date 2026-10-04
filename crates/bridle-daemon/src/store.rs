@@ -1661,7 +1661,7 @@ mod sync {
         Ok(Agent {
             id: row.get(0)?,
             name: row.get(1)?,
-            role: row.get(2)?,
+            role: crate::config::canonical_role(&row.get::<_, String>(2)?),
             state: state_str.parse().map_err(|_| {
                 rusqlite::Error::InvalidColumnType(3, "state".into(), rusqlite::types::Type::Text)
             })?,
@@ -3441,6 +3441,19 @@ mod tests {
             extra_env: Vec::new(),
             components: Vec::new(),
         }
+    }
+
+    #[tokio::test]
+    async fn stored_product_manager_agent_reads_as_project_manager() {
+        let (store, _tmp) = store().await;
+        let mut new = new_agent("pm-1");
+        new.role = "product-manager".to_string();
+        store.insert_agent(new).await.expect("insert");
+        // The queue gate, stop_check and the config role lookup all read this.
+        let got = store.get_agent("pm-1").await.expect("get").expect("some");
+        assert_eq!(got.role, "project-manager");
+        let all = store.list_agents(false).await.expect("list");
+        assert_eq!(all[0].role, "project-manager");
     }
 
     #[tokio::test]

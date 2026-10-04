@@ -1,4 +1,4 @@
-//! A new `open` task wakes the manager when no product manager is running
+//! A new `open` task wakes the manager when no project manager is running
 //! to triage it (coordination.md, "Waking the manager").
 
 mod support;
@@ -10,7 +10,7 @@ use bridle_api::types::{
 use support::{start_daemon_with_config, wait_for_state};
 
 const CONFIG: &str =
-    "[roles.manager]\nautostart = false\n[roles.product-manager]\nmodel = \"sonnet\"\n";
+    "[roles.manager]\nautostart = false\n[roles.project-manager]\nmodel = \"sonnet\"\n";
 
 async fn spawn_role(daemon: &support::TestDaemon, role: &str, name: &str) -> String {
     let a = daemon
@@ -82,7 +82,7 @@ async fn no_pm_means_one_coalesced_message_to_the_manager() {
 async fn a_running_pm_means_no_message() {
     let (daemon, _tmp) = start_daemon_with_config(None, Some(CONFIG)).await;
     let mgr = spawn_role(&daemon, "manager", "mgr").await;
-    spawn_role(&daemon, "product-manager", "pm").await;
+    spawn_role(&daemon, "project-manager", "pm").await;
     file(&daemon, "first").await;
     assert!(wakes(&daemon, &mgr).await.is_empty());
 }

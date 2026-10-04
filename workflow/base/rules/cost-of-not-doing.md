@@ -1,7 +1,7 @@
 ---
 id: cost-of-not-doing
 severity: should
-roles: [orchestrator, product-manager, manager, worker, reviewer]
+roles: [orchestrator, project-manager, manager, worker, reviewer]
 ---
 Before doing something, ask: what's the worst that happens if I don't? If the
 answer is "not much", don't.

@@ -1,9 +1,9 @@
 ---
 id: planning-the-queue
 severity: should
-roles: [orchestrator, product-manager]
+roles: [orchestrator, project-manager]
 ---
-Whoever prepares tasks and edits the queue (the product manager, or the orchestrator acting
+Whoever prepares tasks and edits the queue (the project manager, or the orchestrator acting
 as PM on a small project with none) plans like this:
 
 - **Right-size every task.** A worker's context should stay well under 200K tokens for the

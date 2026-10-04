@@ -72,6 +72,16 @@ pub enum ConfigError {
 }
 
 /// Where `bridle init` vendors the base workflow, repo-relative.
+/// A role name as the daemon looks it up: the pre-9j2h `product-manager` reads as
+/// `project-manager`, so stored agents and unmigrated configs keep PM permissions.
+pub fn canonical_role(name: &str) -> String {
+    if name == "product-manager" {
+        "project-manager".to_string()
+    } else {
+        name.to_string()
+    }
+}
+
 pub const VENDORED_WORKFLOW: &str = ".bridle/workflow";
 
 /// Expands a leading `~` (to `$HOME`) and `$VAR` / `${VAR}` in a `workflow` value.
@@ -1897,6 +1907,7 @@ impl Config {
             .collect();
 
         for (name, raw_role) in raw.roles.unwrap_or_default() {
+            let name = canonical_role(&name);
             let pinned_model = raw_role.model.clone();
             let base = config
                 .roles
@@ -3164,10 +3175,10 @@ mod tests {
             let prompt = config.roles[role].system_prompt.as_ref().expect("prompt");
             assert!(repo.join(prompt).is_file(), "{} exists", prompt.display());
         }
-        // product-manager is a custom role, so it falls back to
+        // project-manager is a custom role, so it falls back to
         // Role::worker_default() as its merge base (stop_check: true); config
         // must turn it back off explicitly, since it isn't the worker role.
-        assert!(!config.roles["product-manager"].stop_check);
+        assert!(!config.roles["project-manager"].stop_check);
     }
 
     #[test]
@@ -3181,7 +3192,7 @@ mod tests {
             check: "make ci".to_string(),
             check_worker: None,
         };
-        for name in ["worker", "manager", "product-manager"] {
+        for name in ["worker", "manager", "project-manager"] {
             let role = Role {
                 system_prompt: Some(format!("workflow/base/roles/{name}.md").into()),
                 ..Role::worker_default()
@@ -3231,16 +3242,23 @@ mod tests {
     #[test]
     fn custom_role_falling_back_to_worker_default_can_turn_stop_check_back_off() {
         let toml = r#"
-            [roles.product-manager]
+            [roles.project-manager]
             model = "sonnet"
             stop_check = false
         "#;
         let cfg = Config::parse(toml).expect("parse");
-        let pm = &cfg.roles["product-manager"];
+        let pm = &cfg.roles["project-manager"];
         // Confirms the fallback base really is worker_default (stop_check: true)
         // and that the project config can override it.
         assert!(Role::worker_default().stop_check);
         assert!(!pm.stop_check);
+    }
+
+    #[test]
+    fn old_product_manager_role_name_resolves_as_project_manager() {
+        let cfg = Config::parse("[roles.product-manager]\nstop_check = false\n").expect("parse");
+        assert!(!cfg.roles["project-manager"].stop_check);
+        assert!(!cfg.roles.contains_key("product-manager"));
     }
 
     #[test]

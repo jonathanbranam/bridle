@@ -87,7 +87,7 @@ and guide paths when they exist, but the spawn-time system prompt carries rules 
 `agents/` is Claude Code's own subagent mechanism (the `Agent` tool, `.claude/agents/`);
 `roles/` is bridle's driver-facing role prompt, appended after bridle's own preamble to
 the `claude` process's system prompt for a whole bridle role (worker, manager,
-product-manager, orchestrator, advisor, prototyper) — see
+project-manager, orchestrator, advisor, prototyper) — see
 [[docs/design/agent-host/roles-and-config|roles and config]]. `bridle sync` renders
 `agents/` into `.claude/agents/*.md` (below); it does nothing with `roles/`. Instead, a
 role with no `system_prompt` in `.bridle/config.toml` defaults to

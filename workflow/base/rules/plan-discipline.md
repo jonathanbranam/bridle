@@ -1,7 +1,7 @@
 ---
 id: plan-discipline
 severity: should
-roles: [orchestrator, product-manager, manager, worker, reviewer]
+roles: [orchestrator, project-manager, manager, worker, reviewer]
 ---
 A plan is complete when it says what it touches, what it defers and why, what
 it rejected, and how to check it.

@@ -1,7 +1,7 @@
 ---
 id: work-flow
 severity: must
-roles: [orchestrator, product-manager, manager, worker, reviewer]
+roles: [orchestrator, project-manager, manager, worker, reviewer]
 ---
 Filing is not scheduling, and a report is a claim.
 

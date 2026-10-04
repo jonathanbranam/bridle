@@ -1,7 +1,7 @@
 ---
 id: tickets
 severity: should
-roles: [orchestrator, advisor, product-manager, manager, worker, reviewer]
+roles: [orchestrator, advisor, project-manager, manager, worker, reviewer]
 ---
 Tickets live in `docs/tickets/open/` and `docs/tickets/resolved/`, one file each,
 `<descriptive-tail>-<id>.md`. Use the `bridle` binary for everything mechanical:
