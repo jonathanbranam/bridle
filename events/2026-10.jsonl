@@ -685,3 +685,4 @@
 {"actor":"human","at":"2026-10-04T23:19:22.297Z","from":"","task":"br-cr7t","to":"pending"}
 {"actor":"human","at":"2026-10-04T23:19:22.412Z","from":"","task":"br-75h2","to":"pending"}
 {"actor":"agent:manager-2","at":"2026-10-04T23:52:31.061453Z","from":"planned","task":"br-rmzx","to":"integrated"}
+{"actor":"external:advisor","at":"2026-10-04T23:53:28.931764Z","from":"pending","task":"br-75h2","to":"open"}
