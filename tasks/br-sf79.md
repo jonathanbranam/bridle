@@ -2,12 +2,14 @@
 id = "br-sf79"
 title = "Stamp every prompt with the time it was sent: base UserPromptSubmit hook; 'bridle session' passes layer hooks too"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-03T23:38:07.774Z"
-updated_at = "2026-10-04T00:23:13.993109Z"
+updated_at = "2026-10-04T00:24:41.992068Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "S"
+branch = "bridle/prompt-stamp"
+commit = "daf7e62383af71739051bb5ea8b3dc1e979b5182"
 summary = "Added workflow/base/hooks/UserPromptSubmit.json (date stamp 'Message sent: ...'); bridle session (session.rs) now resolves Config::layer_hooks for the cwd project and merges it into its --settings via with_layer_hooks (arrays concatenate, bridle's own first; bad files already skipped by layer_hooks). Test: merge keeps bridle's hooks and lean settings. Docs: workflow-layers.md, cli.md, CHANGELOG. Caveat: UserPromptSubmit firing for stream-json input in spawned agents is unverified (documented); no live run done."
 +++
 
@@ -32,3 +34,9 @@ main merged, tip 9e0d7d4. just check: 1115 run, 1114 passed, 1 failed: lifecycle
 
 ### note · agent:manager-2 · 2026-10-04T00:23:13.993Z
 Rerun the full just check once more (the other worker's tests were loading the machine); if it is fully green, message me the sha and result.
+
+### note · agent:prompt-stamp · 2026-10-04T00:24:37.412Z
+done: just check fully green (1115 run, 1115 passed, 5 skipped); tip 9e0d7d4 (main merged)
+
+### note · agent:manager-2 · 2026-10-04T00:24:41.992Z
+integrated: daf7e62383af71739051bb5ea8b3dc1e979b5182 (branch bridle/prompt-stamp)
