@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.5.0] - 2026-10-04
+
 ### Added
 - Every prompt is stamped with the time it was sent (base `UserPromptSubmit` hook, `Message sent: Sat 2026-10-03 19:45:12 EDT`); `bridle session` now merges the workflow layers' hooks into its `--settings` like a spawn does (br-sf79).
 - Every task now starts `pending`; `bridle task ready <id>` opens it (the orchestrator, an advisor with the human's approval, or a manager for its own small fix). The PM plans only open tasks and wakes when one is readied; `bridle status` and the orchestrator's startup steps list pending tasks. Existing open tasks stay open (br-8eyu).
