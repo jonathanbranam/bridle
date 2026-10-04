@@ -146,6 +146,21 @@ question so nothing builds it before then.
 - **Again on 2026-10-03 ~23:40 ET:** while this ticket was being written, the main advisor's
   wake returned and marked read the orchestrator's brief "For advisor doc-review" (m-4174, ticket
   x8jt). Same cause.
+- **2026-10-04 ~02:00-03:00 ET, a self-upgrade made every running advisor unreachable by name.**
+  The human (verbatim, via the advisor): "That advisor is up and running. This bug should be
+  fixed in an upcoming ticket, but please add these issues anyway". The doc-review advisor
+  (`bridle session advisor --project bridle doc-review`, pid 62800, started 20:27 ET) was running,
+  but the daemon restarted at 21:51 and 22:02 ET (`daemon.started`; self-upgrade to 941312c) and
+  forgot every registered session: `bridle status --json` showed `sessions: []` while six
+  advisor launchers ran (main, tickets, doc-review, workflow, and two for track-web). Mail
+  for `external:advisor/doc-review` then took the "never existed" fallback: the orchestrator's
+  m-4237 (x8jt built; hand gtzx to the reviewer agent?) and m-4240 (br-qttb and ui-c39e filed)
+  reached the main advisor marked "(originally for advisor/doc-review)" and were marked read by
+  its wake. The same restart likely explains the orchestrator's "external:aide isn't registered
+  on this daemon". Also lost with the registry: the `session.context` warnings for all of them.
+  Cause: the in-memory registry (`sessions.rs`: "a session re-registers when its launcher
+  restarts"; the launchers don't restart when the daemon does). P2 (seats in the database) and
+  P4 (mail stays in the seat's inbox) fix it.
 - **2026-10-01, starting advisors by hand went wrong twice:** a new advisor never read its brief
   ([[a-new-advisor-never-reads-its-brief-jb4e|jb4e]]).
 - **2026-10-03 01:59, a daemon restart ended the advisor's wait as a "timeout"**: the session
