@@ -2,16 +2,16 @@
 id = "br-puaf"
 title = "Usage readings go stale while agents work, and a stale reading at low usage holds the workforce"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-04T15:18:54.499Z"
-updated_at = "2026-10-04T15:37:03.930334Z"
+updated_at = "2026-10-04T16:36:36.129436Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
 +++
 
 original id: puaf
-docs/tickets/open/usage-readings-go-stale-while-agents-work-and-a-stale-readin-puaf.md
+Build per the Decided section of docs/tickets/open/usage-readings-go-stale-while-agents-work-and-a-stale-readin-puaf.md (read it and the task thread first; the human rejected the long-lived probe, option A). Summary: (1) usage poll tries direct HTTP with the OAuth token first; (2) only if HTTP fails, run the existing probe for that poll, started and exited each time (every 5 min, nothing left running); (3) staleness slides by usage: a stale reading matters only near the limits, not at 20-30%; (4) probe/HTTP failures logged at warn level; (5) no model call anywhere, and per-poll cost visible (bridle usage or a log line per poll). Default config changes only; ~/.bridle/config.toml is the human's, do not touch it. Files: budget/usage code in crates/bridle-daemon, config defaults, docs/design/agent-host/ and cli.md kept in step. Acceptance: just check passes; tests with the fake for HTTP-ok, HTTP-fail-then-probe, and sliding staleness. Model: Sonnet. Out of scope: one machine-wide source (that is kuw2, not scheduled).
 
 ## Thread
 

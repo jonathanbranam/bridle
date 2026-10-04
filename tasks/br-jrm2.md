@@ -2,15 +2,15 @@
 id = "br-jrm2"
 title = "Document view: project dropdown, ticket search by ID, comment box at the highlight, full width"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-10-04T14:57:49.130Z"
-updated_at = "2026-10-04T15:05:27.251370Z"
+updated_at = "2026-10-04T16:36:36.418627Z"
 created_by = "external:advisor/doc-review"
 watchers = ["external:advisor/doc-review"]
 +++
 
 original id: jrm2
-docs/tickets/open/document-view-project-dropdown-ticket-search-by-id-comment-b-jrm2.md
+Build docs/tickets/open/document-view-project-dropdown-ticket-search-by-id-comment-b-jrm2.md (read it and the task thread; the human added item 7 and a Google-Docs-style margin layout in item 4). Touches the document review UI and daemon: Document.tsx, comments.ts, doc_watch.rs and whatever the ticket lists. Runs BEFORE br-ehv6, which touches the same files. Acceptance: just check passes, plus the UI's own checks as the ticket states. Model: Sonnet. Out of scope: scanning for hand-added comments (TBD per the ticket), and everything in br-ehv6. If it is too big for one branch, report on the thread and ask the manager to split.
 
 ## Thread
 
