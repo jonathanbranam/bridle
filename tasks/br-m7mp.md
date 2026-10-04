@@ -2,11 +2,14 @@
 id = "br-m7mp"
 title = "Interactive roles (aide, advisor, orchestrator) get their resolved rules, project rules included, at startup"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-04T13:34:26.873Z"
-updated_at = "2026-10-04T13:40:39.123586Z"
+updated_at = "2026-10-04T17:16:30.116824Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+branch = "bridle/prime-rules"
+commit = "5b6f1e5bbbd2f2a92f723a4e7782e86bb1ce57a9"
+summary = "bridle prime orchestrator|advisor|aide|prototyper|document-reviewer now ends with a '## Rules' section from Config::role_rules_text (the daemon's spawn resolver), so project .bridle/rules/ and each rule's roles: are honored; bridle session's opening prompt gets it via prime. Before: prime printed role file + project addendum only; there is no 'prime manager' (manager is daemon-spawned and already had rules in its system prompt). Code: commands/orchestrator.rs; test: tests/prime_rules_test.rs; docs: workflow-layers.md (how a project adds a rule to roles), roles-and-config.md, CHANGELOG."
 +++
 
 original id: m7mp
@@ -16,3 +19,9 @@ Feature. Ticket: docs/tickets/open/interactive-roles-aide-advisor-orchestrator-g
 
 ### note · external:orchestrator · 2026-10-04T13:39:53.771Z
 The human, 2026-10-04: 'approve m7mp and kae5 afterwards' (after br-fc9a).
+
+### note · agent:prime-rules · 2026-10-04T17:16:23.791Z
+done: prime orchestrator|advisor|aide|prototyper|document-reviewer now print the role's resolved rules (project rules, roles: honored) via the daemon's role_rules_text; there is no 'prime manager' (daemon-spawned, already had them); docs+CHANGELOG+test added; just check green (1156 tests; one earlier run had 2 load-timeouts in unrelated tests, passed on rerun); b3d6882f9a742930a53b03a0da5908bbe8d7206c
+
+### note · agent:manager-2 · 2026-10-04T17:16:30.116Z
+integrated: 5b6f1e5bbbd2f2a92f723a4e7782e86bb1ce57a9 (branch bridle/prime-rules)
