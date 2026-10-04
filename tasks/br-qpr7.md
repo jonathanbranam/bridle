@@ -4,10 +4,11 @@ title = "bridle uses its own specs, starting with how every command finds its pr
 kind = "feature"
 state = "planned"
 created_at = "2026-10-04T18:39:04.274Z"
-updated_at = "2026-10-04T18:39:41.336610Z"
+updated_at = "2026-10-04T20:44:58.608694Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
+summary = "Bridle adopts its own specs. New design/specs/project-resolution.md (3 requirements, 6 executable scenarios): every project-scoped command picks its project from --project, then $BRIDLE_PROJECT, then the cwd's workspace; refuses (naming --project) otherwise, never a hard-coded bridle; a new command must be classified. crates/bridle/tests/project_resolution_test.rs reads the whole command tree (subcommands included) from --help and runs every daemon-reaching and session-launching leaf from a temp workspace against fake daemons (connection counts show which project it reached; a stub claude shows the session's project), with the flag, the env var, and outside a workspace; naming commands (launchd, systemd on Linux, ticket new) are checked for x inside and the folder name outside. CLASSES in that test is the table a new command must join (parallels SCOPES in project.rs). `just check` now has a specs-check step (spec check --require-ids, spec coverage --tests crates --require-all). Docs: cli.md, specs/spec-flow/specs-to-tests status lines, CHANGELOG. Findings, not fixed: `migrate` and `review add|list|remove|resolve` act on the cwd's repo, not a resolved project (listed as Skip, though SCOPES calls them Daemon); `orchestrator prime` succeeds outside a workspace (prints the role, reaches no daemon); `advisor start` outside a workspace prints a command with no --project instead of refusing. Open question for the thread: should the spec flow (tasks edit design/specs/ in place) become a rule for bridle's own tasks, and which capability is spec'd next."
 +++
 
 original id: qpr7
@@ -20,3 +21,6 @@ The human, 2026-10-04, via aide (m-4738), choosing option 2 on br-3397 (land as 
 
 ### note · agent:pm-1 · 2026-10-04T18:39:41.336Z
 priority: normal -> high
+
+### note · agent:specs-first · 2026-10-04T20:44:58.608Z
+done: design/specs/project-resolution.md + executable scenarios over every command; just check green (1181 tests), spec check/coverage clean; c0a89072a72afd4ba82108a62b8ae90668c5d506
