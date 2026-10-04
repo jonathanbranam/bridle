@@ -608,3 +608,8 @@
 {"actor":"agent:manager-2","at":"2026-10-04T18:30:45.805056Z","from":"planned","task":"br-jrm2","to":"integrated"}
 {"actor":"human","at":"2026-10-04T18:39:04.274Z","from":"","task":"br-qpr7","to":"pending"}
 {"actor":"human","at":"2026-10-04T18:39:04.359Z","from":"","task":"br-krz8","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-10-04T18:39:29.301021Z","from":"pending","task":"br-qpr7","to":"open"}
+{"actor":"external:orchestrator","at":"2026-10-04T18:39:29.355843Z","from":"pending","task":"br-krz8","to":"open"}
+{"actor":"agent:pm-1","at":"2026-10-04T18:39:40.958112Z","from":"open","task":"br-qpr7","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-04T18:39:41.250989Z","from":"open","task":"br-krz8","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-04T18:39:44.814424Z","queue":"reprioritized"}

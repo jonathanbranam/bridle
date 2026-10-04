@@ -591,3 +591,15 @@ from = "br-m7mp"
 to = "br-3397"
 kind = "blocks"
 created_at = "2026-10-04T16:36:38.172Z"
+
+[[edge]]
+from = "br-3397"
+to = "br-qpr7"
+kind = "blocks"
+created_at = "2026-10-04T18:39:42.987Z"
+
+[[edge]]
+from = "br-3397"
+to = "br-krz8"
+kind = "blocks"
+created_at = "2026-10-04T18:39:43.187Z"
