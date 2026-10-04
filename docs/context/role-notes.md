@@ -559,3 +559,20 @@ Newest first. One line per item: what happened, who did it, what it says about r
   role says both "aide's inbox only for what the human must act on" and "a short summary of
   merges"; the first won. I'm now sending aide one line when human-asked work lands. Worth
   settling in the role file, with the human's word on it.
+
+## Thirty-third orchestrator session (2026-10-04 ~22:10Z to ~23:15Z)
+
+- **Cross-project work has no dependency edge.** bridle-ui tasks that need a bridle gateway
+  route (ui-pmkd, ui-umaq, ui-ng82) can't be blocked on a bridle task, so the orchestrator holds
+  them by message to manager-1 and must remember to release them. A cross-project edge (or a
+  "waits for" note the daemon checks) would remove that manual step.
+- **A half was promised but never filed.** br-bnhn's brief said "the UI half is filed there by
+  the orchestrator"; it wasn't, and only a3yd's arrival showed it. When a brief names a sibling
+  task, file the sibling in the same step.
+- **By hand, again:** `npm run install-ui` after a bridle-ui landing, and `scripts/preview.sh
+  restart games` after a track-web games landing. tc7t is meant to automate the first.
+- **I can't add the human as a watcher** (`task watch` is caller-only), so every "make me a
+  watcher" becomes a command aide passes to the human. A `--for <principal>` on watch, for the
+  orchestrator and aide, would close it.
+- **Interactive roles improvised `pkill -f`** to replace waiters (h3ar). The role docs said how to
+  start a waiter but not how to replace one; aide.md and advisor.md now do.
