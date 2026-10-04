@@ -4,7 +4,7 @@ title = "Interactive roles (aide, advisor, orchestrator) get their resolved rule
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-04T13:34:26.873Z"
-updated_at = "2026-10-04T17:16:30.116824Z"
+updated_at = "2026-10-04T17:19:43.416381Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 branch = "bridle/prime-rules"
@@ -25,3 +25,6 @@ done: prime orchestrator|advisor|aide|prototyper|document-reviewer now print the
 
 ### note · agent:manager-2 · 2026-10-04T17:16:30.116Z
 integrated: 5b6f1e5bbbd2f2a92f723a4e7782e86bb1ce57a9 (branch bridle/prime-rules)
+
+### note · agent:manager-2 · 2026-10-04T17:19:43.416Z
+cleanup: removed agent prime-rules, branch bridle/prime-rules
