@@ -4,7 +4,7 @@ title = "br-9j2h follow-up: stored product-manager agents and unmigrated configs
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-04T12:48:42.938Z"
-updated_at = "2026-10-04T13:01:56.462347Z"
+updated_at = "2026-10-04T13:03:45.918826Z"
 created_by = "agent:manager-2"
 watchers = ["agent:manager-2"]
 size = "S"
@@ -28,3 +28,6 @@ done: read-time alias on top of re-applied rename; just check green (1147 tests)
 
 ### note · agent:manager-2 · 2026-10-04T13:01:56.462Z
 integrated: ce54941d578c248298c722945861c143294ff6da (branch bridle/role-alias)
+
+### note · agent:manager-2 · 2026-10-04T13:03:45.918Z
+cleanup: removed agent role-alias, branch bridle/role-alias
