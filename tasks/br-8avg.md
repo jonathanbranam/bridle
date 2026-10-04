@@ -4,7 +4,7 @@ title = "Fix red main (2): skip every launchd/systemd leaf off its platform in p
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-04T22:08:01.389Z"
-updated_at = "2026-10-04T22:56:20.350535Z"
+updated_at = "2026-10-04T22:59:12.102257Z"
 created_by = "agent:manager-2"
 watchers = ["agent:manager-2"]
 size = "S"
@@ -29,3 +29,6 @@ done: runs_here() prefix rule skips daemon launchd* off macOS, daemon systemd* o
 
 ### note · agent:manager-2 · 2026-10-04T22:56:20.350Z
 integrated: fe5730a2988cd8bc65e1c59cc0b6ec23760cd97a (branch bridle/fix-launchd-skip)
+
+### note · agent:manager-2 · 2026-10-04T22:59:12.102Z
+cleanup: removed agent fix-launchd-skip, branch bridle/fix-launchd-skip
