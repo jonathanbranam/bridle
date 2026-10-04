@@ -2,11 +2,13 @@
 id = "br-jmpf"
 title = "A [gateway] section in ~/.bridle/config.toml stops every daemon from starting (unknown field)"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-04T13:11:47.608Z"
-updated_at = "2026-10-04T14:16:10.384311Z"
+updated_at = "2026-10-04T14:22:18.855637Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
+branch = "bridle/gateway-config"
+commit = "fb3bdb8316ad793032981c175e426f364ba3e682"
 summary = "RawConfig (bridle-daemon/src/config.rs) now accepts [gateway] and [interactions] as accept-only fields like [mail], so adding either to ~/.bridle/config.toml no longer stops daemons starting. Test accepts_sections_owned_by_other_crates; roles-and-config.md note; CHANGELOG. No other crate-owned section was missing. just check: only the known-flaky serve::tests::login_warning_only_when_known_logged_out fails (fail-fast, passes alone); committed per manager."
 +++
 
@@ -37,3 +39,9 @@ re-run: just check still red on only serve::tests::login_warning_only_when_known
 
 ### note · agent:manager-2 · 2026-10-04T14:16:10.384Z
 br-khg3 landed (8f09de4). Merge main into bridle/gateway-config, run just check, message me the tip.
+
+### note · agent:gateway-config · 2026-10-04T14:22:15.669Z
+done: main merged, just check green (1148 passed); tip 3a7fba3a on bridle/gateway-config
+
+### note · agent:manager-2 · 2026-10-04T14:22:18.855Z
+integrated: fb3bdb8316ad793032981c175e426f364ba3e682 (branch bridle/gateway-config)
