@@ -24,6 +24,22 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-04 12:48: a held landing reached origin through another session's ticket push
+
+- **What happened:** manager-2 landed br-9j2h (the product-manager to project-manager rename,
+  4656be0) in the clone at 12:48. The orchestrator had just asked it to hold, because the rename had
+  no alias for stored `product-manager` agents. manager-2 kept it unpushed. A session filing ticket
+  anmx committed on top in the same clone and pushed, which took 4656be0 to origin/main. The
+  orchestrator found it on fetch and pushed a revert (6aaff367) at about 12:51.
+- **Impact:** none seen. Without the revert, the daemon's self-upgrade on green CI would have
+  resumed pm-1 with an unknown role, and dalek's shared binary would have done the same to
+  track-web's PM.
+- **Cause:** the clone is shared. Ticket commits push whatever `main` holds, landed-but-held work
+  included (role notes: "ticket commits racing landings").
+- **Category:** `merge`, `coordination`.
+- **Follow-up:** br-v3d7 (the alias; re-lands the rename). The shared-clone push race has no ticket
+  yet beyond the role note.
+
 ## 2026-10-03: an approved rename was dropped as unapproved in the backlog sort
 
 - **What happened:** the human approved renaming `product-manager` to `project-manager` on
