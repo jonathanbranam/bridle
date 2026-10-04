@@ -1,14 +1,14 @@
 ---
 id: 3397
-title: bridle session ignores the folder it runs in and defaults to the bridle project
+title: Every bridle command finds its project from the folder it runs in (bridle session defaults to bridle), enforced by a spec
 kind: bug
 opened: 2026-10-04
 repos: [bridle]
 changes: []
-specs: []
+specs: [docs/design/cli.md]
 needs: []
 see: []
-tasks: []
+tasks: [br-3397]
 ---
 
 ## The ask
@@ -46,3 +46,22 @@ is registered and alive (`bridle status` sessions), so this mistake can't produc
 Tests: from a temp workspace for project X, `bridle session aide` (stub claude,
 `BRIDLE_LAUNCHER_TEST=1`) sets `BRIDLE_PROJECT=X`; outside any workspace without `--project`, it
 errors. Docs: cli.md's `bridle session` entry.
+
+## Wider: every command, enforced by a spec
+
+The human, verbatim (2026-10-04, via the aide):
+
+> every command should include this behavior. There should be a spec enforcing that behavior for all commands.
+
+So the fix is not just `bridle session`: **every** `bridle` command that acts on a project picks it
+the same way (`--project`, `$BRIDLE_PROJECT`, then the workspace containing the cwd), through one
+shared resolver, and none falls back to a hard-coded `bridle`. Other places seen at a glance
+(not a full audit): `crates/bridle/src/launchd.rs` `project_name` (falls back to the repo folder
+name, then `"bridle"`), `commands/orchestrator.rs` ~550, `statusline.rs` ~237 (display text, probably fine).
+
+And a **spec** states it and is enforced. bridle has no `design/specs/` yet (`docs/design/specs.md`:
+built, not wired in), so this would be its first requirement, or a requirement in `docs/design/cli.md`
+until specs exist. Either way, enforce it with a test over the whole clap command tree: every
+subcommand resolves its project through the shared resolver, run from a temp workspace for
+project X with no `--project`, and an unresolvable project errors rather than meaning bridle. A new
+command that skips the resolver should fail the test.
