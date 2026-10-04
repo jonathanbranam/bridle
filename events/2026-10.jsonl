@@ -560,3 +560,9 @@
 {"actor":"external:orchestrator","at":"2026-10-04T13:39:53.595536Z","from":"pending","task":"br-4f8y","to":"open"}
 {"actor":"external:orchestrator","at":"2026-10-04T13:39:53.620502Z","from":"pending","task":"br-m7mp","to":"open"}
 {"actor":"external:orchestrator","at":"2026-10-04T13:39:53.648496Z","from":"pending","task":"br-kae5","to":"open"}
+{"actor":"agent:pm-1","at":"2026-10-04T13:40:38.978186Z","from":"open","task":"br-fc9a","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-04T13:40:39.028185Z","from":"open","task":"br-x3xk","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-04T13:40:39.075598Z","from":"open","task":"br-4f8y","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-04T13:40:39.123586Z","from":"open","task":"br-m7mp","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-04T13:40:39.181888Z","from":"open","task":"br-kae5","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-04T13:40:39.270012Z","queue":"reprioritized"}

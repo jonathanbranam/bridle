@@ -6,6 +6,21 @@ tasks = ["br-c657"]
 
 [[tier]]
 tasks = [
+    "br-fc9a",
+    "br-x3xk",
+]
+
+[[tier]]
+tasks = [
+    "br-4f8y",
+    "br-m7mp",
+]
+
+[[tier]]
+tasks = ["br-kae5"]
+
+[[tier]]
+tasks = [
     "br-88d4",
     "br-6b8a",
     "br-2718",
