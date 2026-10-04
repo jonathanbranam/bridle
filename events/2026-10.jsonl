@@ -500,3 +500,4 @@
 {"actor":"agent:pm-1","at":"2026-10-04T11:41:25.873651Z","from":"open","task":"br-b795","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-04T11:41:25.894364Z","queue":"reprioritized"}
 {"actor":"agent:manager-2","at":"2026-10-04T12:06:45.787039Z","from":"planned","task":"br-b795","to":"integrated"}
+{"actor":"agent:manager-2","at":"2026-10-04T12:09:47.813115Z","from":"planned","task":"br-cc45","to":"integrated"}
