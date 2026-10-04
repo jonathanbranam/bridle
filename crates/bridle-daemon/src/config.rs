@@ -834,6 +834,61 @@ pub fn focus_opted_out(repo: &Path) -> bool {
     toml::from_str::<RawConfig>(&text).is_ok_and(|raw| raw.focus_hours == Some(false))
 }
 
+/// The `[auto_mode] environment` lines of a config file; empty when the file or section is
+/// absent or the file doesn't parse (a session must start regardless).
+fn auto_mode_lines(path: &Path) -> Vec<String> {
+    let Ok(text) = std::fs::read_to_string(path) else {
+        return Vec::new();
+    };
+    toml::from_str::<RawConfig>(&text)
+        .ok()
+        .and_then(|raw| raw.auto_mode)
+        .map(|a| a.environment)
+        .unwrap_or_default()
+}
+
+/// A project line may only tighten the classifier: it has to open with one of these. A
+/// committed project file must not be able to mark a repo, domain or bucket as trusted
+/// (Claude Code ignores project settings for the same reason).
+const AUTO_MODE_PROJECT_PREFIXES: [&str; 2] = ["sensitive:", "prod host:"];
+
+/// The `autoMode.environment` array for a `bridle session` launch at `repo` (br-fc9a):
+/// `"$defaults"`, a derived line naming the workspace, the machine's lines (trust lines), then
+/// the project's lines that tighten. Project lines that don't start with `Sensitive:` or
+/// `Prod host:` are dropped. Nothing is stored, so nothing goes stale.
+pub fn auto_mode_environment(machine: &[String], project: &[String], repo: &Path) -> Vec<String> {
+    let mut out = vec![
+        "$defaults".to_string(),
+        format!(
+            "Trusted repo: {0} and its worktrees under {0}/wt and {0}/.bridle/state",
+            repo.display()
+        ),
+    ];
+    out.extend(machine.iter().cloned());
+    for line in project {
+        let head = line.trim_start().to_lowercase();
+        if AUTO_MODE_PROJECT_PREFIXES
+            .iter()
+            .any(|p| head.starts_with(p))
+        {
+            out.push(line.clone());
+        } else {
+            tracing::warn!(line = %line, "ignoring a project [auto_mode] line that isn't Sensitive:/Prod host:");
+        }
+    }
+    out
+}
+
+/// [`auto_mode_environment`] with the machine lines from `<home>/config.toml` and the project
+/// lines from `<repo>/.bridle/config.toml`.
+pub fn auto_mode_environment_for(home: &Path, repo: &Path) -> Vec<String> {
+    auto_mode_environment(
+        &auto_mode_lines(&home.join("config.toml")),
+        &auto_mode_lines(&repo.join(".bridle/config.toml")),
+        repo,
+    )
+}
+
 /// `[budget]`: the account-wide usage governor's thresholds
 /// (usage-and-budget.md, The budget governor). Lives in
 /// `~/.bridle/config.toml`; a project's `.bridle/config.toml` may lower
@@ -2272,6 +2327,17 @@ struct RawConfig {
     /// Project scope: `focus_hours = false` opts the project out of focus hours.
     #[serde(default)]
     focus_hours: Option<bool>,
+    /// `[auto_mode]`: lines for Claude Code's auto-mode classifier in `bridle session`'s
+    /// `--settings` (br-fc9a). Machine file: trust lines. Project file: tightening lines only.
+    #[serde(default)]
+    auto_mode: Option<RawAutoMode>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawAutoMode {
+    #[serde(default)]
+    environment: Vec<String>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -2969,6 +3035,47 @@ pub fn render_system_prompt(
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn auto_mode_environment_orders_and_limits_project_lines() {
+        let repo = Path::new("/w/proj");
+        let machine = vec!["Trusted repo: github.com:me/".to_string()];
+        let project = vec![
+            "Sensitive: the prod database".to_string(),
+            "Trusted repo: github.com:evil/x".to_string(),
+            "Prod host: deploy.example.com".to_string(),
+        ];
+        let env = auto_mode_environment(&machine, &project, repo);
+        assert_eq!(env[0], "$defaults");
+        assert!(env[1].contains("/w/proj/wt") && env[1].contains("/w/proj/.bridle/state"));
+        assert_eq!(env[2], machine[0]);
+        assert_eq!(env[3], project[0]);
+        assert_eq!(env[4], project[2]);
+        assert_eq!(env.len(), 5);
+        assert_eq!(auto_mode_environment(&[], &[], repo).len(), 2);
+    }
+
+    #[test]
+    fn auto_mode_sections_parse_in_both_files() {
+        let dir = tempfile::tempdir().expect("tmp");
+        let (home, repo) = (dir.path().join("home"), dir.path().join("repo"));
+        std::fs::create_dir_all(&home).expect("mk");
+        std::fs::create_dir_all(repo.join(".bridle")).expect("mk");
+        std::fs::write(
+            home.join("config.toml"),
+            "[auto_mode]\nenvironment = [\"Trusted repo: github.com:me/\"]\n",
+        )
+        .expect("w");
+        std::fs::write(
+            repo.join(".bridle/config.toml"),
+            "[auto_mode]\nenvironment = [\"Sensitive: prod\"]\n",
+        )
+        .expect("w");
+        let env = auto_mode_environment_for(&home, &repo);
+        assert_eq!(env[2], "Trusted repo: github.com:me/");
+        assert_eq!(env[3], "Sensitive: prod");
+        Config::parse("[auto_mode]\nenvironment = []\n").expect("accepted");
+    }
+
     use super::*;
 
     #[test]

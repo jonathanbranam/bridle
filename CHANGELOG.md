@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The base `UserPromptSubmit` hook (br-sf79, v0.5.0) that stamped every agent's and session's prompts with the time sent is removed; projects that want the timestamp can add `hooks/UserPromptSubmit.json` in their own layer (br-b795).
 
 ### Added
+- `bridle session` launches Claude with `autoMode.environment` in its `--settings`: `$defaults`, the project's workspace, and `[auto_mode] environment` lines (trust lines from `~/.bridle/config.toml`; a project's `.bridle/config.toml` may only add `Sensitive:`/`Prod host:` lines), so auto mode no longer depends on a hand-written global block (br-fc9a).
 - `bridle gateway install` writes a launchd plist or systemd user unit that runs the gateway detached, starts it at login/boot and restarts it after a crash (never runs launchctl/systemctl).
 - Interactive sessions survive a daemon restart: the registry is kept in the daemon's own `sessions.json` (beside its database, one per daemon) and reloaded at start; the tick drops entries whose pid is gone or reused (br-e35h).
 - `bridle review now <path> [--resend]` (and `POST /api/v1/projects/{project}/review` for the UI's button) sends a document's pending comment threads to its agent at once; whenever bridle sends threads it marks them ` · sent YYYY-MM-DD HH:MM` in the file, and marked threads aren't sent again unless resent (br-qttb, x8jt).

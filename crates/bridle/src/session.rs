@@ -99,6 +99,17 @@ fn with_layer_hooks(
     v.to_string()
 }
 
+/// Adds `autoMode.environment` (br-fc9a) for the project in `repo`, so the human's classifier
+/// context follows the workspace instead of the global file. Not written anywhere.
+fn with_auto_mode(settings: &str, home: &std::path::Path, repo: &std::path::Path) -> String {
+    let Ok(mut v) = serde_json::from_str::<serde_json::Value>(settings) else {
+        return settings.to_string();
+    };
+    v["autoMode"]["environment"] =
+        bridle_daemon::config::auto_mode_environment_for(home, repo).into();
+    v.to_string()
+}
+
 /// The layer hooks for the project in the current directory; none (with a warning) when its
 /// config can't be loaded, so a session never fails to start over them.
 fn session_layer_hooks() -> std::collections::BTreeMap<String, serde_json::Value> {
@@ -164,11 +175,16 @@ pub async fn run(cli: &Cli, role: &SessionRole) -> Result<(), CliError> {
     let suffix = std::env::var("BRIDLE_SESSION_SUFFIX").unwrap_or_default();
     let home = bridle_home();
     let layer_hooks = session_layer_hooks();
+    let repo = std::env::current_dir().map_err(anyhow::Error::from)?;
     let code = match role {
         SessionRole::Orchestrator { claude_args: extra } => {
             let name = session_name("orch", None, &project, &suffix);
             let args = claude_args(
-                &with_layer_hooks(&orchestrator_settings(), &layer_hooks),
+                &with_auto_mode(
+                    &with_layer_hooks(&orchestrator_settings(), &layer_hooks),
+                    &home,
+                    &repo,
+                ),
                 &name,
                 extra,
                 ORCHESTRATOR_PROMPT,
@@ -190,7 +206,11 @@ pub async fn run(cli: &Cli, role: &SessionRole) -> Result<(), CliError> {
                 );
             }
             let args = claude_args(
-                &with_layer_hooks(&advisor_settings(), &layer_hooks),
+                &with_auto_mode(
+                    &with_layer_hooks(&advisor_settings(), &layer_hooks),
+                    &home,
+                    &repo,
+                ),
                 &name,
                 extra,
                 &prompt,
@@ -208,7 +228,11 @@ pub async fn run(cli: &Cli, role: &SessionRole) -> Result<(), CliError> {
                 );
             }
             let args = claude_args(
-                &with_layer_hooks(&advisor_settings(), &layer_hooks),
+                &with_auto_mode(
+                    &with_layer_hooks(&advisor_settings(), &layer_hooks),
+                    &home,
+                    &repo,
+                ),
                 &name,
                 extra,
                 &prompt,
@@ -672,6 +696,18 @@ mod tests {
         for s in [orchestrator_settings(), advisor_settings()] {
             serde_json::from_str::<serde_json::Value>(&s).expect("json");
         }
+    }
+
+    #[test]
+    fn auto_mode_environment_is_in_the_settings() {
+        let dir = tempfile::tempdir().expect("tmp");
+        let v: serde_json::Value =
+            serde_json::from_str(&with_auto_mode(&advisor_settings(), dir.path(), dir.path()))
+                .expect("json");
+        let env = v["autoMode"]["environment"].as_array().expect("array");
+        assert_eq!(env[0], "$defaults");
+        assert!(env[1].as_str().expect("str").contains("wt"));
+        assert!(v["hooks"]["Stop"].is_array());
     }
 
     #[test]

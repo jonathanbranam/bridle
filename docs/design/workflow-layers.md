@@ -187,7 +187,12 @@ written down anywhere else yet:
   `bridle arch-guard` works from any worktree.
   `bridle session orchestrator|advisor|aide` merges the same overlay into its `--settings`
   (current directory's project; bridle's own focus, reply and session-note hooks first), so the
-  human's interactive sessions get layer hooks too. Projects that want to stamp prompts with
+  human's interactive sessions get layer hooks too. They also get `autoMode.environment` (br-fc9a;
+  the classifier reads `--settings`, not the project's `.claude/`): `$defaults`, a derived
+  "Trusted repo" line for the clone and its `wt/` and `.bridle/state`, the machine's
+  `[auto_mode] environment` lines (`~/.bridle/config.toml`), then the project's, which are
+  kept only if they start `Sensitive:` or `Prod host:` so a committed file can tighten but
+  never mark anything trusted. Spawned agents don't use auto mode, so their `--settings` has none. Projects that want to stamp prompts with
   a timestamp can add `hooks/UserPromptSubmit.json` in their own layer or in a pack.
 - **Little skill/agent/hook content exists in `workflow/` yet**: `base/hooks/PreToolUse.json`
   and the `manager`/`worker` skills; no `agents/<role>.md`. The conventions above are
