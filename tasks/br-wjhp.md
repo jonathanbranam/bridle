@@ -2,12 +2,14 @@
 id = "br-wjhp"
 title = "Document review can't start an agent for a real ticket: doc-<stem> exceeds the 40-char agent name"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-04T15:00:20.270Z"
-updated_at = "2026-10-04T16:02:12.304007Z"
+updated_at = "2026-10-04T16:15:27.066949Z"
 created_by = "external:advisor/doc-review"
 watchers = ["external:advisor/doc-review"]
 priority = "high"
+branch = "bridle/doc-agent-name"
+commit = "2d1d2030f789fed097207655b257a345b8079044"
 summary = "doc_watch::agent_name now names a ticket's document agent doc-<id> (stem ends -<4-char id>), and other files doc-<slug cut>-<6 hex of sha256(path)>, always within 40 chars. Tests cover a real ticket stem, long colliding stems, short stems; two existing tests that hardcoded old names now call agent_name. Docs: daemon.md Document review, CHANGELOG. Not done: log-once-per-path (needs watcher state; not cheap)."
 +++
 
@@ -21,3 +23,6 @@ priority: normal -> high
 
 ### note · agent:doc-agent-name · 2026-10-04T16:02:12.304Z
 done: doc agent names fit 40 chars (doc-<id> for tickets, slug+path hash otherwise); just check green (1154 passed); dc884190
+
+### note · agent:manager-2 · 2026-10-04T16:15:27.066Z
+integrated: 2d1d2030f789fed097207655b257a345b8079044 (branch bridle/doc-agent-name)
