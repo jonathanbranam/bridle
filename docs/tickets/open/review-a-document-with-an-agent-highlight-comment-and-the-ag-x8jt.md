@@ -355,7 +355,7 @@ The human, verbatim (2026-10-04):
 
 **Decided (the human, 2026-10-04): A, the sent mark lives in the file.** The human, verbatim: "A".
 
-- When bridle sends a batch (after the quiet period, or on review now), it appends `· sent HH:MM`
+- When bridle sends a batch (after the quiet period, or on review now), it appends `· sent YYYY-MM-DD HH:MM`
   to the line of each thread's newest human entry: the `[!comment]` header, or the human's latest
   reply line. Plain text, visible in any editor, and a restart doesn't resend.
 - Review now and the quiet-period send both skip entries already marked sent; `--resend` (and a
@@ -366,3 +366,6 @@ The human, verbatim (2026-10-04):
 
 Review now and sent marks: br-qttb (bridle: command, sent marks, gateway route) and ui-c39e
 (bridle-ui: the button, after br-qttb lands).
+
+The human, verbatim (2026-10-04): "Let's do YYYY-mm-Dr HH:MM for sent" ("Dr" read as DD): the
+mark is `· sent 2026-10-04 21:14`.
