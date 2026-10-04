@@ -97,6 +97,9 @@ The human, 2026-10-04, verbatim: "What I said was it should look exactly like Go
   (spikes too). Start with open tickets and `docs/`, and widen it later.
 - bridle-ui: a `<select>` from `/projects`, a combobox over the search route, a responsive
   comment box placed by the selection, and a wider layout for the document page.
-- Auto-review (item 7): the gateway's document `PUT` asks the daemon to add the path to review
-  when the new content has more comment threads than the old, with the human's token, as the
-  review route already does. The UI changes nothing for this.
+- Auto-review (item 7): after a document `PUT`, if the saved text has a pending thread, the
+  gateway asks the daemon to add the path to review, with the human's token as the review route
+  already does. Pending uses the same rule as the daemon (`doc_watch::pending_threads`): the
+  thread's newest entry is the human's and has no `· sent` mark. That's decided by the text
+  alone, so the same file always gives the same answer. Adding a path that is already under
+  review changes nothing. The UI changes nothing for this.
