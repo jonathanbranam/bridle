@@ -4,7 +4,7 @@ title = "Document review can't start an agent for a real ticket: doc-<stem> exce
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-04T15:00:20.270Z"
-updated_at = "2026-10-04T16:15:27.066949Z"
+updated_at = "2026-10-04T16:17:09.210486Z"
 created_by = "external:advisor/doc-review"
 watchers = ["external:advisor/doc-review"]
 priority = "high"
@@ -26,3 +26,6 @@ done: doc agent names fit 40 chars (doc-<id> for tickets, slug+path hash otherwi
 
 ### note · agent:manager-2 · 2026-10-04T16:15:27.066Z
 integrated: 2d1d2030f789fed097207655b257a345b8079044 (branch bridle/doc-agent-name)
+
+### note · agent:manager-2 · 2026-10-04T16:17:09.210Z
+cleanup: removed agent doc-agent-name, branch bridle/doc-agent-name
