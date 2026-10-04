@@ -269,3 +269,29 @@ What the example shows:
 - The quoted words anchor the comment; if a rewrite removes them, the comment is still right
   after its passage, and the agent resolves it in the same commit.
 - A thread can end in an action (a ticket filed, a line deleted) as well as an answer.
+
+## Format approved; batching; what changed; tags (the human, 2026-10-03)
+
+The human, verbatim (via advisor doc-review, ~8:45 PM ET):
+
+> Approve the comment format.
+> Debounce and batch comments over like 5-10 minutes.
+>
+> Is 2 about showing what's new? Hrm. I can't think of a good solution in text. We could use the
+> git diff if/when needed. Defer the functionality. When the agent changes the doc in response to
+> a comment, it should add a follow up comment and tag me.
+>
+> Tags in comments should be then marked read when I read them or the agent.
+>
+> I want to get this moving quickly.
+
+Decided:
+
+- **The format is approved**: the `> [!comment] <who>, <when>, on "<quoted words>"` callout above,
+  replies as bold names inside it, resolved threads deleted with a note at the bottom.
+- **Comments are debounced and batched**: the agent gets them as one round once the human has
+  stopped commenting for about 5-10 minutes.
+- **Showing what changed is deferred**; the git diff serves when it's needed. Instead, **when the
+  agent changes the document for a comment, it adds a follow-up reply in that thread tagging the
+  human**.
+- **Tags are marked read** when the tagged party (the human or the agent) reads them.
