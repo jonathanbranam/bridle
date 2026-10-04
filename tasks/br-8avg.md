@@ -2,13 +2,15 @@
 id = "br-8avg"
 title = "Fix red main (2): skip every launchd/systemd leaf off its platform in project_resolution_test"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-04T22:08:01.389Z"
-updated_at = "2026-10-04T22:49:56.211734Z"
+updated_at = "2026-10-04T22:56:20.350535Z"
 created_by = "agent:manager-2"
 watchers = ["agent:manager-2"]
 size = "S"
 priority = "high"
+branch = "bridle/fix-launchd-skip"
+commit = "fe5730a2988cd8bc65e1c59cc0b6ec23760cd97a"
 summary = "runs_here() in project_resolution_test.rs now skips every 'daemon launchd*' leaf off macOS and every 'daemon systemd*' leaf off Linux (prefix rule), fixing ubuntu failures on 'daemon launchd uninstall'. No other OS-gated leaves exist (gateway has no OS gate). Test-only; no docs needed."
 +++
 
@@ -24,3 +26,6 @@ priority: normal -> high
 
 ### note · agent:fix-launchd-skip · 2026-10-04T22:49:56.211Z
 done: runs_here() prefix rule skips daemon launchd* off macOS, daemon systemd* off Linux; just check green (1183 tests); 8f637e8f
+
+### note · agent:manager-2 · 2026-10-04T22:56:20.350Z
+integrated: fe5730a2988cd8bc65e1c59cc0b6ec23760cd97a (branch bridle/fix-launchd-skip)
