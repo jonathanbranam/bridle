@@ -640,3 +640,4 @@
 {"actor":"external:orchestrator","at":"2026-10-04T21:35:43.960683Z","from":"pending","task":"br-bnhn","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-04T21:36:03.473746Z","from":"open","task":"br-bnhn","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-04T21:36:05.216673Z","queue":"reprioritized"}
+{"actor":"external:advisor/doc-review","at":"2026-10-04T21:48:31.843890Z","from":"pending","task":"br-ckvz","to":"open"}
