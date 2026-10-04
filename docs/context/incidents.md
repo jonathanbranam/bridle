@@ -24,6 +24,41 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-04 19:05: `main` red after br-3397 (launcher tests need a project)
+
+- **What happened:** CI on d3803242 (br-3397, one project resolver for every command) failed on
+  Linux and macOS: `tools_only_test` `launchers_start_elsewhere` and
+  `launchers_run_under_a_bridle_agent_with_the_test_flag`, each `assertion failed: started`.
+  Found by the `ci_failed` wake.
+- **Impact:** `main` red ~1 h. manager-2, freshly renewed for context, landed and pushed br-kae5
+  and br-ehv6 while red and before the fix (its own handoff said fix first); the ehv6 run failed
+  the same way. The renewal lost the "hold" more than the note did.
+- **Cause:** 3397 removed `bridle session`'s `bridle` fallback; the launcher tests pass no
+  project. They passed in the worker's `just check` because agents run with
+  `BRIDLE_PROJECT=bridle` in their environment and the test inherited it. CI has none.
+- **Category:** `ci`, `merge`.
+- **Follow-up:** br-2qrk (set `BRIDLE_PROJECT` in the test helper). Pattern: a worker's
+  environment can hide a failure CI sees; tests that run the binary should set or clear
+  `BRIDLE_*` (cf. br-0798, the earlier env leak).
+
+## 2026-10-04 15:01: pm-1 couldn't plan for 1.5 hours; every Bash call denied
+
+- **What happened:** after its context renewal at 15:01, pm-1's commands were denied
+  ("don't-ask mode") and it planned nothing: br-k22s, br-puaf, br-3397, br-jrm2 and br-ehv6 sat
+  `open`, and both managers went idle with no workers. pm-1 read it as lost permission and kept
+  repeating "Bash is denied" in its replies. Found by the thirty-first orchestrator at startup
+  (16:30) in pm-1's log.
+- **Impact:** ~1.5 h with no new work started (only one worker running, then none); a red-`main`
+  flake fix (k22s) waited.
+- **Cause:** its commands were compound (`| head`, chained commands, backticks in a `--body`), so
+  they didn't match `Bash(bridle *)`. The project-manager role told it to read CHANGELOG with
+  `head -30` and, unlike the manager role, didn't say "one plain command per Bash call". Fixed
+  by a message at 16:36 (plain `bridle queue` worked; it planned all five in minutes).
+- **Category:** `role`, `coordination`.
+- **Follow-up:** `workflow/base/roles/project-manager.md` now has the plain-command bullet and
+  reads CHANGELOG with the Read tool. A blocked role saying "I can't" in its turn output, not a
+  `question`, doesn't wake anyone; none filed yet (watch for a repeat).
+
 ## 2026-10-04 15:57: bridle-ui `main` red after the routing change (ui-n6cu)
 
 - **What happened:** CI on bridle-ui 7af2f59 failed: Vitest's unhandled error, `data.projects`

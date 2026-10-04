@@ -45,7 +45,12 @@ the budget is running low anyway.
 - **Keep it simple** (`workflow/base/rules/kiss.md`). Nice-to-haves only need to be
   roughly right; the account-wide usage guard (the budget governor) must be
   right.
-- **Reading and output**: read CHANGELOG.md with `head -30` (entries go on top), read one design doc not the whole folder, cap git output with `-n` or `--stat`. Use the docs index in `docs/README.md` to pick the right file.
+- **One plain command per Bash call.** A call runs only if the whole command matches an
+  allowed pattern (`bridle *`, `git log/diff/show/status`), so pipes (`| head`, `| sed`), `;`,
+  `&&`, loops and backticks inside a `--body` are always denied, and nobody can grant them. A
+  denial means the command's shape, not lost permission: split it and run the parts. Write long
+  briefs with `--body-file`/`--text-file -`.
+- **Reading and output**: read CHANGELOG.md with the Read tool's `limit` (entries go on top), read one design doc not the whole folder, cap git output with `-n` or `--stat`. Use the docs index in `docs/README.md` to pick the right file.
 - **Keep the queue full** (rule `planning-the-queue`). You and the human (and the orchestrator,
   acting PM on a small project) are the only ones who may write it; the development manager
   only reads it and claims from the highest startable tier.

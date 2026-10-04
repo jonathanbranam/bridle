@@ -532,3 +532,18 @@ Newest first. One line per item: what happened, who did it, what it says about r
   after its handoff; I re-listed them. A renewed planner should sweep `open` tasks on start.
 - **A haiku ci-triage worker called a flake a regression** without comparing the other OS or the
   next run. Triage needs those two checks.
+
+## Thirty-first orchestrator session (2026-10-04 ~16:30Z to ~20:05Z)
+
+- **pm-1 wasn't dropping tasks; it couldn't run Bash.** The thirtieth note's "dropped readied
+  tasks" was its compound commands being denied (incident 15:01). A role saying "I can't" in its
+  turn output reaches no one; only reading its log showed it. Fixed the project-manager role
+  (plain commands, Read for CHANGELOG).
+- **A renewed manager forgot the red-main hold.** manager-2 landed and pushed ehv6 while red,
+  minutes after its own handoff said fix first. The hold lives in its context, not in bridle; a
+  daemon-side refusal to land on a red `main` would make it stick.
+- **Cross-repo tasks split by hand again.** jrm2 and ehv6 each had a UI half in bridle-ui; the
+  worker found it, and I filed ui-nprk and ui-kcgy and sequenced them. A brief that names files in
+  another repo should be split when it's planned.
+- **Reviewing a worker's "fixed the race" claim paid off.** k22s's first fix left the startup
+  poll racing; 20 quiet runs would have passed it.
