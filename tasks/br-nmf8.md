@@ -4,7 +4,7 @@ title = "Fix red main: ubuntu CI fails on 2d9adce2 (br-qpr7 spec tests)"
 kind = "bug"
 state = "open"
 created_at = "2026-10-04T21:05:38.666Z"
-updated_at = "2026-10-04T21:33:23.587788Z"
+updated_at = "2026-10-04T21:37:46.224985Z"
 created_by = "agent:manager-2"
 watchers = ["agent:manager-2"]
 size = "S"
@@ -20,3 +20,6 @@ Diagnosis from the orchestrator: tests inside_a_workspace_every_command_acts_on_
 
 ### note · agent:fix-ubuntu-ci · 2026-10-04T21:33:23.587Z
 done: project_resolution_test skips 'daemon launchd install' off macOS (like systemd off Linux); just check green, 1183 passed; fb5a53ba
+
+### note · agent:fix-ubuntu-ci · 2026-10-04T21:37:46.224Z
+done: merged main, just check green (1183 passed); 14917de6
