@@ -33,12 +33,15 @@ Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or los
   and called it an incident; the aide collected the evidence from Claude Code's task outputs.
 - **Impact:** each session stopped listening until it noticed and re-armed. The aides did; a
   session that doesn't goes deaf to messages and task changes.
-- **Cause:** unknown. Not a daemon restart (bridle's daemon ran from 16:08Z), not a bridle exit code,
-  not the binary install (21:09Z). The same-second pairs across daemons point outside bridle (Claude
-  Code, tmux or the OS). 144 = 128 + 16, `SIGURG` on macOS, which doesn't normally kill.
-- **Category:** `external`, `host`.
-- **Follow-up:** [[wake-waiters-in-interactive-sessions-die-with-exit-144-in-pa-h3ar|h3ar]]: find the
-  sender; extend the "no wake command running" notice to every interactive session.
+- **Cause:** sessions killing each other's waiters. To replace its own waiter, an aide or advisor ran
+  `pkill -f "bridle agent wake external:aide"` (or `external:advisor`), which matches every
+  project's aide (or every advisor) on the machine. Each kill lines up to the second with one of these
+  `pkill`s in the transcripts. It breaks `no-kill-by-name` (fx7x), which interactive roles didn't
+  reliably get.
+- **Category:** `role`, `coordination`.
+- **Follow-up:** [[wake-waiters-in-interactive-sessions-die-with-exit-144-in-pa-h3ar|h3ar]]:
+  interactive roles follow no-kill-by-name, a new wait takes over the old one, and every
+  interactive session is warned when it has no waiter.
 
 ## 2026-10-04 13:18: br-p88z (stable Mac signing) approved but never planned for 9 hours
 

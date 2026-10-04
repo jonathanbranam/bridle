@@ -1,13 +1,13 @@
 ---
 id: h3ar
-title: Wake waiters in interactive sessions die with exit 144, in pairs across sessions and projects
+title: Interactive sessions kill each other's wake waiters with pkill -f (exit 144)
 kind: incident
 opened: 2026-10-04
 repos: [bridle]
 changes: []
 specs: []
 needs: []
-see: []
+see: [m7mp, j28f, kuw2]
 tasks: [br-h3ar]
 ---
 
@@ -73,3 +73,44 @@ What it shows:
 - The daemon already records `waiter_open`/`last_wake_at`. Extend the "no wake command running"
   notice from the orchestrator to every registered interactive session (advisor, aide), so a dead
   waiter is visible.
+
+## Cause found (2026-10-04 22:46Z, the aide)
+
+**Interactive sessions kill each other's waiters with `pkill -f`.** To stop its own old waiter before
+starting a new one, a session ran `pkill -f "bridle agent wake external:aide"` (or
+`external:advisor`). Identities aren't unique across projects (every project's aide is
+`external:aide`), and `external:advisor` is a prefix of `external:advisor/doc-review` and the rest.
+So the pattern matched **every** aide's or advisor's waiter on the machine. Each kill lines up to
+the second with a `pkill` in a transcript (`~/.claude/projects/*/*.jsonl`):
+
+| pkill (UTC) | run by | pattern | killed (ET) |
+|---|---|---|---|
+| 16:53:23.05 | track-web advisor | `bridle agent wake external:advisor` | two bridle advisors, 12:53:23 |
+| 18:23:38.5 | bridle advisor | `bridle agent wake external:advisor --timeout 5400` | track-web advisor, 14:23:39 |
+| 21:28:00.8 | bridle-ui aide | `bridle agent wake external:aide` | bridle's and track-web's aides, 17:28:01 |
+| 22:20:06.2 | bridle-ui aide | `bridle agent wake external:aide` | bridle's and track-web's aides, 18:20:07 |
+| 22:37:21.9 | track-web aide | `bridle agent wake external:aide` | bridle's aide and bridle-ui's, 18:37:22 |
+| 22:45:25.4 | bridle-ui aide | `bridle agent wake ...` | bridle's, track-web's and two of bridle-ui's own, 18:45:27 |
+
+Other `pkill -f` on waiters today, with no victim confirmed: `wait-for-wake --project track-web`
+(12:56Z, 21:27Z), `wait-for-wake --project bridle-ui` (19:59Z), and `agent wake
+external:advisor/doc-review` (15:25Z, 19:48Z).
+
+This breaks an existing rule: `workflow/base/rules/no-kill-by-name.md` (never `pkill -f`, written after
+fx7x, when workers' `pkill -f "just check"` killed the orchestrator). Interactive roles didn't reliably
+get the rules at startup (m7mp, which just landed, addresses that). The aide and advisor prompts say
+to wait with one background command but not how to cancel one. Exit 144 is how Claude Code reported
+the killed command (pkill sends SIGTERM).
+
+## Fix (replaces "To find out")
+
+1. **Interactive roles get and follow no-kill-by-name** (check m7mp covers aide and advisor). The
+   aide, advisor and orchestrator prompts say how to replace a waiter: never kill it by name. Leave it
+   running (whether two waits for one identity both get woken is unverified; see 2). Or stop it with
+   Claude Code's own task stop for that task id. Or `kill` the exact pid you started.
+2. **Make the daemon's waiter the single source of truth**: a second `bridle agent wake` for the same
+   identity takes over from the first (the old one exits 0 with "superseded"), so no session ever
+   needs to kill one.
+3. **Identities unique per machine**, or patterns can't collide: covered by the j28f/kuw2 discussions
+   (project in the identity).
+4. Keep the mitigation above: warn any interactive session with no waiter, not just the orchestrator.
