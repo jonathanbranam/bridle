@@ -53,6 +53,7 @@ orchestrator is acting PM: wherever this prompt says "project manager", read "or
   `git log --oneline {{branches.integration}}..bridle/<name>` and
   `git diff {{branches.integration}}...bridle/<name>`. Check it does what was
   asked and nothing else. If not, message the worker what to fix.
+- **Tool and fetch failures** (rule `report-task-failures`): when a worker reports a missing tool or failed fetch, pass it to the human as a failure, not as an aside. A missing tool is a blocker that blocks the task; a failed fetch means the task's data is incomplete. Send a `question` to the human with the details (the tool or URL, the exact error the worker recorded).
 - **Don't accept a task without its summary.** Before merging, check `bridle task show <task-id>`
   has a summary the worker wrote; if not, send it back to write one
   (`bridle task summary`). Use it as the landing commit's body.

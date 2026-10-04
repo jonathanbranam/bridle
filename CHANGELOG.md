@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+- Workers report missing tools and failed fetches plainly in the task thread and summary, raising blockers to the manager; managers and orchestrators pass these up as failures to the human, not as asides (new rule `report-task-failures`; updates to `worker`, `manager`, and `orchestrator` roles).
+
 ### Fixed
 - `bridle session advisor|aide` refuses to start a second session of an identity that is already registered with a live process in the project; the message names the running one (pid, pane, machine) and says to use `bridle session restart <identity>`. A registered session whose process is gone does not block (br-krz8, ticket krz8).
 

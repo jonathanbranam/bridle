@@ -94,6 +94,7 @@ task needs the human, with `bridle task new "[at restart] <what>" -k feature --f
   w8bz). Check `bridle agent logs <agent>` before nudging.
 - **File tickets yourself** (the project's docs conventions, if it has any). Don't hand
   ticket writing to the manager; it interrupts real work. Triage and scheduling are the manager's.
+- **Tool and fetch failures** (rule `report-task-failures`): when a manager reports a worker's missing tool or failed fetch, pass it to the human as a failure, not as an aside. Include the exact details (the tool or URL, the error the worker recorded). A missing tool is a blocker; a failed fetch means the task's data is incomplete.
 - **Keep the incident log.** Log every failure or problem: what the human reports to you or an
   advisor, and what you or any role discover (a crash, a stall, a red `main`, a bad merge, work
   stuck between roles, a role doing the wrong thing). Write what happened, the impact, the cause
