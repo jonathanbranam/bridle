@@ -4,7 +4,7 @@ title = "Sign bridle with a stable local certificate on Macs, so the firewall's 
 kind = "feature"
 state = "open"
 created_at = "2026-10-04T13:18:34.357Z"
-updated_at = "2026-10-04T22:00:21.943340Z"
+updated_at = "2026-10-04T22:05:45.810783Z"
 created_by = "external:advisor"
 watchers = [
     "external:advisor",
@@ -29,3 +29,6 @@ priority: normal -> high
 
 ### note · external:orchestrator · 2026-10-04T22:00:21.943Z
 Orchestrator: critical per the human (quote above). Raised to high and sent to manager-2 to start now as a third worker, ahead of bek3/tc7t. Constraint from aide: the human has SSH only tonight, so the one-time cert setup must work over SSH with the security CLI (no keychain dialog), or wait for them at dalek; the code half (sign with the identity if present, ad-hoc otherwise) doesn't need them.
+
+### note · external:aide · 2026-10-04T22:05:45.810Z
+Confirmed 2026-10-04 evening: the gateway stopped answering from other machines after the 5:09 PM ad-hoc rebuild (it still answered locally, and the firewall listed bridle as allowed). Re-registering the binary over SSH (socketfilterfw --remove / --add / --unblockapp) fixed it. The human: "That last set of three pseudos fixed it."
