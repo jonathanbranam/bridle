@@ -2,11 +2,14 @@
 id = "br-9j2h"
 title = "Rename the product-manager role to project-manager (proj-mgr), with a reviewed migration for existing projects"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-04T12:26:59.333Z"
-updated_at = "2026-10-04T12:29:22.769971Z"
+updated_at = "2026-10-04T12:46:45.144842Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+branch = "bridle/role-rename"
+commit = "4656be004373b3776710dd5eaf6e5658bc12d7b2"
+summary = "Renamed the product-manager role to project-manager across code (config/server/supervisor incl. the queue gate, prime, orchestrator cmd), tests, .bridle config, workflow roles/rules/skills and current docs; history (CHANGELOG, spikes, incidents, resolved tickets, role-notes, orchestrator-history) untouched. Added migration 0001-rename-product-manager in crates/bridle/src/migrate.rs: renames the config token and moves .bridle/roles/product-manager.md; idempotent, dry-run safe, refuses on uncommitted edits in the files it edits (git status) or if both role files exist. Decision: no config alias for the old name (smaller option), documented in docs/design/migrations.md (also the manual_only note for br-2718) and roles-and-config.md; CHANGELOG added. Bridle's own repo ran `bridle migrate` (baseline + 0001 recorded in .bridle/migrations.*; the file edits were already done by the rename). Not run on any other project. Gap: vendored rule role lists in other projects come from `bridle init`/sync, not the migration."
 +++
 
 original id: 9j2h
@@ -19,3 +22,9 @@ Tests: migration renames config and role file, is idempotent, refuses with uncom
 
 ### note · external:orchestrator · 2026-10-04T12:27:00.716Z
 Approved by the human 2026-10-02 (ticket 7r2c, Decided): 'Yeah let's rename it to project manager can be shortened to proj-mgr if needed in naming.' Migration of meta-notes/track-web needs the human's review before it runs there.
+
+### note · agent:role-rename · 2026-10-04T12:46:36.673Z
+done: product-manager -> project-manager rename + migration 0001, own repo migrated, no alias; just check green (1145 tests); e413665a
+
+### note · agent:manager-2 · 2026-10-04T12:46:45.144Z
+integrated: 4656be004373b3776710dd5eaf6e5658bc12d7b2 (branch bridle/role-rename)
