@@ -26,3 +26,16 @@ reading what it printed are always allowed, in quiet hours too. Quiet hours limi
 human, not the watch loop. Either the gate text says so, or it doesn't apply to a turn that wasn't
 started by the human. Acting on a wake (a red `main`, say) may still wait for the morning, by the
 rule.
+
+## Again, 2026-10-04; the human asks to get it fixed
+
+The third night in a row (incident log, 2026-10-04 03:31). The human, 2026-10-04 morning: "Yes,
+please raise that as a problem, file an incident, and let's figure out how to get that fixed."
+They also asked whether quiet-hours text ever reaches the manager, PM or workers: it doesn't. The
+gate is installed only by `bridle session` (`crates/bridle/src/session.rs`, `FOCUS_GATE`), for
+the orchestrator, advisors and aide; daemon-spawned agents never get it.
+
+Recommended fix (orchestrator): `bridle focus gate` adds nothing when the prompt isn't the
+human's (a `<task-notification>` or other system-generated prompt; the hook gets the prompt
+text), and its text says plainly that restarting watchers and reading wakes is always allowed.
+Both, since the first alone fails if Claude Code changes how notifications look.

@@ -24,6 +24,23 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-04 03:31 to the morning: quiet hours stopped the watchers again (third time)
+
+- **What happened:** from 03:31 UTC each watcher's exit notification arrived with the quiet-hours
+  gate attached ("no tool calls except the one the human asked for"), and the orchestrator obeyed
+  it: it restarted none of the three (bridle, track-web, bridle-ui). It said so in its reply each
+  time, but nothing happened until the human's morning prompt. Earlier, at 03:31 one notification
+  came without the gate and the orchestrator restarted the watchers; the next ones carried it.
+- **Impact:** no watch from about 11:30 PM to the morning ET. Nothing was being built, so little
+  was missed (the daemon self-upgraded to bc8c745 at 03:46 and resumed its agents on its own);
+  the human noticed several sessions had stopped watching overnight.
+- **Cause:** cc45, unfixed: the focus gate runs on every UserPromptSubmit, background-task
+  notifications included, and its text forbids tool calls. cc45 was filed after the first
+  occurrence (2026-10-03 03:30) but never got a task, so nothing was built.
+- **Category:** `role`, `config`.
+- **Follow-up:** cc45, now with its task br-cc45 (ready). Lesson: a ticket from an incident needs
+  its task filed the same day.
+
 ## 2026-10-04 01:51 and 02:02: daemon restarts dropped every interactive session
 
 - **What happened:** the daemon self-upgraded twice (to 9d0f0f6, then 941312c). Afterwards
