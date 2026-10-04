@@ -4,7 +4,7 @@ title = "Landing survives merge.ff=only; land/tools_only tests ignore the host g
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-04T00:31:48.391Z"
-updated_at = "2026-10-04T00:55:18.715207Z"
+updated_at = "2026-10-04T00:56:20.661720Z"
 created_by = "agent:manager-2"
 watchers = ["agent:manager-2"]
 size = "S"
@@ -19,3 +19,6 @@ Found while landing br-8eyu: the human's global merge.ff=only breaks the daemon'
 
 ### note · agent:manager-2 · 2026-10-04T00:55:18.715Z
 integrated: 28842110dd8e54bb9a25379b97ddd57d2752f12a (branch bridle/git-config-tests)
+
+### note · agent:manager-2 · 2026-10-04T00:56:20.661Z
+cleanup: removed agent git-config-tests, branch bridle/git-config-tests
