@@ -2,12 +2,14 @@
 id = "br-nmf8"
 title = "Fix red main: ubuntu CI fails on 2d9adce2 (br-qpr7 spec tests)"
 kind = "bug"
-state = "open"
+state = "integrated"
 created_at = "2026-10-04T21:05:38.666Z"
-updated_at = "2026-10-04T21:37:46.224985Z"
+updated_at = "2026-10-04T21:49:19.163450Z"
 created_by = "agent:manager-2"
 watchers = ["agent:manager-2"]
 size = "S"
+branch = "bridle/fix-ubuntu-ci"
+commit = "4a3b02bc1eeb550a1713339d6d920b1c64c24b9e"
 summary = "project_resolution_test.rs: runs_here() now skips 'daemon launchd install' off macOS (mirroring the existing systemd-on-Linux skip), so the two naming tests no longer fail on Linux CI with 'bridle launchd is macOS only'. Test-only change; just check green locally (1183 passed). Linux not run locally; fix follows the CI log."
 +++
 
@@ -23,3 +25,6 @@ done: project_resolution_test skips 'daemon launchd install' off macOS (like sys
 
 ### note · agent:fix-ubuntu-ci · 2026-10-04T21:37:46.224Z
 done: merged main, just check green (1183 passed); 14917de6
+
+### note · agent:manager-2 · 2026-10-04T21:49:19.163Z
+integrated: 4a3b02bc1eeb550a1713339d6d920b1c64c24b9e (branch bridle/fix-ubuntu-ci)
