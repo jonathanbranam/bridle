@@ -13,7 +13,7 @@ tasks: [br-xz4f]
 
 ## The ask
 
-The human, verbatim (2026-10-04 ~6:15 PM ET, via the aide), on the report that br-p88z never started:
+The human, verbatim (2026-10-04 ~6:05 PM ET, via the aide), on the report that br-p88z never started:
 
 > Investigate this report and file as an incident with your findings. I think our queue is broken. Or PM is not working right
 

@@ -13,7 +13,7 @@ tasks: [br-h3ar]
 
 ## The ask
 
-The human, verbatim (2026-10-04 ~7:30 PM ET, via the aide):
+The human, verbatim (2026-10-04 ~6:30 PM ET, via the aide):
 
 > this constitutes an incident. Please file it. It's happened to other agents as well. Looked like I
 > saw it killed with maybe a 144. The waiters are getting killed all over the place or dying for some
@@ -35,13 +35,15 @@ Every background command on 2026-10-04 that ended `[exited with code 144]` with 
 | 17:34:35 | wt/advisor-brief (worker) | four `sleep 60/120 && tail /tmp/br-6d49-check.log` |
 | 18:20:07 | bridle (aide) | `bridle agent wake external:aide --timeout 5400` |
 | 18:20:07 | track-web (aide) | `bridle agent wake external:aide --timeout 5400` |
+| 18:37:22 | bridle (aide) | `bridle agent wake external:aide --timeout 5400` |
+| 18:37:22 | bridle-ui (a session) | a background command that had just run `bridle task comment` (output "commented on ui-pmkd") |
 | 20:05:59, 20:50:58 | wt/gateway-discovery, wt/gateway-actions (workers) | not identified |
 
 What it shows:
 
 - **Kills land in pairs at the same second in separate Claude Code sessions**, and across
   projects: two bridle advisors at 12:53:23, and bridle's and track-web's aides at 17:28:01 and
-  again at 18:20:07. Those talk to **different daemons** (7401 and track-web's). Whatever kills
+  again at 18:20:07; bridle's aide and a bridle-ui session at 18:37:22. Those talk to **different daemons** (7401 and track-web's). Whatever kills
   them is outside a single session and a single daemon.
 - **Not a daemon restart**: bridle's daemon ran from 16:08Z without a restart, and its log has
   nothing at 21:28Z or 22:20Z (17:28 and 18:20 ET).

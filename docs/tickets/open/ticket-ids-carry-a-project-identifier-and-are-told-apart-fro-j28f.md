@@ -40,7 +40,7 @@ The human, verbatim (2026-10-04 evening, to the bridle-ui aide; dictated; the UI
 - Tickets for more than one project live in one repo: bridle-ui's tickets (k3qx, bnhn, t4rf, ...)
   are in the bridle repo, while their tasks are `ui-` tasks in bridle-ui's daemon.
 
-## The human, again (2026-10-04 ~7:30 PM ET, via bridle's aide)
+## The human, again (2026-10-04 ~6:30 PM ET, via bridle's aide)
 
 > Secondly, we've in building the UI, I realized that we have a the potential. We're going to have
 > ticket name collisions between projects. Since the ticket doesn't have the project identifier on

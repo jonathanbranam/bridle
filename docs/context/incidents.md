@@ -27,7 +27,7 @@ Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or los
 ## 2026-10-04 (all day): wake waiters in interactive sessions die with exit 144
 
 - **What happened:** `bridle agent wake` commands run in the background by advisors and aides
-  ended `exited with code 144` with no output, at least 9 times between 16:53Z and 22:20Z. Kills
+  ended `exited with code 144` with no output, at least 10 times between 16:53Z and 22:37Z. Kills
   came in pairs at the same second in separate sessions and projects (two bridle advisors at 16:53:23Z;
   bridle's and track-web's aides at 21:28:01Z and 22:20:07Z). The human saw it in other agents too
   and called it an incident; the aide collected the evidence from Claude Code's task outputs.
