@@ -26,8 +26,12 @@ async fn review_now_sends_marks_and_skips_marked() {
         (&bridle_daemon::doc_watch::agent_name("doc.md")[..], 1)
     );
     let text = std::fs::read_to_string(daemon.repo.join("doc.md")).expect("read");
-    assert_eq!(text.matches(" · sent 20").count(), 1);
-    assert!(text.contains("on \"Line\" · sent "));
+    assert_eq!(text.matches("[sent 20").count(), 1);
+    assert!(text.contains("[!comment] c1 human"));
+    assert!(
+        text.lines()
+            .any(|l| l.contains("on \"Line\" [sent ") && l.ends_with("T]"))
+    );
 
     // Marked: not sent again, and the file is untouched.
     let r = daemon.client.review_now(&req(false)).await.expect("again");

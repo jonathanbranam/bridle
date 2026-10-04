@@ -110,8 +110,8 @@ ports whose owner is gone) and the document watcher (30 s), plus the daily event
 A document is under review when its repo-relative path is a line in `.bridle/review-documents.txt`
 (`bridle review add|remove|list <path>`; the daemon re-reads the file each tick). The watcher
 (`doc_watch.rs`) looks at each file in the main checkout. A comment thread (the callout format in
-`workflow/base/roles/document-reviewer.md`) is *pending* when its last reply is the human's; an author with
-"agent" in the name is the document agent. When a document's pending threads have not changed for
+`workflow/base/roles/document-reviewer.md`) is *pending* when its newest entry is the human's and has no mark or `[pending]`; the human is
+exactly `human` or `human via <agent>`, any other author is an agent. Resolved threads (a `resolved by` line) never go. When a document's pending threads have not changed for
 `[review] quiet_minutes` (default 7), the pending threads go as one batch to that document's agent
 (role `document-reviewer`, in the main checkout; named `doc-<id>` when the file stem ends in a ticket ID, else `doc-<slug>-<hash>` with the slug cut to fit the 40-character name limit and a hash of the path): spawned if there is none,
 resumed if stopped, else sent as a message. Its own replies end the pending state, so it is not woken
@@ -120,12 +120,18 @@ caps document agents running at once (a document needing a start waits, still du
 frees); `[review] idle_hours` (default 4) stops an idle document agent, which resumes with its next
 batch.
 
-**Sent marks and review now.** When bridle sends a batch it appends ` · sent YYYY-MM-DD HH:MM` (US
-Eastern) to the line of each thread's newest human entry (the `[!comment]` header or the human's
-latest reply), in the file; plain text, so a restart doesn't resend. The quiet-period send skips a
-thread whose newest entry is marked. The mark doesn't change who a thread's last author is, so it
-never makes a thread pending or answered, and a later human reply is unmarked, so pending again.
-The file is edited in the working tree and not committed by bridle: the agent's next commit carries
+**Marks, IDs and review now (ticket ehv6).** Each entry may end its first line with one ASCII
+status, `[pending|sent|read YYYY-MM-DD HH:MM EDT]` (US Eastern with its zone; only the latest is
+kept). Nothing parses the times: state is which mark is present. When bridle sends a batch it first
+gives each open thread without one an ID (`c<n>`, highest in the file plus one), then writes
+`[sent <now>]` on each thread's newest human entry. Each tick, a document's `[sent]` human entries
+become `[read]` once its agent has no unread message (a message is read when the agent lists or
+wakes on it; an agent started with the text as its prompt has none), so a thread stuck at `sent`
+means the agent is busy, down or out of budget. The same tick rewrites the old
+` U+00B7 sent YYYY-MM-DD HH:MM` marks to the new form. A mark doesn't change who a thread's last
+author is. The quiet-period send skips a thread whose newest entry is `sent` or `read`, and a
+later human reply is unmarked, so pending again. `bridle review resolve <path> c3` appends
+`resolved by human, <time>` to a thread. The file is edited in the working tree and not committed by bridle: the agent's next commit carries
 the marks. `POST /v1/review/now` (`ReviewNowRequest {path, resend}` → `{path, agent, threads}`;
 `bridle review now <path> [--resend]`; the gateway's `POST /api/v1/projects/{project}/review`)
 sends the document's unmarked pending threads at once (all pending ones with `resend`), skipping

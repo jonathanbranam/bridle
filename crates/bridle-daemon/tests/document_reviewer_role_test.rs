@@ -52,7 +52,7 @@ fn real_base_roles_dir_loads_and_document_reviewer_gets_its_file() {
     assert!(role.system_prompt.is_some());
     let text = prompt(&cfg, dir.path());
     assert!(text.contains("You are a document-reviewer"), "{text}");
-    assert!(text.contains("[!comment] <who>, <when>, on"), "{text}");
+    assert!(text.contains("[!comment] c<n> <who>, <when>, on"), "{text}");
     assert!(text.contains("Commit each round"), "{text}");
 }
 

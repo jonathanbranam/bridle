@@ -87,7 +87,7 @@ document's unsent comment threads to its agent at once, like `bridle review now`
 `ReviewResult {project, path, agent, threads}`. `threads: 0` means nothing was unsent (the UI can
 say so). The path must be one under review (`bridle review add`), else 400 with the daemon's
 message; the daemon is reached with the human's token like the task actions. Sent threads are
-marked in the file (`· sent YYYY-MM-DD HH:MM`), so re-reading the document shows what went. The UI
+marked in the file (`[sent YYYY-MM-DD HH:MM EDT]`, ASCII; the daemon turns it into `[read ...]` once the agent has read the message, and gives a hand-typed thread its `c<n>` ID), so re-reading the document shows what went. The UI
 button is bridle-ui's ui-c39e.
 The commit uses the repo's git identity.
 

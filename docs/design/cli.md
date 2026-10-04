@@ -125,8 +125,9 @@ bridle orchestrator note-session            the orchestrator launcher's SessionS
                                              from the hook JSON on stdin; local only; never fails
 bridle review add|remove|list <path>          documents under review (x8jt): edits `.bridle/review-documents.txt`; the daemon wakes a document's
                                              agent on new comments (docs/design/agent-host/daemon.md, Document review)
+bridle review resolve <path> c3               closes a comment thread: appends `resolved by human, <time>` to it in the file (ticket ehv6)
 bridle review now <path> [--resend]           sends the document's pending comment threads to its agent at once, skipping the quiet period;
-                                             marks them ` · sent YYYY-MM-DD HH:MM` in the file; marked threads stay out unless --resend
+                                             marks them `[sent YYYY-MM-DD HH:MM EDT]` in the file; marked threads stay out unless --resend
 bridle focus gate                           the UserPromptSubmit hook of focus hours (cvaq): in a `quiet` `[[focus]]` period prints
                                              nudge context on the first prompt and every 5 min after; silent otherwise; never fails
 bridle orchestrator handover done                       the orchestrator's state is written: the daemon stops and relaunches its session (marker only); human and external:orchestrator only

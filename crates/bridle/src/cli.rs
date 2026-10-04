@@ -1660,6 +1660,9 @@ pub enum ReviewAction {
     Remove { path: String },
     /// The documents under review.
     List,
+    /// Close a comment thread (its ID, like c3, is on its first line): appends
+    /// `resolved by human, <time>` to it in the document.
+    Resolve { path: String, thread: String },
     /// Send a document's pending comment threads to its agent now, without waiting out the quiet
     /// period. Threads already marked "sent" stay out unless --resend.
     Now {

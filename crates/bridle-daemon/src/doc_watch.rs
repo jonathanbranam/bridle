@@ -88,17 +88,40 @@ pub fn agent_name(path: &str) -> String {
     format!("doc-{}-{hash}", cut.trim_end_matches('-'))
 }
 
-/// What bridle appends to a thread's newest human entry when it sends the thread to the agent:
-/// ` · sent 2026-10-04 21:14` (US Eastern). Plain text in the document; a restart doesn't resend.
-const SENT: &str = " · sent ";
-const STAMP_LEN: usize = "2026-10-04 21:14".len();
+/// Every entry (the `[!comment]` header or a `> **who, when:**` reply) may end with one status
+/// mark, `[pending|sent|read YYYY-MM-DD HH:MM EDT]`: plain ASCII in the document, the latest
+/// status only (git keeps the history). The format is in `workflow/base/roles/document-reviewer.md`.
+/// Nothing parses the times: state comes from which mark is present.
+const STAMP_LEN: usize = "2026-10-04 21:14 EDT".len();
+/// The old mark, `" · sent 2026-10-04 21:14"` (Eastern, no zone); read as `sent` and rewritten.
+const LEGACY: &str = " \u{b7} sent ";
+const LEGACY_STAMP_LEN: usize = "2026-10-04 21:14".len();
 
-/// The line without its sent mark.
-fn strip_mark(line: &str) -> &str {
-    match line.rfind(SENT) {
-        Some(i) if line.len() - i - SENT.len() == STAMP_LEN => &line[..i],
-        _ => line,
+/// A line split into its text and its status (`pending`, `sent` or `read`), if it has a mark.
+fn split_mark(line: &str) -> (&str, Option<&'static str>) {
+    if let Some(i) = line.rfind(LEGACY)
+        && line.len() - i - LEGACY.len() == LEGACY_STAMP_LEN
+    {
+        return (&line[..i], Some("sent"));
     }
+    if let Some(inner) = line.strip_suffix(']')
+        && let Some(i) = inner.rfind(" [")
+    {
+        let mark = &inner[i + 2..];
+        for state in ["pending", "sent", "read"] {
+            if let Some(stamp) = mark.strip_prefix(state).and_then(|r| r.strip_prefix(' '))
+                && stamp.len() == STAMP_LEN
+            {
+                return (&inner[..i], Some(state));
+            }
+        }
+    }
+    (line, None)
+}
+
+/// The line with its mark replaced by `[state stamp]`.
+fn with_mark(line: &str, state: &str, stamp: &str) -> String {
+    format!("{} [{state} {stamp}]", split_mark(line).0)
 }
 
 /// One comment thread: the line numbers of its quoted block, and which one is its newest entry
@@ -106,6 +129,7 @@ fn strip_mark(line: &str) -> &str {
 struct Thread {
     lines: Vec<usize>,
     newest: usize,
+    resolved: bool,
 }
 
 fn scan(all: &[&str]) -> Vec<Thread> {
@@ -115,6 +139,7 @@ fn scan(all: &[&str]) -> Vec<Thread> {
             threads.push(Thread {
                 lines: vec![i],
                 newest: i,
+                resolved: false,
             });
         } else if line.starts_with('>')
             && let Some(t) = threads.last_mut()
@@ -122,61 +147,187 @@ fn scan(all: &[&str]) -> Vec<Thread> {
             t.lines.push(i);
             if line.starts_with("> **") {
                 t.newest = i;
+                t.resolved |= line.starts_with("> **resolved by ");
             }
         }
     }
     threads
 }
 
+/// The thread ID in a header line (`> [!comment] c3 human, ...`).
+fn header_id(header: &str) -> Option<u32> {
+    let first = header
+        .strip_prefix("> [!comment]")?
+        .split_whitespace()
+        .next()?;
+    first.strip_prefix('c')?.parse().ok()
+}
+
 impl Thread {
-    /// The quoted block, without sent marks.
+    /// The quoted block, without marks.
     fn block(&self, all: &[&str]) -> String {
         self.lines
             .iter()
-            .map(|&i| strip_mark(all[i]))
+            .map(|&i| split_mark(all[i]).0)
             .collect::<Vec<_>>()
             .join("\n")
     }
+
+    fn id(&self, all: &[&str]) -> Option<u32> {
+        header_id(all[self.lines[0]])
+    }
 }
 
-/// Comment threads whose last reply is the human's, each as its quoted block. Threads whose
-/// newest entry already carries a sent mark are left out unless `resend`.
+/// A block without its thread ID, so a batch compares the same before and after IDs are added.
+fn unid(block: &str) -> String {
+    let Some(rest) = block.strip_prefix("> [!comment] ") else {
+        return block.to_string();
+    };
+    let (first, tail) = rest.split_once(' ').unwrap_or((rest, ""));
+    if first
+        .strip_prefix('c')
+        .is_some_and(|n| n.parse::<u32>().is_ok())
+    {
+        format!("> [!comment] {tail}")
+    } else {
+        block.to_string()
+    }
+}
+
+/// Comment threads whose newest entry is the human's with no mark or `[pending]`, each as its
+/// quoted block. Threads already marked sent or read are left out unless `resend`; resolved
+/// threads never go.
 pub fn pending_threads(text: &str, resend: bool) -> Vec<String> {
     let all: Vec<&str> = text.split('\n').collect();
     scan(&all)
         .iter()
-        .filter(|t| is_human(all[t.newest]))
-        .filter(|t| resend || strip_mark(all[t.newest]).len() == all[t.newest].len())
+        .filter(|t| !t.resolved && is_human(all[t.newest]))
+        .filter(|t| resend || matches!(split_mark(all[t.newest]).1, None | Some("pending")))
         .map(|t| t.block(&all))
         .collect()
 }
 
-/// The text with a sent mark on the newest entry of each thread whose block is in `sent`
+/// The text with `[state stamp]` on the newest entry of each thread whose block is in `sent`
 /// (a mark already there is replaced).
-fn mark_sent(text: &str, sent: &[String], stamp: &str) -> String {
+fn mark_threads(text: &str, sent: &[String], state: &str, stamp: &str) -> String {
     let all: Vec<&str> = text.split('\n').collect();
     let mut out: Vec<String> = all.iter().map(|l| l.to_string()).collect();
     for t in scan(&all) {
         if is_human(all[t.newest]) && sent.contains(&t.block(&all)) {
-            out[t.newest] = format!("{}{SENT}{stamp}", strip_mark(all[t.newest]));
+            out[t.newest] = with_mark(all[t.newest], state, stamp);
         }
     }
     out.join("\n")
 }
 
-/// An author with "agent" in the name is the document agent; anyone else is the human.
+/// Gives each open thread without an ID the next free one (highest in the file plus one).
+fn assign_ids(text: &str) -> String {
+    let all: Vec<&str> = text.split('\n').collect();
+    let threads = scan(&all);
+    let first = threads.iter().filter_map(|t| t.id(&all)).max().unwrap_or(0) + 1;
+    let mut out: Vec<String> = all.iter().map(|l| l.to_string()).collect();
+    let open = threads
+        .iter()
+        .filter(|t| !t.resolved && t.id(&all).is_none());
+    for (next, t) in (first..).zip(open) {
+        let h = t.lines[0];
+        out[h] = out[h].replacen("> [!comment] ", &format!("> [!comment] c{next} "), 1);
+    }
+    out.join("\n")
+}
+
+/// The agent has read what was sent: every human entry marked `sent` becomes `read`. Old
+/// marks are rewritten to the new form on the way. None when nothing changed.
+fn mark_read(text: &str, stamp: &str) -> Option<String> {
+    let all: Vec<&str> = text.split('\n').collect();
+    let mut out: Vec<String> = all.iter().map(|l| l.to_string()).collect();
+    for t in scan(&all) {
+        for &i in t
+            .lines
+            .iter()
+            .filter(|&&i| all[i].starts_with("> [!comment]") || all[i].starts_with("> **"))
+        {
+            if is_human(all[i]) && split_mark(all[i]).1 == Some("sent") {
+                out[i] = with_mark(all[i], "read", stamp);
+            }
+        }
+    }
+    let out = out.join("\n");
+    (out != text).then_some(out)
+}
+
+/// Old `sent` marks rewritten to the ASCII form, in the zone they were written in. None when
+/// there are none.
+fn migrate_marks(text: &str) -> Option<String> {
+    if !text.contains(LEGACY) {
+        return None;
+    }
+    let out: Vec<String> = text
+        .split('\n')
+        .map(|l| match l.rfind(LEGACY) {
+            Some(i) if l.len() - i - LEGACY.len() == LEGACY_STAMP_LEN => {
+                let at = &l[i + LEGACY.len()..];
+                let zone = chrono::NaiveDateTime::parse_from_str(at, "%Y-%m-%d %H:%M")
+                    .map(|d| zone_of(d.and_utc() + Duration::hours(5)))
+                    .unwrap_or("EST");
+                format!("{} [sent {at} {zone}]", &l[..i])
+            }
+            _ => l.to_string(),
+        })
+        .collect();
+    Some(out.join("\n"))
+}
+
+/// Appends `**resolved by <by>, <stamp>**` to thread `id` (`c3`). Errors when there is no such
+/// thread or it is already resolved.
+pub fn resolve_thread(text: &str, id: &str, by: &str, stamp: &str) -> Result<String, String> {
+    let n: u32 = id
+        .strip_prefix('c')
+        .and_then(|n| n.parse().ok())
+        .ok_or_else(|| format!("{id} is not a thread ID (c1, c2, ...)"))?;
+    let all: Vec<&str> = text.split('\n').collect();
+    let t = scan(&all)
+        .into_iter()
+        .find(|t| t.id(&all) == Some(n))
+        .ok_or_else(|| format!("no thread {id}"))?;
+    if t.resolved {
+        return Err(format!("{id} is already resolved"));
+    }
+    let mut out: Vec<String> = all.iter().map(|l| l.to_string()).collect();
+    let last = *t.lines.last().expect("a thread has its header");
+    out.insert(last + 1, format!("> **resolved by {by}, {stamp}**"));
+    out.insert(last + 1, ">".to_string());
+    Ok(out.join("\n"))
+}
+
+/// The human's entries are written by `human` or `human via <agent>`; anything else is an agent.
 fn is_human(entry: &str) -> bool {
     let who = if let Some(h) = entry.strip_prefix("> [!comment]") {
-        h.trim().split(',').next()
+        let h = h.trim();
+        let h = match h.split_once(' ') {
+            Some((first, rest)) if header_id(entry).is_some() && first.starts_with('c') => rest,
+            _ => h,
+        };
+        h.split(',').next()
     } else if let Some(r) = entry.strip_prefix("> **") {
         r.split(',').next()
     } else {
         None
     };
-    !who.unwrap_or("").to_lowercase().contains("agent")
+    let who = who.unwrap_or("").trim().to_lowercase();
+    who == "human" || who.starts_with("human via ")
 }
 
-/// UTC offset of US Eastern at `at`: -4h in daylight time, else -5h (the US rule since 2007).
+/// US Eastern's zone abbreviation at `at`: EDT in daylight time (the US rule since 2007), else EST.
+fn zone_of(at: DateTime<Utc>) -> &'static str {
+    if eastern_offset(at) == Duration::hours(-4) {
+        "EDT"
+    } else {
+        "EST"
+    }
+}
+
+/// UTC offset of US Eastern at `at`: -4h in daylight time, else -5h.
 fn eastern_offset(at: DateTime<Utc>) -> Duration {
     let year = at.year();
     let transition = |month, nth, hour| {
@@ -191,11 +342,14 @@ fn eastern_offset(at: DateTime<Utc>) -> Duration {
     }
 }
 
-/// `YYYY-MM-DD HH:MM` in US Eastern, the human's time (rule human-timezone).
-fn stamp(now: DateTime<Utc>) -> String {
-    (now + eastern_offset(now))
-        .format("%Y-%m-%d %H:%M")
-        .to_string()
+/// `YYYY-MM-DD HH:MM EDT` in US Eastern, the human's time. Deliberately not UTC, unlike the
+/// rest of what bridle records: the human reads and types these (ticket ehv6).
+pub fn stamp(now: DateTime<Utc>) -> String {
+    format!(
+        "{} {}",
+        (now + eastern_offset(now)).format("%Y-%m-%d %H:%M"),
+        zone_of(now)
+    )
 }
 
 #[derive(Default)]
@@ -342,6 +496,8 @@ impl DocWatcher {
             }
         }
 
+        self.sweep_marks(&docs, now).await;
+
         let due = {
             let mut core = self.core.lock().expect("doc watch lock");
             for p in read_registry(&self.repo) {
@@ -367,6 +523,36 @@ impl DocWatcher {
                 && n > 0
             {
                 self.core.lock().expect("doc watch lock").delivered(&d.path);
+            }
+        }
+    }
+
+    /// Housekeeping on the documents under review: old marks are rewritten to the ASCII form,
+    /// and a `[sent]` thread becomes `[read]` once its agent has no unread message (a message
+    /// is read when the agent lists or wakes on it; a started agent was given the text as its
+    /// prompt). A thread stuck at `sent` means the agent is busy, down or out of budget.
+    async fn sweep_marks(&self, docs: &[&bridle_api::types::Agent], now: DateTime<Utc>) {
+        let _guard = self.sending.lock().await;
+        for p in read_registry(&self.repo) {
+            let file = self.repo.join(&p);
+            let Ok(text) = std::fs::read_to_string(&file) else {
+                continue;
+            };
+            let mut text = text;
+            let mut changed = false;
+            if let Some(m) = migrate_marks(&text) {
+                text = m;
+                changed = true;
+            }
+            if let Some(a) = docs.iter().find(|a| a.name == agent_name(&p))
+                && matches!(self.store.unread_count(&a.id).await, Ok(0))
+                && let Some(m) = mark_read(&text, &stamp(now))
+            {
+                text = m;
+                changed = true;
+            }
+            if changed && let Err(e) = std::fs::write(&file, text) {
+                tracing::warn!(path = %p, error = %e, "could not update comment marks");
             }
         }
     }
@@ -422,10 +608,16 @@ impl DocWatcher {
         let file = self.repo.join(path);
         let text = std::fs::read_to_string(&file).map_err(|e| format!("{path}: {e}"))?;
         let threads = pending_threads(&text, resend);
-        let batch = threads.join("\n\n");
-        if threads.is_empty() || expect.is_some_and(|e| e != batch) {
+        if threads.is_empty() || expect.is_some_and(|e| e != unid(&threads.join("\n\n"))) {
             return Ok(0);
         }
+        // The agent sees the thread IDs, so they go in before the batch does.
+        let with_ids = assign_ids(&text);
+        if with_ids != text {
+            std::fs::write(&file, &with_ids).map_err(|e| format!("writing {path}: {e}"))?;
+        }
+        let threads = pending_threads(&with_ids, resend);
+        let batch = threads.join("\n\n");
         if !self
             .deliver(&Due {
                 path: path.to_string(),
@@ -437,7 +629,7 @@ impl DocWatcher {
         }
         // Read again: the agent may already have edited the file.
         let latest = std::fs::read_to_string(&file).map_err(|e| format!("{path}: {e}"))?;
-        let marked = mark_sent(&latest, &threads, &stamp(now));
+        let marked = mark_threads(&latest, &threads, "sent", &stamp(now));
         std::fs::write(&file, marked).map_err(|e| format!("marking {path}: {e}"))?;
         Ok(threads.len())
     }
@@ -498,7 +690,7 @@ mod tests {
     use super::*;
 
     const HUMAN: &str = "Line.\n\n> [!comment] human, 2026-10-03 14:05, on \"Line\"\n> Why?\n";
-    const ANSWERED: &str = "Line.\n\n> [!comment] human, 2026-10-03 14:05, on \"Line\"\n> Why?\n>\n> **docs agent, 14:06:** @human Because.\n";
+    const ANSWERED: &str = "Line.\n\n> [!comment] human, 2026-10-03 14:05, on \"Line\"\n> Why?\n>\n> **doc-3haz, 14:06:** @human Because.\n";
 
     fn t(min: i64) -> DateTime<Utc> {
         DateTime::<Utc>::from_timestamp(1_800_000_000, 0).unwrap() + Duration::minutes(min)
@@ -600,24 +792,107 @@ mod tests {
             format!("{HUMAN}>\n> **docs agent, 14:06:** Because.\n>\n> **human, 14:20:** and?\n");
         let sent = pending_threads(&text, false);
         assert_eq!(sent.len(), 1);
-        let marked = mark_sent(&text, &sent, "2026-10-04 21:14");
-        assert!(marked.contains("> **human, 14:20:** and? · sent 2026-10-04 21:14\n"));
-        assert_eq!(marked.matches(" · sent ").count(), 1);
+        let marked = mark_threads(&text, &sent, "sent", "2026-10-04 21:14 EDT");
+        assert!(marked.contains("> **human, 14:20:** and? [sent 2026-10-04 21:14 EDT]\n"));
+        assert_eq!(marked.matches("[sent ").count(), 1);
         // Marked threads are left out, are still the human's (so the watcher's pending state
         // is unchanged by the mark), and come back with resend, without the old mark.
         assert!(pending_threads(&marked, false).is_empty());
         let again = pending_threads(&marked, true);
         assert_eq!(again, sent);
-        let remarked = mark_sent(&marked, &again, "2026-10-05 08:00");
-        assert!(remarked.contains("and? · sent 2026-10-05 08:00\n"));
-        assert_eq!(remarked.matches(" · sent ").count(), 1);
+        let remarked = mark_threads(&marked, &again, "sent", "2026-10-05 08:00 EDT");
+        assert!(remarked.contains("and? [sent 2026-10-05 08:00 EDT]\n"));
+        assert_eq!(remarked.matches("[sent ").count(), 1);
         // A new human reply is unsent again.
         let reply = format!("{marked}>\n> **human, 14:30:** hello?\n");
         assert_eq!(pending_threads(&reply, false).len(), 1);
         // A mark on a header works too.
-        let m = mark_sent(HUMAN, &pending_threads(HUMAN, false), "2026-10-04 21:14");
-        assert!(m.contains("on \"Line\" · sent 2026-10-04 21:14\n"));
+        let m = mark_threads(
+            HUMAN,
+            &pending_threads(HUMAN, false),
+            "sent",
+            "2026-10-04 21:14 EDT",
+        );
+        assert!(m.contains("on \"Line\" [sent 2026-10-04 21:14 EDT]\n"));
         assert!(pending_threads(&m, false).is_empty());
+    }
+
+    #[test]
+    fn pending_marks_count_as_pending_and_read_as_done() {
+        let pending = HUMAN.replace("\"Line\"\n", "\"Line\" [pending 2026-10-04 10:57 EDT]\n");
+        assert_eq!(pending_threads(&pending, false).len(), 1);
+        let read = pending.replace("[pending", "[read");
+        assert!(pending_threads(&read, false).is_empty());
+        assert_eq!(pending_threads(&read, true).len(), 1);
+    }
+
+    #[test]
+    fn only_human_and_human_via_are_the_human() {
+        let via = HUMAN.replace("human, 2026", "human via advisor, 2026");
+        assert_eq!(pending_threads(&via, false).len(), 1);
+        let advisor = HUMAN.replace("human, 2026", "advisor, 2026");
+        assert!(pending_threads(&advisor, false).is_empty());
+        let with_id = HUMAN.replace("] human", "] c3 human");
+        assert_eq!(pending_threads(&with_id, false).len(), 1);
+    }
+
+    #[test]
+    fn ids_are_next_highest_and_batch_compares_without_them() {
+        let two = format!("{HUMAN}\nOther.\n\n> [!comment] c7 human, 14:07, on \"Other\"\n> Hm?\n");
+        let with = assign_ids(&two);
+        assert!(with.contains("> [!comment] c8 human, 2026-10-03"));
+        assert!(with.contains("> [!comment] c7 human, 14:07"));
+        assert_eq!(assign_ids(&with), with);
+        assert_eq!(
+            pending_threads(&two, false)
+                .iter()
+                .map(|b| unid(b))
+                .collect::<Vec<_>>(),
+            pending_threads(&with, false)
+                .iter()
+                .map(|b| unid(b))
+                .collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn read_follows_sent_and_old_marks_migrate() {
+        let sent = mark_threads(
+            HUMAN,
+            &pending_threads(HUMAN, false),
+            "sent",
+            "2026-10-04 21:14 EDT",
+        );
+        let read = mark_read(&sent, "2026-10-04 21:15 EDT").unwrap();
+        assert!(read.contains("[read 2026-10-04 21:15 EDT]") && !read.contains("[sent"));
+        assert!(mark_read(&read, "x").is_none());
+        let old = HUMAN.replace("\"Line\"\n", "\"Line\" \u{b7} sent 2026-10-04 21:14\n");
+        assert!(pending_threads(&old, false).is_empty());
+        let migrated = migrate_marks(&old).unwrap();
+        assert!(migrated.contains("on \"Line\" [sent 2026-10-04 21:14 EDT]\n"));
+        assert!(migrated.is_ascii());
+        assert!(migrate_marks(&migrated).is_none());
+    }
+
+    #[test]
+    fn resolve_appends_the_closing_line_and_ends_pending() {
+        let doc = format!(
+            "{}\nAfter.\n",
+            HUMAN.replace("] human", "] c3 human").trim_end()
+        );
+        let r = resolve_thread(&doc, "c3", "human", "2026-10-04 11:17 EDT").unwrap();
+        assert!(r.contains("> Why?\n>\n> **resolved by human, 2026-10-04 11:17 EDT**\nAfter."));
+        assert!(pending_threads(&r, true).is_empty());
+        assert!(
+            resolve_thread(&r, "c3", "human", "x")
+                .unwrap_err()
+                .contains("already")
+        );
+        assert!(
+            resolve_thread(&doc, "c9", "human", "x")
+                .unwrap_err()
+                .contains("no thread")
+        );
     }
 
     #[test]
@@ -626,7 +901,12 @@ mod tests {
         c.observe("a.md", HUMAN, t(0));
         assert_eq!(c.due(t(7), Duration::minutes(7)).len(), 1);
         c.delivered("a.md");
-        let marked = mark_sent(HUMAN, &pending_threads(HUMAN, false), "2026-10-04 21:14");
+        let marked = mark_threads(
+            HUMAN,
+            &pending_threads(HUMAN, false),
+            "sent",
+            "2026-10-04 21:14 EDT",
+        );
         c.observe("a.md", &marked, t(8));
         assert!(c.due(t(60), Duration::minutes(7)).is_empty());
     }
@@ -637,10 +917,10 @@ mod tests {
         let edt = DateTime::parse_from_rfc3339("2026-10-05T01:14:00Z")
             .unwrap()
             .to_utc();
-        assert_eq!(stamp(edt), "2026-10-04 21:14");
+        assert_eq!(stamp(edt), "2026-10-04 21:14 EDT");
         let est = DateTime::parse_from_rfc3339("2026-01-05T01:14:00Z")
             .unwrap()
             .to_utc();
-        assert_eq!(stamp(est), "2026-01-04 20:14");
+        assert_eq!(stamp(est), "2026-01-04 20:14 EST");
     }
 }

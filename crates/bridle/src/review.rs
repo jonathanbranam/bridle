@@ -6,7 +6,7 @@ use std::process::Command;
 
 use anyhow::{Context, bail};
 use bridle_api::types::ReviewNowRequest;
-use bridle_daemon::doc_watch::{read_registry, set_registered};
+use bridle_daemon::doc_watch::{read_registry, resolve_thread, set_registered, stamp};
 
 use crate::cli::{Cli, ReviewAction, ReviewArgs};
 use crate::commands::client_for;
@@ -52,6 +52,13 @@ fn edit(args: &ReviewArgs) -> anyhow::Result<()> {
         }
         ReviewAction::Remove { path } => {
             set_registered(&repo, path, false).context("writing the review list")?;
+        }
+        ReviewAction::Resolve { path, thread } => {
+            let file = repo.join(path);
+            let text = std::fs::read_to_string(&file).with_context(|| format!("reading {path}"))?;
+            let out = resolve_thread(&text, thread, "human", &stamp(chrono::Utc::now()))
+                .map_err(anyhow::Error::msg)?;
+            std::fs::write(&file, out).with_context(|| format!("writing {path}"))?;
         }
         ReviewAction::Now { .. } => unreachable!("handled in run"),
         ReviewAction::List => {

@@ -382,3 +382,10 @@ Everything approved is built, integrated and on main; the human hasn't tried it 
   (`npm run install-ui`), no gateway running, nothing under review (`bridle review add`).
 - The next steps and a prompt for a new advisor are in the human's to-do **br-twg8** (first round
   on gtzx). Still deferred: thread IDs, showing what a revision changed, diagrams (yyzm).
+
+## Format changed by ehv6 (worker, 2026-10-04)
+
+The comment format, the `sent` mark and `is_human` above are superseded by ticket ehv6: ASCII
+`[state time zone]` marks, thread IDs, `read` by the agent, `resolved by` lines, and `human via
+<agent>`. The current format is in `workflow/base/roles/document-reviewer.md`. The `(read)` tag
+suffix is gone (the status mark replaces it).

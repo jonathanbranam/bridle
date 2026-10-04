@@ -37,8 +37,8 @@ fn prime_prints_the_real_role_and_the_project_append() {
     .unwrap();
 
     let out = prime(repo.path(), home.path());
-    assert!(out.contains("> [!comment] <who>, <when>, on"), "{out}");
-    assert!(out.contains("@docs-agent (read)"), "{out}");
+    assert!(out.contains("> [!comment] c<n> <who>, <when>, on"), "{out}");
+    assert!(out.contains("[<state> YYYY-MM-DD HH:MM ZZZ]"), "{out}");
 
     fs::write(
         repo.path().join(".bridle/roles/document-reviewer.md"),

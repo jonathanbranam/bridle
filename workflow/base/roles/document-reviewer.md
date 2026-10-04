@@ -12,61 +12,78 @@ sections after it).
 ## The comment format
 
 A comment is an Obsidian-style callout sitting right after the line it is on. It reads fine raw
-and renders as a box in Obsidian:
+and renders as a box in Obsidian. Everything is ASCII (rule `ascii-in-editable-text`):
 
 ```markdown
-The gateway acts with the human's token.
-
-> [!comment] human, 2026-10-02 14:05, on "acts with the human's token"
-> Why not record the route?
+> [!comment] c3 human, 2026-10-04 10:57 EDT, on "nothing records" [sent 2026-10-04 11:00 EDT]
+> Why not? Wouldn't an audit want it?
 >
-> **docs agent, 14:06:** @human The task history already names who acted. Rewrote the line.
+> **doc-3haz, 2026-10-04 11:02 EDT:** @human The task's history already names the human. Rewrote it. [read 2026-10-04 11:15 EDT]
+>
+> **human, 2026-10-04 11:16 EDT:** thanks [read 2026-10-04 11:16 EDT]
+>
+> **resolved by human via doc-3haz, 2026-10-04 11:17 EDT**
 ```
 
-- The first line is `> [!comment] <who>, <when>, on "<quoted words>"`; the quoted words are
+- The first line is `> [!comment] c<n> <who>, <when>, on "<quoted words>"`; the quoted words are
   what was highlighted. They anchor the comment; no line numbers (they drift when you rewrite).
+  `c<n>` is the thread's ID (`bridle review resolve <path> c3`); bridle adds it to a hand-typed
+  thread when it sends it to you, so you may see a thread without one in the file.
 - The comment's text follows in the quote. **Replies are bold names inside the same callout**
-  (`**docs agent, 14:06:** ...`, separated by a `>` blank line). Never nest callouts.
-- Reply times are US Eastern, bare (`14:06`), as the human's are.
+  (`**doc-3haz, 2026-10-04 11:02 EDT:** ...`, separated by a `>` blank line). Never nest callouts.
+- Every entry's author is `who, YYYY-MM-DD HH:MM ZZZ`: US Eastern with the zone (`EST`/`EDT`).
+  This stamp is the exception to "bare Eastern times" in `human-timezone`: the human types it.
+- **Authors:** the human's entries are `human` or `human via <agent>`. Yours is your own agent
+  name (`doc-3haz`, as `bridle agents` shows it), not the role. When you act on what the human
+  asked ("thanks", "resolve this"), write `human via <your name>` (rule `human-via-agent`).
+
+## Status marks
+
+An entry may end its first line with one status, `[<state> YYYY-MM-DD HH:MM ZZZ]`. Only the
+latest is kept; git has the history.
+
+| Entry | Marks, in order |
+|---|---|
+| The human's | none or `[pending ...]` -> `[sent ...]` (bridle sent it to you) -> `[read ...]` (you read it) |
+| Yours | none -> `[read ...]` (the human opened it in the UI) |
+
+- Bridle writes the human's `sent` and `read` marks. **Leave them as they are**, and don't write
+  `[read]` on the human's entries yourself. Don't mark your own replies; the human's UI does.
+- A thread needs you when its newest entry is the human's and is unmarked or `[pending]`.
+  Marks never change what a thread says.
+- Old marks (` U+00B7 sent YYYY-MM-DD HH:MM`) are rewritten by bridle; leave them.
 
 ## Tags
 
-A reply that needs someone's attention starts with `@human` or `@docs-agent`. Read is marked by
-appending `(read)` to the tag: `@docs-agent (read)`.
-
-- **You mark your own tags read** (`@docs-agent` becomes `@docs-agent (read)`) when you take a
-  round and read them.
-- You never mark `@human` read; the human, or the UI when they open the thread, does. Until the
-  UI exists, a reply from the human in the thread counts as having read it.
-
-Bridle may append ` · sent YYYY-MM-DD HH:MM` to a human's header or reply line when it sends you
-a thread. Leave it as it is; it isn't part of the comment.
+A reply that needs someone's attention starts with `@human`. Read is marked by the UI when the
+human opens the thread (the `[read ...]` status above).
 
 ## A round
 
 When told "go" (or sent a batch), the human has stopped commenting. Take **every** new comment
 in the document as one batch round, not one at a time:
 
-1. Read the whole document and find the comments that need you: a callout whose last reply isn't
-   yours, or that carries an unread `@docs-agent`. Mark those `@docs-agent` tags `(read)`.
+1. Read the whole document and find the comments that need you: a callout whose newest entry is
+   the human's and not marked `[sent]` or `[read]` by a past round, or that you were sent in
+   the batch.
 2. For each, answer in the thread: a bold-name reply right under the last one. Explain in plain
    words when asked; do the thing when asked (file a ticket, delete a line) and say you did.
 3. **If a comment asks for a change, or an answer implies one, revise the document** and add a
    follow-up reply in that thread starting `@human`, saying what you changed and where. When
    it's only a question, don't change the document; offer ("Want that sentence added?").
 4. **Resolve** a thread when its comment is settled (the human said yes and you did it, or it was
-   a question they've accepted the answer to; if unsure, leave it open and ask). Resolving is:
-   delete the whole callout, and add a line to the note at the bottom of the document, creating
-   it if absent:
+   a question they've accepted the answer to; if unsure, leave it open and ask). Resolving is
+   appending a closing line to the thread, leaving the thread in the file:
 
    ```markdown
-   ---
-   Resolved comments (deleted, see git history):
-   - 2026-10-02, human on "SameSite=Strict": explained; sentence added under Login.
+   >
+   > **resolved by human via doc-3haz, 2026-10-04 11:17 EDT**
    ```
 
-   If a rewrite removes the quoted words, the comment is still right after its passage; resolve
-   it in the same round.
+   Use `resolved by human via <your name>` when the human's newest entry asked to close it
+   ("thanks", "resolve this"), and `resolved by <your name>` when it was your own call (you
+   rewrote the passage as asked). The human can also resolve from the UI or with
+   `bridle review resolve <path> c3`. Resolved threads are cleaned up later; git keeps them.
 5. **Commit each round**, on the branch you were given, with the comments you handled in the
    message. Documents are in git, so every deleted comment is in the history.
 
@@ -74,7 +91,7 @@ in the document as one batch round, not one at a time:
 
 - Change only the document you were given, and only what a comment asks for. Don't reflow,
   restyle or "improve" the rest.
-- Don't change the human's comments or delete a thread you haven't resolved.
+- Don't change the human's comments or delete a thread.
 - Keep replies short and in plain words.
 - Design questions beyond the document go on a ticket (`workflow/base/rules/tickets.md`).
 - KISS, YAGNI and "what's the worst if we don't?" (`workflow/base/rules/`).
