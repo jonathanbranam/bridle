@@ -4,9 +4,10 @@ title = "bridle session launches with autoMode.environment in its --settings (uf
 kind = "feature"
 state = "planned"
 created_at = "2026-10-04T13:39:51.820Z"
-updated_at = "2026-10-04T13:40:38.978186Z"
+updated_at = "2026-10-04T15:15:28.270367Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+summary = "Added config::auto_mode_environment (+_for) and [auto_mode] environment in the machine and project files (RawConfig accepts both). Output: $defaults, derived trusted-repo line (clone, wt/, .bridle/state), machine lines, then project lines kept only if they start 'Sensitive:' or 'Prod host:' (others dropped with a warning), so a committed project file can tighten but not trust. session.rs adds autoMode.environment to orchestrator/advisor/aide --settings via with_auto_mode. Daemon spawn --settings and 'bridle auto-mode print' deferred per ufrw. Docs: cli.md, workflow-layers.md, CHANGELOG."
 +++
 
 original id: fc9a
@@ -15,3 +16,8 @@ Build the ufrw smallest first slice, conservative variant: (1) in crates/bridle-
 Never write ~/.claude/settings.json. Deferred (ufrw, with reasons): 'bridle auto-mode print'; autoMode in the daemon's spawn --settings.
 Conflicts: config.rs RawConfig is also edited by br-jmpf (accept-only [gateway]/[interactions]); session.rs by br-m7mp later. Land after br-jmpf; rebase on main first.
 Acceptance: just check passes. Model: Sonnet. Migration: none (no existing project file changes; absent [auto_mode] adds only $defaults and the derived line). Out of scope: editing any existing project's config.
+
+## Thread
+
+### note · agent:auto-mode-env · 2026-10-04T15:15:28.270Z
+done: bridle session adds autoMode.environment ($defaults, derived workspace line, machine lines, project lines only if Sensitive:/Prod host:); just check green (1154 passed, after 2 load-timing reruns); cbba3206
