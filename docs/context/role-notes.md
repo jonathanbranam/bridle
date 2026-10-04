@@ -495,3 +495,12 @@ Newest first. One line per item: what happened, who did it, what it says about r
 - **Filing a relayed approval across two repos.** x8jt slice 3 spanned the gateway (bridle) and
   the UI (bridle-ui); I split it into br-5paw and ui-acf0 and told bridle-ui's manager when the
   first landed. The handoff between the two managers ran through me.
+- **`bridle ticket task` leaves an uncommitted edit.** It writes the ticket's `tasks:` line after
+  my commit; left in the shared clone, that blocked manager-2's landings (br-tgdn now lets a
+  landing pass unrelated dirty files). Commit right after `ticket task`.
+- **Ticket commits race landings.** Each docs commit on `main` made a landing fail with "main
+  moved" (a real race check, kept). Tonight I asked the advisors to hold ticket commits ~15 min
+  while two landings went in; a role that writes tickets on `main` should batch them.
+- **I review worker output the manager doesn't.** I caught br-5paw refusing commits on `main` and
+  br-e35h's shared `~/.bridle/sessions.json` (three daemons per machine) from the workers' summaries
+  before landing. Reading each "done:" summary for scope and machine-wide assumptions pays.
