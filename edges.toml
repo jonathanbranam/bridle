@@ -567,3 +567,15 @@ from = "br-rp53"
 to = "br-aj9d"
 kind = "blocks"
 created_at = "2026-10-04T00:49:30.111Z"
+
+[[edge]]
+from = "br-3haz"
+to = "br-kuvh"
+kind = "blocks"
+created_at = "2026-10-04T02:55:48.143Z"
+
+[[edge]]
+from = "br-1ddd"
+to = "br-kuvh"
+kind = "blocks"
+created_at = "2026-10-04T02:55:48.186Z"
