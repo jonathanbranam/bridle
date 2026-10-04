@@ -4,7 +4,7 @@ title = "Fix red main: ubuntu CI fails on 2d9adce2 (br-qpr7 spec tests)"
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-04T21:05:38.666Z"
-updated_at = "2026-10-04T21:49:19.163450Z"
+updated_at = "2026-10-04T21:52:20.333896Z"
 created_by = "agent:manager-2"
 watchers = ["agent:manager-2"]
 size = "S"
@@ -28,3 +28,6 @@ done: merged main, just check green (1183 passed); 14917de6
 
 ### note · agent:manager-2 · 2026-10-04T21:49:19.163Z
 integrated: 4a3b02bc1eeb550a1713339d6d920b1c64c24b9e (branch bridle/fix-ubuntu-ci)
+
+### note · agent:manager-2 · 2026-10-04T21:52:20.333Z
+cleanup: removed agent fix-ubuntu-ci, branch bridle/fix-ubuntu-ci
