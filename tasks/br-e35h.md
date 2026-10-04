@@ -4,7 +4,7 @@ title = "Interactive sessions survive a daemon restart (the registry is lost on 
 kind = "bug"
 state = "planned"
 created_at = "2026-10-04T02:29:11.334Z"
-updated_at = "2026-10-04T02:50:04.813948Z"
+updated_at = "2026-10-04T02:50:31.416480Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 summary = "The session registry is now written to $BRIDLE_HOME/sessions.json (atomic tmp+rename) on every change (register, end, keep, tick) and loaded in Sessions::new; a missing/unreadable file is empty. The existing tick drops entries via is_same_process (pid + start time), so dead and reused pids are not adopted. Test covers reload, dead pid, reused pid, and persisted drop. Docs: orchestrator-supervision.md, api.md, CHANGELOG. No API change."
@@ -22,3 +22,9 @@ done: session registry persisted to $BRIDLE_HOME/sessions.json, reloaded at star
 
 ### note · agent:manager-2 · 2026-10-04T02:50:04.813Z
 main moved; please merge main into your branch, re-run just check, and message me the new tip.
+
+### note · agent:manager-2 · 2026-10-04T02:50:30.929Z
+Hold, from the orchestrator (m-4267): sessions.json under $BRIDLE_HOME is shared by every daemon on the machine (bridle, track-web, bridle-ui), so daemons would overwrite each other's file and load another project's sessions. Fix: keep the file per daemon, in the daemon's own state directory (where its database is) or named by project; add a test with two registries sharing one home. Then merge main, just check, update the summary and docs, message me the tip. Supersedes my merge-main request.
+
+### note · agent:manager-2 · 2026-10-04T02:50:31.416Z
+br-e35h: new instruction on the thread (per-daemon file, not shared $BRIDLE_HOME). Do that before the merge.
