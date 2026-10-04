@@ -295,3 +295,32 @@ Decided:
   agent changes the document for a comment, it adds a follow-up reply in that thread tagging the
   human**.
 - **Tags are marked read** when the tagged party (the human or the agent) reads them.
+
+## Tag format; approved to build in three slices (the human, 2026-10-03)
+
+The human, verbatim (via advisor doc-review, ~9:00 PM ET):
+
+> Approve all three to build. Approve tag format
+
+> The ticket to test is gtzx
+
+- **Tag format:** `@human` or `@docs-agent` at the start of a reply (`**docs agent, 14:08:** @human
+  Rewrote the Login bullet; see the commit.`). Read is marked by appending `(read)`:
+  `@human (read)`. The agent marks its own tags when it takes a round; the UI marks the human's
+  when they open the thread; until the UI, a reply in the thread counts as read.
+- **First trial document:** gtzx. Until slice 1 lands, advisor doc-review acts as its document
+  agent (the human comments in an editor and says "go").
+
+Approved slices, in order, each usable alone:
+
+1. **Document-reviewer role** (bridle): a role prompt with the approved format and how to reply,
+   revise (follow-up reply tagging `@human`), mark tags read, resolve (delete the thread, note at
+   the bottom) and commit each round. One agent per document, started by hand by the orchestrator
+   and told "go".
+2. **Bridle notices comments** (bridle): watch the documents under review; when new comments have
+   been quiet for 5-10 minutes, start or resume that document's agent with the batch. Uses the
+   existing agent stop/resume and a simple cap on how many run at once; doesn't wait on the rest of
+   r9vh. The expiry per document agent comes with it.
+3. **Document view in the web UI** (bridle-gateway + bridle-ui): open a document, comments to the
+   side, highlight to add a comment, tags marked read on opening the thread. Needs a narrow piece
+   of v8kn: the gateway reads and writes one document file and commits it.
