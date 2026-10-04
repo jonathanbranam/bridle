@@ -8,7 +8,7 @@ changes: []
 specs: []
 needs: []
 see: [sign-binaries-on-intel-macs-cs7x, jmpf]
-tasks: []
+tasks: [br-p88z]
 ---
 
 ## The ask
