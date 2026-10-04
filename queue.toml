@@ -1,4 +1,10 @@
 [[tier]]
+tasks = ["br-8avg"]
+
+[[tier]]
+tasks = ["br-p88z"]
+
+[[tier]]
 tasks = [
     "br-bek3",
     "br-bnhn",
@@ -8,10 +14,16 @@ tasks = [
 tasks = ["br-tc7t"]
 
 [[tier]]
+tasks = ["br-anmx"]
+
+[[tier]]
 tasks = [
     "br-bdrc",
     "br-58c9",
 ]
+
+[[tier]]
+tasks = ["br-ckvz"]
 
 [[tier]]
 tasks = [

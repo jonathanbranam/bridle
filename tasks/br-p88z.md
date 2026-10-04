@@ -2,9 +2,9 @@
 id = "br-p88z"
 title = "Sign bridle with a stable local certificate on Macs, so the firewall's Allow survives every rebuild"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-10-04T13:18:34.357Z"
-updated_at = "2026-10-04T22:08:39.152979Z"
+updated_at = "2026-10-04T22:08:44.961230Z"
 created_by = "external:advisor"
 watchers = [
     "external:advisor",

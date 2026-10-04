@@ -2,9 +2,9 @@
 id = "br-ckvz"
 title = "Tasks split from another inherit its watchers, across projects too"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-10-04T21:28:54.526Z"
-updated_at = "2026-10-04T22:08:43.104103Z"
+updated_at = "2026-10-04T22:08:45.365212Z"
 created_by = "external:advisor/doc-review"
 watchers = ["external:advisor/doc-review"]
 +++

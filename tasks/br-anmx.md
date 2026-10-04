@@ -2,9 +2,9 @@
 id = "br-anmx"
 title = "bridle gateway hash-password' echoes the password as it's typed: read it hidden when stdin is a terminal"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-04T12:47:28.413Z"
-updated_at = "2026-10-04T22:08:40.718610Z"
+updated_at = "2026-10-04T22:08:45.055992Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
 +++
