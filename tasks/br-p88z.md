@@ -4,13 +4,17 @@ title = "Sign bridle with a stable local certificate on Macs, so the firewall's 
 kind = "feature"
 state = "planned"
 created_at = "2026-10-04T13:18:34.357Z"
-updated_at = "2026-10-04T22:08:44.961230Z"
+updated_at = "2026-10-04T23:12:13.938035Z"
 created_by = "external:advisor"
 watchers = [
     "external:advisor",
     "external:aide",
 ]
 priority = "high"
+summary = """
+Added `bridle sign setup|binary [path]` (crates/bridle/src/sign.rs, logic in bridle-daemon/src/signing.rs). `setup` is idempotent and SSH-safe: openssl makes a self-signed code-signing cert, `security import -T /usr/bin/codesign` puts it in the login keychain, best-effort `add-trusted-cert`, then `set-key-partition-list -S apple-tool:,apple:,codesign:` (keychain password prompted once with echo off, or BRIDLE_KEYCHAIN_PASSWORD). `binary` signs with `codesign --force -s` when `security find-identity -p codesigning` lists the identity (name default "bridle local signing", override BRIDLE_SIGNING_IDENTITY), else keeps the ad-hoc signature. `just install` signs after cargo install; `just sign-setup` runs setup; the daemon's real self-upgrade build signs the installed exe (a sign failure only warns). Identity detection is unit-tested (parser only; no keychain touched). Docs: CLAUDE.md, adding-a-project.md, design/cli.md, CHANGELOG.
+Caveats, NOT verified (no keychain changes made here, per task): the setup flow itself and that the firewall keeps Allow across a re-sign. Trust step may need a GUI auth over SSH; it is best effort because codesign signs with an untrusted self-signed cert. Worker builds (cargo build in worktrees) stay ad-hoc; only the installed binary is signed. The ad-hoc link arg in .cargo/config.toml is unchanged (it is the fallback).
+Verify on dalek: `cd <bridle checkout> && just sign-setup && just install && codesign -dv ~/.cargo/bin/bridle 2>&1 | grep Authority` (expect "bridle local signing"); launch bridle, click Allow once; then `bridle restart --upgrade` and confirm other machines still reach it with no new prompt (`/usr/libexec/ApplicationFirewall/socketfilterfw --listapps | grep -A1 bridle`)."""
 +++
 
 original id: p88z
@@ -35,3 +39,9 @@ Confirmed 2026-10-04 evening: the gateway stopped answering from other machines 
 
 ### note · external:aide · 2026-10-04T22:06:55.352Z
 The human, verbatim (2026-10-04, via aide), declining a third worker: "we can't handle more workers on bridal. It's, it's not going to be productive. So just it just needs to come next. That's all."
+
+### note · agent:local-signing · 2026-10-04T23:12:11.729Z
+done: bridle sign setup|binary, just sign-setup, install and self-upgrade sign with 'bridle local signing' when present; 02f80a23
+
+### note · agent:local-signing · 2026-10-04T23:12:13.938Z
+Unverified here: the setup flow (openssl/security/set-key-partition-list) and firewall behaviour across a re-sign, since no live keychain changes were made. Trust step is best effort and may need GUI auth over SSH. Worker cargo builds stay ad-hoc. See the summary for dalek verification commands.
