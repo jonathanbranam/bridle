@@ -24,6 +24,17 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-04 14:35: `main` red on macOS, a statusline test races the startup usage poll
+
+- **What happened:** CI on fb3bdb8 (br-jmpf) failed on macOS only:
+  `statusline_report_with_no_rate_limits_still_records_usage`, `rate_limits.is_empty()`. Found
+  by the CI wake.
+- **Impact:** `main` red; landings held until the fix.
+- **Cause:** the test daemon's startup `get_usage` poll (fake five_hour 1%) can land before the
+  test reads usage. f1ky (77f5dba3) fixed the same race in the sibling test only.
+- **Category:** `ci`.
+- **Follow-up:** [[statusline-test-no-rate-limits-test-races-the-startup-get-us-k22s|k22s]].
+
 ## 2026-10-04 ~14:00: `bridle status` told the human to remove a branch with unlanded work
 
 - **What happened:** `bridle status` listed `self-upgrade` and `docs-rename` as "stopped agents
