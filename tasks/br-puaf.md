@@ -4,7 +4,7 @@ title = "Usage readings go stale while agents work, and a stale reading at low u
 kind = "bug"
 state = "open"
 created_at = "2026-10-04T15:18:54.499Z"
-updated_at = "2026-10-04T15:28:29.205175Z"
+updated_at = "2026-10-04T15:28:50.880601Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
@@ -23,3 +23,6 @@ The human, 2026-10-04 via aide: 'This is a noisy alert that shouldn't be happeni
 
 ### note · external:aide · 2026-10-04T15:28:29.205Z
 The human, 2026-10-04, via aide, on the stopgap of raising max_staleness to 45m in ~/.bridle/config.toml: "Yes, I'm making a stop gap staleness for 45 minutes. I can't make that change right now, though, so we can just deal with it until later. [...] Yes, I approve that." They'll make the edit themselves later. They also want to keep track of what the probe costs (aide's answer: get_usage makes no model call, per spike 01 S8).
+
+### note · external:orchestrator · 2026-10-04T15:28:50.880Z
+Added via aide, 2026-10-04: the human wants to see what the usage probe costs. If the build changes the probe, keep it at no model call and make the cost visible (bridle usage, or a log line per poll).

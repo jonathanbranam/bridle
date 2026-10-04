@@ -585,3 +585,6 @@
 {"actor":"external:orchestrator","at":"2026-10-04T15:19:27.906260Z","from":"pending","task":"br-puaf","to":"open"}
 {"actor":"human","at":"2026-10-04T15:25:24.347Z","from":"","task":"br-ehv6","to":"pending"}
 {"actor":"external:advisor/doc-review","at":"2026-10-04T15:25:24.543850Z","from":"pending","task":"br-ehv6","to":"open"}
+{"actor":"human","at":"2026-10-04T15:28:50.846Z","from":"","task":"br-g8wv","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-10-04T15:28:50.846953Z","from":"pending","task":"br-g8wv","to":"open"}
+{"actor":"external:orchestrator","at":"2026-10-04T15:28:50.847367Z","from":"open","task":"br-g8wv","to":"planned"}
