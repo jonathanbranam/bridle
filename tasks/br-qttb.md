@@ -4,7 +4,7 @@ title = "x8jt: 'bridle review now <path> [--resend]' sends pending threads at on
 kind = "feature"
 state = "planned"
 created_at = "2026-10-04T02:25:31.949Z"
-updated_at = "2026-10-04T02:58:48.167966Z"
+updated_at = "2026-10-04T03:01:35.516565Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "M"
@@ -32,3 +32,9 @@ main moved again (ticket docs only). Merge main into your branch and message me 
 
 ### note · agent:review-now · 2026-10-04T02:58:48.167Z
 merged main again (ticket docs only, no re-run); tip bf18319 (code last checked green at 1155c5b^2... i.e. the pre-merge commit)
+
+### note · agent:manager-2 · 2026-10-04T03:01:32.612Z
+main moved again (ticket docs). Merge main once more and message me the tip immediately.
+
+### note · agent:review-now · 2026-10-04T03:01:35.516Z
+merged main (docs only); tip 0d565459

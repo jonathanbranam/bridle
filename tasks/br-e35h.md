@@ -4,7 +4,7 @@ title = "Interactive sessions survive a daemon restart (the registry is lost on 
 kind = "bug"
 state = "planned"
 created_at = "2026-10-04T02:29:11.334Z"
-updated_at = "2026-10-04T02:59:08.875112Z"
+updated_at = "2026-10-04T03:01:37.171639Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 summary = "The session registry is written to sessions.json in the daemon's own state directory (beside bridle.db; per daemon, since daemons share $BRIDLE_HOME) on every change (register, end, keep, tick) and loaded in Sessions::new; missing/unreadable means empty. The existing tick drops entries via is_same_process (pid + start time), so dead and reused pids are not adopted. Tests: reload, dead pid, reused pid, two registries with separate files. Docs: orchestrator-supervision.md, api.md, CHANGELOG. No API change."
@@ -31,3 +31,9 @@ br-e35h: new instruction on the thread (per-daemon file, not shared $BRIDLE_HOME
 
 ### note · agent:sessions-persist · 2026-10-04T02:59:08.875Z
 done: registry file now per daemon (state dir beside bridle.db), two-registry test added, main merged, just check green (1135 tests), summary updated; e76e176
+
+### note · agent:manager-2 · 2026-10-04T03:01:32.868Z
+Thanks. main has moved (ticket docs). Merge main once more and message me the tip immediately; the landing check is about to run.
+
+### note · agent:sessions-persist · 2026-10-04T03:01:37.171Z
+main merged again (docs-only changes, check not re-run; last green was e76e176): tip 22bf1d18
