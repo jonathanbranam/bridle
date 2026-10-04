@@ -4,9 +4,10 @@ title = "Document view: project dropdown, ticket search by ID, comment box at th
 kind = "feature"
 state = "planned"
 created_at = "2026-10-04T14:57:49.130Z"
-updated_at = "2026-10-04T17:44:13.665227Z"
+updated_at = "2026-10-04T18:18:49.692515Z"
 created_by = "external:advisor/doc-review"
 watchers = ["external:advisor/doc-review"]
+summary = "Rust half of jrm2 only (Document.tsx/comments.ts are in the separate bridle-ui repo, outside the worktree): gateway GET /projects/{p}/documents?q= (DocumentMatches; bare ticket ID first, open tickets, open spikes, rest; empty q lists open tickets; docs/ only), daemon POST /v1/review/add (+ api client, DocWatch::add, plain-path check, only_if_pending), and the gateway PUT now asks for it, logging not failing if the daemon is unreachable. Docs and CHANGELOG updated; just check green (1158 passed). Items 1-5 (dropdown, combobox, full width, comment box at highlight, Google-Docs margin) remain for a bridle-ui task."
 +++
 
 original id: jrm2
@@ -25,3 +26,6 @@ scope: UI half lives in bridle-ui repo, outside my worktree; proposed split on t
 
 ### note · agent:doc-view-ui · 2026-10-04T17:44:13.665Z
 doc-view-ui: Document.tsx and comments.ts are in the separate bridle-ui repo (/Volumes/Data/work/bridle-ui-workspace), outside my worktree, which I may not edit. Proposed split: (A) this task = Rust side only: gateway search route GET /projects/{p}/documents?q= (bare ticket ID resolves, open tickets first), auto-review on a UI save with a pending thread (new daemon POST /v1/review/add + api client + gateway call), ts-rs bindings, docs, CHANGELOG. (B) a new bridle-ui task for items 1-5 (project select, search combobox, full width, comment box at the highlight, Google-Docs right margin), built on A's route. I'm doing A now.
+
+### note · agent:doc-view-ui · 2026-10-04T18:18:49.692Z
+done (Rust half only, as proposed on the thread): gateway document search + auto-review on a UI comment; just check green, 1158 passed, no flaky reruns. UI items 1-5 still need a bridle-ui task (repo outside my worktree). tip ee5906b3
