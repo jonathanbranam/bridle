@@ -8,7 +8,7 @@ changes: []
 specs: []
 needs: []
 see: [essy, v8kn, hvxk, 6yb4, k4wq, yyzm, yj38, r9vh]
-tasks: [br-rp53, br-aj9d, br-5paw, ui-acf0, br-qttb, ui-c39e]
+tasks: [br-rp53, br-aj9d, br-5paw, br-pwtw, ui-acf0, br-qttb, ui-c39e]
 ---
 
 ## The ask
@@ -369,3 +369,16 @@ Review now and sent marks: br-qttb (bridle: command, sent marks, gateway route) 
 
 The human, verbatim (2026-10-04): "Let's do YYYY-mm-Dr HH:MM for sent" ("Dr" read as DD): the
 mark is `· sent 2026-10-04 21:14`.
+
+## Where it stands (advisor doc-review, retiring, 2026-10-04)
+
+Everything approved is built, integrated and on main; the human hasn't tried it end to end yet.
+
+- bridle: br-rp53 (document-reviewer role), br-aj9d (watcher, 7-minute quiet period, cap, idle
+  stop), br-5paw (gateway reads and saves a document), br-pwtw (and commits it on main), br-qttb
+  (`bridle review now [--resend]`, the `· sent YYYY-MM-DD HH:MM` mark).
+- bridle-ui: ui-acf0 (document view), ui-c39e ("Request review" button with resend).
+- Not done on the human's machine: the UI in `~/.bridle/ui` predates the document view
+  (`npm run install-ui`), no gateway running, nothing under review (`bridle review add`).
+- The next steps and a prompt for a new advisor are in the human's to-do **br-twg8** (first round
+  on gtzx). Still deferred: thread IDs, showing what a revision changed, diagrams (yyzm).

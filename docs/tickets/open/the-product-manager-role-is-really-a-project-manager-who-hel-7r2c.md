@@ -92,3 +92,43 @@ So the reworked product manager would own: pending tickets and tasks (what waits
 other dependencies, filing the human's to-dos for those. Until that role exists, advisors file the
 to-dos.
 
+
+## A worked case: x8jt, run by an advisor (the human, 2026-10-04, via advisor doc-review)
+
+The human, verbatim, retiring the advisor that ran x8jt:
+
+> in the future - a peice of related work like this should be managed by the product manager;
+> find the ticket for that work and update it with some details about what we've done here and
+> how a product manager would manage the pending and future work.
+
+**What was done by hand.** x8jt (document review) went from idea to built in about a day, run
+by one advisor (doc-review) with the human:
+
+- The advisor took the human's decisions in conversation (comment format, batching, tags, the
+  sent mark, review now) and recorded each on x8jt verbatim, then sent approved slices to the
+  orchestrator to file, since an advisor can't mark tasks ready or file in bridle-ui.
+- The orchestrator filed seven tasks across two repos (br-rp53, br-aj9d, br-5paw, br-pwtw,
+  br-qttb; ui-acf0, ui-c39e); pm-1 planned them; the advisor relayed progress from the
+  orchestrator's messages.
+- At the end nothing tracked what was left: the setup on the human's machine and the first trial.
+  The advisor checked each task's state by hand and filed the human's to-do br-twg8 with the
+  next steps and a prompt for the next advisor, because sessions were restarting and the
+  advisor's context would be lost.
+
+**How a product manager would run it.** One owner per piece of work (an effort: a ticket or a
+few related ones), outliving any one session:
+
+- **Owns the effort's record**: the ticket(s), every task filed for it in every repo, and who is
+  on each. Answers "what's the latest with x8jt?" from that record, not from a session's memory.
+- **Takes the human's decisions** (or receives them from the advisor the human talked to),
+  records them on the ticket, slices approved work into tasks and has them filed in the right
+  project and opened, without the advisor-to-orchestrator relay.
+- **Watches the pending work**: tasks still `pending` for the human's `task ready`, tasks
+  dropped in a sort, deferred items (here: thread IDs, showing what changed, diagrams yyzm),
+  and dependencies (here v8kn and r9vh, which the slices sidestepped).
+- **Notices when built isn't the same as in use**, and files the human's to-do for the steps
+  only they can take (here: install the UI, start the gateway, run the first review), then
+  follows up on it.
+- **Hands over through the ticket**, so a restart costs nothing: what's built, what's next,
+  who's on it. This is what br-twg8 did by hand. Seats (gtzx) would give the role a lasting
+  identity and inbox across restarts.
