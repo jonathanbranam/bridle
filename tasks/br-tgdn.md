@@ -4,7 +4,7 @@ title = "Landing refuses a clone with unrelated uncommitted edits; document revi
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-04T03:11:21.857Z"
-updated_at = "2026-10-04T03:28:47.899597Z"
+updated_at = "2026-10-04T03:30:35.787063Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "S"
@@ -27,3 +27,6 @@ done: landing refuses a dirty integration checkout only when the merge touches t
 
 ### note · agent:manager-2 · 2026-10-04T03:28:47.899Z
 integrated: bc8c745526f69dca2856bd3b0135c6d255a7f46c (branch bridle/land-dirty)
+
+### note · agent:manager-2 · 2026-10-04T03:30:35.787Z
+cleanup: removed agent land-dirty, branch bridle/land-dirty
