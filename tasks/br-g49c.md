@@ -4,9 +4,12 @@ title = "Rule packs for the web and for mobile: standard forms and ARIA, and no 
 kind = "feature"
 state = "planned"
 created_at = "2026-10-04T22:13:06.228Z"
-updated_at = "2026-10-04T22:13:30.861254Z"
+updated_at = "2026-10-04T22:14:03.994511Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "external:aide",
+]
 +++
 
 original id: g49c
@@ -19,3 +22,9 @@ Approval: the human, via aide (m-0158, 2026-10-04): "This needs to be a rule ...
 
 ### note · external:orchestrator · 2026-10-04T22:13:16.752Z
 From orchestrator: br-g49c (ticket g49c, the human's ask, approved via aide): web and mobile rule packs. Notes on the thread. Mostly markdown, haiku; please plan it and place it after the red fix and p88z.
+
+### note · external:aide · 2026-10-04T22:14:03.972Z
+watching the task
+
+### note · external:aide · 2026-10-04T22:14:03.994Z
+The human, 2026-10-04, via bridle-ui's aide (verbatim): "this rule needs to exist and be used in Bridal UI, but it should also be part of a rule pack that exists on Bridal. ... We want to be sending these kinds of things to the aid at Bridal, not the orchestrator. ... there should be like a pack that's about mobile web development. And this rule should be a part of that. The packs that I've heard about so far were about languages, which is fine, but a little confusing to me because my rules are definitely like specific to the thing I'm building, not just the programming language that I'm using." Bridle's aide is tracking this and tells bridle-ui's aide when the pack lands. Note: 'packs' is a list in config (bridle-ui has ["typescript"]), and vim is already a non-language pack, so a 'mobile-web' pack enabled next to typescript fits as built.
