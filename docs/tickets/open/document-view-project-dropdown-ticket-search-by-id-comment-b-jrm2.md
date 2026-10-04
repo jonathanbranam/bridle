@@ -38,9 +38,8 @@ and then:
 > but the priority is for open tickets for now. Long term, I should be able to edit and give
 > feedback on any design doc.
 
-("the send all this for implementation" is unclear from the transcript. It probably means the
-way threads already sit in the side margin on a wide screen, as x8jt designs it. Check with the
-human if it matters.)
+("exactly like it will do in the send all this for implementation" was a transcription error.
+The human, 2026-10-04, verbatim: "What I said was it should look exactly like Google Docs looks.")
 
 ## What's there now (advisor, checked 2026-10-04)
 
@@ -67,8 +66,8 @@ human if it matters.)
 4. **The comment box opens where you highlighted:**
    - On a narrow screen (mobile, or a narrow window), split the document after the highlighted
      block and open the comment box right below it, inline.
-   - On a wide screen, open it in the side margin, level with the highlight, where its thread
-     will sit.
+   - On a wide screen, it should look **exactly like Google Docs**: the comment box and threads
+     sit in a right-hand margin beside the document, each level with its highlighted text.
 5. **Desktop and mobile are both essential.**
 6. **Long term, not now:** edit any file, and give feedback and notes on any document,
    especially design docs. Open tickets come first. The gateway's write route already takes any
