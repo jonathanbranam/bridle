@@ -24,6 +24,66 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-04 13:18: br-p88z (stable Mac signing) approved but never planned for 9 hours
+
+- **What happened:** the advisor filed and opened br-p88z at 13:18. It was never planned, so it
+  never reached the queue, and the human hit the firewall problem it fixes again after the 21:09
+  rebuild. The human raised it at ~22:00 ("I think our queue is broken. Or PM is not working
+  right"); the aide traced it from the event log and pm-1's inbox.
+- **Impact:** a fix the human calls critical sat idle all day. The gateway stopped answering from
+  other machines after the rebuild, and the human found out the work hadn't started.
+- **Cause:** pm-1 plans only the tasks someone names to it. Every task it planned that day followed
+  an orchestrator message. Nothing tells the PM when a task goes `pending -> open`:
+  `queue_nudge.rs` nudges the manager on queue edits only. The advisor opened p88z and told no one.
+  It opened between two daemon restarts (13:18 and 13:27). Not the cause, but nobody was watching
+  then.
+- **Category:** `coordination`, `role`.
+- **Follow-up:** [[tasks-approved-by-anyone-but-the-orchestrator-are-never-plan-xz4f|xz4f]]: tell
+  the PM when a task opens, plus an alarm for tasks open and unplanned too long. Also open and
+  unplanned the same way: br-anmx, br-ckvz.
+
+## 2026-10-04 ~5:36 PM ET: a duplicate spawn for br-bek3 drove load to 70
+
+- **What happened:** manager-2 spawned `gateway-detach` for br-bek3; my second nudge to fill the
+  slot crossed that spawn, and it started `gw-detach` for the same task. The second spawn sat
+  10 minutes in `cp -cR` of `integration/target`, alongside syspolicyd and XprotectService at
+  ~85% each. Load average 70 on 16 cores. manager-2 couldn't kill it (dontAsk denies `kill`).
+- **Impact:** a slow, loaded machine for ~10 min; the human noticed (ticket 58c9). No work lost.
+- **Cause:** spawn isn't idempotent per task (two workers on one task allowed), and I nudged
+  without checking `bridle agents` and running spawns first. Copying `target/` per worktree is
+  heavy and slow.
+- **Category:** `coordination`, `host`.
+- **Follow-up:** I killed the spawn and removed the empty worktree. br-58c9 (watch load).
+  A daemon-side refusal of a second worker on a claimed task would have stopped it.
+
+## 2026-10-04 ~2:45 PM and ~4:15 PM ET: the human told twice that landed bridle-ui work hadn't started
+
+- **What happened:** the human's routing ask (k3qx) became ui-n6cu and landed on bridle-ui
+  `main` (7af2f59) ten minutes after it was relayed. No one told `external:aide`. Hours later
+  the bridle-ui aide told the human, twice, that the orchestrator hadn't acted on it. k3qx was
+  never linked to its task or resolved.
+- **Impact:** the human was misinformed about finished work and had to ask for an incident.
+- **Cause:** two gaps. The orchestrator doesn't report landings of human-asked work to aide
+  (the standing rule keeps routine status out of aide's inbox, and the line was drawn too
+  tight). The aide's status check looked only at its inbox, to-dos and pending tasks, not at
+  `bridle task list` or `git log`.
+- **Category:** `coordination`, `role`.
+- **Follow-up:** bridle-ui incident task ui-wdp3; k3qx resolved with the landing. Orchestrator
+  practice from now: when work the human asked for lands, tell aide in one line.
+
+## 2026-10-04 21:05: main red on Linux after br-qpr7 (spec test runs a macOS-only command)
+
+- **What happened:** CI run 37233807547 on 2d9adce2 (br-qpr7) failed on ubuntu-latest only. Two
+  tests in `project_resolution_test.rs` run every command, including `bridle daemon launchd
+  install`, which errors "bridle launchd is macOS only" on Linux.
+- **Impact:** `main` red; landing held. br-2mtr (34015348) was pushed 20 s before the failure
+  was known, so its run fails the same way.
+- **Cause:** a test that walks every command wasn't written for commands gated by platform; the
+  worker's `just check` ran on macOS only, so it couldn't see it. Second red from the
+  project-resolver work today (after 3397/2qrk).
+- **Category:** `ci`.
+- **Follow-up:** fix sent to manager-2 (m-4839); task to be filed by the fix.
+
 ## 2026-10-04 ~20:00: a track-web research worker had no web tools and called the web "unreachable"
 
 - **What happened:** track-web's tw-sxfh (h679, research Hole.io gameplay and reviews) went to
