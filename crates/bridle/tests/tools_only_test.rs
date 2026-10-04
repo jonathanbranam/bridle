@@ -160,6 +160,7 @@ fn run_script_env(role: &str, cwd: &Path, home: &Path, agent: Option<bool>) -> (
         .current_dir(cwd)
         .env("PATH", path)
         .env("BRIDLE_HOME", home)
+        .env("BRIDLE_PROJECT", "bridle")
         .env_remove("TMUX_PANE")
         .output()
         .unwrap();
