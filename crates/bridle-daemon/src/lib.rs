@@ -45,6 +45,7 @@ mod supervisor;
 pub mod sync;
 mod tasks;
 mod upgrade;
+pub mod usage_http;
 mod wake;
 pub mod warm_build;
 pub mod worktree;
@@ -102,6 +103,9 @@ pub struct Overrides {
     pub governor_poll_interval_normal: Duration,
     /// ...and at or above it.
     pub governor_poll_interval_above_hold: Duration,
+    /// The governor's HTTP usage source. Tests point it at a local server
+    /// (or a dead port) so they never reach the real endpoint or token.
+    pub usage_http: usage_http::UsageHttp,
     /// How often pending state-branch writes are flushed to one commit
     /// (docs/design/storage.md, "The state branch"). There's no immediate-
     /// flush trigger yet (that arrives with `accept`), so this is the only
@@ -140,6 +144,7 @@ impl Default for Overrides {
             governor_interval: Duration::from_secs(30),
             governor_poll_interval_normal: Duration::from_secs(5 * 60),
             governor_poll_interval_above_hold: Duration::from_secs(30),
+            usage_http: Default::default(),
             task_flush_interval: Duration::from_secs(30),
             claim_lease_check_interval: Duration::from_secs(30),
             port_check_interval: Duration::from_secs(30),
@@ -534,6 +539,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         overrides.claude_program.clone(),
         ws.clone(),
         governor_handle,
+        overrides.usage_http.clone(),
         overrides.governor_poll_interval_normal,
         overrides.governor_poll_interval_above_hold,
     );

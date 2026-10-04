@@ -15,6 +15,10 @@ async fn statusline_report_feeds_rate_limits_and_usage() {
     let (daemon, _tmp) = support::start_daemon(Some(bridle_daemon::Overrides {
         governor_poll_interval_normal: Duration::from_secs(3600),
         governor_poll_interval_above_hold: Duration::from_secs(3600),
+        usage_http: bridle_daemon::usage_http::UsageHttp {
+            url: "http://127.0.0.1:9/".to_string(),
+            token: Some("test".to_string()),
+        },
         ..support::default_overrides()
     }))
     .await;

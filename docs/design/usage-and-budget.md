@@ -99,9 +99,9 @@ The governor is built: it computes
 `stop_at` threshold crossings (per default-scoped window and, separately,
 per per-model window), from `rejected`/`allowed_warning` rate-limit
 statuses, and from reading staleness while any agent is working, and it
-polls the undocumented `get_usage` control request
-([[docs/design/usage-and-budget#Seeing the windows|seeing the windows]]) on
-a running agent or a dedicated probe process. It holds new work while not
+reads usage over HTTP, falling back to the undocumented `get_usage`
+control request on a throwaway probe process
+([[docs/design/usage-and-budget#Seeing the windows|seeing the windows]]). It holds new work while not
 `normal`: `bridle spawn`/`resume` are refused (409) unless `--ignore-budget`
 is passed, and a message that would start a turn in an idle agent is held
 instead. On crossing into `winding_down` or worse, it stops idle agents at
@@ -190,8 +190,12 @@ max_staleness   = "10m"     # older readings count as unknown
 - Thresholds are **account settings**, so they live in `~/.bridle/config.toml`
   and every daemon on the machine uses the same ones. A project's
   `.bridle/config.toml` may lower them, never raise them.
-- **Unknown is not safe.** With no reading newer than `max_staleness` while
-  any agent is working, the governor holds. Once the reading is three times
+- **Unknown is not safe, but staleness slides.** With no reading newer than
+  the allowed age while any agent is working, the governor holds. The allowed
+  age is `max_staleness` when the highest default window is at or above
+  `hold_at`, and slides up linearly to 6x `max_staleness` (an hour by default)
+  at or below half of `hold_at`: a reading at 20% can't have reached a limit
+  in an hour. `bridle budget` marks `(stale)` by the same slid age. Once the reading is three times
   that old, it winds down. Before the daemon's first reading ever lands, its
   own age stands in for the reading's age, so a fresh daemon doesn't hold
   before its first `get_usage` poll has had a chance to answer.
@@ -410,11 +414,20 @@ The governor needs a **fresh** reading, and the stream doesn't give one: a
 agent's last reading can be hours old, and it can't see the human's own use.
 Sources, best first:
 
-1. **`get_usage` probes.** The control request returns every window's
-   utilisation and reset time **without a model call** (~1.1 s, spike 01). The
-   daemon sends it to a running agent, or to a probe process of its own
-   (`claude -p`, stream-json, no prompt, no tools) when none is running, and
-   records only the window numbers (the response also carries account
+1. **OAuth usage over HTTP.** One GET of `api.anthropic.com/api/oauth/usage`
+   (what `/usage` reads) with Claude Code's OAuth token, read each poll from
+   `~/.claude/.credentials.json` or the macOS keychain item `Claude
+   Code-credentials`. No `claude` process and no model call. It goes through
+   the system `curl` (reqwest is built without TLS), with the token on curl's
+   stdin. Undocumented, so it can break on any Claude Code release.
+   **`get_usage` probe**, only when the HTTP call fails: the control request
+   returns every window's utilisation and reset time **without a model call**
+   (~1.1 s, spike 01). The daemon starts a probe process of its own
+   (`claude -p`, stream-json, no prompt, no tools) for that one poll and kills
+   it straight after, since an idle one holds ~150 MB. It never asks a working
+   agent. Each poll logs one `usage poll` line (`source`, `elapsed_ms`,
+   `model_calls=0`), and each HTTP or probe failure logs at `warn`.
+   Either way the daemon records only the window numbers (the response also carries account
    details). It polls every 5 min below `hold_at` and every 30 s above, and
    whenever a turn ends above `hold_at`. The reading is account-wide, so it
    includes the human's sessions on every machine.

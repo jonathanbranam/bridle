@@ -107,11 +107,9 @@ async fn idle_message_is_held_not_written_while_governor_is_holding() {
     )
     .await;
 
-    // Once an agent is running, the governor's `get_usage` probe goes to its
-    // handle instead of a dedicated probe process (governor.rs's
-    // `any_running_handle`), and fake-claude reads `.fake-claude-usage`
-    // from its own cwd — the agent's worktree, not `daemon.repo`.
-    script_usage(std::path::Path::new(&agent.cwd), 82.0, 10.0);
+    // The HTTP source is a dead port here, so each poll runs a throwaway
+    // probe, which reads `.fake-claude-usage` from `daemon.repo`.
+    script_usage(&daemon.repo, 82.0, 10.0);
     wait_for("holding", || async {
         let b = daemon.client.budget().await.ok()?;
         (b.state == GovernorState::Holding).then_some(())
@@ -167,7 +165,7 @@ async fn held_message_for_idle_agent_is_delivered_when_governor_returns_to_norma
         .expect("spawn while normal");
     let agent = wait_for_state(&daemon.client, &agent.id, AgentState::Idle).await;
 
-    script_usage(std::path::Path::new(&agent.cwd), 82.0, 10.0);
+    script_usage(&daemon.repo, 82.0, 10.0);
     wait_for("holding", || async {
         let b = daemon.client.budget().await.ok()?;
         (b.state == GovernorState::Holding).then_some(())
@@ -193,7 +191,7 @@ async fn held_message_for_idle_agent_is_delivered_when_governor_returns_to_norma
 
     // Back below every threshold: the agent is still idle (nothing else
     // poked it), so only the governor's own recovery path can deliver it.
-    script_usage(std::path::Path::new(&agent.cwd), 10.0, 10.0);
+    script_usage(&daemon.repo, 10.0, 10.0);
     wait_for("normal after recovery", || async {
         let b = daemon.client.budget().await.ok()?;
         (b.state == GovernorState::Normal).then_some(())
@@ -276,7 +274,7 @@ async fn idle_agent_is_stopped_at_once_on_wind_down_then_resumed() {
     let agent = wait_for_state(&daemon.client, &agent.id, AgentState::Idle).await;
 
     // wind_down_at default is 90: an idle agent is stopped at once.
-    script_usage(std::path::Path::new(&agent.cwd), 90.0, 10.0);
+    script_usage(&daemon.repo, 90.0, 10.0);
     let stopped = wait_for_state(&daemon.client, &agent.id, AgentState::Stopped).await;
     assert_eq!(
         stopped.exit.as_ref().map(|e| e.reason.as_str()),
@@ -343,7 +341,7 @@ async fn working_agent_is_notified_then_stopped_when_its_turn_ends() {
         .expect("spawn while normal");
     let agent = wait_for_state(&daemon.client, &agent.id, AgentState::Working).await;
 
-    script_usage(std::path::Path::new(&agent.cwd), 90.0, 10.0);
+    script_usage(&daemon.repo, 90.0, 10.0);
     wait_for("usage pause notice sent", || {
         let daemon = &daemon;
         let id = agent.id.clone();
@@ -651,7 +649,7 @@ async fn renew_under_hold_succeeds() {
     let agent = wait_for_state(&daemon.client, &agent.id, AgentState::Idle).await;
 
     // The agent's own process answers the usage probe from its worktree.
-    script_usage(std::path::Path::new(&agent.cwd), 82.0, 10.0);
+    script_usage(&daemon.repo, 82.0, 10.0);
     wait_for("holding", || async {
         let b = daemon.client.budget().await.ok()?;
         (b.state == GovernorState::Holding).then_some(())
@@ -854,4 +852,66 @@ async fn resume_brings_back_a_manager_even_when_workers_fill_max_workers() {
         })
         .await;
     }
+}
+
+/// One-shot-per-connection HTTP server answering every request with `body`.
+async fn serve_usage(body: String) -> String {
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+        .await
+        .expect("bind");
+    let url = format!("http://{}/usage", listener.local_addr().expect("addr"));
+    tokio::spawn(async move {
+        loop {
+            let Ok((mut sock, _)) = listener.accept().await else {
+                return;
+            };
+            let body = body.clone();
+            tokio::spawn(async move {
+                let mut buf = [0u8; 4096];
+                let _ = sock.read(&mut buf).await;
+                let resp = format!(
+                    "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
+                    body.len()
+                );
+                let _ = sock.write_all(resp.as_bytes()).await;
+            });
+        }
+    });
+    url
+}
+
+#[tokio::test]
+async fn http_usage_is_read_first_and_the_probe_is_not_asked() {
+    let url = serve_usage(
+        serde_json::json!({
+            "five_hour": {"utilization": 82.0, "resets_at": null},
+            "seven_day": {"utilization": 10.0, "resets_at": null},
+            "seven_day_oauth_apps": null
+        })
+        .to_string(),
+    )
+    .await;
+    let mut overrides = support::default_overrides();
+    overrides.usage_http.url = url;
+    let (daemon, _tmp) = start_daemon(Some(overrides)).await;
+    // The probe would say 10%: only the HTTP reading can produce Holding.
+    script_usage(&daemon.repo, 10.0, 10.0);
+    wait_for("holding from the http reading", || async {
+        let b = daemon.client.budget().await.ok()?;
+        (b.state == GovernorState::Holding).then_some(())
+    })
+    .await;
+}
+
+#[tokio::test]
+async fn http_failure_falls_back_to_a_probe_for_that_poll() {
+    // Default overrides: a dead port, so every poll falls back.
+    let (daemon, _tmp) = start_daemon(None).await;
+    script_usage(&daemon.repo, 82.0, 10.0);
+    wait_for("holding from the probe reading", || async {
+        let b = daemon.client.budget().await.ok()?;
+        (b.state == GovernorState::Holding).then_some(())
+    })
+    .await;
 }

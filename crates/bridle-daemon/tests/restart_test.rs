@@ -83,6 +83,10 @@ async fn restart_marks_a_stale_running_agent_lost_and_kills_its_process() {
         governor_interval: std::time::Duration::from_secs(3600),
         governor_poll_interval_normal: std::time::Duration::from_secs(3600),
         governor_poll_interval_above_hold: std::time::Duration::from_secs(3600),
+        usage_http: bridle_daemon::usage_http::UsageHttp {
+            url: "http://127.0.0.1:9/".to_string(),
+            token: Some("test".to_string()),
+        },
         task_flush_interval: std::time::Duration::from_secs(3600),
         claim_lease_check_interval: std::time::Duration::from_secs(3600),
         port_check_interval: std::time::Duration::from_secs(3600),
@@ -174,6 +178,10 @@ async fn resume_on_restart_role_comes_back_after_a_clean_shutdown_then_restart()
         governor_interval: std::time::Duration::from_secs(3600),
         governor_poll_interval_normal: std::time::Duration::from_secs(3600),
         governor_poll_interval_above_hold: std::time::Duration::from_secs(3600),
+        usage_http: bridle_daemon::usage_http::UsageHttp {
+            url: "http://127.0.0.1:9/".to_string(),
+            token: Some("test".to_string()),
+        },
         task_flush_interval: std::time::Duration::from_secs(3600),
         claim_lease_check_interval: std::time::Duration::from_secs(3600),
         port_check_interval: std::time::Duration::from_secs(3600),

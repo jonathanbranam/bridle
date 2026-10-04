@@ -718,6 +718,7 @@ async fn budget(State(state): State<AppState>) -> Result<Json<BudgetStatus>, Api
     let snapshot = state.governor.snapshot();
     let cfg = state.governor.config();
     let rate_limits = state.store.rate_limits().await?;
+    let staleness = state.governor.effective_staleness(&rate_limits);
     let mut windows = Vec::new();
     for window in [
         "five_hour",
@@ -747,7 +748,7 @@ async fn budget(State(state): State<AppState>) -> Result<Json<BudgetStatus>, Api
             utilization: rl.and_then(|r| r.utilization),
             resets_at: rl.and_then(|r| r.resets_at),
             observed_at: rl.map(|r| r.observed_at),
-            stale: age.is_none_or(|a| a > cfg.max_staleness),
+            stale: age.is_none_or(|a| a > staleness),
             age_secs: age.map(|a| a.as_secs()),
         });
     }

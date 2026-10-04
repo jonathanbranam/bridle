@@ -23,6 +23,7 @@ use crate::events::Emitter;
 use crate::paths::Workspace;
 use crate::store::Store;
 use crate::supervisor::{AgentManager, ToTarget, system_principal};
+use crate::usage_http::UsageHttp;
 
 /// Windows that gate everyone, not just agents on one model
 /// (usage-and-budget.md: "The rest apply to everyone").
@@ -32,6 +33,8 @@ const MODEL_WINDOWS: &[(&str, &str)] =
     &[("opus", "seven_day_opus"), ("sonnet", "seven_day_sonnet")];
 
 const PROBE_TIMEOUT: Duration = Duration::from_secs(10);
+/// How many times `max_staleness` a reading may age while usage is low.
+const STALENESS_RELAXED: f64 = 6.0;
 
 /// One window's contribution to a governor state: which window it was and
 /// when it resets, so a 409 can name both.
@@ -84,7 +87,7 @@ struct Inner {
     workspace: Workspace,
     handle: GovernorHandle,
     last_poll: Mutex<Option<Instant>>,
-    probe: tokio::sync::Mutex<Option<bridle_claude::process::AgentHandle>>,
+    usage_http: UsageHttp,
     /// docs/design/usage-and-budget.md, Seeing the windows: 5 min normally,
     /// 30 s at or above `hold_at`. Fields (not consts) so tests can poll
     /// every tick instead of waiting out the real cadence.
@@ -126,6 +129,7 @@ impl Governor {
         claude_program: String,
         workspace: Workspace,
         handle: GovernorHandle,
+        usage_http: UsageHttp,
         poll_interval_normal: Duration,
         poll_interval_above_hold: Duration,
     ) -> Self {
@@ -138,7 +142,7 @@ impl Governor {
             workspace,
             handle,
             last_poll: Mutex::new(None),
-            probe: tokio::sync::Mutex::new(None),
+            usage_http,
             poll_interval_normal,
             poll_interval_above_hold,
             human_hold: Mutex::new(None),
@@ -279,50 +283,52 @@ impl Governor {
         due
     }
 
-    /// Sends the undocumented `get_usage` control request to a running
-    /// agent if one exists, else a dedicated probe process, and upserts
-    /// every window it reports.
+    /// Reads usage over HTTP, and only if that fails runs a probe for this
+    /// poll alone; upserts every window it reports. Logs one line per poll
+    /// with the source and its cost (never a model call).
     async fn poll_usage(&self) {
-        let response = if let Some(h) = self.0.manager.any_running_handle() {
-            h.get_usage(PROBE_TIMEOUT).await.map_err(|e| e.to_string())
-        } else {
-            self.probe_get_usage().await
+        let started = Instant::now();
+        let (source, response) = match self.0.usage_http.fetch().await {
+            Ok(v) => ("http", Ok(v)),
+            Err(http_err) => {
+                tracing::warn!(error = %http_err, "usage HTTP poll failed; falling back to the probe");
+                ("probe", self.probe_get_usage().await)
+            }
         };
         let response = match response {
             Ok(v) => v,
             Err(e) => {
-                tracing::debug!(error = %e, "get_usage probe failed");
+                tracing::warn!(error = %e, "usage poll failed: no reading this round");
                 return;
             }
         };
         let observed_at = Utc::now();
-        for rl in parse_get_usage(&response, observed_at) {
+        let readings = parse_get_usage(&response, observed_at);
+        tracing::info!(
+            source,
+            windows = readings.len(),
+            elapsed_ms = started.elapsed().as_millis() as u64,
+            model_calls = 0,
+            "usage poll"
+        );
+        for rl in readings {
             let _ = self.0.store.upsert_rate_limit(rl).await;
         }
     }
 
-    /// A plain, promptless `claude -p` process kept alive across polls,
-    /// used only when no real agent is running to ask instead. Built
-    /// through the same command path as real agents
-    /// (`BRIDLE_CLAUDE_BIN`-substitutable) so tests can drive it with
-    /// fake-claude.py.
+    /// A plain, promptless `claude -p` process, started for this poll and
+    /// killed straight after, so nothing stays resident between polls
+    /// (an idle one holds ~150 MB). Built through the same command path as
+    /// real agents (`BRIDLE_CLAUDE_BIN`-substitutable) so tests can drive
+    /// it with fake-claude.py.
     async fn probe_get_usage(&self) -> Result<Value, String> {
-        let mut guard = self.0.probe.lock().await;
-        if let Some(h) = guard.as_ref() {
-            match h.get_usage(PROBE_TIMEOUT).await {
-                Ok(v) => return Ok(v),
-                Err(e) => {
-                    tracing::debug!(error = %e, "governor probe process gone; respawning");
-                    *guard = None;
-                }
-            }
-        }
         let handle = self.spawn_probe().await.map_err(|e| e.to_string())?;
         let result = handle
             .get_usage(PROBE_TIMEOUT)
             .await
             .map_err(|e| e.to_string());
-        *guard = Some(handle);
+        handle.close_stdin();
+        let _ = handle.signal_group(nix::sys::signal::Signal::SIGKILL);
         result
     }
 
@@ -340,8 +346,8 @@ impl Governor {
         let spawned = bridle_claude::process::spawn(&cmd, transcript).await?;
         // Nobody else reads `spawned.events`; the stdout reader task stops
         // (and with it, future control responses) the moment nothing is
-        // draining that channel, so this task exists purely to keep it
-        // drained for as long as the probe lives.
+        // draining that channel, so this task drains it until the probe
+        // is killed and the channel closes.
         tokio::spawn(async move {
             let mut events = spawned.events;
             while events.recv().await.is_some() {}
@@ -753,6 +759,39 @@ impl Governor {
         }
     }
 
+    /// How old a reading may be before it counts as unknown. A reading far
+    /// below `hold_at` can't have crossed a limit in the time since, so it
+    /// may be up to [`STALENESS_RELAXED`] times `max_staleness` old; the
+    /// allowance slides down to `max_staleness` itself as the highest
+    /// default window closes in on its `hold_at` (puaf).
+    pub fn effective_staleness(&self, rate_limits: &[RateLimit]) -> Duration {
+        sliding_staleness(
+            self.0.config.max_staleness,
+            self.closeness_to_hold(rate_limits),
+        )
+    }
+
+    /// The largest utilization/`hold_at` ratio over the default windows;
+    /// `1.0` (no slack) when a window has no utilization reading.
+    fn closeness_to_hold(&self, rate_limits: &[RateLimit]) -> f64 {
+        let mut worst: f64 = 0.0;
+        for window in DEFAULT_WINDOWS {
+            let Some(rl) = rate_limits.iter().find(|r| r.window == *window) else {
+                continue;
+            };
+            let Some(u) = rl.utilization else {
+                return 1.0;
+            };
+            let hold_at = if *window == "five_hour" {
+                self.effective_five_hour_thresholds(Local::now()).0
+            } else {
+                self.0.config.hold_at.get(window)
+            };
+            worst = worst.max(u * 100.0 / hold_at.max(1.0));
+        }
+        worst
+    }
+
     /// The default-scoped state: the worst of `five_hour`/`seven_day`
     /// thresholds and, while any agent is `working`, staleness.
     fn evaluate_default(&self, rate_limits: &[RateLimit], any_working: bool) -> WindowBlock {
@@ -779,7 +818,8 @@ impl Governor {
                 Some(observed) => {
                     let age = Utc::now() - observed;
                     let staleness =
-                        chrono::Duration::from_std(cfg.max_staleness).unwrap_or_default();
+                        chrono::Duration::from_std(self.effective_staleness(rate_limits))
+                            .unwrap_or_default();
                     if age > staleness * 3 {
                         GovernorState::WindingDown
                     } else if age > staleness {
@@ -888,6 +928,14 @@ fn parse_get_usage(v: &Value, observed_at: DateTime<Utc>) -> Vec<RateLimit> {
     }
 
     out
+}
+
+/// Staleness allowance at `ratio` (utilization / `hold_at`): up to
+/// [`STALENESS_RELAXED`] x `max_staleness` at or below half of `hold_at`,
+/// sliding linearly down to `max_staleness` at `hold_at`.
+fn sliding_staleness(max_staleness: Duration, ratio: f64) -> Duration {
+    let slack = ((1.0 - ratio) / 0.5).clamp(0.0, 1.0);
+    max_staleness.mul_f64(1.0 + (STALENESS_RELAXED - 1.0) * slack)
 }
 
 /// `Normal` under `max_staleness`, `Holding` under 3x that, `WindingDown`
@@ -1057,6 +1105,19 @@ mod tests {
             tokio::runtime::Runtime::new().expect("rt"),
             BudgetConfig::default(),
         )
+    }
+
+    #[test]
+    fn staleness_slides_with_closeness_to_hold_at() {
+        let m = Duration::from_secs(600);
+        // Well under half of hold_at (20% of an 80% hold): the full relaxation.
+        assert_eq!(sliding_staleness(m, 0.25), m * 6);
+        assert_eq!(sliding_staleness(m, 0.5), m * 6);
+        // Halfway between: 3.5x.
+        assert_eq!(sliding_staleness(m, 0.75), m.mul_f64(3.5));
+        // At or past hold_at: the plain max_staleness.
+        assert_eq!(sliding_staleness(m, 1.0), m);
+        assert_eq!(sliding_staleness(m, 1.4), m);
     }
 
     #[test]

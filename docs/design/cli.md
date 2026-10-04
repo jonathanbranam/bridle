@@ -344,7 +344,7 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   (override / schedule period / default), the current period's span, the next
   schedule change, a `why` line per non-normal window, and each window's
   status (when not `allowed`) and reading age, marked `(stale)` past
-  `max_staleness`. `--schedule` prints the whole resolved schedule instead.
+  the slid `max_staleness` (up to 6x while usage is low; usage-and-budget.md). `--schedule` prints the whole resolved schedule instead.
   Text times are local machine time; `--json` keeps UTC/ISO 8601
   ([[docs/design/usage-and-budget#Seeing what applies|details]]).
 
