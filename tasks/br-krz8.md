@@ -4,9 +4,10 @@ title = "bridle session refuses a second session of an identity that's already r
 kind = "bug"
 state = "planned"
 created_at = "2026-10-04T18:39:04.359Z"
-updated_at = "2026-10-04T18:39:41.250989Z"
+updated_at = "2026-10-04T20:34:39.063261Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+summary = "bridle session advisor|aide now refuses to start when the same identity is registered in the project with a live process (ps finds the pid). Message names pid, pane, machine and says `bridle session restart <identity>`. A registered session whose process is gone, one on another machine, or an unreachable daemon does not block. Code: refuse_if_running in crates/bridle/src/session.rs. Orchestrator is not covered (it does not register, only keeps a pid file). Tests in session_test.rs use a fake HTTP daemon via --url. Gotcha: tests inherit BRIDLE_URL/BRIDLE_TOKEN from an agent's env and would hit the real daemon, so session_test.rs and tools_only_test.rs now remove them. Docs: cli.md, CHANGELOG."
 +++
 
 original id: krz8
@@ -16,3 +17,6 @@ Build docs/tickets/open/bridle-session-refuses-a-second-session-of-an-identity-t
 
 ### note · external:orchestrator · 2026-10-04T18:39:29.274Z
 The human, 2026-10-04, via aide (m-4738), choosing option 2 on br-3397 (land as built, file follow-ups): "Agree with 2 - we need to start using specs first bridle".
+
+### note · agent:dup-session · 2026-10-04T20:34:39.063Z
+done: bridle session advisor|aide refuses a second live session of an identity; just check green (1177 tests); 3bc99449
