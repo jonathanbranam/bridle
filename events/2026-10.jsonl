@@ -532,3 +532,5 @@
 {"actor":"external:advisor/doc-review","at":"2026-10-04T13:16:26.410808Z","from":"open","task":"br-twg8","to":"planned"}
 {"actor":"human","at":"2026-10-04T13:18:34.357Z","from":"","task":"br-p88z","to":"pending"}
 {"actor":"external:advisor","at":"2026-10-04T13:18:36.885683Z","from":"pending","task":"br-p88z","to":"open"}
+{"actor":"human","at":"2026-10-04T13:34:26.873Z","from":"","task":"br-m7mp","to":"pending"}
+{"actor":"human","at":"2026-10-04T13:34:26.958Z","from":"","task":"br-kae5","to":"pending"}
