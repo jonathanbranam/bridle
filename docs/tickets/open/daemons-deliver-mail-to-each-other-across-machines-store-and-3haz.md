@@ -182,6 +182,32 @@ Asked whether to hold cy2v's planned task (br-1ddd) meanwhile, the human, verbat
 So the non-message wake reasons are the orchestrator's alone: every other agent wakes only on
 messages, and 3haz's forwarding is all they need. br-1ddd is left as it is (not decided).
 
+Then, verbatim:
+
+> I'm fine with everything as a message if there are no caveats
+
+### Caveats of every orchestrator wake as a message (advisor, for the human)
+
+Checked against `orchestrator-supervision.md` section 5 (wake conditions, `wake.rs`). Context
+warnings are already messages (`sessions.rs`). None looks like a blocker; each has a fix:
+
+1. **Noise.** Wakes fire once per condition and are kept out of the human's counts; as messages
+   they need the same: one message per crossing (not per event), a `system` kind that
+   `unread_human_messages` and the human's to-dos skip.
+2. **State, not news.** Usage over 93%, a budget hold, "idle" are states that can be over by the
+   time a forwarded message is read. Each message says when it was true, and a later message
+   clears it ("budget hold ended").
+3. **One home daemon is one point of failure.** Today a dead track-web daemon doesn't stop
+   bridle's waiter, and vice versa. With one waiter on the home daemon: if the home daemon is
+   down the orchestrator hears nothing from any project (but its waiter fails, so it knows); and
+   a project's daemon being down can't be reported by that daemon, so the home daemon's outbox
+   reports a peer unreachable (P6) as a message.
+4. **Read on delivery** ([[read-on-delivery-can-lose-messages-marked-read-before-the-re-k8jn|k8jn]]):
+   wakes today move a cursor only when delivered, so a restart re-derives them. Messages marked
+   read on delivery can be lost the same way k8jn describes; the k8jn fix must cover them.
+5. **"Nobody is waiting" stays.** The waiter incident (no wake command running) is about the
+   waiter, not a message; it moves to the home daemon, per principal.
+
 ## The questions as asked (answered in "Decided: Q1-Q4" above)
 
 - **Q1. Daemons on the same machine too?** The human: "maybe not between daemons, but between
