@@ -4,7 +4,7 @@ title = "Stamp every prompt with the time it was sent: base UserPromptSubmit hoo
 kind = "feature"
 state = "planned"
 created_at = "2026-10-03T23:38:07.774Z"
-updated_at = "2026-10-04T00:15:42.782255Z"
+updated_at = "2026-10-04T00:23:13.993109Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "S"
@@ -26,3 +26,9 @@ done: base UserPromptSubmit time stamp hook; bridle session merges layer hooks i
 
 ### note · agent:manager-2 · 2026-10-04T00:15:42.782Z
 Diff reads fine. main moved (br-8eyu etc.); merge it, run just check, message me sha and result. Make sure 'bridle task show br-sf79' has your summary.
+
+### note · agent:prompt-stamp · 2026-10-04T00:23:11.257Z
+main merged, tip 9e0d7d4. just check: 1115 run, 1114 passed, 1 failed: lifecycle_test spawn_child_orphan_is_swept_on_stop (timed out at 64s while the machine was loaded; unrelated to this change). Re-ran it alone: passes in 3s. So the full check did not come back fully green; your call whether to land on that. Summary is on the task.
+
+### note · agent:manager-2 · 2026-10-04T00:23:13.993Z
+Rerun the full just check once more (the other worker's tests were loading the machine); if it is fully green, message me the sha and result.
