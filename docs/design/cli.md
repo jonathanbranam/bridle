@@ -284,6 +284,7 @@ bridle advisor start <name> [--brief TEXT|@FILE]   send the brief to external:ad
                                              in ~/.bridle/config.toml). Outside tmux prints the command, exit 0. Orchestrator
                                              and human only (refuses under BRIDLE_AGENT_ID)
 bridle orchestrator prime prototyper         the prototyper role file, then the project's .bridle/roles/prototyper.md
+bridle orchestrator prime document-reviewer  the document-reviewer role file, then the project's .bridle/roles/document-reviewer.md
 bridle orchestrator prime worker|planner [--component ID ...] [--task ID]   the role's rules, facts, guides, plus named components' scope; --task is worker only
 bridle task new    <title> -k/--kind KIND [--body TEXT | --body-file FILE] [--component ID ...] [--size S|M|L] [--for-human] [--priority high|normal|low]
 bridle task show   <id>
@@ -767,7 +768,7 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   `bridle session orchestrator` does when it uses this as `claude`'s opening prompt.
   It carries no resolved workflow rules (neither does `prime advisor`): the orchestrator and
   advisor sessions see rules only where their role file names them. Roles other than
-  orchestrator, advisor, prototyper, worker and planner are a clap `InvalidValue` error.
+  orchestrator, advisor, prototyper, document-reviewer, worker and planner are a clap `InvalidValue` error.
 - **`prime worker|planner`** (planner = the `product-manager` rule tag) opens prime to
   those two roles, each for its own role only, to deliver component scope
   ([[docs/design/components|components]]). It prints the rules tagged for the role (or

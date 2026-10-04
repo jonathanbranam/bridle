@@ -1468,6 +1468,7 @@ impl Default for Config {
         roles.insert("manager".to_string(), Role::manager_default());
         roles.insert("orchestrator".to_string(), Role::orchestrator_default());
         roles.insert("prototyper".to_string(), Role::worker_default());
+        roles.insert("document-reviewer".to_string(), Role::worker_default());
         Config {
             listen: "127.0.0.1:0".parse().expect("valid default listen addr"),
             listen_set: false,
@@ -2702,6 +2703,9 @@ fn role_preamble_suffix(role_name: &str) -> Option<&'static str> {
         "prototyper" => Some(
             "\nYou are a prototyper: build the prototype in your own worktree and branch, from the prompt's constraints only, and report back to whoever gave you the task.\n",
         ),
+        "document-reviewer" => Some(
+            "\nYou are a document-reviewer: answer the human's comments in the one document you were given, revise it when a comment asks, and commit each round.\n",
+        ),
         _ => None,
     }
 }
@@ -2741,8 +2745,9 @@ pub fn stable_system_prompt(
     }
     // The project's own prototype conventions (where prototypes live) are appended to the
     // shared role; a missing file is the normal case. Other roles don't read this dir here.
-    if role_name == "prototyper"
-        && let Ok(text) = std::fs::read_to_string(repo.join(".bridle/roles/prototyper.md"))
+    if matches!(role_name, "prototyper" | "document-reviewer")
+        && let Ok(text) =
+            std::fs::read_to_string(repo.join(format!(".bridle/roles/{role_name}.md")))
     {
         out.push('\n');
         out.push_str(&substitute_role_text(&text, branches, commands));

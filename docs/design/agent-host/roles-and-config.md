@@ -54,12 +54,15 @@ system_prompt     = "workflow/base/roles/manager.md"
 start_prompt      = "Check your inbox and tell the human you're ready."   # first message when spawned without one
 ```
 
-- **Built-in roles** are `worker`, `manager`, `orchestrator` and `prototyper`
+- **Built-in roles** are `worker`, `manager`, `orchestrator`, `prototyper` and `document-reviewer`
   ([[docs/design/roles-and-lifecycle|roles]]). The defaults are the values
   above; the orchestrator is like the manager without `Bash(git *)`; the `prototyper` starts from the
   worker's defaults (its role file, `workflow/base/roles/prototyper.md`, says to build only from the
   prototype prompt's constraints; a project's `.bridle/roles/prototyper.md` is appended to it, both in
-  the agent's system prompt and in `bridle prime prototyper`). None has a
+  the agent's system prompt and in `bridle prime prototyper`); the `document-reviewer` likewise starts
+  from the worker's defaults, with `workflow/base/roles/document-reviewer.md` (the comment format and a
+  review round for one document; append file `.bridle/roles/document-reviewer.md`; `bridle prime
+  document-reviewer`). None has a
   default `start_prompt` or `max_budget_usd`; the values
   above are examples. A role with no `system_prompt` uses
   `<workflow>/base/roles/<role>.md` when the project sets `workflow` and that file exists;
