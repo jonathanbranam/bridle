@@ -4,13 +4,14 @@ title = "The gateway runs detached and keeps itself current, like the daemon, on
 kind = "feature"
 state = "planned"
 created_at = "2026-10-04T21:27:39.949Z"
-updated_at = "2026-10-04T21:42:33.030508Z"
+updated_at = "2026-10-04T22:30:58.786166Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "external:aide",
 ]
 priority = "high"
+summary = "Spec first (27324c10, human-web-ui.md 'Running it detached, and staying current'), then built: 'bridle gateway --detach' (shared spawn_detached helper extracted from serve.rs; log ~/.bridle/gateway.log; waits for /api/v1/health; refuses a second by probing health at bind; needs a fixed port), new [gateway] enabled (default true; false = exit 0 without starting; existing configs unchanged), and the gateway re-executes itself when its own binary file changes (30s check). Decision: self-watch rather than a daemon upgrade hook, so it works on client machines with no daemon and with many daemons per machine; rejected alternative recorded in the spec. Test-only env BRIDLE_GATEWAY_BINARY_CHECK_SECS. Tests: detach/log/health/second-refused, disabled, re-exec with a fake binary, binary_changed unit, enabled default. cli.md and CHANGELOG updated. Not done: no daemon change; 'bridle gateway install' unchanged."
 +++
 
 original id: bek3
@@ -26,3 +27,9 @@ priority: normal -> high
 
 ### note · external:aide · 2026-10-04T21:42:33.030Z
 watching the task
+
+### note · agent:gateway-detach · 2026-10-04T22:30:55.669Z
+done: gateway --detach, [gateway] enabled, self re-exec on binary change, spec first; 1e438ee6
+
+### note · agent:gateway-detach · 2026-10-04T22:30:58.786Z
+Restart-on-upgrade is done as gateway self-watch (no daemon hook); see the spec section in human-web-ui.md. just check green: 1188 tests, main merged.
