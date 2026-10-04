@@ -473,7 +473,8 @@ pub async fn prune(repo: &Path) -> Result<(), WorktreeError> {
 /// creation commit comes from the branch's reflog; with no reflog we can't tell
 /// and fall back to ancestry alone). A branch landed by
 /// `git merge --squash` isn't an ancestor, so a `Branch: <branch>` trailer on a
-/// commit reachable from `HEAD` (the manager's landing commit) counts too.
+/// commit reachable from `HEAD` (the manager's landing commit) counts too,
+/// unless the branch has commits newer than that landing (a reused branch).
 pub async fn is_merged(repo: &Path, branch: &str) -> Result<bool, WorktreeError> {
     let exists = branch_exists(repo, branch).await?;
     if !exists {
@@ -494,14 +495,25 @@ pub async fn is_merged(repo: &Path, branch: &str) -> Result<bool, WorktreeError>
         &[
             "log",
             "-1",
-            "--format=%H",
+            "--format=%ct",
             "--fixed-strings",
             &format!("--grep=Branch: {branch}"),
             "HEAD",
         ],
     )
     .await?;
-    Ok(!landed.trim().is_empty())
+    let Ok(landed_at) = landed.trim().parse::<i64>() else {
+        return Ok(false);
+    };
+    // A reused branch keeps its old trailer on HEAD; commits made after that
+    // landing are unlanded work.
+    let ahead = run_git(
+        repo,
+        &["log", "--format=%ct", &format!("HEAD..refs/heads/{branch}")],
+    )
+    .await?;
+    let newest = ahead.lines().filter_map(|l| l.parse::<i64>().ok()).max();
+    Ok(newest.is_none_or(|t| t <= landed_at))
 }
 
 /// False only when the reflog shows `branch` still at the commit it was created on.
@@ -879,6 +891,23 @@ mod tests {
             .success()
         );
         assert!(is_merged(&repo, "bridle/w2").await.expect("squash-landed"));
+
+        // Reusing the branch after the landing: the old trailer must not hide the new commit.
+        let later = Command::new("git")
+            .arg("-C")
+            .arg(&wt_path)
+            .args(["-c", "user.email=t@e.com", "-c", "user.name=T"])
+            .args(["commit", "--allow-empty", "-q", "-m", "more work"])
+            .env("GIT_COMMITTER_DATE", "@4102444800 +0000")
+            .output()
+            .await
+            .expect("later commit");
+        assert!(later.status.success());
+        assert!(
+            !is_merged(&repo, "bridle/w2")
+                .await
+                .expect("reused after landing")
+        );
 
         // An rm that already removed the directory can still finish.
         std::fs::remove_dir_all(&wt_path).expect("rm dir");

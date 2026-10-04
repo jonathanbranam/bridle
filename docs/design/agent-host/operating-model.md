@@ -204,7 +204,8 @@ the clone:
    body, `Task:` and `Branch:` trailers) in `<workspace>/integration`, runs `[integration] check` there (skipped on a fast-forward of an unchanged base), and only then moves the
    integration branch, so a red or conflicting merge never lands. The branch is found from the
    task's claimant, or `--branch`. The integration branch reads as one commit per task (sq4m, tr7k); the
-   `Branch:` trailer is how the landed branch is recognised as merged.
+   `Branch:` trailer is how the landed branch is recognised as merged, unless the branch has commits
+   newer than the landing (a reused branch), which stay unmerged (x3xk).
 4. `git push origin <integration>`, straight after the merge, so the remote
    never lags the clone. `land` never pushes: only the merger pushes, and only the integration
    branch and (trunk pattern) release tags; workers never push. The release
