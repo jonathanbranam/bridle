@@ -18,7 +18,10 @@ fn repo_root() -> PathBuf {
 }
 
 fn git(dir: &Path, args: &[&str]) -> Output {
+    // Ignore the host's git config: its template dir installs hooks into `git init`.
     Command::new("git")
+        .env("GIT_CONFIG_GLOBAL", "/dev/null")
+        .env("GIT_CONFIG_NOSYSTEM", "1")
         .arg("-C")
         .arg(dir)
         .args(["-c", "user.name=t", "-c", "user.email=t@t"])

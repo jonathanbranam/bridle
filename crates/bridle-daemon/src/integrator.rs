@@ -97,7 +97,9 @@ pub async fn land(i: &LandInput<'_>) -> Result<Landed, LandError> {
     let wt = prepare_worktree(i, &old).await?;
     // One single-parent commit per task; the `Branch:` trailer is how `is_merged` recognises it.
     let msg = commit_message(i);
-    let squashed = match run_git(&wt, &["merge", "--squash", i.branch]).await {
+    // `merge.ff=only` in a user's config would make a squash of a moved base fail.
+    let squashed = match run_git(&wt, &["-c", "merge.ff=true", "merge", "--squash", i.branch]).await
+    {
         Ok(_) => run_git(&wt, &["commit", "-q", "-m", &msg]).await.map(drop),
         Err(e) => Err(e),
     };

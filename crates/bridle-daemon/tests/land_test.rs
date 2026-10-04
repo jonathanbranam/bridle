@@ -9,6 +9,8 @@ use support::{TestDaemon, start_daemon};
 
 fn git(dir: &std::path::Path, args: &[&str]) -> String {
     let out = std::process::Command::new("git")
+        .env("GIT_CONFIG_GLOBAL", "/dev/null")
+        .env("GIT_CONFIG_NOSYSTEM", "1")
         .arg("-C")
         .arg(dir)
         .args(args)
