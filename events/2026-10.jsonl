@@ -639,3 +639,4 @@
 {"actor":"human","at":"2026-10-04T21:35:43.904Z","from":"","task":"br-bnhn","to":"pending"}
 {"actor":"external:orchestrator","at":"2026-10-04T21:35:43.960683Z","from":"pending","task":"br-bnhn","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-04T21:36:03.473746Z","from":"open","task":"br-bnhn","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-04T21:36:05.216673Z","queue":"reprioritized"}
