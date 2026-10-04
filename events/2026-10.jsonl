@@ -490,3 +490,4 @@
 {"actor":"agent:pm-1","at":"2026-10-04T03:11:35.510345Z","from":"open","task":"br-tgdn","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-04T03:11:35.536110Z","queue":"reprioritized"}
 {"actor":"agent:manager-2","at":"2026-10-04T03:14:41.304861Z","from":"planned","task":"br-e35h","to":"integrated"}
+{"actor":"agent:manager-2","at":"2026-10-04T03:28:47.899597Z","from":"planned","task":"br-tgdn","to":"integrated"}
