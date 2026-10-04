@@ -3,13 +3,19 @@ default:
     @just --list
 
 # Format, lint, test: what CI runs.
-check: fmt-check lint test
+check: fmt-check lint specs-check test
 
 fmt:
     cargo fmt --all
 
 fmt-check:
     cargo fmt --all -- --check
+
+# Bridle's own specs (design/specs/): well formed, with an id on everything, and every
+# executable scenario's id named in a test under crates/.
+specs-check:
+    cargo run -q -p bridle -- workflow spec check --require-ids
+    cargo run -q -p bridle -- workflow spec coverage --tests crates --require-all
 
 lint:
     cargo clippy --workspace --all-targets -- -D warnings

@@ -31,7 +31,13 @@ this from `discovery::resolve_endpoint` (after `--url` and `$BRIDLE_URL`); the r
 `advisor`, `prime`, `ticket`, `launchd`, `systemd`) call `project::resolve` (`crates/bridle/src/project.rs`).
 A command that acts on no project (or only on the cwd's repo) says so.
 
-Enforced by tests in `project.rs`: every top-level command in the clap tree must be listed in
+The rule is bridle's first spec, `design/specs/project-resolution.md`. Its executable scenarios
+(`crates/bridle/tests/project_resolution_test.rs`) read every command and subcommand from
+`--help` and run each from a temp workspace, with the flag, with the environment variable and
+outside any workspace, checking which project it acted on. A new command must be classified in
+that test's `CLASSES` table. `just check` runs `spec check` and `spec coverage` on bridle's own specs.
+
+Also enforced by tests in `project.rs`: every top-level command in the clap tree must be listed in
 its `SCOPES` table as daemon-backed, resolver-backed or no-project with a reason (a new command
 fails until its author chooses), and no source file may hard-code a project name as a fallback.
 `tests/session_test.rs` covers the behaviour: `bridle session` run from another project's

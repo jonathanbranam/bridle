@@ -1,6 +1,6 @@
 # Specs to tests: making Gherkin disappear
 
-> **Status (checked 2026-10-03):** Built, not wired in: the Rust parser, `bridle spec export --format gherkin|json [--task|--scenario]`, `bridle spec coverage`, the pytest adapter (`workflow/packs/python/adapters/bridle_specs.py`) and the vitest one (`workflow/packs/typescript/adapters/vitest-bridle/`), both vendored by hand; no onboarded project uses them yet (track-web, bridle-ui and data-contracts have no `design/specs/`) · Planned: `bridle test --task` as its own command (`spec export --task` covers the selection)
+> **Status (checked 2026-10-03):** Built, not wired in: the Rust parser, `bridle spec export --format gherkin|json [--task|--scenario]`, `bridle spec coverage`, the pytest adapter (`workflow/packs/python/adapters/bridle_specs.py`) and the vitest one (`workflow/packs/typescript/adapters/vitest-bridle/`), both vendored by hand; bridle uses them for its own specs (`design/specs/`, checked in `just check`); no other onboarded project does yet (track-web, bridle-ui and data-contracts have no `design/specs/`) · Planned: `bridle test --task` as its own command (`spec export --task` covers the selection)
 
 The current pipeline commits a generated `.feature` beside every `spec.md`, so
 it needs a staleness check (`check-specs.py`), strict input validation, output

@@ -1,6 +1,6 @@
 # The spec flow, start to finish
 
-> **Status (checked 2026-10-03):** Built, not wired in: every command on this page (`bridle spec`, `goals`, `arch`, `explore`), `spec coverage`, `spec export --task`, `goals propose` and `arch propose` (these two call the daemon), and the pytest and vitest adapters; no onboarded project uses them yet (track-web, bridle-ui and data-contracts have no `design/specs/`) · Planned: `explore adopt`, converting active OpenSpec changes to tasks
+> **Status (checked 2026-10-03):** Built, not wired in: every command on this page (`bridle spec`, `goals`, `arch`, `explore`), `spec coverage`, `spec export --task`, `goals propose` and `arch propose` (these two call the daemon), and the pytest and vitest adapters; bridle uses them for its own specs (`design/specs/`, checked in `just check`); no other onboarded project does yet (track-web, bridle-ui and data-contracts have no `design/specs/`) · Planned: `explore adopt`, converting active OpenSpec changes to tasks
 
 One page for a project adopting bridle's spec tooling. Every command here is
 built, local, and makes no daemon call, except `goals propose` and `arch propose`. Details live in

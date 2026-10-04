@@ -1,6 +1,6 @@
 # Specs: keep the model, replace the lifecycle
 
-> **Status (checked 2026-10-03):** Built, not wired in: `bridle spec check|id|import openspec` (local, `bridle-spec` parser, `.ids` ledger); no onboarded project uses them yet (track-web, bridle-ui and data-contracts have no `design/specs/`), and no role or rule tells agents to edit specs in place · Planned: the human plan gate for `protected` requirements (the marker is parsed; no gate exists), converting active OpenSpec changes to tasks
+> **Status (checked 2026-10-03):** Built, not wired in: `bridle spec check|id|import openspec` (local, `bridle-spec` parser, `.ids` ledger); bridle uses them for its own specs (`design/specs/`, checked in `just check`); no other onboarded project does yet (track-web, bridle-ui and data-contracts have no `design/specs/`), and no role or rule tells agents to edit specs in place · Planned: the human plan gate for `protected` requirements (the marker is parsed; no gate exists), converting active OpenSpec changes to tasks
 
 See [[docs/design/spec-flow|the spec flow]] for the whole path from adoption to CI.
 
