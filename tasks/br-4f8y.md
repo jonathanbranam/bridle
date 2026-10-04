@@ -4,7 +4,7 @@ title = "agent rm fails when git no longer knows the agent's worktree (pruned re
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-04T13:39:52.020Z"
-updated_at = "2026-10-04T16:35:15.641600Z"
+updated_at = "2026-10-04T16:38:15.127793Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 branch = "bridle/rm-pruned-wt"
@@ -22,3 +22,6 @@ done: agent rm handles pruned worktree records and missing branches; just check 
 
 ### note · agent:manager-2 · 2026-10-04T16:35:15.641Z
 integrated: 7d707f34e67e294c6b707392d315007fbdb2efa7 (branch bridle/rm-pruned-wt)
+
+### note · agent:manager-2 · 2026-10-04T16:38:15.127Z
+cleanup: removed agent rm-pruned-wt, branch bridle/rm-pruned-wt
