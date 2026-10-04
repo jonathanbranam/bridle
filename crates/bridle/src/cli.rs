@@ -809,6 +809,16 @@ pub struct GatewayArgs {
 pub enum GatewayCommand {
     /// Read a password from stdin and print its argon2 hash for `[gateway] password_hash`.
     HashPassword,
+    /// Write a launchd plist (macOS) or systemd user unit (Linux) that runs the gateway detached
+    /// and restarts it on a crash; prints the commands to load it, never runs them.
+    Install(GatewayInstallArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct GatewayInstallArgs {
+    /// Overwrite an existing plist or unit.
+    #[arg(long)]
+    pub force: bool,
 }
 
 #[derive(Debug, Args)]

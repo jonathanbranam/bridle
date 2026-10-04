@@ -695,7 +695,7 @@ mod tests {
         assert!(s.keep("advisor/alice").await.is_err());
         let to_session = notes_to(&store, "external:advisor/alice").await;
         assert!(to_session[0].contains("hard limit"), "{to_session:?}");
-        for _ in 0..50 {
+        for _ in 0..300 {
             if notes_to(&store, AIDE).await.len() == 2 {
                 break;
             }

@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The base `UserPromptSubmit` hook (br-sf79, v0.5.0) that stamped every agent's and session's prompts with the time sent is removed; projects that want the timestamp can add `hooks/UserPromptSubmit.json` in their own layer (br-b795).
 
 ### Added
+- `bridle gateway install` writes a launchd plist or systemd user unit that runs the gateway detached, starts it at login/boot and restarts it after a crash (never runs launchctl/systemctl).
 - Interactive sessions survive a daemon restart: the registry is kept in the daemon's own `sessions.json` (beside its database, one per daemon) and reloaded at start; the tick drops entries whose pid is gone or reused (br-e35h).
 - `bridle review now <path> [--resend]` (and `POST /api/v1/projects/{project}/review` for the UI's button) sends a document's pending comment threads to its agent at once; whenever bridle sends threads it marks them ` · sent YYYY-MM-DD HH:MM` in the file, and marked threads aren't sent again unless resent (br-qttb, x8jt).
 - Documents under review: `bridle review add|remove|list <path>`; when the human's comments in one have been still for 7 minutes the daemon starts or resumes that document's `document-reviewer` agent with them as one batch, capped at 3 running and stopped after 4 idle hours (`[review]` in config) (br-aj9d, x8jt).

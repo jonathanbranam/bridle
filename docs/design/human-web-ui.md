@@ -148,7 +148,7 @@ planned.
    API version, warn or refuse. Tests: serves a file, a missing folder, a mismatched version.
 9. **Multi-machine** (after br-8b98 lands): per-machine human tokens for remote daemons, remote
    actions. Tests: a remote fake daemon with its own token.
-10. **Service install** (launchd/systemd unit, `bridle gateway` beside the daemons' install).
+10. **Service install** (built): `bridle gateway install` writes the launchd plist / systemd user unit (`dev.bridle.gateway`, `bridle-gateway.service`), restart on failure only, log `~/.bridle/gateway.log`; loading it is the operator's step.
 
 `bridle-ui` itself (and an install script) is a separate project, not part of these tasks.
 

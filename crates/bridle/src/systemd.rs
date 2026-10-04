@@ -102,7 +102,7 @@ fn owned_here(project: Option<&str>, machines: &MachineMap) -> Result<Vec<String
 
 /// One `ExecStart`/`Environment` word: quoted when it holds anything systemd would split or
 /// expand (`%` is a specifier, `$` an env reference).
-fn quote(s: &str) -> String {
+pub(crate) fn quote(s: &str) -> String {
     let plain = !s.is_empty()
         && s.chars()
             .all(|c| c.is_ascii_alphanumeric() || "/._-:=+,@".contains(c));
