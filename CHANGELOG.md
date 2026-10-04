@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Landing no longer refuses a checked-out integration branch for uncommitted edits to files the landing doesn't touch; it refuses only on an overlap and names the files (br-tgdn).
+- The base `UserPromptSubmit` hook (br-sf79, v0.5.0) that stamped every agent's and session's prompts with the time sent is removed; projects that want the timestamp can add `hooks/UserPromptSubmit.json` in their own layer (br-b795).
 
 ### Added
 - Interactive sessions survive a daemon restart: the registry is kept in the daemon's own `sessions.json` (beside its database, one per daemon) and reloaded at start; the tick drops entries whose pid is gone or reused (br-e35h).

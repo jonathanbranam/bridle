@@ -78,8 +78,7 @@ fn session_name(role: &str, name: Option<&str>, project: &str, suffix: &str) -> 
 
 /// Merges the workflow layers' hooks (the spawn path's overlay, br-01a4) into a session's
 /// `--settings` JSON: per event the arrays concatenate, bridle's own first, so a layer can't
-/// drop the focus gate or the reply hook. This is also how the base `UserPromptSubmit` time
-/// stamp reaches the sessions where the human types.
+/// drop the focus gate or the reply hook.
 fn with_layer_hooks(
     settings: &str,
     layer_hooks: &std::collections::BTreeMap<String, serde_json::Value>,
