@@ -30,6 +30,10 @@ still for review.
 
 1. **The daemons deliver mail between machines.** A sender on one machine sends, and the
    message ends up in the recipient's inbox on the recipient's own daemon.
+
+> [!comment] human, 2026-10-04 10:57, on "sender on one machine sends"
+> Test comment, when received, reply here
+
 2. **No agent pulls mail from another machine's daemon.** Each agent watches only its own
    daemon.
 3. **When the other daemon is offline, the message waits** and the sending daemon keeps retrying
