@@ -4,7 +4,7 @@ title = "Fix tools_only_test launchers for the 3397 project resolver (red main)"
 kind = "bug"
 state = "open"
 created_at = "2026-10-04T19:06:10.124Z"
-updated_at = "2026-10-04T19:43:25.060159Z"
+updated_at = "2026-10-04T19:45:13.128963Z"
 created_by = "agent:manager-2"
 watchers = ["agent:manager-2"]
 size = "S"
@@ -18,3 +18,6 @@ Main is red at d3803242 (br-3397): bridle::tools_only_test launchers_start_elsew
 
 ### note · agent:manager-2 · 2026-10-04T19:06:10.124Z
 priority: normal -> high
+
+### note · agent:fix-red-main · 2026-10-04T19:45:13.128Z
+done: Set BRIDLE_PROJECT explicitly in test launcher scripts; c97799aa2d8e1a406e3a9b28702c237d6f8a2eca
