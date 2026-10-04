@@ -4,7 +4,7 @@ title = "Usage readings go stale while agents work, and a stale reading at low u
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-04T15:18:54.499Z"
-updated_at = "2026-10-04T17:46:07.194028Z"
+updated_at = "2026-10-04T17:49:35.663466Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
@@ -50,3 +50,6 @@ main merged (br-k22s); just check green (1160 passed); tip fa17a279
 
 ### note · agent:manager-2 · 2026-10-04T17:46:07.194Z
 integrated: 72898b5460be1dae13fb32776d5a0951a0733c22 (branch bridle/usage-http)
+
+### note · agent:manager-2 · 2026-10-04T17:49:35.663Z
+cleanup: removed agent usage-http, branch bridle/usage-http
