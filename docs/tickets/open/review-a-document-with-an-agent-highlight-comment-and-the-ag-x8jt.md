@@ -330,3 +330,36 @@ Approved slices, in order, each usable alone:
 Slice 1 br-rp53, slice 2 br-aj9d. Slice 3 is split by repo: br-5paw (gateway reads, writes and
 commits one document file) and ui-acf0 in bridle-ui (the document view, built on br-5paw). The old
 br-2ec0 was dropped.
+
+## Review now, from the CLI and the UI; sent comments are marked (the human, 2026-10-04)
+
+The human, verbatim (via advisor doc-review):
+
+> Add a bridle command to perform the review on a document immediately and a button in the UI
+> also to request the review.
+>
+> Comments that have been sent for review should be marked as such and not resent if the button
+> is pressed again, unless requested.
+
+- **Review now:** a `bridle` command and a UI button send a document's pending comments to its
+  agent at once, skipping slice 2's quiet period.
+- **Sent comments are marked** as sent, and pressing the button (or running the command) again
+  doesn't resend them, unless the human asks for a resend.
+
+The human, verbatim (2026-10-04):
+
+> Comment threads probably need a UID as well but we could wait on that
+
+- **Thread IDs: deferred.** Threads have no ID yet; they're found by position and quoted words.
+  An ID would key "sent" and "read" state and UI links reliably once wanted.
+
+**Decided (the human, 2026-10-04): A, the sent mark lives in the file.** The human, verbatim: "A".
+
+- When bridle sends a batch (after the quiet period, or on review now), it appends `· sent HH:MM`
+  to the line of each thread's newest human entry: the `[!comment]` header, or the human's latest
+  reply line. Plain text, visible in any editor, and a restart doesn't resend.
+- Review now and the quiet-period send both skip entries already marked sent; `--resend` (and a
+  resend option in the UI) sends them again.
+- To build: `bridle review now <path> [--resend]` and the mark (bridle: daemon `doc_watch.rs`,
+  CLI, a gateway route the UI button calls, docs/design daemon.md and cli.md), and the button in
+  bridle-ui's document view.
