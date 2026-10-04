@@ -8,7 +8,7 @@ changes: []
 specs: []
 needs: []
 see: [essy, v8kn, hvxk, 6yb4, k4wq, yyzm, yj38, r9vh]
-tasks: [br-2ec0]
+tasks: [br-rp53, br-aj9d, br-5paw, ui-acf0]
 ---
 
 ## The ask
@@ -324,3 +324,9 @@ Approved slices, in order, each usable alone:
 3. **Document view in the web UI** (bridle-gateway + bridle-ui): open a document, comments to the
    side, highlight to add a comment, tags marked read on opening the thread. Needs a narrow piece
    of v8kn: the gateway reads and writes one document file and commits it.
+
+## Filed (orchestrator, 2026-10-04)
+
+Slice 1 br-rp53, slice 2 br-aj9d. Slice 3 is split by repo: br-5paw (gateway reads, writes and
+commits one document file) and ui-acf0 in bridle-ui (the document view, built on br-5paw). The old
+br-2ec0 was dropped.
