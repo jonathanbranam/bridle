@@ -4,10 +4,11 @@ title = "statusline_test: no-rate-limits test races the startup get_usage poll (
 kind = "bug"
 state = "planned"
 created_at = "2026-10-04T14:36:31.255Z"
-updated_at = "2026-10-04T16:36:35.741462Z"
+updated_at = "2026-10-04T17:25:06.780568Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 priority = "high"
+summary = "Fixed flaky test statusline_report_with_no_rate_limits_still_records_usage by preventing the startup get_usage poll from populating rate_limits before the test assertion. Solution: use long poll intervals (3600s) to delay the next poll, and report without waiting for the startup poll to complete, allowing the assertion to check the empty rate_limits immediately after reporting."
 +++
 
 original id: k22s
@@ -17,3 +18,6 @@ Fix the flaky test statusline_report_with_no_rate_limits_still_records_usage in 
 
 ### note · external:orchestrator · 2026-10-04T14:36:38.018Z
 priority: normal -> high
+
+### note · agent:statusline-flake · 2026-10-04T17:25:06.780Z
+done: Fixed flaky test by preventing get_usage poll from overwriting empty rate_limits; ran test 20x with no failures; just check passes; 65da00b8
