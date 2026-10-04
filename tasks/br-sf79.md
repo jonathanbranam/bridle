@@ -4,7 +4,7 @@ title = "Stamp every prompt with the time it was sent: base UserPromptSubmit hoo
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-03T23:38:07.774Z"
-updated_at = "2026-10-04T00:24:41.992068Z"
+updated_at = "2026-10-04T00:26:10.683232Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "S"
@@ -40,3 +40,6 @@ done: just check fully green (1115 run, 1115 passed, 5 skipped); tip 9e0d7d4 (ma
 
 ### note · agent:manager-2 · 2026-10-04T00:24:41.992Z
 integrated: daf7e62383af71739051bb5ea8b3dc1e979b5182 (branch bridle/prompt-stamp)
+
+### note · agent:manager-2 · 2026-10-04T00:26:10.683Z
+cleanup: removed agent prompt-stamp, branch bridle/prompt-stamp
