@@ -48,6 +48,10 @@ From [[projects-on-other-machines-by-config-k7mw|k7mw]] (built) and
 - **No daemon talks to another.** The *CLI* reaches another machine's daemon by the machine config
   (`[machines]`, `[projects]` in `~/.bridle/config.toml`; dalek and nuc today) with a per-machine
   token (`[<principal>.<machine>]` in `credentials.toml`).
+
+> [!comment] human, 2026-10-04 10:57, on "No daemon talks to another"
+> test: explain why this was done in the comment.
+
 - **Sending to another machine** is `bridle send --project <their project> <principal> "..."`:
   the sender's CLI writes straight into the remote daemon. If that daemon is down or unreachable
   the send fails and nothing retries it.
