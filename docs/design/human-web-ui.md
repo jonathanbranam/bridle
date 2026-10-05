@@ -69,7 +69,14 @@ each list high priority then oldest. Actions: check off a to-do, answer a task q
 a to-do with a reason. **Retracted items are hidden** from the lists; the withdrawal and its
 reason stay on the record as the audit trail (the asker withdraws, "To-do withdrawn by ...").
 Out for now: questions sent as messages to `human` (they can't be retracted) and the inbox; no
-events stream and no agent control. The gateway may also expose **read-only views** of tasks
+events stream and no agent control, with one exception (rk7k): the human may **send a message to
+one agent or the orchestrator** of a project (`POST .../messages`, recipients from
+`GET .../recipients`: that project's running agents plus the orchestrator). It is sent with the
+human's token through the daemon's ordinary send endpoint, so the sender is `human` and the
+message is in the audit trail; an optional task id threads it on that task. Text is non-empty and
+capped, and any other recipient is refused (422). Still no start, stop, kill or events: a stolen
+session can message, not run work directly. One project per request; a cross-project picker is
+open. The gateway may also expose **read-only views** of tasks
 (s6cj, below), and of agents and status (br-7sd9); a read changes nothing. It exposes only the v1
 actions as writes and refuses the rest, so a stolen session can answer and check off, not run work.
 

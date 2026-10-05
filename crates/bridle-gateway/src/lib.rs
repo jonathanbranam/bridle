@@ -10,8 +10,9 @@ pub mod documents;
 pub mod interactions;
 pub mod intervals;
 pub mod items;
+pub mod messages;
 pub mod report;
-pub mod system;
+mod system;
 pub mod tasks;
 pub mod types;
 pub mod ui;
@@ -63,6 +64,11 @@ pub fn router(login: Option<Login>, ui: UiConfig, interactions: report::Interact
         .route("/projects/{project}/review", post(actions::review_route))
         .route("/projects/{project}/system", get(system::system_route))
         .route("/projects/{project}/agents", get(system::agents_route))
+        .route(
+            "/projects/{project}/recipients",
+            get(messages::recipients_route),
+        )
+        .route("/projects/{project}/messages", post(messages::send_route))
         .route("/projects/{project}/tasks", get(tasks::list_route))
         .route("/projects/{project}/tasks/{id}", get(tasks::detail_route))
         .route(

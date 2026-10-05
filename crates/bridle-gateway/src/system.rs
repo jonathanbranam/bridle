@@ -163,7 +163,7 @@ fn system_status(s: Status) -> SystemStatus {
     }
 }
 
-fn api_error(e: ClientError) -> ActionError {
+pub(crate) fn api_error(e: ClientError) -> ActionError {
     match e {
         ClientError::Api {
             status, message, ..

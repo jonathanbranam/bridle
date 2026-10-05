@@ -66,6 +66,9 @@ pub enum ActionError {
     NoToken { project: String, reason: String },
     #[error("'{0}' needs a non-empty text")]
     MissingText(&'static str),
+    /// The request names something this project doesn't have, or is too long.
+    #[error("{0}")]
+    Invalid(String),
     #[error("{0}")]
     Daemon(String),
     /// The daemon refused: its status and message pass through.
@@ -78,6 +81,7 @@ impl IntoResponse for ActionError {
         let status = match &self {
             Self::UnknownAction(_) | Self::UnknownProject(_) => StatusCode::NOT_FOUND,
             Self::MissingText(_) => StatusCode::BAD_REQUEST,
+            Self::Invalid(_) => StatusCode::UNPROCESSABLE_ENTITY,
             Self::NotAvailable(_) | Self::NoToken { .. } => StatusCode::SERVICE_UNAVAILABLE,
             Self::Daemon(_) => StatusCode::BAD_GATEWAY,
             Self::Refused { status, .. } => {

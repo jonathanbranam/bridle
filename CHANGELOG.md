@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- Gateway: `POST /api/v1/projects/{project}/messages` sends a message from the human to one running agent or the orchestrator (optionally threaded on a task), and `GET .../recipients` lists who can be sent to; the one agent-facing write, for the UI's "Send to an agent" button.
 - The gateway's `links/resolve` also resolves a bare ticket ID, or a task ID whose id is a ticket's, to the ticket file (br-a3yd).
 - Gateway: read-only `GET /api/v1/projects/{project}/system` (the daemon's status; `reachable: false` when it is down) and `.../agents` (running and stopped, with the task each holds) for the UI's System page; secrets and machine paths are left out.
 - Gateway: read-only `GET /api/v1/projects/{project}/tasks` (open, closed or all, with who holds each) and `.../tasks/{id}` (body, thread, watchers, branch, blocks and blocked-by) for the UI's Tasks page.
