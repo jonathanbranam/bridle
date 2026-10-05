@@ -4,10 +4,11 @@ title = "Flaky on Linux CI: queue_nudge_test a_burst_is_one_message_after_it_set
 kind = "bug"
 state = "planned"
 created_at = "2026-10-05T02:59:19.142Z"
-updated_at = "2026-10-05T02:59:42.819245Z"
+updated_at = "2026-10-05T03:45:47.081718Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 priority = "high"
+summary = "Cause: test timing, not a daemon race (queue_nudge.rs trailing-edge debounce is correct). The burst test needed the three requests to land inside a 1s wait; on a stalled ubuntu runner the span exceeded 1s so the first sleeper fired, giving 2 nudges. Fix: the burst test uses a 5s debounce (100ms gaps, wait debounce+3s). Not reproduced locally; 50x loop clean, just check green (1191 tests). spawn_child_orphan_is_swept_on_stop left alone (no shared cause found). No docs or CHANGELOG needed."
 +++
 
 original id: tr22
@@ -27,3 +28,6 @@ priority: normal -> high
 
 ### note · external:orchestrator · 2026-10-05T02:59:23.621Z
 Critical (orchestrator): a CI-breaking flake on main; the human, 2026-10-03: anything that breaks CI on main, a flaky test included, is critical. Readied by orchestrator.
+
+### note · agent:nudge-flake · 2026-10-05T03:45:47.081Z
+done: flake was test timing, not a daemon race (debounce code is correct). The burst test needed 3 requests inside a 1s wait, and a stalled runner exceeded it. The burst test now uses a 5s debounce. just check exit 0, 1191 tests passed; nudge test 50x clean (I could not reproduce the failure locally, so the 50x run only shows no regression). Main already merged. spawn_child_orphan left alone. Commit e8eb601b
