@@ -709,3 +709,4 @@
 {"actor":"external:orchestrator","at":"2026-10-05T00:28:47.987236Z","from":"pending","task":"br-dahs","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-05T00:28:49.444152Z","from":"open","task":"br-dahs","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-05T00:28:51.335244Z","queue":"reprioritized"}
+{"actor":"human","at":"2026-10-05T00:32:36.447Z","from":"","task":"br-ytqu","to":"pending"}
