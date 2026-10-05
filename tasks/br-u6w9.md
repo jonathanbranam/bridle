@@ -2,9 +2,9 @@
 id = "br-u6w9"
 title = "Human interaction time: daemon serves the prompt log; gateway collects across machines and reports (u6w9)"
 kind = "feature"
-state = "open"
+state = "pending"
 created_at = "2026-10-03T21:01:56.091Z"
-updated_at = "2026-10-03T21:03:12.164623Z"
+updated_at = "2026-10-05T15:24:32.211937Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
 +++
@@ -18,3 +18,6 @@ Tests: interval rules (cap, tail, union, concurrency) with fixed fixtures; dedup
 
 ### note · agent:pm-1 · 2026-10-03T21:03:12.164Z
 Split into br-bhcp (a: daemon endpoint + ts-rs types, lands first), br-25nn (b: gateway collect/store/intervals), br-59vt (c: handlers). Chained by dependency edges; queued as tiers 1-3, ahead of everything else. Human approved building today.
+
+### note · system · 2026-10-05T15:24:32.205Z
+open 4h, never planned: back to pending. Ready it again once someone will plan it.
