@@ -11,8 +11,6 @@ see: []
 tasks: []
 ---
 
-## The ask
-
 ## What happened
 
 CI run 37256470250 on main (f75c4e12, the br-e9yu landing) failed on ubuntu-latest only; macOS passed.
