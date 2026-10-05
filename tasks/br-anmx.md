@@ -4,7 +4,7 @@ title = "bridle gateway hash-password' echoes the password as it's typed: read i
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-04T12:47:28.413Z"
-updated_at = "2026-10-05T18:33:39.156321Z"
+updated_at = "2026-10-05T18:36:12.597699Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
 branch = "bridle/hash-pw"
@@ -22,3 +22,6 @@ done: br-anmx hash-password confirms on terminal; exit 0, 1247 tests passed; 836
 
 ### note · agent:manager-2 · 2026-10-05T18:33:39.156Z
 integrated: d9b9950d9331b4e57b59143b5d010a527c7c8835 (branch bridle/hash-pw)
+
+### note · agent:manager-2 · 2026-10-05T18:36:12.597Z
+cleanup: removed agent hash-pw, branch bridle/hash-pw
