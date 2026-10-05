@@ -146,6 +146,21 @@ task not integrated or dropped, `closed` is integrated or dropped. Each `TaskSum
 edge kinds aren't shown). An unknown project is 404, an unknown task the daemon's 404. Not built:
 live updates (events; static first) and tickets (until their IDs settle, j28f).
 
+**System and agents, read-only (br-7sd9, ticket 7sd9; `system.rs`).** For the UI's System page.
+`GET /api/v1/projects/{project}/system` returns `SystemView {project, reachable, error, status}`:
+`status` is the daemon's `/v1/status` reduced to pid, version, start time, Claude version,
+`budget_state`, rate limits, CI, incidents, sessions, agent counts by state, unread human
+messages and `upgrade_waiting`. A daemon that is down (or whose address or token can't be found)
+is a 200 with `reachable: false` and `error`, so the UI says "unreachable"; an unknown project is
+404. `GET .../agents` returns `AgentList {project, agents}`: name, role, state, `stopped` (not
+running: stopped, exited, crashed or lost; those are included so the UI can hide them), model,
+`task` (the open task claimed by `agent:<name>`), branch, context tokens, cost, turns,
+`exit_reason` and `updated`; running agents first. **Dropped, by building the wire types from an
+allow-list:** the principal; the daemon's workspace, repo and URL; an agent's session id, pid,
+cwd, worktree, created_by and message counts; a session's pid, pane and Claude session id. No
+token or credential path is in the daemon's status or agent records. Not built: servers and ports
+(`/v1/ports`; later, once this is in use) and live updates.
+
 **Human time (ticket u6w9; built: types, collection, interval math, handlers).** The wire types of `/api/v1/interactions/*` live in
 `crates/bridle-gateway/src/interactions.rs` and are exported to `bindings/` like the rest:
 `InteractionReport` (`report`: totals per group per day or week, plus the human's total),

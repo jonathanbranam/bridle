@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- Gateway: read-only `GET /api/v1/projects/{project}/system` (the daemon's status; `reachable: false` when it is down) and `.../agents` (running and stopped, with the task each holds) for the UI's System page; secrets and machine paths are left out.
 - Gateway: read-only `GET /api/v1/projects/{project}/tasks` (open, closed or all, with who holds each) and `.../tasks/{id}` (body, thread, watchers, branch, blocks and blocked-by) for the UI's Tasks page.
 - `[integration] check_skip_paths` (globs; bridle sets `["docs/**"]`): a landing no longer fails "main moved" when only commits touching those paths landed on main during its check; it merges them in and lands without re-checking.
 - Context renewal of a manager or worker goes through the handover record: the wind-down notice tells the agent to run `bridle handover write --file -`, and the replacement's first message names its claimed task and carries its newest note (or says none was written).

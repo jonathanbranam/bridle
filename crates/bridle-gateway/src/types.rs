@@ -14,6 +14,7 @@ use crate::documents::{
 };
 use crate::interactions::{DayReport, HoursReport, InteractionReport, IntervalsReport};
 use crate::items::{Decision, Items, Priority, ProjectItems, Todo};
+use crate::system::{AgentList, SystemView};
 use crate::tasks::{ClaimAgent, TaskDetail, TaskList, TaskSummary, ThreadItem};
 use crate::ui::UiHealth;
 
@@ -49,6 +50,8 @@ pub fn export_all(dir: &Path) -> Result<(), ts_rs::ExportError> {
     TaskDetail::export_all(&config)?;
     ThreadItem::export_all(&config)?;
     ClaimAgent::export_all(&config)?;
+    SystemView::export_all(&config)?;
+    AgentList::export_all(&config)?;
     Ok(())
 }
 
