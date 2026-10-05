@@ -2,12 +2,23 @@
 id = "br-rk7k"
 title = "bridle-ui: a 'Send to an agent' button on a task: pick the agent, type a message, send"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-10-05T00:09:25.550Z"
-updated_at = "2026-10-05T00:09:28.767756Z"
+updated_at = "2026-10-05T00:09:53.221684Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "external:aide",
+]
 +++
 
 original id: rk7k
-docs/tickets/open/bridle-ui-a-send-to-an-agent-button-on-a-task-pick-the-agent-rk7k.md
+Bridle-repo (gateway) half of docs/tickets/open/bridle-ui-a-send-to-an-agent-button-on-a-task-pick-the-agent-rk7k.md (read it; it quotes the human). The UI half is filed by the orchestrator after this is planned. Goal: a gateway WRITE route that sends a message from 'human' to one agent, in crates/bridle-gateway beside the read-only tasks/agents routes of br-s6cj and br-7sd9 (those must land first; they supply the agent list and the same route registration and doc: dependency edges on both). Shape: POST /api/v1/projects/{project}/messages (name per the existing route style) with { to, text, task? } ; the gateway proxies the daemon's existing agent-message endpoint (/v1/agents/{id}/messages, same as bridle send) with the gateway's per-project human credential so the sender is recorded as human; optional task id is added to the message so it threads on the task (check how bridle send --task does it and use the same). Recipients: only an agent or the orchestrator that the project's daemon lists; reject others (404/422), cap the text length, empty text refused. For the dropdown, GET agents already exists (br-7sd9); add the orchestrator to the recipient list in a small GET .../recipients route if the agents list lacks it. Doc: docs/design/human-web-ui.md section 2: record that the human's ask loosens 'no agent control' for this ONE write (send a message), still no start/stop/kill and no events, and why (a stolen session can message, not run work directly; messages are visible in the audit trail). Cross-project look is open (the human: by default the task's project's agents plus the orchestrator): build for that default only, one project per request. Tests: send ok with sender human, unknown recipient refused, empty text refused, unknown project 404. Acceptance: just check passes. Model: Sonnet. Out of scope: any UI, events, other writes, cross-project pickers.
+
+## Thread
+
+### note · external:orchestrator · 2026-10-05T00:09:37.921Z
+From orchestrator: br-rk7k (ticket rk7k, the human's ask via aide) is open: a 'Send to an agent' button on a task in bridle-ui. Plan the bridle half after br-s6cj and br-7sd9 (it needs the Tasks page and agent list): a gateway write route that sends a message from 'human' to an agent, plus the human-web-ui.md change (the human's ask loosens 'no agent control' for this one write; record it there). The cross-project look is open: default recipients are the task's project's agents plus the orchestrator. Sonnet. A bridle-ui half follows, which I'll file when the gateway route is planned.
+
+### note · external:aide · 2026-10-05T00:09:45.622Z
+watching the task

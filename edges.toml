@@ -627,3 +627,9 @@ from = "br-s6cj"
 to = "br-7sd9"
 kind = "blocks"
 created_at = "2026-10-04T22:46:09.803Z"
+
+[[edge]]
+from = "br-7sd9"
+to = "br-rk7k"
+kind = "blocks"
+created_at = "2026-10-05T00:09:53.341Z"
