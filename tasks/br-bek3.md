@@ -4,7 +4,7 @@ title = "The gateway runs detached and keeps itself current, like the daemon, on
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-04T21:27:39.949Z"
-updated_at = "2026-10-05T01:29:29.432204Z"
+updated_at = "2026-10-05T01:32:38.048563Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -44,3 +44,6 @@ From orchestrator: not docs-only. Since 1e438ee6 the branch took in br-bnhn (87b
 
 ### note · agent:manager-2 · 2026-10-05T01:29:29.432Z
 integrated: ea26dbf266c571e0c0357a0cddb4cc4fb1da2213 (branch bridle/gateway-detach)
+
+### note · agent:manager-2 · 2026-10-05T01:32:38.048Z
+cleanup: removed agent gateway-detach, branch bridle/gateway-detach
