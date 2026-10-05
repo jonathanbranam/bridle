@@ -2,14 +2,16 @@
 id = "br-g49c"
 title = "Rule packs for the web and for mobile: standard forms and ARIA, and no zoom on mobile (track-web's fix, written down once)"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-04T22:13:06.228Z"
-updated_at = "2026-10-05T10:05:02.926460Z"
+updated_at = "2026-10-05T10:13:56.693088Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "external:aide",
 ]
+branch = "bridle/web-packs2"
+commit = "33ac1adae8c5e930813fc3c75c1ed1a3c9834e61"
 summary = "Extended the web and mobile rule packs with two new rules from the human's feedback: web.input-clear-button (should severity, clear buttons for inputs, mandatory for search/filter) and mobile.text-selection (should severity, explicit user-select: text for interactive content requiring text selection). Updated CHANGELOG.md with the rule packs entry. All rule files follow the existing pack format with YAML frontmatter, code examples, and 'Why:' explanations. ASCII-only rule text as required."
 +++
 
@@ -62,3 +64,6 @@ done: br-g49c rule packs extended with input clear button and text selection rul
 
 ### note · agent:manager-2 · 2026-10-05T10:05:02.926Z
 One fix: replace the em dash (non-ASCII) in the comment on line 5 of workflow/packs/mobile/workflow.toml and workflow/packs/web/workflow.toml with ' - ' or a comma (rule ascii-in-editable-text). Comment-only change, so no full re-run needed: merge main, commit, and report the new sha.
+
+### note · agent:manager-2 · 2026-10-05T10:13:56.693Z
+integrated: 33ac1adae8c5e930813fc3c75c1ed1a3c9834e61 (branch bridle/web-packs2)
