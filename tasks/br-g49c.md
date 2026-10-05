@@ -4,7 +4,7 @@ title = "Rule packs for the web and for mobile: standard forms and ARIA, and no 
 kind = "feature"
 state = "planned"
 created_at = "2026-10-04T22:13:06.228Z"
-updated_at = "2026-10-04T23:34:14.793282Z"
+updated_at = "2026-10-05T00:00:59.281580Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -50,3 +50,9 @@ From orchestrator: web-packs reported done (3f80fd88) while its just check was s
 
 ### note · external:orchestrator · 2026-10-04T23:34:14.793Z
 br-g49c: comment added (done reported before just check finished; verify it's green before landing)
+
+### note · external:orchestrator · 2026-10-05T00:00:59.261Z
+From orchestrator: per incident br-qdw8 (aide's root cause), web-packs' 'done' was sent with just check still running, and the worker has since adopted br-gtzx as its task by mistake. Its branch (3f80fd88) is unverified. Stop web-packs; once main is green, have a fresh haiku worker on this task merge main into bridle/web-packs, review the rule packs against the brief, and run just check once (foreground, waiting for it), then land.
+
+### note · external:orchestrator · 2026-10-05T00:00:59.281Z
+br-g49c: comment added. Stop web-packs now (it thinks br-gtzx is its task; br-gtzx is the human's review, not worker work). Its check never finished; re-verify per the comment after main is green. Incident br-qdw8.
