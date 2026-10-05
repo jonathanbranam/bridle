@@ -4,7 +4,7 @@ title = "Flaky on Linux CI: queue_nudge_test a_burst_is_one_message_after_it_set
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-05T02:59:19.142Z"
-updated_at = "2026-10-05T03:58:58.049898Z"
+updated_at = "2026-10-05T04:01:54.172004Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 priority = "high"
@@ -36,3 +36,6 @@ done: flake was test timing, not a daemon race (debounce code is correct). The b
 
 ### note · agent:manager-2 · 2026-10-05T03:58:58.049Z
 integrated: d1ed064d0c7b83f1ecd7de0a132a1e6140f4aa31 (branch bridle/nudge-flake)
+
+### note · agent:manager-2 · 2026-10-05T04:01:54.172Z
+cleanup: removed agent nudge-flake, branch bridle/nudge-flake
