@@ -2,11 +2,13 @@
 id = "br-jxm5"
 title = "Gateway TS bindings: export the Spec* types (br-75zr follow-up) so bridle-ui can use the specs routes"
 kind = "bug"
-state = "open"
+state = "integrated"
 created_at = "2026-10-05T13:39:06.809Z"
-updated_at = "2026-10-05T14:20:56.960556Z"
+updated_at = "2026-10-05T14:21:01.265174Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+branch = "bridle/spec-bindings"
+commit = "af42cfdac8a77ba3527f7707bfd281b8062d6a25"
 summary = "Added ProjectSpecs, SpecFile, SpecRequirement, SpecScenario, SpecDiagnostic to export_all in crates/bridle-gateway/src/types.rs and regenerated bindings with just gateway-types (5 new .ts files); committed_types_are_current already covers staleness. CHANGELOG line added."
 +++
 
@@ -16,3 +18,6 @@ br-75zr added the gateway specs routes, but the Spec* types in crates/bridle-gat
 
 ### note · agent:spec-bindings · 2026-10-05T14:20:56.960Z
 done: Spec* types exported to gateway bindings; just check exit 0, 1232 tests run (1232 passed); sha 2ce207e2 (main already merged)
+
+### note · agent:manager-2 · 2026-10-05T14:21:01.265Z
+integrated: af42cfdac8a77ba3527f7707bfd281b8062d6a25 (branch bridle/spec-bindings)
