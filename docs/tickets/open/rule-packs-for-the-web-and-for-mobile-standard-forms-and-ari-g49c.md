@@ -80,7 +80,7 @@ Where these came from in bridle-ui tonight:
   (ui-7mcp, 44e8faf). The page's own button with `aria-label="Clear search"`, shown when the box
   has text; tapping it empties the box and keeps focus. A native `type="search"` clear isn't shown
   on iOS Safari, so it can't be relied on.
-- Mobile selection: [[bridle-ui-highlight-to-comment-doesn-t-trigger-on-mobile-on-c2xn|c2xn]]
+- Mobile selection: [[bridle-ui-highlight-to-comment-doesn-t-trigger-on-mobile-onl-c2xn|c2xn]]
   (ui-s3xe, c5c0a0a). Highlight-to-comment listened only for `mouseup`, which a phone's native
   selection (long-press, drag the handles) doesn't fire. The fix acts on `selectionchange`,
   debounced (~300 ms after the selection settles).
