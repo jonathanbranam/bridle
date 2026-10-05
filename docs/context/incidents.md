@@ -24,6 +24,18 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-05 03:51: the automatic upgrade refused a good build (self-check timed out)
+
+- **What happened:** the daemon built 0d69d617 (CI green) and then refused to restart into it:
+  the new binary's `serve --check` exceeded its 60 s cap. Found by the orchestrator's
+  `upgrade_failed` wake. Run by hand ten minutes later, the same check passed in under a second.
+- **Impact:** the daemon stays on c548182b (without br-e9yu) until the next upgrade; the CLI
+  already runs the new binary, so the CLI and the daemon are on different builds.
+- **Cause:** unknown. Likely a freshly linked ad-hoc binary's first launch waiting on macOS's
+  policy check on the loaded Intel Mac (two workers' checks were running).
+- **Category:** `daemon`, `host`.
+- **Follow-up:** [[self-upgrade-refuses-a-good-build-the-new-binary-s-self-chec-up82|up82]].
+
 ## 2026-10-05 ~01:30-02:50: interactive sessions replied in quiet hours on wake turns
 
 - **What happened:** the focus gate is a UserPromptSubmit hook, so it runs only on the human's
