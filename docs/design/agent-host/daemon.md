@@ -259,6 +259,11 @@ A wait that ends with agents still busy is not a failure: `upgrade.waiting`, no 
 note, and the next quiet tick builds (incrementally) and tries again. After three hours of that for
 one commit it records `upgrade.gave_up`, wakes `upgrade_failed` once and stops retrying it.
 
+**The gateway follows the upgrade by itself.** The upgrade replaces the installed `bridle` file, and
+a running `bridle gateway` re-executes itself when it sees that file change (human-web-ui.md,
+'Running it detached, and staying current'). The daemon does nothing for it: no hook, no quiet
+point (the gateway holds no agent turns), and it works on machines with no daemon.
+
 While a built commit waits for its quiet point (manual or automatic), new worker spawns are refused
 with a 409 naming the build, and `bridle status` shows an `upgrade` line, so running workers drain
 instead of being replaced as they land. If the wait gives up, the refusal is lifted; a successful
