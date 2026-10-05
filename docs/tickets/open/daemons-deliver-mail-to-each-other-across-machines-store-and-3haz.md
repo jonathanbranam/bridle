@@ -31,8 +31,10 @@ still for review.
 1. **The daemons deliver mail between machines.** A sender on one machine sends, and the
    message ends up in the recipient's inbox on the recipient's own daemon.
 
-> [!comment] human, 2026-10-04 10:57, on "sender on one machine sends"
+> [!comment] c1 human, 2026-10-04 10:57, on "sender on one machine sends" [sent 2026-10-04 22:03 EDT]
 > Test comment, when received, reply here
+>
+> **doc-3haz, 2026-10-04 22:10 EDT:** @human Received. This is my reply.
 
 2. **No agent pulls mail from another machine's daemon.** Each agent watches only its own
    daemon.
@@ -49,21 +51,35 @@ From [[projects-on-other-machines-by-config-k7mw|k7mw]] (built) and
   (`[machines]`, `[projects]` in `~/.bridle/config.toml`; dalek and nuc today) with a per-machine
   token (`[<principal>.<machine>]` in `credentials.toml`).
 
-> [!comment] human, 2026-10-04 10:57, on "No daemon talks to another"
+> [!comment] c2 human, 2026-10-04 10:57, on "No daemon talks to another" [sent 2026-10-04 22:03 EDT]
 > test: explain why this was done in the comment.
+>
+> **doc-3haz, 2026-10-04 22:10 EDT:** @human It was scope, not a principle. k7mw (projects on other
+> machines by config) only needed a person at a terminal to reach a remote project, so the CLI
+> got the machine config and a per-machine token. Its design lists "Daemon-to-daemon
+> forwarding" as out of scope and says "Clients talk to the daemon that owns the recipient."
+> That left the gap this ticket fills. I haven't found a recorded reason beyond keeping k7mw
+> small.
 
 - **Sending to another machine** is `bridle send --project <their project> <principal> "..."`:
   the sender's CLI writes straight into the remote daemon. If that daemon is down or unreachable
   the send fails and nothing retries it.
 - **The reply stays on the remote machine.** The sender appears there as a visitor
-  (`<name>@<machine>`, e.g. `external:orchestrator@dalek` on the NUC's daemon), and replies go to
-  that visitor's inbox *on the NUC*. k7mw's design says so: "the laptop's side reads it there
+  (`<name>@<machine>`, e.g. `external:aide@nuc` on dalek's daemon), and replies go to
+  that visitor's inbox *on dalek*. k7mw's design says so: "the laptop's side reads it there
   (`bridle inbox --project meta-notes`), or the NUC's orchestrator sends it to the laptop's daemon
   instead". So the sender must poll the other machine's daemon to see a reply, which is what the
   human wants gone.
 
-> [!comment] human, 2026-10-04 10:58, on "external:orchestrator@dalek"
+> [!comment] c3 human, 2026-10-04 10:58, on "external:orchestrator@dalek" [sent 2026-10-04 22:03 EDT]
 > Test: change this example to be for the aide at nuc instead; do this edit actually so i can see the result of applying an edit.
+>
+> **doc-3haz, 2026-10-04 22:10 EDT:** @human Done. The example in the "reply stays on the remote
+> machine" bullet is now `external:aide@nuc` on dalek's daemon, and "on the NUC" became "on
+> dalek" in the same sentence. I left the `external:orchestrator@dalek` in P2 and the k7mw quote
+> alone, since you anchored only the first one. Want those changed too?
+>
+> **resolved by doc-3haz, 2026-10-04 22:10 EDT**
 
 - **Waiters watch one daemon each.** `bridle agent wake` and `wait-for-wake` long-poll one daemon;
   the orchestrator runs one per project ([[one-watcher-for-every-project-bridle-agent-wake-all-projects-cy2v|cy2v]],
