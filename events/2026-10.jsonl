@@ -749,3 +749,4 @@
 {"actor":"human","at":"2026-10-05T02:40:28.433Z","from":"","task":"br-75zr","to":"pending"}
 {"actor":"external:orchestrator","at":"2026-10-05T02:40:40.613899Z","from":"pending","task":"br-75zr","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-05T02:40:56.318158Z","from":"open","task":"br-75zr","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-05T02:40:58.528043Z","queue":"reprioritized"}
