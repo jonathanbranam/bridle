@@ -4,9 +4,10 @@ title = "worker.md: how to wait on a long check, done quotes its result; manager
 kind = "bug"
 state = "planned"
 created_at = "2026-10-05T00:33:10.679Z"
-updated_at = "2026-10-05T00:33:19.024815Z"
+updated_at = "2026-10-05T02:14:38.571689Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+summary = "Updated worker.md with instructions on how to wait on a long check: run it once in the background to a log file, save the exit status to a file, and wait for that file with one Monitor until-loop (never pgrep -f). Report done only after exit 0, quoting exit status, test count, and commit sha. Updated manager.md to verify the check before landing: pass --checked-commit only when the worker's done quotes exit 0 and test count for that sha, otherwise let task land run the check. Updated operating-model.md to document the merger's check verification."
 +++
 
 Ticket: docs/tickets/open/a-haiku-worker-reported-done-before-its-check-finished-then-qdw8.md (fixes 2 and 3; read "What happened" and "Decided"). Postmortem: ytqu.
@@ -20,3 +21,8 @@ Goal, role-prompt text only:
 Keep it short; match the files' voice; ASCII only.
 Acceptance: just check green (renders/tests that read role prompts still pass). Model: haiku. The check here is long: follow the new instructions you are writing.
 Out of scope: code changes; fix 1 (its own task); fix 4.
+
+## Thread
+
+### note · agent:role-waits · 2026-10-05T02:14:38.571Z
+done: Updated worker.md and manager.md with instructions for handling long checks; exit 0, 1190 tests passed; 9e736af0
