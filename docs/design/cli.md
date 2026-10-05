@@ -86,7 +86,7 @@ bridle agent spawn   <role> [--name N] [--prompt TEXT | --prompt-file FILE]
                [--component ID ...]
 bridle agents  [--all]
 bridle agent show    <agent>
-bridle send    <agent|human|role:NAME|external:NAME> [TEXT | --text-file FILE] [--question] [--when now|idle] [--reply-to ID] [--task ID]
+bridle send    [--project <other>] <agent|human|role:NAME|external:NAME> [TEXT | --text-file FILE] [--question] [--when now|idle] [--reply-to ID] [--task ID]
 bridle inbox   [--all] [--mark-read]        # messages to me, plus every task's open question (list); an agent's or external principal's listed messages are marked read
 bridle inbox show <id> [--mark-read]        # show one message in full; for the human it leaves it unread unless --mark-read, for an agent or external principal it marks it read
 bridle inbox read <id>...                   # mark one or more messages read
@@ -121,6 +121,8 @@ bridle token create <name> [--print]        with a known project (--project, or 
                                              printed once. A name with `@` is refused
 bridle token create <name> --machine <m>    a visitor, `external:<name>@<m>`, for a principal on another machine: always
                                              printed once, never saved here; paste it into that machine's credentials.toml
+bridle token create --peer <m>              a peer token, `peer:<m>`, for the daemons of machine <m> to forward mail here: always
+                                             printed once; paste it under `[peer]` in the sender's credentials.toml, keyed by this project
 bridle token list                           name, created-at, revoked-or-not; never the token itself
 bridle token revoke <name>                  human only, external tokens only (an agent's own token is
                                              revoked through `bridle agent rm`, not this); also removes its
@@ -391,6 +393,12 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   it isn't running the message goes to `external:advisor`, marked "(originally for advisor/<name>)",
   and `send` adds "<name> isn't running; delivered to advisor"; `bridle send` prints one `sent <id> -> <to>` line per recipient.
   A role with no live agents is an error, same as an unknown agent name.
+  `--project <other>` naming a different daemon than the sender's own (3haz): the CLI hands the message to
+  the sender's own daemon (the cwd's, or `$BRIDLE_URL`'s), which queues it in its outbox and prints
+  `queued o-0007 for <project> -> <to>` at once, then forwards it (principals.md, "Mail between
+  daemons"). It never writes to the other daemon, and succeeds while that daemon is down. The
+  recipient is named as on the other daemon; `--task` isn't supported that way yet. With no own
+  daemon to hand it to, the old direct send to `--project` applies.
   `--task <id>` (and `bridle task comment <id> --notify <agent>`, the same call) writes the text as a comment on the task's thread and sends the recipient `<id>: comment added` plus its first line; an unknown task is an error and nothing is sent.
 
 - **`task new/edit/comment`**: when given `--body-file FILE` or `--text-file FILE`, pass `-`

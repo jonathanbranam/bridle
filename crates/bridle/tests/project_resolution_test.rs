@@ -190,6 +190,7 @@ fn required_args(path: &[String]) -> Vec<String> {
         ("probe", &["target"]),
         ("agent wake", &["external:advisor"]),
         ("send", &["human", "hi"]),
+        ("token create", &["x"]),
         ("ticket new", &["-k", "chore", "a title"]),
         ("task comment", &["1", "hi"]),
         ("ticket task", &["abcd"]),
@@ -537,7 +538,10 @@ fn inside_a_workspace_every_command_acts_on_its_project() {
 #[test]
 fn the_flag_wins_over_the_workspace() {
     let w = world();
-    let seen = acted_on(&w, &w.inside, &["--project", "y"], &[]);
+    let mut seen = acted_on(&w, &w.inside, &["--project", "y"], &[]);
+    // 3haz: `send --project y` is mail for y's daemon, so it is queued on the sender's own
+    // daemon (x, the workspace's) and forwarded from there; the CLI never writes to y.
+    assert_eq!(seen.remove("send").as_deref(), Some("x"));
     assert_all(&seen, "y");
 }
 

@@ -34,6 +34,14 @@ messages(seq INTEGER PK AUTOINCREMENT, id UNIQUE,    -- id = m-0042 from seq
          answered_by, answered_reply, answered_line,  -- SCHEMA_V14: a question to the human closed
                                                       -- by a delegate's reply (`answer_for_human`)
          incident_task)                               -- SCHEMA_V18: the incident a broadcast notice announces
+outbox(seq INTEGER PK AUTOINCREMENT, id,              -- SCHEMA_V20, mail for another daemon (3haz); id = o-0007
+       project, from_principal, to_principal, kind, body, reply_to, when_mode,
+       state,                                         -- queued | delivered | failed (refused for good)
+       attempts, last_error, remote_ids, created_at, delivered_at)
+                                                      -- one queue per destination `project`, oldest `seq` first
+forwarded_in(origin_machine, origin_daemon, origin_id, message_ids, received_at,
+             PRIMARY KEY(origin_machine, origin_daemon, origin_id))
+                                                      -- SCHEMA_V20: origins already accepted from peers (dedup)
 events(seq INTEGER PK AUTOINCREMENT, ts, kind, actor, agent_id, data JSON)
                                                      -- agent_id has no FK: events outlive agents
 rate_limits(window PK, status, utilization, resets_at, observed_at)

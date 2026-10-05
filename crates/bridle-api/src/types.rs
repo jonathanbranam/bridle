@@ -18,6 +18,9 @@ pub enum PrincipalKind {
     Human,
     Agent,
     External,
+    /// Another daemon forwarding mail (`peer:<machine>`, `bridle token create --peer`). The only
+    /// kind whose claim about the original sender is believed (principals.md, "Peer tokens").
+    Peer,
     System,
     /// A GET/HEAD request with no bearer token, synthesized by the daemon
     /// rather than authenticated against a stored principal (see
@@ -730,6 +733,57 @@ pub struct SendRequest {
     pub task: Option<String>,
 }
 
+/// `POST /v1/outbox`: mail for a principal on another daemon. The sender's own daemon accepts it
+/// at once, keeps it in its outbox and delivers it to `project`'s daemon (3haz).
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct OutboxSendRequest {
+    /// The destination project (its daemon, on this machine or another).
+    pub project: String,
+    /// The recipient on that daemon, as `SendRequest::to`.
+    pub to: String,
+    pub body: String,
+    #[serde(default)]
+    pub kind: MessageKind,
+    #[serde(default)]
+    pub when: When,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reply_to: Option<String>,
+}
+
+/// What the sender gets back at once: the outbox id and where it is going.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Queued {
+    /// `o-0007`; also the message's id in the receiver's dedup record.
+    pub id: String,
+    pub project: String,
+    pub to: String,
+}
+
+/// `POST /v1/forward`: one message from another daemon's outbox. Peer tokens only.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ForwardRequest {
+    /// Where the message started: the same triple on every retry is how a repeat is spotted.
+    pub origin_machine: String,
+    pub origin_daemon: String,
+    pub origin_id: String,
+    /// The original sender, qualified with its machine (`agent:w1@nuc`).
+    pub from: PrincipalId,
+    pub to: String,
+    pub body: String,
+    #[serde(default)]
+    pub kind: MessageKind,
+    #[serde(default)]
+    pub when: When,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reply_to: Option<String>,
+}
+
+/// The acknowledgement: the receiver has the message (as these ids); a repeat gets the same.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ForwardAck {
+    pub message_ids: Vec<String>,
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct MessageQuery {
     /// `human`, agent id/name, or `me` (the calling principal's inbox).
@@ -1318,6 +1372,13 @@ pub struct TokenCreateRequest {
     /// Mints a visitor, `external:<name>@<machine>`: another machine's principal on this daemon.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub machine: Option<String>,
+}
+
+/// `POST /v1/tokens/peer`: mints `peer:<machine>`, the token that daemon's forwarding presents.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PeerTokenCreateRequest {
+    /// The sending machine, as named in `[machine] name` there.
+    pub machine: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -13,19 +13,20 @@ use thiserror::Error;
 use crate::types::{
     AddQueueTierRequest, Agent, AllocPortRequest, AnswerQuestionRequest, ApiErrorResponse,
     AskQuestionRequest, BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, Conflict,
-    DoneTaskRequest, DropTaskRequest, Edge, EditTaskRequest, Event, EventQuery, Handover,
-    HandoverDone, Health, ImpactCheckRequest, ImpactReport, Interaction, InteractionsQuery,
-    InterruptRequest, InterruptResponse, LandRequest, LandResult, MaxWorkersRequest, Message,
-    MessageQuery, NewEdgeRequest, NewTaskRequest, NoteTaskRequest, OpenQuestion,
-    OrchestratorWakeQuery, PortAllocation, PrincipalWakeQuery, PrincipalWakeResponse, ProbeRequest,
-    ProbeResult, Queue, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest,
-    RestartRequest, RestartResponse, ResumeRequest, ReviewAddRequest, ReviewAddResponse,
-    ReviewNowRequest, ReviewNowResponse, SendRequest, SessionEnd, SessionInfo, SessionKeep,
-    SessionRegister, SetImpactRequest, SetKindRequest, SetPriorityRequest, SetQueueRequest,
-    SetSummaryRequest, ShutdownResponse, SkipSettleRequest, SpawnRequest, Status, StatusLineReport,
-    StopRequest, StopWakeRequest, StopWakeResponse, SubmitTaskRequest, Task, TaskQuery,
-    TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
-    UsageBreakdown, UsageBreakdownQuery, WakeResponse, WriteHandoverRequest,
+    DoneTaskRequest, DropTaskRequest, Edge, EditTaskRequest, Event, EventQuery, ForwardAck,
+    ForwardRequest, Handover, HandoverDone, Health, ImpactCheckRequest, ImpactReport, Interaction,
+    InteractionsQuery, InterruptRequest, InterruptResponse, LandRequest, LandResult,
+    MaxWorkersRequest, Message, MessageQuery, NewEdgeRequest, NewTaskRequest, NoteTaskRequest,
+    OpenQuestion, OrchestratorWakeQuery, OutboxSendRequest, PeerTokenCreateRequest, PortAllocation,
+    PrincipalWakeQuery, PrincipalWakeResponse, ProbeRequest, ProbeResult, Queue, Queued,
+    RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, RestartRequest,
+    RestartResponse, ResumeRequest, ReviewAddRequest, ReviewAddResponse, ReviewNowRequest,
+    ReviewNowResponse, SendRequest, SessionEnd, SessionInfo, SessionKeep, SessionRegister,
+    SetImpactRequest, SetKindRequest, SetPriorityRequest, SetQueueRequest, SetSummaryRequest,
+    ShutdownResponse, SkipSettleRequest, SpawnRequest, Status, StatusLineReport, StopRequest,
+    StopWakeRequest, StopWakeResponse, SubmitTaskRequest, Task, TaskQuery, TokenCreateRequest,
+    TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown,
+    UsageBreakdownQuery, WakeResponse, WriteHandoverRequest,
 };
 
 #[derive(Debug, Error)]
@@ -267,6 +268,16 @@ impl Client {
     /// agent, or one per matching live agent for a `role:<name>` target.
     pub async fn send(&self, req: &SendRequest) -> Result<Vec<Message>, ClientError> {
         self.post_json(&["v1", "messages"], req).await
+    }
+
+    /// `POST /v1/outbox`: queue mail for another daemon on this one.
+    pub async fn send_outbox(&self, req: &OutboxSendRequest) -> Result<Queued, ClientError> {
+        self.post_json(&["v1", "outbox"], req).await
+    }
+
+    /// `POST /v1/forward`: hand one message to the daemon this client points at (peer token).
+    pub async fn forward(&self, req: &ForwardRequest) -> Result<ForwardAck, ClientError> {
+        self.post_json(&["v1", "forward"], req).await
     }
 
     pub async fn mark_read(&self, id: &str) -> Result<Message, ClientError> {
@@ -531,6 +542,13 @@ impl Client {
         req: &TokenCreateRequest,
     ) -> Result<TokenCreated, ClientError> {
         self.post_json(&["v1", "tokens"], req).await
+    }
+
+    pub async fn create_peer_token(
+        &self,
+        req: &PeerTokenCreateRequest,
+    ) -> Result<TokenCreated, ClientError> {
+        self.post_json(&["v1", "tokens", "peer"], req).await
     }
 
     pub async fn list_tokens(&self) -> Result<Vec<TokenInfo>, ClientError> {

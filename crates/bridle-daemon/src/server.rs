@@ -14,17 +14,19 @@ use bridle_api::types::{
     AddQueueTierRequest, Agent, AllocPortRequest, AnswerQuestionRequest, ApiErrorResponse,
     AskQuestionRequest, BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, Conflict,
     DoneTaskRequest, DropTaskRequest, Edge, EdgeKind, EditTaskRequest, ErrorBody, Event,
-    EventQuery, Handover, Health, HoldStatus, ImpactCheckRequest, ImpactReport, Interaction,
-    InteractionsQuery, InteractiveUsageRow, InterruptRequest, MaxWorkersRequest, MergeProbe,
-    Message, MessageKind, MessageQuery, MessageState, MigrationRecord, NewEdgeRequest,
-    NewTaskRequest, NoteTaskRequest, OpenQuestion, OverlapLevel, PortAllocation, PrincipalKind,
-    ProbeOutcome, ProbeRequest, ProbeResult, Queue, RateLimit, RebuildResponse, RemoveEdgeQuery,
-    RemoveQuery, RenewRequest, ResolveConflictRequest, ResumeRequest, ScheduleOverrideStatus,
-    SendRequest, SetImpactRequest, SetKindRequest, SetPriorityRequest, SetQueueRequest,
-    SetSummaryRequest, ShutdownResponse, SkipSettleRequest, SpawnRequest, Status, StatusLineReport,
-    StopRequest, SubmitTaskRequest, Task, TaskQuery, TaskState, TokenCreateRequest, TokenCreated,
-    TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery,
-    UsageGroupBy, WakeResponse, When, WindowStatus, WriteHandoverRequest, event_kind,
+    EventQuery, ForwardAck, ForwardRequest, Handover, Health, HoldStatus, ImpactCheckRequest,
+    ImpactReport, Interaction, InteractionsQuery, InteractiveUsageRow, InterruptRequest,
+    MaxWorkersRequest, MergeProbe, Message, MessageKind, MessageQuery, MessageState,
+    MigrationRecord, NewEdgeRequest, NewTaskRequest, NoteTaskRequest, OpenQuestion,
+    OutboxSendRequest, OverlapLevel, PeerTokenCreateRequest, PortAllocation, PrincipalKind,
+    ProbeOutcome, ProbeRequest, ProbeResult, Queue, Queued, RateLimit, RebuildResponse,
+    RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, ResumeRequest,
+    ScheduleOverrideStatus, SendRequest, SetImpactRequest, SetKindRequest, SetPriorityRequest,
+    SetQueueRequest, SetSummaryRequest, ShutdownResponse, SkipSettleRequest, SpawnRequest, Status,
+    StatusLineReport, StopRequest, SubmitTaskRequest, Task, TaskQuery, TaskState,
+    TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
+    UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, WakeResponse, When, WindowStatus,
+    WriteHandoverRequest, event_kind,
 };
 use bridle_api::types::{PrincipalId, ThreadEntryKind};
 use chrono::Utc;
@@ -83,6 +85,7 @@ pub struct AppState {
     pub landing: std::sync::Arc<tokio::sync::Mutex<()>>,
     pub queue_nudge: crate::queue_nudge::QueueNudge,
     pub open_watch: crate::open_watch::OpenWatch,
+    pub outbox: crate::outbox::Outbox,
 }
 
 pub fn router(state: AppState) -> Router {
@@ -98,6 +101,8 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/agents/{id}/renew", post(renew_agent))
         .route("/v1/agents/{id}/transcript", get(transcript))
         .route("/v1/messages", get(list_messages).post(send_message))
+        .route("/v1/outbox", post(send_outbox))
+        .route("/v1/forward", post(forward))
         .route("/v1/messages/{id}/read", post(mark_read))
         .route("/v1/messages/{id}/unread", post(mark_unread))
         .route("/v1/events", get(list_events))
@@ -124,6 +129,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/budget/override", post(budget_override))
         .route("/v1/budget/override/clear", post(budget_override_clear))
         .route("/v1/budget/max-workers", post(budget_max_workers))
+        .route("/v1/tokens/peer", post(create_peer_token))
         .route("/v1/tokens", get(list_tokens).post(create_token))
         .route("/v1/tokens/{name}", axum::routing::delete(revoke_token))
         .route("/v1/tasks", get(list_tasks).post(new_task))
@@ -308,6 +314,11 @@ async fn auth_middleware(
         .into_response();
     };
     match state.store.authenticate(&token).await {
+        Ok(Some(principal))
+            if principal.kind == PrincipalKind::Peer && req.uri().path() != "/v1/forward" =>
+        {
+            ApiError::forbidden("a peer token may only forward mail").into_response()
+        }
         Ok(Some(principal)) => {
             let principal = named_advisor(principal, req.headers());
             req.extensions_mut().insert(principal);
@@ -1324,6 +1335,99 @@ async fn send_message(
         msgs.push(msg);
     }
     Ok(Json(msgs))
+}
+
+/// `POST /v1/outbox`: mail for a principal on another daemon. Accepted at once, whether or not
+/// that daemon is up; the delivery try runs in the background.
+async fn send_outbox(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Json(req): Json<OutboxSendRequest>,
+) -> Result<Json<Queued>, ApiError> {
+    if req.body.trim().is_empty() {
+        return Err(ApiError::bad_request("message text must not be empty"));
+    }
+    if req.project == state.project {
+        return Err(ApiError::bad_request(
+            "that is this daemon's own project: send without --project",
+        ));
+    }
+    state
+        .outbox
+        .check_destination(&req.project)
+        .map_err(ApiError::bad_request)?;
+    // The receiver believes this label because the token says we are a daemon, so it names the
+    // machine the sender is on (a visitor's name already does).
+    let from = if principal.id.contains('@') {
+        principal.id.clone()
+    } else {
+        format!("{}@{}", principal.id, state.outbox.machine_name())
+    };
+    let id = state
+        .store
+        .outbox_enqueue(crate::store::OutboxRow {
+            id: String::new(),
+            project: req.project.clone(),
+            from,
+            to: req.to.clone(),
+            kind: req.kind,
+            body: req.body,
+            reply_to: req.reply_to,
+            when: req.when,
+            attempts: 0,
+            last_error: None,
+        })
+        .await?;
+    let outbox = state.outbox.clone();
+    let project = req.project.clone();
+    tokio::spawn(async move { outbox.flush(&project).await });
+    Ok(Json(Queued {
+        id,
+        project: req.project,
+        to: req.to,
+    }))
+}
+
+/// `POST /v1/forward`: a message from another daemon's outbox. Only a peer token may call it,
+/// which is also why its `from` is believed. A repeat (same origin) is acknowledged with the
+/// ids it got the first time and delivers nothing.
+async fn forward(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Json(req): Json<ForwardRequest>,
+) -> Result<Json<ForwardAck>, ApiError> {
+    if principal.kind != PrincipalKind::Peer {
+        return Err(ApiError::forbidden("forwarding takes a peer token"));
+    }
+    if req.body.trim().is_empty() {
+        return Err(ApiError::bad_request("message text must not be empty"));
+    }
+    let origin = (
+        req.origin_machine.clone(),
+        req.origin_daemon.clone(),
+        req.origin_id.clone(),
+    );
+    if let Some(message_ids) = state.store.forwarded_seen(&origin).await? {
+        return Ok(Json(ForwardAck { message_ids }));
+    }
+    let targets = resolve_targets(&state, &req.to).await?;
+    let mut message_ids = Vec::with_capacity(targets.len());
+    for target in targets {
+        let msg = state
+            .manager
+            .send(
+                req.from.clone(),
+                target,
+                req.kind,
+                req.body.clone(),
+                req.when,
+                req.reply_to.clone(),
+            )
+            .await?;
+        message_ids.push(msg.id);
+    }
+    state.store.forwarded_record(&origin, &message_ids).await?;
+    Ok(Json(ForwardAck { message_ids }))
 }
 
 async fn mark_read(
@@ -3184,6 +3288,20 @@ async fn create_token(
         Some(m) => format!("{}@{m}", req.name),
     };
     Ok(Json(state.store.create_external_token(&name).await?))
+}
+
+async fn create_peer_token(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Json(req): Json<PeerTokenCreateRequest>,
+) -> Result<Json<TokenCreated>, ApiError> {
+    require_human(&principal)?;
+    if req.machine.is_empty() || req.machine.contains(['@', ':']) {
+        return Err(ApiError::bad_request(
+            "a machine name is non-empty and has no '@' or ':'",
+        ));
+    }
+    Ok(Json(state.store.create_peer_token(&req.machine).await?))
 }
 
 async fn list_tokens(

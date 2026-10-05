@@ -30,6 +30,7 @@ pub mod impact;
 mod integrator;
 mod open_watch;
 mod orchestrator;
+mod outbox;
 pub mod paths;
 pub mod ports;
 mod principal_wake;
@@ -683,6 +684,14 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         landing: Default::default(),
         queue_nudge: queue_nudge.clone(),
         open_watch: open_watch.clone(),
+        outbox: outbox::Outbox::new(
+            store.clone(),
+            overrides
+                .bridle_home
+                .clone()
+                .unwrap_or_else(discovery::bridle_home),
+            project.clone(),
+        ),
         self_upgrade: config.self_upgrade,
         self_upgrade_wait: overrides.self_upgrade_wait,
     };

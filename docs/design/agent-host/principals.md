@@ -128,6 +128,34 @@ A visitor may also **submit** (`POST /v1/tasks/submit`, `bridle ticket submit`, 
 `submitted by <principal>`, with a first thread note saying so. It may comment on its own submissions only; planning,
 claiming, dropping and editing a task are refused for any visitor.
 
+## Mail between daemons (3haz, slice 1)
+
+A message to a principal on another daemon (`bridle send --project <other> ...`, any machine, the
+same machine included) never goes from the CLI to that daemon. It goes to the **sender's own**
+daemon (`POST /v1/outbox`), which accepts it at once and answers with an outbox id, stores it in
+its `outbox` table (storage.md) and forwards it to the destination over `POST /v1/forward`. The
+destination is found from the machine config (`[projects]`, k7mw), else this machine's registry.
+
+- **Peer tokens.** `bridle token create --peer <machine>` on the *receiving* daemon mints
+  `peer:<machine>` (`<machine>` is the sender's `[machine] name`; `local` when it has none).
+  It is printed once and pasted into the sender's `credentials.toml` under `[peer]`, keyed by the
+  receiving project: `[peer]` / `beta = "..."`. One token per sending machine per receiving
+  daemon, so the daemons of one machine share theirs. A peer token may call `/v1/forward` and
+  nothing else (403); nothing else may call `/v1/forward`.
+- **The sender's label.** The forwarding daemon states who the sender was, qualified with its
+  machine (`agent:w1@nuc`, `external:advisor/research@nuc`), and the receiver stores that as
+  `from`. It is believed because the token is a peer's: a visitor's or other external token's
+  label is only a label. Reply routing home is a later slice.
+- **Exactly once, in order.** Each forward carries its origin (machine, daemon, outbox id); the
+  receiver records it in `forwarded_in` and answers a repeat with the same message ids without
+  delivering again, so a try whose acknowledgement was lost is safe to repeat. Per destination
+  the outbox delivers oldest first, one flush at a time; a try that doesn't get through (daemon
+  down, refused token) leaves the message queued and stops the flush so nothing overtakes it;
+  a refusal for good (unknown recipient, bad request) marks it `failed` and the queue moves on.
+- **Not built yet:** the retry loop and start-up ping (a queued message is retried only when
+  the next message for the same destination is sent), forwarding a visitor's mail home, status
+  lines, `bridle message show`, `--task` and `@machine` addressing across daemons.
+
 Rule 2 means a Claude Code session (the human's orchestrator, or any agent)
 never silently acts as the human. It has to be given an identity to write;
 rule 3 only ever gets it as far as `local` can reach, which is reads.

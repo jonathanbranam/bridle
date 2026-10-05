@@ -389,6 +389,16 @@ pub fn store_credential(
     write_credentials(path, &table)
 }
 
+/// The token this machine's daemons present to `project`'s daemon when forwarding mail: the
+/// `[peer]` table's entry for that project (3haz). A missing file or entry is `None`.
+pub fn peer_token(credentials: &Path, project: &str) -> Result<Option<String>, DiscoveryError> {
+    Ok(read_credentials(credentials)?
+        .get("peer")
+        .and_then(|v| v.get(project))
+        .and_then(|v| v.as_str())
+        .map(str::to_string))
+}
+
 /// Removes `principal`'s entry for `project`; returns whether there was one.
 pub fn remove_credential(
     path: &Path,

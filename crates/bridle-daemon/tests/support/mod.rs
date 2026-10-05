@@ -267,6 +267,15 @@ pub async fn start_daemon_verbatim_config(
     overrides: Option<Overrides>,
     config_toml: Option<&str>,
 ) -> (TestDaemon, tempfile::TempDir) {
+    start_daemon_named(None, overrides, config_toml).await
+}
+
+/// [`start_daemon_verbatim_config`] with an explicit project name, for tests that run two daemons.
+pub async fn start_daemon_named(
+    project: Option<&str>,
+    overrides: Option<Overrides>,
+    config_toml: Option<&str>,
+) -> (TestDaemon, tempfile::TempDir) {
     let tmp = tempfile::tempdir().expect("tempdir");
     let repo = tmp.path().join("repo");
     init_repo(&repo).await;
@@ -279,7 +288,7 @@ pub async fn start_daemon_verbatim_config(
     let opts = ServeOptions {
         repo: repo.clone(),
         workspace: Some(workspace.clone()),
-        project: None,
+        project: project.map(str::to_string),
         listen: Some("127.0.0.1:0".parse().expect("valid addr")),
     };
     let mut overrides = overrides.unwrap_or_else(default_overrides);

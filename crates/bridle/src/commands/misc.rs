@@ -148,9 +148,70 @@ pub(super) fn require_body(body: String) -> Result<String, CliError> {
     Ok(body)
 }
 
+/// The sender's own daemon, when `--project` names a different one: mail for another daemon goes
+/// through the sender's own outbox, never straight to the remote (3haz). `None` when there is no
+/// `--project`, or no own daemon to hand it to (then the old direct send applies).
+fn own_daemon_for_other_project(cli: &Cli) -> Result<Option<(Client, String)>, CliError> {
+    let Some(project) = cli.project.as_deref() else {
+        return Ok(None);
+    };
+    let cwd = std::env::current_dir().context("current directory")?;
+    let env = ProcessEnv;
+    let Ok(own) = discovery::resolve_endpoint(cli.url.as_deref(), None, &cwd, &env) else {
+        return Ok(None);
+    };
+    if own.project.as_deref() == Some(project) {
+        return Ok(None);
+    }
+    let token = discovery::resolve_token(
+        cli.token.as_deref(),
+        own.workspace.as_deref(),
+        own.project.as_deref(),
+        own.machine.as_deref(),
+        &env,
+        false,
+    )?;
+    let client =
+        Client::new(own.url, token).with_advisor(std::env::var("BRIDLE_ADVISOR_NAME").ok());
+    Ok(Some((client, project.to_string())))
+}
+
 pub(super) async fn send(cli: &Cli, args: &SendArgs) -> Result<(), CliError> {
-    let client = client_for(cli).await?;
     let body = require_body(read_text(&args.text, &args.text_file, "text")?)?;
+    if let Some((own, project)) = own_daemon_for_other_project(cli)? {
+        if args.task.is_some() {
+            return Err(CliError::from(anyhow::anyhow!(
+                "--task isn't supported for another project's daemon yet"
+            )));
+        }
+        let queued = own
+            .send_outbox(&bridle_api::types::OutboxSendRequest {
+                project,
+                to: args.to.clone(),
+                body,
+                kind: if args.question {
+                    MessageKind::Question
+                } else {
+                    MessageKind::Note
+                },
+                when: match args.when {
+                    WhenArg::Now => bridle_api::When::Now,
+                    WhenArg::Idle => bridle_api::When::Idle,
+                },
+                reply_to: args.reply_to.clone(),
+            })
+            .await?;
+        if cli.json {
+            render::print_json(&queued)?;
+        } else {
+            println!(
+                "queued {} for {} -> {}",
+                queued.id, queued.project, queued.to
+            );
+        }
+        return Ok(());
+    }
+    let client = client_for(cli).await?;
     let req = SendRequest {
         to: Some(args.to.clone()),
         body,
@@ -513,10 +574,33 @@ pub(super) async fn token(cli: &Cli, args: &TokenArgs) -> Result<(), CliError> {
     };
     match &args.action {
         TokenAction::Create {
+            name: None,
+            peer: Some(machine),
+            ..
+        } => {
+            let created = client
+                .create_peer_token(&bridle_api::types::PeerTokenCreateRequest {
+                    machine: machine.clone(),
+                })
+                .await?;
+            if cli.json {
+                render::print_json(&created)?;
+            } else {
+                println!("{}", created.token);
+                eprintln!(
+                    "principal {} - this token is shown once; paste it under [peer] in the \
+                     sending daemon's credentials.toml, keyed by this project",
+                    created.principal
+                );
+            }
+        }
+        TokenAction::Create {
             name,
             machine,
             print,
+            ..
         } => {
+            let name = name.clone().context("a token needs a name or --peer")?;
             let created = client
                 .create_token(&TokenCreateRequest {
                     name: name.clone(),
@@ -535,7 +619,7 @@ pub(super) async fn token(cli: &Cli, args: &TokenArgs) -> Result<(), CliError> {
             let stored_in = match project {
                 Some(project) => {
                     let path = discovery::credentials_path();
-                    discovery::store_credential(&path, name, &project, &created.token).map_err(
+                    discovery::store_credential(&path, &name, &project, &created.token).map_err(
                         |e| {
                             CliError::Other(anyhow::anyhow!(
                                 "token created but not saved (it is shown once): {e}: {}",

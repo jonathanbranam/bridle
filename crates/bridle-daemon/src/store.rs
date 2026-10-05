@@ -144,6 +144,23 @@ impl RecipientKind {
     }
 }
 
+/// One message waiting in (or finished with) this daemon's outbox (3haz).
+#[derive(Debug, Clone, PartialEq)]
+pub struct OutboxRow {
+    /// `o-0007`.
+    pub id: String,
+    /// The destination daemon's project; one queue per destination.
+    pub project: String,
+    pub from: PrincipalId,
+    pub to: String,
+    pub kind: MessageKind,
+    pub body: String,
+    pub reply_to: Option<String>,
+    pub when: When,
+    pub attempts: i64,
+    pub last_error: Option<String>,
+}
+
 #[derive(Debug, Clone)]
 pub struct NewMessage {
     pub from: PrincipalId,
@@ -262,6 +279,66 @@ impl Store {
     pub async fn authenticate(&self, token: &str) -> Result<Option<Principal>, StoreError> {
         let token = token.to_string();
         self.with_conn(move |c| sync::authenticate(c, &token)).await
+    }
+
+    /// Mints `peer:<machine>`; a name already in use is a conflict, like any token.
+    pub async fn create_peer_token(&self, machine: &str) -> Result<TokenCreated, StoreError> {
+        let machine = machine.to_string();
+        self.with_conn(move |c| sync::create_peer_token(c, &machine))
+            .await
+    }
+
+    /// Adds a message to the outbox as `queued`; returns its id.
+    pub async fn outbox_enqueue(&self, row: OutboxRow) -> Result<String, StoreError> {
+        self.with_conn(move |c| sync::outbox_enqueue(c, &row)).await
+    }
+
+    /// The oldest still-queued message for `project`.
+    pub async fn outbox_next(&self, project: &str) -> Result<Option<OutboxRow>, StoreError> {
+        let project = project.to_string();
+        self.with_conn(move |c| sync::outbox_next(c, &project))
+            .await
+    }
+
+    /// Records one try: `Ok(ids)` marks it delivered (the receiver's message ids), `Err(e)` with
+    /// `permanent` marks it failed, and without it leaves it queued for the next try.
+    pub async fn outbox_finish(
+        &self,
+        id: &str,
+        outcome: Result<Vec<String>, (String, bool)>,
+    ) -> Result<(), StoreError> {
+        let id = id.to_string();
+        self.with_conn(move |c| sync::outbox_finish(c, &id, &outcome))
+            .await
+    }
+
+    /// `(state, remote ids)` of an outbox row: `queued`, `delivered` or `failed`.
+    pub async fn outbox_state(
+        &self,
+        id: &str,
+    ) -> Result<Option<(String, Vec<String>)>, StoreError> {
+        let id = id.to_string();
+        self.with_conn(move |c| sync::outbox_state(c, &id)).await
+    }
+
+    /// The ids a forwarded message was stored as, if this origin's message was seen before.
+    pub async fn forwarded_seen(
+        &self,
+        origin: &(String, String, String),
+    ) -> Result<Option<Vec<String>>, StoreError> {
+        let origin = origin.clone();
+        self.with_conn(move |c| sync::forwarded_seen(c, &origin))
+            .await
+    }
+
+    pub async fn forwarded_record(
+        &self,
+        origin: &(String, String, String),
+        ids: &[String],
+    ) -> Result<(), StoreError> {
+        let (origin, ids) = (origin.clone(), ids.to_vec());
+        self.with_conn(move |c| sync::forwarded_record(c, &origin, &ids))
+            .await
     }
 
     pub async fn revoke_principal(&self, id: &str) -> Result<(), StoreError> {
@@ -1232,10 +1309,41 @@ mod sync {
         ALTER TABLE tasks ADD COLUMN created_by TEXT;
     "#;
 
+    // Mail between daemons (3haz): this daemon's outbox, one queue per destination project, and
+    // the origins it has already accepted from other daemons (the dedup record).
+    pub(super) const SCHEMA_V20: &str = r#"
+        CREATE TABLE outbox (
+            seq INTEGER PRIMARY KEY AUTOINCREMENT,
+            id TEXT NOT NULL DEFAULT '',
+            project TEXT NOT NULL,
+            from_principal TEXT NOT NULL,
+            to_principal TEXT NOT NULL,
+            kind TEXT NOT NULL,
+            body TEXT NOT NULL,
+            reply_to TEXT,
+            when_mode TEXT NOT NULL,
+            state TEXT NOT NULL,
+            attempts INTEGER NOT NULL DEFAULT 0,
+            last_error TEXT,
+            remote_ids TEXT,
+            created_at TEXT NOT NULL,
+            delivered_at TEXT
+        );
+        CREATE INDEX outbox_queue ON outbox(project, state, seq);
+        CREATE TABLE forwarded_in (
+            origin_machine TEXT NOT NULL,
+            origin_daemon TEXT NOT NULL,
+            origin_id TEXT NOT NULL,
+            message_ids TEXT NOT NULL,
+            received_at TEXT NOT NULL,
+            PRIMARY KEY (origin_machine, origin_daemon, origin_id)
+        );
+    "#;
+
     pub(super) const MIGRATIONS: &[&str] = &[
         SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7, SCHEMA_V8,
         SCHEMA_V9, SCHEMA_V10, SCHEMA_V11, SCHEMA_V12, SCHEMA_V13, SCHEMA_V14, SCHEMA_V15,
-        SCHEMA_V16, SCHEMA_V17, SCHEMA_V18, SCHEMA_V19,
+        SCHEMA_V16, SCHEMA_V17, SCHEMA_V18, SCHEMA_V19, SCHEMA_V20,
     ];
 
     pub(super) fn open(path: &Path) -> Result<Connection, StoreError> {
@@ -1440,6 +1548,7 @@ mod sync {
             PrincipalKind::Human => "human",
             PrincipalKind::Agent => "agent",
             PrincipalKind::External => "external",
+            PrincipalKind::Peer => "peer",
             PrincipalKind::System => "system",
             PrincipalKind::Local => {
                 unreachable!("Local principals are synthesized per-request, never stored")
@@ -1451,6 +1560,7 @@ mod sync {
         match s {
             "agent" => PrincipalKind::Agent,
             "external" => PrincipalKind::External,
+            "peer" => PrincipalKind::Peer,
             "system" => PrincipalKind::System,
             _ => PrincipalKind::Human,
         }
@@ -1549,6 +1659,152 @@ mod sync {
         })
     }
 
+    pub(super) fn create_peer_token(
+        conn: &Connection,
+        machine: &str,
+    ) -> Result<TokenCreated, StoreError> {
+        let id = format!("peer:{machine}");
+        let token = create_principal_active_only(conn, &id, PrincipalKind::Peer, machine)?;
+        Ok(TokenCreated {
+            principal: id,
+            token,
+        })
+    }
+
+    pub(super) fn outbox_enqueue(conn: &Connection, row: &OutboxRow) -> Result<String, StoreError> {
+        conn.execute(
+            "INSERT INTO outbox(project, from_principal, to_principal, kind, body, reply_to,
+                when_mode, state, created_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'queued', ?8)",
+            params![
+                row.project,
+                row.from,
+                row.to,
+                kind_str(row.kind),
+                row.body,
+                row.reply_to,
+                when_str(row.when),
+                fmt_dt(Utc::now()),
+            ],
+        )?;
+        let seq = conn.last_insert_rowid();
+        let id = format!("o-{seq:04}");
+        conn.execute("UPDATE outbox SET id = ?1 WHERE seq = ?2", params![id, seq])?;
+        Ok(id)
+    }
+
+    pub(super) fn outbox_next(
+        conn: &Connection,
+        project: &str,
+    ) -> Result<Option<OutboxRow>, StoreError> {
+        Ok(conn
+            .query_row(
+                "SELECT id, project, from_principal, to_principal, kind, body, reply_to,
+                        when_mode, attempts, last_error
+                 FROM outbox WHERE project = ?1 AND state = 'queued' ORDER BY seq ASC LIMIT 1",
+                params![project],
+                |r| {
+                    let kind: String = r.get(4)?;
+                    let when: String = r.get(7)?;
+                    Ok(OutboxRow {
+                        id: r.get(0)?,
+                        project: r.get(1)?,
+                        from: r.get(2)?,
+                        to: r.get(3)?,
+                        kind: kind_from_str(&kind),
+                        body: r.get(5)?,
+                        reply_to: r.get(6)?,
+                        when: when_from_str(&when),
+                        attempts: r.get(8)?,
+                        last_error: r.get(9)?,
+                    })
+                },
+            )
+            .optional()?)
+    }
+
+    pub(super) fn outbox_finish(
+        conn: &Connection,
+        id: &str,
+        outcome: &Result<Vec<String>, (String, bool)>,
+    ) -> Result<(), StoreError> {
+        match outcome {
+            Ok(ids) => conn.execute(
+                "UPDATE outbox SET state = 'delivered', attempts = attempts + 1, last_error = NULL,
+                    remote_ids = ?2, delivered_at = ?3 WHERE id = ?1",
+                params![id, ids.join(","), fmt_dt(Utc::now())],
+            )?,
+            Err((error, permanent)) => conn.execute(
+                "UPDATE outbox SET state = CASE WHEN ?3 THEN 'failed' ELSE state END,
+                    attempts = attempts + 1, last_error = ?2 WHERE id = ?1",
+                params![id, error, permanent],
+            )?,
+        };
+        Ok(())
+    }
+
+    pub(super) fn outbox_state(
+        conn: &Connection,
+        id: &str,
+    ) -> Result<Option<(String, Vec<String>)>, StoreError> {
+        Ok(conn
+            .query_row(
+                "SELECT state, remote_ids FROM outbox WHERE id = ?1",
+                params![id],
+                |r| {
+                    let ids: Option<String> = r.get(1)?;
+                    Ok((
+                        r.get(0)?,
+                        ids.unwrap_or_default()
+                            .split(',')
+                            .filter(|s| !s.is_empty())
+                            .map(str::to_string)
+                            .collect(),
+                    ))
+                },
+            )
+            .optional()?)
+    }
+
+    pub(super) fn forwarded_seen(
+        conn: &Connection,
+        origin: &(String, String, String),
+    ) -> Result<Option<Vec<String>>, StoreError> {
+        let ids: Option<String> = conn
+            .query_row(
+                "SELECT message_ids FROM forwarded_in
+                 WHERE origin_machine = ?1 AND origin_daemon = ?2 AND origin_id = ?3",
+                params![origin.0, origin.1, origin.2],
+                |r| r.get(0),
+            )
+            .optional()?;
+        Ok(ids.map(|s| {
+            s.split(',')
+                .filter(|s| !s.is_empty())
+                .map(str::to_string)
+                .collect()
+        }))
+    }
+
+    pub(super) fn forwarded_record(
+        conn: &Connection,
+        origin: &(String, String, String),
+        ids: &[String],
+    ) -> Result<(), StoreError> {
+        conn.execute(
+            "INSERT OR IGNORE INTO forwarded_in(origin_machine, origin_daemon, origin_id,
+                message_ids, received_at) VALUES (?1, ?2, ?3, ?4, ?5)",
+            params![
+                origin.0,
+                origin.1,
+                origin.2,
+                ids.join(","),
+                fmt_dt(Utc::now())
+            ],
+        )?;
+        Ok(())
+    }
+
     pub(super) fn create_agent_token(
         conn: &Connection,
         agent_name: &str,
@@ -1590,7 +1846,7 @@ mod sync {
     pub(super) fn list_external_tokens(conn: &Connection) -> Result<Vec<TokenInfo>, StoreError> {
         let mut stmt = conn.prepare(
             "SELECT id, name, created_at, revoked_at FROM principals
-             WHERE kind = 'external' ORDER BY created_at ASC, rowid ASC",
+             WHERE kind IN ('external', 'peer') ORDER BY created_at ASC, rowid ASC",
         )?;
         let rows = stmt.query_map([], |row| {
             let created_at: String = row.get(2)?;
@@ -1619,10 +1875,15 @@ mod sync {
     }
 
     pub(super) fn revoke_external_token(conn: &Connection, name: &str) -> Result<(), StoreError> {
-        let id = format!("external:{name}");
+        // `peer:<machine>` is named in full; anything else is an external principal's name.
+        let id = if name.starts_with("peer:") {
+            name.to_string()
+        } else {
+            format!("external:{name}")
+        };
         let exists: bool = conn
             .query_row(
-                "SELECT 1 FROM principals WHERE id = ?1 AND kind = 'external'",
+                "SELECT 1 FROM principals WHERE id = ?1 AND kind IN ('external', 'peer')",
                 params![id],
                 |_| Ok(()),
             )

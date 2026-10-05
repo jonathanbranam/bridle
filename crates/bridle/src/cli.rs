@@ -1046,7 +1046,9 @@ pub enum WhenArg {
 #[command(group(ArgGroup::new("text_source").args(["text", "text_file"])))]
 pub struct SendArgs {
     /// An agent id/name, `human`, or `role:<name>` for every live agent
-    /// currently holding that role.
+    /// currently holding that role. With `--project` naming another daemon's project, the
+    /// principal on that daemon (`advisor`, `external:advisor`, `human`, ...): your own daemon
+    /// queues the message and delivers it there.
     pub to: String,
     /// Message body.
     #[arg(value_name = "TEXT")]
@@ -1323,7 +1325,13 @@ pub enum TokenAction {
     /// Mint an `external:<name>` token (human only). It is saved in `credentials.toml` when
     /// the project is known, and printed only with `--print` (or when it can't be saved).
     Create {
-        name: String,
+        #[arg(required_unless_present = "peer")]
+        name: Option<String>,
+        /// Mint a peer token for another daemon's mail forwarding, `peer:<machine>` (human
+        /// only). Always printed: paste it under `[peer]` in the sending daemon's
+        /// `credentials.toml`, keyed by this daemon's project.
+        #[arg(long, conflicts_with_all = ["name", "machine"])]
+        peer: Option<String>,
         /// Mint a visitor, `external:<name>@<machine>`, for a principal on another machine.
         /// Always printed, to paste into that machine's `credentials.toml`.
         #[arg(long)]
@@ -2501,7 +2509,7 @@ mod tests {
         let TokenAction::Create { name, .. } = t.action else {
             panic!("expected create")
         };
-        assert_eq!(name, "orchestrator");
+        assert_eq!(name.as_deref(), Some("orchestrator"));
     }
 
     #[test]
