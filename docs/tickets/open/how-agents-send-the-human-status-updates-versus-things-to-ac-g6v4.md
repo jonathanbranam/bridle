@@ -57,7 +57,7 @@ ideas here over time; the bridle-ui aide appends them, quoted. Item 1 of the sam
 >
 > Actually, that's an interesting issue there. If an agent's asking me to approve a ticket, my
 > comments on that ticket should be sent back to that agent, not to a different agent. Let's make
-> sure to file that and keep track of that as a change. Take filter into this.
+> sure to file that and keep track of that as a change.
 
 ## Context (2026-10-04)
 

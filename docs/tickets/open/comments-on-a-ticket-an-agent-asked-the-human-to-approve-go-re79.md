@@ -26,7 +26,7 @@ filed as [[how-agents-send-the-human-status-updates-versus-things-to-ac-g6v4|g6v
 >
 > Actually, that's an interesting issue there. If an agent's asking me to approve a ticket, my
 > comments on that ticket should be sent back to that agent, not to a different agent. Let's make
-> sure to file that and keep track of that as a change. Take filter into this.
+> sure to file that and keep track of that as a change.
 
 ## Context
 
@@ -36,4 +36,4 @@ filed as [[how-agents-send-the-human-status-updates-versus-things-to-ac-g6v4|g6v
   ID ...): spawned if there is none" (`docs/design/agent-host/daemon.md`, around line 113).
 - Tickets have no approval state or field today; approvals are quoted into the ticket or task body
   by whoever relays them.
-- "Take filter into this" is quoted as said; its meaning isn't clear.
+- One sentence of the dictation ("Take filter into this") is left out: the human said it was a transcription error.
