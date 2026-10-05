@@ -2,12 +2,14 @@
 id = "br-yfjc"
 title = "Every agent talking to the human links each ticket and task it names to the bridle UI, from a configured base URL"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-05T01:19:32.477Z"
-updated_at = "2026-10-05T03:23:06.257194Z"
+updated_at = "2026-10-05T03:54:11.084518Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
+branch = "bridle/link-ids"
+commit = "8c7cc7689f3682225d7e016d679978331e30dcf2"
 summary = "Added 'bridle link <id>' (crates/bridle/src/link.rs): task IDs (contain '-') -> <base>/task?id=<id>, ticket IDs -> <base>/ticket?project=<p>&id=<id> (project via --project/env/cwd workspace). Base URL is [gateway] public_url, project .bridle/config.toml over ~/.bridle/config.toml (config::ui_base_url); unset prints nothing, exit 0. GatewaySection now accepts public_url (deny_unknown_fields). New rule link-ids-for-the-human, one-line pointers in aide/advisor/orchestrator prompts; docs cli.md, roles-and-config.md, CHANGELOG. Tests: tests/link_test.rs (ticket, task, unset). Note: no manager role prompt line was added (task named aide, advisor, orchestrator only)."
 +++
 
@@ -35,3 +37,6 @@ Raised to high by orchestrator: the human, via aide (m-5240, 2026-10-04 ~10:15 P
 
 ### note · agent:link-ids · 2026-10-05T03:23:06.257Z
 done: bridle link + [gateway] public_url + rule link-ids-for-the-human; just check exit 0, 1194 tests passed; 506ef362
+
+### note · agent:manager-2 · 2026-10-05T03:54:11.084Z
+integrated: 8c7cc7689f3682225d7e016d679978331e30dcf2 (branch bridle/link-ids)
