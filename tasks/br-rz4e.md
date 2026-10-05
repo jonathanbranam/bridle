@@ -4,9 +4,10 @@ title = "A researcher role with WebSearch and WebFetch; the manager checks a tas
 kind = "feature"
 state = "planned"
 created_at = "2026-10-05T01:02:06.369Z"
-updated_at = "2026-10-05T01:02:16.756792Z"
+updated_at = "2026-10-05T17:32:52.808862Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+summary = "Added built-in researcher role (Role::researcher_default in config.rs: worker defaults + WebSearch/WebFetch in allowed_tools and tools; reuses worker.md prompt via default_role_prompts fallback; preamble sentence on URLs and failed fetches). Added [roles.researcher] to bridle's .bridle/config.toml, manager.md role-picking/missing-tool step, roles-and-config.md, CHANGELOG. Test: researcher_is_a_built_in_worker_with_web_tools. No other docs needed changes."
 +++
 
 Ticket: docs/tickets/open/workers-report-missing-tools-and-failed-fetches-plainly-a-re-2mtr.md (ask 2; read "What happened" and "The human's decision"). Ask 1 already landed as br-2mtr.
@@ -20,3 +21,8 @@ Goal:
 Acceptance: just check green; a test that a project with no [roles.researcher] can spawn a researcher with WebSearch and WebFetch in its allowed tools, and a plain worker still lacks them.
 Model: sonnet.
 Out of scope: re-running track-web's tw-sxfh (the orchestrator does it once this lands); changes to other projects' config files.
+
+## Thread
+
+### note · agent:researcher-role · 2026-10-05T17:32:52.808Z
+done: built-in researcher role + manager.md tool check + docs + CHANGELOG; just check exit 0, 1245 tests run (1245 passed), commit 1159e54a
