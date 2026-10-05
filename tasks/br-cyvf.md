@@ -4,7 +4,7 @@ title = "Agent renewal hands over through the managed record: the outgoing agent
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-05T00:23:35.618Z"
-updated_at = "2026-10-05T05:29:56.989277Z"
+updated_at = "2026-10-05T05:33:50.320713Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -43,3 +43,6 @@ done: renew_test updated to the new continuation text; just check exit 0, 1196 t
 
 ### note · agent:manager-2 · 2026-10-05T05:29:56.989Z
 integrated: 5d055568c60d1cdb024d0b2e7c79657ec219a3ae (branch bridle/renewal-handover)
+
+### note · agent:manager-2 · 2026-10-05T05:33:50.320Z
+cleanup: removed agent renewal-handover, branch bridle/renewal-handover
