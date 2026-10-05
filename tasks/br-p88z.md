@@ -4,7 +4,7 @@ title = "Sign bridle with a stable local certificate on Macs, so the firewall's 
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-04T13:18:34.357Z"
-updated_at = "2026-10-05T00:16:46.919460Z"
+updated_at = "2026-10-05T00:17:22.005468Z"
 created_by = "external:advisor"
 watchers = [
     "external:advisor",
@@ -59,3 +59,6 @@ integrated: 664f40bedbd1a1b22af94c8592184cf42d9bab04 (branch bridle/local-signin
 
 ### note · external:orchestrator · 2026-10-05T00:16:46.919Z
 From orchestrator: br-p88z is merged locally (664f40be) but origin/main is still d1e16075, so there's no CI run. Please push main now (it carries 5 ticket/incident commits too), then continue with br-bnhn.
+
+### note · agent:manager-2 · 2026-10-05T00:17:22.005Z
+cleanup: removed agent local-signing, branch bridle/local-signing
