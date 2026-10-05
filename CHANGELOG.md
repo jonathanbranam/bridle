@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- A worker resumed after a daemon restart is told its claimed task and branch, and a worker's `bridle inbox` lists only open questions on its own claimed task or asked by it; managers, the orchestrator and the human still see all (br-xtxd, qdw8).
 - Readying a task now messages the running project-manager (else the orchestrator), one message per burst naming each task; a task left `open` and unplanned for `[tasks] open_stale` (default 4h) goes back to `pending` with a comment, and the orchestrator and whoever readied it are told. Tasks with an open question stay open (br-xz4f).
 - The gateway TypeScript bindings now include the specs types (`ProjectSpecs`, `SpecFile`, `SpecRequirement`, `SpecScenario`, `SpecDiagnostic`), so bridle-ui can use the specs route (br-jxm5).
 - The gateway lists a project's specs for the web UI (`GET /api/v1/projects/{project}/specs`: capabilities, requirements, scenarios with ids and whether they are executable, parse errors per file), and `links/resolve` turns a spec, requirement or scenario id into its spec file and heading anchor (br-75zr).

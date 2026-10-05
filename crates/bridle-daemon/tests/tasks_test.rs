@@ -1405,3 +1405,44 @@ async fn task_kind_changes_only_while_open() {
     assert!(refused(e.expect_err("reopened")));
     assert_eq!(c.get_task(&task.id).await.expect("get").kind, TaskKind::Bug);
 }
+
+/// A worker's open-questions list holds only the questions on its own claimed task;
+/// the human still sees every one (qdw8).
+#[tokio::test]
+async fn a_workers_open_questions_omit_other_tasks_but_the_humans_do_not() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let c = &daemon.client;
+    let agent = spawn_worker_with_commit(&daemon, "w1").await;
+    let token = std::fs::read_to_string(
+        daemon
+            .workspace
+            .join(".bridle/agents")
+            .join(&agent.id)
+            .join("token"),
+    )
+    .expect("agent token file");
+    let worker =
+        bridle_api::Client::new(daemon.running.url.clone(), Some(token.trim().to_string()));
+
+    let mine = c
+        .new_open_task(&new_req("Mine", TaskKind::Feature))
+        .await
+        .expect("mine");
+    let other = c
+        .new_open_task(&new_req("Other", TaskKind::Feature))
+        .await
+        .expect("other");
+    c.plan_task(&mine.id).await.expect("plan");
+    worker.claim_task(&mine.id).await.expect("claim");
+    c.ask_question(&other.id, "for the human?", None)
+        .await
+        .expect("ask other");
+    c.ask_question(&mine.id, "for the worker?", None)
+        .await
+        .expect("ask mine");
+
+    let seen = worker.list_open_questions().await.expect("worker list");
+    assert_eq!(seen.len(), 1, "{seen:?}");
+    assert_eq!(seen[0].task_id, mine.id);
+    assert_eq!(c.list_open_questions().await.expect("human list").len(), 2);
+}

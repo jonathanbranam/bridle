@@ -2928,10 +2928,28 @@ async fn note_task(
     Ok(Json(task))
 }
 
+/// A worker sees only the questions on its own claimed task or asked by it, so a
+/// resumed worker can't mistake the human's questions for its own work (qdw8).
+/// Everyone else sees all of them.
 async fn list_open_questions(
     State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
 ) -> Result<Json<Vec<OpenQuestion>>, ApiError> {
-    Ok(Json(state.tasks.list_open_questions()))
+    let mut questions = state.tasks.list_open_questions();
+    if principal.kind == PrincipalKind::Agent {
+        let name = principal.id.strip_prefix("agent:").unwrap_or(&principal.id);
+        let role = state.store.get_agent(name).await?.map(|a| a.role);
+        if role.as_deref() == Some("worker") {
+            questions.retain(|q| {
+                q.asked_by == principal.id
+                    || state
+                        .tasks
+                        .get_task(&q.task_id)
+                        .is_some_and(|t| t.claimed_by.as_deref() == Some(principal.id.as_str()))
+            });
+        }
+    }
+    Ok(Json(questions))
 }
 
 async fn claim_task(

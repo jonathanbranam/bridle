@@ -2629,13 +2629,18 @@ impl AgentManager {
         // Same gap as `renew` (br-ab66): `--resume` still just waits on
         // stdin, so with no pending messages the process would otherwise sit
         // idle forever.
-        self.send_continuation_note(
-            principal,
-            &agent.id,
-            "You were resumed after a daemon restart. Continue from your task's thread and \
-             your own last handoff note",
-        )
-        .await?;
+        let principal_id = format!("agent:{}", agent.name);
+        let task_id = self
+            .0
+            .store
+            .list_claims()
+            .await?
+            .into_iter()
+            .find(|c| c.claimed_by == principal_id)
+            .map(|c| c.task_id);
+        let lead_in = resume_lead_in(task_id.as_deref(), agent.branch.as_deref());
+        self.send_continuation_note(principal, &agent.id, &lead_in)
+            .await?;
 
         self.0
             .store
@@ -3228,6 +3233,21 @@ fn truncate_chars(s: &str, max_chars: usize) -> String {
     }
 }
 
+/// The resume continuation: names the claimed task and branch so a resumed agent can't lose
+/// them (qdw8).
+fn resume_lead_in(task_id: Option<&str>, branch: Option<&str>) -> String {
+    let mut s = "You were resumed after a daemon restart.".to_string();
+    match (task_id, branch) {
+        (Some(t), Some(b)) => s.push_str(&format!(
+            " You are on {t}, branch {b}; read `bridle task show {t}`."
+        )),
+        (Some(t), None) => s.push_str(&format!(" You are on {t}; read `bridle task show {t}`.")),
+        (None, _) => s.push_str(" You have no claimed task."),
+    }
+    s.push_str(" Continue from the task's thread and your own last handoff note.");
+    s
+}
+
 /// The renewal continuation: the claimed task and the newest handover note for the agent's
 /// identity (br-cyvf). Without a note it says so rather than sending the agent hunting.
 fn renewal_lead_in(
@@ -3258,6 +3278,13 @@ fn renewal_lead_in(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn resume_lead_in_names_task_and_branch() {
+        let s = resume_lead_in(Some("br-xxxx"), Some("bridle/w"));
+        assert!(s.contains("br-xxxx") && s.contains("bridle/w"), "{s}");
+        assert!(resume_lead_in(None, None).contains("no claimed task"));
+    }
 
     fn note() -> bridle_api::types::Handover {
         bridle_api::types::Handover {

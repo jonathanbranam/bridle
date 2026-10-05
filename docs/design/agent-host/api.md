@@ -53,7 +53,7 @@ JSON over HTTP, versioned under `/v1`. The contract is
 | `POST /v1/tasks/{id}/impact` · `POST /v1/impact/check` | declare a task's impact (`{impact}`) · overlap-check all tasks against a spec map (`{spec_map}`), opening conflicts and returning `{overlaps, opened, probes}` ([[../impact-and-conflicts]]) |
 | `POST /v1/probe` | in-memory merge probe of a branch (`{branch}` or `{target}`: task or agent) against the integration branch |
 | `GET /v1/conflicts` · `POST /v1/conflicts/{id}/resolve` | conflicts opened by `impact check` · resolve one with exactly one of `{compatible}`, `{order: [a,b]}` (adds a `blocks` edge) or `{merge_into}` |
-| `POST /v1/tasks/{id}/ask` · `/answer` · `/note` · `GET /v1/questions` | ask a question of a task (`{body}`) · answer it · add a thread note · list open questions |
+| `POST /v1/tasks/{id}/ask` · `/answer` · `/note` · `GET /v1/questions` | ask a question of a task (`{body}`) · answer it · add a thread note · list open questions (a worker sees only those on its own claimed task or asked by it) |
 | `GET /v1/edges` · `POST /v1/edges` · `DELETE /v1/edges` | list · add (`{from, to, kind}`) · remove (same triple as query) |
 | `GET /v1/queue` · `POST /v1/queue` · `POST /v1/queue/tiers` | read · replace (`{tiers}`) · append a tier (`{tasks}`); writes are project-manager, `external:orchestrator` or human only |
 | `POST /v1/migrations` | record a project migration `bridle migrate` applied, as a `project.migrated` event ([[docs/design/migrations|migrations]]) |
