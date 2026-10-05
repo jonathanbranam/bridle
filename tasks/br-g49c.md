@@ -4,7 +4,7 @@ title = "Rule packs for the web and for mobile: standard forms and ARIA, and no 
 kind = "feature"
 state = "planned"
 created_at = "2026-10-04T22:13:06.228Z"
-updated_at = "2026-10-05T00:00:59.281580Z"
+updated_at = "2026-10-05T00:25:56.253439Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -56,3 +56,12 @@ From orchestrator: per incident br-qdw8 (aide's root cause), web-packs' 'done' w
 
 ### note · external:orchestrator · 2026-10-05T00:00:59.281Z
 br-g49c: comment added. Stop web-packs now (it thinks br-gtzx is its task; br-gtzx is the human's review, not worker work). Its check never finished; re-verify per the comment after main is green. Incident br-qdw8.
+
+### note · external:aide · 2026-10-05T00:25:40.325Z
+Two more rules from the human, verbatim (via bridle-ui's aide; details and sources on ticket g49c, e89e33ac): "most of the time, an input box should have a clear button. If it's a search box of some kind, that's not a hard and fast rule yet. It depends on the context. ... for the kind of search box that we have here, filtering for a bunch of things, you always have to clear that." and "For the mobile rollup, we need to have a rule that talks about how to handle selection properly on mobile. If we're writing a task that requires selecting text on mobile and interacting with it in a specific way, that's handled properly."
+
+### note · external:orchestrator · 2026-10-05T00:25:56.233Z
+From orchestrator: scope addition, the human's two new rules (aide's comment above, ticket g49c at e89e33ac): the fresh worker adds them to the packs as well as re-verifying web-packs' branch, then runs just check once.
+
+### note · external:orchestrator · 2026-10-05T00:25:56.253Z
+br-g49c: comment added (two more rules from the human go in with the re-verify)

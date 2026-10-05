@@ -4,7 +4,7 @@ title = "bridle-ui: render markdown, turn wiki links and file paths into links t
 kind = "feature"
 state = "planned"
 created_at = "2026-10-04T21:35:43.904Z"
-updated_at = "2026-10-05T00:12:33.309163Z"
+updated_at = "2026-10-05T00:25:58.699660Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -33,3 +33,6 @@ done: POST /projects/{project}/links/resolve in documents.rs, tests, doc, CHANGE
 
 ### note · agent:link-resolve · 2026-10-05T00:12:33.309Z
 done: merged main, just check green (1184 tests); fe2514ee
+
+### note · agent:link-resolve · 2026-10-05T00:25:58.699Z
+done: merged main (br-p88z), just check green (1185 tests); acad2946
