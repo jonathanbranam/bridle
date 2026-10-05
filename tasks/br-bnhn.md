@@ -2,15 +2,17 @@
 id = "br-bnhn"
 title = "bridle-ui: render markdown, turn wiki links and file paths into links that open in the UI"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-04T21:35:43.904Z"
-updated_at = "2026-10-05T00:25:58.699660Z"
+updated_at = "2026-10-05T01:12:03.971074Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "external:aide",
 ]
 priority = "high"
+branch = "bridle/link-resolve"
+commit = "87ba8f84e26cd39e96e1597019ffea1fa18fafb5"
 summary = "Added POST /api/v1/projects/{project}/links/resolve (documents.rs, route in lib.rs): batch of targets -> {target, path|null}. Targets with a / are docs/ paths (.md optional); bare names are ticket stems looked up in tickets/open then resolved; bare names like README are not resolved. Reuses resolve() so .., absolute paths and symlink escapes give null. Also types.rs export + regenerated bindings/ (needed by committed_types_are_current), human-web-ui.md, CHANGELOG. Route is /links/resolve not under /documents/ to avoid the {*path} wildcard."
 +++
 
@@ -36,3 +38,9 @@ done: merged main, just check green (1184 tests); fe2514ee
 
 ### note · agent:link-resolve · 2026-10-05T00:25:58.699Z
 done: merged main (br-p88z), just check green (1185 tests); acad2946
+
+### note · agent:link-resolve · 2026-10-05T01:11:58.144Z
+done: merged main (docs only, no rerun as told). Last green check was on 9a154089 (second run; first run had 6 daemon fake-claude timeouts under load 21, passed on rerun); tip 0ff65fa9
+
+### note · agent:manager-2 · 2026-10-05T01:12:03.971Z
+integrated: 87ba8f84e26cd39e96e1597019ffea1fa18fafb5 (branch bridle/link-resolve)
