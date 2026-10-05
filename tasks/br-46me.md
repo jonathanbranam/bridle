@@ -4,7 +4,7 @@ title = "[at restart] Run the daemon self-upgrade, then restart the gateway once
 kind = "feature"
 state = "claimed"
 created_at = "2026-10-05T03:00:59.360Z"
-updated_at = "2026-10-05T03:00:59.364066Z"
+updated_at = "2026-10-05T03:52:31.609036Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -26,3 +26,6 @@ created for the human, priority normal
 
 ### note · external:orchestrator · 2026-10-05T03:00:59.364Z
 To-do for you (normal priority): [at restart] Run the daemon self-upgrade, then restart the gateway once. Finish it with `bridle task done br-46me`.
+
+### note · external:orchestrator · 2026-10-05T03:52:31.609Z
+Update (orchestrator, 03:55Z): the daemon upgrades itself automatically after merges (c548182b at 01:50Z, which already includes bek3). The next attempt, 0d69d617, failed its self-check by timeout (ticket up82); the next merge retries it. So step 1 is only needed if it is still failing in the morning (check 'bridle events --kind upgrade.'). Step 2, 'bridle gateway --detach' once, is still needed for bek3.
