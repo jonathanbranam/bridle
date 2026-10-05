@@ -800,3 +800,6 @@
 {"actor":"agent:pm-1","at":"2026-10-05T10:00:28.349005Z","from":"open","task":"br-gq9r","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-05T10:00:30.756011Z","queue":"reprioritized"}
 {"actor":"agent:manager-2","at":"2026-10-05T10:13:56.693088Z","from":"planned","task":"br-g49c","to":"integrated"}
+{"actor":"human","at":"2026-10-05T10:25:03.830Z","from":"","task":"br-abnq","to":"pending"}
+{"actor":"human","at":"2026-10-05T10:25:03.871Z","from":"","task":"br-cbbn","to":"pending"}
+{"actor":"human","at":"2026-10-05T10:25:03.907Z","from":"","task":"br-ft3b","to":"pending"}
