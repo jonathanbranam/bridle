@@ -2,9 +2,9 @@
 id = "br-xxw9"
 title = "Usage history: keep the account's rate-limit readings over time and serve them (xxw9, bridle side)"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-10-05T21:06:01.545Z"
-updated_at = "2026-10-05T21:06:35.034537Z"
+updated_at = "2026-10-05T21:06:46.912037Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 +++

@@ -2,9 +2,9 @@
 id = "br-gztq"
 title = "Evaluate the UI: can the human see which projects and which agents consume tokens?"
 kind = "research"
-state = "open"
+state = "planned"
 created_at = "2026-10-05T21:06:01.619Z"
-updated_at = "2026-10-05T21:06:39.139558Z"
+updated_at = "2026-10-05T21:06:47.004440Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 +++
