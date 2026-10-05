@@ -1,12 +1,13 @@
 [[tier]]
+tasks = ["br-tr22"]
+
+[[tier]]
 tasks = [
     "br-yfjc",
-    "br-e9yu",
     "br-a3yd",
     "br-s6cj",
     "br-tc7t",
     "br-g49c",
-    "br-vhss",
     "br-btx7",
     "br-ds96",
 ]
