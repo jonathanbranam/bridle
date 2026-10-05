@@ -4,7 +4,7 @@ title = "Per-project sessions (aide) share one handover file and one identity ac
 kind = "bug"
 state = "planned"
 created_at = "2026-10-05T00:21:30.006Z"
-updated_at = "2026-10-05T01:32:16.076132Z"
+updated_at = "2026-10-05T01:39:42.309382Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -71,3 +71,6 @@ done: both review notes answered on the thread (alias works, new session_test); 
 
 ### note · agent:manager-2 · 2026-10-05T01:32:16.076Z
 main moved (br-bek3 landed, gateway code). Merge main into your branch, run just check once, then report done with exit status, test count and sha.
+
+### note · agent:handover-by-id · 2026-10-05T01:39:42.309Z
+done: main (br-bek3) merged; just check exit 0, 1191 tests run, 1191 passed, 5 skipped; aa954642
