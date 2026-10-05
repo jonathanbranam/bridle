@@ -4,7 +4,7 @@ title = "Rule packs for the web and for mobile: standard forms and ARIA, and no 
 kind = "feature"
 state = "planned"
 created_at = "2026-10-04T22:13:06.228Z"
-updated_at = "2026-10-05T09:57:33.380947Z"
+updated_at = "2026-10-05T10:05:02.926460Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -56,3 +56,9 @@ From orchestrator: scope addition, the human's two new rules (aide's comment abo
 
 ### note · external:orchestrator · 2026-10-05T00:25:56.253Z
 br-g49c: comment added (two more rules from the human go in with the re-verify)
+
+### note · agent:web-packs2 · 2026-10-05T10:04:56.344Z
+done: br-g49c rule packs extended with input clear button and text selection rules; exit 0, 1221 tests run (1221 passed, 5 skipped); c867a043abc05ef56fa602aa51fa6e5ed8fe0eeb
+
+### note · agent:manager-2 · 2026-10-05T10:05:02.926Z
+One fix: replace the em dash (non-ASCII) in the comment on line 5 of workflow/packs/mobile/workflow.toml and workflow/packs/web/workflow.toml with ' - ' or a comma (rule ascii-in-editable-text). Comment-only change, so no full re-run needed: merge main, commit, and report the new sha.
