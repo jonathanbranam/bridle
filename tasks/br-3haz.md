@@ -4,7 +4,7 @@ title = "Mail between daemons, slice 1: outbox, peer tokens, forwarding with ack
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-04T02:32:57.804Z"
-updated_at = "2026-10-05T23:19:30.524941Z"
+updated_at = "2026-10-05T23:22:12.042755Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
 branch = "bridle/mail-outbox"
@@ -45,3 +45,6 @@ done: slice 1 (outbox, peer tokens, POST /v1/forward with ack and dedup, send --
 
 ### note · agent:manager-2 · 2026-10-05T23:19:30.524Z
 integrated: 29296901d9a9c6ab5d63790fb8bffcfad0dc0772 (branch bridle/mail-outbox)
+
+### note · agent:manager-2 · 2026-10-05T23:22:12.042Z
+cleanup: removed agent mail-outbox, branch bridle/mail-outbox
