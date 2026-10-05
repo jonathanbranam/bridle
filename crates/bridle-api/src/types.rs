@@ -354,11 +354,13 @@ pub struct HandoverDone {
 pub struct Handover {
     /// `h-0007`, from the insertion sequence.
     pub id: String,
+    /// The writer's identity without `external:`/`@machine` (`aide`, `advisor/doc-review`,
+    /// `agent:manager-2`); the human's notes are the orchestrator's.
     pub role: String,
     pub project: String,
     pub body: String,
     pub created_at: DateTime<Utc>,
-    /// The writing principal: `human` or `external:orchestrator`.
+    /// The writing principal.
     pub created_by: String,
 }
 

@@ -4,7 +4,7 @@
 
 use std::io::Write as _;
 use std::os::unix::process::ExitStatusExt;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::process::Command;
 
 use anyhow::Context;
@@ -200,11 +200,8 @@ pub async fn run(cli: &Cli, role: &SessionRole) -> Result<(), CliError> {
             refuse_if_running(cli, &advisor_identity(adv), &project).await?;
             let name = session_name("advisor", adv, &project, &suffix);
             let mut prompt = advisor_prompt(adv);
-            if let Some(path) = take_handover(&home, &advisor_identity(adv)) {
-                prompt = format!(
-                    "{prompt} Your previous session left a handover note at {}: read it first.",
-                    path.display()
-                );
+            if let Some(note) = handover_prompt(cli, &advisor_identity(adv)).await {
+                prompt = format!("{prompt} {note}");
             }
             let args = claude_args(
                 &with_auto_mode(
@@ -223,11 +220,8 @@ pub async fn run(cli: &Cli, role: &SessionRole) -> Result<(), CliError> {
             refuse_if_running(cli, "aide", &project).await?;
             let name = session_name("aide", None, &project, &suffix);
             let mut prompt = AIDE_PROMPT.to_string();
-            if let Some(path) = take_handover(&home, "aide") {
-                prompt = format!(
-                    "{prompt} Your previous session left a handover note at {}: read it first.",
-                    path.display()
-                );
+            if let Some(note) = handover_prompt(cli, "aide").await {
+                prompt = format!("{prompt} {note}");
             }
             let args = claude_args(
                 &with_auto_mode(
@@ -522,22 +516,28 @@ fn hostname() -> Option<String> {
     (!h.is_empty()).then_some(h)
 }
 
-/// Where a restart's handover note goes: `$BRIDLE_HOME/handover/<identity, '/' as '-'>.md`.
-fn handover_path(home: &Path, identity: &str) -> PathBuf {
-    home.join("handover")
-        .join(format!("{}.md", identity.replace('/', "-")))
-}
-
-/// The handover note a restart left for this session, renamed `.read` so a later plain launch
-/// doesn't read it again. `None` when there isn't one.
-fn take_handover(home: &Path, identity: &str) -> Option<PathBuf> {
-    let path = handover_path(home, identity);
-    if !path.is_file() {
-        return None;
-    }
-    let read = path.with_extension("md.read");
-    std::fs::rename(&path, &read).ok()?;
-    Some(read)
+/// The opening-prompt line pointing at this identity's newest handover note in the project's
+/// daemon (the record `bridle handover write` fills). `None` when there is none or the daemon
+/// can't be asked: a session still starts.
+async fn handover_prompt(cli: &Cli, identity: &str) -> Option<String> {
+    let h = tokio::time::timeout(DAEMON_WAIT, async {
+        crate::commands::client_for(cli)
+            .await
+            .ok()?
+            .latest_handover(Some(identity))
+            .await
+            .ok()
+            .flatten()
+    })
+    .await
+    .ok()
+    .flatten()?;
+    Some(format!(
+        "Your previous session left a handover note ({}, {}): read it first with `bridle handover show {}`.",
+        h.id,
+        h.created_at.format("%Y-%m-%d %H:%M UTC"),
+        h.id
+    ))
 }
 
 /// How long `--handover` waits for the session to write its note.
@@ -591,17 +591,20 @@ async fn restart(cli: &Cli, identifier: &str, fresh: bool) -> Result<(), CliErro
         .iter()
         .find(|s| s.identity == wanted)
         .ok_or_else(|| anyhow::anyhow!("no running session {wanted:?} (see `bridle status`)"))?;
-    let home = bridle_home();
-    let note = handover_path(&home, &info.identity);
-    let _ = std::fs::remove_file(&note); // a stale note is not this restart's
     if !fresh {
-        std::fs::create_dir_all(note.parent().expect("handover dir"))
-            .map_err(anyhow::Error::from)?;
+        let newest = || async {
+            client
+                .latest_handover(Some(&info.identity))
+                .await
+                .map(|h| h.map(|h| h.id))
+        };
+        let before = newest().await?;
         let to = format!("external:{}", info.identity);
-        let body = format!(
-            "The human is restarting this session. Write a handover note (what you were doing,              open threads, what the next session needs) to {} and say nothing more; the              restart follows when the file appears.",
-            note.display()
-        );
+        let body =
+            "The human is restarting this session. Write a handover note (what you were doing, \
+             open threads, what the next session needs) with `bridle handover write --file -` \
+             and say nothing more; the restart follows when the note is recorded."
+                .to_string();
         client
             .send(&bridle_api::SendRequest {
                 to: Some(to),
@@ -612,16 +615,13 @@ async fn restart(cli: &Cli, identifier: &str, fresh: bool) -> Result<(), CliErro
                 task: None,
             })
             .await?;
-        println!(
-            "asked {} to write {}; waiting",
-            info.identity,
-            note.display()
-        );
+        println!("asked {} to write a handover note; waiting", info.identity);
         let deadline = std::time::Instant::now() + handover_wait();
-        while !note.metadata().is_ok_and(|m| m.len() > 0) {
+        while newest().await? == before {
             if std::time::Instant::now() >= deadline {
                 return Err(anyhow::anyhow!(
-                    "no handover note after {}s; nothing restarted. Use --fresh to restart with                      no context",
+                    "no handover note after {}s; nothing restarted. Use --fresh to restart with \
+                     no context",
                     handover_wait().as_secs()
                 )
                 .into());
@@ -699,19 +699,6 @@ mod tests {
             "bridle --project meta session advisor alice"
         );
         assert_eq!(relaunch_command("advisor", None), "bridle session advisor");
-    }
-
-    #[test]
-    fn a_handover_note_is_read_once() {
-        let home = tempfile::tempdir().unwrap();
-        let p = handover_path(home.path(), "advisor/alice");
-        assert!(p.ends_with("handover/advisor-alice.md"));
-        assert!(take_handover(home.path(), "advisor/alice").is_none());
-        std::fs::create_dir_all(p.parent().unwrap()).unwrap();
-        std::fs::write(&p, "state").unwrap();
-        let read = take_handover(home.path(), "advisor/alice").unwrap();
-        assert!(read.is_file() && !p.exists());
-        assert!(take_handover(home.path(), "advisor/alice").is_none());
     }
 
     #[test]

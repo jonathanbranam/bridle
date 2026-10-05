@@ -457,36 +457,66 @@ async fn require_not_worker(state: &AppState, principal: &Principal) -> Result<(
 
 // ---------- orchestrator handover notes ----------
 
-/// Writing is for the human and the orchestrator only; reading is for any principal.
+/// Any principal may write; the note is keyed by the writer's own identity (never the body).
 async fn write_handover(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
     Json(req): Json<WriteHandoverRequest>,
 ) -> Result<Json<Handover>, ApiError> {
-    if principal.kind != PrincipalKind::Human && principal.id != crate::wake::ORCHESTRATOR {
-        return Err(ApiError::forbidden(
-            "only the human or external:orchestrator may write a handover note",
-        ));
-    }
     if req.body.trim().is_empty() {
         return Err(ApiError::bad_request("the note is empty"));
     }
     let h = state
         .store
-        .insert_handover("orchestrator", &state.project, &req.body, &principal.id)
+        .insert_handover(
+            &handover_role(&principal),
+            &state.project,
+            &req.body,
+            &principal.id,
+        )
         .await?;
     state.tasks.enqueue_handover(&h)?;
     Ok(Json(h))
 }
 
-async fn list_handovers(State(state): State<AppState>) -> Result<Json<Vec<Handover>>, ApiError> {
-    Ok(Json(state.store.list_handovers().await?))
+/// The key of a principal's notes: its id without `external:` and without `@machine`, so
+/// `aide`, `advisor/doc-review`, `agent:manager-2`. The human writes the orchestrator's.
+fn handover_role(principal: &Principal) -> String {
+    if principal.kind == PrincipalKind::Human {
+        return "orchestrator".to_string();
+    }
+    let id = principal
+        .id
+        .strip_prefix("external:")
+        .unwrap_or(&principal.id);
+    id.split('@').next().unwrap_or(id).to_string()
+}
+
+#[derive(serde::Deserialize)]
+struct HandoverFilter {
+    role: Option<String>,
+}
+
+async fn list_handovers(
+    State(state): State<AppState>,
+    Query(f): Query<HandoverFilter>,
+) -> Result<Json<Vec<Handover>>, ApiError> {
+    let mut list = state.store.list_handovers().await?;
+    if let Some(role) = f.role {
+        list.retain(|h| h.role == role);
+    }
+    Ok(Json(list))
 }
 
 async fn latest_handover(
     State(state): State<AppState>,
+    Query(f): Query<HandoverFilter>,
 ) -> Result<Json<Option<Handover>>, ApiError> {
-    Ok(Json(state.store.list_handovers().await?.into_iter().next()))
+    let mut list = state.store.list_handovers().await?;
+    if let Some(role) = f.role {
+        list.retain(|h| h.role == role);
+    }
+    Ok(Json(list.into_iter().next()))
 }
 
 async fn get_handover(

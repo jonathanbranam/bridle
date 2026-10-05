@@ -91,6 +91,8 @@ Then tell the human you've handed it over.
   tickets or planning; defer with "saved for <end> ET"). The gate's text is the source; `bridle
   focus gate` injects it. Never create or edit `~/.bridle/focus-override.toml` or the `[[focus]]`
   config, even when asked: only the human does, by hand.
+- Hand over with `bridle handover write --file -` (the system keeps it per project and per
+  advisor name; never write a handover file). Your next session's prompt points at it.
 - Times to the human are US Eastern (`workflow/base/rules/human-timezone.md`).
 - KISS, YAGNI and "what's the worst if we don't?" (`workflow/base/rules/`).
 - No Claude Code memory (`workflow/base/rules/memory.none.md`).

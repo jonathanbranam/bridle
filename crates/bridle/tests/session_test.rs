@@ -434,3 +434,50 @@ fn a_registered_session_whose_process_is_gone_does_not_block() {
     );
     assert!(!r.claude.is_empty());
 }
+
+/// A fake daemon with one handover note, for `role=aide` only: any other role has none.
+fn handover_daemon() -> String {
+    use std::io::{Read, Write};
+    let l = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let url = format!("http://{}", l.local_addr().unwrap());
+    std::thread::spawn(move || {
+        for mut c in l.incoming().flatten() {
+            let mut buf = [0u8; 4096];
+            let n = c.read(&mut buf).unwrap_or(0);
+            let req = String::from_utf8_lossy(&buf[..n]).into_owned();
+            let line = req.lines().next().unwrap_or("").to_string();
+            let body = if line.contains("/v1/handovers/latest") && line.contains("role=aide ") {
+                r#"{"id":"h-0042","role":"aide","project":"p","body":"b","created_at":"2026-01-01T00:00:00Z","created_by":"external:aide"}"#
+            } else if line.contains("/v1/handovers/latest") {
+                "null"
+            } else {
+                "[]"
+            };
+            let _ = write!(
+                c,
+                "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
+                body.len()
+            );
+        }
+    });
+    url
+}
+
+#[test]
+fn a_session_prompt_names_the_newest_note_of_its_own_identity() {
+    let url = handover_daemon();
+    let args = |who: &[&str]| {
+        let mut a = vec!["--project", "p", "--url", &url, "--token", "t"];
+        a.extend_from_slice(who);
+        session(&a, &[], 0)
+    };
+    let aide = args(&["aide"]);
+    assert!(
+        aide.claude.contains("bridle handover show h-0042"),
+        "{}",
+        aide.claude
+    );
+    let advisor = args(&["advisor", "alice"]);
+    assert!(!advisor.claude.is_empty());
+    assert!(!advisor.claude.contains("h-0042"), "{}", advisor.claude);
+}

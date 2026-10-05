@@ -2673,7 +2673,7 @@ mod sync {
     ) -> Result<u64, StoreError> {
         let n = conn.execute(
             "DELETE FROM handovers WHERE created_at < ?1
-               AND seq < (SELECT MAX(seq) FROM handovers)",
+               AND seq NOT IN (SELECT MAX(seq) FROM handovers GROUP BY role)",
             params![fmt_dt(older_than)],
         )?;
         Ok(n as u64)

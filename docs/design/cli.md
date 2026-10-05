@@ -139,8 +139,8 @@ bridle focus gate                           the UserPromptSubmit hook of focus h
                                              nudge context on the first prompt and every 5 min after; silent otherwise; never fails
 bridle orchestrator handover done                       the orchestrator's state is written: the daemon stops and relaunches its session (marker only); human and external:orchestrator only
 bridle orchestrator wait-for-wake --mail [--timeout SECS]                  the advisor's mail-only waiter: returns when unread mail from external:mail arrives (`nothing` at the timeout, default 25 min, cap 6900 s); polls the inbox every 10 s
-bridle orchestrator handover write --file <path>|-      record the orchestrator's handover note (human and external:orchestrator only); prints its id
-bridle orchestrator handover list | show <id>           the notes, newest first · one note
+bridle handover write --file <path>|-                  record your handover note (any principal; keyed by your identity and the project); prints its id
+bridle handover list [--role R] | show <id> | latest [--role R]     the notes, newest first · one note · the newest
 bridle mail run                              the email bridge for this project: inbound mail, question mails, daily digest (docs/design/mail.md); runs as external:mail
 bridle orchestrator wait-for-wake [--timeout SECS]                  the orchestrator's background watcher: waits for a wake condition, prints it and exits 0 (`nothing` at the timeout, default 25 min, cap 6900 s); external:orchestrator only
 bridle hook arch-guard                      Claude Code PreToolUse hook: blocks design/architecture/ edits outside an arch-revision task
@@ -708,7 +708,7 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   (`{"decision":"block"}`, reason "Locked until 6:00 PM. Email bridle@dev.branam.us if it
   matters."). `bridle session advisor`, `bridle session aide` and `bridle advisor start` refuse while locked. Local, never fails. An active override file (roles-and-config, Focus hours) silences it, and
   `bridle status` prints a `focus` line while one is pending or active.
-- **`handover`** keeps the orchestrator's note as a record ([[orchestrator-supervision]] section 7):
+- **`handover`** keeps every agent's note (orchestrator, aide, advisor/<name>, workers) as a record keyed by the writer's identity ([[orchestrator-supervision]] section 7):
   `write` reads a file or stdin (`-`), `list` shows id, time, author and first line, `show` the
   whole note. Latest wins; `bridle orchestrator prime orchestrator` prints the newest under a heading with
   its age, and falls back to `docs/context/orchestrator-state.md` when there is no note (or no

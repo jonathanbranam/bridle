@@ -225,7 +225,7 @@ that jumps steps announces only the highest.
 | Step | Context | Session is told | Human is told |
 |---|---|---|---|
 | 0 | 150k | its size | the size, and the restart commands |
-| 1 | 200k | plan a handover (note at `$BRIDLE_HOME/handover/<identity>.md`) unless the human overrides | `bridle session keep` to carry on, `bridle session restart` to go now |
+| 1 | 200k | plan a handover (`bridle handover write --file -`) unless the human overrides | `bridle session keep` to carry on, `bridle session restart` to go now |
 | 2 | 250k | the normal ceiling: hand over or shut down unless the human overrides | the same |
 | 3 | 300k | the hard limit: write the note now | it is being restarted |
 
@@ -241,13 +241,14 @@ and relaunching from the daemon without the CLI (the pane logic lives in the com
 
 **Restart on request (jttf).** `bridle session restart <identifier> [--handover|--fresh]`, run by
 the human (or the orchestrator for a handover): `--handover`, the default, messages the session to
-write a note to `$BRIDLE_HOME/handover/<identity, / as ->.md` and waits for it (10 min, then it
-fails and nothing is restarted); `--fresh` skips that and is refused inside a session
+write a note with `bridle handover write --file -` and waits for a new note of that identity
+(10 min, then it fails and nothing is restarted); `--fresh` skips that and is refused inside a session
 (`BRIDLE_AS`). Then it SIGTERMs the launcher's children, waits for the launcher to exit and runs
 `bridle [--project p] session advisor [name]` in the registered tmux pane with `send-keys`; with
-no pane, or a pane that is gone, it prints the command. The new launcher adds the note's path to
-its opening prompt and renames the note `.read`. A stale note is removed at the start of each
-restart. Not for the orchestrator (its own handover above); no crash restart (tabled).
+no pane, or a pane that is gone, it prints the command. The new launcher adds the newest note's id
+to its opening prompt (`bridle handover show <id>`). The old `~/.bridle/handover/*.md` files are
+obsolete and ignored (they were one per identity across all projects, so two projects' aides
+collided). Not for the orchestrator (its own handover above); no crash restart (tabled).
 
 **Who talks to the human (r8kv).** The orchestrator session doesn't: it reaches the human only by
 messaging `external:aide` (`bridle session aide`, `workflow/base/roles/aide.md`), which
@@ -299,10 +300,14 @@ tasks, CI), and that is printed live by `bridle prime orchestrator`. What is lef
 - A table `handovers(seq INTEGER PK AUTOINCREMENT, id UNIQUE, role, project, body, created_at,
   created_by)` in the store (`storage.md` gets it; a new schema version). `id` is `h-0007` from
   `seq`, like messages.
-- `bridle handover write --file <path>|-` inserts a row (role `orchestrator`, the caller's
-  project; only the human and `external:orchestrator`). **Latest wins, history kept**: prime
+- `bridle handover write --file <path>|-` inserts a row for any principal: `role` is the
+  writer's own identity from its token (`orchestrator`, `aide`, `advisor/<name>`,
+  `agent:<name>`; the human's notes are the orchestrator's), never from the request, plus the
+  daemon's project, so each project's daemon keeps its own and each named advisor is its own
+  role. `list --role R` and `latest [--role R]` (`?role= on `GET /v1/handovers` and
+  `/latest`) read one identity's. **Latest wins, history kept**: prime
   reads the highest `seq`; older rows stay for `bridle handover list` and `show <id>`, pruned
-  with the events at 30 days but always keeping the newest.
+  with the events at 30 days but always keeping each role's newest.
 - `bridle handover done` (6) is the separate marker, so writing a note early doesn't restart.
 - `bridle prime orchestrator` prints the note under a heading, its age, then the live views.
 - Also on the state branch, unlike messages and incidents: each note is written as

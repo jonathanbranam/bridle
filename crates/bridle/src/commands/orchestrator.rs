@@ -106,7 +106,7 @@ pub(super) async fn prime_orchestrator(cli: &Cli) -> Result<(), CliError> {
     }
     let state = std::fs::read_to_string(repo.join("docs/context/orchestrator-state.md")).ok();
     let note = match client_for_read(cli).await {
-        Ok(c) => c.latest_handover().await.ok().flatten(),
+        Ok(c) => c.latest_handover(Some("orchestrator")).await.ok().flatten(),
         Err(_) => None,
     };
     let project = crate::launchd::project_name(cli, &repo)?;
@@ -416,8 +416,11 @@ pub(super) async fn handover(cli: &Cli, args: &HandoverArgs) -> Result<(), CliEr
             }
         }
         HandoverAction::Done => handover_done(cli).await?,
-        HandoverAction::List => {
-            let list = client_for_read(cli).await?.list_handovers().await?;
+        HandoverAction::List { role } => {
+            let list = client_for_read(cli)
+                .await?
+                .list_handovers(role.as_deref())
+                .await?;
             if cli.json {
                 render::print_json(&list)?;
             } else if list.is_empty() {
@@ -434,8 +437,17 @@ pub(super) async fn handover(cli: &Cli, args: &HandoverArgs) -> Result<(), CliEr
                 }
             }
         }
-        HandoverAction::Show { id } => {
-            let h = client_for_read(cli).await?.get_handover(id).await?;
+        HandoverAction::Show { .. } | HandoverAction::Latest { .. } => {
+            let client = client_for_read(cli).await?;
+            let h =
+                match &args.action {
+                    HandoverAction::Latest { role } => client
+                        .latest_handover(role.as_deref())
+                        .await?
+                        .ok_or_else(|| anyhow::anyhow!("no handover note"))?,
+                    HandoverAction::Show { id } => client.get_handover(id).await?,
+                    _ => unreachable!("matched above"),
+                };
             if cli.json {
                 render::print_json(&h)?;
             } else {

@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- Every agent hands over through the project's handover record, keyed by its own identity (`aide`, `advisor/<name>`, `agent:<name>`, `orchestrator`) and project, so two projects' aides no longer share one file under `~/.bridle/handover/` (obsolete, left alone). `bridle handover write` accepts any principal; `handover list --role R` and `handover latest [--role R]` read them; `bridle session aide|advisor` point the opening prompt at the newest note, and the context-limit messages and `session restart` name the command instead of a file path.
 - `bridle gateway --detach` runs the gateway in the background like `bridle serve --detach` (log `~/.bridle/gateway.log`, waits for health, refuses a second); a running gateway re-executes itself when the bridle binary is replaced by an upgrade; new optional `[gateway] enabled` (default true).
 - Gateway `POST /api/v1/projects/{project}/links/resolve` tells the UI which wiki links, doc paths and ticket stems name an existing document under `docs/` (br-bnhn).
 - Stable local code signing on Macs: `just sign-setup` (or `bridle sign setup`) creates a self-signed "bridle local signing" identity over SSH with no GUI dialog; `just install` and the daemon's self-upgrade then re-sign the installed binary with it, so the firewall's Allow survives rebuilds. Without the identity the ad-hoc signature stays (br-p88z, ticket p88z).

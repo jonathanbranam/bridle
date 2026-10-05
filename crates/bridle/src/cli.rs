@@ -1749,8 +1749,8 @@ pub struct HandoverArgs {
 
 #[derive(Debug, Subcommand)]
 pub enum HandoverAction {
-    /// Record a new note (the newest one is what `prime orchestrator` prints). Only the human
-    /// and `external:orchestrator`.
+    /// Record a new note, keyed by who you are (aide, advisor/<name>, an agent, the orchestrator)
+    /// and this project; your next session gets the newest one.
     Write {
         /// Read the note from this file, or `-` for stdin.
         #[arg(long)]
@@ -1761,9 +1761,18 @@ pub enum HandoverAction {
     /// `external:orchestrator`. The marker only; `write` records the note.
     Done,
     /// List notes, newest first.
-    List,
+    List {
+        /// Only this identity's notes (`aide`, `advisor/<name>`, `orchestrator`, `agent:<name>`).
+        #[arg(long)]
+        role: Option<String>,
+    },
     /// Print one note.
     Show { id: String },
+    /// Print the newest note (of `--role`, if given).
+    Latest {
+        #[arg(long)]
+        role: Option<String>,
+    },
 }
 
 #[derive(Debug, Args)]

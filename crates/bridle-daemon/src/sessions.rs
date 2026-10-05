@@ -122,12 +122,6 @@ impl Sessions {
         self.config.steps_for(identity)
     }
 
-    fn handover_note(&self, identity: &str) -> PathBuf {
-        self.home
-            .join("handover")
-            .join(format!("{}.md", identity.replace('/', "-")))
-    }
-
     /// Registers the session, or fills in what the later call knows for the same pid.
     pub fn register(&self, req: SessionRegister, now: DateTime<Utc>) -> SessionInfo {
         let mut entries = self.entries.lock().expect("sessions lock");
@@ -339,7 +333,7 @@ impl Sessions {
         let steps = self.steps(&r.identity);
         let (next, hard) = (steps.get(r.step + 1).map(|t| t / 1000), steps[3] / 1000);
         let id = &r.identity;
-        let note = self.handover_note(id).display().to_string();
+        let write = "`bridle handover write --file -`";
         let kept = if r.kept {
             " (You carried on at the last step; asking again.)"
         } else {
@@ -361,7 +355,7 @@ impl Sessions {
                 format!(
                     "Your context is {k}k tokens. Plan a handover at the next quiet point: write \
                      a short note (what you were doing, open threads, what the next session \
-                     needs) to {note}. The human may override this.{kept}"
+                     needs) with {write}. The human may override this.{kept}"
                 ),
                 format!(
                     "{id} is at {k}k tokens and will plan a handover. Carry on instead with \
@@ -371,7 +365,7 @@ impl Sessions {
             ),
             2 => (
                 format!(
-                    "Your context is {k}k tokens: the normal ceiling. Hand over (write {note}) or \
+                    "Your context is {k}k tokens: the normal ceiling. Hand over (run {write}) or \
                      shut down, unless the human overrides. At {hard}k the handover is forced.{kept}"
                 ),
                 format!(
@@ -382,8 +376,8 @@ impl Sessions {
             ),
             _ => (
                 format!(
-                    "Your context is {k}k tokens: the hard limit. Write your handover note to \
-                     {note} now; the session is restarted when it appears, and in any case \
+                    "Your context is {k}k tokens: the hard limit. Write your handover note with \
+                     {write} now; the session is restarted when it is recorded, and in any case \
                      within minutes. No override."
                 ),
                 format!("{id} is at {k}k tokens, the hard limit: it is being restarted."),
@@ -640,6 +634,11 @@ mod tests {
         let to_human = notes_to(&store, AIDE).await;
         assert_eq!((to_session.len(), to_human.len()), (1, 1));
         assert!(to_session[0].contains("normal ceiling"), "{to_session:?}");
+        assert!(
+            to_session[0].contains("bridle handover write --file -")
+                && !to_session[0].contains(".md"),
+            "{to_session:?}"
+        );
         assert!(to_human[0].contains("bridle session keep advisor/alice"));
         // The next step asks again; /compact resets.
         write_context(&dir, "sess-1", 10);

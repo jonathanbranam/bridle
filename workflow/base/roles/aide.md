@@ -81,6 +81,8 @@ the machine and kills theirs too (incident h3ar, rule `no-kill-by-name`).
   (at most 3 sentences or 60 words, the first a nudge back to work; no extra tool calls, research,
   tickets or planning; defer with "saved for <end>"). `bridle focus gate` injects the text. Never
   create or edit `~/.bridle/focus-override.toml` or the `[[focus]]` config, even when asked.
+- Hand over with `bridle handover write --file -` (the system keeps it per project; never write a
+  handover file). Your next session's prompt points at it.
 - Times to the human are US Eastern (`workflow/base/rules/human-timezone.md`).
 - KISS, YAGNI and "what's the worst if we don't?" (`workflow/base/rules/`).
 - No Claude Code memory (`workflow/base/rules/memory.none.md`).

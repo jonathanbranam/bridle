@@ -384,7 +384,7 @@ impl Client {
         self.get_json_query(&["v1", "interactions"], query).await
     }
 
-    /// `POST /v1/handovers`: `human` and `external:orchestrator` only.
+    /// `POST /v1/handovers`: any principal; the note is keyed by the caller's own identity.
     pub async fn write_handover(&self, body: &str) -> Result<Handover, ClientError> {
         let req = WriteHandoverRequest {
             body: body.to_string(),
@@ -392,14 +392,19 @@ impl Client {
         self.post_json(&["v1", "handovers"], &req).await
     }
 
-    /// `GET /v1/handovers`: newest first.
-    pub async fn list_handovers(&self) -> Result<Vec<Handover>, ClientError> {
-        self.get_json(&["v1", "handovers"]).await
+    /// `GET /v1/handovers`: newest first; `role` limits it to one identity's notes.
+    pub async fn list_handovers(&self, role: Option<&str>) -> Result<Vec<Handover>, ClientError> {
+        self.get_json_query(&["v1", "handovers"], &[("role", role)])
+            .await
     }
 
-    /// `GET /v1/handovers/latest`: the note `prime` prints, if any.
-    pub async fn latest_handover(&self) -> Result<Option<Handover>, ClientError> {
-        self.get_json(&["v1", "handovers", "latest"]).await
+    /// `GET /v1/handovers/latest`: the newest note (of `role`, if given), if any.
+    pub async fn latest_handover(
+        &self,
+        role: Option<&str>,
+    ) -> Result<Option<Handover>, ClientError> {
+        self.get_json_query(&["v1", "handovers", "latest"], &[("role", role)])
+            .await
     }
 
     /// `GET /v1/handovers/{id}`.
