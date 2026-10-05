@@ -614,3 +614,20 @@ Newest first. One line per item: what happened, who did it, what it says about r
   task within minutes; the human's quote goes on the task as the approval.
 - **By hand:** `npm run install-ui` twice (ui-65ft, ui-pksj); the track-web games preview is a vite
   dev server on the clone, so a landing on `dev` needs only a reload, not a restart.
+
+## Thirty-sixth orchestrator session (2026-10-05 ~01:30Z to ~04:40Z)
+
+- **Quiet hours never reached wake turns** (incident yy88): the focus gate is a UserPromptSubmit
+  hook, so every wake turn after the first replied in full while the human slept. Until 9s8u lands,
+  read the clock yourself on wake turns and keep the reply to a line in quiet hours.
+- **I repeated last session's "## The ask" mistake three times** (tr22, ksz7, up82): `bridle ticket
+  new --body` also adds the heading. Write the body without it.
+- **Auto mode refused `bridle daemon restart --upgrade`** ("Interfere With Workloads"), though the
+  role says the orchestrator may request it. The automatic upgrade after merges does the same job,
+  so this only matters for a manual one; human to-do br-46me suggests allowing it.
+- **manager-1 (bridle-ui) is denied `npm ci`**, so it can't install the UI after a landing; I ran
+  `npm ci && npm run install-ui` in the bridle-ui clone myself (twice). br-tc7t should give it a way.
+- **Started a watcher with `&` inside a Bash call twice**: untracked, output to /dev/null, so wakes
+  could be lost. Always use run_in_background.
+- **Managers integrate quickly** (bridle-ui manager-1 landed ui-py6p 9 s after "done"). Spot-checked
+  `bridle spec check` on bridle-ui main afterwards: clean.
