@@ -225,13 +225,17 @@ that jumps steps announces only the highest.
 | Step | Context | Session is told | Human is told |
 |---|---|---|---|
 | 0 | 150k | its size | the size, and the restart commands |
-| 1 | 200k | plan a handover (`bridle handover write --file -`) unless the human overrides | `bridle session keep` to carry on, `bridle session restart` to go now |
-| 2 | 250k | the normal ceiling: hand over or shut down unless the human overrides | the same |
+| 1 | 200k | restart yourself: say "I'm at 200k; restarting", run `bridle session restart <identity>`, write the handover note it asks for (`bridle handover write --file -`); the human may say keep going | `bridle session keep` to carry on, `restart --fresh` for no handover |
+| 2 | 250k | the normal ceiling, past due: restart yourself as at 200k | the same |
 | 3 | 300k | the hard limit: write the note now | it is being restarted |
 
 `bridle session keep <identifier>` (`POST /v1/sessions/keep`) is the override: recorded as
 `session.override`, told to the session, and the next step says so and asks again. It is refused
-before the first step and at step 3. Restarting without a handover stays the human's choice
+before the first step and at step 3. The session has the authority to act on step 1 itself (gq9r), so it no longer waits on the human;
+the prompts in `workflow/base/roles/aide.md` and `advisor.md` say the same. Role prompts are read
+from the workflow dir when a session launches (`docs/design/workflow-layers.md`), so existing
+projects get them at the next launch with no per-project change, unless a project sets its own
+`system_prompt`. Nothing is forced below the hard limit. Restarting without a handover stays the human's choice
 (`session restart --fresh`) at any point. At step 3 the daemon runs `bridle session restart
 <identity>` itself (a handover first, up to the command's 10 minute wait; `--fresh` if the note
 never comes) in the repo, and tells aide the outcome, including "run this in a terminal" when

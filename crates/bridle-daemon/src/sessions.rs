@@ -6,8 +6,8 @@
 //! is gone, start time included, so a reused pid isn't adopted. Stopgap until the seats table
 //! (gtzx).
 //!
-//! The steps are `[sessions] warn` (150k, 200k, 250k, 300k): warn, plan a handover, the normal
-//! ceiling, the hard limit. Reaching a step emits `session.context` and messages the session and
+//! The steps are `[sessions] warn` (150k, 200k, 250k, 300k): warn, hand over and restart yourself,
+//! the normal ceiling, the hard limit. Reaching a step emits `session.context` and messages the session and
 //! the human (through `external:aide`), once until the reading drops (/compact, /clear); a
 //! reading that jumps several steps announces only the highest. The human's override
 //! ([`Sessions::keep`]) is recorded and the next step asks again; the hard limit has none: it
@@ -353,25 +353,30 @@ impl Sessions {
             ),
             1 => (
                 format!(
-                    "Your context is {k}k tokens. Plan a handover at the next quiet point: write \
-                     a short note (what you were doing, open threads, what the next session \
-                     needs) with {write}. The human may override this.{kept}"
+                    "Your context is {k}k tokens. You have the authority to restart yourself: say \
+                     \"I'm at {k}k; restarting\" to the human, then run `bridle session restart \
+                     {id}`. It asks you for a handover note (what you were doing, open threads, \
+                     what the next session needs): write it with {write} and the restart follows. \
+                     If the human is mid-conversation and says keep going, carry on; they can \
+                     override with `bridle session keep`.{kept}"
                 ),
                 format!(
-                    "{id} is at {k}k tokens and will plan a handover. Carry on instead with \
-                     `bridle session keep {id}`; restart now with `bridle session restart {id}` \
-                     (`--fresh` for no handover).{kept}"
+                    "{id} is at {k}k tokens and will hand over and restart itself. Carry on \
+                     instead with `bridle session keep {id}`; restart fresh with `bridle session \
+                     restart {id} --fresh` (no handover).{kept}"
                 ),
             ),
             2 => (
                 format!(
-                    "Your context is {k}k tokens: the normal ceiling. Hand over (run {write}) or \
-                     shut down, unless the human overrides. At {hard}k the handover is forced.{kept}"
+                    "Your context is {k}k tokens: the normal ceiling, and you should have \
+                     restarted already. Say \"I'm at {k}k; restarting\", run `bridle session \
+                     restart {id}` and write the handover note it asks for ({write}), unless the \
+                     human says otherwise. At {hard}k the restart is forced.{kept}"
                 ),
                 format!(
-                    "{id} is at {k}k tokens, the normal ceiling: it will hand over or shut down. \
-                     Override with `bridle session keep {id}` (forced at {hard}k), or restart now \
-                     with `bridle session restart {id}` (`--fresh` for no handover).{kept}"
+                    "{id} is at {k}k tokens, the normal ceiling: it will hand over and restart \
+                     itself. Override with `bridle session keep {id}` (forced at {hard}k), or \
+                     restart fresh with `bridle session restart {id} --fresh`.{kept}"
                 ),
             ),
             _ => (
@@ -613,6 +618,24 @@ mod tests {
             reg(std::process::id() as i32, &real_start(), Some("sess-1")),
             Utc::now(),
         );
+    }
+
+    #[tokio::test]
+    async fn the_200k_step_tells_the_session_to_hand_over_and_restart_itself() {
+        let (s, dir, store) = fixture().await;
+        register_self(&s);
+        write_context(&dir, "sess-1", 200);
+        s.tick().await;
+        let to_session = notes_to(&store, "external:advisor/alice").await;
+        assert_eq!(to_session.len(), 1, "{to_session:?}");
+        let note = &to_session[0];
+        assert!(note.contains("restart yourself"), "{note}");
+        assert!(
+            note.contains("bridle session restart advisor/alice"),
+            "{note}"
+        );
+        assert!(note.contains("bridle handover write --file -"), "{note}");
+        assert!(!note.contains("Plan a handover"), "{note}");
     }
 
     #[tokio::test]

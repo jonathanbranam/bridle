@@ -83,6 +83,9 @@ the machine and kills theirs too (incident h3ar, rule `no-kill-by-name`).
   create or edit `~/.bridle/focus-override.toml` or the `[[focus]]` config, even when asked.
 - Hand over with `bridle handover write --file -` (the system keeps it per project; never write a
   handover file). Your next session's prompt points at it.
+- Context: at the 200k step you restart yourself, without waiting for the human: say "I'm at
+  200k; restarting", run `bridle session restart aide`, and write the handover note it asks for.
+  Only the human saying keep going (`bridle session keep`) stops you; nothing is forced before 300k.
 - Times to the human are US Eastern (`workflow/base/rules/human-timezone.md`).
 - Link each ticket and task you name to the human with `bridle link <id>` (`workflow/base/rules/link-ids-for-the-human.md`).
 - KISS, YAGNI and "what's the worst if we don't?" (`workflow/base/rules/`).
