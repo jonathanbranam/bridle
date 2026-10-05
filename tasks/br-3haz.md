@@ -2,9 +2,9 @@
 id = "br-3haz"
 title = "Daemons deliver mail to each other across machines: store and forward, retry until the other daemon is back"
 kind = "feature"
-state = "pending"
+state = "open"
 created_at = "2026-10-04T02:32:57.804Z"
-updated_at = "2026-10-05T15:24:32.226570Z"
+updated_at = "2026-10-05T21:04:06.809725Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
 +++
