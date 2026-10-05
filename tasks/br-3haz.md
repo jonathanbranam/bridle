@@ -1,16 +1,27 @@
 +++
 id = "br-3haz"
-title = "Daemons deliver mail to each other across machines: store and forward, retry until the other daemon is back"
+title = "Mail between daemons, slice 1: outbox, peer tokens, forwarding with acknowledgement and dedup (3haz P1, P4, P5)"
 kind = "feature"
 state = "open"
 created_at = "2026-10-04T02:32:57.804Z"
-updated_at = "2026-10-05T21:04:06.809725Z"
+updated_at = "2026-10-05T21:04:30.419838Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
 +++
 
 original id: 3haz
-docs/tickets/open/daemons-deliver-mail-to-each-other-across-machines-store-and-3haz.md
+Ticket (read all of it first; the human decided Q1-Q4 and the wake-as-message design there): docs/tickets/open/daemons-deliver-mail-to-each-other-across-machines-store-and-3haz.md. Also docs/design/agent-host/principals.md, the k7mw design (projects on other machines), docs/design/storage.md. This is slice 1 of 6; the ticket's P8 order is the plan. Later slices (visitor mail home, retry and start-up ping, status/message show, wakes as messages, cross-project task watch) are separate tasks that depend on this one: do NOT build them here.
+
+Goal: a message to a principal on another daemon goes to the sender's OWN daemon, which accepts it at once, stores it in an outbox table and delivers it to the remote daemon over HTTP; the CLI never writes mail to a remote daemon. Scope is every daemon pair, same machine included (Q1).
+Build:
+- Outbox table (schema migration per storage.md) and a delivery attempt on enqueue (one immediate try is enough; the retry loop is slice 3).
+- Peer tokens (P5): one token per pair of daemons, `bridle token create --peer <machine>` (or the smallest equivalent), stored where visitor/per-machine tokens are; the forwarding daemon states the original sender and the receiver trusts that label only from a peer token.
+- Forwarding endpoint on the receiving daemon, with acknowledgement and dedup by origin (machine, daemon, message id) so a retry never delivers twice; per peer, oldest first (P4).
+- `bridle send` to a remote project/principal now enqueues on the local daemon (keep k7mw addressing, P7); the sender gets a message id at once.
+Files likely: crates/bridle-daemon (store, server, new outbox module), crates/bridle-api/src/types.rs (wire change: update all clients together), crates/bridle/src (send, token commands), docs/design/agent-host/principals.md, cli.md, storage.md.
+Migration: the schema change follows the daemon's normal DB migration; peer tokens and the outbox are new and optional, so existing projects need no file changes. State this in the done note.
+Acceptance: just check passes; tests with two in-process daemons: send enqueues locally, delivers, an ack lost then retried does not duplicate, order is oldest first, a peer-token label is trusted and a visitor token's is not. Docs updated in the same change.
+Model: Sonnet. Out of scope: the retry loop and start-up ping, forwarding visitor mail home, status lines, wake reasons as messages, task watch across projects.
 
 ## Thread
 
