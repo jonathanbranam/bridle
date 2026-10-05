@@ -2,11 +2,13 @@
 id = "br-ds96"
 title = "Before a planned restart or shutdown, the daemon ends every waiter with the reason (shutting down, upgrading, restarting by request) and records it in events"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-05T02:11:30.511Z"
-updated_at = "2026-10-05T10:44:07.709880Z"
+updated_at = "2026-10-05T10:46:38.950562Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+branch = "bridle/waiter-reason"
+commit = "7c1accb724f73fe0c217c99e2ff7d3fcd123efcc"
 summary = """Planned restarts and shutdowns now end every open waiter with the reason. Waiters (wake.rs) holds the stop reason (first planned path wins: /v1/shutdown, /v1/restart, upgrade with the build sha) and a watch channel; the shutdown task in lib.rs announces it before agents stop and emits daemon.stopping with reason and waiters_ended (orchestrator and `agent wake` waiters both counted, principal ones via a new guard that stays out of the orchestrator presence check). Both wake routes answer a daemon_stopping reason (api types: DAEMON_STOPPING_WAKE, PrincipalWakeReason.text); the CLI maps it to new CliError::Stopping, exit 6 with the reason on stderr; real timeouts still exit 4. A signal stop uses the default "shutting down". Test: principal_wake_test waiter open during a restart. Docs: cli.md, api.md, CHANGELOG. Caveat: the orchestrator waiter route has no dedicated test; the orchestrator's queued "restart" wake may win the race there and exit 0."""
 +++
 
@@ -23,3 +25,9 @@ done: waiters ended with reason before planned restart/shutdown, exit 6, daemon.
 
 ### note · agent:manager-2 · 2026-10-05T10:44:07.709Z
 main moved: merge main into your branch, rerun just check, then report the new sha with exit status and test count.
+
+### note · agent:waiter-reason · 2026-10-05T10:46:33.652Z
+done: main merged; just check exit 0, 1222 tests passed; d79aafa1
+
+### note · agent:manager-2 · 2026-10-05T10:46:38.950Z
+integrated: 7c1accb724f73fe0c217c99e2ff7d3fcd123efcc (branch bridle/waiter-reason)
