@@ -4,7 +4,7 @@ title = "Per-project sessions (aide) share one handover file and one identity ac
 kind = "bug"
 state = "planned"
 created_at = "2026-10-05T00:21:30.006Z"
-updated_at = "2026-10-05T00:22:49.318860Z"
+updated_at = "2026-10-05T00:23:28.010482Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -15,18 +15,19 @@ watchers = [
 original id: e9yu
 Ticket: docs/tickets/open/per-project-sessions-aide-share-one-handover-file-and-one-id-e9yu.md (read it; it quotes the human, including the clarification).
 
-Approval: the human, via the bridle-ui aide (m-0259, m-0268, 2026-10-04 ~8:25 PM ET), critical: "File is critical, but fix that". And: "That file should be based on the ID of the agent, so the named agents get a different file. I don't even know why it's a file. The orchestrator's handover is some kind of note in the system."
+Approval: the human, via the bridle-ui aide (m-0259, m-0268, m-0270, 2026-10-04 ~8:25 PM ET), critical: "File is critical, but fix that". And: "That file should be based on the ID of the agent, so the named agents get a different file. I don't even know why it's a file. The orchestrator's handover is some kind of note in the system." And: "There should be a write command for an agent to write a handover, and it should be fully managed. ... This should all be managed by the system, and the system then can ensure that every agent in every project with the proper name has the right handover and that there's no confusion about anything."
 
 Goal: aides and advisors (named advisors included) hand over through the same handover record the orchestrator uses (the `handovers` table; types.rs `Handover` has role and project), not a file under ~/.bridle/handover/. Each project's daemon keeps its own, so two projects' aides never collide, and each named advisor is its own role.
-- Who may write: today `bridle handover write` / POST /v1/handovers accepts only human and external:orchestrator. Allow external:aide and external:advisor[/<name>]; `role` is the writer's identity (aide, advisor, advisor/doc-review), never taken from the request body. Keep the wire type unless a field is truly needed (if so, types.rs and all clients together).
+- One managed command for every agent: today `bridle handover write` / POST /v1/handovers accepts only human and external:orchestrator. Accept every principal (external sessions: aide, advisor, advisor/<name>; daemon agents: managers and workers by their agent token). The note is keyed by the daemon's project plus the writer's full identity including its name (e.g. external:advisor/doc-review, agent:manager-2), always taken from the token, never from the request body. `bridle handover show`/list can filter by that identity, and there's a way to get "the newest note for identity X" (CLI and API) for the next session. Keep the wire type unless a field is truly needed (if so, types.rs and all clients together).
 - Reading: `bridle session aide` / `bridle session advisor [name]` (crates/bridle/src/session.rs ~203, ~226, take_handover) fetch the newest note for that role from the project's daemon and put it in the opening prompt (the body, or "run `bridle handover show <id>`"), instead of reading a file.
 - Prompting: the daemon's context-limit message to sessions (crates/bridle-daemon/src/sessions.rs, handover_note() at ~125 and its callers) tells the session to run `bridle handover write --file -` instead of writing to a path. Drop the file path.
 - Old files: leave existing ~/.bridle/handover/*.md alone (don't read or move them); one line in the doc notes they are obsolete.
 - CHECK, and fix if keyed by identity alone across projects, the same collision in the session registry (sessions.rs register/lookup), `bridle session restart aide`, and refuse_if_running("aide", &project). Write what you found per item on the task thread, fixed or already safe, with the line.
 - Docs: docs/design/agent-host/orchestrator-supervision.md (section 7 and the file path at ~228/~244), docs/design/cli.md (handover write/show/list), workflow/base/roles/aide.md and advisor.md where they describe handing over, storage.md if the table changes.
-Acceptance: just check green; tests: aide and a named advisor can write a handover and get role = their identity; a worker can't; session start for aide picks up the newest aide note and not an advisor's; the context-limit message names the command, not a file.
+Acceptance: just check green; tests: aide, a named advisor and a worker each write a handover keyed by their own identity and project; a request can't set another identity; session start for aide picks up the newest aide note and not an advisor's; the context-limit message names the command, not a file.
 Model: sonnet.
-Out of scope: seats (gtzx); the waiter work (h3ar/75h2); the orchestrator's own handover flow beyond what sharing the code needs.
+- No role is ever told to write a file: grep the roles, rules and daemon messages for handover/handoff file paths and point them at the command.
+Out of scope (follow-up task, blocked by this one): daemon agents' renewal (supervisor.rs ~2822, the context governor's "leave a handoff note" and the "your own last handoff note" continuation) using this record. Also seats (gtzx); the waiter work (h3ar/75h2); the orchestrator's own handover flow beyond what sharing the code needs.
 
 ## Thread
 
