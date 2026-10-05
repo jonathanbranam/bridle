@@ -120,6 +120,8 @@ Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or los
   for a Linux-only failure, each narrower than the cause. A test also must not install a real
   system service. Fix 3: br-rmzx (Skip the service leaves). Lesson: a fix for a Linux-only
   failure states, per OS, which branch runs, since no worker can run Linux here.
+- **Resolved:** br-rmzx (1dde6f73) landed 2026-10-04 23:54Z; run 37245380632 on d1e16075 green on
+  ubuntu and macOS.
 
 ## 2026-10-04 ~20:00: a track-web research worker had no web tools and called the web "unreachable"
 
