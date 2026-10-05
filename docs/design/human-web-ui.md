@@ -120,7 +120,10 @@ undecided). The UI side (project dropdown, search box, margin layout) is bridle-
 target in order, `path` null when nothing matches. A target with a `/` is a path under `docs/`
 (`docs/design/gates` or `docs/design/cli.md`; `.md` is tried if the target as written is no
 file); one without is a ticket stem, looked up in `docs/tickets/open/` then `resolved/` (tickets
-move). Targets are checked on disk with the same rules as a document read, so `..`, absolute
+move); failing that, a bare ticket ID (4 characters) or a task ID `<prefix>-<id>` whose `<id>`
+is a ticket ID (a ticket's first task takes its id) resolves to the ticket file ending `-<id>.md`
+(br-a3yd). Other task IDs resolve to null (no task view yet); cross-project IDs wait on question
+j28f. Targets are checked on disk with the same rules as a document read, so `..`, absolute
 paths, symlinks out of the repo and anything outside `docs/` resolve to null, never an error.
 Bare names like `README` are not resolved (undecided). The UI turns wiki links and paths into
 links with the answer; rendering is bridle-ui's.

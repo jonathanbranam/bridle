@@ -202,6 +202,7 @@ pub fn resolve_links(repo: &FsPath, targets: &[String]) -> Vec<ResolvedLink> {
                     .iter()
                     .map(|d| format!("docs/tickets/{d}/{stem}.md"))
                     .find(|c| exists(c))
+                    .or_else(|| ticket_by_id(repo, t))
             };
             ResolvedLink {
                 target: t.clone(),
@@ -409,9 +410,73 @@ pub fn write_document(
     Ok(saved(git(repo, &["rev-parse", "HEAD"])?))
 }
 
+/// A bare ticket ID, or a task ID `<prefix>-<id>` whose `<id>` is a ticket ID (a ticket's first
+/// task takes its id), is the ticket file ending `-<id>.md`, in `open/` then `resolved/`. Other
+/// task IDs resolve to none: the UI has no task view.
+fn ticket_by_id(repo: &FsPath, target: &str) -> Option<String> {
+    const ALPHABET: &str = "abcdefghjkmnpqrstuvwxyz23456789";
+    let id = match target.split_once('-') {
+        None => target,
+        Some((prefix, id))
+            if !prefix.is_empty() && prefix.chars().all(|c| c.is_ascii_lowercase()) =>
+        {
+            id
+        }
+        Some(_) => return None,
+    };
+    if id.len() != 4 || !id.chars().all(|c| ALPHABET.contains(c)) {
+        return None;
+    }
+    let suffix = format!("-{id}.md");
+    ["open", "resolved"].iter().find_map(|d| {
+        let dir = format!("docs/tickets/{d}");
+        let mut names: Vec<String> = std::fs::read_dir(repo.join(&dir))
+            .ok()?
+            .filter_map(|e| e.ok()?.file_name().into_string().ok())
+            .filter(|n| n.ends_with(&suffix))
+            .collect();
+        names.sort();
+        names
+            .into_iter()
+            .map(|n| format!("{dir}/{n}"))
+            .find(|rel| resolve(repo, rel).is_ok())
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn resolves_ticket_and_task_ids() {
+        let d = repo("main");
+        let root = d.path();
+        for dir in ["docs/tickets/open", "docs/tickets/resolved"] {
+            std::fs::create_dir_all(root.join(dir)).expect("mkdir");
+        }
+        std::fs::write(root.join("docs/tickets/open/a-thing-ab23.md"), "x").expect("write");
+        std::fs::write(root.join("docs/tickets/resolved/old-one-cd34.md"), "x").expect("write");
+        let got = |t: &str| resolve_links(root, &[t.to_string()]).remove(0).path;
+        assert_eq!(
+            got("ab23"),
+            Some("docs/tickets/open/a-thing-ab23.md".into())
+        );
+        assert_eq!(
+            got("cd34"),
+            Some("docs/tickets/resolved/old-one-cd34.md".into())
+        );
+        assert_eq!(
+            got("br-ab23"),
+            Some("docs/tickets/open/a-thing-ab23.md".into())
+        );
+        assert_eq!(
+            got("br-cd34"),
+            Some("docs/tickets/resolved/old-one-cd34.md".into())
+        );
+        assert_eq!(got("zz99"), None);
+        assert_eq!(got("br-zz99"), None);
+        assert_eq!(got("a-b-ab23"), None);
+    }
 
     #[test]
     fn resolves_paths_and_ticket_stems_only_inside_docs() {
