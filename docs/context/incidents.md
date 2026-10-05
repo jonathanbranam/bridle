@@ -24,6 +24,22 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-05 ~01:30-02:50: interactive sessions replied in quiet hours on wake turns
+
+- **What happened:** the focus gate is a UserPromptSubmit hook, so it runs only on the human's
+  own prompts. Turns started by a background wake (watchers, task notifications) never saw it,
+  and the advisor, the aides and the orchestrator kept writing replies the human could see from
+  their phone after quiet hours began. The advisor noticed in its own session; the human asked
+  for an incident (br-yy88).
+- **Impact:** messages to the human during their sleep hours, the thing the gate exists to stop.
+- **Cause:** the gate's text is injected only by a UserPromptSubmit hook, which never fires on
+  turns started by a background wake.
+- **Category:** `role`, `config`.
+- **Follow-up:** [[interactive-sessions-reply-in-quiet-hours-the-focus-gate-nev-yy88|yy88]]
+  (incident), [[postmortem-quiet-hours-didn-t-reach-replies-to-background-wa-v3b7|v3b7]]
+  (postmortem), [[background-wakes-carry-the-session-s-prompt-context-quiet-ho-9s8u|9s8u]] (wakes
+  print the gate; hook audit), all pending the human's review.
+
 ## 2026-10-05 00:28-01:15: br-bnhn's landing failed three times with "main moved"
 
 - **What happened:** each ~10 min land check (load ~40) was overtaken by docs-only commits on
