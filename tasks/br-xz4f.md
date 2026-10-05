@@ -4,7 +4,7 @@ title = "Tasks approved by anyone but the orchestrator are never planned: nothin
 kind = "bug"
 state = "planned"
 created_at = "2026-10-04T22:06:38.716Z"
-updated_at = "2026-10-05T14:47:52.944527Z"
+updated_at = "2026-10-05T15:05:25.997369Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 summary = "Readying a task (task ready) now messages the running project-manager, else the orchestrator, once per settled burst naming each still-open task (skipped when the PM readied it). A task open with no activity for [tasks] open_stale (default 4h, 0 = off) goes back to pending with a thread note and a message to the orchestrator and the readier (readier kept in memory; creator after a restart); tasks with an open question are skipped. New crates/bridle-daemon/src/open_watch.rs, run on the existing settle-wake tick; TaskManager::unready_stale; config + docs + CHANGELOG. Caveat: the staleness clock is updated_at, so any comment on an open task resets it."
@@ -22,3 +22,8 @@ Goal:
 Acceptance: just check green; tests: ready -> PM gets one message naming the task (and the orchestrator when no PM runs); a burst gives one message; an open task past N hours goes pending with the comment; one with an open question to the human stays open.
 Model: sonnet.
 Out of scope: fix 2 (PM sweeps) and fix 4 (rule); a new task state.
+
+## Thread
+
+### note · agent:open-nudge · 2026-10-05T15:05:25.997Z
+done: ready tells PM (else orchestrator), stale open tasks return to pending; just check exit 0, 1238 tests run (1238 passed, 5 skipped); commit 501bae7c (main already merged)
