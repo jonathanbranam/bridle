@@ -7,7 +7,7 @@ repos: [bridle]
 changes: []
 specs: []
 needs: []
-see: [g49c, h3ar]
+see: [g49c, h3ar, ytqu]
 tasks: [br-qdw8]
 ---
 
@@ -58,3 +58,15 @@ Worker `web-packs` (a-01brf, **haiku**), task br-g49c (two rule packs, mechanica
 - PM: Haiku only when the check is short or the task needs no check wait; or the worker's check runs in
   the daemon (warm build), not in the agent's turn.
 - Now: manager-2 should stop or redirect web-packs; it's idle and thinks it's on gtzx.
+
+## Decided (the human, 2026-10-04 ~8:05 PM ET, via the aide)
+
+> 1. Looks correct. 2. Looks good. 3. Seems reasonable, if possible, yes. 4. I don't know about 4, but I
+> don't really understand 4 because just "check" is always wrong. I don't understand why a Haiku agent
+> can't wait for something. I think it just needs better instructions, but if using 4 is the right
+> choice, okay, it was it. [...] I think it's 1, 2, 3, so let's go with that and consider 4.
+
+Build 1 (renewal and resume name the task and branch; a worker's open questions are its own), 2 (worker.md:
+how to wait on a long check, done quotes the check result) and 3 (the manager verifies the check before
+landing). 4 (no Haiku for long checks) is to consider, not build. The human leans toward better
+instructions. Postmortem: [[postmortem-a-haiku-worker-waited-on-a-check-it-couldn-t-see-ytqu|ytqu]].
