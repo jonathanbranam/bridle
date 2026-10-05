@@ -48,6 +48,15 @@ Any background process you start must satisfy all three of these requirements, o
 - **Cleaned up before your turn ends**: Don't leave background jobs running past the turn that started them, except for a specific, tracked reason (e.g., you're genuinely waiting on a long `{{commands.check_worker}}` run and will check on it next). Stop any background process before you report done.
 - **Never disowned**: Don't use patterns like `nohup`, `disown`, or detached `setsid` that intentionally let a process outlive the agent's own process tree. Bridle's cleanup on stop only works for processes still attached to your agent; disowned processes escape that containment.
 
+### Waiting on a long check
+
+When the check takes longer than your Bash timeout (2 minutes default):
+
+1. Start it once in the background: `{{commands.check_worker}} > .bridle/check.log 2>&1; echo $? > .bridle/check.exit`
+2. Wait for the exit file with one Monitor until-loop on the exit file, or wait for the background task's completion notice. Never `pgrep -f` or `ps | grep` to find the check (see rule `no-kill-by-name`); those commands match other worktrees' checks.
+3. Once the exit file exists, read it to confirm the exit status, then delete both files: `rm .bridle/check.log .bridle/check.exit` (they are untracked and must not be committed).
+4. Report **done only after the check exits 0.** Your done message must quote the exit status (0), the test count from the log, and the commit sha the check ran on. A failed check is not done: tell the manager and let them tell you what to fix.
+
 ## Never
 
 - Push, fetch, or merge from a remote (`origin/*`), merge your branch into

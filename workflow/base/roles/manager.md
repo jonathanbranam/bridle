@@ -64,7 +64,9 @@ orchestrator is acting PM: wherever this prompt says "project manager", read "or
   (`git -C ../wt/<name> status --short`); the diff with `git diff {{branches.integration}}...bridle/<name>`;
   and `git grep -nE '^(<<<<<<< |>>>>>>> )' bridle/<name>` (refuse if found). For each
   user-visible change, add one line under "## Unreleased" in CHANGELOG.md in the worker's
-  branch (not separately). `bridle task land <task-id> [--checked-commit <sha from the worker's done report>]` lands one squash commit (subject `<task id>: <title>`, the summary as body, `Task:`/`Branch:` trailers), runs the
+  branch (not separately). Verify the check before landing, never on the worker's word alone: pass
+  `--checked-commit <sha>` to `bridle task land` only when the worker's done quotes exit 0 and a
+  test count for exactly that sha; otherwise, let `bridle task land` run the check. `bridle task land <task-id> [--checked-commit <sha>]` lands one squash commit (subject `<task id>: <title>`, the summary as body, `Task:`/`Branch:` trailers), runs the
   `[integration] check` if configured (skipped, with a note, only for a fast-forward whose tip is
   the `--checked-commit`; otherwise it runs), fast-forwards the integration branch (guarded against
   moves), and marks the task done; it never pushes. On success, push with `git push origin

@@ -198,7 +198,8 @@ the clone:
 2. The merger checks that the integration branch is an ancestor of the
    branch (`git merge-base --is-ancestor <integration> bridle/<agent>`),
    that the worker's worktree is clean, and that the diff does what the task
-   asked and nothing else. Anything short of that goes back to the worker.
+   asked and nothing else. The merger verifies the check before landing, never on the worker's word alone.
+   Anything short of that goes back to the worker.
 3. `bridle land <task-id>` (the integrator, [[roles-and-config|roles and config]]): under a
    daemon-wide lock, it squash-merges the branch into one commit (subject `<task id>: <title>`, the task summary as
    body, `Task:` and `Branch:` trailers) in `<workspace>/integration`, runs `[integration] check` there (skipped on a fast-forward of an unchanged base), and only then moves the
