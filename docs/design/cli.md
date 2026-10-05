@@ -96,7 +96,7 @@ bridle task answer  <task-id> TEXT                    answers a task's open ques
 bridle task claim   <task-id>                         claims a ready task for the caller: planned -> claimed
 bridle task release <task-id>                         releases the caller's own claim: claimed -> planned
 bridle task ready   [--all] [--role R]                the highest queue tier with a startable task (planned, deps met, no open question, unclaimed)
-bridle task ready   <id>                                 pending -> open: approve the task for the PM (orchestrator or an advisor with the human's approval; a manager for its own small fix inside approved work; not workers, the PM or visitors). `bridle status` lists pending tasks
+bridle task ready   <id>                                 pending -> open: approve the task for the PM (orchestrator or an advisor with the human's approval; a manager for its own small fix inside approved work; not workers, the PM or visitors). The daemon messages the PM (else the orchestrator) that it is open, and returns it to `pending` with a note if nobody plans it within `[tasks] open_stale` (default 4h). `bridle status` lists pending tasks
 bridle queue                                     read-only: claimed tasks with their worker, then the tiers in rank order
 bridle queue set --tier T,T... [--tier T,T...]   replace the whole queue, one --tier per tier (PM, orchestrator or human only)
 bridle queue add-tier <task>...                  append one tier at the back (PM, orchestrator or human only)

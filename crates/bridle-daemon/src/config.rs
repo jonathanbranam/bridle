@@ -1537,6 +1537,9 @@ pub struct Config {
     /// the default; `bridle doctor` reports it. Never fatal: a typo here must
     /// not stop the daemon starting.
     pub tasks_settle_problem: Option<String>,
+    /// `[tasks] open_stale`: an `open` task nobody planned for this long goes back to `pending`
+    /// (xz4f). Zero turns it off.
+    pub tasks_open_stale: Duration,
     /// Where the L1/L2 workflow layers live (docs/design/workflow-layers.md):
     /// a path (relative to the repo root) or a git url. `None` until a
     /// project opts in. Read by `bridle_daemon::rules::discover_layers` as
@@ -1590,6 +1593,7 @@ impl Default for Config {
             task_prefix: None,
             tasks_settle: DEFAULT_SETTLE,
             tasks_settle_problem: None,
+            tasks_open_stale: DEFAULT_OPEN_STALE,
             workflow: None,
             packs: Vec::new(),
             components: BTreeMap::new(),
@@ -2030,6 +2034,12 @@ impl Config {
                     }
                 }
             }
+            if let Some(v) = t.open_stale {
+                match parse_open_stale(&v) {
+                    Ok(d) => config.tasks_open_stale = d,
+                    Err(problem) => tracing::warn!("{problem}; using 4h"),
+                }
+            }
         }
 
         config.workflow = raw.workflow;
@@ -2193,6 +2203,23 @@ fn parse_settle(v: &toml::Value) -> Result<Duration, String> {
             .map_err(|_| format!("[tasks] settle = {s:?} is not a duration like \"5m\" (or 0)")),
         other => Err(format!(
             "[tasks] settle = {other} is not a duration like \"5m\" (or 0)"
+        )),
+    }
+}
+
+/// The `open_stale` period when `[tasks] open_stale` is unset or invalid.
+const DEFAULT_OPEN_STALE: Duration = Duration::from_secs(4 * 3600);
+
+/// `[tasks] open_stale`: a duration string ("4h", "0s") or the integer 0.
+fn parse_open_stale(v: &toml::Value) -> Result<Duration, String> {
+    match v {
+        toml::Value::Integer(0) => Ok(Duration::ZERO),
+        toml::Value::String(s) if s.trim() == "0" => Ok(Duration::ZERO),
+        toml::Value::String(s) => parse_duration(s).map_err(|_| {
+            format!("[tasks] open_stale = {s:?} is not a duration like \"4h\" (or 0)")
+        }),
+        other => Err(format!(
+            "[tasks] open_stale = {other} is not a duration like \"4h\" (or 0)"
         )),
     }
 }
@@ -2660,6 +2687,9 @@ struct RawTasks {
     /// A duration like "5m", or the integer 0.
     #[serde(default)]
     settle: Option<toml::Value>,
+    /// A duration like "4h", or the integer 0.
+    #[serde(default)]
+    open_stale: Option<toml::Value>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -4083,6 +4113,15 @@ mod tests {
 
         let cfg = Config::default();
         assert_eq!(cfg.task_prefix, None);
+    }
+
+    #[test]
+    fn tasks_open_stale_parses_and_defaults() {
+        let secs = |t: &str| Config::parse(t).expect("parse").tasks_open_stale.as_secs();
+        assert_eq!(secs(""), 4 * 3600);
+        assert_eq!(secs("[tasks]\nopen_stale = \"2h\"\n"), 7200);
+        assert_eq!(secs("[tasks]\nopen_stale = 0\n"), 0);
+        assert_eq!(secs("[tasks]\nopen_stale = \"soon\"\n"), 4 * 3600);
     }
 
     #[test]

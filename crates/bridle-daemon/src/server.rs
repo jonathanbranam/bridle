@@ -82,6 +82,7 @@ pub struct AppState {
     /// Held for the length of a landing: one at a time.
     pub landing: std::sync::Arc<tokio::sync::Mutex<()>>,
     pub queue_nudge: crate::queue_nudge::QueueNudge,
+    pub open_watch: crate::open_watch::OpenWatch,
 }
 
 pub fn router(state: AppState) -> Router {
@@ -1791,6 +1792,7 @@ async fn ready_task(
     }
     let from = state.tasks.get_task(&id).map(|t| t.state);
     let task = state.tasks.ready_task(&id, &principal.id).await?;
+    state.open_watch.readied(&task.id, &principal.id).await;
     emit_state_change(&state, principal.id, &task, from).await;
     let open = state
         .tasks

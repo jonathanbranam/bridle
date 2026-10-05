@@ -34,6 +34,7 @@ fn fast_overrides() -> Overrides {
         self_upgrade_wait: std::time::Duration::from_secs(600),
         settle_wake_interval: std::time::Duration::from_secs(3600),
         queue_nudge_debounce: std::time::Duration::from_secs(3600),
+        open_watch_debounce: std::time::Duration::from_secs(3600),
         take_over: false,
         host: None,
     }

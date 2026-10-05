@@ -28,6 +28,7 @@ pub mod focus;
 pub mod governor;
 pub mod impact;
 mod integrator;
+mod open_watch;
 mod orchestrator;
 pub mod paths;
 pub mod ports;
@@ -127,6 +128,8 @@ pub struct Overrides {
     pub settle_wake_interval: Duration,
     /// How long the queue stays unchanged before the manager is nudged.
     pub queue_nudge_debounce: Duration,
+    /// How long readied tasks must stop arriving before the PM is told they're open.
+    pub open_watch_debounce: Duration,
     /// `bridle serve --take-over`: claim a project another host owns (hw6c).
     pub take_over: bool,
     /// This machine's name for `owner.toml`. `None` asks `hostname`.
@@ -154,6 +157,7 @@ impl Default for Overrides {
             self_upgrade_wait: Duration::from_secs(600),
             settle_wake_interval: Duration::from_secs(30),
             queue_nudge_debounce: queue_nudge::DEBOUNCE,
+            open_watch_debounce: open_watch::DEBOUNCE,
             take_over: false,
             host: None,
         }
@@ -627,6 +631,14 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         overrides.queue_nudge_debounce,
     );
     let settle_wake = queue_nudge::SettleWake::new(queue_nudge.clone(), tasks.clone());
+    let open_watch = open_watch::OpenWatch::new(
+        store.clone(),
+        manager.clone(),
+        tasks.clone(),
+        emitter.clone(),
+        overrides.open_watch_debounce,
+        config.tasks_open_stale,
+    );
     let doc_watch = doc_watch::DocWatcher::new(
         store.clone(),
         manager.clone(),
@@ -670,6 +682,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         ),
         landing: Default::default(),
         queue_nudge: queue_nudge.clone(),
+        open_watch: open_watch.clone(),
         self_upgrade: config.self_upgrade,
         self_upgrade_wait: overrides.self_upgrade_wait,
     };
@@ -776,7 +789,11 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
     let settle_wake_task = spawn_loop(shutdown_rx.clone(), overrides.settle_wake_interval, {
         move || {
             let settle_wake = settle_wake.clone();
-            async move { settle_wake.tick().await }
+            let open_watch = open_watch.clone();
+            async move {
+                settle_wake.tick().await;
+                open_watch.tick().await;
+            }
         }
     });
     let doc_watch_task = spawn_loop(shutdown_rx.clone(), Duration::from_secs(30), {

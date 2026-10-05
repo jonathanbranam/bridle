@@ -171,6 +171,11 @@ Also read from `.bridle/config.toml` (defaults in parentheses; each is documente
 - `[tasks] settle` (`"5m"`; `0` turns it off): how long a task waits after creation or a human
   comment/edit before it can be claimed or listed ready. An invalid value warns, falls back to
   5m and is reported by `bridle doctor`; it never stops the daemon starting (coordination.md, "Settling").
+- `[tasks] open_stale` (`"4h"`; `0` turns it off): a task left `open` (no activity on it) this long
+  goes back to `pending` with a thread note saying why, and the orchestrator and whoever readied it
+  are messaged; a task with an open question is left alone. Also, when a task is readied the
+  daemon messages the running project-manager (else the orchestrator) once per burst, naming each
+  task, unless the PM readied it (xz4f; `open_watch.rs`, checked on the settle-wake tick).
 - `[tasks] prefix` (first two alphanumerics of the project name): task id prefix
   ([[../storage|storage.md]]).
 - `workflow` (unset), `packs = []`: where the workflow layers live and which L2 packs to

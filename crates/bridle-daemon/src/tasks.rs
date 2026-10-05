@@ -703,6 +703,33 @@ impl TaskManager {
         Ok(self.put(task))
     }
 
+    /// `open` -> `pending`, for a task nobody planned in time (xz4f): the daemon's own
+    /// correction, so it says why in the thread. Skips a task that has gained an open question
+    /// or has left `open` since the caller looked.
+    pub async fn unready_stale(
+        &self,
+        id: &str,
+        actor: &PrincipalId,
+        reason: &str,
+    ) -> Result<Option<Task>, TaskError> {
+        let Some(mut task) = self.get_task(id) else {
+            return Ok(None);
+        };
+        if task.state != TaskState::Open || self.has_open_questions(&task) {
+            return Ok(None);
+        }
+        task.thread.push(ThreadEntry {
+            kind: ThreadEntryKind::Note,
+            from: actor.clone(),
+            body: reason.to_string(),
+            at: Utc::now(),
+        });
+        self.transition(&mut task, TaskState::Pending, actor)
+            .await?;
+        self.state.enqueue_task(&task)?;
+        Ok(Some(self.put(task)))
+    }
+
     /// [`TaskManager::new_task`] then [`TaskManager::ready_task`], for tests that start from
     /// an `open` task.
     pub async fn new_open_task(
