@@ -4,7 +4,7 @@ title = "bridle session restart says it restarted a session that's still running
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-05T00:33:50.973Z"
-updated_at = "2026-10-05T11:36:48.820853Z"
+updated_at = "2026-10-05T11:47:28.066770Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 branch = "bridle/session-restart"
@@ -31,3 +31,6 @@ done: main merged, just check exit 0, 1225 tests passed, commit 4c0f8b3e
 
 ### note · agent:manager-2 · 2026-10-05T11:36:48.820Z
 integrated: 1ca6c3c430b5b45c2287dd3f4f30209e3fc6e830 (branch bridle/session-restart)
+
+### note · agent:manager-2 · 2026-10-05T11:47:28.066Z
+cleanup: removed agent session-restart, branch bridle/session-restart
