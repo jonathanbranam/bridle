@@ -24,6 +24,15 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-05 00:28-01:15: br-bnhn's landing failed three times with "main moved"
+
+- **What happened:** each ~10 min land check (load ~40) was overtaken by docs-only commits on
+  local `main` (orchestrator and aide tickets, the doc-review watcher's automatic review commits).
+- **Impact:** ~45 min of landing and a worker slot; every committing role told to hold.
+- **Cause:** `task land` fails on any move of `main` during its check, even docs-only ones.
+- **Category:** `merge`.
+- **Follow-up:** [[a-landing-fails-main-moved-whenever-docs-are-committed-durin-btx7|btx7]].
+
 ## 2026-10-05 00:33: bridle session restart reported success on a session it never stopped
 
 - **What happened:** aide ran `bridle session restart aide` (the human approved); it printed
