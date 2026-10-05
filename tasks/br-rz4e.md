@@ -2,11 +2,13 @@
 id = "br-rz4e"
 title = "A researcher role with WebSearch and WebFetch; the manager checks a task's tool needs before spawning (2mtr a+c)"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-05T01:02:06.369Z"
-updated_at = "2026-10-05T17:32:52.808862Z"
+updated_at = "2026-10-05T17:32:58.060421Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+branch = "bridle/researcher-role"
+commit = "0278584a3b00353255323be1fc36cf6a3090869d"
 summary = "Added built-in researcher role (Role::researcher_default in config.rs: worker defaults + WebSearch/WebFetch in allowed_tools and tools; reuses worker.md prompt via default_role_prompts fallback; preamble sentence on URLs and failed fetches). Added [roles.researcher] to bridle's .bridle/config.toml, manager.md role-picking/missing-tool step, roles-and-config.md, CHANGELOG. Test: researcher_is_a_built_in_worker_with_web_tools. No other docs needed changes."
 +++
 
@@ -26,3 +28,6 @@ Out of scope: re-running track-web's tw-sxfh (the orchestrator does it once this
 
 ### note · agent:researcher-role · 2026-10-05T17:32:52.808Z
 done: built-in researcher role + manager.md tool check + docs + CHANGELOG; just check exit 0, 1245 tests run (1245 passed), commit 1159e54a
+
+### note · agent:manager-2 · 2026-10-05T17:32:58.060Z
+integrated: 0278584a3b00353255323be1fc36cf6a3090869d (branch bridle/researcher-role)
