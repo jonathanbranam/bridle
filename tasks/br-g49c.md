@@ -4,22 +4,13 @@ title = "Rule packs for the web and for mobile: standard forms and ARIA, and no 
 kind = "feature"
 state = "planned"
 created_at = "2026-10-04T22:13:06.228Z"
-updated_at = "2026-10-05T00:25:56.253439Z"
+updated_at = "2026-10-05T09:57:33.380947Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "external:aide",
 ]
-summary = """
-Created two rule packs for web and mobile development:
-
-**workflow/packs/web/**: Four rules for web standards — form labels (must), input autocomplete (should), ARIA labels for inaccessible controls (should), and semantic HTML over ARIA roles (should). These guide projects building web forms toward accessibility and usability.
-
-**workflow/packs/mobile/**: Four rules for mobile-friendly pages — viewport meta tag with no-zoom (must), touch-action: manipulation body style (should), input font-size >= 16px to prevent iOS Safari auto-zoom (must), and safe-area insets for notched devices (should). Codifies track-web's mobile zoom fix (commit 8f4793c) so projects don't rediscover it.
-
-Both packs follow the existing layout (workflow.toml, rules/*.md) and style (must/should severity, "Why:" explanations, code examples).
-
-Note on pack organization: The human mentioned wanting a "mobile-web" pack in the thread, but projects can enable both web and mobile packs together in config (e.g., `packs = ["typescript", "web", "mobile"]`), giving them all the rules they need. Separate packs allow finer control: a pure web service uses only "web"; a backend service needs neither."""
+summary = "Extended the web and mobile rule packs with two new rules from the human's feedback: web.input-clear-button (should severity, clear buttons for inputs, mandatory for search/filter) and mobile.text-selection (should severity, explicit user-select: text for interactive content requiring text selection). Updated CHANGELOG.md with the rule packs entry. All rule files follow the existing pack format with YAML frontmatter, code examples, and 'Why:' explanations. ASCII-only rule text as required."
 +++
 
 original id: g49c
