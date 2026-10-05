@@ -4,7 +4,7 @@ title = "Resumed workers are told their task and branch; a worker's inbox shows 
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-05T00:33:10.608Z"
-updated_at = "2026-10-05T15:55:48.854685Z"
+updated_at = "2026-10-05T16:00:39.118711Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 branch = "bridle/resume-task"
@@ -30,3 +30,6 @@ done: resume names task+branch, worker inbox filtered; just check exit 0, 1240 t
 
 ### note · agent:manager-2 · 2026-10-05T15:55:48.854Z
 integrated: 5dcb5abfbf55d4a89e68e7eaee36eeb43574381a (branch bridle/resume-task)
+
+### note · agent:manager-2 · 2026-10-05T16:00:39.118Z
+cleanup: removed agent resume-task, branch bridle/resume-task
