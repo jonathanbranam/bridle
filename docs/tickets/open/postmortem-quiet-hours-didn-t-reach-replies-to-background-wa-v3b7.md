@@ -8,7 +8,7 @@ changes: []
 specs: []
 needs: []
 see: [yy88, 9s8u, cvaq, u6w9, cr7t, mvtz]
-tasks: []
+tasks: [br-v3b7]
 ---
 
 The kind is `research` until a `postmortem` kind exists ([[add-a-postmortem-ticket-kind-the-full-write-up-after-an-inci-cr7t|cr7t]]).
