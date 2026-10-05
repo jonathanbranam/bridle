@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- The gateway TypeScript bindings now include the specs types (`ProjectSpecs`, `SpecFile`, `SpecRequirement`, `SpecScenario`, `SpecDiagnostic`), so bridle-ui can use the specs route (br-jxm5).
 - The gateway lists a project's specs for the web UI (`GET /api/v1/projects/{project}/specs`: capabilities, requirements, scenarios with ids and whether they are executable, parse errors per file), and `links/resolve` turns a spec, requirement or scenario id into its spec file and heading anchor (br-75zr).
 - Interactive sessions (aide, advisor) restart themselves at the 200k context step instead of waiting for the human: the step note and the aide and advisor role prompts now say "restart yourself" (`session restart`, then write the handover); `session keep` still overrides, and nothing is forced before 300k (br-gq9r).
 - The human's to-do list has an order agents can set: `bridle task priority <id>` (and `task new --priority`) now take `critical` and `urgent` above `high`; `task list` and the gateway's to-do list sort by level, newest-set first at `high` and above, so a newer urgent item outranks older ones (br-y25n).
