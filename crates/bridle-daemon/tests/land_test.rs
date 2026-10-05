@@ -5,7 +5,7 @@ mod support;
 use support::ClientExt as _;
 
 use bridle_api::types::{LandRequest, NewTaskRequest, TaskKind, TaskState};
-use support::{TestDaemon, start_daemon};
+use support::{TestDaemon, start_daemon, start_daemon_with_config};
 
 fn git(dir: &std::path::Path, args: &[&str]) -> String {
     let out = std::process::Command::new("git")
@@ -405,4 +405,61 @@ async fn zero_tests_fail_even_without_a_last_count() {
     let (d, _tmp) = start_daemon(None).await;
     let e = land_moved(&d, "b1", &counting(0)).await.expect_err("zero");
     assert!(e.contains("sane band"), "{e}");
+}
+
+/// A check command that commits `path` on main while the landing is running.
+fn commit_during_check(d: &TestDaemon, path: &str) -> String {
+    let repo = d.repo.to_str().expect("utf8");
+    format!(
+        "mkdir -p {repo}/$(dirname {path}); echo x > {repo}/{path}; git -C {repo} add {path}; \
+         git -C {repo} -c user.name=t -c user.email=t@x commit -qm moved"
+    )
+}
+
+async fn moved_main_setup(d: &TestDaemon) -> String {
+    branch_with(d, "b1", "f.txt", "x\n");
+    // Main has moved past the branch's base, so the check runs.
+    std::fs::write(d.repo.join("other.txt"), "y\n").expect("w");
+    git(&d.repo, &["add", "."]);
+    git(&d.repo, &["commit", "-qm", "main moves"]);
+    task(d, TaskKind::Feature).await
+}
+
+#[tokio::test]
+async fn a_skippable_move_during_the_check_still_lands() {
+    let (d, _tmp) = start_daemon_with_config(
+        None,
+        Some("[integration]\ncheck_skip_paths = [\"docs/**\"]\n"),
+    )
+    .await;
+    let id = moved_main_setup(&d).await;
+    let mover = commit_during_check(&d, "docs/n.md");
+    d.client
+        .land_task(&id, &req("b1", Some(&mover)))
+        .await
+        .expect("lands");
+    assert_eq!(git(&d.repo, &["show", "main:docs/n.md"]), "x");
+    assert_eq!(git(&d.repo, &["show", "main:f.txt"]), "x");
+}
+
+#[tokio::test]
+async fn a_move_outside_the_skip_paths_is_refused() {
+    let (d, _tmp) = start_daemon_with_config(
+        None,
+        Some("[integration]\ncheck_skip_paths = [\"docs/**\"]\n"),
+    )
+    .await;
+    let id = moved_main_setup(&d).await;
+    let mover = commit_during_check(&d, "crates/n.rs");
+    let e = land_err(&d, &id, &req("b1", Some(&mover))).await;
+    assert!(e.contains("main moved, retry"), "{e}");
+}
+
+#[tokio::test]
+async fn a_docs_move_is_refused_when_no_skip_paths_are_set() {
+    let (d, _tmp) = start_daemon(None).await;
+    let id = moved_main_setup(&d).await;
+    let mover = commit_during_check(&d, "docs/n.md");
+    let e = land_err(&d, &id, &req("b1", Some(&mover))).await;
+    assert!(e.contains("main moved, retry"), "{e}");
 }

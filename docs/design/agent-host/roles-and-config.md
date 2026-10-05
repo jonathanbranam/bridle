@@ -157,6 +157,9 @@ Also read from `.bridle/config.toml` (defaults in parentheses; each is documente
 - `[commands] check` (`"just check"`) and `check_worker` (unset: same as `check`): the
   `{{commands.*}}` substitutions above.
 - `[integration] check` (unset): the `bridle land` gate above.
+- `[integration] check_skip_paths` (empty): globs of paths the check can't see. If the integration
+  branch moved during a landing's check by commits touching only these, `land` replays its squash
+  on the new tip and lands without re-checking; any other move fails "moved, retry".
 - `[integration] warm_build` (unset): background build after each land; see "Warm worktree `target/`".
 - `[context] wind_down_at = { default = 200000, worker = 120000 }` (context tokens) and
   `wind_down_grace` (`"5m"`): an agent nearing its context limit is told to hand off, then

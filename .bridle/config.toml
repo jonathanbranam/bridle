@@ -20,6 +20,7 @@ github = true
 [integration]
 check = "just check"
 warm_build = "cargo build --workspace --all-targets"
+check_skip_paths = ["docs/**"]
 
 [roles.worker]
 model            = "sonnet"

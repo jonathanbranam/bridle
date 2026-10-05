@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- `[integration] check_skip_paths` (globs; bridle sets `["docs/**"]`): a landing no longer fails "main moved" when only commits touching those paths landed on main during its check; it merges them in and lands without re-checking.
 - `bridle link <id>` prints the bridle UI link for a ticket or task ID from the new `[gateway] public_url` (machine config, per-project override); nothing when unset. New rule `link-ids-for-the-human`: aide, advisor, orchestrator and manager link each ticket and task they name to the human.
 - Every agent hands over through the project's handover record, keyed by its own identity (`aide`, `advisor/<name>`, `agent:<name>`, `orchestrator`) and project, so two projects' aides no longer share one file under `~/.bridle/handover/` (obsolete, left alone). `bridle handover write` accepts any principal; `handover list --role R` and `handover latest [--role R]` read them; `bridle session aide|advisor` point the opening prompt at the newest note, and the context-limit messages and `session restart` name the command instead of a file path.
 - `bridle gateway --detach` runs the gateway in the background like `bridle serve --detach` (log `~/.bridle/gateway.log`, waits for health, refuses a second); a running gateway re-executes itself when the bridle binary is replaced by an upgrade; new optional `[gateway] enabled` (default true).

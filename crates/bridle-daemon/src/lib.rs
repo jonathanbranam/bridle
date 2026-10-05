@@ -663,6 +663,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
             .clone()
             .unwrap_or_else(discovery::bridle_home),
         integration_check: config.integration.check.clone(),
+        check_skip_paths: config.integration.check_skip_paths.clone(),
         warm_build: warm_build::WarmBuild::new(
             config.integration.warm_build.clone(),
             ws.workspace.join("integration"),

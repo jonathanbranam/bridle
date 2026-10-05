@@ -74,6 +74,9 @@ pub struct AppState {
     pub integration: String,
     /// `[integration] check`, run by `bridle land`.
     pub integration_check: Option<String>,
+    /// `[integration] check_skip_paths`: paths whose changes on the integration branch during a
+    /// check don't fail the landing.
+    pub check_skip_paths: Vec<String>,
     /// Background build in the integration worktree after each land (`[integration] warm_build`).
     pub warm_build: crate::warm_build::WarmBuild,
     /// Held for the length of a landing: one at a time.
@@ -2335,6 +2338,7 @@ async fn land_task(
         is_arch_revision: task.kind == bridle_api::types::TaskKind::ArchRevision,
         check,
         checked_commit: req.checked_commit.as_deref(),
+        check_skip_paths: &state.check_skip_paths,
     })
     .await;
     let landed = match landed {

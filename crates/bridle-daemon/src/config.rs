@@ -1187,6 +1187,9 @@ pub struct IntegrationConfig {
     /// Shell command run in the integration worktree, in the background, after each land, to
     /// keep its `target/` fresh for `[worktrees] warm_target`; `None` runs nothing.
     pub warm_build: Option<String>,
+    /// Globs of paths that can't affect the check. A landing whose integration branch gained only
+    /// commits touching these during the check merges them in and lands without re-checking.
+    pub check_skip_paths: Vec<String>,
 }
 
 /// `[ci]`: opt-in watching of the integration branch's GitHub Actions runs (`crate::ci`).
@@ -1906,6 +1909,9 @@ impl Config {
             if let Some(c) = i.warm_build {
                 config.integration.warm_build = Some(c);
             }
+            if let Some(v) = i.check_skip_paths {
+                config.integration.check_skip_paths = v;
+            }
         }
 
         if let Some(p) = raw.ports {
@@ -2524,6 +2530,8 @@ struct RawIntegration {
     check: Option<String>,
     #[serde(default)]
     warm_build: Option<String>,
+    #[serde(default)]
+    check_skip_paths: Option<Vec<String>>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -3840,6 +3848,16 @@ mod tests {
         assert_eq!(Config::default().integration.warm_build, None);
         let cfg = Config::parse("[integration]\nwarm_build = \"cargo build\"\n").unwrap();
         assert_eq!(cfg.integration.warm_build.as_deref(), Some("cargo build"));
+    }
+
+    #[test]
+    fn integration_check_skip_paths_parses() {
+        assert!(Config::default().integration.check_skip_paths.is_empty());
+        let cfg = Config::parse("[integration]\ncheck_skip_paths = [\"docs/**\"]\n").unwrap();
+        assert_eq!(
+            cfg.integration.check_skip_paths,
+            vec!["docs/**".to_string()]
+        );
     }
 
     #[test]

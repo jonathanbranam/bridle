@@ -203,7 +203,7 @@ the clone:
 3. `bridle land <task-id>` (the integrator, [[roles-and-config|roles and config]]): under a
    daemon-wide lock, it squash-merges the branch into one commit (subject `<task id>: <title>`, the task summary as
    body, `Task:` and `Branch:` trailers) in `<workspace>/integration`, runs `[integration] check` there (skipped on a fast-forward of an unchanged base), and only then moves the
-   integration branch, so a red or conflicting merge never lands. The branch is found from the
+   integration branch (if it moved meanwhile only by commits under `[integration] check_skip_paths`, e.g. `docs/**`, the squash is replayed on the new tip without re-checking; any other move fails "moved, retry"), so a red or conflicting merge never lands. The branch is found from the
    task's claimant, or `--branch`. The integration branch reads as one commit per task (sq4m, tr7k); the
    `Branch:` trailer is how the landed branch is recognised as merged, unless the branch has commits
    newer than the landing (a reused branch), which stay unmerged (x3xk).

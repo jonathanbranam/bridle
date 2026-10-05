@@ -55,6 +55,8 @@ pub struct LandInput<'a> {
     pub check: Option<&'a str>,
     /// The commit the worker reported a green check on.
     pub checked_commit: Option<&'a str>,
+    /// `[integration] check_skip_paths` globs.
+    pub check_skip_paths: &'a [String],
 }
 
 pub struct Landed {
@@ -156,16 +158,86 @@ pub async fn land(i: &LandInput<'_>) -> Result<Landed, LandError> {
         None => notes.push("no [integration] check configured: skipped".to_string()),
     }
 
-    let new = run_git(&wt, &["rev-parse", "HEAD"])
+    let mut new = run_git(&wt, &["rev-parse", "HEAD"])
         .await?
         .trim()
         .to_string();
+    let mut old = old;
+    if let Some(moved_to) = skippable_move(i, &old).await? {
+        // Only paths the check can't see changed under us: replay the squash on top of them.
+        let replay = match run_git(&wt, &["reset", "-q", "--hard", &moved_to]).await {
+            Ok(_) => run_git(&wt, &["cherry-pick", &new]).await.map(drop),
+            Err(e) => Err(e),
+        };
+        if replay.is_err() {
+            let _ = run_git(&wt, &["cherry-pick", "--abort"]).await;
+            return Err(LandError::Moved(i.integration.to_string()));
+        }
+        new = run_git(&wt, &["rev-parse", "HEAD"])
+            .await?
+            .trim()
+            .to_string();
+        old = moved_to;
+        notes.push(
+            "integration branch moved during the check by commits touching only \
+             [integration] check_skip_paths: merged them in without re-running it"
+                .to_string(),
+        );
+    }
     advance(i, &old, &new).await?;
     if let Some(n) = count {
         // Best effort: a missed write only leaves the band looser.
         let _ = std::fs::write(count_path(i), format!("{n}\n"));
     }
     Ok(Landed { commit: new, notes })
+}
+
+/// The integration branch's new tip, when it moved past `old` and every path changed since
+/// matches `check_skip_paths`. `None` when it didn't move, the setting is empty, or any other
+/// path changed (the guard in `advance` then reports "moved").
+async fn skippable_move(i: &LandInput<'_>, old: &str) -> Result<Option<String>, WorktreeError> {
+    if i.check_skip_paths.is_empty() {
+        return Ok(None);
+    }
+    let cur = run_git(
+        i.repo,
+        &["rev-parse", &format!("refs/heads/{}", i.integration)],
+    )
+    .await?
+    .trim()
+    .to_string();
+    if cur == old
+        || run_git(i.repo, &["merge-base", "--is-ancestor", old, &cur])
+            .await
+            .is_err()
+    {
+        return Ok(None);
+    }
+    let changed = run_git(i.repo, &["diff", "--name-only", old, &cur]).await?;
+    let all_skippable = changed
+        .lines()
+        .all(|p| i.check_skip_paths.iter().any(|g| glob_match(g, p)));
+    Ok(all_skippable.then_some(cur))
+}
+
+/// `*` and `?` match within a path segment, `**` across segments.
+fn glob_match(glob: &str, path: &str) -> bool {
+    fn go(g: &[u8], p: &[u8]) -> bool {
+        match g.split_first() {
+            None => p.is_empty(),
+            Some((b'*', rest)) if rest.first() == Some(&b'*') => {
+                let rest = &rest[1..];
+                let rest = rest.strip_prefix(b"/").unwrap_or(rest);
+                (0..=p.len()).any(|n| go(rest, &p[n..]))
+            }
+            Some((b'*', rest)) => (0..=p.len())
+                .take_while(|&n| n == 0 || p[n - 1] != b'/')
+                .any(|n| go(rest, &p[n..])),
+            Some((b'?', rest)) => p.first().is_some_and(|&c| c != b'/') && go(rest, &p[1..]),
+            Some((c, rest)) => p.first() == Some(c) && go(rest, &p[1..]),
+        }
+    }
+    go(glob.as_bytes(), path.as_bytes())
 }
 
 /// `<task id>: <title>`, the task summary as the body, then the `Task:` and `Branch:` trailers.
@@ -312,6 +384,17 @@ async fn run_check(wt: &Path, cmd: &str) -> Result<Option<u64>, LandError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn globs_match_paths() {
+        assert!(glob_match("docs/**", "docs/a.md"));
+        assert!(glob_match("docs/**", "docs/tickets/open/a.md"));
+        assert!(!glob_match("docs/**", "crates/docs/a.md"));
+        assert!(!glob_match("docs/**", "docs"));
+        assert!(glob_match("*.md", "README.md"));
+        assert!(!glob_match("*.md", "docs/README.md"));
+        assert!(glob_match("**/*.md", "docs/a/README.md"));
+    }
 
     #[test]
     fn parses_the_count_from_a_nextest_summary() {
