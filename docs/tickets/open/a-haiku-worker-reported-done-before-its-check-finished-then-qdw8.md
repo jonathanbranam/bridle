@@ -8,7 +8,7 @@ changes: []
 specs: []
 needs: []
 see: [g49c, h3ar, ytqu]
-tasks: [br-qdw8]
+tasks: [[br-qdw8, br-xtxd, br-vhss, br-cyvf]]
 ---
 
 ## The ask
