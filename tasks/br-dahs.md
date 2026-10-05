@@ -4,7 +4,7 @@ title = "Waiters: a new wait replaces the old (by session), bridle agent wake --
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-04T23:54:00.140Z"
-updated_at = "2026-10-05T19:23:34.686795Z"
+updated_at = "2026-10-05T19:28:55.204789Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 branch = "bridle/wait-replace"
@@ -21,3 +21,6 @@ done: waits tracked by session, a new wait replaces the old (exit 5), agent wake
 
 ### note · agent:manager-2 · 2026-10-05T19:23:34.686Z
 integrated: 3960f1abbce213f0182d4b0387bd46287e4e2fdc (branch bridle/wait-replace)
+
+### note · agent:manager-2 · 2026-10-05T19:28:55.204Z
+cleanup: removed agent wait-replace, branch bridle/wait-replace
