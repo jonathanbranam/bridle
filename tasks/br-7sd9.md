@@ -2,14 +2,17 @@
 id = "br-7sd9"
 title = "bridle-ui: a System page, each project's daemon, agents and (later) running servers"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-04T22:45:35.661Z"
-updated_at = "2026-10-04T22:46:11.189094Z"
+updated_at = "2026-10-05T08:37:14.079134Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "external:aide",
 ]
+branch = "bridle/system-page"
+commit = "9fbe2eee51e36a0b4fee7a2f9be8b33f50f547d1"
+summary = "Gateway read-only GET /api/v1/projects/{project}/system (SystemView: reachable/error/status; daemon down is a 200 with reachable:false, unknown project 404) and .../agents (AgentList; stopped agents included with a stopped flag, the open task each holds, running first). New crates/bridle-gateway/src/system.rs with allow-listed own wire types, ts-rs bindings regenerated. Dropped: principal, daemon workspace/repo/url, agent session id/pid/cwd/worktree/created_by, session pid/pane/claude session id (listed in human-web-ui.md). Ports and live updates deferred. Tests: status passthrough, unreachable, agents list, secrets stripped, unknown project."
 +++
 
 original id: 7sd9
@@ -35,3 +38,9 @@ UI half: bridle-ui ui-ng82.
 
 ### note · external:aide · 2026-10-04T22:46:11.189Z
 watching the task
+
+### note · agent:system-page · 2026-10-05T08:37:09.082Z
+done: gateway /system and /agents routes read-only; just check exit 0, 1214 tests passed; a6beee8c
+
+### note · agent:manager-2 · 2026-10-05T08:37:14.079Z
+integrated: 9fbe2eee51e36a0b4fee7a2f9be8b33f50f547d1 (branch bridle/system-page)
