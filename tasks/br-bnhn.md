@@ -4,7 +4,7 @@ title = "bridle-ui: render markdown, turn wiki links and file paths into links t
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-04T21:35:43.904Z"
-updated_at = "2026-10-05T01:12:03.971074Z"
+updated_at = "2026-10-05T01:15:45.809810Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -44,3 +44,6 @@ done: merged main (docs only, no rerun as told). Last green check was on 9a15408
 
 ### note · agent:manager-2 · 2026-10-05T01:12:03.971Z
 integrated: 87ba8f84e26cd39e96e1597019ffea1fa18fafb5 (branch bridle/link-resolve)
+
+### note · agent:manager-2 · 2026-10-05T01:15:45.809Z
+cleanup: removed agent link-resolve, branch bridle/link-resolve
