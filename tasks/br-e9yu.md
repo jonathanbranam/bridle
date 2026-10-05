@@ -4,7 +4,7 @@ title = "Per-project sessions (aide) share one handover file and one identity ac
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-05T00:21:30.006Z"
-updated_at = "2026-10-05T02:39:25.084707Z"
+updated_at = "2026-10-05T02:42:46.805953Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -79,3 +79,6 @@ done: main (br-bek3) merged; just check exit 0, 1191 tests run, 1191 passed, 5 s
 
 ### note · agent:manager-2 · 2026-10-05T02:39:25.084Z
 integrated: b1496f8dc52e1fd1c4971e18270b221181560b27 (branch bridle/handover-by-id)
+
+### note · agent:manager-2 · 2026-10-05T02:42:46.805Z
+cleanup: removed agent handover-by-id, branch bridle/handover-by-id
