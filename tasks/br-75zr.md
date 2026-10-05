@@ -4,7 +4,7 @@ title = "bridle-ui: view each project's specs as organised in design/specs, and 
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-05T02:40:28.433Z"
-updated_at = "2026-10-05T13:32:03.521787Z"
+updated_at = "2026-10-05T13:36:13.545286Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 branch = "bridle/specs-route"
@@ -25,3 +25,6 @@ done: specs route + links/resolve spec ids; eb354787; just check exit 0, 1232 te
 
 ### note · agent:manager-2 · 2026-10-05T13:32:03.521Z
 integrated: ad447213b55d5c2b709a1b67676065f0d5d8d159 (branch bridle/specs-route)
+
+### note · agent:manager-2 · 2026-10-05T13:36:13.545Z
+cleanup: removed agent specs-route, branch bridle/specs-route
