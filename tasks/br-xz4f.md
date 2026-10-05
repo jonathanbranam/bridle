@@ -4,7 +4,7 @@ title = "Tasks approved by anyone but the orchestrator are never planned: nothin
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-04T22:06:38.716Z"
-updated_at = "2026-10-05T15:05:30.950531Z"
+updated_at = "2026-10-05T15:10:11.991232Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 branch = "bridle/open-nudge"
@@ -32,3 +32,6 @@ done: ready tells PM (else orchestrator), stale open tasks return to pending; ju
 
 ### note · agent:manager-2 · 2026-10-05T15:05:30.950Z
 integrated: 189508b0f2fa2222edd40fcf283038b5acbb4c38 (branch bridle/open-nudge)
+
+### note · agent:manager-2 · 2026-10-05T15:10:11.991Z
+cleanup: removed agent open-nudge, branch bridle/open-nudge
