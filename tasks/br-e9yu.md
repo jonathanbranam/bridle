@@ -4,22 +4,37 @@ title = "Per-project sessions (aide) share one handover file and one identity ac
 kind = "bug"
 state = "planned"
 created_at = "2026-10-05T00:21:30.006Z"
-updated_at = "2026-10-05T00:21:42.642057Z"
+updated_at = "2026-10-05T00:22:27.199518Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "external:aide",
+]
 +++
 
 original id: e9yu
-Ticket: docs/tickets/open/per-project-sessions-aide-share-one-handover-file-and-one-id-e9yu.md (read it; it quotes the human).
+Ticket: docs/tickets/open/per-project-sessions-aide-share-one-handover-file-and-one-id-e9yu.md (read it; it quotes the human, including the clarification).
 
-Approval: the human, via the bridle-ui aide (m-0259, 2026-10-04 ~8:25 PM ET), marked critical: "The iOS file [aide file] is always shared between projects. That's just ridiculously poor planning. File is critical, but fix that".
+Approval: the human, via the bridle-ui aide (m-0259, m-0268, 2026-10-04 ~8:25 PM ET), critical: "File is critical, but fix that". And: "That file should be based on the ID of the agent, so the named agents get a different file. I don't even know why it's a file. The orchestrator's handover is some kind of note in the system."
 
-Goal: a per-project session's handover note is keyed by project as well as identity, so two projects' aides (and advisors) on one machine never share a file.
-- crates/bridle-daemon/src/sessions.rs:125 handover_note(identity) builds $BRIDLE_HOME/handover/<identity>.md. Key it by project too (recommended: $BRIDLE_HOME/handover/<project>/<identity>.md). The session already carries its project (SessionInfo.project).
-- crates/bridle/src/session.rs:203 and :226 take_handover(&home, identity) on start: read from the same per-project path.
-- Migration: on start, if the new path is empty and the old $BRIDLE_HOME/handover/<identity>.md exists, don't guess its project; leave it and say so in the prompt ("an old shared note may be at <path>"), so no project picks up another's note. KISS: no automatic move.
-- Then CHECK, and fix if keyed by identity alone, the same collision in: the session registry (sessions.rs register/lookup: does a second project's aide replace or shadow the first's entry?), `bridle session restart aide`, and refuse_if_running("aide", &project). Write what you found per item on the task thread, fixed or already safe, with the line.
-- Docs: docs/design/agent-host/orchestrator-supervision.md (lines ~228 and ~244, the path) and any doc naming the old path.
-Acceptance: just check green; tests: two sessions with the same identity in different projects get different handover paths, and starting one doesn't pick up the other's note; plus a test for any registry/restart collision you fix.
+Goal: aides and advisors (named advisors included) hand over through the same handover record the orchestrator uses (the `handovers` table; types.rs `Handover` has role and project), not a file under ~/.bridle/handover/. Each project's daemon keeps its own, so two projects' aides never collide, and each named advisor is its own role.
+- Who may write: today `bridle handover write` / POST /v1/handovers accepts only human and external:orchestrator. Allow external:aide and external:advisor[/<name>]; `role` is the writer's identity (aide, advisor, advisor/doc-review), never taken from the request body. Keep the wire type unless a field is truly needed (if so, types.rs and all clients together).
+- Reading: `bridle session aide` / `bridle session advisor [name]` (crates/bridle/src/session.rs ~203, ~226, take_handover) fetch the newest note for that role from the project's daemon and put it in the opening prompt (the body, or "run `bridle handover show <id>`"), instead of reading a file.
+- Prompting: the daemon's context-limit message to sessions (crates/bridle-daemon/src/sessions.rs, handover_note() at ~125 and its callers) tells the session to run `bridle handover write --file -` instead of writing to a path. Drop the file path.
+- Old files: leave existing ~/.bridle/handover/*.md alone (don't read or move them); one line in the doc notes they are obsolete.
+- CHECK, and fix if keyed by identity alone across projects, the same collision in the session registry (sessions.rs register/lookup), `bridle session restart aide`, and refuse_if_running("aide", &project). Write what you found per item on the task thread, fixed or already safe, with the line.
+- Docs: docs/design/agent-host/orchestrator-supervision.md (section 7 and the file path at ~228/~244), docs/design/cli.md (handover write/show/list), workflow/base/roles/aide.md and advisor.md where they describe handing over, storage.md if the table changes.
+Acceptance: just check green; tests: aide and a named advisor can write a handover and get role = their identity; a worker can't; session start for aide picks up the newest aide note and not an advisor's; the context-limit message names the command, not a file.
 Model: sonnet.
-Out of scope: identity changes beyond the path (seats are gtzx); the h3ar/75h2 waiter work.
+Out of scope: seats (gtzx); the waiter work (h3ar/75h2); the orchestrator's own handover flow beyond what sharing the code needs.
+
+## Thread
+
+### note · external:orchestrator · 2026-10-05T00:22:19.616Z
+From orchestrator: br-e9yu is CRITICAL (the human, via aide: 'File is critical, but fix that'), planned with a full brief (aides and advisors hand over through the handovers record, per the human's clarification). Put it in its own tier at the very front of the queue now.
+
+### note · external:orchestrator · 2026-10-05T00:22:19.644Z
+From orchestrator: br-e9yu is critical (the human's word): every project's aide shares one handover file. Brief on the task, sonnet. Give it the next free worker slot, ahead of everything except landing what's already done (push p88z, land bnhn). Two workers max.
+
+### note · external:aide · 2026-10-05T00:22:27.199Z
+watching the task
