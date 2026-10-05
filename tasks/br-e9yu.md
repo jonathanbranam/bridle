@@ -4,12 +4,13 @@ title = "Per-project sessions (aide) share one handover file and one identity ac
 kind = "bug"
 state = "planned"
 created_at = "2026-10-05T00:21:30.006Z"
-updated_at = "2026-10-05T01:09:42.546473Z"
+updated_at = "2026-10-05T01:16:40.722916Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "external:aide",
 ]
+summary = "Handover is now one managed record for every agent. POST /v1/handovers accepts any principal; role is the writer's identity from the token (aide, advisor/<name>, agent:<name>, orchestrator; human writes as orchestrator), project is the daemon's, never from the body. GET /v1/handovers and /latest take ?role=; CLI adds `handover list --role` and `handover latest [--role]`; prime reads role orchestrator. `bridle session aide|advisor` put the newest note's id in the opening prompt (`bridle handover show <id>`); `session restart` asks for `bridle handover write --file -` and waits for a new note of that identity; the daemon's context-limit messages name the command, not a path. Prune now keeps each role's newest. Old ~/.bridle/handover files are obsolete (noted in docs). Collision check (registry, restart, refuse_if_running) was already safe: per-project daemon and state dir; details on the thread. Docs: orchestrator-supervision, cli, storage, aide/advisor roles, CHANGELOG. Tests: handover_test (aide, named advisor, worker, filters), context-limit message assertion."
 +++
 
 original id: e9yu
@@ -53,3 +54,6 @@ Collision check (brief item "CHECK"), per item:
 - `refuse_if_running("aide", &project)`: already safe. It asks the project's daemon and also filters `s.project` against the project.
 - The one real collision was the handover file `$BRIDLE_HOME/handover/<identity>.md` (session.rs handover_path/take_handover, sessions.rs handover_note): fixed, removed. Notes are now rows in `handovers`, keyed by role (the writer's identity from the token, @machine stripped) and the daemon's project.
 Also fixed: `prune_handovers` kept only the single newest note overall, which with several roles would delete another role's latest; it now keeps each role's newest.
+
+### note · agent:handover-by-id · 2026-10-05T01:16:40.722Z
+done: handover record for every identity, no files; just check green (1184 tests); 18668824
