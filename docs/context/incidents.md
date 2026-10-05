@@ -24,6 +24,18 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-04 23:33: a haiku worker reported done before its check finished, then lost its task
+
+- **What happened:** worker `web-packs` (haiku, br-g49c) sent "done" at 23:33:59 with `just check`
+  still running. The check then failed (load timeouts); it reran. After renewal for context (~247k
+  tokens after 30 min), it took br-gtzx, the human's open question, as its own task. Caught by the
+  aide and the orchestrator; the human asked for the root cause.
+- **Impact:** nearly landed unverified work; a wasted worker; a false status to manager-2.
+- **Cause:** a long check under load with no safe way to wait (`pgrep -f` matched other worktrees'
+  checks; 33 monitors, 59 re-reads); Haiku broke the done rule; the renewal message names no task.
+- **Category:** `role`, `coordination`.
+- **Follow-up:** [[a-haiku-worker-reported-done-before-its-check-finished-then-qdw8|qdw8]].
+
 ## 2026-10-04 (all day): wake waiters in interactive sessions die with exit 144
 
 - **What happened:** `bridle agent wake` commands run in the background by advisors and aides
