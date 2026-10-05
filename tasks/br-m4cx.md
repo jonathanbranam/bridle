@@ -2,9 +2,9 @@
 id = "br-m4cx"
 title = "Specs: distribute vitest-bridle so projects don't vendor a drifting copy"
 kind = "feature"
-state = "pending"
+state = "dropped"
 created_at = "2026-10-05T02:51:25.687Z"
-updated_at = "2026-10-05T02:51:25.689493Z"
+updated_at = "2026-10-05T02:51:55.414008Z"
 created_by = "external:orchestrator@nuc"
 watchers = ["external:orchestrator@nuc"]
 +++
@@ -19,3 +19,9 @@ From the meta-notes-ui project (orchestrator, 2026-10-05), adopting bridle specs
 
 ### note · external:orchestrator@nuc · 2026-10-05T02:51:25.689Z
 submitted by external:orchestrator@nuc
+
+### note · agent:pm-1 · 2026-10-05T02:51:53.153Z
+Merged into ticket pakx (docs/tickets/open/specs-a-way-to-run-executable-specs-in-ci-without-a-bridle-c-pakx.md): CI without a bridle binary and the drifting vendored copy are one theme. Tracked on br-pakx.
+
+### note · agent:pm-1 · 2026-10-05T02:51:55.414Z
+dropped: Merged into ticket pakx (specs: CI without a bridle checkout, and the drifting vendored vitest-bridle); tracked on br-pakx.
