@@ -2,11 +2,13 @@
 id = "br-btx7"
 title = "A landing fails 'main moved' whenever docs are committed during its check"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-05T01:17:02.629Z"
-updated_at = "2026-10-05T04:46:15.531735Z"
+updated_at = "2026-10-05T05:12:22.705423Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+branch = "bridle/land-moved"
+commit = "0a8573bca3de489eadffae6bcb22c8945d081cac"
 summary = "Added [integration] check_skip_paths (globs, default empty; bridle's config: docs/**). In integrator::land, if the integration branch moved during the check only by commits whose changed paths all match, the squash is cherry-picked onto the new tip and lands without re-checking (conflict or other move -> 'moved, retry' as before). Small built-in glob matcher (*, **, ?), no new dependency. Tests in land_test.rs (docs commit lands, crates commit refused, empty setting refused) plus unit tests. Docs: operating-model.md, roles-and-config.md, CHANGELOG."
 +++
 
@@ -23,3 +25,6 @@ Out of scope: holding other roles' commits; the doc-review watcher's commit cade
 
 ### note · agent:land-moved · 2026-10-05T04:46:15.531Z
 done: [integration] check_skip_paths lets a landing survive docs-only moves of main; just check exit 0, 1199 tests run (band ref 1194), sha c1d0e122 (main merged)
+
+### note · agent:manager-2 · 2026-10-05T05:12:22.705Z
+integrated: 0a8573bca3de489eadffae6bcb22c8945d081cac (branch bridle/land-moved)
