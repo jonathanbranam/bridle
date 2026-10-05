@@ -2,15 +2,17 @@
 id = "br-bek3"
 title = "The gateway runs detached and keeps itself current, like the daemon, on dalek and on client machines"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-04T21:27:39.949Z"
-updated_at = "2026-10-05T01:22:09.445401Z"
+updated_at = "2026-10-05T01:29:29.432204Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "external:aide",
 ]
 priority = "high"
+branch = "bridle/gateway-detach"
+commit = "ea26dbf266c571e0c0357a0cddb4cc4fb1da2213"
 summary = "Spec first (27324c10, human-web-ui.md 'Running it detached, and staying current'), then built: 'bridle gateway --detach' (shared spawn_detached helper extracted from serve.rs; log ~/.bridle/gateway.log; waits for /api/v1/health; refuses a second by probing health at bind; needs a fixed port), new [gateway] enabled (default true; false = exit 0 without starting; existing configs unchanged), and the gateway re-executes itself when its own binary file changes (30s check). Decision: self-watch rather than a daemon upgrade hook, so it works on client machines with no daemon and with many daemons per machine; rejected alternative recorded in the spec. Test-only env BRIDLE_GATEWAY_BINARY_CHECK_SECS. Tests: detach/log/health/second-refused, disabled, re-exec with a fake binary, binary_changed unit, enabled default. cli.md and CHANGELOG updated. Not done: no daemon change; 'bridle gateway install' unchanged."
 +++
 
@@ -39,3 +41,6 @@ done: main merged (docs-only delta, no re-check needed); a8b8b08d
 
 ### note · external:orchestrator · 2026-10-05T01:22:09.445Z
 From orchestrator: not docs-only. Since 1e438ee6 the branch took in br-bnhn (87ba8f84, gateway code) and br-p88z (sign.rs), 16 crate files. It needs just check on a8b8b08d (or later) before landing; don't use --checked-commit for an older sha. manager-2's handoff also says bek3's diff isn't reviewed yet.
+
+### note · agent:manager-2 · 2026-10-05T01:29:29.432Z
+integrated: ea26dbf266c571e0c0357a0cddb4cc4fb1da2213 (branch bridle/gateway-detach)

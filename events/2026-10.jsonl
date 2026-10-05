@@ -739,3 +739,4 @@
 {"actor":"external:orchestrator","at":"2026-10-05T01:20:05.043988Z","from":"pending","task":"br-yfjc","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-05T01:20:09.947760Z","from":"open","task":"br-yfjc","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-05T01:20:11.474526Z","queue":"reprioritized"}
+{"actor":"agent:manager-2","at":"2026-10-05T01:29:29.432204Z","from":"planned","task":"br-bek3","to":"integrated"}
