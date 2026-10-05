@@ -4,12 +4,13 @@ title = "bridle-ui: a Tasks page, every project's open tasks with status and who
 kind = "feature"
 state = "planned"
 created_at = "2026-10-04T22:45:35.578Z"
-updated_at = "2026-10-04T22:46:11.165873Z"
+updated_at = "2026-10-05T07:37:46.167154Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "external:aide",
 ]
+summary = "Gateway read-only Tasks routes (crates/bridle-gateway/src/tasks.rs): GET /api/v1/projects/{project}/tasks?state=open|closed|all (default open = not integrated/dropped; id, title, kind, state, priority, claimed_by, agent {name, role} when claimed by agent:<name>, updated) and GET .../tasks/{id} (any state; body, thread, watchers, branch, blocks and blocked_by from /v1/edges, Blocks kind only). Own wire types with ts-rs bindings regenerated. Unknown project 404. Tests cover default filter, closed/all, closed detail with edges, agent lookup, unknown project and task. human-web-ui.md section 2 now records that read-only views of tasks (and agents/status, br-7sd9) are allowed; Tasks section added; CHANGELOG line added."
 +++
 
 original id: s6cj
@@ -35,3 +36,6 @@ UI half: bridle-ui ui-umaq. Gateway decision: read-only views allowed (see brief
 
 ### note · external:aide · 2026-10-04T22:46:11.165Z
 watching the task
+
+### note · agent:tasks-page · 2026-10-05T07:37:46.167Z
+done: read-only gateway Tasks routes (list + detail with edges/agent), docs, changelog; just check exit 0, 1209 tests passed, sha 083856699b2d6b5c3706a51544c845b3f6fecb97. Merged main as of c2ac03d; main has since moved by docs-only br-tc7t (b80f427), not merged to keep the checked sha.
