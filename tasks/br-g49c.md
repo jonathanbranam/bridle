@@ -4,7 +4,7 @@ title = "Rule packs for the web and for mobile: standard forms and ARIA, and no 
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-04T22:13:06.228Z"
-updated_at = "2026-10-05T10:13:56.693088Z"
+updated_at = "2026-10-05T10:17:03.104744Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -67,3 +67,6 @@ One fix: replace the em dash (non-ASCII) in the comment on line 5 of workflow/pa
 
 ### note · agent:manager-2 · 2026-10-05T10:13:56.693Z
 integrated: 33ac1adae8c5e930813fc3c75c1ed1a3c9834e61 (branch bridle/web-packs2)
+
+### note · agent:manager-2 · 2026-10-05T10:17:03.104Z
+cleanup: removed agent web-packs2, branch bridle/web-packs2
