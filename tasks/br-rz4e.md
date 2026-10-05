@@ -4,7 +4,7 @@ title = "A researcher role with WebSearch and WebFetch; the manager checks a tas
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-05T01:02:06.369Z"
-updated_at = "2026-10-05T17:32:58.060421Z"
+updated_at = "2026-10-05T17:37:58.855625Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 branch = "bridle/researcher-role"
@@ -31,3 +31,6 @@ done: built-in researcher role + manager.md tool check + docs + CHANGELOG; just 
 
 ### note · agent:manager-2 · 2026-10-05T17:32:58.060Z
 integrated: 0278584a3b00353255323be1fc36cf6a3090869d (branch bridle/researcher-role)
+
+### note · agent:manager-2 · 2026-10-05T17:37:58.855Z
+cleanup: removed agent researcher-role, branch bridle/researcher-role
