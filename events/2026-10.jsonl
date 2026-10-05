@@ -813,3 +813,4 @@
 {"actor":"agent:manager-2","at":"2026-10-05T11:59:16.138261Z","from":"planned","task":"br-y25n","to":"integrated"}
 {"actor":"human","at":"2026-10-05T12:17:39.961Z","from":"","task":"br-aqa7","to":"pending"}
 {"actor":"agent:manager-2","at":"2026-10-05T12:43:09.886211Z","from":"planned","task":"br-gq9r","to":"integrated"}
+{"actor":"agent:manager-2","at":"2026-10-05T13:32:03.521787Z","from":"planned","task":"br-75zr","to":"integrated"}
