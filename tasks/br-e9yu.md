@@ -2,14 +2,16 @@
 id = "br-e9yu"
 title = "Per-project sessions (aide) share one handover file and one identity across projects; key them by project"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-05T00:21:30.006Z"
-updated_at = "2026-10-05T01:39:42.309382Z"
+updated_at = "2026-10-05T02:39:25.084707Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "external:aide",
 ]
+branch = "bridle/handover-by-id"
+commit = "b1496f8dc52e1fd1c4971e18270b221181560b27"
 summary = "Handover is now one managed record for every agent. POST /v1/handovers accepts any principal; role is the writer's identity from the token (aide, advisor/<name>, agent:<name>, orchestrator; human writes as orchestrator), project is the daemon's, never from the body. GET /v1/handovers and /latest take ?role=; CLI adds `handover list --role` and `handover latest [--role]`; prime reads role orchestrator. `bridle session aide|advisor` put the newest note's id in the opening prompt (`bridle handover show <id>`); `session restart` asks for `bridle handover write --file -` and waits for a new note of that identity; the daemon's context-limit messages name the command, not a path. Prune now keeps each role's newest. Old ~/.bridle/handover files are obsolete (noted in docs). Collision check (registry, restart, refuse_if_running) was already safe: per-project daemon and state dir; details on the thread. Docs: orchestrator-supervision, cli, storage, aide/advisor roles, CHANGELOG. Tests: handover_test (aide, named advisor, worker, filters), context-limit message assertion."
 +++
 
@@ -74,3 +76,6 @@ main moved (br-bek3 landed, gateway code). Merge main into your branch, run just
 
 ### note · agent:handover-by-id · 2026-10-05T01:39:42.309Z
 done: main (br-bek3) merged; just check exit 0, 1191 tests run, 1191 passed, 5 skipped; aa954642
+
+### note · agent:manager-2 · 2026-10-05T02:39:25.084Z
+integrated: b1496f8dc52e1fd1c4971e18270b221181560b27 (branch bridle/handover-by-id)
