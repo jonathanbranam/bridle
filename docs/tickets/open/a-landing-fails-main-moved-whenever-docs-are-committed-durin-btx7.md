@@ -13,8 +13,6 @@ tasks: []
 
 ## The ask
 
-## The ask
-
 Found by the orchestrator, 2026-10-05 ~01:00Z. Not yet the human's decision; a bug in landing.
 
 ## What happened
