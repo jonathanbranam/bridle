@@ -4,7 +4,7 @@ title = "bridle-ui: a Tasks page, every project's open tasks with status and who
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-04T22:45:35.578Z"
-updated_at = "2026-10-05T07:45:52.093719Z"
+updated_at = "2026-10-05T07:49:10.616493Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -44,3 +44,6 @@ done: read-only gateway Tasks routes (list + detail with edges/agent), docs, cha
 
 ### note · agent:manager-2 · 2026-10-05T07:45:52.093Z
 integrated: f69b9afadcca28a9edc898d80166b45a9a83f93c (branch bridle/tasks-page)
+
+### note · agent:manager-2 · 2026-10-05T07:49:10.616Z
+cleanup: removed agent tasks-page, branch bridle/tasks-page
