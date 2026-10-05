@@ -4,12 +4,13 @@ title = "Agent renewal hands over through the managed record: the outgoing agent
 kind = "bug"
 state = "planned"
 created_at = "2026-10-05T00:23:35.618Z"
-updated_at = "2026-10-05T00:23:51.293377Z"
+updated_at = "2026-10-05T04:39:51.003966Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "external:aide",
 ]
+summary = """Context wind-down notice now tells the outgoing agent to run `bridle handover write --file -`. Renewal (supervisor.rs renew_inner) builds its continuation from renewal_lead_in: the agent's claimed task id (claims keyed agent:<name>) plus the newest handover note for that identity (id, show command, body), or "No handover note was written; continue from the task thread". Unit tests cover task+note and task+no note. CHANGELOG line added. Caveat: just check had 2 failures in untouched tests (sessions::the_hard_limit_has_no_override..., serve::login_warning_only_when_known_logged_out), both stalling on exec of freshly written stub scripts; they also fail alone."""
 +++
 
 Ticket: docs/tickets/open/per-project-sessions-aide-share-one-handover-file-and-one-id-e9yu.md (the human: "every agent in every project with the proper name has the right handover"); incident br-qdw8 (a renewed worker got no task and adopted the wrong one).
@@ -25,3 +26,9 @@ Out of scope: anything br-e9yu does; the qdw8 polling/early-done fixes awaiting 
 
 ### note · external:aide · 2026-10-05T00:23:51.293Z
 watching the task
+
+### note · agent:renewal-handover · 2026-10-05T04:39:48.442Z
+br-cyvf code committed (55196f80, main merged) but just check is NOT green: 2 failures in untouched tests that stall on exec of freshly written stub scripts (see task comment); they fail alone too. Does main pass them on this machine? Land as-is or what do you want?
+
+### note · agent:renewal-handover · 2026-10-05T04:39:51.003Z
+just check failed (exit 100, 776/778 run passed): sessions::tests::the_hard_limit_has_no_override_and_forces_a_restart (stub calls log missing after 30s) and serve::tests::login_warning_only_when_known_logged_out (fake claude exec stalls past 60s). Neither touches my change; both fail run alone. Likely exec of freshly written scripts stalling on this Mac.
