@@ -4,7 +4,7 @@ title = "bridle-ui: render front matter, and auto-link URLs, file paths and tick
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-04T22:32:01.072Z"
-updated_at = "2026-10-05T09:01:03.086273Z"
+updated_at = "2026-10-05T09:07:16.608366Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -43,3 +43,6 @@ done: links/resolve resolves ticket IDs and ticket-made task IDs; just check exi
 
 ### note · agent:manager-2 · 2026-10-05T09:01:03.086Z
 integrated: 1f0a5bd43df80eec417e4239e74e5f51fe34360c (branch bridle/ui-render)
+
+### note · agent:manager-2 · 2026-10-05T09:07:16.608Z
+cleanup: removed agent ui-render, branch bridle/ui-render
