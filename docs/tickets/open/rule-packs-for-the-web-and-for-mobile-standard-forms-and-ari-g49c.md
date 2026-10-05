@@ -60,3 +60,27 @@ The working login form (standard labels and autocomplete) is track-web's
   `packs = [...]` in `.bridle/config.toml`. bridle-ui and track-web both use `packs = ["typescript"]`.
 - bridle-ui's `index.html` at 515ad47 has
   `<meta name="viewport" content="width=device-width, initial-scale=1.0" />` (none of the fix).
+
+## Two more rules from the human (2026-10-04 ~8:50 PM ET, to the bridle-ui aide)
+
+The human, verbatim (dictated):
+
+> These are rules that need to get pushed back into the bridle design.
+> - I think just UI design: most of the time, an input box should have a clear button. If it's a
+>   search box of some kind, that's not a hard and fast rule yet. It depends on the context. For a
+>   whole form, we have a clear or something box, but for the kind of search box that we have here,
+>   filtering for a bunch of things, you always have to clear that.
+> - For the mobile rollup, we need to have a rule that talks about how to handle selection properly
+>   on mobile. If we're writing a task that requires selecting text on mobile and interacting with
+>   it in a specific way, that's handled properly.
+
+Where these came from in bridle-ui tonight:
+
+- Clear button: [[bridle-ui-a-clear-x-button-on-the-document-page-s-search-box-wu7r|wu7r]]
+  (ui-7mcp, 44e8faf). The page's own button with `aria-label="Clear search"`, shown when the box
+  has text; tapping it empties the box and keeps focus. A native `type="search"` clear isn't shown
+  on iOS Safari, so it can't be relied on.
+- Mobile selection: [[bridle-ui-highlight-to-comment-doesn-t-trigger-on-mobile-on-c2xn|c2xn]]
+  (ui-s3xe, c5c0a0a). Highlight-to-comment listened only for `mouseup`, which a phone's native
+  selection (long-press, drag the handles) doesn't fire. The fix acts on `selectionchange`,
+  debounced (~300 ms after the selection settles).
