@@ -172,6 +172,7 @@ mod tests {
             components: Vec::new(),
             size: None,
             priority: Default::default(),
+            priority_at: None,
             branch: None,
             commit: None,
             summary: None,

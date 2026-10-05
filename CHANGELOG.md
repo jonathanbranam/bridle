@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- The human's to-do list has an order agents can set: `bridle task priority <id>` (and `task new --priority`) now take `critical` and `urgent` above `high`; `task list` and the gateway's to-do list sort by level, newest-set first at `high` and above, so a newer urgent item outranks older ones (br-y25n).
 - `bridle session restart` no longer types the relaunch into a session that is still running: it escalates to SIGKILL on the launcher's children, fails if the launcher survives, prints "restarted" only after the new session registers, and runs detached when a session restarts itself (br-4s3z).
 - Before a planned restart (upgrade or restart by request) or a shutdown, the daemon ends every open `bridle agent wake` and `wait-for-wake` with the reason (shutting down, restarting for an internal upgrade to a build, restarting by request by someone). The waiter prints it on stderr and exits 6 (not the timeout's 4), and the `daemon.stopping` event records the reason and `waiters_ended` (br-ds96).
 - Workflow rule packs for web (form labels and autocomplete, ARIA labels, semantic HTML) and mobile (viewport meta tag disabling zoom, touch-action, 16px input font size, safe-area insets) to guide projects toward accessibility and mobile-friendly design (br-g49c).

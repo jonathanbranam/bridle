@@ -3,4 +3,4 @@
 /**
  * Declaration order is the sort order: high first.
  */
-export type Priority = "high" | "normal" | "low";
+export type Priority = "critical" | "urgent" | "high" | "normal" | "low";

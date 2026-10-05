@@ -186,6 +186,7 @@ impl TaskManager {
                 components: Vec::new(),
                 size: None,
                 priority: TaskPriority::default(),
+                priority_at: None,
                 branch: None,
                 commit: None,
                 summary: None,
@@ -524,6 +525,7 @@ impl TaskManager {
             components,
             size,
             priority: TaskPriority::default(),
+            priority_at: None,
             branch: None,
             commit: None,
             summary: None,
@@ -552,6 +554,7 @@ impl TaskManager {
         }
         task.priority = priority;
         task.updated_at = Utc::now();
+        task.priority_at = Some(task.updated_at);
         task.thread.push(ThreadEntry {
             kind: ThreadEntryKind::Note,
             from: actor.clone(),
@@ -607,6 +610,7 @@ impl TaskManager {
             .get_task(id)
             .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
         task.priority = priority;
+        task.priority_at = Some(Utc::now());
         task.thread.push(ThreadEntry {
             kind: ThreadEntryKind::Note,
             from: actor.clone(),

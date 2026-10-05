@@ -1069,6 +1069,9 @@ struct Frontmatter {
     /// Absent in records written before priority existed, or normal.
     #[serde(default, skip_serializing_if = "TaskPriority::is_normal")]
     priority: TaskPriority,
+    /// Absent in records written before ordering existed, or never set.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    priority_at: Option<DateTime<Utc>>,
     /// Absent in records written before the landing record existed, or unset.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     branch: Option<String>,
@@ -1100,6 +1103,7 @@ fn render_task(task: &Task) -> Result<String, StateBranchError> {
         components: task.components.clone(),
         size: task.size,
         priority: task.priority,
+        priority_at: task.priority_at,
         branch: task.branch.clone(),
         commit: task.commit.clone(),
         summary: task.summary.clone(),
@@ -1276,6 +1280,7 @@ fn parse_task(text: &str) -> Result<Task, StateBranchError> {
         components: fm.components,
         size: fm.size,
         priority: fm.priority,
+        priority_at: fm.priority_at,
         branch: fm.branch,
         commit: fm.commit,
         summary: fm.summary,
@@ -1447,6 +1452,7 @@ mod tests {
             components: vec!["client-games".to_string(), "dungeon".to_string()],
             size: Some(TaskSize::S),
             priority: TaskPriority::High,
+            priority_at: None,
             branch: Some("bridle/x".to_string()),
             commit: Some("abc123".to_string()),
             summary: Some("Did a thing.\n\nSecond \"paragraph\".".to_string()),

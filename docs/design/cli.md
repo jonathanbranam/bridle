@@ -326,10 +326,10 @@ bridle advisor start <name> [--brief TEXT|@FILE]   send the brief to external:ad
 bridle orchestrator prime prototyper         the prototyper role file, then the project's .bridle/roles/prototyper.md
 bridle orchestrator prime document-reviewer  the document-reviewer role file, then the project's .bridle/roles/document-reviewer.md
 bridle orchestrator prime worker|planner [--component ID ...] [--task ID]   the role's rules, facts, guides, plus named components' scope; --task is worker only
-bridle task new    <title> -k/--kind KIND [--body TEXT | --body-file FILE] [--component ID ...] [--size S|M|L] [--for-human] [--priority high|normal|low]
+bridle task new    <title> -k/--kind KIND [--body TEXT | --body-file FILE] [--component ID ...] [--size S|M|L] [--for-human] [--priority critical|urgent|high|normal|low]
 bridle task show   <id>
 bridle task plan   <id>                                                 open -> planned: ready to build, claimable once unblocked
-bridle task priority <id> high|normal|low  change the priority; who and when go in the thread and a `task.priority` event
+bridle task priority <id> critical|urgent|high|normal|low  change the priority; who and when go in the thread and a `task.priority` event
 bridle task kind <id> <kind>             change the kind, only while `pending` or `open` (refused planned, claimed, dropped, integrated, reopened); who and when go in the thread and a `task.kind` event
 bridle task edit   <id> [--title TEXT] [--body TEXT | --body-file FILE] [--component ID ... | --no-component] [--size S|M|L|none]
 bridle task list   [--claimed-by WHO] [--component ID] [-k KIND]             WHO: me|human|<agent name>|<principal id>; unclaimed tasks have no claimant to match
@@ -422,9 +422,12 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   finishes it with `task done <id>` (no `--commit`); `task list --claimed-by human` lists
   the open ones. By convention the title starts `[at restart]` or `[at next reboot]` when it
   must wait for one; nothing parses it. See coordination.md, "Human to-dos".
-- **`--priority high|normal|low`** on `task new` (default normal) and `task priority <id> <p>`
-  set the priority. `task list` and `task show` display it, and `task list` sorts high first
-  (oldest first within a priority), so `task list --claimed-by human` is the human's ranked
+- **`--priority critical|urgent|high|normal|low`** on `task new` (default normal) and `task priority <id> <p>`
+  set the priority. `task list` and `task show` display it, and `task list` sorts by it,
+  highest first. At `high` and above the most recently set goes first (so a newer urgent thing
+  outranks older ones at its level, and an agent putting things "at the top" is outranked by
+  the next one to do so); at `normal` and `low` it is oldest first. The order is one function
+  (`sort_by_priority` in bridle-api) shared by the CLI and the gateway's to-do list, so `task list --claimed-by human` is the human's ranked
   list. `task drop --reason` on a to-do the human holds also sends the human an inbox note
   with the reason.
 - **`task edit --body`** keeps a ticket-born task's first line `original id: <ticket>` (the link

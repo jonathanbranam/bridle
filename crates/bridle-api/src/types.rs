@@ -1405,6 +1405,8 @@ impl std::fmt::Display for TaskSize {
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum TaskPriority {
+    Critical,
+    Urgent,
     High,
     #[default]
     Normal,
@@ -1414,6 +1416,8 @@ pub enum TaskPriority {
 impl TaskPriority {
     pub fn as_str(self) -> &'static str {
         match self {
+            Self::Critical => "critical",
+            Self::Urgent => "urgent",
             Self::High => "high",
             Self::Normal => "normal",
             Self::Low => "low",
@@ -1423,6 +1427,23 @@ impl TaskPriority {
     pub fn is_normal(&self) -> bool {
         *self == Self::Normal
     }
+}
+
+/// Sorts the human's to-dos: higher level first; at `high` and above the most recently ranked
+/// goes first (a newer urgent thing outranks older ones at its level), below that oldest first.
+pub fn sort_by_priority(tasks: &mut [Task]) {
+    tasks.sort_by_key(|t| {
+        let at = t.priority_at.unwrap_or(t.created_at);
+        let newest_first = t.priority <= TaskPriority::High;
+        (
+            t.priority,
+            if newest_first {
+                -at.timestamp_millis()
+            } else {
+                at.timestamp_millis()
+            },
+        )
+    });
 }
 
 impl std::fmt::Display for TaskPriority {
@@ -1589,6 +1610,9 @@ pub struct Task {
     /// Absent (normal) unless set; ranks the human's to-dos.
     #[serde(default, skip_serializing_if = "TaskPriority::is_normal")]
     pub priority: TaskPriority,
+    /// When the priority was last set; orders to-dos within a level. Null until first set.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub priority_at: Option<DateTime<Utc>>,
     /// Branch that did the work, recorded by `task done --branch`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub branch: Option<String>,
@@ -2142,5 +2166,38 @@ mod tests {
         );
         let s: TaskSize = serde_json::from_value(serde_json::json!("S")).unwrap();
         assert_eq!(s, TaskSize::S);
+    }
+
+    #[test]
+    fn priority_sort_levels_then_newest_first_above_normal() {
+        let mk = |id: &str, p: &str, day: u32, set: Option<u32>| -> Task {
+            let at = |d: u32| format!("2026-01-{d:02}T00:00:00Z");
+            let mut v = serde_json::json!({
+                "id": id, "title": id, "kind": "feature", "state": "claimed", "body": "",
+                "thread": [], "created_at": at(day), "updated_at": at(day), "priority": p,
+            });
+            if let Some(d) = set {
+                v["priority_at"] = serde_json::json!(at(d));
+            }
+            serde_json::from_value(v).unwrap()
+        };
+        let mut tasks = vec![
+            mk("n-old", "normal", 1, None),
+            mk("n-new", "normal", 2, None),
+            mk("low", "low", 1, None),
+            mk("h-old", "high", 1, Some(5)),
+            mk("h-new", "high", 1, Some(9)),
+            mk("u-old", "urgent", 1, Some(3)),
+            mk("u-new", "urgent", 1, Some(4)),
+            mk("crit", "critical", 1, Some(2)),
+        ];
+        sort_by_priority(&mut tasks);
+        let ids: Vec<_> = tasks.iter().map(|t| t.id.as_str()).collect();
+        assert_eq!(
+            ids,
+            [
+                "crit", "u-new", "u-old", "h-new", "h-old", "n-old", "n-new", "low"
+            ]
+        );
     }
 }

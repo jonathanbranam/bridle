@@ -8,7 +8,7 @@ use std::time::Duration;
 
 use bridle_api::client::Client;
 use bridle_api::discovery::{ProcessEnv, resolve_token};
-use bridle_api::types::{Task, TaskPriority, TaskState};
+use bridle_api::types::{Task, TaskPriority, TaskState, sort_by_priority};
 use serde::Serialize;
 use ts_rs::TS;
 
@@ -18,6 +18,8 @@ use crate::discovery::{PROBE_TIMEOUT, ProjectStatus, Target, current_targets};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, TS)]
 #[serde(rename_all = "snake_case")]
 pub enum Priority {
+    Critical,
+    Urgent,
     High,
     Normal,
     Low,
@@ -26,6 +28,8 @@ pub enum Priority {
 impl From<TaskPriority> for Priority {
     fn from(p: TaskPriority) -> Self {
         match p {
+            TaskPriority::Critical => Self::Critical,
+            TaskPriority::Urgent => Self::Urgent,
             TaskPriority::High => Self::High,
             TaskPriority::Normal => Self::Normal,
             TaskPriority::Low => Self::Low,
@@ -160,21 +164,22 @@ async fn read_project(s: Source, timeout: Duration) -> Result<ProjectItems, Proj
     let (claimed, all, questions) = fetched.map_err(|e| down(e.to_string()))?;
 
     let by_id: HashMap<&str, &Task> = all.iter().map(|t| (t.id.as_str(), t)).collect();
-    let mut todos: Vec<(Todo, chrono::DateTime<chrono::Utc>)> = claimed
+    let mut held: Vec<Task> = claimed
         .iter()
         .filter(|t| t.state == TaskState::Claimed)
-        .map(|t| {
-            let todo = Todo {
-                task_id: t.id.clone(),
-                title: t.title.clone(),
-                body: t.body.clone(),
-                priority: t.priority.into(),
-                created_at: t.created_at.to_rfc3339(),
-            };
-            (todo, t.created_at)
+        .cloned()
+        .collect();
+    sort_by_priority(&mut held);
+    let todos: Vec<Todo> = held
+        .iter()
+        .map(|t| Todo {
+            task_id: t.id.clone(),
+            title: t.title.clone(),
+            body: t.body.clone(),
+            priority: t.priority.into(),
+            created_at: t.created_at.to_rfc3339(),
         })
         .collect();
-    todos.sort_by_key(|(t, at)| (t.priority, *at));
     // A withdrawn task can still have its question open in the daemon; the withdrawal stays on
     // the task's record, the human just isn't asked.
     let mut decisions: Vec<_> = questions
@@ -202,7 +207,7 @@ async fn read_project(s: Source, timeout: Duration) -> Result<ProjectItems, Proj
         project: s.project,
         machine: s.machine,
         decisions: decisions.into_iter().map(|(d, _)| d).collect(),
-        todos: todos.into_iter().map(|(t, _)| t).collect(),
+        todos,
     })
 }
 

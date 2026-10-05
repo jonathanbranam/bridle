@@ -108,10 +108,11 @@ pub(super) fn task_size_arg_to_opt(arg: TaskSizeArg) -> Option<TaskSize> {
 }
 
 use bridle_api::settle_clock_text;
+use bridle_api::types::sort_by_priority;
 
 pub fn print_task_row(t: &Task) {
     println!(
-        "{:<10} {:<9} {:<8} {:<4} {:<6} {}",
+        "{:<10} {:<9} {:<8} {:<4} {:<8} {}",
         t.id,
         t.kind,
         t.state,
@@ -267,15 +268,14 @@ pub(super) async fn task_list(cli: &Cli, args: &TaskListArgs) -> Result<(), CliE
         let kind = task_kind_arg(kind);
         tasks.retain(|t| t.kind == kind);
     }
-    // Stable: high first, ties stay oldest first.
-    tasks.sort_by_key(|t| t.priority);
+    sort_by_priority(&mut tasks);
     if cli.json {
         render::print_json(&tasks)?;
     } else if tasks.is_empty() {
         println!("no tasks");
     } else {
         println!(
-            "{:<10} {:<9} {:<8} {:<4} {:<6} TITLE",
+            "{:<10} {:<9} {:<8} {:<4} {:<8} TITLE",
             "ID", "KIND", "STATE", "SIZE", "PRI"
         );
         for t in &tasks {
@@ -309,6 +309,8 @@ pub(super) async fn task_plan(cli: &Cli, args: &TaskPlanArgs) -> Result<(), CliE
 
 pub(super) fn task_priority_arg(arg: TaskPriorityArg) -> TaskPriority {
     match arg {
+        TaskPriorityArg::Critical => TaskPriority::Critical,
+        TaskPriorityArg::Urgent => TaskPriority::Urgent,
         TaskPriorityArg::High => TaskPriority::High,
         TaskPriorityArg::Normal => TaskPriority::Normal,
         TaskPriorityArg::Low => TaskPriority::Low,

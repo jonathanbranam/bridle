@@ -298,9 +298,11 @@ events/2026-09.jsonl      append-only transitions, for history and rebuild
   parse falls back to the first thread entry's author, else `unknown`. Every step is best
   effort: a failure logs and leaves that task unknown, never failing start-up. A task created
   by the daemon itself (re-evaluate) is `bridle`.
-- **A task's `priority`** (`high`, `normal`, `low`) lives only in the frontmatter, as an
+- **A task's `priority`** (`critical`, `urgent`, `high`, `normal`, `low`) lives only in the frontmatter, as an
   optional `priority = "high"` line: omitted when normal, and a file written before the field
-  existed loads as normal. A rebuild round-trips it; each change is also a thread entry.
+  existed loads as normal. `priority_at` (when it was last set; orders to-dos within a level)
+  is likewise optional; absent means never set, and the task's creation time stands in. The new
+  levels are additive, so old files need no migration. A rebuild round-trips it; each change is also a thread entry.
 - **A task's landing record** (`branch`, `commit`, `summary`) lives only in the frontmatter, as
   optional strings: omitted when unset, and a file written before the fields existed loads
   with none. A rebuild round-trips them.

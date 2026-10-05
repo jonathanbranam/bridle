@@ -1352,6 +1352,8 @@ pub enum TaskSizeArg {
 #[derive(Debug, Clone, Copy, ValueEnum)]
 #[value(rename_all = "lowercase")]
 pub enum TaskPriorityArg {
+    Critical,
+    Urgent,
     High,
     Normal,
     Low,
@@ -1389,7 +1391,7 @@ pub enum TaskAction {
     List(TaskListArgs),
     /// Mark a task ready to build: `open` -> `planned`.
     Plan(TaskPlanArgs),
-    /// Change a task's priority (high, normal, low); recorded in its thread and as an event.
+    /// Change a task's priority (critical, urgent, high, normal, low); recorded in its thread and as an event.
     Priority(TaskPriorityArgs),
     /// Change a task's kind; only while it is `open`. Recorded in its thread and as an event.
     Kind(TaskKindArgs),
