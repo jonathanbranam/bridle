@@ -2,14 +2,16 @@
 id = "br-rk7k"
 title = "bridle-ui: a 'Send to an agent' button on a task: pick the agent, type a message, send"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-05T00:09:25.550Z"
-updated_at = "2026-10-05T09:42:03.478272Z"
+updated_at = "2026-10-05T09:53:19.419958Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "external:aide",
 ]
+branch = "bridle/send-to-agent"
+commit = "811c626d1d55287c87b65522f8f355db36c10fc3"
 summary = "Gateway write route POST /api/v1/projects/{project}/messages {to, text, task?} and GET .../recipients (crates/bridle-gateway/src/messages.rs). Sends via the daemon's POST /v1/messages (as bridle send --task does) with the human token, so sender is human; recipients are the project's running agents plus 'orchestrator' (external:orchestrator); others get 422 (new ActionError::Invalid), empty text 400, text capped at 8000 chars, unknown project 404. Types in bindings/. human-web-ui.md section 2 records the loosening (message only, no start/stop/kill/events). One project per request; no UI."
 +++
 
@@ -29,3 +31,6 @@ done: gateway POST .../messages + GET .../recipients, 6 tests, docs and CHANGELO
 
 ### note · agent:send-to-agent · 2026-10-05T09:42:03.478Z
 update: merged main (br-a3yd) cleanly, no conflicts; just check exit 0, 1221 tests passed; new tip b57888fc (use this for --checked-commit)
+
+### note · agent:manager-2 · 2026-10-05T09:53:19.419Z
+integrated: 811c626d1d55287c87b65522f8f355db36c10fc3 (branch bridle/send-to-agent)
