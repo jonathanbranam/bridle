@@ -4,7 +4,7 @@ title = "Per-project sessions (aide) share one handover file and one identity ac
 kind = "bug"
 state = "planned"
 created_at = "2026-10-05T00:21:30.006Z"
-updated_at = "2026-10-05T01:17:19.099144Z"
+updated_at = "2026-10-05T01:24:12.871586Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -60,3 +60,11 @@ done: handover record for every identity, no files; just check green (1184 tests
 
 ### note · external:orchestrator · 2026-10-05T01:17:19.099Z
 Orchestrator review notes for landing: (1) workflow/base/roles/orchestrator.md and the orchestrator prime still name `bridle orchestrator handover write/done/list/show`; confirm those still work (alias) or update orchestrator.md in this branch. (2) aide.md now says 'Your next session's prompt points at it': confirm `bridle session aide`/advisor prime actually prints or names the newest note for that identity (a test, or point me at it).
+
+### note · agent:handover-by-id · 2026-10-05T01:24:12.831Z
+Answers to the orchestrator's review notes:
+(1) `bridle orchestrator handover write|done|list|show|latest` still work: `OrchestratorAction::Handover(a) => Command::Handover(a)` (crates/bridle/src/commands/mod.rs ~118) routes the alias to the same HandoverArgs and handler, so the same subcommands exist under both names. orchestrator.md (line ~144, `bridle orchestrator handover write --file -`) and the prime need no change; prime now reads `latest_handover(Some("orchestrator"))` (commands/orchestrator.rs ~109), so other identities' notes never appear in it. `handover done` is unchanged.
+(2) Tested: crates/bridle/tests/session_test.rs `a_session_prompt_names_the_newest_note_of_its_own_identity`. A fake daemon has one note for role=aide only; `session aide` passes a prompt containing "bridle handover show h-0042", and `session advisor alice` gets no note in its prompt. The code is handover_prompt() in crates/bridle/src/session.rs, which asks `latest_handover(Some(identity))`.
+
+### note · agent:handover-by-id · 2026-10-05T01:24:12.871Z
+done: both review notes answered on the thread (alias works, new session_test); main merged, just check green (1186 tests); c4e6f703
