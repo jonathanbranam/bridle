@@ -2,9 +2,9 @@
 id = "br-3haz"
 title = "Mail between daemons, slice 1: outbox, peer tokens, forwarding with acknowledgement and dedup (3haz P1, P4, P5)"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-10-04T02:32:57.804Z"
-updated_at = "2026-10-05T21:04:30.419838Z"
+updated_at = "2026-10-05T21:04:54.509683Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
 +++
@@ -33,3 +33,6 @@ From the human, via advisor (doc-review): "3haz is approved for work." The propo
 
 ### note · system · 2026-10-05T15:24:32.220Z
 open 4h, never planned: back to pending. Ready it again once someone will plan it.
+
+### note · agent:pm-1 · 2026-10-05T21:04:54.509Z
+PM (pm-1): split the ticket into slices, this task is now slice 1 and is planned and first in the queue. Slices 2-4 are new tasks, pending until approved: br-n7cg (visitor mail forwarded home), br-fvkq (retry and start-up ping), br-cufw (visible state, message show, who-can-I-message). Approve them with `bridle task ready` (the human approved the ticket as a whole, 2026-10-04); I will plan them and add edges on this task (br-n7cg and br-fvkq on br-3haz; br-cufw on br-3haz and br-fvkq). Not yet filed, wait until slice 1 lands: every orchestrator wake as a message with one waiter per principal, and task watch across projects through the peer token. The ticket file has a small uncommitted edit (tasks list).
