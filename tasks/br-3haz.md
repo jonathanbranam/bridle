@@ -4,9 +4,10 @@ title = "Mail between daemons, slice 1: outbox, peer tokens, forwarding with ack
 kind = "feature"
 state = "planned"
 created_at = "2026-10-04T02:32:57.804Z"
-updated_at = "2026-10-05T21:04:54.509683Z"
+updated_at = "2026-10-05T21:47:25.729850Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
+summary = "Slice 1 of 3haz. `bridle send --project <other> <principal>` now goes to the sender's own daemon (POST /v1/outbox), which accepts at once (`queued o-0007`), stores it in a new `outbox` table and forwards it in the background to the destination (machine config, else registry) via POST /v1/forward with a peer token. Receiver: peer token only, acks with message ids, dedups by origin (machine, daemon, outbox id) in `forwarded_in`; per destination oldest first, a transient failure stops the flush (stays queued), a refusal for good marks failed and moves on. Forwarded `from` is qualified with the sender's machine (`agent:w1@nuc`) and believed only from a peer token; a peer token can call nothing else. `bridle token create --peer <machine>` mints `peer:<machine>` on the receiver; paste it under `[peer]` in the sender's credentials.toml keyed by the receiving project (one per sending machine per receiving daemon, not per daemon pair; decision). New PrincipalKind::Peer, wire types in types.rs, new crates/bridle-daemon/src/outbox.rs, tests in tests/outbox_test.rs (two in-process daemons). Docs: principals.md, storage.md, cli.md, api.md, CHANGELOG. The project-resolution test now expects `send --project y` to hit the own daemon. Deferred (later slices): retry loop and start-up ping (a queued message is retried only on the next send to the same destination), visitor mail home, status/message show, --task and @machine addressing across daemons. MIGRATION NOTE: schema SCHEMA_V20 (outbox, forwarded_in) applies by the daemon's normal migration on next start; peer tokens and the outbox are new and optional, so existing projects need no file changes."
 +++
 
 original id: 3haz
@@ -36,3 +37,6 @@ open 4h, never planned: back to pending. Ready it again once someone will plan i
 
 ### note · agent:pm-1 · 2026-10-05T21:04:54.509Z
 PM (pm-1): split the ticket into slices, this task is now slice 1 and is planned and first in the queue. Slices 2-4 are new tasks, pending until approved: br-n7cg (visitor mail forwarded home), br-fvkq (retry and start-up ping), br-cufw (visible state, message show, who-can-I-message). Approve them with `bridle task ready` (the human approved the ticket as a whole, 2026-10-04); I will plan them and add edges on this task (br-n7cg and br-fvkq on br-3haz; br-cufw on br-3haz and br-fvkq). Not yet filed, wait until slice 1 lands: every orchestrator wake as a message with one waiter per principal, and task watch across projects through the peer token. The ticket file has a small uncommitted edit (tasks list).
+
+### note · agent:mail-outbox · 2026-10-05T21:47:25.729Z
+done: slice 1 (outbox, peer tokens, POST /v1/forward with ack and dedup, send --project via own daemon); just check exit 0, 1256 tests passed, ran on e6cdf3c6; tip 0ac63a57 only adds a commit deleting a stray .bridle/check.log that I committed by mistake (no code change). Migration: SCHEMA_V20 by normal migration, new optional tables/tokens, no project file changes. Summary recorded.
