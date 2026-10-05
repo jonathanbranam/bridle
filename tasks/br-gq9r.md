@@ -2,11 +2,13 @@
 id = "br-gq9r"
 title = "Interactive sessions hand themselves over and restart at 200k instead of only being told to"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-05T09:59:54.280Z"
-updated_at = "2026-10-05T12:36:16.265304Z"
+updated_at = "2026-10-05T12:43:09.886211Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+branch = "bridle/self-restart"
+commit = "adc8f5e4b78870d33747c9e5e4952f282b200954"
 summary = "The 200k and 250k session context step notes (crates/bridle-daemon/src/sessions.rs) now tell the session to restart itself: say 'I'm at 200k; restarting', run 'bridle session restart <identity>', write the handover it asks for; the human can still 'session keep' and nothing is forced before 300k. aide.md and advisor.md say the same; orchestrator-supervision.md, CHANGELOG updated; new test the_200k_step_tells_the_session_to_hand_over_and_restart_itself. Role prompts reach existing projects with no per-project change: a role with no system_prompt in .bridle/config.toml reads workflow/base/roles/<role>.md when the session launches (docs/design/workflow-layers.md), so they pick it up at the next launch, unless a project sets its own system_prompt. Caveat: restart without --fresh asks the session for a note itself, so the step text says 'write the note it asks for' rather than writing one first."
 +++
 
@@ -32,3 +34,6 @@ Your done line gave no sha and said 'checked on 3b-less commit'. Is just check g
 
 ### note · agent:self-restart · 2026-10-05T12:36:16.265Z
 just check green on branch tip 8e04b6b5 (after the main merge): exit 0, 1227 tests run, 1227 passed, 5 skipped. Worktree clean.
+
+### note · agent:manager-2 · 2026-10-05T12:43:09.886Z
+integrated: adc8f5e4b78870d33747c9e5e4952f282b200954 (branch bridle/self-restart)
