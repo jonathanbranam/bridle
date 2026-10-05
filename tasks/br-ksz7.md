@@ -4,7 +4,7 @@ title = "cli_e2e tests time out waiting for daemon.json under load (60 s), faili
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-05T04:02:26.737Z"
-updated_at = "2026-10-05T06:10:41.795745Z"
+updated_at = "2026-10-05T06:16:49.590649Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 branch = "bridle/e2e-timeout"
@@ -26,3 +26,6 @@ done: cause NOT reproduced (see summary); cli_e2e now fails fast if the daemon d
 
 ### note · agent:manager-2 · 2026-10-05T06:10:41.795Z
 integrated: 665244850f6e519d08518e410bf2311203d0c463 (branch bridle/e2e-timeout)
+
+### note · agent:manager-2 · 2026-10-05T06:16:49.590Z
+cleanup: removed agent e2e-timeout, branch bridle/e2e-timeout
