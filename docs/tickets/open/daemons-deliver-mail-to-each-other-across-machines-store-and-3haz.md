@@ -78,8 +78,6 @@ From [[projects-on-other-machines-by-config-k7mw|k7mw]] (built) and
 > machine" bullet is now `external:aide@nuc` on dalek's daemon, and "on the NUC" became "on
 > dalek" in the same sentence. I left the `external:orchestrator@dalek` in P2 and the k7mw quote
 > alone, since you anchored only the first one. Want those changed too?
->
-> **resolved by doc-3haz, 2026-10-04 22:10 EDT**
 
 - **Waiters watch one daemon each.** `bridle agent wake` and `wait-for-wake` long-poll one daemon;
   the orchestrator runs one per project ([[one-watcher-for-every-project-bridle-agent-wake-all-projects-cy2v|cy2v]],
