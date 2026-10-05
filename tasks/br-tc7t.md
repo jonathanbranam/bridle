@@ -4,7 +4,7 @@ title = "A landing that needs a UI install or gateway restart to show says so, a
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-04T21:27:39.835Z"
-updated_at = "2026-10-05T07:37:31.151880Z"
+updated_at = "2026-10-05T07:42:17.856075Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -35,3 +35,6 @@ done: gateway restart already delivered by br-bek3 (self-watch re-exec, existing
 
 ### note · agent:manager-2 · 2026-10-05T07:37:31.151Z
 integrated: b80f42787ad191bdb575017783aab43f26ad32ae (branch bridle/landing-install)
+
+### note · agent:manager-2 · 2026-10-05T07:42:17.856Z
+cleanup: removed agent landing-install, branch bridle/landing-install
