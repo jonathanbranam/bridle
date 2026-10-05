@@ -431,6 +431,17 @@ impl Role {
         }
     }
 
+    /// The worker plus WebSearch and WebFetch (the worker has no web tools, so a research task
+    /// needs this role; br-rz4e).
+    fn researcher_default() -> Self {
+        let mut role = Self::worker_default();
+        for tool in ["WebSearch", "WebFetch"] {
+            role.allowed_tools.push(tool.into());
+            role.tools.get_or_insert_with(Vec::new).push(tool.into());
+        }
+        role
+    }
+
     fn manager_default() -> Self {
         Role {
             model: "sonnet".into(),
@@ -1565,6 +1576,7 @@ impl Default for Config {
         roles.insert("worker".to_string(), Role::worker_default());
         roles.insert("manager".to_string(), Role::manager_default());
         roles.insert("orchestrator".to_string(), Role::orchestrator_default());
+        roles.insert("researcher".to_string(), Role::researcher_default());
         roles.insert("prototyper".to_string(), Role::worker_default());
         roles.insert("document-reviewer".to_string(), Role::worker_default());
         Config {
@@ -1772,11 +1784,21 @@ impl Config {
             if role.system_prompt.is_some() {
                 continue;
             }
-            let rel = Path::new(workflow)
-                .join("base/roles")
-                .join(format!("{name}.md"));
-            if repo.join(&rel).is_file() {
-                role.system_prompt = Some(rel);
+            // The researcher is a worker with web tools: it reuses the worker's prompt.
+            let candidates = [name.as_str(), "worker"];
+            let candidates = if name == "researcher" {
+                &candidates[..]
+            } else {
+                &candidates[..1]
+            };
+            for c in candidates {
+                let rel = Path::new(workflow)
+                    .join("base/roles")
+                    .join(format!("{c}.md"));
+                if repo.join(&rel).is_file() {
+                    role.system_prompt = Some(rel);
+                    break;
+                }
             }
         }
     }
@@ -2913,6 +2935,9 @@ fn role_preamble_suffix(role_name: &str) -> Option<&'static str> {
         "orchestrator" => Some(
             "\nYou are the orchestrator: you are the human's delegate, driving bridle's agents to get work done.\n",
         ),
+        "researcher" => Some(
+            "\nYou are a researcher: a worker with WebSearch and WebFetch. Cite every source you rely on with its URL, and record each failed fetch or missing tool (what, URL, exact error) in the task thread and your summary instead of working around it silently.\n",
+        ),
         "prototyper" => Some(
             "\nYou are a prototyper: build the prototype in your own worktree and branch, from the prompt's constraints only, and report back to whoever gave you the task.\n",
         ),
@@ -3273,6 +3298,39 @@ mod tests {
         );
         // Not measured yet (ct8m step 4): full toolset.
         assert_eq!(tools_of(&cfg, "orchestrator"), None);
+    }
+
+    #[test]
+    fn researcher_is_a_built_in_worker_with_web_tools() {
+        // No [roles.researcher] in the project's config: the default still exists.
+        let cfg = Config::parse("[roles.worker]\nmodel = \"sonnet\"\n").expect("parse");
+        let researcher = &cfg.roles["researcher"];
+        for tool in ["WebSearch", "WebFetch"] {
+            assert!(
+                researcher.allowed_tools.contains(&tool.to_string()),
+                "{tool}"
+            );
+            assert!(
+                researcher
+                    .tools
+                    .as_ref()
+                    .expect("tools")
+                    .contains(&tool.to_string())
+            );
+            assert!(
+                !cfg.roles["worker"]
+                    .allowed_tools
+                    .contains(&tool.to_string())
+            );
+            assert!(
+                !cfg.roles["worker"]
+                    .tools
+                    .as_ref()
+                    .expect("tools")
+                    .contains(&tool.to_string())
+            );
+        }
+        assert!(researcher.allowed_tools.contains(&"Edit".to_string()));
     }
 
     #[test]

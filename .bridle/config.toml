@@ -39,6 +39,11 @@ system_prompt    = "workflow/base/roles/worker.md"
 # governor), not to this cap, so it's set well above a normal task.
 max_budget_usd   = 50.0
 
+[roles.researcher]
+# A worker that can also search and fetch from the web (br-rz4e).
+allowed_tools    = ["Bash", "Read", "Edit", "Write", "Glob", "Grep", "WebSearch", "WebFetch"]
+tools            = ["Bash", "Read", "Edit", "Write", "Glob", "Grep", "WebSearch", "WebFetch"]
+
 [roles.project-manager]
 # Owns the backlog and prepares right-sized tasks; the manager (development manager) runs them.
 # Interim split by configuration (ticket tx3f). Read-only on the repo; talks through bridle.

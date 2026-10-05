@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- A built-in `researcher` role (the worker plus WebSearch and WebFetch), spawnable in every project, and the manager prompt now picks it for web research and asks the orchestrator when no role has a tool a task needs (br-rz4e, 2mtr).
 - `pkill` and `killall` are denied to every role and session, and a new `bridle kill-guard` PreToolUse hook (in the base `PreToolUse.json`, picked up by `bridle workflow sync`) refuses `pgrep ... | xargs kill`, `kill $(pgrep ...)` and `pkill` in compound commands; the `no-kill-by-name` rule now says what enforces it and applies to every role (br-75h2, part 1).
 - A worker resumed after a daemon restart is told its claimed task and branch, and a worker's `bridle inbox` lists only open questions on its own claimed task or asked by it; managers, the orchestrator and the human still see all (br-xtxd, qdw8).
 - Readying a task now messages the running project-manager (else the orchestrator), one message per burst naming each task; a task left `open` and unplanned for `[tasks] open_stale` (default 4h) goes back to `pending` with a comment, and the orchestrator and whoever readied it are told. Tasks with an open question stay open (br-xz4f).

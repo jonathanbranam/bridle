@@ -54,9 +54,9 @@ system_prompt     = "workflow/base/roles/manager.md"
 start_prompt      = "Check your inbox and tell the human you're ready."   # first message when spawned without one
 ```
 
-- **Built-in roles** are `worker`, `manager`, `orchestrator`, `prototyper` and `document-reviewer`
+- **Built-in roles** are `worker`, `manager`, `orchestrator`, `researcher`, `prototyper` and `document-reviewer`
   ([[docs/design/roles-and-lifecycle|roles]]). The defaults are the values
-  above; the orchestrator is like the manager without `Bash(git *)`; the `prototyper` starts from the
+  above; the `researcher` is the worker's defaults plus `WebSearch` and `WebFetch` in `allowed_tools` and `tools` (the worker has no web tools), reuses the worker's role prompt and adds a preamble sentence on citing URLs and reporting failed fetches; it exists in every project without a `[roles.researcher]`, and the manager picks it for web-research tasks; the orchestrator is like the manager without `Bash(git *)`; the `prototyper` starts from the
   worker's defaults (its role file, `workflow/base/roles/prototyper.md`, says to build only from the
   prototype prompt's constraints; a project's `.bridle/roles/prototyper.md` is appended to it, both in
   the agent's system prompt and in `bridle prime prototyper`); the `document-reviewer` likewise starts
