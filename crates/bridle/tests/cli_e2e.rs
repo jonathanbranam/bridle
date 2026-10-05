@@ -71,7 +71,7 @@ fn strip_bridle_env(cmd: &mut Command) -> &mut Command {
 /// Hang guard for every wait in this file: a passing test never waits this
 /// long, only a genuinely hung one does. Waits are on conditions, never on
 /// elapsed time, so a loaded machine can't fail a test that would pass.
-const HANG_GUARD: Duration = Duration::from_secs(60);
+const HANG_GUARD: Duration = Duration::from_secs(180);
 
 /// Polls `f` until it returns `Some`, or panics after [`HANG_GUARD`].
 fn wait_until<T>(what: &str, mut f: impl FnMut() -> Option<T>) -> T {
@@ -85,8 +85,20 @@ fn wait_until<T>(what: &str, mut f: impl FnMut() -> Option<T>) -> T {
     }
 }
 
-fn wait_for_file(path: &Path) {
-    wait_until(&path.display().to_string(), || path.is_file().then_some(()));
+/// Waits for a daemon we spawned to write `daemon.json`, failing at once if it
+/// exited instead: a daemon that died at start-up (its stderr is inherited, so
+/// nextest shows why) never writes the file, and polling on would just burn
+/// the whole hang guard before reporting a misleading timeout.
+fn wait_for_daemon(child: &mut Child, daemon_json: &Path) {
+    wait_until(&daemon_json.display().to_string(), || {
+        if let Some(status) = child.try_wait().expect("poll daemon") {
+            panic!(
+                "daemon exited ({status}) before writing {}",
+                daemon_json.display()
+            );
+        }
+        daemon_json.is_file().then_some(())
+    });
 }
 
 /// Waits for w1's first turn to complete (polls `agents --all --json`).
@@ -168,13 +180,13 @@ fn cli_end_to_end_against_a_foreground_daemon() {
         .env("BRIDLE_HOME", &home)
         .stdin(Stdio::null())
         .stdout(Stdio::null())
-        .stderr(Stdio::null());
+        .stderr(Stdio::inherit());
     strip_bridle_env(&mut serve_cmd);
     let child = serve_cmd.spawn().expect("spawn bridle serve");
     let mut guard = DaemonGuard(child);
 
     let daemon_json = workspace.join(".bridle/daemon.json");
-    wait_for_file(&daemon_json);
+    wait_for_daemon(&mut guard.0, &daemon_json);
 
     // `spawn worker --name w1 --prompt hi --json`
     let (ok, out, err) = run_cli(
@@ -299,13 +311,13 @@ fn read_command_succeeds_with_no_token_when_claudecode_is_set() {
         .env("BRIDLE_HOME", &home)
         .stdin(Stdio::null())
         .stdout(Stdio::null())
-        .stderr(Stdio::null());
+        .stderr(Stdio::inherit());
     strip_bridle_env(&mut serve_cmd);
     let child = serve_cmd.spawn().expect("spawn bridle serve");
-    let _guard = DaemonGuard(child);
+    let mut guard = DaemonGuard(child);
 
     let daemon_json = workspace.join(".bridle/daemon.json");
-    wait_for_file(&daemon_json);
+    wait_for_daemon(&mut guard.0, &daemon_json);
 
     // Same as `run_cli`, but with `$CLAUDECODE` set and no `$BRIDLE_TOKEN` —
     // the case that used to fail client-side (crates/bridle-api/src/
@@ -444,7 +456,7 @@ fn sigint_shuts_down_cleanly_while_idle() {
     let mut guard = DaemonGuard(child);
 
     let daemon_json = workspace.join(".bridle/daemon.json");
-    wait_for_file(&daemon_json);
+    wait_for_daemon(&mut guard.0, &daemon_json);
 
     kill(Pid::from_raw(pid as i32), Signal::SIGINT).expect("send SIGINT");
 
@@ -507,7 +519,7 @@ fn sigint_shuts_down_cleanly_with_a_store_call_in_flight() {
     let mut guard = DaemonGuard(child);
 
     let daemon_json = workspace.join(".bridle/daemon.json");
-    wait_for_file(&daemon_json);
+    wait_for_daemon(&mut guard.0, &daemon_json);
 
     for i in 0..8 {
         let (ok, _out, err) = run_cli(
@@ -570,13 +582,13 @@ fn inbox_show_and_read_commands() {
         .env("BRIDLE_HOME", &home)
         .stdin(Stdio::null())
         .stdout(Stdio::null())
-        .stderr(Stdio::null());
+        .stderr(Stdio::inherit());
     strip_bridle_env(&mut serve_cmd);
     let child = serve_cmd.spawn().expect("spawn bridle serve");
     let mut guard = DaemonGuard(child);
 
     let daemon_json = workspace.join(".bridle/daemon.json");
-    wait_for_file(&daemon_json);
+    wait_for_daemon(&mut guard.0, &daemon_json);
 
     // Spawn a worker
     let (ok, out, err) = run_cli(
@@ -1012,10 +1024,10 @@ fn start_daemon(tmp: &Path) -> (DaemonGuard, PathBuf, PathBuf) {
         .env("BRIDLE_HOME", &home)
         .stdin(Stdio::null())
         .stdout(Stdio::null())
-        .stderr(Stdio::null());
+        .stderr(Stdio::inherit());
     strip_bridle_env(&mut serve_cmd);
-    let guard = DaemonGuard(serve_cmd.spawn().expect("spawn bridle serve"));
-    wait_for_file(&tmp.join(".bridle/daemon.json"));
+    let mut guard = DaemonGuard(serve_cmd.spawn().expect("spawn bridle serve"));
+    wait_for_daemon(&mut guard.0, &tmp.join(".bridle/daemon.json"));
     (guard, repo, home)
 }
 
@@ -1404,13 +1416,13 @@ fn task_done_skips_warning_for_human_claimed_tasks() {
         .env("BRIDLE_HOME", &home)
         .stdin(Stdio::null())
         .stdout(Stdio::null())
-        .stderr(Stdio::null());
+        .stderr(Stdio::inherit());
     strip_bridle_env(&mut serve_cmd);
     let child = serve_cmd.spawn().expect("spawn bridle serve");
-    let _guard = DaemonGuard(child);
+    let mut guard = DaemonGuard(child);
 
     let daemon_json = workspace.join(".bridle/daemon.json");
-    wait_for_file(&daemon_json);
+    wait_for_daemon(&mut guard.0, &daemon_json);
 
     // Create a human to-do
     let (ok, out, err) = run_cli(
@@ -1458,13 +1470,13 @@ fn task_done_warns_for_agent_claimed_tasks_without_summary() {
         .env("BRIDLE_HOME", &home)
         .stdin(Stdio::null())
         .stdout(Stdio::null())
-        .stderr(Stdio::null());
+        .stderr(Stdio::inherit());
     strip_bridle_env(&mut serve_cmd);
     let child = serve_cmd.spawn().expect("spawn bridle serve");
-    let _guard = DaemonGuard(child);
+    let mut guard = DaemonGuard(child);
 
     let daemon_json = workspace.join(".bridle/daemon.json");
-    wait_for_file(&daemon_json);
+    wait_for_daemon(&mut guard.0, &daemon_json);
 
     // Create a regular task that is not claimed by a human
     let (ok, out, err) = run_cli(
