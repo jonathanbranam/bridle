@@ -65,3 +65,6 @@ So the decision is made in principle: **ticket IDs get a project identifier**. W
 
 > [!comment] c1 human, 2026-10-04 21:06 EDT, on "for example a kind marker (br-t-p88z / br-k-p88z), a different separator (br-p88z task vs br/p88z ticket), or ticket and task never sharing an ID." [pending 2026-10-04 21:06 EDT]
 > Do some research on this comment and propose a number of solutions for this task. Instead of just "tasks," both of those words have a T and a K in them, so that feels like a problem here for one letter. TK is not great, and TI and TA don't do a whole lot better. Let's just investigate and consider what other systems might do for similar use cases and make some suggestions.
+
+> [!comment] c2 human, 2026-10-04 21:08 EDT, on "ticket and task never sharing an" [pending 2026-10-04 21:08 EDT]
+> This is maybe another possibility to slightly simplify things, but the problem with this is that I can't tell at a glance if something's a ticket or a task. I really don't like that, so I have to go look it up before finding out, "Hey, that was actually a task," or "Hey, that was actually a ticket." I think I'm going to reject this to begin with.
