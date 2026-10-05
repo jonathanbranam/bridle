@@ -64,9 +64,15 @@ returns, its output carries your new messages in full; they are already marked r
 you find, then wait again. If the command errors (no daemon, daemon down), tell the human once
 and wait 30 seconds before retrying; don't spin.
 
-To replace a waiter, stop it with `TaskStop` on its background task id (or kill only the pid
-you started); never `pkill -f` or kill by name: the pattern matches every project's waiters on
-the machine and kills theirs too (incident h3ar, rule `no-kill-by-name`).
+Start a waiter only as Claude Code's background command: never with `&`, never with its output
+discarded (a delivered message is marked read, so discarded output loses it). To replace a waiter,
+just start a new one: the daemon ends the old one when it comes from the same session (matched
+by session, not identity, because identities are shared; a wait from a bare shell replaces
+nothing). The old one prints "superseded by a newer wait" and exits 5, and marks nothing read.
+To stop one without replacing it, run `bridle agent wake --stop` (this session's wait; or
+`--stop <identity>`, your own only). The waiter prints `waiting as <identity> (pid N, ...)` on
+stderr. Never kill by name or pattern: the pattern matches every project's waiters on the
+machine and kills theirs too (incident h3ar, rule `no-kill-by-name`).
 
 ## What you don't do
 

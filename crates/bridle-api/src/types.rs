@@ -280,6 +280,10 @@ pub struct CiStatus {
 /// The CLI exits 6 on it.
 pub const DAEMON_STOPPING_WAKE: &str = "daemon_stopping";
 
+/// The wake reason a waiter gets when it was ended (by a newer wait from the same session, or
+/// `bridle agent wake --stop`). It marks nothing read. The CLI exits 5 on it.
+pub const WAIT_SUPERSEDED_WAKE: &str = "superseded";
+
 /// One reason to wake the orchestrator (`GET /v1/orchestrator/wake`).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct WakeReason {
@@ -315,6 +319,25 @@ pub struct PrincipalWakeQuery {
     /// Give up after this many seconds (the daemon caps it at 1 h 55 min; absent is the cap).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub timeout_secs: Option<u64>,
+    /// The launcher's session (`BRIDLE_SESSION_PID`): a newer wait from it replaces this one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub session: Option<String>,
+}
+
+/// `POST /v1/wake/stop`: end open waits. With `principal` those waiting as it, else those
+/// started by `session`.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct StopWakeRequest {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub principal: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub session: Option<String>,
+}
+
+/// How many waits `POST /v1/wake/stop` ended.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct StopWakeResponse {
+    pub stopped: usize,
 }
 
 /// One reason a principal should wake.

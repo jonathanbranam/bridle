@@ -205,15 +205,57 @@ pub(super) async fn rm(cli: &Cli, args: &RmArgs) -> Result<(), CliError> {
 }
 
 /// `bridle agent wake <identifier>`: the daemon holds the request until it decides the
-/// principal should wake. Exit 0 woken, 4 timed out, 6 the daemon is restarting or stopping.
+/// principal should wake. Exit 0 woken, 4 timed out, 5 superseded by a newer wait from this
+/// session or stopped with `--stop`, 6 the daemon is restarting or stopping.
 pub(super) async fn wake(cli: &Cli, args: &WakeArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
+    // The launcher's pid (`bridle session`); a bare shell has none and replaces nothing.
+    let session = std::env::var("BRIDLE_SESSION_PID")
+        .ok()
+        .filter(|s| !s.is_empty());
+    if args.stop {
+        let stopped = client
+            .stop_wake(&bridle_api::types::StopWakeRequest {
+                principal: args.identifier.clone(),
+                session: session.clone().filter(|_| args.identifier.is_none()),
+            })
+            .await?
+            .stopped;
+        if cli.json {
+            render::print_json(&serde_json::json!({"stopped": stopped}))?;
+        } else if stopped == 0 {
+            println!("no wait open");
+        } else {
+            println!("stopped {stopped} wait(s)");
+        }
+        return Ok(());
+    }
+    let identifier = args.identifier.clone().unwrap_or_default();
+    // On stderr so `--json` output stays clean.
+    eprintln!(
+        "waiting as {identifier} (pid {}, timeout {} s)",
+        std::process::id(),
+        args.timeout.map_or(6900, |t| t.min(6900))
+    );
     let got = client
         .principal_wake(&bridle_api::types::PrincipalWakeQuery {
-            principal: args.identifier.clone(),
+            principal: identifier.clone(),
             timeout_secs: args.timeout,
+            session,
         })
         .await?;
+    if got
+        .reasons
+        .iter()
+        .any(|r| r.reason == bridle_api::types::WAIT_SUPERSEDED_WAKE)
+    {
+        if cli.json {
+            render::print_json(&got)?;
+        }
+        return Err(CliError::Superseded(
+            "superseded by a newer wait (or stopped); nothing was marked read".to_string(),
+        ));
+    }
     let stopping = got
         .reasons
         .iter()
@@ -232,8 +274,7 @@ pub(super) async fn wake(cli: &Cli, args: &WakeArgs) -> Result<(), CliError> {
             println!("{{\"reasons\":[]}}");
         }
         return Err(CliError::Timeout(format!(
-            "nothing woke {} before the timeout",
-            args.identifier
+            "nothing woke {identifier} before the timeout"
         )));
     }
     if cli.json {

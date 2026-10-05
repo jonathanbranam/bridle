@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- `bridle agent wake`: a new wait from the same session (`BRIDLE_SESSION_PID`) replaces the old one, which exits 5 "superseded" and marks nothing read; `bridle agent wake --stop [identity]` ends a wait through the daemon; the waiter prints `waiting as <identity> (pid N, timeout S s)` on stderr; the advisor and aide prompts say so (br-dahs, 75h2 part 2).
 - `bridle gateway hash-password` now prompts for password interactively on a terminal (reads with echo off, asks for confirmation, refuses on mismatch) and accepts piped input for scripts without a prompt (br-anmx).
 - A built-in `researcher` role (the worker plus WebSearch and WebFetch), spawnable in every project, and the manager prompt now picks it for web research and asks the orchestrator when no role has a tool a task needs (br-rz4e, 2mtr).
 - `pkill` and `killall` are denied to every role and session, and a new `bridle kill-guard` PreToolUse hook (in the base `PreToolUse.json`, picked up by `bridle workflow sync`) refuses `pgrep ... | xargs kill`, `kill $(pgrep ...)` and `pkill` in compound commands; the `no-kill-by-name` rule now says what enforces it and applies to every role (br-75h2, part 1).

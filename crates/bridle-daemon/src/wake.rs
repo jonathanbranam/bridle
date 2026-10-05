@@ -52,10 +52,19 @@ pub struct Waiters {
 struct WaiterState {
     open: u32,
     /// `bridle agent wake` requests open now; not part of the orchestrator's presence check.
-    principal_open: u32,
+    principal_open: Vec<PrincipalWait>,
+    next_wait_id: u64,
     last_closed: Option<DateTime<Utc>>,
     /// When a poll last answered with wakes (not an empty timeout); in memory only.
     last_delivered: Option<DateTime<Utc>>,
+}
+
+/// One open `bridle agent wake`: who it waits as, which session started it, and the way to end it.
+struct PrincipalWait {
+    id: u64,
+    target: String,
+    session: Option<String>,
+    end: tokio::sync::oneshot::Sender<()>,
 }
 
 /// Held for as long as a wake request is open; dropping it (also when the client hangs up)
@@ -71,11 +80,17 @@ impl Drop for WaiterGuard {
 }
 
 /// Held for as long as a `bridle agent wake` request is open.
-pub struct PrincipalGuard(Arc<Waiters>);
+pub struct PrincipalGuard(Arc<Waiters>, u64);
 
 impl Drop for PrincipalGuard {
     fn drop(&mut self) {
-        self.0.state.lock().expect("waiters lock").principal_open -= 1;
+        let id = self.1;
+        self.0
+            .state
+            .lock()
+            .expect("waiters lock")
+            .principal_open
+            .retain(|w| w.id != id);
     }
 }
 
@@ -89,9 +104,53 @@ impl Waiters {
         })
     }
 
-    pub fn principal_opened(self: &Arc<Self>) -> PrincipalGuard {
-        self.state.lock().expect("waiters lock").principal_open += 1;
-        PrincipalGuard(self.clone())
+    /// Registers a `bridle agent wake` for `target`. A wait from the same `session` that is
+    /// still open is ended (its receiver resolves): replacement is per session, not per identity,
+    /// because identities are shared; a wait with no session replaces nothing. The receiver
+    /// resolves when this wait is itself ended, by a newer wait or by [`Waiters::end_principal_waits`].
+    pub fn principal_opened(
+        self: &Arc<Self>,
+        target: &str,
+        session: Option<&str>,
+    ) -> (PrincipalGuard, tokio::sync::oneshot::Receiver<()>) {
+        let mut st = self.state.lock().expect("waiters lock");
+        if let Some(s) = session {
+            let (old, keep): (Vec<_>, Vec<_>) = std::mem::take(&mut st.principal_open)
+                .into_iter()
+                .partition(|w| w.session.as_deref() == Some(s));
+            st.principal_open = keep;
+            for w in old {
+                let _ = w.end.send(());
+            }
+        }
+        st.next_wait_id += 1;
+        let id = st.next_wait_id;
+        let (end, rx) = tokio::sync::oneshot::channel();
+        st.principal_open.push(PrincipalWait {
+            id,
+            target: target.to_string(),
+            session: session.map(str::to_string),
+            end,
+        });
+        (PrincipalGuard(self.clone(), id), rx)
+    }
+
+    /// Ends open `bridle agent wake` waits: those of `session` when given, else those waiting as
+    /// `target`. Returns how many it ended.
+    pub fn end_principal_waits(&self, target: &str, session: Option<&str>) -> usize {
+        let mut st = self.state.lock().expect("waiters lock");
+        let (hit, keep): (Vec<_>, Vec<_>) = std::mem::take(&mut st.principal_open)
+            .into_iter()
+            .partition(|w| match session {
+                Some(s) => w.session.as_deref() == Some(s),
+                None => w.target == target,
+            });
+        st.principal_open = keep;
+        let n = hit.len();
+        for w in hit {
+            let _ = w.end.send(());
+        }
+        n
     }
 
     /// Records why the daemon is about to stop; the first caller wins.
@@ -113,7 +172,7 @@ impl Waiters {
             .get_or_insert_with(|| default.to_string())
             .clone();
         let st = self.state.lock().expect("waiters lock");
-        let n = st.open + st.principal_open;
+        let n = st.open + st.principal_open.len() as u32;
         drop(st);
         self.stop_tx.send_replace(Some(reason.clone()));
         (reason, n)

@@ -23,9 +23,9 @@ use crate::types::{
     ReviewNowRequest, ReviewNowResponse, SendRequest, SessionEnd, SessionInfo, SessionKeep,
     SessionRegister, SetImpactRequest, SetKindRequest, SetPriorityRequest, SetQueueRequest,
     SetSummaryRequest, ShutdownResponse, SkipSettleRequest, SpawnRequest, Status, StatusLineReport,
-    StopRequest, SubmitTaskRequest, Task, TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo,
-    TranscriptLine, TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery, WakeResponse,
-    WriteHandoverRequest,
+    StopRequest, StopWakeRequest, StopWakeResponse, SubmitTaskRequest, Task, TaskQuery,
+    TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
+    UsageBreakdown, UsageBreakdownQuery, WakeResponse, WriteHandoverRequest,
 };
 
 #[derive(Debug, Error)]
@@ -432,6 +432,11 @@ impl Client {
         query: &PrincipalWakeQuery,
     ) -> Result<PrincipalWakeResponse, ClientError> {
         self.get_json_query(&["v1", "wake"], query).await
+    }
+
+    /// `POST /v1/wake/stop`: end open waits (see [`StopWakeRequest`]).
+    pub async fn stop_wake(&self, req: &StopWakeRequest) -> Result<StopWakeResponse, ClientError> {
+        self.post_json(&["v1", "wake", "stop"], req).await
     }
 
     /// `POST /v1/orchestrator/handover`: the orchestrator has written its state; the daemon

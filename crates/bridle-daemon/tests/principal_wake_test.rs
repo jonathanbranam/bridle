@@ -16,7 +16,19 @@ fn query(principal: &str, timeout_secs: u64) -> PrincipalWakeQuery {
     PrincipalWakeQuery {
         principal: principal.to_string(),
         timeout_secs: Some(timeout_secs),
+        session: None,
     }
+}
+
+fn session_query(principal: &str, session: &str) -> PrincipalWakeQuery {
+    PrincipalWakeQuery {
+        session: Some(session.to_string()),
+        ..query(principal, 60)
+    }
+}
+
+fn superseded(r: &PrincipalWakeResponse) -> bool {
+    r.reasons.len() == 1 && r.reasons[0].reason == bridle_api::types::WAIT_SUPERSEDED_WAKE
 }
 
 async fn send(client: &Client, to: &str, body: &str) -> String {
@@ -382,4 +394,128 @@ async fn a_waiter_open_during_a_restart_is_told_why_and_the_event_counts_it() {
         "{ev:?}"
     );
     daemon.running.join().await.expect("join");
+}
+
+#[tokio::test]
+async fn a_new_wait_from_the_same_session_replaces_the_old_one() {
+    let (daemon, _tmp) = support::start_daemon(None).await;
+    let advisor = daemon.external_client("advisor").await;
+    let old = {
+        let advisor = advisor.clone();
+        tokio::spawn(async move {
+            advisor
+                .principal_wake(&session_query("external:advisor", "100"))
+                .await
+        })
+    };
+    tokio::time::sleep(Duration::from_millis(300)).await;
+    let new = {
+        let advisor = advisor.clone();
+        tokio::spawn(async move {
+            advisor
+                .principal_wake(&session_query("external:advisor", "100"))
+                .await
+        })
+    };
+    let got = tokio::time::timeout(Duration::from_secs(5), old)
+        .await
+        .expect("old wait ended")
+        .unwrap()
+        .unwrap();
+    assert!(superseded(&got));
+    // The new wait is still open and gets the message; the superseded one took nothing.
+    send(&daemon.client, "external:advisor", "hi").await;
+    let got = new.await.unwrap().unwrap();
+    assert_eq!(got.reasons[0].reason, "message");
+}
+
+#[tokio::test]
+async fn sessions_sharing_an_identity_do_not_replace_each_other() {
+    let (daemon, _tmp) = support::start_daemon(None).await;
+    let advisor = daemon.external_client("advisor").await;
+    let a = {
+        let advisor = advisor.clone();
+        tokio::spawn(async move {
+            advisor
+                .principal_wake(&session_query("external:advisor", "100"))
+                .await
+        })
+    };
+    tokio::time::sleep(Duration::from_millis(300)).await;
+    let b = {
+        let advisor = advisor.clone();
+        tokio::spawn(async move {
+            advisor
+                .principal_wake(&session_query("external:advisor", "200"))
+                .await
+        })
+    };
+    // A wait with no session replaces nothing either.
+    let c = {
+        let advisor = advisor.clone();
+        tokio::spawn(async move { advisor.principal_wake(&query("external:advisor", 60)).await })
+    };
+    tokio::time::sleep(Duration::from_millis(500)).await;
+    assert!(!a.is_finished() && !b.is_finished() && !c.is_finished());
+    let n = advisor
+        .stop_wake(&bridle_api::types::StopWakeRequest {
+            principal: Some("external:advisor".into()),
+            session: None,
+        })
+        .await
+        .unwrap()
+        .stopped;
+    assert_eq!(n, 3);
+    for h in [a, b, c] {
+        assert!(superseded(&h.await.unwrap().unwrap()));
+    }
+}
+
+#[tokio::test]
+async fn stop_ends_own_session_refuses_other_identity_and_reports_none() {
+    let (daemon, _tmp) = support::start_daemon(None).await;
+    let advisor = daemon.external_client("advisor").await;
+    let stop =
+        |principal: Option<&str>, session: Option<&str>| bridle_api::types::StopWakeRequest {
+            principal: principal.map(str::to_string),
+            session: session.map(str::to_string),
+        };
+    // None open.
+    assert_eq!(
+        advisor
+            .stop_wake(&stop(None, Some("100")))
+            .await
+            .unwrap()
+            .stopped,
+        0
+    );
+    let w = {
+        let advisor = advisor.clone();
+        tokio::spawn(async move {
+            advisor
+                .principal_wake(&session_query("external:advisor", "100"))
+                .await
+        })
+    };
+    tokio::time::sleep(Duration::from_millis(300)).await;
+    // Another session's stop finds nothing; another identity's wait may not be stopped.
+    assert_eq!(
+        advisor
+            .stop_wake(&stop(None, Some("999")))
+            .await
+            .unwrap()
+            .stopped,
+        0
+    );
+    let err = advisor.stop_wake(&stop(Some("human"), None)).await;
+    assert!(err.is_err(), "stopping another identity's wait is refused");
+    assert_eq!(
+        advisor
+            .stop_wake(&stop(None, Some("100")))
+            .await
+            .unwrap()
+            .stopped,
+        1
+    );
+    assert!(superseded(&w.await.unwrap().unwrap()));
 }

@@ -188,6 +188,7 @@ fn required_args(path: &[String]) -> Vec<String> {
         ("task dep rm", &["1", "--to", "2"]),
         ("task search", &["word"]),
         ("probe", &["target"]),
+        ("agent wake", &["external:advisor"]),
         ("send", &["human", "hi"]),
         ("ticket new", &["-k", "chore", "a title"]),
         ("task comment", &["1", "hi"]),

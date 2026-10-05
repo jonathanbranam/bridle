@@ -102,7 +102,7 @@ bridle queue set --tier T,T... [--tier T,T...]   replace the whole queue, one --
 bridle queue add-tier <task>...                  append one tier at the back (PM, orchestrator or human only)
 bridle task dep add|rm <task> (--to OTHER [--kind K] | --blocked-by OTHER)   K: blocks (default)|parent|discovered-from|related|supersedes|duplicates
 bridle wait    <task> [--until STATE] [--or-message] [--timeout SECS]   block until the task changes state; exit 4 on timeout
-bridle agent wake <identifier> [--timeout SECS]   (cap and default 6900 s = 1 h 55 min) blocks until the daemon decides that principal should wake (reason: it has an unread message, which includes the `task_update` lines about tasks it watches); prints each message (id, sender, text) (`--json`: `{reasons:[{reason,message_ids,messages,task?,event?}]}`); a non-human caller's messages are marked read by the call, the human's are not; exit 0 woken, 4 timed out, 6 the daemon is restarting or shutting down (reason `daemon_stopping`, `text` says why; stderr); caller must be that principal (or the human), else 403
+bridle agent wake <identifier> [--timeout SECS] | --stop [<identifier>]   (cap and default 6900 s = 1 h 55 min) blocks until the daemon decides that principal should wake (reason: it has an unread message, which includes the `task_update` lines about tasks it watches); prints each message (id, sender, text) (`--json`: `{reasons:[{reason,message_ids,messages,task?,event?}]}`); a non-human caller's messages are marked read by the call, the human's are not; exit 0 woken, 4 timed out, 5 superseded (a newer wait from the same session, `BRIDLE_SESSION_PID`, replaced this one, or `--stop` ended it; reason `superseded`; nothing marked read; a wait with no session replaces nothing), 6 the daemon is restarting or shutting down (reason `daemon_stopping`, `text` says why; stderr); it prints `waiting as <identity> (pid N, timeout S s)` on stderr first; `--stop` ends this session's open wait through the daemon, or with an identifier that identity's waits (own only; the human any), printing `stopped N wait(s)` or `no wait open`; caller must be that principal (or the human), else 403
 bridle agent interrupt <agent> [--drop-held]
 bridle agent stop    <agent> [--now]      bridle agent resume <agent> [--ignore-budget]
 bridle agent renew   <agent> [--ignore-budget]    stop + fresh process/session, same worktree/branch/role/model
@@ -471,7 +471,7 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   the local registry as before. A listed project with no `[machine] name` is an error. Types:
   `bridle_api::machines`.
 - **Exit codes**: 0 ok, 1 error, 2 usage error, 3 daemon unreachable (every
-  discovery failure, including an unknown `--project`), 4 `wait` timed out, 6 a waiter
+  discovery failure, including an unknown `--project`), 4 `wait` timed out, 5 an `agent wake` was superseded by a newer wait from the same session or stopped with `--stop`, 6 a waiter
   (`agent wake`, `orchestrator wait-for-wake`) was ended because the daemon is restarting or shutting
   down: the reason is on stderr; re-arm once it is back (`--json` still prints the wake on stdout).
 - **`wait <task> [--until <state>] [--or-message] [--timeout <secs>]`** blocks on the SSE

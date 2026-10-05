@@ -104,6 +104,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/events/stream", get(events_stream))
         .route("/v1/orchestrator/wake", get(orchestrator_wake))
         .route("/v1/wake", get(principal_wake))
+        .route("/v1/wake/stop", post(stop_wake))
         .route("/v1/orchestrator/handover", post(orchestrator_handover))
         .route("/v1/sessions", get(list_sessions).post(register_session))
         .route("/v1/sessions/end", post(end_session))
@@ -579,10 +580,39 @@ async fn principal_wake(
     Extension(principal): Extension<Principal>,
     Query(q): Query<bridle_api::types::PrincipalWakeQuery>,
 ) -> Result<Json<bridle_api::types::PrincipalWakeResponse>, ApiError> {
-    let target = resolve_to(&state.store, &principal, Some(&q.principal))
+    let target = wake_target(&state, &principal, &q.principal).await?;
+    let timeout = crate::wake::clamp_timeout(q.timeout_secs, crate::wake::MAX_WAKE_TIMEOUT);
+    // Messages handed to a non-human are read; the human's reads are explicit.
+    let take = principal.kind != PrincipalKind::Human;
+    let (_waiting, ended) = state
+        .waiters
+        .principal_opened(&target, q.session.as_deref());
+    let reasons = tokio::select! {
+        biased;
+        _ = ended => vec![bridle_api::types::PrincipalWakeReason {
+            reason: bridle_api::types::WAIT_SUPERSEDED_WAKE.to_string(),
+            ..Default::default()
+        }],
+        r = crate::principal_wake::wait(&state.store, &state.emitter, &target, timeout, take) => r?,
+        reason = state.waiters.stopping() => vec![bridle_api::types::PrincipalWakeReason {
+            reason: bridle_api::types::DAEMON_STOPPING_WAKE.to_string(),
+            text: Some(reason),
+            ..Default::default()
+        }],
+    };
+    Ok(Json(bridle_api::types::PrincipalWakeResponse { reasons }))
+}
+
+/// Resolves `principal` and checks the caller may wait for (or stop waits of) it.
+async fn wake_target(
+    state: &AppState,
+    principal: &Principal,
+    wanted: &str,
+) -> Result<String, ApiError> {
+    let target = resolve_to(&state.store, principal, Some(wanted))
         .await?
         .unwrap_or_default();
-    let mine = resolve_to(&state.store, &principal, Some("me")).await?;
+    let mine = resolve_to(&state.store, principal, Some("me")).await?;
     let owner = split_named(&target).map(|(o, _)| o);
     // A named advisor session shares its owner's token, so the owner may wait for it too.
     let allowed = match principal.kind {
@@ -595,19 +625,28 @@ async fn principal_wake(
             "a principal may only wait for its own wake (or the human for any)",
         ));
     }
-    let timeout = crate::wake::clamp_timeout(q.timeout_secs, crate::wake::MAX_WAKE_TIMEOUT);
-    // Messages handed to a non-human are read; the human's reads are explicit.
-    let take = principal.kind != PrincipalKind::Human;
-    let _waiting = state.waiters.principal_opened();
-    let reasons = tokio::select! {
-        r = crate::principal_wake::wait(&state.store, &state.emitter, &target, timeout, take) => r?,
-        reason = state.waiters.stopping() => vec![bridle_api::types::PrincipalWakeReason {
-            reason: bridle_api::types::DAEMON_STOPPING_WAKE.to_string(),
-            text: Some(reason),
-            ..Default::default()
-        }],
+    Ok(target)
+}
+
+/// `bridle agent wake --stop`: ends this session's open wait, or those of one identity.
+async fn stop_wake(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Json(req): Json<bridle_api::types::StopWakeRequest>,
+) -> Result<Json<bridle_api::types::StopWakeResponse>, ApiError> {
+    let stopped = match (&req.principal, &req.session) {
+        (Some(p), _) => {
+            let target = wake_target(&state, &principal, p).await?;
+            state.waiters.end_principal_waits(&target, None)
+        }
+        (None, Some(s)) => state.waiters.end_principal_waits("", Some(s)),
+        (None, None) => {
+            return Err(ApiError::bad_request(
+                "no session to stop a wait for (not started by bridle session); name an identity",
+            ));
+        }
     };
-    Ok(Json(bridle_api::types::PrincipalWakeResponse { reasons }))
+    Ok(Json(bridle_api::types::StopWakeResponse { stopped }))
 }
 
 async fn register_session(

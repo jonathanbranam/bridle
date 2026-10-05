@@ -1153,10 +1153,16 @@ pub struct RmArgs {
 #[derive(Debug, Args)]
 pub struct WakeArgs {
     /// `external:advisor`, `external:advisor/<name>`, `human` or an agent name; must be you.
-    pub identifier: String,
+    /// With `--stop`, optional: the identity whose waits to end (default: this session's).
+    #[arg(required_unless_present = "stop")]
+    pub identifier: Option<String>,
     /// Give up after this many seconds (exit 4); the cap (and default) is 6900 s (1 h 55 min).
-    #[arg(long)]
+    #[arg(long, conflicts_with = "stop")]
     pub timeout: Option<u64>,
+    /// End this session's open wait (or the identifier's) instead of waiting; the stopped
+    /// waiter exits 5. A new wait from the same session also replaces the old one.
+    #[arg(long)]
+    pub stop: bool,
 }
 
 #[derive(Debug, Args)]
