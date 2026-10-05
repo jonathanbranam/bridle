@@ -120,3 +120,12 @@ roles as orchestrator, project-manager, manager, worker, reviewer and advisor, *
 aide's priming never includes it. Fix 1 must add `aide` (and check every interactive role). Both
 other aides confirmed they ran the `pkill -f` to clear a waiter they'd started wrongly (backgrounded
 with `&`, or output sent to /dev/null). The prompts should also say how to start a waiter correctly.
+
+## The human's answer (2026-10-04 ~8:50 PM ET, via the aide)
+
+> It doesn't seem like H3AR has anything in it that needs approval. I don't really understand the
+> question there. I thought I approved some of this work already, and I don't know why nobody can
+> edit the workflow-based rules, but I can edit it now. Send me in today for that. That's fine.
+
+No approval is needed for the fixes. The human makes the `aide` edit to the locked
+`no-kill-by-name.md` themselves: to-do br-wbg2.

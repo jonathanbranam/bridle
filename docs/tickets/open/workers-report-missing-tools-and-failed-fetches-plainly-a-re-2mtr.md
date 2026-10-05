@@ -63,3 +63,16 @@ Transcript: `~/.claude/projects/-Volumes-Data-work-track-web-workspace-wt-holeio
    tasks assigned to it; (b) add both to the default worker; (c) the manager checks a task's needs
    against the role's tools before spawning and refuses a research task for a role without web tools.
    (a) plus (c) seems safest: workers keep a small tool set, and the gap can't recur silently.
+
+## The human's decision (2026-10-04 ~8:50 PM ET, via the aide)
+
+> For 2mtr yeah, that makes sense. yeah, I like your suggestion to go with both A and C. That seems
+> very reasonable. There's not an appropriate worker to find the tools needed, and the manager can
+> complain to somebody, the orchestrator, I guess.
+>
+> We have some pretty good information on SXF already, but might as well go ahead and rerun it.
+
+So: (a) a `researcher` role with `WebSearch` and `WebFetch`, plus (c) the manager checks a task's
+needs against the role's tools before spawning; when no role has them, the manager tells the
+orchestrator. Re-run track-web's tw-sxfh (with the researcher role). How a re-run in another project
+gets sequenced after this lands: [[cross-project-task-dependencies-a-task-waits-on-another-proj-yug5|yug5]].

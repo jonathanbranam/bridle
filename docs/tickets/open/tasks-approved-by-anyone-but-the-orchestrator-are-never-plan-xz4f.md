@@ -62,3 +62,23 @@ gap**. An advisor (or anyone but the orchestrator) can approve a task, and no on
    Recommended alongside 1, as the backstop.
 4. **A rule**: whoever runs `task ready` also messages the orchestrator. Cheapest, but it relies on
    every role remembering, which is what failed here.
+
+## The human's decision (2026-10-04 ~8:50 PM ET, via the aide)
+
+> For XZ for F, yes, I agree with number 1. The daemon sends a message to the PM when a task opens.
+> I guess the task is already pending, so isn't there a status for ready? I don't know how to
+> handle that, but when a task is ready, a message goes to the PM. If the PM is dead and wakes up,
+> they should get that message, right? That should be fine.
+>
+> Fix 3 is good too. That should come from the daemon. I don't know what an alarm is or where
+> that's sent exactly, but that shouldn't happen. That task should go back to pending, needs
+> comments, or whatever the status is. If there's something wrong with it, it should change status.
+
+So:
+
+- **Fix 1, approved.** "Ready" is `task ready`, which moves `pending -> open`; the daemon sends the
+  PM a message at that transition. A message (not only a wake), so a PM that's down gets it when it
+  comes back.
+- **Fix 3, approved and changed.** Not a notice in `bridle status`: the daemon itself acts on a
+  task left `open` and unplanned for more than N hours, by changing its state (back to `pending`, or
+  a needs-attention state) so the problem shows on the task. Which state is for the design.

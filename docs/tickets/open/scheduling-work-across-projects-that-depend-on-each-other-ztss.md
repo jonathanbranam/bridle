@@ -61,3 +61,8 @@ agents should move nearly together. Others: harness waits on track-web's engine 
 Recommendation: 2, with a cross-project edge needing more than "integrated" in some cases (for
 the UI, the bridle change must also be released and installed on the machine), so the edge may
 name a condition: integrated, or released.
+
+## The human's direction (2026-10-04)
+
+The human asked for option 2, with watchers notified on the dependency's state change: filed as
+[[cross-project-task-dependencies-a-task-waits-on-another-proj-yug5|yug5]].
