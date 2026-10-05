@@ -2,11 +2,13 @@
 id = "br-xz4f"
 title = "Tasks approved by anyone but the orchestrator are never planned: nothing tells the PM a task is open (br-p88z sat 9 hours)"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-04T22:06:38.716Z"
-updated_at = "2026-10-05T15:05:25.997369Z"
+updated_at = "2026-10-05T15:05:30.950531Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+branch = "bridle/open-nudge"
+commit = "189508b0f2fa2222edd40fcf283038b5acbb4c38"
 summary = "Readying a task (task ready) now messages the running project-manager, else the orchestrator, once per settled burst naming each still-open task (skipped when the PM readied it). A task open with no activity for [tasks] open_stale (default 4h, 0 = off) goes back to pending with a thread note and a message to the orchestrator and the readier (readier kept in memory; creator after a restart); tasks with an open question are skipped. New crates/bridle-daemon/src/open_watch.rs, run on the existing settle-wake tick; TaskManager::unready_stale; config + docs + CHANGELOG. Caveat: the staleness clock is updated_at, so any comment on an open task resets it."
 +++
 
@@ -27,3 +29,6 @@ Out of scope: fix 2 (PM sweeps) and fix 4 (rule); a new task state.
 
 ### note · agent:open-nudge · 2026-10-05T15:05:25.997Z
 done: ready tells PM (else orchestrator), stale open tasks return to pending; just check exit 0, 1238 tests run (1238 passed, 5 skipped); commit 501bae7c (main already merged)
+
+### note · agent:manager-2 · 2026-10-05T15:05:30.950Z
+integrated: 189508b0f2fa2222edd40fcf283038b5acbb4c38 (branch bridle/open-nudge)
