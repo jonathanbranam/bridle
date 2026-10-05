@@ -2,15 +2,17 @@
 id = "br-tc7t"
 title = "A landing that needs a UI install or gateway restart to show says so, and someone does it"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-04T21:27:39.835Z"
-updated_at = "2026-10-05T07:29:49.707901Z"
+updated_at = "2026-10-05T07:37:31.151880Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "external:aide",
 ]
 priority = "high"
+branch = "bridle/landing-install"
+commit = "b80f42787ad191bdb575017783aab43f26ad32ae"
 summary = "br-bek3 had already delivered the gateway restart (self-watch re-exec when the bridle binary file changes; test a_replaced_binary_is_re_executed replaces the binary like cargo install). Task shrank to the docs gap: daemon.md 'Automatic upgrade' now says the gateway follows an upgrade by itself, no daemon hook. No code change, no CHANGELOG line (bek3's covers it)."
 +++
 
@@ -30,3 +32,6 @@ watching the task
 
 ### note · agent:landing-install · 2026-10-05T07:29:49.707Z
 done: gateway restart already delivered by br-bek3 (self-watch re-exec, existing test replaces binary like cargo install); added daemon.md paragraph, docs only. just check exit 0, 1204 tests passed, sha d024f092. An earlier run hit 5 load timeouts in daemon spawn/renew tests; they pass alone and on rerun.
+
+### note · agent:manager-2 · 2026-10-05T07:37:31.151Z
+integrated: b80f42787ad191bdb575017783aab43f26ad32ae (branch bridle/landing-install)
