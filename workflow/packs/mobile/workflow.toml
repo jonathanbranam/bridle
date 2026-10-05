@@ -1,0 +1,7 @@
+# L2 mobile pack for bridle's workflow system (mobile-friendly viewport, touch, safe-area).
+#
+# Schema: docs/design/workflow-layers.md, roles-and-lifecycle.md and gates.md
+# in the bridle repo. Those tables aren't populated here yet, same as
+# workflow/base/workflow.toml and workflow/packs/python/workflow.toml - this is
+# scaffolding.
+layer = "mobile"
