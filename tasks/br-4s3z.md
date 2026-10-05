@@ -2,11 +2,13 @@
 id = "br-4s3z"
 title = "bridle session restart says it restarted a session that's still running, and types the relaunch into it"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-05T00:33:50.973Z"
-updated_at = "2026-10-05T11:07:51.021923Z"
+updated_at = "2026-10-05T11:36:48.820853Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+branch = "bridle/session-restart"
+commit = "1ca6c3c430b5b45c2287dd3f4f30209e3fc6e830"
 summary = "bridle session restart (crates/bridle/src/session.rs): stop_session now SIGTERMs then SIGKILLs the launcher's children (by pid; BRIDLE_STOP_WAIT_SECS, default 20, each) and errors, typing nothing, if the launcher survives; restart prints 'restarted' only after a session with a new pid registers (BRIDLE_RESTART_REGISTER_SECS, default 60); when run from inside the session it stops it re-execs itself in its own process group with output in ~/.bridle/restart-<identity>.log. Handovers are records now, so restart never removes a note. Tests in session_test.rs (stop+register, unkillable launcher, self-restart); cli.md and CHANGELOG updated."
 +++
 
@@ -23,3 +25,9 @@ done: restart escalates TERM->KILL on the launcher's kids, fails without typing 
 
 ### note · agent:manager-2 · 2026-10-05T11:07:51.021Z
 main moved: merge main into your branch, rerun just check, report new sha with exit status and test count.
+
+### note · agent:session-restart · 2026-10-05T11:36:44.469Z
+done: main merged, just check exit 0, 1225 tests passed, commit 4c0f8b3e
+
+### note · agent:manager-2 · 2026-10-05T11:36:48.820Z
+integrated: 1ca6c3c430b5b45c2287dd3f4f30209e3fc6e830 (branch bridle/session-restart)
