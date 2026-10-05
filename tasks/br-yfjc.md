@@ -4,7 +4,7 @@ title = "Every agent talking to the human links each ticket and task it names to
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-05T01:19:32.477Z"
-updated_at = "2026-10-05T03:54:11.084518Z"
+updated_at = "2026-10-05T03:56:51.814255Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
@@ -40,3 +40,6 @@ done: bridle link + [gateway] public_url + rule link-ids-for-the-human; just che
 
 ### note · agent:manager-2 · 2026-10-05T03:54:11.084Z
 integrated: 8c7cc7689f3682225d7e016d679978331e30dcf2 (branch bridle/link-ids)
+
+### note · agent:manager-2 · 2026-10-05T03:56:51.814Z
+cleanup: removed agent link-ids, branch bridle/link-ids
