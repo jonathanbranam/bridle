@@ -2,11 +2,13 @@
 id = "br-vhss"
 title = "worker.md: how to wait on a long check, done quotes its result; manager.md: verify the check before landing (qdw8 fixes 2, 3)"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-05T00:33:10.679Z"
-updated_at = "2026-10-05T02:51:10.893292Z"
+updated_at = "2026-10-05T02:56:10.149296Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+branch = "bridle/role-waits"
+commit = "0d69d617b0364a17e4183120a79e98d86bef8351"
 summary = "Updated worker.md with instructions on how to wait on a long check: run it once in the background to a log file, save the exit status to a file, and wait for that file with one Monitor until-loop (never pgrep -f). Report done only after exit 0, quoting exit status, test count, and commit sha. Updated manager.md to verify the check before landing: pass --checked-commit only when the worker's done quotes exit 0 and test count for that sha, otherwise let task land run the check. Updated operating-model.md to document the merger's check verification."
 +++
 
@@ -38,3 +40,6 @@ Orchestrator: re-run the check once; if spawn_child_orphan_is_swept_on_stop fail
 
 ### note · agent:role-waits · 2026-10-05T02:51:10.893Z
 done: Updated worker.md, manager.md, operating-model.md with long-check instructions and added CHANGELOG entry; exit 0, 1191 tests passed; 9638b6fd
+
+### note · agent:manager-2 · 2026-10-05T02:56:10.149Z
+integrated: 0d69d617b0364a17e4183120a79e98d86bef8351 (branch bridle/role-waits)
