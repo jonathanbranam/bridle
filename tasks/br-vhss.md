@@ -4,7 +4,7 @@ title = "worker.md: how to wait on a long check, done quotes its result; manager
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-05T00:33:10.679Z"
-updated_at = "2026-10-05T02:56:10.149296Z"
+updated_at = "2026-10-05T02:58:52.172451Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 branch = "bridle/role-waits"
@@ -43,3 +43,6 @@ done: Updated worker.md, manager.md, operating-model.md with long-check instruct
 
 ### note · agent:manager-2 · 2026-10-05T02:56:10.149Z
 integrated: 0d69d617b0364a17e4183120a79e98d86bef8351 (branch bridle/role-waits)
+
+### note · agent:manager-2 · 2026-10-05T02:58:52.172Z
+cleanup: removed agent role-waits, branch bridle/role-waits
