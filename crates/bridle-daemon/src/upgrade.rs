@@ -23,6 +23,11 @@ const BUILT_KEY: &str = "upgrade.built";
 /// How far back from the tip to look for a green commit.
 const LOOKBACK: usize = 30;
 const BUILD_TIMEOUT: Duration = Duration::from_secs(60 * 60);
+/// Cap on one self-check run, and how many runs a timeout gets. The new binary's first run can be
+/// very slow on a loaded Intel Mac (likely macOS policy-checking a fresh unsigned binary; not
+/// confirmed), and later runs are fast, so only a timeout is retried; a real failure is not.
+const CHECK_TIMEOUT: Duration = Duration::from_secs(60);
+const CHECK_ATTEMPTS: usize = 3;
 /// Lines of build output kept in a failure report.
 const TAIL_LINES: usize = 15;
 
@@ -54,6 +59,7 @@ pub struct Upgrader {
     /// Sign the installed binary after the build: only for the real build, never a test's stand-in.
     sign: bool,
     preflight: Preflight,
+    check_timeout: Duration,
     /// One upgrade at a time: it builds for minutes before it restarts.
     busy: Arc<AtomicBool>,
     /// The last commit an upgrade failed on (memory only), so the automatic trigger skips it.
@@ -97,6 +103,7 @@ impl Upgrader {
             build,
             sign,
             preflight,
+            check_timeout: CHECK_TIMEOUT,
             busy: Default::default(),
             failed: Default::default(),
             waiting: Default::default(),
@@ -221,16 +228,27 @@ impl Upgrader {
                 ],
             ),
         };
-        let out = tokio::time::timeout(
-            Duration::from_secs(60),
-            Command::new(&program)
-                .args(&args)
-                .kill_on_drop(true)
-                .output(),
-        )
-        .await
-        .map_err(|_| "the new binary's self-check timed out".to_string())?
-        .map_err(|e| format!("running the new binary {program}: {e}"))?;
+        let mut out = None;
+        for _ in 0..CHECK_ATTEMPTS {
+            let run = tokio::time::timeout(
+                self.check_timeout,
+                Command::new(&program)
+                    .args(&args)
+                    .kill_on_drop(true)
+                    .output(),
+            )
+            .await;
+            if let Ok(done) = run {
+                out = Some(done.map_err(|e| format!("running the new binary {program}: {e}"))?);
+                break;
+            }
+        }
+        let out = out.ok_or_else(|| {
+            format!(
+                "the new binary's self-check timed out ({CHECK_ATTEMPTS} attempts of {} s)",
+                self.check_timeout.as_secs()
+            )
+        })?;
         if out.status.success() {
             return Ok(());
         }
@@ -345,6 +363,51 @@ mod tests {
         git(repo, &["add", "-A"]).await;
         git(repo, &["commit", "-m", file]).await;
         git(repo, &["rev-parse", "HEAD"]).await
+    }
+
+    fn script_upgrader(dir: &Path, body: &str) -> Upgrader {
+        let script = dir.join("check.sh");
+        std::fs::write(&script, body).expect("write");
+        let mut up = Upgrader::new(
+            Arc::new(crate::ci::RealGh::new(dir.to_path_buf())),
+            None,
+            Some(vec!["sh".into(), script.to_string_lossy().into_owned()]),
+        );
+        up.check_timeout = Duration::from_millis(500);
+        up
+    }
+
+    #[tokio::test]
+    async fn a_slow_first_self_check_is_retried() {
+        let tmp = tempfile::tempdir().expect("tmp");
+        let marker = tmp.path().join("ran");
+        let up = script_upgrader(
+            tmp.path(),
+            &format!(
+                "if [ -e {m} ]; then exit 0; fi\ntouch {m}\nsleep 5\n",
+                m = marker.display()
+            ),
+        );
+        let ws = Workspace::new(tmp.path(), None);
+        assert_eq!(up.check_built(&ws).await, Ok(()));
+    }
+
+    #[tokio::test]
+    async fn a_self_check_that_always_times_out_is_refused() {
+        let tmp = tempfile::tempdir().expect("tmp");
+        let up = script_upgrader(tmp.path(), "sleep 5\n");
+        let ws = Workspace::new(tmp.path(), None);
+        let err = up.check_built(&ws).await.expect_err("refused");
+        assert!(err.contains("timed out"), "{err}");
+    }
+
+    #[tokio::test]
+    async fn a_failing_self_check_is_not_retried() {
+        let tmp = tempfile::tempdir().expect("tmp");
+        let up = script_upgrader(tmp.path(), "echo boom >&2\nexit 3\n");
+        let ws = Workspace::new(tmp.path(), None);
+        let err = up.check_built(&ws).await.expect_err("refused");
+        assert!(err.contains("boom"), "{err}");
     }
 
     #[tokio::test]
