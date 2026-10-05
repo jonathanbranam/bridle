@@ -42,11 +42,17 @@ pub fn clamp_timeout(requested: Option<u64>, default: Duration) -> Duration {
 pub struct Waiters {
     started: DateTime<Utc>,
     state: StdMutex<WaiterState>,
+    /// Why the daemon is stopping, set by the first planned path to ask; `None` means a signal.
+    stop_reason: StdMutex<Option<String>>,
+    /// `Some(reason)` once the stop is announced: every open waiter answers with it.
+    stop_tx: tokio::sync::watch::Sender<Option<String>>,
 }
 
 #[derive(Default)]
 struct WaiterState {
     open: u32,
+    /// `bridle agent wake` requests open now; not part of the orchestrator's presence check.
+    principal_open: u32,
     last_closed: Option<DateTime<Utc>>,
     /// When a poll last answered with wakes (not an empty timeout); in memory only.
     last_delivered: Option<DateTime<Utc>>,
@@ -64,12 +70,64 @@ impl Drop for WaiterGuard {
     }
 }
 
+/// Held for as long as a `bridle agent wake` request is open.
+pub struct PrincipalGuard(Arc<Waiters>);
+
+impl Drop for PrincipalGuard {
+    fn drop(&mut self) {
+        self.0.state.lock().expect("waiters lock").principal_open -= 1;
+    }
+}
+
 impl Waiters {
     pub fn new(started: DateTime<Utc>) -> Arc<Self> {
         Arc::new(Waiters {
             started,
             state: Default::default(),
+            stop_reason: Default::default(),
+            stop_tx: tokio::sync::watch::channel(None).0,
         })
+    }
+
+    pub fn principal_opened(self: &Arc<Self>) -> PrincipalGuard {
+        self.state.lock().expect("waiters lock").principal_open += 1;
+        PrincipalGuard(self.clone())
+    }
+
+    /// Records why the daemon is about to stop; the first caller wins.
+    pub fn set_stop_reason(&self, reason: String) {
+        self.stop_reason
+            .lock()
+            .expect("stop reason lock")
+            .get_or_insert(reason);
+    }
+
+    /// Ends every open waiter with the stop reason (`default` when no planned path gave one).
+    /// Returns the reason and how many waiters were open; the count is taken before they are
+    /// told, so none has left yet.
+    pub fn announce_stop(&self, default: &str) -> (String, u32) {
+        let reason = self
+            .stop_reason
+            .lock()
+            .expect("stop reason lock")
+            .get_or_insert_with(|| default.to_string())
+            .clone();
+        let st = self.state.lock().expect("waiters lock");
+        let n = st.open + st.principal_open;
+        drop(st);
+        self.stop_tx.send_replace(Some(reason.clone()));
+        (reason, n)
+    }
+
+    /// Resolves with the reason once the stop is announced.
+    pub async fn stopping(&self) -> String {
+        let mut rx = self.stop_tx.subscribe();
+        // The guard `wait_for` returns isn't Send, so it is dropped before any later await.
+        let reason = rx.wait_for(|v| v.is_some()).await.ok().map(|v| v.clone());
+        match reason {
+            Some(r) => r.unwrap_or_default(),
+            None => std::future::pending().await,
+        }
     }
 
     pub fn opened(self: &Arc<Self>) -> WaiterGuard {

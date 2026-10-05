@@ -550,10 +550,13 @@ async fn orchestrator_wake(
     // Held while the request is open; a client that hangs up drops this future and the guard.
     let _waiting = state.waiters.opened();
     let timeout = crate::wake::clamp_timeout(q.timeout_secs, crate::wake::POLL_TIMEOUT);
-    let mut shutdown = state.shutdown_tx.subscribe();
     let wakes = tokio::select! {
         w = state.wakes.wait(timeout) => w,
-        _ = shutdown.wait_for(|v| *v) => Vec::new(),
+        reason = state.waiters.stopping() => vec![bridle_api::types::WakeReason {
+            reason: bridle_api::types::DAEMON_STOPPING_WAKE.to_string(),
+            text: reason,
+            detail: serde_json::Value::Null,
+        }],
     };
     if !wakes.is_empty() {
         state.waiters.delivered(chrono::Utc::now());
@@ -594,10 +597,14 @@ async fn principal_wake(
     let timeout = crate::wake::clamp_timeout(q.timeout_secs, crate::wake::MAX_WAKE_TIMEOUT);
     // Messages handed to a non-human are read; the human's reads are explicit.
     let take = principal.kind != PrincipalKind::Human;
-    let mut shutdown = state.shutdown_tx.subscribe();
+    let _waiting = state.waiters.principal_opened();
     let reasons = tokio::select! {
         r = crate::principal_wake::wait(&state.store, &state.emitter, &target, timeout, take) => r?,
-        _ = shutdown.wait_for(|v| *v) => Vec::new(),
+        reason = state.waiters.stopping() => vec![bridle_api::types::PrincipalWakeReason {
+            reason: bridle_api::types::DAEMON_STOPPING_WAKE.to_string(),
+            text: Some(reason),
+            ..Default::default()
+        }],
     };
     Ok(Json(bridle_api::types::PrincipalWakeResponse { reasons }))
 }
@@ -3144,6 +3151,9 @@ async fn shutdown(
 ) -> Result<Json<ShutdownResponse>, ApiError> {
     require_human(&principal)?;
     tracing::warn!(principal = %principal.id, "shutdown requested via POST /v1/shutdown");
+    state
+        .waiters
+        .set_stop_reason(format!("shutting down (requested by {})", principal.id));
     let _ = state.shutdown_tx.send(true);
     Ok(Json(ShutdownResponse {
         stop_limit_secs: (state.stop_grace + std::time::Duration::from_secs(5)).as_secs(),
@@ -3515,6 +3525,13 @@ async fn perform_restart(
         })
         .await;
     tracing::warn!(principal = %who, "restart requested via POST /v1/restart");
+    state.waiters.set_stop_reason(match built {
+        Some(sha) => format!(
+            "restarting for an internal upgrade to {} (requested by {who})",
+            sha.chars().take(9).collect::<String>()
+        ),
+        None => format!("restarting by request (requested by {who})"),
+    });
     state
         .restart_requested
         .store(true, std::sync::atomic::Ordering::SeqCst);

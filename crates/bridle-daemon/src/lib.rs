@@ -853,16 +853,19 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
     });
     let signal_task = signals.listen(shutdown_tx.clone());
 
+    let waiters_for_stop = waiters.clone();
     let join_handle = tokio::spawn(async move {
         let mut rx = shutdown_rx;
         let _ = rx.wait_for(|v| *v).await;
 
+        // Before anything else shuts down, so a waiter learns why it ended.
+        let (reason, waiters_ended) = waiters_for_stop.announce_stop("shutting down");
         let _ = emitter
             .emit(
                 event_kind::DAEMON_STOPPING,
                 "system".to_string(),
                 None,
-                json!({}),
+                json!({"reason": reason, "waiters_ended": waiters_ended}),
             )
             .await;
         let cap = config.stop_grace + Duration::from_secs(5);

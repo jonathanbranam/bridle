@@ -1,6 +1,6 @@
 //! The CLI's error type: it exists only to carry the exit code (docs/design/cli.md:
 //! 0 ok, 1 error, 2 usage error [clap handles that one itself], 3 daemon
-//! unreachable, 4 `wait` timed out) alongside a human-readable message.
+//! unreachable, 4 `wait` timed out, 6 the daemon ended a wait because it is restarting or stopping) alongside a human-readable message.
 
 use bridle_api::ClientError;
 use bridle_api::discovery::DiscoveryError;
@@ -11,6 +11,8 @@ pub enum CliError {
     Unreachable(String),
     /// Exit 4: `bridle wait` gave up at `--timeout`.
     Timeout(String),
+    /// Exit 6: the daemon ended the wait because it is restarting or shutting down.
+    Stopping(String),
     /// Exit 1: anything else.
     Other(anyhow::Error),
 }
@@ -20,6 +22,7 @@ impl CliError {
         match self {
             CliError::Unreachable(_) => 3,
             CliError::Timeout(_) => 4,
+            CliError::Stopping(_) => 6,
             CliError::Other(_) => 1,
         }
     }
@@ -28,7 +31,9 @@ impl CliError {
 impl std::fmt::Display for CliError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            CliError::Unreachable(msg) | CliError::Timeout(msg) => write!(f, "{msg}"),
+            CliError::Unreachable(msg) | CliError::Timeout(msg) | CliError::Stopping(msg) => {
+                write!(f, "{msg}")
+            }
             CliError::Other(e) => write!(f, "{e:#}"),
         }
     }

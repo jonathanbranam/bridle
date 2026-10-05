@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- Before a planned restart (upgrade or restart by request) or a shutdown, the daemon ends every open `bridle agent wake` and `wait-for-wake` with the reason (shutting down, restarting for an internal upgrade to a build, restarting by request by someone). The waiter prints it on stderr and exits 6 (not the timeout's 4), and the `daemon.stopping` event records the reason and `waiters_ended` (br-ds96).
 - Workflow rule packs for web (form labels and autocomplete, ARIA labels, semantic HTML) and mobile (viewport meta tag disabling zoom, touch-action, 16px input font size, safe-area insets) to guide projects toward accessibility and mobile-friendly design (br-g49c).
 - Gateway: `POST /api/v1/projects/{project}/messages` sends a message from the human to one running agent or the orchestrator (optionally threaded on a task), and `GET .../recipients` lists who can be sent to; the one agent-facing write, for the UI's "Send to an agent" button.
 - The gateway's `links/resolve` also resolves a bare ticket ID, or a task ID whose id is a ticket's, to the ticket file (br-a3yd).

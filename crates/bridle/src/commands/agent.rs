@@ -205,7 +205,7 @@ pub(super) async fn rm(cli: &Cli, args: &RmArgs) -> Result<(), CliError> {
 }
 
 /// `bridle agent wake <identifier>`: the daemon holds the request until it decides the
-/// principal should wake. Exit 0 woken, 4 timed out.
+/// principal should wake. Exit 0 woken, 4 timed out, 6 the daemon is restarting or stopping.
 pub(super) async fn wake(cli: &Cli, args: &WakeArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
     let got = client
@@ -214,6 +214,19 @@ pub(super) async fn wake(cli: &Cli, args: &WakeArgs) -> Result<(), CliError> {
             timeout_secs: args.timeout,
         })
         .await?;
+    let stopping = got
+        .reasons
+        .iter()
+        .find(|r| r.reason == bridle_api::types::DAEMON_STOPPING_WAKE);
+    if let Some(r) = stopping {
+        if cli.json {
+            render::print_json(&got)?;
+        }
+        return Err(CliError::Stopping(format!(
+            "daemon {}; re-arm once it is back",
+            r.text.as_deref().unwrap_or("restarting or shutting down")
+        )));
+    }
     if got.reasons.is_empty() {
         if cli.json {
             println!("{{\"reasons\":[]}}");

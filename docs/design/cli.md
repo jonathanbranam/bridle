@@ -102,7 +102,7 @@ bridle queue set --tier T,T... [--tier T,T...]   replace the whole queue, one --
 bridle queue add-tier <task>...                  append one tier at the back (PM, orchestrator or human only)
 bridle task dep add|rm <task> (--to OTHER [--kind K] | --blocked-by OTHER)   K: blocks (default)|parent|discovered-from|related|supersedes|duplicates
 bridle wait    <task> [--until STATE] [--or-message] [--timeout SECS]   block until the task changes state; exit 4 on timeout
-bridle agent wake <identifier> [--timeout SECS]   (cap and default 6900 s = 1 h 55 min) blocks until the daemon decides that principal should wake (reason: it has an unread message, which includes the `task_update` lines about tasks it watches); prints each message (id, sender, text) (`--json`: `{reasons:[{reason,message_ids,messages,task?,event?}]}`); a non-human caller's messages are marked read by the call, the human's are not; exit 0 woken, 4 timed out; caller must be that principal (or the human), else 403
+bridle agent wake <identifier> [--timeout SECS]   (cap and default 6900 s = 1 h 55 min) blocks until the daemon decides that principal should wake (reason: it has an unread message, which includes the `task_update` lines about tasks it watches); prints each message (id, sender, text) (`--json`: `{reasons:[{reason,message_ids,messages,task?,event?}]}`); a non-human caller's messages are marked read by the call, the human's are not; exit 0 woken, 4 timed out, 6 the daemon is restarting or shutting down (reason `daemon_stopping`, `text` says why; stderr); caller must be that principal (or the human), else 403
 bridle agent interrupt <agent> [--drop-held]
 bridle agent stop    <agent> [--now]      bridle agent resume <agent> [--ignore-budget]
 bridle agent renew   <agent> [--ignore-budget]    stop + fresh process/session, same worktree/branch/role/model
@@ -143,7 +143,7 @@ bridle orchestrator wait-for-wake --mail [--timeout SECS]                  the a
 bridle handover write --file <path>|-                  record your handover note (any principal; keyed by your identity and the project); prints its id
 bridle handover list [--role R] | show <id> | latest [--role R]     the notes, newest first · one note · the newest
 bridle mail run                              the email bridge for this project: inbound mail, question mails, daily digest (docs/design/mail.md); runs as external:mail
-bridle orchestrator wait-for-wake [--timeout SECS]                  the orchestrator's background watcher: waits for a wake condition, prints it and exits 0 (`nothing` at the timeout, default 25 min, cap 6900 s); external:orchestrator only
+bridle orchestrator wait-for-wake [--timeout SECS]                  the orchestrator's background watcher: waits for a wake condition, prints it and exits 0 (6 with the reason on stderr when the daemon is restarting or shutting down; `nothing` at the timeout, default 25 min, cap 6900 s); external:orchestrator only
 bridle hook arch-guard                      Claude Code PreToolUse hook: blocks design/architecture/ edits outside an arch-revision task
 bridle hook stop-check                      Claude Code Stop hook for the worker role; refuses to stop
                                              with an unreleased claim and no thread entry since claiming
@@ -467,7 +467,9 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   the local registry as before. A listed project with no `[machine] name` is an error. Types:
   `bridle_api::machines`.
 - **Exit codes**: 0 ok, 1 error, 2 usage error, 3 daemon unreachable (every
-  discovery failure, including an unknown `--project`), 4 `wait` timed out.
+  discovery failure, including an unknown `--project`), 4 `wait` timed out, 6 a waiter
+  (`agent wake`, `orchestrator wait-for-wake`) was ended because the daemon is restarting or shutting
+  down: the reason is on stderr; re-arm once it is back (`--json` still prints the wake on stdout).
 - **`wait <task> [--until <state>] [--or-message] [--timeout <secs>]`** blocks on the SSE
   event stream (no polling) until the task's next state change, or until it is in
   `--until` (returning at once if it already is). `--or-message` also returns on a message to

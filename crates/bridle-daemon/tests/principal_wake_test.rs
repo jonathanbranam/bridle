@@ -348,3 +348,38 @@ async fn a_non_human_inbox_marks_what_it_lists_read_and_cannot_unread() {
     );
     daemon.client.mark_unread(&a).await.expect("human unread");
 }
+
+#[tokio::test]
+async fn a_waiter_open_during_a_restart_is_told_why_and_the_event_counts_it() {
+    let (daemon, _tmp) = support::start_daemon(None).await;
+    let advisor = daemon.external_client("advisor").await;
+    let waiting =
+        tokio::spawn(async move { advisor.principal_wake(&query("external:advisor", 60)).await });
+    tokio::time::sleep(Duration::from_millis(300)).await;
+    daemon
+        .client
+        .restart(&bridle_api::types::RestartRequest::default())
+        .await
+        .expect("restart");
+    let got = tokio::time::timeout(Duration::from_secs(5), waiting)
+        .await
+        .expect("ended by the restart, not the timeout")
+        .expect("join")
+        .expect("wake");
+    assert_eq!(got.reasons.len(), 1, "{got:?}");
+    assert_eq!(
+        got.reasons[0].reason,
+        bridle_api::types::DAEMON_STOPPING_WAKE
+    );
+    let text = got.reasons[0].text.as_deref().expect("reason text");
+    assert!(text.contains("restarting by request"), "{text}");
+    let ev = support::wait_for_event(&daemon.client, "daemon.stopping", None, |_| true).await;
+    assert_eq!(ev.data["waiters_ended"], 1, "{ev:?}");
+    assert!(
+        ev.data["reason"]
+            .as_str()
+            .is_some_and(|r| r.contains("restarting by request")),
+        "{ev:?}"
+    );
+    daemon.running.join().await.expect("join");
+}

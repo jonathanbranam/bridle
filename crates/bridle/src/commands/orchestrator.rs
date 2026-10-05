@@ -380,7 +380,16 @@ pub(super) async fn wait_for_wake(cli: &Cli, timeout: Option<u64>) -> Result<(),
             println!("{}", w.detail);
         }
     }
-    Ok(())
+    match wakes
+        .iter()
+        .find(|w| w.reason == bridle_api::types::DAEMON_STOPPING_WAKE)
+    {
+        Some(w) => Err(CliError::Stopping(format!(
+            "daemon {}; re-arm once it is back",
+            w.text
+        ))),
+        None => Ok(()),
+    }
 }
 
 /// `bridle handover done`: the marker only; the daemon stops and relaunches the session.

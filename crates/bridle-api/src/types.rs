@@ -276,6 +276,10 @@ pub struct CiStatus {
 
 // ---------- orchestrator wakes ----------
 
+/// The wake reason a waiter gets when the daemon is stopping or restarting; its text says why.
+/// The CLI exits 6 on it.
+pub const DAEMON_STOPPING_WAKE: &str = "daemon_stopping";
+
 /// One reason to wake the orchestrator (`GET /v1/orchestrator/wake`).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct WakeReason {
@@ -333,6 +337,9 @@ pub struct PrincipalWakeReason {
     /// What happened to it: the event kind, e.g. `task.note_added`, `task.state`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub event: Option<String>,
+    /// For `daemon_stopping`: why the daemon is stopping or restarting.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub text: Option<String>,
 }
 
 /// The answer to `GET /v1/wake`: no reasons means the timeout came first.
