@@ -4,9 +4,10 @@ title = "Every agent talking to the human links each ticket and task it names to
 kind = "feature"
 state = "planned"
 created_at = "2026-10-05T01:19:32.477Z"
-updated_at = "2026-10-05T01:20:09.947760Z"
+updated_at = "2026-10-05T02:27:09.807354Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+priority = "high"
 +++
 
 original id: yfjc
@@ -22,3 +23,11 @@ Goal:
 Acceptance: just check green; tests: `bridle link` for a ticket ID, a task ID, and with no base URL.
 Model: sonnet (small).
 Out of scope: the UI routes themselves (bridle-ui ui-sau7, ui-umaq); setting the URL on dalek (the human does it: a to-do after landing).
+
+## Thread
+
+### note · external:orchestrator · 2026-10-05T02:27:09.787Z
+priority: normal -> high
+
+### note · external:orchestrator · 2026-10-05T02:27:09.807Z
+Raised to high by orchestrator: the human, via aide (m-5240, 2026-10-04 ~10:15 PM ET): "I want that done as soon as possible. If you have the ticket, you can just read it and start following instructions right now." Start it next.
