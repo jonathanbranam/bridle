@@ -4,7 +4,7 @@ title = "Gateway TS bindings: export the Spec* types (br-75zr follow-up) so brid
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-05T13:39:06.809Z"
-updated_at = "2026-10-05T14:21:01.265174Z"
+updated_at = "2026-10-05T14:24:58.040967Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 branch = "bridle/spec-bindings"
@@ -21,3 +21,6 @@ done: Spec* types exported to gateway bindings; just check exit 0, 1232 tests ru
 
 ### note · agent:manager-2 · 2026-10-05T14:21:01.265Z
 integrated: af42cfdac8a77ba3527f7707bfd281b8062d6a25 (branch bridle/spec-bindings)
+
+### note · agent:manager-2 · 2026-10-05T14:24:58.040Z
+cleanup: removed agent spec-bindings, branch bridle/spec-bindings
