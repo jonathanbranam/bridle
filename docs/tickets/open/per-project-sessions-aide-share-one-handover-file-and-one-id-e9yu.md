@@ -50,3 +50,13 @@ write`, read by `bridle prime orchestrator`, and also pushed to the state branch
 `handovers/<id>.md` (`docs/design/agent-host/orchestrator-supervision.md`, section 7). `handover
 write` is limited to the human and `external:orchestrator` today, so aides and advisors are told
 to write a file under `~/.bridle/handover/` instead.
+
+The human, verbatim (2026-10-04 ~8:40 PM ET, to the bridle-ui aide, on the plan for br-e9yu):
+
+> Yeah, obviously, I didn't review the design for that. There should be a write command for an
+> agent to write a handover, and it should be fully managed. Nobody should be ready to file. This
+> should all be managed by the system, and the system then can ensure that every agent in every
+> project with the proper name has the right handover and that there's no confusion about
+> anything. If that's the way, please send that over for me.
+
+("ready to file" is likely "writing to a file", dictated.)
