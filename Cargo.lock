@@ -767,6 +767,7 @@ dependencies = [
  "argon2",
  "axum",
  "bridle-api",
+ "bridle-spec",
  "chrono",
  "futures",
  "getrandom 0.4.3",

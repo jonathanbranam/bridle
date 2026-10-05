@@ -12,6 +12,7 @@ pub mod intervals;
 pub mod items;
 pub mod messages;
 pub mod report;
+pub mod specs;
 mod system;
 pub mod tasks;
 pub mod types;
@@ -61,6 +62,7 @@ pub fn router(login: Option<Login>, ui: UiConfig, interactions: report::Interact
             "/projects/{project}/links/resolve",
             post(documents::resolve_links_route),
         )
+        .route("/projects/{project}/specs", get(specs::specs_route))
         .route("/projects/{project}/review", post(actions::review_route))
         .route("/projects/{project}/system", get(system::system_route))
         .route("/projects/{project}/agents", get(system::agents_route))

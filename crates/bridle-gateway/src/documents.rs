@@ -184,15 +184,23 @@ pub async fn resolve_links_route(
     Ok(Json(ResolvedLinks { project, links }))
 }
 
-/// A target with a folder is a path under `docs/` (a wiki link may omit `.md`); one without is a
+/// A spec id resolves to its file under `design/specs/` plus a `#anchor`, a capability name to
+/// the file. A target with a folder is a path under `docs/` (a wiki link may omit `.md`); one without is a
 /// ticket stem, looked up in `open/` then `resolved/` since tickets move. Anything that escapes
 /// the repo, leaves `docs/` or doesn't exist resolves to none; bare names like README never do.
 pub fn resolve_links(repo: &FsPath, targets: &[String]) -> Vec<ResolvedLink> {
     let exists = |rel: &str| rel.starts_with("docs/") && resolve(repo, rel).is_ok();
+    let specs = std::cell::OnceCell::new();
     targets
         .iter()
         .map(|t| {
-            let path = if t.contains('/') {
+            // A spec id (`r-xxxx`, `s-xxxx`) has the shape of a task id, so it goes first.
+            let spec = crate::specs::is_spec_id(t)
+                .then(|| crate::specs::path_for(specs.get_or_init(|| crate::specs::load(repo)), t))
+                .flatten();
+            let path = if spec.is_some() {
+                spec
+            } else if t.contains('/') {
                 [t.clone(), format!("{t}.md")]
                     .into_iter()
                     .find(|c| exists(c))
@@ -203,6 +211,9 @@ pub fn resolve_links(repo: &FsPath, targets: &[String]) -> Vec<ResolvedLink> {
                     .map(|d| format!("docs/tickets/{d}/{stem}.md"))
                     .find(|c| exists(c))
                     .or_else(|| ticket_by_id(repo, t))
+                    .or_else(|| {
+                        crate::specs::path_for(specs.get_or_init(|| crate::specs::load(repo)), t)
+                    })
             };
             ResolvedLink {
                 target: t.clone(),
@@ -212,7 +223,7 @@ pub fn resolve_links(repo: &FsPath, targets: &[String]) -> Vec<ResolvedLink> {
         .collect()
 }
 
-async fn blocking<T: Send + 'static>(
+pub(crate) async fn blocking<T: Send + 'static>(
     f: impl FnOnce() -> Result<T, DocError> + Send + 'static,
 ) -> Result<T, DocError> {
     tokio::task::spawn_blocking(f)
@@ -221,7 +232,7 @@ async fn blocking<T: Send + 'static>(
 }
 
 /// The working tree of one of this machine's projects.
-async fn repo_of(project: &str) -> Result<PathBuf, DocError> {
+pub(crate) async fn repo_of(project: &str) -> Result<PathBuf, DocError> {
     let t = current_targets()
         .await
         .into_iter()
@@ -242,7 +253,7 @@ fn hash_of(content: &str) -> String {
 }
 
 /// The file's absolute path, after checking `rel` is plain names that resolve inside `repo`.
-fn resolve(repo: &FsPath, rel: &str) -> Result<PathBuf, DocError> {
+pub(crate) fn resolve(repo: &FsPath, rel: &str) -> Result<PathBuf, DocError> {
     let mut clean = PathBuf::new();
     for c in FsPath::new(rel).components() {
         match c {
@@ -267,7 +278,7 @@ fn resolve(repo: &FsPath, rel: &str) -> Result<PathBuf, DocError> {
     Ok(full)
 }
 
-fn read_text(full: &FsPath, rel: &str) -> Result<String, DocError> {
+pub(crate) fn read_text(full: &FsPath, rel: &str) -> Result<String, DocError> {
     let bytes = std::fs::read(full).map_err(|e| DocError::Internal(e.to_string()))?;
     if bytes.len() > MAX_BYTES || bytes.contains(&0) {
         return Err(DocError::NotText(rel.to_string()));
@@ -338,7 +349,7 @@ pub fn search_documents(repo: &FsPath, q: &str) -> Vec<String> {
 }
 
 /// Repo-relative paths of the `.md` files under `dir`, not following symlinks.
-fn collect_markdown(repo: &FsPath, dir: &FsPath, out: &mut Vec<String>) {
+pub(crate) fn collect_markdown(repo: &FsPath, dir: &FsPath, out: &mut Vec<String>) {
     let Ok(entries) = std::fs::read_dir(dir) else {
         return;
     };

@@ -135,6 +135,20 @@ paths, symlinks out of the repo and anything outside `docs/` resolve to null, ne
 Bare names like `README` are not resolved (undecided). The UI turns wiki links and paths into
 links with the answer; rendering is bridle-ui's.
 
+**Specs (br-75zr, ticket 75zr).** Read-only. A document read already serves `design/specs/**`
+(the read route accepts any text file in the repo, `.git` aside); search stays `docs/` only.
+`GET /api/v1/projects/{project}/specs` (`specs.rs`) returns `ProjectSpecs {project, specs}`:
+one `SpecFile {path, capability, title, requirements, diagnostics}` per `.md` under
+`design/specs/`, parsed with `bridle-spec`; each requirement has `id`, `heading`, `protected`,
+`line` and `scenarios` (`id`, `heading`, `executable`, `line`). A file that doesn't parse has
+`diagnostics` (`line`, `column`, `message`) and no requirements; it is not an error. No
+`design/specs/` is an empty list. `links/resolve` also takes a requirement or scenario id
+(`r-xxxx`, `s-xxxx`, tried before the task-id rule) and answers `design/specs/<file>.md#<id>`
+(the heading's explicit `{#id}` anchor), and a capability name (file stem, tried after tickets)
+and answers the file; unknown ids are null. Linking tasks to specs is not built: the UI links ids
+it finds in task text through `links/resolve`. The `PUT` route is unchanged and can still edit a
+spec file like any document; the spec view itself never writes.
+
 **Review now (br-qttb, ticket x8jt).** `POST /api/v1/projects/{project}/review` with
 `ReviewRequest {path, resend}` (`resend` defaults to false) asks the project's daemon to send the
 document's unsent comment threads to its agent at once, like `bridle review now`; returns
