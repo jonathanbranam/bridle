@@ -200,6 +200,9 @@ pub enum Command {
     ArchGuard,
     /// The orchestrator's supervision hooks (docs/design/agent-host/orchestrator-supervision.md).
     Orchestrator(OrchestratorArgs),
+    /// Print the bridle UI link for a ticket ID or a task ID (`br-...`); nothing when no
+    /// `[gateway] public_url` is configured.
+    Link(LinkArgs),
     /// Focus hours (ticket cvaq): the human's `[[focus]]` periods in `~/.bridle/config.toml`.
     Focus(FocusArgs),
     /// Wait for something the orchestrator should act on, print it and exit 0 (`nothing` after
@@ -802,6 +805,12 @@ pub struct InitArgs {
     /// Workflow pack to enable (`packs = [STACK]`).
     #[arg(long, value_parser = ["python", "typescript"])]
     pub stack: Option<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct LinkArgs {
+    /// A ticket ID (`yfjc`) or a task ID (`br-yfjc`).
+    pub id: String,
 }
 
 #[derive(Debug, Args)]

@@ -112,6 +112,8 @@ task needs the human, with `bridle task new "[at restart] <what>" -k feature --f
 - **Times to the human are US Eastern** (`workflow/base/rules/human-timezone.md`);
   written bare ("7:00 AM"), with a zone only when it isn't Eastern.
   Records stay in UTC.
+- **Link each ticket and task you name to the human** with `bridle link <id>`
+  (`workflow/base/rules/link-ids-for-the-human.md`).
 - **You reach the human only through `external:aide`.** Not the human's inbox, and not by
   talking with them in this session. `bridle send external:aide "From orchestrator: ..."` for
   what needs them (a decision, something only they can do, a short summary of merges) with a

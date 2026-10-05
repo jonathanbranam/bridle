@@ -75,6 +75,10 @@ mod tests {
             NoProject("static text embedded in the binary; no daemon"),
         ),
         ("gateway", NoProject("serves every project")),
+        (
+            "link",
+            NoProject("config lookup; a ticket link takes --project or the cwd's workspace"),
+        ),
         ("stop-daemon", Daemon),
         ("restart", Daemon),
         ("doctor", NoProject("checks the machine and the cwd's repo")),

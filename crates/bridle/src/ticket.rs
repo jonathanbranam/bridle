@@ -47,7 +47,7 @@ pub async fn run(cli: &Cli, args: &TicketArgs) -> Result<(), CliError> {
     }
 }
 
-fn repo_root() -> anyhow::Result<PathBuf> {
+pub fn repo_root() -> anyhow::Result<PathBuf> {
     let out = Command::new("git")
         .args(["rev-parse", "--show-toplevel"])
         .output()

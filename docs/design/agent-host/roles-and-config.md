@@ -185,6 +185,9 @@ Also read from `.bridle/config.toml` (defaults in parentheses; each is documente
 - `[mail]`, `[gateway]` and `[interactions]` belong to `bridle mail run` and `bridle gateway`
   (their crates parse them); the daemon only accepts them, so adding one never stops a daemon
   starting.
+- `[gateway] public_url` (machine config, optional per-project override in `.bridle/config.toml`):
+  the bridle UI's base URL as the human opens it, e.g. `http://dalek.tailbc91f5.ts.net:7878`.
+  `bridle link` builds ticket and task links from it; unset means no links.
 
 ## Focus hours
 

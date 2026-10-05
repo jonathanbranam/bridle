@@ -62,6 +62,9 @@ struct GatewaySection {
     ui_dir: Option<PathBuf>,
     /// "warn" (default) or "refuse" when the UI's recorded API version differs.
     ui_version_mismatch: Option<String>,
+    /// Base URL of the UI as the human opens it; read by `bridle link`, not the gateway.
+    #[allow(dead_code)]
+    public_url: Option<String>,
 }
 
 /// The `[interactions]` section: the knobs of the human-time interval rules.

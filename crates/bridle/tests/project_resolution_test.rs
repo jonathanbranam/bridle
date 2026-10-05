@@ -59,6 +59,11 @@ const CLASSES: &[(&str, Kind, &str)] = &[
     ("daemon", Daemon, ""),
     ("agent", Daemon, ""),
     ("docs", Skip, "static text"),
+    (
+        "link",
+        Skip,
+        "config lookup; only a ticket link needs --project, covered by link_test.rs",
+    ),
     ("gateway", Skip, "serves every project"),
     (
         "mail run",

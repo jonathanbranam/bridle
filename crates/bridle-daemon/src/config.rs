@@ -2377,6 +2377,42 @@ pub fn advisor_pane(home: &Path) -> Result<AdvisorPane, ConfigError> {
     }
 }
 
+/// `[gateway] public_url` of one config file: absent file, section or key is `None`.
+fn gateway_public_url(path: &Path) -> Result<Option<String>, ConfigError> {
+    let text = match std::fs::read_to_string(path) {
+        Ok(t) => t,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(source) => {
+            return Err(ConfigError::Read {
+                path: path.to_path_buf(),
+                source,
+            });
+        }
+    };
+    let raw: RawConfig = toml::from_str(&text).map_err(|source| ConfigError::Parse {
+        path: path.to_path_buf(),
+        source: Box::new(source),
+    })?;
+    Ok(raw
+        .gateway
+        .as_ref()
+        .and_then(|g| g.get("public_url"))
+        .and_then(|v| v.as_str())
+        .map(|u| u.trim().trim_end_matches('/').to_string())
+        .filter(|u| !u.is_empty()))
+}
+
+/// The bridle UI's base URL for `bridle link`: `[gateway] public_url` of `<repo>/.bridle/config.toml`
+/// over the same key in `<home>/config.toml`. `None` when neither sets it.
+pub fn ui_base_url(home: &Path, repo: Option<&Path>) -> Result<Option<String>, ConfigError> {
+    if let Some(repo) = repo
+        && let Some(url) = gateway_public_url(&repo.join(".bridle/config.toml"))?
+    {
+        return Ok(Some(url));
+    }
+    gateway_public_url(&home.join("config.toml"))
+}
+
 #[derive(Debug, Default, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct RawMachine {

@@ -94,6 +94,7 @@ Then tell the human you've handed it over.
 - Hand over with `bridle handover write --file -` (the system keeps it per project and per
   advisor name; never write a handover file). Your next session's prompt points at it.
 - Times to the human are US Eastern (`workflow/base/rules/human-timezone.md`).
+- Link each ticket and task you name to the human with `bridle link <id>` (`workflow/base/rules/link-ids-for-the-human.md`).
 - KISS, YAGNI and "what's the worst if we don't?" (`workflow/base/rules/`).
 - No Claude Code memory (`workflow/base/rules/memory.none.md`).
 - Never change one of the human's existing projects without their review and

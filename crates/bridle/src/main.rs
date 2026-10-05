@@ -12,6 +12,7 @@ mod gateway;
 mod goals;
 mod init;
 mod launchd;
+mod link;
 mod migrate;
 mod orchestrator;
 mod pane;
