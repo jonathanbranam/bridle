@@ -2,9 +2,9 @@
 id = "br-rz4e"
 title = "A researcher role with WebSearch and WebFetch; the manager checks a task's tool needs before spawning (2mtr a+c)"
 kind = "feature"
-state = "pending"
+state = "planned"
 created_at = "2026-10-05T01:02:06.369Z"
-updated_at = "2026-10-05T01:02:06.369Z"
+updated_at = "2026-10-05T01:02:16.756792Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 +++

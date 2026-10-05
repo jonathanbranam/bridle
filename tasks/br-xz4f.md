@@ -2,9 +2,9 @@
 id = "br-xz4f"
 title = "Tasks approved by anyone but the orchestrator are never planned: nothing tells the PM a task is open (br-p88z sat 9 hours)"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-04T22:06:38.716Z"
-updated_at = "2026-10-05T01:01:57.797237Z"
+updated_at = "2026-10-05T01:02:16.302661Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 +++

@@ -14,6 +14,9 @@ tasks = ["br-vhss"]
 tasks = ["br-p88z"]
 
 [[tier]]
+tasks = ["br-xz4f"]
+
+[[tier]]
 tasks = ["br-xtxd"]
 
 [[tier]]
@@ -45,6 +48,9 @@ tasks = ["br-7sd9"]
 
 [[tier]]
 tasks = ["br-rk7k"]
+
+[[tier]]
+tasks = ["br-rz4e"]
 
 [[tier]]
 tasks = ["br-anmx"]
