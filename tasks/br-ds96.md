@@ -4,7 +4,7 @@ title = "Before a planned restart or shutdown, the daemon ends every waiter with
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-05T02:11:30.511Z"
-updated_at = "2026-10-05T10:46:38.950562Z"
+updated_at = "2026-10-05T10:53:38.777227Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 branch = "bridle/waiter-reason"
@@ -31,3 +31,6 @@ done: main merged; just check exit 0, 1222 tests passed; d79aafa1
 
 ### note · agent:manager-2 · 2026-10-05T10:46:38.950Z
 integrated: 7c1accb724f73fe0c217c99e2ff7d3fcd123efcc (branch bridle/waiter-reason)
+
+### note · agent:manager-2 · 2026-10-05T10:53:38.777Z
+cleanup: removed agent waiter-reason, branch bridle/waiter-reason
