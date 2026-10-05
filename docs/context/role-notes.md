@@ -593,3 +593,24 @@ Newest first. One line per item: what happened, who did it, what it says about r
 - **Ticket commands commit on their own** (`ticket set`, `ticket task`); my own `git commit` after
   them failed on an empty index and, chained with `&&`, swallowed the messages after it.
 - **By hand, again:** `npm run install-ui` twice, `preview.sh restart games` twice (tc7t).
+
+## Thirty-fifth orchestrator session (2026-10-05 ~00:28Z to ~01:40Z)
+
+- **Docs commits starve landings.** br-bnhn's land check (~10 min at load ~40) failed "main moved"
+  three times; I had to tell aide, advisors and pm-1 to hold commits, and the doc-review watcher's
+  automatic commits weren't held by anyone. Filed btx7 (`check_skip_paths`). Until it lands,
+  committing tickets during a landing costs the manager a retry.
+- **"Docs-only delta" is a worker's claim to check.** gateway-detach said main's merge was docs-only
+  when it carried bnhn and p88z code (16 crate files). A `git diff --stat <old> <new> -- crates`
+  caught it. btx7's path rule would make this mechanical.
+- **A spawn the manager reported never happened** (handover-by-id for e9yu); `agents --all` showed
+  nothing. Same "spawn into a settling task" shape as last session.
+- **`ticket set <id> tasks` takes one id, not a list**, and only ticket-made tasks belong there; my
+  bracketed list broke qdw8's frontmatter and needed a second commit. Non-ticket tasks name the
+  ticket in their brief instead.
+- **`bridle ticket new --body-file` adds "## The ask" itself**; a body that starts with that heading
+  gets it twice and `ticket task` then refuses ("The ask section is empty").
+- **Relayed asks arrive in batches** (aide m-5136: five decisions at once). Each became a brief on a
+  task within minutes; the human's quote goes on the task as the approval.
+- **By hand:** `npm run install-ui` twice (ui-65ft, ui-pksj); the track-web games preview is a vite
+  dev server on the clone, so a landing on `dev` needs only a reload, not a restart.
