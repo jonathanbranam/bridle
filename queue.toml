@@ -1,20 +1,20 @@
 [[tier]]
-tasks = ["br-e9yu"]
+tasks = [
+    "br-e9yu",
+    "br-a3yd",
+    "br-s6cj",
+    "br-tc7t",
+    "br-g49c",
+    "br-vhss",
+    "br-btx7",
+]
 
 [[tier]]
-tasks = ["br-cyvf"]
-
-[[tier]]
-tasks = ["br-rmzx"]
-
-[[tier]]
-tasks = ["br-vhss"]
-
-[[tier]]
-tasks = ["br-btx7"]
-
-[[tier]]
-tasks = ["br-p88z"]
+tasks = [
+    "br-cyvf",
+    "br-7sd9",
+    "br-rk7k",
+]
 
 [[tier]]
 tasks = ["br-xz4f"]
@@ -29,28 +29,7 @@ tasks = ["br-4s3z"]
 tasks = ["br-75h2"]
 
 [[tier]]
-tasks = ["br-g49c"]
-
-[[tier]]
-tasks = ["br-bek3"]
-
-[[tier]]
 tasks = ["br-yfjc"]
-
-[[tier]]
-tasks = ["br-a3yd"]
-
-[[tier]]
-tasks = ["br-tc7t"]
-
-[[tier]]
-tasks = ["br-s6cj"]
-
-[[tier]]
-tasks = ["br-7sd9"]
-
-[[tier]]
-tasks = ["br-rk7k"]
 
 [[tier]]
 tasks = ["br-rz4e"]
