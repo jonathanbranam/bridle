@@ -2,6 +2,9 @@
 tasks = ["br-e9yu"]
 
 [[tier]]
+tasks = ["br-cyvf"]
+
+[[tier]]
 tasks = ["br-rmzx"]
 
 [[tier]]

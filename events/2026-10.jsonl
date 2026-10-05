@@ -702,3 +702,7 @@
 {"actor":"external:orchestrator","at":"2026-10-05T00:21:42.622313Z","from":"pending","task":"br-e9yu","to":"open"}
 {"actor":"external:orchestrator","at":"2026-10-05T00:21:42.642057Z","from":"open","task":"br-e9yu","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-05T00:22:22.637183Z","queue":"reprioritized"}
+{"actor":"human","at":"2026-10-05T00:23:35.618Z","from":"","task":"br-cyvf","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-10-05T00:23:40.846413Z","from":"pending","task":"br-cyvf","to":"open"}
+{"actor":"external:orchestrator","at":"2026-10-05T00:23:40.870188Z","from":"open","task":"br-cyvf","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-05T00:23:54.374370Z","queue":"reprioritized"}
