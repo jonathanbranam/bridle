@@ -728,7 +728,12 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   (best effort; see orchestrator-supervision.md, section 6). `bridle status` shows a
   `session    <identity> <project>@<machine> <tokens> up <n>m active <n>m ago` line per running
   advisor; `--json` has `sessions`. `bridle session restart <identifier> [--handover|--fresh]`
-  restarts one; `bridle session keep <identifier>` carries on past a context warning
+  restarts one: it SIGTERMs, then SIGKILLs, the launcher's children (by pid, never by name;
+  `BRIDLE_STOP_WAIT_SECS`, default 20, each), fails without typing anything if the launcher is
+  still alive, prints "restarted" only once a session with a new pid has registered, and runs
+  detached (own process group, log `~/.bridle/restart-<identity>.log`) when started from inside
+  the session it stops, so a session can restart itself (br-4s3z; the handover note is a
+  record, so a restart never removes it); `bridle session keep <identifier>` carries on past a context warning
   (orchestrator-supervision.md, section 6). The hidden
   `bridle session note` is the advisor's SessionStart hook. `events --kind session.context`
   has the threshold crossings.

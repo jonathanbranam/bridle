@@ -481,3 +481,134 @@ fn a_session_prompt_names_the_newest_note_of_its_own_identity() {
     assert!(!advisor.claude.is_empty());
     assert!(!advisor.claude.contains("h-0042"), "{}", advisor.claude);
 }
+
+/// A fake daemon listing one `aide` session: the old launcher's pid (shared, set once the
+/// launcher is spawned) until the tmux stub has typed the relaunch, then a new pid, as if the
+/// relaunched session had registered.
+fn restart_daemon(old_pid: std::sync::Arc<std::sync::atomic::AtomicU32>, typed: PathBuf) -> String {
+    use std::io::{Read, Write};
+    let l = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let url = format!("http://{}", l.local_addr().unwrap());
+    std::thread::spawn(move || {
+        for mut c in l.incoming().flatten() {
+            let mut buf = [0u8; 4096];
+            let _ = c.read(&mut buf);
+            let old = old_pid.load(std::sync::atomic::Ordering::SeqCst);
+            let pid = if typed.exists() { old + 1 } else { old };
+            let body = registered("aide", pid);
+            let _ = write!(
+                c,
+                "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
+                body.len()
+            );
+        }
+    });
+    url
+}
+
+/// Runs `bridle session restart aide --fresh` against a launcher shell running `launcher_sh`
+/// (its child is what restart signals; `{restart}` in it expands to the restart command, for a
+/// session that restarts itself). Returns the restart's output and whether the relaunch was typed.
+fn restart_run(launcher_sh: &str, self_restart: bool) -> (String, bool) {
+    let bin = tempfile::tempdir().unwrap();
+    let home = tempfile::tempdir().unwrap();
+    let typed = bin.path().join("tmux.rec");
+    stub(
+        bin.path(),
+        "tmux",
+        &format!("echo \"$@\" >> {}", typed.display()),
+    );
+    let path = format!(
+        "{}:{}",
+        bin.path().display(),
+        std::env::var("PATH").unwrap_or_default()
+    );
+    let old = std::sync::Arc::new(std::sync::atomic::AtomicU32::new(0));
+    let url = restart_daemon(old.clone(), typed.clone());
+    let exe = env!("CARGO_BIN_EXE_bridle");
+    let restart = format!("{exe} --project p --url {url} --token t session restart aide --fresh");
+    let envs = |c: &mut Command| {
+        c.env("PATH", &path)
+            .env("BRIDLE_HOME", home.path())
+            .env("BRIDLE_LAUNCHER_TEST", "1")
+            .env("TMUX_PANE", "%9")
+            .env("BRIDLE_STOP_WAIT_SECS", "1")
+            .env("BRIDLE_RESTART_REGISTER_SECS", "10")
+            .env_remove("BRIDLE_AS");
+    };
+    let mut launcher = Command::new("sh");
+    launcher
+        .args(["-c", &launcher_sh.replace("{restart}", &restart)])
+        .stdin(std::process::Stdio::null())
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null());
+    envs(&mut launcher);
+    let mut launcher = launcher.spawn().unwrap();
+    old.store(launcher.id(), std::sync::atomic::Ordering::SeqCst);
+    let (tx, rx) = std::sync::mpsc::channel();
+    let waiter = std::thread::spawn(move || {
+        // Reaps the launcher so a dead one is not a zombie `kill -0` still finds.
+        let _ = launcher.wait();
+        let _ = tx.send(());
+        launcher
+    });
+    let text = if self_restart {
+        let log = home.path().join("restart-aide.log");
+        let t0 = std::time::Instant::now();
+        loop {
+            let s = fs::read_to_string(&log).unwrap_or_default();
+            if s.contains("restarted") || s.contains("did not") || s.contains("still running") {
+                break s;
+            }
+            assert!(t0.elapsed().as_secs() < 60, "no restart log: {s}");
+            std::thread::sleep(std::time::Duration::from_millis(200));
+        }
+    } else {
+        let mut cmd = Command::new(exe);
+        cmd.args(["--project", "p", "--url", &url, "--token", "t"])
+            .args(["session", "restart", "aide", "--fresh"]);
+        envs(&mut cmd);
+        let out = cmd.output().unwrap();
+        format!(
+            "{}{}",
+            String::from_utf8_lossy(&out.stdout),
+            String::from_utf8_lossy(&out.stderr)
+        )
+    };
+    let died = rx.try_recv().is_ok();
+    // An unkillable launcher is still running: kill it by pid so the test leaves nothing behind.
+    if !died {
+        let _ = Command::new("kill")
+            .args([
+                "-KILL",
+                &old.load(std::sync::atomic::Ordering::SeqCst).to_string(),
+            ])
+            .status();
+    }
+    let _ = waiter.join();
+    (text, typed.exists())
+}
+
+#[test]
+fn restart_stops_the_old_launcher_and_waits_for_the_new_one_to_register() {
+    let (text, typed) = restart_run("sleep 60; :", false);
+    assert!(text.contains("restarted aide in pane %3"), "{text}");
+    assert!(typed);
+}
+
+#[test]
+fn restart_fails_without_typing_when_the_launcher_will_not_die() {
+    // Killing the child just starts another: the launcher itself never exits.
+    let (text, typed) = restart_run("while :; do sleep 60; done", false);
+    assert!(text.contains("still running"), "{text}");
+    assert!(!text.contains("restarted"), "{text}");
+    assert!(!typed, "the relaunch must not be typed into a live session");
+}
+
+#[test]
+fn a_session_can_restart_itself() {
+    // The restart runs as the launcher's child, so stopping the session kills its caller.
+    let (text, typed) = restart_run("{restart}; sleep 60; :", true);
+    assert!(text.contains("restarted aide in pane %3"), "{text}");
+    assert!(typed);
+}

@@ -591,6 +591,9 @@ async fn restart(cli: &Cli, identifier: &str, fresh: bool) -> Result<(), CliErro
         .iter()
         .find(|s| s.identity == wanted)
         .ok_or_else(|| anyhow::anyhow!("no running session {wanted:?} (see `bridle status`)"))?;
+    if std::env::var_os("BRIDLE_RESTART_DETACHED").is_none() && is_descendant_of(info.pid) {
+        return detach_restart(&info.identity);
+    }
     if !fresh {
         let newest = || async {
             client
@@ -629,7 +632,7 @@ async fn restart(cli: &Cli, identifier: &str, fresh: bool) -> Result<(), CliErro
             tokio::time::sleep(std::time::Duration::from_millis(500)).await;
         }
     }
-    stop_session(info.pid).await;
+    stop_session(info.pid).await?;
     let cmd = relaunch_command(&info.identity, info.project.as_deref());
     match &info.pane {
         Some(pane) => {
@@ -638,6 +641,7 @@ async fn restart(cli: &Cli, identifier: &str, fresh: bool) -> Result<(), CliErro
                 .status()
                 .is_ok_and(|s| s.success());
             if ok {
+                wait_registered(&client, &info.identity, info.pid).await?;
                 println!("restarted {} in pane {pane}", info.identity);
             } else {
                 println!("pane {pane} is gone; run in a terminal: {cmd}");
@@ -651,28 +655,135 @@ async fn restart(cli: &Cli, identifier: &str, fresh: bool) -> Result<(), CliErro
     Ok(())
 }
 
-/// SIGTERM to the launcher's children (claude), then wait for the launcher to exit so the pane
-/// is back at its shell. Only this pid's own children, never by name (no-kill-by-name).
-async fn stop_session(pid: i32) {
-    let kids = Command::new("pgrep")
-        .args(["-P", &pid.to_string()])
-        .output()
-        .map(|o| String::from_utf8_lossy(&o.stdout).into_owned())
-        .unwrap_or_default();
-    for kid in kids.split_whitespace() {
-        let _ = Command::new("kill").args(["-TERM", kid]).status();
-    }
-    for _ in 0..40 {
-        let alive = Command::new("kill")
-            .args(["-0", &pid.to_string()])
-            .stderr(std::process::Stdio::null())
-            .status()
-            .is_ok_and(|s| s.success());
-        if !alive {
-            return;
+/// Seconds to wait after SIGTERM, and again after SIGKILL, for the launcher to exit.
+fn stop_wait_secs() -> u64 {
+    std::env::var("BRIDLE_STOP_WAIT_SECS")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(20)
+}
+
+fn pid_alive(pid: i32) -> bool {
+    Command::new("kill")
+        .args(["-0", &pid.to_string()])
+        .stderr(std::process::Stdio::null())
+        .status()
+        .is_ok_and(|s| s.success())
+}
+
+async fn wait_gone(pid: i32, secs: u64) -> bool {
+    for _ in 0..secs * 2 {
+        if !pid_alive(pid) {
+            return true;
         }
         tokio::time::sleep(std::time::Duration::from_millis(500)).await;
     }
+    !pid_alive(pid)
+}
+
+/// Stops the launcher: SIGTERM to its children (claude), wait for the launcher to exit so the
+/// pane is back at its shell, then SIGKILL to those same children, then fail. Only this pid's
+/// own children, never by name (no-kill-by-name). Never returns Ok while the launcher lives:
+/// the relaunch is typed into the pane, and a live session would take it as a prompt.
+async fn stop_session(pid: i32) -> Result<(), CliError> {
+    let kids_of = || {
+        Command::new("pgrep")
+            .args(["-P", &pid.to_string()])
+            .output()
+            .map(|o| String::from_utf8_lossy(&o.stdout).into_owned())
+            .unwrap_or_default()
+    };
+    let wait = stop_wait_secs();
+    for sig in ["-TERM", "-KILL"] {
+        for kid in kids_of().split_whitespace() {
+            let _ = Command::new("kill").args([sig, kid]).status();
+        }
+        if wait_gone(pid, wait).await {
+            return Ok(());
+        }
+    }
+    Err(anyhow::anyhow!(
+        "session launcher pid {pid} is still running after SIGTERM and SIGKILL to its children; \
+         nothing typed into its pane"
+    )
+    .into())
+}
+
+/// Waits for a session of `identity` with a pid other than `old` to register.
+async fn wait_registered(
+    client: &bridle_api::Client,
+    identity: &str,
+    old: i32,
+) -> Result<(), CliError> {
+    let secs: u64 = std::env::var("BRIDLE_RESTART_REGISTER_SECS")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(60);
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(secs);
+    loop {
+        let up = client
+            .sessions()
+            .await
+            .is_ok_and(|v| v.iter().any(|s| s.identity == identity && s.pid != old));
+        if up {
+            return Ok(());
+        }
+        if std::time::Instant::now() >= deadline {
+            return Err(anyhow::anyhow!(
+                "the relaunch was typed but {identity} did not register within {secs}s; \
+                 check its pane"
+            )
+            .into());
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+    }
+}
+
+/// Whether this process is `pid` or runs under it, so stopping `pid` would kill the restart.
+fn is_descendant_of(pid: i32) -> bool {
+    let mut cur = std::process::id() as i32;
+    for _ in 0..64 {
+        if cur == pid {
+            return true;
+        }
+        let out = Command::new("ps")
+            .args(["-o", "ppid=", "-p", &cur.to_string()])
+            .output()
+            .ok();
+        match out.and_then(|o| {
+            String::from_utf8_lossy(&o.stdout)
+                .trim()
+                .parse::<i32>()
+                .ok()
+        }) {
+            Some(p) if p > 1 => cur = p,
+            _ => return false,
+        }
+    }
+    false
+}
+
+/// Re-runs this command in its own process group, so killing the session it was started from
+/// does not kill the restart. Output goes to `~/.bridle/restart-<identity>.log`.
+fn detach_restart(identity: &str) -> Result<(), CliError> {
+    use std::os::unix::process::CommandExt;
+    let log = bridle_home().join(format!("restart-{}.log", identity.replace('/', "-")));
+    let f = std::fs::File::create(&log).with_context(|| format!("creating {}", log.display()))?;
+    let f2 = f.try_clone().context("cloning log handle")?;
+    Command::new(std::env::current_exe().context("finding bridle")?)
+        .args(std::env::args_os().skip(1))
+        .env("BRIDLE_RESTART_DETACHED", "1")
+        .process_group(0)
+        .stdin(std::process::Stdio::null())
+        .stdout(f)
+        .stderr(f2)
+        .spawn()
+        .context("spawning the detached restart")?;
+    println!(
+        "restarting {identity} from outside the session; progress in {}",
+        log.display()
+    );
+    Ok(())
 }
 
 /// `ps` lstart of `pid`, the identity check the daemon uses for processes.
