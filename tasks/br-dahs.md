@@ -2,9 +2,9 @@
 id = "br-dahs"
 title = "Waiters: a new wait replaces the old (by session), bridle agent wake --stop, pid on stderr, prompts (75h2 part 2)"
 kind = "feature"
-state = "pending"
+state = "planned"
 created_at = "2026-10-04T23:54:00.140Z"
-updated_at = "2026-10-04T23:54:00.140Z"
+updated_at = "2026-10-05T00:28:49.444152Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 +++
