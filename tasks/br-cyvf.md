@@ -2,14 +2,16 @@
 id = "br-cyvf"
 title = "Agent renewal hands over through the managed record: the outgoing agent writes it, the replacement gets it and its task (e9yu follow-up, qdw8)"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-05T00:23:35.618Z"
-updated_at = "2026-10-05T05:05:56.567074Z"
+updated_at = "2026-10-05T05:29:56.989277Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "external:aide",
 ]
+branch = "bridle/renewal-handover"
+commit = "5d055568c60d1cdb024d0b2e7c79657ec219a3ae"
 summary = """Context wind-down notice now tells the outgoing agent to run `bridle handover write --file -`. Renewal (supervisor.rs renew_inner) builds its continuation from renewal_lead_in: the agent's claimed task id (claims keyed agent:<name>) plus the newest handover note for that identity (id, show command, body), or "No handover note was written; continue from the task thread". Unit tests cover task+note and task+no note. CHANGELOG line added. Caveat: just check had 2 failures in untouched tests (sessions::the_hard_limit_has_no_override..., serve::login_warning_only_when_known_logged_out), both stalling on exec of freshly written stub scripts; they also fail alone."""
 +++
 
@@ -38,3 +40,6 @@ Landing check failed on a real test: bridle-daemon::renew_test renew_sends_a_con
 
 ### note · agent:renewal-handover · 2026-10-05T05:05:56.567Z
 done: renew_test updated to the new continuation text; just check exit 0, 1196 tests passed; 44fc2786 (main already merged)
+
+### note · agent:manager-2 · 2026-10-05T05:29:56.989Z
+integrated: 5d055568c60d1cdb024d0b2e7c79657ec219a3ae (branch bridle/renewal-handover)
