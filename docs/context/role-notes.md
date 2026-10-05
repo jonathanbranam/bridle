@@ -576,3 +576,20 @@ Newest first. One line per item: what happened, who did it, what it says about r
   orchestrator and aide, would close it.
 - **Interactive roles improvised `pkill -f`** to replace waiters (h3ar). The role docs said how to
   start a waiter but not how to replace one; aide.md and advisor.md now do.
+
+## Thirty-fourth orchestrator session (2026-10-04 ~23:13Z to ~00:35Z)
+
+- **Green CI on `main` is silent, so I watch it by hand.** Only a failed run wakes me. Confirming
+  a fix (br-rmzx) or a landing (br-p88z) took a background `gh run watch` each time. A "CI green
+  after red" wake, or one for a run I asked about, would remove it.
+- **A merge wasn't pushed.** br-p88z sat merged on local `main` for ~10 min with no CI run; I
+  only noticed because my CI watch found no run. The push-after-merge rule isn't enforced.
+- **Spawning into a settling task looks like a lost spawn.** fix-skip-service was missing from
+  `agents --all` for minutes because the spawn waits for the task to settle; I nudged manager-2
+  for nothing. `agents` could show a pending spawn.
+- **The human's ask grew in three messages within two minutes** (e9yu: fix the shared file, then
+  "use the record", then "every agent"). I rewrote the brief each time before a worker took it;
+  settling (5 min) absorbed it. Worth keeping settling at least that long for the human's asks.
+- **Ticket commands commit on their own** (`ticket set`, `ticket task`); my own `git commit` after
+  them failed on an empty index and, chained with `&&`, swallowed the messages after it.
+- **By hand, again:** `npm run install-ui` twice, `preview.sh restart games` twice (tc7t).
