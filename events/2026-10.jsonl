@@ -759,3 +759,4 @@
 {"actor":"human","at":"2026-10-05T02:51:25.891Z","from":"","task":"br-mh62","to":"pending"}
 {"actor":"human","at":"2026-10-05T02:51:25.940Z","from":"","task":"br-m5kf","to":"pending"}
 {"actor":"agent:pm-1","at":"2026-10-05T02:51:55.414008Z","from":"pending","task":"br-m4cx","to":"dropped"}
+{"actor":"agent:pm-1","at":"2026-10-05T02:52:20.682165Z","from":"pending","task":"br-mh62","to":"dropped"}
