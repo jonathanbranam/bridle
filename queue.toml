@@ -8,7 +8,13 @@ tasks = ["br-cyvf"]
 tasks = ["br-rmzx"]
 
 [[tier]]
+tasks = ["br-vhss"]
+
+[[tier]]
 tasks = ["br-p88z"]
+
+[[tier]]
+tasks = ["br-xtxd"]
 
 [[tier]]
 tasks = ["br-75h2"]
