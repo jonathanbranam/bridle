@@ -69,8 +69,9 @@ each list high priority then oldest. Actions: check off a to-do, answer a task q
 a to-do with a reason. **Retracted items are hidden** from the lists; the withdrawal and its
 reason stay on the record as the audit trail (the asker withdraws, "To-do withdrawn by ...").
 Out for now: questions sent as messages to `human` (they can't be retracted) and the inbox; no
-agents, events or any agent control. The gateway exposes only the v1 actions and refuses the
-rest, so a stolen session can answer and check off, not run work.
+events stream and no agent control. The gateway may also expose **read-only views** of tasks
+(s6cj, below), and of agents and status (br-7sd9); a read changes nothing. It exposes only the v1
+actions as writes and refuses the rest, so a stolen session can answer and check off, not run work.
 
 ## 3. API, login, UI
 
@@ -133,6 +134,17 @@ message; the daemon is reached with the human's token like the task actions. Sen
 marked in the file (`[sent YYYY-MM-DD HH:MM EDT]`, ASCII; the daemon turns it into `[read ...]` once the agent has read the message, and gives a hand-typed thread its `c<n>` ID), so re-reading the document shows what went. The UI
 button is bridle-ui's ui-c39e.
 The commit uses the repo's git identity.
+
+**Tasks, read-only (br-s6cj, ticket s6cj; `tasks.rs`).** For the UI's Tasks page; the daemon is
+read with the gateway's per-project credentials, as for review. `GET /api/v1/projects/{project}/tasks?state=open|closed|all`
+returns `TaskList {project, tasks}`, most recently updated first; `open` (the default) is every
+task not integrated or dropped, `closed` is integrated or dropped. Each `TaskSummary` has `id`,
+`title`, `kind`, `state`, `priority`, `claimed_by`, `agent` (`{name, role}` when `claimed_by` is
+`agent:<name>` and the daemon knows it, else null) and `updated`. `GET .../tasks/{id}` returns
+`TaskDetail` for a task in any state (so closed tasks open from links): the summary plus `body`,
+`thread`, `watchers`, `branch`, and its `blocks` and `blocked_by` task ids (from `/v1/edges`; other
+edge kinds aren't shown). An unknown project is 404, an unknown task the daemon's 404. Not built:
+live updates (events; static first) and tickets (until their IDs settle, j28f).
 
 **Human time (ticket u6w9; built: types, collection, interval math, handlers).** The wire types of `/api/v1/interactions/*` live in
 `crates/bridle-gateway/src/interactions.rs` and are exported to `bindings/` like the rest:
