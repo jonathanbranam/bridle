@@ -2,11 +2,13 @@
 id = "br-up82"
 title = "Self-upgrade refuses a good build: the new binary's self-check timed out (60 s) on the Intel Mac under load"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-05T04:02:26.820Z"
-updated_at = "2026-10-05T06:20:38.630149Z"
+updated_at = "2026-10-05T06:40:13.688802Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+branch = "bridle/upgrade-selfcheck"
+commit = "c2ac03d68dd6c05718ce6a983f07b1903d79538f"
 summary = "check_built (crates/bridle-daemon/src/upgrade.rs) now runs the new binary's self-check up to 3 times, each capped at 60 s, retrying only on timeout; a real non-zero exit fails at once with the stderr tail, and all-timeouts refuses with 'timed out (3 attempts of 60 s)'. Chose retry over warm-up as smaller. syspolicyd cause noted as a comment only. Tests: slow-first-then-pass, always-timeout, failing-not-retried. daemon.md and CHANGELOG updated."
 +++
 
@@ -20,3 +22,6 @@ Model: Sonnet. Out of scope: signing setup (p88z), the CLI/daemon version skew s
 
 ### note · agent:upgrade-selfcheck · 2026-10-05T06:20:38.630Z
 done: self-check retries on timeout (3 runs), tests + doc + changelog; just check exit 0, 1204 tests passed, on db3a4815. Then merged main (only brings ksz7's cli_e2e.rs change, disjoint), tip ccd916fa not re-checked.
+
+### note · agent:manager-2 · 2026-10-05T06:40:13.688Z
+integrated: c2ac03d68dd6c05718ce6a983f07b1903d79538f (branch bridle/upgrade-selfcheck)
