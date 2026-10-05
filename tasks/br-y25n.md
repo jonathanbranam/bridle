@@ -2,11 +2,14 @@
 id = "br-y25n"
 title = "The human's to-do list has an order agents can set: priorities with enough levels to put things at the top"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-05T10:40:43.926Z"
-updated_at = "2026-10-05T10:41:41.421876Z"
+updated_at = "2026-10-05T11:59:16.138261Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+branch = "bridle/priorities"
+commit = "6c72d8a702bd13a0cd3df3e76ade610d3d1d65b8"
+summary = "Added critical and urgent levels above high (TaskPriority, CLI args, gateway Priority + regenerated bindings) and a priority_at timestamp (set on task new/task priority, stored in frontmatter, optional). One shared sort_by_priority in bridle-api orders CLI 'task list' and the gateway to-do list: level first; newest-set first at high and above, oldest first at normal/low. No data migration: old low/normal/high rows and files load unchanged; priority_at absent falls back to created_at. Dropped the ticket's 'ordered' level (YAGNI). Docs: cli.md, storage.md, CHANGELOG. UI source is not in this repo; it consumes the regenerated Priority.ts binding and the already-sorted list, so it needs to show the two new level names."
 +++
 
 original id: y25n
@@ -18,3 +21,11 @@ Show it: `bridle task list --claimed-by human` (add the flag if missing) and the
 Files likely: crates/bridle-daemon/src/tasks.rs and server.rs, crates/bridle-api/src/types.rs (wire change: update all clients together), crates/bridle/src/cli.rs, crates/bridle-gateway, docs/design/cli.md and storage.md. Check how the stored priority column and old values migrate: existing low/normal/high rows must keep working (additive levels, no data migration expected; say so in the done note).
 Acceptance: just check passes; tests for ordering (levels, newest-first within a level) and the CLI listing; docs updated.
 Model: Sonnet. Out of scope: drag-and-drop reordering, per-agent quotas on top slots.
+
+## Thread
+
+### note · agent:priorities · 2026-10-05T11:59:11.418Z
+done: critical/urgent priority levels + newest-set-first ordering shared by CLI and gateway; just check exit 0, 1226 tests passed; 6455fdf1
+
+### note · agent:manager-2 · 2026-10-05T11:59:16.138Z
+integrated: 6c72d8a702bd13a0cd3df3e76ade610d3d1d65b8 (branch bridle/priorities)
