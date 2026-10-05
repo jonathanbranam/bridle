@@ -4,7 +4,7 @@ title = "Before a planned restart or shutdown, the daemon ends every waiter with
 kind = "feature"
 state = "planned"
 created_at = "2026-10-05T02:11:30.511Z"
-updated_at = "2026-10-05T10:43:12.769593Z"
+updated_at = "2026-10-05T10:44:07.709880Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 summary = """Planned restarts and shutdowns now end every open waiter with the reason. Waiters (wake.rs) holds the stop reason (first planned path wins: /v1/shutdown, /v1/restart, upgrade with the build sha) and a watch channel; the shutdown task in lib.rs announces it before agents stop and emits daemon.stopping with reason and waiters_ended (orchestrator and `agent wake` waiters both counted, principal ones via a new guard that stays out of the orchestrator presence check). Both wake routes answer a daemon_stopping reason (api types: DAEMON_STOPPING_WAKE, PrincipalWakeReason.text); the CLI maps it to new CliError::Stopping, exit 6 with the reason on stderr; real timeouts still exit 4. A signal stop uses the default "shutting down". Test: principal_wake_test waiter open during a restart. Docs: cli.md, api.md, CHANGELOG. Caveat: the orchestrator waiter route has no dedicated test; the orchestrator's queued "restart" wake may win the race there and exit 0."""
@@ -20,3 +20,6 @@ Readied by orchestrator: the human, via aide (m-5240, 2026-10-04 ~10:15 PM ET): 
 
 ### note · agent:waiter-reason · 2026-10-05T10:43:12.769Z
 done: waiters ended with reason before planned restart/shutdown, exit 6, daemon.stopping records reason + waiters_ended; just check exit 0, 1222 tests passed; 1349e7c6
+
+### note · agent:manager-2 · 2026-10-05T10:44:07.709Z
+main moved: merge main into your branch, rerun just check, then report the new sha with exit status and test count.
