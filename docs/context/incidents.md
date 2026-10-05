@@ -24,6 +24,16 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-05 00:33: bridle session restart reported success on a session it never stopped
+
+- **What happened:** aide ran `bridle session restart aide` (the human approved); it printed
+  "restarted aide in pane %86", but the session kept running and the relaunch command was typed
+  into aide's live Claude prompt.
+- **Impact:** aide not restarted; the human has to restart it by hand. A false success message.
+- **Cause:** unknown (the restart doesn't confirm the old session stopped before typing the relaunch).
+- **Category:** `daemon`.
+- **Follow-up:** [[bridle-session-restart-says-it-restarted-a-session-that-s-st-4s3z|4s3z]].
+
 ## 2026-10-04 23:33: a haiku worker reported done before its check finished, then lost its task
 
 - **What happened:** worker `web-packs` (haiku, br-g49c) sent "done" at 23:33:59 with `just check`
