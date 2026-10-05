@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+- Stable local code signing on Macs: `just sign-setup` (or `bridle sign setup`) creates a self-signed "bridle local signing" identity over SSH with no GUI dialog; `just install` and the daemon's self-upgrade then re-sign the installed binary with it, so the firewall's Allow survives rebuilds. Without the identity the ad-hoc signature stays (br-p88z, ticket p88z).
+
 ### Changed
 - Workers report missing tools and failed fetches plainly in the task thread and summary, raising blockers to the manager; managers and orchestrators pass these up as failures to the human, not as asides (new rule `report-task-failures`; updates to `worker`, `manager`, and `orchestrator` roles).
 

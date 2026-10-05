@@ -104,6 +104,10 @@ the directory.
   frozen vendored copy that you refresh yourself with `bridle workflow update`.
 - `bridle launchd install --project P` writes a LaunchAgent if you want the daemon supervised,
   and prints the `launchctl` commands.
+- Once per Mac, run `just sign-setup` (over SSH is fine; it asks for the login keychain password
+  once). It creates the self-signed "bridle local signing" identity; after that `just install` and
+  every self-upgrade sign bridle with it, so the macOS firewall's Allow survives rebuilds. Without
+  it each rebuild is a new ad-hoc program and macOS asks again (p88z).
 
 ## Reaching it from the other machine
 

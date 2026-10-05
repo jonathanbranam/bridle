@@ -39,6 +39,7 @@ pub mod rollback;
 pub mod rules;
 mod server;
 mod sessions;
+pub mod signing;
 pub mod state_branch;
 pub mod store;
 mod supervisor;

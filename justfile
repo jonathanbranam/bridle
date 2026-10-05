@@ -119,8 +119,16 @@ build:
 serve repo:
     cargo run -p bridle -- serve --repo {{repo}}
 
+# On a Mac with the "bridle local signing" identity (`just sign-setup`), the installed binary
+# is re-signed with it so the firewall's Allow survives rebuilds; else the ad-hoc signature stays.
 install:
     cargo install --path crates/bridle --locked
+    "${CARGO_HOME:-$HOME/.cargo}/bin/bridle" sign binary "${CARGO_HOME:-$HOME/.cargo}/bin/bridle"
+
+# One time per Mac, works over SSH: create the local signing certificate (asks for the login
+# keychain password once; or set BRIDLE_KEYCHAIN_PASSWORD).
+sign-setup:
+    cargo run -q -p bridle -- sign setup
 
 # Remove stale build artifacts older than N days (default: 7).
 # Runs only during orchestrator maintenance windows to avoid conflicts with builds.

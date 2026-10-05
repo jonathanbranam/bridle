@@ -27,9 +27,9 @@ tokio-stream.workspace = true
 toml.workspace = true
 tracing.workspace = true
 uuid.workspace = true
+tempfile.workspace = true
 
 [dev-dependencies]
-tempfile.workspace = true
 
 [lints]
 workspace = true

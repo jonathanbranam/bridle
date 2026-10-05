@@ -64,6 +64,9 @@ pub enum Command {
     /// Write or remove a macOS LaunchAgent that runs the daemon (never runs launchctl).
     #[command(hide = true)]
     Launchd(LaunchdArgs),
+    /// Sign the installed binary with the local identity (macOS); `sign setup` creates it once.
+    #[command(hide = true)]
+    Sign(SignArgs),
     /// Write Linux systemd user units that run this machine's project daemons (never runs systemctl).
     #[command(hide = true)]
     Systemd(SystemdArgs),
@@ -847,6 +850,25 @@ pub struct RebuildArgs {
     /// that has state of its own (it says so and leaves both). Otherwise nothing is fetched.
     #[arg(long)]
     pub from_origin: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct SignArgs {
+    #[command(subcommand)]
+    pub action: SignAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum SignAction {
+    /// One time: create the "bridle local signing" certificate in the login keychain and let
+    /// codesign use it without a prompt. Needs the keychain password (prompted, or
+    /// $BRIDLE_KEYCHAIN_PASSWORD).
+    Setup,
+    /// Sign a binary with the identity if it exists, else leave its ad-hoc signature.
+    Binary {
+        /// Defaults to this `bridle`.
+        path: Option<PathBuf>,
+    },
 }
 
 #[derive(Debug, Args)]

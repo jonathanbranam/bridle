@@ -21,6 +21,7 @@ mod render;
 mod review;
 mod serve;
 mod session;
+mod sign;
 mod spec_coverage;
 mod spec_export;
 mod spec_import;

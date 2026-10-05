@@ -71,3 +71,11 @@ On Intel Macs (x86_64), binaries must be ad-hoc code-signed at link time to avoi
 system policy daemon. `.cargo/config.toml` adds `rustflags = ["-C", "link-arg=-Wl,-adhoc_codesign"]`
 for the x86_64-apple-darwin target. This applies to `cargo install`, test binaries, and worker builds.
 The flag is a no-op on arm64 (which signs automatically). See `docs/tickets/resolved/sign-binaries-on-intel-macs-cs7x.md`.
+
+Firewall "Allow" survival (p88z): an ad-hoc signature is a new identity on every build, so the
+macOS application firewall re-asks after each rebuild. Run `just sign-setup` once per Mac (works over
+SSH, asks for the login keychain password once) to create the self-signed "bridle local signing"
+identity (override the name with `BRIDLE_SIGNING_IDENTITY`). Then `just install` and the daemon's
+self-upgrade re-sign the installed binary with it; with no such identity (CI, other machines) the
+ad-hoc signature stays. `bridle sign binary [path]` does the signing by hand. Plain `cargo build`
+in a worktree stays ad-hoc: only the installed binary needs a stable identity.

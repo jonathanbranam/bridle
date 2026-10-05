@@ -81,6 +81,10 @@ mod tests {
         ("init", NoProject("creates a project in the cwd")),
         ("launchd", Resolver),
         ("systemd", Resolver),
+        (
+            "sign",
+            NoProject("signs a binary with the machine's keychain identity"),
+        ),
         ("rebuild", Daemon),
         ("daemons", NoProject("lists every project's daemon")),
         ("status", Daemon),

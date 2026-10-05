@@ -51,6 +51,8 @@ impl fmt::Debug for UpgradeHooks {
 pub struct Upgrader {
     gh: Arc<dyn Gh>,
     build: Vec<String>,
+    /// Sign the installed binary after the build: only for the real build, never a test's stand-in.
+    sign: bool,
     preflight: Preflight,
     /// One upgrade at a time: it builds for minutes before it restarts.
     busy: Arc<AtomicBool>,
@@ -84,6 +86,7 @@ impl Upgrader {
             (None, true) => Preflight::Skip,
             (None, false) => Preflight::Real,
         };
+        let sign = build.is_none();
         let build = build.unwrap_or_else(|| {
             ["cargo", "install", "--path", "crates/bridle"]
                 .map(String::from)
@@ -92,6 +95,7 @@ impl Upgrader {
         Upgrader {
             gh,
             build,
+            sign,
             preflight,
             busy: Default::default(),
             failed: Default::default(),
@@ -252,6 +256,14 @@ impl Upgrader {
             .map_err(|_| "the build timed out after an hour".to_string())?
             .map_err(|e| format!("running {program}: {e}"))?;
         if out.status.success() {
+            // A failed sign leaves the working ad-hoc build in place; don't fail the upgrade.
+            if self.sign
+                && let Err(e) = crate::exe_path()
+                    .map_err(anyhow::Error::from)
+                    .and_then(|exe| crate::signing::sign(&exe))
+            {
+                tracing::warn!("signing the upgraded binary: {e:#}");
+            }
             return Ok(());
         }
         let stderr = String::from_utf8_lossy(&out.stderr);
