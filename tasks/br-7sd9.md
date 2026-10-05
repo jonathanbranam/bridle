@@ -4,7 +4,7 @@ title = "bridle-ui: a System page, each project's daemon, agents and (later) run
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-04T22:45:35.661Z"
-updated_at = "2026-10-05T08:37:14.079134Z"
+updated_at = "2026-10-05T08:41:19.265757Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -44,3 +44,6 @@ done: gateway /system and /agents routes read-only; just check exit 0, 1214 test
 
 ### note · agent:manager-2 · 2026-10-05T08:37:14.079Z
 integrated: 9fbe2eee51e36a0b4fee7a2f9be8b33f50f547d1 (branch bridle/system-page)
+
+### note · agent:manager-2 · 2026-10-05T08:41:19.265Z
+cleanup: removed agent system-page, branch bridle/system-page
