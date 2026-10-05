@@ -4,7 +4,7 @@ title = "Interactive sessions hand themselves over and restart at 200k instead o
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-05T09:59:54.280Z"
-updated_at = "2026-10-05T12:43:09.886211Z"
+updated_at = "2026-10-05T12:49:32.806150Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 branch = "bridle/self-restart"
@@ -37,3 +37,6 @@ just check green on branch tip 8e04b6b5 (after the main merge): exit 0, 1227 tes
 
 ### note · agent:manager-2 · 2026-10-05T12:43:09.886Z
 integrated: adc8f5e4b78870d33747c9e5e4952f282b200954 (branch bridle/self-restart)
+
+### note · agent:manager-2 · 2026-10-05T12:49:32.806Z
+cleanup: removed agent self-restart, branch bridle/self-restart
