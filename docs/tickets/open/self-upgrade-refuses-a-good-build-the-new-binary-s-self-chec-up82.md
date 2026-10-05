@@ -13,8 +13,6 @@ tasks: []
 
 ## The ask
 
-## The ask
-
 Stop a good build from failing the upgrade self-check just because it is the binary's first run on a loaded machine.
 
 ## What happened

@@ -13,8 +13,6 @@ tasks: []
 
 ## The ask
 
-## The ask
-
 Make `bridle::cli_e2e`'s daemon start-up wait robust under load, so a landing check that runs alongside a worker's `just check` doesn't fail.
 
 ## What happened
