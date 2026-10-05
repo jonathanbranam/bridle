@@ -61,3 +61,14 @@ dictated; one message, split into [[bridle-ui-stable-urls-that-open-any-ticket-o
 - The human tested it on 2026-10-04: links open in the Claude app's browser (login once, then it
   stays logged in), or in Safari.
 - The bridle-ui aide started doing this by hand on 2026-10-04 at the human's request.
+
+## Priority (the human, 2026-10-04 ~10:15 PM ET, via bridle's aide)
+
+> I also want there to be a ticket that updates instructions so that every agent creates links on
+> every ticket to the vital UI page for that ticket. I want that done as soon as possible. If you
+> have the ticket, you can just read it and start following instructions right now.
+
+("vital UI" is dictation for "bridle UI".) This ticket is that one: as soon as possible. Until the rule
+lands, each agent that talks to the human links tickets by hand, in the form
+`http://dalek.tailbc91f5.ts.net:7878/document?project=<project>&path=docs%2Ftickets%2Fopen%2F<file>.md`
+(the full file name, checked; `resolved` in place of `open` once resolved).
