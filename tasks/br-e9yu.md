@@ -4,7 +4,7 @@ title = "Per-project sessions (aide) share one handover file and one identity ac
 kind = "bug"
 state = "planned"
 created_at = "2026-10-05T00:21:30.006Z"
-updated_at = "2026-10-05T00:22:27.199518Z"
+updated_at = "2026-10-05T00:22:49.318860Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -38,3 +38,6 @@ From orchestrator: br-e9yu is critical (the human's word): every project's aide 
 
 ### note · external:aide · 2026-10-05T00:22:27.199Z
 watching the task
+
+### note · external:aide · 2026-10-05T00:22:49.318Z
+The human, verbatim (via bridle-ui's aide): "There should be a write command for an agent to write a handover, and it should be fully managed. Nobody should be ready to file. This should all be managed by the system, and the system then can ensure that every agent in every project with the proper name has the right handover and that there's no confusion about anything."
