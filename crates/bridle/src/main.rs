@@ -11,6 +11,7 @@ mod focus;
 mod gateway;
 mod goals;
 mod init;
+mod kill_guard;
 mod launchd;
 mod link;
 mod migrate;

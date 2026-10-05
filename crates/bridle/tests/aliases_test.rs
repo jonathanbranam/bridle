@@ -56,6 +56,7 @@ const OLD_NAMES: &[&str] = &[
     "statusline",
     "stop-check",
     "arch-guard",
+    "kill-guard",
     "orchestrator",
     "focus",
     "wait-for-wake",

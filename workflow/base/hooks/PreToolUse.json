@@ -2,5 +2,9 @@
   {
     "matcher": "Edit|Write|MultiEdit",
     "hooks": [{ "type": "command", "command": "bridle arch-guard" }]
+  },
+  {
+    "matcher": "Bash",
+    "hooks": [{ "type": "command", "command": "bridle kill-guard" }]
   }
 ]

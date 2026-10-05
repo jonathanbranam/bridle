@@ -381,10 +381,15 @@ const DENY_REMOTE_TRIGGERS: [&str; 1] = ["RemoteTrigger"];
 /// the human, by hand. `Edit` rules cover `Write` too.
 pub const DENY_FOCUS_FILES: [&str; 2] = ["Edit(~/.bridle/focus*)", "Edit(~/.bridle/config.toml)"];
 
+/// Killing by name or pattern is never needed (rule `no-kill-by-name`, ticket 75h2); the
+/// `bridle kill-guard` hook refuses the compound forms these rules can't match.
+pub const DENY_PATTERN_KILLS: [&str; 2] = ["Bash(pkill *)", "Bash(killall *)"];
+
 fn deny_list(extra: &[&[&str]]) -> Vec<String> {
     DENY_MESSAGING_AND_SUBAGENTS
         .iter()
         .chain(DENY_FOCUS_FILES.iter())
+        .chain(DENY_PATTERN_KILLS.iter())
         .chain(extra.iter().flat_map(|s| s.iter()))
         .map(|s| s.to_string())
         .collect()
@@ -3161,6 +3166,20 @@ mod tests {
         ] {
             Config::parse(text).unwrap_or_else(|e| panic!("{text}: {e}"));
         }
+    }
+
+    #[test]
+    fn every_builtin_role_denies_pattern_kills() {
+        let cfg = Config::default();
+        for (name, role) in &cfg.roles {
+            for rule in DENY_PATTERN_KILLS {
+                assert!(
+                    role.disallowed_tools.contains(&rule.to_string()),
+                    "{name} should deny {rule}"
+                );
+            }
+        }
+        assert!(!cfg.roles.is_empty());
     }
 
     #[test]

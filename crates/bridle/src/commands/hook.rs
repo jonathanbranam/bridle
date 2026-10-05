@@ -143,3 +143,17 @@ pub(super) async fn arch_guard(cli: &Cli) -> Result<(), CliError> {
     }
     Ok(())
 }
+
+/// Claude Code's PreToolUse hook for Bash: refuses killing by name that the
+/// `pkill`/`killall` deny rules can't match (rule `no-kill-by-name`). Pure
+/// stdin to stdout; anything unparseable allows.
+pub(super) fn kill_guard() -> Result<(), CliError> {
+    let input: serde_json::Value = std::io::read_to_string(std::io::stdin())
+        .ok()
+        .and_then(|s| serde_json::from_str(&s).ok())
+        .unwrap_or(serde_json::Value::Null);
+    if let Some(reason) = crate::kill_guard::refusal(&input) {
+        println!("{}", crate::arch_guard::deny_json(&reason));
+    }
+    Ok(())
+}

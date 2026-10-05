@@ -198,6 +198,11 @@ pub enum Command {
     /// fails: any error of bridle's own allows.
     #[command(hide = true)]
     ArchGuard,
+    /// Claude Code's PreToolUse hook for Bash: refuses killing by name that the
+    /// `pkill`/`killall` deny rules can't match (`pgrep ... | xargs kill`,
+    /// `kill $(pgrep ...)`, `pkill` inside a compound command). Never fails.
+    #[command(hide = true)]
+    KillGuard,
     /// The orchestrator's supervision hooks (docs/design/agent-host/orchestrator-supervision.md).
     Orchestrator(OrchestratorArgs),
     /// Print the bridle UI link for a ticket ID or a task ID (`br-...`); nothing when no
@@ -340,6 +345,8 @@ pub enum HookAction {
     StopCheck,
     /// Claude Code's PreToolUse hook guarding `design/architecture/`.
     ArchGuard,
+    /// Claude Code's PreToolUse hook refusing kill-by-name in Bash.
+    KillGuard,
 }
 
 #[derive(Debug, Subcommand)]

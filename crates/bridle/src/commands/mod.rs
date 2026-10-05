@@ -96,6 +96,7 @@ fn normalize(cmd: Command) -> Command {
             H::Statusline => Command::Statusline,
             H::StopCheck => Command::StopCheck,
             H::ArchGuard => Command::ArchGuard,
+            H::KillGuard => Command::KillGuard,
         },
         Command::Usage(UsageArgs { sub: Some(sub), .. }) => match sub {
             UsageSub::Cost(a) => Command::Cost(a),
@@ -187,6 +188,7 @@ pub async fn run(mut cli: Cli) -> Result<(), CliError> {
         Command::Statusline => statusline(&cli).await,
         Command::StopCheck => stop_check(&cli).await,
         Command::ArchGuard => arch_guard(&cli).await,
+        Command::KillGuard => kill_guard(),
         Command::Orchestrator(OrchestratorArgs {
             action: OrchestratorAction::NoteSession,
         }) => {

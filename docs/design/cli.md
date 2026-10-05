@@ -145,6 +145,7 @@ bridle handover list [--role R] | show <id> | latest [--role R]     the notes, n
 bridle mail run                              the email bridge for this project: inbound mail, question mails, daily digest (docs/design/mail.md); runs as external:mail
 bridle orchestrator wait-for-wake [--timeout SECS]                  the orchestrator's background watcher: waits for a wake condition, prints it and exits 0 (6 with the reason on stderr when the daemon is restarting or shutting down; `nothing` at the timeout, default 25 min, cap 6900 s); external:orchestrator only
 bridle hook arch-guard                      Claude Code PreToolUse hook: blocks design/architecture/ edits outside an arch-revision task
+bridle hook kill-guard                      Claude Code PreToolUse hook (Bash): refuses kill-by-name (pgrep | xargs kill, kill $(pgrep), pkill in a compound command)
 bridle hook stop-check                      Claude Code Stop hook for the worker role; refuses to stop
                                              with an unreleased claim and no thread entry since claiming
                                              it (docs/design/coordination.md); never fails
@@ -784,6 +785,12 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   ([[docs/design/architecture-tier|architecture tier]]). Any error of bridle's own allows.
   Built, not wired in: it runs only where `sync` was run and the resulting `.claude/settings.json`
   committed; bridle's own repo hasn't (no `hooks` in its settings).
+- **`kill-guard`** is Claude Code's `PreToolUse` hook for `Bash` (same `PreToolUse.json`, rendered
+  by `sync`). It reads the hook JSON on stdin and denies a command that kills by name:
+  `pkill`/`killall` as any command in a compound line, or `pgrep` together with `kill`. Plain
+  `pkill *`/`killall *` are also in every role's `disallowed_tools` and the session settings' deny list; the
+  hook covers what those prefix rules miss. `kill <pid>`, `kill $!` and `kill %1` are allowed.
+  Rule `no-kill-by-name`; ticket 75h2.
 - **`stop-check`** is Claude Code's `Stop` hook, registered only for the worker role
   ([[docs/design/coordination#How agents actually hear things (Claude Code integration)|coordination.md]],
   [[docs/spikes/05-stop-hook-findings|spike 05]]). It reads the hook's JSON on stdin; if
