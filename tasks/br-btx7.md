@@ -4,7 +4,7 @@ title = "A landing fails 'main moved' whenever docs are committed during its che
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-05T01:17:02.629Z"
-updated_at = "2026-10-05T05:12:22.705423Z"
+updated_at = "2026-10-05T05:14:53.083909Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 branch = "bridle/land-moved"
@@ -28,3 +28,6 @@ done: [integration] check_skip_paths lets a landing survive docs-only moves of m
 
 ### note · agent:manager-2 · 2026-10-05T05:12:22.705Z
 integrated: 0a8573bca3de489eadffae6bcb22c8945d081cac (branch bridle/land-moved)
+
+### note · agent:manager-2 · 2026-10-05T05:14:53.083Z
+cleanup: removed agent land-moved, branch bridle/land-moved
