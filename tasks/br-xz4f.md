@@ -4,9 +4,10 @@ title = "Tasks approved by anyone but the orchestrator are never planned: nothin
 kind = "bug"
 state = "planned"
 created_at = "2026-10-04T22:06:38.716Z"
-updated_at = "2026-10-05T01:02:16.302661Z"
+updated_at = "2026-10-05T14:47:52.944527Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+summary = "Readying a task (task ready) now messages the running project-manager, else the orchestrator, once per settled burst naming each still-open task (skipped when the PM readied it). A task open with no activity for [tasks] open_stale (default 4h, 0 = off) goes back to pending with a thread note and a message to the orchestrator and the readier (readier kept in memory; creator after a restart); tasks with an open question are skipped. New crates/bridle-daemon/src/open_watch.rs, run on the existing settle-wake tick; TaskManager::unready_stale; config + docs + CHANGELOG. Caveat: the staleness clock is updated_at, so any comment on an open task resets it."
 +++
 
 original id: xz4f
