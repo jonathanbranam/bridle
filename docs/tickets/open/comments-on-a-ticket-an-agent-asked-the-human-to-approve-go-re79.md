@@ -37,3 +37,16 @@ filed as [[how-agents-send-the-human-status-updates-versus-things-to-ac-g6v4|g6v
 - Tickets have no approval state or field today; approvals are quoted into the ticket or task body
   by whoever relays them.
 - One sentence of the dictation ("Take filter into this") is left out: the human said it was a transcription error.
+
+## The human's idea (not a decision)
+
+The human, verbatim (2026-10-04 ~9:10 PM ET, to the bridle-ui aide):
+
+> I want to check the design of how review comments would go to that agent. Can you explain that
+> to me? I don't have an answer exactly yet, but I'm thinking that there should be something in the
+> front matter that says review comments get filtered to this specific agent. That's my thinking,
+> but what does the design say?
+
+Fact: the daemon's document watcher (`crates/bridle-daemon/src/doc_watch.rs`) reads no front matter.
+The receiving agent is fixed by the file name (`doc-<id>` / `doc-<slug>-<hash>`, role
+`document-reviewer`).
