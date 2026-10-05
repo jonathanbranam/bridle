@@ -146,3 +146,56 @@ fn a_replaced_binary_is_re_executed() {
     );
     assert_eq!(std::fs::read_to_string(&marker).unwrap().trim(), "gateway");
 }
+
+#[test]
+fn hash_password_with_piped_input() {
+    let home = tempfile::tempdir().unwrap();
+    let mut cmd = Command::new(PathBuf::from(env!("CARGO_BIN_EXE_bridle")))
+        .env("BRIDLE_HOME", home.path())
+        .arg("gateway")
+        .arg("hash-password")
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .unwrap();
+
+    if let Some(mut stdin) = cmd.stdin.take() {
+        use std::io::Write;
+        let _ = stdin.write_all(b"test_password\n");
+    }
+
+    let out = cmd.wait_with_output().unwrap();
+    assert!(
+        out.status.success(),
+        "{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let hash = String::from_utf8_lossy(&out.stdout).trim().to_string();
+    assert!(!hash.is_empty(), "hash should not be empty");
+    assert!(hash.len() > 20, "hash should be a valid argon2 hash");
+}
+
+#[test]
+fn hash_password_with_piped_empty_input_fails() {
+    let home = tempfile::tempdir().unwrap();
+    let mut cmd = Command::new(PathBuf::from(env!("CARGO_BIN_EXE_bridle")))
+        .env("BRIDLE_HOME", home.path())
+        .arg("gateway")
+        .arg("hash-password")
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .unwrap();
+
+    if let Some(mut stdin) = cmd.stdin.take() {
+        use std::io::Write;
+        let _ = stdin.write_all(b"\n");
+    }
+
+    let out = cmd.wait_with_output().unwrap();
+    assert!(!out.status.success());
+    let err = String::from_utf8_lossy(&out.stderr);
+    assert!(err.contains("no password"), "{err}");
+}

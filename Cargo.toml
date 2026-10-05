@@ -31,6 +31,7 @@ ratatui = "0.30"
 hex = "0.4"
 nix = { version = "0.31", features = ["signal", "process", "fs"] }
 reqwest = { version = "0.13", default-features = false, features = ["json", "query", "stream"] }
+rpassword = "7"
 rusqlite = { version = "0.40", features = ["bundled"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

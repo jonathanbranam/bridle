@@ -5,6 +5,7 @@
 use anyhow::Context;
 use bridle_gateway::GatewayConfig;
 
+use std::io::IsTerminal;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
@@ -125,15 +126,32 @@ async fn run_detached(cli: &Cli, home: &Path, config: &GatewayConfig) -> Result<
 
 /// Reads from stdin, not an argument, so the password stays out of shell history and `ps`.
 fn hash_password() -> Result<(), CliError> {
-    let mut line = String::new();
-    std::io::stdin()
-        .read_line(&mut line)
-        .context("reading the password from stdin")?;
-    let password = line.trim_end_matches(['\r', '\n']);
-    if password.is_empty() {
-        return Err(anyhow::anyhow!("no password on stdin").into());
-    }
-    let hash = bridle_gateway::auth::hash_password(password)
+    let password = if std::io::stdin().is_terminal() {
+        eprint!("Password: ");
+        let _ = std::io::Write::flush(&mut std::io::stderr());
+        let pass = rpassword::read_password().context("reading password")?;
+        if pass.is_empty() {
+            return Err(anyhow::anyhow!("no password provided").into());
+        }
+        eprint!("Confirm Password: ");
+        let _ = std::io::Write::flush(&mut std::io::stderr());
+        let confirm = rpassword::read_password().context("reading password confirmation")?;
+        if pass != confirm {
+            return Err(anyhow::anyhow!("passwords do not match").into());
+        }
+        pass
+    } else {
+        let mut line = String::new();
+        std::io::stdin()
+            .read_line(&mut line)
+            .context("reading the password from stdin")?;
+        let password = line.trim_end_matches(['\r', '\n']).to_string();
+        if password.is_empty() {
+            return Err(anyhow::anyhow!("no password on stdin").into());
+        }
+        password
+    };
+    let hash = bridle_gateway::auth::hash_password(&password)
         .map_err(|e| anyhow::anyhow!("hashing: {e}"))?;
     println!("{hash}");
     Ok(())
