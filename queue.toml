@@ -1,5 +1,6 @@
 [[tier]]
 tasks = [
+    "br-yfjc",
     "br-e9yu",
     "br-a3yd",
     "br-s6cj",
@@ -7,6 +8,7 @@ tasks = [
     "br-g49c",
     "br-vhss",
     "br-btx7",
+    "br-ds96",
 ]
 
 [[tier]]
@@ -27,9 +29,6 @@ tasks = ["br-4s3z"]
 
 [[tier]]
 tasks = ["br-75h2"]
-
-[[tier]]
-tasks = ["br-yfjc"]
 
 [[tier]]
 tasks = ["br-rz4e"]
