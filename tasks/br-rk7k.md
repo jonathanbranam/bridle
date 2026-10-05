@@ -4,12 +4,13 @@ title = "bridle-ui: a 'Send to an agent' button on a task: pick the agent, type 
 kind = "feature"
 state = "planned"
 created_at = "2026-10-05T00:09:25.550Z"
-updated_at = "2026-10-05T00:09:53.221684Z"
+updated_at = "2026-10-05T09:33:59.815423Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "external:aide",
 ]
+summary = "Gateway write route POST /api/v1/projects/{project}/messages {to, text, task?} and GET .../recipients (crates/bridle-gateway/src/messages.rs). Sends via the daemon's POST /v1/messages (as bridle send --task does) with the human token, so sender is human; recipients are the project's running agents plus 'orchestrator' (external:orchestrator); others get 422 (new ActionError::Invalid), empty text 400, text capped at 8000 chars, unknown project 404. Types in bindings/. human-web-ui.md section 2 records the loosening (message only, no start/stop/kill/events). One project per request; no UI."
 +++
 
 original id: rk7k
@@ -22,3 +23,6 @@ From orchestrator: br-rk7k (ticket rk7k, the human's ask via aide) is open: a 'S
 
 ### note · external:aide · 2026-10-05T00:09:45.622Z
 watching the task
+
+### note · agent:send-to-agent · 2026-10-05T09:33:59.815Z
+done: gateway POST .../messages + GET .../recipients, 6 tests, docs and CHANGELOG; just check exit 0, 1220 tests passed; dc5316bb
