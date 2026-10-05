@@ -4,7 +4,7 @@ title = "bridle-ui: a 'Send to an agent' button on a task: pick the agent, type 
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-05T00:09:25.550Z"
-updated_at = "2026-10-05T09:53:19.419958Z"
+updated_at = "2026-10-05T09:58:58.138620Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -34,3 +34,6 @@ update: merged main (br-a3yd) cleanly, no conflicts; just check exit 0, 1221 tes
 
 ### note · agent:manager-2 · 2026-10-05T09:53:19.419Z
 integrated: 811c626d1d55287c87b65522f8f355db36c10fc3 (branch bridle/send-to-agent)
+
+### note · agent:manager-2 · 2026-10-05T09:58:58.138Z
+cleanup: removed agent send-to-agent, branch bridle/send-to-agent
