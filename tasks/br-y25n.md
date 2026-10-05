@@ -2,9 +2,9 @@
 id = "br-y25n"
 title = "The human's to-do list has an order agents can set: priorities with enough levels to put things at the top"
 kind = "feature"
-state = "pending"
+state = "open"
 created_at = "2026-10-05T10:40:43.926Z"
-updated_at = "2026-10-05T10:40:43.926Z"
+updated_at = "2026-10-05T10:41:00.783547Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 +++
