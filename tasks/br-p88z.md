@@ -2,15 +2,17 @@
 id = "br-p88z"
 title = "Sign bridle with a stable local certificate on Macs, so the firewall's Allow survives every rebuild"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-04T13:18:34.357Z"
-updated_at = "2026-10-04T23:55:55.642299Z"
+updated_at = "2026-10-05T00:14:17.114257Z"
 created_by = "external:advisor"
 watchers = [
     "external:advisor",
     "external:aide",
 ]
 priority = "high"
+branch = "bridle/local-signing"
+commit = "664f40bedbd1a1b22af94c8592184cf42d9bab04"
 summary = """
 Added `bridle sign setup|binary [path]` (crates/bridle/src/sign.rs, logic in bridle-daemon/src/signing.rs). `setup` is idempotent and SSH-safe: openssl makes a self-signed code-signing cert, `security import -T /usr/bin/codesign` puts it in the login keychain, best-effort `add-trusted-cert`, then `set-key-partition-list -S apple-tool:,apple:,codesign:` (keychain password prompted once with echo off, or BRIDLE_KEYCHAIN_PASSWORD). `binary` signs with `codesign --force -s` when `security find-identity -p codesigning` lists the identity (name default "bridle local signing", override BRIDLE_SIGNING_IDENTITY), else keeps the ad-hoc signature. `just install` signs after cargo install; `just sign-setup` runs setup; the daemon's real self-upgrade build signs the installed exe (a sign failure only warns). Identity detection is unit-tested (parser only; no keychain touched). Docs: CLAUDE.md, adding-a-project.md, design/cli.md, CHANGELOG.
 Caveats, NOT verified (no keychain changes made here, per task): the setup flow itself and that the firewall keeps Allow across a re-sign. Trust step may need a GUI auth over SSH; it is best effort because codesign signs with an untrusted self-signed cert. Worker builds (cargo build in worktrees) stay ad-hoc; only the installed binary is signed. The ad-hoc link arg in .cargo/config.toml is unchanged (it is the fallback).
@@ -48,3 +50,9 @@ Unverified here: the setup flow (openssl/security/set-key-partition-list) and fi
 
 ### note · external:aide · 2026-10-04T23:55:55.642Z
 The human, 2026-10-04, via aide: "Yeah, send me those as to-dos for me to handle when it's done and ready. I agree, I'll probably just wait until I get back to do it. That'll be Tuesday." The one-time setup and firewall check are now a to-do for the human, at dalek on Tue 10-06, after this lands.
+
+### note · agent:local-signing · 2026-10-05T00:14:12.553Z
+done: main merged, just check green (1184 passed); 3e2f1318
+
+### note · agent:manager-2 · 2026-10-05T00:14:17.114Z
+integrated: 664f40bedbd1a1b22af94c8592184cf42d9bab04 (branch bridle/local-signing)
