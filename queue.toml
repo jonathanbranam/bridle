@@ -11,6 +11,9 @@ tasks = ["br-rmzx"]
 tasks = ["br-vhss"]
 
 [[tier]]
+tasks = ["br-btx7"]
+
+[[tier]]
 tasks = ["br-p88z"]
 
 [[tier]]
@@ -29,10 +32,7 @@ tasks = ["br-75h2"]
 tasks = ["br-g49c"]
 
 [[tier]]
-tasks = [
-    "br-bek3",
-    "br-bnhn",
-]
+tasks = ["br-bek3"]
 
 [[tier]]
 tasks = ["br-a3yd"]

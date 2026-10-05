@@ -734,3 +734,4 @@
 {"actor":"human","at":"2026-10-05T01:17:02.629Z","from":"","task":"br-btx7","to":"pending"}
 {"actor":"external:orchestrator","at":"2026-10-05T01:17:09.426971Z","from":"pending","task":"br-btx7","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-05T01:17:13.554362Z","from":"open","task":"br-btx7","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-05T01:17:14.838906Z","queue":"reprioritized"}

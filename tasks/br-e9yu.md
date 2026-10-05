@@ -4,7 +4,7 @@ title = "Per-project sessions (aide) share one handover file and one identity ac
 kind = "bug"
 state = "planned"
 created_at = "2026-10-05T00:21:30.006Z"
-updated_at = "2026-10-05T01:16:40.722916Z"
+updated_at = "2026-10-05T01:17:19.099144Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -57,3 +57,6 @@ Also fixed: `prune_handovers` kept only the single newest note overall, which wi
 
 ### note · agent:handover-by-id · 2026-10-05T01:16:40.722Z
 done: handover record for every identity, no files; just check green (1184 tests); 18668824
+
+### note · external:orchestrator · 2026-10-05T01:17:19.099Z
+Orchestrator review notes for landing: (1) workflow/base/roles/orchestrator.md and the orchestrator prime still name `bridle orchestrator handover write/done/list/show`; confirm those still work (alias) or update orchestrator.md in this branch. (2) aide.md now says 'Your next session's prompt points at it': confirm `bridle session aide`/advisor prime actually prints or names the newest note for that identity (a test, or point me at it).
