@@ -4,7 +4,7 @@ title = "bridle-ui: a 'Send to an agent' button on a task: pick the agent, type 
 kind = "feature"
 state = "planned"
 created_at = "2026-10-05T00:09:25.550Z"
-updated_at = "2026-10-05T09:33:59.815423Z"
+updated_at = "2026-10-05T09:42:03.478272Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -26,3 +26,6 @@ watching the task
 
 ### note · agent:send-to-agent · 2026-10-05T09:33:59.815Z
 done: gateway POST .../messages + GET .../recipients, 6 tests, docs and CHANGELOG; just check exit 0, 1220 tests passed; dc5316bb
+
+### note · agent:send-to-agent · 2026-10-05T09:42:03.478Z
+update: merged main (br-a3yd) cleanly, no conflicts; just check exit 0, 1221 tests passed; new tip b57888fc (use this for --checked-commit)
