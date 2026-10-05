@@ -4,7 +4,7 @@ title = "Self-upgrade refuses a good build: the new binary's self-check timed ou
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-05T04:02:26.820Z"
-updated_at = "2026-10-05T06:40:13.688802Z"
+updated_at = "2026-10-05T06:45:09.930573Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 branch = "bridle/upgrade-selfcheck"
@@ -25,3 +25,6 @@ done: self-check retries on timeout (3 runs), tests + doc + changelog; just chec
 
 ### note · agent:manager-2 · 2026-10-05T06:40:13.688Z
 integrated: c2ac03d68dd6c05718ce6a983f07b1903d79538f (branch bridle/upgrade-selfcheck)
+
+### note · agent:manager-2 · 2026-10-05T06:45:09.930Z
+cleanup: removed agent upgrade-selfcheck, branch bridle/upgrade-selfcheck
