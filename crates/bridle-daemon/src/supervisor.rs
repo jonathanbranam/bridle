@@ -659,8 +659,9 @@ impl AgentManager {
             let body = format!(
                 "Context handoff: your context is at {tokens} tokens, past this role's \
                  {threshold:.0}-token wind-down threshold. Commit your work in progress \
-                 to your branch, then send a short handoff note on where you are and \
-                 what's next — you'll be renewed with a fresh context once this turn \
+                 to your branch, then write your handover note with \
+                 `bridle handover write --file -` (where you are, what's next, the task \
+                 you're on); your replacement is given it. You'll be renewed with a fresh context once this turn \
                  ends (or in {grace_secs}s regardless).",
                 grace_secs = self.0.config.context.wind_down_grace.as_secs(),
             );
@@ -2821,15 +2822,24 @@ impl AgentManager {
         // sits on stdin forever (br-ab66). The context governor already told
         // the outgoing process to leave a handoff note before renewing
         // (`tick_context_check` above); point the replacement at it.
-        let handoff_note = match agent.context_tokens {
-            Some(tokens) => format!(
-                "You were renewed for context (you were at ~{tokens} tokens). Continue from \
-                 your task's thread and your own last handoff note"
-            ),
-            None => "You were renewed for context. Continue from your task's thread and your \
-                     own last handoff note"
-                .to_string(),
-        };
+        let principal_id = format!("agent:{}", agent.name);
+        let task_id = self
+            .0
+            .store
+            .list_claims()
+            .await?
+            .into_iter()
+            .find(|c| c.claimed_by == principal_id)
+            .map(|c| c.task_id);
+        // Newest first; the key is the same one `write_handover` files the agent's notes under.
+        let note = self
+            .0
+            .store
+            .list_handovers()
+            .await?
+            .into_iter()
+            .find(|h| h.role == principal_id);
+        let handoff_note = renewal_lead_in(agent.context_tokens, task_id.as_deref(), note.as_ref());
         self.send_continuation_note(principal, &agent.id, &handoff_note)
             .await?;
 
@@ -2853,7 +2863,7 @@ impl AgentManager {
             principal.id.clone(),
             ToTarget::Agent(agent_id.to_string()),
             MessageKind::Note,
-            format!("{lead_in} — check `bridle inbox` and the task body for where you left off."),
+            format!("{lead_in} Check `bridle inbox` and the task thread for anything newer."),
             bridle_api::types::When::Now,
             None,
         )
@@ -3218,9 +3228,59 @@ fn truncate_chars(s: &str, max_chars: usize) -> String {
     }
 }
 
+/// The renewal continuation: the claimed task and the newest handover note for the agent's
+/// identity (br-cyvf). Without a note it says so rather than sending the agent hunting.
+fn renewal_lead_in(
+    tokens: Option<u64>,
+    task_id: Option<&str>,
+    note: Option<&bridle_api::types::Handover>,
+) -> String {
+    let mut s = match tokens {
+        Some(t) => format!("You were renewed for context (you were at ~{t} tokens)."),
+        None => "You were renewed for context.".to_string(),
+    };
+    match task_id {
+        Some(t) => s.push_str(&format!(
+            " Your task is {t}: `bridle task show {t}` has its body and thread."
+        )),
+        None => s.push_str(" You have no claimed task."),
+    }
+    match note {
+        Some(h) => s.push_str(&format!(
+            " Your last handover note ({}, `bridle handover show {}`):\n\n{}\n\n",
+            h.id, h.id, h.body
+        )),
+        None => s.push_str(" No handover note was written; continue from the task thread."),
+    }
+    s
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn note() -> bridle_api::types::Handover {
+        bridle_api::types::Handover {
+            id: "h-0007".to_string(),
+            role: "agent:w".to_string(),
+            project: "p".to_string(),
+            body: "step 3 next".to_string(),
+            created_at: chrono::Utc::now(),
+            created_by: "agent:w".to_string(),
+        }
+    }
+
+    #[test]
+    fn renewal_gets_task_and_note() {
+        let s = renewal_lead_in(Some(900), Some("br-abcd"), Some(&note()));
+        assert!(s.contains("br-abcd") && s.contains("step 3 next") && s.contains("h-0007"));
+    }
+
+    #[test]
+    fn renewal_without_note_says_so() {
+        let s = renewal_lead_in(None, Some("br-abcd"), None);
+        assert!(s.contains("br-abcd") && s.contains("No handover note"));
+    }
 
     #[test]
     fn test_agent_path() {

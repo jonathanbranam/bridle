@@ -170,7 +170,7 @@ async fn renew_sends_a_continuation_note_with_no_pending_messages() {
     assert!(
         inbox
             .iter()
-            .any(|m| m.body.contains("Continue from your task's thread")),
+            .any(|m| m.body.contains("No handover note was written")),
         "expected a continuation note in the renewed agent's inbox, got {inbox:?}"
     );
 
