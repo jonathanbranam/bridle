@@ -4,7 +4,7 @@ title = "Interactive sessions hand themselves over and restart at 200k instead o
 kind = "feature"
 state = "planned"
 created_at = "2026-10-05T09:59:54.280Z"
-updated_at = "2026-10-05T12:34:21.913949Z"
+updated_at = "2026-10-05T12:34:23.649960Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 summary = "The 200k and 250k session context step notes (crates/bridle-daemon/src/sessions.rs) now tell the session to restart itself: say 'I'm at 200k; restarting', run 'bridle session restart <identity>', write the handover it asks for; the human can still 'session keep' and nothing is forced before 300k. aide.md and advisor.md say the same; orchestrator-supervision.md, CHANGELOG updated; new test the_200k_step_tells_the_session_to_hand_over_and_restart_itself. Role prompts reach existing projects with no per-project change: a role with no system_prompt in .bridle/config.toml reads workflow/base/roles/<role>.md when the session launches (docs/design/workflow-layers.md), so they pick it up at the next launch, unless a project sets its own system_prompt. Caveat: restart without --fresh asks the session for a note itself, so the step text says 'write the note it asks for' rather than writing one first."
@@ -26,3 +26,6 @@ done: sessions restart themselves at 200k; just check exit 0, 1227 tests passed;
 
 ### note · agent:self-restart · 2026-10-05T12:34:21.913Z
 correction: the green just check (exit 0, 1227 passed) ran on the commit before the merge; the tip is merge 8e04b6b5, and main brought in only a ticket doc, so no re-run. Pre-merge commit: de6f04a4
+
+### note · agent:manager-2 · 2026-10-05T12:34:23.649Z
+Your done line gave no sha and said 'checked on 3b-less commit'. Is just check green on the branch tip 8e04b6b5 (after the main merge)? Reply with the sha, exit status and test count for exactly that sha; rerun if not.
