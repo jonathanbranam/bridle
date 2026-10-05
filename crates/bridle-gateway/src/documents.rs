@@ -155,6 +155,62 @@ pub async fn search_route(
     Ok(Json(DocumentMatches { project, paths }))
 }
 
+/// `POST .../links/resolve` body: link targets as written in the docs.
+#[derive(Debug, Clone, Deserialize, Serialize, TS)]
+pub struct LinkResolveRequest {
+    pub targets: Vec<String>,
+}
+
+/// One target and the existing document it names, if any.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
+pub struct ResolvedLink {
+    pub target: String,
+    pub path: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
+pub struct ResolvedLinks {
+    pub project: String,
+    pub links: Vec<ResolvedLink>,
+}
+
+/// `POST /api/v1/projects/{project}/links/resolve`: which of the UI's link targets are documents.
+pub async fn resolve_links_route(
+    Path(project): Path<String>,
+    Json(req): Json<LinkResolveRequest>,
+) -> Result<Json<ResolvedLinks>, DocError> {
+    let repo = repo_of(&project).await?;
+    let links = blocking(move || Ok(resolve_links(&repo, &req.targets))).await?;
+    Ok(Json(ResolvedLinks { project, links }))
+}
+
+/// A target with a folder is a path under `docs/` (a wiki link may omit `.md`); one without is a
+/// ticket stem, looked up in `open/` then `resolved/` since tickets move. Anything that escapes
+/// the repo, leaves `docs/` or doesn't exist resolves to none; bare names like README never do.
+pub fn resolve_links(repo: &FsPath, targets: &[String]) -> Vec<ResolvedLink> {
+    let exists = |rel: &str| rel.starts_with("docs/") && resolve(repo, rel).is_ok();
+    targets
+        .iter()
+        .map(|t| {
+            let path = if t.contains('/') {
+                [t.clone(), format!("{t}.md")]
+                    .into_iter()
+                    .find(|c| exists(c))
+            } else {
+                let stem = t.strip_suffix(".md").unwrap_or(t);
+                ["open", "resolved"]
+                    .iter()
+                    .map(|d| format!("docs/tickets/{d}/{stem}.md"))
+                    .find(|c| exists(c))
+            };
+            ResolvedLink {
+                target: t.clone(),
+                path,
+            }
+        })
+        .collect()
+}
+
 async fn blocking<T: Send + 'static>(
     f: impl FnOnce() -> Result<T, DocError> + Send + 'static,
 ) -> Result<T, DocError> {
@@ -356,6 +412,37 @@ pub fn write_document(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn resolves_paths_and_ticket_stems_only_inside_docs() {
+        let d = repo("main");
+        let root = d.path();
+        for dir in ["docs/tickets/open", "docs/tickets/resolved"] {
+            std::fs::create_dir_all(root.join(dir)).expect("mkdir");
+        }
+        std::fs::write(root.join("docs/tickets/open/a-thing-ab12.md"), "x").expect("write");
+        std::fs::write(root.join("docs/tickets/resolved/old-one-cd34.md"), "x").expect("write");
+        std::fs::write(root.join("README.md"), "x").expect("write");
+        let got = |t: &str| resolve_links(root, &[t.to_string()]).remove(0).path;
+        assert_eq!(got("docs/doc"), Some("docs/doc.md".into()));
+        assert_eq!(got("docs/doc.md"), Some("docs/doc.md".into()));
+        assert_eq!(
+            got("a-thing-ab12"),
+            Some("docs/tickets/open/a-thing-ab12.md".into())
+        );
+        assert_eq!(
+            got("old-one-cd34"),
+            Some("docs/tickets/resolved/old-one-cd34.md".into())
+        );
+        assert_eq!(got("docs/missing"), None);
+        assert_eq!(got("nope-ef56"), None);
+        assert_eq!(got("README"), None);
+        assert_eq!(got("README.md"), None);
+        assert_eq!(got("docs/../README.md"), None);
+        assert_eq!(got("/etc/passwd"), None);
+        assert_eq!(got("../x/docs/doc.md"), None);
+        assert_eq!(got("blob.bin"), None);
+    }
 
     fn run(dir: &FsPath, args: &[&str]) {
         let out = Command::new("git")

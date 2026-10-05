@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- Gateway `POST /api/v1/projects/{project}/links/resolve` tells the UI which wiki links, doc paths and ticket stems name an existing document under `docs/` (br-bnhn).
 - Stable local code signing on Macs: `just sign-setup` (or `bridle sign setup`) creates a self-signed "bridle local signing" identity over SSH with no GUI dialog; `just install` and the daemon's self-upgrade then re-sign the installed binary with it, so the firewall's Allow survives rebuilds. Without the identity the ad-hoc signature stays (br-p88z, ticket p88z).
 
 ### Changed

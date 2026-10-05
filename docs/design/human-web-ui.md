@@ -81,6 +81,16 @@ daemon that can't be reached is logged and doesn't fail the save, and a comment 
 still needs `bridle review add` (nothing scans the repo for them; whether anything should is
 undecided). The UI side (project dropdown, search box, margin layout) is bridle-ui's.
 
+**Link resolution (br-bnhn, ticket bnhn).** `POST /api/v1/projects/{project}/links/resolve` with
+`LinkResolveRequest {targets}` returns `ResolvedLinks {project, links}`, one `{target, path}` per
+target in order, `path` null when nothing matches. A target with a `/` is a path under `docs/`
+(`docs/design/gates` or `docs/design/cli.md`; `.md` is tried if the target as written is no
+file); one without is a ticket stem, looked up in `docs/tickets/open/` then `resolved/` (tickets
+move). Targets are checked on disk with the same rules as a document read, so `..`, absolute
+paths, symlinks out of the repo and anything outside `docs/` resolve to null, never an error.
+Bare names like `README` are not resolved (undecided). The UI turns wiki links and paths into
+links with the answer; rendering is bridle-ui's.
+
 **Review now (br-qttb, ticket x8jt).** `POST /api/v1/projects/{project}/review` with
 `ReviewRequest {path, resend}` (`resend` defaults to false) asks the project's daemon to send the
 document's unsent comment threads to its agent at once, like `bridle review now`; returns

@@ -9,7 +9,9 @@ use ts_rs::{Config, TS};
 use crate::actions::{ActionRequest, ActionResult, ReviewRequest, ReviewResult};
 use crate::auth::{Credentials, SessionInfo};
 use crate::discovery::{ProjectStatus, Projects};
-use crate::documents::{Document, DocumentMatches, DocumentSaved, DocumentWrite};
+use crate::documents::{
+    Document, DocumentMatches, DocumentSaved, DocumentWrite, LinkResolveRequest, ResolvedLinks,
+};
 use crate::interactions::{DayReport, HoursReport, InteractionReport, IntervalsReport};
 use crate::items::{Decision, Items, Priority, ProjectItems, Todo};
 use crate::ui::UiHealth;
@@ -22,6 +24,8 @@ pub fn export_all(dir: &Path) -> Result<(), ts_rs::ExportError> {
     Items::export_all(&config)?;
     ProjectItems::export_all(&config)?;
     Decision::export_all(&config)?;
+    LinkResolveRequest::export_all(&config)?;
+    ResolvedLinks::export_all(&config)?;
     Todo::export_all(&config)?;
     Priority::export_all(&config)?;
     Credentials::export_all(&config)?;

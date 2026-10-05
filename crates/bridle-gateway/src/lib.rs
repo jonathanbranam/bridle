@@ -54,6 +54,10 @@ pub fn router(login: Option<Login>, ui: UiConfig, interactions: report::Interact
             "/projects/{project}/documents/{*path}",
             get(documents::read_route).put(documents::write_route),
         )
+        .route(
+            "/projects/{project}/links/resolve",
+            post(documents::resolve_links_route),
+        )
         .route("/projects/{project}/review", post(actions::review_route))
         .route(
             "/projects/{project}/tasks/{id}/{action}",
