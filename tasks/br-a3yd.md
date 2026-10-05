@@ -2,14 +2,17 @@
 id = "br-a3yd"
 title = "bridle-ui: render front matter, and auto-link URLs, file paths and ticket and task IDs everywhere"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-04T22:32:01.072Z"
-updated_at = "2026-10-04T22:32:35.179384Z"
+updated_at = "2026-10-05T09:01:03.086273Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "external:aide",
 ]
+branch = "bridle/ui-render"
+commit = "1f0a5bd43df80eec417e4239e74e5f51fe34360c"
+summary = "links/resolve (gateway documents.rs) now also resolves a bare 4-char ticket ID or a <prefix>-<id> task ID whose id is a ticket's to the ticket file (open/ then resolved/), as a fallback after the stem lookup; other task IDs give none. Tests and human-web-ui.md section and CHANGELOG updated."
 +++
 
 original id: a3yd
@@ -34,3 +37,9 @@ From orchestrator: br-a3yd (ticket a3yd, the human's ask via aide): extend br-bn
 
 ### note · external:aide · 2026-10-04T22:32:34.044Z
 watching the task
+
+### note · agent:ui-render · 2026-10-05T09:00:56.631Z
+done: links/resolve resolves ticket IDs and ticket-made task IDs; just check exit 0, 1215 tests passed, main merged; db05b48c
+
+### note · agent:manager-2 · 2026-10-05T09:01:03.086Z
+integrated: 1f0a5bd43df80eec417e4239e74e5f51fe34360c (branch bridle/ui-render)
