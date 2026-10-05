@@ -4,7 +4,7 @@ title = "Self-upgrade refused good builds 3 times overnight: the new binary's se
 kind = "incident"
 state = "pending"
 created_at = "2026-10-05T12:17:39.961Z"
-updated_at = "2026-10-05T12:17:39.961Z"
+updated_at = "2026-10-05T12:21:10.605287Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 +++
@@ -18,3 +18,8 @@ Impact: the installed daemon/gateway stayed on d1ed064d for ~7 h while 8 overnig
 Cause (to confirm in the postmortem): the self-check's 60 s budget on the Intel Mac under concurrent worker builds/tests (same load family as br-ksz7's cli_e2e timeouts). A fix to the check can't fix the checker that's already running: the bootstrap gap.
 
 Follow-ups: br-up82 (landed), ticket up82, docs/context/incidents.md entry (e0fbe4d0), postmortem ticket (to be filed).
+
+## Thread
+
+### note · external:orchestrator · 2026-10-05T12:21:10.605Z
+Postmortem: ticket q7mv (docs/tickets/open/postmortem-the-self-upgrade-refused-three-good-builds-overnight-q7mv.md). Corrections to the body: (1) the gateway (pid 60915, started 2026-10-04 22:05Z) predates br-bek3, so it does NOT follow the upgrade and still serves old code: it needs 'bridle gateway --detach' once (br-46me step 2). (2) br-46me was filed at 03:00Z, before this incident. (3) The 12:08Z success was the old single 60 s check passing on a quiet machine, not up82's retry.
