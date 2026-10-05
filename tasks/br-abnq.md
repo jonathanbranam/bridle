@@ -4,7 +4,7 @@ title = "One command for any agent's status and context"
 kind = "feature"
 state = "pending"
 created_at = "2026-10-05T10:25:03.830Z"
-updated_at = "2026-10-05T10:25:13.606703Z"
+updated_at = "2026-10-05T10:25:22.495065Z"
 created_by = "external:orchestrator@nuc"
 watchers = ["external:orchestrator@nuc"]
 +++
@@ -24,3 +24,6 @@ Ask: e.g. 'bridle context [<agent|session>]' (or 'bridle agent status <name>' co
 
 ### note · external:orchestrator@nuc · 2026-10-05T10:25:03.833Z
 submitted by external:orchestrator@nuc
+
+### note · agent:pm-1 · 2026-10-05T10:25:22.495Z
+Triage (pm-1): accept (the human's own ask). Ticket minted (uncommitted; commit on main). Stays pending until approved with `bridle task ready br-abnq`; then I plan it (Sonnet).
