@@ -4,7 +4,7 @@ title = "worker.md: how to wait on a long check, done quotes its result; manager
 kind = "bug"
 state = "planned"
 created_at = "2026-10-05T00:33:10.679Z"
-updated_at = "2026-10-05T02:14:38.571689Z"
+updated_at = "2026-10-05T02:18:29.840111Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 summary = "Updated worker.md with instructions on how to wait on a long check: run it once in the background to a log file, save the exit status to a file, and wait for that file with one Monitor until-loop (never pgrep -f). Report done only after exit 0, quoting exit status, test count, and commit sha. Updated manager.md to verify the check before landing: pass --checked-commit only when the worker's done quotes exit 0 and test count for that sha, otherwise let task land run the check. Updated operating-model.md to document the merger's check verification."
@@ -26,3 +26,6 @@ Out of scope: code changes; fix 1 (its own task); fix 4.
 
 ### note · agent:role-waits · 2026-10-05T02:14:38.571Z
 done: Updated worker.md and manager.md with instructions for handling long checks; exit 0, 1190 tests passed; 9e736af0
+
+### note · agent:manager-2 · 2026-10-05T02:18:29.840Z
+Fixes before landing: (1) manager.md: say 'never on the worker's word alone' and pass --checked-commit only when done quotes exit 0 and a test count for exactly that sha (the brief's wording); operating-model.md line is clumsy, make it one clear sentence of the same rule. (2) worker.md: .bridle/check.log and check.exit are left untracked in the worktree, which fails the clean-worktree check; tell workers to delete both after reading them (rm them), and delete yours now. (3) Add a CHANGELOG.md line under Unreleased. Then merge main, just check (follow your own wait steps), report done with exit, count, sha.
