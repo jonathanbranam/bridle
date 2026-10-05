@@ -51,6 +51,8 @@ pub enum ConfigError {
 #[serde(deny_unknown_fields)]
 struct GatewaySection {
     bind: Option<String>,
+    /// Default true; false makes `bridle gateway` exit 0 without starting.
+    enabled: Option<bool>,
     #[serde(default)]
     allow_any_interface: bool,
     username: Option<String>,
@@ -118,6 +120,7 @@ fn parse_duration(key: &str, s: &str) -> Result<Duration, ConfigError> {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GatewayConfig {
     pub bind: SocketAddr,
+    pub enabled: bool,
     /// `None` is the safe default: the gateway then answers nothing but health.
     pub login: Option<Login>,
     pub ui: UiConfig,
@@ -195,6 +198,7 @@ impl GatewayConfig {
         }
         Ok(Self {
             bind,
+            enabled: section.enabled.unwrap_or(true),
             login,
             ui,
             interactions,
@@ -208,6 +212,16 @@ mod tests {
 
     fn parse_at(text: &str) -> Result<GatewayConfig, ConfigError> {
         GatewayConfig::parse(text, Path::new("/home"))
+    }
+
+    #[test]
+    fn enabled_defaults_to_true() {
+        assert!(parse_at("").expect("parse").enabled);
+        assert!(
+            !parse_at("[gateway]\nenabled = false\n")
+                .expect("parse")
+                .enabled
+        );
     }
 
     #[test]

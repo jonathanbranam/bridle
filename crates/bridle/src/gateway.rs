@@ -6,6 +6,7 @@ use anyhow::Context;
 use bridle_gateway::GatewayConfig;
 
 use std::path::{Path, PathBuf};
+use std::time::{Duration, Instant};
 
 use anyhow::anyhow;
 
@@ -23,6 +24,13 @@ pub async fn run(cli: &Cli, args: &GatewayArgs) -> Result<(), CliError> {
     }
     let home = bridle_api::discovery::bridle_home();
     let config = GatewayConfig::load(&home).map_err(anyhow::Error::from)?;
+    if !config.enabled {
+        println!("the gateway is disabled ([gateway] enabled = false); not starting");
+        return Ok(());
+    }
+    if args.detach {
+        return run_detached(cli, &home, &config).await;
+    }
     tracing_subscriber::fmt()
         .with_writer(std::io::stderr)
         .try_init()
@@ -38,10 +46,81 @@ pub async fn run(cli: &Cli, args: &GatewayArgs) -> Result<(), CliError> {
         store,
         config: config.interactions,
     };
-    bridle_gateway::serve(listener, config.login, config.ui, interactions)
-        .await
-        .context("gateway")?;
+    let exe = current_exe_path()?;
+    let serving = bridle_gateway::serve(listener, config.login, config.ui, interactions);
+    tokio::select! {
+        r = serving => r.context("gateway")?,
+        () = bridle_gateway::binary_changed(&exe, check_interval()) => {
+            tracing::info!(exe = %exe.display(), "the bridle binary changed; restarting onto it");
+            use std::os::unix::process::CommandExt;
+            let err = std::process::Command::new(&exe)
+                .args(std::env::args_os().skip(1))
+                .exec();
+            return Err(anyhow!("exec {} failed: {err}", exe.display()).into());
+        }
+    }
     Ok(())
+}
+
+/// How often the gateway looks for a replaced binary. The env var is for tests only.
+fn check_interval() -> Duration {
+    std::env::var("BRIDLE_GATEWAY_BINARY_CHECK_SECS")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .map(Duration::from_secs)
+        .unwrap_or(Duration::from_secs(30))
+}
+
+/// Linux appends " (deleted)" to the path of a replaced binary; the new file is at the plain path.
+fn current_exe_path() -> anyhow::Result<PathBuf> {
+    let p = std::env::current_exe().context("locating the bridle binary")?;
+    Ok(
+        match p.to_str().and_then(|s| s.strip_suffix(" (deleted)")) {
+            Some(s) => PathBuf::from(s),
+            None => p,
+        },
+    )
+}
+
+async fn run_detached(cli: &Cli, home: &Path, config: &GatewayConfig) -> Result<(), CliError> {
+    if config.bind.port() == 0 {
+        return Err(anyhow!("--detach needs a fixed port in [gateway] bind, not 0").into());
+    }
+    if bridle_gateway::health_ok(config.bind).await {
+        return Err(anyhow!("a gateway already answers at {}", config.bind).into());
+    }
+    std::fs::create_dir_all(home).with_context(|| format!("creating {}", home.display()))?;
+    let log_path = home.join("gateway.log");
+    let mut child = crate::serve::spawn_detached(&log_path, "gateway")?;
+    let deadline = Instant::now() + crate::serve::DETACH_WAIT;
+    loop {
+        if let Ok(Some(status)) = child.try_wait() {
+            return Err(anyhow!(
+                "gateway exited early ({status}); tail of {}:\n{}",
+                log_path.display(),
+                crate::serve::tail_of_log(&log_path, 40)
+            )
+            .into());
+        }
+        if bridle_gateway::health_ok(config.bind).await {
+            let url = format!("http://{}", config.bind);
+            if cli.json {
+                render::print_json(&serde_json::json!({"url": url, "pid": child.id()}))?;
+            } else {
+                println!("bridle gateway listening on {url} (pid {})", child.id());
+            }
+            return Ok(());
+        }
+        if Instant::now() >= deadline {
+            eprintln!(
+                "warning: the gateway (pid {}) is still starting and was left running.\nLog: {}",
+                child.id(),
+                log_path.display()
+            );
+            return Ok(());
+        }
+        tokio::time::sleep(Duration::from_millis(200)).await;
+    }
 }
 
 /// Reads from stdin, not an argument, so the password stays out of shell history and `ps`.

@@ -812,6 +812,10 @@ pub struct DocsArgs {
 
 #[derive(Debug, Args)]
 pub struct GatewayArgs {
+    /// Re-execute in a new process group, logging to ~/.bridle/gateway.log; wait for health,
+    /// print the URL and exit. Refused if a gateway already answers at the bind address.
+    #[arg(long)]
+    pub detach: bool,
     #[command(subcommand)]
     pub command: Option<GatewayCommand>,
 }

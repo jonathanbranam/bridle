@@ -94,39 +94,41 @@ async fn run_detached(cli: &Cli, args: &ServeArgs) -> Result<(), CliError> {
     std::fs::create_dir_all(&state_dir)
         .with_context(|| format!("creating {}", state_dir.display()))?;
 
+    let log_path = state_dir.join("daemon.log");
+    let mut child = spawn_detached(&log_path, "daemon")?;
+    wait_for_daemon(cli.json, &workspace, &mut child, &log_path, DETACH_WAIT).await
+}
+
+/// Re-executes this command line without `--detach` in a new process group, output appended
+/// to `log_path`. Shared by `bridle serve --detach` and `bridle gateway --detach`.
+pub(crate) fn spawn_detached(log_path: &Path, what: &str) -> anyhow::Result<std::process::Child> {
     let current_exe = std::env::current_exe().context("locating the bridle binary")?;
     let child_args: Vec<std::ffi::OsString> = std::env::args_os()
         .skip(1)
         .filter(|a| a != "--detach")
         .collect();
-
-    let log_path = state_dir.join("daemon.log");
     let log_out = std::fs::OpenOptions::new()
         .create(true)
         .append(true)
-        .open(&log_path)
+        .open(log_path)
         .with_context(|| format!("opening {}", log_path.display()))?;
     let log_err = log_out
         .try_clone()
-        .context("duplicating the daemon.log handle")?;
-
-    let mut child = {
-        use std::os::unix::process::CommandExt;
-        std::process::Command::new(&current_exe)
-            .args(&child_args)
-            .stdin(std::process::Stdio::null())
-            .stdout(log_out)
-            .stderr(log_err)
-            .process_group(0)
-            .spawn()
-            .context("spawning the detached daemon")?
-    };
-    wait_for_daemon(cli.json, &workspace, &mut child, &log_path, DETACH_WAIT).await
+        .with_context(|| format!("duplicating the {} handle", log_path.display()))?;
+    use std::os::unix::process::CommandExt;
+    std::process::Command::new(&current_exe)
+        .args(&child_args)
+        .stdin(std::process::Stdio::null())
+        .stdout(log_out)
+        .stderr(log_err)
+        .process_group(0)
+        .spawn()
+        .with_context(|| format!("spawning the detached {what}"))
 }
 
 /// How long `--detach` waits for the daemon's health to answer. A loaded host (a build
 /// running beside it) can take well past 15 s to start; see ticket cy5v.
-const DETACH_WAIT: Duration = Duration::from_secs(60);
+pub(crate) const DETACH_WAIT: Duration = Duration::from_secs(60);
 
 async fn wait_for_daemon(
     json: bool,
@@ -176,7 +178,7 @@ fn still_starting_message(pid: i32, wait: Duration, log_path: &Path) -> String {
     )
 }
 
-fn tail_of_log(path: &Path, n: usize) -> String {
+pub(crate) fn tail_of_log(path: &Path, n: usize) -> String {
     match std::fs::read_to_string(path) {
         Ok(s) => {
             let lines: Vec<&str> = s.lines().collect();

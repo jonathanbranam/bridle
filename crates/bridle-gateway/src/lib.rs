@@ -101,6 +101,39 @@ pub async fn bind(config: &GatewayConfig) -> std::io::Result<TcpListener> {
     TcpListener::bind(config.bind).await
 }
 
+/// Whether a gateway answers health at `addr` (the port is the gateway's lock; see the
+/// design doc, "Running it detached").
+pub async fn health_ok(addr: std::net::SocketAddr) -> bool {
+    let url = format!("http://{addr}{API_PREFIX}/health");
+    let Ok(client) = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(2))
+        .build()
+    else {
+        return false;
+    };
+    matches!(client.get(url).send().await, Ok(r) if r.status().is_success())
+}
+
+/// Completes when the file at `path` changes (modified time or size), checked every
+/// `every`: the binary was replaced by an upgrade and the caller should re-exec it.
+pub async fn binary_changed(path: &std::path::Path, every: std::time::Duration) {
+    let stamp = |p: &std::path::Path| {
+        std::fs::metadata(p)
+            .ok()
+            .map(|m| (m.modified().ok(), m.len()))
+    };
+    let first = stamp(path);
+    loop {
+        tokio::time::sleep(every).await;
+        // A briefly missing file (mid-replace) is not a change yet.
+        if let Some(now) = stamp(path)
+            && Some(&now) != first.as_ref()
+        {
+            return;
+        }
+    }
+}
+
 pub async fn serve(
     listener: TcpListener,
     login: Option<Login>,
@@ -256,9 +289,29 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn binary_changed_fires_when_the_file_is_replaced() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let exe = dir.path().join("bridle");
+        std::fs::write(&exe, "old").expect("write");
+        let watch = binary_changed(&exe, std::time::Duration::from_millis(20));
+        tokio::pin!(watch);
+        assert!(
+            tokio::time::timeout(std::time::Duration::from_millis(100), &mut watch)
+                .await
+                .is_err(),
+            "no change yet"
+        );
+        std::fs::write(&exe, "a longer new binary").expect("write");
+        tokio::time::timeout(std::time::Duration::from_secs(2), watch)
+            .await
+            .expect("noticed the change");
+    }
+
+    #[tokio::test]
     async fn health_answers_under_api_v1() {
         let config = GatewayConfig {
             bind: "127.0.0.1:0".parse().expect("addr"),
+            enabled: true,
             login: None,
             ui: no_ui(),
             interactions: Default::default(),

@@ -29,6 +29,39 @@ holds a bridle token and never talks to a daemon.
 - **No new daemon endpoints** for v1: to-dos are `GET /v1/tasks?claimed_by=human`, task
   questions are on the tasks, and acting is `POST /v1/tasks/{id}/done`, `/drop`, `/answer`.
 
+### Running it detached, and staying current
+
+The same pattern as the daemon ([[docs/design/agent-host/daemon#Running it|daemon, running it]]),
+on dalek and on every client machine alike.
+
+- **`bridle gateway --detach`** re-executes `bridle gateway` in a new process group (the
+  daemon's spawn code, shared, not copied) with stdout and stderr appended to
+  `~/.bridle/gateway.log`, then waits up to 60 s for `GET /api/v1/health` at the configured
+  `bind` to answer. It prints the URL and pid and exits 0; if the gateway is still starting
+  then, it says so, leaves it running and exits 0. If the gateway exits early it fails with the
+  tail of the log. A bind with port 0 can't be probed, so `--detach` refuses it.
+- **A second start is refused.** Before spawning, `--detach` probes `bind`'s health; if
+  something answers it exits 1 naming the address. The foreground `bridle gateway` has the
+  bind error as its guard. There is no pid file: the port is the lock.
+- **It keeps itself current.** The running gateway checks every 30 s whether the file at
+  its own executable path changed (modified time or size) and, if so, re-executes that path
+  with the same arguments. The pid, process group and log handles are kept, so a detached
+  gateway stays detached and a launchd or systemd unit sees no exit. The daemon's upgrade
+  (`cargo install` over the same path) and a client machine's release update both replace that
+  file, so one rule covers both. If the new binary fails to start (bad config, say) the exec
+  has already happened and the process exits non-zero, which a service unit restarts; the log
+  says why. Rejected: a daemon hook that restarts the gateway after an upgrade. The gateway
+  must not depend on a daemon (a client machine may have none, and a machine has many), and
+  a daemon restart then missing the gateway is exactly the failure to avoid.
+- **Config** (`[gateway]` in `~/.bridle/config.toml`, extending
+  [[a-gateway-section-in-bridle-config-toml-stops-every-daemon-f-jmpf|jmpf]]): `bind` (exists;
+  default `127.0.0.1:7878`) and `enabled` (new; default `true`). With `enabled = false`,
+  `bridle gateway` (foreground or `--detach`) prints that and exits 0 without starting, so
+  a machine that shouldn't run one can say so and a launcher can stay installed. Both keys
+  have defaults, so existing configs keep working unchanged.
+- `bridle gateway install` stays for those who want launchd or systemd to start it at login.
+  Its unit runs the foreground command; that is unchanged.
+
 ## 2. v1 scope
 
 The human's **to-dos and task questions** (decisions), grouped by project, decisions first,
@@ -147,7 +180,7 @@ reachable from another machine. Until then the gateway works for local projects.
 
 ## 5. Build tasks, in order
 
-Each is one branch and one worker. None touches the daemon. Tasks 1–8 are built; 9 and 10 are
+Each is one branch and one worker. None touches the daemon. Tasks 1–8 and 10 are built; 9 and 11 are
 planned.
 
 1. **Skeleton, config, serve**: `bridle gateway` subcommand, a `crates/bridle-gateway` library
@@ -171,11 +204,14 @@ planned.
 9. **Multi-machine** (after br-8b98 lands): per-machine human tokens for remote daemons, remote
    actions. Tests: a remote fake daemon with its own token.
 10. **Service install** (built): `bridle gateway install` writes the launchd plist / systemd user unit (`dev.bridle.gateway`, `bridle-gateway.service`), restart on failure only, log `~/.bridle/gateway.log`; loading it is the operator's step.
+11. **Detach and self-restart** (bek3): `bridle gateway --detach`, `[gateway] enabled`, the gateway
+    re-executing itself when its binary changes. Tests: detach starts, logs and answers health; a
+    second start is refused; a changed binary is re-executed (with a fake).
 
 `bridle-ui` itself (and an install script) is a separate project, not part of these tasks.
 
 ## 6. Migration
 
 No project file, schema or daemon change. The only addition is new **optional machine config**
-(the gateway section with the login and bind address, in `~/.bridle/config.toml`); a machine
+(the gateway section with the login, bind address and `enabled`, default true, in `~/.bridle/config.toml`); a machine
 that doesn't run a gateway never sees it.
