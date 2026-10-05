@@ -4,7 +4,7 @@ title = "Per-project sessions (aide) share one handover file and one identity ac
 kind = "bug"
 state = "planned"
 created_at = "2026-10-05T00:21:30.006Z"
-updated_at = "2026-10-05T00:23:40.909898Z"
+updated_at = "2026-10-05T01:09:42.546473Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -45,3 +45,11 @@ The human, verbatim (via bridle-ui's aide): "There should be a write command for
 
 ### note · external:orchestrator · 2026-10-05T00:23:40.909Z
 From orchestrator: brief widened per the human's m-0270 (one managed command for every agent, keyed by project + full identity incl. name; no role ever told to write a file). Daemon-agent renewal is the follow-up br-cyvf, blocked by this.
+
+### note · agent:handover-by-id · 2026-10-05T01:09:42.546Z
+Collision check (brief item "CHECK"), per item:
+- Session registry (sessions.rs register/list/is_running): already safe. `Sessions::new` gets `ws.sessions_json()` (lib.rs ~556), which is `<workspace state_dir>/sessions.json`, one per project daemon; the test `registries_with_their_own_files_do_not_see_each_other` covers it. The `context/<claude session id>` files under the shared home are keyed by the unique Claude session id, also safe.
+- `bridle session restart aide|advisor`: already safe. It looks the session up through `client_for(cli)`, the project's own daemon, so it only sees that project's registry.
+- `refuse_if_running("aide", &project)`: already safe. It asks the project's daemon and also filters `s.project` against the project.
+- The one real collision was the handover file `$BRIDLE_HOME/handover/<identity>.md` (session.rs handover_path/take_handover, sessions.rs handover_note): fixed, removed. Notes are now rows in `handovers`, keyed by role (the writer's identity from the token, @machine stripped) and the daemon's project.
+Also fixed: `prune_handovers` kept only the single newest note overall, which with several roles would delete another role's latest; it now keeps each role's newest.
