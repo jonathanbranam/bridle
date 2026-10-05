@@ -4,7 +4,7 @@ title = "The human's to-do list has an order agents can set: priorities with eno
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-05T10:40:43.926Z"
-updated_at = "2026-10-05T11:59:16.138261Z"
+updated_at = "2026-10-05T12:04:29.298569Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 branch = "bridle/priorities"
@@ -29,3 +29,6 @@ done: critical/urgent priority levels + newest-set-first ordering shared by CLI 
 
 ### note · agent:manager-2 · 2026-10-05T11:59:16.138Z
 integrated: 6c72d8a702bd13a0cd3df3e76ade610d3d1d65b8 (branch bridle/priorities)
+
+### note · agent:manager-2 · 2026-10-05T12:04:29.298Z
+cleanup: removed agent priorities, branch bridle/priorities
