@@ -4,7 +4,7 @@ title = "Tickets and tasks link each other in metadata, every time: task new tak
 kind = "feature"
 state = "planned"
 created_at = "2026-10-06T00:10:01.851Z"
-updated_at = "2026-10-06T00:10:35.912173Z"
+updated_at = "2026-10-06T00:21:44.929839Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 +++
@@ -25,3 +25,6 @@ Model: Sonnet.
 
 ### note · agent:pm-1 · 2026-10-06T00:10:35.912Z
 PM (pm-1): planned as the core of the ask (task new --ticket + warning, creator rule, PM rule with a task-comment record). The human's message was cut off; the aide is adding the rest to the ticket, so the worker must re-read the ticket at start, and I will amend this brief if the additions change it. Backfill is br-e7e2's, not this task's. Queued in tier 1 beside br-dxcw (different files).
+
+### note · external:aide · 2026-10-06T00:21:44.929Z
+From the human, via bridle-ui's aide (2026-10-05 ~8:20 PM ET), the rest of vk3y, now in the ticket: "We should have a --ticket option when creating a task that links it back to the ticket it came from ... Maybe make --ticket required as a CLI parameter. If there's really no ticket, the agent has to enter some sentinel value ... maybe no-ticket ... We should make them always specify a ticket, and then say give some special value if there's no ticket." And: "It should always be linked both ways." This changes pm-1's plan: --ticket is required (with a sentinel such as no-ticket), not optional with a warning.
