@@ -1,24 +1,25 @@
 +++
 id = "br-vk3y"
-title = "Tickets and tasks link each other in metadata, every time: task new requires --ticket (no-ticket sentinel), a rule for every creator"
+title = "Tasks get a real 'ticket' field, replacing the 'original id:' first body line, with an automatic migration (vk3y slice 1)"
 kind = "feature"
 state = "planned"
 created_at = "2026-10-06T00:10:01.851Z"
-updated_at = "2026-10-06T00:37:24.321312Z"
+updated_at = "2026-10-06T00:38:01.886388Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 +++
 
 original id: vk3y
-Ticket (the ask with the human's words; read first, including "The human's follow-up" section; RE-READ it when you start in case more is added): docs/tickets/open/tickets-and-tasks-link-each-other-in-metadata-every-time-tas-vk3y.md
-Goal: tickets and tasks link each other in metadata, both ways, however the task was made.
+Ticket (the ask with the human's words; read all of it, including "The human on `original id:`"; RE-READ it when you start in case more is added): docs/tickets/open/tickets-and-tasks-link-each-other-in-metadata-every-time-tas-vk3y.md
+This is slice 1 of 2. Slice 2 (new task, depends on this one) makes `bridle task new --ticket` required with the no-ticket sentinel, and adds the creator rule. Do not build slice 2 here.
+Goal: the task -> ticket link is a real task field named `ticket`, not free text. Today it is the first line of the task body (`original id: <ticket>`; see docs/design/storage.md ~71, docs/design/cli.md ~251 and ~442, crates/bridle-daemon/src/tasks.rs ~494 and ~1582; "original" because a ticket's task takes its id from the ticket, vk3y -> br-vk3y).
 Build:
-1. `bridle task new` takes a REQUIRED `--ticket <id>`. With a real ticket id it writes both links the way `bridle ticket task` does (the ticket's `tasks:` front matter and the task body's `original id:` first line; reuse that code, don't duplicate it). With no real ticket the agent passes the sentinel `--ticket no-ticket` (plain, shell-safe, no quoting), recorded on the task as an `original id: no-ticket` first line (greppable; nothing more needed). Omitting --ticket is an ERROR whose message names the sentinel. An unknown ticket id is an error. Update `bridle task new --help` and docs/design/cli.md.
-   Breaking change, so find every caller: grep workflow/, docs/, role prompts, scripts, justfile and tests for `task new` and update them to pass --ticket. The CLI change reaches agents on the next daemon upgrade; the updated prompts reach projects through workflow sync; no project files change. State this in the done note.
-2. Rule in workflow/base/rules (new file, e.g. ticket-links.md, short, with the human's why): every role that creates tasks or tickets (aides, orchestrator, PM, any other) makes a task from its ticket (`bridle ticket task <id>` is preferred, `bridle task new --ticket <id>` otherwise) so the link goes both ways; `no-ticket` only when there really is none, and it is loud on purpose. Reference it from the role docs that already list task-creation steps (workflow/base/roles/*.md: aide, orchestrator, project-manager).
-Dropped by the human (2026-10-05, comment c1 on the ticket: "defined this error away"): there is NO PM rule for tracing tasks that have no ticket. Do not add one.
-Out of scope here: the backfill of today's unlinked pairs is br-e7e2 (v3dk slice B); check that task's brief and, if it does not cover the 48 ticket warnings from `bridle ticket check`, say so in your done note rather than building it. Also out of scope: br-bdrc (who filed a ticket).
-Acceptance: just check passes; tests for `task new --ticket` (both links written; sentinel recorded; missing flag errors naming no-ticket; bad ticket id errors); docs, prompts and rules updated; no remaining `task new` example without --ticket.
+- A `ticket` column on tasks (nullable; the value is a ticket id, or the sentinel `no-ticket` which slice 2 will write), exposed as "ticket" in `bridle task show`, the API (crates/bridle-api/src/types.rs: a wire change, update the daemon, CLI, TUI and gateway together; additive, optional field) and the gateway/UI bindings (crates/bridle-gateway/bindings/*.ts, show it where a task is displayed; link it to the ticket if the UI already links tickets).
+- Set by `bridle ticket task`, `bridle ticket new` (when it files a task) and any other code that writes the `original id:` line today; those stop writing the body line.
+- `bridle ticket check` and any other reader of the `original id:` line read the field instead (and, during migration, the old line).
+- MIGRATION (required, automatic): a normal DB schema migration at daemon start that parses an `original id: <x>` first line from each existing task body into the field and strips that line from the body. Idempotent; tasks with no such line get NULL. Covers every project's daemon when it upgrades; no per-project file changes. If tasks are also mirrored to the bridle/state branch (crates/bridle-daemon/src/state_branch.rs), check that the export carries the field and re-imports cleanly. Document the migration in docs/design/storage.md.
+Out of scope: required --ticket and the sentinel behaviour, the creator rule (slice 2); the backfill of unlinked old pairs (br-e7e2; say in your done note whether the 48 `ticket check` warnings are covered there); br-bdrc.
+Acceptance: just check passes; tests: field round-trips through the store and API, `ticket task` sets it and writes no body line, the migration converts a body with the line (and is a no-op on rerun), ticket check reads the field; docs updated (storage.md, cli.md).
 Model: Sonnet.
 
 ## Thread
@@ -40,3 +41,6 @@ PM (pm-1): brief amended: the PM tracing rule is removed, per the human's commen
 
 ### note · external:aide · 2026-10-06T00:37:24.321Z
 From the human, via bridle-ui's aide (2026-10-05 ~8:45 PM ET), added to ticket vk3y: "What is original ID in the task? Is that a field? ... If that's the ticket ID, then just say ticket ID, not original ID." Today it's the first body line (text, not metadata). vk3y now asks for a real task field 'ticket' (task show, API, UI), with existing 'original id:' lines migrated. Please add this to br-vk3y's brief before it's built.
+
+### note · agent:pm-1 · 2026-10-06T00:38:01.886Z
+PM (pm-1): brief rewritten for the human's addition (a real `ticket` field plus an automatic migration of `original id:` lines). It is now slice 1 of 2: the field, API, UI display and migration. The required --ticket flag and the creator rule moved to a new task, br-avu7 (pending; needs `bridle task ready br-avu7`, then I plan it with an edge on this one). PM tracing rule stays dropped.
