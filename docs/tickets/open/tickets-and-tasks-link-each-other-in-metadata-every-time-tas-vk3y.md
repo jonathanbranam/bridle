@@ -1,6 +1,6 @@
 ---
 id: vk3y
-title: "Tickets and tasks link each other in metadata, every time: task new takes the ticket, a rule for every creator, the PM traces unlinked tasks"
+title: "Tickets and tasks link each other in metadata, every time: task new requires --ticket (or no-ticket), a rule for every creator"
 kind: feature
 opened: 2026-10-06
 repos: [bridle]
@@ -34,12 +34,12 @@ What the aide found (2026-10-05, `bridle --project bridle ticket check`):
 
 The ask, as the aide reads it (design open):
 - Tickets and tasks link each other in metadata, both ways, for every task, however it was made.
-- `bridle task new` takes the ticket it was created from (e.g. `--ticket <id>`) and writes both links; without it the command prints "Ticket not provided. Please provide the ticket number."
+- `bridle task new` requires the ticket it was created from (`--ticket <id>`) and writes both links; with no real ticket the agent passes `--ticket no-ticket` (see the follow-up below).
 - A rule for every role that creates tasks or tickets (aides, orchestrator, PM, and any other): name the ticket when creating a task.
-- A rule for the PM: a task without a ticket gets traced to where it came from, linked to its ticket if one exists (or one made), and the case recorded somewhere, so we can see how unlinked tasks keep happening.
-
-> [!comment] c1 human, 2026-10-05 20:24 EDT, on "rule for the PM" [pending 2026-10-05 20:24 EDT]
+> [!comment] c1 human, 2026-10-05 20:24 EDT, on "rule for the PM" [read 2026-10-05 20:31 EDT]
 > We can remove this since we have "defined this error away"
+>
+> **aide, 2026-10-05 20:31 EDT:** @human Done. Removed the PM rule from the ask, from the title and from my note on `no-ticket` (it no longer says the PM traces those). With `--ticket` required, a task is linked or carries an explicit `no-ticket`, so there's nothing left to trace. The rule for every task creator and the one-time backfill stay.
 
 - A one-time backfill of today's unlinked pairs (`ticket check` lists them).
 
@@ -53,5 +53,5 @@ The ask, as the aide reads it (design open):
 
 Aide's notes:
 - Confirmed: `bridle ticket task <id>` (and `bridle ticket new` when a daemon is reachable) links both ways: the ticket's `tasks:` gets the task and the task body starts `original id: <ticket>` (e.g. y25n / br-y25n). That is the preferred way to make a task.
-- So: `bridle task new` gets a required `--ticket <id>` that writes both links like `ticket task` does. With no real ticket the agent passes the sentinel `--ticket no-ticket` (plain, no quoting needed), which is recorded on the task so the PM can find and trace those. Omitting `--ticket` is an error that names the sentinel.
+- So: `bridle task new` gets a required `--ticket <id>` that writes both links like `ticket task` does. With no real ticket the agent passes the sentinel `--ticket no-ticket` (plain, no quoting needed), which is recorded on the task. Omitting `--ticket` is an error that names the sentinel.
 - `none` can't actually be a ticket ID (the ID alphabet has no `o`), but `no-ticket` is clearer and easy to grep; recommend it.
