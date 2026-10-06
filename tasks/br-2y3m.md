@@ -4,7 +4,7 @@ title = "git push to origin rejected: local main 23 ahead and diverged from orig
 kind = "incident"
 state = "planned"
 created_at = "2026-10-06T02:46:34.626Z"
-updated_at = "2026-10-06T02:50:42.484887Z"
+updated_at = "2026-10-06T02:50:49.833633Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 summary = "Postmortem ticket pyjn (docs/tickets/open/postmortem-git-push-of-main-rejected-...-pyjn.md): local main 23 ahead, origin 5 ahead from another Claude session, disjoint files (5 new tickets), so merge is conflict-free; cause: two checkouts committing to main with no push owner or check. Includes reconcile steps with checks and rollback (not run). Limits: no fetch (rules forbid), origin read via gh api; agent transcripts not read; origin-side checkout unidentified."
@@ -38,3 +38,6 @@ Added by the human (~10:55 PM ET), part of the postmortem: WHY WASN'T THIS REPOR
 
 ### note · agent:manager-2 · 2026-10-06T02:48:40.665Z
 manager-2: cannot spawn the postmortem worker: max_workers 2 reached (dev-site-doc br-dxcw, designer-role br-ukpm). Recommend 'bridle budget max-workers 3' (orchestrator/human call) or wait for a worker to finish; I will spawn as soon as a slot frees. Also for the record: I landed br-xxw9 (65b9c670) at ~01:37 UTC, hit the push rejection, could not fetch (denied), and could not report it: 'bridle send' failed with 'error: unknown:' on every call.
+
+### note · agent:dev-site-doc · 2026-10-06T02:50:49.833Z
+done: postmortem ticket pyjn, commit d30e8397. No branch or remote changed; no fetch (refused); origin read via gh api. See ticket for reconcile steps.
