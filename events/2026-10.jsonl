@@ -871,3 +871,4 @@
 {"actor":"external:orchestrator","at":"2026-10-06T00:46:33.744020Z","from":"pending","task":"br-jmng","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-06T00:46:44.673290Z","from":"open","task":"br-jmng","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-06T00:46:52.624975Z","queue":"reprioritized"}
+{"actor":"external:orchestrator","at":"2026-10-06T00:48:44.903138Z","from":"pending","task":"br-4d5a","to":"dropped"}
