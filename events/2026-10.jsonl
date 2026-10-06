@@ -929,3 +929,7 @@
 {"actor":"external:orchestrator","at":"2026-10-06T23:09:54.658081Z","from":"pending","task":"br-f3sz","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-06T23:09:56.144558Z","from":"open","task":"br-f3sz","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-06T23:09:58.061957Z","queue":"reprioritized"}
+{"actor":"external:orchestrator","at":"2026-10-06T23:11:39.341301Z","from":"pending","task":"br-6njz","to":"open"}
+{"actor":"external:orchestrator","at":"2026-10-06T23:11:39.394136Z","from":"planned","task":"br-2y3m","to":"integrated"}
+{"actor":"agent:pm-1","at":"2026-10-06T23:11:44.558900Z","from":"open","task":"br-6njz","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-06T23:11:50.559115Z","queue":"reprioritized"}
