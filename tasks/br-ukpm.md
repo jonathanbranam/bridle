@@ -4,9 +4,13 @@ title = "A designer role: a background agent that reads a problem ticket, analys
 kind = "feature"
 state = "planned"
 created_at = "2026-10-06T01:21:56.084Z"
-updated_at = "2026-10-06T01:22:20.399229Z"
+updated_at = "2026-10-06T02:54:25.042509Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+summary = """
+Added the built-in `designer` role, modelled on prototyper. Files: workflow/base/roles/designer.md (new; the role), workflow/base/rules/design-principles.md (new; KISS/YAGNI by reference, modularity, one name per action, user's side first, and an empty section "The human's own principles" for the human to fill), `designer` added to the `roles:` of 20 existing rules (kiss, yagni, tickets, ticket-references, talk-on-the-task, record-decisions, work-flow, shell-zsh, no-kill-by-name, ascii, etc.; reused by reference, not copied), config.rs (default role entry on worker defaults, preamble sentence, project append `.bridle/roles/designer.md`), cli.rs and commands/orchestrator.rs (`bridle prime designer`), tests (designer_role_test.rs, prime_designer_test.rs), docs (README, cli.md, workflow-layers, roles-and-config, cli/roles, cli/priming-and-rules) and CHANGELOG.
+Decisions for review: (1) ONE role with two focus sections (Interface; Internal architecture), per the PM's YAGNI recommendation; rejected: two roles now. Splitting later is a copy to designer-interface.md/designer-architecture.md plus a role entry each (the role doc says so). (2) Output goes under `## Design options` in the ticket body; no design doc, nothing built; task ends when the proposal is committed. (3) Differs from project-manager (plans/sizes, no design) and prototyper (throwaway build, ignores current design; designer reads it closely, builds nothing). (4) Doing nothing is allowed as an option. (5) design-principles.md is severity must, roles [designer] only.
+A project gets it with `bridle workflow sync`/the base workflow; no per-project file changes (an optional .bridle/roles/designer.md is appended). Not run on any ticket. just check: exit 0, 1262 tests passed. Merged main (tickets only)."""
 +++
 
 original id: ukpm
@@ -20,3 +24,8 @@ THE HUMAN REVIEWS the role and its rules BEFORE it is used: finish with a done n
 Files likely: workflow/base/roles/designer.md, workflow/base/rules/*, wherever roles are listed/registered (grep prototyper), docs/design/workflow-layers.md or the roles doc, CHANGELOG.
 Acceptance: just check passes (role-enumerating tests included); the role reads cleanly start to finish; ASCII only in docs the human edits.
 Model: Sonnet. Out of scope: running it, the fne2 design itself, changing other roles.
+
+## Thread
+
+### note · agent:designer-role · 2026-10-06T02:54:25.042Z
+done: designer role (one role, two focus sections) + design-principles rule, wiring, tests, docs. just check exit 0, 1262 tests passed; commit 9b730ed2. Summary is on the task. Awaiting the human's review; do not land yet.
