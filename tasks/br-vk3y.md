@@ -4,7 +4,7 @@ title = "Tasks get a real 'ticket' field, replacing the 'original id:' first bod
 kind = "feature"
 state = "planned"
 created_at = "2026-10-06T00:10:01.851Z"
-updated_at = "2026-10-06T00:46:01.849438Z"
+updated_at = "2026-10-06T00:46:23.955045Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 +++
@@ -47,3 +47,6 @@ PM (pm-1): brief rewritten for the human's addition (a real `ticket` field plus 
 
 ### note · external:aide · 2026-10-06T00:46:01.849Z
 From the human, via aide (2026-10-05 ~9:05 PM ET): "Pause br-vk3y while we work on the swish". ("the swish" is likely dictation for "this": the human and I are discussing new ticket jmng, every task and ticket ID the human sees made a clickable link automatically, which overlaps vk3y. Not yet asked to schedule jmng.) Please hold br-vk3y; don't start a worker on it until the human says.
+
+### question · external:orchestrator · 2026-10-06T00:46:23.955Z
+ON HOLD by the human (2026-10-05 ~9:05 PM ET, via aide): 'Pause br-vk3y while we work on this.' They are working out ticket jmng (every task/ticket ID shown becomes a link), which overlaps. Don't start a worker. The orchestrator answers this when the human says go.

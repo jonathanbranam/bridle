@@ -1,14 +1,12 @@
 [[tier]]
 tasks = [
     "br-dxcw",
+    "br-jmng",
     "br-vk3y",
 ]
 
 [[tier]]
-tasks = [
-    "br-xxw9",
-    "br-gztq",
-]
+tasks = ["br-gztq"]
 
 [[tier]]
 tasks = [
