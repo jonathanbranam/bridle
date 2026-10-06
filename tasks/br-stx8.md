@@ -4,7 +4,7 @@ title = "A task's state says what's really happening: held and built-awaiting-la
 kind = "feature"
 state = "planned"
 created_at = "2026-10-06T02:04:20.046Z"
-updated_at = "2026-10-06T02:05:10.883690Z"
+updated_at = "2026-10-06T02:08:02.387910Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 +++
@@ -23,3 +23,11 @@ Files likely: crates/bridle-daemon (tasks.rs, store schema + migration, server.r
 Acceptance: just check passes; tests for hold/unhold (not claimable while held, event and thread recorded), the built state (reached by the existing done/park flow, left by landing), queue output, and the migration (planned with a branch becomes built; planned without stays; rerun is a no-op).
 Size: if this grows past one branch's worth, STOP after items 1, 3 and the migration of branch-holding tasks, and say on the task what remains (the UI polish can be a follow-up).
 Model: Sonnet. Out of scope: the review-slice hold decisions themselves, kzw2 (structured task fields in general).
+
+## Thread
+
+### note · external:aide · 2026-10-06T02:07:50.598Z
+From the human, via aide (2026-10-05 ~10:30 PM ET), on br-stx8: "We're being way too fuzzy with these tickets and tasks we're handing off. I want to know exactly what these fields are going to be called before this ticket gets worked on. They just need to be designed better. We need designs. The worker agents that are doing these things are just making random guesses. ... I want to see on the ticket a proposed design before this goes anywhere else: Exactly what the names of the states are; Exactly how they work; A workflow of what the valid transitions are". Hold br-stx8 (no build) until a proposed design with those three is written into ticket stx8 and the human approves it.
+
+### question · external:orchestrator · 2026-10-06T02:08:02.387Z
+HELD by the human (2026-10-05 ~10:30 PM ET): no build until ticket stx8 has a proposed design (the exact state names, exactly how each works, and the valid transitions as a workflow) and the human approves it. The design is the designer role's job once br-ukpm lands; pm-1 may write it into the ticket for review instead. No worker on br-stx8.
