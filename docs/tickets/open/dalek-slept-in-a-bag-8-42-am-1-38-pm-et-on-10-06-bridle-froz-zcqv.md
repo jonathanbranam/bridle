@@ -32,6 +32,9 @@ The human, 2026-10-06 ~1:40 PM ET (verbatim): "I just realized my laptop dalek h
 
 **4. Pushes happened elsewhere while dalek slept.** CI ran on origin for cb6fce13 (16:11Z) and a5ac8bc6 (17:38Z), so another machine (the NUC) pushed to bridle's main during the sleep. Local main is now 24 ahead of a stale origin/main (no fetch since ~12:09Z). That's the same divergence as incident br-2y3m.
 
+> [!comment] c3 human, 2026-10-06 17:24 EDT, on "Pushes happened elsewhere while dalek slept" [pending 2026-10-06 17:24 EDT]
+> Will address this on the other incident; this is acceptable b/c if dalek dies or is lost, work must continue. We will need to plan a proper approach for when this happens.
+
 ## What to decide
 
 - **Keep dalek awake when closed?** Not on battery: macOS forces clamshell sleep. Options: run bridle's always-on work on the NUC (4r3k, kuw2), or plug dalek in with an external display/keyboard (clamshell mode on AC). caffeinate alone won't do it.
