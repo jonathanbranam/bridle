@@ -40,6 +40,8 @@ The ask, as the aide reads it (design open):
 > We can remove this since we have "defined this error away"
 >
 > **aide, 2026-10-05 20:31 EDT:** @human Done. Removed the PM rule from the ask, from the title and from my note on `no-ticket` (it no longer says the PM traces those). With `--ticket` required, a task is linked or carries an explicit `no-ticket`, so there's nothing left to trace. The rule for every task creator and the one-time backfill stay. [read 2026-10-05 20:26 EDT]
+>
+> **resolved by human, 2026-10-05 20:27 EDT**
 
 - A one-time backfill of today's unlinked pairs (`ticket check` lists them).
 
