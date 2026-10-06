@@ -4,9 +4,10 @@ title = "git push to origin rejected: local main 23 ahead and diverged from orig
 kind = "incident"
 state = "planned"
 created_at = "2026-10-06T02:46:34.626Z"
-updated_at = "2026-10-06T02:48:40.665921Z"
+updated_at = "2026-10-06T02:50:42.484887Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+summary = "Postmortem ticket pyjn (docs/tickets/open/postmortem-git-push-of-main-rejected-...-pyjn.md): local main 23 ahead, origin 5 ahead from another Claude session, disjoint files (5 new tickets), so merge is conflict-free; cause: two checkouts committing to main with no push owner or check. Includes reconcile steps with checks and rollback (not run). Limits: no fetch (rules forbid), origin read via gh api; agent transcripts not read; origin-side checkout unidentified."
 +++
 
 Found 2026-10-05 ~10:50 PM ET by the human ('Is git push failing? ... I saw this several times in other messages'). Local main in /Volumes/Data/work/bridle/bridle is 23 commits ahead and diverged from origin/main; 'git push' is rejected as non-fast-forward. The human (verbatim): 'while I'm sleeping, write up an incident report, investigate this, explain what happened, and make a postmortem. Somebody did something wrong here.'
