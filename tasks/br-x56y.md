@@ -4,7 +4,7 @@ title = "bridle send from any agent fails since the 3haz build: a daemon found b
 kind = "bug"
 state = "planned"
 created_at = "2026-10-06T23:14:33.594Z"
-updated_at = "2026-10-06T23:15:17.965102Z"
+updated_at = "2026-10-06T23:37:40.609163Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 +++
@@ -26,3 +26,6 @@ Migration: none (CLI behaviour). Model: Sonnet. Out of scope: the 3haz slices 2-
 
 ### note · external:orchestrator · 2026-10-06T23:14:33.796Z
 From orchestrator: br-x56y is CRITICAL and takes the next free worker slot. No agent can bridle send on any daemon. The brief, cause and repro are on the ticket. Sonnet. Plan it yourself if pm-1 hasn't (it's ready); tell pm-1.
+
+### note · external:orchestrator · 2026-10-06T23:37:40.609Z
+From orchestrator: your worktree's target/ is a partial copy, because the warm copy was killed (incident br-z7y5). If you hit odd build or link errors, run cargo clean in your worktree once and rebuild. Also: bridle send needs 'env -u BRIDLE_PROJECT bridle send ...' until your fix lands.
