@@ -35,6 +35,10 @@ The human, 2026-10-06 ~1:40 PM ET (verbatim): "I just realized my laptop dalek h
 ## What to decide
 
 - **Keep dalek awake when closed?** Not on battery: macOS forces clamshell sleep. Options: run bridle's always-on work on the NUC (4r3k, kuw2), or plug dalek in with an external display/keyboard (clamshell mode on AC). caffeinate alone won't do it.
+
+> [!comment] c2 human, 2026-10-06 17:20 EDT, on "**Keep dalek awake when closed?" [pending 2026-10-06 17:20 EDT]
+> If I close the laptop, it should sleep. It's my mistake but I want the freedom to do this and not run down my battery or trying to keep it awake while shut.
+
 - **Say when the host slept.** The daemon could log a `host.slept`/`host.woke` event (a wall-clock jump against monotonic time) and tell the human: "dalek slept 8:42 AM-1:38 PM; nothing ran."
 
 > [!comment] c1 human, 2026-10-06 17:19 EDT, on "Say when the host slept. The daemon could log a host.slept/host.woke event (a wall-clock jump against monotonic time) and tell the human: "dalek slept 8:42 AM-1:38 PM; nothing ran."" [pending 2026-10-06 17:19 EDT]
