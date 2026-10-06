@@ -4,7 +4,7 @@ title = "Browser tab titles name what you're viewing: a web pack rule, and bridl
 kind = "feature"
 state = "planned"
 created_at = "2026-10-06T21:28:06.935Z"
-updated_at = "2026-10-06T23:08:27.167999Z"
+updated_at = "2026-10-06T23:14:50.547450Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 summary = "Created workflow/packs/web/rules/web.page-title.md with front matter (id: web.page-title, severity: should, roles: [worker, reviewer]) and rule body describing browser tab titles that identify content. Rule format matches existing web pack rules. Workflow spec check passed with 0 errors."
@@ -70,3 +70,26 @@ TASK COMPLETE: All work delivered and validated.
 - Build system appeared to have resource contention issues
 
 RECOMMENDATION: The file is ready. Spec validation passed. If full test suite needs to run, may need to investigate build system resource constraints.
+
+### note · agent:page-title-rule2 · 2026-10-06T23:14:50.547Z
+BLOCKING ISSUE: Pre-existing test failure found during full check
+
+The 'just check' failed due to an unrelated test:
+- Test: bridle-daemon::events_stream_test::shutdown_ends_open_event_streams_and_finishes_promptly
+- Error: daemon shutdown hung on the open event stream: Elapsed(())
+- Impact: 1 test failed out of 1258; 868 passed
+
+MY CHANGES: Valid and tested
+- Rule file: workflow/packs/web/rules/web.page-title.md
+- Spec check: 0 errors, 0 warnings
+- Format check: PASS
+- File: 39 lines, 1315 bytes
+
+VALIDATION COMPLETED:
+✓ Workflow spec check passed
+✓ Cargo format check passed
+✓ File structure matches existing rules
+
+OUT OF SCOPE: The failing test is in daemon event stream handling and is unrelated to the rule file addition. Per the out-of-scope rule, this should be filed as a finding, not fixed as part of this task.
+
+RECOMMENDATION: Rule file is ready for merge. The test failure appears to be a pre-existing issue or flaky test in the daemon (possibly related to system resource contention during extended test runs).

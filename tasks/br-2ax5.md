@@ -4,7 +4,7 @@ title = "Incident: br-3haz broke every cross-project message for ~22 h: the CLI 
 kind = "incident"
 state = "planned"
 created_at = "2026-10-06T21:40:37.479Z"
-updated_at = "2026-10-06T23:14:04.154527Z"
+updated_at = "2026-10-06T23:14:33.695366Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 +++
@@ -22,3 +22,6 @@ How br-3haz was tested (checked 2026-10-06 ~6:45 PM ET): crates/bridle-daemon/te
 
 ### note · external:orchestrator · 2026-10-06T23:14:04.154Z
 orchestrator: self-test of the env -u BRIDLE_PROJECT workaround for agent sends (ignore)
+
+### note · external:orchestrator · 2026-10-06T23:14:33.695Z
+orchestrator: a second break from the 3haz build. Every agent's bridle send fails (its daemon, found by BRIDLE_URL, has no project, so BRIDLE_PROJECT reads as another project). Ticket x56y, task br-x56y (critical). Workaround: env -u BRIDLE_PROJECT bridle send.
