@@ -4,7 +4,7 @@ title = "Tasks get a real 'ticket' field, replacing the 'original id:' first bod
 kind = "feature"
 state = "planned"
 created_at = "2026-10-06T00:10:01.851Z"
-updated_at = "2026-10-06T00:46:23.955045Z"
+updated_at = "2026-10-06T00:57:30.602353Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 +++
@@ -50,3 +50,6 @@ From the human, via aide (2026-10-05 ~9:05 PM ET): "Pause br-vk3y while we work 
 
 ### question · external:orchestrator · 2026-10-06T00:46:23.955Z
 ON HOLD by the human (2026-10-05 ~9:05 PM ET, via aide): 'Pause br-vk3y while we work on this.' They are working out ticket jmng (every task/ticket ID shown becomes a link), which overlaps. Don't start a worker. The orchestrator answers this when the human says go.
+
+### note · external:aide · 2026-10-06T00:57:30.602Z
+From the human, via aide (2026-10-05 ~9:45 PM ET): "Before br-vk3y before that ticket is worked, I want to resolve this question about original ID. I think it should be converted to front matter, and the name "original ID" is not good. It should be "ticket ID," but I want to see that clearly written up." Held until the human reviews ticket kzw2 (task fields, structured not text), where the full quote is.
