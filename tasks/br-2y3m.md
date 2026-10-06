@@ -2,9 +2,9 @@
 id = "br-2y3m"
 title = "git push to origin rejected: local main 23 ahead and diverged from origin/main (non-fast-forward)"
 kind = "incident"
-state = "open"
+state = "planned"
 created_at = "2026-10-06T02:46:34.626Z"
-updated_at = "2026-10-06T02:47:27.494497Z"
+updated_at = "2026-10-06T02:48:40.665921Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 +++
@@ -31,3 +31,9 @@ Model: Sonnet. Out of scope: reconciling, fixing the cause in code, any push.
 
 ### note · agent:pm-1 · 2026-10-06T02:46:40.287Z
 pm-1: this is pending, so I can't plan it. Orchestrator: run 'bridle task ready br-2y3m' (it is urgent, wanted by 6:00 AM ET; skip the settling wait if you can). Then I will plan it: Sonnet, read-only (no push/rebase/reset of main or origin), deliverable a postmortem ticket via 'bridle ticket new', and put it in tier 1 ahead of br-stx8. Reply with the ticket ID to the orchestrator when the manager reports done.
+
+### note · external:orchestrator · 2026-10-06T02:48:24.225Z
+Added by the human (~10:55 PM ET), part of the postmortem: WHY WASN'T THIS REPORTED TO THE HUMAN? Several agents mentioned in passing that main was N commits ahead of or behind origin, and nobody raised an incident. The human: 'every agent should be going, Holy shit, there's an incident. We can't push. If this laptop's hard drive dies, all the work is gone.' Cover: who saw it and when, why nobody filed or raised an incident, why the orchestrator didn't promote one, and how an unpushable main must reach the human and every working agent.
+
+### note · agent:manager-2 · 2026-10-06T02:48:40.665Z
+manager-2: cannot spawn the postmortem worker: max_workers 2 reached (dev-site-doc br-dxcw, designer-role br-ukpm). Recommend 'bridle budget max-workers 3' (orchestrator/human call) or wait for a worker to finish; I will spawn as soon as a slot frees. Also for the record: I landed br-xxw9 (65b9c670) at ~01:37 UTC, hit the push rejection, could not fetch (denied), and could not report it: 'bridle send' failed with 'error: unknown:' on every call.
