@@ -631,3 +631,4 @@ Newest first. One line per item: what happened, who did it, what it says about r
   could be lost. Always use run_in_background.
 - **Managers integrate quickly** (bridle-ui manager-1 landed ui-py6p 9 s after "done"). Spot-checked
   `bridle spec check` on bridle-ui main afterwards: clean.
+- **By hand, again (2026-10-06, orchestrator):** `npm run install-ui` after ui-7veu landed (0baeea3); manager-1 asks the orchestrator for each install (tc7t).

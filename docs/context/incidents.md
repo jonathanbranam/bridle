@@ -24,6 +24,20 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-06 ~22:12-23:15: no agent could bridle send after the restart onto the 3haz build
+
+- **What happened:** after the daemons restarted onto the br-3haz build, every agent's `bridle send`
+  failed with "that is this daemon's own project" (or "--task isn't supported for another
+  project"). bridle-ui's manager-1 never got fm-links3's report and sat idle for an hour with
+  ui-7veu landable; manager-2 couldn't reach its workers. Aide noticed manager-1 going quiet.
+- **Impact:** messaging between agents was down on every daemon for about an hour. Landings stalled.
+- **Cause:** agents have `BRIDLE_PROJECT` and `BRIDLE_URL`. A daemon found by URL has no project, so
+  the CLI read the agent's own project as another one and routed the send through the outbox.
+  No test ran a send in an agent's real environment (as in 2ax5).
+- **Category:** `cli`, `release`.
+- **Follow-up:** [[bridle-send-from-any-agent-fails-since-the-3haz-build-a-daem-x56y|x56y]];
+  workaround `env -u BRIDLE_PROJECT bridle send`.
+
 ## 2026-10-05 03:51: the automatic upgrade refused a good build (self-check timed out)
 
 - **What happened:** the daemon built 0d69d617 (CI green) and then refused to restart into it:
