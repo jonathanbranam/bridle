@@ -46,3 +46,28 @@ Config: `[tasks] settle` exists per project (`config.rs` `tasks_settle`, `DEFAUL
 ## Verify
 
 Daemon tests: spawn or done on a settling / unclaimed task is refused with "settling until"; after settle + plan + claim it works; a skip-settle note lets it through; default reads 10m.
+
+## The human's input (via advisor, m-0105, 2026-10-06), verbatim
+
+- "Show me the ticket and write a clear design. I think claims should fail"
+- "If this needs to be worked on the bridal site, I can work with over there on it. But this should be mechanical, deterministic, and not a rule that an agent can ignore. And yeah, so if I provide input on a ticket, that should reset the clock. I'm not sure, you know, other comments on a ticket might not reset the clock, so not sure how to handle that exactly, but yeah, if I provide input on the task, I guess it's the task, right? It should reset the clock so that I have 10 minutes from the last time I had made a comment about scope. Or design or whatever."
+
+## Design (advisor's draft, shown to the human; supersedes "The ask" above where they differ)
+
+Principle: enforced by the daemon, not by role text. The claim is the one gate into work, and it fails while a task settles.
+
+1. **Claim fails while settling** ("settling until <time>"). Already true; it stays the single gate.
+2. **No work without a claim.** `bridle spawn worker --task <id>` claims the task for the worker and fails while it is settling or unplanned. A spawn with no task (research) is allowed but can't finish a task.
+3. **No finish without a claim.** `task done` / integrate is refused unless the task was claimed; no `open -> done`.
+4. **Clock:** claimable at `max(created, the human's latest input on the task) + settle`. Human input is the human's own comment, question/answer or edit, and a relayed one. The relay is mechanical, not a text prefix: e.g. `bridle task comment --from-human` (allowed for advisor, aide, orchestrator), recorded as human input; the daemon restarts the clock on it. Other agents' comments don't restart it. Input on a ticket reaches the clock by being relayed onto its task the same way. (This replaces the text-prefix recommendation above.)
+5. **Default 10m** in the binary (every daemon gets it on upgrade); `[tasks] settle` per project overrides; nothing per machine.
+6. **Skip only for a critical fix:** the human any time; the orchestrator or PM only with a reason naming the critical fix (main red, service down, data at risk); recorded in the thread and sent to the human's inbox. Drop "the human asked".
+7. **Visible:** `task show` and `queue` show "settling until <time>".
+8. **Tests:** claim, `spawn --task` and done refused while settling or unclaimed; fine after settle + plan + claim; a critical skip passes; relayed human input restarts the clock; default 10m.
+
+## Open questions (not answered yet)
+
+- May `settle = 0` still turn it off for a project? Advisor recommends keep.
+- Does human input on an already-claimed task pause the worker, or just reach it? Advisor recommends just reach it.
+
+The human offered to work this through with the bridle side directly if needed.
