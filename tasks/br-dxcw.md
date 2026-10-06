@@ -4,7 +4,7 @@ title = "vwqt: agents run a throwaway bridle site (daemon+gateway+UI) on a free 
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-06T00:07:44.945Z"
-updated_at = "2026-10-06T03:17:08.159187Z"
+updated_at = "2026-10-06T03:20:30.754798Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -36,3 +36,6 @@ done: docs/design/dev-site.md + tickets vdu8 (bridle build), dgef (bridle-ui pie
 
 ### note · agent:manager-2 · 2026-10-06T03:17:08.159Z
 integrated: 511b3b7183b42f6659dd292e889b28e4667eec26 (branch bridle/dev-site-doc)
+
+### note · agent:manager-2 · 2026-10-06T03:20:30.754Z
+cleanup: removed agent dev-site-doc, branch bridle/dev-site-doc
