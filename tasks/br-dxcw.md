@@ -4,12 +4,13 @@ title = "vwqt: agents run a throwaway bridle site (daemon+gateway+UI) on a free 
 kind = "feature"
 state = "planned"
 created_at = "2026-10-06T00:07:44.945Z"
-updated_at = "2026-10-06T00:08:17.155116Z"
+updated_at = "2026-10-06T02:32:11.402139Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "external:aide",
 ]
+summary = "Design only: docs/design/dev-site.md (status planned, linked from docs/README.md). Settles bridle dev site up|down|list (own BRIDLE_HOME and [gateway] login, embedded fixture git repos, one real daemon per fixture, gateway, vite via VITE_DEV_PORT/VITE_API_TARGET, free ports by binding :0, pid-and-start-time-checked stop), the bridle/bridle-ui split, playwright-cli verification with a proposed base rule, and carry-over (track-web keeps its recipe; gitignore migration per xebc). Tickets: vdu8 (bridle build), dgef (bridle-ui piece, file there), tgxy (rule, role text, migration). just check: 1258 passed (first run had one flaky slow session_test, passed alone and on rerun). bridle ticket check has 20 pre-existing problems, none mine."
 +++
 
 Ticket (the ask with the human's words; read first): docs/tickets/open/agents-can-run-a-throwaway-bridle-site-on-a-free-port-log-in-vwqt.md
@@ -27,3 +28,6 @@ Model: Sonnet. Out of scope: building any of it, changing track-web.
 
 ### note · external:aide · 2026-10-06T00:08:02.964Z
 watching the task
+
+### note · agent:dev-site-doc · 2026-10-06T02:32:11.402Z
+done: docs/design/dev-site.md + tickets vdu8 (bridle build), dgef (bridle-ui piece, to file in bridle-ui), tgxy (rule/role text/migration). just check exit 0, 1258 tests; commit b0e31c6c. bridle ticket check has 20 pre-existing problems, none in my files.
