@@ -4,7 +4,7 @@ title = "Incident: the bridle orchestrator was killed (SIGTERM) at 11:18 PM ET a
 kind = "incident"
 state = "pending"
 created_at = "2026-10-06T12:05:50.523Z"
-updated_at = "2026-10-06T12:05:50.523960Z"
+updated_at = "2026-10-06T12:08:26.238015Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
@@ -27,3 +27,20 @@ The human is resuming the session by hand (`claude --resume orch-bridle`) so it 
 
 ### note · external:aide · 2026-10-06T12:05:50.523Z
 priority: normal -> high
+
+### note · external:orchestrator · 2026-10-06T12:08:26.238Z
+Root cause, found by the orchestrator (resumed session, 2026-10-06 ~8:10 AM ET):
+
+1. WHO SENT SIGTERM: the daemon, on purpose. Event 03:19:05Z: 'The orchestrator was stopped at 03:19:05 UTC: the handover deadline passed with no bridle handover done.' The session had passed 200K and got 'hand over now ... stopped at 03:18:54 UTC'. It wrote handover h-0049 but never ran 'bridle orchestrator handover done', the step its prime names twice. The stop was the designed fallback.
+
+2. WHY NO RELAUNCH: event 03:19:05Z: 'The orchestrator is down and no pane is tagged @bridle=orchestrator'. The orchestrator's own pane (%68) was tagged @bridle=advisor-fields. At ~9:10 PM ET the orchestrator ran 'bridle session advisor fields ...' from its Bash tool (incident br-9z2d). session.rs:378 calls pane::tag_pane, which tags $TMUX_PANE, and that is the calling Claude's pane, so it RETAGGED THE ORCHESTRATOR'S PANE as advisor-fields. That run ended in print mode, but the tag stayed. From then on the supervisor had no pane to relaunch into.
+
+3. WHY NOBODY KNEW: both facts were raised only as orchestrator.incident events (03:19:05Z, also 03:03:57Z 'no wake command running'), and they reached neither the aide nor the human overnight.
+
+Fixed now: pane %68 retagged @bridle=orchestrator (bridle pane tag orchestrator).
+
+Recommendations for the postmortem:
+(a) session commands must not tag the pane when they aren't interactive (no TTY), or must refuse to run without a TTY (fne2);
+(b) relaunch with no tagged pane should fall back to a new tmux window, not give up;
+(c) 'orchestrator down' must reach the human (aide, push notification, the human's to-do list), not only the event log;
+(d) the orchestrator must run 'handover done' (role text is there; the session didn't read its prime, incident 9z2d), or the daemon should do the stop and relaunch without it.
