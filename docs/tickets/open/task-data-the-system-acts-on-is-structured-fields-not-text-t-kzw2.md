@@ -71,3 +71,18 @@ Stays text: the brief's description, goal, build steps, acceptance and out-of-sc
 
 1. Is the field list right? Anything to add or drop (e.g. is `approval` worth structuring, or is the quote enough as text)?
 2. `when` for to-dos: only the two values, or a date/time too ("Tue 10-06, at dalek" in br-x99a's title is the same kind of thing)?
+
+## The human's follow-up (2026-10-05 ~9:45 PM ET, to bridle's aide)
+
+> Before br-vk3y before that ticket is worked, I want to resolve this question about original ID. I think it should be converted to front matter, and the name "original ID" is not good. It should be "ticket ID," but I want to see that clearly written up.
+>
+> I think maybe there's a ticket 2 that's being written up about it, but I got confused there. It does not need to be a field in the SQLite database necessarily, but maybe we need to be able to link these things very quickly, as long as we can find them quickly. I guess it doesn't have to be a field, but it should at least be front matter, I think.
+>
+> I'm still kind of waiting for an answer and a research item on what all is perceived as basically structured fields in a task. I understand that the comments are, and that's by design, but the rest of it I don't understand. The model: this is just a string inside of. If it says the word "model" somewhere in there with a colon, that's meaningful. That seems really fragile. I guess it's checked, but what if that shows up twice in the text?
+
+br-vk3y is held until the human has reviewed this ticket.
+
+Aide's notes on what code reads from task text today (checked 2026-10-05):
+- `original id: <ticket>`: read by code, first body line only (`crates/bridle-daemon/src/tasks.rs` ~494 and ~1582). A second such line elsewhere is ignored. This becomes the `ticket` front-matter field.
+- `Model: Sonnet`: no code reads it. The manager (an agent) reads the brief and picks the model when it spawns the worker, so a second "model:" in the text could confuse it, but nothing parses it. This becomes the `model` field.
+- The others in the table above (`done:`, `integrated:`, `settle skipped by`, `Incident <id> updated`) are read by code by matching the start of a thread entry or message.
