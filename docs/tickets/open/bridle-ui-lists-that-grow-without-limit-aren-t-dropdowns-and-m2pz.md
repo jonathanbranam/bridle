@@ -32,3 +32,24 @@ Also said in the same message (for the orchestrator, not this ticket's scope): "
 - Then two or three clickable, static HTML prototypes of the document page's picker, each a genuinely different approach, with fake data around 100 to 1000 documents in folders. No backend.
 - Served on a port the human can open over Tailscale (bound to all interfaces, not 127.0.0.1), still running after the agent's turn ends, with the URLs reported.
 - Uses the base prototyper role (workflow/base/roles/prototyper.md). That role says build only from the prompt; the research step here is an explicit part of the prompt.
+
+## The human's notes (2026-10-05 ~10:05 PM ET, to the bridle-ui aide), verbatim
+
+> m2pa this should be the ticket that builds some prototypes for the dropdown. Add a few notes to this: it doesn't have to be a dropdown. Maybe it shouldn't be a dropdown. What we're trying to research and prototype is the most effective way for a user to select one thing out of a list of hundreds. What's the best UI design, and it should be mobile-friendly, so I don't think it's a dropdown, probably.
+>
+> I think maybe separating the input box from the dropdown might work, or I'm not really sure. It's not a hierarchy either; it's a flat list. Anyway, just a few notes there on that.
+>
+> It should probably be search with some form of autocomplete search of some kind. It could be two fields, or there could be a lot of ways. It could just literally be search and then pick from the answers.
+>
+> The other interaction to note here is that most of the time, probably, I'm opening this up and I have the ticket ID in my hands. I've copied it, so I open it up, click that box, and paste. Boom, I feel like it should just open. That's it. I shouldn't have to do anything else. I hit paste, done. I don't want to push the open button. I don't want to confirm the selection from the dropdown. I don't want to do shit. I just open it. If I type a 4-letter ID that matches a ticket, boom, open. There shouldn't be anything else to do. If I type in a bunch of words that match a bunch of tickets, then sure, I don't know, show a list or do something like that, but that's probably never going to happen.
+>
+> Also, for the dropdown, I just don't think it is going to work. Anyway, another thing is that the names wrap terribly on a mobile phone. I know they're the paths of the tickets, and this is supposed to be for viewing any document, so potentially any document in there could be showing up. That really means a document picker: a folder with a folder structure on the left and files on the right, and scrolling, not a dropdown. That's probably closer to what we need: a scroll box or scrollable search results with a search box at the top.
+>
+> Anyway, now I'm giving you the ideas. I still want that design agent to go do some research for similar types of solutions. Think about the list of countries. There are like 100 countries in the list. It's the dumbest thing. Sometimes it just scrolls down, or I've faced this hundreds of times in doing UI design. There are patterns out there. When this task is done and the designer comes up with a good pattern, we need to document that as the correct rule and pattern for designing so that it gets used in the future.
+
+Aide's summary of the ask:
+- Research and prototype the best mobile-friendly way to pick one item from hundreds (flat list); probably not a dropdown. A design agent researches existing patterns (e.g. country pickers) first.
+- Paste or type an exact ticket ID: the document opens at once, with no Open button and no confirm.
+- Words: show scrollable search results under a search box; names must not wrap badly on a phone.
+- For any document (not only tickets): consider a document picker (folders, files, scrolling) rather than a dropdown.
+- When the designer settles on a pattern, write it down as a UI rule/pattern so it's used from then on.
