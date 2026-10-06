@@ -24,6 +24,20 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-06 ~23:15-23:30: syspolicyd and Spotlight pegged; builds and app launches stalled
+
+- **What happened:** the human found Finder and app launches hung. syspolicyd was at ~300% CPU and
+  Spotlight busy; ~33 rustc processes sat at 0% CPU; the daemon had been running `cp -cR
+  integration/target` into a new worktree for 14+ minutes.
+- **Impact:** the machine was unusable for the human; every build stalled; the br-x56y worker's spawn
+  (critical send fix) was stuck behind a copy that would take ~2.5 h.
+- **Cause:** `integration/target/debug/deps` had grown to 564,137 files (never pruned; rebuilt after
+  each land). Every spawn clones it (`warm_target`, b7cz). The data is free, but each new file costs
+  FSEvents and Spotlight work, and each new binary costs a syspolicyd check.
+- **Category:** `daemon`, `machine`.
+- **Follow-up:** [[incident-syspolicyd-and-spotlight-pegged-builds-and-app-laun-z7y5|z7y5]];
+  possibly also explains y455's hung spawns.
+
 ## 2026-10-06 ~22:12-23:15: no agent could bridle send after the restart onto the 3haz build
 
 - **What happened:** after the daemons restarted onto the br-3haz build, every agent's `bridle send`
