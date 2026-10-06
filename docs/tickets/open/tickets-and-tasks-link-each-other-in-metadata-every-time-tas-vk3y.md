@@ -8,7 +8,7 @@ changes: []
 specs: []
 needs: []
 see: [fx7x, nnj2]
-tasks: []
+tasks: [br-vk3y]
 ---
 
 ## The ask
@@ -38,3 +38,16 @@ The ask, as the aide reads it (design open):
 - A rule for every role that creates tasks or tickets (aides, orchestrator, PM, and any other): name the ticket when creating a task.
 - A rule for the PM: a task without a ticket gets traced to where it came from, linked to its ticket if one exists (or one made), and the case recorded somewhere, so we can see how unlinked tasks keep happening.
 - A one-time backfill of today's unlinked pairs (`ticket check` lists them).
+
+## The human's follow-up (2026-10-05 ~8:20 PM ET, finishing the cut-off sentence)
+
+> Sorry about that. I said that generally we should have the agents using the command to create a task off of a ticket. That's the preferred command because then the linkage is created in both directions. Is that correct? Confirm that's correct. It should always be linked both ways.
+>
+> We should have a `--ticket` option when creating a task that links it back to the ticket it came from. What I said was that if there's no ticket, we want to make it loud if you're creating a task without a ticket, so that the agent checks itself.
+>
+> Let's think of some solutions here. Maybe make `--ticket` required as a CLI parameter. If there's really no ticket, the agent has to enter some sentinel value. I was going to say `none`, but that's almost a valid ticket ID, so maybe `no-ticket` or something that's valid to write in the CLI without extra quotes. I'm trying to avoid arrow brackets, parentheses, or a dollar sign, anything that would cause shell interpolation problems. We should make them always specify a ticket, and then say give some special value if there's no ticket.
+
+Aide's notes:
+- Confirmed: `bridle ticket task <id>` (and `bridle ticket new` when a daemon is reachable) links both ways: the ticket's `tasks:` gets the task and the task body starts `original id: <ticket>` (e.g. y25n / br-y25n). That is the preferred way to make a task.
+- So: `bridle task new` gets a required `--ticket <id>` that writes both links like `ticket task` does. With no real ticket the agent passes the sentinel `--ticket no-ticket` (plain, no quoting needed), which is recorded on the task so the PM can find and trace those. Omitting `--ticket` is an error that names the sentinel.
+- `none` can't actually be a ticket ID (the ID alphabet has no `o`), but `no-ticket` is clearer and easy to grep; recommend it.
