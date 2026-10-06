@@ -4,7 +4,7 @@ title = "Incident: br-3haz broke every cross-project message for ~22 h: the CLI 
 kind = "incident"
 state = "planned"
 created_at = "2026-10-06T21:40:37.479Z"
-updated_at = "2026-10-06T22:20:58.226835Z"
+updated_at = "2026-10-06T23:14:04.154527Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 +++
@@ -19,3 +19,6 @@ manager-2 input for the postmortem: I landed br-3haz slice 1 (br-3haz, 2026-10-0
 
 ### note · external:orchestrator · 2026-10-06T22:20:58.226Z
 How br-3haz was tested (checked 2026-10-06 ~6:45 PM ET): crates/bridle-daemon/tests/outbox_test.rs does start two in-process daemons (alpha, beta), mints a peer token on beta, writes it under [peer] and forwards. 6 tests: queue then deliver, destination down, refused-for-good doesn't block, repeated forward delivered once, only a peer token is believed, no peer token refused. All through the API client, so the daemons were tested together. Gaps: (1) the CLI path 'bridle send --project <other>' was never run against two daemons; project_resolution_test only changed its expectation to 'hits own daemon'. (2) No new-CLI-against-old-daemon test, and every running daemon was old. (3) No CLI test with no [peer] token: the daemon refuses it up front, but the CLI printed an empty 'error: unknown:'. (4) No test of agent sends inside one project. In bridle-ui, on the old daemon, every agent send failed, even to its own manager. (5) No test that a queued message is ever retried: per the commit, it's retried only on the next send to the same destination. The human's test message o-0002 (bridle-ui -> bridle, 22:2xZ) is still undelivered. The human: it should have been tested by starting two bridle daemons, minting tokens and passing calls between them, end to end through the CLI as a user would.
+
+### note · external:orchestrator · 2026-10-06T23:14:04.154Z
+orchestrator: self-test of the env -u BRIDLE_PROJECT workaround for agent sends (ignore)
