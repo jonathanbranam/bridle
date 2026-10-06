@@ -110,6 +110,7 @@ done
 | permissions, tools | `docs/design/agent-host/principals.md` |
 | email bridge (`bridle mail run`) | `docs/design/mail.md` |
 | human web UI (gateway built; the UI is a separate project) | `docs/design/human-web-ui.md` |
+| throwaway dev site for verifying UI work (planned) | `docs/design/dev-site.md` |
 
 ## Releases
 
