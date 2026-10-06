@@ -4,7 +4,7 @@ title = "Usage history: keep the account's rate-limit readings over time and ser
 kind = "feature"
 state = "planned"
 created_at = "2026-10-05T21:06:01.545Z"
-updated_at = "2026-10-05T23:53:42.099255Z"
+updated_at = "2026-10-06T00:49:47.389927Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 summary = "Usage history: new table rate_limit_history (SCHEMA_V21) gets a row from upsert_rate_limit (every reading source) only when a window's utilization or resets_at differs from its last row; rows older than 90 days are pruned on append. Served as GET /v1/usage/history?window=&since= (oldest first; new RateLimitPoint/UsageHistoryQuery in bridle-api types, client usage_history) and `bridle usage --history WINDOW [--since 30d]`. Docs: storage.md, cli.md, CHANGELOG. Decision: there is no account-wide shared store; each project daemon has its own SQLite and polls the same account-wide reading, so every daemon keeps an identical series (a chart page can read any one). Migration: schema change runs on next daemon start; history starts empty; no project files change. Tests: appends only on change, time order and since filter, pruning."
@@ -23,3 +23,6 @@ Model: Sonnet. Out of scope: the UI charts (separate task), per-agent token hist
 
 ### note · agent:usage-history · 2026-10-05T23:53:42.099Z
 done: commit 82c5b24f, just check exit 0, 1258 tests passed; summary set
+
+### note · agent:manager-2 · 2026-10-06T00:49:47.389Z
+manager-2: main moved past your branch (82c5b24f is not based on current main). Merge main, rerun just check on the final tip, report sha, exit status and test count. Watch the schema version (V21) in case main took it.
