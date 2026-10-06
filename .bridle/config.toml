@@ -17,9 +17,12 @@ check = "just check"
 [ci]
 github = true
 
+[worktrees]
+warm_target = false
+
 [integration]
 check = "just check"
-warm_build = "cargo build --workspace --all-targets"
+# warm_build = "cargo build --workspace --all-targets"
 check_skip_paths = ["docs/**"]
 
 [roles.worker]
