@@ -110,6 +110,7 @@ bridle agent rm      <agent> [--force] [--delete-branch]
 bridle agent logs    <agent> [--follow] [--raw] [--since LINE]
 bridle events  [--follow] [--since SEQ] [--agent A] [--kind PREFIX]
 bridle usage   [--by role|model|agent] [--since DURATION]   # DURATION: <n>s|m|h|d, e.g. 30d
+bridle usage --history WINDOW [--since DURATION]            # the window's rate-limit readings over time (five_hour, seven_day)
 bridle usage cost audit [--check]                 static: size of what bridle injects into agent context (usage-and-budget.md)
 bridle tui                                  interactive terminal UI: agents list, live event tail
 bridle usage budget [--schedule]                  usage governor status, or the whole resolved schedule (usage-and-budget.md)

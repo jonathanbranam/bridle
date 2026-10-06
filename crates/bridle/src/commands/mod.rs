@@ -14,7 +14,7 @@ use bridle_api::{
     ProbeResult, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, ResumeRequest,
     SendRequest, SetImpactRequest, SetKindRequest, SetPriorityRequest, SetSummaryRequest,
     SpawnRequest, SpecRef, StopRequest, Task, TaskKind, TaskPriority, TaskSize, TokenCreateRequest,
-    UsageBreakdownQuery, UsageGroupBy, Workdir, event_kind,
+    UsageBreakdownQuery, UsageGroupBy, UsageHistoryQuery, Workdir, event_kind,
 };
 use chrono::{Local, TimeZone, Utc};
 use clap::CommandFactory;

@@ -19,14 +19,14 @@ use crate::types::{
     MaxWorkersRequest, Message, MessageQuery, NewEdgeRequest, NewTaskRequest, NoteTaskRequest,
     OpenQuestion, OrchestratorWakeQuery, OutboxSendRequest, PeerTokenCreateRequest, PortAllocation,
     PrincipalWakeQuery, PrincipalWakeResponse, ProbeRequest, ProbeResult, Queue, Queued,
-    RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, RestartRequest,
-    RestartResponse, ResumeRequest, ReviewAddRequest, ReviewAddResponse, ReviewNowRequest,
-    ReviewNowResponse, SendRequest, SessionEnd, SessionInfo, SessionKeep, SessionRegister,
-    SetImpactRequest, SetKindRequest, SetPriorityRequest, SetQueueRequest, SetSummaryRequest,
-    ShutdownResponse, SkipSettleRequest, SpawnRequest, Status, StatusLineReport, StopRequest,
-    StopWakeRequest, StopWakeResponse, SubmitTaskRequest, Task, TaskQuery, TokenCreateRequest,
-    TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown,
-    UsageBreakdownQuery, WakeResponse, WriteHandoverRequest,
+    RateLimitPoint, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest,
+    RestartRequest, RestartResponse, ResumeRequest, ReviewAddRequest, ReviewAddResponse,
+    ReviewNowRequest, ReviewNowResponse, SendRequest, SessionEnd, SessionInfo, SessionKeep,
+    SessionRegister, SetImpactRequest, SetKindRequest, SetPriorityRequest, SetQueueRequest,
+    SetSummaryRequest, ShutdownResponse, SkipSettleRequest, SpawnRequest, Status, StatusLineReport,
+    StopRequest, StopWakeRequest, StopWakeResponse, SubmitTaskRequest, Task, TaskQuery,
+    TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
+    UsageBreakdown, UsageBreakdownQuery, UsageHistoryQuery, WakeResponse, WriteHandoverRequest,
 };
 
 #[derive(Debug, Error)]
@@ -383,6 +383,15 @@ impl Client {
         query: &UsageBreakdownQuery,
     ) -> Result<UsageBreakdown, ClientError> {
         self.get_json_query(&["v1", "usage", "breakdown"], query)
+            .await
+    }
+
+    /// `GET /v1/usage/history`: a window's rate-limit readings, oldest first.
+    pub async fn usage_history(
+        &self,
+        query: &UsageHistoryQuery,
+    ) -> Result<Vec<RateLimitPoint>, ClientError> {
+        self.get_json_query(&["v1", "usage", "history"], query)
             .await
     }
 

@@ -19,14 +19,14 @@ use bridle_api::types::{
     MaxWorkersRequest, MergeProbe, Message, MessageKind, MessageQuery, MessageState,
     MigrationRecord, NewEdgeRequest, NewTaskRequest, NoteTaskRequest, OpenQuestion,
     OutboxSendRequest, OverlapLevel, PeerTokenCreateRequest, PortAllocation, PrincipalKind,
-    ProbeOutcome, ProbeRequest, ProbeResult, Queue, Queued, RateLimit, RebuildResponse,
-    RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, ResumeRequest,
-    ScheduleOverrideStatus, SendRequest, SetImpactRequest, SetKindRequest, SetPriorityRequest,
-    SetQueueRequest, SetSummaryRequest, ShutdownResponse, SkipSettleRequest, SpawnRequest, Status,
-    StatusLineReport, StopRequest, SubmitTaskRequest, Task, TaskQuery, TaskState,
-    TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
-    UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, WakeResponse, When, WindowStatus,
-    WriteHandoverRequest, event_kind,
+    ProbeOutcome, ProbeRequest, ProbeResult, Queue, Queued, RateLimit, RateLimitPoint,
+    RebuildResponse, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest,
+    ResumeRequest, ScheduleOverrideStatus, SendRequest, SetImpactRequest, SetKindRequest,
+    SetPriorityRequest, SetQueueRequest, SetSummaryRequest, ShutdownResponse, SkipSettleRequest,
+    SpawnRequest, Status, StatusLineReport, StopRequest, SubmitTaskRequest, Task, TaskQuery,
+    TaskState, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
+    UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, UsageHistoryQuery, WakeResponse, When,
+    WindowStatus, WriteHandoverRequest, event_kind,
 };
 use bridle_api::types::{PrincipalId, ThreadEntryKind};
 use chrono::Utc;
@@ -122,6 +122,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/interactions", get(interactions))
         .route("/v1/usage", get(usage))
         .route("/v1/usage/breakdown", get(usage_breakdown))
+        .route("/v1/usage/history", get(usage_history))
         .route("/v1/statusline", post(report_statusline))
         .route("/v1/budget", get(budget))
         .route("/v1/budget/hold", post(budget_hold))
@@ -1669,6 +1670,15 @@ async fn interactions(
         .collect();
     out.sort_by_key(|i| i.at);
     Ok(Json(out))
+}
+
+async fn usage_history(
+    State(state): State<AppState>,
+    Query(q): Query<UsageHistoryQuery>,
+) -> Result<Json<Vec<RateLimitPoint>>, ApiError> {
+    Ok(Json(
+        state.store.rate_limit_history(q.window, q.since).await?,
+    ))
 }
 
 async fn usage_breakdown(

@@ -45,6 +45,11 @@ forwarded_in(origin_machine, origin_daemon, origin_id, message_ids, received_at,
 events(seq INTEGER PK AUTOINCREMENT, ts, kind, actor, agent_id, data JSON)
                                                      -- agent_id has no FK: events outlive agents
 rate_limits(window PK, status, utilization, resets_at, observed_at)
+rate_limit_history(id PK AUTOINCREMENT, window, utilization, resets_at, observed_at)
+                                                     -- SCHEMA_V21: a row when a window's utilization or
+                                                     -- resets_at changes, pruned past 90 days; the readings
+                                                     -- are account-wide, so every project's daemon keeps the
+                                                     -- same series (no shared store exists). GET /v1/usage/history
 interactive_usage(id PK AUTOINCREMENT, observed_at, session_id, model,
                    cost_usd, context_used_tokens, context_max_tokens,
                    context_used_percentage)          -- V10: Claude's own figure; right on 1M models

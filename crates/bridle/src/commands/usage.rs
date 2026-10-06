@@ -52,6 +52,33 @@ pub(super) async fn usage(cli: &Cli, args: &UsageArgs) -> Result<(), CliError> {
         })
         .transpose()?;
 
+    if let Some(window) = &args.history {
+        let points = client
+            .usage_history(&UsageHistoryQuery {
+                window: window.clone(),
+                since,
+            })
+            .await?;
+        if cli.json {
+            render::print_json(&points)?;
+        } else {
+            println!("{:<20} {:>6} RESETS", "OBSERVED", "USED");
+            for p in &points {
+                let resets = p
+                    .resets_at
+                    .map(|r| r.format("%Y-%m-%d %H:%M").to_string())
+                    .unwrap_or_else(|| "-".to_string());
+                println!(
+                    "{:<20} {:>6} {}",
+                    p.observed_at.format("%Y-%m-%d %H:%M:%S"),
+                    format_utilization(p.utilization),
+                    resets
+                );
+            }
+        }
+        return Ok(());
+    }
+
     // `--by role|model` (and `--since` on its own) go through the turns
     // ledger directly; the plain per-agent view keeps using the existing
     // endpoint, unfiltered, as before.

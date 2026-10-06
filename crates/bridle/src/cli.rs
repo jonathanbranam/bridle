@@ -1220,6 +1220,9 @@ pub struct UsageArgs {
     /// Only turns started within this long, e.g. `30d`, `12h`, `45m`.
     #[arg(long)]
     pub since: Option<String>,
+    /// Show the rate-limit history of this window (`five_hour`, `seven_day`, ...) instead.
+    #[arg(long, value_name = "WINDOW")]
+    pub history: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]

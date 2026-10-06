@@ -972,6 +972,26 @@ pub struct RateLimit {
     pub observed_at: DateTime<Utc>,
 }
 
+/// One reading in a window's history (`GET /v1/usage/history`): kept when the utilization or
+/// `resets_at` changed, so a flat stretch is one point.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct RateLimitPoint {
+    pub window: String,
+    /// 0-1 fraction.
+    pub utilization: Option<f64>,
+    pub resets_at: Option<DateTime<Utc>>,
+    pub observed_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UsageHistoryQuery {
+    /// `five_hour`, `seven_day`, ...
+    pub window: String,
+    /// Only readings observed at or after this time.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub since: Option<DateTime<Utc>>,
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 pub struct TokenTotals {
     pub input: u64,

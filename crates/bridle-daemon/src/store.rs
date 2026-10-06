@@ -15,8 +15,8 @@ use std::sync::{Arc, Mutex};
 use bridle_api::types::{
     Agent, AgentState, AgentUsage, Conflict, Edge, EdgeKind, Event, EventQuery, ExitInfo, Handover,
     InteractiveUsageRow, Message, MessageKind, MessageState, PortAllocation, PrincipalId,
-    PrincipalKind, RateLimit, TaskKind, TaskState, TokenCreated, TokenInfo, TokenTotals, Usage,
-    UsageBreakdown, UsageGroup, UsageGroupBy, When,
+    PrincipalKind, RateLimit, RateLimitPoint, TaskKind, TaskState, TokenCreated, TokenInfo,
+    TokenTotals, Usage, UsageBreakdown, UsageGroup, UsageGroupBy, When,
 };
 use chrono::{DateTime, SecondsFormat, SubsecRound, Utc};
 use rusqlite::Connection;
@@ -934,6 +934,16 @@ impl Store {
             .await
     }
 
+    /// A window's readings, oldest first (`GET /v1/usage/history`).
+    pub async fn rate_limit_history(
+        &self,
+        window: String,
+        since: Option<DateTime<Utc>>,
+    ) -> Result<Vec<RateLimitPoint>, StoreError> {
+        self.with_conn(move |c| sync::rate_limit_history(c, &window, since))
+            .await
+    }
+
     pub async fn rate_limits(&self) -> Result<Vec<RateLimit>, StoreError> {
         self.with_conn(sync::rate_limits).await
     }
@@ -1340,10 +1350,25 @@ mod sync {
         );
     "#;
 
+    // The account's rate-limit readings over time (xxw9): one row per change of a window's
+    // utilization or resets_at, kept `RATE_LIMIT_HISTORY_DAYS` days.
+    pub(super) const SCHEMA_V21: &str = r#"
+        CREATE TABLE rate_limit_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            window TEXT NOT NULL,
+            utilization REAL,
+            resets_at TEXT,
+            observed_at TEXT NOT NULL
+        );
+        CREATE INDEX rate_limit_history_window ON rate_limit_history(window, observed_at);
+    "#;
+
+    pub(super) const RATE_LIMIT_HISTORY_DAYS: i64 = 90;
+
     pub(super) const MIGRATIONS: &[&str] = &[
         SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7, SCHEMA_V8,
         SCHEMA_V9, SCHEMA_V10, SCHEMA_V11, SCHEMA_V12, SCHEMA_V13, SCHEMA_V14, SCHEMA_V15,
-        SCHEMA_V16, SCHEMA_V17, SCHEMA_V18, SCHEMA_V19, SCHEMA_V20,
+        SCHEMA_V16, SCHEMA_V17, SCHEMA_V18, SCHEMA_V19, SCHEMA_V20, SCHEMA_V21,
     ];
 
     pub(super) fn open(path: &Path) -> Result<Connection, StoreError> {
@@ -3141,7 +3166,59 @@ mod sync {
                 fmt_dt(rl.observed_at)
             ],
         )?;
+        append_rate_limit_history(conn, rl)
+    }
+
+    /// Appends the reading only when it differs from the window's last one, so a poll every
+    /// 30 s that sees the same numbers adds nothing; prunes past the retention at the same time.
+    fn append_rate_limit_history(conn: &Connection, rl: &RateLimit) -> Result<(), StoreError> {
+        let last: Option<(Option<f64>, Option<String>)> = conn
+            .query_row(
+                "SELECT utilization, resets_at FROM rate_limit_history
+                 WHERE window = ?1 ORDER BY id DESC LIMIT 1",
+                params![rl.window],
+                |r| Ok((r.get(0)?, r.get(1)?)),
+            )
+            .optional()?;
+        let resets_at = rl.resets_at.map(fmt_dt);
+        if last.is_some_and(|(u, r)| u == rl.utilization && r == resets_at) {
+            return Ok(());
+        }
+        conn.execute(
+            "INSERT INTO rate_limit_history(window, utilization, resets_at, observed_at)
+             VALUES (?1, ?2, ?3, ?4)",
+            params![rl.window, rl.utilization, resets_at, fmt_dt(rl.observed_at)],
+        )?;
+        conn.execute(
+            "DELETE FROM rate_limit_history WHERE observed_at < ?1",
+            params![fmt_dt(
+                rl.observed_at - chrono::Duration::days(RATE_LIMIT_HISTORY_DAYS)
+            )],
+        )?;
         Ok(())
+    }
+
+    pub(super) fn rate_limit_history(
+        conn: &Connection,
+        window: &str,
+        since: Option<DateTime<Utc>>,
+    ) -> Result<Vec<RateLimitPoint>, StoreError> {
+        let mut stmt = conn.prepare(
+            "SELECT window, utilization, resets_at, observed_at FROM rate_limit_history
+             WHERE window = ?1 AND observed_at >= ?2 ORDER BY observed_at, id",
+        )?;
+        let rows = stmt.query_map(
+            params![window, since.map(fmt_dt).unwrap_or_default()],
+            |row| {
+                Ok(RateLimitPoint {
+                    window: row.get(0)?,
+                    utilization: row.get(1)?,
+                    resets_at: parse_dt_opt(row.get(2)?)?,
+                    observed_at: parse_dt(&row.get::<_, String>(3)?)?,
+                })
+            },
+        )?;
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
     }
 
     pub(super) fn rate_limits(conn: &Connection) -> Result<Vec<RateLimit>, StoreError> {
@@ -4513,6 +4590,76 @@ mod tests {
         let limits = store.rate_limits().await.expect("rate limits");
         assert_eq!(limits.len(), 1);
         assert_eq!(limits[0].status.as_deref(), Some("allowed_warning"));
+    }
+
+    fn reading(u: f64, resets: Option<DateTime<Utc>>, at: DateTime<Utc>) -> RateLimit {
+        RateLimit {
+            window: "five_hour".to_string(),
+            status: None,
+            utilization: Some(u),
+            resets_at: resets,
+            observed_at: at,
+        }
+    }
+
+    #[tokio::test]
+    async fn rate_limit_history_appends_changes_only_in_time_order() {
+        let (store, _tmp) = store().await;
+        let t0 = Utc::now() - chrono::Duration::hours(3);
+        let m = chrono::Duration::minutes;
+        for (u, at) in [
+            (0.1, t0),
+            (0.1, t0 + m(1)),
+            (0.2, t0 + m(2)),
+            (0.2, t0 + m(3)),
+        ] {
+            store
+                .upsert_rate_limit(reading(u, None, at))
+                .await
+                .expect("upsert");
+        }
+        // Another window and a changed resets_at are their own points.
+        let mut other = reading(0.5, None, t0 + m(4));
+        other.window = "seven_day".to_string();
+        store.upsert_rate_limit(other).await.expect("other");
+        store
+            .upsert_rate_limit(reading(0.2, Some(t0 + m(300)), t0 + m(5)))
+            .await
+            .expect("reset");
+
+        let h = store
+            .rate_limit_history("five_hour".to_string(), None)
+            .await
+            .expect("history");
+        let us: Vec<_> = h.iter().map(|p| p.utilization).collect();
+        assert_eq!(us, vec![Some(0.1), Some(0.2), Some(0.2)]);
+        assert!(h.windows(2).all(|w| w[0].observed_at <= w[1].observed_at));
+        let h = store
+            .rate_limit_history("five_hour".to_string(), Some(t0 + m(2)))
+            .await
+            .expect("since");
+        assert_eq!(h.len(), 2);
+    }
+
+    #[tokio::test]
+    async fn rate_limit_history_prunes_past_retention() {
+        let (store, _tmp) = store().await;
+        let now = Utc::now();
+        let old = now - chrono::Duration::days(sync::RATE_LIMIT_HISTORY_DAYS + 1);
+        store
+            .upsert_rate_limit(reading(0.1, None, old))
+            .await
+            .expect("old");
+        store
+            .upsert_rate_limit(reading(0.2, None, now))
+            .await
+            .expect("new");
+        let h = store
+            .rate_limit_history("five_hour".to_string(), None)
+            .await
+            .expect("history");
+        assert_eq!(h.len(), 1);
+        assert_eq!(h[0].utilization, Some(0.2));
     }
 
     #[tokio::test]
