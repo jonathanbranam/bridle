@@ -4,7 +4,7 @@ title = "A task's state says what's really happening: held and built-awaiting-la
 kind = "feature"
 state = "planned"
 created_at = "2026-10-06T02:04:20.046Z"
-updated_at = "2026-10-06T02:08:02.387910Z"
+updated_at = "2026-10-06T02:08:22.868766Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 +++
@@ -31,3 +31,46 @@ From the human, via aide (2026-10-05 ~10:30 PM ET), on br-stx8: "We're being way
 
 ### question · external:orchestrator · 2026-10-06T02:08:02.387Z
 HELD by the human (2026-10-05 ~10:30 PM ET): no build until ticket stx8 has a proposed design (the exact state names, exactly how each works, and the valid transitions as a workflow) and the human approves it. The design is the designer role's job once br-ukpm lands; pm-1 may write it into the ticket for review instead. No worker on br-stx8.
+
+### note · external:aide · 2026-10-06T02:08:14.481Z
+From the human, via aide (2026-10-05 ~10:35 PM ET), on br-stx8: "Maybe just hold this up until we build a designer role agent first, and then pass it off to them. I'd be happy with that." So: br-stx8 stays held until the designer role (br-ukpm) lands; then hand stx8 to a designer to write the design (state names, how each works, valid transitions) for the human's approval before any build.
+
+### note · agent:pm-1 · 2026-10-06T02:08:22.868Z
+pm-1: PROPOSED DESIGN for stx8 (for the human's approval; no code until approved). I cannot edit files, so the orchestrator should paste this into ticket stx8 under "Proposed design".
+
+1. STATE NAMES (task `state` field, wire string = lowercase)
+Existing, unchanged: pending, open, planned, claimed, dropped, integrated, reopened.
+New (exactly two): `held`, `built`.
+
+2. HOW EACH WORKS
+- planned: in the queue; a worker may claim it if deps are met and no open question. Nothing else.
+- claimed: unchanged (a worker holds the lease). Returns to `planned` on release or lease expiry.
+- held: a person has paused it. Not claimable, not spawnable, shown by `bridle queue` as "held" (never "startable"), does not block its dependents' edges any differently than planned (it is unmet until integrated). Fields on the task: `held_by` (principal), `held_reason` (text, required), `held_until` (free text, optional, e.g. "human reviews kzw2"), `held_at`. Set only from `planned` (a claimed task must be released first).
+- built: work is finished on a branch and is waiting to land or for review. Fields: `branch` and `commit` (these already exist; both required to enter). Not claimable, not in the queue's startable list, shown as "built". Does NOT resolve `blocks` edges (only integrated does). Left only by landing (`task done`) or by being sent back.
+- integrated, dropped, reopened: unchanged.
+
+3. COMMANDS (exact)
+- `bridle task hold <id> --reason TEXT [--until TEXT]`: planned -> held. Records a thread note and a `task.held` event.
+- `bridle task unhold <id>`: held -> planned. Thread note, `task.unheld` event. (Not "release": that already means giving up a claim.)
+- `bridle task built <id> --branch NAME --commit SHA`: claimed -> built (the worker's finish when the work is not landed yet; releases the lease), and planned -> built (for parked work, by the manager/orchestrator/human). Thread note, `task.built` event.
+- `bridle task done <id> --commit SHA [--branch NAME]`: built -> integrated (today also allowed from claimed/planned; unchanged).
+- `bridle task send-back <id> --reason TEXT`: built -> planned (review failed; keeps the branch field for the next worker). Thread note, `task.sent_back` event.
+- `bridle task drop`, `reopen`: unchanged; drop is allowed from held and built too.
+
+4. TRANSITIONS (the whole workflow; anything else is a 409)
+pending -> open -> planned
+planned -> claimed (claim) | held (hold) | built (built) | dropped
+claimed -> planned (release/expiry) | built (built) | integrated (done) | dropped
+held    -> planned (unhold) | dropped
+built   -> integrated (done) | planned (send-back) | dropped
+integrated/dropped -> reopened -> (as open)
+Who may: hold/unhold: human, manager, PM, orchestrator. built: the claiming worker, or manager/orchestrator/human for parked work. done/send-back: manager, orchestrator, human (rule work-flow: only their merge accepts).
+
+5. MIGRATION (automatic at daemon start, idempotent, in storage.md): every task in `planned` with `branch` and `commit` set and not integrated -> `built`. No guessing for held; the orchestrator holds br-vk3y, br-1ddd, br-91b3, br-6ba3, br-46fe, br-cf00, br-f610 with `task hold` afterwards. Rerun is a no-op.
+
+6. OPEN QUESTIONS FOR THE HUMAN (my recommendations in brackets)
+Q1: a held task still shows in `bridle queue` under its tier, labelled held? [yes, so the queue stays one list]
+Q2: Is `send-back` a new command, or reuse `task reopen`? [new command; reopen is for dropped/integrated]
+Q3: Should `built` be a state even for the normal worker flow (worker finishes -> built -> manager merges -> integrated)? [yes: that is the "waiting to land" state the manager reads]
+
+Tell me when approved and I'll rewrite the br-stx8 brief with these exact names (and split UI/TUI polish into a second task).
