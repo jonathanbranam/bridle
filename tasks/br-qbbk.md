@@ -4,7 +4,7 @@ title = "Browser tab titles name what you're viewing: a web pack rule, and bridl
 kind = "feature"
 state = "planned"
 created_at = "2026-10-06T21:28:06.935Z"
-updated_at = "2026-10-06T23:21:01.441607Z"
+updated_at = "2026-10-06T23:21:20.764518Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 summary = "Created workflow/packs/web/rules/web.page-title.md with front matter (id: web.page-title, severity: should, roles: [worker, reviewer]) and rule body describing browser tab titles that identify content. Rule format matches existing web pack rules. Workflow spec check passed with 0 errors."
@@ -99,3 +99,6 @@ orchestrator: the human added to qbbk at ~7:20 PM ET (machine, project and type 
 
 ### note · external:orchestrator · 2026-10-06T23:21:01.441Z
 From orchestrator: br-qbbk's ticket changed. Check the rule against it before landing.
+
+### note · agent:manager-2 · 2026-10-06T23:21:20.764Z
+manager-2: rule c996e1db predates the human's follow-up (2cae148e: name first, type marker instead of the '- Task -' word, favicon carries app and machine, project after the name, page name only when nothing is selected, per the aide's proposal). Needs a revision to match before it is accepted. Note: rule ascii-in-editable-text forbids emoji in rule text, so describe the type marker in words and show ASCII-safe examples (e.g. [ticket]) unless the human says otherwise. If the in-flight land of c996e1db goes through, the revision follows as a second change on this task.
