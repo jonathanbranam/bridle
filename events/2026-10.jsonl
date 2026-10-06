@@ -942,3 +942,4 @@
 {"actor":"external:orchestrator","at":"2026-10-06T23:42:50.318634Z","from":"pending","task":"br-76aq","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-06T23:43:05.961153Z","from":"open","task":"br-76aq","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-06T23:43:08.563394Z","queue":"reprioritized"}
+{"actor":"human","at":"2026-10-06T23:46:06.501Z","from":"","task":"br-5j35","to":"pending"}
