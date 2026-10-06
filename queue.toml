@@ -1,5 +1,6 @@
 [[tier]]
 tasks = [
+    "br-qect",
     "br-qbbk",
     "br-stx8",
 ]
