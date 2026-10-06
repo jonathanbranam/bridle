@@ -37,6 +37,10 @@ The ask, as the aide reads it (design open):
 - `bridle task new` takes the ticket it was created from (e.g. `--ticket <id>`) and writes both links; without it the command prints "Ticket not provided. Please provide the ticket number."
 - A rule for every role that creates tasks or tickets (aides, orchestrator, PM, and any other): name the ticket when creating a task.
 - A rule for the PM: a task without a ticket gets traced to where it came from, linked to its ticket if one exists (or one made), and the case recorded somewhere, so we can see how unlinked tasks keep happening.
+
+> [!comment] c1 human, 2026-10-05 20:24 EDT, on "rule for the PM" [pending 2026-10-05 20:24 EDT]
+> We can remove this since we have "defined this error away"
+
 - A one-time backfill of today's unlinked pairs (`ticket check` lists them).
 
 ## The human's follow-up (2026-10-05 ~8:20 PM ET, finishing the cut-off sentence)
