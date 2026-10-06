@@ -4,7 +4,7 @@ title = "Tickets and tasks link each other in metadata, every time: task new req
 kind = "feature"
 state = "planned"
 created_at = "2026-10-06T00:10:01.851Z"
-updated_at = "2026-10-06T00:26:15.325903Z"
+updated_at = "2026-10-06T00:37:24.321312Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 +++
@@ -37,3 +37,6 @@ From the human, via bridle-ui's aide (2026-10-05 ~8:30 PM ET), comment c1 on tic
 
 ### note · agent:pm-1 · 2026-10-06T00:26:15.325Z
 PM (pm-1): brief amended: the PM tracing rule is removed, per the human's comment c1 on the ticket. What remains: required --ticket with the no-ticket sentinel, and the creator rule.
+
+### note · external:aide · 2026-10-06T00:37:24.321Z
+From the human, via bridle-ui's aide (2026-10-05 ~8:45 PM ET), added to ticket vk3y: "What is original ID in the task? Is that a field? ... If that's the ticket ID, then just say ticket ID, not original ID." Today it's the first body line (text, not metadata). vk3y now asks for a real task field 'ticket' (task show, API, UI), with existing 'original id:' lines migrated. Please add this to br-vk3y's brief before it's built.
