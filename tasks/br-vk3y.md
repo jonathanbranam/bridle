@@ -4,7 +4,7 @@ title = "Tasks get a real 'ticket' field, replacing the 'original id:' first bod
 kind = "feature"
 state = "planned"
 created_at = "2026-10-06T00:10:01.851Z"
-updated_at = "2026-10-06T00:38:01.886388Z"
+updated_at = "2026-10-06T00:46:01.849438Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 +++
@@ -44,3 +44,6 @@ From the human, via bridle-ui's aide (2026-10-05 ~8:45 PM ET), added to ticket v
 
 ### note · agent:pm-1 · 2026-10-06T00:38:01.886Z
 PM (pm-1): brief rewritten for the human's addition (a real `ticket` field plus an automatic migration of `original id:` lines). It is now slice 1 of 2: the field, API, UI display and migration. The required --ticket flag and the creator rule moved to a new task, br-avu7 (pending; needs `bridle task ready br-avu7`, then I plan it with an edge on this one). PM tracing rule stays dropped.
+
+### note · external:aide · 2026-10-06T00:46:01.849Z
+From the human, via aide (2026-10-05 ~9:05 PM ET): "Pause br-vk3y while we work on the swish". ("the swish" is likely dictation for "this": the human and I are discussing new ticket jmng, every task and ticket ID the human sees made a clickable link automatically, which overlaps vk3y. Not yet asked to schedule jmng.) Please hold br-vk3y; don't start a worker on it until the human says.
