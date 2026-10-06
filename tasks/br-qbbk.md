@@ -4,9 +4,10 @@ title = "Browser tab titles name what you're viewing: a web pack rule, and bridl
 kind = "feature"
 state = "planned"
 created_at = "2026-10-06T21:28:06.935Z"
-updated_at = "2026-10-06T21:29:34.095375Z"
+updated_at = "2026-10-06T23:00:11.896844Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+summary = "Created workflow/packs/web/rules/web.page-title.md with front matter (id: web.page-title, severity: should, roles: [worker, reviewer]) and rule body describing browser tab titles that identify content. Rule format matches existing web pack rules. Workflow spec check passed with 0 errors."
 +++
 
 original id: qbbk
