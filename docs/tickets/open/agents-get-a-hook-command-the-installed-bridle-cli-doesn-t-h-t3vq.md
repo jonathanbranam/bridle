@@ -38,3 +38,15 @@ spawn (e.g. `bridle --version`, or the subcommand list) and refuse the spawn,
 or leave the hook out with a warning; and say so in `bridle status`. A
 failing hook should fail open with a clear message rather than block every
 Bash call.
+
+## The other direction (2026-10-06 02:10 UTC)
+
+After the human reinstalled bridle (29296901), the skew reversed: the CLI is
+newer than the four NUC daemons (running since 10-01 and 10-04). `bridle send
+--project <other>` now posts to the caller's own daemon at `/v1/outbox`
+(br-3haz), which the old daemons don't have. The 404's empty body surfaces
+as `error: unknown:` with nothing else, so it looks like a refusal. The
+meta-notes manager couldn't message its worker. Workaround: run the send
+from the target project's workspace, so it posts `/v1/messages` directly.
+The CLI should fall back to (or at least name) a missing endpoint, and an
+empty error body should print the HTTP status.
