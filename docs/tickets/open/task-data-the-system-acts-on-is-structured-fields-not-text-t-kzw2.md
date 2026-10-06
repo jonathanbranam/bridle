@@ -86,3 +86,29 @@ Aide's notes on what code reads from task text today (checked 2026-10-05):
 - `original id: <ticket>`: read by code, first body line only (`crates/bridle-daemon/src/tasks.rs` ~494 and ~1582). A second such line elsewhere is ignored. This becomes the `ticket` front-matter field.
 - `Model: Sonnet`: no code reads it. The manager (an agent) reads the brief and picks the model when it spawns the worker, so a second "model:" in the text could confuse it, but nothing parses it. This becomes the `model` field.
 - The others in the table above (`done:`, `integrated:`, `settle skipped by`, `Incident <id> updated`) are read by code by matching the start of a thread entry or message.
+
+## Decided: the `ticket` field (2026-10-05, the human with advisor fields)
+
+The human, verbatim: "Sure, I'm fine with just a ticket."
+
+- A task's link to its ticket is a front-matter field `ticket = "vk3y"` (shown as "ticket" in
+  `bridle task show`, the API and the UI). It replaces the `original id: <ticket>` first body
+  line; the migration moves each such line into the field and removes the line.
+- No SQLite column. The daemon holds every task in full (front matter, body, thread; open and
+  closed) in memory: `TaskManager::open` hydrates the cache from the state branch and every write
+  keeps it current (`crates/bridle-daemon/src/tasks.rs` ~101, ~160). Today that is 612 tasks,
+  about 1.35 MB of task files, so "tasks for ticket X" is a scan of memory, well under a
+  millisecond. Add a column later only if something can't use the cache.
+- The `no-ticket` sentinel and required `--ticket` stay with slice 2 (br-avu7).
+- br-vk3y's brief asks for a `ticket` column; it needs changing to the front-matter field with no
+  column before it is built.
+
+## Corrections to the field table (advisor fields, checked 2026-10-05)
+
+- `merged` already exists: landing writes `branch` and `commit` into the front matter
+  (`crates/bridle-daemon/src/tasks.rs` ~841; storage.md "A task's landing record"). The
+  `integrated: <commit>` thread note is a log line no code reads. Drop `merged` from the list.
+- `done` mostly exists: the worker's `summary` is a front-matter field. The only text match is
+  the stop check looking for a thread entry from the claimer starting `done:`
+  (`crates/bridle/src/stop_check.rs` ~48). What's missing is a structured "the worker reported"
+  marker, not a four-part `done` field.
