@@ -57,3 +57,9 @@ Aide's notes:
 - Confirmed: `bridle ticket task <id>` (and `bridle ticket new` when a daemon is reachable) links both ways: the ticket's `tasks:` gets the task and the task body starts `original id: <ticket>` (e.g. y25n / br-y25n). That is the preferred way to make a task.
 - So: `bridle task new` gets a required `--ticket <id>` that writes both links like `ticket task` does. With no real ticket the agent passes the sentinel `--ticket no-ticket` (plain, no quoting needed), which is recorded on the task. Omitting `--ticket` is an error that names the sentinel.
 - `none` can't actually be a ticket ID (the ID alphabet has no `o`), but `no-ticket` is clearer and easy to grep; recommend it.
+
+## The human on `original id:` (2026-10-05 ~8:45 PM ET)
+
+> What is original ID in the task? Is that a field? I, I don't know why it says original ID. Is that the ticket ID? If that's the ticket ID, then just say ticket ID, not original ID.
+
+Aide's notes: it is the ticket ID, and it is not a field: it is the first line of the task's body text (`original id: <ticket>`, storage.md ~71, cli.md ~251/442, daemon tasks.rs ~494/1582). "Original" because a ticket's task takes its ID from the ticket (vk3y -> br-vk3y). So the task -> ticket link is text, which this ticket says it must not be. Make it a real task field named `ticket` (shown as "ticket" in `task show`, the API and the UI), set by `ticket task`, `ticket new` and `task new --ticket`; migrate existing `original id:` first lines into it and stop writing them.
