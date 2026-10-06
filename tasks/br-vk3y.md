@@ -4,22 +4,23 @@ title = "Tasks get a real 'ticket' field, replacing the 'original id:' first bod
 kind = "feature"
 state = "planned"
 created_at = "2026-10-06T00:10:01.851Z"
-updated_at = "2026-10-06T00:57:30.602353Z"
+updated_at = "2026-10-06T02:42:41.680023Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 +++
 
 original id: vk3y
-Ticket (the ask with the human's words; read all of it, including "The human on `original id:`"; RE-READ it when you start in case more is added): docs/tickets/open/tickets-and-tasks-link-each-other-in-metadata-every-time-tas-vk3y.md
-This is slice 1 of 2. Slice 2 (new task, depends on this one) makes `bridle task new --ticket` required with the no-ticket sentinel, and adds the creator rule. Do not build slice 2 here.
-Goal: the task -> ticket link is a real task field named `ticket`, not free text. Today it is the first line of the task body (`original id: <ticket>`; see docs/design/storage.md ~71, docs/design/cli.md ~251 and ~442, crates/bridle-daemon/src/tasks.rs ~494 and ~1582; "original" because a ticket's task takes its id from the ticket, vk3y -> br-vk3y).
+Ticket (the ask with the human's words; read all of it, including "The human on `original id:`"; RE-READ it when you start). Also read ticket kzw2, section "Decided: the `ticket` field" (docs/tickets/open/task-data-the-system-acts-on-is-structured-fields-not-text-t-kzw2.md): it overrides any older mention of a column. Ticket vk3y: docs/tickets/open/tickets-and-tasks-link-each-other-in-metadata-every-time-tas-vk3y.md
+This is slice 1 of 2. Slice 2 (br-avu7, depends on this one) makes `bridle task new --ticket` required with the no-ticket sentinel, and adds the creator rule. Do not build slice 2 here.
+Goal: the task -> ticket link is a real task field named exactly `ticket`, not free text. Today it is the first line of the task body (`original id: <ticket>`; see docs/design/storage.md ~71, docs/design/cli.md ~251 and ~442, crates/bridle-daemon/src/tasks.rs ~494 and ~1582).
+DECIDED by the human (2026-10-05, via advisor fields): the field is a FRONT-MATTER key `ticket = "<ticket id>"` in the task file, like the other task front-matter fields. NO SQLite column and NO schema migration: the daemon holds every task in memory (TaskManager::open hydrates the cache from the state branch; tasks.rs ~101, ~160), so "tasks for ticket X" is a scan of that cache. Do not add an index or a column.
 Build:
-- A `ticket` column on tasks (nullable; the value is a ticket id, or the sentinel `no-ticket` which slice 2 will write), exposed as "ticket" in `bridle task show`, the API (crates/bridle-api/src/types.rs: a wire change, update the daemon, CLI, TUI and gateway together; additive, optional field) and the gateway/UI bindings (crates/bridle-gateway/bindings/*.ts, show it where a task is displayed; link it to the ticket if the UI already links tickets).
-- Set by `bridle ticket task`, `bridle ticket new` (when it files a task) and any other code that writes the `original id:` line today; those stop writing the body line.
-- `bridle ticket check` and any other reader of the `original id:` line read the field instead (and, during migration, the old line).
-- MIGRATION (required, automatic): a normal DB schema migration at daemon start that parses an `original id: <x>` first line from each existing task body into the field and strips that line from the body. Idempotent; tasks with no such line get NULL. Covers every project's daemon when it upgrades; no per-project file changes. If tasks are also mirrored to the bridle/state branch (crates/bridle-daemon/src/state_branch.rs), check that the export carries the field and re-imports cleanly. Document the migration in docs/design/storage.md.
-Out of scope: required --ticket and the sentinel behaviour, the creator rule (slice 2); the backfill of unlinked old pairs (br-e7e2; say in your done note whether the 48 `ticket check` warnings are covered there); br-bdrc.
-Acceptance: just check passes; tests: field round-trips through the store and API, `ticket task` sets it and writes no body line, the migration converts a body with the line (and is a no-op on rerun), ticket check reads the field; docs updated (storage.md, cli.md).
+- Add `ticket: Option<String>` to the task front matter and in-memory task (tasks.rs), exposed as "ticket" in `bridle task show`, in the API (crates/bridle-api/src/types.rs: additive optional field; update daemon, CLI, TUI and gateway together) and in the gateway/UI bindings (crates/bridle-gateway/bindings/*.ts; show it where a task is displayed, linked to the ticket if the UI already links tickets).
+- `bridle ticket task`, `bridle ticket new` (when it files a task) and any other code that writes the `original id:` line today set the field instead and stop writing the body line. `task edit` must keep the field (today it preserves the body line).
+- `bridle ticket check` and every other reader of the `original id:` line read the field instead (during migration, also the old line).
+- MIGRATION (required, automatic, idempotent): at daemon start, for each existing task whose body's first line is `original id: <x>`, set front-matter `ticket = "<x>"` and remove that line from the body; write it back through the normal task write path so it reaches the bridle/state branch (crates/bridle-daemon/src/state_branch.rs). Tasks without the line are left alone. A second run changes nothing. No per-project file changes. Document in docs/design/storage.md (task front matter and migration) and cli.md.
+Out of scope: required --ticket and the sentinel (slice 2); the backfill of unlinked old pairs (br-e7e2; say in your done note whether the 48 `ticket check` warnings are covered there); br-bdrc.
+Acceptance: just check passes; tests: field round-trips through the task file, store/cache and API, `ticket task` sets it and writes no body line, `task edit` keeps it, the migration converts a body with the line (and is a no-op on rerun), ticket check reads the field; docs updated.
 Model: Sonnet.
 
 ## Thread
@@ -53,3 +54,9 @@ ON HOLD by the human (2026-10-05 ~9:05 PM ET, via aide): 'Pause br-vk3y while we
 
 ### note · external:aide · 2026-10-06T00:57:30.602Z
 From the human, via aide (2026-10-05 ~9:45 PM ET): "Before br-vk3y before that ticket is worked, I want to resolve this question about original ID. I think it should be converted to front matter, and the name "original ID" is not good. It should be "ticket ID," but I want to see that clearly written up." Held until the human reviews ticket kzw2 (task fields, structured not text), where the full quote is.
+
+### note · external:advisor/fields · 2026-10-06T02:42:19.019Z
+From the human, via advisor fields (2026-10-05): the ticket link decision is made, recorded in ticket kzw2 ("Decided: the `ticket` field"). The human: "Sure, I'm fine with just a ticket." The brief needs changing before it is built: the link is a front-matter field `ticket = "<id>"` in the task file, with NO SQLite column (the daemon's in-memory task cache already makes lookup by ticket fast). The rest stays: shown in task show, the API and the UI; ticket new/ticket task set it and stop writing the `original id:` line; ticket check reads the field; a migration moves each `original id:` first line into the field and removes the line. The hold is still yours to release when the human says go.
+
+### note · agent:pm-1 · 2026-10-06T02:42:41.680Z
+pm-1: brief amended per advisor fields' comment: the ticket link is a front-matter field, no SQLite column, no schema migration; the migration moves 'original id:' lines into the field at daemon start. Still HELD until the human says go.
