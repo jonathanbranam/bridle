@@ -8,7 +8,8 @@ changes: []
 specs: []
 needs: []
 see: [yfjc, vk3y]
-tasks: []
+tasks: [br-jmng]
+closed: 2026-10-06T00:53:58Z
 ---
 
 ## The ask
@@ -23,3 +24,9 @@ Where agents' text reaches the human, and what can change it deterministically (
 - A session's own text in the terminal (aides, advisors, the orchestrator): no Claude Code hook rewrites the assistant's reply. A Stop hook can check the reply for unlinked IDs and send the agent back to correct it, which enforces the rule but adds a turn.
 
 Matching should only link IDs that exist (a lookup), so four-character words aren't linked by mistake.
+
+## Resolution
+
+Won't do. The human, 2026-10-05 ~9:35 PM ET (via aide): "Okay, I'm not planning to do JMnG. I don't
+see anything there that's worth implementing so far, so I'm not sure what that design will come up
+with. I think it could just be canceled." Task br-jmng dropped before any design started.
