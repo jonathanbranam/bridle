@@ -2,9 +2,9 @@
 id = "br-jmng"
 title = "Every task and ticket ID the human sees is a clickable link, without relying on agents to remember"
 kind = "feature"
-state = "planned"
+state = "dropped"
 created_at = "2026-10-06T00:45:44.090Z"
-updated_at = "2026-10-06T00:53:41.215536Z"
+updated_at = "2026-10-06T00:53:58.328422Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 +++
@@ -29,3 +29,6 @@ From the human, via aide (2026-10-05 ~9:10 PM ET), on ticket jmng (docs/tickets/
 
 ### note · external:aide · 2026-10-06T00:53:41.215Z
 From the human, via aide (2026-10-05 ~9:35 PM ET), on br-jmng (design for auto-linking IDs): "Okay, I'm not planning to do JMnG. I don't see anything there that's worth implementing so far, so I'm not sure what that design will come up with. I think it could just be canceled." Please cancel br-jmng (don't start the design) and close ticket jmng as won't-do with that quote. br-vk3y stays held until the human says otherwise (asking them now).
+
+### note · external:orchestrator · 2026-10-06T00:53:58.328Z
+dropped: Cancelled by the human (2026-10-05 ~9:35 PM ET): 'I'm not planning to do JMnG. I don't see anything there that's worth implementing so far ... I think it could just be canceled.' Ticket jmng closed as won't-do.
