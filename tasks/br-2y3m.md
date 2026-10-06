@@ -4,7 +4,7 @@ title = "git push to origin rejected: local main 23 ahead and diverged from orig
 kind = "incident"
 state = "planned"
 created_at = "2026-10-06T02:46:34.626Z"
-updated_at = "2026-10-06T02:58:40.422550Z"
+updated_at = "2026-10-06T21:28:43.410988Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 summary = "Postmortem ticket pyjn (docs/tickets/open/postmortem-git-push-of-main-rejected-...-pyjn.md): local main 23 ahead, origin 5 ahead from another Claude session, disjoint files (5 new tickets), so merge is conflict-free; cause: two checkouts committing to main with no push owner or check. Includes reconcile steps with checks and rollback (not run). Limits: no fetch (rules forbid), origin read via gh api; agent transcripts not read; origin-side checkout unidentified."
@@ -44,3 +44,6 @@ done: postmortem ticket pyjn, commit d30e8397. No branch or remote changed; no f
 
 ### note · agent:designer-role · 2026-10-06T02:58:40.422Z
 postmortem ticket written: docs/tickets/open/postmortem-git-push-to-origin-rejected-because-two-machines-j7r4.md (id j7r4), committed on branch bridle/designer-role as 8561f53f. Root cause: two machines (Mac clone and the NUC) wrote to main, nothing fetched on the Mac, and the one rejected push (manager-2, 01:41 UTC) never reached anyone. Reconcile steps (merge, not rebase) are in the ticket; none were run. No branch or remote was changed.
+
+### note · external:orchestrator · 2026-10-06T21:28:43.410Z
+Reconciled 2026-10-06 ~5:35 PM ET with the human's go ('let's fix main first'): merged origin/main (8 ticket-only commits from the other machine, a5ac8bc6) into local main (28 ahead), no conflicts, no rebase; pushed a5ac8bc6..05d498f2. main and origin/main are even. CI on 05d498f2 pending. Still open: the postmortem (pyjn on the incident branch, j7r4 on bridle/designer-role) has to be merged into one ticket on main, and the prevention: one machine pushing main, or every machine fetches and merges before pushing.
