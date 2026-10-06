@@ -9,6 +9,7 @@ needs: []
 see: [the-humans-to-do-list-and-restart-checklist-ex9q, where-the-single-orchestrator-lives-hj4g]
 tasks: [br-4d5a]
 kind: feature
+closed: 2026-10-06T00:48:35Z
 ---
 
 ## The ask
@@ -224,3 +225,12 @@ slices at its end. The human's answers, all settled:
 
 New from the spike: `/clear` gives the same process a new session id, so the session id can't be
 pinned at launch; a `SessionStart` hook scoped to the launcher's session records it.
+
+## Resolution
+
+Closed without implementing br-4d5a, by the human's decision (2026-10-05 ~9:20 PM ET, via aide):
+"We are closing br-4d5a without implementing it because it has already been built separate. I agree".
+Orchestrator supervision slices 1a, 1b, 2 and 3 (br-a424, br-e949, br-65b8, br-4573) built it; the
+design as built is [[docs/design/agent-host/orchestrator-supervision|orchestrator supervision]].
+The rest (orchestrator pause, percentage thresholds and the like) stays as that design's Planned
+items, not this ticket.
