@@ -20,6 +20,7 @@ tasks = [
 
 [[tier]]
 tasks = [
+    "br-f3sz",
     "br-bdrc",
     "br-58c9",
 ]

@@ -926,3 +926,6 @@
 {"actor":"human","at":"2026-10-06T23:09:42.775Z","from":"","task":"br-f3sz","to":"pending"}
 {"actor":"agent:pm-1","at":"2026-10-06T23:09:46.739236Z","from":"open","task":"br-w3pk","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-06T23:09:48.762544Z","queue":"reprioritized"}
+{"actor":"external:orchestrator","at":"2026-10-06T23:09:54.658081Z","from":"pending","task":"br-f3sz","to":"open"}
+{"actor":"agent:pm-1","at":"2026-10-06T23:09:56.144558Z","from":"open","task":"br-f3sz","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-06T23:09:58.061957Z","queue":"reprioritized"}
