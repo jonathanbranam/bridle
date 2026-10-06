@@ -889,3 +889,4 @@
 {"actor":"agent:pm-1","at":"2026-10-06T02:05:10.883690Z","from":"open","task":"br-stx8","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-06T02:05:14.888966Z","queue":"reprioritized"}
 {"actor":"human","at":"2026-10-06T02:46:34.626Z","from":"","task":"br-2y3m","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-10-06T02:46:48.049001Z","from":"pending","task":"br-2y3m","to":"open"}
