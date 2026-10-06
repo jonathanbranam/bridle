@@ -4,7 +4,7 @@ title = "Incident: the bridle orchestrator was killed (SIGTERM) at 11:18 PM ET a
 kind = "incident"
 state = "pending"
 created_at = "2026-10-06T12:05:50.523Z"
-updated_at = "2026-10-06T12:08:26.238015Z"
+updated_at = "2026-10-06T22:52:27.054127Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
@@ -44,3 +44,6 @@ Recommendations for the postmortem:
 (b) relaunch with no tagged pane should fall back to a new tmux window, not give up;
 (c) 'orchestrator down' must reach the human (aide, push notification, the human's to-do list), not only the event log;
 (d) the orchestrator must run 'handover done' (role text is there; the session didn't read its prime, incident 9z2d), or the daemon should do the stop and relaunch without it.
+
+### note · external:orchestrator · 2026-10-06T22:52:27.054Z
+Follow-up (2026-10-06 6:35 PM ET): after the human resumed the orchestrator by hand ('claude --resume', not the launcher), the daemon never adopted the session. There's no session row, no BRIDLE_AS (every bridle command failed until prefixed), and no context wakes. It records 'orchestrator is down but pane %68 is running 2.1.291, not a shell; not typing into it', so it also won't relaunch while this session lives. A hand-resumed session is invisible to the supervisor and can't be restarted by it. Fix ideas: let 'bridle session orchestrator --resume <id>' register a resumed session, or adopt a claude running in the tagged pane.
