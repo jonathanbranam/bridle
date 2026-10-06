@@ -4,7 +4,7 @@ title = "Browser tab titles name what you're viewing: a web pack rule, and bridl
 kind = "feature"
 state = "planned"
 created_at = "2026-10-06T21:28:06.935Z"
-updated_at = "2026-10-06T23:14:50.547450Z"
+updated_at = "2026-10-06T23:21:01.441607Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 summary = "Created workflow/packs/web/rules/web.page-title.md with front matter (id: web.page-title, severity: should, roles: [worker, reviewer]) and rule body describing browser tab titles that identify content. Rule format matches existing web pack rules. Workflow spec check passed with 0 errors."
@@ -93,3 +93,9 @@ VALIDATION COMPLETED:
 OUT OF SCOPE: The failing test is in daemon event stream handling and is unrelated to the rule file addition. Per the out-of-scope rule, this should be filed as a finding, not fixed as part of this task.
 
 RECOMMENDATION: Rule file is ready for merge. The test failure appears to be a pre-existing issue or flaky test in the daemon (possibly related to system resource contention during extended test runs).
+
+### note · external:orchestrator · 2026-10-06T23:21:01.351Z
+orchestrator: the human added to qbbk at ~7:20 PM ET (machine, project and type markers, favicon per machine; see the ticket, 2cae148e). Before merging the web.page-title rule, check that it matches the updated ticket.
+
+### note · external:orchestrator · 2026-10-06T23:21:01.441Z
+From orchestrator: br-qbbk's ticket changed. Check the rule against it before landing.
