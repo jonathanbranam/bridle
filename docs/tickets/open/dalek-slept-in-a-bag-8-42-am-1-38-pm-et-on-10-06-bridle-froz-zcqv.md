@@ -8,7 +8,7 @@ changes: []
 specs: []
 needs: []
 see: [4r3k, stx8]
-tasks: []
+tasks: [br-zcqv]
 ---
 
 ## The ask
@@ -36,6 +36,10 @@ The human, 2026-10-06 ~1:40 PM ET (verbatim): "I just realized my laptop dalek h
 
 - **Keep dalek awake when closed?** Not on battery: macOS forces clamshell sleep. Options: run bridle's always-on work on the NUC (4r3k, kuw2), or plug dalek in with an external display/keyboard (clamshell mode on AC). caffeinate alone won't do it.
 - **Say when the host slept.** The daemon could log a `host.slept`/`host.woke` event (a wall-clock jump against monotonic time) and tell the human: "dalek slept 8:42 AM-1:38 PM; nothing ran."
+
+> [!comment] c1 human, 2026-10-06 17:19 EDT, on "Say when the host slept. The daemon could log a host.slept/host.woke event (a wall-clock jump against monotonic time) and tell the human: "dalek slept 8:42 AM-1:38 PM; nothing ran."" [pending 2026-10-06 17:19 EDT]
+> Yes, this would be good to have in our event logs and sent to orchestrators so they are notified and don't have to independently investigate.
+
 - **Managers start startable work without a nudge.** An idle manager with free slots and startable tasks should spawn on its own (or the daemon wakes it), not wait for the orchestrator. Tie to stx8 and the "why doesn't work ship" question.
 - **One machine pushes main, or both reconcile first** (br-2y3m).
 
