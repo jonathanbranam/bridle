@@ -874,3 +874,6 @@
 {"actor":"external:orchestrator","at":"2026-10-06T00:48:44.903138Z","from":"pending","task":"br-4d5a","to":"dropped"}
 {"actor":"external:orchestrator","at":"2026-10-06T00:53:58.328422Z","from":"planned","task":"br-jmng","to":"dropped"}
 {"actor":"agent:pm-1","at":"2026-10-06T00:54:01.556148Z","queue":"reprioritized"}
+{"actor":"human","at":"2026-10-06T01:14:10.251Z","from":"","task":"br-9z2d","to":"pending"}
+{"actor":"human","at":"2026-10-06T01:14:10.390Z","from":"","task":"br-fne2","to":"pending"}
+{"actor":"human","at":"2026-10-06T01:14:10.511Z","from":"","task":"br-m9sd","to":"pending"}
