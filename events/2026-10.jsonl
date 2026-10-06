@@ -923,3 +923,6 @@
 {"actor":"external:orchestrator","at":"2026-10-06T23:08:51.237056Z","from":"pending","task":"br-w3pk","to":"open"}
 {"actor":"human","at":"2026-10-06T23:09:15.193Z","from":"","task":"br-s5ah","to":"pending"}
 {"actor":"human","at":"2026-10-06T23:09:15.299Z","from":"","task":"br-gdf3","to":"pending"}
+{"actor":"human","at":"2026-10-06T23:09:42.775Z","from":"","task":"br-f3sz","to":"pending"}
+{"actor":"agent:pm-1","at":"2026-10-06T23:09:46.739236Z","from":"open","task":"br-w3pk","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-06T23:09:48.762544Z","queue":"reprioritized"}
