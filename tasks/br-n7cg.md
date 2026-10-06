@@ -4,11 +4,12 @@ title = "Mail between daemons, slice 2: mail for a visitor is forwarded to its h
 kind = "feature"
 state = "pending"
 created_at = "2026-10-05T21:04:36.179Z"
-updated_at = "2026-10-05T21:04:36.179Z"
+updated_at = "2026-10-06T00:45:04.041396Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 +++
 
+original id: 3haz
 Ticket: docs/tickets/open/daemons-deliver-mail-to-each-other-across-machines-store-and-3haz.md (read it; this is slice 2 of 6, P2 and P8 step 2). Depends on br-3haz (slice 1: outbox, peer tokens, forwarding).
 Goal: replies come home. A visitor's token records its home (machine and project daemon). When a daemon gets mail for a visitor (e.g. external:aide@nuc on dalek's daemon), it forwards it to that home daemon through its own outbox instead of keeping it in a visitor inbox, so the recipient's ordinary waiter on its own daemon wakes for it and nobody polls another machine. Also: every principal has a home daemon (the orchestrator's is the machine's bridle daemon); other daemons forward that principal's messages there. Remove the "read the reply on the remote daemon" text from the k7mw design doc and fix principals.md.
 Files likely: crates/bridle-daemon (token/visitor records, outbox use), crates/bridle-api types if the token record gains a home, docs/design/agent-host/principals.md and the k7mw design doc.
