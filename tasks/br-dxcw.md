@@ -2,14 +2,16 @@
 id = "br-dxcw"
 title = "vwqt: agents run a throwaway bridle site (daemon+gateway+UI) on a free port, log in and verify UI work"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-06T00:07:44.945Z"
-updated_at = "2026-10-06T02:32:11.402139Z"
+updated_at = "2026-10-06T03:17:08.159187Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "external:aide",
 ]
+branch = "bridle/dev-site-doc"
+commit = "511b3b7183b42f6659dd292e889b28e4667eec26"
 summary = "Design only: docs/design/dev-site.md (status planned, linked from docs/README.md). Settles bridle dev site up|down|list (own BRIDLE_HOME and [gateway] login, embedded fixture git repos, one real daemon per fixture, gateway, vite via VITE_DEV_PORT/VITE_API_TARGET, free ports by binding :0, pid-and-start-time-checked stop), the bridle/bridle-ui split, playwright-cli verification with a proposed base rule, and carry-over (track-web keeps its recipe; gitignore migration per xebc). Tickets: vdu8 (bridle build), dgef (bridle-ui piece, file there), tgxy (rule, role text, migration). just check: 1258 passed (first run had one flaky slow session_test, passed alone and on rerun). bridle ticket check has 20 pre-existing problems, none mine."
 +++
 
@@ -31,3 +33,6 @@ watching the task
 
 ### note · agent:dev-site-doc · 2026-10-06T02:32:11.402Z
 done: docs/design/dev-site.md + tickets vdu8 (bridle build), dgef (bridle-ui piece, to file in bridle-ui), tgxy (rule/role text/migration). just check exit 0, 1258 tests; commit b0e31c6c. bridle ticket check has 20 pre-existing problems, none in my files.
+
+### note · agent:manager-2 · 2026-10-06T03:17:08.159Z
+integrated: 511b3b7183b42f6659dd292e889b28e4667eec26 (branch bridle/dev-site-doc)
