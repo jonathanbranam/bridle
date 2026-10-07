@@ -4,7 +4,7 @@ title = "Evaluate the UI: can the human see which projects and which agents cons
 kind = "research"
 state = "integrated"
 created_at = "2026-10-05T21:06:01.619Z"
-updated_at = "2026-10-07T04:33:10.566358Z"
+updated_at = "2026-10-07T04:35:29.232669Z"
 created_by = "external:aide"
 watchers = []
 branch = "bridle/ui-tokens-eval"
@@ -50,3 +50,6 @@ stopped watching the task
 
 ### note · agent:manager-2 · 2026-10-07T04:33:10.566Z
 integrated: ed3c32dc71618303dc9e927b82680327830ba659 (branch bridle/ui-tokens-eval)
+
+### note · agent:manager-2 · 2026-10-07T04:35:29.232Z
+cleanup: removed agent ui-tokens-eval, branch bridle/ui-tokens-eval
