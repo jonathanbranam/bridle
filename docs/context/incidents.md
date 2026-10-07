@@ -24,6 +24,20 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-07 ~01:35-02:05: the daemon upgrade gave up under load
+
+- **What happened:** `bridle daemon restart --upgrade` at the human's go built 57983073, then
+  waited the default 600 s for every agent to be idle. Worker `page-title-rev` stayed in one turn
+  throughout; the upgrade failed ("no quiet point within 600s"), spawns were allowed again and
+  the commit isn't retried.
+- **Impact:** every daemon stayed on the old build; the fixes the human wanted live (br-x56y and
+  others) didn't reach the running daemons.
+- **Cause:** the design waits for a quiet point to happen by chance (automatic upgrade starts only
+  at an idle tick, 600 s give-up, only spawns held while running agents keep getting new turns).
+  Under steady load it never comes.
+- **Category:** `daemon`.
+- **Follow-up:** [[upgrades-never-go-through-under-load-drain-no-new-turns-no-t-vn42|vn42]].
+
 ## 2026-10-07 ~00:53-01:40: auto mode refused the orchestrator's daemon upgrade
 
 - **What happened:** Claude Code's auto mode classifier refused `bridle daemon restart --upgrade`
