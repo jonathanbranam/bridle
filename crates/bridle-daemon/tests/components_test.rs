@@ -22,6 +22,7 @@ parent = "client"
 fn req(title: &str, components: &[&str]) -> NewTaskRequest {
     NewTaskRequest {
         ticket: None,
+        parent: None,
         for_human: false,
         priority: None,
         title: title.to_string(),

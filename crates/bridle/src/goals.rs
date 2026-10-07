@@ -136,6 +136,7 @@ async fn propose(cli: &Cli, args: &GoalsProposeProposeArgs) -> Result<(), CliErr
     let client = client_for(cli).await?;
     let req = NewTaskRequest {
         ticket: None,
+        parent: None,
         for_human: false,
         priority: None,
         title,

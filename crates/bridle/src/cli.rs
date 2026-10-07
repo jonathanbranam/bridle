@@ -1492,6 +1492,10 @@ pub struct TaskNewArgs {
     /// How soon it's wanted; ranks the human's to-dos (default normal).
     #[arg(long, value_enum, ignore_case = true)]
     pub priority: Option<TaskPriorityArg>,
+    /// Split from this task: the new task records it as its parent, inherits its watchers
+    /// (you are still added), and the parent's thread names the new task.
+    #[arg(long, value_name = "TASK")]
+    pub from: Option<String>,
 }
 
 #[derive(Debug, Args)]

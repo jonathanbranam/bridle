@@ -244,6 +244,7 @@ async fn make_task(
             components: Vec::new(),
             size: None,
             ticket: Some(id.to_string()),
+            parent: None,
         })
         .await?;
     Ok(task.id)

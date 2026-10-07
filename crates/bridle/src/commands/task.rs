@@ -131,6 +131,7 @@ pub(super) async fn task_new(cli: &Cli, args: &TaskNewArgs) -> Result<(), CliErr
     };
     let req = NewTaskRequest {
         ticket: None,
+        parent: args.from.clone(),
         for_human: args.for_human,
         title: args.title.clone(),
         kind: task_kind_arg(args.kind),

@@ -123,6 +123,7 @@ async fn new_task(client: &Client) -> String {
     client
         .new_open_task(&NewTaskRequest {
             ticket: None,
+            parent: None,
             title: "t".to_string(),
             kind: TaskKind::Feature,
             body: String::new(),

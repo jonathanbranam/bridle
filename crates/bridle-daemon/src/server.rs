@@ -1805,7 +1805,12 @@ async fn new_task(
     Json(req): Json<NewTaskRequest>,
 ) -> Result<Json<Task>, ApiError> {
     let components = state.manager.normalize_components(&req.components)?;
-    let task = state
+    if let Some(parent) = &req.parent
+        && state.tasks.get_task(parent).is_none()
+    {
+        return Err(TaskError::NotFound(format!("no such task: {parent}")).into());
+    }
+    let mut task = state
         .tasks
         .new_task_for_ticket(
             &req.title,
@@ -1817,6 +1822,12 @@ async fn new_task(
             req.ticket,
         )
         .await?;
+    if let Some(parent) = &req.parent {
+        task = state
+            .tasks
+            .split_from(&task.id, parent, &principal.id)
+            .await?;
+    }
     let task = if req.for_human {
         let human = "human".to_string();
         // A to-do is the requester's own, already approved: skip the pending gate.

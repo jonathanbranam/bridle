@@ -1082,6 +1082,9 @@ struct Frontmatter {
     /// The ticket the task was made from; absent for a task with none.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     ticket: Option<String>,
+    /// The task this one was split from; absent for an ordinary task.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    parent: Option<String>,
     /// Last: TOML needs tables after plain values.
     #[serde(default, skip_serializing_if = "Impact::is_empty")]
     impact: Impact,
@@ -1111,6 +1114,7 @@ fn render_task(task: &Task) -> Result<String, StateBranchError> {
         commit: task.commit.clone(),
         summary: task.summary.clone(),
         ticket: task.ticket.clone(),
+        parent: task.parent.clone(),
         impact: task.impact.clone(),
     };
     let toml = toml::to_string_pretty(&fm)?;
@@ -1289,6 +1293,7 @@ fn parse_task(text: &str) -> Result<Task, StateBranchError> {
         commit: fm.commit,
         summary: fm.summary,
         ticket: fm.ticket,
+        parent: fm.parent,
         impact: fm.impact,
         settle_until: None,
     })
@@ -1462,6 +1467,7 @@ mod tests {
             commit: Some("abc123".to_string()),
             summary: Some("Did a thing.\n\nSecond \"paragraph\".".to_string()),
             ticket: Some("7fa2".to_string()),
+            parent: None,
             impact: Impact {
                 modify: vec!["s-b310".to_string()],
                 add_under: vec!["r-7fa2".to_string()],

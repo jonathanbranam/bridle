@@ -191,6 +191,7 @@ impl TaskManager {
                 commit: None,
                 summary: None,
                 ticket: None,
+                parent: None,
                 impact: Impact::default(),
                 settle_until: None,
             });
@@ -558,12 +559,48 @@ impl TaskManager {
             commit: None,
             summary: None,
             ticket,
+            parent: None,
             impact: Impact::default(),
             settle_until: None,
         };
         self.state.enqueue_task(&task)?;
         self.state
             .enqueue_event(&task.id, "", task.state.as_str(), "human", task.created_at);
+        Ok(self.put(task))
+    }
+
+    /// Makes `child` a task split from `parent` (`task new --from`): records the link on the
+    /// child, gives it the parent's watchers (the creator, already a watcher, stays), and notes
+    /// the child on the parent's thread. Fails `NotFound` for an unknown parent, before the
+    /// child is touched; call [`TaskManager::get_task`] on the parent first to fail early.
+    pub async fn split_from(
+        &self,
+        child: &str,
+        parent: &str,
+        by: &PrincipalId,
+    ) -> Result<Task, TaskError> {
+        let mut parent_task = self
+            .get_task(parent)
+            .ok_or_else(|| TaskError::NotFound(format!("no such task: {parent}")))?;
+        let mut task = self
+            .get_task(child)
+            .ok_or_else(|| TaskError::NotFound(format!("no such task: {child}")))?;
+        let now = Utc::now();
+        for w in &parent_task.watchers {
+            add_watcher(&mut task.watchers, w);
+        }
+        task.parent = Some(parent.to_string());
+        task.updated_at = now;
+        self.state.enqueue_task(&task)?;
+        parent_task.thread.push(ThreadEntry {
+            kind: ThreadEntryKind::Note,
+            from: by.clone(),
+            body: format!("split off {child}: {}", task.title),
+            at: now,
+        });
+        parent_task.updated_at = now;
+        self.state.enqueue_task(&parent_task)?;
+        self.put(parent_task);
         Ok(self.put(task))
     }
 
@@ -2541,6 +2578,58 @@ mod tests {
         assert_eq!(task.ticket.as_deref(), Some("abcd"));
         assert_eq!(task.watchers, vec![aide.clone()]);
         assert_eq!(notified_of(&task), vec![aide]);
+    }
+
+    #[tokio::test]
+    async fn split_from_links_inherits_watchers_and_notes_the_parent() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let repo = tmp.path().join("repo");
+        init_repo(&repo).await;
+        let store = Store::open(tmp.path().join("bridle.db"))
+            .await
+            .expect("open store");
+        let state = StateBranch::open(&repo, &tmp.path().join("state"))
+            .await
+            .expect("open state branch");
+        let tm = reopen_manager(store.clone(), state.clone()).await;
+
+        let parent = tm
+            .new_task_by(
+                "P",
+                TaskKind::Feature,
+                String::new(),
+                vec![],
+                None,
+                "advisor",
+            )
+            .await
+            .expect("parent");
+        let orch = "orchestrator".to_string();
+        let child = tm
+            .new_task_by("C", TaskKind::Feature, String::new(), vec![], None, &orch)
+            .await
+            .expect("child");
+        let child = tm
+            .split_from(&child.id, &parent.id, &orch)
+            .await
+            .expect("split");
+        assert_eq!(child.parent.as_deref(), Some(parent.id.as_str()));
+        assert_eq!(child.watchers, vec![orch.clone(), "advisor".to_string()]);
+        let parent = tm.get_task(&parent.id).expect("parent");
+        let note = parent.thread.last().expect("a note on the parent");
+        assert_eq!(note.from, orch);
+        assert!(note.body.contains(&child.id), "{}", note.body);
+        // The link outlives a restart.
+        state.flush_now().await.expect("flush");
+        let tm2 = reopen_manager(store, state).await;
+        assert_eq!(
+            tm2.get_task(&child.id).expect("child").parent.as_deref(),
+            Some(parent.id.as_str())
+        );
+        assert!(matches!(
+            tm2.split_from(&child.id, "nope", &orch).await,
+            Err(TaskError::NotFound(_))
+        ));
     }
 
     #[tokio::test]

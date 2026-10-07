@@ -331,7 +331,7 @@ bridle advisor start <name> [--brief TEXT|@FILE]   send the brief to external:ad
 bridle orchestrator prime prototyper         the prototyper role file, then the project's .bridle/roles/prototyper.md
 bridle orchestrator prime document-reviewer  the document-reviewer role file, then the project's .bridle/roles/document-reviewer.md
 bridle orchestrator prime worker|planner [--component ID ...] [--task ID]   the role's rules, facts, guides, plus named components' scope; --task is worker only
-bridle task new    <title> -k/--kind KIND [--body TEXT | --body-file FILE] [--component ID ...] [--size S|M|L] [--for-human] [--priority critical|urgent|high|normal|low]
+bridle task new    <title> -k/--kind KIND [--body TEXT | --body-file FILE] [--component ID ...] [--size S|M|L] [--for-human] [--priority critical|urgent|high|normal|low] [--from TASK]
 bridle task show   <id>
 bridle task plan   <id>                                                 open -> planned: ready to build, claimable once unblocked
 bridle task priority <id> critical|urgent|high|normal|low  change the priority; who and when go in the thread and a `task.priority` event
@@ -435,6 +435,10 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   finishes it with `task done <id>` (no `--commit`); `task list --claimed-by human` lists
   the open ones. By convention the title starts `[at restart]` or `[at next reboot]` when it
   must wait for one; nothing parses it. See coordination.md, "Human to-dos".
+- **`task new --from <task>`** makes the new task a split of an existing one: it records the
+  task as its `parent`, inherits the parent's watchers (you are still added), and the parent's
+  thread gets a note naming the new task. An unknown parent is refused before anything is made.
+  The link is same-daemon only: a parent on another project's daemon is not reachable (cy2v, 3haz).
 - **`--priority critical|urgent|high|normal|low`** on `task new` (default normal) and `task priority <id> <p>`
   set the priority. `task list` and `task show` display it, and `task list` sorts by it,
   highest first. At `high` and above the most recently set goes first (so a newer urgent thing

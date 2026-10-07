@@ -323,6 +323,9 @@ events/2026-09.jsonl      append-only transitions, for history and rebuild
   removed from the body, written back through the normal task write (so it reaches the state
   branch). Idempotent: a task without the line is left alone, so a second start changes nothing.
   A rebuild round-trips the field.
+- **A task's `parent`** (the task it was split from, `task new --from`) is an optional
+  `parent = "..."` frontmatter line, omitted for an ordinary task; no SQLite column, no migration
+  (existing tasks have none). Setting it also copies the parent's watchers into the child's.
 - **A task's landing record** (`branch`, `commit`, `summary`) lives only in the frontmatter, as
   optional strings: omitted when unset, and a file written before the fields existed loads
   with none. A rebuild round-trips them.

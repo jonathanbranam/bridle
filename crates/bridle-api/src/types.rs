@@ -1749,6 +1749,10 @@ pub struct Task {
     /// with no ticket. Old task files and old daemons omit it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ticket: Option<String>,
+    /// The task this one was split from or made for (`task new --from`); it inherited that
+    /// task's watchers. Null for an ordinary task; old task files and daemons omit it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub parent: Option<String>,
     /// Spec ids and file globs the task declares it will touch, set by
     /// `impact set` (docs/design/impact-and-conflicts.md). Empty = undeclared.
     #[serde(default, skip_serializing_if = "Impact::is_empty")]
@@ -1960,6 +1964,10 @@ pub struct NewTaskRequest {
     /// The ticket the task is made from; the task's id takes the ticket's id when free.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ticket: Option<String>,
+    /// The task this one is split from: stored as its parent, and it inherits the parent's
+    /// watchers (the creator is still added).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub parent: Option<String>,
 }
 
 /// A submission to the project's triage (`POST /v1/tasks/submit`): always an `open` task.

@@ -16,6 +16,7 @@ async fn a_new_task_settles_and_skip_settle_is_gated() {
     let task = c
         .new_open_task(&NewTaskRequest {
             ticket: None,
+            parent: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
@@ -57,6 +58,7 @@ async fn a_human_todo_is_claimed_at_creation_despite_settling() {
         .client
         .new_open_task(&NewTaskRequest {
             ticket: None,
+            parent: None,
             for_human: true,
             priority: None,
             components: Vec::new(),

@@ -23,6 +23,7 @@ async fn planned_task(daemon: &support::TestDaemon, title: &str) -> String {
         .client
         .new_open_task(&NewTaskRequest {
             ticket: None,
+            parent: None,
             for_human: false,
             priority: None,
             components: Vec::new(),

@@ -18,6 +18,7 @@ use support::{start_daemon, wait_for_state};
 fn new_req(title: &str, kind: TaskKind) -> NewTaskRequest {
     NewTaskRequest {
         ticket: None,
+        parent: None,
         for_human: false,
         priority: None,
         components: Vec::new(),
@@ -36,6 +37,7 @@ async fn create_show_list_and_edit_a_task() {
     let task = c
         .new_open_task(&NewTaskRequest {
             ticket: None,
+            parent: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
@@ -846,6 +848,7 @@ async fn search_matches_words_in_title_body_and_summary() {
     let t1 = c
         .new_open_task(&NewTaskRequest {
             ticket: None,
+            parent: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
@@ -860,6 +863,7 @@ async fn search_matches_words_in_title_body_and_summary() {
     let t2 = c
         .new_open_task(&NewTaskRequest {
             ticket: None,
+            parent: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
@@ -874,6 +878,7 @@ async fn search_matches_words_in_title_body_and_summary() {
     let t3 = c
         .new_open_task(&NewTaskRequest {
             ticket: None,
+            parent: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
@@ -948,6 +953,7 @@ async fn search_includes_done_and_dropped_tasks() {
     let open_task = c
         .new_open_task(&NewTaskRequest {
             ticket: None,
+            parent: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
@@ -962,6 +968,7 @@ async fn search_includes_done_and_dropped_tasks() {
     let done_task = c
         .new_open_task(&NewTaskRequest {
             ticket: None,
+            parent: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
@@ -976,6 +983,7 @@ async fn search_includes_done_and_dropped_tasks() {
     let dropped_task = c
         .new_open_task(&NewTaskRequest {
             ticket: None,
+            parent: None,
             for_human: false,
             priority: None,
             components: Vec::new(),

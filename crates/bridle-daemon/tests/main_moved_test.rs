@@ -56,6 +56,7 @@ async fn landing_notifies_the_other_worker_once_and_not_the_lander() {
         .client
         .new_open_task(&NewTaskRequest {
             ticket: None,
+            parent: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
@@ -129,6 +130,7 @@ async fn landing_names_the_overlap_only_to_the_worker_whose_impact_overlaps() {
             .client
             .new_open_task(&NewTaskRequest {
                 ticket: None,
+                parent: None,
                 for_human: false,
                 priority: None,
                 components: Vec::new(),

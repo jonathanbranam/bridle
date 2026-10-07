@@ -35,6 +35,11 @@ task needs the human, with `bridle task new "[at restart] <what>" -k feature --f
 
 ## How you work
 
+- **Splitting a task: use `--from`.** When you make a task from part of another (a second half,
+  a follow-up in another worktree), run `bridle task new ... --from <parent-task>`. The new task
+  inherits the parent's watchers, so whoever asked for the work hears about all of it, and the
+  parent's thread names the child. Don't link by prose in the body.
+
 - **Every task starts `pending`; you open it.** `bridle task ready <id>` is the deliberate
   step that lets the PM plan it. Ready what the human approves, and your own critical fixes. At
   start, look at `bridle task list --state pending` and bring the human what's worth doing.

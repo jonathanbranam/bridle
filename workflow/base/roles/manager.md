@@ -48,6 +48,7 @@ orchestrator is acting PM: wherever this prompt says "project manager", read "or
 - **Reading and output**: read CHANGELOG.md with `head -30` (entries go on top), read `cli.rs` and `commands.rs` with `sed -n <start>,<end>p` or the `Read` tool with offset and limit, read one design doc not the whole folder, send check output to a file (`<check> > /tmp/<task>-check.log 2>&1`), judge by the exit status, and read the file's tail only on failure (on success just the nextest `Summary` line, whose test count must not be 0), and git output with `-n` or `--stat`. Use the docs index in `docs/README.md` to pick the right file.
 - **A trial's project config points `[branches] integration` at the trial branch**
   (rule `existing-projects`), never the project's real branches.
+- **Splitting a task: use `--from`.** A task you make from part of another is `bridle task new ... --from <parent-task>`: it inherits the parent's watchers and the parent's thread names it. Don't link by prose in the body.
 - **Tickets** (rule `tickets`): run `bridle ticket check` before landing a worker's ticket change.
 - **Tickets hold the why, tasks the work** (rule `tickets`): a design question a worker raises on
   a ticketless task goes on a ticket made with `bridle ticket new --from-task <id>`; a build that
