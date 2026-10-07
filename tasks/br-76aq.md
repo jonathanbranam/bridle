@@ -2,11 +2,13 @@
 id = "br-76aq"
 title = "bridle sign setup fails with Homebrew OpenSSL 3+: macOS can't import the p12 ('MAC verification failed ... wrong password?')"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-06T23:42:35.043Z"
-updated_at = "2026-10-07T00:44:12.898770Z"
+updated_at = "2026-10-07T01:03:10.736046Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+branch = "bridle/openssl-path"
+commit = "feed0c806a3879466ddbcabbe611ebec9deee515"
 summary = "Fixed bridle sign setup failing on macOS with Homebrew OpenSSL 3+ by using /usr/bin/openssl (LibreSSL) instead of the first openssl on PATH. Added pick_openssl(exists: bool) function for testability and openssl_path() to check filesystem; both openssl calls in create_identity now use openssl_path(). Added unit test and documented in cli.md. Commit: 71a385fd."
 +++
 
@@ -27,3 +29,6 @@ From orchestrator: br-76aq is ready (the human, via aide: 'Please schedule'). It
 
 ### note · agent:openssl-path · 2026-10-07T00:44:12.898Z
 done: Fixed bridle sign setup failing with Homebrew OpenSSL 3+ by using system /usr/bin/openssl; commit 71a385fd
+
+### note · agent:manager-2 · 2026-10-07T01:03:10.736Z
+integrated: feed0c806a3879466ddbcabbe611ebec9deee515 (branch bridle/openssl-path)
