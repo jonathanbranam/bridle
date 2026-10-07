@@ -4,7 +4,7 @@ title = "Postmortem for incident br-y455: bridle's daemon couldn't restart or se
 kind = "research"
 state = "integrated"
 created_at = "2026-10-06T22:13:54.531Z"
-updated_at = "2026-10-07T01:21:15.093411Z"
+updated_at = "2026-10-07T01:23:40.719719Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 branch = "bridle/y455-postmortem"
@@ -39,3 +39,6 @@ merged main (conflict only in y455 front matter, kept tasks: [br-y455, br-qect] 
 
 ### note · agent:manager-2 · 2026-10-07T01:21:15.093Z
 integrated: 579830737e4297476c6888f7dcef9f6e49691244 (branch bridle/y455-postmortem)
+
+### note · agent:manager-2 · 2026-10-07T01:23:40.719Z
+cleanup: removed agent y455-postmortem, branch bridle/y455-postmortem
