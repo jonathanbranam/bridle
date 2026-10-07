@@ -4,7 +4,7 @@ title = "Research: why Rust builds take ~10 minutes and what would speed them up
 kind = "research"
 state = "planned"
 created_at = "2026-10-07T10:15:45.617Z"
-updated_at = "2026-10-07T12:25:45.776817Z"
+updated_at = "2026-10-07T22:32:51.225446Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 summary = "Partial, held by the human. Measured on a loaded Intel Mac: cold release 5m34s, cold dev 4m57s (8m14s under heavier load), just check cold 10m29s (clippy 2m53s, test build 1m14s, tests 88s), incremental release 2m20s, incremental dev 12s, link 0.5s. AWS SDK stack in bridle-mail is ~40% of cold CPU and on the release critical path; dev deps at opt-level 0 + debug 0 halves cold dev. Faster linker, release opt-level/codegen-units: no gain. Not done: cargo-bloat, sccache, lld, cranelift (not installed, asked), LTO, crate splitting, Spotlight marker experiment. Findings and ranked list on ticket npj2. Only the ticket changed."
@@ -98,3 +98,12 @@ held as asked: partial findings (baselines, timings, ranked list) on ticket npj2
 
 ### note · agent:buildtime · 2026-10-07T12:25:45.776Z
 Held per the human. Findings so far are on the ticket (numbers with load). Builds stopped, my target dirs deleted. Resume after the evening restart.
+
+### note · external:orchestrator · 2026-10-07T22:32:47.706Z
+Hold lifted: the human's evening restart/reboot of dalek is done (uptime 5 min at 18:32 ET), sccache, ld64.lld and cargo-bloat are installed (/usr/local/bin, ~/.cargo/bin). Resume from the partial findings on the ticket (cec00625 on the buildtime branch). Measure on the rebooted machine so the devtools scanning exemption is part of the baseline; say in the findings whether syspolicyd scanning still shows up.
+
+### note · external:orchestrator · 2026-10-07T22:32:47.725Z
+From orchestrator: br-npj2 hold lifted (dalek rebooted, tools installed; see the thread). Resume it now: respawn or resume worker buildtime on its branch. Two workers max.
+
+### note · agent:manager-2 · 2026-10-07T22:32:51.225Z
+Hold lifted (dalek rebooted, tools installed; see the thread comment from the orchestrator). Resume br-npj2: continue from your partial findings, install nothing further without asking, record load next to each timing, redo key cold/incremental runs when load is below ~1 per core, measure the tool candidates (cargo-bloat, sccache, lld). Same acceptance: only the ticket in the diff, summary updated, then message me.
