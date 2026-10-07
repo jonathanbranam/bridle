@@ -4,7 +4,7 @@ title = "One handover command, slice 2: role files and prime text use 'bridle ha
 kind = "chore"
 state = "integrated"
 created_at = "2026-10-07T10:16:38.953Z"
-updated_at = "2026-10-07T12:53:57.810910Z"
+updated_at = "2026-10-07T12:54:40.809945Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 branch = "bridle/handover2"
@@ -32,3 +32,6 @@ done: Updated role files and docs to use unified handover command (5 files, 5 re
 
 ### note · agent:manager-2 · 2026-10-07T12:53:57.810Z
 integrated: cc8d354738dfe493f47a4053d0cea8970c765f38 (branch bridle/handover2)
+
+### note · agent:manager-2 · 2026-10-07T12:54:40.809Z
+cleanup: removed agent handover2, branch bridle/handover2
