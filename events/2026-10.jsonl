@@ -1033,3 +1033,5 @@
 {"actor":"agent:pm-1","at":"2026-10-07T23:25:53.791096Z","from":"open","task":"br-4yc8","to":"planned"}
 {"actor":"human","at":"2026-10-07T23:25:54.822167Z","from":"planned","task":"br-bedz","to":"integrated"}
 {"actor":"agent:pm-1","at":"2026-10-07T23:25:56.888811Z","queue":"reprioritized"}
+{"actor":"human","at":"2026-10-07T23:27:17.813884Z","from":"planned","task":"br-cb18","to":"integrated"}
+{"actor":"agent:pm-1","at":"2026-10-07T23:27:21.163824Z","queue":"reprioritized"}

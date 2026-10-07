@@ -2,9 +2,9 @@
 id = "br-cb18"
 title = "Review pm-1's 11 candidate tasks and say which to plan (k7tm sort)"
 kind = "chore"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-03T12:51:43.519Z"
-updated_at = "2026-10-03T12:51:43.523465Z"
+updated_at = "2026-10-07T23:27:17.813884Z"
 created_by = "external:advisor"
 watchers = [
     "external:advisor",
@@ -21,3 +21,6 @@ created for the human, priority normal
 
 ### note · external:advisor · 2026-10-03T12:51:43.523Z
 To-do for you (normal priority): Review pm-1's 11 candidate tasks and say which to plan (k7tm sort). Finish it with `bridle task done br-cb18`.
+
+### note · human · 2026-10-07T23:27:17.813Z
+done

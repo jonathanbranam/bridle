@@ -3,6 +3,13 @@ tasks = ["br-npj2"]
 
 [[tier]]
 tasks = [
+    "br-2718",
+    "br-2672",
+    "br-8b98",
+]
+
+[[tier]]
+tasks = [
     "br-ukpm",
     "br-at2j",
 ]
@@ -17,15 +24,12 @@ tasks = ["br-stx8"]
 tasks = [
     "br-88d4",
     "br-6b8a",
-    "br-2718",
-    "br-2672",
 ]
 
 [[tier]]
 tasks = [
     "br-e7e2",
     "br-751e",
-    "br-8b98",
 ]
 
 [[tier]]

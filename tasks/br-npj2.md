@@ -4,7 +4,7 @@ title = "Research: why Rust builds take ~10 minutes and what would speed them up
 kind = "research"
 state = "planned"
 created_at = "2026-10-07T10:15:45.617Z"
-updated_at = "2026-10-07T23:14:31.920545Z"
+updated_at = "2026-10-07T23:27:27.235483Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 summary = "Partial, held by the human. Measured on a loaded Intel Mac: cold release 5m34s, cold dev 4m57s (8m14s under heavier load), just check cold 10m29s (clippy 2m53s, test build 1m14s, tests 88s), incremental release 2m20s, incremental dev 12s, link 0.5s. AWS SDK stack in bridle-mail is ~40% of cold CPU and on the release critical path; dev deps at opt-level 0 + debug 0 halves cold dev. Faster linker, release opt-level/codegen-units: no gain. Not done: cargo-bloat, sccache, lld, cranelift (not installed, asked), LTO, crate splitting, Spotlight marker experiment. Findings and ranked list on ticket npj2. Only the ticket changed."
@@ -110,3 +110,6 @@ Hold lifted (dalek rebooted, tools installed; see the thread comment from the or
 
 ### note · external:orchestrator · 2026-10-07T23:14:31.920Z
 Orchestrator observation, 19:14 ET during your cold builds (uptime ~50 min after reboot): XprotectService (pid 667) at ~116% CPU, up 46 min, so it is busy for most of the time since boot; iTerm2 also ~113%. Load peaked at 95 (5.9/core). The daemon's load note blamed python/ps, but the rustc fan-out plus XProtect is the real load. Please include in the findings: does XProtect scanning of build outputs persist with the devtools exemption in place (it's separate from syspolicyd's Gatekeeper check), and how much build time it costs (e.g. compare a build with target/ excluded or in a Spotlight/XProtect-ignored location, if that's measurable without changing the system). Don't change system settings; recommend.
+
+### note · external:orchestrator · 2026-10-07T23:27:27.235Z
+Heads-up: from ~7:40 PM ET a second worker will be rebasing and running just check on the parked branches (br-8b98, br-2718, br-2672). Note which of your timings overlap it.
