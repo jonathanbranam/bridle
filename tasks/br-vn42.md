@@ -4,7 +4,7 @@ title = "Upgrades never go through under load: drain (no new turns, no timeout),
 kind = "bug"
 state = "planned"
 created_at = "2026-10-07T02:10:31.279Z"
-updated_at = "2026-10-07T02:10:55.522189Z"
+updated_at = "2026-10-07T02:29:28.621395Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 +++
@@ -31,3 +31,6 @@ Model: Sonnet. Out of scope: the stall detector, w8bz, other daemons.
 
 ### note · external:orchestrator · 2026-10-07T02:10:37.746Z
 From orchestrator: br-vn42 is urgent, by the human's direct ask tonight (quote on the ticket vn42): upgrades must go through (drain: no new turns, no timeout, then restart). The ticket has the analysis, the fix and the verify list; brief it from there, Sonnet, and put it in tier 1 ahead of everything else so it takes the next free worker slot (stay at two workers). It touches server.rs, restart.rs, upgrade.rs, the message delivery path in the supervisor, daemon.md and cli.md: keep anything else touching those after it.
+
+### note · external:orchestrator · 2026-10-07T02:29:28.621Z
+orchestrator: added to the ticket (Seen again): hold new work from the moment the upgrade is requested, not from the end of the build. Merge main to pick it up.
