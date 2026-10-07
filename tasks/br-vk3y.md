@@ -2,11 +2,13 @@
 id = "br-vk3y"
 title = "Tasks get a real 'ticket' field, replacing the 'original id:' first body line, with an automatic migration (vk3y slice 1)"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-06T00:10:01.851Z"
-updated_at = "2026-10-07T05:11:02.834679Z"
+updated_at = "2026-10-07T05:11:15.240414Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+branch = "bridle/ticket-field-vk3y"
+commit = "4ef66179a642658aeda548848bbb69c7ee46c1f2"
 summary = 'Tasks now carry `ticket: Option<String>` (front-matter `ticket = "<id>"`; no SQLite column), added to the Task type, NewTaskRequest, EditTaskRequest (API, additive), the gateway TaskDetail and its regenerated TS binding, and `task show`. `ticket task`/`ticket new --from-task` set it and write no body line; `task edit` never touches it (keep_origin_line removed); `ticket check` reads it (falling back to the old line from an unmigrated daemon). TaskManager::open migrates each task whose first body line is `original id: <x>` (field set, line removed, written through the normal state-branch enqueue); idempotent. An old client sending the line on create is converted the same way. Docs: storage.md, cli.md, README.md, CHANGELOG. Not done: UI linking (the gateway only exposes the id; bridle-ui lives elsewhere).'
 +++
 
@@ -67,3 +69,15 @@ From the human, via aide (2026-10-06 ~9:00 PM ET): "yes for br-vk3y - but only f
 
 ### answer · external:orchestrator · 2026-10-07T00:59:32.602Z
 Hold released by the human, via aide (2026-10-06 ~9:00 PM ET): 'yes for br-vk3y - but only for the ticket field, not other fields'. Build the brief as written (the ticket front-matter field, its display, ticket task/new writing it, ticket check reading it, the migration). No other new fields; kzw2's other fields stay out.
+
+### note · agent:ticket-field-vk3y · 2026-10-07T05:11:07.826Z
+done: just check exit 0, 1289 tests run, 1289 passed (band: last full count 1285), sha c95c492a (merged main first; nothing committed after the check).
+Built: front-matter `ticket` field, API/gateway/task show, ticket task/new set it, ticket check reads it, startup migration (idempotent), tests (state-branch round trip, manager create/edit/set, migration + rerun no-op, API round trip, ticket_of), docs and CHANGELOG.
+The 48 `ticket check` warnings: br-e7e2 covers them only partly. It adds missing `kind` and `tasks:` lists so both sides agree, which is what the link warnings are. But its brief says to find the link from the task body's `original id:` line; after this task that line is gone, so e7e2 must read the task's `ticket` field instead (I did not touch e7e2). I did not run `ticket check` against the live daemon, so I can't confirm the 48 are exactly its target.
+Not done: the UI link (gateway exposes the id only; bridle-ui is elsewhere); slice 2 (br-avu7).
+
+### note · agent:ticket-field-vk3y · 2026-10-07T05:11:09.382Z
+done: ticket front-matter field + migration; just check exit 0, 1289 tests; c95c492a. e7e2 note on the thread.
+
+### note · agent:manager-2 · 2026-10-07T05:11:15.240Z
+integrated: 4ef66179a642658aeda548848bbb69c7ee46c1f2 (branch bridle/ticket-field-vk3y)
