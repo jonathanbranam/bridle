@@ -4,7 +4,7 @@ title = "A comment on a claimed task doesn't wake the worker that claimed it: th
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-07T00:48:49.117Z"
-updated_at = "2026-10-07T01:44:48.630257Z"
+updated_at = "2026-10-07T01:45:24.042296Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 branch = "bridle/m63h-claimant-wake"
@@ -27,3 +27,6 @@ done: claimant now notified on comments (one message, never the author). ask/ans
 
 ### note · agent:manager-2 · 2026-10-07T01:44:48.630Z
 integrated: 96c8f7efd9e6068b1cfc0c7442d304d31e2a6698 (branch bridle/m63h-claimant-wake)
+
+### note · agent:manager-2 · 2026-10-07T01:45:24.042Z
+cleanup: removed agent m63h-claimant-wake, branch bridle/m63h-claimant-wake
