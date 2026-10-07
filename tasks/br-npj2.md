@@ -4,10 +4,10 @@ title = "Research: why Rust builds take ~10 minutes and what would speed them up
 kind = "research"
 state = "planned"
 created_at = "2026-10-07T10:15:45.617Z"
-updated_at = "2026-10-07T23:29:43.293080Z"
+updated_at = "2026-10-07T23:43:13.935978Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
-summary = "Research done; findings on ticket npj2 (only file changed). Cold on a rebooted 8-core Intel Mac: release 6m12s, dev 5m58s, just check ~10m; incremental release 2m19s (serial daemon 72s + bin 68s), dev 11s; link 0.5s. Ranked: (1) AWS SDKs in bridle-mail are ~40% of cold CPU and ~20% of the binary: feature-gate or replace with a small reqwest client (expected cold release 6m to ~4m, derived not built); (2) dev profile deps opt-level 0 + debug 0: measured cold dev -60% (2m28s), tests unchanged (88s vs 81s); (3) warm target dirs. Measured no gain: ld64.lld, Spotlight marker, release opt-level/codegen-units, sccache per worktree (0 Rust hits, paths in key). syspolicyd small after reboot. Cranelift not tried (needs nightly)."
+summary = "Research done; ticket npj2 has parts 1 to 3 (only file changed). Cold on rebooted 8-core Intel Mac: release 6m12s, dev 5m58s, just check ~10m; incremental release 2m19s, dev 11s; link 0.5s. Ranked: lean dev profile (measured -60% cold dev, tests unchanged); AWS SDKs in bridle-mail (~40% cold CPU, est. cold release 6m to 4m); tests/ consolidation (estimate -30-40s cold test build, -20-30s per daemon change; one test file touch = 5s, daemon lib touch = 37-45s); keep scanning exemption (nextest list of 73 binaries now 4.5s; not a build-time lever, sys time ~4%, XProtect +35s small). No gain: lld, Spotlight marker, release opt tweaks, per-worktree sccache. Part 3 adds a plain-language why-Rust-is-slow account."
 ticket = "npj2"
 +++
 
@@ -125,3 +125,9 @@ From orchestrator: br-npj2 verified (findings read on f12d4423, ticket-only). Me
 
 ### note · agent:manager-2 · 2026-10-07T23:29:43.293Z
 Good work; not landed yet, three gaps against the human's 7:30 AM scope change (see the aide note on the task thread). Add a short final section, no new heavy measurement beyond what is cheap: (1) answer explicitly: is the developer-tools scanning exemption a critical perf fix for us? yes/no with your numbers (before vs after reboot, syspolicyd/XProtect CPU, nextest --list phase if you can time it: 73 test binaries). (2) the tests/ consolidation (one test binary per crate via tests/it/main.rs; bridle-daemon 43 test files): put the human's pasted analysis on the ticket and add it to the ranked list with an expected saving (link count/test build time; measure test-build time on a crate or estimate and say which). (3) a plain-language 'how Rust builds work and why it is slow' paragraph or two for a reader new to Rust (crates, per-test-binary linking, generics monomorphization, deps compiled from source), and the XProtect question from the orchestrator (does XProtect persist with the exemption: your +35s says small; state it). Ticket only in the diff. Commit, merge main, message me.
+
+### note · agent:buildtime · 2026-10-07T23:43:04.939Z
+Part 3 added to the ticket (exemption verdict with numbers, human's analysis verbatim, tests/ consolidation with estimate, plain-language account, XProtect answer, conclusion). Consolidation saving is an estimate (not built); everything else measured.
+
+### note · agent:buildtime · 2026-10-07T23:43:13.935Z
+done: part 3 on ticket npj2 (exemption: no for build time, fixed nextest list to 4.5s; tests/ consolidation est. -30-40s cold test build; why-Rust-is-slow section; XProtect small); c663ae2b (ticket only, main merged, docs-only so no just check)
