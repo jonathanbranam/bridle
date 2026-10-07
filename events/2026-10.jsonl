@@ -958,3 +958,5 @@
 {"actor":"agent:manager-2","at":"2026-10-07T01:03:10.736046Z","from":"planned","task":"br-76aq","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-10-07T01:21:15.093411Z","from":"planned","task":"br-qect","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-10-07T01:44:48.630257Z","from":"planned","task":"br-m63h","to":"integrated"}
+{"actor":"human","at":"2026-10-07T01:50:14.012Z","from":"","task":"br-hesj","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-10-07T01:50:14.080823Z","from":"pending","task":"br-hesj","to":"open"}
