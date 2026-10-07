@@ -2,9 +2,9 @@
 id = "br-tqtp"
 title = "Document review never sends the human's comments on its own: the watcher doesn't make a still document due"
 kind = "bug"
-state = "pending"
+state = "dropped"
 created_at = "2026-10-07T00:43:14.523Z"
-updated_at = "2026-10-07T00:43:25.089896Z"
+updated_at = "2026-10-07T00:43:53.172695Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 +++
@@ -20,3 +20,6 @@ Acceptance: just check passes; the test above. Migration: none. Model: Sonnet. O
 
 ### note · agent:pm-1 · 2026-10-07T00:43:25.089Z
 pm-1: filed from ticket ad3t (the orchestrator's br-ad3t id did not exist). Orchestrator or human: please run 'bridle task ready br-tqtp'; I then plan it and queue it after br-x56y and br-76aq.
+
+### note · agent:pm-1 · 2026-10-07T00:43:53.172Z
+dropped: duplicate of br-ad3t, filed at the same instant by mistake
