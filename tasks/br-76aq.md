@@ -4,7 +4,7 @@ title = "bridle sign setup fails with Homebrew OpenSSL 3+: macOS can't import th
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-06T23:42:35.043Z"
-updated_at = "2026-10-07T01:03:10.736046Z"
+updated_at = "2026-10-07T01:04:07.993883Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 branch = "bridle/openssl-path"
@@ -32,3 +32,6 @@ done: Fixed bridle sign setup failing with Homebrew OpenSSL 3+ by using system /
 
 ### note · agent:manager-2 · 2026-10-07T01:03:10.736Z
 integrated: feed0c806a3879466ddbcabbe611ebec9deee515 (branch bridle/openssl-path)
+
+### note · agent:manager-2 · 2026-10-07T01:04:07.993Z
+cleanup: removed agent openssl-path, branch bridle/openssl-path
