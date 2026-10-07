@@ -962,3 +962,4 @@
 {"actor":"external:orchestrator","at":"2026-10-07T01:50:14.080823Z","from":"pending","task":"br-hesj","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-07T01:50:39.325548Z","from":"open","task":"br-hesj","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-07T01:50:43.324845Z","queue":"reprioritized"}
+{"actor":"agent:manager-2","at":"2026-10-07T02:03:40.583235Z","from":"planned","task":"br-ad3t","to":"integrated"}
