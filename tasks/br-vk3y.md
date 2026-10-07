@@ -10,9 +10,9 @@ watchers = ["external:aide"]
 branch = "bridle/ticket-field-vk3y"
 commit = "4ef66179a642658aeda548848bbb69c7ee46c1f2"
 summary = 'Tasks now carry `ticket: Option<String>` (front-matter `ticket = "<id>"`; no SQLite column), added to the Task type, NewTaskRequest, EditTaskRequest (API, additive), the gateway TaskDetail and its regenerated TS binding, and `task show`. `ticket task`/`ticket new --from-task` set it and write no body line; `task edit` never touches it (keep_origin_line removed); `ticket check` reads it (falling back to the old line from an unmigrated daemon). TaskManager::open migrates each task whose first body line is `original id: <x>` (field set, line removed, written through the normal state-branch enqueue); idempotent. An old client sending the line on create is converted the same way. Docs: storage.md, cli.md, README.md, CHANGELOG. Not done: UI linking (the gateway only exposes the id; bridle-ui lives elsewhere).'
+ticket = "vk3y"
 +++
 
-original id: vk3y
 Ticket (the ask with the human's words; read all of it, including "The human on `original id:`"; RE-READ it when you start). Also read ticket kzw2, section "Decided: the `ticket` field" (docs/tickets/open/task-data-the-system-acts-on-is-structured-fields-not-text-t-kzw2.md): it overrides any older mention of a column. Ticket vk3y: docs/tickets/open/tickets-and-tasks-link-each-other-in-metadata-every-time-tas-vk3y.md
 This is slice 1 of 2. Slice 2 (br-avu7, depends on this one) makes `bridle task new --ticket` required with the no-ticket sentinel, and adds the creator rule. Do not build slice 2 here.
 Goal: the task -> ticket link is a real task field named exactly `ticket`, not free text. Today it is the first line of the task body (`original id: <ticket>`; see docs/design/storage.md ~71, docs/design/cli.md ~251 and ~442, crates/bridle-daemon/src/tasks.rs ~494 and ~1582).

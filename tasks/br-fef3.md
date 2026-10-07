@@ -7,9 +7,9 @@ created_at = "2026-10-03T00:48:15.029Z"
 updated_at = "2026-10-03T12:42:59.315406Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
+ticket = "aqtg"
 +++
 
-original id: aqtg
 docs/tickets/open/should-the-orchestrator-wake-when-every-agent-is-idle-a-heal-aqtg.md
 
 ## Thread

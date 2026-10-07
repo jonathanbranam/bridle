@@ -7,9 +7,9 @@ created_at = "2026-10-05T02:56:15.131Z"
 updated_at = "2026-10-05T02:56:34.784914Z"
 created_by = "external:orchestrator@nuc"
 watchers = ["external:orchestrator@nuc"]
+ticket = "dbvd"
 +++
 
-original id: dbvd
 docs/tickets/open/specs-bridle-spec-id-duplicates-ledger-entries-for-hand-writ-dbvd.md
 
 submitted by external:orchestrator@nuc

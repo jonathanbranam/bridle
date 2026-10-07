@@ -7,9 +7,9 @@ created_at = "2026-10-05T00:00:40.553Z"
 updated_at = "2026-10-05T00:32:36.665489Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+ticket = "qdw8"
 +++
 
-original id: qdw8
 docs/tickets/open/a-haiku-worker-reported-done-before-its-check-finished-then-qdw8.md
 
 ## Thread

@@ -11,9 +11,9 @@ size = "M"
 branch = "bridle/jttf-b"
 commit = "cb85c8b25a4a81f9395050bd55e36784cd8eeda7"
 summary = "Named advisors addressable as external:advisor/<name>[@machine]. Client::with_advisor adds x-bridle-advisor from BRIDLE_ADVISOR_NAME; the auth middleware signs the shared advisor token as external:advisor/<name>. resolve_targets routes to the session's own inbox if registered (not for @machine addresses), else to external:advisor with an '(originally for advisor/<name>)' body prefix (send prints the 'isn't running' line when to differs). Sessions end moves unread mail the same way (Store::move_unread_messages; Sessions now takes the Store). Caveats: ask --to doesn't add the mark; a named advisor's 'inbox' reads only its own inbox, not the shared one."
+ticket = "jttf"
 +++
 
-original id: jttf
 Ticket: docs/tickets/open/interactive-sessions-context-for-all-daemon-decided-wakes-re-jttf.md, section 'The advisors inbox: decided' (read it all, including the delivery table). Design: docs/design/agent-host/principals.md and the messaging docs; code: message send/route in crates/bridle-daemon, the CLI's sender identity in crates/bridle (focus.rs line ~207 already reads BRIDLE_ADVISOR_NAME), wire types in crates/bridle-api/src/types.rs. Depends on slice A (the daemon's registry of advisor sessions).
 
 Goal: implement the approved design as written: address 'external:advisor/<name>' (and '/<name>@<machine>' with the existing visitor suffix); a named advisor's CLI sends as from external:advisor/<name> using BRIDLE_ADVISOR_NAME (shared token, name is a label not proof); delivery per the table: running session gets it in its own inbox; ended or never existed goes to external:advisor marked 'originally for advisor/<name>' and the sender is told '<name> isn't running; delivered to advisor'; unread messages move to external:advisor with the same mark when the session ends; unknown part before '/' stays a 404.

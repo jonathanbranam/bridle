@@ -11,9 +11,9 @@ size = "S"
 branch = "bridle/loopback-reads"
 commit = "98b14abaa46bfb556e22f5d136f40d06f4122ff5"
 summary = "Token-less GET/HEAD is granted 'local' only when the TCP peer is loopback (grants_local in server.rs; missing ConnectInfo fails closed); other token-less requests 401. Daemon now serves with connect info and warns at startup when listen isn't loopback. principals.md and CLI rule 3 updated, CHANGELOG added. Test is a unit test of grants_local (no tower dev-dep for a router-level test); existing integration tests cover loopback."
+ticket = "fr6q"
 +++
 
-original id: fr6q
 docs/tickets/open/token-less-reads-only-from-this-machine-fr6q.md
 
 ## Thread

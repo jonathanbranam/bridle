@@ -7,7 +7,7 @@ created_at = "2026-10-06T01:14:10.251Z"
 updated_at = "2026-10-06T01:14:10.251Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+ticket = "9z2d"
 +++
 
-original id: 9z2d
 docs/tickets/open/incident-the-orchestrator-didn-t-use-bridle-advisor-start-or-9z2d.md

@@ -10,9 +10,9 @@ watchers = ["external:aide"]
 branch = "bridle/priorities"
 commit = "6c72d8a702bd13a0cd3df3e76ade610d3d1d65b8"
 summary = "Added critical and urgent levels above high (TaskPriority, CLI args, gateway Priority + regenerated bindings) and a priority_at timestamp (set on task new/task priority, stored in frontmatter, optional). One shared sort_by_priority in bridle-api orders CLI 'task list' and the gateway to-do list: level first; newest-set first at high and above, oldest first at normal/low. No data migration: old low/normal/high rows and files load unchanged; priority_at absent falls back to created_at. Dropped the ticket's 'ordered' level (YAGNI). Docs: cli.md, storage.md, CHANGELOG. UI source is not in this repo; it consumes the regenerated Priority.ts binding and the already-sorted list, so it needs to show the two new level names."
+ticket = "y25n"
 +++
 
-original id: y25n
 Ticket (the ask, with the human's words; read first): docs/tickets/open/the-human-s-to-do-list-has-an-order-agents-can-set-prioritie-y25n.md
 
 Goal: the human's to-dos (tasks claimed by human) have an order agents can set, so an agent can say "put these two at the top" and the human sees them first; and "top" stays meaningful when every agent does it.

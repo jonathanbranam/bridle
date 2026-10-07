@@ -10,9 +10,9 @@ watchers = ["external:orchestrator"]
 branch = "bridle/m63h-claimant-wake"
 commit = "96c8f7efd9e6068b1cfc0c7442d304d31e2a6698"
 summary = "A comment on a claimed task (plain, or via send --task / --notify) now also tells its claimant, like a watcher: server.rs emit_comment adds claimed_by to the notified set; emit_task_change already skips the author and the `told` recipients, so exactly one message per comment (with --notify the pointer is the one sent). Only comments changed: state changes, ask and answer use emit_task_change directly and still tell watchers only (not changed). Tests in principal_wake_test.rs; cli.md and CHANGELOG updated; api.md lists no recipients."
+ticket = "m63h"
 +++
 
-original id: m63h
 Ticket (the human's relay, what happened, cause, fix, tests; read all of it): docs/tickets/open/a-comment-on-a-claimed-task-doesn-t-wake-the-worker-that-cla-m63h.md
 Bug: a plain `bridle task comment` notifies only the task's watchers (a `task_update` message "comment by <actor>: ..."); the claimant is not a watcher, so a manager's send-back comment never reaches the worker doing the task and it sits idle.
 EXACT FIX: a comment on a CLAIMED task also notifies its claimant (the `claimed_by` principal), the same message in the same way as for watchers, unless the claimant is the comment's author. Exactly one notification per comment: no duplicate when the claimant is also a watcher, or when the author also passes `--notify <claimant>` (then the --notify message is the one sent, or the watcher one; pick whichever keeps one; say which). Do not change wake policy for idle agents in general; this only adds a recipient. Start at crates/bridle-daemon/src/server.rs ~2867 (the `comment by {actor}` change text and the watcher fan-out) and crates/bridle-daemon/src/principal_wake.rs; tests in crates/bridle-daemon/tests/principal_wake_test.rs show the shape. Also check the same fan-out for `task ask`/`answer` and the other thread notes: if they use the same function the claimant is covered automatically; if not, list them in the done note and do not change them.

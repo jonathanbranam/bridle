@@ -10,9 +10,9 @@ watchers = ["external:orchestrator"]
 branch = "bridle/config-warn-6hx4"
 commit = "7bafebaf16b4bce63884ffda1d5c7fc7b8eb1cc1"
 summary = """Unknown config sections and keys are now accepted with a warning instead of stopping the binary. New bridle_api::config_warn (serde_ignored over the real structs; a small probe deserializer reads the known keys of the section for the "did you mean" typo hint, edit distance 2). deny_unknown_fields removed from config.toml (daemon), machines.rs, mail and gateway configs; loaders call config_warn::parse / parse_partial (the partial form drops other readers' sections of the shared file). Findings: daemon tracing::warn once per distinct finding per process (so reloads with the same set stay quiet); CLI eprintln once per run (all commands except serve); doctor lists them as "config warnings" warn checks, and doctor --strict exits 1 on any warn. Findings: focus.rs had no deny_unknown_fields (nothing to change); workflow.toml is not parsed with deny; credentials.toml untouched. Two daemon tests asserted that an unknown key errors (components bogus key, orchestrator pane key); changed to assert it now loads. Doctor only reports files its checks already read (project and machine config.toml), not the mail/gateway/machines files. Docs: roles-and-config.md, cli.md, CHANGELOG."""
+ticket = "6hx4"
 +++
 
-original id: 6hx4
 Ticket (the human's words; read all of it): docs/tickets/open/binaries-accept-unknown-config-sections-and-keys-with-a-warn-6hx4.md . Related: jmpf, 2ax5 (a [gateway] section stopped every daemon), 95mu (exact names before building).
 Goal: an older binary reads a config file that has sections or keys a newer one added, runs, and warns; `bridle daemon doctor` reports them and can fail on them.
 

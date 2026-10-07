@@ -7,9 +7,9 @@ created_at = "2026-09-28T16:55:47.716Z"
 updated_at = "2026-10-03T12:42:47.851482Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+ticket = "hv8e"
 +++
 
-original id: hv8e
 docs/questions/open/which-docs-live-in-bridle-and-which-in-markdown-hv8e.md
 
 ## Thread

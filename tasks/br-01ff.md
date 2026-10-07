@@ -8,9 +8,10 @@ updated_at = "2026-10-05T15:24:32.144853Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "M"
+ticket = "7gk7. docs/tickets/open/tickets-through-the-bridle-binary-7gk7.md"
 +++
 
-original id: 7gk7. docs/tickets/open/tickets-through-the-bridle-binary-7gk7.md
+
 
 ## Thread
 

@@ -7,7 +7,7 @@ created_at = "2026-10-05T02:51:03.960Z"
 updated_at = "2026-10-05T02:51:03.960Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
+ticket = "9s8u"
 +++
 
-original id: 9s8u
 docs/tickets/open/background-wakes-carry-the-session-s-prompt-context-quiet-ho-9s8u.md

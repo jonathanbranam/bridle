@@ -7,9 +7,9 @@ created_at = "2026-10-05T02:56:15.099Z"
 updated_at = "2026-10-05T02:56:33.970175Z"
 created_by = "external:orchestrator@nuc"
 watchers = ["external:orchestrator@nuc"]
+ticket = "awh4"
 +++
 
-original id: awh4
 docs/tickets/open/specs-step-text-can-t-quote-code-or-markup-awh4.md
 
 submitted by external:orchestrator@nuc

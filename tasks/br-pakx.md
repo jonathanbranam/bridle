@@ -7,9 +7,9 @@ created_at = "2026-10-05T02:51:25.551Z"
 updated_at = "2026-10-05T02:51:56.253966Z"
 created_by = "external:orchestrator@nuc"
 watchers = ["external:orchestrator@nuc"]
+ticket = "pakx"
 +++
 
-original id: pakx
 docs/tickets/open/specs-a-way-to-run-executable-specs-in-ci-without-a-bridle-c-pakx.md
 
 submitted by external:orchestrator@nuc

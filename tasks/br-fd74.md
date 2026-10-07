@@ -7,9 +7,9 @@ created_at = "2026-10-03T11:04:16.371Z"
 updated_at = "2026-10-03T12:42:33.537351Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
+ticket = "2tpm"
 +++
 
-original id: 2tpm
 docs/tickets/open/evaluate-go-instead-of-rust-for-bridle-2tpm.md
 
 ## Thread

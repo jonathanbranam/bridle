@@ -9,9 +9,9 @@ created_by = "external:advisor"
 watchers = ["external:advisor"]
 size = "S"
 commit = "6ac6121"
+ticket = "qgma"
 +++
 
-original id: qgma
 Ticket: docs/questions/open/lean-checks-skip-on-fast-forward-quiet-output-qgma.md
 
 ## Thread

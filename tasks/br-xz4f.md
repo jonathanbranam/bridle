@@ -10,9 +10,9 @@ watchers = ["external:aide"]
 branch = "bridle/open-nudge"
 commit = "189508b0f2fa2222edd40fcf283038b5acbb4c38"
 summary = "Readying a task (task ready) now messages the running project-manager, else the orchestrator, once per settled burst naming each still-open task (skipped when the PM readied it). A task open with no activity for [tasks] open_stale (default 4h, 0 = off) goes back to pending with a thread note and a message to the orchestrator and the readier (readier kept in memory; creator after a restart); tasks with an open question are skipped. New crates/bridle-daemon/src/open_watch.rs, run on the existing settle-wake tick; TaskManager::unready_stale; config + docs + CHANGELOG. Caveat: the staleness clock is updated_at, so any comment on an open task resets it."
+ticket = "xz4f"
 +++
 
-original id: xz4f
 docs/tickets/open/tasks-approved-by-anyone-but-the-orchestrator-are-never-plan-xz4f.md
 
 Approval: the human, via aide (m-5136, 2026-10-04 ~8:50 PM ET): "yes, I agree with number 1. The daemon sends a message to the PM when a task opens" and, on fix 3, "That should come from the daemon ... That task should go back to pending, needs comments, or whatever the status is. If there's something wrong with it, it should change status." Full quote: the ticket's "The human's decision".

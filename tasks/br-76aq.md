@@ -10,9 +10,9 @@ watchers = ["external:aide"]
 branch = "bridle/openssl-path"
 commit = "feed0c806a3879466ddbcabbe611ebec9deee515"
 summary = "Fixed bridle sign setup failing on macOS with Homebrew OpenSSL 3+ by using /usr/bin/openssl (LibreSSL) instead of the first openssl on PATH. Added pick_openssl(exists: bool) function for testability and openssl_path() to check filesystem; both openssl calls in create_identity now use openssl_path(). Added unit test and documented in cli.md. Commit: 71a385fd."
+ticket = "76aq"
 +++
 
-original id: 76aq
 Ticket (the human's words, cause, workaround): docs/tickets/open/bridle-sign-setup-fails-with-homebrew-openssl-3-macos-can-t-76aq.md . Related: p88z (sign setup).
 Cause: crates/bridle-daemon/src/signing.rs runs the first `openssl` on PATH (two calls, ~lines 126 and 139: `openssl req` and `openssl pkcs12`). On a Mac with Homebrew OpenSSL 3+/4 that binary's `pkcs12 -export` defaults (PBKDF2/AES, SHA-256 MAC) are unreadable by macOS `security import`, which reports "MAC verification failed ... wrong password?". /usr/bin/openssl (LibreSSL) works.
 EXACT FIX (decided; `-legacy` is rejected because LibreSSL does not accept it):

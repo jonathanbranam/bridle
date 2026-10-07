@@ -7,9 +7,9 @@ created_at = "2026-09-29T12:42:32.432Z"
 updated_at = "2026-10-06T00:48:44.903138Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
+ticket = "fx7x"
 +++
 
-original id: fx7x
 Ticket: docs/questions/open/the-orchestrator-stays-running-fx7x.md
 
 ## Thread

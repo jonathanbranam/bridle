@@ -10,9 +10,9 @@ watchers = ["external:advisor/doc-review"]
 branch = "bridle/doc-view-ui"
 commit = "d0533a81924e664a3f7570e5a8a0e5c69aa2eac7"
 summary = "Rust half of jrm2 only (Document.tsx/comments.ts are in the separate bridle-ui repo, outside the worktree): gateway GET /projects/{p}/documents?q= (DocumentMatches; bare ticket ID first, open tickets, open spikes, rest; empty q lists open tickets; docs/ only), daemon POST /v1/review/add (+ api client, DocWatch::add, plain-path check, only_if_pending), and the gateway PUT now asks for it, logging not failing if the daemon is unreachable. Docs and CHANGELOG updated; just check green (1158 passed). Items 1-5 (dropdown, combobox, full width, comment box at highlight, Google-Docs margin) remain for a bridle-ui task."
+ticket = "jrm2"
 +++
 
-original id: jrm2
 Build docs/tickets/open/document-view-project-dropdown-ticket-search-by-id-comment-b-jrm2.md (read it and the task thread; the human added item 7 and a Google-Docs-style margin layout in item 4). Touches the document review UI and daemon: Document.tsx, comments.ts, doc_watch.rs and whatever the ticket lists. Runs BEFORE br-ehv6, which touches the same files. Acceptance: just check passes, plus the UI's own checks as the ticket states. Model: Sonnet. Out of scope: scanning for hand-added comments (TBD per the ticket), and everything in br-ehv6. If it is too big for one branch, report on the thread and ask the manager to split.
 
 ## Thread

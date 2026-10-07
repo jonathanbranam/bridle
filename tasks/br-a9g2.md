@@ -7,7 +7,7 @@ created_at = "2026-10-07T00:11:13.981Z"
 updated_at = "2026-10-07T00:11:13.981Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+ticket = "a9g2"
 +++
 
-original id: a9g2
 docs/tickets/open/agent-spawn-allow-tool-silently-does-nothing-for-a-tool-outs-a9g2.md

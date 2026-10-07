@@ -11,9 +11,9 @@ size = "M"
 branch = "bridle/wake-cmd"
 commit = "852677d26a4528608af53c1a2c6d7a91f9e135e7"
 summary = "Added 'bridle agent wake <identifier> [--timeout]' and route GET /v1/wake beside (not touching) wait-for-wake. Decision lives in daemon fn principal_wake::wake_reasons (only reason: unread message, returns reason+message ids); wait() rechecks on message.sent events plus a 5s tick. Caller must be that principal (owner may wait for its named advisor sessions) or human, else 403; exit 4 on timeout. Tests in bridle-daemon/tests/principal_wake_test.rs. Docs: cli.md, api.md, CHANGELOG. Advisor role text not changed (left for follow-up)."
+ticket = "jttf"
 +++
 
-original id: jttf
 Ticket: docs/tickets/open/interactive-sessions-context-for-all-daemon-decided-wakes-re-jttf.md (decision 2); phyy gap 3 in docs/tickets/open/a-life-assistant-agent-on-the-notes-repo-phyy.md. Code to read first: how 'bridle orchestrator wait-for-wake' is served (crates/bridle/src/commands/orchestrator.rs, the daemon's wake-reason logic in crates/bridle-daemon) and the inbox long-poll if one exists; wire types in crates/bridle-api/src/types.rs.
 
 Goal, first slice: one command an interactive session runs, 'bridle agent wake <identifier>' (identifier = principal such as external:advisor or external:advisor/<name> once slice B lands; any existing principal name works), that blocks and returns when the DAEMON decides that principal should wake. The decision lives in one daemon function 'wake_reasons(principal)' so later reasons (task comment/state change, schedule, ticket comment) are added there, not in prompts. This slice implements ONE reason: the principal has an unread message. Output: the reason and the message ids (JSON with --json); a --timeout, exit code distinguishing timeout from woken. The caller's token must belong to that principal (or the human); otherwise 403.

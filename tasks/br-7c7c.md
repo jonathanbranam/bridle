@@ -7,9 +7,9 @@ created_at = "2026-10-03T02:28:55.737Z"
 updated_at = "2026-10-03T12:42:59.385994Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
+ticket = "fbfy"
 +++
 
-original id: fbfy
 docs/tickets/open/build-our-own-message-and-event-delivery-or-use-an-existing-fbfy.md
 
 ## Thread

@@ -10,9 +10,9 @@ watchers = ["external:orchestrator"]
 branch = "bridle/sessions-persist"
 commit = "7ab2ab8b4a235a42b1b1e4322fd3043142ea16fa"
 summary = "The session registry is written to sessions.json in the daemon's own state directory (beside bridle.db; per daemon, since daemons share $BRIDLE_HOME) on every change (register, end, keep, tick) and loaded in Sessions::new; missing/unreadable means empty. The existing tick drops entries via is_same_process (pid + start time), so dead and reused pids are not adopted. Tests: reload, dead pid, reused pid, two registries with separate files. Docs: orchestrator-supervision.md, api.md, CHANGELOG. No API change."
+ticket = "e35h"
 +++
 
-original id: e35h
 Bug. Full description: docs/tickets/open/interactive-sessions-survive-a-daemon-restart-the-registry-i-e35h.md (read it). The interactive-session registry (crates/bridle-daemon/src/sessions.rs, POST /v1/sessions) is in memory only, so every self-upgrade restart forgets all sessions: named-advisor mail falls back to the shared inbox, external:aide is refused, jttf context warnings stop.
 Build (stopgap, keep it small; gtzx's seats table replaces it later): persist the registry to a file under $BRIDLE_HOME (or the database, whichever is smaller in this code) on every change; reload at daemon start; the existing 10 s tick drops entries whose pid is gone, checking the pid's start time too so a reused pid isn't adopted. No new API. Files: sessions.rs and its startup wiring in the daemon. Docs: orchestrator-supervision.md ('The registry is in memory only'), api.md, CHANGELOG.
 Tests: register, 'restart' (reload), entry survives; dead pid dropped; reused pid (start time differs) dropped. Acceptance: just check passes. Model: Sonnet. Migration: none (a missing file means an empty registry). Out of scope: seats table (gtzx), re-registering sessions from launchers.

@@ -8,9 +8,9 @@ updated_at = "2026-09-30T12:40:24.413683Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
 size = "S"
+ticket = "w2hj"
 +++
 
-original id: w2hj
 docs/tickets/open/small-projects-start-without-a-manager-w2hj.md
 
 ## Thread

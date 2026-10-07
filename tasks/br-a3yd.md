@@ -13,9 +13,9 @@ watchers = [
 branch = "bridle/ui-render"
 commit = "1f0a5bd43df80eec417e4239e74e5f51fe34360c"
 summary = "links/resolve (gateway documents.rs) now also resolves a bare 4-char ticket ID or a <prefix>-<id> task ID whose id is a ticket's to the ticket file (open/ then resolved/), as a fallback after the stem lookup; other task IDs give none. Tests and human-web-ui.md section and CHANGELOG updated."
+ticket = "a3yd"
 +++
 
-original id: a3yd
 Bridle-repo (gateway) half of docs/tickets/open/*-a3yd.md (read it; it extends bnhn). The UI half is bridle-ui task (see thread).
 
 Approval: the human, via bridle-ui's aide (m-0176, 2026-10-04): "IDs or something that map to a ticket or a task, those should all be links ... everywhere."

@@ -10,9 +10,9 @@ watchers = ["external:advisor"]
 branch = "bridle/gateway-config"
 commit = "fb3bdb8316ad793032981c175e426f364ba3e682"
 summary = "RawConfig (bridle-daemon/src/config.rs) now accepts [gateway] and [interactions] as accept-only fields like [mail], so adding either to ~/.bridle/config.toml no longer stops daemons starting. Test accepts_sections_owned_by_other_crates; roles-and-config.md note; CHANGELOG. No other crate-owned section was missing. just check: only the known-flaky serve::tests::login_warning_only_when_known_logged_out fails (fail-fast, passes alone); committed per manager."
+ticket = "jmpf"
 +++
 
-original id: jmpf
 Critical bug, size S. Ticket: docs/tickets/open/a-gateway-section-in-bridle-config-toml-stops-every-daemon-f-jmpf.md. The gateway reads [gateway] and [interactions] from ~/.bridle/config.toml (crates/bridle-gateway/src/config.rs), but the daemon's RawConfig (crates/bridle-daemon/src/config.rs ~2189, deny_unknown_fields) has no field for either, so adding either section makes every daemon fail to parse its config and not start.
 Fix: add accept-only 'gateway' and 'interactions' fields to RawConfig exactly the way [mail] is accepted (config.rs ~2246: 'mail: Option<toml::Value>' with allow(dead_code) and a comment saying who owns the section). Tests: a config with a [gateway] section parses; a config with an [interactions] section parses; both together parse. Also check no other section a bridle crate reads from this file is missing from RawConfig (bridle-mail's [mail] is covered) and fix any found in the same way. Docs: roles-and-config.md note that [gateway]/[interactions] belong to bridle gateway and the daemon only accepts them; CHANGELOG. Acceptance: just check passes. Model: Sonnet. Migration: none. Out of scope: the gateway's own parsing, the service install (br-c657). Do not edit any existing project's config.
 Worker start waits for the orchestrator's go (the human is moving the daemons to launchd).

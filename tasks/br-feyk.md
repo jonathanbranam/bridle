@@ -10,9 +10,9 @@ watchers = ["external:advisor"]
 branch = "bridle/aide-rename"
 commit = "6164a550e992fd8b1c8c082c6402364634ebfcbc"
 summary = "Renamed the triage role to aide: workflow/base/roles/triage.md -> aide.md, principal external:aide, bridle session aide / prime aide, [aide] credentials, [sessions.aide], session identity and wake targets, tests, design docs, orchestrator/advisor role text, CHANGELOG. 'triage' as a verb, PM triage and the planned bridle-triage skill left alone. No alias."
+ticket = "r8kv"
 +++
 
-original id: r8kv
 Ticket: docs/tickets/open/seats-named-interactive-roles-splitting-the-advisor-retiring-r8kv.md, section "Renamed: triage is now aide". The human, 2026-10-03 (via the advisor): "let's rename triage to aid. I think that's a better name. A-I-D-E. Sounds good." Approved; do it now, before anyone mints a triage token (none exists yet).
 Goal: rename the ROLE introduced by br-r8kv (ec0847e) from `triage` to `aide` everywhere: workflow/base/roles/triage.md -> aide.md; principal `external:triage` -> `external:aide`; `bridle session triage` -> `bridle session aide`; `bridle prime triage` -> `bridle prime aide`; credentials section [triage] -> [aide]; session identifiers, wake targets, the [sessions] config and warnings routed "to triage" (br-jttf, 9f67724) -> aide; tests; docs (cli.md, roles-and-config.md, orchestrator-supervision.md, principals.md, orchestrator/advisor/product-manager role text, .bridle/roles/orchestrator.md, .bridle/config.toml), CHANGELOG.
 CAREFUL: "triage" as a verb or for the product manager's triage of open tasks, ticket submissions "for triage", and the planned bridle-triage skill (skills.md) are NOT the role: leave those. Rename only the role and its identifiers.

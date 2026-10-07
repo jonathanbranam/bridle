@@ -9,9 +9,9 @@ created_by = "external:advisor"
 watchers = ["external:advisor"]
 size = "M"
 priority = "low"
+ticket = "m6qs"
 +++
 
-original id: m6qs
 docs/tickets/open/a-box-manager-for-many-projects-m6qs.md
 Research only; the human says not to be done yet.
 

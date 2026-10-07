@@ -7,7 +7,7 @@ created_at = "2026-10-05T00:32:36.447Z"
 updated_at = "2026-10-05T00:32:36.447Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+ticket = "ytqu"
 +++
 
-original id: ytqu
 docs/tickets/open/postmortem-a-haiku-worker-waited-on-a-check-it-couldn-t-see-ytqu.md

@@ -11,9 +11,9 @@ priority = "high"
 branch = "bridle/statusline-flake"
 commit = "088f8decf1ffff59dbf8b6ff6249e6a1eda7144b"
 summary = "Fixed flaky test statusline_report_with_no_rate_limits_still_records_usage by preventing the startup get_usage poll from populating rate_limits before the test assertion. Solution: use long poll intervals (3600s) to delay the next poll, and report without waiting for the startup poll to complete, allowing the assertion to check the empty rate_limits immediately after reporting."
+ticket = "k22s"
 +++
 
-original id: k22s
 Fix the flaky test statusline_report_with_no_rate_limits_still_records_usage in crates/bridle-daemon/tests/statusline_test.rs (that file only). Ticket: docs/tickets/open/statusline-test-no-rate-limits-test-races-the-startup-get-us-k22s.md (read it). Cause: support::start_daemon(None) polls the fake get_usage at startup (five_hour 1%), racing the assertion usage.rate_limits.is_empty(). Same race 77f5dba3 (f1ky) fixed in the sibling test; mirror that fix (a daemon whose usage poll cannot write a reading, or assert the report itself added no reading). No longer wait or sleep. Acceptance: just check passes; the test file run ~20 times in a row (cargo nextest run -p bridle-daemon --test statusline_test) with no failure. Model: Haiku. Out of scope: anything else.
 
 ## Thread

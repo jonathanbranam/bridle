@@ -7,9 +7,9 @@ created_at = "2026-10-04T00:28:01.262Z"
 updated_at = "2026-10-04T00:28:06.580709Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
+ticket = "gtzx"
 +++
 
-original id: gtzx
 docs/tickets/open/seats-every-role-is-a-named-tracked-seat-that-outlives-its-s-gtzx.md
 
 ## Thread

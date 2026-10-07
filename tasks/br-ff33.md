@@ -8,9 +8,9 @@ updated_at = "2026-10-03T12:42:53.548546Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
 size = "M"
+ticket = "cvaq"
 +++
 
-original id: cvaq
 
 docs/tickets/open/focus-hours-quiet-and-locked-cvaq.md. Not urgent; the human wants it built in the next few days.
 

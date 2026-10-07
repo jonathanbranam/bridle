@@ -13,9 +13,9 @@ watchers = [
 branch = "bridle/tasks-page"
 commit = "f69b9afadcca28a9edc898d80166b45a9a83f93c"
 summary = "Gateway read-only Tasks routes (crates/bridle-gateway/src/tasks.rs): GET /api/v1/projects/{project}/tasks?state=open|closed|all (default open = not integrated/dropped; id, title, kind, state, priority, claimed_by, agent {name, role} when claimed by agent:<name>, updated) and GET .../tasks/{id} (any state; body, thread, watchers, branch, blocks and blocked_by from /v1/edges, Blocks kind only). Own wire types with ts-rs bindings regenerated. Unknown project 404. Tests cover default filter, closed/all, closed detail with edges, agent lookup, unknown project and task. human-web-ui.md section 2 now records that read-only views of tasks (and agents/status, br-7sd9) are allowed; Tasks section added; CHANGELOG line added."
+ticket = "s6cj"
 +++
 
-original id: s6cj
 Bridle-repo (gateway) half of docs/tickets/open/*-s6cj.md (read it; it quotes the human). The UI half is a bridle-ui task (see thread).
 
 Approval: the human, via bridle-ui's aide (m-0190, 2026-10-04): "Try to resolve any questions and get that work moving. And queued up for after this other work lands."

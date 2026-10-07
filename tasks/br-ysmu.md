@@ -7,9 +7,9 @@ created_at = "2026-10-05T03:21:20.785Z"
 updated_at = "2026-10-05T03:21:29.947048Z"
 created_by = "external:orchestrator@nuc"
 watchers = ["external:orchestrator@nuc"]
+ticket = "ysmu"
 +++
 
-original id: ysmu
 docs/tickets/open/ci-watch-missed-13-red-runs-on-main-first-ci-failed-wake-cam-ysmu.md
 
 submitted by external:orchestrator@nuc

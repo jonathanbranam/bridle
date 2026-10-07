@@ -10,9 +10,9 @@ watchers = ["external:aide"]
 branch = "bridle/gateway-pid-76td"
 commit = "ced2f63fdd4f10c522eb0ed7f42cb32b48e6310a"
 summary = "The gateway writes ~/.bridle/gateway.pid once listening (PidFile guard in bridle-gateway, removed on drop; SIGTERM/SIGINT now end the select so it drops) and `bridle gateway status|stop|restart` are in crates/bridle/src/gateway.rs. Stop checks `ps -p <pid>` for bridle+gateway, SIGTERMs only that pid via `kill`, waits 10 s, never SIGKILLs. Health now reports `build` (crate version-size-mtime of the gateway's exe); status compares it with the installed binary's for `stale binary`. spawn_detached_with takes explicit args so restart spawns `bridle gateway`. Docs: cli.md, human-web-ui.md, CHANGELOG. Tests in crates/bridle/tests/gateway_test.rs."
+ticket = "76td"
 +++
 
-original id: 76td
 Ticket (the human's words, context; read all of it): docs/tickets/open/the-gateway-records-its-pid-and-has-stop-and-restart-command-76td.md . Related: bek3 (`--detach`), tc7t, rule no-kill-by-name (workflow/base/rules/no-kill-by-name.md: never match processes by pattern; signal only the recorded pid).
 Goal: the gateway can be stopped, restarted and inspected by command, with no pid hunting. Auto-restart is NOT wanted yet (the human).
 EXACT BEHAVIOUR (names fixed):

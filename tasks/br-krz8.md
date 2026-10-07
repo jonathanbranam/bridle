@@ -10,9 +10,9 @@ watchers = ["external:aide"]
 branch = "bridle/dup-session"
 commit = "3734cbc5c7bd23f5f7b839a482dcb1ff243b41b3"
 summary = "bridle session advisor|aide now refuses to start when the same identity is registered in the project with a live process (ps finds the pid). Message names pid, pane, machine and says `bridle session restart <identity>`. A registered session whose process is gone, one on another machine, or an unreachable daemon does not block. Code: refuse_if_running in crates/bridle/src/session.rs. Orchestrator is not covered (it does not register, only keeps a pid file). Tests in session_test.rs use a fake HTTP daemon via --url. Gotcha: tests inherit BRIDLE_URL/BRIDLE_TOKEN from an agent's env and would hit the real daemon, so session_test.rs and tools_only_test.rs now remove them. Docs: cli.md, CHANGELOG."
+ticket = "krz8"
 +++
 
-original id: krz8
 Build docs/tickets/open/bridle-session-refuses-a-second-session-of-an-identity-that-krz8.md (read it). bridle session <role> refuses to start when a session of the same identity in the same project is registered and its process is alive (bridle status sessions, the pid). The message names the running one (pid, pane, machine) and says how to replace it (bridle session restart <identity>). A registered session whose process is gone does not block. Test with a stub claude (BRIDLE_LAUNCHER_TEST=1). Docs: cli.md bridle session. Touches crates/bridle/src/session.rs: starts after br-3397 merges (dependency edge). Acceptance: just check passes. Model: Sonnet. Out of scope: anything else in session.
 
 ## Thread

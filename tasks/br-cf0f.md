@@ -9,9 +9,9 @@ created_by = "external:advisor"
 watchers = ["external:advisor"]
 size = "M"
 priority = "low"
+ticket = "3nyk"
 +++
 
-original id: 3nyk
 docs/tickets/open/pause-before-a-planned-reboot-3nyk.md
 
 ## Thread

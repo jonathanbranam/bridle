@@ -10,9 +10,9 @@ watchers = ["external:orchestrator"]
 branch = "bridle/send-fix"
 commit = "9d93a5d53fd0bec60c6d42690b25c5253f86c86d"
 summary = "Fixed `bridle send --project` (crates/bridle/src/commands/misc.rs, own_daemon_for_other_project): a daemon found by BRIDLE_URL has no project in discovery, so the CLI now asks it (status().daemon.project) and compares; a daemon that cannot say counts as the same project, so it sends directly (--task works). Only a known different project goes through the outbox. Audit: that function is the only caller/comparison of its kind in crates/bridle (grep for own.project / own_daemon_for_other_project found nothing else). Test: cli_e2e send_with_an_agents_own_url_and_project_sends_locally (own project, --task, no BRIDLE_PROJECT, other project still cross-project). Docs: cli.md send section, CHANGELOG. Not verified: the test failing on the old code (a 10 min rebuild); by reading, the first send fails there. Check: 1259 passed."
+ticket = "x56y"
 +++
 
-original id: x56y
 CRITICAL: no agent can `bridle send` on any daemon since the br-3haz build; takes the next free worker slot. Ticket (cause, repro, errors; read all of it): docs/tickets/open/bridle-send-from-any-agent-fails-since-the-3haz-build-a-daem-x56y.md . Related: incident br-2ax5 (same release).
 Cause: every agent runs with BRIDLE_PROJECT=<its project> and BRIDLE_URL. `own_daemon_for_other_project` (crates/bridle/src/commands/misc.rs) resolves the own daemon from BRIDLE_URL; a daemon found by URL has `project == None`, so `own.project == Some(project)` is false and the send is routed to the own daemon's outbox as cross-project mail, which the daemon refuses (crates/bridle-daemon/src/server.rs, "that is this daemon's own project"; with --task: "--task isn't supported for another project's daemon yet").
 EXACT FIX (decided):

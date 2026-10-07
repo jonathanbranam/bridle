@@ -8,9 +8,9 @@ updated_at = "2026-10-03T12:42:53.718441Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
 priority = "low"
+ticket = "hesj"
 +++
 
-original id: hesj
 docs/tickets/open/focus-override-accept-local-time-in-until-like-the-focus-con-hesj.md
 
 ## Thread

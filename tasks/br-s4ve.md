@@ -7,9 +7,9 @@ created_at = "2026-10-05T03:33:06.199Z"
 updated_at = "2026-10-05T03:33:14.695723Z"
 created_by = "external:orchestrator@nuc"
 watchers = ["external:orchestrator@nuc"]
+ticket = "s4ve"
 +++
 
-original id: s4ve
 docs/tickets/open/vitest-bridle-a-step-can-t-skip-a-scenario-at-runtime-s4ve.md
 
 submitted by external:orchestrator@nuc

@@ -10,9 +10,9 @@ watchers = ["external:advisor/doc-review"]
 branch = "bridle/comment-threads"
 commit = "c7a657fb0eaef8d87317d4e6ac10515553d8f8ea"
 summary = "Rust/daemon/CLI/rules side of ehv6. doc_watch.rs: entries carry one ASCII status `[pending|sent|read YYYY-MM-DD HH:MM EDT]` (pending = none or [pending]); thread IDs `c<n>` assigned at send (highest+1) and shown to the agent; `is_human` is now exactly `human` / `human via <agent>`; resolved threads never go; tick sweep turns `[sent]` into `[read]` once the doc agent has no unread message (spawned agents read at once; stateless, restart-safe) and rewrites old middle-dot marks. `bridle review resolve <path> c3` appends `resolved by human, <stamp>`. Role document-reviewer.md rewritten for the new format; new rules ascii-in-editable-text and human-via-agent; docs (daemon.md, cli.md, human-web-ui.md, x8jt note) and CHANGELOG updated. Decisions: Eastern zones only (YAGNI); no new gateway route, since the UI can save marks/resolve lines through the existing document save; cleanup of resolved threads not built (ticket leaves its shape to the planner)."
+ticket = "ehv6"
 +++
 
-original id: ehv6
 Build docs/tickets/open/comment-threads-explicit-ascii-status-and-time-zone-on-every-ehv6.md (read it and the thread; the human approved it with caveats now in the ticket: ASCII only, short US zone abbreviation on stamps, agent names not roles in 'via', thread IDs for the CLI, read-by-the-agent included; includes two new rules). Touches the same files as br-jrm2 (Document.tsx, comments.ts, doc_watch.rs): runs AFTER br-jrm2 merges (dependency edge). Acceptance: just check passes, plus the checks the ticket states. Model: Sonnet. Size is large: if too big for one branch, report on the thread and ask the manager to split (rules + CLI/daemon first, UI second). Out of scope: anything not in the ticket.
 
 ## Thread

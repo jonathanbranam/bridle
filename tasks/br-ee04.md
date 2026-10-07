@@ -11,9 +11,9 @@ size = "S"
 branch = "bridle/calm-wake"
 commit = "3baf657030661a008a5f40bf4418a2a9aaafe7dc"
 summary = """wait-for-wake poll is 25m (wake.rs POLL_TIMEOUT); waiter_grace code default is now 15m (main's 11ea64c only changed .bridle/config.toml; the orchestrator incident test's ticks moved to match). Role file: restart the waiter first on every wake; heartbeat lines dropped from the handover steps and ORCHESTRATOR_STARTUP_STEPS. Status gains waiter_open and last_wake_at (in memory in Waiters, set when a poll answers with wakes; a daemon restart clears it), shown by `bridle status` as a "wake" line. Docs and CHANGELOG updated. just check passes (788 tests)."""
+ticket = "v9t9"
 +++
 
-original id: v9t9
 Ticket: docs/questions/open/a-calmer-orchestrator-wake-loop-v9t9.md
 
 ## Thread

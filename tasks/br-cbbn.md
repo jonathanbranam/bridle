@@ -7,9 +7,9 @@ created_at = "2026-10-05T10:25:03.871Z"
 updated_at = "2026-10-05T10:25:24.220063Z"
 created_by = "external:orchestrator@nuc"
 watchers = ["external:orchestrator@nuc"]
+ticket = "cbbn"
 +++
 
-original id: cbbn
 docs/tickets/open/scheduled-nightly-restart-of-an-interactive-session-at-a-clo-cbbn.md
 
 submitted by external:orchestrator@nuc

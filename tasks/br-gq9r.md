@@ -10,9 +10,9 @@ watchers = ["external:aide"]
 branch = "bridle/self-restart"
 commit = "adc8f5e4b78870d33747c9e5e4952f282b200954"
 summary = "The 200k and 250k session context step notes (crates/bridle-daemon/src/sessions.rs) now tell the session to restart itself: say 'I'm at 200k; restarting', run 'bridle session restart <identity>', write the handover it asks for; the human can still 'session keep' and nothing is forced before 300k. aide.md and advisor.md say the same; orchestrator-supervision.md, CHANGELOG updated; new test the_200k_step_tells_the_session_to_hand_over_and_restart_itself. Role prompts reach existing projects with no per-project change: a role with no system_prompt in .bridle/config.toml reads workflow/base/roles/<role>.md when the session launches (docs/design/workflow-layers.md), so they pick it up at the next launch, unless a project sets its own system_prompt. Caveat: restart without --fresh asks the session for a note itself, so the step text says 'write the note it asks for' rather than writing one first."
+ticket = "gq9r"
 +++
 
-original id: gq9r
 Ticket (the ask, with the human's words; read first): docs/tickets/open/interactive-sessions-hand-themselves-over-and-restart-at-200-gq9r.md
 Depends on br-4s3z (a session can restart itself); start only after it merges.
 

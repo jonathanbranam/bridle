@@ -10,9 +10,9 @@ watchers = ["external:advisor"]
 branch = "bridle/hash-pw"
 commit = "d9b9950d9331b4e57b59143b5d010a527c7c8835"
 summary = "bridle gateway hash-password now prompts for password on a terminal (reads with echo off, asks for confirmation, refuses on mismatch) and accepts piped input for script compatibility. Updated docs/design/cli.md and docs/design/human-web-ui.md. Added rpassword dependency. Tests added for piped input and empty input validation."
+ticket = "anmx"
 +++
 
-original id: anmx
 Build docs/tickets/open/bridle-gateway-hash-password-echoes-the-password-as-it-s-typ-anmx.md (read it). bridle gateway hash-password (crates/bridle/src/gateway.rs, hash_password) echoes the password. When stdin is a terminal: prompt 'Password:' on stderr, read with echo off (a crate with no unsafe, such as rpassword, check what the workspace already depends on first), ask again to confirm and refuse on mismatch. When stdin is not a terminal: read the line as today, no prompt, so scripts keep working. Update docs/design/cli.md and the gateway setup text in docs/design/human-web-ui.md. Acceptance: just check passes; test the piped path and the mismatch refusal (inject the reader). Model: Haiku. Out of scope: other prompts.
 
 ## Thread

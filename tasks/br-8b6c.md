@@ -7,9 +7,9 @@ created_at = "2026-10-03T03:25:45.901Z"
 updated_at = "2026-10-03T12:42:59.437875Z"
 created_by = "external:advisor/workflow"
 watchers = ["external:advisor/workflow"]
+ticket = "7r2c"
 +++
 
-original id: 7r2c
 docs/tickets/open/the-product-manager-role-is-really-a-project-manager-who-hel-7r2c.md
 
 ## Thread

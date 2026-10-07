@@ -10,9 +10,9 @@ watchers = ["external:advisor"]
 branch = "bridle/prototyper-role"
 commit = "cacab9ccbd350181bccadd5ed9f775eefc0279c5"
 summary = "Added a built-in `prototyper` role: workflow/base/roles/prototyper.md (prompt is the whole brief, read only what constraints name, rethink, genuinely different prototypes, project decides location, ask one question if unnamed), default role entry (worker profile, Sonnet), `bridle prime prototyper` (role file + project append), and the project's .bridle/roles/prototyper.md appended in stable_system_prompt for this role only (orchestrator/advisor paths untouched). Role files are only read, never validated, so a bad file warns and cannot stop startup. Tests: real workflow dir load + prompt contents, append, spawn by name, prime output. Docs, CHANGELOG, ticket Built note done. Sandboxing left as a follow-up note in the ticket."
+ticket = "6yb4"
 +++
 
-original id: 6yb4
 Ticket: docs/tickets/open/a-prototyper-role-in-the-base-workflow-build-only-from-the-p-6yb4.md (read it all: the human's words verbatim and 'The ask' 1-4). Code and docs to read first: workflow/base/roles/ (worker.md, advisor.md as examples of a role file), how roles are discovered, validated and given defaults (docs/design/agent-host/roles-and-config.md, crates/bridle-daemon config and role loading, 'bridle prime <role>'), how 'bridle spawn --role' picks a role, .bridle/roles/ project overrides (append to base).
 
 Goal: a 'prototyper' role in the base workflow, separate from the worker, that every project gets.

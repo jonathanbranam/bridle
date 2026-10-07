@@ -8,9 +8,9 @@ updated_at = "2026-10-05T15:24:32.094853Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
 size = "M"
+ticket = "4r3k"
 +++
 
-original id: 4r3k
 docs/tickets/open/nuc-recovery-on-boot-4r3k.md
 
 ## Thread

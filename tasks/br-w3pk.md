@@ -10,9 +10,9 @@ watchers = ["external:orchestrator"]
 branch = "bridle/relaunch-w3pk"
 commit = "7cf5fe917015348739400b84d4ffeb61b82e4fab"
 summary = """Step one of two. [orchestrator] launcher is now Option<String>, unset by default; the supervisor types `bridle session orchestrator --project <project>` (project = the daemon's project name, shell-quoted if needed) into the pane, or a configured launcher verbatim (no repo-path resolution). New orchestrator::launch_line does this; lib.rs calls it. The exact old default string "scripts/claude-orchestrator" in a config is treated as unset (config.rs merge). The pane's shell finds bridle on its PATH, as the advisor relaunch (session.rs relaunch_command) already assumes; nothing else resolves it. Docs (orchestrator-supervision.md, roles-and-config.md) and CHANGELOG updated. Scripts and other mentions untouched (step two)."""
+ticket = "w3pk"
 +++
 
-original id: w3pk
 Ticket (the human's words; read all of it): docs/tickets/open/retire-scripts-claude-orchestrator-and-claude-advisor-the-or-w3pk.md . THIS TASK IS STEP ONE OF TWO: change the relaunch line only. Do NOT delete scripts/claude-orchestrator or scripts/claude-advisor and do not remove their mentions in cli.md, session.rs, commands/orchestrator.rs or bridle-mail/src/local.rs: step two (a separate task) does that after the daemon has upgraded, because the running daemon types the script's path in the clone and deleting it in the same merge would break the orchestrator relaunch.
 Goal: the supervisor relaunches the orchestrator by typing `bridle session orchestrator --project <project>` into the tagged pane, not a repo script path.
 EXACT BEHAVIOUR:

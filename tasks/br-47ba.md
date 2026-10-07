@@ -11,9 +11,9 @@ size = "S"
 branch = "bridle/session-host"
 commit = "8a1c3d41bee08ca8f106c27d035a583edb5d3301"
 summary = "Implemented task br-47ba (sfb3): Updated scripts/claude-orchestrator and scripts/claude-advisor to include the short hostname (lowercased) in session names, with optional BRIDLE_SESSION_SUFFIX environment override. Example command lines: on MacBook uses bridle-orch-macbook and bridle-advisor-macbook; on NUC uses bridle-orch-nuc and bridle-advisor-nuc. Updated docs (fx7x, c9zm) and CHANGELOG. Commit: 8452e39. Full just check: 767 tests passed, 3 skipped."
+ticket = "sfb3"
 +++
 
-original id: sfb3
 Ticket: docs/questions/open/session-names-per-machine-sfb3.md
 
 ## Thread

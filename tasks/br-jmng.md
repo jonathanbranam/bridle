@@ -7,9 +7,9 @@ created_at = "2026-10-06T00:45:44.090Z"
 updated_at = "2026-10-06T00:53:58.328422Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+ticket = "jmng"
 +++
 
-original id: jmng
 docs/tickets/open/every-task-and-ticket-id-the-human-sees-is-a-clickable-link-jmng.md
 Ticket (the ask with the human's words; read all of it, and the thread on this task):
 This task is the DESIGN only, for the human's review. Build nothing; the human decides before any build, and no build tasks are made until then.

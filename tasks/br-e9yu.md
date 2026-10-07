@@ -13,9 +13,9 @@ watchers = [
 branch = "bridle/handover-by-id"
 commit = "b1496f8dc52e1fd1c4971e18270b221181560b27"
 summary = "Handover is now one managed record for every agent. POST /v1/handovers accepts any principal; role is the writer's identity from the token (aide, advisor/<name>, agent:<name>, orchestrator; human writes as orchestrator), project is the daemon's, never from the body. GET /v1/handovers and /latest take ?role=; CLI adds `handover list --role` and `handover latest [--role]`; prime reads role orchestrator. `bridle session aide|advisor` put the newest note's id in the opening prompt (`bridle handover show <id>`); `session restart` asks for `bridle handover write --file -` and waits for a new note of that identity; the daemon's context-limit messages name the command, not a path. Prune now keeps each role's newest. Old ~/.bridle/handover files are obsolete (noted in docs). Collision check (registry, restart, refuse_if_running) was already safe: per-project daemon and state dir; details on the thread. Docs: orchestrator-supervision, cli, storage, aide/advisor roles, CHANGELOG. Tests: handover_test (aide, named advisor, worker, filters), context-limit message assertion."
+ticket = "e9yu"
 +++
 
-original id: e9yu
 Ticket: docs/tickets/open/per-project-sessions-aide-share-one-handover-file-and-one-id-e9yu.md (read it; it quotes the human, including the clarification).
 
 Approval: the human, via the bridle-ui aide (m-0259, m-0268, m-0270, 2026-10-04 ~8:25 PM ET), critical: "File is critical, but fix that". And: "That file should be based on the ID of the agent, so the named agents get a different file. I don't even know why it's a file. The orchestrator's handover is some kind of note in the system." And: "There should be a write command for an agent to write a handover, and it should be fully managed. ... This should all be managed by the system, and the system then can ensure that every agent in every project with the proper name has the right handover and that there's no confusion about anything."

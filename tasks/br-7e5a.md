@@ -11,9 +11,9 @@ size = "S"
 branch = "bridle/jttf-d"
 commit = "133b2f565aad469b3e72c14dcb4731ad5b5126bb"
 summary = "Create shared pane module with tag_pane(), tag_pane_with_error(), and untag_pane_with_error(). Advisor sessions use crate::pane::tag_pane() to tag their pane (advisor or advisor-<name>) before launching claude. Tagging is best-effort: fails silently if outside tmux. Orchestrator keeps local tag_pane (untouched per SAFETY). Added tests verify advisor sessions tag correctly and don't error outside tmux. All 971 tests pass."
+ticket = "jttf"
 +++
 
-original id: jttf
 Ticket: docs/tickets/open/interactive-sessions-context-for-all-daemon-decided-wakes-re-jttf.md (decision 4); docs/tickets/open/tag-a-tmux-pane-from-bridle-butk.md (built: 'bridle pane tag <name>', which moves the tag so tags set through bridle are unique). Code: crates/bridle/src/pane*.rs / commands, bridle session in crates/bridle/src/session.rs (advisor branch), tests crates/bridle/tests/pane_test.rs and session_test.rs.
 
 Goal: when 'bridle session advisor [<name>]' starts inside tmux, it tags its own pane with its identifier (advisor or advisor/<name>, in whatever form 'bridle pane tag' accepts; reuse that code path) before launching claude. Outside tmux or if tagging fails: log and carry on, never fail the session. Because tagging moves the tag, a stale tag on an old pane is cleared by the new session; say so in docs.

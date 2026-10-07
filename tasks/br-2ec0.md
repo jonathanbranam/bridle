@@ -7,9 +7,9 @@ created_at = "2026-10-02T23:34:58.982Z"
 updated_at = "2026-10-03T12:42:59.247189Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
+ticket = "x8jt"
 +++
 
-original id: x8jt
 docs/tickets/open/review-a-document-with-an-agent-highlight-comment-and-the-ag-x8jt.md
 
 ## Thread

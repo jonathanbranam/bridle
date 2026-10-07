@@ -10,9 +10,9 @@ watchers = ["external:orchestrator"]
 branch = "bridle/hesj-focus-local"
 commit = "688330abadc24b76b66fe8d5f8d42317e1eeb505"
 summary = "Implemented local time support for focus override until field: supports UTC-aware datetimes (existing), local datetimes interpreted in the local zone (new), and HH:MM strings for next time occurrence (new). Includes comprehensive tests and updated documentation. Check passed: 1273 tests, commit 2455014401de0dbfbb560488fdb8f405fcbefb29."
+ticket = "hesj"
 +++
 
-original id: hesj
 Ticket (the human's words, today's behaviour, the change): docs/tickets/open/focus-override-accept-local-time-in-until-like-the-focus-con-hesj.md . The human: "ok, UTC sucks, file a low-prio small ticket to support local timezone same as in the config." Approved to schedule 2026-10-07.
 Goal: `until` in ~/.bridle/focus-override.toml accepts local time, read in the machine's local zone exactly like `[[focus]]` periods (checked against DateTime<Local>).
 EXACT ACCEPTED FORMS (parse_override in crates/bridle-daemon/src/focus.rs; decided here):

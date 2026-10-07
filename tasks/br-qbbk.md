@@ -10,9 +10,9 @@ watchers = []
 branch = "bridle/page-title-rev"
 commit = "ca568fb45fcf5dabaf4c5d04c7c536391481a00e"
 summary = "Revised workflow/packs/web/rules/web.page-title.md (merged earlier draft c996e1db, then rewrote to the human's follow-up): name first, type marker (shown as [type] in ASCII examples), project after the name, page name only when nothing is selected, favicon carries app and machine. Why: quotes both messages. Only that file changed; bridle-ui untouched. No list or doc enumerates pack rules."
+ticket = "qbbk"
 +++
 
-original id: qbbk
 Ticket (the human's words, verbatim): docs/tickets/open/browser-tab-titles-name-what-you-re-viewing-a-web-pack-rule-qbbk.md . This task is bridle's half only: the rule. bridle-ui's half (following it on every page) is filed in bridle-ui; do not touch it.
 Goal: add ONE new web pack rule file, workflow/packs/web/rules/web.page-title.md, in the exact format of its neighbours (read web.input-clear-button.md first): front matter `id: web.page-title`, `severity: should`, `roles: [worker, reviewer]`; then a short rule body, one example, and a `Why:` paragraph quoting the human.
 Rule content:

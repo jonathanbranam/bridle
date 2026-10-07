@@ -11,9 +11,9 @@ priority = "high"
 branch = "bridle/link-ids"
 commit = "8c7cc7689f3682225d7e016d679978331e30dcf2"
 summary = "Added 'bridle link <id>' (crates/bridle/src/link.rs): task IDs (contain '-') -> <base>/task?id=<id>, ticket IDs -> <base>/ticket?project=<p>&id=<id> (project via --project/env/cwd workspace). Base URL is [gateway] public_url, project .bridle/config.toml over ~/.bridle/config.toml (config::ui_base_url); unset prints nothing, exit 0. GatewaySection now accepts public_url (deny_unknown_fields). New rule link-ids-for-the-human, one-line pointers in aide/advisor/orchestrator prompts; docs cli.md, roles-and-config.md, CHANGELOG. Tests: tests/link_test.rs (ticket, task, unset). Note: no manager role prompt line was added (task named aide, advisor, orchestrator only)."
+ticket = "yfjc"
 +++
 
-original id: yfjc
 docs/tickets/open/every-agent-talking-to-the-human-links-each-ticket-and-task-yfjc.md
 
 Approval: the human, via bridle-ui's aide (m-5179, 2026-10-04 ~9:20 PM ET): "please write a ticket and ask to get that scheduled so that I have links every time an agent that's talking to me refers to a ticket or a task" and "The address to open, like the URL, should be project configuration or bridle configuration".

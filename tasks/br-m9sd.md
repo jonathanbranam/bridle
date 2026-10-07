@@ -7,7 +7,7 @@ created_at = "2026-10-06T01:14:10.511Z"
 updated_at = "2026-10-06T01:14:10.511Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+ticket = "m9sd"
 +++
 
-original id: m9sd
 docs/tickets/open/agents-don-t-know-how-to-use-the-bridle-cli-correctly-help-s-m9sd.md

@@ -13,9 +13,9 @@ watchers = [
 branch = "bridle/system-page"
 commit = "9fbe2eee51e36a0b4fee7a2f9be8b33f50f547d1"
 summary = "Gateway read-only GET /api/v1/projects/{project}/system (SystemView: reachable/error/status; daemon down is a 200 with reachable:false, unknown project 404) and .../agents (AgentList; stopped agents included with a stopped flag, the open task each holds, running first). New crates/bridle-gateway/src/system.rs with allow-listed own wire types, ts-rs bindings regenerated. Dropped: principal, daemon workspace/repo/url, agent session id/pid/cwd/worktree/created_by, session pid/pane/claude session id (listed in human-web-ui.md). Ports and live updates deferred. Tests: status passthrough, unreachable, agents list, secrets stripped, unknown project."
+ticket = "7sd9"
 +++
 
-original id: 7sd9
 Bridle-repo (gateway) half of docs/tickets/open/*-7sd9.md (read it; it quotes the human). The UI half is a bridle-ui task (see thread).
 
 Approval: the human, via bridle-ui's aide (m-0190, 2026-10-04): "think about everything that's in Bridal, what it can do, and how you can render that ... Try to resolve any questions and get that work moving."

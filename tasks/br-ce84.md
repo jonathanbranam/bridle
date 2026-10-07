@@ -7,9 +7,10 @@ created_at = "2026-09-28T12:42:40.472Z"
 updated_at = "2026-10-03T12:42:47.798649Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+ticket = "2ty9. See docs/questions/open/per-task-secrets-and-network-access-2ty9.md. Related: k8dw (br-abc3)."
 +++
 
-original id: 2ty9. See docs/questions/open/per-task-secrets-and-network-access-2ty9.md. Related: k8dw (br-abc3).
+
 
 ## Thread
 

@@ -7,9 +7,9 @@ created_at = "2026-10-06T02:04:20.046Z"
 updated_at = "2026-10-06T02:08:22.868766Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+ticket = "stx8"
 +++
 
-original id: stx8
 docs/tickets/open/a-task-s-state-says-what-s-really-happening-held-and-built-a-stx8.md
 Ticket (the ask with the human's words and the aide's breakdown of the 24 planned tasks; read all of it). The human is upset: the UI shows 24 "planned" tasks, only 2 being worked, and nothing tells them apart.
 Goal: a task's state says what is really happening, visible at a glance in the CLI and the UI.

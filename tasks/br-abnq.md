@@ -7,9 +7,9 @@ created_at = "2026-10-05T10:25:03.830Z"
 updated_at = "2026-10-05T10:25:22.495065Z"
 created_by = "external:orchestrator@nuc"
 watchers = ["external:orchestrator@nuc"]
+ticket = "abnq"
 +++
 
-original id: abnq
 docs/tickets/open/one-command-for-any-agent-s-status-and-context-abnq.md
 
 submitted by external:orchestrator@nuc

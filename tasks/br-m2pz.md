@@ -7,9 +7,9 @@ created_at = "2026-10-06T01:37:48.467Z"
 updated_at = "2026-10-06T01:37:58.882887Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+ticket = "m2pz"
 +++
 
-original id: m2pz
 docs/tickets/open/bridle-ui-lists-that-grow-without-limit-aren-t-dropdowns-and-m2pz.md
 
 ## Thread

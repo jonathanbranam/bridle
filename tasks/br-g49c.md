@@ -13,9 +13,9 @@ watchers = [
 branch = "bridle/web-packs2"
 commit = "33ac1adae8c5e930813fc3c75c1ed1a3c9834e61"
 summary = "Extended the web and mobile rule packs with two new rules from the human's feedback: web.input-clear-button (should severity, clear buttons for inputs, mandatory for search/filter) and mobile.text-selection (should severity, explicit user-select: text for interactive content requiring text selection). Updated CHANGELOG.md with the rule packs entry. All rule files follow the existing pack format with YAML frontmatter, code examples, and 'Why:' explanations. ASCII-only rule text as required."
+ticket = "g49c"
 +++
 
-original id: g49c
 Write the two rule packs from docs/tickets/open/rule-packs-for-the-web-and-for-mobile-standard-forms-and-ari-g49c.md (read it and the thread). Look first at workflow/packs/typescript/ (and python, vim) to copy the exact layout, rule file format, frontmatter and how packs are listed or tested. Create workflow/packs/web/ (standard form labels and autocomplete on inputs, ARIA where native elements do not do it, semantic elements; cite track-web's packages/auth/src/LoginPage.tsx as the reference form and ticket t4rf) and workflow/packs/mobile/ (the zoom fix from track-web commit 8f4793c: viewport meta width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover; body touch-action: manipulation; input font-size at least 16px, because iOS Safari zooms smaller focused inputs; safe-area insets via env(safe-area-inset-*)). Each rule states the requirement and a short why, in the style of the existing rules. Include any index/doc the packs need (docs/README or the workflow docs list packs). Acceptance: just check passes, and any workflow/pack validation (bridle workflow check or similar, if it exists) is clean. Model: Haiku. Out of scope: enabling the packs in bridle-ui or track-web config and fixing bridle-ui index.html (follow-ups after this lands; track-web changes only on its trial branch).
 
 ## Thread

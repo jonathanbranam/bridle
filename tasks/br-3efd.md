@@ -9,9 +9,10 @@ created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "S"
 priority = "low"
+ticket = "ged2. docs/tickets/open/tools-only-hooks-chain-to-existing-hooks-ged2.md"
 +++
 
-original id: ged2. docs/tickets/open/tools-only-hooks-chain-to-existing-hooks-ged2.md
+
 
 ## Thread
 

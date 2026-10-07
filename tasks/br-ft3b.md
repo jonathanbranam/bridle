@@ -7,9 +7,9 @@ created_at = "2026-10-05T10:25:03.907Z"
 updated_at = "2026-10-05T10:25:23.857819Z"
 created_by = "external:orchestrator@nuc"
 watchers = ["external:orchestrator@nuc"]
+ticket = "ft3b"
 +++
 
-original id: ft3b
 docs/tickets/open/per-role-handover-instructions-in-the-workflow-with-project-ft3b.md
 
 submitted by external:orchestrator@nuc

@@ -11,9 +11,9 @@ priority = "high"
 branch = "bridle/usage-http"
 commit = "72898b5460be1dae13fb32776d5a0951a0733c22"
 summary = "Governor usage poll now tries one HTTPS GET of the OAuth usage endpoint (via system curl, token on stdin; token from ~/.claude/.credentials.json or macOS keychain), new usage_http.rs. Only if that fails it starts a throwaway claude -p probe for that poll and kills it after; the resident probe and the ask-a-working-agent path are gone. Failures log at warn; each poll logs one info line (source, elapsed_ms, model_calls=0). Staleness slides: allowed age is max_staleness at hold_at, rising linearly to 6x at <=half of hold_at (also used for the (stale) flag in bridle budget). No config default changed. Caveat: curl is a runtime dependency (reqwest has no TLS here); the endpoint/token location is undocumented and untested against the live API. Tests: HTTP-ok (local server), HTTP-fail-then-probe, sliding staleness unit test; existing governor tests now script the probe in the repo cwd. Docs: usage-and-budget.md, daemon.md, cli.md, CHANGELOG."
+ticket = "puaf"
 +++
 
-original id: puaf
 Build per the Decided section of docs/tickets/open/usage-readings-go-stale-while-agents-work-and-a-stale-readin-puaf.md (read it and the task thread first; the human rejected the long-lived probe, option A). Summary: (1) usage poll tries direct HTTP with the OAuth token first; (2) only if HTTP fails, run the existing probe for that poll, started and exited each time (every 5 min, nothing left running); (3) staleness slides by usage: a stale reading matters only near the limits, not at 20-30%; (4) probe/HTTP failures logged at warn level; (5) no model call anywhere, and per-poll cost visible (bridle usage or a log line per poll). Default config changes only; ~/.bridle/config.toml is the human's, do not touch it. Files: budget/usage code in crates/bridle-daemon, config defaults, docs/design/agent-host/ and cli.md kept in step. Acceptance: just check passes; tests with the fake for HTTP-ok, HTTP-fail-then-probe, and sliding staleness. Model: Sonnet. Out of scope: one machine-wide source (that is kuw2, not scheduled).
 
 ## Thread

@@ -10,9 +10,9 @@ watchers = ["external:advisor"]
 branch = "bridle/triage-role"
 commit = "3c1e6bf2deb0f2457dd97bc86b8f0e611dadfc9f"
 summary = "Added the triage role (workflow/base/roles/triage.md), 'bridle session triage' (signs external:triage via BRIDLE_AS=triage, pane tag triage, focus-locked like advisors, not registered as a daemon session) and 'bridle prime triage'. Orchestrator role no longer talks with the human or lists their to-dos: it messages external:triage and takes relayed approvals. Advisor role only talks/researches/files tickets; its launcher prompt no longer asks for a status check-in. Daemon: 'triage' is a known external principal name and focus lock covers triage panes. Docs: cli.md, principals.md, orchestrator-supervision.md, CHANGELOG. Caveat: daemon system notes and question wakes still go to human/orchestrator (later slice); users need a [triage] token (bridle token create triage)."
+ticket = "r8kv"
 +++
 
-original id: r8kv
 Ticket: docs/tickets/open/seats-named-interactive-roles-splitting-the-advisor-retiring-r8kv.md, section "Decided: split the roles, start now" (the human, 2026-10-03, verbatim there; approved to start now).
 Goal: a clear three-way split of the interactive roles.
 (1) New role `triage` (working name; the human may rename before it lands): workflow/base/roles/triage.md. It talks to the human about the running system: at start-up and on wake it reads the human's to-dos (`bridle task list --claimed-by human`), the workforce's questions to the human (GET /v1/messages?to=human), `bridle status` and incidents; it lays out options with a recommendation, relays the human's answers and approvals (quoting them) to the orchestrator and agents, and files tickets for what the human raises about the system. It waits and wakes (`bridle agent wake external:triage`). It doesn't run the workforce. Principal `external:triage`; `bridle session triage` starts it (like the advisor launcher); token under [triage] in credentials.toml; `bridle prime triage`.
