@@ -2,9 +2,9 @@
 id = "br-bedz"
 title = "Decide: build ufrw's auto-mode recommendation (per-launch --settings in bridle session)?"
 kind = "chore"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-04T12:34:39.580Z"
-updated_at = "2026-10-04T13:39:53.720295Z"
+updated_at = "2026-10-07T23:25:54.822167Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -24,3 +24,6 @@ To-do for you (normal priority): Decide: build ufrw's auto-mode recommendation (
 
 ### note · external:orchestrator · 2026-10-04T13:39:53.720Z
 The human, 2026-10-04: 'bedz - yes conservative approved'. Build filed as fc9a / br-fc9a, ready.
+
+### note · human · 2026-10-07T23:25:54.822Z
+done

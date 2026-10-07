@@ -2,9 +2,9 @@
 id = "br-4yc8"
 title = "WSL2 host: what bridle needs changed to run on WSL2, and which work moves (audit + recommendation on v7ug)"
 kind = "research"
-state = "pending"
+state = "planned"
 created_at = "2026-10-07T23:25:26.046Z"
-updated_at = "2026-10-07T23:25:26.046Z"
+updated_at = "2026-10-07T23:25:53.791096Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 size = "S"

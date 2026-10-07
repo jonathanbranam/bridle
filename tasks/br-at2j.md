@@ -2,9 +2,9 @@
 id = "br-at2j"
 title = "WSL2 host: write the step-by-step setup guide docs/context/windows-wsl2-host.md (v7ug)"
 kind = "chore"
-state = "pending"
+state = "planned"
 created_at = "2026-10-07T23:25:20.488Z"
-updated_at = "2026-10-07T23:25:33.292095Z"
+updated_at = "2026-10-07T23:25:53.242912Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 size = "S"
