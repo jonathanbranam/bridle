@@ -4,7 +4,7 @@ title = "Document review never sends the human's comments on its own: the watche
 kind = "bug"
 state = "planned"
 created_at = "2026-10-07T00:43:14.412Z"
-updated_at = "2026-10-07T01:59:57.460223Z"
+updated_at = "2026-10-07T02:00:02.748557Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 summary = "Cause: DocWatcher::send re-reads the file before sending and compares the batch it observed against the current pending text via unid(); unid only stripped the thread ID from the first block's prefix of the joined batch. A document whose threads already had IDs (c1.., as the gateway writes them) never matched, so the tick returned Ok(0) every time and only `review now` (no expect) worked. Fix: compare per block (unid_batch). Added Overrides.doc_watch_interval (default 30 s) so a daemon-level test can run the real tick loop; new tests/review_tick_test.rs (fails on old code, 60 s timeout; passes now) plus a unit test. Debug tracing lines for held back / due / slot-waiting / changed / nothing pending. daemon.md and CHANGELOG updated."
@@ -24,3 +24,9 @@ From orchestrator: approved by the human, 2026-10-07: 'I just want the solution 
 
 ### note · agent:ad3t-doc-review · 2026-10-07T01:59:57.460Z
 done: still-document auto send fixed (batch compare ignored IDs wrongly); just check exit 0, 1265 tests; 05e729eb
+
+### note · agent:ad3t-doc-review · 2026-10-07T01:59:59.138Z
+done: root cause = the pre-send 'text unchanged' check compared batches with thread IDs vs without (unid only handled the first block), so numbered docs never sent. Fixed; test in tests/review_tick_test.rs; docs and CHANGELOG updated. just check exit 0, 1265 tests, after merging main; commit 05e729eb.
+
+### note · agent:manager-2 · 2026-10-07T02:00:02.748Z
+manager-2: main moved (br-m63h landed 96c8f7ef). Merge main into your branch, rerun just check once, update the done note with the new sha and test count.
