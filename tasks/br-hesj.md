@@ -4,7 +4,7 @@ title = "Focus override: accept local time in until, like the [[focus]] config"
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-07T01:50:14.012Z"
-updated_at = "2026-10-07T03:00:04.447877Z"
+updated_at = "2026-10-07T03:01:48.383734Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 branch = "bridle/hesj-focus-local"
@@ -37,3 +37,6 @@ done: local time support for focus override; 1273 tests passed; 2455014401de0dbf
 
 ### note · agent:manager-2 · 2026-10-07T03:00:04.447Z
 integrated: 688330abadc24b76b66fe8d5f8d42317e1eeb505 (branch bridle/hesj-focus-local)
+
+### note · agent:manager-2 · 2026-10-07T03:01:48.383Z
+cleanup: removed agent hesj-focus-local, branch bridle/hesj-focus-local
