@@ -2,11 +2,13 @@
 id = "br-3kdc"
 title = "One handover command, the same for every agent"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-07T10:15:45.545Z"
-updated_at = "2026-10-07T10:35:18.134223Z"
+updated_at = "2026-10-07T10:35:35.040707Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+branch = "bridle/handover"
+commit = "d853ddb0d16116e56e2b1f6806317ad7a5455c30"
 summary = "bridle handover write is now the one handover command: it records the note, then signals restart for the caller's own session, chosen from env (BRIDLE_AGENT_ID: record only; BRIDLE_AS=orchestrator: POST /v1/orchestrator/handover; aide/advisor: the session-restart code in session.rs, now split so a detached self-restart runs 'session restart <id> --fresh' rather than re-running the write; no identity: record only). --no-restart records only. handover done and orchestrator handover done are hidden deprecated aliases with a stderr note. The daemon route keeps its human/orchestrator gate, since it only ever restarts the orchestrator (a non-orchestrator cannot restart another's session). Docs: cli.md, orchestrator-supervision.md, api.md, CHANGELOG. Role files untouched. Caveat: tests must env_remove BRIDLE_AGENT_ID when run from an agent."
 ticket = "3kdc"
 +++
@@ -25,3 +27,14 @@ Do NOT edit workflow/base/roles/*.md or the prime text: that is slice 2, after t
 Migration: no project files change; the command reaches agents on daemon upgrade, role text later via workflow sync (slice 2).
 Acceptance: just check passes; tests: write by orchestrator relaunches, write by an advisor triggers self-restart (fake pane/launcher as the existing session-restart tests do), write by a worker only records, --no-restart records only, aliases still work and print the deprecation note.
 Model: Sonnet.
+
+## Thread
+
+### note · agent:handover · 2026-10-07T10:35:21.072Z
+done: one handover command (write signals own-session restart, --no-restart, done aliases deprecated); just check exit 0, 1301 tests passed; commit 326402cc
+
+### note · agent:manager-2 · 2026-10-07T10:35:27.172Z
+integrated: d853ddb0d16116e56e2b1f6806317ad7a5455c30 (branch bridle/handover)
+
+### note · agent:manager-2 · 2026-10-07T10:35:35.040Z
+cleanup: removed agent handover, branch bridle/handover

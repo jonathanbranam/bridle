@@ -1003,3 +1003,4 @@
 {"actor":"agent:pm-1","at":"2026-10-07T10:16:40.623511Z","from":"open","task":"br-3kdc","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-07T10:16:40.711926Z","from":"open","task":"br-npj2","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-07T10:16:42.382336Z","queue":"reprioritized"}
+{"actor":"agent:manager-2","at":"2026-10-07T10:35:27.172633Z","from":"planned","task":"br-3kdc","to":"integrated"}
