@@ -90,6 +90,12 @@ async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<(), CliErro
     } else {
         String::new()
     };
+    // The caller's own principal, as tasks get `created_by`; left out when no daemon answers,
+    // since `ticket new` works without one.
+    let filed_by = match client_for(cli).await {
+        Ok(c) => c.status().await.ok().map(|s| s.principal),
+        Err(_) => None,
+    };
     let fields = Fields {
         title: &title,
         id: id.as_deref(),
@@ -98,6 +104,7 @@ async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<(), CliErro
         repos: &repos,
         needs: &args.needs,
         see: &args.see,
+        filed_by: filed_by.as_deref(),
     };
     let today = chrono::Utc::now().date_naive().to_string();
     let path = create(&root, &fields, &today, &task_id_tails(cli).await)?;
@@ -321,6 +328,8 @@ pub struct Fields<'a> {
     pub repos: &'a [String],
     pub needs: &'a [String],
     pub see: &'a [String],
+    /// The principal that filed it (`external:aide`); optional, older tickets have none.
+    pub filed_by: Option<&'a str>,
 }
 
 /// Write a new ticket into `<root>/open/`, creating the folders; returns its path.
@@ -351,9 +360,12 @@ pub fn create(
         format!("{slug}-{id}.md")
     };
     let text = format!(
-        "---\nid: {id}\ntitle: {}\nkind: {}\nopened: {today}\nrepos: {}\nchanges: []\nspecs: []\nneeds: {}\nsee: {}\ntasks: []\n---\n\n## The ask\n\n{}",
+        "---\nid: {id}\ntitle: {}\nkind: {}\nopened: {today}\n{}repos: {}\nchanges: []\nspecs: []\nneeds: {}\nsee: {}\ntasks: []\n---\n\n## The ask\n\n{}",
         yaml_scalar(f.title),
         f.kind,
+        f.filed_by
+            .map(|p| format!("filed_by: {}\n", yaml_scalar(p)))
+            .unwrap_or_default(),
         list(f.repos),
         list(f.needs),
         list(f.see),
@@ -849,6 +861,7 @@ mod tests {
             repos,
             needs: &[],
             see: &[],
+            filed_by: None,
         }
     }
 
@@ -892,6 +905,24 @@ mod tests {
                 "---\nid: {id}\ntitle: \"Fix the: thing (now)\"\nkind: feature\nopened: 2026-09-30\nrepos: [proj]\nchanges: []\nspecs: []\nneeds: []\nsee: []\ntasks: []\n---\n\n## The ask\n\n"
             )
         );
+    }
+
+    #[test]
+    fn new_records_filed_by_and_check_accepts_it_or_its_absence() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path().join("docs/tickets");
+        let repos = vec!["proj".to_string()];
+        let mut f = fields("Who filed this", &repos);
+        f.filed_by = Some("external:aide");
+        let p = create(&root, &f, "2026-10-07", &HashSet::new()).unwrap();
+        let text = std::fs::read_to_string(&p).unwrap();
+        assert!(
+            text.contains("opened: 2026-10-07\nfiled_by: external:aide\nrepos: [proj]\n"),
+            "{text}"
+        );
+        // An old ticket with no `filed_by` still passes alongside it.
+        write(&root, "open", "old-thing-aaaa.md", "aaaa", "", "");
+        assert_eq!(problems(dir.path()), "");
     }
 
     #[test]

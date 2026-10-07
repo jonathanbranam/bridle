@@ -238,7 +238,7 @@ bridle workflow spec coverage [--root DIR] [--tests DIR ...] [--require-all] [--
 bridle ticket new "<title>" --kind <kind> [--repos a,b] [--needs ids] [--see ids] [--body t | --body-file f]   mints
                                              `docs/tickets/open/<slug>-<id>.md` (repo root found via git): a
                                              fresh 4-character ID unique across `open/` and `resolved/`,
-                                             frontmatter id, title, kind (required, no default: the task kinds), opened (UTC date), repos (default: the
+                                             frontmatter id, title, kind (required, no default: the task kinds), opened (UTC date), filed_by (the calling principal, optional; omitted when no daemon answers), repos (default: the
                                              project name), changes, specs, needs, see, tasks, and an empty
                                              `## The ask`; creates the folders if missing; prints the path.
                                              `--body`/`--body-file` (`-` = stdin) write the ask into the stub. Files no

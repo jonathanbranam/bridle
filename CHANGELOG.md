@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+- `bridle ticket new` records who filed the ticket in an optional `filed_by` front-matter field (the caller's principal, e.g. `external:aide`); old tickets need no change. Whoever files the task with `ticket task` is its creator and watcher, so the relayer gets the landing notice (br-bdrc).
+
 ### Changed
 - A task's link to its ticket is now a real field, `ticket`, in the task's front matter, shown by `bridle task show` and in the API and gateway, not an `original id: <ticket>` first line of the body. `ticket new` and `ticket task` set it; `ticket check` reads it; the daemon moves existing `original id:` lines into the field at start (br-vk3y).
 - The orchestrator supervisor relaunches by typing `bridle session orchestrator --project <project>` into the pane, not the repo script `scripts/claude-orchestrator`. `[orchestrator] launcher` is now unset by default and, when set, is typed verbatim (br-w3pk).

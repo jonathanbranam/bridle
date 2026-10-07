@@ -2514,6 +2514,36 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn a_task_filed_from_a_ticket_is_watched_by_whoever_filed_it() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let repo = tmp.path().join("repo");
+        init_repo(&repo).await;
+        let store = Store::open(tmp.path().join("bridle.db"))
+            .await
+            .expect("open store");
+        let state = StateBranch::open(&repo, &tmp.path().join("state"))
+            .await
+            .expect("open state branch");
+        let tm = reopen_manager(store, state).await;
+        let aide = "external:aide".to_string();
+        let task = tm
+            .new_task_for_ticket(
+                "T",
+                TaskKind::Feature,
+                "docs/tickets/open/t-abcd.md".to_string(),
+                vec![],
+                None,
+                &aide,
+                Some("abcd".to_string()),
+            )
+            .await
+            .expect("new task");
+        assert_eq!(task.ticket.as_deref(), Some("abcd"));
+        assert_eq!(task.watchers, vec![aide.clone()]);
+        assert_eq!(notified_of(&task), vec![aide]);
+    }
+
+    #[tokio::test]
     async fn watchers_creator_claimer_watch_unwatch_rebuild_and_backfill() {
         let tmp = tempfile::tempdir().expect("tempdir");
         let repo = tmp.path().join("repo");

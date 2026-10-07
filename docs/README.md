@@ -56,10 +56,11 @@ design moves on; the design docs cite them.
   verifies frontmatter, IDs, `needs`/`see` and links; shipped to every project as the `tickets`
   rule (`workflow/base/rules/tickets.md`).
 - The same frontmatter: `id`, `title`, `kind` (a task kind; editable with `ticket set`),
-  `opened`, `repos`, `changes`, `specs`, `needs`, `see`, `tasks` (every task made from the
+  `opened`, `filed_by` (optional: the principal that filed it, e.g. `external:aide`, taken from the
+  caller's identity by `ticket new`; older tickets have none and `ticket check` accepts that), `repos`, `changes`, `specs`, `needs`, `see`, `tasks` (every task made from the
   ticket; the task's `ticket` field is `<id>`, so the link is two-way and `ticket check`
   flags one side only). Tickets and tasks share one id alphabet and space: a ticket's first task
-  takes its id (`br-<id>`); `bridle ticket new --from-task <task-id>` goes the other way, making
+  takes its id (`br-<id>`), and whoever runs `ticket task` is the task's creator and so its watcher, told when it lands; `bridle ticket new --from-task <task-id>` goes the other way, making
   a ticket from a task with the task's id (a fresh, linked id when an old hex task id has `0` or `1`).
   Tickets hold design decisions (the why and the what), tasks the work and its status; a build that
   comes out of a discussion ticket gets its own feature ticket, linked, and its task is made from that. A missing `kind`/`tasks` is a warning until the backfill migration. `needs:` orders them.
