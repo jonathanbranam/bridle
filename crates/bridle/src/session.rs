@@ -576,18 +576,45 @@ fn relaunch_command(identity: &str, project: Option<&str>) -> String {
 /// the human's choice: refused for a session or agent (BRIDLE_AS / BRIDLE_AGENT_ID).
 async fn restart(cli: &Cli, identifier: &str, fresh: bool) -> Result<(), CliError> {
     let test = std::env::var_os("BRIDLE_LAUNCHER_TEST").is_some();
-    if std::env::var_os("BRIDLE_AGENT_ID").is_some() && !test {
+    // `bridle handover write` re-runs this for the session's own restart, after its note.
+    let own = std::env::var_os(OWN_RESTART_ENV).is_some();
+    if std::env::var_os("BRIDLE_AGENT_ID").is_some() && !test && !own {
         return Err(anyhow::anyhow!(
             "bridle session restart: refusing under a bridle agent (BRIDLE_AGENT_ID is set)"
         )
         .into());
     }
-    if fresh && std::env::var_os("BRIDLE_AS").is_some() {
+    if fresh && std::env::var_os("BRIDLE_AS").is_some() && !own {
         return Err(anyhow::anyhow!(
             "bridle session restart --fresh is the human's choice: run it from your own terminal"
         )
         .into());
     }
+    restart_session(cli, identifier, fresh).await
+}
+
+/// Set on the detached restart a session starts for itself after writing its handover note.
+const OWN_RESTART_ENV: &str = "BRIDLE_RESTART_OWN";
+
+/// The identity of the interactive session this process runs under (`BRIDLE_AS` aide or
+/// advisor), if any.
+pub fn own_session_identity() -> Option<String> {
+    match std::env::var("BRIDLE_AS").ok()?.as_str() {
+        "aide" => Some("aide".into()),
+        "advisor" => Some(advisor_identity(
+            std::env::var("BRIDLE_ADVISOR_NAME").ok().as_deref(),
+        )),
+        _ => None,
+    }
+}
+
+/// `bridle handover write` by an interactive session: its note is recorded, so restart it with
+/// the same code `session restart --fresh` uses (detached, since this runs inside the session).
+pub async fn restart_own_session(cli: &Cli, identity: &str) -> Result<(), CliError> {
+    restart_session(cli, identity, true).await
+}
+
+async fn restart_session(cli: &Cli, identifier: &str, fresh: bool) -> Result<(), CliError> {
     let client = crate::commands::client_for(cli).await?;
     let sessions = client.sessions().await?;
     let wanted = session_identity(identifier);
@@ -596,7 +623,7 @@ async fn restart(cli: &Cli, identifier: &str, fresh: bool) -> Result<(), CliErro
         .find(|s| s.identity == wanted)
         .ok_or_else(|| anyhow::anyhow!("no running session {wanted:?} (see `bridle status`)"))?;
     if std::env::var_os("BRIDLE_RESTART_DETACHED").is_none() && is_descendant_of(info.pid) {
-        return detach_restart(&info.identity);
+        return detach_restart(cli, &info.identity, fresh);
     }
     if !fresh {
         let newest = || async {
@@ -768,15 +795,28 @@ fn is_descendant_of(pid: i32) -> bool {
 }
 
 /// Re-runs this command in its own process group, so killing the session it was started from
-/// does not kill the restart. Output goes to `~/.bridle/restart-<identity>.log`.
-fn detach_restart(identity: &str) -> Result<(), CliError> {
+/// does not kill the restart. Output goes to `~/.bridle/restart-<identity>.log`. It runs
+/// `session restart <identity>` itself, not this command's arguments: those may be a
+/// `handover write` whose note is on a stdin the child does not have.
+fn detach_restart(cli: &Cli, identity: &str, fresh: bool) -> Result<(), CliError> {
     use std::os::unix::process::CommandExt;
     let log = bridle_home().join(format!("restart-{}.log", identity.replace('/', "-")));
     let f = std::fs::File::create(&log).with_context(|| format!("creating {}", log.display()))?;
     let f2 = f.try_clone().context("cloning log handle")?;
-    Command::new(std::env::current_exe().context("finding bridle")?)
-        .args(std::env::args_os().skip(1))
+    let mut cmd = Command::new(std::env::current_exe().context("finding bridle")?);
+    for (flag, v) in [
+        ("--url", &cli.url),
+        ("--project", &cli.project),
+        ("--token", &cli.token),
+    ] {
+        if let Some(v) = v {
+            cmd.args([flag, v]);
+        }
+    }
+    cmd.args(["session", "restart", identity])
+        .arg(if fresh { "--fresh" } else { "--handover" })
         .env("BRIDLE_RESTART_DETACHED", "1")
+        .env(OWN_RESTART_ENV, "1")
         .process_group(0)
         .stdin(std::process::Stdio::null())
         .stdout(f)

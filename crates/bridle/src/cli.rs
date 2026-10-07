@@ -217,7 +217,8 @@ pub enum Command {
     WaitForWake(WaitForWakeArgs),
     /// Email bridge (docs/design/mail.md). Runs as `external:mail`: `BRIDLE_AS=mail` or `--token`.
     Mail(MailArgs),
-    /// The orchestrator's handover note, kept as a record (orchestrator-supervision.md, section 7).
+    /// Every agent's handover note, kept as a record and signalled the same way for all
+    /// (orchestrator-supervision.md, section 7).
     #[command(hide = true)]
     Handover(HandoverArgs),
     /// Print a fresh session's opening context for a role: the role prompt,
@@ -1708,7 +1709,7 @@ pub enum OrchestratorAction {
     /// The launcher's SessionStart hook: reads the hook JSON on stdin and records the session
     /// id and transcript path in `$BRIDLE_HOME/orchestrator.session`. Never fails.
     NoteSession,
-    /// The orchestrator's handover note, kept as a record.
+    /// Every agent's handover note (same as `bridle handover`).
     Handover(HandoverArgs),
     /// Print a fresh session's opening context for a role.
     Prime(PrimeArgs),
@@ -1794,15 +1795,19 @@ pub struct HandoverArgs {
 #[derive(Debug, Subcommand)]
 pub enum HandoverAction {
     /// Record a new note, keyed by who you are (aide, advisor/<name>, an agent, the orchestrator)
-    /// and this project; your next session gets the newest one.
+    /// and this project; your next session gets the newest one. Then ask for your own restart:
+    /// the orchestrator is relaunched by the daemon, an aide or advisor session restarts in its
+    /// pane, a worker only records (the daemon resumes workers). `--no-restart` records only.
     Write {
         /// Read the note from this file, or `-` for stdin.
         #[arg(long)]
         file: PathBuf,
+        /// Record the note and do not restart this session.
+        #[arg(long)]
+        no_restart: bool,
     },
-    /// Say the state is written: the daemon stops this session and relaunches the orchestrator
-    /// at once (orchestrator-supervision.md, section 6). Only the human and
-    /// `external:orchestrator`. The marker only; `write` records the note.
+    /// Deprecated: `write` now signals the restart. Kept so old role text keeps working.
+    #[command(hide = true)]
     Done,
     /// List notes, newest first.
     List {
@@ -2869,6 +2874,17 @@ mod tests {
             parse(&["handover", "done"]).unwrap().command,
             Command::Handover(HandoverArgs {
                 action: HandoverAction::Done
+            })
+        ));
+        assert!(matches!(
+            parse(&["handover", "write", "--file", "-", "--no-restart"])
+                .unwrap()
+                .command,
+            Command::Handover(HandoverArgs {
+                action: HandoverAction::Write {
+                    no_restart: true,
+                    ..
+                }
             })
         ));
     }

@@ -404,10 +404,26 @@ pub(super) async fn handover_done(cli: &Cli) -> Result<(), CliError> {
     Ok(())
 }
 
+/// After the note is recorded, the "state written, restart me" signal for the caller's own
+/// session, one way for every agent. Who the caller is comes from the environment its launcher
+/// set: a worker (`BRIDLE_AGENT_ID`) is resumed by the daemon, so there is nothing to signal;
+/// the orchestrator is relaunched by the daemon; an aide or advisor restarts in its pane. No
+/// session identity (the human at a terminal) records only.
+async fn restart_after_note(cli: &Cli) -> Result<(), CliError> {
+    if std::env::var_os("BRIDLE_AGENT_ID").is_some() {
+        eprintln!("note recorded; the daemon resumes workers, so no restart is needed");
+    } else if std::env::var("BRIDLE_AS").is_ok_and(|a| a == "orchestrator") {
+        handover_done(cli).await?;
+    } else if let Some(identity) = crate::session::own_session_identity() {
+        crate::session::restart_own_session(cli, &identity).await?;
+    }
+    Ok(())
+}
+
 /// `bridle handover write|done|list|show`.
 pub(super) async fn handover(cli: &Cli, args: &HandoverArgs) -> Result<(), CliError> {
     match &args.action {
-        HandoverAction::Write { file } => {
+        HandoverAction::Write { file, no_restart } => {
             let body = if file.to_string_lossy() == "-" {
                 std::io::read_to_string(std::io::stdin()).context("reading from stdin")?
             } else {
@@ -420,8 +436,16 @@ pub(super) async fn handover(cli: &Cli, args: &HandoverArgs) -> Result<(), CliEr
             } else {
                 println!("{}", h.id);
             }
+            if !no_restart {
+                restart_after_note(cli).await?;
+            }
         }
-        HandoverAction::Done => handover_done(cli).await?,
+        HandoverAction::Done => {
+            eprintln!(
+                "note: `bridle handover done` is deprecated; `bridle handover write` now signals the restart"
+            );
+            handover_done(cli).await?
+        }
         HandoverAction::List { role } => {
             let list = client_for_read(cli)
                 .await?

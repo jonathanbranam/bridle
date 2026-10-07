@@ -261,8 +261,11 @@ answers back, quoted. Advisors only talk, research and file tickets. The daemon'
 and `question` wakes still go to `human` and `external:orchestrator` as before; moving them to
 aide is a later slice.
 
-**Handover done.** The orchestrator writes its state and runs `bridle handover done`
-(`POST /v1/orchestrator/handover`), which marks "handover done for this session". At any point,
+**Handover done.** The orchestrator writes its state with `bridle handover write` (the one
+command for every agent: it records the note, then signals the restart of the caller's own
+session; `--no-restart` records only). As the orchestrator that sends
+`POST /v1/orchestrator/handover` (the old `bridle handover done` is a deprecated alias for it),
+which marks "handover done for this session". At any point,
 not only after a message: an orchestrator that hands over early is fine.
 
 **The restart** happens when either the handover is marked done (the session is stopped at
@@ -312,7 +315,9 @@ tasks, CI), and that is printed live by `bridle prime orchestrator`. What is lef
   `/latest`) read one identity's. **Latest wins, history kept**: prime
   reads the highest `seq`; older rows stay for `bridle handover list` and `show <id>`, pruned
   with the events at 30 days but always keeping each role's newest.
-- `bridle handover done` (6) is the separate marker, so writing a note early doesn't restart.
+- `bridle handover write` also sends the restart marker (6) for the writer's own session; a note
+  written early uses `--no-restart`. Interactive sessions restart through `session restart`'s code;
+  workers only record.
 - `bridle prime orchestrator` prints the note under a heading, its age, then the live views.
 - Also on the state branch, unlike messages and incidents: each note is written as
   `handovers/<id>.md` (TOML frontmatter with id, role, project, created_at, created_by; then the

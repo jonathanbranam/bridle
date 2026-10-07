@@ -492,10 +492,14 @@ fn restart_daemon(old_pid: std::sync::Arc<std::sync::atomic::AtomicU32>, typed: 
     std::thread::spawn(move || {
         for mut c in l.incoming().flatten() {
             let mut buf = [0u8; 4096];
-            let _ = c.read(&mut buf);
+            let n = c.read(&mut buf).unwrap_or(0);
             let old = old_pid.load(std::sync::atomic::Ordering::SeqCst);
             let pid = if typed.exists() { old + 1 } else { old };
-            let body = registered("aide", pid);
+            let body = if buf[..n].starts_with(b"POST /v1/handovers") {
+                HANDOVER_JSON.to_string()
+            } else {
+                registered("aide", pid)
+            };
             let _ = write!(
                 c,
                 "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
@@ -510,6 +514,24 @@ fn restart_daemon(old_pid: std::sync::Arc<std::sync::atomic::AtomicU32>, typed: 
 /// (its child is what restart signals; `{restart}` in it expands to the restart command, for a
 /// session that restarts itself). Returns the restart's output and whether the relaunch was typed.
 fn restart_run(launcher_sh: &str, self_restart: bool) -> (String, bool) {
+    restart_run_as(
+        launcher_sh,
+        self_restart,
+        "session restart aide --fresh",
+        None,
+    )
+}
+
+const HANDOVER_JSON: &str = r#"{"id":"h-0042","role":"aide","project":"p","body":"b","created_at":"2026-01-01T00:00:00Z","created_by":"external:aide"}"#;
+
+/// `restart_run` with the command to run (`tail`, after the global flags) and the `BRIDLE_AS`
+/// the session runs under.
+fn restart_run_as(
+    launcher_sh: &str,
+    self_restart: bool,
+    tail: &str,
+    bridle_as: Option<&str>,
+) -> (String, bool) {
     let bin = tempfile::tempdir().unwrap();
     let home = tempfile::tempdir().unwrap();
     let typed = bin.path().join("tmux.rec");
@@ -526,7 +548,7 @@ fn restart_run(launcher_sh: &str, self_restart: bool) -> (String, bool) {
     let old = std::sync::Arc::new(std::sync::atomic::AtomicU32::new(0));
     let url = restart_daemon(old.clone(), typed.clone());
     let exe = env!("CARGO_BIN_EXE_bridle");
-    let restart = format!("{exe} --project p --url {url} --token t session restart aide --fresh");
+    let restart = format!("{exe} --project p --url {url} --token t {tail}");
     let envs = |c: &mut Command| {
         c.env("PATH", &path)
             .env("BRIDLE_HOME", home.path())
@@ -534,7 +556,11 @@ fn restart_run(launcher_sh: &str, self_restart: bool) -> (String, bool) {
             .env("TMUX_PANE", "%9")
             .env("BRIDLE_STOP_WAIT_SECS", "1")
             .env("BRIDLE_RESTART_REGISTER_SECS", "10")
+            .env_remove("BRIDLE_AGENT_ID")
             .env_remove("BRIDLE_AS");
+        if let Some(a) = bridle_as {
+            c.env("BRIDLE_AS", a);
+        }
     };
     let mut launcher = Command::new("sh");
     launcher
@@ -566,7 +592,7 @@ fn restart_run(launcher_sh: &str, self_restart: bool) -> (String, bool) {
     } else {
         let mut cmd = Command::new(exe);
         cmd.args(["--project", "p", "--url", &url, "--token", "t"])
-            .args(["session", "restart", "aide", "--fresh"]);
+            .args(tail.split_whitespace());
         envs(&mut cmd);
         let out = cmd.output().unwrap();
         format!(
@@ -609,6 +635,122 @@ fn restart_fails_without_typing_when_the_launcher_will_not_die() {
 fn a_session_can_restart_itself() {
     // The restart runs as the launcher's child, so stopping the session kills its caller.
     let (text, typed) = restart_run("{restart}; sleep 60; :", true);
+    assert!(text.contains("restarted aide in pane %3"), "{text}");
+    assert!(typed);
+}
+
+/// A fake daemon that records each request line and answers the handover routes.
+fn recording_daemon() -> (String, std::sync::Arc<std::sync::Mutex<Vec<String>>>) {
+    use std::io::{Read, Write};
+    let l = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let url = format!("http://{}", l.local_addr().unwrap());
+    let seen = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
+    let log = seen.clone();
+    std::thread::spawn(move || {
+        for mut c in l.incoming().flatten() {
+            let mut buf = [0u8; 4096];
+            let n = c.read(&mut buf).unwrap_or(0);
+            let req = String::from_utf8_lossy(&buf[..n]).into_owned();
+            let line = req.lines().next().unwrap_or("").to_string();
+            let body = if line.starts_with("POST /v1/handovers") {
+                HANDOVER_JSON
+            } else if line.starts_with("POST /v1/orchestrator/handover") {
+                r#"{"marked_at":"2026-01-01T00:00:00Z"}"#
+            } else {
+                "[]"
+            };
+            log.lock().unwrap().push(line);
+            let _ = write!(
+                c,
+                "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
+                body.len()
+            );
+        }
+    });
+    (url, seen)
+}
+
+/// Runs `bridle <args>` with a note on disk against the recording daemon; returns stderr and
+/// the request lines the daemon saw.
+fn handover_run(envs: &[(&str, &str)], args: &[&str]) -> (String, Vec<String>) {
+    let (url, seen) = recording_daemon();
+    let home = tempfile::tempdir().unwrap();
+    let note = home.path().join("note.md");
+    fs::write(&note, "state").unwrap();
+    let out = Command::new(env!("CARGO_BIN_EXE_bridle"))
+        .args(["--project", "p", "--url", &url, "--token", "t"])
+        .args(args)
+        .args(if args.contains(&"write") {
+            vec!["--file", note.to_str().unwrap()]
+        } else {
+            vec![]
+        })
+        .env("BRIDLE_HOME", home.path())
+        .env_remove("BRIDLE_AS")
+        .env_remove("BRIDLE_AGENT_ID")
+        .envs(envs.iter().copied())
+        .output()
+        .unwrap();
+    assert!(
+        out.status.success(),
+        "{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let seen = seen.lock().unwrap().clone();
+    (String::from_utf8_lossy(&out.stderr).into_owned(), seen)
+}
+
+fn posted(seen: &[String], path: &str) -> bool {
+    seen.iter().any(|l| l.starts_with(&format!("POST {path}")))
+}
+
+#[test]
+fn handover_write_by_the_orchestrator_signals_its_relaunch() {
+    let (_, seen) = handover_run(&[("BRIDLE_AS", "orchestrator")], &["handover", "write"]);
+    assert!(posted(&seen, "/v1/handovers"), "{seen:?}");
+    assert!(posted(&seen, "/v1/orchestrator/handover"), "{seen:?}");
+}
+
+#[test]
+fn handover_write_by_a_worker_only_records() {
+    let (err, seen) = handover_run(&[("BRIDLE_AGENT_ID", "a-1")], &["handover", "write"]);
+    assert!(posted(&seen, "/v1/handovers"), "{seen:?}");
+    assert!(!posted(&seen, "/v1/orchestrator/handover"), "{seen:?}");
+    assert!(!seen.iter().any(|l| l.contains("/v1/sessions")), "{seen:?}");
+    assert!(err.contains("recorded"), "{err}");
+}
+
+#[test]
+fn handover_write_no_restart_only_records() {
+    let (_, seen) = handover_run(
+        &[("BRIDLE_AS", "orchestrator")],
+        &["handover", "write", "--no-restart"],
+    );
+    assert_eq!(seen.len(), 1, "{seen:?}");
+    assert!(posted(&seen, "/v1/handovers"), "{seen:?}");
+}
+
+#[test]
+fn the_deprecated_handover_done_still_works_and_says_so() {
+    for args in [
+        &["handover", "done"][..],
+        &["orchestrator", "handover", "done"][..],
+    ] {
+        let (err, seen) = handover_run(&[("BRIDLE_AS", "orchestrator")], args);
+        assert!(err.contains("deprecated"), "{err}");
+        assert!(posted(&seen, "/v1/orchestrator/handover"), "{seen:?}");
+    }
+}
+
+#[test]
+fn handover_write_by_an_aide_restarts_its_own_session() {
+    // The write runs as the launcher's child, so the restart must detach to survive it.
+    let (text, typed) = restart_run_as(
+        "{restart}; sleep 60; :",
+        true,
+        "handover write --file /dev/null",
+        Some("aide"),
+    );
     assert!(text.contains("restarted aide in pane %3"), "{text}");
     assert!(typed);
 }

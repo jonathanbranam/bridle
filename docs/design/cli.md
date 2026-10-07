@@ -142,9 +142,9 @@ bridle review now <path> [--resend]           sends the document's pending comme
 bridle link <ID>                                                local, no daemon: the bridle UI URL for a ticket ID (`<base>/ticket?project=<p>&id=<id>`) or a task ID with a `-` (`<base>/task?id=<id>`), from `[gateway] public_url` (project config over machine config); prints nothing and exits 0 when unset (yfjc)
 bridle focus gate                           the UserPromptSubmit hook of focus hours (cvaq): in a `quiet` `[[focus]]` period prints
                                              nudge context on the first prompt and every 5 min after; silent otherwise; never fails
-bridle orchestrator handover done                       the orchestrator's state is written: the daemon stops and relaunches its session (marker only); human and external:orchestrator only
+bridle orchestrator handover ...                       alias of `bridle handover ...`; `handover done` is a deprecated hidden alias (prints a note; the marker only)
 bridle orchestrator wait-for-wake --mail [--timeout SECS]                  the advisor's mail-only waiter: returns when unread mail from external:mail arrives (`nothing` at the timeout, default 25 min, cap 6900 s); polls the inbox every 10 s
-bridle handover write --file <path>|-                  record your handover note (any principal; keyed by your identity and the project); prints its id
+bridle handover write --file <path>|- [--no-restart]  record your handover note (any principal; keyed by your identity and the project), print its id, then signal "restart me" for your own session (see handover below)
 bridle handover list [--role R] | show <id> | latest [--role R]     the notes, newest first · one note · the newest
 bridle mail run                              the email bridge for this project: inbound mail, question mails, daily digest (docs/design/mail.md); runs as external:mail
 bridle orchestrator wait-for-wake [--timeout SECS]                  the orchestrator's background watcher: waits for a wake condition, prints it and exits 0 (6 with the reason on stderr when the daemon is restarting or shutting down; `nothing` at the timeout, default 25 min, cap 6900 s); external:orchestrator only
@@ -738,10 +738,17 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   `write` reads a file or stdin (`-`), `list` shows id, time, author and first line, `show` the
   whole note. Latest wins; `bridle orchestrator prime orchestrator` prints the newest under a heading with
   its age, and falls back to `docs/context/orchestrator-state.md` when there is no note (or no
-  daemon to ask). **`handover done`** is `POST /v1/orchestrator/handover`
-  ([[orchestrator-supervision]] section 6): the orchestrator runs it after writing its state, and
-  the daemon stops the session (SIGTERM, SIGKILL after 15 s) and relaunches it at once. It
-  stores nothing itself.
+  daemon to ask). **`write` is the one handover command for every agent**: after recording the
+  note it signals "state written, restart me" for the caller's own session, chosen from the
+  environment the launcher set. `BRIDLE_AS=orchestrator`: `POST /v1/orchestrator/handover`
+  ([[orchestrator-supervision]] section 6), and the daemon stops the session (SIGTERM, SIGKILL
+  after 15 s) and relaunches it at once. `BRIDLE_AS=aide` or `advisor`: the same self-restart as
+  `session restart --fresh` (detached, below), since the note is already the handover.
+  A worker (`BRIDLE_AGENT_ID`): records only; the daemon resumes workers. No identity (the
+  human at a terminal): records only. `--no-restart` records only, for a note written
+  mid-session. Nobody can restart another's session this way. `handover done` (and
+  `orchestrator handover done`) is a hidden, deprecated alias for the marker alone: it prints a
+  note on stderr and goes away in a later release.
 - **`wait-for-wake`** is `GET /v1/orchestrator/wake` ([[orchestrator-supervision]] section 5),
   replacing `scripts/orchestrator-watch.sh`. It prints each wake as `<reason>: <text>` and its
   detail as JSON (`--json`: the list of wakes), exits 0, and prints `nothing` when the daemon's
