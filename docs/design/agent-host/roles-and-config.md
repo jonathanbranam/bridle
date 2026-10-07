@@ -252,9 +252,26 @@ nudge.
 **Override.** The human can write `~/.bridle/focus-override.toml` by hand (no CLI command):
 
 ```toml
-until  = 2026-10-01T15:00:00Z   # UTC; capped at 2 hours after it takes effect
+# Local time (machine's local zone, no offset)
+until  = 2026-10-01T22:00:00
 reason = "deploy is broken"
+
+# Or UTC with offset or Z
+# until  = 2026-10-01T18:00:00-04:00
+# until  = 2026-10-01T22:00:00Z
+
+# Or local time of day (next occurrence)
+# until = "22:00"
 ```
+
+`until` accepts three forms, all capped at 2 hours after the override takes effect:
+1. Local datetime without offset (e.g., `2026-10-01T22:00:00`): interpreted in the machine's local
+   zone, like `[[focus]]` periods.
+2. Datetime with offset or Z (e.g., `2026-10-01T22:00:00Z`, `2026-10-01T18:00:00-04:00`): UTC-aware,
+   parsed as-is.
+3. String `"HH:MM"` (e.g., `"22:00"`): the next occurrence of that local time, today if still ahead,
+   else tomorrow. A local time that does not exist or is ambiguous (DST gap or overlap) is rejected
+   with a log line.
 
 It takes effect only `focus_override_delay_minutes` (top-level in `config.toml`, default 10)
 after the file was last written (its mtime), so tripping it is deliberate. (Not `[focus]

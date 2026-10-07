@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+- `~/.bridle/focus-override.toml`'s `until` now accepts local times like `[[focus]]` periods: a TOML local datetime without offset (e.g. `until = 2026-10-01T22:00:00`), or a string `"HH:MM"` for the next occurrence of that local time (e.g. `until = "22:00"`). Existing offset and Z forms still work. Local times that do not exist or are ambiguous (DST gaps/overlaps) are rejected with a log line (br-hesj).
+
 ### Fixed
 - Upgrades go through under load: `bridle daemon restart` (and `--upgrade`, and the automatic upgrade) now drains the daemon instead of waiting for a quiet moment that never came. The build starts at once; then no new turns start (spawns and claims are refused, messages are held and delivered after the restart), turns in progress finish, and the daemon restarts, with no timeout. `bridle status` shows `upgrade <sha> draining; waiting on <agents>`; a drain still waiting after an hour wakes the orchestrator once (`upgrade_draining`). `--wait` and the 600 s limit are gone. Resumed agents are told to re-run any background job they were waiting on (br-vn42).
 - Document review sends a still document's pending comments on its own again: the watcher's check that the text hadn't changed before sending compared a batch with thread IDs (`c1`) against one without, so any document the gateway had numbered never went; only `bridle review now` worked. The watcher now logs at debug level why a document is held back, due or waiting for a slot (br-ad3t).

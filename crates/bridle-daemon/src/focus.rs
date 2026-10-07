@@ -4,7 +4,7 @@
 
 use std::path::Path;
 
-use chrono::{DateTime, Duration, Local, Utc};
+use chrono::{DateTime, Duration, Local, NaiveTime, TimeZone, Utc};
 use serde::Deserialize;
 
 use crate::config::{FocusMode, FocusPeriod, focus_override_delay_minutes, focus_periods};
@@ -16,9 +16,7 @@ const OVERRIDE_MAX: Duration = Duration::hours(2);
 
 /// `<home>/focus-override.toml`, written by the human by hand (no CLI, agents are denied it).
 #[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
 struct RawOverride {
-    until: toml::value::Datetime,
     reason: String,
 }
 
@@ -52,16 +50,81 @@ pub fn read_override(home: &Path) -> Option<Override> {
 fn parse_override(text: &str, written: DateTime<Utc>, delay_minutes: u32) -> Option<Override> {
     let raw: RawOverride = toml::from_str(text).ok()?;
     let from = written + Duration::minutes(i64::from(delay_minutes));
+
+    // Parse until from the TOML table directly to get the raw value
+    let until_utc = parse_until_from_text(text, from)?;
+
     Some(Override {
         from,
-        until: raw
-            .until
-            .to_string()
-            .parse::<DateTime<Utc>>()
-            .ok()?
-            .min(from + OVERRIDE_MAX),
+        until: until_utc.min(from + OVERRIDE_MAX),
         reason: raw.reason,
     })
+}
+
+/// Extract and parse the `until` value in three forms:
+/// 1. Offset datetime or Z (existing): e.g., `2026-10-01T22:00:00Z` or `2026-10-01T18:00:00-04:00`
+/// 2. Local datetime (new): e.g., `2026-10-01T22:00:00`, interpreted in the local zone
+/// 3. String "HH:MM" (new): e.g., `"22:00"`, meaning the next occurrence of that time
+fn parse_until_from_text(text: &str, from: DateTime<Utc>) -> Option<DateTime<Utc>> {
+    let table: toml::Table = toml::from_str(text).ok()?;
+    let value = table.get("until")?;
+
+    match value {
+        toml::value::Value::Datetime(dt) => {
+            // Try to parse as offset datetime (existing forms)
+            let s = dt.to_string();
+            if let Ok(utc_dt) = s.parse::<DateTime<Utc>>() {
+                return Some(utc_dt);
+            }
+
+            // Try to parse as local datetime (new form)
+            if let Ok(local_dt) = chrono::NaiveDateTime::parse_from_str(&s, "%Y-%m-%dT%H:%M:%S") {
+                if let Some(local) = Local.from_local_datetime(&local_dt).single() {
+                    return Some(local.with_timezone(&Utc));
+                } else {
+                    // Ambiguous or nonexistent local time
+                    tracing::warn!("until time {s:?} is ambiguous or nonexistent in local zone");
+                }
+            }
+
+            None
+        }
+        toml::value::Value::String(s) => {
+            // Try to parse as "HH:MM" (new form)
+            if let Ok(time) = NaiveTime::parse_from_str(s, "%H:%M") {
+                // Calculate the next occurrence of this time
+                let from_local = from.with_timezone(&Local);
+                let today = from_local.date_naive();
+                let today_occurrence = today.and_time(time);
+
+                let target_local = if let Some(today_time) =
+                    Local.from_local_datetime(&today_occurrence).single()
+                {
+                    if today_time > from_local {
+                        today_time
+                    } else {
+                        // Time already passed today, use tomorrow
+                        let tomorrow = today + Duration::days(1);
+                        let tomorrow_occurrence = tomorrow.and_time(time);
+                        Local
+                            .from_local_datetime(&tomorrow_occurrence)
+                            .single()
+                            .expect("tomorrow's time is unambiguous")
+                    }
+                } else {
+                    // Today's occurrence is ambiguous or nonexistent (DST), try tomorrow
+                    let tomorrow = today + Duration::days(1);
+                    let tomorrow_occurrence = tomorrow.and_time(time);
+                    Local.from_local_datetime(&tomorrow_occurrence).single()?
+                };
+
+                return Some(target_local.with_timezone(&Utc));
+            }
+
+            None
+        }
+        _ => None,
+    }
 }
 
 /// The locked period covering `now`, unless an active override lifts it. `None` when nothing is
@@ -117,7 +180,7 @@ pub fn stop_advisors_if_locked(home: &Path, now: DateTime<Local>) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::TimeZone;
+    use chrono::{Datelike, TimeZone, Timelike};
 
     fn at(h: u32, m: u32) -> DateTime<Local> {
         Local
@@ -158,6 +221,110 @@ mod tests {
         )
         .expect("parses");
         assert_eq!(short.until, written + Duration::minutes(30));
+    }
+
+    #[test]
+    fn accepts_offset_datetime_forms() {
+        let written = utc(10, 0);
+
+        // UTC form with Z - use a time within the 2-hour cap
+        let utc_z = parse_override("until = 2026-09-30T11:00:00Z\nreason = \"x\"", written, 0)
+            .expect("parses UTC Z form");
+        let expected_z = "2026-09-30T11:00:00Z".parse::<DateTime<Utc>>().unwrap();
+        assert_eq!(utc_z.until, expected_z);
+
+        // UTC form with offset (unquoted in TOML) - same time as Z form
+        let utc_offset = parse_override(
+            "until = 2026-09-30T11:00:00+00:00\nreason = \"x\"",
+            written,
+            0,
+        )
+        .expect("parses UTC offset form");
+        let expected_offset = "2026-09-30T11:00:00+00:00"
+            .parse::<DateTime<Utc>>()
+            .unwrap();
+        assert_eq!(utc_offset.until, expected_offset);
+
+        // Non-UTC offset (unquoted in TOML): 7:00 EDT is the same as 11:00 UTC
+        let non_utc = parse_override(
+            "until = 2026-09-30T07:00:00-04:00\nreason = \"x\"",
+            written,
+            0,
+        )
+        .expect("parses non-UTC offset form");
+        let expected_non_utc = "2026-09-30T07:00:00-04:00"
+            .parse::<DateTime<Utc>>()
+            .unwrap();
+        assert_eq!(non_utc.until, expected_non_utc);
+    }
+
+    #[test]
+    fn accepts_local_datetime_form() {
+        let written = utc(10, 0);
+
+        // Local datetime form (no offset) - use a time within 2-hour cap from `from`
+        let local_dt = parse_override("until = 2026-09-30T12:00:00\nreason = \"x\"", written, 0)
+            .expect("parses local datetime form");
+
+        // Should be interpreted in local time: 12:00 local = (if EDT) 16:00 UTC
+        let expected = Local
+            .with_ymd_and_hms(2026, 9, 30, 12, 0, 0)
+            .single()
+            .expect("unambiguous local time")
+            .with_timezone(&Utc);
+        assert_eq!(local_dt.until, expected);
+    }
+
+    #[test]
+    fn accepts_string_hhmm_form() {
+        let written = utc(10, 0);
+
+        // String "HH:MM" form - time in the future today (within 2-hour cap)
+        let from_local = written.with_timezone(&Local);
+        let local_hour = from_local.hour();
+        let hhmm = format!("{:02}:30", local_hour + 1); // Next hour, 30 minutes
+
+        let future_today =
+            parse_override(&format!("until = \"{}\"\nreason = \"x\"", hhmm), written, 0)
+                .expect("parses HH:MM form");
+
+        let today = from_local.date_naive();
+        let expected = Local
+            .with_ymd_and_hms(
+                today.year(),
+                today.month(),
+                today.day(),
+                local_hour + 1,
+                30,
+                0,
+            )
+            .single()
+            .expect("unambiguous time")
+            .with_timezone(&Utc);
+        assert_eq!(future_today.until, expected);
+    }
+
+    #[test]
+    fn string_hhmm_rolls_to_tomorrow_if_past() {
+        let written = utc(10, 0);
+
+        // String "HH:MM" form - time already passed today
+        let past_today = parse_override("until = \"00:00\"\nreason = \"x\"", written, 0)
+            .expect("parses HH:MM form for past time");
+
+        // Just verify it parsed successfully and is valid (exact value depends on capping)
+        assert!(past_today.until > written);
+    }
+
+    #[test]
+    fn rejects_malformed_values() {
+        let written = utc(10, 0);
+
+        // Invalid datetime string
+        assert!(parse_override("until = \"not-a-time\"\nreason = \"x\"", written, 0).is_none());
+
+        // Invalid TOML value type
+        assert!(parse_override("until = 123\nreason = \"x\"", written, 0).is_none());
     }
 
     #[test]
