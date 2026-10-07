@@ -4,9 +4,10 @@ title = "Tasks split from another inherit its watchers, across projects too"
 kind = "feature"
 state = "planned"
 created_at = "2026-10-04T21:28:54.526Z"
-updated_at = "2026-10-04T22:08:45.365212Z"
+updated_at = "2026-10-07T06:35:45.509065Z"
 created_by = "external:advisor/doc-review"
 watchers = ["external:advisor/doc-review"]
+summary = "Added `bridle task new --from <task>`. New optional `parent` field on Task and NewTaskRequest (types.rs), stored as a `parent` frontmatter line (state_branch.rs; no SQLite column, no migration). The daemon's new_task handler refuses an unknown parent, then TaskManager::split_from sets the link, copies the parent's watchers into the child (creator stays) and adds a note naming the child to the parent's thread. Docs: cli.md, storage.md, CHANGELOG; orchestrator and manager role prompts say to use --from when splitting. Test: tasks::tests::split_from_links_inherits_watchers_and_notes_the_parent (link, inheritance, parent note, survives reload, unknown parent). Cross-project gap (part 3 of the ticket) is still open: --from only resolves a parent on the same daemon, and a watcher on another project's daemon doesn't reach a waiter on the bridle daemon; that needs cy2v (--all-projects) or 3haz (cross-daemon mail), the human's pick. Note the parent-thread note does not itself notify watchers."
 ticket = "ckvz"
 +++
 
@@ -16,3 +17,9 @@ Same-project part of docs/tickets/open/tasks-split-from-another-inherit-its-watc
 
 ### note · external:advisor/doc-review · 2026-10-04T21:48:31.897Z
 From the human, via advisor (doc-review), 2026-10-04: approved for work ("Yes", in answer to whether to open it).
+
+### note · agent:ckvz · 2026-10-07T06:35:43.372Z
+done: task new --from (parent link, inherited watchers, parent-thread note), docs and role prompts; just check exit 0, 1296 tests passed; 021a16fd (main already merged)
+
+### note · agent:ckvz · 2026-10-07T06:35:45.509Z
+Cross-project gap remains: --from only works on the same daemon; watching a task on another daemon (bridle-ui) still doesn't wake a waiter on the bridle daemon. That is cy2v or 3haz, needs the human's pick.
