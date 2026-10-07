@@ -4,7 +4,7 @@ title = "Research: why Rust builds take ~10 minutes and what would speed them up
 kind = "research"
 state = "planned"
 created_at = "2026-10-07T10:15:45.617Z"
-updated_at = "2026-10-07T12:13:47.874900Z"
+updated_at = "2026-10-07T12:19:25.844059Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "npj2"
@@ -28,3 +28,51 @@ From orchestrator: machine load is high (5.4/core) so timings are noisy. Record 
 
 ### note · external:aide · 2026-10-07T12:13:47.874Z
 From the human, via aide (2026-10-07 ~7:00 AM ET), re br-npj2 tool installs (cargo-bloat, sccache, lld): "for npj2 - I approve this installation; can we have the orch do the installs required first and then the worker does not have to?" So: all three approved; the orchestrator installs them, not the worker.
+
+### note · external:aide · 2026-10-07T12:19:25.791Z
+From the human, via aide (2026-10-07 ~7:30 AM ET): SCOPE CHANGE and input for br-npj2 / ticket npj2.
+
+The human: "Add this information to research into the rust research ticket as part of the analysis and include any suggestions in the conclusion. Is this dev tools excemption a critical perf. improvement for us? this expands the scope of research beyond just builds. the scope should be "ignoring agent time, what are the mechanical reasons that builds/tests/everything takes so long and uses so much CPU" - I don't know how Rust works and haven't used it so I don't have experience here to draw on."
+
+So: (1) new scope, quoted above; write the findings for a reader new to Rust. (2) Answer explicitly whether the developer-tools (scan) exemption is a critical performance fix for us, with numbers. (3) Put suggestions in the conclusion, including the tests/ consolidation below. (4) Add the following analysis (pasted by the human, from another session) to the ticket:
+
+---
+In Rust, each test target is compiled into its own executable, and this workspace has a lot of test targets. In the benchmark's build directory (wt/buildtime/target-dev) I counted 73 test binaries:
+  - One per crate for unit tests. The #[cfg(test)] modules inside each crate's src/ are compiled into one test binary per lib or bin target. With 8 crates, that's about 9 of the 73.
+  - One per file in tests/. Cargo treats each tests/*.rs file as a separate crate, so each becomes its own executable. There are 64 of them: bridle-daemon has 43, bridle 14, bridle-claude 3, bridle-mail 3 and bridle-spec 1.
+The build also creates other new files that get scanned before nextest starts:
+  - 28 build-script binaries (build.rs), each compiled and run once during the build.
+  - 21 proc-macro dylibs (serde_derive, clap_derive and so on), loaded into rustc as it compiles.
+Why they count as new so often:
+  - Changing one crate relinks everything that depends on it. Touching bridle-daemon relinks its 43 test binaries plus everything in bridle that uses it. Each relinked binary has a new code hash, so macOS scans it again.
+  - A new worktree or target dir makes everything new, including the build scripts and proc-macro dylibs.
+  - Debug test binaries are large (tens of MB with debug info), and the scan takes longer on bigger files.
+How this adds up to the 84 seconds: before running anything, nextest launches every test binary once with --list to find the tests in it. That's the first launch, so each binary waits for its scan there. Those were the processes we saw sitting at 0% CPU. 73 binaries at roughly 1 s each matches the 84 s after compiling finished. Once listed, nextest starts a new process for every test, but those reuse already-scanned binaries, so they're fast.
+Two ways to reduce it:
+  - Exempt the build environment, as we've been doing. That removes the per-binary scan cost entirely.
+  - Combine the tests/ files into one binary per crate. This is a common Rust layout: a single tests/it/main.rs that pulls the other files in with mod. bridle-daemon would go from 43 test binaries to 1. That also cuts link time, which is a large share of the build on its own, and it would help on any machine, exempt or not. It's a real change to the repo layout, so I can file it as a ticket if you want it considered.
+---
+
+### note · external:aide · 2026-10-07T12:19:25.844Z
+From the human, via aide (2026-10-07 ~7:30 AM ET): SCOPE CHANGE and input for br-npj2 / ticket npj2.
+
+The human: "Add this information to research into the rust research ticket as part of the analysis and include any suggestions in the conclusion. Is this dev tools excemption a critical perf. improvement for us? this expands the scope of research beyond just builds. the scope should be "ignoring agent time, what are the mechanical reasons that builds/tests/everything takes so long and uses so much CPU" - I don't know how Rust works and haven't used it so I don't have experience here to draw on."
+
+So: (1) new scope, quoted above; write the findings for a reader new to Rust. (2) Answer explicitly whether the developer-tools (scan) exemption is a critical performance fix for us, with numbers. (3) Put suggestions in the conclusion, including the tests/ consolidation below. (4) Add the following analysis (pasted by the human, from another session) to the ticket:
+
+---
+In Rust, each test target is compiled into its own executable, and this workspace has a lot of test targets. In the benchmark's build directory (wt/buildtime/target-dev) I counted 73 test binaries:
+  - One per crate for unit tests. The #[cfg(test)] modules inside each crate's src/ are compiled into one test binary per lib or bin target. With 8 crates, that's about 9 of the 73.
+  - One per file in tests/. Cargo treats each tests/*.rs file as a separate crate, so each becomes its own executable. There are 64 of them: bridle-daemon has 43, bridle 14, bridle-claude 3, bridle-mail 3 and bridle-spec 1.
+The build also creates other new files that get scanned before nextest starts:
+  - 28 build-script binaries (build.rs), each compiled and run once during the build.
+  - 21 proc-macro dylibs (serde_derive, clap_derive and so on), loaded into rustc as it compiles.
+Why they count as new so often:
+  - Changing one crate relinks everything that depends on it. Touching bridle-daemon relinks its 43 test binaries plus everything in bridle that uses it. Each relinked binary has a new code hash, so macOS scans it again.
+  - A new worktree or target dir makes everything new, including the build scripts and proc-macro dylibs.
+  - Debug test binaries are large (tens of MB with debug info), and the scan takes longer on bigger files.
+How this adds up to the 84 seconds: before running anything, nextest launches every test binary once with --list to find the tests in it. That's the first launch, so each binary waits for its scan there. Those were the processes we saw sitting at 0% CPU. 73 binaries at roughly 1 s each matches the 84 s after compiling finished. Once listed, nextest starts a new process for every test, but those reuse already-scanned binaries, so they're fast.
+Two ways to reduce it:
+  - Exempt the build environment, as we've been doing. That removes the per-binary scan cost entirely.
+  - Combine the tests/ files into one binary per crate. This is a common Rust layout: a single tests/it/main.rs that pulls the other files in with mod. bridle-daemon would go from 43 test binaries to 1. That also cuts link time, which is a large share of the build on its own, and it would help on any machine, exempt or not. It's a real change to the repo layout, so I can file it as a ticket if you want it considered.
+---
