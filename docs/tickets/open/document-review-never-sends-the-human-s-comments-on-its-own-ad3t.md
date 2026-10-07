@@ -13,8 +13,6 @@ tasks: []
 
 ## The ask
 
-## The ask
-
 The human, 2026-10-07 (on zcqv's comments never reaching an agent): "I just want the solution fixed actually."
 
 ## What happened
