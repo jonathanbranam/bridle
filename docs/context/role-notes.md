@@ -632,3 +632,5 @@ Newest first. One line per item: what happened, who did it, what it says about r
 - **Managers integrate quickly** (bridle-ui manager-1 landed ui-py6p 9 s after "done"). Spot-checked
   `bridle spec check` on bridle-ui main afterwards: clean.
 - **By hand, again (2026-10-06, orchestrator):** `npm run install-ui` after ui-7veu landed (0baeea3); manager-1 asks the orchestrator for each install (tc7t).
+- **By hand (2026-10-06 evening, orchestrator):** `npm run install-ui` for ui-g49c and ui-mk9b; relaunched bridle's aide by typing `bridle session aide` into its pane (5j35); ran `just install` for the human (signing identity); the human killed the warm-target copy and deleted integration/target (z7y5); a stuck test process needed the human to kill it (auto mode refuses killing a daemon-owned pid).
+- **Where a role didn't fit:** bridle-ui's manager-1 spawned a worker with `--allow-tool WebSearch` for research, which can't work (a9g2); research belongs to the `researcher` role.
