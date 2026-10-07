@@ -10,6 +10,7 @@ specs: []
 needs: []
 see: [ft3b, gq9r, jttf, gtzx]
 tasks: [br-3kdc]
+closed: 2026-10-07T14:00:08Z
 ---
 
 ## The ask
