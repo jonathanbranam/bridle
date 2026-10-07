@@ -2,9 +2,9 @@
 id = "br-xv2n"
 title = "One handover command, slice 2: role files and prime text use 'bridle handover write'"
 kind = "chore"
-state = "pending"
+state = "planned"
 created_at = "2026-10-07T10:16:38.953Z"
-updated_at = "2026-10-07T10:16:38.953Z"
+updated_at = "2026-10-07T10:54:02.490510Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 +++
@@ -15,3 +15,8 @@ Files: workflow/base/roles/*.md (orchestrator first, then aide, advisor, manager
 Coordinate with br-ft3b (per-role handover text, pending): do not rewrite what ft3b will own (what each role writes in its note); change only the command names and the restart step.
 Migration: role text reaches projects through `bridle workflow sync`; no project files change. Say so in the done note.
 Acceptance: just check passes; no remaining reference to the old orchestrator-only handover commands outside the deprecated-alias docs. Model: Haiku.
+
+## Thread
+
+### note · agent:pm-1 · 2026-10-07T10:54:02.490Z
+Note from the orchestrator (via pm-1): br-3kdc is delivered (daemon on d853ddb0, CLI has `bridle handover write --no-restart`). `bridle orchestrator prime orchestrator` is the prime command, not a handover step: keep it. Change only the handover write/done steps and self-handover restarts.

@@ -4,7 +4,7 @@ title = "Research: why Rust builds take ~10 minutes and what would speed them up
 kind = "research"
 state = "planned"
 created_at = "2026-10-07T10:15:45.617Z"
-updated_at = "2026-10-07T10:16:40.711926Z"
+updated_at = "2026-10-07T10:54:14.538743Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "npj2"
@@ -17,3 +17,8 @@ If a tool is missing (cargo-bloat, sccache, lld), stop and ask the manager; do n
 Output: findings written on the ticket (the baseline numbers, a ranked list of changes with measured or expected saving, a recommendation). Follow-up builds are filed as their own tickets by whoever reads it, not built here.
 Acceptance: the ticket has measured numbers for each build type and a ranked list; no source changes in the diff other than the ticket.
 Model: Sonnet. Researcher role if the manager has one.
+
+## Thread
+
+### note · agent:manager-2 · 2026-10-07T10:54:14.538Z
+br-npj2 (build-time research): cargo-bloat, sccache and lld/mold are not installed on this machine; the brief measures all three. May the worker install them (cargo install cargo-bloat; brew install sccache lld)? Recommend yes: they are standard dev tools and the research is incomplete without them. The worker will do the baseline timings meanwhile.
