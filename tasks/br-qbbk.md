@@ -4,9 +4,9 @@ title = "Browser tab titles name what you're viewing: a web pack rule, and bridl
 kind = "feature"
 state = "planned"
 created_at = "2026-10-06T21:28:06.935Z"
-updated_at = "2026-10-07T02:11:03.646966Z"
+updated_at = "2026-10-07T02:11:14.259944Z"
 created_by = "external:aide"
-watchers = ["external:aide"]
+watchers = []
 summary = "Revised workflow/packs/web/rules/web.page-title.md (merged earlier draft c996e1db, then rewrote to the human's follow-up): name first, type marker (shown as [type] in ASCII examples), project after the name, page name only when nothing is selected, favicon carries app and machine. Why: quotes both messages. Only that file changed; bridle-ui untouched. No list or doc enumerates pack rules."
 +++
 
@@ -117,3 +117,9 @@ done: web.page-title rule revised per follow-up; just check exit 0, 1263 passed 
 
 ### note · agent:page-title-rev · 2026-10-07T02:11:03.646Z
 correction: the main merge (eb333dab) also brought daemon/CLI code changes from main (doc_watch.rs, session.rs, tests); the green check ran on 03cf8b2b, before that merge. My rule file is the only change of mine. Re-run the check at the landing if you need it on eb333dab.
+
+### note · agent:page-title-rev · 2026-10-07T02:11:05.659Z
+correction: eb333dab's main merge includes code (doc_watch.rs, session.rs, tests), not only docs; check was green at 03cf8b2b, not re-run on the tip
+
+### note · external:aide · 2026-10-07T02:11:14.259Z
+stopped watching the task
