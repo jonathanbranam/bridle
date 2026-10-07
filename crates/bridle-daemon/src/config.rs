@@ -1292,8 +1292,9 @@ impl Default for DiskConfig {
 pub struct OrchestratorConfig {
     /// Off by default: the supervisor doesn't run.
     pub enabled: bool,
-    /// The launcher script, relative to the repo or absolute.
-    pub launcher: String,
+    /// The command typed into the pane to relaunch, verbatim. None: `bridle session orchestrator
+    /// --project <project>`.
+    pub launcher: Option<String>,
     /// Wait before relaunch 2, 3, ...; the first relaunch goes at once. After them all fail
     /// the supervisor gives up.
     pub relaunch_backoff: Vec<Duration>,
@@ -1316,7 +1317,7 @@ impl Default for OrchestratorConfig {
     fn default() -> Self {
         OrchestratorConfig {
             enabled: false,
-            launcher: "scripts/claude-orchestrator".to_string(),
+            launcher: None,
             relaunch_backoff: vec![
                 Duration::from_secs(30),
                 Duration::from_secs(2 * 60),
@@ -1342,7 +1343,9 @@ impl OrchestratorConfig {
             if v.trim().is_empty() {
                 return Err(ConfigError::BadOrchestrator("launcher is empty".into()));
             }
-            self.launcher = v;
+            // The old default, spelled out in a config: a repo-relative script path the pane's
+            // cwd may not resolve, and the script is going away. Same as unset.
+            self.launcher = (v != "scripts/claude-orchestrator").then_some(v);
         }
         if let Some(v) = raw.relaunch_backoff {
             if v.is_empty() {
@@ -4010,7 +4013,11 @@ mod tests {
         .unwrap();
         let o = cfg.orchestrator;
         assert!(o.enabled);
-        assert_eq!(o.launcher, "/x/launch");
+        assert_eq!(o.launcher.as_deref(), Some("/x/launch"));
+        assert_eq!(d.launcher, None);
+        let old =
+            Config::parse("[orchestrator]\nlauncher = \"scripts/claude-orchestrator\"\n").unwrap();
+        assert_eq!(old.orchestrator.launcher, None);
         assert_eq!(
             o.relaunch_backoff,
             vec![Duration::from_secs(5), Duration::from_secs(60)]

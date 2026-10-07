@@ -843,10 +843,10 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
             .bridle_home
             .clone()
             .unwrap_or_else(discovery::bridle_home);
-        let launcher = ws.repo.join(&config.orchestrator.launcher);
+        let launcher = orchestrator::launch_line(config.orchestrator.launcher.as_deref(), &project);
         let sup = orchestrator::real(
             home,
-            orchestrator::shell_word(&launcher),
+            launcher,
             &config.orchestrator,
             waiters.clone(),
             handover.clone(),

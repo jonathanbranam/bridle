@@ -15,8 +15,8 @@ over, and carries its wake conditions, with no agent in the loop.
 
 ## Rules the human set (fx7x, 2026-09-29)
 
-1. **The pane is the human's.** Bridle types into it only to relaunch `scripts/claude-orchestrator`
-   when no `claude` is running there. Never into a live session.
+1. **The pane is the human's.** Bridle types into it only to relaunch
+   `bridle session orchestrator --project <project>` when no `claude` is running there. Never into a live session.
 2. **Wakes stay in the session:** one background command the orchestrator keeps running, waiting
    on the daemon. If none is waiting, the daemon records an incident.
 3. **Forced restart = ask for a handover, then stop the process at the deadline and relaunch.**
@@ -60,7 +60,7 @@ key**.
 ```toml
 [orchestrator]
 enabled            = true
-launcher           = "scripts/claude-orchestrator"   # relative to the repo, or absolute
+# launcher        = "..."   # unset: `bridle session orchestrator --project <project>`; else typed verbatim
 note_tokens        = "150k"    # "context at N"
 plan_tokens        = "180k"    # "plan a handover at the next quiet point"
 handover_tokens    = "200k"    # "hand over now"; starts the deadline
@@ -98,7 +98,8 @@ same incident.
 
 ## 4. Relaunch and crash-loop prevention
 
-To relaunch: `tmux send-keys -t <pane_id> -l '<launcher, absolute>'`, then a separate
+To relaunch: `tmux send-keys -t <pane_id> -l 'bridle session orchestrator --project <project>'` (or `[orchestrator] launcher`, verbatim; the
+pane's shell finds `bridle` on its PATH, as the advisor relaunch does), then a separate
 `tmux send-keys -t <pane_id> Enter` (spike #7; the two calls are the tested form). The launcher
 does `cd`, writes the pid file and starts `claude` with a one-line prompt telling it to run
 `bridle prime orchestrator`. Not the prime's text itself: a long prompt in argv matches any

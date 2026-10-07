@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Changed
+- The orchestrator supervisor relaunches by typing `bridle session orchestrator --project <project>` into the pane, not the repo script `scripts/claude-orchestrator`. `[orchestrator] launcher` is now unset by default and, when set, is typed verbatim (br-w3pk).
 - Unknown config sections and keys no longer stop a binary: they are accepted with a warning (daemon log, or stderr once per CLI run) naming the file, the key and "unknown to this build (bridle <version>); a newer build may use it", with "did you mean" for a near-miss like `max_worker`. `bridle daemon doctor` lists them under "config warnings"; `--strict` makes any warning exit 1 (br-6hx4).
 
 ### Added

@@ -1,12 +1,12 @@
 //! The orchestrator supervisor: keeps the human's interactive `claude` running in its tmux
-//! pane by relaunching `scripts/claude-orchestrator` when it dies, with crash-loop backoff
+//! pane by relaunching `bridle session orchestrator` when it dies, with crash-loop backoff
 //! (docs/design/agent-host/orchestrator-supervision.md, sections 3 and 4; spike 07).
 //!
 //! The pane is the human's: the supervisor types into it only when the recorded process is
 //! dead and the pane's foreground command is a shell on two checks 5 s apart. tmux, process
 //! liveness and the incident sink sit behind traits so tests drive a fake clock and fakes.
 
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex as StdMutex};
 use std::time::Duration;
 
@@ -192,7 +192,7 @@ pub struct Supervisor<T, P, I, W, E> {
 }
 
 impl<T: Tmux, P: Procs, I: Incidents, W: WakeSink, E: EventEmitter> Supervisor<T, P, I, W, E> {
-    /// `launcher` is the absolute path to type into the pane.
+    /// `launcher` is the command line to type into the pane (see `launch_line`).
     #[allow(clippy::too_many_arguments)] // the fakes in tests are why each is a parameter
     pub fn new(
         home: PathBuf,
@@ -614,13 +614,25 @@ fn chrono_dur(d: Duration) -> chrono::Duration {
     chrono::Duration::from_std(d).unwrap_or(chrono::Duration::MAX)
 }
 
-/// The launcher as typed into the shell: the path itself unless it needs quoting.
-pub fn shell_word(path: &Path) -> String {
-    let s = path.to_string_lossy();
+/// The line typed into the pane to relaunch. The pane's shell finds `bridle` on its PATH, as the
+/// advisor relaunch (`bridle session advisor`) already assumes. A configured launcher is typed
+/// verbatim.
+pub fn launch_line(launcher: Option<&str>, project: &str) -> String {
+    match launcher {
+        Some(l) => l.to_string(),
+        None => format!(
+            "bridle session orchestrator --project {}",
+            shell_word(project)
+        ),
+    }
+}
+
+/// A word as typed into the shell: itself unless it needs quoting.
+fn shell_word(s: &str) -> String {
     if s.chars()
         .all(|c| c.is_ascii_alphanumeric() || "_./-+@:".contains(c))
     {
-        s.into_owned()
+        s.to_string()
     } else {
         format!("'{}'", s.replace('\'', "'\\''"))
     }
@@ -936,7 +948,7 @@ mod tests {
             let emitter = Arc::new(FakeEmitter::default());
             let sup = Supervisor::new(
                 dir.path().to_path_buf(),
-                "/x/launch".into(),
+                launch_line(None, "proj"),
                 &cfg,
                 waiters.clone(),
                 handover.clone(),
@@ -1028,8 +1040,20 @@ mod tests {
 
     #[test]
     fn shell_word_quotes_only_when_needed() {
-        assert_eq!(shell_word(Path::new("/a/b-c/launch")), "/a/b-c/launch");
-        assert_eq!(shell_word(Path::new("/a b/it's")), "'/a b/it'\\''s'");
+        assert_eq!(shell_word("/a/b-c/launch"), "/a/b-c/launch");
+        assert_eq!(shell_word("/a b/it's"), "'/a b/it'\\''s'");
+    }
+
+    #[test]
+    fn launch_line_defaults_to_the_session_command_and_types_a_custom_one_verbatim() {
+        assert_eq!(
+            launch_line(None, "bridle"),
+            "bridle session orchestrator --project bridle"
+        );
+        assert_eq!(
+            launch_line(Some("my launch --x 'y'"), "bridle"),
+            "my launch --x 'y'"
+        );
     }
 
     #[tokio::test]
@@ -1080,7 +1104,10 @@ mod tests {
         r.tick(10).await;
         assert_eq!(
             *r.tmux.typed.lock().unwrap(),
-            vec![("%2".to_string(), "/x/launch".to_string())]
+            vec![(
+                "%2".to_string(),
+                "bridle session orchestrator --project proj".to_string()
+            )]
         );
         assert!(r.incidents()[0].contains("not running"));
     }
