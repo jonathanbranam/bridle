@@ -10,6 +10,21 @@ use std::process::{Command, Stdio};
 
 use anyhow::{Context, Result, bail};
 
+/// Choose which openssl binary to use: /usr/bin/openssl (macOS system LibreSSL) when it exists,
+/// else "openssl" (PATH lookup). On macOS with Homebrew OpenSSL 3+, the Homebrew binary's
+/// pkcs12 -export defaults are unreadable by macOS security import (MAC verification failed).
+fn pick_openssl(exists: bool) -> &'static str {
+    if exists {
+        "/usr/bin/openssl"
+    } else {
+        "openssl"
+    }
+}
+
+fn openssl_path() -> &'static str {
+    pick_openssl(Path::new("/usr/bin/openssl").exists())
+}
+
 pub const DEFAULT_IDENTITY: &str = "bridle local signing";
 const IDENTITY_ENV: &str = "BRIDLE_SIGNING_IDENTITY";
 const KEYCHAIN: &str = "login.keychain-db";
@@ -123,7 +138,7 @@ fn create_identity(name: &str, password: &str) -> Result<()> {
         ),
     )?;
     run(
-        Command::new("openssl")
+        Command::new(openssl_path())
             .args([
                 "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-days", "3650",
             ])
@@ -136,7 +151,7 @@ fn create_identity(name: &str, password: &str) -> Result<()> {
         "openssl req",
     )?;
     run(
-        Command::new("openssl")
+        Command::new(openssl_path())
             .args(["pkcs12", "-export", "-inkey"])
             .arg(&key)
             .arg("-in")
@@ -201,5 +216,11 @@ mod tests {
             "note: \"bridle local signing\" missing",
             "bridle local signing"
         ));
+    }
+
+    #[test]
+    fn choose_openssl_binary() {
+        assert_eq!(pick_openssl(true), "/usr/bin/openssl");
+        assert_eq!(pick_openssl(false), "openssl");
     }
 }

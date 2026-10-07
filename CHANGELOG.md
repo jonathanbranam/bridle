@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Workers report missing tools and failed fetches plainly in the task thread and summary, raising blockers to the manager; managers and orchestrators pass these up as failures to the human, not as asides (new rule `report-task-failures`; updates to `worker`, `manager`, and `orchestrator` roles).
 
 ### Fixed
+- `bridle sign setup` no longer fails on macOS with Homebrew OpenSSL 3+ installed first on PATH: it now uses the system /usr/bin/openssl (LibreSSL) which produces a p12 that macOS `security import` can read, falling back to PATH openssl on non-macOS and when /usr/bin/openssl is not present (br-76aq, ticket 76aq).
 - The self-upgrade no longer refuses a good build because the new binary's first self-check run timed out (60 s) on a loaded Intel Mac: a timed-out check is retried, up to three runs; a real failure still refuses at once.
 - `bridle session advisor|aide` refuses to start a second session of an identity that is already registered with a live process in the project; the message names the running one (pid, pane, machine) and says to use `bridle session restart <identity>`. A registered session whose process is gone does not block (br-krz8, ticket krz8).
 
