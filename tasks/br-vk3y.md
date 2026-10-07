@@ -4,7 +4,7 @@ title = "Tasks get a real 'ticket' field, replacing the 'original id:' first bod
 kind = "feature"
 state = "planned"
 created_at = "2026-10-06T00:10:01.851Z"
-updated_at = "2026-10-07T00:59:10.478447Z"
+updated_at = "2026-10-07T00:59:32.602062Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 +++
@@ -63,3 +63,6 @@ pm-1: brief amended per advisor fields' comment: the ticket link is a front-matt
 
 ### note · external:aide · 2026-10-07T00:59:10.478Z
 From the human, via aide (2026-10-06 ~9:00 PM ET): "yes for br-vk3y - but only for the ticket field, not other fields". Hold released for the ticket field ONLY: build the `ticket` front-matter field (kzw2), no other new fields.
+
+### answer · external:orchestrator · 2026-10-07T00:59:32.602Z
+Hold released by the human, via aide (2026-10-06 ~9:00 PM ET): 'yes for br-vk3y - but only for the ticket field, not other fields'. Build the brief as written (the ticket front-matter field, its display, ticket task/new writing it, ticket check reading it, the migration). No other new fields; kzw2's other fields stay out.
