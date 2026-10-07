@@ -416,6 +416,8 @@ mod tests {
             waiter_open: false,
             last_wake_at: None,
             upgrade_waiting: None,
+            draining: false,
+            draining_on: Vec::new(),
             sessions: Vec::new(),
             pending_tasks: Vec::new(),
         }

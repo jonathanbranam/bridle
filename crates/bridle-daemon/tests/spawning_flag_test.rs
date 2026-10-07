@@ -49,12 +49,7 @@ async fn a_stop_during_spawn_leaves_no_spawning_flag() {
     let _ = spawned;
 
     let orch = daemon.external_client("orchestrator").await;
-    let outcome = orch
-        .restart(&RestartRequest {
-            wait_secs: Some(3),
-            ..Default::default()
-        })
-        .await;
+    let outcome = orch.restart(&RestartRequest::default()).await;
     assert!(
         outcome.is_ok(),
         "restart refused after the spawn returned: {outcome:?}"

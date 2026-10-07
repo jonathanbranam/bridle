@@ -351,7 +351,7 @@ async fn a_task_created_before_restart_is_still_there_after() {
         port_check_interval: std::time::Duration::from_secs(3600),
         upgrade: Default::default(),
         ci_tick_interval: std::time::Duration::from_secs(3600),
-        self_upgrade_wait: std::time::Duration::from_secs(600),
+        drain_wake_after: std::time::Duration::from_secs(600),
         settle_wake_interval: std::time::Duration::from_secs(3600),
         doc_watch_interval: std::time::Duration::from_secs(3600),
         queue_nudge_debounce: std::time::Duration::from_secs(3600),

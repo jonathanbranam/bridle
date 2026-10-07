@@ -47,14 +47,12 @@ pub struct ShutdownResponse {
     pub stop_limit_secs: u64,
 }
 
-/// `POST /v1/restart`: how long to wait for every agent to be idle before giving up.
+/// `POST /v1/restart`. A plain restart drains the daemon (no new turns) and answers once it has
+/// decided to go, however long the running turns take; there is no timeout.
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 pub struct RestartRequest {
-    /// Seconds; the daemon's default (10 minutes) when absent.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub wait_secs: Option<u64>,
     /// Build the newest green commit on the integration branch first, then restart into it. The
-    /// reply comes at once; the build runs in the background and the wait starts after it.
+    /// reply comes at once; the build runs in the background and the drain starts after it.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub upgrade: bool,
 }
@@ -131,10 +129,16 @@ pub struct Status {
     /// started if none has.
     #[serde(default)]
     pub last_wake_at: Option<DateTime<Utc>>,
-    /// Short sha of a green build waiting for a quiet point; new worker spawns are refused
-    /// until the daemon has restarted into it (or the upgrade gives up).
+    /// Short sha of the built commit a drain is restarting into; `None` for no drain or a plain
+    /// restart's.
     #[serde(default)]
     pub upgrade_waiting: Option<String>,
+    /// A restart is draining the daemon: no spawns, claims or new turns until it has restarted.
+    #[serde(default)]
+    pub draining: bool,
+    /// While draining, the agents still mid-turn (what the restart waits on).
+    #[serde(default)]
+    pub draining_on: Vec<String>,
     /// Registered interactive sessions (advisors) still running.
     #[serde(default)]
     pub sessions: Vec<SessionInfo>,
@@ -827,13 +831,10 @@ pub mod event_kind {
     /// `commit`. Skipped: {reason}, nothing the binary is built from changed.
     pub const UPGRADE_SKIPPED: &str = "upgrade.skipped";
     pub const UPGRADE_BUILDING: &str = "upgrade.building";
-    /// The build passed its self-check; the restart waits for a quiet point.
+    /// The build passed its self-check; the drain starts.
     pub const UPGRADE_BUILT: &str = "upgrade.built";
-    /// No quiet point in time; the automatic upgrade retries later. data: {busy, error}.
-    pub const UPGRADE_WAITING: &str = "upgrade.waiting";
-    /// The automatic upgrade kept finding no quiet point for hours and stopped retrying that
-    /// commit. data: {busy, error, hours}.
-    pub const UPGRADE_GAVE_UP: &str = "upgrade.gave_up";
+    /// The drain after a good build began: no new turns until the restart.
+    pub const UPGRADE_DRAINING: &str = "upgrade.draining";
     /// Build, self-check or restart failed. data: {error}.
     pub const UPGRADE_FAILED: &str = "upgrade.failed";
     /// The upgraded binary failed to start and the previous one is back. data: {error}.

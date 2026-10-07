@@ -144,7 +144,7 @@ pub async fn run(mut cli: Cli) -> Result<(), CliError> {
         Command::Link(args) => crate::link::run(&cli, args),
         Command::Gateway(args) => crate::gateway::run(&cli, args).await,
         Command::StopDaemon => stop_daemon(&cli).await,
-        Command::Restart(args) => restart(&cli, args.wait, args.upgrade).await,
+        Command::Restart(args) => restart(&cli, args.upgrade).await,
         Command::Doctor(args) => crate::doctor::run(&cli, args),
         Command::Init(args) => crate::init::run(args),
         Command::Launchd(args) => crate::launchd::run(&cli, args),

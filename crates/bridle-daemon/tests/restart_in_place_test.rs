@@ -47,28 +47,25 @@ async fn only_the_human_and_the_orchestrator_may_restart() {
 }
 
 #[tokio::test]
-async fn a_busy_agent_means_no_restart_after_the_wait() {
+async fn a_plain_restart_drains_a_busy_agent_with_no_timeout() {
     let (daemon, _tmp) = support::start_daemon(None).await;
     let agent = daemon
         .client
-        .spawn(&spawn_req("busy", Some("SLEEP 4")))
+        .spawn(&spawn_req("busy", Some("SLEEP 3")))
         .await
         .expect("spawn");
     support::wait_for_state(&daemon.client, &agent.id, AgentState::Working).await;
     let orch = daemon.external_client("orchestrator").await;
-    let err = orch
-        .restart(&RestartRequest {
-            wait_secs: Some(1),
-            ..Default::default()
-        })
-        .await
-        .expect_err("busy");
-    assert!(err.to_string().contains("still busy: busy"), "{err}");
+    let asked = tokio::spawn(async move { orch.restart(&RestartRequest::default()).await });
+    support::wait_for("the drain in status", || async {
+        daemon.client.status().await.ok()?.draining.then_some(())
+    })
+    .await;
     assert!(!daemon.running.restart_requested());
-    // Still up and serving, agent untouched.
-    let a = daemon.client.get_agent(&agent.id).await.expect("agent");
-    assert_eq!(a.state, AgentState::Working);
-    daemon.running.shutdown();
+    // The turn is not cut off; the restart follows it.
+    let reply = asked.await.expect("task").expect("restart accepted");
+    assert_eq!(reply.agents, vec!["busy".to_string()]);
+    assert!(daemon.running.restart_requested());
     daemon.running.join().await.expect("join");
 }
 
@@ -83,10 +80,7 @@ async fn a_restart_stops_the_daemon_and_the_next_start_resumes_the_worker_with_a
     support::wait_for_state(&daemon.client, &agent.id, AgentState::Idle).await;
     let orch = daemon.external_client("orchestrator").await;
     let reply = orch
-        .restart(&RestartRequest {
-            wait_secs: Some(30),
-            ..Default::default()
-        })
+        .restart(&RestartRequest::default())
         .await
         .expect("restart accepted");
     assert_eq!(reply.agents, vec!["w1".to_string()]);

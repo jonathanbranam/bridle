@@ -228,7 +228,7 @@ pub fn default_overrides() -> Overrides {
         port_check_interval: Duration::from_secs(3600),
         upgrade: Default::default(),
         ci_tick_interval: Duration::from_secs(3600),
-        self_upgrade_wait: Duration::from_secs(600),
+        drain_wake_after: Duration::from_secs(600),
         settle_wake_interval: Duration::from_secs(3600),
         doc_watch_interval: Duration::from_secs(3600),
         queue_nudge_debounce: Duration::from_secs(3600),

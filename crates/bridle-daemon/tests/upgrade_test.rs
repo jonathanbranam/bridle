@@ -42,10 +42,7 @@ fn hooks(conclusion: &'static str, build: &str) -> bridle_daemon::Overrides {
 }
 
 fn upgrade() -> RestartRequest {
-    RestartRequest {
-        wait_secs: Some(30),
-        upgrade: true,
-    }
+    RestartRequest { upgrade: true }
 }
 
 #[tokio::test]
@@ -197,7 +194,7 @@ async fn self_upgrade_at_a_quiet_point_builds_and_restarts_once() {
 }
 
 #[tokio::test]
-async fn self_upgrade_waits_while_an_agent_is_mid_turn() {
+async fn self_upgrade_restarts_only_after_the_mid_turn_agent_finishes() {
     let marker = "echo ran > \"$CARGO_TARGET_DIR.txt\"";
     let (daemon, _tmp) =
         support::start_daemon_with_config(Some(auto(marker)), Some(SELF_UPGRADE)).await;
@@ -267,57 +264,6 @@ async fn failed_preflight_leaves_the_daemon_untouched() {
             .join(".bridle/upgrade-pending.json")
             .exists()
     );
-    daemon.running.shutdown();
-    daemon.running.join().await.expect("join");
-}
-
-#[tokio::test]
-async fn a_waiting_build_refuses_new_workers_until_it_gives_up() {
-    let (daemon, _tmp) = support::start_daemon(Some(hooks("success", "true"))).await;
-    let busy = daemon
-        .client
-        .spawn(&worker("SLEEP 8"))
-        .await
-        .expect("spawn");
-    support::wait_for_state(
-        &daemon.client,
-        &busy.id,
-        bridle_api::types::AgentState::Working,
-    )
-    .await;
-    daemon
-        .client
-        .restart(&RestartRequest {
-            wait_secs: Some(2),
-            upgrade: true,
-        })
-        .await
-        .expect("reply");
-    support::wait_for("the refusal in status", || async {
-        daemon.client.status().await.ok()?.upgrade_waiting
-    })
-    .await;
-    let mut second = worker("hi");
-    second.name = Some("w2".to_string());
-    let err = daemon.client.spawn(&second).await.expect_err("refused");
-    assert!(
-        err.to_string().contains("waiting for a quiet point"),
-        "{err}"
-    );
-    // The wait gives up (the worker is still busy): the refusal lifts.
-    support::wait_for("the refusal to lift", || async {
-        daemon
-            .client
-            .status()
-            .await
-            .ok()?
-            .upgrade_waiting
-            .is_none()
-            .then_some(())
-    })
-    .await;
-    assert!(!daemon.running.restart_requested());
-    daemon.client.spawn(&second).await.expect("spawn allowed");
     daemon.running.shutdown();
     daemon.running.join().await.expect("join");
 }
@@ -419,12 +365,48 @@ async fn a_docs_only_commit_is_an_event_and_wakes_no_one() {
     running.join().await.expect("join");
 }
 
+fn spawn_named(name: &str, prompt: &str) -> bridle_api::types::SpawnRequest {
+    let mut r = worker(prompt);
+    r.name = Some(name.to_string());
+    r
+}
+
+fn say(body: &str) -> bridle_api::types::SendRequest {
+    bridle_api::types::SendRequest {
+        to: None,
+        body: body.to_string(),
+        kind: bridle_api::types::MessageKind::Note,
+        when: bridle_api::types::When::Now,
+        reply_to: None,
+        task: None,
+    }
+}
+
+async fn messages_to(client: &Client, id: &str) -> Vec<bridle_api::types::Message> {
+    client
+        .list_messages(&MessageQuery {
+            to: Some(id.to_string()),
+            ..Default::default()
+        })
+        .await
+        .expect("messages")
+}
+
 #[tokio::test]
-async fn automatic_no_quiet_point_is_silent_and_retried() {
-    let mut o = auto("sleep 1");
-    o.self_upgrade_wait = Duration::from_secs(1);
-    let (daemon, _tmp) = support::start_daemon_with_config(Some(o), Some(SELF_UPGRADE)).await;
-    // Busy from during the build, so the post-build wait finds no quiet point.
+async fn self_upgrade_starts_the_build_while_agents_are_busy() {
+    let (daemon, _tmp) =
+        support::start_daemon_with_config(Some(auto("sleep 1")), Some(SELF_UPGRADE)).await;
+    let agent = daemon
+        .client
+        .spawn(&worker("SLEEP 6"))
+        .await
+        .expect("spawn");
+    support::wait_for_state(
+        &daemon.client,
+        &agent.id,
+        bridle_api::types::AgentState::Working,
+    )
+    .await;
     support::wait_for("the build to start", || async {
         upgrade_events(&daemon)
             .await
@@ -432,49 +414,166 @@ async fn automatic_no_quiet_point_is_silent_and_retried() {
             .then_some(())
     })
     .await;
-    let agent = daemon
-        .client
-        .spawn(&worker("SLEEP 5"))
-        .await
-        .expect("spawn");
-    support::wait_for("the give-up", || async {
-        upgrade_events(&daemon)
-            .await
-            .contains(&"upgrade.waiting".to_string())
-            .then_some(())
-    })
-    .await;
+    let a = daemon.client.get_agent(&agent.id).await.expect("agent");
+    assert_eq!(a.state, bridle_api::types::AgentState::Working);
     assert!(!daemon.running.restart_requested());
-    let notes = daemon
-        .client
-        .list_messages(&MessageQuery {
-            to: Some("human".to_string()),
-            ..Default::default()
-        })
-        .await
-        .expect("messages");
-    assert!(
-        notes.iter().all(|m| !m.body.contains("upgrade")),
-        "{notes:?}"
-    );
-    let orch = daemon.external_client("orchestrator").await;
-    let wakes = orch.orchestrator_wake(Some(1)).await.expect("wake").wakes;
-    assert!(
-        wakes.iter().all(|w| !w.reason.starts_with("upgrade")),
-        "{wakes:?}"
-    );
-    let _ = agent;
-    // Once the worker is idle the next tick builds again and restarts.
-    // Read the events before the restart: once it's requested the server shuts
-    // down, and an HTTP read races that. The second build precedes the restart.
-    support::wait_for("the retry's build", || async {
-        let kinds = upgrade_events(&daemon).await;
-        (kinds.iter().filter(|k| *k == "upgrade.building").count() == 2).then_some(())
-    })
-    .await;
-    support::wait_for("the retry's restart", || async {
+    support::wait_for("the restart after the turn", || async {
         daemon.running.restart_requested().then_some(())
     })
     .await;
+    daemon.running.join().await.expect("join");
+}
+
+/// A drain holds the new turns (messages to a busy and to an idle agent), refuses spawns and
+/// claims, shows what it waits on, restarts the moment the turn ends with no timeout, and the
+/// held messages are delivered after the resume, in order, none lost or duplicated.
+#[tokio::test]
+async fn a_drain_holds_new_turns_and_delivers_them_after_the_restart() {
+    let (daemon, tmp) = support::start_daemon(Some(hooks("success", "true"))).await;
+    let busy = daemon
+        .client
+        .spawn(&spawn_named("busy", "SLEEP 4"))
+        .await
+        .expect("spawn");
+    let idle = daemon
+        .client
+        .spawn(&spawn_named("idle", "hi"))
+        .await
+        .expect("spawn");
+    support::wait_for_state(
+        &daemon.client,
+        &busy.id,
+        bridle_api::types::AgentState::Working,
+    )
+    .await;
+    support::wait_for_state(
+        &daemon.client,
+        &idle.id,
+        bridle_api::types::AgentState::Idle,
+    )
+    .await;
+    daemon.client.restart(&upgrade()).await.expect("reply");
+    let status = support::wait_for("the drain in status", || async {
+        let s = daemon.client.status().await.ok()?;
+        s.draining.then_some(s)
+    })
+    .await;
+    assert!(status.upgrade_waiting.is_some());
+    assert_eq!(status.draining_on, vec!["busy".to_string()]);
+
+    // Refused while draining: spawns and claims.
+    let err = daemon
+        .client
+        .spawn(&spawn_named("late", "hi"))
+        .await
+        .expect_err("refused");
+    assert!(err.to_string().contains("draining"), "{err}");
+    let err = daemon
+        .client
+        .claim_task("t-0000")
+        .await
+        .expect_err("refused");
+    assert!(err.to_string().contains("draining"), "{err}");
+
+    // New turns are held, not delivered.
+    let m1 = daemon
+        .client
+        .send_to_agent(&busy.id, &say("first for busy"))
+        .await
+        .expect("send");
+    let m2 = daemon
+        .client
+        .send_to_agent(&idle.id, &say("for idle"))
+        .await
+        .expect("send");
+    let m3 = daemon
+        .client
+        .send_to_agent(&busy.id, &say("second for busy"))
+        .await
+        .expect("send");
+    for m in [&m1, &m2, &m3] {
+        assert_eq!(m.state, bridle_api::types::MessageState::Held, "{m:?}");
+    }
+    assert!(!daemon.running.restart_requested());
+
+    // The turn ends; no timeout, the restart follows by itself.
+    support::wait_for("the restart", || async {
+        daemon.running.restart_requested().then_some(())
+    })
+    .await;
+    let (workspace, repo) = (daemon.workspace.clone(), daemon.repo.clone());
+    daemon.running.join().await.expect("join");
+
+    let opts = bridle_daemon::ServeOptions {
+        repo,
+        workspace: Some(workspace.clone()),
+        project: None,
+        listen: Some("127.0.0.1:0".parse().expect("valid addr")),
+    };
+    let mut overrides = hooks("success", "true");
+    overrides.bridle_home = Some(support::machine_home_dir(tmp.path()));
+    let running = bridle_daemon::start(opts, overrides).await.expect("start");
+    let token =
+        std::fs::read_to_string(workspace.join(".bridle/tokens/human")).expect("human token");
+    let client = Client::new(running.url.clone(), Some(token.trim().to_string()));
+    let delivered = |s: &bridle_api::types::MessageState| {
+        !matches!(
+            s,
+            bridle_api::types::MessageState::Held | bridle_api::types::MessageState::Pending
+        )
+    };
+    let on_busy = support::wait_for("the held messages reach busy", || async {
+        let ms: Vec<_> = messages_to(&client, &busy.id)
+            .await
+            .into_iter()
+            .filter(|m| m.body.contains("for busy"))
+            .collect();
+        (ms.len() == 2 && ms.iter().all(|m| delivered(&m.state))).then_some(ms)
+    })
+    .await;
+    // Once each, and in the order they were sent.
+    assert_eq!(on_busy[0].id, m1.id);
+    assert_eq!(on_busy[1].id, m3.id);
+    assert!(on_busy[0].written_at <= on_busy[1].written_at);
+    support::wait_for("the held message reaches idle", || async {
+        let ms: Vec<_> = messages_to(&client, &idle.id)
+            .await
+            .into_iter()
+            .filter(|m| m.id == m2.id)
+            .collect();
+        (ms.len() == 1 && delivered(&ms[0].state)).then_some(())
+    })
+    .await;
+    running.shutdown();
+    running.join().await.expect("join");
+}
+
+/// The drain's one-hour wake (a short stand-in for the hour here) fires once, naming who is
+/// still in a turn.
+#[tokio::test]
+async fn a_long_drain_wakes_the_orchestrator_once() {
+    let mut o = hooks("success", "true");
+    o.drain_wake_after = Duration::from_secs(1);
+    let (daemon, _tmp) = support::start_daemon(Some(o)).await;
+    let agent = daemon
+        .client
+        .spawn(&spawn_named("slow", "SLEEP 5"))
+        .await
+        .expect("spawn");
+    support::wait_for_state(
+        &daemon.client,
+        &agent.id,
+        bridle_api::types::AgentState::Working,
+    )
+    .await;
+    daemon.client.restart(&upgrade()).await.expect("reply");
+    let orch = daemon.external_client("orchestrator").await;
+    let mut seen = Vec::new();
+    while !daemon.running.restart_requested() {
+        let wakes = orch.orchestrator_wake(Some(1)).await.expect("wake").wakes;
+        seen.extend(wakes.into_iter().filter(|w| w.reason == "upgrade_draining"));
+    }
+    assert_eq!(seen.len(), 1, "{seen:?}");
+    assert!(seen[0].text.contains("slow"), "{:?}", seen[0]);
     daemon.running.join().await.expect("join");
 }

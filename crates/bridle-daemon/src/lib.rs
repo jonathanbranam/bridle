@@ -123,8 +123,8 @@ pub struct Overrides {
     pub upgrade: UpgradeHooks,
     /// The CI watcher's tick, which also carries the self-upgrade check.
     pub ci_tick_interval: Duration,
-    /// How long an automatic upgrade waits for a quiet point once built.
-    pub self_upgrade_wait: Duration,
+    /// How long a restart drains before it wakes the orchestrator (once).
+    pub drain_wake_after: Duration,
     /// How often a task finishing its settle period is looked for.
     pub settle_wake_interval: Duration,
     /// How often the document-review watcher looks at the documents under review.
@@ -157,7 +157,7 @@ impl Default for Overrides {
             port_check_interval: Duration::from_secs(30),
             upgrade: UpgradeHooks::default(),
             ci_tick_interval: ci::TICK_INTERVAL,
-            self_upgrade_wait: Duration::from_secs(600),
+            drain_wake_after: Duration::from_secs(3600),
             settle_wake_interval: Duration::from_secs(30),
             doc_watch_interval: Duration::from_secs(30),
             queue_nudge_debounce: queue_nudge::DEBOUNCE,
@@ -696,7 +696,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
             project.clone(),
         ),
         self_upgrade: config.self_upgrade,
-        self_upgrade_wait: overrides.self_upgrade_wait,
+        drain_wake_after: overrides.drain_wake_after,
     };
     let tick_state = state.clone();
     let app = server::router(state);

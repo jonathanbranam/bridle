@@ -84,7 +84,7 @@ pub async fn resume_all(
             continue;
         }
         let body = format!(
-            "The daemon restarted for an upgrade (now at {}). You were resumed; carry on where you left off.",
+            "The daemon restarted for an upgrade (now at {}). You were resumed; carry on where you left off, and re-run any background job you were waiting on.",
             commit.as_deref().unwrap_or("an unknown commit")
         );
         match manager

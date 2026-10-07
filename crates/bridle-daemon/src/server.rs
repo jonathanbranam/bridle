@@ -58,7 +58,8 @@ pub struct AppState {
     pub upgrader: crate::upgrade::Upgrader,
     /// `[daemon] self_upgrade`.
     pub self_upgrade: bool,
-    pub self_upgrade_wait: std::time::Duration,
+    /// How long a drain waits before it wakes the orchestrator (once).
+    pub drain_wake_after: std::time::Duration,
     pub governor: crate::governor::Governor,
     pub ci: crate::ci::CiWatcher,
     pub wakes: std::sync::Arc<crate::wake::Wakes>,
@@ -782,6 +783,19 @@ async fn status(
         }
     }
     let (waiter_open, last_wake_at) = state.waiters.snapshot();
+    let draining = state.manager.draining();
+    let draining_on: Vec<String> = if draining {
+        state
+            .store
+            .list_agents(false)
+            .await?
+            .into_iter()
+            .filter(|a| a.state.is_running() && a.state != bridle_api::types::AgentState::Idle)
+            .map(|a| a.name)
+            .collect()
+    } else {
+        Vec::new()
+    };
     Ok(Json(Status {
         daemon: bridle_api::types::DaemonInfo {
             project: state.project.clone(),
@@ -816,6 +830,8 @@ async fn status(
         waiter_open,
         last_wake_at,
         upgrade_waiting: state.manager.upgrade_waiting(),
+        draining,
+        draining_on,
         sessions: state.sessions.list(),
     }))
 }
@@ -3119,6 +3135,13 @@ async fn claim_task(
     Path(id): Path<String>,
 ) -> Result<Json<Task>, ApiError> {
     require_not_visitor(&principal)?;
+    if state.manager.draining() {
+        return Err(ApiError::new(
+            StatusCode::CONFLICT,
+            "conflict",
+            "not claiming: the daemon is draining for a restart; retry once it has restarted",
+        ));
+    }
     let from = state.tasks.get_task(&id).map(|t| t.state);
     let task = state.tasks.claim_task(&id, &principal.id).await?;
     emit_state_change(&state, principal.id, &task, from).await;
@@ -3355,9 +3378,6 @@ async fn shutdown(
     }))
 }
 
-/// Default wait for a quiet point (`RestartRequest::wait_secs`).
-const RESTART_WAIT: std::time::Duration = std::time::Duration::from_secs(600);
-
 /// Restart in place, or (`upgrade`) build the newest green commit first and then restart. Only
 /// the human and the orchestrator may ask.
 async fn restart(
@@ -3373,6 +3393,7 @@ async fn restart(
     if state
         .restart_requested
         .load(std::sync::atomic::Ordering::SeqCst)
+        || state.manager.draining()
     {
         return Err(ApiError::new(
             StatusCode::CONFLICT,
@@ -3380,14 +3401,8 @@ async fn restart(
             "a restart is already under way",
         ));
     }
-    let wait = req
-        .wait_secs
-        .map(std::time::Duration::from_secs)
-        .unwrap_or(RESTART_WAIT);
     if !req.upgrade {
-        return perform_restart(&state, &principal.id, wait, None)
-            .await
-            .map(Json);
+        return perform_restart(&state, &principal.id, None).await.map(Json);
     }
 
     if !state.upgrader.claim() {
@@ -3428,32 +3443,21 @@ async fn restart(
     let bg = state.clone();
     let who = principal.id.clone();
     tokio::spawn(async move {
-        upgrade_in_background(bg, who, sha, wait).await;
+        upgrade_in_background(bg, who, sha).await;
     });
     Ok(Json(reply))
 }
 
-/// The automatic upgrade (`[daemon] self_upgrade`), run on the CI watcher's tick: at a quiet point
-/// (no running agent mid-turn; a budget hold has wound the workers down to idle or stopped) and
-/// with a newer green commit, start the same background upgrade as `restart --upgrade`. A commit
-/// whose upgrade failed isn't retried until main moves on, so a broken build doesn't loop.
+/// The automatic upgrade (`[daemon] self_upgrade`), run on the CI watcher's tick: with a newer
+/// green commit, start the same background upgrade as `restart --upgrade` at once, however busy
+/// the agents are (the build needs no quiet point; the drain after it makes one). A commit whose
+/// upgrade failed isn't retried until main moves on, so a broken build doesn't loop.
 pub async fn self_upgrade_tick(state: &AppState) {
     if !state.self_upgrade
         || state
             .restart_requested
             .load(std::sync::atomic::Ordering::SeqCst)
-    {
-        return;
-    }
-    // Read before the list: a spawn that ends in between is then in the list as working.
-    let spawning = state.manager.spawning();
-    let Ok(agents) = state.store.list_agents(false).await else {
-        return;
-    };
-    if spawning
-        || agents
-            .iter()
-            .any(|a| a.state.is_running() && a.state != bridle_api::types::AgentState::Idle)
+        || state.manager.draining()
     {
         return;
     }
@@ -3474,12 +3478,9 @@ pub async fn self_upgrade_tick(state: &AppState) {
             return;
         }
     };
-    // The tick only starts one at a quiet point, so the wait covers work that began during the
-    // build.
-    let wait = state.self_upgrade_wait;
     let bg = state.clone();
     tokio::spawn(async move {
-        upgrade_in_background(bg, "system".to_string(), sha, wait).await;
+        upgrade_in_background(bg, "system".to_string(), sha).await;
     });
 }
 
@@ -3515,20 +3516,10 @@ async fn upgrade_event(state: &AppState, kind: &str, actor: &str, data: serde_js
         .await;
 }
 
-/// Prefix of the `perform_restart` error for a wait that ended with agents still busy.
-const NO_QUIET_POINT: &str = "not restarted: no quiet point";
-
-/// Build, then restart. Every step is an `upgrade.*` event; only what needs attention wakes the
-/// orchestrator: the `restart` wake from `perform_restart`, and a real failure (also told to the
-/// human). For the automatic upgrade (`who == "system"`) a wait that finds no quiet point is
-/// "try later": silent, retried on the next tick, escalated (a wake, no human note) after
-/// [`crate::upgrade::GIVE_UP_AFTER`].
-async fn upgrade_in_background(
-    state: AppState,
-    who: String,
-    sha: String,
-    wait: std::time::Duration,
-) {
+/// Build, then drain and restart. Every step is an `upgrade.*` event; only what needs attention
+/// wakes the orchestrator: the `restart` wake from `perform_restart`, `upgrade_draining` if the
+/// drain takes over an hour, and a real build or self-check failure (also told to the human).
+async fn upgrade_in_background(state: AppState, who: String, sha: String) {
     use bridle_api::types::event_kind as ek;
     let short: String = sha.chars().take(9).collect();
     if !crate::upgrade::needs_build(&state.store, &state.workspace.repo, &sha).await {
@@ -3564,7 +3555,6 @@ async fn upgrade_in_background(
             "build of {short} failed; the daemon is unchanged: {e}"
         )),
     };
-    let mut quiet_wait = None;
     let outcome = match built {
         Ok(()) => {
             upgrade_event(
@@ -3574,50 +3564,24 @@ async fn upgrade_in_background(
                 serde_json::json!({"commit": sha}),
             )
             .await;
-            // Refuse new workers so the running ones drain; stays set on success (the daemon is
-            // about to exec) and is lifted on any give-up so spawns are never blocked for good.
-            state.manager.set_upgrade_waiting(Some(short.clone()));
-            let r = perform_restart(&state, &who, wait, Some(&sha))
+            upgrade_event(
+                &state,
+                ek::UPGRADE_DRAINING,
+                &who,
+                serde_json::json!({"commit": sha}),
+            )
+            .await;
+            // The drain stays on once the restart is certain (the daemon is about to exec);
+            // `perform_restart` lifts it on any error so the daemon is never frozen for good.
+            perform_restart(&state, &who, Some(&sha))
                 .await
                 .map(|_| ())
-                .map_err(|e| {
-                    if e.message.starts_with(NO_QUIET_POINT) {
-                        quiet_wait = Some(e.message.clone());
-                    }
-                    format!("built {short} but did not restart: {}", e.message)
-                });
-            if r.is_err() {
-                state.manager.set_upgrade_waiting(None);
-            }
-            r
+                .map_err(|e| format!("built {short} but did not restart: {}", e.message))
         }
         Err(e) => Err(e),
     };
     state.upgrader.release();
     let Err(text) = outcome else { return };
-    if let (Some(msg), "system") = (&quiet_wait, who.as_str()) {
-        let busy = msg.split_once("still busy: ").map_or("", |(_, b)| b);
-        let data = serde_json::json!({"commit": sha, "busy": busy, "error": text});
-        let waited = state.upgrader.note_waiting(&sha);
-        if waited < crate::upgrade::GIVE_UP_AFTER {
-            tracing::info!(%text, "upgrade waiting for a quiet point; will retry");
-            upgrade_event(&state, ek::UPGRADE_WAITING, &who, data).await;
-            return;
-        }
-        state.upgrader.note_failed(&sha);
-        let hours = waited.as_secs() / 3600;
-        let mut data = data;
-        data["hours"] = hours.into();
-        upgrade_event(&state, ek::UPGRADE_GAVE_UP, &who, data).await;
-        upgrade_wake(
-            &state,
-            "upgrade_failed",
-            format!("upgrade: {short} found no quiet point for {hours}h; not retrying it: {text}"),
-            serde_json::json!({"commit": sha, "stage": "gave_up", "error": text}),
-        )
-        .await;
-        return;
-    }
     state.upgrader.note_failed(&sha);
     tracing::warn!(%text, "upgrade failed");
     upgrade_event(
@@ -3647,16 +3611,35 @@ async fn upgrade_in_background(
         .await;
 }
 
-/// Wait until every agent is idle (never cutting a turn off), record who was running, then
-/// trigger the shutdown sequence with `restart_requested` set so `run` execs. `built` is the
-/// commit an upgrade built, remembered once the restart is certain.
+/// Drain the daemon (no spawns, claims or new turns; see `AgentManager::set_draining`), wait
+/// with no timeout until no agent is mid-turn and no spawn is in flight (never cutting a turn
+/// off), record who was running, then trigger the shutdown sequence with `restart_requested` set
+/// so `run` execs. `built` is the commit an upgrade built, remembered once the restart is
+/// certain. Past [`AppState::drain_wake_after`] of waiting it wakes the orchestrator once.
 async fn perform_restart(
     state: &AppState,
     who: &str,
-    wait: std::time::Duration,
     built: Option<&str>,
 ) -> Result<bridle_api::types::RestartResponse, ApiError> {
-    let deadline = tokio::time::Instant::now() + wait;
+    state.manager.set_draining(true);
+    state
+        .manager
+        .set_upgrade_waiting(built.map(|s| s.chars().take(9).collect()));
+    let result = drain_and_restart(state, who, built).await;
+    if result.is_err() {
+        state.manager.set_draining(false);
+        state.manager.set_upgrade_waiting(None);
+    }
+    result
+}
+
+async fn drain_and_restart(
+    state: &AppState,
+    who: &str,
+    built: Option<&str>,
+) -> Result<bridle_api::types::RestartResponse, ApiError> {
+    let started = tokio::time::Instant::now();
+    let mut woke = false;
     let running = loop {
         let spawning = state.manager.spawning();
         let running: Vec<_> = state
@@ -3674,20 +3657,23 @@ async fn perform_restart(
         if busy.is_empty() && !spawning {
             break running;
         }
-        if tokio::time::Instant::now() >= deadline {
-            return Err(ApiError::new(
-                StatusCode::CONFLICT,
-                "conflict",
+        if !woke && started.elapsed() >= state.drain_wake_after {
+            woke = true;
+            let still = if busy.is_empty() {
+                "a spawning agent".to_string()
+            } else {
+                busy.join(", ")
+            };
+            upgrade_wake(
+                state,
+                "upgrade_draining",
                 format!(
-                    "{NO_QUIET_POINT} within {}s; still busy: {}",
-                    wait.as_secs(),
-                    if busy.is_empty() {
-                        "a spawning agent".to_string()
-                    } else {
-                        busy.join(", ")
-                    }
+                    "the restart has been draining for {} min; still in a turn: {still}",
+                    started.elapsed().as_secs() / 60
                 ),
-            ));
+                serde_json::json!({"agents": busy, "spawning": spawning}),
+            )
+            .await;
         }
         tokio::time::sleep(std::time::Duration::from_millis(500)).await;
     };

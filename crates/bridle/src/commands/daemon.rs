@@ -2,15 +2,12 @@
 
 use super::*;
 
-/// The daemon answers once it has decided to go (a busy daemon answers 409 and stays up), then
-/// execs itself with the new binary, so wait for it to go and return (possibly on a new port).
-pub(super) async fn restart(cli: &Cli, wait: Option<u64>, upgrade: bool) -> Result<(), CliError> {
+/// The daemon drains (no new turns, no timeout) and answers once it has decided to go, then execs
+/// itself with the new binary, so wait for it to go and return (possibly on a new port).
+pub(super) async fn restart(cli: &Cli, upgrade: bool) -> Result<(), CliError> {
     let client = client_for(cli).await?;
     let reply = client
-        .restart(&bridle_api::types::RestartRequest {
-            wait_secs: wait,
-            upgrade,
-        })
+        .restart(&bridle_api::types::RestartRequest { upgrade })
         .await?;
     if !reply.restarting {
         // Nothing newer, or the build runs on in the daemon and it restarts itself after.

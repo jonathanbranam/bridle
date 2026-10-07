@@ -1508,7 +1508,7 @@ pub struct Config {
     /// agent's own activity (`last_event_at`/`turn_started_at`) before it's
     /// released back to `planned` (docs/design/storage.md, claims).
     pub claim_lease_after: Duration,
-    /// `[daemon] self_upgrade`: at a quiet point, when a newer green commit is on the integration
+    /// `[daemon] self_upgrade`: when a newer green commit is on the integration
     /// branch, run what `bridle restart --upgrade` runs (docs/design/agent-host/daemon.md, Upgrade).
     pub self_upgrade: bool,
     pub stop_grace: Duration,

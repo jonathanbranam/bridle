@@ -21,7 +21,7 @@ stall_after = "10m"
 stop_grace  = "30s"                # how long `stop` waits after closing stdin
 claim_lease_after = "10m"          # a claimed task is released once its claimant has been
                                    # inactive this long (storage.md, claims)
-self_upgrade = false               # at a quiet point, build and restart into a newer green main
+self_upgrade = false               # build, drain and restart into a newer green main
                                    # commit, as `bridle restart --upgrade` (daemon.md, Upgrade)
 
 [branches]

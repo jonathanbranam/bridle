@@ -186,9 +186,13 @@ Whether workers should resume too after a *crash* or plain restart is open:
 ### Restart in place
 
 `POST /v1/restart` (`bridle restart`; the human and `external:orchestrator` only) upgrades the
-daemon without the human: the request waits for a quiet point (every running agent `idle`, checked
-every 500 ms, up to `wait_secs`, default 600). At the timeout it answers 409 naming the busy agents
-and does nothing: work is never cut off. At a quiet point it records the running agents' ids
+daemon without the human: it **drains** first. From the request on the daemon is `draining`: spawns
+are refused, task claims are refused, and no running agent gets a new turn. Messages, task updates
+and comments, queue nudges and wakes are still stored (state `held`, in order) but not written to
+the agent; the end of a turn no longer delivers the next held one. Turns already in progress run to
+their end and nothing is cut off; the queue stays as it is. Interactive sessions (orchestrator,
+aide, advisors) are outside the daemon's turns and are not held. There is no timeout and no 409:
+when no agent is mid-turn and no spawn is in flight (checked every 500 ms) it records the running agents' ids
 (`meta` key `restart.resume`), wakes the orchestrator (`restart`, with the commit), sets the
 restart flag and runs the ordinary shutdown sequence above (agents stop as `daemon_shutdown`, the
 state branch is flushed and pushed, `daemon.json` removed). `run` then `exec`s the binary path resolved once at start-up (`exe_path()`: Linux's `<path> (deleted)` suffix, left after a reinstall, is stripped) with
@@ -198,7 +202,10 @@ exec fails the daemon stays cleanly stopped, as after `stop-daemon`.
 
 The next start, after its own resume of `resume_on_restart` roles, reads and clears the record and
 resumes every recorded agent still not running, workers too, each with a note from `system` that the
-daemon restarted for an upgrade and to carry on. It wakes the orchestrator (`restart`: commit, who
+daemon restarted for an upgrade, to carry on and to re-run any background job it was waiting on
+(an idle agent's own shell job dies with the restart: w8bz). The held messages went back to
+`pending` when the agents stopped, so the ordinary resume delivers them, oldest first;
+none are lost or duplicated. It wakes the orchestrator (`restart`: commit, who
 resumed, who failed); the human's inbox gets a message only if some agent failed to resume.
 
 #### Upgrade
@@ -215,18 +222,21 @@ upgrade at a time: event `upgrade.building` (no wake), check the commit out into
 (`<workspace>/.bridle/upgrade-src`; the human's checkout is never touched), run `cargo install
 --path crates/bridle` there at normal priority with `CARGO_TARGET_DIR=<workspace>/.bridle/upgrade-target`
 (kept between upgrades so builds are incremental; one-hour cap), then restart in place as above,
-with the same quiet-point wait, recording the commit as built. A failed build or self-check, or
-(for a manual upgrade) no quiet point after the build, leaves the running daemon untouched: event
+after the drain above (event `upgrade.draining`; `bridle status` shows `upgrade <sha> draining;
+waiting on <agents mid-turn>`), recording the commit as built. A newer commit landing during the
+drain does not rebuild: the restart uses the built commit. A failed build or self-check leaves the
+running daemon untouched (the drain is a restart's, so it starts only after both passed): event
 `upgrade.failed`, wake `upgrade_failed` (with the build output's last lines) and a note to the
 human's inbox. Out of scope: other projects' daemons.
 
 **Events, and what wakes.** Every step is an event (`bridle events --kind upgrade.`):
-`upgrade.skipped` (`{commit, reason}`), `upgrade.building`, `upgrade.built`, `upgrade.waiting`
-and `upgrade.gave_up` (`{commit, busy, error}`), `upgrade.failed` (`{commit, error}`) and
-`upgrade.rolled_back` (`{error}`). Only what needs attention wakes the orchestrator: the `restart`
-wake of a successful upgrade, `upgrade_failed` for a real failure (build, self-check, rollback,
-manual no-quiet-point) which also notes the human, and `upgrade_failed` (no human note) when the
-automatic upgrade has found no quiet point for three hours. Skipped and building wake no one.
+`upgrade.skipped` (`{commit, reason}`), `upgrade.building`, `upgrade.built`, `upgrade.draining`,
+`upgrade.failed` (`{commit, error}`) and `upgrade.rolled_back` (`{error}`). Only what needs
+attention wakes the orchestrator: the `restart` wake of a successful upgrade, `upgrade_failed` for
+a real failure (build, self-check, rollback) which also notes the human, and `upgrade_draining`,
+once, when a drain (an upgrade's or a plain restart's) is still waiting after an hour
+(`{agents, spawning}`; the text names the agents still in a turn). Nothing else escalates: a stuck
+turn is the stall detector's job. Skipped and building wake no one.
 
 **Rollback.** The running binary is copied to `<workspace>/.bridle/bridle.prev` before the build
 replaces it. After the build, the daemon runs the new binary's self-check (`bridle serve --check
@@ -249,15 +259,12 @@ git can't diff, it builds. **The restart's commit** (message to agents, `restart
 built commit (`upgrade.built`), not the integration head, which can have moved during the build.
 
 **Automatic upgrade.** With `[daemon] self_upgrade = true` (default off; on in bridle's own
-`.bridle/config.toml`) the CI watcher's tick (every minute; no loop of its own) also checks for a
-quiet point: no running agent mid-turn (a budget hold winds workers down to idle or stopped, which
-counts). If so, and no restart or upgrade is under way, it looks for a newer green commit exactly as
-above and, if there is one, starts the same background upgrade (build, restart with
-the ten-minute quiet-point wait), so a turn is never cut off. A commit whose upgrade failed is not
-retried (in memory; a daemon restart or a newer commit tries again) so a broken build doesn't loop.
-A wait that ends with agents still busy is not a failure: `upgrade.waiting`, no wake, no human
-note, and the next quiet tick builds (incrementally) and tries again. After three hours of that for
-one commit it records `upgrade.gave_up`, wakes `upgrade_failed` once and stops retrying it.
+`.bridle/config.toml`) the CI watcher's tick (every minute; no loop of its own) looks for a newer
+green commit exactly as above, whatever the agents are doing (the build needs no quiet point), and,
+if there is one and no restart or upgrade is under way, starts the same background upgrade: build,
+then drain, then restart. A turn is never cut off and nothing gives up waiting. A commit whose
+upgrade failed (build or self-check) is not retried (in memory; a daemon restart or a newer commit
+tries again) so a broken build doesn't loop.
 
 **The gateway follows the upgrade by itself.** The upgrade replaces the installed `bridle` file, and
 a running `bridle gateway` re-executes itself when it sees that file change (human-web-ui.md,

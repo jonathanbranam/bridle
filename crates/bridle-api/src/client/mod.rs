@@ -859,8 +859,8 @@ impl Client {
         self.send_unit(req).await
     }
 
-    /// Waits (up to `req.wait_secs`) for a quiet point, then the daemon restarts itself. A busy
-    /// daemon answers 409 and does nothing. Give the client a timeout longer than the wait.
+    /// A plain restart answers once the daemon has drained and decided to go, which can take as
+    /// long as the running turns; use a client with no timeout.
     pub async fn restart(&self, req: &RestartRequest) -> Result<RestartResponse, ClientError> {
         self.post_json(&["v1", "restart"], req).await
     }

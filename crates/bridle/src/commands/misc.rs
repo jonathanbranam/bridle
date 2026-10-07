@@ -42,9 +42,10 @@ pub(super) async fn status(cli: &Cli) -> Result<(), CliError> {
                 (None, None) => println!("state      nothing pushed yet"),
             }
         }
-        if let Some(sha) = &status.upgrade_waiting {
+        if status.draining {
             println!(
-                "upgrade    {sha} built-green, waiting for a quiet point; new worker spawns refused"
+                "{}",
+                drain_line(status.upgrade_waiting.as_deref(), &status.draining_on)
             );
         }
         for inc in &status.incidents {
@@ -781,5 +782,38 @@ mod require_body_tests {
         assert!(require_body(String::new()).is_err());
         assert!(require_body(" \n\t".to_string()).is_err());
         assert_eq!(require_body("hi".to_string()).unwrap(), "hi");
+    }
+}
+
+/// The status line of a drain: `upgrade <sha> draining; waiting on <agents mid-turn>`, or
+/// `restart draining; ...` for a plain restart.
+fn drain_line(upgrade: Option<&str>, waiting_on: &[String]) -> String {
+    let what = match upgrade {
+        Some(sha) => format!("upgrade {sha}"),
+        None => "restart".to_string(),
+    };
+    let on = if waiting_on.is_empty() {
+        "a spawning agent".to_string()
+    } else {
+        waiting_on.join(", ")
+    };
+    format!("{what} draining; waiting on {on}")
+}
+
+#[cfg(test)]
+mod drain_tests {
+    use super::drain_line;
+
+    #[test]
+    fn the_drain_status_line_names_the_commit_and_the_agents_mid_turn() {
+        let on = ["w1".to_string(), "w2".to_string()];
+        assert_eq!(
+            drain_line(Some("abc1234"), &on),
+            "upgrade abc1234 draining; waiting on w1, w2"
+        );
+        assert_eq!(
+            drain_line(None, &on[..1]),
+            "restart draining; waiting on w1"
+        );
     }
 }

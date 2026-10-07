@@ -189,9 +189,12 @@ struct Inner {
     /// Spawns in flight. Until its first `system/init` an agent reads `idle` although its first
     /// turn is already on the way, so the quiet-point checks count these as busy.
     spawning: std::sync::atomic::AtomicUsize,
-    /// Short sha of a green build waiting for a quiet point (self-upgrade): new workers are
-    /// refused so the running ones drain. Lifted when the upgrade gives up.
+    /// Short sha of the built commit a drain is waiting to restart into (`None` for a plain
+    /// restart's drain).
     upgrade_waiting: std::sync::Mutex<Option<String>>,
+    /// A restart is draining the daemon (daemon.md, "Restart in place"): no spawns, no claims and
+    /// no new turns; messages are stored held until after the restart's resume.
+    draining: std::sync::atomic::AtomicBool,
     governor: crate::governor::GovernorHandle,
     /// `bridle budget max-workers`: a live cap replacing
     /// `[budget] max_workers` until cleared or the daemon restarts.
@@ -281,6 +284,7 @@ impl AgentManager {
             runtimes: std::sync::Mutex::new(HashMap::new()),
             spawning: std::sync::atomic::AtomicUsize::new(0),
             upgrade_waiting: std::sync::Mutex::new(None),
+            draining: std::sync::atomic::AtomicBool::new(false),
             governor,
             max_workers_override: std::sync::Mutex::new(None),
             task_wake: std::sync::Mutex::new(TaskWake::default()),
@@ -782,7 +786,19 @@ impl AgentManager {
         self.0.spawning.load(std::sync::atomic::Ordering::SeqCst) > 0
     }
 
-    /// Refuses (or, with `None`, stops refusing) new worker spawns for a build waiting on a quiet point.
+    /// Starts (or ends) a drain: see `Inner::draining`. Set on every path out of a restart that
+    /// doesn't exec, or the daemon would stay frozen.
+    pub fn set_draining(&self, on: bool) {
+        self.0
+            .draining
+            .store(on, std::sync::atomic::Ordering::SeqCst);
+    }
+
+    pub fn draining(&self) -> bool {
+        self.0.draining.load(std::sync::atomic::Ordering::SeqCst)
+    }
+
+    /// The built commit's short sha, for the status line of an upgrade's drain.
     pub fn set_upgrade_waiting(&self, short_sha: Option<String>) {
         *self.0.upgrade_waiting.lock().expect("upgrade_waiting lock") = short_sha;
     }
@@ -829,12 +845,11 @@ impl AgentManager {
         if !req.ignore_budget {
             self.refuse_if_holding(&model)?;
         }
-        if req.role == WORKER_ROLE
-            && let Some(sha) = self.upgrade_waiting()
-        {
-            return Err(SupervisorError::Conflict(format!(
-                "not spawning: a green build ({sha}) is waiting for a quiet point to restart the daemon; retry once it has restarted"
-            )));
+        if self.draining() {
+            return Err(SupervisorError::Conflict(
+                "not spawning: the daemon is draining for a restart; retry once it has restarted"
+                    .to_string(),
+            ));
         }
         if req.role == WORKER_ROLE {
             let cap = self.effective_max_workers() as usize;
@@ -1998,6 +2013,11 @@ impl AgentManager {
                 {
                     write_now = false;
                 }
+                // A drain holds every new turn, and a `now` message folding into a running
+                // turn too: it is delivered after the restart's resume, in order.
+                if self.draining() {
+                    write_now = false;
+                }
                 if write_now {
                     let _ = write_message(&self.0.store, &rt, &inserted).await;
                 } else {
@@ -2286,6 +2306,9 @@ impl AgentManager {
     /// it recovers to `normal` (so an agent that's already idle at that
     /// point isn't left holding forever with no turn ending to trigger it).
     pub async fn deliver_oldest_held(&self, id: &str) {
+        if self.draining() {
+            return;
+        }
         let Some(rt) = self.get_runtime(id) else {
             return;
         };
