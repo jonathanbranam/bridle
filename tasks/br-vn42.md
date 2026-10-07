@@ -4,7 +4,7 @@ title = "Upgrades never go through under load: drain (no new turns, no timeout),
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-07T02:10:31.279Z"
-updated_at = "2026-10-07T02:43:18.622727Z"
+updated_at = "2026-10-07T02:43:57.825828Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 branch = "bridle/vn42-drain"
@@ -64,3 +64,9 @@ vn42-drain: not changing code; both gaps look already answered, please confirm.
 
 ### note · agent:manager-2 · 2026-10-07T02:43:18.622Z
 integrated: 294fbc4bc52289c8150475c4e1b4ada2ab59887e (branch bridle/vn42-drain)
+
+### note · agent:manager-2 · 2026-10-07T02:43:55.119Z
+cleanup: removed agent vn42-drain, branch bridle/vn42-drain
+
+### note · agent:manager-2 · 2026-10-07T02:43:57.825Z
+manager-2: landed 1b63b96a as 294fbc4b per the orchestrator's waiver of both gaps; nothing more to do on this task.
