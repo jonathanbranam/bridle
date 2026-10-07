@@ -2,11 +2,13 @@
 id = "br-vn42"
 title = "Upgrades never go through under load: drain (no new turns, no timeout), then restart"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-07T02:10:31.279Z"
-updated_at = "2026-10-07T02:43:01.345379Z"
+updated_at = "2026-10-07T02:43:18.622727Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+branch = "bridle/vn42-drain"
+commit = "294fbc4bc52289c8150475c4e1b4ada2ab59887e"
 summary = 'Restart and upgrade now drain instead of waiting for a quiet point. The automatic upgrade builds at once (self_upgrade_tick no longer needs a quiet tick); after a good build and self-check, and for a plain `daemon restart`, perform_restart sets AgentManager draining: spawns and task claims are refused, and send() stores messages as held (even `when now` to a working agent) while deliver_oldest_held is a no-op, so no new turns start; turns in progress finish. No timeout: RESTART_WAIT, wait_secs, `--wait`, the 409 path and the upgrade.waiting/gave_up events/GIVE_UP_AFTER are gone; the daemon restarts when no agent is mid-turn and no spawn is in flight. Status gains `draining` and `draining_on`; `bridle status` prints `upgrade <sha> draining; waiting on <agents>` (`restart draining; ...` for a plain restart). A drain over drain_wake_after (default 1 h; override renamed from self_upgrade_wait) wakes the orchestrator once with `upgrade_draining`. Resume note adds "re-run any background job you were waiting on". Held messages return to pending when agents stop for the restart, so the normal resume delivers them in order. Docs (daemon.md, api.md, cli.md, roles-and-config.md) and CHANGELOG updated. Note: a build/self-check failure is still not retried until main moves (the 3 h retry only existed for the quiet-point wait, so it went away with it).'
 +++
 
@@ -51,3 +53,14 @@ manager-2: not landing yet; two gaps against the ticket. (1) The 'Seen again' se
 
 ### note · external:orchestrator · 2026-10-07T02:43:01.345Z
 orchestrator: reviewed the design doc diff. Drain starting after the build (not at the request) is fine with no timeout: held turns can't pile up, and a failed build doesn't stop work for nothing. My 'Seen again' note was about the old give-up; consider it answered. OK to land.
+
+### note · external:orchestrator · 2026-10-07T02:43:15.486Z
+orchestrator to manager-2 and vn42-drain: our comments crossed. (1) Waived: I wrote 'Seen again' before this design removed the timeout. With no give-up, holding during the build only stops work for the build's length (and for nothing if it fails); draining after the build is fine. (2) Not needed either: a failed build not retried until main moves on (the old rule, kept) is enough, YAGNI. Land 1b63b96a as is if CI/check is green.
+
+### note · agent:vn42-drain · 2026-10-07T02:43:16.797Z
+vn42-drain: not changing code; both gaps look already answered, please confirm.
+(1) Hold from the request: the orchestrator's last note on this thread says drain starting after the build is fine (no timeout, a failed build doesn't stop work for nothing), and its 'Seen again' note was about the old give-up. Builds also now start at once, not at a quiet tick.
+(2) 3 h retry: in the old code (1b63b96a^) that 3 h (GIVE_UP_AFTER, `waiting`) only covered a commit that never found a quiet point. A failed build or self-check already called note_failed and was skipped until main moved; the ticket (item 2) says the same. With the quiet-point wait gone, there is nothing left for the 3 h to cover. Restoring a 3 h retry for build failures would be new behaviour; if you want it, say so and I will add it with a test.
+
+### note · agent:manager-2 · 2026-10-07T02:43:18.622Z
+integrated: 294fbc4bc52289c8150475c4e1b4ada2ab59887e (branch bridle/vn42-drain)
