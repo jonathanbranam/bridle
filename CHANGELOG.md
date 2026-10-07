@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+- `bridle send` from an agent (its own `BRIDLE_URL` and `BRIDLE_PROJECT`) sends locally again, `--task` included; since the 3haz build it was treated as mail for another project and refused. The own daemon's project is read from its status when found by URL (br-x56y).
+
 ### Added
 - Usage history (xxw9): the daemon keeps the account's rate-limit readings (a row whenever a window's utilization or reset time changes, 90 days) and serves a window's series at `GET /v1/usage/history?window=five_hour&since=...` and `bridle usage --history five_hour [--since 30d]`. Migration: the schema change (SCHEMA_V21, rate_limit_history) runs on the next daemon start; history starts empty, no project files change (br-xxw9).
 - Mail between daemons, slice 1 (3haz): `bridle send --project <other> <principal> "..."` now goes to the sender's own daemon, which accepts it at once (`queued o-0007 for <project>`), keeps it in a new outbox table and forwards it to the other daemon (any machine, same machine included) over `POST /v1/forward` with a peer token, acknowledged and deduplicated by origin so a retried try never delivers twice, oldest first per destination. `bridle token create --peer <machine>` mints the peer token (`peer:<machine>`, paste it under `[peer]` in the sender's `credentials.toml`, keyed by the destination project); the receiver believes the forwarded sender label from a peer token only. Retry with backoff, the start-up ping and status lines are later slices. Migration: the schema change (SCHEMA_V20, outbox and forwarded_in) runs on the next daemon start; peer tokens and the outbox are optional, so no project files change (br-3haz).

@@ -1512,3 +1512,97 @@ fn task_done_warns_for_agent_claimed_tasks_without_summary() {
         "unclaimed task should warn about missing summary; stderr: {err}"
     );
 }
+
+/// x56y: an agent runs with both `BRIDLE_URL` (its own daemon) and `BRIDLE_PROJECT` (that
+/// daemon's project). `bridle send` must send locally, `--task` included; a different project
+/// still goes the cross-project way (the outbox), and no `BRIDLE_PROJECT` is the plain send.
+#[test]
+fn send_with_an_agents_own_url_and_project_sends_locally() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let repo = tmp.path().join("repo");
+    init_repo(&repo);
+    let home = tmp.path().join("home");
+
+    let mut serve_cmd = Command::new(bridle_bin());
+    serve_cmd
+        .arg("serve")
+        .arg("--repo")
+        .arg(&repo)
+        .arg("--listen")
+        .arg("127.0.0.1:0")
+        .env("BRIDLE_CLAUDE_BIN", fake_claude_path())
+        .env("BRIDLE_HOME", &home)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::inherit());
+    strip_bridle_env(&mut serve_cmd);
+    let mut guard = DaemonGuard(serve_cmd.spawn().expect("spawn bridle serve"));
+    let daemon_json = tmp.path().join(".bridle/daemon.json");
+    wait_for_daemon(&mut guard.0, &daemon_json);
+    let info: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(&daemon_json).expect("daemon.json"))
+            .expect("daemon.json parses");
+    let url = info["url"].as_str().expect("url").to_string();
+    let project = info["project"].as_str().expect("project").to_string();
+
+    let (ok, out, err) = run_cli(&repo, &home, &["task", "new", "t", "-k", "chore", "--json"]);
+    assert!(ok, "task new failed: {err}");
+    let task: serde_json::Value = serde_json::from_str(&out).expect("task json");
+    let task_id = task["id"].as_str().expect("task id").to_string();
+
+    // The agent's environment: run from outside the workspace, so only the env finds the daemon.
+    let elsewhere = tmp.path().join("elsewhere");
+    std::fs::create_dir_all(&elsewhere).expect("mkdir");
+    let (ok, out, err) = run_cli(&repo, &home, &["token", "create", "agent", "--json"]);
+    assert!(ok, "token create failed: {err}");
+    let created: serde_json::Value = serde_json::from_str(&out).expect("token json");
+    let token = created["token"].as_str().expect("token secret").to_string();
+    let send = |project_env: Option<&str>, args: &[&str]| {
+        let mut cmd = Command::new(bridle_bin());
+        cmd.args(args)
+            .current_dir(&elsewhere)
+            .env("BRIDLE_HOME", &home)
+            .env("BRIDLE_URL", &url);
+        strip_bridle_env_except_url(&mut cmd);
+        if let Some(p) = project_env {
+            cmd.env("BRIDLE_PROJECT", p);
+        }
+        cmd.env("BRIDLE_TOKEN", &token);
+        let out = cmd.output().expect("run bridle");
+        (
+            out.status.success(),
+            String::from_utf8_lossy(&out.stdout).into_owned(),
+            String::from_utf8_lossy(&out.stderr).into_owned(),
+        )
+    };
+
+    let (ok, _, err) = send(Some(&project), &["send", "human", "own", "--json"]);
+    assert!(ok, "send with own project failed: {err}");
+    let (ok, _, err) = send(
+        Some(&project),
+        &["send", "human", "own", "--task", &task_id, "--json"],
+    );
+    assert!(ok, "send --task with own project failed: {err}");
+    let (ok, _, err) = send(None, &["send", "human", "bare", "--json"]);
+    assert!(ok, "send without BRIDLE_PROJECT failed: {err}");
+
+    // Another project: not a direct send (`--task` is refused for it, which only the
+    // cross-project path does).
+    let (ok, _, err) = send(
+        Some("some-other-project"),
+        &["send", "human", "x", "--task", &task_id],
+    );
+    assert!(!ok);
+    assert!(
+        err.contains("another project's daemon"),
+        "expected the cross-project path: {err}"
+    );
+}
+
+fn strip_bridle_env_except_url(cmd: &mut Command) {
+    cmd.env_remove("CLAUDECODE")
+        .env_remove("BRIDLE_TOKEN")
+        .env_remove("BRIDLE_AGENT_ID")
+        .env_remove("BRIDLE_AGENT_NAME")
+        .env_remove("BRIDLE_PROJECT");
+}

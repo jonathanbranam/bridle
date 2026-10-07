@@ -150,8 +150,10 @@ pub(super) fn require_body(body: String) -> Result<String, CliError> {
 
 /// The sender's own daemon, when `--project` names a different one: mail for another daemon goes
 /// through the sender's own outbox, never straight to the remote (3haz). `None` when there is no
-/// `--project`, or no own daemon to hand it to (then the old direct send applies).
-fn own_daemon_for_other_project(cli: &Cli) -> Result<Option<(Client, String)>, CliError> {
+/// `--project`, or no own daemon to hand it to (then the old direct send applies). A daemon found
+/// by `$BRIDLE_URL` has no project in discovery, so it is asked; one that can't say is taken to be
+/// the requested project, so an agent's `$BRIDLE_PROJECT` never turns a local send into mail (x56y).
+async fn own_daemon_for_other_project(cli: &Cli) -> Result<Option<(Client, String)>, CliError> {
     let Some(project) = cli.project.as_deref() else {
         return Ok(None);
     };
@@ -160,9 +162,6 @@ fn own_daemon_for_other_project(cli: &Cli) -> Result<Option<(Client, String)>, C
     let Ok(own) = discovery::resolve_endpoint(cli.url.as_deref(), None, &cwd, &env) else {
         return Ok(None);
     };
-    if own.project.as_deref() == Some(project) {
-        return Ok(None);
-    }
     let token = discovery::resolve_token(
         cli.token.as_deref(),
         own.workspace.as_deref(),
@@ -173,12 +172,19 @@ fn own_daemon_for_other_project(cli: &Cli) -> Result<Option<(Client, String)>, C
     )?;
     let client =
         Client::new(own.url, token).with_advisor(std::env::var("BRIDLE_ADVISOR_NAME").ok());
+    let own_project = match own.project {
+        Some(p) => Some(p),
+        None => client.status().await.ok().map(|s| s.daemon.project),
+    };
+    if own_project.as_deref().is_none_or(|p| p == project) {
+        return Ok(None);
+    }
     Ok(Some((client, project.to_string())))
 }
 
 pub(super) async fn send(cli: &Cli, args: &SendArgs) -> Result<(), CliError> {
     let body = require_body(read_text(&args.text, &args.text_file, "text")?)?;
-    if let Some((own, project)) = own_daemon_for_other_project(cli)? {
+    if let Some((own, project)) = own_daemon_for_other_project(cli).await? {
         if args.task.is_some() {
             return Err(CliError::from(anyhow::anyhow!(
                 "--task isn't supported for another project's daemon yet"

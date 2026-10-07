@@ -399,7 +399,9 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   `queued o-0007 for <project> -> <to>` at once, then forwards it (principals.md, "Mail between
   daemons"). It never writes to the other daemon, and succeeds while that daemon is down. The
   recipient is named as on the other daemon; `--task` isn't supported that way yet. With no own
-  daemon to hand it to, the old direct send to `--project` applies.
+  daemon to hand it to, the old direct send to `--project` applies. The own daemon's project is the
+  cwd workspace's; a daemon found by `$BRIDLE_URL` is asked (`status`), and one that can't say counts as
+  the same project, so an agent's own `$BRIDLE_URL` + `$BRIDLE_PROJECT` sends locally, `--task` too (x56y).
   `--task <id>` (and `bridle task comment <id> --notify <agent>`, the same call) writes the text as a comment on the task's thread and sends the recipient `<id>: comment added` plus its first line; an unknown task is an error and nothing is sent.
 
 - **`task new/edit/comment`**: when given `--body-file FILE` or `--text-file FILE`, pass `-`
