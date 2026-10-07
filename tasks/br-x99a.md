@@ -2,9 +2,9 @@
 id = "br-x99a"
 title = "Tue 10-06, at dalek: set up bridle's local signing certificate (bridle sign setup) once br-p88z lands, and check the firewall survives a rebuild"
 kind = "chore"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-04T23:55:55.619Z"
-updated_at = "2026-10-04T23:55:55.622469Z"
+updated_at = "2026-10-07T02:35:35.470868Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -37,3 +37,6 @@ created for the human, priority normal
 
 ### note · external:aide · 2026-10-04T23:55:55.622Z
 To-do for you (normal priority): Tue 10-06, at dalek: set up bridle's local signing certificate (bridle sign setup) once br-p88z lands, and check the firewall survives a rebuild. Finish it with `bridle task done br-x99a`.
+
+### note · human · 2026-10-07T02:35:35.470Z
+done
