@@ -2,9 +2,9 @@
 id = "br-jkas"
 title = "NUC: run meta-notes, notes and dotfiles-local under systemd, and enable linger"
 kind = "chore"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-04T13:39:39.320Z"
-updated_at = "2026-10-04T13:39:39.323923Z"
+updated_at = "2026-10-07T23:12:06.639724Z"
 created_by = "external:advisor"
 watchers = [
     "external:advisor",
@@ -21,3 +21,6 @@ created for the human, priority normal
 
 ### note · external:advisor · 2026-10-04T13:39:39.323Z
 To-do for you (normal priority): NUC: run meta-notes, notes and dotfiles-local under systemd, and enable linger. Finish it with `bridle task done br-jkas`.
+
+### note · human · 2026-10-07T23:12:06.639Z
+done
