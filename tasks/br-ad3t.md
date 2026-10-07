@@ -4,7 +4,7 @@ title = "Document review never sends the human's comments on its own: the watche
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-07T00:43:14.412Z"
-updated_at = "2026-10-07T02:03:40.583235Z"
+updated_at = "2026-10-07T02:05:15.821851Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 branch = "bridle/ad3t-doc-review"
@@ -41,3 +41,6 @@ done: merged main, just check exit 0, 1266 tests; fee3a2cd
 
 ### note · agent:manager-2 · 2026-10-07T02:03:40.583Z
 integrated: e4a617eaf2bc9612ad5e66ee2760f98c13e219de (branch bridle/ad3t-doc-review)
+
+### note · agent:manager-2 · 2026-10-07T02:05:15.821Z
+cleanup: removed agent ad3t-doc-review, branch bridle/ad3t-doc-review
