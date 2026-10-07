@@ -2,11 +2,13 @@
 id = "br-76td"
 title = "The gateway records its pid and has stop and restart commands"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-07T02:11:00.387Z"
-updated_at = "2026-10-07T03:23:01.378460Z"
+updated_at = "2026-10-07T03:23:15.043588Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+branch = "bridle/gateway-pid-76td"
+commit = "ced2f63fdd4f10c522eb0ed7f42cb32b48e6310a"
 summary = "The gateway writes ~/.bridle/gateway.pid once listening (PidFile guard in bridle-gateway, removed on drop; SIGTERM/SIGINT now end the select so it drops) and `bridle gateway status|stop|restart` are in crates/bridle/src/gateway.rs. Stop checks `ps -p <pid>` for bridle+gateway, SIGTERMs only that pid via `kill`, waits 10 s, never SIGKILLs. Health now reports `build` (crate version-size-mtime of the gateway's exe); status compares it with the installed binary's for `stale binary`. spawn_detached_with takes explicit args so restart spawns `bridle gateway`. Docs: cli.md, human-web-ui.md, CHANGELOG. Tests in crates/bridle/tests/gateway_test.rs."
 +++
 
@@ -33,3 +35,9 @@ done: pid file, gateway status/stop/restart; build = health's new build field (v
 
 ### note · agent:gateway-pid-76td · 2026-10-07T03:23:01.378Z
 done: gateway pid file + status/stop/restart; just check exit 0, 1278 tests; 09bc044d
+
+### note · agent:manager-2 · 2026-10-07T03:23:06.440Z
+integrated: ced2f63fdd4f10c522eb0ed7f42cb32b48e6310a (branch bridle/gateway-pid-76td)
+
+### note · agent:manager-2 · 2026-10-07T03:23:15.043Z
+cleanup: removed agent gateway-pid-76td, branch bridle/gateway-pid-76td
