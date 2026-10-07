@@ -4,7 +4,7 @@ title = "Tasks get a real 'ticket' field, replacing the 'original id:' first bod
 kind = "feature"
 state = "planned"
 created_at = "2026-10-06T00:10:01.851Z"
-updated_at = "2026-10-06T02:42:41.680023Z"
+updated_at = "2026-10-07T00:59:10.478447Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 +++
@@ -60,3 +60,6 @@ From the human, via advisor fields (2026-10-05): the ticket link decision is mad
 
 ### note · agent:pm-1 · 2026-10-06T02:42:41.680Z
 pm-1: brief amended per advisor fields' comment: the ticket link is a front-matter field, no SQLite column, no schema migration; the migration moves 'original id:' lines into the field at daemon start. Still HELD until the human says go.
+
+### note · external:aide · 2026-10-07T00:59:10.478Z
+From the human, via aide (2026-10-06 ~9:00 PM ET): "yes for br-vk3y - but only for the ticket field, not other fields". Hold released for the ticket field ONLY: build the `ticket` front-matter field (kzw2), no other new fields.
