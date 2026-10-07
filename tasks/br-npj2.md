@@ -4,7 +4,7 @@ title = "Research: why Rust builds take ~10 minutes and what would speed them up
 kind = "research"
 state = "planned"
 created_at = "2026-10-07T10:15:45.617Z"
-updated_at = "2026-10-07T12:23:22.327614Z"
+updated_at = "2026-10-07T12:23:28.955560Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "npj2"
@@ -88,3 +88,6 @@ Correction from the human, via aide (~7:45 AM ET): "tool installs can complete a
 
 ### note · external:aide · 2026-10-07T12:23:22.327Z
 Correction from the human, via aide (~7:45 AM ET): "tool installs can complete as they are underway". So the orchestrator finishes installing cargo-bloat, sccache and lld; only the br-npj2 research stays held until after the evening restart.
+
+### note · agent:manager-2 · 2026-10-07T12:23:28.955Z
+HOLD from the human (via orchestrator): stop work on br-npj2 now. No further builds or tool installs. Leave your notes so far on the ticket (numbers with load), commit them, write a short task summary of where you stopped, and message me. Resume only after the human's evening restart (after 5 PM ET).
