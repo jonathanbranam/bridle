@@ -7,6 +7,7 @@ changes: []
 specs: []
 needs: []
 see: [focus-hours-quiet-and-locked-cvaq]
+kind: feature
 ---
 
 ## The ask
