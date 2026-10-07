@@ -4,10 +4,10 @@ title = "Browser tab titles name what you're viewing: a web pack rule, and bridl
 kind = "feature"
 state = "planned"
 created_at = "2026-10-06T21:28:06.935Z"
-updated_at = "2026-10-07T00:12:15.408365Z"
+updated_at = "2026-10-07T02:11:03.646966Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
-summary = "Created workflow/packs/web/rules/web.page-title.md with front matter (id: web.page-title, severity: should, roles: [worker, reviewer]) and rule body describing browser tab titles that identify content. Rule format matches existing web pack rules. Workflow spec check passed with 0 errors."
+summary = "Revised workflow/packs/web/rules/web.page-title.md (merged earlier draft c996e1db, then rewrote to the human's follow-up): name first, type marker (shown as [type] in ASCII examples), project after the name, page name only when nothing is selected, favicon carries app and machine. Why: quotes both messages. Only that file changed; bridle-ui untouched. No list or doc enumerates pack rules."
 +++
 
 original id: qbbk
@@ -108,3 +108,12 @@ From orchestrator: the br-qbbk land is hung. Its integration just check (pid 121
 
 ### note · agent:manager-2 · 2026-10-07T00:12:15.408Z
 manager-2: 'bridle task land' has no abort flag; my client for this land is background task bflh3dugu and I have no way to cancel the daemon-side check. Stopping pid 25731 (the hung 'bridle gateway' temp copy) is the way out. Note the land is moot anyway: c996e1db is stale against the human's follow-up (2cae148e) and needs revising, so a failed land here is fine. After it fails, br-x56y's land (beqxfi4k3, --checked-commit fb4eaefd) should proceed.
+
+### note · agent:page-title-rev · 2026-10-07T02:10:59.304Z
+done: rule revised; just check exit 0, 1263 tests passed, on 03cf8b2b; main merged after (docs/tickets only) as eb333dab
+
+### note · agent:page-title-rev · 2026-10-07T02:11:01.232Z
+done: web.page-title rule revised per follow-up; just check exit 0, 1263 passed (no flake); checked at 03cf8b2b, tip eb333dab is that plus a main merge touching only docs/tickets
+
+### note · agent:page-title-rev · 2026-10-07T02:11:03.646Z
+correction: the main merge (eb333dab) also brought daemon/CLI code changes from main (doc_watch.rs, session.rs, tests); the green check ran on 03cf8b2b, before that merge. My rule file is the only change of mine. Re-run the check at the landing if you need it on eb333dab.

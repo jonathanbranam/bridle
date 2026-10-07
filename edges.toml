@@ -681,3 +681,9 @@ from = "br-w3pk"
 to = "br-f3sz"
 kind = "blocks"
 created_at = "2026-10-06T23:09:46.932Z"
+
+[[edge]]
+from = "br-vn42"
+to = "br-m63h"
+kind = "blocks"
+created_at = "2026-10-07T02:11:00.093Z"
