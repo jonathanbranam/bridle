@@ -2,9 +2,9 @@
 id = "br-y7ht"
 title = "[after daemon upgrades] Mint peer tokens so cross-project messaging works (stopgap until n63z)"
 kind = "chore"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-06T21:34:38.945Z"
-updated_at = "2026-10-06T21:34:38.984395Z"
+updated_at = "2026-10-07T02:35:56.540741Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -38,3 +38,6 @@ created for the human, priority high
 
 ### note · external:orchestrator · 2026-10-06T21:34:38.984Z
 To-do for you (high priority): [after daemon upgrades] Mint peer tokens so cross-project messaging works (stopgap until n63z). Finish it with `bridle task done br-y7ht`.
+
+### note · human · 2026-10-07T02:35:56.540Z
+done
