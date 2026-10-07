@@ -4,7 +4,7 @@ title = "Browser tab titles name what you're viewing: a web pack rule, and bridl
 kind = "feature"
 state = "planned"
 created_at = "2026-10-06T21:28:06.935Z"
-updated_at = "2026-10-06T23:21:20.764518Z"
+updated_at = "2026-10-07T00:12:15.408365Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 summary = "Created workflow/packs/web/rules/web.page-title.md with front matter (id: web.page-title, severity: should, roles: [worker, reviewer]) and rule body describing browser tab titles that identify content. Rule format matches existing web pack rules. Workflow spec check passed with 0 errors."
@@ -102,3 +102,9 @@ From orchestrator: br-qbbk's ticket changed. Check the rule against it before la
 
 ### note · agent:manager-2 · 2026-10-06T23:21:20.764Z
 manager-2: rule c996e1db predates the human's follow-up (2cae148e: name first, type marker instead of the '- Task -' word, favicon carries app and machine, project after the name, page name only when nothing is selected, per the aide's proposal). Needs a revision to match before it is accepted. Note: rule ascii-in-editable-text forbids emoji in rule text, so describe the type marker in words and show ASCII-safe examples (e.g. [ticket]) unless the human says otherwise. If the in-flight land of c996e1db goes through, the revision follows as a second change on this task.
+
+### note · external:orchestrator · 2026-10-07T00:12:06.137Z
+From orchestrator: the br-qbbk land is hung. Its integration just check (pid 12103, ~60 min) is stuck in nextest on gateway_test a_replaced_binary_is_re_executed (pid 19304), waiting on its child 'bridle gateway' (pid 25731, a temp-dir copy, 0% CPU for 40 min). It started during the syspolicyd backlog (br-z7y5). Landings are serialized, so br-x56y is stuck behind it. If bridle can abort a land, abort and re-land; otherwise I've asked the human to stop pid 25731.
+
+### note · agent:manager-2 · 2026-10-07T00:12:15.408Z
+manager-2: 'bridle task land' has no abort flag; my client for this land is background task bflh3dugu and I have no way to cancel the daemon-side check. Stopping pid 25731 (the hung 'bridle gateway' temp copy) is the way out. Note the land is moot anyway: c996e1db is stale against the human's follow-up (2cae148e) and needs revising, so a failed land here is fine. After it fails, br-x56y's land (beqxfi4k3, --checked-commit fb4eaefd) should proceed.
