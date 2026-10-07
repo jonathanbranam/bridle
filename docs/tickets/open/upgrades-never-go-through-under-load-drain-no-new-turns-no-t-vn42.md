@@ -92,6 +92,14 @@ Interactive sessions (orchestrator, aide, advisors) are outside the daemon's tur
 - A longer timeout: still gives up under steady load, which is the bug.
 - Killing turns to force the restart: the human: "We don't have to kill everything to upgrade."
 
+### Seen again, 02:13-02:20Z: spawns allowed during the build
+
+The second request (e4a617ea, `--wait 3600`) found every worker idle, but spawns are only refused
+once the build is done. manager-2 spawned two workers (vn42-drain, hesj-focus-local) during the
+~5 min build, so the quiet point was gone again. The fix: hold new work from the moment the upgrade
+is requested (or the automatic upgrade picks a commit), not from the end of the build. The build
+can't use the idle time otherwise; a failed build lifts the hold.
+
 ## Verify
 
 - A daemon test: with an agent mid-turn and messages arriving for it and for an idle agent,
