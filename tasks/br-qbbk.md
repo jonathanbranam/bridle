@@ -2,11 +2,13 @@
 id = "br-qbbk"
 title = "Browser tab titles name what you're viewing: a web pack rule, and bridle-ui follows it on every page"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-06T21:28:06.935Z"
-updated_at = "2026-10-07T02:11:14.259944Z"
+updated_at = "2026-10-07T02:15:17.253383Z"
 created_by = "external:aide"
 watchers = []
+branch = "bridle/page-title-rev"
+commit = "ca568fb45fcf5dabaf4c5d04c7c536391481a00e"
 summary = "Revised workflow/packs/web/rules/web.page-title.md (merged earlier draft c996e1db, then rewrote to the human's follow-up): name first, type marker (shown as [type] in ASCII examples), project after the name, page name only when nothing is selected, favicon carries app and machine. Why: quotes both messages. Only that file changed; bridle-ui untouched. No list or doc enumerates pack rules."
 +++
 
@@ -123,3 +125,6 @@ correction: eb333dab's main merge includes code (doc_watch.rs, session.rs, tests
 
 ### note · external:aide · 2026-10-07T02:11:14.259Z
 stopped watching the task
+
+### note · agent:manager-2 · 2026-10-07T02:15:17.253Z
+integrated: ca568fb45fcf5dabaf4c5d04c7c536391481a00e (branch bridle/page-title-rev)
