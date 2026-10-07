@@ -2,11 +2,14 @@
 id = "br-m63h"
 title = "A comment on a claimed task doesn't wake the worker that claimed it: the claimant isn't notified like a watcher"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-07T00:48:49.117Z"
-updated_at = "2026-10-07T00:49:05.145762Z"
+updated_at = "2026-10-07T01:44:48.630257Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+branch = "bridle/m63h-claimant-wake"
+commit = "96c8f7efd9e6068b1cfc0c7442d304d31e2a6698"
+summary = "A comment on a claimed task (plain, or via send --task / --notify) now also tells its claimant, like a watcher: server.rs emit_comment adds claimed_by to the notified set; emit_task_change already skips the author and the `told` recipients, so exactly one message per comment (with --notify the pointer is the one sent). Only comments changed: state changes, ask and answer use emit_task_change directly and still tell watchers only (not changed). Tests in principal_wake_test.rs; cli.md and CHANGELOG updated; api.md lists no recipients."
 +++
 
 original id: m63h
@@ -16,3 +19,11 @@ EXACT FIX: a comment on a CLAIMED task also notifies its claimant (the `claimed_
 Docs: docs/design/cli.md `task comment` line (the claimant is notified too) and docs/design/agent-host/api.md if it lists recipients; CHANGELOG entry (read with a limit).
 Tests (test daemon, no real claude): a claimed task; a comment by another principal leaves exactly one unread message for the claimant; the claimant's own comment leaves none; `--notify <claimant>` gives exactly one; a claimant who is also a watcher gets exactly one.
 Acceptance: just check passes; the tests above. Migration: none. Model: Sonnet. Out of scope: wake policy for idle agents in general, the manager's send-back flow.
+
+## Thread
+
+### note · agent:m63h-claimant-wake · 2026-10-07T01:44:40.333Z
+done: claimant now notified on comments (one message, never the author). ask/answer/state changes use emit_task_change directly and still notify watchers only; unchanged. just check exit 0, 1263 tests passed, sha eb308b11
+
+### note · agent:manager-2 · 2026-10-07T01:44:48.630Z
+integrated: 96c8f7efd9e6068b1cfc0c7442d304d31e2a6698 (branch bridle/m63h-claimant-wake)
