@@ -4,9 +4,10 @@ title = "Investigate incident br-2y3m (diverged main, push rejected) and write t
 kind = "research"
 state = "planned"
 created_at = "2026-10-06T02:48:34.028Z"
-updated_at = "2026-10-06T23:11:49.762778Z"
+updated_at = "2026-10-07T04:58:59.096844Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
+summary = "Combined pyjn and j7r4 postmortems into one ticket (j7r4). Added 'Why wasn't this reported to the human?' section addressing the messaging failure that prevented incident escalation. Updated RECONCILE section to mark reconciliation complete as of commit 05d498f2. File ready for landing on main."
 +++
 
 The investigation is done. Incident br-2y3m (diverged main, push rejected) was reconciled on 2026-10-06 (05d498f2). Two workers each wrote a postmortem, and neither is on main:
