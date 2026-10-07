@@ -995,3 +995,5 @@
 {"actor":"human","at":"2026-10-07T10:01:40.849Z","from":"","task":"br-cfb2","to":"pending"}
 {"actor":"external:aide","at":"2026-10-07T10:01:40.850002Z","from":"pending","task":"br-cfb2","to":"open"}
 {"actor":"external:aide","at":"2026-10-07T10:01:40.850290Z","from":"open","task":"br-cfb2","to":"planned"}
+{"actor":"human","at":"2026-10-07T10:15:45.545Z","from":"","task":"br-3kdc","to":"pending"}
+{"actor":"human","at":"2026-10-07T10:15:45.617Z","from":"","task":"br-npj2","to":"pending"}
