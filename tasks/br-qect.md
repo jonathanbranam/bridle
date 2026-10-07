@@ -4,9 +4,10 @@ title = "Postmortem for incident br-y455: bridle's daemon couldn't restart or se
 kind = "research"
 state = "planned"
 created_at = "2026-10-06T22:13:54.531Z"
-updated_at = "2026-10-06T22:14:05.713726Z"
+updated_at = "2026-10-07T00:29:30.804684Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+summary = "Postmortem written into ticket y455. Finding: manager.spawning() is a counter released by an RAII drop guard (supervisor.rs:803-814), so no spawn exit path (error, stop, cancel, panic) leaks it; stop-during-spawn is refuted as the trigger. The counter can only stay up while a spawn future hangs forever; candidate unbounded awaits listed (warm_target cp -cR, worktree::add, store/state locks), exact one unproven (daemon was kickstarted, evidence gone). Explained fully: no alert (self_upgrade_tick returns silently when spawning, before any upgrade.* event or the 3h give-up clock; CI watch ssh failure also hid it), restart error names nothing (bare counter; busy-agent names mask it), first refusal undatable (refusals are not logged). Recommendations: observable spawn registry, bound spawn awaits, alert on long-skipped upgrades, log restart refusals, forced restart for orchestrator, fix CI ssh key. Test crates/bridle-daemon/tests/spawning_flag_test.rs PASSES today (cannot reproduce a failing case; committed un-ignored as a guard) - the brief's required failing test is not delivered; reason in the ticket. just check exit 0, 1259 tests (last full: 1258)."
 +++
 
 original id: y455
@@ -16,3 +17,8 @@ Reproduce: add a test that fails today because the flag stays true after the spa
 Rules: do not restart, signal or change the running daemon; no live tests. ASCII only; times UTC (US Eastern in parentheses only where the human quoted one). Run `bridle ticket check`.
 Acceptance: postmortem committed in ticket y455 on your branch, every question answered with evidence (log lines, event ids, code lines); the ignored failing test committed; `just check` passes.
 Model: Sonnet. Out of scope: the fix (br-btdn), the alerting change itself (recommend only), any daemon restart.
+
+## Thread
+
+### note · agent:y455-postmortem · 2026-10-07T00:29:30.804Z
+done: postmortem in ticket y455 (summary set). Stop-during-spawn is NOT the leak: counter is an RAII guard; test spawning_flag_test passes today, so no failing reproducer exists (brief's failing-test criterion not met, reason in ticket). Cause is a hung spawn future, exact await unproven. just check exit 0, 1259 tests. commit b2ef1c32
