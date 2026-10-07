@@ -24,6 +24,19 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-06 ~23:13 on: a hung test held the landing queue
+
+- **What happened:** br-qbbk's landing check (`just check` in the integration worktree) hung in
+  gateway_test `a_replaced_binary_is_re_executed`, which waited forever on its temp-dir `bridle
+  gateway` child (0% CPU). Found by the orchestrator when br-x56y couldn't land.
+- **Impact:** the landing queue blocked for over an hour; the critical br-x56y fix (agents can't
+  `bridle send`) waited behind it. Only the human could end it (no abort, no timeout; rule
+  `no-kill-by-name`).
+- **Cause:** likely the z7y5 syspolicyd backlog delaying the new binary's first exec; the check
+  itself has no timeout.
+- **Category:** `merge`, `daemon`, `host`.
+- **Follow-up:** [[a-landing-s-integration-check-has-no-timeout-one-hung-test-h-y55w|y55w]].
+
 ## 2026-10-06 ~23:15-23:30: syspolicyd and Spotlight pegged; builds and app launches stalled
 
 - **What happened:** the human found Finder and app launches hung. syspolicyd was at ~300% CPU and
