@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Changed
+- A task's link to its ticket is now a real field, `ticket`, in the task's front matter, shown by `bridle task show` and in the API and gateway, not an `original id: <ticket>` first line of the body. `ticket new` and `ticket task` set it; `ticket check` reads it; the daemon moves existing `original id:` lines into the field at start (br-vk3y).
 - The orchestrator supervisor relaunches by typing `bridle session orchestrator --project <project>` into the pane, not the repo script `scripts/claude-orchestrator`. `[orchestrator] launcher` is now unset by default and, when set, is typed verbatim (br-w3pk).
 - Unknown config sections and keys no longer stop a binary: they are accepted with a warning (daemon log, or stderr once per CLI run) naming the file, the key and "unknown to this build (bridle <version>); a newer build may use it", with "did you mean" for a near-miss like `max_worker`. `bridle daemon doctor` lists them under "config warnings"; `--strict` makes any warning exit 1 (br-6hx4).
 

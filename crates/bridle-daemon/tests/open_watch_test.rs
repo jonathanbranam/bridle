@@ -24,6 +24,7 @@ async fn daemon(config: &str) -> (support::TestDaemon, tempfile::TempDir) {
 
 fn req(title: &str) -> NewTaskRequest {
     NewTaskRequest {
+        ticket: None,
         for_human: false,
         priority: None,
         components: Vec::new(),

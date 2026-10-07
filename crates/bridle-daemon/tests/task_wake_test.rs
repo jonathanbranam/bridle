@@ -36,6 +36,7 @@ async fn file(daemon: &support::TestDaemon, title: &str) {
     daemon
         .client
         .new_open_task(&NewTaskRequest {
+            ticket: None,
             for_human: false,
             priority: None,
             components: Vec::new(),

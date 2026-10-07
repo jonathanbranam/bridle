@@ -1806,13 +1806,14 @@ async fn new_task(
     let components = state.manager.normalize_components(&req.components)?;
     let task = state
         .tasks
-        .new_task_by(
+        .new_task_for_ticket(
             &req.title,
             req.kind,
             req.body,
             components,
             req.size,
             &principal.id,
+            req.ticket,
         )
         .await?;
     let task = if req.for_human {
@@ -1923,6 +1924,10 @@ async fn edit_task(
             req.size,
         )
         .await?;
+    let task = match req.ticket.as_deref() {
+        Some(t) => state.tasks.set_ticket(&task.id, t).await?,
+        None => task,
+    };
     if task.kind == bridle_api::types::TaskKind::Incident
         && task.state == bridle_api::types::TaskState::Planned
         && edited_notice_text

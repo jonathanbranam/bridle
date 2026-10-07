@@ -73,7 +73,7 @@ deliberately narrow: it's the fast index (id, title, kind, state,
 timestamps), not the record itself. `id` is `<project prefix>-<4
 characters>` (e.g. `tw-k7tm`) from the ticket alphabet (`abcdefghjkmnpqrstuvwxyz23456789`; tasks
 made before 2026-10-03 have hex ids, unchanged), generated with a collision retry. A task whose body
-starts `original id: <ticket>` (a ticket's task) takes `<prefix>-<ticket>` if no task has it yet, so
+has a `ticket` (the ticket it was made from, `ticket new`/`ticket task`) takes `<prefix>-<ticket>` if no task has it yet, so
 a ticket's first task shares its id; later ones get a fresh id. The prefix
 is `[tasks] prefix` in config, defaulting to the project name's first two
 alphanumeric characters (`bridle` -> `br`) if unset
@@ -316,6 +316,13 @@ events/2026-09.jsonl      append-only transitions, for history and rebuild
   existed loads as normal. `priority_at` (when it was last set; orders to-dos within a level)
   is likewise optional; absent means never set, and the task's creation time stands in. The new
   levels are additive, so old files need no migration. A rebuild round-trips it; each change is also a thread entry.
+- **A task's `ticket`** (the id of the ticket it was made from) is an optional `ticket = "..."`
+  frontmatter line: omitted for a task with none. There is no SQLite column; "the tasks of ticket X"
+  is a scan of the in-memory task cache. Before vk3y the link was the first body line
+  `original id: <ticket>`; at daemon start each such task has the line moved into the field and
+  removed from the body, written back through the normal task write (so it reaches the state
+  branch). Idempotent: a task without the line is left alone, so a second start changes nothing.
+  A rebuild round-trips the field.
 - **A task's landing record** (`branch`, `commit`, `summary`) lives only in the frontmatter, as
   optional strings: omitted when unset, and a file written before the fields existed loads
   with none. A rebuild round-trips them.

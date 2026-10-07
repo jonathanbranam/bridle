@@ -190,9 +190,21 @@ impl TaskManager {
                 branch: None,
                 commit: None,
                 summary: None,
+                ticket: None,
                 impact: Impact::default(),
                 settle_until: None,
             });
+            // Migration (vk3y): the old `original id:` first body line becomes the `ticket`
+            // field. Idempotent: once the line is gone there is nothing to move.
+            if task.ticket.is_none()
+                && let (Some(ticket), body) = split_legacy_origin(&task.body)
+            {
+                task.ticket = Some(ticket);
+                task.body = body;
+                if let Err(e) = state.enqueue_task(&task) {
+                    tracing::warn!(task = %task.id, "moving the original id line to the ticket field: {e}");
+                }
+            }
             // The database (backfilled from events) wins; where it's unknown, the task file's
             // value (which may itself have fallen back to the thread) fills it in. Either
             // direction is best effort: it must not fail start-up.
@@ -488,20 +500,36 @@ impl TaskManager {
         size: Option<TaskSize>,
         created_by: &str,
     ) -> Result<Task, TaskError> {
+        self.new_task_for_ticket(title, kind, body, components, size, created_by, None)
+            .await
+    }
+
+    /// [`TaskManager::new_task_by`] for a task made from `ticket`; the task's id takes the
+    /// ticket's id when free. An older client that sends the `original id:` first body line
+    /// instead of `ticket` is read the same way (the line leaves the body).
+    #[allow(clippy::too_many_arguments)]
+    pub async fn new_task_for_ticket(
+        &self,
+        title: &str,
+        kind: TaskKind,
+        body: String,
+        components: Vec<String>,
+        size: Option<TaskSize>,
+        created_by: &str,
+        ticket: Option<String>,
+    ) -> Result<Task, TaskError> {
         if title.trim().is_empty() {
             return Err(TaskError::BadRequest("title must not be empty".to_string()));
         }
-        // A task made from a ticket starts its body `original id: <ticket>`; the first one
-        // takes the ticket's id.
-        let ticket = body
-            .lines()
-            .next()
-            .and_then(|l| l.strip_prefix("original id: "))
-            .map(str::trim)
-            .filter(|t| !t.is_empty());
+        let (legacy, body) = split_legacy_origin(&body);
+        let ticket = ticket
+            .map(|t| t.trim().to_string())
+            .filter(|t| !t.is_empty())
+            .or(legacy);
+        let ticket_ref = ticket.as_deref();
         let row = self
             .store
-            .insert_task_wanting(&self.prefix, title, kind, created_by, ticket)
+            .insert_task_wanting(&self.prefix, title, kind, created_by, ticket_ref)
             .await?;
         let task = Task {
             id: row.id,
@@ -529,6 +557,7 @@ impl TaskManager {
             branch: None,
             commit: None,
             summary: None,
+            ticket,
             impact: Impact::default(),
             settle_until: None,
         };
@@ -633,6 +662,26 @@ impl TaskManager {
         tasks
     }
 
+    /// Sets the task's ticket link; no thread note, it is metadata.
+    pub async fn set_ticket(&self, id: &str, ticket: &str) -> Result<Task, TaskError> {
+        let ticket = ticket.trim();
+        if ticket.is_empty() {
+            return Err(TaskError::BadRequest(
+                "ticket must not be empty".to_string(),
+            ));
+        }
+        let mut task = self
+            .get_task(id)
+            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+        if task.ticket.as_deref() == Some(ticket) {
+            return Ok(task);
+        }
+        task.ticket = Some(ticket.to_string());
+        task.updated_at = Utc::now();
+        self.state.enqueue_task(&task)?;
+        Ok(self.put(task))
+    }
+
     /// Changes `title`, `body`, `components` and/or `size`. Neither changes the task's state.
     /// A human edit of the title or body is recorded as a thread note, which
     /// restarts the settle clock.
@@ -669,7 +718,7 @@ impl TaskManager {
             task.title = title;
         }
         if let Some(body) = body {
-            task.body = keep_origin_line(&task.body, body);
+            task.body = body;
         }
         if let Some(components) = components {
             task.components = components;
@@ -1579,14 +1628,15 @@ impl TaskManager {
     }
 }
 
-/// `ticket new` links a task to its ticket by a first body line `original id: <ticket>`; a body
-/// rewrite that doesn't carry its own such line keeps the old one, so `ticket check` stays green.
-fn keep_origin_line(old: &str, new: String) -> String {
+/// Before the `ticket` front-matter field, a task made from a ticket started its body
+/// `original id: <ticket>`. Returns that ticket id (if the first line is such a line) and the
+/// body without the line.
+fn split_legacy_origin(body: &str) -> (Option<String>, String) {
     const PREFIX: &str = "original id: ";
-    let origin = |b: &str| b.lines().next().is_some_and(|l| l.starts_with(PREFIX));
-    match old.lines().next() {
-        Some(first) if origin(old) && !origin(&new) => format!("{first}\n{new}"),
-        _ => new,
+    let (first, rest) = body.split_once('\n').unwrap_or((body, ""));
+    match first.strip_prefix(PREFIX).map(str::trim) {
+        Some(t) if !t.is_empty() => (Some(t.to_string()), rest.to_string()),
+        _ => (None, body.to_string()),
     }
 }
 
@@ -1746,46 +1796,26 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn body_edit_keeps_the_original_id_first_line() {
+    async fn a_ticket_task_has_the_field_and_no_body_line_and_edit_keeps_it() {
         let (tm, _tmp) = manager().await;
-        let body = "original id: abcd\nold".to_string();
         let task = tm
-            .new_open_task("T", TaskKind::Feature, body, vec![], None)
+            .new_task_for_ticket(
+                "T",
+                TaskKind::Feature,
+                "docs/tickets/open/x-abcd.md".to_string(),
+                vec![],
+                None,
+                "human",
+                Some("abcd".to_string()),
+            )
             .await
             .expect("new task");
+        assert_eq!(task.ticket.as_deref(), Some("abcd"));
+        assert_eq!(task.id, "tw-abcd");
+        assert_eq!(task.body, "docs/tickets/open/x-abcd.md");
         let edited = tm
             .edit_task(
                 &task.id,
-                &agent(),
-                None,
-                Some("brief".to_string()),
-                None,
-                None,
-            )
-            .await
-            .expect("edit");
-        assert_eq!(edited.body, "original id: abcd\nbrief");
-        // A body with its own origin line wins.
-        let edited = tm
-            .edit_task(
-                &task.id,
-                &agent(),
-                None,
-                Some("original id: wxyz\nbrief".to_string()),
-                None,
-                None,
-            )
-            .await
-            .expect("edit");
-        assert_eq!(edited.body, "original id: wxyz\nbrief");
-        // A task without an origin line is unaffected.
-        let plain = tm
-            .new_open_task("P", TaskKind::Feature, "plain".to_string(), vec![], None)
-            .await
-            .expect("new task");
-        let edited = tm
-            .edit_task(
-                &plain.id,
                 &agent(),
                 None,
                 Some("brief".to_string()),
@@ -1795,6 +1825,80 @@ mod tests {
             .await
             .expect("edit");
         assert_eq!(edited.body, "brief");
+        assert_eq!(edited.ticket.as_deref(), Some("abcd"));
+        let set = tm.set_ticket(&task.id, "wxyz").await.expect("set");
+        assert_eq!(set.ticket.as_deref(), Some("wxyz"));
+        // A task without a ticket stays without one.
+        let plain = tm
+            .new_open_task("P", TaskKind::Feature, "plain".to_string(), vec![], None)
+            .await
+            .expect("new task");
+        assert_eq!(plain.ticket, None);
+    }
+
+    #[tokio::test]
+    async fn an_old_client_origin_line_becomes_the_field_on_create() {
+        let (tm, _tmp) = manager().await;
+        let task = tm
+            .new_open_task(
+                "T",
+                TaskKind::Feature,
+                "original id: abcd\nold".to_string(),
+                vec![],
+                None,
+            )
+            .await
+            .expect("new task");
+        assert_eq!(task.ticket.as_deref(), Some("abcd"));
+        assert_eq!(task.body, "old");
+    }
+
+    #[tokio::test]
+    async fn start_moves_an_original_id_line_into_the_ticket_field_once() {
+        let (tm, tmp) = manager().await;
+        let mut task = tm
+            .new_open_task("T", TaskKind::Feature, "x".to_string(), vec![], None)
+            .await
+            .expect("new task");
+        let plain = tm
+            .new_open_task("P", TaskKind::Feature, "plain".to_string(), vec![], None)
+            .await
+            .expect("new task");
+        // The state a pre-vk3y daemon left behind.
+        task.body = "original id: abcd\ndocs/x.md\n\nbrief".to_string();
+        tm.state.enqueue_task(&task).expect("enqueue");
+        tm.state.flush_now().await.expect("flush");
+        let reopen = || async {
+            let store = Store::open(tmp.path().join("bridle.db"))
+                .await
+                .expect("open store");
+            let state = StateBranch::open(&tmp.path().join("repo"), &tmp.path().join("state"))
+                .await
+                .expect("open state branch");
+            let tm = TaskManager::open(
+                store,
+                state,
+                "tw".to_string(),
+                std::time::Duration::from_secs(600),
+            )
+            .await
+            .expect("reopen");
+            tm.state.flush_now().await.expect("flush");
+            tm
+        };
+        let tm2 = reopen().await;
+        let migrated = tm2.get_task(&task.id).expect("task");
+        assert_eq!(migrated.ticket.as_deref(), Some("abcd"));
+        assert_eq!(migrated.body, "docs/x.md\n\nbrief");
+        assert_eq!(tm2.get_task(&plain.id).expect("plain").ticket, None);
+        // It reached the state branch, and a second start changes nothing.
+        let on_disk = tm2.state.read_task(&task.id).expect("file");
+        assert_eq!(on_disk.ticket.as_deref(), Some("abcd"));
+        let tm3 = reopen().await;
+        let again = tm3.get_task(&task.id).expect("task");
+        assert_eq!(again.ticket, migrated.ticket);
+        assert_eq!(again.body, migrated.body);
+        assert_eq!(again.updated_at, migrated.updated_at);
     }
 
     #[tokio::test]

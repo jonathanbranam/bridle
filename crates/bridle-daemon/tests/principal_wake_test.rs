@@ -122,6 +122,7 @@ async fn only_that_principal_or_the_human_may_wait() {
 async fn new_task(client: &Client) -> String {
     client
         .new_open_task(&NewTaskRequest {
+            ticket: None,
             title: "t".to_string(),
             kind: TaskKind::Feature,
             body: String::new(),

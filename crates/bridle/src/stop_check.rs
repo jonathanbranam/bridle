@@ -176,6 +176,7 @@ mod tests {
             branch: None,
             commit: None,
             summary: None,
+            ticket: None,
             impact: Default::default(),
             settle_until: None,
             id: "tw-0001".to_string(),

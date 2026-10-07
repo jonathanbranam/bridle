@@ -45,6 +45,7 @@ fn branch_with(d: &TestDaemon, branch: &str, file: &str, content: &str) {
 async fn task(d: &TestDaemon, kind: TaskKind) -> String {
     d.client
         .new_open_task(&NewTaskRequest {
+            ticket: None,
             for_human: false,
             priority: None,
             components: Vec::new(),

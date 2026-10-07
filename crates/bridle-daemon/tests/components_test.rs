@@ -21,6 +21,7 @@ parent = "client"
 
 fn req(title: &str, components: &[&str]) -> NewTaskRequest {
     NewTaskRequest {
+        ticket: None,
         for_human: false,
         priority: None,
         title: title.to_string(),
@@ -57,6 +58,7 @@ async fn task_components_round_trip_validate_and_filter_by_descendant() {
         .edit_task(
             &games.id,
             &EditTaskRequest {
+                ticket: None,
                 components: Some(vec!["nope".to_string()]),
                 ..Default::default()
             },
@@ -85,6 +87,7 @@ async fn task_components_round_trip_validate_and_filter_by_descendant() {
         .edit_task(
             &games.id,
             &EditTaskRequest {
+                ticket: None,
                 components: Some(vec!["server".to_string()]),
                 ..Default::default()
             },
@@ -96,6 +99,7 @@ async fn task_components_round_trip_validate_and_filter_by_descendant() {
         .edit_task(
             &games.id,
             &EditTaskRequest {
+                ticket: None,
                 components: Some(vec![]),
                 ..Default::default()
             },

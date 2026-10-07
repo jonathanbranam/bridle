@@ -57,7 +57,7 @@ design moves on; the design docs cite them.
   rule (`workflow/base/rules/tickets.md`).
 - The same frontmatter: `id`, `title`, `kind` (a task kind; editable with `ticket set`),
   `opened`, `repos`, `changes`, `specs`, `needs`, `see`, `tasks` (every task made from the
-  ticket; the task's body starts `original id: <id>`, so the link is two-way and `ticket check`
+  ticket; the task's `ticket` field is `<id>`, so the link is two-way and `ticket check`
   flags one side only). Tickets and tasks share one id alphabet and space: a ticket's first task
   takes its id (`br-<id>`); `bridle ticket new --from-task <task-id>` goes the other way, making
   a ticket from a task with the task's id (a fresh, linked id when an old hex task id has `0` or `1`).
@@ -78,7 +78,7 @@ design moves on; the design docs cite them.
   pinned to a commit when the source has since changed) and don't triage.
 
 **Since P0-6 (tskm), `bridle task` is the queue, not this folder.** Every
-ticket here has a matching bridle task (body starts `original id: <id>`); a
+ticket here has a matching bridle task (its `ticket` field is `<id>`); a
 new ticket gets its task at filing, and resolving a ticket closes its task.
 The ticket file stays the durable text its task points to — filing and
 resolving still work the way this section describes. This doesn't decide

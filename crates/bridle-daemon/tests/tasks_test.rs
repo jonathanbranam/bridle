@@ -17,6 +17,7 @@ use support::{start_daemon, wait_for_state};
 
 fn new_req(title: &str, kind: TaskKind) -> NewTaskRequest {
     NewTaskRequest {
+        ticket: None,
         for_human: false,
         priority: None,
         components: Vec::new(),
@@ -34,6 +35,7 @@ async fn create_show_list_and_edit_a_task() {
 
     let task = c
         .new_open_task(&NewTaskRequest {
+            ticket: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
@@ -63,6 +65,7 @@ async fn create_show_list_and_edit_a_task() {
         .edit_task(
             &task.id,
             &EditTaskRequest {
+                ticket: None,
                 components: None,
                 size: None,
                 title: Some("Add foo, better".to_string()),
@@ -764,6 +767,7 @@ async fn size_is_set_on_new_shown_edited_and_kept_by_other_edits() {
         .edit_task(
             &unsized_task.id,
             &EditTaskRequest {
+                ticket: None,
                 size: Some(TaskSize::L),
                 ..Default::default()
             },
@@ -775,6 +779,7 @@ async fn size_is_set_on_new_shown_edited_and_kept_by_other_edits() {
         .edit_task(
             &edited.id,
             &EditTaskRequest {
+                ticket: None,
                 title: Some("Bigger".to_string()),
                 ..Default::default()
             },
@@ -839,6 +844,7 @@ async fn search_matches_words_in_title_body_and_summary() {
 
     let t1 = c
         .new_open_task(&NewTaskRequest {
+            ticket: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
@@ -852,6 +858,7 @@ async fn search_matches_words_in_title_body_and_summary() {
 
     let t2 = c
         .new_open_task(&NewTaskRequest {
+            ticket: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
@@ -865,6 +872,7 @@ async fn search_matches_words_in_title_body_and_summary() {
 
     let t3 = c
         .new_open_task(&NewTaskRequest {
+            ticket: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
@@ -938,6 +946,7 @@ async fn search_includes_done_and_dropped_tasks() {
 
     let open_task = c
         .new_open_task(&NewTaskRequest {
+            ticket: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
@@ -951,6 +960,7 @@ async fn search_includes_done_and_dropped_tasks() {
 
     let done_task = c
         .new_open_task(&NewTaskRequest {
+            ticket: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
@@ -964,6 +974,7 @@ async fn search_includes_done_and_dropped_tasks() {
 
     let dropped_task = c
         .new_open_task(&NewTaskRequest {
+            ticket: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
@@ -1446,4 +1457,44 @@ async fn a_workers_open_questions_omit_other_tasks_but_the_humans_do_not() {
     assert_eq!(seen.len(), 1, "{seen:?}");
     assert_eq!(seen[0].task_id, mine.id);
     assert_eq!(c.list_open_questions().await.expect("human list").len(), 2);
+}
+
+#[tokio::test]
+async fn the_ticket_field_round_trips_through_the_api_and_survives_an_edit() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let c = &daemon.client;
+    let mut req = new_req("From a ticket", TaskKind::Feature);
+    req.ticket = Some("k7tm".to_string());
+    req.body = "docs/tickets/open/x-k7tm.md".to_string();
+    let task = c.new_open_task(&req).await.expect("new task");
+    assert_eq!(task.ticket.as_deref(), Some("k7tm"));
+    assert!(task.id.ends_with("-k7tm"), "got id {}", task.id);
+    assert_eq!(task.body, "docs/tickets/open/x-k7tm.md");
+
+    let edited = c
+        .edit_task(
+            &task.id,
+            &EditTaskRequest {
+                body: Some("new brief".to_string()),
+                ..Default::default()
+            },
+        )
+        .await
+        .expect("edit");
+    assert_eq!(edited.ticket.as_deref(), Some("k7tm"));
+    let fetched = c.get_task(&task.id).await.expect("get");
+    assert_eq!(fetched.ticket.as_deref(), Some("k7tm"));
+    assert_eq!(fetched.body, "new brief");
+
+    let relinked = c
+        .edit_task(
+            &task.id,
+            &EditTaskRequest {
+                ticket: Some("zzzz".to_string()),
+                ..Default::default()
+            },
+        )
+        .await
+        .expect("edit ticket");
+    assert_eq!(relinked.ticket.as_deref(), Some("zzzz"));
 }

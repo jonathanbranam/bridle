@@ -1727,6 +1727,10 @@ pub struct Task {
     /// Short account of how it was implemented, set by `task summary`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub summary: Option<String>,
+    /// The id of the ticket the task was made from (front matter `ticket`); null for a task
+    /// with no ticket. Old task files and old daemons omit it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ticket: Option<String>,
     /// Spec ids and file globs the task declares it will touch, set by
     /// `impact set` (docs/design/impact-and-conflicts.md). Empty = undeclared.
     #[serde(default, skip_serializing_if = "Impact::is_empty")]
@@ -1935,6 +1939,9 @@ pub struct NewTaskRequest {
     /// Default normal.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub priority: Option<TaskPriority>,
+    /// The ticket the task is made from; the task's id takes the ticket's id when free.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ticket: Option<String>,
 }
 
 /// A submission to the project's triage (`POST /v1/tasks/submit`): always an `open` task.
@@ -1957,6 +1964,9 @@ pub struct EditTaskRequest {
     pub components: Option<Vec<String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub size: Option<TaskSize>,
+    /// Sets the task's ticket link.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ticket: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

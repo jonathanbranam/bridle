@@ -4,6 +4,10 @@ import type { ThreadItem } from "./ThreadItem";
 
 export type TaskDetail = { project: string, body: string, thread: Array<ThreadItem>, watchers: Array<string>, branch: string | null, 
 /**
+ * The ticket the task was made from, if any.
+ */
+ticket: string | null, 
+/**
  * Ids of tasks this one blocks.
  */
 blocks: Array<string>, 

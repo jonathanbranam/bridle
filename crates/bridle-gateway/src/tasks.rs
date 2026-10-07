@@ -88,6 +88,8 @@ pub struct TaskDetail {
     pub thread: Vec<ThreadItem>,
     pub watchers: Vec<String>,
     pub branch: Option<String>,
+    /// The ticket the task was made from, if any.
+    pub ticket: Option<String>,
     /// Ids of tasks this one blocks.
     pub blocks: Vec<String>,
     /// Ids of tasks that block this one.
@@ -195,6 +197,7 @@ pub(crate) async fn detail(
             .collect(),
         watchers: t.watchers.clone(),
         branch: t.branch.clone(),
+        ticket: t.ticket.clone(),
         blocks: blocks(true),
         blocked_by: blocks(false),
     })

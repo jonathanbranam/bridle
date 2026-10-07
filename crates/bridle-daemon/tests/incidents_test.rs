@@ -31,6 +31,7 @@ async fn spawn(d: &TestDaemon, name: &str) -> String {
 async fn file(client: &bridle_api::Client, title: &str) -> String {
     client
         .new_task(&NewTaskRequest {
+            ticket: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
@@ -230,6 +231,7 @@ async fn editing_an_active_incident_updates_the_pending_notice_in_place() {
     orch.edit_task(
         &id,
         &EditTaskRequest {
+            ticket: None,
             body: Some("now it's green-ish".to_string()),
             ..Default::default()
         },

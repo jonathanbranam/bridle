@@ -250,9 +250,9 @@ bridle ticket new --from-task <task-id> [--kind k] [title]   as `ticket new`, fr
                                              task's id, or a fresh one when the task's tail has a character
                                              the ticket alphabet lacks (old hex ids with 0/1) or a ticket has
                                              it; either way the ticket's `tasks:` lists the task and the
-                                             task body gets the `original id: <ticket>` first line
-bridle ticket task <id>                      files the task for an open ticket (its title and kind, body
-                                             `original id: <id>` and the path) and records its id in the
+                                             task's `ticket` field is set to the ticket's id
+bridle ticket task <id>                      files the task for an open ticket (its title and kind, `ticket` field
+                                             set to the id, body the path) and records its id in the
                                              ticket's `tasks:` (the first task from a ticket takes the ticket's id,
                                              `br-k7tm` for `k7tm`; later ones get fresh ids). Refuses an empty
                                              `## The ask` and a ticket file not in the tip of local `main`
@@ -271,7 +271,7 @@ bridle ticket check [--quiet]                checks every ticket in `docs/ticket
                                              name's tail and is unique; `needs`/`see` name existing tickets (id or
                                              full stem); `[[stem|text]]` links outside code fences point at a file
                                              (stem anywhere under `docs/`, or a path from the repo root or
-                                             `docs/`); `kind` is a task kind; `tasks` and the tasks' `original id:` agree (task side checked only
+                                             `docs/`); `kind` is a task kind; `tasks` and the tasks' `ticket` fields agree (task side checked only
                                              when the daemon is up; a missing `kind`/`tasks` is a warning for now, see
                                              `MISSING_KIND_OR_LINK_IS_ERROR` in `ticket.rs`). Problems go to stderr, one per line, exit 1; `--quiet`
                                              prints nothing when clean. Local, no daemon
@@ -443,9 +443,10 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   (`sort_by_priority` in bridle-api) shared by the CLI and the gateway's to-do list, so `task list --claimed-by human` is the human's ranked
   list. `task drop --reason` on a to-do the human holds also sends the human an inbox note
   with the reason.
-- **`task edit --body`** keeps a ticket-born task's first line `original id: <ticket>` (the link
-  `ticket check` reads) when the new body doesn't start with its own such line; a body that does
-  wins.
+- **A task's `ticket`** (the ticket it was made from) is a task field, shown by `task show` as
+  `ticket` and in the JSON; `ticket check` reads it. `task edit` never touches it (the body is
+  free text). Old tasks that had an `original id: <ticket>` first body line are migrated at daemon
+  start (docs/design/storage.md).
 - **`--size S|M|L|none`** on `task new`/`task edit` sets the task's optional estimated size
   (case-insensitive), so small tasks can be picked when budget runs short. `--size none`
   on `task edit` clears the task's size. It's informational: nothing selects on it and the

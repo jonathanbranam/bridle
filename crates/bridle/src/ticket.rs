@@ -28,7 +28,8 @@ const MAX_SLUG: usize = 60;
 /// (ticket v3dk, slice B) has run in every project; it flips this to true.
 const MISSING_KIND_OR_LINK_IS_ERROR: bool = false;
 
-/// First line of a task body made from a ticket: `original id: <ticket id>`.
+/// First line of a task body made from a ticket before the `ticket` field (vk3y); still read
+/// from a daemon that hasn't migrated it yet.
 const TASK_ORIGIN_PREFIX: &str = "original id: ";
 
 pub async fn run(cli: &Cli, args: &TicketArgs) -> Result<(), CliError> {
@@ -106,21 +107,23 @@ async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<(), CliErro
         .display()
         .to_string();
     if let Some(task) = &from {
-        // Link both ways: the ticket lists the task, and the task body names the ticket (what
-        // `ticket check` reads); the ticket's id is the task's tail unless that couldn't be reused.
+        // Link both ways: the ticket lists the task, and the task's `ticket` field names the
+        // ticket (what `ticket check` reads); the ticket's id is the task's tail unless that
+        // couldn't be reused.
         let ticket_id = id_of(&path).ok_or_else(|| anyhow!("new ticket has no id"))?;
         set(&root, &ticket_id, "tasks", &task.id)?;
-        let body = if task.body.starts_with(TASK_ORIGIN_PREFIX) {
-            task.body.clone()
+        let body = if task.ticket.is_some() {
+            None
         } else {
-            format!("{TASK_ORIGIN_PREFIX}{ticket_id}\n{rel}\n\n{}", task.body)
+            Some(format!("{rel}\n\n{}", task.body))
         };
         client_for(cli)
             .await?
             .edit_task(
                 &task.id,
                 &EditTaskRequest {
-                    body: Some(body),
+                    body,
+                    ticket: Some(ticket_id),
                     ..Default::default()
                 },
             )
@@ -142,7 +145,7 @@ async fn task_cmd(cli: &Cli, repo: &Path, args: &TicketTaskArgs) -> Result<(), C
     let rel = path.strip_prefix(repo).unwrap_or(&path).to_path_buf();
     ensure_committed(repo, &rel)?;
     let rel = rel.display().to_string();
-    // The daemon gives the task the ticket's id from the `original id:` line (br-9e15).
+    // The daemon gives the task the ticket's id from the `ticket` field (br-9e15).
     let task_id = make_task(cli, &title, kind, &args.id, &rel).await?;
     set(&root, &args.id, "tasks", &task_id)?;
     println!("{task_id}");
@@ -230,9 +233,10 @@ async fn make_task(
             priority: None,
             title: title.to_string(),
             kind,
-            body: format!("{TASK_ORIGIN_PREFIX}{id}\n{rel}"),
+            body: rel.to_string(),
             components: Vec::new(),
             size: None,
+            ticket: Some(id.to_string()),
         })
         .await?;
     Ok(task.id)
@@ -261,15 +265,18 @@ async fn task_links(cli: &Cli) -> Option<HashMap<String, String>> {
     Some(
         tasks
             .into_iter()
-            .filter_map(|t| {
-                let first = t.body.lines().next()?;
-                Some((
-                    t.id,
-                    first.strip_prefix(TASK_ORIGIN_PREFIX)?.trim().to_string(),
-                ))
-            })
+            .filter_map(|t| Some((t.id.clone(), ticket_of(&t)?)))
             .collect(),
     )
+}
+
+/// The ticket a task was made from: its `ticket` field, or (a daemon that hasn't migrated it
+/// yet) the old `original id:` first body line.
+fn ticket_of(t: &bridle_api::Task) -> Option<String> {
+    t.ticket.clone().or_else(|| {
+        let first = t.body.lines().next()?;
+        Some(first.strip_prefix(TASK_ORIGIN_PREFIX)?.trim().to_string())
+    })
 }
 
 fn resolve_cmd(repo: &Path, args: &TicketResolveArgs) -> Result<(), CliError> {
@@ -670,7 +677,7 @@ pub fn check(root: &Path, docs: &Path, task_links: Option<&HashMap<String, Strin
                         true,
                         format!(
                             "tasks names {t}, which is not a task made from a ticket \
-                             (or its task body lost its `original id:` first line)"
+                             (or its task has no `ticket` field)"
                         ),
                     ),
                     Some(o) if o != me => {
@@ -843,6 +850,21 @@ mod tests {
             needs: &[],
             see: &[],
         }
+    }
+
+    #[test]
+    fn ticket_of_reads_the_field_then_the_old_body_line() {
+        let mut t: bridle_api::Task = serde_json::from_value(serde_json::json!({
+            "id": "br-abcd", "title": "T", "kind": "feature", "state": "open", "body": "x",
+            "thread": [], "created_at": "2026-01-01T00:00:00Z",
+            "updated_at": "2026-01-01T00:00:00Z",
+        }))
+        .unwrap();
+        assert_eq!(ticket_of(&t), None);
+        t.body = "original id: old1\nrest".to_string();
+        assert_eq!(ticket_of(&t).as_deref(), Some("old1"));
+        t.ticket = Some("abcd".to_string());
+        assert_eq!(ticket_of(&t).as_deref(), Some("abcd"));
     }
 
     #[test]

@@ -1079,6 +1079,9 @@ struct Frontmatter {
     commit: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     summary: Option<String>,
+    /// The ticket the task was made from; absent for a task with none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    ticket: Option<String>,
     /// Last: TOML needs tables after plain values.
     #[serde(default, skip_serializing_if = "Impact::is_empty")]
     impact: Impact,
@@ -1107,6 +1110,7 @@ fn render_task(task: &Task) -> Result<String, StateBranchError> {
         branch: task.branch.clone(),
         commit: task.commit.clone(),
         summary: task.summary.clone(),
+        ticket: task.ticket.clone(),
         impact: task.impact.clone(),
     };
     let toml = toml::to_string_pretty(&fm)?;
@@ -1284,6 +1288,7 @@ fn parse_task(text: &str) -> Result<Task, StateBranchError> {
         branch: fm.branch,
         commit: fm.commit,
         summary: fm.summary,
+        ticket: fm.ticket,
         impact: fm.impact,
         settle_until: None,
     })
@@ -1456,6 +1461,7 @@ mod tests {
             branch: Some("bridle/x".to_string()),
             commit: Some("abc123".to_string()),
             summary: Some("Did a thing.\n\nSecond \"paragraph\".".to_string()),
+            ticket: Some("7fa2".to_string()),
             impact: Impact {
                 modify: vec!["s-b310".to_string()],
                 add_under: vec!["r-7fa2".to_string()],
@@ -1483,6 +1489,7 @@ mod tests {
         assert_eq!(parsed.branch, task.branch);
         assert_eq!(parsed.commit, task.commit);
         assert_eq!(parsed.summary, task.summary);
+        assert_eq!(parsed.ticket.as_deref(), Some("7fa2"));
         assert_eq!(parsed.created_at, task.created_at);
         assert_eq!(parsed.updated_at, task.updated_at);
         assert_eq!(parsed.created_by, "human");

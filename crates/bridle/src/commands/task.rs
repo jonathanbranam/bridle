@@ -130,6 +130,7 @@ pub(super) async fn task_new(cli: &Cli, args: &TaskNewArgs) -> Result<(), CliErr
         String::new()
     };
     let req = NewTaskRequest {
+        ticket: None,
         for_human: args.for_human,
         title: args.title.clone(),
         kind: task_kind_arg(args.kind),
@@ -178,6 +179,9 @@ pub(super) async fn task_show(cli: &Cli, args: &TaskShowArgs) -> Result<(), CliE
         println!("kind        {}", task.kind);
         println!("state       {}", task.state);
         println!("priority    {}", task.priority);
+        if let Some(ticket) = &task.ticket {
+            println!("ticket      {ticket}");
+        }
         if let Some(size) = task.size {
             println!("size        {size}");
         }
@@ -243,6 +247,7 @@ pub(super) async fn task_edit(cli: &Cli, args: &TaskEditArgs) -> Result<(), CliE
             Some(args.component.clone())
         },
         size: args.size.and_then(task_size_arg_to_opt),
+        ticket: None,
     };
     let task = client.edit_task(&args.task, &req).await?;
     if cli.json {

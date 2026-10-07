@@ -55,6 +55,7 @@ async fn landing_notifies_the_other_worker_once_and_not_the_lander() {
     let task = daemon
         .client
         .new_open_task(&NewTaskRequest {
+            ticket: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
@@ -127,6 +128,7 @@ async fn landing_names_the_overlap_only_to_the_worker_whose_impact_overlaps() {
         let t = daemon
             .client
             .new_open_task(&NewTaskRequest {
+                ticket: None,
                 for_human: false,
                 priority: None,
                 components: Vec::new(),

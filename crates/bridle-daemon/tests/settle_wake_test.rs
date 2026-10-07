@@ -22,6 +22,7 @@ async fn planned_task(daemon: &support::TestDaemon, title: &str) -> String {
     let id = daemon
         .client
         .new_open_task(&NewTaskRequest {
+            ticket: None,
             for_human: false,
             priority: None,
             components: Vec::new(),

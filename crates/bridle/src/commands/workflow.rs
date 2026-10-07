@@ -345,6 +345,7 @@ pub(super) async fn arch_propose(cli: &Cli, args: &ArchProposeArgs) -> Result<()
 
     let client = client_for(cli).await?;
     let req = NewTaskRequest {
+        ticket: None,
         for_human: false,
         priority: None,
         title: args.title.clone(),

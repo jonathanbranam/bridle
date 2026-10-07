@@ -27,6 +27,7 @@ async fn land(daemon: &support::TestDaemon, kind: TaskKind, title: &str) -> Stri
     let t = daemon
         .client
         .new_open_task(&NewTaskRequest {
+            ticket: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
