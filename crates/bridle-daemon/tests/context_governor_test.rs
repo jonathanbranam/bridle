@@ -33,6 +33,7 @@ fn fast_overrides() -> Overrides {
         ci_tick_interval: std::time::Duration::from_secs(3600),
         self_upgrade_wait: std::time::Duration::from_secs(600),
         settle_wake_interval: std::time::Duration::from_secs(3600),
+        doc_watch_interval: std::time::Duration::from_secs(3600),
         queue_nudge_debounce: std::time::Duration::from_secs(3600),
         open_watch_debounce: std::time::Duration::from_secs(3600),
         take_over: false,

@@ -194,6 +194,15 @@ fn unid(block: &str) -> String {
     }
 }
 
+/// A batch (blocks joined by a blank line) with every thread ID removed.
+fn unid_batch(batch: &str) -> String {
+    batch
+        .split("\n\n")
+        .map(unid)
+        .collect::<Vec<_>>()
+        .join("\n\n")
+}
+
 /// Comment threads whose newest entry is the human's with no mark or `[pending]`, each as its
 /// quoted block. Threads already marked sent or read are left out unless `resend`; resolved
 /// threads never go.
@@ -407,11 +416,29 @@ impl Core {
         v.into_iter().map(|(_, d)| d).collect()
     }
 
+    /// Why each observed document with something to send is not in `due` (debug log).
+    fn log_held_back(&self, due: &[Due], now: DateTime<Utc>, quiet: Duration) {
+        for (p, d) in &self.docs {
+            if d.seen.is_empty() || d.seen == d.delivered || due.iter().any(|x| &x.path == p) {
+                continue;
+            }
+            let still_for = d.changed_at.map(|at| now - at);
+            tracing::debug!(path = %p, ?still_for, ?quiet, "pending comments held back: not still long enough");
+        }
+    }
+
     pub fn delivered(&mut self, path: &str) {
         if let Some(d) = self.docs.get_mut(path) {
             d.delivered = d.seen.clone();
         }
     }
+}
+
+fn due_paths_not_admitted(due: &[String], go: &[Due]) -> Vec<String> {
+    due.iter()
+        .filter(|p| !go.iter().any(|g| &g.path == *p))
+        .cloned()
+        .collect()
 }
 
 /// Which due documents go now: one whose agent is already running always does; one that needs
@@ -505,19 +532,24 @@ impl DocWatcher {
                     core.observe(&p, &text, now);
                 }
             }
-            core.due(
-                now,
-                Duration::from_std(self.cfg.quiet).unwrap_or(Duration::minutes(7)),
-            )
+            let quiet = Duration::from_std(self.cfg.quiet).unwrap_or(Duration::minutes(7));
+            let due = core.due(now, quiet);
+            core.log_held_back(&due, now, quiet);
+            due
         };
         let running = docs.iter().filter(|a| a.state.is_running()).count();
+        let go_paths: Vec<String> = due.iter().map(|d| d.path.clone()).collect();
         let go = admit(
             due,
             |n| docs.iter().any(|a| a.name == n && a.state.is_running()),
             running,
             self.cfg.max_agents as usize,
         );
+        for d in &due_paths_not_admitted(&go_paths, &go) {
+            tracing::debug!(path = %d, "document is due but waits for a free agent slot");
+        }
         for d in go {
+            tracing::debug!(path = %d.path, "document is due; sending");
             // `Ok(0)`: the text changed since it was observed; the next tick looks again.
             if let Ok(n) = self.send(&d.path, false, Some(&d.batch), now).await
                 && n > 0
@@ -608,7 +640,16 @@ impl DocWatcher {
         let file = self.repo.join(path);
         let text = std::fs::read_to_string(&file).map_err(|e| format!("{path}: {e}"))?;
         let threads = pending_threads(&text, resend);
-        if threads.is_empty() || expect.is_some_and(|e| e != unid(&threads.join("\n\n"))) {
+        if threads.is_empty() {
+            tracing::debug!(path, "document has nothing pending to send");
+            return Ok(0);
+        }
+        // `expect` was read before IDs were assigned; compare without them.
+        if expect.is_some_and(|e| unid_batch(e) != unid_batch(&threads.join("\n\n"))) {
+            tracing::debug!(
+                path,
+                "document changed since it was observed; looking again next tick"
+            );
             return Ok(0);
         }
         // The agent sees the thread IDs, so they go in before the batch does.
@@ -893,6 +934,14 @@ mod tests {
                 .unwrap_err()
                 .contains("no thread")
         );
+    }
+
+    #[test]
+    fn batch_with_ids_matches_the_same_batch_without() {
+        let two = format!("{HUMAN}\nOther.\n\n> [!comment] c7 human, 14:07, on \"Other\"\n> Hm?\n");
+        let with = assign_ids(&two);
+        let join = |t: &str| pending_threads(t, false).join("\n\n");
+        assert_eq!(unid_batch(&join(&two)), unid_batch(&join(&with)));
     }
 
     #[test]

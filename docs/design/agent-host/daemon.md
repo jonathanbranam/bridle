@@ -118,7 +118,7 @@ resumed if stopped, else sent as a message. Its own replies end the pending stat
 for its own edits, and a restart doesn't resend answered threads. `[review] max_agents` (default 3)
 caps document agents running at once (a document needing a start waits, still due, until a slot
 frees); `[review] idle_hours` (default 4) stops an idle document agent, which resumes with its next
-batch.
+batch. The watcher ticks every 30 s; at debug level it logs why a document is held back (not still long enough), due, or waiting for a slot. Just before sending it re-reads the file and sends only if the pending threads are unchanged, comparing without thread IDs (ad3t: a document whose threads already had IDs was never sent).
 
 **Marks, IDs and review now (ticket ehv6).** Each entry may end its first line with one ASCII
 status, `[pending|sent|read YYYY-MM-DD HH:MM EDT]` (US Eastern with its zone; only the latest is

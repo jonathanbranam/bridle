@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Fixed
+- Document review sends a still document's pending comments on its own again: the watcher's check that the text hadn't changed before sending compared a batch with thread IDs (`c1`) against one without, so any document the gateway had numbered never went; only `bridle review now` worked. The watcher now logs at debug level why a document is held back, due or waiting for a slot (br-ad3t).
 - A comment on a claimed task now tells its claimant like a watcher (one message, never the author), so a manager's send-back comment wakes the worker (br-m63h).
 - `bridle send` from an agent (its own `BRIDLE_URL` and `BRIDLE_PROJECT`) sends locally again, `--task` included; since the 3haz build it was treated as mail for another project and refused. The own daemon's project is read from its status when found by URL (br-x56y).
 

@@ -127,6 +127,8 @@ pub struct Overrides {
     pub self_upgrade_wait: Duration,
     /// How often a task finishing its settle period is looked for.
     pub settle_wake_interval: Duration,
+    /// How often the document-review watcher looks at the documents under review.
+    pub doc_watch_interval: Duration,
     /// How long the queue stays unchanged before the manager is nudged.
     pub queue_nudge_debounce: Duration,
     /// How long readied tasks must stop arriving before the PM is told they're open.
@@ -157,6 +159,7 @@ impl Default for Overrides {
             ci_tick_interval: ci::TICK_INTERVAL,
             self_upgrade_wait: Duration::from_secs(600),
             settle_wake_interval: Duration::from_secs(30),
+            doc_watch_interval: Duration::from_secs(30),
             queue_nudge_debounce: queue_nudge::DEBOUNCE,
             open_watch_debounce: open_watch::DEBOUNCE,
             take_over: false,
@@ -805,7 +808,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
             }
         }
     });
-    let doc_watch_task = spawn_loop(shutdown_rx.clone(), Duration::from_secs(30), {
+    let doc_watch_task = spawn_loop(shutdown_rx.clone(), overrides.doc_watch_interval, {
         move || {
             let doc_watch = doc_watch.clone();
             async move { doc_watch.tick().await }
