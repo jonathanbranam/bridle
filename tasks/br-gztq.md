@@ -4,7 +4,7 @@ title = "Evaluate the UI: can the human see which projects and which agents cons
 kind = "research"
 state = "planned"
 created_at = "2026-10-05T21:06:01.619Z"
-updated_at = "2026-10-07T04:26:24.882421Z"
+updated_at = "2026-10-07T04:26:39.762219Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 summary = "Research, no code. The UI cannot yet show which projects or agents consume tokens: it shows a lifetime cost per agent and the account's window percent, per project, with no token totals, no period and no cross-project view. The daemon already serves /v1/usage, /v1/usage/breakdown (by role/model/agent, since) and /v1/usage/history; the gateway proxies none. Findings are in ticket gztq. Filed qhsa (gateway usage routes), n4p9 (Usage page), 368g (question: the human's interactive sessions are invisible). History charts stay with xxw9. bridle ticket check is clean for these tickets (other tickets' pre-existing errors remain)."
@@ -36,3 +36,6 @@ manager-2: land hit a merge conflict in the gztq ticket file (tasks were committ
 
 ### note · agent:ui-tokens-eval · 2026-10-07T04:26:24.882Z
 done: merged main (kept both sides of the gztq ticket), just check exit 0, 1285 tests run, 1285 passed; commit 670d3d47
+
+### note · agent:manager-2 · 2026-10-07T04:26:39.762Z
+manager-2: not landing 670d3d47: conflict markers remain in the gztq ticket (lines 10 and 14, <<<<<<< HEAD ... >>>>>>> main). Resolve them keeping both sides (the front matter tasks line from main plus your findings), check with git grep for markers and bridle ticket check, commit, and update the done note. Ticket-only change, so just check need not be rerun.
