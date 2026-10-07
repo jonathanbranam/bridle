@@ -13,8 +13,6 @@ tasks: []
 
 ## The ask
 
-## The ask
-
 The human, 2026-10-07 ~10:30 PM ET (directly to the orchestrator), after the upgrade of 57983073
 gave up with "no quiet point within 600s; still busy: page-title-rev":
 
