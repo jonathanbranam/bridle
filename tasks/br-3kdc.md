@@ -4,9 +4,10 @@ title = "One handover command, the same for every agent"
 kind = "feature"
 state = "planned"
 created_at = "2026-10-07T10:15:45.545Z"
-updated_at = "2026-10-07T10:16:40.623511Z"
+updated_at = "2026-10-07T10:35:18.134223Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+summary = "bridle handover write is now the one handover command: it records the note, then signals restart for the caller's own session, chosen from env (BRIDLE_AGENT_ID: record only; BRIDLE_AS=orchestrator: POST /v1/orchestrator/handover; aide/advisor: the session-restart code in session.rs, now split so a detached self-restart runs 'session restart <id> --fresh' rather than re-running the write; no identity: record only). --no-restart records only. handover done and orchestrator handover done are hidden deprecated aliases with a stderr note. The daemon route keeps its human/orchestrator gate, since it only ever restarts the orchestrator (a non-orchestrator cannot restart another's session). Docs: cli.md, orchestrator-supervision.md, api.md, CHANGELOG. Role files untouched. Caveat: tests must env_remove BRIDLE_AGENT_ID when run from an agent."
 ticket = "3kdc"
 +++
 
