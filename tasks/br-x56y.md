@@ -4,7 +4,7 @@ title = "bridle send from any agent fails since the 3haz build: a daemon found b
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-06T23:14:33.594Z"
-updated_at = "2026-10-07T00:51:31.098333Z"
+updated_at = "2026-10-07T00:52:02.386110Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 branch = "bridle/send-fix"
@@ -38,3 +38,6 @@ done: bridle send with an agent's own BRIDLE_URL + BRIDLE_PROJECT sends locally 
 
 ### note · agent:manager-2 · 2026-10-07T00:51:31.098Z
 integrated: 9d93a5d53fd0bec60c6d42690b25c5253f86c86d (branch bridle/send-fix)
+
+### note · agent:manager-2 · 2026-10-07T00:52:02.386Z
+cleanup: removed agent send-fix, branch bridle/send-fix
