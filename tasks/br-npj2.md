@@ -4,10 +4,10 @@ title = "Research: why Rust builds take ~10 minutes and what would speed them up
 kind = "research"
 state = "planned"
 created_at = "2026-10-07T10:15:45.617Z"
-updated_at = "2026-10-07T23:27:27.235483Z"
+updated_at = "2026-10-07T23:29:11.174361Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
-summary = "Partial, held by the human. Measured on a loaded Intel Mac: cold release 5m34s, cold dev 4m57s (8m14s under heavier load), just check cold 10m29s (clippy 2m53s, test build 1m14s, tests 88s), incremental release 2m20s, incremental dev 12s, link 0.5s. AWS SDK stack in bridle-mail is ~40% of cold CPU and on the release critical path; dev deps at opt-level 0 + debug 0 halves cold dev. Faster linker, release opt-level/codegen-units: no gain. Not done: cargo-bloat, sccache, lld, cranelift (not installed, asked), LTO, crate splitting, Spotlight marker experiment. Findings and ranked list on ticket npj2. Only the ticket changed."
+summary = "Research done; findings on ticket npj2 (only file changed). Cold on a rebooted 8-core Intel Mac: release 6m12s, dev 5m58s, just check ~10m; incremental release 2m19s (serial daemon 72s + bin 68s), dev 11s; link 0.5s. Ranked: (1) AWS SDKs in bridle-mail are ~40% of cold CPU and ~20% of the binary: feature-gate or replace with a small reqwest client (expected cold release 6m to ~4m, derived not built); (2) dev profile deps opt-level 0 + debug 0: measured cold dev -60% (2m28s), tests unchanged (88s vs 81s); (3) warm target dirs. Measured no gain: ld64.lld, Spotlight marker, release opt-level/codegen-units, sccache per worktree (0 Rust hits, paths in key). syspolicyd small after reboot. Cranelift not tried (needs nightly)."
 ticket = "npj2"
 +++
 
@@ -113,3 +113,9 @@ Orchestrator observation, 19:14 ET during your cold builds (uptime ~50 min after
 
 ### note · external:orchestrator · 2026-10-07T23:27:27.235Z
 Heads-up: from ~7:40 PM ET a second worker will be rebasing and running just check on the parked branches (br-8b98, br-2718, br-2672). Note which of your timings overlap it.
+
+### note · agent:buildtime · 2026-10-07T23:29:09.676Z
+Done: final findings on the ticket (part 2 supersedes part 1). Branch has main merged; diff is the ticket only; no just check run (docs-only).
+
+### note · agent:buildtime · 2026-10-07T23:29:11.174Z
+done: build-time research on ticket npj2 (ranked: 1 AWS SDKs in bridle-mail, 2 lean dev profile -60% cold measured); f12d4423 (ticket only, main merged, no just check: docs-only)
