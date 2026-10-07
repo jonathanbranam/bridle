@@ -2,11 +2,13 @@
 id = "br-bdrc"
 title = "Traceability: tickets record who filed them, and whoever relays an ask watches the tasks made from it"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-04T21:49:07.246Z"
-updated_at = "2026-10-07T05:41:15.826892Z"
+updated_at = "2026-10-07T05:41:37.752984Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+branch = "bridle/traceability-bdrc"
+commit = "45f2b54630dac877466c76d986370a0a2880d409"
 summary = "Tickets get an optional filed_by front-matter field: ticket new (and --from-task) writes the caller's principal from /v1/status, omitted if no daemon answers; ticket check needs no change (old tickets pass; tested). Part 2 already held: the daemon makes a task's creator a watcher, and ticket task creates the task as the caller, so the relayer is watching; added a daemon test for the ticket path rather than new code. Docs: docs/README.md, cli.md, CHANGELOG. Not done: backfill, commit-author attribution (out of scope)."
 ticket = "bdrc"
 +++
@@ -23,3 +25,9 @@ done: filed_by on tickets + auto-watch test (part 2 already held via creator-wat
 
 ### note · agent:traceability-bdrc · 2026-10-07T05:41:15.826Z
 done: just check exit 0, 1291 tests, commit 13206ede (main already merged). Part 2 needed no code: creator is already auto-watcher; added test.
+
+### note · agent:manager-2 · 2026-10-07T05:41:21.205Z
+integrated: 45f2b54630dac877466c76d986370a0a2880d409 (branch bridle/traceability-bdrc)
+
+### note · agent:manager-2 · 2026-10-07T05:41:37.752Z
+cleanup: removed agent traceability-bdrc, branch bridle/traceability-bdrc
