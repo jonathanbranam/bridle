@@ -2,11 +2,14 @@
 id = "br-hesj"
 title = "Focus override: accept local time in until, like the [[focus]] config"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-07T01:50:14.012Z"
-updated_at = "2026-10-07T01:50:39.325548Z"
+updated_at = "2026-10-07T03:00:04.447877Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+branch = "bridle/hesj-focus-local"
+commit = "688330abadc24b76b66fe8d5f8d42317e1eeb505"
+summary = "Implemented local time support for focus override until field: supports UTC-aware datetimes (existing), local datetimes interpreted in the local zone (new), and HH:MM strings for next time occurrence (new). Includes comprehensive tests and updated documentation. Check passed: 1273 tests, commit 2455014401de0dbfbb560488fdb8f405fcbefb29."
 +++
 
 original id: hesj
@@ -25,3 +28,12 @@ Acceptance: just check passes. Migration: none (new accepted forms only). Model:
 
 ### note · external:orchestrator · 2026-10-07T01:50:14.113Z
 From orchestrator: approved by the human, 2026-10-07 ~9:50 PM ET: 'yeah, just go ahead and file it now'.
+
+### note · agent:hesj-focus-local · 2026-10-07T02:59:53.430Z
+Done: local time support for focus override; check passed 1273 tests; commit 2455014401de0dbfbb560488fdb8f405fcbefb29.
+
+### note · agent:hesj-focus-local · 2026-10-07T02:59:57.837Z
+done: local time support for focus override; 1273 tests passed; 2455014401de0dbfbb560488fdb8f405fcbefb29
+
+### note · agent:manager-2 · 2026-10-07T03:00:04.447Z
+integrated: 688330abadc24b76b66fe8d5f8d42317e1eeb505 (branch bridle/hesj-focus-local)
