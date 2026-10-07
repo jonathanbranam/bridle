@@ -14,8 +14,6 @@ tasks: []
 
 ## The ask
 
-## The ask
-
 The human, 2026-10-07 ~7:20 PM ET, via aide (m-6585), answering whether to plan moving heavy
 bridle work off dalek (the Intel Mac) to the Windows PC under WSL2:
 
