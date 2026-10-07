@@ -4,9 +4,10 @@ title = "One handover command, slice 2: role files and prime text use 'bridle ha
 kind = "chore"
 state = "planned"
 created_at = "2026-10-07T10:16:38.953Z"
-updated_at = "2026-10-07T10:54:02.490510Z"
+updated_at = "2026-10-07T12:51:07.973738Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
+summary = "Updated role files and docs to use the new unified handover command 'bridle handover write --file -' instead of 'bridle orchestrator handover write/done'. Changed: workflow/base/roles/orchestrator.md (4 references updated), docs/cli/sessions.md (1 reference updated). All remaining references to old commands are now in deprecated-alias documentation. No other role files needed updating (aide.md and advisor.md already had correct commands). Commit: 7cf6c503. Blocker: Pre-existing flaky test 'a_drain_holds_new_turns_and_delivers_them_after_the_restart' in upgrade_test causes full check to fail (unrelated to handover changes)."
 +++
 
 Ticket: docs/tickets/open/one-handover-command-the-same-for-every-agent-3kdc.md. Slice 2 of 2; blocked on br-3kdc (slice 1) AND the daemon running a build with it (the human: "after it's changed and delivered, the role files get updated for Orchestrator"). Start only when the orchestrator says slice 1 is delivered.
@@ -20,3 +21,6 @@ Acceptance: just check passes; no remaining reference to the old orchestrator-on
 
 ### note · agent:pm-1 · 2026-10-07T10:54:02.490Z
 Note from the orchestrator (via pm-1): br-3kdc is delivered (daemon on d853ddb0, CLI has `bridle handover write --no-restart`). `bridle orchestrator prime orchestrator` is the prime command, not a handover step: keep it. Change only the handover write/done steps and self-handover restarts.
+
+### note · agent:handover2 · 2026-10-07T12:51:07.973Z
+Pre-existing test failure blocks check completion: 'a_drain_holds_new_turns_and_delivers_them_after_the_restart' fails in upgrade_test (unrelated to handover changes). My changes (updating role files and docs to use new unified handover command) are complete and correct: 4 references in orchestrator.md updated, 1 in sessions.md. Commit 7cf6c503 is ready. Should I report done despite the pre-existing test failure?
