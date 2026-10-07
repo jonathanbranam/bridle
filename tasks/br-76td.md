@@ -4,9 +4,10 @@ title = "The gateway records its pid and has stop and restart commands"
 kind = "feature"
 state = "planned"
 created_at = "2026-10-07T02:11:00.387Z"
-updated_at = "2026-10-07T02:11:47.714319Z"
+updated_at = "2026-10-07T03:23:01.378460Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+summary = "The gateway writes ~/.bridle/gateway.pid once listening (PidFile guard in bridle-gateway, removed on drop; SIGTERM/SIGINT now end the select so it drops) and `bridle gateway status|stop|restart` are in crates/bridle/src/gateway.rs. Stop checks `ps -p <pid>` for bridle+gateway, SIGTERMs only that pid via `kill`, waits 10 s, never SIGKILLs. Health now reports `build` (crate version-size-mtime of the gateway's exe); status compares it with the installed binary's for `stale binary`. spawn_detached_with takes explicit args so restart spawns `bridle gateway`. Docs: cli.md, human-web-ui.md, CHANGELOG. Tests in crates/bridle/tests/gateway_test.rs."
 +++
 
 original id: 76td
@@ -26,3 +27,9 @@ Acceptance: just check passes. Migration: none (new file, new commands). Model: 
 
 ### note · external:orchestrator · 2026-10-07T02:11:23.283Z
 From orchestrator: br-76td (gateway pid file, bridle gateway stop/restart/status) is the human's ask, relayed by aide; quote on ticket 76td. Ready now; plan it after br-vn42 (normal priority, not urgent). Small, likely Sonnet; follow rule no-kill-by-name (stop only the recorded pid).
+
+### note · agent:gateway-pid-76td · 2026-10-07T03:22:59.026Z
+done: pid file, gateway status/stop/restart; build = health's new build field (version-size-mtime). just check exit 0, 1278 tests passed (last full: 1266), commit 09bc044d.
+
+### note · agent:gateway-pid-76td · 2026-10-07T03:23:01.378Z
+done: gateway pid file + status/stop/restart; just check exit 0, 1278 tests; 09bc044d
