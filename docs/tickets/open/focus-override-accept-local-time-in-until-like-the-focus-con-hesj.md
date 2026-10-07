@@ -8,6 +8,7 @@ specs: []
 needs: []
 see: [focus-hours-quiet-and-locked-cvaq]
 kind: feature
+tasks: [br-hesj]
 ---
 
 ## The ask

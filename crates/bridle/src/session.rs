@@ -27,11 +27,16 @@ const FOCUS_GATE: &str =
 const REPLY_HOOK: &str =
     r#""Stop":[{"hooks":[{"type":"command","command":"bridle focus reply"}]}]"#;
 
+/// The orchestrator restarts the daemon itself (its role), which auto mode otherwise refuses
+/// (docs/context/auto-mode-blocks.md). Merged into LEAN's permissions: a second key would replace them.
+const ORCHESTRATOR_ALLOW: &str = r#""permissions":{"allow":["Bash(bridle daemon restart:*)"],"#;
+
 /// The SessionStart hook records the session id (it changes on /clear). One --settings object:
 /// a second would replace it.
 fn orchestrator_settings() -> String {
     format!(
-        r#"{{"hooks":{{"SessionStart":[{{"hooks":[{{"type":"command","command":"bridle orchestrator note-session"}}]}}],{FOCUS_GATE},{REPLY_HOOK}}},{LEAN}}}"#
+        r#"{{"hooks":{{"SessionStart":[{{"hooks":[{{"type":"command","command":"bridle orchestrator note-session"}}]}}],{FOCUS_GATE},{REPLY_HOOK}}},{lean}}}"#,
+        lean = LEAN.replace(r#""permissions":{"#, ORCHESTRATOR_ALLOW)
     )
 }
 
@@ -831,6 +836,18 @@ mod tests {
         for s in [orchestrator_settings(), advisor_settings()] {
             serde_json::from_str::<serde_json::Value>(&s).expect("json");
         }
+    }
+
+    #[test]
+    fn only_the_orchestrator_may_restart_the_daemon() {
+        let o: serde_json::Value = serde_json::from_str(&orchestrator_settings()).expect("json");
+        assert_eq!(
+            o["permissions"]["allow"][0],
+            "Bash(bridle daemon restart:*)"
+        );
+        assert!(o["permissions"]["deny"].is_array());
+        let a: serde_json::Value = serde_json::from_str(&advisor_settings()).expect("json");
+        assert!(a["permissions"]["allow"].is_null());
     }
 
     #[test]

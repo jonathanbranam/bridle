@@ -24,6 +24,17 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-07 ~00:53-01:40: auto mode refused the orchestrator's daemon upgrade
+
+- **What happened:** Claude Code's auto mode classifier refused `bridle daemon restart --upgrade`
+  ([Interfere With Workloads]), though the orchestrator role allows it. The human had to ask
+  in the session before it went through.
+- **Impact:** br-x56y (agents can't `bridle send`) sat landed but uninstalled for ~45 min.
+- **Cause:** no permission rule for the orchestrator's daemon commands.
+- **Category:** `config`, `external`.
+- **Follow-up:** a new log, `docs/context/auto-mode-blocks.md`, of every auto mode refusal, to fix
+  with permission rules or the global auto mode configuration.
+
 ## 2026-10-06 ~23:13 on: a hung test held the landing queue
 
 - **What happened:** br-qbbk's landing check (`just check` in the integration worktree) hung in
