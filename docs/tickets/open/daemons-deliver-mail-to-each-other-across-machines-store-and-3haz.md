@@ -8,7 +8,7 @@ changes: []
 specs: []
 needs: []
 see: [k7mw, cy2v, bp2v, fbfy, 3ehu, gtzx, k8jn]
-tasks: [br-3haz]
+tasks: [br-3haz, br-n7cg, br-fvkq, br-cufw]
 ---
 
 ## The ask
@@ -31,7 +31,7 @@ still for review.
 1. **The daemons deliver mail between machines.** A sender on one machine sends, and the
    message ends up in the recipient's inbox on the recipient's own daemon.
 
-> [!comment] c1 human, 2026-10-04 10:57, on "sender on one machine sends" [sent 2026-10-04 22:03 EDT]
+> [!comment] c1 human, 2026-10-04 10:57, on "sender on one machine sends" [read 2026-10-04 22:03 EDT]
 > Test comment, when received, reply here
 >
 > **doc-3haz, 2026-10-04 22:10 EDT:** @human Received. This is my reply.
@@ -51,7 +51,7 @@ From [[projects-on-other-machines-by-config-k7mw|k7mw]] (built) and
   (`[machines]`, `[projects]` in `~/.bridle/config.toml`; dalek and nuc today) with a per-machine
   token (`[<principal>.<machine>]` in `credentials.toml`).
 
-> [!comment] c2 human, 2026-10-04 10:57, on "No daemon talks to another" [sent 2026-10-04 22:03 EDT]
+> [!comment] c2 human, 2026-10-04 10:57, on "No daemon talks to another" [read 2026-10-04 22:03 EDT]
 > test: explain why this was done in the comment.
 >
 > **doc-3haz, 2026-10-04 22:10 EDT:** @human It was scope, not a principle. k7mw (projects on other
@@ -71,7 +71,7 @@ From [[projects-on-other-machines-by-config-k7mw|k7mw]] (built) and
   instead". So the sender must poll the other machine's daemon to see a reply, which is what the
   human wants gone.
 
-> [!comment] c3 human, 2026-10-04 10:58, on "external:orchestrator@dalek" [sent 2026-10-04 22:03 EDT]
+> [!comment] c3 human, 2026-10-04 10:58, on "external:orchestrator@dalek" [read 2026-10-04 22:03 EDT]
 > Test: change this example to be for the aide at nuc instead; do this edit actually so i can see the result of applying an edit.
 >
 > **doc-3haz, 2026-10-04 22:10 EDT:** @human Done. The example in the "reply stays on the remote
