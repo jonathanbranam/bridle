@@ -8,8 +8,8 @@ repos: [bridle]
 changes: []
 specs: []
 needs: []
-see: [[ft3b, gq9r, jttf, gtzx]]
-tasks: []
+see: [ft3b, gq9r, jttf, gtzx]
+tasks: [br-3kdc]
 ---
 
 ## The ask
