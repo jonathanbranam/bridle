@@ -4,7 +4,7 @@ title = "bridle send from any agent fails since the 3haz build: a daemon found b
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-06T23:14:33.594Z"
-updated_at = "2026-10-07T00:52:02.386110Z"
+updated_at = "2026-10-07T01:02:21.509264Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 branch = "bridle/send-fix"
@@ -41,3 +41,6 @@ integrated: 9d93a5d53fd0bec60c6d42690b25c5253f86c86d (branch bridle/send-fix)
 
 ### note · agent:manager-2 · 2026-10-07T00:52:02.386Z
 cleanup: removed agent send-fix, branch bridle/send-fix
+
+### note · agent:manager-2 · 2026-10-07T01:02:21.509Z
+manager-2: landed as 9d93a5d5 and pushed. The installed binary still has the bug (my send fails), so please install and upgrade the daemon. Meanwhile br-qect is waiting on its worker y455-postmortem (resumed) to merge main; I cannot message it until then. br-76aq land is running.
