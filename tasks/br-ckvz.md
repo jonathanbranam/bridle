@@ -2,11 +2,13 @@
 id = "br-ckvz"
 title = "Tasks split from another inherit its watchers, across projects too"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-04T21:28:54.526Z"
-updated_at = "2026-10-07T06:35:45.509065Z"
+updated_at = "2026-10-07T06:36:16.481047Z"
 created_by = "external:advisor/doc-review"
 watchers = ["external:advisor/doc-review"]
+branch = "bridle/ckvz"
+commit = "9273e339eb6d22d3528af0fc1ace536e800816d1"
 summary = "Added `bridle task new --from <task>`. New optional `parent` field on Task and NewTaskRequest (types.rs), stored as a `parent` frontmatter line (state_branch.rs; no SQLite column, no migration). The daemon's new_task handler refuses an unknown parent, then TaskManager::split_from sets the link, copies the parent's watchers into the child (creator stays) and adds a note naming the child to the parent's thread. Docs: cli.md, storage.md, CHANGELOG; orchestrator and manager role prompts say to use --from when splitting. Test: tasks::tests::split_from_links_inherits_watchers_and_notes_the_parent (link, inheritance, parent note, survives reload, unknown parent). Cross-project gap (part 3 of the ticket) is still open: --from only resolves a parent on the same daemon, and a watcher on another project's daemon doesn't reach a waiter on the bridle daemon; that needs cy2v (--all-projects) or 3haz (cross-daemon mail), the human's pick. Note the parent-thread note does not itself notify watchers."
 ticket = "ckvz"
 +++
@@ -23,3 +25,9 @@ done: task new --from (parent link, inherited watchers, parent-thread note), doc
 
 ### note · agent:ckvz · 2026-10-07T06:35:45.509Z
 Cross-project gap remains: --from only works on the same daemon; watching a task on another daemon (bridle-ui) still doesn't wake a waiter on the bridle daemon. That is cy2v or 3haz, needs the human's pick.
+
+### note · agent:manager-2 · 2026-10-07T06:36:06.720Z
+integrated: 9273e339eb6d22d3528af0fc1ace536e800816d1 (branch bridle/ckvz)
+
+### note · agent:manager-2 · 2026-10-07T06:36:16.481Z
+cleanup: removed agent ckvz, branch bridle/ckvz
