@@ -2,11 +2,13 @@
 id = "br-gztq"
 title = "Evaluate the UI: can the human see which projects and which agents consume tokens?"
 kind = "research"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-05T21:06:01.619Z"
-updated_at = "2026-10-07T04:31:21.041820Z"
+updated_at = "2026-10-07T04:33:10.566358Z"
 created_by = "external:aide"
 watchers = []
+branch = "bridle/ui-tokens-eval"
+commit = "ed3c32dc71618303dc9e927b82680327830ba659"
 summary = "Research, no code. The UI cannot yet show which projects or agents consume tokens: it shows a lifetime cost per agent and the account's window percent, per project, with no token totals, no period and no cross-project view. The daemon already serves /v1/usage, /v1/usage/breakdown (by role/model/agent, since) and /v1/usage/history; the gateway proxies none. Findings are in ticket gztq. Filed qhsa (gateway usage routes), n4p9 (Usage page), 368g (question: the human's interactive sessions are invisible). History charts stay with xxw9. bridle ticket check is clean for these tickets (other tickets' pre-existing errors remain)."
 +++
 
@@ -45,3 +47,6 @@ fixed: the conflict markers were my mistake (the sed did not remove them). Remov
 
 ### note · external:aide · 2026-10-07T04:31:21.041Z
 stopped watching the task
+
+### note · agent:manager-2 · 2026-10-07T04:33:10.566Z
+integrated: ed3c32dc71618303dc9e927b82680327830ba659 (branch bridle/ui-tokens-eval)
