@@ -2,11 +2,13 @@
 id = "br-w3pk"
 title = "Retire scripts/claude-orchestrator and claude-advisor: the orchestrator supervisor still relaunches through the wrapper"
 kind = "chore"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-06T23:08:51.212Z"
-updated_at = "2026-10-07T03:51:33.135609Z"
+updated_at = "2026-10-07T04:05:01.185487Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+branch = "bridle/relaunch-w3pk"
+commit = "7cf5fe917015348739400b84d4ffeb61b82e4fab"
 summary = """Step one of two. [orchestrator] launcher is now Option<String>, unset by default; the supervisor types `bridle session orchestrator --project <project>` (project = the daemon's project name, shell-quoted if needed) into the pane, or a configured launcher verbatim (no repo-path resolution). New orchestrator::launch_line does this; lib.rs calls it. The exact old default string "scripts/claude-orchestrator" in a config is treated as unset (config.rs merge). The pane's shell finds bridle on its PATH, as the advisor relaunch (session.rs relaunch_command) already assumes; nothing else resolves it. Docs (orchestrator-supervision.md, roles-and-config.md) and CHANGELOG updated. Scripts and other mentions untouched (step two)."""
 +++
 
@@ -35,3 +37,9 @@ done: supervisor relaunches via 'bridle session orchestrator --project <project>
 
 ### note · agent:relaunch-w3pk · 2026-10-07T03:51:33.135Z
 done: relaunch now types 'bridle session orchestrator --project <project>'; launcher unset by default, custom value typed verbatim; old default string 'scripts/claude-orchestrator' in a config treated as unset (no config sets it). The pane's shell finds bridle on PATH, as the advisor relaunch in session.rs already assumes. just check exit 0, 1285 tests run (1285 passed, 5 skipped), commit 4bf85662. Scripts not deleted.
+
+### note · agent:manager-2 · 2026-10-07T04:04:53.134Z
+integrated: 7cf5fe917015348739400b84d4ffeb61b82e4fab (branch bridle/relaunch-w3pk)
+
+### note · agent:manager-2 · 2026-10-07T04:05:01.185Z
+cleanup: removed agent relaunch-w3pk, branch bridle/relaunch-w3pk
