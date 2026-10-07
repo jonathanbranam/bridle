@@ -1672,12 +1672,32 @@ mod sync {
         Ok(token)
     }
 
+    /// `human@<machine>`: the human's token on another machine's daemon (3ehu).
+    fn is_human_visitor(name: &str) -> bool {
+        name.strip_prefix("human@").is_some_and(|m| !m.is_empty())
+    }
+
+    /// The principal id behind a token name: `external:<name>`, except `human@<machine>`.
+    fn token_principal_id(name: &str) -> String {
+        if is_human_visitor(name) {
+            name.to_string()
+        } else {
+            format!("external:{name}")
+        }
+    }
+
     pub(super) fn create_external_token(
         conn: &Connection,
         name: &str,
     ) -> Result<TokenCreated, StoreError> {
-        let id = format!("external:{name}");
-        let token = create_principal_active_only(conn, &id, PrincipalKind::External, name)?;
+        // `human@<machine>` is the human on another machine: human authority, its own id.
+        let kind = if is_human_visitor(name) {
+            PrincipalKind::Human
+        } else {
+            PrincipalKind::External
+        };
+        let id = token_principal_id(name);
+        let token = create_principal_active_only(conn, &id, kind, name)?;
         Ok(TokenCreated {
             principal: id,
             token,
@@ -1871,7 +1891,7 @@ mod sync {
     pub(super) fn list_external_tokens(conn: &Connection) -> Result<Vec<TokenInfo>, StoreError> {
         let mut stmt = conn.prepare(
             "SELECT id, name, created_at, revoked_at FROM principals
-             WHERE kind IN ('external', 'peer') ORDER BY created_at ASC, rowid ASC",
+             WHERE kind IN ('external', 'peer') OR id LIKE 'human@%' ORDER BY created_at ASC, rowid ASC",
         )?;
         let rows = stmt.query_map([], |row| {
             let created_at: String = row.get(2)?;
@@ -1887,10 +1907,10 @@ mod sync {
     }
 
     pub(super) fn external_exists(conn: &Connection, name: &str) -> Result<bool, StoreError> {
-        let id = format!("external:{name}");
+        let id = token_principal_id(name);
         let exists: bool = conn
             .query_row(
-                "SELECT 1 FROM principals WHERE id = ?1 AND kind = 'external' AND revoked_at IS NULL",
+                "SELECT 1 FROM principals WHERE id = ?1 AND kind IN ('external', 'human') AND revoked_at IS NULL",
                 params![id],
                 |_| Ok(()),
             )
@@ -1904,11 +1924,11 @@ mod sync {
         let id = if name.starts_with("peer:") {
             name.to_string()
         } else {
-            format!("external:{name}")
+            token_principal_id(name)
         };
         let exists: bool = conn
             .query_row(
-                "SELECT 1 FROM principals WHERE id = ?1 AND kind IN ('external', 'peer')",
+                "SELECT 1 FROM principals WHERE id = ?1 AND kind IN ('external', 'peer', 'human')",
                 params![id],
                 |_| Ok(()),
             )

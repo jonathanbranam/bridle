@@ -502,10 +502,27 @@ fn resolve_token_in(
         ));
     }
     let Some(workspace) = workspace else {
-        return Err(DiscoveryError::Message(
-            "no workspace found to read the human token from: pass --token (required with --url or $BRIDLE_URL), set $BRIDLE_TOKEN, or $BRIDLE_AS"
-                .to_string(),
-        ));
+        // Last resort, only where this used to be an error: the human's token for another
+        // machine's daemon, principal `human@<machine>` (3ehu).
+        if let (Some(machine), Some(project)) = (machine, project)
+            && let Some(t) = read_credentials(credentials)?
+                .get("human")
+                .and_then(|v| v.get(machine))
+                .and_then(|v| v.get(project))
+                .and_then(|v| v.as_str())
+        {
+            return Ok(Some(t.to_string()));
+        }
+        let hint = match machine {
+            Some(m) => format!(
+                ", or put the token under [human.{m}] in {}",
+                credentials.display()
+            ),
+            None => String::new(),
+        };
+        return Err(DiscoveryError::Message(format!(
+            "no workspace found to read the human token from: pass --token (required with --url or $BRIDLE_URL), set $BRIDLE_TOKEN, or $BRIDLE_AS{hint}"
+        )));
     };
     let path = human_token_path(workspace);
     match fs::read_to_string(&path) {
@@ -876,5 +893,55 @@ mod tests {
         );
         assert!(get("meta", None).is_err());
         assert!(get("bridle", Some("nuc")).is_err());
+    }
+
+    #[test]
+    fn human_on_another_machine_falls_back_to_the_human_machine_entry() {
+        let dir = tempdir().unwrap();
+        let path = creds_file(dir.path());
+        store_credential(&path, "human", "bridle", "local-tok").unwrap();
+        let mut text = fs::read_to_string(&path).unwrap();
+        text.push_str("\n[human.nuc]\nmeta = \"nuc-tok\"\n");
+        fs::write(&path, text).unwrap();
+        let env = empty_env();
+        let get = |ws, project, machine| {
+            resolve_token_in(&path, None, ws, Some(project), machine, &env, false)
+        };
+        assert_eq!(
+            get(None, "meta", Some("nuc")).unwrap().as_deref(),
+            Some("nuc-tok")
+        );
+        // Missing entry: the error is extended to name the section, not swallowed.
+        let msg = get(None, "other", Some("nuc")).unwrap_err().to_string();
+        assert!(msg.contains("no workspace found"), "{msg}");
+        assert!(msg.contains("[human.nuc]"), "{msg}");
+        // Without a machine the old error is unchanged.
+        let msg = get(None, "meta", None).unwrap_err().to_string();
+        assert!(!msg.contains("[human."), "{msg}");
+    }
+
+    #[test]
+    fn a_local_project_keeps_the_workspace_token_even_with_human_entries() {
+        let dir = tempdir().unwrap();
+        let path = creds_file(dir.path());
+        fs::write(&path, "[human.nuc]\nbridle = \"nuc-tok\"\n").unwrap();
+        fs::set_permissions(&path, std::os::unix::fs::PermissionsExt::from_mode(0o600)).unwrap();
+        let ws = dir.path().join("ws");
+        fs::create_dir_all(human_token_path(&ws).parent().unwrap()).unwrap();
+        fs::write(human_token_path(&ws), "ws-tok\n").unwrap();
+        let env = empty_env();
+        let tok = resolve_token_in(&path, None, Some(&ws), Some("bridle"), None, &env, false);
+        assert_eq!(tok.unwrap().as_deref(), Some("ws-tok"));
+    }
+
+    #[test]
+    fn bridle_as_human_already_reads_the_machine_entry() {
+        let dir = tempdir().unwrap();
+        let path = creds_file(dir.path());
+        fs::write(&path, "[human.dalek]\nmeta = \"d-tok\"\n").unwrap();
+        fs::set_permissions(&path, std::os::unix::fs::PermissionsExt::from_mode(0o600)).unwrap();
+        let env = creds_env(&[("BRIDLE_AS", "human")]);
+        let tok = resolve_token_in(&path, None, None, Some("meta"), Some("dalek"), &env, false);
+        assert_eq!(tok.unwrap().as_deref(), Some("d-tok"));
     }
 }

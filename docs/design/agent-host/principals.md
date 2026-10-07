@@ -82,6 +82,11 @@ An agent's token is also kept in `.bridle/agents/<id>/token` (0600), so
    authenticates it as `local`; a daemon on another machine answers 401. The human token file is still never read
    implicitly under `$CLAUDECODE` — the CLI just stops erring out ahead of a
    request that would have succeeded anyway.
+   Exception, and only where rules 2-4 would end in the "no workspace found" error: the
+   daemon is on another machine (`--project` routed by the machine config) and the
+   credentials file has `[human.<machine>] <project> = "..."`. That token is used, as the
+   principal `human@<machine>`; `$BRIDLE_AS=human` reads the same entry already. A local
+   project always uses the workspace token file, whatever `[human.*]` holds.
 4. Otherwise (a write, or a non-read command that can't reach a workspace to
    find a human token file — e.g. the daemon was found by URL), fail with
    "set `BRIDLE_TOKEN`".
@@ -121,7 +126,11 @@ daemon, minted with `bridle token create <name> --machine <machine>` (printed on
 that machine's `credentials.toml`; plain `token create` refuses `@` in a name, so the suffix always
 means a visitor). It sends, reads its own inbox and queries like any external principal. The
 daemon's own `external:orchestrator` (wake long poll, liveness watch, handovers) is matched by
-exact name, so a visitor never takes those over. `bridle session orchestrator`, `bridle session advisor` and `bridle session aide` (`external:aide`, `[aide]` in `credentials.toml`) set
+exact name, so a visitor never takes those over. The name `human` with `--machine` mints `human@<machine>` instead: the human on that machine, kind
+human, so every human-only route (`token create`/`revoke`, `shutdown`, ...) accepts it exactly as
+the local human; recorded and revocable separately (`token revoke human@<machine>`). Its messages
+are from `human@<machine>`, `--to me` is its own inbox, and a reply to one of its messages (or
+`--to human@<machine>`) lands there, not in the bare `human`'s inbox. `bridle session orchestrator`, `bridle session advisor` and `bridle session aide` (`external:aide`, `[aide]` in `credentials.toml`) set
 `BRIDLE_AS` so a session never handles a token.
 
 A visitor may also **submit** (`POST /v1/tasks/submit`, `bridle ticket submit`, ticket 93xm): an `open` task whose body starts

@@ -1033,3 +1033,83 @@ async fn named_advisor_addressing_and_delivery_fallbacks() {
         bridle_api::ClientError::Api { status: 404, .. }
     ));
 }
+
+/// 3ehu: `human@machine` is the human on another machine: human authority on human-only
+/// routes, its own sender identity, and replies to its messages land back in its inbox.
+#[tokio::test]
+async fn human_visitor_has_human_authority_and_its_own_identity() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let created = daemon
+        .client
+        .create_token(&TokenCreateRequest {
+            name: "human".to_string(),
+            machine: Some("nuc".to_string()),
+        })
+        .await
+        .expect("create human visitor token");
+    assert_eq!(created.principal, "human@nuc");
+    let nuc = Client::new(daemon.running.url.clone(), Some(created.token));
+
+    // A human-only route works, exactly as for the local human.
+    let other = nuc
+        .create_token(&TokenCreateRequest {
+            name: "advisor".to_string(),
+            machine: None,
+        })
+        .await
+        .expect("human@nuc may create tokens");
+    assert_eq!(other.principal, "external:advisor");
+
+    let sent = nuc
+        .send(&SendRequest {
+            to: Some("human".to_string()),
+            body: "hello from the nuc".to_string(),
+            kind: MessageKind::Question,
+            when: When::Now,
+            reply_to: None,
+            task: None,
+        })
+        .await
+        .expect("send");
+    assert_eq!(sent[0].from, "human@nuc");
+
+    let reply = daemon
+        .client
+        .send(&SendRequest {
+            to: Some("human@nuc".to_string()),
+            body: "got it".to_string(),
+            kind: MessageKind::Note,
+            when: When::Now,
+            reply_to: Some(sent[0].id.clone()),
+            task: None,
+        })
+        .await
+        .expect("reply to human@nuc");
+    assert_eq!(reply[0].to, "human@nuc");
+    let inbox = nuc
+        .list_messages(&MessageQuery {
+            to: Some("me".to_string()),
+            ..Default::default()
+        })
+        .await
+        .expect("inbox");
+    assert_eq!(inbox.len(), 1);
+
+    // The bare human's inbox is separate.
+    let err = daemon
+        .client
+        .send(&SendRequest {
+            to: Some("human@elsewhere".to_string()),
+            body: "x".to_string(),
+            kind: MessageKind::Note,
+            when: When::Now,
+            reply_to: None,
+            task: None,
+        })
+        .await
+        .unwrap_err();
+    assert!(
+        matches!(err, bridle_api::ClientError::Api { status: 404, .. }),
+        "{err:?}"
+    );
+}

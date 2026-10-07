@@ -122,7 +122,9 @@ bridle token create <name> [--print]        with a known project (--project, or 
                                              ~/.bridle/credentials.toml and not printed unless --print; with --url it's
                                              printed once. A name with `@` is refused
 bridle token create <name> --machine <m>    a visitor, `external:<name>@<m>`, for a principal on another machine: always
-                                             printed once, never saved here; paste it into that machine's credentials.toml
+                                             printed once, never saved here; paste it into that machine's credentials.toml.
+                                             `token create human --machine <m>` mints `human@<m>`, the human on
+                                             another machine (principals.md)
 bridle token create --peer <m>              a peer token, `peer:<m>`, for the daemons of machine <m> to forward mail here: always
                                              printed once; paste it under `[peer]` in the sender's credentials.toml, keyed by this project
 bridle token list                           name, created-at, revoked-or-not; never the token itself
@@ -484,7 +486,8 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   the host to reach each machine by (`[machines] nuc = "nuc"`) and where each project lives
   (`[projects] meta-notes = { machine = "nuc", port = 7402 }`). `--project`/`$BRIDLE_PROJECT`
   naming a project on another machine goes to `http://<host>:<port>` and takes its token from
-  `[principal.<machine>]` in `credentials.toml`; a project on this machine, or not listed, uses
+  `[principal.<machine>]` in `credentials.toml` (the plain human, with no `$BRIDLE_AS`, falls
+  back to `[human.<machine>]`); a project on this machine, or not listed, uses
   the local registry as before. A listed project with no `[machine] name` is an error. Types:
   `bridle_api::machines`.
 - **Exit codes**: 0 ok, 1 error, 2 usage error, 3 daemon unreachable (every

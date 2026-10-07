@@ -1177,7 +1177,7 @@ async fn resolve_to(
     Ok(match raw {
         None => None,
         Some("me") => Some(match principal.kind {
-            PrincipalKind::Human => "human".to_string(),
+            PrincipalKind::Human => principal.id.clone(),
             PrincipalKind::Agent => {
                 let name = principal.id.strip_prefix("agent:").unwrap_or(&principal.id);
                 store
@@ -1250,6 +1250,11 @@ fn is_known_external_principal(name: &str) -> bool {
 async fn resolve_targets(state: &AppState, to_raw: &str) -> Result<Vec<ToTarget>, ApiError> {
     Ok(if to_raw == "human" {
         vec![ToTarget::Human]
+    } else if to_raw.starts_with("human@") {
+        if !state.store.external_exists(to_raw).await? {
+            return Err(ApiError::not_found(format!("no such recipient: {to_raw}")));
+        }
+        vec![ToTarget::External(to_raw.to_string())]
     } else if let Some(name) = to_raw.strip_prefix("external:") {
         let (owner, advisor) = match split_named(name) {
             Some((o, a)) => (o, Some(a)),
@@ -1504,7 +1509,7 @@ async fn set_read_state(
         .await?
         .ok_or_else(|| ApiError::not_found(format!("no such message: {id}")))?;
     let is_recipient = match principal.kind {
-        PrincipalKind::Human => msg.to == "human",
+        PrincipalKind::Human => msg.to == principal.id,
         PrincipalKind::Agent => {
             let name = principal.id.strip_prefix("agent:").unwrap_or(&principal.id);
             state.store.get_agent(name).await?.map(|a| a.id) == Some(msg.to.clone())
@@ -2953,7 +2958,7 @@ async fn target_for_principal(state: &AppState, id: &str) -> Result<Option<ToTar
     if id == "human" {
         return Ok(Some(ToTarget::Human));
     }
-    if id.starts_with("external:") {
+    if id.starts_with("external:") || id.starts_with("human@") {
         return Ok(Some(ToTarget::External(id.to_string())));
     }
     let name = id.strip_prefix("agent:").unwrap_or(id);
