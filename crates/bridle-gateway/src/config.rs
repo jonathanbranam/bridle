@@ -48,7 +48,6 @@ pub enum ConfigError {
 }
 
 #[derive(Debug, Default, Deserialize)]
-#[serde(deny_unknown_fields)]
 struct GatewaySection {
     bind: Option<String>,
     /// Default true; false makes `bridle gateway` exit 0 without starting.
@@ -69,7 +68,6 @@ struct GatewaySection {
 
 /// The `[interactions]` section: the knobs of the human-time interval rules.
 #[derive(Debug, Default, Deserialize)]
-#[serde(deny_unknown_fields)]
 struct InteractionsSection {
     gap: Option<String>,
     tail: Option<String>,
@@ -153,7 +151,12 @@ impl GatewayConfig {
     }
 
     fn parse(text: &str, home: &Path) -> Result<Self, ConfigError> {
-        let file: File = toml::from_str(text).map_err(|source| ConfigError::Parse {
+        let file: File = bridle_api::config_warn::parse_partial(
+            text,
+            &home.join("config.toml").display().to_string(),
+            &["gateway", "interactions"],
+        )
+        .map_err(|source| ConfigError::Parse {
             path: PathBuf::new(),
             source: Box::new(source),
         })?;

@@ -766,6 +766,9 @@ pub struct DoctorArgs {
     /// The project's clone. Defaults to the current directory.
     #[arg(long)]
     pub repo: Option<PathBuf>,
+    /// Exit 1 on any warning (unknown config sections and keys included), not just failures.
+    #[arg(long)]
+    pub strict: bool,
 }
 
 #[derive(Debug, Subcommand)]

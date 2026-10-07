@@ -4,7 +4,7 @@ use serde::Deserialize;
 
 /// `[mail]` in `~/.bridle/config.toml`.
 #[derive(Debug, Clone, PartialEq, Deserialize)]
-#[serde(default, deny_unknown_fields)]
+#[serde(default)]
 pub struct MailConfig {
     pub bucket: String,
     /// Where SES writes (the receipt rule's object key prefix).
@@ -58,7 +58,7 @@ impl MailConfig {
         struct File {
             mail: Option<MailConfig>,
         }
-        let file: File = toml::from_str(text)?;
+        let file: File = bridle_api::config_warn::parse_partial(text, "config.toml", &["mail"])?;
         let cfg = file.mail.unwrap_or_default();
         anyhow::ensure!(!cfg.bucket.is_empty(), "[mail] bucket is not set");
         anyhow::ensure!(

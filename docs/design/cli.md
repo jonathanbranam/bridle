@@ -72,7 +72,7 @@ bridle daemon restart [--upgrade]                restart the daemon in place (or
                                               resume, then "the daemon is back". While it drains, `bridle status` shows `restart draining; waiting on <agents mid-turn>` (`upgrade <sha> draining; ...` for --upgrade). --upgrade first builds the newest green-CI commit on main (background; prints "building <sha>" or "nothing to upgrade" and returns; the daemon restarts itself after the build)
 bridle daemon init [--repo PATH] [--name N] [--integration BRANCH] [--stack S]  scaffold .bridle/config.toml + .gitignore; never overwrites. A project with no `workflow` (and no `workflow/base/` in the repo) also gets the base workflow vendored into `.bridle/workflow/` (uncommitted; you commit it): copied from the clone this binary was built from if it's still there, else `git clone --depth 1 --branch v<version>` of `workflow_url` (machine `~/.bridle/config.toml`; default the bridle GitHub repo). A fetch failure is an error.
 bridle workflow update [--repo PATH] [--to TAG]   re-fetch the vendored `.bridle/workflow/` (from the local clone, or the tag: `--to`, else this binary's) and print added/changed/removed files; the only thing that ever changes it. Errors if the project isn't vendored.
-bridle daemon doctor  [--repo PATH]                 check the project's setup, say what to fix; exit 1 on a failure
+bridle daemon doctor  [--repo PATH] [--strict]       check the project's setup, say what to fix; exit 1 on a failure (--strict: on a warning too)
 bridle daemon launchd install [--repo PATH] [--workspace DIR] [--force]   macOS: write the LaunchAgent plist, print launchctl commands
 bridle daemon launchd uninstall                    remove the plist, print the bootout command
 bridle daemon systemd install [--project P] [--projects-dir DIR] [--force]   Linux: write a systemd user unit per project `[projects]` puts on this machine, print the systemctl and linger commands
@@ -576,7 +576,9 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   `{{commands.check}}`, substituted with `.bridle/config.toml`'s `[commands] check`
   (default `"just check"`, per-project — e.g. `"make check"`) so a base skill like
   `workflow/base/skills/worker/SKILL.md` doesn't hardcode one project's build tool.
-- **`doctor [--repo PATH]`**: local checks on the clone (default: the current directory),
+- **`doctor [--repo PATH] [--strict]`**: unknown config sections and keys are warnings (heading
+  "config warnings", one line each; text in `docs/design/agent-host/roles-and-config.md`);
+  `--strict` makes any warning, these included, exit 1. Local checks on the clone (default: the current directory),
   each printed `ok`/`warn`/`FAIL` with a one-line fix (`--json`: the list). Git repo; the
   integration branch exists (the g3ck failure mode); `.bridle/config.toml` loads (the
   config loader's own error text); files it references exist (role `system_prompt`, `workflow`,

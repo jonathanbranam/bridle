@@ -96,7 +96,17 @@ start_prompt      = "Check your inbox and tell the human you're ready."   # firs
   so a worktree doesn't even have it); a role that lists `Skill` also
   gets `disableBundledSkills` so the bundled skills don't reload. Permissions
   still gate calls: a tool must be in both `tools` and `allowed_tools`.
-- **Parsing is strict**: an unknown key stops the daemon from starting. There is
+- **Unknown sections and keys are warnings, not errors** (6hx4), so an older binary reads
+  a file a newer one wrote. Each is reported as one line, per file: ``<file>: unknown section
+  [<section>] (unknown to this build (bridle <version>); a newer build may use it)`` or
+  ``<file>: unknown key <section>.<key> (...same...)``. A key within edit distance 2 of a
+  known key of the same section gets ` - did you mean <known_key>?` (so `max_worker` is still
+  caught). The daemon logs each finding (`warn`) at start-up and reload, saying nothing
+  new when a reload finds the same set; the CLI prints each to stderr once per run;
+  `bridle daemon doctor` lists them under "config warnings" and `--strict` makes them (and any
+  other warning) exit 1. Wrong types and missing required keys are still errors.
+  `bridle_api::config_warn` does it (the real structs, via `serde_ignored`); `credentials.toml`
+  was always lenient. There is
   no `project` key: the project's name comes from its directory.
   Durations are an integer plus `s`, `m` or `h`. The config is read once, at
   start.

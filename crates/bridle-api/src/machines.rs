@@ -23,7 +23,6 @@ use crate::discovery::DiscoveryError;
 
 /// Where one project's daemon is: a machine named in `[machines]`, and its port.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-#[serde(deny_unknown_fields)]
 pub struct ProjectPlace {
     pub machine: String,
     pub port: u16,

@@ -308,7 +308,6 @@ pub fn is_safe_relative(path: &str) -> bool {
 /// Everything is optional; `paths` and `consumers` are metadata for tooling, `docs` a
 /// folder pointer, `parent` the nesting.
 #[derive(Debug, Clone, Default, PartialEq, Deserialize)]
-#[serde(deny_unknown_fields)]
 pub struct Component {
     #[serde(default)]
     pub paths: Vec<String>,
@@ -758,7 +757,6 @@ pub fn focus_end(
 }
 
 #[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
 struct RawFocusPeriod {
     name: String,
     days: RawDays,
@@ -819,10 +817,11 @@ pub fn focus_periods(home: &Path) -> Result<Vec<FocusPeriod>, ConfigError> {
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
         Err(source) => return Err(ConfigError::Read { path, source }),
     };
-    let raw: RawConfig = toml::from_str(&text).map_err(|source| ConfigError::Parse {
-        path: path.clone(),
-        source: Box::new(source),
-    })?;
+    let raw: RawConfig = bridle_api::config_warn::parse(&text, &path.display().to_string())
+        .map_err(|source| ConfigError::Parse {
+            path: path.clone(),
+            source: Box::new(source),
+        })?;
     raw.focus
         .unwrap_or_default()
         .into_iter()
@@ -1460,7 +1459,6 @@ fn session_steps(raw: &[TokenCount]) -> Result<SessionSteps, ConfigError> {
 }
 
 #[derive(Debug, Default, Deserialize)]
-#[serde(deny_unknown_fields)]
 struct RawSessions {
     #[serde(default)]
     warn: Option<Vec<TokenCount>>,
@@ -1471,7 +1469,6 @@ struct RawSessions {
 }
 
 #[derive(Debug, Default, Deserialize)]
-#[serde(deny_unknown_fields)]
 struct RawSessionRole {
     #[serde(default)]
     warn: Option<Vec<TokenCount>>,
@@ -1659,10 +1656,12 @@ impl Config {
         match std::fs::read_to_string(&path) {
             Ok(text) => {
                 let raw: RawConfig =
-                    toml::from_str(&text).map_err(|source| ConfigError::Parse {
-                        path: path.clone(),
-                        source: Box::new(source),
-                    })?;
+                    bridle_api::config_warn::parse(&text, &path.display().to_string()).map_err(
+                        |source| ConfigError::Parse {
+                            path: path.clone(),
+                            source: Box::new(source),
+                        },
+                    )?;
                 BudgetConfig::default().merge(raw.budget.unwrap_or_default())
             }
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(BudgetConfig::default()),
@@ -1680,10 +1679,12 @@ impl Config {
         match std::fs::read_to_string(&path) {
             Ok(text) => {
                 let raw: RawConfig =
-                    toml::from_str(&text).map_err(|source| ConfigError::Parse {
-                        path: path.clone(),
-                        source: Box::new(source),
-                    })?;
+                    bridle_api::config_warn::parse(&text, &path.display().to_string()).map_err(
+                        |source| ConfigError::Parse {
+                            path: path.clone(),
+                            source: Box::new(source),
+                        },
+                    )?;
                 Ok(raw.workflow)
             }
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
@@ -1702,10 +1703,12 @@ impl Config {
         match std::fs::read_to_string(&path) {
             Ok(text) => {
                 let raw: RawConfig =
-                    toml::from_str(&text).map_err(|source| ConfigError::Parse {
-                        path: path.clone(),
-                        source: Box::new(source),
-                    })?;
+                    bridle_api::config_warn::parse(&text, &path.display().to_string()).map_err(
+                        |source| ConfigError::Parse {
+                            path: path.clone(),
+                            source: Box::new(source),
+                        },
+                    )?;
                 Ok(raw.workflow_url)
             }
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
@@ -1891,10 +1894,11 @@ impl Config {
         machine_budget: BudgetConfig,
         path: &Path,
     ) -> Result<Self, ConfigError> {
-        let raw: RawConfig = toml::from_str(text).map_err(|source| ConfigError::Parse {
-            path: path.to_path_buf(),
-            source: Box::new(source),
-        })?;
+        let raw: RawConfig = bridle_api::config_warn::parse(text, &path.display().to_string())
+            .map_err(|source| ConfigError::Parse {
+                path: path.to_path_buf(),
+                source: Box::new(source),
+            })?;
 
         let mut config = Config {
             budget: machine_budget,
@@ -2202,10 +2206,11 @@ pub fn machine_config_problems(home: &Path) -> Result<Vec<String>, ConfigError> 
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
         Err(source) => return Err(ConfigError::Read { path, source }),
     };
-    let raw: RawConfig = toml::from_str(&text).map_err(|source| ConfigError::Parse {
-        path: path.clone(),
-        source: Box::new(source),
-    })?;
+    let raw: RawConfig = bridle_api::config_warn::parse(&text, &path.display().to_string())
+        .map_err(|source| ConfigError::Parse {
+            path: path.clone(),
+            source: Box::new(source),
+        })?;
     let mut out = Vec::new();
     for f in raw.focus.iter().flatten() {
         out.extend(overnight_problem(&f.name, &f.start, &f.end));
@@ -2302,7 +2307,6 @@ fn parse_token_count(s: &str) -> Result<u64, ConfigError> {
 }
 
 #[derive(Debug, Default, Deserialize)]
-#[serde(deny_unknown_fields)]
 struct RawConfig {
     /// `[machines]` and `[projects]` (k7mw) are read through
     /// `bridle_api::machines::MachineMap`; here they only have to parse.
@@ -2394,14 +2398,12 @@ struct RawConfig {
 }
 
 #[derive(Debug, Default, Deserialize)]
-#[serde(deny_unknown_fields)]
 struct RawAutoMode {
     #[serde(default)]
     environment: Vec<String>,
 }
 
 #[derive(Debug, Default, Deserialize)]
-#[serde(deny_unknown_fields)]
 struct RawTmux {
     #[serde(default)]
     advisor_pane: Option<String>,
@@ -2423,10 +2425,11 @@ pub fn advisor_pane(home: &Path) -> Result<AdvisorPane, ConfigError> {
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(AdvisorPane::Split),
         Err(source) => return Err(ConfigError::Read { path, source }),
     };
-    let raw: RawConfig = toml::from_str(&text).map_err(|source| ConfigError::Parse {
-        path: path.clone(),
-        source: Box::new(source),
-    })?;
+    let raw: RawConfig = bridle_api::config_warn::parse(&text, &path.display().to_string())
+        .map_err(|source| ConfigError::Parse {
+            path: path.clone(),
+            source: Box::new(source),
+        })?;
     match raw.tmux.unwrap_or_default().advisor_pane.as_deref() {
         None | Some("split") => Ok(AdvisorPane::Split),
         Some("window") => Ok(AdvisorPane::Window),
@@ -2449,10 +2452,11 @@ fn gateway_public_url(path: &Path) -> Result<Option<String>, ConfigError> {
             });
         }
     };
-    let raw: RawConfig = toml::from_str(&text).map_err(|source| ConfigError::Parse {
-        path: path.to_path_buf(),
-        source: Box::new(source),
-    })?;
+    let raw: RawConfig = bridle_api::config_warn::parse(&text, &path.display().to_string())
+        .map_err(|source| ConfigError::Parse {
+            path: path.to_path_buf(),
+            source: Box::new(source),
+        })?;
     Ok(raw
         .gateway
         .as_ref()
@@ -2474,7 +2478,6 @@ pub fn ui_base_url(home: &Path, repo: Option<&Path>) -> Result<Option<String>, C
 }
 
 #[derive(Debug, Default, Deserialize)]
-#[serde(deny_unknown_fields)]
 struct RawMachine {
     #[serde(default)]
     tools_only: Vec<String>,
@@ -2495,10 +2498,11 @@ pub fn is_tools_only(repo: &Path, home: &Path) -> Result<bool, ConfigError> {
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(false),
         Err(source) => return Err(ConfigError::Read { path, source }),
     };
-    let raw: RawConfig = toml::from_str(&text).map_err(|source| ConfigError::Parse {
-        path: path.clone(),
-        source: Box::new(source),
-    })?;
+    let raw: RawConfig = bridle_api::config_warn::parse(&text, &path.display().to_string())
+        .map_err(|source| ConfigError::Parse {
+            path: path.clone(),
+            source: Box::new(source),
+        })?;
     let repo = repo.canonicalize().unwrap_or_else(|_| repo.to_path_buf());
     for entry in raw.machine.unwrap_or_default().tools_only {
         let p = PathBuf::from(expand_path(&entry)?);
@@ -2510,7 +2514,6 @@ pub fn is_tools_only(repo: &Path, home: &Path) -> Result<bool, ConfigError> {
 }
 
 #[derive(Debug, Default, Deserialize)]
-#[serde(deny_unknown_fields)]
 struct RawContext {
     #[serde(default)]
     wind_down_at: Option<BTreeMap<String, f64>>,
@@ -2519,7 +2522,6 @@ struct RawContext {
 }
 
 #[derive(Debug, Default, Deserialize)]
-#[serde(deny_unknown_fields)]
 struct RawCommands {
     #[serde(default)]
     check: Option<String>,
@@ -2528,7 +2530,6 @@ struct RawCommands {
 }
 
 #[derive(Debug, Default, Deserialize)]
-#[serde(deny_unknown_fields)]
 struct RawWorktrees {
     #[serde(default)]
     warm_target: Option<bool>,
@@ -2547,7 +2548,6 @@ struct RawWorktrees {
 }
 
 #[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
 struct RawPair {
     path: String,
     #[serde(default)]
@@ -2555,7 +2555,6 @@ struct RawPair {
 }
 
 #[derive(Debug, Default, Deserialize)]
-#[serde(deny_unknown_fields)]
 struct RawBranches {
     #[serde(default)]
     integration: Option<String>,
@@ -2564,21 +2563,18 @@ struct RawBranches {
 }
 
 #[derive(Debug, Default, Deserialize)]
-#[serde(deny_unknown_fields)]
 struct RawCi {
     #[serde(default)]
     github: Option<bool>,
 }
 
 #[derive(Debug, Default, Deserialize)]
-#[serde(deny_unknown_fields)]
 struct RawMessages {
     #[serde(default)]
     answer_for_human: Option<Vec<String>>,
 }
 
 #[derive(Debug, Default, Deserialize)]
-#[serde(deny_unknown_fields)]
 struct RawIntegration {
     #[serde(default)]
     check: Option<String>,
@@ -2589,7 +2585,6 @@ struct RawIntegration {
 }
 
 #[derive(Debug, Default, Deserialize)]
-#[serde(deny_unknown_fields)]
 struct RawPorts {
     #[serde(default)]
     range: Option<[u16; 2]>,
@@ -2598,14 +2593,12 @@ struct RawPorts {
 }
 
 #[derive(Debug, Default, Deserialize)]
-#[serde(deny_unknown_fields)]
 struct RawState {
     #[serde(default)]
     push: Option<bool>,
 }
 
 #[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
 struct RawDisk {
     #[serde(default)]
     check_interval: Option<String>,
@@ -2614,7 +2607,6 @@ struct RawDisk {
 }
 
 #[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
 struct RawReview {
     #[serde(default)]
     quiet_minutes: Option<u64>,
@@ -2682,7 +2674,6 @@ impl<'de> Deserialize<'de> for TokenCount {
 }
 
 #[derive(Debug, Default, Deserialize)]
-#[serde(deny_unknown_fields)]
 struct RawOrchestrator {
     #[serde(default)]
     enabled: Option<bool>,
@@ -2707,7 +2698,6 @@ struct RawOrchestrator {
 }
 
 #[derive(Debug, Default, Deserialize)]
-#[serde(deny_unknown_fields)]
 struct RawTasks {
     #[serde(default)]
     prefix: Option<String>,
@@ -2720,7 +2710,6 @@ struct RawTasks {
 }
 
 #[derive(Debug, Default, Deserialize)]
-#[serde(deny_unknown_fields)]
 struct RawBudget {
     #[serde(default)]
     max_workers: Option<u32>,
@@ -2741,7 +2730,6 @@ struct RawBudget {
 }
 
 #[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
 struct RawSchedulePeriod {
     name: String,
     /// `days`, `start` and `end` are all given or all omitted (a preset).
@@ -2824,7 +2812,6 @@ enum RawDays {
 }
 
 #[derive(Debug, Default, Deserialize)]
-#[serde(deny_unknown_fields)]
 struct RawDaemon {
     #[serde(default)]
     listen: Option<String>,
@@ -2839,7 +2826,6 @@ struct RawDaemon {
 }
 
 #[derive(Debug, Default, Deserialize)]
-#[serde(deny_unknown_fields)]
 struct RawRole {
     #[serde(default)]
     model: Option<String>,
@@ -4035,7 +4021,8 @@ mod tests {
         assert!(Config::parse("[orchestrator]\nrelaunch_backoff = []\n").is_err());
         assert!(Config::parse("[orchestrator]\nrelaunch_backoff = [\"5\"]\n").is_err());
         assert!(Config::parse("[orchestrator]\nlauncher = \" \"\n").is_err());
-        assert!(Config::parse("[orchestrator]\npane = \"%3\"\n").is_err());
+        // `pane` is gone: an unknown key is a warning now (6hx4), not a refusal to start.
+        assert!(Config::parse("[orchestrator]\npane = \"%3\"\n").is_ok());
         assert_eq!(d.plan_tokens, 180_000);
         assert_eq!(d.handover_tokens, 200_000);
         assert_eq!(d.handover_deadline, Duration::from_secs(1800));
@@ -4646,7 +4633,9 @@ mod tests {
         let err = Config::parse("[components.a]\nparent = \"b\"\n[components.b]\nparent = \"a\"")
             .unwrap_err();
         assert!(err.to_string().contains("cycle"), "{err}");
-        let err = Config::parse("[components.a]\nbogus = 1").unwrap_err();
+        // An unknown key is a warning now (6hx4); a wrong type is still a parse error.
+        assert!(Config::parse("[components.a]\nbogus = 1").is_ok());
+        let err = Config::parse("[components.a]\nparent = 1").unwrap_err();
         assert!(matches!(err, ConfigError::Parse { .. }));
     }
 

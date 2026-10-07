@@ -138,6 +138,10 @@ fn normalize(cmd: Command) -> Command {
 pub async fn run(mut cli: Cli) -> Result<(), CliError> {
     let command = normalize(std::mem::replace(&mut cli.command, Command::Status));
     let cli = Cli { command, ..cli };
+    // The daemon logs its config warnings; every other command prints them once to stderr.
+    if !matches!(cli.command, Command::Serve(_)) {
+        bridle_api::config_warn::print_to_stderr();
+    }
     match &cli.command {
         Command::Serve(args) => serve::run(&cli, args).await,
         Command::Docs(args) => docs::run(args),

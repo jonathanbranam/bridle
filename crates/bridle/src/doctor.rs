@@ -65,10 +65,13 @@ pub fn run(cli: &Cli, args: &DoctorArgs) -> Result<(), CliError> {
         Some(p) => p.clone(),
         None => std::env::current_dir().context("current directory")?,
     };
+    // The report below carries the config warnings; don't also print them to stderr.
+    bridle_api::config_warn::collect_quietly();
     let (mut checks, config) = local_checks(&repo, None);
     checks.extend(tool_checks(config.as_ref()));
+    checks.extend(config_warning_checks());
 
-    let failed = checks.iter().any(|c| c.status == Status::Fail);
+    let failed = failed(&checks, args.strict);
     if cli.json {
         render::print_json(&checks)?;
     } else {
@@ -88,6 +91,22 @@ pub fn run(cli: &Cli, args: &DoctorArgs) -> Result<(), CliError> {
         return Err(CliError::Other(anyhow::anyhow!("doctor found problems")));
     }
     Ok(())
+}
+
+/// Failures always fail doctor; warnings (unknown config keys among them) only with `--strict`.
+fn failed(checks: &[Check], strict: bool) -> bool {
+    checks
+        .iter()
+        .any(|c| c.status == Status::Fail || (strict && c.status == Status::Warn))
+}
+
+/// One warning per unknown config section or key found while the checks above read the
+/// config files (see `bridle_api::config_warn`).
+fn config_warning_checks() -> Vec<Check> {
+    bridle_api::config_warn::seen()
+        .into_iter()
+        .map(|f| Check::warn("config warnings", f, "remove it, or upgrade bridle"))
+        .collect()
 }
 
 fn git(repo: &Path, args: &[&str]) -> Option<std::process::Output> {
@@ -496,6 +515,34 @@ mod tests {
         );
         assert_eq!(get(&checks, "integration branch").status, Status::Ok);
         assert_eq!(get(&checks, ".gitignore").status, Status::Ok);
+    }
+
+    #[test]
+    fn unknown_config_keys_are_warnings_and_fail_only_when_strict() {
+        let d = repo(Some(
+            "[commands]\ncheck = \"just check\"\nchek = \"x\"\n\n[newer]\na = 1\n",
+        ));
+        let home = tempfile::tempdir().expect("home");
+        let (mut checks, config) = local_checks(d.path(), Some(home.path()));
+        assert!(config.is_some(), "an unknown key must not stop the load");
+        let dir = d.path().display().to_string();
+        let mine: Vec<Check> = config_warning_checks()
+            .into_iter()
+            .filter(|c| c.detail.contains(&dir))
+            .collect();
+        assert_eq!(mine.len(), 2, "{mine:#?}");
+        assert!(
+            mine.iter()
+                .any(|c| c.detail.contains("unknown key commands.chek")
+                    && c.detail.contains("- did you mean check?"))
+        );
+        assert!(
+            mine.iter()
+                .any(|c| c.detail.contains("unknown section [newer]"))
+        );
+        checks.extend(mine);
+        assert!(!failed(&checks, false), "warnings alone pass by default");
+        assert!(failed(&checks, true), "--strict fails on warnings");
     }
 
     fn machine_check(toml: Option<&str>) -> Check {

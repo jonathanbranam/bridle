@@ -2,6 +2,7 @@
 //! an async HTTP/SSE client and daemon discovery. See docs/design/agent-host/api.md.
 
 pub mod client;
+pub mod config_warn;
 pub mod discovery;
 pub mod machines;
 pub mod types;
