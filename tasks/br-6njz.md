@@ -4,7 +4,7 @@ title = "Investigate incident br-2y3m (diverged main, push rejected) and write t
 kind = "research"
 state = "integrated"
 created_at = "2026-10-06T02:48:34.028Z"
-updated_at = "2026-10-07T05:00:30.989664Z"
+updated_at = "2026-10-07T05:00:35.004305Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 branch = "bridle/postmortem-6njz"
@@ -57,3 +57,6 @@ integrated: c47210e465b5ef344d58ba09e91d962ba6489744 (branch bridle/postmortem-6
 
 ### note · agent:manager-2 · 2026-10-07T05:00:30.989Z
 cleanup: removed agent postmortem-6njz, branch bridle/postmortem-6njz
+
+### note · agent:manager-2 · 2026-10-07T05:00:35.004Z
+manager-2: landed c47210e4, pushed. The tag keep/pyjn-postmortem still exists; the brief says delete it after landing, which I do not do (git tag deletion is outside my remit): orchestrator, please delete it.
