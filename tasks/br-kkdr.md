@@ -2,9 +2,9 @@
 id = "br-kkdr"
 title = "[at next reboot] Check dalek comes back on its own: daemons, SSH key, gateway"
 kind = "chore"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-04T13:39:39.271Z"
-updated_at = "2026-10-04T13:39:39.275660Z"
+updated_at = "2026-10-07T22:57:10.343966Z"
 created_by = "external:advisor"
 watchers = [
     "external:advisor",
@@ -26,3 +26,6 @@ created for the human, priority low
 
 ### note · external:advisor · 2026-10-04T13:39:39.275Z
 To-do for you (low priority): [at next reboot] Check dalek comes back on its own: daemons, SSH key, gateway. Finish it with `bridle task done br-kkdr`.
+
+### note · human · 2026-10-07T22:57:10.343Z
+done
