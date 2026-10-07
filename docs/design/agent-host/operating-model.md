@@ -81,6 +81,21 @@ space under `[disk] min_free_gb` (default 20) sends one note with the sizes and 
 (`cargo clean`, remove finished worktrees), and not again until free space has recovered and
 dipped again. Investigating growth is left to whoever reads the events.
 
+## Load watch
+
+Decision (ticket 58c9, first slice): the daemon samples the machine's 1-minute load average
+every `[machine] check_interval` (default `30s`; `0s` turns the watch off) and divides it by the
+core count (`bridle-daemon/src/load.rs`). It reads `/proc/loadavg`, else `sysctl -n vm.loadavg`:
+`unsafe` is forbidden here, so no `getloadavg` call. The last reading is in `bridle status`
+(`load`). The keys are read from the project's `.bridle/config.toml` (the machine file's `[machine]`
+section holds other keys that the daemon doesn't read; moving these there is not yet done). While load per core is above `[machine] load_per_core` (default 2.5; zero or less never
+holds) new spawns are refused with a conflict, like a budget hold (`--ignore-budget` skips it);
+they resume on their own once the load falls. The orchestrator gets one note per crossing (not
+per tick) with the load and the top three CPU consumers by command name (`ps`); its role says to
+add no work and wait. Resumes and renews of existing agents are not held, and running agents are
+not wound down (rejected for now: by-priority wind-down and cross-project coordination, design
+xypj; killing processes; fixing the cause, a target-dir copy at spawn).
+
 ## CI watcher
 
 `[ci] github = true` in `.bridle/config.toml` makes the daemon watch GitHub Actions for the

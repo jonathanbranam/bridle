@@ -815,6 +815,7 @@ async fn status(
         ci: state.ci.last(),
         merged_leftovers,
         state_push: state.tasks.state_push_status(),
+        load: state.manager.load_status(),
         incidents: state.tasks.active_incidents(),
         pending_tasks: state
             .tasks

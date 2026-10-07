@@ -189,6 +189,8 @@ struct Inner {
     /// Spawns in flight. Until its first `system/init` an agent reads `idle` although its first
     /// turn is already on the way, so the quiet-point checks count these as busy.
     spawning: std::sync::atomic::AtomicUsize,
+    /// The load watch's last reading; its `holding` flag gates new spawns.
+    load: std::sync::Mutex<Option<bridle_api::types::LoadStatus>>,
     /// Short sha of the built commit a drain is waiting to restart into (`None` for a plain
     /// restart's drain).
     upgrade_waiting: std::sync::Mutex<Option<String>>,
@@ -283,6 +285,7 @@ impl AgentManager {
             emitter,
             runtimes: std::sync::Mutex::new(HashMap::new()),
             spawning: std::sync::atomic::AtomicUsize::new(0),
+            load: std::sync::Mutex::new(None),
             upgrade_waiting: std::sync::Mutex::new(None),
             draining: std::sync::atomic::AtomicBool::new(false),
             governor,
@@ -487,6 +490,27 @@ impl AgentManager {
             .or_else(|| candidates.first().copied())
             .map(str::to_string)
             .unwrap_or_else(|| role.model.clone())
+    }
+
+    pub fn set_load(&self, load: bridle_api::types::LoadStatus) {
+        *self.0.load.lock().expect("load mutex poisoned") = Some(load);
+    }
+
+    pub fn load_status(&self) -> Option<bridle_api::types::LoadStatus> {
+        self.0.load.lock().expect("load mutex poisoned").clone()
+    }
+
+    /// New spawns only: a resume or renew of an existing agent adds no new process tree
+    /// of the kind the hold is for (the incident was spawn-time target-dir copies).
+    pub(crate) fn refuse_if_load_held(&self) -> Result<(), SupervisorError> {
+        match self.load_status() {
+            Some(l) if l.holding => Err(SupervisorError::Conflict(format!(
+                "machine load is high ({:.1} per core on {} cores, threshold {:.1}); \
+                 spawns are held until it falls; pass --ignore-budget to override",
+                l.per_core, l.cores, l.threshold
+            ))),
+            _ => Ok(()),
+        }
     }
 
     fn refuse_if_holding(&self, model: &str) -> Result<(), SupervisorError> {
@@ -844,6 +868,7 @@ impl AgentManager {
         };
         if !req.ignore_budget {
             self.refuse_if_holding(&model)?;
+            self.refuse_if_load_held()?;
         }
         if self.draining() {
             return Err(SupervisorError::Conflict(

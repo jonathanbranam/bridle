@@ -42,6 +42,16 @@ pub(super) async fn status(cli: &Cli) -> Result<(), CliError> {
                 (None, None) => println!("state      nothing pushed yet"),
             }
         }
+        if let Some(l) = &status.load {
+            println!(
+                "load       {:.1} on {} cores ({:.2} per core, hold above {:.1}){}",
+                l.load1,
+                l.cores,
+                l.per_core,
+                l.threshold,
+                if l.holding { " HOLDING spawns" } else { "" }
+            );
+        }
         if status.draining {
             println!(
                 "{}",

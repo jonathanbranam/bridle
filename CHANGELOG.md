@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- The daemon watches the machine load: `bridle status` shows the 1-minute load average per core, and above `[machine] load_per_core` (default 2.5) new spawns are held until it falls, with one note to the orchestrator per crossing naming the top CPU consumers. `[machine] check_interval` (default 30s, 0s = off) sets the sample period (br-58c9).
 - `bridle ticket new` records who filed the ticket in an optional `filed_by` front-matter field (the caller's principal, e.g. `external:aide`); old tickets need no change. Whoever files the task with `ticket task` is its creator and watcher, so the relayer gets the landing notice (br-bdrc).
 
 ### Changed

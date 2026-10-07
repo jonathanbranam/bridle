@@ -146,6 +146,24 @@ pub struct Status {
     /// something nobody has approved yet.
     #[serde(default)]
     pub pending_tasks: Vec<PendingTask>,
+    /// The last machine load reading (`[machine]`); `None` until the first one, or when the
+    /// watch is off.
+    #[serde(default)]
+    pub load: Option<LoadStatus>,
+}
+
+/// The machine load watch's last reading (docs/design/agent-host/operating-model.md, Load watch).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct LoadStatus {
+    /// The 1-minute load average.
+    pub load1: f64,
+    pub cores: u32,
+    /// `load1` divided by `cores`.
+    pub per_core: f64,
+    /// `[machine] load_per_core`; `holding` is `per_core` over it.
+    pub threshold: f64,
+    /// New agent spawns are held.
+    pub holding: bool,
 }
 
 /// One `pending` task in [`Status::pending_tasks`].

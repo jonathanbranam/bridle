@@ -28,6 +28,7 @@ pub mod focus;
 pub mod governor;
 pub mod impact;
 mod integrator;
+pub mod load;
 mod open_watch;
 mod orchestrator;
 mod outbox;
@@ -119,6 +120,9 @@ pub struct Overrides {
     pub claim_lease_check_interval: Duration,
     /// How often [`ports::tick`] frees ports whose pid or owner agent is gone.
     pub port_check_interval: Duration,
+    /// Whether the machine load watch runs (`[machine] check_interval` still applies). Tests turn
+    /// it off so a loaded host does not hold their spawns.
+    pub load_watch: bool,
     /// Canned CI status and build command for `restart --upgrade` (tests).
     pub upgrade: UpgradeHooks,
     /// The CI watcher's tick, which also carries the self-upgrade check.
@@ -155,6 +159,7 @@ impl Default for Overrides {
             task_flush_interval: Duration::from_secs(30),
             claim_lease_check_interval: Duration::from_secs(30),
             port_check_interval: Duration::from_secs(30),
+            load_watch: true,
             upgrade: UpgradeHooks::default(),
             ci_tick_interval: ci::TICK_INTERVAL,
             drain_wake_after: Duration::from_secs(3600),
@@ -597,6 +602,12 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         manager.clone(),
     );
 
+    let load_watch = load::LoadWatch::new(
+        config.machine.load_per_core,
+        Box::new(load::SystemLoad),
+        manager.clone(),
+    );
+
     manager.set_tasks(tasks.clone());
     run_autostart_and_resume(&store, &config, &manager).await;
     restart::resume_all(
@@ -838,6 +849,15 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
             }
         })
     });
+    let load_task = (overrides.load_watch && !config.machine.check_interval.is_zero()).then(|| {
+        spawn_loop(shutdown_rx.clone(), config.machine.check_interval, {
+            let load_watch = load_watch.clone();
+            move || {
+                let load_watch = load_watch.clone();
+                async move { load_watch.tick().await }
+            }
+        })
+    });
     let orchestrator_task = config.orchestrator.enabled.then(|| {
         let home = overrides
             .bridle_home
@@ -935,6 +955,9 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         tracker_task.abort();
         governor_task.abort();
         ci_task.abort();
+        if let Some(t) = load_task {
+            t.abort();
+        }
         if let Some(t) = disk_task {
             t.abort();
         }

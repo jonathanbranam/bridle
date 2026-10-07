@@ -412,6 +412,7 @@ mod tests {
             ci: None,
             merged_leftovers: Vec::new(),
             state_push: None,
+            load: None,
             incidents: Vec::new(),
             waiter_open: false,
             last_wake_at: None,

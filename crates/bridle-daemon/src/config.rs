@@ -1286,6 +1286,24 @@ impl Default for DiskConfig {
     }
 }
 
+/// `[machine]`: the load watch (`crate::load`).
+#[derive(Debug, Clone, PartialEq)]
+pub struct MachineConfig {
+    /// Zero turns the watch off.
+    pub check_interval: Duration,
+    /// 1-minute load average per core above which new spawns are held; zero or less never holds.
+    pub load_per_core: f64,
+}
+
+impl Default for MachineConfig {
+    fn default() -> Self {
+        MachineConfig {
+            check_interval: crate::load::DEFAULT_INTERVAL,
+            load_per_core: crate::load::DEFAULT_LOAD_PER_CORE,
+        }
+    }
+}
+
 /// `[orchestrator]`: the supervisor that keeps the human's interactive orchestrator running
 /// (docs/design/agent-host/orchestrator-supervision.md, sections 2 to 4).
 #[derive(Debug, Clone, PartialEq)]
@@ -1533,6 +1551,7 @@ pub struct Config {
     pub branches: BranchesConfig,
     pub ci: CiConfig,
     pub disk: DiskConfig,
+    pub machine: MachineConfig,
     pub review: ReviewConfig,
     /// `[state] push`: push `bridle/state` to origin after a flush that committed. On by
     /// default: set to false to opt-out (rule existing-projects, human-approved 2026-09-29).
@@ -1600,6 +1619,7 @@ impl Default for Config {
             branches: BranchesConfig::default(),
             ci: CiConfig::default(),
             disk: DiskConfig::default(),
+            machine: MachineConfig::default(),
             review: ReviewConfig::default(),
             state_push: true,
             orchestrator: OrchestratorConfig::default(),
@@ -1979,6 +1999,15 @@ impl Config {
             }
             if let Some(v) = d.min_free_gb {
                 config.disk.min_free_gb = v;
+            }
+        }
+
+        if let Some(m) = raw.machine {
+            if let Some(s) = m.check_interval {
+                config.machine.check_interval = parse_duration(&s)?;
+            }
+            if let Some(v) = m.load_per_core {
+                config.machine.load_per_core = v;
             }
         }
 
@@ -2488,6 +2517,11 @@ struct RawMachine {
     #[serde(default)]
     #[allow(dead_code)]
     name: Option<String>,
+    /// The load watch (`crate::load`).
+    #[serde(default)]
+    check_interval: Option<String>,
+    #[serde(default)]
+    load_per_core: Option<f64>,
 }
 
 /// Whether `repo` is listed in `[machine] tools_only` of `<home>/config.toml` (hw6c): a clone
@@ -3989,6 +4023,16 @@ mod tests {
         assert_eq!(cfg.review.quiet, Duration::from_secs(300));
         assert_eq!(cfg.review.max_agents, 1);
         assert_eq!(cfg.review.idle, Duration::from_secs(7200));
+    }
+
+    #[test]
+    fn machine_config_parses() {
+        let d = Config::default().machine;
+        assert_eq!(d.load_per_core, crate::load::DEFAULT_LOAD_PER_CORE);
+        let cfg =
+            Config::parse("[machine]\ncheck_interval = \"0s\"\nload_per_core = 3.5\n").unwrap();
+        assert!(cfg.machine.check_interval.is_zero());
+        assert_eq!(cfg.machine.load_per_core, 3.5);
     }
 
     #[test]
