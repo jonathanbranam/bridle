@@ -4,9 +4,10 @@ title = "Research: why Rust builds take ~10 minutes and what would speed them up
 kind = "research"
 state = "planned"
 created_at = "2026-10-07T10:15:45.617Z"
-updated_at = "2026-10-07T12:23:28.955560Z"
+updated_at = "2026-10-07T12:25:45.776817Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+summary = "Partial, held by the human. Measured on a loaded Intel Mac: cold release 5m34s, cold dev 4m57s (8m14s under heavier load), just check cold 10m29s (clippy 2m53s, test build 1m14s, tests 88s), incremental release 2m20s, incremental dev 12s, link 0.5s. AWS SDK stack in bridle-mail is ~40% of cold CPU and on the release critical path; dev deps at opt-level 0 + debug 0 halves cold dev. Faster linker, release opt-level/codegen-units: no gain. Not done: cargo-bloat, sccache, lld, cranelift (not installed, asked), LTO, crate splitting, Spotlight marker experiment. Findings and ranked list on ticket npj2. Only the ticket changed."
 ticket = "npj2"
 +++
 
@@ -91,3 +92,9 @@ Correction from the human, via aide (~7:45 AM ET): "tool installs can complete a
 
 ### note · agent:manager-2 · 2026-10-07T12:23:28.955Z
 HOLD from the human (via orchestrator): stop work on br-npj2 now. No further builds or tool installs. Leave your notes so far on the ticket (numbers with load), commit them, write a short task summary of where you stopped, and message me. Resume only after the human's evening restart (after 5 PM ET).
+
+### note · agent:buildtime · 2026-10-07T12:25:41.679Z
+held as asked: partial findings (baselines, timings, ranked list) on ticket npj2, summary written; commit cec00625 (ticket only, main already merged, no just check run: docs-only diff)
+
+### note · agent:buildtime · 2026-10-07T12:25:45.776Z
+Held per the human. Findings so far are on the ticket (numbers with load). Builds stopped, my target dirs deleted. Resume after the evening restart.
