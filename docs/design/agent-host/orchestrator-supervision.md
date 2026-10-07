@@ -36,7 +36,7 @@ daemon: orchestrator supervisor     one task, ticks every 10 s
 bridle wait-for-wake                the in-session command
 ```
 
-The launcher (`bridle session orchestrator`; `scripts/claude-orchestrator` wraps it) writes its own pid to the pid file and runs
+The launcher (`bridle session orchestrator`) writes its own pid to the pid file and runs
 `claude` as its child, so the pid lives exactly as long as the session. It doesn't `exec`, so that
 when `claude` ends it can append the time and exit status (a signal, when above 128) to
 `$BRIDLE_HOME/orchestrator.exits` and print it in the pane: sessions had ended unattended with
@@ -171,10 +171,9 @@ delivered, so a daemon restart re-derives what was queued. Idle and usage are st
 kept in memory (a restart resets their baselines). The wake loop runs whether or not `[orchestrator]`
 is enabled. The waiter incident is measured from the later of the last request's close and the
 session's launch. `bridle status` shows `waiter_open` and `last_wake_at` (when a poll last
-answered with wakes; in memory, so a daemon restart clears it). `scripts/orchestrator-watch.sh` is deleted; `scripts/context-check.sh` was
-deleted in slice 2 (with `~/.bridle-orchestrator-{ctx-level,session}`).
+answered with wakes; in memory, so a daemon restart clears it).
 
-`scripts/orchestrator-watch.sh` and `scripts/context-check.sh` are deleted, and with them the
+The old shell scripts are deleted, and with them the
 `~/.bridle-orchestrator-{seen-questions,hold-state,ci-seen,ctx-level,session}` files. The
 role file's watcher step (`workflow/base/roles/orchestrator.md`) becomes: run `bridle
 wait-for-wake` in the background, and on any exit, read what it printed, act, and run it again.
@@ -358,8 +357,8 @@ Each finishes on one branch. Files named are where the change lands.
   cursor row, schema version), `main` wiring where the background loops start.
 - `crates/bridle-api/src/types.rs` (wake response) and `client/`; `crates/bridle/src/cli.rs`
   (`wait-for-wake`, `orchestrator note-session`).
-- `scripts/claude-orchestrator` (pid file, `--settings` hook; drop `--session-id`); delete
-  `scripts/orchestrator-watch.sh`; `workflow/base/roles/orchestrator.md` (the watcher step).
+- `crates/bridle/src/session.rs` (orchestrator launcher, pid file, `--settings` hook);
+  `workflow/base/roles/orchestrator.md` (the watcher step).
 - Docs: this file, `daemon.md` (loops), `api.md`, `cli.md`, `roles-and-config.md`, `storage.md`.
 
 **Slice 2: context and uptime thresholds, forced restart.** After slice 1; the same files.
@@ -368,7 +367,7 @@ Each finishes on one branch. Files named are where the change lands.
 - `config.rs`: `note_tokens`, `plan_tokens`, `handover_tokens`, `handover_deadline`,
   `max_uptime`.
 - `server.rs`, `types.rs`, `client/`, `cli.rs`: `bridle handover done` (the marker; no note yet).
-- Delete `scripts/context-check.sh`; the role file's context step.
+- `workflow/base/roles/orchestrator.md` (the context step).
 - Docs: `orchestrator-supervision.md`, `cli.md`, `api.md`.
 
 **Slice 3: the handover note as a record.** After slice 2 in the merge order, but independent

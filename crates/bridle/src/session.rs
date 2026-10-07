@@ -1,5 +1,4 @@
-//! `bridle session orchestrator|advisor|aide`: starts the role's `claude` session (ticket mrhe). Ports
-//! `scripts/claude-orchestrator` and `scripts/claude-advisor`, which are now wrappers around it.
+//! `bridle session orchestrator|advisor|aide`: starts the role's `claude` session (ticket mrhe).
 //! No `exec`: bridle stays as the parent so the pid file can be removed and the exit recorded.
 
 use std::io::Write as _;

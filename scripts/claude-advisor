@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-# Compat wrapper (ticket mrhe): the launcher is now `bridle session advisor`, which runs from any
-# directory. Kept so existing supervisors and habits still work; remove once nothing calls it.
-# Usage: claude-advisor [--project <project>] [name] [extra claude args]
-cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)" || exit 1
-exec bridle session advisor "$@"

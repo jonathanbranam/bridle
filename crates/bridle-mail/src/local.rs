@@ -34,7 +34,7 @@ impl Local for FixedLocal {
 pub struct FileLocal {
     /// `<workspace>/.bridle/state/owner.toml`: the state branch's worktree.
     pub owner_file: PathBuf,
-    /// `<bridle home>/advisor-<project>.pid`, written by `scripts/claude-advisor`.
+    /// `<bridle home>/advisor-<project>.pid`, written by the advisor launcher.
     pub advisor_pid_file: PathBuf,
     /// This machine's name, as `bridle serve` writes it to `owner.toml`.
     pub host: String,
@@ -76,7 +76,7 @@ fn owner_host(text: &str) -> Option<String> {
         .map(str::to_string)
 }
 
-/// `<pid> <ps lstart> <launch epoch>`, as `scripts/claude-orchestrator` writes; returns the pid
+/// `<pid> <ps lstart> <launch epoch>`, as the orchestrator launcher writes; returns the pid
 /// and the start time with whitespace squeezed.
 fn parse_pid_file(text: &str) -> Option<(i32, String)> {
     let words: Vec<&str> = text.split_whitespace().collect();

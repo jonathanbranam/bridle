@@ -716,8 +716,8 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
 - **`budget`'s** subcommands (`hold`, `release`, `override`, `override-clear`, `max-workers`)
   are described in [[docs/design/usage-and-budget|usage and budget]]. `max-workers` sets a live
   cap that never stops running workers, only blocks new spawns and resumes.
-- **`orchestrator note-session`** is the SessionStart hook `scripts/claude-orchestrator` registers for
-  its own session (`bridle session orchestrator`; `scripts/claude-orchestrator` is a compat wrapper) ([[orchestrator-supervision]]). It reads the hook JSON on stdin and writes
+- **`orchestrator note-session`** is the SessionStart hook that `bridle session orchestrator` registers for
+  its own session ([[orchestrator-supervision]]). It reads the hook JSON on stdin and writes
   `$BRIDLE_HOME/orchestrator.session` as `<session id> <transcript path>` (`/clear` gives the same
   process a new id). Local, silent, never fails.
 - **`focus gate`** is the `UserPromptSubmit` hook `bridle session` passes for the advisor and

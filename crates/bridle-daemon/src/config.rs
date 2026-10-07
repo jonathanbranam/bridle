@@ -1343,8 +1343,8 @@ impl OrchestratorConfig {
             if v.trim().is_empty() {
                 return Err(ConfigError::BadOrchestrator("launcher is empty".into()));
             }
-            // The old default, spelled out in a config: a repo-relative script path the pane's
-            // cwd may not resolve, and the script is going away. Same as unset.
+            // The old default: a repo-relative script path the pane's cwd may not resolve.
+            // Any config value other than the old script path is kept as an override.
             self.launcher = (v != "scripts/claude-orchestrator").then_some(v);
         }
         if let Some(v) = raw.relaunch_backoff {

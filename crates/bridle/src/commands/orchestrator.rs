@@ -4,10 +4,8 @@ use super::*;
 
 /// The orchestrator's startup steps, printed by `bridle prime orchestrator`
 /// alongside the role prompt and current state (docs/tickets/open/
-/// one-command-orchestrator-handover-d4mz.md). Kept in the binary, not
-/// `scripts/claude-orchestrator`, so there's one source of truth for what a
-/// fresh orchestrator session does first; the script just runs `bridle prime
-/// orchestrator` for its opening prompt.
+/// one-command-orchestrator-handover-d4mz.md). Kept in the binary, so there's one source of truth
+/// for what a fresh orchestrator session does first; `bridle session orchestrator` runs this.
 pub(super) const ORCHESTRATOR_STARTUP_STEPS: &str = "\
 Check in: `bridle status`, `bridle agents`, and recent messages to human (from the \
 managers).
@@ -24,8 +22,7 @@ The human will mostly reach you through Remote Control.";
 /// `bridle prime orchestrator`: a fresh orchestrator session's opening
 /// context in one command (docs/tickets/open/
 /// one-command-orchestrator-handover-d4mz.md, step 2), read from the current
-/// directory — run this from the repo root, as
-/// `scripts/claude-orchestrator` does. Purely local: no daemon call.
+/// directory — run this from the repo root. Purely local: no daemon call.
 pub(super) async fn prime(cli: &Cli, args: &PrimeArgs) -> Result<(), CliError> {
     match args.role {
         PrimeRoleArg::Orchestrator => prime_orchestrator(cli).await,
