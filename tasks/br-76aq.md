@@ -4,9 +4,10 @@ title = "bridle sign setup fails with Homebrew OpenSSL 3+: macOS can't import th
 kind = "bug"
 state = "planned"
 created_at = "2026-10-06T23:42:35.043Z"
-updated_at = "2026-10-06T23:43:05.961153Z"
+updated_at = "2026-10-07T00:44:12.898770Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+summary = "Fixed bridle sign setup failing on macOS with Homebrew OpenSSL 3+ by using /usr/bin/openssl (LibreSSL) instead of the first openssl on PATH. Added pick_openssl(exists: bool) function for testability and openssl_path() to check filesystem; both openssl calls in create_identity now use openssl_path(). Added unit test and documented in cli.md. Commit: 71a385fd."
 +++
 
 original id: 76aq
@@ -23,3 +24,6 @@ Migration: none. Model: Haiku. Out of scope: any other signing change.
 
 ### note · external:orchestrator · 2026-10-06T23:42:50.552Z
 From orchestrator: br-76aq is ready (the human, via aide: 'Please schedule'). It's a small bug fix: signing.rs should use /usr/bin/openssl or -legacy. The human has a PATH workaround, so it's normal priority, after br-x56y. Spawns are on hold until the daemon restarts (incident br-z7y5).
+
+### note · agent:openssl-path · 2026-10-07T00:44:12.898Z
+done: Fixed bridle sign setup failing with Homebrew OpenSSL 3+ by using system /usr/bin/openssl; commit 71a385fd
