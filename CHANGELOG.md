@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Fixed
+- A comment on a claimed task now tells its claimant like a watcher (one message, never the author), so a manager's send-back comment wakes the worker (br-m63h).
 - `bridle send` from an agent (its own `BRIDLE_URL` and `BRIDLE_PROJECT`) sends locally again, `--task` included; since the 3haz build it was treated as mail for another project and refused. The own daemon's project is read from its status when found by URL (br-x56y).
 
 ### Added

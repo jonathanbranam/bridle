@@ -2865,11 +2865,19 @@ async fn emit_comment(
     told: &[ToTarget],
 ) {
     let change = format!("comment by {actor}: {}", excerpt(body));
+    // The claimant is told like a watcher (a send-back comment must reach the worker doing the
+    // task); `emit_task_change` skips the author and `told`, so there is one message each.
+    let mut notified = task.clone();
+    if let Some(claimant) = &task.claimed_by
+        && !notified.watchers.contains(claimant)
+    {
+        notified.watchers.push(claimant.clone());
+    }
     emit_task_change(
         state,
         event_kind::TASK_NOTE_ADDED,
         actor,
-        task,
+        &notified,
         serde_json::json!({"text": body}),
         change,
         told,

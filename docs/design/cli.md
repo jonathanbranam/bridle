@@ -355,7 +355,7 @@ bridle task summary <id> --text TEXT | --file FILE                    records ho
 bridle task reopen <id>
 bridle task watch <id> · unwatch <id>                               add/remove yourself as a watcher (`task show` lists them; the creator and claimer are added automatically)
 bridle task skip-settle <id> --reason TEXT                            skip the settle period (recorded); human, or orchestrator/PM with a reason saying the human asked or an urgent downtime fix
-bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comment on the task's thread; no effect on readiness
+bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comment on the task's thread; tells the watchers and the claimant (not the author); no effect on readiness
 ```
 
 - **`--allow-tool TOOL`** on `spawn` (repeatable) grants a tool beyond the

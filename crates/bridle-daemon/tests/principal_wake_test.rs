@@ -519,3 +519,65 @@ async fn stop_ends_own_session_refuses_other_identity_and_reports_none() {
     );
     assert!(superseded(&w.await.unwrap().unwrap()));
 }
+
+/// A task claimed by `worker`, who has stopped watching it: only the claimant link can tell it.
+async fn claimed_by_unwatching_worker(daemon: &support::TestDaemon, worker: &Client) -> String {
+    let task = new_task(&daemon.client).await;
+    daemon.client.plan_task(&task).await.expect("plan");
+    worker.claim_task(&task).await.expect("claim");
+    worker.unwatch_task(&task).await.expect("unwatch");
+    task
+}
+
+#[tokio::test]
+async fn a_comment_on_a_claimed_task_tells_its_claimant_once() {
+    let (daemon, _tmp) = support::start_daemon(None).await;
+    let worker = daemon.external_client("worker").await;
+    let task = claimed_by_unwatching_worker(&daemon, &worker).await;
+    daemon
+        .client
+        .note_task(&task, "send-back")
+        .await
+        .expect("note");
+    let lines = updates(&worker, "me").await;
+    assert_eq!(lines.len(), 1, "{lines:?}");
+    assert!(
+        lines[0].ends_with("comment by human: send-back"),
+        "{lines:?}"
+    );
+    // The claimant's own comment tells it nothing.
+    worker.note_task(&task, "mine").await.expect("own note");
+    assert_eq!(updates(&worker, "me").await.len(), 1);
+}
+
+#[tokio::test]
+async fn notifying_the_claimant_or_watching_it_is_still_one_message() {
+    let (daemon, _tmp) = support::start_daemon(None).await;
+    let worker = daemon.external_client("worker").await;
+    let task = claimed_by_unwatching_worker(&daemon, &worker).await;
+    // `--notify` is `send --task`: its pointer is the one message, not a second watcher line.
+    daemon
+        .client
+        .send(&SendRequest {
+            to: Some("external:worker".to_string()),
+            body: "merge main".to_string(),
+            kind: MessageKind::Note,
+            when: When::Now,
+            reply_to: None,
+            task: Some(task.clone()),
+        })
+        .await
+        .expect("send");
+    let all = worker
+        .list_messages(&MessageQuery {
+            to: Some("me".to_string()),
+            ..Default::default()
+        })
+        .await
+        .expect("messages");
+    assert_eq!(all.len(), 1, "{all:?}");
+    // A claimant that is also a watcher gets one line per comment too.
+    worker.watch_task(&task).await.expect("watch");
+    daemon.client.note_task(&task, "again").await.expect("note");
+    assert_eq!(updates(&worker, "me").await.len(), 1);
+}
