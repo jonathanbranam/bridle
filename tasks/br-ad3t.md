@@ -4,9 +4,10 @@ title = "Document review never sends the human's comments on its own: the watche
 kind = "bug"
 state = "planned"
 created_at = "2026-10-07T00:43:14.412Z"
-updated_at = "2026-10-07T00:43:54.381948Z"
+updated_at = "2026-10-07T01:59:57.460223Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+summary = "Cause: DocWatcher::send re-reads the file before sending and compares the batch it observed against the current pending text via unid(); unid only stripped the thread ID from the first block's prefix of the joined batch. A document whose threads already had IDs (c1.., as the gateway writes them) never matched, so the tick returned Ok(0) every time and only `review now` (no expect) worked. Fix: compare per block (unid_batch). Added Overrides.doc_watch_interval (default 30 s) so a daemon-level test can run the real tick loop; new tests/review_tick_test.rs (fails on old code, 60 s timeout; passes now) plus a unit test. Debug tracing lines for held back / due / slot-waiting / changed / nothing pending. daemon.md and CHANGELOG updated."
 +++
 
 original id: ad3t
@@ -20,3 +21,6 @@ Acceptance: just check passes; the test above. Migration: none. Model: Sonnet. O
 
 ### note · external:orchestrator · 2026-10-07T00:43:14.578Z
 From orchestrator: approved by the human, 2026-10-07: 'I just want the solution fixed actually.'
+
+### note · agent:ad3t-doc-review · 2026-10-07T01:59:57.460Z
+done: still-document auto send fixed (batch compare ignored IDs wrongly); just check exit 0, 1265 tests; 05e729eb
