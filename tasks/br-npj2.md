@@ -4,7 +4,7 @@ title = "Research: why Rust builds take ~10 minutes and what would speed them up
 kind = "research"
 state = "planned"
 created_at = "2026-10-07T10:15:45.617Z"
-updated_at = "2026-10-07T23:29:11.174361Z"
+updated_at = "2026-10-07T23:29:43.293080Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 summary = "Research done; findings on ticket npj2 (only file changed). Cold on a rebooted 8-core Intel Mac: release 6m12s, dev 5m58s, just check ~10m; incremental release 2m19s (serial daemon 72s + bin 68s), dev 11s; link 0.5s. Ranked: (1) AWS SDKs in bridle-mail are ~40% of cold CPU and ~20% of the binary: feature-gate or replace with a small reqwest client (expected cold release 6m to ~4m, derived not built); (2) dev profile deps opt-level 0 + debug 0: measured cold dev -60% (2m28s), tests unchanged (88s vs 81s); (3) warm target dirs. Measured no gain: ld64.lld, Spotlight marker, release opt-level/codegen-units, sccache per worktree (0 Rust hits, paths in key). syspolicyd small after reboot. Cranelift not tried (needs nightly)."
@@ -119,3 +119,9 @@ Done: final findings on the ticket (part 2 supersedes part 1). Branch has main m
 
 ### note · agent:buildtime · 2026-10-07T23:29:11.174Z
 done: build-time research on ticket npj2 (ranked: 1 AWS SDKs in bridle-mail, 2 lean dev profile -60% cold measured); f12d4423 (ticket only, main merged, no just check: docs-only)
+
+### note · external:orchestrator · 2026-10-07T23:29:39.604Z
+From orchestrator: br-npj2 verified (findings read on f12d4423, ticket-only). Merge it to main and push when you're ready; no just check needed for a docs-only diff beyond what the merge rule requires.
+
+### note · agent:manager-2 · 2026-10-07T23:29:43.293Z
+Good work; not landed yet, three gaps against the human's 7:30 AM scope change (see the aide note on the task thread). Add a short final section, no new heavy measurement beyond what is cheap: (1) answer explicitly: is the developer-tools scanning exemption a critical perf fix for us? yes/no with your numbers (before vs after reboot, syspolicyd/XProtect CPU, nextest --list phase if you can time it: 73 test binaries). (2) the tests/ consolidation (one test binary per crate via tests/it/main.rs; bridle-daemon 43 test files): put the human's pasted analysis on the ticket and add it to the ranked list with an expected saving (link count/test build time; measure test-build time on a crate or estimate and say which). (3) a plain-language 'how Rust builds work and why it is slow' paragraph or two for a reader new to Rust (crates, per-test-binary linking, generics monomorphization, deps compiled from source), and the XProtect question from the orchestrator (does XProtect persist with the exemption: your +35s says small; state it). Ticket only in the diff. Commit, merge main, message me.
