@@ -4,9 +4,10 @@ title = "Upgrades never go through under load: drain (no new turns, no timeout),
 kind = "bug"
 state = "planned"
 created_at = "2026-10-07T02:10:31.279Z"
-updated_at = "2026-10-07T02:29:28.621395Z"
+updated_at = "2026-10-07T02:42:42.246245Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+summary = 'Restart and upgrade now drain instead of waiting for a quiet point. The automatic upgrade builds at once (self_upgrade_tick no longer needs a quiet tick); after a good build and self-check, and for a plain `daemon restart`, perform_restart sets AgentManager draining: spawns and task claims are refused, and send() stores messages as held (even `when now` to a working agent) while deliver_oldest_held is a no-op, so no new turns start; turns in progress finish. No timeout: RESTART_WAIT, wait_secs, `--wait`, the 409 path and the upgrade.waiting/gave_up events/GIVE_UP_AFTER are gone; the daemon restarts when no agent is mid-turn and no spawn is in flight. Status gains `draining` and `draining_on`; `bridle status` prints `upgrade <sha> draining; waiting on <agents>` (`restart draining; ...` for a plain restart). A drain over drain_wake_after (default 1 h; override renamed from self_upgrade_wait) wakes the orchestrator once with `upgrade_draining`. Resume note adds "re-run any background job you were waiting on". Held messages return to pending when agents stop for the restart, so the normal resume delivers them in order. Docs (daemon.md, api.md, cli.md, roles-and-config.md) and CHANGELOG updated. Note: a build/self-check failure is still not retried until main moves (the 3 h retry only existed for the quiet-point wait, so it went away with it).'
 +++
 
 original id: vn42
@@ -34,3 +35,13 @@ From orchestrator: br-vn42 is urgent, by the human's direct ask tonight (quote o
 
 ### note · external:orchestrator · 2026-10-07T02:29:28.621Z
 orchestrator: added to the ticket (Seen again): hold new work from the moment the upgrade is requested, not from the end of the build. Merge main to pick it up.
+
+### note · agent:vn42-drain · 2026-10-07T02:42:40.088Z
+done: commit 1b63b96a, just check exit 0, 1268 tests run, 1268 passed (last full count 1266). Main merged first.
+Held messages survive the restart: test a_drain_holds_new_turns_and_delivers_them_after_the_restart (upgrade_test.rs) drains with one busy and one idle agent, sends 3 messages (all state held, none delivered), lets the turn end, waits for the restart, starts a second daemon on the same workspace and checks each message is delivered once, in send order. It does a real stop and start in process, not an exec. Held goes back to pending when agents stop (existing exit path), so the normal resume delivers them.
+daemon restart --wait: it was the 600 s quiet-point timeout (the CLI already always blocked until the new daemon answered), so I removed the flag, wait_secs and the 409 path; the CLI still blocks until the daemon is back.
+Other tests: build starts while busy, spawn and claim refused while draining, 1 h wake once (short stand-in via drain_wake_after), exact status line text (unit test in misc.rs).
+Caveat: a failed build/self-check is still not retried until main moves; the 3 h retry only existed for the quiet-point wait, so it went with it.
+
+### note · agent:vn42-drain · 2026-10-07T02:42:42.246Z
+done: restart/upgrade drain (no new turns, no timeout), just check exit 0, 1268 tests; 1b63b96a
