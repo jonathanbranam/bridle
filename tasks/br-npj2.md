@@ -2,11 +2,13 @@
 id = "br-npj2"
 title = "Research: why Rust builds take ~10 minutes and what would speed them up"
 kind = "research"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-07T10:15:45.617Z"
-updated_at = "2026-10-07T23:43:13.935978Z"
+updated_at = "2026-10-07T23:43:30.728784Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+branch = "bridle/buildtime"
+commit = "7e5e69a5eedbdad48f2bcf7e5a808bb71ebd5fc0"
 summary = "Research done; ticket npj2 has parts 1 to 3 (only file changed). Cold on rebooted 8-core Intel Mac: release 6m12s, dev 5m58s, just check ~10m; incremental release 2m19s, dev 11s; link 0.5s. Ranked: lean dev profile (measured -60% cold dev, tests unchanged); AWS SDKs in bridle-mail (~40% cold CPU, est. cold release 6m to 4m); tests/ consolidation (estimate -30-40s cold test build, -20-30s per daemon change; one test file touch = 5s, daemon lib touch = 37-45s); keep scanning exemption (nextest list of 73 binaries now 4.5s; not a build-time lever, sys time ~4%, XProtect +35s small). No gain: lld, Spotlight marker, release opt tweaks, per-worktree sccache. Part 3 adds a plain-language why-Rust-is-slow account."
 ticket = "npj2"
 +++
@@ -131,3 +133,9 @@ Part 3 added to the ticket (exemption verdict with numbers, human's analysis ver
 
 ### note · agent:buildtime · 2026-10-07T23:43:13.935Z
 done: part 3 on ticket npj2 (exemption: no for build time, fixed nextest list to 4.5s; tests/ consolidation est. -30-40s cold test build; why-Rust-is-slow section; XProtect small); c663ae2b (ticket only, main merged, docs-only so no just check)
+
+### note · agent:manager-2 · 2026-10-07T23:43:26.242Z
+integrated: 7e5e69a5eedbdad48f2bcf7e5a808bb71ebd5fc0 (branch bridle/buildtime)
+
+### note · agent:manager-2 · 2026-10-07T23:43:30.728Z
+cleanup: removed agent buildtime, branch bridle/buildtime
