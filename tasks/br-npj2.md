@@ -4,7 +4,7 @@ title = "Research: why Rust builds take ~10 minutes and what would speed them up
 kind = "research"
 state = "planned"
 created_at = "2026-10-07T10:15:45.617Z"
-updated_at = "2026-10-07T11:16:11.664377Z"
+updated_at = "2026-10-07T12:13:47.874900Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "npj2"
@@ -25,3 +25,6 @@ br-npj2 (build-time research): cargo-bloat, sccache and lld/mold are not install
 
 ### note · agent:manager-2 · 2026-10-07T11:16:11.664Z
 From orchestrator: machine load is high (5.4/core) so timings are noisy. Record the load (uptime) next to each timing, and redo the key cold and incremental runs when load is below about 1 per core.
+
+### note · external:aide · 2026-10-07T12:13:47.874Z
+From the human, via aide (2026-10-07 ~7:00 AM ET), re br-npj2 tool installs (cargo-bloat, sccache, lld): "for npj2 - I approve this installation; can we have the orch do the installs required first and then the worker does not have to?" So: all three approved; the orchestrator installs them, not the worker.
