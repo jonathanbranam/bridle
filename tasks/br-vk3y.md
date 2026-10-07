@@ -4,9 +4,10 @@ title = "Tasks get a real 'ticket' field, replacing the 'original id:' first bod
 kind = "feature"
 state = "planned"
 created_at = "2026-10-06T00:10:01.851Z"
-updated_at = "2026-10-07T00:59:32.602062Z"
+updated_at = "2026-10-07T05:11:02.834679Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+summary = 'Tasks now carry `ticket: Option<String>` (front-matter `ticket = "<id>"`; no SQLite column), added to the Task type, NewTaskRequest, EditTaskRequest (API, additive), the gateway TaskDetail and its regenerated TS binding, and `task show`. `ticket task`/`ticket new --from-task` set it and write no body line; `task edit` never touches it (keep_origin_line removed); `ticket check` reads it (falling back to the old line from an unmigrated daemon). TaskManager::open migrates each task whose first body line is `original id: <x>` (field set, line removed, written through the normal state-branch enqueue); idempotent. An old client sending the line on create is converted the same way. Docs: storage.md, cli.md, README.md, CHANGELOG. Not done: UI linking (the gateway only exposes the id; bridle-ui lives elsewhere).'
 +++
 
 original id: vk3y
