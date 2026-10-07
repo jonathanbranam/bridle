@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- `bridle gateway status`, `stop` and `restart`: the gateway records its pid in `~/.bridle/gateway.pid` once listening (removed on exit and on SIGTERM/SIGINT); `stop` signals only that pid, after checking its command line is a bridle gateway, and waits 10 s; `status` shows pid, URL and build (`stale binary` when it differs from the installed one) and exits 1 when not running; `restart` is stop then `--detach` (br-76td).
 - `~/.bridle/focus-override.toml`'s `until` now accepts local times like `[[focus]]` periods: a TOML local datetime without offset (e.g. `until = 2026-10-01T22:00:00`), or a string `"HH:MM"` for the next occurrence of that local time (e.g. `until = "22:00"`). Existing offset and Z forms still work. Local times that do not exist or are ambiguous (DST gaps/overlaps) are rejected with a log line (br-hesj).
 
 ### Fixed

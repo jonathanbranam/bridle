@@ -102,11 +102,21 @@ async fn run_detached(cli: &Cli, args: &ServeArgs) -> Result<(), CliError> {
 /// Re-executes this command line without `--detach` in a new process group, output appended
 /// to `log_path`. Shared by `bridle serve --detach` and `bridle gateway --detach`.
 pub(crate) fn spawn_detached(log_path: &Path, what: &str) -> anyhow::Result<std::process::Child> {
-    let current_exe = std::env::current_exe().context("locating the bridle binary")?;
     let child_args: Vec<std::ffi::OsString> = std::env::args_os()
         .skip(1)
         .filter(|a| a != "--detach")
         .collect();
+    spawn_detached_with(log_path, what, &child_args)
+}
+
+/// Like [`spawn_detached`] with the child's arguments given, for a caller (`gateway restart`)
+/// whose own arguments aren't the child's.
+pub(crate) fn spawn_detached_with(
+    log_path: &Path,
+    what: &str,
+    child_args: &[std::ffi::OsString],
+) -> anyhow::Result<std::process::Child> {
+    let current_exe = std::env::current_exe().context("locating the bridle binary")?;
     let log_out = std::fs::OpenOptions::new()
         .create(true)
         .append(true)
@@ -117,7 +127,7 @@ pub(crate) fn spawn_detached(log_path: &Path, what: &str) -> anyhow::Result<std:
         .with_context(|| format!("duplicating the {} handle", log_path.display()))?;
     use std::os::unix::process::CommandExt;
     std::process::Command::new(&current_exe)
-        .args(&child_args)
+        .args(child_args)
         .stdin(std::process::Stdio::null())
         .stdout(log_out)
         .stderr(log_err)

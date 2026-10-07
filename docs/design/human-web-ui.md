@@ -42,7 +42,24 @@ on dalek and on every client machine alike.
   tail of the log. A bind with port 0 can't be probed, so `--detach` refuses it.
 - **A second start is refused.** Before spawning, `--detach` probes `bind`'s health; if
   something answers it exits 1 naming the address. The foreground `bridle gateway` has the
-  bind error as its guard. There is no pid file: the port is the lock.
+  bind error as its guard. The port is the lock; the pid file (below) is for stop and status.
+- **Pid file** (76td). The gateway process itself (foreground, or the `--detach` child, not the
+  parent) writes `~/.bridle/gateway.pid` (decimal pid and a newline, beside `gateway.log`) once
+  it is listening, and removes it on a clean exit and on SIGTERM or SIGINT. A stale file (pid
+  not alive) is ignored and overwritten by the next start. A self re-exec keeps the pid, so
+  the file stays right.
+- **`bridle gateway status`** prints `running pid <pid> <url> build <build>` (the URL is
+  `[gateway] public_url`, else `http://<bind>`; the build is what the gateway's own health
+  endpoint reports: crate version, binary size and modified time, compared with the installed
+  binary's to add `stale binary`), or `not running` (plus `stale pid file removed`). Exit 0
+  running, 1 not. `--json` too.
+- **`bridle gateway stop`** reads the pid file, checks with `ps -p <pid>` (that one pid, never a
+  search by name or port) that its command line contains `bridle` and `gateway`, sends SIGTERM,
+  and waits up to 10 s for it to exit (`stopped`). Not a gateway: it says so, signals and removes
+  nothing, exit 1. Still alive after 10 s: an error naming the pid, exit 1, no SIGKILL. No pid
+  file: `not running`.
+- **`bridle gateway restart`** is stop (not running is fine; a failed stop means no start), then
+  `bridle gateway --detach`, then the status line. Auto-restart is not built (the human).
 - **It keeps itself current.** The running gateway checks every 30 s whether the file at
   its own executable path changed (modified time or size) and, if so, re-executes that path
   with the same arguments. The pid, process group and log handles are kept, so a detached

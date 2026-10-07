@@ -21,6 +21,17 @@ pub async fn run(cli: &Cli, args: &GatewayArgs) -> Result<(), CliError> {
     match &args.command {
         Some(GatewayCommand::HashPassword) => return hash_password(),
         Some(GatewayCommand::Install(a)) => return install(cli, a),
+        Some(GatewayCommand::Status) => {
+            let home = bridle_api::discovery::bridle_home();
+            if status(cli, &home).await? {
+                return Ok(());
+            }
+            std::process::exit(1);
+        }
+        Some(GatewayCommand::Stop) => {
+            return stop(cli, &bridle_api::discovery::bridle_home()).await;
+        }
+        Some(GatewayCommand::Restart) => return restart(cli).await,
         None => {}
     }
     let home = bridle_api::discovery::bridle_home();
@@ -30,7 +41,11 @@ pub async fn run(cli: &Cli, args: &GatewayArgs) -> Result<(), CliError> {
         return Ok(());
     }
     if args.detach {
-        return run_detached(cli, &home, &config).await;
+        let child_args: Vec<std::ffi::OsString> = std::env::args_os()
+            .skip(1)
+            .filter(|a| a != "--detach")
+            .collect();
+        return run_detached(cli, &home, &config, &child_args).await;
     }
     tracing_subscriber::fmt()
         .with_writer(std::io::stderr)
@@ -48,9 +63,17 @@ pub async fn run(cli: &Cli, args: &GatewayArgs) -> Result<(), CliError> {
         config: config.interactions,
     };
     let exe = current_exe_path()?;
+    // Written once listening; dropped (file removed) on every return below. The exec path
+    // keeps the file, and the new image rewrites it.
+    std::fs::create_dir_all(&home).with_context(|| format!("creating {}", home.display()))?;
+    let _pid_file = bridle_gateway::PidFile::write(&home).context("writing the pid file")?;
+    let mut sigterm = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+        .context("installing the SIGTERM handler")?;
     let serving = bridle_gateway::serve(listener, config.login, config.ui, interactions);
     tokio::select! {
         r = serving => r.context("gateway")?,
+        _ = sigterm.recv() => tracing::info!("SIGTERM; shutting down"),
+        _ = tokio::signal::ctrl_c() => tracing::info!("SIGINT; shutting down"),
         () = bridle_gateway::binary_changed(&exe, check_interval()) => {
             tracing::info!(exe = %exe.display(), "the bridle binary changed; restarting onto it");
             use std::os::unix::process::CommandExt;
@@ -83,7 +106,12 @@ fn current_exe_path() -> anyhow::Result<PathBuf> {
     )
 }
 
-async fn run_detached(cli: &Cli, home: &Path, config: &GatewayConfig) -> Result<(), CliError> {
+async fn run_detached(
+    cli: &Cli,
+    home: &Path,
+    config: &GatewayConfig,
+    child_args: &[std::ffi::OsString],
+) -> Result<(), CliError> {
     if config.bind.port() == 0 {
         return Err(anyhow!("--detach needs a fixed port in [gateway] bind, not 0").into());
     }
@@ -92,7 +120,7 @@ async fn run_detached(cli: &Cli, home: &Path, config: &GatewayConfig) -> Result<
     }
     std::fs::create_dir_all(home).with_context(|| format!("creating {}", home.display()))?;
     let log_path = home.join("gateway.log");
-    let mut child = crate::serve::spawn_detached(&log_path, "gateway")?;
+    let mut child = crate::serve::spawn_detached_with(&log_path, "gateway", child_args)?;
     let deadline = Instant::now() + crate::serve::DETACH_WAIT;
     loop {
         if let Ok(Some(status)) = child.try_wait() {
@@ -122,6 +150,130 @@ async fn run_detached(cli: &Cli, home: &Path, config: &GatewayConfig) -> Result<
         }
         tokio::time::sleep(Duration::from_millis(200)).await;
     }
+}
+
+/// The first line of `ps` for one pid: `(stat, command)`; `None` when the pid is gone or a zombie.
+/// A specific pid, never a search by name (rule no-kill-by-name).
+fn process_command(pid: u32) -> Option<String> {
+    let out = std::process::Command::new("ps")
+        .args(["-p", &pid.to_string(), "-o", "stat=,command="])
+        .output()
+        .ok()?;
+    let text = String::from_utf8_lossy(&out.stdout);
+    let line = text.lines().next()?.trim();
+    let (stat, command) = line.split_once(char::is_whitespace)?;
+    if stat.starts_with('Z') {
+        return None;
+    }
+    Some(command.trim().to_string())
+}
+
+fn is_gateway_command(command: &str) -> bool {
+    command.contains("bridle") && command.contains("gateway")
+}
+
+/// The URL as `bridle link` and the config derive it: `public_url`, else `http://<bind>`.
+fn gateway_url(home: &Path, config: &GatewayConfig) -> String {
+    bridle_daemon::config::ui_base_url(home, None)
+        .ok()
+        .flatten()
+        .unwrap_or_else(|| format!("http://{}", config.bind))
+}
+
+/// Prints the status; `true` when running. A pid file whose pid is gone is removed.
+async fn status(cli: &Cli, home: &Path) -> Result<bool, CliError> {
+    let config = GatewayConfig::load(home).map_err(anyhow::Error::from)?;
+    let pid = bridle_gateway::read_pid(home);
+    let alive = pid.filter(|p| process_command(*p).is_some_and(|c| is_gateway_command(&c)));
+    let Some(pid) = alive else {
+        let removed = pid.is_some() && std::fs::remove_file(bridle_gateway::pid_path(home)).is_ok();
+        if cli.json {
+            render::print_json(
+                &serde_json::json!({"running": false, "stale_pid_file_removed": removed}),
+            )?;
+        } else {
+            println!("not running");
+            if removed {
+                println!("stale pid file removed");
+            }
+        }
+        return Ok(false);
+    };
+    let url = gateway_url(home, &config);
+    // The build the gateway itself reports at health; the installed binary's is this one's.
+    let build = bridle_gateway::health_build(config.bind).await;
+    let installed = bridle_gateway::build_id(&current_exe_path()?);
+    let stale = matches!((&build, &installed), (Some(b), Some(i)) if b != i);
+    if cli.json {
+        render::print_json(&serde_json::json!({
+            "running": true, "pid": pid, "url": url, "build": build, "stale_binary": stale,
+        }))?;
+    } else {
+        println!(
+            "running pid {pid} {url} build {}{}",
+            build.as_deref().unwrap_or("unknown"),
+            if stale { " stale binary" } else { "" }
+        );
+    }
+    Ok(true)
+}
+
+/// SIGTERM the recorded gateway and wait for it to go; no SIGKILL.
+async fn stop(cli: &Cli, home: &Path) -> Result<(), CliError> {
+    let say = |state: &str, text: &str| -> Result<(), CliError> {
+        if cli.json {
+            render::print_json(&serde_json::json!({"state": state}))?;
+        } else {
+            println!("{text}");
+        }
+        Ok(())
+    };
+    let Some(pid) = bridle_gateway::read_pid(home) else {
+        return say("not_running", "not running");
+    };
+    let Some(command) = process_command(pid) else {
+        let _ = std::fs::remove_file(bridle_gateway::pid_path(home));
+        return say("not_running", "not running (stale pid file removed)");
+    };
+    if !is_gateway_command(&command) {
+        return Err(anyhow!(
+            "pid {pid} in {} is not a bridle gateway ({command}); nothing signalled, nothing removed",
+            bridle_gateway::pid_path(home).display()
+        )
+        .into());
+    }
+    let status = std::process::Command::new("kill")
+        .args(["-TERM", &pid.to_string()])
+        .status()
+        .context("running kill")?;
+    if !status.success() {
+        return Err(anyhow!("could not signal pid {pid}").into());
+    }
+    let deadline = Instant::now() + Duration::from_secs(10);
+    while process_command(pid).is_some() {
+        if Instant::now() >= deadline {
+            return Err(
+                anyhow!("the gateway (pid {pid}) is still running 10 s after SIGTERM").into(),
+            );
+        }
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    // A clean exit removed it; a gateway that died hard leaves a stale one.
+    let _ = std::fs::remove_file(bridle_gateway::pid_path(home));
+    say("stopped", "stopped")
+}
+
+async fn restart(cli: &Cli) -> Result<(), CliError> {
+    let home = bridle_api::discovery::bridle_home();
+    stop(cli, &home).await?;
+    let config = GatewayConfig::load(&home).map_err(anyhow::Error::from)?;
+    if !config.enabled {
+        println!("the gateway is disabled ([gateway] enabled = false); not starting");
+        return Ok(());
+    }
+    run_detached(cli, &home, &config, &[std::ffi::OsString::from("gateway")]).await?;
+    status(cli, &home).await?;
+    Ok(())
 }
 
 /// Reads from stdin, not an argument, so the password stays out of shell history and `ps`.

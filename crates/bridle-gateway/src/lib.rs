@@ -88,17 +88,66 @@ pub fn router(login: Option<Login>, ui: UiConfig, interactions: report::Interact
         .merge(protected)
         .with_state(auth);
     let health_ui = ui.clone();
+    let build = std::env::current_exe()
+        .ok()
+        .and_then(|p| build_id(&p))
+        .unwrap_or_else(|| "unknown".into());
     Router::new()
         .nest(API_PREFIX, v1)
         .route(
             &format!("{API_PREFIX}/health"),
-            get(move || async move { health(&health_ui) }),
+            get(move || async move { health(&health_ui, &build) }),
         )
         .fallback(move |uri| ui::serve_ui(ui, uri))
 }
 
-fn health(ui: &UiConfig) -> Json<Value> {
-    Json(json!({ "status": "ok", "ui": ui::check(ui) }))
+fn health(ui: &UiConfig, build: &str) -> Json<Value> {
+    Json(json!({ "status": "ok", "build": build, "ui": ui::check(ui) }))
+}
+
+/// Names the build of the bridle binary at `path`: crate version, size and modified time. The
+/// gateway reports its own at health; `bridle gateway status` compares it with the installed
+/// binary's to say `stale binary`. `None` when the file can't be read.
+pub fn build_id(path: &std::path::Path) -> Option<String> {
+    let m = std::fs::metadata(path).ok()?;
+    let secs = m
+        .modified()
+        .ok()?
+        .duration_since(std::time::UNIX_EPOCH)
+        .ok()?
+        .as_secs();
+    Some(format!("{}-{}-{secs}", env!("CARGO_PKG_VERSION"), m.len()))
+}
+
+/// `<home>/gateway.pid`, beside `gateway.log`.
+pub fn pid_path(home: &std::path::Path) -> std::path::PathBuf {
+    home.join("gateway.pid")
+}
+
+/// The pid recorded in `<home>/gateway.pid`, if the file exists and holds one.
+pub fn read_pid(home: &std::path::Path) -> Option<u32> {
+    std::fs::read_to_string(pid_path(home))
+        .ok()?
+        .trim()
+        .parse()
+        .ok()
+}
+
+/// Records this process's pid (overwriting any stale file) and removes the file on drop.
+pub struct PidFile(std::path::PathBuf);
+
+impl PidFile {
+    pub fn write(home: &std::path::Path) -> std::io::Result<Self> {
+        let path = pid_path(home);
+        std::fs::write(&path, format!("{}\n", std::process::id()))?;
+        Ok(Self(path))
+    }
+}
+
+impl Drop for PidFile {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_file(&self.0);
+    }
 }
 
 async fn projects() -> Json<discovery::Projects> {
@@ -126,6 +175,23 @@ pub async fn health_ok(addr: std::net::SocketAddr) -> bool {
         return false;
     };
     matches!(client.get(url).send().await, Ok(r) if r.status().is_success())
+}
+
+/// The `build` the gateway at `addr` reports at health; `None` when it doesn't answer.
+pub async fn health_build(addr: std::net::SocketAddr) -> Option<String> {
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(2))
+        .build()
+        .ok()?;
+    let v: Value = client
+        .get(format!("http://{addr}{API_PREFIX}/health"))
+        .send()
+        .await
+        .ok()?
+        .json()
+        .await
+        .ok()?;
+    Some(v["build"].as_str().unwrap_or("unknown").to_string())
 }
 
 /// Completes when the file at `path` changes (modified time or size), checked every

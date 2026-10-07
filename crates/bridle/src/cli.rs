@@ -843,6 +843,12 @@ pub enum GatewayCommand {
     /// Write a launchd plist (macOS) or systemd user unit (Linux) that runs the gateway detached
     /// and restarts it on a crash; prints the commands to load it, never runs them.
     Install(GatewayInstallArgs),
+    /// Say whether the gateway runs (pid, URL, build); exit 0 if so, 1 if not.
+    Status,
+    /// SIGTERM the gateway recorded in ~/.bridle/gateway.pid and wait up to 10 s for it to exit.
+    Stop,
+    /// Stop (not running is fine), then start like `bridle gateway --detach`.
+    Restart,
 }
 
 #[derive(Debug, Args)]
