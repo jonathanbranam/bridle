@@ -32,20 +32,30 @@ The human, 2026-10-06 ~1:40 PM ET (verbatim): "I just realized my laptop dalek h
 
 **4. Pushes happened elsewhere while dalek slept.** CI ran on origin for cb6fce13 (16:11Z) and a5ac8bc6 (17:38Z), so another machine (the NUC) pushed to bridle's main during the sleep. Local main is now 24 ahead of a stale origin/main (no fetch since ~12:09Z). That's the same divergence as incident br-2y3m.
 
-> [!comment] c3 human, 2026-10-06 17:24 EDT, on "Pushes happened elsewhere while dalek slept" [pending 2026-10-06 17:24 EDT]
+> [!comment] c3 human, 2026-10-06 17:24 EDT, on "Pushes happened elsewhere while dalek slept" [read 2026-10-06 20:42 EDT]
 > Will address this on the other incident; this is acceptable b/c if dalek dies or is lost, work must continue. We will need to plan a proper approach for when this happens.
+>
+> **doc-zcqv, 2026-10-06 20:45 EDT:** @human Understood, left as is here; the plan for losing dalek goes on the other incident (br-2y3m). Resolving.
+>
+> **resolved by doc-zcqv, 2026-10-06 20:45 EDT**
 
 ## What to decide
 
-- **Keep dalek awake when closed?** Not on battery: macOS forces clamshell sleep. Options: run bridle's always-on work on the NUC (4r3k, kuw2), or plug dalek in with an external display/keyboard (clamshell mode on AC). caffeinate alone won't do it.
+- **Keep dalek awake when closed?** Decided: no. A closed dalek sleeps, and the human keeps that freedom. macOS forces clamshell sleep on battery anyway, and caffeinate alone won't change it. Work that must run while dalek is shut belongs on the NUC (4r3k, kuw2).
 
-> [!comment] c2 human, 2026-10-06 17:20 EDT, on "**Keep dalek awake when closed?" [pending 2026-10-06 17:20 EDT]
+> [!comment] c2 human, 2026-10-06 17:20 EDT, on "**Keep dalek awake when closed?" [read 2026-10-06 20:42 EDT]
 > If I close the laptop, it should sleep. It's my mistake but I want the freedom to do this and not run down my battery or trying to keep it awake while shut.
+>
+> **doc-zcqv, 2026-10-06 20:45 EDT:** @human Agreed. I changed the "Keep dalek awake" bullet to say a closed dalek sleeps by decision, and that always-on work goes to the NUC. Resolving.
+>
+> **resolved by doc-zcqv, 2026-10-06 20:45 EDT**
 
-- **Say when the host slept.** The daemon could log a `host.slept`/`host.woke` event (a wall-clock jump against monotonic time) and tell the human: "dalek slept 8:42 AM-1:38 PM; nothing ran."
+- **Say when the host slept.** Decided: yes. The daemon logs a `host.slept`/`host.woke` event (a wall-clock jump against monotonic time) in the event log and sends it to the orchestrators, so they are told and don't each investigate: "dalek slept 8:42 AM-1:38 PM; nothing ran."
 
-> [!comment] c1 human, 2026-10-06 17:19 EDT, on "Say when the host slept. The daemon could log a host.slept/host.woke event (a wall-clock jump against monotonic time) and tell the human: "dalek slept 8:42 AM-1:38 PM; nothing ran."" [pending 2026-10-06 17:19 EDT]
+> [!comment] c1 human, 2026-10-06 17:19 EDT, on "Say when the host slept. The daemon could log a host.slept/host.woke event (a wall-clock jump against monotonic time) and tell the human: "dalek slept 8:42 AM-1:38 PM; nothing ran."" [read 2026-10-06 20:42 EDT]
 > Yes, this would be good to have in our event logs and sent to orchestrators so they are notified and don't have to independently investigate.
+>
+> **doc-zcqv, 2026-10-06 20:45 EDT:** @human Done. I changed the "Say when the host slept" bullet to say the event goes in the event log and to the orchestrators. Building it is not ticketed yet; want a separate ticket?
 
 - **Managers start startable work without a nudge.** An idle manager with free slots and startable tasks should spawn on its own (or the daemon wakes it), not wait for the orchestrator. Tie to stx8 and the "why doesn't work ship" question.
 - **One machine pushes main, or both reconcile first** (br-2y3m).
