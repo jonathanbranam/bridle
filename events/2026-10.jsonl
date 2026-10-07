@@ -1011,3 +1011,5 @@
 {"actor":"external:aide","at":"2026-10-07T12:15:18.724959Z","from":"pending","task":"br-8b52","to":"open"}
 {"actor":"external:aide","at":"2026-10-07T12:15:18.725690Z","from":"open","task":"br-8b52","to":"planned"}
 {"actor":"agent:manager-2","at":"2026-10-07T12:53:57.810910Z","from":"planned","task":"br-xv2n","to":"integrated"}
+{"actor":"human","at":"2026-10-07T22:38:02.257183Z","from":"planned","task":"br-8b52","to":"integrated"}
+{"actor":"human","at":"2026-10-07T22:38:04.932841Z","from":"planned","task":"br-7eg6","to":"integrated"}
