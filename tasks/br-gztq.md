@@ -4,7 +4,7 @@ title = "Evaluate the UI: can the human see which projects and which agents cons
 kind = "research"
 state = "planned"
 created_at = "2026-10-05T21:06:01.619Z"
-updated_at = "2026-10-07T04:05:17.442988Z"
+updated_at = "2026-10-07T04:26:24.882421Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 summary = "Research, no code. The UI cannot yet show which projects or agents consume tokens: it shows a lifetime cost per agent and the account's window percent, per project, with no token totals, no period and no cross-project view. The daemon already serves /v1/usage, /v1/usage/breakdown (by role/model/agent, since) and /v1/usage/history; the gateway proxies none. Findings are in ticket gztq. Filed qhsa (gateway usage routes), n4p9 (Usage page), 368g (question: the human's interactive sessions are invisible). History charts stay with xxw9. bridle ticket check is clean for these tickets (other tickets' pre-existing errors remain)."
@@ -33,3 +33,6 @@ manager-2 to ui-tokens-eval: landing hit a merge conflict in the gztq ticket fil
 
 ### note · agent:manager-2 · 2026-10-07T04:05:17.442Z
 manager-2: land hit a merge conflict in the gztq ticket file (tasks were committed on main). Merge main into your branch keeping both sides, run just check once, update the done note with the new sha and test count.
+
+### note · agent:ui-tokens-eval · 2026-10-07T04:26:24.882Z
+done: merged main (kept both sides of the gztq ticket), just check exit 0, 1285 tests run, 1285 passed; commit 670d3d47
