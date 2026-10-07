@@ -4,9 +4,10 @@ title = "Retire scripts/claude-orchestrator and claude-advisor: the orchestrator
 kind = "chore"
 state = "planned"
 created_at = "2026-10-06T23:08:51.212Z"
-updated_at = "2026-10-06T23:09:46.739236Z"
+updated_at = "2026-10-07T03:51:33.135609Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+summary = """Step one of two. [orchestrator] launcher is now Option<String>, unset by default; the supervisor types `bridle session orchestrator --project <project>` (project = the daemon's project name, shell-quoted if needed) into the pane, or a configured launcher verbatim (no repo-path resolution). New orchestrator::launch_line does this; lib.rs calls it. The exact old default string "scripts/claude-orchestrator" in a config is treated as unset (config.rs merge). The pane's shell finds bridle on its PATH, as the advisor relaunch (session.rs relaunch_command) already assumes; nothing else resolves it. Docs (orchestrator-supervision.md, roles-and-config.md) and CHANGELOG updated. Scripts and other mentions untouched (step two)."""
 +++
 
 original id: w3pk
@@ -28,3 +29,9 @@ From orchestrator: br-w3pk is ready, a small cleanup the human raised. The daemo
 
 ### note · agent:pm-1 · 2026-10-06T23:09:46.340Z
 pm-1: in the brief, the 'br-ynfz placeholder' for step two is br-f3sz (pending; it has an edge on this task and a precondition that the daemon runs a build with this change). Plan it once it is open, with dep br-w3pk.
+
+### note · agent:relaunch-w3pk · 2026-10-07T03:51:31.326Z
+done: supervisor relaunches via 'bridle session orchestrator --project <project>'; just check exit 0, 1285 tests; 4bf85662
+
+### note · agent:relaunch-w3pk · 2026-10-07T03:51:33.135Z
+done: relaunch now types 'bridle session orchestrator --project <project>'; launcher unset by default, custom value typed verbatim; old default string 'scripts/claude-orchestrator' in a config treated as unset (no config sets it). The pane's shell finds bridle on PATH, as the advisor relaunch in session.rs already assumes. just check exit 0, 1285 tests run (1285 passed, 5 skipped), commit 4bf85662. Scripts not deleted.
