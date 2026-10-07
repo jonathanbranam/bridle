@@ -2,11 +2,14 @@
 id = "br-6hx4"
 title = "Binaries accept unknown config sections and keys with a warning; doctor warns, and fails with a strictness flag"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-06T22:20:29.388Z"
-updated_at = "2026-10-06T22:21:29.556773Z"
+updated_at = "2026-10-07T03:37:02.780110Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+branch = "bridle/config-warn-6hx4"
+commit = "7bafebaf16b4bce63884ffda1d5c7fc7b8eb1cc1"
+summary = """Unknown config sections and keys are now accepted with a warning instead of stopping the binary. New bridle_api::config_warn (serde_ignored over the real structs; a small probe deserializer reads the known keys of the section for the "did you mean" typo hint, edit distance 2). deny_unknown_fields removed from config.toml (daemon), machines.rs, mail and gateway configs; loaders call config_warn::parse / parse_partial (the partial form drops other readers' sections of the shared file). Findings: daemon tracing::warn once per distinct finding per process (so reloads with the same set stay quiet); CLI eprintln once per run (all commands except serve); doctor lists them as "config warnings" warn checks, and doctor --strict exits 1 on any warn. Findings: focus.rs had no deny_unknown_fields (nothing to change); workflow.toml is not parsed with deny; credentials.toml untouched. Two daemon tests asserted that an unknown key errors (components bogus key, orchestrator pane key); changed to assert it now loads. Doctor only reports files its checks already read (project and machine config.toml), not the mail/gateway/machines files. Docs: roles-and-config.md, cli.md, CHANGELOG."""
 +++
 
 original id: 6hx4
@@ -27,3 +30,17 @@ Build: remove `deny_unknown_fields` from those structs and collect unknown paths
 Migration: none needed (no stored state; behaviour only).
 Acceptance: just check passes; tests: (1) an OLD-SHAPED config struct (a test-local copy of a section without the newer field, built the way the real structs are) reads a NEWER file with an extra section and an extra key, loads successfully and yields exactly the two findings with the exact text above; (2) a typo key `max_worker` yields the did-you-mean finding; (3) a known key with the wrong type still errors; (4) doctor: default exit 0 with warnings printed, `--strict` exit 1; (5) the CLI prints findings once per run.
 Model: Sonnet. Out of scope: credentials.toml, changing what any known key means, a config-versioning scheme, auto-fixing typos.
+
+## Thread
+
+### note · agent:config-warn-6hx4 · 2026-10-07T03:36:40.275Z
+done: unknown config keys/sections warn; doctor --strict; just check exit 0, 1284 tests; sha 4793c5ac
+
+### note · agent:config-warn-6hx4 · 2026-10-07T03:36:42.252Z
+done: unknown config sections/keys warn (config_warn helper), doctor --strict; just check exit 0, 1284 tests passed; 4793c5ac
+
+### note · agent:manager-2 · 2026-10-07T03:36:47.926Z
+integrated: 7bafebaf16b4bce63884ffda1d5c7fc7b8eb1cc1 (branch bridle/config-warn-6hx4)
+
+### note · agent:manager-2 · 2026-10-07T03:37:02.780Z
+cleanup: removed agent config-warn-6hx4, branch bridle/config-warn-6hx4
