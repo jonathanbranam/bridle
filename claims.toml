@@ -1,14 +1,4 @@
 [[claim]]
-task = "br-8pjm"
-claimed_by = "human"
-claimed_at = "2026-10-04T13:39:39.371Z"
-
-[[claim]]
-task = "br-g8wv"
-claimed_by = "human"
-claimed_at = "2026-10-04T15:28:50.847Z"
-
-[[claim]]
 task = "br-5761"
 claimed_by = "human"
 claimed_at = "2026-10-01T11:14:10.926Z"
@@ -47,11 +37,6 @@ claimed_at = "2026-10-04T12:49:58.215Z"
 task = "br-twg8"
 claimed_by = "human"
 claimed_at = "2026-10-04T13:16:26.410Z"
-
-[[claim]]
-task = "br-xes7"
-claimed_by = "human"
-claimed_at = "2026-10-04T13:39:39.222Z"
 
 [[claim]]
 task = "br-26m3"
