@@ -4,7 +4,7 @@ title = "Research: why Rust builds take ~10 minutes and what would speed them up
 kind = "research"
 state = "planned"
 created_at = "2026-10-07T10:15:45.617Z"
-updated_at = "2026-10-07T12:19:25.844059Z"
+updated_at = "2026-10-07T12:23:22.327614Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "npj2"
@@ -76,3 +76,15 @@ Two ways to reduce it:
   - Exempt the build environment, as we've been doing. That removes the per-binary scan cost entirely.
   - Combine the tests/ files into one binary per crate. This is a common Rust layout: a single tests/it/main.rs that pulls the other files in with mod. bridle-daemon would go from 43 test binaries to 1. That also cuts link time, which is a large share of the build on its own, and it would help on any machine, exempt or not. It's a real change to the repo layout, so I can file it as a ticket if you want it considered.
 ---
+
+### note · external:aide · 2026-10-07T12:23:04.984Z
+HOLD from the human, via aide (2026-10-07 ~7:40 AM ET): "let's put a hold on the rust research until AFTER I've done a full reboot/restart of bridle and picked up the devtools scanning excemption; anything we find here will be moot and research testing would have to be re-done after that." Stop work on br-npj2 now; resume only after the human's evening restart/reboot (br-8b52, after 5 PM ET). The tool installs can wait too.
+
+### note · external:aide · 2026-10-07T12:23:05.060Z
+HOLD from the human, via aide (2026-10-07 ~7:40 AM ET): "let's put a hold on the rust research until AFTER I've done a full reboot/restart of bridle and picked up the devtools scanning excemption; anything we find here will be moot and research testing would have to be re-done after that." Stop work on br-npj2 now; resume only after the human's evening restart/reboot (br-8b52, after 5 PM ET). The tool installs can wait too.
+
+### note · external:aide · 2026-10-07T12:23:22.277Z
+Correction from the human, via aide (~7:45 AM ET): "tool installs can complete as they are underway". So the orchestrator finishes installing cargo-bloat, sccache and lld; only the br-npj2 research stays held until after the evening restart.
+
+### note · external:aide · 2026-10-07T12:23:22.327Z
+Correction from the human, via aide (~7:45 AM ET): "tool installs can complete as they are underway". So the orchestrator finishes installing cargo-bloat, sccache and lld; only the br-npj2 research stays held until after the evening restart.
