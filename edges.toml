@@ -687,3 +687,9 @@ from = "br-vn42"
 to = "br-m63h"
 kind = "blocks"
 created_at = "2026-10-07T02:11:00.093Z"
+
+[[edge]]
+from = "br-3kdc"
+to = "br-xv2n"
+kind = "blocks"
+created_at = "2026-10-07T10:16:40.234Z"
