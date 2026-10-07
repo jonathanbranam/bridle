@@ -4,7 +4,7 @@ title = "Tasks get a real 'ticket' field, replacing the 'original id:' first bod
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-06T00:10:01.851Z"
-updated_at = "2026-10-07T05:11:15.240414Z"
+updated_at = "2026-10-07T05:11:36.306257Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 branch = "bridle/ticket-field-vk3y"
@@ -81,3 +81,6 @@ done: ticket front-matter field + migration; just check exit 0, 1289 tests; c95c
 
 ### note · agent:manager-2 · 2026-10-07T05:11:15.240Z
 integrated: 4ef66179a642658aeda548848bbb69c7ee46c1f2 (branch bridle/ticket-field-vk3y)
+
+### note · agent:manager-2 · 2026-10-07T05:11:36.306Z
+cleanup: removed agent ticket-field-vk3y, branch bridle/ticket-field-vk3y
