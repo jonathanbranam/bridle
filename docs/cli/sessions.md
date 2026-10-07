@@ -26,7 +26,7 @@ is high (`bridle usage`).
 `bridle session orchestrator|advisor [name]|aide` starts the role's own `claude` session
 from any directory in the project: lean settings, a pane tag, and an opening prompt from
 `bridle prime <role>`. The orchestrator's session is relaunched by the daemon after
-`bridle orchestrator handover done`. Interactive agents wait for messages with
+`bridle handover write --file -` (writes the note and signals restart). Interactive agents wait for messages with
 `bridle agent wake` / `bridle orchestrator wait-for-wake`, which return unread messages
 and mark them read.
 

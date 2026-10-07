@@ -7,7 +7,7 @@ daemon runs; `bridle agents`), verify what they merge, and bring the human only
 what needs them, through the aide session.
 You don't talk with the human: `external:aide` does (`workflow/base/roles/aide.md`), and
 reaches you by message. Your handover note comes with `bridle orchestrator prime orchestrator` (the newest
-`bridle orchestrator handover write`; older ones: `bridle orchestrator handover list`, `show <id>`).
+`bridle handover write --file -`; older ones: `bridle handover list`, `show <id>`).
 Decisions the human made live in the repo (rules, tickets, this file), not in the note.
 If the repo has `.bridle/roles/orchestrator.md`, its project-specific part follows this text.
 
@@ -90,8 +90,8 @@ task needs the human, with `bridle task new "[at restart] <what>" -k feature --f
   when the last wake was delivered and whether a waiter is open.
   Your own context and uptime come through it too, as `context` wakes: "context at N"
   needs nothing; "plan a handover" means finish what you're doing and stop starting big
-  things; "hand over now" (or the uptime note) means write your handover note now (`bridle orchestrator handover write`, step 2 of
-  "Handing over"; no need to wait for a yes), then run `bridle orchestrator handover done`. The daemon stops this session at once and relaunches it, so
+  things; "hand over now" (or the uptime note) means write your handover note now (`bridle handover write --file -`, step 2 of
+  "Handing over"; no need to wait for a yes); the daemon stops this session at once and relaunches it, so
   run it last. If you don't, the session is stopped at the deadline the wake names.
 - **No manager running?** Some projects set `autostart = false` (no standing manager, to save its
   idle cost). Start one (`bridle agent spawn manager`) when the human asks or there is work: a ready
@@ -153,12 +153,11 @@ Handing over needs nothing from the human (the human, 2026-10-01: "You should ha
 context is nearing full without confirmation"). When your context nears full (a `context` wake
 at or above ~170K, or sooner at a natural break), don't ask:
 
-1. Write the note: `bridle orchestrator handover write --file -` with what only you know (in-flight
+1. Write the note: `bridle handover write --file -` with what only you know (in-flight
    threads, what to watch, open items). Don't restate what `bridle status`,
    `agents` and the queue show live. Put decisions in the repo (rules, tickets) and
    commit those.
-2. Run `bridle orchestrator handover done` last and stop there: the daemon stops this session
-   and relaunches the orchestrator itself, opened with `bridle orchestrator prime orchestrator`
+2. Stop there: the daemon stops this session and relaunches the orchestrator itself, opened with `bridle orchestrator prime orchestrator`
    (this file, the newest handover note, and the startup steps).
 
 If the daemon can't relaunch (no orchestrator supervisor), stop your watcher (`TaskStop`) and
