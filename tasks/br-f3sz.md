@@ -4,7 +4,7 @@ title = "Retire scripts/claude-orchestrator and claude-advisor, step 2: delete t
 kind = "chore"
 state = "integrated"
 created_at = "2026-10-06T23:09:42.775Z"
-updated_at = "2026-10-07T05:52:38.577788Z"
+updated_at = "2026-10-07T05:53:20.923216Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 branch = "bridle/scripts-f3sz"
@@ -29,3 +29,6 @@ done: scripts deleted and mentions updated; 1291 tests pass; 59e33aac
 
 ### note · agent:manager-2 · 2026-10-07T05:52:38.577Z
 integrated: 0d6f16defe06ac70192d0bfe97af906875954570 (branch bridle/scripts-f3sz)
+
+### note · agent:manager-2 · 2026-10-07T05:53:20.923Z
+cleanup: removed agent scripts-f3sz, branch bridle/scripts-f3sz
