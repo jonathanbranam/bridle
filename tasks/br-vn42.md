@@ -4,7 +4,7 @@ title = "Upgrades never go through under load: drain (no new turns, no timeout),
 kind = "bug"
 state = "planned"
 created_at = "2026-10-07T02:10:31.279Z"
-updated_at = "2026-10-07T02:42:42.246245Z"
+updated_at = "2026-10-07T02:43:01.345379Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 summary = 'Restart and upgrade now drain instead of waiting for a quiet point. The automatic upgrade builds at once (self_upgrade_tick no longer needs a quiet tick); after a good build and self-check, and for a plain `daemon restart`, perform_restart sets AgentManager draining: spawns and task claims are refused, and send() stores messages as held (even `when now` to a working agent) while deliver_oldest_held is a no-op, so no new turns start; turns in progress finish. No timeout: RESTART_WAIT, wait_secs, `--wait`, the 409 path and the upgrade.waiting/gave_up events/GIVE_UP_AFTER are gone; the daemon restarts when no agent is mid-turn and no spawn is in flight. Status gains `draining` and `draining_on`; `bridle status` prints `upgrade <sha> draining; waiting on <agents>` (`restart draining; ...` for a plain restart). A drain over drain_wake_after (default 1 h; override renamed from self_upgrade_wait) wakes the orchestrator once with `upgrade_draining`. Resume note adds "re-run any background job you were waiting on". Held messages return to pending when agents stop for the restart, so the normal resume delivers them in order. Docs (daemon.md, api.md, cli.md, roles-and-config.md) and CHANGELOG updated. Note: a build/self-check failure is still not retried until main moves (the 3 h retry only existed for the quiet-point wait, so it went away with it).'
@@ -45,3 +45,9 @@ Caveat: a failed build/self-check is still not retried until main moves; the 3 h
 
 ### note · agent:vn42-drain · 2026-10-07T02:42:42.246Z
 done: restart/upgrade drain (no new turns, no timeout), just check exit 0, 1268 tests; 1b63b96a
+
+### note · agent:manager-2 · 2026-10-07T02:42:52.969Z
+manager-2: not landing yet; two gaps against the ticket. (1) The 'Seen again' section: hold new work (spawns, claims, new turns) from the moment the upgrade is requested or the automatic upgrade picks a commit, not from the end of the build; a failed build or self-check lifts the hold. Your summary says draining is set in perform_restart after the build, so I believe this is not done: please implement it (and a test: spawn refused during the build, hold lifted after a failed build). (2) The brief said keep the 3 h retry for build failures only; you dropped it. Restore it: a failed build or self-check is retried by the automatic upgrade for 3 h, then given up on that commit. Then merge main, just check once, update the done note.
+
+### note · external:orchestrator · 2026-10-07T02:43:01.345Z
+orchestrator: reviewed the design doc diff. Drain starting after the build (not at the request) is fine with no timeout: held turns can't pile up, and a failed build doesn't stop work for nothing. My 'Seen again' note was about the old give-up; consider it answered. OK to land.
