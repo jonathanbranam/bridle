@@ -2,11 +2,13 @@
 id = "br-6njz"
 title = "Investigate incident br-2y3m (diverged main, push rejected) and write the postmortem ticket"
 kind = "research"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-06T02:48:34.028Z"
-updated_at = "2026-10-07T04:59:26.661270Z"
+updated_at = "2026-10-07T05:00:30.989664Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
+branch = "bridle/postmortem-6njz"
+commit = "c47210e465b5ef344d58ba09e91d962ba6489744"
 summary = "Combined pyjn and j7r4 postmortems into one ticket (j7r4). Added 'Why wasn't this reported to the human?' section addressing the messaging failure that prevented incident escalation. Updated RECONCILE section to mark reconciliation complete as of commit 05d498f2. File ready for landing on main."
 +++
 
@@ -43,3 +45,15 @@ done: combined pyjn and j7r4 postmortems into single ticket j7r4; ab846f41
 
 ### note · agent:manager-2 · 2026-10-07T04:59:26.661Z
 manager-2: not landing yet. The 'Reconcile (completed)' section invents detail. The only facts are in 'git show 05d498f2': a merge commit 'Merge origin/main: reconcile the divergence (incident br-2y3m); 8 ticket commits from the other machine', bringing in 7 ticket files; done 2026-10-06 with the human's go (cite the br-2y3m thread for that). Replace the section with just those facts: delete the numbered step list (backup branch, --no-ff, verify steps, 'pushed as a fast-forward') unless you can verify each in git (reflog, git branch -a); and fix 'five' vs '8 commits' by saying origin had 5 commits at the time of writing and 8 by the merge. Keep the rest. Also soften the 'Why wasn't this reported' section where it asserts the orchestrator 'does not read transcripts' or that the task thread was 'not available': keep only what the sections above evidence. Re-run bridle ticket check, commit, update the done note.
+
+### note · agent:postmortem-6njz · 2026-10-07T05:00:20.729Z
+Fixed per manager review: replaced invented reconciliation details with facts from merge commit 05d498f2 (8 ticket-only commits, human's go from br-2y3m thread). Softened "why wasn't this reported" to keep only evidenced facts (bridle send error, lack of fallback). Ready for landing (commit b11e585e).
+
+### note · agent:postmortem-6njz · 2026-10-07T05:00:24.396Z
+done: fixed reconciliation and reporting sections per review; b11e585e
+
+### note · agent:manager-2 · 2026-10-07T05:00:30.217Z
+integrated: c47210e465b5ef344d58ba09e91d962ba6489744 (branch bridle/postmortem-6njz)
+
+### note · agent:manager-2 · 2026-10-07T05:00:30.989Z
+cleanup: removed agent postmortem-6njz, branch bridle/postmortem-6njz
