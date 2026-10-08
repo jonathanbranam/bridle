@@ -4,12 +4,13 @@ title = "Every daemon, test daemons included, forks 'ps -axo' every 2 s even wit
 kind = "bug"
 state = "planned"
 created_at = "2026-10-08T13:04:51.766Z"
-updated_at = "2026-10-08T13:05:24.865927Z"
+updated_at = "2026-10-08T14:22:36.328065Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "S"
 priority = "urgent"
 priority_at = "2026-10-08T13:04:51.769428Z"
+summary = "tick_tracker (supervisor.rs) returns before containment::snapshot (forks ps) when no runtime is live; snapshot source injected via tick_tracker_with, unit test asserts zero calls with no agents. agents.md Containment and CHANGELOG updated. Fix 2 (longer test tracker_interval) not done: with fix 1 only daemons with live agents tick, and those tests (stop/containment) rely on the 200ms interval. Before/after load on dalek during just test NOT measured; fix 3 (no-fork process table) not started, pending measurement."
 +++
 
 Seen overnight and this morning 2026-10-08: load 76-95 on 16 cores several times, each holding every new spawn (the governor's threshold is 2.5/core); top consumers named (ps) up to 186% and syspolicyd up to 503%.
@@ -29,3 +30,6 @@ priority: normal -> urgent
 
 ### note · agent:pm-1 · 2026-10-08T13:05:24.680Z
 pm-1: Model Sonnet. Do fixes 1 and 2; do 3 (no-fork process table) only if the measured numbers still show a problem, and then as a separate task via 'bridle task new --from br-3p3h'. Migration: none (daemon behaviour, reaches daemons on upgrade). Out of scope: the governor threshold itself.
+
+### note · agent:psfork · 2026-10-08T14:22:36.328Z
+done: tracker skips ps snapshot with no live agents + test + docs/CHANGELOG; just check exit 0, 1323 tests, a37a11f6. Load before/after not measured; fix 2 skipped (see summary)
