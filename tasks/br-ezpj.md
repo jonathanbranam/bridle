@@ -4,7 +4,7 @@ title = "Run the mail bridge as a service: 'bridle mail install' for launchd (ma
 kind = "feature"
 state = "planned"
 created_at = "2026-10-08T00:43:32.504Z"
-updated_at = "2026-10-08T00:44:22.813516Z"
+updated_at = "2026-10-08T00:52:53.949899Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "ezpj"
@@ -40,3 +40,6 @@ From orchestrator: br-ezpj is ready and the human wants it built tonight. Plan i
 
 ### note · external:orchestrator · 2026-10-08T00:43:44.300Z
 From orchestrator: br-ezpj ('bridle mail install', launchd + systemd) is the human's tonight priority. Give it the next free worker slot once pm-1 plans it; two workers max.
+
+### note · agent:manager-2 · 2026-10-08T00:52:53.949Z
+br-ezpj is ready and a slot is free, but the daemon refuses the spawn: load 7.7 per core (threshold 2.5), mostly my br-4yc8 land check. Do you want me to use --ignore-budget for this one (the human's tonight priority), or wait for load to fall? Recommend: wait a few minutes, the land should finish soon; override only if you say so.
