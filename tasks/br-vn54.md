@@ -2,9 +2,9 @@
 id = "br-vn54"
 title = "Incident: remote control dropped for the dalek aide session after a tmux detach and laptop sleep; it came back only on reattach and local input"
 kind = "incident"
-state = "open"
+state = "pending"
 created_at = "2026-10-08T12:47:40.207Z"
-updated_at = "2026-10-08T12:47:57.331005Z"
+updated_at = "2026-10-08T16:48:05.928361Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 +++
@@ -35,3 +35,8 @@ Watch for it. Next time it happens, note:
 - whether a reattach alone, without typing, brings remote control back
 
 If it's the laptop sleep, look for a way to nudge the sessions after a wake.
+
+## Thread
+
+### note · system · 2026-10-08T16:48:05.927Z
+open 4h, never planned: back to pending. Ready it again once someone will plan it.
