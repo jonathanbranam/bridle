@@ -1,6 +1,6 @@
 # The human web UI: the bridle gateway
 
-> **Status (checked 2026-10-03):** Built and in use: `bridle gateway` (`crates/bridle-gateway`), build tasks 1–8 below: config and serve, discovery and fan-out, listing, local actions, retract handling, login, `/api/v1` with ts-rs types (`crates/bridle-gateway/bindings/`), serving `~/.bridle/ui/` with the version check; `bridle-ui` is its own project under bridle (`/Volumes/Data/work/bridle-ui-workspace`) · Planned: task 9 (remote actions; `actions.rs` refuses a project on another machine) and task 10 (service install; `launchd.rs`/`systemd.rs` don't know the gateway)
+> **Status (checked 2026-10-03):** Built and in use: `bridle gateway` (`crates/bridle-gateway`), build tasks 1–8 below: config and serve, discovery and fan-out, listing, local actions, retract handling, login, `/api/v1` with ts-rs types (`crates/bridle-gateway/bindings/`), serving `~/.bridle/ui/` with the version check; `bridle-ui` is its own project under bridle (`/Volumes/Data/work/bridle-ui-workspace`) · task 9 (multi-machine: listing and actions on remote projects with `[human.<machine>]` tokens), task 10 (service install)
 
 Ticket: [[docs/tickets/open/a-web-ui-for-the-human-my-to-dos-and-decisions-to-run-throug-essy|essy]]
 ("Option F" and "Gateway v1: the human's answers", decided by the human, 2026-10-02). This
@@ -242,14 +242,17 @@ database. `unreachable` is who the last poll couldn't read.
 
 ## 4. Multi-machine
 
-The human runs one gateway on one machine and manages everything from there. That needs the
-human's token for other machines' daemons: **br-8b98** (3ehu part 1, `[human.<machine>]`
-fallback), still `planned` as a task, not landed. The multi-machine build task comes after it. A project on a random port needs a `[projects]` entry with a fixed port to be
-reachable from another machine. Until then the gateway works for local projects.
+The human runs one gateway on one machine and manages everything from there. For a project on
+another machine (`[projects]` + `[machines]`) the gateway uses the human's token from
+`[human.<machine>]` in `~/.bridle/credentials.toml` (br-8b98), for listing and for actions alike
+(`actions::resolve`). A local project keeps the workspace's human token. A machine that doesn't
+answer is listed as unreachable; one with no `[human.<machine>]` entry for the project is reported
+with an error naming that section. A project on a random port needs a `[projects]` entry with a
+fixed port to be reachable from another machine.
 
 ## 5. Build tasks, in order
 
-Each is one branch and one worker. None touches the daemon. Tasks 1–8 and 10 are built; 9 and 11 are
+Each is one branch and one worker. None touches the daemon. Tasks 1–10 are built; 11 is
 planned.
 
 1. **Skeleton, config, serve**: `bridle gateway` subcommand, a `crates/bridle-gateway` library
@@ -270,7 +273,7 @@ planned.
    `just` target emits them; a test that fails if the emitted files are stale.
 8. **Static UI folder and version check**: serve `~/.bridle/ui/`, compare the build's recorded
    API version, warn or refuse. Tests: serves a file, a missing folder, a mismatched version.
-9. **Multi-machine** (after br-8b98 lands): per-machine human tokens for remote daemons, remote
+9. **Multi-machine** (built, br-7172): per-machine human tokens for remote daemons, remote
    actions. Tests: a remote fake daemon with its own token.
 10. **Service install** (built): `bridle gateway install` writes the launchd plist / systemd user unit (`dev.bridle.gateway`, `bridle-gateway.service`), restart on failure only, log `~/.bridle/gateway.log`; loading it is the operator's step.
 11. **Detach and self-restart** (bek3): `bridle gateway --detach`, `[gateway] enabled`, the gateway

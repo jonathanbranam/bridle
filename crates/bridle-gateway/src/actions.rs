@@ -1,7 +1,7 @@
 //! The only things the gateway does to a daemon besides read: check off a to-do, decline one
 //! with a reason, answer a task question. Anything else is refused here, so a stolen session
 //! can answer and check off, not run work. Acts with the human's token, found the way the CLI
-//! finds it (principals.md); this machine's projects only (remote machines are task 9).
+//! finds it (principals.md): a project on another machine uses `[human.<machine>]` (task 9).
 //! See docs/design/human-web-ui.md sections 1, 2 and 5.
 
 use axum::Json;
@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use ts_rs::TS;
 
-use crate::discovery::{PROBE_TIMEOUT, current_targets};
+use crate::discovery::{PROBE_TIMEOUT, Target, current_targets};
 
 /// The v1 actions; the path segment after the task id names one.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -111,46 +111,58 @@ pub async fn act_route(
     }))
 }
 
-/// The daemon's address and the human's token for one of this machine's projects.
+/// The daemon's address and the human's token for a project, on this machine or another.
 pub(crate) async fn resolve(project: &str) -> Result<(String, String), ActionError> {
-    let targets = current_targets().await;
-    let t = targets
+    let target = current_targets()
+        .await
         .into_iter()
         .find(|t| t.project == project)
         .ok_or_else(|| ActionError::UnknownProject(project.to_string()))?;
+    // Reads the token file: blocking work.
+    tokio::task::spawn_blocking(move || resolve_target(target, human_token))
+        .await
+        .map_err(|e| ActionError::Daemon(e.to_string()))?
+}
+
+/// The human's token as the CLI finds it: a local project's workspace file, or for a project on
+/// another machine the `[human.<machine>]` entry in credentials.toml (br-8b98).
+fn human_token(
+    workspace: Option<&str>,
+    project: &str,
+    machine: Option<&str>,
+) -> Result<Option<String>, String> {
+    resolve_token(
+        None,
+        workspace.map(std::path::Path::new),
+        Some(project),
+        machine,
+        &ProcessEnv,
+        false,
+    )
+    .map_err(|e| e.to_string())
+}
+
+/// The injectable core of `resolve`: `lookup(workspace, project, machine)` finds the token.
+fn resolve_target(
+    t: Target,
+    lookup: impl Fn(Option<&str>, &str, Option<&str>) -> Result<Option<String>, String>,
+) -> Result<(String, String), ActionError> {
+    let project = t.project;
     if let Some(problem) = t.problem {
         return Err(ActionError::NotAvailable(problem));
     }
-    let Some(workspace) = t.workspace else {
-        return Err(ActionError::NotAvailable(format!(
-            "project '{project}' is on another machine: remote actions aren't supported yet"
-        )));
-    };
     let url = t
         .url
         .ok_or_else(|| ActionError::NotAvailable(format!("no address for '{project}'")))?;
-    let name = project.to_string();
-    // Reads the token file: blocking work.
-    let token = tokio::task::spawn_blocking(move || {
-        resolve_token(
-            None,
-            Some(std::path::Path::new(&workspace)),
-            Some(&name),
-            None,
-            &ProcessEnv,
-            false,
-        )
-    })
-    .await
-    .map_err(|e| ActionError::Daemon(e.to_string()))?
-    .map_err(|e| ActionError::NoToken {
-        project: project.to_string(),
-        reason: e.to_string(),
-    })?
-    .ok_or_else(|| ActionError::NoToken {
-        project: project.to_string(),
-        reason: "none found".to_string(),
-    })?;
+    let no_token = |reason: String| ActionError::NoToken {
+        project: project.clone(),
+        reason,
+    };
+    // The machine matters only for a daemon this machine has no workspace for.
+    let machine = t.machine.as_deref().filter(|_| t.workspace.is_none());
+    let token = lookup(t.workspace.as_deref(), &project, machine)
+        .map_err(no_token)?
+        .ok_or_else(|| no_token("none found".to_string()))?;
     Ok((url, token))
 }
 
@@ -333,6 +345,47 @@ mod tests {
         assert_eq!(seen[1].2["reason"], "not now");
         assert_eq!(seen[2].2["body"], "yes");
         assert_eq!(seen[3].2["body"], "thanks");
+    }
+
+    fn remote(url: &str) -> Target {
+        Target {
+            project: "far".into(),
+            machine: Some("nuc".into()),
+            url: Some(url.into()),
+            workspace: None,
+            repo: None,
+            problem: None,
+        }
+    }
+
+    #[tokio::test]
+    async fn a_remote_project_acts_on_its_daemon_with_its_machines_token() {
+        let (url, seen) = fake().await;
+        let (got_url, token) = resolve_target(remote(&url), |ws, project, machine| {
+            assert_eq!((ws, project, machine), (None, "far", Some("nuc")));
+            Ok(Some("nuc-human".to_string()))
+        })
+        .expect("resolve");
+        assert_eq!(got_url, url);
+        act(&got_url, Some(token), Action::Done, "t-1", "")
+            .await
+            .expect("done");
+        let seen = seen.lock().expect("lock");
+        assert_eq!(seen[0].1.as_deref(), Some("Bearer nuc-human"));
+    }
+
+    #[test]
+    fn a_machine_without_a_token_is_reported_by_name() {
+        let err = resolve_target(remote("http://x"), |_, _, m| {
+            Err(format!("put the token under [human.{}]", m.unwrap_or("?")))
+        })
+        .expect_err("no token");
+        assert!(matches!(err, ActionError::NoToken { .. }));
+        let msg = err.to_string();
+        assert!(
+            msg.contains("'far'") && msg.contains("[human.nuc]"),
+            "{msg}"
+        );
     }
 
     #[tokio::test]
