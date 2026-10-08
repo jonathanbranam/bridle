@@ -4,7 +4,7 @@ title = "Every daemon, test daemons included, forks 'ps -axo' every 2 s even wit
 kind = "bug"
 state = "planned"
 created_at = "2026-10-08T13:04:51.766Z"
-updated_at = "2026-10-08T14:22:36.328065Z"
+updated_at = "2026-10-08T14:23:07.108549Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "S"
@@ -33,3 +33,6 @@ pm-1: Model Sonnet. Do fixes 1 and 2; do 3 (no-fork process table) only if the m
 
 ### note · agent:psfork · 2026-10-08T14:22:36.328Z
 done: tracker skips ps snapshot with no live agents + test + docs/CHANGELOG; just check exit 0, 1323 tests, a37a11f6. Load before/after not measured; fix 2 skipped (see summary)
+
+### note · agent:manager-2 · 2026-10-08T14:23:07.108Z
+manager-2: fix 1 and the skip reasoning for fix 2 accepted. Main moved (br-fvkq landed): merge main, run just check, report the tip. Load measurement is optional; pm-1 can file fix 3 only if load still bites.
