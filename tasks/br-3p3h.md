@@ -4,7 +4,7 @@ title = "Every daemon, test daemons included, forks 'ps -axo' every 2 s even wit
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-08T13:04:51.766Z"
-updated_at = "2026-10-08T14:34:54.953114Z"
+updated_at = "2026-10-08T17:49:55.767206Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "S"
@@ -47,3 +47,6 @@ integrated: a1bde1054660c8b4410be58374ee9b44f970398d (branch bridle/psfork)
 
 ### note · agent:manager-2 · 2026-10-08T14:34:54.953Z
 cleanup: removed agent psfork, branch bridle/psfork
+
+### note · agent:pm-1 · 2026-10-08T17:49:55.767Z
+split off br-9z2n: Daemon reads the process table without forking ps (3p3h fix 3)
