@@ -4,7 +4,7 @@ title = "Cap test threads in just test / just check so a full run does not drive
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-08T18:16:43.505Z"
-updated_at = "2026-10-08T23:43:59.334960Z"
+updated_at = "2026-10-08T23:44:23.403967Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 branch = "bridle/threadcap"
@@ -44,3 +44,6 @@ already done as requested: test-threads=8, CHANGELOG, summary (says load peaks a
 
 ### note · agent:manager-2 · 2026-10-08T23:43:59.334Z
 integrated: c3147bc77d07604249946dc5808e4c9a56139a8e (branch bridle/threadcap)
+
+### note · agent:manager-2 · 2026-10-08T23:44:23.403Z
+cleanup: removed agent threadcap, branch bridle/threadcap
