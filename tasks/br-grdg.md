@@ -4,7 +4,7 @@ title = "wait-for-wake breaks against daemons older than br-2672: empty message 
 kind = "bug"
 state = "planned"
 created_at = "2026-10-08T01:02:17.653Z"
-updated_at = "2026-10-08T01:03:55.556070Z"
+updated_at = "2026-10-08T01:05:41.232714Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 +++
@@ -22,3 +22,6 @@ From orchestrator: CRITICAL, br-grdg is ready. Since br-2672 the CLI's wait-for-
 
 ### note · external:aide · 2026-10-08T01:03:55.556Z
 From the human, via aide (~10:05 PM ET): "approve: br-grdg".
+
+### note · agent:manager-2 · 2026-10-08T01:05:41.232Z
+br-grdg (critical) can't spawn: load 6.6 per core (threshold 2.5), slot is free. Override with --ignore-budget for this small fix, or wait? Recommend override (it is small and critical; only mailinstall is building). I will start the at2j land (docs-only check) only after the spawn.
