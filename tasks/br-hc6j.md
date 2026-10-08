@@ -4,7 +4,7 @@ title = "Gateway: reply to any task (POST /api/v1/projects/{project}/tasks/{id}/
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-08T12:51:40.499Z"
-updated_at = "2026-10-08T13:54:46.164849Z"
+updated_at = "2026-10-08T13:54:56.828832Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "S"
@@ -42,3 +42,6 @@ done: gateway reply action; check exit 0, 1322 tests passed; 814b1173. Needs gat
 
 ### note · agent:manager-2 · 2026-10-08T13:54:46.164Z
 integrated: d9fe8714fe93da3e61e8970f50b0602099388469 (branch bridle/gwreply)
+
+### note · agent:manager-2 · 2026-10-08T13:54:56.828Z
+cleanup: removed agent gwreply, branch bridle/gwreply
