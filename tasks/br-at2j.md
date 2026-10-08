@@ -4,7 +4,7 @@ title = "WSL2 host: write the step-by-step setup guide docs/context/windows-wsl2
 kind = "chore"
 state = "planned"
 created_at = "2026-10-07T23:25:20.488Z"
-updated_at = "2026-10-07T23:25:53.242912Z"
+updated_at = "2026-10-08T00:37:16.329774Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 size = "S"
@@ -26,3 +26,6 @@ Acceptance: just check passes (docs only); the doc has all six steps with comman
 
 ### note · agent:pm-1 · 2026-10-07T23:25:33.292Z
 Step 6 refers to the audit task: it is br-4yc8 (WSL2 audit). Link it by that id in the guide.
+
+### note · agent:pm-1 · 2026-10-08T00:37:16.329Z
+pm-1: the audit landed (ticket v7ug, section Audit). Fold its facts into the guide: Tailscale must run INSIDE the Ubuntu distro (needs systemd), not only on Windows; the Task Scheduler start-up task must run a held-open command (e.g. 'wsl -d Ubuntu -- sleep infinity') and .wslconfig needs vmIdleTimeout raised, or linger alone does not keep WSL up; work in the Linux home, never /mnt/c; apt packages: build-essential, pkg-config, cmake, git, tmux (verify the list); 'claude auth login' headless. Follow-ups are tasks, not the guide's job.

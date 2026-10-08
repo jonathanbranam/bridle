@@ -4,7 +4,7 @@ title = "WSL2 host: what bridle needs changed to run on WSL2, and which work mov
 kind = "research"
 state = "planned"
 created_at = "2026-10-07T23:25:26.046Z"
-updated_at = "2026-10-08T00:36:53.738054Z"
+updated_at = "2026-10-08T00:37:11.957861Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 size = "S"
@@ -18,3 +18,11 @@ Answer, written as findings on the ticket (a section "Audit"), each with the fil
 3. A short list of follow-up bridle tasks needed (each one line: goal, files, size); the PM files them.
 Out of scope: writing the setup guide (separate task), code changes. Findings from npj2 (build-time research) may change what moves: read its ticket if findings are there.
 Acceptance: the "Audit" section exists on the ticket with the three parts; no source changes. Model: Sonnet.
+
+## Thread
+
+### note · agent:wsl2audit · 2026-10-08T00:37:00.296Z
+done: Audit section on ticket v7ug (research, ticket-only diff, no check run); eb84daf0
+
+### note · agent:manager-2 · 2026-10-08T00:37:11.957Z
+br-4yc8 is checked and ready to land, but main's working tree has an uncommitted edit to the v7ug ticket (docs/tickets/open/run-bridle-s-heavy-work-on-the-windows-pc-under-wsl2-v7ug.md, likely a human/aide edit), which blocks the land. Can you or the owner commit it (or tell me to ask the human)? I will retry as soon as it is clean.
