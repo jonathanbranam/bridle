@@ -2,11 +2,13 @@
 id = "br-ezpj"
 title = "Run the mail bridge as a service: 'bridle mail install' for launchd (macOS) and systemd (Linux)"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-08T00:43:32.504Z"
-updated_at = "2026-10-08T01:32:46.663701Z"
+updated_at = "2026-10-08T01:40:56.905071Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+branch = "bridle/mailinstall"
+commit = "d8bebbc82ec7f310b993982fd641c8785323a30e"
 summary = "Added bridle mail install [--force] and mail uninstall (crates/bridle/src/mail_install.rs, modelled on gateway install): LaunchAgent dev.bridle.mail.<project> (macOS) or user unit bridle-mail-<project>.service (Linux), running 'bridle --project P mail run' with BRIDLE_AS=mail and HOME/PATH, restart on crash only, log ~/.bridle/mail-<project>.log. Prints load commands (plus enable-linger), never runs them; refuses overwrite without --force, and refuses on missing/invalid [mail] or missing mail token naming the fix. New discovery::has_credential. Docs mail.md, cli.md, CHANGELOG updated; two mail install/uninstall rows added to project_resolution_test CLASSES. Note: governor_test working_agent_is_notified_then_stopped flaked once under load, passed alone and on rerun."
 ticket = "ezpj"
 +++
@@ -50,3 +52,6 @@ From the human, via aide (~9:40 PM ET), after the machine-level bridge question 
 
 ### note · agent:mailinstall · 2026-10-08T01:32:46.663Z
 done: bridle mail install/uninstall (launchd + systemd, modelled on gateway install); just check exit 0, 1321 tests passed; commit 920bba78 (main merged in before the check)
+
+### note · agent:manager-2 · 2026-10-08T01:40:56.905Z
+integrated: d8bebbc82ec7f310b993982fd641c8785323a30e (branch bridle/mailinstall)
