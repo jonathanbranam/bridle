@@ -14,10 +14,10 @@ use bridle_api::types::{
     AddQueueTierRequest, Agent, AllocPortRequest, AnswerQuestionRequest, ApiErrorResponse,
     AskQuestionRequest, BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, Conflict,
     DoneTaskRequest, DropTaskRequest, Edge, EdgeKind, EditTaskRequest, ErrorBody, Event,
-    EventQuery, ForwardAck, ForwardRequest, Handover, Health, HoldStatus, ImpactCheckRequest,
-    ImpactReport, Interaction, InteractionsQuery, InteractiveUsageRow, InterruptRequest,
-    MaxWorkersRequest, MergeProbe, Message, MessageKind, MessageQuery, MessageState,
-    MigrationRecord, NewEdgeRequest, NewTaskRequest, NoteTaskRequest, OpenQuestion,
+    EventQuery, ForwardAck, ForwardRequest, Handover, Health, HelloRequest, HoldStatus,
+    ImpactCheckRequest, ImpactReport, Interaction, InteractionsQuery, InteractiveUsageRow,
+    InterruptRequest, MaxWorkersRequest, MergeProbe, Message, MessageKind, MessageQuery,
+    MessageState, MigrationRecord, NewEdgeRequest, NewTaskRequest, NoteTaskRequest, OpenQuestion,
     OutboxSendRequest, OverlapLevel, PeerTokenCreateRequest, PortAllocation, PrincipalKind,
     ProbeOutcome, ProbeRequest, ProbeResult, Queue, Queued, RateLimit, RateLimitPoint,
     RebuildResponse, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest,
@@ -103,6 +103,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/agents/{id}/transcript", get(transcript))
         .route("/v1/messages", get(list_messages).post(send_message))
         .route("/v1/outbox", post(send_outbox))
+        .route("/v1/hello", post(hello))
         .route("/v1/forward", post(forward))
         .route("/v1/messages/{id}/read", post(mark_read))
         .route("/v1/messages/{id}/unread", post(mark_unread))
@@ -317,7 +318,8 @@ async fn auth_middleware(
     };
     match state.store.authenticate(&token).await {
         Ok(Some(principal))
-            if principal.kind == PrincipalKind::Peer && req.uri().path() != "/v1/forward" =>
+            if principal.kind == PrincipalKind::Peer
+                && !matches!(req.uri().path(), "/v1/forward" | "/v1/hello") =>
         {
             ApiError::forbidden("a peer token may only forward mail").into_response()
         }
@@ -1318,7 +1320,9 @@ async fn resolve_targets(state: &AppState, to_raw: &str) -> Result<Vec<ToTarget>
         }
         matching
     } else {
-        let agent = state.store.get_agent(to_raw).await?.ok_or_else(|| {
+        // `agent:<name>` is the form agents carry as their own id, so it works as an address.
+        let name = to_raw.strip_prefix("agent:").unwrap_or(to_raw);
+        let agent = state.store.get_agent(name).await?.ok_or_else(|| {
             // Check if the bare name is a known external principal
             if is_known_external_principal(to_raw) {
                 ApiError::not_found(format!(
@@ -1432,12 +1436,37 @@ async fn send_outbox(
         .await?;
     let outbox = state.outbox.clone();
     let project = req.project.clone();
-    tokio::spawn(async move { outbox.flush(&project).await });
+    let first_try = tokio::spawn(async move { outbox.flush(&project).await });
+    // Wait briefly for the first try so the sender learns of a refusal at once; a slow or
+    // absent peer just leaves it queued, still being tried in the background.
+    let _ = tokio::time::timeout(crate::outbox::FIRST_TRY_WAIT, first_try).await;
+    let (state_now, last_error) = state
+        .store
+        .outbox_info(&id)
+        .await?
+        .unwrap_or_else(|| ("queued".to_string(), None));
     Ok(Json(Queued {
         id,
         project: req.project,
         to: req.to,
+        state: state_now,
+        last_error,
     }))
+}
+
+/// `POST /v1/hello`: a peer daemon says it is back; its queue here is flushed at once. Only a
+/// peer token may call it.
+async fn hello(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Json(req): Json<HelloRequest>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    if principal.kind != PrincipalKind::Peer {
+        return Err(ApiError::forbidden("hello takes a peer token"));
+    }
+    let outbox = state.outbox.clone();
+    tokio::spawn(async move { outbox.peer_is_back(&req.daemon).await });
+    Ok(Json(serde_json::json!({})))
 }
 
 /// `POST /v1/forward`: a message from another daemon's outbox. Only a peer token may call it,

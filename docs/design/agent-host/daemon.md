@@ -103,7 +103,18 @@ Besides serving the API, the daemon runs: the stall and context checks (every 30
 tracker (2 s), the budget governor (30 s tick; polls usage every 5 min, 30 s above
 `hold_at`: OAuth usage endpoint over HTTP, else a throwaway `claude -p` probe for that poll), the CI watcher (when `[ci] github`), the disk monitor (`[disk] check_interval`), the orchestrator supervisor (`[orchestrator] enabled`; 10 s; [[orchestrator-supervision]]), the orchestrator wake conditions (always; 10 s; the same design), the
 task state-branch flush (30 s), the claim-lease check (30 s) and the port sweep (30 s; frees
-ports whose owner is gone) and the document watcher (30 s), plus the daily event prune. All stop on shutdown.
+ports whose owner is gone) and the document watcher (30 s), the outbox retry loop (15 s; below), plus the daily event prune. All stop on shutdown.
+
+**Outbox retry** (3haz, br-fvkq; `outbox.rs`). Every 15 s the daemon looks at each destination with
+queued mail and tries the oldest if its backoff has run out: the first try is at once (on send), then
+after 30 s, 2 min, and every 5 min; mail never expires. The backoff is in memory, so a restart tries
+everything at once. Two things cut a wait short: at start-up the daemon greets every daemon in
+`[projects]` of the machine config that it holds a peer token for (`POST /v1/hello`), and a daemon
+that hears a greeting flushes its queue for the greeter; and a wall clock that jumped more than 60 s
+between two looks (the machine slept) counts as a start-up: greet the peers, try every queue at once.
+The sender is told by a note from `system` when a message is refused for good (once, when it
+fails) and when it has been queued 30 min (once; retries go on). Tests drive the loop on tokio's
+paused clock with a fake transport.
 
 ## Document review
 

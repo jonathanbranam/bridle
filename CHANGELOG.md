@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- Mail between daemons retries until delivered: backoff (at once, 30 s, 2 m, then every 5 m), a start-up and wake-from-sleep greeting (`POST /v1/hello`) that makes a peer flush at once, a note to the sender when a message is refused for good or stuck 30 min, `agent:<name>` accepted across daemons, and `bridle send --project` now reports the first try's outcome (br-fvkq, 3haz slice 3).
 - Gateway: `POST /api/v1/projects/{project}/tasks/{id}/reply` adds the human's reply to any task's thread (any state), notifying the claimer and watchers like a comment (br-hc6j).
 
 ### Fixed

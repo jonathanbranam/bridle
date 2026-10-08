@@ -221,10 +221,21 @@ pub(super) async fn send(cli: &Cli, args: &SendArgs) -> Result<(), CliError> {
         if cli.json {
             render::print_json(&queued)?;
         } else {
-            println!(
-                "queued {} for {} -> {}",
-                queued.id, queued.project, queued.to
-            );
+            let place = format!("{} for {} -> {}", queued.id, queued.project, queued.to);
+            match (queued.state.as_str(), queued.last_error.as_deref()) {
+                ("delivered", _) => println!("delivered {place}"),
+                ("failed", _) => {}
+                (_, Some(why)) => println!("queued {place}; not delivered yet ({why}), retrying"),
+                _ => println!("queued {place}"),
+            }
+        }
+        // Refused for good: say so with a failing exit, so the sender cannot miss it.
+        if queued.state == "failed" {
+            return Err(CliError::from(anyhow::anyhow!(
+                "not delivered, refused for good ({}): {}",
+                queued.id,
+                queued.last_error.as_deref().unwrap_or("no reason given")
+            )));
         }
         return Ok(());
     }

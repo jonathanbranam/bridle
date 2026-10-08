@@ -399,8 +399,9 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   and `send` adds "<name> isn't running; delivered to advisor"; `bridle send` prints one `sent <id> -> <to>` line per recipient.
   A role with no live agents is an error, same as an unknown agent name.
   `--project <other>` naming a different daemon than the sender's own (3haz): the CLI hands the message to
-  the sender's own daemon (the cwd's, or `$BRIDLE_URL`'s), which queues it in its outbox and prints
-  `queued o-0007 for <project> -> <to>` at once, then forwards it (principals.md, "Mail between
+  the sender's own daemon (the cwd's, or `$BRIDLE_URL`'s), which queues it in its outbox and waits up to 3 s for the first try and prints
+  its outcome: `delivered o-0007 for <project> -> <to>`, `queued ...; not delivered yet (<why>), retrying`,
+  or (refused for good, exit 1) the reason; it keeps retrying a queued one (principals.md, "Mail between
   daemons"). It never writes to the other daemon, and succeeds while that daemon is down. The
   recipient is named as on the other daemon; `--task` isn't supported that way yet. With no own
   daemon to hand it to, the old direct send to `--project` applies. The own daemon's project is the

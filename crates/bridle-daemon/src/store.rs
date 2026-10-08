@@ -312,6 +312,36 @@ impl Store {
             .await
     }
 
+    /// Destinations that have something queued.
+    pub async fn outbox_queued_projects(&self) -> Result<Vec<String>, StoreError> {
+        self.with_conn(sync::outbox_queued_projects).await
+    }
+
+    /// `(state, last_error)` of an outbox row.
+    pub async fn outbox_info(
+        &self,
+        id: &str,
+    ) -> Result<Option<(String, Option<String>)>, StoreError> {
+        let id = id.to_string();
+        self.with_conn(move |c| sync::outbox_info(c, &id)).await
+    }
+
+    /// Queued entries older than `cutoff` whose sender has not been told yet.
+    pub async fn outbox_stuck(&self, cutoff: DateTime<Utc>) -> Result<Vec<OutboxRow>, StoreError> {
+        self.with_conn(move |c| sync::outbox_stuck(c, cutoff)).await
+    }
+
+    pub async fn outbox_row(&self, id: &str) -> Result<Option<OutboxRow>, StoreError> {
+        let id = id.to_string();
+        self.with_conn(move |c| sync::outbox_row(c, &id)).await
+    }
+
+    pub async fn outbox_mark_stuck(&self, id: &str) -> Result<(), StoreError> {
+        let id = id.to_string();
+        self.with_conn(move |c| sync::outbox_mark_stuck(c, &id))
+            .await
+    }
+
     /// `(state, remote ids)` of an outbox row: `queued`, `delivered` or `failed`.
     pub async fn outbox_state(
         &self,
@@ -1363,12 +1393,17 @@ mod sync {
         CREATE INDEX rate_limit_history_window ON rate_limit_history(window, observed_at);
     "#;
 
+    // Mail between daemons, slice 3 (br-fvkq): a stuck entry's one-time notice to its sender.
+    pub(super) const SCHEMA_V22: &str = r#"
+        ALTER TABLE outbox ADD COLUMN stuck_notified_at TEXT;
+    "#;
+
     pub(super) const RATE_LIMIT_HISTORY_DAYS: i64 = 90;
 
     pub(super) const MIGRATIONS: &[&str] = &[
         SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7, SCHEMA_V8,
         SCHEMA_V9, SCHEMA_V10, SCHEMA_V11, SCHEMA_V12, SCHEMA_V13, SCHEMA_V14, SCHEMA_V15,
-        SCHEMA_V16, SCHEMA_V17, SCHEMA_V18, SCHEMA_V19, SCHEMA_V20, SCHEMA_V21,
+        SCHEMA_V16, SCHEMA_V17, SCHEMA_V18, SCHEMA_V19, SCHEMA_V20, SCHEMA_V21, SCHEMA_V22,
     ];
 
     pub(super) fn open(path: &Path) -> Result<Connection, StoreError> {
@@ -1738,6 +1773,23 @@ mod sync {
         Ok(id)
     }
 
+    fn outbox_row_from(r: &rusqlite::Row<'_>) -> rusqlite::Result<OutboxRow> {
+        let kind: String = r.get(4)?;
+        let when: String = r.get(7)?;
+        Ok(OutboxRow {
+            id: r.get(0)?,
+            project: r.get(1)?,
+            from: r.get(2)?,
+            to: r.get(3)?,
+            kind: kind_from_str(&kind),
+            body: r.get(5)?,
+            reply_to: r.get(6)?,
+            when: when_from_str(&when),
+            attempts: r.get(8)?,
+            last_error: r.get(9)?,
+        })
+    }
+
     pub(super) fn outbox_next(
         conn: &Connection,
         project: &str,
@@ -1748,22 +1800,7 @@ mod sync {
                         when_mode, attempts, last_error
                  FROM outbox WHERE project = ?1 AND state = 'queued' ORDER BY seq ASC LIMIT 1",
                 params![project],
-                |r| {
-                    let kind: String = r.get(4)?;
-                    let when: String = r.get(7)?;
-                    Ok(OutboxRow {
-                        id: r.get(0)?,
-                        project: r.get(1)?,
-                        from: r.get(2)?,
-                        to: r.get(3)?,
-                        kind: kind_from_str(&kind),
-                        body: r.get(5)?,
-                        reply_to: r.get(6)?,
-                        when: when_from_str(&when),
-                        attempts: r.get(8)?,
-                        last_error: r.get(9)?,
-                    })
-                },
+                outbox_row_from,
             )
             .optional()?)
     }
@@ -1809,6 +1846,64 @@ mod sync {
                 },
             )
             .optional()?)
+    }
+
+    pub(super) fn outbox_queued_projects(conn: &Connection) -> Result<Vec<String>, StoreError> {
+        let mut stmt =
+            conn.prepare("SELECT DISTINCT project FROM outbox WHERE state = 'queued'")?;
+        Ok(stmt
+            .query_map([], |r| r.get(0))?
+            .collect::<Result<_, _>>()?)
+    }
+
+    pub(super) fn outbox_info(
+        conn: &Connection,
+        id: &str,
+    ) -> Result<Option<(String, Option<String>)>, StoreError> {
+        Ok(conn
+            .query_row(
+                "SELECT state, last_error FROM outbox WHERE id = ?1",
+                params![id],
+                |r| Ok((r.get(0)?, r.get(1)?)),
+            )
+            .optional()?)
+    }
+
+    /// Entries queued since before `cutoff` that have not yet had their stuck notice.
+    pub(super) fn outbox_stuck(
+        conn: &Connection,
+        cutoff: DateTime<Utc>,
+    ) -> Result<Vec<OutboxRow>, StoreError> {
+        let mut stmt = conn.prepare(
+            "SELECT id FROM outbox WHERE state = 'queued' AND stuck_notified_at IS NULL
+                AND created_at < ?1 ORDER BY seq",
+        )?;
+        let ids: Vec<String> = stmt
+            .query_map(params![fmt_dt(cutoff)], |r| r.get(0))?
+            .collect::<Result<_, _>>()?;
+        ids.iter()
+            .filter_map(|id| outbox_row(conn, id).transpose())
+            .collect()
+    }
+
+    pub(super) fn outbox_row(conn: &Connection, id: &str) -> Result<Option<OutboxRow>, StoreError> {
+        Ok(conn
+            .query_row(
+                "SELECT id, project, from_principal, to_principal, kind, body, reply_to,
+                        when_mode, attempts, last_error
+                 FROM outbox WHERE id = ?1",
+                params![id],
+                outbox_row_from,
+            )
+            .optional()?)
+    }
+
+    pub(super) fn outbox_mark_stuck(conn: &Connection, id: &str) -> Result<(), StoreError> {
+        conn.execute(
+            "UPDATE outbox SET stuck_notified_at = ?2 WHERE id = ?1",
+            params![id, fmt_dt(Utc::now())],
+        )?;
+        Ok(())
     }
 
     pub(super) fn forwarded_seen(

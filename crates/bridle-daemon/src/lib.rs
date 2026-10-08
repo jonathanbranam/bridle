@@ -705,6 +705,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
                 .clone()
                 .unwrap_or_else(discovery::bridle_home),
             project.clone(),
+            outbox::notifier(store.clone(), manager.clone()),
         ),
         self_upgrade: config.self_upgrade,
         drain_wake_after: overrides.drain_wake_after,
@@ -741,6 +742,16 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         while set.join_next().await.is_some() {}
     });
 
+    // Tells the peers we are up so they flush what they hold for us; the loop below retries our
+    // own queues and notices a sleep.
+    tokio::spawn(tick_state.outbox.clone().ping_peers());
+    let outbox_task = spawn_loop(shutdown_rx.clone(), outbox::TICK, {
+        let outbox = tick_state.outbox.clone();
+        move || {
+            let outbox = outbox.clone();
+            async move { outbox.tick().await }
+        }
+    });
     let stall_task = spawn_loop(shutdown_rx.clone(), overrides.stall_check_interval, {
         let manager = manager.clone();
         let home = overrides
@@ -952,6 +963,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         }
         signal_task.abort();
         stall_task.abort();
+        outbox_task.abort();
         tracker_task.abort();
         governor_task.abort();
         ci_task.abort();

@@ -14,8 +14,8 @@ use crate::types::{
     AddQueueTierRequest, Agent, AllocPortRequest, AnswerQuestionRequest, ApiErrorResponse,
     AskQuestionRequest, BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, Conflict,
     DoneTaskRequest, DropTaskRequest, Edge, EditTaskRequest, Event, EventQuery, ForwardAck,
-    ForwardRequest, Handover, HandoverDone, Health, ImpactCheckRequest, ImpactReport, Interaction,
-    InteractionsQuery, InterruptRequest, InterruptResponse, LandRequest, LandResult,
+    ForwardRequest, Handover, HandoverDone, Health, HelloRequest, ImpactCheckRequest, ImpactReport,
+    Interaction, InteractionsQuery, InterruptRequest, InterruptResponse, LandRequest, LandResult,
     MaxWorkersRequest, Message, MessageQuery, NewEdgeRequest, NewTaskRequest, NoteTaskRequest,
     OpenQuestion, OrchestratorWakeQuery, OutboxSendRequest, PeerTokenCreateRequest, PortAllocation,
     PrincipalWakeQuery, PrincipalWakeResponse, ProbeRequest, ProbeResult, Queue, Queued,
@@ -278,6 +278,13 @@ impl Client {
     /// `POST /v1/forward`: hand one message to the daemon this client points at (peer token).
     pub async fn forward(&self, req: &ForwardRequest) -> Result<ForwardAck, ClientError> {
         self.post_json(&["v1", "forward"], req).await
+    }
+
+    /// `POST /v1/hello`: tell the daemon this client points at that we are back (peer token).
+    pub async fn hello(&self, req: &HelloRequest) -> Result<(), ClientError> {
+        self.post_json::<serde_json::Value, _>(&["v1", "hello"], req)
+            .await
+            .map(|_| ())
     }
 
     pub async fn mark_read(&self, id: &str) -> Result<Message, ClientError> {

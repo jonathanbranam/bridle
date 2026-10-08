@@ -783,6 +783,25 @@ pub struct Queued {
     pub id: String,
     pub project: String,
     pub to: String,
+    /// Where the first try left it: `queued` (retrying), `delivered` or `failed` (refused for
+    /// good). An older daemon sends none, which reads as `queued`.
+    #[serde(default = "queued_state")]
+    pub state: String,
+    /// Why the first try did not deliver.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub last_error: Option<String>,
+}
+
+fn queued_state() -> String {
+    "queued".to_string()
+}
+
+/// `POST /v1/hello`: a daemon that has just started (or woken) tells a peer so; the peer flushes
+/// its outbox to it at once. Peer tokens only.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct HelloRequest {
+    /// The greeting daemon's project: the key of the receiver's outbox queue for it.
+    pub daemon: String,
 }
 
 /// `POST /v1/forward`: one message from another daemon's outbox. Peer tokens only.

@@ -161,8 +161,13 @@ destination is found from the machine config (`[projects]`, k7mw), else this mac
   the outbox delivers oldest first, one flush at a time; a try that doesn't get through (daemon
   down, refused token) leaves the message queued and stops the flush so nothing overtakes it;
   a refusal for good (unknown recipient, bad request) marks it `failed` and the queue moves on.
-- **Not built yet:** the retry loop and start-up ping (a queued message is retried only when
-  the next message for the same destination is sent), forwarding a visitor's mail home, status
+- **Retry (br-fvkq).** Backoff at once, 30 s, 2 m, then every 5 m; mail never expires; a start-up
+  or wake-from-sleep greeting (`POST /v1/hello`, peer token) makes the hearer flush at once. See
+  daemon.md, "Outbox retry". The send waits up to 3 s for the first try and answers with its
+  outcome (`delivered`, `failed` with the reason, or `queued` with the last error). A refusal for
+  good, and a message queued 30 min, each send the sender one note from `system`. The receiver
+  accepts `agent:<name>` as well as a bare agent name.
+- **Not built yet:** forwarding a visitor's mail home, status
   lines, `bridle message show`, `--task` and `@machine` addressing across daemons.
 
 Rule 2 means a Claude Code session (the human's orchestrator, or any agent)

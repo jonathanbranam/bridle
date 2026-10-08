@@ -6,8 +6,8 @@ mod support;
 use bridle_api::Client;
 use bridle_api::discovery::store_credential;
 use bridle_api::types::{
-    ForwardRequest, MessageKind, MessageQuery, OutboxSendRequest, PeerTokenCreateRequest,
-    TokenCreateRequest, When,
+    ForwardRequest, HelloRequest, MessageKind, MessageQuery, OutboxSendRequest,
+    PeerTokenCreateRequest, TokenCreateRequest, When,
 };
 use support::{TestDaemon, machine_home_dir, start_daemon_named, wait_for};
 
@@ -155,8 +155,8 @@ async fn a_send_to_a_down_daemon_is_still_accepted_and_the_queue_keeps_its_order
     tokio::time::sleep(std::time::Duration::from_millis(500)).await;
     assert!(inbox_bodies(&p.b, "external:advisor").await.is_empty());
 
-    // The token is fixed; the next send flushes the queue oldest first. (The retry loop that
-    // does this by itself is a later slice.)
+    // The token is fixed; the next send flushes the queue oldest first. (Without a send it
+    // would wait out the backoff, or a greeting from the peer: see the hello test.)
     p.point_a_at_b(&p.peer_token);
     sender
         .send_outbox(&out(&p.b_project, "external:advisor", "three"))
@@ -250,4 +250,113 @@ async fn a_destination_with_no_peer_token_is_refused_up_front() {
         .await
         .expect_err("no token");
     assert!(err.to_string().contains("peer token"), "{err}");
+}
+
+#[tokio::test]
+async fn the_send_reports_how_the_first_try_went() {
+    let p = pair().await;
+    p.b.external_client("advisor").await;
+    let sender = p.a.external_client("orchestrator").await;
+
+    let ok = sender
+        .send_outbox(&out(&p.b_project, "external:advisor", "hello"))
+        .await
+        .expect("send");
+    assert_eq!(ok.state, "delivered");
+
+    let refused = sender
+        .send_outbox(&out(&p.b_project, "external:nobody", "lost"))
+        .await
+        .expect("accepted");
+    assert_eq!(refused.state, "failed");
+    assert!(
+        refused
+            .last_error
+            .as_deref()
+            .is_some_and(|e| e.contains("no such recipient")),
+        "{refused:?}"
+    );
+    // ... and the sender is told in its inbox too, by the daemon, once.
+    let notes = wait_for("the refusal notice", || async {
+        let got = inbox_bodies(&p.a, "external:orchestrator").await;
+        (!got.is_empty()).then_some(got)
+    })
+    .await;
+    assert_eq!(notes.len(), 1, "{notes:?}");
+    assert_eq!(notes[0].0, "system");
+    assert!(notes[0].1.contains("external:nobody"), "{notes:?}");
+
+    p.point_a_at_b(&"0".repeat(64));
+    let down = sender
+        .send_outbox(&out(&p.b_project, "external:advisor", "later"))
+        .await
+        .expect("accepted");
+    assert_eq!(down.state, "queued");
+    assert!(down.last_error.is_some(), "{down:?}");
+}
+
+#[tokio::test]
+async fn a_peer_saying_hello_gets_its_queue_flushed_at_once() {
+    let p = pair().await;
+    p.b.external_client("advisor").await;
+    let sender = p.a.external_client("orchestrator").await;
+    p.point_a_at_b(&"0".repeat(64));
+    sender
+        .send_outbox(&out(&p.b_project, "external:advisor", "waiting"))
+        .await
+        .expect("queued");
+    // B comes back (its token is good again), and greets A with a peer token A minted for it.
+    p.point_a_at_b(&p.peer_token);
+    let a_peer =
+        p.a.client
+            .create_peer_token(&PeerTokenCreateRequest {
+                machine: "m2".to_string(),
+            })
+            .await
+            .expect("peer token")
+            .token;
+    let greeting = Client::new(p.a.running.url.clone(), Some(a_peer));
+    greeting
+        .hello(&HelloRequest {
+            daemon: p.b_project.clone(),
+        })
+        .await
+        .expect("hello");
+    // Well inside the 30 s backoff.
+    let got = wait_for_bodies(&p.b, "external:advisor", 1).await;
+    assert_eq!(got[0].1, "waiting");
+
+    // Only a peer token may greet.
+    let err = sender
+        .hello(&HelloRequest {
+            daemon: p.b_project.clone(),
+        })
+        .await
+        .expect_err("not a peer");
+    assert!(err.to_string().contains("peer token"), "{err}");
+}
+
+#[tokio::test]
+async fn mail_to_agent_colon_name_reaches_the_agent_across_daemons() {
+    let p = pair().await;
+    p.b.client
+        .spawn(&bridle_api::types::SpawnRequest {
+            components: Vec::new(),
+            role: "worker".to_string(),
+            name: Some("w1".to_string()),
+            prompt: None,
+            workdir: Some(bridle_api::types::Workdir::Repo),
+            model: None,
+            extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
+            ignore_budget: false,
+        })
+        .await
+        .expect("spawn");
+    let sender = p.a.external_client("orchestrator").await;
+    let sent = sender
+        .send_outbox(&out(&p.b_project, "agent:w1", "for you"))
+        .await
+        .expect("send");
+    assert_eq!(sent.state, "delivered", "{sent:?}");
 }
