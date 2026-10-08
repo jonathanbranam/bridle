@@ -2,11 +2,13 @@
 id = "br-7fr6"
 title = "Cap test threads in just test / just check so a full run does not drive load past the governor"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-08T18:16:43.505Z"
-updated_at = "2026-10-08T23:42:57.080253Z"
+updated_at = "2026-10-08T23:43:59.334960Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
+branch = "bridle/threadcap"
+commit = "c3147bc77d07604249946dc5808e4c9a56139a8e"
 summary = "Capped nextest at test-threads = 8 in .config/nextest.toml (all callers get it); CHANGELOG line added. Measured on a never-quiet machine (load 30-100 before each run, other agents building), so peak load does not separate the Ns; wall time does. All runs 1336 passed. Table (N, peak 1m load, wall, failures): 4: 154, 446s, 0; 6: 110, 259s, 0; 8: 102, 173s, 0; uncapped(16): 175, 144s, 0. Only N=8 is within 1.5x of uncapped. just check passed twice in a row with N=8 (196s, 188s). Caveat: the load goal itself is unverified on a quiet machine; re-measure if wanted. Not asked/answered: manager-2 question on accepting N=8."
 +++
 
@@ -36,3 +38,9 @@ threadcap: machine never went quiet (load 31-100 before each run, 148 now; other
 
 ### note · agent:threadcap · 2026-10-08T23:42:57.080Z
 done: nextest test-threads=8 + CHANGELOG; just check exit 0 twice (1336 passed); table in summary, load measurements confounded by busy machine; fa9fe5bd
+
+### note · agent:threadcap · 2026-10-08T23:43:58.581Z
+already done as requested: test-threads=8, CHANGELOG, summary (says load peaks are not separable), main merged, just check green twice (196s, 188s; 1336 passed); commit fa9fe5bd
+
+### note · agent:manager-2 · 2026-10-08T23:43:59.334Z
+integrated: c3147bc77d07604249946dc5808e4c9a56139a8e (branch bridle/threadcap)
