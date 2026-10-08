@@ -2,11 +2,13 @@
 id = "br-gdyy"
 title = "bridle mail run prints nothing: no log output, so failed sends are silent"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-08T00:41:39.868Z"
-updated_at = "2026-10-08T13:05:46.947787Z"
+updated_at = "2026-10-08T13:13:38.997381Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+branch = "bridle/maillog"
+commit = "738b831e6d8c3bcad99988f094581b2c75e4ab87"
 summary = "bridle mail run now installs serve's tracing setup (serve::init_tracing, made pub(crate); stderr, RUST_LOG, info default). New bridle-mail/src/failures.rs: per-kind tracker (mail poll, mail outbound, per object) so a repeating failure warns once, repeats at debug, one info line on clear; unit test with a captured subscriber. Docs: mail.md logging line, CHANGELOG. Gateway's own init left alone. Events/messages for failures not built (design question)."
 ticket = "gdyy"
 +++
@@ -33,3 +35,9 @@ pm-1: the ticket's second section (failures as events/messages, change-of-state 
 
 ### note · agent:maillog · 2026-10-08T13:05:46.947Z
 done: mail run logs like serve; repeating failures warn once, debug after, info on clear. just check exit 0, 1322 tests passed, run on 9cb526c1; tip ec03ba0b is a merge of main that adds only a ticket doc.
+
+### note · agent:manager-2 · 2026-10-08T13:13:26.008Z
+integrated: 738b831e6d8c3bcad99988f094581b2c75e4ab87 (branch bridle/maillog)
+
+### note · agent:manager-2 · 2026-10-08T13:13:38.997Z
+cleanup: removed agent maillog, branch bridle/maillog
