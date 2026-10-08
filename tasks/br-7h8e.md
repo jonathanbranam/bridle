@@ -2,9 +2,9 @@
 id = "br-7h8e"
 title = "Flaky test: upgrade_test a_long_drain_wakes_the_orchestrator_once sees no wake (fewer than one)"
 kind = "bug"
-state = "pending"
+state = "planned"
 created_at = "2026-10-08T19:05:02.374Z"
-updated_at = "2026-10-08T19:05:02.374Z"
+updated_at = "2026-10-08T21:50:26.481360Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 +++
