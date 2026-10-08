@@ -4,7 +4,7 @@ title = "A project's aide messages an orchestrator that isn't watching that proj
 kind = "bug"
 state = "planned"
 created_at = "2026-10-08T01:05:40.485Z"
-updated_at = "2026-10-08T01:06:24.467123Z"
+updated_at = "2026-10-08T02:21:18.485691Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "ghys"
@@ -29,3 +29,6 @@ Readied by orchestrator on the human's go, via aide (~10:10 PM ET): "file this a
 
 ### note · external:orchestrator · 2026-10-08T01:06:10.331Z
 From orchestrator: br-ghys ready (the human's bug, via aide). Role-rules clarification (aide/orchestrator per machine vs per project); place it after br-grdg, which is the code half of the same symptom. Likely Haiku/Sonnet docs-only.
+
+### note · external:orchestrator · 2026-10-08T02:21:18.485Z
+orchestrator: one more aide-role change for this ticket, from bridle-ui incident ui-wdp3 (postmortem in ui-mbhk's summary): before telling the human that work hasn't started or wasn't acted on, the aide checks 'bridle task list', 'git log' and the orchestrator's message trail, not only its inbox, the human's to-dos and pending_tasks. On 2026-10-04 the bridle-ui aide told the human twice that k3qx hadn't been acted on; it had landed in 10 minutes as ui-n6cu.
