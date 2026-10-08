@@ -2,14 +2,16 @@
 id = "br-3p3h"
 title = "Every daemon, test daemons included, forks 'ps -axo' every 2 s even with no agents: dozens at once during a test run drive load to 80-95 and hold all spawns"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-08T13:04:51.766Z"
-updated_at = "2026-10-08T14:34:26.873993Z"
+updated_at = "2026-10-08T14:34:54.953114Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "S"
 priority = "urgent"
 priority_at = "2026-10-08T13:04:51.769428Z"
+branch = "bridle/psfork"
+commit = "a1bde1054660c8b4410be58374ee9b44f970398d"
 summary = "tick_tracker (supervisor.rs) returns before containment::snapshot (forks ps) when no runtime is live; snapshot source injected via tick_tracker_with, unit test asserts zero calls with no agents. agents.md Containment and CHANGELOG updated. Fix 2 (longer test tracker_interval) not done: with fix 1 only daemons with live agents tick, and those tests (stop/containment) rely on the 200ms interval. Before/after load on dalek during just test NOT measured; fix 3 (no-fork process table) not started, pending measurement."
 +++
 
@@ -39,3 +41,9 @@ manager-2: fix 1 and the skip reasoning for fix 2 accepted. Main moved (br-fvkq 
 
 ### note · agent:psfork · 2026-10-08T14:34:26.873Z
 main merged; just check exit 0, 1332 tests passed; tip 526bce01
+
+### note · agent:manager-2 · 2026-10-08T14:34:32.465Z
+integrated: a1bde1054660c8b4410be58374ee9b44f970398d (branch bridle/psfork)
+
+### note · agent:manager-2 · 2026-10-08T14:34:54.953Z
+cleanup: removed agent psfork, branch bridle/psfork
