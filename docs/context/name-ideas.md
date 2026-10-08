@@ -145,6 +145,10 @@ Red Rising (soon), Brandon Sanderson (next; less into fantasy).
 - [Sci-fi hostname schemes](https://rubenerd.com/brad-alexander-on-hostname-schemes-sci-fi),
   [Fun with Host Naming Schemes](https://www.steevithak.com/?p=808).
 - RFC 1178, "Choosing a Name for Your Computer".
+
+> [!comment] c2 human, 2026-10-08 19:34 EDT, on "RFC 1178" [pending 2026-10-08 19:34 EDT]
+> Please link the RFC.
+
 - Generators: [The Story Shack](https://thestoryshack.com/tools/server-hostname-generator/)
   (servers, ships, Foundation characters), fantasynamegenerators.com.
 - A lesson from sysadmins: one favourite novel runs out of names fast; pick a category with
