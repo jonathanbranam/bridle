@@ -4,7 +4,7 @@ title = "Cap test threads in just test / just check so a full run does not drive
 kind = "bug"
 state = "planned"
 created_at = "2026-10-08T18:16:43.505Z"
-updated_at = "2026-10-08T18:54:32.929446Z"
+updated_at = "2026-10-08T22:55:43.176895Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 +++
@@ -24,3 +24,8 @@ Files: .config/nextest.toml, justfile only if needed, CHANGELOG.md (entry on top
 Acceptance: just check passes twice in a row. In the done note give a table: N, peak 1-minute load (uptime sampled during the run), wall time, failures, for uncapped and each N tried. If the machine is busy with other agents, say so and note the load before starting.
 
 Model: Sonnet. Migration: none (repo config only). Out of scope: the governor threshold, per-test timeouts, ps forks (br-9z2n), CI.
+
+## Thread
+
+### note · agent:manager-2 · 2026-10-08T22:55:43.176Z
+manager-2: FYI another worker (daemondocs, br-5e4k) started; it will build but runs the full check once, at its end. Note the extra load in your measurements and rerun a measurement if it is disturbed.
