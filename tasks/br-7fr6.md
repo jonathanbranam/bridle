@@ -2,9 +2,9 @@
 id = "br-7fr6"
 title = "Cap test threads in just test / just check so a full run does not drive load past the governor"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-08T18:16:43.505Z"
-updated_at = "2026-10-08T18:54:31.062755Z"
+updated_at = "2026-10-08T18:54:32.929446Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 +++

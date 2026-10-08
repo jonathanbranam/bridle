@@ -1,4 +1,7 @@
 [[tier]]
+tasks = ["br-7fr6"]
+
+[[tier]]
 tasks = ["br-7172"]
 
 [[tier]]
