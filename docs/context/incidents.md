@@ -24,6 +24,20 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-08 ~01:10-01:30: aide's in-session restart left it at the shell again
+
+- **What happened:** aide (bridle, dalek) wrote handover h-0066 at ~200K and restarted itself.
+  The session ended; `~/.bridle/restart-aide.log` says the relaunch was typed but aide didn't
+  register within 60 s, then "pane %5 is gone". Pane %5 still existed, at the shell prompt, with
+  no relaunch in it. The human asked the orchestrator whether they had broken it; they hadn't.
+  The orchestrator typed `bridle --project bridle session aide` into %5 and aide came back at once.
+- **Impact:** about 20 minutes with no bridle aide; the human's channel to the workforce was down.
+- **Cause:** unknown; second occurrence of 5j35 (the restarter still can't relaunch from inside
+  the session), and its "pane gone" check is wrong.
+- **Category:** `connectivity`, `coordination`.
+- **Follow-up:** [[bridle-session-restart-run-from-inside-the-session-stops-it-5j35|5j35]]
+  (recurrence on br-5j35's thread).
+
 ## 2026-10-08 ~00:53-01:05: orchestrator wakes came back empty after br-2672
 
 - **What happened:** the CLI installed with br-2672 (bc5ed0a5, at 00:53) waits on the new
