@@ -1085,3 +1085,4 @@
 {"actor":"system","at":"2026-10-08T03:37:45.314596Z","from":"open","task":"br-v7ug","to":"pending"}
 {"actor":"agent:manager-2","at":"2026-10-08T05:07:58.201665Z","from":"planned","task":"br-ghys","to":"integrated"}
 {"actor":"human","at":"2026-10-08T12:46:23.404Z","from":"","task":"br-bbhn","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-10-08T12:46:41.781225Z","from":"pending","task":"br-bbhn","to":"open"}

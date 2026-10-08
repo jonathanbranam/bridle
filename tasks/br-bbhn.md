@@ -2,9 +2,9 @@
 id = "br-bbhn"
 title = "Incident: a NUC aide's message to bridle sat undelivered in the outbox: one try timed out while dalek slept, and the outbox never retries (3haz)"
 kind = "incident"
-state = "pending"
+state = "open"
 created_at = "2026-10-08T12:46:23.404Z"
-updated_at = "2026-10-08T12:46:23.404Z"
+updated_at = "2026-10-08T12:46:41.781225Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 +++
@@ -22,3 +22,8 @@ The human's words from the NUC were silently lost for 30+ min, and indefinitely 
 
 ## Follow-up
 The retry loop (periodic flush with backoff, plus a flush when a destination comes back) from 3haz's remaining slices; also some way to see a stuck outbox (status line, `bridle outbox`). Workaround: the aide on dalek relays the stuck message's content by hand.
+
+## Thread
+
+### note · external:orchestrator · 2026-10-08T12:46:41.758Z
+Same root, second case (orchestrator, overnight): from dalek's bridle daemon, 'bridle --project bridle-ui send agent:manager-2 ...' printed 'queued o-0009/10/11'; all three ended state=failed, last_error 'no such recipient: agent:manager-2' (the remote wants 'manager-2'). The sender never hears of the failure, so a work-unblocking nudge was lost for ~7 h. The fix should cover both: a stuck or failed outbox entry must reach its sender (a message back, or the wake), not just a retry. Also worth accepting 'agent:<name>' across daemons as it is locally.
