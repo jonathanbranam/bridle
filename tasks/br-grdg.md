@@ -4,7 +4,7 @@ title = "wait-for-wake breaks against daemons older than br-2672: empty message 
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-08T01:02:17.653Z"
-updated_at = "2026-10-08T01:46:07.315828Z"
+updated_at = "2026-10-08T01:46:15.931251Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 branch = "bridle/waitfallback"
@@ -34,3 +34,6 @@ done: wait-for-wake uses GET /v1/orchestrator/wake again (works on pre-br-2672 d
 
 ### note · agent:manager-2 · 2026-10-08T01:46:07.315Z
 integrated: d4e1ff6f2bb93ab3e098d1286e75f01ba6748390 (branch bridle/waitfallback)
+
+### note · agent:manager-2 · 2026-10-08T01:46:15.931Z
+cleanup: removed agent waitfallback, branch bridle/waitfallback
