@@ -2,14 +2,16 @@
 id = "br-eyu3"
 title = "Focus nudge is shared by every session on the machine: one session's prompt uses up the 5-minute nudge and the session the human is typing in stays silent"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-08T12:53:50.556Z"
-updated_at = "2026-10-08T16:47:33.464109Z"
+updated_at = "2026-10-08T17:35:52.466644Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "S"
 priority = "high"
 priority_at = "2026-10-08T12:53:50.557Z"
+branch = "bridle/focusnudge"
+commit = "35a66d7a0c677d4cc25dbd4d93c0cb5a8c3c835e"
 summary = "The quiet-hours focus nudge is recorded per session: gate() takes the hook's session_id and keeps '<secs> <period>' in $BRIDLE_HOME/focus-nudge.d/<session> (atomic temp+rename; files idle >1 day pruned), so each session gets its first nudge and its own 5-minute repeat. No usable session id falls back to the machine-wide focus-nudge file. The old machine-wide file is left alone / overwritten; no migration. Tests for per-session and no-session cases; cli.md and CHANGELOG updated. just check green."
 +++
 
@@ -34,3 +36,6 @@ implemented per-session focus nudge, commit ac74cbb6 (merged main, nothing new).
 
 ### note · agent:focusnudge · 2026-10-08T16:47:33.464Z
 done: per-session focus nudge; just check exit 0, 1334 tests passed; ac74cbb6 (main already merged)
+
+### note · agent:manager-2 · 2026-10-08T17:35:52.466Z
+integrated: 35a66d7a0c677d4cc25dbd4d93c0cb5a8c3c835e (branch bridle/focusnudge)
