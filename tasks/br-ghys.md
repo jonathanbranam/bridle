@@ -4,9 +4,21 @@ title = "A project's aide messages an orchestrator that isn't watching that proj
 kind = "bug"
 state = "planned"
 created_at = "2026-10-08T01:05:40.485Z"
-updated_at = "2026-10-08T02:21:18.485691Z"
+updated_at = "2026-10-08T05:07:41.087625Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+summary = """
+Clarified the aide and orchestrator role texts (workflow/base/roles/) for the ghys bug: the aide is one per project; the orchestrator is one per machine, running in one project's session and watching other projects' daemons only while it runs a waiter for each.
+
+aide.md: first screen states per-project aide and per-machine orchestrator, and that a message to external:orchestrator is accepted even when nobody listens. New "Relaying to the orchestrator" step: check `bridle status --json` `waiter_open` before relying on the orchestrator; if false, send and tell the human at once; if true but no reply in 30 minutes, tell the human. `waiter_open` counts any principal's open waiter on that daemon, so it is not proof the orchestrator is the one waiting (a code gap, not fixed here). Also the ui-wdp3 rule: before saying work wasn't acted on, check `bridle task list`, `git log` and the orchestrator's message trail.
+
+orchestrator.md: the one-per-machine statement in the opening paragraph; a first-after-restart check in "At every start"; the per-project waiter duty restated at the top of Watch as a duty nothing enforces, with the 15-minute incident (waiter_grace) and `bridle status --project <name>`. Also replaced a non-ASCII >= sign that was already in the file.
+
+Migration: role text reaches projects only through `bridle workflow sync`; no project files change. CHANGELOG Unreleased/Changed has a line telling people to run it.
+
+Not done (ticket ask 2, a code/design choice for the human): making a missed route visible to the aide. docs/design/roles-and-config.md named in the brief does not exist; no design doc states the machine-vs-project rule.
+
+Check: just check exit 0 on commit a6786314 (1321 run, 1321 passed). The first run had one flaky failure, upgrade_test a_long_drain_wakes_the_orchestrator_once; it passed alone on rerun and the full rerun was green. Not related to this text-only change."""
 ticket = "ghys"
 +++
 
@@ -32,3 +44,6 @@ From orchestrator: br-ghys ready (the human's bug, via aide). Role-rules clarifi
 
 ### note · external:orchestrator · 2026-10-08T02:21:18.485Z
 orchestrator: one more aide-role change for this ticket, from bridle-ui incident ui-wdp3 (postmortem in ui-mbhk's summary): before telling the human that work hasn't started or wasn't acted on, the aide checks 'bridle task list', 'git log' and the orchestrator's message trail, not only its inbox, the human's to-dos and pending_tasks. On 2026-10-04 the bridle-ui aide told the human twice that k3qx hadn't been acted on; it had landed in 10 minutes as ui-n6cu.
+
+### note · agent:roleclarify · 2026-10-08T05:07:41.087Z
+done: role text clarified on bridle/roleclarify a6786314; just check exit 0 (1321 passed). First run had one flaky upgrade_test failure (a_long_drain_wakes_the_orchestrator_once), green on rerun.
