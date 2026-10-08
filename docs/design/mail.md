@@ -1,6 +1,6 @@
 # Mail
 
-> **Status (checked 2026-10-03):** Built and in use: `bridle mail run` (`crates/bridle-mail`): inbound from S3, outbound questions and the daily digest through SES, signed replies, following the owner, "got it" replies; it runs only on a machine whose `~/.bridle/config.toml` has `[mail]`, started by hand or by a service the human sets up
+> **Status (checked 2026-10-03):** Built and in use: `bridle mail run` (`crates/bridle-mail`): inbound from S3, outbound questions and the daily digest through SES, signed replies, following the owner, "got it" replies; it runs only on a machine whose `~/.bridle/config.toml` has `[mail]`, started by hand or as a service with `bridle mail install`
 
 `bridle mail run` is bridle's email bridge (ticket rs7p, which holds the design and the human's
 answers): inbound mail from S3, then outbound question mails and a daily digest through SES. It lives in the `bridle-mail` crate so the AWS SDK and the parsing of untrusted MIME stay
@@ -8,6 +8,18 @@ out of the daemon. It holds an `external:mail` token (mint one, put it in `crede
 with `BRIDLE_AS=mail` or `--token`) and only calls `POST /v1/messages`.
 
 Mail follows the project's owner (see "Following the owner" below); "got it" replies go back to the sender.
+
+## Running it as a service
+
+`bridle mail install [--force]` (project from `--project` or the working directory) writes a
+LaunchAgent (`~/Library/LaunchAgents/dev.bridle.mail.<project>.plist`, macOS) or a systemd user
+unit (`~/.config/systemd/user/bridle-mail-<project>.service`, Linux) that runs
+`bridle --project <project> mail run` with `BRIDLE_AS=mail` and `HOME` set (so the AWS chain finds
+`~/.aws/credentials`), at login/boot, restarting on a crash only, logging stdout and stderr to
+`~/.bridle/mail-<project>.log`. One service per project. It prints the load commands (and, on
+Linux, `sudo loginctl enable-linger <user>`) and never runs them; it refuses to overwrite without
+`--force`, and refuses when `[mail]` is missing or invalid or the `mail` token for the project is
+not in `credentials.toml`. `bridle mail uninstall` removes the file and prints the unload command.
 
 ## Config
 

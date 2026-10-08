@@ -149,6 +149,8 @@ bridle orchestrator wait-for-wake --mail [--timeout SECS]                  the a
 bridle handover write --file <path>|- [--no-restart]  record your handover note (any principal; keyed by your identity and the project), print its id, then signal "restart me" for your own session (see handover below)
 bridle handover list [--role R] | show <id> | latest [--role R]     the notes, newest first · one note · the newest
 bridle mail run                              the email bridge for this project: inbound mail, question mails, daily digest (docs/design/mail.md); runs as external:mail
+bridle mail install [--force]                 write a launchd plist (macOS, `dev.bridle.mail.<project>.plist`) or systemd user unit (Linux, `bridle-mail-<project>.service`) that runs `bridle mail run` as `external:mail` at login/boot, restarts it on a crash only, logs to `~/.bridle/mail-<project>.log`; prints the load commands (and `loginctl enable-linger`), never runs them; refuses without a `[mail]` config and a `mail` token, and to overwrite without `--force`
+bridle mail uninstall                        remove that file, print the unload command
 bridle orchestrator wait-for-wake [--timeout SECS]                  the orchestrator's background watcher: waits for a wake condition, prints it and exits 0 (6 with the reason on stderr when the daemon is restarting or shutting down; `nothing` at the timeout, default 25 min, cap 6900 s); external:orchestrator only
 bridle hook arch-guard                      Claude Code PreToolUse hook: blocks design/architecture/ edits outside an arch-revision task
 bridle hook kill-guard                      Claude Code PreToolUse hook (Bash): refuses kill-by-name (pgrep | xargs kill, kill $(pgrep), pkill in a compound command)

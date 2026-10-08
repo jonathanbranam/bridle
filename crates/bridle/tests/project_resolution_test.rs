@@ -71,6 +71,16 @@ const CLASSES: &[(&str, Kind, &str)] = &[
         "a long-running bridge; reads its own config",
     ),
     (
+        "mail install",
+        Skip,
+        "writes a service file in the user's home; the project naming is covered by mail_install.rs unit tests",
+    ),
+    (
+        "mail uninstall",
+        Skip,
+        "removes a service file from the user's home; see mail install",
+    ),
+    (
         "tui",
         Skip,
         "needs a terminal; covered by the daemon discovery tests",

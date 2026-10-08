@@ -399,6 +399,15 @@ pub fn peer_token(credentials: &Path, project: &str) -> Result<Option<String>, D
         .map(str::to_string))
 }
 
+/// Whether `principal` has a token for `project` in the credentials file (a missing file: no).
+pub fn has_credential(path: &Path, principal: &str, project: &str) -> Result<bool, DiscoveryError> {
+    Ok(read_credentials(path)?
+        .get(principal)
+        .and_then(|v| v.get(project))
+        .and_then(|v| v.as_str())
+        .is_some())
+}
+
 /// Removes `principal`'s entry for `project`; returns whether there was one.
 pub fn remove_credential(
     path: &Path,

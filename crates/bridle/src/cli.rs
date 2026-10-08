@@ -1784,6 +1784,19 @@ pub enum MailAction {
     /// Poll the S3 inbound prefix and deliver the project's mail to the advisor or orchestrator;
     /// mail the human's questions and a daily digest through SES (`[mail]` in `~/.bridle/config.toml`; AWS credentials from the standard AWS chain).
     Run,
+    /// Write a launchd plist (macOS) or systemd user unit (Linux) that runs `bridle mail run`
+    /// for this project at login/boot and restarts it on a crash; prints the load commands and
+    /// never runs them. Needs `[mail]` in `~/.bridle/config.toml` and a `mail` token.
+    Install(MailInstallArgs),
+    /// Remove the file `mail install` wrote and print the unload command.
+    Uninstall,
+}
+
+#[derive(Debug, Args)]
+pub struct MailInstallArgs {
+    /// Overwrite an existing plist or unit.
+    #[arg(long)]
+    pub force: bool,
 }
 
 #[derive(Debug, Args)]

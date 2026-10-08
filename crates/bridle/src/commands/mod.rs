@@ -219,8 +219,10 @@ pub async fn run(mut cli: Cli) -> Result<(), CliError> {
         Command::Handover(args) => handover(&cli, args).await,
         Command::WaitForWake(args) if args.mail => wait_for_mail(&cli, args.timeout).await,
         Command::WaitForWake(args) => wait_for_wake(&cli, args.timeout).await,
-        Command::Mail(args) => match args.action {
+        Command::Mail(args) => match &args.action {
             crate::cli::MailAction::Run => mail_run(&cli).await,
+            crate::cli::MailAction::Install(a) => crate::mail_install::install(&cli, a),
+            crate::cli::MailAction::Uninstall => crate::mail_install::uninstall(&cli),
         },
         Command::Prime(args) => prime(&cli, args).await,
         Command::Rules(args) => rules(&cli, args).await,
