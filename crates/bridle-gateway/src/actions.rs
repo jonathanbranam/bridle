@@ -26,6 +26,8 @@ pub enum Action {
     Drop,
     /// Answer a task question; needs the answer.
     Answer,
+    /// Add a note to the task's thread, whatever its state; needs the text.
+    Reply,
 }
 
 impl Action {
@@ -34,13 +36,14 @@ impl Action {
             "done" => Some(Self::Done),
             "drop" => Some(Self::Drop),
             "answer" => Some(Self::Answer),
+            "reply" => Some(Self::Reply),
             _ => None,
         }
     }
 }
 
-/// The body of an action. `text` is the reason for `drop` and the answer for `answer`;
-/// `done` ignores it.
+/// The body of an action. `text` is the reason for `drop`, the answer for `answer` and the
+/// note for `reply`; `done` ignores it.
 #[derive(Debug, Clone, Default, Deserialize, Serialize, TS)]
 pub struct ActionRequest {
     #[serde(default)]
@@ -56,7 +59,7 @@ pub struct ActionResult {
 
 #[derive(Debug, thiserror::Error)]
 pub enum ActionError {
-    #[error("unknown action '{0}': only done, drop and answer are available")]
+    #[error("unknown action '{0}': only done, drop, answer and reply are available")]
     UnknownAction(String),
     #[error("no project '{0}' is known on this machine")]
     UnknownProject(String),
@@ -191,6 +194,12 @@ pub(crate) async fn act(
             }
             client.answer_question(task_id, text).await.map(drop)
         }
+        Action::Reply => {
+            if text.is_empty() {
+                return Err(ActionError::MissingText("reply"));
+            }
+            client.note_task(task_id, text).await.map(drop)
+        }
     };
     sent.map_err(|e| match e {
         ClientError::Api {
@@ -280,6 +289,7 @@ mod tests {
             .route("/v1/tasks/{id}/done", post(record))
             .route("/v1/tasks/{id}/drop", post(record))
             .route("/v1/tasks/{id}/answer", post(record))
+            .route("/v1/tasks/{id}/note", post(record))
             .with_state(seen.clone());
         let l = tokio::net::TcpListener::bind("127.0.0.1:0")
             .await
@@ -302,6 +312,9 @@ mod tests {
         act(&url, tok(), Action::Answer, "t-1", "yes")
             .await
             .expect("answer");
+        act(&url, tok(), Action::Reply, "t-1", " thanks ")
+            .await
+            .expect("reply");
         let seen = seen.lock().expect("lock");
         let paths: Vec<_> = seen.iter().map(|s| s.0.as_str()).collect();
         assert_eq!(
@@ -309,7 +322,8 @@ mod tests {
             [
                 "/v1/tasks/t-1/done",
                 "/v1/tasks/t-1/drop",
-                "/v1/tasks/t-1/answer"
+                "/v1/tasks/t-1/answer",
+                "/v1/tasks/t-1/note"
             ]
         );
         assert!(
@@ -318,6 +332,7 @@ mod tests {
         );
         assert_eq!(seen[1].2["reason"], "not now");
         assert_eq!(seen[2].2["body"], "yes");
+        assert_eq!(seen[3].2["body"], "thanks");
     }
 
     #[tokio::test]
@@ -331,9 +346,9 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn drop_and_answer_need_text() {
+    async fn drop_answer_and_reply_need_text() {
         let (url, seen) = fake().await;
-        for a in [Action::Drop, Action::Answer] {
+        for a in [Action::Drop, Action::Answer, Action::Reply] {
             let err = act(&url, Some("t".into()), a, "t-1", "  ")
                 .await
                 .expect_err("empty");
@@ -343,10 +358,11 @@ mod tests {
     }
 
     #[test]
-    fn only_the_three_actions_parse() {
+    fn only_the_four_actions_parse() {
         assert_eq!(Action::parse("done"), Some(Action::Done));
         assert_eq!(Action::parse("drop"), Some(Action::Drop));
         assert_eq!(Action::parse("answer"), Some(Action::Answer));
+        assert_eq!(Action::parse("reply"), Some(Action::Reply));
         for other in ["land", "shutdown", "claim", "retract", ""] {
             assert_eq!(Action::parse(other), None, "{other}");
         }

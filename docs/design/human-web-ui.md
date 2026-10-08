@@ -83,7 +83,8 @@ on dalek and on every client machine alike.
 
 The human's **to-dos and task questions** (decisions), grouped by project, decisions first,
 each list high priority then oldest. Actions: check off a to-do, answer a task question, decline
-a to-do with a reason. **Retracted items are hidden** from the lists; the withdrawal and its
+a to-do with a reason, and reply to any task (`.../tasks/{id}/reply`, a note authored `human` on the
+thread, any task state). **Retracted items are hidden** from the lists; the withdrawal and its
 reason stay on the record as the audit trail (the asker withdraws, "To-do withdrawn by ...").
 Out for now: questions sent as messages to `human` (they can't be retracted) and the inbox; no
 events stream and no agent control, with one exception (rk7k): the human may **send a message to
