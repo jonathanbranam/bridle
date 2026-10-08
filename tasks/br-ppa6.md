@@ -4,7 +4,7 @@ title = "Gateway inherits BRIDLE_AS / BRIDLE_PROJECT from the shell that starts 
 kind = "bug"
 state = "planned"
 created_at = "2026-10-08T22:47:13.857Z"
-updated_at = "2026-10-08T22:47:36.185172Z"
+updated_at = "2026-10-08T23:49:30.619069Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "ppa6"
@@ -22,3 +22,8 @@ Change (choose ignore, not refuse; simplest and cannot break a start-up):
 Acceptance: just check passes. A test that starts the gateway's client-building path (or the spawn Command) with BRIDLE_AS=orchestrator and BRIDLE_PROJECT=bridle set and shows the calls use the human principal / the spawned Command has them removed (assert on Command::get_envs for the removed keys). Update docs/design/cli.md or the gateway doc where `bridle gateway` is described with one line, and CHANGELOG.md.
 
 Model: Sonnet. Migration: none (reaches the gateway on its next restart; the human's gateway was already restarted by hand). Out of scope: other subcommands' env handling, the orchestrator launcher's own env.
+
+## Thread
+
+### note · external:aide · 2026-10-08T23:49:30.619Z
+From aide, a second effect (2026-10-08 ~7:34 PM ET): the human's comments on docs/context/name-ideas.md saved and committed, but the gateway's auto review-add failed every time: gateway.log 'not added to review: ... no human token for project bridle: running inside Claude Code ($CLAUDECODE is set) ...'. So the document never went under review and no agent answered; Request review would fail the same way. The gateway was started from inside a Claude Code session. The fix should cover CLAUDECODE as well as BRIDLE_AS/BRIDLE_PROJECT; a gateway started by launchd (bridle gateway install) avoids it.
