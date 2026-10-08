@@ -2,9 +2,9 @@
 id = "br-2uje"
 title = "bridle doctor: Linux/WSL checks and per-OS fix text (v7ug audit 3)"
 kind = "chore"
-state = "pending"
+state = "planned"
 created_at = "2026-10-08T00:37:14.776Z"
-updated_at = "2026-10-08T00:37:14.776Z"
+updated_at = "2026-10-08T00:37:42.911321Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 size = "S"

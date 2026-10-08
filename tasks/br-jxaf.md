@@ -2,9 +2,9 @@
 id = "br-jxaf"
 title = "Daemon re-checks Tailscale after start so a boot-time race doesn't leave it loopback-only (v7ug audit 1)"
 kind = "bug"
-state = "pending"
+state = "planned"
 created_at = "2026-10-08T00:37:10.183Z"
-updated_at = "2026-10-08T00:37:10.183Z"
+updated_at = "2026-10-08T00:37:39.398570Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 size = "S"
