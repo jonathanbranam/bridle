@@ -225,7 +225,8 @@ wildcard A for that one name, which nothing uses. `branam.us` has no DMARC recor
    action "deliver to S3" `inbound/`.
 5. **IAM:** one user (or key) per machine (laptop, NUC): `s3:ListBucket`, `s3:GetObject`,
    `s3:DeleteObject` on `inbound/`, and `ses:SendEmail` from `dev.branam.us`. Put the keys in each
-   machine's `~/.bridle/credentials.toml` (never in the repo).
+   machine's standard AWS credentials (`aws configure`, `~/.aws/credentials`), never in bridle's files
+   or the repo: the bridge reads the standard AWS chain (`docs/design/mail.md`, Config).
 6. **Check the work domain's DMARC:** `host -t TXT _dmarc.<employer domain>`, and tell the advisor
    the result (decides domain vs. address allowlist).
 7. **Send a test mail** from work and from Gmail to `test@dev.branam.us` and check it lands in
