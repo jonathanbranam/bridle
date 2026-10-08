@@ -9,7 +9,7 @@ changes: []
 specs: []
 needs: []
 see: [cvaq]
-tasks: []
+tasks: [br-4ge4]
 ---
 
 ## The ask
@@ -24,3 +24,10 @@ The ask: give `bridle focus` and `bridle budget` one shared shape for reading th
 - any active override or hold
 
 If the commands that change settings differ between the two in naming, make those consistent as well. The design picks the verb and the layout.
+
+## Naming (the human, 2026-10-08)
+
+> I mean the naming here; budget show focus show or skip 'show' for both.
+
+So the two read the same way: either `bridle budget show` and `bridle focus show`, or a bare
+`bridle budget` and `bridle focus` that print the settings. Either is fine; they just have to match.
