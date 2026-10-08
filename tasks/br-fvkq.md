@@ -4,7 +4,7 @@ title = "Mail between daemons, slice 3: outbox retry with backoff and the start-
 kind = "feature"
 state = "planned"
 created_at = "2026-10-05T21:04:39.093Z"
-updated_at = "2026-10-08T13:09:33.008359Z"
+updated_at = "2026-10-08T13:46:43.961757Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 summary = "Slice 3 of 3haz. outbox.rs: a 15 s tick retries each destination's head message on the backoff (first try at once, then 30 s, 2 m, 5 m; in-memory next-try, never expires); POST /v1/hello (peer token) makes the hearer flush its queue for the greeter, sent to [projects] peers at start-up and after a wall-clock jump over 60 s (sleep). The sender gets a system note once on a permanent refusal and once at 30 min queued (new column stuck_notified_at, SCHEMA_V22; the ticket said no migration but a once-only notice survives restarts only with one). POST /v1/outbox waits up to 3 s for the first try; Queued gains state and last_error (serde default); the CLI prints the outcome and exits 1 on a refusal. resolve_targets accepts agent:<name>. Tests: unit tests on tokio paused time with a fake Transport/Notifier/wall clock (schedule, ping flush in order with no duplicates, sleep, refusal notice, stuck notice) plus integration tests. tokio test-util added as a dev-dependency. Docs: daemon.md, principals.md, api.md, storage.md, cli.md, CHANGELOG."
@@ -31,3 +31,9 @@ pm-1's (1)-(3) stand. The 30 min stuck notice (2) goes to the sender only; the h
 
 ### note · agent:manager-2 · 2026-10-08T12:49:21.387Z
 manager-2: re-read the whole thread of br-fvkq (bridle task show br-fvkq): the orchestrator added two requirements (resume from sleep counts as a start-up ping; the send reports the first try's result, a bridle-api types.rs change, so update all clients). Cover them with tests too.
+
+### note · agent:outboxretry · 2026-10-08T13:46:35.221Z
+done: outbox retry (backoff 0/30s/2m/5m), /v1/hello greeting at start-up and after sleep, sender notices for refused/stuck-30min, agent:<name> accepted, send reports first try; just check exit 0, 1330 tests passed; 1fd1
+
+### note · agent:outboxretry · 2026-10-08T13:46:43.961Z
+correction: the commit the green check ran on is d2414b68 (ignore '1fd1' above)
