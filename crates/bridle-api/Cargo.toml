@@ -8,6 +8,7 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
+bridle-docs.workspace = true
 bytes.workspace = true
 chrono.workspace = true
 futures.workspace = true

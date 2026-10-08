@@ -29,6 +29,20 @@ use crate::types::{
     UsageBreakdown, UsageBreakdownQuery, UsageHistoryQuery, WakeResponse, WriteHandoverRequest,
 };
 
+pub use bridle_docs::documents::{
+    Document, DocumentMatches, DocumentSaved, DocumentWrite, LinkResolveRequest, ResolvedLink,
+    ResolvedLinks, SearchQuery,
+};
+pub use bridle_docs::specs::{ProjectSpecs, SpecFile};
+
+/// `v1/documents/<each part of the path>`: a path's slashes are separators, not escaped.
+fn document_segments(path: &str) -> Vec<&str> {
+    ["v1", "documents"]
+        .into_iter()
+        .chain(path.split('/'))
+        .collect()
+}
+
 #[derive(Debug, Error)]
 pub enum ClientError {
     #[error("could not reach the daemon: {0}")]
@@ -515,6 +529,42 @@ impl Client {
         req: &ReviewAddRequest,
     ) -> Result<ReviewAddResponse, ClientError> {
         self.post_json(&["v1", "review", "add"], req).await
+    }
+
+    /// `GET /v1/documents?q=` (human token): repo-relative document paths, best first.
+    pub async fn search_documents(&self, q: &str) -> Result<DocumentMatches, ClientError> {
+        self.get_json_query(&["v1", "documents"], &SearchQuery { q: q.to_string() })
+            .await
+    }
+
+    /// `GET /v1/documents/{path}` (human token).
+    pub async fn read_document(&self, path: &str) -> Result<Document, ClientError> {
+        let segments = document_segments(path);
+        self.get_json(&segments).await
+    }
+
+    /// `PUT /v1/documents/{path}` (human token): the whole file plus the hash it was read at.
+    pub async fn write_document(
+        &self,
+        path: &str,
+        req: &DocumentWrite,
+    ) -> Result<DocumentSaved, ClientError> {
+        let segments = document_segments(path);
+        let req = self.request(Method::PUT, &segments)?.json(req);
+        self.send_json(req).await
+    }
+
+    /// `POST /v1/links/resolve` (human token).
+    pub async fn resolve_links(&self, targets: &[String]) -> Result<ResolvedLinks, ClientError> {
+        let req = LinkResolveRequest {
+            targets: targets.to_vec(),
+        };
+        self.post_json(&["v1", "links", "resolve"], &req).await
+    }
+
+    /// `GET /v1/specs` (human token).
+    pub async fn specs(&self) -> Result<ProjectSpecs, ClientError> {
+        self.get_json(&["v1", "specs"]).await
     }
 
     /// `GET /v1/sessions`.

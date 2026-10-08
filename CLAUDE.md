@@ -25,6 +25,7 @@ crates/bridle-claude   stream-json client (no daemon knowledge)
 crates/bridle-api      wire types (types.rs is the contract) + HTTP/SSE client + discovery
 crates/bridle-daemon   store (SQLite), supervisor, containment, worktrees, config, axum server
 crates/bridle-tui      `bridle tui` (bridle-api only)
+crates/bridle-docs     documents and specs: read, search, link resolution, guarded write (daemon + gateway)
 crates/bridle-gateway  `bridle gateway`: the human web UI's API
 crates/bridle-mail     `bridle mail run`: the email bridge
 crates/bridle-spec     spec-file parser behind `bridle workflow spec`

@@ -118,6 +118,13 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/sessions/keep", post(keep_session))
         .route("/v1/review/now", post(review_now))
         .route("/v1/review/add", post(review_add))
+        .route("/v1/documents", get(search_documents_route))
+        .route(
+            "/v1/documents/{*path}",
+            get(read_document_route).put(write_document_route),
+        )
+        .route("/v1/links/resolve", post(resolve_links_route))
+        .route("/v1/specs", get(specs_route))
         .route("/v1/handovers", get(list_handovers).post(write_handover))
         .route("/v1/handovers/latest", get(latest_handover))
         .route("/v1/handovers/{id}", get(get_handover))
@@ -750,6 +757,124 @@ async fn review_add(
     Ok(Json(bridle_api::types::ReviewAddResponse {
         path: req.path,
         under_review,
+    }))
+}
+
+// ---------- documents (br-5e4k) ----------
+//
+// The human token reads and edits this daemon's own repo's documents (the gateway's document
+// view, served by the daemon itself so a remote gateway can reach it). The rules live in
+// `bridle-docs`; here only the principal check, the blocking hop and the error mapping.
+
+impl From<bridle_docs::documents::DocError> for ApiError {
+    fn from(e: bridle_docs::documents::DocError) -> Self {
+        use bridle_docs::documents::DocError;
+        let (status, code) = match &e {
+            DocError::UnknownProject(_) | DocError::NotFound(_) => {
+                (StatusCode::NOT_FOUND, "not_found")
+            }
+            DocError::BadPath(_) => (StatusCode::BAD_REQUEST, "bad_request"),
+            DocError::NotText(_) => (StatusCode::UNSUPPORTED_MEDIA_TYPE, "unsupported_media_type"),
+            DocError::Stale => (StatusCode::CONFLICT, "conflict"),
+            DocError::DetachedHead => (StatusCode::FORBIDDEN, "forbidden"),
+            DocError::NotAvailable(_) => (StatusCode::SERVICE_UNAVAILABLE, "unavailable"),
+            DocError::Internal(_) => (StatusCode::INTERNAL_SERVER_ERROR, "internal"),
+        };
+        ApiError::new(status, code, e.to_string())
+    }
+}
+
+async fn in_repo<T: Send + 'static>(
+    state: &AppState,
+    f: impl FnOnce(&std::path::Path) -> Result<T, bridle_docs::documents::DocError> + Send + 'static,
+) -> Result<T, ApiError> {
+    let repo = std::path::PathBuf::from(&state.repo);
+    tokio::task::spawn_blocking(move || f(&repo))
+        .await
+        .map_err(|e| ApiError::new(StatusCode::INTERNAL_SERVER_ERROR, "internal", e.to_string()))?
+        .map_err(ApiError::from)
+}
+
+/// `GET /v1/documents?q=`.
+async fn search_documents_route(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Query(query): Query<bridle_docs::documents::SearchQuery>,
+) -> Result<Json<bridle_docs::documents::DocumentMatches>, ApiError> {
+    require_human(&principal)?;
+    let paths = in_repo(&state, move |repo| {
+        Ok(bridle_docs::documents::search_documents(repo, &query.q))
+    })
+    .await?;
+    Ok(Json(bridle_docs::documents::DocumentMatches {
+        project: state.project.clone(),
+        paths,
+    }))
+}
+
+/// `GET /v1/documents/{*path}`.
+async fn read_document_route(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path(path): Path<String>,
+) -> Result<Json<bridle_docs::documents::Document>, ApiError> {
+    require_human(&principal)?;
+    let project = state.project.clone();
+    let doc = in_repo(&state, move |repo| {
+        bridle_docs::documents::read_document(repo, &project, &path)
+    })
+    .await?;
+    Ok(Json(doc))
+}
+
+/// `PUT /v1/documents/{*path}`: the guarded write, committed on the checked-out branch.
+async fn write_document_route(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path(path): Path<String>,
+    Json(req): Json<bridle_docs::documents::DocumentWrite>,
+) -> Result<Json<bridle_docs::documents::DocumentSaved>, ApiError> {
+    require_human(&principal)?;
+    let (project, rel) = (state.project.clone(), path.clone());
+    let saved = in_repo(&state, move |repo| {
+        bridle_docs::documents::write_document(repo, &project, &rel, &req)
+    })
+    .await?;
+    // A comment saved from the UI puts the document under review (jrm2); the save is already
+    // committed, so a failure here is logged, not an error.
+    if let Err(e) = state.doc_watch.add(&path, true) {
+        tracing::warn!("not added to review: {path}: {e}");
+    }
+    Ok(Json(saved))
+}
+
+/// `POST /v1/links/resolve`.
+async fn resolve_links_route(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Json(req): Json<bridle_docs::documents::LinkResolveRequest>,
+) -> Result<Json<bridle_docs::documents::ResolvedLinks>, ApiError> {
+    require_human(&principal)?;
+    let links = in_repo(&state, move |repo| {
+        Ok(bridle_docs::documents::resolve_links(repo, &req.targets))
+    })
+    .await?;
+    Ok(Json(bridle_docs::documents::ResolvedLinks {
+        project: state.project.clone(),
+        links,
+    }))
+}
+
+/// `GET /v1/specs`.
+async fn specs_route(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+) -> Result<Json<bridle_docs::specs::ProjectSpecs>, ApiError> {
+    require_human(&principal)?;
+    let specs = in_repo(&state, |repo| Ok(bridle_docs::specs::load(repo))).await?;
+    Ok(Json(bridle_docs::specs::ProjectSpecs {
+        project: state.project.clone(),
+        specs,
     }))
 }
 
