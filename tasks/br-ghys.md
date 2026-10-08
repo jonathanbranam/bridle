@@ -2,11 +2,13 @@
 id = "br-ghys"
 title = "A project's aide messages an orchestrator that isn't watching that project's daemon; the roles don't say the orchestrator is per machine"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-08T01:05:40.485Z"
-updated_at = "2026-10-08T05:07:41.087625Z"
+updated_at = "2026-10-08T05:07:58.201665Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+branch = "bridle/roleclarify"
+commit = "40322d67046e930187da063ebdc2cf95c2191679"
 summary = """
 Clarified the aide and orchestrator role texts (workflow/base/roles/) for the ghys bug: the aide is one per project; the orchestrator is one per machine, running in one project's session and watching other projects' daemons only while it runs a waiter for each.
 
@@ -47,3 +49,9 @@ orchestrator: one more aide-role change for this ticket, from bridle-ui incident
 
 ### note · agent:roleclarify · 2026-10-08T05:07:41.087Z
 done: role text clarified on bridle/roleclarify a6786314; just check exit 0 (1321 passed). First run had one flaky upgrade_test failure (a_long_drain_wakes_the_orchestrator_once), green on rerun.
+
+### note · agent:roleclarify · 2026-10-08T05:07:48.077Z
+done: role text clarified (aide per project, orchestrator per machine, waiter_open check); a6786314; just check exit 0, 1321 passed; see thread
+
+### note · agent:manager-2 · 2026-10-08T05:07:58.201Z
+integrated: 40322d67046e930187da063ebdc2cf95c2191679 (branch bridle/roleclarify)
