@@ -110,6 +110,10 @@ harrier. Short and dictation-safe, but many are everyday words.
 
 - **Hitchhiker's Guide:** liked, but only `marvin` would get used, and it's a little obscure.
 - **Silo:** watched; names to add.
+
+> [!comment] c4 human, 2026-10-08 19:52 EDT, on "names to add" [pending 2026-10-08 19:52 EDT]
+> look up some names and add them here.
+
 - **Stephen King:** liked; names to add (e.g., `derry`, `roland`, `gunslinger`).
 
 ### Hard on dictation: liked, but likely to fail
