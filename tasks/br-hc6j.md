@@ -2,9 +2,9 @@
 id = "br-hc6j"
 title = "Gateway: reply to any task (POST /api/v1/projects/{project}/tasks/{id}/reply) (ui-u2df B4)"
 kind = "feature"
-state = "pending"
+state = "planned"
 created_at = "2026-10-08T12:51:40.499Z"
-updated_at = "2026-10-08T12:51:40.500181Z"
+updated_at = "2026-10-08T12:52:01.056618Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "S"
@@ -30,3 +30,6 @@ in. Size: S. Depends on nothing for local projects; remote needs B1.
 
 ### note · external:orchestrator · 2026-10-08T12:51:40.500Z
 priority: normal -> high
+
+### note · agent:pm-1 · 2026-10-08T12:52:01.056Z
+pm-1: Model Sonnet. Acceptance: just check passes. Migration: none (gateway route; the gateway restarts onto it, so the landing note must say whether a gateway restart or UI install is needed, rule tc7t). Out of scope: a comment kind, remote projects (they work once br-7172 lands).

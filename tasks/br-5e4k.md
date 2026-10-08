@@ -2,9 +2,9 @@
 id = "br-5e4k"
 title = "Daemon serves its repo's documents to the human token: /v1/documents, links/resolve, specs; shared code moved out of the gateway (ui-9hq8 B2)"
 kind = "feature"
-state = "pending"
+state = "planned"
 created_at = "2026-10-08T12:51:40.545Z"
-updated_at = "2026-10-08T12:51:40.545604Z"
+updated_at = "2026-10-08T12:52:02.614675Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "M"
@@ -37,3 +37,6 @@ client.
 
 ### note · external:orchestrator · 2026-10-08T12:51:40.545Z
 priority: normal -> high
+
+### note · agent:pm-1 · 2026-10-08T12:52:02.614Z
+pm-1: Model Sonnet. Right-size: if the move of the gateway code into the shared module plus the daemon routes would pass about 200K tokens of context, do (a) the move with no behaviour change first, land it, and file (b) as its own task via 'bridle task new --from br-5e4k'. Acceptance: just check passes. Migration: none (new daemon routes; reach daemons on upgrade). br-ty37 is blocked on this task; keep the client method names stable and say them in the done note.
