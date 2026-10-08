@@ -432,7 +432,7 @@ async fn a_drain_holds_new_turns_and_delivers_them_after_the_restart() {
     let (daemon, tmp) = support::start_daemon(Some(hooks("success", "true"))).await;
     let busy = daemon
         .client
-        .spawn(&spawn_named("busy", "SLEEP 4"))
+        .spawn(&spawn_named("busy", "SLEEP 60"))
         .await
         .expect("spawn");
     let idle = daemon
@@ -496,7 +496,16 @@ async fn a_drain_holds_new_turns_and_delivers_them_after_the_restart() {
     }
     assert!(!daemon.running.restart_requested());
 
-    // The turn ends; no timeout, the restart follows by itself.
+    // The turn ends (interrupted, so a loaded machine can't end it before the drain checks
+    // above); no timeout, the restart follows by itself.
+    daemon
+        .client
+        .interrupt(
+            &busy.id,
+            &bridle_api::types::InterruptRequest { drop_held: false },
+        )
+        .await
+        .expect("interrupt");
     support::wait_for("the restart", || async {
         daemon.running.restart_requested().then_some(())
     })
