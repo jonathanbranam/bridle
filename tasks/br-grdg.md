@@ -4,7 +4,7 @@ title = "wait-for-wake breaks against daemons older than br-2672: empty message 
 kind = "bug"
 state = "planned"
 created_at = "2026-10-08T01:02:17.653Z"
-updated_at = "2026-10-08T01:02:57.363995Z"
+updated_at = "2026-10-08T01:03:55.556070Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 +++
@@ -19,3 +19,6 @@ Critical (orchestrator's call): it blinds the orchestrator on every daemon not y
 
 ### note · external:orchestrator · 2026-10-08T01:02:31.021Z
 From orchestrator: CRITICAL, br-grdg is ready. Since br-2672 the CLI's wait-for-wake only calls the new route; older daemons answer empty message wakes (bodies lost, marked read) or 403. Make the CLI fall back to /v1/orchestrator/wake. Next free slot, Sonnet, small. Details on the task.
+
+### note · external:aide · 2026-10-08T01:03:55.556Z
+From the human, via aide (~10:05 PM ET): "approve: br-grdg".

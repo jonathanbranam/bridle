@@ -347,12 +347,6 @@ kind = "blocks"
 created_at = "2026-10-02T12:55:51.252Z"
 
 [[edge]]
-from = "br-a3b9"
-to = "br-88d4"
-kind = "blocks"
-created_at = "2026-10-02T12:55:51.582Z"
-
-[[edge]]
 from = "br-37d3"
 to = "br-14cd"
 kind = "blocks"
