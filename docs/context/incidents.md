@@ -24,6 +24,35 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-08 ~00:53-01:05: orchestrator wakes came back empty after br-2672
+
+- **What happened:** the CLI installed with br-2672 (bc5ed0a5, at 00:53) waits on the new
+  `GET /v1/wake?principal=external:orchestrator`. Daemons still on an older build answer that as a
+  plain principal wake, so `wait-for-wake` printed `message: ` and `null` and the daemon marked the
+  message read. meta-notes' daemon on the NUC answered 403. Found by the orchestrator after three
+  empty wakes in a row, by reading `GET /v1/messages`.
+- **Impact:** about 10 minutes of the human's relayed requests (three aide messages) reached the
+  orchestrator only by hand; the orchestrator was blind on every daemon not yet upgraded.
+- **Cause:** the commit kept the old route on the daemon but stopped the CLI using it; mixed
+  versions (other projects, other machines) weren't considered.
+- **Category:** `daemon`, `merge`.
+- **Follow-up:** br-grdg (CLI falls back to `/v1/orchestrator/wake`). Workaround: call the old
+  route directly.
+
+## 2026-10-07 ~22:30-01:05: the orchestrator watched only bridle's daemon
+
+- **What happened:** the orchestrator, relaunched after dalek's reboot, ran a waiter for `bridle`
+  only, though it holds orchestrator tokens for bridle-ui, track-web and meta-notes too. The
+  human's bridle-ui requests to it (m-0606, from ~22:40) sat unread until aide relayed them
+  through bridle at 01:01.
+- **Impact:** about 2.5 hours of delay on a request the human called important (ui-2kmw), and on
+  the prototype server they wanted for phone testing.
+- **Cause:** the startup steps say "start the watcher" (one); the one-waiter-per-project rule is in
+  the role text but not in the startup steps or the handover note.
+- **Category:** `role`.
+- **Follow-up:** the handover note names the four waiters; the startup steps should say it too
+  (noted in the handover).
+
 ## 2026-10-07 ~01:35-02:05: the daemon upgrade gave up under load
 
 - **What happened:** `bridle daemon restart --upgrade` at the human's go built 57983073, then
