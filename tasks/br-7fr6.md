@@ -4,9 +4,10 @@ title = "Cap test threads in just test / just check so a full run does not drive
 kind = "bug"
 state = "planned"
 created_at = "2026-10-08T18:16:43.505Z"
-updated_at = "2026-10-08T23:22:55.498618Z"
+updated_at = "2026-10-08T23:42:53.604164Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
+summary = "Capped nextest at test-threads = 8 in .config/nextest.toml (all callers get it); CHANGELOG line added. Measured on a never-quiet machine (load 30-100 before each run, other agents building), so peak load does not separate the Ns; wall time does. All runs 1336 passed. Table (N, peak 1m load, wall, failures): 4: 154, 446s, 0; 6: 110, 259s, 0; 8: 102, 173s, 0; uncapped(16): 175, 144s, 0. Only N=8 is within 1.5x of uncapped. just check passed twice in a row with N=8 (196s, 188s). Caveat: the load goal itself is unverified on a quiet machine; re-measure if wanted. Not asked/answered: manager-2 question on accepting N=8."
 +++
 
 Asked by manager-2 (m-7188), approved by the orchestrator (m-7187). It blocks every land under load.
