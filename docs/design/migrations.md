@@ -9,8 +9,12 @@ running binary (ticket xebc). The daemon's SQLite database is separate: it migra
 
 ## Rules
 
-- **Never automatic.** Only `bridle migrate` runs migrations: no hook, no daemon start-up step.
-  Running it on one of the human's real projects is the human's call, on a branch.
+- **Automatic by default.** `bridle serve` applies the project's pending migrations at start-up
+  (see "At start-up"); `bridle migrate` does the same by hand. A project opts out with
+  `[migrations] auto = false` in `.bridle/config.toml`.
+- **Opt-in migrations.** A migration with `manual_only: true` is skipped at start-up and by a
+  plain `bridle migrate` (listed as pending-manual); it runs only by id, `bridle migrate --only ID`.
+  None ships today.
 - A migration is a Rust fn in the ordered `MIGRATIONS` list (`crates/bridle/src/migrate.rs`):
   an id `NNNN-short-name`, a description, `run(ctx) -> Result<Report>`. Ids are append-only.
 - It must be **idempotent**, touch only the project's own bridle files, and under `ctx.dry_run`
@@ -37,6 +41,20 @@ running binary (ticket xebc). The daemon's SQLite database is separate: it migra
 already done). A project whose daemon isn't running is not in the registry, so `--all` skips it;
 run `bridle migrate` in its repo. Commit the changed files and `.bridle/migrations.*` afterward.
 
+## At start-up
+
+`bridle serve` runs the pending, non-opt-in migrations before the daemon starts listening, with
+the same code and records as `bridle migrate`; a restart catches up whatever was missed while
+down, and an upgraded binary migrates each project as its daemon starts. Nothing here may stop
+the daemon: the run is wrapped against errors and panics.
+
+- A failure stops the run at that migration (as `bridle migrate` does), is logged, and files an
+  incident task once the daemon is up. The daemon serves regardless.
+- A migration refusing for uncommitted changes (`migrate::Refused`) is not a failure: logged,
+  no incident, retried at the next start.
+- Applied migrations are posted as `project.migrated` events once the daemon is up.
+- Nothing pending (or `auto = false`) touches no file.
+
 ## Shipped migrations
 
 - **`0000-baseline`**: starts tracking; changes nothing.
@@ -61,5 +79,5 @@ run `bridle migrate` in its repo. Commit the changed files and `.bridle/migratio
   and are replaced by `bridle init`/sync, not by this migration.
   Existing projects other than bridle's own are migrated only after the human reviews this.
 
-Automatic start-up migrations (ticket br-2718) are parked and not on main. If they land, every
-migration that edits a project's files, this one included, must be flagged `manual_only`.
+`0001` is flagged `manual_only` (it edits a project's files, and the human reviews it before it
+runs on a real project): start-up skips it, and it runs by `bridle migrate --only 0001-rename-product-manager`.

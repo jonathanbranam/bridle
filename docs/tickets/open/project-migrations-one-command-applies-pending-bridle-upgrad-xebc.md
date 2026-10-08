@@ -87,6 +87,10 @@ How bridle installs and upgrades itself on each machine is separate work. The da
 self-upgrade (`bridle restart --upgrade`, [[docs/design/agent-host/daemon|daemon]], "Upgrade")
 covers one project's daemon. Running migrations when `bridle serve` starts covers both paths.
 
+## Built: automatic at start-up (br-2718, on a branch, parked for review)
+
+`bridle serve` runs pending migrations before listening (`migrate::run_at_startup`, wrapped against errors and panics); `[migrations] auto = false` opts out; `manual_only` migrations run only by `bridle migrate --only ID`; failures file an incident, refusals are skipped. See docs/design/migrations.md, "At start-up".
+
 ## Product-manager review (handed to the orchestrator, 2026-10-01)
 
 Separately, the product manager's review of a task or ticket should check that a change to

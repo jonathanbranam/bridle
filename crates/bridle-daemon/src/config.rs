@@ -1556,6 +1556,9 @@ pub struct Config {
     /// `[state] push`: push `bridle/state` to origin after a flush that committed. On by
     /// default: set to false to opt-out (rule existing-projects, human-approved 2026-09-29).
     pub state_push: bool,
+    /// `[migrations] auto`: `bridle serve` applies the project's pending migrations at start-up
+    /// (docs/design/migrations.md). On by default.
+    pub migrations_auto: bool,
     pub orchestrator: OrchestratorConfig,
     pub sessions: SessionsConfig,
     pub ports: PortsConfig,
@@ -1622,6 +1625,7 @@ impl Default for Config {
             machine: MachineConfig::default(),
             review: ReviewConfig::default(),
             state_push: true,
+            migrations_auto: true,
             orchestrator: OrchestratorConfig::default(),
             sessions: SessionsConfig::default(),
             ports: PortsConfig::default(),
@@ -1951,6 +1955,9 @@ impl Config {
 
         if let Some(raw_branches) = raw.branches {
             config.branches = config.branches.merge(raw_branches);
+        }
+        if let Some(v) = raw.migrations.and_then(|m| m.auto) {
+            config.migrations_auto = v;
         }
         if let Some(github) = raw.ci.and_then(|c| c.github) {
             config.ci.github = github;
@@ -2373,6 +2380,8 @@ struct RawConfig {
     #[serde(default)]
     state: Option<RawState>,
     #[serde(default)]
+    migrations: Option<RawMigrations>,
+    #[serde(default)]
     orchestrator: Option<RawOrchestrator>,
     #[serde(default)]
     sessions: Option<RawSessions>,
@@ -2597,6 +2606,12 @@ struct RawBranches {
     integration: Option<String>,
     #[serde(default)]
     release: Option<String>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+struct RawMigrations {
+    #[serde(default)]
+    auto: Option<bool>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -4005,6 +4020,16 @@ mod tests {
         assert_eq!(cfg.ports.range, (5000, 5010));
         assert_eq!(cfg.ports.reserved, vec![5001, 5002]);
         assert!(Config::parse("[ports]\nrange = [5010, 5000]\n").is_err());
+    }
+
+    #[test]
+    fn migrations_auto_defaults_on_and_parses() {
+        assert!(Config::default().migrations_auto);
+        assert!(
+            !Config::parse("[migrations]\nauto = false\n")
+                .unwrap()
+                .migrations_auto
+        );
     }
 
     #[test]

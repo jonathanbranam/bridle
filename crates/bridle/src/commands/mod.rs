@@ -382,8 +382,14 @@ async fn migrate(cli: &Cli, args: &MigrateArgs) -> Result<(), CliError> {
 
     let mut finished = vec![];
     for t in &targets {
-        let out = apply(&t.repo, MIGRATIONS, args.dry_run, Utc::now())
-            .with_context(|| format!("project {}", t.name))?;
+        let out = apply(
+            &t.repo,
+            MIGRATIONS,
+            args.dry_run,
+            args.only.as_deref(),
+            Utc::now(),
+        )
+        .with_context(|| format!("project {}", t.name))?;
         // A daemon being down never fails a migration; the log in the project is the record.
         if !args.dry_run
             && let Some(client) = &t.client
@@ -399,6 +405,7 @@ async fn migrate(cli: &Cli, args: &MigrateArgs) -> Result<(), CliError> {
                 "project": t.name,
                 "dry_run": args.dry_run,
                 "applied": out.done,
+                "manual_pending": out.manual_pending,
                 "failed": out.failed.as_ref().map(|(id, e)| serde_json::json!({"id": id, "error": format!("{e:#}")})),
             }))?;
         } else {
@@ -407,8 +414,14 @@ async fn migrate(cli: &Cli, args: &MigrateArgs) -> Result<(), CliError> {
             } else {
                 "applied"
             };
-            if out.done.is_empty() && out.failed.is_none() {
+            if out.done.is_empty() && out.failed.is_none() && out.manual_pending.is_empty() {
                 println!("{}: up to date", t.name);
+            }
+            for id in &out.manual_pending {
+                println!(
+                    "{}: {id} is pending-manual: run it with `bridle migrate --only {id}`",
+                    t.name
+                );
             }
             for r in &out.done {
                 println!("{}: {verb} {}: {}", t.name, r.id, r.summary);

@@ -32,12 +32,127 @@ async fn run_foreground(cli: &Cli, args: &ServeArgs) -> Result<(), CliError> {
         project: cli.project.clone(),
         listen: args.listen,
     };
+    startup_migrations(&opts).await;
     tokio::spawn(warn_if_not_logged_in(
         std::process::Command::new("claude"),
         LOGIN_CHECK_TIMEOUT,
     ));
     bridle_daemon::run(opts, args.take_over).await?;
     Ok(())
+}
+
+/// Apply the project's pending migrations before the daemon starts serving (docs/design/migrations.md).
+/// Nothing in here may stop the daemon: errors and panics are logged, and the reporting
+/// (events, incident) is a background task that waits for the daemon to be up.
+async fn startup_migrations(opts: &bridle_daemon::ServeOptions) {
+    let repo = opts.repo.clone();
+    let run = tokio::task::spawn_blocking(move || {
+        crate::migrate::run_at_startup(&repo, crate::migrate::MIGRATIONS)
+    })
+    .await;
+    let result = match run {
+        Ok(Some(r)) => r,
+        Ok(None) => return,
+        Err(e) => Err(format!("the migration run panicked: {e}")),
+    };
+    let workspace = opts.workspace.clone().unwrap_or_else(|| {
+        opts.repo
+            .parent()
+            .map(Path::to_path_buf)
+            .unwrap_or_else(|| opts.repo.clone())
+    });
+    let project = opts.project.clone().unwrap_or_else(|| {
+        opts.repo
+            .file_name()
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_default()
+    });
+    tokio::spawn(report_startup_migrations(workspace, project, result));
+}
+
+async fn report_startup_migrations(
+    workspace: PathBuf,
+    project: String,
+    result: Result<crate::migrate::Outcome, String>,
+) {
+    use crate::migrate::is_refusal;
+    // What went wrong, if it's a failure; a refusal is only logged and retried at next start.
+    let failure = match &result {
+        Ok(out) => {
+            for r in &out.done {
+                tracing::info!("migrated {}: {}", r.id, r.summary);
+            }
+            match &out.failed {
+                Some((id, e)) if is_refusal(e) => {
+                    tracing::warn!("migration {id} skipped, will retry at next start: {e:#}");
+                    None
+                }
+                Some((id, e)) => Some(format!("migration {id} failed: {e:#}")),
+                None => None,
+            }
+        }
+        Err(e) => Some(format!("the migration run failed: {e}")),
+    };
+    if let Some(f) = &failure {
+        tracing::error!("{f}");
+    }
+    let done = match &result {
+        Ok(out) => out.done.as_slice(),
+        Err(_) => &[],
+    };
+    if done.is_empty() && failure.is_none() {
+        return;
+    }
+
+    // The daemon writes daemon.json once it's listening; wait for it, up to a minute.
+    let deadline = Instant::now() + Duration::from_secs(60);
+    let url = loop {
+        if let Ok(info) = discovery::read_daemon_json(&workspace)
+            && info.pid == std::process::id() as i32
+        {
+            break info.url;
+        }
+        if Instant::now() >= deadline {
+            tracing::warn!("daemon never came up; migration events and incident not posted");
+            return;
+        }
+        tokio::time::sleep(Duration::from_millis(200)).await;
+    };
+    let token = discovery::resolve_token(
+        None,
+        Some(&workspace),
+        Some(&project),
+        None,
+        &discovery::ProcessEnv,
+        false,
+    )
+    .ok()
+    .flatten();
+    let client = bridle_api::Client::new(url, token);
+    for rec in done {
+        if let Err(e) = client.record_migration(rec).await {
+            tracing::warn!("couldn't record {} as an event: {e}", rec.id);
+        }
+    }
+    if let Some(f) = failure {
+        let req = bridle_api::types::NewTaskRequest {
+            title: "Project migration failed at start-up".into(),
+            kind: bridle_api::types::TaskKind::Incident,
+            body: format!(
+                "{f}\n\nThe daemon started anyway. Fix the cause and restart, or run \
+                 `bridle migrate` by hand; details are in the daemon log."
+            ),
+            size: None,
+            components: vec![],
+            for_human: false,
+            priority: None,
+            ticket: None,
+            parent: None,
+        };
+        if let Err(e) = client.new_task(&req).await {
+            tracing::warn!("couldn't file an incident for the migration failure: {e}");
+        }
+    }
 }
 
 const LOGIN_CHECK_TIMEOUT: Duration = Duration::from_secs(5);

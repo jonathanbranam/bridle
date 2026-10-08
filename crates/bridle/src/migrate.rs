@@ -1,5 +1,6 @@
 //! `bridle migrate`: apply the project migrations this binary ships that a project hasn't had
-//! yet (ticket xebc, docs/design/migrations.md). Never run automatically.
+//! yet (ticket xebc, docs/design/migrations.md). `bridle serve` runs the same code at start-up
+//! (`run_at_startup`) unless the project sets `[migrations] auto = false`.
 //!
 //! The applied list lives in the project (`.bridle/migrations.toml`), so it travels with the
 //! repo; each applied migration is also appended to `.bridle/migrations.log` for the human.
@@ -32,6 +33,19 @@ pub struct Migration {
     pub description: &'static str,
     /// Must be idempotent, and under `ctx.dry_run` must write nothing.
     pub run: fn(&Ctx) -> anyhow::Result<Report>,
+    /// Opt-in: skipped by the start-up run and by a plain `bridle migrate` (which lists it as
+    /// pending-manual); runs only by id (`bridle migrate --only ID`).
+    pub manual_only: bool,
+}
+
+/// What a migration returns (wrapped in `anyhow`) when the files it edits have uncommitted
+/// changes. Not a failure: the start-up run skips and retries at the next start.
+#[derive(Debug, thiserror::Error)]
+#[error("{0}")]
+pub struct Refused(pub String);
+
+pub fn is_refusal(e: &anyhow::Error) -> bool {
+    e.downcast_ref::<Refused>().is_some()
 }
 
 /// Append only; ids never change or move once shipped.
@@ -39,6 +53,7 @@ pub const MIGRATIONS: &[Migration] = &[
     Migration {
         id: "0000-baseline",
         description: "Start tracking migrations in this project; changes nothing else.",
+        manual_only: false,
         run: |_| {
             Ok(Report {
                 files: vec![],
@@ -49,6 +64,8 @@ pub const MIGRATIONS: &[Migration] = &[
     Migration {
         id: "0001-rename-product-manager",
         description: "Rename the product-manager role to project-manager (ticket 9j2h).",
+        // The human reviews it before it runs on a real project (br-9j2h).
+        manual_only: true,
         run: rename_product_manager,
     },
 ];
@@ -124,10 +141,11 @@ fn refuse_if_uncommitted(repo: &Path, files: &[String]) -> anyhow::Result<()> {
     }
     let dirty = String::from_utf8_lossy(&out.stdout);
     if !dirty.trim().is_empty() {
-        bail!(
+        return Err(Refused(format!(
             "uncommitted changes in files this migration edits; commit or stash them first:\n{}",
             dirty.trim_end()
-        );
+        ))
+        .into());
     }
     Ok(())
 }
@@ -176,14 +194,18 @@ pub struct Outcome {
     pub done: Vec<MigrationRecord>,
     /// The migration that failed; nothing is recorded for it and nothing after it ran.
     pub failed: Option<(String, anyhow::Error)>,
+    /// Pending opt-in migrations that were left alone.
+    pub manual_pending: Vec<String>,
 }
 
 /// Apply every pending migration in order, recording each (state file, then log) as it
-/// succeeds so a later failure doesn't lose earlier work. A dry run writes nothing.
+/// succeeds so a later failure doesn't lose earlier work. A dry run writes nothing. Opt-in
+/// migrations run only when named by `only`, which then runs just that one.
 pub fn apply(
     repo: &Path,
     all: &[Migration],
     dry_run: bool,
+    only: Option<&str>,
     now: DateTime<Utc>,
 ) -> anyhow::Result<Outcome> {
     if !repo.join(".bridle").is_dir() {
@@ -195,9 +217,22 @@ pub fn apply(
     let mut out = Outcome {
         done: vec![],
         failed: None,
+        manual_pending: vec![],
     };
+    if let Some(id) = only
+        && !all.iter().any(|m| m.id == id)
+    {
+        bail!("no migration {id}");
+    }
     let ctx = Ctx { repo, dry_run };
     for m in pending(repo, all)? {
+        if only.is_some_and(|id| id != m.id) {
+            continue;
+        }
+        if m.manual_only && only.is_none() {
+            out.manual_pending.push(m.id.to_string());
+            continue;
+        }
         let report = match (m.run)(&ctx) {
             Ok(r) => r,
             Err(e) => {
@@ -216,6 +251,26 @@ pub fn apply(
         out.done.push(rec);
     }
     Ok(out)
+}
+
+/// The start-up run: apply pending migrations unless `[migrations] auto = false`. Never
+/// errors or panics out; `None` means nothing was attempted. A run that applied nothing and
+/// failed nothing touched no file.
+pub fn run_at_startup(repo: &Path, all: &[Migration]) -> Option<Result<Outcome, String>> {
+    let attempt = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        if !repo.join(".bridle").is_dir() {
+            return None;
+        }
+        // An unreadable config is the daemon's own start-up error to report, not ours.
+        if !bridle_daemon::config::Config::load(repo).is_ok_and(|c| c.migrations_auto) {
+            return None;
+        }
+        Some(apply(repo, all, false, None, Utc::now()).map_err(|e| format!("{e:#}")))
+    }));
+    match attempt {
+        Ok(r) => r,
+        Err(_) => Some(Err("the migration run panicked".into())),
+    }
 }
 
 fn record(
@@ -270,6 +325,7 @@ mod tests {
         Migration {
             id,
             description: "test",
+            manual_only: false,
             run: |ctx| {
                 if !ctx.dry_run {
                     std::fs::write(ctx.repo.join("touched"), "x")?;
@@ -286,6 +342,7 @@ mod tests {
         Migration {
             id,
             description: "fails",
+            manual_only: false,
             run: |_| bail!("boom"),
         }
     }
@@ -313,7 +370,7 @@ mod tests {
     fn applies_in_order_records_and_second_run_is_a_noop() {
         let p = project();
         let all = [ok_migration("0000-a"), ok_migration("0001-b")];
-        let out = apply(p.path(), &all, false, Utc::now()).unwrap();
+        let out = apply(p.path(), &all, false, None, Utc::now()).unwrap();
         assert_eq!(ids(&out.done), ["0000-a", "0001-b"]);
         assert!(out.failed.is_none());
         let state = load_state(p.path()).unwrap();
@@ -323,7 +380,7 @@ mod tests {
         assert_eq!(log.lines().count(), 2);
         assert!(log.contains("0001-b") && log.contains("files: touched"));
 
-        let again = apply(p.path(), &all, false, Utc::now()).unwrap();
+        let again = apply(p.path(), &all, false, None, Utc::now()).unwrap();
         assert!(again.done.is_empty());
         assert_eq!(load_state(p.path()).unwrap().applied.len(), 2);
         assert_eq!(
@@ -339,7 +396,7 @@ mod tests {
     fn dry_run_writes_nothing() {
         let p = project();
         let all = [ok_migration("0000-a")];
-        let out = apply(p.path(), &all, true, Utc::now()).unwrap();
+        let out = apply(p.path(), &all, true, None, Utc::now()).unwrap();
         assert_eq!(ids(&out.done), ["0000-a"]);
         assert!(!state_path(p.path()).exists());
         assert!(!log_path(p.path()).exists());
@@ -354,7 +411,7 @@ mod tests {
             failing("0001-b"),
             ok_migration("0002-c"),
         ];
-        let out = apply(p.path(), &all, false, Utc::now()).unwrap();
+        let out = apply(p.path(), &all, false, None, Utc::now()).unwrap();
         assert_eq!(ids(&out.done), ["0000-a"]);
         assert_eq!(out.failed.as_ref().unwrap().0, "0001-b");
         let state = load_state(p.path()).unwrap();
@@ -366,7 +423,7 @@ mod tests {
     fn two_projects_are_independent() {
         let (a, b) = (project(), project());
         let all = [ok_migration("0000-a")];
-        apply(a.path(), &all, false, Utc::now()).unwrap();
+        apply(a.path(), &all, false, None, Utc::now()).unwrap();
         assert!(pending(a.path(), &all).unwrap().is_empty());
         assert_eq!(pending(b.path(), &all).unwrap().len(), 1);
     }
@@ -374,7 +431,124 @@ mod tests {
     #[test]
     fn refuses_a_directory_that_is_not_a_project() {
         let d = tempfile::tempdir().unwrap();
-        assert!(apply(d.path(), MIGRATIONS, false, Utc::now()).is_err());
+        assert!(apply(d.path(), MIGRATIONS, false, None, Utc::now()).is_err());
+    }
+
+    fn manual(id: &'static str) -> Migration {
+        Migration {
+            manual_only: true,
+            ..ok_migration(id)
+        }
+    }
+
+    fn refusing(id: &'static str) -> Migration {
+        Migration {
+            id,
+            description: "refuses",
+            manual_only: false,
+            run: |_| Err(Refused("uncommitted changes in x".into()).into()),
+        }
+    }
+
+    #[test]
+    fn startup_applies_pending_and_records() {
+        let p = project();
+        let all = [ok_migration("0000-a")];
+        let out = run_at_startup(p.path(), &all).unwrap().unwrap();
+        assert_eq!(ids(&out.done), ["0000-a"]);
+        assert_eq!(load_state(p.path()).unwrap().applied.len(), 1);
+        assert!(log_path(p.path()).exists());
+    }
+
+    #[test]
+    fn startup_with_nothing_pending_touches_no_file() {
+        let p = project();
+        let all = [ok_migration("0000-a")];
+        run_at_startup(p.path(), &all);
+        let before = std::fs::read_to_string(state_path(p.path())).unwrap();
+        let log = std::fs::read_to_string(log_path(p.path())).unwrap();
+        let mtime = std::fs::metadata(state_path(p.path()))
+            .unwrap()
+            .modified()
+            .unwrap();
+        let out = run_at_startup(p.path(), &all).unwrap().unwrap();
+        assert!(out.done.is_empty() && out.failed.is_none());
+        assert_eq!(
+            std::fs::read_to_string(state_path(p.path())).unwrap(),
+            before
+        );
+        assert_eq!(std::fs::read_to_string(log_path(p.path())).unwrap(), log);
+        assert_eq!(
+            std::fs::metadata(state_path(p.path()))
+                .unwrap()
+                .modified()
+                .unwrap(),
+            mtime
+        );
+    }
+
+    #[test]
+    fn auto_false_leaves_it_pending() {
+        let p = project();
+        std::fs::write(
+            p.path().join(".bridle/config.toml"),
+            "[migrations]\nauto = false\n",
+        )
+        .unwrap();
+        let all = [ok_migration("0000-a")];
+        assert!(run_at_startup(p.path(), &all).is_none());
+        assert_eq!(pending(p.path(), &all).unwrap().len(), 1);
+        assert!(!state_path(p.path()).exists());
+    }
+
+    #[test]
+    fn startup_skips_opt_in_migrations_and_apply_only_runs_one_by_id() {
+        let p = project();
+        let all = [
+            ok_migration("0000-a"),
+            manual("0001-m"),
+            ok_migration("0002-c"),
+        ];
+        let out = run_at_startup(p.path(), &all).unwrap().unwrap();
+        assert_eq!(ids(&out.done), ["0000-a", "0002-c"]);
+        assert_eq!(out.manual_pending, ["0001-m"]);
+        let out = apply(p.path(), &all, false, Some("0001-m"), Utc::now()).unwrap();
+        assert_eq!(ids(&out.done), ["0001-m"]);
+        assert!(pending(p.path(), &all).unwrap().is_empty());
+        assert!(apply(p.path(), &all, false, Some("9999-x"), Utc::now()).is_err());
+    }
+
+    #[test]
+    fn startup_failure_is_returned_not_raised_and_stops_the_run() {
+        let p = project();
+        let all = [failing("0000-a"), ok_migration("0001-b")];
+        let out = run_at_startup(p.path(), &all).unwrap().unwrap();
+        assert!(out.done.is_empty());
+        let (id, e) = out.failed.unwrap();
+        assert_eq!(id, "0000-a");
+        assert!(!is_refusal(&e));
+        assert!(!state_path(p.path()).exists());
+    }
+
+    #[test]
+    fn startup_survives_a_panicking_migration() {
+        let p = project();
+        let all = [Migration {
+            id: "0000-p",
+            description: "panics",
+            manual_only: false,
+            run: |_| panic!("boom"),
+        }];
+        assert!(run_at_startup(p.path(), &all).unwrap().is_err());
+    }
+
+    #[test]
+    fn a_refusal_is_recognised_and_recorded_nowhere() {
+        let p = project();
+        let all = [refusing("0000-a")];
+        let out = run_at_startup(p.path(), &all).unwrap().unwrap();
+        assert!(is_refusal(&out.failed.unwrap().1));
+        assert_eq!(pending(p.path(), &all).unwrap().len(), 1);
     }
 
     fn git_project(config: &str, role_file: bool) -> tempfile::TempDir {

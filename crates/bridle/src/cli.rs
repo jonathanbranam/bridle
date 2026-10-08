@@ -270,7 +270,7 @@ pub enum Command {
     Trace(TraceArgs),
     /// Print shell completions (zsh, bash, fish, elvish, or powershell); install once with `bridle completions <shell> > <dest>`.
     Completions(CompletionsArgs),
-    /// Apply the project migrations this bridle ships that the project hasn't had yet (docs/design/migrations.md). Never runs by itself.
+    /// Apply the project migrations this bridle ships that the project hasn't had yet (docs/design/migrations.md). `bridle serve` also runs them at start-up unless `[migrations] auto = false`.
     Migrate(MigrateArgs),
 }
 
@@ -2145,6 +2145,9 @@ pub struct MigrateArgs {
     /// Every project in the daemon registry (`bridle daemon list`), one at a time, stopping at the first failure. Default: the current directory's repository, or `--project NAME`.
     #[arg(long, conflicts_with = "project")]
     pub all: bool,
+    /// Run this one migration by id (`NNNN-name`), including an opt-in one that a plain run only lists as pending-manual.
+    #[arg(long, value_name = "ID", conflicts_with = "all")]
+    pub only: Option<String>,
 }
 
 #[derive(Debug, Args)]
