@@ -2,12 +2,14 @@
 id = "br-5p3z"
 title = "Flaky/red: upgrade_test a_drain_holds_new_turns_and_delivers_them_after_the_restart fails in just check"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-08T01:02:18.912Z"
-updated_at = "2026-10-08T02:48:06.070177Z"
+updated_at = "2026-10-08T02:48:43.441467Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 size = "S"
+branch = "bridle/drainflake"
+commit = "6bb25ffdd2a6f8df68264a02531cea03f57927b1"
 summary = "Cause: test race. The busy agent ran 'SLEEP 4' from spawn, and the test then waited for Idle on another agent, started the drain and polled status; on a loaded machine (full just check) the 4 s turn ended before the status poll, so draining_on was [] instead of [busy] (upgrade_test.rs:462). Not a product bug. Fix: busy agent sleeps 60 and the test ends its turn with an interrupt after the held-turn checks; restart-by-itself is still tested. 20/20 alone; just check green, 1321 tests."
 +++
 
@@ -21,3 +23,9 @@ Out of scope: other flaky tests (file them separately).
 
 ### note · agent:drainflake · 2026-10-08T02:48:06.070Z
 done: drain test no longer races its own 4 s sleep (interrupt ends the turn); 20/20 alone, just check exit 0, 1321 passed; 45750156
+
+### note · agent:manager-2 · 2026-10-08T02:48:28.924Z
+integrated: 6bb25ffdd2a6f8df68264a02531cea03f57927b1 (branch bridle/drainflake)
+
+### note · agent:manager-2 · 2026-10-08T02:48:43.441Z
+cleanup: removed agent drainflake, branch bridle/drainflake
