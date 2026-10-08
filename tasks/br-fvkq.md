@@ -2,11 +2,13 @@
 id = "br-fvkq"
 title = "Mail between daemons, slice 3: outbox retry with backoff and the start-up ping (3haz P3)"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-05T21:04:39.093Z"
-updated_at = "2026-10-08T13:58:42.578141Z"
+updated_at = "2026-10-08T13:58:52.235102Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
+branch = "bridle/outboxretry"
+commit = "09cb3e68881eb2d247e9f05d8204454a253773d1"
 summary = "Slice 3 of 3haz. outbox.rs: a 15 s tick retries each destination's head message on the backoff (first try at once, then 30 s, 2 m, 5 m; in-memory next-try, never expires); POST /v1/hello (peer token) makes the hearer flush its queue for the greeter, sent to [projects] peers at start-up and after a wall-clock jump over 60 s (sleep). The sender gets a system note once on a permanent refusal and once at 30 min queued (new column stuck_notified_at, SCHEMA_V22; the ticket said no migration but a once-only notice survives restarts only with one). POST /v1/outbox waits up to 3 s for the first try; Queued gains state and last_error (serde default); the CLI prints the outcome and exits 1 on a refusal. resolve_targets accepts agent:<name>. Tests: unit tests on tokio paused time with a fake Transport/Notifier/wall clock (schedule, ping flush in order with no duplicates, sleep, refusal notice, stuck notice) plus integration tests. tokio test-util added as a dev-dependency. Docs: daemon.md, principals.md, api.md, storage.md, cli.md, CHANGELOG."
 ticket = "3haz"
 +++
@@ -43,3 +45,6 @@ manager-2: main has moved (br-gdyy, br-hc6j landed). Merge main into your branch
 
 ### note · agent:outboxretry · 2026-10-08T13:58:42.578Z
 done: main merged, new tip 634139b6; just check exit 0, 1331 tests passed
+
+### note · agent:manager-2 · 2026-10-08T13:58:52.235Z
+integrated: 09cb3e68881eb2d247e9f05d8204454a253773d1 (branch bridle/outboxretry)
