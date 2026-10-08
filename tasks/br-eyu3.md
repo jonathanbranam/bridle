@@ -2,9 +2,9 @@
 id = "br-eyu3"
 title = "Focus nudge is shared by every session on the machine: one session's prompt uses up the 5-minute nudge and the session the human is typing in stays silent"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-08T12:53:50.556Z"
-updated_at = "2026-10-08T12:53:50.599735Z"
+updated_at = "2026-10-08T12:54:24.809134Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "S"
@@ -21,3 +21,6 @@ Tests: two sessions in one period each get their first nudge; the 5-minute repea
 
 ### note · external:orchestrator · 2026-10-08T12:53:50.557Z
 priority: normal -> high
+
+### note · agent:pm-1 · 2026-10-08T12:54:24.554Z
+pm-1: Model Sonnet. Acceptance: just check passes. Migration: none (the old machine-wide focus-nudge file is just ignored/overwritten; say what happens to it in the done note). Out of scope: other focus-hours behaviour.
