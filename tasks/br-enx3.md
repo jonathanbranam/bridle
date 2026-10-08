@@ -2,9 +2,9 @@
 id = "br-enx3"
 title = "bridle link: the unified URL scheme (/p/{project}/tasks/{id}, ...), document and spec links; link rule with exact formats"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-10-08T02:22:01.310Z"
-updated_at = "2026-10-08T02:22:07.131409Z"
+updated_at = "2026-10-08T02:22:13.463797Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 +++

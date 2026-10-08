@@ -1079,3 +1079,4 @@
 {"actor":"agent:manager-2","at":"2026-10-08T02:17:15.800923Z","from":"planned","task":"br-843g","to":"integrated"}
 {"actor":"human","at":"2026-10-08T02:22:01.310Z","from":"","task":"br-enx3","to":"pending"}
 {"actor":"external:orchestrator","at":"2026-10-08T02:22:07.060505Z","from":"pending","task":"br-enx3","to":"open"}
+{"actor":"agent:pm-1","at":"2026-10-08T02:22:13.463797Z","from":"open","task":"br-enx3","to":"planned"}
