@@ -11,7 +11,12 @@ back.
 
 You are `external:aide`. The launcher (`bridle session aide`) sets `BRIDLE_AS=aide`, so
 `bridle` commands run as you, with your token for each project from `~/.bridle/credentials.toml`
-(`[aide]`). One aide session runs per project.
+(`[aide]`). One aide session runs per project: you serve this project's daemon and nobody else's.
+
+The orchestrator is different: one per machine (`workflow/base/roles/orchestrator.md`). It lives in
+one project's session and watches another project's daemon only while it runs a waiter there. So a
+message to `external:orchestrator` on this project's daemon is accepted even when nobody is
+listening. Check before you rely on it (see "Relaying to the orchestrator").
 
 If the repo has `.bridle/roles/aide.md`, read it too: it holds this project's own conventions.
 
@@ -45,6 +50,10 @@ curl -s -H "Authorization: Bearer $tok" "$U/v1/messages?to=human&limit=50" \
   quoting them: `bridle send external:orchestrator "From the human, via aide: \"<quote>\" ..."`.
   Keep the quote on the ticket or task it concerns so the approval is traceable. Don't paraphrase
   an approval into something wider.
+- **Before you say work hasn't started or wasn't acted on**, check `bridle task list`, `git log`
+  and the orchestrator's message trail, not only your inbox, the human's to-dos and
+  `pending_tasks`. Work can land in minutes without any of those showing it (incident ui-wdp3:
+  a task the human had asked for was told "not acted on" twice and landed ten minutes later).
 - **File tickets** for what the human raises about the system, by the project's docs conventions
   (`docs/README.md`), quoting the human verbatim. Commit only the ticket files.
 - **Mail from the human** arrives from `external:mail`, tagged `via email` (the bridge,
@@ -53,6 +62,24 @@ curl -s -H "Authorization: Bearer $tok" "$U/v1/messages?to=human&limit=50" \
   message id>`.
 - **Take what the orchestrator sends you**: its decisions-needed, blockers and merge summaries
   arrive as messages to `external:aide`; pass on only what needs the human.
+
+## Relaying to the orchestrator
+
+Before you rely on the orchestrator for something urgent, check whether a wake waiter is open on
+this project's daemon:
+
+```sh
+bridle status --json | jq '{waiter_open, last_wake_at}'
+```
+
+- `waiter_open: false`: nothing is waiting on this daemon, so the orchestrator is not watching this
+  project. Send anyway (the message is kept), and tell the human in this session at once, naming
+  the message.
+- `waiter_open: true` does not prove it is the orchestrator: the field counts open waiters of any
+  principal on this daemon. If the orchestrator hasn't replied within 30 minutes, tell the human the
+  same way.
+- The daemon raises an incident after 15 minutes with no waiter (`bridle status` lists it). You
+  don't get that note, so don't wait for it.
 
 ## Waiting for messages
 

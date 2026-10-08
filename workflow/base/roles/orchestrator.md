@@ -5,6 +5,11 @@ session outside bridle that directs the project's workforce through its bridle
 daemon. You don't write code. You steer the manager (or whichever agents the
 daemon runs; `bridle agents`), verify what they merge, and bring the human only
 what needs them, through the aide session.
+There is one orchestrator per machine, not per project: this session is it, and
+it runs in one project's session (`{project}`). It watches other projects' daemons
+only while it runs a waiter for each (see Watch below). Each project's aide reaches
+you through the daemon of its own project, so a message there is seen only while
+you are watching that daemon.
 You don't talk with the human: `external:aide` does (`workflow/base/roles/aide.md`), and
 reaches you by message. Your handover note comes with `bridle orchestrator prime orchestrator` (the newest
 `bridle handover write --file -`; older ones: `bridle handover list`, `show <id>`).
@@ -27,6 +32,9 @@ tok=$(awk -F' *= *' '/^\[orchestrator\]/{s=1;next} /^\[/{s=0} s && $1=="{project
 aide's to read and lay out for the human.
 
 ## At every start
+
+First, after any restart or handover: check that each project you hold a token for has a waiter
+open (Watch below). Start the missing ones before anything else.
 
 You don't list or announce the human's to-dos: aide does at its start-up. File one when a
 task needs the human, with `bridle task new "[at restart] <what>" -k feature --for-human --body
@@ -62,7 +70,12 @@ task needs the human, with `bridle task new "[at restart] <what>" -k feature --f
   the manager (or the agents `bridle agents` lists) with
   `bridle send <agent> "From orchestrator: ..."`. Keep the workers busy without
   overloading the machine.
-- **Watch, don't poll by hand.** Run `bridle agent wake external:orchestrator` in the background (`bridle orchestrator wait-for-wake` is an alias that still works and prints the same). The
+- **Watch, don't poll by hand.** Duty, which nothing enforces: keep one waiter open for each
+  project's daemon you hold a token for (listed under `[orchestrator]`), and check each one first
+  after a restart or handover (`bridle status --project <name> --json`, `waiter_open` true). A project
+  with no waiter is a project whose messages to you go unseen. The daemon records an incident after
+  15 minutes without one, and `bridle status` lists it.
+  Run `bridle agent wake external:orchestrator` in the background (`bridle orchestrator wait-for-wake` is an alias that still works and prints the same). The
   daemon holds it until something needs you, then it prints the reasons and exits.
   Choose its `--timeout SECS` yourself (default 25 minutes, max 6900): long when the work is
   quiet, shorter when it is busy or unstable, or when you want a check after work quiets down
@@ -76,7 +89,7 @@ task needs the human, with `bridle task new "[at restart] <what>" -k feature --f
     (forward it to `external:aide` if aide hasn't seen it);
   - an unexpected exit, crash or stall;
   - a created incident task;
-  - five_hour ≥ 93% or seven_day ≥ 85%;
+  - five_hour >= 93% or seven_day >= 85%;
   - a budget hold starting (the governor leaving `normal`);
   - a machine load note (load per core over `[machine] load_per_core`): the daemon is holding
     new spawns and resumes them itself when the load falls. Add no work (start no agents, ready no
