@@ -73,6 +73,20 @@ until the human has reviewed the design in detail.**
    pushes and runs takeover, then tells the receiver it's ready. The receiver pulls and restarts
    what was running on the sender.
 
+6. **The email bridge, one per machine instead of one per project** (added 2026-10-07 at the
+   human's ask). The human, ~9:35 PM ET via aide, on learning that `bridle mail run` serves one
+   project: "oh damn... one mail daemon per project? OK. Can you add this to the "one daemone per
+   machine" ticket that exists already? this seems like a machine-level thing not a project-level
+   thing, but that ticket should make a decision for this also. gateway is machine-level and very
+   nice." Today (`docs/design/mail.md`, "Following the owner"): every bridge reads the shared S3
+   bucket and takes only its own project's mail while its machine owns the project, so each
+   project on each machine needs its own bridge, token and service (br-ezpj, being built tonight,
+   installs one per project). A known gap that a machine-level bridge would close: mail for a
+   project with no bridge running anywhere waits silently up to the bucket's 30 days, since the
+   "not delivered yet" reply comes from that project's own bridge. The design should decide:
+   machine-level (like `bridle gateway`: one process, one AWS key, routing to each local project's
+   daemon) inside the machine daemon or beside it, and what happens to the per-project service.
+
 ## Related
 
 - [[project-machine-and-account-scope-9mxw|9mxw]]: what's per project, per machine, per account.
