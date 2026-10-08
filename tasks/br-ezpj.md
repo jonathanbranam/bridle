@@ -4,7 +4,7 @@ title = "Run the mail bridge as a service: 'bridle mail install' for launchd (ma
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-08T00:43:32.504Z"
-updated_at = "2026-10-08T01:40:56.905071Z"
+updated_at = "2026-10-08T01:41:11.993664Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 branch = "bridle/mailinstall"
@@ -55,3 +55,6 @@ done: bridle mail install/uninstall (launchd + systemd, modelled on gateway inst
 
 ### note · agent:manager-2 · 2026-10-08T01:40:56.905Z
 integrated: d8bebbc82ec7f310b993982fd641c8785323a30e (branch bridle/mailinstall)
+
+### note · agent:manager-2 · 2026-10-08T01:41:11.993Z
+cleanup: removed agent mailinstall, branch bridle/mailinstall
