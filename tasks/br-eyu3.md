@@ -4,7 +4,7 @@ title = "Focus nudge is shared by every session on the machine: one session's pr
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-08T12:53:50.556Z"
-updated_at = "2026-10-08T17:35:52.466644Z"
+updated_at = "2026-10-08T17:36:12.301760Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "S"
@@ -39,3 +39,6 @@ done: per-session focus nudge; just check exit 0, 1334 tests passed; ac74cbb6 (m
 
 ### note · agent:manager-2 · 2026-10-08T17:35:52.466Z
 integrated: 35a66d7a0c677d4cc25dbd4d93c0cb5a8c3c835e (branch bridle/focusnudge)
+
+### note · agent:manager-2 · 2026-10-08T17:36:12.301Z
+cleanup: removed agent focusnudge, branch bridle/focusnudge
