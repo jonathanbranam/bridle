@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+- `bridle orchestrator wait-for-wake` works against daemons older than br-2672 again: it waits on `GET /v1/orchestrator/wake`, which every daemon serves, instead of `GET /v1/wake` (older daemons answered that with empty message wakes or 403) (br-grdg).
+
 ### Added
 - `bridle mail install` runs the email bridge as a service: a launchd LaunchAgent on macOS or a systemd user unit on Linux, one per project, restarting on a crash and logging to `~/.bridle/mail-<project>.log`; prints the load commands and never runs them. `bridle mail uninstall` removes it (br-ezpj, ezpj).
 - One wake mechanism: `bridle agent wake external:orchestrator` now returns every reason `bridle orchestrator wait-for-wake` does (agent exits, usage, context notes, messages, upgrade wakes, ...), with the same text and detail. `wait-for-wake` stays as an alias with unchanged output and flags, and the orchestrator role now prefers `agent wake` (br-2672, jttf).

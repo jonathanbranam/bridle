@@ -361,24 +361,18 @@ pub(super) async fn wait_for_mail(cli: &Cli, timeout: Option<u64>) -> Result<(),
     }
 }
 
+async fn fetch_wakes(
+    client: &bridle_api::Client,
+    timeout: Option<u64>,
+) -> Result<Vec<bridle_api::types::WakeReason>, bridle_api::ClientError> {
+    Ok(client.orchestrator_wake(timeout).await?.wakes)
+}
+
 pub(super) async fn wait_for_wake(cli: &Cli, timeout: Option<u64>) -> Result<(), CliError> {
     let client = client_for(cli).await?;
-    // The same wait as `bridle agent wake external:orchestrator`, printed as it always was.
-    let wakes: Vec<bridle_api::types::WakeReason> = client
-        .principal_wake(&bridle_api::types::PrincipalWakeQuery {
-            principal: "external:orchestrator".to_string(),
-            timeout_secs: timeout,
-            session: None,
-        })
-        .await?
-        .reasons
-        .into_iter()
-        .map(|r| bridle_api::types::WakeReason {
-            reason: r.reason,
-            text: r.text.unwrap_or_default(),
-            detail: r.detail.unwrap_or_default(),
-        })
-        .collect();
+    // The old route, not `GET /v1/wake`: daemons from before br-2672 answer the new one with
+    // text-less reasons (the message body lost, marked read) or 403. Every daemon serves this.
+    let wakes = fetch_wakes(&client, timeout).await?;
     if cli.json {
         println!(
             "{}",
@@ -674,5 +668,43 @@ mod prime_tests {
             !role.contains("--mark-read"),
             "what reaches an agent is read: no mark-read step in the advisor prime"
         );
+    }
+}
+
+#[cfg(test)]
+mod wake_tests {
+    use super::fetch_wakes;
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+
+    /// A daemon older than br-2672 serves only the old route; a hit on any other path is a 404.
+    #[tokio::test]
+    async fn waits_on_the_old_route_and_reads_its_reply() {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let url = format!("http://{}", listener.local_addr().unwrap());
+        let server = tokio::spawn(async move {
+            let (mut sock, _) = listener.accept().await.unwrap();
+            let mut buf = vec![0u8; 4096];
+            let n = sock.read(&mut buf).await.unwrap();
+            let req = String::from_utf8_lossy(&buf[..n]).to_string();
+            let (status, body) = if req.starts_with("GET /v1/orchestrator/wake") {
+                (
+                    "200 OK",
+                    r#"{"wakes":[{"reason":"message","text":"hello from x","detail":{"id":"m-1"}}]}"#,
+                )
+            } else {
+                ("404 Not Found", "{}")
+            };
+            let resp = format!(
+                "HTTP/1.1 {status}\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
+                body.len()
+            );
+            sock.write_all(resp.as_bytes()).await.unwrap();
+        });
+        let client = bridle_api::Client::new(url, Some("t".into()));
+        let wakes = fetch_wakes(&client, Some(1)).await.unwrap();
+        server.await.unwrap();
+        assert_eq!(wakes.len(), 1);
+        assert_eq!(wakes[0].reason, "message");
+        assert_eq!(wakes[0].text, "hello from x");
     }
 }
