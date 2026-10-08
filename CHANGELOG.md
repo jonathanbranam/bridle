@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Fixed
+- nextest runs at most 8 tests at once (`.config/nextest.toml`), so a full `just check` no longer drives host load past the governor and makes timing-sensitive tests flake (br-7fr6).
 - The quiet-hours focus nudge is kept per session, so one session's prompt no longer uses up the nudge for the session the human is typing in (br-eyu3).
 
 ### Added
