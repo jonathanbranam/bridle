@@ -24,6 +24,22 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-08 14:37-22:46: the gateway ran as the orchestrator and saw every project unreachable
+
+- **What happened:** an orchestrator session restarted the gateway at 14:37 from its own shell.
+  The gateway inherited `BRIDLE_AS=orchestrator` and `BRIDLE_PROJECT=bridle` and called every
+  daemon as the orchestrator, which has no token there, so every poll failed. The human saw
+  "bridle is unreachable: no token for principal 'orchestrator' ..." on the web UI and no to-dos,
+  and aide traced it with `ps eww` (m-7205, 22:45). The orchestrator restarted it with a clean env
+  at 22:46.
+- **Impact:** about 8 hours with no web UI for the human: no to-dos and no interactions (59 came in
+  on the first poll after the fix). Any reply from the web UI in that window would have been written
+  as the orchestrator, if it got through at all.
+- **Cause:** the gateway honours `BRIDLE_AS` / `BRIDLE_PROJECT` from its environment, and the
+  orchestrator's launcher sets both.
+- **Category:** `daemon`, `role`
+- **Follow-up:** [[gateway-inherits-bridle-as-bridle-project-from-the-shell-tha-ppa6|ppa6]].
+
 ## 2026-10-08 ~01:10-01:30: aide's in-session restart left it at the shell again
 
 - **What happened:** aide (bridle, dalek) wrote handover h-0066 at ~200K and restarted itself.
