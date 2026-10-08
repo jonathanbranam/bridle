@@ -1092,3 +1092,5 @@
 {"actor":"human","at":"2026-10-08T12:47:40.207Z","from":"","task":"br-vn54","to":"pending"}
 {"actor":"external:orchestrator","at":"2026-10-08T12:47:57.331005Z","from":"pending","task":"br-vn54","to":"open"}
 {"actor":"external:orchestrator","at":"2026-10-08T12:49:16.532999Z","from":"open","task":"br-bbhn","to":"dropped"}
+{"actor":"human","at":"2026-10-08T12:51:40.499Z","from":"","task":"br-hc6j","to":"pending"}
+{"actor":"human","at":"2026-10-08T12:51:40.545Z","from":"","task":"br-5e4k","to":"pending"}
