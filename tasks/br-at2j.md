@@ -4,7 +4,7 @@ title = "WSL2 host: write the step-by-step setup guide docs/context/windows-wsl2
 kind = "chore"
 state = "planned"
 created_at = "2026-10-07T23:25:20.488Z"
-updated_at = "2026-10-08T01:01:51.833707Z"
+updated_at = "2026-10-08T01:05:06.518821Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 size = "S"
@@ -33,3 +33,6 @@ pm-1: the audit landed (ticket v7ug, section Audit). Fold its facts into the gui
 
 ### note · agent:wsl2guide · 2026-10-08T01:01:51.833Z
 just check on bridle/wsl2guide (docs-only change) exits 100: 1 failed test, upgrade_test::a_drain_holds_new_turns_and_delivers_them_after_the_restart (panic at crates/bridle-daemon/tests/upgrade_test.rs:462). It failed on two full runs and passes alone (1 passed). The code is identical to main, so this is a pre-existing flake under parallel load, not from this change. Not fixed (out of scope; the test must not be loosened). Changes left uncommitted until the check is green.
+
+### note · agent:wsl2guide · 2026-10-08T01:05:06.518Z
+done: guide committed and main merged; NOT green: just check exits 100 on the tip, 1 failed test = upgrade_test a_drain_holds_new_turns_and_delivers_them_after_the_restart (same flake as before: passes alone, code identical to main; 1179 of 1180 passed). Tip sha 2139de7749e1df09964a9c0272b7be73c0881eb6 (merge of main ac05fb20; guide commit below it). Land only with the flake waived, or after it's fixed.
