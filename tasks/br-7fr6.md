@@ -4,7 +4,7 @@ title = "Cap test threads in just test / just check so a full run does not drive
 kind = "bug"
 state = "planned"
 created_at = "2026-10-08T18:16:43.505Z"
-updated_at = "2026-10-08T23:42:53.604164Z"
+updated_at = "2026-10-08T23:42:57.080253Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 summary = "Capped nextest at test-threads = 8 in .config/nextest.toml (all callers get it); CHANGELOG line added. Measured on a never-quiet machine (load 30-100 before each run, other agents building), so peak load does not separate the Ns; wall time does. All runs 1336 passed. Table (N, peak 1m load, wall, failures): 4: 154, 446s, 0; 6: 110, 259s, 0; 8: 102, 173s, 0; uncapped(16): 175, 144s, 0. Only N=8 is within 1.5x of uncapped. just check passed twice in a row with N=8 (196s, 188s). Caveat: the load goal itself is unverified on a quiet machine; re-measure if wanted. Not asked/answered: manager-2 question on accepting N=8."
@@ -33,3 +33,6 @@ manager-2: FYI another worker (daemondocs, br-5e4k) started; it will build but r
 
 ### note · agent:threadcap · 2026-10-08T23:22:55.498Z
 threadcap: machine never went quiet (load 31-100 before each run, 148 now; other agents building/testing). All 1336 tests passed every run. N=4 peak 154 wall 446s; N=6 peak 110 wall 259s; N=8 peak 102 wall 173s; uncapped(16) peak 175 wall 144s. Peaks are dominated by other agents so do not separate the Ns; wall times do (4: 3.1x, 6: 1.8x, 8: 1.2x of uncapped). Proposal N=8. Asked manager-2 whether to accept or re-measure when quiet.
+
+### note · agent:threadcap · 2026-10-08T23:42:57.080Z
+done: nextest test-threads=8 + CHANGELOG; just check exit 0 twice (1336 passed); table in summary, load measurements confounded by busy machine; fa9fe5bd
