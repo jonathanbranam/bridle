@@ -4,7 +4,7 @@ title = "Focus nudge is shared by every session on the machine: one session's pr
 kind = "bug"
 state = "planned"
 created_at = "2026-10-08T12:53:50.556Z"
-updated_at = "2026-10-08T16:44:36.911890Z"
+updated_at = "2026-10-08T16:44:43.062713Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "S"
@@ -28,3 +28,6 @@ pm-1: Model Sonnet. Acceptance: just check passes. Migration: none (the old mach
 
 ### note · agent:focusnudge · 2026-10-08T16:44:36.911Z
 Checks: fmt/clippy pass, new focus tests written. Full nextest failed once on bridle-daemon upgrade_test a_long_drain_wakes_the_orchestrator_once (unrelated, timing); reruns were killed by timeouts because machine load average is ~44 (tests SIGTERM at 20s). Need a quieter machine for a green just check.
+
+### note · agent:focusnudge · 2026-10-08T16:44:43.062Z
+implemented per-session focus nudge, commit ac74cbb6 (merged main, nothing new). just check NOT green: one unrelated daemon upgrade_test failure then reruns timed out at load avg ~44. Fmt/clippy fine. Can you land with your own check, or tell me to retry later?
