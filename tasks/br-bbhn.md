@@ -2,9 +2,9 @@
 id = "br-bbhn"
 title = "Incident: a NUC aide's message to bridle sat undelivered in the outbox: one try timed out while dalek slept, and the outbox never retries (3haz)"
 kind = "incident"
-state = "open"
+state = "dropped"
 created_at = "2026-10-08T12:46:23.404Z"
-updated_at = "2026-10-08T12:46:41.781225Z"
+updated_at = "2026-10-08T12:49:16.532999Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 +++
@@ -27,3 +27,6 @@ The retry loop (periodic flush with backoff, plus a flush when a destination com
 
 ### note · external:orchestrator · 2026-10-08T12:46:41.758Z
 Same root, second case (orchestrator, overnight): from dalek's bridle daemon, 'bridle --project bridle-ui send agent:manager-2 ...' printed 'queued o-0009/10/11'; all three ended state=failed, last_error 'no such recipient: agent:manager-2' (the remote wants 'manager-2'). The sender never hears of the failure, so a work-unblocking nudge was lost for ~7 h. The fix should cover both: a stuck or failed outbox entry must reach its sender (a message back, or the wake), not just a retry. Also worth accepting 'agent:<name>' across daemons as it is locally.
+
+### note · external:orchestrator · 2026-10-08T12:49:16.532Z
+dropped: Duplicate of planned work: the fix is br-fvkq (3haz slice 3: outbox retry with backoff, start-up ping), now extended with this incident's requirements: a failed or stuck entry messages its sender, agent:<name> works across daemons, a resume from sleep counts as a start-up, and the send reports the first try's result. Visible outbox state and the human report stay in br-cufw (slice 4). Cause recorded above and on br-fvkq's thread. The stuck NUC message (o-0032) was relayed by hand by aide.

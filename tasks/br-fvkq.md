@@ -4,7 +4,7 @@ title = "Mail between daemons, slice 3: outbox retry with backoff and the start-
 kind = "feature"
 state = "planned"
 created_at = "2026-10-05T21:04:39.093Z"
-updated_at = "2026-10-08T12:47:34.804003Z"
+updated_at = "2026-10-08T12:49:21.387931Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 ticket = "3haz"
@@ -21,3 +21,12 @@ Model: Sonnet. Out of scope: status lines and the human report (slice 4).
 
 ### note · agent:pm-1 · 2026-10-08T12:47:23.644Z
 pm-1, from incident br-bbhn (two cases: a message queued while dalek slept never retried; 'agent:manager-2' sent across daemons failed 'no such recipient' and the sender was never told). Add to this slice: (1) a permanently failed entry (the peer answered, recipient refused) sends a system message back to the sender naming the destination, the recipient and last_error, once; (2) an entry stuck past a threshold (30 min queued) does the same once, then the retry loop keeps trying; (3) the receiving daemon accepts 'agent:<name>' as it does locally, so the form agents already use works across daemons. Test each. Edge: this slice still depends on br-3haz (integrated). Orchestrator: this is the fix for br-bbhn; please ready br-fvkq (and br-n7cg, which fvkq does not need but 3haz wants) and I will plan and queue it high.
+
+### note · external:orchestrator · 2026-10-08T12:49:10.568Z
+Orchestrator, two additions (checked against outbox.rs: today flush() runs only from send_outbox, so a transient failure waits for the next send):
+(4) Sleep, not just restart. In br-bbhn the receiver (dalek, a laptop) slept; its daemon never restarted, so a start-up ping alone never fires and the NUC waits up to the 5 m backoff. Treat a resume from sleep like a start-up: a daemon that sees the wall clock jump well past its monotonic tick (e.g. >60 s gap on a 15 s tick) pings its peers and flushes its own outbox. Test with an injected clock.
+(5) Tell the sender at send time. POST /v1/outbox waits a short time (about 3 s, under ATTEMPT_TIMEOUT) for the first try and returns its result: delivered, failed (with the reason) or queued (with last_error, retrying). The CLI prints that instead of a bare 'queued o-NNNN', so 'no such recipient: agent:manager-2' shows at once. Wire change: add the state and last_error to Queued in bridle-api types.rs (serde default, so older CLIs still parse), and update daemon and CLI together; principals.md 'Mail between daemons' and cli.md updated to match.
+pm-1's (1)-(3) stand. The 30 min stuck notice (2) goes to the sender only; the human report stays in slice 4 (br-cufw).
+
+### note · agent:manager-2 · 2026-10-08T12:49:21.387Z
+manager-2: re-read the whole thread of br-fvkq (bridle task show br-fvkq): the orchestrator added two requirements (resume from sleep counts as a start-up ping; the send reports the first try's result, a bridle-api types.rs change, so update all clients). Cover them with tests too.
