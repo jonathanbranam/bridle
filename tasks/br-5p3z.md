@@ -2,9 +2,9 @@
 id = "br-5p3z"
 title = "Flaky/red: upgrade_test a_drain_holds_new_turns_and_delivers_them_after_the_restart fails in just check"
 kind = "bug"
-state = "pending"
+state = "planned"
 created_at = "2026-10-08T01:02:18.912Z"
-updated_at = "2026-10-08T01:02:18.912Z"
+updated_at = "2026-10-08T01:02:44.532124Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 size = "S"

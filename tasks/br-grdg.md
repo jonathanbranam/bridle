@@ -2,9 +2,9 @@
 id = "br-grdg"
 title = "wait-for-wake breaks against daemons older than br-2672: empty message wakes, 403 on meta-notes"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-08T01:02:17.653Z"
-updated_at = "2026-10-08T01:02:31.021890Z"
+updated_at = "2026-10-08T01:02:57.363995Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 +++
