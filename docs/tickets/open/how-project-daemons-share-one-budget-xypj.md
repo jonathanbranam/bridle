@@ -48,3 +48,21 @@ sessions ([[docs/design/usage-and-budget|usage and budget]]).
 Load can't be scheduled in advance; the machine's one orchestrator coordinates it across projects
 at run time, winding down agents by the projects' relative priority when the machine is bogged
 down. Quoted in [[one-orchestrator-and-advisor-or-one-per-project-ma8e|ma8e]].
+
+## Per-machine and per-project worker limits (the human, 2026-10-07)
+
+Prompted by bridle-ui's one worker leaving ui-qbbk queued while other projects were idle. The
+human, verbatim (~10:15 PM ET):
+
+> Okay, is that because there's only one worker for bridle-ui? This is what I'm talking about
+> here. We really need to manage workers both per machine and per project, but if none of the
+> other projects are doing anything, might as well use two workers here.
+>
+> I think there's a whole system of defining those limits. We could put a max for the machine
+> and a max for each project, and then we need a machine-level orchestrator watching the load
+> and making sure things don't overwhelm the machine. Anyway, there's a ticket for that. Add a
+> note about the proper way to manage this between a bunch of workers on the same machine on
+> different projects.
+
+So: a machine max and a per-project max, with idle projects' share usable by busy ones, and
+a machine-level orchestrator watching load (see kuw2, the machine daemon).
