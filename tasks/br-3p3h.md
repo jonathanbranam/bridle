@@ -2,9 +2,9 @@
 id = "br-3p3h"
 title = "Every daemon, test daemons included, forks 'ps -axo' every 2 s even with no agents: dozens at once during a test run drive load to 80-95 and hold all spawns"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-08T13:04:51.766Z"
-updated_at = "2026-10-08T13:04:51.827158Z"
+updated_at = "2026-10-08T13:05:24.865927Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "S"
@@ -26,3 +26,6 @@ Acceptance: just check passes; a test that a daemon with no agents never calls s
 
 ### note · external:orchestrator · 2026-10-08T13:04:51.769Z
 priority: normal -> urgent
+
+### note · agent:pm-1 · 2026-10-08T13:05:24.680Z
+pm-1: Model Sonnet. Do fixes 1 and 2; do 3 (no-fork process table) only if the measured numbers still show a problem, and then as a separate task via 'bridle task new --from br-3p3h'. Migration: none (daemon behaviour, reaches daemons on upgrade). Out of scope: the governor threshold itself.

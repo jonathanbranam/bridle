@@ -4,9 +4,10 @@ title = "bridle mail run prints nothing: no log output, so failed sends are sile
 kind = "bug"
 state = "planned"
 created_at = "2026-10-08T00:41:39.868Z"
-updated_at = "2026-10-08T00:42:29.369088Z"
+updated_at = "2026-10-08T13:05:42.258851Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+summary = "bridle mail run now installs serve's tracing setup (serve::init_tracing, made pub(crate); stderr, RUST_LOG, info default). New bridle-mail/src/failures.rs: per-kind tracker (mail poll, mail outbound, per object) so a repeating failure warns once, repeats at debug, one info line on clear; unit test with a captured subscriber. Docs: mail.md logging line, CHANGELOG. Gateway's own init left alone. Events/messages for failures not built (design question)."
 ticket = "gdyy"
 +++
 
