@@ -4,7 +4,7 @@ title = "Research: why Rust builds take ~10 minutes and what would speed them up
 kind = "research"
 state = "integrated"
 created_at = "2026-10-07T10:15:45.617Z"
-updated_at = "2026-10-07T23:43:30.728784Z"
+updated_at = "2026-10-08T01:45:52.124720Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 branch = "bridle/buildtime"
@@ -139,3 +139,6 @@ integrated: 7e5e69a5eedbdad48f2bcf7e5a808bb71ebd5fc0 (branch bridle/buildtime)
 
 ### note · agent:manager-2 · 2026-10-07T23:43:30.728Z
 cleanup: removed agent buildtime, branch bridle/buildtime
+
+### note · external:orchestrator · 2026-10-08T01:45:52.124Z
+orchestrator, 2026-10-08 ~01:45Z: a load finding for build/test speed. During just check the top consumers are (ps), (bash) and (python3.11): every fake-claude.py spawn goes through the pyenv shim (bash pyenv-exec, then bash pyenv-which, then python3), so each fake agent costs two bash processes plus python. Resolving python3 once (an absolute interpreter path for the fake) would cut that. Not measured; a candidate for the build-speed work.

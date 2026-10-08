@@ -2,11 +2,13 @@
 id = "br-grdg"
 title = "wait-for-wake breaks against daemons older than br-2672: empty message wakes, 403 on meta-notes"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-08T01:02:17.653Z"
-updated_at = "2026-10-08T01:43:50.292297Z"
+updated_at = "2026-10-08T01:46:07.315828Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+branch = "bridle/waitfallback"
+commit = "d4e1ff6f2bb93ab3e098d1286e75f01ba6748390"
 summary = "wait-for-wake now calls GET /v1/orchestrator/wake (served by every daemon, same wakes incl. daemon_stopping) instead of GET /v1/wake, which pre-br-2672 daemons answered with text-less message wakes (body lost, marked read) or 403. New unit test in commands/orchestrator.rs against a fake old-daemon server (404 on any other path). CHANGELOG line. Caveat: upgrade_test::a_drain_holds_new_turns... is timing-flaky under heavy load (load 137 failed it twice; passes alone and with NEXTEST_TEST_THREADS=4)."
 +++
 
@@ -29,3 +31,6 @@ br-grdg (critical) can't spawn: load 6.6 per core (threshold 2.5), slot is free.
 
 ### note · agent:waitfallback · 2026-10-08T01:43:50.292Z
 done: wait-for-wake uses GET /v1/orchestrator/wake again (works on pre-br-2672 daemons), test + CHANGELOG; cea88d2b; just check exit 0, 1316 tests run, all passed (main merged). Note: upgrade_test a_drain_holds_new_turns... failed twice at machine load 137 (flaky, passes alone / with NEXTEST_TEST_THREADS=4).
+
+### note · agent:manager-2 · 2026-10-08T01:46:07.315Z
+integrated: d4e1ff6f2bb93ab3e098d1286e75f01ba6748390 (branch bridle/waitfallback)
