@@ -2,14 +2,16 @@
 id = "br-hc6j"
 title = "Gateway: reply to any task (POST /api/v1/projects/{project}/tasks/{id}/reply) (ui-u2df B4)"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-08T12:51:40.499Z"
-updated_at = "2026-10-08T13:54:06.587709Z"
+updated_at = "2026-10-08T13:54:46.164849Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "S"
 priority = "high"
 priority_at = "2026-10-08T12:51:40.500181Z"
+branch = "bridle/gwreply"
+commit = "d9fe8714fe93da3e61e8970f50b0602099388469"
 summary = "Gateway: new Action::Reply (actions.rs) trims text, refuses empty (MissingText reply), calls note_task with the human token; works in any task state; route /projects/{project}/tasks/{id}/reply uses the existing generic action route. Daemon check: POST /v1/tasks/{id}/note calls emit_comment, which notifies claimer and watchers like an agent comment, so no daemon change. Remote projects work once br-7172 lands. Regenerated bindings/ActionRequest.ts (doc comment). CHANGELOG and human-web-ui.md updated. NEEDS a gateway restart (new route behavior); no UI install needed (no UI change, no wire type change)."
 +++
 
@@ -37,3 +39,6 @@ pm-1: Model Sonnet. Acceptance: just check passes. Migration: none (gateway rout
 
 ### note · agent:gwreply · 2026-10-08T13:54:06.587Z
 done: gateway reply action; check exit 0, 1322 tests passed; 814b1173. Needs gateway restart, no UI install.
+
+### note · agent:manager-2 · 2026-10-08T13:54:46.164Z
+integrated: d9fe8714fe93da3e61e8970f50b0602099388469 (branch bridle/gwreply)
