@@ -4,9 +4,10 @@ title = "Run the mail bridge as a service: 'bridle mail install' for launchd (ma
 kind = "feature"
 state = "planned"
 created_at = "2026-10-08T00:43:32.504Z"
-updated_at = "2026-10-08T01:01:53.626850Z"
+updated_at = "2026-10-08T01:32:27.319106Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+summary = "Added bridle mail install [--force] and mail uninstall (crates/bridle/src/mail_install.rs, modelled on gateway install): LaunchAgent dev.bridle.mail.<project> (macOS) or user unit bridle-mail-<project>.service (Linux), running 'bridle --project P mail run' with BRIDLE_AS=mail and HOME/PATH, restart on crash only, log ~/.bridle/mail-<project>.log. Prints load commands (plus enable-linger), never runs them; refuses overwrite without --force, and refuses on missing/invalid [mail] or missing mail token naming the fix. New discovery::has_credential. Docs mail.md, cli.md, CHANGELOG updated; two mail install/uninstall rows added to project_resolution_test CLASSES. Note: governor_test working_agent_is_notified_then_stopped flaked once under load, passed alone and on rerun."
 ticket = "ezpj"
 +++
 
