@@ -5,7 +5,7 @@
 //! `<bridle_home>/prompts.jsonl` (ticket u6w9).
 
 use std::io::Write as _;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use bridle_daemon::config::{FocusMode, FocusPeriod, focus_end, focus_opted_out, focus_periods};
 use bridle_daemon::focus::{locked_period, read_override};
@@ -42,8 +42,15 @@ pub fn status_line(home: &Path, now: DateTime<Utc>) -> Option<String> {
 }
 
 /// The hook's stdout for `now`: the JSON that adds the nudge to the prompt's context, or
-/// `None` for silence. Records the nudge in `<home>/focus-nudge` as `<unix secs> <period>`.
-pub fn gate(home: &Path, repo: &Path, now: DateTime<Local>) -> Option<String> {
+/// `None` for silence. Records the nudge as `<unix secs> <period>` per session, in
+/// `<home>/focus-nudge.d/<session>`, so one session's prompt doesn't use up another's nudge;
+/// with no session id, in the machine-wide `<home>/focus-nudge`.
+pub fn gate(
+    home: &Path,
+    repo: &Path,
+    now: DateTime<Local>,
+    session: Option<&str>,
+) -> Option<String> {
     let periods = focus_periods(home).ok()?;
     if periods.is_empty() || focus_opted_out(repo) {
         return None;
@@ -58,17 +65,60 @@ pub fn gate(home: &Path, repo: &Path, now: DateTime<Local>) -> Option<String> {
     if read_override(home).is_some_and(|o| o.active(now.with_timezone(&Utc))) {
         return None;
     }
-    let state = home.join(STATE_FILE);
+    let state = state_path(home, session);
     let last = std::fs::read_to_string(&state).ok();
     if !nudge_due(last.as_deref(), period, now.timestamp()) {
         return None;
     }
-    let _ = std::fs::create_dir_all(home);
-    let _ = std::fs::write(&state, format!("{} {}\n", now.timestamp(), period.name));
+    write_state(
+        &state,
+        format!("{} {}\n", now.timestamp(), period.name),
+        now.timestamp(),
+    );
     Some(hook_output(&nudge_text(
         period,
         &end_text(&periods, period, now),
     )))
+}
+
+/// The session's own file, or the machine-wide one when there is no (usable) session id.
+fn state_path(home: &Path, session: Option<&str>) -> PathBuf {
+    let safe = session.filter(|s| {
+        !s.is_empty()
+            && s.chars()
+                .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+    });
+    match safe {
+        Some(s) => home.join(format!("{STATE_FILE}.d")).join(s),
+        None => home.join(STATE_FILE),
+    }
+}
+
+/// Writes through a temp file and a rename: several sessions run the hook at once. Also drops
+/// the files of sessions idle for a day. Best effort; a failed write only means an extra nudge.
+fn write_state(state: &Path, text: String, now: i64) {
+    let Some(dir) = state.parent() else { return };
+    let _ = std::fs::create_dir_all(dir);
+    let tmp = state.with_extension(format!("tmp{}", std::process::id()));
+    if std::fs::write(&tmp, text).is_ok() && std::fs::rename(&tmp, state).is_err() {
+        let _ = std::fs::remove_file(&tmp);
+    }
+    if dir
+        .file_name()
+        .is_some_and(|n| n == format!("{STATE_FILE}.d").as_str())
+    {
+        for e in std::fs::read_dir(dir).into_iter().flatten().flatten() {
+            let old = e
+                .metadata()
+                .and_then(|m| m.modified())
+                .ok()
+                .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+                .is_some_and(|t| now - t.as_secs() as i64 > 24 * 3600);
+            if old {
+                let _ = std::fs::remove_file(e.path());
+            }
+        }
+    }
 }
 
 /// Due on the first prompt of a period (no record, or the record is of another period) and
@@ -246,13 +296,14 @@ pub fn run_gate() {
     if !input.as_ref().is_none_or(is_human_prompt) {
         return;
     }
-    record_prompt(&home, session_id_of(input.as_ref()));
+    let session = session_id_of(input.as_ref());
+    record_prompt(&home, session.clone());
 
     let repo = std::env::var_os("CLAUDE_PROJECT_DIR")
         .map(std::path::PathBuf::from)
         .or_else(|| std::env::current_dir().ok())
         .unwrap_or_default();
-    if let Some(out) = gate(&home, &repo, Local::now()) {
+    if let Some(out) = gate(&home, &repo, Local::now(), session.as_deref()) {
         println!("{out}");
     }
 }
@@ -314,11 +365,14 @@ mod tests {
     #[test]
     fn unconfigured_is_silent_and_writes_nothing() {
         let home = home_with(None);
-        assert_eq!(gate(home.path(), home.path(), at(2026, 9, 30, 10, 0)), None);
+        assert_eq!(
+            gate(home.path(), home.path(), at(2026, 9, 30, 10, 0), None),
+            None
+        );
         assert!(!home.path().join(STATE_FILE).exists());
         let empty = home_with(Some("[budget]\nmax_workers = 3\n"));
         assert_eq!(
-            gate(empty.path(), empty.path(), at(2026, 9, 30, 10, 0)),
+            gate(empty.path(), empty.path(), at(2026, 9, 30, 10, 0), None),
             None
         );
     }
@@ -336,7 +390,7 @@ mod tests {
     #[test]
     fn nudges_first_prompt_then_every_five_minutes() {
         let home = home_with(Some(WORK));
-        let g = |h, m| gate(home.path(), home.path(), at(2026, 9, 30, h, m));
+        let g = |h, m| gate(home.path(), home.path(), at(2026, 9, 30, h, m), None);
         let first = g(10, 0).expect("first prompt nudges");
         assert!(
             first.contains("QUIET HOURS (work) until 6:00 PM ET"),
@@ -359,11 +413,53 @@ mod tests {
     }
 
     #[test]
+    fn each_session_gets_its_own_nudge_and_repeat() {
+        let home = home_with(Some(WORK));
+        let g = |h, m, s: Option<&str>| gate(home.path(), home.path(), at(2026, 9, 30, h, m), s);
+        assert!(g(10, 0, Some("aide")).is_some());
+        assert!(
+            g(10, 1, Some("orch")).is_some(),
+            "second session still nudged"
+        );
+        assert_eq!(g(10, 2, Some("aide")), None);
+        assert_eq!(g(10, 3, Some("orch")), None);
+        assert!(g(10, 5, Some("aide")).is_some());
+        assert_eq!(
+            g(10, 5, Some("orch")),
+            None,
+            "orch's repeat is on its own clock"
+        );
+        assert!(g(10, 6, Some("orch")).is_some());
+    }
+
+    #[test]
+    fn no_session_id_uses_the_machine_wide_record() {
+        let home = home_with(Some(WORK));
+        let g = |m, s: Option<&str>| gate(home.path(), home.path(), at(2026, 9, 30, 10, m), s);
+        assert!(g(0, None).is_some());
+        assert_eq!(g(1, None), None);
+        assert!(
+            g(1, Some("s1")).is_some(),
+            "sessions are independent of the shared file"
+        );
+        assert!(home.path().join(STATE_FILE).exists());
+    }
+
+    #[test]
     fn silent_outside_the_period() {
         let home = home_with(Some(WORK));
-        assert_eq!(gate(home.path(), home.path(), at(2026, 9, 30, 7, 59)), None);
-        assert_eq!(gate(home.path(), home.path(), at(2026, 9, 30, 18, 0)), None);
-        assert_eq!(gate(home.path(), home.path(), at(2026, 10, 3, 10, 0)), None);
+        assert_eq!(
+            gate(home.path(), home.path(), at(2026, 9, 30, 7, 59), None),
+            None
+        );
+        assert_eq!(
+            gate(home.path(), home.path(), at(2026, 9, 30, 18, 0), None),
+            None
+        );
+        assert_eq!(
+            gate(home.path(), home.path(), at(2026, 10, 3, 10, 0), None),
+            None
+        );
     }
 
     #[test]
@@ -377,17 +473,20 @@ mod tests {
             end = "07:00"
             "#,
         ));
-        assert!(gate(home.path(), home.path(), at(2026, 9, 30, 23, 30)).is_some());
+        assert!(gate(home.path(), home.path(), at(2026, 9, 30, 23, 30), None).is_some());
         // A new period name or a gap over 5 minutes both re-nudge; here the gap.
-        assert!(gate(home.path(), home.path(), at(2026, 10, 1, 6, 0)).is_some());
-        assert_eq!(gate(home.path(), home.path(), at(2026, 10, 1, 12, 0)), None);
+        assert!(gate(home.path(), home.path(), at(2026, 10, 1, 6, 0), None).is_some());
+        assert_eq!(
+            gate(home.path(), home.path(), at(2026, 10, 1, 12, 0), None),
+            None
+        );
     }
 
     #[test]
     fn locked_blocks_every_prompt() {
         let home = home_with(Some(&WORK.replace("quiet", "locked")));
         for m in [0, 1, 30] {
-            let out = gate(home.path(), home.path(), at(2026, 9, 30, 10, m)).expect("blocks");
+            let out = gate(home.path(), home.path(), at(2026, 9, 30, 10, m), None).expect("blocks");
             let v: serde_json::Value = serde_json::from_str(&out).expect("json");
             assert_eq!(v["decision"], "block");
             assert_eq!(
@@ -395,7 +494,10 @@ mod tests {
                 "Locked until 6:00 PM. Email bridle@dev.branam.us if it matters."
             );
         }
-        assert_eq!(gate(home.path(), home.path(), at(2026, 9, 30, 18, 0)), None);
+        assert_eq!(
+            gate(home.path(), home.path(), at(2026, 9, 30, 18, 0), None),
+            None
+        );
     }
 
     #[test]
@@ -419,7 +521,10 @@ mod tests {
             "focus_hours = false\n",
         )
         .expect("write");
-        assert_eq!(gate(home.path(), repo.path(), at(2026, 9, 30, 10, 0)), None);
+        assert_eq!(
+            gate(home.path(), repo.path(), at(2026, 9, 30, 10, 0), None),
+            None
+        );
         std::fs::write(
             home.path().join(OVERRIDE_FILE),
             "until = 2099-01-01T00:00:00Z\nreason = \"deploy\"\n",
@@ -427,7 +532,7 @@ mod tests {
         .expect("write");
         let o = read_override(home.path()).expect("parses");
         let t = (o.from + chrono::Duration::minutes(1)).with_timezone(&Local);
-        assert_eq!(gate(home.path(), home.path(), t), None);
+        assert_eq!(gate(home.path(), home.path(), t, None), None);
     }
 
     #[test]
@@ -440,7 +545,10 @@ mod tests {
             "focus_hours = false\n",
         )
         .expect("write");
-        assert_eq!(gate(home.path(), repo.path(), at(2026, 9, 30, 10, 0)), None);
+        assert_eq!(
+            gate(home.path(), repo.path(), at(2026, 9, 30, 10, 0), None),
+            None
+        );
     }
 
     #[test]
@@ -448,7 +556,7 @@ mod tests {
         let home = home_with(Some(WORK));
         std::fs::write(home.path().join(OVERRIDE_FILE), "garbage [").expect("write");
         assert!(read_override(home.path()).is_none());
-        assert!(gate(home.path(), home.path(), at(2026, 9, 30, 10, 0)).is_some());
+        assert!(gate(home.path(), home.path(), at(2026, 9, 30, 10, 0), None).is_some());
     }
 
     #[test]
@@ -472,7 +580,8 @@ mod tests {
         )
         .expect("copy");
         let o = read_override(always.path()).expect("parses");
-        let g = |t: DateTime<Utc>| gate(always.path(), always.path(), t.with_timezone(&Local));
+        let g =
+            |t: DateTime<Utc>| gate(always.path(), always.path(), t.with_timezone(&Local), None);
         assert!(g(o.from - Duration::minutes(1)).is_some(), "pending nudges");
         assert_eq!(g(o.from + Duration::minutes(1)), None, "active is silent");
         assert!(
@@ -484,7 +593,10 @@ mod tests {
     #[test]
     fn a_bad_mode_is_silent_not_an_error() {
         let home = home_with(Some(&WORK.replace("quiet", "loud")));
-        assert_eq!(gate(home.path(), home.path(), at(2026, 9, 30, 10, 0)), None);
+        assert_eq!(
+            gate(home.path(), home.path(), at(2026, 9, 30, 10, 0), None),
+            None
+        );
     }
 
     #[test]
@@ -579,7 +691,7 @@ mod tests {
 
         record_prompt(&unwritable_home, None);
 
-        let gate_before = gate(home.path(), home.path(), at(2026, 9, 30, 10, 0));
+        let gate_before = gate(home.path(), home.path(), at(2026, 9, 30, 10, 0), None);
         assert_eq!(gate_before, None, "gate output should be unchanged");
     }
 }

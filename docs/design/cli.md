@@ -733,8 +733,9 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   orchestrator. It does nothing on a `<task-notification>` prompt (not the human), and its quiet-hours text
   says restarting watchers is always allowed. Inside a `quiet` `[[focus]]` period ([[roles-and-config]], Focus hours) it prints
   hook JSON whose `additionalContext` is "Quiet hours (work) until 6:00 PM ET" plus the nudge
-  instruction, on the first prompt of a period and again once 5 minutes have passed
-  (last nudge in `$BRIDLE_HOME/focus-nudge`). With no `[[focus]]`, outside a period, or in a
+  instruction, on the first prompt of a period and again once 5 minutes have passed, per session
+  (last nudge in `$BRIDLE_HOME/focus-nudge.d/<session_id>`, files idle a day are pruned; with no
+  session id, the machine-wide `$BRIDLE_HOME/focus-nudge`; an old-format file there is overwritten). With no `[[focus]]`, outside a period, or in a
   project with `focus_hours = false`, it prints nothing. In a `locked` period it blocks every prompt
   (`{"decision":"block"}`, reason "Locked until 6:00 PM. Email bridle@dev.branam.us if it
   matters."). `bridle session advisor`, `bridle session aide` and `bridle advisor start` refuse while locked. Local, never fails. An active override file (roles-and-config, Focus hours) silences it, and
