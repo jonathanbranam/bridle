@@ -4,10 +4,11 @@ title = "WSL2 host: write the step-by-step setup guide docs/context/windows-wsl2
 kind = "chore"
 state = "planned"
 created_at = "2026-10-07T23:25:20.488Z"
-updated_at = "2026-10-08T00:37:16.329774Z"
+updated_at = "2026-10-08T01:01:51.833707Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 size = "S"
+summary = '''Added docs/context/windows-wsl2-host.md: the human's step-by-step guide to turn the Windows PC into a bridle host under WSL2 (Ubuntu), modelled on docs/context/nuc-host.md. Six numbered steps, each with commands and a check: (1) wsl --install -d Ubuntu; (2) %UserProfile%\.wslconfig (vmIdleTimeout=-1, networkingMode=mirrored, memory/processors left as fill-in placeholders because CPU and RAM are unknown) and /etc/wsl.conf (systemd=true); (3) Tailscale inside WSL, not on Windows, as the NUC does; (4) Task Scheduler start-up task plus green (schtasks /run) and red (wsl.exe --shutdown) desktop shortcuts; (5) power and Windows Update settings, and unattended-upgrades Automatic-Reboot off; (6) toolchain (rustup, just, cargo-nextest, tmux, claude) and bridle (just install), then bridle systemd install, marked to be verified under WSL's systemd (audit task br-4yc8). Steps not confirmed on the PC are marked unverified. Index row added in docs/README.md. Decisions: Tailscale inside WSL (the Linux host gets its own name, like the NUC); the red and green buttons are desktop shortcuts, not built. Caveat: the human's PC name, CPU, RAM and active hours are still <fill in> placeholders. Docs only; no code changed.'''
 +++
 
 Ticket: docs/tickets/open/run-bridle-s-heavy-work-on-the-windows-pc-under-wsl2-v7ug.md (read it, and docs/tickets/open/ ur9v: the-windows-gaming-pc-as-a-bridle-host-without-wiping-window-ur9v, for the research and the human's answers: Windows Home, BitLocker off, plenty of disk, gaming means bridle stops, a big red / big green button).
@@ -29,3 +30,6 @@ Step 6 refers to the audit task: it is br-4yc8 (WSL2 audit). Link it by that id 
 
 ### note · agent:pm-1 · 2026-10-08T00:37:16.329Z
 pm-1: the audit landed (ticket v7ug, section Audit). Fold its facts into the guide: Tailscale must run INSIDE the Ubuntu distro (needs systemd), not only on Windows; the Task Scheduler start-up task must run a held-open command (e.g. 'wsl -d Ubuntu -- sleep infinity') and .wslconfig needs vmIdleTimeout raised, or linger alone does not keep WSL up; work in the Linux home, never /mnt/c; apt packages: build-essential, pkg-config, cmake, git, tmux (verify the list); 'claude auth login' headless. Follow-ups are tasks, not the guide's job.
+
+### note · agent:wsl2guide · 2026-10-08T01:01:51.833Z
+just check on bridle/wsl2guide (docs-only change) exits 100: 1 failed test, upgrade_test::a_drain_holds_new_turns_and_delivers_them_after_the_restart (panic at crates/bridle-daemon/tests/upgrade_test.rs:462). It failed on two full runs and passes alone (1 passed). The code is identical to main, so this is a pre-existing flake under parallel load, not from this change. Not fixed (out of scope; the test must not be loosened). Changes left uncommitted until the check is green.

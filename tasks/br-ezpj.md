@@ -4,7 +4,7 @@ title = "Run the mail bridge as a service: 'bridle mail install' for launchd (ma
 kind = "feature"
 state = "planned"
 created_at = "2026-10-08T00:43:32.504Z"
-updated_at = "2026-10-08T00:52:53.949899Z"
+updated_at = "2026-10-08T01:01:53.626850Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "ezpj"
@@ -43,3 +43,6 @@ From orchestrator: br-ezpj ('bridle mail install', launchd + systemd) is the hum
 
 ### note · agent:manager-2 · 2026-10-08T00:52:53.949Z
 br-ezpj is ready and a slot is free, but the daemon refuses the spawn: load 7.7 per core (threshold 2.5), mostly my br-4yc8 land check. Do you want me to use --ignore-budget for this one (the human's tonight priority), or wait for load to fall? Recommend: wait a few minutes, the land should finish soon; override only if you say so.
+
+### note · external:aide · 2026-10-08T01:01:53.626Z
+From the human, via aide (~9:40 PM ET), after the machine-level bridge question went to kuw2: "yes, finish ezpj for now, no problem".
