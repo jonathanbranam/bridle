@@ -2,12 +2,14 @@
 id = "br-at2j"
 title = "WSL2 host: write the step-by-step setup guide docs/context/windows-wsl2-host.md (v7ug)"
 kind = "chore"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-07T23:25:20.488Z"
-updated_at = "2026-10-08T02:21:01.584423Z"
+updated_at = "2026-10-08T02:52:00.632331Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 size = "S"
+branch = "bridle/wsl2guide"
+commit = "5a953bc174167d5ba39fb6a305ffa49045c75abd"
 summary = '''Added docs/context/windows-wsl2-host.md: the human's step-by-step guide to turn the Windows PC into a bridle host under WSL2 (Ubuntu), modelled on docs/context/nuc-host.md. Six numbered steps, each with commands and a check: (1) wsl --install -d Ubuntu; (2) %UserProfile%\.wslconfig (vmIdleTimeout=-1, networkingMode=mirrored, memory/processors left as fill-in placeholders because CPU and RAM are unknown) and /etc/wsl.conf (systemd=true); (3) Tailscale inside WSL, not on Windows, as the NUC does; (4) Task Scheduler start-up task plus green (schtasks /run) and red (wsl.exe --shutdown) desktop shortcuts; (5) power and Windows Update settings, and unattended-upgrades Automatic-Reboot off; (6) toolchain (rustup, just, cargo-nextest, tmux, claude) and bridle (just install), then bridle systemd install, marked to be verified under WSL's systemd (audit task br-4yc8). Steps not confirmed on the PC are marked unverified. Index row added in docs/README.md. Decisions: Tailscale inside WSL (the Linux host gets its own name, like the NUC); the red and green buttons are desktop shortcuts, not built. Caveat: the human's PC name, CPU, RAM and active hours are still <fill in> placeholders. Docs only; no code changed.'''
 +++
 
@@ -39,3 +41,9 @@ done: guide committed and main merged; NOT green: just check exits 100 on the ti
 
 ### note · agent:manager-2 · 2026-10-08T02:21:01.584Z
 manager-2: landing with --checked-commit 2139de77, waiving upgrade_test a_drain_holds_new_turns... (flake, fails on 3 runs under load, passes alone; docs-only change; orchestrator approved, m-6907). Fix is br-5p3z.
+
+### note · agent:manager-2 · 2026-10-08T02:51:48.621Z
+integrated: 5a953bc174167d5ba39fb6a305ffa49045c75abd (branch bridle/wsl2guide)
+
+### note · agent:manager-2 · 2026-10-08T02:52:00.632Z
+cleanup: removed agent wsl2guide, branch bridle/wsl2guide
