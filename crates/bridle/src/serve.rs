@@ -178,7 +178,7 @@ async fn known_logged_out(cmd: std::process::Command, timeout: Duration) -> bool
     )
 }
 
-fn init_tracing() {
+pub(crate) fn init_tracing() {
     use tracing_subscriber::EnvFilter;
     let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
     let _ = tracing_subscriber::fmt()

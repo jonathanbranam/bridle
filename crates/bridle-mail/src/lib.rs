@@ -5,6 +5,7 @@
 
 mod bridge;
 mod config;
+mod failures;
 mod local;
 mod outbound;
 mod parse;

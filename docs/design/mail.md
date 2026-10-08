@@ -21,6 +21,8 @@ Linux, `sudo loginctl enable-linger <user>`) and never runs them; it refuses to 
 `--force`, and refuses when `[mail]` is missing or invalid or the `mail` token for the project is
 not in `credentials.toml`. `bridle mail uninstall` removes the file and prints the unload command.
 
+Logging: `bridle mail run` logs to stderr (the service log above) with the `RUST_LOG` filter, info by default. A failure that repeats every poll (`mail poll`, `mail outbound`, or one object) logs once at warn, repeats at debug, and one info line when it clears.
+
 ## Config
 
 `[mail]` in `~/.bridle/config.toml` (the daemon accepts and ignores it). AWS credentials come from

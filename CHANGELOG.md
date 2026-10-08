@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Fixed
+- `bridle mail run` now logs to stderr (or its service log) like `serve`, filtered by `RUST_LOG`, info by default, so a refused SES send or a failed poll no longer goes unseen; a failure that repeats every poll logs once at warn, repeats at debug, and one info line when it clears (br-gdyy).
 - `bridle orchestrator wait-for-wake` works against daemons older than br-2672 again: it waits on `GET /v1/orchestrator/wake`, which every daemon serves, instead of `GET /v1/wake` (older daemons answered that with empty message wakes or 403) (br-grdg).
 
 ### Added

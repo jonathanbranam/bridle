@@ -261,6 +261,7 @@ pub(super) async fn bridle_counts(cwd: &Path, env: &impl Env, token_path: &Path)
 /// `bridle wait-for-wake`: the daemon holds the request until a wake is pending.
 /// `bridle mail run`: the mail bridge for this daemon's project, until interrupted.
 pub(super) async fn mail_run(cli: &Cli) -> Result<(), CliError> {
+    crate::serve::init_tracing();
     let cwd = std::env::current_dir().context("current directory")?;
     let endpoint = discovery::resolve_endpoint(
         cli.url.as_deref(),

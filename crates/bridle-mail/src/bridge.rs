@@ -12,6 +12,7 @@ use chrono::{DateTime, NaiveDateTime, Utc};
 use std::collections::HashMap;
 
 use crate::config::MailConfig;
+use crate::failures::Failures;
 use crate::local::{FixedLocal, Local};
 use crate::outbound::{
     Feed, Mailer, OutMail, Sent, digest_due, digest_mail, is_open_question, question_mail,
@@ -121,6 +122,7 @@ pub struct Bridge {
     attachments_dir: PathBuf,
     /// Rejected keys, so a poll doesn't fetch and log the same stranger again.
     rejected: Mutex<HashSet<String>>,
+    failures: Failures,
     /// When each waiting mail was first seen, to time the "not delivered yet" reply.
     waiting_since: Mutex<HashMap<String, DateTime<Utc>>>,
     local: Arc<dyn Local>,
@@ -142,6 +144,7 @@ impl Bridge {
             project,
             attachments_dir,
             rejected: Mutex::new(HashSet::new()),
+            failures: Failures::default(),
             waiting_since: Mutex::new(HashMap::new()),
             local: Arc::new(FixedLocal {
                 owns: true,
@@ -166,11 +169,13 @@ impl Bridge {
 
     pub async fn run(&self) -> anyhow::Result<()> {
         loop {
-            if let Err(e) = self.poll_once().await {
-                tracing::warn!("mail poll failed: {e:#}");
+            match self.poll_once().await {
+                Ok(_) => self.failures.ok("mail poll"),
+                Err(e) => self.failures.failed("mail poll", &e),
             }
-            if let Err(e) = self.poll_outbound(chrono::Local::now().naive_local()).await {
-                tracing::warn!("mail outbound failed: {e:#}");
+            match self.poll_outbound(chrono::Local::now().naive_local()).await {
+                Ok(_) => self.failures.ok("mail outbound"),
+                Err(e) => self.failures.failed("mail outbound", &e),
             }
             tokio::time::sleep(self.cfg.poll_interval()).await;
         }
@@ -188,9 +193,13 @@ impl Bridge {
             if self.rejected.lock().expect("rejected lock").contains(&key) {
                 continue;
             }
+            let kind = format!("mail {key}");
             match self.handle(&key, now).await {
-                Ok(outcome) => done.push((key, outcome)),
-                Err(e) => tracing::warn!("mail {key}: {e:#}"),
+                Ok(outcome) => {
+                    self.failures.ok(&kind);
+                    done.push((key, outcome));
+                }
+                Err(e) => self.failures.failed(&kind, &e),
             }
         }
         Ok(done)
