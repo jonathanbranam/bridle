@@ -4,7 +4,7 @@ title = "A project's aide messages an orchestrator that isn't watching that proj
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-08T01:05:40.485Z"
-updated_at = "2026-10-08T05:07:58.201665Z"
+updated_at = "2026-10-08T05:08:20.941652Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 branch = "bridle/roleclarify"
@@ -55,3 +55,6 @@ done: role text clarified (aide per project, orchestrator per machine, waiter_op
 
 ### note · agent:manager-2 · 2026-10-08T05:07:58.201Z
 integrated: 40322d67046e930187da063ebdc2cf95c2191679 (branch bridle/roleclarify)
+
+### note · agent:manager-2 · 2026-10-08T05:08:20.941Z
+cleanup: removed agent roleclarify, branch bridle/roleclarify
