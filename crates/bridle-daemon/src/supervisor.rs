@@ -599,11 +599,25 @@ impl AgentManager {
     /// Updates every live agent's containment tracker from one process
     /// snapshot (agents.md, Containment; called every `tracker_interval`).
     pub async fn tick_tracker(&self) {
-        let snap = match tokio::task::spawn_blocking(containment::snapshot).await {
+        self.tick_tracker_with(containment::snapshot).await;
+    }
+
+    /// [`Self::tick_tracker`] with the snapshot source injected. With no live
+    /// agent it takes no snapshot at all: the snapshot forks `ps`, and every
+    /// idle (or test) daemon doing that every 2 s drove the machine's load up.
+    async fn tick_tracker_with(
+        &self,
+        snapshot: fn() -> std::io::Result<Vec<containment::ProcInfo>>,
+    ) {
+        let runtimes = self.runtimes_snapshot();
+        if runtimes.is_empty() {
+            return;
+        }
+        let snap = match tokio::task::spawn_blocking(snapshot).await {
             Ok(Ok(s)) => s,
             _ => return,
         };
-        for (_, rt) in self.runtimes_snapshot() {
+        for (_, rt) in runtimes {
             let mut st = rt.state.lock().await;
             st.tracker.update(&snap);
         }
@@ -3355,6 +3369,30 @@ mod tests {
     fn renewal_without_note_says_so() {
         let s = renewal_lead_in(None, Some("br-abcd"), None);
         assert!(s.contains("br-abcd") && s.contains("No handover note"));
+    }
+
+    #[tokio::test]
+    async fn tracker_takes_no_snapshot_without_agents() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        static CALLS: AtomicUsize = AtomicUsize::new(0);
+        fn counting() -> std::io::Result<Vec<containment::ProcInfo>> {
+            CALLS.fetch_add(1, Ordering::SeqCst);
+            Ok(Vec::new())
+        }
+        let dir = tempfile::tempdir().unwrap();
+        let store = Store::open(dir.path().join("bridle.db")).await.unwrap();
+        let manager = AgentManager::new(
+            store.clone(),
+            Workspace::new(dir.path().join("repo"), None),
+            Config::default(),
+            "claude".to_string(),
+            "http://127.0.0.1:0".to_string(),
+            "test".to_string(),
+            Emitter::new(store),
+            Default::default(),
+        );
+        manager.tick_tracker_with(counting).await;
+        assert_eq!(CALLS.load(Ordering::SeqCst), 0);
     }
 
     #[test]

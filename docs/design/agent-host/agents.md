@@ -254,7 +254,8 @@ The implementation today uses the process table. A `Containment` trait
 (research 01 §5.2) is defined for a cgroup implementation on Linux, but isn't
 wired in yet.
 
-- **Track**: every 2 s, and just before any stop, snapshot the process table
+- **Track**: every 2 s while at least one agent is live (with none, the tick takes no
+  snapshot: it forks `ps`, and idle daemons doing it drove machine load up), and just before any stop, snapshot the process table
   (`ps -axo pid,ppid,pgid,lstart`) once. Prune the agent's *seen* set to what
   that snapshot confirms still exists (a pid that's gone, or reused by a
   different process, is dropped; the check is pid + start time identity only,

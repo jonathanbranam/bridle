@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Gateway: `POST /api/v1/projects/{project}/tasks/{id}/reply` adds the human's reply to any task's thread (any state), notifying the claimer and watchers like a comment (br-hc6j).
 
 ### Fixed
+- A daemon with no live agents no longer forks `ps` every 2 s for the containment tracker; dozens of idle and test daemons at once had pushed machine load past the governor's hold (br-3p3h).
 - `bridle mail run` now logs to stderr (or its service log) like `serve`, filtered by `RUST_LOG`, info by default, so a refused SES send or a failed poll no longer goes unseen; a failure that repeats every poll logs once at warn, repeats at debug, and one info line when it clears (br-gdyy).
 - `bridle orchestrator wait-for-wake` works against daemons older than br-2672 again: it waits on `GET /v1/orchestrator/wake`, which every daemon serves, instead of `GET /v1/wake` (older daemons answered that with empty message wakes or 403) (br-grdg).
 
