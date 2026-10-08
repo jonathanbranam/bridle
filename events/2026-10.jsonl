@@ -1104,3 +1104,4 @@
 {"actor":"human","at":"2026-10-08T12:52:01.654Z","from":"","task":"br-xg47","to":"pending"}
 {"actor":"external:orchestrator","at":"2026-10-08T12:52:01.655546Z","from":"pending","task":"br-xg47","to":"open"}
 {"actor":"external:orchestrator","at":"2026-10-08T12:52:01.655925Z","from":"open","task":"br-xg47","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-08T12:52:23.482109Z","queue":"reprioritized"}
