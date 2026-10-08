@@ -2,9 +2,9 @@
 id = "br-9z2n"
 title = "Daemon reads the process table without forking ps (3p3h fix 3)"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-10-08T17:49:55.764Z"
-updated_at = "2026-10-08T17:49:55.767206Z"
+updated_at = "2026-10-08T17:50:59.174943Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",

@@ -1126,3 +1126,4 @@
 {"actor":"system","at":"2026-10-08T16:48:05.928361Z","from":"open","task":"br-vn54","to":"pending"}
 {"actor":"agent:manager-2","at":"2026-10-08T17:35:52.466644Z","from":"planned","task":"br-eyu3","to":"integrated"}
 {"actor":"human","at":"2026-10-08T17:49:55.764Z","from":"","task":"br-9z2n","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-10-08T17:50:59.174943Z","from":"pending","task":"br-9z2n","to":"open"}
