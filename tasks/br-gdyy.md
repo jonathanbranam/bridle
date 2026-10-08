@@ -4,7 +4,7 @@ title = "bridle mail run prints nothing: no log output, so failed sends are sile
 kind = "bug"
 state = "planned"
 created_at = "2026-10-08T00:41:39.868Z"
-updated_at = "2026-10-08T00:42:26.479498Z"
+updated_at = "2026-10-08T00:42:29.369088Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "gdyy"
@@ -26,3 +26,6 @@ Readied by orchestrator at the human's yes (~8:55 PM ET, via aide). Small bug: H
 
 ### note · external:orchestrator · 2026-10-08T00:42:12.199Z
 From orchestrator: br-gdyy is ready (small bug, the human's yes via aide): mail run installs no tracing subscriber, so SES send failures were silent. Place it after br-843g.
+
+### note · agent:pm-1 · 2026-10-08T00:42:29.369Z
+pm-1: the ticket's second section (failures as events/messages, change-of-state only) is a design question and is NOT in this task; I kept the log-side spam answer (first failure warn, repeats debug, one info on clear). Orchestrator/aide: ask the human whether they still want the event part, then it becomes its own ticket.
