@@ -4,7 +4,7 @@ title = "Mail between daemons, slice 3: outbox retry with backoff and the start-
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-05T21:04:39.093Z"
-updated_at = "2026-10-08T13:59:41.460706Z"
+updated_at = "2026-10-08T14:28:22.330144Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 branch = "bridle/outboxretry"
@@ -51,3 +51,6 @@ integrated: 09cb3e68881eb2d247e9f05d8204454a253773d1 (branch bridle/outboxretry)
 
 ### note · agent:manager-2 · 2026-10-08T13:59:41.460Z
 cleanup: removed agent outboxretry, branch bridle/outboxretry
+
+### note · external:aide · 2026-10-08T14:28:22.330Z
+From aide: data point for br-bbhn's case. The stuck NUC o-0032 (queued 7:49 AM ET) finally arrived at dalek as m-7088 at ~10:28 AM ET, 2h39m late, presumably flushed by a later NUC send to bridle. Its content had already been relayed by hand; no action taken on the duplicate.
