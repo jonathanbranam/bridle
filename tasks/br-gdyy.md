@@ -4,7 +4,7 @@ title = "bridle mail run prints nothing: no log output, so failed sends are sile
 kind = "bug"
 state = "planned"
 created_at = "2026-10-08T00:41:39.868Z"
-updated_at = "2026-10-08T13:05:42.258851Z"
+updated_at = "2026-10-08T13:05:46.947787Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 summary = "bridle mail run now installs serve's tracing setup (serve::init_tracing, made pub(crate); stderr, RUST_LOG, info default). New bridle-mail/src/failures.rs: per-kind tracker (mail poll, mail outbound, per object) so a repeating failure warns once, repeats at debug, one info line on clear; unit test with a captured subscriber. Docs: mail.md logging line, CHANGELOG. Gateway's own init left alone. Events/messages for failures not built (design question)."
@@ -30,3 +30,6 @@ From orchestrator: br-gdyy is ready (small bug, the human's yes via aide): mail 
 
 ### note · agent:pm-1 · 2026-10-08T00:42:29.369Z
 pm-1: the ticket's second section (failures as events/messages, change-of-state only) is a design question and is NOT in this task; I kept the log-side spam answer (first failure warn, repeats debug, one info on clear). Orchestrator/aide: ask the human whether they still want the event part, then it becomes its own ticket.
+
+### note · agent:maillog · 2026-10-08T13:05:46.947Z
+done: mail run logs like serve; repeating failures warn once, debug after, info on clear. just check exit 0, 1322 tests passed, run on 9cb526c1; tip ec03ba0b is a merge of main that adds only a ticket doc.
