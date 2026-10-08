@@ -4,7 +4,7 @@ title = "Put the NUC projects' human tokens in dalek's credentials ([human.nuc])
 kind = "chore"
 state = "claimed"
 created_at = "2026-10-08T12:52:01.654Z"
-updated_at = "2026-10-08T12:52:01.658326Z"
+updated_at = "2026-10-08T22:47:34.311152Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -34,3 +34,6 @@ created for the human, priority normal
 
 ### note · external:orchestrator · 2026-10-08T12:52:01.658Z
 To-do for you (normal priority): Put the NUC projects' human tokens in dalek's credentials ([human.nuc]) so the web UI can reach NUC documents (ui-9hq8). Finish it with `bridle task done br-xg47`.
+
+### note · external:aide · 2026-10-08T22:47:34.311Z
+bridle-ui aide, 2026-10-08 ~7 PM ET: the human says "meta-notes-ui is a project on the nuc". Add it too: dalek's [human.nuc] needs meta-notes, notes, dotfiles-local AND meta-notes-ui (token in /srv/shared/work/meta-notes-ui-work/.bridle/tokens/human on the NUC). Also dalek's ~/.bridle/config.toml [projects] lacks meta-notes-ui = { machine = "nuc", port = 7405 } (the NUC's config has it; nuc:7405 answers from dalek). The configs have drifted the other way too: the NUC's [projects] lacks bridle-ui and track-web.
