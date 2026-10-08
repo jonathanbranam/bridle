@@ -562,9 +562,20 @@ async fn orchestrator_wake(
             "only external:orchestrator may wait for wakes",
         ));
     }
+    let wakes = orchestrator_wakes(&state, &principal.id, q.timeout_secs).await;
+    Ok(Json(WakeResponse { wakes }))
+}
+
+/// The orchestrator's wait, shared by `GET /v1/orchestrator/wake` and `GET /v1/wake` for
+/// `external:orchestrator`: queued wakes at once, else the next one, empty at the timeout.
+async fn orchestrator_wakes(
+    state: &AppState,
+    reader: &str,
+    timeout_secs: Option<u64>,
+) -> Vec<bridle_api::types::WakeReason> {
     // Held while the request is open; a client that hangs up drops this future and the guard.
     let _waiting = state.waiters.opened();
-    let timeout = crate::wake::clamp_timeout(q.timeout_secs, crate::wake::POLL_TIMEOUT);
+    let timeout = crate::wake::clamp_timeout(timeout_secs, crate::wake::POLL_TIMEOUT);
     let wakes = tokio::select! {
         w = state.wakes.wait(timeout) => w,
         reason = state.waiters.stopping() => vec![bridle_api::types::WakeReason {
@@ -580,10 +591,10 @@ async fn orchestrator_wake(
     // messages (in `detail`, text included) are read now that they're being returned.
     for w in wakes.iter().filter(|w| w.reason == "message") {
         if let Some(id) = w.detail["id"].as_str() {
-            mark_read_by(&state, id, &principal.id).await;
+            mark_read_by(state, id, reader).await;
         }
     }
-    Ok(Json(WakeResponse { wakes }))
+    wakes
 }
 
 /// The long poll behind `bridle agent wake <identifier>`: the daemon decides when
@@ -594,19 +605,37 @@ async fn principal_wake(
     Query(q): Query<bridle_api::types::PrincipalWakeQuery>,
 ) -> Result<Json<bridle_api::types::PrincipalWakeResponse>, ApiError> {
     let target = wake_target(&state, &principal, &q.principal).await?;
+    // The orchestrator's wakes are taken off a shared queue: only it may drain them.
+    if target == crate::wake::ORCHESTRATOR && principal.id != crate::wake::ORCHESTRATOR {
+        return Err(ApiError::forbidden(
+            "only external:orchestrator may wait for its wakes",
+        ));
+    }
     let timeout = crate::wake::clamp_timeout(q.timeout_secs, crate::wake::MAX_WAKE_TIMEOUT);
     // Messages handed to a non-human are read; the human's reads are explicit.
     let take = principal.kind != PrincipalKind::Human;
     let (_waiting, ended) = state
         .waiters
         .principal_opened(&target, q.session.as_deref());
+    // The orchestrator's wakes are daemon-decided facts queued in `Wakes`, not just unread
+    // messages; they come back as reasons carrying the same text and detail as before.
+    let orchestrator = target == crate::wake::ORCHESTRATOR;
     let reasons = tokio::select! {
         biased;
         _ = ended => vec![bridle_api::types::PrincipalWakeReason {
             reason: bridle_api::types::WAIT_SUPERSEDED_WAKE.to_string(),
             ..Default::default()
         }],
-        r = crate::principal_wake::wait(&state.store, &state.emitter, &target, timeout, take) => r?,
+        w = orchestrator_wakes(&state, &target, q.timeout_secs), if orchestrator => w
+            .into_iter()
+            .map(|w| bridle_api::types::PrincipalWakeReason {
+                reason: w.reason,
+                text: Some(w.text),
+                detail: Some(w.detail),
+                ..Default::default()
+            })
+            .collect(),
+        r = crate::principal_wake::wait(&state.store, &state.emitter, &target, timeout, take), if !orchestrator => r?,
         reason = state.waiters.stopping() => vec![bridle_api::types::PrincipalWakeReason {
             reason: bridle_api::types::DAEMON_STOPPING_WAKE.to_string(),
             text: Some(reason),

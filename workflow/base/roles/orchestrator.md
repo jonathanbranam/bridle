@@ -62,7 +62,7 @@ task needs the human, with `bridle task new "[at restart] <what>" -k feature --f
   the manager (or the agents `bridle agents` lists) with
   `bridle send <agent> "From orchestrator: ..."`. Keep the workers busy without
   overloading the machine.
-- **Watch, don't poll by hand.** Run `bridle orchestrator wait-for-wake` in the background. The
+- **Watch, don't poll by hand.** Run `bridle agent wake external:orchestrator` in the background (`bridle orchestrator wait-for-wake` is an alias that still works and prints the same). The
   daemon holds it until something needs you, then it prints the reasons and exits.
   Choose its `--timeout SECS` yourself (default 25 minutes, max 6900): long when the work is
   quiet, shorter when it is busy or unstable, or when you want a check after work quiets down

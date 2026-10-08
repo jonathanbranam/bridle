@@ -363,7 +363,22 @@ pub(super) async fn wait_for_mail(cli: &Cli, timeout: Option<u64>) -> Result<(),
 
 pub(super) async fn wait_for_wake(cli: &Cli, timeout: Option<u64>) -> Result<(), CliError> {
     let client = client_for(cli).await?;
-    let wakes = client.orchestrator_wake(timeout).await?.wakes;
+    // The same wait as `bridle agent wake external:orchestrator`, printed as it always was.
+    let wakes: Vec<bridle_api::types::WakeReason> = client
+        .principal_wake(&bridle_api::types::PrincipalWakeQuery {
+            principal: "external:orchestrator".to_string(),
+            timeout_secs: timeout,
+            session: None,
+        })
+        .await?
+        .reasons
+        .into_iter()
+        .map(|r| bridle_api::types::WakeReason {
+            reason: r.reason,
+            text: r.text.unwrap_or_default(),
+            detail: r.detail.unwrap_or_default(),
+        })
+        .collect();
     if cli.json {
         println!(
             "{}",

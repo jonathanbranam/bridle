@@ -288,6 +288,11 @@ pub(super) async fn wake(cli: &Cli, args: &WakeArgs) -> Result<(), CliError> {
                         println!("message {} from {}:\n{}", m.id, m.from, m.body);
                     }
                 }
+                // The orchestrator's reasons: the text, then the raw fact, as wait-for-wake does.
+                _ if r.detail.is_some() => {
+                    println!("{}: {}", r.reason, r.text.as_deref().unwrap_or_default());
+                    println!("{}", r.detail.as_ref().unwrap_or(&serde_json::Value::Null));
+                }
                 _ => println!("{}: {}", r.reason, r.message_ids.join(" ")),
             }
         }

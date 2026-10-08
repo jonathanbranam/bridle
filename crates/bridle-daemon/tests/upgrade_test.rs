@@ -577,3 +577,22 @@ async fn a_long_drain_wakes_the_orchestrator_once() {
     assert!(seen[0].text.contains("slow"), "{:?}", seen[0]);
     daemon.running.join().await.expect("join");
 }
+
+#[tokio::test]
+async fn a_daemon_raised_wake_also_comes_through_agent_wake() {
+    let (daemon, _tmp) =
+        support::start_daemon(Some(hooks("success", "echo boom >&2; exit 3"))).await;
+    daemon.client.restart(&upgrade()).await.expect("reply");
+    let orch = daemon.external_client("orchestrator").await;
+    let got = orch
+        .principal_wake(&bridle_api::types::PrincipalWakeQuery {
+            principal: "external:orchestrator".to_string(),
+            timeout_secs: Some(5),
+            session: None,
+        })
+        .await
+        .expect("wake")
+        .reasons;
+    let failed = got.iter().find(|r| r.reason == "upgrade_failed");
+    assert!(failed.is_some_and(|r| r.detail.is_some()), "{got:?}");
+}

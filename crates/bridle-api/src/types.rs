@@ -388,6 +388,10 @@ pub struct PrincipalWakeReason {
     /// For `daemon_stopping`: why the daemon is stopping or restarting.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub text: Option<String>,
+    /// For the orchestrator's reasons (`agent_exited`, `usage`, `context`, ...): the raw fact,
+    /// the same payload `wait-for-wake` has always returned. `message` carries it too.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub detail: Option<Value>,
 }
 
 /// The answer to `GET /v1/wake`: no reasons means the timeout came first.
