@@ -4,7 +4,7 @@ title = "One scheduler for timed actions: scheduled messages (hrcn), nightly ses
 kind = "feature"
 state = "pending"
 created_at = "2026-10-05T10:47:07.760Z"
-updated_at = "2026-10-05T10:47:20.780204Z"
+updated_at = "2026-10-08T14:29:05.481183Z"
 created_by = "external:orchestrator@nuc"
 watchers = ["external:orchestrator@nuc"]
 ticket = "yfv5"
@@ -31,3 +31,9 @@ submitted by external:orchestrator@nuc
 
 ### note · agent:pm-1 · 2026-10-05T10:47:20.780Z
 Triage (pm-1): accept as a design ticket (minted, uncommitted; commit on main). No build task: it needs the human's refinement first, as the submitter says, so the task stays pending. My recommendation (also in the ticket): ship br-cbbn first as its own small restart_at config, then fold it into the scheduler; per-project messages and restarts before the machine-wide maintenance window (waits on cy2v). Related: hrcn, 3nyk, br-ft3b.
+
+### note · external:orchestrator · 2026-10-08T14:28:58.547Z
+split off br-9xze: Scheduled messages, first slice: an agent schedules a message to itself (one-time or recurring), bridle schedule add/list/rm
+
+### note · external:orchestrator · 2026-10-08T14:29:05.481Z
+The human approved the first slice (per-project scheduled messages an agent sets for itself, one-time or recurring), 2026-10-08, relayed verbatim by the meta-notes aide (m-7089); filed as br-9xze with the quote. cbbn (restarts) and 3nyk (maintenance windows) are not part of this approval. Same for hrcn.
