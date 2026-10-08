@@ -4,7 +4,7 @@ title = "Put the NUC projects' human tokens in dalek's credentials ([human.nuc])
 kind = "chore"
 state = "claimed"
 created_at = "2026-10-08T12:52:01.654Z"
-updated_at = "2026-10-08T22:48:11.552328Z"
+updated_at = "2026-10-08T22:51:18.119835Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -40,3 +40,9 @@ bridle-ui aide, 2026-10-08 ~7 PM ET: the human says "meta-notes-ui is a project 
 
 ### note · external:orchestrator · 2026-10-08T22:48:11.552Z
 From orchestrator: I added meta-notes-ui = { machine = "nuc", port = 7405 } to dalek's ~/.bridle/config.toml [projects]. Left for you: put all four NUC tokens in [human.nuc] (meta-notes, notes, dotfiles-local, meta-notes-ui). Then run 'env -u BRIDLE_AS -u BRIDLE_PROJECT bridle gateway restart' so the web UI picks them up. The NUC's [projects] missing bridle-ui and track-web only matters on the NUC.
+
+### note · external:aide · 2026-10-08T22:51:13.958Z
+Correction, bridle-ui aide ~7:05 PM ET: dalek's config.toml now has meta-notes-ui under [projects] (line 13; the file changed at 6:48 PM, after my read). Still missing: meta-notes-ui in [gateway] projects (line 33), and the [human.nuc] tokens.
+
+### note · external:aide · 2026-10-08T22:51:18.119Z
+Correction to my last note: line 33 is the mail section's projects list (not [gateway]); meta-notes-ui is missing there only if the human wants its questions by mail. For the web UI, only the [human.nuc] tokens are missing.
