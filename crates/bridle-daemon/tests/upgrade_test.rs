@@ -566,7 +566,7 @@ async fn a_long_drain_wakes_the_orchestrator_once() {
     let (daemon, _tmp) = support::start_daemon(Some(o)).await;
     let agent = daemon
         .client
-        .spawn(&spawn_named("slow", "SLEEP 5"))
+        .spawn(&spawn_named("slow", "SLEEP 60"))
         .await
         .expect("spawn");
     support::wait_for_state(
@@ -577,7 +577,27 @@ async fn a_long_drain_wakes_the_orchestrator_once() {
     .await;
     daemon.client.restart(&upgrade()).await.expect("reply");
     let orch = daemon.external_client("orchestrator").await;
+    // The upgrade builds before it drains, so the drain's clock starts late on a loaded machine:
+    // wait for the wake itself (generous bound), not for the restart.
     let mut seen = Vec::new();
+    let deadline = tokio::time::Instant::now() + Duration::from_secs(60);
+    while seen.is_empty() {
+        assert!(
+            tokio::time::Instant::now() < deadline,
+            "no upgrade_draining wake"
+        );
+        let wakes = orch.orchestrator_wake(Some(1)).await.expect("wake").wakes;
+        seen.extend(wakes.into_iter().filter(|w| w.reason == "upgrade_draining"));
+    }
+    // End the turn (interrupted, not timed) so the restart follows; no second wake may come.
+    daemon
+        .client
+        .interrupt(
+            &agent.id,
+            &bridle_api::types::InterruptRequest { drop_held: false },
+        )
+        .await
+        .expect("interrupt");
     while !daemon.running.restart_requested() {
         let wakes = orch.orchestrator_wake(Some(1)).await.expect("wake").wakes;
         seen.extend(wakes.into_iter().filter(|w| w.reason == "upgrade_draining"));
