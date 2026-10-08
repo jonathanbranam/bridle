@@ -4,10 +4,11 @@ title = "WSL2 host: what bridle needs changed to run on WSL2, and which work mov
 kind = "research"
 state = "planned"
 created_at = "2026-10-07T23:25:26.046Z"
-updated_at = "2026-10-07T23:25:53.791096Z"
+updated_at = "2026-10-08T00:36:53.738054Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 size = "S"
+summary = 'Research on v7ug: added an "Audit" section to the ticket. Bridle is mostly portable (WSL2+systemd counts as linux); gaps are the one-shot Tailscale address read at serve start, macOS-only warm target/ cloning, and macOS-flavoured doctor text. Recommends moving whole projects (bridle first) per nuc-host.md steps, orchestrator/advisor on the PC, dalek attaching via [human.<pc>]; remote builds rejected. Four follow-up tasks listed. Items only the PC can confirm are marked "verify on the PC". Diff is the ticket only.'
 +++
 
 Ticket: docs/tickets/open/run-bridle-s-heavy-work-on-the-windows-pc-under-wsl2-v7ug.md (the "Bridle work, if any" section). Research from the code and docs; no build, and nothing needs the PC to exist (it is not set up yet), so mark what only the real machine can confirm as "verify on the PC".
