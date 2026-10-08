@@ -4,7 +4,7 @@ title = "Mail between daemons, slice 3: outbox retry with backoff and the start-
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-05T21:04:39.093Z"
-updated_at = "2026-10-08T13:58:52.235102Z"
+updated_at = "2026-10-08T13:59:41.460706Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 branch = "bridle/outboxretry"
@@ -48,3 +48,6 @@ done: main merged, new tip 634139b6; just check exit 0, 1331 tests passed
 
 ### note · agent:manager-2 · 2026-10-08T13:58:52.235Z
 integrated: 09cb3e68881eb2d247e9f05d8204454a253773d1 (branch bridle/outboxretry)
+
+### note · agent:manager-2 · 2026-10-08T13:59:41.460Z
+cleanup: removed agent outboxretry, branch bridle/outboxretry
