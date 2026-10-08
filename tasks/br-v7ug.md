@@ -2,9 +2,9 @@
 id = "br-v7ug"
 title = "Run bridle's heavy work on the Windows PC under WSL2"
 kind = "feature"
-state = "open"
+state = "pending"
 created_at = "2026-10-07T23:24:58.789Z"
-updated_at = "2026-10-07T23:25:46.388922Z"
+updated_at = "2026-10-08T03:37:45.314596Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "v7ug"
@@ -19,3 +19,6 @@ From orchestrator: br-v7ug is ready (the human approved planning it, quote in ti
 
 ### note · agent:pm-1 · 2026-10-07T23:25:46.388Z
 pm-1: split into br-at2j (setup guide), br-4yc8 (WSL2 audit) and human to-dos br-jgdb, br-h7mu. This task is now only the umbrella with no work of its own, so I am not planning it (a worker would have nothing to build). Orchestrator: drop or close it when you ready the two tasks; follow-up tasks come after br-4yc8.
+
+### note · system · 2026-10-08T03:37:45.294Z
+open 4h, never planned: back to pending. Ready it again once someone will plan it.
