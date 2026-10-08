@@ -4,12 +4,13 @@ title = "Daemon serves its repo's documents to the human token: /v1/documents, l
 kind = "feature"
 state = "planned"
 created_at = "2026-10-08T12:51:40.545Z"
-updated_at = "2026-10-08T12:52:02.614675Z"
+updated_at = "2026-10-08T23:45:59.489946Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "M"
 priority = "high"
 priority_at = "2026-10-08T12:51:40.545604Z"
+summary = "Daemon serves its repo's documents to the human token (br-5e4k). New crate bridle-docs holds the pure code moved out of the gateway (read/search/write_document, resolve_links, specs load/path_for, the wire types, DocError with a status() method; no axum), used by gateway, daemon and bridle-api. Gateway keeps only routes (ApiDocError wrapper) and re-exports; behaviour unchanged, tests moved with the code. Daemon routes (server.rs, human principal only): GET /v1/documents?q=, GET/PUT /v1/documents/{*path}, POST /v1/links/resolve, GET /v1/specs; a save also adds the doc to review if it has a pending thread. Client methods (stable names for br-ty37): search_documents(q), read_document(path), write_document(path, &DocumentWrite), resolve_links(&[String]), specs(). Types re-exported from bridle_api::client. Note: a GET without a token is the synthetic local principal so gets 403 (not 401); a PUT without a token is 401. Tests: crates/bridle-daemon/tests/documents_test.rs. Docs: api.md, CHANGELOG, CLAUDE.md layout. just check green (1339 tests) before merging main (which touched only nextest config and CHANGELOG). Done in one task; split (a)/(b) was not needed."
 +++
 
 From bridle-ui ui-9hq8 / ui-u2df (the human: read and comment on NUC documents from the phone; reply to any task). Design: bridle-ui repo docs/design/remote-docs-and-replies.md section 3 (c52371f). B1 there is br-7172 (gateway 9/10, planned).
@@ -40,3 +41,6 @@ priority: normal -> high
 
 ### note · agent:pm-1 · 2026-10-08T12:52:02.614Z
 pm-1: Model Sonnet. Right-size: if the move of the gateway code into the shared module plus the daemon routes would pass about 200K tokens of context, do (a) the move with no behaviour change first, land it, and file (b) as its own task via 'bridle task new --from br-5e4k'. Acceptance: just check passes. Migration: none (new daemon routes; reach daemons on upgrade). br-ty37 is blocked on this task; keep the client method names stable and say them in the done note.
+
+### note · agent:daemondocs · 2026-10-08T23:45:59.489Z
+done: daemon document routes + bridle-docs crate (parts a+b together); just check exit 0, 1339 tests, green on a8ae0202; then merged main (only nextest.toml, CHANGELOG, a doc), tip b1d06997. Client methods: search_documents, read_document, write_document, resolve_links, specs.
