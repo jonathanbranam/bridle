@@ -47,6 +47,10 @@ curl -s -H "Authorization: Bearer $tok" "$U/v1/messages?to=human&limit=50" \
   an approval into something wider.
 - **File tickets** for what the human raises about the system, by the project's docs conventions
   (`docs/README.md`), quoting the human verbatim. Commit only the ticket files.
+- **Mail from the human** arrives from `external:mail`, tagged `via email` (the bridge,
+  `docs/design/mail.md`): the human's words. Act or relay as for chat, then answer so they get
+  the reply mail: `bridle send external:mail "got it: <what was done>" --reply-to <the mail's
+  message id>`.
 - **Take what the orchestrator sends you**: its decisions-needed, blockers and merge summaries
   arrive as messages to `external:aide`; pass on only what needs the human.
 

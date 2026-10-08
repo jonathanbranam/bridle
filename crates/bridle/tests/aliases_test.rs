@@ -168,5 +168,5 @@ fn old_flag_shapes_still_parse() {
     let out = bridle().args(["usage", "--help"]).output().expect("run");
     let text = String::from_utf8_lossy(&out.stdout);
     assert!(text.contains("--by") && text.contains("cost") && text.contains("budget"));
-    help_ok(&["wait-for-wake", "--mail"]);
+    help_ok(&["wait-for-wake", "--timeout", "5"]);
 }

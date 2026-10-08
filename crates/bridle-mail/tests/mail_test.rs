@@ -291,7 +291,7 @@ fn bridge(
 }
 
 #[tokio::test]
-async fn routes_to_the_orchestrator_or_the_advisor_and_deletes() {
+async fn routes_to_the_orchestrator_or_the_aide_and_deletes() {
     let dir = tempfile::tempdir().expect("tmp");
     let store = Arc::new(FakeStore::default());
     store.put(
@@ -330,7 +330,7 @@ async fn routes_to_the_orchestrator_or_the_advisor_and_deletes() {
     let out = bridge(&store, Arc::new(rec.clone()), cfg(), dir.path())
         .with_local(Arc::new(FixedLocal {
             owns: true,
-            advisor: true,
+            aide: true,
         }))
         .poll_once()
         .await
@@ -338,7 +338,7 @@ async fn routes_to_the_orchestrator_or_the_advisor_and_deletes() {
     assert_eq!(
         out[0].1,
         Outcome::Delivered {
-            to: "external:advisor".into()
+            to: "external:aide".into()
         }
     );
 }

@@ -145,7 +145,6 @@ bridle link <ID>                                                local, no daemon
 bridle focus gate                           the UserPromptSubmit hook of focus hours (cvaq): in a `quiet` `[[focus]]` period prints
                                              nudge context on the first prompt and every 5 min after; silent otherwise; never fails
 bridle orchestrator handover ...                       alias of `bridle handover ...`; `handover done` is a deprecated hidden alias (prints a note; the marker only)
-bridle orchestrator wait-for-wake --mail [--timeout SECS]                  the advisor's mail-only waiter: returns when unread mail from external:mail arrives (`nothing` at the timeout, default 25 min, cap 6900 s); polls the inbox every 10 s
 bridle handover write --file <path>|- [--no-restart]  record your handover note (any principal; keyed by your identity and the project), print its id, then signal "restart me" for your own session (see handover below)
 bridle handover list [--role R] | show <id> | latest [--role R]     the notes, newest first · one note · the newest
 bridle mail run                              the email bridge for this project: inbound mail, question mails, daily digest (docs/design/mail.md); runs as external:mail
@@ -317,7 +316,7 @@ bridle session orchestrator [claude args]   start the orchestrator's claude sess
                                              `Prod host:`, others are dropped; never writes ~/.claude/settings.json)
 bridle session advisor [name] [claude args] same for the advisor (advisor[-<name>]-<project>): lean
                                              settings, pane tag (advisor or advisor-<name>), sets BRIDLE_ADVISOR_NAME;
-                                             the unnamed one keeps advisor-<project>.pid while it runs; refuses
+                                             refuses
                                              (and names pid, pane, machine and `bridle session restart <identity>`)
                                              when a session of that identity is registered with a live process in
                                              the project; a registered one whose process is gone does not block

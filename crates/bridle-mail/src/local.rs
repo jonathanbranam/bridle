@@ -1,5 +1,5 @@
 //! What the bridge asks of its own machine: does this daemon own the project (hw6c's owner
-//! record), and is the main advisor running (its launcher's pid file).
+//! record), and is the project's aide running (the daemon's session list).
 
 use std::path::PathBuf;
 
@@ -9,14 +9,14 @@ use async_trait::async_trait;
 pub trait Local: Send + Sync {
     /// Mail for the project is taken only while this is true.
     async fn owns_project(&self) -> bool;
-    /// The unnamed advisor is up, so mail goes to it rather than the orchestrator.
-    async fn advisor_running(&self) -> bool;
+    /// The project's aide is up, so mail goes to it rather than the orchestrator.
+    async fn aide_running(&self) -> bool;
 }
 
 /// Fixed answers, for a bridge with no state to read and for tests.
 pub struct FixedLocal {
     pub owns: bool,
-    pub advisor: bool,
+    pub aide: bool,
 }
 
 #[async_trait]
@@ -25,17 +25,17 @@ impl Local for FixedLocal {
         self.owns
     }
 
-    async fn advisor_running(&self) -> bool {
-        self.advisor
+    async fn aide_running(&self) -> bool {
+        self.aide
     }
 }
 
-/// The real thing, from files.
+/// The real thing: the owner file, and the daemon for liveness.
 pub struct FileLocal {
     /// `<workspace>/.bridle/state/owner.toml`: the state branch's worktree.
     pub owner_file: PathBuf,
-    /// `<bridle home>/advisor-<project>.pid`, written by the advisor launcher.
-    pub advisor_pid_file: PathBuf,
+    /// The project's daemon, which lists the live sessions.
+    pub client: bridle_api::Client,
     /// This machine's name, as `bridle serve` writes it to `owner.toml`.
     pub host: String,
 }
@@ -50,22 +50,16 @@ impl Local for FileLocal {
         }
     }
 
-    async fn advisor_running(&self) -> bool {
-        let Some((pid, start)) = std::fs::read_to_string(&self.advisor_pid_file)
-            .ok()
-            .and_then(|t| parse_pid_file(&t))
-        else {
-            return false;
-        };
-        // `ps` prints the start time the launcher recorded, so a reused pid doesn't match.
-        let out = tokio::process::Command::new("ps")
-            .args(["-o", "lstart=", "-p", &pid.to_string()])
-            .output()
-            .await;
-        out.ok()
-            .and_then(|o| String::from_utf8(o.stdout).ok())
-            .is_some_and(|s| squeeze(&s) == start)
+    async fn aide_running(&self) -> bool {
+        // The daemon drops a session whose pid is gone, so a listed aide is a live one. A daemon
+        // that can't answer means no aide: the orchestrator is the safe fallback.
+        self.client.sessions().await.is_ok_and(|s| has_aide(&s))
     }
+}
+
+/// The daemon is per project, so any `aide` session in its list is this project's.
+fn has_aide(sessions: &[bridle_api::types::SessionInfo]) -> bool {
+    sessions.iter().any(|s| s.identity == "aide" && s.pid > 0)
 }
 
 fn owner_host(text: &str) -> Option<String> {
@@ -76,31 +70,25 @@ fn owner_host(text: &str) -> Option<String> {
         .map(str::to_string)
 }
 
-/// `<pid> <ps lstart> <launch epoch>`, as the orchestrator launcher writes; returns the pid
-/// and the start time with whitespace squeezed.
-fn parse_pid_file(text: &str) -> Option<(i32, String)> {
-    let words: Vec<&str> = text.split_whitespace().collect();
-    let (pid, rest) = words.split_first()?;
-    let start = rest.get(..rest.len().checked_sub(1)?)?.join(" ");
-    (!start.is_empty()).then_some((pid.parse().ok()?, start))
-}
-
-fn squeeze(s: &str) -> String {
-    s.split_whitespace().collect::<Vec<_>>().join(" ")
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
+    fn session(identity: &str, pid: i32) -> bridle_api::types::SessionInfo {
+        serde_json::from_value(serde_json::json!({
+            "identity": identity, "pid": pid, "started_at": "2026-10-07T00:00:00Z",
+        }))
+        .unwrap()
+    }
+
     #[test]
-    fn pid_file_parses() {
-        assert_eq!(
-            parse_pid_file("123 Tue Sep 30 10:00:00 2026 1790000000\n"),
-            Some((123, "Tue Sep 30 10:00:00 2026".to_string()))
-        );
-        assert_eq!(parse_pid_file(""), None);
-        assert_eq!(parse_pid_file("123"), None);
+    fn only_an_aide_session_counts() {
+        assert!(!has_aide(&[]));
+        assert!(!has_aide(&[
+            session("advisor", 5),
+            session("advisor/alice", 6)
+        ]));
+        assert!(has_aide(&[session("advisor", 5), session("aide", 7)]));
     }
 
     #[tokio::test]
@@ -109,7 +97,7 @@ mod tests {
         let file = dir.path().join("owner.toml");
         let local = |host: &str| FileLocal {
             owner_file: file.clone(),
-            advisor_pid_file: dir.path().join("advisor.pid"),
+            client: bridle_api::Client::new("http://127.0.0.1:1", None),
             host: host.to_string(),
         };
         assert!(
@@ -119,38 +107,5 @@ mod tests {
         std::fs::write(&file, "host = \"a\"\nsince = \"2026-09-30T00:00:00Z\"\n").unwrap();
         assert!(local("a").owns_project().await);
         assert!(!local("b").owns_project().await);
-    }
-
-    #[tokio::test]
-    async fn advisor_runs_only_while_its_pid_is_that_process() {
-        let dir = tempfile::tempdir().unwrap();
-        let pid_file = dir.path().join("advisor.pid");
-        let local = FileLocal {
-            owner_file: dir.path().join("owner.toml"),
-            advisor_pid_file: pid_file.clone(),
-            host: "a".to_string(),
-        };
-        assert!(!local.advisor_running().await, "no pid file");
-
-        let me = std::process::id();
-        let lstart = std::process::Command::new("ps")
-            .args(["-o", "lstart=", "-p", &me.to_string()])
-            .output()
-            .unwrap();
-        let lstart = squeeze(&String::from_utf8(lstart.stdout).unwrap());
-        std::fs::write(&pid_file, format!("{me} {lstart} 1790000000\n")).unwrap();
-        assert!(local.advisor_running().await);
-
-        std::fs::write(
-            &pid_file,
-            format!("{me} Mon Jan 1 00:00:00 2001 1790000000\n"),
-        )
-        .unwrap();
-        assert!(
-            !local.advisor_running().await,
-            "a reused pid is not the advisor"
-        );
-        std::fs::write(&pid_file, "999999 Mon Jan 1 00:00:00 2001 1\n").unwrap();
-        assert!(!local.advisor_running().await, "a dead pid");
     }
 }

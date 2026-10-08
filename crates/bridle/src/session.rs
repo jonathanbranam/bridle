@@ -217,7 +217,7 @@ pub async fn run(cli: &Cli, role: &SessionRole) -> Result<(), CliError> {
                 extra,
                 &prompt,
             );
-            advisor(cli, &home, &project, adv, &args).await?
+            advisor(cli, &project, adv, &args).await?
         }
         SessionRole::Aide { claude_args: extra } => {
             crate::focus::refuse_advisor_if_locked(&home, chrono::Local::now())?;
@@ -358,7 +358,6 @@ async fn aide(cli: &Cli, project: &str, args: &[String]) -> anyhow::Result<i32> 
 
 async fn advisor(
     cli: &Cli,
-    home: &Path,
     project: &str,
     name: Option<&str>,
     args: &[String],
@@ -371,13 +370,6 @@ async fn advisor(
     ];
     if let Some(n) = name {
         env.push(("BRIDLE_ADVISOR_NAME", n));
-    }
-    // Only the unnamed advisor records its pid, so `bridle mail run` sends mail to it only while
-    // it is alive (rs7p); a stale file is harmless, the start time is checked.
-    let pid_file = home.join(format!("advisor-{project}.pid"));
-    if name.is_none() {
-        std::fs::create_dir_all(home)?;
-        write_pid_file(&pid_file)?;
     }
     crate::pane::tag_pane(&match name {
         Some(n) => format!("advisor-{n}"),
@@ -392,9 +384,6 @@ async fn advisor(
     .await;
     let rc = run_claude(&env, args).await;
     end(cli).await;
-    if name.is_none() {
-        let _ = std::fs::remove_file(&pid_file);
-    }
     rc
 }
 

@@ -60,8 +60,6 @@ To stop one without replacing it, run `bridle agent wake --stop` (this session's
 stderr. Never kill by name or pattern: the pattern matches every project's waiters on the
 machine and kills theirs too (incident h3ar, rule `no-kill-by-name`).
 
-The mail waiter (unnamed advisor only, when `~/.bridle/config.toml` has `[mail]`): run `bridle orchestrator wait-for-wake --mail` in the background separately and restart it each time it exits. It returns when mail from the human's email bridge (`via email`) arrives, or prints `nothing` after 25 minutes. While your launcher is alive, mail goes to you, not the orchestrator. Answer with `bridle send external:mail "got it: <one line>" --reply-to <the mail's message id>`.
-
 ## What you don't do
 
 - Don't check `bridle status`, triage the human's inbox or the workforce's questions at

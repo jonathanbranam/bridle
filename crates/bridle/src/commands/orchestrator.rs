@@ -284,8 +284,8 @@ pub(super) async fn mail_run(cli: &Cli) -> Result<(), CliError> {
     let mailer = bridle_mail::SesMailer::connect(cfg.region.as_deref()).await;
     let tokens = bridle_mail::Tokens::load_or_create(&discovery::bridle_home().join("mail.key"))?;
     let sent = bridle_mail::Sent::open(&state.join("mail"))?;
+    let aide_client = client.clone();
     let sink = std::sync::Arc::new(bridle_mail::ClientSink(client));
-    let advisor_pid = format!("advisor-{project}.pid");
     bridle_mail::Bridge::new(
         std::sync::Arc::new(store),
         sink.clone(),
@@ -295,7 +295,7 @@ pub(super) async fn mail_run(cli: &Cli) -> Result<(), CliError> {
     )
     .with_local(std::sync::Arc::new(bridle_mail::FileLocal {
         owner_file: state.join("state").join("owner.toml"),
-        advisor_pid_file: discovery::bridle_home().join(advisor_pid),
+        client: aide_client,
         host: local_hostname(),
     }))
     .with_outbound(bridle_mail::Outbound {
@@ -318,47 +318,6 @@ pub(super) fn local_hostname() -> String {
         .map(|s| s.trim().to_string())
         .filter(|s| !s.is_empty())
         .unwrap_or_else(|| "unknown".to_string())
-}
-
-/// Unread mail from the email bridge, for `wait-for-wake --mail`.
-pub(super) fn unread_mail(
-    messages: Vec<bridle_api::types::Message>,
-) -> Vec<bridle_api::types::Message> {
-    messages
-        .into_iter()
-        .filter(|m| m.from == "external:mail")
-        .collect()
-}
-
-/// `bridle wait-for-wake --mail`: the advisor's mail-only waiter. Polls its own inbox for mail
-/// from the bridge and prints it; `nothing` after 25 minutes, like the orchestrator's waiter.
-pub(super) async fn wait_for_mail(cli: &Cli, timeout: Option<u64>) -> Result<(), CliError> {
-    let client = client_for(cli).await?;
-    let query = MessageQuery {
-        to: Some("me".to_string()),
-        unread: true,
-        ..Default::default()
-    };
-    let deadline = std::time::Instant::now()
-        + std::time::Duration::from_secs(timeout.unwrap_or(25 * 60).min(6900));
-    loop {
-        let mail = unread_mail(client.list_messages(&query).await?);
-        if !mail.is_empty() {
-            if cli.json {
-                render::print_json(&mail)?;
-            } else {
-                for m in &mail {
-                    println!("{} from {}:\n{}", m.id, m.from, m.body);
-                }
-            }
-            return Ok(());
-        }
-        if std::time::Instant::now() >= deadline {
-            println!("nothing");
-            return Ok(());
-        }
-        tokio::time::sleep(std::time::Duration::from_secs(10)).await;
-    }
 }
 
 async fn fetch_wakes(

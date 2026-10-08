@@ -194,6 +194,9 @@ So, against section 5:
 
 ## Delivery to the advisor (the advisor's reading)
 
+Superseded by 843g (2026-10-07): mail goes to the project's `external:aide`, found through the
+daemon's session list; the pid file and `wait-for-wake --mail` below were removed.
+
 The advisor has no waiter by rule (it idles between the human's messages), so a note in its
 inbox is only seen at its next turn. Recommended:
 

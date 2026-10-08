@@ -58,7 +58,7 @@ lists the prefix and, per object:
    history and signature stripped, HTML converted to text, capped). `.md`, `.txt` and `text/*`
    attachments up to the cap are written to `<workspace>/.bridle/inbox/mail/<id>/<name>` and listed
    by path; others are dropped and listed as dropped.
-4. Sent to `external:advisor` while the unnamed advisor is running (below), else `external:orchestrator`; with a task address, as a note on that
+4. Sent to `external:aide` while the project's aide is running (below), else `external:orchestrator`; with a task address, as a note on that
    task's thread (`task`). The object is deleted only after the daemon accepted it, so a down
    daemon just means a retry on the next poll.
 
@@ -114,11 +114,13 @@ Every machine may run a bridge for the projects it has; all read the same bucket
   gets a reply listing the valid ones (`projects` plus the bridge's own), and the object is
   deleted. Only the bridge of the first name in `projects` answers, so several bridges don't
   each reply; strangers get nothing.
-- **Advisor liveness.** `bridle session advisor` (unnamed advisor only) writes
-  `$BRIDLE_HOME/advisor-<project>.pid` (`<pid> <ps lstart> <epoch>`, as `orchestrator.pid`) and
-  removes it when claude ends. The bridge treats the advisor as running only while that pid exists
-  with that start time. Running: mail goes to `external:advisor`, whose session runs
-  `bridle wait-for-wake --mail`; otherwise to `external:orchestrator`.
+- **Aide liveness.** The bridge asks the project's daemon (`GET /v1/sessions`, what `bridle
+  status` lists under `sessions`) whether a session with identity `aide` is registered; the daemon
+  drops a session whose process is gone. Running: mail goes to `external:aide`, which needs no
+  special waiter (its `bridle agent wake` ends on any message); otherwise, or when the daemon
+  can't answer, to `external:orchestrator` (until the orchestrator goes machine-wide, then
+  revisit). The aide role says to answer with `got it` (below). br-843g replaced the unnamed advisor's pid
+  file and its mail-only waiter.
 - **"Got it".** Each delivered message id is kept with its sender in `<state dir>/mail/senders`. A
   message to `external:mail` with `reply_to` set to that id (the recipient's `bridle send
   external:mail "got it: ..." --reply-to <id>`) is emailed to the sender as `Re: <subject>` from

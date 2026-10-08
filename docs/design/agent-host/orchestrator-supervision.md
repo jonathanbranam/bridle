@@ -147,7 +147,7 @@ state), and the cursors are the daemon's own, so nothing is lost or repeated by 
 restarting its watcher. A condition that fires while nobody is waiting waits: **wakes are queued,
 not dropped**, so the next `wait-for-wake` returns at once.
 
-**The command.** `bridle agent wake external:orchestrator` is the one wake mechanism; `bridle wait-for-wake` is a thin alias for it (jttf decision 2: same wait, the same reasons and output as before, `--mail` and `--timeout` kept). Both are `GET /v1/wake` (the older `GET /v1/orchestrator/wake` still answers the same queue), a long poll (like the
+**The command.** `bridle agent wake external:orchestrator` is the one wake mechanism; `bridle wait-for-wake` is a thin alias for it (jttf decision 2: same wait, the same reasons and output as before, `--timeout` kept; the mail-only `--mail` went with br-843g). Both are `GET /v1/wake` (the older `GET /v1/orchestrator/wake` still answers the same queue), a long poll (like the
 event stream, `api.md`) that the daemon holds until a wake is pending, then answers with the
 reasons and their details as JSON, marks them delivered and closes. The command prints them and
 exits 0; the orchestrator's Claude Code background task exits, the harness reports the exit to

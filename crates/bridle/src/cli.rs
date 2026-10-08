@@ -1763,10 +1763,6 @@ pub enum FocusAction {
 
 #[derive(Debug, Args)]
 pub struct WaitForWakeArgs {
-    /// The advisor's mail-only waiter: return when unread mail from the email bridge arrives
-    /// (`nothing` at the timeout). `external:advisor`.
-    #[arg(long)]
-    pub mail: bool,
     /// Give up after this many seconds and print `nothing`; default 25 minutes, cap 6900 s
     /// (1 h 55 min).
     #[arg(long)]
@@ -2908,11 +2904,9 @@ mod tests {
     #[test]
     fn wait_for_wake_parses() {
         let cli = parse(&["wait-for-wake"]).unwrap();
-        assert!(matches!(cli.command, Command::WaitForWake(ref a) if !a.mail));
+        assert!(matches!(cli.command, Command::WaitForWake(_)));
         let cli = parse(&["wait-for-wake", "--timeout", "6900"]).unwrap();
         assert!(matches!(cli.command, Command::WaitForWake(ref a) if a.timeout == Some(6900)));
-        let cli = parse(&["wait-for-wake", "--mail"]).unwrap();
-        assert!(matches!(cli.command, Command::WaitForWake(ref a) if a.mail));
     }
 
     #[test]

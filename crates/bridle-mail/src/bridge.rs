@@ -145,14 +145,14 @@ impl Bridge {
             waiting_since: Mutex::new(HashMap::new()),
             local: Arc::new(FixedLocal {
                 owns: true,
-                advisor: false,
+                aide: false,
             }),
             outbound: None,
         }
     }
 
-    /// Where ownership and the advisor's liveness come from; the default owns the project and
-    /// has no advisor.
+    /// Where ownership and the aide's liveness come from; the default owns the project and
+    /// has no aide.
     pub fn with_local(mut self, local: Arc<dyn Local>) -> Self {
         self.local = local;
         self
@@ -392,8 +392,8 @@ impl Bridge {
         let saved = self.save_attachments(ses_id, &mail)?;
         let to = if let Some(q) = &question {
             q.from.as_str()
-        } else if self.local.advisor_running().await {
-            "external:advisor"
+        } else if self.local.aide_running().await {
+            "external:aide"
         } else {
             "external:orchestrator"
         };

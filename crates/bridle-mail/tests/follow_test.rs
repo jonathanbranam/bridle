@@ -84,7 +84,7 @@ struct Rig {
     _dir: tempfile::TempDir,
 }
 
-fn rig(project: &str, owns: bool, advisor: bool) -> Rig {
+fn rig(project: &str, owns: bool, aide: bool) -> Rig {
     let dir = tempfile::tempdir().expect("tempdir");
     let store = Arc::new(FakeStore::default());
     let hub = Arc::new(Hub::default());
@@ -96,7 +96,7 @@ fn rig(project: &str, owns: bool, advisor: bool) -> Rig {
         project.into(),
         dir.path().join("attachments"),
     )
-    .with_local(Arc::new(FixedLocal { owns, advisor }))
+    .with_local(Arc::new(FixedLocal { owns, aide }))
     .with_outbound(Outbound {
         mailer: mailer.clone(),
         feed: Arc::new(NoFeed),
@@ -204,9 +204,9 @@ async fn a_stranger_writing_to_an_unknown_project_gets_no_reply() {
 }
 
 #[tokio::test]
-async fn mail_goes_to_the_advisor_only_while_it_runs() {
-    for (advisor, to) in [(true, "external:advisor"), (false, "external:orchestrator")] {
-        let r = rig("proj", true, advisor);
+async fn mail_goes_to_the_aide_only_while_it_runs() {
+    for (aide, to) in [(true, "external:aide"), (false, "external:orchestrator")] {
+        let r = rig("proj", true, aide);
         r.store.put("inbound/a", raw("proj"));
         r.bridge.poll_once_at(t0()).await.expect("poll");
         assert_eq!(r.hub.sent.lock().expect("lock")[0].to.as_deref(), Some(to));
@@ -219,7 +219,7 @@ async fn got_it_goes_back_to_the_sender() {
     r.store.put("inbound/a", raw("proj"));
     r.bridge.poll_once_at(t0()).await.expect("poll");
     let reply: Message = serde_json::from_value(json!({
-        "id": "m-0101", "from": "external:advisor", "to": "external:mail", "kind": "note",
+        "id": "m-0101", "from": "external:aide", "to": "external:mail", "kind": "note",
         "body": "got it: filed ticket ab12", "reply_to": "m-0100", "when": "idle",
         "state": "delivered", "created_at": "2026-09-30T10:05:00Z", "written_at": null,
         "delivered_at": null, "read_at": null,

@@ -14,8 +14,6 @@ struct Run {
     /// One argument per line, then a line of the env the stub saw.
     claude: String,
     tmux: String,
-    /// BRIDLE_HOME's files as claude saw them, while it ran.
-    files_during: String,
 }
 
 fn stub(dir: &Path, name: &str, body: &str) {
@@ -35,9 +33,8 @@ fn session(args: &[&str], envs: &[(&str, &str)], claude_exit: i32) -> Run {
         &format!(
             "for a in \"$@\"; do printf '%s\\n' \"$a\"; done > {rec}\n\
              echo \"AS=$BRIDLE_AS PROJECT=$BRIDLE_PROJECT ADVISOR=$BRIDLE_ADVISOR_NAME\" >> {rec}\n\
-             ls {home} > {rec}.files\nexit {claude_exit}",
+             exit {claude_exit}",
             rec = rec.display(),
-            home = home.path().display()
         ),
     );
     stub(
@@ -80,7 +77,6 @@ fn session(args: &[&str], envs: &[(&str, &str)], claude_exit: i32) -> Run {
         home,
         claude: fs::read_to_string(&rec).unwrap_or_default(),
         tmux: fs::read_to_string(&tmux_rec).unwrap_or_default(),
-        files_during: fs::read_to_string(bin.path().join("claude.rec.files")).unwrap_or_default(),
     }
 }
 
@@ -153,7 +149,7 @@ fn orchestrator_records_a_nonzero_exit() {
 }
 
 #[test]
-fn advisor_unnamed_has_a_pid_file_only_while_running() {
+fn advisor_unnamed_signs_and_tags_its_pane() {
     let r = session(&["--project", "p", "advisor"], &[], 0);
     let l = lines(&r);
     assert_eq!(
@@ -163,12 +159,6 @@ fn advisor_unnamed_has_a_pid_file_only_while_running() {
     assert!(l[7].starts_with("Run `bridle prime advisor`"));
     assert_eq!(l[8], "AS=advisor PROJECT=p ADVISOR=");
     assert!(r.tmux.contains("@bridle advisor\n"), "{}", r.tmux);
-    assert!(
-        r.files_during.contains("advisor-p.pid"),
-        "{}",
-        r.files_during
-    );
-    assert!(!r.home.path().join("advisor-p.pid").exists());
 }
 
 #[test]
@@ -182,7 +172,7 @@ fn aide_signs_as_aide_and_tags_its_pane() {
 }
 
 #[test]
-fn named_advisor_signs_tags_and_skips_the_pid_file() {
+fn named_advisor_signs_and_tags_its_pane() {
     let r = session(
         &["--project", "p", "advisor", "alice", "--model", "m"],
         &[("BRIDLE_SESSION_SUFFIX", "nuc")],
@@ -194,7 +184,6 @@ fn named_advisor_signs_tags_and_skips_the_pid_file() {
     assert_eq!(l[8], "m");
     assert_eq!(l[10], "AS=advisor PROJECT=p ADVISOR=alice");
     assert!(r.tmux.contains("@bridle advisor-alice"), "{}", r.tmux);
-    assert!(!r.home.path().join("advisor-p.pid").exists());
 }
 
 /// `bridle advisor start`, with a stub tmux that records its arguments.
