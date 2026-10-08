@@ -108,6 +108,7 @@ done
 | roles and what they do | `workflow/base/roles/<role>.md` (worker, manager, project-manager, orchestrator, advisor, prototyper, document-reviewer) |
 | building and testing | `CLAUDE.md` (Conventions section) |
 | incidents (a task kind plus a broadcast notice) | `docs/design/agent-host/incidents.md` |
+| the Windows PC as a bridle host under WSL2 (setup steps, planned) | `docs/context/windows-wsl2-host.md` |
 | permissions, tools | `docs/design/agent-host/principals.md` |
 | email bridge (`bridle mail run`) | `docs/design/mail.md` |
 | human web UI (gateway built; the UI is a separate project) | `docs/design/human-web-ui.md` |
