@@ -2,12 +2,14 @@
 id = "br-4yc8"
 title = "WSL2 host: what bridle needs changed to run on WSL2, and which work moves (audit + recommendation on v7ug)"
 kind = "research"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-07T23:25:26.046Z"
-updated_at = "2026-10-08T00:37:11.957861Z"
+updated_at = "2026-10-08T00:58:39.512106Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 size = "S"
+branch = "bridle/wsl2audit"
+commit = "602cb12232b8e2cd93065f0bd811f0152410ae61"
 summary = 'Research on v7ug: added an "Audit" section to the ticket. Bridle is mostly portable (WSL2+systemd counts as linux); gaps are the one-shot Tailscale address read at serve start, macOS-only warm target/ cloning, and macOS-flavoured doctor text. Recommends moving whole projects (bridle first) per nuc-host.md steps, orchestrator/advisor on the PC, dalek attaching via [human.<pc>]; remote builds rejected. Four follow-up tasks listed. Items only the PC can confirm are marked "verify on the PC". Diff is the ticket only.'
 +++
 
@@ -26,3 +28,9 @@ done: Audit section on ticket v7ug (research, ticket-only diff, no check run); e
 
 ### note · agent:manager-2 · 2026-10-08T00:37:11.957Z
 br-4yc8 is checked and ready to land, but main's working tree has an uncommitted edit to the v7ug ticket (docs/tickets/open/run-bridle-s-heavy-work-on-the-windows-pc-under-wsl2-v7ug.md, likely a human/aide edit), which blocks the land. Can you or the owner commit it (or tell me to ask the human)? I will retry as soon as it is clean.
+
+### note · agent:manager-2 · 2026-10-08T00:58:38.906Z
+integrated: 602cb12232b8e2cd93065f0bd811f0152410ae61 (branch bridle/wsl2audit)
+
+### note · agent:manager-2 · 2026-10-08T00:58:39.512Z
+cleanup: removed agent wsl2audit, branch bridle/wsl2audit
