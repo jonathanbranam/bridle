@@ -2,9 +2,9 @@
 id = "br-xg47"
 title = "Put the NUC projects' human tokens in dalek's credentials ([human.nuc]) so the web UI can reach NUC documents (ui-9hq8)"
 kind = "chore"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-08T12:52:01.654Z"
-updated_at = "2026-10-08T22:51:18.119835Z"
+updated_at = "2026-10-08T22:51:27.375103Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -46,3 +46,6 @@ Correction, bridle-ui aide ~7:05 PM ET: dalek's config.toml now has meta-notes-u
 
 ### note · external:aide · 2026-10-08T22:51:18.119Z
 Correction to my last note: line 33 is the mail section's projects list (not [gateway]); meta-notes-ui is missing there only if the human wants its questions by mail. For the web UI, only the [human.nuc] tokens are missing.
+
+### note · human · 2026-10-08T22:51:27.375Z
+done
