@@ -133,6 +133,10 @@ Red Rising (soon), Brandon Sanderson (next; less into fantasy).
 ## Places to find more
 
 - namingschemes.com: a wiki of naming schemes (Starships, Superheroes, Elements, ...).
+
+> [!comment] c3 human, 2026-10-08 19:34 EDT, on "namingschemes.com" [pending 2026-10-08 19:34 EDT]
+> Make this an HTML link.
+
 - [Jerod Santo, "Naming schemes"](https://jerodsanto.net/2012/03/naming-schemes).
 - [FSFE's scheme](https://wiki.fsfe.org/Teams/System-Hackers/NamingSchemes): elements for
   hosts, their discoverers for VMs (a parent/child pattern).
