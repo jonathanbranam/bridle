@@ -2,9 +2,9 @@
 id = "br-fc05"
 title = "Set up email for bridle: SES on dev.branam.us, DNS, S3, IAM (rs7p)"
 kind = "chore"
-state = "claimed"
+state = "integrated"
 created_at = "2026-09-30T03:46:36.780Z"
-updated_at = "2026-10-01T01:13:06.057867Z"
+updated_at = "2026-10-08T00:57:22.584856Z"
 created_by = "external:advisor"
 watchers = [
     "external:advisor",
@@ -22,3 +22,6 @@ To-do for you: Set up email for bridle: SES on dev.branam.us, DNS, S3, IAM (rs7p
 
 ### note · human · 2026-10-01T01:13:06.057Z
 I am not going to have time to do that before I leave - will happen some time next week. I have travel Thr-Fri and Sun-Mon.
+
+### note · human · 2026-10-08T00:57:22.584Z
+done
