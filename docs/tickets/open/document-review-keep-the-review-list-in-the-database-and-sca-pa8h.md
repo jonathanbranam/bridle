@@ -32,3 +32,9 @@ The human, verbatim (2026-10-08 ~8 PM ET), while testing document review on docs
 - Whether a thread is pending depends on its newest entry, and on its marks and resolved line. That needs the existing parser (`pending_threads` in doc_watch.rs).
 - So the cheap approach: grep for candidate files, then parse only those.
 - A pure grep that's always exact would need the thread's state on a single line. Ticket ehv6 (explicit status on comment threads) is related.
+
+## Leaving review (the human, 2026-10-08)
+
+> also - how does a file every become un-watched? We need some kind of TTL for that otherwise they'll stay watched forever
+
+Today the only way out is `bridle review remove` by hand. `[review] idle_hours` (default 4) stops the document's *agent*, but the document stays on the list and is re-read every 30 s indefinitely; a renamed or deleted file is never cleaned up either. 3. Give a watched document a TTL: e.g. it leaves review after N days with no pending thread and no new comment (the periodic scan in 2 puts it back if a new comment appears).
