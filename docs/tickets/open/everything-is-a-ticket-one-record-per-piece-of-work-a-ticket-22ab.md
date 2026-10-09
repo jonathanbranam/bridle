@@ -231,6 +231,9 @@ Decided by the human (2026-10-09) except `kind`, which no one asked to change, s
 need fields (YAGNI). Link values are bare IDs (`k7tm`), resolved by the tooling. That settles
 zkbb's "bare ID vs full stem".
 
+> [!comment] c1 human, 2026-10-09 14:56 EDT, on "That settles zkbb's "bare ID vs full stem"." [pending 2026-10-09 14:56 EDT]
+> I'm pretty sure we need to use the project id here. We should be clear on the project to avoid confusion on ticket ids. It is fine to use shorthand when working on a specific project, but we want ticket names to be unique globally, as much as possible. br-<id> not <id>.
+
 ### 8. IDs
 
 - One ID per ticket, and the row has the same ID. No `br-` prefix shown to the human inside a
