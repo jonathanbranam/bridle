@@ -122,6 +122,17 @@ harrier. Short and dictation-safe, but many are everyday words.
 
 - **Stephen King:** liked; names to add (e.g., `derry`, `roland`, `gunslinger`).
 
+> [!comment] c5 human, 2026-10-08 21:38 EDT, on "Stephen King" [pending 2026-10-08 21:38 EDT]
+> Fill out this section with major characters from:
+> - The Shining
+> - The Stand
+> - Carrie
+> - Cujo
+> - Thinner
+> - Shawshank Redemption 
+> - all of the four seasons
+> - The Gunslinger series
+
 ### Hard on dictation: liked, but likely to fail
 
 - **The Three-Body Problem** (read all of it; ties in with China): e.g., `sophon`, which will
