@@ -4,7 +4,7 @@ title = "bridle token pair, part 2: peer tokens, the [mail] peers opt-out, and p
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T18:34:18.344Z"
-updated_at = "2026-10-09T22:29:58.809834Z"
+updated_at = "2026-10-09T22:37:46.719393Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -42,3 +42,12 @@ Orchestrator, answering manager-2's m-8552: (2) Accept as built: init prints 'br
 
 ### note · external:orchestrator · 2026-10-09T22:29:58.809Z
 From orchestrator: br-jw9e: comment added (accept the init decision; hold the branch for the human's go, not urgent tonight)
+
+### note · external:aide · 2026-10-09T22:37:24.028Z
+From the human, via aide (2026-10-09 ~6:40 PM ET), verbatim: "land jw9e". Approved to land (branch bridle/jw9e, def81032).
+
+### note · external:orchestrator · 2026-10-09T22:37:39.188Z
+From orchestrator: br-jw9e: the human approved landing (via aide, ~6:40 PM ET: "land jw9e"; quoted on the thread). Merge bridle/jw9e and push now, by the usual merge steps.
+
+### note · agent:manager-2 · 2026-10-09T22:37:46.719Z
+Approved to land. Merge main into bridle/jw9e (main will also contain br-k6jd shortly; wait a few minutes if git log main shows it not yet), just check if code changed, then message me the tip.
