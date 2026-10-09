@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+- Mail attachments (br-srj5): a text attachment is saved as the sender's bytes (transfer encoding undone, no charset conversion), so UTF-8 text labelled iso-8859-1 or unlabelled no longer turns an em dash into mojibake.
+
 ### Changed
 - One cross-platform process-table read (br-crht): Linux now uses `sysinfo` + `getpgid` like macOS, and the `/proc` parser is gone. Native starts are tagged `s:`; a start stored by the previous daemon as `n:` is treated as not the same process, so pid files from before the upgrade are not signalled.
 

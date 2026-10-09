@@ -261,6 +261,58 @@ fn keeps_small_text_attachments_and_notes_the_rest() {
     assert_eq!(m.dropped.len(), 2, "{:?}", m.dropped);
 }
 
+fn one_attachment(ctype: &str, cte: &str, body: &[u8]) -> Vec<u8> {
+    let head = String::from_utf8(Spec::default().raw())
+        .expect("utf8")
+        .replace(
+            "Content-Type: text/plain; charset=utf-8\r\n\r\nPlease do the thing.\r\n",
+            "",
+        );
+    let mut out = format!(
+        "{head}Content-Type: multipart/mixed; boundary=B\r\n\r\n\
+         --B\r\nContent-Type: text/plain\r\n\r\nSee attached.\r\n\
+         --B\r\nContent-Type: {ctype}; name=\"n.md\"\r\nContent-Disposition: attachment; filename=\"n.md\"\r\nContent-Transfer-Encoding: {cte}\r\n\r\n"
+    )
+    .into_bytes();
+    out.extend_from_slice(body);
+    out.extend_from_slice(b"\r\n--B--\r\n");
+    out
+}
+
+#[test]
+fn utf8_attachment_saved_byte_identical_whatever_the_label() {
+    let text = "a \u{2014} b \u{e9}\n";
+    for ctype in [
+        "text/markdown; charset=iso-8859-1",
+        "text/markdown",
+        "text/markdown; charset=utf-8",
+    ] {
+        let m = evaluate(
+            &one_attachment(ctype, "8bit", text.as_bytes()),
+            &cfg(),
+            "proj",
+        )
+        .expect("ok");
+        assert_eq!(m.attachments[0].data, text.as_bytes(), "{ctype}");
+    }
+}
+
+#[test]
+fn base64_attachment_decoded_without_charset_conversion() {
+    // "a \u{2014} b" in UTF-8, base64.
+    let m = evaluate(
+        &one_attachment(
+            "text/markdown; charset=iso-8859-1",
+            "base64",
+            b"YSDigJQgYg==",
+        ),
+        &cfg(),
+        "proj",
+    )
+    .expect("ok");
+    assert_eq!(m.attachments[0].data, "a \u{2014} b".as_bytes());
+}
+
 #[derive(Default, Clone)]
 struct Recorder(Arc<Mutex<Vec<SendRequest>>>);
 

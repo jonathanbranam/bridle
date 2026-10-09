@@ -207,12 +207,12 @@ pub fn evaluate(raw: &[u8], cfg: &MailConfig, project: &str) -> Result<Accepted,
         let lower = name.to_ascii_lowercase();
         if !(is_text || lower.ends_with(".md") || lower.ends_with(".txt")) {
             dropped.push(format!("{name} (only .md, .txt and text/* are kept)"));
-        } else if part.contents().len() > cfg.max_attachment_bytes {
+        } else if raw_contents(&msg, part).len() > cfg.max_attachment_bytes {
             dropped.push(format!("{name} (over {} bytes)", cfg.max_attachment_bytes));
         } else {
             attachments.push(Attachment {
                 name,
-                data: part.contents().to_vec(),
+                data: raw_contents(&msg, part),
             });
         }
     }
@@ -225,6 +225,43 @@ pub fn evaluate(raw: &[u8], cfg: &MailConfig, project: &str) -> Result<Accepted,
         attachments,
         dropped,
     })
+}
+
+/// A part's bytes as the sender wrote them (transfer encoding undone, no charset decoding).
+/// The parser decodes text parts by their declared charset, so a UTF-8 file labelled
+/// iso-8859-1 (or unlabelled and not UTF-8 clean) comes out as mojibake. Re-parsing the body
+/// slice as an unlabelled binary part gets the transfer-decoded bytes untouched.
+fn raw_contents(msg: &mail_parser::Message<'_>, part: &mail_parser::MessagePart<'_>) -> Vec<u8> {
+    let is_text = matches!(
+        part.body,
+        mail_parser::PartType::Text(_) | mail_parser::PartType::Html(_)
+    );
+    if !is_text {
+        return part.contents().to_vec();
+    }
+    let raw = msg.raw_message();
+    let (start, end) = (
+        part.raw_body_offset() as usize,
+        part.raw_end_offset() as usize,
+    );
+    let Some(body) = raw.get(start..end) else {
+        return part.contents().to_vec();
+    };
+    let cte = part
+        .headers()
+        .iter()
+        .find(|h| matches!(h.name, mail_parser::HeaderName::ContentTransferEncoding))
+        .and_then(|h| h.value.as_text())
+        .unwrap_or("7bit");
+    let mut synthetic = format!(
+        "Content-Type: application/octet-stream\r\nContent-Transfer-Encoding: {cte}\r\n\r\n"
+    )
+    .into_bytes();
+    synthetic.extend_from_slice(body);
+    mail_parser::MessageParser::default()
+        .parse(&synthetic)
+        .and_then(|m| m.parts.first().map(|p| p.contents().to_vec()))
+        .unwrap_or_else(|| part.contents().to_vec())
 }
 
 /// `dmarc=pass` in an Authentication-Results value, for the From domain when it says which.
