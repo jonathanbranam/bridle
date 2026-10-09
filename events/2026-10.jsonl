@@ -1304,3 +1304,5 @@
 {"actor":"agent:manager-2","at":"2026-10-09T21:12:14.532963Z","from":"planned","task":"br-8a53","to":"integrated"}
 {"actor":"human","at":"2026-10-09T21:37:08.794Z","from":"","task":"br-3mz4","to":"pending"}
 {"actor":"external:advisor/product-manager","at":"2026-10-09T21:37:11.643626Z","from":"pending","task":"br-3mz4","to":"open"}
+{"actor":"human","at":"2026-10-09T21:37:47.787Z","from":"","task":"br-re79","to":"pending"}
+{"actor":"agent:pm-1","at":"2026-10-09T21:37:53.892683Z","from":"open","task":"br-3mz4","to":"planned"}
