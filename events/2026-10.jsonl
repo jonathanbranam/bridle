@@ -1322,3 +1322,4 @@
 {"actor":"human","at":"2026-10-09T22:04:36.827Z","from":"","task":"br-x7fx","to":"pending"}
 {"actor":"external:aide","at":"2026-10-09T22:04:36.828812Z","from":"pending","task":"br-x7fx","to":"open"}
 {"actor":"external:aide","at":"2026-10-09T22:04:36.829258Z","from":"open","task":"br-x7fx","to":"planned"}
+{"actor":"external:advisor/product-manager","at":"2026-10-09T22:05:37.478749Z","from":"pending","task":"br-tnyt","to":"open"}
