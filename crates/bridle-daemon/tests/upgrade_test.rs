@@ -195,33 +195,25 @@ async fn self_upgrade_at_a_quiet_point_builds_and_restarts_once() {
 
 #[tokio::test]
 async fn self_upgrade_restarts_only_after_the_mid_turn_agent_finishes() {
-    let marker = "echo ran > \"$CARGO_TARGET_DIR.txt\"";
+    // The build waits for a go file, so the upgrade (and its drain) cannot begin until the agent
+    // is seen mid-turn. Without it the drain could start while the spawn was in flight, hold the
+    // agent's first prompt, and leave nothing to wait on (the flake of ticket h7gt, run
+    // 37954619068).
+    let build = "while [ ! -f \"$CARGO_TARGET_DIR.go\" ]; do sleep 0.05; done; \
+                 echo ran > \"$CARGO_TARGET_DIR.txt\"";
     let (daemon, _tmp) =
-        support::start_daemon_with_config(Some(auto(marker)), Some(SELF_UPGRADE)).await;
-    // Spawned in the same instant the first tick may fire (the tick is 100 ms): the quiet check
-    // must count the spawn itself, before the agent reads as working.
+        support::start_daemon_with_config(Some(auto(build)), Some(SELF_UPGRADE)).await;
     let agent = daemon
         .client
         .spawn(&worker("SLEEP 3"))
         .await
         .expect("spawn");
-    // On a slow machine the drain can begin while the spawn is still in flight; the drain then
-    // holds the agent's first prompt, so it never works and the restart rightly follows the spawn
-    // (the quiet check counted it). That outcome has no mid-turn phase to check, so it ends the
-    // wait too.
-    let ran = std::sync::atomic::AtomicBool::new(false);
-    support::wait_for("the agent to work or the restart", || async {
-        let restarted = daemon.running.restart_requested();
+    support::wait_for("the agent to work", || async {
         let a = daemon.client.get_agent(&agent.id).await.ok()?;
-        let working = a.state == bridle_api::types::AgentState::Working;
-        ran.store(working, std::sync::atomic::Ordering::SeqCst);
-        (working || restarted).then_some(())
+        (a.state == bridle_api::types::AgentState::Working).then_some(())
     })
     .await;
-    if !ran.load(std::sync::atomic::Ordering::SeqCst) {
-        daemon.running.join().await.expect("join");
-        return;
-    }
+    std::fs::write(daemon.workspace.join(".bridle/upgrade-target.go"), "").expect("go file");
     // Polls until the turn ends. The flag is read before the state, so a restart seen alongside a
     // still-working agent really did happen mid-turn, however slow the machine is.
     loop {
