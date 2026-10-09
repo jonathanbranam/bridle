@@ -215,6 +215,16 @@ pub(super) fn render_prime_orchestrator(
     )
 }
 
+/// The token is the last non-empty line. `bridle token create statusline
+/// --print` writes a `principal ...` line before the token, so the file the
+/// docs tell the human to make can hold two lines; the token is the last.
+fn token_from_file(contents: &str) -> Option<&str> {
+    contents
+        .lines()
+        .map(str::trim)
+        .rfind(|line| !line.is_empty())
+}
+
 /// Bridle's own counts for the human (docs/tickets/resolved/
 /// statusline-bridle-counts-with-a-read-only-token-r7cs.md): agents working
 /// and messages waiting. Attempted only when `token_path` holds a token —
@@ -229,12 +239,11 @@ pub(super) fn render_prime_orchestrator(
 pub(super) async fn bridle_counts(cwd: &Path, env: &impl Env, token_path: &Path) -> Option<String> {
     let token = match std::fs::read_to_string(token_path) {
         Ok(s) => {
-            let s = s.trim();
-            if s.is_empty() {
+            let Some(token) = token_from_file(&s) else {
                 tracing::debug!("statusline: token file {} is empty", token_path.display());
                 return None;
-            }
-            s.to_string()
+            };
+            token.to_string()
         }
         Err(e) => {
             tracing::debug!("statusline: no token at {}: {e}", token_path.display());
@@ -461,7 +470,30 @@ pub(super) async fn handover(cli: &Cli, args: &HandoverArgs) -> Result<(), CliEr
 
 #[cfg(test)]
 mod bridle_counts_tests {
-    use super::bridle_counts;
+    use super::{bridle_counts, token_from_file};
+
+    #[test]
+    fn token_file_with_one_line() {
+        assert_eq!(token_from_file("tok\n"), Some("tok"));
+        assert_eq!(token_from_file("tok"), Some("tok"));
+    }
+
+    #[test]
+    fn token_file_takes_the_line_after_the_principal_line() {
+        let contents = "principal external:statusline\ntok\n";
+        assert_eq!(token_from_file(contents), Some("tok"));
+    }
+
+    #[test]
+    fn token_file_ignores_trailing_blank_lines() {
+        assert_eq!(token_from_file("principal x\ntok\n\n  \n"), Some("tok"));
+    }
+
+    #[test]
+    fn empty_token_file_has_no_token() {
+        assert_eq!(token_from_file(""), None);
+        assert_eq!(token_from_file("\n  \n"), None);
+    }
 
     #[tokio::test]
     async fn missing_token_file_skips_the_daemon_call() {

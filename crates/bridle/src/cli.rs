@@ -187,7 +187,8 @@ pub enum Command {
     Queue(QueueArgs),
     /// Claude Code's statusLine command: reads its JSON on stdin and prints a
     /// line back. Never fails or blocks: see docs/design/usage-and-budget.md
-    /// ("Where bridle can see usage").
+    /// ("Where bridle can see usage"). Adds bridle's counts when
+    /// ~/.bridle/statusline.token holds a token (setup: docs/design/cli.md).
     #[command(hide = true)]
     Statusline,
     /// Claude Code's Stop hook for the worker role (docs/design/
