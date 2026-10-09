@@ -1287,3 +1287,5 @@
 {"actor":"human","at":"2026-10-09T19:47:21.455Z","from":"","task":"br-72t9","to":"pending"}
 {"actor":"external:advisor/product-manager","at":"2026-10-09T19:47:21.477848Z","from":"pending","task":"br-syqn","to":"open"}
 {"actor":"human","at":"2026-10-09T20:06:43.304Z","from":"","task":"br-g5dm","to":"pending"}
+{"actor":"human","at":"2026-10-09T20:33:29.456Z","from":"","task":"br-mqc5","to":"pending"}
+{"actor":"agent:manager-2","at":"2026-10-09T20:33:30.665554Z","from":"pending","task":"br-mqc5","to":"open"}
