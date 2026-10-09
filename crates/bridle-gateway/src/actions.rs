@@ -9,7 +9,7 @@ use axum::extract::Path;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use bridle_api::client::{Client, ClientError};
-use bridle_api::discovery::{ProcessEnv, resolve_token};
+use bridle_api::discovery::resolve_token;
 use bridle_api::types::{DoneTaskRequest, DropTaskRequest, ReviewNowRequest};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -136,7 +136,7 @@ pub(crate) fn human_token(
         workspace.map(std::path::Path::new),
         Some(project),
         machine,
-        &ProcessEnv,
+        &crate::discovery::HumanEnv,
         false,
     )
     .map_err(|e| e.to_string())

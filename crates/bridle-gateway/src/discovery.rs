@@ -16,6 +16,23 @@ use ts_rs::TS;
 /// hold up the page.
 pub const PROBE_TIMEOUT: Duration = Duration::from_secs(2);
 
+/// Variables that name a principal or project; the gateway ignores them (ticket ppa6).
+pub const IGNORED_ENV: [&str; 4] = ["BRIDLE_AS", "BRIDLE_PROJECT", "BRIDLE_TOKEN", "CLAUDECODE"];
+
+/// The process environment minus [`IGNORED_ENV`], so token resolution always lands on the
+/// human's token whatever shell started the gateway.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct HumanEnv;
+
+impl bridle_api::discovery::Env for HumanEnv {
+    fn var(&self, key: &str) -> Option<String> {
+        if IGNORED_ENV.contains(&key) {
+            return None;
+        }
+        std::env::var(key).ok()
+    }
+}
+
 /// One project's daemon, as the gateway saw it just now.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
 pub struct ProjectStatus {
@@ -248,5 +265,15 @@ mod tests {
                 .expect("reason")
                 .contains("[machines]")
         );
+    }
+
+    #[test]
+    fn human_env_hides_principal_variables() {
+        use bridle_api::discovery::Env;
+        // PATH is always set; the others are hidden whether or not the test shell has them.
+        assert!(HumanEnv.var("PATH").is_some());
+        for k in IGNORED_ENV {
+            assert_eq!(HumanEnv.var(k), None, "{k}");
+        }
     }
 }

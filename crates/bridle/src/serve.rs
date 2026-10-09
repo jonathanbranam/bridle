@@ -241,14 +241,24 @@ pub(crate) fn spawn_detached_with(
         .try_clone()
         .with_context(|| format!("duplicating the {} handle", log_path.display()))?;
     use std::os::unix::process::CommandExt;
-    std::process::Command::new(&current_exe)
-        .args(child_args)
+    detached_command(&current_exe, child_args)
         .stdin(std::process::Stdio::null())
         .stdout(log_out)
         .stderr(log_err)
         .process_group(0)
         .spawn()
         .with_context(|| format!("spawning the detached {what}"))
+}
+
+/// The detached child never inherits a principal or project from the starting shell (ppa6):
+/// the gateway ignores them, and a detached daemon has its own identity.
+fn detached_command(exe: &Path, child_args: &[std::ffi::OsString]) -> std::process::Command {
+    let mut cmd = std::process::Command::new(exe);
+    cmd.args(child_args);
+    for k in ["BRIDLE_AS", "BRIDLE_PROJECT", "BRIDLE_TOKEN"] {
+        cmd.env_remove(k);
+    }
+    cmd
 }
 
 /// How long `--detach` waits for the daemon's health to answer. A loaded host (a build
@@ -316,6 +326,15 @@ pub(crate) fn tail_of_log(path: &Path, n: usize) -> String {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn detached_command_removes_principal_env() {
+        let cmd = super::detached_command(std::path::Path::new("/bin/true"), &[]);
+        for k in ["BRIDLE_AS", "BRIDLE_PROJECT", "BRIDLE_TOKEN"] {
+            let found = cmd.get_envs().find(|(key, _)| *key == k);
+            assert_eq!(found, Some((std::ffi::OsStr::new(k), None)), "{k}");
+        }
+    }
+
     use super::*;
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
 

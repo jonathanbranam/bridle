@@ -40,6 +40,16 @@ pub async fn run(cli: &Cli, args: &GatewayArgs) -> Result<(), CliError> {
         println!("the gateway is disabled ([gateway] enabled = false); not starting");
         return Ok(());
     }
+    let ignored: Vec<&str> = bridle_gateway::discovery::IGNORED_ENV
+        .into_iter()
+        .filter(|k| std::env::var_os(k).is_some())
+        .collect();
+    if !ignored.is_empty() {
+        eprintln!(
+            "warning: ignoring {} from the starting shell; the gateway acts as the human",
+            ignored.join(", ")
+        );
+    }
     if args.detach {
         let child_args: Vec<std::ffi::OsString> = std::env::args_os()
             .skip(1)

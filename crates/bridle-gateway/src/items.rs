@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::time::Duration;
 
 use bridle_api::client::Client;
-use bridle_api::discovery::{ProcessEnv, resolve_token};
+use bridle_api::discovery::resolve_token;
 use bridle_api::types::{Task, TaskPriority, TaskState, sort_by_priority};
 use serde::Serialize;
 use ts_rs::TS;
@@ -104,7 +104,7 @@ pub(crate) fn source(t: Target) -> Source {
         t.workspace.as_deref().map(std::path::Path::new),
         Some(&t.project),
         t.machine.as_deref(),
-        &ProcessEnv,
+        &crate::discovery::HumanEnv,
         true,
     ) {
         Ok(token) => (token, None),
