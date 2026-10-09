@@ -8,6 +8,7 @@ specs: []
 needs: []
 see: [3ehu, k7mw, 9mxw, n63z, gdf3]
 kind: feature
+closed: 2026-10-09T23:00:17Z
 ---
 
 ## The ask
