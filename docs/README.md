@@ -33,6 +33,7 @@ without any other step; `bridle workflow sync` (CLAUDE.md block, skills, hooks) 
 matters if you commit its output
 ([[docs/design/cli|cli]]). Real onboardings: [[docs/context/onboarding-data-contracts|data-contracts]].
 Step by step on dalek or the NUC, with the machine config and tokens: [[docs/context/adding-a-project|adding a project]].
+Bringing a whole new machine onto the network (git, config, tokens, services, moving a project): [[docs/context/add-a-machine|add a machine]].
 
 ## How the folders work
 

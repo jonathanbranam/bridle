@@ -282,3 +282,7 @@ To move a project here, follow the NUC's steps in
 - Bridle-side checks of WSL (systemd units, discovery across machines, budget hold on a game): the
   audit task br-4yc8.
 - Dual boot: the fallback only if WSL proves unreliable as an always-on host (the research).
+
+**Next:** the PC is now a Linux host with bridle installed. Continue at
+[[docs/context/add-a-machine|add a machine]], step 1 (git and GitHub), then step 2 (config), tokens
+and services.

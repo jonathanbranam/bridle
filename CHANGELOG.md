@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Docs: `docs/context/add-a-machine.md`, one procedure to bring a new machine (macOS, Linux, WSL2) onto the network: git and GitHub, `~/.bridle/config.toml`, visitor and peer tokens, services, moving a project.
 - `bridle daemon doctor` on Linux/WSL2: per-OS Claude login fix text, and warnings (also fail under `--strict`) for a workspace under `/mnt/`, systemd not PID 1 (missing `systemd=true` in `/etc/wsl.conf`) and linger off while `bridle systemd install` units exist.
 
 ### Fixed
