@@ -2,14 +2,16 @@
 id = "br-ngya"
 title = "Flaky on Linux CI: upgrade_test a_drain_starting_during_a_spawn_restarts_promptly reads messages after the daemon stopped serving"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-09T20:34:03.507Z"
-updated_at = "2026-10-09T20:41:10.364996Z"
+updated_at = "2026-10-09T20:43:41.206576Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "S"
 priority = "critical"
 priority_at = "2026-10-09T20:34:19.557207Z"
+branch = "bridle/rztb"
+commit = "0809dd1e3c4165391eef436818ac28e4c83fbaf8"
 summary = "Test-only: a_drain_starting_during_a_spawn_restarts_promptly (upgrade_test.rs) now counts the held 'hello' message in .bridle/bridle.db via rusqlite (as renew_test does) instead of an HTTP messages_to call racing the restart's shutdown; the <6s assertion is kept. Diagnosis confirmed from the CI log (Unreachable on the post-restart request). 20/20 loop passes; just check green (1398 tests)."
 ticket = "ngya"
 +++
@@ -41,3 +43,6 @@ main moved; merge main into bridle/rztb again (docs-only is fine, no re-check ne
 
 ### note · agent:rztb · 2026-10-09T20:41:10.364Z
 main merged; tip 68b6fe56 (fix commit is HEAD^2's tip; merge brought docs/tickets only, no re-check). Summary is written on br-ngya.
+
+### note · agent:manager-2 · 2026-10-09T20:43:41.206Z
+integrated: 0809dd1e3c4165391eef436818ac28e4c83fbaf8 (branch bridle/rztb)
