@@ -28,3 +28,23 @@ Scope:
 Out of scope: ticket types and readiness (step 2), links indexed from frontmatter (step 3), the thread move (step 4).
 
 Acceptance: `just check`; `bridle ticket check` clean on bridle after the migration; an old-format ticket still reads.
+
+## Open question: themes and epics across projects
+
+The human, 2026-10-09 ~5:05 PM ET, verbatim: "do themes cross projeccts??? do epics? damn.
+overlooked that one".
+
+They already do in practice: the roadmap's epics have tasks in bridle and bridle-ui
+(everything-is-a-ticket's step 8 is a bridle-ui ticket), and theme `multi-machine` holds ui-9hq8.
+
+PdM recommendation, for the human to confirm before this step builds the theme field:
+
+- **Themes are the human's, not a project's.** A slug means the same theme in every project
+  (`human-ui` in bridle and bridle-ui is one theme). KISS: no central registry to start; each
+  ticket names a slug, and the gateway (which already spans projects) groups by it. `ticket
+  check` accepts any well-formed slug.
+- **An epic lives in one project and its children may live in any**: `parent: br-22ab` on a
+  bridle-ui ticket. Project-qualified IDs (section 8 of 22ab) make that work with no new design.
+- **The roadmap order is cross-project too**, so it can't live in one project's repo. Until a
+  home is designed (the gateway, or a machine-level file), it stays in bridle's
+  `docs/notes/roadmap.md`.

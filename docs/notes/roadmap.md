@@ -15,7 +15,7 @@ before it moves: "waits on the human" is a pending task only the human can appro
 is the project manager's; "ready to build" is in the queue; "HELD" is planned in bridle but
 stopped by the human.
 
-Last updated: 2026-10-09 16:50 ET.
+Last updated: 2026-10-09 17:10 ET.
 
 ## Needs the human now
 
@@ -210,6 +210,7 @@ No tasks yet.
 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
+| [ui-vhrb](http://dalek.tailbc91f5.ts.net:7878/task?id=ui-vhrb) | A theme page (everything about one theme) and a roadmap page (epics in order) in the UI | low | pending | waits on the human (approve to ready) |
 | [br-6h65](http://dalek.tailbc91f5.ts.net:7878/task?id=br-6h65) | A product manager that relates every ticket to open and planned work: links, merges, an... |  | pending | this trial is the stand-in (docs/notes/product-manager-trial.md) |
 | [br-gtzx](http://dalek.tailbc91f5.ts.net:7878/task?id=br-gtzx) | Seats: every role is a named, tracked seat that outlives its sessions, with its own inb... |  | open | HELD: waits on the human's review of P1-P10, Q1-Q4 |
 | [br-stx8](http://dalek.tailbc91f5.ts.net:7878/task?id=br-stx8) | A task's state says what's really happening: held and built-awaiting-landing are states... |  | planned | HELD: needs a proposed design and the human's approval |
@@ -386,3 +387,4 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 - 2026-10-09 16:10 ET: br-xrkh delivered.
 - 2026-10-09 16:30 ET: restructured from workstreams into themes (slugs) and epics, the human's model (d9wq): roadmap orders epics, grouped by theme. 5 epics, 9 themes, the human's to-dos apart.
 - 2026-10-09 16:50 ET: the human approved the epic Done-when drafts and the 22ab plan. Filed 22ab steps 1-4 (br-syqn readied; bpku, 3v75, 72t9 chained by blocked_by). New epic `migrations` (the human's ask), third in order; br-e7e2 moved into it.
+- 2026-10-09 17:10 ET: filed ui-vhrb (theme page and roadmap page; the human's future work), low, theme product-process. Open question on br-syqn: themes and epics cross projects.
