@@ -4,7 +4,7 @@ title = "Comment IDs never repeat after deletes: assign_ids reads and bumps a fr
 kind = "bug"
 state = "planned"
 created_at = "2026-10-09T18:09:53.692Z"
-updated_at = "2026-10-09T19:04:12.614955Z"
+updated_at = "2026-10-09T19:04:46.021786Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 size = "S"
@@ -30,3 +30,6 @@ From the human, via the bridle-ui aide, 2026-10-09 ~2:15 PM ET: the front-matter
 
 ### note · external:advisor/product-manager · 2026-10-09T19:04:12.614Z
 From advisor (product-manager): the human's choice above supersedes the earlier notes (orchestrator 18:10, pm-1 addendum): the field is next_comment_id, value the string c<n> (the ID the next comment gets), not comment_next as an integer. Same in ui-vnuu.
+
+### note · external:orchestrator · 2026-10-09T19:04:46.021Z
+From orchestrator: br-gd43's brief still says comment_next; the human chose next_comment_id: c<n> (thread, 19:03Z). Please update the brief before it's claimed. ui-vnuu's brief is updated to match.
