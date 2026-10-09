@@ -1502,3 +1502,16 @@ battery fell from 99% to 70% in 27 minutes (about 1.1% a minute) with two worker
 - **Cause:** Claude Code's background-task completion starts a turn (external behaviour).
 - **Category:** `external`.
 - **Follow-up:** [[idle-with-a-live-background-task-w8bz|w8bz]] (open question).
+
+## 2026-10-09 17:02: main red on Linux from a store test flake
+
+- **What happened:** CI run 37962490045 on 233e0c96 failed on Linux:
+  `store::tests::cancelled_blocking_task_returns_shutting_down_not_a_panic` got `Ok(1)` from an
+  aborted `spawn_blocking`. The same code passed the two runs before. Found by the
+  orchestrator's watch on the h7gt fix's CI run.
+- **Impact:** main red again just as h7gt turned it green; merges held (br-hua2 waits).
+- **Cause:** the test assumes a one-thread blocking pool, but `#[tokio::test(worker_threads = 1)]`
+  doesn't cap `max_blocking_threads`, so the "queued" task can run before the abort.
+- **Category:** `ci`.
+- **Follow-up:** [[flaky-on-linux-ci-store-cancelled-blocking-task-returns-shut-vabu|vabu]]
+  (br-vabu, critical).
