@@ -37,3 +37,13 @@ The human, verbatim (2026-10-09 ~3:15 PM ET):
 1. **Record the lifecycle in enough detail**, with timestamps, to split a task's time into: waiting (unclaimed, on a dependency, on the human), agent work, builds and tests (worker's check, merge check, CI), waiting for a merge, and held or blocked, **with the reason** for each hold or block (load hold, budget, human gate, dependency, failed check, ...).
 2. **A report** of cycle time from claim to merge (and from filing to merge), per task and summarised over a period, with the breakdown above, so changes to the lifecycle can be compared before and after.
 3. Keep it where it can be evaluated later: the event log or the database, not only messages.
+
+## Addendum (the human, 2026-10-09 ~3:20 PM ET)
+
+> 3. how long do tickets wait for merging and release?
+>
+> etc.
+>
+> AND - DON'T Jump the queue just b/c I'm asking; if this doesn't exist, it's low priority; but something we should get on a workstream
+
+So: also time waiting for a merge and for a release, and other waits like them ("etc."). **Priority: low.** Not to jump the queue; to go on a workstream.
