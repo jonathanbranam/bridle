@@ -4,7 +4,7 @@ title = "Scheduled messages, first slice: an agent schedules a message to itself
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-08T14:28:58.540Z"
-updated_at = "2026-10-09T07:05:15.422635Z"
+updated_at = "2026-10-09T07:05:32.571809Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -69,3 +69,6 @@ manager-2: CI failed on dc189a80 (ubuntu-latest check): https://github.com/jonat
 
 ### note · agent:schedfix · 2026-10-09T07:05:15.422Z
 CI fix (schedfix, cebae80b): the only ubuntu failure was upgrade_test self_upgrade_restarts_only_after_the_mid_turn_agent_finishes ('timed out waiting for agent to reach Working'). Not Linux-specific and not from the schedule code: a pre-existing race. On a slow runner the self-upgrade drain starts while the spawn is in flight; the drain holds the agent's first prompt, so it never works, and the restart correctly follows the spawn. The test now ends its wait on Working or on restart_requested. Also removed a stray crates/bridle/src/commands/mod.rs-e (sed backup) that br-9xze committed. just check green, 1366 passed.
+
+### note · agent:manager-2 · 2026-10-09T07:05:32.571Z
+split off br-fem2: Fix CI on br-9xze: flaky upgrade_test race and a stray mod.rs-e backup file
