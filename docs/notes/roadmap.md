@@ -13,7 +13,7 @@ before it moves: "waits on the human" is a pending task only the human can appro
 is the project manager's; "ready to build" is in the queue; "HELD" is planned in bridle but
 stopped by the human.
 
-Last updated: 2026-10-09 14:06 ET.
+Last updated: 2026-10-09 14:20 ET.
 
 ## Needs the human now
 
@@ -21,8 +21,8 @@ In the order the PdM suggests:
 
 0. **Machine setup** (your priority, 2026-10-09): two decisions unblock phase 2. (a) approve
    the `bridle token pair` design in ticket sk7p (one command, decided 1:55 PM; open: the names
-   `role`/`peer`, the opt-out `[mail] peers = false`); br-8c25 is held for it. (b) j7r4: does the NUC keep pushing tickets to main
-   once a third machine writes to repos (one pusher per branch)? Also your review of kuw2
+   `role`/`peer`, the opt-out `[mail] peers = false`); br-8c25 is held for it. (b) j7r4: answered 2:05 PM (one pusher, enforced:
+   8z7j to the designer; k6jd, 8ay6, 8umh readied; xccp later). Also your review of kuw2
    (machine daemon, br-efs2) gates project transfer's design.
 
 1. **The designer's first job**: by your ladder it is the attachments design (step 2 below),
@@ -79,6 +79,9 @@ The human, 2026-10-09: efficient, direct setup of a new machine, first the Windo
 | [br-f8f9](http://dalek.tailbc91f5.ts.net:7878/task?id=br-f8f9) | The NUC recovers everything on boot (4r3k) | pending | phase 2: 'bridle up' after boot needs a small design |
 | [br-v7ug](http://dalek.tailbc91f5.ts.net:7878/task?id=br-v7ug) | Run bridle's heavy work on the Windows PC under WSL2 | pending | umbrella; audit and guide delivered |
 | [br-kt25](http://dalek.tailbc91f5.ts.net:7878/task?id=br-kt25) | Move a project between machines with one command (bridle project move) | pending | phase 3: needs a design and the human's decisions (see ticket) |
+| [br-8z7j](http://dalek.tailbc91f5.ts.net:7878/task?id=br-8z7j) | Only the owner's clone can push the integration branch: enforced, not a rule | pending | needs a design (designer): how to enforce one pusher; the human picks |
+| [br-k6jd](http://dalek.tailbc91f5.ts.net:7878/task?id=br-k6jd) | Managers and the orchestrator fetch origin; divergence from origin is warned (N ahead, ... | open | to plan (project manager) |
+| [br-xccp](http://dalek.tailbc91f5.ts.net:7878/task?id=br-xccp) | A git identity per machine, so commits show which clone made them | pending | later (the human: non-urgent); needs the human's keys or tokens |
 
 ### Product process and gates
 
@@ -127,6 +130,8 @@ The orchestrator and daemons stay up, relaunch once, upgrade cleanly and recover
 | [br-4zfa](http://dalek.tailbc91f5.ts.net:7878/task?id=br-4zfa) | Incident: the bridle orchestrator was killed (SIGTERM) at 11:18 PM ET and nothing relau... | pending | waits on the human (approve to ready) |
 | [br-f4xu](http://dalek.tailbc91f5.ts.net:7878/task?id=br-f4xu) | Flaky on macOS CI: process_test sigterm_via_signal_group_exits_143 exits 1, not 143 | integrated | delivered |
 | [br-h7gt](http://dalek.tailbc91f5.ts.net:7878/task?id=br-h7gt) | Flaky on Linux CI: upgrade_test self_upgrade_restarts_only_after_the_mid_turn_agent_fin... | integrated | delivered |
+| [br-8ay6](http://dalek.tailbc91f5.ts.net:7878/task?id=br-8ay6) | Direct-to-main docs commits are pushed straight after, on the owner's clone | open | to plan (project manager) |
+| [br-8umh](http://dalek.tailbc91f5.ts.net:7878/task?id=br-8umh) | A failed push is an event and an alarm; an agent that can't send puts the blocker on th... | open | to plan (project manager) |
 | [br-vabu](http://dalek.tailbc91f5.ts.net:7878/task?id=br-vabu) | Flaky on Linux CI: store cancelled_blocking_task_returns_shutting_down_not_a_panic | integrated | delivered |
 | [br-b6mu](http://dalek.tailbc91f5.ts.net:7878/task?id=br-b6mu) | Self-upgrade drain may never restart when it starts during a spawn | planned | ready to build |
 | [br-6b8a](http://dalek.tailbc91f5.ts.net:7878/task?id=br-6b8a) | Orchestrator relaunch liveness: one clock, never a second orchestrator (jf9u) | planned | ready to build |
@@ -298,3 +303,4 @@ Chores that are the human's own: expand on an idea, review a ticket or branch.
 - 2026-10-09 12:54 ET: br-h7gt delivered.
 - 2026-10-09 13:25 ET: placed br-vabu (Linux CI flake, critical; main red, blocks hua2 merge) and br-b6mu (self-upgrade drain bug from h7gt) in reliability. Asked the orchestrator to put machine setup ahead of normal work; agreed: vabu, then hua2, then phase 1.
 - 2026-10-09 14:06 ET: br-vabu, br-hua2 delivered. br-8c25 HELD: the human widened token pair (one command, role and peer tokens, all machines/projects/roles by default); design written into ticket sk7p (n63z folded in), waits on the human's approval.
+- 2026-10-09 14:20 ET: the human answered postmortem j7r4 (c1-c5). Filed 8z7j (one pusher enforced; needs design) and k6jd (fetch, divergence warning; high) in machine setup; 8ay6 (push docs commits) and 8umh (push failed alarm) in reliability, readied; xccp (git identity per machine) low, pending.
