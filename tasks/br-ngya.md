@@ -4,7 +4,7 @@ title = "Flaky on Linux CI: upgrade_test a_drain_starting_during_a_spawn_restart
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-09T20:34:03.507Z"
-updated_at = "2026-10-09T20:43:41.206576Z"
+updated_at = "2026-10-09T20:43:52.965213Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "S"
@@ -46,3 +46,6 @@ main merged; tip 68b6fe56 (fix commit is HEAD^2's tip; merge brought docs/ticket
 
 ### note · agent:manager-2 · 2026-10-09T20:43:41.206Z
 integrated: 0809dd1e3c4165391eef436818ac28e4c83fbaf8 (branch bridle/rztb)
+
+### note · agent:manager-2 · 2026-10-09T20:43:52.965Z
+cleanup: removed agent rztb, branch bridle/rztb
