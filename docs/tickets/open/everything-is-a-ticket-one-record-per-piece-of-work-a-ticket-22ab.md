@@ -346,6 +346,43 @@ Advisor (product-manager) sizes, orders and plans them, with the human's approva
     and a final pass over the docs (`docs/README.md`, `cli.md`, `storage.md`, `agent-host/`).
     The workstream is complete only after this one.
 
+## Plan (advisor product-manager, 2026-10-09; waits on the human's approval)
+
+**Priority.** Second to machine setup: it starts as its gates clear and doesn't take worker slots
+from machine setup phase 1. The roadmap tracks it as the workstream "Everything is a ticket".
+
+**What gates each step** (the suggested sequence above, numbered the same):
+
+| Step | Size (guess) | After | Gated by the human |
+|---|---|---|---|
+| 1 Field names (zkbb) | M | - | Q1 (section 7 names) |
+| 2 Ticket types, readiness on the ticket | M | 1 | Q2 (epic or initiative), Q4 (a row per ticket) |
+| 3 Links from frontmatter | M | 2 | - |
+| 4 The thread moves to the ticket | L | 3 | - |
+| 5 States (stx8) | M | 4 | stx8's state design (still held) |
+| 6 Change parts, gates, approvals (95mu) | L | 2 | Q3 (layout); 95mu review |
+| 7 User-facing rename | L | 1-4 | - |
+| 8 UI (bridle-ui) | M | 7's gateway API | - |
+| 9 Code rename | L | 7 | - (run at a quiet time: it touches every crate) |
+| 10 Cleanup, purge resolved/ | S | 9, one release later | Q5 (purge age and target) |
+
+**Order.** 1 to 4 one at a time: each changes the ticket tooling the next builds on, and running
+them side by side would conflict. 6 can run beside 3 and 4 once Q3 is answered. 7 waits until the
+names and commands of 1 to 4 are stable, so the docs and roles are renamed once. 9 waits for 7 and
+runs while little else is in flight. 10 waits one release after 9, for the wire compatibility.
+
+**Answer together.** Q2 (epic or initiative) is the same question as research ticket d9wq
+(workstream or initiative, already done and waiting on the human's read): one answer settles both.
+
+**Filing.** Once the human approves this plan, the PdM files steps 1 to 4 as child tickets now
+(each with this ticket as parent; until step 1 adds `parent`, a "Parent: 22ab" line and `see`),
+and later steps when their gates clear, so no brief goes stale waiting. Each child gets its task
+from `bridle ticket task` and is readied when it's buildable.
+
+**Risks.** The rename changes what every agent types daily; the hidden `task` alias (step 7)
+keeps old habits working until step 10. The PdM's own roadmap generator reads `bridle task list`
+and needs the same change.
+
 ## Open for the human
 
 1. The field names in section 7, especially `kind` vs `type` and `closed` -> `resolved`.
