@@ -115,6 +115,14 @@ Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or los
 - **Category:** `role`.
 - **Follow-up:** none; the human can `bridle agent rm page-title-rule --delete-branch` to clear it.
 
+## 2026-10-08 (found; began 2026-10-07): bridle's own `ps` polling held spawns for ~26 h
+
+- **What happened:** from 06:34 ET on 10-07 the load hold refused spawns; its notes named `(ps)` as the top consumer. Found by the human watching the holds, not by an alert.
+- **Impact:** about 26 h of spawn holds across the machine's bridle daemons, work waiting on a load that bridle itself caused.
+- **Cause:** every daemon, test daemons included, forked `ps` every 2 s from the tracker timer even with no agents; more load slowed each `ps`, so more overlapped.
+- **Category:** daemon
+- **Follow-up:** fixed by a1bde105 (no snapshot without agents) and 018b9cfd (no-fork read); test daemons stop polling at 200 ms and a resource-budget test guards it (br-6nzj); see [[postmortem-bridle-s-own-ps-polling-every-daemon-test-daemons-n4w4|n4w4]].
+
 ## 2026-10-08 23:40-2026-10-09 01:40: the orchestrator had no waiter on bridle for ~2 h
 
 - **What happened:** during the self-upgrade to 018b9cfd, the orchestrator re-armed its bridle

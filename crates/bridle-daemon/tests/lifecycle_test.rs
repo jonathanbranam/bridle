@@ -432,7 +432,7 @@ async fn crash_is_reported_with_a_stderr_tail_and_pending_messages_deliver_on_re
 
 #[tokio::test]
 async fn spawn_child_orphan_is_swept_on_stop() {
-    let (daemon, _tmp) = start_daemon(None).await;
+    let (daemon, _tmp) = start_daemon(Some(support::fast_tracker_overrides())).await;
     let agent = daemon
         .client
         .spawn(&SpawnRequest {

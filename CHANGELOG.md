@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `bridle daemon doctor` on Linux/WSL2: per-OS Claude login fix text, and warnings (also fail under `--strict`) for a workspace under `/mnt/`, systemd not PID 1 (missing `systemd=true` in `/etc/wsl.conf`) and linger off while `bridle systemd install` units exist.
 
 ### Fixed
+- Test daemons poll the process table every 2 s like production (a test that waits on a reap sets its own faster interval), and a resource-budget test fails if an idle daemon snapshots it (br-6nzj, n4w4).
 - Statusline token setup (br-g3az): the documented `bridle token create statusline` writes an empty file, since the token is saved in `credentials.toml` unless `--print` is given. The docs now use `--print`, and `statusline` reads the last non-empty line of `~/.bridle/statusline.token`, so the `principal ...` line `--print` writes first no longer breaks the counts. An existing empty file needs regenerating with the new command.
 - Daemon and Tailscale (br-jxaf): a daemon that starts before Tailscale is up now re-checks every 5 s for 5 min and binds the Tailscale address when it appears, instead of staying loopback-only until restarted.
 - Mail attachments (br-srj5): a text attachment is saved as the sender's bytes (transfer encoding undone, no charset conversion), so UTF-8 text labelled iso-8859-1 or unlabelled no longer turns an em dash into mojibake.

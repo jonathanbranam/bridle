@@ -209,13 +209,24 @@ pub fn fake_claude_argv_and_env_dump_wrapper(
     wrapper
 }
 
+/// The tracker runs at the production 2 s: idle test daemons stay cheap (br-n4w4).
+/// A test that waits on a tracker-driven reap sets `tracker_interval` itself.
+/// [`default_overrides`] with the tracker at 200 ms, for tests that wait on a
+/// tracker-driven event (`agent.orphans_killed`): at 2 s they time out under load.
+pub fn fast_tracker_overrides() -> Overrides {
+    Overrides {
+        tracker_interval: Duration::from_millis(200),
+        ..default_overrides()
+    }
+}
+
 pub fn default_overrides() -> Overrides {
     Overrides {
         claude_program: fake_claude_path().to_string_lossy().into_owned(),
         write_registry: false,
         bridle_home: None,
         stall_check_interval: Duration::from_secs(3600),
-        tracker_interval: Duration::from_millis(200),
+        tracker_interval: Duration::from_secs(2),
         governor_interval: Duration::from_millis(200),
         governor_poll_interval_normal: Duration::ZERO,
         governor_poll_interval_above_hold: Duration::ZERO,

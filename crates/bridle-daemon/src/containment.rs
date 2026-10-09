@@ -4,6 +4,7 @@
 use std::collections::{HashMap, HashSet};
 use std::io;
 use std::process::Command;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Duration;
 
 use nix::sys::signal::{Signal, kill, killpg};
@@ -30,10 +31,15 @@ const NATIVE: &str = "s:";
 /// sysinfo seconds on macOS. Not comparable with anything now.
 const LEGACY_NATIVE: &str = "n:";
 
+/// How many times [`snapshot`] has run in this process: the resource-budget
+/// test (br-6nzj) counts them to catch a timer that snapshots with nothing to track.
+pub static SNAPSHOTS: AtomicUsize = AtomicUsize::new(0);
+
 /// Snapshots the process table. Reads it natively (no fork: a `ps` per tick
 /// per daemon drove the machine's load up, br-3p3h) and falls back to `ps` if
 /// that fails.
 pub fn snapshot() -> io::Result<Vec<ProcInfo>> {
+    SNAPSHOTS.fetch_add(1, Ordering::Relaxed);
     match native_snapshot() {
         Ok(procs) if !procs.is_empty() => Ok(procs),
         Ok(_) => ps_snapshot(),
