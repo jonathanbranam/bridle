@@ -158,7 +158,7 @@ Red Rising (soon), Brandon Sanderson (next; less into fantasy).
 >
 > > This page has been moved to docs.fsfe.org with the rest of the sysadmin documentation
 >
-> **doc-name-ideas-e11e82, 2026-10-08 20:15 EDT:** @human I could not find it. docs.fsfe.org/en/sysadmin/ answers 403 to every path I tried (real or not, so it looks login-only), and the public part (techdocs, teams/system-hackers) has no naming page. I left the link as is. If you can open it in a browser, send me the URL and I will swap it in.
+> **doc-name-ideas-e11e82, 2026-10-08 20:15 EDT:** @human I could not find it. docs.fsfe.org/en/sysadmin/ answers 403 to every path I tried (real or not, so it looks login-only), and the public part (techdocs, teams/system-hackers) has no naming page. I left the link as is. If you can open it in a browser, send me the URL and I will swap it in. [read 2026-10-08 21:37 EDT]
 
 - [Sci-fi hostname schemes](https://rubenerd.com/brad-alexander-on-hostname-schemes-sci-fi),
   [Fun with Host Naming Schemes](https://www.steevithak.com/?p=808).
