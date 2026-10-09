@@ -31,7 +31,13 @@ runs in the bridle project. No orchestrator belongs to the bridle-ui project.
 
 State at 2026-10-09 5:34 PM ET: launchd's `dev.bridle.gateway` is running (pid 97811). At
 21:31:12Z it restarted itself onto a new binary and logged `via="service manager"`, so that
-self-re-exec stayed under launchd. The open question is the earlier `restart`/`--detach` path.
+self-re-exec stayed under launchd. The fix for the `restart`/`--detach` path, br-57nt, landed
+at 3:06 PM ET (4e28ca82): restart goes through launchd/systemd, and the detached child drops
+Claude's environment. Both of the human's guesses were right. The owner changed during
+landings and upgrades (`bridle gateway restart` from a Claude session), and a test once
+kickstarted the real `dev.bridle.gateway` job (the worker's note; tests now set
+`BRIDLE_GATEWAY_UNMANAGED=1`). What's left: confirm that the next landing or upgrade keeps the
+gateway under launchd, then resolve.
 
 ## Facts (the bridle-ui aide's findings)
 
