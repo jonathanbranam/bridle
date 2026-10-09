@@ -1200,3 +1200,5 @@
 {"actor":"agent:pm-1","at":"2026-10-09T10:47:39.656050Z","from":"open","task":"br-fzwa","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-09T10:47:40.102668Z","from":"open","task":"br-yw8b","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-09T10:47:42.444029Z","queue":"reprioritized"}
+{"actor":"external:orchestrator","at":"2026-10-09T10:48:04.893222Z","from":"open","task":"br-r9h7","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-09T10:48:17.642499Z","queue":"reprioritized"}
