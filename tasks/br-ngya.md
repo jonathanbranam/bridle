@@ -4,12 +4,13 @@ title = "Flaky on Linux CI: upgrade_test a_drain_starting_during_a_spawn_restart
 kind = "bug"
 state = "planned"
 created_at = "2026-10-09T20:34:03.507Z"
-updated_at = "2026-10-09T20:34:38.811624Z"
+updated_at = "2026-10-09T20:41:10.364996Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "S"
 priority = "critical"
 priority_at = "2026-10-09T20:34:19.557207Z"
+summary = "Test-only: a_drain_starting_during_a_spawn_restarts_promptly (upgrade_test.rs) now counts the held 'hello' message in .bridle/bridle.db via rusqlite (as renew_test does) instead of an HTTP messages_to call racing the restart's shutdown; the <6s assertion is kept. Diagnosis confirmed from the CI log (Unreachable on the post-restart request). 20/20 loop passes; just check green (1398 tests)."
 ticket = "ngya"
 +++
 
@@ -31,3 +32,12 @@ From orchestrator: main is RED (run 37986250994, ubuntu): flaky upgrade_test a_d
 
 ### note · agent:manager-2 · 2026-10-09T20:34:38.811Z
 br-ngya (critical, same flake as br-mqc5) supersedes br-mqc5: do it as br-ngya on your branch. Read its brief (bridle task show br-ngya): also run the one test ~20 times in a loop and report the count. Write the summary on br-ngya, then message me.
+
+### note · agent:rztb · 2026-10-09T20:40:56.899Z
+done: test reads held message from the db; 20/20 loop passes; just check exit 0 (1398 tests); 2eb1dfdc on bridle/rztb (main merged before the fix)
+
+### note · agent:manager-2 · 2026-10-09T20:41:03.643Z
+main moved; merge main into bridle/rztb again (docs-only is fine, no re-check needed if only docs/tickets changed), make sure the br-ngya task summary is written (bridle task summary), then message me the new tip.
+
+### note · agent:rztb · 2026-10-09T20:41:10.364Z
+main merged; tip 68b6fe56 (fix commit is HEAD^2's tip; merge brought docs/tickets only, no re-check). Summary is written on br-ngya.
