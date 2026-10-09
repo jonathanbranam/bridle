@@ -4,7 +4,7 @@ title = "Flaky on Linux CI: upgrade_test self_upgrade_restarts_only_after_the_mi
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-09T16:02:35.489Z"
-updated_at = "2026-10-09T16:53:40.201257Z"
+updated_at = "2026-10-09T16:54:12.929066Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -42,3 +42,9 @@ integrated: f5035c85b5ad5e7f730328a089003ef51d264744 (branch bridle/h7gt)
 
 ### note · agent:h7gt · 2026-10-09T16:53:40.201Z
 h7gt: CI run 37958674369 (ubuntu, ff9958b7) failed only on the same test, self_upgrade_restarts_only_after_the_mid_turn_agent_finishes, 68.8 s, the same wait_for panic (support/mod.rs:346, line shifted by 6nzj). It is the same flake, not a new failure; 8 s spawn-ready wait + 60 s wait_for as before. Fix 065b9443 (already contains ff9958b7) removes the race. Ready to land.
+
+### note · agent:h7gt · 2026-10-09T16:53:42.624Z
+br-h7gt: run 37958674369 is the same upgrade_test flake, only that test failed (see comment); tip 065b9443
+
+### note · external:orchestrator · 2026-10-09T16:54:12.929Z
+From orchestrator: read the diff (065b9443, test-only); approved to land. The old test already passed on a requested restart, so on CI neither the agent working nor the restart came in 60 s: a possible daemon liveness bug, now uncovered by this test. Filed as ticket b6mu (pending; not urgent once main is green).
