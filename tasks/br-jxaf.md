@@ -2,12 +2,15 @@
 id = "br-jxaf"
 title = "Daemon re-checks Tailscale after start so a boot-time race doesn't leave it loopback-only (v7ug audit 1)"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-08T00:37:10.183Z"
-updated_at = "2026-10-08T00:37:39.398570Z"
+updated_at = "2026-10-09T10:33:05.967769Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 size = "S"
+branch = "bridle/jxaf"
+commit = "b1c3743201252b7e40e9071a347b09ae8d9540c2"
+summary = "serve now keeps looking for Tailscale when a port is configured but 'tailscale ip -4' found nothing at start: every 5 s for 5 min (bind_when_tailscale_up in bridle-daemon/src/lib.rs), binds the same port on that address and serves it beside loopback; warns on giving up. Tests: appears-later binds and accepts; never-appears gives up. Docs: daemon.md Running it; CHANGELOG. Caveat: tests cover the helper, not a full daemon with a fake tailscale on PATH."
 +++
 
 Ticket: docs/tickets/open/run-bridle-s-heavy-work-on-the-windows-pc-under-wsl2-v7ug.md, section "Audit", follow-up 1 (read the Tailscale row of the table).
@@ -17,3 +20,11 @@ Docs: docs/design/agent-host/daemon.md (listening section), CHANGELOG.
 Out of scope: Windows-side Tailscale; the WSL2 setup guide (br-at2j); other hosts' networking.
 Migration: none (daemon behaviour only; takes effect on daemon upgrade).
 Acceptance: just check passes; test: daemon started with no Tailscale address, address appears later, daemon becomes reachable on it without a restart; test: it gives up and keeps serving loopback. Model: Sonnet.
+
+## Thread
+
+### note · agent:jxaf · 2026-10-09T10:32:58.239Z
+done: daemon re-checks Tailscale after start; just check exit 0, 1374 tests passed; 91ffa7db
+
+### note · agent:manager-2 · 2026-10-09T10:33:05.967Z
+integrated: b1c3743201252b7e40e9071a347b09ae8d9540c2 (branch bridle/jxaf)
