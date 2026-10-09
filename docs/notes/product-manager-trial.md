@@ -277,3 +277,15 @@ in is automated project transfer between machines."
   waits on the human's NUC token, which br-8c25 automates).
 - Lesson 9: **pending is a dead end without an owner.** Every project's pending tasks need
   someone sweeping them (the PdM, here), or the human's asks sit unnoticed overnight.
+
+**2026-10-09 ~3:00-3:15 PM ET.**
+
+- Restart (h-0082). Advisor (tickets) wrote the human's answers to 22ab Q1-Q5 into the ticket;
+  updated the plan table to match (step 5, stx8, out of the workstream; purge deferred). The plan
+  itself still waits on the human's approval before steps 1-4 are filed.
+- br-8z7j (one pusher) was HELD for build, but landing the designer's docs-only branch marked the
+  task integrated. Asked the orchestrator to reopen it held; done.
+- Lesson 10: **a design step and a build step share one task, so landing the design closes the
+  work.** The task's state can't say "design landed, build owed". Either the designer works on
+  the ticket without a task branch of its own task, or design and build are separate tasks (or
+  tickets: 22ab's child tickets would make this natural).
