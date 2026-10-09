@@ -40,6 +40,7 @@ pub mod reevaluate;
 mod restart;
 pub mod rollback;
 pub mod rules;
+mod schedule;
 mod server;
 mod sessions;
 pub mod signing;
@@ -709,6 +710,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         ),
         self_upgrade: config.self_upgrade,
         drain_wake_after: overrides.drain_wake_after,
+        schedule_timezone: config.schedule_timezone.clone(),
     };
     let tick_state = state.clone();
     let app = server::router(state);
@@ -745,6 +747,15 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
     // Tells the peers we are up so they flush what they hold for us; the loop below retries our
     // own queues and notices a sleep.
     tokio::spawn(tick_state.outbox.clone().ping_peers());
+    // Run once at once: whatever came due while the daemon was down fires now.
+    schedule_tick(&tick_state).await;
+    let schedule_task = spawn_loop(shutdown_rx.clone(), schedule::TICK, {
+        let state = tick_state.clone();
+        move || {
+            let state = state.clone();
+            async move { schedule_tick(&state).await }
+        }
+    });
     let outbox_task = spawn_loop(shutdown_rx.clone(), outbox::TICK, {
         let outbox = tick_state.outbox.clone();
         move || {
@@ -964,6 +975,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         signal_task.abort();
         stall_task.abort();
         outbox_task.abort();
+        schedule_task.abort();
         tracker_task.abort();
         governor_task.abort();
         ci_task.abort();
@@ -1157,6 +1169,30 @@ async fn run_autostart_and_resume(store: &Store, config: &Config, manager: &Agen
         {
             tracing::warn!(agent = %a.id, error = %e, "resume-on-restart failed");
         }
+    }
+}
+
+async fn schedule_tick(state: &server::AppState) {
+    let fired = schedule::fire_due(&state.store, chrono::Utc::now(), |target, body| {
+        let state = state.clone();
+        async move { server::send_scheduled(&state, &target, &body).await }
+    })
+    .await;
+    for f in fired {
+        let kind = if f.missed {
+            bridle_api::types::event_kind::SCHEDULE_MISSED_FIRED
+        } else {
+            bridle_api::types::event_kind::SCHEDULE_FIRED
+        };
+        let _ = state
+            .emitter
+            .emit(
+                kind,
+                "system".to_string(),
+                None,
+                serde_json::json!({"id": f.id, "target": f.target}),
+            )
+            .await;
     }
 }
 

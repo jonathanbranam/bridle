@@ -116,6 +116,33 @@ The sender is told by a note from `system` when a message is refused for good (o
 fails) and when it has been queued 30 min (once; retries go on). Tests drive the loop on tokio's
 paused clock with a fake transport.
 
+## Scheduled messages
+
+(hrcn, br-9xze; `schedule.rs`.) A stored message the daemon sends to a principal at a time, once or
+on a cron. Slice 1: the mechanism, per project; role priming and other timed actions (nightly
+restarts, maintenance windows, machine-wide schedules) are separate.
+
+- **Storage**: the `schedules` table ([[storage]]). Ids are `sc-` and four characters. `target` is a
+  principal as `bridle send` takes it. A fired `once` becomes `done`; a `cron` stays `active` with
+  its next `next_fire_at`.
+- **Cron**: standard 5 fields in the schedule's IANA zone (`--tz`, else `[schedule] timezone`, else
+  `America/New_York`), own parser, `chrono-tz` for the zones (nothing in the lock file handled
+  them). A local time that does not exist (spring forward) is skipped that day; an ambiguous one
+  (fall back) fires once, at its first occurrence. A cron that never fires (31 Feb) is refused.
+- **Firing**: a loop every 15 s (`schedule::TICK`), and once at start-up, sends each `active`
+  schedule whose `next_fire_at` has passed through the normal message path, from `system`, as a
+  note: `Scheduled <id> (set by <creator>): <body>`. So it queues, and wakes the agent like any
+  message. A target that no longer exists is logged and the schedule moves on (a `once` ends), else it
+  would fail every tick. A schedule lives on one project's daemon; its target is a principal of that
+  daemon (no outbox hop).
+- **Missed firings** (daemon down, machine asleep): a `once` fires once, now; a `cron` fires once,
+  for its latest missed occurrence (never a burst), then moves to the next future one. More than
+  2 minutes late, the body ends ` (due <local time>, sent late)`.
+- **Who**: the human adds for anyone and lists/removes any; an agent only for itself, and lists and
+  removes only its own; everyone else (externals, peers, visitors) is refused.
+- **Events**: `schedule.fired` and `schedule.missed_fired`, data `{id, target}`; none per tick.
+- **Not done**: quiet hours do not hold a schedule back.
+
 ## Document review
 
 A document is under review when its repo-relative path is a line in `.bridle/review-documents.txt`

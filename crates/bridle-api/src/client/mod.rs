@@ -21,12 +21,13 @@ use crate::types::{
     PrincipalWakeQuery, PrincipalWakeResponse, ProbeRequest, ProbeResult, Queue, Queued,
     RateLimitPoint, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest,
     RestartRequest, RestartResponse, ResumeRequest, ReviewAddRequest, ReviewAddResponse,
-    ReviewNowRequest, ReviewNowResponse, SendRequest, SessionEnd, SessionInfo, SessionKeep,
-    SessionRegister, SetImpactRequest, SetKindRequest, SetPriorityRequest, SetQueueRequest,
-    SetSummaryRequest, ShutdownResponse, SkipSettleRequest, SpawnRequest, Status, StatusLineReport,
-    StopRequest, StopWakeRequest, StopWakeResponse, SubmitTaskRequest, Task, TaskQuery,
-    TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
-    UsageBreakdown, UsageBreakdownQuery, UsageHistoryQuery, WakeResponse, WriteHandoverRequest,
+    ReviewNowRequest, ReviewNowResponse, Schedule, ScheduleAddRequest, ScheduleListQuery,
+    SendRequest, SessionEnd, SessionInfo, SessionKeep, SessionRegister, SetImpactRequest,
+    SetKindRequest, SetPriorityRequest, SetQueueRequest, SetSummaryRequest, ShutdownResponse,
+    SkipSettleRequest, SpawnRequest, Status, StatusLineReport, StopRequest, StopWakeRequest,
+    StopWakeResponse, SubmitTaskRequest, Task, TaskQuery, TokenCreateRequest, TokenCreated,
+    TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery,
+    UsageHistoryQuery, WakeResponse, WriteHandoverRequest,
 };
 
 pub use bridle_docs::documents::{
@@ -287,6 +288,23 @@ impl Client {
     /// `POST /v1/outbox`: queue mail for another daemon on this one.
     pub async fn send_outbox(&self, req: &OutboxSendRequest) -> Result<Queued, ClientError> {
         self.post_json(&["v1", "outbox"], req).await
+    }
+
+    /// `POST /v1/schedules`.
+    pub async fn add_schedule(&self, req: &ScheduleAddRequest) -> Result<Schedule, ClientError> {
+        self.post_json(&["v1", "schedules"], req).await
+    }
+
+    /// `GET /v1/schedules`: the caller's own (all of them for the human).
+    pub async fn list_schedules(&self, all: bool) -> Result<Vec<Schedule>, ClientError> {
+        self.get_json_query(&["v1", "schedules"], &ScheduleListQuery { all })
+            .await
+    }
+
+    /// `DELETE /v1/schedules/{id}`.
+    pub async fn remove_schedule(&self, id: &str) -> Result<(), ClientError> {
+        let req = self.request(Method::DELETE, &["v1", "schedules", id])?;
+        self.send_unit(req).await
     }
 
     /// `POST /v1/forward`: hand one message to the daemon this client points at (peer token).

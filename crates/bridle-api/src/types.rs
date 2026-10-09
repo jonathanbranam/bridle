@@ -776,6 +776,58 @@ pub struct OutboxSendRequest {
     pub reply_to: Option<String>,
 }
 
+/// A scheduled message (`/v1/schedules`).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Schedule {
+    /// `sc-` and four characters.
+    pub id: String,
+    pub created_by: String,
+    /// A principal as `bridle send` takes it (`external:orchestrator`, `agent:notes-1`).
+    pub target: String,
+    pub body: String,
+    /// `once` or `cron`.
+    pub kind: String,
+    /// The cron expression, for `cron`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cron: Option<String>,
+    /// The IANA zone the schedule is evaluated in.
+    pub tz: String,
+    /// The next firing; none once a `once` is `done`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub next_fire_at: Option<DateTime<Utc>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub last_fired_at: Option<DateTime<Utc>>,
+    /// `active` or `done`.
+    pub state: String,
+    pub created_at: DateTime<Utc>,
+}
+
+/// `POST /v1/schedules`. Exactly one of `at` and `cron`.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+pub struct ScheduleAddRequest {
+    /// Defaults to the caller.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub to: Option<String>,
+    /// RFC 3339, or `YYYY-MM-DD HH:MM` in `tz`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub at: Option<String>,
+    /// Five fields: minute hour day-of-month month day-of-week.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cron: Option<String>,
+    /// Defaults to the daemon's `[schedule] timezone`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tz: Option<String>,
+    pub body: String,
+}
+
+/// `GET /v1/schedules`.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct ScheduleListQuery {
+    /// Include `done` schedules.
+    #[serde(default)]
+    pub all: bool,
+}
+
 /// What the sender gets back at once: the outbox id and where it is going.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Queued {
@@ -868,6 +920,10 @@ pub struct Event {
 pub mod event_kind {
     pub const DAEMON_STARTED: &str = "daemon.started";
     pub const DAEMON_STOPPING: &str = "daemon.stopping";
+    /// A schedule's message was sent on time. data: {id, target}.
+    pub const SCHEDULE_FIRED: &str = "schedule.fired";
+    /// A schedule's message was sent late (the daemon was down or asleep). data: {id, target}.
+    pub const SCHEDULE_MISSED_FIRED: &str = "schedule.missed_fired";
     /// Self-upgrade steps (actor: whoever asked, `system` for the automatic one). data always has
     /// `commit`. Skipped: {reason}, nothing the binary is built from changed.
     pub const UPGRADE_SKIPPED: &str = "upgrade.skipped";

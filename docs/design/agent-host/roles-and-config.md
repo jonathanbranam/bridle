@@ -177,6 +177,7 @@ Also read from `.bridle/config.toml` (defaults in parentheses; each is documente
 - `[orchestrator] enabled` (`false`), `launcher` (unset: types `bridle session orchestrator --project <project>`; a value is typed into the pane verbatim; the old default string counts as unset), `relaunch_backoff` (`["30s", "2m", "10m"]`), `stable_after` (`"10m"`), `waiter_grace` (`"15m"`), `note_tokens` (`"150k"`), `plan_tokens` (`"180k"`), `handover_tokens` (`"200k"`; each at least the one before), `handover_deadline` (`"30m"`), `max_uptime` (`"12h"`): the orchestrator supervisor ([[orchestrator-supervision]]).
 - `[sessions] warn` (`["150k", "200k", "250k", "300k"]`; four increasing counts) and `[sessions.advisor] warn` / `[sessions.aide] warn`: the context steps of interactive sessions: warn, plan a handover, the normal ceiling, the hard limit that forces a restart ([[orchestrator-supervision]], Interactive sessions).
 - `[migrations] auto` (`true`): `bridle serve` applies the project's pending migrations at start-up; `false` leaves them to `bridle migrate`; see [[docs/design/migrations|migrations]].
+- `[schedule] timezone` (`America/New_York`): the IANA zone a scheduled message is evaluated in when it names none.
 - `[state] push` (`true`): push `bridle/state` to `origin` after flushes; set to `false` to opt-out; see [[storage#The state branch]].
 - `[machine] check_interval` (`"30s"`), `load_per_core` (2.5): [[operating-model#Load watch|load watch]].
 - `[disk] check_interval` (`"1h"`), `min_free_gb` (20): [[operating-model#Disk monitor|disk monitor]].

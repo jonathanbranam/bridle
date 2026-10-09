@@ -137,6 +137,9 @@ pub enum Command {
     Budget(BudgetArgs),
     /// Token management.
     Token(TokenArgs),
+    /// Scheduled messages: add/list/rm. The daemon sends the message to the target at the time
+    /// (once or on a cron). An agent schedules to itself; the human to anyone.
+    Schedule(ScheduleArgs),
     /// Task records: create/show/edit/list/drop/done/reopen/plan/summary.
     /// Ready changes state `pending` -> `open`, plan `open` -> `planned`. See docs/design/storage.md
     /// for state machine and docs/design/coordination.md for the task lifecycle.
@@ -1333,6 +1336,45 @@ pub struct BudgetOverrideArgs {
     /// change on its own.
     #[arg(long)]
     pub until: Option<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct ScheduleArgs {
+    #[command(subcommand)]
+    pub action: ScheduleAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum ScheduleAction {
+    /// Schedule a message. Prints its id and the next time it fires.
+    Add {
+        /// Who gets it, as `bridle send` takes it. Default: yourself (an agent).
+        #[arg(long)]
+        to: Option<String>,
+        /// Fire once: RFC 3339, or `YYYY-MM-DD HH:MM` in --tz.
+        #[arg(long, conflicts_with = "cron", required_unless_present = "cron")]
+        at: Option<String>,
+        /// Fire on a 5-field cron expression (minute hour day-of-month month day-of-week), in --tz.
+        #[arg(long)]
+        cron: Option<String>,
+        /// IANA zone (default: the daemon's `[schedule] timezone`, America/New_York).
+        #[arg(long)]
+        tz: Option<String>,
+        /// The message text.
+        #[arg(long)]
+        message: Option<String>,
+        /// Read the message text from a file (or `-` for stdin).
+        #[arg(long)]
+        message_file: Option<PathBuf>,
+    },
+    /// List your schedules (the human sees all).
+    List {
+        /// Include ones that have finished.
+        #[arg(long)]
+        all: bool,
+    },
+    /// Remove a schedule.
+    Rm { id: String },
 }
 
 #[derive(Debug, Args)]

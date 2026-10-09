@@ -37,6 +37,8 @@ pub enum ConfigError {
         value: f64,
         machine_value: f64,
     },
+    #[error("invalid [schedule]: {0}")]
+    BadScheduleZone(String),
     #[error("invalid [tmux]: {0}")]
     BadTmux(String),
     #[error("invalid [orchestrator]: {0}")]
@@ -1556,6 +1558,9 @@ pub struct Config {
     /// `[state] push`: push `bridle/state` to origin after a flush that committed. On by
     /// default: set to false to opt-out (rule existing-projects, human-approved 2026-09-29).
     pub state_push: bool,
+    /// `[schedule] timezone`: the IANA zone a schedule gets when it names none. Default
+    /// `America/New_York`.
+    pub schedule_timezone: String,
     /// `[migrations] auto`: `bridle serve` applies the project's pending migrations at start-up
     /// (docs/design/migrations.md). On by default.
     pub migrations_auto: bool,
@@ -1625,6 +1630,7 @@ impl Default for Config {
             machine: MachineConfig::default(),
             review: ReviewConfig::default(),
             state_push: true,
+            schedule_timezone: "America/New_York".to_string(),
             migrations_auto: true,
             orchestrator: OrchestratorConfig::default(),
             sessions: SessionsConfig::default(),
@@ -1998,6 +2004,11 @@ impl Config {
 
         if let Some(v) = raw.state.and_then(|s| s.push) {
             config.state_push = v;
+        }
+        if let Some(tz) = raw.schedule.and_then(|s| s.timezone) {
+            tz.parse::<chrono_tz::Tz>()
+                .map_err(|e| ConfigError::BadScheduleZone(format!("timezone {tz:?}: {e}")))?;
+            config.schedule_timezone = tz;
         }
 
         if let Some(d) = raw.disk {
@@ -2380,6 +2391,8 @@ struct RawConfig {
     #[serde(default)]
     state: Option<RawState>,
     #[serde(default)]
+    schedule: Option<RawSchedule>,
+    #[serde(default)]
     migrations: Option<RawMigrations>,
     #[serde(default)]
     orchestrator: Option<RawOrchestrator>,
@@ -2642,6 +2655,12 @@ struct RawPorts {
     range: Option<[u16; 2]>,
     #[serde(default)]
     reserved: Vec<u16>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+struct RawSchedule {
+    #[serde(default)]
+    timezone: Option<String>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -4030,6 +4049,14 @@ mod tests {
                 .unwrap()
                 .migrations_auto
         );
+    }
+
+    #[test]
+    fn schedule_timezone_defaults_and_is_checked() {
+        assert_eq!(Config::default().schedule_timezone, "America/New_York");
+        let c = Config::parse("[schedule]\ntimezone = \"Europe/London\"\n").unwrap();
+        assert_eq!(c.schedule_timezone, "Europe/London");
+        assert!(Config::parse("[schedule]\ntimezone = \"Mars/Base\"\n").is_err());
     }
 
     #[test]

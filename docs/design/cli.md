@@ -89,6 +89,11 @@ bridle agent spawn   <role> [--name N] [--prompt TEXT | --prompt-file FILE]
 bridle agents  [--all]
 bridle agent show    <agent>
 bridle send    [--project <other>] <agent|human|role:NAME|external:NAME> [TEXT | --text-file FILE] [--question] [--when now|idle] [--reply-to ID] [--task ID]
+bridle schedule add  [--to <principal>] (--at <time> | --cron "<expr>") [--tz <IANA>] (--message TEXT | --message-file FILE|-)
+                     # the daemon sends the message to <principal> (default: me, an agent) at the time; --at is RFC 3339 or "YYYY-MM-DD HH:MM" in --tz (default [schedule] timezone, America/New_York);
+                     # --cron is 5 fields in --tz (DST: a skipped local time is skipped that day, a repeated one fires once). Prints the id and the next fire time (schedule zone, and UTC). A past --at or a cron that never fires is refused
+bridle schedule list [--all]                # my schedules (the human sees everyone's); --all adds finished ones
+bridle schedule rm   <id>                   # mine (the human: any)
 bridle inbox   [--all] [--mark-read]        # messages to me, plus every task's open question (list); an agent's or external principal's listed messages are marked read
 bridle inbox show <id> [--mark-read]        # show one message in full; for the human it leaves it unread unless --mark-read, for an agent or external principal it marks it read
 bridle inbox read <id>...                   # mark one or more messages read

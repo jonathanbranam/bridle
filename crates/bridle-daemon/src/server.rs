@@ -28,7 +28,9 @@ use bridle_api::types::{
     UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, UsageHistoryQuery, WakeResponse, When,
     WindowStatus, WriteHandoverRequest, event_kind,
 };
-use bridle_api::types::{PrincipalId, ThreadEntryKind};
+use bridle_api::types::{
+    PrincipalId, Schedule, ScheduleAddRequest, ScheduleListQuery, ThreadEntryKind,
+};
 use chrono::Utc;
 use futures::Stream;
 use serde::Deserialize;
@@ -60,6 +62,8 @@ pub struct AppState {
     pub self_upgrade: bool,
     /// How long a drain waits before it wakes the orchestrator (once).
     pub drain_wake_after: std::time::Duration,
+    /// `[schedule] timezone`: the zone a schedule gets when it names none.
+    pub schedule_timezone: String,
     pub governor: crate::governor::Governor,
     pub ci: crate::ci::CiWatcher,
     pub wakes: std::sync::Arc<crate::wake::Wakes>,
@@ -103,6 +107,8 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/agents/{id}/transcript", get(transcript))
         .route("/v1/messages", get(list_messages).post(send_message))
         .route("/v1/outbox", post(send_outbox))
+        .route("/v1/schedules", get(list_schedules).post(add_schedule))
+        .route("/v1/schedules/{id}", axum::routing::delete(remove_schedule))
         .route("/v1/hello", post(hello))
         .route("/v1/forward", post(forward))
         .route("/v1/messages/{id}/read", post(mark_read))
@@ -1516,6 +1522,147 @@ async fn send_message(
         msgs.push(msg);
     }
     Ok(Json(msgs))
+}
+
+/// Who may touch schedules: the human any, an agent its own (an agent's schedule can only
+/// target itself); anyone else none.
+fn schedule_actor_ok(principal: &Principal) -> Result<(), ApiError> {
+    match principal.kind {
+        PrincipalKind::Human | PrincipalKind::Agent => Ok(()),
+        _ => Err(ApiError::forbidden(
+            "only agents and the human use schedules",
+        )),
+    }
+}
+
+/// `POST /v1/schedules`.
+async fn add_schedule(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Json(req): Json<ScheduleAddRequest>,
+) -> Result<Json<Schedule>, ApiError> {
+    schedule_actor_ok(&principal)?;
+    if req.body.trim().is_empty() {
+        return Err(ApiError::bad_request("message text must not be empty"));
+    }
+    let target = match req.to.as_deref() {
+        Some(t) => t.to_string(),
+        None if principal.kind == PrincipalKind::Agent => principal.id.clone(),
+        None => return Err(ApiError::bad_request("`to` is required")),
+    };
+    let bare = |p: &str| p.strip_prefix("agent:").unwrap_or(p).to_string();
+    if principal.kind == PrincipalKind::Agent && bare(&target) != bare(&principal.id) {
+        return Err(ApiError::forbidden(
+            "an agent may schedule messages only to itself",
+        ));
+    }
+    // The target must exist now; it is looked up again when the message fires.
+    resolve_targets(&state, &target).await?;
+    let tz_name = req.tz.as_deref().unwrap_or(&state.schedule_timezone);
+    let tz = crate::schedule::parse_tz(tz_name).map_err(ApiError::bad_request)?;
+    let now = Utc::now();
+    let (kind, cron, next) = match (req.at.as_deref(), req.cron.as_deref()) {
+        (Some(at), None) => {
+            let at = crate::schedule::parse_at(at, tz).map_err(ApiError::bad_request)?;
+            if at <= now {
+                return Err(ApiError::bad_request(format!(
+                    "{} is in the past",
+                    at.with_timezone(&tz).format("%Y-%m-%d %H:%M %Z")
+                )));
+            }
+            ("once", None, at)
+        }
+        (None, Some(expr)) => {
+            let cron = crate::schedule::Cron::parse(expr).map_err(ApiError::bad_request)?;
+            let next = cron
+                .next_after(tz, now)
+                .ok_or_else(|| ApiError::bad_request(format!("cron {expr:?} never fires")))?;
+            (
+                "cron",
+                Some(expr.split_whitespace().collect::<Vec<_>>().join(" ")),
+                next,
+            )
+        }
+        _ => return Err(ApiError::bad_request("give exactly one of `at` and `cron`")),
+    };
+    let target = match target.strip_prefix("agent:") {
+        Some(_) => target,
+        None if state.store.get_agent(&target).await?.is_some() => format!("agent:{target}"),
+        None => target,
+    };
+    let schedule = state
+        .store
+        .schedule_add(Schedule {
+            id: String::new(),
+            created_by: principal.id.clone(),
+            target,
+            body: req.body,
+            kind: kind.to_string(),
+            cron,
+            tz: tz.name().to_string(),
+            next_fire_at: Some(next),
+            last_fired_at: None,
+            state: String::new(),
+            created_at: now,
+        })
+        .await?;
+    Ok(Json(schedule))
+}
+
+/// `GET /v1/schedules`.
+async fn list_schedules(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Query(q): Query<ScheduleListQuery>,
+) -> Result<Json<Vec<Schedule>>, ApiError> {
+    schedule_actor_ok(&principal)?;
+    let owner = (principal.kind != PrincipalKind::Human).then_some(principal.id.as_str());
+    Ok(Json(state.store.schedules_list(owner, q.all).await?))
+}
+
+/// `DELETE /v1/schedules/{id}`. Another agent's schedule reads as not found.
+async fn remove_schedule(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path(id): Path<String>,
+) -> Result<StatusCode, ApiError> {
+    schedule_actor_ok(&principal)?;
+    let mine = state
+        .store
+        .schedule_get(&id)
+        .await?
+        .filter(|s| principal.kind == PrincipalKind::Human || s.created_by == principal.id);
+    if mine.is_none() || !state.store.schedule_remove(&id).await? {
+        return Err(ApiError::not_found(format!("no such schedule: {id}")));
+    }
+    Ok(StatusCode::NO_CONTENT)
+}
+
+/// Sends one scheduled message the way `bridle send` does (from `system`), so it queues and
+/// wakes like any other.
+pub(crate) async fn send_scheduled(
+    state: &AppState,
+    target: &str,
+    body: &str,
+) -> Result<(), String> {
+    let targets = resolve_targets(state, target)
+        .await
+        .map_err(|e| e.message)?;
+    for t in targets {
+        state
+            .manager
+            .send(
+                "system".to_string(),
+                t,
+                MessageKind::Note,
+                body.to_string(),
+                When::Idle,
+                None,
+            )
+            .await
+            .map_err(|e| e.to_string())?;
+    }
+    Ok(())
 }
 
 /// `POST /v1/outbox`: mail for a principal on another daemon. Accepted at once, whether or not

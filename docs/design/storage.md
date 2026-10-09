@@ -55,6 +55,10 @@ interactive_usage(id PK AUTOINCREMENT, observed_at, session_id, model,
                    cost_usd, context_used_tokens, context_max_tokens,
                    context_used_percentage)          -- V10: Claude's own figure; right on 1M models
                                                      -- from `bridle statusline`; no agent id, nothing bridle hosts
+schedules(id PK 'sc-xxxx', created_by, target, body, kind 'once'|'cron', at_utc, cron, tz, next_fire_at,
+          last_fired_at, state 'active'|'done', created_at)
+                                                     -- SCHEMA_V23: scheduled messages (daemon.md); a fired
+                                                     -- once becomes done, a cron keeps its next_fire_at
 meta(key PK, value)                                  -- e.g. claude_version; orchestrator_wake_cursor
                                                      -- (event seq the orchestrator's wakes were last delivered up to)
 ```

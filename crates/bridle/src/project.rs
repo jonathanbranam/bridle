@@ -96,6 +96,7 @@ mod tests {
         ("agents", Daemon),
         ("show", Daemon),
         ("send", Daemon),
+        ("schedule", Daemon),
         ("inbox", Daemon),
         ("interrupt", Daemon),
         ("stop", Daemon),

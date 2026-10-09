@@ -15,8 +15,8 @@ use std::sync::{Arc, Mutex};
 use bridle_api::types::{
     Agent, AgentState, AgentUsage, Conflict, Edge, EdgeKind, Event, EventQuery, ExitInfo, Handover,
     InteractiveUsageRow, Message, MessageKind, MessageState, PortAllocation, PrincipalId,
-    PrincipalKind, RateLimit, RateLimitPoint, TaskKind, TaskState, TokenCreated, TokenInfo,
-    TokenTotals, Usage, UsageBreakdown, UsageGroup, UsageGroupBy, When,
+    PrincipalKind, RateLimit, RateLimitPoint, Schedule, TaskKind, TaskState, TokenCreated,
+    TokenInfo, TokenTotals, Usage, UsageBreakdown, UsageGroup, UsageGroupBy, When,
 };
 use chrono::{DateTime, SecondsFormat, SubsecRound, Utc};
 use rusqlite::Connection;
@@ -285,6 +285,50 @@ impl Store {
     pub async fn create_peer_token(&self, machine: &str) -> Result<TokenCreated, StoreError> {
         let machine = machine.to_string();
         self.with_conn(move |c| sync::create_peer_token(c, &machine))
+            .await
+    }
+
+    /// Stores a new schedule and returns it with its id.
+    pub async fn schedule_add(&self, s: Schedule) -> Result<Schedule, StoreError> {
+        self.with_conn(move |c| sync::schedule_add(c, s)).await
+    }
+
+    /// `created_by` limits to one creator; `all` includes `done` ones.
+    pub async fn schedules_list(
+        &self,
+        created_by: Option<&str>,
+        all: bool,
+    ) -> Result<Vec<Schedule>, StoreError> {
+        let created_by = created_by.map(str::to_string);
+        self.with_conn(move |c| sync::schedules_list(c, created_by.as_deref(), all))
+            .await
+    }
+
+    pub async fn schedule_get(&self, id: &str) -> Result<Option<Schedule>, StoreError> {
+        let id = id.to_string();
+        self.with_conn(move |c| sync::schedule_get(c, &id)).await
+    }
+
+    /// True when it existed.
+    pub async fn schedule_remove(&self, id: &str) -> Result<bool, StoreError> {
+        let id = id.to_string();
+        self.with_conn(move |c| sync::schedule_remove(c, &id)).await
+    }
+
+    /// Active schedules whose `next_fire_at` is at or before `now`.
+    pub async fn schedules_due(&self, now: DateTime<Utc>) -> Result<Vec<Schedule>, StoreError> {
+        self.with_conn(move |c| sync::schedules_due(c, now)).await
+    }
+
+    /// Records a firing: `next` is the next firing, or none to end a `once`.
+    pub async fn schedule_fired(
+        &self,
+        id: &str,
+        at: DateTime<Utc>,
+        next: Option<DateTime<Utc>>,
+    ) -> Result<(), StoreError> {
+        let id = id.to_string();
+        self.with_conn(move |c| sync::schedule_fired(c, &id, at, next))
             .await
     }
 
@@ -1398,12 +1442,32 @@ mod sync {
         ALTER TABLE outbox ADD COLUMN stuck_notified_at TEXT;
     "#;
 
+    // Scheduled messages (hrcn, br-9xze).
+    pub(super) const SCHEMA_V23: &str = r#"
+        CREATE TABLE schedules (
+            id TEXT PRIMARY KEY,
+            created_by TEXT NOT NULL,
+            target TEXT NOT NULL,
+            body TEXT NOT NULL,
+            kind TEXT NOT NULL,
+            at_utc TEXT,
+            cron TEXT,
+            tz TEXT NOT NULL,
+            next_fire_at TEXT,
+            last_fired_at TEXT,
+            state TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        );
+        CREATE INDEX schedules_due ON schedules(state, next_fire_at);
+    "#;
+
     pub(super) const RATE_LIMIT_HISTORY_DAYS: i64 = 90;
 
     pub(super) const MIGRATIONS: &[&str] = &[
         SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7, SCHEMA_V8,
         SCHEMA_V9, SCHEMA_V10, SCHEMA_V11, SCHEMA_V12, SCHEMA_V13, SCHEMA_V14, SCHEMA_V15,
         SCHEMA_V16, SCHEMA_V17, SCHEMA_V18, SCHEMA_V19, SCHEMA_V20, SCHEMA_V21, SCHEMA_V22,
+        SCHEMA_V23,
     ];
 
     pub(super) fn open(path: &Path) -> Result<Connection, StoreError> {
@@ -1749,6 +1813,112 @@ mod sync {
             principal: id,
             token,
         })
+    }
+
+    const SCHEDULE_COLS: &str = "id, created_by, target, body, kind, cron, tz, next_fire_at,
+        last_fired_at, state, created_at";
+
+    fn schedule_from(r: &Row<'_>) -> rusqlite::Result<Schedule> {
+        Ok(Schedule {
+            id: r.get(0)?,
+            created_by: r.get(1)?,
+            target: r.get(2)?,
+            body: r.get(3)?,
+            kind: r.get(4)?,
+            cron: r.get(5)?,
+            tz: r.get(6)?,
+            next_fire_at: parse_dt_opt(r.get(7)?)?,
+            last_fired_at: parse_dt_opt(r.get(8)?)?,
+            state: r.get(9)?,
+            created_at: parse_dt(&r.get::<_, String>(10)?)?,
+        })
+    }
+
+    pub(super) fn schedule_add(conn: &Connection, mut s: Schedule) -> Result<Schedule, StoreError> {
+        s.id = new_task_id("sc");
+        s.created_at = Utc::now().trunc_subsecs(3);
+        conn.execute(
+            "INSERT INTO schedules(id, created_by, target, body, kind, at_utc, cron, tz,
+                next_fire_at, state, created_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, 'active', ?10)",
+            params![
+                s.id,
+                s.created_by,
+                s.target,
+                s.body,
+                s.kind,
+                (s.kind == "once")
+                    .then(|| s.next_fire_at.map(fmt_dt))
+                    .flatten(),
+                s.cron,
+                s.tz,
+                s.next_fire_at.map(fmt_dt),
+                fmt_dt(s.created_at),
+            ],
+        )?;
+        s.state = "active".to_string();
+        Ok(s)
+    }
+
+    pub(super) fn schedules_list(
+        conn: &Connection,
+        created_by: Option<&str>,
+        all: bool,
+    ) -> Result<Vec<Schedule>, StoreError> {
+        let mut stmt = conn.prepare(&format!(
+            "SELECT {SCHEDULE_COLS} FROM schedules
+             WHERE (?1 IS NULL OR created_by = ?1) AND (?2 OR state = 'active')
+             ORDER BY next_fire_at IS NULL, next_fire_at, created_at"
+        ))?;
+        Ok(stmt
+            .query_map(params![created_by, all], schedule_from)?
+            .collect::<Result<_, _>>()?)
+    }
+
+    pub(super) fn schedule_get(
+        conn: &Connection,
+        id: &str,
+    ) -> Result<Option<Schedule>, StoreError> {
+        Ok(conn
+            .query_row(
+                &format!("SELECT {SCHEDULE_COLS} FROM schedules WHERE id = ?1"),
+                params![id],
+                schedule_from,
+            )
+            .optional()?)
+    }
+
+    pub(super) fn schedule_remove(conn: &Connection, id: &str) -> Result<bool, StoreError> {
+        Ok(conn.execute("DELETE FROM schedules WHERE id = ?1", params![id])? > 0)
+    }
+
+    pub(super) fn schedules_due(
+        conn: &Connection,
+        now: DateTime<Utc>,
+    ) -> Result<Vec<Schedule>, StoreError> {
+        let mut stmt = conn.prepare(&format!(
+            "SELECT {SCHEDULE_COLS} FROM schedules
+             WHERE state = 'active' AND next_fire_at IS NOT NULL AND next_fire_at <= ?1
+             ORDER BY next_fire_at"
+        ))?;
+        Ok(stmt
+            .query_map(params![fmt_dt(now)], schedule_from)?
+            .collect::<Result<_, _>>()?)
+    }
+
+    pub(super) fn schedule_fired(
+        conn: &Connection,
+        id: &str,
+        at: DateTime<Utc>,
+        next: Option<DateTime<Utc>>,
+    ) -> Result<(), StoreError> {
+        conn.execute(
+            "UPDATE schedules SET last_fired_at = ?2, next_fire_at = ?3,
+                state = CASE WHEN ?3 IS NULL THEN 'done' ELSE 'active' END
+             WHERE id = ?1",
+            params![id, fmt_dt(at), next.map(fmt_dt)],
+        )?;
+        Ok(())
     }
 
     pub(super) fn outbox_enqueue(conn: &Connection, row: &OutboxRow) -> Result<String, StoreError> {
