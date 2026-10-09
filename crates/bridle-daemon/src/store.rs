@@ -3954,24 +3954,37 @@ mod tests {
     /// exist and the call sites did
     /// `spawn_blocking(...).await.expect("... task panicked")`, which
     /// turned this ordinary cancellation into a panic.
-    #[tokio::test(flavor = "multi_thread", worker_threads = 1)]
-    async fn cancelled_blocking_task_returns_shutting_down_not_a_panic() {
-        let occupy = tokio::task::spawn_blocking(|| {
-            std::thread::sleep(std::time::Duration::from_millis(200))
+    ///
+    /// The runtime is built by hand: `#[tokio::test(worker_threads = 1)]` leaves
+    /// `max_blocking_threads` at 512, so the second task got its own thread and
+    /// could finish before the abort (br-vabu).
+    #[test]
+    fn cancelled_blocking_task_returns_shutting_down_not_a_panic() {
+        let rt = tokio::runtime::Builder::new_multi_thread()
+            .worker_threads(1)
+            .max_blocking_threads(1)
+            .enable_all()
+            .build()
+            .expect("runtime");
+        rt.block_on(async {
+            let occupy = tokio::task::spawn_blocking(|| {
+                std::thread::sleep(std::time::Duration::from_millis(200))
+            });
+            tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+
+            // The only blocking thread is busy, so this is queued, not started.
+            let handle = tokio::task::spawn_blocking(|| 1);
+            handle.abort();
+            let err = handle.await.expect_err("aborted task should error");
+            assert!(err.is_cancelled());
+
+            match join_error(err) {
+                StoreError::ShuttingDown => {}
+                other => panic!("expected StoreError::ShuttingDown, got {other:?}"),
+            }
+
+            occupy.await.expect("occupying task should finish normally");
         });
-        tokio::time::sleep(std::time::Duration::from_millis(20)).await;
-
-        let handle = tokio::task::spawn_blocking(|| 1);
-        handle.abort();
-        let err = handle.await.expect_err("aborted task should error");
-        assert!(err.is_cancelled());
-
-        match join_error(err) {
-            StoreError::ShuttingDown => {}
-            other => panic!("expected StoreError::ShuttingDown, got {other:?}"),
-        }
-
-        occupy.await.expect("occupying task should finish normally");
     }
 
     /// A genuine panic inside the blocking closure must still surface as a
