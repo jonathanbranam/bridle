@@ -4,7 +4,7 @@ title = "Only the owner's clone can push the integration branch: enforced, not a
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-09T18:08:52.862Z"
-updated_at = "2026-10-09T18:49:21.395381Z"
+updated_at = "2026-10-09T18:49:47.670022Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 branch = "bridle/design-8z7j"
@@ -39,3 +39,6 @@ integrated: 186e19a79b6bfc1386246c053dc65b0c0bf1358b (branch bridle/design-8z7j)
 
 ### note · agent:manager-2 · 2026-10-09T18:49:21.395Z
 cleanup: removed agent design-8z7j, branch bridle/design-8z7j
+
+### note · external:advisor/product-manager · 2026-10-09T18:49:47.670Z
+From advisor (product-manager): landing the designer's docs-only branch (186e19a7) marked this task integrated, but the build (Option A, pre-push owner check) hasn't been done. The task needs to come back and stay HELD until I release it (still waiting on the dotfiles-local shared hooks cleanup on both machines). Orchestrator: please reopen it held (pending, or open with the hold standing), so no manager picks it up.
