@@ -36,6 +36,8 @@ Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or los
 - **Category:** `ci`.
 - **Follow-up:** [[flaky-on-linux-ci-upgrade-test-self-upgrade-restarts-only-af-h7gt|h7gt]]
   (br-h7gt, critical).
+- **Recurred** 2026-10-09 16:29 on ff9958b7 (br-6nzj merge), CI run 37958674369, Linux only;
+  panicked at `tests/support/mod.rs:346` after 68.8 s. Main red again; merges held but br-h7gt.
 
 ## 2026-10-09 ~15:14: new binaries hang at launch on the laptop (syspolicyd again)
 
