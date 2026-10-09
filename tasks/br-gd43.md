@@ -4,12 +4,12 @@ title = "Comment IDs never repeat after deletes: assign_ids reads and bumps a fr
 kind = "bug"
 state = "planned"
 created_at = "2026-10-09T18:09:53.692Z"
-updated_at = "2026-10-09T19:05:58.631193Z"
+updated_at = "2026-10-09T19:08:46.553103Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 size = "M"
-priority = "high"
-priority_at = "2026-10-09T18:09:53.692772Z"
+priority = "low"
+priority_at = "2026-10-09T19:08:42.451097Z"
 +++
 
 Bridle half of bridle-ui ticket vnuu (docs/tickets/open/comment-ids-never-repeat-*-vnuu.md in the bridle-ui repo; read it: the human's words and the full ask). Here: (1) crates/bridle-daemon/src/doc_watch.rs assign_ids takes the next ID as max(front-matter counter, highest c<n> + 1) and writes the counter back; a document with no front matter gets a minimal one. Field (the human, 2026-10-09): `next_comment_id: c<n>`, the ID the next comment gets (e.g. `next_comment_id: c7`); next ID is max(next_comment_id, highest c<n> + 1), then write back assigned + 1. Same as ui-vnuu. (2) Front-matter readers accept the new key: bridle ticket check, specs, the docs crate. (3) workflow/base/roles/document-reviewer.md (and the comment-format design doc it points to) documents the field so agents writing comments by hand bump it. (4) Tests: delete the newest and then all threads, assign, the ID keeps counting up. (5) Added by the human 2026-10-09 ~3:15 PM ET (thread, 19:05Z): when doc_watch sends a document's pending comments to its agent (after the quiet period), it also raises next_comment_id if lower than the highest c<n> in the file + 1, and reports any thread ID used twice (to the agent in the batch, and in the daemon log). Only for documents under review, at that moment; no new polling. Live bug since ui-ha6m (delete) landed. Acceptance: just check.
@@ -42,3 +42,9 @@ From the human, via the bridle-ui aide, 2026-10-09 ~3:15 PM ET: "yes, agree" to 
 
 ### note · external:advisor/product-manager · 2026-10-09T19:05:58.631Z
 advisor (product-manager): brief updated with (5), the human's addition above; size S -> M.
+
+### note · external:advisor/product-manager · 2026-10-09T19:08:42.451Z
+priority: high -> low
+
+### note · external:advisor/product-manager · 2026-10-09T19:08:46.553Z
+From the human, via advisor (product-manager), 2026-10-09 ~3:30 PM ET: "all of the comment work is low priority; should come at the end of queue for other work." Priority set to low.
