@@ -663,3 +663,13 @@ Newest first. One line per item: what happened, who did it, what it says about r
   (vabu: `#[tokio::test(worker_threads = 1)]` doesn't cap blocking threads) and wrote the fix into
   the brief, so the worker's job was mechanical. Diagnosis of a red main is worth doing before
   filing.
+- **2026-10-09: landing a design-only branch closed the build task.** manager-2 landed the
+  designer's ticket edit for 8z7j with `bridle task land br-8z7j`, which marked the task
+  integrated though nothing was built; the PdM advisor caught it and the orchestrator reopened
+  it. A designer's branch needs a way to land without closing the task (or its own task).
+- **2026-10-09: the orchestrator planned an incident by hand.** pm-1 can't plan incident tasks
+  and the daemon won't queue them, so br-rztb needed the orchestrator to plan it and tell the
+  manager to claim it directly. Incidents have no owner between "filed" and "a worker on it".
+- **2026-10-09: the orchestrator filed a bug for a project without mail.** The human emailed a
+  meta-notes bug to bridle's mail bridge; the orchestrator filed it as mn-7tfg. Per-project
+  mail routing (or a mail-to-task rule) would do this without a role.
