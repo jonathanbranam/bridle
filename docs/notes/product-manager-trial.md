@@ -177,3 +177,20 @@ workforce reaches it.
   PdM: max_workers 2 -> 3 (aide recommends no until the v6kr baseline), whether to start br-yfv5
   then br-g5y2, npj2 follow-ups, q7mv recommendations, closing br-a3b9, and this morning's new
   tickets rjd5, 22n2, 9xbk, 57nt.
+- Watching works: task comments reach the PdM as messages that end its wait (first: m-7673,
+  br-r9h7 done by jxaffix). With 103 tasks watched this will be noisy; the real role needs
+  either a digest or a filter (state changes and human-gate events only), to be judged once
+  there's a day of volume.
+
+### 2026-10-09 07:55 ET: first item routed through the PdM
+
+- The bridle aide sent br-g3az (docs fix: status line token setup writes an empty file), with
+  the human's go verbatim ("yes fix the docs."). No design gate needed (a doc correction), so the
+  PdM watched it, readied it (`pending` -> `open`) and put the approval on the thread. The
+  advisor stand-in could do `task ready` itself; no orchestrator request needed.
+- Lesson 3: most items need no ladder. The PdM's test is "does this need a design or the
+  human's review before build?"; if not, pass it straight through and get out of the way.
+- v6kr (system architect role, resource baseline): the aide added the human's memory-measure
+  question and the macOS-correct measures to the ticket and asked the PdM to make sure the
+  baseline uses them. Done as a comment on br-v6kr (planned), so whoever picks it up reads it.
+  The PdM's job here is carrying a human's concern from the ticket to the work, on the record.
