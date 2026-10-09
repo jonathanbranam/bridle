@@ -245,8 +245,11 @@ track-web): messages, the inbox, the UI and cross-project links.
 - **Written form, everywhere: `<prefix>-<id>`.** The tooling writes it in the frontmatter `id:`
   field (`id: br-k7tm`), link values, threads, messages, commits and the UI. The ticket and its
   row have literally the same ID string.
-- **Shorthand, input only: `k7tm`.** It's accepted inside a project (CLI arguments, typed by the
-  human or an agent) and expanded to `br-k7tm`. It's never written to disk.
+- **Shorthand, input only: `k7tm`.** Accept the bare ID wherever it's unambiguous, to keep
+  input simple (CLI arguments, the UI, an agent reading the human's message), and expand it to
+  `br-k7tm`. Where it's ambiguous (the same `k7tm` exists in two projects, and nothing in the
+  context names the project), the CLI, UI or agent refuses and lists the qualified candidates
+  instead of guessing. The bare form is never written to disk.
 - **Cross-project links** name the other project's prefix: `related: [tw-a3f8]`.
 - **Prefixes are unique across registered projects**, refused when a project registers. Today
   the prefix is `[tasks] prefix` in config, defaulting to the project name's first two
@@ -477,3 +480,7 @@ And, after the advisor proposed the rule (qualified everywhere written, bare as 
 unique prefixes) and asked about file names:
 
 > agree to all of these. and (a) keep ticket file names without project - the names are already egregiously long!! It adds nothing since it is within the repo.
+
+Then (2026-10-09, verbatim):
+
+> It is good if the bare id works as much as possible to simplify the user's input; if there is a context where it is ambiguous, then the agent or UI or CLI can refuse.

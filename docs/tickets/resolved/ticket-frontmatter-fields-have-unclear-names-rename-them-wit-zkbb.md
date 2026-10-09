@@ -9,6 +9,7 @@ specs: []
 needs: [project-migrations-one-command-applies-pending-bridle-upgrad-xebc]
 see: [tickets-and-tasks-why-both-k7tm]
 tasks: []
+closed: 2026-10-09T19:01:05Z
 ---
 
 ## The ask
@@ -62,3 +63,13 @@ migrations automatically at `bridle serve` start-up is task **br-2718** (planned
 human's review on Sat 10-03). The rename migration should wait for br-2718 to land so it reaches
 every project without a hand-run step. The ticket-kind backfill (br-e7e2, v3dk slice B) is the
 first migration in line; this would follow it.
+
+## Resolution
+
+Answered by [[everything-is-a-ticket-one-record-per-piece-of-work-a-ticket-22ab|22ab]] (advisor
+(tickets), 2026-10-09), section 7 (the field renames, decided by the human) and section 8 (IDs):
+`needs` -> `blocked_by`, `see` -> `related`, a new `parent`, `opened` -> `created`, `closed` ->
+`resolved`, `filed_by` -> `created_by`, `kind` unchanged; `tasks`, `changes` and `specs`
+dropped. Link values are project-qualified IDs (`br-k7tm`), not bare IDs or full stems. The
+rename and its migration are step 1 of 22ab's sequence (migrations at start-up landed in
+br-2718). The build is planned under 22ab, not here.
