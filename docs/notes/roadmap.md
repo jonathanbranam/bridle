@@ -13,7 +13,7 @@ before it moves: "waits on the human" is a pending task only the human can appro
 is the project manager's; "ready to build" is in the queue; "HELD" is planned in bridle but
 stopped by the human.
 
-Last updated: 2026-10-09 15:40 ET.
+Last updated: 2026-10-09 15:50 ET.
 
 ## Needs the human now
 
@@ -137,6 +137,7 @@ The orchestrator and daemons stay up, relaunch once, upgrade cleanly and recover
 
 | Task | Title | State | Next |
 |---|---|---|---|
+| [br-rztb](http://dalek.tailbc91f5.ts.net:7878/task?id=br-rztb) | Incident: something keeps restarting dalek's gateway outside launchd from a Claude sess... | pending | waits on the human (approve to ready) |
 | [br-4zfa](http://dalek.tailbc91f5.ts.net:7878/task?id=br-4zfa) | Incident: the bridle orchestrator was killed (SIGTERM) at 11:18 PM ET and nothing relau... | pending | waits on the human (approve to ready) |
 | [br-f4xu](http://dalek.tailbc91f5.ts.net:7878/task?id=br-f4xu) | Flaky on macOS CI: process_test sigterm_via_signal_group_exits_143 exits 1, not 143 | integrated | delivered |
 | [br-h7gt](http://dalek.tailbc91f5.ts.net:7878/task?id=br-h7gt) | Flaky on Linux CI: upgrade_test self_upgrade_restarts_only_after_the_mid_turn_agent_fin... | integrated | delivered |
@@ -209,7 +210,7 @@ What the human sees and touches: to-dos, document review, links, usage, quiet ho
 | [ui-7jg4](http://dalek.tailbc91f5.ts.net:7878/task?id=ui-7jg4) | [at restart] Test the new comment selection (ui-bpsd) on laptop and phone | claimed | the human's to-do |
 | [ui-ha6m](http://dalek.tailbc91f5.ts.net:7878/task?id=ui-ha6m) | The human can delete a resolved comment thread (kept in git history) | integrated | delivered |
 | [ui-wtr3](http://dalek.tailbc91f5.ts.net:7878/task?id=ui-wtr3) | An expanded comment thread can be collapsed again (a [-] button) | integrated | delivered |
-| [ui-vnuu](http://dalek.tailbc91f5.ts.net:7878/task?id=ui-vnuu) | Comment IDs never repeat after deletes: a counter in the document's front matter | planned | ready to build |
+| [ui-vnuu](http://dalek.tailbc91f5.ts.net:7878/task?id=ui-vnuu) | Comment IDs never repeat after deletes: a counter in the document's front matter | integrated | delivered |
 | [br-gd43](http://dalek.tailbc91f5.ts.net:7878/task?id=br-gd43) | Comment IDs never repeat after deletes: assign_ids reads and bumps a front-matter count... | planned | ready to build |
 | [br-twg8](http://dalek.tailbc91f5.ts.net:7878/task?id=br-twg8) | Try document review (x8jt) on gtzx: install the UI, review add, start the gateway, comment | claimed | the human's to-do |
 
@@ -329,3 +330,4 @@ Chores that are the human's own: expand on an idea, review a ticket or branch.
 - 2026-10-09 14:55 ET: new workstream Everything is a ticket (22ab, from advisor (tickets)); moved d9wq, 95mu, stx8 into it; plan written into 22ab for approval. 8z7j: Option A approved, blocked on removing dotfiles-local shared git hooks on both machines (asked the dotfiles-local aide on the NUC).
 - 2026-10-09 15:25 ET: br-57nt delivered. 22ab Q1-Q5 answered (stx8 out of the workstream; project-qualified IDs into step 1); plan still waits on approval. br-8z7j wrongly closed by its design landing, reopened HELD. br-gd43 brief: next_comment_id: c<n> and the human's doc_watch addition.
 - 2026-10-09 15:40 ET: the human: all comment work low, end of queue (br-gd43, ui-vnuu, br-pa8h set low); order by priority, never size (each task ~30-40 min of builds). Placed br-jxwr (task timing) in performance, low (the human: don't jump the queue).
+- 2026-10-09 15:50 ET: incident br-rztb (gateway restarted outside launchd, recurring; the human asked for an investigation; critical, straight to the orchestrator) placed in reliability.
