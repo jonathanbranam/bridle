@@ -2,16 +2,10 @@
 tasks = ["br-vabu"]
 
 [[tier]]
-tasks = ["br-h7gt"]
-
-[[tier]]
 tasks = ["br-hua2"]
 
 [[tier]]
 tasks = ["br-gdf3"]
-
-[[tier]]
-tasks = ["br-8c25"]
 
 [[tier]]
 tasks = ["br-88d4"]
