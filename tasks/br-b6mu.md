@@ -2,14 +2,16 @@
 id = "br-b6mu"
 title = "Self-upgrade drain may never restart when it starts during a spawn"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-09T16:54:27.508Z"
-updated_at = "2026-10-09T17:49:25.498549Z"
+updated_at = "2026-10-09T18:14:08.208371Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "external:advisor/product-manager",
 ]
+branch = "bridle/b6mu"
+commit = "3323d2f4acc8d9a75787616c430004635515c4e6"
 summary = "Reproduced (upgrade_test a_drain_starting_during_a_spawn_restarts_promptly, no go-file gate; failed at 10.3 s): a drain that begins during a spawn holds the first prompt, no init comes, and the spawn sat out its 8 s SPAWN_READY_TIMEOUT before the quiet point. So the cause is a delay, not a permanent hang; it cannot explain a 60 s non-restart by itself. Fix (the smaller option): spawn no longer waits for readiness when its first message was held (supervisor.rs). Also new AgentManager::lift_drain, used by perform_restart's error path, delivers each running agent's oldest held message. Docs: daemon.md Restart in place, CHANGELOG. The lift_drain error path has no dedicated test (no cheap way to make drain_and_restart fail). Looped the new test 30 of 30 on macOS. Unrelated CI flake seen on 233e0c96: store::tests::cancelled_blocking_task_returns_shutting_down_not_a_panic."
 ticket = "b6mu"
 +++
@@ -43,3 +45,6 @@ done: drain-during-spawn race reproduced and fixed (spawn skips the readiness wa
 
 ### note · external:orchestrator · 2026-10-09T17:49:25.498Z
 From orchestrator: read the diff (72c42a8d): approved to land. Small and correct; the held-prompt check and lift_drain match daemon.md. Noted that this explains an 8 s delay, not CI's 60 s non-restart: the ticket's resolution should say that cause stays unknown, to reopen only if a restart-never-comes symptom recurs.
+
+### note · agent:manager-2 · 2026-10-09T18:14:08.208Z
+integrated: 3323d2f4acc8d9a75787616c430004635515c4e6 (branch bridle/b6mu)
