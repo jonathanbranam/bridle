@@ -79,6 +79,12 @@ which wait on the human's review (design, specs, approval). The first theme is s
 messages (yfv5): designer role, design in the ticket, the human's review, specs, then build.
 The roadmap will be at `docs/notes/roadmap.md`.
 
+**The PdM resolves tickets** (the human, 2026-10-09: "don't confirm for resolving tickets - if
+the tasks are done; you can do a quick verify if needed then resolve them; don't prompt for
+confirmation unless there is a discrepancy or issue. This should be part of the PdM role").
+When a ticket's tasks have all landed (or been dropped), the PdM checks quickly that the ask was
+met and runs `bridle ticket resolve`; it asks the human only when something doesn't match.
+
 **How to work with the PdM:**
 
 - **Aides (every project):** send **everything** from the human to the PdM, not the
