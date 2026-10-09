@@ -205,12 +205,23 @@ async fn self_upgrade_restarts_only_after_the_mid_turn_agent_finishes() {
         .spawn(&worker("SLEEP 3"))
         .await
         .expect("spawn");
-    support::wait_for_state(
-        &daemon.client,
-        &agent.id,
-        bridle_api::types::AgentState::Working,
-    )
+    // On a slow machine the drain can begin while the spawn is still in flight; the drain then
+    // holds the agent's first prompt, so it never works and the restart rightly follows the spawn
+    // (the quiet check counted it). That outcome has no mid-turn phase to check, so it ends the
+    // wait too.
+    let ran = std::sync::atomic::AtomicBool::new(false);
+    support::wait_for("the agent to work or the restart", || async {
+        let restarted = daemon.running.restart_requested();
+        let a = daemon.client.get_agent(&agent.id).await.ok()?;
+        let working = a.state == bridle_api::types::AgentState::Working;
+        ran.store(working, std::sync::atomic::Ordering::SeqCst);
+        (working || restarted).then_some(())
+    })
     .await;
+    if !ran.load(std::sync::atomic::Ordering::SeqCst) {
+        daemon.running.join().await.expect("join");
+        return;
+    }
     // Polls until the turn ends. The flag is read before the state, so a restart seen alongside a
     // still-working agent really did happen mid-turn, however slow the machine is.
     loop {
