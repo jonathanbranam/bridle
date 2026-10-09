@@ -8,7 +8,7 @@ repos: [bridle]
 changes: []
 specs: []
 needs: []
-see: [x8jt, ehv6, ppa6]
+see: [x8jt, ehv6, ppa6, yj38, wjhp]
 tasks: [br-pa8h]
 ---
 
@@ -38,3 +38,26 @@ The human, verbatim (2026-10-08 ~8 PM ET), while testing document review on docs
 > also - how does a file every become un-watched? We need some kind of TTL for that otherwise they'll stay watched forever
 
 Today the only way out is `bridle review remove` by hand. `[review] idle_hours` (default 4) stops the document's *agent*, but the document stays on the list and is re-read every 30 s indefinitely; a renamed or deleted file is never cleaned up either. 3. Give a watched document a TTL: e.g. it leaves review after N days with no pending thread and no new comment (the periodic scan in 2 puts it back if a new comment appears).
+
+## Found in the first end-to-end test (2026-10-08, docs/context/name-ideas.md)
+
+The test worked: the gateway put the document under review on comment save (19:52 EDT), the daemon sent c1-c4 at 20:07, and agent `doc-name-ideas-e11e82` answered all four in commit 82990f87 at 20:08. The human: "Sure add them." Two bugs:
+
+4. **The send came 15 minutes after the last comment, not 7.** The last comment (c4) was saved at 19:52 and the send was at 20:07, with `quiet_minutes` 7 (the default). The cause isn't known. Candidates: the 30 s tick, the `max_agents` cap, the machine-load hold, or the quiet timer counting from something other than the last change. Note that `[review]` is read only at daemon start, so the human's `quiet_minutes = 1` in config.toml didn't apply. That's surprising next to `[[focus]]`, which applies at once.
+5. **The agent dated its replies 20:15 EDT, after it had committed them at 20:08.** It's guessing the time instead of reading the clock. The role should get the time from `date`, or bridle should stamp it.
+
+## Web tools for the document reviewer (the human, 2026-10-08)
+
+> Also - does the agent have web search? I think it needs it. Will be helpful often and the agent isn't writing code or anything either.
+
+It doesn't. `document-reviewer` uses `Role::worker_default()` (config.rs), which has no WebSearch or WebFetch; only the researcher role adds them. On c1 the agent reported docs.fsfe.org answering 403 on every path, presumably by fetching without the tools (rule `report-task-failures`).
+
+6. **Give `document-reviewer` WebSearch and WebFetch,** as the researcher role has. This is small and independent of the rest, so it can ship first.
+
+## Assigning an agent to a document (the human, 2026-10-08)
+
+> Also - where is the ticket for assigning a specific agent to review the document? Liked tagging an agent to the document for review or assigning them? That should be part of any change to the txt file.
+
+No ticket has this as its ask. The nearest are x8jt's "Which agent answers" section, the human's 2026-10-02 thoughts on a per-document advisor-like agent, and yj38 (responder agents for each kind of incoming item). Today the agent is always `doc-<file stem>`, made by `agent_name(path)` and started on first send. The wjhp bug: that name can exceed 40 characters.
+
+7. **When the review list moves into the database (ask 1), give each entry an assigned agent.** The human chooses it, by tagging or assigning an existing agent (an advisor, say, or a named agent) to a document, from the UI or the CLI. The default stays the per-document reviewer. Design this together with ask 1, not after it.
