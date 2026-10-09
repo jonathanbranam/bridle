@@ -68,7 +68,7 @@ The aide's reading. The dictation is garbled in places, so check with the human 
 - The counters are written to a log file every minute: no endpoint, and no external or hosted metrics service.
 - **Processes started per minute** is an always-on counter in that log, with memory and load beside it.
 - "counterstand" = counters.
-- "I don't want to not use an external hotload solution" probably means: don't bring in an external monitoring stack.
+- "I don't want to not use an external hotload solution": the human clarified that it meant writing the counters to a file rather than sending logs to a listener. The "status endpoint" the aide had mentioned meant a route on the daemon's own HTTP API (`bridle status` style), not OpenTelemetry. The decision is file first.
 
 **The benchmark scenarios have to do real work.** Ones the human named, same machine only (inter-machine is out):
 - simulated input to an interactive session through tmux
