@@ -2,9 +2,9 @@
 id = "br-crht"
 title = "One cross-platform process-table read: sysinfo + getpgid on Linux too, drop the /proc parser"
 kind = "chore"
-state = "pending"
+state = "planned"
 created_at = "2026-10-09T01:14:41.562Z"
-updated_at = "2026-10-09T01:14:41.563578Z"
+updated_at = "2026-10-09T01:40:13.452556Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
