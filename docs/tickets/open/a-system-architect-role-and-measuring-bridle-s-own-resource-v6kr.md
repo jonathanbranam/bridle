@@ -88,3 +88,15 @@ The aide's reading. The dictation is garbled in places, so check with the human 
 So:
 1. **The baseline (phase 1) comes first,** before any counters, benchmark or other enhancement.
 2. **Every always-on measure must be shown to be cheap,** checked against the baseline before it lands. For example, the counters read numbers the process already has (`getrusage`, a counter incremented at the existing spawn sites). They never start a process, and never do work proportional to the machine. The containment `ps` poll was well-meant monitoring that became the load (n4w4).
+
+## Memory: which measure (the human, 2026-10-09 ~8:20 AM ET)
+
+The human, verbatim: "in our analysis of memory usage, are we relying on top only or are we using macos specific information? I have this report and am concerned about whether ths impacts the benchmarking and memory monitoring we have planned (or done?)", quoting a report:
+
+> top reports 29 GB used and 3.3 GB free. However, macOS reports 81% free memory and swap use is small (about 960 MB of 2 GB). On macOS, the "used" figure includes file cache that the system frees when something needs it, so memory isn't actually under pressure.
+
+Facts (checked by the aide at dade5b1a):
+- Bridle reads no memory figures today. The load governor (`load.rs`, `governor.rs`) uses load average and per-process CPU only. No baseline or counter has been run or built yet.
+- So nothing done is affected, but phase 2's "memory beside load" names no measure. top's used/free (and sysinfo's `used_memory`) counts file cache and inactive pages as used on macOS, so it would read near-full on an idle Mac.
+
+For the design: on macOS log the memory pressure level (`kern.memorystatus_vm_pressure_level`, what `memory_pressure` reports), compressed memory and swap used, not used/free. For bridle's own cost, log its processes' footprint or RSS. On Linux, use `MemAvailable` and PSI (`/proc/pressure/memory`).
