@@ -1301,3 +1301,4 @@
 {"actor":"external:orchestrator","at":"2026-10-09T20:48:12.347656Z","from":"pending","task":"br-8a53","to":"open"}
 {"actor":"external:orchestrator","at":"2026-10-09T20:48:12.429072Z","from":"open","task":"br-8a53","to":"planned"}
 {"actor":"human","at":"2026-10-09T20:49:28.208Z","from":"","task":"br-4cgx","to":"pending"}
+{"actor":"agent:manager-2","at":"2026-10-09T21:12:14.532963Z","from":"planned","task":"br-8a53","to":"integrated"}
