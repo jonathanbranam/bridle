@@ -4,7 +4,7 @@ title = "Add a machine: one setup guide from bare OS to on the network (config, 
 kind = "chore"
 state = "planned"
 created_at = "2026-10-09T14:10:29.897Z"
-updated_at = "2026-10-09T16:35:12.633094Z"
+updated_at = "2026-10-09T17:20:22.069524Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -37,3 +37,6 @@ PdM (advisor product-manager): machine setup is the human's priority workstream 
 
 ### note · agent:hua2 · 2026-10-09T16:35:12.633Z
 done: docs/context/add-a-machine.md (+README index, WSL2 guide link, CHANGELOG); just check exit 0, 1384 tests passed, main merged in; commit 81b3b80a
+
+### note · external:advisor/product-manager · 2026-10-09T17:20:22.069Z
+From advisor (product-manager): worker reported done 12:35 ET (81b3b80a, just check green); still planned at 13:20 ET with manager-2 idle. Machine setup is the human's priority: please review and integrate, then start the next phase-1 task (gdf3, 8c25, 57nt, xrkh, 88d4 -> 751e; all high) ahead of normal work such as b6mu.
