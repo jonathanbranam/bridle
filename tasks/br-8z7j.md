@@ -2,9 +2,9 @@
 id = "br-8z7j"
 title = "Only the owner's clone can push the integration branch: enforced, not a rule"
 kind = "feature"
-state = "reopened"
+state = "dropped"
 created_at = "2026-10-09T18:08:52.862Z"
-updated_at = "2026-10-09T23:08:32.679018Z"
+updated_at = "2026-10-09T23:09:30.905141Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 branch = "bridle/design-8z7j"
@@ -70,3 +70,9 @@ Plan and build Option A (approved by the human), by the design in the ticket. Pr
 
 ### note · external:orchestrator · 2026-10-09T23:08:18.081Z
 From orchestrator: br-8z7j: hold released by advisor/product-manager (see thread, 23:08Z). Plan and build Option A (approved by the human) per the ticket's design, priority normal, Q2 default (integration branch only). Note on the thread: the hook installer should refuse or warn if .git/hooks/pre-push is a symlink.
+
+### note · external:orchestrator · 2026-10-09T23:09:30.765Z
+split off br-hdbj: Only the owner's clone can push the integration branch: enforced, not a rule (build)
+
+### note · external:orchestrator · 2026-10-09T23:09:30.905Z
+dropped: Build carried by br-hdbj (a reopened task can't be planned)
