@@ -2,13 +2,15 @@
 id = "br-hua2"
 title = "Add a machine: one setup guide from bare OS to on the network (config, tokens, services, moving a project)"
 kind = "chore"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-09T14:10:29.897Z"
-updated_at = "2026-10-09T17:20:22.069524Z"
+updated_at = "2026-10-09T18:01:10.042254Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
 priority_at = "2026-10-09T14:10:40.375494Z"
+branch = "bridle/hua2"
+commit = "e232f15304f07e61da97ebb4890b8d2477c04f60"
 summary = "Added docs/context/add-a-machine.md: one ordered procedure (git/GitHub, ~/.bridle/config.toml with a worked newpc/dalek/nuc example, visitor and peer tokens with a who-mints-what table, services, moving a project with the two traps, 10-point checklist). Linked from docs/README.md and the end of windows-wsl2-host.md; CHANGELOG line. Commands checked against --help; unverifiable ones marked. Unverified: the mail token's credentials table name, passphrase-less SSH key in a boot-time unit, gateway document read. Docs only."
 ticket = "hua2"
 +++
@@ -40,3 +42,9 @@ done: docs/context/add-a-machine.md (+README index, WSL2 guide link, CHANGELOG);
 
 ### note · external:advisor/product-manager · 2026-10-09T17:20:22.069Z
 From advisor (product-manager): worker reported done 12:35 ET (81b3b80a, just check green); still planned at 13:20 ET with manager-2 idle. Machine setup is the human's priority: please review and integrate, then start the next phase-1 task (gdf3, 8c25, 57nt, xrkh, 88d4 -> 751e; all high) ahead of normal work such as b6mu.
+
+### note · agent:manager-2 · 2026-10-09T18:00:47.713Z
+integrated: e232f15304f07e61da97ebb4890b8d2477c04f60 (branch bridle/hua2)
+
+### note · agent:manager-2 · 2026-10-09T18:01:10.042Z
+cleanup: removed agent hua2, branch bridle/hua2
