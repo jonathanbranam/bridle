@@ -24,6 +24,29 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-09 10:45: main red on macOS from a new flaky test
+
+- **What happened:** CI run 37918335201 on b1c37432 (the br-jxaf merge) failed on macOS only:
+  `spawn_messaging_test spawn_with_prompt_waits_for_the_turn_to_start_before_returning` saw the
+  spawned agent `Idle` where it expected `Working`. Found by the orchestrator's `ci_failed` wake.
+- **Impact:** merges held until the fix lands; one worker slot goes to the fix.
+- **Cause:** a timing race in the test (the fake's turn can finish before the spawn response is
+  built), not the jxaf change.
+- **Category:** `ci`.
+- **Follow-up:** [[flaky-on-macos-ci-spawn-with-prompt-waits-for-the-turn-to-st-r9h7|r9h7]]
+  (br-r9h7).
+
+## 2026-10-09 06:45: the orchestrator sent a manager after a stale agent record
+
+- **What happened:** the new orchestrator session read `bridle agents --all`, saw
+  page-title-rule `lost`, and asked manager-2 to resume it. It was a record left from 10-07 whose
+  task (br-qbbk) had already landed through page-title-rev; manager-2 caught it.
+- **Impact:** two wasted messages, no work lost.
+- **Cause:** `--all` lists finished and lost agents from any date with no age shown, and the
+  orchestrator didn't check the task's state first.
+- **Category:** `role`.
+- **Follow-up:** none; the human can `bridle agent rm page-title-rule --delete-branch` to clear it.
+
 ## 2026-10-08 23:40-2026-10-09 01:40: the orchestrator had no waiter on bridle for ~2 h
 
 - **What happened:** during the self-upgrade to 018b9cfd, the orchestrator re-armed its bridle
