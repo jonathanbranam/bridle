@@ -13,7 +13,7 @@ before it moves: "waits on the human" is a pending task only the human can appro
 is the project manager's; "ready to build" is in the queue; "HELD" is planned in bridle but
 stopped by the human.
 
-Last updated: 2026-10-09 14:55 ET.
+Last updated: 2026-10-09 15:25 ET.
 
 ## Needs the human now
 
@@ -64,7 +64,7 @@ Goal: ship scheduled messages, with design and specs approved before build. In b
 
 ### Everything is a ticket
 
-The human, 2026-10-09: one record per piece of work; tickets that change code are tracked as rows with a thread on the state branch; fields renamed; task renamed to ticket in names and code. Ticket 22ab holds the decisions, design and plan (10 child tickets, gated); the plan waits on the human's approval and Q1-Q5.
+The human, 2026-10-09: one record per piece of work; tickets that change code are tracked as rows with a thread on the state branch; fields renamed; task renamed to ticket in names and code. Ticket 22ab holds the decisions, design and plan (child tickets; Q1-Q5 answered, step 5 stx8 moved out); the plan waits on the human's approval.
 
 | Task | Title | State | Next |
 |---|---|---|---|
@@ -86,13 +86,13 @@ The human, 2026-10-09: efficient, direct setup of a new machine, first the Windo
 | [br-jw9e](http://dalek.tailbc91f5.ts.net:7878/task?id=br-jw9e) | bridle token pair, part 2: peer tokens, the [mail] peers opt-out, and pairing on projec... | planned | ready to build |
 | [br-88d4](http://dalek.tailbc91f5.ts.net:7878/task?id=br-88d4) | self_upgrade = "release": fetch, verify and swap the release binary (chvf 2) | planned | ready to build |
 | [br-751e](http://dalek.tailbc91f5.ts.net:7878/task?id=br-751e) | Daemon keeps its own workflow checkout at the binary's tag (chvf 3) | planned | ready to build |
-| [br-57nt](http://dalek.tailbc91f5.ts.net:7878/task?id=br-57nt) | bridle gateway restart takes a launchd-managed gateway out of launchd and inherits the ... | planned | ready to build |
+| [br-57nt](http://dalek.tailbc91f5.ts.net:7878/task?id=br-57nt) | bridle gateway restart takes a launchd-managed gateway out of launchd and inherits the ... | integrated | delivered |
 | [br-xrkh](http://dalek.tailbc91f5.ts.net:7878/task?id=br-xrkh) | systemd uninstall, and an owner refusal never crash-loops a launchd or systemd unit aft... | planned | ready to build |
 | [br-rjd5](http://dalek.tailbc91f5.ts.net:7878/task?id=br-rjd5) | Commands to set up and sync a project everywhere: sync all seven places per machine, an... | pending | phase 2: needs a design (source of truth for the project list), then the human's approval |
 | [br-f8f9](http://dalek.tailbc91f5.ts.net:7878/task?id=br-f8f9) | The NUC recovers everything on boot (4r3k) | pending | phase 2: 'bridle up' after boot needs a small design |
 | [br-v7ug](http://dalek.tailbc91f5.ts.net:7878/task?id=br-v7ug) | Run bridle's heavy work on the Windows PC under WSL2 | pending | umbrella; audit and guide delivered |
 | [br-kt25](http://dalek.tailbc91f5.ts.net:7878/task?id=br-kt25) | Move a project between machines with one command (bridle project move) | pending | phase 3: needs a design and the human's decisions (see ticket) |
-| [br-8z7j](http://dalek.tailbc91f5.ts.net:7878/task?id=br-8z7j) | Only the owner's clone can push the integration branch: enforced, not a rule | open | Option A approved; blocked until dotfiles-local shared git hooks are removed on both machines (dotfiles-local aide, NUC) |
+| [br-8z7j](http://dalek.tailbc91f5.ts.net:7878/task?id=br-8z7j) | Only the owner's clone can push the integration branch: enforced, not a rule | reopened | Option A approved; blocked until dotfiles-local shared git hooks are removed on both machines (dotfiles-local aide, NUC) |
 | [br-k6jd](http://dalek.tailbc91f5.ts.net:7878/task?id=br-k6jd) | Managers and the orchestrator fetch origin; divergence from origin is warned (N ahead, ... | planned | ready to build |
 | [br-xccp](http://dalek.tailbc91f5.ts.net:7878/task?id=br-xccp) | A git identity per machine, so commits show which clone made them | pending | later (the human: non-urgent); needs the human's keys or tokens |
 
@@ -305,6 +305,7 @@ Chores that are the human's own: expand on an idea, review a ticket or branch.
 | 2026-10-09 afternoon | ui-ha6m delete a resolved comment thread | human-ui |
 | 2026-10-09 ~14:15 | br-b6mu self-upgrade drain during a spawn | reliability |
 | 2026-10-09 ~14:34 | br-gdf3 peer-token direction rule in errors, help and docs | machine setup |
+| 2026-10-09 ~15:25 | br-57nt gateway restart stays under launchd, Claude env stripped | machine setup |
 
 ## Changes to this roadmap
 
@@ -325,3 +326,4 @@ Chores that are the human's own: expand on an idea, review a ticket or branch.
 - 2026-10-09 14:34 ET: br-gdf3 delivered.
 - 2026-10-09: pm-1 split token pair: br-8c25 part 1 (role tokens, token-role list), br-jw9e part 2 (peer tokens, opt-out, pairing on project creation); placed in machine setup.
 - 2026-10-09 14:55 ET: new workstream Everything is a ticket (22ab, from advisor (tickets)); moved d9wq, 95mu, stx8 into it; plan written into 22ab for approval. 8z7j: Option A approved, blocked on removing dotfiles-local shared git hooks on both machines (asked the dotfiles-local aide on the NUC).
+- 2026-10-09 15:25 ET: br-57nt delivered. 22ab Q1-Q5 answered (stx8 out of the workstream; project-qualified IDs into step 1); plan still waits on approval. br-8z7j wrongly closed by its design landing, reopened HELD. br-gd43 brief: next_comment_id: c<n> and the human's doc_watch addition.
