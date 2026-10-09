@@ -10,7 +10,7 @@ specs: []
 needs: []
 see: [bp2v, 22ab, 72t9]
 tasks: [br-4cgx]
-next_comment_id: c7
+next_comment_id: c8
 ---
 
 ## The ask
@@ -57,6 +57,9 @@ the same.
 > See also re79 which should be designed and planned along with this ticket - adds a reviewer: <agent> frontmatter (optional, ignored if missing) that indicates that every comment in a document is sent to that specific agent. In this case, also de-duplicate the messages as above; 
 >
 > If review: agent-a and a comment includes \@agent-b the comment is sent to agent-b and not agent-a (unless agent-a is also mentioned.
+
+> [!comment] c7 human, 2026-10-09 17:21 EDT, on "sends that role a message" [pending 2026-10-09 17:21 EDT]
+> If more than one \@mention exists in a single thread or comment, a message is sent to every agent in the message.
 
 - `@<role>` means that role on the same project: `@orchestrator`, `@aide`, `@advisor`, and
   named sessions as `@advisor/product-manager`.
