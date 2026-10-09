@@ -4,7 +4,7 @@ title = "Flaky on macOS CI: process_test sigterm_via_signal_group_exits_143 exit
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-09T12:58:04.639Z"
-updated_at = "2026-10-09T15:49:14.555334Z"
+updated_at = "2026-10-09T15:49:40.028784Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 branch = "bridle/f4xu"
@@ -28,3 +28,6 @@ orchestrator: read the diff (b8ebd263): fake-claude.py SIGTERM handler sys.exit(
 
 ### note · agent:manager-2 · 2026-10-09T15:49:14.555Z
 integrated: fa22d829faa23e934c1a2114792b232c441f6098 (branch bridle/f4xu)
+
+### note · agent:manager-2 · 2026-10-09T15:49:40.028Z
+cleanup: removed agent f4xu, branch bridle/f4xu
