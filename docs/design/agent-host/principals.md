@@ -121,6 +121,13 @@ directory and file 0600, keeping other entries) and prints no token; with no kno
 removes the entry. The CLI refuses to read a file that group or others can access, and
 says to `chmod 600` it. `--print` prints the token as well.
 
+`bridle token pair` (human only; spec `design/specs/token-pairing.md`) does all of this for every
+listed role, project and machine at once over ssh, including the `[<role>.<machine>]` and
+`human@<machine>` entries; it keeps entries that work, so it is safe to re-run. The roles it pairs
+are the one list `TOKEN_ROLES` (`crates/bridle/src/token_pair.rs`), which the session launchers
+also use; a launcher cannot set `BRIDLE_AS` to a role not in it. Agents' deny lists carry
+`Bash(bridle token *)`.
+
 A principal named `<name>@<machine>` is a **visitor**: another machine's principal on this
 daemon, minted with `bridle token create <name> --machine <machine>` (printed once, to paste into
 that machine's `credentials.toml`; plain `token create` refuses `@` in a name, so the suffix always

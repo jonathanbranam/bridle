@@ -386,11 +386,16 @@ pub const DENY_FOCUS_FILES: [&str; 2] = ["Edit(~/.bridle/focus*)", "Edit(~/.brid
 /// `bridle kill-guard` hook refuses the compound forms these rules can't match.
 pub const DENY_PATTERN_KILLS: [&str; 2] = ["Bash(pkill *)", "Bash(killall *)"];
 
+/// Tokens are the human's (`bridle token create`, `token pair`): an agent never mints or moves
+/// one (ticket sk7p).
+pub const DENY_TOKEN_COMMANDS: [&str; 1] = ["Bash(bridle token *)"];
+
 fn deny_list(extra: &[&[&str]]) -> Vec<String> {
     DENY_MESSAGING_AND_SUBAGENTS
         .iter()
         .chain(DENY_FOCUS_FILES.iter())
         .chain(DENY_PATTERN_KILLS.iter())
+        .chain(DENY_TOKEN_COMMANDS.iter())
         .chain(extra.iter().flat_map(|s| s.iter()))
         .map(|s| s.to_string())
         .collect()

@@ -389,6 +389,53 @@ pub fn store_credential(
     write_credentials(path, &table)
 }
 
+/// Like [`store_credential`], but into `[principal.<machine>]` when `machine` is set: the entry
+/// for a daemon on another machine (k7mw). Keeps every other entry.
+pub fn store_credential_on(
+    path: &Path,
+    principal: &str,
+    machine: Option<&str>,
+    project: &str,
+    token: &str,
+) -> Result<(), DiscoveryError> {
+    let Some(machine) = machine else {
+        return store_credential(path, principal, project, token);
+    };
+    let mut table = read_credentials(path)?;
+    let bad =
+        || DiscoveryError::Message(format!("{}: [{principal}] is not a table", path.display()));
+    let entry = table
+        .entry(principal.to_string())
+        .or_insert_with(|| toml::Value::Table(toml::Table::new()))
+        .as_table_mut()
+        .ok_or_else(bad)?;
+    let sub = entry
+        .entry(machine.to_string())
+        .or_insert_with(|| toml::Value::Table(toml::Table::new()))
+        .as_table_mut()
+        .ok_or_else(bad)?;
+    sub.insert(project.to_string(), toml::Value::String(token.to_string()));
+    write_credentials(path, &table)
+}
+
+/// `principal`'s token for `project` (on `machine`, if set) from the credentials file.
+pub fn credential(
+    path: &Path,
+    principal: &str,
+    machine: Option<&str>,
+    project: &str,
+) -> Result<Option<String>, DiscoveryError> {
+    let table = read_credentials(path)?;
+    let mut entry = table.get(principal);
+    if let Some(m) = machine {
+        entry = entry.and_then(|v| v.get(m));
+    }
+    Ok(entry
+        .and_then(|v| v.get(project))
+        .and_then(|v| v.as_str())
+        .map(str::to_string))
+}
+
 /// The token this machine's daemons present to `project`'s daemon when forwarding mail: the
 /// `[peer]` table's entry for that project (3haz). A missing file or entry is `None`.
 pub fn peer_token(credentials: &Path, project: &str) -> Result<Option<String>, DiscoveryError> {

@@ -129,6 +129,11 @@ const CLASSES: &[(&str, Kind, &str)] = &[
     ("review", Skip, "edits the documents of the cwd's repo"),
     ("usage cost", Skip, "reads the role prompts; no daemon"),
     ("token", Daemon, ""),
+    (
+        "token pair",
+        Skip,
+        "pairs every project on the machines in config.toml; --project is not its input",
+    ),
     ("task", Daemon, ""),
     ("probe", Daemon, ""),
     ("port", Daemon, ""),

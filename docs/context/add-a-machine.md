@@ -123,7 +123,7 @@ that moves here; for a project already on dalek or the NUC it is already up).
 ### 3a. Visitor tokens, both ways, by hand
 
 A visitor token lets a principal on one machine use a project's daemon on another (read, send,
-query). `bridle token pair` (br-8c25, sk7p) will replace this by hand; it is not built yet.
+query). Once ssh works, `bridle token pair` (br-8c25, sk7p) does this for every role, project and machine in one command and is safe to re-run; run it first, and use the by-hand steps below only to see what it does or to fix one entry. Peer tokens (3b) are still by hand until br-jw9e.
 
 **newpc's human reaches a project on dalek.** On dalek, for the project `bridle`:
 

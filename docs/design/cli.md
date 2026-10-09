@@ -131,6 +131,19 @@ bridle token create <name> --machine <m>    a visitor, `external:<name>@<m>`, fo
                                              printed once, never saved here; paste it into that machine's credentials.toml.
                                              `token create human --machine <m>` mints `human@<m>`, the human on
                                              another machine (principals.md)
+bridle token pair [--machines m,..] [--projects p,..] [--roles r,..] [--tokens role,peer] [--rotate] [--dry-run]
+                                             human only. Sets up role tokens between machines over ssh (plain `ssh <host> bridle ...`,
+                                             bridle on the remote PATH), like ssh-copy-id. Every selector defaults to all (this machine
+                                             plus every [machines] entry; every project there; every role in the token-role list);
+                                             naming some narrows to exactly those, and there is no exclude. Writes `[<role>] <project>`
+                                             for a daemon on the same machine, `[<role>.<machine>]` for another's (`human` only for
+                                             other machines: `human@<machine>`). An entry that works (GET /v1/status) is kept, so a
+                                             second run changes nothing; `--rotate` replaces working ones; `--dry-run` mints and
+                                             writes nothing. An unreachable machine is reported and skipped and the exit is non-zero.
+                                             Tokens go only through ssh stdin/stdout, never argv or output. After adding a role (it
+                                             joins `TOKEN_ROLES` in token_pair.rs) or a machine, run it once more. `--tokens peer` is
+                                             accepted but prints "not built yet (br-jw9e)". Spec: design/specs/token-pairing.md.
+                                             Hidden helpers it runs: `token pair-projects|pair-check|pair-mint|pair-store`.
 bridle token create --peer <m>              a peer token, `peer:<m>`, for the daemons of machine <m> to forward mail here: always
                                              printed once; paste it under `[peer]` in the sender's credentials.toml, keyed by this project.
                                              <m> is the machine that SENDS here, not this one; one per receiving project per

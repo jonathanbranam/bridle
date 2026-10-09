@@ -594,7 +594,140 @@ pub(super) fn token_project(cli: &Cli) -> Result<Option<String>, CliError> {
     Ok(endpoint.project)
 }
 
+/// `bridle token pair` and its helpers (token_pair.rs). None of them print a token except
+/// `pair-mint`, whose stdout is the broker's input.
+async fn token_pair(cli: &Cli, action: &TokenAction) -> Result<(), CliError> {
+    use crate::token_pair as tp;
+    let project = || {
+        cli.project
+            .clone()
+            .context("this helper needs --project")
+            .map_err(CliError::Other)
+    };
+    match action {
+        TokenAction::Pair {
+            machines,
+            projects,
+            roles,
+            tokens,
+            rotate,
+            dry_run,
+        } => {
+            // Agents never pair (their deny list also covers it); the daemon checks the
+            // human on every mint.
+            for var in ["BRIDLE_AS", "BRIDLE_AGENT_ID", "CLAUDECODE"] {
+                if std::env::var_os(var).is_some() {
+                    return Err(CliError::Other(anyhow::anyhow!(
+                        "bridle token pair is human-only: run it from your own terminal (${var} is set)"
+                    )));
+                }
+            }
+            let map = bridle_api::machines::MachineMap::load(&discovery::bridle_home())
+                .map_err(|e| CliError::Other(e.into()))?;
+            let fleet = tp::Fleet::from_config(&map);
+            let opts = tp::Options {
+                machines: machines.clone(),
+                projects: projects.clone(),
+                roles: roles.clone(),
+                tokens: tokens.clone(),
+                rotate: *rotate,
+                dry_run: *dry_run,
+            };
+            let ok = tokio::task::spawn_blocking(move || {
+                tp::pair(&opts, &fleet, &tp::Exec, &mut std::io::stdout())
+            })
+            .await
+            .map_err(|e| CliError::Other(e.into()))?
+            .map_err(|e| CliError::Other(anyhow::anyhow!(e)))?;
+            if !ok {
+                return Err(CliError::Other(anyhow::anyhow!(
+                    "some tokens could not be paired (see above); run again to fill the gaps"
+                )));
+            }
+        }
+        TokenAction::PairProjects => {
+            for d in discovery::list_registry() {
+                if let Some(port) = d
+                    .url
+                    .rsplit(':')
+                    .next()
+                    .and_then(|p| p.trim_end_matches('/').parse::<u16>().ok())
+                {
+                    println!("{} {port}", d.project);
+                }
+            }
+        }
+        TokenAction::PairCheck { role, machine } => {
+            let project = project()?;
+            let token = discovery::credential(
+                &discovery::credentials_path(),
+                role,
+                machine.as_deref(),
+                &project,
+            )
+            .map_err(|e| CliError::Other(e.into()))?
+            .context("no entry")?;
+            let url = match &cli.url {
+                Some(u) => u.clone(),
+                None => {
+                    discovery::resolve_endpoint(None, Some(&project), Path::new("."), &ProcessEnv)
+                        .map_err(|e| CliError::Unreachable(e.to_string()))?
+                        .url
+                }
+            };
+            Client::new(url, Some(token)).status().await?;
+        }
+        TokenAction::PairMint { role, for_machine } => {
+            let client = client_for(cli).await?;
+            let name = match for_machine {
+                Some(m) => format!("{role}@{m}"),
+                None => role.clone(),
+            };
+            // One active token per principal: drop any old one (it may not exist).
+            let _ = client.revoke_token(&name).await;
+            let created = client
+                .create_token(&TokenCreateRequest {
+                    name: role.clone(),
+                    machine: for_machine.clone(),
+                })
+                .await?;
+            println!("{}", created.token);
+        }
+        TokenAction::PairStore { role, machine } => {
+            let project = project()?;
+            let mut token = String::new();
+            std::io::stdin()
+                .read_line(&mut token)
+                .context("read the token from stdin")?;
+            let token = token.trim();
+            if token.is_empty() {
+                return Err(CliError::Other(anyhow::anyhow!("no token on stdin")));
+            }
+            discovery::store_credential_on(
+                &discovery::credentials_path(),
+                role,
+                machine.as_deref(),
+                &project,
+                token,
+            )
+            .map_err(|e| CliError::Other(e.into()))?;
+        }
+        _ => unreachable!("not a pair action"),
+    }
+    Ok(())
+}
+
 pub(super) async fn token(cli: &Cli, args: &TokenArgs) -> Result<(), CliError> {
+    if matches!(
+        args.action,
+        TokenAction::Pair { .. }
+            | TokenAction::PairProjects
+            | TokenAction::PairCheck { .. }
+            | TokenAction::PairMint { .. }
+            | TokenAction::PairStore { .. }
+    ) {
+        return token_pair(cli, &args.action).await;
+    }
     let client = if matches!(args.action, TokenAction::List) {
         client_for_read(cli).await?
     } else {
@@ -711,6 +844,11 @@ pub(super) async fn token(cli: &Cli, args: &TokenArgs) -> Result<(), CliError> {
                 }
             }
         }
+        TokenAction::Pair { .. }
+        | TokenAction::PairProjects
+        | TokenAction::PairCheck { .. }
+        | TokenAction::PairMint { .. }
+        | TokenAction::PairStore { .. } => unreachable!("handled by token_pair"),
     }
     Ok(())
 }

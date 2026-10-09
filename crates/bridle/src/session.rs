@@ -15,7 +15,7 @@ use crate::error::CliError;
 /// Lean start (ticket ct8m, docs/spikes/08-lean-context-findings.md): drops bundled skills,
 /// workflows and the claude.ai connectors, and denies tools these roles never use. Not
 /// disableRemoteControl: the human reaches the session through Remote Control.
-const LEAN: &str = r#""disableBundledSkills":true,"disableWorkflows":true,"disableClaudeAiConnectors":true,"disableArtifact":true,"permissions":{"deny":["EnterPlanMode","ExitPlanMode","DesignSync","NotebookEdit","PushNotification","ReportFindings","RemoteTrigger","Artifact","Workflow","Edit(~/.bridle/focus*)","Edit(~/.bridle/config.toml)","Bash(pkill *)","Bash(killall *)"]}"#;
+const LEAN: &str = r#""disableBundledSkills":true,"disableWorkflows":true,"disableClaudeAiConnectors":true,"disableArtifact":true,"permissions":{"deny":["EnterPlanMode","ExitPlanMode","DesignSync","NotebookEdit","PushNotification","ReportFindings","RemoteTrigger","Artifact","Workflow","Edit(~/.bridle/focus*)","Edit(~/.bridle/config.toml)","Bash(pkill *)","Bash(killall *)","Bash(bridle token *)"]}"#;
 
 /// Focus hours (ticket cvaq): a no-op unless `~/.bridle/config.toml` has `[[focus]]`.
 const FOCUS_GATE: &str =
@@ -297,7 +297,10 @@ async fn orchestrator(home: &Path, project: &str, args: &[String]) -> anyhow::Re
     std::fs::create_dir_all(home)?;
     write_pid_file(&home.join("orchestrator.pid"))?;
     tag_pane("orchestrator");
-    let env = [("BRIDLE_AS", "orchestrator"), ("BRIDLE_PROJECT", project)];
+    let env = [
+        ("BRIDLE_AS", crate::token_pair::ORCHESTRATOR),
+        ("BRIDLE_PROJECT", project),
+    ];
     let rc = run_claude(&env, args).await?;
     // A killed claude can't restore the pane's terminal modes; left on they make the next
     // session's input fill with focus reports (csfe). Off: focus reporting, bracketed paste,
@@ -345,7 +348,7 @@ async fn aide(cli: &Cli, project: &str, args: &[String]) -> anyhow::Result<i32> 
     register(cli, std::process::id() as i32, "aide", None).await;
     let rc = run_claude(
         &[
-            ("BRIDLE_AS", "aide"),
+            ("BRIDLE_AS", crate::token_pair::AIDE),
             ("BRIDLE_PROJECT", project),
             ("BRIDLE_SESSION_PID", pid.as_str()),
         ],
@@ -364,7 +367,7 @@ async fn advisor(
 ) -> anyhow::Result<i32> {
     let pid = std::process::id().to_string();
     let mut env = vec![
-        ("BRIDLE_AS", "advisor"),
+        ("BRIDLE_AS", crate::token_pair::ADVISOR),
         ("BRIDLE_PROJECT", project),
         ("BRIDLE_SESSION_PID", pid.as_str()),
     ];

@@ -1413,6 +1413,57 @@ pub enum TokenAction {
         #[arg(long)]
         print: bool,
     },
+    /// Set up role tokens between machines over ssh, like ssh-copy-id (human only). With no
+    /// options it pairs every role, for every project, on every machine; naming some narrows
+    /// to exactly those. A second run changes nothing. Run it again after adding a role or a
+    /// machine. Tokens travel only over ssh stdin/stdout, never argv or output.
+    Pair {
+        /// Machines to pair (default: this one and every `[machines]` entry).
+        #[arg(long, value_delimiter = ',')]
+        machines: Vec<String>,
+        /// Projects to pair (default: every project on a selected machine).
+        #[arg(long, value_delimiter = ',')]
+        projects: Vec<String>,
+        /// Roles to pair (default: every token role). For role tokens only.
+        #[arg(long, value_delimiter = ',')]
+        roles: Vec<String>,
+        /// Token types: `role`, `peer` (default: both; peer tokens are not built yet).
+        #[arg(long, value_delimiter = ',')]
+        tokens: Vec<crate::token_pair::TokenType>,
+        /// Revoke and re-mint the selected tokens instead of keeping working ones.
+        #[arg(long)]
+        rotate: bool,
+        /// Print the plan; mint and write nothing.
+        #[arg(long)]
+        dry_run: bool,
+    },
+    /// Helper for `token pair`: list this machine's project daemons as `<project> <port>`.
+    #[command(hide = true)]
+    PairProjects,
+    /// Helper for `token pair`: exit 0 if `--project`'s entry for this role works.
+    #[command(hide = true)]
+    PairCheck {
+        role: String,
+        /// The machine the daemon is on, when not this one.
+        #[arg(long)]
+        machine: Option<String>,
+    },
+    /// Helper for `token pair`: print a fresh token for the role on `--project`'s daemon.
+    #[command(hide = true)]
+    PairMint {
+        role: String,
+        /// The machine that will hold the token, when not this one.
+        #[arg(long = "for")]
+        for_machine: Option<String>,
+    },
+    /// Helper for `token pair`: store the token on stdin as the role's entry for `--project`.
+    #[command(hide = true)]
+    PairStore {
+        role: String,
+        /// The machine the daemon is on, when not this one.
+        #[arg(long)]
+        machine: Option<String>,
+    },
     /// List external tokens: name, created-at, revoked-or-not (human only).
     List,
     /// Revoke an `external:<name>` token (human only). An agent's own token
