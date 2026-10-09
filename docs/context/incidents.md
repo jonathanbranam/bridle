@@ -24,6 +24,24 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-09 19:18: dalek's gateway keeps being restarted outside launchd (recurring)
+
+- **What happened:** the human found the gateway on `:7878` was pid 88281, started 2026-10-09
+  01:39Z from a Claude Code session (`CLAUDECODE=1`, ppid 1), not by launchd or by them. The log
+  shows the same SIGTERM-then-restart at least nine times since 2026-10-07 22:08Z, with no record
+  of who asked. Since ~18:54Z launchd's `dev.bridle.gateway` fails "Address already in use"
+  (likely kickstarted by a br-57nt test run). Reported by the human to aide ("I NEVER started
+  those gateways ... I have reported this before").
+- **Impact:** the gateway runs unsupervised with an inherited session environment (the
+  2026-10-08 outage had the same shape); launchd retries in a loop; the human's trust, as a
+  repeat report.
+- **Cause:** unknown: some session or code path (upgrade, `just install`, an agent, a test)
+  runs `gateway restart` or `--detach` against the live gateway. A test touching real launchd
+  is suspected.
+- **Category:** `daemon`, `role`.
+- **Follow-up:** [[incident-something-keeps-restarting-dalek-s-gateway-outside-rztb|rztb]]
+  (br-rztb, high); earlier bek3, 76td, ppa6, 57nt.
+
 ## 2026-10-09 15:56: main red on Linux from a third upgrade_test flake
 
 - **What happened:** CI run 37954619068 on fa22d829 (the br-f4xu merge) failed on Linux:
