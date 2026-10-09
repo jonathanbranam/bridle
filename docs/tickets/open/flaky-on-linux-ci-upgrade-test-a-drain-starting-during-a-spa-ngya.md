@@ -9,10 +9,13 @@ changes: []
 specs: []
 needs: []
 see: []
-tasks: []
+tasks: [br-ngya]
 ---
 
 ## The ask
+
+Make upgrade_test's a_drain_starting_during_a_spawn_restarts_promptly deterministic: it must
+not call the daemon over HTTP after the restart is requested. Critical (flaky test on main).
 
 ## What happened
 
