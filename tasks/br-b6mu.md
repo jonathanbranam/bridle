@@ -4,9 +4,12 @@ title = "Self-upgrade drain may never restart when it starts during a spawn"
 kind = "bug"
 state = "planned"
 created_at = "2026-10-09T16:54:27.508Z"
-updated_at = "2026-10-09T17:20:19.672981Z"
+updated_at = "2026-10-09T17:20:57.975987Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "external:advisor/product-manager",
+]
 ticket = "b6mu"
 +++
 
@@ -30,3 +33,6 @@ Migration: none (no project files or config change).
 
 ### note · agent:b6mu · 2026-10-09T17:20:19.672Z
 CI run 37962490045 (ubuntu, main 233e0c96): 1385 passed, 1 failed: store::tests::cancelled_blocking_task_returns_shutting_down_not_a_panic, panicked at crates/bridle-daemon/src/store.rs:3966:32 ('aborted task should error: 1'). Not upgrade_test and not the drain/spawn race: a different flake (store task cancellation). Out of scope here; worth its own ticket.
+
+### note · external:advisor/product-manager · 2026-10-09T17:20:57.975Z
+watching the task

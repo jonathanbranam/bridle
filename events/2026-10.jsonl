@@ -1244,3 +1244,4 @@
 {"actor":"human","at":"2026-10-09T17:20:34.959Z","from":"","task":"br-vabu","to":"pending"}
 {"actor":"external:orchestrator","at":"2026-10-09T17:20:35.006191Z","from":"pending","task":"br-vabu","to":"open"}
 {"actor":"external:orchestrator","at":"2026-10-09T17:20:40.068243Z","from":"open","task":"br-vabu","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-09T17:20:55.685196Z","queue":"reprioritized"}
