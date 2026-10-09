@@ -359,7 +359,7 @@ Advisor (product-manager) sizes, orders and plans them, with the human's approva
     and a final pass over the docs (`docs/README.md`, `cli.md`, `storage.md`, `agent-host/`).
     The workstream is complete only after this one.
 
-## Plan (advisor product-manager, 2026-10-09; Q1-Q5 answered, waits on the human's approval)
+## Plan (advisor product-manager, 2026-10-09; approved by the human)
 
 **Priority.** Second to machine setup: it starts as its gates clear and doesn't take worker slots
 from machine setup phase 1. The roadmap tracks it as the workstream "Everything is a ticket".
@@ -398,6 +398,10 @@ theme is a lasting area with a slug, not an ID (`reliability`, `human-ui`, `agen
 the list of themes lives in one file (for now `docs/notes/roadmap.md`). No `idea` kind: whether
 a ticket is scheduled is its state (no row yet, or pending), not its kind, so a large future idea
 is a `feature` or `epic` ticket tagged to a theme and not yet approved.
+
+**Filed** (the human approved this plan, 2026-10-09 ~4:40 PM ET: "approve; looks great"): step 1
+syqn, step 2 bpku (blocked by syqn), step 3 3v75 (blocked by bpku), step 4 72t9 (blocked by
+3v75). Later steps are filed when their gates clear.
 
 **Risks.** The rename changes what every agent types daily; the hidden `task` alias (step 7)
 keeps old habits working until step 10. The PdM's own roadmap generator reads `bridle task list`
