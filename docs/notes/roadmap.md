@@ -15,7 +15,7 @@ before it moves: "waits on the human" is a pending task only the human can appro
 is the project manager's; "ready to build" is in the queue; "HELD" is planned in bridle but
 stopped by the human.
 
-Last updated: 2026-10-09 18:04 ET.
+Last updated: 2026-10-09 18:05 ET.
 
 ## Needs the human now
 
@@ -358,6 +358,7 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
+| [br-x7fx](http://dalek.tailbc91f5.ts.net:7878/task?id=br-x7fx) | Turn self_upgrade back on ([daemon] self_upgrade = true in bridle's .bridle/config.toml... |  | claimed | in progress |
 | [br-a3b9](http://dalek.tailbc91f5.ts.net:7878/task?id=br-a3b9) | Sat 10-03: review and land the parked branches (br-6b8a, br-2718, br-2672, br-8b98, br-... |  | claimed | the human's to-do; aide asks whether to close |
 | [br-7575](http://dalek.tailbc91f5.ts.net:7878/task?id=br-7575) | Expand on 8r5x: keep your interactive session logs (which sessions, how long, where) |  | claimed | the human's to-do |
 | [br-3a42](http://dalek.tailbc91f5.ts.net:7878/task?id=br-3a42) | Expand on z485: make the orchestrator non-interactive (what it gives you, who you talk ... |  | claimed | the human's to-do |
@@ -429,3 +430,4 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 - 2026-10-09 18:02 ET: br-d48r (machine load notes go to aide; the human, via the orchestrator) placed in agents-and-cli, no epic.
 - 2026-10-09 18:03 ET: filed by the aide from the human's words, readied, high: br-7ufd (self-upgrade at most every few hours, batched; critical fixes at once), theme reliability.
 - 2026-10-09 18:03 ET: br-d48r dropped (orchestrator misread the human); the aide files the real ticket (load notes repeat with no quiet period).
+- 2026-10-09 18:05 ET: the human turned self_upgrade off until br-7ufd lands; their to-do br-x7fx (turn it back on) added.
