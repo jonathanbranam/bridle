@@ -4,12 +4,13 @@ title = "Scheduled messages, first slice: an agent schedules a message to itself
 kind = "feature"
 state = "planned"
 created_at = "2026-10-08T14:28:58.540Z"
-updated_at = "2026-10-08T14:29:41.499394Z"
+updated_at = "2026-10-09T02:19:03.642053Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "external:orchestrator@nuc",
 ]
+summary = 'Scheduled messages slice 1. New `schedules` table (SCHEMA_V23); daemon `schedule.rs` (own 5-field cron parser, DST-aware via chrono-tz, which is a new dependency because nothing in Cargo.lock handled IANA zones; `fire_due` with an injected clock); a 15 s loop plus one run at start-up sends due schedules from `system` as "Scheduled <id> (set by <creator>): ..." through the normal message path; a missed once fires late, a missed cron fires once for its latest occurrence, both with a "(due <local>, sent late)" note when over 2 minutes late. Routes /v1/schedules (POST, GET ?all, DELETE /{id}), client methods, `bridle schedule add|list|rm`, `[schedule] timezone` config, events schedule.fired / schedule.missed_fired. Docs: api.md, cli.md, storage.md, roles-and-config.md, daemon.md "Scheduled messages", CHANGELOG. Caveats: externals (orchestrator, advisor) are refused, per decision 6 (strictly agents and the human); a send to a vanished target is logged and the schedule moves on; targets are principals on the same daemon (no outbox hop).'
 parent = "br-yfv5"
 +++
 
