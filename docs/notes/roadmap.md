@@ -70,6 +70,7 @@ The human, 2026-10-09: efficient, direct setup of a new machine, first the Windo
 | [br-hua2](http://dalek.tailbc91f5.ts.net:7878/task?id=br-hua2) | Add a machine: one setup guide from bare OS to on the network (config, tokens, services... | integrated | delivered |
 | [br-gdf3](http://dalek.tailbc91f5.ts.net:7878/task?id=br-gdf3) | Peer-token setup guidance: a token per receiving project per sending machine, minted on... | integrated | delivered |
 | [br-8c25](http://dalek.tailbc91f5.ts.net:7878/task?id=br-8c25) | bridle token pair, part 1: the token-role list, the spec, and role tokens across machin... | planned | design approved (sk7p); pm-1 re-briefs, then build |
+| [br-jw9e](http://dalek.tailbc91f5.ts.net:7878/task?id=br-jw9e) | bridle token pair, part 2: peer tokens, the [mail] peers opt-out, and pairing on projec... | planned | ready to build |
 | [br-88d4](http://dalek.tailbc91f5.ts.net:7878/task?id=br-88d4) | self_upgrade = "release": fetch, verify and swap the release binary (chvf 2) | planned | ready to build |
 | [br-751e](http://dalek.tailbc91f5.ts.net:7878/task?id=br-751e) | Daemon keeps its own workflow checkout at the binary's tag (chvf 3) | planned | ready to build |
 | [br-57nt](http://dalek.tailbc91f5.ts.net:7878/task?id=br-57nt) | bridle gateway restart takes a launchd-managed gateway out of launchd and inherits the ... | planned | ready to build |
@@ -312,3 +313,4 @@ Chores that are the human's own: expand on an idea, review a ticket or branch.
 - 2026-10-09 14:15 ET: br-b6mu delivered.
 - 2026-10-09 14:23 ET: the human approved the sk7p design (token pair: role and peer tokens, all by default, opt-out [mail] peers = false). br-8c25 hold released; pm-1 re-briefs.
 - 2026-10-09 14:34 ET: br-gdf3 delivered.
+- 2026-10-09: pm-1 split token pair: br-8c25 part 1 (role tokens, token-role list), br-jw9e part 2 (peer tokens, opt-out, pairing on project creation); placed in machine setup.
