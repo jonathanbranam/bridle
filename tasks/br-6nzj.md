@@ -4,7 +4,7 @@ title = "Test daemons stop polling at 200 ms; a resource-budget test; log the in
 kind = "bug"
 state = "planned"
 created_at = "2026-10-09T01:41:03.473Z"
-updated_at = "2026-10-09T13:09:33.880360Z"
+updated_at = "2026-10-09T14:05:37.965101Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -38,3 +38,9 @@ Timer forks found: tracker (containment::snapshot, now counted); load.rs sysctl/
 
 ### note · agent:tick6nzj · 2026-10-09T13:09:33.880Z
 done: harness tracker 2 s, resource-budget test (fails when tick_tracker snapshots with no agents), incident entry, changelog; just check exit 0, 1382 tests run, 1382 passed; ac6a527a
+
+### note · agent:tick6nzj · 2026-10-09T14:05:35.189Z
+Merged main (kept both incidents.md entries; tip 19aeee3c). just check not green here: machine load average ~66 (16 cores). Run 1: 1044 pass, governor_test working_agent_is_notified... timed out at 71 s under load (passes alone in 4 s). Run 2: cli_e2e sigint_shuts_down... refused by the load hold (3.8 per core). Neither touches my change. Merge is docs-only conflict; suggest landing on your own check when load drops.
+
+### note · agent:tick6nzj · 2026-10-09T14:05:37.965Z
+merged main, incidents.md conflict resolved (both kept), tip 19aeee3c. just check did NOT pass cleanly: host load ~66 caused 2 unrelated failures (governor_test timeout, cli_e2e load hold); both pass or are load-bound. Details on thread. Prior green tip before merge: ac6a527a.
