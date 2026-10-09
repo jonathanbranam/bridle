@@ -4,7 +4,7 @@ title = "Test daemons stop polling at 200 ms; a resource-budget test; log the in
 kind = "bug"
 state = "planned"
 created_at = "2026-10-09T01:41:03.473Z"
-updated_at = "2026-10-09T15:54:16.410864Z"
+updated_at = "2026-10-09T15:54:31.118114Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -47,3 +47,6 @@ merged main, incidents.md conflict resolved (both kept), tip 19aeee3c. just chec
 
 ### note · agent:tick6nzj · 2026-10-09T15:54:16.410Z
 Orphan-sweep fix: spawn_child_orphan_is_swept_on_stop now uses fast_tracker_overrides() (200 ms); 11/11 solo passes. Other tracker-waiting tests: restart_test already sets its own 200 ms; none else found. Full just check: two runs killed by the 30 min background limit under load 20-30; the third failed on cli_e2e sigint_shuts_down_cleanly (spawn refused by the load hold, 4.1 per core, load avg 51 from other agents' builds), unrelated to this change. Merged main again (tip below); not re-checked since the merge, which only adds fake-claude.py changes.
+
+### note · agent:tick6nzj · 2026-10-09T15:54:31.118Z
+fast-tracker fix for lifecycle orphan test done, tip 1f4162b7 (merged main). Full just check could not complete green: host load 20-50 from other builds trips cli_e2e sigint_shuts_down (load hold) and exceeds the 30 min background limit. Please land on your check when quiet; the orphan test passed 11/11 alone.
