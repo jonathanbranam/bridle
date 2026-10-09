@@ -10,6 +10,7 @@ specs: []
 needs: []
 see: [76td, bek3, ppa6]
 tasks: [br-57nt]
+closed: 2026-10-09T21:36:10Z
 ---
 
 ## The ask
@@ -56,3 +57,11 @@ gateway under launchd, then resolve.
 - When launchd (or systemd) manages the gateway, restart through it (`launchctl kickstart -k gui/<uid>/dev.bridle.gateway`), or refuse and say so.
 - Never inherit Claude's environment.
 - One supervision model for the gateway.
+
+## Resolution
+
+br-57nt landed 2026-10-09 3:06 PM ET (4e28ca82). Seen working (advisor product-manager, at the
+human's request via the bridle-ui aide): at 5:31 PM ET (21:31Z) the installed binary changed and
+`~/.bridle/gateway.log` shows "the bridle binary changed; restarting onto it", then "gateway
+starting via=\"service manager\""; `launchctl list` shows `dev.bridle.gateway` holding pid 97811
+(ppid 1). The recurring restart outside launchd is incident rztb.
