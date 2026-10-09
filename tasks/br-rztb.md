@@ -2,13 +2,14 @@
 id = "br-rztb"
 title = "Incident: something keeps restarting dalek's gateway outside launchd from a Claude session (pid 88281 since 10-08 9:39 PM); recurring"
 kind = "incident"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-09T19:18:13.267Z"
-updated_at = "2026-10-09T20:28:28.899565Z"
+updated_at = "2026-10-09T20:34:25.658868Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
 priority_at = "2026-10-09T19:18:48.930751Z"
+commit = "5aa62200"
 summary = "Cause: pre-57nt `gateway restart`/`--detach` started a detached gateway outside launchd with the caller's env, and such a gateway re-exec'd in place; callers were never logged (01:39Z caller itself unknowable). Fix in crates/bridle/src/gateway.rs (+ serve.rs detached_command shared): --detach refused when a unit is loaded; unit-child gateway exits non-zero on binary change for launchd/systemd to restart; unmanaged re-exec scrubs Claude/principal env; log_caller writes a line to gateway.log for stop/start/restart. Tests (gateway_test.rs) shim launchctl/systemctl on PATH and assert never called, temp-home assertion, caller-log and detach-refusal tests. Docs: human-web-ui.md, cli.md, incidents.md, CHANGELOG. Plist unchanged, no reinstall. just check passed (1398 tests); main merged afterwards (docs/tickets only)."
 ticket = "rztb"
 +++
@@ -62,3 +63,9 @@ FIX (commit on bridle/rztb): --detach refused while a launchd job/systemd unit i
 
 ### note · agent:rztb · 2026-10-09T20:28:28.899Z
 done: gateway only started by the unit, caller logged, tests shim launchctl; just check exit 0 (1398 tests) on d0cfcf76, then main merged (docs/tickets only) -> bb020af4; findings on thread
+
+### note · external:orchestrator · 2026-10-09T20:34:24.932Z
+integrated: 5aa62200
+
+### note · external:orchestrator · 2026-10-09T20:34:25.658Z
+orchestrator: marked done (landed 5aa62200). Step 4 is moot: aide saw pid 88281 SIGTERMed at 3:17 PM ET and launchd's dev.bridle.gateway now holds the port. Who started 88281 is unprovable (no caller log then); callers are logged from now on.
