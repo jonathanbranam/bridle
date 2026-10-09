@@ -15,7 +15,7 @@ before it moves: "waits on the human" is a pending task only the human can appro
 is the project manager's; "ready to build" is in the queue; "HELD" is planned in bridle but
 stopped by the human.
 
-Last updated: 2026-10-09 18:03 ET.
+Last updated: 2026-10-09 18:04 ET.
 
 ## Needs the human now
 
@@ -239,7 +239,7 @@ The orchestrator and daemons stay up, relaunch once, upgrade cleanly and recover
 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
-| [br-7ufd](http://dalek.tailbc91f5.ts.net:7878/task?id=br-7ufd) | Self-upgrade at most every few hours, batching the landings; critical fixes go through ... | high | open | to plan (project manager) |
+| [br-7ufd](http://dalek.tailbc91f5.ts.net:7878/task?id=br-7ufd) | Self-upgrade at most every few hours, batching the landings; critical fixes go through ... | high | planned | ready to build |
 | [br-8a53](http://dalek.tailbc91f5.ts.net:7878/task?id=br-8a53) | main red (ubuntu): gateway_test a_replaced_binary_is_re_executed; INVOCATION_ID misdete... | critical | integrated | delivered |
 | [br-ngya](http://dalek.tailbc91f5.ts.net:7878/task?id=br-ngya) | Flaky on Linux CI: upgrade_test a_drain_starting_during_a_spawn_restarts_promptly reads... | critical | integrated | delivered |
 | [br-rztb](http://dalek.tailbc91f5.ts.net:7878/task?id=br-rztb) | Incident: something keeps restarting dalek's gateway outside launchd from a Claude sess... | high | integrated | delivered |
