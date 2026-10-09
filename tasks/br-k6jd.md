@@ -4,7 +4,7 @@ title = "Managers and the orchestrator fetch origin; divergence from origin is w
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T18:08:53.045Z"
-updated_at = "2026-10-09T22:20:51.727911Z"
+updated_at = "2026-10-09T22:20:53.978574Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -33,3 +33,6 @@ priority: normal -> high
 
 ### note · agent:k6jd · 2026-10-09T22:20:51.727Z
 done: origin divergence watch (git.diverged event + orchestrator note, doctor 'N ahead, M behind'), orchestrator may git fetch origin; just check exit 0, 1418 tests, ran on 9b62775b; main merged after (docs-only), tip 5591a8f8
+
+### note · agent:k6jd · 2026-10-09T22:20:53.978Z
+Migration: the permission is a built-in role default in config.rs, so projects get it with the daemon upgrade (no bridle workflow sync or hand edit needed); only projects overriding orchestrator allowed_tools need the CHANGELOG note.
