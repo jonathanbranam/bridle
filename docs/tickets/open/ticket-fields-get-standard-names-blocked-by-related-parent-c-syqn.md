@@ -56,3 +56,6 @@ manager". Themes and epics belong to a product; products are epic g5dm, designed
 this step (PdM reading): add `theme: <slug>` accepting any well-formed slug, with no registry
 and no product scoping yet; `parent` takes project-qualified IDs, so an epic's children can be in
 other projects.
+
+The human, 2026-10-09 ~5:40 PM ET: "agree no enforced list of themes yet, but that should come
+later." So this step accepts any slug; an enforced list is later work (with products, g5dm).

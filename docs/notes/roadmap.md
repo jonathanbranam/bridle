@@ -65,10 +65,10 @@ The roadmap's priority order. Machine setup first (the human, 2026-10-09).
 1. **Machine setup** (`machine-setup`, theme `multi-machine`)
 2. **Everything is a ticket** (`everything-is-a-ticket`, theme `tickets-and-release`)
 3. **Migrations** (`migrations`, theme `tickets-and-release`)
-4. **Products: several product managers and roadmaps** (`products`, theme `product-process`)
-5. **Scheduled messages and timed actions** (`scheduled-messages`, theme `agents-and-cli`)
-6. **Documents and attachments on tickets** (`attachments`, theme `product-process`)
-7. **Reviews enforced by bridle** (`reviews-enforced`, theme `product-process`)
+4. **Scheduled messages and timed actions** (`scheduled-messages`, theme `agents-and-cli`)
+5. **Documents and attachments on tickets** (`attachments`, theme `product-process`)
+6. **Reviews enforced by bridle** (`reviews-enforced`, theme `product-process`)
+7. **Products: several product managers and roadmaps** (`products`, theme `product-process`)
 
 ## Themes
 
@@ -187,16 +187,6 @@ Agents use bridle correctly: commands, help, roles, the workflow reaching every 
 
 How work gets from an idea to ready: the PdM, the designer, change specs, reviews, task states.
 
-#### Epic `products`: Products: several product managers and roadmaps
-
-- Outcome: Each product (a set of projects, 1:1 with GitHub repos, sharing one roadmap and one product manager; the human, 2026-10-09) has its own PdM and roadmap, so neither the agent's context nor the human's mixes unrelated products.
-- Done when: There are multiple product managers, each responsible for a product that contains many projects; a product roadmap lives in a single place (probably a project), but its planning spans multiple projects. (The human.)
-
-| Task | Title | Pri | State | Next |
-|---|---|---|---|---|
-| [br-g5dm](http://dalek.tailbc91f5.ts.net:7878/task?id=br-g5dm) | Products: a product is a set of projects with one roadmap and one product manager; seve... |  | pending | needs a design (designer), then the human's review; keep it flexible while the trial runs |
-| [br-6h65](http://dalek.tailbc91f5.ts.net:7878/task?id=br-6h65) | A product manager that relates every ticket to open and planned work: links, merges, an... |  | pending | this trial is the stand-in (docs/notes/product-manager-trial.md) |
-
 #### Epic `attachments`: Documents and attachments on tickets
 
 - Outcome: Several documents (a design, specs) and later images on one ticket; the human's MIME parts idea.
@@ -216,6 +206,16 @@ No tasks yet.
 | [br-46fe](http://dalek.tailbc91f5.ts.net:7878/task?id=br-46fe) | Reviews B: signed review records on the task (v2va slice B) | low | planned | ready to build |
 | [br-cf00](http://dalek.tailbc91f5.ts.net:7878/task?id=br-cf00) | Reviews C: the daemon spawns the required reviewers; comment-only talk; cost recorded (... | low | planned | ready to build |
 | [br-f610](http://dalek.tailbc91f5.ts.net:7878/task?id=br-f610) | Reviews D: the gate: no landing until every required review is signed (v2va slice D) | low | planned | ready to build |
+
+#### Epic `products`: Products: several product managers and roadmaps
+
+- Outcome: Each product (a set of projects, 1:1 with GitHub repos, sharing one roadmap and one product manager; the human, 2026-10-09) has its own PdM and roadmap, so neither the agent's context nor the human's mixes unrelated products.
+- Done when: There are multiple product managers, each responsible for a product that contains many projects; a product roadmap lives in a single place (probably a project), but its planning spans multiple projects. (The human.)
+
+| Task | Title | Pri | State | Next |
+|---|---|---|---|---|
+| [br-g5dm](http://dalek.tailbc91f5.ts.net:7878/task?id=br-g5dm) | Products: a product is a set of projects with one roadmap and one product manager; seve... | low | pending | needs a design (designer), then the human's review; keep it flexible while the trial runs |
+| [br-6h65](http://dalek.tailbc91f5.ts.net:7878/task?id=br-6h65) | A product manager that relates every ticket to open and planned work: links, merges, an... |  | pending | this trial is the stand-in (docs/notes/product-manager-trial.md) |
 
 #### Not in an epic
 
@@ -399,3 +399,4 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 - 2026-10-09 16:50 ET: the human approved the epic Done-when drafts and the 22ab plan. Filed 22ab steps 1-4 (br-syqn readied; bpku, 3v75, 72t9 chained by blocked_by). New epic `migrations` (the human's ask), third in order; br-e7e2 moved into it.
 - 2026-10-09 17:10 ET: filed ui-vhrb (theme page and roadmap page; the human's future work), low, theme product-process. Open question on br-syqn: themes and epics cross projects.
 - 2026-10-09 17:30 ET: new epic `products` (g5dm; the human: a product is a set of projects with one roadmap and one PdM), fourth in order; br-6h65 (the PdM role) moved into it. br-syqn's question answered (theme: accepts any slug for now).
+- 2026-10-09 17:40 ET: `products` moved last and br-g5dm low (the human: "the right direction BUT NOT URGENT"). No enforced theme list yet; one later (the human).

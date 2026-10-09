@@ -59,3 +59,7 @@ what we have - it's working well for use currently." Low.
 
 Needs a design (the designer) and the human's review before any build. Learning from the PdM
 trial (docs/notes/product-manager-trial.md) feeds it.
+
+An enforced list of themes comes later (the human, 2026-10-09 ~5:40 PM ET: "agree no enforced
+list of themes yet, but that should come later"); it likely belongs with this epic, since themes
+are per product.
