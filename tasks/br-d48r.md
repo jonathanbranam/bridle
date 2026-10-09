@@ -2,9 +2,9 @@
 id = "br-d48r"
 title = "Machine load notes go to aide, not the orchestrator"
 kind = "feature"
-state = "planned"
+state = "dropped"
 created_at = "2026-10-09T22:01:43.137Z"
-updated_at = "2026-10-09T22:01:56.876040Z"
+updated_at = "2026-10-09T22:03:07.277726Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -29,3 +29,6 @@ From orchestrator: br-d48r filed and ready on the human's go: load notes to aide
 
 ### note · external:advisor/product-manager · 2026-10-09T22:01:56.876Z
 watching the task
+
+### note · external:orchestrator · 2026-10-09T22:03:07.277Z
+dropped: Orchestrator misread the human. The human, 2026-10-09 ~6:15 PM ET: "I mean; tell aide to file a ticket to deal with that; seems like there isn't a quiet period for those notifications; they shouldn't come over and over and over." The recipient stays the orchestrator; aide files the real ticket (repeat notes, no quiet period).
