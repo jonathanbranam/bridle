@@ -15,7 +15,7 @@ before it moves: "waits on the human" is a pending task only the human can appro
 is the project manager's; "ready to build" is in the queue; "HELD" is planned in bridle but
 stopped by the human.
 
-Last updated: 2026-10-09 16:30 ET.
+Last updated: 2026-10-09 16:50 ET.
 
 ## Needs the human now
 
@@ -26,8 +26,6 @@ In the order the PdM suggests:
    8z7j to the designer; k6jd, 8ay6, 8umh readied; xccp later). Also your review of kuw2
    (machine daemon, br-efs2) gates project transfer's design.
 
-0b. **Everything is a ticket** (22ab): Q1-Q5 answered; approve the plan in the ticket ("Plan"
-   section) so the PdM files steps 1-4.
 1. **The designer's first job**: by your ladder it is the attachments design (step 2 below),
    then the scheduler design for the rest of yfv5 (nightly restarts, maintenance windows,
    machine-wide), with the shipped slice (9xze) written up after the fact. ukpm planned fne2 as
@@ -42,7 +40,7 @@ In the order the PdM suggests:
    needs a proposed design).
 6. From the bridle aide: max_workers 2 -> 3 (the aide recommends no until the v6kr baseline);
    close br-a3b9?
-7. Epic "Done when" lines marked (PdM draft) below: amend or approve.
+7. The new epic `migrations`: its "Done when" is a PdM draft; amend or approve.
 
 ## The scheduler ladder (the human's sequence, 2026-10-09)
 
@@ -66,9 +64,10 @@ The roadmap's priority order. Machine setup first (the human, 2026-10-09).
 
 1. **Machine setup** (`machine-setup`, theme `multi-machine`)
 2. **Everything is a ticket** (`everything-is-a-ticket`, theme `tickets-and-release`)
-3. **Scheduled messages and timed actions** (`scheduled-messages`, theme `agents-and-cli`)
-4. **Documents and attachments on tickets** (`attachments`, theme `product-process`)
-5. **Reviews enforced by bridle** (`reviews-enforced`, theme `product-process`)
+3. **Migrations** (`migrations`, theme `tickets-and-release`)
+4. **Scheduled messages and timed actions** (`scheduled-messages`, theme `agents-and-cli`)
+5. **Documents and attachments on tickets** (`attachments`, theme `product-process`)
+6. **Reviews enforced by bridle** (`reviews-enforced`, theme `product-process`)
 
 ## Themes
 
@@ -79,7 +78,7 @@ Daemons, tokens, sync and projects across the laptop, the NUC and the Windows PC
 #### Epic `machine-setup`: Machine setup
 
 - Outcome: A new machine (first the Windows PC) is set up directly: background daemons, tokens between machines and projects, sync. (The human, 2026-10-09.)
-- Done when: (PdM draft) Phase 1: the PC runs bridle unattended. Phase 2: one command sets up and syncs a machine. Phase 3: a project moves between machines.
+- Done when: Phase 1: the PC runs bridle unattended. Phase 2: one command sets up and syncs a machine. Phase 3: a project moves between machines.
 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
@@ -124,8 +123,21 @@ How work is recorded (tickets, fields, migrations) and shipped (changelog, relea
 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
+| [br-syqn](http://dalek.tailbc91f5.ts.net:7878/task?id=br-syqn) | Ticket fields get standard names (blocked_by, related, parent, created, resolved), a th... |  | open | to plan (project manager) |
+| [br-bpku](http://dalek.tailbc91f5.ts.net:7878/task?id=br-bpku) | Every ticket gets a row; types fix and epic; readiness moves to the ticket (ticket ready) |  | pending | after br-syqn lands (blocked_by) |
+| [br-3v75](http://dalek.tailbc91f5.ts.net:7878/task?id=br-3v75) | Ticket links live in the frontmatter: the daemon indexes blocked_by, parent and related... |  | pending | after br-bpku lands |
+| [br-72t9](http://dalek.tailbc91f5.ts.net:7878/task?id=br-72t9) | A ticket's thread moves to the ticket (tickets/<id>.md on the state branch); ticket com... |  | pending | after br-3v75 lands |
 | [br-d9wq](http://dalek.tailbc91f5.ts.net:7878/task?id=br-d9wq) | Research: product manager roles, human and agentic (BMAD and others), and what to call ... |  | pending | research done; the human reads it and picks the term |
 | [br-95mu](http://dalek.tailbc91f5.ts.net:7878/task?id=br-95mu) | A change spec (proposal and design) reviewed for risk and impact before any worker buil... |  | pending | to the designer once the human has reviewed the ticket |
+
+#### Epic `migrations`: Migrations
+
+- Outcome: Every bridle project's tickets and tasks are brought to the current format by migrations that run on their own at start-up (xebc, br-2718 landed). The human, 2026-10-09: "this would be a great new epic to have! migrations!"
+- Done when: (PdM draft) Every open ticket in every project has a kind and two-way task links; `bridle ticket check` is clean in each project; later format changes (22ab) ship as migrations here.
+
+| Task | Title | Pri | State | Next |
+|---|---|---|---|---|
+| [br-e7e2](http://dalek.tailbc91f5.ts.net:7878/task?id=br-e7e2) | Migration: backfill ticket kind and two-way task links in every bridle project (v3dk sl... |  | planned | ready to build |
 
 #### Not in an epic
 
@@ -133,7 +145,6 @@ How work is recorded (tickets, fields, migrations) and shipped (changelog, relea
 |---|---|---|---|---|
 | [br-g3az](http://dalek.tailbc91f5.ts.net:7878/task?id=br-g3az) | Status line token setup in the docs writes an empty file: token create needs --print now |  | integrated | delivered |
 | [br-01ff](http://dalek.tailbc91f5.ts.net:7878/task?id=br-01ff) | Tickets through the bridle binary in every project: new, frontmatter, check, resolve; a... |  | pending | waits on the human (approve to ready) |
-| [br-e7e2](http://dalek.tailbc91f5.ts.net:7878/task?id=br-e7e2) | Migration: backfill ticket kind and two-way task links in every bridle project (v3dk sl... |  | planned | ready to build |
 | [br-ubjd](http://dalek.tailbc91f5.ts.net:7878/task?id=br-ubjd) | A CHANGELOG line for every landed task, written on the branch, and one section per kind... |  | pending | waits on the human (approve to ready) |
 
 ### Theme `agents-and-cli`: Agents and the CLI
@@ -143,7 +154,7 @@ Agents use bridle correctly: commands, help, roles, the workflow reaching every 
 #### Epic `scheduled-messages`: Scheduled messages and timed actions
 
 - Outcome: Agents and the human schedule messages and timed actions through one scheduler (yfv5).
-- Done when: (PdM draft) Nightly restarts, maintenance windows and machine-wide schedules run from the one scheduler, designed and specced before build.
+- Done when: Nightly restarts, maintenance windows and machine-wide schedules run from the one scheduler, designed and specced before build.
 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
@@ -178,7 +189,7 @@ How work gets from an idea to ready: the PdM, the designer, change specs, review
 #### Epic `attachments`: Documents and attachments on tickets
 
 - Outcome: Several documents (a design, specs) and later images on one ticket; the human's MIME parts idea.
-- Done when: (PdM draft) A ticket carries a design and specs as parts, and the designer writes into them.
+- Done when: A ticket carries a design and specs as parts, and the designer writes into them.
 
 No tasks yet.
 
@@ -374,3 +385,4 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 - 2026-10-09 15:50 ET: incident br-rztb (gateway restarted outside launchd, recurring; the human asked for an investigation; critical, straight to the orchestrator) placed in reliability.
 - 2026-10-09 16:10 ET: br-xrkh delivered.
 - 2026-10-09 16:30 ET: restructured from workstreams into themes (slugs) and epics, the human's model (d9wq): roadmap orders epics, grouped by theme. 5 epics, 9 themes, the human's to-dos apart.
+- 2026-10-09 16:50 ET: the human approved the epic Done-when drafts and the 22ab plan. Filed 22ab steps 1-4 (br-syqn readied; bpku, 3v75, 72t9 chained by blocked_by). New epic `migrations` (the human's ask), third in order; br-e7e2 moved into it.
