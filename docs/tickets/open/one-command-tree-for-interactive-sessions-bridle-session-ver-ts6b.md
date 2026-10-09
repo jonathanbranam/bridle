@@ -9,7 +9,7 @@ changes: []
 specs: []
 needs: []
 see: [seats-named-interactive-roles-splitting-the-advisor-retiring-r8kv, seats-every-role-is-a-named-tracked-seat-that-outlives-its-s-gtzx, orchestrator-spins-off-an-advisor-ervd]
-tasks: []
+tasks: [br-ts6b]
 ---
 
 ## The ask
