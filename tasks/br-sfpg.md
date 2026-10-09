@@ -2,9 +2,9 @@
 id = "br-sfpg"
 title = "A researcher role with web tools, and managers check a task's needs against the role's tools (2mtr)"
 kind = "feature"
-state = "pending"
+state = "open"
 created_at = "2026-10-09T23:27:47.658Z"
-updated_at = "2026-10-09T23:27:47.659470Z"
+updated_at = "2026-10-09T23:28:07.176728Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",

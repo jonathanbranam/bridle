@@ -2,9 +2,9 @@
 id = "br-7zd4"
 title = "Remove the stale 'Until bridle workflow sync renders rules' lines from workflow/base/rules (98xt)"
 kind = "chore"
-state = "pending"
+state = "open"
 created_at = "2026-10-09T23:27:48.286Z"
-updated_at = "2026-10-09T23:27:48.287084Z"
+updated_at = "2026-10-09T23:28:07.278208Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
