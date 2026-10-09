@@ -402,7 +402,7 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 | 2026-10-09 ~17:40 | br-8c25 bridle token pair, part 1 (role tokens across machines over SSH) | machine setup |
 | 2026-10-09 ~18:45 | br-k6jd managers and the orchestrator fetch origin; divergence warned (N ahead, M behind) | machine setup |
 | 2026-10-09 ~18:56 | br-jw9e bridle token pair, part 2 (peer tokens, [mail] peers opt-out, pairing on project creation) | machine setup |
-| 2026-10-09 ~19:50 | br-tnyt load notes: quiet period, 30 min gap, one per machine | performance |
+| 2026-10-09 ~19:37 | br-tnyt load notes: quiet period, 30 min gap, one per machine | performance |
 
 ## Changes to this roadmap
 
