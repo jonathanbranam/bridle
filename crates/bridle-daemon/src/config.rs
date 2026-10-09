@@ -1576,6 +1576,9 @@ pub struct Config {
     pub ports: PortsConfig,
     pub integration: IntegrationConfig,
     pub messages: MessagesConfig,
+    /// `[mail] peers` (default true): false leaves the project out of `bridle token pair`'s
+    /// peer tokens in both directions (it neither sends mail to other projects nor receives).
+    pub mail_peers: bool,
     /// The prefix new task ids get (storage.md: `<prefix>-<4 hex chars>`,
     /// e.g. `tw-7fa2`). `None` means derive one from the project name
     /// ([`default_task_prefix`]).
@@ -1645,6 +1648,7 @@ impl Default for Config {
             ports: PortsConfig::default(),
             integration: IntegrationConfig::default(),
             messages: MessagesConfig::default(),
+            mail_peers: true,
             task_prefix: None,
             tasks_settle: DEFAULT_SETTLE,
             tasks_settle_problem: None,
@@ -1979,6 +1983,15 @@ impl Config {
 
         if let Some(v) = raw.messages.and_then(|m| m.answer_for_human) {
             config.messages.answer_for_human = v;
+        }
+        // The rest of `[mail]` belongs to `bridle mail run`; `peers` is ours.
+        if let Some(v) = raw
+            .mail
+            .as_ref()
+            .and_then(|m| m.get("peers"))
+            .and_then(|v| v.as_bool())
+        {
+            config.mail_peers = v;
         }
 
         if let Some(i) = raw.integration {
@@ -2425,9 +2438,8 @@ struct RawConfig {
     #[serde(default)]
     components: Option<BTreeMap<String, Component>>,
     /// `[mail]` belongs to `bridle mail run` (the `bridle-mail` crate parses it); the daemon
-    /// only has to accept it.
+    /// reads only `peers`.
     #[serde(default)]
-    #[allow(dead_code)]
     mail: Option<toml::Value>,
     /// `[gateway]` and `[interactions]` belong to `bridle gateway` (the `bridle-gateway` crate
     /// parses them); the daemon only has to accept them, or adding either stops every daemon

@@ -31,15 +31,43 @@ pub fn run(args: &InitArgs) -> Result<(), CliError> {
             crate::vendor::print_changes(&c);
         }
     }
+    let name = repo
+        .canonicalize()
+        .ok()
+        .and_then(|p| p.file_name().map(|n| n.to_string_lossy().into_owned()))
+        .unwrap_or_default();
     println!(
-        "\nNext:\n  bridle sync     render the workflow layers into .claude/\n  bridle doctor   check the setup\n  bridle serve    start the daemon"
+        "\nNext:\n  bridle sync     render the workflow layers into .claude/\n  bridle doctor   check the setup\n  bridle serve    start the daemon\n  bridle token pair --projects {name}   once it is serving: peer tokens so it can mail the other projects (n63z)"
     );
+    pair_new_project(&name);
     if args.stack.is_none()
         && let Some(s) = detect_stack(&repo)
     {
         println!("\nThis looks like a {s} project: rerun with --stack {s} to enable its pack.");
     }
     Ok(())
+}
+
+/// Pairs a project that already has a daemon (a re-init) so it can send and receive mail at
+/// once (n63z). A fresh project has no daemon yet, so the "Next" list tells the human to run
+/// it after `bridle serve`. Failure (no ssh, a machine down) never fails init: it says to
+/// re-run the command.
+fn pair_new_project(name: &str) {
+    if name.is_empty()
+        || !bridle_api::discovery::list_registry()
+            .iter()
+            .any(|d| d.project == name)
+    {
+        return;
+    }
+    let ran = std::env::current_exe().and_then(|exe| {
+        Command::new(exe)
+            .args(["token", "pair", "--projects", name])
+            .status()
+    });
+    if !ran.is_ok_and(|s| s.success()) {
+        println!("\nPairing did not finish; re-run: bridle token pair --projects {name}");
+    }
 }
 
 #[derive(Debug, Default)]

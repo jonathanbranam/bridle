@@ -14,7 +14,9 @@ dir=$(dirname "$0")
 echo "$@" >> "$dir/argv.log"
 if [ -f "$dir/down" ]; then echo "ssh: connect to host refused" >&2; exit 255; fi
 case "$*" in
-  *pair-projects*) echo "notes 7402" ;;
+  *pair-projects*) echo "notes 7402"; [ -f "$dir/two" ] && echo "zeta 7403 true"; [ -f "$dir/optout" ] && echo "quiet 7404 false"; exit 0 ;;
+  *pair-peer-held*|*pair-peer-active*) exit 1 ;;
+  *pair-peer-mint*) echo "tok-SECRET-$$" ;;
   *pair-check*) exit 1 ;;
   *pair-mint*) echo "tok-SECRET-$$" ;;
   *pair-store*) cat >> "$dir/stored.log" ;;
@@ -136,4 +138,59 @@ fn an_agent_may_not_pair() {
         .unwrap();
     assert!(!out.status.success());
     assert!(String::from_utf8_lossy(&out.stderr).contains("human-only"));
+}
+
+// s-b3a1, s-f12f: peer tokens go receiver -> sender over the helpers, never in argv or output.
+#[test]
+fn peer_tokens_over_ssh_with_an_opt_out_project() {
+    let r = rig();
+    std::fs::write(r.fake.path().join("two"), "").unwrap();
+    std::fs::write(r.fake.path().join("optout"), "").unwrap();
+    let out = pair(&r, &["--machines", "nuc", "--tokens", "peer"]);
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    let stderr = String::from_utf8_lossy(&out.stderr);
+    assert!(out.status.success(), "{stdout}{stderr}");
+    // notes and zeta send to each other; quiet (peers = false) is left out.
+    assert!(
+        stdout.contains("(peer tokens): minted 2, kept 0"),
+        "{stdout}"
+    );
+    assert!(!stdout.contains("quiet"), "{stdout}");
+    assert!(!stdout.contains("tok-SECRET") && !stderr.contains("tok-SECRET"));
+    let argv = read(r.fake.path(), "argv.log");
+    assert!(argv.contains("pair-peer-mint nuc"), "{argv}");
+    assert!(!argv.contains("tok-SECRET"), "{argv}");
+    assert_eq!(
+        read(r.fake.path(), "stored.log")
+            .matches("tok-SECRET")
+            .count(),
+        2
+    );
+}
+
+// s-7a58
+#[test]
+fn init_names_the_pairing_command_and_does_not_fail_without_a_daemon() {
+    let r = rig();
+    let repo = tempfile::tempdir().unwrap();
+    let git = Command::new("git")
+        .args(["init", "-q", "-b", "main"])
+        .current_dir(repo.path())
+        .status()
+        .unwrap();
+    assert!(git.success());
+    let out = Command::new(env!("CARGO_BIN_EXE_bridle"))
+        .arg("init")
+        .current_dir(repo.path())
+        .env("BRIDLE_HOME", r.home.path())
+        .output()
+        .unwrap();
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    assert!(out.status.success(), "{stdout}");
+    let name = repo.path().canonicalize().unwrap();
+    let name = name.file_name().unwrap().to_string_lossy();
+    assert!(
+        stdout.contains(&format!("bridle token pair --projects {name}")),
+        "{stdout}"
+    );
 }

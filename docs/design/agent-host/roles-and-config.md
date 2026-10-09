@@ -205,7 +205,8 @@ Also read from `.bridle/config.toml` (defaults in parentheses; each is documente
   ([[../components|components]]); a parent that isn't defined, or a cycle, is a config error.
 - `[mail]`, `[gateway]` and `[interactions]` belong to `bridle mail run` and `bridle gateway`
   (their crates parse them); the daemon only accepts them, so adding one never stops a daemon
-  starting.
+  starting. The one `[mail]` key the daemon reads is `peers` (default `true`): `false` leaves
+  the project out of `bridle token pair`'s peer tokens in both directions (`Config::mail_peers`).
 - `[gateway] public_url` (machine config, optional per-project override in `.bridle/config.toml`):
   the bridle UI's base URL as the human opens it, e.g. `http://dalek.tailbc91f5.ts.net:7878`.
   `bridle link` builds ticket and task links from it; unset means no links.

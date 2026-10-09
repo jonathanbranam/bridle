@@ -142,8 +142,13 @@ bridle token pair [--machines m,..] [--projects p,..] [--roles r,..] [--tokens r
                                              writes nothing. An unreachable machine is reported and skipped and the exit is non-zero.
                                              Tokens go only through ssh stdin/stdout, never argv or output. After adding a role (it
                                              joins `TOKEN_ROLES` in token_pair.rs) or a machine, run it once more. `--tokens peer` is
-                                             accepted but prints "not built yet (br-jw9e)". Spec: design/specs/token-pairing.md.
-                                             Hidden helpers it runs: `token pair-projects|pair-check|pair-mint|pair-store`.
+                                             the default also pairs `peer` tokens: the receiving daemon mints `peer:<sending machine>` and the sender's file gets
+                                             `[peer] <receiving project>`, for every project that sends to every other (same machine too);
+                                             `[mail] peers = false` in a project's config leaves it out both ways (role tokens still
+                                             minted). `bridle init` runs it for the new project when its daemon is already up, and
+                                             otherwise lists it as a next step. Spec: design/specs/token-pairing.md.
+                                             Hidden helpers it runs: `token pair-projects|pair-check|pair-mint|pair-store|
+                                             pair-peer-held|pair-peer-active|pair-peer-mint`.
 bridle token create --peer <m>              a peer token, `peer:<m>`, for the daemons of machine <m> to forward mail here: always
                                              printed once; paste it under `[peer]` in the sender's credentials.toml, keyed by this project.
                                              <m> is the machine that SENDS here, not this one; one per receiving project per

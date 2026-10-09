@@ -102,3 +102,47 @@ to the target machine's `credentials.toml`, mode 0600.
 - **GIVEN** a pairing run
 - **WHEN** it finishes
 - **THEN** no command it ran carried a token in its arguments and the output holds no token
+
+### Requirement: Peer tokens let every project forward mail to every other, minted on the receiver  {#r-5d1c}
+
+With `--tokens peer` (or by default) `bridle token pair` SHALL mint, on each selected receiving
+project's daemon, `peer:<sending machine>`, and write it into the sending machine's
+`credentials.toml` as `[peer] <receiving project>` (the direction rule, gdf3). Every selected
+project that sends SHALL get one per receiving selected project, on the same machine too. An
+entry present and not revoked SHALL be kept; `--rotate` and `--dry-run` apply as for role tokens.
+
+#### Scenario: Peer tokens are minted on the receiver and stored on the sender  {#s-b3a1}
+
+*Verification*: **executable**
+
+- **GIVEN** projects bridle on machine mbp and notes on machine nuc
+- **WHEN** bridle token pair --tokens peer runs
+- **THEN** nuc mints a peer token for mbp and mbp holds a peer entry for notes, and the reverse; the output says peer minted on the receiver; a second run keeps both
+
+### Requirement: A project can opt out of peer tokens  {#r-8e20}
+
+`[mail] peers = false` in a project's `.bridle/config.toml` SHALL leave it out of peer tokens in
+both directions. Its role tokens SHALL still be minted. The default is `true`.
+
+#### Scenario: An opted-out project gets no peer tokens but keeps its role tokens  {#s-4e7d}
+
+*Verification*: **executable**
+
+- **GIVEN** a project with peers set to false in its mail config
+- **WHEN** bridle token pair runs with no options
+- **THEN** no machine holds a peer entry for it or sends from it, and its role tokens are minted
+
+### Requirement: Creating a project pairs it  {#r-1f66}
+
+`bridle init` SHALL run `bridle token pair --projects <name>` when the project already has a
+daemon, and otherwise print the command as a next step after `bridle serve`. A failure SHALL
+not fail init; it says to re-run the command. Existing projects default to `peers = true` and
+get peer tokens on the next plain `bridle token pair`.
+
+#### Scenario: Init names the pairing command  {#s-7a58}
+
+*Verification*: **executable**
+
+- **GIVEN** a new git repo
+- **WHEN** bridle init runs
+- **THEN** it succeeds and its next steps include the token pair command for the new project

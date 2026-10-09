@@ -8,7 +8,7 @@
 //! stdout and the next helper's stdin: never argv, a log, our output or a file but the
 //! holder's `credentials.toml`.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::io::Write;
 use std::process::{Command, Stdio};
 
@@ -236,12 +236,6 @@ pub fn pair(
             return Err(format!("host '{host}' in [machines] is not a plain name"));
         }
     }
-    if do_peer {
-        writeln!(out, "peer tokens: not built yet (br-jw9e)").ok();
-    }
-    if !do_role {
-        return Ok(true);
-    }
     let roles: Vec<&str> = TOKEN_ROLES
         .iter()
         .map(|t| t.name)
@@ -251,6 +245,8 @@ pub fn pair(
     // Each reachable machine and its projects (name, port).
     let mut ok = true;
     let mut up: BTreeMap<String, Vec<(String, u16)>> = BTreeMap::new();
+    // (machine, project) pairs that left peer tokens out (`[mail] peers = false`).
+    let mut no_peers: BTreeSet<(String, String)> = BTreeSet::new();
     for m in &machines {
         let mut found: Vec<(String, u16)> = Vec::new();
         match runner.run(&fleet.at(m), &args(&["token", "pair-projects"]), None) {
@@ -261,6 +257,9 @@ pub fn pair(
                         && let Ok(port) = port.parse()
                     {
                         found.push((p.to_string(), port));
+                        if it.next() == Some("false") {
+                            no_peers.insert((m.clone(), p.to_string()));
+                        }
                     }
                 }
             }
@@ -287,7 +286,7 @@ pub fn pair(
         }
     }
 
-    for holder in up.keys() {
+    for holder in up.keys().filter(|_| do_role) {
         let mut t = Tally::default();
         for (daemon, projects) in &up {
             for (project, port) in projects {
@@ -324,21 +323,136 @@ pub fn pair(
         if t.failed > 0 {
             ok = false;
         }
-        let mut head = format!("machine {holder} (role tokens): ");
-        if opts.dry_run {
-            head.push_str(&format!("would mint {}, kept {}", t.would, t.kept));
-        } else {
-            head.push_str(&format!("minted {}, kept {}", t.minted, t.kept));
+        report(out, opts, holder, "role", &t);
+    }
+
+    // Peer tokens: a daemon forwards mail with a token the receiving daemon minted for the
+    // sending MACHINE, so each machine with a sending project needs one per receiving project.
+    for holder in up.keys().filter(|_| do_peer) {
+        let senders: Vec<&String> = up[holder]
+            .iter()
+            .map(|(p, _)| p)
+            .filter(|p| !no_peers.contains(&(holder.clone(), (*p).clone())))
+            .collect();
+        let mut t = Tally::default();
+        for (daemon, projects) in &up {
+            for (project, _) in projects {
+                if no_peers.contains(&(daemon.clone(), project.clone())) {
+                    continue;
+                }
+                // A project's only sender being itself needs no token.
+                if daemon == holder && senders.len() == 1 && senders[0] == project {
+                    continue;
+                }
+                if senders.is_empty() {
+                    continue;
+                }
+                if !plain(project) {
+                    t.failed += 1;
+                    t.lines
+                        .push(format!("project '{project}' is not a plain name"));
+                    continue;
+                }
+                let label = format!("{holder} -> {daemon}/{project}");
+                match peer_one(opts, fleet, runner, holder, daemon, project) {
+                    Ok(Outcome::Kept) => t.kept += 1,
+                    Ok(Outcome::Minted) => {
+                        t.minted += 1;
+                        t.lines
+                            .push(format!("peer: minted on the receiver for {label}"));
+                    }
+                    Ok(Outcome::Would) => {
+                        t.would += 1;
+                        t.lines
+                            .push(format!("peer: would mint on the receiver for {label}"));
+                    }
+                    Err(e) => {
+                        t.failed += 1;
+                        t.lines.push(format!("failed: peer {label}: {e}"));
+                    }
+                }
+            }
         }
         if t.failed > 0 {
-            head.push_str(&format!(", failed {}", t.failed));
+            ok = false;
         }
-        writeln!(out, "{head}").ok();
-        for l in &t.lines {
-            writeln!(out, "  {l}").ok();
+        if t.minted + t.kept + t.would + t.failed > 0 {
+            report(out, opts, holder, "peer", &t);
         }
     }
     Ok(ok)
+}
+
+fn report(out: &mut dyn Write, opts: &Options, holder: &str, kind: &str, t: &Tally) {
+    let mut head = format!("machine {holder} ({kind} tokens): ");
+    if opts.dry_run {
+        head.push_str(&format!("would mint {}, kept {}", t.would, t.kept));
+    } else {
+        head.push_str(&format!("minted {}, kept {}", t.minted, t.kept));
+    }
+    if t.failed > 0 {
+        head.push_str(&format!(", failed {}", t.failed));
+    }
+    writeln!(out, "{head}").ok();
+    for l in &t.lines {
+        writeln!(out, "  {l}").ok();
+    }
+}
+
+/// One peer entry: `holder` machine sends to `project` on `daemon`. The receiver mints
+/// `peer:<holder>`, the holder stores it as `[peer] <project>` (the direction rule, gdf3).
+fn peer_one(
+    opts: &Options,
+    fleet: &Fleet,
+    runner: &dyn Runner,
+    holder: &str,
+    daemon: &str,
+    project: &str,
+) -> Result<Outcome, String> {
+    let holder_at = fleet.at(holder);
+    let daemon_at = fleet.at(daemon);
+    if !opts.rotate {
+        let held = runner
+            .run(
+                &holder_at,
+                &args(&["--project", project, "token", "pair-peer-held"]),
+                None,
+            )
+            .is_ok();
+        let live = held
+            && runner
+                .run(
+                    &daemon_at,
+                    &args(&["--project", project, "token", "pair-peer-active", holder]),
+                    None,
+                )
+                .is_ok();
+        if live {
+            return Ok(Outcome::Kept);
+        }
+    }
+    if opts.dry_run {
+        return Ok(Outcome::Would);
+    }
+    let token = runner
+        .run(
+            &daemon_at,
+            &args(&["--project", project, "token", "pair-peer-mint", holder]),
+            None,
+        )
+        .map_err(|e| format!("mint on {daemon}: {e}"))?;
+    let token = token.trim();
+    if token.is_empty() {
+        return Err(format!("mint on {daemon}: no token came back"));
+    }
+    runner
+        .run(
+            &holder_at,
+            &args(&["--project", project, "token", "pair-store", "peer"]),
+            Some(token),
+        )
+        .map_err(|e| format!("store on {holder}: {e}"))?;
+    Ok(Outcome::Minted)
 }
 
 enum Outcome {
@@ -407,7 +521,7 @@ fn one(
 mod tests {
     use super::*;
     use std::cell::RefCell;
-    use std::collections::{BTreeSet, HashMap};
+    use std::collections::HashMap;
 
     /// An in-memory fleet: daemons accept the tokens minted for them; holders keep entries.
     type CredKey = (String, String, Option<String>, String);
@@ -422,6 +536,10 @@ mod tests {
         creds: RefCell<HashMap<CredKey, String>>,
         calls: RefCell<Vec<Vec<String>>>,
         down: Vec<String>,
+        /// (machine, project) with `[mail] peers = false`
+        no_peers: Vec<(String, String)>,
+        /// (daemon machine, receiving project, sending machine) -> live peer token
+        peer: RefCell<HashMap<(String, String, String), String>>,
         n: RefCell<u32>,
     }
 
@@ -456,7 +574,10 @@ mod tests {
                     .get(&here)
                     .into_iter()
                     .flatten()
-                    .map(|(p, port)| format!("{p} {port}\n"))
+                    .map(|(p, port)| {
+                        let peers = !self.no_peers.contains(&(here.clone(), p.clone()));
+                        format!("{p} {port} {peers}\n")
+                    })
                     .collect()),
                 "pair-check" => {
                     let machine = val("--machine");
@@ -495,6 +616,28 @@ mod tests {
                         stdin.unwrap().to_string(),
                     );
                     Ok(String::new())
+                }
+                "pair-peer-held" => {
+                    let key = (here, "peer".to_string(), None, project);
+                    self.creds
+                        .borrow()
+                        .contains_key(&key)
+                        .then(String::new)
+                        .ok_or_else(|| "no peer entry".into())
+                }
+                "pair-peer-active" => self
+                    .peer
+                    .borrow()
+                    .contains_key(&(here, project, a[i + 2].clone()))
+                    .then(String::new)
+                    .ok_or_else(|| "no live peer".into()),
+                "pair-peer-mint" => {
+                    *self.n.borrow_mut() += 1;
+                    let tok = format!("secret-{}", self.n.borrow());
+                    self.peer
+                        .borrow_mut()
+                        .insert((here, project, a[i + 2].clone()), tok.clone());
+                    Ok(format!("{tok}\n"))
                 }
                 other => panic!("unexpected helper {other}"),
             }
@@ -535,13 +678,13 @@ mod tests {
         assert!(ok, "{out}");
         // 2 holders x 2 projects x 4 roles, plus `human` for the 2 cross-machine pairs x 1.
         // Per holder: 2 projects x 4 roles + 1 remote human = 9.
-        assert_eq!(s.creds.borrow().len(), 18, "{out}");
-        assert!(out.contains("minted 9, kept 0"), "{out}");
-        assert!(out.contains("peer tokens: not built yet (br-jw9e)"));
+        let roles = |s: &Sim| s.creds.borrow().keys().filter(|k| k.1 != "peer").count();
+        assert_eq!(roles(&s), 18, "{out}");
+        assert!(out.contains("(role tokens): minted 9, kept 0"), "{out}");
         let before: BTreeMap<_, _> = s.creds.borrow().clone().into_iter().collect();
         let (ok, out) = run(&s, &Options::default());
         assert!(ok);
-        assert!(out.contains("minted 0, kept 9"), "{out}");
+        assert!(out.contains("(role tokens): minted 0, kept 9"), "{out}");
         let after: BTreeMap<_, _> = s.creds.borrow().clone().into_iter().collect();
         assert_eq!(before, after);
         // The local human uses the workspace token: no `[human] project` entry anywhere.
@@ -573,7 +716,7 @@ mod tests {
                 .keys()
                 .all(|(_, p, _, proj)| p == "aide" && proj == "notes")
         );
-        assert!(!out.contains("peer tokens"));
+        assert!(!out.contains("peer tokens"), "{out}");
     }
 
     // s-9267
@@ -654,6 +797,129 @@ mod tests {
             c.iter()
                 .any(|x| x.starts_with("pair-m") || x == "pair-store")
         }));
+    }
+
+    fn peer_only() -> Options {
+        Options {
+            tokens: vec![TokenType::Peer],
+            ..Default::default()
+        }
+    }
+
+    fn peer_entries(s: &Sim) -> Vec<(String, String)> {
+        let mut v: Vec<_> = s
+            .creds
+            .borrow()
+            .keys()
+            .filter(|k| k.1 == "peer")
+            .map(|k| (k.0.clone(), k.3.clone()))
+            .collect();
+        v.sort();
+        v
+    }
+
+    // s-b3a1: minted on the receiver, written on the sender, keyed by the receiving project
+    #[test]
+    fn peer_tokens_are_minted_on_the_receiver_and_stored_on_the_sender() {
+        let s = sim();
+        let (ok, out) = run(&s, &peer_only());
+        assert!(ok, "{out}");
+        assert_eq!(
+            peer_entries(&s),
+            [
+                ("mbp".into(), "notes".into()),
+                ("nuc".into(), "bridle".into())
+            ]
+        );
+        assert!(
+            out.contains("peer: minted on the receiver for mbp -> nuc/notes"),
+            "{out}"
+        );
+        // The token for notes was minted on nuc, for sender mbp.
+        assert!(
+            s.peer
+                .borrow()
+                .contains_key(&("nuc".into(), "notes".into(), "mbp".into()))
+        );
+        assert!(
+            !s.creds.borrow().keys().any(|k| k.1 != "peer"),
+            "no role tokens"
+        );
+        // Idempotent; --rotate re-mints.
+        let (_, out) = run(&s, &peer_only());
+        assert!(out.contains("(peer tokens): minted 0, kept 1"), "{out}");
+        let rotate = Options {
+            rotate: true,
+            ..peer_only()
+        };
+        let (_, out) = run(&s, &rotate);
+        assert!(out.contains("(peer tokens): minted 1, kept 0"), "{out}");
+    }
+
+    // s-b3a1: a receiver that lost its token (revoked) is re-minted
+    #[test]
+    fn a_revoked_peer_token_is_reminted() {
+        let s = sim();
+        run(&s, &peer_only());
+        s.peer.borrow_mut().clear();
+        let (ok, out) = run(&s, &peer_only());
+        assert!(ok);
+        assert!(out.contains("(peer tokens): minted 1, kept 0"), "{out}");
+    }
+
+    // s-4e7d
+    #[test]
+    fn peers_false_leaves_a_project_out_both_ways_but_keeps_its_role_tokens() {
+        let mut s = sim();
+        s.no_peers.push(("nuc".into(), "notes".into()));
+        let (ok, out) = run(&s, &Options::default());
+        assert!(ok, "{out}");
+        // notes neither sends (nuc holds nothing) nor receives (mbp holds nothing for it).
+        assert!(peer_entries(&s).is_empty(), "{:?}\n{out}", peer_entries(&s));
+        let roles = s
+            .creds
+            .borrow()
+            .keys()
+            .filter(|k| k.1 != "peer" && k.3 == "notes")
+            .count();
+        assert!(roles > 0, "role tokens for notes are still minted");
+    }
+
+    // s-c92f
+    #[test]
+    fn peer_dry_run_mints_nothing_and_no_token_leaks() {
+        let s = sim();
+        let dry = Options {
+            dry_run: true,
+            ..peer_only()
+        };
+        let (ok, out) = run(&s, &dry);
+        assert!(ok);
+        assert!(out.contains("would mint 1"), "{out}");
+        assert!(s.creds.borrow().is_empty() && s.peer.borrow().is_empty());
+        run(&s, &peer_only());
+        for call in s.calls.borrow().iter() {
+            assert!(call.iter().all(|a| !a.contains("secret-")), "{call:?}");
+        }
+    }
+
+    // s-b3a1: two projects on one machine send to each other too (all mail goes via forward)
+    #[test]
+    fn same_machine_projects_get_peer_tokens() {
+        let mut s = sim();
+        s.projects
+            .get_mut("mbp")
+            .unwrap()
+            .push(("other".into(), 7403));
+        let (_, out) = run(&s, &peer_only());
+        assert!(
+            peer_entries(&s).contains(&("mbp".into(), "other".into())),
+            "{out}"
+        );
+        assert!(
+            peer_entries(&s).contains(&("mbp".into(), "bridle".into())),
+            "{out}"
+        );
     }
 
     // s-f12f

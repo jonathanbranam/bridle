@@ -1427,7 +1427,7 @@ pub enum TokenAction {
         /// Roles to pair (default: every token role). For role tokens only.
         #[arg(long, value_delimiter = ',')]
         roles: Vec<String>,
-        /// Token types: `role`, `peer` (default: both; peer tokens are not built yet).
+        /// Token types: `role`, `peer` (default: both).
         #[arg(long, value_delimiter = ',')]
         tokens: Vec<crate::token_pair::TokenType>,
         /// Revoke and re-mint the selected tokens instead of keeping working ones.
@@ -1464,6 +1464,15 @@ pub enum TokenAction {
         #[arg(long)]
         machine: Option<String>,
     },
+    /// Helper for `token pair`: exit 0 if this machine holds a `[peer]` entry for `--project`.
+    #[command(hide = true)]
+    PairPeerHeld,
+    /// Helper for `token pair`: exit 0 if `--project`'s daemon has an unrevoked `peer:<sender>`.
+    #[command(hide = true)]
+    PairPeerActive { sender: String },
+    /// Helper for `token pair`: print a fresh `peer:<sender>` token from `--project`'s daemon.
+    #[command(hide = true)]
+    PairPeerMint { sender: String },
     /// List external tokens: name, created-at, revoked-or-not (human only).
     List,
     /// Revoke an `external:<name>` token (human only). An agent's own token

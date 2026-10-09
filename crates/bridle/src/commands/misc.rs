@@ -653,7 +653,11 @@ async fn token_pair(cli: &Cli, action: &TokenAction) -> Result<(), CliError> {
                     .next()
                     .and_then(|p| p.trim_end_matches('/').parse::<u16>().ok())
                 {
-                    println!("{} {port}", d.project);
+                    // Whether the project takes part in peer tokens (`[mail] peers`).
+                    let peers = bridle_daemon::config::Config::load(Path::new(&d.repo))
+                        .map(|c| c.mail_peers)
+                        .unwrap_or(true);
+                    println!("{} {port} {peers}", d.project);
                 }
             }
         }
@@ -712,6 +716,33 @@ async fn token_pair(cli: &Cli, action: &TokenAction) -> Result<(), CliError> {
             )
             .map_err(|e| CliError::Other(e.into()))?;
         }
+        TokenAction::PairPeerHeld => {
+            let project = project()?;
+            discovery::peer_token(&discovery::credentials_path(), &project)
+                .map_err(|e| CliError::Other(e.into()))?
+                .context("no peer entry")?;
+        }
+        TokenAction::PairPeerActive { sender } => {
+            let client = client_for(cli).await?;
+            let name = format!("peer:{sender}");
+            let live = client
+                .list_tokens()
+                .await?
+                .iter()
+                .any(|t| t.name == name && !t.revoked);
+            if !live {
+                return Err(CliError::Other(anyhow::anyhow!("no live {name}")));
+            }
+        }
+        TokenAction::PairPeerMint { sender } => {
+            let client = client_for(cli).await?;
+            let created = client
+                .create_peer_token(&bridle_api::types::PeerTokenCreateRequest {
+                    machine: sender.clone(),
+                })
+                .await?;
+            println!("{}", created.token);
+        }
         _ => unreachable!("not a pair action"),
     }
     Ok(())
@@ -725,6 +756,9 @@ pub(super) async fn token(cli: &Cli, args: &TokenArgs) -> Result<(), CliError> {
             | TokenAction::PairCheck { .. }
             | TokenAction::PairMint { .. }
             | TokenAction::PairStore { .. }
+            | TokenAction::PairPeerHeld
+            | TokenAction::PairPeerActive { .. }
+            | TokenAction::PairPeerMint { .. }
     ) {
         return token_pair(cli, &args.action).await;
     }
@@ -848,7 +882,10 @@ pub(super) async fn token(cli: &Cli, args: &TokenArgs) -> Result<(), CliError> {
         | TokenAction::PairProjects
         | TokenAction::PairCheck { .. }
         | TokenAction::PairMint { .. }
-        | TokenAction::PairStore { .. } => unreachable!("handled by token_pair"),
+        | TokenAction::PairStore { .. }
+        | TokenAction::PairPeerHeld
+        | TokenAction::PairPeerActive { .. }
+        | TokenAction::PairPeerMint { .. } => unreachable!("handled by token_pair"),
     }
     Ok(())
 }
