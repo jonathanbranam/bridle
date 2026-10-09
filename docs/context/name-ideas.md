@@ -109,10 +109,14 @@ harrier. Short and dictation-safe, but many are everyday words.
 ### Maybe
 
 - **Hitchhiker's Guide:** liked, but only `marvin` would get used, and it's a little obscure.
-- **Silo:** watched; names to add.
+- **Silo:** watched; names to add. From the books and show: `juliette` (the engineer), `solo`
+  (a common word), `bernard`, `lukas`, `walker`, `shirley`, `knox`, `jahns` (the mayor), `silo`
+  itself (a type, not a name). Most are plain first names, so dictation should be easy.
 
-> [!comment] c4 human, 2026-10-08 19:52 EDT, on "names to add" [pending 2026-10-08 19:52 EDT]
+> [!comment] c4 human, 2026-10-08 19:52 EDT, on "names to add" [read 2026-10-08 20:07 EDT]
 > look up some names and add them here.
+>
+> **doc-name-ideas-e11e82, 2026-10-08 20:15 EDT:** @human Added Silo names to its bullet, from what I know of the books and show; I could not check them against a site. I read "names to add" as the Silo line (the comment sits under it). The Stephen King line says the same; want me to fill that one too?
 
 - **Stephen King:** liked; names to add (e.g., `derry`, `roland`, `gunslinger`).
 
@@ -136,26 +140,34 @@ Red Rising (soon), Brandon Sanderson (next; less into fantasy).
 
 ## Places to find more
 
-- namingschemes.com: a wiki of naming schemes (Starships, Superheroes, Elements, ...).
+- [namingschemes.com](https://namingschemes.com): a wiki of naming schemes (Starships, Superheroes, Elements, ...).
 
-> [!comment] c3 human, 2026-10-08 19:34 EDT, on "namingschemes.com" [pending 2026-10-08 19:34 EDT]
+> [!comment] c3 human, 2026-10-08 19:34 EDT, on "namingschemes.com" [read 2026-10-08 20:07 EDT]
 > Make this an HTML link.
+>
+> **doc-name-ideas-e11e82, 2026-10-08 20:15 EDT:** @human Done. It is a Markdown link, which Obsidian and the UI render as an HTML link. If you meant a literal `<a href>` tag, say so.
 
 - [Jerod Santo, "Naming schemes"](https://jerodsanto.net/2012/03/naming-schemes).
 - [FSFE's scheme](https://wiki.fsfe.org/Teams/System-Hackers/NamingSchemes): elements for
   hosts, their discoverers for VMs (a parent/child pattern).
 
-> [!comment] c1 human, 2026-10-08 19:33 EDT, on "elements for hosts, their discoverers for VMs" [pending 2026-10-08 19:33 EDT]
+> [!comment] c1 human, 2026-10-08 19:33 EDT, on "elements for hosts, their discoverers for VMs" [read 2026-10-08 20:07 EDT]
 > The site is a static copy. Can you find the same information on the new site and update the link here?
 >
 > > This page has been moved to docs.fsfe.org with the rest of the sysadmin documentation
+>
+> **doc-name-ideas-e11e82, 2026-10-08 20:15 EDT:** @human I could not find it. docs.fsfe.org/en/sysadmin/ answers 403 to every path I tried (real or not, so it looks login-only), and the public part (techdocs, teams/system-hackers) has no naming page. I left the link as is. If you can open it in a browser, send me the URL and I will swap it in.
 
 - [Sci-fi hostname schemes](https://rubenerd.com/brad-alexander-on-hostname-schemes-sci-fi),
   [Fun with Host Naming Schemes](https://www.steevithak.com/?p=808).
-- RFC 1178, "Choosing a Name for Your Computer".
+- [RFC 1178](https://www.rfc-editor.org/rfc/rfc1178), "Choosing a Name for Your Computer".
 
-> [!comment] c2 human, 2026-10-08 19:34 EDT, on "RFC 1178" [pending 2026-10-08 19:34 EDT]
+> [!comment] c2 human, 2026-10-08 19:34 EDT, on "RFC 1178" [read 2026-10-08 20:07 EDT]
 > Please link the RFC.
+>
+> **doc-name-ideas-e11e82, 2026-10-08 20:15 EDT:** @human Done: linked to rfc-editor.org (checked, it loads).
+>
+> **resolved by doc-name-ideas-e11e82, 2026-10-08 20:15 EDT**
 
 - Generators: [The Story Shack](https://thestoryshack.com/tools/server-hostname-generator/)
   (servers, ships, Foundation characters), fantasynamegenerators.com.
