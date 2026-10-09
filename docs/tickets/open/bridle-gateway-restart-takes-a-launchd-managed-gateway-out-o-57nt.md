@@ -20,6 +20,19 @@ The human, verbatim (2026-10-08 ~9:50 PM ET, relayed by the bridle-ui aide, m-74
 
 They saw: "Daemon unreachable: no human token for project 'bridle': running inside Claude Code ($CLAUDECODE is set) ...".
 
+The human, verbatim (2026-10-09 ~5:30 PM ET, to the bridle-ui aide):
+
+> there is a ticket to investigate why the gateway changes owners. It may be part of the ugprade process or testing - that behavior is not mine and AFAIK not an active, external agent. I think it is the sytem or part of upgrades. I did kill the spawned gateway and launchd spawned a proper one. There is only one orchestrator per machine; we need to make that clear. the orch for this machine runs in the bridle project.
+
+So: find which part of the system (the upgrade or landing path, or tests) restarts the gateway
+outside launchd. It is not the human and, as far as they know, not an external agent acting on
+its own. Anything here that names "the orchestrator" means the one orchestrator on dalek, which
+runs in the bridle project. No orchestrator belongs to the bridle-ui project.
+
+State at 2026-10-09 5:34 PM ET: launchd's `dev.bridle.gateway` is running (pid 97811). At
+21:31:12Z it restarted itself onto a new binary and logged `via="service manager"`, so that
+self-re-exec stayed under launchd. The open question is the earlier `restart`/`--detach` path.
+
 ## Facts (the bridle-ui aide's findings)
 
 - launchd job `dev.bridle.gateway` was "not running", last exit 0, runs=2.
