@@ -272,6 +272,7 @@ Bridle's own cost on the machine: measure against a baseline, then cut it.
 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
+| [br-tnyt](http://dalek.tailbc91f5.ts.net:7878/task?id=br-tnyt) | Machine load notes repeat every few minutes: add a quiet period, and send one note per ... | high | open | to plan (project manager) |
 | [br-n4w4](http://dalek.tailbc91f5.ts.net:7878/task?id=br-n4w4) | Postmortem: bridle's own 'ps' polling (every daemon, test daemons at 200 ms) drove dale... |  | pending | waits on the human (approve to ready) |
 | [br-v6kr](http://dalek.tailbc91f5.ts.net:7878/task?id=br-v6kr) | A system architect role, and measuring bridle's own resource cost against a baseline |  | planned | baseline starts 4:00 AM ET 2026-10-10 (the human); orchestrator sends the go; must use the macOS memory measures (ticket) |
 | [br-jxwr](http://dalek.tailbc91f5.ts.net:7878/task?id=br-jxwr) | Track and report how long a task takes from pickup to merge, split into agent work, bui... | low | pending | the human's ask (via aide); would show where the 30-40 min per task goes; low (the human): on a workstream, not queued now |
@@ -431,3 +432,4 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 - 2026-10-09 18:03 ET: filed by the aide from the human's words, readied, high: br-7ufd (self-upgrade at most every few hours, batched; critical fixes at once), theme reliability.
 - 2026-10-09 18:03 ET: br-d48r dropped (orchestrator misread the human); the aide files the real ticket (load notes repeat with no quiet period).
 - 2026-10-09 18:05 ET: the human turned self_upgrade off until br-7ufd lands; their to-do br-x7fx (turn it back on) added.
+- 2026-10-09 18:05 ET: filed by the aide from the human's words, readied, high: br-tnyt (load notes: quiet period, hysteresis, one per machine), theme performance.
