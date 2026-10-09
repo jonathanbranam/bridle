@@ -173,6 +173,10 @@ Cheap first.
 3. **Push ticket commits too.** Either push after each direct-to-main docs commit (a small wrapper
    or hook), or accept that the remote lags and say so in the operating model; right now it says it
    never lags and that is false for docs.
+
+> [!comment] c3 human, 2026-10-09 14:04 EDT, on "Either push after each direct-to-main docs commit" [pending 2026-10-09 14:04 EDT]
+> Yes, I think this is a good pattern.
+
 4. **A failed push is an event and an alarm.** The merger's push after a landing should be a bridle
    command (or `bridle task land --push`) that records `push.failed` and notifies the orchestrator
    and the human; a bare `git push` that fails should not depend on the pushing agent's session
