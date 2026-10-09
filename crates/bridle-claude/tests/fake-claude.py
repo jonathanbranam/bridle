@@ -528,7 +528,10 @@ def main():
     state["eof"] = False
     replay = replay_flag
 
-    signal.signal(signal.SIGTERM, lambda *_: sys.exit(143))
+    # os._exit, not sys.exit: a normal interpreter shutdown races the daemon
+    # reader thread blocked on stdin (buffer lock, flush at finalization) and
+    # could turn the 143 into another code. Output is flushed per `emit`.
+    signal.signal(signal.SIGTERM, lambda *_: os._exit(143))
 
     threading.Thread(target=reader, daemon=True).start()
 
