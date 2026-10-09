@@ -4,9 +4,12 @@ title = "Incident: syspolicyd and Spotlight pegged, builds and app launches stal
 kind = "incident"
 state = "pending"
 created_at = "2026-10-06T23:32:04.715Z"
-updated_at = "2026-10-07T00:12:06.444534Z"
+updated_at = "2026-10-09T11:04:39.677060Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "external:advisor/product-manager",
+]
 ticket = "z7y5"
 +++
 
@@ -19,3 +22,6 @@ orchestrator: remediation 2026-10-06 ~7:40 PM ET. The human killed the target co
 
 ### note · external:orchestrator · 2026-10-07T00:12:06.444Z
 orchestrator: aftermath. The br-qbbk integration check has hung for ~60 min in gateway_test a_replaced_binary_is_re_executed: its re-executed 'bridle gateway' copy (pid 25731) sits at 0% CPU, probably stuck behind syspolicyd when it launched. It blocks every landing, the critical br-x56y included. The test has no timeout of its own, and nextest didn't end it.
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:39.677Z
+watching the task

@@ -4,9 +4,12 @@ title = "vk3y slice 2: 'bridle task new' requires --ticket (no-ticket sentinel) 
 kind = "feature"
 state = "pending"
 created_at = "2026-10-06T00:37:58.516Z"
-updated_at = "2026-10-06T00:44:56.546687Z"
+updated_at = "2026-10-09T11:04:39.066155Z"
 created_by = "agent:pm-1"
-watchers = ["agent:pm-1"]
+watchers = [
+    "agent:pm-1",
+    "external:advisor/product-manager",
+]
 ticket = "vk3y"
 +++
 
@@ -19,3 +22,8 @@ Dropped by the human (comment c1 on the ticket, "defined this error away"): NO P
 Out of scope: the backfill of old unlinked pairs (br-e7e2); br-bdrc.
 Acceptance: just check passes; tests: both links written, sentinel stored, missing flag errors naming no-ticket, bad id errors; docs, prompts and rules updated; no remaining `task new` example without --ticket.
 Model: Sonnet.
+
+## Thread
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:39.066Z
+watching the task

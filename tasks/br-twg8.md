@@ -4,11 +4,12 @@ title = "Try document review (x8jt) on gtzx: install the UI, review add, start t
 kind = "chore"
 state = "claimed"
 created_at = "2026-10-04T13:16:26.409Z"
-updated_at = "2026-10-04T13:16:26.423828Z"
+updated_at = "2026-10-09T11:04:37.815590Z"
 created_by = "external:advisor/doc-review"
 watchers = [
     "external:advisor/doc-review",
     "human",
+    "external:advisor/product-manager",
 ]
 +++
 
@@ -49,3 +50,6 @@ created for the human, priority normal
 
 ### note · external:advisor/doc-review · 2026-10-04T13:16:26.423Z
 To-do for you (normal priority): Try document review (x8jt) on gtzx: install the UI, review add, start the gateway, comment. Finish it with `bridle task done br-twg8`.
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:37.815Z
+watching the task

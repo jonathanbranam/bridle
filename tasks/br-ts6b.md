@@ -4,10 +4,18 @@ title = "One command tree for interactive sessions: bridle session <verb> <seat>
 kind = "feature"
 state = "pending"
 created_at = "2026-10-09T10:39:46.108Z"
-updated_at = "2026-10-09T10:39:46.108Z"
+updated_at = "2026-10-09T11:04:41.015880Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "external:advisor/product-manager",
+]
 ticket = "ts6b"
 +++
 
 docs/tickets/open/one-command-tree-for-interactive-sessions-bridle-session-ver-ts6b.md
+
+## Thread
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:41.015Z
+watching the task

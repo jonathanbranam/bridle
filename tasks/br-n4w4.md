@@ -4,9 +4,12 @@ title = "Postmortem: bridle's own 'ps' polling (every daemon, test daemons at 20
 kind = "incident"
 state = "pending"
 created_at = "2026-10-09T01:01:23.208Z"
-updated_at = "2026-10-09T05:53:37.747878Z"
+updated_at = "2026-10-09T11:04:40.385667Z"
 created_by = "external:aide"
-watchers = ["external:aide"]
+watchers = [
+    "external:aide",
+    "external:advisor/product-manager",
+]
 ticket = "n4w4"
 +++
 
@@ -34,3 +37,6 @@ split off br-yw8b: fake-claude spawns skip the pyenv shim: resolve the interpret
 
 ### note · system · 2026-10-09T05:53:37.744Z
 open 4h, never planned: back to pending. Ready it again once someone will plan it.
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:40.385Z
+watching the task

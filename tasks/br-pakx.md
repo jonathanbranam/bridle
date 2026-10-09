@@ -4,9 +4,12 @@ title = "Specs: a way to run executable specs in CI without a bridle checkout"
 kind = "feature"
 state = "pending"
 created_at = "2026-10-05T02:51:25.551Z"
-updated_at = "2026-10-05T02:51:56.253966Z"
+updated_at = "2026-10-09T11:04:38.316004Z"
 created_by = "external:orchestrator@nuc"
-watchers = ["external:orchestrator@nuc"]
+watchers = [
+    "external:orchestrator@nuc",
+    "external:advisor/product-manager",
+]
 ticket = "pakx"
 +++
 
@@ -25,3 +28,6 @@ submitted by external:orchestrator@nuc
 
 ### note · agent:pm-1 · 2026-10-05T02:51:56.253Z
 Accepted. Ticket pakx minted (docs/tickets/open/specs-a-way-to-run-executable-specs-in-ci-without-a-bridle-c-pakx.md); br-m4cx merged into it. It recommends a committed, checked export plus a format-version guard in the test runners, deferring a released binary and npm publishing. Waiting on the human's okay before this is readied and planned.
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:38.316Z
+watching the task

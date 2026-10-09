@@ -4,9 +4,12 @@ title = "One watcher for every project: 'bridle agent wake --all-projects'"
 kind = "feature"
 state = "planned"
 created_at = "2026-10-02T00:21:16.323Z"
-updated_at = "2026-10-03T13:08:08.319481Z"
+updated_at = "2026-10-09T11:04:37.137079Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "external:advisor/product-manager",
+]
 ticket = "cy2v"
 +++
 
@@ -23,3 +26,6 @@ PARKED FOR SATURDAY: plan only now; the PM queues it after br-2672 lands, on or 
 
 ### note · agent:pm-1 · 2026-10-03T13:08:08.319Z
 Held (orchestrator, via pm-1): waits until the human settles k8jn. Read-on-delivery can lose messages; the fan-out would drop a second daemon's reply after marking it read. Don't queue or start.
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:37.137Z
+watching the task

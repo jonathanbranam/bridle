@@ -4,9 +4,12 @@ title = "bridle link: the unified URL scheme (/p/{project}/tasks/{id}, ...), doc
 kind = "feature"
 state = "planned"
 created_at = "2026-10-08T02:22:01.310Z"
-updated_at = "2026-10-08T02:22:13.463797Z"
+updated_at = "2026-10-09T11:04:40.015784Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "external:advisor/product-manager",
+]
 +++
 
 Bridle side of bridle-ui's unified URL scheme (bridle-ui ui-4u8g design, ui-judt build, ui-28em part 2). The human's answers, 2026-10-07 ~10:20 PM ET in the orchestrator's session: plural kind segments; 'bridle link' also takes a document path and a spec ID; build tonight.
@@ -24,3 +27,6 @@ ORDER: land only after ui-judt has landed and the UI is installed (the orchestra
 
 ### note · external:orchestrator · 2026-10-08T02:22:07.131Z
 From orchestrator: br-enx3 ready (the human's go tonight, quotes in the body). Plan it, but queue it only when I say: it must land after bridle-ui's ui-judt is landed and installed. Then it goes ahead of everything except br-5p3z.
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:40.015Z
+watching the task

@@ -4,9 +4,12 @@ title = "Human interaction time: daemon serves the prompt log; gateway collects 
 kind = "feature"
 state = "pending"
 created_at = "2026-10-03T21:01:56.091Z"
-updated_at = "2026-10-05T15:24:32.211937Z"
+updated_at = "2026-10-09T11:04:37.576134Z"
 created_by = "external:advisor"
-watchers = ["external:advisor"]
+watchers = [
+    "external:advisor",
+    "external:advisor/product-manager",
+]
 ticket = "u6w9"
 +++
 
@@ -21,3 +24,6 @@ Split into br-bhcp (a: daemon endpoint + ts-rs types, lands first), br-25nn (b: 
 
 ### note · system · 2026-10-05T15:24:32.205Z
 open 4h, never planned: back to pending. Ready it again once someone will plan it.
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:37.576Z
+watching the task

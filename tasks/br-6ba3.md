@@ -4,9 +4,12 @@ title = "Reviews A: in_review state, ready-for-review, review requirements on ta
 kind = "feature"
 state = "planned"
 created_at = "2026-10-01T11:47:57.256Z"
-updated_at = "2026-10-01T11:53:58.657347Z"
+updated_at = "2026-10-09T11:04:41.216428Z"
 created_by = "agent:pm-1"
-watchers = ["agent:pm-1"]
+watchers = [
+    "agent:pm-1",
+    "external:advisor/product-manager",
+]
 size = "M"
 priority = "low"
 +++
@@ -20,3 +23,6 @@ priority: normal -> low
 
 ### note · agent:pm-1 · 2026-10-01T11:53:58.657Z
 pm-1, brief addition (human on thresholds, via advisor 2026-10-01): the workflow rules define review THRESHOLDS and the daemon enforces and tracks them. Defaults: a change under about 30 changed lines, and a docs-only change, need no review. The policy lookup returns required or not-required for a task from those thresholds (configurable in the rule, not a hard-coded const) and records which threshold applied, so the human can see why a review was or wasn't required. Budget wind-down is NOT a threshold: a low budget means the work waits and does not merge; a required review is never skipped for it. A required review is always done unless the human overrides it (record who and why).
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:41.216Z
+watching the task

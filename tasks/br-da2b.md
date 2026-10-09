@@ -4,11 +4,12 @@ title = "Expand on 2tpm: evaluate Go instead of Rust (why, what would decide it)
 kind = "chore"
 state = "claimed"
 created_at = "2026-10-03T11:04:49.779Z"
-updated_at = "2026-10-03T11:04:49.783313Z"
+updated_at = "2026-10-09T11:04:37.468294Z"
 created_by = "external:advisor"
 watchers = [
     "external:advisor",
     "human",
+    "external:advisor/product-manager",
 ]
 +++
 
@@ -21,3 +22,6 @@ created for the human, priority normal
 
 ### note · external:advisor · 2026-10-03T11:04:49.783Z
 To-do for you (normal priority): Expand on 2tpm: evaluate Go instead of Rust (why, what would decide it). Finish it with `bridle task done br-da2b`.
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:37.468Z
+watching the task

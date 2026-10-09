@@ -4,11 +4,12 @@ title = "Review ticket v8uu: seeing what background agents do (findings + 5 poss
 kind = "chore"
 state = "claimed"
 created_at = "2026-10-07T10:01:40.849Z"
-updated_at = "2026-10-07T10:01:40.852252Z"
+updated_at = "2026-10-09T11:04:39.866074Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
     "human",
+    "external:advisor/product-manager",
 ]
 priority_at = "2026-10-07T10:01:40.851077Z"
 +++
@@ -22,3 +23,6 @@ created for the human, priority normal
 
 ### note · external:aide · 2026-10-07T10:01:40.852Z
 To-do for you (normal priority): Review ticket v8uu: seeing what background agents do (findings + 5 possible features). Finish it with `bridle task done br-cfb2`.
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:39.866Z
+watching the task

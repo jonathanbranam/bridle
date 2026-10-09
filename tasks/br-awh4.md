@@ -4,9 +4,12 @@ title = "Specs: step text can't quote code or markup"
 kind = "feature"
 state = "pending"
 created_at = "2026-10-05T02:56:15.099Z"
-updated_at = "2026-10-05T02:56:33.970175Z"
+updated_at = "2026-10-09T11:04:38.475721Z"
 created_by = "external:orchestrator@nuc"
-watchers = ["external:orchestrator@nuc"]
+watchers = [
+    "external:orchestrator@nuc",
+    "external:advisor/product-manager",
+]
 ticket = "awh4"
 +++
 
@@ -25,3 +28,6 @@ submitted by external:orchestrator@nuc
 
 ### note · agent:pm-1 · 2026-10-05T02:56:33.970Z
 Triage (pm-1): accept. Real friction from meta-notes-ui, on the onboarding goal. Ticket minted: docs/tickets/open/specs-step-text-can-t-quote-code-or-markup-awh4.md (uncommitted; needs committing on main). Stays pending: the human or orchestrator approves with `bridle task ready br-awh4`, then I plan it (Sonnet, crates/bridle-spec).
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:38.475Z
+watching the task

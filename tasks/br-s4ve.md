@@ -4,9 +4,12 @@ title = "vitest-bridle: a step can't skip a scenario at runtime"
 kind = "feature"
 state = "pending"
 created_at = "2026-10-05T03:33:06.199Z"
-updated_at = "2026-10-05T03:33:14.695723Z"
+updated_at = "2026-10-09T11:04:38.627967Z"
 created_by = "external:orchestrator@nuc"
-watchers = ["external:orchestrator@nuc"]
+watchers = [
+    "external:orchestrator@nuc",
+    "external:advisor/product-manager",
+]
 ticket = "s4ve"
 +++
 
@@ -23,3 +26,6 @@ submitted by external:orchestrator@nuc
 
 ### note · agent:pm-1 · 2026-10-05T03:33:14.695Z
 Triage (pm-1): accept; meta-notes-ui is a priority project and its vendored copy has already diverged. Ticket minted (uncommitted; needs committing on main). Stays pending: approve with `bridle task ready br-s4ve`, then I plan it (Sonnet). Related: br-m4cx.
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:38.627Z
+watching the task

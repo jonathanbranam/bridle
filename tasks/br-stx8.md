@@ -4,9 +4,12 @@ title = "A task's state says what's really happening: held and built-awaiting-la
 kind = "feature"
 state = "planned"
 created_at = "2026-10-06T02:04:20.046Z"
-updated_at = "2026-10-06T02:08:22.868766Z"
+updated_at = "2026-10-09T11:04:39.266056Z"
 created_by = "external:aide"
-watchers = ["external:aide"]
+watchers = [
+    "external:aide",
+    "external:advisor/product-manager",
+]
 ticket = "stx8"
 +++
 
@@ -74,3 +77,6 @@ Q2: Is `send-back` a new command, or reuse `task reopen`? [new command; reopen i
 Q3: Should `built` be a state even for the normal worker flow (worker finishes -> built -> manager merges -> integrated)? [yes: that is the "waiting to land" state the manager reads]
 
 Tell me when approved and I'll rewrite the br-stx8 brief with these exact names (and split UI/TUI polish into a second task).
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:39.266Z
+watching the task

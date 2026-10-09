@@ -4,9 +4,12 @@ title = "Run bridle's heavy work on the Windows PC under WSL2"
 kind = "feature"
 state = "pending"
 created_at = "2026-10-07T23:24:58.789Z"
-updated_at = "2026-10-08T03:37:45.314596Z"
+updated_at = "2026-10-09T11:04:39.915865Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "external:advisor/product-manager",
+]
 ticket = "v7ug"
 +++
 
@@ -22,3 +25,6 @@ pm-1: split into br-at2j (setup guide), br-4yc8 (WSL2 audit) and human to-dos br
 
 ### note · system · 2026-10-08T03:37:45.294Z
 open 4h, never planned: back to pending. Ready it again once someone will plan it.
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:39.915Z
+watching the task

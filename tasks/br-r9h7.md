@@ -4,9 +4,12 @@ title = "Flaky on macOS CI: spawn_with_prompt_waits_for_the_turn_to_start_before
 kind = "bug"
 state = "planned"
 created_at = "2026-10-09T10:47:12.713Z"
-updated_at = "2026-10-09T10:48:15.223746Z"
+updated_at = "2026-10-09T11:04:41.066009Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "external:advisor/product-manager",
+]
 ticket = "r9h7"
 +++
 
@@ -25,3 +28,6 @@ Acceptance: just check passes; run `cargo nextest run -p bridle-daemon -E 'test(
 
 ### note · external:orchestrator · 2026-10-09T10:48:10.956Z
 settle skipped by external:orchestrator: critical: main is red on macOS (CI run 37918335201); the human treats any red main as critical
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:41.066Z
+watching the task

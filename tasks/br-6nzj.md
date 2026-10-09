@@ -4,11 +4,12 @@ title = "Test daemons stop polling at 200 ms; a resource-budget test; log the in
 kind = "bug"
 state = "planned"
 created_at = "2026-10-09T01:41:03.473Z"
-updated_at = "2026-10-09T10:47:34.547955Z"
+updated_at = "2026-10-09T11:04:40.515984Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:aide",
+    "external:advisor/product-manager",
 ]
 parent = "br-n4w4"
 +++
@@ -25,3 +26,8 @@ Files: crates/bridle-daemon/tests/support/mod.rs and the tests that set tracker_
 Acceptance: just check passes; the new test fails if you temporarily make tick_tracker snapshot with no agents (say you tried it on the thread); report wall time of `just test` before and after if the machine is quiet, else say it was not.
 
 Model: Sonnet. Migration: none. Out of scope: the load-hold notes (separate task), a cap on concurrent test runs, the fake-claude shim, restarting the other projects' daemons (orchestrator action, rec 8).
+
+## Thread
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:40.515Z
+watching the task

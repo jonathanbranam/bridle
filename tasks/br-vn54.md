@@ -4,9 +4,12 @@ title = "Incident: remote control dropped for the dalek aide session after a tmu
 kind = "incident"
 state = "pending"
 created_at = "2026-10-08T12:47:40.207Z"
-updated_at = "2026-10-08T16:48:05.928361Z"
+updated_at = "2026-10-09T11:04:40.066062Z"
 created_by = "external:aide"
-watchers = ["external:aide"]
+watchers = [
+    "external:aide",
+    "external:advisor/product-manager",
+]
 +++
 
 Filed by the bridle aide at the human's request, 2026-10-08 ~9:00 AM ET.
@@ -40,3 +43,6 @@ If it's the laptop sleep, look for a way to nudge the sessions after a wake.
 
 ### note · system · 2026-10-08T16:48:05.927Z
 open 4h, never planned: back to pending. Ready it again once someone will plan it.
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:40.066Z
+watching the task

@@ -4,9 +4,12 @@ title = "Seats: every role is a named, tracked seat that outlives its sessions, 
 kind = "feature"
 state = "open"
 created_at = "2026-10-04T00:28:01.262Z"
-updated_at = "2026-10-04T00:28:06.580709Z"
+updated_at = "2026-10-09T11:04:37.629736Z"
 created_by = "external:advisor"
-watchers = ["external:advisor"]
+watchers = [
+    "external:advisor",
+    "external:advisor/product-manager",
+]
 ticket = "gtzx"
 +++
 
@@ -16,3 +19,6 @@ docs/tickets/open/seats-every-role-is-a-named-tracked-seat-that-outlives-its-s-g
 
 ### question · external:advisor · 2026-10-04T00:28:06.580Z
 Waiting for the human's review of the ticket's proposals P1-P10 and questions Q1-Q4 (docs/tickets/open/seats-every-role-is-a-named-tracked-seat-that-outlives-its-s-gtzx.md). Don't plan or build until the human answers.
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:37.629Z
+watching the task

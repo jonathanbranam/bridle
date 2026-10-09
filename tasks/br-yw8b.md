@@ -4,11 +4,12 @@ title = "fake-claude spawns skip the pyenv shim: resolve the interpreter once (n
 kind = "chore"
 state = "planned"
 created_at = "2026-10-09T01:41:32.122Z"
-updated_at = "2026-10-09T10:47:40.102668Z"
+updated_at = "2026-10-09T11:04:40.715866Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:aide",
+    "external:advisor/product-manager",
 ]
 parent = "br-n4w4"
 +++
@@ -22,3 +23,8 @@ Files: the test support code that builds the fake's command line, fake-claude.py
 Acceptance: just check passes; on the task thread show `ps` evidence (process tree of one running fake agent before and after: depth and count of processes) from a one-off test run that you start and own.
 
 Model: Sonnet. Migration: none. Out of scope: replacing the fake, the tracker interval (br-6nzj), real claude.
+
+## Thread
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:40.715Z
+watching the task

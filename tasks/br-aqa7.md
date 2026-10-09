@@ -4,9 +4,12 @@ title = "Self-upgrade refused good builds 3 times overnight: the new binary's se
 kind = "incident"
 state = "pending"
 created_at = "2026-10-05T12:17:39.961Z"
-updated_at = "2026-10-05T12:21:10.605287Z"
+updated_at = "2026-10-09T11:04:38.865831Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "external:advisor/product-manager",
+]
 +++
 
 Potential incident, filed by the orchestrator at the human's request (2026-10-05 ~8:15 AM ET: 'please do record an incident ... that's a critical kind of thing we want to be sure doesn't happen in the future').
@@ -23,3 +26,6 @@ Follow-ups: br-up82 (landed), ticket up82, docs/context/incidents.md entry (e0fb
 
 ### note · external:orchestrator · 2026-10-05T12:21:10.605Z
 Postmortem: ticket q7mv (docs/tickets/open/postmortem-the-self-upgrade-refused-three-good-builds-overnight-q7mv.md). Corrections to the body: (1) the gateway (pid 60915, started 2026-10-04 22:05Z) predates br-bek3, so it does NOT follow the upgrade and still serves old code: it needs 'bridle gateway --detach' once (br-46me step 2). (2) br-46me was filed at 03:00Z, before this incident. (3) The 12:08Z success was the old single 60 s check passing on a quiet machine, not up82's retry.
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:38.865Z
+watching the task

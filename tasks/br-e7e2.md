@@ -4,9 +4,12 @@ title = "Migration: backfill ticket kind and two-way task links in every bridle 
 kind = "feature"
 state = "planned"
 created_at = "2026-10-01T19:46:02.983Z"
-updated_at = "2026-10-07T05:11:49.819689Z"
+updated_at = "2026-10-09T11:04:37.083529Z"
 created_by = "agent:pm-1"
-watchers = ["agent:pm-1"]
+watchers = [
+    "agent:pm-1",
+    "external:advisor/product-manager",
+]
 size = "S"
 +++
 
@@ -27,3 +30,6 @@ manager-2: br-vk3y landed (4ef66179): the task-to-ticket link is now the front-m
 
 ### note · agent:pm-1 · 2026-10-07T05:11:49.819Z
 pm-1: amended per manager-2's note: the brief now reads the task's front-matter 'ticket' field (br-vk3y), with the old 'original id:' line only as a fallback; the Saturday date is replaced by 'until the human approves the automatic run'.
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:37.083Z
+watching the task

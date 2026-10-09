@@ -4,9 +4,12 @@ title = "bridle-ui: a usage page with week-to-week charts of the five-hour and s
 kind = "feature"
 state = "pending"
 created_at = "2026-10-05T21:06:46.794Z"
-updated_at = "2026-10-06T00:45:01.174107Z"
+updated_at = "2026-10-09T11:04:39.016144Z"
 created_by = "agent:pm-1"
-watchers = ["agent:pm-1"]
+watchers = [
+    "agent:pm-1",
+    "external:advisor/product-manager",
+]
 ticket = "xxw9"
 +++
 
@@ -16,3 +19,8 @@ Files likely: crates/bridle-gateway (proxy the history endpoint, bindings/*.ts),
 Migration: none.
 Acceptance: just check passes; the gateway endpoint is tested; the page renders from fixture history (describe how you checked it in the done note).
 Model: Sonnet. Out of scope: per-project and per-agent token views (br-gztq's findings feed those).
+
+## Thread
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:39.016Z
+watching the task

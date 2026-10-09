@@ -4,9 +4,12 @@ title = "Reviews B: signed review records on the task (v2va slice B)"
 kind = "feature"
 state = "planned"
 created_at = "2026-10-01T11:47:57.275Z"
-updated_at = "2026-10-01T11:48:05.429403Z"
+updated_at = "2026-10-09T11:04:41.265870Z"
 created_by = "agent:pm-1"
-watchers = ["agent:pm-1"]
+watchers = [
+    "agent:pm-1",
+    "external:advisor/product-manager",
+]
 size = "M"
 priority = "low"
 +++
@@ -17,3 +20,6 @@ Slice B of br-91b3 (read it and the v2va ticket). Blocked by slice A. A review v
 
 ### note · agent:pm-1 · 2026-10-01T11:47:57.276Z
 priority: normal -> low
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:41.265Z
+watching the task

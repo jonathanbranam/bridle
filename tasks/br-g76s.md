@@ -4,11 +4,12 @@ title = "Load-hold notes: one per machine, name bridle-owned top consumers, hone
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T01:41:12.914Z"
-updated_at = "2026-10-09T10:47:38.503649Z"
+updated_at = "2026-10-09T11:04:40.565728Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:aide",
+    "external:advisor/product-manager",
 ]
 parent = "br-n4w4"
 +++
@@ -30,3 +31,8 @@ Files: crates/bridle-daemon/src/load.rs, supervisor.rs (only the note/refusal te
 Acceptance: just check passes; unit tests with a fake LoadSource for: note text without the false claim, bridle-process line present/absent, started/ended events, escalation after 60 minutes (fake clock), machine-wide dedupe.
 
 Model: Sonnet. Migration: the orchestrator role text reaches projects through the normal `bridle workflow sync`; no file changes in projects. Out of scope: queueing held spawns (the note stops claiming it), the governor threshold, the test harness.
+
+## Thread
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:40.565Z
+watching the task

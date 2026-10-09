@@ -4,11 +4,12 @@ title = "Only one full test run at a time per machine: just check takes a machin
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T01:41:27.525Z"
-updated_at = "2026-10-09T10:47:39.219324Z"
+updated_at = "2026-10-09T11:04:40.665895Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:aide",
+    "external:advisor/product-manager",
 ]
 parent = "br-n4w4"
 +++
@@ -22,3 +23,8 @@ Files: justfile, scripts/test-lock.sh (new, executable), CLAUDE.md (one line und
 Acceptance: just check passes; demonstrate on the task thread two concurrent `just test -E 'test(none_such)'` style runs where the second waits and then proceeds; a stale-lock takeover test by hand (kill -9 the holder by its pid, which you started) and say what you saw. Do not use pkill/killall/pgrep (rule no-kill-by-name).
 
 Model: Sonnet. Migration: none (repo scripts only; reaches worktrees with a merge of main). Out of scope: the nextest thread count (set in br-7fr6), CI, a fair queue order (first to notice wins is fine).
+
+## Thread
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:40.665Z
+watching the task

@@ -4,11 +4,12 @@ title = "Audit every periodic daemon loop for what it forks or reads per tick; l
 kind = "chore"
 state = "planned"
 created_at = "2026-10-09T01:41:21.012Z"
-updated_at = "2026-10-09T10:47:39.656050Z"
+updated_at = "2026-10-09T11:04:40.615999Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:aide",
+    "external:advisor/product-manager",
 ]
 parent = "br-n4w4"
 +++
@@ -22,3 +23,8 @@ Files: docs/design/agent-host/daemon.md, crates/bridle-daemon/src/* only for the
 Acceptance: just check passes; the table lists every spawn_loop and timer in lib.rs (the worker greps for `spawn_loop`, `interval(` and `sleep(` in crates/bridle-daemon/src and says so on the thread); fixes have tests.
 
 Model: Sonnet. Migration: none. Out of scope: replacing `ps` callers outside the tracker (load.rs top_consumers is per crossing), the test harness (br-6nzj), notes (br-g76s).
+
+## Thread
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:40.615Z
+watching the task

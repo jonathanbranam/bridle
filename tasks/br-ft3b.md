@@ -4,9 +4,12 @@ title = "Per-role handover instructions in the workflow, with project overrides"
 kind = "feature"
 state = "pending"
 created_at = "2026-10-05T10:25:03.907Z"
-updated_at = "2026-10-05T10:25:23.857819Z"
+updated_at = "2026-10-09T11:04:38.766112Z"
 created_by = "external:orchestrator@nuc"
-watchers = ["external:orchestrator@nuc"]
+watchers = [
+    "external:orchestrator@nuc",
+    "external:advisor/product-manager",
+]
 ticket = "ft3b"
 +++
 
@@ -27,3 +30,6 @@ submitted by external:orchestrator@nuc
 
 ### note · agent:pm-1 · 2026-10-05T10:25:23.857Z
 Triage (pm-1): accept (the human's own ask). Ticket minted (uncommitted; commit on main). Stays pending until approved with `bridle task ready br-ft3b`; then I plan it (Sonnet). Suggested order: after 4s3z and gq9r (it feeds gq9r's handover text, and cbbn).
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:38.766Z
+watching the task

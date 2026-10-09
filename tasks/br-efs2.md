@@ -4,11 +4,12 @@ title = "Review and comment on kuw2, the machine daemon design (docs/tickets/ope
 kind = "chore"
 state = "claimed"
 created_at = "2026-10-04T15:40:03.732Z"
-updated_at = "2026-10-04T15:40:03.737024Z"
+updated_at = "2026-10-09T11:04:37.885934Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
     "human",
+    "external:advisor/product-manager",
 ]
 +++
 
@@ -39,3 +40,6 @@ created for the human, priority normal
 
 ### note · external:aide · 2026-10-04T15:40:03.737Z
 To-do for you (normal priority): Review and comment on kuw2, the machine daemon design (docs/tickets/open/a-machine-daemon-...-kuw2.md), with document review. Finish it with `bridle task done br-efs2`.
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:37.885Z
+watching the task

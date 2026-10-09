@@ -4,9 +4,12 @@ title = "CI watch missed 13 red runs on main; first ci_failed wake came 40 minut
 kind = "bug"
 state = "pending"
 created_at = "2026-10-05T03:21:20.785Z"
-updated_at = "2026-10-05T03:21:29.947048Z"
+updated_at = "2026-10-09T11:04:38.565513Z"
 created_by = "external:orchestrator@nuc"
-watchers = ["external:orchestrator@nuc"]
+watchers = [
+    "external:orchestrator@nuc",
+    "external:advisor/product-manager",
+]
 ticket = "ysmu"
 +++
 
@@ -23,3 +26,6 @@ submitted by external:orchestrator@nuc
 
 ### note · agent:pm-1 · 2026-10-05T03:21:29.947Z
 Triage (pm-1): accept, high value: merges went in on red on an onboarded project. Ticket minted (uncommitted; needs committing on main). Stays pending: approve with `bridle task ready br-ysmu` and I plan it (Sonnet, bridle-daemon CI watcher; the manager's read command may split off as a small second task).
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:38.565Z
+watching the task

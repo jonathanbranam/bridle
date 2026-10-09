@@ -4,9 +4,12 @@ title = "The NUC recovers everything on boot (4r3k)"
 kind = "feature"
 state = "pending"
 created_at = "2026-09-30T12:20:01.124Z"
-updated_at = "2026-10-05T15:24:32.094853Z"
+updated_at = "2026-10-09T11:04:36.626973Z"
 created_by = "external:advisor"
-watchers = ["external:advisor"]
+watchers = [
+    "external:advisor",
+    "external:advisor/product-manager",
+]
 size = "M"
 ticket = "4r3k"
 +++
@@ -17,3 +20,6 @@ docs/tickets/open/nuc-recovery-on-boot-4r3k.md
 
 ### note · system · 2026-10-05T15:24:32.089Z
 open 4h, never planned: back to pending. Ready it again once someone will plan it.
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:36.626Z
+watching the task

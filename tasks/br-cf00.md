@@ -4,9 +4,12 @@ title = "Reviews C: the daemon spawns the required reviewers; comment-only talk;
 kind = "feature"
 state = "planned"
 created_at = "2026-10-01T11:47:57.295Z"
-updated_at = "2026-10-01T11:48:05.445937Z"
+updated_at = "2026-10-09T11:04:41.315879Z"
 created_by = "agent:pm-1"
-watchers = ["agent:pm-1"]
+watchers = [
+    "agent:pm-1",
+    "external:advisor/product-manager",
+]
 size = "M"
 priority = "low"
 +++
@@ -17,3 +20,6 @@ Slice C of br-91b3 (read it and the v2va ticket). Blocked by slices A and B. Whe
 
 ### note · agent:pm-1 · 2026-10-01T11:47:57.296Z
 priority: normal -> low
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:41.315Z
+watching the task

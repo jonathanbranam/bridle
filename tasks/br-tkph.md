@@ -4,11 +4,12 @@ title = "Follow up on the workflow review: 6 decisions, 2 waiting on others (34b
 kind = "chore"
 state = "claimed"
 created_at = "2026-10-04T12:49:58.213Z"
-updated_at = "2026-10-04T12:49:58.218169Z"
+updated_at = "2026-10-09T11:04:37.765787Z"
 created_by = "external:advisor/workflow"
 watchers = [
     "external:advisor/workflow",
     "human",
+    "external:advisor/product-manager",
 ]
 +++
 
@@ -35,3 +36,6 @@ created for the human, priority normal
 
 ### note · external:advisor/workflow · 2026-10-04T12:49:58.218Z
 To-do for you (normal priority): Follow up on the workflow review: 6 decisions, 2 waiting on others (34bw, vp9e, sk52, 7r2c, xfb3, ma2x, ntca, 98xt). Finish it with `bridle task done br-tkph`.
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:37.765Z
+watching the task

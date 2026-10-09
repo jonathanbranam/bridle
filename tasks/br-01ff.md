@@ -4,9 +4,12 @@ title = "Tickets through the bridle binary in every project: new, frontmatter, c
 kind = "feature"
 state = "pending"
 created_at = "2026-09-30T19:48:27.574Z"
-updated_at = "2026-10-05T15:24:32.144853Z"
+updated_at = "2026-10-09T11:04:36.829797Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "external:advisor/product-manager",
+]
 size = "M"
 ticket = "7gk7. docs/tickets/open/tickets-through-the-bridle-binary-7gk7.md"
 +++
@@ -17,3 +20,6 @@ ticket = "7gk7. docs/tickets/open/tickets-through-the-bridle-binary-7gk7.md"
 
 ### note · system · 2026-10-05T15:24:32.139Z
 open 4h, never planned: back to pending. Ready it again once someone will plan it.
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:36.829Z
+watching the task

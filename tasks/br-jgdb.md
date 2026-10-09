@@ -4,11 +4,12 @@ title = "Windows PC: follow the WSL2 setup guide (install WSL2 + Ubuntu, wslconf
 kind = "chore"
 state = "claimed"
 created_at = "2026-10-07T23:25:29.937Z"
-updated_at = "2026-10-07T23:25:29.954649Z"
+updated_at = "2026-10-09T11:04:41.415872Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "human",
+    "external:advisor/product-manager",
 ]
 priority = "low"
 priority_at = "2026-10-07T23:25:29.942324Z"
@@ -23,3 +24,6 @@ created for the human, priority low
 
 ### note · agent:pm-1 · 2026-10-07T23:25:29.954Z
 To-do for you (low priority): Windows PC: follow the WSL2 setup guide (install WSL2 + Ubuntu, wslconfig, Tailscale, start-up task, red/green shortcuts) and note the CPU and RAM (v7ug). Finish it with `bridle task done br-jgdb`.
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:41.415Z
+watching the task

@@ -4,9 +4,12 @@ title = "Specs: bridle spec id duplicates ledger entries for hand-written IDs"
 kind = "bug"
 state = "pending"
 created_at = "2026-10-05T02:56:15.131Z"
-updated_at = "2026-10-05T02:56:34.784914Z"
+updated_at = "2026-10-09T11:04:38.516180Z"
 created_by = "external:orchestrator@nuc"
-watchers = ["external:orchestrator@nuc"]
+watchers = [
+    "external:orchestrator@nuc",
+    "external:advisor/product-manager",
+]
 ticket = "dbvd"
 +++
 
@@ -25,3 +28,6 @@ submitted by external:orchestrator@nuc
 
 ### note · agent:pm-1 · 2026-10-05T02:56:34.784Z
 Triage (pm-1): accept. A real bug from meta-notes-ui. Ticket minted: docs/tickets/open/specs-bridle-spec-id-duplicates-ledger-entries-for-hand-writ-dbvd.md (uncommitted; needs committing on main). Stays pending: approve with `bridle task ready br-dbvd`, then I plan it (small; Sonnet, crates/bridle-spec; Haiku may do).
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:38.516Z
+watching the task

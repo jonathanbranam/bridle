@@ -4,9 +4,12 @@ title = "Mail between daemons, slice 4: visible state: outbox status, message sh
 kind = "feature"
 state = "pending"
 created_at = "2026-10-05T21:04:43.237Z"
-updated_at = "2026-10-06T00:45:08.577802Z"
+updated_at = "2026-10-09T11:04:38.966102Z"
 created_by = "agent:pm-1"
-watchers = ["agent:pm-1"]
+watchers = [
+    "agent:pm-1",
+    "external:advisor/product-manager",
+]
 ticket = "3haz"
 +++
 
@@ -16,3 +19,8 @@ Files likely: crates/bridle-daemon, crates/bridle-api types, crates/bridle/src (
 Migration: role prompt text reaches projects through workflow sync; no per-project files change.
 Acceptance: just check passes; tests for the three states, the status line and the one-time report; docs updated.
 Model: Sonnet. Out of scope: wake reasons as messages, task watch across projects.
+
+## Thread
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:38.966Z
+watching the task

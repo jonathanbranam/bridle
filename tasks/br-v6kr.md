@@ -4,9 +4,12 @@ title = "A system architect role, and measuring bridle's own resource cost again
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T01:19:29.534Z"
-updated_at = "2026-10-09T01:41:46.724508Z"
+updated_at = "2026-10-09T11:04:40.435666Z"
 created_by = "external:aide"
-watchers = ["external:aide"]
+watchers = [
+    "external:aide",
+    "external:advisor/product-manager",
+]
 ticket = "v6kr"
 +++
 
@@ -22,3 +25,8 @@ Files: scripts/baseline-sample.sh (new), docs/context/baseline-2026-10.md and .c
 Acceptance: the sampler produced at least 10 hours of lines (or say why not), the summary is in the doc, benchmark.md exists with the scenario list. just check passes (no code change, but run it once). Ask the human nothing: send the proposal to the orchestrator for review via the task thread.
 
 Model: Sonnet. Migration: none. Out of scope: any daemon code, counters, tokio-console/profiling, the architect role file, the weekly schedule, inter-machine scenarios, fixing anything the baseline shows (file a ticket instead).
+
+## Thread
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:40.435Z
+watching the task

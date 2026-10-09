@@ -4,9 +4,12 @@ title = "Mail between daemons, slice 2: mail for a visitor is forwarded to its h
 kind = "feature"
 state = "pending"
 created_at = "2026-10-05T21:04:36.179Z"
-updated_at = "2026-10-06T00:45:04.041396Z"
+updated_at = "2026-10-09T11:04:38.915857Z"
 created_by = "agent:pm-1"
-watchers = ["agent:pm-1"]
+watchers = [
+    "agent:pm-1",
+    "external:advisor/product-manager",
+]
 ticket = "3haz"
 +++
 
@@ -16,3 +19,8 @@ Files likely: crates/bridle-daemon (token/visitor records, outbox use), crates/b
 Migration: existing visitor tokens have no recorded home; define what happens to them (keep local inbox as today) and say so. New field is optional.
 Acceptance: just check passes; two-daemon test: a reply to a visitor lands in the home daemon's inbox and wakes its waiter; an old token without a home still works locally.
 Model: Sonnet. Out of scope: retry loop, status, wake reasons as messages.
+
+## Thread
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:38.915Z
+watching the task

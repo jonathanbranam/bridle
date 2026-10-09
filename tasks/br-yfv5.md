@@ -4,9 +4,12 @@ title = "One scheduler for timed actions: scheduled messages (hrcn), nightly ses
 kind = "feature"
 state = "pending"
 created_at = "2026-10-05T10:47:07.760Z"
-updated_at = "2026-10-08T14:29:05.481183Z"
+updated_at = "2026-10-09T11:04:38.816234Z"
 created_by = "external:orchestrator@nuc"
-watchers = ["external:orchestrator@nuc"]
+watchers = [
+    "external:orchestrator@nuc",
+    "external:advisor/product-manager",
+]
 ticket = "yfv5"
 +++
 
@@ -37,3 +40,6 @@ split off br-9xze: Scheduled messages, first slice: an agent schedules a message
 
 ### note · external:orchestrator · 2026-10-08T14:29:05.481Z
 The human approved the first slice (per-project scheduled messages an agent sets for itself, one-time or recurring), 2026-10-08, relayed verbatim by the meta-notes aide (m-7089); filed as br-9xze with the quote. cbbn (restarts) and 3nyk (maintenance windows) are not part of this approval. Same for hrcn.
+
+### note · external:advisor/product-manager · 2026-10-09T11:04:38.816Z
+watching the task
