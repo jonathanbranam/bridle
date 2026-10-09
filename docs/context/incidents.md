@@ -24,6 +24,19 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-09 15:56: main red on Linux from a third upgrade_test flake
+
+- **What happened:** CI run 37954619068 on fa22d829 (the br-f4xu merge) failed on Linux:
+  `upgrade_test self_upgrade_restarts_only_after_the_mid_turn_agent_finishes` timed out (60 s)
+  waiting for the agent to work or the restart. macOS passed. Found by the orchestrator's
+  `ci_failed` wake.
+- **Impact:** main red; merges held; the failed job re-run.
+- **Cause:** unknown; a timing race in the test or the daemon's quiet check. Not br-f4xu (the test
+  sends no signal).
+- **Category:** `ci`.
+- **Follow-up:** [[flaky-on-linux-ci-upgrade-test-self-upgrade-restarts-only-af-h7gt|h7gt]]
+  (br-h7gt, critical).
+
 ## 2026-10-09 ~15:14: new binaries hang at launch on the laptop (syspolicyd again)
 
 - **What happened:** two `bridle workflow spec check --require-ids` runs (tick6nzj's `just check`
