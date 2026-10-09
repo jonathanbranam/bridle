@@ -236,6 +236,8 @@ async fn spawn_with_prompt_runs_a_turn_and_creates_a_worktree() {
 /// `system/init` before answering, so the response (and the store, and the
 /// event log) already reflect the turn having started — no extra polling
 /// needed, unlike the assertions above this test that use `wait_for_*`.
+/// The turn is held with `SLEEP` so a fast machine can't finish it (back to
+/// `Idle`) before the response is read.
 #[tokio::test]
 async fn spawn_with_prompt_waits_for_the_turn_to_start_before_returning() {
     let (daemon, _tmp) = start_daemon(None).await;
@@ -246,7 +248,7 @@ async fn spawn_with_prompt_waits_for_the_turn_to_start_before_returning() {
             components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
-            prompt: Some("hello there".to_string()),
+            prompt: Some("SLEEP 10".to_string()),
             workdir: None,
             model: None,
             extra_allowed_tools: Vec::new(),
