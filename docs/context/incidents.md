@@ -24,6 +24,18 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-09 20:32: main red on Linux from a new upgrade_test flake
+
+- **What happened:** CI on `f8b6b5b5` (docs only) failed on ubuntu: `upgrade_test`
+  `a_drain_starting_during_a_spawn_restarts_promptly` got `Unreachable` listing messages. Found
+  by the orchestrator's CI wake.
+- **Impact:** `main` red; merges held until it is fixed.
+- **Cause:** the test (added hours earlier by br-b6mu, 3323d2f4) calls the daemon over HTTP after
+  `restart_requested()`, racing the drain's shutdown of the server.
+- **Category:** `ci`
+- **Follow-up:** [[flaky-on-linux-ci-upgrade-test-a-drain-starting-during-a-spa-ngya|ngya]]
+  (br-ngya, critical).
+
 ## 2026-10-09 19:18: dalek's gateway keeps being restarted outside launchd (recurring)
 
 - **What happened:** the human found the gateway on `:7878` was pid 88281, started 2026-10-09
