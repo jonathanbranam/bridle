@@ -2,9 +2,9 @@
 id = "br-n4w4"
 title = "Postmortem: bridle's own 'ps' polling (every daemon, test daemons at 200 ms) drove dalek's load to 76-144 and the load hold blocked spawns for ~26 h; br-3p3h fixed only the idle case"
 kind = "incident"
-state = "open"
+state = "pending"
 created_at = "2026-10-09T01:01:23.208Z"
-updated_at = "2026-10-09T01:41:32.122757Z"
+updated_at = "2026-10-09T05:53:37.747878Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "n4w4"
@@ -31,3 +31,6 @@ split off br-ks55: Only one full test run at a time per machine: just check take
 
 ### note · agent:pm-1 · 2026-10-09T01:41:32.122Z
 split off br-yw8b: fake-claude spawns skip the pyenv shim: resolve the interpreter once (n4w4 rec 7)
+
+### note · system · 2026-10-09T05:53:37.744Z
+open 4h, never planned: back to pending. Ready it again once someone will plan it.
