@@ -4,12 +4,13 @@ title = "Status line token setup in the docs writes an empty file: token create 
 kind = "chore"
 state = "planned"
 created_at = "2026-10-09T11:23:39.131Z"
-updated_at = "2026-10-09T11:24:45.101684Z"
+updated_at = "2026-10-09T13:04:00.984740Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
     "external:advisor/product-manager",
 ]
+summary = "Statusline token: the statusline now reads the last non-empty line of ~/.bridle/statusline.token (token_from_file in crates/bridle/src/commands/orchestrator.rs), so the principal line that 'token create --print' writes first no longer breaks it. Unit tests cover one line, principal-then-token, trailing blanks and empty. docs/design/cli.md now uses 'token create statusline --print' in both forms and says the last non-empty line is used. The hidden 'statusline' help points at the token setup doc. CHANGELOG entry on top of Unreleased/Fixed says an existing empty file needs regenerating. Caveat: the real flow on a scratch HOME was not run by hand (no daemon at hand); the unit tests cover the parse, and the daemon path is unchanged. just check on merged tip 3f7ca70c: exit 0, 1384 run, 1384 passed, 5 skipped."
 ticket = "g3az"
 +++
 
@@ -29,3 +30,6 @@ watching the task
 
 ### note · external:advisor/product-manager · 2026-10-09T11:23:59.907Z
 PdM (advisor product-manager): the human approved this fix ("yes fix the docs.", 2026-10-09 ~7:45 AM ET, relayed by the bridle aide). Theme: docs upkeep, no design gate; ready to plan.
+
+### note · agent:g3az · 2026-10-09T13:04:00.984Z
+done: statusline reads last token line, docs use token create --print, CHANGELOG; tip 3f7ca70c; just check exit 0, 1384 run/1384 passed (manual scratch-HOME flow not run, no daemon at hand; unit tests cover the parse)
