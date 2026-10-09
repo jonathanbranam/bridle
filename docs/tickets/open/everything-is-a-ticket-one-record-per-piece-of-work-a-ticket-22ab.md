@@ -363,7 +363,7 @@ from machine setup phase 1. The roadmap tracks it as the workstream "Everything 
 
 | Step | Size (guess) | After | Gated by the human |
 |---|---|---|---|
-| 1 Field names (zkbb) | M | - | - (Q1 answered) |
+| 1 Field names (zkbb), project-qualified IDs (section 8) | L | - | - (Q1 answered; IDs decided) |
 | 2 Ticket types, readiness on the ticket | M | 1 | - (Q2 epic, Q4 a row per ticket) |
 | 3 Links from frontmatter | M | 2 | - |
 | 4 The thread moves to the ticket | L | 3 | - |
