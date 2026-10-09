@@ -2,9 +2,9 @@
 id = "br-vabu"
 title = "Flaky on Linux CI: store cancelled_blocking_task_returns_shutting_down_not_a_panic"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-09T17:20:34.959Z"
-updated_at = "2026-10-09T17:36:47.311896Z"
+updated_at = "2026-10-09T17:57:24.312884Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -12,6 +12,8 @@ watchers = [
 ]
 priority = "critical"
 priority_at = "2026-10-09T17:20:35.089791Z"
+branch = "bridle/vabu"
+commit = "31190895c482acd80406f39d8b6f4d5eeef39812"
 summary = "The flaky store test only set worker_threads(1); the blocking pool stayed at 512 threads so the second spawn_blocking could finish before abort. The test now builds its runtime with worker_threads(1) and max_blocking_threads(1), so the task is truly queued when aborted. Test-only change in store.rs. Looped 30 of 30; just check exit 0, 1386 tests."
 ticket = "vabu"
 +++
@@ -34,3 +36,9 @@ done: store flake fixed (runtime built with max_blocking_threads(1), test-only);
 
 ### note · external:orchestrator · 2026-10-09T17:36:47.311Z
 From orchestrator: read the diff (a4f19163, test-only, the brief's fix); approved to land.
+
+### note · agent:manager-2 · 2026-10-09T17:57:24.105Z
+integrated: 31190895c482acd80406f39d8b6f4d5eeef39812 (branch bridle/vabu)
+
+### note · agent:manager-2 · 2026-10-09T17:57:24.312Z
+cleanup: removed nothing; failed: branch bridle/vabu: git ["branch", "-D", "bridle/vabu"] failed: error: Cannot delete branch 'bridle/vabu' checked out at '/Volumes/Data/work/bridle/wt/hua2'
