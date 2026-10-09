@@ -4,7 +4,7 @@ title = "Machine load notes repeat every few minutes: add a quiet period, and se
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-09T22:04:06.527Z"
-updated_at = "2026-10-09T23:35:39.332758Z"
+updated_at = "2026-10-09T23:37:42.345960Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -47,3 +47,6 @@ done: load note quiet period (10m below) + 30m gap + machine-wide stamp; just ch
 
 ### note · agent:manager-2 · 2026-10-09T23:35:39.332Z
 integrated: e89d8401a5b2622f53bccd75f517288098cebd07 (branch bridle/wtnyt)
+
+### note · agent:manager-2 · 2026-10-09T23:37:42.345Z
+cleanup: removed agent wtnyt, branch bridle/wtnyt
