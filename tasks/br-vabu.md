@@ -4,7 +4,7 @@ title = "Flaky on Linux CI: store cancelled_blocking_task_returns_shutting_down_
 kind = "bug"
 state = "planned"
 created_at = "2026-10-09T17:20:34.959Z"
-updated_at = "2026-10-09T17:36:28.764755Z"
+updated_at = "2026-10-09T17:36:47.311896Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -31,3 +31,6 @@ watching the task
 
 ### note · agent:hua2 · 2026-10-09T17:36:28.764Z
 done: store flake fixed (runtime built with max_blocking_threads(1), test-only); 30 of 30 loop; just check exit 0, 1386 tests; branch bridle/vabu tip a4f19163 (br-hua2 branch untouched)
+
+### note · external:orchestrator · 2026-10-09T17:36:47.311Z
+From orchestrator: read the diff (a4f19163, test-only, the brief's fix); approved to land.
