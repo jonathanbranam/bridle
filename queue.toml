@@ -11,6 +11,9 @@ tasks = ["br-tnyt"]
 tasks = ["br-hdbj"]
 
 [[tier]]
+tasks = ["br-fpde"]
+
+[[tier]]
 tasks = ["br-88d4"]
 
 [[tier]]
@@ -39,6 +42,9 @@ tasks = ["br-3mz4"]
 
 [[tier]]
 tasks = ["br-gd43"]
+
+[[tier]]
+tasks = ["br-7zd4"]
 
 [[tier]]
 tasks = ["br-v6kr"]

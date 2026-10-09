@@ -4,7 +4,7 @@ title = "A researcher role with web tools, and managers check a task's needs aga
 kind = "feature"
 state = "open"
 created_at = "2026-10-09T23:27:47.658Z"
-updated_at = "2026-10-09T23:28:07.176728Z"
+updated_at = "2026-10-09T23:29:10.455157Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -21,3 +21,6 @@ Ticket: docs/tickets/open/*-2mtr.md (read the human's later approval there). br-
 
 ### note · external:advisor/product-manager · 2026-10-09T23:27:47.659Z
 priority: normal -> low
+
+### note · agent:pm-1 · 2026-10-09T23:29:10.455Z
+pm-1: not planned yet. Low priority and the ticket says design the role first (which tools, how a manager checks a task's needs against a role's tools, how tw-sxfh is re-run). It needs a designer pass before a brief can be written. Not queued; I will plan it once the design is in the ticket.
