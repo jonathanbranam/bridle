@@ -57,6 +57,8 @@ the same.
 > See also re79 which should be designed and planned along with this ticket - adds a reviewer: <agent> frontmatter (optional, ignored if missing) that indicates that every comment in a document is sent to that specific agent. In this case, also de-duplicate the messages as above; 
 >
 > If review: agent-a and a comment includes \@agent-b the comment is sent to agent-b and not agent-a (unless agent-a is also mentioned.
+>
+> **human, 2026-10-09 17:22 EDT:** I'm not sure about this at second thought; evaluate this for consistency across our systems - An \@mention in a ticket THREAD will notify that agent and all watchers; maybe we should treat the reviewer the same? I'm not sure. [pending 2026-10-09 17:22 EDT]
 
 > [!comment] c7 human, 2026-10-09 17:21 EDT, on "sends that role a message" [pending 2026-10-09 17:21 EDT]
 > If more than one \@mention exists in a single thread or comment, a message is sent to every agent in the message.
