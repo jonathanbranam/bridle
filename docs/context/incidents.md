@@ -24,6 +24,23 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-09 ~15:14: new binaries hang at launch on the laptop (syspolicyd again)
+
+- **What happened:** two `bridle workflow spec check --require-ids` runs (tick6nzj's `just check`
+  in `wt/tick6nzj`, and manager-2's integration check landing br-f4xu) sat 19+ min with one
+  thread in an unknown image, before `main()`. Test binaries in `integration/target` (`--list`
+  runs) hung the same way, up to 33 min. `syspolicyd` was in state U at ~55% CPU (610 CPU-min in
+  41 h of uptime), XprotectService ~55%. Earlier, tick6nzj's first check had hit its background
+  time limit. Found by the orchestrator from an `agent.stalled` wake on tick6nzj.
+- **Impact:** merges (the f4xu flake fix included) and both workers stalled; the human was asked
+  through aide to clear it.
+- **Cause:** a syspolicyd backlog, or a pending Gatekeeper window (qr8z), holding new binaries at
+  launch. The morning's load holds (two workers' builds, two self-upgrades) fed it new binaries;
+  `integration/target/debug/deps` is back to 192K files.
+- **Category:** `host`, `merge`.
+- **Follow-up:** [[incident-syspolicyd-and-spotlight-pegged-builds-and-app-laun-z7y5|z7y5]]
+  (open), [[a-landing-s-integration-check-has-no-timeout-one-hung-test-h-y55w|y55w]].
+
 ## 2026-10-09 12:57: main red on macOS from a second flaky test
 
 - **What happened:** CI run 37931990047 on 8debefe6 (docs only) failed on macOS:
