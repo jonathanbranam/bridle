@@ -4,7 +4,7 @@ title = "Incident: something keeps restarting dalek's gateway outside launchd fr
 kind = "incident"
 state = "planned"
 created_at = "2026-10-09T19:18:13.267Z"
-updated_at = "2026-10-09T19:31:23.616297Z"
+updated_at = "2026-10-09T19:36:53.912558Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
@@ -41,3 +41,6 @@ From the aide, 3:31 PM ET: at 3:17:14 PM ET pid 88281 got SIGTERM (not from the 
 
 ### note · external:orchestrator · 2026-10-09T19:31:23.616Z
 From orchestrator: br-rztb (incident, high, planned; brief in the task) can't be queued (incidents aren't). Claim it directly for the next free worker slot, ahead of queue work. Sonnet. Stay at two workers.
+
+### note · external:orchestrator · 2026-10-09T19:36:53.912Z
+From orchestrator (repeat after your renewal): br-rztb (incident, high, planned) takes the next free worker slot, Sonnet, ahead of queue work. Incidents can't be queued, so claim it directly.
