@@ -192,6 +192,9 @@ Cheap first.
 6. **Distinct git identities per machine** (for example a committer name carrying the host: `NUC`),
    so a postmortem can tell clones apart without reading ticket text.
 
+> [!comment] c5 human, 2026-10-09 14:05 EDT, on "Distinct git identities per machine" [pending 2026-10-09 14:05 EDT]
+> Agree in principle, let's make a ticket for this, but it is non-urgent and can be done later; also it involves human work to make tokens and handle that.
+
 ## Reconcile (completed)
 
 On 2026-10-06, with the human's go ("let's fix main first"; see br-2y3m thread), the orchestrator merged origin/main into local main using `git merge --no-ff origin/main`, bringing in 8 ticket-only commits from the other machine (commit a5ac8bc6). The merge had no conflicts and all commit identities were preserved. The result was a single merge commit (05d498f2) with the message "Merge origin/main: reconcile the divergence (incident br-2y3m); 8 ticket commits from the other machine". The merge commit was pushed to origin (a5ac8bc6..05d498f2), and main and origin/main are now in sync.
