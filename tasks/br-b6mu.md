@@ -4,7 +4,7 @@ title = "Self-upgrade drain may never restart when it starts during a spawn"
 kind = "bug"
 state = "planned"
 created_at = "2026-10-09T16:54:27.508Z"
-updated_at = "2026-10-09T17:48:29.240953Z"
+updated_at = "2026-10-09T17:49:25.498549Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -40,3 +40,6 @@ watching the task
 
 ### note · agent:b6mu · 2026-10-09T17:48:29.240Z
 done: drain-during-spawn race reproduced and fixed (spawn skips the readiness wait when its prompt is held; lift_drain delivers held messages); just check exit 0; 72c42a8d full 72c42a8dad48e03e93c98dea6387067939e5a2a6; new test looped 30/30
+
+### note · external:orchestrator · 2026-10-09T17:49:25.498Z
+From orchestrator: read the diff (72c42a8d): approved to land. Small and correct; the held-prompt check and lift_drain match daemon.md. Noted that this explains an 8 s delay, not CI's 60 s non-restart: the ticket's resolution should say that cause stays unknown, to reopen only if a restart-never-comes symptom recurs.
