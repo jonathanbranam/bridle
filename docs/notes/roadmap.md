@@ -15,7 +15,7 @@ before it moves: "waits on the human" is a pending task only the human can appro
 is the project manager's; "ready to build" is in the queue; "HELD" is planned in bridle but
 stopped by the human.
 
-Last updated: 2026-10-09 19:15 ET.
+Last updated: 2026-10-09 19:25 ET.
 
 ## Needs the human now
 
@@ -68,7 +68,8 @@ The roadmap's priority order. Machine setup first (the human, 2026-10-09).
 4. **Scheduled messages and timed actions** (`scheduled-messages`, theme `agents-and-cli`)
 5. **Documents and attachments on tickets** (`attachments`, theme `product-process`)
 6. **Reviews enforced by bridle** (`reviews-enforced`, theme `product-process`)
-7. **Products: several product managers and roadmaps** (`products`, theme `product-process`)
+7. **Comments and mentions reach the right agent** (`comment-routing`, theme `human-ui`)
+8. **Products: several product managers and roadmaps** (`products`, theme `product-process`)
 
 ## Themes
 
@@ -169,8 +170,7 @@ Agents use bridle correctly: commands, help, roles, the workflow reaching every 
 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
-| [br-3mz4](http://dalek.tailbc91f5.ts.net:7878/task?id=br-3mz4) | One orchestrator per machine, not per project: say so in the advisor role and wherever ... |  | open | to plan (project manager) |
-| [br-4cgx](http://dalek.tailbc91f5.ts.net:7878/task?id=br-4cgx) | @-mention a role in a ticket reply or a document comment and that role gets a message | low | pending | waits on the human (approve to ready) |
+| [br-3mz4](http://dalek.tailbc91f5.ts.net:7878/task?id=br-3mz4) | One orchestrator per machine, not per project: say so in the advisor role and wherever ... |  | planned | ready to build |
 | [br-163f](http://dalek.tailbc91f5.ts.net:7878/task?id=br-163f) | Group the CLI's 54 top-level commands; split commands.rs/cli.rs by group (a67t) |  | reopened | reopened |
 | [br-ts6b](http://dalek.tailbc91f5.ts.net:7878/task?id=br-ts6b) | One command tree for interactive sessions: bridle session <verb> <seat>, retiring bridl... |  | pending | waits on the human (approve to ready) |
 | [br-fne2](http://dalek.tailbc91f5.ts.net:7878/task?id=br-fne2) | bridle session advisor and bridle advisor start: near-identical commands that do differ... |  | pending | the designer's first job (ukpm) |
@@ -283,6 +283,16 @@ Bridle's own cost on the machine: measure against a baseline, then cut it.
 ### Theme `human-ui`: The human's interface
 
 What the human sees and touches: web UI, documents and comments, to-dos, links, quiet hours.
+
+#### Epic `comment-routing`: Comments and mentions reach the right agent
+
+- Outcome: The human's comments and replies reach the agent that should act: a document's reviewer front matter (re79) and @-mentions in replies and comments (4cgx). The human, 2026-10-09: "they are related".
+- Done when: (PdM draft) A comment on a document with `reviewer:` reaches that agent, and an @-mention in a ticket reply or document comment reaches the named role, external roles included.
+
+| Task | Title | Pri | State | Next |
+|---|---|---|---|---|
+| [br-re79](http://dalek.tailbc91f5.ts.net:7878/task?id=br-re79) | Comments on a ticket an agent asked the human to approve go back to that agent; a pendi... | low | pending | waits on the human (approve to ready) |
+| [br-4cgx](http://dalek.tailbc91f5.ts.net:7878/task?id=br-4cgx) | @-mention a role in a ticket reply or a document comment and that role gets a message | low | pending | waits on the human (approve to ready) |
 
 #### Not in an epic
 
@@ -410,3 +420,4 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 - 2026-10-09 18:45 ET: br-8a53 (main red on ubuntu, gateway_test) placed in reliability.
 - 2026-10-09 18:55 ET: filed ui-qfur (the human edits or deletes own document comments until another role replies; via the bridle-ui aide), low, theme human-ui.
 - 2026-10-09 19:15 ET: 57nt resolved (gateway seen restarting under launchd at the 5:31 PM upgrade). Filed and readied br-3mz4 (one orchestrator per machine: advisor role and sends), theme agents-and-cli.
+- 2026-10-09 19:25 ET: re79 refined (reviewer front matter; the human), task br-re79 low. New epic `comment-routing` (theme human-ui, low) with br-re79 and br-4cgx, before `products`.

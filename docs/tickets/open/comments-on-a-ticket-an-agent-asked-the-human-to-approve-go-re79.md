@@ -1,6 +1,6 @@
 ---
 id: re79
-title: Comments on a ticket an agent asked the human to approve go back to that agent; a pending ticket gets a direct Approve
+title: A document's reviewer front matter names the agent its comments go to (so the human's comments go back to the asker)
 kind: feature
 opened: 2026-10-05
 repos: [bridle, bridle-ui]
