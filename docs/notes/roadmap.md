@@ -13,7 +13,7 @@ before it moves: "waits on the human" is a pending task only the human can appro
 is the project manager's; "ready to build" is in the queue; "HELD" is planned in bridle but
 stopped by the human.
 
-Last updated: 2026-10-09 09:20 ET.
+Last updated: 2026-10-09 09:45 ET.
 
 ## Needs the human now
 
@@ -33,6 +33,8 @@ In the order the PdM suggests:
    needs a proposed design).
 6. From the bridle aide: max_workers 2 -> 3 (the aide recommends no until the v6kr baseline);
    close br-a3b9?
+7. **Term for these groupings** (d9wq, PdM research): keep "workstream" or switch to
+   "initiative" (an outcome and a "Done when" per grouping), with "theme" as a tag?
 
 ## The scheduler ladder (the human's sequence, 2026-10-09)
 
@@ -59,6 +61,7 @@ How work gets from an idea to ready: the PdM, the designer, change specs and rev
 | Task | Title | State | Next |
 |---|---|---|---|
 | [br-6h65](http://dalek.tailbc91f5.ts.net:7878/task?id=br-6h65) | A product manager that relates every ticket to open and planned work: links, merges, an... | pending | this trial is the stand-in (docs/notes/product-manager-trial.md) |
+| [br-d9wq](http://dalek.tailbc91f5.ts.net:7878/task?id=br-d9wq) | Research: product manager roles, human and agentic (BMAD and others), and what to call ... | pending | research done; the human reads it and picks the term |
 | [br-95mu](http://dalek.tailbc91f5.ts.net:7878/task?id=br-95mu) | A change spec (proposal and design) reviewed for risk and impact before any worker buil... | pending | to the designer once the human has reviewed the ticket |
 | [br-stx8](http://dalek.tailbc91f5.ts.net:7878/task?id=br-stx8) | A task's state says what's really happening: held and built-awaiting-landing are states... | planned | HELD: needs a proposed design and the human's approval |
 | [br-gtzx](http://dalek.tailbc91f5.ts.net:7878/task?id=br-gtzx) | Seats: every role is a named, tracked seat that outlives its sessions, with its own inb... | open | HELD: waits on the human's review of P1-P10, Q1-Q4 |
@@ -261,3 +264,4 @@ Chores that are the human's own: expand on an idea, review a ticket or branch.
 
 - 2026-10-09 09:20 ET: first version. 12 workstreams; every open task in bridle, bridle-ui and
   track-web placed in one.
+- 2026-10-09 09:45 ET: added br-d9wq (PdM research) to product process; decision 7 (the term).
