@@ -1562,3 +1562,18 @@ battery fell from 99% to 70% in 27 minutes (about 1.1% a minute) with two worker
 - **Category:** `ci`.
 - **Follow-up:** [[flaky-on-linux-ci-store-cancelled-blocking-task-returns-shut-vabu|vabu]]
   (br-vabu, critical).
+
+## 2026-10-09 23:06: main red twice in an hour from two test flakes
+
+- **What happened:** CI on b798c8bc (br-k6jd landing) failed on macOS only:
+  `lifecycle_test::spawn_child_orphan_is_swept_on_stop` timed out waiting for
+  `agent.orphans_killed` (62 s); it passed on re-run. Then d9f8505b (docs only) failed on Linux:
+  `settle_wake_test::a_task_blocked_by_a_dependency_makes_no_note` got a note for the blocked task
+  too. The next commit was green. Reported by manager-2 (the first) and the orchestrator's check.
+- **Impact:** main red ~23:06-23:20Z; merges held.
+- **Cause:** the settle test plans both tasks before adding the `blocks` edge, with a 1 s settle,
+  so a slow runner lets the blocked task settle unblocked. The orphan timeout: unknown (its second
+  time; see tr22).
+- **Category:** `ci`.
+- **Follow-up:** [[flaky-on-ci-settle-wake-test-blocked-task-note-races-its-edg-8ff8|8ff8]]
+  (br-8ff8, critical); the orphan test gets a ticket if it fails again.
