@@ -1394,7 +1394,9 @@ pub enum TokenAction {
         name: Option<String>,
         /// Mint a peer token for another daemon's mail forwarding, `peer:<machine>` (human
         /// only). Always printed: paste it under `[peer]` in the sending daemon's
-        /// `credentials.toml`, keyed by this daemon's project.
+        /// `credentials.toml`, keyed by this daemon's project. `<machine>` is the machine that
+        /// SENDS to this project, not this one: one token per receiving project per sending
+        /// machine, so mint it here, once for each project that machine sends to.
         #[arg(long, conflicts_with_all = ["name", "machine"])]
         peer: Option<String>,
         /// Mint a visitor, `external:<name>@<machine>`, for a principal on another machine.

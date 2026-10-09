@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+- Peer-token guidance (gdf3): `bridle token create --peer` now says in its help and in the `peer:<machine> already exists` error that `<machine>` is the machine that SENDS to the project (not the receiver), and names the `bridle token revoke peer:<machine>` fix. `docs/design/cli.md` states the rule with an example.
+
 - Docs: `docs/context/add-a-machine.md`, one procedure to bring a new machine (macOS, Linux, WSL2) onto the network: git and GitHub, `~/.bridle/config.toml`, visitor and peer tokens, services, moving a project.
 - `bridle daemon doctor` on Linux/WSL2: per-OS Claude login fix text, and warnings (also fail under `--strict`) for a workspace under `/mnt/`, systemd not PID 1 (missing `systemd=true` in `/etc/wsl.conf`) and linger off while `bridle systemd install` units exist.
 

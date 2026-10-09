@@ -132,7 +132,12 @@ bridle token create <name> --machine <m>    a visitor, `external:<name>@<m>`, fo
                                              `token create human --machine <m>` mints `human@<m>`, the human on
                                              another machine (principals.md)
 bridle token create --peer <m>              a peer token, `peer:<m>`, for the daemons of machine <m> to forward mail here: always
-                                             printed once; paste it under `[peer]` in the sender's credentials.toml, keyed by this project
+                                             printed once; paste it under `[peer]` in the sender's credentials.toml, keyed by this project.
+                                             <m> is the machine that SENDS here, not this one; one per receiving project per
+                                             sending machine. E.g. dalek sends to project notes: on the receiver,
+                                             `bridle token create --peer dalek --project notes`; on dalek, `[peer]` / `notes = "<token>"`.
+                                             A second one for the same <m> is refused (`peer:<m> already exists`); replace it
+                                             with `bridle token revoke peer:<m>` first
 bridle token list                           name, created-at, revoked-or-not; never the token itself
 bridle token revoke <name>                  human only, external tokens only (an agent's own token is
                                              revoked through `bridle agent rm`, not this); also removes its

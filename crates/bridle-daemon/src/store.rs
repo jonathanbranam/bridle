@@ -1750,9 +1750,16 @@ mod sync {
             .optional()?
             .is_some();
         if active {
-            return Err(StoreError::Conflict(format!(
-                "principal {id:?} already exists"
-            )));
+            // The usual cause is the receiver's own name given to `--peer` (gdf3).
+            return Err(StoreError::Conflict(if kind == PrincipalKind::Peer {
+                format!(
+                    "{id} already exists on this daemon: --peer takes the machine that SENDS \
+                     to this project (the receiver is this machine); to replace its token, \
+                     revoke it first with `bridle token revoke {id}`"
+                )
+            } else {
+                format!("principal {id:?} already exists")
+            }));
         }
         let token = random_token();
         conn.execute(
@@ -4255,6 +4262,20 @@ mod tests {
         assert_eq!(running[0].id, a.id);
         assert_eq!(running[0].pid, Some(111));
         assert_eq!(running[0].pid_start.as_deref(), Some("start-a"));
+    }
+
+    #[tokio::test]
+    async fn duplicate_peer_token_error_names_the_sending_machine() {
+        let (store, _tmp) = store().await;
+        store.create_peer_token("dalek").await.expect("first");
+        let err = store
+            .create_peer_token("dalek")
+            .await
+            .expect_err("duplicate");
+        let msg = err.to_string();
+        assert!(msg.contains("peer:dalek already exists"), "{msg}");
+        assert!(msg.contains("SENDS"), "{msg}");
+        assert!(msg.contains("bridle token revoke peer:dalek"), "{msg}");
     }
 
     #[tokio::test]
