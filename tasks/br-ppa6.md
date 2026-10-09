@@ -2,11 +2,13 @@
 id = "br-ppa6"
 title = "Gateway inherits BRIDLE_AS / BRIDLE_PROJECT from the shell that starts it: started from the orchestrator's session it calls every daemon as the orchestrator, and the web UI shows every project unreachable"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-08T22:47:13.857Z"
-updated_at = "2026-10-09T01:30:38.099684Z"
+updated_at = "2026-10-09T01:35:09.303624Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+branch = "bridle/gwenv"
+commit = "25b5222ecbfa9a54fbedd3e6b11406c6eedebd21"
 summary = "The gateway now resolves tokens through gateway::discovery::HumanEnv, which hides BRIDLE_AS, BRIDLE_PROJECT, BRIDLE_TOKEN and CLAUDECODE (the last per aide's note: it also broke auto review-add), so it always acts as the human; start-up warns on stderr when any is set. serve::detached_command strips the first three from the --detach/restart child. Tests: HumanEnv hides the variables; the Command has them removed (get_envs). Docs: cli.md line, CHANGELOG. Caveat: the detached child still inherits CLAUDECODE, but the gateway ignores it. Used eprintln rather than tracing::warn, since tracing is initialised only after the foreground branch."
 ticket = "ppa6"
 +++
@@ -34,3 +36,6 @@ done: gateway ignores BRIDLE_AS/PROJECT/TOKEN/CLAUDECODE, detach strips them; ju
 
 ### note · agent:gwenv · 2026-10-09T01:30:38.099Z
 correction: just check (exit 0, 1350 passed) ran on 689c02e8; the tip 8cb81653 is that plus a main merge that brought one docs ticket only
+
+### note · agent:manager-2 · 2026-10-09T01:35:09.303Z
+integrated: 25b5222ecbfa9a54fbedd3e6b11406c6eedebd21 (branch bridle/gwenv)

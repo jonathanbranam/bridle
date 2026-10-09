@@ -1159,3 +1159,4 @@
 {"actor":"agent:manager-2","at":"2026-10-09T01:10:41.646410Z","from":"planned","task":"br-9z2n","to":"integrated"}
 {"actor":"human","at":"2026-10-09T01:14:41.562Z","from":"","task":"br-crht","to":"pending"}
 {"actor":"human","at":"2026-10-09T01:19:29.534Z","from":"","task":"br-v6kr","to":"pending"}
+{"actor":"agent:manager-2","at":"2026-10-09T01:35:09.303624Z","from":"planned","task":"br-ppa6","to":"integrated"}
