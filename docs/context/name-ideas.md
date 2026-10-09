@@ -168,7 +168,7 @@ harrier. Short and dictation-safe, but many are everyday words.
 > - all of the four seasons
 > - The Gunslinger series
 >
-> **doc-name-ideas-e11e82, 2026-10-08 22:00 EDT:** @human Filled in a "Stephen King" table just below, one group per work, from memory. Names shared between books (tommy, billy, chris) are listed once, under the first. I cut the bullet down to point at it.
+> **doc-name-ideas-e11e82, 2026-10-08 22:00 EDT:** @human Filled in a "Stephen King" table just below, one group per work, from memory. Names shared between books (tommy, billy, chris) are listed once, under the first. I cut the bullet down to point at it. [read 2026-10-08 22:04 EDT]
 
 | Work | Names |
 |---|---|
