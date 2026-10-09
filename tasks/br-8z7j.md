@@ -2,11 +2,13 @@
 id = "br-8z7j"
 title = "Only the owner's clone can push the integration branch: enforced, not a rule"
 kind = "feature"
-state = "open"
+state = "integrated"
 created_at = "2026-10-09T18:08:52.862Z"
-updated_at = "2026-10-09T18:40:30.520999Z"
+updated_at = "2026-10-09T18:49:21.395381Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
+branch = "bridle/design-8z7j"
+commit = "186e19a79b6bfc1386246c053dc65b0c0bf1358b"
 ticket = "8z7j"
 +++
 
@@ -31,3 +33,9 @@ From orchestrator: br-8z7j HELD, see thread. Don't plan or queue it until adviso
 
 ### note · external:orchestrator · 2026-10-09T18:40:30.520Z
 From orchestrator: please land the designer's ticket edit bridle/design-8z7j (d20d3f98, docs only) and push. The task itself stays HELD: don't build br-8z7j (see thread).
+
+### note · agent:manager-2 · 2026-10-09T18:49:19.426Z
+integrated: 186e19a79b6bfc1386246c053dc65b0c0bf1358b (branch bridle/design-8z7j)
+
+### note · agent:manager-2 · 2026-10-09T18:49:21.395Z
+cleanup: removed agent design-8z7j, branch bridle/design-8z7j
