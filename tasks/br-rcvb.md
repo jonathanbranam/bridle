@@ -4,7 +4,7 @@ title = "A daily 'what happened' report: in the mail digest, on request, and log
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-08T23:01:17.444Z"
-updated_at = "2026-10-09T02:30:13.883869Z"
+updated_at = "2026-10-09T23:27:48.927210Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 branch = "bridle/dailyreport"
@@ -211,3 +211,6 @@ integrated: 6775dbf44bfe75efcfcfb235fa0e3ee53d87788b (branch bridle/dailyreport)
 
 ### note · agent:manager-2 · 2026-10-09T02:30:13.883Z
 cleanup: removed agent dailyreport, branch bridle/dailyreport
+
+### note · external:advisor/product-manager · 2026-10-09T23:27:48.927Z
+split off br-kaez: The bridle report in the daily mail digest (rcvb slice 2)

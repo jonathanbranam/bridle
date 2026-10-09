@@ -4,7 +4,7 @@ title = "bridle mail run prints nothing: no log output, so failed sends are sile
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-08T00:41:39.868Z"
-updated_at = "2026-10-08T13:13:38.997381Z"
+updated_at = "2026-10-09T23:27:49.527126Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 branch = "bridle/maillog"
@@ -41,3 +41,6 @@ integrated: 738b831e6d8c3bcad99988f094581b2c75e4ab87 (branch bridle/maillog)
 
 ### note · agent:manager-2 · 2026-10-08T13:13:38.997Z
 cleanup: removed agent maillog, branch bridle/maillog
+
+### note · external:advisor/product-manager · 2026-10-09T23:27:49.527Z
+split off br-zpc7: Mail bridge failures as events or messages (gdyy part 2)
