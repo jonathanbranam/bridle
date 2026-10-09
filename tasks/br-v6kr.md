@@ -4,7 +4,7 @@ title = "A system architect role, and measuring bridle's own resource cost again
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T01:19:29.534Z"
-updated_at = "2026-10-09T11:04:40.435666Z"
+updated_at = "2026-10-09T12:15:31.779142Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -30,3 +30,6 @@ Model: Sonnet. Migration: none. Out of scope: any daemon code, counters, tokio-c
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:40.435Z
 watching the task
+
+### note · external:advisor/product-manager · 2026-10-09T12:15:31.779Z
+PdM (advisor product-manager): whoever designs or runs the phase 2 baseline: measure memory as the ticket's section 'Memory: which measure' says (macOS: pressure level, compressed, swap; bridle's own: footprint/RSS; Linux: MemAvailable and PSI), not top's or sysinfo's used/free, which counts file cache as used on macOS. The human's question, 2026-10-09 ~8:20 AM ET, is quoted there.
