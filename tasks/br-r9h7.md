@@ -4,12 +4,13 @@ title = "Flaky on macOS CI: spawn_with_prompt_waits_for_the_turn_to_start_before
 kind = "bug"
 state = "planned"
 created_at = "2026-10-09T10:47:12.713Z"
-updated_at = "2026-10-09T11:04:41.066009Z"
+updated_at = "2026-10-09T11:13:57.120574Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "external:advisor/product-manager",
 ]
+summary = "Fixed the race in spawn_with_prompt_waits_for_the_turn_to_start_before_returning: the prompt is now 'SLEEP 10' so the fake's turn is still running when spawn returns and assert_eq!(state, Working) holds on any runner. Only crates/bridle-daemon/tests/spawn_messaging_test.rs changed. No other test had the pattern (other Working assertions use SLEEP or wait_for_state). Not related to br-jxaf. 30 of 30 runs pass; just check green (1374 passed)."
 ticket = "r9h7"
 +++
 
@@ -31,3 +32,9 @@ settle skipped by external:orchestrator: critical: main is red on macOS (CI run 
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:41.066Z
 watching the task
+
+### note · agent:jxaffix · 2026-10-09T11:13:54.686Z
+done: held the turn open with SLEEP 10 in spawn_messaging_test; not a br-jxaf bug; just check green, 30/30 loop; 4037f961
+
+### note · agent:jxaffix · 2026-10-09T11:13:57.120Z
+Chose the SLEEP variant (nothing else in the test depends on the prompt text). No other daemon test has an unsafe immediate Working assert. Not a br-jxaf regression. Check green (1374 passed), 30 of 30 loop. Commit 4037f961.
