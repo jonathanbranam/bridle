@@ -80,3 +80,11 @@ The aide's reading. The dictation is garbled in places, so check with the human 
 - It runs weekly, against the baseline.
 - Scenarios are added over time but changed rarely, so the numbers stay comparable.
 - The human wants to see the scenario list before it's built.
+
+## Order, and monitoring as a load source (the human, 2026-10-08 ~9:55 PM ET)
+
+> Okay, the thing to consider here is that, for anything always-on, any continuous monitoring can be a new source of load, right? Our PS problem was part of this. It was monitoring the system, right? All well-intentioned, but too much and incorrectly written monitoring can just cause as much load as anything else, so we need to be careful. What we're doing, I want to establish the baseline, I think, before doing any of these additional enhancements, so we know where we stand right now.
+
+So:
+1. **The baseline (phase 1) comes first,** before any counters, benchmark or other enhancement.
+2. **Every always-on measure must be shown to be cheap,** checked against the baseline before it lands. For example, the counters read numbers the process already has (`getrusage`, a counter incremented at the existing spawn sites). They never start a process, and never do work proportional to the machine. The containment `ps` poll was well-meant monitoring that became the load (n4w4).
