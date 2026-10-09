@@ -15,7 +15,7 @@ before it moves: "waits on the human" is a pending task only the human can appro
 is the project manager's; "ready to build" is in the queue; "HELD" is planned in bridle but
 stopped by the human.
 
-Last updated: 2026-10-09 19:28 ET.
+Last updated: 2026-10-09 19:38 ET.
 
 ## Needs the human now
 
@@ -113,7 +113,7 @@ Daemons, tokens, sync and projects across the laptop, the NUC and the Windows PC
 | [br-cufw](http://dalek.tailbc91f5.ts.net:7878/task?id=br-cufw) | Mail between daemons, slice 4: visible state: outbox status, message show (queued/arriv... |  | pending | waits on the human (approve to ready) |
 | [br-3932](http://dalek.tailbc91f5.ts.net:7878/task?id=br-3932) | Run bridle on a project without a local bridle clone (mrhe) |  | pending | waits on the human (approve to ready) |
 | [br-u6w9](http://dalek.tailbc91f5.ts.net:7878/task?id=br-u6w9) | Human interaction time: daemon serves the prompt log; gateway collects across machines ... |  | pending | waits on the human (approve to ready) |
-| [ui-9hq8](http://dalek.tailbc91f5.ts.net:7878/task?id=ui-9hq8) | Documents of projects on another machine (the NUC): read and comment in bridle-ui | high | planned | ready to build |
+| [ui-9hq8](http://dalek.tailbc91f5.ts.net:7878/task?id=ui-9hq8) | Documents of projects on another machine (the NUC): read and comment in bridle-ui | high | integrated | delivered |
 
 ### Theme `tickets-and-release`: Tickets, changelog and release
 
@@ -146,7 +146,7 @@ How work is recorded (tickets, fields, migrations) and shipped (changelog, relea
 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
-| [br-785a](http://dalek.tailbc91f5.ts.net:7878/task?id=br-785a) | A landing that needs a UI install shows without a manual step (tc7t, option C) |  | open | to plan (project manager) |
+| [br-785a](http://dalek.tailbc91f5.ts.net:7878/task?id=br-785a) | A landing that needs a UI install shows without a manual step (tc7t, option C) |  | open | design first (designer on tc7t, then the human's review); build split after br-7ufd lands |
 | [br-g3az](http://dalek.tailbc91f5.ts.net:7878/task?id=br-g3az) | Status line token setup in the docs writes an empty file: token create needs --print now |  | integrated | delivered |
 | [br-01ff](http://dalek.tailbc91f5.ts.net:7878/task?id=br-01ff) | Tickets through the bridle binary in every project: new, frontmatter, check, resolve; a... |  | pending | waits on the human (approve to ready) |
 | [br-ubjd](http://dalek.tailbc91f5.ts.net:7878/task?id=br-ubjd) | A CHANGELOG line for every landed task, written on the branch, and one section per kind... |  | pending | waits on the human (approve to ready) |
@@ -173,8 +173,8 @@ Agents use bridle correctly: commands, help, roles, the workflow reaching every 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
 | [br-3mz4](http://dalek.tailbc91f5.ts.net:7878/task?id=br-3mz4) | One orchestrator per machine, not per project: say so in the advisor role and wherever ... |  | planned | ready to build |
-| [br-7zd4](http://dalek.tailbc91f5.ts.net:7878/task?id=br-7zd4) | Remove the stale 'Until bridle workflow sync renders rules' lines from workflow/base/ru... | low | open | to plan (project manager) |
-| [br-sfpg](http://dalek.tailbc91f5.ts.net:7878/task?id=br-sfpg) | A researcher role with web tools, and managers check a task's needs against the role's ... | low | open | to plan (project manager) |
+| [br-7zd4](http://dalek.tailbc91f5.ts.net:7878/task?id=br-7zd4) | Remove the stale 'Until bridle workflow sync renders rules' lines from workflow/base/ru... | low | planned | ready to build |
+| [br-sfpg](http://dalek.tailbc91f5.ts.net:7878/task?id=br-sfpg) | A researcher role with web tools, and managers check a task's needs against the role's ... | low | open | needs a designer pass (low; later) |
 | [br-d48r](http://dalek.tailbc91f5.ts.net:7878/task?id=br-d48r) | Machine load notes go to aide, not the orchestrator |  | dropped | dropped |
 | [br-163f](http://dalek.tailbc91f5.ts.net:7878/task?id=br-163f) | Group the CLI's 54 top-level commands; split commands.rs/cli.rs by group (a67t) |  | reopened | reopened |
 | [br-ts6b](http://dalek.tailbc91f5.ts.net:7878/task?id=br-ts6b) | One command tree for interactive sessions: bridle session <verb> <seat>, retiring bridl... |  | pending | waits on the human (approve to ready) |
@@ -243,7 +243,8 @@ The orchestrator and daemons stay up, relaunch once, upgrade cleanly and recover
 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
-| [br-fpde](http://dalek.tailbc91f5.ts.net:7878/task?id=br-fpde) | Restart on Linux execs '<path> (deleted)' after the binary is replaced |  | open | to plan (project manager) |
+| [br-fpde](http://dalek.tailbc91f5.ts.net:7878/task?id=br-fpde) | Restart on Linux execs '<path> (deleted)' after the binary is replaced |  | planned | ready to build |
+| [br-8ff8](http://dalek.tailbc91f5.ts.net:7878/task?id=br-8ff8) | Flaky on CI: settle_wake_test blocked-task note races its edge setup | critical | planned | ready to build |
 | [br-7ufd](http://dalek.tailbc91f5.ts.net:7878/task?id=br-7ufd) | Self-upgrade at most every few hours, batching the landings; critical fixes go through ... | high | planned | ready to build |
 | [br-zpc7](http://dalek.tailbc91f5.ts.net:7878/task?id=br-zpc7) | Mail bridge failures as events or messages (gdyy part 2) | low | pending | waits on the human (approve to ready) |
 | [br-8a53](http://dalek.tailbc91f5.ts.net:7878/task?id=br-8a53) | main red (ubuntu): gateway_test a_replaced_binary_is_re_executed; INVOCATION_ID misdete... | critical | integrated | delivered |
@@ -278,7 +279,7 @@ Bridle's own cost on the machine: measure against a baseline, then cut it.
 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
-| [br-tnyt](http://dalek.tailbc91f5.ts.net:7878/task?id=br-tnyt) | Machine load notes repeat every few minutes: add a quiet period, and send one note per ... | high | planned | ready to build |
+| [br-tnyt](http://dalek.tailbc91f5.ts.net:7878/task?id=br-tnyt) | Machine load notes repeat every few minutes: add a quiet period, and send one note per ... | high | integrated | delivered |
 | [br-n4w4](http://dalek.tailbc91f5.ts.net:7878/task?id=br-n4w4) | Postmortem: bridle's own 'ps' polling (every daemon, test daemons at 200 ms) drove dale... |  | pending | waits on the human (approve to ready) |
 | [br-v6kr](http://dalek.tailbc91f5.ts.net:7878/task?id=br-v6kr) | A system architect role, and measuring bridle's own resource cost against a baseline |  | planned | baseline starts 4:00 AM ET 2026-10-10 (the human); orchestrator sends the go; must use the macOS memory measures (ticket) |
 | [br-jxwr](http://dalek.tailbc91f5.ts.net:7878/task?id=br-jxwr) | Track and report how long a task takes from pickup to merge, split into agent work, bui... | low | pending | the human's ask (via aide); would show where the 30-40 min per task goes; low (the human): on a workstream, not queued now |
@@ -307,7 +308,7 @@ What the human sees and touches: web UI, documents and comments, to-dos, links, 
 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
-| [ui-jafg](http://dalek.tailbc91f5.ts.net:7878/task?id=ui-jafg) | Send-to-agent button on a task (UI half of rk7k) | low | open | to plan (project manager) |
+| [ui-jafg](http://dalek.tailbc91f5.ts.net:7878/task?id=ui-jafg) | Send-to-agent button on a task (UI half of rk7k) | low | planned | ready to build |
 | [br-kaez](http://dalek.tailbc91f5.ts.net:7878/task?id=br-kaez) | The bridle report in the daily mail digest (rcvb slice 2) | low | pending | waits on the human (approve to ready) |
 | [br-1665](http://dalek.tailbc91f5.ts.net:7878/task?id=br-1665) | A web UI for the human: my to-dos and decisions, to run through and check off |  | pending | waits on the human (approve to ready) |
 | [br-pa8h](http://dalek.tailbc91f5.ts.net:7878/task?id=br-pa8h) | Document review: keep the review list in the database, and scan for unresolved comments... | low | pending | waits on the human (approve to ready) |
@@ -401,6 +402,7 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 | 2026-10-09 ~17:40 | br-8c25 bridle token pair, part 1 (role tokens across machines over SSH) | machine setup |
 | 2026-10-09 ~18:45 | br-k6jd managers and the orchestrator fetch origin; divergence warned (N ahead, M behind) | machine setup |
 | 2026-10-09 ~18:56 | br-jw9e bridle token pair, part 2 (peer tokens, [mail] peers opt-out, pairing on project creation) | machine setup |
+| 2026-10-09 ~19:50 | br-tnyt load notes: quiet period, 30 min gap, one per machine | performance |
 
 ## Changes to this roadmap
 
@@ -447,3 +449,4 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 - 2026-10-09 18:57 ET: br-k6jd and br-jw9e (token pair part 2, the human: "land jw9e") delivered. br-tnyt planned.
 - 2026-10-09 19:11 ET: br-8z7j hold released (dotfiles hooks cleaned up); its build is br-hdbj (planned), br-8z7j dropped. Ticket sweep: 96 tickets whose tasks were all done resolved (the human: the PdM resolves tickets).
 - 2026-10-09 19:28 ET: follow-ups from the ticket sweep (the human approved): readied br-fpde (restart stays up when exec fails; reliability) and br-785a (UI install follows landings, tc7t option C; tickets-and-release), normal; readied low ui-jafg (rk7k UI button; human-ui), br-sfpg (researcher role, 2mtr; agents-and-cli), br-7zd4 (stale rule lines, 98xt; agents-and-cli); filed unscheduled br-kaez (rcvb slice 2; human-ui) and br-zpc7 (gdyy part 2; reliability). None in an epic.
+- 2026-10-09 19:38 ET: br-tnyt delivered, ticket tnyt resolved; br-g76s unblocked. Placed br-8ff8 (CI flake, critical) in reliability. br-785a waits on a designer pass on tc7t (queued); br-sfpg needs a designer later.

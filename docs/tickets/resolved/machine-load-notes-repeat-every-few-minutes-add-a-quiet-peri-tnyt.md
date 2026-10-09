@@ -10,6 +10,7 @@ specs: []
 needs: []
 see: [d48r, v7ug]
 tasks: [br-tnyt]
+closed: 2026-10-09T23:37:59Z
 ---
 
 ## The ask
@@ -37,3 +38,7 @@ The human, 2026-10-09 ~6:15 PM ET, verbatim (to the orchestrator, for the aide):
 2. One note per machine, not per daemon: a machine-wide condition is reported once.
 3. Unchanged: the recipient and what the daemon does under load (hold new spawns and resume them
    itself).
+
+## Resolution
+
+Resolved 2026-10-09 by advisor (product-manager). br-tnyt landed: a load note needs 10 minutes below the threshold before the next crossing counts, at least 30 minutes between notes, and a machine-wide stamp so only one daemon per machine sends it. The recipient stays the orchestrator.
