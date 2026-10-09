@@ -4,7 +4,7 @@ title = "A daily 'what happened' report: in the mail digest, on request, and log
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-08T23:01:17.444Z"
-updated_at = "2026-10-09T02:30:03.970417Z"
+updated_at = "2026-10-09T02:30:13.883869Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 branch = "bridle/dailyreport"
@@ -208,3 +208,6 @@ done: bridle report (slice 1) built, real output pasted on the thread; just chec
 
 ### note · agent:manager-2 · 2026-10-09T02:30:03.970Z
 integrated: 6775dbf44bfe75efcfcfb235fa0e3ee53d87788b (branch bridle/dailyreport)
+
+### note · agent:manager-2 · 2026-10-09T02:30:13.883Z
+cleanup: removed agent dailyreport, branch bridle/dailyreport

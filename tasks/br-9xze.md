@@ -4,7 +4,7 @@ title = "Scheduled messages, first slice: an agent schedules a message to itself
 kind = "feature"
 state = "planned"
 created_at = "2026-10-08T14:28:58.540Z"
-updated_at = "2026-10-09T02:22:40.617826Z"
+updated_at = "2026-10-09T02:30:19.850213Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -40,3 +40,6 @@ split off br-g5y2: Scheduled messages slice 2: role priming: wait at the maximum
 
 ### note · agent:schedmsg · 2026-10-09T02:22:40.617Z
 done: scheduled messages slice 1 (store, firing loop, /v1/schedules, bridle schedule add|list|rm, docs, CHANGELOG, summary written); just check exit 0, 1362 tests passed; 0e966960. Notes: added chrono-tz (nothing in Cargo.lock handled IANA zones); externals like the orchestrator are refused per decision 6 (agents and the human only), which slice 2 may want to revisit; targets are principals on the same daemon.
+
+### note · agent:manager-2 · 2026-10-09T02:30:19.850Z
+manager-2: land hit a merge conflict in crates/bridle/src/commands/mod.rs (br-rcvb added 'report' there). Merge main, resolve, run just check once, report the tip.
