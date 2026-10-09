@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The daemon serves its own repo's documents to the human token: `GET /v1/documents?q=`, `GET`/`PUT /v1/documents/{path}`, `POST /v1/links/resolve`, `GET /v1/specs` (br-5e4k). The shared code moved out of the gateway into the new `bridle-docs` crate; client methods `search_documents`, `read_document`, `write_document`, `resolve_links`, `specs`.
 
 ### Fixed
+- The daemon reads the process table natively (`/proc` on Linux, `sysinfo` on macOS) instead of forking `ps` on every tracker tick, with `ps` as the fallback (br-9z2n).
 - nextest runs at most 8 tests at once (`.config/nextest.toml`), so a full `just check` no longer drives host load past the governor and makes timing-sensitive tests flake (br-7fr6).
 - The quiet-hours focus nudge is kept per session, so one session's prompt no longer uses up the nudge for the session the human is typing in (br-eyu3).
 

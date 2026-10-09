@@ -20,10 +20,93 @@ pub struct ProcInfo {
     pub start: String,
 }
 
+/// Prefix of a `start` read natively (no fork). A stored `start` without it
+/// came from `ps` (an older daemon, or the fallback) and is only ever compared
+/// with a `ps` start: the two formats must never be compared with each other.
+const NATIVE: &str = "n:";
+
+/// Snapshots the process table. Reads it natively (no fork: a `ps` per tick
+/// per daemon drove the machine's load up, br-3p3h) and falls back to `ps` if
+/// that fails.
+pub fn snapshot() -> io::Result<Vec<ProcInfo>> {
+    match native_snapshot() {
+        Ok(procs) if !procs.is_empty() => Ok(procs),
+        Ok(_) => ps_snapshot(),
+        Err(e) => {
+            tracing::debug!("native process table read failed, using ps: {e}");
+            ps_snapshot()
+        }
+    }
+}
+
+/// Linux: `/proc/<pid>/stat`. `start` is the boot-relative start in ticks.
+#[cfg(target_os = "linux")]
+fn native_snapshot() -> io::Result<Vec<ProcInfo>> {
+    let mut procs = Vec::new();
+    for entry in std::fs::read_dir("/proc")? {
+        let Ok(entry) = entry else { continue };
+        let Some(pid) = entry
+            .file_name()
+            .to_str()
+            .and_then(|n| n.parse::<i32>().ok())
+        else {
+            continue;
+        };
+        // The process may exit between the listing and the read.
+        let Ok(stat) = std::fs::read_to_string(format!("/proc/{pid}/stat")) else {
+            continue;
+        };
+        if let Some(info) = parse_proc_stat(pid, &stat) {
+            procs.push(info);
+        }
+    }
+    Ok(procs)
+}
+
+/// `pid (comm) state ppid pgrp ... starttime ...`; comm may hold spaces and
+/// parens, so fields are counted from the last `)`.
+#[cfg(any(target_os = "linux", test))]
+fn parse_proc_stat(pid: i32, stat: &str) -> Option<ProcInfo> {
+    let rest = &stat[stat.rfind(')')? + 1..];
+    let f: Vec<&str> = rest.split_whitespace().collect();
+    // f[0] state, f[1] ppid, f[2] pgrp, f[19] starttime.
+    Some(ProcInfo {
+        pid,
+        ppid: f.get(1)?.parse().ok()?,
+        pgid: f.get(2)?.parse().ok()?,
+        start: format!("{NATIVE}{}", f.get(19)?),
+    })
+}
+
+/// Elsewhere (macOS): `sysinfo` for pid, ppid and start time, `getpgid(2)`
+/// for the group (sysinfo has none).
+#[cfg(not(target_os = "linux"))]
+fn native_snapshot() -> io::Result<Vec<ProcInfo>> {
+    use sysinfo::{ProcessRefreshKind, ProcessesToUpdate, System};
+    let mut sys = System::new();
+    sys.refresh_processes_specifics(ProcessesToUpdate::All, true, ProcessRefreshKind::nothing());
+    let mut procs = Vec::new();
+    for (pid, p) in sys.processes() {
+        let pid = pid.as_u32() as i32;
+        let Some(ppid) = p.parent() else { continue };
+        // Gone since the listing, or not ours to ask about: skip it.
+        let Ok(pgid) = nix::unistd::getpgid(Some(Pid::from_raw(pid))) else {
+            continue;
+        };
+        procs.push(ProcInfo {
+            pid,
+            ppid: ppid.as_u32() as i32,
+            pgid: pgid.as_raw(),
+            start: format!("{NATIVE}{}", p.start_time()),
+        });
+    }
+    Ok(procs)
+}
+
 /// Snapshots the process table with `ps`. Works on both macOS and Linux:
 /// `lstart` is multi-word, so it's kept last and the rest of the line after
 /// the first three numeric fields is taken whole.
-pub fn snapshot() -> io::Result<Vec<ProcInfo>> {
+fn ps_snapshot() -> io::Result<Vec<ProcInfo>> {
     let output = Command::new("ps")
         .args(["-axo", "pid=,ppid=,pgid=,lstart="])
         .output()?;
@@ -96,7 +179,16 @@ pub fn start_time(pid: i32) -> Option<String> {
 /// with a *different* start time has been reused by an unrelated process
 /// and must never be signalled.
 pub fn is_same_process(pid: i32, start: &str) -> bool {
-    start_time(pid).as_deref() == Some(start)
+    // A start stored by `ps` (an older daemon) is checked against `ps`.
+    let current = if start.starts_with(NATIVE) {
+        start_time(pid)
+    } else {
+        ps_snapshot()
+            .ok()
+            .and_then(|s| s.into_iter().find(|p| p.pid == pid))
+            .map(|p| p.start)
+    };
+    current.as_deref() == Some(start)
 }
 
 /// Maps each pid in `snap` to its start time, for O(1) identity checks
@@ -258,6 +350,33 @@ mod tests {
         cmd.arg("-c").arg("sleep 30 & sleep 30");
         cmd.process_group(0);
         cmd.spawn().expect("spawn test process group")
+    }
+
+    #[test]
+    fn native_snapshot_has_this_process_and_its_parent() {
+        let snap = native_snapshot().expect("native snapshot");
+        let me = std::process::id() as i32;
+        let mine = snap.iter().find(|p| p.pid == me).expect("own pid listed");
+        assert_eq!(mine.ppid, std::os::unix::process::parent_id() as i32);
+        assert!(mine.start.starts_with(NATIVE));
+        assert!(is_same_process(me, &mine.start));
+        assert!(!is_same_process(me, "n:0"));
+    }
+
+    #[test]
+    fn descendants_finds_a_spawned_child_natively() {
+        let mut child = Command::new("sleep").arg("30").spawn().expect("spawn");
+        let found = descendants(std::process::id() as i32, &native_snapshot().unwrap());
+        let _ = child.kill();
+        let _ = child.wait();
+        assert!(found.iter().any(|p| p.pid == child.id() as i32));
+    }
+
+    #[test]
+    fn parses_proc_stat_with_spaces_and_parens_in_comm() {
+        let line = "42 (a) b (c)) S 7 9 9 0 -1 4194560 1 0 0 0 0 0 0 0 20 0 1 0 12345 100 10 18446744073709551615";
+        let p = parse_proc_stat(42, line).unwrap();
+        assert_eq!((p.ppid, p.pgid, p.start.as_str()), (7, 9, "n:12345"));
     }
 
     #[tokio::test]
