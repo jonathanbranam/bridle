@@ -7,7 +7,7 @@ repos: [bridle, bridle-ui]
 changes: []
 specs: []
 needs: []
-see: [g6v4, x8jt, wjhp, ehv6]
+see: [g6v4, x8jt, wjhp, ehv6, 4cgx]
 tasks: []
 ---
 
@@ -50,3 +50,26 @@ The human, verbatim (2026-10-04 ~9:10 PM ET, to the bridle-ui aide):
 Fact: the daemon's document watcher (`crates/bridle-daemon/src/doc_watch.rs`) reads no front matter.
 The receiving agent is fixed by the file name (`doc-<id>` / `doc-<slug>-<hash>`, role
 `document-reviewer`).
+
+## Refined (the human, 2026-10-09 ~7:20 PM ET)
+
+The human, verbatim (to advisor product-manager): "Refine re79 and put it in the proper epic - a
+document can have a reviewer frontmatter that indicates which agent is sent messages when
+comments are added. Goes alongsie 4cgx they are related."
+
+So the idea above is now the ask:
+
+- A document's front matter may carry `reviewer: <agent>`. When comments are added, the daemon's
+  document watcher (`doc_watch`) sends the batch to that agent instead of the default
+  `doc-<id>` document-reviewer. With no `reviewer:`, today's behaviour stays.
+- The agent that asks the human to approve a ticket sets `reviewer:` to itself, so the human's
+  comments go back to the asker (the original ask).
+- Naming the agent follows 4cgx's mention rules: a role on the same project by default
+  (`orchestrator`, `advisor/product-manager`), external roles detected and sent to `external:`,
+  an agent by name; the cross-project form is 4cgx's open question. An unknown or gone agent is
+  reported, and the batch falls back to the default reviewer.
+- Not in this ticket: the direct Approve button on a pending ticket (the first half of the ask).
+  It belongs with readiness on the ticket (22ab step 2, br-bpku) and reviews (v2va).
+
+Epic `comment-routing` (theme `human-ui`) with 4cgx. Low priority, like all comment work (the
+human, 2026-10-09).
