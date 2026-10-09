@@ -198,6 +198,9 @@ both directions: it can't send mail to other projects or receive mail from them.
 tokens are still minted. The default is `true` (everyone talks to everyone). The advisor's
 recommendation (2026-10-09): an on/off setting, not a list of allowed projects (YAGNI).
 
+> [!comment] c1 human, 2026-10-09 14:20 EDT, on "The advisor's recommendation (2026-10-09): an on/off setting, not a list of allowed projects (YAGNI)." [pending 2026-10-09 14:20 EDT]
+> Agree.
+
 ### Ticket or task: where design lives
 
 This ticket. The docs index (docs/README.md, "Tickets hold design decisions (the why and the
