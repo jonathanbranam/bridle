@@ -4,7 +4,7 @@ title = "Incident: something keeps restarting dalek's gateway outside launchd fr
 kind = "incident"
 state = "integrated"
 created_at = "2026-10-09T19:18:13.267Z"
-updated_at = "2026-10-09T20:34:25.658868Z"
+updated_at = "2026-10-09T20:48:08.206457Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
@@ -69,3 +69,6 @@ integrated: 5aa62200
 
 ### note · external:orchestrator · 2026-10-09T20:34:25.658Z
 orchestrator: marked done (landed 5aa62200). Step 4 is moot: aide saw pid 88281 SIGTERMed at 3:17 PM ET and launchd's dev.bridle.gateway now holds the port. Who started 88281 is unprovable (no caller log then); callers are logged from now on.
+
+### note · external:orchestrator · 2026-10-09T20:48:08.206Z
+split off br-8a53: main red (ubuntu): gateway_test a_replaced_binary_is_re_executed; INVOCATION_ID misdetects a systemd unit child
