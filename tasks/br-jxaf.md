@@ -4,7 +4,7 @@ title = "Daemon re-checks Tailscale after start so a boot-time race doesn't leav
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-08T00:37:10.183Z"
-updated_at = "2026-10-09T10:33:05.967769Z"
+updated_at = "2026-10-09T10:33:19.073981Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 size = "S"
@@ -28,3 +28,6 @@ done: daemon re-checks Tailscale after start; just check exit 0, 1374 tests pass
 
 ### note · agent:manager-2 · 2026-10-09T10:33:05.967Z
 integrated: b1c3743201252b7e40e9071a347b09ae8d9540c2 (branch bridle/jxaf)
+
+### note · agent:manager-2 · 2026-10-09T10:33:19.073Z
+cleanup: removed agent jxaf, branch bridle/jxaf
