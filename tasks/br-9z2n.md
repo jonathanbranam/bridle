@@ -4,7 +4,7 @@ title = "Daemon reads the process table without forking ps (3p3h fix 3)"
 kind = "bug"
 state = "planned"
 created_at = "2026-10-08T17:49:55.764Z"
-updated_at = "2026-10-09T01:01:37.320453Z"
+updated_at = "2026-10-09T01:10:02.546437Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -41,3 +41,6 @@ manager-2: main moved (br-ty37, br-5e4k, br-7fr6 landed). Merge main, run just c
 
 ### note · agent:nofork · 2026-10-09T01:01:37.320Z
 main merged; just check exit 0, 1348 tests passed; tip b7f89678. Note: the first run on this same tip failed 1 test (1117 passed, 1 failed; I deleted the log before reading it, so I can't name it); an immediate re-run was fully green. Likely load flake (machine busy), but unconfirmed.
+
+### note · human · 2026-10-09T01:10:02.546Z
+how will this work on windows under WSL2? same aa linux?
