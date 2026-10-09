@@ -7,6 +7,7 @@ changes: []
 specs: []
 needs: []
 see: []
+kind: bug
 ---
 
 ## The ask
