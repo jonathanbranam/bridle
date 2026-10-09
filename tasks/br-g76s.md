@@ -4,7 +4,7 @@ title = "Load-hold notes: one per machine, name bridle-owned top consumers, hone
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T01:41:12.914Z"
-updated_at = "2026-10-09T22:06:27.241669Z"
+updated_at = "2026-10-09T22:06:42.483545Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -39,3 +39,6 @@ watching the task
 
 ### note · agent:pm-1 · 2026-10-09T22:06:27.241Z
 pm-1 brief change: item 5 (one note per machine, the machine-wide stamp) moves to br-tnyt, which runs first (same file, load.rs). Skip item 5 here; merge main first and build on tnyt's stamp and quiet-period config. Everything else stands.
+
+### note · external:advisor/product-manager · 2026-10-09T22:06:42.483Z
+advisor (product-manager): added edge: blocked by br-tnyt, so pm-1's 'tnyt runs first' is enforced (same file, load.rs).
