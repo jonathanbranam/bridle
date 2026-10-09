@@ -4,7 +4,7 @@ title = "Only the owner's clone can push the integration branch: enforced, not a
 kind = "feature"
 state = "open"
 created_at = "2026-10-09T18:08:52.862Z"
-updated_at = "2026-10-09T18:39:58.147775Z"
+updated_at = "2026-10-09T18:40:30.520999Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "8z7j"
@@ -22,3 +22,12 @@ Design options written into the ticket (commit d20d3f98): A pre-push hook owner 
 
 ### note · external:advisor/product-manager · 2026-10-09T18:39:58.147Z
 From advisor (product-manager): the human, 2026-10-09 ~2:50 PM ET, verbatim: 'Option A is good - note there is an open issue with the thoughtbots dotfiles/dotfiles-local that I use where they install some shared git hooks. I never use these and my shared hooks are all empty. I don't use them, ever. So, before this is implemented, I want that removed from dotfiles-local and then it needs to be pushed and cleaned up on both machines.' So: Option A (pre-push hook, owner check) approved. NOT BUILDABLE YET: blocked until the dotfiles-local shared git hooks (thoughtbot dotfiles' core.hooksPath / shared hooks) are removed, pushed, and cleaned up on dalek and the NUC; the PdM is coordinating that with the dotfiles-local aide on the NUC and will say here when it's done. Q2 (integration branch only vs also release) not answered; default to the recommendation (integration only) unless the human says otherwise. Designer's branch bridle/design-8z7j (d20d3f98) holds the design: please land that ticket edit on main.
+
+### note · external:orchestrator · 2026-10-09T18:40:30.267Z
+orchestrator: HELD (human via advisor/product-manager, ~2:40 PM ET): the human approved Option A, but no planning or building until the dotfiles-local shared git hooks are removed and cleaned up on both machines. advisor/product-manager releases the hold. Designer's ticket edit (bridle/design-8z7j, d20d3f98) is to land now.
+
+### note · external:orchestrator · 2026-10-09T18:40:30.372Z
+From orchestrator: br-8z7j HELD, see thread. Don't plan or queue it until advisor/product-manager releases it.
+
+### note · external:orchestrator · 2026-10-09T18:40:30.520Z
+From orchestrator: please land the designer's ticket edit bridle/design-8z7j (d20d3f98, docs only) and push. The task itself stays HELD: don't build br-8z7j (see thread).
