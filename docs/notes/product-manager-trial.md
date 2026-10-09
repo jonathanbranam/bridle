@@ -289,3 +289,17 @@ in is automated project transfer between machines."
   work.** The task's state can't say "design landed, build owed". Either the designer works on
   the ticket without a task branch of its own task, or design and build are separate tasks (or
   tickets: 22ab's child tickets would make this natural).
+
+**2026-10-09 ~3:30 PM ET.**
+
+- The human asked why the comment counter (br-gd43) was high. It was my overrating: "live bug
+  since delete landed", but the human can't delete comments yet. The human: "all of the comment
+  work is low priority; should come at the end of queue for other work." Set low: br-gd43,
+  ui-vnuu, br-pa8h.
+- The human, on why: "the issue with less important working going ahead is that the \"easy\" and
+  \"small\" changes still run builds and peg the CPU so it is quick for the worker to implement,
+  but it actually adds 30-40min." Passed to the orchestrator: order by priority, never by size.
+- Lesson 11: **size is not cost.** A task's cost to the human's queue is its build and check time
+  on the shared machine (~30-40 min, whatever the diff), not its coding time. A real PdM ranks by
+  value and treats every task as a fixed machine cost; "it's small, slot it in" is the wrong
+  instinct. Check before raising priority that the bug can actually hit the human today.
