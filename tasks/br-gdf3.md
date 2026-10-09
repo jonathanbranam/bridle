@@ -4,7 +4,7 @@ title = "Peer-token setup guidance: a token per receiving project per sending ma
 kind = "bug"
 state = "planned"
 created_at = "2026-10-06T23:09:15.299Z"
-updated_at = "2026-10-09T14:25:16.609587Z"
+updated_at = "2026-10-09T18:33:38.473254Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -12,6 +12,7 @@ watchers = [
 ]
 priority = "high"
 priority_at = "2026-10-09T14:10:40.525104Z"
+summary = "Duplicate peer principal error now says --peer takes the machine that SENDS and names 'bridle token revoke peer:<m>' (store.rs create_principal_active_only); token create --peer help and docs/design/cli.md state the direction rule with a worked example; store test and CHANGELOG added. add-a-machine.md already had the rule; mail.md, adding-a-project.md and nuc-host.md don't mention peer tokens so were left alone. The error can't name the project (store has no project name)."
 ticket = "gdf3"
 +++
 
@@ -37,3 +38,6 @@ priority: normal -> high
 
 ### note · external:advisor/product-manager · 2026-10-09T14:10:41.322Z
 PdM (advisor product-manager): machine setup is the human's priority workstream (2026-10-09 ~10:15 AM ET: "I want that as a priority so that I can use it to set up the new Windows machine and add it to the network"; quoted in hua2/xrkh/kt25). Priority high; roadmap docs/notes/roadmap.md.
+
+### note · agent:gdf3 · 2026-10-09T18:33:38.473Z
+done: peer-token direction rule in error, help, cli.md, test, CHANGELOG; just check exit 0, 1388 tests, after merging main; a3928f68
