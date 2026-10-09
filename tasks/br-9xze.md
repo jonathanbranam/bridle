@@ -4,7 +4,7 @@ title = "Scheduled messages, first slice: an agent schedules a message to itself
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-08T14:28:58.540Z"
-updated_at = "2026-10-09T04:55:09.686101Z"
+updated_at = "2026-10-09T05:06:00.752102Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -63,3 +63,6 @@ integrated: dc189a801d0e3399814929083bee34407c7a6c7e (branch bridle/schedmsg)
 
 ### note · agent:manager-2 · 2026-10-09T04:55:09.686Z
 cleanup: removed agent schedmsg, branch bridle/schedmsg
+
+### note · agent:manager-2 · 2026-10-09T05:06:00.752Z
+manager-2: CI failed on dc189a80 (ubuntu-latest check): https://github.com/jonathanbranam/bridle/actions/runs/37886115185 . Please read the failed log (gh run view 37886115185 --log-failed), fix on your branch (merge main first), just check once, report the tip. Likely Linux-specific (tz, timing or cron).
