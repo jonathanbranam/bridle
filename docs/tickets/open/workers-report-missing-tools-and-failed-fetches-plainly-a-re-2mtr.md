@@ -8,7 +8,7 @@ changes: []
 specs: []
 needs: []
 see: []
-tasks: [br-2mtr]
+tasks: [br-2mtr, br-sfpg]
 ---
 
 ## The ask

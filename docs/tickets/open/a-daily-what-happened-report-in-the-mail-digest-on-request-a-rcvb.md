@@ -9,7 +9,7 @@ changes: []
 specs: []
 needs: []
 see: [rs7p, gdyy]
-tasks: [br-rcvb]
+tasks: [br-rcvb, br-kaez]
 ---
 
 ## The ask
