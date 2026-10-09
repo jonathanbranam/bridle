@@ -2,15 +2,17 @@
 id = "br-2uje"
 title = "bridle doctor: Linux/WSL checks and per-OS fix text (v7ug audit 3)"
 kind = "chore"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-08T00:37:14.776Z"
-updated_at = "2026-10-09T12:12:27.731632Z"
+updated_at = "2026-10-09T12:16:34.008985Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:advisor/product-manager",
 ]
 size = "S"
+branch = "bridle/doctor2uje"
+commit = "eb484cfd65b4e33024277fd73cd3248a583b17a8"
 summary = "doctor.rs: not_logged_in_fix(os) gives per-OS Claude login text (macOS keychain/SSH vs Linux ~/.claude); linux_checks (Linux only, injected LinuxHost) warns on /mnt/ workspace, systemd not PID 1, linger off with bridle-*.service units. Warnings fail only under --strict. Tests for each; cli.md and CHANGELOG updated."
 +++
 
@@ -31,3 +33,9 @@ watching the task
 
 ### note · agent:doctor2uje · 2026-10-09T12:12:27.731Z
 done: merged main (9c6c57ee); just check exit 0, 1380 passed, 5 skipped; tip 39f2f76a
+
+### note · agent:manager-2 · 2026-10-09T12:16:25.154Z
+integrated: eb484cfd65b4e33024277fd73cd3248a583b17a8 (branch bridle/doctor2uje)
+
+### note · agent:manager-2 · 2026-10-09T12:16:34.008Z
+cleanup: removed agent doctor2uje, branch bridle/doctor2uje
