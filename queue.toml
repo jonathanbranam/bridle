@@ -2,6 +2,9 @@
 tasks = ["br-jw9e"]
 
 [[tier]]
+tasks = ["br-7ufd"]
+
+[[tier]]
 tasks = ["br-88d4"]
 
 [[tier]]
