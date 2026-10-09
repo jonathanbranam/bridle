@@ -82,6 +82,12 @@ would need `unsafe`), and surviving a closed terminal is unverified:
 keep bridle running, run `bridle serve` in the foreground under a service
 manager (systemd, launchd).
 
+With a port from `[projects]` and no `--listen` or `[daemon] listen`, the daemon listens on loopback
+and the Tailscale IPv4 address (`tailscale ip -4`). If Tailscale is not up at start (boot, a WSL
+restart), it serves loopback, then re-checks every 5 s for 5 min and binds the Tailscale address on
+the same port as soon as one appears, with no restart. If none appears it logs a warning and stays on
+loopback until restarted.
+
 A project has one serving machine ([[docs/design/storage#The state branch|storage]], "Ownership"):
 `serve` fetches `origin/bridle/state` first and refuses to start when its `owner.toml` names
 another host. `bridle serve --take-over` claims the project (after the old daemon stopped and

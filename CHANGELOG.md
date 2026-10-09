@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Fixed
+- Daemon and Tailscale (br-jxaf): a daemon that starts before Tailscale is up now re-checks every 5 s for 5 min and binds the Tailscale address when it appears, instead of staying loopback-only until restarted.
 - Mail attachments (br-srj5): a text attachment is saved as the sender's bytes (transfer encoding undone, no charset conversion), so UTF-8 text labelled iso-8859-1 or unlabelled no longer turns an em dash into mojibake.
 
 ### Changed

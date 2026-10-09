@@ -360,6 +360,71 @@ async fn tailscale_ip() -> Option<std::net::IpAddr> {
         .ok()
 }
 
+/// How often, and for how long, a daemon that started without Tailscale looks for it again.
+const TAILSCALE_RETRY_EVERY: Duration = Duration::from_secs(5);
+const TAILSCALE_RETRY_FOR: Duration = Duration::from_secs(5 * 60);
+
+/// Polls `lookup` until it gives an address, then binds it on `port`. `None` when `give_up`
+/// passes (logged at warn), shutdown comes first, or the bind fails.
+async fn bind_when_tailscale_up<F, Fut>(
+    lookup: F,
+    port: u16,
+    every: Duration,
+    give_up: Duration,
+    mut shutdown: watch::Receiver<bool>,
+) -> Option<tokio::net::TcpListener>
+where
+    F: Fn() -> Fut,
+    Fut: std::future::Future<Output = Option<std::net::IpAddr>>,
+{
+    let deadline = tokio::time::Instant::now() + give_up;
+    loop {
+        tokio::select! {
+            _ = tokio::time::sleep(every) => {}
+            _ = shutdown.wait_for(|v| *v) => return None,
+        }
+        if let Some(ip) = lookup().await {
+            let addr = SocketAddr::new(ip, port);
+            return match tokio::net::TcpListener::bind(addr).await {
+                Ok(l) => {
+                    tracing::warn!(bound = %addr, "Tailscale came up: now also listening on it; every request from another machine needs a bearer token, reads included");
+                    Some(l)
+                }
+                Err(e) => {
+                    tracing::warn!(error = %e, %addr, "Tailscale came up but binding its address failed: loopback only");
+                    None
+                }
+            };
+        }
+        if tokio::time::Instant::now() >= deadline {
+            tracing::warn!(
+                "no Tailscale address after {}s: giving up, loopback only until the daemon restarts",
+                give_up.as_secs()
+            );
+            return None;
+        }
+    }
+}
+
+async fn serve_listener(
+    listener: tokio::net::TcpListener,
+    app: axum::Router,
+    mut rx: watch::Receiver<bool>,
+) {
+    let graceful = async move {
+        let _ = rx.wait_for(|v| *v).await;
+    };
+    if let Err(e) = axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .with_graceful_shutdown(graceful)
+    .await
+    {
+        tracing::error!(error = %e, "axum serve error");
+    }
+}
+
 /// Starts the daemon and returns once it's listening, autostart has run,
 /// and background tasks are up. Does not block for shutdown; see
 /// [`RunningDaemon::join`].
@@ -478,9 +543,11 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
     )
     .context("reading the machine config")?;
     let configured_port = this_machine_port(&machines, &project);
-    let tailscale = match (opts.listen, configured_port) {
-        (None, Some(_)) if !config.listen_set => tailscale_ip().await,
-        _ => None,
+    let tailscale_wanted = opts.listen.is_none() && configured_port.is_some() && !config.listen_set;
+    let tailscale = if tailscale_wanted {
+        tailscale_ip().await
+    } else {
+        None
     };
     let addrs = bind_addrs(
         opts.listen,
@@ -497,8 +564,9 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
                 .with_context(|| format!("binding {addr}"))?,
         );
     }
-    if configured_port.is_some() && addrs.len() == 1 && addrs[0].ip().is_loopback() {
-        tracing::info!("no Tailscale address found: listening on loopback only");
+    let late_tailscale = tailscale_wanted && tailscale.is_none();
+    if late_tailscale {
+        tracing::info!("no Tailscale address found: listening on loopback only, will keep looking");
     }
     let bound = listeners[0].local_addr().context("reading bound address")?;
     let url = format!("http://{bound}");
@@ -724,20 +792,27 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
     let serve_task = tokio::spawn(async move {
         let mut set = tokio::task::JoinSet::new();
         for listener in listeners {
-            let app = app.clone();
-            let mut rx = serve_shutdown_rx.clone();
+            set.spawn(serve_listener(
+                listener,
+                app.clone(),
+                serve_shutdown_rx.clone(),
+            ));
+        }
+        // Tailscale was not up at start (boot, WSL restart): keep looking for it, then serve it
+        // beside the others.
+        if let (true, Some(port)) = (late_tailscale, configured_port) {
+            let (app, rx) = (app.clone(), serve_shutdown_rx.clone());
             set.spawn(async move {
-                let graceful = async move {
-                    let _ = rx.wait_for(|v| *v).await;
-                };
-                if let Err(e) = axum::serve(
-                    listener,
-                    app.into_make_service_with_connect_info::<SocketAddr>(),
+                let found = bind_when_tailscale_up(
+                    tailscale_ip,
+                    port,
+                    TAILSCALE_RETRY_EVERY,
+                    TAILSCALE_RETRY_FOR,
+                    rx.clone(),
                 )
-                .with_graceful_shutdown(graceful)
-                .await
-                {
-                    tracing::error!(error = %e, "axum serve error");
+                .await;
+                if let Some(listener) = found {
+                    serve_listener(listener, app, rx).await;
                 }
             });
         }
@@ -1287,6 +1362,42 @@ mod bind_tests {
         let ts: IpAddr = "100.64.0.7".parse().unwrap();
         let got = bind_addrs(None, None, Some(7402), a(DEFAULT), Some(ts));
         assert_eq!(got, vec![a("127.0.0.1:7402"), a("100.64.0.7:7402")]);
+    }
+
+    #[tokio::test]
+    async fn late_tailscale_is_bound_once_it_appears() {
+        let (_tx, rx) = watch::channel(false);
+        let calls = std::sync::atomic::AtomicUsize::new(0);
+        let lookup = || {
+            let n = calls.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            async move { (n >= 2).then(|| "127.0.0.1".parse::<IpAddr>().unwrap()) }
+        };
+        let l = bind_when_tailscale_up(
+            lookup,
+            0,
+            Duration::from_millis(10),
+            Duration::from_secs(10),
+            rx,
+        )
+        .await
+        .expect("bound once the address appeared");
+        let addr = l.local_addr().unwrap();
+        assert!(tokio::net::TcpStream::connect(addr).await.is_ok());
+        assert_eq!(calls.load(std::sync::atomic::Ordering::SeqCst), 3);
+    }
+
+    #[tokio::test]
+    async fn tailscale_that_never_comes_up_is_given_up_on() {
+        let (_tx, rx) = watch::channel(false);
+        let got = bind_when_tailscale_up(
+            || async { None },
+            0,
+            Duration::from_millis(10),
+            Duration::from_millis(50),
+            rx,
+        )
+        .await;
+        assert!(got.is_none());
     }
 
     #[test]
