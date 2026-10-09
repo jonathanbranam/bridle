@@ -14,8 +14,6 @@ tasks: []
 
 ## The ask
 
-## The ask
-
 Make `store::tests::cancelled_blocking_task_returns_shutting_down_not_a_panic`
 (`crates/bridle-daemon/src/store.rs`, ~line 3955) deterministic. Test-only; Haiku.
 
