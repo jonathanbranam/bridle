@@ -4,7 +4,7 @@ title = "Flaky on Linux CI: upgrade_test self_upgrade_restarts_only_after_the_mi
 kind = "bug"
 state = "planned"
 created_at = "2026-10-09T16:02:35.489Z"
-updated_at = "2026-10-09T16:30:01.121502Z"
+updated_at = "2026-10-09T16:52:52.776393Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -12,6 +12,7 @@ watchers = [
 ]
 priority = "critical"
 priority_at = "2026-10-09T16:02:49.417144Z"
+summary = "Flaky upgrade_test self_upgrade_restarts_only_after_the_mid_turn_agent_finishes made deterministic (crates/bridle-daemon/tests/upgrade_test.rs; test-only). Cause inferred, not reproduced: CI's ~69 s is the 8 s spawn-ready wait plus the 60 s wait_for, i.e. the drain began while the spawn was in flight, held the agent's first prompt (no init, so no turn), and the agent never read working. The test's build command now waits for a go file that the test writes only after it sees the agent working, so the drain cannot start before the turn. Looped 30 of 30 under 8 CPU-burners locally (macOS; the flake never reproduced locally before the change either). Caveat for a possible follow-up, not fixed: lifting a drain after a failed restart (perform_restart error path) does not deliver messages held during the drain, so a held prompt could stay stuck; unproven as the CI cause. The spawn-in-flight-vs-quiet-check race is no longer covered by this test."
 ticket = "h7gt"
 +++
 
