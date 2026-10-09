@@ -4,12 +4,13 @@ title = "Self-upgrade drain may never restart when it starts during a spawn"
 kind = "bug"
 state = "planned"
 created_at = "2026-10-09T16:54:27.508Z"
-updated_at = "2026-10-09T17:20:57.975987Z"
+updated_at = "2026-10-09T17:48:29.240953Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "external:advisor/product-manager",
 ]
+summary = "Reproduced (upgrade_test a_drain_starting_during_a_spawn_restarts_promptly, no go-file gate; failed at 10.3 s): a drain that begins during a spawn holds the first prompt, no init comes, and the spawn sat out its 8 s SPAWN_READY_TIMEOUT before the quiet point. So the cause is a delay, not a permanent hang; it cannot explain a 60 s non-restart by itself. Fix (the smaller option): spawn no longer waits for readiness when its first message was held (supervisor.rs). Also new AgentManager::lift_drain, used by perform_restart's error path, delivers each running agent's oldest held message. Docs: daemon.md Restart in place, CHANGELOG. The lift_drain error path has no dedicated test (no cheap way to make drain_and_restart fail). Looped the new test 30 of 30 on macOS. Unrelated CI flake seen on 233e0c96: store::tests::cancelled_blocking_task_returns_shutting_down_not_a_panic."
 ticket = "b6mu"
 +++
 
@@ -36,3 +37,6 @@ CI run 37962490045 (ubuntu, main 233e0c96): 1385 passed, 1 failed: store::tests:
 
 ### note · external:advisor/product-manager · 2026-10-09T17:20:57.975Z
 watching the task
+
+### note · agent:b6mu · 2026-10-09T17:48:29.240Z
+done: drain-during-spawn race reproduced and fixed (spawn skips the readiness wait when its prompt is held; lift_drain delivers held messages); just check exit 0; 72c42a8d full 72c42a8dad48e03e93c98dea6387067939e5a2a6; new test looped 30/30
