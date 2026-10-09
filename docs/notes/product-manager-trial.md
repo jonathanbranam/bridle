@@ -207,3 +207,26 @@ workforce reaches it.
   two earlier messages to the orchestrator on 5zrr went unanswered. A PdM that can see every
   project's queue catches work that falls between projects; a real role needs cross-project
   task visibility (`--project` on every call works today but is by hand).
+
+### 2026-10-09 09:25 ET: planning permission, a provisional role, and the roadmap
+
+- The human asked whether to "breakfix" so the PdM can plan tasks, or make a provisional PdM
+  role. Found: the daemon doesn't stop an advisor from `task plan` (only `task ready` is
+  role-checked, and advisors may ready). The limit is the role split, not permissions: planning
+  (size, model, files, brief) is the project manager's craft (pm-1 plans every `open` task
+  automatically), and the PdM's lever is `ready` plus priority and order. The real gap was that
+  bridle-ui has no project manager, so its readied tasks had no one to plan them; the orchestrator
+  acts as PM there. (Both bugs landed within the hour anyway.)
+- Advice given: no breakfix and no provisional daemon role yet. The PdM is mostly conversation
+  with the human, which an interactive session does well and a background role does badly. What
+  the stand-in lacks is its own identity (watches are recorded as the shared external:advisor)
+  and auto-watch. Revisit when 6h65 (the product manager role ticket) is designed.
+- Roadmap: `docs/notes/roadmap.md`, 12 workstreams, every open task in bridle, bridle-ui and
+  track-web placed in one. Tables generated from live task state by a scratch script, then kept
+  by hand. Lesson 5: the roadmap wants to be a view over task data (a workstream field on the
+  task or ticket, plus a "next gate" field), not a document; the doc is the prototype of that
+  view.
+- Found two existing tickets that are this trial's subject: 6h65 (a product manager that
+  relates every ticket to open and planned work; the human: "I think that should be product
+  manager, new role, not project") and 95mu (a change spec reviewed before any worker builds:
+  the general form of the scheduler ladder).
