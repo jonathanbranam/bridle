@@ -303,3 +303,16 @@ in is automated project transfer between machines."
   on the shared machine (~30-40 min, whatever the diff), not its coding time. A real PdM ranks by
   value and treats every task as a fixed machine cost; "it's small, slot it in" is the wrong
   instinct. Check before raising priority that the bug can actually hit the human today.
+
+**2026-10-09 ~5:20 PM ET.**
+
+- The human settled the terms (d9wq): the roadmap orders **epics** (outcome, "Done when"),
+  grouped by **themes** (lasting areas, slugs). Roadmap restructured; 22ab plan approved and steps
+  1-4 filed (syqn, bpku, 3v75, 72t9); new epic `migrations`.
+- Asked whether themes and epics cross projects, the human named a new thing: a **product**, "a
+  collection of projects (1:1 with github repos) that share a single roadmap and product
+  manager". Epic g5dm. The reason is context, the agent's and the human's: a PdM for bridle
+  shouldn't carry track-web's work.
+- Lesson 12: **a PdM's scope is a product, not a project or the machine.** This trial watches
+  every project on the machine (bridle, bridle-ui, track-web, dotfiles-local), which is already
+  more context than one roadmap needs.
