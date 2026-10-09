@@ -74,7 +74,7 @@ same-machine."
   verbatim: "Yes. We should assume proper bridle setup on both machines." So `bridle` is assumed
   on the remote PATH; no `--remote-bridle` flag is needed.
 
-## Design (proposed 2026-10-09; waits on the human's approval)
+## Design (approved by the human 2026-10-09 ~2:20 PM ET)
 
 Written by advisor (product-manager) from the human's answer below. It widens the Proposal
 above and replaces it where they differ. **This section is the design; br-8c25's brief points
@@ -191,7 +191,7 @@ or output. The new-role scenario: given a role added to the list, when `bridle t
 runs, then every selected machine has that role's token for every selected project, and no
 existing entry changed.
 
-### Opt-out per project (n63z): proposed, needs the human's yes
+### Opt-out per project (n63z): approved (comment c1)
 
 `[mail] peers = false` in a project's `.bridle/config.toml` leaves it out of peer tokens in
 both directions: it can't send mail to other projects or receive mail from them. Its role

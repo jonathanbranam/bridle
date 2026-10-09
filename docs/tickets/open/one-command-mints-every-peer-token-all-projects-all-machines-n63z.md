@@ -72,8 +72,8 @@ The human, 2026-10-09 ~1:55 PM ET, verbatim: "one command, by default it does bo
 the name of all CLI options before scheduling." (Full answer quoted in sk7p.)
 
 **The design is in [[pair-machines-token-setup-over-ssh-sk7p|sk7p]], section "Design", and that
-section is authoritative**; this ticket keeps the ask. Built by br-8c25. Proposed option names
-(wait on the human's approval):
+section is authoritative**; this ticket keeps the ask. Built by br-8c25. Option names
+(approved by the human 2026-10-09 ~2:20 PM ET, with the opt-out):
 
 ```
 bridle token pair [--machines <m>,...] [--projects <p>,...] [--roles <r>,...]
