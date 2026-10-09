@@ -2,9 +2,9 @@
 id = "br-g76s"
 title = "Load-hold notes: one per machine, name bridle-owned top consumers, honest text, load.hold.started/ended events, escalate a long hold (n4w4 recs 4, 5)"
 kind = "feature"
-state = "pending"
+state = "planned"
 created_at = "2026-10-09T01:41:12.914Z"
-updated_at = "2026-10-09T01:41:12.915207Z"
+updated_at = "2026-10-09T10:47:38.503649Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",

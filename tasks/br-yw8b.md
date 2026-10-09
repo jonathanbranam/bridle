@@ -2,9 +2,9 @@
 id = "br-yw8b"
 title = "fake-claude spawns skip the pyenv shim: resolve the interpreter once (n4w4 rec 7)"
 kind = "chore"
-state = "pending"
+state = "planned"
 created_at = "2026-10-09T01:41:32.122Z"
-updated_at = "2026-10-09T01:41:32.122757Z"
+updated_at = "2026-10-09T10:47:40.102668Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",

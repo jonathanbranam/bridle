@@ -2,9 +2,9 @@
 id = "br-6nzj"
 title = "Test daemons stop polling at 200 ms; a resource-budget test; log the incident in docs/context/incidents.md (n4w4 recs 1, 2, 9)"
 kind = "bug"
-state = "pending"
+state = "planned"
 created_at = "2026-10-09T01:41:03.473Z"
-updated_at = "2026-10-09T01:41:03.474877Z"
+updated_at = "2026-10-09T10:47:34.547955Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",

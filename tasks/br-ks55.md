@@ -2,9 +2,9 @@
 id = "br-ks55"
 title = "Only one full test run at a time per machine: just check takes a machine-wide lock (n4w4 rec 6)"
 kind = "feature"
-state = "pending"
+state = "planned"
 created_at = "2026-10-09T01:41:27.525Z"
-updated_at = "2026-10-09T01:41:27.525863Z"
+updated_at = "2026-10-09T10:47:39.219324Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",

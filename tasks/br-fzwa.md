@@ -2,9 +2,9 @@
 id = "br-fzwa"
 title = "Audit every periodic daemon loop for what it forks or reads per tick; list them with cost in daemon.md (n4w4 rec 3)"
 kind = "chore"
-state = "pending"
+state = "planned"
 created_at = "2026-10-09T01:41:21.012Z"
-updated_at = "2026-10-09T01:41:21.012927Z"
+updated_at = "2026-10-09T10:47:39.656050Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
