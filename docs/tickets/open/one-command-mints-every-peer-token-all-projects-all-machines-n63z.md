@@ -64,3 +64,23 @@ Builds on [[pair-machines-token-setup-over-ssh-sk7p|sk7p]] (machine pairing
 over ssh) and [[daemons-deliver-mail-to-each-other-across-machines-store-and-3haz|3haz]]
 (P5, peer tokens). Wanted before dalek upgrades past 3haz slice 1, or its
 cross-project mail breaks the same way.
+
+## Decided (2026-10-09): folded into `bridle token pair` (sk7p)
+
+The human, 2026-10-09 ~1:55 PM ET, verbatim: "one command, by default it does both, support
+--(no-)peer and another option for the other types of tokens. Update n63z with your proposal on
+the name of all CLI options before scheduling." (Full answer quoted in sk7p.)
+
+**The design is in [[pair-machines-token-setup-over-ssh-sk7p|sk7p]], section "Design", and that
+section is authoritative**; this ticket keeps the ask. Built by br-8c25. Proposed option names
+(wait on the human's approval):
+
+```
+bridle token pair [--machines <m>,...] [--projects <p>,...] [--roles <r>,...]
+                  [--tokens role,peer] [--rotate] [--dry-run]
+```
+
+Each selector left out means all; naming some narrows to exactly those; no `--exclude-*`.
+Token types: `role` (a role reaching a daemon) and `peer` (this ticket: daemon to daemon mail).
+Opt-out proposed as `[mail] peers = false` in the project's `.bridle/config.toml` (default
+true). Project creation runs `bridle token pair --projects <new>`.
