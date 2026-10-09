@@ -7,7 +7,7 @@ repos: [bridle]
 changes: []
 specs: []
 needs: []
-see: [q7mv]
+see: [q7mv, 8z7j, k6jd, 8ay6, 8umh, xccp, 2ax5]
 tasks: []
 ---
 
@@ -207,3 +207,22 @@ The incident is resolved. All ticket work from both the Mac and NUC checkouts is
   `git reflog origin/main`); this report infers it from ticket text and -0400 patch dates.
 - Does the human want the NUC to keep writing tickets into bridle's main, or to use a branch?
   Recommendation 1 assumes the first, with pull-before-commit.
+
+## Decided (2026-10-09)
+
+The human's answers are the comments c1-c5 above (2026-10-09 14:03-14:05 EDT). Follow-ups, one
+ticket each:
+
+- Rec 1 (c1): [[only-the-owner-s-clone-can-push-the-integration-branch-enfor-8z7j|8z7j]], one
+  pusher enforced mechanically, not only a rule; needs a design. This also answers the open
+  question above: no other clone pushes the integration branch.
+- Rec 2 (c2): [[managers-and-the-orchestrator-fetch-origin-divergence-from-o-k6jd|k6jd]], fetch
+  for managers and the orchestrator; divergence warned.
+- Rec 3 (c3): [[direct-to-main-docs-commits-are-pushed-straight-after-on-the-8ay6|8ay6]], push
+  after direct-to-main docs commits.
+- Rec 4 (c4): [[a-failed-push-is-an-event-and-an-alarm-an-agent-that-can-t-s-8umh|8umh]], a
+  failed push is an event and an alarm.
+- Rec 5: the `error: unknown:` send failure is incident
+  [[incident-br-3haz-broke-every-cross-project-message-for-22-h-2ax5|2ax5]]; nothing new.
+- Rec 6 (c5): [[a-git-identity-per-machine-so-commits-show-which-clone-made-xccp|xccp]],
+  non-urgent, later.
