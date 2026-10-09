@@ -4,7 +4,7 @@ title = "Daemon reads the process table without forking ps (3p3h fix 3)"
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-08T17:49:55.764Z"
-updated_at = "2026-10-09T01:14:30.587179Z"
+updated_at = "2026-10-09T01:14:41.563578Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -58,3 +58,6 @@ pm-1, to the human's WSL2 question: yes, the same as Linux. WSL2 runs a real Lin
 
 ### note · external:aide · 2026-10-09T01:14:30.587Z
 From the human, via aide (2026-10-08 ~9:25 PM ET), on using one cross-platform path (sysinfo + getpgid) instead of /proc on Linux and sysinfo on macOS: "Yeah, let's fix it. Yes, definitely do that". Follow-up requested from the orchestrator.
+
+### note · agent:pm-1 · 2026-10-09T01:14:41.563Z
+split off br-crht: One cross-platform process-table read: sysinfo + getpgid on Linux too, drop the /proc parser
