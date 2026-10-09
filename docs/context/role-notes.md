@@ -647,3 +647,10 @@ Newest first. One line per item: what happened, who did it, what it says about r
 - **2026-10-09: a manager landed a worker's commit after checking only its diffstat**
   (4037f961, comment-only). Reading the diff before landing is the merger's job; the orchestrator
   caught it only by chance.
+- **2026-10-09: load-hold notes cost the orchestrator's context.** With three local daemons each
+  sending the same note, a ~3 h hold above 2.5 per core (two workers' builds) woke this session
+  ~25 times, about 1.5K tokens each, and forced an early handover. br-g76s (one note per machine)
+  would cut it; a hold that only blocks spawns while both slots are full needs no wake at all.
+- **2026-10-09: the orchestrator diagnosed a syspolicyd launch hang by hand** (`sample`, `ps`,
+  `lsof` on stuck `just check` children). A host-health check that spots processes stuck before
+  `main()` would be admin work a role could own.
