@@ -2,9 +2,9 @@
 id = "br-gdf3"
 title = "Peer-token setup guidance: a token per receiving project per sending machine, minted on the receiver"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-06T23:09:15.299Z"
-updated_at = "2026-10-09T18:33:38.473254Z"
+updated_at = "2026-10-09T18:34:20.195324Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -12,6 +12,8 @@ watchers = [
 ]
 priority = "high"
 priority_at = "2026-10-09T14:10:40.525104Z"
+branch = "bridle/gdf3"
+commit = "fed5d9a4585610e202e1f67aeaa597b56dd5c209"
 summary = "Duplicate peer principal error now says --peer takes the machine that SENDS and names 'bridle token revoke peer:<m>' (store.rs create_principal_active_only); token create --peer help and docs/design/cli.md state the direction rule with a worked example; store test and CHANGELOG added. add-a-machine.md already had the rule; mail.md, adding-a-project.md and nuc-host.md don't mention peer tokens so were left alone. The error can't name the project (store has no project name)."
 ticket = "gdf3"
 +++
@@ -41,3 +43,9 @@ PdM (advisor product-manager): machine setup is the human's priority workstream 
 
 ### note · agent:gdf3 · 2026-10-09T18:33:38.473Z
 done: peer-token direction rule in error, help, cli.md, test, CHANGELOG; just check exit 0, 1388 tests, after merging main; a3928f68
+
+### note · agent:manager-2 · 2026-10-09T18:34:01.978Z
+integrated: fed5d9a4585610e202e1f67aeaa597b56dd5c209 (branch bridle/gdf3)
+
+### note · agent:manager-2 · 2026-10-09T18:34:20.195Z
+cleanup: removed agent gdf3, branch bridle/gdf3
