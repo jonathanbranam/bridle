@@ -234,6 +234,8 @@ zkbb's "bare ID vs full stem".
 
 > [!comment] c1 human, 2026-10-09 14:56 EDT, on "That settles zkbb's "bare ID vs full stem"." [pending 2026-10-09 14:56 EDT]
 > I'm pretty sure we need to use the project id here. We should be clear on the project to avoid confusion on ticket ids. It is fine to use shorthand when working on a specific project, but we want ticket names to be unique globally, as much as possible. br-<id> not <id>.
+>
+> **resolved by human, 2026-10-09 15:01 EDT**
 
 ### 8. IDs
 
