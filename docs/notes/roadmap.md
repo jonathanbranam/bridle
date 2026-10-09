@@ -15,7 +15,7 @@ before it moves: "waits on the human" is a pending task only the human can appro
 is the project manager's; "ready to build" is in the queue; "HELD" is planned in bridle but
 stopped by the human.
 
-Last updated: 2026-10-09 18:40 ET.
+Last updated: 2026-10-09 18:55 ET.
 
 ## Needs the human now
 
@@ -237,7 +237,7 @@ The orchestrator and daemons stay up, relaunch once, upgrade cleanly and recover
 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
-| [br-8a53](http://dalek.tailbc91f5.ts.net:7878/task?id=br-8a53) | main red (ubuntu): gateway_test a_replaced_binary_is_re_executed; INVOCATION_ID misdete... | critical | planned | ready to build |
+| [br-8a53](http://dalek.tailbc91f5.ts.net:7878/task?id=br-8a53) | main red (ubuntu): gateway_test a_replaced_binary_is_re_executed; INVOCATION_ID misdete... | critical | integrated | delivered |
 | [br-ngya](http://dalek.tailbc91f5.ts.net:7878/task?id=br-ngya) | Flaky on Linux CI: upgrade_test a_drain_starting_during_a_spawn_restarts_promptly reads... | critical | integrated | delivered |
 | [br-rztb](http://dalek.tailbc91f5.ts.net:7878/task?id=br-rztb) | Incident: something keeps restarting dalek's gateway outside launchd from a Claude sess... | high | integrated | delivered |
 | [br-4zfa](http://dalek.tailbc91f5.ts.net:7878/task?id=br-4zfa) | Incident: the bridle orchestrator was killed (SIGTERM) at 11:18 PM ET and nothing relau... | high | pending | waits on the human (approve to ready) |
@@ -304,6 +304,7 @@ What the human sees and touches: web UI, documents and comments, to-dos, links, 
 | [ui-wtr3](http://dalek.tailbc91f5.ts.net:7878/task?id=ui-wtr3) | An expanded comment thread can be collapsed again (a [-] button) |  | integrated | delivered |
 | [ui-vnuu](http://dalek.tailbc91f5.ts.net:7878/task?id=ui-vnuu) | Comment IDs never repeat after deletes: a counter in the document's front matter | low | integrated | delivered |
 | [br-gd43](http://dalek.tailbc91f5.ts.net:7878/task?id=br-gd43) | Comment IDs never repeat after deletes: assign_ids reads and bumps a front-matter count... | low | planned | ready to build |
+| [ui-qfur](http://dalek.tailbc91f5.ts.net:7878/task?id=ui-qfur) | The human edits or deletes their own document comments until another role replies (unre... | low | pending | waits on the human (approve to ready) |
 
 ### Theme `specs`: Executable specs
 
@@ -406,3 +407,4 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 - 2026-10-09 18:15 ET: br-8c25 approved to land (the human); waits for main green (br-ngya, critical CI flake, placed in reliability).
 - 2026-10-09 18:40 ET: filed br-4cgx (@-mention a role in a ticket reply or document comment; the human's ask), low, theme agents-and-cli, no epic.
 - 2026-10-09 18:45 ET: br-8a53 (main red on ubuntu, gateway_test) placed in reliability.
+- 2026-10-09 18:55 ET: filed ui-qfur (the human edits or deletes own document comments until another role replies; via the bridle-ui aide), low, theme human-ui.
