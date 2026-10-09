@@ -15,7 +15,7 @@ before it moves: "waits on the human" is a pending task only the human can appro
 is the project manager's; "ready to build" is in the queue; "HELD" is planned in bridle but
 stopped by the human.
 
-Last updated: 2026-10-09 19:25 ET.
+Last updated: 2026-10-09 17:41 ET.
 
 ## Needs the human now
 
@@ -88,8 +88,8 @@ Daemons, tokens, sync and projects across the laptop, the NUC and the Windows PC
 | [br-h7mu](http://dalek.tailbc91f5.ts.net:7878/task?id=br-h7mu) | Pick a name for the Windows PC (docs/context/naming.md) (v7ug) | low | claimed | the human's to-do |
 | [br-hua2](http://dalek.tailbc91f5.ts.net:7878/task?id=br-hua2) | Add a machine: one setup guide from bare OS to on the network (config, tokens, services... | high | integrated | delivered |
 | [br-gdf3](http://dalek.tailbc91f5.ts.net:7878/task?id=br-gdf3) | Peer-token setup guidance: a token per receiving project per sending machine, minted on... | high | integrated | delivered |
-| [br-8c25](http://dalek.tailbc91f5.ts.net:7878/task?id=br-8c25) | bridle token pair, part 1: the token-role list, the spec, and role tokens across machin... | high | planned | approved to land (the human, 6:05 PM ET); lands after br-ngya turns main green |
-| [br-jw9e](http://dalek.tailbc91f5.ts.net:7878/task?id=br-jw9e) | bridle token pair, part 2: peer tokens, the [mail] peers opt-out, and pairing on projec... |  | planned | ready to build |
+| [br-8c25](http://dalek.tailbc91f5.ts.net:7878/task?id=br-8c25) | bridle token pair, part 1: the token-role list, the spec, and role tokens across machin... | high | integrated | delivered |
+| [br-jw9e](http://dalek.tailbc91f5.ts.net:7878/task?id=br-jw9e) | bridle token pair, part 2: peer tokens, the [mail] peers opt-out, and pairing on projec... |  | planned | ready to build: part 1 (br-8c25) landed 2026-10-09 ~5:40 PM ET |
 | [br-88d4](http://dalek.tailbc91f5.ts.net:7878/task?id=br-88d4) | self_upgrade = "release": fetch, verify and swap the release binary (chvf 2) | high | planned | ready to build |
 | [br-751e](http://dalek.tailbc91f5.ts.net:7878/task?id=br-751e) | Daemon keeps its own workflow checkout at the binary's tag (chvf 3) | high | planned | ready to build |
 | [br-57nt](http://dalek.tailbc91f5.ts.net:7878/task?id=br-57nt) | bridle gateway restart takes a launchd-managed gateway out of launchd and inherits the ... | high | integrated | delivered |
@@ -386,6 +386,7 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 | 2026-10-09 ~14:34 | br-gdf3 peer-token direction rule in errors, help and docs | machine setup |
 | 2026-10-09 ~15:25 | br-57nt gateway restart stays under launchd, Claude env stripped | machine setup |
 | 2026-10-09 ~16:10 | br-xrkh systemd uninstall; owner refusal never crash-loops a unit | machine setup |
+| 2026-10-09 ~17:40 | br-8c25 bridle token pair, part 1 (role tokens across machines over SSH) | machine setup |
 
 ## Changes to this roadmap
 
@@ -421,3 +422,4 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 - 2026-10-09 18:55 ET: filed ui-qfur (the human edits or deletes own document comments until another role replies; via the bridle-ui aide), low, theme human-ui.
 - 2026-10-09 19:15 ET: 57nt resolved (gateway seen restarting under launchd at the 5:31 PM upgrade). Filed and readied br-3mz4 (one orchestrator per machine: advisor role and sends), theme agents-and-cli.
 - 2026-10-09 19:25 ET: re79 refined (reviewer front matter; the human), task br-re79 low. New epic `comment-routing` (theme human-ui, low) with br-re79 and br-4cgx, before `products`.
+- 2026-10-09 17:41 ET: br-8c25 (token pair part 1) delivered; br-jw9e (part 2) now ready to build.
