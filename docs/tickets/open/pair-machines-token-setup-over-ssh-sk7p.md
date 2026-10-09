@@ -1,12 +1,13 @@
 ---
 id: sk7p
-title: "`bridle token pair <machine>`: set up tokens between machines over SSH, like ssh-copy-id"
+title: "`bridle token pair`: set up role and peer tokens between machines over SSH, like ssh-copy-id"
 opened: 2026-10-01
 repos: [bridle]
 changes: []
 specs: []
 needs: []
 see: [3ehu, k7mw, 9mxw, n63z, gdf3]
+kind: feature
 ---
 
 ## The ask
