@@ -1302,6 +1302,10 @@ pub struct MachineConfig {
     pub check_interval: Duration,
     /// 1-minute load average per core above which new spawns are held; zero or less never holds.
     pub load_per_core: f64,
+    /// After a load note, the next waits until the load has stayed under the threshold this long.
+    pub load_quiet_below: Duration,
+    /// Minimum time between load notes on the machine, across daemons.
+    pub load_note_gap: Duration,
 }
 
 impl Default for MachineConfig {
@@ -1309,6 +1313,8 @@ impl Default for MachineConfig {
         MachineConfig {
             check_interval: crate::load::DEFAULT_INTERVAL,
             load_per_core: crate::load::DEFAULT_LOAD_PER_CORE,
+            load_quiet_below: crate::load::DEFAULT_QUIET_BELOW,
+            load_note_gap: crate::load::DEFAULT_NOTE_GAP,
         }
     }
 }
@@ -2048,6 +2054,12 @@ impl Config {
             if let Some(v) = m.load_per_core {
                 config.machine.load_per_core = v;
             }
+            if let Some(s) = m.load_quiet_below {
+                config.machine.load_quiet_below = parse_duration(&s)?;
+            }
+            if let Some(s) = m.load_note_gap {
+                config.machine.load_note_gap = parse_duration(&s)?;
+            }
         }
 
         if let Some(r) = raw.review {
@@ -2564,6 +2576,10 @@ struct RawMachine {
     check_interval: Option<String>,
     #[serde(default)]
     load_per_core: Option<f64>,
+    #[serde(default)]
+    load_quiet_below: Option<String>,
+    #[serde(default)]
+    load_note_gap: Option<String>,
 }
 
 /// Whether `repo` is listed in `[machine] tools_only` of `<home>/config.toml` (hw6c): a clone
@@ -4114,10 +4130,16 @@ mod tests {
     fn machine_config_parses() {
         let d = Config::default().machine;
         assert_eq!(d.load_per_core, crate::load::DEFAULT_LOAD_PER_CORE);
-        let cfg =
-            Config::parse("[machine]\ncheck_interval = \"0s\"\nload_per_core = 3.5\n").unwrap();
+        assert_eq!(d.load_quiet_below, Duration::from_secs(600));
+        assert_eq!(d.load_note_gap, Duration::from_secs(1800));
+        let cfg = Config::parse(
+            "[machine]\ncheck_interval = \"0s\"\nload_per_core = 3.5\nload_quiet_below = \"5m\"\nload_note_gap = \"1h\"\n",
+        )
+        .unwrap();
         assert!(cfg.machine.check_interval.is_zero());
         assert_eq!(cfg.machine.load_per_core, 3.5);
+        assert_eq!(cfg.machine.load_quiet_below, Duration::from_secs(300));
+        assert_eq!(cfg.machine.load_note_gap, Duration::from_secs(3600));
     }
 
     #[test]

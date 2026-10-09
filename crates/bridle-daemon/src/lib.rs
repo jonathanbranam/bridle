@@ -682,6 +682,12 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
 
     let load_watch = load::LoadWatch::new(
         config.machine.load_per_core,
+        config.machine.load_quiet_below,
+        config.machine.load_note_gap,
+        overrides
+            .bridle_home
+            .clone()
+            .unwrap_or_else(discovery::bridle_home),
         Box::new(load::SystemLoad),
         manager.clone(),
     );

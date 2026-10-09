@@ -179,7 +179,7 @@ Also read from `.bridle/config.toml` (defaults in parentheses; each is documente
 - `[migrations] auto` (`true`): `bridle serve` applies the project's pending migrations at start-up; `false` leaves them to `bridle migrate`; see [[docs/design/migrations|migrations]].
 - `[schedule] timezone` (`America/New_York`): the IANA zone a scheduled message is evaluated in when it names none.
 - `[state] push` (`true`): push `bridle/state` to `origin` after flushes; set to `false` to opt-out; see [[storage#The state branch]].
-- `[machine] check_interval` (`"30s"`), `load_per_core` (2.5): [[operating-model#Load watch|load watch]].
+- `[machine] check_interval` (`"30s"`), `load_per_core` (2.5), `load_quiet_below` (`"10m"`), `load_note_gap` (`"30m"`): [[operating-model#Load watch|load watch]].
 - `[disk] check_interval` (`"1h"`), `min_free_gb` (20): [[operating-model#Disk monitor|disk monitor]].
 - `[tasks] settle` (`"5m"`; `0` turns it off): how long a task waits after creation or a human
   comment/edit before it can be claimed or listed ready. An invalid value warns, falls back to

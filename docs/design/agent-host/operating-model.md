@@ -92,7 +92,11 @@ section holds other keys that the daemon doesn't read; moving these there is not
 holds) new spawns are refused with a conflict, like a budget hold (`--ignore-budget` skips it);
 they resume on their own once the load falls. The orchestrator gets one note per crossing (not
 per tick) with the load and the top three CPU consumers by command name (`ps`); its role says to
-add no work and wait. Resumes and renews of existing agents are not held, and running agents are
+add no work and wait. Notes are rate-limited (ticket tnyt): after one, the next waits until the
+load has stayed under the threshold for `[machine] load_quiet_below` (default `10m`), and none
+is sent within `[machine] load_note_gap` (default `30m`) of the last note sent by any daemon on
+the machine, which `~/.bridle/load-note.stamp` (epoch seconds, written atomically) records; a
+missing or unreadable stamp means send. The hold itself is not rate-limited. Resumes and renews of existing agents are not held, and running agents are
 not wound down (rejected for now: by-priority wind-down and cross-project coordination, design
 xypj; killing processes; fixing the cause, a target-dir copy at spawn).
 
