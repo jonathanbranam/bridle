@@ -13,15 +13,14 @@ before it moves: "waits on the human" is a pending task only the human can appro
 is the project manager's; "ready to build" is in the queue; "HELD" is planned in bridle but
 stopped by the human.
 
-Last updated: 2026-10-09 14:15 ET.
+Last updated: 2026-10-09 14:23 ET.
 
 ## Needs the human now
 
 In the order the PdM suggests:
 
-0. **Machine setup** (your priority, 2026-10-09): two decisions unblock phase 2. (a) approve
-   the `bridle token pair` design in ticket sk7p (one command, decided 1:55 PM; open: the names
-   `role`/`peer`, the opt-out `[mail] peers = false`); br-8c25 is held for it. (b) j7r4: answered 2:05 PM (one pusher, enforced:
+0. **Machine setup** (your priority, 2026-10-09): two decisions unblock phase 2. (a) done 2:20 PM: sk7p
+   design approved; 8c25 being re-briefed. (b) j7r4: answered 2:05 PM (one pusher, enforced:
    8z7j to the designer; k6jd, 8ay6, 8umh readied; xccp later). Also your review of kuw2
    (machine daemon, br-efs2) gates project transfer's design.
 
@@ -70,7 +69,7 @@ The human, 2026-10-09: efficient, direct setup of a new machine, first the Windo
 | [br-h7mu](http://dalek.tailbc91f5.ts.net:7878/task?id=br-h7mu) | Pick a name for the Windows PC (docs/context/naming.md) (v7ug) | claimed | the human's to-do |
 | [br-hua2](http://dalek.tailbc91f5.ts.net:7878/task?id=br-hua2) | Add a machine: one setup guide from bare OS to on the network (config, tokens, services... | integrated | delivered |
 | [br-gdf3](http://dalek.tailbc91f5.ts.net:7878/task?id=br-gdf3) | Peer-token setup guidance: a token per receiving project per sending machine, minted on... | planned | ready to build |
-| [br-8c25](http://dalek.tailbc91f5.ts.net:7878/task?id=br-8c25) | bridle token pair <machine>: set up tokens between machines over SSH (sk7p) | planned | HELD: design in ticket sk7p (role + peer tokens, n63z folded in) waits on the human's approval |
+| [br-8c25](http://dalek.tailbc91f5.ts.net:7878/task?id=br-8c25) | bridle token pair <machine>: set up tokens between machines over SSH (sk7p) | planned | design approved (sk7p); pm-1 re-briefs, then build |
 | [br-88d4](http://dalek.tailbc91f5.ts.net:7878/task?id=br-88d4) | self_upgrade = "release": fetch, verify and swap the release binary (chvf 2) | planned | ready to build |
 | [br-751e](http://dalek.tailbc91f5.ts.net:7878/task?id=br-751e) | Daemon keeps its own workflow checkout at the binary's tag (chvf 3) | planned | ready to build |
 | [br-57nt](http://dalek.tailbc91f5.ts.net:7878/task?id=br-57nt) | bridle gateway restart takes a launchd-managed gateway out of launchd and inherits the ... | planned | ready to build |
@@ -310,3 +309,4 @@ Chores that are the human's own: expand on an idea, review a ticket or branch.
 - 2026-10-09 14:20 ET: the human answered postmortem j7r4 (c1-c5). Filed 8z7j (one pusher enforced; needs design) and k6jd (fetch, divergence warning; high) in machine setup; 8ay6 (push docs commits) and 8umh (push failed alarm) in reliability, readied; xccp (git identity per machine) low, pending.
 - 2026-10-09 14:28 ET: ui-ha6m delivered. The human asked for comment IDs that never repeat (ui-vnuu, via the bridle-ui aide): readied high with its bridle half br-gd43, in human-ui; no design review (the human gave the shape).
 - 2026-10-09 14:15 ET: br-b6mu delivered.
+- 2026-10-09 14:23 ET: the human approved the sk7p design (token pair: role and peer tokens, all by default, opt-out [mail] peers = false). br-8c25 hold released; pm-1 re-briefs.
