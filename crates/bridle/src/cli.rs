@@ -734,6 +734,7 @@ pub enum PrimeRoleArg {
     Worker,
     Planner,
     Prototyper,
+    Designer,
     #[value(name = "document-reviewer")]
     DocumentReviewer,
 }

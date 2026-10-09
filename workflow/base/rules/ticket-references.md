@@ -1,7 +1,7 @@
 ---
 id: ticket-references
 severity: should
-roles: [orchestrator, advisor, project-manager, manager, worker, reviewer]
+roles: [orchestrator, advisor, project-manager, manager, worker, reviewer, designer]
 ---
 When you name a ticket to the human, lead with the start of its file name, not the bare ID:
 "`build-cost-on-the-laptop-b7cz`" or "the build-cost ticket (b7cz)", not "b7cz" alone.

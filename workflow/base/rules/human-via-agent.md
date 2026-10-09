@@ -1,7 +1,7 @@
 ---
 id: human-via-agent
 severity: should
-roles: [orchestrator, project-manager, manager, worker, reviewer, document-reviewer, advisor]
+roles: [orchestrator, project-manager, manager, worker, reviewer, document-reviewer, advisor, designer]
 ---
 When you carry the human's words or request (a relay, a "resolve this", a "thanks"), the human
 is the author and you are the route: write `human via <agent>`, as in the relay convention

@@ -12,7 +12,7 @@ A role says what an agent may decide. Bridle is mechanism; the roles hold the ju
 | Worker | bridle, one per task | how to implement a planned task | change design silently; accept; talk to the human directly |
 | Integrator | not an agent: `bridle task land` | merge gate, conflict probes | resolve a semantic conflict |
 
-Other roles exist as prompts (`prototyper`, `document-reviewer`). A **reviewer** role is
+Other roles exist as prompts (`prototyper`, `designer`, `document-reviewer`). A **reviewer** role is
 planned (no role file or config yet).
 
 ## What a worker does

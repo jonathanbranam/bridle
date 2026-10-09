@@ -1,7 +1,7 @@
 ---
 id: out-of-scope
 severity: must
-roles: [worker, reviewer]
+roles: [worker, reviewer, designer]
 ---
 File out-of-scope findings; do not fix them. Never weaken a test to make it
 pass.

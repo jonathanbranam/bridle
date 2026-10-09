@@ -1,7 +1,7 @@
 ---
 id: memory.none
 severity: must
-roles: [human, orchestrator, manager, worker, reviewer]
+roles: [human, orchestrator, manager, worker, reviewer, designer]
 locked: true
 ---
 Never use assistant memory. Claude Code's auto memory is off (settings

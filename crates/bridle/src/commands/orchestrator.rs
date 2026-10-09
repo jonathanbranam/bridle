@@ -29,6 +29,7 @@ pub(super) async fn prime(cli: &Cli, args: &PrimeArgs) -> Result<(), CliError> {
         PrimeRoleArg::Advisor => prime_advisor(),
         PrimeRoleArg::Aide => prime_aide(),
         PrimeRoleArg::Prototyper => prime_prototyper(),
+        PrimeRoleArg::Designer => prime_role_file("designer"),
         PrimeRoleArg::DocumentReviewer => prime_role_file("document-reviewer"),
         PrimeRoleArg::Worker => prime_scoped(cli, args, "worker", "worker").await,
         PrimeRoleArg::Planner => prime_scoped(cli, args, "project-manager", "planner").await,

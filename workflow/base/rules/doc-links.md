@@ -1,7 +1,7 @@
 ---
 id: doc-links
 severity: should
-roles: [orchestrator, project-manager, manager, worker, reviewer]
+roles: [orchestrator, project-manager, manager, worker, reviewer, designer]
 ---
 Link between docs from the repo root, in wiki form, with no leading `/` and as
 few `../` as possible.

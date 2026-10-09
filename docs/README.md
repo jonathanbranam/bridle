@@ -106,7 +106,7 @@ done
 | storage, database, state | `docs/design/storage.md` |
 | project migrations (`bridle migrate`) | `docs/design/migrations.md` |
 | git branches, release branches | `docs/design/agent-host/operating-model.md` or the project's `[branches]` config |
-| roles and what they do | `workflow/base/roles/<role>.md` (worker, manager, project-manager, orchestrator, advisor, prototyper, document-reviewer) |
+| roles and what they do | `workflow/base/roles/<role>.md` (worker, manager, project-manager, orchestrator, advisor, prototyper, designer, document-reviewer) |
 | building and testing | `CLAUDE.md` (Conventions section) |
 | incidents (a task kind plus a broadcast notice) | `docs/design/agent-host/incidents.md` |
 | the Windows PC as a bridle host under WSL2 (setup steps, planned) | `docs/context/windows-wsl2-host.md` |

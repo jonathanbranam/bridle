@@ -1,7 +1,7 @@
 ---
 id: report-task-failures
 severity: must
-roles: [worker, manager, orchestrator]
+roles: [worker, manager, orchestrator, designer]
 ---
 When a tool the task needs is missing, or a fetch or site request fails during task work, record each one plainly and report it.
 

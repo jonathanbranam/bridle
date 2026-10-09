@@ -1,7 +1,7 @@
 ---
 id: no-kill-by-name
 severity: must
-roles: [orchestrator, project-manager, manager, worker, reviewer, document-reviewer, advisor, aide, prototyper]
+roles: [orchestrator, project-manager, manager, worker, reviewer, document-reviewer, advisor, aide, prototyper, designer]
 locked: true
 ---
 Never use `pkill -f`, `pgrep -f` piped to `kill` or `xargs kill`, `killall`,

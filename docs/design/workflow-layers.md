@@ -87,7 +87,7 @@ and guide paths when they exist, but the spawn-time system prompt carries rules 
 `agents/` is Claude Code's own subagent mechanism (the `Agent` tool, `.claude/agents/`);
 `roles/` is bridle's driver-facing role prompt, appended after bridle's own preamble to
 the `claude` process's system prompt for a whole bridle role (worker, manager,
-project-manager, orchestrator, advisor, prototyper) — see
+project-manager, orchestrator, advisor, prototyper, designer) — see
 [[docs/design/agent-host/roles-and-config|roles and config]]. `bridle sync` renders
 `agents/` into `.claude/agents/*.md` (below); it does nothing with `roles/`. Instead, a
 role with no `system_prompt` in `.bridle/config.toml` defaults to
@@ -110,7 +110,7 @@ A project adds a rule for specific roles with a file in its own `.bridle/rules/`
 `bridle prime <role>`), and a role not listed doesn't. For example
 `.bridle/rules/worked-on-log.md` with `roles: [advisor, orchestrator, manager, worker]` reaches
 those four and not the aide. Role names are the tags the roles use: `orchestrator`, `advisor`,
-`aide`, `manager`, `worker`, `project-manager`, `reviewer`, `prototyper`, `document-reviewer`.
+`aide`, `manager`, `worker`, `project-manager`, `reviewer`, `prototyper`, `designer`, `document-reviewer`.
 
 A project overrides by id:
 
@@ -218,7 +218,7 @@ written down anywhere else yet:
 Most rule content is not rendered into a file at all. For agents bridle spawns, the daemon
 appends the role's resolved rules (L1–L3, the rules tagged for the role) to the system prompt
 under `## Workflow rules`; that is how rules reach workers, managers and the PM today. The
-orchestrator, advisor, aide, prototyper and document-reviewer sessions get theirs as a `## Rules`
+orchestrator, advisor, aide, prototyper, designer and document-reviewer sessions get theirs as a `## Rules`
 section of `bridle prime <role>` (the same resolver, so the same L1–L3 rules, filtered by each
 rule's `roles:`), which `bridle session` tells them to run.
 

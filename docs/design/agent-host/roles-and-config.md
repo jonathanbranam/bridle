@@ -54,12 +54,12 @@ system_prompt     = "workflow/base/roles/manager.md"
 start_prompt      = "Check your inbox and tell the human you're ready."   # first message when spawned without one
 ```
 
-- **Built-in roles** are `worker`, `manager`, `orchestrator`, `researcher`, `prototyper` and `document-reviewer`
+- **Built-in roles** are `worker`, `manager`, `orchestrator`, `researcher`, `prototyper`, `designer` and `document-reviewer`
   ([[docs/design/roles-and-lifecycle|roles]]). The defaults are the values
   above; the `researcher` is the worker's defaults plus `WebSearch` and `WebFetch` in `allowed_tools` and `tools` (the worker has no web tools), reuses the worker's role prompt and adds a preamble sentence on citing URLs and reporting failed fetches; it exists in every project without a `[roles.researcher]`, and the manager picks it for web-research tasks; the orchestrator is like the manager without `Bash(git *)`; the `prototyper` starts from the
   worker's defaults (its role file, `workflow/base/roles/prototyper.md`, says to build only from the
   prototype prompt's constraints; a project's `.bridle/roles/prototyper.md` is appended to it, both in
-  the agent's system prompt and in `bridle prime prototyper`); the `document-reviewer` likewise starts
+  the agent's system prompt and in `bridle prime prototyper`); the `designer` likewise (`workflow/base/roles/designer.md`: read a problem ticket, write options and a recommendation into it, build nothing; append file `.bridle/roles/designer.md`; `bridle prime designer`); the `document-reviewer` likewise starts
   from the worker's defaults, with `workflow/base/roles/document-reviewer.md` (the comment format and a
   review round for one document; append file `.bridle/roles/document-reviewer.md`; `bridle prime
   document-reviewer`). None has a

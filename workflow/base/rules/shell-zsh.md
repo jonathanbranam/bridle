@@ -1,7 +1,7 @@
 ---
 id: shell-zsh
 severity: must
-roles: [orchestrator, advisor, project-manager, manager, worker, reviewer, prototyper]
+roles: [orchestrator, advisor, project-manager, manager, worker, reviewer, prototyper, designer]
 ---
 The shell is zsh (the human, 2026-10-03: "it's a bug that needs to go in every cloud, every rule
 set somewhere"; ticket urdm).

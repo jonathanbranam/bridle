@@ -19,14 +19,14 @@ bridle rules diff             # what the project changed
 - **Spawned agents** (worker, manager, project-manager, ...): the daemon resolves the
   role's rules and puts them in the system prompt at every spawn, resume and renew. A
   rule changed in the workflow shows up at the agent's next one of those.
-- **Interactive roles** (orchestrator, advisor, aide, prototyper, document-reviewer):
+- **Interactive roles** (orchestrator, advisor, aide, prototyper, designer, document-reviewer):
   `bridle prime <role>` prints the role prompt followed by its resolved rules;
   `bridle session <role>` runs it as the opening prompt.
 - **Not wired in:** `bridle prime worker|planner` (facts, guide pointers, component
   rules) isn't run by spawned workers, so those don't reach them yet.
 
 Role names in `roles:` are the tags the roles use: `orchestrator`, `advisor`, `aide`,
-`manager`, `worker`, `project-manager`, `reviewer`, `prototyper`, `document-reviewer`.
+`manager`, `worker`, `project-manager`, `reviewer`, `prototyper`, `designer`, `document-reviewer`.
 
 ## Project instructions
 

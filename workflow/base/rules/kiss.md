@@ -1,7 +1,7 @@
 ---
 id: kiss
 severity: should
-roles: [orchestrator, manager, worker, reviewer]
+roles: [orchestrator, manager, worker, reviewer, designer]
 ---
 Keep it simple. Do what the task needs, to the precision it needs, and stop.
 

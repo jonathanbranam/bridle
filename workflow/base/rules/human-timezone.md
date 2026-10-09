@@ -1,7 +1,7 @@
 ---
 id: human-timezone
 severity: must
-roles: [orchestrator, project-manager, manager, worker, reviewer]
+roles: [orchestrator, project-manager, manager, worker, reviewer, designer]
 ---
 Times shown to the human are in US Eastern (America/New_York), written bare:
 "7:00 AM", not "7:00 AM ET". Name the zone only for a time that isn't
