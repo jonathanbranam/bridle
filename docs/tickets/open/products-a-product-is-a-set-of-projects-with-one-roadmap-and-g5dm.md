@@ -51,6 +51,11 @@ So the product is optional. Without one, a project has no roadmap, no product ma
 themes; it keeps tickets (perhaps epics), the project manager and the rest of bridle. Example:
 dotfiles-local.
 
+## Decided: where requests go
+
+The human, 2026-10-09 ~5:50 PM ET, verbatim: "when other agents ask for a feature or bug-fix for
+a project with a product, those requests go to the PdM; otherwise they go to the project aide."
+
 ## Open for the design (not decided)
 
 - Where a product is declared (its home project's config? a machine-level registry?) and how a

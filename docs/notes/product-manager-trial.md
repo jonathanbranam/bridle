@@ -94,6 +94,10 @@ The roadmap will be at `docs/notes/roadmap.md`.
   PdM would do itself but this advisor stand-in can't (permissions or set-up), for example: run
   the designer on a ticket, plan or ready a task, set a task's priority or dependencies, hold a
   task that skipped a design gate. Treat them as the PdM's decisions, made with the human.
+- **Any agent asking for a feature or bug fix in bridle or bridle-ui** (the trial's product):
+  send it to the PdM, not the orchestrator or aide (the human, 2026-10-09: "when other agents ask
+  for a feature or bug-fix for a project with a product, those requests go to the PdM; otherwise
+  they go to the project aide"). Critical fixes still go straight to the orchestrator.
 - **Everyone:** keep the conversation in the system: comments on the task or ticket, state
   changes, `task ask`. Direct messages are for important context that doesn't fit there. The PdM
   takes the human's next steps to them directly or through the project's aide. Nothing from the
