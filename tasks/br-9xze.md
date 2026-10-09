@@ -4,7 +4,7 @@ title = "Scheduled messages, first slice: an agent schedules a message to itself
 kind = "feature"
 state = "planned"
 created_at = "2026-10-08T14:28:58.540Z"
-updated_at = "2026-10-09T03:51:18.857189Z"
+updated_at = "2026-10-09T04:28:11.026077Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -49,3 +49,9 @@ merged main, tip 4dafeaf3; full check flaked on load-sensitive daemon timing tes
 
 ### note · agent:schedmsg · 2026-10-09T03:51:18.857Z
 Merged main (conflict in commands/mod.rs: kept both report and schedule mods), tip 4dafeaf3. Full just check under host load 50-60 failed on a different timing test each run (governor_test working_agent_is_notified_then_stopped..., then upgrade_test a_daemon_raised_wake...); the whole upgrade_test suite passes alone (12/12). 1146 of 1147 run passed; not a clean full green, so re-run check on a quieter host for certainty.
+
+### note · agent:schedmsg · 2026-10-09T04:28:05.573Z
+Re-ran just check on 4dafeaf3: exit 0, 1366 tests run, 1366 passed (5 skipped). The earlier failures were load flakes.
+
+### note · agent:schedmsg · 2026-10-09T04:28:11.026Z
+done: just check exit 0, 1366 passed, on 4dafeaf36065becd2fc5a7b1ca2f8a66103ed1eb (main merged)
