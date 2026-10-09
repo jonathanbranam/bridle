@@ -656,7 +656,16 @@ async fn a_drain_starting_during_a_spawn_restarts_promptly() {
         "the drain waited out the spawn's readiness wait: {:?}",
         began.elapsed()
     );
-    let held = messages_to(&daemon.client, &spawned.id).await;
-    assert!(held.iter().any(|m| m.body == "hello"), "{held:?}");
+    // Read the db, not the API: the restart begins as soon as the spawn ends, so the server may
+    // already be closing (br-mqc5).
+    let db = rusqlite::Connection::open(daemon.workspace.join(".bridle/bridle.db")).expect("db");
+    let held: i64 = db
+        .query_row(
+            "SELECT COUNT(*) FROM messages WHERE to_id = ?1 AND body = 'hello'",
+            [&spawned.id],
+            |r| r.get(0),
+        )
+        .expect("count");
+    assert_eq!(held, 1);
     daemon.running.join().await.expect("join");
 }
