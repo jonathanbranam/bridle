@@ -145,7 +145,7 @@ Red Rising (soon), Brandon Sanderson (next; less into fantasy).
 > [!comment] c3 human, 2026-10-08 19:34 EDT, on "namingschemes.com" [read 2026-10-08 20:07 EDT]
 > Make this an HTML link.
 >
-> **doc-name-ideas-e11e82, 2026-10-08 20:15 EDT:** @human Done. It is a Markdown link, which Obsidian and the UI render as an HTML link. If you meant a literal `<a href>` tag, say so.
+> **doc-name-ideas-e11e82, 2026-10-08 20:15 EDT:** @human Done. It is a Markdown link, which Obsidian and the UI render as an HTML link. If you meant a literal `<a href>` tag, say so. [read 2026-10-08 21:37 EDT]
 
 - [Jerod Santo, "Naming schemes"](https://jerodsanto.net/2012/03/naming-schemes).
 - [FSFE's scheme](https://wiki.fsfe.org/Teams/System-Hackers/NamingSchemes): elements for
