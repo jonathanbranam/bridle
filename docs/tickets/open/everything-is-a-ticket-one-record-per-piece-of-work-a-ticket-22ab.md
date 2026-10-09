@@ -14,8 +14,6 @@ tasks: []
 
 ## The ask
 
-## The ask
-
 Make the ticket the one record of every piece of work: the ask, the design, the discussion, the
 reviews and the approvals. The task stops being a second record and becomes only the row that
 tracks a ticket through the workflow. A ticket too big for one change gets child tickets, each
@@ -98,9 +96,9 @@ and keeps everything the human edits in vim or Obsidian in one file.
 
 ### 2. Every ticket is indexed; its type decides its workflow
 
-The human described a row "for certain ticket types that are going to be implemented". I
-recommend a small extension: **every ticket gets a row**, and the type decides what the row can
-do:
+The human described a row "for certain ticket types that are going to be implemented". The
+advisor recommended a small extension, and the human accepted it (2026-10-09: "row for every
+ticket is fine"): **every ticket gets a row**, and the type decides what the row can do:
 
 - Every ticket needs a thread (any ticket can be discussed), and the thread needs a record to
   hang on. A row per ticket also gives the UI and `bridle ticket list`/`search` one index for
@@ -124,7 +122,7 @@ New or changed types: `fix` (the change that fixes a `bug` report; today's `bug`
 fixes migrate to `fix`) and `epic`. **Name check (naming.md):** the human said "large initiative
 design". "Epic" is the standard tracker word (Jira, GitHub, Linear) for "a big ticket split into
 child tickets"; "initiative" in Jira is the level above an epic. Both dictate cleanly.
-Recommendation: `epic`. The human decides.
+**Decided: `epic`** (the human, 2026-10-09).
 
 ### 3. Readiness and who may start work
 
@@ -147,34 +145,24 @@ model:
 local integration branch, so a local commit is enough on the same machine. Only a daemon on
 another machine needs the push, as it does today for everything else.
 
-### 4. The ticket on disk: one file, plus an optional folder of parts
+### 4. The ticket on disk: one file
 
-The human, verbatim: "big tickets only exist on disk; in the UI they can be rendered as a folder;
-they will show as a single file in a local editor, however; this is something to consider;
-tickets that aren't changes might not need folders, though."
+**Decided (the human, 2026-10-09): start with one file.** A ticket is one file,
+`docs/tickets/{open,resolved}/<slug>-<id>.md`, at today's path, so every `[[stem|text]]` link and
+Obsidian lookup keeps working. A change ticket's parts (section 5) are in the same file.
 
-Recommended layout (**open for the human**):
+How the parts are separated in the file is an implementation decision, and it doesn't block this
+work. The human's proposal is MIME parts: each part a separately delimited section of the one
+file, so the UI can show the parts as tabs (or as a folder), while vim and Obsidian show one file.
+The simplest fallback is headings (`## Proposal`, `## Design`, ...). Either way:
 
-```
-docs/tickets/open/<slug>-<id>.md          the ticket: frontmatter, ## The ask, discussion notes
-docs/tickets/open/<slug>-<id>/            only when the ticket has parts (change types)
-  proposal.md
-  design.md
-  specs.md
-  tasks.md
-```
+- The gate (section 6) finds each required part by its name and checks that it isn't empty.
+- Non-change tickets have no parts beyond `## The ask` and the discussion.
+- `ticket resolve` moves one file, as today.
 
-- The main file keeps today's path, so every `[[stem|text]]` link and Obsidian lookup keeps
-  working. The folder sits beside it and has the same name.
-- In vim or Obsidian, the ticket is one file plus a folder next to it. In the UI it's one ticket
-  with its parts as tabs or sections.
-- Non-change tickets have no folder.
-- A small change may put short parts as sections in the main file (`## Proposal`, `## Design`,
-  ...). The gate accepts either a section or a file. This keeps a one-line `fix` cheap.
-- `ticket resolve` moves the file and its folder together.
-
-The alternative is everything as sections in one file, always. That's simpler on disk, but a
-change ticket with a full design gets long.
+The human's earlier words on layout: "big tickets only exist on disk; in the UI they can be
+rendered as a folder; they will show as a single file in a local editor, however; this is
+something to consider; tickets that aren't changes might not need folders, though."
 
 ### 5. Change parts (modeled on OpenSpec)
 
@@ -223,11 +211,11 @@ existing `edges` table when it reads tickets, so readiness (`blocked_by`) keeps 
 children and "blocks" are computed by querying, never stored on both sides (today's
 `tasks:`/`ticket` pair is the drift k7tm warns about).
 
-Proposed names. Per naming.md, read them aloud and check for sound-alikes. The human confirms.
+Decided by the human (2026-10-09) except `kind`, which no one asked to change, so it stays.
 
 | Today | New | Why |
 |---|---|---|
-| `needs` | `blocked_by` | Jira, Linear and GitHub all say "blocked by"; it's the `blocks` edge |
+| `needs` | `blocked_by` | the trackers' name: Jira "is blocked by", Linear "Blocked by", GitHub Issues "Blocked by" (API `blocked_by`); pairs with our `blocks` edge. `depends`/`depends_on` (beads' field, Compose, Terraform) were weighed: developer-tool names, not tracker names |
 | `see` | `related` | the standard name, and already our edge kind |
 | (none) | `parent` | the standard name; already our edge kind; one ID |
 | `tasks` | (dropped) | one row per ticket, same ID |
@@ -236,7 +224,7 @@ Proposed names. Per naming.md, read them aloud and check for sound-alikes. The h
 | `opened` | `created` | the standard name |
 | `filed_by` | `created_by` | matches the row's `created_by` |
 | `closed` | `resolved` | matches the `resolved/` folder and `ticket resolve` |
-| `kind` | `type`? | Jira and GitHub say "type"; `kind` is used throughout the code (task, message and edge kinds). Recommendation: **keep `kind`**, since it's clear and renaming it ripples through everything. The human decides |
+| `kind` | `kind` | unchanged: clear, and used throughout the code (task, message and edge kinds) |
 | `repos` | `repos` | fine |
 
 `duplicates` and `supersedes` stay edge kinds, used from the CLI; they're rare enough not to
@@ -279,10 +267,14 @@ zkbb's "bare ID vs full stem".
 
 ### 10. States
 
-stx8 designs the states (held, built-and-waiting-to-land, ...). It's held for the human's
-approval and becomes the state design for change tickets. Other types use a subset (section 2).
-Its meanings are needed here, not its final names: not ready, ready, planned (in the queue),
-held, claimed, built (waiting to land), landed, dropped, resolved.
+**Decided (the human, 2026-10-09): merging task into ticket uses the existing states.** The row
+keeps today's states (`pending`, `open`, `planned`, `claimed`, `integrated`, `dropped`,
+`reopened`). New states are not part of this workstream.
+
+stx8 is reviewed separately, later. The human: "I think we need more than just these states",
+meaning more than the held and built-and-waiting-to-land states stx8 proposes. stx8 stays held
+until the human approves its state design. When it lands, it designs the states for change
+tickets, and other types use a subset (section 2).
 
 ### 11. Migration
 
@@ -298,10 +290,8 @@ Run by `bridle migrate` (xebc; auto-run at start-up is built, br-2718), per proj
 4. Tickets with more than one task (11 today): each extra task becomes a child ticket with
    `parent` set.
 5. `bug` tasks that are fixes become `fix`.
-6. Purging `resolved/`: the human is fine with it. Proposal: tickets resolved more than N days
-   ago move out of `docs/tickets/resolved/`, either to an archive folder or out of the tree
-   (git keeps them). Their links still resolve through the index. The human sets N, or drops
-   this step.
+6. Purging `resolved/`: **deferred** until it's a problem (the human, 2026-10-09: "defer a
+   decision until we have a problem. YAGNI, maybe.").
 
 **Other projects** (track-web, meta-notes, ...): their migrations commit stub tickets and field
 renames. By rule `existing-projects`, those go to the project's trial or integration branch
@@ -333,8 +323,8 @@ Advisor (product-manager) sizes, orders and plans them, with the human's approva
    `ticket link` replaces `task dep`.
 4. **The thread moves to the ticket**: `tickets/<id>.md` on the state branch, `ticket
    comment/ask/answer/show`, and migration steps 2-4.
-5. **States** (stx8, re-scoped to tickets): still held until the human approves its state
-   design.
+5. ~~States (stx8)~~: **out of this workstream** (the human, 2026-10-09). The merge uses the
+   existing states; stx8 is reviewed separately, later (section 10).
 6. **Change parts, gate and approvals** (with 95mu): the layout (section 4), the per-type
    config (section 6), `ticket approve`, the daemon refusing to plan, and the proposal, design
    and review prompts.
@@ -342,7 +332,7 @@ Advisor (product-manager) sizes, orders and plans them, with the human's approva
    gateway API exposes change tickets for the UI.
 8. **UI** (bridle-ui project): change tickets shown with parts, state, gates and approvals.
 9. **Code rename**: types, storage, the state branch folder, wire compatibility for one release.
-10. **Cleanup**: remove the `task` alias and the old-name readers, purge `resolved/` (step 6),
+10. **Cleanup**: remove the `task` alias and the old-name readers (purging `resolved/` is deferred),
     and a final pass over the docs (`docs/README.md`, `cli.md`, `storage.md`, `agent-host/`).
     The workstream is complete only after this one.
 
@@ -383,13 +373,18 @@ from `bridle ticket task` and is readied when it's buildable.
 keeps old habits working until step 10. The PdM's own roadmap generator reads `bridle task list`
 and needs the same change.
 
-## Open for the human
+## Answered by the human (2026-10-09)
 
-1. The field names in section 7, especially `kind` vs `type` and `closed` -> `resolved`.
-2. `epic` or `initiative` (section 2).
-3. Ticket layout: main file plus a folder of parts, or sections in one file (section 4).
-4. A row for every ticket, not only implementation tickets (section 2).
-5. Purging `resolved/`: how old, and to where (section 11, step 6).
+1. Field names (section 7): `needs` -> `blocked_by`, `see` -> `related`, a new `parent`, `opened` ->
+   `created`, `closed` -> `resolved`. `kind` stays.
+2. `epic` (section 2).
+3. One file to start, with the parts separated inside it (MIME parts is the human's proposal; an
+   implementation decision, not blocking) (section 4).
+4. A row for every ticket (section 2).
+5. Purging `resolved/`: deferred until it's a problem (section 11).
+6. Not asked, but decided: the merge uses the existing states. stx8 needs more states than it
+   lists and is reviewed separately, later (section 10). Step 5 of the sequence is out of this
+   workstream.
 
 ## The human's words
 
@@ -428,3 +423,22 @@ ticket; B, the thread in the ticket file on `main`):
 > Yes, so, this needs to be a new workstream managed by the advisor/product-manager.
 >
 > I want you to write up a new ticket that focuses on the decisions that we've made. Link to other tickets for history and keep the motivation and reasoning very short. A bullet list of why (model on openspec proposal Why?). Then explain the entire design in detail. At the end, make a suggestion on a sequence of tickets that will implement it. When that doc is written, send it to advisor/product-manager as a new workstream to plan.
+
+Then, answering the open questions (2026-10-09, verbatim):
+
+> My proposal for additional files is to use MIME parts to separate them within the same file; but that is an implementation decision not blocking this work.
+>
+> 1. blocked_by or depends? depends is more generic I feel; see -> related is good; parent is good; you're suggesting renaming opened to created and closed to resolved, is that right?
+>
+> Ah - we need to also review this: docs/tickets/open/a-task-s-state-says-what-s-really-happening-held-and-built-a-stx8.md ; I think we need more than just these states; although we can come back to this work later. the task -> ticket merge could be done with the existing states.
+>
+> 2. epic
+> 3. let's start with one file and the idea of MIME parts for the moment
+> 4. i'm fine with either; row for every ticket is fine
+> 5. defer a decision until we have a problem. YAGNI, maybe.
+
+The advisor confirmed `opened` -> `created` and `closed` -> `resolved`. On `depends` vs
+`depends_on` vs `blocked_by`, the advisor checked beads (field `depends_on`, edge `blocks`;
+`workflow/research/02-beads.md` names only the edge types) and the trackers (Jira, Linear and
+GitHub Issues all say "blocked by"), and recommended `blocked_by` as the tracker name. The human
+(2026-10-09, verbatim): "agree; good discussion; blocked_by".
