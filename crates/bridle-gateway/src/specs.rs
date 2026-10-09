@@ -3,12 +3,16 @@
 use axum::Json;
 use axum::extract::Path;
 
-use crate::documents::{ApiDocError, blocking, repo_of};
+use crate::documents::{ApiDocError, DocTarget, blocking, target_of};
 pub use bridle_docs::specs::*;
 
 /// `GET /api/v1/projects/{project}/specs`.
 pub async fn specs_route(Path(project): Path<String>) -> Result<Json<ProjectSpecs>, ApiDocError> {
-    let repo = repo_of(&project).await?;
-    let specs = blocking(move || Ok(load(&repo))).await?;
-    Ok(Json(ProjectSpecs { project, specs }))
+    match target_of(&project).await? {
+        DocTarget::Local(repo) => {
+            let specs = blocking(move || Ok(load(&repo))).await?;
+            Ok(Json(ProjectSpecs { project, specs }))
+        }
+        DocTarget::Remote(r) => Ok(Json(r.specs(&project).await?)),
+    }
 }

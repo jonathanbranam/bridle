@@ -126,7 +126,7 @@ pub(crate) async fn resolve(project: &str) -> Result<(String, String), ActionErr
 
 /// The human's token as the CLI finds it: a local project's workspace file, or for a project on
 /// another machine the `[human.<machine>]` entry in credentials.toml (br-8b98).
-fn human_token(
+pub(crate) fn human_token(
     workspace: Option<&str>,
     project: &str,
     machine: Option<&str>,
@@ -143,7 +143,7 @@ fn human_token(
 }
 
 /// The injectable core of `resolve`: `lookup(workspace, project, machine)` finds the token.
-fn resolve_target(
+pub(crate) fn resolve_target(
     t: Target,
     lookup: impl Fn(Option<&str>, &str, Option<&str>) -> Result<Option<String>, String>,
 ) -> Result<(String, String), ActionError> {

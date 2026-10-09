@@ -250,6 +250,14 @@ answer is listed as unreachable; one with no `[human.<machine>]` entry for the p
 with an error naming that section. A project on a random port needs a `[projects]` entry with a
 fixed port to be reachable from another machine.
 
+**Documents and specs on a remote project (br-ty37).** The six document and spec routes
+(`documents.rs`, `specs.rs`) ask `target_of(project)`: `Local(repo)` reads the working tree through
+`bridle-docs` as before; `Remote` calls the owning daemon's `/v1/documents`, `/v1/links/resolve` and
+`/v1/specs` with that machine's human token, and the response's `project` is the gateway's name for
+it. A daemon's 400/403/404/409/415 map back to the same `DocError` variants, so the API keeps its
+shape; an unreachable machine is a 503 naming it. A remote write is followed by the same
+`review/add` call, sent to that daemon.
+
 ## 5. Build tasks, in order
 
 Each is one branch and one worker. None touches the daemon. Tasks 1–10 are built; 11 is

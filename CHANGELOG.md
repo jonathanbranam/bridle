@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- The gateway reads, searches, edits and resolves links for a project's documents and specs on another machine through that machine's daemon, using its `[human.<machine>]` token; a saved comment puts the document under review there (br-ty37, ui-9hq8 B3). An unreachable machine is a 503 naming it. No API route changes.
 - The daemon serves its own repo's documents to the human token: `GET /v1/documents?q=`, `GET`/`PUT /v1/documents/{path}`, `POST /v1/links/resolve`, `GET /v1/specs` (br-5e4k). The shared code moved out of the gateway into the new `bridle-docs` crate; client methods `search_documents`, `read_document`, `write_document`, `resolve_links`, `specs`.
 
 ### Fixed
