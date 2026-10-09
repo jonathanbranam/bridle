@@ -1,0 +1,32 @@
++++
+id = "br-g76s"
+title = "Load-hold notes: one per machine, name bridle-owned top consumers, honest text, load.hold.started/ended events, escalate a long hold (n4w4 recs 4, 5)"
+kind = "feature"
+state = "pending"
+created_at = "2026-10-09T01:41:12.914Z"
+updated_at = "2026-10-09T01:41:12.915207Z"
+created_by = "agent:pm-1"
+watchers = [
+    "agent:pm-1",
+    "external:aide",
+]
+parent = "br-n4w4"
++++
+
+Ticket: docs/tickets/open/postmortem-bridle-s-own-ps-polling-every-daemon-test-daemons-n4w4.md (read "Why it went on for ~26 hours" and Recommendations 4 and 5; also ticket xypj, one note per machine). Human approved all recommendations.
+
+Code: crates/bridle-daemon/src/load.rs (the watch, the note, LoadSource, top_consumers), supervisor.rs `refuse_if_load_held` (~line 505), workflow/base/roles/orchestrator.md lines ~94-96 (the load-note paragraph).
+
+Do:
+1. The note's text: remove the false "the daemon resumes them itself". A held spawn is refused with a conflict and not queued; say "new spawns are refused until the load falls; retry then".
+2. Name bridle's own processes: when any of the top three consumers is a bridle-owned process (comm `ps`, `bridle`, `fake-claude`, `claude`, or a test binary under a worktree's target/debug), add one line "a bridle process is a top consumer: <name> <pct>%. Find the cause now, do not wait." Pure string match over the consumers already collected; no new fork.
+3. Events: emit `load.hold.started` and `load.hold.ended` events (use the existing events mechanism; see how other daemon events are recorded) with load, per-core load and the consumers on start, and the held duration on end, so total hold time can be summed. Document in docs/design/agent-host/daemon.md.
+4. Escalation: if spawns have been held more than 60 minutes in the last 2 hours, or a refused spawn belongs to a task with priority critical, send the orchestrator one message (once per hour at most) "Spawns have been held N minutes of the last 120: investigate the cause now" and write the same line into the morning list the way other daemon notes reach the human (find the existing path; if none exists, only message the orchestrator and say so on the thread).
+5. One note per machine, not per daemon (xypj): if it needs a machine-wide file (e.g. a lock or stamp file under ~/.bridle/ with the last-sent time), use that; the first daemon to cross sends, the others skip within 5 minutes. Keep it simple; say on the thread if you judge this part needs a separate design.
+6. workflow/base/roles/orchestrator.md: change the load-note rule from "wait" to "wait; if the note names a bridle process, or the hold lasts or escalates, find the cause now" (keep the surrounding wording).
+
+Files: crates/bridle-daemon/src/load.rs, supervisor.rs (only the note/refusal text), docs/design/agent-host/daemon.md, workflow/base/roles/orchestrator.md, CHANGELOG.md.
+
+Acceptance: just check passes; unit tests with a fake LoadSource for: note text without the false claim, bridle-process line present/absent, started/ended events, escalation after 60 minutes (fake clock), machine-wide dedupe.
+
+Model: Sonnet. Migration: the orchestrator role text reaches projects through the normal `bridle workflow sync`; no file changes in projects. Out of scope: queueing held spawns (the note stops claiming it), the governor threshold, the test harness.

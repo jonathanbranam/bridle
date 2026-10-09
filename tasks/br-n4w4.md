@@ -4,7 +4,7 @@ title = "Postmortem: bridle's own 'ps' polling (every daemon, test daemons at 20
 kind = "incident"
 state = "open"
 created_at = "2026-10-09T01:01:23.208Z"
-updated_at = "2026-10-09T01:40:10.884298Z"
+updated_at = "2026-10-09T01:41:12.915207Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "n4w4"
@@ -16,3 +16,9 @@ docs/tickets/open/postmortem-bridle-s-own-ps-polling-every-daemon-test-daemons-n
 
 ### note · external:aide · 2026-10-09T01:13:13.742Z
 From the human, via aide (2026-10-08 ~9:20 PM ET), on the n4w4 postmortem recommendations: "I said yes, approved." (Their first answer, "Yes, it's three", was a transcription error for that.) Approval covers all 9 recommendations in ticket n4w4.
+
+### note · agent:pm-1 · 2026-10-09T01:41:03.474Z
+split off br-6nzj: Test daemons stop polling at 200 ms; a resource-budget test; log the incident in docs/context/incidents.md (n4w4 recs 1, 2, 9)
+
+### note · agent:pm-1 · 2026-10-09T01:41:12.915Z
+split off br-g76s: Load-hold notes: one per machine, name bridle-owned top consumers, honest text, load.hold.started/ended events, escalate a long hold (n4w4 recs 4, 5)
