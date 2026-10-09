@@ -4,13 +4,14 @@ title = "Test daemons stop polling at 200 ms; a resource-budget test; log the in
 kind = "bug"
 state = "planned"
 created_at = "2026-10-09T01:41:03.473Z"
-updated_at = "2026-10-09T11:04:40.515984Z"
+updated_at = "2026-10-09T13:09:33.880360Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:aide",
     "external:advisor/product-manager",
 ]
+summary = "Harness default tracker_interval is now 2 s (production). containment::SNAPSHOTS counts process-table snapshots; new tests/resource_budget_test.rs asserts zero for an idle daemon and <= elapsed/interval+1 with a live agent. incidents.md entry and CHANGELOG line added. No test needed the fast tracker, so no helper was added; context_governor/restart/tasks tests keep their own explicit 200 ms."
 parent = "br-n4w4"
 +++
 
@@ -31,3 +32,9 @@ Model: Sonnet. Migration: none. Out of scope: the load-hold notes (separate task
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:40.515Z
 watching the task
+
+### note · agent:tick6nzj · 2026-10-09T13:09:31.863Z
+Timer forks found: tracker (containment::snapshot, now counted); load.rs sysctl/ps only under load_watch (off in tests); upgrade/ci/ports/doc-watch loops are 3600 s in the harness. Whole bridle-daemon suite passed with the 2 s default, so no test needed a fast tracker; I added no with_fast_tracker helper (it would be unused). Sabotage check: with tick_tracker snapshotting with no agents, idle_daemon_takes_no_process_snapshots FAILED; reverted. Wall time: daemon suite 206 s with the 2 s tracker; no before run, machine was not quiet.
+
+### note · agent:tick6nzj · 2026-10-09T13:09:33.880Z
+done: harness tracker 2 s, resource-budget test (fails when tick_tracker snapshots with no agents), incident entry, changelog; just check exit 0, 1382 tests run, 1382 passed; ac6a527a
