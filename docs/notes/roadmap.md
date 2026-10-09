@@ -171,7 +171,7 @@ Agents use bridle correctly: commands, help, roles, the workflow reaching every 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
 | [br-3mz4](http://dalek.tailbc91f5.ts.net:7878/task?id=br-3mz4) | One orchestrator per machine, not per project: say so in the advisor role and wherever ... |  | planned | ready to build |
-| [br-d48r](http://dalek.tailbc91f5.ts.net:7878/task?id=br-d48r) | Machine load notes go to aide, not the orchestrator |  | planned | ready to build |
+| [br-d48r](http://dalek.tailbc91f5.ts.net:7878/task?id=br-d48r) | Machine load notes go to aide, not the orchestrator |  | dropped | dropped |
 | [br-163f](http://dalek.tailbc91f5.ts.net:7878/task?id=br-163f) | Group the CLI's 54 top-level commands; split commands.rs/cli.rs by group (a67t) |  | reopened | reopened |
 | [br-ts6b](http://dalek.tailbc91f5.ts.net:7878/task?id=br-ts6b) | One command tree for interactive sessions: bridle session <verb> <seat>, retiring bridl... |  | pending | waits on the human (approve to ready) |
 | [br-fne2](http://dalek.tailbc91f5.ts.net:7878/task?id=br-fne2) | bridle session advisor and bridle advisor start: near-identical commands that do differ... |  | pending | the designer's first job (ukpm) |
@@ -428,3 +428,4 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 - 2026-10-09 18:01 ET: br-v6kr baseline set to start 4:00 AM ET 2026-10-10 (the human, via the orchestrator).
 - 2026-10-09 18:02 ET: br-d48r (machine load notes go to aide; the human, via the orchestrator) placed in agents-and-cli, no epic.
 - 2026-10-09 18:03 ET: filed by the aide from the human's words, readied, high: br-7ufd (self-upgrade at most every few hours, batched; critical fixes at once), theme reliability.
+- 2026-10-09 18:03 ET: br-d48r dropped (orchestrator misread the human); the aide files the real ticket (load notes repeat with no quiet period).
