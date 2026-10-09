@@ -2,14 +2,16 @@
 id = "br-9z2n"
 title = "Daemon reads the process table without forking ps (3p3h fix 3)"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-08T17:49:55.764Z"
-updated_at = "2026-10-09T01:10:02.546437Z"
+updated_at = "2026-10-09T01:10:58.184298Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:orchestrator",
 ]
+branch = "bridle/nofork"
+commit = "018b9cfd547b9a0ad1c72cbd0ca2ec7735af43e1"
 summary = 'containment::snapshot() now reads the process table without forking ps: /proc/<pid>/stat on Linux, the sysinfo crate (pid, ppid, start) plus nix getpgid per pid on macOS (sysinfo has no pgid; no unsafe). ps stays as the fallback on error or empty result. Native starts are tagged "n:"; is_same_process checks an untagged (ps-format, stored by an older daemon) start against ps, so the two formats are never compared with each other and upgrades keep adopting old pid files. Tests: own pid with ppid == parent_id, descendants finds a spawned child, /proc stat parsing. agents.md and CHANGELOG updated. Load before/after NOT measured: the machine was at load 16-43 throughout from other agents, so a before/after comparison would be noise; just check ran at load ~43 (1342 tests passed).'
 parent = "br-3p3h"
 +++
@@ -44,3 +46,9 @@ main merged; just check exit 0, 1348 tests passed; tip b7f89678. Note: the first
 
 ### note · human · 2026-10-09T01:10:02.546Z
 how will this work on windows under WSL2? same aa linux?
+
+### note · agent:manager-2 · 2026-10-09T01:10:41.646Z
+integrated: 018b9cfd547b9a0ad1c72cbd0ca2ec7735af43e1 (branch bridle/nofork)
+
+### note · agent:manager-2 · 2026-10-09T01:10:58.184Z
+cleanup: removed agent nofork, branch bridle/nofork
