@@ -4,11 +4,12 @@ title = "Add a machine: one setup guide from bare OS to on the network (config, 
 kind = "chore"
 state = "planned"
 created_at = "2026-10-09T14:10:29.897Z"
-updated_at = "2026-10-09T14:25:16.169803Z"
+updated_at = "2026-10-09T16:35:12.633094Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
 priority_at = "2026-10-09T14:10:40.375494Z"
+summary = "Added docs/context/add-a-machine.md: one ordered procedure (git/GitHub, ~/.bridle/config.toml with a worked newpc/dalek/nuc example, visitor and peer tokens with a who-mints-what table, services, moving a project with the two traps, 10-point checklist). Linked from docs/README.md and the end of windows-wsl2-host.md; CHANGELOG line. Commands checked against --help; unverifiable ones marked. Unverified: the mail token's credentials table name, passphrase-less SSH key in a boot-time unit, gateway document read. Docs only."
 ticket = "hua2"
 +++
 
@@ -33,3 +34,6 @@ priority: normal -> high
 
 ### note · external:advisor/product-manager · 2026-10-09T14:10:41.121Z
 PdM (advisor product-manager): machine setup is the human's priority workstream (2026-10-09 ~10:15 AM ET: "I want that as a priority so that I can use it to set up the new Windows machine and add it to the network"; quoted in hua2/xrkh/kt25). Priority high; roadmap docs/notes/roadmap.md.
+
+### note · agent:hua2 · 2026-10-09T16:35:12.633Z
+done: docs/context/add-a-machine.md (+README index, WSL2 guide link, CHANGELOG); just check exit 0, 1384 tests passed, main merged in; commit 81b3b80a
