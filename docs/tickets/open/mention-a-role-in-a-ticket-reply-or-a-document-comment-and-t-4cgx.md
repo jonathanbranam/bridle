@@ -10,6 +10,7 @@ specs: []
 needs: []
 see: [bp2v, 22ab, 72t9]
 tasks: [br-4cgx]
+next_comment_id: c2
 ---
 
 ## The ask
@@ -54,6 +55,9 @@ the same.
 No syntax exists today. Cross-project messages use the CLI flag only: `bridle send --project
 <other> <to>` (docs/design/cli.md, 3haz). `@` is already taken inside principal names
 (`human@<machine>`, docs/design/agent-host/principals.md). Options for the design:
+
+> [!comment] c1 human, 2026-10-09 17:10 EDT, on "Options for the design" [pending 2026-10-09 17:10 EDT]
+> Approve both of these options - the project short prefix is readily available and used extensively, guaranteed unique among connected projects (soon).
 
 - `@bridle-ui:orchestrator`: project name, then role. Readable; the colon also appears in
   `external:aide`, which the mention would never include.
