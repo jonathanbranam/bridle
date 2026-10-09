@@ -1313,3 +1313,4 @@
 {"actor":"agent:pm-1","at":"2026-10-09T22:01:55.593195Z","from":"open","task":"br-d48r","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-09T22:01:58.585717Z","queue":"reprioritized"}
 {"actor":"human","at":"2026-10-09T22:02:24.988Z","from":"","task":"br-7ufd","to":"pending"}
+{"actor":"external:advisor/product-manager","at":"2026-10-09T22:02:49.177482Z","from":"pending","task":"br-7ufd","to":"open"}
