@@ -83,11 +83,15 @@ The roadmap will be at `docs/notes/roadmap.md`.
 
 - **Aides (every project):** send **everything** from the human to the PdM, not the
   orchestrator: ideas, feature asks, changes, "should we build X", and work the human has
-  approved. The one exception is a **critical bug fix**: send it straight to the orchestrator as
+  approved. The one exception is a **critical bug fix**: send it straight to the machine's orchestrator (see below) as
   before; the PdM picks it up from the task. Send with
   `bridle --project bridle send external:advisor/product-manager "For advisor product-manager: ..."`.
   The PdM may ask you to put a question to the human or carry an answer back.
-- **Orchestrator (bridle and NUC):** carry on as now; no extra reporting is asked of you. The PdM
+- **Orchestrator:** one per machine, not per project (the human, 2026-10-09: "There is only one
+  orchestrator per machine; we need to make that clear. the orch for this machine runs in the
+  bridle project."). Dalek's runs in the bridle project, so from another project send to it with
+  `bridle --project bridle send external:orchestrator ...`; the NUC has its own. There is no
+  "bridle-ui orchestrator". The orchestrator: carry on as now; no extra reporting is asked of you. The PdM
   watches tasks and tickets and reads what happens to them (comments, state changes, landings),
   so keep the record on the task as rule `talk-on-the-task` says; that is how the PdM hears.
   **Expect requests from the PdM**, signed `From advisor (product-manager):`, for things a real
