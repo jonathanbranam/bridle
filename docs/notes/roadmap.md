@@ -13,15 +13,15 @@ before it moves: "waits on the human" is a pending task only the human can appro
 is the project manager's; "ready to build" is in the queue; "HELD" is planned in bridle but
 stopped by the human.
 
-Last updated: 2026-10-09 13:25 ET.
+Last updated: 2026-10-09 14:06 ET.
 
 ## Needs the human now
 
 In the order the PdM suggests:
 
-0. **Machine setup** (your priority, 2026-10-09): two decisions unblock phase 2. (a) n63z,
-   peer tokens for every project: fold into `bridle token pair` (sk7p) or a separate command,
-   and the per-project opt-out's shape? (b) j7r4: does the NUC keep pushing tickets to main
+0. **Machine setup** (your priority, 2026-10-09): two decisions unblock phase 2. (a) approve
+   the `bridle token pair` design in ticket sk7p (one command, decided 1:55 PM; open: the names
+   `role`/`peer`, the opt-out `[mail] peers = false`); br-8c25 is held for it. (b) j7r4: does the NUC keep pushing tickets to main
    once a third machine writes to repos (one pusher per branch)? Also your review of kuw2
    (machine daemon, br-efs2) gates project transfer's design.
 
@@ -68,9 +68,9 @@ The human, 2026-10-09: efficient, direct setup of a new machine, first the Windo
 |---|---|---|---|
 | [br-jgdb](http://dalek.tailbc91f5.ts.net:7878/task?id=br-jgdb) | Windows PC: follow the WSL2 setup guide (install WSL2 + Ubuntu, wslconfig, Tailscale, s... | claimed | the human's to-do |
 | [br-h7mu](http://dalek.tailbc91f5.ts.net:7878/task?id=br-h7mu) | Pick a name for the Windows PC (docs/context/naming.md) (v7ug) | claimed | the human's to-do |
-| [br-hua2](http://dalek.tailbc91f5.ts.net:7878/task?id=br-hua2) | Add a machine: one setup guide from bare OS to on the network (config, tokens, services... | planned | ready to build |
+| [br-hua2](http://dalek.tailbc91f5.ts.net:7878/task?id=br-hua2) | Add a machine: one setup guide from bare OS to on the network (config, tokens, services... | integrated | delivered |
 | [br-gdf3](http://dalek.tailbc91f5.ts.net:7878/task?id=br-gdf3) | Peer-token setup guidance: a token per receiving project per sending machine, minted on... | planned | ready to build |
-| [br-8c25](http://dalek.tailbc91f5.ts.net:7878/task?id=br-8c25) | bridle token pair <machine>: set up tokens between machines over SSH (sk7p) | planned | ready to build; biggest manual pain (tokens both ways) |
+| [br-8c25](http://dalek.tailbc91f5.ts.net:7878/task?id=br-8c25) | bridle token pair <machine>: set up tokens between machines over SSH (sk7p) | planned | HELD: design in ticket sk7p (role + peer tokens, n63z folded in) waits on the human's approval |
 | [br-88d4](http://dalek.tailbc91f5.ts.net:7878/task?id=br-88d4) | self_upgrade = "release": fetch, verify and swap the release binary (chvf 2) | planned | ready to build |
 | [br-751e](http://dalek.tailbc91f5.ts.net:7878/task?id=br-751e) | Daemon keeps its own workflow checkout at the binary's tag (chvf 3) | planned | ready to build |
 | [br-57nt](http://dalek.tailbc91f5.ts.net:7878/task?id=br-57nt) | bridle gateway restart takes a launchd-managed gateway out of launchd and inherits the ... | planned | ready to build |
@@ -127,7 +127,7 @@ The orchestrator and daemons stay up, relaunch once, upgrade cleanly and recover
 | [br-4zfa](http://dalek.tailbc91f5.ts.net:7878/task?id=br-4zfa) | Incident: the bridle orchestrator was killed (SIGTERM) at 11:18 PM ET and nothing relau... | pending | waits on the human (approve to ready) |
 | [br-f4xu](http://dalek.tailbc91f5.ts.net:7878/task?id=br-f4xu) | Flaky on macOS CI: process_test sigterm_via_signal_group_exits_143 exits 1, not 143 | integrated | delivered |
 | [br-h7gt](http://dalek.tailbc91f5.ts.net:7878/task?id=br-h7gt) | Flaky on Linux CI: upgrade_test self_upgrade_restarts_only_after_the_mid_turn_agent_fin... | integrated | delivered |
-| [br-vabu](http://dalek.tailbc91f5.ts.net:7878/task?id=br-vabu) | Flaky on Linux CI: store cancelled_blocking_task_returns_shutting_down_not_a_panic | planned | ready to build |
+| [br-vabu](http://dalek.tailbc91f5.ts.net:7878/task?id=br-vabu) | Flaky on Linux CI: store cancelled_blocking_task_returns_shutting_down_not_a_panic | integrated | delivered |
 | [br-b6mu](http://dalek.tailbc91f5.ts.net:7878/task?id=br-b6mu) | Self-upgrade drain may never restart when it starts during a spawn | planned | ready to build |
 | [br-6b8a](http://dalek.tailbc91f5.ts.net:7878/task?id=br-6b8a) | Orchestrator relaunch liveness: one clock, never a second orchestrator (jf9u) | planned | ready to build |
 | [br-96a6](http://dalek.tailbc91f5.ts.net:7878/task?id=br-96a6) | Hold the orchestrator relaunch without restarting the daemon (8fsx) | pending | waits on the human (approve to ready) |
@@ -191,8 +191,8 @@ What the human sees and touches: to-dos, document review, links, usage, quiet ho
 | [br-767c](http://dalek.tailbc91f5.ts.net:7878/task?id=br-767c) | Drop the Write(path) focus-file deny rules: Claude Code warns on every session start | pending | waits on the human (approve to ready) |
 | [ui-hu3k](http://dalek.tailbc91f5.ts.net:7878/task?id=ui-hu3k) | Review the document picker prototypes and choose A, B or C (ui-m2pz) | claimed | the human's to-do |
 | [ui-7jg4](http://dalek.tailbc91f5.ts.net:7878/task?id=ui-7jg4) | [at restart] Test the new comment selection (ui-bpsd) on laptop and phone | claimed | the human's to-do |
-| [ui-ha6m](http://dalek.tailbc91f5.ts.net:7878/task?id=ui-ha6m) | The human can delete a resolved comment thread (kept in git history) | pending | waits on the human (approve to ready) |
-| [ui-wtr3](http://dalek.tailbc91f5.ts.net:7878/task?id=ui-wtr3) | An expanded comment thread can be collapsed again (a [-] button) | pending | waits on the human (approve to ready) |
+| [ui-ha6m](http://dalek.tailbc91f5.ts.net:7878/task?id=ui-ha6m) | The human can delete a resolved comment thread (kept in git history) | integrated | delivered |
+| [ui-wtr3](http://dalek.tailbc91f5.ts.net:7878/task?id=ui-wtr3) | An expanded comment thread can be collapsed again (a [-] button) | integrated | delivered |
 | [br-twg8](http://dalek.tailbc91f5.ts.net:7878/task?id=br-twg8) | Try document review (x8jt) on gtzx: install the UI, review add, start the gateway, comment | claimed | the human's to-do |
 
 ### Agents and the CLI
@@ -283,6 +283,8 @@ Chores that are the human's own: expand on an idea, review a ticket or branch.
 | 2026-10-09 ~12:20 | br-6nzj test daemons poll at 200 ms, resource-budget test | performance |
 | 2026-10-09 ~12:00 | br-f4xu macOS CI flake (sigterm exit 143) | reliability |
 | 2026-10-09 ~12:50 | br-h7gt Linux CI flake (mid-turn upgrade test made deterministic) | reliability |
+| 2026-10-09 ~13:50 | br-vabu Linux CI store flake (main green again) | reliability |
+| 2026-10-09 ~14:05 | br-hua2 add-a-machine guide (docs/context/add-a-machine.md) | machine setup |
 
 ## Changes to this roadmap
 
@@ -295,3 +297,4 @@ Chores that are the human's own: expand on an idea, review a ticket or branch.
 - 2026-10-09 12:22 ET: br-6nzj and br-f4xu delivered. Placed br-h7gt (Linux CI flake, critical) in reliability.
 - 2026-10-09 12:54 ET: br-h7gt delivered.
 - 2026-10-09 13:25 ET: placed br-vabu (Linux CI flake, critical; main red, blocks hua2 merge) and br-b6mu (self-upgrade drain bug from h7gt) in reliability. Asked the orchestrator to put machine setup ahead of normal work; agreed: vabu, then hua2, then phase 1.
+- 2026-10-09 14:06 ET: br-vabu, br-hua2 delivered. br-8c25 HELD: the human widened token pair (one command, role and peer tokens, all machines/projects/roles by default); design written into ticket sk7p (n63z folded in), waits on the human's approval.
