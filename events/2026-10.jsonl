@@ -1278,3 +1278,4 @@
 {"actor":"agent:pm-1","at":"2026-10-09T19:09:27.731633Z","queue":"reprioritized"}
 {"actor":"human","at":"2026-10-09T19:11:41.011Z","from":"","task":"br-jxwr","to":"pending"}
 {"actor":"human","at":"2026-10-09T19:18:13.267Z","from":"","task":"br-rztb","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-10-09T19:18:42.759874Z","from":"pending","task":"br-rztb","to":"open"}
