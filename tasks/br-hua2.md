@@ -2,9 +2,9 @@
 id = "br-hua2"
 title = "Add a machine: one setup guide from bare OS to on the network (config, tokens, services, moving a project)"
 kind = "chore"
-state = "open"
+state = "planned"
 created_at = "2026-10-09T14:10:29.897Z"
-updated_at = "2026-10-09T14:24:37.202522Z"
+updated_at = "2026-10-09T14:25:16.169803Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"

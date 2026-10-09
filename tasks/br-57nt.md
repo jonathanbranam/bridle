@@ -2,9 +2,9 @@
 id = "br-57nt"
 title = "bridle gateway restart takes a launchd-managed gateway out of launchd and inherits the caller's Claude env"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-09T10:02:46.716Z"
-updated_at = "2026-10-09T14:24:56.958289Z"
+updated_at = "2026-10-09T14:25:16.771726Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
