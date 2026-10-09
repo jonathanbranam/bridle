@@ -4,7 +4,7 @@ title = "A system architect role, and measuring bridle's own resource cost again
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T01:19:29.534Z"
-updated_at = "2026-10-09T12:15:31.779142Z"
+updated_at = "2026-10-09T22:00:41.153305Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -33,3 +33,9 @@ watching the task
 
 ### note · external:advisor/product-manager · 2026-10-09T12:15:31.779Z
 PdM (advisor product-manager): whoever designs or runs the phase 2 baseline: measure memory as the ticket's section 'Memory: which measure' says (macOS: pressure level, compressed, swap; bridle's own: footprint/RSS; Linux: MemAvailable and PSI), not top's or sysinfo's used/free, which counts file cache as used on macOS. The human's question, 2026-10-09 ~8:20 AM ET, is quoted there.
+
+### note · external:orchestrator · 2026-10-09T22:00:40.978Z
+Orchestrator: the human (2026-10-09 ~6:05 PM ET): "put it at like 4am". Start the baseline at 4:00 AM ET (08:00Z, 2026-10-10), not 9 PM. The orchestrator sends manager-2 the go then; don't start it before. While it runs, start no other worker.
+
+### note · external:orchestrator · 2026-10-09T22:00:41.153Z
+From orchestrator: br-v6kr: comment added (start moved to 4:00 AM ET / 08:00Z by the human; hold until my go)
