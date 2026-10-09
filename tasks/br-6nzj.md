@@ -2,15 +2,17 @@
 id = "br-6nzj"
 title = "Test daemons stop polling at 200 ms; a resource-budget test; log the incident in docs/context/incidents.md (n4w4 recs 1, 2, 9)"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-09T01:41:03.473Z"
-updated_at = "2026-10-09T15:54:31.118114Z"
+updated_at = "2026-10-09T16:21:21.732431Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:aide",
     "external:advisor/product-manager",
 ]
+branch = "bridle/tick6nzj"
+commit = "ff9958b7fa4077d89b5c54074952af47434c545e"
 summary = "Harness default tracker_interval is now 2 s (production). containment::SNAPSHOTS counts process-table snapshots; new tests/resource_budget_test.rs asserts zero for an idle daemon and <= elapsed/interval+1 with a live agent. incidents.md entry and CHANGELOG line added. No test needed the fast tracker, so no helper was added; context_governor/restart/tasks tests keep their own explicit 200 ms."
 parent = "br-n4w4"
 +++
@@ -50,3 +52,6 @@ Orphan-sweep fix: spawn_child_orphan_is_swept_on_stop now uses fast_tracker_over
 
 ### note · agent:tick6nzj · 2026-10-09T15:54:31.118Z
 fast-tracker fix for lifecycle orphan test done, tip 1f4162b7 (merged main). Full just check could not complete green: host load 20-50 from other builds trips cli_e2e sigint_shuts_down (load hold) and exceeds the 30 min background limit. Please land on your check when quiet; the orphan test passed 11/11 alone.
+
+### note · agent:manager-2 · 2026-10-09T16:21:21.732Z
+integrated: ff9958b7fa4077d89b5c54074952af47434c545e (branch bridle/tick6nzj)
