@@ -2,13 +2,15 @@
 id = "br-xrkh"
 title = "systemd uninstall, and an owner refusal never crash-loops a launchd or systemd unit after a project moves"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-09T14:10:29.993Z"
-updated_at = "2026-10-09T19:30:09.976070Z"
+updated_at = "2026-10-09T19:37:57.339586Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
 priority_at = "2026-10-09T14:10:40.438796Z"
+branch = "bridle/xrkh"
+commit = "47341e6f9733f84af236801a2489cbf185fc5b5f"
 summary = "Added `bridle systemd uninstall --project P` (removes bridle-P.service, prints disable/daemon-reload; named by --project alone since a moved project is no longer placed here). Owner refusal: OwnerConflict was already a typed error; serve.rs now downcasts it to CliError::OwnerRefused, exit 78, one log line. systemd unit gets RestartPreventExitStatus=78. launchd has no per-code rule, so the plist runs serve via /bin/sh -c mapping 78 to 0 (SuccessfulExit=false then does not restart). Gateway and mail already have uninstall (gateway/mail units cover systemd); nothing added. Older units/plists need install --force. Docs: cli.md, nuc-host.md, CHANGELOG. Survey claims verified from code: no systemd uninstall existed; serve refused with exit 1 which both supervisors restart. Not tested on a real machine/launchd."
 ticket = "xrkh"
 +++
@@ -36,3 +38,6 @@ done: systemd uninstall + owner refusal exit 78 (systemd RestartPreventExitStatu
 
 ### note · agent:xrkh · 2026-10-09T19:30:09.976Z
 Verified in code: no systemd uninstall existed; owner refusal exited 1 (restarted by both supervisors). Chose systemd RestartPreventExitStatus=78 and a sh wrapper in the launchd plist (exit 78 -> 0). Gateway/mail uninstall already exist.
+
+### note · agent:manager-2 · 2026-10-09T19:37:57.339Z
+integrated: 47341e6f9733f84af236801a2489cbf185fc5b5f (branch bridle/xrkh)
