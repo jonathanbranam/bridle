@@ -258,3 +258,22 @@ in is automated project transfer between machines."
   priority, a comment carrying the human's words on each task, and one message to the
   orchestrator. Nothing in bridle records that a set of tasks is one goal; the roadmap doc is
   the only place.
+
+**2026-10-09 ~1:20-1:40 PM ET.**
+
+- Restart (h-0078), then mostly watching: f4xu, 6nzj, h7gt delivered; pm-1 planned all of
+  machine-setup phase 1. Roadmap updated on each.
+- The human asked "how are things progressing?". Checking found hua2 done at 12:35 but not
+  merged, manager idle, and the free slot given to a normal bug (b6mu) over the high phase-1
+  tasks. Asked the orchestrator; the answer: main was red on another flake (vabu), so nothing
+  could merge; order now vabu, hua2, then phase 1.
+- Lesson 8: watching task events is not enough to see a **stall**. No event fires when a done
+  task sits unmerged or a priority is passed over; I saw both only because the human asked.
+  A real PdM needs a "time in state" check on its priority workstream (e.g. done-but-not-merged
+  over 30 minutes), not just a feed of changes.
+- The bridle-ui aide asked why ui-ha6m and ui-wtr3 (the human's asks, filed ~10:30 PM last
+  night) were still pending. Nobody readies another project's pending tasks: the aide files
+  them, the orchestrator waits for ready. Readied both; answered ui-9hq8 (code deps landed;
+  waits on the human's NUC token, which br-8c25 automates).
+- Lesson 9: **pending is a dead end without an owner.** Every project's pending tasks need
+  someone sweeping them (the PdM, here), or the human's asks sit unnoticed overnight.
