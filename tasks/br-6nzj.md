@@ -4,7 +4,7 @@ title = "Test daemons stop polling at 200 ms; a resource-budget test; log the in
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-09T01:41:03.473Z"
-updated_at = "2026-10-09T16:21:21.732431Z"
+updated_at = "2026-10-09T16:22:35.403Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -55,3 +55,6 @@ fast-tracker fix for lifecycle orphan test done, tip 1f4162b7 (merged main). Ful
 
 ### note · agent:manager-2 · 2026-10-09T16:21:21.732Z
 integrated: ff9958b7fa4077d89b5c54074952af47434c545e (branch bridle/tick6nzj)
+
+### note · agent:manager-2 · 2026-10-09T16:22:35.403Z
+cleanup: removed agent tick6nzj, branch bridle/tick6nzj
