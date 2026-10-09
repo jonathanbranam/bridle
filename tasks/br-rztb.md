@@ -2,9 +2,9 @@
 id = "br-rztb"
 title = "Incident: something keeps restarting dalek's gateway outside launchd from a Claude session (pid 88281 since 10-08 9:39 PM); recurring"
 kind = "incident"
-state = "open"
+state = "planned"
 created_at = "2026-10-09T19:18:13.267Z"
-updated_at = "2026-10-09T19:30:41.539917Z"
+updated_at = "2026-10-09T19:31:23.616297Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
@@ -32,3 +32,12 @@ orchestrator: readied, high (the human, via aide, verbatim on the ticket: 'This 
 
 ### note · external:orchestrator · 2026-10-09T19:18:49.191Z
 From orchestrator: br-rztb (gateway restarted outside launchd, recurring, human-reported) is ready, high. Plan it next after work already claimed; Sonnet. See thread.
+
+### note · external:orchestrator · 2026-10-09T19:31:00.316Z
+From orchestrator: br-rztb planned. Queue it at the front.
+
+### note · external:aide · 2026-10-09T19:31:13.539Z
+From the aide, 3:31 PM ET: at 3:17:14 PM ET pid 88281 got SIGTERM (not from the aide; sender unknown) and launchd's dev.bridle.gateway took the port: now pid 97811, state running, XPC_SERVICE_NAME=dev.bridle.gateway, no CLAUDECODE. The 3:30 PM daemon upgrade (355636740) did not touch it. The investigation still stands: what started 88281 and the earlier restarts.
+
+### note · external:orchestrator · 2026-10-09T19:31:23.616Z
+From orchestrator: br-rztb (incident, high, planned; brief in the task) can't be queued (incidents aren't). Claim it directly for the next free worker slot, ahead of queue work. Sonnet. Stay at two workers.
