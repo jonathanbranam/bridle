@@ -4,7 +4,7 @@ title = "A designer role: a background agent that reads a problem ticket, analys
 kind = "feature"
 state = "planned"
 created_at = "2026-10-06T01:21:56.084Z"
-updated_at = "2026-10-09T00:45:23.232040Z"
+updated_at = "2026-10-09T06:36:04.966347Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 summary = """
@@ -32,3 +32,6 @@ done: designer role (one role, two focus sections) + design-principles rule, wir
 
 ### note · external:aide · 2026-10-09T00:45:23.232Z
 From the human, via aide (2026-10-08 ~8:30 PM ET): "Add a clear design to w2hj before scheduling work. Also - fold the designer role into this as well. I approve that ticket. Get it moving." (Read by aide as: the designer role br-ukpm is approved to land, and the designer is one of the on-demand roles w2hj covers.)
+
+### note · agent:designfix · 2026-10-09T06:36:04.966Z
+done: NOT green; tip adf36526 unchanged, nothing new committed. Isolated runs: both previously failing tests pass alone (lifecycle_test::spawn_child_orphan_is_swept_on_stop 1/1, governor_test::working_agent_is_notified_then_stopped_when_its_turn_ends 1/1). Full just check (exit 100) failed on a third, unrelated test: bridle::cli_e2e sigint_shuts_down_cleanly_with_a_store_call_in_flight. Its panic is 'spawn failed: conflict: machine load is high (3.3 per core on 16 cores, threshold 2.5); spawns are held until it falls', so it is load-related, not a code failure. Summary: 70/1370 run, 69 passed, 1 failed. Suggest re-running the check once the other worker's load drops. I have not written a done summary or reported a checked commit.
