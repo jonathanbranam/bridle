@@ -41,7 +41,7 @@ but right as "the aide at Sonic".
 
 ## Themes
 
-> [!comment] c7 human, 2026-10-08 21:43 EDT, on "Themes" [sent 2026-10-08 21:51 EDT]
+> [!comment] c7 human, 2026-10-08 21:43 EDT, on "Themes" [read 2026-10-08 21:51 EDT]
 > Also add the Chinese zodiac as a theme. I already asked for Greek, Norse, and Roman gods, so I was going to say the constellations, but it might be hard to type. Just go and add another one for constellations. This is a lot of fun.
 >
 > **doc-name-ideas-e11e82, 2026-10-08 22:00 EDT:** @human Added two themes under "In: liked": Chinese zodiac and Constellations (most are easy to type; the long ones are marked). I found no Greek, Norse or Roman gods in this file, so that earlier request may have gone to someone else. Want me to add them here too?
@@ -62,10 +62,10 @@ but right as "the aide at Sonic".
 
 **Sci-fi ships** (a favourite; some are long to type, but they sound great)
 
-> [!comment] c6 human, 2026-10-08 21:40 EDT, on "Sci-fi" [sent 2026-10-08 21:51 EDT]
+> [!comment] c6 human, 2026-10-08 21:40 EDT, on "Sci-fi" [read 2026-10-08 21:51 EDT]
 > Add another section here with characters from the Alien franchise and Firefly.
 >
-> **doc-name-ideas-e11e82, 2026-10-08 22:00 EDT:** @human Added "Sci-fi characters" right after the ships table, with Alien and Firefly names, from memory.
+> **doc-name-ideas-e11e82, 2026-10-08 22:00 EDT:** @human Added "Sci-fi characters" right after the ships table, with Alien and Firefly names, from memory. [read 2026-10-08 22:04 EDT]
 
 | Name | From | Notes |
 |---|---|---|
@@ -157,7 +157,7 @@ harrier. Short and dictation-safe, but many are everyday words.
 
 - **Stephen King:** liked; names in the table after this comment. Places: `derry`, `overlook`.
 
-> [!comment] c5 human, 2026-10-08 21:38 EDT, on "Stephen King" [sent 2026-10-08 21:51 EDT]
+> [!comment] c5 human, 2026-10-08 21:38 EDT, on "Stephen King" [read 2026-10-08 21:51 EDT]
 > Fill out this section with major characters from:
 > - The Shining
 > - The Stand
