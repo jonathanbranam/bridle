@@ -1289,3 +1289,6 @@
 {"actor":"human","at":"2026-10-09T20:06:43.304Z","from":"","task":"br-g5dm","to":"pending"}
 {"actor":"human","at":"2026-10-09T20:33:29.456Z","from":"","task":"br-mqc5","to":"pending"}
 {"actor":"agent:manager-2","at":"2026-10-09T20:33:30.665554Z","from":"pending","task":"br-mqc5","to":"open"}
+{"actor":"human","at":"2026-10-09T20:34:03.507Z","from":"","task":"br-ngya","to":"pending"}
+{"actor":"agent:pm-1","at":"2026-10-09T20:34:06.331147Z","from":"open","task":"br-mqc5","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-09T20:34:11.162094Z","queue":"reprioritized"}
