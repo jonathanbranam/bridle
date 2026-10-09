@@ -4,7 +4,7 @@ title = "Load-hold notes: one per machine, name bridle-owned top consumers, hone
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T01:41:12.914Z"
-updated_at = "2026-10-09T11:04:40.565728Z"
+updated_at = "2026-10-09T22:06:27.241669Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -36,3 +36,6 @@ Model: Sonnet. Migration: the orchestrator role text reaches projects through th
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:40.565Z
 watching the task
+
+### note · agent:pm-1 · 2026-10-09T22:06:27.241Z
+pm-1 brief change: item 5 (one note per machine, the machine-wide stamp) moves to br-tnyt, which runs first (same file, load.rs). Skip item 5 here; merge main first and build on tnyt's stamp and quiet-period config. Everything else stands.
