@@ -1295,3 +1295,4 @@
 {"actor":"external:orchestrator","at":"2026-10-09T20:34:19.509446Z","from":"pending","task":"br-ngya","to":"open"}
 {"actor":"external:orchestrator","at":"2026-10-09T20:34:19.677647Z","from":"open","task":"br-ngya","to":"planned"}
 {"actor":"external:orchestrator","at":"2026-10-09T20:34:24.932913Z","from":"planned","task":"br-rztb","to":"integrated"}
+{"actor":"external:orchestrator","at":"2026-10-09T20:35:03.979394Z","from":"planned","task":"br-mqc5","to":"dropped"}

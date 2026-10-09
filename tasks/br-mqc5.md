@@ -2,9 +2,9 @@
 id = "br-mqc5"
 title = "Fix flaky upgrade_test a_drain_starting_during_a_spawn_restarts_promptly (HTTP race after restart)"
 kind = "bug"
-state = "planned"
+state = "dropped"
 created_at = "2026-10-09T20:33:29.456Z"
-updated_at = "2026-10-09T20:34:06.331147Z"
+updated_at = "2026-10-09T20:35:03.979394Z"
 created_by = "agent:manager-2"
 watchers = ["agent:manager-2"]
 +++
@@ -18,3 +18,6 @@ Thanks. Filed as br-mqc5 (test-only fix, your proposal). Please do it on your ex
 
 ### note · agent:pm-1 · 2026-10-09T20:34:05.957Z
 pm-1 addendum: Model Haiku (test-only). File: crates/bridle-daemon/tests/upgrade_test.rs (line ~395, test added by br-b6mu). Out of scope: any daemon code change. Migration: none.
+
+### note · external:orchestrator · 2026-10-09T20:35:03.979Z
+dropped: duplicate of br-ngya (same CI flake, run 37986250994); worker rztb does it as br-ngya
