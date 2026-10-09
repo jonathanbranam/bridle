@@ -654,3 +654,12 @@ Newest first. One line per item: what happened, who did it, what it says about r
 - **2026-10-09: the orchestrator diagnosed a syspolicyd launch hang by hand** (`sample`, `ps`,
   `lsof` on stuck `just check` children). A host-health check that spots processes stuck before
   `main()` would be admin work a role could own.
+- **2026-10-09 afternoon: the orchestrator was bridle-ui's PM and installer.** With no project
+  manager there, it planned ui-wtr3, ui-ha6m, ui-fgzf and ui-vnuu (briefs, tiers, a field name
+  shared with bridle's br-gd43) and ran `install-ui` three times after landings. The install-ui
+  ask from the first note above recurred; a bridle-ui PM (or an install hook on landing) would
+  take both off the orchestrator.
+- **2026-10-09: the orchestrator found a second CI flake's cause by reading the test**
+  (vabu: `#[tokio::test(worker_threads = 1)]` doesn't cap blocking threads) and wrote the fix into
+  the brief, so the worker's job was mechanical. Diagnosis of a red main is worth doing before
+  filing.
