@@ -47,6 +47,8 @@ pub enum Command {
     Serve(ServeArgs),
     /// How bridle works: `bridle docs` lists topics, `bridle docs <topic>` prints one.
     Docs(DocsArgs),
+    /// What happened in this project lately: features delivered, bugs, blocked work, incidents.
+    Report(ReportArgs),
     /// Run the gateway: the human web UI's API (`[gateway]` in ~/.bridle/config.toml).
     Gateway(GatewayArgs),
     /// Ask the daemon to shut down gracefully.
@@ -828,6 +830,16 @@ pub struct LinkArgs {
 pub struct DocsArgs {
     /// The topic to print; omit to list them.
     pub topic: Option<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct ReportArgs {
+    /// The window ending now, like 24h, 48h, 90m or 2d.
+    #[arg(long, default_value = "24h")]
+    pub since: String,
+    /// Save it as docs/reports/YYYY-MM-DD.md (Eastern date) and print the path; no commit.
+    #[arg(long)]
+    pub write: bool,
 }
 
 #[derive(Debug, Args)]

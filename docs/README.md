@@ -101,6 +101,7 @@ done
 |-------|----------|
 | daemon, API, agent host | `docs/design/agent-host/*.md` (operating model, daemon, agents, messages, principals, API, roles and config) |
 | CLI commands and flags | `docs/design/cli.md` |
+| `bridle report`, the daily "what happened" report | `docs/design/report.md` |
 | `bridle docs` topic text (embedded in the binary) | `docs/cli/*.md` |
 | storage, database, state | `docs/design/storage.md` |
 | project migrations (`bridle migrate`) | `docs/design/migrations.md` |

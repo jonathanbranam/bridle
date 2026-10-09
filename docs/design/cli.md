@@ -49,6 +49,7 @@ folder targets that project, and outside any workspace it refuses.
 bridle [--url URL] [--project NAME] [--token T] [--json] <command>
 
 bridle docs [TOPIC]                                             local, no daemon: with no topic, list the topics; with one, print its overview (embedded from `docs/cli/<topic>.md`, written for agents in any project)
+bridle report [--since 24h] [--write]                         what happened in this project over the window ending now, as Markdown: features delivered, bugs identified and fixed, pending or blocked work, incidents, and counts (tasks, commits on main); `--write` saves `docs/reports/YYYY-MM-DD.md` (Eastern date, overwritten the same day) and prints the path, no commit; see report.md
 
 bridle gateway [--detach]                                       run the human web UI's gateway, in the foreground or (`--detach`) in a new process group logging to `~/.bridle/gateway.log`, waiting for health and refusing if one already answers at `bind` (needs a fixed port); it re-executes itself when its binary is replaced; it ignores `BRIDLE_AS`, `BRIDLE_PROJECT`, `BRIDLE_TOKEN` and `CLAUDECODE` (warns when set) and always acts as the human; `[gateway] enabled = false` makes it exit 0 without starting (docs/design/human-web-ui.md, "Running it detached"); `[gateway]` in
                                              `~/.bridle/config.toml`: `bind` (default `127.0.0.1:7878`; `0.0.0.0` refused unless `allow_any_interface = true`).

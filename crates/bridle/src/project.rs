@@ -125,6 +125,7 @@ mod tests {
         ("release", Daemon),
         ("ready", Daemon),
         ("queue", Daemon),
+        ("report", Daemon),
         (
             "statusline",
             NoProject("display text from the statusline token"),

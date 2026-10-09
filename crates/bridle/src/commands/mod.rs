@@ -48,6 +48,7 @@ mod docs;
 mod hook;
 mod misc;
 mod orchestrator;
+mod report;
 mod task;
 mod usage;
 mod workflow;
@@ -145,6 +146,7 @@ pub async fn run(mut cli: Cli) -> Result<(), CliError> {
     match &cli.command {
         Command::Serve(args) => serve::run(&cli, args).await,
         Command::Docs(args) => docs::run(args),
+        Command::Report(args) => report::report(&cli, args).await,
         Command::Link(args) => crate::link::run(&cli, args),
         Command::Gateway(args) => crate::gateway::run(&cli, args).await,
         Command::StopDaemon => stop_daemon(&cli).await,
