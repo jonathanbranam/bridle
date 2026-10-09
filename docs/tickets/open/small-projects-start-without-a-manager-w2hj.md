@@ -62,3 +62,11 @@ Work status: 4 integrated task(s); 1 dropped: br-6ffa.
 > Its frustrating when the smaller projects don't manage themselves the same way basically
 
 This applies to every on-demand role (manager, project manager, the new product manager in 6h65), not just the manager. The stop should be **automatic after a settle period of 30-60 minutes** once all work is done, not left to the orchestrator to remember. Small projects should manage themselves the same way bridle does.
+
+## Design first (the human, 2026-10-08 ~8:30 PM ET)
+
+> Add a clear design to w2hj before scheduling work.
+>
+> Also - fold the designer role into this as well. I approve that ticket. Get it moving.
+
+No build task until a design is written into this ticket and the human approves it. The roles in scope: manager, project manager, product manager (6h65) and designer (ukpm, approved to land). For each: what starts it, its settle period (30-60 min after all work is done), what stopping means (agent state, a handover, resume), and what does its job while it is down.
