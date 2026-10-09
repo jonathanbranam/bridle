@@ -4,7 +4,7 @@ title = "Flaky on macOS CI: spawn_with_prompt_waits_for_the_turn_to_start_before
 kind = "bug"
 state = "planned"
 created_at = "2026-10-09T10:47:12.713Z"
-updated_at = "2026-10-09T11:14:33.997304Z"
+updated_at = "2026-10-09T11:24:38.051760Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -41,3 +41,6 @@ Chose the SLEEP variant (nothing else in the test depends on the prompt text). N
 
 ### note · external:orchestrator · 2026-10-09T11:14:33.997Z
 Sent back by orchestrator: 4037f961 only adds the two doc-comment lines. The test's prompt at spawn_messaging_test.rs:251 is still "hello there", not a SLEEP prompt, and the worktree has no uncommitted changes, so the race is unfixed and the 30/30 loop can't have run on this commit. Make the change (a SLEEP prompt; use the shortest hold that covers reading the response, so it doesn't add 10 s to the suite), confirm with git show that it is in the commit, then report again.
+
+### note · external:orchestrator · 2026-10-09T11:24:38.051Z
+split off br-7m99: Actually fix the macOS flake: hold the turn in spawn_with_prompt_waits_for_the_turn_to_start_before_returning (r9h7 follow-up)
