@@ -13,7 +13,7 @@ before it moves: "waits on the human" is a pending task only the human can appro
 is the project manager's; "ready to build" is in the queue; "HELD" is planned in bridle but
 stopped by the human.
 
-Last updated: 2026-10-09 09:45 ET.
+Last updated: 2026-10-09 10:05 ET.
 
 ## Needs the human now
 
@@ -199,7 +199,7 @@ Ticket tooling in every project, migrations, the changelog, self-upgrade from re
 
 | Task | Title | State | Next |
 |---|---|---|---|
-| [br-g3az](http://dalek.tailbc91f5.ts.net:7878/task?id=br-g3az) | Status line token setup in the docs writes an empty file: token create needs --print now | planned | ready to build |
+| [br-g3az](http://dalek.tailbc91f5.ts.net:7878/task?id=br-g3az) | Status line token setup in the docs writes an empty file: token create needs --print now | integrated | delivered |
 | [br-01ff](http://dalek.tailbc91f5.ts.net:7878/task?id=br-01ff) | Tickets through the bridle binary in every project: new, frontmatter, check, resolve; a... | pending | waits on the human (approve to ready) |
 | [br-e7e2](http://dalek.tailbc91f5.ts.net:7878/task?id=br-e7e2) | Migration: backfill ticket kind and two-way task links in every bridle project (v3dk sl... | planned | ready to build |
 | [br-ubjd](http://dalek.tailbc91f5.ts.net:7878/task?id=br-ubjd) | A CHANGELOG line for every landed task, written on the branch, and one section per kind... | pending | waits on the human (approve to ready) |
@@ -259,9 +259,11 @@ Chores that are the human's own: expand on an idea, review a ticket or branch.
 | 2026-10-09 morning | br-7m99, br-r9h7 macOS test flake | reliability |
 | 2026-10-09 morning | br-2uje bridle doctor Linux/WSL checks | multi-machine |
 | 2026-10-09 morning | ui-kqsp, ui-5zrr Document page markdown rendering and highlights | human-ui |
+| 2026-10-09 ~10:00 | br-g3az status line token docs (first item routed through the PdM) | tickets-release |
 
 ## Changes to this roadmap
 
 - 2026-10-09 09:20 ET: first version. 12 workstreams; every open task in bridle, bridle-ui and
   track-web placed in one.
 - 2026-10-09 09:45 ET: added br-d9wq (PdM research) to product process; decision 7 (the term).
+- 2026-10-09 10:05 ET: br-g3az delivered.
