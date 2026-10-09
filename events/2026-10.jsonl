@@ -1240,3 +1240,4 @@
 {"actor":"human","at":"2026-10-09T16:54:27.508Z","from":"","task":"br-b6mu","to":"pending"}
 {"actor":"external:orchestrator","at":"2026-10-09T16:54:27.754740Z","from":"pending","task":"br-b6mu","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-09T16:54:42.346857Z","from":"open","task":"br-b6mu","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-09T16:54:45.545336Z","queue":"reprioritized"}
