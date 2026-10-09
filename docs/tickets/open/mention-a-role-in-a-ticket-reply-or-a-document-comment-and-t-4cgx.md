@@ -10,7 +10,7 @@ specs: []
 needs: []
 see: [bp2v, 22ab, 72t9]
 tasks: [br-4cgx]
-next_comment_id: c6
+next_comment_id: c7
 ---
 
 ## The ask
@@ -52,6 +52,11 @@ the same.
 
 > [!comment] c5 human, 2026-10-09 17:16 EDT, on "contains @<role>" [pending 2026-10-09 17:16 EDT]
 > To block this, preceding the @ with a backslash "escapes" the character and disables the behavior for use in documents and comments such as: \@orchestrator <- this would *not* be sent to the orchestrator.
+
+> [!comment] c6 human, 2026-10-09 17:21 EDT, on "comment on a document under review" [pending 2026-10-09 17:21 EDT]
+> See also re79 which should be designed and planned along with this ticket - adds a reviewer: <agent> frontmatter (optional, ignored if missing) that indicates that every comment in a document is sent to that specific agent. In this case, also de-duplicate the messages as above; 
+>
+> If review: agent-a and a comment includes \@agent-b the comment is sent to agent-b and not agent-a (unless agent-a is also mentioned.
 
 - `@<role>` means that role on the same project: `@orchestrator`, `@aide`, `@advisor`, and
   named sessions as `@advisor/product-manager`.
