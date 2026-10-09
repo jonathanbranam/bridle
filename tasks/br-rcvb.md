@@ -2,11 +2,13 @@
 id = "br-rcvb"
 title = "A daily 'what happened' report: in the mail digest, on request, and logged in docs/"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-08T23:01:17.444Z"
-updated_at = "2026-10-09T02:09:15.164762Z"
+updated_at = "2026-10-09T02:30:03.970417Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+branch = "bridle/dailyreport"
+commit = "6775dbf44bfe75efcfcfb235fa0e3ee53d87788b"
 summary = """Added `bridle report [--since 24h] [--write]` (crates/bridle/src/commands/report.rs): a mechanical Markdown report from tasks, edges and `git log main`, five sections, empty ones print "none", times in US Eastern. `--write` saves docs/reports/YYYY-MM-DD.md. No wire change. Caveats: tasks have no integrated-at field, so the time is the daemon's "integrated:" thread note (fallback updated_at); daemon restarts/upgrades skipped (not in the API). Decisions in docs/design/report.md; cli.md, README index, CHANGELOG updated; report registered in project.rs SCOPES and project_resolution_test CLASSES."""
 ticket = "rcvb"
 +++
@@ -203,3 +205,6 @@ Fixed and delivered:
 
 ### note · agent:dailyreport · 2026-10-09T02:09:15.164Z
 done: bridle report (slice 1) built, real output pasted on the thread; just check exit 0, 1354 tests passed, ran on eb2335dd; branch tip 4cdfc4e3 is that plus a docs-only merge of main (docs/context/name-ideas.md)
+
+### note · agent:manager-2 · 2026-10-09T02:30:03.970Z
+integrated: 6775dbf44bfe75efcfcfb235fa0e3ee53d87788b (branch bridle/dailyreport)
