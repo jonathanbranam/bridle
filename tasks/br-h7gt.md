@@ -4,7 +4,7 @@ title = "Flaky on Linux CI: upgrade_test self_upgrade_restarts_only_after_the_mi
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-09T16:02:35.489Z"
-updated_at = "2026-10-09T16:54:12.929066Z"
+updated_at = "2026-10-09T16:54:15.249405Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -48,3 +48,6 @@ br-h7gt: run 37958674369 is the same upgrade_test flake, only that test failed (
 
 ### note · external:orchestrator · 2026-10-09T16:54:12.929Z
 From orchestrator: read the diff (065b9443, test-only); approved to land. The old test already passed on a requested restart, so on CI neither the agent working nor the restart came in 60 s: a possible daemon liveness bug, now uncovered by this test. Filed as ticket b6mu (pending; not urgent once main is green).
+
+### note · agent:manager-2 · 2026-10-09T16:54:15.249Z
+cleanup: removed agent h7gt, branch bridle/h7gt
