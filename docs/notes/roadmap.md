@@ -13,7 +13,7 @@ before it moves: "waits on the human" is a pending task only the human can appro
 is the project manager's; "ready to build" is in the queue; "HELD" is planned in bridle but
 stopped by the human.
 
-Last updated: 2026-10-09 14:34 ET.
+Last updated: 2026-10-09 14:55 ET.
 
 ## Needs the human now
 
@@ -24,6 +24,9 @@ In the order the PdM suggests:
    8z7j to the designer; k6jd, 8ay6, 8umh readied; xccp later). Also your review of kuw2
    (machine daemon, br-efs2) gates project transfer's design.
 
+0b. **Everything is a ticket** (22ab, new workstream): approve the plan in the ticket ("Plan"
+   section), and answer its Q1-Q5 (field names; epic or initiative, which also settles d9wq; ticket
+   layout; a row per ticket; purging resolved/). Step 1 waits on Q1.
 1. **The designer's first job**: by your ladder it is the attachments design (step 2 below),
    then the scheduler design for the rest of yfv5 (nightly restarts, maintenance windows,
    machine-wide), with the shipped slice (9xze) written up after the fact. ukpm planned fne2 as
@@ -59,6 +62,16 @@ Goal: ship scheduled messages, with design and specs approved before build. In b
 
 ## Workstreams
 
+### Everything is a ticket
+
+The human, 2026-10-09: one record per piece of work; tickets that change code are tracked as rows with a thread on the state branch; fields renamed; task renamed to ticket in names and code. Ticket 22ab holds the decisions, design and plan (10 child tickets, gated); the plan waits on the human's approval and Q1-Q5.
+
+| Task | Title | State | Next |
+|---|---|---|---|
+| [br-d9wq](http://dalek.tailbc91f5.ts.net:7878/task?id=br-d9wq) | Research: product manager roles, human and agentic (BMAD and others), and what to call ... | pending | research done; the human reads it and picks the term |
+| [br-95mu](http://dalek.tailbc91f5.ts.net:7878/task?id=br-95mu) | A change spec (proposal and design) reviewed for risk and impact before any worker buil... | pending | to the designer once the human has reviewed the ticket |
+| [br-stx8](http://dalek.tailbc91f5.ts.net:7878/task?id=br-stx8) | A task's state says what's really happening: held and built-awaiting-landing are states... | planned | HELD: needs a proposed design and the human's approval |
+
 ### Machine setup (PRIORITY)
 
 The human, 2026-10-09: efficient, direct setup of a new machine, first the Windows PC: background daemons, tokens between machines and between projects, sync; then moving a project between machines. Phase 1 makes the PC usable; phase 2 one command to set up and sync; phase 3 project transfer.
@@ -79,7 +92,7 @@ The human, 2026-10-09: efficient, direct setup of a new machine, first the Windo
 | [br-f8f9](http://dalek.tailbc91f5.ts.net:7878/task?id=br-f8f9) | The NUC recovers everything on boot (4r3k) | pending | phase 2: 'bridle up' after boot needs a small design |
 | [br-v7ug](http://dalek.tailbc91f5.ts.net:7878/task?id=br-v7ug) | Run bridle's heavy work on the Windows PC under WSL2 | pending | umbrella; audit and guide delivered |
 | [br-kt25](http://dalek.tailbc91f5.ts.net:7878/task?id=br-kt25) | Move a project between machines with one command (bridle project move) | pending | phase 3: needs a design and the human's decisions (see ticket) |
-| [br-8z7j](http://dalek.tailbc91f5.ts.net:7878/task?id=br-8z7j) | Only the owner's clone can push the integration branch: enforced, not a rule | open | needs a design (designer): how to enforce one pusher; the human picks |
+| [br-8z7j](http://dalek.tailbc91f5.ts.net:7878/task?id=br-8z7j) | Only the owner's clone can push the integration branch: enforced, not a rule | open | Option A approved; blocked until dotfiles-local shared git hooks are removed on both machines (dotfiles-local aide, NUC) |
 | [br-k6jd](http://dalek.tailbc91f5.ts.net:7878/task?id=br-k6jd) | Managers and the orchestrator fetch origin; divergence from origin is warned (N ahead, ... | planned | ready to build |
 | [br-xccp](http://dalek.tailbc91f5.ts.net:7878/task?id=br-xccp) | A git identity per machine, so commits show which clone made them | pending | later (the human: non-urgent); needs the human's keys or tokens |
 
@@ -90,9 +103,6 @@ How work gets from an idea to ready: the PdM, the designer, change specs and rev
 | Task | Title | State | Next |
 |---|---|---|---|
 | [br-6h65](http://dalek.tailbc91f5.ts.net:7878/task?id=br-6h65) | A product manager that relates every ticket to open and planned work: links, merges, an... | pending | this trial is the stand-in (docs/notes/product-manager-trial.md) |
-| [br-d9wq](http://dalek.tailbc91f5.ts.net:7878/task?id=br-d9wq) | Research: product manager roles, human and agentic (BMAD and others), and what to call ... | pending | research done; the human reads it and picks the term |
-| [br-95mu](http://dalek.tailbc91f5.ts.net:7878/task?id=br-95mu) | A change spec (proposal and design) reviewed for risk and impact before any worker buil... | pending | to the designer once the human has reviewed the ticket |
-| [br-stx8](http://dalek.tailbc91f5.ts.net:7878/task?id=br-stx8) | A task's state says what's really happening: held and built-awaiting-landing are states... | planned | HELD: needs a proposed design and the human's approval |
 | [br-gtzx](http://dalek.tailbc91f5.ts.net:7878/task?id=br-gtzx) | Seats: every role is a named, tracked seat that outlives its sessions, with its own inb... | open | HELD: waits on the human's review of P1-P10, Q1-Q4 |
 | [br-91b3](http://dalek.tailbc91f5.ts.net:7878/task?id=br-91b3) | Reviews enforced by bridle, signed on the task (v2va): umbrella, slices A-D | planned | ready to build |
 | [br-6ba3](http://dalek.tailbc91f5.ts.net:7878/task?id=br-6ba3) | Reviews A: in_review state, ready-for-review, review requirements on tasks (v2va slice A) | planned | ready to build |
@@ -314,3 +324,4 @@ Chores that are the human's own: expand on an idea, review a ticket or branch.
 - 2026-10-09 14:23 ET: the human approved the sk7p design (token pair: role and peer tokens, all by default, opt-out [mail] peers = false). br-8c25 hold released; pm-1 re-briefs.
 - 2026-10-09 14:34 ET: br-gdf3 delivered.
 - 2026-10-09: pm-1 split token pair: br-8c25 part 1 (role tokens, token-role list), br-jw9e part 2 (peer tokens, opt-out, pairing on project creation); placed in machine setup.
+- 2026-10-09 14:55 ET: new workstream Everything is a ticket (22ab, from advisor (tickets)); moved d9wq, 95mu, stx8 into it; plan written into 22ab for approval. 8z7j: Option A approved, blocked on removing dotfiles-local shared git hooks on both machines (asked the dotfiles-local aide on the NUC).
