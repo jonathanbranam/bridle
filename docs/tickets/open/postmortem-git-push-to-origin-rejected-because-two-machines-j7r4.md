@@ -166,6 +166,10 @@ Cheap first.
    (a read-only fetch, allowed in don't-ask mode), and have the daemon or `bridle doctor` run it on a
    timer and warn when `origin/main` is not an ancestor of `main` ("N ahead, M behind"). Today's
    `[ahead 23]` hid the problem.
+
+> [!comment] c2 human, 2026-10-09 14:03 EDT, on "Let managers and the orchestrator run git fetch origin" [pending 2026-10-09 14:03 EDT]
+> Yes, definitely. This is critical to allow for moving a project from one machine to another. Manager and orchestrator are trusted to do this.
+
 3. **Push ticket commits too.** Either push after each direct-to-main docs commit (a small wrapper
    or hook), or accept that the remote lags and say so in the operating model; right now it says it
    never lags and that is false for docs.
