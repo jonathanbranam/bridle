@@ -1202,3 +1202,4 @@
 {"actor":"agent:pm-1","at":"2026-10-09T10:47:42.444029Z","queue":"reprioritized"}
 {"actor":"external:orchestrator","at":"2026-10-09T10:48:04.893222Z","from":"open","task":"br-r9h7","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-09T10:48:17.642499Z","queue":"reprioritized"}
+{"actor":"human","at":"2026-10-09T11:23:39.131Z","from":"","task":"br-g3az","to":"pending"}
