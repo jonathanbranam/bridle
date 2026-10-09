@@ -228,7 +228,8 @@ Decided by the human (2026-10-09) except `kind`, which no one asked to change, s
 | `repos` | `repos` | fine |
 
 `duplicates` and `supersedes` stay edge kinds, used from the CLI; they're rare enough not to
-need fields (YAGNI). Link values are bare IDs (`k7tm`), resolved by the tooling. That settles
+need fields (YAGNI). Link values are project-qualified IDs (`blocked_by: [br-k7tm]`,
+`related: [tw-a3f8]` across projects), never bare IDs or full stems (section 8). That settles
 zkbb's "bare ID vs full stem".
 
 > [!comment] c1 human, 2026-10-09 14:56 EDT, on "That settles zkbb's "bare ID vs full stem"." [pending 2026-10-09 14:56 EDT]
@@ -236,10 +237,24 @@ zkbb's "bare ID vs full stem".
 
 ### 8. IDs
 
-- One ID per ticket, and the row has the same ID. No `br-` prefix shown to the human inside a
-  project.
-- Across projects, the prefix stays as the qualified form (`br-k7tm`, `tw-k7tm`), and the CLI
-  accepts both.
+**Decided (the human, 2026-10-09): the canonical ID is project-qualified, `br-k7tm`.** The
+human: "we want ticket names to be unique globally, as much as possible. br-<id> not <id>."
+A bare ID is ambiguous once anything crosses projects (`k7tm` can exist in bridle and in
+track-web): messages, the inbox, the UI and cross-project links.
+
+- **Written form, everywhere: `<prefix>-<id>`.** The tooling writes it in the frontmatter `id:`
+  field (`id: br-k7tm`), link values, threads, messages, commits and the UI. The ticket and its
+  row have literally the same ID string.
+- **Shorthand, input only: `k7tm`.** It's accepted inside a project (CLI arguments, typed by the
+  human or an agent) and expanded to `br-k7tm`. It's never written to disk.
+- **Cross-project links** name the other project's prefix: `related: [tw-a3f8]`.
+- **Prefixes are unique across registered projects**, refused when a project registers. Today
+  the prefix is `[tasks] prefix` in config, defaulting to the project name's first two
+  characters, so the default can collide: bridle is `br`, and bridle-ui had to set `ui` to avoid
+  `br`. (The config key moves to `[tickets] prefix` with the rename.)
+- **File names stay bare: `<slug>-<id>.md`** (the human: "keep ticket file names without project
+  - the names are already egregiously long!! It adds nothing since it is within the repo.").
+  `ticket check` matches the file name's tail to the `id:` without its prefix.
 - Old hex task IDs that can't be ticket IDs (they contain `0` or `1`) get a fresh ticket ID. The
   old ID stays as an alias.
 - nkd9 (speakable IDs) may change the alphabet; this design doesn't depend on it.
@@ -388,6 +403,9 @@ and needs the same change.
 6. Not asked, but decided: the merge uses the existing states. stx8 needs more states than it
    lists and is reviewed separately, later (section 10). Step 5 of the sequence is out of this
    workstream.
+7. IDs (section 8): the written ID is always project-qualified (`br-k7tm`), in `id:`, links,
+   threads, messages and the UI. The bare `k7tm` is input shorthand only. Prefixes are unique
+   across projects. File names stay bare.
 
 ## The human's words
 
@@ -445,3 +463,17 @@ The advisor confirmed `opened` -> `created` and `closed` -> `resolved`. On `depe
 `workflow/research/02-beads.md` names only the edge types) and the trackers (Jira, Linear and
 GitHub Issues all say "blocked by"), and recommended `blocked_by` as the tracker name. The human
 (2026-10-09, verbatim): "agree; good discussion; blocked_by".
+
+Then, on IDs (2026-10-09, verbatim), after the advisor's "Link values are bare IDs (k7tm),
+resolved by the tooling":
+
+> Explain this further
+>
+> > Link values are bare IDs (k7tm), resolved by the tooling. That settles zkbb's "bare ID vs full stem".
+>
+> I'm pretty sure we need to use the project id here. We should be clear on the project to avoid confusion on ticket ids. It is fine to use shorthand when working on a specific project, but we want ticket names to be unique globally, as much as possible. br-<id> not <id>.
+
+And, after the advisor proposed the rule (qualified everywhere written, bare as input shorthand,
+unique prefixes) and asked about file names:
+
+> agree to all of these. and (a) keep ticket file names without project - the names are already egregiously long!! It adds nothing since it is within the repo.
