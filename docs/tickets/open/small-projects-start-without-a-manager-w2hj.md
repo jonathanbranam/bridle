@@ -6,7 +6,7 @@ repos: [bridle]
 changes: []
 specs: []
 needs: []
-see: [one-daemon-for-several-small-projects-3nkk, a-box-manager-for-many-projects-m6qs]
+see: [one-daemon-for-several-small-projects-3nkk, a-box-manager-for-many-projects-m6qs, 6h65]
 ---
 
 ## The ask
@@ -52,3 +52,13 @@ turn) on every restart.
 
 So "small projects" may become every project: build it as the general mode, not a special case.
 Work status: 4 integrated task(s); 1 dropped: br-6ffa.
+
+## The human on it (2026-10-08 ~8:25 PM ET, in ticket 6h65)
+
+> I think that should be product manager, new role, not project. But IDK maybe it's just too many divisions for our level or work. They don't need to stay running basically.
+>
+> Smaller projects should spin one up and then shut it down automatically after a settle period like 30-60 minutes after all work is done. I think that's the direction.
+>
+> Its frustrating when the smaller projects don't manage themselves the same way basically
+
+This applies to every on-demand role (manager, project manager, the new product manager in 6h65), not just the manager. The stop should be **automatic after a settle period of 30-60 minutes** once all work is done, not left to the orchestrator to remember. Small projects should manage themselves the same way bridle does.
