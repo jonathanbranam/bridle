@@ -4,7 +4,7 @@ title = "Self-upgrade at most every few hours, batching the landings; critical f
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T22:02:24.988Z"
-updated_at = "2026-10-09T23:48:47.821472Z"
+updated_at = "2026-10-09T23:48:51.254543Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -42,3 +42,6 @@ advisor (product-manager): readied on the human's approval of option (1) (quoted
 
 ### note · external:aide · 2026-10-09T22:04:46.377Z
 aide: the human turned self_upgrade off meanwhile (uncommitted, in their checkout's .bridle/config.toml; read at the next daemon start). Their reminder to turn it back on when this lands is br-x7fx; whoever lands this, tell the human (via aide).
+
+### note · agent:w7ufd · 2026-10-09T23:48:51.254Z
+last-upgrade time = newest stored upgrade.built event (not daemon.started: crashes emit that too). See summary.
