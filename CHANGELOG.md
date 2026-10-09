@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Fixed
+- `bridle gateway restart` (n57nt) restarts a launchd- or systemd-managed gateway through its manager (`launchctl kickstart -k`, `systemctl --user restart`) instead of replacing it with an unsupervised child; detached gateways and daemons no longer inherit the caller's `CLAUDECODE`, `CLAUDE_CODE_*` and `ANTHROPIC_*` variables.
 - Peer-token guidance (gdf3): `bridle token create --peer` now says in its help and in the `peer:<machine> already exists` error that `<machine>` is the machine that SENDS to the project (not the receiver), and names the `bridle token revoke peer:<machine>` fix. `docs/design/cli.md` states the rule with an example.
 
 - Docs: `docs/context/add-a-machine.md`, one procedure to bring a new machine (macOS, Linux, WSL2) onto the network: git and GitHub, `~/.bridle/config.toml`, visitor and peer tokens, services, moving a project.

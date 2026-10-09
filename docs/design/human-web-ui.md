@@ -58,8 +58,15 @@ on dalek and on every client machine alike.
   and waits up to 10 s for it to exit (`stopped`). Not a gateway: it says so, signals and removes
   nothing, exit 1. Still alive after 10 s: an error naming the pid, exit 1, no SIGKILL. No pid
   file: `not running`.
-- **`bridle gateway restart`** is stop (not running is fine; a failed stop means no start), then
-  `bridle gateway --detach`, then the status line. Auto-restart is not built (the human).
+- **`bridle gateway restart`**: when a launchd job `dev.bridle.gateway` is loaded (macOS,
+  `launchctl print gui/<uid>/dev.bridle.gateway`) or the systemd user unit `bridle-gateway.service`
+  is enabled or active (Linux), it restarts through the manager (`launchctl kickstart -k`,
+  `systemctl --user restart`), waits for health and says `restarted via launchd|systemd`; a
+  failed kickstart is an error, never a fallback to a detached child (one supervision model).
+  Otherwise it is stop (not running is fine; a failed stop means no start), then
+  `bridle gateway --detach`, then the status line. A detached child does not inherit the
+  caller's `CLAUDECODE`, `CLAUDE_CODE_*` or `ANTHROPIC_*` variables (nor `BRIDLE_AS`,
+  `BRIDLE_PROJECT`, `BRIDLE_TOKEN`). Auto-restart is not built (the human).
 - **It keeps itself current.** The running gateway checks every 30 s whether the file at
   its own executable path changed (modified time or size) and, if so, re-executes that path
   with the same arguments. The pid, process group and log handles are kept, so a detached

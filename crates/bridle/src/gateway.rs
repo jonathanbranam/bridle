@@ -273,10 +273,106 @@ async fn stop(cli: &Cli, home: &Path) -> Result<(), CliError> {
     say("stopped", "stopped")
 }
 
+/// The service manager that runs the gateway, when one does (n57nt).
+#[derive(Debug, PartialEq)]
+enum Managed {
+    Launchd(String),
+    Systemd,
+}
+
+const SYSTEMD_UNIT: &str = "bridle-gateway.service";
+
+/// Runs one command and says whether it exited 0; injected so tests never touch the real
+/// launchd or systemd.
+type Runner<'a> = &'a mut dyn FnMut(&str, &[&str]) -> bool;
+
+fn run_ok(program: &str, args: &[&str]) -> bool {
+    std::process::Command::new(program)
+        .args(args)
+        .stdin(std::process::Stdio::null())
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .status()
+        .is_ok_and(|s| s.success())
+}
+
+/// `macos` selects launchd (job loaded: `launchctl print` succeeds) over systemd (unit enabled
+/// or active). A stopped but enabled unit still counts: a detached child would escape it too.
+fn detect_managed(run: Runner, macos: bool, uid: &str) -> Option<Managed> {
+    if macos {
+        let target = format!("gui/{uid}/{LABEL}");
+        run("launchctl", &["print", &target]).then_some(Managed::Launchd(target))
+    } else {
+        (run("systemctl", &["--user", "is-enabled", SYSTEMD_UNIT])
+            || run("systemctl", &["--user", "is-active", SYSTEMD_UNIT]))
+        .then_some(Managed::Systemd)
+    }
+}
+
+/// Restart through the manager; there is no fallback to a detached child (one supervision model).
+fn restart_managed(run: Runner, managed: &Managed) -> Result<(), String> {
+    let (ok, how) = match managed {
+        Managed::Launchd(target) => (
+            run("launchctl", &["kickstart", "-k", target]),
+            format!("launchctl kickstart -k {target}"),
+        ),
+        Managed::Systemd => (
+            run("systemctl", &["--user", "restart", SYSTEMD_UNIT]),
+            format!("systemctl --user restart {SYSTEMD_UNIT}"),
+        ),
+    };
+    if ok {
+        Ok(())
+    } else {
+        Err(format!(
+            "`{how}` failed; not starting a detached gateway beside the managed one"
+        ))
+    }
+}
+
+fn current_uid() -> Option<String> {
+    let out = std::process::Command::new("id").arg("-u").output().ok()?;
+    let uid = String::from_utf8_lossy(&out.stdout).trim().to_string();
+    (out.status.success() && !uid.is_empty()).then_some(uid)
+}
+
 async fn restart(cli: &Cli) -> Result<(), CliError> {
     let home = bridle_api::discovery::bridle_home();
-    stop(cli, &home).await?;
     let config = GatewayConfig::load(&home).map_err(anyhow::Error::from)?;
+    let macos = cfg!(target_os = "macos");
+    // The env var is for tests only: the job or unit is machine-wide, not per BRIDLE_HOME.
+    let managed = match current_uid() {
+        Some(_) if std::env::var_os("BRIDLE_GATEWAY_UNMANAGED").is_some() => None,
+        Some(uid) => detect_managed(&mut run_ok, macos, &uid),
+        None => None,
+    };
+    if let Some(managed) = managed {
+        if !config.enabled {
+            println!("the gateway is disabled ([gateway] enabled = false); not starting");
+            return Ok(());
+        }
+        restart_managed(&mut run_ok, &managed).map_err(|e| anyhow!(e))?;
+        let via = if macos { "launchd" } else { "systemd" };
+        let deadline = Instant::now() + crate::serve::DETACH_WAIT;
+        while !bridle_gateway::health_ok(config.bind).await {
+            if Instant::now() >= deadline {
+                return Err(anyhow!(
+                    "restarted via {via}, but no gateway answers at {} after {} s; see {}",
+                    config.bind,
+                    crate::serve::DETACH_WAIT.as_secs(),
+                    home.join("gateway.log").display()
+                )
+                .into());
+            }
+            tokio::time::sleep(Duration::from_millis(200)).await;
+        }
+        if !cli.json {
+            println!("restarted via {via}");
+        }
+        status(cli, &home).await?;
+        return Ok(());
+    }
+    stop(cli, &home).await?;
     if !config.enabled {
         println!("the gateway is disabled ([gateway] enabled = false); not starting");
         return Ok(());
@@ -494,6 +590,54 @@ mod tests {
             bridle_home: bridle_home.map(String::from),
             log: PathBuf::from("/Users/h/.bridle/gateway.log"),
         }
+    }
+
+    fn fake(results: &'static [(&'static str, bool)]) -> impl FnMut(&str, &[&str]) -> bool {
+        move |program, args| {
+            let line = format!("{program} {}", args.join(" "));
+            results.iter().any(|(p, ok)| *ok && line.contains(p))
+        }
+    }
+
+    #[test]
+    fn launchd_job_loaded_is_managed() {
+        let mut run = fake(&[("launchctl print", true)]);
+        assert_eq!(
+            detect_managed(&mut run, true, "501"),
+            Some(Managed::Launchd("gui/501/dev.bridle.gateway".into()))
+        );
+    }
+
+    #[test]
+    fn no_job_or_unit_is_not_managed() {
+        assert_eq!(detect_managed(&mut fake(&[]), true, "501"), None);
+        assert_eq!(detect_managed(&mut fake(&[]), false, "1000"), None);
+    }
+
+    #[test]
+    fn enabled_or_active_unit_is_managed() {
+        for hit in ["is-enabled", "is-active"] {
+            let mut run = fake(match hit {
+                "is-enabled" => &[("is-enabled", true)],
+                _ => &[("is-active", true)],
+            });
+            assert_eq!(
+                detect_managed(&mut run, false, "1000"),
+                Some(Managed::Systemd)
+            );
+        }
+    }
+
+    #[test]
+    fn failed_kickstart_is_an_error_not_a_fallback() {
+        let managed = Managed::Launchd("gui/501/dev.bridle.gateway".into());
+        let err = restart_managed(&mut fake(&[]), &managed).unwrap_err();
+        assert!(
+            err.contains("kickstart -k gui/501/dev.bridle.gateway"),
+            "{err}"
+        );
+        assert!(err.contains("not starting a detached gateway"), "{err}");
+        assert!(restart_managed(&mut fake(&[("kickstart", true)]), &managed).is_ok());
     }
 
     #[test]

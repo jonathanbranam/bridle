@@ -8,6 +8,8 @@ use std::process::{Command, Output};
 fn bridle(home: &std::path::Path, args: &[&str]) -> Output {
     Command::new(PathBuf::from(env!("CARGO_BIN_EXE_bridle")))
         .env("BRIDLE_HOME", home)
+        // Never let a test restart the developer's real launchd/systemd gateway.
+        .env("BRIDLE_GATEWAY_UNMANAGED", "1")
         .args(args)
         .output()
         .unwrap()

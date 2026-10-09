@@ -241,21 +241,40 @@ pub(crate) fn spawn_detached_with(
         .try_clone()
         .with_context(|| format!("duplicating the {} handle", log_path.display()))?;
     use std::os::unix::process::CommandExt;
-    detached_command(&current_exe, child_args)
-        .stdin(std::process::Stdio::null())
-        .stdout(log_out)
-        .stderr(log_err)
-        .process_group(0)
-        .spawn()
-        .with_context(|| format!("spawning the detached {what}"))
+    detached_command(
+        &current_exe,
+        child_args,
+        std::env::vars_os().map(|(k, _)| k),
+    )
+    .stdin(std::process::Stdio::null())
+    .stdout(log_out)
+    .stderr(log_err)
+    .process_group(0)
+    .spawn()
+    .with_context(|| format!("spawning the detached {what}"))
+}
+
+/// Variables a Claude Code session sets in its caller's environment; a detached child that
+/// inherited them would think it runs inside that session (n57nt).
+fn is_claude_env(key: &std::ffi::OsStr) -> bool {
+    let k = key.to_string_lossy();
+    k == "CLAUDECODE" || k.starts_with("CLAUDE_CODE_") || k.starts_with("ANTHROPIC_")
 }
 
 /// The detached child never inherits a principal or project from the starting shell (ppa6):
-/// the gateway ignores them, and a detached daemon has its own identity.
-fn detached_command(exe: &Path, child_args: &[std::ffi::OsString]) -> std::process::Command {
+/// the gateway ignores them, and a detached daemon has its own identity. Nor does it inherit
+/// the caller's Claude Code variables (n57nt); `caller_vars` is the caller's variable names.
+fn detached_command(
+    exe: &Path,
+    child_args: &[std::ffi::OsString],
+    caller_vars: impl Iterator<Item = std::ffi::OsString>,
+) -> std::process::Command {
     let mut cmd = std::process::Command::new(exe);
     cmd.args(child_args);
     for k in ["BRIDLE_AS", "BRIDLE_PROJECT", "BRIDLE_TOKEN"] {
+        cmd.env_remove(k);
+    }
+    for k in caller_vars.filter(|k| is_claude_env(k)) {
         cmd.env_remove(k);
     }
     cmd
@@ -328,8 +347,24 @@ pub(crate) fn tail_of_log(path: &Path, n: usize) -> String {
 mod tests {
     #[test]
     fn detached_command_removes_principal_env() {
-        let cmd = super::detached_command(std::path::Path::new("/bin/true"), &[]);
-        for k in ["BRIDLE_AS", "BRIDLE_PROJECT", "BRIDLE_TOKEN"] {
+        let vars = [
+            "CLAUDECODE",
+            "CLAUDE_CODE_ENTRYPOINT",
+            "ANTHROPIC_API_KEY",
+            "PATH",
+        ]
+        .map(std::ffi::OsString::from);
+        let cmd = super::detached_command(std::path::Path::new("/bin/true"), &[], vars.into_iter());
+        let found = cmd.get_envs().find(|(key, _)| *key == "PATH");
+        assert_eq!(found, None, "unrelated variables are kept");
+        for k in [
+            "BRIDLE_AS",
+            "BRIDLE_PROJECT",
+            "BRIDLE_TOKEN",
+            "CLAUDECODE",
+            "CLAUDE_CODE_ENTRYPOINT",
+            "ANTHROPIC_API_KEY",
+        ] {
             let found = cmd.get_envs().find(|(key, _)| *key == k);
             assert_eq!(found, Some((std::ffi::OsStr::new(k), None)), "{k}");
         }
