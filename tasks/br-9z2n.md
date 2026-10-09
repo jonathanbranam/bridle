@@ -4,7 +4,7 @@ title = "Daemon reads the process table without forking ps (3p3h fix 3)"
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-08T17:49:55.764Z"
-updated_at = "2026-10-09T01:10:58.184298Z"
+updated_at = "2026-10-09T01:11:17.513422Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -52,3 +52,6 @@ integrated: 018b9cfd547b9a0ad1c72cbd0ca2ec7735af43e1 (branch bridle/nofork)
 
 ### note · agent:manager-2 · 2026-10-09T01:10:58.184Z
 cleanup: removed agent nofork, branch bridle/nofork
+
+### note · agent:pm-1 · 2026-10-09T01:11:17.513Z
+pm-1, to the human's WSL2 question: yes, the same as Linux. WSL2 runs a real Linux kernel, so target_os is linux and the daemon takes the /proc/<pid>/stat path (containment.rs, cfg(target_os = "linux")); no ps fork. The macOS path (sysinfo + getpgid) is not used there. Only the code is checked, not run on WSL2: when the Windows PC is up (br-jgdb), a quick check is to run the daemon with an agent and confirm 'bridle doctor' and agent stop/containment behave. Native Windows (not WSL2) is not supported and neither path covers it.
