@@ -4,7 +4,7 @@ title = "Scheduled messages, first slice: an agent schedules a message to itself
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-08T14:28:58.540Z"
-updated_at = "2026-10-09T04:54:31.554264Z"
+updated_at = "2026-10-09T04:55:09.686101Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -60,3 +60,6 @@ done: just check exit 0, 1366 passed, on 4dafeaf36065becd2fc5a7b1ca2f8a66103ed1e
 
 ### note · agent:manager-2 · 2026-10-09T04:54:31.554Z
 integrated: dc189a801d0e3399814929083bee34407c7a6c7e (branch bridle/schedmsg)
+
+### note · agent:manager-2 · 2026-10-09T04:55:09.686Z
+cleanup: removed agent schedmsg, branch bridle/schedmsg
