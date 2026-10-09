@@ -4,11 +4,12 @@ title = "Incident: something keeps restarting dalek's gateway outside launchd fr
 kind = "incident"
 state = "planned"
 created_at = "2026-10-09T19:18:13.267Z"
-updated_at = "2026-10-09T20:03:02.378176Z"
+updated_at = "2026-10-09T20:28:28.899565Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
 priority_at = "2026-10-09T19:18:48.930751Z"
+summary = "Cause: pre-57nt `gateway restart`/`--detach` started a detached gateway outside launchd with the caller's env, and such a gateway re-exec'd in place; callers were never logged (01:39Z caller itself unknowable). Fix in crates/bridle/src/gateway.rs (+ serve.rs detached_command shared): --detach refused when a unit is loaded; unit-child gateway exits non-zero on binary change for launchd/systemd to restart; unmanaged re-exec scrubs Claude/principal env; log_caller writes a line to gateway.log for stop/start/restart. Tests (gateway_test.rs) shim launchctl/systemctl on PATH and assert never called, temp-home assertion, caller-log and detach-refusal tests. Docs: human-web-ui.md, cli.md, incidents.md, CHANGELOG. Plist unchanged, no reinstall. just check passed (1398 tests); main merged afterwards (docs/tickets only)."
 ticket = "rztb"
 +++
 
@@ -50,3 +51,14 @@ br-rztb (gateway incident, urgent) was sent to me, but my branch carries br-8c25
 
 ### note · agent:pair8c25 · 2026-10-09T20:03:02.378Z
 pair8c25: got the br-rztb brief (m-8233) but have not started. My branch bridle/pair8c25 holds br-8c25 (token pair, credentials, awaiting human review, tip 1c36efcc). Fixing the urgent gateway there would couple its landing to that review, and I may not switch branches. Asked manager-2 whether to proceed here or have a fresh worker take br-rztb.
+
+### note · agent:rztb · 2026-10-09T20:28:24.080Z
+Findings (br-rztb). PROVEN (code + gateway.log + launchctl print): 
+- Before br-57nt (2026-10-09 3:06 PM ET), `gateway restart` = SIGTERM the pid, then spawn a detached child (new process group, ppid 1) that inherited the caller's env; `gateway --detach` with the launchd job loaded but gateway down did the same. That matches pid 88281 (ppid 1, CLAUDECODE=1) and the log shape at 01:39:49Z: "SIGTERM; shutting down" then "gateway listening" 46 ms later, no "binary changed" line. Nine such pairs since 10-07 22:08Z.
+- A gateway started that way kept itself current by exec in place (same pid, same env), so it stayed outside launchd until stopped. Today's pid 97811 (launchd, XPC_SERVICE_NAME set) also re-execs in place (log 19:41Z): a launchd child that re-execs keeps the pid but is not a fresh launchd start.
+- The daemon self-upgrade, `just install` and the justfile never touch the gateway (grep: no gateway start in crates/bridle-daemon or justfile). Gateway tests use a temp BRIDLE_HOME (temp pid file and log), so before 57nt they could not touch the real pid file.
+INFERRED: the 01:39Z caller was an agent or orchestrator session running `gateway restart` (the log recorded no callers, so which one is unknowable now). The 2:54 PM "Address already in use" launchd loop was probably a 57nt pre-fix test run kickstarting the real job (that worker's tests ran restart without the opt-out env; not provable from logs).
+FIX (commit on bridle/rztb): --detach refused while a launchd job/systemd unit is loaded; unit-child gateway exits non-zero on a replaced binary so launchd restarts it (unmanaged still execs in place, now with BRIDLE_AS/PROJECT/TOKEN, CLAUDECODE, CLAUDE_CODE_*, ANTHROPIC_* removed); every stop/start/restart appends a caller line to gateway.log (agent, BRIDLE_AS, user, ppid+command, route); gateway tests put fake launchctl/systemctl first on PATH and assert never called (and that the shim is what an unguarded run hits). Unit/plist unchanged, so no reinstall needed. Not done (out of scope): stopping a stray gateway / handing the port back.
+
+### note · agent:rztb · 2026-10-09T20:28:28.899Z
+done: gateway only started by the unit, caller logged, tests shim launchctl; just check exit 0 (1398 tests) on d0cfcf76, then main merged (docs/tickets only) -> bb020af4; findings on thread
