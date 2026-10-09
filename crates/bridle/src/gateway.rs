@@ -330,9 +330,21 @@ fn managed_now() -> Option<Managed> {
 }
 
 /// True when this process is the unit's own child, so exiting non-zero gets it restarted.
+/// systemd's INVOCATION_ID is set for every service (a CI runner's included), so on Linux the
+/// process must also sit in our unit's cgroup.
 fn supervised() -> bool {
     std::env::var("XPC_SERVICE_NAME").is_ok_and(|v| v == LABEL)
-        || (cfg!(target_os = "linux") && std::env::var_os("INVOCATION_ID").is_some())
+        || (cfg!(target_os = "linux")
+            && std::env::var_os("INVOCATION_ID").is_some()
+            && std::fs::read_to_string("/proc/self/cgroup").is_ok_and(|c| in_gateway_unit(&c)))
+}
+
+/// Whether a /proc/self/cgroup listing puts the process in the gateway's systemd unit.
+fn in_gateway_unit(cgroup: &str) -> bool {
+    let suffix = format!("/{SYSTEMD_UNIT}");
+    cgroup
+        .lines()
+        .any(|l| l.ends_with(&suffix) || l.contains(&format!("{suffix}/")))
 }
 
 /// One line in gateway.log for every stop, start and restart: who asked and by which route, so
@@ -658,6 +670,16 @@ fn render_systemd(env: &ServiceEnv) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn only_our_unit_cgroup_counts_as_supervised() {
+        assert!(in_gateway_unit(
+            "0::/user.slice/user-1000.slice/user@1000.service/app.slice/bridle-gateway.service\n"
+        ));
+        assert!(!in_gateway_unit(
+            "0::/system.slice/hosted-compute-agent.service\n"
+        ));
+    }
 
     fn env(bridle_home: Option<&str>) -> ServiceEnv {
         ServiceEnv {

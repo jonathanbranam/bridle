@@ -43,7 +43,7 @@ on dalek and on every client machine alike.
 - **Only the unit starts a managed gateway** (rztb). While the launchd job or systemd unit is
   loaded, `--detach` is refused (use `restart`, which goes through the manager). A gateway
   that is the unit's own child (`XPC_SERVICE_NAME=dev.bridle.gateway`, or systemd's
-  `INVOCATION_ID`) answers a replaced binary by exiting non-zero so the manager restarts it;
+  `INVOCATION_ID` with the process in the `bridle-gateway.service` cgroup) answers a replaced binary by exiting non-zero so the manager restarts it;
   an unmanaged one execs in place with `BRIDLE_AS`, `BRIDLE_PROJECT`, `BRIDLE_TOKEN`,
   `CLAUDECODE`, `CLAUDE_CODE_*` and `ANTHROPIC_*` removed. Every stop, start and restart
   appends a line to `gateway.log` (`gateway <action> via <route>: agent= as= user= ppid=

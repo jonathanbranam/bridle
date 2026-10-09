@@ -207,6 +207,8 @@ fn a_replaced_binary_is_re_executed() {
     let mut child = Command::new(&exe)
         .env("BRIDLE_HOME", home.path())
         .env("BRIDLE_GATEWAY_BINARY_CHECK_SECS", "1")
+        .env_remove("INVOCATION_ID")
+        .env_remove("XPC_SERVICE_NAME")
         .arg("gateway")
         .stderr(std::process::Stdio::null())
         .spawn()
