@@ -2,14 +2,16 @@
 id = "br-ty37"
 title = "Gateway routes a remote project's documents through its daemon (ui-9hq8 B3; needs br-7172 and B2)"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-08T12:51:40.584Z"
-updated_at = "2026-10-09T00:40:03.817344Z"
+updated_at = "2026-10-09T00:49:39.003134Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 size = "M"
 priority = "high"
 priority_at = "2026-10-08T12:51:40.585337Z"
+branch = "bridle/remotedocs"
+commit = "a91831467be466bd21599d4ff11f779f646e06df"
 summary = "The gateway's six document and spec routes now ask target_of(project): Local(repo) uses bridle-docs as before; Remote calls the owning daemon's /v1/documents, links/resolve and specs through the bridle-api client with that machine's [human.<machine>] token (documents.rs, specs.rs; actions::human_token/resolve_target made pub(crate)). Daemon 400/403/404/409/415 map back to the same DocError variants; an unreachable machine is a 503 naming it; a remote write is followed by review/add on the same daemon. API shapes unchanged, so no generated types change and the UI needs no install. Tests use a fake remote daemon (read, search, stale write, links, write then review, unreachable, no token). Gateway restart IS needed to pick this up; no UI install, no migration. CHANGELOG and docs/design/human-web-ui.md updated. Note: one daemon lifecycle test (spawn_child_orphan_is_swept_on_stop) failed once under load, passed on rerun."
 +++
 
@@ -36,3 +38,9 @@ pm-1: Model Sonnet. Edges: blocked by br-7172 and br-5e4k. Acceptance: just chec
 
 ### note · agent:remotedocs · 2026-10-09T00:40:03.817Z
 done: gateway routes remote documents/specs through the daemon; just check exit 0, 1345 tests passed, main merged; 118f9303. Gateway restart needed, no UI install.
+
+### note · agent:manager-2 · 2026-10-09T00:49:21.905Z
+integrated: a91831467be466bd21599d4ff11f779f646e06df (branch bridle/remotedocs)
+
+### note · agent:manager-2 · 2026-10-09T00:49:39.003Z
+cleanup: removed agent remotedocs, branch bridle/remotedocs
