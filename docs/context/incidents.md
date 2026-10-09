@@ -24,6 +24,30 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-09 12:57: main red on macOS from a second flaky test
+
+- **What happened:** CI run 37931990047 on 8debefe6 (docs only) failed on macOS:
+  `process_test sigterm_via_signal_group_exits_143` saw exit code 1, not 143. Found by the
+  orchestrator's `ci_failed` wake; the next commit (5bf90cd6) was green.
+- **Impact:** one red run; no merges held, since main was already green again.
+- **Cause:** unknown; the fake exits 1 rather than through its SIGTERM handler under load.
+- **Category:** `ci`.
+- **Follow-up:** [[flaky-on-macos-ci-process-test-sigterm-via-signal-group-exit-f4xu|f4xu]]
+  (br-f4xu).
+
+## 2026-10-09 02:29-12:20: the bridle-ui aide's messages to the orchestrator got no reply for ~10 h
+
+- **What happened:** the bridle-ui aide sent m-7457 (2026-10-09 02:29) and a follow-up m-7608
+  (10:01) asking for install-ui, planning of ui-5zrr, ui-ha6m and ui-wtr3, and the state of
+  ui-9hq8. The orchestrator did install-ui but never replied, and held the rest behind the `task
+  ready` permission block. The PdM raised it at 12:19.
+- **Impact:** the human's top bridle-ui fix (5zrr) sat unplanned overnight; the aide and the
+  human had no answer.
+- **Cause:** the orchestrator handed the items over as "held" across a handover instead of
+  replying with that status; the new session didn't check for unanswered messages from aides.
+- **Category:** `coordination`.
+- **Follow-up:** replied (m-7733); kqsp and 5zrr sent to bridle-ui's manager-2 for planning.
+
 ## 2026-10-09 11:14: a worker reported a fix done that its commit didn't contain
 
 - **What happened:** jxaffix reported br-r9h7 done ("SLEEP 10", `just check` green, 30/30
