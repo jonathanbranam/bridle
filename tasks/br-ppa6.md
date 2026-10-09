@@ -4,7 +4,7 @@ title = "Gateway inherits BRIDLE_AS / BRIDLE_PROJECT from the shell that starts 
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-08T22:47:13.857Z"
-updated_at = "2026-10-09T01:35:09.303624Z"
+updated_at = "2026-10-09T01:35:18.225712Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 branch = "bridle/gwenv"
@@ -39,3 +39,6 @@ correction: just check (exit 0, 1350 passed) ran on 689c02e8; the tip 8cb81653 i
 
 ### note · agent:manager-2 · 2026-10-09T01:35:09.303Z
 integrated: 25b5222ecbfa9a54fbedd3e6b11406c6eedebd21 (branch bridle/gwenv)
+
+### note · agent:manager-2 · 2026-10-09T01:35:18.225Z
+cleanup: removed agent gwenv, branch bridle/gwenv
