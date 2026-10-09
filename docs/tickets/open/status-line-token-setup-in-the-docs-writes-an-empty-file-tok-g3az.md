@@ -23,4 +23,4 @@ The human, verbatim (2026-10-09 ~7:45 AM ET), after the aide found dalek's statu
 
 ## The ask
 
-Fix the setup line wherever it appears (cli.md; the docs topic text in `docs/cli/` if it has one; `bridle statusline`'s help) to a command that works, e.g. `bridle token create statusline --print > ~/.bridle/statusline.token`. Check that `--print` writes only the token to stdout. The resolved ticket r7cs stays as it is (a dated record).
+Fix the setup line wherever it appears (cli.md; the docs topic text in `docs/cli/` if it has one; `bridle statusline`'s help) to a command that works, e.g. `bridle token create statusline --print > ~/.bridle/statusline.token`. `--print` alone isn't enough: it also writes a `principal ...` line to stdout before the token (checked 2026-10-09: the human's file came out as two lines, and the status line failed silently). Either make the documented command keep only the token, or have `statusline` read the last non-empty line, or both. The resolved ticket r7cs stays as it is (a dated record).
