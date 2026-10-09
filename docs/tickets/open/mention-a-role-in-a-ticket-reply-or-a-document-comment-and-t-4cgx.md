@@ -10,7 +10,7 @@ specs: []
 needs: []
 see: [bp2v, 22ab, 72t9]
 tasks: [br-4cgx]
-next_comment_id: c2
+next_comment_id: c3
 ---
 
 ## The ask
@@ -41,6 +41,10 @@ the same.
   its link), and the text. One message per mention, also when the author is an agent (the
   human's "(or any agent?)" is open; the PdM's suggestion: yes, the same rule for everyone, so
   agents can hand off on the thread instead of in DMs, rule `talk-on-the-task`).
+
+> [!comment] c2 human, 2026-10-09 17:11 EDT, on "PdM's suggestion: yes, the same rule for everyone, so agents can hand off on the thread instead of in DMs" [pending 2026-10-09 17:11 EDT]
+> Agree and approve this direction - agents can use the same syntax to tag another agent. This is NOT NECESSARY when the agent tagged is watching the task, so use this sparingly and only when actually necessary.
+
 - `@<role>` means that role on the same project: `@orchestrator`, `@aide`, `@advisor`, and
   named sessions as `@advisor/product-manager`.
 - An unknown role is reported back to the author, not dropped.
