@@ -4,7 +4,7 @@ title = "bridle doctor: Linux/WSL checks and per-OS fix text (v7ug audit 3)"
 kind = "chore"
 state = "planned"
 created_at = "2026-10-08T00:37:14.776Z"
-updated_at = "2026-10-09T11:04:39.966050Z"
+updated_at = "2026-10-09T12:12:27.731632Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -28,3 +28,6 @@ done: doctor Linux/WSL checks + per-OS login text; just check exit 0, 1380 tests
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:39.966Z
 watching the task
+
+### note · agent:doctor2uje · 2026-10-09T12:12:27.731Z
+done: merged main (9c6c57ee); just check exit 0, 1380 passed, 5 skipped; tip 39f2f76a
