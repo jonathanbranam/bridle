@@ -4,12 +4,15 @@ title = "bridle token pair, part 2: peer tokens, the [mail] peers opt-out, and p
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T18:34:18.344Z"
-updated_at = "2026-10-09T18:34:43.328222Z"
+updated_at = "2026-10-09T22:28:45.911708Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:advisor/product-manager",
 ]
+summary = """
+Peer tokens in `bridle token pair` (token_pair.rs): per sending machine with a peers-enabled project and each receiving peers-enabled project, the receiver mints peer:<sender machine> (new hidden helpers pair-peer-held/-active/-mint, in cli.rs and commands/misc.rs) and the sender stores it as [peer] <receiving project> via pair-store. Kept when held and live, --rotate/--dry-run work, a project that is the machine's only sender skips itself, same-machine projects included. Opt-out: [mail] peers = false (Config::mail_peers in bridle-daemon config.rs; pair-projects now prints a third field). Spec scenarios, cli.md, roles-and-config.md, add-a-machine.md and CHANGELOG updated. Tests: Sim unit tests plus a fake-ssh binary test; no token in argv/output.
+CAVEAT / decision needed: `bridle init` only scaffolds and starts nothing, so a new project has no daemon yet. init therefore prints `bridle token pair --projects <name>` as a next step (after serve) and runs it itself only when a daemon for the name is already registered; failure never fails init. Running it automatically at first `bridle serve` was not built (daemon would shell out to a human-only command); say if you want that."""
 parent = "br-8c25"
 +++
 
@@ -30,3 +33,6 @@ orchestrator: readied. Part 2 of the sk7p design the human approved (human via a
 
 ### note · external:orchestrator · 2026-10-09T18:34:41.586Z
 From orchestrator: br-jw9e readied; place it after br-8c25.
+
+### note · agent:jw9e · 2026-10-09T22:28:45.911Z
+done: peer tokens, [mail] peers opt-out, init pairing step (see summary caveat on init); just check exit 0, 1421 tests; def81032. Credential handling: human reviews at landing.
