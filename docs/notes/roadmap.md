@@ -13,11 +13,17 @@ before it moves: "waits on the human" is a pending task only the human can appro
 is the project manager's; "ready to build" is in the queue; "HELD" is planned in bridle but
 stopped by the human.
 
-Last updated: 2026-10-09 10:05 ET.
+Last updated: 2026-10-09 10:45 ET.
 
 ## Needs the human now
 
 In the order the PdM suggests:
+
+0. **Machine setup** (your priority, 2026-10-09): two decisions unblock phase 2. (a) n63z,
+   peer tokens for every project: fold into `bridle token pair` (sk7p) or a separate command,
+   and the per-project opt-out's shape? (b) j7r4: does the NUC keep pushing tickets to main
+   once a third machine writes to repos (one pusher per branch)? Also your review of kuw2
+   (machine daemon, br-efs2) gates project transfer's design.
 
 1. **The designer's first job**: by your ladder it is the attachments design (step 2 below),
    then the scheduler design for the rest of yfv5 (nightly restarts, maintenance windows,
@@ -53,6 +59,26 @@ Goal: ship scheduled messages, with design and specs approved before build. In b
 | 9 | The system scheduler | Slice 1 (per-project scheduled messages) delivered early: br-9xze, 2026-10-09, built from decisions the orchestrator wrote and the human approved 10-08 |
 
 ## Workstreams
+
+### Machine setup (PRIORITY)
+
+The human, 2026-10-09: efficient, direct setup of a new machine, first the Windows PC: background daemons, tokens between machines and between projects, sync; then moving a project between machines. Phase 1 makes the PC usable; phase 2 one command to set up and sync; phase 3 project transfer.
+
+| Task | Title | State | Next |
+|---|---|---|---|
+| [br-jgdb](http://dalek.tailbc91f5.ts.net:7878/task?id=br-jgdb) | Windows PC: follow the WSL2 setup guide (install WSL2 + Ubuntu, wslconfig, Tailscale, s... | claimed | the human's to-do |
+| [br-h7mu](http://dalek.tailbc91f5.ts.net:7878/task?id=br-h7mu) | Pick a name for the Windows PC (docs/context/naming.md) (v7ug) | claimed | the human's to-do |
+| [br-hua2](http://dalek.tailbc91f5.ts.net:7878/task?id=br-hua2) | Add a machine: one setup guide from bare OS to on the network (config, tokens, services... | open | to plan (project manager) |
+| [br-gdf3](http://dalek.tailbc91f5.ts.net:7878/task?id=br-gdf3) | Peer-token setup guidance: a token per receiving project per sending machine, minted on... | open | to plan (project manager) |
+| [br-8c25](http://dalek.tailbc91f5.ts.net:7878/task?id=br-8c25) | bridle token pair <machine>: set up tokens between machines over SSH (sk7p) | planned | ready to build; biggest manual pain (tokens both ways) |
+| [br-88d4](http://dalek.tailbc91f5.ts.net:7878/task?id=br-88d4) | self_upgrade = "release": fetch, verify and swap the release binary (chvf 2) | planned | ready to build |
+| [br-751e](http://dalek.tailbc91f5.ts.net:7878/task?id=br-751e) | Daemon keeps its own workflow checkout at the binary's tag (chvf 3) | planned | ready to build |
+| [br-57nt](http://dalek.tailbc91f5.ts.net:7878/task?id=br-57nt) | bridle gateway restart takes a launchd-managed gateway out of launchd and inherits the ... | open | to plan (project manager) |
+| [br-xrkh](http://dalek.tailbc91f5.ts.net:7878/task?id=br-xrkh) | systemd uninstall, and an owner refusal never crash-loops a launchd or systemd unit aft... | open | to plan (project manager) |
+| [br-rjd5](http://dalek.tailbc91f5.ts.net:7878/task?id=br-rjd5) | Commands to set up and sync a project everywhere: sync all seven places per machine, an... | pending | phase 2: needs a design (source of truth for the project list), then the human's approval |
+| [br-f8f9](http://dalek.tailbc91f5.ts.net:7878/task?id=br-f8f9) | The NUC recovers everything on boot (4r3k) | pending | phase 2: 'bridle up' after boot needs a small design |
+| [br-v7ug](http://dalek.tailbc91f5.ts.net:7878/task?id=br-v7ug) | Run bridle's heavy work on the Windows PC under WSL2 | pending | umbrella; audit and guide delivered |
+| [br-kt25](http://dalek.tailbc91f5.ts.net:7878/task?id=br-kt25) | Move a project between machines with one command (bridle project move) | pending | phase 3: needs a design and the human's decisions (see ticket) |
 
 ### Product process and gates
 
@@ -99,11 +125,11 @@ The orchestrator and daemons stay up, relaunch once, upgrade cleanly and recover
 | Task | Title | State | Next |
 |---|---|---|---|
 | [br-4zfa](http://dalek.tailbc91f5.ts.net:7878/task?id=br-4zfa) | Incident: the bridle orchestrator was killed (SIGTERM) at 11:18 PM ET and nothing relau... | pending | waits on the human (approve to ready) |
+| [br-f4xu](http://dalek.tailbc91f5.ts.net:7878/task?id=br-f4xu) | Flaky on macOS CI: process_test sigterm_via_signal_group_exits_143 exits 1, not 143 | planned | ready to build |
 | [br-6b8a](http://dalek.tailbc91f5.ts.net:7878/task?id=br-6b8a) | Orchestrator relaunch liveness: one clock, never a second orchestrator (jf9u) | planned | ready to build |
 | [br-96a6](http://dalek.tailbc91f5.ts.net:7878/task?id=br-96a6) | Hold the orchestrator relaunch without restarting the daemon (8fsx) | pending | waits on the human (approve to ready) |
 | [br-9966](http://dalek.tailbc91f5.ts.net:7878/task?id=br-9966) | bridle orchestrator hold / release: runtime switch for the relaunch (8fsx) | planned | ready to build |
 | [br-10c0](http://dalek.tailbc91f5.ts.net:7878/task?id=br-10c0) | Orchestrator identity and disaster recovery (7d62) | pending | waits on the human (approve to ready) |
-| [br-f8f9](http://dalek.tailbc91f5.ts.net:7878/task?id=br-f8f9) | The NUC recovers everything on boot (4r3k) | pending | waits on the human (approve to ready) |
 | [br-btdn](http://dalek.tailbc91f5.ts.net:7878/task?id=br-btdn) | Daemon restart and self-upgrade blocked forever: manager.spawning() stays true with no ... | pending | waits on the human (approve to ready) |
 | [br-y455](http://dalek.tailbc91f5.ts.net:7878/task?id=br-y455) | Incident: bridle's daemon couldn't restart or self-upgrade for ~23 h: a stuck 'spawning... | planned | ready to build |
 | [br-aqa7](http://dalek.tailbc91f5.ts.net:7878/task?id=br-aqa7) | Self-upgrade refused good builds 3 times overnight: the new binary's self-check timed o... | pending | waits on the human (approve to ready) |
@@ -112,7 +138,6 @@ The orchestrator and daemons stay up, relaunch once, upgrade cleanly and recover
 | [br-2ax5](http://dalek.tailbc91f5.ts.net:7878/task?id=br-2ax5) | Incident: br-3haz broke every cross-project message for ~22 h: the CLI needed an outbox... | planned | ready to build |
 | [br-zcqv](http://dalek.tailbc91f5.ts.net:7878/task?id=br-zcqv) | dalek slept in a bag 8:42 AM-1:38 PM ET on 10-06: bridle froze, but the workforce had a... | pending | waits on the human (approve to ready) |
 | [br-vn54](http://dalek.tailbc91f5.ts.net:7878/task?id=br-vn54) | Incident: remote control dropped for the dalek aide session after a tmux detach and lap... | pending | waits on the human (approve to ready) |
-| [br-57nt](http://dalek.tailbc91f5.ts.net:7878/task?id=br-57nt) | bridle gateway restart takes a launchd-managed gateway out of launchd and inherits the ... | pending | waits on the human (approve to ready) |
 | [br-ysmu](http://dalek.tailbc91f5.ts.net:7878/task?id=br-ysmu) | CI watch missed 13 red runs on main; first ci_failed wake came 40 minutes late | pending | waits on the human (approve to ready) |
 
 ### Load and resource cost
@@ -140,15 +165,9 @@ One watcher for all projects, mail between daemons, tokens between machines, the
 | [br-kuvh](http://dalek.tailbc91f5.ts.net:7878/task?id=br-kuvh) | Remove 'bridle agent wake --all-projects' once 3haz lands and rolls out: warn first, th... | pending | waits on the human (approve to ready) |
 | [br-n7cg](http://dalek.tailbc91f5.ts.net:7878/task?id=br-n7cg) | Mail between daemons, slice 2: mail for a visitor is forwarded to its home daemon (3haz... | pending | waits on the human (approve to ready) |
 | [br-cufw](http://dalek.tailbc91f5.ts.net:7878/task?id=br-cufw) | Mail between daemons, slice 4: visible state: outbox status, message show (queued/arriv... | pending | waits on the human (approve to ready) |
-| [br-gdf3](http://dalek.tailbc91f5.ts.net:7878/task?id=br-gdf3) | Peer-token setup guidance: a token per receiving project per sending machine, minted on... | pending | waits on the human (approve to ready) |
-| [br-8c25](http://dalek.tailbc91f5.ts.net:7878/task?id=br-8c25) | bridle token pair <machine>: set up tokens between machines over SSH (sk7p) | planned | ready to build |
 | [br-3932](http://dalek.tailbc91f5.ts.net:7878/task?id=br-3932) | Run bridle on a project without a local bridle clone (mrhe) | pending | waits on the human (approve to ready) |
-| [br-rjd5](http://dalek.tailbc91f5.ts.net:7878/task?id=br-rjd5) | Commands to set up and sync a project everywhere: sync all seven places per machine, an... | pending | waits on the human (approve to ready) |
 | [br-u6w9](http://dalek.tailbc91f5.ts.net:7878/task?id=br-u6w9) | Human interaction time: daemon serves the prompt log; gateway collects across machines ... | pending | waits on the human (approve to ready) |
 | [ui-9hq8](http://dalek.tailbc91f5.ts.net:7878/task?id=ui-9hq8) | Documents of projects on another machine (the NUC): read and comment in bridle-ui | planned | ready to build |
-| [br-v7ug](http://dalek.tailbc91f5.ts.net:7878/task?id=br-v7ug) | Run bridle's heavy work on the Windows PC under WSL2 | pending | waits on the human (approve to ready) |
-| [br-jgdb](http://dalek.tailbc91f5.ts.net:7878/task?id=br-jgdb) | Windows PC: follow the WSL2 setup guide (install WSL2 + Ubuntu, wslconfig, Tailscale, s... | claimed | the human's to-do |
-| [br-h7mu](http://dalek.tailbc91f5.ts.net:7878/task?id=br-h7mu) | Pick a name for the Windows PC (docs/context/naming.md) (v7ug) | claimed | the human's to-do |
 
 ### The human's interface: web UI, documents, focus
 
@@ -203,8 +222,6 @@ Ticket tooling in every project, migrations, the changelog, self-upgrade from re
 | [br-01ff](http://dalek.tailbc91f5.ts.net:7878/task?id=br-01ff) | Tickets through the bridle binary in every project: new, frontmatter, check, resolve; a... | pending | waits on the human (approve to ready) |
 | [br-e7e2](http://dalek.tailbc91f5.ts.net:7878/task?id=br-e7e2) | Migration: backfill ticket kind and two-way task links in every bridle project (v3dk sl... | planned | ready to build |
 | [br-ubjd](http://dalek.tailbc91f5.ts.net:7878/task?id=br-ubjd) | A CHANGELOG line for every landed task, written on the branch, and one section per kind... | pending | waits on the human (approve to ready) |
-| [br-88d4](http://dalek.tailbc91f5.ts.net:7878/task?id=br-88d4) | self_upgrade = "release": fetch, verify and swap the release binary (chvf 2) | planned | ready to build |
-| [br-751e](http://dalek.tailbc91f5.ts.net:7878/task?id=br-751e) | Daemon keeps its own workflow checkout at the binary's tag (chvf 3) | planned | ready to build |
 
 ### Executable specs
 
@@ -267,3 +284,4 @@ Chores that are the human's own: expand on an idea, review a ticket or branch.
   track-web placed in one.
 - 2026-10-09 09:45 ET: added br-d9wq (PdM research) to product process; decision 7 (the term).
 - 2026-10-09 10:05 ET: br-g3az delivered.
+- 2026-10-09 10:45 ET: new workstream Machine setup (PRIORITY), first. Filed hua2, xrkh, kt25; readied hua2, xrkh, gdf3, 57nt; priority high on those and 8c25, 88d4, 751e. Moved 8c25, gdf3, rjd5, v7ug, jgdb, h7mu, f8f9, 57nt, 88d4, 751e into it. Placed br-f4xu (CI flake) in reliability.

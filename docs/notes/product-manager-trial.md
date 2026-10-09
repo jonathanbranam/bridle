@@ -230,3 +230,31 @@ workforce reaches it.
   relates every ticket to open and planned work; the human: "I think that should be product
   manager, new role, not project") and 95mu (a change spec reviewed before any worker builds:
   the general form of the scheduler ladder).
+
+### 2026-10-09 ~10:15 ET: a priority workstream, machine setup
+
+The human, verbatim: "Do you have a work stream for project setup, like inter-machine project
+setup, token setup, automatic syncing? If not, please create one. And I want to get that work
+delivered. Put tickets in there that would enable basically efficient and pretty direct setup
+for a new machine. And I want to get that work scheduled and address any issues on it. So build
+a roadmap, add that as a work stream to the roadmap. And I want that as a priority so that I
+can use it to set up the new Windows machine and add it to the network. So it would include
+everything for configuring background daemons, launching tokens between machines, tokens
+between projects, and then as a as a additional feature I would like to see if we can get it
+in is automated project transfer between machines."
+
+- The roadmap had these tasks spread under "Many projects, many machines". About 25 open
+  tickets touch machine setup. A subagent is surveying them (state, dependencies, today's
+  end-to-end procedure, gaps) before the PdM proposes the workstream's order.
+- Lesson 6: the first real PdM job is not inventing work but **collecting it**: the tickets
+  for a goal already exist, scattered, filed one complaint at a time. The value is the
+  sequence and the gaps.
+- Survey back (a Claude Code subagent). Most building blocks exist (systemd units, WSL guide,
+  doctor checks, Tailscale re-check); the glue is missing: no token mesh command, no single
+  procedure, no project move. Filed hua2 (add-a-machine guide), xrkh (systemd uninstall; an
+  owner refusal must not crash-loop the old machine's unit), kt25 (project move, needs design).
+  Readied what was buildable and set priority high; asked the orchestrator to schedule.
+- Lesson 7: "make it a priority" turned into four PdM actions with today's tools: ready,
+  priority, a comment carrying the human's words on each task, and one message to the
+  orchestrator. Nothing in bridle records that a set of tasks is one goal; the roadmap doc is
+  the only place.
