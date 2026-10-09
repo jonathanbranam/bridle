@@ -986,6 +986,9 @@ pub mod event_kind {
     /// data: {free_bytes, total_bytes, target_bytes, worktrees_bytes, data_bytes}. The
     /// periodic disk usage reading (`[disk]`).
     pub const DISK_CHECKED: &str = "disk.checked";
+    /// data: {integration, ahead, behind}. The local integration branch differs from
+    /// `origin/<integration>` (zeros when back in step; ticket k6jd).
+    pub const GIT_DIVERGED: &str = "git.diverged";
     /// data: {text}. The orchestrator supervisor needs the human (interim, until incidents
     /// exist: docs/design/agent-host/orchestrator-supervision.md, section 8).
     pub const ORCHESTRATOR_INCIDENT: &str = "orchestrator.incident";

@@ -126,6 +126,7 @@ SSE event id:
 | `message.sent` (`{message,to}`) · `message.delivered` · `message.read` · `message.dropped` | messaging |
 | `rate_limit` (`{info}`) | a `rate_limit_event` from any agent |
 | `orchestrator.incident` (`{text}`) | the orchestrator supervisor needs the human (interim until incidents exist; also a `system` note to the human) |
+| `git.diverged` (`{integration,ahead,behind}`) | the integration branch differs from `origin/<integration>`, or is back in step (zeros) |
 | `disk.checked` (`{free_bytes,total_bytes,target_bytes,worktrees_bytes,data_bytes}`) | the periodic disk reading ([[operating-model#Disk monitor\|disk monitor]]) |
 | `integrate.started` (`{task,branch}`) · `integrate.finished` (`{task,branch,ok,commit?,error?}`) | `bridle land` began / ended |
 | `task.created` (`{task,kind,state}`) · `task.state` (`{task,to}`) · `task.priority` (`{task,from,to}`) · `task.kind` (`{task,from,to}`) · `task.edited` (`{fields}`) · `task.question_asked` / `task.question_answered` / `task.note_added` (`{task}`) | task changes |

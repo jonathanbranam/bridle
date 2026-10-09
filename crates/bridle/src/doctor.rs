@@ -1,6 +1,6 @@
 //! `bridle doctor`: checks the project's setup and says what to fix. Local only: it reads
 //! the repo, `.bridle/config.toml` and the tools on PATH, and never talks to a daemon or
-//! changes anything. See docs/design/cli.md.
+//! changes anything (but for `git fetch origin`, which updates remote-tracking refs). See docs/design/cli.md.
 
 use std::path::Path;
 use std::process::Command;
@@ -69,6 +69,7 @@ pub fn run(cli: &Cli, args: &DoctorArgs) -> Result<(), CliError> {
     bridle_api::config_warn::collect_quietly();
     let (mut checks, config) = local_checks(&repo, None);
     checks.extend(tool_checks(config.as_ref()));
+    checks.extend(origin_check(&repo, config.as_ref()));
     if std::env::consts::OS == "linux" {
         checks.extend(linux_checks(&LinuxHost::detect(&repo)));
     }
@@ -94,6 +95,30 @@ pub fn run(cli: &Cli, args: &DoctorArgs) -> Result<(), CliError> {
         return Err(CliError::Other(anyhow::anyhow!("doctor found problems")));
     }
     Ok(())
+}
+
+/// Fetches origin (the one thing doctor does that writes, and only to remote-tracking refs)
+/// and warns when the integration branch differs from `origin/<integration>`. Silent when in
+/// step, with no origin, or with no such branch there; a failed fetch is a warning, not hidden.
+fn origin_check(repo: &Path, config: Option<&Config>) -> Option<Check> {
+    if !git_ok(repo, &["rev-parse", "--git-dir"]) {
+        return None;
+    }
+    let integration = config.map_or("main", |c| c.branches.integration.as_str());
+    match bridle_daemon::divergence::check(repo, integration) {
+        Ok(Some(d)) if d.ahead > 0 || d.behind > 0 => Some(Check::warn(
+            "origin",
+            format!("{integration} vs origin/{integration}: {d}"),
+            "find out why before landing or pushing more: git log --left-right --oneline \
+             <integration>...origin/<integration>",
+        )),
+        Ok(_) => None,
+        Err(e) => Some(Check::warn(
+            "origin",
+            format!("git fetch origin failed: {e}"),
+            "fix the remote or network, then re-run doctor",
+        )),
+    }
 }
 
 /// Failures always fail doctor; warnings (unknown config keys among them) only with `--strict`.
@@ -534,6 +559,39 @@ fn parse_git_version(s: &str) -> Option<(u32, u32)> {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn origin_check_says_n_ahead_m_behind() {
+        let tmp = tempfile::tempdir().unwrap();
+        let origin = tmp.path().join("origin.git");
+        let clone = tmp.path().join("clone");
+        let git = |dir: &Path, args: &[&str]| {
+            let ok = Command::new("git")
+                .arg("-C")
+                .arg(dir)
+                .args(["-c", "user.name=t", "-c", "user.email=t@t"])
+                .args(args)
+                .output()
+                .unwrap()
+                .status
+                .success();
+            assert!(ok, "git {args:?}");
+        };
+        std::fs::create_dir(&origin).unwrap();
+        git(&origin, &["init", "--bare", "-b", "main"]);
+        git(tmp.path(), &["clone", origin.to_str().unwrap(), "clone"]);
+        git(&clone, &["checkout", "-b", "main"]);
+        git(&clone, &["commit", "--allow-empty", "-m", "one"]);
+        git(&clone, &["push", "origin", "main"]);
+        assert!(origin_check(&clone, None).is_none());
+        git(&clone, &["commit", "--allow-empty", "-m", "two"]);
+        let c = origin_check(&clone, None).expect("warns");
+        assert_eq!(c.status, Status::Warn);
+        assert!(c.detail.contains("1 ahead, 0 behind"), "{}", c.detail);
+        git(&clone, &["remote", "set-url", "origin", "/nonexistent.git"]);
+        let c = origin_check(&clone, None).expect("fetch failure shown");
+        assert!(c.detail.contains("git fetch origin failed"), "{}", c.detail);
+    }
+
     use super::*;
 
     fn sh(dir: &Path, args: &[&str]) {

@@ -613,7 +613,9 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   `workflow/base/skills/worker/SKILL.md` doesn't hardcode one project's build tool.
 - **`doctor [--repo PATH] [--strict]`**: unknown config sections and keys are warnings (heading
   "config warnings", one line each; text in `docs/design/agent-host/roles-and-config.md`);
-  `--strict` makes any warning, these included, exit 1. Local checks on the clone (default: the current directory),
+  `--strict` makes any warning, these included, exit 1. It runs `git fetch origin` and warns
+  "N ahead, M behind" when the integration branch differs from `origin/<integration>` (a failed
+  fetch is a warning too; silent with no origin). Local checks on the clone (default: the current directory),
   each printed `ok`/`warn`/`FAIL` with a one-line fix (`--json`: the list). Git repo; the
   integration branch exists (the g3ck failure mode); `.bridle/config.toml` loads (the
   config loader's own error text); files it references exist (role `system_prompt`, `workflow`,

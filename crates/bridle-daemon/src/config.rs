@@ -490,6 +490,8 @@ impl Role {
             permission_mode: "dontAsk".into(),
             allowed_tools: vec![
                 "Bash(bridle *)".into(),
+                // Read-only: the orchestrator checks its clone against origin (k6jd).
+                "Bash(git fetch origin)".into(),
                 "Read".into(),
                 "Glob".into(),
                 "Grep".into(),
@@ -3318,6 +3320,16 @@ mod tests {
             !orchestrator
                 .allowed_tools
                 .contains(&"Bash(git *)".to_string())
+        );
+        assert!(
+            orchestrator
+                .allowed_tools
+                .contains(&"Bash(git fetch origin)".to_string())
+        );
+        assert!(
+            !worker
+                .allowed_tools
+                .contains(&"Bash(git fetch origin)".to_string())
         );
         for tool in ["SendMessage", "Workflow", "RemoteTrigger"] {
             assert!(

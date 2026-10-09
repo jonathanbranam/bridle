@@ -22,6 +22,7 @@ pub mod config;
 pub mod containment;
 pub mod cost_audit;
 pub mod disk;
+pub mod divergence;
 pub mod doc_watch;
 mod events;
 pub mod focus;
@@ -121,8 +122,9 @@ pub struct Overrides {
     pub claim_lease_check_interval: Duration,
     /// How often [`ports::tick`] frees ports whose pid or owner agent is gone.
     pub port_check_interval: Duration,
-    /// Whether the machine load watch runs (`[machine] check_interval` still applies). Tests turn
-    /// it off so a loaded host does not hold their spawns.
+    /// Whether the machine load watch runs (`[machine] check_interval` still applies), and the
+    /// origin divergence watch with it. Tests turn it off so a loaded host does not hold their
+    /// spawns and no test daemon runs `git fetch`.
     pub load_watch: bool,
     /// Canned CI status and build command for `restart --upgrade` (tests).
     pub upgrade: UpgradeHooks,
@@ -671,6 +673,13 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         manager.clone(),
     );
 
+    let divergence_watch = divergence::DivergenceWatch::new(
+        ws.repo.clone(),
+        config.branches.integration.clone(),
+        emitter.clone(),
+        manager.clone(),
+    );
+
     let load_watch = load::LoadWatch::new(
         config.machine.load_per_core,
         Box::new(load::SystemLoad),
@@ -946,6 +955,15 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
             }
         })
     });
+    let divergence_task = overrides.load_watch.then(|| {
+        spawn_loop(shutdown_rx.clone(), divergence::INTERVAL, {
+            let divergence_watch = divergence_watch.clone();
+            move || {
+                let divergence_watch = divergence_watch.clone();
+                async move { divergence_watch.tick().await }
+            }
+        })
+    });
     let load_task = (overrides.load_watch && !config.machine.check_interval.is_zero()).then(|| {
         spawn_loop(shutdown_rx.clone(), config.machine.check_interval, {
             let load_watch = load_watch.clone();
@@ -1055,6 +1073,9 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
         governor_task.abort();
         ci_task.abort();
         if let Some(t) = load_task {
+            t.abort();
+        }
+        if let Some(t) = divergence_task {
             t.abort();
         }
         if let Some(t) = disk_task {

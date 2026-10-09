@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- Origin divergence (k6jd, postmortem j7r4): every 10 minutes the daemon fetches origin and, when the integration branch differs from `origin/<integration>`, raises a `git.diverged` event and one note to the orchestrator ("N ahead, M behind"; again only when the counts change). `bridle daemon doctor` shows it and any fetch failure. The orchestrator role may run `git fetch origin` (managers already may). Projects that override `allowed_tools` for the orchestrator in `.bridle/config.toml` must add `Bash(git fetch origin)` themselves.
 - `bridle token pair` (br-8c25, sk7p), human only: sets up role tokens (orchestrator, advisor, aide, mail, and `human@<machine>`) for every project on every machine over ssh, like ssh-copy-id. Selectors `--machines`, `--projects`, `--roles` default to all; `--rotate`, `--dry-run`; a second run changes nothing. One token-role list (`TOKEN_ROLES`) is read by the launchers and the command; agents' deny lists now carry `Bash(bridle token *)`. Peer tokens come with br-jw9e. Spec: `design/specs/token-pairing.md`.
 - Gateway (rztb): every stop, start and restart writes who asked (agent, `BRIDLE_AS`, user, parent process, route) to `gateway.log`.
 - `bridle systemd uninstall --project P` (xrkh) removes the unit `install` wrote and prints the `systemctl` commands, like `launchd uninstall`.
