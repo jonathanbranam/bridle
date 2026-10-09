@@ -4,7 +4,7 @@ title = "systemd uninstall, and an owner refusal never crash-loops a launchd or 
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-09T14:10:29.993Z"
-updated_at = "2026-10-09T19:37:57.339586Z"
+updated_at = "2026-10-09T19:38:59.320199Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -41,3 +41,6 @@ Verified in code: no systemd uninstall existed; owner refusal exited 1 (restarte
 
 ### note · agent:manager-2 · 2026-10-09T19:37:57.339Z
 integrated: 47341e6f9733f84af236801a2489cbf185fc5b5f (branch bridle/xrkh)
+
+### note · agent:manager-2 · 2026-10-09T19:38:59.320Z
+cleanup: removed agent xrkh, branch bridle/xrkh
