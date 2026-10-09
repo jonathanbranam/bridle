@@ -182,6 +182,10 @@ Cheap first.
    and the human; a bare `git push` that fails should not depend on the pushing agent's session
    text. Related: an agent that cannot send must put the blocker on the task thread
    (`bridle task comment`), not just in its own output; add that to the worker/manager roles.
+
+> [!comment] c4 human, 2026-10-09 14:04 EDT, on "A failed push is an event and an alarm" [pending 2026-10-09 14:04 EDT]
+> Agreed.
+
 5. **Investigate `bridle send` returning `error: unknown:`** (reproduced by manager-2 many times
    from 01:41 and once more by this agent). Out of scope here; file a bug. It is why the one report
    was lost.
