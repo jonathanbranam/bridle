@@ -368,7 +368,7 @@ from machine setup phase 1. The roadmap tracks it as the workstream "Everything 
 
 | Step | Size (guess) | After | Gated by the human |
 |---|---|---|---|
-| 1 Field names (zkbb), project-qualified IDs (section 8) | L | - | - (Q1 answered; IDs decided) |
+| 1 Field names (zkbb), project-qualified IDs (section 8), `theme:` | L | - | - (Q1 answered; IDs, themes decided) |
 | 2 Ticket types, readiness on the ticket | M | 1 | - (Q2 epic, Q4 a row per ticket) |
 | 3 Links from frontmatter | M | 2 | - |
 | 4 The thread moves to the ticket | L | 3 | - |
@@ -391,6 +391,13 @@ runs while little else is in flight. 10 waits one release after 9, for the wire 
 (each with this ticket as parent; until step 1 adds `parent`, a "Parent: 22ab" line and `see`),
 and later steps when their gates clear, so no brief goes stale waiting. Each child gets its task
 from `bridle ticket task` and is readied when it's buildable.
+
+**Themes** (the human, 2026-10-09, from d9wq): the roadmap orders epics, grouped by theme. A
+theme is a lasting area with a slug, not an ID (`reliability`, `human-ui`, `agents-and-cli`:
+"must be short, but not opaque"), and may never finish. Epics and tickets carry `theme: <slug>`;
+the list of themes lives in one file (for now `docs/notes/roadmap.md`). No `idea` kind: whether
+a ticket is scheduled is its state (no row yet, or pending), not its kind, so a large future idea
+is a `feature` or `epic` ticket tagged to a theme and not yet approved.
 
 **Risks.** The rename changes what every agent types daily; the hidden `task` alias (step 7)
 keeps old habits working until step 10. The PdM's own roadmap generator reads `bridle task list`
