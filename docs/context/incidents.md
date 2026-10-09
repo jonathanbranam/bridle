@@ -35,6 +35,10 @@ Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or los
 - **Category:** `ci`
 - **Follow-up:** [[flaky-on-linux-ci-upgrade-test-a-drain-starting-during-a-spa-ngya|ngya]]
   (br-ngya, critical).
+- **Second cause, same window:** from br-rztb (5aa62200) every ubuntu run also failed
+  `gateway_test` `a_replaced_binary_is_re_executed`: the new unit-child check trusted any
+  `INVOCATION_ID`, which systemd sets for every service (the GitHub runner included). Not
+  flaky; a real misdetection. Follow-up: br-8a53 (critical). `main` stayed red until both landed.
 
 ## 2026-10-09 19:18: dalek's gateway keeps being restarted outside launchd (recurring)
 
