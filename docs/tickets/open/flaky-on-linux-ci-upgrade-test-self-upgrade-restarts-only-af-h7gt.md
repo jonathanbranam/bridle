@@ -8,8 +8,8 @@ repos: [bridle]
 changes: []
 specs: []
 needs: []
-see: [f4xu, 7h8e, 5p3z]
-tasks: []
+see: [f4xu]
+tasks: [br-h7gt]
 ---
 
 ## The ask
