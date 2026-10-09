@@ -69,6 +69,9 @@ pub fn run(cli: &Cli, args: &DoctorArgs) -> Result<(), CliError> {
     bridle_api::config_warn::collect_quietly();
     let (mut checks, config) = local_checks(&repo, None);
     checks.extend(tool_checks(config.as_ref()));
+    if std::env::consts::OS == "linux" {
+        checks.extend(linux_checks(&LinuxHost::detect(&repo)));
+    }
     checks.extend(config_warning_checks());
 
     let failed = failed(&checks, args.strict);
@@ -409,7 +412,11 @@ pub fn tool_checks(config: Option<&Config>) -> Vec<Check> {
 fn claude_login_check(cmd: Command) -> Check {
     match claude_logged_in(cmd) {
         Some(true) => Check::ok("claude login", "logged in"),
-        Some(false) => Check::fail("claude login", NOT_LOGGED_IN_DETAIL, NOT_LOGGED_IN_FIX),
+        Some(false) => Check::fail(
+            "claude login",
+            NOT_LOGGED_IN_DETAIL,
+            not_logged_in_fix(std::env::consts::OS),
+        ),
         None => Check::warn(
             "claude login",
             "could not read `claude auth status`",
@@ -420,7 +427,93 @@ fn claude_login_check(cmd: Command) -> Check {
 
 pub const NOT_LOGGED_IN_DETAIL: &str =
     "NOT LOGGED IN: agents spawned from this session would silently do nothing";
-pub const NOT_LOGGED_IN_FIX: &str = "run `claude auth login`; on macOS start the daemon from a local terminal or tmux, not over SSH (which can't read the keychain)";
+
+/// The fix for a logged-out `claude`, per OS: the macOS login lives in the keychain, which an
+/// SSH session can't read; elsewhere it lives in `~/.claude`.
+pub fn not_logged_in_fix(os: &str) -> &'static str {
+    if os == "macos" {
+        "run `claude auth login`; start the daemon from a local terminal or tmux, not over SSH (which can't read the keychain)"
+    } else {
+        "run `claude auth login` as the user that runs the daemon (it prints a URL to open on any machine; the login is kept in ~/.claude)"
+    }
+}
+
+/// What the Linux-only checks look at, gathered by `detect` and injected by tests.
+struct LinuxHost {
+    /// The project clone (the workspace lives beside it).
+    path: std::path::PathBuf,
+    /// `/proc/1/comm`, if readable.
+    pid1_comm: Option<String>,
+    /// Any `bridle-*.service` user unit from `bridle systemd install` exists.
+    units_installed: bool,
+    /// Whether linger is on for `user`; `None` when unknown.
+    linger: Option<bool>,
+    user: String,
+}
+
+impl LinuxHost {
+    fn detect(repo: &Path) -> Self {
+        let user = std::env::var("USER").unwrap_or_default();
+        let config_home = std::env::var_os("XDG_CONFIG_HOME")
+            .filter(|v| !v.is_empty())
+            .map(std::path::PathBuf::from)
+            .or_else(|| {
+                std::env::var_os("HOME").map(|h| std::path::PathBuf::from(h).join(".config"))
+            });
+        let units_installed = config_home
+            .and_then(|c| std::fs::read_dir(c.join("systemd/user")).ok())
+            .is_some_and(|d| {
+                d.flatten().any(|e| {
+                    let n = e.file_name();
+                    let n = n.to_string_lossy();
+                    n.starts_with("bridle-") && n.ends_with(".service")
+                })
+            });
+        LinuxHost {
+            path: std::fs::canonicalize(repo).unwrap_or_else(|_| repo.to_path_buf()),
+            pid1_comm: std::fs::read_to_string("/proc/1/comm").ok(),
+            units_installed,
+            linger: (!user.is_empty())
+                .then(|| Path::new("/var/lib/systemd/linger").join(&user).exists()),
+            user,
+        }
+    }
+}
+
+/// Linux and WSL2 only (the caller skips these on macOS); all are warnings.
+fn linux_checks(h: &LinuxHost) -> Vec<Check> {
+    let mut out = Vec::new();
+    if h.path.starts_with("/mnt") {
+        out.push(Check::warn(
+            "workspace path",
+            format!(
+                "{} is under /mnt/ (a Windows drive: slow, and no unix permissions on WSL2)",
+                h.path.display()
+            ),
+            "clone the project under the Linux home (e.g. ~/work), not /mnt/",
+        ));
+    }
+    if let Some(comm) = &h.pid1_comm
+        && comm.trim() != "systemd"
+    {
+        out.push(Check::warn(
+            "systemd",
+            format!("systemd is not PID 1 (it is {:?})", comm.trim()),
+            "on WSL2 add `[boot]` and `systemd=true` to /etc/wsl.conf, then run `wsl --shutdown` from Windows",
+        ));
+    }
+    if h.units_installed && h.linger == Some(false) {
+        out.push(Check::warn(
+            "linger",
+            format!(
+                "linger is off for {}: the bridle systemd units stop when the last login ends",
+                h.user
+            ),
+            format!("run `sudo loginctl enable-linger {}`", h.user),
+        ));
+    }
+    out
+}
 
 /// `Some(logged_in)`, or `None` when the answer is unknown (can't run, unreadable output).
 /// Shared by doctor and the start-up warning in `serve`.
@@ -490,11 +583,86 @@ mod tests {
         ));
         assert_eq!(out.status, Status::Fail);
         assert!(out.detail.contains("NOT LOGGED IN"));
-        assert!(out.fix.contains("not over SSH"));
+        assert!(out.fix.contains("claude auth login"));
         let ok = claude_login_check(fake_claude(d.path(), "echo '{\"loggedIn\": true}'"));
         assert_eq!(ok.status, Status::Ok);
         let junk = claude_login_check(fake_claude(d.path(), "echo huh"));
         assert_eq!(junk.status, Status::Warn);
+    }
+
+    #[test]
+    fn login_fix_is_per_os() {
+        assert!(not_logged_in_fix("macos").contains("not over SSH"));
+        let linux = not_logged_in_fix("linux");
+        assert!(linux.contains("claude auth login") && linux.contains("~/.claude"));
+        assert!(!linux.contains("keychain"));
+    }
+
+    fn host() -> LinuxHost {
+        LinuxHost {
+            path: "/home/jo/work/proj".into(),
+            pid1_comm: Some("systemd\n".into()),
+            units_installed: true,
+            linger: Some(true),
+            user: "jo".into(),
+        }
+    }
+
+    #[test]
+    fn healthy_linux_host_has_no_warnings() {
+        assert!(linux_checks(&host()).is_empty());
+    }
+
+    #[test]
+    fn linux_warns_about_mnt_workspace() {
+        let c = linux_checks(&LinuxHost {
+            path: "/mnt/c/work/proj".into(),
+            ..host()
+        });
+        assert_eq!(c.len(), 1);
+        assert_eq!(c[0].status, Status::Warn);
+        assert!(c[0].detail.contains("/mnt/c/work/proj") && c[0].fix.contains("Linux home"));
+    }
+
+    #[test]
+    fn linux_warns_when_systemd_is_not_pid_1() {
+        let c = linux_checks(&LinuxHost {
+            pid1_comm: Some("init\n".into()),
+            ..host()
+        });
+        assert_eq!(c.len(), 1);
+        assert!(c[0].fix.contains("systemd=true") && c[0].fix.contains("/etc/wsl.conf"));
+        let unknown = linux_checks(&LinuxHost {
+            pid1_comm: None,
+            ..host()
+        });
+        assert!(unknown.is_empty());
+    }
+
+    #[test]
+    fn linux_warns_about_linger_only_with_units_installed() {
+        let off = LinuxHost {
+            linger: Some(false),
+            ..host()
+        };
+        let c = linux_checks(&off);
+        assert_eq!(c.len(), 1);
+        assert_eq!(c[0].fix, "run `sudo loginctl enable-linger jo`");
+        let no_units = LinuxHost {
+            units_installed: false,
+            ..off
+        };
+        assert!(linux_checks(&no_units).is_empty());
+    }
+
+    #[test]
+    fn linux_warnings_fail_only_when_strict() {
+        let c = linux_checks(&LinuxHost {
+            path: "/mnt/c/x".into(),
+            ..host()
+        });
+        assert!(!failed(&c, false));
+        assert!(failed(&c, true));
     }
 
     fn get<'a>(checks: &'a [Check], name: &str) -> &'a Check {

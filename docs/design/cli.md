@@ -601,9 +601,9 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   config loader's own error text); files it references exist (role `system_prompt`, `workflow`,
   packs, component `docs`); the machine `~/.bridle/config.toml` (a missing file is fine): each
   `[[focus]]` and `[[budget.schedule]]` block whose end is before its start without `+1d` is a
-  failure naming the block and the fix; every role has a prompt (warn); `claude auth status` in doctor's own environment (FAIL, loudly, when not logged in: start the daemon from a local terminal or tmux, not over SSH, on macOS; warn if the output can't be read); `.gitignore` covers
+  failure naming the block and the fix; every role has a prompt (warn); `claude auth status` in doctor's own environment (FAIL, loudly, when not logged in; the fix is per OS: on macOS start the daemon from a local terminal or tmux, not over SSH; on Linux/WSL `claude auth login` as the daemon's user, the login being kept in `~/.claude`; warn if the output can't be read); `.gitignore` covers
   `.bridle/cache/`, `bridle.db` and `daemon.json` (warn); `bridle/state` exists once a
-  `bridle.db` does (warn); `[ports]` range sane; git >= 2.38; `claude` on PATH; `gh` on PATH
+  `bridle.db` does (warn); `[ports]` range sane; on Linux only (warn): the clone is under `/mnt/` (slow, no unix permissions on WSL2), systemd is not PID 1 (`/proc/1/comm`; on WSL2 `systemd=true` is missing from `/etc/wsl.conf`), linger is off while `bridle systemd install` units exist (`sudo loginctl enable-linger <user>`); git >= 2.38; `claude` on PATH; `gh` on PATH
   when `[ci] github` is on. Exits 1 if any check fails. It never fixes anything and does not
   talk to a daemon; a dry `sync` check isn't done because `sync` has no check mode.
 - **`init [--repo PATH] [--name N] [--integration BRANCH] [--stack python|typescript]`**:

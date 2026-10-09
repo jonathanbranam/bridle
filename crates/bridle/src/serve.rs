@@ -165,7 +165,7 @@ async fn warn_if_not_logged_in(cmd: std::process::Command, timeout: Duration) {
         tracing::warn!(
             "{}; {}",
             crate::doctor::NOT_LOGGED_IN_DETAIL,
-            crate::doctor::NOT_LOGGED_IN_FIX
+            crate::doctor::not_logged_in_fix(std::env::consts::OS)
         );
     }
 }
