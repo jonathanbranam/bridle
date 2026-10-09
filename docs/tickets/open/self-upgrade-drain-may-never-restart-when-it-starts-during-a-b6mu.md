@@ -9,10 +9,16 @@ changes: []
 specs: []
 needs: []
 see: [h7gt]
-tasks: []
+tasks: [br-b6mu]
 ---
 
 ## The ask
+
+Reproduce the spawn-in-flight vs. drain race (a test that starts the drain during the spawn,
+with no go-file gate) and make sure the daemon either lets the held first prompt through or
+stops counting the spawn, so the restart always comes. Restore test coverage of that race.
+
+See br-h7gt (065b9443) and `docs/context/incidents.md` (2026-10-09 15:56).
 
 ## What happened
 
@@ -30,11 +36,3 @@ quiet point ever comes and the restart never happens. That is a daemon liveness 
 same family as incident br-y455 (a stuck `spawning` flag meant no quiet point for ~23 h).
 h7gt's worker also noted: lifting a drain after a failed restart (`perform_restart` error
 path) doesn't deliver messages held during the drain.
-
-## Ask
-
-Reproduce the spawn-in-flight vs. drain race (a test that starts the drain during the spawn,
-with no go-file gate) and make sure the daemon either lets the held first prompt through or
-stops counting the spawn, so the restart always comes. Restore test coverage of that race.
-
-See br-h7gt (065b9443) and `docs/context/incidents.md` (2026-10-09 15:56).
