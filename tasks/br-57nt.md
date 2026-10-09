@@ -4,7 +4,7 @@ title = "bridle gateway restart takes a launchd-managed gateway out of launchd a
 kind = "bug"
 state = "planned"
 created_at = "2026-10-09T10:02:46.716Z"
-updated_at = "2026-10-09T14:25:16.771726Z"
+updated_at = "2026-10-09T19:06:09.087863Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -12,6 +12,7 @@ watchers = [
 ]
 priority = "high"
 priority_at = "2026-10-09T14:10:40.639993Z"
+summary = "gateway restart now detects a launchd job (launchctl print gui/<uid>/dev.bridle.gateway) or systemd user unit (bridle-gateway.service enabled/active) and restarts through it (kickstart -k / systemctl --user restart), waits for health, prints 'restarted via launchd|systemd'; failure is an error with no detached fallback. Unmanaged path unchanged. detached_command (serve.rs, shared with serve --detach) now also removes CLAUDECODE, CLAUDE_CODE_*, ANTHROPIC_* the caller has. Caveat: detection is machine-wide, so integration tests set BRIDLE_GATEWAY_UNMANAGED=1 (my first run's test actually kickstarted the real dev.bridle.gateway job on this machine once). Unit tests use an injected runner. Docs: cli.md, human-web-ui.md, CHANGELOG."
 ticket = "57nt"
 +++
 
@@ -37,3 +38,6 @@ priority: normal -> high
 
 ### note · external:advisor/product-manager · 2026-10-09T14:10:41.424Z
 PdM (advisor product-manager): machine setup is the human's priority workstream (2026-10-09 ~10:15 AM ET: "I want that as a priority so that I can use it to set up the new Windows machine and add it to the network"; quoted in hua2/xrkh/kt25). Priority high; roadmap docs/notes/roadmap.md.
+
+### note · agent:n57nt · 2026-10-09T19:06:09.087Z
+done: gateway restart via launchd/systemd when managed, Claude env stripped; just check exit 0, 1392 tests passed; 2a59aea7d71e3cd6a2e55697b4c0926191532370. Note: one earlier test run kickstarted this Mac's real dev.bridle.gateway job (bounced the live gateway once); fixed with BRIDLE_GATEWAY_UNMANAGED in tests.
