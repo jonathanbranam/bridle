@@ -643,7 +643,20 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   parent; the clone must exist), `Restart=on-failure` (a deliberate `stop-daemon` stays
   stopped), output appended to `<dir>/.bridle/daemon.log`, `PATH`/`HOME` copied from the caller,
   `WantedBy=default.target`. The port isn't in the unit: `serve` takes it from `[projects]`.
-  Refuses to overwrite without `--force`.
+  `RestartPreventExitStatus=78`: `serve` exits 78 (EX_CONFIG) when another machine owns the
+  project (`owner.toml`), logging one line, and systemd then leaves it stopped instead of looping.
+  Refuses to overwrite without `--force`; units written before 78 existed lack the line, so
+  re-run `install --force` to rewrite them.
+- **`systemd uninstall --project P`** (Linux only): removes `bridle-<project>.service` and prints
+  `systemctl --user disable --now <unit>` and `daemon-reload`, never running them. Named by
+  `--project` alone, since after a project moves `[projects]` no longer puts it here. Mirrors
+  `launchd uninstall`.
+- **Owner refusal exit code**: `bridle serve` exits 78 when the project's owner is another
+  machine (without `--take-over`). A launchd plist can't list exit codes, so `launchd install`
+  runs `serve` through `/bin/sh -c` that maps 78 to 0, which `KeepAlive/SuccessfulExit=false`
+  does not restart (plists from older installs: `launchd install --force`). A unit can't pass
+  `--take-over`, so on a new owner run `bridle serve --take-over` by hand once, stop it, then
+  enable the unit; on the old machine uninstall the unit.
 - **`serve --detach`**: [[docs/design/agent-host/daemon#Running it|running the daemon]].
 - **`tui`** is a subcommand, not a separate binary, so it shares `bridle`'s discovery,
   token and `--url`/`--project` flags like every other command. It's a thin client of

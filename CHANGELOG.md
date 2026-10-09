@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+- `bridle systemd uninstall --project P` (xrkh) removes the unit `install` wrote and prints the `systemctl` commands, like `launchd uninstall`.
+
 ### Fixed
+- An owner refusal (the project belongs to another machine) is final for the supervisor (xrkh): `bridle serve` exits 78 with one clear log line, generated systemd units carry `RestartPreventExitStatus=78`, and the launchd plist maps 78 to a successful exit, so a moved project no longer crash-loops. Units and plists written earlier lack this: re-run `bridle systemd install --force` / `bridle launchd install --force`.
 - `bridle gateway restart` (n57nt) restarts a launchd- or systemd-managed gateway through its manager (`launchctl kickstart -k`, `systemctl --user restart`) instead of replacing it with an unsupervised child; detached gateways and daemons no longer inherit the caller's `CLAUDECODE`, `CLAUDE_CODE_*` and `ANTHROPIC_*` variables.
 - Peer-token guidance (gdf3): `bridle token create --peer` now says in its help and in the `peer:<machine> already exists` error that `<machine>` is the machine that SENDS to the project (not the receiver), and names the `bridle token revoke peer:<machine>` fix. `docs/design/cli.md` states the rule with an example.
 

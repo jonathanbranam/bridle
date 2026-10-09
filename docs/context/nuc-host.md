@@ -111,7 +111,13 @@ To move one (old machine to new):
 6. **Start the sessions** with the project-aware commands, as in "Running sessions for specific
    projects" above: `bridle session orchestrator --project <name>` and
    `bridle session advisor --project <name> [alias]`.
-7. **Old machine, mark its clone tools-only** (below) so nobody starts a second daemon there.
+   A launchd or systemd unit can't pass `--take-over`: take over by hand once, stop that daemon
+   (`bridle stop-daemon`), then enable the unit on the new machine.
+7. **Old machine, uninstall its unit** (`bridle launchd uninstall` / `bridle systemd uninstall
+   --project <name>`, then the printed `launchctl bootout` / `systemctl --user disable --now`), or
+   it restarts at boot. A unit left behind no longer loops (`serve` exits 78, which the unit
+   treats as final), but it is still dead weight.
+8. **Old machine, mark its clone tools-only** (below) so nobody starts a second daemon there.
 
 Messages (the inbox) live in SQLite, not on the state branch, and do not move; read anything
 still needed on the old machine first. Tasks, edges, open questions and claims come from the state

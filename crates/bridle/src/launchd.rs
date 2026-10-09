@@ -154,7 +154,13 @@ fn install(
     let path_env = std::env::var("PATH").unwrap_or_default();
     let plist = Plist {
         label: &label,
+        // launchd has no per-code restart rule, so a shell maps the owner refusal (78) to a
+        // successful exit, which `SuccessfulExit=false` does not restart.
         program_args: vec![
+            "/bin/sh".into(),
+            "-c".into(),
+            r#""$@"; rc=$?; [ "$rc" -eq 78 ] && exit 0; exit "$rc""#.into(),
+            "bridle-serve".into(),
             exe.to_string_lossy().into_owned(),
             "--project".into(),
             project.clone(),
@@ -242,6 +248,7 @@ mod tests {
         let text = std::fs::read_to_string(&path).unwrap();
         assert!(text.contains("<string>dev.bridle.proj</string>"));
         assert!(text.contains("<string>serve</string>"));
+        assert!(text.contains("-eq 78"));
         assert!(text.contains("proj &amp; co"));
         assert!(text.contains("<key>SuccessfulExit</key>"));
         assert!(text.contains("<key>PATH</key>"));

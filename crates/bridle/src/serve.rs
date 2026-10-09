@@ -37,8 +37,22 @@ async fn run_foreground(cli: &Cli, args: &ServeArgs) -> Result<(), CliError> {
         std::process::Command::new("claude"),
         LOGIN_CHECK_TIMEOUT,
     ));
-    bridle_daemon::run(opts, args.take_over).await?;
+    bridle_daemon::run(opts, args.take_over)
+        .await
+        .map_err(owner_refusal)?;
     Ok(())
+}
+
+/// Maps the owner refusal (a typed `OwnerConflict` somewhere in the chain) to its own exit code,
+/// so a supervisor can be told not to restart it; the message is the one log line.
+fn owner_refusal(e: anyhow::Error) -> CliError {
+    match e.downcast_ref::<bridle_daemon::state_branch::OwnerConflict>() {
+        Some(c) => CliError::OwnerRefused(format!(
+            "this project is owned by {}; refusing to start; run `bridle serve --take-over` here to take it over, or uninstall this unit (since {})",
+            c.host, c.since
+        )),
+        None => CliError::Other(e),
+    }
 }
 
 /// Apply the project's pending migrations before the daemon starts serving (docs/design/migrations.md).
@@ -345,6 +359,22 @@ pub(crate) fn tail_of_log(path: &Path, n: usize) -> String {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
+    #[test]
+    fn owner_conflict_maps_to_exit_78() {
+        let e = anyhow::Error::new(bridle_daemon::state_branch::OwnerConflict {
+            project: "p".into(),
+            host: "nuc".into(),
+            since: "t".into(),
+        })
+        .context("starting");
+        let c = owner_refusal(e);
+        assert_eq!(c.exit_code(), 78);
+        assert!(c.to_string().contains("owned by nuc"));
+        assert_eq!(owner_refusal(anyhow::anyhow!("x")).exit_code(), 1);
+    }
+
     #[test]
     fn detached_command_removes_principal_env() {
         let vars = [
@@ -370,7 +400,6 @@ mod tests {
         }
     }
 
-    use super::*;
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
     fn sleeper() -> std::process::Child {

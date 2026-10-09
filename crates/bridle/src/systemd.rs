@@ -20,7 +20,13 @@ pub fn run(cli: &Cli, args: &SystemdArgs) -> Result<(), CliError> {
         .map(PathBuf::from)
         .unwrap_or_else(|| home.join(".config"));
     let units_dir = config_home.join("systemd/user");
-    let SystemdAction::Install(a) = &args.action;
+    let a = match &args.action {
+        SystemdAction::Install(a) => a,
+        SystemdAction::Uninstall(_) => {
+            let out = uninstall(cli.project.as_deref(), &units_dir)?;
+            return print_out(cli, &out);
+        }
+    };
     let machines = MachineMap::load(&discovery::bridle_home()).map_err(anyhow::Error::new)?;
     let projects_dir = match &a.projects_dir {
         Some(d) => d.clone(),
@@ -43,8 +49,12 @@ pub fn run(cli: &Cli, args: &SystemdArgs) -> Result<(), CliError> {
         &units_dir,
         &env,
     )?;
+    print_out(cli, &out)
+}
+
+fn print_out(cli: &Cli, out: &serde_json::Value) -> Result<(), CliError> {
     if cli.json {
-        render::print_json(&out)?;
+        render::print_json(out)?;
     } else {
         for line in out["message"].as_str().unwrap_or_default().lines() {
             println!("{line}");
@@ -134,10 +144,12 @@ fn render_unit(project: &str, repo: &Path, workspace: &Path, env: &UnitEnv) -> S
     .join(" ");
     let log = discovery::state_dir(workspace).join("daemon.log");
     // Restart only on a crash (non-zero exit), so a deliberate `stop-daemon` stays stopped.
+    // 78 is `serve` refusing because another machine owns the project: final, never a loop.
     // The port comes from `[projects]`, which `serve` reads itself.
     format!(
         "[Unit]\nDescription=bridle daemon for {project}\nAfter=network-online.target\n\n\
          [Service]\nExecStart={exec}\nWorkingDirectory={wd}\nRestart=on-failure\nRestartSec=5\n\
+         RestartPreventExitStatus=78\n\
          Environment={path}\nEnvironment={home}\n\
          StandardOutput=append:{log}\nStandardError=append:{log}\n\n\
          [Install]\nWantedBy=default.target\n",
@@ -208,6 +220,30 @@ fn install(
     }))
 }
 
+/// Removes the unit file `install` wrote. Named by `--project` alone, not by `[projects]`: after
+/// a project moves away this machine no longer owns it, which is exactly when to uninstall.
+fn uninstall(project: Option<&str>, units_dir: &Path) -> Result<serde_json::Value, CliError> {
+    let project = project.ok_or_else(|| anyhow!("name the project with --project"))?;
+    let name = format!("bridle-{project}.service");
+    let path = units_dir.join(&name);
+    if !path.exists() {
+        return Err(CliError::Other(anyhow!(
+            "{} does not exist",
+            path.display()
+        )));
+    }
+    std::fs::remove_file(&path).with_context(|| format!("removing {}", path.display()))?;
+    let disable = format!("systemctl --user disable --now {name}");
+    let reload = "systemctl --user daemon-reload".to_string();
+    let message = format!(
+        "removed {}\nif it is enabled, stop and disable it (this stops the daemon), then reload:\n  {disable}\n  {reload}",
+        path.display()
+    );
+    Ok(serde_json::json!({
+        "unit": path, "disable": disable, "daemon_reload": reload, "message": message,
+    }))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -274,6 +310,7 @@ mod tests {
             ws.display()
         )));
         assert!(text.contains("Restart=on-failure\n"));
+        assert!(text.contains("RestartPreventExitStatus=78\n"));
         assert!(text.contains("WantedBy=default.target\n"));
         assert!(text.contains("Environment=PATH=/usr/bin:/home/jo/.cargo/bin\n"));
         assert!(units.join("bridle-dotfiles.service").is_file());
@@ -289,6 +326,24 @@ mod tests {
         let err = install(None, &args(false), &machines(), &ws, &units, &env()).unwrap_err();
         assert!(err.to_string().contains("--force"));
         install(None, &args(true), &machines(), &ws, &units, &env()).unwrap();
+    }
+
+    #[test]
+    fn uninstall_removes_the_unit_even_when_the_project_moved() {
+        let tmp = tempfile::tempdir().unwrap();
+        let units = tmp.path().join("units");
+        std::fs::create_dir_all(&units).unwrap();
+        assert!(uninstall(None, &units).is_err());
+        assert!(uninstall(Some("bridle"), &units).is_err());
+        // "bridle" is placed on another machine in `machines()`; uninstall doesn't care.
+        let path = units.join("bridle-bridle.service");
+        std::fs::write(&path, "x").unwrap();
+        let out = uninstall(Some("bridle"), &units).unwrap();
+        assert!(!path.exists());
+        assert_eq!(
+            out["disable"],
+            "systemctl --user disable --now bridle-bridle.service"
+        );
     }
 
     #[test]

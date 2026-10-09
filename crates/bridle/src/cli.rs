@@ -952,7 +952,13 @@ pub enum SystemdAction {
     /// Write `~/.config/systemd/user/bridle-<project>.service` for `--project`, or for every
     /// project `[projects]` puts on this machine, and print the systemctl commands.
     Install(SystemdInstallArgs),
+    /// Remove `bridle-<project>.service` for `--project` (required: the project may no longer be
+    /// placed on this machine) and print the systemctl commands to run.
+    Uninstall(SystemdUninstallArgs),
 }
+
+#[derive(Debug, Args)]
+pub struct SystemdUninstallArgs {}
 
 #[derive(Debug, Args)]
 pub struct SystemdInstallArgs {

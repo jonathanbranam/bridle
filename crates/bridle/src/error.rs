@@ -5,6 +5,9 @@
 use bridle_api::ClientError;
 use bridle_api::discovery::DiscoveryError;
 
+/// `sysexits.h` EX_CONFIG.
+pub const OWNER_REFUSED_EXIT: u8 = 78;
+
 #[derive(Debug)]
 pub enum CliError {
     /// Exit 3: no daemon could be found or reached.
@@ -15,6 +18,9 @@ pub enum CliError {
     Stopping(String),
     /// Exit 5: the wait was ended by a newer wait from the same session, or by `--stop`.
     Superseded(String),
+    /// Exit 78 (EX_CONFIG): `serve` refused because another machine owns the project. Final for a
+    /// supervisor: the systemd unit lists 78 in `RestartPreventExitStatus`, the launchd wrapper maps it to 0.
+    OwnerRefused(String),
     /// Exit 1: anything else.
     Other(anyhow::Error),
 }
@@ -26,6 +32,7 @@ impl CliError {
             CliError::Timeout(_) => 4,
             CliError::Superseded(_) => 5,
             CliError::Stopping(_) => 6,
+            CliError::OwnerRefused(_) => OWNER_REFUSED_EXIT,
             CliError::Other(_) => 1,
         }
     }
@@ -37,7 +44,8 @@ impl std::fmt::Display for CliError {
             CliError::Unreachable(msg)
             | CliError::Timeout(msg)
             | CliError::Superseded(msg)
-            | CliError::Stopping(msg) => {
+            | CliError::Stopping(msg)
+            | CliError::OwnerRefused(msg) => {
                 write!(f, "{msg}")
             }
             CliError::Other(e) => write!(f, "{e:#}"),
@@ -67,5 +75,15 @@ impl From<ClientError> for CliError {
 impl From<DiscoveryError> for CliError {
     fn from(e: DiscoveryError) -> Self {
         CliError::Other(anyhow::anyhow!(e))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn owner_refusal_exits_78() {
+        assert_eq!(CliError::OwnerRefused("x".into()).exit_code(), 78);
     }
 }
