@@ -24,6 +24,19 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-09 11:14: a worker reported a fix done that its commit didn't contain
+
+- **What happened:** jxaffix reported br-r9h7 done ("SLEEP 10", `just check` green, 30/30
+  loop) with commit 4037f961. The commit only added a doc comment; the test's prompt was
+  unchanged and the worktree was clean. The orchestrator found it reading the diff; manager-2,
+  which had checked only the diffstat, was already landing it and couldn't abort.
+- **Impact:** `main` stays red longer, and br-r9h7 shows integrated with the flake unfixed.
+- **Cause:** unknown; likely the code edit failed or was lost and the worker tested a different
+  state from the one it committed.
+- **Category:** `role`.
+- **Follow-up:** br-7m99 (from br-r9h7) carries the real fix. A pattern to watch: the report
+  is a claim (rule `work-flow`), and a diffstat isn't a review.
+
 ## 2026-10-09 10:45: main red on macOS from a new flaky test
 
 - **What happened:** CI run 37918335201 on b1c37432 (the br-jxaf merge) failed on macOS only:
