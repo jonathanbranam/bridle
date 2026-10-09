@@ -4,7 +4,7 @@ title = "bridle token pair, part 2: peer tokens, the [mail] peers opt-out, and p
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-09T18:34:18.344Z"
-updated_at = "2026-10-09T22:56:39.429815Z"
+updated_at = "2026-10-09T22:56:52.605950Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -65,3 +65,6 @@ ready to land: tip c5d6ae8a contains main b798c8bc (br-k6jd); just check exit 0,
 
 ### note · agent:manager-2 · 2026-10-09T22:56:39.429Z
 integrated: cbc2e6a9b1f3f4711bb57a37cb7a5a811bda4e24 (branch bridle/jw9e)
+
+### note · agent:manager-2 · 2026-10-09T22:56:52.605Z
+cleanup: removed agent jw9e, branch bridle/jw9e
