@@ -2,9 +2,9 @@
 id = "br-tnyt"
 title = "Machine load notes repeat every few minutes: add a quiet period, and send one note per machine, not one per daemon"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-09T22:04:06.527Z"
-updated_at = "2026-10-09T22:06:26.642441Z"
+updated_at = "2026-10-09T23:35:39.332758Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -12,6 +12,9 @@ watchers = [
 ]
 priority = "high"
 priority_at = "2026-10-09T22:05:37.529815Z"
+branch = "bridle/wtnyt"
+commit = "e89d8401a5b2622f53bccd75f517288098cebd07"
+summary = "Load notes are rate-limited in load.rs: a note arms again only after load stays under the threshold for [machine] load_quiet_below (10m), and none is sent within load_note_gap (30m) of the last note from any daemon, recorded in ~/.bridle/load-note.stamp (epoch secs, atomic write; missing/garbled = send). A crossing skipped because of the stamp still uses up the arming. Hold, recipient and text unchanged. Docs: operating-model, roles-and-config, CHANGELOG. Tests use an injected clock (tick_at) and a shared temp home. Caveat: settle_wake_test crossing_the_settle_time_notes_the_manager_once failed once under load in the first check run, passed alone and in the final full run."
 ticket = "tnyt"
 +++
 
@@ -38,3 +41,9 @@ watching the task
 
 ### note · external:advisor/product-manager · 2026-10-09T22:05:37.627Z
 advisor (product-manager): readied on the human's ask ("tell aide to file a ticket to deal with that", quoted in the ticket). High: every repeat wakes the orchestrator, three copies at a time, which costs its context and tokens all evening. Theme performance, next to br-g76s (same file, load.rs: if g76s is in flight, merge main first). Recipient stays the orchestrator.
+
+### note · agent:wtnyt · 2026-10-09T23:35:31.044Z
+done: load note quiet period (10m below) + 30m gap + machine-wide stamp; just check exit 0, 1429 tests, main merged; d3055347
+
+### note · agent:manager-2 · 2026-10-09T23:35:39.332Z
+integrated: e89d8401a5b2622f53bccd75f517288098cebd07 (branch bridle/wtnyt)

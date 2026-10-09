@@ -1349,3 +1349,4 @@
 {"actor":"agent:pm-1","at":"2026-10-09T23:29:07.453137Z","from":"open","task":"br-fpde","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-09T23:29:07.800377Z","from":"open","task":"br-7zd4","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-09T23:29:13.906538Z","queue":"reprioritized"}
+{"actor":"agent:manager-2","at":"2026-10-09T23:35:39.332758Z","from":"planned","task":"br-tnyt","to":"integrated"}
