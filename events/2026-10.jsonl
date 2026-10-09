@@ -1180,3 +1180,4 @@
 {"actor":"agent:manager-2","at":"2026-10-09T07:06:16.689899Z","from":"open","task":"br-fem2","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-10-09T07:13:06.476683Z","from":"planned","task":"br-ukpm","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-10-09T09:33:45.255638Z","from":"planned","task":"br-crht","to":"integrated"}
+{"actor":"agent:manager-2","at":"2026-10-09T09:57:29.835028Z","from":"planned","task":"br-srj5","to":"integrated"}

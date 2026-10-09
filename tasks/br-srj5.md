@@ -2,11 +2,13 @@
 id = "br-srj5"
 title = "Mail attachments: UTF-8 text saved garbled as Latin-1 (em dash becomes 'â€”')"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-08T00:56:39.666Z"
-updated_at = "2026-10-09T09:57:12.901962Z"
+updated_at = "2026-10-09T09:57:39.103488Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+branch = "bridle/srj5"
+commit = "103a44ae9c984194c8b75e9c22e00a9bf9c19558"
 summary = "Text attachments in bridle-mail parse.rs are now saved as the sender's transfer-decoded bytes (raw_contents re-parses the part's raw body as an unlabelled binary part), so UTF-8 labelled iso-8859-1 or unlabelled is byte-identical. Binary parts unchanged. Message body path untouched (not checked for the same bug). Tests: 8bit UTF-8 under three labels, base64 with iso-8859-1 label. CHANGELOG added."
 ticket = "srj5"
 +++
@@ -23,3 +25,9 @@ Acceptance: just check passes. Model: Haiku is enough only if the fix is the one
 
 ### note · agent:srj5 · 2026-10-09T09:57:12.901Z
 done: text attachments saved byte-identical (parse.rs raw_contents); just check exit 0, 1372 tests passed; 19b7cc418a9ee5f9d6e88ce005615b4a07809256
+
+### note · agent:manager-2 · 2026-10-09T09:57:29.835Z
+integrated: 103a44ae9c984194c8b75e9c22e00a9bf9c19558 (branch bridle/srj5)
+
+### note · agent:manager-2 · 2026-10-09T09:57:39.103Z
+cleanup: removed agent srj5, branch bridle/srj5
