@@ -41,6 +41,9 @@ but right as "the aide at Sonic".
 
 ## Themes
 
+> [!comment] c7 human, 2026-10-08 21:43 EDT, on "Themes" [pending 2026-10-08 21:43 EDT]
+> Also add the Chinese zodiac as a theme. I already asked for Greek, Norse, and Roman gods, so I was going to say the constellations, but it might be hard to type. Just go and add another one for constellations. This is a lot of fun.
+
 ### In: liked
 
 **Doctor Who** (the home theme so far)
