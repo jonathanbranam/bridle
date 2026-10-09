@@ -24,6 +24,21 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-08 23:40-2026-10-09 01:40: the orchestrator had no waiter on bridle for ~2 h
+
+- **What happened:** during the self-upgrade to 018b9cfd, the orchestrator re-armed its bridle
+  waiter behind a shell loop that waited for the daemon's pid to change. The daemon re-executes in
+  place and keeps its pid (640), so the loop never ended and no waiter ran. The orchestrator found
+  it at 01:39 when `bridle status` showed "no waiter".
+- **Impact:** about 2 h of wakes unseen (all queued, none lost): br-5e4k, br-ty37, br-9z2n and
+  br-ppa6 landing; the human's approvals on ukpm, n4w4, crht and v6kr; a gateway restart for the
+  NUC documents left waiting.
+- **Cause:** the orchestrator assumed an upgrade restart changes the pid. It doesn't. `started_at`
+  changes. A waiter that exits 6 ("daemon restarting") just needs re-arming in a loop until it stops
+  exiting 6.
+- **Category:** `role`
+- **Follow-up:** none; the lesson is in the handover note.
+
 ## 2026-10-08 14:37-22:46: the gateway ran as the orchestrator and saw every project unreachable
 
 - **What happened:** an orchestrator session restarted the gateway at 14:37 from its own shell.
