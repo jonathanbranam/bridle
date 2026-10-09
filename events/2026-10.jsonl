@@ -1213,3 +1213,6 @@
 {"actor":"agent:manager-2","at":"2026-10-09T12:16:25.154039Z","from":"planned","task":"br-2uje","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-10-09T12:26:17.536829Z","from":"planned","task":"br-r9h7","to":"integrated"}
 {"actor":"human","at":"2026-10-09T12:47:32.807Z","from":"","task":"br-d9wq","to":"pending"}
+{"actor":"human","at":"2026-10-09T12:58:04.639Z","from":"","task":"br-f4xu","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-10-09T12:58:04.886907Z","from":"pending","task":"br-f4xu","to":"open"}
+{"actor":"external:orchestrator","at":"2026-10-09T12:58:04.923074Z","from":"open","task":"br-f4xu","to":"planned"}
