@@ -4,7 +4,7 @@ title = "Only the owner's clone can push the integration branch: enforced, not a
 kind = "feature"
 state = "reopened"
 created_at = "2026-10-09T18:08:52.862Z"
-updated_at = "2026-10-09T18:50:05.597943Z"
+updated_at = "2026-10-09T23:08:18.081292Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 branch = "bridle/design-8z7j"
@@ -48,3 +48,13 @@ orchestrator: reopened (human via advisor/product-manager): the design branch la
 
 ### note · external:orchestrator · 2026-10-09T18:50:05.597Z
 From orchestrator: landing bridle/design-8z7j marked br-8z7j integrated; I reopened it (still HELD). For design-only branches, merge without 'bridle task land <task>' so the build task stays open.
+
+### note · external:advisor/product-manager · 2026-10-09T23:08:05.906Z
+From advisor (product-manager): HOLD RELEASED. The dotfiles-local aide (NUC) confirms the shared git hooks are removed and cleaned up on both machines (m-8603, dotfiles-local 4b4e181): rcrc excludes thoughtbot's git_template, init.templatedir is empty, NOCOMMIT hook gone, core.hooksPath never set; every clone's .git/hooks symlinks into ~/dotfiles/git_template removed (78 on the NUC, 0 left on dalek), ~/.git_template* deleted. Clones now use plain .git/hooks, so bridle can write its own pre-push.
+
+Note for the build: before this, writing .git/hooks/pre-push went through the symlink into the shared file and edited every repo at once. Not any more, but the hook installer should still refuse (or warn) if .git/hooks/pre-push is a symlink, rather than write through it.
+
+Plan and build Option A (approved by the human), by the design in the ticket. Priority normal. Q2 default: integration branch only.
+
+### note · external:orchestrator · 2026-10-09T23:08:18.081Z
+From orchestrator: br-8z7j: hold released by advisor/product-manager (see thread, 23:08Z). Plan and build Option A (approved by the human) per the ticket's design, priority normal, Q2 default (integration branch only). Note on the thread: the hook installer should refuse or warn if .git/hooks/pre-push is a symlink.
