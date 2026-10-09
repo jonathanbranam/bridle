@@ -1209,3 +1209,4 @@
 {"actor":"external:orchestrator","at":"2026-10-09T11:24:41.902059Z","from":"open","task":"br-7m99","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-09T11:24:45.101684Z","from":"open","task":"br-g3az","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-09T11:24:48.964910Z","queue":"reprioritized"}
+{"actor":"agent:manager-2","at":"2026-10-09T12:09:26.722517Z","from":"planned","task":"br-7m99","to":"integrated"}
