@@ -244,6 +244,11 @@ the same args (safe Rust, `CommandExt::exec`), so the PID and the terminal stay 
 works; the new process rebinds the same `listen` address and clients retry through the gap. If the
 exec fails the daemon stays cleanly stopped, as after `stop-daemon`.
 
+A spawn already in flight when the drain begins has its first prompt held like any message, so no
+turn starts; the spawn then returns at once rather than waiting out its 8 s readiness wait, and the
+prompt is delivered after the restart's resume. If the restart fails before the exec, the drain is
+lifted and each running agent gets its oldest held message (the end of its turn chains the rest).
+
 The next start, after its own resume of `resume_on_restart` roles, reads and clears the record and
 resumes every recorded agent still not running, workers too, each with a note from `system` that the
 daemon restarted for an upgrade, to carry on and to re-run any background job it was waiting on

@@ -628,3 +628,35 @@ async fn a_daemon_raised_wake_also_comes_through_agent_wake() {
     let failed = got.iter().find(|r| r.reason == "upgrade_failed");
     assert!(failed.is_some_and(|r| r.detail.is_some()), "{got:?}");
 }
+
+/// A drain that begins while a spawn is in flight holds the agent's first prompt, so no init will
+/// ever come: the spawn must not sit out its readiness wait (8 s), and the restart must come at
+/// once, with the held prompt delivered after it (ticket b6mu; no go-file gate, unlike the
+/// mid-turn test above).
+#[tokio::test]
+async fn a_drain_starting_during_a_spawn_restarts_promptly() {
+    let config = "[worktrees]\nsetup = \"sleep 2\"\n";
+    let (daemon, _tmp) =
+        support::start_daemon_with_config(Some(hooks("success", "true")), Some(config)).await;
+    let mut req = spawn_named("racer", "hello");
+    req.workdir = None;
+    let client = daemon.client.clone();
+    let spawn = tokio::spawn(async move { client.spawn(&req).await });
+    // The spawn is inside its worktree setup (the drain check at its start has passed).
+    tokio::time::sleep(Duration::from_millis(700)).await;
+    let began = std::time::Instant::now();
+    daemon.client.restart(&upgrade()).await.expect("reply");
+    support::wait_for("the restart", || async {
+        daemon.running.restart_requested().then_some(())
+    })
+    .await;
+    let spawned = spawn.await.expect("join").expect("spawn");
+    assert!(
+        began.elapsed() < Duration::from_secs(6),
+        "the drain waited out the spawn's readiness wait: {:?}",
+        began.elapsed()
+    );
+    let held = messages_to(&daemon.client, &spawned.id).await;
+    assert!(held.iter().any(|m| m.body == "hello"), "{held:?}");
+    daemon.running.join().await.expect("join");
+}

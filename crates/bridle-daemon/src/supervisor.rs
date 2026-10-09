@@ -832,6 +832,16 @@ impl AgentManager {
             .store(on, std::sync::atomic::Ordering::SeqCst);
     }
 
+    /// Ends a drain that did not lead to a restart and hands each running agent its oldest message
+    /// held meanwhile (the end of a turn then chains the rest), or an idle agent would hold it
+    /// until some unrelated turn ended.
+    pub async fn lift_drain(&self) {
+        self.set_draining(false);
+        for id in self.running_ids() {
+            self.deliver_oldest_held(&id).await;
+        }
+    }
+
     pub fn draining(&self) -> bool {
         self.0.draining.load(std::sync::atomic::Ordering::SeqCst)
     }
@@ -1220,17 +1230,23 @@ impl AgentManager {
         // now (render_system_prompt), so the first message no longer needs
         // to carry them: it's just the task, if there is one.
         let first_message = req.prompt.or(role.start_prompt.clone());
-        let sent_first_message = first_message.is_some();
+        let mut sent_first_message = first_message.is_some();
         if let Some(prompt) = first_message {
-            self.send(
-                principal.id.clone(),
-                ToTarget::Agent(agent.id.clone()),
-                MessageKind::Note,
-                prompt,
-                bridle_api::types::When::Now,
-                None,
-            )
-            .await?;
+            let sent = self
+                .send(
+                    principal.id.clone(),
+                    ToTarget::Agent(agent.id.clone()),
+                    MessageKind::Note,
+                    prompt,
+                    bridle_api::types::When::Now,
+                    None,
+                )
+                .await?;
+            // A drain that began mid-spawn held the prompt: no turn starts, so no init will come
+            // and waiting for one would only stall the drain's quiet point (b6mu).
+            if sent.state == MessageState::Held {
+                sent_first_message = false;
+            }
         }
 
         self.fill_incident_notices(&agent.id).await;

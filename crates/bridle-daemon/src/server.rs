@@ -3979,8 +3979,8 @@ async fn perform_restart(
         .set_upgrade_waiting(built.map(|s| s.chars().take(9).collect()));
     let result = drain_and_restart(state, who, built).await;
     if result.is_err() {
-        state.manager.set_draining(false);
         state.manager.set_upgrade_waiting(None);
+        state.manager.lift_drain().await;
     }
     result
 }
