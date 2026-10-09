@@ -10,7 +10,7 @@ specs: []
 needs: []
 see: [bp2v, 22ab, 72t9]
 tasks: [br-4cgx]
-next_comment_id: c4
+next_comment_id: c5
 ---
 
 ## The ask
@@ -70,6 +70,10 @@ No syntax exists today. Cross-project messages use the CLI flag only: `bridle se
 
 - `@bridle-ui:orchestrator`: project name, then role. Readable; the colon also appears in
   `external:aide`, which the mention would never include.
+
+> [!comment] c4 human, 2026-10-09 17:15 EDT, on "bridle-ui:orchestrator: project name, then role. Readable; the colon also appears in external:aide, which the mention would never include" [pending 2026-10-09 17:15 EDT]
+> is \@bridle-ui:external:orchestrator also valid syntax? I think it should be valid.
+
 - `@ui:orchestrator`: the project's ID prefix, matching project-qualified ticket IDs (`ui-vnuu`;
   22ab section 8). Shorter, a bit more opaque.
 
