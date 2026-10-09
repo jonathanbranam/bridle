@@ -2,14 +2,15 @@
 id = "br-r9h7"
 title = "Flaky on macOS CI: spawn_with_prompt_waits_for_the_turn_to_start_before_returning sees Idle, not Working"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-09T10:47:12.713Z"
-updated_at = "2026-10-09T11:24:38.051760Z"
+updated_at = "2026-10-09T12:26:17.536829Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "external:advisor/product-manager",
 ]
+commit = "9c6c57eedf591241bb9c51dff3c377a82bf21c1d"
 summary = "Fixed the race in spawn_with_prompt_waits_for_the_turn_to_start_before_returning: the prompt is now 'SLEEP 10' so the fake's turn is still running when spawn returns and assert_eq!(state, Working) holds on any runner. Only crates/bridle-daemon/tests/spawn_messaging_test.rs changed. No other test had the pattern (other Working assertions use SLEEP or wait_for_state). Not related to br-jxaf. 30 of 30 runs pass; just check green (1374 passed)."
 ticket = "r9h7"
 +++
@@ -44,3 +45,6 @@ Sent back by orchestrator: 4037f961 only adds the two doc-comment lines. The tes
 
 ### note · external:orchestrator · 2026-10-09T11:24:38.051Z
 split off br-7m99: Actually fix the macOS flake: hold the turn in spawn_with_prompt_waits_for_the_turn_to_start_before_returning (r9h7 follow-up)
+
+### note · agent:manager-2 · 2026-10-09T12:26:17.536Z
+integrated: 9c6c57eedf591241bb9c51dff3c377a82bf21c1d
