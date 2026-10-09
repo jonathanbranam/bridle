@@ -13,7 +13,7 @@ before it moves: "waits on the human" is a pending task only the human can appro
 is the project manager's; "ready to build" is in the queue; "HELD" is planned in bridle but
 stopped by the human.
 
-Last updated: 2026-10-09 12:22 ET.
+Last updated: 2026-10-09 12:54 ET.
 
 ## Needs the human now
 
@@ -126,7 +126,7 @@ The orchestrator and daemons stay up, relaunch once, upgrade cleanly and recover
 |---|---|---|---|
 | [br-4zfa](http://dalek.tailbc91f5.ts.net:7878/task?id=br-4zfa) | Incident: the bridle orchestrator was killed (SIGTERM) at 11:18 PM ET and nothing relau... | pending | waits on the human (approve to ready) |
 | [br-f4xu](http://dalek.tailbc91f5.ts.net:7878/task?id=br-f4xu) | Flaky on macOS CI: process_test sigterm_via_signal_group_exits_143 exits 1, not 143 | integrated | delivered |
-| [br-h7gt](http://dalek.tailbc91f5.ts.net:7878/task?id=br-h7gt) | Flaky on Linux CI: upgrade_test self_upgrade_restarts_only_after_the_mid_turn_agent_fin... | planned | ready to build |
+| [br-h7gt](http://dalek.tailbc91f5.ts.net:7878/task?id=br-h7gt) | Flaky on Linux CI: upgrade_test self_upgrade_restarts_only_after_the_mid_turn_agent_fin... | integrated | delivered |
 | [br-6b8a](http://dalek.tailbc91f5.ts.net:7878/task?id=br-6b8a) | Orchestrator relaunch liveness: one clock, never a second orchestrator (jf9u) | planned | ready to build |
 | [br-96a6](http://dalek.tailbc91f5.ts.net:7878/task?id=br-96a6) | Hold the orchestrator relaunch without restarting the daemon (8fsx) | pending | waits on the human (approve to ready) |
 | [br-9966](http://dalek.tailbc91f5.ts.net:7878/task?id=br-9966) | bridle orchestrator hold / release: runtime switch for the relaunch (8fsx) | planned | ready to build |
@@ -280,6 +280,7 @@ Chores that are the human's own: expand on an idea, review a ticket or branch.
 | 2026-10-09 ~10:00 | br-g3az status line token docs (first item routed through the PdM) | tickets-release |
 | 2026-10-09 ~12:20 | br-6nzj test daemons poll at 200 ms, resource-budget test | performance |
 | 2026-10-09 ~12:00 | br-f4xu macOS CI flake (sigterm exit 143) | reliability |
+| 2026-10-09 ~12:50 | br-h7gt Linux CI flake (mid-turn upgrade test made deterministic) | reliability |
 
 ## Changes to this roadmap
 
@@ -290,3 +291,4 @@ Chores that are the human's own: expand on an idea, review a ticket or branch.
 - 2026-10-09 10:45 ET: new workstream Machine setup (PRIORITY), first. Filed hua2, xrkh, kt25; readied hua2, xrkh, gdf3, 57nt; priority high on those and 8c25, 88d4, 751e. Moved 8c25, gdf3, rjd5, v7ug, jgdb, h7mu, f8f9, 57nt, 88d4, 751e into it. Placed br-f4xu (CI flake) in reliability.
 - 2026-10-09 10:25 ET: machine setup phase 1 all planned by pm-1 (hua2, gdf3, 57nt, xrkh now ready to build, with 8c25, 88d4, 751e).
 - 2026-10-09 12:22 ET: br-6nzj and br-f4xu delivered. Placed br-h7gt (Linux CI flake, critical) in reliability.
+- 2026-10-09 12:54 ET: br-h7gt delivered.
