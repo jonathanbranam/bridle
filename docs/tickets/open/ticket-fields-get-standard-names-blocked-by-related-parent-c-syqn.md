@@ -48,3 +48,11 @@ PdM recommendation, for the human to confirm before this step builds the theme f
 - **The roadmap order is cross-project too**, so it can't live in one project's repo. Until a
   home is designed (the gateway, or a machine-level file), it stays in bridle's
   `docs/notes/roadmap.md`.
+
+**Answered (the human, 2026-10-09 ~5:20 PM ET; full words in g5dm):** "Some will cross projects,
+some will not ... keep the design flexible." The human named a new thing, the **product**: "a
+collection of projects (1:1 with github repos) that share a single roadmap and product
+manager". Themes and epics belong to a product; products are epic g5dm, designed later. For
+this step (PdM reading): add `theme: <slug>` accepting any well-formed slug, with no registry
+and no product scoping yet; `parent` takes project-qualified IDs, so an epic's children can be in
+other projects.
