@@ -163,3 +163,17 @@ workforce reaches it.
 - Lesson 2 for the role: **the PdM's input is the record, not messages.** It should be an
   automatic watcher of every task (to be narrowed later), so a real role needs auto-watch at
   task creation; the stand-in has to `bridle task watch` by hand.
+
+### 2026-10-09 07:45 ET: trial announced
+
+- Pushed this doc (790a19ac). Sent the pointer to external:orchestrator (m-7666),
+  external:orchestrator@nuc (m-7667) and the aides of bridle (m-7668), track-web, bridle-ui and
+  meta-notes (outbox o-0034..36).
+- Watching all 103 open tasks (`bridle task watch`, by hand, one by one). Gaps for the real
+  role: the watch is recorded as `external:advisor`, an identity every advisor shares, not as
+  the PdM; and tasks created from now on won't have the PdM as a watcher unless someone adds it.
+  A real role needs its own principal and auto-watch at task creation.
+- The bridle aide acknowledged (m-7669) and handed over what it had open with the human for the
+  PdM: max_workers 2 -> 3 (aide recommends no until the v6kr baseline), whether to start br-yfv5
+  then br-g5y2, npj2 follow-ups, q7mv recommendations, closing br-a3b9, and this morning's new
+  tickets rjd5, 22n2, 9xbk, 57nt.
