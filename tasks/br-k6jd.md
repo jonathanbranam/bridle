@@ -2,13 +2,15 @@
 id = "br-k6jd"
 title = "Managers and the orchestrator fetch origin; divergence from origin is warned (N ahead, M behind)"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-09T18:08:53.045Z"
-updated_at = "2026-10-09T22:29:25.128403Z"
+updated_at = "2026-10-09T22:43:51.034733Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
 priority_at = "2026-10-09T18:09:00.653636Z"
+branch = "bridle/k6jd"
+commit = "b798c8bc031e4c0722e32a6719061cf116384676"
 summary = "New divergence.rs: every 10 min (and in bridle daemon doctor) runs git fetch origin in the clone and compares the integration branch with origin/<integration> (rev-list --left-right --count). Any difference (ahead-only included, since 'ahead 23' was the incident) is a git.diverged event {integration, ahead, behind} plus one note to the orchestrator, re-sent only when the counts change; back in step emits zeros and clears. Silent with no origin/branch; doctor warns plainly on fetch failure (daemon logs it). Orchestrator role gets Bash(git fetch origin); managers already had Bash(git *); workers unchanged. Docs: operating-model, api, cli, CHANGELOG (projects overriding orchestrator allowed_tools must add the rule). Migration: built-in role default, so existing projects pick it up on daemon upgrade; no project file hand edit. Check: exit 0, 1418 tests, run on 9b62775b; main merged after (docs-only changes)."
 ticket = "k6jd"
 +++
@@ -42,3 +44,9 @@ main moved again; merge main into bridle/k6jd (just check only if code changed) 
 
 ### note · agent:k6jd · 2026-10-09T22:29:25.128Z
 main merged; only docs/notes/roadmap.md changed, no code, check not re-run. tip 2221134d
+
+### note · agent:manager-2 · 2026-10-09T22:43:35.726Z
+integrated: b798c8bc031e4c0722e32a6719061cf116384676 (branch bridle/k6jd)
+
+### note · agent:manager-2 · 2026-10-09T22:43:51.034Z
+cleanup: removed agent k6jd, branch bridle/k6jd
