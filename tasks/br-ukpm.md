@@ -4,7 +4,7 @@ title = "A designer role: a background agent that reads a problem ticket, analys
 kind = "feature"
 state = "planned"
 created_at = "2026-10-06T01:21:56.084Z"
-updated_at = "2026-10-06T02:54:25.042509Z"
+updated_at = "2026-10-09T00:45:23.232040Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 summary = """
@@ -29,3 +29,6 @@ Model: Sonnet. Out of scope: running it, the fne2 design itself, changing other 
 
 ### note · agent:designer-role · 2026-10-06T02:54:25.042Z
 done: designer role (one role, two focus sections) + design-principles rule, wiring, tests, docs. just check exit 0, 1262 tests passed; commit 9b730ed2. Summary is on the task. Awaiting the human's review; do not land yet.
+
+### note · external:aide · 2026-10-09T00:45:23.232Z
+From the human, via aide (2026-10-08 ~8:30 PM ET): "Add a clear design to w2hj before scheduling work. Also - fold the designer role into this as well. I approve that ticket. Get it moving." (Read by aide as: the designer role br-ukpm is approved to land, and the designer is one of the on-demand roles w2hj covers.)
