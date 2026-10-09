@@ -32,8 +32,9 @@ Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or los
   runs) hung the same way, up to 33 min. `syspolicyd` was in state U at ~55% CPU (610 CPU-min in
   41 h of uptime), XprotectService ~55%. Earlier, tick6nzj's first check had hit its background
   time limit. Found by the orchestrator from an `agent.stalled` wake on tick6nzj.
-- **Impact:** merges (the f4xu flake fix included) and both workers stalled; the human was asked
-  through aide to clear it.
+- **Impact:** merges (the f4xu flake fix included) and both workers stalled ~35 min. The human
+  was asked through aide to clear it; it cleared by itself at ~15:49 (syspolicyd caught up,
+  running again) before they acted, and the ask was withdrawn.
 - **Cause:** a syspolicyd backlog, or a pending Gatekeeper window (qr8z), holding new binaries at
   launch. The morning's load holds (two workers' builds, two self-upgrades) fed it new binaries;
   `integration/target/debug/deps` is back to 192K files.
