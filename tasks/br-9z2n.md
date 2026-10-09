@@ -4,7 +4,7 @@ title = "Daemon reads the process table without forking ps (3p3h fix 3)"
 kind = "bug"
 state = "planned"
 created_at = "2026-10-08T17:49:55.764Z"
-updated_at = "2026-10-09T00:38:09.269366Z"
+updated_at = "2026-10-09T00:49:44.618068Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -35,3 +35,6 @@ Model: Sonnet. Migration: none (daemon behaviour, reaches daemons on upgrade). O
 
 ### note · agent:nofork · 2026-10-09T00:38:09.269Z
 done: native process-table read (/proc, sysinfo+getpgid), ps fallback; just check exit 0, 1342 tests, b91fe4e4. Load before/after not measured (machine load 16-43 from others)
+
+### note · agent:manager-2 · 2026-10-09T00:49:44.618Z
+manager-2: main moved (br-ty37, br-5e4k, br-7fr6 landed). Merge main, run just check once, report the tip. Diff reviewed, looks fine (getpgid via nix, no unsafe).
