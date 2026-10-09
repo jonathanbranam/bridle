@@ -673,3 +673,14 @@ Newest first. One line per item: what happened, who did it, what it says about r
 - **2026-10-09: the orchestrator filed a bug for a project without mail.** The human emailed a
   meta-notes bug to bridle's mail bridge; the orchestrator filed it as mn-7tfg. Per-project
   mail routing (or a mail-to-task rule) would do this without a role.
+- **2026-10-09: incident tasks can't be closed by the manager.** manager-2 landed br-rztb but
+  "only the human or external:orchestrator may change an incident's state", and it couldn't
+  drop its own duplicate br-mqc5 either (planned). Both needed the orchestrator by hand.
+- **2026-10-09: the manager can't read CI.** `gh` is denied to manager-2, so after a land it
+  asks the orchestrator "is main green?", and it misread a pre-fix red run as the fix failing
+  (a worker had named main's docs commit as its code commit). A daemon-side "green on <sha>"
+  note to the merger would remove the orchestrator from that loop.
+- **2026-10-09: two orchestrators, one project.** The NUC's orchestrator readied mn-7tfg, which
+  the laptop's had filed pending awaiting the human; it merged before the laptop's hold arrived.
+  Agreed between them: neither readies a task the other filed pending without asking. A
+  cross-project visitor also can't comment on another project's task (hold went by message).
