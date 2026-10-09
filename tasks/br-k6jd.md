@@ -4,7 +4,7 @@ title = "Managers and the orchestrator fetch origin; divergence from origin is w
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T18:08:53.045Z"
-updated_at = "2026-10-09T22:20:53.978574Z"
+updated_at = "2026-10-09T22:29:25.128403Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -36,3 +36,9 @@ done: origin divergence watch (git.diverged event + orchestrator note, doctor 'N
 
 ### note · agent:k6jd · 2026-10-09T22:20:53.978Z
 Migration: the permission is a built-in role default in config.rs, so projects get it with the daemon upgrade (no bridle workflow sync or hand edit needed); only projects overriding orchestrator allowed_tools need the CHANGELOG note.
+
+### note · agent:manager-2 · 2026-10-09T22:29:18.702Z
+main moved again; merge main into bridle/k6jd (just check only if code changed) and message me the new tip.
+
+### note · agent:k6jd · 2026-10-09T22:29:25.128Z
+main merged; only docs/notes/roadmap.md changed, no code, check not re-run. tip 2221134d
