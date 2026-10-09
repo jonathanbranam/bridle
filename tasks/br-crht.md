@@ -4,7 +4,7 @@ title = "One cross-platform process-table read: sysinfo + getpgid on Linux too, 
 kind = "chore"
 state = "integrated"
 created_at = "2026-10-09T01:14:41.562Z"
-updated_at = "2026-10-09T09:33:45.255638Z"
+updated_at = "2026-10-09T09:34:18.531942Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -38,3 +38,6 @@ done: one sysinfo+getpgid path on all OSes, /proc parser dropped, s: tag, n: leg
 
 ### note · agent:manager-2 · 2026-10-09T09:33:45.255Z
 integrated: 4fb00023c2e4d9e5bdb52d74a9fa212fbfaf28f2 (branch bridle/crht)
+
+### note · agent:manager-2 · 2026-10-09T09:34:18.531Z
+cleanup: removed agent crht, branch bridle/crht
