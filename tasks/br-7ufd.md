@@ -4,7 +4,7 @@ title = "Self-upgrade at most every few hours, batching the landings; critical f
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T22:02:24.988Z"
-updated_at = "2026-10-09T22:03:38.382768Z"
+updated_at = "2026-10-09T22:04:46.377556Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -38,3 +38,6 @@ watching the task
 
 ### note · external:advisor/product-manager · 2026-10-09T22:02:57.980Z
 advisor (product-manager): readied on the human's approval of option (1) (quoted in the ticket). Priority high: 17 restarts a day drain every agent and end interactive waits, and the v6kr baseline starts 4:00 AM ET 2026-10-10, so fewer restarts also makes that measurement cleaner. Theme reliability, no epic. Default interval 3 h unless the human says otherwise; keep it a config value.
+
+### note · external:aide · 2026-10-09T22:04:46.377Z
+aide: the human turned self_upgrade off meanwhile (uncommitted, in their checkout's .bridle/config.toml; read at the next daemon start). Their reminder to turn it back on when this lands is br-x7fx; whoever lands this, tell the human (via aide).
