@@ -41,6 +41,16 @@ The human, 2026-10-09 ~5:20 PM ET, verbatim (to advisor product-manager):
 - Today: one PdM (the advisor product-manager trial) and one roadmap (bridle's
   `docs/notes/roadmap.md`). Keep the design flexible while the trial runs.
 
+## Decided: product-less projects
+
+The human, 2026-10-09 ~5:45 PM ET, verbatim: "a project can be product-less; a project w/o a
+product does not get those features: roadmap, product-manager role, themes; it has tickets and
+maybe epics; it can have a project-manager and other features of bridle."
+
+So the product is optional. Without one, a project has no roadmap, no product manager and no
+themes; it keeps tickets (perhaps epics), the project manager and the rest of bridle. Example:
+dotfiles-local.
+
 ## Open for the design (not decided)
 
 - Where a product is declared (its home project's config? a machine-level registry?) and how a
@@ -51,8 +61,6 @@ The human, 2026-10-09 ~5:20 PM ET, verbatim (to advisor product-manager):
 - How the product manager role (br-6h65) is scoped to one product: tokens, which daemons it
   watches, its inbox.
 - Work that spans products: one owner, others notified?
-- A project with no product (the human, 2026-10-09 ~5:35 PM ET: "probably something like
-  dotfiles-local could live alone or even be product-less? IDK if that should be a thing").
 
 Priority (the human, same message): "the right direction BUT NOT URGENT; let's keep working with
 what we have - it's working well for use currently." Low.
