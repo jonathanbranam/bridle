@@ -4,9 +4,10 @@ title = "Gateway inherits BRIDLE_AS / BRIDLE_PROJECT from the shell that starts 
 kind = "bug"
 state = "planned"
 created_at = "2026-10-08T22:47:13.857Z"
-updated_at = "2026-10-08T23:49:30.619069Z"
+updated_at = "2026-10-09T01:30:38.099684Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+summary = "The gateway now resolves tokens through gateway::discovery::HumanEnv, which hides BRIDLE_AS, BRIDLE_PROJECT, BRIDLE_TOKEN and CLAUDECODE (the last per aide's note: it also broke auto review-add), so it always acts as the human; start-up warns on stderr when any is set. serve::detached_command strips the first three from the --detach/restart child. Tests: HumanEnv hides the variables; the Command has them removed (get_envs). Docs: cli.md line, CHANGELOG. Caveat: the detached child still inherits CLAUDECODE, but the gateway ignores it. Used eprintln rather than tracing::warn, since tracing is initialised only after the foreground branch."
 ticket = "ppa6"
 +++
 
@@ -27,3 +28,9 @@ Model: Sonnet. Migration: none (reaches the gateway on its next restart; the hum
 
 ### note · external:aide · 2026-10-08T23:49:30.619Z
 From aide, a second effect (2026-10-08 ~7:34 PM ET): the human's comments on docs/context/name-ideas.md saved and committed, but the gateway's auto review-add failed every time: gateway.log 'not added to review: ... no human token for project bridle: running inside Claude Code ($CLAUDECODE is set) ...'. So the document never went under review and no agent answered; Request review would fail the same way. The gateway was started from inside a Claude Code session. The fix should cover CLAUDECODE as well as BRIDLE_AS/BRIDLE_PROJECT; a gateway started by launchd (bridle gateway install) avoids it.
+
+### note · agent:gwenv · 2026-10-09T01:30:33.139Z
+done: gateway ignores BRIDLE_AS/PROJECT/TOKEN/CLAUDECODE, detach strips them; just check exit 0, 1350 tests passed; checked on 5ac... see tip 8cb81653 (main merge brought docs only)
+
+### note · agent:gwenv · 2026-10-09T01:30:38.099Z
+correction: just check (exit 0, 1350 passed) ran on 689c02e8; the tip 8cb81653 is that plus a main merge that brought one docs ticket only
