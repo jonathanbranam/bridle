@@ -116,7 +116,7 @@ harrier. Short and dictation-safe, but many are everyday words.
 > [!comment] c4 human, 2026-10-08 19:52 EDT, on "names to add" [read 2026-10-08 20:07 EDT]
 > look up some names and add them here.
 >
-> **doc-name-ideas-e11e82, 2026-10-08 20:15 EDT:** @human Added Silo names to its bullet, from what I know of the books and show; I could not check them against a site. I read "names to add" as the Silo line (the comment sits under it). The Stephen King line says the same; want me to fill that one too?
+> **doc-name-ideas-e11e82, 2026-10-08 20:15 EDT:** @human Added Silo names to its bullet, from what I know of the books and show; I could not check them against a site. I read "names to add" as the Silo line (the comment sits under it). The Stephen King line says the same; want me to fill that one too? [read 2026-10-08 21:37 EDT]
 
 - **Stephen King:** liked; names to add (e.g., `derry`, `roland`, `gunslinger`).
 
