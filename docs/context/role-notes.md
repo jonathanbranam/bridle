@@ -640,3 +640,10 @@ Newest first. One line per item: what happened, who did it, what it says about r
   that only continue an approved ticket (the next slice), would keep the workforce busy.
 - **I told manager-2 to start br-ukpm, which waits for the human's approval** (designer role).
   manager-2 refused correctly. Read a task's thread before sending it to be started.
+- **2026-10-09: the orchestrator now runs `bridle task ready` itself.** The handover said the
+  classifier denied it; this session it went through. Try it before asking the human.
+- **2026-10-09: the orchestrator ran `npm run install-ui` for bridle-ui by hand** after
+  ui-kqsp/ui-5zrr landed. An install step after each UI landing is admin work a role could own.
+- **2026-10-09: a manager landed a worker's commit after checking only its diffstat**
+  (4037f961, comment-only). Reading the diff before landing is the merger's job; the orchestrator
+  caught it only by chance.
