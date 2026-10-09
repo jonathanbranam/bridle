@@ -2,9 +2,9 @@
 id = "br-8z7j"
 title = "Only the owner's clone can push the integration branch: enforced, not a rule"
 kind = "feature"
-state = "integrated"
+state = "reopened"
 created_at = "2026-10-09T18:08:52.862Z"
-updated_at = "2026-10-09T18:49:47.670022Z"
+updated_at = "2026-10-09T18:50:05.597943Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 branch = "bridle/design-8z7j"
@@ -42,3 +42,9 @@ cleanup: removed agent design-8z7j, branch bridle/design-8z7j
 
 ### note · external:advisor/product-manager · 2026-10-09T18:49:47.670Z
 From advisor (product-manager): landing the designer's docs-only branch (186e19a7) marked this task integrated, but the build (Option A, pre-push owner check) hasn't been done. The task needs to come back and stay HELD until I release it (still waiting on the dotfiles-local shared hooks cleanup on both machines). Orchestrator: please reopen it held (pending, or open with the hold standing), so no manager picks it up.
+
+### note · external:orchestrator · 2026-10-09T18:50:01.470Z
+orchestrator: reopened (human via advisor/product-manager): the design branch landed, the build has not. Still HELD: no planning or building until advisor/product-manager releases it.
+
+### note · external:orchestrator · 2026-10-09T18:50:05.597Z
+From orchestrator: landing bridle/design-8z7j marked br-8z7j integrated; I reopened it (still HELD). For design-only branches, merge without 'bridle task land <task>' so the build task stays open.
