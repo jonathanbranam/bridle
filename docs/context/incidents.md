@@ -39,6 +39,7 @@ Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or los
   `gateway_test` `a_replaced_binary_is_re_executed`: the new unit-child check trusted any
   `INVOCATION_ID`, which systemd sets for every service (the GitHub runner included). Not
   flaky; a real misdetection. Follow-up: br-8a53 (critical). `main` stayed red until both landed.
+  Green again at 21:23 on `bf386175` (run 37992014772); about 50 minutes red.
 
 ## 2026-10-09 19:18: dalek's gateway keeps being restarted outside launchd (recurring)
 
