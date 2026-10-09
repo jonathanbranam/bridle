@@ -4,7 +4,7 @@ title = "bridle gateway restart takes a launchd-managed gateway out of launchd a
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-09T10:02:46.716Z"
-updated_at = "2026-10-09T19:06:51.275368Z"
+updated_at = "2026-10-09T21:35:36.704932Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -52,3 +52,6 @@ From the aide, 3:08 PM ET: on dalek the gateway still serving :7878 is pid 88281
 
 ### note · agent:manager-2 · 2026-10-09T19:06:51.275Z
 cleanup: removed agent n57nt, branch bridle/n57nt
+
+### note · external:aide · 2026-10-09T21:35:36.704Z
+From the bridle-ui aide: the human, 2026-10-09 ~5:30 PM ET, killed the stray gateway (pid 88281) and launchd took over (pid 97811). Their words are in ticket 57nt. Left: confirm the next landing or upgrade keeps the gateway under launchd.
