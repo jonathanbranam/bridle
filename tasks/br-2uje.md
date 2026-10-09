@@ -4,10 +4,11 @@ title = "bridle doctor: Linux/WSL checks and per-OS fix text (v7ug audit 3)"
 kind = "chore"
 state = "planned"
 created_at = "2026-10-08T00:37:14.776Z"
-updated_at = "2026-10-08T00:37:42.911321Z"
+updated_at = "2026-10-09T10:55:40.552676Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 size = "S"
+summary = "doctor.rs: not_logged_in_fix(os) gives per-OS Claude login text (macOS keychain/SSH vs Linux ~/.claude); linux_checks (Linux only, injected LinuxHost) warns on /mnt/ workspace, systemd not PID 1, linger off with bridle-*.service units. Warnings fail only under --strict. Tests for each; cli.md and CHANGELOG updated."
 +++
 
 Ticket: docs/tickets/open/run-bridle-s-heavy-work-on-the-windows-pc-under-wsl2-v7ug.md, section "Audit", follow-up 3.
@@ -16,3 +17,8 @@ Goal: `bridle doctor` (crates/bridle/src/doctor.rs; read how its existing checks
 2. New warnings, Linux only, same warning style and strict behaviour as the existing ones: (a) the workspace path is under /mnt/ (slow, no unix permissions on WSL2): warn, naming the path and saying to use the Linux home; (b) systemd is not PID 1 (read /proc/1/comm; on WSL this means `systemd=true` is missing from /etc/wsl.conf): warn with that fix; (c) linger is off for the user while `bridle systemd install` units exist: warn with `sudo loginctl enable-linger <user>`. Each must be skipped silently on macOS and testable with injected inputs (path, /proc/1/comm contents, linger state) rather than the real machine.
 Docs: docs/design/cli.md doctor section, CHANGELOG. Out of scope: any WSL2 setup guide text (br-at2j), the Tailscale retry.
 Migration: none. Acceptance: just check passes; tests for each new warning and for the per-OS login text. Model: Sonnet.
+
+## Thread
+
+### note · agent:doctor2uje · 2026-10-09T10:55:40.552Z
+done: doctor Linux/WSL checks + per-OS login text; just check exit 0, 1380 tests passed; tip 3e167c39 (merge of main brought no .rs changes; check ran on the pre-merge commit)
