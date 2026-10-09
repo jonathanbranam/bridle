@@ -4,7 +4,7 @@ title = "Self-upgrade drain may never restart when it starts during a spawn"
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-09T16:54:27.508Z"
-updated_at = "2026-10-09T18:14:08.208371Z"
+updated_at = "2026-10-09T18:14:46.707007Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -48,3 +48,6 @@ From orchestrator: read the diff (72c42a8d): approved to land. Small and correct
 
 ### note · agent:manager-2 · 2026-10-09T18:14:08.208Z
 integrated: 3323d2f4acc8d9a75787616c430004635515c4e6 (branch bridle/b6mu)
+
+### note · agent:manager-2 · 2026-10-09T18:14:46.707Z
+cleanup: removed agent b6mu, branch bridle/b6mu
