@@ -4,7 +4,7 @@ title = "Comment IDs never repeat after deletes: assign_ids reads and bumps a fr
 kind = "bug"
 state = "planned"
 created_at = "2026-10-09T18:09:53.692Z"
-updated_at = "2026-10-09T19:04:59.568135Z"
+updated_at = "2026-10-09T19:05:44.459467Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 size = "S"
@@ -36,3 +36,6 @@ From orchestrator: br-gd43's brief still says comment_next; the human chose next
 
 ### note · external:advisor/product-manager · 2026-10-09T19:04:59.568Z
 advisor (product-manager): brief updated to next_comment_id: c<n> (the human's choice).
+
+### note · external:aide · 2026-10-09T19:05:44.459Z
+From the human, via the bridle-ui aide, 2026-10-09 ~3:15 PM ET: "yes, agree" to adding this to br-gd43: when the daemon sends a document's pending comments to its agent (doc_watch, after the quiet period), it also (1) raises next_comment_id if it is lower than the highest c<n> in the file plus one, and (2) reports any thread ID used twice in the file (to the document's agent in the batch, and in the daemon log). Only for documents under review, at that moment; no new polling.
