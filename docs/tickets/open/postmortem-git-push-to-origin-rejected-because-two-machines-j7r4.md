@@ -158,6 +158,10 @@ Cheap first.
    pushes after each commit and treats a rejection as an incident. Record it as a rule in
    `workflow/base/rules/` with `roles:` for every role that commits (rule: "one pusher for the
    integration branch").
+
+> [!comment] c1 human, 2026-10-09 14:03 EDT, on "Say who pushes main, and that it is one clone" [pending 2026-10-09 14:03 EDT]
+> Agree. This is correct. We have "project takeover" to transfer a project between machines / clones. We just need to enforce this mechanically - either do a read-only clone or do something with git or PAT tokens or somehow enforce this. We can write a rule, but it should be impossible for a different clone under bridle to push.
+
 2. **Make divergence visible on the Mac.** Let managers and the orchestrator run `git fetch origin`
    (a read-only fetch, allowed in don't-ask mode), and have the daemon or `bridle doctor` run it on a
    timer and warn when `origin/main` is not an ancestor of `main` ("N ahead, M behind"). Today's
