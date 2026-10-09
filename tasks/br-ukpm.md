@@ -2,15 +2,14 @@
 id = "br-ukpm"
 title = "A designer role: a background agent that reads a problem ticket, analyses the system and writes design options into the ticket"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-06T01:21:56.084Z"
-updated_at = "2026-10-09T06:36:04.966347Z"
+updated_at = "2026-10-09T07:13:06.476683Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
-summary = """
-Added the built-in `designer` role, modelled on prototyper. Files: workflow/base/roles/designer.md (new; the role), workflow/base/rules/design-principles.md (new; KISS/YAGNI by reference, modularity, one name per action, user's side first, and an empty section "The human's own principles" for the human to fill), `designer` added to the `roles:` of 20 existing rules (kiss, yagni, tickets, ticket-references, talk-on-the-task, record-decisions, work-flow, shell-zsh, no-kill-by-name, ascii, etc.; reused by reference, not copied), config.rs (default role entry on worker defaults, preamble sentence, project append `.bridle/roles/designer.md`), cli.rs and commands/orchestrator.rs (`bridle prime designer`), tests (designer_role_test.rs, prime_designer_test.rs), docs (README, cli.md, workflow-layers, roles-and-config, cli/roles, cli/priming-and-rules) and CHANGELOG.
-Decisions for review: (1) ONE role with two focus sections (Interface; Internal architecture), per the PM's YAGNI recommendation; rejected: two roles now. Splitting later is a copy to designer-interface.md/designer-architecture.md plus a role entry each (the role doc says so). (2) Output goes under `## Design options` in the ticket body; no design doc, nothing built; task ends when the proposal is committed. (3) Differs from project-manager (plans/sizes, no design) and prototyper (throwaway build, ignores current design; designer reads it closely, builds nothing). (4) Doing nothing is allowed as an option. (5) design-principles.md is severity must, roles [designer] only.
-A project gets it with `bridle workflow sync`/the base workflow; no per-project file changes (an optional .bridle/roles/designer.md is appended). Not run on any ticket. just check: exit 0, 1262 tests passed. Merged main (tickets only)."""
+branch = "bridle/designfix"
+commit = "5fa2d459d17e0c053e2ed15973892f07cf2aa50d"
+summary = "Designer role: the base-workflow role 'designer' (commit 790b0273, carried on this branch) with rules that the role reuses by reference, plus the role's registration and docs. The branch now also merges main (d5cd2e04), which drops the stray crates/bridle/src/commands/mod.rs-e file and carries the j7r4 postmortem ticket exactly as on main. Human review is required before landing: the role and its rules are not to be used until the human approves them."
 ticket = "ukpm"
 +++
 
@@ -35,3 +34,12 @@ From the human, via aide (2026-10-08 ~8:30 PM ET): "Add a clear design to w2hj b
 
 ### note · agent:designfix · 2026-10-09T06:36:04.966Z
 done: NOT green; tip adf36526 unchanged, nothing new committed. Isolated runs: both previously failing tests pass alone (lifecycle_test::spawn_child_orphan_is_swept_on_stop 1/1, governor_test::working_agent_is_notified_then_stopped_when_its_turn_ends 1/1). Full just check (exit 100) failed on a third, unrelated test: bridle::cli_e2e sigint_shuts_down_cleanly_with_a_store_call_in_flight. Its panic is 'spawn failed: conflict: machine load is high (3.3 per core on 16 cores, threshold 2.5); spawns are held until it falls', so it is load-related, not a code failure. Summary: 70/1370 run, 69 passed, 1 failed. Suggest re-running the check once the other worker's load drops. I have not written a done summary or reported a checked commit.
+
+### note · agent:designfix · 2026-10-09T07:12:58.752Z
+done: green; tip d5cd2e04 (merge of main 0e72d190); just check exit 0, 1370 run, 1370 passed, 5 skipped. Not landed: the designer role needs the human's review first.
+
+### note · agent:designfix · 2026-10-09T07:13:01.787Z
+Checked tip d5cd2e04 (merge of main 0e72d190 into bridle/designfix): just check exit 0, 1370 run, 1370 passed, 5 skipped. Earlier failures on adf36526 were load-related timing flakes; both tests pass alone and the full run is green at a quieter load.
+
+### note · agent:manager-2 · 2026-10-09T07:13:06.476Z
+integrated: 5fa2d459d17e0c053e2ed15973892f07cf2aa50d (branch bridle/designfix)
