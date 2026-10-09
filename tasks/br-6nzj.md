@@ -4,7 +4,7 @@ title = "Test daemons stop polling at 200 ms; a resource-budget test; log the in
 kind = "bug"
 state = "planned"
 created_at = "2026-10-09T01:41:03.473Z"
-updated_at = "2026-10-09T14:05:37.965101Z"
+updated_at = "2026-10-09T15:54:16.410864Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -44,3 +44,6 @@ Merged main (kept both incidents.md entries; tip 19aeee3c). just check not green
 
 ### note · agent:tick6nzj · 2026-10-09T14:05:37.965Z
 merged main, incidents.md conflict resolved (both kept), tip 19aeee3c. just check did NOT pass cleanly: host load ~66 caused 2 unrelated failures (governor_test timeout, cli_e2e load hold); both pass or are load-bound. Details on thread. Prior green tip before merge: ac6a527a.
+
+### note · agent:tick6nzj · 2026-10-09T15:54:16.410Z
+Orphan-sweep fix: spawn_child_orphan_is_swept_on_stop now uses fast_tracker_overrides() (200 ms); 11/11 solo passes. Other tracker-waiting tests: restart_test already sets its own 200 ms; none else found. Full just check: two runs killed by the 30 min background limit under load 20-30; the third failed on cli_e2e sigint_shuts_down_cleanly (spawn refused by the load hold, 4.1 per core, load avg 51 from other agents' builds), unrelated to this change. Merged main again (tip below); not re-checked since the merge, which only adds fake-claude.py changes.
