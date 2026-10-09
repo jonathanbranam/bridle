@@ -15,7 +15,7 @@ before it moves: "waits on the human" is a pending task only the human can appro
 is the project manager's; "ready to build" is in the queue; "HELD" is planned in bridle but
 stopped by the human.
 
-Last updated: 2026-10-09 17:41 ET.
+Last updated: 2026-10-09 18:01 ET.
 
 ## Needs the human now
 
@@ -271,7 +271,7 @@ Bridle's own cost on the machine: measure against a baseline, then cut it.
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
 | [br-n4w4](http://dalek.tailbc91f5.ts.net:7878/task?id=br-n4w4) | Postmortem: bridle's own 'ps' polling (every daemon, test daemons at 200 ms) drove dale... |  | pending | waits on the human (approve to ready) |
-| [br-v6kr](http://dalek.tailbc91f5.ts.net:7878/task?id=br-v6kr) | A system architect role, and measuring bridle's own resource cost against a baseline |  | planned | ready; baseline must use the macOS memory measures (ticket) |
+| [br-v6kr](http://dalek.tailbc91f5.ts.net:7878/task?id=br-v6kr) | A system architect role, and measuring bridle's own resource cost against a baseline |  | planned | baseline starts 4:00 AM ET 2026-10-10 (the human); orchestrator sends the go; must use the macOS memory measures (ticket) |
 | [br-jxwr](http://dalek.tailbc91f5.ts.net:7878/task?id=br-jxwr) | Track and report how long a task takes from pickup to merge, split into agent work, bui... | low | pending | the human's ask (via aide); would show where the 30-40 min per task goes; low (the human): on a workstream, not queued now |
 | [br-6nzj](http://dalek.tailbc91f5.ts.net:7878/task?id=br-6nzj) | Test daemons stop polling at 200 ms; a resource-budget test; log the incident in docs/c... |  | integrated | delivered |
 | [br-g76s](http://dalek.tailbc91f5.ts.net:7878/task?id=br-g76s) | Load-hold notes: one per machine, name bridle-owned top consumers, honest text, load.ho... |  | planned | ready to build |
@@ -423,3 +423,4 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 - 2026-10-09 19:15 ET: 57nt resolved (gateway seen restarting under launchd at the 5:31 PM upgrade). Filed and readied br-3mz4 (one orchestrator per machine: advisor role and sends), theme agents-and-cli.
 - 2026-10-09 19:25 ET: re79 refined (reviewer front matter; the human), task br-re79 low. New epic `comment-routing` (theme human-ui, low) with br-re79 and br-4cgx, before `products`.
 - 2026-10-09 17:41 ET: br-8c25 (token pair part 1) delivered; br-jw9e (part 2) now ready to build.
+- 2026-10-09 18:01 ET: br-v6kr baseline set to start 4:00 AM ET 2026-10-10 (the human, via the orchestrator).
