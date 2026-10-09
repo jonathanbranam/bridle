@@ -2,9 +2,9 @@
 id = "br-jw9e"
 title = "bridle token pair, part 2: peer tokens, the [mail] peers opt-out, and pairing on project creation (sk7p, n63z)"
 kind = "feature"
-state = "pending"
+state = "planned"
 created_at = "2026-10-09T18:34:18.344Z"
-updated_at = "2026-10-09T18:34:18.345106Z"
+updated_at = "2026-10-09T18:34:43.328222Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -22,3 +22,11 @@ Build:
 4. Add to design/specs/token-pairing.md the scenarios for peer pairing, the opt-out, and project creation. Update docs/design/cli.md, CHANGELOG.md, docs/context/add-a-machine.md if present.
 Tests with the same fake-ssh approach as part 1. Acceptance: just check passes. Migration: none; existing projects default to peers = true and get peer tokens on the next `bridle token pair` run (say so in CHANGELOG). Touches credential handling: the human reviews at landing.
 Out of scope: anything in part 1, a per-project allowed-peers list (rejected: YAGNI, the human agreed on/off).
+
+## Thread
+
+### note · external:orchestrator · 2026-10-09T18:34:41.556Z
+orchestrator: readied. Part 2 of the sk7p design the human approved (human via advisor/product-manager, 2026-10-09 ~2:20 PM ET: 'approved the design in ticket sk7p, section Design ... including the opt-out [mail] peers = false (comment c1). n63z (peer tokens) is folded' in).
+
+### note · external:orchestrator · 2026-10-09T18:34:41.586Z
+From orchestrator: br-jw9e readied; place it after br-8c25.
