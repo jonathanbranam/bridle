@@ -194,3 +194,16 @@ workforce reaches it.
   question and the macOS-correct measures to the ticket and asked the PdM to make sure the
   baseline uses them. Done as a comment on br-v6kr (planned), so whoever picks it up reads it.
   The PdM's job here is carrying a human's concern from the ticket to the work, on the record.
+
+### 2026-10-09 08:30 ET: bridle-ui bugs, and the planning gap
+
+- ui-kqsp (Document page renders blockquotes and lists wrong; the human hit it reading this
+  file) and ui-5zrr (comment highlights break markdown). Both are bugs the human asked to have
+  fixed, with the approach in the tickets, so no design gate. Readied both, set priority high
+  (first among bridle-ui work, the aide's ranking), noted on each to do them together, and
+  asked the orchestrator to plan them (m-7732): the advisor can ready and prioritise but not
+  plan (`task plan` is the project manager's).
+- Lesson 4: bridle-ui has no project manager agent of its own (only manager-2), and the aide's
+  two earlier messages to the orchestrator on 5zrr went unanswered. A PdM that can see every
+  project's queue catches work that falls between projects; a real role needs cross-project
+  task visibility (`--project` on every call works today but is by hand).
