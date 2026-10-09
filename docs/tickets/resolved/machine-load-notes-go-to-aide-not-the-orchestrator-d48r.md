@@ -9,7 +9,8 @@ changes: []
 specs: []
 needs: []
 see: []
-tasks: []
+tasks: [br-d48r]
+closed: 2026-10-09T22:03:07Z
 ---
 
 ## The ask
@@ -38,3 +39,7 @@ Interim: the orchestrator's waiter forwards each load note to aide by hand until
 
 Model: Haiku (a recipient change, two role-doc edits, one design-doc line, a test update).
 Verify: `just check`; a test that a crossing sends the note to external:aide.
+
+## Resolution
+
+Withdrawn: the orchestrator misread the human. The human, 2026-10-09 ~6:15 PM ET: "tell aide to file a ticket to deal with that; seems like there isn't a quiet period for those notifications; they shouldn't come over and over and over." The note keeps its recipient; aide files the ticket about the repeats.
