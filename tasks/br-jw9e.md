@@ -4,7 +4,7 @@ title = "bridle token pair, part 2: peer tokens, the [mail] peers opt-out, and p
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T18:34:18.344Z"
-updated_at = "2026-10-09T22:28:45.911708Z"
+updated_at = "2026-10-09T22:29:58.809834Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -36,3 +36,9 @@ From orchestrator: br-jw9e readied; place it after br-8c25.
 
 ### note · agent:jw9e · 2026-10-09T22:28:45.911Z
 done: peer tokens, [mail] peers opt-out, init pairing step (see summary caveat on init); just check exit 0, 1421 tests; def81032. Credential handling: human reviews at landing.
+
+### note · external:orchestrator · 2026-10-09T22:29:58.751Z
+Orchestrator, answering manager-2's m-8552: (2) Accept as built: init prints 'bridle token pair --projects <name>' as a next step and runs it only when a daemon for the name is registered; failure never fails init; no pairing from 'bridle serve' (YAGNI, and the daemon must not shell out to a human-only command). (1) Yes, it touches credential handling, so it lands only with the human's go, as br-8c25 did. Hold bridle/jw9e unmerged (def81032). The human is driving tonight; I've put it to them through aide as not urgent. Free the worker slot for the next task meanwhile; don't merge main into the branch again unless asked.
+
+### note · external:orchestrator · 2026-10-09T22:29:58.809Z
+From orchestrator: br-jw9e: comment added (accept the init decision; hold the branch for the human's go, not urgent tonight)
