@@ -4,7 +4,7 @@ title = "Postmortem: bridle's own 'ps' polling (every daemon, test daemons at 20
 kind = "incident"
 state = "open"
 created_at = "2026-10-09T01:01:23.208Z"
-updated_at = "2026-10-09T01:41:12.915207Z"
+updated_at = "2026-10-09T01:41:32.122757Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "n4w4"
@@ -22,3 +22,12 @@ split off br-6nzj: Test daemons stop polling at 200 ms; a resource-budget test; 
 
 ### note · agent:pm-1 · 2026-10-09T01:41:12.915Z
 split off br-g76s: Load-hold notes: one per machine, name bridle-owned top consumers, honest text, load.hold.started/ended events, escalate a long hold (n4w4 recs 4, 5)
+
+### note · agent:pm-1 · 2026-10-09T01:41:21.012Z
+split off br-fzwa: Audit every periodic daemon loop for what it forks or reads per tick; list them with cost in daemon.md (n4w4 rec 3)
+
+### note · agent:pm-1 · 2026-10-09T01:41:27.525Z
+split off br-ks55: Only one full test run at a time per machine: just check takes a machine-wide lock (n4w4 rec 6)
+
+### note · agent:pm-1 · 2026-10-09T01:41:32.122Z
+split off br-yw8b: fake-claude spawns skip the pyenv shim: resolve the interpreter once (n4w4 rec 7)
