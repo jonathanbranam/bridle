@@ -5,14 +5,105 @@
 use std::path::PathBuf;
 use std::process::{Command, Output};
 
-fn bridle(home: &std::path::Path, args: &[&str]) -> Output {
-    Command::new(PathBuf::from(env!("CARGO_BIN_EXE_bridle")))
-        .env("BRIDLE_HOME", home)
+/// Fake `launchctl` and `systemctl` that record every call in `<home>/service-calls` and fail
+/// (succeed once `<home>/shim-ok` exists),
+/// first on PATH, so no test run can reach the real service manager (rztb).
+fn shim_path(home: &std::path::Path) -> std::ffi::OsString {
+    let dir = home.join("shim");
+    std::fs::create_dir_all(&dir).unwrap();
+    for tool in ["launchctl", "systemctl"] {
+        let path = dir.join(tool);
+        std::fs::write(
+            &path,
+            format!(
+                "#!/bin/sh\necho \"{tool} $*\" >> \"{}\"\n[ -e \"{ok}\" ] && exit 0\nexit 1\n",
+                home.join("service-calls").display(),
+                ok = home.join("shim-ok").display(),
+            ),
+        )
+        .unwrap();
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755)).unwrap();
+    }
+    let mut paths = vec![dir];
+    paths.extend(std::env::split_paths(
+        &std::env::var_os("PATH").unwrap_or_default(),
+    ));
+    std::env::join_paths(paths).unwrap()
+}
+
+fn bridle_with(home: &std::path::Path, args: &[&str], unmanaged: bool) -> Output {
+    // The pid file, log and port all come from BRIDLE_HOME: it must be a temp dir.
+    assert!(
+        home.starts_with(std::env::temp_dir().canonicalize().unwrap())
+            || home.starts_with(std::env::temp_dir()),
+        "{} is not under the temp dir",
+        home.display()
+    );
+    let mut cmd = Command::new(PathBuf::from(env!("CARGO_BIN_EXE_bridle")));
+    cmd.env("BRIDLE_HOME", home)
+        .env("PATH", shim_path(home))
+        .args(args);
+    if unmanaged {
         // Never let a test restart the developer's real launchd/systemd gateway.
-        .env("BRIDLE_GATEWAY_UNMANAGED", "1")
-        .args(args)
-        .output()
-        .unwrap()
+        cmd.env("BRIDLE_GATEWAY_UNMANAGED", "1");
+    }
+    cmd.output().unwrap()
+}
+
+fn bridle(home: &std::path::Path, args: &[&str]) -> Output {
+    bridle_with(home, args, true)
+}
+
+#[test]
+fn tests_never_reach_the_real_service_manager() {
+    let home = tempfile::tempdir().unwrap();
+    // Disabled, so restart only detects the manager and then starts nothing.
+    std::fs::write(
+        home.path().join("config.toml"),
+        "[gateway]\nenabled = false\n",
+    )
+    .unwrap();
+    // Without the opt-out the binary does ask launchctl/systemctl: the shim catches it, which
+    // proves the shim is what a test run would reach.
+    bridle_with(home.path(), &["gateway", "restart"], false);
+    let calls = std::fs::read_to_string(home.path().join("service-calls")).unwrap();
+    assert!(
+        calls.contains("print") || calls.contains("is-enabled"),
+        "{calls}"
+    );
+    // With the opt-out it asks nobody.
+    let _ = std::fs::remove_file(home.path().join("service-calls"));
+    bridle(home.path(), &["gateway", "restart"]);
+    bridle(home.path(), &["gateway", "status"]);
+    bridle(home.path(), &["gateway", "stop"]);
+    assert!(!home.path().join("service-calls").exists());
+}
+
+#[test]
+fn detach_is_refused_when_a_unit_runs_the_gateway() {
+    let (home, _) = gateway_home();
+    std::fs::write(home.path().join("shim-ok"), "").unwrap();
+    let out = bridle_with(home.path(), &["gateway", "--detach"], false);
+    assert!(!out.status.success());
+    let err = String::from_utf8_lossy(&out.stderr);
+    assert!(err.contains("is run by"), "{err}");
+    assert!(pid_file(home.path()).is_none());
+}
+
+#[test]
+fn stop_and_start_log_who_asked() {
+    let (home, _) = gateway_home();
+    let out = bridle(home.path(), &["gateway", "--detach", "--json"]);
+    assert!(out.status.success());
+    bridle(home.path(), &["gateway", "stop"]);
+    let log = std::fs::read_to_string(home.path().join("gateway.log")).unwrap();
+    assert!(
+        log.contains("gateway start (detached) via cli: agent="),
+        "{log}"
+    );
+    assert!(log.contains("gateway stop (pid "), "{log}");
+    assert!(log.contains("ppid="), "{log}");
 }
 
 #[test]

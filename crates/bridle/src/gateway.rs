@@ -51,6 +51,15 @@ pub async fn run(cli: &Cli, args: &GatewayArgs) -> Result<(), CliError> {
         );
     }
     if args.detach {
+        // A loaded unit means the service manager starts the gateway, never a detached child (rztb).
+        if let Some(managed) = managed_now() {
+            return Err(anyhow!(
+                "the gateway is run by {}; `bridle gateway --detach` would start a second one outside it. \
+                 Use `bridle gateway restart`",
+                managed.name()
+            )
+            .into());
+        }
         let child_args: Vec<std::ffi::OsString> = std::env::args_os()
             .skip(1)
             .filter(|a| a != "--detach")
@@ -73,6 +82,15 @@ pub async fn run(cli: &Cli, args: &GatewayArgs) -> Result<(), CliError> {
         config: config.interactions,
     };
     let exe = current_exe_path()?;
+    tracing::info!(
+        via = if supervised() {
+            "service manager"
+        } else {
+            "cli"
+        },
+        pid = std::process::id(),
+        "gateway starting"
+    );
     // Written once listening; dropped (file removed) on every return below. The exec path
     // keeps the file, and the new image rewrites it.
     std::fs::create_dir_all(&home).with_context(|| format!("creating {}", home.display()))?;
@@ -86,10 +104,20 @@ pub async fn run(cli: &Cli, args: &GatewayArgs) -> Result<(), CliError> {
         _ = tokio::signal::ctrl_c() => tracing::info!("SIGINT; shutting down"),
         () = bridle_gateway::binary_changed(&exe, check_interval()) => {
             tracing::info!(exe = %exe.display(), "the bridle binary changed; restarting onto it");
+            // Under a unit, exit non-zero and let the manager restart it (KeepAlive / Restart=on-failure):
+            // exec in place would keep the old pid and environment outside its supervision (rztb).
+            if supervised() {
+                log_caller(&home, "restart", "self re-exec, exiting for the service manager");
+                return Err(anyhow!("the bridle binary changed; exiting so the service manager restarts it").into());
+            }
+            log_caller(&home, "restart", "self re-exec");
             use std::os::unix::process::CommandExt;
-            let err = std::process::Command::new(&exe)
-                .args(std::env::args_os().skip(1))
-                .exec();
+            let err = crate::serve::detached_command(
+                &exe,
+                &std::env::args_os().skip(1).collect::<Vec<_>>(),
+                std::env::vars_os().map(|(k, _)| k),
+            )
+            .exec();
             return Err(anyhow!("exec {} failed: {err}", exe.display()).into());
         }
     }
@@ -130,6 +158,7 @@ async fn run_detached(
     }
     std::fs::create_dir_all(home).with_context(|| format!("creating {}", home.display()))?;
     let log_path = home.join("gateway.log");
+    log_caller(home, "start (detached)", "cli");
     let mut child = crate::serve::spawn_detached_with(&log_path, "gateway", child_args)?;
     let deadline = Instant::now() + crate::serve::DETACH_WAIT;
     loop {
@@ -252,6 +281,7 @@ async fn stop(cli: &Cli, home: &Path) -> Result<(), CliError> {
         )
         .into());
     }
+    log_caller(home, &format!("stop (pid {pid})"), "cli");
     let status = std::process::Command::new("kill")
         .args(["-TERM", &pid.to_string()])
         .status()
@@ -278,6 +308,57 @@ async fn stop(cli: &Cli, home: &Path) -> Result<(), CliError> {
 enum Managed {
     Launchd(String),
     Systemd,
+}
+
+impl Managed {
+    fn name(&self) -> &'static str {
+        match self {
+            Managed::Launchd(_) => "launchd",
+            Managed::Systemd => "systemd",
+        }
+    }
+}
+
+/// The manager running the gateway on this machine, if a unit is installed. The env var is for
+/// tests only: the job or unit is machine-wide, not per BRIDLE_HOME.
+fn managed_now() -> Option<Managed> {
+    let uid = current_uid()?;
+    if std::env::var_os("BRIDLE_GATEWAY_UNMANAGED").is_some() {
+        return None;
+    }
+    detect_managed(&mut run_ok, cfg!(target_os = "macos"), &uid)
+}
+
+/// True when this process is the unit's own child, so exiting non-zero gets it restarted.
+fn supervised() -> bool {
+    std::env::var("XPC_SERVICE_NAME").is_ok_and(|v| v == LABEL)
+        || (cfg!(target_os = "linux") && std::env::var_os("INVOCATION_ID").is_some())
+}
+
+/// One line in gateway.log for every stop, start and restart: who asked and by which route, so
+/// the next stray gateway can be traced (rztb). `via` is "launchd", "cli" or "self re-exec".
+fn log_caller(home: &Path, action: &str, via: &str) {
+    let ppid = std::os::unix::process::parent_id();
+    let parent = process_command(ppid).unwrap_or_else(|| "gone".into());
+    let var = |k: &str| std::env::var(k).unwrap_or_else(|_| "-".into());
+    let line = format!(
+        "{} gateway {action} via {via}: agent={} as={} user={} ppid={ppid} ({parent}) claudecode={}\n",
+        chrono::Utc::now().format("%Y-%m-%dT%H:%M:%S%.6fZ"),
+        var("BRIDLE_AGENT_NAME"),
+        var("BRIDLE_AS"),
+        var("USER"),
+        std::env::var_os("CLAUDECODE").is_some(),
+    );
+    if std::fs::create_dir_all(home).is_err() {
+        return;
+    }
+    if let Ok(mut f) = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(home.join("gateway.log"))
+    {
+        let _ = std::io::Write::write_all(&mut f, line.as_bytes());
+    }
 }
 
 const SYSTEMD_UNIT: &str = "bridle-gateway.service";
@@ -340,17 +421,13 @@ async fn restart(cli: &Cli) -> Result<(), CliError> {
     let home = bridle_api::discovery::bridle_home();
     let config = GatewayConfig::load(&home).map_err(anyhow::Error::from)?;
     let macos = cfg!(target_os = "macos");
-    // The env var is for tests only: the job or unit is machine-wide, not per BRIDLE_HOME.
-    let managed = match current_uid() {
-        Some(_) if std::env::var_os("BRIDLE_GATEWAY_UNMANAGED").is_some() => None,
-        Some(uid) => detect_managed(&mut run_ok, macos, &uid),
-        None => None,
-    };
+    let managed = managed_now();
     if let Some(managed) = managed {
         if !config.enabled {
             println!("the gateway is disabled ([gateway] enabled = false); not starting");
             return Ok(());
         }
+        log_caller(&home, "restart", managed.name());
         restart_managed(&mut run_ok, &managed).map_err(|e| anyhow!(e))?;
         let via = if macos { "launchd" } else { "systemd" };
         let deadline = Instant::now() + crate::serve::DETACH_WAIT;

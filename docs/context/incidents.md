@@ -35,9 +35,21 @@ Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or los
 - **Impact:** the gateway runs unsupervised with an inherited session environment (the
   2026-10-08 outage had the same shape); launchd retries in a loop; the human's trust, as a
   repeat report.
-- **Cause:** unknown: some session or code path (upgrade, `just install`, an agent, a test)
-  runs `gateway restart` or `--detach` against the live gateway. A test touching real launchd
-  is suspected.
+- **Cause:** proven from the code and log: before br-57nt (2026-10-09 3:06 PM ET) `gateway
+  restart` was SIGTERM then a detached child, never launchd, and the child inherited the
+  caller's Claude env; the log shows that shape (SIGTERM, "listening" 25-150 ms later, no
+  "binary changed" line) nine times. `gateway --detach` with the launchd job loaded but
+  stopped did the same, and a gateway started that way then kept itself current by exec in
+  place (same pid, same env), so it stayed outside launchd until stopped. Inferred: the 01:39Z
+  restart was an agent or the orchestrator running `gateway restart` from a Claude session; the
+  log didn't record callers, so which one is unknowable. No test touched the real gateway
+  before 57nt (tests use a temp `BRIDLE_HOME`); 57nt's own pre-fix test runs likely kickstarted
+  the real job (the 2:54 PM "Address already in use" loop, inferred).
+- **Fix (rztb):** `--detach` is refused while a unit is loaded; a gateway that is the unit's
+  child exits non-zero on a replaced binary so launchd/systemd restarts it (exec in place only
+  when unmanaged, with the Claude/principal env scrubbed); every stop, start and restart
+  writes a caller line to `gateway.log`; gateway tests put fake `launchctl`/`systemctl` first on
+  PATH and assert they are never called. The launchd unit is unchanged.
 - **Category:** `daemon`, `role`.
 - **Follow-up:** [[incident-something-keeps-restarting-dalek-s-gateway-outside-rztb|rztb]]
   (br-rztb, high); earlier bek3, 76td, ppa6, 57nt.

@@ -40,6 +40,15 @@ on dalek and on every client machine alike.
   `bind` to answer. It prints the URL and pid and exits 0; if the gateway is still starting
   then, it says so, leaves it running and exits 0. If the gateway exits early it fails with the
   tail of the log. A bind with port 0 can't be probed, so `--detach` refuses it.
+- **Only the unit starts a managed gateway** (rztb). While the launchd job or systemd unit is
+  loaded, `--detach` is refused (use `restart`, which goes through the manager). A gateway
+  that is the unit's own child (`XPC_SERVICE_NAME=dev.bridle.gateway`, or systemd's
+  `INVOCATION_ID`) answers a replaced binary by exiting non-zero so the manager restarts it;
+  an unmanaged one execs in place with `BRIDLE_AS`, `BRIDLE_PROJECT`, `BRIDLE_TOKEN`,
+  `CLAUDECODE`, `CLAUDE_CODE_*` and `ANTHROPIC_*` removed. Every stop, start and restart
+  appends a line to `gateway.log` (`gateway <action> via <route>: agent= as= user= ppid=
+  (<parent command>) claudecode=`), and the foreground start logs "gateway starting" with its
+  route. Tests put fake `launchctl`/`systemctl` first on PATH and assert they are never called.
 - **A second start is refused.** Before spawning, `--detach` probes `bind`'s health; if
   something answers it exits 1 naming the address. The foreground `bridle gateway` has the
   bind error as its guard. The port is the lock; the pid file (below) is for stop and status.

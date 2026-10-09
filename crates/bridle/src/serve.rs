@@ -278,7 +278,7 @@ fn is_claude_env(key: &std::ffi::OsStr) -> bool {
 /// The detached child never inherits a principal or project from the starting shell (ppa6):
 /// the gateway ignores them, and a detached daemon has its own identity. Nor does it inherit
 /// the caller's Claude Code variables (n57nt); `caller_vars` is the caller's variable names.
-fn detached_command(
+pub(crate) fn detached_command(
     exe: &Path,
     child_args: &[std::ffi::OsString],
     caller_vars: impl Iterator<Item = std::ffi::OsString>,
