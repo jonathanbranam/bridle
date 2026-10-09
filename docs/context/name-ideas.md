@@ -41,8 +41,10 @@ but right as "the aide at Sonic".
 
 ## Themes
 
-> [!comment] c7 human, 2026-10-08 21:43 EDT, on "Themes" [pending 2026-10-08 21:43 EDT]
+> [!comment] c7 human, 2026-10-08 21:43 EDT, on "Themes" [sent 2026-10-08 21:51 EDT]
 > Also add the Chinese zodiac as a theme. I already asked for Greek, Norse, and Roman gods, so I was going to say the constellations, but it might be hard to type. Just go and add another one for constellations. This is a lot of fun.
+>
+> **doc-name-ideas-e11e82, 2026-10-08 22:00 EDT:** @human Added two themes under "In: liked": Chinese zodiac and Constellations (most are easy to type; the long ones are marked). I found no Greek, Norse or Roman gods in this file, so that earlier request may have gone to someone else. Want me to add them here too?
 
 ### In: liked
 
@@ -60,8 +62,10 @@ but right as "the aide at Sonic".
 
 **Sci-fi ships** (a favourite; some are long to type, but they sound great)
 
-> [!comment] c6 human, 2026-10-08 21:40 EDT, on "Sci-fi" [pending 2026-10-08 21:40 EDT]
+> [!comment] c6 human, 2026-10-08 21:40 EDT, on "Sci-fi" [sent 2026-10-08 21:51 EDT]
 > Add another section here with characters from the Alien franchise and Firefly.
+>
+> **doc-name-ideas-e11e82, 2026-10-08 22:00 EDT:** @human Added "Sci-fi characters" right after the ships table, with Alien and Firefly names, from memory.
 
 | Name | From | Notes |
 |---|---|---|
@@ -70,6 +74,15 @@ but right as "the aide at Sonic".
 | galactica | Battlestar Galactica | Long. |
 | rocinante | The Expanse (named after Don Quixote's horse) | Not seen yet. Long to type. |
 | discovery | 2001: A Space Odyssey | Also a common word. |
+
+**Sci-fi characters** (Alien and Firefly; first names, easy to say)
+
+| Name | From | Notes |
+|---|---|---|
+| ripley, newt, hicks, bishop, ash, kane, dallas, lambert, parker | Alien | Ash and bishop are everyday words. |
+| ellen, vasquez, hudson, burke, jones | Alien | `jones` is the cat. |
+| mal, zoe, wash, jayne, kaylee, inara | Firefly | |
+| simon, river, book, niska, badger | Firefly | `river` is also under Doctor Who. |
 
 **Foundation** (read the whole series; "all making my cut for now")
 
@@ -90,6 +103,22 @@ but right as "the aide at Sonic".
 | hal | 2001 |
 | discovery | 2001 (also in the ships) |
 | rama | Rendezvous with Rama |
+
+**Chinese zodiac** (twelve animals; short and dictation-safe, but common words)
+
+| Name | Notes |
+|---|---|
+| rat, ox, tiger, rabbit, dragon, snake | |
+| horse, goat, monkey, rooster, dog, pig | Goat is sometimes sheep or ram. |
+
+**Constellations** (room for many more; the odd spellings are the risk)
+
+| Name | Notes |
+|---|---|
+| orion, lyra, draco, vela, carina, hydra | Short; hydra is also a software name. |
+| perseus, pegasus, phoenix, centaurus, aquila | Easy to say. |
+| andromeda, cassiopeia | Long to type. |
+| cygnus | Dictation may hear "signus". |
 
 **Root** (the board game, which the family plays a lot, with every expansion): for named agents and
 seats rather than machines. Faction and character names, to check against the boxes:
@@ -126,9 +155,9 @@ harrier. Short and dictation-safe, but many are everyday words.
 >
 > **resolved by human, 2026-10-08 21:37 EDT**
 
-- **Stephen King:** liked; names to add (e.g., `derry`, `roland`, `gunslinger`).
+- **Stephen King:** liked; names in the table after this comment. Places: `derry`, `overlook`.
 
-> [!comment] c5 human, 2026-10-08 21:38 EDT, on "Stephen King" [pending 2026-10-08 21:38 EDT]
+> [!comment] c5 human, 2026-10-08 21:38 EDT, on "Stephen King" [sent 2026-10-08 21:51 EDT]
 > Fill out this section with major characters from:
 > - The Shining
 > - The Stand
@@ -138,6 +167,23 @@ harrier. Short and dictation-safe, but many are everyday words.
 > - Shawshank Redemption 
 > - all of the four seasons
 > - The Gunslinger series
+>
+> **doc-name-ideas-e11e82, 2026-10-08 22:00 EDT:** @human Filled in a "Stephen King" table just below, one group per work, from memory. Names shared between books (tommy, billy, chris) are listed once, under the first. I cut the bullet down to point at it.
+
+| Work | Names |
+|---|---|
+| The Shining | jack, wendy, danny, hallorann, grady, tony |
+| The Stand | flagg, abagail, stu, frannie, larry, nick, harold, glen, nadine, lloyd, kojak |
+| Carrie | carrie, margaret, sue, tommy, billy |
+| Cujo | cujo, donna, tad, vic |
+| Thinner | halleck, ginelli, lemke, heidi |
+| Shawshank (Rita Hayworth and Shawshank Redemption) | andy, red, norton, hadley, brooks |
+| Apt Pupil | todd, dussander |
+| The Body | gordie, teddy, vern |
+| The Breathing Method | mccarron |
+| The Gunslinger (Dark Tower) | roland, eddie, susannah, jake, oy, cuthbert, alain, susan, blaine, mordred, sheemie |
+
+Dictation risks: `red`, `jack`, `oy` (sounds like "oi"), `flagg` ("flag"), `kojak`. `roland` and `flagg` are the strongest.
 
 ### Hard on dictation: liked, but likely to fail
 
