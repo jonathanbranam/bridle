@@ -25,5 +25,10 @@ as PM on a small project with none) plans like this:
   whole queue to reorder. `bridle queue` shows claimed tasks, then the tiers, each task marked
   startable or blocked. Keep it two or three tiers ahead of what's claimed. The manager claims
   from the highest startable tier.
+- **Order by priority, never by size.** A small low or normal task doesn't fill a free slot
+  while higher ready work waits: every task costs ~30-40 minutes of machine time (builds,
+  `just check`), not its coding time. The human, 2026-10-09: "the "easy" and "small" changes
+  still run builds and peg the CPU so it is quick for the worker to implement, but it actually
+  adds 30-40min."
 - **The daemon nudges the manager** when the queue changes; don't send "queue updated" by hand.
   A change to one brief goes on that task (`bridle send <manager> --task <id> ...`).
