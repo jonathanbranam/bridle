@@ -10,7 +10,7 @@ specs: []
 needs: []
 see: [bp2v, 22ab, 72t9]
 tasks: [br-4cgx]
-next_comment_id: c3
+next_comment_id: c4
 ---
 
 ## The ask
@@ -44,6 +44,9 @@ the same.
 
 > [!comment] c2 human, 2026-10-09 17:11 EDT, on "PdM's suggestion: yes, the same rule for everyone, so agents can hand off on the thread instead of in DMs" [pending 2026-10-09 17:11 EDT]
 > Agree and approve this direction - agents can use the same syntax to tag another agent. This is NOT NECESSARY when the agent tagged is watching the task, so use this sparingly and only when actually necessary.
+
+> [!comment] c3 human, 2026-10-09 17:12 EDT, on "ticket's thread (today a task's)" [pending 2026-10-09 17:12 EDT]
+> This should be de-duplicated with the watchers list so that agents only receive a single message. If they watch the ticket/task and are @ mentioned, then only one message should be sent to the agent, preferably the one from the mention (since it is more explicit).
 
 - `@<role>` means that role on the same project: `@orchestrator`, `@aide`, `@advisor`, and
   named sessions as `@advisor/product-manager`.
