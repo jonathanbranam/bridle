@@ -256,10 +256,7 @@ wired in yet.
 
 - **Track**: every 2 s while at least one agent is live (with none, the tick takes no
   snapshot: it forks `ps`, and idle daemons doing it drove machine load up), and just before any stop, snapshot the process table
-  once. The read is native, with no fork: `/proc/<pid>/stat` on Linux, the `sysinfo` crate plus
-  `getpgid(2)` on macOS (no `ps` per tick, br-9z2n). A native `start` is tagged `n:`; `ps` is the
-  fallback if the native read fails, and a stored start without the tag (an older daemon's) is
-  checked against `ps`, so the two formats are never compared with each other. Prune the agent's *seen* set to what
+  once. The read is native, with no fork, and the same on every OS: the `sysinfo` crate (pid, ppid, start time) plus `getpgid(2)` (no `ps` per tick, br-9z2n; one path since br-crht, no `/proc` parser). A native `start` is tagged `s:`; `ps` is the fallback if the native read fails or is empty. A stored start without a tag (an older daemon's) is checked against `ps`; one tagged `n:` (the previous native format, `/proc` ticks on Linux) is never the same process (cannot be compared, so never signalled). Formats are never compared with each other. Prune the agent's *seen* set to what
   that snapshot confirms still exists (a pid that's gone, or reused by a
   different process, is dropped; the check is pid + start time identity only,
   not parentage, so a process re-parented to init is kept as long as its

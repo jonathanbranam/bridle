@@ -20,10 +20,15 @@ pub struct ProcInfo {
     pub start: String,
 }
 
-/// Prefix of a `start` read natively (no fork). A stored `start` without it
-/// came from `ps` (an older daemon, or the fallback) and is only ever compared
-/// with a `ps` start: the two formats must never be compared with each other.
-const NATIVE: &str = "n:";
+/// Prefix of a `start` read natively (sysinfo, no fork). A stored `start`
+/// without a known tag came from `ps` (an older daemon, or the fallback) and is
+/// only ever compared with a `ps` start: formats must never be compared with
+/// each other.
+const NATIVE: &str = "s:";
+
+/// Prefix of the previous native format (br-9z2n): `/proc` ticks on Linux,
+/// sysinfo seconds on macOS. Not comparable with anything now.
+const LEGACY_NATIVE: &str = "n:";
 
 /// Snapshots the process table. Reads it natively (no fork: a `ps` per tick
 /// per daemon drove the machine's load up, br-3p3h) and falls back to `ps` if
@@ -39,48 +44,9 @@ pub fn snapshot() -> io::Result<Vec<ProcInfo>> {
     }
 }
 
-/// Linux: `/proc/<pid>/stat`. `start` is the boot-relative start in ticks.
-#[cfg(target_os = "linux")]
-fn native_snapshot() -> io::Result<Vec<ProcInfo>> {
-    let mut procs = Vec::new();
-    for entry in std::fs::read_dir("/proc")? {
-        let Ok(entry) = entry else { continue };
-        let Some(pid) = entry
-            .file_name()
-            .to_str()
-            .and_then(|n| n.parse::<i32>().ok())
-        else {
-            continue;
-        };
-        // The process may exit between the listing and the read.
-        let Ok(stat) = std::fs::read_to_string(format!("/proc/{pid}/stat")) else {
-            continue;
-        };
-        if let Some(info) = parse_proc_stat(pid, &stat) {
-            procs.push(info);
-        }
-    }
-    Ok(procs)
-}
-
-/// `pid (comm) state ppid pgrp ... starttime ...`; comm may hold spaces and
-/// parens, so fields are counted from the last `)`.
-#[cfg(any(target_os = "linux", test))]
-fn parse_proc_stat(pid: i32, stat: &str) -> Option<ProcInfo> {
-    let rest = &stat[stat.rfind(')')? + 1..];
-    let f: Vec<&str> = rest.split_whitespace().collect();
-    // f[0] state, f[1] ppid, f[2] pgrp, f[19] starttime.
-    Some(ProcInfo {
-        pid,
-        ppid: f.get(1)?.parse().ok()?,
-        pgid: f.get(2)?.parse().ok()?,
-        start: format!("{NATIVE}{}", f.get(19)?),
-    })
-}
-
-/// Elsewhere (macOS): `sysinfo` for pid, ppid and start time, `getpgid(2)`
-/// for the group (sysinfo has none).
-#[cfg(not(target_os = "linux"))]
+/// `sysinfo` for pid, ppid and start time, `getpgid(2)` for the group (sysinfo
+/// has none): one path on every OS. A process with no ppid, or whose group
+/// can't be read (gone since the listing), is skipped.
 fn native_snapshot() -> io::Result<Vec<ProcInfo>> {
     use sysinfo::{ProcessRefreshKind, ProcessesToUpdate, System};
     let mut sys = System::new();
@@ -179,6 +145,12 @@ pub fn start_time(pid: i32) -> Option<String> {
 /// with a *different* start time has been reused by an unrelated process
 /// and must never be signalled.
 pub fn is_same_process(pid: i32, start: &str) -> bool {
+    // A legacy-tagged start is ambiguous across OSes and can't be compared with
+    // either current format; treat it as not the same rather than risk signalling
+    // a reused pid. (Its holder, if alive, is re-recorded on the next launch.)
+    if start.starts_with(LEGACY_NATIVE) {
+        return false;
+    }
     // A start stored by `ps` (an older daemon) is checked against `ps`.
     let current = if start.starts_with(NATIVE) {
         start_time(pid)
@@ -373,10 +345,26 @@ mod tests {
     }
 
     #[test]
-    fn parses_proc_stat_with_spaces_and_parens_in_comm() {
-        let line = "42 (a) b (c)) S 7 9 9 0 -1 4194560 1 0 0 0 0 0 0 0 20 0 1 0 12345 100 10 18446744073709551615";
-        let p = parse_proc_stat(42, line).unwrap();
-        assert_eq!((p.ppid, p.pgid, p.start.as_str()), (7, 9, "n:12345"));
+    fn stored_start_forms_across_an_upgrade() {
+        let me = std::process::id() as i32;
+        // Current native form.
+        let native = start_time(me).expect("own start");
+        assert!(native.starts_with(NATIVE));
+        assert!(is_same_process(me, &native));
+        assert!(!is_same_process(me, "s:0"));
+        // Untagged (ps format): compared via ps.
+        let ps = ps_snapshot()
+            .unwrap()
+            .into_iter()
+            .find(|p| p.pid == me)
+            .expect("own pid in ps")
+            .start;
+        assert!(is_same_process(me, &ps));
+        assert!(!is_same_process(me, "Thu Jan  1 00:00:00 1970"));
+        // Legacy "n:": never compared, never the same (even with our own current value).
+        let legacy = format!("{LEGACY_NATIVE}{}", &native[NATIVE.len()..]);
+        assert!(!is_same_process(me, &legacy));
+        assert!(!is_same_process(me, "n:0"));
     }
 
     #[tokio::test]

@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+- One cross-platform process-table read (br-crht): Linux now uses `sysinfo` + `getpgid` like macOS, and the `/proc` parser is gone. Native starts are tagged `s:`; a start stored by the previous daemon as `n:` is treated as not the same process, so pid files from before the upgrade are not signalled.
+
 ### Added
 - A `designer` role in the base workflow (br-ukpm, ukpm): reads one problem ticket, analyses the system and writes several design options, a recommendation and the rejected alternatives into that ticket (no design doc, nothing built), measured against `workflow/base/rules/design-principles.md` (KISS, YAGNI, modularity, one name per action, the user's side first, plus a place for the human's own). One role with an interface and an architecture focus. `bridle spawn designer`, `bridle prime designer`; a project's `.bridle/roles/designer.md` is appended. Every project inherits it with `bridle workflow sync`; no per-project file changes.
 - Scheduled messages (hrcn, br-9xze): `bridle schedule add|list|rm` makes the daemon send a message to a principal at a time (`--at`) or on a cron (`--cron`, 5 fields, in `--tz`, default `[schedule] timezone` = America/New_York). An agent schedules to itself (a wake-up reminder); the human to anyone. A missed firing is sent once, late, with a note. New `schedules` table (SCHEMA_V23), `/v1/schedules` routes, `schedule.fired` and `schedule.missed_fired` events.
