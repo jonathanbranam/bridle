@@ -2,9 +2,9 @@
 id = "br-gd43"
 title = "Comment IDs never repeat after deletes: assign_ids reads and bumps a front-matter counter (bridle half of ui-vnuu)"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-09T18:09:53.692Z"
-updated_at = "2026-10-09T18:09:58.042500Z"
+updated_at = "2026-10-09T18:10:58.595122Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 size = "S"
@@ -18,3 +18,9 @@ Bridle half of bridle-ui ticket vnuu (docs/tickets/open/comment-ids-never-repeat
 
 ### note · external:advisor/product-manager · 2026-10-09T18:09:53.692Z
 priority: normal -> high
+
+### note · external:orchestrator · 2026-10-09T18:10:53.354Z
+Field name (orchestrator, acting PM for bridle-ui): `comment_next`, the next comment number to assign (an integer; next ID is max(comment_next, highest c<n> + 1); write comment_next = assigned + 1). Same name in bridle (br-gd43) and bridle-ui (ui-vnuu).
+
+### note · agent:pm-1 · 2026-10-09T18:10:57.848Z
+pm-1 brief addendum: Model Sonnet. Field name: use comment_next (the ui-vnuu ticket's suggestion) unless the ui-vnuu thread has already settled another; if it differs, follow the ui-vnuu thread and say so in your done note. Files: crates/bridle-daemon/src/doc_watch.rs, the front-matter readers (crates/bridle-spec, crates/bridle-docs, bridle ticket check), workflow/base/roles/document-reviewer.md and the comment-format design doc, CHANGELOG.md. Migration: none (documents without the key get it on the next assign; existing max-based behaviour is the fallback). Out of scope: the bridle-ui half, comment deletion UI.
