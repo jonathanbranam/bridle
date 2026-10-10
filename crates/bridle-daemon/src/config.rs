@@ -1759,9 +1759,10 @@ impl Config {
         }
     }
 
-    /// The machine's `workflow` override from `<home>/config.toml`, if any. A machine
-    /// beats the project because the project's path is written for one machine.
-    fn load_machine_workflow(home_override: Option<&Path>) -> Result<Option<String>, ConfigError> {
+    /// The machine's `workflow` and `[daemon]` upgrade overrides from `<home>/config.toml`, if
+    /// any. A machine beats the project: a workflow path is written for one machine, and the
+    /// upgrade mode is a property of the machine's daemons, not of the project's files.
+    fn load_machine_overrides(home_override: Option<&Path>) -> Result<RawConfig, ConfigError> {
         let home = home_override
             .map(Path::to_path_buf)
             .unwrap_or_else(bridle_api::discovery::bridle_home);
@@ -1775,9 +1776,9 @@ impl Config {
                             source: Box::new(source),
                         },
                     )?;
-                Ok(raw.workflow)
+                Ok(raw)
             }
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(RawConfig::default()),
             Err(source) => Err(ConfigError::Read { path, source }),
         }
     }
@@ -1853,8 +1854,20 @@ impl Config {
             }
             Err(source) => return Err(ConfigError::Read { path, source }),
         };
-        if let Some(w) = Self::load_machine_workflow(home_override)? {
+        let machine = Self::load_machine_overrides(home_override)?;
+        if let Some(w) = machine.workflow {
             config.workflow = Some(w);
+        }
+        if let Some(d) = machine.daemon {
+            if let Some(v) = d.self_upgrade {
+                config.self_upgrade = v.into_mode()?;
+            }
+            if let Some(r) = d.release_repo {
+                config.release_repo = Some(r);
+            }
+            if let Some(s) = d.self_upgrade_min_interval {
+                config.self_upgrade_min_interval = parse_duration(&s)?;
+            }
         }
         // A project with no `workflow` uses the copy `bridle init` vendored, if there is one.
         if config.workflow.is_none() && repo.join(VENDORED_WORKFLOW).join("base").is_dir() {
@@ -4814,6 +4827,56 @@ mod tests {
             cfg.workflow.as_deref(),
             Some(format!("{h}/machine-wf").as_str())
         );
+    }
+
+    #[test]
+    fn machine_daemon_upgrade_keys_override_the_project() {
+        let repo = tempfile::tempdir().expect("repo");
+        let home = tempfile::tempdir().expect("home");
+        std::fs::create_dir_all(repo.path().join(".bridle")).expect("mkdir");
+        std::fs::write(
+            repo.path().join(".bridle/config.toml"),
+            "[daemon]\nself_upgrade = true\nrelease_repo = \"p/q\"\nself_upgrade_min_interval = \"90m\"\n",
+        )
+        .expect("write");
+        // No machine file: the project's values apply.
+        let cfg = Config::load_with_home(repo.path(), Some(home.path())).expect("load");
+        assert_eq!(cfg.self_upgrade, SelfUpgrade::Main);
+        assert_eq!(cfg.release_repo.as_deref(), Some("p/q"));
+        assert_eq!(cfg.self_upgrade_min_interval, Duration::from_secs(90 * 60));
+
+        // A machine file without the keys changes nothing.
+        std::fs::write(
+            home.path().join("config.toml"),
+            "[daemon]\nstop_grace = \"5s\"\n",
+        )
+        .expect("write");
+        let cfg = Config::load_with_home(repo.path(), Some(home.path())).expect("load");
+        assert_eq!(cfg.self_upgrade, SelfUpgrade::Main);
+
+        // Machine values win; release mode picks up the managed workflow checkout.
+        std::fs::write(
+            home.path().join("config.toml"),
+            "[daemon]\nself_upgrade = \"release\"\nrelease_repo = \"m/n\"\nself_upgrade_min_interval = \"1h\"\n",
+        )
+        .expect("write");
+        let cfg = Config::load_with_home(repo.path(), Some(home.path())).expect("load");
+        assert_eq!(cfg.self_upgrade, SelfUpgrade::Release);
+        assert_eq!(cfg.release_repo.as_deref(), Some("m/n"));
+        assert_eq!(cfg.self_upgrade_min_interval, Duration::from_secs(3600));
+        let expected =
+            crate::workflow_checkout::managed_root(home.path(), env!("CARGO_PKG_VERSION"))
+                .map(|p| p.to_string_lossy().into_owned());
+        assert_eq!(cfg.workflow, expected);
+
+        // An invalid machine value gives the existing error.
+        std::fs::write(
+            home.path().join("config.toml"),
+            "[daemon]\nself_upgrade = \"nightly\"\n",
+        )
+        .expect("write");
+        let err = Config::load_with_home(repo.path(), Some(home.path())).expect_err("bad");
+        assert!(err.to_string().contains("invalid self_upgrade"), "{err}");
     }
 
     #[test]

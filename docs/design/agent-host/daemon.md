@@ -334,7 +334,10 @@ a running `bridle gateway` re-executes itself when it sees that file change (hum
 'Running it detached, and staying current'). The daemon does nothing for it: no hook, no quiet
 point (the gateway holds no agent turns), and it works on machines with no daemon.
 
-**Release upgrade.** `self_upgrade = "release"` is for client machines that don't build. On the same
+**Release upgrade.** `self_upgrade = "release"` is for client machines that don't build. It can be set
+for every daemon on the machine in `~/.bridle/config.toml` (`[daemon] self_upgrade`, `release_repo`,
+`self_upgrade_min_interval`): the machine value wins over a project's, and a key unset there leaves
+the project's value alone, so a project that builds `main` keeps doing so. On the same
 tick and the same quiet-point test, the daemon asks GitHub (`curl`, unauthenticated; the repo is
 `[daemon] release_repo` or the checkout's `origin`) for the newest release, at most every 30
 minutes (`release::POLL_EVERY`, counted even when the ask fails, so rate limits back off). A tag

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `~/.bridle/config.toml` may set `[daemon] self_upgrade`, `release_repo` and `self_upgrade_min_interval` for every daemon on the machine; the machine value wins over the project's, and unset keeps the project's (36dp).
 - `bridle messages [--for PRINCIPAL] [--last N] [--since DURATION]` lists recent messages for you or any principal with sent, delivered and read times and how each was read; bodies only for your own. `message.*` events record the channel (waiter pid and session, inbox, ui, agent, api), and `bridle events` and `GET /v1/events` filter by `--message ID` and `--to PRINCIPAL`. Old events and clients still parse (9aj2, part 1).
 - `scripts/install-release.sh [tag]` installs bridle from a GitHub release with no clone: it downloads this platform's tarball, checks it against `SHA256SUMS`, and puts `bridle` in `~/.local/bin`. The add-a-machine and WSL2 guides use it and set `self_upgrade = "release"` (fv86).
 

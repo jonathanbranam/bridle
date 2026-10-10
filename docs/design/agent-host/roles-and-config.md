@@ -29,6 +29,9 @@ self_upgrade = false               # build, drain and restart into a newer green
                                    # when no `workflow` is set (daemon.md)
 self_upgrade_min_interval = "3h"   # at least this long between automatic upgrades, to batch
                                    # landings; "0s" = at once
+# self_upgrade, release_repo and self_upgrade_min_interval may also be set in the machine's
+# ~/.bridle/config.toml [daemon]; the machine value wins over the project's (like `workflow`),
+# unset there means the project's applies. No project file has to change.
 
 [branches]
 integration = "main"               # work merges here; worktree roles branch from here too
