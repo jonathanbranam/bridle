@@ -4,9 +4,10 @@ title = "Message delivery you can check, part 1: bridle messages command, delive
 kind = "feature"
 state = "planned"
 created_at = "2026-10-10T13:38:39.686Z"
-updated_at = "2026-10-10T14:21:36.938612Z"
+updated_at = "2026-10-10T20:01:11.945377Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+summary = "Part 1 of 9aj2. New `bridle messages [--for P] [--last N=5] [--since DUR]` (misc.rs): default the caller's own with bodies; any other principal (role, external:, agent, human) headers only (a CLI display rule, not a boundary; GET /v1/messages still returns bodies; stated in cli.md). Shows sent/delivered/read times and the channel of each. Wire: MessageQuery.since_secs, EventQuery.message and .to (the latter matched through the messages table, so old events match), PrincipalWakeQuery.pid, `channel` constants in types.rs; all serde-default. Audit: message.sent/delivered/read carry `channel` (waiter with pid+session, inbox, ui, agent, api); wake-taken reads previously emitted no message.read at all, now they do. `bridle events --message/--to` (not applied under --follow). Mail and schedule sends are not yet told apart from ui/api (noted in api.md). Role files (aide, advisor, orchestrator) say how to check for missed messages. Migration: no schema change; event fields additive; role text reaches projects via workflow sync. Not built: part 2 (br-3zhx)."
 ticket = "9aj2"
 +++
 
@@ -22,3 +23,6 @@ split off br-djru: Message delivery you can check, part 2: a message stays unrea
 
 ### note · external:advisor/product-manager · 2026-10-10T14:21:36.938Z
 split off br-3zhx: Message delivery you can check, part 2: a message stays unread until the session has seen it; refuse a wake started with & or discarded output (9aj2 items 1, 4)
+
+### note · agent:w9aj2 · 2026-10-10T20:01:11.945Z
+done: bridle messages, message.* events with channel, events --message/--to, role files; just check exit 0, 1461 tests passed; decac24b
