@@ -15,7 +15,7 @@ before it moves: "waits on the human" is a pending task only the human can appro
 is the project manager's; "ready to build" is in the queue; "HELD" is planned in bridle but
 stopped by the human.
 
-Last updated: 2026-10-09 20:47 ET.
+Last updated: 2026-10-09 23:05 ET.
 
 ## Needs the human now
 
@@ -29,18 +29,17 @@ In the order the PdM suggests:
 1. **The designer's first job**: by your ladder it is the attachments design (step 2 below),
    then the scheduler design for the rest of yfv5 (nightly restarts, maintenance windows,
    machine-wide), with the shipped slice (9xze) written up after the fact. ukpm planned fne2 as
-   its first job. Attachments first, then yfv5, then fne2?
+   its first job. Confirmed 10:58 PM: attachments first, then yfv5.
 2. **Attachments**: file the ticket now (several documents and later images per ticket or
    task, the MIME idea), so the designer has something to design?
-3. **br-g5y2**: approve role priming for scheduled messages (agents wait at the maximum
-   timeout and schedule their own wake-ups). Its mechanism, 9xze, has landed.
+3. Done 10:58 PM: br-g5y2 approved (role priming for scheduled messages).
 4. **95mu** (change specs reviewed before build): review the ticket so it can go to the
    designer. It is the general form of the scheduler ladder below.
 5. Held for your review already: **gtzx** (seats, P1-P10, Q1-Q4) and **stx8** (task states,
    needs a proposed design).
-6. From the bridle aide: max_workers 2 -> 3 (the aide recommends no until the v6kr baseline);
-   close br-a3b9?
-7. The new epic `migrations`: its "Done when" is a PdM draft; amend or approve.
+6. Done 10:30 PM: max_workers raised to 3. Still open: close br-a3b9?
+7. The new epic `migrations`: its "Done when" is a PdM draft; amend or approve. Same for the
+   new epic `messaging`.
 
 ## The scheduler ladder (the human's sequence, 2026-10-09)
 
@@ -60,16 +59,17 @@ Goal: ship scheduled messages, with design and specs approved before build. In b
 
 ## Epics in order
 
-The roadmap's priority order. Machine setup first (the human, 2026-10-09).
+The roadmap's priority order. Machine setup first (the human, 2026-10-09); then messaging and scheduled messages (the human, 2026-10-09 ~10:55 PM ET: "if the machine work finishes up, let's prioritize work that makes sending and receiving messages work better and more reliable, reducing waiter counts like the orc has 5 waiters; I think the scheduled message work is also an important epic to finish up soon").
 
 1. **Machine setup** (`machine-setup`, theme `multi-machine`)
-2. **Everything is a ticket** (`everything-is-a-ticket`, theme `tickets-and-release`)
-3. **Migrations** (`migrations`, theme `tickets-and-release`)
-4. **Scheduled messages and timed actions** (`scheduled-messages`, theme `agents-and-cli`)
-5. **Documents and attachments on tickets** (`attachments`, theme `product-process`)
-6. **Reviews enforced by bridle** (`reviews-enforced`, theme `product-process`)
-7. **Comments and mentions reach the right agent** (`comment-routing`, theme `human-ui`)
-8. **Products: several product managers and roadmaps** (`products`, theme `product-process`)
+2. **Messages are reliable, one waiter per agent** (`messaging`, theme `agents-and-cli`)
+3. **Scheduled messages and timed actions** (`scheduled-messages`, theme `agents-and-cli`)
+4. **Everything is a ticket** (`everything-is-a-ticket`, theme `tickets-and-release`)
+5. **Migrations** (`migrations`, theme `tickets-and-release`)
+6. **Documents and attachments on tickets** (`attachments`, theme `product-process`)
+7. **Reviews enforced by bridle** (`reviews-enforced`, theme `product-process`)
+8. **Comments and mentions reach the right agent** (`comment-routing`, theme `human-ui`)
+9. **Products: several product managers and roadmaps** (`products`, theme `product-process`)
 
 ## Themes
 
@@ -107,13 +107,11 @@ Daemons, tokens, sync and projects across the laptop, the NUC and the Windows PC
 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
-| [br-1ddd](http://dalek.tailbc91f5.ts.net:7878/task?id=br-1ddd) | One watcher for every project: 'bridle agent wake --all-projects' |  | planned | ready to build |
-| [br-kuvh](http://dalek.tailbc91f5.ts.net:7878/task?id=br-kuvh) | Remove 'bridle agent wake --all-projects' once 3haz lands and rolls out: warn first, th... |  | pending | waits on the human (approve to ready) |
-| [br-n7cg](http://dalek.tailbc91f5.ts.net:7878/task?id=br-n7cg) | Mail between daemons, slice 2: mail for a visitor is forwarded to its home daemon (3haz... |  | pending | waits on the human (approve to ready) |
-| [br-cufw](http://dalek.tailbc91f5.ts.net:7878/task?id=br-cufw) | Mail between daemons, slice 4: visible state: outbox status, message show (queued/arriv... |  | pending | waits on the human (approve to ready) |
 | [br-3932](http://dalek.tailbc91f5.ts.net:7878/task?id=br-3932) | Run bridle on a project without a local bridle clone (mrhe) |  | pending | waits on the human (approve to ready) |
 | [br-u6w9](http://dalek.tailbc91f5.ts.net:7878/task?id=br-u6w9) | Human interaction time: daemon serves the prompt log; gateway collects across machines ... |  | pending | waits on the human (approve to ready) |
 | [ui-9hq8](http://dalek.tailbc91f5.ts.net:7878/task?id=ui-9hq8) | Documents of projects on another machine (the NUC): read and comment in bridle-ui | high | integrated | delivered |
+| [br-xxq8](http://dalek.tailbc91f5.ts.net:7878/task?id=br-xxq8) | List the projects an identity holds tokens for, without printing the tokens | low | pending | waits on the human (approve to ready) |
+| [br-m5n2](http://dalek.tailbc91f5.ts.net:7878/task?id=br-m5n2) | Onboard data-contracts: start the trial that was prepared on 2026-09-28 |  | dropped | dropped |
 
 ### Theme `tickets-and-release`: Tickets, changelog and release
 
@@ -155,6 +153,21 @@ How work is recorded (tickets, fields, migrations) and shipped (changelog, relea
 
 Agents use bridle correctly: commands, help, roles, the workflow reaching every agent, timed actions.
 
+#### Epic `messaging`: Messages are reliable, one waiter per agent
+
+- Outcome: Sending and receiving messages works reliably across projects and machines, and each principal waits on one waiter on its home daemon (3haz). The human, 2026-10-09: "let's prioritize work that makes sending and receiving messages work better and more reliable, reducing waiter counts like the orc has 5 waiters".
+- Done when: (PdM draft) The orchestrator runs one waiter; every wake reason arrives as a message; send works to any project on the machine without a peer token; CI failures wake on time; outbox state is visible.
+
+| Task | Title | Pri | State | Next |
+|---|---|---|---|---|
+| [br-3haz](http://dalek.tailbc91f5.ts.net:7878/task?id=br-3haz) | Mail between daemons, slice 1: outbox, peer tokens, forwarding with acknowledgement and... |  | integrated | delivered |
+| [br-fvkq](http://dalek.tailbc91f5.ts.net:7878/task?id=br-fvkq) | Mail between daemons, slice 3: outbox retry with backoff and the start-up ping (3haz P3) |  | integrated | delivered |
+| [br-2msq](http://dalek.tailbc91f5.ts.net:7878/task?id=br-2msq) | bridle send --project to a local daemon needs a peer token, and --url can't be combined... |  | planned | ready to build |
+| [br-n7cg](http://dalek.tailbc91f5.ts.net:7878/task?id=br-n7cg) | Mail between daemons, slice 2: mail for a visitor is forwarded to its home daemon (3haz... |  | planned | ready to build |
+| [br-rhba](http://dalek.tailbc91f5.ts.net:7878/task?id=br-rhba) | Mail between daemons, slice 5: every orchestrator wake is a message, sent home; one wai... |  | planned | ready to build |
+| [br-ysmu](http://dalek.tailbc91f5.ts.net:7878/task?id=br-ysmu) | CI watch missed 13 red runs on main; first ci_failed wake came 40 minutes late |  | planned | ready to build |
+| [br-cufw](http://dalek.tailbc91f5.ts.net:7878/task?id=br-cufw) | Mail between daemons, slice 4: visible state: outbox status, message show (queued/arriv... |  | planned | ready to build |
+
 #### Epic `scheduled-messages`: Scheduled messages and timed actions
 
 - Outcome: Agents and the human schedule messages and timed actions through one scheduler (yfv5).
@@ -163,7 +176,7 @@ Agents use bridle correctly: commands, help, roles, the workflow reaching every 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
 | [br-9xze](http://dalek.tailbc91f5.ts.net:7878/task?id=br-9xze) | Scheduled messages, first slice: an agent schedules a message to itself (one-time or re... |  | integrated | delivered |
-| [br-g5y2](http://dalek.tailbc91f5.ts.net:7878/task?id=br-g5y2) | Scheduled messages slice 2: role priming: wait at the maximum timeout and schedule a me... |  | pending | waits on the human; 9xze has landed |
+| [br-g5y2](http://dalek.tailbc91f5.ts.net:7878/task?id=br-g5y2) | Scheduled messages slice 2: role priming: wait at the maximum timeout and schedule a me... |  | planned | waits on the human; 9xze has landed |
 | [br-yfv5](http://dalek.tailbc91f5.ts.net:7878/task?id=br-yfv5) | One scheduler for timed actions: scheduled messages (hrcn), nightly session restarts (c... |  | pending | needs a design (designer) for the rest: cbbn, 3nyk, cy2v; then the human's review |
 | [br-cbbn](http://dalek.tailbc91f5.ts.net:7878/task?id=br-cbbn) | Scheduled nightly restart of an interactive session at a clock time (e.g. 3 AM) |  | pending | waits on the human (approve to ready) |
 | [br-ft3b](http://dalek.tailbc91f5.ts.net:7878/task?id=br-ft3b) | Per-role handover instructions in the workflow, with project overrides |  | pending | waits on the human (approve to ready) |
@@ -244,8 +257,10 @@ The orchestrator and daemons stay up, relaunch once, upgrade cleanly and recover
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
 | [br-fpde](http://dalek.tailbc91f5.ts.net:7878/task?id=br-fpde) | Restart on Linux execs '<path> (deleted)' after the binary is replaced |  | planned | ready to build |
-| [br-8ff8](http://dalek.tailbc91f5.ts.net:7878/task?id=br-8ff8) | Flaky on CI: settle_wake_test blocked-task note races its edge setup | critical | planned | ready to build |
-| [br-7ufd](http://dalek.tailbc91f5.ts.net:7878/task?id=br-7ufd) | Self-upgrade at most every few hours, batching the landings; critical fixes go through ... | high | planned | ready to build |
+| [br-4vmc](http://dalek.tailbc91f5.ts.net:7878/task?id=br-4vmc) | Flaky lifecycle_test spawn_child_orphan_is_swept_on_stop times out waiting for agent.or... |  | planned | ready to build |
+| [br-p29s](http://dalek.tailbc91f5.ts.net:7878/task?id=br-p29s) | The macOS Verifying popup still flashes during bridle builds, though the daemons run un... |  | pending | waits on the human (approve to ready) |
+| [br-8ff8](http://dalek.tailbc91f5.ts.net:7878/task?id=br-8ff8) | Flaky on CI: settle_wake_test blocked-task note races its edge setup | critical | integrated | delivered |
+| [br-7ufd](http://dalek.tailbc91f5.ts.net:7878/task?id=br-7ufd) | Self-upgrade at most every few hours, batching the landings; critical fixes go through ... | high | integrated | delivered |
 | [br-zpc7](http://dalek.tailbc91f5.ts.net:7878/task?id=br-zpc7) | Mail bridge failures as events or messages (gdyy part 2) | low | pending | waits on the human (approve to ready) |
 | [br-8a53](http://dalek.tailbc91f5.ts.net:7878/task?id=br-8a53) | main red (ubuntu): gateway_test a_replaced_binary_is_re_executed; INVOCATION_ID misdete... | critical | integrated | delivered |
 | [br-ngya](http://dalek.tailbc91f5.ts.net:7878/task?id=br-ngya) | Flaky on Linux CI: upgrade_test a_drain_starting_during_a_spawn_restarts_promptly reads... | critical | integrated | delivered |
@@ -269,7 +284,6 @@ The orchestrator and daemons stay up, relaunch once, upgrade cleanly and recover
 | [br-2ax5](http://dalek.tailbc91f5.ts.net:7878/task?id=br-2ax5) | Incident: br-3haz broke every cross-project message for ~22 h: the CLI needed an outbox... |  | planned | ready to build |
 | [br-zcqv](http://dalek.tailbc91f5.ts.net:7878/task?id=br-zcqv) | dalek slept in a bag 8:42 AM-1:38 PM ET on 10-06: bridle froze, but the workforce had a... |  | pending | waits on the human (approve to ready) |
 | [br-vn54](http://dalek.tailbc91f5.ts.net:7878/task?id=br-vn54) | Incident: remote control dropped for the dalek aide session after a tmux detach and lap... |  | pending | waits on the human (approve to ready) |
-| [br-ysmu](http://dalek.tailbc91f5.ts.net:7878/task?id=br-ysmu) | CI watch missed 13 red runs on main; first ci_failed wake came 40 minutes late |  | pending | waits on the human (approve to ready) |
 
 ### Theme `performance`: Performance and resource cost
 
@@ -308,7 +322,8 @@ What the human sees and touches: web UI, documents and comments, to-dos, links, 
 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
-| [ui-jafg](http://dalek.tailbc91f5.ts.net:7878/task?id=ui-jafg) | Send-to-agent button on a task (UI half of rk7k) | low | planned | ready to build |
+| [br-bnfs](http://dalek.tailbc91f5.ts.net:7878/task?id=br-bnfs) | Deep links to a human to-do open the task page and fail; open the to-do page instead, a... | low | pending | waits on the human (approve to ready) |
+| [ui-jafg](http://dalek.tailbc91f5.ts.net:7878/task?id=ui-jafg) | Send-to-agent button on a task (UI half of rk7k) | low | integrated | delivered |
 | [br-kaez](http://dalek.tailbc91f5.ts.net:7878/task?id=br-kaez) | The bridle report in the daily mail digest (rcvb slice 2) | low | pending | waits on the human (approve to ready) |
 | [br-1665](http://dalek.tailbc91f5.ts.net:7878/task?id=br-1665) | A web UI for the human: my to-dos and decisions, to run through and check off |  | pending | waits on the human (approve to ready) |
 | [br-pa8h](http://dalek.tailbc91f5.ts.net:7878/task?id=br-pa8h) | Document review: keep the review list in the database, and scan for unresolved comments... | low | pending | waits on the human (approve to ready) |
@@ -368,7 +383,7 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
-| [br-x7fx](http://dalek.tailbc91f5.ts.net:7878/task?id=br-x7fx) | Turn self_upgrade back on ([daemon] self_upgrade = true in bridle's .bridle/config.toml... |  | claimed | in progress |
+| [br-x7fx](http://dalek.tailbc91f5.ts.net:7878/task?id=br-x7fx) | Turn self_upgrade back on ([daemon] self_upgrade = true in bridle's .bridle/config.toml... |  | integrated | delivered |
 | [br-a3b9](http://dalek.tailbc91f5.ts.net:7878/task?id=br-a3b9) | Sat 10-03: review and land the parked branches (br-6b8a, br-2718, br-2672, br-8b98, br-... |  | claimed | the human's to-do; aide asks whether to close |
 | [br-7575](http://dalek.tailbc91f5.ts.net:7878/task?id=br-7575) | Expand on 8r5x: keep your interactive session logs (which sessions, how long, where) |  | claimed | the human's to-do |
 | [br-3a42](http://dalek.tailbc91f5.ts.net:7878/task?id=br-3a42) | Expand on z485: make the orchestrator non-interactive (what it gives you, who you talk ... |  | claimed | the human's to-do |
@@ -403,6 +418,8 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 | 2026-10-09 ~18:45 | br-k6jd managers and the orchestrator fetch origin; divergence warned (N ahead, M behind) | machine setup |
 | 2026-10-09 ~18:56 | br-jw9e bridle token pair, part 2 (peer tokens, [mail] peers opt-out, pairing on project creation) | machine setup |
 | 2026-10-09 ~19:37 | br-tnyt load notes: quiet period, 30 min gap, one per machine | performance |
+| 2026-10-09 ~21:32 | br-7ufd self-upgrade batched, at most every 3 h | reliability |
+| 2026-10-09 ~22:33 | br-m5n2 data-contracts onboarded (daemon on 7407, dc- tasks filed; done in data-contracts) | onboarding |
 
 ## Changes to this roadmap
 
@@ -451,3 +468,4 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 - 2026-10-09 19:28 ET: follow-ups from the ticket sweep (the human approved): readied br-fpde (restart stays up when exec fails; reliability) and br-785a (UI install follows landings, tc7t option C; tickets-and-release), normal; readied low ui-jafg (rk7k UI button; human-ui), br-sfpg (researcher role, 2mtr; agents-and-cli), br-7zd4 (stale rule lines, 98xt; agents-and-cli); filed unscheduled br-kaez (rcvb slice 2; human-ui) and br-zpc7 (gdyy part 2; reliability). None in an epic.
 - 2026-10-09 19:38 ET: br-tnyt delivered, ticket tnyt resolved; br-g76s unblocked. Placed br-8ff8 (CI flake, critical) in reliability. br-785a waits on a designer pass on tc7t (queued); br-sfpg needs a designer later.
 - 2026-10-09 20:47 ET: br-syqn planned as part 1 of 3 (pm-1 files parts 2 and 3 when it lands).
+- 2026-10-09 23:05 ET: br-7ufd delivered, ticket 7ufd resolved; data-contracts onboarded (m5n2 resolved). Queue re-tiered by pm-1 to the roadmap (88d4, fpde, 751e, hdbj ahead) after the human found low work running ahead of machine setup (trial lesson 14). New epic `messaging` (rank 2: 3haz, fvkq, 2msq, n7cg, new rhba, ysmu, cufw); `scheduled-messages` moved to rank 3; br-g5y2 approved. br-1ddd and br-kuvh dropped (the human chose the real fix). Placed br-xxq8, br-p29s, br-bnfs, br-4vmc.
