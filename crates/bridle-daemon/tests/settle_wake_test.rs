@@ -102,7 +102,10 @@ async fn an_already_settled_task_makes_no_note() {
 
 #[tokio::test]
 async fn a_task_blocked_by_a_dependency_makes_no_note() {
-    let (daemon, _tmp) = daemon("1s").await;
+    // The settle clock starts at creation, so the edge must land well inside
+    // it: planning two tasks and adding the edge can outlast 1 s on a slow
+    // runner (8ff8). 5 s leaves room; the sleep is scaled to match.
+    let (daemon, _tmp) = daemon("5s").await;
     let mgr = spawn_manager(&daemon).await;
     let blocker = planned_task(&daemon, "blocker").await;
     let blocked = planned_task(&daemon, "blocked").await;
@@ -115,7 +118,7 @@ async fn a_task_blocked_by_a_dependency_makes_no_note() {
         })
         .await
         .expect("edge");
-    tokio::time::sleep(Duration::from_millis(2500)).await;
+    tokio::time::sleep(Duration::from_millis(6500)).await;
     let got = notes(&daemon, &mgr).await;
     assert_eq!(got, vec![format!("{blocker} is now startable")], "{got:?}");
 }
