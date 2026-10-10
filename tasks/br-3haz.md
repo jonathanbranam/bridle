@@ -4,7 +4,7 @@ title = "Mail between daemons, slice 1: outbox, peer tokens, forwarding with ack
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-04T02:32:57.804Z"
-updated_at = "2026-10-05T23:22:12.042755Z"
+updated_at = "2026-10-10T02:59:02.105395Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
 branch = "bridle/mail-outbox"
@@ -48,3 +48,6 @@ integrated: 29296901d9a9c6ab5d63790fb8bffcfad0dc0772 (branch bridle/mail-outbox)
 
 ### note · agent:manager-2 · 2026-10-05T23:22:12.042Z
 cleanup: removed agent mail-outbox, branch bridle/mail-outbox
+
+### note · external:advisor/product-manager · 2026-10-10T02:59:02.105Z
+split off br-rhba: Mail between daemons, slice 5: every orchestrator wake is a message, sent home; one waiter per principal (3haz)

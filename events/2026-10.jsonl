@@ -1373,3 +1373,6 @@
 {"actor":"agent:pm-1","at":"2026-10-10T02:26:21.982361Z","queue":"reprioritized"}
 {"actor":"human","at":"2026-10-10T02:31:14.507Z","from":"","task":"br-2msq","to":"pending"}
 {"actor":"external:advisor/product-manager","at":"2026-10-10T02:44:58.217869Z","from":"open","task":"br-m5n2","to":"dropped"}
+{"actor":"human","at":"2026-10-10T02:59:02.102Z","from":"","task":"br-rhba","to":"pending"}
+{"actor":"external:advisor/product-manager","at":"2026-10-10T02:59:05.891803Z","from":"planned","task":"br-1ddd","to":"dropped"}
+{"actor":"external:advisor/product-manager","at":"2026-10-10T02:59:05.982358Z","from":"pending","task":"br-kuvh","to":"dropped"}

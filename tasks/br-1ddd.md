@@ -2,9 +2,9 @@
 id = "br-1ddd"
 title = "One watcher for every project: 'bridle agent wake --all-projects'"
 kind = "feature"
-state = "planned"
+state = "dropped"
 created_at = "2026-10-02T00:21:16.323Z"
-updated_at = "2026-10-09T11:04:37.137079Z"
+updated_at = "2026-10-10T02:59:05.891803Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -29,3 +29,6 @@ Held (orchestrator, via pm-1): waits until the human settles k8jn. Read-on-deliv
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:37.137Z
 watching the task
+
+### note · external:advisor/product-manager · 2026-10-10T02:59:05.891Z
+dropped: the human, 2026-10-09 ~10:55 PM ET, chose the real fix over the stopgap: every wake is a message, one waiter per principal (br-n7cg then br-rhba); --all-projects would be a no-op once they land.
