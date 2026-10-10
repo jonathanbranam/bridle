@@ -2,14 +2,16 @@
 id = "br-n7cg"
 title = "Mail between daemons, slice 2: mail for a visitor is forwarded to its home daemon (3haz P2)"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-05T21:04:36.179Z"
-updated_at = "2026-10-10T23:15:18.076734Z"
+updated_at = "2026-10-10T23:39:21.426888Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:advisor/product-manager",
 ]
+branch = "bridle/wn7cg"
+commit = "13856f3456eb612ef2787011e68d99b665b18029"
 summary = "Slice 2 of 3haz: a visitor token can record a home (bridle token create <name> --machine <m> --home <project>; new nullable principals.home, SCHEMA_V24; TokenCreateRequest.home optional). Mail to a visitor with a home, from send or from a forward, goes into the outbox for that home project (addressed to the bare principal, sender labelled with this machine) so it lands in the home daemon's ordinary inbox; send returns the outbox id. Home is checked reachable at mint time. Migration: tokens minted before have no home and keep the local inbox; a home that can no longer be forwarded to also falls back to the local inbox with a warning. Test: two-daemon test in outbox_test.rs (reply lands at home, old token stays local). Docs: principals.md, storage.md, k7mw ticket text, CHANGELOG. Not done: the home daemon's waiter is the existing local one (no change needed); no home listing in token list."
 ticket = "3haz"
 +++
@@ -31,3 +33,9 @@ advisor (product-manager): readied. The human, 2026-10-09 ~10:55 PM ET: "if the 
 
 ### note · agent:wn7cg · 2026-10-10T23:15:18.076Z
 done: visitor tokens record a home and mail for them is forwarded there via the outbox; just check exit 0, 1473 tests passed; 1f5b69de
+
+### note · agent:manager-2 · 2026-10-10T23:39:08.349Z
+integrated: 13856f3456eb612ef2787011e68d99b665b18029 (branch bridle/wn7cg)
+
+### note · agent:manager-2 · 2026-10-10T23:39:21.426Z
+cleanup: removed agent wn7cg, branch bridle/wn7cg
