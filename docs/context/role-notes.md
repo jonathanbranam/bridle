@@ -684,3 +684,15 @@ Newest first. One line per item: what happened, who did it, what it says about r
   the laptop's had filed pending awaiting the human; it merged before the laptop's hold arrived.
   Agreed between them: neither readies a task the other filed pending without asking. A
   cross-project visitor also can't comment on another project's task (hold went by message).
+- **2026-10-09 evening: load notes swamp the orchestrator.** With builds running, each of three
+  daemons on dalek sent its own load note every 1-3 min; the orchestrator re-armed by hand each
+  time. A local waiter loop that skips load-only wakes fixed it for the session (aide filed tnyt for
+  the real fix). The orchestrator misread the human's ask once (routed the notes to aide, d48r,
+  withdrawn).
+- **2026-10-09: a reopened task is stuck.** br-8z7j was reopened after its design branch landed;
+  only incidents can be planned from `reopened`, so the orchestrator moved the build to a new task
+  (br-hdbj, `--from`) and dropped the old one.
+- **2026-10-09: the bridle-ui manager can't run `npm run install-ui`** (Bash denied), so each UI
+  landing needs the orchestrator to install it (done for ui-9hq8). tc7t (br-785a) automates this.
+- **2026-10-09: managers don't retry a spawn refused by the load hold.** The bridle-ui manager
+  asked to be woken when load fell; the orchestrator polled load and nudged it.
