@@ -4,11 +4,12 @@ title = "Flaky on CI: settle_wake_test blocked-task note races its edge setup"
 kind = "bug"
 state = "planned"
 created_at = "2026-10-09T23:23:12.045Z"
-updated_at = "2026-10-09T23:23:20.004947Z"
+updated_at = "2026-10-10T01:44:04.300889Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 priority = "critical"
 priority_at = "2026-10-09T23:23:12.261517Z"
+summary = "Fixed the flaky settle_wake_test::a_task_blocked_by_a_dependency_makes_no_note (ticket 8ff8). Test-only change in crates/bridle-daemon/tests/settle_wake_test.rs: the blocked-task case now uses a 5 s settle (was 1 s) and sleeps 6500 ms (was 2500 ms). Reason: the settle clock starts at task creation (tasks.rs settle_until), so the blocks edge must land before the settle expires; planning two tasks plus the edge can outrun 1 s on a slow runner. Assertion unchanged. The other tests in the file have no edge-setup race and are untouched. Diagnosis confirmed; no product code changed. Verified: the blocked test passed 20/20 consecutive runs; just check green on the merged tree (1432 passed, 5 skipped). Earlier red runs were timing tests failing under machine load 120-135 (session_test a_session_can_restart_itself, governor_test working_agent_is_notified_then_stopped_when_its_turn_ends), not changed by this work. Commit 5c81b767 message still says NOT YET GREEN: stale now that the check passed. Merged main (41d6e0fd, br-7ufd)."
 ticket = "8ff8"
 +++
 
@@ -24,3 +25,6 @@ From orchestrator: main: the macOS orphan-test failure on b798c8bc passed on re-
 
 ### note · external:orchestrator · 2026-10-09T23:23:12.580Z
 From orchestrator: br-8ff8 (critical flake fix, ticket 8ff8) is ready; plan it at the top. Brief is in the ticket.
+
+### note · agent:w8ff8 · 2026-10-10T01:44:04.300Z
+done: settle_wake blocked-task test fixed (test-only, 5 s settle); just check green on merged tree (exit 0, 1432 passed, 5 skipped); blocked test 20/20; main merged (41d6e0fd); commit 5c81b767. Note: that commit's message says NOT YET GREEN, which is stale now; say if you want it amended.
