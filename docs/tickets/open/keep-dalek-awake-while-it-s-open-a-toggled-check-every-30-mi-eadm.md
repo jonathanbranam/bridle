@@ -50,3 +50,12 @@ The human, 2026-10-10 ~1:00 PM ET, verbatim (to the aide):
    easy for the human and visible in `bridle status`.
 3. Answer the human's "I don't know if there's a different way to keep this awake": compare the
    launchd agent and `pmset` options above with the monitor alone, and recommend one.
+
+## Decision (the human, 2026-10-10 ~11:00 AM ET, to advisor product-manager)
+
+No launchd agent for caffeinate. The human's words: "No, ... definitely not. Caffeinate is a human
+decision, and I do not necessarily want it always running, so it is not a priority. It only
+happens at reboot. Yeah, it can wait."
+
+So: keeping dalek awake stays the human's call, made by hand. The task stays pending, unscheduled,
+for the next PdM review; if it's built, it only notices and tells, never starts caffeinate itself.
