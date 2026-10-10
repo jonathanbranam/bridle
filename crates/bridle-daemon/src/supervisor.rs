@@ -496,6 +496,15 @@ impl AgentManager {
         *self.0.load.lock().expect("load mutex poisoned") = Some(load);
     }
 
+    /// Records a system event from outside the supervisor (the load watch).
+    pub(crate) async fn emit_system_event(&self, kind: &str, data: serde_json::Value) {
+        let _ = self
+            .0
+            .emitter
+            .emit(kind, "system".to_string(), None, data)
+            .await;
+    }
+
     pub fn load_status(&self) -> Option<bridle_api::types::LoadStatus> {
         self.0.load.lock().expect("load mutex poisoned").clone()
     }
@@ -506,7 +515,7 @@ impl AgentManager {
         match self.load_status() {
             Some(l) if l.holding => Err(SupervisorError::Conflict(format!(
                 "machine load is high ({:.1} per core on {} cores, threshold {:.1}); \
-                 spawns are held until it falls; pass --ignore-budget to override",
+                 spawns are refused (not queued) until it falls, retry then; pass --ignore-budget to override",
                 l.per_core, l.cores, l.threshold
             ))),
             _ => Ok(()),

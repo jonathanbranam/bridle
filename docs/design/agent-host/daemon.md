@@ -289,7 +289,7 @@ attention wakes the orchestrator: the `restart` wake of a successful upgrade, `u
 a real failure (build, self-check, rollback) which also notes the human, and `upgrade_draining`,
 once, when a drain (an upgrade's or a plain restart's) is still waiting after an hour
 (`{agents, spawning}`; the text names the agents still in a turn). Nothing else escalates: a stuck
-turn is the stall detector's job. Skipped and building wake no one.
+turn is the stall detector's job. Skipped and building wake no one. Load holds also record `load.hold.started` and `load.hold.ended` ([[docs/design/agent-host/operating-model]], Load watch).
 
 **Rollback.** The running binary is copied to `<workspace>/.bridle/bridle.prev` before the build
 replaces it. After the build, the daemon runs the new binary's self-check (`bridle serve --check

@@ -1,6 +1,6 @@
 //! Machine load watch: on a timer, reads the 1-minute load average, normalises it by core
 //! count, and while it is over `[machine] load_per_core` holds new agent spawns (like the
-//! budget hold; they resume when the load falls). The orchestrator is messaged once per
+//! budget hold; a held spawn is refused, not queued). The orchestrator is messaged once per
 //! crossing, naming the load and the top CPU consumers (ticket 58c9). Running agents are
 //! left alone: this slice only stops adding work. Notes are rate-limited (ticket tnyt): after
 //! one, the next needs a quiet stretch under the threshold, and a machine-wide stamp file in
@@ -10,7 +10,7 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use bridle_api::types::{LoadStatus, MessageKind, When};
+use bridle_api::types::{LoadStatus, MessageKind, When, event_kind};
 
 use crate::supervisor::{AgentManager, ToTarget};
 
@@ -107,6 +107,55 @@ struct Inner {
     /// Where the last-sent time lives, shared by every daemon on the machine.
     stamp: PathBuf,
     rate: Mutex<Rate>,
+    hold: Mutex<Hold>,
+}
+
+/// Hold history for the `load.hold.*` events and the long-hold escalation.
+#[derive(Default)]
+struct Hold {
+    started: Option<SystemTime>,
+    /// Finished holds inside the escalation window.
+    done: Vec<(SystemTime, SystemTime)>,
+    last_escalation: Option<SystemTime>,
+}
+
+/// Escalate when spawns were held longer than this in the last `ESCALATE_WINDOW`...
+const ESCALATE_HELD: Duration = Duration::from_secs(60 * 60);
+const ESCALATE_WINDOW: Duration = Duration::from_secs(2 * 60 * 60);
+/// ...and no more than once per this.
+const ESCALATE_EVERY: Duration = Duration::from_secs(60 * 60);
+
+impl Hold {
+    /// Seconds held inside `[now - window, now]`, counting an open hold up to `now`.
+    fn held_within(&self, now: SystemTime) -> Duration {
+        let from = now - ESCALATE_WINDOW;
+        self.done
+            .iter()
+            .copied()
+            .chain(self.started.map(|s| (s, now)))
+            .map(|(s, e)| e.duration_since(s.max(from)).unwrap_or_default())
+            .sum()
+    }
+}
+
+/// Command names of bridle's own processes: the cause of a load hold may be bridle itself
+/// (ticket n4w4: test daemons polling `ps`).
+fn bridle_owned(name: &str) -> bool {
+    // `top_from_ps` keeps only the basename, so a test binary under a worktree's target/debug
+    // shows as `bridle_daemon-<hash>`.
+    matches!(name, "ps" | "fake-claude" | "claude") || name.starts_with("bridle")
+}
+
+/// The line naming a bridle-owned process among the first three of `top` (`name 120%, ...`).
+fn bridle_process_line(top: &str) -> Option<String> {
+    top.split(", ").take(3).find_map(|c| {
+        let (name, pct) = c.rsplit_once(' ')?;
+        bridle_owned(name).then(|| {
+            format!(
+                " A bridle process is a top consumer: {name} {pct}. Find the cause now, do not wait."
+            )
+        })
+    })
 }
 
 struct Rate {
@@ -152,6 +201,7 @@ impl LoadWatch {
                 armed: true,
                 below_since: None,
             }),
+            hold: Mutex::new(Hold::default()),
         }))
     }
 
@@ -177,21 +227,51 @@ impl LoadWatch {
             holding: over,
         });
         *self.0.holding.lock().expect("load lock") = over;
-        if !self.should_note(over, now) {
+        let note = self.should_note(over, now);
+        let (started, ended) = self.track_hold(over, now);
+        let mut top = String::new();
+        if note || started {
+            let this = self.clone();
+            top = tokio::task::spawn_blocking(move || this.0.source.top_consumers())
+                .await
+                .unwrap_or_default();
+        }
+        if started {
+            self.0
+                .manager
+                .emit_system_event(
+                    event_kind::LOAD_HOLD_STARTED,
+                    serde_json::json!({
+                        "load1": load1, "cores": cores, "per_core": per_core,
+                        "threshold": self.0.threshold, "consumers": top,
+                    }),
+                )
+                .await;
+        }
+        if let Some(held) = ended {
+            self.0
+                .manager
+                .emit_system_event(
+                    event_kind::LOAD_HOLD_ENDED,
+                    serde_json::json!({ "held_secs": held.as_secs() }),
+                )
+                .await;
+        }
+        self.escalate_if_long(now).await;
+        if !note {
             return;
         }
-        let this = self.clone();
-        let top = tokio::task::spawn_blocking(move || this.0.source.top_consumers())
-            .await
-            .unwrap_or_default();
         let mut body = format!(
             "Machine load is high: {load1:.1} on {cores} cores ({per_core:.1} per core, \
-             threshold {:.1}). New agent spawns are held until it falls; the daemon resumes \
-             them itself. Don't add work: wait.",
+             threshold {:.1}). New agent spawns are refused until it falls (they are \
+             not queued); retry then. Don't add work: wait.",
             self.0.threshold
         );
         if !top.is_empty() {
             body.push_str(&format!(" Top consumers: {top}."));
+        }
+        if let Some(line) = bridle_process_line(&top) {
+            body.push_str(&line);
         }
         let _ = self
             .0
@@ -209,6 +289,62 @@ impl LoadWatch {
 }
 
 impl LoadWatch {
+    /// Updates the hold history; returns (a hold started, the length of one that ended).
+    fn track_hold(&self, over: bool, now: SystemTime) -> (bool, Option<Duration>) {
+        let mut h = self.0.hold.lock().expect("load hold lock");
+        h.done
+            .retain(|(_, e)| now.duration_since(*e).unwrap_or_default() < ESCALATE_WINDOW);
+        match (over, h.started) {
+            (true, None) => {
+                h.started = Some(now);
+                (true, None)
+            }
+            (false, Some(s)) => {
+                h.started = None;
+                h.done.push((s, now));
+                (false, Some(now.duration_since(s).unwrap_or_default()))
+            }
+            _ => (false, None),
+        }
+    }
+
+    /// One message to the orchestrator, and a note for the human's morning list, when spawns
+    /// have been held over an hour of the last two (at most once an hour). A refused spawn of
+    /// a critical task is not a trigger: spawn requests carry no task.
+    async fn escalate_if_long(&self, now: SystemTime) {
+        let held = {
+            let mut h = self.0.hold.lock().expect("load hold lock");
+            let held = h.held_within(now);
+            let recent = h
+                .last_escalation
+                .is_some_and(|t| now.duration_since(t).unwrap_or_default() < ESCALATE_EVERY);
+            if held <= ESCALATE_HELD || recent {
+                return;
+            }
+            h.last_escalation = Some(now);
+            held
+        };
+        let body = format!(
+            "Spawns have been held {} minutes of the last {}: investigate the cause now",
+            held.as_secs() / 60,
+            ESCALATE_WINDOW.as_secs() / 60
+        );
+        let manager = &self.0.manager;
+        let to_orch = ToTarget::External(crate::wake::ORCHESTRATOR.to_string());
+        for to in [to_orch, ToTarget::Human] {
+            let _ = manager
+                .send(
+                    "system".to_string(),
+                    to,
+                    MessageKind::Note,
+                    body.clone(),
+                    When::Now,
+                    None,
+                )
+                .await;
+        }
+    }
+
     /// Whether this tick sends a note: over the threshold, armed, and no daemon on the machine
     /// has sent one inside the gap. A skip because of the stamp still uses up the arming: the
     /// other daemon's note covers this crossing.
@@ -248,14 +384,14 @@ mod tests {
     use std::collections::VecDeque;
 
     /// Hands out the scripted loads one per tick.
-    struct Fake(Mutex<VecDeque<f64>>);
+    struct Fake(Mutex<VecDeque<f64>>, &'static str);
 
     impl LoadSource for Fake {
         fn sample(&self) -> Option<(f64, usize)> {
             Some((self.0.lock().unwrap().pop_front()?, 4))
         }
         fn top_consumers(&self) -> String {
-            "rustc 300%".to_string()
+            self.1.to_string()
         }
     }
 
@@ -278,7 +414,7 @@ mod tests {
             Emitter::new(store.clone()),
             Default::default(),
         );
-        let fake = Fake(Mutex::new(loads.iter().copied().collect()));
+        let fake = Fake(Mutex::new(loads.iter().copied().collect()), "rustc 300%");
         let watch = watch_in(dir.path(), fake, &manager);
         (watch, manager, store, dir)
     }
@@ -363,7 +499,7 @@ mod tests {
         let (first, manager, store, dir) = fixture(&[12.0, 12.0]).await;
         let second = watch_in(
             dir.path(),
-            Fake(Mutex::new(VecDeque::from([12.0, 12.0]))),
+            Fake(Mutex::new(VecDeque::from([12.0, 12.0])), "rustc 300%"),
             &manager,
         );
         first.tick_at(at(0)).await;
@@ -373,7 +509,7 @@ mod tests {
         // Re-armed after a quiet stretch and past the gap, the second may send.
         let late = watch_in(
             dir.path(),
-            Fake(Mutex::new(VecDeque::from([12.0]))),
+            Fake(Mutex::new(VecDeque::from([12.0])), "rustc 300%"),
             &manager,
         );
         late.tick_at(at(31)).await;
@@ -402,5 +538,74 @@ mod tests {
     fn top_consumers_fold_by_name() {
         let ps = " 80.0 /usr/sbin/syspolicyd\n 30.0 /x/rustc\n 40.0 /y/rustc\n  1.0 /bin/zsh\n";
         assert_eq!(top_from_ps(ps, 2), "syspolicyd 80%, rustc 70%");
+    }
+
+    #[tokio::test]
+    async fn note_does_not_claim_a_resume_and_names_bridle_processes() {
+        let (watch, _m, store, dir) = fixture(&[12.0]).await;
+        watch.tick_at(at(0)).await;
+        let plain = orchestrator_messages(&store).await.remove(0);
+        assert!(!plain.contains("resumes them itself"));
+        assert!(plain.contains("refused until it falls") && plain.contains("retry then"));
+        assert!(!plain.contains("bridle process"));
+
+        let (w2, _m2, store2, _d2) = fixture(&[]).await;
+        let w2 = watch_in(
+            dir.path().join("other").as_path(),
+            Fake(Mutex::new([12.0].into()), "rustc 300%, ps 90%, zsh 1%"),
+            &w2.0.manager,
+        );
+        w2.tick_at(at(0)).await;
+        let msg = orchestrator_messages(&store2).await.remove(0);
+        assert!(msg.contains("A bridle process is a top consumer: ps 90%. Find the cause now"));
+    }
+
+    #[tokio::test]
+    async fn hold_events_and_escalation_after_an_hour_held() {
+        let (watch, _m, store, _dir) = fixture(&[12.0; 70]).await;
+        for m in 0..=61 {
+            watch.tick_at(at(m)).await;
+        }
+        // 61 minutes held: just over the hour. One escalation to orchestrator and human.
+        let msgs = orchestrator_messages(&store).await;
+        let esc: Vec<_> = msgs
+            .iter()
+            .filter(|b| b.starts_with("Spawns have been held"))
+            .collect();
+        assert_eq!(esc.len(), 1, "{msgs:?}");
+        assert!(esc[0].contains("61 minutes of the last 120"));
+        watch.tick_at(at(100)).await; // within the hour of the last escalation: no second
+        assert_eq!(
+            orchestrator_messages(&store)
+                .await
+                .iter()
+                .filter(|b| b.starts_with("Spawns have been held"))
+                .count(),
+            1
+        );
+        let kinds: Vec<_> = store
+            .list_events(Default::default())
+            .await
+            .unwrap()
+            .into_iter()
+            .map(|e| e.kind)
+            .collect();
+        assert_eq!(
+            kinds.iter().filter(|k| *k == "load.hold.started").count(),
+            1
+        );
+    }
+
+    #[tokio::test]
+    async fn hold_ended_event_carries_the_held_seconds() {
+        let (watch, _m, store, _dir) = fixture(&[12.0, 12.0, 1.0]).await;
+        for m in 0..3 {
+            watch.tick_at(at(m * 5)).await;
+        }
+        let evs = store.list_events(Default::default()).await.unwrap();
+        let ended = evs.iter().find(|e| e.kind == "load.hold.ended").unwrap();
+        assert_eq!(ended.data["held_secs"], 600);
+        let started = evs.iter().find(|e| e.kind == "load.hold.started").unwrap();
+        assert_eq!(started.data["consumers"], "rustc 300%");
     }
 }

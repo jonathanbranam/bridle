@@ -967,6 +967,11 @@ pub mod event_kind {
     pub const UPGRADE_ROLLED_BACK: &str = "upgrade.rolled_back";
     /// A restart's exec failed; the daemon started again in the same process. data: {error}.
     pub const RESTART_FAILED: &str = "restart.failed";
+    /// Machine load went over the threshold; new spawns are held.
+    /// data: {load1, cores, per_core, threshold, consumers}.
+    pub const LOAD_HOLD_STARTED: &str = "load.hold.started";
+    /// The load fell; spawns resume. data: {held_secs}, so total hold time can be summed.
+    pub const LOAD_HOLD_ENDED: &str = "load.hold.ended";
     pub const AGENT_SPAWNED: &str = "agent.spawned";
     /// data: {from, to}
     pub const AGENT_STATE: &str = "agent.state";

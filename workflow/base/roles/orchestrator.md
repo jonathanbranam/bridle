@@ -93,9 +93,11 @@ task needs the human, with `bridle task new "[at restart] <what>" -k feature --f
   - a created incident task;
   - five_hour >= 93% or seven_day >= 85%;
   - a budget hold starting (the governor leaving `normal`);
-  - a machine load note (load per core over `[machine] load_per_core`): the daemon is holding
-    new spawns and resumes them itself when the load falls. Add no work (start no agents, ready no
-    tasks), wait, and tell the human only if it lasts or names a cause you can act on;
+  - a machine load note (load per core over `[machine] load_per_core`): the daemon is refusing
+    new spawns (not queuing them) until the load falls. Add no work (start no agents, ready no
+    tasks), wait; if the note names a bridle process, or the hold lasts or escalates ("Spawns
+    have been held N minutes of the last 120"), find the cause now, and tell the human if it lasts
+    or names a cause you can act on;
   - a failed CI run on `main` (only with `[ci] github = true` in the project config).
 
   Nothing pending for 25 minutes prints `nothing`. On any exit, **start it again

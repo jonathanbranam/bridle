@@ -90,13 +90,13 @@ core count (`bridle-daemon/src/load.rs`). It reads `/proc/loadavg`, else `sysctl
 (`load`). The keys are read from the project's `.bridle/config.toml` (the machine file's `[machine]`
 section holds other keys that the daemon doesn't read; moving these there is not yet done). While load per core is above `[machine] load_per_core` (default 2.5; zero or less never
 holds) new spawns are refused with a conflict, like a budget hold (`--ignore-budget` skips it);
-they resume on their own once the load falls. The orchestrator gets one note per crossing (not
+a held spawn is refused, not queued: retry once the load falls. The orchestrator gets one note per crossing (not
 per tick) with the load and the top three CPU consumers by command name (`ps`); its role says to
-add no work and wait. Notes are rate-limited (ticket tnyt): after one, the next waits until the
+add no work and wait. If a bridle-owned process (`ps`, `bridle*`, `claude`, `fake-claude`) is among the three, the note says so and to find the cause now. Notes are rate-limited (ticket tnyt): after one, the next waits until the
 load has stayed under the threshold for `[machine] load_quiet_below` (default `10m`), and none
 is sent within `[machine] load_note_gap` (default `30m`) of the last note sent by any daemon on
 the machine, which `~/.bridle/load-note.stamp` (epoch seconds, written atomically) records; a
-missing or unreadable stamp means send. The hold itself is not rate-limited. Resumes and renews of existing agents are not held, and running agents are
+missing or unreadable stamp means send. The hold itself is not rate-limited. Events: `load.hold.started` (`{load1, cores, per_core, threshold, consumers}`) and `load.hold.ended` (`{held_secs}`, summable). When spawns were held more than 60 of the last 120 minutes, the orchestrator and the human get one note (at most hourly): "Spawns have been held N minutes of the last 120: investigate the cause now". A refused spawn of a critical task is not a trigger yet: spawn requests carry no task. Resumes and renews of existing agents are not held, and running agents are
 not wound down (rejected for now: by-priority wind-down and cross-project coordination, design
 xypj; killing processes; fixing the cause, a target-dir copy at spawn).
 

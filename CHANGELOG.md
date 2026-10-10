@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Load-hold notes no longer say the daemon resumes held spawns (they are refused, not queued), name a bridle-owned process when one is a top consumer, and the hold records `load.hold.started` / `load.hold.ended` events; a hold of over 60 of the last 120 minutes messages the orchestrator and the human once an hour (br-g76s).
 - `bridle send --project <p>` goes straight to a daemon on this machine when you hold your own token for it (as `task ready --project` does), and only uses the outbox and a peer token otherwise; `--url` can now be combined with `--project` to name the token (br-2msq).
 - The CI watcher now reports every commit on the integration branch, not just the newest tip: several pushes between two checks each get a `ci.completed` event, and the first failure wakes the manager at once. New `bridle ci` prints the latest CI result and exits 0 only on success, so a manager can check main is green without `gh`. Takes effect on daemon upgrade (br-ysmu).
 
