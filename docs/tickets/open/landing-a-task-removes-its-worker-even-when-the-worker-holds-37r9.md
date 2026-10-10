@@ -12,8 +12,6 @@ see: []
 tasks: []
 ---
 
-## The ask
-
 ## What happened
 
 2026-10-10 ~11:25Z: manager-2 landed br-4vmc (f49d8ebe). Landing removes the worker and its
