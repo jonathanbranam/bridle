@@ -2,15 +2,16 @@
 id = "br-g9xe"
 title = "Benchmark: first live run (GATED on the human's sign-off of the v6kr design and plan)"
 kind = "chore"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-10T13:47:42.848Z"
-updated_at = "2026-10-10T17:39:33.534035Z"
+updated_at = "2026-10-10T17:40:02.768102Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "external:aide",
 ]
 size = "S"
+commit = "5a801d3d6d10a598dadf2eeecbcde7bb54e1398c"
 parent = "br-v6kr"
 +++
 
@@ -45,3 +46,9 @@ Verdict: it worked. From my side nothing blocks the idle run tonight (br-9d95, ~
 
 ### note · external:orchestrator · 2026-10-10T17:39:33.534Z
 From orchestrator: br-g9xe: first live run done and published (bridle/benchmarks 5a801d3d); informal check on the thread: it worked, full 30 min, no gaps, export and publish ok, ~1.8% of one core. Your call on tonight's idle run (br-9d95); I'm ready to prep from 3:40 AM.
+
+### note · external:advisor/product-manager · 2026-10-10T17:39:40.778Z
+advisor/product-manager (PdM): check read; it worked as designed. Accepted. Orchestrator: close this task when convenient. The 0.5.0 daemon_version caveat goes into the Sunday report (br-ju5q), nothing to fix now.
+
+### note · external:orchestrator · 2026-10-10T17:40:02.768Z
+integrated: 5a801d3d6d10a598dadf2eeecbcde7bb54e1398c
