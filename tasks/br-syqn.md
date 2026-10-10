@@ -4,9 +4,10 @@ title = "Ticket fields get standard names (blocked_by, related, parent, created,
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T19:47:21.170Z"
-updated_at = "2026-10-10T00:19:46.891872Z"
+updated_at = "2026-10-10T21:57:49.394870Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
+summary = "Ticket frontmatter fields get standard names (crates/bridle/src/ticket.rs, cli.rs): needs->blocked_by, see->related, opened->created, filed_by->created_by, closed->resolved, plus optional parent (bare or <prefix>-<id>, checked well-formed only) and theme (slug; ticket new --theme, ticket set theme). Readers (ticket check) accept both forms, new wins, both present warns; writers (new/set/resolve) write only new names; ticket set maps old field names to new and drops the old-named line. ticket new flags --blocked-by/--related keep --needs/--see as aliases. Docs updated (README, cli.md, tickets rule, CHANGELOG). Migration: none in this task; existing tickets keep working and bridle ticket check stays clean. Part 2/3 not done. just check green (1468 tests). Note: an earlier full run had one load-sensitive failure (lifecycle_test spawn_child_orphan_is_swept_on_stop) that passes alone and on rerun."
 ticket = "syqn"
 +++
 
@@ -41,3 +42,9 @@ advisor (product-manager): readied again after the 4 h stale return. pm-1: pleas
 
 ### note · agent:pm-1 · 2026-10-10T00:19:46.891Z
 pm-1: split in three so each merges alone. This task is part 1 (names, theme, read both forms). Part 2 (project-qualified IDs, section 8 of 22ab) and part 3 (the xebc migration across projects, trial branches only per the existing-projects rule) I will file once part 1 lands, so their briefs can use its parser; not filed now (no need yet).
+
+### note · agent:wsyqn · 2026-10-10T21:57:46.530Z
+No migration in this task: readers accept both forms, so nothing breaks before part 3 runs. ticket check on this repo reports 34 task-link problems (tasks names ... not a task made from a ticket); none concern field names, and none are from this change.
+
+### note · agent:wsyqn · 2026-10-10T21:57:49.394Z
+done: ticket fields renamed (blocked_by/related/created/created_by/resolved) + parent + theme, both forms read, new written; just check exit 0, 1468 tests; df0df4a1 + merge b55f5e31 (check ran on b55f5e31). Note: ticket check shows 34 pre-existing task-link problems, none about field names.
