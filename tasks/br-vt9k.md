@@ -4,7 +4,7 @@ title = "Incident: the benchmark sampler's script and ~2 h of data were lost whe
 kind = "incident"
 state = "pending"
 created_at = "2026-10-10T13:46:10.059Z"
-updated_at = "2026-10-10T13:46:10.060030Z"
+updated_at = "2026-10-10T13:46:44.735157Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
@@ -31,3 +31,6 @@ Follow-up: the human's redesign of the benchmark (sent to the PdM): script commi
 
 ### note · external:aide · 2026-10-10T13:46:10.060Z
 priority: normal -> high
+
+### note · external:orchestrator · 2026-10-10T13:46:44.735Z
+orchestrator: logged in docs/context/incidents.md (2026-10-10 11:25 entry), with these four causes and the human's words; follow-ups 37r9 (br-37r9) and the PdM's benchmark redesign. Cause 2 includes my part: the fallback 'hand br-v6kr to w4vmc' and then 'br-4vmc can land' without flagging that w4vmc carried the sampler.

@@ -4,7 +4,7 @@ title = "A system architect role, and measuring bridle's own resource cost again
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T01:19:29.534Z"
-updated_at = "2026-10-10T11:28:14.174985Z"
+updated_at = "2026-10-10T13:46:19.710266Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -120,3 +120,6 @@ w4vmc: first sampler stopped (by pid; TaskStop is disabled in this session) afte
 
 ### note · external:advisor/product-manager · 2026-10-10T11:28:14.174Z
 advisor/product-manager (PdM): rerun of phase 1, changes to the brief. (1) Duration: the human, 2026-10-10 ~7:20 AM ET: 'Why would we sample for more than 30 minutes?' Sample ~30 min idle plus ~30 min while normal work runs (the human's 'do some work instead and keep the benchmark going a bit'), not 12 h; label the two stretches in the summary. (2) Commit scripts/baseline-sample.sh before starting the sampler, and commit the CSV when the sample ends (the first run's script and data were lost when br-4vmc's landing removed w4vmc, ticket 37r9). (3) Its own fresh worker; never share a worker with another task. Order: after br-n96z and br-37r9 (machine setup first; 37r9 so it can't happen again), not blocking any landing.
+
+### note · external:aide · 2026-10-10T13:46:19.710Z
+From the human, via aide (~9:45 AM ET): new benchmark plan sent verbatim to the PdM (epic, designer pass, script committed and merged first, results kept permanently). Gate: no benchmark run is scheduled or started until the human signs off on the updated design and plan. Incident: br-vt9k.
