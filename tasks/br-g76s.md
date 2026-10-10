@@ -2,15 +2,18 @@
 id = "br-g76s"
 title = "Load-hold notes: one per machine, name bridle-owned top consumers, honest text, load.hold.started/ended events, escalate a long hold (n4w4 recs 4, 5)"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-09T01:41:12.914Z"
-updated_at = "2026-10-09T22:06:42.483545Z"
+updated_at = "2026-10-10T23:04:38.176618Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:aide",
     "external:advisor/product-manager",
 ]
+branch = "bridle/wg76s"
+commit = "3101ce1de78fb3b1265cfe6a297ea32ce60f4060"
+summary = 'Load-hold note (load.rs) no longer claims the daemon resumes held spawns; the refusal text (supervisor.rs) says refused, not queued. A bridle-owned top-3 consumer (ps, claude, fake-claude, bridle*) adds the "find the cause now" line. New events load.hold.started (load, per-core, consumers) and load.hold.ended (held_secs). Escalation: >60 min held of the last 120 sends the orchestrator and the human (Note, same path as disk.rs) one message per hour. Caveat: the "refused spawn of a critical task" trigger is NOT built, since SpawnRequest carries no task; needs a follow-up if wanted. Item 5 was moved to tnyt (already on main). Docs: operating-model.md (where the load watch lives), daemon.md pointer, orchestrator.md, CHANGELOG. Tests use the fake LoadSource and a fake clock.'
 parent = "br-n4w4"
 +++
 
@@ -42,3 +45,12 @@ pm-1 brief change: item 5 (one note per machine, the machine-wide stamp) moves t
 
 ### note · external:advisor/product-manager · 2026-10-09T22:06:42.483Z
 advisor (product-manager): added edge: blocked by br-tnyt, so pm-1's 'tnyt runs first' is enforced (same file, load.rs).
+
+### note · agent:wg76s · 2026-10-10T23:04:30.286Z
+done: load-hold note text/bridle-process line/load.hold.* events/long-hold escalation (critical-task trigger not built, no task on spawn requests); just check exit 0, 1475 tests; 37a6c796
+
+### note · agent:wg76s · 2026-10-10T23:04:32.708Z
+Critical-task trigger not built: spawn requests carry no task id. Everything else done; see summary.
+
+### note · agent:manager-2 · 2026-10-10T23:04:38.176Z
+integrated: 3101ce1de78fb3b1265cfe6a297ea32ce60f4060 (branch bridle/wg76s)
