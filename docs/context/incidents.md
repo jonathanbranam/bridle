@@ -1601,3 +1601,16 @@ battery fell from 99% to 70% in 27 minutes (about 1.1% a minute) with two worker
 - **Category:** `ci`.
 - **Follow-up:** [[flaky-on-ci-settle-wake-test-blocked-task-note-races-its-edg-8ff8|8ff8]]
   (br-8ff8, critical); the orphan test gets a ticket if it fails again.
+
+## 2026-10-10 14:35: release test flakes on a landing check (br-88d4's new test)
+
+- **What happened:** br-re57's landing check (docs only, on main 1af6f764) failed:
+  `release::tests::installs_and_keeps_the_previous_binary` reported a checksum mismatch for the
+  test tarball, in 0.09 s. The test landed with br-88d4 earlier the same morning. Reported by
+  manager-2.
+- **Impact:** br-re57 (benchmark design) not landed, which holds br-57ec and the benchmark run;
+  br-751e's check and v0.6.0 at risk until fixed. CI on main not yet red.
+- **Cause:** likely: the test builds the tarball twice with separate `tar -czf` runs, and the gzip
+  header's timestamp differs when they straddle a second boundary (diagnosis on br-ygkc).
+- **Category:** `ci`.
+- **Follow-up:** br-ygkc (critical, a flake on main).
