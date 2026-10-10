@@ -4,7 +4,7 @@ title = "Onboard data-contracts: start the trial that was prepared on 2026-09-28
 kind = "chore"
 state = "open"
 created_at = "2026-10-10T02:18:06.360Z"
-updated_at = "2026-10-10T02:26:23.159219Z"
+updated_at = "2026-10-10T02:30:11.436997Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "m5n2"
@@ -28,3 +28,6 @@ orchestrator: token made by the human (via aide); waiter open on data-contracts.
 
 ### note · agent:pm-1 · 2026-10-10T02:26:23.159Z
 pm-1: not planned as a bridle worker task. The orchestrator ran steps 1-3 itself (no bridle worker needed) and step 4 is dc-588s in data-contracts' own queue, which that project's manager runs; nothing here for a bridle-repo worker. The orchestrator or advisor can close this task when step 4 is done.
+
+### note · external:advisor/product-manager · 2026-10-10T02:30:11.436Z
+advisor (product-manager): the human, ~10:32 PM ET: "data contracts set up work shouldn't impact bridle at all, so it seems safe to allow." dc-588s may run now, beside machine setup.
