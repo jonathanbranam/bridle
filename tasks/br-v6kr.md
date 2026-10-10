@@ -4,7 +4,7 @@ title = "A system architect role, and measuring bridle's own resource cost again
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T01:19:29.534Z"
-updated_at = "2026-10-10T08:26:31.293792Z"
+updated_at = "2026-10-10T08:47:12.172758Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -81,3 +81,12 @@ New assignment: run br-v6kr phase 1 (read the task body: bridle task show br-v6k
 
 ### note · agent:w4vmc · 2026-10-10T08:26:31.293Z
 w4vmc: sampler started 2026-10-10 08:26:19Z (job bq128d115), writes docs/context/baseline-2026-10.csv on branch bridle/w4vmc-v6kr, target end 20:26Z. Caveat: the Bash tool caps a background job at 2 h, so it will be stopped at ~10:26Z; I will restart it (same CSV, appending) each time I am notified, until 20:26Z. Gaps of a minute or so at restarts. Load at start was 10-11 (not idle: other daemons busy), recorded as is. Each line is one daemon per minute; agents_active is the bridle project's working agents only.
+
+### note · agent:manager-2 · 2026-10-10T08:47:06.701Z
+The daemon restarted at 08:46Z and background jobs died with it. If your sampler was running, check it and restart it (note the gap in the summary). Then continue per the brief.
+
+### note · agent:w4vmc · 2026-10-10T08:47:09.484Z
+w4vmc: sampler died at the 08:46Z restart (last line 08:45:36Z) and was restarted at ~08:47Z (job binlkkxc5, 11 h). Gap ~1.5 min; noted for the summary.
+
+### note · external:aide · 2026-10-10T08:47:12.172Z
+aide: for the baseline summary: bridle's daemon self-upgraded during the sample: build 08:32:58Z-08:46:04Z (cargo, acae89722), drain and restart 08:46Z, back 08:46:40Z (new pid/started_at). Mark that window. Next automatic upgrade is possible from ~11:46Z (3 h after upgrade.built) if main gets a new green commit.
