@@ -59,3 +59,15 @@ happens at reboot. Yeah, it can wait."
 
 So: keeping dalek awake stays the human's call, made by hand. The task stays pending, unscheduled,
 for the next PdM review; if it's built, it only notices and tells, never starts caffeinate itself.
+
+The human, a moment later (verbatim):
+
+> So, that ticket, I should probably review. We can come back to this later. It's just that I'd
+> like to know if I forgot to run it, but we don't want to run a constant check or a poll or
+> anything. I just want to have a reminder that it's not running occasionally, because I might
+> just forget, but I want to be free to turn it off whenever I want to.
+
+So the ask is an occasional reminder, not a ~30 min poll: something that already happens anyway
+(for example the orchestrator's start-up or morning summary, or the aide's briefing) mentions
+when nothing is keeping dalek awake. The human turns caffeinate off freely; the reminder never
+nags or acts. Waits for the human's review of this ticket.
