@@ -1,6 +1,6 @@
 ---
 id: rjd5
-title: "Commands to set up and sync a project everywhere: sync all seven places per machine, and add a project to both machines and mail"
+title: One idempotent command to set up a project on a machine, and track which projects are set up where
 kind: feature
 opened: 2026-10-09
 filed_by: external:aide
