@@ -4,12 +4,13 @@ title = "Only the owner's clone can push the integration branch: enforced, not a
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T23:09:30.765Z"
-updated_at = "2026-10-09T23:09:35.418948Z"
+updated_at = "2026-10-10T04:42:34.451428Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "external:advisor/product-manager",
 ]
+summary = "Option A of 8z7j, as designed. A marked pre-push script (one script shared with the tools-only hook, in crates/bridle/src/tools_only.rs) runs the hidden `bridle machine push-check`: for a push to refs/heads/<integration> it compares `hostname` with owner.toml (fresh fetch of origin/bridle/state into FETCH_HEAD with a 10s bound, else the local bridle/state branch; no readable owner refuses); other branches and tags pass. `serve` and `bridle sync` install it (idempotent, rewritten when the binary or tools-only listing changes, not written through a symlink or over a foreign hook; those only warn). Only projects with state push on get it (no owner.toml otherwise). serve now flush_now()s after claim_owner so take-over commits owner.toml before serving. apply_branches adds the three locked deny entries to every role. Rule one-pusher-for-the-integration-branch, operating-model step 4, cli.md, add-a-machine.md, CHANGELOG done. Tests: tests/owner_push_test.rs (7, temp bare origin and clones) plus a config deny test. Installs hooks only; never edits branches or settings. Caveat: governor_test working_agent_is_notified_then_stopped_when_its_turn_ends is timing-flaky under the machine's load (30-40); it failed twice in full runs, passed alone, and the final check passed with NEXTEST_RETRIES=2."
 parent = "br-8z7j"
 +++
 
@@ -34,3 +35,9 @@ Orchestrator: carries br-8z7j's build. br-8z7j was 'reopened' after its design b
 
 ### note · external:orchestrator · 2026-10-09T23:09:30.954Z
 From orchestrator: br-8z7j can't leave 'reopened' (only incidents can be planned from it), so its build is now br-hdbj (same brief, open). Plan and queue it as you said.
+
+### note · agent:whdbj · 2026-10-10T04:42:27.781Z
+Installs hooks only; never edits branches or settings of any project. just check exit 0, 1440 tests, with NEXTEST_RETRIES=2 because governor_test working_agent_is_notified_then_stopped_when_its_turn_ends timed out twice under load (passes alone).
+
+### note · agent:whdbj · 2026-10-10T04:42:34.451Z
+done: owner-only pre-push hook (Option A) built; just check exit 0, 1440 tests (NEXTEST_RETRIES=2: one unrelated governor_test is load-flaky); 06112b58
