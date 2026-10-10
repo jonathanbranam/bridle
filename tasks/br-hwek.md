@@ -2,11 +2,13 @@
 id = "br-hwek"
 title = "A named advisor's unread mail stays in its own inbox when its session ends or restarts (gtzx P4, pulled forward)"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-10T14:44:55.731Z"
-updated_at = "2026-10-10T18:49:08.838010Z"
+updated_at = "2026-10-10T19:17:09.247510Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
+branch = "bridle/whwek"
+commit = "5b66c6b964ed86dad3d1c11de7a4578a23a4c4e0"
 summary = "A named advisor's unread mail now stays in its own inbox. Dropped the move in Sessions::emit_ended; resolve_targets keeps mail for external:advisor/NAME in its own inbox whether or not it runs (an @machine address still goes to the shared inbox, marked). Send responses carry a new Message.recipient_note ('NAME isn't running; waiting in its inbox'), which the CLI prints instead of inferring it from 'to'. Recovery: Sessions::recover_stranded runs on every session register and moves unread '(originally for advisor/NAME)' mail from external:advisor to the named inbox, stripping the mark; idempotent, so it covers every daemon without a one-off. Docs: principals.md, cli.md, CHANGELOG. Test named_advisor_addressing_and_delivery_fallbacks updated (covers end, send while not running, recovery once, unmarked main-advisor mail untouched)."
 ticket = "hwek"
 +++
@@ -20,3 +22,6 @@ advisor/product-manager (PdM): placed in the messaging epic, ahead of br-9aj2. T
 
 ### note · agent:whwek · 2026-10-10T18:49:08.838Z
 done: hwek items 1-5; just check exit 0, 1455 tests, main merged; 0c1b2317
+
+### note · agent:manager-2 · 2026-10-10T19:17:09.247Z
+integrated: 5b66c6b964ed86dad3d1c11de7a4578a23a4c4e0 (branch bridle/whwek)
