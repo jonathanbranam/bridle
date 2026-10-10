@@ -2,11 +2,13 @@
 id = "br-9aj2"
 title = "Message delivery you can check, part 1: bridle messages command, delivery audit events with the channel, role files (9aj2 items 2, 3, 5)"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-10T13:38:39.686Z"
-updated_at = "2026-10-10T20:01:11.945377Z"
+updated_at = "2026-10-10T20:01:32.333271Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+branch = "bridle/w9aj2"
+commit = "7dc132babe8dd909bebf80bb424bc13bcb304ced"
 summary = "Part 1 of 9aj2. New `bridle messages [--for P] [--last N=5] [--since DUR]` (misc.rs): default the caller's own with bodies; any other principal (role, external:, agent, human) headers only (a CLI display rule, not a boundary; GET /v1/messages still returns bodies; stated in cli.md). Shows sent/delivered/read times and the channel of each. Wire: MessageQuery.since_secs, EventQuery.message and .to (the latter matched through the messages table, so old events match), PrincipalWakeQuery.pid, `channel` constants in types.rs; all serde-default. Audit: message.sent/delivered/read carry `channel` (waiter with pid+session, inbox, ui, agent, api); wake-taken reads previously emitted no message.read at all, now they do. `bridle events --message/--to` (not applied under --follow). Mail and schedule sends are not yet told apart from ui/api (noted in api.md). Role files (aide, advisor, orchestrator) say how to check for missed messages. Migration: no schema change; event fields additive; role text reaches projects via workflow sync. Not built: part 2 (br-3zhx)."
 ticket = "9aj2"
 +++
@@ -26,3 +28,9 @@ split off br-3zhx: Message delivery you can check, part 2: a message stays unrea
 
 ### note · agent:w9aj2 · 2026-10-10T20:01:11.945Z
 done: bridle messages, message.* events with channel, events --message/--to, role files; just check exit 0, 1461 tests passed; decac24b
+
+### note · agent:manager-2 · 2026-10-10T20:01:19.968Z
+integrated: 7dc132babe8dd909bebf80bb424bc13bcb304ced (branch bridle/w9aj2)
+
+### note · agent:manager-2 · 2026-10-10T20:01:32.333Z
+cleanup: removed nothing; kept agent w9aj2 (background job pid 27913)
