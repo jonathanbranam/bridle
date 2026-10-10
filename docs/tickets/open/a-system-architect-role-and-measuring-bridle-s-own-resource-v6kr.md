@@ -100,3 +100,61 @@ Facts (checked by the aide at dade5b1a):
 - So nothing done is affected, but phase 2's "memory beside load" names no measure. top's used/free (and sysinfo's `used_memory`) counts file cache and inactive pages as used on macOS, so it would read near-full on an idle Mac.
 
 For the design: on macOS log the memory pressure level (`kern.memorystatus_vm_pressure_level`, what `memory_pressure` reports), compressed memory and swap used, not used/free. For bridle's own cost, log its processes' footprint or RSS. On Linux, use `MemAvailable` and PSI (`/proc/pressure/memory`).
+
+## The first baseline was lost (2026-10-10)
+
+The 12 h passive sample started at 08:26Z on worker w4vmc, which also held br-4vmc's parked branch.
+Landing br-4vmc at ~11:25Z removed w4vmc and its worktree, which held the uncommitted script and
+~2 h of CSV. Incident br-vt9k; the landing fix is br-37r9 (landed 5e2944fd, ticket 37r9). The 12 h
+duration itself was a misreading: the human's "overnight" (2026-10-08) said when to run, not how
+long (the human, 2026-10-10 ~7:20 AM ET: "Why would we sample for more than 30 minutes?").
+
+## The human's plan for the benchmark (2026-10-10 ~9:45 AM ET, via the aide, verbatim)
+
+> wow - we lost everything from the benchmark sampler! OMG that is a huge miss; traack in the
+> incident log.
+>
+> So, sure, let's just run a "live benchmark" today; don't pause any work, don't interrupt
+> anything; run a sampler benchmark any time it is ready; the sampler script or whatever MUST be
+> committed and merged first; so schedule that separately if necessary or write it first; then
+> the sampler/benchmark will run, results are committed! Stored forever (until we purge due to
+> irrelevance I guess). If the data sizes are too big for github then suggest an alternative
+> solution; they could be stored on a branch for now so we can purge them later without
+> re-writing history.
+>
+> The benchmarking is important but should not interrupt other work during the day; do we have
+> the design role? If so, have it do a design pass on the benchmarking to ensure that the design
+> is appropriate and considers all critical factors:
+>
+> 1. benchmark during idle vs. busy
+> 2. no fixed scenarios yet
+> 3. benchmark should have a log of what happened during the run (event log export?)
+> 4. must run the same script every time, so design and write a good script
+> 5. commit and merge the script first
+> 6. what is the shape and size of the output data and where should it live?
+> 7. keep the results permanently somehow; if too big for github, create a folder on dalek inside
+>    the bridle workspace parent folder and add benchmarks in dated / timestamped folders; we can
+>    send to DropBox or something else later for retention
+>
+> Since this went poorrly last night, I need to review the updated design and plan. So, do all
+> the work to get a plan made; the script can be written that's fine (we can re-write it if there
+> are issues). But don't schedule or run the benchmark until I sign off.
+>
+> This is my plan - send all of this verbatim to the PdM and ask them to put this into an epic in
+> the proper theme and to own and balance the schedule for this alongside other work.
+
+## Plan (PdM, 2026-10-10)
+
+Epic "Benchmarking" (theme performance), owned by the PdM. Steps, each its own task:
+
+1. **Design pass** (designer): options and a recommendation written into this ticket under
+   `## Design options`, covering the human's seven points. The PdM sends it to the human through
+   the aide for review.
+2. **The script** (worker, after the design): written to the chosen design, committed and merged
+   to main. Allowed before sign-off (the human: "the script can be written").
+3. **The first live run**: GATED. It is not scheduled or started until the human signs off on the
+   design and plan. Runs alongside normal work, interrupts nothing, and commits its results where
+   the design says.
+
+The old phase-1 brief on br-v6kr (12 h passive sample, script uncommitted) is superseded by these.
+The architect role and the counters (phase 2) stay as the order above sets them.
