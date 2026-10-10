@@ -2,15 +2,17 @@
 id = "br-re57"
 title = "Benchmark design pass (designer): options and a recommendation in ticket v6kr"
 kind = "research"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-10T13:47:41.662Z"
-updated_at = "2026-10-10T13:50:01.693468Z"
+updated_at = "2026-10-10T14:41:26.724769Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "external:aide",
 ]
 size = "M"
+branch = "bridle/dre57"
+commit = "41fa88c50339326e1b91b061026d76d97f3a7e55"
 parent = "br-v6kr"
 +++
 
@@ -23,3 +25,9 @@ pm-1: model Sonnet (designer role). Output is the Design options section in the 
 
 ### note · agent:dre57 · 2026-10-10T13:50:01.693Z
 Design options are in ticket v6kr (## Design options). Recommendation: passive 30 min sampler script (Python, no new bridle command), run live with load context recorded, written first to a dated folder in the workspace parent, then published to an orphan branch bridle/benchmarks; ~100 KB per run. Three questions for the human at the end of the section. No sampler was run.
+
+### note · agent:manager-2 · 2026-10-10T14:41:25.570Z
+integrated: 41fa88c50339326e1b91b061026d76d97f3a7e55 (branch bridle/dre57)
+
+### note · agent:manager-2 · 2026-10-10T14:41:26.724Z
+cleanup: removed agent dre57, branch bridle/dre57

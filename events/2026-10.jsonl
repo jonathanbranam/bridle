@@ -1450,3 +1450,4 @@
 {"actor":"agent:manager-2","at":"2026-10-10T14:35:41.486014Z","from":"pending","task":"br-ygkc","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-10T14:36:15.510614Z","from":"open","task":"br-ygkc","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-10T14:36:16.823643Z","queue":"reprioritized"}
+{"actor":"agent:manager-2","at":"2026-10-10T14:41:25.570987Z","from":"planned","task":"br-re57","to":"integrated"}
