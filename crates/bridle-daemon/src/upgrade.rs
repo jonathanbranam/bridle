@@ -42,6 +42,8 @@ pub struct UpgradeHooks {
     /// Stand-in pre-flight (program then args). With `build` set and this not, none runs, so a
     /// test's stand-in build never execs the test binary.
     pub preflight: Option<Vec<String>>,
+    /// Stand-in for GitHub's releases (`self_upgrade = "release"`).
+    pub releases: Option<Arc<dyn crate::release::ReleaseSource>>,
 }
 
 impl fmt::Debug for UpgradeHooks {
@@ -50,6 +52,7 @@ impl fmt::Debug for UpgradeHooks {
             .field("gh", &self.gh.is_some())
             .field("build", &self.build)
             .field("preflight", &self.preflight)
+            .field("releases", &self.releases.is_some())
             .finish()
     }
 }
@@ -66,6 +69,9 @@ pub struct Upgrader {
     busy: Arc<AtomicBool>,
     /// The last commit an upgrade failed on (memory only), so the automatic trigger skips it.
     failed: Arc<Mutex<Option<String>>>,
+    releases: Arc<dyn crate::release::ReleaseSource>,
+    /// When GitHub was last asked for the newest release (memory only).
+    last_poll: Arc<Mutex<Option<std::time::Instant>>>,
     /// The last candidate held back by the minimum interval (memory only), so it's logged once.
     deferred: Arc<Mutex<Option<String>>>,
 }
@@ -84,6 +90,7 @@ impl Upgrader {
         gh: Arc<dyn Gh>,
         build: Option<Vec<String>>,
         preflight: Option<Vec<String>>,
+        releases: Option<Arc<dyn crate::release::ReleaseSource>>,
     ) -> Self {
         let preflight = match (preflight, build.is_some()) {
             (Some(c), _) => Preflight::Command(c),
@@ -104,8 +111,25 @@ impl Upgrader {
             check_timeout: CHECK_TIMEOUT,
             busy: Default::default(),
             failed: Default::default(),
+            releases: releases.unwrap_or_else(|| Arc::new(crate::release::CurlSource)),
+            last_poll: Default::default(),
             deferred: Default::default(),
         }
+    }
+
+    pub fn releases(&self) -> Arc<dyn crate::release::ReleaseSource> {
+        self.releases.clone()
+    }
+
+    /// Whether GitHub may be asked again, and if so counts this as the ask: at most once per
+    /// [`crate::release::POLL_EVERY`], failures included, so errors and rate limits back off too.
+    pub fn poll_due(&self) -> bool {
+        let mut last = self.last_poll.lock().expect("poll lock");
+        if last.is_some_and(|t| t.elapsed() < crate::release::POLL_EVERY) {
+            return false;
+        }
+        *last = Some(std::time::Instant::now());
+        true
     }
 
     /// Claims the single upgrade slot; `false` if one is under way. Release with [`Self::release`].
@@ -358,6 +382,18 @@ async fn is_ancestor(repo: &Path, ancestor: &str, of: &str) -> bool {
 mod tests {
     use super::*;
 
+    #[test]
+    fn github_is_polled_at_most_every_interval() {
+        let u = Upgrader::new(
+            Arc::new(crate::ci::RealGh::new(".".into())),
+            None,
+            None,
+            None,
+        );
+        assert!(u.poll_due());
+        assert!(!u.poll_due());
+    }
+
     async fn git(repo: &Path, args: &[&str]) -> String {
         let out = tokio::process::Command::new("git")
             .args(["-c", "user.name=t", "-c", "user.email=t@t"])
@@ -386,6 +422,7 @@ mod tests {
             Arc::new(crate::ci::RealGh::new(dir.to_path_buf())),
             None,
             Some(vec!["sh".into(), script.to_string_lossy().into_owned()]),
+            None,
         );
         up.check_timeout = Duration::from_millis(500);
         up

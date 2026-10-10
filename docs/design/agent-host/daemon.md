@@ -334,6 +334,19 @@ a running `bridle gateway` re-executes itself when it sees that file change (hum
 'Running it detached, and staying current'). The daemon does nothing for it: no hook, no quiet
 point (the gateway holds no agent turns), and it works on machines with no daemon.
 
+**Release upgrade.** `self_upgrade = "release"` is for client machines that don't build. On the same
+tick and the same quiet-point test, the daemon asks GitHub (`curl`, unauthenticated; the repo is
+`[daemon] release_repo` or the checkout's `origin`) for the newest release, at most every 30
+minutes (`release::POLL_EVERY`, counted even when the ask fails, so rate limits back off). A tag
+newer than the running version (plain `X.Y.Z` compare, a prerelease or odd tag is never newer)
+starts a background upgrade: download `bridle-<tag>-<target>.tar.gz` and `SHA256SUMS` (names from
+the release workflow, `scripts/package-release.sh`), check the SHA256, unpack, keep the running
+binary as `bridle.prev`, write the new one beside the install path and rename it over, then the
+usual pre-flight (`serve --check`), refuse-spawns wait, restart with rollback armed. A failed
+download, checksum or unpack changes nothing and wakes `upgrade_failed` (the orchestrator; nothing
+goes to the human's inbox). That tag isn't retried until the daemon restarts. The recorded built
+value is the tag, which the restart's commit reports. Bridle's own daemon keeps `true`.
+
 While a built commit waits for its quiet point (manual or automatic), new worker spawns are refused
 with a 409 naming the build, and `bridle status` shows an `upgrade` line, so running workers drain
 instead of being replaced as they land. If the wait gives up, the refusal is lifted; a successful

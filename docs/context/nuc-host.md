@@ -97,6 +97,8 @@ To move one (old machine to new):
 2. **Old machine, stop the daemon** with `bridle stop-daemon`. One writer only: don't start the new
    daemon first. Shutdown stops the agents, flushes tasks and pushes `bridle/state` (bounded to
    10 s); check that `git push origin bridle/state` says up to date, or run it yourself.
+   (A client machine that shouldn't build can set `[daemon] self_upgrade = "release"` and install
+   the release binary once; the daemon then keeps itself current, see `daemon.md`, Upgrade.)
 3. **New machine, clone** the repo and build or install `bridle`. `bridle/state` comes with it from
    origin; no manual `git fetch origin bridle/state:bridle/state`.
 4. **New machine, `bridle serve --take-over`** in the clone (add `--detach` to background it).

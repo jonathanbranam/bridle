@@ -34,6 +34,12 @@ pub async fn running_commit(store: &Store, repo: &Path, integration: &str) -> Op
     {
         return Some(short.trim().to_string());
     }
+    // A release tag (`self_upgrade = "release"`) needn't be in the checkout.
+    if let Some(tag) = crate::upgrade::built(store).await
+        && tag.starts_with('v')
+    {
+        return Some(tag);
+    }
     head(repo, integration).await
 }
 

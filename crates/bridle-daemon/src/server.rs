@@ -59,7 +59,9 @@ pub struct AppState {
     pub restart_requested: std::sync::Arc<std::sync::atomic::AtomicBool>,
     pub upgrader: crate::upgrade::Upgrader,
     /// `[daemon] self_upgrade`.
-    pub self_upgrade: bool,
+    pub self_upgrade: crate::config::SelfUpgrade,
+    /// `[daemon] release_repo`.
+    pub release_repo: Option<String>,
     /// `[daemon] self_upgrade_min_interval`.
     pub self_upgrade_min_interval: std::time::Duration,
     /// How long a drain waits before it wakes the orchestrator (once).
@@ -3905,7 +3907,7 @@ pub async fn self_upgrade_tick(state: &AppState) {
 /// [`self_upgrade_tick`] at an injected time. A candidate inside `[daemon]
 /// self_upgrade_min_interval` of the last upgrade is noted once and left for a later tick.
 pub async fn self_upgrade_tick_at(state: &AppState, now: DateTime<Utc>) {
-    if !state.self_upgrade
+    if state.self_upgrade == crate::config::SelfUpgrade::Off
         || state
             .restart_requested
             .load(std::sync::atomic::Ordering::SeqCst)
@@ -3914,6 +3916,10 @@ pub async fn self_upgrade_tick_at(state: &AppState, now: DateTime<Utc>) {
         return;
     }
     if !state.upgrader.claim() {
+        return;
+    }
+    if state.self_upgrade == crate::config::SelfUpgrade::Release {
+        release_upgrade_tick(state).await;
         return;
     }
     let sha = match state
@@ -3945,6 +3951,93 @@ pub async fn self_upgrade_tick_at(state: &AppState, now: DateTime<Utc>) {
     tokio::spawn(async move {
         upgrade_in_background(bg, "system".to_string(), sha).await;
     });
+}
+
+/// `self_upgrade = "release"`, with the upgrade slot claimed: look for a newer release (at most
+/// every half hour) and start installing it. Not finding one, or GitHub being unreachable or
+/// rate-limited, is quiet; only a download that went wrong wakes the orchestrator.
+async fn release_upgrade_tick(state: &AppState) {
+    if !state.upgrader.poll_due() {
+        state.upgrader.release();
+        return;
+    }
+    let repo = match &state.release_repo {
+        Some(r) => Some(r.clone()),
+        None => crate::worktree::run_git(&state.workspace.repo, &["remote", "get-url", "origin"])
+            .await
+            .ok()
+            .and_then(|u| crate::release::github_slug(&u)),
+    };
+    let Some(repo) = repo else {
+        tracing::warn!("self-upgrade: no GitHub repo (set [daemon] release_repo)");
+        state.upgrader.release();
+        return;
+    };
+    let src = state.upgrader.releases();
+    let latest = tokio::task::spawn_blocking(move || src.latest(&repo)).await;
+    let release = match latest {
+        Ok(Ok(r)) if crate::release::is_newer(&r.tag, env!("CARGO_PKG_VERSION")) => r,
+        Ok(Ok(_)) => {
+            state.upgrader.release();
+            return;
+        }
+        Ok(Err(e)) => {
+            tracing::debug!(error = %e, "self-upgrade: no release found");
+            state.upgrader.release();
+            return;
+        }
+        Err(e) => {
+            tracing::debug!(error = %e, "self-upgrade: release lookup failed");
+            state.upgrader.release();
+            return;
+        }
+    };
+    if state.upgrader.failed_before(&release.tag) {
+        state.upgrader.release();
+        return;
+    }
+    let bg = state.clone();
+    tokio::spawn(async move {
+        release_upgrade_in_background(bg, release).await;
+    });
+}
+
+/// Download and install a release, then restart as an upgrade does.
+async fn release_upgrade_in_background(state: AppState, release: crate::release::Release) {
+    let tag = release.tag.clone();
+    upgrade_wake(
+        &state,
+        "upgrade",
+        format!("upgrade: installing release {tag}"),
+        serde_json::json!({"commit": tag, "stage": "downloading"}),
+    )
+    .await;
+    let installed = match (crate::release::this_target(), crate::exe_path()) {
+        (None, _) => Err("no release binary for this platform".to_string()),
+        (_, Err(e)) => Err(format!("finding the running binary: {e}")),
+        (Some(target), Ok(exe)) => {
+            let src = state.upgrader.releases();
+            let ws = state.workspace.clone();
+            let r = release.clone();
+            tokio::task::spawn_blocking(move || {
+                crate::release::fetch_and_install(src.as_ref(), &ws, &r, target, &exe)
+            })
+            .await
+            .unwrap_or_else(|e| Err(e.to_string()))
+        }
+    };
+    let built = match installed {
+        Ok(()) => state
+            .upgrader
+            .check_built(&state.workspace)
+            .await
+            .map_err(|e| format!("installed {tag} but refused to restart into it: {e}")),
+        Err(e) => Err(format!(
+            "release {tag} not installed; the daemon is unchanged: {e}"
+        )),
+    };
+    // A failure goes to the orchestrator as a wake, not to the human's inbox.
+    restart_after_install(&state, "system", &tag, &tag, built, false).await;
 }
 
 async fn upgrade_reply(
@@ -4018,25 +4111,40 @@ async fn upgrade_in_background(state: AppState, who: String, sha: String) {
             "build of {short} failed; the daemon is unchanged: {e}"
         )),
     };
+    restart_after_install(&state, &who, &sha, &short, built, true).await;
+}
+
+/// The shared end of an upgrade: with the new binary in place (`built`), restart at a quiet
+/// point; any failure leaves the running daemon as it was, wakes the orchestrator and tells the
+/// human if `tell_human`. `sha` is what's recorded as built (a commit, or a release tag).
+async fn restart_after_install(
+    state: &AppState,
+    who: &str,
+    sha: &str,
+    short: &str,
+    built: Result<(), String>,
+    tell_human: bool,
+) {
+    use bridle_api::types::event_kind as ek;
     let outcome = match built {
         Ok(()) => {
             upgrade_event(
-                &state,
+                state,
                 ek::UPGRADE_BUILT,
-                &who,
+                who,
                 serde_json::json!({"commit": sha}),
             )
             .await;
             upgrade_event(
-                &state,
+                state,
                 ek::UPGRADE_DRAINING,
-                &who,
+                who,
                 serde_json::json!({"commit": sha}),
             )
             .await;
             // The drain stays on once the restart is certain (the daemon is about to exec);
             // `perform_restart` lifts it on any error so the daemon is never frozen for good.
-            perform_restart(&state, &who, Some(&sha))
+            perform_restart(state, who, Some(sha))
                 .await
                 .map(|_| ())
                 .map_err(|e| format!("built {short} but did not restart: {}", e.message))
@@ -4045,22 +4153,25 @@ async fn upgrade_in_background(state: AppState, who: String, sha: String) {
     };
     state.upgrader.release();
     let Err(text) = outcome else { return };
-    state.upgrader.note_failed(&sha);
+    state.upgrader.note_failed(sha);
     tracing::warn!(%text, "upgrade failed");
     upgrade_event(
-        &state,
+        state,
         ek::UPGRADE_FAILED,
-        &who,
+        who,
         serde_json::json!({"commit": sha, "error": text}),
     )
     .await;
     upgrade_wake(
-        &state,
+        state,
         "upgrade_failed",
         format!("upgrade: {text}"),
         serde_json::json!({"commit": sha, "stage": "failed", "error": text}),
     )
     .await;
+    if !tell_human {
+        return;
+    }
     let _ = state
         .manager
         .send(

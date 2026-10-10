@@ -23,6 +23,8 @@ pub enum ConfigError {
     },
     #[error("invalid duration {0:?}: expected a number followed by s, m or h")]
     BadDuration(String),
+    #[error("invalid self_upgrade {0:?}: expected true, false or \"release\"")]
+    BadSelfUpgrade(String),
     #[error("invalid listen address {0:?}: {1}")]
     BadListen(String, std::net::AddrParseError),
     #[error("[budget] {field} needs a \"default\" entry")]
@@ -1531,6 +1533,34 @@ impl CommandsConfig {
     }
 }
 
+/// What `[daemon] self_upgrade` does: `false`/absent nothing, `true` builds the newest green commit
+/// of the integration branch, `"release"` installs the newest GitHub release's binary.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SelfUpgrade {
+    Off,
+    Main,
+    Release,
+}
+
+/// The raw TOML value of `self_upgrade`: a bool (the original form) or a string.
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+enum SelfUpgradeSetting {
+    Bool(bool),
+    Mode(String),
+}
+
+impl SelfUpgradeSetting {
+    fn into_mode(self) -> Result<SelfUpgrade, ConfigError> {
+        match self {
+            Self::Bool(true) => Ok(SelfUpgrade::Main),
+            Self::Bool(false) => Ok(SelfUpgrade::Off),
+            Self::Mode(m) if m == "release" => Ok(SelfUpgrade::Release),
+            Self::Mode(m) => Err(ConfigError::BadSelfUpgrade(m)),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Config {
     pub listen: SocketAddr,
@@ -1543,7 +1573,10 @@ pub struct Config {
     pub claim_lease_after: Duration,
     /// `[daemon] self_upgrade`: when a newer green commit is on the integration
     /// branch, run what `bridle restart --upgrade` runs (docs/design/agent-host/daemon.md, Upgrade).
-    pub self_upgrade: bool,
+    pub self_upgrade: SelfUpgrade,
+    /// `[daemon] release_repo` (`owner/name`): where `self_upgrade = "release"` looks for releases;
+    /// by default taken from the checkout's `origin` remote.
+    pub release_repo: Option<String>,
     /// `[daemon] self_upgrade_min_interval`: the automatic upgrade waits this long after the
     /// last upgrade, so landings in between go in as one batch. `0s` is no wait. An explicit
     /// `bridle restart --upgrade` ignores it.
@@ -1632,7 +1665,8 @@ impl Default for Config {
             listen_set: false,
             stall_after: Duration::from_secs(10 * 60),
             claim_lease_after: Duration::from_secs(10 * 60),
-            self_upgrade: false,
+            self_upgrade: SelfUpgrade::Off,
+            release_repo: None,
             self_upgrade_min_interval: Duration::from_secs(3 * 3600),
             stop_grace: Duration::from_secs(30),
             roles,
@@ -1975,7 +2009,10 @@ impl Config {
                 config.claim_lease_after = parse_duration(&s)?;
             }
             if let Some(v) = d.self_upgrade {
-                config.self_upgrade = v;
+                config.self_upgrade = v.into_mode()?;
+            }
+            if let Some(r) = d.release_repo {
+                config.release_repo = Some(r);
             }
             if let Some(s) = d.self_upgrade_min_interval {
                 config.self_upgrade_min_interval = parse_duration(&s)?;
@@ -2935,7 +2972,9 @@ struct RawDaemon {
     #[serde(default)]
     claim_lease_after: Option<String>,
     #[serde(default)]
-    self_upgrade: Option<bool>,
+    self_upgrade: Option<SelfUpgradeSetting>,
+    #[serde(default)]
+    release_repo: Option<String>,
     #[serde(default)]
     self_upgrade_min_interval: Option<String>,
     #[serde(default)]
@@ -3504,14 +3543,19 @@ mod tests {
         assert_eq!(cfg.listen, "0.0.0.0:7433".parse().expect("addr"));
         assert_eq!(cfg.stall_after, Duration::from_secs(5 * 60));
         assert_eq!(cfg.claim_lease_after, Duration::from_secs(15 * 60));
-        assert!(cfg.self_upgrade);
-        assert!(!Config::default().self_upgrade);
+        assert_eq!(cfg.self_upgrade, SelfUpgrade::Main);
+        assert_eq!(Config::default().self_upgrade, SelfUpgrade::Off);
         assert_eq!(cfg.self_upgrade_min_interval, Duration::from_secs(90 * 60));
         assert_eq!(
             Config::default().self_upgrade_min_interval,
             Duration::from_secs(3 * 3600)
         );
         assert_eq!(cfg.stop_grace, Duration::from_secs(45));
+        let release = Config::parse("[daemon]\nself_upgrade = \"release\"\nrelease_repo = \"a/b\"")
+            .expect("release");
+        assert_eq!(release.self_upgrade, SelfUpgrade::Release);
+        assert_eq!(release.release_repo.as_deref(), Some("a/b"));
+        assert!(Config::parse("[daemon]\nself_upgrade = \"nightly\"").is_err());
 
         // Overridden field changes; untouched fields keep the built-in default.
         let worker = &cfg.roles["worker"];

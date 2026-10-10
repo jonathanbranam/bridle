@@ -37,6 +37,7 @@ fn hooks(conclusion: &'static str, build: &str) -> bridle_daemon::Overrides {
         gh: Some(Arc::new(FakeGh(conclusion))),
         build: Some(vec!["sh".to_string(), "-c".to_string(), build.to_string()]),
         preflight: None,
+        releases: None,
     };
     o
 }

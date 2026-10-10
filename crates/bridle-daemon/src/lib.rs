@@ -38,6 +38,7 @@ pub mod ports;
 mod principal_wake;
 mod queue_nudge;
 pub mod reevaluate;
+mod release;
 mod restart;
 pub mod rollback;
 pub mod rules;
@@ -57,6 +58,7 @@ pub mod warm_build;
 pub mod worktree;
 
 pub use governor::Governor;
+pub use release::{Asset as ReleaseAsset, Release, ReleaseSource};
 pub use supervisor::{AgentManager, DAEMON_SHUTDOWN_REASON, SupervisorError, ToTarget};
 pub use upgrade::UpgradeHooks;
 
@@ -681,6 +683,7 @@ async fn start_inner(
         gh.clone(),
         overrides.upgrade.build.clone(),
         overrides.upgrade.preflight.clone(),
+        overrides.upgrade.releases.clone(),
     );
     let ci = ci::CiWatcher::new(
         config.ci.github,
@@ -836,6 +839,7 @@ async fn start_inner(
             outbox::notifier(store.clone(), manager.clone()),
         ),
         self_upgrade: config.self_upgrade,
+        release_repo: config.release_repo.clone(),
         self_upgrade_min_interval: config.self_upgrade_min_interval,
         drain_wake_after: overrides.drain_wake_after,
         schedule_timezone: config.schedule_timezone.clone(),

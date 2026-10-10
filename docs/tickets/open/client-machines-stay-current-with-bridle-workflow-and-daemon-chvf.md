@@ -63,6 +63,12 @@ The human approved the design, with step 3 as revised (the daemon's own workflow
 binary's tag) and the "at most about daily" release cadence. Steps 2 and 3 change the daemon's
 upgrade and start-up path, so they land after the human's trip (not before Sat 2026-10-03).
 
+## Progress
+
+Step 2 is built on branch `bridle/self-upgrade` (task br-88d4), parked for review until the human's
+return: `self_upgrade = "release"` polls GitHub (at most every 30 minutes), verifies the SHA256,
+swaps the binary in and restarts through q7rx's machinery. Step 3 isn't started.
+
 ## To decide
 
 - Whether step 2 also replaces building on dalek (probably not: bridle's own daemon builds `main`).
