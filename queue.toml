@@ -44,6 +44,9 @@ tasks = ["br-ysmu"]
 tasks = ["br-cufw"]
 
 [[tier]]
+tasks = ["br-k3jk"]
+
+[[tier]]
 tasks = ["br-ju5q"]
 
 [[tier]]
