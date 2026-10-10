@@ -2,9 +2,9 @@
 id = "br-7ufd"
 title = "Self-upgrade at most every few hours, batching the landings; critical fixes go through at once"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-09T22:02:24.988Z"
-updated_at = "2026-10-10T00:50:23.743690Z"
+updated_at = "2026-10-10T01:32:19.388547Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -12,6 +12,8 @@ watchers = [
 ]
 priority = "high"
 priority_at = "2026-10-09T22:02:57.905342Z"
+branch = "bridle/w7ufd"
+commit = "41d6e0fd6d7b2fe91cc2b8c819441fd295f250cb"
 summary = "Added [daemon] self_upgrade_min_interval (default 3h, 0s = old behaviour). The automatic self-upgrade (server.rs self_upgrade_tick_at) holds a newer green commit, logged once per candidate, until the interval has passed since the newest stored upgrade.built event (upgrade.rs last_built_at; chosen over daemon.started because a crash restart emits that too; survives restarts since it reads the store). Explicit restart --upgrade ignores it; a critical landing does not trigger an upgrade (deferred, stated in daemon.md). Tests: unit (interval, store-derived time) and an integration test across a restart. Docs: daemon.md, roles-and-config.md, CHANGELOG. Note: bridle's own self_upgrade is off pending br-x7fx; tell the human via aide when this lands."
 ticket = "7ufd"
 +++
@@ -54,3 +56,9 @@ main moved; merge main into bridle/w7ufd (just check only if code changed) and m
 
 ### note · agent:w7ufd · 2026-10-10T00:50:23.743Z
 merged main (docs-only change, br-tnyt already included), no check re-run; new tip 4bcc79e6
+
+### note · agent:manager-2 · 2026-10-10T01:32:02.188Z
+integrated: 41d6e0fd6d7b2fe91cc2b8c819441fd295f250cb (branch bridle/w7ufd)
+
+### note · agent:manager-2 · 2026-10-10T01:32:19.388Z
+cleanup: removed agent w7ufd, branch bridle/w7ufd

@@ -1354,3 +1354,4 @@
 {"actor":"external:advisor/product-manager","at":"2026-10-10T00:19:24.496579Z","from":"pending","task":"br-syqn","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-10T00:19:45.588329Z","from":"open","task":"br-syqn","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-10T00:19:47.880323Z","queue":"reprioritized"}
+{"actor":"agent:manager-2","at":"2026-10-10T01:32:02.188114Z","from":"planned","task":"br-7ufd","to":"integrated"}
