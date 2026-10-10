@@ -1358,3 +1358,6 @@
 {"actor":"external:aide","at":"2026-10-10T01:37:33.559396Z","from":"planned","task":"br-x7fx","to":"integrated"}
 {"actor":"agent:pm-1","at":"2026-10-10T01:41:57.061647Z","queue":"reprioritized"}
 {"actor":"human","at":"2026-10-10T01:48:05.370Z","from":"","task":"br-xxq8","to":"pending"}
+{"actor":"human","at":"2026-10-10T02:02:03.952Z","from":"","task":"br-4vmc","to":"pending"}
+{"actor":"agent:manager-2","at":"2026-10-10T02:02:06.066611Z","from":"pending","task":"br-4vmc","to":"open"}
+{"actor":"agent:manager-2","at":"2026-10-10T02:02:09.319945Z","from":"planned","task":"br-8ff8","to":"integrated"}

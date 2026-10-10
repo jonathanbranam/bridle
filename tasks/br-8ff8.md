@@ -2,13 +2,15 @@
 id = "br-8ff8"
 title = "Flaky on CI: settle_wake_test blocked-task note races its edge setup"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-09T23:23:12.045Z"
-updated_at = "2026-10-10T01:58:07.948204Z"
+updated_at = "2026-10-10T02:02:09.319945Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 priority = "critical"
 priority_at = "2026-10-09T23:23:12.261517Z"
+branch = "bridle/w8ff8"
+commit = "d0869bab343e1c27a3e4188b2c80e6df8d8cb90a"
 summary = "Fixed the flaky settle_wake_test::a_task_blocked_by_a_dependency_makes_no_note (ticket 8ff8). Test-only change in crates/bridle-daemon/tests/settle_wake_test.rs: the blocked-task case now uses a 5 s settle (was 1 s) and sleeps 6500 ms (was 2500 ms). Reason: the settle clock starts at task creation (tasks.rs settle_until), so the blocks edge must land before the settle expires; planning two tasks plus the edge can outrun 1 s on a slow runner. Assertion unchanged. The other tests in the file have no edge-setup race and are untouched. Diagnosis confirmed; no product code changed. Verified: the blocked test passed 20/20 consecutive runs; just check green on the merged tree (1432 passed, 5 skipped). Earlier red runs were timing tests failing under machine load 120-135 (session_test a_session_can_restart_itself, governor_test working_agent_is_notified_then_stopped_when_its_turn_ends), not changed by this work. Commit 5c81b767 message still says NOT YET GREEN: stale now that the check passed. Merged main (41d6e0fd, br-7ufd)."
 ticket = "8ff8"
 +++
@@ -34,3 +36,6 @@ main moved; merge main into bridle/w8ff8 (docs-only? then no re-check), message 
 
 ### note · agent:w8ff8 · 2026-10-10T01:58:07.948Z
 tip fcd9f4f8 (merge of main; main's new commits are docs, tickets and a .bridle role note only, no code, so no re-check). Last green check: 5c81b767.
+
+### note · agent:manager-2 · 2026-10-10T02:02:09.319Z
+integrated: d0869bab343e1c27a3e4188b2c80e6df8d8cb90a (branch bridle/w8ff8)
