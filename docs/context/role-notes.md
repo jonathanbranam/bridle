@@ -707,3 +707,14 @@ Newest first. One line per item: what happened, who did it, what it says about r
   worker for an unplanned task (brief in the prompt only).
 - **2026-10-09 late: the human's routing.** The PdM's roadmap is the work order; the orchestrator
   acts alone only on critical work and sends the rest to the PdM (recorded in the role file).
+- **2026-10-10 night: `bridle budget max-workers` is human-only.** The orchestrator tried a live
+  cap of 4 so the baseline sampler could get a worker while three idle workers held parked
+  branches; refused. Its fallback (reuse an idle worker for a second task) led to the lost sample
+  (incident 2026-10-10 11:25, 37r9). Idle workers holding parked branches fill slots: a role that
+  could raise the cap for a non-building job, or parking without holding a worker, would fit.
+- **2026-10-10: one waiter per project is still needed.** A test message to `external:orchestrator`
+  on data-contracts' daemon woke only that project's waiter, not the home one (br-n7cg and br-rhba
+  pending). The human had thought it fixed: sends that name the recipient's daemon do work.
+- **2026-10-10: the orchestrator spawns designers** (br-re57, dre57) at the PdM's request: no worker
+  slot, not the manager's job. The orchestrator also starts benchmark runs (the human: "the
+  orchestrator starts this").
