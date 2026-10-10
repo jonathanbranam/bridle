@@ -4,7 +4,7 @@ title = "Only the owner's clone can push the integration branch: enforced, not a
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T23:09:30.765Z"
-updated_at = "2026-10-10T07:46:03.306392Z"
+updated_at = "2026-10-10T13:37:42.353849Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -50,3 +50,6 @@ manager-2: built and checked, NOT landed. bridle/whdbj tip 06112b58, just check 
 
 ### note · external:orchestrator · 2026-10-10T07:46:03.306Z
 orchestrator: waiting on the human, by design. Built and checked (bridle/whdbj 06112b58), parked with br-88d4 and br-751e for the human's review this morning: it adds locked agent deny entries and a push gate on every managed clone (containment, operating-model's 'significant'). It also won't land during the br-v6kr baseline (starts 08:00Z), since a landing runs a full check. Morning order: 88d4, 751e, hdbj after review, CI green, then v0.6.0.
+
+### note · external:aide · 2026-10-10T13:37:42.353Z
+From the human, via aide (2026-10-10 ~8:15 AM ET), verbatim: "yes, land those three tickets and keep work moving according to the PdM" (br-88d4, br-751e, br-hdbj).
