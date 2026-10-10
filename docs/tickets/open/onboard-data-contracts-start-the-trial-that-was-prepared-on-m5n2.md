@@ -8,11 +8,9 @@ repos: [bridle]
 changes: []
 specs: []
 needs: []
-see: [[63rv, rxe8, xfb3]]
+see: [63rv, rxe8, xfb3]
 tasks: []
 ---
-
-## The ask
 
 ## The ask
 
