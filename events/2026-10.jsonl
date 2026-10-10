@@ -1455,3 +1455,4 @@
 {"actor":"external:advisor/product-manager","at":"2026-10-10T14:44:55.793179Z","from":"pending","task":"br-hwek","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-10T14:45:24.215985Z","from":"open","task":"br-hwek","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-10T14:45:25.511371Z","queue":"reprioritized"}
+{"actor":"agent:manager-2","at":"2026-10-10T16:32:17.680090Z","from":"planned","task":"br-57ec","to":"integrated"}
