@@ -55,10 +55,11 @@ direct bridle's workforce on bridle itself. `bridle session orchestrator` starts
 - **File tickets** by `docs/README.md` conventions; IDs use the alphabet
   `abcdefghjkmnpqrstuvwxyz23456789`.
 - **Advisors and aide**: the human starts them (`bridle session advisor <name>`, `bridle session aide`). You message `external:aide`, not the human.
-- **A new advisor's brief goes in its pane, not the inbox** (the human, 2026-10-04: "don't send
-  the message as a brief. Wait until the advisor comes up or give it about 30 seconds and then send
-  the message."). The advisors share one inbox, so another advisor's wake takes a `--brief`. Run
-  `bridle advisor start <name>` with no `--brief`, wait ~30 s, then type the brief into its tmux pane.
+- **A new advisor's brief is a message, sent once it's up** (the human, 2026-10-10: "you can just
+  send this as a message. You don't need to type it. For the advisor, you can just send it a message.
+  It should work once it's up."). Run `bridle advisor start <name>` with no `--brief`, wait ~30 s,
+  then `bridle send external:advisor/<name> "..."`. Not `--brief`: before a named advisor is up, a
+  brief can land in the shared advisor inbox and wake another advisor (the human, 2026-10-04).
 
 ### The human's standing decisions
 

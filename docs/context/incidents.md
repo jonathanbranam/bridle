@@ -1650,3 +1650,15 @@ battery fell from 99% to 70% in 27 minutes (about 1.1% a minute) with two worker
   header's timestamp differs when they straddle a second boundary (diagnosis on br-ygkc).
 - **Category:** `ci`.
 - **Follow-up:** br-ygkc (critical, a flake on main).
+
+## 2026-10-10 17:45: the orchestrator told the human `bridle link` prints nothing, without running it
+
+- **What happened:** the orchestrator named tasks and tickets to the human without links all session
+  and said "`bridle link` prints nothing here". It had never run it; it works
+  (`[gateway] public_url` is set in the machine config). The human asked whether that was why they
+  weren't getting links, and asked for a ticket.
+- **Impact:** the human got no links for a session's worth of IDs, and nearly a bogus ticket.
+- **Cause:** the orchestrator read rule `link-ids-for-the-human`'s "silent when unset" clause and
+  assumed the clause applied instead of running the command.
+- **Category:** `role`.
+- **Follow-up:** none (no bridle defect). The orchestrator runs `bridle link` for every ID it names.
