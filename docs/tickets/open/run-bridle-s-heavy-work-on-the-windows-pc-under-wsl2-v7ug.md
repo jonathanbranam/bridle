@@ -134,3 +134,18 @@ From the human's session with advisor wsl2, 2026-10-10 (times US Eastern).
 
   So 1Password (the Windows app, with its CLI and SSH agent wired into WSL) comes before the
   guide's step 2. The guide (`docs/context/windows-wsl2-host.md`) does not have this step yet.
+- 1Password is installed and signed in on Windows. The human skipped its WSL wiring (SSH agent,
+  CLI integration) for now: "mostly i want 1pasword from windows; skip this for now".
+- The PC: Intel Core i5-13400F (10 cores, 16 logical processors), 16 GB DDR4 (2 of 2 slots used;
+  the human can upgrade to 32 GB), 1.8 TB NVMe SSD with 1.5 TB free. Windows user `micro`, PC name
+  `EzekielsPC` (to be renamed). Linux user `jbranam`.
+- `wsl --install -d Ubuntu` only installed WSL on the first run; the distro downloaded on a second
+  run after the reboot. The guide should say so.
+- `.wslconfig` written and checked: `memory=12GB`, `processors=14`, `swap=8GB`,
+  `vmIdleTimeout=-1`, `networkingMode=mirrored`. After `wsl --shutdown`: systemd is PID 1 with no
+  `/etc/wsl.conf` edit (the Ubuntu image turns it on), 11 GiB and 14 CPUs seen. With 32 GB,
+  `memory=24GB`.
+- Notepad is not installed on this PC; writing the file from PowerShell (`Set-Content`) worked.
+- Paused before Tailscale while the human picks the PC's name. Next:
+  `curl -fsSL https://tailscale.com/install.sh | sh && sudo tailscale up --ssh` in Ubuntu
+  (Tailscale SSH, so no openssh-server or keys needed to reach it from dalek).
