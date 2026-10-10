@@ -530,6 +530,9 @@ async fn start_inner(
         let sb = state_branch.with_push(state_branch::PUSH_DEBOUNCE);
         sb.claim_owner(&host, chrono::Utc::now())
             .context("recording this host as the project's owner")?;
+        // The pre-push owner check (8z7j) reads `owner.toml` from the state branch: a take-over
+        // must have committed it before the daemon serves, not at some later flush.
+        sb.flush_now().await.context("committing the owner file")?;
         sb
     } else {
         state_branch

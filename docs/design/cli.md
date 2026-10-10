@@ -230,6 +230,11 @@ bridle machine tools-only-install [--repo P] install pre-commit and pre-push hoo
                                              moves a hook that isn't bridle's to `<hook>.pre-bridle` (refuses if that
                                              exists); once the clone is no longer listed, re-running removes bridle's
                                              hooks and restores those, keeping both if a different hook appeared (hw6c, ged2)
+bridle machine push-check                    hidden: the pre-push hook's helper. Reads git's ref lines on stdin; for a push of the
+                                             integration branch, exits 1 unless this machine is the owner in
+                                             `owner.toml` (8z7j). `serve` and `bridle sync` install the hook (marked,
+                                             idempotent; shares the pre-push script with tools-only; never written
+                                             through a symlink or over a hook that isn't bridle's)
 bridle workflow spec check [paths...] [--root DIR] [--require-ids]   validates spec files (dirs are searched for
                                              *.md; default `design/specs`, or --root) with the
                                              bridle-spec parser: prints file:line:col: message per

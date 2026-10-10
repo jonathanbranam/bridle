@@ -311,6 +311,10 @@ The procedure is "Moving a project to another machine" in
    Once it is up and the claim is pushed, you may stop it with `bridle stop-daemon` and enable
    the new unit (step 4), which then starts as the owner.
 
+Only the owner's clone can push the project's integration branch (8z7j): `bridle serve` and
+`bridle sync` install a `pre-push` hook that refuses it elsewhere, and `--take-over` moves the
+right with the project. Pushes of other branches are not touched.
+
 Also update `[projects]` on **every** machine to the new `machine = "newpc"` line, and re-mint
 the tokens for that project (steps 3a, 3b): a visitor and a peer token are tied to the daemon
 that minted them. Inbox messages do not move.

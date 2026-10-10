@@ -775,9 +775,9 @@ const OWNER_FILE: &str = "owner.toml";
 
 /// `owner.toml` on the state branch: the one host whose daemon serves the project (hw6c).
 #[derive(Debug, Serialize, Deserialize)]
-struct Owner {
-    host: String,
-    since: String,
+pub struct Owner {
+    pub host: String,
+    pub since: String,
 }
 
 fn read_owner_file(dir: &Path) -> Option<Owner> {

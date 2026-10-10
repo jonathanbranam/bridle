@@ -2261,6 +2261,17 @@ pub enum MachineAction {
     /// moves a hook that isn't bridle's to `<hook>.pre-bridle`. Run again once the clone is no
     /// longer listed to remove bridle's hooks and restore the moved ones.
     ToolsOnlyInstall(ToolsOnlyArgs),
+    /// The pre-push hook's helper: reads git's ref lines on stdin and exits 1, saying why, for a
+    /// push of the integration branch from a clone this machine does not own (8z7j).
+    #[command(hide = true)]
+    PushCheck(PushCheckArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct PushCheckArgs {
+    /// The remote name and URL git passes to the hook.
+    #[arg(trailing_var_arg = true)]
+    pub rest: Vec<String>,
 }
 
 #[derive(Debug, Args)]

@@ -227,7 +227,13 @@ the clone:
    `Branch:` trailer is how the landed branch is recognised as merged, unless the branch has commits
    newer than the landing (a reused branch), which stay unmerged (x3xk).
 4. `git push origin <integration>`, straight after the merge, so the remote
-   never lags the clone. `land` never pushes: only the merger pushes, and only the integration
+   never lags the clone. Only the owner's clone can push it (8z7j): a `pre-push` hook that
+   `serve` and `bridle sync` install in each clone runs `bridle machine push-check`, which compares
+   this machine with `owner.toml` on `bridle/state` (a fresh fetch of origin's, else the local
+   branch; no readable owner refuses) and refuses with the owner's name and `bridle serve
+   --take-over`. Other branches and tags pass; `--no-verify` and `core.hooksPath` edits are denied
+   to agents (locked), not to the human. Projects with `[state] push = false` have no
+   owner file and get no hook. `land` never pushes: only the merger pushes, and only the integration
    branch and (trunk pattern) release tags; workers never push. The release
    branch, when a project has one, is never a target of this step at all
    (mechanically denied — see "Branch pattern", above).

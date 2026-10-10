@@ -2234,6 +2234,17 @@ fn apply_branches(config: &mut Config) {
         if role.workdir == Workdir::Worktree && role.base == "HEAD" {
             role.base = integration.clone();
         }
+        // Locked like the release deny: the owner-only pre-push hook (8z7j) is the enforcement,
+        // so an agent may not skip or repoint it.
+        for deny in [
+            "Bash(git push --no-verify*)",
+            "Bash(git push * --no-verify*)",
+            "Bash(git config *hooksPath*)",
+        ] {
+            if !role.disallowed_tools.iter().any(|d| d == deny) {
+                role.disallowed_tools.push(deny.to_string());
+            }
+        }
         if let Some(release) = &release
             && release != &integration
             && name != "orchestrator"
@@ -4651,6 +4662,23 @@ mod tests {
         // base is "HEAD" until `apply_branches` (only run by `Config::load`/
         // `parse`, not bare `Config::default`) resolves it.
         assert_eq!(cfg.roles["worker"].base, "HEAD");
+    }
+
+    #[test]
+    fn every_role_is_denied_skipping_the_push_hook() {
+        let cfg = Config::parse("").expect("parse");
+        for (name, role) in &cfg.roles {
+            for deny in [
+                "Bash(git push --no-verify*)",
+                "Bash(git push * --no-verify*)",
+                "Bash(git config *hooksPath*)",
+            ] {
+                assert!(
+                    role.disallowed_tools.iter().any(|d| d == deny),
+                    "{name} lacks {deny}"
+                );
+            }
+        }
     }
 
     #[test]

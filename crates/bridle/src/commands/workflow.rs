@@ -142,6 +142,10 @@ pub(super) async fn sync(cli: &Cli) -> Result<(), CliError> {
     let report = bridle_daemon::sync::sync(&repo, &layers, &config.commands, &config.branches)
         .map_err(|e| CliError::from(anyhow::Error::new(e).context("syncing workflow layers")))?;
 
+    if let Err(e) = crate::tools_only::install_owner_hook(&repo) {
+        eprintln!("bridle: owner-only push check not installed: {e:#}");
+    }
+
     if cli.json {
         render::print_json(&report)?;
         return Ok(());

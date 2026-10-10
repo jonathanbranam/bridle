@@ -16,10 +16,19 @@ pub async fn run(cli: &Cli, args: &ServeArgs) -> Result<(), CliError> {
         bridle_daemon::rollback::preflight(&canonical_repo(args)?, None)?;
         return Ok(());
     }
+    install_owner_hook(&canonical_repo(args)?);
     if args.detach {
         run_detached(cli, args).await
     } else {
         run_foreground(cli, args).await
+    }
+}
+
+/// A hook that can't be installed (a symlinked hooks dir, someone else's pre-push) is said, not
+/// fatal: the daemon still serves.
+fn install_owner_hook(repo: &Path) {
+    if let Err(e) = crate::tools_only::install_owner_hook(repo) {
+        eprintln!("bridle: owner-only push check not installed: {e:#}");
     }
 }
 
