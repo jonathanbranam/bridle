@@ -9,7 +9,7 @@ changes: []
 specs: []
 needs: []
 see: [n4w4, 67qw, 3w9t, ukpm, 6h65, w2hj]
-tasks: [br-v6kr]
+tasks: [br-v6kr, br-re57, br-57ec, br-g9xe]
 ---
 
 ## The ask
