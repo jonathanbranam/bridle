@@ -4,7 +4,7 @@ title = "One scheduler for timed actions: scheduled messages (hrcn), nightly ses
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-05T10:47:07.760Z"
-updated_at = "2026-10-10T18:19:37.165441Z"
+updated_at = "2026-10-10T18:19:41.552736Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
@@ -43,3 +43,6 @@ done: Design options in ticket yfv5 (cbbn as restart action on schedules table; 
 
 ### note · agent:manager-2 · 2026-10-10T18:19:37.165Z
 integrated: 699154b8d622cb54e38a4aaf110de7d4eb7f6f16 (branch bridle/dyfv5)
+
+### note · agent:manager-2 · 2026-10-10T18:19:41.552Z
+cleanup: removed agent dyfv5, branch bridle/dyfv5
