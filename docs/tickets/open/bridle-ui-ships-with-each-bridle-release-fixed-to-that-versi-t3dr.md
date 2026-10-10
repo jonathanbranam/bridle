@@ -39,3 +39,29 @@ UI that matches it, and a self-upgrade moves both together. For a designer pass:
 build comes from (bridle's release workflow builds a pinned bridle-ui commit, or bridle-ui
 publishes its own release that bridle names), how the pin is recorded, how the daemon installs it
 into `~/.bridle/ui/` on upgrade, and how this fits tc7t on the dev machine.
+
+## The human's requirements for the short term (2026-10-10)
+
+The human, 2026-10-10 ~1:30 PM ET, verbatim (to the aide):
+
+> And on the UI, I'm okay if that's a separate command, or if it's a separate tarball or a
+> separate download, or if I'm going to send this somewhere else. Yeah, I can do that.
+>
+> For shipping the UI, I lost it. X, shoot. There's a ticket that says that the UI is shipped
+> along with Bridle, upgraded along with Bridle on a machine that doesn't have a clone. I think
+> it's going to go in a new epic for the product manager.
+>
+> What I want to say is that I'm okay if that's slightly separate, or I don't care if it's a
+> `git clone`, a read-only clone or something, a shallow clone, if that's the way to do it. Maybe
+> that's fine, or if it needs a local build of Node, a local compile, I don't really care that
+> much. Long term, it should be kind of part of the Bridle installation, but if it's a separate
+> thing, that's fine.
+>
+> What I really want is that the short-term deliverable does not require cloning the Bridle UI
+> and setting up Bridle on it. It should also be automated, and it should be tied to the Bridle
+> version so that the two stay in sync. Those are kind of the main requirements.
+
+So, for the designer: **must** (short term) — no hand-made bridle-ui clone with bridle set up on
+it; automated; tied to the bridle version so the two stay in step. **May** — a separate command,
+tarball or download; a shallow or read-only clone made by bridle itself; a local Node build.
+**Long term** — part of the bridle installation.
