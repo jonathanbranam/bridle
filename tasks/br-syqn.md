@@ -4,7 +4,7 @@ title = "Ticket fields get standard names (blocked_by, related, parent, created,
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-09T19:47:21.170Z"
-updated_at = "2026-10-10T22:01:03.513143Z"
+updated_at = "2026-10-10T22:01:28.757133Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 branch = "bridle/wsyqn"
@@ -53,3 +53,6 @@ done: ticket fields renamed (blocked_by/related/created/created_by/resolved) + p
 
 ### note · agent:manager-2 · 2026-10-10T22:01:03.513Z
 integrated: 1a64bb8e83c8b9270b92085cea3db184f50e79e5 (branch bridle/wsyqn)
+
+### note · agent:manager-2 · 2026-10-10T22:01:28.757Z
+cleanup: removed agent wsyqn, branch bridle/wsyqn

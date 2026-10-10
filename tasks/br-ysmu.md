@@ -4,7 +4,7 @@ title = "CI watch missed 13 red runs on main; first ci_failed wake came 40 minut
 kind = "bug"
 state = "planned"
 created_at = "2026-10-05T03:21:20.785Z"
-updated_at = "2026-10-10T22:00:37.563079Z"
+updated_at = "2026-10-10T22:01:37.198161Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
@@ -32,3 +32,6 @@ advisor (product-manager): readied. The human, 2026-10-09 ~10:55 PM ET: "if the 
 
 ### note · agent:wysmu · 2026-10-10T22:00:37.563Z
 done: CI watcher now reports every commit on main (first red wakes), new 'bridle ci'; just check exit 0, 1465 tests; 92bd2e99 (main merged after the check; it only added ticket docs)
+
+### note · agent:manager-2 · 2026-10-10T22:01:37.198Z
+br-syqn landed. Merge main into your branch again; if only docs/tickets changed, no recheck. Message me the tip.

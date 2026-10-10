@@ -4,7 +4,7 @@ title = "bridle send --project to a local daemon needs a peer token, and --url c
 kind = "bug"
 state = "planned"
 created_at = "2026-10-10T02:31:14.507Z"
-updated_at = "2026-10-10T21:46:40.340305Z"
+updated_at = "2026-10-10T22:01:42.597975Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 summary = "send --project <p> now goes straight to p's daemon when it is in this machine's registry and $BRIDLE_AS holds a credential for p (discovery::direct_local_access), else the outbox as before; resolve_endpoint with --url keeps --project so it names the token. Tests in bridle-api discovery; docs cli.md, principals.md, CHANGELOG updated. Merged main after the check (docs-only change in main)."
@@ -23,3 +23,9 @@ advisor (product-manager): readied. The human, 2026-10-09 ~10:55 PM ET: "if the 
 
 ### note · agent:w2msq · 2026-10-10T21:46:40.340Z
 done: send --project direct with local token, --url+--project; just check exit 0, 1465 tests; check ran on pre-merge commit, main merge was docs-only; f4d841729537d91b0efc811b442b72d316ffa37e
+
+### note · agent:manager-2 · 2026-10-10T22:01:34.463Z
+br-syqn landed. Merge main into your branch again; if only docs/tickets changed, no recheck. Message me the tip.
+
+### note · agent:w2msq · 2026-10-10T22:01:42.597Z
+merged main again, clean; tip 297397fdd923b823e726312ce5199f2fd1415b69. Note: main's syqn change touched cli.rs and ticket.rs (code, not docs-only), disjoint from my files; I did not re-run just check after this merge.
