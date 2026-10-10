@@ -81,6 +81,7 @@ Daemons, tokens, sync and projects across the laptop, the NUC and the Windows PC
 |---|---|---|---|---|
 | [br-ygkc](http://dalek.tailbc91f5.ts.net:7878/task?id=br-ygkc) | release::tests::installs_and_keeps_the_previous_binary fails with checksum mismatch (br... |  | integrated | fix done, landing; unblocks br-751e |
 | [br-751e](http://dalek.tailbc91f5.ts.net:7878/task?id=br-751e) | Daemon keeps its own workflow checkout at the binary's tag (chvf 3) | high | integrated | done; landing waits on the br-ygkc flake fix; then v0.6.0 |
+| [br-36dp](http://dalek.tailbc91f5.ts.net:7878/task?id=br-36dp) | Machine-wide self_upgrade: let ~/.bridle/config.toml set [daemon] self_upgrade for ever... | high | planned | ready to build |
 | [br-fv86](http://dalek.tailbc91f5.ts.net:7878/task?id=br-fv86) | Install bridle from a release with no clone: one step that downloads, verifies and inst... | high | planned | ready to build |
 | [br-jgdb](http://dalek.tailbc91f5.ts.net:7878/task?id=br-jgdb) | Windows PC: follow the WSL2 setup guide (install WSL2 + Ubuntu, wslconfig, Tailscale, s... | low | claimed | the human's to-do |
 | [br-h7mu](http://dalek.tailbc91f5.ts.net:7878/task?id=br-h7mu) | Pick a name for the Windows PC (docs/context/naming.md) (v7ug) | low | claimed | the human's to-do |
@@ -195,7 +196,7 @@ Agents use bridle correctly: commands, help, roles, the workflow reaching every 
 |---|---|---|---|---|
 | [br-9xze](http://dalek.tailbc91f5.ts.net:7878/task?id=br-9xze) | Scheduled messages, first slice: an agent schedules a message to itself (one-time or re... |  | integrated | delivered |
 | [br-g5y2](http://dalek.tailbc91f5.ts.net:7878/task?id=br-g5y2) | Scheduled messages slice 2: role priming: wait at the maximum timeout and schedule a me... |  | planned | waits on the human; 9xze has landed |
-| [br-yfv5](http://dalek.tailbc91f5.ts.net:7878/task?id=br-yfv5) | One scheduler for timed actions: scheduled messages (hrcn), nightly session restarts (c... |  | planned | needs a design (designer) for the rest: cbbn, 3nyk, cy2v; then the human's review |
+| [br-yfv5](http://dalek.tailbc91f5.ts.net:7878/task?id=br-yfv5) | One scheduler for timed actions: scheduled messages (hrcn), nightly session restarts (c... |  | integrated | needs a design (designer) for the rest: cbbn, 3nyk, cy2v; then the human's review |
 | [br-cbbn](http://dalek.tailbc91f5.ts.net:7878/task?id=br-cbbn) | Scheduled nightly restart of an interactive session at a clock time (e.g. 3 AM) |  | pending | waits on the human (approve to ready) |
 | [br-ft3b](http://dalek.tailbc91f5.ts.net:7878/task?id=br-ft3b) | Per-role handover instructions in the workflow, with project overrides |  | pending | waits on the human (approve to ready) |
 
@@ -557,3 +558,4 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 - 2026-10-10 1:55 PM ET: stx8 (task states) into `everything-is-a-ticket`, last, blocked by br-72t9 (the human: "do all the ticket task work first because they're dependent and interrelated ... it can come later"); off the reviews list for now. Note: today's earlier PM entries above were stamped about an hour late (the previous session's ET clock was off).
 - 2026-10-10 2:05 PM ET: rule for epics (the human approved): a ticket is in an epic only if it is on the path to the epic's done-when; ideas, questions and investigations not yet committed to stay in their theme, not in an epic. br-d9wq (PdM research) out of everything-is-a-ticket into product-process, not in an epic.
 - 2026-10-10 2:10 PM ET: new p896 (agent evaluations, the human: long-term, low, not now) in agents-and-cli, not in an epic. br-g9xe, br-751e and br-3932 delivered.
+- 2026-10-10 2:25 PM ET: v0.6.0 tagged. New 36dp (machine-wide self_upgrade, from the orchestrator) into `machine-setup`, readied high: the NUC's switch to release upgrades waits on it, so no commits to the human's existing projects.
