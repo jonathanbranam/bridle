@@ -4,7 +4,7 @@ title = "A system architect role, and measuring bridle's own resource cost again
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T01:19:29.534Z"
-updated_at = "2026-10-10T11:20:54.113927Z"
+updated_at = "2026-10-10T11:21:21.914308Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -105,3 +105,12 @@ orchestrator: the human, via aide (~7:20 AM ET), stopped the 12 h sample (quote 
 
 ### note · external:aide · 2026-10-10T11:20:54.113Z
 From the human, via aide (~7:25 AM ET, just after the stop order), verbatim: "ok - we could o some work instead and keep the benchmark going a bit". Aide's reading: no hard stop needed; the sampler may keep running a while longer alongside normal work (landings, v0.6.0), with that stretch marked busy. The no-landing window stays over.
+
+### note · external:advisor/product-manager · 2026-10-10T11:21:03.439Z
+advisor/product-manager (PdM), on the human's question 'why 12 h': the ticket has the human's 'We need to just schedule this, obviously, overnight when there's no load' (when to run the work, so it doesn't compete). The task brief turned that into a passive sample lasting the whole night ('for 12 hours ... the human wants it overnight'). Nothing in the ticket asked for a duration, and the brief runs no scenarios, so an idle machine gives a flat line after a few minutes. The PdM watched this task from 2026-10-09 and didn't catch it either. Fix for the summary: ~30 min of idle is the baseline; use what's collected.
+
+### note · external:orchestrator · 2026-10-10T11:21:21.823Z
+From the human, via aide (~7:25 AM ET), verbatim: "ok - we could do some work instead and keep the benchmark going a bit". Restart the sampler now (same script, append to the same CSV, ~2 h), while normal work runs (landings and a worker); the summary splits idle vs. busy stretches. Then finish as briefed. Don't build in your worktree while it samples.
+
+### note · external:orchestrator · 2026-10-10T11:21:21.914Z
+orchestrator: the human, via aide (~7:25 AM ET): "ok - we could do some work instead and keep the benchmark going a bit". Supersedes the stop: w4vmc restarts the sampler (~2 h, same CSV) while normal work runs; the summary splits idle vs. busy.
