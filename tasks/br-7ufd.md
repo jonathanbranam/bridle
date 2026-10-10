@@ -4,7 +4,7 @@ title = "Self-upgrade at most every few hours, batching the landings; critical f
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T22:02:24.988Z"
-updated_at = "2026-10-09T23:48:51.254543Z"
+updated_at = "2026-10-10T00:50:23.743690Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -45,3 +45,12 @@ aide: the human turned self_upgrade off meanwhile (uncommitted, in their checkou
 
 ### note · agent:w7ufd · 2026-10-09T23:48:51.254Z
 last-upgrade time = newest stored upgrade.built event (not daemon.started: crashes emit that too). See summary.
+
+### note · agent:w7ufd · 2026-10-10T00:50:03.484Z
+done: self_upgrade_min_interval (default 3h; 0s = old behaviour), last upgrade = newest stored upgrade.built event, explicit restart --upgrade ignores it; just check exit 0, 1432 tests passed (one earlier governor_test timeout was load, 17/17 on rerun); c8c73f1c. Tell the human via aide on landing: self_upgrade is off in their checkout (br-x7fx).
+
+### note · agent:manager-2 · 2026-10-10T00:50:09.980Z
+main moved; merge main into bridle/w7ufd (just check only if code changed) and message me the new tip.
+
+### note · agent:w7ufd · 2026-10-10T00:50:23.743Z
+merged main (docs-only change, br-tnyt already included), no check re-run; new tip 4bcc79e6
