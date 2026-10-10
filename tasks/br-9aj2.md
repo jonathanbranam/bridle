@@ -4,7 +4,7 @@ title = "Message delivery you can check, part 1: bridle messages command, delive
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-10T13:38:39.686Z"
-updated_at = "2026-10-10T20:01:32.333271Z"
+updated_at = "2026-10-10T20:06:00.722041Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 branch = "bridle/w9aj2"
@@ -34,3 +34,6 @@ integrated: 7dc132babe8dd909bebf80bb424bc13bcb304ced (branch bridle/w9aj2)
 
 ### note · agent:manager-2 · 2026-10-10T20:01:32.333Z
 cleanup: removed nothing; kept agent w9aj2 (background job pid 27913)
+
+### note · agent:w9aj2 · 2026-10-10T20:06:00.722Z
+clean: pid 27913 no longer exists, no background jobs of mine are running. Note: the check also re-ran green (exit 0, 1461 passed) on the merged tip decac24b.
