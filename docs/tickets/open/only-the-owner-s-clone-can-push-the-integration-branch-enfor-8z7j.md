@@ -166,3 +166,15 @@ for `--no-verify` and hooksPath), `workflow/base/rules/` (one-pusher rule),
 1. Option A, as recommended?
 2. Should the hook also cover the release branch and release tags, or the integration branch
    only (as asked)? Recommendation: integration only; release is already locked per role.
+
+## Resolution
+
+Option A built as br-hdbj, landed 2026-10-10 (1af6f764), on the human's go that morning; br-8z7j
+was the design task (it couldn't leave 'reopened', so the build moved to br-hdbj; dropped). A
+marked pre-push hook, shared with the tools-only hook, runs `bridle machine push-check`: a push to
+the integration branch from a machine that isn't the owner in `owner.toml` (a fresh fetch of
+`origin/bridle/state`, else the local copy; unreadable means refuse) is refused with the take-over
+hint; other branches and tags pass. `serve` and `bridle sync` install it (idempotent; never
+through a symlink or over a foreign hook), only in projects that push state. Take-over flushes
+`owner.toml` before serving. Agents get locked deny entries for `--no-verify` and `hooksPath`.
+Rule `one-pusher-for-the-integration-branch`. Option C (credentials) stays deferred.
