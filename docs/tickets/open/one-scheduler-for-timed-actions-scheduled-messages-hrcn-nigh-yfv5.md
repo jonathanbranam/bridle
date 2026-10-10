@@ -38,3 +38,121 @@ One schedule record (daemon DB, survives restarts; human time zone with DST; one
 - Split: per-project scheduler for messages and restarts first; the machine-wide maintenance window waits on cy2v.
 
 Source: orchestrator@nuc, 2026-10-05.
+
+## Design options
+
+Focus: interface (the schedule CLI and what an action is), with a little internal architecture
+(where the loop lives). Designer dyfv5, 2026-10-10. Priority per the human, 2026-10-10: scheduled
+messages are next; the one-daemon-per-machine question (kuw2) is not ready and is not designed for.
+
+### What exists
+
+Built (br-9xze, `schedule.rs`, daemon.md "Scheduled messages"): `bridle schedule add/list/rm`, a
+`schedules` table (`sc-xxxx`, created_by, target, body, kind once|cron, tz, next_fire_at, state), a
+15 s loop that sends due rows as a system note through the normal message path, DST and missed-firing
+rules, per project. The only action is "send body to target". Who: the human for anyone; an agent for
+itself; everyone else refused (`schedule_actor_ok`, server.rs). Not built: restarts (cbbn),
+maintenance windows (3nyk), anything machine-wide. Today's nearest relatives: `max_uptime` (12 h,
+orchestrator only) and the context-driven handover (gq9r); neither is a clock time.
+
+### Point 1: does cbbn wait for the scheduler?
+
+The scheduler's mechanism now exists, so the PM's "ship cbbn first behind its own config" no longer
+saves anything: a second clock and second config for the same job is the near-duplicate
+`design-principles` warns about.
+
+- **A. cbbn as its own `restart_at` config.** The user edits config, restarts the daemon to change it.
+  Cost: a second timer, a second place for time zone and DST rules, and a later fold-in. Falls short:
+  one name per action (two ways to say "at 3 AM").
+- **B. cbbn as a second action on the schedules table.** `bridle schedule add --cron "0 3 * * *"
+  --restart notes-advisor` (agent for itself, or the human for anyone). Cost: one nullable column
+  (see Point 3) and a restart routine. Uses the existing loop, zone rules and list/rm.
+- **C. Do nothing:** the notes agent keeps being restarted by hand. Honest, but it is the stated need.
+
+**Recommend B.** Ship cbbn as the restart action of the scheduler. The restart routine itself (ask
+for handover with the role's instructions (ft3b), wait for the deadline, restart in the pane, defer
+when the human was active within N minutes) is the real work of cbbn and is the same under A or B, so
+nothing is wasted. Accepts: cbbn now depends on the schedule table's shape, and still waits on its
+own needs (4s3z, gq9r, ft3b), which is true for A as well.
+
+### Point 2: per-project first, machine-wide later
+
+**Recommend: per project for messages and restarts; the maintenance window (3nyk) waits on cy2v / kuw2.**
+Unchanged from the PM and the human's 2026-10-10 caveat. Nothing here is designed for kuw2.
+
+What would change under one daemon per machine (noted, not built): the loop and the table would move
+to the machine daemon (or stay per project and be driven by it); `target` would need a project part
+(`project/agent`) or the schedule would carry a project column; message delivery to a target becomes a
+call into that project's agent host rather than the in-process message path. The CLI text
+(`bridle schedule ...`) and the action names would not change. That is the cost of not designing for
+it now, and it is small: today's `target` is a bare principal and the one place that sends is
+`schedule.rs`.
+
+### Point 3: what an action is (how cbbn and 3nyk reuse the table and loop)
+
+**Recommend: one nullable `action` column, default `message`.** Rows keep `kind` (when: once|cron)
+separate from `action` (what). The loop is unchanged: find due rows, call `fire(row)`, which matches
+on action.
+
+| action  | `target` means | `body` means          | firing does                                        |
+|---------|----------------|-----------------------|----------------------------------------------------|
+| message | principal      | the message           | send as a system note (today)                      |
+| restart | agent name     | optional extra note   | handover, wait, restart in the pane (cbbn)         |
+| window  | scope (project)| the wind-down note    | hold new turns, ask for handover, resume after (3nyk) |
+
+CLI: `bridle schedule add` keeps its flags; a restart is `--restart` (replaces the message text) and a
+window would be `--window 20m` later. One verb, one list: `schedule list` shows an ACTION column.
+Rejected: a table per action, or a trait/plugin layer for actions (YAGNI: three known actions, a
+`match` is enough; `modularity` is kept by each action's routine living in its own function/module,
+called from `fire`).
+
+Reuse detail for later slices:
+- cbbn: the restart routine is a function of (agent, deadline); the schedule just calls it. A
+  "defer when the human is mid-conversation" skip re-arms the row for N minutes later without
+  marking it fired. Missed-firing rule: a restart missed by hours should be skipped, not run late
+  (a stale 3 AM restart at noon is unwanted); needs a per-action "max lateness" (message: unlimited
+  as today, restart: e.g. 1 h). Decide when cbbn is built.
+- 3nyk: a window is a start and an end, so two rows (or one row with a duration). Per project it
+  holds work and asks the orchestrator for a handover; it is only useful machine-wide, so it waits on
+  kuw2/cy2v. After a boot (4r3k) the missed-firing rule resumes agents. Do not build it before then.
+
+Quiet hours (a stated "Not done" of slice 1) are not part of this; a schedule is an explicit human or
+agent request, so it fires through quiet hours. Recommend leaving it as is and saying so in docs.
+
+### Point 4: schedules refuse external principals (known gap)
+
+Today an `external` caller (orchestrator, advisor, aide: the long-lived interactive sessions that most
+need reminders; the notes aide is the first user) gets 403 "only agents and the human use schedules".
+
+- **A. Leave it.** The aide asks the human or a spawned agent. Falls short: the user's side first;
+  the primary scheduling user (notes) is exactly an external.
+- **B. Externals follow the agent rule:** may add for themselves (target must equal their own
+  principal) and list/rm only their own. Change is the one match in `schedule_actor_ok` plus the
+  self-target compare (`bare()` already handles the `agent:` prefix; externals need the same identity
+  compare). Cost: tiny. Caveat: identities are shared (every project's aide is `external:aide`; two
+  unnamed advisors are both `external:advisor`, per the no-kill-by-name rule), so one external can
+  see and remove the other's schedules, and the message wakes whichever session reads the inbox.
+  Acceptable for the same human's own sessions.
+- **C. Externals may target anyone.** Rejected: widens who can wake whom; nobody asked.
+
+**Recommend B**, as its own small ticket (it does not depend on the action column). Peers, visitors
+and system stay refused.
+
+### Recommendation in one list
+
+1. cbbn is the `restart` action on the schedules table, not a separate config (B).
+2. Per project now; the maintenance window waits on kuw2/cy2v; note in docs what moves under kuw2.
+3. Add a nullable `action` column (default `message`) when the first non-message action is built; no
+   action framework.
+4. Let externals schedule for themselves (B); build it first, it is small and unblocks the notes aide.
+5. Order: externals-self (small) -> cbbn restart action (after 4s3z, gq9r, ft3b) -> 3nyk window
+   (after kuw2/cy2v and 4r3k). Hrcn's "human schedules for any agent" is already built.
+
+### Rejected, so nobody re-proposes them
+
+- A separate `restart_at` config (Point 1 A): second clock, second DST rule set.
+- A table or plugin layer per action: no need with three actions.
+- Designing the machine-wide scheduler now: the human said the architecture is not ready.
+- Blocking on quiet hours: not asked for.
+
+Migration: none for this design; the `action` column is a later additive schema step, done with cbbn.
