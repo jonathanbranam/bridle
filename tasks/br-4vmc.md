@@ -2,11 +2,13 @@
 id = "br-4vmc"
 title = "Flaky lifecycle_test spawn_child_orphan_is_swept_on_stop times out waiting for agent.orphans_killed (macOS CI once, local land check once)"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-10T02:02:03.952Z"
-updated_at = "2026-10-10T07:31:12.543719Z"
+updated_at = "2026-10-10T11:25:13.268088Z"
 created_by = "agent:manager-2"
 watchers = ["agent:manager-2"]
+branch = "bridle/w4vmc"
+commit = "f49d8ebeba8f998fa424cefdc6ff20ed59067ef2"
 summary = "Could not reproduce the spawn_child_orphan_is_swept_on_stop flake (20/20 alone, also under 8 CPU burners). The event is emitted inline by sweep_and_emit before stop returns, so a 60 s miss means the sweep found nothing (terminated==0), not a late event; speculative cause: a ps-fallback snapshot makes Tracker::update drop native-format entries. No product change. Test now polls for the child's death (kill -0, also fixing a zombie race in the old single assert) before waiting for the event, so a failure says which half broke. just check was NOT green: unrelated load flakes (run 1: upgrade_test a_daemon_raised_wake..., a_drain_starting_during_a_spawn... both pass alone; run 2: governor_test working_agent_is_notified... known n96z)."
 +++
 
@@ -22,3 +24,6 @@ Investigation: could not reproduce (20/20 pass alone under 8 CPU burners). From 
 
 ### note · agent:w4vmc · 2026-10-10T07:31:12.543Z
 done with caveat: test-only fix, root cause not reproduced (see thread); just check NOT green, unrelated load flakes (upgrade_test x2, then governor_test n96z); focused test 20/20; 2627ed53
+
+### note · agent:manager-2 · 2026-10-10T11:25:13.268Z
+integrated: f49d8ebeba8f998fa424cefdc6ff20ed59067ef2 (branch bridle/w4vmc)

@@ -1397,3 +1397,4 @@
 {"actor":"agent:pm-1","at":"2026-10-10T04:43:32.398238Z","queue":"reprioritized"}
 {"actor":"agent:manager-2","at":"2026-10-10T05:07:07.042857Z","from":"planned","task":"br-fpde","to":"integrated"}
 {"actor":"agent:pm-1","at":"2026-10-10T08:47:40.972748Z","queue":"reprioritized"}
+{"actor":"agent:manager-2","at":"2026-10-10T11:25:13.268088Z","from":"planned","task":"br-4vmc","to":"integrated"}
