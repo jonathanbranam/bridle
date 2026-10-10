@@ -2,9 +2,9 @@
 id = "br-g9xe"
 title = "Benchmark: first live run (GATED on the human's sign-off of the v6kr design and plan)"
 kind = "chore"
-state = "open"
+state = "planned"
 created_at = "2026-10-10T13:47:42.848Z"
-updated_at = "2026-10-10T14:20:12.082657Z"
+updated_at = "2026-10-10T14:20:49.504756Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",

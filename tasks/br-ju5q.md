@@ -2,9 +2,9 @@
 id = "br-ju5q"
 title = "Benchmark report: analyse the live and idle runs, ready Sunday 2026-10-11 morning"
 kind = "research"
-state = "open"
+state = "planned"
 created_at = "2026-10-10T14:20:12.659Z"
-updated_at = "2026-10-10T14:20:13.129940Z"
+updated_at = "2026-10-10T14:20:50.185403Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
