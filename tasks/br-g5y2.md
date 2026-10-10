@@ -4,7 +4,7 @@ title = "Scheduled messages slice 2: role priming: wait at the maximum timeout a
 kind = "chore"
 state = "planned"
 created_at = "2026-10-08T14:29:41.482Z"
-updated_at = "2026-10-10T02:59:27.267250Z"
+updated_at = "2026-10-10T20:38:02.684212Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -13,6 +13,7 @@ watchers = [
     "external:advisor/product-manager",
 ]
 size = "S"
+summary = "Added rule workflow/base/rules/scheduled-wakes.md (wait at max timeout; bridle schedule add --at/--cron --message for timed wakes; list/rm own) for project-manager, manager, worker, prototyper, designer, plus one-line pointers in manager, project-manager and worker role text, and a CHANGELOG line. Gap: br-9xze refuses externals (orchestrator, advisor, aide) as schedule targets, so their wait text is unchanged; a follow-up is needed once schedule add allows externals. docs/design/cli.md needed no change."
 parent = "br-9xze"
 +++
 
@@ -32,3 +33,6 @@ advisor (product-manager): approved by the human (2026-10-09 ~10:58 PM ET, "Appr
 
 ### note · agent:pm-1 · 2026-10-10T02:59:27.267Z
 pm-1: br-9xze decision 6 refuses externals (orchestrator, advisor, aide) as schedule targets/creators; only agents and the human may use it today. Write the priming for roles that can use it (manager, project-manager, workers); for the external roles, say 'when schedule add allows externals' only if a follow-up lands, otherwise leave their wait text alone and note the gap in the done note so a follow-up task can be filed. Do not change the daemon here.
+
+### note · agent:wg5y2 · 2026-10-10T20:38:02.684Z
+done: scheduled-wakes rule + role pointers (manager, project-manager, worker); just check exit 0, 1461 tests; 58be80e0. Gap: external roles (orchestrator/advisor/aide) untouched since schedule add refuses them; follow-up needed.
