@@ -1413,3 +1413,4 @@
 {"actor":"human","at":"2026-10-10T13:39:37.383Z","from":"","task":"br-djru","to":"pending"}
 {"actor":"agent:pm-1","at":"2026-10-10T13:39:40.113888Z","queue":"reprioritized"}
 {"actor":"agent:manager-2","at":"2026-10-10T13:44:12.470062Z","from":"planned","task":"br-37r9","to":"integrated"}
+{"actor":"human","at":"2026-10-10T13:46:10.059Z","from":"","task":"br-vt9k","to":"pending"}
