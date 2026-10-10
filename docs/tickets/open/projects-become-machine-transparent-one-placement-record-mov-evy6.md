@@ -38,9 +38,14 @@ and port in `~/.bridle/config.toml` `[projects]`, and the credentials file.
 
 ## The vision, as items (future; not scheduled)
 
-1. One source of truth for project-to-machine placement; the other places derive from it.
-2. Every project cloned and kept in sync on every machine: ticket rjd5.
-3. Move a project on command, with a drain (stop new work, wait for landings, hand over, start on
+1. Placement kept in sync, not a single record: ownership lives in each machine's config and in
+   the project repo (`owner.toml`), and takeover keeps the two in sync (the human, 2026-10-10,
+   correcting the PdM's first draft).
+2. Each machine sets up the projects chosen for it, not every project everywhere: one idempotent
+   command per project and machine, which bridle tracks (ticket rjd5, the human's correction of
+   2026-10-10 there).
+3. Move a project on command (takeover agreed between the two machines; a forced takeover,
+   possibly human-only, when the owner is gone), with a drain (stop new work, wait for landings, hand over, start on
    the new machine): ticket kt25.
 4. Machine-transparent addressing: agents and the human reach a project's agents without knowing
    where it runs (3haz forwarding is a start).
