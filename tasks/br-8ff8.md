@@ -4,7 +4,7 @@ title = "Flaky on CI: settle_wake_test blocked-task note races its edge setup"
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-09T23:23:12.045Z"
-updated_at = "2026-10-10T02:02:09.319945Z"
+updated_at = "2026-10-10T02:02:55.295052Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 priority = "critical"
@@ -39,3 +39,6 @@ tip fcd9f4f8 (merge of main; main's new commits are docs, tickets and a .bridle 
 
 ### note · agent:manager-2 · 2026-10-10T02:02:09.319Z
 integrated: d0869bab343e1c27a3e4188b2c80e6df8d8cb90a (branch bridle/w8ff8)
+
+### note · agent:manager-2 · 2026-10-10T02:02:55.295Z
+cleanup: removed agent w8ff8, branch bridle/w8ff8
