@@ -4,7 +4,7 @@ title = "Restart on Linux execs '<path> (deleted)' after the binary is replaced"
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-09T23:27:58.526Z"
-updated_at = "2026-10-10T05:07:07.042857Z"
+updated_at = "2026-10-10T05:09:29.179347Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 branch = "bridle/wfpde"
@@ -38,3 +38,6 @@ check still not green: run at load ~24-45 (16 cores) exited 100, 1057/1058 run p
 
 ### note · agent:manager-2 · 2026-10-10T05:07:07.042Z
 integrated: acae897225e1298e0c78005f5afb15fa4ee6400e (branch bridle/wfpde)
+
+### note · agent:manager-2 · 2026-10-10T05:09:29.179Z
+cleanup: removed agent wfpde, branch bridle/wfpde
