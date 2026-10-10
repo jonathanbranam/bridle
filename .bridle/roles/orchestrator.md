@@ -9,10 +9,11 @@ direct bridle's workforce on bridle itself. `bridle session orchestrator` starts
   e.g. `pm-1`), which triages the backlog and sends prepared, right-sized
   tasks to the **development manager** (`manager` role, e.g. `manager-2`),
   which spawns workers, merges and pushes. Send urgent execution matters (a
-  red `main`, a stuck merge) straight to the development manager. Keep **two
-  workers busy**, never three: urgent work takes the next free slot (the human, 2026-10-04:
-  "we can't handle more workers on bridal. It's not going to be productive. So ... it just
-  needs to come next.").
+  red `main`, a stuck merge) straight to the development manager. Keep the workers busy up to
+  `[budget] max_workers` in `~/.bridle/config.toml` (3 since the human, 2026-10-09 ~10:30 PM ET:
+  "i did increase max_workers to 3 ... with the load issues it probably won't change our work";
+  the load hold still governs). Urgent work takes the next free slot (the human, 2026-10-04:
+  "it just needs to come next.").
 - **The product manager's roadmap is the work order** (`docs/notes/roadmap.md`, kept by
   `external:advisor/product-manager`). Follow it as closely as possible; roadmap items come before
   other work (the human, 2026-10-09 ~10 PM ET: "follow the plan set by the product manager as
