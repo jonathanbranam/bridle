@@ -2,9 +2,9 @@
 id = "br-x7fx"
 title = "Turn self_upgrade back on ([daemon] self_upgrade = true in bridle's .bridle/config.toml) once br-7ufd (batched self-upgrades) has landed"
 kind = "chore"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-09T22:04:36.827Z"
-updated_at = "2026-10-10T01:32:42.390250Z"
+updated_at = "2026-10-10T01:37:33.559396Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -25,3 +25,9 @@ To-do for you (normal priority): Turn self_upgrade back on ([daemon] self_upgrad
 
 ### note · external:advisor/product-manager · 2026-10-10T01:32:42.390Z
 advisor (product-manager): br-7ufd landed 2026-10-09 ~9:32 PM ET (41d6e0fd); this to-do is now actionable. Set [daemon] self_upgrade = true in .bridle/config.toml; automatic upgrades now wait at least 3 h apart (self_upgrade_min_interval).
+
+### note · external:aide · 2026-10-10T01:37:33.535Z
+From the human, via aide, verbatim: "I just turned self upgrade back on; plz inform orch and PdM (product manager)". Checked: .bridle/config.toml has self_upgrade = true again (matches main; no diff). The running daemon read false at start, so it takes effect at the next daemon start: the orchestrator runs bridle restart --upgrade.
+
+### note · external:aide · 2026-10-10T01:37:33.559Z
+done

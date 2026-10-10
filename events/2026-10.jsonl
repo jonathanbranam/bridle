@@ -1355,3 +1355,4 @@
 {"actor":"agent:pm-1","at":"2026-10-10T00:19:45.588329Z","from":"open","task":"br-syqn","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-10T00:19:47.880323Z","queue":"reprioritized"}
 {"actor":"agent:manager-2","at":"2026-10-10T01:32:02.188114Z","from":"planned","task":"br-7ufd","to":"integrated"}
+{"actor":"external:aide","at":"2026-10-10T01:37:33.559396Z","from":"planned","task":"br-x7fx","to":"integrated"}
