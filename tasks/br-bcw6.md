@@ -2,11 +2,13 @@
 id = "br-bcw6"
 title = "cli_e2e sigint and events_stream shutdown tests flake under load"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-10T12:08:56.477Z"
-updated_at = "2026-10-10T19:03:59.463915Z"
+updated_at = "2026-10-10T19:20:37.366134Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
+branch = "bridle/wbcw6"
+commit = "a563aa5a5a3f4430832b73c605d888d32a2a625f"
 summary = "events_stream shutdown test (crates/bridle-daemon/tests/events_stream_test.rs): the 3 s bounds on running.join() and on the client seeing EOF were wall-clock limits on a shutdown that flushes and pushes the state branch (git subprocesses); measured 2.9 s on a quiet-ish machine, so over 3 s under load. Now both waits are 120 s hang guards on the events (join returns, stream ends). Promptness of ending the stream is still checked load-independently: a stream the server fails to end keeps its connection open, so the EOF wait cannot pass however long the guard. cli_e2e sigint tests: already event-based since br-648a (they wait on process exit with the 180 s HANG_GUARD and assert no time limit), so there was nothing wall-clock-bound to change; signals are installed before daemon.json is written, so an early SIGINT is queued, not lost. I could not reproduce a failure of either test, so the cli_e2e cause is NOT demonstrated; I made no change there. If it recurs, capture the failing assertion text. Runs: 20/20 alone and 10/10 with 16 busy loops added (on a machine already at load 25-40), both tests plus the in-flight sigint test. Docs: none needed (test-only)."
 ticket = "bcw6"
 +++
@@ -20,3 +22,9 @@ Done at 002676e4. events_stream shutdown test: its 3 s bounds on join and EOF we
 
 ### note · agent:wbcw6 · 2026-10-10T19:03:59.463Z
 done: events_stream shutdown bounds -> 120s hang guards; cli_e2e sigint already event-based, flake not reproduced (no change); 20/20 alone, 10/10 loaded; check exit 0, 1455 tests; 002676e4
+
+### note · agent:manager-2 · 2026-10-10T19:20:18.714Z
+integrated: a563aa5a5a3f4430832b73c605d888d32a2a625f (branch bridle/wbcw6)
+
+### note · agent:manager-2 · 2026-10-10T19:20:37.366Z
+cleanup: removed agent wbcw6, branch bridle/wbcw6
