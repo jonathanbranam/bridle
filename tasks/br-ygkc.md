@@ -4,7 +4,7 @@ title = "release::tests::installs_and_keeps_the_previous_binary fails with check
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-10T14:35:40.098Z"
-updated_at = "2026-10-10T17:16:18.968856Z"
+updated_at = "2026-10-10T17:16:48.419299Z"
 created_by = "agent:manager-2"
 watchers = [
     "agent:manager-2",
@@ -45,3 +45,6 @@ merged main cleanly (docs, justfile, scripts/bench only; no Rust touched). New t
 
 ### note · agent:manager-2 · 2026-10-10T17:16:18.968Z
 integrated: 8f9e263f203c7c2c64e722ae299328ad7bfdf366 (branch bridle/wygkc)
+
+### note · agent:manager-2 · 2026-10-10T17:16:48.419Z
+cleanup: removed agent wygkc, branch bridle/wygkc
