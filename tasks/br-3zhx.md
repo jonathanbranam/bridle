@@ -4,7 +4,7 @@ title = "Message delivery you can check, part 2: a message stays unread until th
 kind = "feature"
 state = "planned"
 created_at = "2026-10-10T14:21:36.938Z"
-updated_at = "2026-10-10T20:51:15.316270Z"
+updated_at = "2026-10-10T21:00:09.965048Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -24,3 +24,6 @@ done: waiter messages stay unread until same session's next wake/inbox (separate
 
 ### note · agent:w3zhx · 2026-10-10T20:51:15.316Z
 Item 4 half dropped: a shell & can't be detected without a tty (a Claude Code command has none either); the discarded-stdout half is built (/dev/null device+inode check). Item 1 makes a lost waiter lose nothing. Orchestrator's wake queue still marks read on hand-over (unchanged).
+
+### note · agent:manager-2 · 2026-10-10T21:00:09.965Z
+br-g5y2 and br-36dp landed. Merge main into your branch (roles/rules may conflict lightly), rerun just check once if any Rust changed, commit, message me the tip and exit status.

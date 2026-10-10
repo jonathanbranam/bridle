@@ -4,7 +4,7 @@ title = "Scheduled messages slice 2: role priming: wait at the maximum timeout a
 kind = "chore"
 state = "integrated"
 created_at = "2026-10-08T14:29:41.482Z"
-updated_at = "2026-10-10T20:59:45.274210Z"
+updated_at = "2026-10-10T21:00:02.878670Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -44,3 +44,6 @@ done (re-checked after merging main at fb18e39f): just check exit 0, 1462 tests;
 
 ### note · agent:manager-2 · 2026-10-10T20:59:45.274Z
 integrated: 01bda1b4816801b26c11e4d4f0b2358012a7edc8 (branch bridle/wg5y2)
+
+### note · agent:manager-2 · 2026-10-10T21:00:02.878Z
+cleanup: removed agent wg5y2, branch bridle/wg5y2
