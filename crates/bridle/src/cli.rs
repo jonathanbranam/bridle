@@ -453,11 +453,11 @@ pub enum TicketAction {
     New(TicketNewArgs),
     /// File the bridle task for a committed ticket with a non-empty ask (two-way link).
     Task(TicketTaskArgs),
-    /// Stamp `closed:` and move an open ticket to docs/tickets/resolved/ (no commit, no task change).
+    /// Stamp `resolved:` and move an open ticket to docs/tickets/resolved/ (no commit, no task change).
     Resolve(TicketResolveArgs),
-    /// Set one frontmatter field (title, kind, repos, changes, specs, needs, see, tasks); list fields take comma-separated values.
+    /// Set one frontmatter field (title, kind, theme, parent, repos, changes, specs, blocked_by, related, tasks; the old names needs and see still work); list fields take comma-separated values.
     Set(TicketSetArgs),
-    /// Check every ticket's frontmatter, IDs, needs/see and [[links]]; exits 1 listing the problems.
+    /// Check every ticket's frontmatter, IDs, blocked_by/related and [[links]]; exits 1 listing the problems.
     Check(TicketCheckArgs),
     /// File an open task on the project's daemon for its project manager to triage (any principal with a token; no ticket file).
     Submit(TicketSubmitArgs),
@@ -489,12 +489,15 @@ pub struct TicketNewArgs {
     /// Repos the ticket concerns, comma-separated (default: the project name).
     #[arg(long, value_delimiter = ',')]
     pub repos: Vec<String>,
-    /// Ticket ids this one needs, comma-separated.
-    #[arg(long, value_delimiter = ',')]
-    pub needs: Vec<String>,
+    /// Ticket ids this one is blocked by, comma-separated.
+    #[arg(long, alias = "needs", value_delimiter = ',')]
+    pub blocked_by: Vec<String>,
     /// Related ticket ids, comma-separated.
-    #[arg(long, value_delimiter = ',')]
-    pub see: Vec<String>,
+    #[arg(long, alias = "see", value_delimiter = ',')]
+    pub related: Vec<String>,
+    /// The ticket's theme: a slug (lowercase letters, digits, hyphens).
+    #[arg(long)]
+    pub theme: Option<String>,
     /// The ticket's kind, and its task's: there is no default.
     #[arg(short = 'k', long, value_enum, required_unless_present = "from_task")]
     pub kind: Option<TaskKindArg>,

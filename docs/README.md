@@ -54,22 +54,22 @@ design moves on; the design docs cite them.
   once the ticket with its ask is committed on `main`, `bridle ticket task <id>` files it), or by hand with a fresh ID unique
   across the repo.
 - `bridle ticket set <id> <field> <value>` edits the frontmatter and `bridle ticket check`
-  verifies frontmatter, IDs, `needs`/`see` and links; shipped to every project as the `tickets`
+  verifies frontmatter, IDs, `blocked_by`/`related` and links; shipped to every project as the `tickets`
   rule (`workflow/base/rules/tickets.md`).
 - The same frontmatter: `id`, `title`, `kind` (a task kind; editable with `ticket set`),
-  `opened`, `filed_by` (optional: the principal that filed it, e.g. `external:aide`, taken from the
-  caller's identity by `ticket new`; older tickets have none and `ticket check` accepts that), `repos`, `changes`, `specs`, `needs`, `see`, `tasks` (every task made from the
+  `created`, `created_by` (optional: the principal that created it, e.g. `external:aide`, taken from the
+  caller's identity by `ticket new`; older tickets have none and `ticket check` accepts that), `repos`, `changes`, `specs`, `blocked_by`, `related`, `parent` (optional: one ticket id, bare or `<prefix>-<id>`; the epic this belongs to), `theme` (optional: a slug of lowercase letters, digits and hyphens, e.g. `human-ui`; any well-formed slug, no registry yet), `tasks` (every task made from the
   ticket; the task's `ticket` field is `<id>`, so the link is two-way and `ticket check`
   flags one side only). Tickets and tasks share one id alphabet and space: a ticket's first task
   takes its id (`br-<id>`), and whoever runs `ticket task` is the task's creator and so its watcher, told when it lands; `bridle ticket new --from-task <task-id>` goes the other way, making
   a ticket from a task with the task's id (a fresh, linked id when an old hex task id has `0` or `1`).
   Tickets hold design decisions (the why and the what), tasks the work and its status; a build that
-  comes out of a discussion ticket gets its own feature ticket, linked, and its task is made from that. A missing `kind`/`tasks` is a warning until the backfill migration. `needs:` orders them.
-- The checker takes one ticket root, so `needs:` and `see:` only name tickets
+  comes out of a discussion ticket gets its own feature ticket, linked, and its task is made from that. A missing `kind`/`tasks` is a warning until the backfill migration. `blocked_by:` orders them. Readers still accept the old names (`needs`, `see`, `opened`, `filed_by`, `closed`; the new name wins and `ticket check` warns on both); writers use only the new ones, and a migration renames existing tickets later (syqn).
+- The checker takes one ticket root, so `blocked_by:` and `related:` only name tickets
   in the same tree (`questions/` or `spikes/open/`). A dependency across the
   two goes in the body as a `**Needs**` line with the ID and a link.
 - **The folder is the state.** Resolving a question is `bridle ticket resolve <id>`
-  (stamps `closed:` and moves `open/` to `resolved/`; you commit), plus a `## Resolution` section naming the design doc the
+  (stamps `resolved:` and moves `open/` to `resolved/`; you commit), plus a `## Resolution` section naming the design doc the
   answer landed in. The design doc, not the ticket, is the durable record. A
   spike's ticket moves to `spikes/done/` once its findings doc exists beside
   the numbered spike docs. (Whether bridle's own task records should keep folder-as-state

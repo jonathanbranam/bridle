@@ -273,11 +273,11 @@ bridle workflow spec coverage [--root DIR] [--tests DIR ...] [--require-all] [--
                                              and the unbound list as 'file:line: s-id title'; exits 1
                                              with --require-all if any unbound (default exit 0); local
                                              only, no daemon call
-bridle ticket new "<title>" --kind <kind> [--repos a,b] [--needs ids] [--see ids] [--body t | --body-file f]   mints
+bridle ticket new "<title>" --kind <kind> [--repos a,b] [--blocked-by ids] [--related ids] [--theme slug] [--body t | --body-file f]   mints
                                              `docs/tickets/open/<slug>-<id>.md` (repo root found via git): a
                                              fresh 4-character ID unique across `open/` and `resolved/`,
-                                             frontmatter id, title, kind (required, no default: the task kinds), opened (UTC date), filed_by (the calling principal, optional; omitted when no daemon answers), repos (default: the
-                                             project name), changes, specs, needs, see, tasks, and an empty
+                                             frontmatter id, title, kind (required, no default: the task kinds), created (UTC date), created_by (the calling principal, optional; omitted when no daemon answers), repos (default: the
+                                             project name), theme (optional), changes, specs, blocked_by, related, tasks, and an empty
                                              `## The ask`; creates the folders if missing; prints the path.
                                              `--body`/`--body-file` (`-` = stdin) write the ask into the stub. Files no
                                              task (the task would race the ticket's commit; k7tm); `--no-task`
@@ -295,19 +295,19 @@ bridle ticket task <id>                      files the task for an open ticket (
                                              `br-k7tm` for `k7tm`; later ones get fresh ids). Refuses an empty
                                              `## The ask` and a ticket file not in the tip of local `main`
                                              (commit it first); needs a daemon; prints the task id
-bridle ticket resolve <id>                   stamps `closed: <UTC date-time>` into the frontmatter and moves
+bridle ticket resolve <id>                   stamps `resolved: <UTC date-time>` into the frontmatter and moves
                                              the ticket from `open/` to `resolved/` (a plain move: committing
                                              is the caller's); errors on an unknown or ambiguous id; doesn't
                                              touch the task. Both are local file work, no daemon start-up
 bridle ticket set <id> <field> <value>       edits one frontmatter field of an open or resolved ticket: `title`,
-                                             `kind` (any time; independent of its tasks' kinds), or a list field (`repos`, `changes`, `specs`, `needs`, `see`, `tasks`) given
-                                             comma-separated (empty clears it); refuses `id`, `opened`, `closed`
-                                             and unknown fields. Local file work
+                                             `kind` (any time; independent of its tasks' kinds), `theme` (a slug), `parent` (one id, bare or `<prefix>-<id>`), or a list field (`repos`, `changes`, `specs`, `blocked_by`, `related`, `tasks`) given
+                                             comma-separated (empty clears it); the old names (`needs`, `see`) map to the new; refuses `id`, `created`, `resolved`
+                                             (and their old names `opened`, `closed`) and unknown fields. Local file work
 bridle ticket check [--quiet]                checks every ticket in `docs/tickets/{open,resolved}`: all of id,
-                                             title, opened, repos, changes, specs, needs, see present; `closed`
+                                             title, created, repos, changes, specs, blocked_by, related present; `resolved`
                                              present under `resolved/` and only there; the id matches the file
-                                             name's tail and is unique; `needs`/`see` name existing tickets (id or
-                                             full stem); `[[stem|text]]` links outside code fences point at a file
+                                             name's tail and is unique; `blocked_by`/`related` name existing tickets (id or
+                                             full stem); `theme` is a slug and `parent` a well-formed id; the old field names are read too (new wins; both present warns); `[[stem|text]]` links outside code fences point at a file
                                              (stem anywhere under `docs/`, or a path from the repo root or
                                              `docs/`); `kind` is a task kind; `tasks` and the tasks' `ticket` fields agree (task side checked only
                                              when the daemon is up; a missing `kind`/`tasks` is a warning for now, see

@@ -92,7 +92,7 @@ async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<(), CliErro
     };
     // The caller's own principal, as tasks get `created_by`; left out when no daemon answers,
     // since `ticket new` works without one.
-    let filed_by = match client_for(cli).await {
+    let created_by = match client_for(cli).await {
         Ok(c) => c.status().await.ok().map(|s| s.principal),
         Err(_) => None,
     };
@@ -102,10 +102,14 @@ async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<(), CliErro
         ask: &ask,
         kind,
         repos: &repos,
-        needs: &args.needs,
-        see: &args.see,
-        filed_by: filed_by.as_deref(),
+        blocked_by: &args.blocked_by,
+        related: &args.related,
+        created_by: created_by.as_deref(),
+        theme: args.theme.as_deref(),
     };
+    if let Some(t) = fields.theme {
+        check_theme(t)?;
+    }
     let today = chrono::Utc::now().date_naive().to_string();
     let path = create(&root, &fields, &today, &task_id_tails(cli).await)?;
     let rel = path
@@ -327,10 +331,12 @@ pub struct Fields<'a> {
     pub ask: &'a str,
     pub kind: TaskKind,
     pub repos: &'a [String],
-    pub needs: &'a [String],
-    pub see: &'a [String],
-    /// The principal that filed it (`external:aide`); optional, older tickets have none.
-    pub filed_by: Option<&'a str>,
+    pub blocked_by: &'a [String],
+    pub related: &'a [String],
+    /// The principal that created it (`external:aide`); optional, older tickets have none.
+    pub created_by: Option<&'a str>,
+    /// A lasting area, as a slug (`reliability`); optional.
+    pub theme: Option<&'a str>,
 }
 
 /// Write a new ticket into `<root>/open/`, creating the folders; returns its path.
@@ -361,15 +367,16 @@ pub fn create(
         format!("{slug}-{id}.md")
     };
     let text = format!(
-        "---\nid: {id}\ntitle: {}\nkind: {}\nopened: {today}\n{}repos: {}\nchanges: []\nspecs: []\nneeds: {}\nsee: {}\ntasks: []\n---\n\n## The ask\n\n{}",
+        "---\nid: {id}\ntitle: {}\nkind: {}\ncreated: {today}\n{}{}repos: {}\nchanges: []\nspecs: []\nblocked_by: {}\nrelated: {}\ntasks: []\n---\n\n## The ask\n\n{}",
         yaml_scalar(f.title),
         f.kind,
-        f.filed_by
-            .map(|p| format!("filed_by: {}\n", yaml_scalar(p)))
+        f.created_by
+            .map(|p| format!("created_by: {}\n", yaml_scalar(p)))
             .unwrap_or_default(),
+        f.theme.map(|t| format!("theme: {t}\n")).unwrap_or_default(),
         list(f.repos),
-        list(f.needs),
-        list(f.see),
+        list(f.blocked_by),
+        list(f.related),
         if f.ask.trim().is_empty() {
             String::new()
         } else {
@@ -381,8 +388,8 @@ pub fn create(
     Ok(path)
 }
 
-/// Move the open ticket `id` to `resolved/`, stamping `closed:` first. Returns the new path.
-pub fn resolve(root: &Path, id: &str, closed: &str) -> anyhow::Result<PathBuf> {
+/// Move the open ticket `id` to `resolved/`, stamping `resolved:` first. Returns the new path.
+pub fn resolve(root: &Path, id: &str, resolved: &str) -> anyhow::Result<PathBuf> {
     let found = find_by_id(&root.join("open"), id)?;
     let dest = root
         .join("resolved")
@@ -392,7 +399,7 @@ pub fn resolve(root: &Path, id: &str, closed: &str) -> anyhow::Result<PathBuf> {
     }
     let text =
         std::fs::read_to_string(&found).with_context(|| format!("reading {}", found.display()))?;
-    let stamped = set_closed(&text, closed)
+    let stamped = set_resolved(&text, resolved)
         .ok_or_else(|| anyhow!("{} has no frontmatter", found.display()))?;
     std::fs::create_dir_all(root.join("resolved")).context("creating resolved/")?;
     std::fs::write(&dest, stamped).with_context(|| format!("writing {}", dest.display()))?;
@@ -436,24 +443,97 @@ pub fn id_of(path: &Path) -> Option<String> {
     (id.len() == ID_LEN && id.bytes().all(|b| ID_ALPHABET.contains(&b))).then(|| id.to_string())
 }
 
-const LIST_FIELDS: [&str; 6] = ["repos", "changes", "specs", "needs", "see", "tasks"];
-const REQUIRED: [&str; 8] = [
-    "id", "title", "opened", "repos", "changes", "specs", "needs", "see",
+const LIST_FIELDS: [&str; 6] = [
+    "repos",
+    "changes",
+    "specs",
+    "blocked_by",
+    "related",
+    "tasks",
 ];
+const REQUIRED: [&str; 8] = [
+    "id",
+    "title",
+    "created",
+    "repos",
+    "changes",
+    "specs",
+    "blocked_by",
+    "related",
+];
+/// Old frontmatter names and the standard names that replace them (syqn). Readers accept both
+/// until the rename migration has run everywhere; writers use the new ones only.
+const RENAMED: [(&str, &str); 5] = [
+    ("needs", "blocked_by"),
+    ("see", "related"),
+    ("opened", "created"),
+    ("filed_by", "created_by"),
+    ("closed", "resolved"),
+];
+
+/// The standard name for `field`, mapping an old name to its new one.
+fn canon(field: &str) -> &str {
+    RENAMED
+        .iter()
+        .find(|(old, _)| *old == field)
+        .map_or(field, |(_, new)| new)
+}
+
+/// The old name `field` replaced, if any.
+fn old_name(field: &str) -> Option<&'static str> {
+    RENAMED
+        .iter()
+        .find(|(_, new)| *new == field)
+        .map(|(o, _)| *o)
+}
+
+/// A theme slug: lowercase letters, digits and hyphens, not starting or ending with a hyphen.
+fn check_theme(t: &str) -> anyhow::Result<()> {
+    let ok = !t.is_empty()
+        && !t.starts_with('-')
+        && !t.ends_with('-')
+        && t.bytes()
+            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-');
+    if !ok {
+        bail!("theme {t:?} is not a slug (lowercase letters, digits and hyphens)");
+    }
+    Ok(())
+}
+
+/// A ticket id as `parent` may hold it: letters and digits, with an optional `<prefix>-`.
+/// Not resolved across projects yet (qualified ids are syqn part 2).
+fn check_parent(v: &str) -> anyhow::Result<()> {
+    let word = |w: &str| !w.is_empty() && w.bytes().all(|b| b.is_ascii_alphanumeric());
+    let ok = match v.split_once('-') {
+        Some((prefix, id)) => word(prefix) && word(id),
+        None => word(v),
+    };
+    if !ok {
+        bail!("parent {v:?} is not a ticket id (letters and digits, optionally <prefix>-<id>)");
+    }
+    Ok(())
+}
 
 /// Set frontmatter `field` of ticket `id` (open or resolved) to `value`; returns the path.
 pub fn set(root: &Path, id: &str, field: &str, value: &str) -> anyhow::Result<PathBuf> {
-    if matches!(field, "id" | "opened" | "closed") {
-        bail!("{field} is not editable (resolve stamps closed; id and opened never change)");
+    let field = canon(field);
+    if matches!(field, "id" | "created" | "resolved") {
+        bail!("{field} is not editable (resolve stamps resolved; id and created never change)");
     }
     let is_list = LIST_FIELDS.contains(&field);
-    if !is_list && field != "title" && field != "kind" {
+    if !is_list && !matches!(field, "title" | "kind" | "theme" | "parent") {
         bail!(
-            "unknown field {field}; one of title, kind, repos, changes, specs, needs, see, tasks"
+            "unknown field {field}; one of title, kind, theme, parent, repos, changes, specs, blocked_by, related, tasks"
         );
     }
     if field == "kind" {
         value.parse::<TaskKind>().map_err(|e| anyhow!(e))?;
+    }
+    if field == "theme" {
+        check_theme(value)?;
+    }
+    if field == "parent" {
+        check_parent(value)?;
     }
     let path = find_by_id(&root.join("open"), id)
         .or_else(|_| find_by_id(&root.join("resolved"), id))
@@ -470,6 +550,12 @@ pub fn set(root: &Path, id: &str, field: &str, value: &str) -> anyhow::Result<Pa
     } else {
         yaml_scalar(value)
     };
+    // A ticket still in the old form keeps one copy of the field: drop the old-named line so the
+    // new one is the only one (the new name wins on read anyway).
+    let text = match old_name(field) {
+        Some(old) => drop_line(&text, old),
+        None => text,
+    };
     let out = set_line(&text, field, &rendered)
         .ok_or_else(|| anyhow!("{} has no frontmatter", path.display()))?;
     std::fs::write(&path, out).with_context(|| format!("writing {}", path.display()))?;
@@ -477,7 +563,7 @@ pub fn set(root: &Path, id: &str, field: &str, value: &str) -> anyhow::Result<Pa
 }
 
 /// `text` with frontmatter `key: value` replaced, or added last before the closing `---`
-/// (and before `closed:`, which stays last); `None` without a frontmatter block.
+/// (and before `resolved:`/`closed:`, which stay last); `None` without a frontmatter block.
 fn set_line(text: &str, key: &str, value: &str) -> Option<String> {
     let mut lines: Vec<String> = text.lines().map(str::to_string).collect();
     let end = front_end(&lines)?;
@@ -486,7 +572,10 @@ fn set_line(text: &str, key: &str, value: &str) -> Option<String> {
     match (1..end).find(|&i| lines[i].starts_with(&prefix)) {
         Some(i) => lines[i] = new,
         None => {
-            let at = if end > 1 && lines[end - 1].starts_with("closed:") {
+            let at = if end > 1
+                && (lines[end - 1].starts_with("resolved:")
+                    || lines[end - 1].starts_with("closed:"))
+            {
                 end - 1
             } else {
                 end
@@ -499,6 +588,26 @@ fn set_line(text: &str, key: &str, value: &str) -> Option<String> {
         out.push('\n');
     }
     Some(out)
+}
+
+/// `text` without the frontmatter line for `key`.
+fn drop_line(text: &str, key: &str) -> String {
+    let lines: Vec<String> = text.lines().map(str::to_string).collect();
+    let Some(end) = front_end(&lines) else {
+        return text.to_string();
+    };
+    let prefix = format!("{key}:");
+    let mut out: Vec<&str> = Vec::new();
+    for (i, l) in lines.iter().enumerate() {
+        if !(i > 0 && i < end && l.starts_with(&prefix)) {
+            out.push(l);
+        }
+    }
+    let mut s = out.join("\n");
+    if text.ends_with('\n') {
+        s.push('\n');
+    }
+    s
 }
 
 /// Index of the closing `---` of a leading frontmatter block.
@@ -660,12 +769,22 @@ pub fn check(root: &Path, docs: &Path, task_links: Option<&HashMap<String, Strin
             note(true, "no frontmatter".into());
             continue;
         };
-        let get = |k: &str| {
+        // The new name wins over the old one when both are present.
+        let raw = |k: &str| {
             front
                 .iter()
                 .find(|(key, _)| key == k)
                 .map(|(_, v)| v.as_str())
         };
+        let get = |k: &str| raw(k).or_else(|| old_name(k).and_then(raw));
+        for (old, new) in RENAMED {
+            if raw(old).is_some() && raw(new).is_some() {
+                note(
+                    false,
+                    format!("has both {old} and {new}; {new} wins, delete {old}"),
+                );
+            }
+        }
         for k in REQUIRED {
             if get(k).is_none_or(str::is_empty) && !(LIST_FIELDS.contains(&k) && get(k).is_some()) {
                 note(true, format!("missing {k}"));
@@ -716,12 +835,22 @@ pub fn check(root: &Path, docs: &Path, task_links: Option<&HashMap<String, Strin
                 }
             }
         }
-        match (resolved, get("closed")) {
+        match (resolved, get("resolved")) {
             (true, None | Some("")) => {
-                note(true, "missing closed (required under resolved/)".into())
+                note(true, "missing resolved (required under resolved/)".into())
             }
-            (false, Some(_)) => note(true, "closed is set but the ticket is under open/".into()),
+            (false, Some(_)) => note(true, "resolved is set but the ticket is under open/".into()),
             _ => {}
+        }
+        if let Some(t) = get("theme")
+            && let Err(e) = check_theme(t)
+        {
+            note(true, e.to_string());
+        }
+        if let Some(p) = get("parent")
+            && let Err(e) = check_parent(p)
+        {
+            note(true, e.to_string());
         }
         if let Some(id) = get("id") {
             if file_id.as_deref().is_some_and(|f| f != id) {
@@ -737,7 +866,7 @@ pub fn check(root: &Path, docs: &Path, task_links: Option<&HashMap<String, Strin
                 note(true, format!("{k} is not a [a, b] list"));
                 continue;
             };
-            if k == "needs" || k == "see" {
+            if k == "blocked_by" || k == "related" {
                 for it in items {
                     if !ids.contains(&it) && !stems.contains(&it) {
                         note(true, format!("{k} names {it}, which is not a ticket"));
@@ -824,9 +953,10 @@ fn yaml_scalar(s: &str) -> String {
     }
 }
 
-/// `text` with `closed: <ts>` as the last frontmatter line (replacing any existing one);
+/// `text` with `resolved: <ts>` as the last frontmatter line (replacing any existing one, in
+/// either name);
 /// `None` when there is no frontmatter block.
-fn set_closed(text: &str, closed: &str) -> Option<String> {
+fn set_resolved(text: &str, resolved: &str) -> Option<String> {
     let mut lines: Vec<&str> = text.lines().collect();
     if lines.first() != Some(&"---") {
         return None;
@@ -836,11 +966,11 @@ fn set_closed(text: &str, closed: &str) -> Option<String> {
         let mut i = 0;
         move |l| {
             i += 1;
-            !(i > 1 && i <= end && l.starts_with("closed:"))
+            !(i > 1 && i <= end && (l.starts_with("resolved:") || l.starts_with("closed:")))
         }
     });
     let end = lines.iter().skip(1).position(|l| *l == "---")? + 1;
-    let stamp = format!("closed: {closed}");
+    let stamp = format!("resolved: {resolved}");
     lines.insert(end, &stamp);
     let mut out = lines.join("\n");
     if text.ends_with('\n') {
@@ -860,9 +990,10 @@ mod tests {
             ask: "",
             kind: TaskKind::Feature,
             repos,
-            needs: &[],
-            see: &[],
-            filed_by: None,
+            blocked_by: &[],
+            related: &[],
+            created_by: None,
+            theme: None,
         }
     }
 
@@ -903,25 +1034,25 @@ mod tests {
         assert_eq!(
             text,
             format!(
-                "---\nid: {id}\ntitle: \"Fix the: thing (now)\"\nkind: feature\nopened: 2026-09-30\nrepos: [proj]\nchanges: []\nspecs: []\nneeds: []\nsee: []\ntasks: []\n---\n\n## The ask\n\n"
+                "---\nid: {id}\ntitle: \"Fix the: thing (now)\"\nkind: feature\ncreated: 2026-09-30\nrepos: [proj]\nchanges: []\nspecs: []\nblocked_by: []\nrelated: []\ntasks: []\n---\n\n## The ask\n\n"
             )
         );
     }
 
     #[test]
-    fn new_records_filed_by_and_check_accepts_it_or_its_absence() {
+    fn new_records_created_by_and_check_accepts_it_or_its_absence() {
         let dir = tempfile::tempdir().unwrap();
         let root = dir.path().join("docs/tickets");
         let repos = vec!["proj".to_string()];
         let mut f = fields("Who filed this", &repos);
-        f.filed_by = Some("external:aide");
+        f.created_by = Some("external:aide");
         let p = create(&root, &f, "2026-10-07", &HashSet::new()).unwrap();
         let text = std::fs::read_to_string(&p).unwrap();
         assert!(
-            text.contains("opened: 2026-10-07\nfiled_by: external:aide\nrepos: [proj]\n"),
+            text.contains("created: 2026-10-07\ncreated_by: external:aide\nrepos: [proj]\n"),
             "{text}"
         );
-        // An old ticket with no `filed_by` still passes alongside it.
+        // An old ticket with no `created_by` still passes alongside it.
         write(&root, "open", "old-thing-aaaa.md", "aaaa", "", "");
         assert_eq!(problems(dir.path()), "");
     }
@@ -989,7 +1120,7 @@ mod tests {
     }
 
     #[test]
-    fn resolve_moves_and_stamps_closed() {
+    fn resolve_moves_and_stamps_resolved() {
         let dir = tempfile::tempdir().unwrap();
         let repos = vec!["p".to_string()];
         let p = create(
@@ -1005,7 +1136,7 @@ mod tests {
         assert_eq!(dest.parent().unwrap(), dir.path().join("resolved"));
         let text = std::fs::read_to_string(&dest).unwrap();
         assert!(
-            text.contains("tasks: []\nclosed: 2026-10-01T12:00:00Z\n---\n"),
+            text.contains("tasks: []\nresolved: 2026-10-01T12:00:00Z\n---\n"),
             "{text}"
         );
         assert!(resolve(dir.path(), &id, "x").is_err());
@@ -1026,10 +1157,12 @@ mod tests {
     }
 
     #[test]
-    fn set_closed_replaces_an_existing_stamp() {
-        let t = set_closed("---\nid: a\nclosed: old\n---\nbody\n", "new").unwrap();
-        assert_eq!(t, "---\nid: a\nclosed: new\n---\nbody\n");
-        assert!(set_closed("no frontmatter", "x").is_none());
+    fn set_resolved_replaces_an_existing_stamp_in_either_name() {
+        for old in ["resolved", "closed"] {
+            let t = set_resolved(&format!("---\nid: a\n{old}: old\n---\nbody\n"), "new").unwrap();
+            assert_eq!(t, "---\nid: a\nresolved: new\n---\nbody\n");
+        }
+        assert!(set_resolved("no frontmatter", "x").is_none());
     }
 
     const FRONT: &str =
@@ -1104,16 +1237,16 @@ mod tests {
             "short.md: file name doesn't end in -<4-character id>.md",
             "short.md: missing title",
             "mismatch-aaaa.md: id dddd doesn't match the file name",
-            "closed is set but the ticket is under open/",
-            "missing closed (required under resolved/)",
+            "resolved is set but the ticket is under open/",
+            "missing resolved (required under resolved/)",
             "id eeee is also used by",
-            "needs names nope, which is not a ticket",
+            "blocked_by names nope, which is not a ticket",
             "link [[nowhere]] points at no file",
         ] {
             assert!(p.contains(want), "missing {want:?} in:\n{p}");
         }
         assert!(!p.contains("in-code") && !p.contains("inline-code"), "{p}");
-        assert!(!p.contains("see names"), "{p}");
+        assert!(!p.contains("related names"), "{p}");
     }
 
     #[test]
@@ -1245,25 +1378,25 @@ mod tests {
         set(dir.path(), &id, "repos", "a, b").unwrap();
         set(dir.path(), &id, "title", "New: title").unwrap();
         set(dir.path(), &id, "needs", "xxxx").unwrap();
-        set(dir.path(), &id, "see", "").unwrap();
+        set(dir.path(), &id, "related", "").unwrap();
         let text = std::fs::read_to_string(&p).unwrap();
         assert!(text.contains("title: \"New: title\"\n"), "{text}");
         assert!(text.contains("repos: [a, b]\n"), "{text}");
         assert!(
-            text.contains("needs: [xxxx]\nsee: []\ntasks: []\n---\n"),
+            text.contains("blocked_by: [xxxx]\nrelated: []\ntasks: []\n---\n"),
             "{text}"
         );
         assert!(text.ends_with("## The ask\n\n"));
-        // A resolved ticket is editable too, and `closed:` stays last.
+        // A resolved ticket is editable too, and `resolved:` stays last.
         let dest = resolve(dir.path(), &id, "2026-10-01T00:00:00Z").unwrap();
         set(dir.path(), &id, "specs", "s1").unwrap();
         let text = std::fs::read_to_string(dest).unwrap();
         assert!(text.contains("specs: [s1]\n"), "{text}");
         assert!(
-            text.contains("closed: 2026-10-01T00:00:00Z\n---\n"),
+            text.contains("resolved: 2026-10-01T00:00:00Z\n---\n"),
             "{text}"
         );
-        for f in ["id", "opened", "closed"] {
+        for f in ["id", "created", "opened", "resolved", "closed"] {
             let e = set(dir.path(), &id, f, "x").unwrap_err().to_string();
             assert!(e.contains("not editable"), "{e}");
         }
@@ -1323,5 +1456,123 @@ mod tests {
         assert!(ensure_committed(dir.path(), Path::new("a.md")).is_ok());
         let err = ensure_committed(dir.path(), Path::new("b.md")).unwrap_err();
         assert!(err.to_string().contains("not committed"), "{err}");
+    }
+    const NEW_FRONT: &str =
+        "created: 2026-09-30\nrepos: [p]\nchanges: []\nspecs: []\nblocked_by: []\nrelated: []\n";
+
+    fn write_raw(root: &Path, dir: &str, name: &str, front: &str) {
+        let d = root.join(dir);
+        std::fs::create_dir_all(&d).unwrap();
+        std::fs::write(d.join(name), format!("---\n{front}---\nbody\n")).unwrap();
+    }
+
+    #[test]
+    fn check_reads_old_and_new_names_cleanly() {
+        let dir = tempfile::tempdir().unwrap();
+        let t = dir.path().join("docs/tickets");
+        write(&t, "open", "old-aaaa.md", "aaaa", "", "");
+        write_raw(
+            &t,
+            "open",
+            "new-bbbb.md",
+            &format!("id: bbbb\ntitle: T\n{NEW_FRONT}theme: human-ui\nparent: aaaa\n"),
+        );
+        write_raw(
+            &t,
+            "resolved",
+            "done-cccc.md",
+            &format!("id: cccc\ntitle: T\n{NEW_FRONT}parent: br-aaaa\nresolved: 2026-10-01\n"),
+        );
+        let r = report(dir.path(), None);
+        assert!(r.errors.is_empty(), "{:?}", r.errors);
+        assert!(
+            r.warnings.iter().all(|w| !w.contains("both")),
+            "{:?}",
+            r.warnings
+        );
+    }
+
+    #[test]
+    fn check_warns_when_both_names_are_present_and_the_new_one_wins() {
+        let dir = tempfile::tempdir().unwrap();
+        let t = dir.path().join("docs/tickets");
+        // `needs` names a missing ticket, but `blocked_by` (empty) wins, so no error.
+        write_raw(
+            &t,
+            "open",
+            "both-aaaa.md",
+            &format!("id: aaaa\ntitle: T\n{NEW_FRONT}needs: [nope]\n"),
+        );
+        let r = report(dir.path(), None);
+        assert!(r.errors.is_empty(), "{:?}", r.errors);
+        assert!(
+            r.warnings
+                .iter()
+                .any(|w| w.contains("has both needs and blocked_by")),
+            "{:?}",
+            r.warnings
+        );
+    }
+
+    #[test]
+    fn check_validates_theme_and_parent() {
+        let dir = tempfile::tempdir().unwrap();
+        let t = dir.path().join("docs/tickets");
+        for (name, id, extra) in [
+            ("a-aaaa.md", "aaaa", "theme: Human_UI\n"),
+            ("b-bbbb.md", "bbbb", "parent: br--x\n"),
+            (
+                "c-cccc.md",
+                "cccc",
+                "theme: agents-and-cli\nparent: br-aaaa\n",
+            ),
+        ] {
+            write_raw(
+                &t,
+                "open",
+                name,
+                &format!("id: {id}\ntitle: T\n{NEW_FRONT}{extra}"),
+            );
+        }
+        let p = problems(dir.path());
+        assert!(p.contains("a-aaaa.md: theme"), "{p}");
+        assert!(p.contains("b-bbbb.md: parent"), "{p}");
+        assert!(!p.contains("c-cccc"), "{p}");
+    }
+
+    #[test]
+    fn set_maps_old_names_and_validates_theme_and_parent() {
+        let dir = tempfile::tempdir().unwrap();
+        let t = dir.path().join("docs/tickets");
+        write(&t, "open", "old-aaaa.md", "aaaa", "", "");
+        let root = &t;
+        set(root, "aaaa", "see", "bbbb").unwrap();
+        set(root, "aaaa", "theme", "reliability").unwrap();
+        set(root, "aaaa", "parent", "br-k7tm").unwrap();
+        let text = std::fs::read_to_string(t.join("open/old-aaaa.md")).unwrap();
+        assert!(text.contains("related: [bbbb]\n"), "{text}");
+        assert!(!text.contains("see:"), "{text}");
+        assert!(text.contains("theme: reliability\n") && text.contains("parent: br-k7tm\n"));
+        for bad in ["Reliability", "a_b", "-a", ""] {
+            assert!(set(root, "aaaa", "theme", bad).is_err(), "{bad}");
+        }
+        assert!(set(root, "aaaa", "parent", "a b").is_err());
+    }
+
+    #[test]
+    fn new_writes_theme_and_the_new_names_only() {
+        let dir = tempfile::tempdir().unwrap();
+        let repos = vec!["p".to_string()];
+        let mut f = fields("Thing", &repos);
+        f.theme = Some("human-ui");
+        let p = create(dir.path(), &f, "2026-10-10", &HashSet::new()).unwrap();
+        let text = std::fs::read_to_string(p).unwrap();
+        assert!(
+            text.contains("created: 2026-10-10\ntheme: human-ui\nrepos: [p]\n"),
+            "{text}"
+        );
+        for old in ["opened:", "needs:", "see:", "filed_by:", "closed:"] {
+            assert!(!text.contains(old), "{old} in {text}");
+        }
     }
 }
