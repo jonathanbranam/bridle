@@ -9,7 +9,7 @@ changes: []
 specs: []
 needs: []
 see: [fv86, tc7t, chvf]
-tasks: [br-t3dr]
+tasks: [br-t3dr, br-k3jk]
 ---
 
 ## The ask
