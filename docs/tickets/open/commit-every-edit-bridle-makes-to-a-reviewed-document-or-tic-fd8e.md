@@ -27,8 +27,9 @@ The human, 2026-10-10 ~5:15 PM ET, verbatim (to the aide):
     `[read 2026-10-09 22:45 EDT]`. Per `docs/design/human-web-ui.md` (review section) the
     **daemon** rewrites `[sent]` to `[read]` once the agent has read the message, and gives a
     hand-typed thread its `c<n>` ID. Neither write is committed.
-  - `p896`: `tasks: []` became `tasks: [br-p896]` (a task filed from the ticket wrote the
-    frontmatter and didn't commit it).
+  - `p896`: `tasks: []` became `tasks: [br-p896]`. Correction: this was the PdM's own hand
+    edit, not bridle's (the PdM, m-9641), and it is now committed. Only the 4cgx markers are
+    bridle's.
 - What is committed: the human's comments (`review: human comments on ...` commits, af2a0e95,
   ec5e53c2) and the document-reviewer's rounds (role step 5, "Commit each round"; 98eecbcf).
   So the gap is the writes made by bridle itself, not the reviewer's own edits.
