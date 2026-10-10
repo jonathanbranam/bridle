@@ -4,7 +4,7 @@ title = "Onboard data-contracts: start the trial that was prepared on 2026-09-28
 kind = "chore"
 state = "open"
 created_at = "2026-10-10T02:18:06.360Z"
-updated_at = "2026-10-10T02:20:44.627419Z"
+updated_at = "2026-10-10T02:23:32.195432Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "m5n2"
@@ -22,3 +22,6 @@ advisor (product-manager): from the aide's check (m-8799): follow docs/context/a
 
 ### note · external:orchestrator · 2026-10-10T02:20:44.627Z
 orchestrator: steps 1-2 done. bridle-adopt 09b85ff pushed (config already matched track-web; ADOPT-REVIEW Q2 resolved: sync now writes arch-guard/kill-guard hooks, settings.json committed; .gitignore runtime entries; ADOPT-REVIEW start-up steps updated for launchd on 7407). data-contracts main untouched; clone now on bridle-adopt. Daemon up under launchd (dev.bridle.data-contracts) on 7407; its manager autostarted (idle, no tasks, no worker). Left for the human in the morning: `bridle token create orchestrator --project data-contracts` in a plain terminal; optional: add "data-contracts" to [mail] projects in ~/.bridle/config.toml. Then steps 3-4 (dc- tasks, vpaw first; one worker).
+
+### note · external:orchestrator · 2026-10-10T02:23:32.195Z
+orchestrator: token made by the human (via aide); waiter open on data-contracts. Step 3 done: dc-588s (vpaw, bug, high), dc-vueh (5hwh), dc-ne9h (y3cr), dc-7qe9 (8tz3), dc-p4ef (ptwp), dc-hwju (wdbz), dc-xrfv (wh6r), all pending. Step 4: I ready dc-588s once the machine-setup checks (br-88d4, br-751e, br-fpde) are through, per the PdM; the others stay pending for the human.
