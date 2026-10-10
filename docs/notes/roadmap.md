@@ -15,7 +15,7 @@ before it moves: "waits on the human" is a pending task only the human can appro
 is the project manager's; "ready to build" is in the queue; "HELD" is planned in bridle but
 stopped by the human.
 
-Last updated: 2026-10-10 1:45 PM ET.
+Last updated: 2026-10-10 2:10 PM ET.
 
 ## Needs the human now
 
@@ -54,17 +54,18 @@ The roadmap's priority order (the human, 2026-10-10 10:15 AM ET): machine setup,
 2. **Messages are reliable, one waiter per agent** (`messaging`, theme `agents-and-cli`)
 3. **Scheduled messages and timed actions** (`scheduled-messages`, theme `agents-and-cli`)
 4. **Benchmarking bridle's own cost** (`benchmarking`, theme `performance`)
-5. **Interactive agents move to the background** (`background-agents`, theme `agents-and-cli`)
-6. **Everything is a ticket** (`everything-is-a-ticket`, theme `tickets-and-release`)
-7. **Migrations** (`migrations`, theme `tickets-and-release`)
-8. **Documents and attachments on tickets** (`attachments`, theme `product-process`)
-9. **Reviews enforced by bridle** (`reviews-enforced`, theme `product-process`)
-10. **Comments and mentions reach the right agent** (`comment-routing`, theme `human-ui`)
-11. **One orchestrator per machine** (`orchestrator-per-machine`, theme `agents-and-cli`)
-12. **Machine sync and recovery** (`machine-sync`, theme `multi-machine`)
-13. **Projects become machine-transparent** (`machine-transparent`, theme `multi-machine`)
-14. **bridle-ui enhancements and fixes** (`ui-cleanups`, theme `human-ui`)
-15. **Products: several product managers and roadmaps** (`products`, theme `product-process`)
+5. **bridle-ui ships with bridle releases** (`ui-releases`, theme `human-ui`)
+6. **Interactive agents move to the background** (`background-agents`, theme `agents-and-cli`)
+7. **Everything is a ticket** (`everything-is-a-ticket`, theme `tickets-and-release`)
+8. **Migrations** (`migrations`, theme `tickets-and-release`)
+9. **Documents and attachments on tickets** (`attachments`, theme `product-process`)
+10. **Reviews enforced by bridle** (`reviews-enforced`, theme `product-process`)
+11. **Comments and mentions reach the right agent** (`comment-routing`, theme `human-ui`)
+12. **One orchestrator per machine** (`orchestrator-per-machine`, theme `agents-and-cli`)
+13. **Machine sync and recovery** (`machine-sync`, theme `multi-machine`)
+14. **Projects become machine-transparent** (`machine-transparent`, theme `multi-machine`)
+15. **bridle-ui enhancements and fixes** (`ui-cleanups`, theme `human-ui`)
+16. **Products: several product managers and roadmaps** (`products`, theme `product-process`)
 
 ## Themes
 
@@ -75,12 +76,13 @@ Daemons, tokens, sync and projects across the laptop, the NUC and the Windows PC
 #### Epic `machine-setup`: Machine setup: the PC runs bridle from a release
 
 - Outcome: A second machine (first the Windows PC) runs bridle unattended from a release, with no bridle source clone: background daemons, tokens between machines and projects, owner-only pushes, and the binary and workflow upgrading together by release (chvf, mrhe). The human, 2026-10-10: "Split the epics and write a proper 'when done' statement for the epic".
-- Done when: (1) v0.6.0 is released with br-751e in it and CI on main is green; (2) the Windows PC is named and set up under WSL2 by the guide, and its daemon runs from the v0.6.0 release binary with no bridle clone, its workflow at the binary's tag; (3) the PC's and the NUC's daemons run self_upgrade = "release" and take the next release on their own; (4) tickets chvf and mrhe are resolved.
+- Done when: (1) v0.6.0 is released with br-751e in it and CI on main is green; (2) bridle installs from a release in one step with no clone (fv86), and the Windows PC is named and set up under WSL2 that way, its daemon and gateway running from the release binary with no bridle clone, its workflow at the binary's tag; (3) the PC's and the NUC's daemons run self_upgrade = "release" and take the next release on their own; (4) tickets chvf and mrhe are resolved.
 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
-| [br-ygkc](http://dalek.tailbc91f5.ts.net:7878/task?id=br-ygkc) | release::tests::installs_and_keeps_the_previous_binary fails with checksum mismatch (br... |  | planned | fix done, landing; unblocks br-751e |
+| [br-ygkc](http://dalek.tailbc91f5.ts.net:7878/task?id=br-ygkc) | release::tests::installs_and_keeps_the_previous_binary fails with checksum mismatch (br... |  | integrated | fix done, landing; unblocks br-751e |
 | [br-751e](http://dalek.tailbc91f5.ts.net:7878/task?id=br-751e) | Daemon keeps its own workflow checkout at the binary's tag (chvf 3) | high | planned | done; landing waits on the br-ygkc flake fix; then v0.6.0 |
+| [br-fv86](http://dalek.tailbc91f5.ts.net:7878/task?id=br-fv86) | Install bridle from a release with no clone: one step that downloads, verifies and inst... | high | open | to plan (project manager) |
 | [br-jgdb](http://dalek.tailbc91f5.ts.net:7878/task?id=br-jgdb) | Windows PC: follow the WSL2 setup guide (install WSL2 + Ubuntu, wslconfig, Tailscale, s... | low | claimed | the human's to-do |
 | [br-h7mu](http://dalek.tailbc91f5.ts.net:7878/task?id=br-h7mu) | Pick a name for the Windows PC (docs/context/naming.md) (v7ug) | low | claimed | the human's to-do |
 | [br-3932](http://dalek.tailbc91f5.ts.net:7878/task?id=br-3932) | Run bridle on a project without a local bridle clone (mrhe) |  | pending | umbrella: both parts landed (br-85bc, br-8411); closes with tickets mrhe and chvf once br-751e lands |
@@ -158,7 +160,6 @@ How work is recorded (tickets, fields, migrations) and shipped (changelog, relea
 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
-| [br-785a](http://dalek.tailbc91f5.ts.net:7878/task?id=br-785a) | A landing that needs a UI install shows without a manual step (tc7t, option C) |  | pending | design first (designer on tc7t, then the human's review); build split after br-7ufd lands |
 | [br-g3az](http://dalek.tailbc91f5.ts.net:7878/task?id=br-g3az) | Status line token setup in the docs writes an empty file: token create needs --print now |  | integrated | delivered |
 | [br-01ff](http://dalek.tailbc91f5.ts.net:7878/task?id=br-01ff) | Tickets through the bridle binary in every project: new, frontmatter, check, resolve; a... |  | pending | waits on the human (approve to ready) |
 | [br-ubjd](http://dalek.tailbc91f5.ts.net:7878/task?id=br-ubjd) | A CHANGELOG line for every landed task, written on the branch, and one section per kind... |  | pending | waits on the human (approve to ready) |
@@ -361,6 +362,16 @@ Bridle's own cost on the machine: measure against a baseline, then cut it.
 
 What the human sees and touches: web UI, documents and comments, to-dos, links, quiet hours.
 
+#### Epic `ui-releases`: bridle-ui ships with bridle releases
+
+- Outcome: The UI is installed and upgraded with bridle, fixed to the bridle version, so a machine installed from a release has the matching UI (t3dr). The human, 2026-10-10: "the bridle-ui as part of that, all fixed to a version that comes from bridle ... If the UI is not done, that could be a separate epic".
+- Done when: (PdM draft) A machine installed from a release (fv86) serves the UI that matches its bridle version, and a self-upgrade moves both; the dev machine follows landings (tc7t).
+
+| Task | Title | Pri | State | Next |
+|---|---|---|---|---|
+| [br-t3dr](http://dalek.tailbc91f5.ts.net:7878/task?id=br-t3dr) | bridle-ui ships with each bridle release, fixed to that version, and self-upgrade moves... |  | pending | waits on the human (approve to ready) |
+| [br-785a](http://dalek.tailbc91f5.ts.net:7878/task?id=br-785a) | A landing that needs a UI install shows without a manual step (tc7t, option C) |  | pending | design first (designer on tc7t, then the human's review); build split after br-7ufd lands |
+
 #### Epic `comment-routing`: Comments and mentions reach the right agent
 
 - Outcome: The human's comments and replies reach the agent that should act: a document's reviewer front matter (re79) and @-mentions in replies and comments (4cgx). The human, 2026-10-09: "they are related".
@@ -541,3 +552,4 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 - 2026-10-09 20:47 ET: br-syqn planned as part 1 of 3 (pm-1 files parts 2 and 3 when it lands).
 - 2026-10-09 23:05 ET: br-7ufd delivered, ticket 7ufd resolved; data-contracts onboarded (m5n2 resolved). Queue re-tiered by pm-1 to the roadmap (88d4, fpde, 751e, hdbj ahead) after the human found low work running ahead of machine setup (trial lesson 14). New epic `messaging` (rank 2: 3haz, fvkq, 2msq, n7cg, new rhba, ysmu, cufw); `scheduled-messages` moved to rank 3; br-g5y2 approved. br-1ddd and br-kuvh dropped (the human chose the real fix). Placed br-xxq8, br-p29s, br-bnfs, br-4vmc.
 - 2026-10-10 1:45 PM ET: regenerated (stale since 2026-10-09 23:05). Machine setup split (the human: "Split the epics and write a proper 'when done' statement"): `machine-setup` is phase 1 only, done when v0.6.0 is out, the PC runs bridle from the release with no clone, the PC and NUC self-upgrade by release, and chvf and mrhe are resolved; br-3932 (mrhe umbrella) and br-ygkc moved in. New epic `machine-sync` (rjd5, f8f9, xccp, v7ug) after one orchestrator per machine; kt25 to `machine-transparent`; eadm unscheduled. Also new today: epics benchmarking, background-agents, orchestrator-per-machine, machine-transparent, ui-cleanups; hwek (incident fix, messaging); 9dcz and g8pe (link hook, comment-routing).
+- 2026-10-10 2:10 PM ET: the human expects machine setup to cover installing bridle with no clone, running and self-upgrading (daemon, gateway, UI fixed to a bridle version). Filed fv86 (install from a release, no clone; readied, high) into `machine-setup` and its done-when; new epic `ui-releases` (t3dr, with br-785a) fifth, the UI being a separate piece of work (the human).
