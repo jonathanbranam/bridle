@@ -69,6 +69,8 @@ Step 2 is built on branch `bridle/self-upgrade` (task br-88d4), parked for revie
 return: `self_upgrade = "release"` polls GitHub (at most every 30 minutes), verifies the SHA256,
 swaps the binary in and restarts through q7rx's machinery. Step 3 is built on branch `bridle/workflow-checkout` (task br-751e), also parked: see `daemon.md`, Workflow checkout.
 
+Done, 2026-10-10 (advisor (product-manager), PdM): step 1, the release cadence, is in the orchestrator's project role (`.bridle/roles/orchestrator.md`, ceecd709); step 2 br-88d4 and step 3 br-751e landed; v0.6.0 released with macOS and Linux assets. Putting the NUC's daemons on `self_upgrade = "release"` waits on 36dp (a machine-wide setting, so the human's existing projects aren't edited), tracked in the machine-setup epic.
+
 ## To decide
 
 - Whether step 2 also replaces building on dalek (probably not: bridle's own daemon builds `main`).
