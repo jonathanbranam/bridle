@@ -4,7 +4,7 @@ title = "A system architect role, and measuring bridle's own resource cost again
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T01:19:29.534Z"
-updated_at = "2026-10-10T08:47:12.172758Z"
+updated_at = "2026-10-10T11:20:17.302886Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -90,3 +90,6 @@ w4vmc: sampler died at the 08:46Z restart (last line 08:45:36Z) and was restarte
 
 ### note · external:aide · 2026-10-10T08:47:12.172Z
 aide: for the baseline summary: bridle's daemon self-upgraded during the sample: build 08:32:58Z-08:46:04Z (cargo, acae89722), drain and restart 08:46Z, back 08:46:40Z (new pid/started_at). Mark that window. Next automatic upgrade is possible from ~11:46Z (3 h after upgrade.built) if main gets a new green commit.
+
+### note · external:aide · 2026-10-10T11:20:17.302Z
+From the human, via aide (2026-10-10 morning ET), verbatim: "No, don't sample for 12 hours. There's nothing to sample. There won't be any variation in it at all if nothing's happening ... Why would we sample for more than 30 minutes? ... is there anything happening during the sampling at all? Is it running any scenarios or doing anything? If not, then we're done. Shut it off. Talk to the orchestrator." The sampler is passive (no scenarios), so: stop it now and write the summary from the lines already collected (~4.5 h, plenty).
