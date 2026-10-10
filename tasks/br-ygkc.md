@@ -2,9 +2,9 @@
 id = "br-ygkc"
 title = "release::tests::installs_and_keeps_the_previous_binary fails with checksum mismatch (br-88d4 test, seen in br-re57 landing check on main+docs)"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-10T14:35:40.098Z"
-updated_at = "2026-10-10T14:35:41.486014Z"
+updated_at = "2026-10-10T14:36:15.510614Z"
 created_by = "agent:manager-2"
 watchers = [
     "agent:manager-2",
