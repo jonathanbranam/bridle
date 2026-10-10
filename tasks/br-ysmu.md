@@ -2,14 +2,16 @@
 id = "br-ysmu"
 title = "CI watch missed 13 red runs on main; first ci_failed wake came 40 minutes late"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-05T03:21:20.785Z"
-updated_at = "2026-10-10T22:06:52.309228Z"
+updated_at = "2026-10-10T22:28:19.411271Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
     "external:advisor/product-manager",
 ]
+branch = "bridle/wysmu"
+commit = "f278f02b50c813dc1cd5797c5b8342844de23e10"
 summary = """Cause: the CI watcher followed only the newest tip of main (git ls-remote every third tick, then polled that one sha). Pushes landing while it polled, or between tip checks, were never looked at, so 13 red commits produced one ci.completed. Fix (crates/bridle-daemon/src/ci.rs): every tick lists the branch's 50 most recent runs (gh run list --branch), groups by commit, and reports each commit whose runs have all finished, once, oldest first, so the first red one wakes the manager. First look after start treats only the newest commit as news. Gh trait: remote_tip replaced by branch_runs; Run gained head_sha. New `bridle ci` (prints sha/conclusion/age/url, --json prints CiStatus, exit 0 only on success) reads the daemon's in-memory last result via status; empty until a run finishes after a daemon restart. Manager role text gets a "never merge on red" bullet. Docs: operating-model.md CI watcher, cli.md, CHANGELOG. Tests: fake CI source with several commits between polls (all recorded, first failure wakes), plus first-look and report-once tests. Caveat: a commit whose workflows start at different times could be reported when only the first workflow has finished (same as before)."""
 ticket = "ysmu"
 +++
@@ -38,3 +40,9 @@ br-syqn landed. Merge main into your branch again; if only docs/tickets changed,
 
 ### note · agent:wysmu · 2026-10-10T22:06:52.309Z
 merged main (br-syqn) cleanly; just check exit 0, 1470 tests; tip d1246980
+
+### note · agent:manager-2 · 2026-10-10T22:27:59.154Z
+integrated: f278f02b50c813dc1cd5797c5b8342844de23e10 (branch bridle/wysmu)
+
+### note · agent:manager-2 · 2026-10-10T22:28:19.411Z
+cleanup: removed agent wysmu, branch bridle/wysmu
