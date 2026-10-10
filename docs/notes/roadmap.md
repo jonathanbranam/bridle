@@ -15,7 +15,7 @@ before it moves: "waits on the human" is a pending task only the human can appro
 is the project manager's; "ready to build" is in the queue; "HELD" is planned in bridle but
 stopped by the human.
 
-Last updated: 2026-10-09 19:38 ET.
+Last updated: 2026-10-09 20:47 ET.
 
 ## Needs the human now
 
@@ -126,7 +126,7 @@ How work is recorded (tickets, fields, migrations) and shipped (changelog, relea
 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
-| [br-syqn](http://dalek.tailbc91f5.ts.net:7878/task?id=br-syqn) | Ticket fields get standard names (blocked_by, related, parent, created, resolved), a th... |  | open | to plan (project manager) |
+| [br-syqn](http://dalek.tailbc91f5.ts.net:7878/task?id=br-syqn) | Ticket fields get standard names (blocked_by, related, parent, created, created_by, res... |  | planned | part 1 of 3 (names, theme, read both forms); pm-1 files part 2 (project-qualified IDs) and part 3 (migration) when it lands |
 | [br-bpku](http://dalek.tailbc91f5.ts.net:7878/task?id=br-bpku) | Every ticket gets a row; types fix and epic; readiness moves to the ticket (ticket ready) |  | pending | after br-syqn lands (blocked_by) |
 | [br-3v75](http://dalek.tailbc91f5.ts.net:7878/task?id=br-3v75) | Ticket links live in the frontmatter: the daemon indexes blocked_by, parent and related... |  | pending | after br-bpku lands |
 | [br-72t9](http://dalek.tailbc91f5.ts.net:7878/task?id=br-72t9) | A ticket's thread moves to the ticket (tickets/<id>.md on the state branch); ticket com... |  | pending | after br-3v75 lands |
@@ -450,3 +450,4 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 - 2026-10-09 19:11 ET: br-8z7j hold released (dotfiles hooks cleaned up); its build is br-hdbj (planned), br-8z7j dropped. Ticket sweep: 96 tickets whose tasks were all done resolved (the human: the PdM resolves tickets).
 - 2026-10-09 19:28 ET: follow-ups from the ticket sweep (the human approved): readied br-fpde (restart stays up when exec fails; reliability) and br-785a (UI install follows landings, tc7t option C; tickets-and-release), normal; readied low ui-jafg (rk7k UI button; human-ui), br-sfpg (researcher role, 2mtr; agents-and-cli), br-7zd4 (stale rule lines, 98xt; agents-and-cli); filed unscheduled br-kaez (rcvb slice 2; human-ui) and br-zpc7 (gdyy part 2; reliability). None in an epic.
 - 2026-10-09 19:38 ET: br-tnyt delivered, ticket tnyt resolved; br-g76s unblocked. Placed br-8ff8 (CI flake, critical) in reliability. br-785a waits on a designer pass on tc7t (queued); br-sfpg needs a designer later.
+- 2026-10-09 20:47 ET: br-syqn planned as part 1 of 3 (pm-1 files parts 2 and 3 when it lands).
