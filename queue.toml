@@ -11,7 +11,10 @@ tasks = ["br-hdbj"]
 tasks = ["br-n96z"]
 
 [[tier]]
-tasks = ["br-4vmc"]
+tasks = ["br-37r9"]
+
+[[tier]]
+tasks = ["br-v6kr"]
 
 [[tier]]
 tasks = ["br-2msq"]
@@ -60,9 +63,6 @@ tasks = ["br-gd43"]
 
 [[tier]]
 tasks = ["br-7zd4"]
-
-[[tier]]
-tasks = ["br-v6kr"]
 
 [[tier]]
 tasks = ["br-stx8"]
