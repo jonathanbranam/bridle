@@ -330,3 +330,34 @@ in is automated project transfer between machines."
 - Lesson 12: **a PdM's scope is a product, not a project or the machine.** This trial watches
   every project on the machine (bridle, bridle-ui, track-web, dotfiles-local), which is already
   more context than one roadmap needs.
+
+**2026-10-09 ~9:50 PM ET.**
+
+- The human: "we are prioritizing the machine config and upgrades and project setup, right? I
+  thought sent-to-agent would wait until all that is done", then "it sounds like the tiering and
+  queueing isn't working properly and the roadmap epic planning isn't being honored. Please note
+  this in the PdM report", and "I would like to have things ready to install on the WSL2 tomorrow
+  and slightly concerned if tasks take an hour due to builds".
+- What happened: ui-jafg (send-to-agent button, low, no epic) landed 9:05 PM while br-88d4
+  (self_upgrade = "release", high, machine-setup epic) sat in bridle's queue at tier 4, behind
+  br-hdbj and br-fpde (both normal).
+- Who decides the order (checked in the events and role prompts):
+  - bridle: pm-1 sets the tiers; managers claim mechanically from `bridle queue` and never
+    reorder. The tiers did not follow priority or the roadmap.
+  - bridle-ui: no project manager and no queue ("no queue set"); the orchestrator is acting PM.
+    It planned ui-jafg "low, after ui-9hq8" within bridle-ui only.
+  - Across projects nothing orders work: a free slot goes to whichever project has planned work,
+    so a low task in one project runs beside a high one waiting in another.
+  - The roadmap is a notes file. No role prompt mentions it, and nothing in bridle reads it, so
+    its epic order binds only through what the PdM tells pm-1 and the orchestrator.
+  - My share: I readied ui-jafg tonight (low) without saying "after machine setup". In bridle's
+    vocabulary, low meant "eventually", not "not before the epics above it".
+- Done: asked the orchestrator (m-8732) and pm-1 (m-8733) for the order 8ff8, 88d4, fpde, 751e,
+  hdbj, syqn, and to keep low tasks out until machine setup is checked.
+- Lesson 13: **nobody owned resolving tickets**, so ~137 piled up; the PdM owns it now.
+- Lesson 14: **a roadmap no tool reads is advice, not a plan.** The order must reach whatever picks
+  the next task: the tiers (pm-1), the orchestrator's acting-PM queues and the choice between
+  projects. Until 22ab gives tasks an epic, the PdM must state the order in every ready (comment:
+  "after <epic>") and check the tiers against the roadmap after each planning pass. For the real
+  role: the queue across a product's projects is ordered by epic rank, then priority; a task
+  outside the current epic waits unless the human says otherwise.
