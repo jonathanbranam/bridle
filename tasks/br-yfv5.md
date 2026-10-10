@@ -2,9 +2,9 @@
 id = "br-yfv5"
 title = "One scheduler for timed actions: scheduled messages (hrcn), nightly session restarts (cbbn), maintenance windows for upgrades and reboots (3nyk)"
 kind = "feature"
-state = "pending"
+state = "planned"
 created_at = "2026-10-05T10:47:07.760Z"
-updated_at = "2026-10-09T11:04:38.816234Z"
+updated_at = "2026-10-10T14:21:18.482222Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
@@ -13,19 +13,7 @@ watchers = [
 ticket = "yfv5"
 +++
 
-docs/tickets/open/one-scheduler-for-timed-actions-scheduled-messages-hrcn-nigh-yfv5.md
-
-submitted by external:orchestrator@nuc
-
-The human, 2026-10-05 (NUC orchestrator): 'There's a ticket on bridle somewhere about having different types of scheduled message sends, I think, that can occur either on some form of cron or at specific points in the future. That's something that the notes agent is going to use a lot to ensure that they wake up in enough time before a meeting or something they need to send me a reminder for. We've also discussed the ability to reboot all agents for a machine upgrade in the middle of the night. These are all related things that probably should be solved in the same way.'
-
-Design ticket (no task until the human refines it, like hrcn). Related asks that should share one mechanism:
-- hrcn: scheduled messages, one-time or cron, set by an agent for itself or by the human for any agent. Notes use: wake the notes agent ahead of a meeting or a reminder it must send.
-- br-cbbn: restart an interactive session at a clock time (notes agent at 3 AM), with handover first and the role's handover instructions (br-ft3b).
-- 3nyk: pause work before a planned reboot, hand over, resume after.
-- Machine upgrades: build and install bridle, restart every daemon on the machine, resume agents, at night (today on the NUC it's by hand: temp worktree, just install, then 'bridle daemon restart' per project; self_upgrade only works where the bridle project's own daemon runs).
-
-Shape to consider: one schedule record (daemon DB, survives restarts; human time zone with DST; one-time or cron; what to do on a missed firing) with an action: send a message (hrcn), hand over and restart a session (cbbn), or a maintenance window (pause, hand over, then upgrade/reboot/restart daemons, resume; 3nyk). One CLI (bridle schedule add/list/rm) for agents and the human. Machine-wide actions need a home above one project's daemon (cy2v, one watcher for every project).
+Role: designer (workflow/base/roles/designer.md). Ticket: docs/tickets/open/one-scheduler-for-timed-actions-scheduled-messages-hrcn-nigh-yfv5.md (read all of it, plus the built first slice: br-9xze, docs/design/agent-host/daemon.md Scheduled messages). Write a Design options section into the ticket: settle its For the PM / human to settle points, each with a recommendation; keep the scheduler per project for now and say what would change under one daemon per machine (kuw2) without designing for it (YAGNI). Cover how cbbn (nightly session restarts) and 3nyk (maintenance windows) would reuse the schedules table and loop, and note the known gap that schedules refuse external principals (orchestrator, advisor, aide) today, with a recommendation. Build nothing, edit only the ticket. Report on the task; the PdM sends it to the human. Model: Sonnet. Migration: none (design only).
 
 ## Thread
 
@@ -43,3 +31,6 @@ The human approved the first slice (per-project scheduled messages an agent sets
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:38.816Z
 watching the task
+
+### note · external:advisor/product-manager · 2026-10-10T14:20:57.820Z
+advisor/product-manager (PdM): readied for a DESIGNER pass (next designer task, after br-re57). The human, 2026-10-10 ~10:15 AM ET: 'the scheduled messages, is a real high priority for me. Assuming the setup for the WSL2 work is done, assuming the machine work is done, adding scheduled messages is the next priority. My only caveat to that is that we have some big architecture considerations about whether we have one daemon per machine or one per project. Not ready to tackle that, but that would entirely rewrite message delivery.' Designer: write '## Design options' into ticket yfv5; settle its 'For the PM / human to settle' points with a recommendation; keep the scheduler per project for now and say what would change under one daemon per machine (kuw2), without designing for it (YAGNI). br-g5y2 (planned) can be built meanwhile.
