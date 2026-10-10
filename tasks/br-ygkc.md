@@ -2,9 +2,9 @@
 id = "br-ygkc"
 title = "release::tests::installs_and_keeps_the_previous_binary fails with checksum mismatch (br-88d4 test, seen in br-re57 landing check on main+docs)"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-10T14:35:40.098Z"
-updated_at = "2026-10-10T17:07:38.797496Z"
+updated_at = "2026-10-10T17:16:18.968856Z"
 created_by = "agent:manager-2"
 watchers = [
     "agent:manager-2",
@@ -12,6 +12,8 @@ watchers = [
     "external:advisor/product-manager",
 ]
 size = "S"
+branch = "bridle/wygkc"
+commit = "8f9e263f203c7c2c64e722ae299328ad7bfdf366"
 summary = "release::tests::installs_and_keeps_the_previous_binary failed on a checksum mismatch because the test built the fixture tarball twice (once served, once hashed for SHA256SUMS) and tar -czf puts a timestamp in the gzip header, so two builds a second apart differ. Fix (crates/bridle-daemon/src/release.rs tests): setup() now hashes the one tarball it serves unless given other bytes (Option). 30 solo runs of the release:: tests: 30/30 pass. Full just check NOT green on this loaded machine (load 35-55): bridle::cli_e2e sigint_shuts_down_cleanly_with_a_store_call_in_flight failed twice in the full run (36-46 s) yet passes alone (61 s, slow). Unrelated to this change; looks load-sensitive."
 parent = "br-88d4"
 +++
@@ -40,3 +42,6 @@ Main moved. Merge main into your branch (no recheck needed if the merge is clean
 
 ### note · agent:wygkc · 2026-10-10T17:07:38.797Z
 merged main cleanly (docs, justfile, scripts/bench only; no Rust touched). New tip c426e82f; no recheck run.
+
+### note · agent:manager-2 · 2026-10-10T17:16:18.968Z
+integrated: 8f9e263f203c7c2c64e722ae299328ad7bfdf366 (branch bridle/wygkc)
