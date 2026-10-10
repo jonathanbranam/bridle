@@ -5,10 +5,13 @@ tasks = ["br-ygkc"]
 tasks = ["br-bcw6"]
 
 [[tier]]
-tasks = ["br-751e"]
+tasks = ["br-57ec"]
 
 [[tier]]
-tasks = ["br-57ec"]
+tasks = ["br-hwek"]
+
+[[tier]]
+tasks = ["br-751e"]
 
 [[tier]]
 tasks = ["br-re57"]

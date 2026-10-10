@@ -2,12 +2,17 @@
 id = "br-hwek"
 title = "A named advisor's unread mail stays in its own inbox when its session ends or restarts (gtzx P4, pulled forward)"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-10T14:44:55.731Z"
-updated_at = "2026-10-10T14:44:55.793179Z"
+updated_at = "2026-10-10T14:45:24.215985Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "hwek"
 +++
 
-docs/tickets/open/a-named-advisor-s-unread-mail-stays-in-its-own-inbox-when-it-hwek.md
+Ticket: docs/tickets/open/a-named-advisor-s-unread-mail-stays-in-its-own-inbox-when-it-hwek.md (read it, with the incident entry 2026-10-10 14:36 in docs/context/incidents.md). Goal, items 1-5 of the ticket: (1) drop the move of unread mail to the shared external:advisor inbox in Sessions::emit_ended (crates/bridle-daemon/src/sessions.rs); (2) mail sent to a named advisor that is not running stays in its own inbox instead of the send-time fallback (server.rs, fell_back); the next session of that name gets it from its first bridle inbox or wake; (3) the sender is still told the recipient is not running, worded as waiting in its inbox; (4) recovery: move existing unread messages marked originally for advisor/NAME in the shared inbox back to the named inbox, done automatically when that named session next starts (and/or a one-off at daemon start), on every daemon; (5) update docs/design/agent-host/principals.md (fallback paragraph), cli.md send wording, CHANGELOG, and the test named_advisor_addressing_and_delivery_fallbacks. Migration: item 4 is the migration for existing stranded messages, automatic and idempotent; no project files change. Acceptance: just check passes; tests: session end leaves unread mail in the named inbox, send to a non-running named advisor lands in the named inbox with the sender note, stranded messages are moved back once and not twice, unnamed external:advisor behaviour unchanged. Model: Sonnet. Out of scope: the rest of gtzx (seats, retire), waiter acknowledgement (br-3zhx).
+
+## Thread
+
+### note · external:advisor/product-manager · 2026-10-10T14:45:11.925Z
+advisor/product-manager (PdM): placed in the messaging epic, ahead of br-9aj2. The human, 2026-10-10 ~10:45 AM ET: "this needs to be handled more quickly". Worker order: br-ygkc, br-bcw6, br-57ec, then br-hwek, then br-9aj2, br-3zhx as before. Small: drop the move in Sessions::emit_ended, keep send-time mail in the named inbox, recover the stranded messages (ticket hwek, items 1-5). Incident: docs/context/incidents.md, 2026-10-10 14:36.
