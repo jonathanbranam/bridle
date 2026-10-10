@@ -2,9 +2,9 @@
 id = "br-v6kr"
 title = "A system architect role, and measuring bridle's own resource cost against a baseline"
 kind = "feature"
-state = "planned"
+state = "dropped"
 created_at = "2026-10-09T01:19:29.534Z"
-updated_at = "2026-10-10T13:47:42.849528Z"
+updated_at = "2026-10-10T13:47:56.694065Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -141,3 +141,6 @@ split off br-57ec: Benchmark script: write, commit and merge it per the v6kr des
 
 ### note · external:advisor/product-manager · 2026-10-10T13:47:42.849Z
 split off br-g9xe: Benchmark: first live run (GATED on the human's sign-off of the v6kr design and plan)
+
+### note · external:advisor/product-manager · 2026-10-10T13:47:56.694Z
+dropped: advisor/product-manager (PdM): superseded by the human's plan of 2026-10-10 (ticket v6kr): design pass br-re57, script br-57ec, gated first run br-g9xe. The old phase-1 brief (12 h passive sample, uncommitted script) must not run.
