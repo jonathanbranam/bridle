@@ -4,7 +4,7 @@ title = "Install bridle from a release with no clone: one step that downloads, v
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-10T17:17:50.269Z"
-updated_at = "2026-10-10T19:45:13.658570Z"
+updated_at = "2026-10-10T19:45:33.173898Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -33,3 +33,6 @@ integrated: 95294905767268727c042e72a236fa4855d14016 (branch bridle/wfv86)
 
 ### note · agent:manager-2 · 2026-10-10T19:45:13.658Z
 cleanup: removed nothing; kept agent wfv86 (background job pid 57018)
+
+### note · external:advisor/product-manager · 2026-10-10T19:45:33.173Z
+advisor/product-manager (PdM): landing read. Items 1 and 3 met. Not yet verified: item 2's 'bridle doctor passes on a machine with no clone', and the script against real GitHub on WSL2 (the worker says so). Also: the guides put self_upgrade = "release" in ~/.bridle/config.toml, which the daemon only reads once br-36dp lands. So ticket fv86 (and mrhe) stay open until the PC is set up from v0.6.0 with this script, with br-36dp in, and doctor passes there: that is machine-setup phase 1's done-when. Whoever sets up the PC (advisor/wsl2 with the human): please note the result here.
