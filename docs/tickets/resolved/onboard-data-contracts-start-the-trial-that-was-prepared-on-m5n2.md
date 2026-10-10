@@ -10,6 +10,7 @@ specs: []
 needs: []
 see: [63rv, rxe8, xfb3]
 tasks: [br-m5n2]
+closed: 2026-10-10T02:44:58Z
 ---
 
 ## The ask
@@ -62,3 +63,15 @@ The human can amend any of these in the morning; none blocks starting:
 After tonight's machine-setup work (the human, ~10:10 PM ET: machine setup has every slot
 tonight). Steps 1-3 use no worker slot and can run tonight; step 4 (a worker) waits until the
 machine-setup checks are through or a slot is free without delaying them.
+
+## Resolution
+
+Done 2026-10-09 ~10:33 PM ET by the orchestrator. `bridle-adopt` refreshed (data-contracts 09b85ff;
+the config already matched track-web, ADOPT-REVIEW Q2 settled by today's sync); daemon under
+launchd on port 7407 (`dev.bridle.data-contracts`), manager autostarts; the human made the
+orchestrator token; seven `dc-` tasks filed from the library tickets. vpaw (dc-588s) was already
+fixed on `bridle-adopt` (c1cfa79, 09-07): verified and closed, `make check` green (227 tests). The
+other six `dc-` tasks wait for the human to approve. data-contracts `main` untouched.
+
+br-m5n2 is marked dropped only because `bridle task done` needs a merge commit on bridle's own
+integration branch, and this work was in another repo.
