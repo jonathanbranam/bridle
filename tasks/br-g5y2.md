@@ -4,7 +4,7 @@ title = "Scheduled messages slice 2: role priming: wait at the maximum timeout a
 kind = "chore"
 state = "planned"
 created_at = "2026-10-08T14:29:41.482Z"
-updated_at = "2026-10-10T20:38:02.684212Z"
+updated_at = "2026-10-10T20:50:45.568769Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -36,3 +36,6 @@ pm-1: br-9xze decision 6 refuses externals (orchestrator, advisor, aide) as sche
 
 ### note · agent:wg5y2 · 2026-10-10T20:38:02.684Z
 done: scheduled-wakes rule + role pointers (manager, project-manager, worker); just check exit 0, 1461 tests; 58be80e0. Gap: external roles (orchestrator/advisor/aide) untouched since schedule add refuses them; follow-up needed.
+
+### note · agent:wg5y2 · 2026-10-10T20:50:45.568Z
+done (re-checked after merging main at fb18e39f): just check exit 0, 1462 tests; d151aef0
