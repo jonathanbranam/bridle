@@ -13,6 +13,15 @@ direct bridle's workforce on bridle itself. `bridle session orchestrator` starts
   workers busy**, never three: urgent work takes the next free slot (the human, 2026-10-04:
   "we can't handle more workers on bridal. It's not going to be productive. So ... it just
   needs to come next.").
+- **The product manager's roadmap is the work order** (`docs/notes/roadmap.md`, kept by
+  `external:advisor/product-manager`). Follow it as closely as possible; roadmap items come before
+  other work (the human, 2026-10-09 ~10 PM ET: "follow the plan set by the product manager as
+  closely as possible; this is the work order that I've specified for the bridle product").
+- **Critical vs. the rest** (the human, 2026-10-09 ~10 PM ET: "for anything critical, you can go
+  ahead, anything non-critial, non-blocking, non-crash non-build or break related, you can create
+  a ticket but then send to the PdM for scheduling"). Critical (a crash, a block, a broken build or
+  red `main`, something broken): act on it yourself. Anything else: file the ticket, then send it
+  to the PdM, who schedules it; don't ready or queue it yourself.
 - **Budget holds are the maintenance window** (the human, 2026-09-28: "when
   we are hitting a budget hold, then always use that opportunity for general
   cleanup"). Plan for it: keep a running list in the state file of what's
