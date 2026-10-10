@@ -1446,3 +1446,5 @@
 {"actor":"agent:pm-1","at":"2026-10-10T14:22:12.718838Z","from":"open","task":"br-3zhx","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-10T14:22:15.709245Z","queue":"reprioritized"}
 {"actor":"human","at":"2026-10-10T14:23:15.717Z","from":"","task":"br-evy6","to":"pending"}
+{"actor":"human","at":"2026-10-10T14:35:40.098Z","from":"","task":"br-ygkc","to":"pending"}
+{"actor":"agent:manager-2","at":"2026-10-10T14:35:41.486014Z","from":"pending","task":"br-ygkc","to":"open"}
