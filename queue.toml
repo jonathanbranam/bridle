@@ -11,7 +11,10 @@ tasks = ["br-751e"]
 tasks = ["br-hdbj"]
 
 [[tier]]
-tasks = ["br-4vmc"]
+tasks = [
+    "br-4vmc",
+    "br-n96z",
+]
 
 [[tier]]
 tasks = ["br-2msq"]
