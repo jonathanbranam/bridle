@@ -10,6 +10,7 @@ specs: []
 needs: []
 see: []
 tasks: [br-37r9]
+closed: 2026-10-10T13:44:38Z
 ---
 
 ## What happened
