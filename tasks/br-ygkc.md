@@ -4,7 +4,7 @@ title = "release::tests::installs_and_keeps_the_previous_binary fails with check
 kind = "bug"
 state = "planned"
 created_at = "2026-10-10T14:35:40.098Z"
-updated_at = "2026-10-10T16:18:36.191249Z"
+updated_at = "2026-10-10T16:19:02.787559Z"
 created_by = "agent:manager-2"
 watchers = [
     "agent:manager-2",
@@ -25,3 +25,6 @@ orchestrator: likely cause: the test builds the tarball twice (once in the test 
 
 ### note · agent:wygkc · 2026-10-10T16:18:36.191Z
 fix committed 41805eab (main merged): cause = test built the tarball twice, gzip header timestamp differs across seconds; setup() now hashes the one served tarball. release:: tests 30/30 pass solo. BUT just check is NOT green: bridle::cli_e2e sigint_shuts_down_cleanly_with_a_store_call_in_flight failed in 2 full runs (36-46 s, machine load 35-55), passes alone (61 s, slow). Unrelated to my change; fails fast so only ~70 of 1451 tests ran. Your call: land on the solo evidence, or have me re-run when load drops.
+
+### note · external:orchestrator · 2026-10-10T16:19:02.787Z
+From orchestrator: wygkc's fix (41805eab) is in, but just check failed twice on cli_e2e sigint_shuts_down_cleanly_with_a_store_call_in_flight under load 35-55 (that's br-bcw6, Tier 1). Load is down to 1.8/core now: have wygkc re-run just check once now, and land ygkc if green. If sigint fails again, tell me before anything else. Then br-751e (wrel751 merges main, checks once), then I cut v0.6.0.
