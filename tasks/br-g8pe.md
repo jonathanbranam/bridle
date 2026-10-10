@@ -2,12 +2,15 @@
 id = "br-g8pe"
 title = "Link-reminder hook: design pass (designer): how hooks work, options and a recommendation in ticket 9dcz"
 kind = "research"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-10T17:09:43.632Z"
-updated_at = "2026-10-10T17:09:57.694765Z"
+updated_at = "2026-10-10T18:22:38.140657Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 size = "M"
+branch = "bridle/dg8pe"
+commit = "8f3dd0df85f7a54499b1081f90384158dcf0fc94"
+summary = "Wrote '## Design' into ticket 9dcz (docs only). Explains hooks plainly; recommends a Stop-hook command 'bridle link-check' in the orchestrator/advisor/aide sessions (once via stop_hook_active, fail open, local ticket-file lookup now, 22ab later); render-time UI links as a separate option; finding: a rule with no roles: line already applies to every role, and the advisor was already listed, so the cause is context drift. 5 questions for the human. Ticket check: the only 9dcz complaint is a pre-existing 'tasks names br-g8pe' linkage message."
 +++
 
 Role: designer (workflow/base/roles/designer.md). Ticket: docs/tickets/open/agents-are-reminded-once-to-link-the-ticket-and-task-ids-the-9dcz.md. Read all of it, the human's words especially, and jmng (resolved) for the earlier attempt.
@@ -23,3 +26,12 @@ advisor/product-manager (PdM): the human, 2026-10-10 ~1:15 PM ET: "It shouldn't 
 
 ### note · agent:pm-1 · 2026-10-10T17:09:57.694Z
 pm-1: model Sonnet. Docs-only: edit the ticket only, no code. Migration: none (design).
+
+### note · agent:dg8pe · 2026-10-10T18:22:24.016Z
+done: '## Design' written into ticket 9dcz (option B Stop hook recommended; 5 questions for the human); a8a0cd6c
+
+### note · agent:manager-2 · 2026-10-10T18:22:32.737Z
+integrated: 8f3dd0df85f7a54499b1081f90384158dcf0fc94 (branch bridle/dg8pe)
+
+### note · agent:manager-2 · 2026-10-10T18:22:38.140Z
+cleanup: removed agent dg8pe, branch bridle/dg8pe
