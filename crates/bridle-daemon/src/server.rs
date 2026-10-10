@@ -2811,7 +2811,7 @@ async fn done_task(
         open_reevaluate_tasks(&state, &task).await;
     }
     if let Some(branch) = branch {
-        let report = clean_up_landed_branch(&state, branch, &principal).await;
+        let report = clean_up_landed_branch(&state, &task, branch, &principal).await;
         task = state.tasks.note_task(&id, &principal.id, &report).await?;
     }
     emit_state_change(&state, principal.id, &task, from).await;
@@ -3082,16 +3082,28 @@ async fn landed_spec_ids(
 
 /// Removes every agent on `branch` (stopping any still running), their
 /// worktree and the branch itself, and reports what happened for the task's
-/// thread. One failure is recorded and doesn't stop the rest.
-async fn clean_up_landed_branch(state: &AppState, branch: &str, principal: &Principal) -> String {
+/// thread. One failure is recorded and doesn't stop the rest. An agent that
+/// still holds other work is kept (and so is the branch it has checked out),
+/// and the manager is told once.
+async fn clean_up_landed_branch(
+    state: &AppState,
+    task: &Task,
+    branch: &str,
+    principal: &Principal,
+) -> String {
     let mut removed = Vec::new();
     let mut failed = Vec::new();
+    let mut kept = Vec::new();
     match state.store.list_agents(true).await {
         Ok(agents) => {
             for agent in agents
                 .into_iter()
                 .filter(|a| a.branch.as_deref() == Some(branch))
             {
+                if let Some(why) = still_holds_work(state, &agent, branch).await {
+                    kept.push(format!("agent {} ({why})", agent.name));
+                    continue;
+                }
                 // Forced: the work is on the integration branch, so what's
                 // left in the worktree is scratch.
                 match state
@@ -3107,9 +3119,10 @@ async fn clean_up_landed_branch(state: &AppState, branch: &str, principal: &Prin
         Err(e) => failed.push(format!("listing agents: {e}")),
     }
     let repo = &state.workspace.repo;
-    if crate::worktree::branch_exists(repo, branch)
-        .await
-        .unwrap_or(false)
+    if kept.is_empty()
+        && crate::worktree::branch_exists(repo, branch)
+            .await
+            .unwrap_or(false)
     {
         match crate::worktree::delete_branch(repo, branch, true).await {
             Ok(()) => removed.push(format!("branch {branch}")),
@@ -3117,10 +3130,89 @@ async fn clean_up_landed_branch(state: &AppState, branch: &str, principal: &Prin
         }
     }
     let mut report = format!("cleanup: removed {}", list_or_none(&removed));
+    if !kept.is_empty() {
+        report.push_str(&format!("; kept {}", kept.join("; ")));
+        tell_manager_worker_kept(state, task, &kept).await;
+    }
     if !failed.is_empty() {
         report.push_str(&format!("; failed: {}", failed.join("; ")));
     }
     report
+}
+
+/// Why `agent` must outlive its landed `branch`: uncommitted changes, another branch with
+/// work not yet on the integration branch, another claimed task, or a background job still
+/// running under it. `None` when it holds nothing else.
+async fn still_holds_work(
+    state: &AppState,
+    agent: &bridle_api::types::Agent,
+    branch: &str,
+) -> Option<String> {
+    let principal = format!("agent:{}", agent.name);
+    if let Some(other) = state.tasks.list_tasks().into_iter().find(|t| {
+        t.state == bridle_api::types::TaskState::Claimed
+            && t.claimed_by.as_deref() == Some(principal.as_str())
+    }) {
+        return Some(format!("claimed task {}", other.id));
+    }
+    let wt = std::path::PathBuf::from(agent.worktree.as_deref()?);
+    if !wt.exists() {
+        return None;
+    }
+    if crate::worktree::is_dirty(&wt).await.unwrap_or(false) {
+        return Some("uncommitted changes".to_string());
+    }
+    let repo = &state.workspace.repo;
+    if let Ok(Some(other)) = crate::worktree::checked_out_branch(&wt).await
+        && other != branch
+        && !crate::worktree::is_merged(repo, &other)
+            .await
+            .unwrap_or(true)
+    {
+        return Some(format!("unmerged branch {other}"));
+    }
+    if let Some(pid) = agent.pid {
+        let held = crate::worktree::open_file_pids(&wt).await;
+        let jobs = tokio::task::spawn_blocking(move || {
+            let snap = crate::containment::snapshot().unwrap_or_default();
+            crate::containment::descendants(pid, &snap)
+                .into_iter()
+                .find(|p| held.contains(&p.pid))
+        })
+        .await
+        .ok()
+        .flatten();
+        if let Some(job) = jobs {
+            return Some(format!("background job pid {}", job.pid));
+        }
+    }
+    None
+}
+
+async fn tell_manager_worker_kept(state: &AppState, task: &Task, kept: &[String]) {
+    let manager = match state.store.list_agents(false).await {
+        Ok(agents) => agents
+            .into_iter()
+            .find(|a| a.role == "manager" && a.state.is_running()),
+        Err(_) => None,
+    };
+    let to = manager.map_or(ToTarget::Human, |a| ToTarget::Agent(a.id));
+    let _ = state
+        .manager
+        .send(
+            "system".to_string(),
+            to,
+            bridle_api::types::MessageKind::Note,
+            format!(
+                "{} ({}) landed; cleanup kept {} because it still holds other work",
+                task.id,
+                task.title,
+                kept.join("; ")
+            ),
+            bridle_api::types::When::Now,
+            None,
+        )
+        .await;
 }
 
 fn list_or_none(items: &[String]) -> String {

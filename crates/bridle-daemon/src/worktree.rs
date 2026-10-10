@@ -419,6 +419,30 @@ pub async fn open_file_holder(path: &Path) -> Result<Option<String>, WorktreeErr
     }))
 }
 
+/// Pids of processes with a file open under `path` (cwd included), via `lsof -F p +D`.
+/// Empty when `lsof` is missing or finds nothing.
+pub async fn open_file_pids(path: &Path) -> Vec<i32> {
+    let Ok(output) = Command::new("lsof")
+        .args(["-F", "p", "+D"])
+        .arg(path)
+        .output()
+        .await
+    else {
+        return Vec::new();
+    };
+    String::from_utf8_lossy(&output.stdout)
+        .lines()
+        .filter_map(|l| l.strip_prefix('p')?.parse().ok())
+        .collect()
+}
+
+/// The branch checked out in `path`, or `None` when HEAD is detached.
+pub async fn checked_out_branch(path: &Path) -> Result<Option<String>, WorktreeError> {
+    let out = run_git(path, &["rev-parse", "--abbrev-ref", "HEAD"]).await?;
+    let out = out.trim();
+    Ok((out != "HEAD" && !out.is_empty()).then(|| out.to_string()))
+}
+
 /// Deletes a branch. `force` matches `git branch -D` vs `-d`.
 pub async fn delete_branch(repo: &Path, branch: &str, force: bool) -> Result<(), WorktreeError> {
     let flag = if force { "-D" } else { "-d" };

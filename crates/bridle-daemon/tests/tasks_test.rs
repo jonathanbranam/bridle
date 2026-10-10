@@ -1100,13 +1100,21 @@ async fn spawn_worker_with_commit(
     daemon: &support::TestDaemon,
     name: &str,
 ) -> bridle_api::types::Agent {
+    spawn_worker_with_commit_and_prompt(daemon, name, None).await
+}
+
+async fn spawn_worker_with_commit_and_prompt(
+    daemon: &support::TestDaemon,
+    name: &str,
+    prompt: Option<&str>,
+) -> bridle_api::types::Agent {
     let agent = daemon
         .client
         .spawn(&SpawnRequest {
             components: Vec::new(),
             role: "worker".to_string(),
             name: Some(name.to_string()),
-            prompt: None,
+            prompt: prompt.map(str::to_string),
             workdir: Some(Workdir::Worktree { base: None }),
             model: None,
             extra_allowed_tools: Vec::new(),
@@ -1115,7 +1123,10 @@ async fn spawn_worker_with_commit(
         })
         .await
         .expect("spawn");
-    wait_for_state(&daemon.client, &agent.id, AgentState::Idle).await;
+    support::wait_for_agent(&daemon.client, &agent.id, |a| {
+        a.state == AgentState::Idle && (prompt.is_none() || a.turns >= 1)
+    })
+    .await;
     let wt = std::path::PathBuf::from(agent.worktree.clone().expect("worktree"));
     std::fs::write(wt.join(format!("{name}.txt")), name).expect("write file");
     git_out(&wt, &["add", "."]);
@@ -1167,6 +1178,113 @@ async fn done_with_a_landed_branch_removes_its_agents_worktree_and_branch() {
         "note: {}",
         note.body
     );
+}
+
+/// Squash-lands `bridle/w1` on main and marks a fresh task done with it.
+async fn land_w1(daemon: &support::TestDaemon) -> bridle_api::types::Task {
+    git_out(&daemon.repo, &["merge", "--squash", "bridle/w1"]);
+    git_out(
+        &daemon.repo,
+        &["commit", "-q", "-m", "land w1\n\nBranch: bridle/w1"],
+    );
+    let head = git_out(&daemon.repo, &["rev-parse", "HEAD"]);
+    let task = daemon
+        .client
+        .new_open_task(&new_req("Landed", TaskKind::Feature))
+        .await
+        .expect("new task");
+    daemon
+        .client
+        .done_task(
+            &task.id,
+            &DoneTaskRequest {
+                commit: head,
+                branch: Some("bridle/w1".into()),
+                ..Default::default()
+            },
+        )
+        .await
+        .expect("done")
+}
+
+/// The landing succeeded but the worker, its worktree and its branch are still there, and the
+/// landed task's note says why.
+async fn assert_worker_kept(
+    daemon: &support::TestDaemon,
+    done: &bridle_api::types::Task,
+    wt: &str,
+    why: &str,
+) {
+    assert_eq!(done.state, TaskState::Integrated);
+    assert!(daemon.client.get_agent("w1").await.is_ok(), "agent kept");
+    assert!(std::path::Path::new(wt).exists(), "worktree kept");
+    assert!(!git_out(&daemon.repo, &["branch", "--list", "bridle/w1"]).is_empty());
+    let note = done.thread.last().expect("cleanup note");
+    assert!(note.body.contains("kept agent w1"), "note: {}", note.body);
+    assert!(note.body.contains(why), "note: {}", note.body);
+}
+
+#[tokio::test]
+async fn done_keeps_a_worker_with_uncommitted_changes() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let agent = spawn_worker_with_commit(&daemon, "w1").await;
+    let wt = agent.worktree.clone().expect("worktree");
+    std::fs::write(std::path::Path::new(&wt).join("scratch.csv"), "1,2").expect("write");
+    let done = land_w1(&daemon).await;
+    assert_worker_kept(&daemon, &done, &wt, "uncommitted changes").await;
+}
+
+#[tokio::test]
+async fn done_keeps_a_worker_on_another_unmerged_branch() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let agent = spawn_worker_with_commit(&daemon, "w1").await;
+    let wt = agent.worktree.clone().expect("worktree");
+    let path = std::path::Path::new(&wt);
+    git_out(path, &["checkout", "-q", "-b", "bridle/w1-other"]);
+    std::fs::write(path.join("other.txt"), "x").expect("write");
+    git_out(path, &["add", "."]);
+    git_out(path, &["commit", "-q", "-m", "other"]);
+    let done = land_w1(&daemon).await;
+    assert_worker_kept(&daemon, &done, &wt, "unmerged branch bridle/w1-other").await;
+}
+
+#[tokio::test]
+async fn done_keeps_a_worker_with_another_claimed_task() {
+    use bridle_api::types::{Impact, SetImpactRequest};
+    let (daemon, _tmp) = start_daemon(None).await;
+    let agent = spawn_worker_with_commit(&daemon, "w1").await;
+    let wt = agent.worktree.clone().expect("worktree");
+    let second = daemon
+        .client
+        .new_open_task(&new_req("Second", TaskKind::Feature))
+        .await
+        .expect("new task");
+    let impact = Impact {
+        files: vec!["src/**".to_string()],
+        ..Impact::default()
+    };
+    daemon
+        .client
+        .set_task_impact(&second.id, &SetImpactRequest { impact })
+        .await
+        .expect("impact");
+    daemon.client.plan_task(&second.id).await.expect("plan");
+    daemon
+        .agent_client(&agent.id)
+        .claim_task(&second.id)
+        .await
+        .expect("claim");
+    let done = land_w1(&daemon).await;
+    assert_worker_kept(&daemon, &done, &wt, &format!("claimed task {}", second.id)).await;
+}
+
+#[tokio::test]
+async fn done_keeps_a_worker_with_a_running_background_job() {
+    let (daemon, _tmp) = start_daemon(None).await;
+    let agent = spawn_worker_with_commit_and_prompt(&daemon, "w1", Some("SPAWN_CHILD")).await;
+    let wt = agent.worktree.clone().expect("worktree");
+    let done = land_w1(&daemon).await;
+    assert_worker_kept(&daemon, &done, &wt, "background job").await;
 }
 
 #[tokio::test]
