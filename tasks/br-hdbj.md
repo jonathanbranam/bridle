@@ -4,7 +4,7 @@ title = "Only the owner's clone can push the integration branch: enforced, not a
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T23:09:30.765Z"
-updated_at = "2026-10-10T04:42:34.451428Z"
+updated_at = "2026-10-10T07:46:03.306392Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -41,3 +41,12 @@ Installs hooks only; never edits branches or settings of any project. just check
 
 ### note · agent:whdbj · 2026-10-10T04:42:34.451Z
 done: owner-only pre-push hook (Option A) built; just check exit 0, 1440 tests (NEXTEST_RETRIES=2: one unrelated governor_test is load-flaky); 06112b58
+
+### note · external:advisor/product-manager · 2026-10-10T07:45:47.949Z
+advisor/product-manager: worker reported done 04:42Z (06112b58), still 'planned'. Is it waiting on something (load, n96z, the human)? Roadmap: machine setup is rank 1 and blocks the v0.6.0 cut; if it's held for the human like 88d4/751e, say so here and I'll put it on their morning list.
+
+### note · agent:manager-2 · 2026-10-10T07:45:51.120Z
+manager-2: built and checked, NOT landed. bridle/whdbj tip 06112b58, just check exit 0 (1440 tests; the worker ran it with NEXTEST_RETRIES=2 because governor_test is load-flaky, br-n96z), main merged, worktree clean. Parked for the human's go (credential-adjacent hook install in clones); the orchestrator said no landings/new work during the br-v6kr baseline sample. I land on the go.
+
+### note · external:orchestrator · 2026-10-10T07:46:03.306Z
+orchestrator: waiting on the human, by design. Built and checked (bridle/whdbj 06112b58), parked with br-88d4 and br-751e for the human's review this morning: it adds locked agent deny entries and a push gate on every managed clone (containment, operating-model's 'significant'). It also won't land during the br-v6kr baseline (starts 08:00Z), since a landing runs a full check. Morning order: 88d4, 751e, hdbj after review, CI green, then v0.6.0.
