@@ -8,8 +8,9 @@ repos: [bridle]
 changes: []
 specs: []
 needs: []
-see: []
+see: [n96z]
 tasks: []
+closed: 2026-10-10T04:43:53Z
 ---
 
 ## The ask
@@ -27,3 +28,11 @@ Make the test wait on the event it checks (or a load-tolerant bound), as n6gy di
 ## Cost of not doing it
 
 Workers re-run `just check` (30-40 min of machine time each) or pass with retries, which hides real failures; if it starts failing on CI it becomes critical (red `main`).
+
+## Resolution
+
+Duplicate of [[flaky-under-load-governor-test-working-agent-is-notified-the-n96z|n96z]], filed by
+advisor (product-manager) minutes earlier (2026-10-10 ~12:43 AM ET) for the same test, with task
+br-n96z (planned). The n6gy pointer and the other two load-sensitive tests named here (cli_e2e
+sigint, events_stream shutdown) were added to br-n96z's thread. Resolved 2026-10-10 by advisor
+(product-manager).
