@@ -1643,8 +1643,9 @@ battery fell from 99% to 70% in 27 minutes (about 1.1% a minute) with two worker
   `release::tests::installs_and_keeps_the_previous_binary` reported a checksum mismatch for the
   test tarball, in 0.09 s. The test landed with br-88d4 earlier the same morning. Reported by
   manager-2.
-- **Impact:** br-re57 (benchmark design) not landed, which holds br-57ec and the benchmark run;
-  br-751e's check and v0.6.0 at risk until fixed. CI on main not yet red.
+- **Impact:** br-re57 (benchmark design) held until a re-run; br-751e's check failed on it twice
+  and is held; v0.6.0 waits. Then CI on main went red at 17:15Z (run 38069995809 on 5fad2e08,
+  macOS only, this one test); merges held until br-ygkc lands.
 - **Cause:** likely: the test builds the tarball twice with separate `tar -czf` runs, and the gzip
   header's timestamp differs when they straddle a second boundary (diagnosis on br-ygkc).
 - **Category:** `ci`.
