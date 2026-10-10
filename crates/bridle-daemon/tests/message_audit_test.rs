@@ -43,7 +43,7 @@ async fn events(
 }
 
 #[tokio::test]
-async fn a_waiter_read_records_its_channel_pid_and_session() {
+async fn a_waiter_delivery_and_its_acknowledgement_are_separate_events() {
     let (daemon, _tmp) = support::start_daemon(None).await;
     let advisor = daemon.external_client("advisor").await;
     let id = send(&daemon.client, "external:advisor", "hello").await;
@@ -53,6 +53,28 @@ async fn a_waiter_read_records_its_channel_pid_and_session() {
             timeout_secs: Some(5),
             session: Some("s-1".into()),
             pid: Some(4242),
+        })
+        .await
+        .expect("wake");
+    let evs = events(&daemon.client, Some(&id), None).await;
+    let delivered = evs
+        .iter()
+        .find(|e| e.kind == event_kind::MESSAGE_DELIVERED)
+        .expect("delivered");
+    assert_eq!(delivered.data["channel"], "waiter");
+    assert_eq!(delivered.data["pid"], 4242);
+    assert_eq!(delivered.data["session"], "s-1");
+    assert!(
+        !evs.iter().any(|e| e.kind == event_kind::MESSAGE_READ),
+        "not acknowledged yet"
+    );
+    // The same session waiting again is the acknowledgement.
+    advisor
+        .principal_wake(&PrincipalWakeQuery {
+            principal: "external:advisor".into(),
+            timeout_secs: Some(1),
+            session: Some("s-1".into()),
+            pid: Some(4243),
         })
         .await
         .expect("wake");
@@ -69,7 +91,7 @@ async fn a_waiter_read_records_its_channel_pid_and_session() {
         .expect("read");
     assert_eq!(read.actor, "external:advisor");
     assert_eq!(read.data["channel"], "waiter");
-    assert_eq!(read.data["pid"], 4242);
+    assert_eq!(read.data["acknowledged"], true);
     assert_eq!(read.data["session"], "s-1");
 }
 

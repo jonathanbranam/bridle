@@ -53,6 +53,10 @@ struct WaiterState {
     open: u32,
     /// `bridle agent wake` requests open now; not part of the orchestrator's presence check.
     principal_open: Vec<PrincipalWait>,
+    /// Messages a `bridle agent wake` printed but whose session hasn't run a wake or inbox
+    /// since: (target, message id, session). In memory only: after a restart they are simply
+    /// unread, and so offered again.
+    unacked: Vec<(String, String, Option<String>)>,
     next_wait_id: u64,
     last_closed: Option<DateTime<Utc>>,
     /// When a poll last answered with wakes (not an empty timeout); in memory only.
@@ -151,6 +155,37 @@ impl Waiters {
             let _ = w.end.send(());
         }
         n
+    }
+
+    /// Notes that `ids` were handed to a wait of `session` as `target` and await its next call.
+    pub fn handed_over(&self, target: &str, session: Option<&str>, ids: &[String]) {
+        let mut st = self.state.lock().expect("waiters lock");
+        for id in ids {
+            st.unacked
+                .retain(|(t, i, s)| !(t == target && i == id && s.as_deref() == session));
+            st.unacked
+                .push((target.to_string(), id.clone(), session.map(str::to_string)));
+        }
+    }
+
+    /// Takes the messages `session` was handed as `target` and hasn't acknowledged: its next
+    /// wake is the acknowledgement. Other sessions' hand-overs stay, so those are offered again.
+    pub fn take_unacked(&self, target: &str, session: Option<&str>) -> Vec<String> {
+        let mut st = self.state.lock().expect("waiters lock");
+        let (mine, rest): (Vec<_>, Vec<_>) = std::mem::take(&mut st.unacked)
+            .into_iter()
+            .partition(|(t, _, s)| t == target && s.as_deref() == session);
+        st.unacked = rest;
+        mine.into_iter().map(|(_, id, _)| id).collect()
+    }
+
+    /// Forgets `ids`: they were read some other way (the inbox), nothing is left to acknowledge.
+    pub fn forget_unacked(&self, ids: &[String]) {
+        self.state
+            .lock()
+            .expect("waiters lock")
+            .unacked
+            .retain(|(_, i, _)| !ids.contains(i));
     }
 
     /// Records why the daemon is about to stop; the first caller wins.

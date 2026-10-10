@@ -637,14 +637,37 @@ async fn principal_wake(
         ));
     }
     let timeout = crate::wake::clamp_timeout(q.timeout_secs, crate::wake::MAX_WAKE_TIMEOUT);
-    // Messages handed to a non-human are read; the human's reads are explicit.
+    // Messages handed to a non-human stay unread until its session's next wake or inbox
+    // acknowledges them (9aj2); the human's reads are explicit.
     let take = principal.kind != PrincipalKind::Human;
+    let orchestrator = target == crate::wake::ORCHESTRATOR;
+    if take && !orchestrator {
+        // This call is the acknowledgement of what this session's last wait printed.
+        for id in state.waiters.take_unacked(&target, q.session.as_deref()) {
+            let unread = matches!(
+                state.store.get_message(&id).await?,
+                Some(m) if !matches!(m.state, MessageState::Read | MessageState::Dropped)
+            );
+            if unread {
+                mark_read_by(
+                    &state,
+                    &id,
+                    &principal.id,
+                    serde_json::json!({
+                        "channel": bridle_api::types::channel::WAITER,
+                        "acknowledged": true,
+                        "session": q.session,
+                    }),
+                )
+                .await;
+            }
+        }
+    }
     let (_waiting, ended) = state
         .waiters
         .principal_opened(&target, q.session.as_deref());
     // The orchestrator's wakes are daemon-decided facts queued in `Wakes`, not just unread
     // messages; they come back as reasons carrying the same text and detail as before.
-    let orchestrator = target == crate::wake::ORCHESTRATOR;
     let reasons = tokio::select! {
         biased;
         _ = ended => vec![bridle_api::types::PrincipalWakeReason {
@@ -667,17 +690,25 @@ async fn principal_wake(
             ..Default::default()
         }],
     };
-    // `take` marked these read inside the store call; the audit event says by which waiter.
+    // Handed over, not read: remember them for the session's next call and say so in the log.
     if take && !orchestrator {
-        for m in reasons.iter().flat_map(|r| &r.messages) {
+        let ids: Vec<String> = reasons
+            .iter()
+            .flat_map(|r| &r.messages)
+            .map(|m| m.id.clone())
+            .collect();
+        state
+            .waiters
+            .handed_over(&target, q.session.as_deref(), &ids);
+        for id in &ids {
             let _ = state
                 .emitter
                 .emit(
-                    bridle_api::types::event_kind::MESSAGE_READ,
+                    bridle_api::types::event_kind::MESSAGE_DELIVERED,
                     principal.id.clone(),
                     None,
                     read_data(
-                        &m.id,
+                        id,
                         serde_json::json!({
                             "channel": bridle_api::types::channel::WAITER,
                             "pid": q.pid,
@@ -1431,6 +1462,9 @@ async fn list_messages(
     // query filtered out never were handed over, so they stay as they are.
     if q.mark_read && !matches!(principal.kind, PrincipalKind::Human | PrincipalKind::Local) {
         let mine = resolve_to(&state.store, &principal, Some("me")).await?;
+        // Reading them here acknowledges what a wait printed earlier.
+        let ids: Vec<String> = msgs.iter().map(|m| m.id.clone()).collect();
+        state.waiters.forget_unacked(&ids);
         for m in msgs.iter_mut().filter(|m| {
             Some(&m.to) == mine.as_ref()
                 && !matches!(m.state, MessageState::Read | MessageState::Dropped)

@@ -929,7 +929,8 @@ pub struct Event {
 /// Known event kinds. Clients must tolerate kinds not listed here.
 /// Values of the `channel` field on `message.*` events.
 pub mod channel {
-    /// `bridle agent wake` (and the orchestrator's wake queue): read when the waiter was handed it.
+    /// `bridle agent wake`: delivered when the waiter was handed it, read (`acknowledged`) when
+    /// its session next ran a wake or inbox. The orchestrator's wake queue marks read on hand-over.
     pub const WAITER: &str = "waiter";
     /// `bridle inbox` listing or showing it.
     pub const INBOX: &str = "inbox";
@@ -1003,9 +1004,9 @@ pub mod event_kind {
     /// [`channel`]) saying how the step happened; the actor is who, `ts` is when. A `waiter`
     /// read adds `pid` and `session`. Old events have none of these.
     pub const MESSAGE_SENT: &str = "message.sent";
-    /// data: {message, channel?}
-    pub const MESSAGE_DELIVERED: &str = "message.delivered";
     /// data: {message, channel?, pid?, session?}
+    pub const MESSAGE_DELIVERED: &str = "message.delivered";
+    /// data: {message, channel?, pid?, session?, acknowledged?}
     pub const MESSAGE_READ: &str = "message.read";
     pub const MESSAGE_DROPPED: &str = "message.dropped";
     /// data: {info}

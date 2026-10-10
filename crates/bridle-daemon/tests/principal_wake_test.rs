@@ -7,8 +7,9 @@ use support::ClientExt as _;
 use std::time::Duration;
 
 use bridle_api::types::{
-    MessageKind, MessageQuery, NewTaskRequest, PrincipalWakeQuery, PrincipalWakeResponse,
-    SendRequest, SetKindRequest, SetPriorityRequest, TaskKind, TaskPriority, When,
+    MessageKind, MessageQuery, MessageState, NewTaskRequest, PrincipalWakeQuery,
+    PrincipalWakeResponse, SendRequest, SetKindRequest, SetPriorityRequest, TaskKind, TaskPriority,
+    When,
 };
 use bridle_api::{Client, ClientError};
 
@@ -25,6 +26,13 @@ fn session_query(principal: &str, session: &str) -> PrincipalWakeQuery {
     PrincipalWakeQuery {
         session: Some(session.to_string()),
         ..query(principal, 60)
+    }
+}
+
+fn session_query_timeout(principal: &str, session: &str, secs: u64) -> PrincipalWakeQuery {
+    PrincipalWakeQuery {
+        timeout_secs: Some(secs),
+        ..session_query(principal, session)
     }
 }
 
@@ -273,7 +281,7 @@ async fn the_actor_and_non_watchers_are_not_told_and_unwatching_stops_it() {
 }
 
 #[tokio::test]
-async fn the_wake_returns_the_text_and_marks_it_read_once() {
+async fn the_wake_returns_the_text_and_the_next_wake_marks_it_read() {
     let (daemon, _tmp) = support::start_daemon(None).await;
     let advisor = daemon.external_client("advisor").await;
     let id = send(&daemon.client, "external:advisor", "hello there").await;
@@ -287,12 +295,58 @@ async fn the_wake_returns_the_text_and_marks_it_read_once() {
         (msgs[0].id.as_str(), msgs[0].body.as_str()),
         (&*id, "hello there")
     );
-    // Read now, so the next wake has nothing to repeat.
+    // Not read until the same session waits again, which is the acknowledgement.
+    let state = |c: Client| async move {
+        c.list_messages(&MessageQuery {
+            to: Some("me".into()),
+            ..Default::default()
+        })
+        .await
+        .expect("list")[0]
+            .state
+    };
+    assert_ne!(state(advisor.clone()).await, MessageState::Read);
     let again = advisor
         .principal_wake(&query("external:advisor", 1))
         .await
         .expect("wake");
     assert!(again.reasons.is_empty(), "{again:?}");
+    assert_eq!(state(advisor.clone()).await, MessageState::Read);
+}
+
+#[tokio::test]
+async fn an_unacknowledged_delivery_is_offered_again_to_another_session_and_the_inbox() {
+    let (daemon, _tmp) = support::start_daemon(None).await;
+    let advisor = daemon.external_client("advisor").await;
+    let id = send(&daemon.client, "external:advisor", "lost output").await;
+    // Session 100's waiter got it, then its output was lost: nothing acknowledges.
+    let got = advisor
+        .principal_wake(&session_query("external:advisor", "100"))
+        .await
+        .expect("wake");
+    assert_eq!(got.reasons[0].message_ids, vec![id.clone()]);
+    // Another session of the principal is offered it again, and so is the inbox.
+    let other = advisor
+        .principal_wake(&session_query("external:advisor", "200"))
+        .await
+        .expect("wake");
+    assert_eq!(other.reasons[0].message_ids, vec![id.clone()]);
+    let inbox = advisor
+        .list_messages(&MessageQuery {
+            to: Some("me".into()),
+            unread: true,
+            mark_read: true,
+            ..Default::default()
+        })
+        .await
+        .expect("inbox");
+    assert_eq!(inbox.len(), 1);
+    // The inbox read it: nothing is left to offer, even to session 100.
+    let after = advisor
+        .principal_wake(&session_query_timeout("external:advisor", "100", 1))
+        .await
+        .expect("wake");
+    assert!(after.reasons.is_empty(), "{after:?}");
 }
 
 #[tokio::test]

@@ -91,7 +91,7 @@ bridle agent wake external:aide --timeout 5400
 
 Run it as one background command, with no shell loop. The timeout (90 minutes) is only a
 fallback: a message or task change ends the wait at once (the daemon caps it at 6900 s). When it
-returns, its output carries your new messages in full; they are already marked read. Act on what
+returns, its output carries your new messages in full; they stay unread until your next `bridle agent wake` or `bridle inbox` acknowledges them. Act on what
 you find, then wait again. If the command errors (no daemon, daemon down), tell the human once
 and wait 30 seconds before retrying; don't spin.
 To check for a message you may have missed (a lost waiter, a restart), run
@@ -100,7 +100,7 @@ read, and how it was read (the waiter's pid, the inbox). `bridle messages --for 
 another principal's, headers only.
 
 Start a waiter only as Claude Code's background command: never with `&`, never with its output
-discarded (a delivered message is marked read, so discarded output loses it). To replace a waiter,
+discarded (the CLI refuses discarded output; a waiter's message stays unread until your next wait or inbox, so lost output loses nothing). To replace a waiter,
 just start a new one: the daemon ends the old one when it comes from the same session (matched
 by session, not identity, because identities are shared; a wait from a bare shell replaces
 nothing). The old one prints "superseded by a newer wait" and exits 5, and marks nothing read.

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Messages handed to a `bridle agent wake` waiter stay unread until the same session next runs `bridle agent wake` or `bridle inbox`, so a waiter whose output is lost loses nothing; delivery (`message.delivered`) and acknowledgement (`message.read`) are separate audit events. `bridle agent wake` refuses to run with stdout sent to `/dev/null`. Messages already read stay read; takes effect on daemon upgrade (br-3zhx).
+
 ### Added
 
 - `~/.bridle/config.toml` may set `[daemon] self_upgrade`, `release_repo` and `self_upgrade_min_interval` for every daemon on the machine; the machine value wins over the project's, and unset keeps the project's (36dp).

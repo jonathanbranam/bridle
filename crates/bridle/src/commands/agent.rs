@@ -204,6 +204,20 @@ pub(super) async fn rm(cli: &Cli, args: &RmArgs) -> Result<(), CliError> {
     Ok(())
 }
 
+/// Whether stdout is `/dev/null`, compared by device and inode through `/dev/fd/1` (no unsafe).
+/// A shell `&` is not checked: with no tty (a Claude Code command has none either) a background
+/// job can't be told from a foreground one.
+fn stdout_is_dev_null() -> bool {
+    use std::os::unix::fs::MetadataExt;
+    match (
+        std::fs::metadata("/dev/fd/1"),
+        std::fs::metadata("/dev/null"),
+    ) {
+        (Ok(out), Ok(null)) => out.dev() == null.dev() && out.ino() == null.ino(),
+        _ => false,
+    }
+}
+
 /// `bridle agent wake <identifier>`: the daemon holds the request until it decides the
 /// principal should wake. Exit 0 woken, 4 timed out, 5 superseded by a newer wait from this
 /// session or stopped with `--stop`, 6 the daemon is restarting or stopping.
@@ -229,6 +243,13 @@ pub(super) async fn wake(cli: &Cli, args: &WakeArgs) -> Result<(), CliError> {
             println!("stopped {stopped} wait(s)");
         }
         return Ok(());
+    }
+    if stdout_is_dev_null() {
+        return Err(CliError::Other(anyhow::anyhow!(
+            "refusing to wait with stdout discarded (> /dev/null): a message handed to a waiter \
+             whose output is lost is never seen. Run it in the foreground, or as a Claude Code \
+             background command, and read its output"
+        )));
     }
     let identifier = args.identifier.clone().unwrap_or_default();
     // On stderr so `--json` output stays clean.

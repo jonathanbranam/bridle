@@ -15,27 +15,22 @@ use crate::store::{ListMessages, Store, StoreError};
 const RECHECK: Duration = Duration::from_secs(5);
 
 /// Why `principal` (a resolved message address) should wake now; empty means it shouldn't.
-/// With `take` (a caller that isn't the human) the unread messages are returned in full and
-/// marked read in the same store call, so the next wake doesn't repeat them and none is lost.
+/// With `take` (a caller that isn't the human) the unread messages are returned in full but
+/// stay unread: the caller's next wake or inbox acknowledges them (9aj2), so a waiter whose
+/// output is lost loses nothing.
 pub async fn wake_reasons(
     store: &Store,
     principal: &str,
     take: bool,
 ) -> Result<Vec<PrincipalWakeReason>, StoreError> {
     let mut reasons = Vec::new();
-    let unread = if take {
-        store
-            .take_unread_messages(principal, chrono::Utc::now())
-            .await?
-    } else {
-        store
-            .list_messages(ListMessages {
-                to: Some(principal.to_string()),
-                unread: true,
-                ..Default::default()
-            })
-            .await?
-    };
+    let unread = store
+        .list_messages(ListMessages {
+            to: Some(principal.to_string()),
+            unread: true,
+            ..Default::default()
+        })
+        .await?;
     if !unread.is_empty() {
         reasons.push(PrincipalWakeReason {
             reason: "message".to_string(),
@@ -88,7 +83,7 @@ mod tests {
     use crate::store::{NewMessage, RecipientKind};
 
     #[tokio::test]
-    async fn a_task_update_survives_a_reopen_and_wakes_once() {
+    async fn a_task_update_survives_a_reopen_and_is_offered_until_read() {
         let tmp = tempfile::tempdir().expect("tempdir");
         let path = tmp.path().join("bridle.db");
         let me = "external:advisor";
@@ -112,10 +107,21 @@ mod tests {
         assert_eq!(got.len(), 1, "{got:?}");
         assert_eq!(got[0].reason, "message");
         assert_eq!(got[0].messages[0].kind, MessageKind::TaskUpdate);
+        // Handing over doesn't read: the same message is offered until it is acknowledged.
+        let again = wake_reasons(&store, me, true).await.expect("again");
+        assert_eq!(again[0].message_ids, got[0].message_ids);
+        store
+            .set_message_state(
+                &got[0].messages[0].id,
+                MessageState::Read,
+                chrono::Utc::now(),
+            )
+            .await
+            .expect("read");
         assert!(
             wake_reasons(&store, me, true)
                 .await
-                .expect("again")
+                .expect("acked")
                 .is_empty()
         );
     }
