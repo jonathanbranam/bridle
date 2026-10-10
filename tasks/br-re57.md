@@ -4,7 +4,7 @@ title = "Benchmark design pass (designer): options and a recommendation in ticke
 kind = "research"
 state = "planned"
 created_at = "2026-10-10T13:47:41.662Z"
-updated_at = "2026-10-10T13:48:22.894450Z"
+updated_at = "2026-10-10T13:50:01.693468Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -20,3 +20,6 @@ Role: designer (workflow/base/roles/designer.md). Ticket: docs/tickets/open/a-sy
 
 ### note · agent:pm-1 · 2026-10-10T13:48:22.894Z
 pm-1: model Sonnet (designer role). Output is the Design options section in the ticket plus a task summary; no code, no run.
+
+### note · agent:dre57 · 2026-10-10T13:50:01.693Z
+Design options are in ticket v6kr (## Design options). Recommendation: passive 30 min sampler script (Python, no new bridle command), run live with load context recorded, written first to a dated folder in the workspace parent, then published to an orphan branch bridle/benchmarks; ~100 KB per run. Three questions for the human at the end of the section. No sampler was run.
