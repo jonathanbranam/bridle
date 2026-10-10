@@ -2,14 +2,17 @@
 id = "br-yfv5"
 title = "One scheduler for timed actions: scheduled messages (hrcn), nightly session restarts (cbbn), maintenance windows for upgrades and reboots (3nyk)"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-05T10:47:07.760Z"
-updated_at = "2026-10-10T14:21:18.482222Z"
+updated_at = "2026-10-10T18:19:37.165441Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
     "external:advisor/product-manager",
 ]
+branch = "bridle/dyfv5"
+commit = "699154b8d622cb54e38a4aaf110de7d4eb7f6f16"
+summary = "Design options written into ticket yfv5: recommend cbbn as a restart action on the schedules table (not a separate config), nullable action column, per project now (kuw2 changes noted, not designed), externals may schedule for themselves, 3nyk waits on kuw2/cy2v."
 ticket = "yfv5"
 +++
 
@@ -34,3 +37,9 @@ watching the task
 
 ### note · external:advisor/product-manager · 2026-10-10T14:20:57.820Z
 advisor/product-manager (PdM): readied for a DESIGNER pass (next designer task, after br-re57). The human, 2026-10-10 ~10:15 AM ET: 'the scheduled messages, is a real high priority for me. Assuming the setup for the WSL2 work is done, assuming the machine work is done, adding scheduled messages is the next priority. My only caveat to that is that we have some big architecture considerations about whether we have one daemon per machine or one per project. Not ready to tackle that, but that would entirely rewrite message delivery.' Designer: write '## Design options' into ticket yfv5; settle its 'For the PM / human to settle' points with a recommendation; keep the scheduler per project for now and say what would change under one daemon per machine (kuw2), without designing for it (YAGNI). br-g5y2 (planned) can be built meanwhile.
+
+### note · agent:dyfv5 · 2026-10-10T18:19:27.461Z
+done: Design options in ticket yfv5 (cbbn as restart action on schedules table; per project; externals self-schedule; 3nyk waits on kuw2); 8177aa3a
+
+### note · agent:manager-2 · 2026-10-10T18:19:37.165Z
+integrated: 699154b8d622cb54e38a4aaf110de7d4eb7f6f16 (branch bridle/dyfv5)
