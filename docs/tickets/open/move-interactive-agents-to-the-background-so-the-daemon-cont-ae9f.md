@@ -8,7 +8,7 @@ repos: [bridle]
 changes: []
 specs: []
 needs: []
-see: [z485, r8kv, gtzx, 9aj2, kuw2]
+see: [z485, r8kv, gtzx, 9aj2, kuw2, pdmd, ts6b, py93]
 tasks: [br-ae9f]
 ---
 
@@ -48,7 +48,8 @@ web UI, mail or a thin front end.
 - r8kv: seats, splitting the advisor; gtzx: every role is a named, tracked seat (held for the
   human's review).
 - 9aj2: message delivery you can check (in the messaging epic; its part 1 is planned).
-- The future-idea ticket for a bridle tool instead of the CLI (filed by the aide).
+- py93: bridle as a tool (MCP) for interactive sessions instead of the CLI (future idea).
+- pdmd: a leaner orchestrator; ts6b: one command tree for interactive sessions.
 - kuw2: one daemon per machine. The human, 2026-10-10: "that would entirely rewrite message
   delivery", so this epic's design should say how it depends on that decision.
 
