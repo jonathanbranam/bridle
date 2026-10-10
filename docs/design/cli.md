@@ -430,8 +430,9 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   `role:NAME` fans the message out to every live agent currently holding that
   role — one delivered message per matching agent, same as sending to each
   individually; `external:advisor/<name>` (`@machine` allowed) addresses one advisor session: if
-  it isn't running the message goes to `external:advisor`, marked "(originally for advisor/<name>)",
-  and `send` adds "<name> isn't running; delivered to advisor"; `bridle send` prints one `sent <id> -> <to>` line per recipient.
+  it isn't running the message still waits in the name's own inbox for its next session, and `send`
+  adds "<name> isn't running; waiting in its inbox" (an `@machine` address goes to `external:advisor`,
+  marked "(originally for advisor/<name>)"); `bridle send` prints one `sent <id> -> <to>` line per recipient.
   A role with no live agents is an error, same as an unknown agent name.
   `--project <other>` naming a different daemon than the sender's own (3haz): the CLI hands the message to
   the sender's own daemon (the cwd's, or `$BRIDLE_URL`'s), which queues it in its outbox and waits up to 3 s for the first try and prints

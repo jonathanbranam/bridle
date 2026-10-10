@@ -737,6 +737,10 @@ pub struct Message {
     /// The incident task this notice announces; see incidents.md.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub incident_task: Option<String>,
+    /// Set only on a send response: the named recipient isn't running, so the message waits in
+    /// its inbox for its next session. Not stored.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub recipient_note: Option<String>,
 }
 
 /// `POST /v1/agents/{id}/messages` uses this with `to` ignored;

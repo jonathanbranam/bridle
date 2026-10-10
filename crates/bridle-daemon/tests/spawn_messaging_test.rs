@@ -923,8 +923,9 @@ async fn visitor_principal_sends_and_reads_but_is_not_the_orchestrator() {
     );
 }
 
-/// jttf B: `external:advisor/<name>` reaches a running named advisor; otherwise the shared
-/// advisor inbox, marked; unread mail follows when the session ends; unknown owner 404s.
+/// jttf B, hwek: `external:advisor/<name>` lands in the named inbox whether or not the session
+/// runs (the sender is told when it doesn't); unread mail stays there when the session ends;
+/// mail stranded in the shared inbox moves back once at the next start; unknown owner 404s.
 #[tokio::test]
 async fn named_advisor_addressing_and_delivery_fallbacks() {
     use bridle_api::types::SessionRegister;
@@ -962,17 +963,37 @@ async fn named_advisor_addressing_and_delivery_fallbacks() {
         }
     };
 
-    // Never existed: the shared inbox, marked, and the sender can tell by `to`.
+    // Not running: its own inbox, and the sender is told.
     let m = daemon
         .client
         .send(&send("external:advisor/research", None))
         .await
         .expect("send")[0]
         .clone();
-    assert_eq!(m.to, "external:advisor");
-    assert_eq!(m.body, "(originally for advisor/research)\nhello");
-    assert_eq!(inbox(&shared).await.len(), 1);
-    assert!(inbox(&research).await.is_empty());
+    assert_eq!(m.to, "external:advisor/research");
+    assert_eq!(m.body, "hello");
+    assert_eq!(
+        m.recipient_note.as_deref(),
+        Some("research isn't running; waiting in its inbox")
+    );
+    assert!(inbox(&shared).await.is_empty());
+    assert_eq!(inbox(&research).await.len(), 1);
+
+    // Mail stranded in the shared inbox by the old behaviour (marked), and one unmarked.
+    let stranded = |body: &str| SendRequest {
+        body: body.to_string(),
+        ..send("external:advisor", None)
+    };
+    daemon
+        .client
+        .send(&stranded("(originally for advisor/research)\nlost"))
+        .await
+        .expect("send");
+    daemon
+        .client
+        .send(&stranded("for the main advisor"))
+        .await
+        .expect("send");
 
     // Running: its own inbox, unmarked.
     research
@@ -997,8 +1018,27 @@ async fn named_advisor_addressing_and_delivery_fallbacks() {
         (m.to.as_str(), m.body.as_str()),
         ("external:advisor/research", "hello")
     );
-    assert_eq!(inbox(&research).await.len(), 1);
-    assert_eq!(inbox(&shared).await.len(), 1);
+    // The stranded message moved back, mark off; the main advisor's own stays.
+    let own = inbox(&research).await;
+    assert_eq!(own.len(), 3, "{own:?}");
+    assert!(own.iter().any(|m| m.body == "lost"));
+    let main_inbox = inbox(&shared).await;
+    assert_eq!(main_inbox.len(), 1, "{main_inbox:?}");
+    assert_eq!(main_inbox[0].body, "for the main advisor");
+    // Registering again moves nothing twice.
+    research
+        .session_register(&SessionRegister {
+            identity: "advisor/research".into(),
+            pid: 4_000_001,
+            pid_start: "t0".into(),
+            pane: None,
+            claude_session_id: None,
+            project: None,
+            machine: None,
+        })
+        .await
+        .expect("register again");
+    assert_eq!(inbox(&research).await.len(), 3);
 
     // Attribution, and a reply returns to the named advisor.
     let q = research.send(&send("human", None)).await.expect("send")[0].clone();
@@ -1011,18 +1051,12 @@ async fn named_advisor_addressing_and_delivery_fallbacks() {
         .clone();
     assert_eq!(r.to, "external:advisor/research");
 
-    // Ending moves what's unread, marked; what it read stays.
+    // Ending leaves what's unread in its own inbox; the main advisor's is untouched.
     let msgs = inbox(&research).await;
     research.mark_read(&msgs[0].id).await.expect("read");
     research.session_end(4_000_001).await.expect("end");
-    let shared_inbox = inbox(&shared).await;
-    assert_eq!(shared_inbox.len(), 2, "{shared_inbox:?}");
-    assert!(
-        shared_inbox
-            .iter()
-            .all(|m| m.body.starts_with("(originally for advisor/research)\n"))
-    );
-    assert_eq!(inbox(&research).await.len(), 1);
+    assert_eq!(inbox(&research).await.len(), 4);
+    assert_eq!(inbox(&shared).await.len(), 1);
 
     // The part before `/` must be an active principal.
     let err = daemon

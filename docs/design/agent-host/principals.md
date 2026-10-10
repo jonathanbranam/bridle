@@ -46,11 +46,14 @@ replace that.
 **Named advisors.** A named advisor shares `external:advisor`'s token; its CLI adds the name
 (`BRIDLE_ADVISOR_NAME`, header `x-bridle-advisor`) and the daemon signs its requests
 `external:advisor/<name>` (`@machine` kept): an honest label, not proof. Mail to
-`external:advisor/<name>` lands in that principal's inbox while the session is registered
-(`POST /v1/sessions`); otherwise (ended, never existed, or an `@machine` address, which the local
-registry can't vouch for) it goes to `external:advisor` with "(originally for advisor/<name>)" put
-before the body, and unread mail moves there the same way when the session ends. An unknown owner
-before the `/` is a 404.
+`external:advisor/<name>` lands in that principal's inbox whether or not the session is registered
+(`POST /v1/sessions`): unread mail stays there when the session ends, and the next session of that
+name reads it. The send response carries `recipient_note` ("<name> isn't running; waiting in its
+inbox") when no session of that name runs. An `@machine` address, which the local registry can't
+vouch for, goes to `external:advisor` with "(originally for advisor/<name>)" put before the body.
+Registering a named session moves any unread mail so marked in the shared inbox to its own inbox
+and takes the mark off (the recovery for mail the earlier move-on-end stranded; hwek). An unknown
+owner before the `/` is a 404.
 
 Every event records its `actor`: the caller for spawn, send, read,
 interrupt, stop, resume and remove, and `system` for what agents do and for

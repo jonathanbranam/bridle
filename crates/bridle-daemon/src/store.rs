@@ -434,15 +434,16 @@ impl Store {
             .await
     }
 
-    /// Re-addresses `from`'s unread messages to `to`, putting `mark` before each body.
-    pub async fn move_unread_messages(
+    /// Re-addresses `from`'s unread messages whose body starts with `mark` to `to`, taking
+    /// `mark` off. Moves nothing the second time, so it is safe to repeat.
+    pub async fn move_marked_unread_messages(
         &self,
         from: &str,
         to: &str,
         mark: &str,
     ) -> Result<usize, StoreError> {
         let (from, to, mark) = (from.to_string(), to.to_string(), mark.to_string());
-        self.with_conn(move |c| sync::move_unread_messages(c, &from, &to, &mark))
+        self.with_conn(move |c| sync::move_marked_unread_messages(c, &from, &to, &mark))
             .await
     }
 
@@ -2597,6 +2598,7 @@ mod sync {
             answered_reply: row.get(14)?,
             answered_line: row.get(15)?,
             incident_task: row.get(16)?,
+            recipient_note: None,
         })
     }
 
@@ -2644,6 +2646,7 @@ mod sync {
             answered_reply: None,
             answered_line: None,
             incident_task: None,
+            recipient_note: None,
         })
     }
 
@@ -3811,15 +3814,16 @@ mod sync {
         Ok(previous)
     }
 
-    pub(super) fn move_unread_messages(
+    pub(super) fn move_marked_unread_messages(
         conn: &Connection,
         from: &str,
         to: &str,
         mark: &str,
     ) -> Result<usize, StoreError> {
         Ok(conn.execute(
-            "UPDATE messages SET to_id = ?2, body = ?3 || body
-             WHERE to_id = ?1 AND state NOT IN ('read', 'dropped')",
+            "UPDATE messages SET to_id = ?2, body = substr(body, length(?3) + 1)
+             WHERE to_id = ?1 AND state NOT IN ('read', 'dropped')
+               AND substr(body, 1, length(?3)) = ?3",
             params![from, to, mark],
         )?)
     }

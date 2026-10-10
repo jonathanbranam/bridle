@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- A named advisor's unread mail stays in its own inbox when its session ends or restarts, and mail sent to a named advisor that isn't running waits there (the sender is told); mail the old move stranded in the shared `external:advisor` inbox goes back to the named inbox when that session next starts (hwek).
+
 ## [0.6.0] - 2026-10-10
 
 ### Added

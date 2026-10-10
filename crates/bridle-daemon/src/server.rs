@@ -714,7 +714,10 @@ async fn register_session(
     State(state): State<AppState>,
     Json(req): Json<bridle_api::types::SessionRegister>,
 ) -> Json<bridle_api::types::SessionInfo> {
-    Json(state.sessions.register(req, chrono::Utc::now()))
+    let identity = req.identity.clone();
+    let info = state.sessions.register(req, chrono::Utc::now());
+    state.sessions.recover_stranded(&identity).await;
+    Json(info)
 }
 
 async fn end_session(
@@ -1431,13 +1434,13 @@ async fn resolve_targets(state: &AppState, to_raw: &str) -> Result<Vec<ToTarget>
         {
             return Err(ApiError::not_found(format!("no such recipient: {to_raw}")));
         }
-        // A named session that isn't running gets its mail at the shared inbox.
+        // A named advisor's mail waits in its own inbox, running or not (hwek). A machine
+        // suffix is another daemon's session: that mail goes to the shared inbox, marked.
         match advisor {
-            Some(a) if !to_raw.contains('@') && state.sessions.is_running(&a) => {
-                vec![ToTarget::External(to_raw.to_string())]
+            Some(_) if to_raw.contains('@') => {
+                vec![ToTarget::External(format!("external:{owner}"))]
             }
-            Some(_) => vec![ToTarget::External(format!("external:{owner}"))],
-            None => vec![ToTarget::External(to_raw.to_string())],
+            _ => vec![ToTarget::External(to_raw.to_string())],
         }
     } else if let Some(role) = to_raw.strip_prefix("role:") {
         let matching: Vec<ToTarget> = state
@@ -1481,11 +1484,15 @@ async fn send_message(
         return Err(ApiError::bad_request("`to` is required"));
     };
     let targets = resolve_targets(&state, to_raw).await?;
-    let fell_back = match (
-        to_raw.strip_prefix("external:").and_then(split_named),
-        targets.first(),
-    ) {
-        (Some((_, name)), Some(ToTarget::External(to))) if !to.contains('/') => Some(name),
+    let named = to_raw.strip_prefix("external:").and_then(split_named);
+    let fell_back = match (&named, targets.first()) {
+        (Some((_, name)), Some(ToTarget::External(to))) if !to.contains('/') => Some(name.clone()),
+        _ => None,
+    };
+    let not_running = match &named {
+        Some((_, name)) if fell_back.is_none() && !state.sessions.is_running(name) => {
+            Some(name.clone())
+        }
         _ => None,
     };
     // The full text goes on the task's thread (an unknown task fails here,
@@ -1524,6 +1531,16 @@ async fn send_message(
             )
             .await?;
         msgs.push(msg);
+    }
+    let note = match (not_running, fell_back) {
+        (Some(name), _) => Some(format!("{name} isn't running; waiting in its inbox")),
+        (None, Some(name)) => Some(format!("{name} isn't running; delivered to advisor")),
+        _ => None,
+    };
+    if let Some(note) = note {
+        for m in &mut msgs {
+            m.recipient_note = Some(note.clone());
+        }
     }
     Ok(Json(msgs))
 }

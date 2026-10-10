@@ -30,7 +30,7 @@ use crate::store::{NewMessage, RecipientKind, Store};
 /// The principal the human's warnings go to.
 const AIDE: &str = "external:aide";
 
-/// The shared advisor principal: where a named advisor's mail goes when it isn't running.
+/// The shared advisor principal: where mail for a remote-machine named advisor goes.
 pub const ADVISOR: &str = "external:advisor";
 
 /// `body` marked as meant for the named advisor, for the shared inbox.
@@ -175,6 +175,26 @@ impl Sessions {
         };
         if let Some(e) = gone {
             self.emit_ended(&e).await;
+        }
+    }
+
+    /// Gives a named advisor's session the mail that was parked in the shared inbox for it
+    /// (marked "originally for advisor/<name>"), before this session ran: by the old move on
+    /// session end, or a send while it wasn't running. A no-op when there is none (hwek).
+    pub async fn recover_stranded(&self, identity: &str) {
+        let Some(name) = identity.strip_prefix("advisor/") else {
+            return;
+        };
+        let to = format!("{ADVISOR}/{name}");
+        let mark = originally_for(name, "");
+        match self
+            .store
+            .move_marked_unread_messages(ADVISOR, &to, &mark)
+            .await
+        {
+            Ok(0) => {}
+            Ok(n) => tracing::info!("moved {n} stranded messages to {to}"),
+            Err(err) => tracing::warn!("recovering {to}'s stranded messages: {err}"),
         }
     }
 
@@ -441,14 +461,6 @@ impl Sessions {
     }
 
     async fn emit_ended(&self, e: &Entry) {
-        // Mail it hadn't read goes to the shared inbox, marked, so someone sees it.
-        if let Some(name) = e.info.identity.strip_prefix("advisor/") {
-            let from = format!("{ADVISOR}/{name}");
-            let mark = originally_for(name, "");
-            if let Err(err) = self.store.move_unread_messages(&from, ADVISOR, &mark).await {
-                tracing::warn!("moving {from}'s unread messages: {err}");
-            }
-        }
         let _ = self
             .emitter
             .emit(
