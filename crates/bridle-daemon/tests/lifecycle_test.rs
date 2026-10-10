@@ -481,6 +481,18 @@ async fn spawn_child_orphan_is_swept_on_stop() {
         .expect("stop");
     assert_eq!(stopped.state, AgentState::Stopped);
 
+    // Death first, then the event: a pid that outlives the sweep (never
+    // tracked) and an event that never lands (killed some other way) are
+    // different bugs, and the 60 s event timeout alone can't tell them apart
+    // (br-4vmc). A zombie awaiting init's reap still answers `kill -0`, so
+    // this polls rather than asserting once.
+    support::wait_for("orphan pid to be gone", || async {
+        nix::sys::signal::kill(nix::unistd::Pid::from_raw(child_pid), None)
+            .is_err()
+            .then_some(())
+    })
+    .await;
+
     let orphans = support::wait_for_event(
         &daemon.client,
         bridle_api::types::event_kind::AGENT_ORPHANS_KILLED,
@@ -494,11 +506,6 @@ async fn spawn_child_orphan_is_swept_on_stop() {
     )
     .await;
     assert!(orphans.data["count"].as_u64().unwrap() >= 1);
-
-    assert!(
-        nix::sys::signal::kill(nix::unistd::Pid::from_raw(child_pid), None).is_err(),
-        "spawned child pid {child_pid} should be dead after stop"
-    );
 }
 
 /// v4nk: worker-role agents get no agent lifecycle authority
