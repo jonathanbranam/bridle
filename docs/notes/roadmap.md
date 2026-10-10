@@ -25,8 +25,7 @@ In the order the PdM suggests:
    (br-jgdb) once v0.6.0 is out. Everything else in the epic is landed or landing.
 2. **The set phrase** for an empty wake: "Listening." or "Waiting." (the NUC's notes advisor's
    relay, m-9300; the rule ticket is filed once you pick).
-3. **Reviews waiting on you**: gtzx (seats; its mail half is now hwek, being built), stx8 (task
-   states), kuw2 (machine daemon, br-efs2), eadm (keep-awake reminder, not a poll), and the
+3. **Reviews waiting on you**: gtzx (seats; its mail half is now hwek, being built), kuw2 (machine daemon, br-efs2), eadm (keep-awake reminder, not a poll), and the
    9dcz link-hook design once br-g8pe writes it.
 4. **Done-when drafts**: every epic marked "(PdM draft)" below waits for you to amend or approve.
 
@@ -146,6 +145,7 @@ How work is recorded (tickets, fields, migrations) and shipped (changelog, relea
 | [br-72t9](http://dalek.tailbc91f5.ts.net:7878/task?id=br-72t9) | A ticket's thread moves to the ticket (tickets/<id>.md on the state branch); ticket com... |  | pending | after br-3v75 lands |
 | [br-d9wq](http://dalek.tailbc91f5.ts.net:7878/task?id=br-d9wq) | Research: product manager roles, human and agentic (BMAD and others), and what to call ... |  | pending | research done; the human reads it and picks the term |
 | [br-95mu](http://dalek.tailbc91f5.ts.net:7878/task?id=br-95mu) | A change spec (proposal and design) reviewed for risk and impact before any worker buil... |  | pending | to the designer once the human has reviewed the ticket |
+| [br-stx8](http://dalek.tailbc91f5.ts.net:7878/task?id=br-stx8) | A task's state says what's really happening: held and built-awaiting-landing are states... |  | planned | last in this epic, after all the ticket work (the human, 2026-10-10); then a proposed design and the human's approval (HELD) |
 
 #### Epic `migrations`: Migrations
 
@@ -280,7 +280,6 @@ No tasks yet.
 |---|---|---|---|---|
 | [ui-vhrb](http://dalek.tailbc91f5.ts.net:7878/task?id=ui-vhrb) | A theme page (everything about one theme) and a roadmap page (epics in order) in the UI | low | pending | waits on the human (approve to ready) |
 | [br-gtzx](http://dalek.tailbc91f5.ts.net:7878/task?id=br-gtzx) | Seats: every role is a named, tracked seat that outlives its sessions, with its own inb... |  | open | HELD: waits on the human's review of P1-P10, Q1-Q4 |
-| [br-stx8](http://dalek.tailbc91f5.ts.net:7878/task?id=br-stx8) | A task's state says what's really happening: held and built-awaiting-landing are states... |  | planned | HELD: needs a proposed design and the human's approval |
 | [br-519b](http://dalek.tailbc91f5.ts.net:7878/task?id=br-519b) | Task watchers: a creator field, a watchers list, and wakes that say what changed and ar... |  | pending | waits on the human (approve to ready) |
 | [br-cr7t](http://dalek.tailbc91f5.ts.net:7878/task?id=br-cr7t) | Add a postmortem ticket kind: the full write-up after an incident |  | pending | waits on the human (approve to ready) |
 | [br-avu7](http://dalek.tailbc91f5.ts.net:7878/task?id=br-avu7) | vk3y slice 2: 'bridle task new' requires --ticket (no-ticket sentinel) and a rule for e... |  | pending | waits on the human (approve to ready) |
@@ -339,7 +338,7 @@ Bridle's own cost on the machine: measure against a baseline, then cut it.
 |---|---|---|---|---|
 | [br-re57](http://dalek.tailbc91f5.ts.net:7878/task?id=br-re57) | Benchmark design pass (designer): options and a recommendation in ticket v6kr |  | integrated | delivered |
 | [br-57ec](http://dalek.tailbc91f5.ts.net:7878/task?id=br-57ec) | Benchmark script: write, commit and merge it per the v6kr design |  | integrated | delivered |
-| [br-g9xe](http://dalek.tailbc91f5.ts.net:7878/task?id=br-g9xe) | Benchmark: first live run (GATED on the human's sign-off of the v6kr design and plan) |  | planned | ready to build |
+| [br-g9xe](http://dalek.tailbc91f5.ts.net:7878/task?id=br-g9xe) | Benchmark: first live run (GATED on the human's sign-off of the v6kr design and plan) |  | integrated | delivered |
 | [br-9d95](http://dalek.tailbc91f5.ts.net:7878/task?id=br-9d95) | Benchmark: idle run tonight, 2026-10-11 ~4:00 AM ET (after the live run checks out) |  | planned | ready to build |
 | [br-ju5q](http://dalek.tailbc91f5.ts.net:7878/task?id=br-ju5q) | Benchmark report: analyse the live and idle runs, ready Sunday 2026-10-11 morning |  | planned | ready to build |
 
@@ -470,7 +469,6 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 | [br-cfb2](http://dalek.tailbc91f5.ts.net:7878/task?id=br-cfb2) | Review ticket v8uu: seeing what background agents do (findings + 5 possible features) |  | claimed | the human's to-do |
 | [br-twg8](http://dalek.tailbc91f5.ts.net:7878/task?id=br-twg8) | Try document review (x8jt) on gtzx: install the UI, review add, start the gateway, comment |  | claimed | the human's to-do |
 
-
 ## Delivered (since the trial began)
 
 | When (ET) | Task | Workstream |
@@ -555,3 +553,4 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 - 2026-10-10 1:45 PM ET: regenerated (stale since 2026-10-09 23:05). Machine setup split (the human: "Split the epics and write a proper 'when done' statement"): `machine-setup` is phase 1 only, done when v0.6.0 is out, the PC runs bridle from the release with no clone, the PC and NUC self-upgrade by release, and chvf and mrhe are resolved; br-3932 (mrhe umbrella) and br-ygkc moved in. New epic `machine-sync` (rjd5, f8f9, xccp, v7ug) after one orchestrator per machine; kt25 to `machine-transparent`; eadm unscheduled. Also new today: epics benchmarking, background-agents, orchestrator-per-machine, machine-transparent, ui-cleanups; hwek (incident fix, messaging); 9dcz and g8pe (link hook, comment-routing).
 - 2026-10-10 2:10 PM ET: the human expects machine setup to cover installing bridle with no clone, running and self-upgrading (daemon, gateway, UI fixed to a bridle version). Filed fv86 (install from a release, no clone; readied, high) into `machine-setup` and its done-when; new epic `ui-releases` (t3dr, with br-785a) fifth, the UI being a separate piece of work (the human).
 - 2026-10-10 2:40 PM ET: xccp out of machine-sync to unscheduled (the human hadn't decided it; aide wrote option A, no new credentials, into the ticket). Design task br-k3jk added to ui-releases.
+- 2026-10-10 1:55 PM ET: stx8 (task states) into `everything-is-a-ticket`, last, blocked by br-72t9 (the human: "do all the ticket task work first because they're dependent and interrelated ... it can come later"); off the reviews list for now. Note: today's earlier PM entries above were stamped about an hour late (the previous session's ET clock was off).

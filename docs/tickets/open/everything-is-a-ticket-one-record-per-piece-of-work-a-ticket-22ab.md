@@ -294,6 +294,8 @@ track-web): messages, the inbox, the UI and cross-project links.
 keeps today's states (`pending`, `open`, `planned`, `claimed`, `integrated`, `dropped`,
 `reopened`). New states are not part of this workstream.
 
+**Update, the human, 2026-10-10 ~1:55 PM ET**: stx8 joins this epic, last, after all the ticket work: "do all the ticket task work first because they're dependent and interrelated ... It'll be really nice to have, but it can come later." Its design may find it superseded by the ticket states here.
+
 stx8 is reviewed separately, later. The human: "I think we need more than just these states",
 meaning more than the held and built-and-waiting-to-land states stx8 proposes. stx8 stays held
 until the human approves its state design. When it lands, it designs the states for change
