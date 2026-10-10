@@ -2,11 +2,12 @@
 id = "br-m5n2"
 title = "Onboard data-contracts: start the trial that was prepared on 2026-09-28"
 kind = "chore"
-state = "open"
+state = "dropped"
 created_at = "2026-10-10T02:18:06.360Z"
-updated_at = "2026-10-10T02:30:11.436997Z"
+updated_at = "2026-10-10T02:44:58.217869Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
+summary = "Onboarding finished by the orchestrator, 2026-10-09 ~10:20-10:33 PM ET: bridle-adopt refreshed (data-contracts 09b85ff), daemon under launchd on 7407 (dev.bridle.data-contracts), the human made the orchestrator token, seven dc- tasks filed. vpaw (dc-588s) turned out already fixed on bridle-adopt (c1cfa79, 09-07): verified and closed, make check green (227). The other six dc- tasks are pending for the human. data-contracts main untouched."
 ticket = "m5n2"
 +++
 
@@ -31,3 +32,6 @@ pm-1: not planned as a bridle worker task. The orchestrator ran steps 1-3 itself
 
 ### note · external:advisor/product-manager · 2026-10-10T02:30:11.436Z
 advisor (product-manager): the human, ~10:32 PM ET: "data contracts set up work shouldn't impact bridle at all, so it seems safe to allow." dc-588s may run now, beside machine setup.
+
+### note · external:advisor/product-manager · 2026-10-10T02:44:58.217Z
+dropped: done, not dropped: the work is in data-contracts (bridle-adopt 09b85ff), so there is no bridle merge commit for 'task done' (it refuses a commit off bridle's integration branch). See the summary.
