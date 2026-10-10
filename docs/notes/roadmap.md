@@ -15,7 +15,7 @@ before it moves: "waits on the human" is a pending task only the human can appro
 is the project manager's; "ready to build" is in the queue; "HELD" is planned in bridle but
 stopped by the human.
 
-Last updated: 2026-10-10 2:10 PM ET.
+Last updated: 2026-10-10 2:40 PM ET.
 
 ## Needs the human now
 
@@ -82,7 +82,7 @@ Daemons, tokens, sync and projects across the laptop, the NUC and the Windows PC
 |---|---|---|---|---|
 | [br-ygkc](http://dalek.tailbc91f5.ts.net:7878/task?id=br-ygkc) | release::tests::installs_and_keeps_the_previous_binary fails with checksum mismatch (br... |  | integrated | fix done, landing; unblocks br-751e |
 | [br-751e](http://dalek.tailbc91f5.ts.net:7878/task?id=br-751e) | Daemon keeps its own workflow checkout at the binary's tag (chvf 3) | high | planned | done; landing waits on the br-ygkc flake fix; then v0.6.0 |
-| [br-fv86](http://dalek.tailbc91f5.ts.net:7878/task?id=br-fv86) | Install bridle from a release with no clone: one step that downloads, verifies and inst... | high | open | to plan (project manager) |
+| [br-fv86](http://dalek.tailbc91f5.ts.net:7878/task?id=br-fv86) | Install bridle from a release with no clone: one step that downloads, verifies and inst... | high | planned | ready to build |
 | [br-jgdb](http://dalek.tailbc91f5.ts.net:7878/task?id=br-jgdb) | Windows PC: follow the WSL2 setup guide (install WSL2 + Ubuntu, wslconfig, Tailscale, s... | low | claimed | the human's to-do |
 | [br-h7mu](http://dalek.tailbc91f5.ts.net:7878/task?id=br-h7mu) | Pick a name for the Windows PC (docs/context/naming.md) (v7ug) | low | claimed | the human's to-do |
 | [br-3932](http://dalek.tailbc91f5.ts.net:7878/task?id=br-3932) | Run bridle on a project without a local bridle clone (mrhe) |  | pending | umbrella: both parts landed (br-85bc, br-8411); closes with tickets mrhe and chvf once br-751e lands |
@@ -99,14 +99,13 @@ Daemons, tokens, sync and projects across the laptop, the NUC and the Windows PC
 
 #### Epic `machine-sync`: Machine sync and recovery
 
-- Outcome: Phases 2 and 3 of the old machine-setup epic, split out 2026-10-10 at the human's ask: each machine is set up and kept in sync by one idempotent command (rjd5), recovers everything on boot (f8f9), says which clone made each commit (xccp), and the PC takes bridle's heavy work (v7ug). Sequenced after one orchestrator per machine (the human, 2026-10-10).
-- Done when: (PdM draft) One idempotent command sets up or re-syncs a project on a machine (rjd5); the NUC and the PC bring every daemon, gateway and session back after a reboot with no human step (f8f9); each machine's commits show their clone (xccp); heavy builds and checks can run on the PC (v7ug).
+- Outcome: Phases 2 and 3 of the old machine-setup epic, split out 2026-10-10 at the human's ask: each machine is set up and kept in sync by one idempotent command (rjd5), recovers everything on boot (f8f9), and the PC takes bridle's heavy work (v7ug). Sequenced after one orchestrator per machine (the human, 2026-10-10).
+- Done when: (PdM draft) One idempotent command sets up or re-syncs a project on a machine (rjd5); the NUC and the PC bring every daemon, gateway and session back after a reboot with no human step (f8f9); heavy builds and checks can run on the PC (v7ug).
 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
 | [br-rjd5](http://dalek.tailbc91f5.ts.net:7878/task?id=br-rjd5) | Commands to set up and sync a project everywhere: sync all seven places per machine, an... |  | pending | needs a design (source of truth for the project list), then the human's approval |
 | [br-f8f9](http://dalek.tailbc91f5.ts.net:7878/task?id=br-f8f9) | The NUC recovers everything on boot (4r3k) |  | pending | 'bridle up' after boot needs a small design |
-| [br-xccp](http://dalek.tailbc91f5.ts.net:7878/task?id=br-xccp) | A git identity per machine, so commits show which clone made them | low | pending | later (the human: non-urgent); needs the human's keys or tokens |
 | [br-v7ug](http://dalek.tailbc91f5.ts.net:7878/task?id=br-v7ug) | Run bridle's heavy work on the Windows PC under WSL2 |  | pending | umbrella; audit and guide delivered |
 
 #### Epic `machine-transparent`: Projects become machine-transparent
@@ -124,6 +123,7 @@ Daemons, tokens, sync and projects across the laptop, the NUC and the Windows PC
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
 | [br-eadm](http://dalek.tailbc91f5.ts.net:7878/task?id=br-eadm) | Keep dalek awake while it's open: a toggled check every ~30 min that tells the orchestr... |  | pending | waits on the human (approve to ready) |
+| [br-xccp](http://dalek.tailbc91f5.ts.net:7878/task?id=br-xccp) | A git identity per machine, so commits show which clone made them | low | pending | low, unscheduled; no new credentials (option A: machine in the committer name, aide 2026-10-10); for the human to approve |
 | [br-u6w9](http://dalek.tailbc91f5.ts.net:7878/task?id=br-u6w9) | Human interaction time: daemon serves the prompt log; gateway collects across machines ... |  | pending | waits on the human (approve to ready) |
 | [ui-9hq8](http://dalek.tailbc91f5.ts.net:7878/task?id=ui-9hq8) | Documents of projects on another machine (the NUC): read and comment in bridle-ui | high | integrated | delivered |
 | [br-xxq8](http://dalek.tailbc91f5.ts.net:7878/task?id=br-xxq8) | List the projects an identity holds tokens for, without printing the tokens | low | pending | waits on the human (approve to ready) |
@@ -369,6 +369,7 @@ What the human sees and touches: web UI, documents and comments, to-dos, links, 
 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
+| [br-k3jk](http://dalek.tailbc91f5.ts.net:7878/task?id=br-k3jk) | bridle-ui ships with bridle releases: design pass (designer): options and a recommendat... |  | planned | ready to build |
 | [br-t3dr](http://dalek.tailbc91f5.ts.net:7878/task?id=br-t3dr) | bridle-ui ships with each bridle release, fixed to that version, and self-upgrade moves... |  | pending | waits on the human (approve to ready) |
 | [br-785a](http://dalek.tailbc91f5.ts.net:7878/task?id=br-785a) | A landing that needs a UI install shows without a manual step (tc7t, option C) |  | pending | design first (designer on tc7t, then the human's review); build split after br-7ufd lands |
 
@@ -553,3 +554,4 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 - 2026-10-09 23:05 ET: br-7ufd delivered, ticket 7ufd resolved; data-contracts onboarded (m5n2 resolved). Queue re-tiered by pm-1 to the roadmap (88d4, fpde, 751e, hdbj ahead) after the human found low work running ahead of machine setup (trial lesson 14). New epic `messaging` (rank 2: 3haz, fvkq, 2msq, n7cg, new rhba, ysmu, cufw); `scheduled-messages` moved to rank 3; br-g5y2 approved. br-1ddd and br-kuvh dropped (the human chose the real fix). Placed br-xxq8, br-p29s, br-bnfs, br-4vmc.
 - 2026-10-10 1:45 PM ET: regenerated (stale since 2026-10-09 23:05). Machine setup split (the human: "Split the epics and write a proper 'when done' statement"): `machine-setup` is phase 1 only, done when v0.6.0 is out, the PC runs bridle from the release with no clone, the PC and NUC self-upgrade by release, and chvf and mrhe are resolved; br-3932 (mrhe umbrella) and br-ygkc moved in. New epic `machine-sync` (rjd5, f8f9, xccp, v7ug) after one orchestrator per machine; kt25 to `machine-transparent`; eadm unscheduled. Also new today: epics benchmarking, background-agents, orchestrator-per-machine, machine-transparent, ui-cleanups; hwek (incident fix, messaging); 9dcz and g8pe (link hook, comment-routing).
 - 2026-10-10 2:10 PM ET: the human expects machine setup to cover installing bridle with no clone, running and self-upgrading (daemon, gateway, UI fixed to a bridle version). Filed fv86 (install from a release, no clone; readied, high) into `machine-setup` and its done-when; new epic `ui-releases` (t3dr, with br-785a) fifth, the UI being a separate piece of work (the human).
+- 2026-10-10 2:40 PM ET: xccp out of machine-sync to unscheduled (the human hadn't decided it; aide wrote option A, no new credentials, into the ticket). Design task br-k3jk added to ui-releases.
