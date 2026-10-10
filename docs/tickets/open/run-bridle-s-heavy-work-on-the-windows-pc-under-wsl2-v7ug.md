@@ -116,3 +116,21 @@ Options: (a) builds only (remote builds), (b) whole projects, (c) bridle's own r
    the setup-guide task covers the human steps. Size S, docs only.
 5. npj2 follow-ups (feature-gate or replace the AWS SDKs in `bridle-mail`; dev profile deps
    `opt-level=0`) are filed under npj2, not here.
+
+## Setup log
+
+From the human's session with advisor wsl2, 2026-10-10 (times US Eastern).
+
+- WSL was not installed. The human ran `wsl --install -d Ubuntu` (default LTS; fine, per the
+  human) and rebooted. Linux user name and password still to choose.
+- Naming the PC (Windows name and the WSL hostname) is deferred until before Tailscale (step 3);
+  the human has no name yet.
+- v0.6.0 has a Linux x86_64 release asset (orchestrator, m-9495), so step 6 can download bridle
+  instead of building it. Rust is still needed for the builds this PC is for.
+- The human, on the next step:
+
+  > I want my next step to be authenticating and updating to 1Password. That will make all of
+  > this a lot easier.
+
+  So 1Password (the Windows app, with its CLI and SSH agent wired into WSL) comes before the
+  guide's step 2. The guide (`docs/context/windows-wsl2-host.md`) does not have this step yet.
