@@ -159,7 +159,7 @@ Cheap first.
    `workflow/base/rules/` with `roles:` for every role that commits (rule: "one pusher for the
    integration branch").
 
-> [!comment] c1 human, 2026-10-09 14:03 EDT, on "Say who pushes main, and that it is one clone" [sent 2026-10-09 14:18 EDT]
+> [!comment] c1 human, 2026-10-09 14:03 EDT, on "Say who pushes main, and that it is one clone" [read 2026-10-09 14:18 EDT]
 > Agree. This is correct. We have "project takeover" to transfer a project between machines / clones. We just need to enforce this mechanically - either do a read-only clone or do something with git or PAT tokens or somehow enforce this. We can write a rule, but it should be impossible for a different clone under bridle to push.
 >
 > **doc-j7r4, 2026-10-09 14:20 EDT:** @human Agreed. Ticket 8z7j covers it: enforce one pusher mechanically (read-only clone, deploy key or token scoped to the owner's clone), with the rule as a backstop. It needs a design first. No change to this document.
@@ -171,7 +171,7 @@ Cheap first.
    timer and warn when `origin/main` is not an ancestor of `main` ("N ahead, M behind"). Today's
    `[ahead 23]` hid the problem.
 
-> [!comment] c2 human, 2026-10-09 14:03 EDT, on "Let managers and the orchestrator run git fetch origin" [sent 2026-10-09 14:18 EDT]
+> [!comment] c2 human, 2026-10-09 14:03 EDT, on "Let managers and the orchestrator run git fetch origin" [read 2026-10-09 14:18 EDT]
 > Yes, definitely. This is critical to allow for moving a project from one machine to another. Manager and orchestrator are trusted to do this.
 >
 > **doc-j7r4, 2026-10-09 14:20 EDT:** @human Ticket k6jd covers it: managers and the orchestrator may run `git fetch origin`, and divergence is warned. No change to this document.
@@ -182,7 +182,7 @@ Cheap first.
    or hook), or accept that the remote lags and say so in the operating model; right now it says it
    never lags and that is false for docs.
 
-> [!comment] c3 human, 2026-10-09 14:04 EDT, on "Either push after each direct-to-main docs commit" [sent 2026-10-09 14:18 EDT]
+> [!comment] c3 human, 2026-10-09 14:04 EDT, on "Either push after each direct-to-main docs commit" [read 2026-10-09 14:18 EDT]
 > Yes, I think this is a good pattern.
 >
 > **doc-j7r4, 2026-10-09 14:20 EDT:** @human Ticket 8ay6 covers it: push straight after each direct-to-main docs commit. No change to this document.
@@ -195,7 +195,7 @@ Cheap first.
    text. Related: an agent that cannot send must put the blocker on the task thread
    (`bridle task comment`), not just in its own output; add that to the worker/manager roles.
 
-> [!comment] c4 human, 2026-10-09 14:04 EDT, on "A failed push is an event and an alarm" [sent 2026-10-09 14:18 EDT]
+> [!comment] c4 human, 2026-10-09 14:04 EDT, on "A failed push is an event and an alarm" [read 2026-10-09 14:18 EDT]
 > Agreed.
 >
 > **doc-j7r4, 2026-10-09 14:20 EDT:** @human Ticket 8umh covers it: a failed push is an event and an alarm. No change to this document.
@@ -208,7 +208,7 @@ Cheap first.
 6. **Distinct git identities per machine** (for example a committer name carrying the host: `NUC`),
    so a postmortem can tell clones apart without reading ticket text.
 
-> [!comment] c5 human, 2026-10-09 14:05 EDT, on "Distinct git identities per machine" [sent 2026-10-09 14:18 EDT]
+> [!comment] c5 human, 2026-10-09 14:05 EDT, on "Distinct git identities per machine" [read 2026-10-09 14:18 EDT]
 > Agree in principle, let's make a ticket for this, but it is non-urgent and can be done later; also it involves human work to make tokens and handle that.
 >
 > **doc-j7r4, 2026-10-09 14:20 EDT:** @human Ticket xccp is filed, marked non-urgent, and notes the token work is yours. No change to this document.
