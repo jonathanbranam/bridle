@@ -4,7 +4,7 @@ title = "A named advisor's unread mail stays in its own inbox when its session e
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-10T14:44:55.731Z"
-updated_at = "2026-10-10T19:17:09.247510Z"
+updated_at = "2026-10-10T19:17:24.561240Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 branch = "bridle/whwek"
@@ -25,3 +25,6 @@ done: hwek items 1-5; just check exit 0, 1455 tests, main merged; 0c1b2317
 
 ### note · agent:manager-2 · 2026-10-10T19:17:09.247Z
 integrated: 5b66c6b964ed86dad3d1c11de7a4578a23a4c4e0 (branch bridle/whwek)
+
+### note · agent:manager-2 · 2026-10-10T19:17:24.561Z
+cleanup: removed agent whwek, branch bridle/whwek
