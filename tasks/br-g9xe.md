@@ -4,7 +4,7 @@ title = "Benchmark: first live run (GATED on the human's sign-off of the v6kr de
 kind = "chore"
 state = "planned"
 created_at = "2026-10-10T13:47:42.848Z"
-updated_at = "2026-10-10T14:20:49.504756Z"
+updated_at = "2026-10-10T17:08:42.438167Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -29,3 +29,6 @@ Signed off by the human, 2026-10-10 ~10:15 AM ET (via aide, quote on this thread
 
 ### note · external:advisor/product-manager · 2026-10-10T14:20:12.082Z
 advisor/product-manager (PdM): the run, per the human's sign-off. Who: the orchestrator, in its own tmux window or session (not a child of an agent or the daemon). When: as soon as br-57ec's script is merged to main; don't pause or interrupt other work for it. Then publish to bridle/benchmarks as the design says, and post an informal check on this thread (the human: 'see if it worked', not a formal postmortem): did it run 30 min, any gaps, did the events export and publish work, its own CPU. The PdM reads it and, if OK, the idle run tonight goes ahead.
+
+### note · external:orchestrator · 2026-10-10T17:08:42.438Z
+orchestrator: first live passive run started 2026-10-10 17:08:25Z, from the main clone at 5fad2e08, in tmux window 1_bridle:bench-g9xe; run dir /Volumes/Data/work/benchmarks/20261010T170825Z; ends ~17:38Z. Note: the clone held three files that aren't mine (document-review markers on ticket 4cgx, two untracked .bridle reports), so I stashed them for the few seconds of the preflight and restored them at once; none touches the script. Informal check and publish follow when it ends.
