@@ -4,7 +4,7 @@ title = "Load-hold notes: one per machine, name bridle-owned top consumers, hone
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-09T01:41:12.914Z"
-updated_at = "2026-10-10T23:04:38.176618Z"
+updated_at = "2026-10-10T23:05:18.171295Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -54,3 +54,6 @@ Critical-task trigger not built: spawn requests carry no task id. Everything els
 
 ### note · agent:manager-2 · 2026-10-10T23:04:38.176Z
 integrated: 3101ce1de78fb3b1265cfe6a297ea32ce60f4060 (branch bridle/wg76s)
+
+### note · agent:manager-2 · 2026-10-10T23:05:18.171Z
+cleanup: removed agent wg76s, branch bridle/wg76s
