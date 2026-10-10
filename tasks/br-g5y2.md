@@ -2,9 +2,9 @@
 id = "br-g5y2"
 title = "Scheduled messages slice 2: role priming: wait at the maximum timeout and schedule a message for timed wake-ups (hrcn)"
 kind = "chore"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-08T14:29:41.482Z"
-updated_at = "2026-10-10T20:50:45.568769Z"
+updated_at = "2026-10-10T20:59:45.274210Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -13,6 +13,8 @@ watchers = [
     "external:advisor/product-manager",
 ]
 size = "S"
+branch = "bridle/wg5y2"
+commit = "01bda1b4816801b26c11e4d4f0b2358012a7edc8"
 summary = "Added rule workflow/base/rules/scheduled-wakes.md (wait at max timeout; bridle schedule add --at/--cron --message for timed wakes; list/rm own) for project-manager, manager, worker, prototyper, designer, plus one-line pointers in manager, project-manager and worker role text, and a CHANGELOG line. Gap: br-9xze refuses externals (orchestrator, advisor, aide) as schedule targets, so their wait text is unchanged; a follow-up is needed once schedule add allows externals. docs/design/cli.md needed no change."
 parent = "br-9xze"
 +++
@@ -39,3 +41,6 @@ done: scheduled-wakes rule + role pointers (manager, project-manager, worker); j
 
 ### note · agent:wg5y2 · 2026-10-10T20:50:45.568Z
 done (re-checked after merging main at fb18e39f): just check exit 0, 1462 tests; d151aef0
+
+### note · agent:manager-2 · 2026-10-10T20:59:45.274Z
+integrated: 01bda1b4816801b26c11e4d4f0b2358012a7edc8 (branch bridle/wg5y2)
