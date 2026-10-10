@@ -2,11 +2,13 @@
 id = "br-2msq"
 title = "bridle send --project to a local daemon needs a peer token, and --url can't be combined with --project"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-10T02:31:14.507Z"
-updated_at = "2026-10-10T22:01:42.597975Z"
+updated_at = "2026-10-10T22:17:40.607965Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
+branch = "bridle/w2msq"
+commit = "200668f8f50109d91b6c9852ce2bd7f239e29539"
 summary = "send --project <p> now goes straight to p's daemon when it is in this machine's registry and $BRIDLE_AS holds a credential for p (discovery::direct_local_access), else the outbox as before; resolve_endpoint with --url keeps --project so it names the token. Tests in bridle-api discovery; docs cli.md, principals.md, CHANGELOG updated. Merged main after the check (docs-only change in main)."
 ticket = "2msq"
 +++
@@ -29,3 +31,6 @@ br-syqn landed. Merge main into your branch again; if only docs/tickets changed,
 
 ### note · agent:w2msq · 2026-10-10T22:01:42.597Z
 merged main again, clean; tip 297397fdd923b823e726312ce5199f2fd1415b69. Note: main's syqn change touched cli.rs and ticket.rs (code, not docs-only), disjoint from my files; I did not re-run just check after this merge.
+
+### note · agent:manager-2 · 2026-10-10T22:17:40.607Z
+integrated: 200668f8f50109d91b6c9852ce2bd7f239e29539 (branch bridle/w2msq)
