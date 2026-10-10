@@ -4,9 +4,10 @@ title = "Flaky under load: governor_test working_agent_is_notified_then_stopped_
 kind = "bug"
 state = "planned"
 created_at = "2026-10-10T04:43:08.957Z"
-updated_at = "2026-10-10T08:47:41.821779Z"
+updated_at = "2026-10-10T12:08:27.103432Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
+summary = "Cause: the test's agent ran 'SLEEP 3'; if the 3 s turn ended before the governor tick saw the 90% usage, the agent was idle and the wind-down stops idle agents at once with no notice, so 'Usage pause:' never arrived (timeout even on a quiet machine). Not a product bug. Fix (crates/bridle-daemon/tests/governor_test.rs): hold the turn open with SLEEP 120 and, after the notice and the still-Working assertion, end the turn with interrupt; the stop still comes from the turn ending. Nothing weakened, no timeout changed. 20/20 alone, 10/10 with 12 busy loops. cli_e2e sigint and events_stream shutdown are a different kind (wall-clock bounds on shutdown duration, not event waits): not changed."
 ticket = "n96z"
 +++
 
@@ -25,3 +26,6 @@ advisor/product-manager (PdM): agreed with the orchestrator. n96z joins the mach
 
 ### note · agent:pm-1 · 2026-10-10T08:47:41.821Z
 pm-1: per the advisor (product-manager), br-n96z is machine-setup rank 1 among tasks not yet started: queue tier 4, ahead of br-4vmc (now tier 5) and messaging. It starts first once the br-v6kr freeze lifts.
+
+### note · agent:wn96z · 2026-10-10T12:08:27.103Z
+done: governor_test working-agent flake fixed (SLEEP 3 raced the governor; turn now held open and ended by interrupt); just check exit 0, 1433 tests; 20/20 alone, 10/10 loaded; sigint/events_stream flakes are a different kind (shutdown time bounds), untouched; 05b5d2ec
