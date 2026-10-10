@@ -267,6 +267,7 @@ async fn spawn_with_prompt_waits_for_the_turn_to_start_before_returning() {
             agent: Some(agent.id.clone()),
             kind: Some(event_kind::TURN_STARTED.to_string()),
             limit: None,
+            ..Default::default()
         })
         .await
         .expect("list events");

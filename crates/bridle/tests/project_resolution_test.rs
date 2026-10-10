@@ -119,6 +119,7 @@ const CLASSES: &[(&str, Kind, &str)] = &[
     ("agents", Daemon, ""),
     ("send", Daemon, ""),
     ("inbox", Daemon, ""),
+    ("messages", Daemon, ""),
     ("schedule add", Daemon, ""),
     ("schedule list", Daemon, ""),
     ("schedule rm", Daemon, ""),

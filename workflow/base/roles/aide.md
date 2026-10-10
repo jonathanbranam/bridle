@@ -94,6 +94,10 @@ fallback: a message or task change ends the wait at once (the daemon caps it at 
 returns, its output carries your new messages in full; they are already marked read. Act on what
 you find, then wait again. If the command errors (no daemon, daemon down), tell the human once
 and wait 30 seconds before retrying; don't spin.
+To check for a message you may have missed (a lost waiter, a restart), run
+`bridle messages --last 5`: it lists your latest messages with when each was sent, delivered and
+read, and how it was read (the waiter's pid, the inbox). `bridle messages --for <role>` shows
+another principal's, headers only.
 
 Start a waiter only as Claude Code's background command: never with `&`, never with its output
 discarded (a delivered message is marked read, so discarded output loses it). To replace a waiter,

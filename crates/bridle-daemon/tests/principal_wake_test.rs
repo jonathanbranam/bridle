@@ -17,6 +17,7 @@ fn query(principal: &str, timeout_secs: u64) -> PrincipalWakeQuery {
         principal: principal.to_string(),
         timeout_secs: Some(timeout_secs),
         session: None,
+        pid: None,
     }
 }
 

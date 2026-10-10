@@ -82,6 +82,8 @@ task needs the human, with `bridle task new "[at restart] <what>" -k feature --f
   (the daemon no longer wakes you when every agent is idle). A wake ends the wait at once either way.
   Start it only as Claude Code's background command: never with `&`, never with its output
   discarded. Stop one with `TaskStop`, never by killing by name (rule `no-kill-by-name`).
+  To check for a message you may have missed, run `bridle messages --last 5` (your latest, with
+  sent, delivered and read times and the channel each was read through).
   One waiter watches one daemon. Run one per project you hold an orchestrator token for
   (`--project <name>`; the projects are under `[orchestrator]` in the credentials file), or
   that project's messages to you are never seen (the human, 2026-10-01). Wakes are:

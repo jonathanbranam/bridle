@@ -1606,3 +1606,51 @@ fn strip_bridle_env_except_url(cmd: &mut Command) {
         .env_remove("BRIDLE_AGENT_NAME")
         .env_remove("BRIDLE_PROJECT");
 }
+
+#[test]
+fn messages_shows_own_bodies_and_headers_only_for_others() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let (_guard, repo, home) = start_daemon(tmp.path());
+    let (ok, _, err) = run_cli(
+        &repo,
+        &home,
+        &[
+            "spawn", "worker", "--name", "w1", "--prompt", "hi", "--json",
+        ],
+    );
+    assert!(ok, "spawn failed: {err}");
+    wait_for_first_turn(&repo, &home);
+    for (to, body) in [
+        ("human", "for-the-human"),
+        ("w1", "for-w1"),
+        ("w1", "second-for-w1"),
+    ] {
+        let (ok, _, err) = run_cli(&repo, &home, &["send", to, body]);
+        assert!(ok, "send failed: {err}");
+    }
+    let json = |args: &[&str]| -> Vec<serde_json::Value> {
+        let (ok, out, err) = run_cli(&repo, &home, args);
+        assert!(ok, "{args:?} failed: {err}");
+        serde_json::from_str(&out).expect("messages json")
+    };
+
+    // Default scope is the caller's own, bodies included.
+    let own = json(&["messages", "--json"]);
+    assert_eq!(own.len(), 1, "{own:?}");
+    assert_eq!(own[0]["body"], "for-the-human");
+    assert_eq!(own[0]["sent_via"], "ui");
+
+    // Another principal's: headers only, newest `--last N`.
+    let others = json(&["messages", "--for", "w1", "--json"]);
+    // The spawn prompt is a message too.
+    assert_eq!(others.len(), 3, "{others:?}");
+    assert!(others.iter().all(|m| m["body"].is_null()), "{others:?}");
+    let last = json(&["messages", "--for", "w1", "--last", "1", "--json"]);
+    assert_eq!(last.len(), 1);
+    assert_eq!(last[0]["id"], others[2]["id"]);
+
+    // A window that excludes everything, and a bad one.
+    assert!(json(&["messages", "--for", "w1", "--since", "0s", "--json"]).is_empty());
+    let (ok, _, _) = run_cli(&repo, &home, &["messages", "--since", "soon"]);
+    assert!(!ok);
+}

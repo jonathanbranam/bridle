@@ -242,6 +242,7 @@ pub(super) async fn wake(cli: &Cli, args: &WakeArgs) -> Result<(), CliError> {
             principal: identifier.clone(),
             timeout_secs: args.timeout,
             session,
+            pid: Some(std::process::id()),
         })
         .await?;
     if got

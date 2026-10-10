@@ -283,6 +283,8 @@ impl Wakes {
                     agent: None,
                     kind: None,
                     limit: Some(500),
+                    message: None,
+                    to: None,
                 })
                 .await?;
             let Some(last) = events.last().map(|e| e.seq) else {

@@ -610,7 +610,13 @@ async fn orchestrator_wakes(
     // messages (in `detail`, text included) are read now that they're being returned.
     for w in wakes.iter().filter(|w| w.reason == "message") {
         if let Some(id) = w.detail["id"].as_str() {
-            mark_read_by(state, id, reader).await;
+            mark_read_by(
+                state,
+                id,
+                reader,
+                serde_json::json!({"channel": bridle_api::types::channel::WAITER}),
+            )
+            .await;
         }
     }
     wakes
@@ -661,6 +667,27 @@ async fn principal_wake(
             ..Default::default()
         }],
     };
+    // `take` marked these read inside the store call; the audit event says by which waiter.
+    if take && !orchestrator {
+        for m in reasons.iter().flat_map(|r| &r.messages) {
+            let _ = state
+                .emitter
+                .emit(
+                    bridle_api::types::event_kind::MESSAGE_READ,
+                    principal.id.clone(),
+                    None,
+                    read_data(
+                        &m.id,
+                        serde_json::json!({
+                            "channel": bridle_api::types::channel::WAITER,
+                            "pid": q.pid,
+                            "session": q.session,
+                        }),
+                    ),
+                )
+                .await;
+        }
+    }
     Ok(Json(bridle_api::types::PrincipalWakeResponse { reasons }))
 }
 
@@ -1395,6 +1422,11 @@ async fn list_messages(
     if let Some(id) = &q.id {
         msgs.retain(|m| &m.id == id);
     }
+    if let Some(secs) = q.since_secs {
+        let cutoff =
+            Utc::now() - chrono::Duration::seconds(secs.min(i64::MAX as u64 / 1000) as i64);
+        msgs.retain(|m| m.created_at >= cutoff);
+    }
     // What an agent or external principal is handed from its own inbox is read; messages the
     // query filtered out never were handed over, so they stay as they are.
     if q.mark_read && !matches!(principal.kind, PrincipalKind::Human | PrincipalKind::Local) {
@@ -1403,7 +1435,13 @@ async fn list_messages(
             Some(&m.to) == mine.as_ref()
                 && !matches!(m.state, MessageState::Read | MessageState::Dropped)
         }) {
-            mark_read_by(&state, &m.id, &principal.id).await;
+            mark_read_by(
+                &state,
+                &m.id,
+                &principal.id,
+                serde_json::json!({"channel": bridle_api::types::channel::INBOX}),
+            )
+            .await;
             m.state = MessageState::Read;
         }
     }
@@ -1822,8 +1860,9 @@ async fn mark_unread(
     set_read_state(state.0, principal.0, id.0, false).await
 }
 
-/// Marks `id` read on behalf of `actor` and says so on the event stream.
-async fn mark_read_by(state: &AppState, id: &str, actor: &str) {
+/// Marks `id` read on behalf of `actor` and says so on the event stream, with the `channel` it
+/// was read through (and a waiter's `pid` and `session`, when known).
+async fn mark_read_by(state: &AppState, id: &str, actor: &str, channel: serde_json::Value) {
     if let Err(e) = state
         .store
         .set_message_state(id, MessageState::Read, Utc::now())
@@ -1838,9 +1877,18 @@ async fn mark_read_by(state: &AppState, id: &str, actor: &str) {
             bridle_api::types::event_kind::MESSAGE_READ,
             actor.to_string(),
             None,
-            serde_json::json!({"message": id}),
+            read_data(id, channel),
         )
         .await;
+}
+
+/// The `message.read` event data: the message plus the channel fields.
+fn read_data(id: &str, channel: serde_json::Value) -> serde_json::Value {
+    let mut data = serde_json::json!({"message": id});
+    if let (Some(d), serde_json::Value::Object(c)) = (data.as_object_mut(), channel) {
+        d.extend(c);
+    }
+    data
 }
 
 async fn set_read_state(
@@ -1881,7 +1929,14 @@ async fn set_read_state(
                 bridle_api::types::event_kind::MESSAGE_READ,
                 principal.id,
                 None,
-                serde_json::json!({"message": id}),
+                read_data(
+                    &id,
+                    serde_json::json!({"channel": if principal.kind == PrincipalKind::Human {
+                        bridle_api::types::channel::UI
+                    } else {
+                        bridle_api::types::channel::API
+                    }}),
+                ),
             )
             .await;
     } else if msg.state == MessageState::Read {
@@ -1905,6 +1960,7 @@ async fn set_read_state(
 
 async fn list_events(
     State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
     Query(mut q): Query<EventQuery>,
 ) -> Result<Json<Vec<Event>>, ApiError> {
     // Events store the agent id; accept a name too, like every other
@@ -1913,6 +1969,10 @@ async fn list_events(
         && let Some(a) = state.store.get_agent(agent).await?
     {
         q.agent = Some(a.id);
+    }
+    // `to` takes the same spellings as a message query's.
+    if q.to.is_some() {
+        q.to = resolve_to(&state.store, &principal, q.to.as_deref()).await?;
     }
     Ok(Json(state.store.list_events(q).await?))
 }
@@ -1954,6 +2014,8 @@ async fn events_stream(
                 agent: None,
                 kind: None,
                 limit: Some(1_000_000),
+                message: None,
+                to: None,
             })
             .await
             .unwrap_or_default()

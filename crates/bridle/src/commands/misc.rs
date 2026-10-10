@@ -341,6 +341,141 @@ pub(super) async fn inbox_list(cli: &Cli, args: &InboxArgs) -> Result<(), CliErr
     Ok(())
 }
 
+/// The message address a `--for` / `--to` spelling means: roles get `external:`.
+fn principal_address(raw: &str) -> String {
+    match raw {
+        "aide" | "advisor" | "orchestrator" => format!("external:{raw}"),
+        other => other.to_string(),
+    }
+}
+
+/// The channel fields of one audit event, as `via waiter (pid 12, session 34)`.
+fn via(ev: &Event) -> String {
+    let channel = ev.data["channel"].as_str().unwrap_or("?");
+    let mut extra = Vec::new();
+    if let Some(pid) = ev.data["pid"].as_u64() {
+        extra.push(format!("pid {pid}"));
+    }
+    if let Some(session) = ev.data["session"].as_str() {
+        extra.push(format!("session {session}"));
+    }
+    if extra.is_empty() {
+        channel.to_string()
+    } else {
+        format!("{channel} ({})", extra.join(", "))
+    }
+}
+
+/// `bridle messages`: recent messages for me or another principal. Headers only unless they
+/// are my own: a display rule of the CLI, not a boundary (the HTTP route returns bodies).
+pub(super) async fn messages(cli: &Cli, args: &MessagesArgs) -> Result<(), CliError> {
+    let client = client_for_read(cli).await?;
+    let me = client.status().await?.principal;
+    let own = match args.for_.as_deref() {
+        None => true,
+        Some(f) => {
+            let f = principal_address(f);
+            f == me || format!("agent:{f}") == me
+        }
+    };
+    let to = if own {
+        "me".to_string()
+    } else {
+        principal_address(args.for_.as_deref().unwrap_or_default())
+    };
+    let since_secs = match &args.since {
+        Some(s) => Some(
+            super::usage::parse_duration(s)
+                .filter(|d| d.num_seconds() >= 0)
+                .ok_or_else(|| CliError::Other(anyhow::anyhow!("bad --since: {s:?} (try 30m)")))?
+                .num_seconds() as u64,
+        ),
+        None => None,
+    };
+    let msgs = client
+        .list_messages(&MessageQuery {
+            to: Some(to.clone()),
+            limit: Some(args.last),
+            since_secs,
+            ..Default::default()
+        })
+        .await?;
+    let events = client
+        .events(&EventQuery {
+            kind: Some("message.".to_string()),
+            to: Some(to),
+            limit: Some(5000),
+            ..Default::default()
+        })
+        .await?;
+    // The last event of a kind for a message wins: a re-delivery replaces the earlier channel.
+    let channel_of = |id: &str, kind: &str| {
+        events
+            .iter()
+            .rev()
+            .find(|e| e.kind == kind && e.data["message"] == id)
+    };
+    let stamp = |t: Option<chrono::DateTime<Utc>>| {
+        t.map_or("-".to_string(), |t| {
+            t.with_timezone(&Local).format("%m-%d %H:%M:%S").to_string()
+        })
+    };
+    let mut rows = Vec::new();
+    for m in &msgs {
+        let sent = channel_of(&m.id, event_kind::MESSAGE_SENT);
+        let delivered = channel_of(&m.id, event_kind::MESSAGE_DELIVERED);
+        let read = channel_of(&m.id, event_kind::MESSAGE_READ);
+        if cli.json {
+            rows.push(serde_json::json!({
+                "id": m.id,
+                "from": m.from,
+                "to": m.to,
+                "kind": m.kind,
+                "state": m.state,
+                "sent_at": m.created_at,
+                "delivered_at": m.delivered_at,
+                "read_at": m.read_at,
+                "sent_via": sent.map(via),
+                "delivered_via": delivered.map(via),
+                "read_via": read.map(via),
+                "read_by": read.map(|e| e.actor.clone()),
+                "body": own.then_some(&m.body),
+            }));
+            continue;
+        }
+        println!(
+            "{} from {} sent {} delivered {} read {}",
+            m.id,
+            m.from,
+            stamp(Some(m.created_at)),
+            stamp(m.delivered_at),
+            stamp(m.read_at)
+        );
+        let mut how = Vec::new();
+        if let Some(e) = sent {
+            how.push(format!("sent via {}", via(e)));
+        }
+        if let Some(e) = delivered {
+            how.push(format!("delivered via {}", via(e)));
+        }
+        if let Some(e) = read {
+            how.push(format!("read via {}", via(e)));
+        }
+        if !how.is_empty() {
+            println!("    {}", how.join("; "));
+        }
+        if own {
+            println!("    {}", m.body.lines().next().unwrap_or_default());
+        }
+    }
+    if cli.json {
+        render::print_json(&rows)?;
+    } else if msgs.is_empty() {
+        println!("no messages");
+    }
+    Ok(())
+}
+
 pub(super) async fn inbox_show(cli: &Cli, args: &InboxShowArgs) -> Result<(), CliError> {
     let client = client_for_read(cli).await?;
     let query = MessageQuery {
@@ -442,6 +577,8 @@ pub(super) async fn events(cli: &Cli, args: &EventsArgs) -> Result<(), CliError>
             agent: args.agent.clone(),
             kind: args.kind.clone(),
             limit: None,
+            message: args.message.clone(),
+            to: args.to.as_deref().map(principal_address),
         };
         let events = client.events(&query).await?;
         if cli.json {

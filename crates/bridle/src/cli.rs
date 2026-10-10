@@ -95,6 +95,8 @@ pub enum Command {
     Send(SendArgs),
     /// Messages addressed to me (the calling principal).
     Inbox(InboxArgs),
+    /// Recent messages for me or any principal, with sent/delivered/read times and channels.
+    Messages(MessagesArgs),
     /// Interrupt a running agent's turn.
     #[command(hide = true)]
     Interrupt(InterruptArgs),
@@ -1123,6 +1125,20 @@ pub enum InboxAction {
 }
 
 #[derive(Debug, Args)]
+pub struct MessagesArgs {
+    /// Whose messages: `human`, a role (`aide`, `advisor`, `orchestrator`), `external:NAME[/SESSION]`
+    /// or an agent name. Default: me. Bodies are shown only for my own.
+    #[arg(long = "for")]
+    pub for_: Option<String>,
+    /// How many of the most recent (default 5).
+    #[arg(long, default_value_t = 5)]
+    pub last: u32,
+    /// Only those created within this long, e.g. `30m`, `2h`, `1d`.
+    #[arg(long)]
+    pub since: Option<String>,
+}
+
+#[derive(Debug, Args)]
 pub struct InboxShowArgs {
     pub id: String,
     /// Mark the message read after showing it (the human's show leaves it unread; an agent's
@@ -1222,6 +1238,12 @@ pub struct EventsArgs {
     /// Prefix match, e.g. `message.` or `agent.state`.
     #[arg(long)]
     pub kind: Option<String>,
+    /// Only events about this message id.
+    #[arg(long)]
+    pub message: Option<String>,
+    /// Only events about messages addressed to this principal (same spellings as `messages --for`).
+    #[arg(long)]
+    pub to: Option<String>,
 }
 
 #[derive(Debug, Args)]

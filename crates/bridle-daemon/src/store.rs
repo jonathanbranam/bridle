@@ -2828,10 +2828,16 @@ mod sync {
             let sql = "SELECT seq, ts, kind, actor, data, agent_id FROM events
                  WHERE (?1 IS NULL OR agent_id = ?1)
                    AND (?2 IS NULL OR kind LIKE ?2 || '%')
+                   AND (?3 IS NULL OR json_extract(data, '$.message') = ?3)
+                   AND (?4 IS NULL OR json_extract(data, '$.message') IN
+                        (SELECT id FROM messages WHERE to_id = ?4))
                  ORDER BY seq DESC
-                 LIMIT ?3";
+                 LIMIT ?5";
             let mut stmt = conn.prepare(sql)?;
-            let rows = stmt.query_map(params![q.agent, q.kind, limit], row_to_event)?;
+            let rows = stmt.query_map(
+                params![q.agent, q.kind, q.message, q.to, limit],
+                row_to_event,
+            )?;
             let mut events = rows.collect::<Result<Vec<_>, _>>()?;
             events.reverse();
             return Ok(events);
@@ -2840,10 +2846,16 @@ mod sync {
              WHERE seq > ?1
                AND (?2 IS NULL OR agent_id = ?2)
                AND (?3 IS NULL OR kind LIKE ?3 || '%')
+               AND (?4 IS NULL OR json_extract(data, '$.message') = ?4)
+               AND (?5 IS NULL OR json_extract(data, '$.message') IN
+                    (SELECT id FROM messages WHERE to_id = ?5))
              ORDER BY seq ASC
-             LIMIT ?4";
+             LIMIT ?6";
         let mut stmt = conn.prepare(sql)?;
-        let rows = stmt.query_map(params![q.since, q.agent, q.kind, limit], row_to_event)?;
+        let rows = stmt.query_map(
+            params![q.since, q.agent, q.kind, q.message, q.to, limit],
+            row_to_event,
+        )?;
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
     }
 

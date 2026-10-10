@@ -81,6 +81,7 @@ async fn agent_wake_serves_the_orchestrators_wakes_with_the_same_payload() {
         principal: "external:orchestrator".to_string(),
         timeout_secs: Some(30),
         session: None,
+        pid: None,
     };
 
     // Only the orchestrator drains its queue: not another principal, not the human.

@@ -444,6 +444,7 @@ pub async fn wait_for_event(
                 agent: agent.map(str::to_string),
                 kind: Some(kind.to_string()),
                 limit: None,
+                ..Default::default()
             })
             .await
             .ok()?;

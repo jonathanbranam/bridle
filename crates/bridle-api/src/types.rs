@@ -347,6 +347,9 @@ pub struct PrincipalWakeQuery {
     /// The launcher's session (`BRIDLE_SESSION_PID`): a newer wait from it replaces this one.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub session: Option<String>,
+    /// The waiter's process id, recorded on the `message.read` audit event.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pid: Option<u32>,
 }
 
 /// `POST /v1/wake/stop`: end open waits. With `principal` those waiting as it, else those
@@ -903,6 +906,9 @@ pub struct MessageQuery {
     /// messages are its own. Ignored for the human, whose reads are explicit.
     #[serde(default)]
     pub mark_read: bool,
+    /// Only messages created within this many seconds before now.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub since_secs: Option<u64>,
 }
 
 // ---------- events ----------
@@ -921,6 +927,24 @@ pub struct Event {
 }
 
 /// Known event kinds. Clients must tolerate kinds not listed here.
+/// Values of the `channel` field on `message.*` events.
+pub mod channel {
+    /// `bridle agent wake` (and the orchestrator's wake queue): read when the waiter was handed it.
+    pub const WAITER: &str = "waiter";
+    /// `bridle inbox` listing or showing it.
+    pub const INBOX: &str = "inbox";
+    /// The human's web UI or TUI (the human principal).
+    pub const UI: &str = "ui";
+    /// The email bridge.
+    pub const MAIL: &str = "mail";
+    /// Sent by a schedule firing.
+    pub const SCHEDULE: &str = "schedule";
+    /// Any other HTTP API caller.
+    pub const API: &str = "api";
+    /// Typed into a running agent's session by the supervisor.
+    pub const AGENT: &str = "agent";
+}
+
 pub mod event_kind {
     pub const DAEMON_STARTED: &str = "daemon.started";
     pub const DAEMON_STOPPING: &str = "daemon.stopping";
@@ -975,9 +999,13 @@ pub mod event_kind {
     pub const TURN_STARTED: &str = "turn.started";
     /// data: {n, subtype, is_error, terminal_reason, usage, cost_total, result}
     pub const TURN_ENDED: &str = "turn.ended";
-    /// data: {message, to}
+    /// data: {message, to, channel?}. The `message.*` events carry an optional `channel` (see
+    /// [`channel`]) saying how the step happened; the actor is who, `ts` is when. A `waiter`
+    /// read adds `pid` and `session`. Old events have none of these.
     pub const MESSAGE_SENT: &str = "message.sent";
+    /// data: {message, channel?}
     pub const MESSAGE_DELIVERED: &str = "message.delivered";
+    /// data: {message, channel?, pid?, session?}
     pub const MESSAGE_READ: &str = "message.read";
     pub const MESSAGE_DROPPED: &str = "message.dropped";
     /// data: {info}
@@ -1063,6 +1091,12 @@ pub struct EventQuery {
     pub kind: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub limit: Option<u32>,
+    /// Only events about this message (`data.message`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub message: Option<String>,
+    /// Only events about messages addressed to this principal (resolved like `MessageQuery::to`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub to: Option<String>,
 }
 
 // ---------- usage ----------

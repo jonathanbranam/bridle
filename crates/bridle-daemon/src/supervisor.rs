@@ -9,7 +9,7 @@ use std::time::Duration;
 
 use bridle_api::types::{
     Agent, AgentState, ExitInfo, Message, MessageKind, MessageState, PrincipalId, PrincipalKind,
-    SpawnRequest, Workdir, event_kind,
+    SpawnRequest, Workdir, channel, event_kind,
 };
 use bridle_claude::command::{ClaudeCommand, Session};
 use bridle_claude::events::{ContentBlock, EventKind as ClaudeEventKind};
@@ -1528,7 +1528,7 @@ impl AgentManager {
                                     kind,
                                     "system".to_string(),
                                     Some(id.to_string()),
-                                    json!({"message": mid}),
+                                    json!({"message": mid, "channel": channel::AGENT}),
                                 )
                                 .await;
                         }
@@ -2034,13 +2034,17 @@ impl AgentManager {
             .emitter
             .emit(
                 event_kind::MESSAGE_SENT,
-                from,
+                from.clone(),
                 if matches!(to, ToTarget::Agent(_)) {
                     Some(to_id.clone())
                 } else {
                     None
                 },
-                json!({"message": inserted.id, "to": to_id}),
+                json!({
+                    "message": inserted.id,
+                    "to": to_id,
+                    "channel": if from == "human" { channel::UI } else { channel::API },
+                }),
             )
             .await;
 

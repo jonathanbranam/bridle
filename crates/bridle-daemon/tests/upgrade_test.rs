@@ -622,6 +622,7 @@ async fn a_daemon_raised_wake_also_comes_through_agent_wake() {
             principal: "external:orchestrator".to_string(),
             timeout_secs: Some(5),
             session: None,
+            pid: None,
         })
         .await
         .expect("wake")

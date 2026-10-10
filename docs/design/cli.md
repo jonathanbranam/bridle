@@ -94,6 +94,7 @@ bridle schedule add  [--to <principal>] (--at <time> | --cron "<expr>") [--tz <I
                      # --cron is 5 fields in --tz (DST: a skipped local time is skipped that day, a repeated one fires once). Prints the id and the next fire time (schedule zone, and UTC). A past --at or a cron that never fires is refused
 bridle schedule list [--all]                # my schedules (the human sees everyone's); --all adds finished ones
 bridle schedule rm   <id>                   # mine (the human: any)
+bridle messages [--for P] [--last N] [--since 30m] # recent messages for me (default) or P: id, from, sent/delivered/read times, channel of each; bodies only for my own, headers only for others (a display rule of the CLI, not a boundary: GET /v1/messages still returns bodies); never marks anything read
 bridle inbox   [--all] [--mark-read]        # messages to me, plus every task's open question (list); an agent's or external principal's listed messages are marked read
 bridle inbox show <id> [--mark-read]        # show one message in full; for the human it leaves it unread unless --mark-read, for an agent or external principal it marks it read
 bridle inbox read <id>...                   # mark one or more messages read
@@ -115,7 +116,7 @@ bridle agent stop    <agent> [--now]      bridle agent resume <agent> [--ignore-
 bridle agent renew   <agent> [--ignore-budget]    stop + fresh process/session, same worktree/branch/role/model
 bridle agent rm      <agent> [--force] [--delete-branch]
 bridle agent logs    <agent> [--follow] [--raw] [--since LINE]
-bridle events  [--follow] [--since SEQ] [--agent A] [--kind PREFIX]
+bridle events  [--follow] [--since SEQ] [--agent A] [--kind PREFIX] [--message ID] [--to P]
 bridle usage   [--by role|model|agent] [--since DURATION]   # DURATION: <n>s|m|h|d, e.g. 30d
 bridle usage --history WINDOW [--since DURATION]            # the window's rate-limit readings over time (five_hour, seven_day)
 bridle usage cost audit [--check]                 static: size of what bridle injects into agent context (usage-and-budget.md)
@@ -543,7 +544,9 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   oldest; give `--since` to page forward from a line number instead.
   `--follow` polls once a second.
 - **`events`** without `--follow` returns the most recent 500 matching
-  events, oldest first; give `--since` to page forward from a cursor instead.
+  events, oldest first; give `--since` to page forward from a cursor instead. `--message` and
+  `--to` match `message.*` events by message id and by the message's recipient (looked up in the
+  messages table, so events from before the `to` field existed match too); `--follow` ignores them.
   `--follow` streams over SSE, filtering agent and kind on the client, and
   starts at the tail unless given `--since` (or resuming after a
   reconnect), in which case it backfills from that cursor first.

@@ -128,6 +128,7 @@ async fn crossing_wind_down_at_sends_handoff_and_renews_once() {
             agent: Some(agent.id.clone()),
             kind: Some("agent.renewed".to_string()),
             limit: None,
+            ..Default::default()
         })
         .await
         .expect("events");
@@ -191,6 +192,7 @@ async fn many_concurrent_crossings_each_renew_exactly_once() {
                 agent: Some(agent.id.clone()),
                 kind: Some("agent.renewed".to_string()),
                 limit: None,
+                ..Default::default()
             })
             .await
             .expect("events");
