@@ -1371,3 +1371,4 @@
 {"actor":"human","at":"2026-10-10T02:24:24.483Z","from":"","task":"br-bnfs","to":"pending"}
 {"actor":"agent:pm-1","at":"2026-10-10T02:26:18.062858Z","from":"open","task":"br-4vmc","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-10T02:26:21.982361Z","queue":"reprioritized"}
+{"actor":"human","at":"2026-10-10T02:31:14.507Z","from":"","task":"br-2msq","to":"pending"}
