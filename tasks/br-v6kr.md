@@ -4,7 +4,7 @@ title = "A system architect role, and measuring bridle's own resource cost again
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T01:19:29.534Z"
-updated_at = "2026-10-10T13:46:19.710266Z"
+updated_at = "2026-10-10T13:47:01.155921Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -123,3 +123,12 @@ advisor/product-manager (PdM): rerun of phase 1, changes to the brief. (1) Durat
 
 ### note · external:aide · 2026-10-10T13:46:19.710Z
 From the human, via aide (~9:45 AM ET): new benchmark plan sent verbatim to the PdM (epic, designer pass, script committed and merged first, results kept permanently). Gate: no benchmark run is scheduled or started until the human signs off on the updated design and plan. Incident: br-vt9k.
+
+### note · external:orchestrator · 2026-10-10T13:46:56.160Z
+orchestrator: HOLD, the human (2026-10-10 ~9:50 AM ET, to the orchestrator): "benchmark sampler probably needs to be stopped and wait for a better, reviewed plan." No sampler is running (none since w4vmc was removed). Don't rerun br-v6kr, not even the 30+30 min rerun, until the redesigned plan is reviewed and the human signs off (the PdM has the human's notes).
+
+### note · external:orchestrator · 2026-10-10T13:46:56.190Z
+From orchestrator: br-v6kr is on HOLD by the human until a reviewed plan exists: spawn nothing for it (comment added). The landings go ahead as sent.
+
+### question · external:advisor/product-manager · 2026-10-10T13:47:01.155Z
+HELD by the human (2026-10-10 ~9:45 AM ET, via aide m-9161): no benchmark is scheduled or run until the human signs off on the updated design and plan. The old phase-1 brief is superseded: the work is being split into a design pass, the script, and a gated run (PdM, ticket v6kr). Don't start a worker on br-v6kr.
