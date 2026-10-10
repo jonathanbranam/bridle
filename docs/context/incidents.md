@@ -31,13 +31,22 @@ Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or los
   branch in the same worktree, because all three slots were full. The sampler script and ~2 h of
   CSV were uncommitted, so they were deleted and the sampler stopped. Found by the orchestrator
   after manager-2 reported "w4vmc was removed with its branch".
-- **Impact:** ~2 h of baseline data and the sampler script lost; br-v6kr phase 1 needs a new
-  worker. The human had just asked to keep the sample going while work ran.
-- **Cause:** the orchestrator told manager-2 that br-4vmc "can land when a check passes" without
-  saying w4vmc now carried br-v6kr; and a landing removes its worker without checking for other
-  uncommitted work, other branches or running jobs.
-- **Category:** `coordination`, `daemon`.
-- **Follow-up:** [[landing-a-task-removes-its-worker-even-when-the-worker-holds-37r9|37r9]].
+- **Impact:** the sampler script and all the data (89 min collected over ~3 h, one gap from the
+  08:46Z self-upgrade) lost; br-v6kr phase 1 must be redone. The human had just asked to keep
+  the sample going while work ran. The human, 2026-10-10 ~9:45 AM ET: "wow - we lost everything
+  from the benchmark sampler! OMG that is a huge miss".
+- **Cause:** (1) a landing removes its worker without checking for other uncommitted work, other
+  branches or running jobs; (2) one worker was shared between two tasks (br-4vmc, br-v6kr) to
+  fit the worker cap, on the orchestrator's fallback instruction, and the orchestrator then told
+  manager-2 that br-4vmc "can land when a check passes" without saying w4vmc carried br-v6kr;
+  (3) the brief let the sampler run before its script was committed and kept the data
+  uncommitted until the end; (4) the 12 h passive duration (no scenarios) came from reading the
+  human's "overnight" (when to run it) as how long to run it, and nobody caught it.
+- **Category:** `coordination`, `daemon`, `role`.
+- **Follow-up:** [[landing-a-task-removes-its-worker-even-when-the-worker-holds-37r9|37r9]]
+  (br-37r9, built); incident task br-vt9k; the human's redesign of the benchmark (with the PdM:
+  script committed and merged first, results committed and kept, a designer pass, the human signs
+  off before any run).
 
 ## 2026-10-09 20:32: main red on Linux from a new upgrade_test flake
 
