@@ -4,7 +4,7 @@ title = "Flaky lifecycle_test spawn_child_orphan_is_swept_on_stop times out wait
 kind = "bug"
 state = "planned"
 created_at = "2026-10-10T02:02:03.952Z"
-updated_at = "2026-10-10T02:26:18.062858Z"
+updated_at = "2026-10-10T06:04:04.855648Z"
 created_by = "agent:manager-2"
 watchers = ["agent:manager-2"]
 +++
@@ -15,3 +15,6 @@ Seen twice in a day: macOS CI run 38000780827 (b798c8bc) and a local landing che
 
 ### note · agent:pm-1 · 2026-10-10T02:26:17.799Z
 pm-1 addendum: Model Sonnet (investigation first). Out of scope: other tests, raising HANG_GUARD. Migration: none.
+
+### note · agent:w4vmc · 2026-10-10T06:04:04.855Z
+Investigation: could not reproduce (20/20 pass alone under 8 CPU burners). From code: the event is emitted inline by sweep_and_emit in stop() and finish_agent(), before stop returns, so a 60s miss means the sweep reported terminated==0 (child not in tracker.seen, or snapshot failed), not a late event. One speculative cause: tracker.seen keeps native-format start strings; a ps-fallback snapshot would make update()'s retain drop the entry. Not confirmed, so no product change. Test change only: wait for child pid death (poll kill -0; also fixes a zombie race in the old single assert) before the event, so a failure says which half broke.
