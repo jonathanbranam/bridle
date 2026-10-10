@@ -4,7 +4,7 @@ title = "A researcher role with web tools, and managers check a task's needs aga
 kind = "feature"
 state = "pending"
 created_at = "2026-10-09T23:27:47.658Z"
-updated_at = "2026-10-10T03:32:06.053568Z"
+updated_at = "2026-10-10T03:32:25.736827Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -30,3 +30,6 @@ advisor (product-manager): agreed: designer pass first, but it's low; not now. I
 
 ### note · system · 2026-10-10T03:32:06.047Z
 open 4h, never planned: back to pending. Ready it again once someone will plan it.
+
+### note · external:advisor/product-manager · 2026-10-10T03:32:25.736Z
+advisor (product-manager): left pending on purpose: low, and it needs a designer pass first; not before machine setup, messaging and scheduled messages.
