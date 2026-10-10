@@ -55,6 +55,7 @@ mod upgrade;
 pub mod usage_http;
 mod wake;
 pub mod warm_build;
+pub mod workflow_checkout;
 pub mod worktree;
 
 pub use governor::Governor;
@@ -445,6 +446,55 @@ async fn serve_listener(
     }
 }
 
+/// A release daemon with no explicit `workflow` makes sure its own tag's checkout is there
+/// (chvf step 3) and reloads the config to pick it up. A failed fetch leaves the previous tag's
+/// directory in use and returns the one report for the orchestrator.
+async fn ensure_own_workflow(
+    repo: &Path,
+    overrides: &Overrides,
+    config: &mut Config,
+) -> Option<String> {
+    let version = env!("CARGO_PKG_VERSION");
+    let home = overrides
+        .bridle_home
+        .clone()
+        .unwrap_or_else(discovery::bridle_home);
+    if config.self_upgrade != config::SelfUpgrade::Release
+        || !workflow_checkout::is_unpinned(&home, config.workflow.as_deref())
+        || workflow_checkout::has(&home, version)
+    {
+        return None;
+    }
+    let slug = match &config.release_repo {
+        Some(r) => Some(r.clone()),
+        None => worktree::run_git(repo, &["remote", "get-url", "origin"])
+            .await
+            .ok()
+            .and_then(|u| release::github_slug(&u)),
+    };
+    let tag = workflow_checkout::tag_for(version);
+    let h = home.clone();
+    let fetched = tokio::task::spawn_blocking(move || {
+        let url = workflow_checkout::url_for(&h, slug.as_deref())
+            .ok_or("no URL to fetch it from (set [daemon] release_repo or workflow_url)")?;
+        workflow_checkout::ensure(&h, &url, &tag)
+    })
+    .await
+    .unwrap_or_else(|e| Err(e.to_string()));
+    match fetched {
+        Ok(()) => {
+            match Config::load_with_home(repo, Some(&home)) {
+                Ok(c) => *config = c,
+                Err(e) => tracing::warn!(error = %e, "reloading config after the workflow fetch"),
+            }
+            None
+        }
+        Err(e) => Some(format!(
+            "no workflow checkout for v{version}, using the previous tag's: {e}"
+        )),
+    }
+}
+
 /// Starts the daemon and returns once it's listening, autostart has run,
 /// and background tasks are up. Does not block for shutdown; see
 /// [`RunningDaemon::join`].
@@ -465,8 +515,9 @@ async fn start_inner(
     }
     let ws = Workspace::new(opts.repo.clone(), opts.workspace.clone());
     ws.ensure_dirs().context("creating workspace directories")?;
-    let config = Config::load_with_home(&opts.repo, overrides.bridle_home.as_deref())
+    let mut config = Config::load_with_home(&opts.repo, overrides.bridle_home.as_deref())
         .context("loading .bridle/config.toml")?;
+    let workflow_note = ensure_own_workflow(&opts.repo, &overrides, &mut config).await;
     config.workflow_root(&opts.repo)?;
     // An unset `[branches] integration` means `main`; a repo on `master` would otherwise
     // fail every spawn with `invalid reference` (g3ck). No guessing from HEAD.
@@ -733,6 +784,16 @@ async fn start_inner(
         &config.branches.integration,
     )
     .await;
+
+    if let Some(text) = workflow_note {
+        wakes
+            .push(bridle_api::types::WakeReason {
+                reason: "upgrade_failed".to_string(),
+                text: format!("workflow: {text}"),
+                detail: serde_json::json!({"stage": "workflow_checkout"}),
+            })
+            .await;
+    }
 
     if let Some(text) = rollback::take_notice(&ws) {
         let _ = emitter

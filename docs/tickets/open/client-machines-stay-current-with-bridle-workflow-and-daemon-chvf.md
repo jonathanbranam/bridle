@@ -67,7 +67,7 @@ upgrade and start-up path, so they land after the human's trip (not before Sat 2
 
 Step 2 is built on branch `bridle/self-upgrade` (task br-88d4), parked for review until the human's
 return: `self_upgrade = "release"` polls GitHub (at most every 30 minutes), verifies the SHA256,
-swaps the binary in and restarts through q7rx's machinery. Step 3 isn't started.
+swaps the binary in and restarts through q7rx's machinery. Step 3 is built on branch `bridle/workflow-checkout` (task br-751e), also parked: see `daemon.md`, Workflow checkout.
 
 ## To decide
 

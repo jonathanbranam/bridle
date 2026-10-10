@@ -4026,6 +4026,9 @@ async fn release_upgrade_in_background(state: AppState, release: crate::release:
             .unwrap_or_else(|e| Err(e.to_string()))
         }
     };
+    if installed.is_ok() {
+        fetch_release_workflow(&state, &release).await;
+    }
     let built = match installed {
         Ok(()) => state
             .upgrader
@@ -4038,6 +4041,43 @@ async fn release_upgrade_in_background(state: AppState, release: crate::release:
     };
     // A failure goes to the orchestrator as a wake, not to the human's inbox.
     restart_after_install(&state, "system", &tag, &tag, built, false).await;
+}
+
+/// Fetches the new release's workflow checkout beside the binary swap. A failure doesn't stop the
+/// upgrade: the next start retries, and until then the previous tag's workflow stays in use.
+async fn fetch_release_workflow(state: &AppState, release: &crate::release::Release) {
+    let home = bridle_api::discovery::bridle_home();
+    // An explicit `workflow` path is the machine's own; leave its tags alone.
+    let pinned = crate::config::Config::load_with_home(&state.workspace.repo, Some(&home))
+        .map(|c| !crate::workflow_checkout::is_unpinned(&home, c.workflow.as_deref()))
+        .unwrap_or(false);
+    let repo = match &state.release_repo {
+        Some(r) => Some(r.clone()),
+        None => crate::worktree::run_git(&state.workspace.repo, &["remote", "get-url", "origin"])
+            .await
+            .ok()
+            .and_then(|u| crate::release::github_slug(&u)),
+    };
+    let (Some(repo), false) = (repo, pinned) else {
+        return;
+    };
+    let src = state.upgrader.releases();
+    let tag = release.tag.clone();
+    let result = tokio::task::spawn_blocking(move || src.fetch_workflow(&home, &repo, &tag))
+        .await
+        .unwrap_or_else(|e| Err(e.to_string()));
+    if let Err(e) = result {
+        upgrade_wake(
+            state,
+            "upgrade_failed",
+            format!(
+                "workflow: no checkout for {}, agents keep the previous tag's: {e}",
+                release.tag
+            ),
+            serde_json::json!({"commit": release.tag, "stage": "workflow_checkout"}),
+        )
+        .await;
+    }
 }
 
 async fn upgrade_reply(

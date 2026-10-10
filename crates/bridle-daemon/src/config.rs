@@ -1860,6 +1860,15 @@ impl Config {
         if config.workflow.is_none() && repo.join(VENDORED_WORKFLOW).join("base").is_dir() {
             config.workflow = Some(VENDORED_WORKFLOW.to_string());
         }
+        // A release daemon with nothing explicit uses its own checkout at the binary's tag.
+        if config.workflow.is_none() && config.self_upgrade == SelfUpgrade::Release {
+            let home = home_override
+                .map(Path::to_path_buf)
+                .unwrap_or_else(bridle_api::discovery::bridle_home);
+            config.workflow =
+                crate::workflow_checkout::managed_root(&home, env!("CARGO_PKG_VERSION"))
+                    .map(|p| p.to_string_lossy().into_owned());
+        }
         config.workflow = config.workflow.as_deref().map(expand_path).transpose()?;
         config.default_role_prompts(repo);
         Ok(config)

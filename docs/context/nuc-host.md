@@ -98,7 +98,10 @@ To move one (old machine to new):
    daemon first. Shutdown stops the agents, flushes tasks and pushes `bridle/state` (bounded to
    10 s); check that `git push origin bridle/state` says up to date, or run it yourself.
    (A client machine that shouldn't build can set `[daemon] self_upgrade = "release"` and install
-   the release binary once; the daemon then keeps itself current, see `daemon.md`, Upgrade.)
+   the release binary once; the daemon then keeps itself current, see `daemon.md`, Upgrade. With no
+   `workflow` line in `~/.bridle/config.toml` it also keeps its own workflow checkout at the
+   binary's tag in `~/.bridle/workflow/`, so a `git pull` of a clone no longer moves agents'
+   workflow; remove an old `workflow = <clone>` line to switch.)
 3. **New machine, clone** the repo and build or install `bridle`. `bridle/state` comes with it from
    origin; no manual `git fetch origin bridle/state:bridle/state`.
 4. **New machine, `bridle serve --take-over`** in the clone (add `--detach` to background it).

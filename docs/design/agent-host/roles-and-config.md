@@ -24,7 +24,9 @@ claim_lease_after = "10m"          # a claimed task is released once its claiman
 self_upgrade = false               # build, drain and restart into a newer green main
                                    # commit, as `bridle restart --upgrade` (daemon.md, Upgrade);
                                    # "release" installs the newest GitHub release's binary instead
-                                   # (no build), optionally from `release_repo = "owner/name"`
+                                   # (no build), optionally from `release_repo = "owner/name"`;
+                                   # it also keeps ~/.bridle/workflow/vX.Y.Z as the base layer
+                                   # when no `workflow` is set (daemon.md)
 self_upgrade_min_interval = "3h"   # at least this long between automatic upgrades, to batch
                                    # landings; "0s" = at once
 

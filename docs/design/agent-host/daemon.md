@@ -347,6 +347,19 @@ download, checksum or unpack changes nothing and wakes `upgrade_failed` (the orc
 goes to the human's inbox). That tag isn't retried until the daemon restarts. The recorded built
 value is the tag, which the restart's commit reports. Bridle's own daemon keeps `true`.
 
+**Workflow checkout.** A release daemon whose config sets no `workflow` (machine, project or
+vendored) keeps its own copy of the base workflow at the binary's tag: a shallow clone of `vX.Y.Z`
+in `~/.bridle/workflow/vX.Y.Z/` (read-only by convention; the `.git` is dropped), and the base layer
+points at its `workflow/` directory (`workflow_checkout.rs`). The source is the machine's
+`workflow_url`, else `github.com/<release_repo>`. At start, if the running version's checkout is
+absent, it is fetched before the config is read; after a release install the new tag is fetched
+before the restart. The last two tags are kept, older ones deleted. A failed fetch doesn't stop the
+upgrade or the start: the newest older checkout stays in use and the orchestrator gets one
+`upgrade_failed` wake (the next start retries). An explicit `workflow` path always wins, and
+bridle's own daemon (`true`) keeps pointing at its clone. Project overlays in `.bridle/` are
+untouched. To adopt this on a machine that has `workflow = <clone>` in `~/.bridle/config.toml`,
+remove that line.
+
 While a built commit waits for its quiet point (manual or automatic), new worker spawns are refused
 with a 409 naming the build, and `bridle status` shows an `upgrade` line, so running workers drain
 instead of being replaced as they land. If the wait gives up, the refusal is lifted; a successful

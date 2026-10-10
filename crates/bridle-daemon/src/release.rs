@@ -35,6 +35,11 @@ pub trait ReleaseSource: Send + Sync {
     /// The newest published (non-draft, non-prerelease) release of `repo` (`owner/name`).
     fn latest(&self, repo: &str) -> Result<Release, String>;
     fn download(&self, url: &str) -> Result<Vec<u8>, String>;
+    /// Puts the workflow at `tag` of `repo` in `<home>/workflow/<tag>` (chvf step 3). Sources
+    /// with no git remote to fetch from do nothing.
+    fn fetch_workflow(&self, _home: &Path, _repo: &str, _tag: &str) -> Result<(), String> {
+        Ok(())
+    }
 }
 
 impl fmt::Debug for dyn ReleaseSource {
@@ -80,6 +85,12 @@ impl ReleaseSource for CurlSource {
 
     fn download(&self, url: &str) -> Result<Vec<u8>, String> {
         curl(url)
+    }
+
+    fn fetch_workflow(&self, home: &Path, repo: &str, tag: &str) -> Result<(), String> {
+        let url = crate::workflow_checkout::url_for(home, Some(repo))
+            .ok_or("no URL to fetch the workflow from")?;
+        crate::workflow_checkout::ensure(home, &url, tag)
     }
 }
 
