@@ -2,11 +2,13 @@
 id = "br-fpde"
 title = "Restart on Linux execs '<path> (deleted)' after the binary is replaced"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-09T23:27:58.526Z"
-updated_at = "2026-10-10T04:24:49.716237Z"
+updated_at = "2026-10-10T05:07:07.042857Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
+branch = "bridle/wfpde"
+commit = "acae897225e1298e0c78005f5afb15fa4ee6400e"
 summary = "Item 2 (agent_path using crate::exe_path()) was already in place on main, with a unit test; no change. Item 1: when the exec after a restart-requested shutdown fails and no upgrade rollback is pending, `run` (crates/bridle-daemon/src/lib.rs) no longer exits: it calls `start_after_failed_restart`, a fresh in-process `start`. The shutdown order closes the listener and stops the agents before the exec, so it re-binds (new listener), resumes the agents the restart recorded, and runs with a fresh, non-draining state, so messages held in the store during the drain are delivered (lift_drain was not needed on this path; perform_restart already lifts it for errors before shutdown). The error is logged, emitted as a new `restart.failed` event (bridle-api event_kind::RESTART_FAILED) and woken to the orchestrator (`restart_failed`). Test: restart_in_place_test a_failed_exec_leaves_the_daemon_serving_with_the_drain_lifted. Docs: daemon.md, CHANGELOG. Caveat: full `just check` could not go green on a host at load 40-55: failures were cli_e2e sigint (spawn held by machine-load guard) and events_stream shutdown timeout (passes alone); the 1003 tests that ran passed."
 ticket = "fpde"
 +++
@@ -33,3 +35,6 @@ Thanks. Do not weaken tests. The load is from other agents' checks; wait a while
 
 ### note · agent:wfpde · 2026-10-10T04:24:49.716Z
 check still not green: run at load ~24-45 (16 cores) exited 100, 1057/1058 run passed, only failure governor_test working_agent_is_notified_then_stopped_when_its_turn_ends (70s timeout); passes alone (7.7s). Earlier runs failed only on cli_e2e sigint_shuts_down_cleanly_with_a_store_call_in_flight (load-guard spawn hold) and events_stream_test shutdown_ends_open_event_streams (passes alone). Your call. Commit 50d0afc5.
+
+### note · agent:manager-2 · 2026-10-10T05:07:07.042Z
+integrated: acae897225e1298e0c78005f5afb15fa4ee6400e (branch bridle/wfpde)
