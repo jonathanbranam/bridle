@@ -41,3 +41,20 @@ The aide asked the PdM to make it clear "wherever it is fuzzy".
   code change; only if cheap (the daemon knows whether a waiter is registered).
 
 Docs-only except the optional warning. Theme `agents-and-cli`.
+
+## An epic, sequenced before project transfer (the human, 2026-10-10 ~10:50 AM ET, to the advisor)
+
+> Great. The goal would be that project takeover can be initiated by either machine, and the goal
+> is also that it can be handled by the orchestrator on both machines.
+>
+> I think, in terms of sequencing for this work, let's make sure we have an epic for one
+> orchestrator per machine, and let's sequence that epic before this one. I think that will
+> simplify things. We already have problems with the orchestrator role, so in terms of
+> sequencing, make sure there's an epic, pick an appropriate theme for one orchestrator per
+> machine, and make sure that comes before any epic about this project transferring stuff.
+
+The PdM's epic "One orchestrator per machine" (theme agents-and-cli) holds this ticket's task and
+the related open tickets ma8e (one orchestrator across projects or one per project), 7d62
+(orchestrator identity and recovery) and pdmd (a leaner orchestrator); kuw2 (the machine daemon)
+is related. It comes before the epic "Projects become machine-transparent" (evy6), where takeover
+can be started from either machine and handled by the orchestrators on both.

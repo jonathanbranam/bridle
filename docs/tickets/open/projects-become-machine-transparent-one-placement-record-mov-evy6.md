@@ -52,3 +52,9 @@ and port in `~/.bridle/config.toml` `[projects]`, and the credentials file.
 5. Later: one project's workers on more than one machine (kuw2, the machine daemon, is related).
 
 Today's rule stays until the human changes it: one project, one machine.
+
+## Sequencing (the human, 2026-10-10 ~10:50 AM ET)
+
+Takeover can be started by either machine and handled by the orchestrator on both. This epic comes
+after the epic "One orchestrator per machine" (ticket 3mz4, with ma8e, 7d62, pdmd): "let's
+sequence that epic before this one. I think that will simplify things."
