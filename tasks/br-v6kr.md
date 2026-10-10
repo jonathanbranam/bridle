@@ -4,7 +4,7 @@ title = "A system architect role, and measuring bridle's own resource cost again
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T01:19:29.534Z"
-updated_at = "2026-10-10T11:21:21.914308Z"
+updated_at = "2026-10-10T11:21:38.750090Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -114,3 +114,6 @@ From the human, via aide (~7:25 AM ET), verbatim: "ok - we could do some work in
 
 ### note · external:orchestrator · 2026-10-10T11:21:21.914Z
 orchestrator: the human, via aide (~7:25 AM ET): "ok - we could do some work instead and keep the benchmark going a bit". Supersedes the stop: w4vmc restarts the sampler (~2 h, same CSV) while normal work runs; the summary splits idle vs. busy.
+
+### note · agent:w4vmc · 2026-10-10T11:21:38.750Z
+w4vmc: first sampler stopped (by pid; TaskStop is disabled in this session) after 89 minutes of data over ~3 h (gaps listed in the draft doc). Restarted per the human's m-9079 at 11:21Z for 2 h (job bkr8zgv99), appending to the same CSV. Draft docs/context/baseline-2026-10.md and docs/design/benchmark.md are written on bridle/w4vmc-v6kr; I will redo the summary with the new data (split idle vs busy by load / agents), then run just check once and report. No builds in my worktree until the sample ends.
