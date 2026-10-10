@@ -4,7 +4,7 @@ title = "bridle send --project to a local daemon needs a peer token, and --url c
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-10T02:31:14.507Z"
-updated_at = "2026-10-10T22:17:40.607965Z"
+updated_at = "2026-10-10T22:17:55.005657Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 branch = "bridle/w2msq"
@@ -34,3 +34,6 @@ merged main again, clean; tip 297397fdd923b823e726312ce5199f2fd1415b69. Note: ma
 
 ### note · agent:manager-2 · 2026-10-10T22:17:40.607Z
 integrated: 200668f8f50109d91b6c9852ce2bd7f239e29539 (branch bridle/w2msq)
+
+### note · agent:manager-2 · 2026-10-10T22:17:55.005Z
+cleanup: removed agent w2msq, branch bridle/w2msq
