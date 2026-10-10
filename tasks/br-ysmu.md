@@ -2,9 +2,9 @@
 id = "br-ysmu"
 title = "CI watch missed 13 red runs on main; first ci_failed wake came 40 minutes late"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-05T03:21:20.785Z"
-updated_at = "2026-10-10T02:59:39.061137Z"
+updated_at = "2026-10-10T02:59:44.197758Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",

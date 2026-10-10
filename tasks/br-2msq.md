@@ -2,9 +2,9 @@
 id = "br-2msq"
 title = "bridle send --project to a local daemon needs a peer token, and --url can't be combined with --project"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-10T02:31:14.507Z"
-updated_at = "2026-10-10T02:59:36.438108Z"
+updated_at = "2026-10-10T02:59:43.823766Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "2msq"

@@ -2,9 +2,9 @@
 id = "br-rhba"
 title = "Mail between daemons, slice 5: every orchestrator wake is a message, sent home; one waiter per principal (3haz)"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-10-10T02:59:02.102Z"
-updated_at = "2026-10-10T02:59:22.432174Z"
+updated_at = "2026-10-10T02:59:44.612376Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -13,13 +13,7 @@ watchers = [
 parent = "br-3haz"
 +++
 
-Ticket: docs/tickets/open/daemons-deliver-mail-to-each-other-across-machines-store-and-3haz.md (3haz), sections "Decided: one waiter per principal, on its home daemon" and "Caveats of every orchestrator wake as a message" (all five caveats accepted by the human, 2026-10-04: "Approve every wake is a message. I think this simplifies a lot of things.").
-
-Goal: every reason a daemon wakes the orchestrator today (red CI, agent death, stall, context warning, task wakes; orchestrator-supervision.md section 5, wake.rs) is sent as a message of a system kind and, with br-n7cg's forwarding, reaches the orchestrator's home daemon. The orchestrator then needs one waiter, on its home daemon, instead of one per project.
-
-The human, 2026-10-09 ~10:55 PM ET: "let's prioritize work that makes sending and receiving messages work better and more reliable, reducing waiter counts like the orc has 5 waiters". Chose the real fix over the --all-projects stopgap (br-1ddd dropped).
-
-Needs br-n7cg (visitor mail forwarded home). Then update the orchestrator role (one waiter, home daemon) and supervision docs. pm-1 plans it from the ticket.
+Ticket: docs/tickets/open/daemons-deliver-mail-to-each-other-across-machines-store-and-3haz.md, sections 'Decided: one waiter per principal, on its home daemon' and 'Caveats of every orchestrator wake as a message' (all five accepted by the human). Also docs/design/agent-host/orchestrator-supervision.md section 5, crates/bridle-daemon wake.rs. Goal: every reason a daemon wakes the orchestrator today (red CI, agent death, stall, context warning, task wakes) is sent as a message of a system kind and, via br-n7cg forwarding, reaches the orchestrator's home daemon; the orchestrator then needs ONE waiter on its home daemon instead of one per project. Update the orchestrator role (workflow/base/roles/orchestrator.md: one waiter, home daemon) and the supervision docs. Wire change (message kind) goes in crates/bridle-api/src/types.rs with all clients; keep the old wake path working until the message path is verified (serde defaults). Blocked by br-n7cg. Acceptance: just check passes; tests: each wake reason arrives as a message on the orchestrator's home daemon and wakes its single waiter; a remote project's wake is forwarded home once (dedup). Migration: new message kind is additive; role text reaches projects via workflow sync; existing orchestrators with per-project waiters keep working. State this. Model: Sonnet. Out of scope: status lines (br-cufw), CI watch fix (br-ysmu).
 
 ## Thread
 
