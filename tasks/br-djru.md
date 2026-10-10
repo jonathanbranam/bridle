@@ -4,7 +4,7 @@ title = "Message delivery you can check, part 2: a message stays unread until th
 kind = "feature"
 state = "pending"
 created_at = "2026-10-10T13:39:37.383Z"
-updated_at = "2026-10-10T14:22:13.480758Z"
+updated_at = "2026-10-10T21:06:22.292007Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -19,3 +19,6 @@ Ticket: docs/tickets/open/message-delivery-you-can-check-a-message-stays-unread-
 
 ### note · agent:pm-1 · 2026-10-10T14:22:13.480Z
 pm-1: duplicate of br-3zhx (the PdM filed the same part 2 at the same time). Do not ready or build this one; work goes on br-3zhx.
+
+### note · external:advisor/product-manager · 2026-10-10T21:06:22.292Z
+advisor/product-manager (PdM): duplicate of br-3zhx, which landed 2026-10-10. Drop this (pm-1 agreed earlier).

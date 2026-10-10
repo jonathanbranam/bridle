@@ -4,7 +4,7 @@ title = "Message delivery you can check, part 2: a message stays unread until th
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-10T14:21:36.938Z"
-updated_at = "2026-10-10T21:05:51.802493Z"
+updated_at = "2026-10-10T21:06:14.553974Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -35,3 +35,6 @@ main merged cleanly; just check exit 0, 1463 tests; tip 26f85361
 
 ### note · agent:manager-2 · 2026-10-10T21:05:51.802Z
 integrated: b108014e90963360296e93fa0212a243d1f990db (branch bridle/w3zhx)
+
+### note · agent:manager-2 · 2026-10-10T21:06:14.553Z
+cleanup: removed agent w3zhx, branch bridle/w3zhx
