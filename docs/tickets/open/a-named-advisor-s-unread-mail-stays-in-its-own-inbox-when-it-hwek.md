@@ -14,8 +14,6 @@ tasks: []
 
 ## The ask
 
-## The ask
-
 The human, 2026-10-10 ~10:40 AM ET, verbatim (to advisor product-manager), after a message from
 the NUC's notes advisor to the PdM was lost during the PdM's restart:
 
