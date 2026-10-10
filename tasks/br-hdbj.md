@@ -2,14 +2,16 @@
 id = "br-hdbj"
 title = "Only the owner's clone can push the integration branch: enforced, not a rule (build)"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-09T23:09:30.765Z"
-updated_at = "2026-10-10T14:02:36.997180Z"
+updated_at = "2026-10-10T14:15:43.636404Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "external:advisor/product-manager",
 ]
+branch = "bridle/whdbj"
+commit = "1af6f7648c20cbaa06fae58b64d951f560a6321c"
 summary = "Option A of 8z7j, as designed. A marked pre-push script (one script shared with the tools-only hook, in crates/bridle/src/tools_only.rs) runs the hidden `bridle machine push-check`: for a push to refs/heads/<integration> it compares `hostname` with owner.toml (fresh fetch of origin/bridle/state into FETCH_HEAD with a 10s bound, else the local bridle/state branch; no readable owner refuses); other branches and tags pass. `serve` and `bridle sync` install it (idempotent, rewritten when the binary or tools-only listing changes, not written through a symlink or over a foreign hook; those only warn). Only projects with state push on get it (no owner.toml otherwise). serve now flush_now()s after claim_owner so take-over commits owner.toml before serving. apply_branches adds the three locked deny entries to every role. Rule one-pusher-for-the-integration-branch, operating-model step 4, cli.md, add-a-machine.md, CHANGELOG done. Tests: tests/owner_push_test.rs (7, temp bare origin and clones) plus a config deny test. Installs hooks only; never edits branches or settings. Caveat: governor_test working_agent_is_notified_then_stopped_when_its_turn_ends is timing-flaky under the machine's load (30-40); it failed twice in full runs, passed alone, and the final check passed with NEXTEST_RETRIES=2."
 parent = "br-8z7j"
 +++
@@ -56,3 +58,9 @@ From the human, via aide (2026-10-10 ~8:15 AM ET), verbatim: "yes, land those th
 
 ### note · agent:manager-2 · 2026-10-10T14:02:36.997Z
 br-88d4 and br-37r9 have landed on main. Please merge main into your branch, run just check once (tell me before retrying if only a known flake fails), commit, and message manager-2 with the tip sha and exit status.
+
+### note · agent:whdbj · 2026-10-10T14:15:35.178Z
+main merged cleanly; just check exit 0, 1451 passed, no retries, no flakes; tip e4087d53
+
+### note · agent:manager-2 · 2026-10-10T14:15:43.636Z
+integrated: 1af6f7648c20cbaa06fae58b64d951f560a6321c (branch bridle/whdbj)
