@@ -1547,6 +1547,72 @@ async fn resolve_targets(state: &AppState, to_raw: &str) -> Result<Vec<ToTarget>
     })
 }
 
+/// A visitor with a recorded home gets its mail forwarded there through the outbox (3haz P2),
+/// so its own waiter on its own daemon wakes for it. `None` means keep it here: not a visitor,
+/// a token with no home (minted before the field), or a home we can't forward to now.
+async fn forward_to_home(
+    state: &AppState,
+    from: &str,
+    target: &ToTarget,
+    req: (&MessageKind, &str, When, &Option<String>),
+) -> Result<Option<Message>, ApiError> {
+    let ToTarget::External(id) = target else {
+        return Ok(None);
+    };
+    let Some((to, _)) = id.split_once('@') else {
+        return Ok(None);
+    };
+    let Some(home) = state.store.visitor_home(id).await? else {
+        return Ok(None);
+    };
+    if let Err(why) = state.outbox.check_destination(&home) {
+        tracing::warn!(visitor = %id, home, why, "visitor's home unreachable: keeping the mail here");
+        return Ok(None);
+    }
+    let (kind, body, when, reply_to) = req;
+    let from = if from.contains('@') {
+        from.to_string()
+    } else {
+        format!("{from}@{}", state.outbox.machine_name())
+    };
+    let oid = state
+        .store
+        .outbox_enqueue(crate::store::OutboxRow {
+            id: String::new(),
+            project: home.clone(),
+            from: from.clone(),
+            to: to.to_string(),
+            kind: *kind,
+            body: body.to_string(),
+            reply_to: reply_to.clone(),
+            when,
+            attempts: 0,
+            last_error: None,
+        })
+        .await?;
+    let outbox = state.outbox.clone();
+    tokio::spawn(async move { outbox.flush(&home).await });
+    Ok(Some(Message {
+        id: oid.clone(),
+        from,
+        to: id.clone(),
+        kind: *kind,
+        body: body.to_string(),
+        reply_to: reply_to.clone(),
+        when,
+        state: MessageState::Pending,
+        created_at: Utc::now(),
+        written_at: None,
+        delivered_at: None,
+        read_at: None,
+        answered_by: None,
+        answered_reply: None,
+        answered_line: None,
+        incident_task: None,
+        recipient_note: Some(format!("forwarded to its home daemon, outbox {oid}")),
+    }))
+}
+
 async fn send_message(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
@@ -1592,6 +1658,11 @@ async fn send_message(
     };
     let mut msgs = Vec::with_capacity(targets.len());
     for target in targets {
+        let home_req = (&req.kind, body.as_str(), req.when, &req.reply_to);
+        if let Some(msg) = forward_to_home(&state, &principal.id, &target, home_req).await? {
+            msgs.push(msg);
+            continue;
+        }
         let msg = state
             .manager
             .send(
@@ -1860,6 +1931,11 @@ async fn forward(
     let targets = resolve_targets(&state, &req.to).await?;
     let mut message_ids = Vec::with_capacity(targets.len());
     for target in targets {
+        let home_req = (&req.kind, req.body.as_str(), req.when, &req.reply_to);
+        if let Some(msg) = forward_to_home(&state, &req.from, &target, home_req).await? {
+            message_ids.push(msg.id);
+            continue;
+        }
         let msg = state
             .manager
             .send(
@@ -3977,7 +4053,26 @@ async fn create_token(
         }
         Some(m) => format!("{}@{m}", req.name),
     };
-    Ok(Json(state.store.create_external_token(&name).await?))
+    if req.home.as_deref().is_some_and(str::is_empty)
+        || (req.home.is_some() && req.machine.is_none())
+    {
+        return Err(ApiError::bad_request(
+            "home is a non-empty project, and only a visitor (--machine) has one",
+        ));
+    }
+    if let Some(home) = &req.home {
+        // Mail for the visitor is forwarded there, so it has to be reachable now.
+        state
+            .outbox
+            .check_destination(home)
+            .map_err(ApiError::bad_request)?;
+    }
+    Ok(Json(
+        state
+            .store
+            .create_external_token(&name, req.home.as_deref())
+            .await?,
+    ))
 }
 
 async fn create_peer_token(

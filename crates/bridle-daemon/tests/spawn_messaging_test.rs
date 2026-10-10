@@ -671,6 +671,7 @@ async fn send_to_external_principal_lands_in_its_own_inbox() {
         .create_token(&TokenCreateRequest {
             name: "orchestrator".to_string(),
             machine: None,
+            home: None,
         })
         .await
         .expect("create external token");
@@ -735,6 +736,7 @@ async fn delegate_reply_closes_the_humans_question_but_others_do_not() {
             .create_token(&TokenCreateRequest {
                 name: name.to_string(),
                 machine: None,
+                home: None,
             })
             .await
             .expect("create external token");
@@ -859,6 +861,7 @@ async fn visitor_principal_sends_and_reads_but_is_not_the_orchestrator() {
         .create_token(&TokenCreateRequest {
             name: "orchestrator@nuc".to_string(),
             machine: None,
+            home: None,
         })
         .await
         .unwrap_err();
@@ -872,6 +875,7 @@ async fn visitor_principal_sends_and_reads_but_is_not_the_orchestrator() {
         .create_token(&TokenCreateRequest {
             name: "orchestrator".to_string(),
             machine: Some("nuc".to_string()),
+            home: None,
         })
         .await
         .expect("create visitor token");
@@ -936,6 +940,7 @@ async fn named_advisor_addressing_and_delivery_fallbacks() {
         .create_token(&TokenCreateRequest {
             name: "advisor".to_string(),
             machine: None,
+            home: None,
         })
         .await
         .expect("create advisor token")
@@ -1081,6 +1086,7 @@ async fn human_visitor_has_human_authority_and_its_own_identity() {
         .create_token(&TokenCreateRequest {
             name: "human".to_string(),
             machine: Some("nuc".to_string()),
+            home: None,
         })
         .await
         .expect("create human visitor token");
@@ -1092,6 +1098,7 @@ async fn human_visitor_has_human_authority_and_its_own_identity() {
         .create_token(&TokenCreateRequest {
             name: "advisor".to_string(),
             machine: None,
+            home: None,
         })
         .await
         .expect("human@nuc may create tokens");

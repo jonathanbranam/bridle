@@ -719,6 +719,7 @@ async fn only_pm_or_human_may_write_the_queue() {
         .create_token(&bridle_api::types::TokenCreateRequest {
             name: "orchestrator".to_string(),
             machine: Some("laptop".to_string()),
+            home: None,
         })
         .await
         .expect("create visitor token");

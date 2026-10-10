@@ -255,10 +255,21 @@ impl Store {
         self.with_conn(sync::ensure_human_token).await
     }
 
-    pub async fn create_external_token(&self, name: &str) -> Result<TokenCreated, StoreError> {
+    pub async fn create_external_token(
+        &self,
+        name: &str,
+        home: Option<&str>,
+    ) -> Result<TokenCreated, StoreError> {
         let name = name.to_string();
-        self.with_conn(move |c| sync::create_external_token(c, &name))
+        let home = home.map(str::to_string);
+        self.with_conn(move |c| sync::create_external_token(c, &name, home.as_deref()))
             .await
+    }
+
+    /// The project a visitor's mail is forwarded to; `None` for a token minted without one.
+    pub async fn visitor_home(&self, principal_id: &str) -> Result<Option<String>, StoreError> {
+        let id = principal_id.to_string();
+        self.with_conn(move |c| sync::visitor_home(c, &id)).await
     }
 
     /// `agent_id` is accepted for interface symmetry with the rest of the
@@ -1450,13 +1461,19 @@ mod sync {
         CREATE INDEX schedules_due ON schedules(state, next_fire_at);
     "#;
 
+    // Mail between daemons, slice 2 (br-n7cg): where a visitor's mail is forwarded. NULL (every
+    // token minted before) keeps the visitor's inbox on this daemon.
+    pub(super) const SCHEMA_V24: &str = r#"
+        ALTER TABLE principals ADD COLUMN home TEXT;
+    "#;
+
     pub(super) const RATE_LIMIT_HISTORY_DAYS: i64 = 90;
 
     pub(super) const MIGRATIONS: &[&str] = &[
         SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7, SCHEMA_V8,
         SCHEMA_V9, SCHEMA_V10, SCHEMA_V11, SCHEMA_V12, SCHEMA_V13, SCHEMA_V14, SCHEMA_V15,
         SCHEMA_V16, SCHEMA_V17, SCHEMA_V18, SCHEMA_V19, SCHEMA_V20, SCHEMA_V21, SCHEMA_V22,
-        SCHEMA_V23,
+        SCHEMA_V23, SCHEMA_V24,
     ];
 
     pub(super) fn open(path: &Path) -> Result<Connection, StoreError> {
@@ -1784,6 +1801,7 @@ mod sync {
     pub(super) fn create_external_token(
         conn: &Connection,
         name: &str,
+        home: Option<&str>,
     ) -> Result<TokenCreated, StoreError> {
         // `human@<machine>` is the human on another machine: human authority, its own id.
         let kind = if is_human_visitor(name) {
@@ -1793,6 +1811,10 @@ mod sync {
         };
         let id = token_principal_id(name);
         let token = create_principal_active_only(conn, &id, kind, name)?;
+        conn.execute(
+            "UPDATE principals SET home = ?1 WHERE id = ?2",
+            params![home, id],
+        )?;
         Ok(TokenCreated {
             principal: id,
             token,
@@ -2165,6 +2187,17 @@ mod sync {
             })
         })?;
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
+    pub(super) fn visitor_home(conn: &Connection, id: &str) -> Result<Option<String>, StoreError> {
+        Ok(conn
+            .query_row(
+                "SELECT home FROM principals WHERE id = ?1 AND revoked_at IS NULL",
+                params![id],
+                |r| r.get::<_, Option<String>>(0),
+            )
+            .optional()?
+            .flatten())
     }
 
     pub(super) fn external_exists(conn: &Connection, name: &str) -> Result<bool, StoreError> {
@@ -4291,7 +4324,7 @@ mod tests {
         assert_eq!(principal.kind, PrincipalKind::Human);
 
         let external = store
-            .create_external_token("orchestrator")
+            .create_external_token("orchestrator", None)
             .await
             .expect("create external token");
         assert_eq!(external.principal, "external:orchestrator");
@@ -4304,7 +4337,7 @@ mod tests {
 
         // A second, still-active external token of the same name conflicts.
         let conflict = store
-            .create_external_token("orchestrator")
+            .create_external_token("orchestrator", None)
             .await
             .expect_err("should conflict");
         assert!(matches!(conflict, StoreError::Conflict(_)));
@@ -4348,11 +4381,11 @@ mod tests {
     async fn list_and_revoke_external_tokens() {
         let (store, _tmp) = store().await;
         store
-            .create_external_token("orchestrator")
+            .create_external_token("orchestrator", None)
             .await
             .expect("create external token");
         store
-            .create_external_token("tui")
+            .create_external_token("tui", None)
             .await
             .expect("create external token");
 

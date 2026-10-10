@@ -1542,6 +1542,11 @@ pub struct TokenCreateRequest {
     /// Mints a visitor, `external:<name>@<machine>`: another machine's principal on this daemon.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub machine: Option<String>,
+    /// With `machine`: the project (daemon) on that machine the visitor's mail is forwarded to,
+    /// as a destination this daemon can reach (3haz P2). Without it the visitor keeps a local
+    /// inbox here, as tokens minted before this field do.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub home: Option<String>,
 }
 
 /// `POST /v1/tokens/peer`: mints `peer:<machine>`, the token that daemon's forwarding presents.

@@ -12,7 +12,7 @@ a `Store` handle that run it on `spawn_blocking`. The daemon is the only
 writer. Migrations use `PRAGMA user_version`. What is built:
 
 ```
-principals(id TEXT PK, kind, name, token_hash, created_at, revoked_at)
+principals(id TEXT PK, kind, name, token_hash, created_at, revoked_at, home)
 agents(id PK, name UNIQUE, role, state, model, session_id, pid, pid_start,
        workdir_kind, cwd, worktree, branch, created_at, updated_at,
        turns, turn_started_at, cost_usd_total, last_event_at,

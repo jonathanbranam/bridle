@@ -74,9 +74,8 @@ suffix always means a visitor. `BRIDLE_AS=orchestrator` talking to another machi
 `orchestrator@<this machine>`'s token from `[orchestrator.<machine>]`.
 
 **5. Result:** `bridle send --project meta-notes external:orchestrator "..."` works from either
-box. A reply goes to `external:orchestrator@mbp` on the NUC's daemon; the laptop's side reads it
-there (`bridle inbox --project meta-notes`), or the NUC's orchestrator sends it to the laptop's
-daemon instead.
+box. A reply to `external:orchestrator@mbp` is forwarded by the NUC's daemon to the visitor's
+home daemon on the laptop (3haz), so the laptop's side reads it in its own inbox.
 
 ## Not in scope
 

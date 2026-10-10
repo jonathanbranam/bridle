@@ -79,6 +79,7 @@ impl TestDaemon {
             .create_token(&bridle_api::types::TokenCreateRequest {
                 name: name.to_string(),
                 machine: None,
+                home: None,
             })
             .await
             .expect("create external token");

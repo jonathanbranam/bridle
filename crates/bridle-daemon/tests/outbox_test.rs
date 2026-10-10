@@ -213,6 +213,7 @@ async fn only_a_peer_token_is_believed_about_the_sender() {
             .create_token(&TokenCreateRequest {
                 name: "orchestrator".to_string(),
                 machine: Some("m1".to_string()),
+                home: None,
             })
             .await
             .expect("visitor");
@@ -359,4 +360,89 @@ async fn mail_to_agent_colon_name_reaches_the_agent_across_daemons() {
         .await
         .expect("send");
     assert_eq!(sent.state, "delivered", "{sent:?}");
+}
+
+/// Slice 2: B (the "remote" daemon) forwards mail for a visitor to the visitor's home daemon A,
+/// where its ordinary inbox (and waiter) is; a visitor minted without a home keeps its inbox.
+#[tokio::test]
+async fn mail_for_a_visitor_is_forwarded_to_its_home_daemon() {
+    let p = pair().await;
+    let a_project = p.a.running.info.project.clone();
+
+    // B reaches A as machine `m2`: A mints the peer token, B's machine config and credentials
+    // point at A.
+    let a_peer =
+        p.a.client
+            .create_peer_token(&PeerTokenCreateRequest {
+                machine: "m2".to_string(),
+            })
+            .await
+            .expect("peer token")
+            .token;
+    let b_home = machine_home_dir(p._tmp_b.path());
+    std::fs::create_dir_all(&b_home).expect("home");
+    let a_port = p.a.running.url.rsplit(':').next().expect("port");
+    std::fs::write(
+        b_home.join("config.toml"),
+        format!(
+            "[machine]\nname = \"m2\"\n[machines]\nm1 = \"127.0.0.1\"\nm2 = \"127.0.0.1\"\n\
+             [projects]\n{a_project} = {{ machine = \"m1\", port = {a_port} }}\n"
+        ),
+    )
+    .expect("config");
+    store_credential(
+        &b_home.join("credentials.toml"),
+        "peer",
+        &a_project,
+        &a_peer,
+    )
+    .expect("credentials");
+
+    // The visitor's home must be reachable when its token is minted.
+    let err =
+        p.b.client
+            .create_token(&TokenCreateRequest {
+                name: "aide".to_string(),
+                machine: Some("m1".to_string()),
+                home: Some("nowhere".to_string()),
+            })
+            .await
+            .expect_err("unknown home");
+    assert!(err.to_string().contains("nowhere"), "{err}");
+
+    for (name, home) in [("aide", Some(a_project.clone())), ("old", None)] {
+        p.b.client
+            .create_token(&TokenCreateRequest {
+                name: name.to_string(),
+                machine: Some("m1".to_string()),
+                home,
+            })
+            .await
+            .expect("visitor");
+    }
+    p.a.external_client("aide").await;
+    let advisor = p.b.external_client("advisor").await;
+    for to in ["external:aide@m1", "external:old@m1"] {
+        advisor
+            .send(&bridle_api::types::SendRequest {
+                to: Some(to.to_string()),
+                body: format!("reply for {to}"),
+                ..Default::default()
+            })
+            .await
+            .expect("send");
+    }
+
+    // The reply lands in A's inbox, from the sender qualified with B's machine ...
+    let got = wait_for_bodies(&p.a, "external:aide", 1).await;
+    assert_eq!(
+        got,
+        vec![(
+            "external:advisor@m2".to_string(),
+            "reply for external:aide@m1".to_string()
+        )]
+    );
+    // ... and not in B's; the token with no home keeps its mail on B, as before.
+    assert!(inbox_bodies(&p.b, "external:aide@m1").await.is_empty());
+    assert_eq!(inbox_bodies(&p.b, "external:old@m1").await.len(), 1);
 }

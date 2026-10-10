@@ -355,6 +355,7 @@ async fn a_docs_only_commit_is_an_event_and_wakes_no_one() {
                 .create_token(&bridle_api::types::TokenCreateRequest {
                     name: "orchestrator".to_string(),
                     machine: None,
+                    home: None,
                 })
                 .await
                 .expect("token")

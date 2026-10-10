@@ -19,6 +19,7 @@ async fn visitor(daemon: &support::TestDaemon) -> Client {
         .create_token(&TokenCreateRequest {
             name: "advisor".to_string(),
             machine: Some("nuc".to_string()),
+            home: None,
         })
         .await
         .expect("visitor token");

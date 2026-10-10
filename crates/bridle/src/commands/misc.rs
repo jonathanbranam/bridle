@@ -878,6 +878,7 @@ async fn token_pair(cli: &Cli, action: &TokenAction) -> Result<(), CliError> {
                 .create_token(&TokenCreateRequest {
                     name: role.clone(),
                     machine: for_machine.clone(),
+                    home: None,
                 })
                 .await?;
             println!("{}", created.token);
@@ -977,6 +978,7 @@ pub(super) async fn token(cli: &Cli, args: &TokenArgs) -> Result<(), CliError> {
         TokenAction::Create {
             name,
             machine,
+            home,
             print,
             ..
         } => {
@@ -985,6 +987,7 @@ pub(super) async fn token(cli: &Cli, args: &TokenArgs) -> Result<(), CliError> {
                 .create_token(&TokenCreateRequest {
                     name: name.clone(),
                     machine: machine.clone(),
+                    home: home.clone(),
                 })
                 .await?;
             // Stored for the project this command talked to, so the token never has

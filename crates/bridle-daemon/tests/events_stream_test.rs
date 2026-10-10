@@ -202,6 +202,7 @@ async fn shutdown_ends_open_event_streams_and_finishes_promptly() {
         .create_token(&bridle_api::types::TokenCreateRequest {
             name: "raw-sse".to_string(),
             machine: None,
+            home: None,
         })
         .await
         .expect("token")

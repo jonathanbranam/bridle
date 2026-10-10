@@ -167,7 +167,19 @@ token, like `task ready --project`; the outbox is for a project with no such tok
 - **The sender's label.** The forwarding daemon states who the sender was, qualified with its
   machine (`agent:w1@nuc`, `external:advisor/research@nuc`), and the receiver stores that as
   `from`. It is believed because the token is a peer's: a visitor's or other external token's
-  label is only a label. Reply routing home is a later slice.
+  label is only a label.
+- **Replies come home (br-n7cg, 3haz P2).** `bridle token create <name> --machine <m> --home
+  <project>` records the visitor's home: a project this daemon can forward to (machine config and
+  a `[peer]` token, checked when the token is minted). Mail to that visitor, from `send` or a
+  forward, goes into this daemon's outbox for the home project, addressed to the visitor's bare
+  principal (`external:aide@nuc` becomes `external:aide`, `human@nuc` becomes `human`), and
+  lands in the home daemon's ordinary inbox, where its own waiter wakes; nobody reads another
+  machine. The sender is labelled with this machine (`external:advisor@dalek`). The `send` answers
+  with the outbox id as the message id. Migration: a visitor token minted before this has no
+  home (`principals.home` NULL) and keeps its inbox here as before; so does one whose home can no
+  longer be forwarded to (no peer token), with a warning in the log. A home is only for visitors.
+  Every principal's home is its own machine's daemon, so a visitor token with a home is the
+  only record needed; `external:orchestrator` itself stays local.
 - **Exactly once, in order.** Each forward carries its origin (machine, daemon, outbox id); the
   receiver records it in `forwarded_in` and answers a repeat with the same message ids without
   delivering again, so a try whose acknowledgement was lost is safe to repeat. Per destination
@@ -180,7 +192,7 @@ token, like `task ready --project`; the outbox is for a project with no such tok
   outcome (`delivered`, `failed` with the reason, or `queued` with the last error). A refusal for
   good, and a message queued 30 min, each send the sender one note from `system`. The receiver
   accepts `agent:<name>` as well as a bare agent name.
-- **Not built yet:** forwarding a visitor's mail home, status
+- **Not built yet:** status
   lines, `bridle message show`, `--task` and `@machine` addressing across daemons.
 
 Rule 2 means a Claude Code session (the human's orchestrator, or any agent)

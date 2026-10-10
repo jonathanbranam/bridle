@@ -1439,6 +1439,11 @@ pub enum TokenAction {
         /// Always printed, to paste into that machine's `credentials.toml`.
         #[arg(long)]
         machine: Option<String>,
+        /// With `--machine`: the project on that machine whose daemon receives the visitor's
+        /// mail, so its replies come home (3haz). Must be reachable from this daemon with a
+        /// `[peer]` token. Without it the visitor's inbox stays on this daemon.
+        #[arg(long, requires = "machine", conflicts_with = "peer")]
+        home: Option<String>,
         /// Print the token even when it is saved.
         #[arg(long)]
         print: bool,
