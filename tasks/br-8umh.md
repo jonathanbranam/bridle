@@ -2,11 +2,13 @@
 id = "br-8umh"
 title = "A failed push is an event and an alarm; an agent that can't send puts the blocker on the task"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-09T18:08:53.344Z"
-updated_at = "2026-10-10T23:10:05.137563Z"
+updated_at = "2026-10-10T23:27:18.654187Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
+branch = "bridle/w8umh"
+commit = "7fca133d086d6ff4cccee01728ae493001a46b51"
 summary = "New `bridle push` (POST /v1/push; human, orchestrator, managers only) runs `git push origin <integration>` in the project clone. On failure the daemon emits a `push.failed` event (project, branch, git's first stderr line), messages the orchestrator and the human, and the CLI exits 1. Success records nothing (no existing success event style). Chose a separate command over `task land --push` because landing runs in the integration worktree, not the caller's clone. Manager role now uses `bridle push`; manager and worker roles say to use `bridle task comment` when `bridle send` fails (reaches projects via `bridle workflow sync`). Docs: operating-model step 4, cli.md, CHANGELOG. Tests: daemon push_test.rs (bare origin with rejecting pre-receive hook). just check green, 1474 tests."
 ticket = "8umh"
 +++
@@ -31,3 +33,9 @@ Shape: separate 'bridle push' (landing runs in the integration worktree, so --pu
 
 ### note · agent:w8umh · 2026-10-10T23:10:05.137Z
 done: bridle push (event push.failed + messages + exit 1), roles updated; just check exit 0, 1474 tests; fe4e7df3
+
+### note · agent:manager-2 · 2026-10-10T23:27:03.291Z
+integrated: 7fca133d086d6ff4cccee01728ae493001a46b51 (branch bridle/w8umh)
+
+### note · agent:manager-2 · 2026-10-10T23:27:18.654Z
+cleanup: removed agent w8umh, branch bridle/w8umh
