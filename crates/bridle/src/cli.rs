@@ -83,6 +83,8 @@ pub enum Command {
     Daemons,
     /// Daemon + agents summary.
     Status,
+    /// The latest CI result on the integration branch (needs `[ci] github`).
+    Ci,
     /// Spawn a new agent.
     #[command(hide = true)]
     Spawn(SpawnArgs),

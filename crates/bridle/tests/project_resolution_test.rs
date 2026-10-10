@@ -116,6 +116,7 @@ const CLASSES: &[(&str, Kind, &str)] = &[
         "migrates the cwd's repo; --project only picks a registry entry for --all",
     ),
     ("status", Daemon, ""),
+    ("ci", Daemon, ""),
     ("agents", Daemon, ""),
     ("send", Daemon, ""),
     ("inbox", Daemon, ""),

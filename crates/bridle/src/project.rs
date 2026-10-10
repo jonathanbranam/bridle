@@ -92,6 +92,7 @@ mod tests {
         ("rebuild", Daemon),
         ("daemons", NoProject("lists every project's daemon")),
         ("status", Daemon),
+        ("ci", Daemon),
         ("spawn", Daemon),
         ("agents", Daemon),
         ("show", Daemon),

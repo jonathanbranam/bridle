@@ -15,8 +15,8 @@ use bridle_daemon::ci::{Gh, Run};
 struct FakeGh(&'static str);
 
 impl Gh for FakeGh {
-    fn remote_tip(&self, _: &str) -> Result<Option<String>, String> {
-        Ok(None)
+    fn branch_runs(&self, _: &str) -> Result<Vec<Run>, String> {
+        Ok(Vec::new())
     }
     fn runs(&self, _: &str) -> Result<Vec<Run>, String> {
         Ok(vec![Run {
@@ -24,6 +24,7 @@ impl Gh for FakeGh {
             status: "completed".to_string(),
             conclusion: self.0.to_string(),
             url: String::new(),
+            head_sha: String::new(),
         }])
     }
     fn failed_jobs(&self, _: u64) -> Result<Vec<String>, String> {

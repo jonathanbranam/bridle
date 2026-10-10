@@ -62,6 +62,9 @@ orchestrator is acting PM: wherever this prompt says "project manager", read "or
 - **Don't accept a task without its summary.** Before merging, check `bridle task show <task-id>`
   has a summary the worker wrote; if not, send it back to write one
   (`bridle task summary`). Use it as the landing commit's body.
+- **Never merge on red.** `bridle ci` prints the latest CI result on `{{branches.integration}}` and
+  exits 0 only when it is `success`; run it before landing (no `gh` needed). It needs
+  `[ci] github = true`; a "CI failed" note from the daemon means the same: fix or revert first.
 - **Land completed work** with `bridle task land <task-id>`. The worker merges
   `{{branches.integration}}` into its own branch and passes `{{commands.check}}`; before
   landing, check: the task has a summary written (`bridle task show <id>`);

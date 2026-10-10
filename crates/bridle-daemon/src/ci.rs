@@ -1,8 +1,9 @@
-//! CI watcher: when the integration branch's tip changes on `origin`, polls
-//! GitHub Actions (through `gh`) until every run for that commit finishes,
-//! emits `ci.completed`, and tells the manager if it failed. Opt-in with
-//! `[ci] github = true`; off, `tick` does nothing (ticket c8qw).
+//! CI watcher: every tick lists the integration branch's recent GitHub Actions
+//! runs (through `gh`), and for each commit whose runs have all finished emits
+//! one `ci.completed` and tells the manager if it failed. Opt-in with
+//! `[ci] github = true`; off, `tick` does nothing (tickets c8qw, ysmu).
 
+use std::collections::HashSet;
 use std::path::PathBuf;
 use std::process::Command;
 use std::sync::{Arc, Mutex};
@@ -20,10 +21,9 @@ use crate::supervisor::{AgentManager, ToTarget};
 /// One tick per minute; the counts below are in ticks, so the cadence is
 /// deterministic to test.
 pub const TICK_INTERVAL: Duration = Duration::from_secs(60);
-/// Look for a new tip every third tick while nothing is pending.
-const TIP_CHECK_EVERY: u32 = 3;
-/// Give up on a commit's runs after about an hour.
-const MAX_POLLS: u32 = 60;
+/// How many recent runs of the branch to look at: enough to cover every push
+/// between two ticks, and a long outage, without a huge reply.
+const RUN_LIMIT: u32 = 50;
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -34,13 +34,17 @@ pub struct Run {
     pub conclusion: String,
     #[serde(default)]
     pub url: String,
+    /// The commit the run is for.
+    #[serde(default)]
+    pub head_sha: String,
 }
 
-/// The two external tools the watcher shells out to, behind a trait so tests
+/// The external tool the watcher shells out to, behind a trait so tests
 /// inject canned output. Blocking; the watcher calls it from `spawn_blocking`.
 pub trait Gh: Send + Sync + 'static {
-    /// The tip of `branch` on `origin`, `None` if it doesn't exist there.
-    fn remote_tip(&self, branch: &str) -> Result<Option<String>, String>;
+    /// The recent runs of `branch`, newest first, each tagged with its commit.
+    fn branch_runs(&self, branch: &str) -> Result<Vec<Run>, String>;
+    /// The runs of one commit (the upgrade check asks for its CI result).
     fn runs(&self, sha: &str) -> Result<Vec<Run>, String>;
     /// Names of the failed jobs of one run.
     fn failed_jobs(&self, run_id: u64) -> Result<Vec<String>, String>;
@@ -74,12 +78,21 @@ impl RealGh {
 }
 
 impl Gh for RealGh {
-    fn remote_tip(&self, branch: &str) -> Result<Option<String>, String> {
+    fn branch_runs(&self, branch: &str) -> Result<Vec<Run>, String> {
         let out = self.run(
-            "git",
-            &["ls-remote", "origin", &format!("refs/heads/{branch}")],
+            "gh",
+            &[
+                "run",
+                "list",
+                "--branch",
+                branch,
+                "--limit",
+                &RUN_LIMIT.to_string(),
+                "--json",
+                "databaseId,status,conclusion,url,headSha",
+            ],
         )?;
-        Ok(out.split_whitespace().next().map(str::to_string))
+        serde_json::from_str(&out).map_err(|e| format!("parsing gh run list: {e}"))
     }
 
     fn runs(&self, sha: &str) -> Result<Vec<Run>, String> {
@@ -91,7 +104,7 @@ impl Gh for RealGh {
                 "--commit",
                 sha,
                 "--json",
-                "databaseId,status,conclusion,url,name",
+                "databaseId,status,conclusion,url,headSha",
             ],
         )?;
         serde_json::from_str(&out).map_err(|e| format!("parsing gh run list: {e}"))
@@ -125,13 +138,11 @@ impl Gh for RealGh {
 
 #[derive(Default)]
 struct State {
-    /// The tip last seen on origin; a different one starts a watch.
-    last_tip: Option<String>,
-    /// The commit being polled and how many polls it has had.
-    pending: Option<(String, u32)>,
-    /// Ticks to skip before the next tip check.
-    tip_countdown: u32,
-    /// A `gh`/`git` failure was already logged; cleared by the next success,
+    /// Commits already reported (or, on the first look, already history).
+    seen: HashSet<String>,
+    /// The first successful look has happened.
+    started: bool,
+    /// A `gh` failure was already logged; cleared by the next success,
     /// so an outage is one warning, not one per tick.
     warned: bool,
 }
@@ -181,21 +192,34 @@ impl CiWatcher {
             return;
         }
         let mut st = self.0.state.lock().await;
-        if st.pending.is_none() {
-            if st.tip_countdown > 0 {
-                st.tip_countdown -= 1;
-                return;
+        let branch = self.0.branch.clone();
+        let Some(runs) = self.call(&mut st, move |gh| gh.branch_runs(&branch)).await else {
+            return;
+        };
+        // Group by commit, newest first. A commit with no runs yet is not in
+        // the list; it shows up on a later tick.
+        let mut commits: Vec<(String, Vec<Run>)> = Vec::new();
+        for run in runs {
+            match commits.iter_mut().find(|(sha, _)| *sha == run.head_sha) {
+                Some((_, group)) => group.push(run),
+                None => commits.push((run.head_sha.clone(), vec![run])),
             }
-            st.tip_countdown = TIP_CHECK_EVERY - 1;
-            let branch = self.0.branch.clone();
-            let tip = match self.call(&mut st, move |gh| gh.remote_tip(&branch)).await {
-                Some(Some(tip)) if st.last_tip.as_deref() != Some(&tip) => tip,
-                _ => return,
-            };
-            st.last_tip = Some(tip.clone());
-            st.pending = Some((tip, 0));
         }
-        self.poll(&mut st).await;
+        if !st.started {
+            // Only the newest commit is news on the first look (a restart or
+            // a new project); the rest is history.
+            st.started = true;
+            st.seen
+                .extend(commits.iter().skip(1).map(|(sha, _)| sha.clone()));
+        }
+        // Oldest first, so events and wakes arrive in push order.
+        for (sha, group) in commits.into_iter().rev() {
+            if st.seen.contains(&sha) || !group.iter().all(|r| r.status == "completed") {
+                continue;
+            }
+            st.seen.insert(sha.clone());
+            self.finish(&sha, group).await;
+        }
     }
 
     /// Runs one blocking `gh`/`git` call; a failure is logged once until the
@@ -216,37 +240,11 @@ impl CiWatcher {
             }
             Err(e) => {
                 if !st.warned {
-                    tracing::warn!(error = %e, "CI watch: gh/git failed; retrying next tick");
+                    tracing::warn!(error = %e, "CI watch: gh failed; retrying next tick");
                     st.warned = true;
                 }
                 None
             }
-        }
-    }
-
-    async fn poll(&self, st: &mut State) {
-        let Some((sha, polls)) = st.pending.as_mut() else {
-            return;
-        };
-        *polls += 1;
-        let give_up = *polls >= MAX_POLLS;
-        let sha = sha.clone();
-        let runs = {
-            let sha = sha.clone();
-            self.call(st, move |gh| gh.runs(&sha)).await
-        };
-        // No runs yet is not done: GitHub takes a moment to create them.
-        let done = runs.filter(|r| !r.is_empty() && r.iter().all(|r| r.status == "completed"));
-        match done {
-            Some(runs) => {
-                st.pending = None;
-                self.finish(&sha, runs).await;
-            }
-            None if give_up => {
-                tracing::warn!(%sha, "CI watch: giving up, runs never finished");
-                st.pending = None;
-            }
-            None => {}
         }
     }
 
@@ -358,7 +356,6 @@ mod tests {
     /// repeats) and is counted.
     #[derive(Default)]
     struct FakeGh {
-        tips: Mutex<VecDeque<Result<Option<String>, String>>>,
         runs: Mutex<VecDeque<Result<Vec<Run>, String>>>,
         calls: Mutex<u32>,
     }
@@ -373,26 +370,30 @@ mod tests {
     }
 
     impl Gh for FakeGh {
-        fn remote_tip(&self, _: &str) -> Result<Option<String>, String> {
-            *self.calls.lock().unwrap() += 1;
-            pop(&self.tips)
-        }
-        fn runs(&self, _: &str) -> Result<Vec<Run>, String> {
+        fn branch_runs(&self, _: &str) -> Result<Vec<Run>, String> {
             *self.calls.lock().unwrap() += 1;
             pop(&self.runs)
+        }
+        fn runs(&self, _: &str) -> Result<Vec<Run>, String> {
+            unreachable!("the watcher lists by branch")
         }
         fn failed_jobs(&self, _: u64) -> Result<Vec<String>, String> {
             Ok(vec!["test (ubuntu-latest)".to_string(), "lint".to_string()])
         }
     }
 
-    fn run(status: &str, conclusion: &str) -> Run {
+    fn run_for(sha: &str, id: u64, status: &str, conclusion: &str) -> Run {
         Run {
-            database_id: 7,
+            database_id: id,
             status: status.to_string(),
             conclusion: conclusion.to_string(),
-            url: "https://gh/run/7".to_string(),
+            url: format!("https://gh/run/{id}"),
+            head_sha: sha.to_string(),
         }
+    }
+
+    fn run(status: &str, conclusion: &str) -> Run {
+        run_for("abc", 7, status, conclusion)
     }
 
     struct Fixture {
@@ -433,19 +434,11 @@ mod tests {
         }
     }
 
-    fn script(
-        tips: Vec<Result<Option<String>, String>>,
-        runs: Vec<Result<Vec<Run>, String>>,
-    ) -> FakeGh {
+    fn script(runs: Vec<Result<Vec<Run>, String>>) -> FakeGh {
         FakeGh {
-            tips: Mutex::new(tips.into()),
             runs: Mutex::new(runs.into()),
             calls: Mutex::new(0),
         }
-    }
-
-    fn tip(s: &str) -> Result<Option<String>, String> {
-        Ok(Some(s.to_string()))
     }
 
     async fn ci_events(store: &Store) -> Vec<bridle_api::types::Event> {
@@ -473,7 +466,7 @@ mod tests {
 
     #[tokio::test]
     async fn disabled_makes_no_calls() {
-        let f = fixture(false, script(vec![tip("abc")], vec![Ok(vec![])])).await;
+        let f = fixture(false, script(vec![Ok(vec![])])).await;
         for _ in 0..5 {
             f.watcher.tick().await;
         }
@@ -483,14 +476,7 @@ mod tests {
 
     #[tokio::test]
     async fn success_emits_event_and_sends_nothing() {
-        let f = fixture(
-            true,
-            script(
-                vec![tip("abc")],
-                vec![Ok(vec![run("completed", "success")])],
-            ),
-        )
-        .await;
+        let f = fixture(true, script(vec![Ok(vec![run("completed", "success")])])).await;
         f.watcher.tick().await;
         let last = f.watcher.last().unwrap();
         assert_eq!(
@@ -503,14 +489,7 @@ mod tests {
 
     #[tokio::test]
     async fn failure_messages_the_manager_with_failed_jobs() {
-        let f = fixture(
-            true,
-            script(
-                vec![tip("abc")],
-                vec![Ok(vec![run("completed", "failure")])],
-            ),
-        )
-        .await;
+        let f = fixture(true, script(vec![Ok(vec![run("completed", "failure")])])).await;
         let manager = f
             .store
             .insert_agent(NewAgent {
@@ -551,30 +530,20 @@ mod tests {
 
     #[tokio::test]
     async fn failure_without_a_manager_goes_to_the_human() {
-        let f = fixture(
-            true,
-            script(
-                vec![tip("abc")],
-                vec![Ok(vec![run("completed", "failure")])],
-            ),
-        )
-        .await;
+        let f = fixture(true, script(vec![Ok(vec![run("completed", "failure")])])).await;
         f.watcher.tick().await;
         assert_eq!(human_messages(&f.store).await.len(), 1);
     }
 
     #[tokio::test]
-    async fn waits_through_in_progress_and_no_runs() {
+    async fn waits_through_no_runs_and_in_progress() {
         let f = fixture(
             true,
-            script(
-                vec![tip("abc")],
-                vec![
-                    Ok(vec![]),
-                    Ok(vec![run("in_progress", "")]),
-                    Ok(vec![run("completed", "success")]),
-                ],
-            ),
+            script(vec![
+                Ok(vec![]),
+                Ok(vec![run("in_progress", "")]),
+                Ok(vec![run("completed", "success")]),
+            ]),
         )
         .await;
         f.watcher.tick().await;
@@ -582,24 +551,67 @@ mod tests {
         assert!(f.watcher.last().is_none());
         f.watcher.tick().await;
         assert_eq!(f.watcher.last().unwrap().conclusion, "success");
-        // Done: no more polling of that sha (tip checks are skipped for a couple of ticks).
-        let calls = *f.gh.calls.lock().unwrap();
+    }
+
+    #[tokio::test]
+    async fn every_run_between_polls_is_recorded_and_first_failure_wakes() {
+        // First look: c0 is the newest and already green. Then three pushes
+        // land before the next tick: c1 red, c2 red, c3 still running.
+        let f = fixture(
+            true,
+            script(vec![
+                Ok(vec![run_for("c0", 1, "completed", "success")]),
+                Ok(vec![
+                    run_for("c3", 4, "in_progress", ""),
+                    run_for("c2", 3, "completed", "failure"),
+                    run_for("c1", 2, "completed", "failure"),
+                    run_for("c0", 1, "completed", "success"),
+                ]),
+                Ok(vec![
+                    run_for("c3", 4, "completed", "success"),
+                    run_for("c2", 3, "completed", "failure"),
+                    run_for("c1", 2, "completed", "failure"),
+                    run_for("c0", 1, "completed", "success"),
+                ]),
+            ]),
+        )
+        .await;
         f.watcher.tick().await;
-        assert_eq!(*f.gh.calls.lock().unwrap(), calls);
+        assert_eq!(ci_events(&f.store).await.len(), 1);
+        f.watcher.tick().await;
+        let events = ci_events(&f.store).await;
+        assert_eq!(events.len(), 3);
+        assert_eq!(human_messages(&f.store).await.len(), 2);
+        f.watcher.tick().await;
+        assert_eq!(ci_events(&f.store).await.len(), 4);
+        f.watcher.tick().await;
+        assert_eq!(ci_events(&f.store).await.len(), 4);
+        assert_eq!(f.watcher.last().unwrap().sha, "c3");
+    }
+
+    #[tokio::test]
+    async fn old_history_is_not_replayed_on_the_first_look() {
+        let f = fixture(
+            true,
+            script(vec![Ok(vec![
+                run_for("c1", 2, "completed", "failure"),
+                run_for("c0", 1, "completed", "failure"),
+            ])]),
+        )
+        .await;
+        f.watcher.tick().await;
+        assert_eq!(ci_events(&f.store).await.len(), 1);
     }
 
     #[tokio::test]
     async fn gh_error_keeps_going_next_tick() {
         let f = fixture(
             true,
-            script(
-                vec![tip("abc")],
-                vec![
-                    Err("gh: not found".to_string()),
-                    Err("gh: not found".to_string()),
-                    Ok(vec![run("completed", "success")]),
-                ],
-            ),
+            script(vec![
+                Err("gh: not found".to_string()),
+                Err("gh: not found".to_string()),
+                Ok(vec![run("completed", "success")]),
+            ]),
         )
         .await;
         f.watcher.tick().await;
@@ -611,16 +623,9 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn unchanged_tip_is_not_rewatched() {
-        let f = fixture(
-            true,
-            script(
-                vec![tip("abc")],
-                vec![Ok(vec![run("completed", "success")])],
-            ),
-        )
-        .await;
-        for _ in 0..(TIP_CHECK_EVERY * 3) {
+    async fn a_finished_commit_is_reported_once() {
+        let f = fixture(true, script(vec![Ok(vec![run("completed", "success")])])).await;
+        for _ in 0..5 {
             f.watcher.tick().await;
         }
         assert_eq!(ci_events(&f.store).await.len(), 1);

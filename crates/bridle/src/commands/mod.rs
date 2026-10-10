@@ -160,6 +160,7 @@ pub async fn run(mut cli: Cli) -> Result<(), CliError> {
         Command::Rebuild(args) => rebuild(&cli, args.from_origin).await,
         Command::Daemons => daemons(&cli).await,
         Command::Status => status(&cli).await,
+        Command::Ci => ci(&cli).await,
         Command::Spawn(args) => spawn(&cli, args).await,
         Command::Agents(args) => agents(&cli, args).await,
         Command::Show(args) => show(&cli, args).await,

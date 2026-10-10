@@ -2,6 +2,38 @@
 
 use super::*;
 
+/// Exits 1 unless the latest result is a success, so a manager can gate a
+/// merge on it without `gh`.
+pub(super) async fn ci(cli: &Cli) -> Result<(), CliError> {
+    let client = client_for_read(cli).await?;
+    let status = client.status().await?;
+    if cli.json {
+        render::print_json(&status.ci)?;
+    }
+    match status.ci {
+        Some(ci) => {
+            if !cli.json {
+                let age = (chrono::Utc::now() - ci.completed_at).num_minutes().max(0);
+                println!(
+                    "{} {} {}m ago {}",
+                    ci.sha,
+                    ci.conclusion,
+                    age,
+                    ci.url.as_deref().unwrap_or("")
+                );
+            }
+            if ci.conclusion == "success" {
+                Ok(())
+            } else {
+                Err(CliError::Other(anyhow::anyhow!("CI is {}", ci.conclusion)))
+            }
+        }
+        None => Err(CliError::Other(anyhow::anyhow!(
+            "no CI result yet (is [ci] github on?)"
+        ))),
+    }
+}
+
 pub(super) async fn status(cli: &Cli) -> Result<(), CliError> {
     let client = client_for_read(cli).await?;
     let status = client.status().await?;
