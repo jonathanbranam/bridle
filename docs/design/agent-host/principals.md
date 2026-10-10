@@ -154,6 +154,9 @@ same machine included) never goes from the CLI to that daemon. It goes to the **
 daemon (`POST /v1/outbox`), which accepts it at once and answers with an outbox id, stores it in
 its `outbox` table (storage.md) and forwards it to the destination over `POST /v1/forward`. The
 destination is found from the machine config (`[projects]`, k7mw), else this machine's registry.
+Exception (2msq): when the sender holds its own credential for that project (`$BRIDLE_AS`'s entry in
+the credentials file) and the project's daemon is on this machine, `send` talks to it directly with that
+token, like `task ready --project`; the outbox is for a project with no such token and for other machines.
 
 - **Peer tokens.** `bridle token create --peer <machine>` on the *receiving* daemon mints
   `peer:<machine>` (`<machine>` is the sender's `[machine] name`; `local` when it has none).

@@ -170,6 +170,17 @@ async fn own_daemon_for_other_project(cli: &Cli) -> Result<Option<(Client, Strin
     };
     let cwd = std::env::current_dir().context("current directory")?;
     let env = ProcessEnv;
+    // A direct token for that project on this machine: talk to its daemon, not the outbox.
+    if discovery::direct_local_access(
+        &discovery::credentials_path(),
+        &discovery::list_registry(),
+        project,
+        &env,
+    )
+    .is_some()
+    {
+        return Ok(None);
+    }
     let Ok(own) = discovery::resolve_endpoint(cli.url.as_deref(), None, &cwd, &env) else {
         return Ok(None);
     };
@@ -239,7 +250,20 @@ pub(super) async fn send(cli: &Cli, args: &SendArgs) -> Result<(), CliError> {
         }
         return Ok(());
     }
-    let client = client_for(cli).await?;
+    let client = match cli.project.as_deref().and_then(|p| {
+        discovery::direct_local_access(
+            &discovery::credentials_path(),
+            &discovery::list_registry(),
+            p,
+            &ProcessEnv,
+        )
+    }) {
+        // Not client_for: $BRIDLE_URL would send it to the own daemon.
+        Some((url, token)) => {
+            Client::new(url, Some(token)).with_advisor(std::env::var("BRIDLE_ADVISOR_NAME").ok())
+        }
+        None => client_for(cli).await?,
+    };
     let req = SendRequest {
         to: Some(args.to.clone()),
         body,

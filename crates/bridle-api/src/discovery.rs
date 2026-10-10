@@ -258,10 +258,11 @@ fn resolve_endpoint_with(
     env: &impl Env,
 ) -> Result<Endpoint, DiscoveryError> {
     if let Some(url) = url_flag {
+        // --url picks the daemon; --project, if given, names whose token to present (2msq).
         return Ok(Endpoint {
             url: url.to_string(),
             workspace: None,
-            project: None,
+            project: project_flag.map(str::to_string),
             machine: None,
         });
     }
@@ -434,6 +435,22 @@ pub fn credential(
         .and_then(|v| v.get(project))
         .and_then(|v| v.as_str())
         .map(str::to_string))
+}
+
+/// The URL and token to reach `project`'s daemon on this machine directly: the daemon is in
+/// `registry` and `$BRIDLE_AS` holds a credential for the project. `None` otherwise, and the
+/// caller falls back to mail between daemons (2msq). `$BRIDLE_TOKEN` is never used: it is the
+/// own daemon's token.
+pub fn direct_local_access(
+    credentials: &Path,
+    registry: &[DaemonInfo],
+    project: &str,
+    env: &impl Env,
+) -> Option<(String, String)> {
+    let principal = env.var("BRIDLE_AS").filter(|s| !s.is_empty())?;
+    let daemon = registry.iter().find(|d| d.project == project)?;
+    let token = credential(credentials, &principal, None, project).ok()??;
+    Some((daemon.url.clone(), token))
 }
 
 /// The token this machine's daemons present to `project`'s daemon when forwarding mail: the
@@ -887,6 +904,62 @@ mod tests {
         let env = creds_env(&[("BRIDLE_AS", "advisor")]);
         let err = resolve_token_in(&path, None, None, Some("demo"), None, &env, false).unwrap_err();
         assert!(err.to_string().contains("chmod 600"));
+    }
+
+    #[test]
+    fn url_with_project_names_the_token_project() {
+        let m = crate::machines::MachineMap::default();
+        let cwd = tempdir().unwrap();
+        let ep = resolve_endpoint_with(
+            &m,
+            Some("http://127.0.0.1:7407"),
+            Some("dc"),
+            cwd.path(),
+            &empty_env(),
+        )
+        .unwrap();
+        assert_eq!(ep.url, "http://127.0.0.1:7407");
+        assert_eq!(ep.project.as_deref(), Some("dc"));
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("credentials.toml");
+        write_credentials(
+            &path,
+            &toml::from_str("[orchestrator]\ndc = \"tok\"").unwrap(),
+        )
+        .unwrap();
+        let env = MapEnv(std::collections::HashMap::from([(
+            "BRIDLE_AS",
+            "orchestrator",
+        )]));
+        let t = resolve_token_in(&path, None, None, ep.project.as_deref(), None, &env, false);
+        assert_eq!(t.unwrap().as_deref(), Some("tok"));
+    }
+
+    #[test]
+    fn direct_local_access_needs_a_registered_daemon_and_a_credential() {
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("credentials.toml");
+        write_credentials(
+            &path,
+            &toml::from_str("[orchestrator]\ndc = \"tok\"").unwrap(),
+        )
+        .unwrap();
+        let reg = [sample_daemon_info("dc", dir.path(), 1)];
+        let env = MapEnv(std::collections::HashMap::from([(
+            "BRIDLE_AS",
+            "orchestrator",
+        )]));
+        let got = direct_local_access(&path, &reg, "dc", &env).unwrap();
+        assert_eq!(
+            got,
+            ("http://127.0.0.1:12345".to_string(), "tok".to_string())
+        );
+        // No credential for the project, or no daemon on this machine: outbox path.
+        assert!(direct_local_access(&path, &reg, "other", &env).is_none());
+        assert!(direct_local_access(&path, &[], "dc", &env).is_none());
+        // $BRIDLE_TOKEN alone is the own daemon's token, not a direct one.
+        let env = MapEnv(std::collections::HashMap::from([("BRIDLE_TOKEN", "x")]));
+        assert!(direct_local_access(&path, &reg, "dc", &env).is_none());
     }
 
     #[test]
