@@ -89,11 +89,10 @@ restart"). If you ever must build, do it in the background in a worktree, never
 in the clone and never in the foreground (the human, 2026-09-30: a build in the
 foreground blocks the wake loop, and a merge during a build once broke it; nc7r).
 
-Self-upgrade is off (`[daemon] self_upgrade = false`) while batching is worked on (the human,
-2026-10-09 ~6:20 PM ET: "I disabled self upgrade while we work on batching; any critical fixes
-you have my approval to run the upgrade yourself."). For a critical fix that has landed on
-`main`, run the upgrade yourself (`bridle daemon restart --upgrade`); everything else waits until
-the human turns self-upgrade back on.
+Self-upgrade is on again (`[daemon] self_upgrade = true`), cycling every 3 hours (the human,
+2026-10-10 ~1 PM ET: "Self-upgrade has been turned back on after those fixes landed to cycle it
+every 3 hours."). Landed work reaches the daemon by itself; run `bridle daemon restart --upgrade`
+only for a critical fix that can't wait for the next cycle.
 
 ### The human is away: Thu 2026-10-01 afternoon to Fri 2026-10-02 late (ET)
 
