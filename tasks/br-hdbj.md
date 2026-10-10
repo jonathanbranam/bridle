@@ -4,7 +4,7 @@ title = "Only the owner's clone can push the integration branch: enforced, not a
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T23:09:30.765Z"
-updated_at = "2026-10-10T13:37:42.353849Z"
+updated_at = "2026-10-10T14:02:36.997180Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -53,3 +53,6 @@ orchestrator: waiting on the human, by design. Built and checked (bridle/whdbj 0
 
 ### note · external:aide · 2026-10-10T13:37:42.353Z
 From the human, via aide (2026-10-10 ~8:15 AM ET), verbatim: "yes, land those three tickets and keep work moving according to the PdM" (br-88d4, br-751e, br-hdbj).
+
+### note · agent:manager-2 · 2026-10-10T14:02:36.997Z
+br-88d4 and br-37r9 have landed on main. Please merge main into your branch, run just check once (tell me before retrying if only a known flake fails), commit, and message manager-2 with the tip sha and exit status.
