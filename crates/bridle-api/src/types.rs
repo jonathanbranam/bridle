@@ -936,6 +936,8 @@ pub mod event_kind {
     pub const UPGRADE_FAILED: &str = "upgrade.failed";
     /// The upgraded binary failed to start and the previous one is back. data: {error}.
     pub const UPGRADE_ROLLED_BACK: &str = "upgrade.rolled_back";
+    /// A restart's exec failed; the daemon started again in the same process. data: {error}.
+    pub const RESTART_FAILED: &str = "restart.failed";
     pub const AGENT_SPAWNED: &str = "agent.spawned";
     /// data: {from, to}
     pub const AGENT_STATE: &str = "agent.state";

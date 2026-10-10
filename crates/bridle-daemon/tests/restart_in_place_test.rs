@@ -122,3 +122,52 @@ async fn a_restart_stops_the_daemon_and_the_next_start_resumes_the_worker_with_a
     running.shutdown();
     running.join().await.expect("join");
 }
+
+#[tokio::test]
+async fn a_failed_exec_leaves_the_daemon_serving_with_the_drain_lifted() {
+    let (daemon, tmp) = support::start_daemon(None).await;
+    let agent = daemon
+        .client
+        .spawn(&spawn_req("w2", None))
+        .await
+        .expect("spawn");
+    support::wait_for_state(&daemon.client, &agent.id, AgentState::Idle).await;
+    let orch = daemon.external_client("orchestrator").await;
+    orch.restart(&RestartRequest::default())
+        .await
+        .expect("restart accepted");
+    let (workspace, repo) = (daemon.workspace.clone(), daemon.repo.clone());
+    daemon.running.join().await.expect("join");
+
+    // What `run` does when the exec returns: serve again from the same process.
+    let opts = bridle_daemon::ServeOptions {
+        repo,
+        workspace: Some(workspace.clone()),
+        project: None,
+        listen: Some("127.0.0.1:0".parse().expect("valid addr")),
+    };
+    let mut overrides = support::default_overrides();
+    overrides.bridle_home = Some(support::machine_home_dir(tmp.path()));
+    let running = bridle_daemon::start_after_failed_restart(opts, overrides, "exec /nope failed")
+        .await
+        .expect("serves again");
+    let token =
+        std::fs::read_to_string(workspace.join(".bridle/tokens/human")).expect("human token");
+    let client = bridle_api::Client::new(running.url.clone(), Some(token.trim().to_string()));
+
+    assert!(!client.status().await.expect("status").draining);
+    support::wait_for_agent(&client, &agent.id, |a| a.state.is_running()).await;
+    let events = client
+        .events(&bridle_api::types::EventQuery::default())
+        .await
+        .expect("events");
+    assert!(
+        events
+            .iter()
+            .any(|e| e.kind == bridle_api::types::event_kind::RESTART_FAILED),
+        "restart.failed recorded"
+    );
+
+    running.shutdown();
+    running.join().await.expect("join");
+}

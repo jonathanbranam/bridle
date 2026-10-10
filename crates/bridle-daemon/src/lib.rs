@@ -222,27 +222,43 @@ pub async fn run(opts: ServeOptions, take_over: bool) -> anyhow::Result<()> {
         Ok(p) => p,
         Err(reason) => return Err(roll_back(&ws, &reason)),
     };
-    let running = match start(opts, overrides).await {
+    let mut running = match start(opts.clone(), overrides.clone()).await {
         Ok(r) => r,
         Err(e) if pending => return Err(roll_back(&ws, &format!("{e:#}"))),
         Err(e) => return Err(e),
     };
-    let restart = running.restart_requested.clone();
-    running.join().await?;
-    if restart.load(std::sync::atomic::Ordering::SeqCst) {
-        // Same PID and terminal; only returns on failure. The agents are already stopped and
-        // daemon.json is gone, so a failed exec leaves a clean stop for the human to start by hand,
-        // unless an upgrade is pending, in which case the previous binary goes back first.
+    loop {
+        let restart = running.restart_requested.clone();
+        running.join().await?;
+        if !restart.load(std::sync::atomic::Ordering::SeqCst) {
+            return Ok(());
+        }
+        // Same PID and terminal; only returns on failure.
         let err = exec_self();
         if rollback::is_pending(&ws) {
+            // The agents are stopped and daemon.json is gone: put the previous binary back first.
             return Err(roll_back(
                 &ws,
                 &format!("exec of the new binary failed: {err}"),
             ));
         }
-        anyhow::bail!("restart: {err}");
+        // An unattended machine must not lose its daemon to a restart (fpde): serve again from
+        // this process.
+        running = start_after_failed_restart(opts.clone(), overrides.clone(), &err).await?;
     }
-    Ok(())
+}
+
+/// A restart's exec failed after the daemon had shut down. Starts it again in this process:
+/// `start` listens anew, resumes the agents the restart recorded and delivers the messages held
+/// meanwhile (they are in the store, and the drain flag is per process, so it is lifted). The
+/// error is logged, recorded as a `restart.failed` event and woken to the orchestrator.
+pub async fn start_after_failed_restart(
+    opts: ServeOptions,
+    overrides: Overrides,
+    error: &str,
+) -> anyhow::Result<RunningDaemon> {
+    tracing::error!(%error, "restart failed; serving again from the running process");
+    start_inner(opts, overrides, Some(error.to_string())).await
 }
 
 /// This binary's path, resolved once. On Linux `current_exe()` reads `/proc/self/exe`, which
@@ -431,6 +447,15 @@ async fn serve_listener(
 /// and background tasks are up. Does not block for shutdown; see
 /// [`RunningDaemon::join`].
 pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<RunningDaemon> {
+    start_inner(opts, overrides, None).await
+}
+
+/// [`start`]; `restart_error` is why the restart before this start could not exec.
+async fn start_inner(
+    opts: ServeOptions,
+    overrides: Overrides,
+    restart_error: Option<String>,
+) -> anyhow::Result<RunningDaemon> {
     // First, so a detached daemon ignores SIGHUP from the moment it runs.
     let signals = Signals::install().context("installing signal handlers")?;
     if !worktree::is_git_repo(&opts.repo).await {
@@ -717,6 +742,25 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
                 reason: "upgrade_failed".to_string(),
                 text: format!("upgrade: {text}"),
                 detail: serde_json::json!({"stage": "rolled_back"}),
+            })
+            .await;
+    }
+
+    if let Some(error) = restart_error {
+        let text = format!("restart failed ({error}); the daemon is still running the old binary");
+        let _ = emitter
+            .emit(
+                bridle_api::types::event_kind::RESTART_FAILED,
+                "system".to_string(),
+                None,
+                serde_json::json!({"error": error}),
+            )
+            .await;
+        wakes
+            .push(bridle_api::types::WakeReason {
+                reason: "restart_failed".to_string(),
+                text,
+                detail: serde_json::json!({"error": error}),
             })
             .await;
     }

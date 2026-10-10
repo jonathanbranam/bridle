@@ -242,7 +242,11 @@ restart flag and runs the ordinary shutdown sequence above (agents stop as `daem
 state branch is flushed and pushed, `daemon.json` removed). `run` then `exec`s the binary path resolved once at start-up (`exe_path()`: Linux's `<path> (deleted)` suffix, left after a reinstall, is stripped) with
 the same args (safe Rust, `CommandExt::exec`), so the PID and the terminal stay and Ctrl-C still
 works; the new process rebinds the same `listen` address and clients retry through the gap. If the
-exec fails the daemon stays cleanly stopped, as after `stop-daemon`.
+exec fails (and no upgrade is pending a rollback) the daemon does not exit: the shutdown has already
+closed the listener and stopped the agents, so `run` starts the daemon again in the same process
+(`start_after_failed_restart`). That start listens anew, resumes the agents the restart recorded,
+and starts with no drain, so the messages held meanwhile (kept in the store) are delivered. The error is
+logged, recorded as a `restart.failed` event and woken to the orchestrator (`restart_failed`).
 
 A spawn already in flight when the drain begins has its first prompt held like any message, so no
 turn starts; the spawn then returns at once rather than waiting out its 8 s readiness wait, and the
