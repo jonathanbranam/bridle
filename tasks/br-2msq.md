@@ -4,9 +4,10 @@ title = "bridle send --project to a local daemon needs a peer token, and --url c
 kind = "bug"
 state = "planned"
 created_at = "2026-10-10T02:31:14.507Z"
-updated_at = "2026-10-10T02:59:43.823766Z"
+updated_at = "2026-10-10T21:46:40.340305Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
+summary = "send --project <p> now goes straight to p's daemon when it is in this machine's registry and $BRIDLE_AS holds a credential for p (discovery::direct_local_access), else the outbox as before; resolve_endpoint with --url keeps --project so it names the token. Tests in bridle-api discovery; docs cli.md, principals.md, CHANGELOG updated. Merged main after the check (docs-only change in main)."
 ticket = "2msq"
 +++
 
@@ -19,3 +20,6 @@ advisor (product-manager): placed: epic machine-setup (project setup across daem
 
 ### note · external:advisor/product-manager · 2026-10-10T02:59:22.334Z
 advisor (product-manager): readied. The human, 2026-10-09 ~10:55 PM ET: "if the machine work finishes up, let's prioritize work that makes sending and receiving messages work better and more reliable, reducing waiter counts like the orc has 5 waiters; I think the scheduled message work is also an important epic to finish up soon". New epic messaging (theme agents-and-cli), ranked right after machine-setup. Order: br-2msq, br-n7cg, br-rhba, br-ysmu, br-cufw.
+
+### note · agent:w2msq · 2026-10-10T21:46:40.340Z
+done: send --project direct with local token, --url+--project; just check exit 0, 1465 tests; check ran on pre-merge commit, main merge was docs-only; f4d841729537d91b0efc811b442b72d316ffa37e
