@@ -18,8 +18,8 @@ use crate::types::{
     Interaction, InteractionsQuery, InterruptRequest, InterruptResponse, LandRequest, LandResult,
     MaxWorkersRequest, Message, MessageQuery, NewEdgeRequest, NewTaskRequest, NoteTaskRequest,
     OpenQuestion, OrchestratorWakeQuery, OutboxSendRequest, PeerTokenCreateRequest, PortAllocation,
-    PrincipalWakeQuery, PrincipalWakeResponse, ProbeRequest, ProbeResult, Queue, Queued,
-    RateLimitPoint, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest,
+    PrincipalWakeQuery, PrincipalWakeResponse, ProbeRequest, ProbeResult, PushResult, Queue,
+    Queued, RateLimitPoint, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest,
     RestartRequest, RestartResponse, ResumeRequest, ReviewAddRequest, ReviewAddResponse,
     ReviewNowRequest, ReviewNowResponse, Schedule, ScheduleAddRequest, ScheduleListQuery,
     SendRequest, SessionEnd, SessionInfo, SessionKeep, SessionRegister, SetImpactRequest,
@@ -769,6 +769,11 @@ impl Client {
 
     pub async fn land_task(&self, id: &str, req: &LandRequest) -> Result<LandResult, ClientError> {
         self.post_json(&["v1", "tasks", id, "land"], req).await
+    }
+
+    pub async fn push(&self) -> Result<PushResult, ClientError> {
+        self.post_json(&["v1", "push"], &serde_json::json!({}))
+            .await
     }
 
     pub async fn probe(&self, req: &ProbeRequest) -> Result<ProbeResult, ClientError> {

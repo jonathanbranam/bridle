@@ -157,6 +157,9 @@ pub enum Command {
     /// Merge a task's branch into the integration branch after the check passes.
     #[command(hide = true)]
     Land(LandArgs),
+    /// Push the integration branch to origin (human, orchestrator, managers). A rejected push is
+    /// recorded as a `push.failed` event and messaged to the orchestrator and the human; exits 1.
+    Push,
     /// Conflicts opened by `impact check`: list and resolve
     /// (docs/design/impact-and-conflicts.md).
     #[command(hide = true)]

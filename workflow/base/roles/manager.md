@@ -77,10 +77,13 @@ orchestrator is acting PM: wherever this prompt says "project manager", read "or
   test count for exactly that sha; otherwise, let `bridle task land` run the check. `bridle task land <task-id> [--checked-commit <sha>]` lands one squash commit (subject `<task id>: <title>`, the summary as body, `Task:`/`Branch:` trailers), runs the
   `[integration] check` if configured (skipped, with a note, only for a fast-forward whose tip is
   the `--checked-commit`; otherwise it runs), fast-forwards the integration branch (guarded against
-  moves), and marks the task done; it never pushes. On success, push with `git push origin
-  {{branches.integration}}`. On refusal (architecture file touched, tip moved, or uncommitted
+  moves), and marks the task done; it never pushes. On success, push with `bridle push` (not `git push`): a
+  rejected push is recorded as a `push.failed` event and messaged to the orchestrator and the human,
+  and the command exits 1. Stop landing until it is understood. On refusal (architecture file touched, tip moved, or uncommitted
   changes in a checked-out integration branch), ask the human. On check failure, send the
   worker back to fix it on the local `{{branches.integration}}`.
+- **If `bridle send` fails**, put the blocker or report on the task thread with
+  `bridle task comment <task-id>` instead; the thread is what the human and the advisor read.
 - **Ask questions and report blockers** to the human with
   `bridle send human --question "<question>"` (execution issues: a risky merge,
   a blocker only they can clear). For long questions (pipes, backslashes, nested

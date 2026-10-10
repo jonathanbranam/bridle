@@ -138,6 +138,7 @@ const CLASSES: &[(&str, Kind, &str)] = &[
     ),
     ("task", Daemon, ""),
     ("probe", Daemon, ""),
+    ("push", Daemon, ""),
     ("port", Daemon, ""),
     ("queue", Daemon, ""),
     ("report", Daemon, ""),

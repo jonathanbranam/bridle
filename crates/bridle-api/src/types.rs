@@ -1023,6 +1023,9 @@ pub mod event_kind {
     /// data: {sha, conclusion, url}. Every GitHub Actions run for the
     /// integration branch's new tip has finished (`[ci] github`).
     pub const CI_COMPLETED: &str = "ci.completed";
+    /// data: {project, branch, error}. `bridle push` was rejected (or git failed): `error` is
+    /// git's first stderr line. The orchestrator and the human are messaged too (ticket 8umh).
+    pub const PUSH_FAILED: &str = "push.failed";
     /// data: {free_bytes, total_bytes, target_bytes, worktrees_bytes, data_bytes}. The
     /// periodic disk usage reading (`[disk]`).
     pub const DISK_CHECKED: &str = "disk.checked";
@@ -2139,6 +2142,12 @@ pub struct DoneTaskRequest {
     /// For an incident: how it ended, recorded in its thread and sent in the "resolved" note.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub resolution: Option<String>,
+}
+
+/// `POST /v1/push` result: the integration branch was pushed to origin.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PushResult {
+    pub branch: String,
 }
 
 /// `POST /v1/tasks/{id}/land`: the integrator merges the task's branch, checks it, and marks

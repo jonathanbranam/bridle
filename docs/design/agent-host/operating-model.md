@@ -231,8 +231,10 @@ the clone:
    task's claimant, or `--branch`. The integration branch reads as one commit per task (sq4m, tr7k); the
    `Branch:` trailer is how the landed branch is recognised as merged, unless the branch has commits
    newer than the landing (a reused branch), which stay unmerged (x3xk).
-4. `git push origin <integration>`, straight after the merge, so the remote
-   never lags the clone. Only the owner's clone can push it (8z7j): a `pre-push` hook that
+4. `bridle push` (human, orchestrator and managers; it runs `git push origin <integration>` in the clone), straight after the merge, so the remote
+   never lags the clone. A rejected push is a `push.failed` event (project, branch, git's first
+   stderr line) and a message to the orchestrator and the human, and the command exits 1, so it never
+   depends on the pusher's own report (8umh). Only the owner's clone can push it (8z7j): a `pre-push` hook that
    `serve` and `bridle sync` install in each clone runs `bridle machine push-check`, which compares
    this machine with `owner.toml` on `bridle/state` (a fresh fetch of origin's, else the local
    branch; no readable owner refuses) and refuses with the owner's name and `bridle serve

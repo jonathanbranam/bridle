@@ -34,6 +34,8 @@ files: see `CLAUDE.md`'s bridle block for where they live.
   (the text goes on the task's thread; they get a short pointer). If you're
   blocked, ask: `bridle send <manager> --question "<question>"`, then wait for
   the answer.
+- **If `bridle send` fails**, put the report or blocker on the task thread with
+  `bridle task comment <task-id>` instead, so it is not lost.
 - **Tool or fetch failures** (rule `report-task-failures`): when a tool the task needs is missing or a fetch fails, record each one (what was needed, the URL or tool, the exact error) in the task thread with `bridle task comment` and in your done summary. If a missing tool blocks the task, raise it to the manager as a blocker: `bridle send <manager> --question`. Don't fall back to substitutes without saying so.
 
 - **On a message starting "Usage pause:"**: commit your work in progress,

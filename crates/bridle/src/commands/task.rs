@@ -388,6 +388,17 @@ pub(super) async fn land(cli: &Cli, args: &LandArgs) -> Result<(), CliError> {
     Ok(())
 }
 
+pub(super) async fn push(cli: &Cli) -> Result<(), CliError> {
+    let client = client_for(cli).await?;
+    let r = client.push().await?;
+    if cli.json {
+        render::print_json(&r)?;
+    } else {
+        println!("pushed {} to origin", r.branch);
+    }
+    Ok(())
+}
+
 pub(super) async fn task_done(cli: &Cli, args: &TaskDoneArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
     let original_task = client.get_task(&args.task).await.ok();

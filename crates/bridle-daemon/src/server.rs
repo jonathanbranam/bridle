@@ -160,6 +160,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/tasks/{id}/drop", post(drop_task))
         .route("/v1/tasks/{id}/done", post(done_task))
         .route("/v1/tasks/{id}/land", post(land_task))
+        .route("/v1/push", post(push_integration))
         .route("/v1/tasks/{id}/summary", post(set_summary))
         .route("/v1/tasks/{id}/priority", post(set_priority))
         .route("/v1/tasks/{id}/kind", post(set_kind))
@@ -2931,6 +2932,93 @@ async fn done_task(
     }
     emit_state_change(&state, principal.id, &task, from).await;
     Ok(Json(task))
+}
+
+/// `bridle push`: `git push origin <integration>` in the project clone. A rejected push is
+/// recorded (`push.failed`) and sent to the orchestrator and the human, so it never depends on
+/// the pushing agent's own report (ticket 8umh).
+async fn push_integration(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+) -> Result<Json<bridle_api::types::PushResult>, ApiError> {
+    let allowed = match principal.kind {
+        PrincipalKind::Human => true,
+        PrincipalKind::Agent => {
+            let name = principal.id.strip_prefix("agent:").unwrap_or(&principal.id);
+            state
+                .store
+                .get_agent(name)
+                .await?
+                .map(|a| a.role)
+                .as_deref()
+                == Some("manager")
+        }
+        _ => principal.id == crate::wake::ORCHESTRATOR,
+    };
+    if !allowed {
+        return Err(ApiError::forbidden(
+            "only the human, the orchestrator and managers can push",
+        ));
+    }
+    let out = tokio::process::Command::new("git")
+        .arg("-C")
+        .arg(&state.workspace.repo)
+        .args(["push", "origin", &state.integration])
+        .output()
+        .await
+        .map_err(|e| {
+            ApiError::new(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "push_failed",
+                format!("running git push: {e}"),
+            )
+        })?;
+    if out.status.success() {
+        return Ok(Json(bridle_api::types::PushResult {
+            branch: state.integration.clone(),
+        }));
+    }
+    let stderr = String::from_utf8_lossy(&out.stderr);
+    let first = stderr
+        .lines()
+        .find(|l| !l.trim().is_empty())
+        .unwrap_or("git push failed")
+        .to_string();
+    let _ = state
+        .emitter
+        .emit(
+            event_kind::PUSH_FAILED,
+            principal.id.clone(),
+            None,
+            serde_json::json!({"project": state.project, "branch": state.integration, "error": first}),
+        )
+        .await;
+    let body = format!(
+        "Push of {} to origin failed ({}): {first}. The landing is on the local branch only; \
+         find out why before landing more.",
+        state.integration, state.project
+    );
+    for to in [
+        ToTarget::Human,
+        ToTarget::External(crate::wake::ORCHESTRATOR.to_string()),
+    ] {
+        let _ = state
+            .manager
+            .send(
+                "system".to_string(),
+                to,
+                MessageKind::Note,
+                body.clone(),
+                When::Now,
+                None,
+            )
+            .await;
+    }
+    Err(ApiError::new(
+        StatusCode::CONFLICT,
+        "push_failed",
+        format!("git push origin {}: {first}", state.integration),
+    ))
 }
 
 /// `bridle land`: merge the task's branch in the integration worktree, check it, move the

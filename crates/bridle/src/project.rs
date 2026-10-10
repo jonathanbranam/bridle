@@ -119,6 +119,7 @@ mod tests {
         ("impact", Daemon),
         ("probe", Daemon),
         ("land", Daemon),
+        ("push", Daemon),
         ("conflict", Daemon),
         ("port", Daemon),
         ("dep", Daemon),
