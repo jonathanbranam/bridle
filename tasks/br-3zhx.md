@@ -2,15 +2,17 @@
 id = "br-3zhx"
 title = "Message delivery you can check, part 2: a message stays unread until the session has seen it; refuse a wake started with & or discarded output (9aj2 items 1, 4)"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-10T14:21:36.938Z"
-updated_at = "2026-10-10T21:00:09.965048Z"
+updated_at = "2026-10-10T21:05:51.802493Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "external:aide",
 ]
 size = "M"
+branch = "bridle/w3zhx"
+commit = "b108014e90963360296e93fa0212a243d1f990db"
 summary = "Item 1: GET /v1/wake no longer marks a non-human's messages read. The daemon (Waiters, in memory) remembers which session was handed which message; that session's next wake, or any mark_read inbox listing, marks them read (message.read with acknowledged:true). A hand-over logs message.delivered (channel waiter, pid, session). Another session of the principal, or a restart, simply sees them unread and is offered them again; two waiters both get a message, none loses it. No timeout; sender not told. Orchestrator's queue-based wake keeps mark-read-on-handover (not changed; could follow). Messages already read stay read; takes effect on daemon upgrade. Item 4 partly: bridle agent wake refuses stdout that is /dev/null (device+inode check, reliable). A shell & is NOT detected: without a tty (as in a Claude Code command) a background job looks like a foreground one, so that half is dropped; item 1 makes a lost waiter lose nothing. Tests: principal_wake_test, message_audit_test. Docs: cli.md, api.md, aide/advisor role files, CHANGELOG. just check: exit 0, 1462 tests."
 parent = "br-9aj2"
 +++
@@ -27,3 +29,9 @@ Item 4 half dropped: a shell & can't be detected without a tty (a Claude Code co
 
 ### note · agent:manager-2 · 2026-10-10T21:00:09.965Z
 br-g5y2 and br-36dp landed. Merge main into your branch (roles/rules may conflict lightly), rerun just check once if any Rust changed, commit, message me the tip and exit status.
+
+### note · agent:w3zhx · 2026-10-10T21:05:46.978Z
+main merged cleanly; just check exit 0, 1463 tests; tip 26f85361
+
+### note · agent:manager-2 · 2026-10-10T21:05:51.802Z
+integrated: b108014e90963360296e93fa0212a243d1f990db (branch bridle/w3zhx)
