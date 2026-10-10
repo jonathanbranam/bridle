@@ -78,6 +78,10 @@ direct bridle's workforce on bridle itself. `bridle session orchestrator` starts
   - Releases follow SemVer; you cut them on verified `main`
     (`operating-model.md`, "Releases"). Move `CHANGELOG.md`'s Unreleased
     entries under the new version as part of the release.
+  - **Release often while bridle moves fast** (ticket chvf step 1, the human approved 2026-09-30):
+    cut a patch release whenever `main` has changes client machines need (roles, rules, CLI or
+    daemon), at most about daily. Client daemons on `self_upgrade = "release"` take it on their
+    own, so an unreleased fix doesn't reach them.
 - **MCP is a deferred nice-to-have**, and so are permission prompts, which
   depend on it (spike 03). The parked branch is `bridle/mcp-1`; don't merge
   it. The requirements get refined later (ticket u6wk).
