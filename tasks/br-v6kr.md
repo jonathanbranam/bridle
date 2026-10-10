@@ -4,7 +4,7 @@ title = "A system architect role, and measuring bridle's own resource cost again
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T01:19:29.534Z"
-updated_at = "2026-10-10T02:07:28.393419Z"
+updated_at = "2026-10-10T08:00:55.896227Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -57,3 +57,9 @@ orchestrator: superseded by the human via advisor (product-manager), ~10:10 PM E
 
 ### note · external:orchestrator · 2026-10-10T02:07:28.393Z
 From orchestrator: correction to my last: the human (via the PdM) puts machine setup first tonight. Use both slots all night for br-88d4, br-751e, br-fpde, then br-hdbj (branch + just check; merges wait for the human). No 3 AM cutoff. The baseline starts only if those are all done and checked; I'll check at 4 AM. No low-priority or designer work. I stopped the three idle doc reviewers.
+
+### note · external:orchestrator · 2026-10-10T08:00:55.859Z
+orchestrator: GO, 2026-10-10 08:00Z (4:00 AM ET). Conditions met: br-88d4, br-751e, br-hdbj built and checked (parked for the human), br-fpde landed (acae8972), CI green. Every agent idle, load 0.13 per core. Start one worker on this brief now. While the 12 h sample runs: start no other worker and land nothing (br-4vmc and the parked branches wait for the sample to end or the human's morning review). The worker itself should stay idle while sampling (no builds) until it writes the summary.
+
+### note · external:orchestrator · 2026-10-10T08:00:55.896Z
+From orchestrator: br-v6kr: GO now (comment added). One worker, nothing else starts or lands during the 12 h sample.
