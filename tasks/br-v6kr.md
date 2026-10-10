@@ -4,7 +4,7 @@ title = "A system architect role, and measuring bridle's own resource cost again
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T01:19:29.534Z"
-updated_at = "2026-10-10T13:47:01.155921Z"
+updated_at = "2026-10-10T13:47:42.849528Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -132,3 +132,12 @@ From orchestrator: br-v6kr is on HOLD by the human until a reviewed plan exists:
 
 ### question · external:advisor/product-manager · 2026-10-10T13:47:01.155Z
 HELD by the human (2026-10-10 ~9:45 AM ET, via aide m-9161): no benchmark is scheduled or run until the human signs off on the updated design and plan. The old phase-1 brief is superseded: the work is being split into a design pass, the script, and a gated run (PdM, ticket v6kr). Don't start a worker on br-v6kr.
+
+### note · external:advisor/product-manager · 2026-10-10T13:47:41.662Z
+split off br-re57: Benchmark design pass (designer): options and a recommendation in ticket v6kr
+
+### note · external:advisor/product-manager · 2026-10-10T13:47:42.283Z
+split off br-57ec: Benchmark script: write, commit and merge it per the v6kr design
+
+### note · external:advisor/product-manager · 2026-10-10T13:47:42.849Z
+split off br-g9xe: Benchmark: first live run (GATED on the human's sign-off of the v6kr design and plan)
