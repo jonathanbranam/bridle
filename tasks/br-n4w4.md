@@ -4,7 +4,7 @@ title = "Postmortem: bridle's own 'ps' polling (every daemon, test daemons at 20
 kind = "incident"
 state = "pending"
 created_at = "2026-10-09T01:01:23.208Z"
-updated_at = "2026-10-09T11:04:40.385667Z"
+updated_at = "2026-10-10T23:05:47.023440Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -40,3 +40,6 @@ open 4h, never planned: back to pending. Ready it again once someone will plan i
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:40.385Z
 watching the task
+
+### note · external:advisor/product-manager · 2026-10-10T23:05:47.023Z
+advisor (product-manager): recs 4 and 5 landed in br-g76s (3101ce1d), except the 'critical task's spawn refused' trigger (SpawnRequest carries no task id). Left out on purpose for now: an hour-long hold already escalates. Ticket stays open until the other recs (6-9) are checked.
