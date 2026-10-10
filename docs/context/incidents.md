@@ -19,10 +19,45 @@ Newest first. Times are UTC. Each entry has:
 - **Cause:** the root cause, or "unknown".
 - **Category:** one or more of `connectivity`, `host` (OS, machine, power), `daemon`, `ci`,
   `merge`, `coordination` (work stuck or dropped between roles), `role` (a role or prompt did
-  the wrong thing), `config`, `external` (Claude Code, GitHub, network), `human-process`.
+  the wrong thing), `config`, `external` (Claude Code, GitHub, network), `human-process`,
+  `messaging` (a message lost, late, misrouted or unseen; a wait that missed one; added
+  2026-10-10 at the human's ask, and back-filled).
 - **Follow-up:** the ticket or task, or "none" and why.
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
+
+## 2026-10-10 14:36: a named advisor's restart stranded its unread mail, the human's request included
+
+- **What happened:** the NUC's notes advisor relayed a request from the human to the PdM
+  (`bridle send --project bridle --question external:advisor/product-manager ...`; NUC outbox
+  o-0010, here m-9300) and told the human "It worked: ... delivered as o-0010". It arrived at
+  14:36:53.611Z, while the PdM's session (pid 57549) was restarting at 200k: the handover h-0097
+  was written at 14:36:52.9Z and `session.ended` fired at 14:36:53.820Z. On session end the
+  daemon moves a named advisor's unread mail to the shared `external:advisor` inbox, marked
+  "(originally for advisor/product-manager)". The new PdM session reads only its own inbox, and no
+  main advisor is running, so nobody saw it. Found when the human asked the PdM ~10:40 AM ET
+  whether the message had come; the PdM found it by the `message.sent` event and in the database.
+  Six messages to the PdM were stranded this way, all still unread: m-8455 (2026-10-09 21:37Z, a
+  br-3mz4 update), m-8951 and m-9299 (restart handover prompts, harmless), m-9291 and m-9297
+  (br-ygkc updates, 14:36Z, arrived while the old session was writing its handover), and m-9300.
+- **Impact:** the human's request (agents say one set phrase, "Listening." or "Waiting.", on an
+  empty wake) went unseen until the human asked; the sender believed it delivered. Three task
+  updates were missed (the PdM caught up from the tasks). Trust: message delivery is the human's
+  top concern today. It happens on every advisor restart: any mail arriving between the last wake
+  and the session's end is stranded.
+- **Cause:** (1) the design (jttf, 2026-10-01; `Sessions::emit_ended` and the send-time fallback
+  in `server.rs`): mail to a named advisor that isn't running, or unread when it ends, goes to the
+  shared `external:advisor` inbox. (2) The human asked on 2026-10-03/04 for it to stay in the named
+  inbox ("it's important they're not lost. They should probably just stay where they are"), but
+  that went into gtzx (seats, P4), which has waited for the human's review since 2026-10-04, so
+  the old behaviour is still built. (3) The shared inbox has no reader: no main advisor runs, and
+  the named session's `inbox` and wake don't show it. (4) "delivered" from the outbox means
+  reached the other daemon, not seen. Same cause as gtzx's 2026-10-03/04 incidents (briefs taken
+  by the main advisor, doc-review's mail after a self-upgrade).
+- **Category:** `messaging`, `daemon`.
+- **Follow-up:** [[a-named-advisor-s-unread-mail-stays-in-its-own-inbox-when-it-hwek|hwek]]
+  (br-hwek: gtzx P4's mail half, pulled forward, in the messaging epic); the stranded messages
+  are recovered by hwek. Related: 9aj2 / br-3zhx (unread until acknowledged), k8jn.
 
 ## 2026-10-10 11:25: a landing deleted the baseline sampler's work
 
@@ -149,7 +184,7 @@ Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or los
   human had no answer.
 - **Cause:** the orchestrator handed the items over as "held" across a handover instead of
   replying with that status; the new session didn't check for unanswered messages from aides.
-- **Category:** `coordination`.
+- **Category:** `messaging`, `coordination`.
 - **Follow-up:** replied (m-7733); kqsp and 5zrr sent to bridle-ui's manager-2 for planning.
 
 ## 2026-10-09 11:14: a worker reported a fix done that its commit didn't contain
@@ -208,7 +243,7 @@ Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or los
 - **Cause:** the orchestrator assumed an upgrade restart changes the pid. It doesn't. `started_at`
   changes. A waiter that exits 6 ("daemon restarting") just needs re-arming in a loop until it stops
   exiting 6.
-- **Category:** `role`
+- **Category:** `messaging`, `role`
 - **Follow-up:** none; the lesson is in the handover note.
 
 ## 2026-10-08 14:37-22:46: the gateway ran as the orchestrator and saw every project unreachable
@@ -252,7 +287,7 @@ Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or los
   orchestrator only by hand; the orchestrator was blind on every daemon not yet upgraded.
 - **Cause:** the commit kept the old route on the daemon but stopped the CLI using it; mixed
   versions (other projects, other machines) weren't considered.
-- **Category:** `daemon`, `merge`.
+- **Category:** `messaging`, `daemon`, `merge`.
 - **Follow-up:** br-grdg (CLI falls back to `/v1/orchestrator/wake`). Workaround: call the old
   route directly.
 
@@ -409,7 +444,7 @@ Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or los
   project's aide (or every advisor) on the machine. Each kill lines up to the second with one of these
   `pkill`s in the transcripts. It breaks `no-kill-by-name` (fx7x), which interactive roles didn't
   reliably get.
-- **Category:** `role`, `coordination`.
+- **Category:** `messaging`, `role`, `coordination`.
 - **Follow-up:** [[wake-waiters-in-interactive-sessions-die-with-exit-144-in-pa-h3ar|h3ar]]:
   interactive roles follow no-kill-by-name, a new wait takes over the old one, and every
   interactive session is warned when it has no waiter.
@@ -722,7 +757,7 @@ Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or los
   tells the session "No tool calls except the one the human asked for", and the orchestrator
   role says to obey it, so restarting its own wait looks forbidden. The advisor did the same that
   night, skipping its wait restart under the gate.
-- **Category:** `role`, `coordination`.
+- **Category:** `messaging`, `role`, `coordination`.
 - **Follow-up:** the human's rule (the orchestrator never sleeps without a wait, and checks the
   system at least every two hours) sent to the orchestrator for its role and the gate text;
   [[scheduled-messages-an-agent-or-the-human-schedules-a-message-hrcn|hrcn]] (scheduled messages,
@@ -773,7 +808,7 @@ Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or los
   output is misleading: a restart reads as a timeout, so a caller can't tell them apart.
 - **Cause:** on shutdown the wait ends as if the timeout had passed (the daemon answers empty, or
   the CLI reads a closed connection as one). Not verified which.
-- **Category:** `daemon`.
+- **Category:** `messaging`, `daemon`.
 - **Follow-up:** none yet; candidate: report "daemon restarting" with its own exit code, or have the
   CLI reconnect and keep waiting until the original deadline.
 
@@ -921,7 +956,7 @@ Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or los
 - **Impact:** days of delay on track-web's questions; its work still moved because filing a
   task notifies the manager directly.
 - **Cause:** a waiter watches one daemon, and the role didn't say to run one per project.
-- **Category:** `coordination`, `role`.
+- **Category:** `messaging`, `coordination`, `role`.
 - **Follow-up:** role: one waiter per project (7b22c1e);
   [[one-watcher-for-every-project-bridle-agent-wake-all-projects-cy2v|cy2v]]; advisors mark
   read (br-c877).
@@ -1017,7 +1052,7 @@ Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or los
   one session.
 - **Impact:** missed or duplicate wakes, and turns spent on "nothing".
 - **Cause:** a session-side polling loop with hand-set timeouts, restarted by the model.
-- **Category:** `role`, `external`.
+- **Category:** `messaging`, `role`, `external`.
 - **Follow-up:** [[a-calmer-orchestrator-wake-loop-v9t9|v9t9]] (restart the waiter first, run
   with `timeout: 7200000`); [[advisor-wake-waits-about-90-minutes-not-5-789x|789x]];
   [[should-the-orchestrator-wake-when-every-agent-is-idle-a-heal-aqtg|aqtg]].
@@ -1039,7 +1074,7 @@ Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or los
 - **Impact:** a large, costly context; a handover only by the agent noticing itself.
 - **Cause:** not confirmed: supervision off for the project, a split `BRIDLE_HOME`, or an old
   binary on the NUC.
-- **Category:** `daemon`, `config`.
+- **Category:** `messaging`, `daemon`, `config`.
 - **Follow-up:** [[context-wakes-never-reach-the-orchestrator-on-a-client-machi-jf9u|jf9u]]
   (br-6b8a, parked).
 
@@ -1552,7 +1587,7 @@ battery fell from 99% to 70% in 27 minutes (about 1.1% a minute) with two worker
   permission layer whenever the body contained a backtick, though safely quoted.
 - **Impact:** a blocked message mid-run, with no obvious reason.
 - **Cause:** the permission classifier flags backticks in Bash arguments whatever the quoting.
-- **Category:** `external`.
+- **Category:** `messaging`, `external`.
 - **Follow-up:** [[backtick-in-bridle-send-body-denied-by-permissions-tk3m|tk3m]] (`--text-file -`).
 
 ## 2026-09-27: stopping agents took minutes, and shutdown panicked

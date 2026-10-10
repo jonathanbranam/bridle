@@ -263,3 +263,11 @@ Background running (r9vh) after this, as the human asked.
   named seat, and the shared inbox goes away.
 - **Q4. Do named roles also need their own tokens**, so the name is proof rather than a label
   ([[how-strong-agent-provenance-should-be-2bzw|2bzw]])? The advisor's view: not for this build.
+
+## 2026-10-10: P4's mail half pulled forward
+
+After another lost message (incident 2026-10-10 14:36 in `docs/context/incidents.md`), the human,
+~10:45 AM ET: "it's part of the whole seats review. Fine. That makes sense, but this needs to be
+handled more quickly." P4's mail half (a named advisor's mail stays in its own inbox, at send and
+at session end) is now [[a-named-advisor-s-unread-mail-stays-in-its-own-inbox-when-it-hwek|hwek]],
+built ahead of this review. The rest of P4 (seats, priming) stays here.
