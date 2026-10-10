@@ -34,3 +34,12 @@ Wanted: the test passes reliably under the load that bridle's own workers create
 checks at once), without weakening what it checks: make its timing depend on events, not wall
 clock, or give it a deadline scaled to the load, as br-6nzj and br-8ff8 did for theirs. Find why
 a loaded machine needs more than 70 s first.
+
+## Resolution
+
+br-n96z landed 2026-10-10 (05b5d2ec). The cause wasn't load: the test's agent ran `SLEEP 3`, and if
+that turn ended before the governor's check saw 90% usage, the agent was idle, and wind-down stops
+idle agents at once without notice, so `Usage pause:` never came (it timed out even on a quiet
+machine). The test now holds the turn open and ends it with an interrupt after the notice. Nothing
+was weakened and no timeout changed. 20/20 alone, 10/10 under 12 busy loops. The other two
+load-sensitive tests (cli_e2e sigint, events_stream shutdown) are a different kind: ticket bcw6.
