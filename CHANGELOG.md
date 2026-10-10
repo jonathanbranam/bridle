@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- `scripts/install-release.sh [tag]` installs bridle from a GitHub release with no clone: it downloads this platform's tarball, checks it against `SHA256SUMS`, and puts `bridle` in `~/.local/bin`. The add-a-machine and WSL2 guides use it and set `self_upgrade = "release"` (fv86).
+
 ### Fixed
 
 - A named advisor's unread mail stays in its own inbox when its session ends or restarts, and mail sent to a named advisor that isn't running waits there (the sender is told); mail the old move stranded in the shared `external:advisor` inbox goes back to the named inbox when that session next starts (hwek).

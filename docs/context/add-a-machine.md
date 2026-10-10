@@ -20,9 +20,36 @@ Before step 1, the machine needs its OS side done:
   including `just install`, then come back here at step 1. (Tailscale, linger and SSH are in
   that guide.)
 - **Linux (like the NUC):** [[docs/context/nuc-host|the NUC host]], "How it's reached": Tailscale,
-  SSH, `gh`, Node, Claude Code. Build and install bridle with `just install` in a clone.
-- **macOS:** build with `just install`, and run `just sign-setup` once (see `CLAUDE.md`, "Build
-  configuration").
+  SSH, `gh`, Node, Claude Code. Install bridle with the release script below.
+- **macOS:** install with the release script below (macOS note after it).
+
+Install bridle from a release, with no clone and no Rust toolchain (needs `curl`, `tar` and
+`shasum` or `sha256sum`):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/jonathanbranam/bridle/main/scripts/install-release.sh | bash
+# or a named release: ... | bash -s v0.6.0
+```
+
+It downloads `bridle-<tag>-<target>.tar.gz` and `SHA256SUMS` from the GitHub release, refuses
+to install on a checksum mismatch, puts `bridle` in `~/.local/bin` (say if that is not on your
+PATH) and prints the next step. Then make the daemon keep itself current: in
+`~/.bridle/config.toml` set
+
+```toml
+[daemon]
+self_upgrade = "release"
+```
+
+(`docs/design/agent-host/daemon.md`, "Release upgrade"; it also keeps the base workflow at the
+binary's tag.) A machine that builds from a clone uses `just install` instead and leaves
+`self_upgrade` alone.
+
+On macOS, a downloaded release binary is ad-hoc signed by the build, and the signature is a new
+identity for each release, so the application firewall asks "Allow incoming connections?" again
+after each self-upgrade; click Allow (or run `just sign-setup` from a clone once and
+`bridle sign binary` on the installed file, which gives it the stable local identity; the next
+self-upgrade replaces the file and loses it). Nothing else is needed for it to run.
 
 `bridle --version` and `tailscale status` must both work before you go on. The machines reach each
 other by the host name in `[machines]` (a Tailscale MagicDNS name); `ping <host>` from each other
@@ -270,7 +297,9 @@ Both take `--force` to overwrite an existing file. `bridle mail uninstall` and
 `bridle launchd uninstall` exist; `bridle systemd uninstall` does not yet (br-xrkh).
 
 **Check with `bridle doctor`** in the project's clone. Green is every line a pass (or a
-deliberate warning) and exit status 0:
+deliberate warning) and exit status 0. It reads only the project's clone and `~/.bridle/config.toml`,
+so a machine with no bridle clone needs nothing more for it (not yet run on a machine installed
+this way; if it prints a failure, that is a bug to file):
 
 ```bash
 cd ~/work/P-workspace/P && bridle doctor        # exit 0; --strict also fails on warnings

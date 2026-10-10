@@ -235,17 +235,18 @@ curl -fsSL https://claude.ai/install.sh | bash     # unverified
 claude --version
 ```
 
-Then clone bridle and install it (the clone is the project's home on this host, as on the NUC):
+Then install bridle from a release (no clone, no Rust toolchain):
 
 ```bash
-git clone <bridle-repo-url> ~/src/bridle
-cd ~/src/bridle
-just install
+curl -fsSL https://raw.githubusercontent.com/jonathanbranam/bridle/main/scripts/install-release.sh | bash
+export PATH="$HOME/.local/bin:$PATH"   # if the script said ~/.local/bin is not on PATH; add it to ~/.profile too
 bridle --version
+mkdir -p ~/.bridle && printf '[daemon]\nself_upgrade = "release"\n' >> ~/.bridle/config.toml
 ```
 
-`just install` runs `cargo install --path crates/bridle --locked` and, on a Mac, re-signs the binary
-(the signing step is a no-op on Linux). Unverified: `just install` on Linux.
+The last line makes the daemon keep itself current from releases; if `~/.bridle/config.toml`
+already has a `[daemon]` table, add the key there instead. Unverified: the script on WSL2 (it
+is tested on a local fixture release only).
 
 Then the daemon's units (this step is **to be verified under WSL's systemd**; the audit task
 br-4yc8 will report whether `bridle systemd install` works here):

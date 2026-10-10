@@ -128,6 +128,12 @@ GitHub release for the tag (creating it if missing):
 Running the workflow by hand (`workflow_dispatch`) builds the tarballs and uploads them as
 workflow artifacts without publishing. `scripts/package-release.sh` does the packaging.
 
+`scripts/install-release.sh [tag]` is the first install on a machine with no clone: it downloads
+the tarball for this platform and `SHA256SUMS` (default the newest release), refuses on a checksum
+mismatch, and installs `bridle` in `~/.local/bin`. It takes the names from the scheme above.
+`just install-script-test` runs it against a local fixture release (part of `just check`). The
+steps after it are in `docs/context/add-a-machine.md`.
+
 ## Reading order
 
 1. [[docs/proposal/problem|The problem]], [[docs/proposal/decisions|decisions]],

@@ -3,7 +3,7 @@ default:
     @just --list
 
 # Format, lint, test: what CI runs.
-check: fmt-check lint specs-check bench-test test
+check: fmt-check lint specs-check bench-test install-script-test test
 
 fmt:
     cargo fmt --all
@@ -20,6 +20,10 @@ specs-check:
 # The benchmark sampler's unit tests (python3 stdlib; never samples).
 bench-test:
     python3 -I scripts/bench/test_passive_sample.py
+
+# install-release.sh against a local fixture release: installs, and rejects a bad checksum.
+install-script-test:
+    scripts/test-install-release.sh
 
 lint:
     cargo clippy --workspace --all-targets -- -D warnings
