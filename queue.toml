@@ -2,19 +2,16 @@
 tasks = ["br-88d4"]
 
 [[tier]]
-tasks = ["br-fpde"]
-
-[[tier]]
 tasks = ["br-751e"]
 
 [[tier]]
 tasks = ["br-hdbj"]
 
 [[tier]]
-tasks = [
-    "br-4vmc",
-    "br-n96z",
-]
+tasks = ["br-n96z"]
+
+[[tier]]
+tasks = ["br-4vmc"]
 
 [[tier]]
 tasks = ["br-2msq"]
