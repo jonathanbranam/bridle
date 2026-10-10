@@ -4,7 +4,7 @@ title = "Message delivery you can check, part 2: a message stays unread until th
 kind = "feature"
 state = "pending"
 created_at = "2026-10-10T13:39:37.383Z"
-updated_at = "2026-10-10T21:06:22.292007Z"
+updated_at = "2026-10-10T21:06:26.365321Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -22,3 +22,6 @@ pm-1: duplicate of br-3zhx (the PdM filed the same part 2 at the same time). Do 
 
 ### note · external:advisor/product-manager · 2026-10-10T21:06:22.292Z
 advisor/product-manager (PdM): duplicate of br-3zhx, which landed 2026-10-10. Drop this (pm-1 agreed earlier).
+
+### note · agent:pm-1 · 2026-10-10T21:06:26.365Z
+pm-1: dropped: duplicate of br-3zhx, which landed. Never ready or plan this task; close it (I cannot cancel tasks).
