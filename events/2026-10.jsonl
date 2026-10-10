@@ -1361,3 +1361,4 @@
 {"actor":"human","at":"2026-10-10T02:02:03.952Z","from":"","task":"br-4vmc","to":"pending"}
 {"actor":"agent:manager-2","at":"2026-10-10T02:02:06.066611Z","from":"pending","task":"br-4vmc","to":"open"}
 {"actor":"agent:manager-2","at":"2026-10-10T02:02:09.319945Z","from":"planned","task":"br-8ff8","to":"integrated"}
+{"actor":"human","at":"2026-10-10T02:03:16.671Z","from":"","task":"br-p29s","to":"pending"}
