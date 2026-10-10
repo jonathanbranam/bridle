@@ -6,8 +6,8 @@
 mod support;
 
 use bridle_api::types::{
-    AgentState, BudgetHoldRequest, BudgetOverrideRequest, GovernorState, MessageQuery,
-    ResumeRequest, SendRequest, SpawnRequest, When, event_kind,
+    AgentState, BudgetHoldRequest, BudgetOverrideRequest, GovernorState, InterruptRequest,
+    MessageQuery, ResumeRequest, SendRequest, SpawnRequest, When, event_kind,
 };
 use support::{start_daemon, wait_for, wait_for_event, wait_for_state};
 
@@ -330,7 +330,10 @@ async fn working_agent_is_notified_then_stopped_when_its_turn_ends() {
             components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
-            prompt: Some("SLEEP 3".to_string()),
+            // Long enough that the turn can't end before the governor
+            // sees the usage change (an idle agent is stopped with no
+            // notice); the test ends the turn itself below (n96z).
+            prompt: Some("SLEEP 120".to_string()),
             workdir: Some(bridle_api::types::Workdir::Repo),
             model: None,
             extra_allowed_tools: Vec::new(),
@@ -360,6 +363,12 @@ async fn working_agent_is_notified_then_stopped_when_its_turn_ends() {
         AgentState::Working
     );
 
+    // The turn ending is what stops it: the notice told it to end its turn.
+    daemon
+        .client
+        .interrupt(&agent.id, &InterruptRequest { drop_held: false })
+        .await
+        .expect("interrupt");
     let stopped = wait_for_state(&daemon.client, &agent.id, AgentState::Stopped).await;
     assert_eq!(
         stopped.exit.as_ref().map(|e| e.reason.as_str()),
