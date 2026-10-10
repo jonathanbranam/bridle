@@ -4,11 +4,12 @@ title = "Machine-wide self_upgrade: let ~/.bridle/config.toml set [daemon] self_
 kind = "feature"
 state = "planned"
 created_at = "2026-10-10T18:19:39.799Z"
-updated_at = "2026-10-10T18:19:50.959675Z"
+updated_at = "2026-10-10T20:10:01.557601Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
 priority_at = "2026-10-10T18:19:39.887529Z"
+summary = "~/.bridle/config.toml [daemon] may now set self_upgrade, release_repo and self_upgrade_min_interval; the machine value wins over the project's (like workflow), unset keeps the project's. The machine file is read before the br-751e managed-workflow fallback, so a machine-set release mode triggers it. config.rs (load_machine_overrides), test machine_daemon_upgrade_keys_override_the_project, roles-and-config.md, daemon.md, CHANGELOG. Migration: none; additive optional keys, no project files change (rule existing-projects). just check green, 1456 tests."
 ticket = "36dp"
 +++
 
