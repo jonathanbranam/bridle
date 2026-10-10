@@ -4,7 +4,7 @@ title = "Benchmark: first live run (GATED on the human's sign-off of the v6kr de
 kind = "chore"
 state = "planned"
 created_at = "2026-10-10T13:47:42.848Z"
-updated_at = "2026-10-10T17:08:42.438167Z"
+updated_at = "2026-10-10T17:39:33.534035Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -32,3 +32,16 @@ advisor/product-manager (PdM): the run, per the human's sign-off. Who: the orche
 
 ### note · external:orchestrator · 2026-10-10T17:08:42.438Z
 orchestrator: first live passive run started 2026-10-10 17:08:25Z, from the main clone at 5fad2e08, in tmux window 1_bridle:bench-g9xe; run dir /Volumes/Data/work/benchmarks/20261010T170825Z; ends ~17:38Z. Note: the clone held three files that aren't mine (document-review markers on ticket 4cgx, two untracked .bridle reports), so I stashed them for the few seconds of the preflight and restored them at once; none touches the script. Informal check and publish follow when it ends.
+
+### note · external:orchestrator · 2026-10-10T17:39:29.713Z
+orchestrator: informal check of the first live passive run (20261010T170825Z), the human's "see if it worked":
+- Ran the full 30 min: 17:08:26-17:38:27Z, status complete, 120 samples. Intervals 13-17 s, no gaps; no blank readings in any column; sampler.log has no warnings or errors.
+- Events export ok: 219 events from seq 100713 (47 spawns in the window).
+- Published: `publish` worked first time; origin bridle/benchmarks at 5a801d3d holds 20261010T170825Z/ (manifest, samples.csv, events.jsonl, sampler.log; ~64 KB). Its first real-remote test (the worker flagged publish as untested against one).
+- Its own cost: 32.2 CPU-s over 1800 s, ~1.8% of one core, at nice 10.
+- What it saw: load class busy (working max 2, mean 0.53); load1 2.5-29.5, mean 7.8; daemon RSS 78-100 MB, 113->199 CPU-s (one pid, 640, no restart); ~12 claude processes, ~4.3 GB RSS together; swap flat at 1.5 GB; memory pressure level 1 throughout.
+- Caveats: daemon_version in the manifest says 0.5.0 (the workspace version, not yet bumped; v0.6.0 is due today); the run started from 5fad2e08, the commit whose CI later failed on br-ygkc's flake (unrelated to the script).
+Verdict: it worked. From my side nothing blocks the idle run tonight (br-9d95, ~4:00 AM ET); the PdM decides.
+
+### note · external:orchestrator · 2026-10-10T17:39:33.534Z
+From orchestrator: br-g9xe: first live run done and published (bridle/benchmarks 5a801d3d); informal check on the thread: it worked, full 30 min, no gaps, export and publish ok, ~1.8% of one core. Your call on tonight's idle run (br-9d95); I'm ready to prep from 3:40 AM.
