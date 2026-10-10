@@ -158,3 +158,147 @@ Epic "Benchmarking" (theme performance), owned by the PdM. Steps, each its own t
 
 The old phase-1 brief on br-v6kr (12 h passive sample, script uncommitted) is superseded by these.
 The architect role and the counters (phase 2) stay as the order above sets them.
+
+## Design options
+
+Focus: internal architecture (where the sampler lives, what it couples, where data lands). There is
+no new user-facing CLI in the recommendation; the one "interface" is the script's usage.
+
+**The problem in a sentence:** take a repeatable, cheap, 30-minute reading of what bridle costs the
+machine, keep it forever, and never lose it or disturb other work the way the first attempt did.
+
+### What exists today
+
+- No sampler, counters or memory reads in bridle (see Facts and Memory above). Nothing to extend.
+- The event log (`bridle events --json`, `--since`, `--kind`) is the daemon's SQLite `events` table;
+  it is pruned at 30 days (docs/design/storage.md), so a run's log must be exported to outlive it.
+- The state branch `bridle/state` (own worktree, pushed to origin) is the precedent for "data on a
+  branch, not on main".
+- Two causes of the loss (br-vt9k): the script and CSV lived uncommitted in a worker's worktree, and
+  landing removed the worktree. Nothing that matters may live in a worktree or be a child of an agent.
+
+### Decisions common to all options
+
+- **Length and rate:** 30 minutes, one sample every 15 s = 120 rows. Short is enough (the human,
+  2026-10-10); 15 s keeps the sampler's own forks to a handful per sample.
+- **What a row holds** (all read from outside; the sampler never touches the daemon's write API):
+  - time (UTC), load average (1 min);
+  - daemon pid; daemon self CPU time and RSS; summed CPU time and RSS of its direct children and of
+    the agent `claude` processes, kept as separate columns (so a `ps`-style child shows up as the
+    daemon's cost, the n4w4 lesson);
+  - count of agents by state (one `bridle status --json`, a read);
+  - memory, macOS measures per "Memory: which measure": pressure level
+    (`kern.memorystatus_vm_pressure_level`), compressed pages, swap used. Never top's used/free.
+    Linux (`MemAvailable`, PSI) is left out until a Linux host needs it (YAGNI).
+  - CPU is cumulative CPU seconds, so the analysis takes deltas; the sampler does no maths.
+- **Limit, said plainly:** a 15 s sampler cannot see forks per minute (short-lived children vanish
+  between samples). Spawns can only be counted by an in-daemon counter (phase 2). The run reports the
+  `agent.*` events from the event log as the spawn count, and that is all it claims.
+- **Its own cost is measured:** the sampler records its own CPU time in the manifest, so "the monitor
+  became the load" (n4w4) is checkable on every run.
+
+### The seven points, and the options
+
+**1. Idle vs. busy.** Two readings are different numbers, and mixing them ruins comparison.
+- A. Wait for a quiet window, then run. Cleanest, but "today, interrupt nothing" may never get a
+  window on a working day, and it needs a definition of quiet.
+- B. Run live whenever ready and record the load context (agents by state per sample, plus mean
+  and max at the end in the manifest). Classify afterwards: a run with zero working agents for its
+  whole length is "idle"; anything else is "busy". Only like is compared with like.
+- Recommend **B** now (it is what the human asked for today), and run an **A-style run later** in a
+  focus-free period (`[[focus]]`, cvaq) when an idle number is wanted. The script is the same either
+  way; only the start time differs. Cost: the first number is a busy one and is no baseline for idle.
+
+**2. No fixed scenarios yet.** The sampler is passive: it watches, it drives nothing. The manifest
+carries `scenario: passive` so that, when scenarios exist, runs are told apart without a schema
+change. A scenario driver (tmux input, messages, spawn and stop) is a separate script that can run
+alongside this one later. Not building it now is YAGNI and honours "no fixed scenarios yet".
+
+**3. A log of what happened.** At the end the script writes `events.jsonl`: `bridle events --since
+<start> --json` for the run window, plus, in the manifest, the daemon version, git sha of the daemon
+and of the script, hostname, `uname`, and the pid of the daemon at each sample (a changed pid in the
+CSV is a restart, visible without the events). If the daemon is down at the end, the export is
+retried then recorded as failed in the manifest; the CSV still stands. Export is a plain read of an
+existing command, so no new endpoint.
+
+**4. Same script every time, and its form.**
+- A. A standalone script in the repo, `scripts/bench/passive-sample.py` (stdlib Python, one
+  long-lived process, constants for length and interval fixed in the file; no flags except an output
+  directory). The manifest stores the script's blob hash (`git hash-object`) so a changed script is
+  visible in the data. It refuses to start unless its own checkout is on `main`, clean, and not
+  behind `origin/main`, which enforces point 5 mechanically.
+- B. A `bridle bench` subcommand. Rejected: puts measuring code in the thing measured (a rebuild
+  and daemon upgrade is needed to change it, which itself disturbs the run), adds a command nobody
+  has asked for (KISS, YAGNI), and ties the benchmark to the daemon's release cadence.
+- C. Fold into the phase 2 counters and skip the benchmark. Rejected for now: the counters do not
+  exist, and the human wants a baseline before any enhancement lands (order section above).
+- Recommend **A**. Python rather than shell: the CSV and parsing are simpler and robust, and shell
+  rule `shell-zsh` word-splitting traps are avoided. Cost: depends on `python3` being present (the
+  repo's test fake already does). Fallback if the human dislikes Python: the same script as bash.
+
+**5. Commit and merge the script first.** Order: worker writes the script on a branch, the
+manager merges to `main`, then the run starts from the main clone. The start refusal in 4A makes
+skipping this impossible. The script may be written and merged before the human signs off; only the
+run is gated.
+
+**6. Shape and size of the output.** One run is one directory:
+`manifest.json` (a few KB), `samples.csv` (120 rows x ~30 columns, about 30 KB), `events.jsonl`
+(tens of KB, more on a busy hour), `sampler.log` (a few KB). Roughly 100 KB per run; weekly for
+five years is about 25 MB. This is small enough for git. No compression or database needed.
+
+**7. Where it lives, permanently.**
+- A. In `main` (e.g. `docs/benchmarks/`). Rejected: clutters the integration branch, and cannot be
+  purged without rewriting main's history.
+- B. A dedicated orphan branch, `bridle/benchmarks`, pushed to origin, one directory per run named
+  by UTC timestamp. Purging later is `git rm` on that branch or deleting it, and never touches main.
+  It mirrors `bridle/state`.
+- C. Only a dated folder on dalek in the bridle workspace parent, `<workspace parent>/benchmarks/
+  <UTC timestamp>/`; copy to Dropbox later. Survives everything local, but has no history, review
+  or off-machine copy until someone sets one up.
+- D. Both: the script writes C continuously (first, outside any worktree, appended each sample, so
+  a crash or landing loses nothing), and a separate `publish` step copies the finished directory to
+  B with a commit and push. Publish is a second invocation of the same script so it can be redone.
+- Recommend **D**. The folder is the safe write target; the branch is the reviewable, purgeable,
+  off-machine record. Trade-off: two places to remember (state it in the docs). If the branch ever
+  grows too big, C plus Dropbox remains and nothing else changes.
+
+### Surviving the day (the human's "interrupt nothing")
+
+- **No interruptions:** reads only (`ps` for a known pid list, `sysctl`, `vm_stat`, one `bridle
+  status --json` per sample); about five short forks per 15 s; runs at low priority (`nice`). The
+  manifest reports its own CPU. No pausing, holding or scheduling of agents.
+- **Survives restarts and landings:** (1) never in a worktree: runs from the main clone and writes
+  to the dalek folder (br-vt9k); (2) not a child of an agent or the daemon: started by the human or
+  the PdM in its own tmux window (or `nohup`), so a daemon upgrade or an agent exit cannot take it
+  down; landing (br-37r9) only removes agent worktrees and cannot touch it; (3) the daemon pid is
+  looked up each sample from `daemon.json`; while the daemon is down the row has blank daemon
+  columns, the sampler keeps going, and the gap is itself data; (4) rows are flushed on every
+  sample, so a crash keeps what was written; a rerun is a new directory, not a resume.
+- **Start gate:** the human signs off; then the run is started. Nothing in this design schedules it.
+
+### Against the principles
+
+- KISS/YAGNI: a single script, no new command, endpoint or daemon code; scenarios, Linux and
+  counters are deferred with a named reason.
+- Modularity: the sampler reads public surfaces (`ps`, `sysctl`, `bridle status`, `bridle events`)
+  and couples to no daemon internals; it can be rewritten without a release.
+- One name per action: no new `bridle` command (rejects B in point 4, avoiding a near-duplicate of
+  `status`/`usage`/`events`).
+- The user's side first: one command to start, one to publish, and a flat directory a human can
+  open (`samples.csv` opens in any spreadsheet).
+- Cost of not doing: no baseline, so the phase 2 counters cannot be shown cheap (the human's order).
+
+### Recommendation
+
+Passive 30-minute sampler (4A), run live now with load context recorded (1B), no scenarios yet (2),
+event-log export plus manifest (3), script merged first and self-checking (5), written first to a
+dated folder in the workspace parent and published to an orphan branch `bridle/benchmarks` (7D),
+about 100 KB per run (6), run detached from agents and worktrees so restarts and landings cannot
+touch it. Accepted trade-offs: the first number is a busy number; forks per minute stays unmeasured
+until the counters exist; Python is required; two storage locations to document.
+
+### Questions for the human
+
+1. Python script, or bash? (Recommendation: Python.)
+2. Is `bridle/benchmarks` as a branch name right, and is pushing it to origin approved?
+3. Should a quiet-window (idle) run be asked for separately, after the first live one?
