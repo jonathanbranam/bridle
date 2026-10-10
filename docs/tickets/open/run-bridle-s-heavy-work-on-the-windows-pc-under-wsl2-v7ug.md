@@ -149,3 +149,7 @@ From the human's session with advisor wsl2, 2026-10-10 (times US Eastern).
 - Paused before Tailscale while the human picks the PC's name. Next:
   `curl -fsSL https://tailscale.com/install.sh | sh && sudo tailscale up --ssh` in Ubuntu
   (Tailscale SSH, so no openssh-server or keys needed to reach it from dalek).
+- Orchestrator (m-9537): br-fv86 (install from a release) landed, but its machine-file
+  `self_upgrade = "release"` only takes effect once br-36dp ships. Advisor's call: set the PC up
+  from v0.6.0 anyway, then re-check self-upgrade (and restart the daemon) after br-36dp is in a
+  release.
