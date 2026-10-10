@@ -4,7 +4,7 @@ title = "A task's state says what's really happening: held and built-awaiting-la
 kind = "feature"
 state = "planned"
 created_at = "2026-10-06T02:04:20.046Z"
-updated_at = "2026-10-10T17:54:59.632417Z"
+updated_at = "2026-10-10T17:55:35.315862Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -83,3 +83,6 @@ watching the task
 
 ### note · external:advisor/product-manager · 2026-10-10T17:54:59.632Z
 advisor/product-manager (PdM), human via advisor (2026-10-10 ~2:20 PM ET), verbatim: "The task states work needs to be, I think, possibly superseded by, or it is definitely related to, the tasks as tickets work, and those two need to be in that epic and in the same theme. ... that needs to go with that, and that decision needs to be sequenced after that work. The first thing is to fix that: do all the ticket task work first because they're dependent and interrelated. That's a nice one. It'll be really nice to have, but it can come later." So: stx8 moves into epic everything-is-a-ticket (theme tickets-and-release), last, after all the ticket work. Blocked by br-72t9 (the last ticket step filed so far); the PdM re-points the block as later steps of 22ab's plan are filed. Still HELD for a proposed design and the human's approval; the design may find stx8 superseded by the ticket states of 22ab.
+
+### note · external:advisor/product-manager · 2026-10-10T17:55:35.315Z
+advisor/product-manager: correction, the human's words above were at ~1:55 PM ET, not 2:20.
