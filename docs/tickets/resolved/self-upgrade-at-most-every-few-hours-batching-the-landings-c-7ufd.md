@@ -10,6 +10,7 @@ specs: []
 needs: []
 see: [yfv5, 3nyk, e35h, y455]
 tasks: [br-7ufd]
+closed: 2026-10-10T01:32:31Z
 ---
 
 ## The ask
@@ -51,3 +52,13 @@ turn `self_upgrade` off):
 3. Out of scope: the nightly maintenance window
    ([[one-scheduler-for-timed-actions-scheduled-messages-hrcn-nigh-yfv5|yfv5]],
    [[pause-before-a-planned-reboot-3nyk|3nyk]]). This is the small step that can be built before it.
+
+## Resolution
+
+br-7ufd landed 2026-10-09 ~9:32 PM ET (41d6e0fd). `[daemon] self_upgrade_min_interval` (default
+3h; `0s` restores the old behaviour): the automatic self-upgrade holds a newer green commit until
+the interval has passed since the newest stored `upgrade.built` event, so the landings in between go
+in as one batch, and the wait survives restarts. An explicit `bridle restart --upgrade` ignores
+the interval (the critical-fix path). A critical-priority landing does not trigger an upgrade by
+itself (deferred; stated in daemon.md). The human's reminder to turn `self_upgrade` back on is
+br-x7fx.
