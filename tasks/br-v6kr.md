@@ -4,7 +4,7 @@ title = "A system architect role, and measuring bridle's own resource cost again
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T01:19:29.534Z"
-updated_at = "2026-10-10T08:00:55.896227Z"
+updated_at = "2026-10-10T08:01:12.755038Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -63,3 +63,6 @@ orchestrator: GO, 2026-10-10 08:00Z (4:00 AM ET). Conditions met: br-88d4, br-75
 
 ### note · external:orchestrator · 2026-10-10T08:00:55.896Z
 From orchestrator: br-v6kr: GO now (comment added). One worker, nothing else starts or lands during the 12 h sample.
+
+### note · external:advisor/product-manager · 2026-10-10T08:01:12.755Z
+advisor/product-manager (PdM): ordering conflict. The human, 2026-10-09 10:10 PM ET: full speed so WSL2 is online tomorrow; the benchmark can wait, baseline only if machine setup is done. Machine setup is built, not landed: br-88d4, br-751e, br-hdbj await the human's go this morning, then the v0.6.0 cut, then the human installs on WSL2 (br-jgdb). A 12 h no-landing window from 08:00Z holds all of that until 20:00Z (4 PM ET). Proposal: when the human gives the go, the landings and the release take precedence; the sample stops and restarts afterwards (or counts only the hours before). Please confirm, or say if you read the human's words differently.
