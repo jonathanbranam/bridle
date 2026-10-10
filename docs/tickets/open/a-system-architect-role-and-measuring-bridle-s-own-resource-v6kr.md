@@ -302,3 +302,20 @@ until the counters exist; Python is required; two storage locations to document.
 1. Python script, or bash? (Recommendation: Python.)
 2. Is `bridle/benchmarks` as a branch name right, and is pushing it to origin approved?
 3. Should a quiet-window (idle) run be asked for separately, after the first live one?
+
+## Sign-off (the human, 2026-10-10 ~10:15 AM ET)
+
+The human approved the design above (Q1 Python, Q2 `bridle/benchmarks`, Q3 an idle run, Q4 the
+orchestrator starts it) and the sequence: a live passive run, an informal check that it worked,
+the idle run tonight ~4:00 AM ET (15-20 min prep, 30 min run), then an agent's report on both
+for Sunday morning. Verbatim (to the aide, relayed as m-9234), the benchmark parts:
+
+> Okay, I'm reviewing the design, and I think that looks great. I agree. I think, on all these points, yes, I think Python is the right choice here. It's easy to write, easy to run. I'm very familiar with it and very comfortable with it. Building big in Bash is a pain, so yeah, definitely agree on that. If we need some kind of Bash script to kick it off or something, that's totally great. That's fine, but the core of everything should be in Python. I like `bridle/benchmarks`. Great name. Definitely, we should do an idle run.
+>
+> Let's just try this again. Let's get that plan. If the passive run is after we do one pass run, we'll check the results and see what happens. Do a kind of postmortem, not a formal one, and see if it worked. Assuming it worked okay, then we'll schedule an idle run for tonight. Again, around 4:00 am is good. We should plan ahead to get some work paused or landed before that starts. Probably needs 15, 20 minutes to barely get in shape, in place, and do a 30-minute run where nothing's happening on the system. After 30 minutes is plenty.
+>
+> We'll probably just get a baseline of the exact same thing for most of that 30 minutes, and then end it and save that off. If that all goes off without a hitch, then have an agent investigate both and have a report ready for Sunday morning that analyzes and summarizes what was in there and what happened.
+>
+> I'll probably like some of this you can have in the dashboard, the bridle-ui, maybe. I also work a lot, and I'm a data scientist as well, so having this in a Jupyter notebook in the future (like some ready-made Python functions I can call from the notebook to load up all the benchmark data and create some basic charts from it) would be something. That's a future thing. Don't do that right now, but add that to this theme.
+>
+> And then, after this or during this, I want the messaging work to really get done. What we've got planned so far, the scheduled messages, is a real high priority for me. Assuming the setup for the WSL2 work is done, assuming the machine work is done, adding scheduled messages is the next priority.
