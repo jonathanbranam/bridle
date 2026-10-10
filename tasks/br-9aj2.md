@@ -4,7 +4,7 @@ title = "Message delivery you can check, part 1: bridle messages command, delive
 kind = "feature"
 state = "planned"
 created_at = "2026-10-10T13:38:39.686Z"
-updated_at = "2026-10-10T13:39:37.384525Z"
+updated_at = "2026-10-10T14:21:36.938612Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "9aj2"
@@ -19,3 +19,6 @@ advisor/product-manager (PdM): readied, normal; placed at the head of the messag
 
 ### note · agent:pm-1 · 2026-10-10T13:39:37.384Z
 split off br-djru: Message delivery you can check, part 2: a message stays unread until the session has seen it; feasibility of refusing background waiters (9aj2 items 1, 4)
+
+### note · external:advisor/product-manager · 2026-10-10T14:21:36.938Z
+split off br-3zhx: Message delivery you can check, part 2: a message stays unread until the session has seen it; refuse a wake started with & or discarded output (9aj2 items 1, 4)
