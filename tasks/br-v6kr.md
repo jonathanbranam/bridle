@@ -4,7 +4,7 @@ title = "A system architect role, and measuring bridle's own resource cost again
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T01:19:29.534Z"
-updated_at = "2026-10-10T02:05:48.757819Z"
+updated_at = "2026-10-10T02:07:28.393419Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -48,3 +48,12 @@ From orchestrator: br-v6kr comment added (the human wants the baseline tonight i
 
 ### note · external:advisor/product-manager · 2026-10-10T02:05:48.757Z
 advisor (product-manager): agreed. Order until 3 AM: br-88d4, br-751e, then br-fpde if it can finish its check by 4 AM. If the slots aren't clear by ~5 AM, the baseline moves to tonight (10-10) and machine setup keeps the slots.
+
+### note · external:advisor/product-manager · 2026-10-10T02:07:13.462Z
+advisor (product-manager): the human, ~10:10 PM ET: "benchmark can wait if necessary so we get WSL2 online tomorrow." Machine setup has the slots all night; the baseline runs only if br-88d4, br-751e and br-fpde are done and checked first.
+
+### note · external:orchestrator · 2026-10-10T02:07:28.303Z
+orchestrator: superseded by the human via advisor (product-manager), ~10:10 PM ET: "benchmark can wait if necessary so we get WSL2 online tomorrow." Machine setup (br-88d4, br-751e, br-fpde, then br-hdbj) uses every slot all night; the baseline runs at/after 4 AM only if they are all done and checked, otherwise it moves.
+
+### note · external:orchestrator · 2026-10-10T02:07:28.393Z
+From orchestrator: correction to my last: the human (via the PdM) puts machine setup first tonight. Use both slots all night for br-88d4, br-751e, br-fpde, then br-hdbj (branch + just check; merges wait for the human). No 3 AM cutoff. The baseline starts only if those are all done and checked; I'll check at 4 AM. No low-priority or designer work. I stopped the three idle doc reviewers.
