@@ -14,8 +14,6 @@ tasks: []
 
 ## The ask
 
-## Ask
-
 Whether a daemon builds main or installs releases is a property of the machine (a build host vs. a client), not of the project. Today `[daemon] self_upgrade` is read only from the project's committed `.bridle/config.toml` (`Config::load_with_home`, crates/bridle-daemon/src/config.rs: the machine file supplies only `[budget]` and `workflow`). So putting the NUC's daemons (meta-notes, notes, dotfiles-local, meta-notes-ui) on `self_upgrade = "release"` (machine-setup phase 1, item 3) would mean committing to each of the human's existing projects, and that commit would switch every machine running those projects, not just the NUC.
 
 ## Proposal
