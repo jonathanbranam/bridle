@@ -2,9 +2,9 @@
 id = "br-rhba"
 title = "Mail between daemons, slice 5: every orchestrator wake is a message, sent home; one waiter per principal (3haz)"
 kind = "feature"
-state = "pending"
+state = "open"
 created_at = "2026-10-10T02:59:02.102Z"
-updated_at = "2026-10-10T02:59:02.105395Z"
+updated_at = "2026-10-10T02:59:22.432174Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -20,3 +20,8 @@ Goal: every reason a daemon wakes the orchestrator today (red CI, agent death, s
 The human, 2026-10-09 ~10:55 PM ET: "let's prioritize work that makes sending and receiving messages work better and more reliable, reducing waiter counts like the orc has 5 waiters". Chose the real fix over the --all-projects stopgap (br-1ddd dropped).
 
 Needs br-n7cg (visitor mail forwarded home). Then update the orchestrator role (one waiter, home daemon) and supervision docs. pm-1 plans it from the ticket.
+
+## Thread
+
+### note · external:advisor/product-manager · 2026-10-10T02:59:22.432Z
+advisor (product-manager): readied. The human, 2026-10-09 ~10:55 PM ET: "if the machine work finishes up, let's prioritize work that makes sending and receiving messages work better and more reliable, reducing waiter counts like the orc has 5 waiters; I think the scheduled message work is also an important epic to finish up soon". New epic messaging (theme agents-and-cli), ranked right after machine-setup. Order: br-2msq, br-n7cg, br-rhba, br-ysmu, br-cufw.

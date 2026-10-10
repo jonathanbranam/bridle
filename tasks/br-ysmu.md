@@ -2,9 +2,9 @@
 id = "br-ysmu"
 title = "CI watch missed 13 red runs on main; first ci_failed wake came 40 minutes late"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-10-05T03:21:20.785Z"
-updated_at = "2026-10-09T11:04:38.565513Z"
+updated_at = "2026-10-10T02:59:39.061137Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
@@ -13,11 +13,7 @@ watchers = [
 ticket = "ysmu"
 +++
 
-docs/tickets/open/ci-watch-missed-13-red-runs-on-main-first-ci-failed-wake-cam-ysmu.md
-
-submitted by external:orchestrator@nuc
-
-meta-notes-ui ([ci] github = true, daemon on 7405, project added 2026-10-05). CI on main failed from 97e0b13 (02:41 UTC) through df5f90d: 13 red pushes, 9 of them merges. The daemon recorded a single ci.completed event (df5f90d at 03:20:10) and the orchestrator's first ci_failed wake came then. Meanwhile the manager kept merging; its allowlist denies gh, so it couldn't see CI itself and relied on the wake. Expected: a ci.completed event per run on main, and a wake on the first failure. Cause unknown (new project's watcher start? polling only the newest run?). Also consider: give the manager a bridle command to read the latest CI result on main, so 'never merge on red' doesn't need gh.
+Ticket: docs/tickets/open/ci-watch-missed-13-red-runs-on-main-first-ci-failed-wake-cam-ysmu.md (read it). Goal: (1) find why the CI watcher missed runs on a newly added project (watcher start? only the newest run polled? a run finishing between polls dropped?) and fix the cause so there is one ci.completed event per run on main and a wake on the first failure; (2) a small bridle command the manager can run to read the latest CI result on main (a read of what the watcher already records) so never-merge-on-red does not need gh. Files: the CI watcher in crates/bridle-daemon (grep ci.completed, ci_failed), docs/design/ (CI watcher doc; check docs/README.md index), cli.md, manager role text in workflow/base/roles for the new command, CHANGELOG. Acceptance: just check passes; a test with a fake CI source returning several runs between polls: all recorded, first failure wakes. Migration: the command and role text reach projects via bridle workflow sync / daemon upgrade; no project files change. Model: Sonnet. Out of scope: other CI providers, retry/backoff tuning.
 
 ## Thread
 
@@ -29,3 +25,6 @@ Triage (pm-1): accept, high value: merges went in on red on an onboarded project
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:38.565Z
 watching the task
+
+### note · external:advisor/product-manager · 2026-10-10T02:59:22.486Z
+advisor (product-manager): readied. The human, 2026-10-09 ~10:55 PM ET: "if the machine work finishes up, let's prioritize work that makes sending and receiving messages work better and more reliable, reducing waiter counts like the orc has 5 waiters; I think the scheduled message work is also an important epic to finish up soon". New epic messaging (theme agents-and-cli), ranked right after machine-setup. Order: br-2msq, br-n7cg, br-rhba, br-ysmu, br-cufw.

@@ -2,9 +2,9 @@
 id = "br-cufw"
 title = "Mail between daemons, slice 4: visible state: outbox status, message show (queued/arrived/delivered), the aide report, and who-can-I-message (3haz P6, P7, bp2v)"
 kind = "feature"
-state = "pending"
+state = "planned"
 created_at = "2026-10-05T21:04:43.237Z"
-updated_at = "2026-10-09T11:04:38.966102Z"
+updated_at = "2026-10-10T02:59:25.433624Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -24,3 +24,6 @@ Model: Sonnet. Out of scope: wake reasons as messages, task watch across project
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:38.966Z
 watching the task
+
+### note · external:advisor/product-manager · 2026-10-10T02:59:22.454Z
+advisor (product-manager): readied. The human, 2026-10-09 ~10:55 PM ET: "if the machine work finishes up, let's prioritize work that makes sending and receiving messages work better and more reliable, reducing waiter counts like the orc has 5 waiters; I think the scheduled message work is also an important epic to finish up soon". New epic messaging (theme agents-and-cli), ranked right after machine-setup. Order: br-2msq, br-n7cg, br-rhba, br-ysmu, br-cufw.

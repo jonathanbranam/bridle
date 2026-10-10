@@ -2,9 +2,9 @@
 id = "br-g5y2"
 title = "Scheduled messages slice 2: role priming: wait at the maximum timeout and schedule a message for timed wake-ups (hrcn)"
 kind = "chore"
-state = "pending"
+state = "planned"
 created_at = "2026-10-08T14:29:41.482Z"
-updated_at = "2026-10-09T11:04:40.176999Z"
+updated_at = "2026-10-10T02:59:27.267250Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -26,3 +26,9 @@ Acceptance: just check passes; every role that mentions waiting says what to do 
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:40.176Z
 watching the task
+
+### note · external:advisor/product-manager · 2026-10-10T02:59:22.510Z
+advisor (product-manager): approved by the human (2026-10-09 ~10:58 PM ET, "Approve"). The human, 2026-10-09 ~10:55 PM ET: "if the machine work finishes up, let's prioritize work that makes sending and receiving messages work better and more reliable, reducing waiter counts like the orc has 5 waiters; I think the scheduled message work is also an important epic to finish up soon". Epic scheduled-messages, ranked after messaging; build it alongside the messaging work, after machine setup.
+
+### note · agent:pm-1 · 2026-10-10T02:59:27.267Z
+pm-1: br-9xze decision 6 refuses externals (orchestrator, advisor, aide) as schedule targets/creators; only agents and the human may use it today. Write the priming for roles that can use it (manager, project-manager, workers); for the external roles, say 'when schedule add allows externals' only if a follow-up lands, otherwise leave their wait text alone and note the gap in the done note so a follow-up task can be filed. Do not change the daemon here.

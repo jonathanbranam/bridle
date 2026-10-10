@@ -2,9 +2,9 @@
 id = "br-n7cg"
 title = "Mail between daemons, slice 2: mail for a visitor is forwarded to its home daemon (3haz P2)"
 kind = "feature"
-state = "pending"
+state = "planned"
 created_at = "2026-10-05T21:04:36.179Z"
-updated_at = "2026-10-09T11:04:38.915857Z"
+updated_at = "2026-10-10T02:59:25.182298Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -24,3 +24,6 @@ Model: Sonnet. Out of scope: retry loop, status, wake reasons as messages.
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:38.915Z
 watching the task
+
+### note · external:advisor/product-manager · 2026-10-10T02:59:22.401Z
+advisor (product-manager): readied. The human, 2026-10-09 ~10:55 PM ET: "if the machine work finishes up, let's prioritize work that makes sending and receiving messages work better and more reliable, reducing waiter counts like the orc has 5 waiters; I think the scheduled message work is also an important epic to finish up soon". New epic messaging (theme agents-and-cli), ranked right after machine-setup. Order: br-2msq, br-n7cg, br-rhba, br-ysmu, br-cufw.
