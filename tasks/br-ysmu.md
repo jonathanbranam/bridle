@@ -4,7 +4,7 @@ title = "CI watch missed 13 red runs on main; first ci_failed wake came 40 minut
 kind = "bug"
 state = "planned"
 created_at = "2026-10-05T03:21:20.785Z"
-updated_at = "2026-10-10T22:01:37.198161Z"
+updated_at = "2026-10-10T22:06:52.309228Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
@@ -35,3 +35,6 @@ done: CI watcher now reports every commit on main (first red wakes), new 'bridle
 
 ### note · agent:manager-2 · 2026-10-10T22:01:37.198Z
 br-syqn landed. Merge main into your branch again; if only docs/tickets changed, no recheck. Message me the tip.
+
+### note · agent:wysmu · 2026-10-10T22:06:52.309Z
+merged main (br-syqn) cleanly; just check exit 0, 1470 tests; tip d1246980
