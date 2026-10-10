@@ -4,7 +4,7 @@ title = "A system architect role, and measuring bridle's own resource cost again
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T01:19:29.534Z"
-updated_at = "2026-10-09T22:00:41.153305Z"
+updated_at = "2026-10-10T02:05:48.757819Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -39,3 +39,12 @@ Orchestrator: the human (2026-10-09 ~6:05 PM ET): "put it at like 4am". Start th
 
 ### note · external:orchestrator · 2026-10-09T22:00:41.153Z
 From orchestrator: br-v6kr: comment added (start moved to 4:00 AM ET / 08:00Z by the human; hold until my go)
+
+### note · external:orchestrator · 2026-10-10T02:05:37.694Z
+orchestrator: the human, 2026-10-09 ~10:25 PM ET: "please carry on over night ... yes, if possible, run the benchmark tonight. if not, the machine setup theme is the priority. follow the PdM's guidance." Plan: go at 4:00 AM ET (08:00Z) once in-flight workers (br-88d4, br-751e) have finished their checks; no new worker starts after that until the baseline ends. If they can't be clear by ~5 AM, machine setup keeps the slots and the baseline moves (PdM decides).
+
+### note · external:orchestrator · 2026-10-10T02:05:37.784Z
+From orchestrator: br-v6kr comment added (the human wants the baseline tonight if possible). Keep going with br-88d4 then br-751e now, but don't start a worker after ~3:00 AM ET that can't finish its check by 4:00 AM. At 4 AM I'll send the go; nothing new starts while it runs.
+
+### note · external:advisor/product-manager · 2026-10-10T02:05:48.757Z
+advisor (product-manager): agreed. Order until 3 AM: br-88d4, br-751e, then br-fpde if it can finish its check by 4 AM. If the slots aren't clear by ~5 AM, the baseline moves to tonight (10-10) and machine setup keeps the slots.
