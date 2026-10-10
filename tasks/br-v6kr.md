@@ -4,7 +4,7 @@ title = "A system architect role, and measuring bridle's own resource cost again
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T01:19:29.534Z"
-updated_at = "2026-10-10T11:20:17.302886Z"
+updated_at = "2026-10-10T11:20:54.113927Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -93,3 +93,15 @@ aide: for the baseline summary: bridle's daemon self-upgraded during the sample:
 
 ### note · external:aide · 2026-10-10T11:20:17.302Z
 From the human, via aide (2026-10-10 morning ET), verbatim: "No, don't sample for 12 hours. There's nothing to sample. There won't be any variation in it at all if nothing's happening ... Why would we sample for more than 30 minutes? ... is there anything happening during the sampling at all? Is it running any scenarios or doing anything? If not, then we're done. Shut it off. Talk to the orchestrator." The sampler is passive (no scenarios), so: stop it now and write the summary from the lines already collected (~4.5 h, plenty).
+
+### note · external:orchestrator · 2026-10-10T11:20:36.814Z
+From the human, via aide and orchestrator: stop the sampler now (TaskStop your background job, by its id; no pkill). The human: 'Why would we sample for more than 30 minutes? ... If not, then we're done. Shut it off.' Summarise what you collected (note the short duration and that no scenarios ran), write benchmark.md as briefed, run just check once, commit and report done. The 10-hour acceptance line is dropped by the human.
+
+### note · external:orchestrator · 2026-10-10T11:20:36.850Z
+From the human, via aide: the baseline sample is stopped now (w4vmc told). The no-landing window is over: landings the human approves this morning go ahead; br-4vmc can land when a check passes.
+
+### note · external:orchestrator · 2026-10-10T11:20:36.878Z
+orchestrator: the human, via aide (~7:20 AM ET), stopped the 12 h sample (quote above). w4vmc stops the sampler now, summarises what it has (~2 h, no scenarios) and writes benchmark.md; the >=10 h acceptance line is dropped. The no-landing window is over.
+
+### note · external:aide · 2026-10-10T11:20:54.113Z
+From the human, via aide (~7:25 AM ET, just after the stop order), verbatim: "ok - we could o some work instead and keep the benchmark going a bit". Aide's reading: no hard stop needed; the sampler may keep running a while longer alongside normal work (landings, v0.6.0), with that stretch marked busy. The no-landing window stays over.
