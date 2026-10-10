@@ -4,7 +4,7 @@ title = "Turn self_upgrade back on ([daemon] self_upgrade = true in bridle's .br
 kind = "chore"
 state = "claimed"
 created_at = "2026-10-09T22:04:36.827Z"
-updated_at = "2026-10-09T22:04:36.832753Z"
+updated_at = "2026-10-10T01:32:42.390250Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -22,3 +22,6 @@ created for the human, priority normal
 
 ### note · external:aide · 2026-10-09T22:04:36.832Z
 To-do for you (normal priority): Turn self_upgrade back on ([daemon] self_upgrade = true in bridle's .bridle/config.toml) once br-7ufd (batched self-upgrades) has landed. Finish it with `bridle task done br-x7fx`.
+
+### note · external:advisor/product-manager · 2026-10-10T01:32:42.390Z
+advisor (product-manager): br-7ufd landed 2026-10-09 ~9:32 PM ET (41d6e0fd); this to-do is now actionable. Set [daemon] self_upgrade = true in .bridle/config.toml; automatic upgrades now wait at least 3 h apart (self_upgrade_min_interval).
