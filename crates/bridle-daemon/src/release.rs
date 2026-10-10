@@ -275,7 +275,7 @@ mod tests {
     fn tarball(content: &str) -> Vec<u8> {
         let dir = tempfile::tempdir().expect("tempdir");
         std::fs::write(dir.path().join("bridle"), content).expect("write");
-        // A fixed mtime: two tarballs built a second apart must hash the same.
+        // A fixed mtime for reproducible entries.
         std::fs::File::options()
             .write(true)
             .open(dir.path().join("bridle"))
@@ -294,8 +294,11 @@ mod tests {
         std::fs::read(out).expect("read")
     }
 
-    fn setup(sums_hash_of: &[u8]) -> (Stub, Release) {
+    /// `sums_hash_of` is what SHA256SUMS vouches for; `None` means the tarball itself.
+    /// (Building the tarball twice isn't safe: the gzip header carries a timestamp.)
+    fn setup(sums_hash_of: Option<&[u8]>) -> (Stub, Release) {
         let tar = tarball("new binary");
+        let sums_hash_of = sums_hash_of.unwrap_or(&tar);
         let name = "bridle-v9.9.9-aarch64-apple-darwin.tar.gz";
         let sums = format!("{}  {name}\n", hex::encode(Sha256::digest(sums_hash_of)));
         let release = Release {
@@ -333,7 +336,7 @@ mod tests {
 
     #[test]
     fn asset_chosen_per_platform() {
-        let (_, release) = setup(b"");
+        let (_, release) = setup(None);
         assert_eq!(target_for("macos", "aarch64"), Some("aarch64-apple-darwin"));
         assert_eq!(
             target_for("linux", "x86_64"),
@@ -374,7 +377,7 @@ mod tests {
         std::fs::create_dir_all(ws.state_dir()).expect("state dir");
         let exe = tmp.path().join("bridle");
         std::fs::write(&exe, "old binary").expect("write");
-        let (stub, release) = setup(&tarball("new binary"));
+        let (stub, release) = setup(None);
         fetch_and_install(&stub, &ws, &release, "aarch64-apple-darwin", &exe).expect("install");
         assert_eq!(std::fs::read_to_string(&exe).expect("read"), "new binary");
         let prev = std::fs::read_to_string(ws.state_dir().join("bridle.prev")).expect("prev");
@@ -389,7 +392,7 @@ mod tests {
         std::fs::create_dir_all(ws.state_dir()).expect("state dir");
         let exe = tmp.path().join("bridle");
         std::fs::write(&exe, "old binary").expect("write");
-        let (stub, release) = setup(b"something else");
+        let (stub, release) = setup(Some(b"something else"));
         let err = fetch_and_install(&stub, &ws, &release, "aarch64-apple-darwin", &exe)
             .expect_err("mismatch");
         assert!(err.contains("checksum mismatch"), "{err}");
