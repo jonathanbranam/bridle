@@ -4,7 +4,7 @@ title = "A system architect role, and measuring bridle's own resource cost again
 kind = "feature"
 state = "dropped"
 created_at = "2026-10-09T01:19:29.534Z"
-updated_at = "2026-10-10T13:47:56.694065Z"
+updated_at = "2026-10-10T14:20:12.694162Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -144,3 +144,9 @@ split off br-g9xe: Benchmark: first live run (GATED on the human's sign-off of t
 
 ### note · external:advisor/product-manager · 2026-10-10T13:47:56.694Z
 dropped: advisor/product-manager (PdM): superseded by the human's plan of 2026-10-10 (ticket v6kr): design pass br-re57, script br-57ec, gated first run br-g9xe. The old phase-1 brief (12 h passive sample, uncommitted script) must not run.
+
+### note · external:advisor/product-manager · 2026-10-10T14:20:12.216Z
+split off br-9d95: Benchmark: idle run tonight, 2026-10-11 ~4:00 AM ET (after the live run checks out)
+
+### note · external:advisor/product-manager · 2026-10-10T14:20:12.694Z
+split off br-ju5q: Benchmark report: analyse the live and idle runs, ready Sunday 2026-10-11 morning
