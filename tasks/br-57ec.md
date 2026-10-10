@@ -4,7 +4,7 @@ title = "Benchmark script: write, commit and merge it per the v6kr design"
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-10T13:47:42.282Z"
-updated_at = "2026-10-10T16:32:17.680090Z"
+updated_at = "2026-10-10T16:48:16.431498Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -35,3 +35,6 @@ done: benchmark sampler scripts/bench/passive-sample.py + tests + docs/design/be
 
 ### note · agent:manager-2 · 2026-10-10T16:32:17.680Z
 integrated: 82b5ee90cb2c1b2e512a03fd948b5b35dcdd8cf0 (branch bridle/w57ec)
+
+### note · agent:manager-2 · 2026-10-10T16:48:16.431Z
+cleanup: removed agent w57ec, branch bridle/w57ec
