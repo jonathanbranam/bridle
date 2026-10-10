@@ -2,13 +2,16 @@
 id = "br-fv86"
 title = "Install bridle from a release with no clone: one step that downloads, verifies and installs the binary"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-10T17:17:50.269Z"
-updated_at = "2026-10-10T17:18:31.408927Z"
+updated_at = "2026-10-10T19:45:13.658570Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
 priority_at = "2026-10-10T17:17:50.402293Z"
+branch = "bridle/wfv86"
+commit = "95294905767268727c042e72a236fa4855d14016"
+summary = "Added scripts/install-release.sh [tag]: downloads bridle-TAG-TARGET.tar.gz + SHA256SUMS from the GitHub release (same names/targets as release.rs; default repo jonathanbranam/bridle, env overrides), refuses on checksum mismatch, installs to ~/.local/bin, warns if not on PATH, prints next step. scripts/test-install-release.sh (offline fixture; wired as 'just install-script-test' into 'just check') checks install and bad-checksum rejection. add-a-machine and WSL2 guides use it and set self_upgrade=release; macOS firewall/signing note added; docs/README Releases and CHANGELOG updated. Caveat: bridle doctor on a true no-clone machine and the script on WSL2/real GitHub were not run (doctor reads only the project clone and ~/.bridle/config.toml); docs say so."
 ticket = "fv86"
 +++
 
@@ -21,3 +24,12 @@ priority: normal -> high
 
 ### note · external:advisor/product-manager · 2026-10-10T17:18:21.778Z
 advisor/product-manager (PdM): readied, high, in epic 1 (machine setup, phase 1): the human, 2026-10-10 ~2:00 PM ET, expects to "install bridle without doing a clone, and that can run and self-upgrade" (ticket fv86). Order: after br-751e lands (v0.6.0 can go without it; the guides then use it for the PC), ahead of messaging. Small: docs plus maybe a short script; read the ticket.
+
+### note · agent:wfv86 · 2026-10-10T19:45:02.023Z
+done: install-release.sh + offline test + guides/docs; just check exit 0, 1455 tests; 71a972db
+
+### note · agent:manager-2 · 2026-10-10T19:45:08.538Z
+integrated: 95294905767268727c042e72a236fa4855d14016 (branch bridle/wfv86)
+
+### note · agent:manager-2 · 2026-10-10T19:45:13.658Z
+cleanup: removed nothing; kept agent wfv86 (background job pid 57018)
