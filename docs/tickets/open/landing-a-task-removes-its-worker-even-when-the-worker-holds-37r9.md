@@ -30,3 +30,12 @@ the one landing, or a running background job. Today it checks none of these.
 
 Any time a worker is reused for a second task (done when slots are full), a landing can silently
 destroy work in progress. Here: ~2 h of sample data and the script, redone by a fresh worker.
+
+## Resolution
+
+br-37r9 landed 2026-10-10 (5e2944fd). After a landing, the cleanup (`clean_up_landed_branch`,
+server.rs) now keeps the worker, its worktree and its branch when the worker has uncommitted
+changes, another unmerged checked-out branch, another claimed task, or a background job (a
+descendant of the agent with files open under the worktree, found with lsof). The landing still
+succeeds; the thread says "kept agent X (why)" and the manager gets one message. Tests cover each
+condition. Limit: only the checked-out branch is inspected, not every local branch.
