@@ -81,8 +81,8 @@ Daemons, tokens, sync and projects across the laptop, the NUC and the Windows PC
 |---|---|---|---|---|
 | [br-ygkc](http://dalek.tailbc91f5.ts.net:7878/task?id=br-ygkc) | release::tests::installs_and_keeps_the_previous_binary fails with checksum mismatch (br... |  | integrated | fix done, landing; unblocks br-751e |
 | [br-751e](http://dalek.tailbc91f5.ts.net:7878/task?id=br-751e) | Daemon keeps its own workflow checkout at the binary's tag (chvf 3) | high | integrated | done; landing waits on the br-ygkc flake fix; then v0.6.0 |
-| [br-36dp](http://dalek.tailbc91f5.ts.net:7878/task?id=br-36dp) | Machine-wide self_upgrade: let ~/.bridle/config.toml set [daemon] self_upgrade for ever... | high | planned | ready to build |
-| [br-fv86](http://dalek.tailbc91f5.ts.net:7878/task?id=br-fv86) | Install bridle from a release with no clone: one step that downloads, verifies and inst... | high | planned | ready to build |
+| [br-36dp](http://dalek.tailbc91f5.ts.net:7878/task?id=br-36dp) | Machine-wide self_upgrade: let ~/.bridle/config.toml set [daemon] self_upgrade for ever... | high | integrated | delivered |
+| [br-fv86](http://dalek.tailbc91f5.ts.net:7878/task?id=br-fv86) | Install bridle from a release with no clone: one step that downloads, verifies and inst... | high | integrated | delivered |
 | [br-jgdb](http://dalek.tailbc91f5.ts.net:7878/task?id=br-jgdb) | Windows PC: follow the WSL2 setup guide (install WSL2 + Ubuntu, wslconfig, Tailscale, s... | low | claimed | the human's to-do |
 | [br-h7mu](http://dalek.tailbc91f5.ts.net:7878/task?id=br-h7mu) | Pick a name for the Windows PC (docs/context/naming.md) (v7ug) | low | claimed | the human's to-do |
 | [br-3932](http://dalek.tailbc91f5.ts.net:7878/task?id=br-3932) | Run bridle on a project without a local bridle clone (mrhe) |  | integrated | umbrella: both parts landed (br-85bc, br-8411); closes with tickets mrhe and chvf once br-751e lands |
@@ -140,7 +140,7 @@ How work is recorded (tickets, fields, migrations) and shipped (changelog, relea
 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
-| [br-syqn](http://dalek.tailbc91f5.ts.net:7878/task?id=br-syqn) | Ticket fields get standard names (blocked_by, related, parent, created, created_by, res... |  | planned | part 1 of 3 (names, theme, read both forms); pm-1 files part 2 (project-qualified IDs) and part 3 (migration) when it lands |
+| [br-syqn](http://dalek.tailbc91f5.ts.net:7878/task?id=br-syqn) | Ticket fields get standard names (blocked_by, related, parent, created, created_by, res... |  | integrated | part 1 of 3 (names, theme, read both forms); pm-1 files part 2 (project-qualified IDs) and part 3 (migration) when it lands |
 | [br-bpku](http://dalek.tailbc91f5.ts.net:7878/task?id=br-bpku) | Every ticket gets a row; types fix and epic; readiness moves to the ticket (ticket ready) |  | pending | after br-syqn lands (blocked_by) |
 | [br-3v75](http://dalek.tailbc91f5.ts.net:7878/task?id=br-3v75) | Ticket links live in the frontmatter: the daemon indexes blocked_by, parent and related... |  | pending | after br-bpku lands |
 | [br-72t9](http://dalek.tailbc91f5.ts.net:7878/task?id=br-72t9) | A ticket's thread moves to the ticket (tickets/<id>.md on the state branch); ticket com... |  | pending | after br-3v75 lands |
@@ -177,14 +177,14 @@ Agents use bridle correctly: commands, help, roles, the workflow reaching every 
 |---|---|---|---|---|
 | [br-3haz](http://dalek.tailbc91f5.ts.net:7878/task?id=br-3haz) | Mail between daemons, slice 1: outbox, peer tokens, forwarding with acknowledgement and... |  | integrated | delivered |
 | [br-fvkq](http://dalek.tailbc91f5.ts.net:7878/task?id=br-fvkq) | Mail between daemons, slice 3: outbox retry with backoff and the start-up ping (3haz P3) |  | integrated | delivered |
-| [br-hwek](http://dalek.tailbc91f5.ts.net:7878/task?id=br-hwek) | A named advisor's unread mail stays in its own inbox when its session ends or restarts ... |  | planned | ready to build |
-| [br-9aj2](http://dalek.tailbc91f5.ts.net:7878/task?id=br-9aj2) | Message delivery you can check, part 1: bridle messages command, delivery audit events ... |  | planned | ready to build |
-| [br-3zhx](http://dalek.tailbc91f5.ts.net:7878/task?id=br-3zhx) | Message delivery you can check, part 2: a message stays unread until the session has se... |  | planned | ready to build |
+| [br-hwek](http://dalek.tailbc91f5.ts.net:7878/task?id=br-hwek) | A named advisor's unread mail stays in its own inbox when its session ends or restarts ... |  | integrated | delivered |
+| [br-9aj2](http://dalek.tailbc91f5.ts.net:7878/task?id=br-9aj2) | Message delivery you can check, part 1: bridle messages command, delivery audit events ... |  | integrated | delivered |
+| [br-3zhx](http://dalek.tailbc91f5.ts.net:7878/task?id=br-3zhx) | Message delivery you can check, part 2: a message stays unread until the session has se... |  | integrated | delivered |
 | [br-djru](http://dalek.tailbc91f5.ts.net:7878/task?id=br-djru) | Message delivery you can check, part 2: a message stays unread until the session has se... |  | pending | duplicate of br-3zhx (pm-1); to drop |
-| [br-2msq](http://dalek.tailbc91f5.ts.net:7878/task?id=br-2msq) | bridle send --project to a local daemon needs a peer token, and --url can't be combined... |  | planned | ready to build |
+| [br-2msq](http://dalek.tailbc91f5.ts.net:7878/task?id=br-2msq) | bridle send --project to a local daemon needs a peer token, and --url can't be combined... |  | integrated | delivered |
 | [br-n7cg](http://dalek.tailbc91f5.ts.net:7878/task?id=br-n7cg) | Mail between daemons, slice 2: mail for a visitor is forwarded to its home daemon (3haz... |  | planned | ready to build |
 | [br-rhba](http://dalek.tailbc91f5.ts.net:7878/task?id=br-rhba) | Mail between daemons, slice 5: every orchestrator wake is a message, sent home; one wai... |  | planned | ready to build |
-| [br-ysmu](http://dalek.tailbc91f5.ts.net:7878/task?id=br-ysmu) | CI watch missed 13 red runs on main; first ci_failed wake came 40 minutes late |  | planned | ready to build |
+| [br-ysmu](http://dalek.tailbc91f5.ts.net:7878/task?id=br-ysmu) | CI watch missed 13 red runs on main; first ci_failed wake came 40 minutes late |  | integrated | delivered |
 | [br-cufw](http://dalek.tailbc91f5.ts.net:7878/task?id=br-cufw) | Mail between daemons, slice 4: visible state: outbox status, message show (queued/arriv... |  | planned | ready to build |
 
 #### Epic `scheduled-messages`: Scheduled messages and timed actions
@@ -195,7 +195,7 @@ Agents use bridle correctly: commands, help, roles, the workflow reaching every 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
 | [br-9xze](http://dalek.tailbc91f5.ts.net:7878/task?id=br-9xze) | Scheduled messages, first slice: an agent schedules a message to itself (one-time or re... |  | integrated | delivered |
-| [br-g5y2](http://dalek.tailbc91f5.ts.net:7878/task?id=br-g5y2) | Scheduled messages slice 2: role priming: wait at the maximum timeout and schedule a me... |  | planned | waits on the human; 9xze has landed |
+| [br-g5y2](http://dalek.tailbc91f5.ts.net:7878/task?id=br-g5y2) | Scheduled messages slice 2: role priming: wait at the maximum timeout and schedule a me... |  | integrated | waits on the human; 9xze has landed |
 | [br-yfv5](http://dalek.tailbc91f5.ts.net:7878/task?id=br-yfv5) | One scheduler for timed actions: scheduled messages (hrcn), nightly session restarts (c... |  | integrated | needs a design (designer) for the rest: cbbn, 3nyk, cy2v; then the human's review |
 | [br-cbbn](http://dalek.tailbc91f5.ts.net:7878/task?id=br-cbbn) | Scheduled nightly restart of an interactive session at a clock time (e.g. 3 AM) |  | pending | waits on the human (approve to ready) |
 | [br-ft3b](http://dalek.tailbc91f5.ts.net:7878/task?id=br-ft3b) | Per-role handover instructions in the workflow, with project overrides |  | pending | waits on the human (approve to ready) |
@@ -299,7 +299,7 @@ The orchestrator and daemons stay up, relaunch once, upgrade cleanly and recover
 | [br-4vmc](http://dalek.tailbc91f5.ts.net:7878/task?id=br-4vmc) | Flaky lifecycle_test spawn_child_orphan_is_swept_on_stop times out waiting for agent.or... |  | integrated | delivered |
 | [br-n96z](http://dalek.tailbc91f5.ts.net:7878/task?id=br-n96z) | Flaky under load: governor_test working_agent_is_notified_then_stopped_when_its_turn_en... |  | integrated | delivered |
 | [br-37r9](http://dalek.tailbc91f5.ts.net:7878/task?id=br-37r9) | Landing a task removes its worker even when the worker holds another task's uncommitted... |  | integrated | delivered |
-| [br-bcw6](http://dalek.tailbc91f5.ts.net:7878/task?id=br-bcw6) | cli_e2e sigint and events_stream shutdown tests flake under load |  | planned | ready to build |
+| [br-bcw6](http://dalek.tailbc91f5.ts.net:7878/task?id=br-bcw6) | cli_e2e sigint and events_stream shutdown tests flake under load |  | integrated | delivered |
 | [br-p29s](http://dalek.tailbc91f5.ts.net:7878/task?id=br-p29s) | The macOS Verifying popup still flashes during bridle builds, though the daemons run un... |  | pending | waits on the human (approve to ready) |
 | [br-8ff8](http://dalek.tailbc91f5.ts.net:7878/task?id=br-8ff8) | Flaky on CI: settle_wake_test blocked-task note races its edge setup | critical | integrated | delivered |
 | [br-7ufd](http://dalek.tailbc91f5.ts.net:7878/task?id=br-7ufd) | Self-upgrade at most every few hours, batching the landings; critical fixes go through ... | high | integrated | delivered |
@@ -322,6 +322,7 @@ The orchestrator and daemons stay up, relaunch once, upgrade cleanly and recover
 | [br-y455](http://dalek.tailbc91f5.ts.net:7878/task?id=br-y455) | Incident: bridle's daemon couldn't restart or self-upgrade for ~23 h: a stuck 'spawning... |  | planned | ready to build |
 | [br-aqa7](http://dalek.tailbc91f5.ts.net:7878/task?id=br-aqa7) | Self-upgrade refused good builds 3 times overnight: the new binary's self-check timed o... |  | pending | waits on the human (approve to ready) |
 | [br-5j35](http://dalek.tailbc91f5.ts.net:7878/task?id=br-5j35) | bridle session restart run from inside the session stops it and never relaunches: the d... |  | pending | waits on the human (approve to ready) |
+| [br-ve74](http://dalek.tailbc91f5.ts.net:7878/task?id=br-ve74) | A handover request reaches the new session after the old one already handed over | low | pending | investigate, low (the human, 2026-10-10 via aide): theme-only, not in an epic |
 | [br-s5ah](http://dalek.tailbc91f5.ts.net:7878/task?id=br-s5ah) | A daemon without an aide leaves its orchestrator no route to the human |  | pending | waits on the human (approve to ready) |
 | [br-2ax5](http://dalek.tailbc91f5.ts.net:7878/task?id=br-2ax5) | Incident: br-3haz broke every cross-project message for ~22 h: the CLI needed an outbox... |  | planned | ready to build |
 | [br-zcqv](http://dalek.tailbc91f5.ts.net:7878/task?id=br-zcqv) | dalek slept in a bag 8:42 AM-1:38 PM ET on 10-06: bridle froze, but the workforce had a... |  | pending | waits on the human (approve to ready) |
@@ -353,7 +354,7 @@ Bridle's own cost on the machine: measure against a baseline, then cut it.
 | [br-n4w4](http://dalek.tailbc91f5.ts.net:7878/task?id=br-n4w4) | Postmortem: bridle's own 'ps' polling (every daemon, test daemons at 200 ms) drove dale... |  | pending | waits on the human (approve to ready) |
 | [br-jxwr](http://dalek.tailbc91f5.ts.net:7878/task?id=br-jxwr) | Track and report how long a task takes from pickup to merge, split into agent work, bui... | low | pending | the human's ask (via aide); would show where the 30-40 min per task goes; low (the human): on a workstream, not queued now |
 | [br-6nzj](http://dalek.tailbc91f5.ts.net:7878/task?id=br-6nzj) | Test daemons stop polling at 200 ms; a resource-budget test; log the incident in docs/c... |  | integrated | delivered |
-| [br-g76s](http://dalek.tailbc91f5.ts.net:7878/task?id=br-g76s) | Load-hold notes: one per machine, name bridle-owned top consumers, honest text, load.ho... |  | planned | ready to build |
+| [br-g76s](http://dalek.tailbc91f5.ts.net:7878/task?id=br-g76s) | Load-hold notes: one per machine, name bridle-owned top consumers, honest text, load.ho... |  | integrated | delivered |
 | [br-fzwa](http://dalek.tailbc91f5.ts.net:7878/task?id=br-fzwa) | Audit every periodic daemon loop for what it forks or reads per tick; list them with co... |  | planned | ready to build |
 | [br-ks55](http://dalek.tailbc91f5.ts.net:7878/task?id=br-ks55) | Only one full test run at a time per machine: just check takes a machine-wide lock (n4w... |  | planned | ready to build |
 | [br-yw8b](http://dalek.tailbc91f5.ts.net:7878/task?id=br-yw8b) | fake-claude spawns skip the pyenv shim: resolve the interpreter once (n4w4 rec 7) |  | planned | ready to build |
@@ -370,7 +371,7 @@ What the human sees and touches: web UI, documents and comments, to-dos, links, 
 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
-| [br-k3jk](http://dalek.tailbc91f5.ts.net:7878/task?id=br-k3jk) | bridle-ui ships with bridle releases: design pass (designer): options and a recommendat... |  | planned | ready to build |
+| [br-k3jk](http://dalek.tailbc91f5.ts.net:7878/task?id=br-k3jk) | bridle-ui ships with bridle releases: design pass (designer): options and a recommendat... |  | integrated | delivered |
 | [br-t3dr](http://dalek.tailbc91f5.ts.net:7878/task?id=br-t3dr) | bridle-ui ships with each bridle release, fixed to that version, and self-upgrade moves... |  | pending | waits on the human (approve to ready) |
 | [br-785a](http://dalek.tailbc91f5.ts.net:7878/task?id=br-785a) | A landing that needs a UI install shows without a manual step (tc7t, option C) |  | pending | design first (designer on tc7t, then the human's review); build split after br-7ufd lands |
 
@@ -381,9 +382,10 @@ What the human sees and touches: web UI, documents and comments, to-dos, links, 
 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
+| [br-fd8e](http://dalek.tailbc91f5.ts.net:7878/task?id=br-fd8e) | Commit every edit bridle makes to a reviewed document or ticket (status markers, thread... |  | planned | ready to build |
 | [br-re79](http://dalek.tailbc91f5.ts.net:7878/task?id=br-re79) | Comments on a ticket an agent asked the human to approve go back to that agent; a pendi... | low | pending | waits on the human (approve to ready) |
 | [br-4cgx](http://dalek.tailbc91f5.ts.net:7878/task?id=br-4cgx) | @-mention a role in a ticket reply or a document comment and that role gets a message | low | pending | waits on the human (approve to ready) |
-| [br-g8pe](http://dalek.tailbc91f5.ts.net:7878/task?id=br-g8pe) | Link-reminder hook: design pass (designer): how hooks work, options and a recommendatio... |  | planned | ready to build |
+| [br-g8pe](http://dalek.tailbc91f5.ts.net:7878/task?id=br-g8pe) | Link-reminder hook: design pass (designer): how hooks work, options and a recommendatio... |  | integrated | delivered |
 | [br-9dcz](http://dalek.tailbc91f5.ts.net:7878/task?id=br-9dcz) | Agents are reminded once to link the ticket and task IDs they show the human (a hook, n... |  | pending | waits on the human (approve to ready) |
 
 #### Epic `ui-cleanups`: bridle-ui enhancements and fixes
@@ -559,3 +561,4 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 - 2026-10-10 2:05 PM ET: rule for epics (the human approved): a ticket is in an epic only if it is on the path to the epic's done-when; ideas, questions and investigations not yet committed to stay in their theme, not in an epic. br-d9wq (PdM research) out of everything-is-a-ticket into product-process, not in an epic.
 - 2026-10-10 2:10 PM ET: new p896 (agent evaluations, the human: long-term, low, not now) in agents-and-cli, not in an epic. br-g9xe, br-751e and br-3932 delivered.
 - 2026-10-10 2:25 PM ET: v0.6.0 tagged. New 36dp (machine-wide self_upgrade, from the orchestrator) into `machine-setup`, readied high: the NUC's switch to release upgrades waits on it, so no commits to the human's existing projects.
+- 2026-10-10 7:30 PM ET: regenerated. 36dp, chvf, hwek resolved; fv86, 3zhx, g5y2, syqn, 2msq, ysmu, bcw6, g76s landed; fd8e placed in comment-routing. New ve74 (handover request reaches the new session; the human via aide: investigate, low) in reliability, not in an epic.
