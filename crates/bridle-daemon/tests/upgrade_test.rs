@@ -669,3 +669,79 @@ async fn a_drain_starting_during_a_spawn_restarts_promptly() {
     assert_eq!(held, 1);
     daemon.running.join().await.expect("join");
 }
+
+#[tokio::test]
+async fn the_interval_holds_a_second_automatic_upgrade_across_a_restart_but_not_an_explicit_one() {
+    // Appends, so each build shows as a line.
+    let build = "echo ran >> \"$CARGO_TARGET_DIR.txt\"";
+    let config = "[daemon]\nself_upgrade = true\nself_upgrade_min_interval = \"1h\"\n";
+    let (daemon, tmp) = support::start_daemon_with_config(Some(auto(build)), Some(config)).await;
+    support::wait_for("the first upgrade", || async {
+        daemon.running.restart_requested().then_some(())
+    })
+    .await;
+    let (workspace, repo) = (daemon.workspace.clone(), daemon.repo.clone());
+    daemon.running.join().await.expect("join");
+
+    // Main moves on with a change the binary is built from.
+    std::fs::create_dir_all(repo.join("crates/x")).expect("mkdir");
+    std::fs::write(repo.join("crates/x/lib.rs"), "// x\n").expect("write");
+    for args in [
+        &["add", "-A"][..],
+        &[
+            "-c",
+            "user.name=t",
+            "-c",
+            "user.email=t@t",
+            "commit",
+            "-qm",
+            "x",
+        ][..],
+    ] {
+        let out = tokio::process::Command::new("git")
+            .arg("-C")
+            .arg(&repo)
+            .args(args)
+            .output()
+            .await
+            .expect("git");
+        assert!(out.status.success(), "{out:?}");
+    }
+
+    // The restarted daemon reads the last upgrade from its stored events: it holds the new commit.
+    let opts = bridle_daemon::ServeOptions {
+        repo,
+        workspace: Some(workspace.clone()),
+        project: None,
+        listen: Some("127.0.0.1:0".parse().expect("valid addr")),
+    };
+    let mut overrides = auto(build);
+    overrides.bridle_home = Some(support::machine_home_dir(tmp.path()));
+    let running = bridle_daemon::start(opts, overrides).await.expect("start");
+    tokio::time::sleep(Duration::from_secs(1)).await;
+    assert!(!running.restart_requested(), "held by the interval");
+    let log = || {
+        std::fs::read_to_string(workspace.join(".bridle/upgrade-target.txt"))
+            .expect("the build ran")
+            .lines()
+            .count()
+    };
+    assert_eq!(log(), 1);
+
+    // An explicit upgrade ignores the interval.
+    let token =
+        std::fs::read_to_string(workspace.join(".bridle/tokens/human")).expect("human token");
+    let client = bridle_api::Client::new(running.url.clone(), Some(token.trim().to_string()));
+    // The held tick claims the upgrade slot for a moment each pass; retry past a 409.
+    let reply = support::wait_for("the explicit upgrade to start", || async {
+        client.restart(&upgrade()).await.ok()
+    })
+    .await;
+    assert!(reply.message.unwrap().starts_with("building "));
+    support::wait_for("the explicit upgrade", || async {
+        running.restart_requested().then_some(())
+    })
+    .await;
+    assert_eq!(log(), 2);
+    running.join().await.expect("join");
+}

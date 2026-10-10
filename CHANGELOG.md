@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Mail attachments (br-srj5): a text attachment is saved as the sender's bytes (transfer encoding undone, no charset conversion), so UTF-8 text labelled iso-8859-1 or unlabelled no longer turns an em dash into mojibake.
 
 ### Changed
+- The automatic self-upgrade (`[daemon] self_upgrade`) now waits `[daemon] self_upgrade_min_interval` (default `3h`) after the last upgrade, then takes the newest green commit, so landings in between go in as one batch instead of a restart per landing (br-7ufd). Explicit `bridle restart --upgrade` ignores the interval. Existing projects get the 3 h default on upgrade; set `self_upgrade_min_interval = "0s"` for the old behaviour.
 - One cross-platform process-table read (br-crht): Linux now uses `sysinfo` + `getpgid` like macOS, and the `/proc` parser is gone. Native starts are tagged `s:`; a start stored by the previous daemon as `n:` is treated as not the same process, so pid files from before the upgrade are not signalled.
 
 ### Added

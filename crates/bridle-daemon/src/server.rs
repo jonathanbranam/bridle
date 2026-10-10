@@ -31,7 +31,7 @@ use bridle_api::types::{
 use bridle_api::types::{
     PrincipalId, Schedule, ScheduleAddRequest, ScheduleListQuery, ThreadEntryKind,
 };
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use futures::Stream;
 use serde::Deserialize;
 use tokio::sync::watch;
@@ -60,6 +60,8 @@ pub struct AppState {
     pub upgrader: crate::upgrade::Upgrader,
     /// `[daemon] self_upgrade`.
     pub self_upgrade: bool,
+    /// `[daemon] self_upgrade_min_interval`.
+    pub self_upgrade_min_interval: std::time::Duration,
     /// How long a drain waits before it wakes the orchestrator (once).
     pub drain_wake_after: std::time::Duration,
     /// `[schedule] timezone`: the zone a schedule gets when it names none.
@@ -3805,6 +3807,12 @@ async fn restart(
 /// the agents are (the build needs no quiet point; the drain after it makes one). A commit whose
 /// upgrade failed isn't retried until main moves on, so a broken build doesn't loop.
 pub async fn self_upgrade_tick(state: &AppState) {
+    self_upgrade_tick_at(state, Utc::now()).await;
+}
+
+/// [`self_upgrade_tick`] at an injected time. A candidate inside `[daemon]
+/// self_upgrade_min_interval` of the last upgrade is noted once and left for a later tick.
+pub async fn self_upgrade_tick_at(state: &AppState, now: DateTime<Utc>) {
     if !state.self_upgrade
         || state
             .restart_requested
@@ -3830,6 +3838,17 @@ pub async fn self_upgrade_tick(state: &AppState) {
             return;
         }
     };
+    let last = crate::upgrade::last_built_at(&state.store).await;
+    if !crate::upgrade::interval_passed(last, now, state.self_upgrade_min_interval) {
+        state.upgrader.release();
+        if state.upgrader.note_deferred(&sha) {
+            tracing::info!(
+                commit = %sha,
+                "self-upgrade: newer green commit held until [daemon] self_upgrade_min_interval has passed"
+            );
+        }
+        return;
+    }
     let bg = state.clone();
     tokio::spawn(async move {
         upgrade_in_background(bg, "system".to_string(), sha).await;

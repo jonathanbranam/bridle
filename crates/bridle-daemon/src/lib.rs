@@ -792,6 +792,7 @@ pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<R
             outbox::notifier(store.clone(), manager.clone()),
         ),
         self_upgrade: config.self_upgrade,
+        self_upgrade_min_interval: config.self_upgrade_min_interval,
         drain_wake_after: overrides.drain_wake_after,
         schedule_timezone: config.schedule_timezone.clone(),
     };

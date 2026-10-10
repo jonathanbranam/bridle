@@ -1544,6 +1544,10 @@ pub struct Config {
     /// `[daemon] self_upgrade`: when a newer green commit is on the integration
     /// branch, run what `bridle restart --upgrade` runs (docs/design/agent-host/daemon.md, Upgrade).
     pub self_upgrade: bool,
+    /// `[daemon] self_upgrade_min_interval`: the automatic upgrade waits this long after the
+    /// last upgrade, so landings in between go in as one batch. `0s` is no wait. An explicit
+    /// `bridle restart --upgrade` ignores it.
+    pub self_upgrade_min_interval: Duration,
     pub stop_grace: Duration,
     pub roles: BTreeMap<String, Role>,
     pub budget: BudgetConfig,
@@ -1629,6 +1633,7 @@ impl Default for Config {
             stall_after: Duration::from_secs(10 * 60),
             claim_lease_after: Duration::from_secs(10 * 60),
             self_upgrade: false,
+            self_upgrade_min_interval: Duration::from_secs(3 * 3600),
             stop_grace: Duration::from_secs(30),
             roles,
             budget: BudgetConfig::default(),
@@ -1971,6 +1976,9 @@ impl Config {
             }
             if let Some(v) = d.self_upgrade {
                 config.self_upgrade = v;
+            }
+            if let Some(s) = d.self_upgrade_min_interval {
+                config.self_upgrade_min_interval = parse_duration(&s)?;
             }
             if let Some(s) = d.stop_grace {
                 config.stop_grace = parse_duration(&s)?;
@@ -2929,6 +2937,8 @@ struct RawDaemon {
     #[serde(default)]
     self_upgrade: Option<bool>,
     #[serde(default)]
+    self_upgrade_min_interval: Option<String>,
+    #[serde(default)]
     stop_grace: Option<String>,
 }
 
@@ -3476,6 +3486,7 @@ mod tests {
             stall_after = "5m"
             claim_lease_after = "15m"
             self_upgrade = true
+            self_upgrade_min_interval = "90m"
             stop_grace = "45s"
 
             [roles.worker]
@@ -3495,6 +3506,11 @@ mod tests {
         assert_eq!(cfg.claim_lease_after, Duration::from_secs(15 * 60));
         assert!(cfg.self_upgrade);
         assert!(!Config::default().self_upgrade);
+        assert_eq!(cfg.self_upgrade_min_interval, Duration::from_secs(90 * 60));
+        assert_eq!(
+            Config::default().self_upgrade_min_interval,
+            Duration::from_secs(3 * 3600)
+        );
         assert_eq!(cfg.stop_grace, Duration::from_secs(45));
 
         // Overridden field changes; untouched fields keep the built-in default.

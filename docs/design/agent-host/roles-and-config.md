@@ -23,6 +23,8 @@ claim_lease_after = "10m"          # a claimed task is released once its claiman
                                    # inactive this long (storage.md, claims)
 self_upgrade = false               # build, drain and restart into a newer green main
                                    # commit, as `bridle restart --upgrade` (daemon.md, Upgrade)
+self_upgrade_min_interval = "3h"   # at least this long between automatic upgrades, to batch
+                                   # landings; "0s" = at once
 
 [branches]
 integration = "main"               # work merges here; worktree roles branch from here too

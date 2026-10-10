@@ -315,6 +315,16 @@ then drain, then restart. A turn is never cut off and nothing gives up waiting. 
 upgrade failed (build or self-check) is not retried (in memory; a daemon restart or a newer commit
 tries again) so a broken build doesn't loop.
 
+**Batching (`[daemon] self_upgrade_min_interval`, default `3h`).** The automatic upgrade waits
+this long after the last upgrade, then takes the newest green commit, so the landings in between go
+in as one batch. The last upgrade's time is the newest stored `upgrade.built` event (not memory, so
+it survives the restart the upgrade causes; not `daemon.started`, which a crash emits too). A daemon
+that has never upgraded has no wait. While inside the interval a newer green commit is logged once
+and not built. `0s` restores the old upgrade-at-once behaviour. An explicit `bridle restart
+--upgrade` ignores the interval, which is how a critical fix goes through at once; a
+critical-priority landing does not trigger an upgrade by itself (not yet needed: the orchestrator
+runs the explicit command; ticket 7ufd).
+
 **The gateway follows the upgrade by itself.** The upgrade replaces the installed `bridle` file, and
 a running `bridle gateway` re-executes itself when it sees that file change (human-web-ui.md,
 'Running it detached, and staying current'). The daemon does nothing for it: no hook, no quiet

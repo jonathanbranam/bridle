@@ -9,6 +9,8 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
+use bridle_api::types::{EventQuery, event_kind};
+use chrono::{DateTime, Utc};
 use tokio::process::Command;
 
 use crate::ci::Gh;
@@ -64,6 +66,8 @@ pub struct Upgrader {
     busy: Arc<AtomicBool>,
     /// The last commit an upgrade failed on (memory only), so the automatic trigger skips it.
     failed: Arc<Mutex<Option<String>>>,
+    /// The last candidate held back by the minimum interval (memory only), so it's logged once.
+    deferred: Arc<Mutex<Option<String>>>,
 }
 
 /// How a freshly built binary is checked before the daemon execs it.
@@ -100,6 +104,7 @@ impl Upgrader {
             check_timeout: CHECK_TIMEOUT,
             busy: Default::default(),
             failed: Default::default(),
+            deferred: Default::default(),
         }
     }
 
@@ -114,6 +119,14 @@ impl Upgrader {
 
     pub fn note_failed(&self, sha: &str) {
         *self.failed.lock().expect("failed-sha lock") = Some(sha.to_string());
+    }
+
+    /// Remembers `sha` as held back; `true` the first time for that commit.
+    pub fn note_deferred(&self, sha: &str) -> bool {
+        let mut d = self.deferred.lock().expect("deferred-sha lock");
+        let first = d.as_deref() != Some(sha);
+        *d = Some(sha.to_string());
+        first
     }
 
     pub fn failed_before(&self, sha: &str) -> bool {
@@ -298,6 +311,26 @@ pub async fn built(store: &Store) -> Option<String> {
         .filter(|b| !b.is_empty())
 }
 
+/// When the last upgrade was built, from the stored `upgrade.built` events (not memory: the
+/// upgrade restarts the daemon). Not `daemon.started`, which any restart emits, a crash
+/// included; the interval spaces upgrades. `None` when there has been none.
+pub async fn last_built_at(store: &Store) -> Option<DateTime<Utc>> {
+    let q = EventQuery {
+        kind: Some(event_kind::UPGRADE_BUILT.to_string()),
+        limit: Some(1),
+        ..Default::default()
+    };
+    store.list_events(q).await.ok()?.pop().map(|e| e.ts)
+}
+
+/// Whether an automatic upgrade may go at `now`: no earlier upgrade, or `min` has passed since it.
+pub fn interval_passed(last: Option<DateTime<Utc>>, now: DateTime<Utc>, min: Duration) -> bool {
+    match (last, chrono::Duration::from_std(min)) {
+        (Some(last), Ok(min)) => now - last >= min,
+        _ => true,
+    }
+}
+
 /// Whether the diff from the last built commit to `sha` changes anything the binary is built
 /// from. `true` (build) whenever that can't be told: nothing built yet, or git can't diff.
 pub async fn needs_build(store: &Store, repo: &Path, sha: &str) -> bool {
@@ -389,6 +422,59 @@ mod tests {
         let ws = Workspace::new(tmp.path(), None);
         let err = up.check_built(&ws).await.expect_err("refused");
         assert!(err.contains("boom"), "{err}");
+    }
+
+    #[test]
+    fn the_interval_blocks_until_it_has_passed() {
+        let t0 = Utc::now();
+        let min = Duration::from_secs(3 * 3600);
+        // Never upgraded: go.
+        assert!(interval_passed(None, t0, min));
+        assert!(!interval_passed(
+            Some(t0),
+            t0 + chrono::Duration::hours(2),
+            min
+        ));
+        assert!(interval_passed(
+            Some(t0),
+            t0 + chrono::Duration::hours(3),
+            min
+        ));
+        // Zero restores the old behaviour.
+        assert!(interval_passed(Some(t0), t0, Duration::ZERO));
+    }
+
+    #[tokio::test]
+    async fn the_last_upgrade_time_comes_from_the_stored_events() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let db = tmp.path().join("bridle.db");
+        let store = Store::open(&db).await.expect("store");
+        assert!(last_built_at(&store).await.is_none());
+        store
+            .append_event(
+                event_kind::DAEMON_STARTED,
+                "system".into(),
+                None,
+                serde_json::json!({}),
+            )
+            .await
+            .expect("event");
+        assert!(last_built_at(&store).await.is_none());
+        let ev = store
+            .append_event(
+                event_kind::UPGRADE_BUILT,
+                "system".into(),
+                None,
+                serde_json::json!({}),
+            )
+            .await
+            .expect("event");
+        // A fresh handle on the same file, as after a restart.
+        drop(store);
+        let store = Store::open(&db).await.expect("reopen");
+        // The store keeps milliseconds.
+        let at = last_built_at(&store).await.expect("stored");
+        assert!((at - ev.ts).num_milliseconds().abs() <= 1);
     }
 
     #[tokio::test]
