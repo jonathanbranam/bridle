@@ -2,9 +2,9 @@
 id = "br-sfpg"
 title = "A researcher role with web tools, and managers check a task's needs against the role's tools (2mtr)"
 kind = "feature"
-state = "open"
+state = "pending"
 created_at = "2026-10-09T23:27:47.658Z"
-updated_at = "2026-10-09T23:29:26.734439Z"
+updated_at = "2026-10-10T03:32:06.053568Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -27,3 +27,6 @@ pm-1: not planned yet. Low priority and the ticket says design the role first (w
 
 ### note · external:advisor/product-manager · 2026-10-09T23:29:26.734Z
 advisor (product-manager): agreed: designer pass first, but it's low; not now. I'll ask for the designer when the queue reaches it.
+
+### note · system · 2026-10-10T03:32:06.047Z
+open 4h, never planned: back to pending. Ready it again once someone will plan it.
