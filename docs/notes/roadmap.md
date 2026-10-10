@@ -80,11 +80,11 @@ Daemons, tokens, sync and projects across the laptop, the NUC and the Windows PC
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
 | [br-ygkc](http://dalek.tailbc91f5.ts.net:7878/task?id=br-ygkc) | release::tests::installs_and_keeps_the_previous_binary fails with checksum mismatch (br... |  | integrated | fix done, landing; unblocks br-751e |
-| [br-751e](http://dalek.tailbc91f5.ts.net:7878/task?id=br-751e) | Daemon keeps its own workflow checkout at the binary's tag (chvf 3) | high | planned | done; landing waits on the br-ygkc flake fix; then v0.6.0 |
+| [br-751e](http://dalek.tailbc91f5.ts.net:7878/task?id=br-751e) | Daemon keeps its own workflow checkout at the binary's tag (chvf 3) | high | integrated | done; landing waits on the br-ygkc flake fix; then v0.6.0 |
 | [br-fv86](http://dalek.tailbc91f5.ts.net:7878/task?id=br-fv86) | Install bridle from a release with no clone: one step that downloads, verifies and inst... | high | planned | ready to build |
 | [br-jgdb](http://dalek.tailbc91f5.ts.net:7878/task?id=br-jgdb) | Windows PC: follow the WSL2 setup guide (install WSL2 + Ubuntu, wslconfig, Tailscale, s... | low | claimed | the human's to-do |
 | [br-h7mu](http://dalek.tailbc91f5.ts.net:7878/task?id=br-h7mu) | Pick a name for the Windows PC (docs/context/naming.md) (v7ug) | low | claimed | the human's to-do |
-| [br-3932](http://dalek.tailbc91f5.ts.net:7878/task?id=br-3932) | Run bridle on a project without a local bridle clone (mrhe) |  | pending | umbrella: both parts landed (br-85bc, br-8411); closes with tickets mrhe and chvf once br-751e lands |
+| [br-3932](http://dalek.tailbc91f5.ts.net:7878/task?id=br-3932) | Run bridle on a project without a local bridle clone (mrhe) |  | integrated | umbrella: both parts landed (br-85bc, br-8411); closes with tickets mrhe and chvf once br-751e lands |
 | [br-hua2](http://dalek.tailbc91f5.ts.net:7878/task?id=br-hua2) | Add a machine: one setup guide from bare OS to on the network (config, tokens, services... | high | integrated | delivered |
 | [br-gdf3](http://dalek.tailbc91f5.ts.net:7878/task?id=br-gdf3) | Peer-token setup guidance: a token per receiving project per sending machine, minted on... | high | integrated | delivered |
 | [br-8c25](http://dalek.tailbc91f5.ts.net:7878/task?id=br-8c25) | bridle token pair, part 1: the token-role list, the spec, and role tokens across machin... | high | integrated | delivered |
@@ -221,6 +221,7 @@ Agents use bridle correctly: commands, help, roles, the workflow reaching every 
 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
+| [br-p896](http://dalek.tailbc91f5.ts.net:7878/task?id=br-p896) | Agent evaluations: run agents with a clean, specified context, capture everything, and ... | low | pending | future (the human, 2026-10-10): long-term, low; not now |
 | [br-py93](http://dalek.tailbc91f5.ts.net:7878/task?id=br-py93) | Idea: bridle as a tool (MCP) for interactive sessions instead of the CLI, so waiting an... |  | pending | future idea (the human, 2026-10-10): unscheduled; goes with the background-agents epic (ae9f) |
 | [br-7zd4](http://dalek.tailbc91f5.ts.net:7878/task?id=br-7zd4) | Remove the stale 'Until bridle workflow sync renders rules' lines from workflow/base/ru... | low | planned | ready to build |
 | [br-sfpg](http://dalek.tailbc91f5.ts.net:7878/task?id=br-sfpg) | A researcher role with web tools, and managers check a task's needs against the role's ... | low | pending | needs a designer pass (low; later) |
@@ -555,3 +556,4 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 - 2026-10-10 2:40 PM ET: xccp out of machine-sync to unscheduled (the human hadn't decided it; aide wrote option A, no new credentials, into the ticket). Design task br-k3jk added to ui-releases.
 - 2026-10-10 1:55 PM ET: stx8 (task states) into `everything-is-a-ticket`, last, blocked by br-72t9 (the human: "do all the ticket task work first because they're dependent and interrelated ... it can come later"); off the reviews list for now. Note: today's earlier PM entries above were stamped about an hour late (the previous session's ET clock was off).
 - 2026-10-10 2:05 PM ET: rule for epics (the human approved): a ticket is in an epic only if it is on the path to the epic's done-when; ideas, questions and investigations not yet committed to stay in their theme, not in an epic. br-d9wq (PdM research) out of everything-is-a-ticket into product-process, not in an epic.
+- 2026-10-10 2:10 PM ET: new p896 (agent evaluations, the human: long-term, low, not now) in agents-and-cli, not in an epic. br-g9xe, br-751e and br-3932 delivered.
