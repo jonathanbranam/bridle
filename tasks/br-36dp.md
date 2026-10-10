@@ -4,7 +4,7 @@ title = "Machine-wide self_upgrade: let ~/.bridle/config.toml set [daemon] self_
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-10T18:19:39.799Z"
-updated_at = "2026-10-10T20:25:42.400618Z"
+updated_at = "2026-10-10T20:26:29.039923Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -30,3 +30,6 @@ done: machine ~/.bridle/config.toml [daemon] self_upgrade/release_repo/self_upgr
 
 ### note · agent:manager-2 · 2026-10-10T20:25:42.400Z
 integrated: fb18e39fa287b5c43b8c00f7dad27d439510f6a5 (branch bridle/w36dp)
+
+### note · agent:manager-2 · 2026-10-10T20:26:29.039Z
+cleanup: removed agent w36dp, branch bridle/w36dp
