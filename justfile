@@ -3,7 +3,7 @@ default:
     @just --list
 
 # Format, lint, test: what CI runs.
-check: fmt-check lint specs-check test
+check: fmt-check lint specs-check bench-test test
 
 fmt:
     cargo fmt --all
@@ -16,6 +16,10 @@ fmt-check:
 specs-check:
     cargo run -q -p bridle -- workflow spec check --require-ids
     cargo run -q -p bridle -- workflow spec coverage --tests crates --require-all
+
+# The benchmark sampler's unit tests (python3 stdlib; never samples).
+bench-test:
+    python3 -I scripts/bench/test_passive_sample.py
 
 lint:
     cargo clippy --workspace --all-targets -- -D warnings
