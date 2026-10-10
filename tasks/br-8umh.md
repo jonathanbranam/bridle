@@ -4,9 +4,10 @@ title = "A failed push is an event and an alarm; an agent that can't send puts t
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T18:08:53.344Z"
-updated_at = "2026-10-09T18:10:08.954226Z"
+updated_at = "2026-10-10T23:10:05.137563Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
+summary = "New `bridle push` (POST /v1/push; human, orchestrator, managers only) runs `git push origin <integration>` in the project clone. On failure the daemon emits a `push.failed` event (project, branch, git's first stderr line), messages the orchestrator and the human, and the CLI exits 1. Success records nothing (no existing success event style). Chose a separate command over `task land --push` because landing runs in the integration worktree, not the caller's clone. Manager role now uses `bridle push`; manager and worker roles say to use `bridle task comment` when `bridle send` fails (reaches projects via `bridle workflow sync`). Docs: operating-model step 4, cli.md, CHANGELOG. Tests: daemon push_test.rs (bare origin with rejecting pre-receive hook). just check green, 1474 tests."
 ticket = "8umh"
 +++
 
@@ -22,3 +23,11 @@ Files likely: crates/bridle/src (CLI), crates/bridle-daemon/src/{tasks.rs,server
 Tests: temp bare origin whose pre-receive hook rejects, assert exit code, event and message; no network. Acceptance: just check passes.
 Migration: roles reach projects via bridle workflow sync; state that in the task comment.
 Out of scope: pushing after direct docs commits (task 8ay6, which builds on this command), fetch/divergence warnings (k6jd), incident 2ax5's root cause (why bridle send failed).
+
+## Thread
+
+### note · agent:w8umh · 2026-10-10T23:10:02.279Z
+Shape: separate 'bridle push' (landing runs in the integration worktree, so --push on land would not push the caller's clone). Roles reach projects via bridle workflow sync.
+
+### note · agent:w8umh · 2026-10-10T23:10:05.137Z
+done: bridle push (event push.failed + messages + exit 1), roles updated; just check exit 0, 1474 tests; fe4e7df3
