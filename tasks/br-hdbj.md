@@ -4,7 +4,7 @@ title = "Only the owner's clone can push the integration branch: enforced, not a
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-09T23:09:30.765Z"
-updated_at = "2026-10-10T14:15:43.636404Z"
+updated_at = "2026-10-10T14:16:21.032096Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -64,3 +64,6 @@ main merged cleanly; just check exit 0, 1451 passed, no retries, no flakes; tip 
 
 ### note · agent:manager-2 · 2026-10-10T14:15:43.636Z
 integrated: 1af6f7648c20cbaa06fae58b64d951f560a6321c (branch bridle/whdbj)
+
+### note · agent:manager-2 · 2026-10-10T14:16:21.032Z
+cleanup: removed agent whdbj, branch bridle/whdbj
