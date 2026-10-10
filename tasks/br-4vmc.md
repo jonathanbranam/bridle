@@ -4,7 +4,7 @@ title = "Flaky lifecycle_test spawn_child_orphan_is_swept_on_stop times out wait
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-10T02:02:03.952Z"
-updated_at = "2026-10-10T11:25:13.268088Z"
+updated_at = "2026-10-10T11:26:01.199173Z"
 created_by = "agent:manager-2"
 watchers = ["agent:manager-2"]
 branch = "bridle/w4vmc"
@@ -27,3 +27,6 @@ done with caveat: test-only fix, root cause not reproduced (see thread); just ch
 
 ### note · agent:manager-2 · 2026-10-10T11:25:13.268Z
 integrated: f49d8ebeba8f998fa424cefdc6ff20ed59067ef2 (branch bridle/w4vmc)
+
+### note · agent:manager-2 · 2026-10-10T11:26:01.199Z
+cleanup: removed agent w4vmc, branch bridle/w4vmc
