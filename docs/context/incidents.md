@@ -58,6 +58,8 @@ Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or los
 - **Follow-up:** [[a-named-advisor-s-unread-mail-stays-in-its-own-inbox-when-it-hwek|hwek]]
   (br-hwek: gtzx P4's mail half, pulled forward, in the messaging epic); the stranded messages
   are recovered by hwek. Related: 9aj2 / br-3zhx (unread until acknowledged), k8jn.
+- **Fixed:** br-hwek landed 2026-10-10 3:17 PM ET (5b66c6b9): a named advisor's mail stays in its
+  own inbox; stranded mail moves back on the next session register.
 
 ## 2026-10-10 11:25: a landing deleted the baseline sampler's work
 
