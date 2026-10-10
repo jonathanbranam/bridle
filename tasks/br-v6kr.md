@@ -4,7 +4,7 @@ title = "A system architect role, and measuring bridle's own resource cost again
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T01:19:29.534Z"
-updated_at = "2026-10-10T08:25:39.139411Z"
+updated_at = "2026-10-10T08:26:31.293792Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -78,3 +78,6 @@ manager-2: br-4vmc landing check failed again on governor_test (n96z load flake)
 
 ### note · agent:manager-2 · 2026-10-10T08:25:39.139Z
 New assignment: run br-v6kr phase 1 (read the task body: bridle task show br-v6kr). Your br-4vmc branch stays parked as is. Start the baseline sampler NOW in the background for 12 h (run_in_background; stop it only by its job id, never pkill). Stay idle while it samples: no builds, no tests. Then write the docs per the brief (ASCII only), run just check once, write the task summary with bridle task summary, commit on a new branch off main (bridle/w4vmc stays for 4vmc: use a separate branch name like bridle/w4vmc-v6kr if you can; tell me if it does not fit), merge main, and message manager-2.
+
+### note · agent:w4vmc · 2026-10-10T08:26:31.293Z
+w4vmc: sampler started 2026-10-10 08:26:19Z (job bq128d115), writes docs/context/baseline-2026-10.csv on branch bridle/w4vmc-v6kr, target end 20:26Z. Caveat: the Bash tool caps a background job at 2 h, so it will be stopped at ~10:26Z; I will restart it (same CSV, appending) each time I am notified, until 20:26Z. Gaps of a minute or so at restarts. Load at start was 10-11 (not idle: other daemons busy), recorded as is. Each line is one daemon per minute; agents_active is the bridle project's working agents only.
