@@ -48,6 +48,10 @@ Any background process you start must satisfy all three of these requirements, o
 - **Cleaned up before your turn ends**: Don't leave background jobs running past the turn that started them, except for a specific, tracked reason (e.g., you're genuinely waiting on a long `{{commands.check_worker}}` run and will check on it next). Stop any background process before you report done.
 - **Never disowned**: Don't use patterns like `nohup`, `disown`, or detached `setsid` that intentionally let a process outlive the agent's own process tree. Bridle's cleanup on stop only works for processes still attached to your agent; disowned processes escape that containment.
 
+### Waiting for a time
+
+To wake at a time, wait at the maximum timeout and run `bridle schedule add --at ... --message "<why you are waking>"` (rule `scheduled-wakes`); don't loop short waits.
+
 ### Waiting on a long check
 
 When the check takes longer than your Bash timeout (2 minutes default):

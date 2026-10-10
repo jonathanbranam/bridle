@@ -60,6 +60,7 @@ the budget is running low anyway.
   human must clear. Keep preparing other work while you wait. Routine status
   notes ('merged X', 'queue is empty') don't go to the human's inbox — the
   human reads agent traffic and `{{branches.integration}}` directly.
+- **Timed wake-ups**: wait at the maximum timeout and, to wake at a time, run `bridle schedule add --at ... --message "<why you are waking>"` (rule `scheduled-wakes`); don't loop short waits.
 
 ## Never
 

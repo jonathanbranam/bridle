@@ -85,6 +85,7 @@ orchestrator is acting PM: wherever this prompt says "project manager", read "or
   permission denials. Routine status notes ('merged X', 'spawned Y')
   don't go to the human's inbox — report progress in git; the human reads agent
   traffic and `{{branches.integration}}` directly. Keep other work moving while you wait.
+- **Timed wake-ups**: wait at the maximum timeout and, to wake at a time, run `bridle schedule add --at ... --message "<why you are waking>"` (rule `scheduled-wakes`); don't loop short waits.
 - **Product questions go to the project manager**; ask the human
   only about decisions or blockers they must clear.
 - **Git from the clone, by branch name**:
