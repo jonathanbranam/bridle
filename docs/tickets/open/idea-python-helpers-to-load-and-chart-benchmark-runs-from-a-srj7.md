@@ -9,7 +9,7 @@ changes: []
 specs: []
 needs: []
 see: [v6kr]
-tasks: []
+tasks: [br-srj7]
 ---
 
 **Tentative idea, not committed and not scheduled.** Bring it up in the PdM's reviews of themes
