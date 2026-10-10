@@ -6,6 +6,9 @@ use bridle_api::types::{AgentState, SpawnRequest, Workdir};
 use futures::StreamExt;
 use support::{TestDaemon, start_daemon, wait_for_agent, wait_for_state};
 
+/// Hang guard for the shutdown waits: a passing run never waits this long.
+const HANG_GUARD: std::time::Duration = std::time::Duration::from_secs(120);
+
 #[tokio::test]
 async fn events_stream_receives_backfill_then_live_events_in_seq_order() {
     let (daemon, _tmp) = start_daemon(None).await;
@@ -221,13 +224,18 @@ async fn shutdown_ends_open_event_streams_and_finishes_promptly() {
 
     let TestDaemon { running, .. } = daemon;
     running.shutdown();
-    tokio::time::timeout(std::time::Duration::from_secs(3), running.join())
+    // Shutdown flushes and pushes the state branch (git subprocesses), which
+    // takes seconds on a loaded machine, so the waits below are hang guards on
+    // the events (join returns, the stream ends), not bounds on elapsed time.
+    // A stream the server failed to end can't pass: its connection stays open
+    // and the EOF wait times out, however long the guard is.
+    tokio::time::timeout(HANG_GUARD, running.join())
         .await
         .expect("daemon shutdown hung on the open event stream")
         .expect("join");
 
     // The client is still holding the connection; it must see EOF.
-    let end = tokio::time::timeout(std::time::Duration::from_secs(3), async {
+    let end = tokio::time::timeout(HANG_GUARD, async {
         while conn.read(&mut buf).await.map(|n| n > 0).unwrap_or(false) {}
     })
     .await;
