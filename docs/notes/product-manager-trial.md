@@ -85,6 +85,8 @@ confirmation unless there is a discrepancy or issue. This should be part of the 
 When a ticket's tasks have all landed (or been dropped), the PdM checks quickly that the ask was
 met and runs `bridle ticket resolve`; it asks the human only when something doesn't match.
 
+**Epics and themes** (the human, 2026-10-10): every ticket sits in a theme. It is in an epic only if it is on the path to that epic's done-when (builds, and the design or research they wait on); ideas, questions and investigations not yet committed to stay in the theme, not in an epic, until a decision pulls them in or drops them. The human: "If it satisfies the 'when done,' then it can be part of that epic. If not, it's not."
+
 **How to work with the PdM:**
 
 - **Aides (every project):** send **everything** from the human to the PdM, not the
