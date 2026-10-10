@@ -1457,3 +1457,7 @@
 {"actor":"agent:pm-1","at":"2026-10-10T14:45:25.511371Z","queue":"reprioritized"}
 {"actor":"agent:manager-2","at":"2026-10-10T16:32:17.680090Z","from":"planned","task":"br-57ec","to":"integrated"}
 {"actor":"human","at":"2026-10-10T16:58:43.580Z","from":"","task":"br-eadm","to":"pending"}
+{"actor":"human","at":"2026-10-10T17:09:36.504Z","from":"","task":"br-9dcz","to":"pending"}
+{"actor":"human","at":"2026-10-10T17:09:43.632Z","from":"","task":"br-g8pe","to":"pending"}
+{"actor":"external:advisor/product-manager","at":"2026-10-10T17:09:53.848418Z","from":"pending","task":"br-g8pe","to":"open"}
+{"actor":"agent:pm-1","at":"2026-10-10T17:09:57.338277Z","from":"open","task":"br-g8pe","to":"planned"}
