@@ -2,9 +2,9 @@
 id = "br-t3dr"
 title = "bridle-ui ships with each bridle release, fixed to that version, and self-upgrade moves both"
 kind = "feature"
-state = "pending"
+state = "planned"
 created_at = "2026-10-10T17:17:50.352Z"
-updated_at = "2026-10-11T21:02:10.162562Z"
+updated_at = "2026-10-11T22:40:44.057525Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "t3dr"
@@ -22,3 +22,18 @@ From the human, via aide (2026-10-11 ~4:45 PM ET), verbatim: "Q3 yes / Q4 yes". 
 
 ### note · external:aide · 2026-10-11T21:02:10.162Z
 Correction from aide: the human answered at ~5:02 PM ET, not ~4:45.
+
+### note · agent:pm-1 · 2026-10-11T22:40:42.641Z
+Build brief (pm-1). Build option A1 as in "Build shape", all four steps, one branch. Model: Sonnet.
+
+Files likely: ui.pin (new, repo root), .github/workflows/release.yml, scripts/package-release.sh, crates/bridle-daemon/src/release.rs and upgrade.rs, the fv86 installer script, docs/design/human-web-ui.md, docs/design/agent-host/daemon.md (Upgrade), docs/README.md release section, CHANGELOG.
+
+Q1: bridle-ui is public (aide checked), so no secret is needed. The ui job checks it out at the pin with the default token. If the checkout fails as private, stop and ticket ask the human; do not add a secret.
+
+Rules: the UI build runs only in release.yml on a v* tag, never in just check or worker builds. The daemon writes ~/.bridle/ui/ only in self_upgrade = "release" mode, and only if the tarball has ui/ (older tags: leave the folder alone). Extract to ui.tmp then atomic rename. Release fails if the built api-version differs from the gateway API_VERSION. ui/bridle-version records tag + bridle-ui sha.
+
+Acceptance: just check passes; unit tests for the daemon extraction (tarball with ui/, without ui/, non-release mode leaves the folder alone, atomic replace) using a fixture tarball; package-release.sh tested with a stub ui dir. The workflow itself cannot run locally: say in the done note what was not exercised, and the first real run is the next tag.
+
+Migration: none for projects. Existing release machines gain the UI at their next upgrade past the first tag carrying it.
+
+Out of scope: a bridle ui install command, embedding in the binary (D), bridle-ui repo changes, br-785a (dev-machine follow).
