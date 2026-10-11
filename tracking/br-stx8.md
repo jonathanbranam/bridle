@@ -4,7 +4,7 @@ title = "A task's state says what's really happening: held and built-awaiting-la
 kind = "feature"
 state = "planned"
 created_at = "2026-10-06T02:04:20.046Z"
-updated_at = "2026-10-11T04:14:01.010389Z"
+updated_at = "2026-10-11T17:19:28.236336Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -13,19 +13,19 @@ watchers = [
 ticket = "stx8"
 +++
 
-docs/tickets/open/a-task-s-state-says-what-s-really-happening-held-and-built-a-stx8.md
-Ticket (the ask with the human's words and the aide's breakdown of the 24 planned tasks; read all of it). The human is upset: the UI shows 24 "planned" tasks, only 2 being worked, and nothing tells them apart.
-Goal: a task's state says what is really happening, visible at a glance in the CLI and the UI.
-Build:
-1. A `held` state: a held task is not startable and not in the way of the queue; it records who holds it, why, and until what (free text is fine for "until", e.g. "human reviews kzw2"). Commands set and clear it (propose `bridle task hold <id> --reason ... [--until ...]` and `bridle task unhold <id>`, which returns it to `planned`; avoid colliding with `task release`, which releases a claim; follow the CLI's naming conventions and say why). Hold and unhold are recorded in the thread and as events. A held task cannot be claimed or spawned; `bridle queue` shows it as held, not startable.
-2. A state for "built on a branch, waiting to land or for the human's review" (propose `built`, or the name the state machine's existing vocabulary suggests): how a task gets there (find how work is parked today: tasks with a branch and commit that are not integrated, e.g. br-6b8a, br-2718, br-2672, br-8b98, br-79c3, br-88d4, br-751e; use the existing worker-done/landing flow so no extra manual step is needed), and that landing it moves it to integrated as today. Wherever the manager or orchestrator reads "waiting to land", it is now a state, not a note.
-3. `planned` then means only "in the queue, a worker can start it".
-4. MIGRATION (required, automatic, at daemon start, idempotent): tasks in `planned` that have a branch/commit recorded and are not integrated move to the built-awaiting-landing state. Held cannot be detected reliably from text, so the migration does NOT guess; instead list in the done note the held candidates from the ticket (br-vk3y, br-1ddd, br-91b3, br-6ba3, br-46fe, br-cf00, br-f610) so the orchestrator can hold them with the new command. Document in docs/design/storage.md.
-Show the states in the UI: state is already displayed as text in the task lists; make sure the new states render with distinct labels/styles wherever states render (crates/bridle-gateway bindings/*.ts and the UI source it serves; the TUI too), and that `bridle task list`/`queue`/`status` group or label them. Update docs/design/storage.md (state machine), coordination.md (task lifecycle), cli.md, the manager and PM role docs where they describe planned/held/awaiting-landing.
-Files likely: crates/bridle-daemon (tasks.rs, store schema + migration, server.rs), crates/bridle-api/src/types.rs (wire change, additive: update daemon, CLI, TUI and gateway together), crates/bridle/src (task commands, queue/status output), crates/bridle-tui, crates/bridle-gateway, docs above.
-Acceptance: just check passes; tests for hold/unhold (not claimable while held, event and thread recorded), the built state (reached by the existing done/park flow, left by landing), queue output, and the migration (planned with a branch becomes built; planned without stays; rerun is a no-op).
-Size: if this grows past one branch's worth, STOP after items 1, 3 and the migration of branch-holding tasks, and say on the task what remains (the UI polish can be a follow-up).
-Model: Sonnet. Out of scope: the review-slice hold decisions themselves, kzw2 (structured task fields in general).
+Ticket: docs/tickets/open/a-task-s-state-says-what-s-really-happening-held-and-built-a-stx8.md. Read "The ask" and "Approved design (the human, 2026-10-11)": the design (pm-1 of 2026-10-06) is APPROVED AS WRITTEN with Q1-Q3 at the recommendations, and it supersedes the older brief that was here. The hold is lifted. Deferred, NOT in this task: the review state, the sent-back state, and settling names with v2va slice A's in_review (br-6ba3). Since 22ab the commands live under `bridle ticket`; `task` is the hidden alias. The code now says ticket (TicketManager etc.), so use the current names.
+
+SLICE 1 (this task): daemon, wire, CLI, migration, docs. UI polish is a separate task (named in the thread).
+States: existing unchanged (pending, open, planned, claimed, dropped, integrated, reopened); new exactly two, `held` and `built` (wire strings lowercase).
+- planned: in the queue, claimable if deps are met and no open question.
+- held: a person paused it. Not claimable, not spawnable; `bridle queue` shows it under its tier labelled held (Q1), never startable; an unmet dependency as planned is. Fields: held_by (principal), held_reason (required), held_until (free text, optional), held_at. Only from planned.
+- built: finished on a branch, waiting to land or review. Requires branch and commit. Not claimable, not startable; does NOT resolve blocks edges (only integrated does). Left only by landing (done) or send-back. It is in the normal worker flow too (Q3): worker finishes -> built -> manager lands -> integrated; find where the worker's finish and the manager's landing set state today and move them through built without an extra manual step.
+Commands (ticket forms, task aliases kept): `bridle ticket hold <id> --reason TEXT [--until TEXT]` planned -> held, thread note + `task.held`-style event (keep the event naming convention the code uses now, say which); `ticket unhold <id>` held -> planned; `ticket built <id> --branch NAME --commit SHA` claimed -> built (releases the lease) and planned -> built (parked work, by manager/orchestrator/human); `ticket done` built -> integrated (still allowed from claimed/planned as today); `ticket send-back <id> --reason TEXT` built -> planned keeping the branch (new command, Q2; reopen stays for dropped/integrated); drop allowed from held and built.
+Transitions (anything else is 409): planned -> claimed|held|built|dropped; claimed -> planned|built|integrated|dropped; held -> planned|dropped; built -> integrated|planned|dropped; integrated/dropped -> reopened. Who: hold/unhold human, manager, PM, orchestrator; built the claiming worker or manager/orchestrator/human; done/send-back manager, orchestrator, human.
+Migration (automatic at daemon start, idempotent, in storage.md): every ticket row in planned with branch and commit set and not integrated -> built. No guessing for held; list in the done note the candidates for the orchestrator to hold: br-vk3y, br-1ddd, br-91b3, br-6ba3, br-46fe, br-cf00, br-f610 (some may be gone). Also the queue, list and status output label held and built.
+Files likely: crates/bridle-daemon (tickets.rs, store schema and migration, server.rs), crates/bridle-api/src/types.rs (additive wire change, accept old; daemon, CLI, TUI and gateway compile together), crates/bridle/src (commands, queue/status/list output), docs/design/storage.md (state machine), coordination.md (lifecycle), cli.md, manager and PM role docs where they describe planned/held/awaiting landing, CHANGELOG.
+Acceptance: just check passes; tests: hold/unhold (not claimable while held, event and thread recorded), built reached by the worker finish and by the park command and left by landing, send-back, invalid transitions 409, queue labels, the migration (planned with branch becomes built; without stays; rerun no-op).
+Model: Sonnet. If it grows past one branch, land items up to the migration and say what remains. Out of scope: TUI and gateway rendering (next task), review and sent-back states, kzw2.
 
 ## Thread
 
@@ -92,3 +92,9 @@ advisor (product-manager): the human's input on pm-1's design (2026-10-11 ~1:45 
 
 ### note · external:advisor/product-manager · 2026-10-11T04:14:01.010Z
 Correction from advisor (product-manager): the human's input in my earlier comment was dated '~1:45 AM ET'; it was ~12:10 AM ET 2026-10-11 (the principle ~12:13 AM ET). Ticket stx8 fixed in aa70230b.
+
+### answer · external:advisor/product-manager · 2026-10-11T17:19:02.607Z
+human via advisor/product-manager, 2026-10-11 ~12:00 PM ET: "approve current design of stx8 as designed; we can deal with the review cycle questions later; let's land that first and refine". Hold lifted: pm-1's 2026-10-06 design is approved as written, Q1-Q3 at its recommendations; written into the ticket, section "Approved design" (7d023ff6). Commands under `bridle ticket` since 22ab step 7. Review and sent-back states deferred to a later refinement.
+
+### note · agent:pm-1 · 2026-10-11T17:19:28.236Z
+split off br-e4rv: stx8 part 2: held and built render with distinct labels in the TUI and gateway bindings

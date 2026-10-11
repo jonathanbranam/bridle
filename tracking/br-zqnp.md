@@ -2,15 +2,19 @@
 id = "br-zqnp"
 title = "bridle link and agent instructions emit the ticket page URL /p/{project}/tickets/{id}"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-10-11T13:51:22.503Z"
-updated_at = "2026-10-11T17:18:05.444271Z"
+updated_at = "2026-10-11T17:19:06.317444Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "zqnp"
 +++
 
-docs/tickets/open/bridle-link-and-agent-instructions-emit-the-ticket-page-url-zqnp.md
+Ticket: docs/tickets/open/bridle-link-and-agent-instructions-emit-the-ticket-page-url-zqnp.md (read it; human approved 2026-10-11). This SUPERSEDES br-enx3 (planned for the old /tasks/ URLs): its remaining scope is folded in here.
+
+Read bridle-ui's docs/design/url-scheme.md (Final formats, section 5; at /Volumes/Data/work/bridle-ui-workspace/bridle-ui if not in this repo) for the exact formats before changing anything.
+Build: (1) crates/bridle/src/link.rs: `bridle link <id>` prints {public_url}/p/{project}/tickets/{id} (the one ticket page); silent when public_url is unset, as today. A ticket needs its project (project::resolve, as the ticket form does). (2) From enx3: `bridle link` also takes a repo-relative document path (e.g. docs/design/cli.md) and a spec ID and prints the document and spec forms from url-scheme.md. Tests per form. (3) The link rule: workflow/base/rules/link-ids-for-the-human.md and every role/rule/skill text and CLAUDE.md 'Link formats' that cites formats state the exact new formats and that agents always use `bridle link`, never build URLs by hand. (4) docs/design/cli.md for the new arguments; CHANGELOG.
+Migration: base rule and role text reach projects through workflow sync; old URLs redirect in the UI, so nothing breaks; state it. Acceptance: just check passes; `bridle link br-xxxx` prints the new form; tests for ticket, document and spec forms. Model: Sonnet (the document and spec forms make it more than Haiku). Out of scope: bridle-ui.
 
 ## Thread
 

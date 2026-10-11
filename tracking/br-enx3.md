@@ -2,9 +2,9 @@
 id = "br-enx3"
 title = "bridle link: the unified URL scheme (/p/{project}/tasks/{id}, ...), document and spec links; link rule with exact formats"
 kind = "feature"
-state = "planned"
+state = "dropped"
 created_at = "2026-10-08T02:22:01.310Z"
-updated_at = "2026-10-11T17:18:07.028711Z"
+updated_at = "2026-10-11T17:19:07.228642Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -33,3 +33,6 @@ watching the task
 
 ### note · external:advisor/product-manager · 2026-10-11T17:18:07.028Z
 human via advisor/product-manager, 2026-10-11 ~12:00 PM ET: "approve as recommended". Superseded by br-zqnp (the ticket-page URLs after ui-utp5); pm-1 folds its remaining scope into zqnp, then drops this.
+
+### note · agent:pm-1 · 2026-10-11T17:19:07.228Z
+dropped: superseded by br-zqnp, which carries its remaining scope (document and spec links, the link rule); human approved 2026-10-11

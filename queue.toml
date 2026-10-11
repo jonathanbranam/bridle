@@ -1,32 +1,26 @@
 [[tier]]
-tasks = ["br-95t9"]
+tasks = ["br-dd79"]
 
 [[tier]]
-tasks = ["br-res3"]
+tasks = ["br-6rz4"]
 
 [[tier]]
-tasks = ["br-cy4q"]
+tasks = ["br-ydyk"]
+
+[[tier]]
+tasks = ["br-zqnp"]
+
+[[tier]]
+tasks = ["br-e9wg"]
+
+[[tier]]
+tasks = ["br-uwcw"]
 
 [[tier]]
 tasks = ["br-e7e2"]
 
 [[tier]]
-tasks = ["br-ft3b"]
-
-[[tier]]
-tasks = ["br-cbbn"]
-
-[[tier]]
 tasks = ["br-ju5q"]
-
-[[tier]]
-tasks = ["br-8ay6"]
-
-[[tier]]
-tasks = ["br-gd43"]
-
-[[tier]]
-tasks = ["br-jstr"]
 
 [[tier]]
 tasks = ["br-stx8"]
