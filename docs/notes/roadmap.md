@@ -58,7 +58,7 @@ The roadmap's priority order (the human, 2026-10-10 10:15 AM ET): machine setup,
 7. **Everything is a ticket** (`everything-is-a-ticket`, theme `tickets-and-release`)
 8. **Migrations** (`migrations`, theme `tickets-and-release`)
 9. **Documents and attachments on tickets** (`attachments`, theme `product-process`)
-10. **Reviews enforced by bridle** (`reviews-enforced`, theme `product-process`)
+10. **Gates: design before build, review before landing** (`reviews-enforced`, theme `product-process`)
 11. **Comments and mentions reach the right agent** (`comment-routing`, theme `human-ui`)
 12. **One orchestrator per machine** (`orchestrator-per-machine`, theme `agents-and-cli`)
 13. **Machine sync and recovery** (`machine-sync`, theme `multi-machine`)
@@ -146,7 +146,6 @@ How work is recorded (tickets, fields, migrations) and shipped (changelog, relea
 | [br-bpku](http://dalek.tailbc91f5.ts.net:7878/task?id=br-bpku) | Every ticket gets a row; types fix and epic; readiness moves to the ticket (ticket ready) |  | pending | after br-syqn lands (blocked_by) |
 | [br-3v75](http://dalek.tailbc91f5.ts.net:7878/task?id=br-3v75) | Ticket links live in the frontmatter: the daemon indexes blocked_by, parent and related... |  | pending | after br-bpku lands |
 | [br-72t9](http://dalek.tailbc91f5.ts.net:7878/task?id=br-72t9) | A ticket's thread moves to the ticket (tickets/<id>.md on the state branch); ticket com... |  | pending | after br-3v75 lands |
-| [br-95mu](http://dalek.tailbc91f5.ts.net:7878/task?id=br-95mu) | A change spec (proposal and design) reviewed for risk and impact before any worker buil... |  | pending | to the designer once the human has reviewed the ticket |
 | [br-stx8](http://dalek.tailbc91f5.ts.net:7878/task?id=br-stx8) | A task's state says what's really happening: held and built-awaiting-landing are states... |  | planned | last in this epic, after all the ticket work (the human, 2026-10-10); then a proposed design and the human's approval (HELD) |
 
 #### Epic `migrations`: Migrations
@@ -188,19 +187,20 @@ Agents use bridle correctly: commands, help, roles, the workflow reaching every 
 | [br-rhba](http://dalek.tailbc91f5.ts.net:7878/task?id=br-rhba) | Mail between daemons, slice 5: every orchestrator wake is a message, sent home; one wai... |  | integrated | delivered |
 | [br-ysmu](http://dalek.tailbc91f5.ts.net:7878/task?id=br-ysmu) | CI watch missed 13 red runs on main; first ci_failed wake came 40 minutes late |  | integrated | delivered |
 | [br-cufw](http://dalek.tailbc91f5.ts.net:7878/task?id=br-cufw) | Mail between daemons, slice 4: visible state: outbox status, message show (queued/arriv... |  | integrated | delivered |
-| [br-qac3](http://dalek.tailbc91f5.ts.net:7878/task?id=br-qac3) | Mail between daemons, slice 6: an agent of another project or machine can watch a task ... |  | planned | 3haz slice 6 (the human's Q3: watching a task from another project must work); resolves 3haz |
+| [br-qac3](http://dalek.tailbc91f5.ts.net:7878/task?id=br-qac3) | Mail between daemons, slice 6: an agent of another project or machine can watch a task ... |  | integrated | 3haz slice 6 (the human's Q3: watching a task from another project must work); resolves 3haz |
 
 #### Epic `scheduled-messages`: Scheduled messages and timed actions
 
 - Outcome: Agents and the human schedule messages and timed actions through one scheduler (yfv5).
-- Done when: Nightly restarts, maintenance windows and machine-wide schedules run from the one scheduler, designed and specced before build.
+- Done when: Externals schedule for themselves (3k7d); nightly session restarts from a plain [[restart]] config (cbbn, the human 2026-10-11); maintenance windows and machine-wide schedules after kuw2/cy2v.
 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
 | [br-9xze](http://dalek.tailbc91f5.ts.net:7878/task?id=br-9xze) | Scheduled messages, first slice: an agent schedules a message to itself (one-time or re... |  | integrated | delivered |
 | [br-g5y2](http://dalek.tailbc91f5.ts.net:7878/task?id=br-g5y2) | Scheduled messages slice 2: role priming: wait at the maximum timeout and schedule a me... |  | integrated | waits on the human; 9xze has landed |
 | [br-yfv5](http://dalek.tailbc91f5.ts.net:7878/task?id=br-yfv5) | One scheduler for timed actions: scheduled messages (hrcn), nightly session restarts (c... |  | integrated | needs a design (designer) for the rest: cbbn, 3nyk, cy2v; then the human's review |
-| [br-cbbn](http://dalek.tailbc91f5.ts.net:7878/task?id=br-cbbn) | Scheduled nightly restart of an interactive session at a clock time (e.g. 3 AM) |  | pending | waits on the human (approve to ready) |
+| [br-3k7d](http://dalek.tailbc91f5.ts.net:7878/task?id=br-3k7d) | Externals (orchestrator, advisors, aides) can schedule messages for themselves | high | planned | the human, 2026-10-11: land tonight (high) |
+| [br-cbbn](http://dalek.tailbc91f5.ts.net:7878/task?id=br-cbbn) | Scheduled nightly restart of an interactive session at a clock time (e.g. 3 AM) |  | planned | design decided by the human 2026-10-11 (config [[restart]] project/session/at/days) |
 | [br-ft3b](http://dalek.tailbc91f5.ts.net:7878/task?id=br-ft3b) | Per-role handover instructions in the workflow, with project overrides |  | pending | waits on the human (approve to ready) |
 
 #### Epic `background-agents`: Interactive agents move to the background
@@ -225,6 +225,7 @@ Agents use bridle correctly: commands, help, roles, the workflow reaching every 
 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
+| [br-jstr](http://dalek.tailbc91f5.ts.net:7878/task?id=br-jstr) | Recipient hint: suggest external:advisor/<name> for a bare advisor/<name> | low | planned | ready to build |
 | [br-p896](http://dalek.tailbc91f5.ts.net:7878/task?id=br-p896) | Agent evaluations: run agents with a clean, specified context, capture everything, and ... | low | pending | future (the human, 2026-10-10): long-term, low; not now |
 | [br-py93](http://dalek.tailbc91f5.ts.net:7878/task?id=br-py93) | Idea: bridle as a tool (MCP) for interactive sessions instead of the CLI, so waiting an... |  | pending | future idea (the human, 2026-10-10): unscheduled; goes with the background-agents epic (ae9f) |
 | [br-7zd4](http://dalek.tailbc91f5.ts.net:7878/task?id=br-7zd4) | Remove the stale 'Until bridle workflow sync renders rules' lines from workflow/base/ru... | low | planned | ready to build |
@@ -255,13 +256,14 @@ How work gets from an idea to ready: the PdM, the designer, change specs, review
 
 No tasks yet.
 
-#### Epic `reviews-enforced`: Reviews enforced by bridle
+#### Epic `reviews-enforced`: Gates: design before build, review before landing
 
-- Outcome: Reviews are required, signed on the work and enforced before landing (v2va).
-- Done when: No landing until every required review is signed (slice D).
+- Outcome: A change's proposal and design are approved before it is planned (95mu, 22ab sections 5-6), and reviews are required, signed on the work and enforced before landing (v2va). Moved here from everything-is-a-ticket (the human, 2026-10-11 ~1:30 AM ET: "yes, agreed move it").
+- Done when: The daemon refuses to plan a change ticket without its approved design (95mu), and no landing until every required review is signed (v2va slice D).
 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
+| [br-95mu](http://dalek.tailbc91f5.ts.net:7878/task?id=br-95mu) | A change spec (proposal and design) reviewed for risk and impact before any worker buil... |  | pending | to the designer once the human has reviewed the ticket |
 | [br-91b3](http://dalek.tailbc91f5.ts.net:7878/task?id=br-91b3) | Reviews enforced by bridle, signed on the task (v2va): umbrella, slices A-D | low | planned | ready to build |
 | [br-6ba3](http://dalek.tailbc91f5.ts.net:7878/task?id=br-6ba3) | Reviews A: in_review state, ready-for-review, review requirements on tasks (v2va slice A) | low | planned | ready to build |
 | [br-46fe](http://dalek.tailbc91f5.ts.net:7878/task?id=br-46fe) | Reviews B: signed review records on the task (v2va slice B) | low | planned | ready to build |
@@ -385,7 +387,7 @@ What the human sees and touches: web UI, documents and comments, to-dos, links, 
 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
-| [br-fd8e](http://dalek.tailbc91f5.ts.net:7878/task?id=br-fd8e) | Commit every edit bridle makes to a reviewed document or ticket (status markers, thread... |  | planned | ready to build |
+| [br-fd8e](http://dalek.tailbc91f5.ts.net:7878/task?id=br-fd8e) | Commit every edit bridle makes to a reviewed document or ticket (status markers, thread... |  | integrated | delivered |
 | [br-re79](http://dalek.tailbc91f5.ts.net:7878/task?id=br-re79) | Comments on a ticket an agent asked the human to approve go back to that agent; a pendi... | low | pending | waits on the human (approve to ready) |
 | [br-4cgx](http://dalek.tailbc91f5.ts.net:7878/task?id=br-4cgx) | @-mention a role in a ticket reply or a document comment and that role gets a message | low | pending | waits on the human (approve to ready) |
 | [br-g8pe](http://dalek.tailbc91f5.ts.net:7878/task?id=br-g8pe) | Link-reminder hook: design pass (designer): how hooks work, options and a recommendatio... |  | integrated | delivered |
@@ -566,3 +568,4 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 - 2026-10-10 2:25 PM ET: v0.6.0 tagged. New 36dp (machine-wide self_upgrade, from the orchestrator) into `machine-setup`, readied high: the NUC's switch to release upgrades waits on it, so no commits to the human's existing projects.
 - 2026-10-10 7:30 PM ET: regenerated. 36dp, chvf, hwek resolved; fv86, 3zhx, g5y2, syqn, 2msq, ysmu, bcw6, g76s landed; fd8e placed in comment-routing. New ve74 (handover request reaches the new session; the human via aide: investigate, low) in reliability, not in an epic.
 - 2026-10-10 10:20 PM ET: 8umh, 3mz4, n4w4 resolved (n4w4: all 9 recommendations landed). 3haz slices 4 and 5 landed; 3haz stays open for slice 6, br-qac3 (readied, the human's Q3), in `messaging`. syqn parts 2 and 3 (br-epvy, br-wrmu) readied, in `everything-is-a-ticket` after br-syqn.
+- 2026-10-11 1:35 AM ET: 95mu moved from everything-is-a-ticket to reviews-enforced, renamed "Gates: design before build, review before landing" (the human: "yes, agreed move it"). cbbn design decided (plain [[restart]] config), readied; new 3k7d (externals schedule for themselves, high, tonight) in scheduled-messages; new jstr (recipient hint, low) in agents-and-cli. 3haz, fd8e resolved; qac3, fd8e landed.
