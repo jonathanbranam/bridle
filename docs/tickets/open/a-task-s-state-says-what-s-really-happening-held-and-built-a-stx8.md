@@ -30,3 +30,36 @@ The ask: a task's state says what is really happening, so the human can see it a
 4. A migration moves today's tasks into the right state.
 
 See kzw2 (task data the system acts on is structured fields, not text): the same principle.
+
+## The human's input on the states (2026-10-11 ~1:45 AM ET, to advisor product-manager)
+
+pm-1's proposed design (2026-10-06) is on the br-stx8 thread, not approved. The human, reading it,
+verbatim:
+
+> I definitely want 'built' because integration can take a while and I want to clearly know how long
+> tasks stay in built.
+>
+> if a built task is sent back to the worker for additional changes, is there any state transition? I
+> think that should be a state. We're missing a state for while the manager is reviewing and
+> checking the built task before it is integrated or sent back for changed.
+
+And on claimed -> integrated (pm-1 allowed it): today `task done` takes any state but
+dropped/integrated (`tasks.rs`); claimed -> integrated is used by the human's to-dos and incidents
+(no commit) and by direct commits to main. The human: "I think it makes sense, just asking".
+
+So the design needs, beyond pm-1's `held` and `built`:
+
+- **A review state** between `built` and `integrated`: the manager is checking and landing it
+  (time in it = how long review and the landing check take).
+- **A sent-back state**: changes requested, waiting for the worker (time in it = how long rework
+  waits), then back to claimed when a worker picks it up.
+- So the time in each part of the flow can be read off the transitions: waiting to be reviewed
+  (`built`), being reviewed (review state), waiting for rework (sent-back state).
+
+Overlaps to settle in the design:
+
+- **v2va slice A (br-6ba3)** plans an `in_review` state "between claimed and integrated" with
+  `bridle task ready-for-review`. That is the same territory as `built` + the review state; one
+  set of names must come out of the two. storage.md also names `in_review` and `accepted` as
+  designed, not built.
+- **22ab section 10** (ticket states) may supersede task states once tasks become tickets.
