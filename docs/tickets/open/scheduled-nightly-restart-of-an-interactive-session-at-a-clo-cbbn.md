@@ -44,19 +44,24 @@ table). What that means for the build (advisor product-manager's reading; the hu
   > project = "notes"
   > agent = "advisor"
 
-  So a machine-wide entry naming the project and the agent, in `~/.bridle/config.toml`, one per
-  session to restart:
+  So a machine-wide entry naming the project and the session, in `~/.bridle/config.toml`, one per
+  session to restart. Names aligned with the existing config (the human agreed, 2026-10-11 ~12:20
+  AM ET: "yes, agree, add `days` key as well, that could be useful."):
 
   ```toml
-  [[nightly_restart]]
+  [[restart]]
   project = "notes"
-  agent = "advisor"        # a role; "advisor/<name>" for a named advisor
-  at_time = "4:00 am"
+  session = "advisor"                 # as `bridle session restart` takes it; "advisor/<name>" for a named advisor
+  at      = "04:00"                   # 24-hour HH:MM, host-local, like [[focus]] start/end
+  days    = "all"                     # optional, default "all"; or a list: ["mon", "tue", ...]
   ```
 
-  Accept `"4:00 am"` and `"04:00"`. The time is the machine's local time (the human's zone). The
-  daemon of that project acts on its own entries. No entry, no restart: other agents are
-  unaffected. The orchestrator keeps its own `max_uptime`.
+  - `[[restart]]`: short, like `[[focus]]`; `session`, not `agent`: it restarts an interactive
+    session, named as `bridle session restart` names it; `at` matches `bridle schedule add --at`;
+    `"HH:MM"` and `days` work exactly as in `[[focus]]` and `[[budget.schedule]]` (reuse their
+    parsing). One time format, no am/pm.
+  - The daemon of that project acts on its own entries. No entry, no restart: other agents are
+    unaffected. The orchestrator keeps its own `max_uptime`.
 - **What happens at the time:** the daemon does what `bridle session restart <role>` does with
   `--handover` (the default): asks the session for its handover note, waits up to the handover
   deadline, then restarts the session in its pane; the new session opens with the note. "Forces":
@@ -75,7 +80,7 @@ table). What that means for the build (advisor product-manager's reading; the hu
   reason and the configured time, for example: "The human has configured your session to hand over
   at 4:00 AM every day; it is time to hand over. Write the handover note with `bridle handover
   write --file -` and say nothing more; the restart follows when the note is recorded." (The time
-  is the entry's `at_time`.)
+  is the entry's `at`.)
 - **Not running, and events** (the human, verbatim, 2026-10-11 ~12:15 AM ET):
 
   > if the agent isn't running, the daemon skips it. event should be written for the operation
