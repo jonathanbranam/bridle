@@ -153,3 +153,6 @@ From the human's session with advisor wsl2, 2026-10-10 (times US Eastern).
   `self_upgrade = "release"` only takes effect once br-36dp ships. Advisor's call: set the PC up
   from v0.6.0 anyway, then re-check self-upgrade (and restart the daemon) after br-36dp is in a
   release.
+- Orchestrator (m-9884): v0.6.1 is released and carries br-36dp and br-fv86. Install the PC from
+  v0.6.1 (`scripts/install-release.sh v0.6.1`), not v0.6.0, so `self_upgrade = "release"` in the
+  PC's `~/.bridle/config.toml` takes effect. Bridle is not installed on the PC yet.
