@@ -2,9 +2,9 @@
 id = "br-jstr"
 title = "Recipient hint: suggest external:advisor/<name> for a bare advisor/<name>"
 kind = "bug"
-state = "claimed"
+state = "planned"
 created_at = "2026-10-11T03:48:54.303Z"
-updated_at = "2026-10-11T11:28:32.279024Z"
+updated_at = "2026-10-11T11:46:26.653384Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -42,3 +42,6 @@ Dropped the hint rather than fixing it: br-3k7d resolves these names outright, n
 
 ### note · agent:manager-2 · 2026-10-11T11:28:32.279Z
 main moved. Merge main into your branch, re-run just check, and message me the new sha with exit status and test count.
+
+### note · agent:wjstr · 2026-10-11T11:46:26.653Z
+merged main; just check exit 0, 1513 tests passed (6 skipped); sha a07ec80e
