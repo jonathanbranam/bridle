@@ -4,7 +4,7 @@ title = "Flaky renew_test: resume_of_a_session_that_never_started_uses_a_fresh_s
 kind = "fix"
 state = "pending"
 created_at = "2026-10-11T06:05:26.116Z"
-updated_at = "2026-10-11T07:22:56.899262Z"
+updated_at = "2026-10-11T13:56:44.928743Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 priority = "low"
@@ -24,3 +24,6 @@ advisor (product-manager): kept pending at low under the human's flaky-test rule
 
 ### note · external:advisor/product-manager · 2026-10-11T07:22:56.899Z
 kind: bug -> fix
+
+### note · external:orchestrator · 2026-10-11T13:56:44.928Z
+orchestrator: failed again on macOS CI at 13:55Z (run 38144038514, sha 39e33fa0, same assertion at renew_test.rs:377). Second time today, so disabled per the human's flaky-test rule: #[ignore = "flaky on macOS CI, ticket uwcw"] in 9974ff89. Fixing it means removing that ignore.
