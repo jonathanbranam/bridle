@@ -245,8 +245,9 @@ the clone:
    them: every 30 seconds (`autopush.rs`) it runs a local `rev-list` against `origin/<integration>`
    and, when the branch is strictly ahead, `git push origin <integration>` (no fetch; never a
    force; behind or diverged is left to the origin watch below). A rejection is a `push.failed`
-   event and a note to the human and the orchestrator, sent once per distinct error while it is
-   retried each tick. Only a daemon that holds the project's ownership runs it, and `[state] push =
+   event and a note to the human and the orchestrator, only when the push fails again on the
+   next tick (a one-off race between pushers stays quiet), then once per distinct error while it
+   is retried each tick. The note names git's reason line (`! [rejected] ...`, `error: ...`). Only a daemon that holds the project's ownership runs it, and `[state] push =
    false` turns it off. This is what makes "the remote never lags the clone" true for docs too. Projects with `[state] push = false` have no
    owner file and get no hook. `land` never pushes: only the merger pushes, and only the integration
    branch and (trunk pattern) release tags; workers never push. The release
@@ -257,7 +258,9 @@ the clone:
    daemon runs `git fetch origin` in the owner's clone and compares the integration branch
    with `origin/<integration>` (`git rev-list --left-right --count`). Any difference is a
    `git.diverged` event (`{integration, ahead, behind}`; zeros when back in step) and one
-   note to the orchestrator, sent again only when the counts change. `bridle daemon doctor`
+   note to the orchestrator, sent again only when the counts change. Ahead with nothing behind
+   is the normal state between a direct commit and the next autopush, so it counts only when it
+   persists to the next look; behind > 0 counts at once. `bridle daemon doctor`
    shows the same as "N ahead, M behind", and a failed fetch as a warning. Silent with no
    `origin` or no such branch there.
 5. `land` then does what `bridle ticket done <id> --commit <sha> --branch bridle/<agent>` does

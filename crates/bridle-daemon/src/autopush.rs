@@ -35,13 +35,34 @@ async fn git(repo: &Path, args: &[&str]) -> Result<std::process::Output, String>
     }
 }
 
-/// What a rejected push says: git's first non-empty stderr line.
+/// What a failed push says: git's reason line (`! [rejected] ...` or `error: ...`), else its
+/// first non-empty stderr line. A rejection's first line is only `To <url>`.
 pub fn first_line(stderr: &[u8]) -> String {
-    String::from_utf8_lossy(stderr)
-        .lines()
-        .find(|l| !l.trim().is_empty())
-        .unwrap_or("git push failed")
+    let text = String::from_utf8_lossy(stderr);
+    let mut lines = text.lines().map(str::trim).filter(|l| !l.is_empty());
+    let all: Vec<&str> = lines.by_ref().collect();
+    all.iter()
+        .find(|l| l.starts_with("! ") || l.starts_with("error:"))
+        .or(all.first())
+        .unwrap_or(&"git push failed")
         .to_string()
+}
+
+/// Notes a failed push in `state` (the error and whether it was alarmed) and says whether to
+/// alarm: only when it fails again on the next tick, so a one-off race between pushers stays
+/// quiet, and once for a failure that keeps repeating.
+fn should_alarm(state: &mut Option<(String, bool)>, e: &str) -> bool {
+    match state {
+        None => {
+            *state = Some((e.to_string(), false));
+            false
+        }
+        Some((prev, true)) if prev == e => false,
+        Some(_) => {
+            *state = Some((e.to_string(), true));
+            true
+        }
+    }
 }
 
 /// Records a failed push of the integration branch (`push.failed`) and tells the human and the
@@ -116,9 +137,10 @@ struct Inner {
     integration: String,
     emitter: Emitter,
     manager: AgentManager,
-    /// The error last alarmed, so a push that keeps failing the same way alarms once; it is
-    /// still retried every tick. Cleared by a success.
-    last_error: Mutex<Option<String>>,
+    /// The error last seen and whether it was alarmed: a first failure waits a tick, a push
+    /// that keeps failing the same way alarms once; it is still retried every tick. Cleared
+    /// by a success.
+    last_error: Mutex<Option<(String, bool)>>,
 }
 
 impl AutoPush {
@@ -149,12 +171,9 @@ impl AutoPush {
                 *i.last_error.lock().expect("autopush lock") = None;
             }
             Err(e) => {
-                let before = i
-                    .last_error
-                    .lock()
-                    .expect("autopush lock")
-                    .replace(e.clone());
-                if before.as_deref() == Some(e.as_str()) {
+                tracing::warn!(branch = %i.integration, reason = %e, "automatic push failed");
+                let alarm = should_alarm(&mut i.last_error.lock().expect("autopush lock"), &e);
+                if !alarm {
                     return;
                 }
                 let body = format!(
@@ -271,5 +290,27 @@ mod tests {
         run(&clone, &["commit", "--allow-empty", "-m", "ticket"]);
         let e = push_if_ahead(&clone, "main").await.unwrap_err();
         assert!(!e.is_empty(), "{e}");
+    }
+
+    #[test]
+    fn first_line_names_gits_reason() {
+        let rejected = b"To github.com:x/y.git\n ! [rejected]        main -> main (fetch first)\nerror: failed to push some refs\n";
+        assert_eq!(
+            first_line(rejected),
+            "! [rejected]        main -> main (fetch first)"
+        );
+        assert_eq!(first_line(b"\nfatal: boom\n"), "fatal: boom");
+        assert_eq!(first_line(b""), "git push failed");
+    }
+
+    #[test]
+    fn a_one_off_failure_is_quiet_and_a_repeat_alarms_once() {
+        let mut st = None;
+        assert!(!should_alarm(&mut st, "! [rejected]"));
+        assert!(should_alarm(&mut st, "! [rejected]"));
+        assert!(!should_alarm(&mut st, "! [rejected]"));
+        // A success clears the state; the next failure is a first one again.
+        st = None;
+        assert!(!should_alarm(&mut st, "! [rejected]"));
     }
 }

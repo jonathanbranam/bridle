@@ -124,6 +124,16 @@ struct Inner {
     /// The counts last reported, so the orchestrator hears again only when they change;
     /// `None` while in step.
     last: Mutex<Option<Divergence>>,
+    /// Whether the previous look found the clone ahead (only): ahead alone is the normal state
+    /// between a direct commit and the next autopush tick, so it is reported only when it
+    /// persists.
+    was_ahead: Mutex<bool>,
+}
+
+/// Whether a difference is worth reporting: anything behind, or ahead that already showed on
+/// the previous look.
+fn reportable(d: Divergence, was_ahead: bool) -> bool {
+    d.behind > 0 || (d.ahead > 0 && was_ahead)
 }
 
 impl DivergenceWatch {
@@ -139,6 +149,7 @@ impl DivergenceWatch {
             emitter,
             manager,
             last: Mutex::new(None),
+            was_ahead: Mutex::new(false),
         }))
     }
 
@@ -149,7 +160,11 @@ impl DivergenceWatch {
             Ok(Err(e)) => return tracing::warn!(error = %e, "origin divergence check failed"),
             Err(e) => return tracing::warn!(error = %e, "origin divergence check panicked"),
         };
-        let now = found.filter(|d| d.ahead > 0 || d.behind > 0);
+        let was_ahead = std::mem::replace(
+            &mut *self.0.was_ahead.lock().expect("divergence lock"),
+            found.is_some_and(|d| d.ahead > 0),
+        );
+        let now = found.filter(|d| reportable(*d, was_ahead));
         let before = std::mem::replace(&mut *self.0.last.lock().expect("divergence lock"), now);
         if now == before {
             return;
@@ -251,6 +266,16 @@ mod tests {
         run(&other, &["push", "origin", "HEAD:main"]);
         let d = check(&clone, "main").unwrap().unwrap();
         assert_eq!(d.to_string(), "2 ahead, 1 behind");
+    }
+
+    #[test]
+    fn ahead_alone_waits_a_look_and_behind_does_not() {
+        let d = |ahead, behind| Divergence { ahead, behind };
+        assert!(!reportable(d(1, 0), false));
+        assert!(reportable(d(1, 0), true));
+        assert!(reportable(d(0, 1), false));
+        assert!(reportable(d(2, 1), false));
+        assert!(!reportable(d(0, 0), true));
     }
 
     #[test]
