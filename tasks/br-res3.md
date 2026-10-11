@@ -4,7 +4,7 @@ title = "Code rename slice 3: no type is called Task; internal identifiers sweep
 kind = "arch-revision"
 state = "integrated"
 created_at = "2026-10-11T11:05:22.388Z"
-updated_at = "2026-10-11T13:39:07.301193Z"
+updated_at = "2026-10-11T13:39:40.907272Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -28,3 +28,6 @@ done: no Rust type is called Task (TicketManager/TicketError/TicketRow, gateway 
 
 ### note · agent:manager-2 · 2026-10-11T13:39:07.301Z
 integrated: a8e606aa5ec046783af5b75a19aa65ffc9b9aa02 (branch bridle/wres3)
+
+### note · agent:manager-2 · 2026-10-11T13:39:40.907Z
+cleanup: removed agent wres3, branch bridle/wres3
