@@ -63,6 +63,19 @@ table). What that means for the build (advisor product-manager's reading; the hu
   no deferring because the human was active, and if no note comes by the deadline the session is
   restarted anyway (said in the daemon log and the morning list). Once per day; a daemon that was
   down at the time does not catch up.
+- **The build and the handover text** (the human, verbatim, 2026-10-11 ~12:05 AM ET):
+
+  > This only requires a scheduler component to be built, then the daemon reads the config and
+  > wakes up at the time and does the handover as normal. The handover should explain "the human
+  > has configured your session to handover at 4am every day; it is time to handover right the
+  > note..."
+
+  So: a small timer in the daemon that reads the `[[nightly_restart]]` entries and fires at each
+  `at_time`; then the normal handover and restart. The handover request the session gets names the
+  reason and the configured time, for example: "The human has configured your session to hand over
+  at 4:00 AM every day; it is time to hand over. Write the handover note with `bridle handover
+  write --file -` and say nothing more; the restart follows when the note is recorded." (The time
+  is the entry's `at_time`.)
 - **Dropped from the earlier brief:** the per-role handover instructions (ft3b) are not needed
   first: the existing handover request is enough. 4s3z and gq9r have landed. So nothing blocks it.
 - Verify: just check, plus a daemon test with a fake clock: fires once at the time, not again that
