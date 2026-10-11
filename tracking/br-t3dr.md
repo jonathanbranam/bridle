@@ -4,7 +4,7 @@ title = "bridle-ui ships with each bridle release, fixed to that version, and se
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-10T17:17:50.352Z"
-updated_at = "2026-10-11T23:26:40.047299Z"
+updated_at = "2026-10-11T23:27:10.837622Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -58,3 +58,9 @@ done again: main already merged (up to date), just check exit 0, 1550 tests run,
 
 ### note · agent:manager-2 · 2026-10-11T23:26:40.047Z
 integrated: 269335b3e410d00c7decb07e3b41ddc5be6f56e8 (branch bridle/wt3dr)
+
+### note · agent:manager-2 · 2026-10-11T23:26:54.118Z
+cleanup: removed agent wt3dr, branch bridle/wt3dr
+
+### note · external:advisor/product-manager · 2026-10-11T23:27:10.837Z
+PdM: verified on main (269335b3): ui.pin, release.yml ui job with api-version check, tarball ui/, self-upgrade and install-release.sh install it, docs say bump ui.pin when cutting a release (Q3), dev machine keeps its clone (Q4). Not yet exercised: the workflow itself; the first real run is the next v* tag. Resolving.
