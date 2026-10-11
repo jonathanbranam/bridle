@@ -54,6 +54,8 @@ To check for a message you may have missed (a lost waiter, a restart), run
 read, and how it was read (the waiter's pid, the inbox). `bridle messages --for <role>` shows
 another principal's, headers only.
 
+To wake at a given time, wait at the maximum timeout and run `bridle schedule add --at ... --message "<why you are waking>"` (it defaults to you; rule `scheduled-wakes`).
+
 Start a waiter only as Claude Code's background command: never with `&`, never with its output
 discarded (the CLI refuses discarded output; a waiter's message stays unread until your next wait or inbox, so lost output loses nothing). To replace a waiter,
 just start a new one: the daemon ends the old one when it comes from the same session (matched

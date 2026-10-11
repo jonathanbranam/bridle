@@ -179,8 +179,11 @@ restarts, maintenance windows, machine-wide schedules) are separate.
 - **Missed firings** (daemon down, machine asleep): a `once` fires once, now; a `cron` fires once,
   for its latest missed occurrence (never a burst), then moves to the next future one. More than
   2 minutes late, the body ends ` (due <local time>, sent late)`.
-- **Who**: the human adds for anyone and lists/removes any; an agent only for itself, and lists and
-  removes only its own; everyone else (externals, peers, visitors) is refused.
+- **Who**: the human adds for anyone and lists/removes any; an agent or an external (orchestrator,
+  advisor, aide; its identity is exact, e.g. `external:advisor/<name>`) only for itself, and lists
+  and removes only its own; everyone else (peers, visitors) is refused (3k7d). A bare external
+  name as `to` (`advisor/<name>`, `aide`, `orchestrator`, optional `@machine`) resolves as
+  `external:<name>` when no agent has that name; `bridle send` uses the same resolver.
 - **Events**: `schedule.fired` and `schedule.missed_fired`, data `{id, target}`; none per tick.
 - **Not done**: quiet hours do not hold a schedule back.
 

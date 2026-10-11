@@ -1497,9 +1497,23 @@ fn is_known_external_principal(name: &str) -> bool {
     matches!(name, "advisor" | "orchestrator" | "aide" | "human")
 }
 
+/// A bare external name (`advisor`, `advisor/<name>`, `aide`, `orchestrator`, optional
+/// `@machine`) is `external:<name>` when no agent has that name; anything else is unchanged.
+async fn canonical_target(state: &AppState, to_raw: &str) -> Result<String, ApiError> {
+    let base = to_raw.split(['/', '@']).next().unwrap_or(to_raw);
+    if matches!(base, "advisor" | "orchestrator" | "aide")
+        && state.store.get_agent(to_raw).await?.is_none()
+    {
+        return Ok(format!("external:{to_raw}"));
+    }
+    Ok(to_raw.to_string())
+}
+
 /// Resolves a `to` string (`human`, `external:NAME`, `role:NAME` or an agent) to
 /// its delivery targets; unknown recipients are a 404.
 async fn resolve_targets(state: &AppState, to_raw: &str) -> Result<Vec<ToTarget>, ApiError> {
+    let to_raw = canonical_target(state, to_raw).await?;
+    let to_raw = to_raw.as_str();
     Ok(if to_raw == "human" {
         vec![ToTarget::Human]
     } else if to_raw.starts_with("human@") {
@@ -1721,13 +1735,13 @@ async fn send_message(
     Ok(Json(msgs))
 }
 
-/// Who may touch schedules: the human any, an agent its own (an agent's schedule can only
-/// target itself); anyone else none.
+/// Who may touch schedules: the human any; an agent or an external its own (their schedules
+/// can only target themselves); anyone else none.
 fn schedule_actor_ok(principal: &Principal) -> Result<(), ApiError> {
     match principal.kind {
-        PrincipalKind::Human | PrincipalKind::Agent => Ok(()),
+        PrincipalKind::Human | PrincipalKind::Agent | PrincipalKind::External => Ok(()),
         _ => Err(ApiError::forbidden(
-            "only agents and the human use schedules",
+            "only agents, externals and the human use schedules",
         )),
     }
 }
@@ -1743,14 +1757,14 @@ async fn add_schedule(
         return Err(ApiError::bad_request("message text must not be empty"));
     }
     let target = match req.to.as_deref() {
-        Some(t) => t.to_string(),
-        None if principal.kind == PrincipalKind::Agent => principal.id.clone(),
+        Some(t) => canonical_target(&state, t).await?,
+        None if principal.kind != PrincipalKind::Human => principal.id.clone(),
         None => return Err(ApiError::bad_request("`to` is required")),
     };
     let bare = |p: &str| p.strip_prefix("agent:").unwrap_or(p).to_string();
-    if principal.kind == PrincipalKind::Agent && bare(&target) != bare(&principal.id) {
+    if principal.kind != PrincipalKind::Human && bare(&target) != bare(&principal.id) {
         return Err(ApiError::forbidden(
-            "an agent may schedule messages only to itself",
+            "an agent or external may schedule messages only to itself",
         ));
     }
     // The target must exist now; it is looked up again when the message fires.

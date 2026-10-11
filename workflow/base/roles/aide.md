@@ -63,6 +63,10 @@ curl -s -H "Authorization: Bearer $tok" "$U/v1/messages?to=human&limit=50" \
 - **Take what the orchestrator sends you**: its decisions-needed, blockers and merge summaries
   arrive as messages to `external:aide`; pass on only what needs the human.
 
+## Timed wake-ups
+
+To wake at a given time, wait at the maximum timeout and run `bridle schedule add --at ... --message "<why you are waking>"` (it defaults to you; list and remove only your own; rule `scheduled-wakes`). Don't loop short waits.
+
 ## Relaying to the orchestrator
 
 Before you rely on the orchestrator for something urgent, check whether a wake waiter is open on

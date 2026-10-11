@@ -75,12 +75,6 @@ async fn an_agent_schedules_only_to_itself_and_sees_only_its_own() {
 async fn others_are_refused_and_bad_times_are_explained() {
     let (daemon, _tmp) = start_daemon(Some(default_overrides())).await;
     spawn_worker(&daemon, "w1").await;
-    let ext = daemon.external_client("orchestrator").await;
-    let err = ext.add_schedule(&once(Some("w1"))).await.expect_err("ext");
-    assert!(
-        err.to_string().contains("only agents and the human"),
-        "{err}"
-    );
 
     let past = ScheduleAddRequest {
         at: Some("2020-01-01 09:00".to_string()),
@@ -106,4 +100,69 @@ async fn others_are_refused_and_bad_times_are_explained() {
     let s = daemon.client.add_schedule(&ok).await.expect("cron");
     assert_eq!((s.kind.as_str(), s.tz.as_str()), ("cron", "Europe/London"));
     assert!(s.next_fire_at.is_some());
+}
+
+#[tokio::test]
+async fn an_external_schedules_only_for_itself_and_sees_only_its_own() {
+    let (daemon, _tmp) = start_daemon(Some(default_overrides())).await;
+    spawn_worker(&daemon, "w1").await;
+    let orch = daemon.external_client("orchestrator").await;
+    let aide = daemon.external_client("aide").await;
+
+    let mine = orch
+        .add_schedule(&once(None))
+        .await
+        .expect("default to self");
+    assert_eq!(mine.target, "external:orchestrator");
+    assert_eq!(mine.created_by, "external:orchestrator");
+    // The bare name is the same identity.
+    let bare = orch
+        .add_schedule(&once(Some("orchestrator")))
+        .await
+        .expect("bare");
+    assert_eq!(bare.target, "external:orchestrator");
+
+    for other in ["w1", "external:aide", "aide"] {
+        let err = orch
+            .add_schedule(&once(Some(other)))
+            .await
+            .expect_err(other);
+        assert!(err.to_string().contains("only to itself"), "{err}");
+    }
+
+    let theirs = aide.add_schedule(&once(None)).await.expect("aide");
+    let human = daemon
+        .client
+        .add_schedule(&once(Some("w1")))
+        .await
+        .expect("human");
+    assert_eq!(orch.list_schedules(false).await.unwrap().len(), 2);
+    assert_eq!(daemon.client.list_schedules(false).await.unwrap().len(), 4);
+
+    let err = orch
+        .remove_schedule(&theirs.id)
+        .await
+        .expect_err("not mine");
+    assert!(err.to_string().contains("no such schedule"), "{err}");
+    let err = orch.remove_schedule(&human.id).await.expect_err("not mine");
+    assert!(err.to_string().contains("no such schedule"), "{err}");
+    orch.remove_schedule(&mine.id).await.expect("own");
+}
+
+#[tokio::test]
+async fn the_human_schedules_to_a_bare_advisor_name() {
+    let (daemon, _tmp) = start_daemon(Some(default_overrides())).await;
+    let _adv = daemon.external_client("advisor").await;
+    let s = daemon
+        .client
+        .add_schedule(&once(Some("advisor/product-manager")))
+        .await
+        .expect("bare advisor/<name>");
+    assert_eq!(s.target, "external:advisor/product-manager");
+    let err = daemon
+        .client
+        .add_schedule(&once(Some("aide")))
+        .await
+        .expect_err("unknown");
+    assert!(err.to_string().contains("no such recipient"), "{err}");
 }

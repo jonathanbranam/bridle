@@ -15,8 +15,8 @@ to yourself instead of looping short waits or sleeping.
 - **Clean up**: `bridle schedule list` shows yours, and `bridle schedule rm <id>` removes one that
   is no longer needed. Remove your repeating schedules when the work they serve is done.
 
-Today the daemon refuses the external roles (orchestrator, advisor, aide) as schedule targets, so
-they keep their own wait text.
+Externals (orchestrator, advisor, aide) schedule for themselves the same way: `--to` defaults to
+you, and you list and remove only your own.
 
 Why: the human, 2026-10-09: "agents, instead of waking themselves up with shorter wake-up timers,
 start using this functionality. They set their wake-up timer to the maximum and then rely on

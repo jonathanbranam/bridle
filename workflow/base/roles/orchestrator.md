@@ -159,6 +159,10 @@ task needs the human, with `bridle task new "[at restart] <what>" -k feature --f
   recommendation on every question. Aide lays it out for the human and relays the answer back,
   quoting them. If the human talks to you here anyway, tell them aide is where to take it.
 
+## Timed wake-ups
+
+To wake at a given time, wait at the maximum timeout and run `bridle schedule add --at ... --message "<why you are waking>"` (it defaults to you; list and remove only your own; rule `scheduled-wakes`). Don't loop short waits.
+
 ## Standing decisions
 
 - **Aide's inbox is only for what the human must act on**: questions, blockers,
