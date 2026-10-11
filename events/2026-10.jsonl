@@ -1538,3 +1538,4 @@
 {"actor":"external:advisor/product-manager","at":"2026-10-11T04:28:10.412722Z","from":"pending","task":"br-bpku","to":"open"}
 {"actor":"external:advisor/product-manager","at":"2026-10-11T04:29:38.244252Z","from":"pending","task":"br-3v75","to":"open"}
 {"actor":"external:advisor/product-manager","at":"2026-10-11T04:30:12.364869Z","from":"pending","task":"br-72t9","to":"open"}
+{"actor":"human","at":"2026-10-11T04:32:30.119Z","from":"","task":"br-ck8a","to":"pending"}
