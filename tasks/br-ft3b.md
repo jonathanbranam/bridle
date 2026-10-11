@@ -2,14 +2,16 @@
 id = "br-ft3b"
 title = "Per-role handover instructions in the workflow, with project overrides"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-05T10:25:03.907Z"
-updated_at = "2026-10-11T14:23:04.018393Z"
+updated_at = "2026-10-11T14:26:18.523942Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
     "external:advisor/product-manager",
 ]
+branch = "bridle/wft3b"
+commit = "d7c800e72cb646c43e125586d7c2a2c04aa00d9a"
 summary = """Handover request text is now workflow content. New `crates/bridle-daemon/src/handover.rs`: `workflow/base/handover/standard.md` + appended `<role>.md` (advisor, aide, orchestrator, manager, worker, project-manager); a project's `.bridle/handover/<role>.md` replaces both; no workflow root falls back to the built-in standard text (include_str). Used by `bridle session restart --handover` (`handover_request` in crates/bridle/src/session.rs; hard limit and nightly [[restart]] go through it, reason sentence kept in front) and the agent `Context handoff:` note (supervisor.rs). Standard text calls out what a note cannot summarise; advisor/orchestrator parts ask for next wake-up time and the day's plan state. Role = identity before "/". Project files are read from the CLI's cwd (caveat: a `--project` run from outside the repo gets the built-in text). Override uses a new `.bridle/handover/` dir rather than `.bridle/roles/<role>.md` because that one appends to the system prompt and cannot replace. Migration: base text arrives via the workflow checkout/sync; projects with no override just get the improved standard text. Tests: 4 in handover.rs (standard, extends, replaces, built-in) + 1 in session.rs (reason kept, same resolver). Docs: orchestrator-supervision.md section 7, CHANGELOG."""
 ticket = "ft3b"
 +++
@@ -47,3 +49,9 @@ done: handover instructions as workflow files; just check exit 0, 1523 tests pas
 
 ### note · agent:manager-2 · 2026-10-11T14:23:04.018Z
 main moved. Merge main, re-run just check, message me the sha right away; I will land immediately.
+
+### note · agent:wft3b · 2026-10-11T14:26:13.597Z
+done: merged main, just check exit 0, 1523 tests; sha ce26adb7
+
+### note · agent:manager-2 · 2026-10-11T14:26:18.523Z
+integrated: d7c800e72cb646c43e125586d7c2a2c04aa00d9a (branch bridle/wft3b)
