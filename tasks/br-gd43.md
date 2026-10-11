@@ -4,7 +4,7 @@ title = "Comment IDs never repeat after deletes: assign_ids reads and bumps a fr
 kind = "bug"
 state = "claimed"
 created_at = "2026-10-09T18:09:53.692Z"
-updated_at = "2026-10-11T11:04:15.849594Z"
+updated_at = "2026-10-11T11:36:44.829747Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -13,6 +13,7 @@ watchers = [
 size = "M"
 priority = "low"
 priority_at = "2026-10-09T19:08:42.451097Z"
+summary = "doc_watch assign_ids now uses max(next_comment_id front-matter counter, highest c<n>+1), writes the counter back (minimal front matter made if absent, lower counter raised even when nothing is assigned); send() appends a note to the batch and logs a warning for thread IDs used twice. document-reviewer.md, daemon.md and CHANGELOG updated. Front-matter readers ignore unknown keys, so no reader change was needed."
 +++
 
 Bridle half of bridle-ui ticket vnuu (docs/tickets/open/comment-ids-never-repeat-*-vnuu.md in the bridle-ui repo; read it: the human's words and the full ask). Here: (1) crates/bridle-daemon/src/doc_watch.rs assign_ids takes the next ID as max(front-matter counter, highest c<n> + 1) and writes the counter back; a document with no front matter gets a minimal one. Field (the human, 2026-10-09): `next_comment_id: c<n>`, the ID the next comment gets (e.g. `next_comment_id: c7`); next ID is max(next_comment_id, highest c<n> + 1), then write back assigned + 1. Same as ui-vnuu. (2) Front-matter readers accept the new key: bridle ticket check, specs, the docs crate. (3) workflow/base/roles/document-reviewer.md (and the comment-format design doc it points to) documents the field so agents writing comments by hand bump it. (4) Tests: delete the newest and then all threads, assign, the ID keeps counting up. (5) Added by the human 2026-10-09 ~3:15 PM ET (thread, 19:05Z): when doc_watch sends a document's pending comments to its agent (after the quiet period), it also raises next_comment_id if lower than the highest c<n> in the file + 1, and reports any thread ID used twice (to the agent in the batch, and in the daemon log). Only for documents under review, at that moment; no new polling. Live bug since ui-ha6m (delete) landed. Acceptance: just check.
@@ -51,3 +52,6 @@ priority: high -> low
 
 ### note · external:advisor/product-manager · 2026-10-09T19:08:46.553Z
 From the human, via advisor (product-manager), 2026-10-09 ~3:30 PM ET: "all of the comment work is low priority; should come at the end of queue for other work." Priority set to low.
+
+### note · agent:wgd43 · 2026-10-11T11:36:44.829Z
+done: next_comment_id counter + duplicate-ID report; just check exit 0, 1517 tests run (1517 passed), sha 389782a7
