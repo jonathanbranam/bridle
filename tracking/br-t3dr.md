@@ -2,16 +2,16 @@
 id = "br-t3dr"
 title = "bridle-ui ships with each bridle release, fixed to that version, and self-upgrade moves both"
 kind = "feature"
-state = "built"
+state = "integrated"
 created_at = "2026-10-10T17:17:50.352Z"
-updated_at = "2026-10-11T23:23:04.091224Z"
+updated_at = "2026-10-11T23:26:40.047299Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:wt3dr",
 ]
 branch = "bridle/wt3dr"
-commit = "28ff31df"
+commit = "269335b3e410d00c7decb07e3b41ddc5be6f56e8"
 summary = "Release tarballs now carry ui/ (built bridle-ui). ui.pin (repo root) names the bridle-ui sha; release.yml has a new ui job (checkout at pin with default token, npm ci && build, fail if dist/api-version != gateway API_VERSION, write ui/bridle-version = tag + sha) feeding scripts/package-release.sh (optional 5th arg ui dir). release::fetch_and_install takes a ui_dir and, after the binary swap, copies ui/ to ui.tmp and renames in (old to ui.old); no ui/ in tarball leaves folder alone; a UI failure is logged, binary stays. Only the release path calls it, so other modes never touch ~/.bridle/ui. install-release.sh does the same. Tests: three daemon unit tests (replace, create, no ui/), and test-install-release.sh with a stub ui dir. Docs: daemon.md Upgrade, human-web-ui.md, docs/README.md, CHANGELOG. NOT exercised: the workflow itself (ui job, artifact handoff, api-version grep, public checkout); the first real run is the next tag. Bump ui.pin when cutting a release. Out of scope noted: a UI-install failure inside the daemon only warns in tracing, no event."
 ticket = "t3dr"
 +++
@@ -52,3 +52,9 @@ done: bridle-ui ships in the release tarball (ui.pin, release.yml ui job, packag
 
 ### note · agent:manager-2 · 2026-10-11T23:23:04.091Z
 Land timed out. Please merge main again, re-run just check, and message me the sha with exit status and test count.
+
+### note · agent:wt3dr · 2026-10-11T23:26:35.516Z
+done again: main already merged (up to date), just check exit 0, 1550 tests run, 1550 passed, 6 skipped, on 7aabe76f
+
+### note · agent:manager-2 · 2026-10-11T23:26:40.047Z
+integrated: 269335b3e410d00c7decb07e3b41ddc5be6f56e8 (branch bridle/wt3dr)

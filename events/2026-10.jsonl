@@ -1657,3 +1657,4 @@
 {"actor":"agent:pm-1","at":"2026-10-11T22:40:45.677325Z","queue":"reprioritized"}
 {"actor":"human","at":"2026-10-11T22:41:02.993Z","from":"","task":"br-53gy","to":"pending"}
 {"actor":"agent:wt3dr","at":"2026-10-11T22:57:39.430344Z","from":"claimed","task":"br-t3dr","to":"built"}
+{"actor":"agent:manager-2","at":"2026-10-11T23:26:40.047299Z","from":"built","task":"br-t3dr","to":"integrated"}
