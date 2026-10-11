@@ -184,3 +184,8 @@ From the human's session with advisor wsl2, 2026-10-10 (times US Eastern).
 - Step 5a: `powercfg /change standby-timeout-ac 0`, `hibernate-timeout-ac 0`, `/h off`; `powercfg
   /a` shows hibernation off. Next: Windows Update active hours (the only step left that needs the
   Windows screen), then the rest over `ssh jbranam@remus` from dalek.
+- Windows Update active hours: deferred by the human ("later"). Step 5c needs nothing: Ubuntu
+  26.04.1 LTS, unattended-upgrades installed, `Automatic-Reboot` left commented out (default
+  false). SSH from dalek is Tailscale SSH (browser check about every 12 hours; `"action":
+  "accept"` in the tailnet's ssh rule would drop it). Next: step 6 (toolchain, Claude Code, bridle
+  v0.6.1) over SSH from dalek.
