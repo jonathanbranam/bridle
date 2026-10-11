@@ -56,7 +56,7 @@ Struck by the human (2026-10-11): `cervantes` ("too long; makes me think of Don 
 
 | Windows | WSL2 | Why |
 |---|---|---|
-| mars | deimos | Mars's other moon. |
+| mars | ~~deimos~~ | Mars's other moon. Struck: dictation wrote "Deimos" once and "Dimos" once (2026-10-11). |
 | jupiter | callisto | A planet and its outermost big moon. |
 | saturn | titan | Saturn's biggest moon. |
 | neptune | triton | Neptune's biggest moon. |
