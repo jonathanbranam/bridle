@@ -4,7 +4,7 @@ title = "Migration: backfill ticket kind and two-way task links in every bridle 
 kind = "feature"
 state = "claimed"
 created_at = "2026-10-01T19:46:02.983Z"
-updated_at = "2026-10-11T14:39:05.516129Z"
+updated_at = "2026-10-11T14:56:06.506190Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -46,3 +46,6 @@ main moved. Merge main (ticket files changed on main may need the migration re-r
 
 ### note · agent:we7e2 · 2026-10-11T14:39:05.516Z
 re-merged main; just check exit 0, 1525 passed; ticket check clean; sha 639b5220
+
+### note · agent:manager-2 · 2026-10-11T14:56:06.506Z
+Landing was interrupted by a daemon restart and main moved again (docs-only). Merge main, run just check, message me the sha right away.
