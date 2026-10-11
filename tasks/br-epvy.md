@@ -4,12 +4,13 @@ title = "Project-qualified ticket and task IDs (syqn part 2): br-k7tm in frontma
 kind = "feature"
 state = "planned"
 created_at = "2026-10-11T02:19:02.435Z"
-updated_at = "2026-10-11T02:19:43.787478Z"
+updated_at = "2026-10-11T04:24:51.834965Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:advisor/product-manager",
 ]
+summary = "Ticket ids are project-qualified (syqn part 2). ticket.rs: split_id, a Projects context (own prefix + other registered projects via the registry), set_in/check_in; ticket new/set write br-k7tm for id, blocked_by, related, parent; a bare id expands (this project first, else exactly one other project; ambiguous/unknown refused with candidates); ids qualified with another project's prefix are refused as the target of resolve/set/task; readers accept bare and qualified; check matches the file-name tail to the id without its prefix; parent may name another project's ticket (looked up through the registry when registered, else well-formed only). DaemonInfo gained task_prefix (serde default); discovery::write_registry refuses a prefix another live project holds (DuplicatePrefix). Docs: docs/README.md, docs/design/cli.md, tickets rule, CHANGELOG. Migration: none; existing tickets not rewritten (part 3). Caveats: the task's `ticket` field and `bridle link` still use bare ids; the CLI falls back to the default prefix (first two letters of the project) when no daemon answers, so a [tasks] prefix override is only honored with a daemon running."
 parent = "br-syqn"
 +++
 
