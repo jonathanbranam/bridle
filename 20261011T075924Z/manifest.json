@@ -1,0 +1,28 @@
+{
+  "daemon_pid_start": 640,
+  "daemon_pids": [
+    640
+  ],
+  "daemon_version": "0.6.1",
+  "duration_s": 1800,
+  "ended": "2026-10-11T08:29:26Z",
+  "events_export": "ok",
+  "events_exported": 9,
+  "hostname": "dalek.local",
+  "interval_s": 15,
+  "load": {
+    "class": "idle",
+    "working_max": 0,
+    "working_mean": 0.0
+  },
+  "sampler_cpu_s": 27.29,
+  "samples": 120,
+  "scenario": "passive",
+  "script_blob": "07d8209fafbc8fc9f3135c59d98bf33beabdd567",
+  "script_sha": "9cc5fd3d13ba66c414ed398fd3bcfeecb174cdaa",
+  "spawns": 0,
+  "start_seq": 106184,
+  "started": "2026-10-11T07:59:25Z",
+  "status": "complete",
+  "uname": "Darwin dalek.local 23.6.0 Darwin Kernel Version 23.6.0: Wed Nov  5 21:49:21 PST 2025; root:xnu-10063.141.1.708.2~1/RELEASE_X86_64 x86_64 i386"
+}
