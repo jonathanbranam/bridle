@@ -171,6 +171,10 @@ once, never "Rhea". **Fails.**
 Then `phobos` and `mars` (2026-10-11, the system not noted): "Phobos" three times out of three,
 "Mars" once out of once. **Both pass.**
 
+Then `vega` (2026-10-11): **passes in Claude and Wispr Flow** ("Vega" every time). **iOS
+dictation failed completely**: "test went the latest status of fuses" for "...the latest status of
+Vega". iOS dictation is a third system to test in, where the human uses it.
+
 ## Themes
 
 ### In: liked
