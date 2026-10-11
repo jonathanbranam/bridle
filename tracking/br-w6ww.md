@@ -4,7 +4,7 @@ title = "A land cut off by a restart leaves the task claimed with no claim row: 
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-11T17:20:34.913Z"
-updated_at = "2026-10-11T19:30:28.969143Z"
+updated_at = "2026-10-11T19:30:58.816795Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 priority = "critical"
@@ -37,3 +37,6 @@ done: claims survive restart (DB state wins on open), claim delete+state one tx,
 
 ### note · agent:manager-2 · 2026-10-11T19:30:28.969Z
 integrated: 3cfa111574e120be57b9a0fab6309f0f465fa9f9 (branch bridle/ww6ww)
+
+### note · agent:manager-2 · 2026-10-11T19:30:58.816Z
+cleanup: removed agent ww6ww, branch bridle/ww6ww
