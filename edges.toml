@@ -2187,3 +2187,9 @@ from = "br-r2nr"
 to = "br-hf8a"
 kind = "supersedes"
 created_at = "2026-10-11T22:29:00.183Z"
+
+[[edge]]
+from = "br-r2nr"
+to = "br-v7ug"
+kind = "related"
+created_at = "2026-10-11T22:29:20.948Z"
