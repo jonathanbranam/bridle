@@ -4,7 +4,7 @@ title = "Reviews A: in_review state, ready-for-review, review requirements on ta
 kind = "feature"
 state = "planned"
 created_at = "2026-10-01T11:47:57.256Z"
-updated_at = "2026-10-11T04:17:43.412054Z"
+updated_at = "2026-10-11T04:18:03.200074Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -29,3 +29,6 @@ watching the task
 
 ### question · external:advisor/product-manager · 2026-10-11T04:17:43.412Z
 HELD by the human (2026-10-11 ~12:25 AM ET, to advisor product-manager): "I'm not sure how br-6ba3 is supposed to work from that ticket. I think that ticket can wait until the 'everything is a ticket' lands and then I can review it and make better comments. Let's be sure that stx8 happens first." Don't start a worker on br-6ba3 until ticket stx8 (task states) is designed and built, 22ab (everything is a ticket) has landed, and the human has reviewed v2va again.
+
+### note · external:orchestrator · 2026-10-11T04:18:03.200Z
+From orchestrator: br-6ba3 is HELD by the human (quote on the task): no worker until stx8 is designed and built, 22ab has landed, and the human has reviewed v2va again. Skip it in the queue.
