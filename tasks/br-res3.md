@@ -4,12 +4,13 @@ title = "Code rename slice 3: no type is called Task; internal identifiers sweep
 kind = "arch-revision"
 state = "planned"
 created_at = "2026-10-11T11:05:22.388Z"
-updated_at = "2026-10-11T11:06:44.256736Z"
+updated_at = "2026-10-11T13:38:54.587178Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:advisor/product-manager",
 ]
+summary = "Slice 3 of the code rename: no Rust type is called Task. TaskManager/TaskError/TaskRow became TicketManager/TicketError/TicketRow (daemon); the gateway views became TicketSummary/TicketDetail/TicketListByTasks with #[ts(rename)] keeping the generated TypeScript names for bridle-ui; the legacy 'bridle task' CLI arg types became Row*Args/RowAction and Ticket{Kind,Size,Priority}Arg; QueueTaskRow became QueueRow. Left on purpose: MessageKind::TaskUpdate (wire and db value task_update), Command::Task (hidden alias variant), RawTasks (config key tasks), serde aliases. No behaviour, wire, SQL or migration change. Design docs and CHANGELOG updated."
 ticket = "res3"
 parent = "br-95t9"
 +++
