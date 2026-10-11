@@ -2163,3 +2163,27 @@ from = "br-stx8"
 to = "br-e4rv"
 kind = "blocks"
 created_at = "2026-10-11T17:20:12.489Z"
+
+[[edge]]
+from = "br-3827"
+to = "br-gz4p"
+kind = "parent"
+created_at = "2026-10-11T17:21:42.676Z"
+
+[[edge]]
+from = "br-3827"
+to = "br-xccp"
+kind = "parent"
+created_at = "2026-10-11T17:21:42.681Z"
+
+[[edge]]
+from = "br-3827"
+to = "br-gb97"
+kind = "parent"
+created_at = "2026-10-11T17:21:42.684Z"
+
+[[edge]]
+from = "br-3827"
+to = "br-cp5p"
+kind = "parent"
+created_at = "2026-10-11T17:21:42.687Z"
