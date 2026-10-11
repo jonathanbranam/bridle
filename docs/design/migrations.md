@@ -106,8 +106,18 @@ runs on a real project): start-up skips it, and it runs by `bridle migrate --onl
   with no ticket file, and `duplicates`, `supersedes` and `discovered-from`, stay edges. Opt-in,
   same review and guard as `0002`; a rerun finds nothing.
 
+- **`0005-a-ticket-for-every-active-task`** (ticket 72t9): every active task (not `integrated` or
+  `dropped`) whose `ticket` names no ticket file gets a stub ticket from `bridle ticket new
+  --from-task` (it needs the project's daemon, which links the row), and every extra active task
+  of a ticket that has another gets one the same way plus `ticket link <new> parent <ticket>` (the
+  ticket's first task is the row with its id, else the oldest). Finished tasks stay read-only
+  history. Reads the rows from `bridle/state` with git. Opt-in, same review and guard as `0002`;
+  the new ticket files are left uncommitted for the owner; a rerun finds nothing. It does not
+  move threads: a row whose `ticket` is its own id keeps its thread in `tickets/<id>.md` from its
+  next write (storage.md), and `ticket show` finds the others by the row's `ticket`.
+
 **Protected-branch guard** (rule `existing-projects`; `migrate::refuse_on_protected_branch`, the
 first one): a migration that rewrites a project's files calls it first and is refused
 (`migrate::Refused`) while `main`, `dev` or the configured `[branches] release` is checked out,
 so it only lands on the trial or integration branch. Bridle's own repo (project `bridle`) is
-exempt. `0002`, `0003` and `0004` use it; `0001` does not yet.
+exempt. `0002` to `0005` use it; `0001` does not yet.

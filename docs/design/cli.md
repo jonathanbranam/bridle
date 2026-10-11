@@ -112,6 +112,9 @@ bridle queue                                     read-only: claimed tasks with t
 bridle queue set --tier T,T... [--tier T,T...]   replace the whole queue, one --tier per tier (PM, orchestrator or human only)
 bridle queue add-tier <task>...                  append one tier at the back (PM, orchestrator or human only)
 bridle ticket link <id> <KIND> <other> [--rm]   KIND: blocked-by|parent|related (edit the frontmatter; no commit, the daemon indexes it) or duplicates|supersedes (an edge on the daemon); replaces `task dep`
+bridle ticket comment <id> [TEXT | --text-file F] [--notify AGENT]   add a note to the ticket's thread (br-72t9; same as `task comment`, found by ticket id)
+bridle ticket ask <id> TEXT [--to WHO]  /  bridle ticket answer <id> TEXT   a blocking question on the ticket's thread, and its answer (same as `task ask` / `task answer`)
+bridle ticket show <id>                          the ticket file, then its thread (`--json`: the rows that carry it)
 bridle wait    <task> [--until STATE] [--or-message] [--timeout SECS]   block until the task changes state; exit 4 on timeout
 bridle agent wake <identifier> [--timeout SECS] | --stop [<identifier>]   (cap and default 6900 s = 1 h 55 min) blocks until the daemon decides that principal should wake (reason: it has an unread message, which includes the `task_update` lines about tasks it watches); prints each message (id, sender, text) (`--json`: `{reasons:[{reason,message_ids,messages,task?,event?}]}`); a non-human caller's messages stay unread until the same session (`BRIDLE_SESSION_PID`) next runs `bridle agent wake` or `bridle inbox`, which acknowledges them (a lost waiter loses nothing; another session of that principal is offered them again; no timeout, the sender is not told), the human's are never marked; refused with stdout discarded (`> /dev/null`; a shell `&` can't be detected without a tty, so it is not checked); exit 0 woken, 4 timed out, 5 superseded (a newer wait from the same session, `BRIDLE_SESSION_PID`, replaced this one, or `--stop` ended it; reason `superseded`; nothing marked read; the open wait's own hand-over is not acknowledged by it; a wait with no session replaces nothing), 6 the daemon is restarting or shutting down (reason `daemon_stopping`, `text` says why; stderr); it prints `waiting as <identity> (pid N, timeout S s)` on stderr first; `--stop` ends this session's open wait through the daemon, or with an identifier that identity's waits (own only; the human any), printing `stopped N wait(s)` or `no wait open`; caller must be that principal (or the human), else 403
 bridle agent interrupt <agent> [--drop-held]
@@ -739,6 +742,12 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   never stored on both sides; the `tasks:` list is gone from the frontmatter (a ticket and its
   row share an id). Migration `0004-ticket-links-in-frontmatter` carries existing edges into
   the files.
+- **`ticket comment|ask|answer|show <id>`** (br-72t9) are the ticket forms of the thread
+  commands. The id finds the row: the row with the ticket's id, else the oldest row whose
+  `ticket` names it (a ticket made from an older task); no row is an error. They call the same
+  daemon endpoints as `task comment|ask|answer`, which stay (the only forms for a row with no
+  ticket, and until the rename, 22ab step 7). `ticket show` prints the ticket file from the
+  checkout, then each carrying row's thread, so an older task's thread shows on its ticket.
 - **`inbox`** has three forms:
   - Bare `bridle inbox [--all] [--mark-read]` (list, the default) shows every message to
     `me` plus every task's open question: reads `GET /v1/messages` (with `to=me`,

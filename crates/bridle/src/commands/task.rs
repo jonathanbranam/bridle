@@ -2,7 +2,7 @@
 
 use super::*;
 
-pub(super) async fn ask(cli: &Cli, args: &AskArgs) -> Result<(), CliError> {
+pub(crate) async fn ask(cli: &Cli, args: &AskArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
     let task = client
         .ask_question(&args.task, &args.text, args.to.as_deref())
@@ -15,7 +15,7 @@ pub(super) async fn ask(cli: &Cli, args: &AskArgs) -> Result<(), CliError> {
     Ok(())
 }
 
-pub(super) async fn answer(cli: &Cli, args: &AnswerArgs) -> Result<(), CliError> {
+pub(crate) async fn answer(cli: &Cli, args: &AnswerArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
     let task = client.answer_question(&args.task, &args.text).await?;
     if cli.json {
@@ -646,7 +646,7 @@ pub(super) async fn task_watch(
     Ok(())
 }
 
-pub(super) async fn task_comment(cli: &Cli, args: &TaskCommentArgs) -> Result<(), CliError> {
+pub(crate) async fn task_comment(cli: &Cli, args: &TaskCommentArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
     let text = require_body(read_text(&args.text, &args.text_file, "text")?)?;
     if let Some(to) = &args.notify {

@@ -12,8 +12,9 @@ use bridle_api::{EditTaskRequest, NewTaskRequest, SubmitTaskRequest, TaskKind};
 use clap::ValueEnum;
 
 use crate::cli::{
-    Cli, LinkKind, TaskKindArg, TicketAction, TicketArgs, TicketCheckArgs, TicketLinkArgs,
-    TicketNewArgs, TicketReadyArgs, TicketResolveArgs, TicketSetArgs, TicketSubmitArgs,
+    Cli, LinkKind, TaskKindArg, TicketAction, TicketAnswerArgs, TicketArgs, TicketAskArgs,
+    TicketCheckArgs, TicketCommentArgs, TicketLinkArgs, TicketNewArgs, TicketReadyArgs,
+    TicketResolveArgs, TicketSetArgs, TicketShowArgs, TicketSubmitArgs,
 };
 use crate::commands::client_for;
 use crate::error::CliError;
@@ -45,6 +46,10 @@ pub async fn run(cli: &Cli, args: &TicketArgs) -> Result<(), CliError> {
         TicketAction::Set(a) => set_cmd(cli, &repo, a).await,
         TicketAction::Link(a) => link_cmd(cli, &repo, a).await,
         TicketAction::Check(a) => check_cmd(cli, &repo, a).await,
+        TicketAction::Comment(a) => comment_cmd(cli, &repo, a).await,
+        TicketAction::Ask(a) => ask_cmd(cli, &repo, a).await,
+        TicketAction::Answer(a) => answer_cmd(cli, &repo, a).await,
+        TicketAction::Show(a) => show_cmd(cli, &repo, a).await,
         TicketAction::Submit(_) => unreachable!("handled above"),
     }
 }
@@ -179,6 +184,107 @@ async fn ready_cmd(cli: &Cli, repo: &Path, args: &TicketReadyArgs) -> Result<(),
         .ok_or_else(|| anyhow!("ticket {id} has no row on this daemon"))?;
     let task = client.ready_task(&task.id).await?;
     println!("{}", task.id);
+    Ok(())
+}
+
+/// The rows that carry a ticket's thread, oldest first: the row with the ticket's own id (its
+/// thread is `tickets/<id>.md` on the state branch) or, for a ticket made from an older task,
+/// the rows whose `ticket` names it.
+async fn thread_rows(cli: &Cli, repo: &Path, id: &str) -> Result<Vec<bridle_api::Task>, CliError> {
+    let tail = projects(cli, repo).await?.local(id)?.to_string();
+    let all = crate::commands::client_for_read(cli)
+        .await?
+        .list_tasks()
+        .await?;
+    let mut rows: Vec<_> = all
+        .iter()
+        .filter(|t| split_id(&t.id).1 == tail)
+        .cloned()
+        .collect();
+    if rows.is_empty() {
+        rows = all
+            .into_iter()
+            .filter(|t| ticket_of(t).is_some_and(|tk| split_id(&tk).1 == tail))
+            .collect();
+    }
+    rows.sort_by_key(|t| t.created_at);
+    if rows.is_empty() {
+        return Err(anyhow!("ticket {id} has no row on this daemon").into());
+    }
+    Ok(rows)
+}
+
+/// The row a new comment, question or answer goes on: the first of [`thread_rows`].
+async fn thread_row_id(cli: &Cli, repo: &Path, id: &str) -> Result<String, CliError> {
+    Ok(thread_rows(cli, repo, id).await?.remove(0).id)
+}
+
+async fn comment_cmd(cli: &Cli, repo: &Path, args: &TicketCommentArgs) -> Result<(), CliError> {
+    let task = thread_row_id(cli, repo, &args.id).await?;
+    crate::commands::task_comment(
+        cli,
+        &crate::cli::TaskCommentArgs {
+            task,
+            text: args.text.clone(),
+            text_file: args.text_file.clone(),
+            notify: args.notify.clone(),
+        },
+    )
+    .await
+}
+
+async fn ask_cmd(cli: &Cli, repo: &Path, args: &TicketAskArgs) -> Result<(), CliError> {
+    let task = thread_row_id(cli, repo, &args.id).await?;
+    crate::commands::ask(
+        cli,
+        &crate::cli::AskArgs {
+            task,
+            text: args.text.clone(),
+            to: args.to.clone(),
+        },
+    )
+    .await
+}
+
+async fn answer_cmd(cli: &Cli, repo: &Path, args: &TicketAnswerArgs) -> Result<(), CliError> {
+    let task = thread_row_id(cli, repo, &args.id).await?;
+    crate::commands::answer(
+        cli,
+        &crate::cli::AnswerArgs {
+            task,
+            text: args.text.clone(),
+        },
+    )
+    .await
+}
+
+async fn show_cmd(cli: &Cli, repo: &Path, args: &TicketShowArgs) -> Result<(), CliError> {
+    let rows = thread_rows(cli, repo, &args.id).await?;
+    if cli.json {
+        return Ok(crate::render::print_json(&rows)?);
+    }
+    let tail = projects(cli, repo).await?.local(&args.id)?.to_string();
+    let root = tickets_root(repo);
+    if let Ok(path) =
+        find_by_id(&root.join("open"), &tail).or_else(|_| find_by_id(&root.join("resolved"), &tail))
+    {
+        let text = std::fs::read_to_string(&path)
+            .with_context(|| format!("reading {}", path.display()))?;
+        println!("{}", text.trim_end());
+    }
+    for row in &rows {
+        println!();
+        println!("Thread ({}, {}):", row.id, row.state);
+        for e in &row.thread {
+            println!(
+                "  [{}] {} ({}): {}",
+                e.kind,
+                e.from,
+                e.at.to_rfc3339(),
+                e.body
+            );
+        }
+    }
     Ok(())
 }
 

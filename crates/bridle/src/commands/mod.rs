@@ -61,6 +61,7 @@ use misc::*;
 use orchestrator::*;
 pub use task::print_task_row;
 use task::*;
+pub(crate) use task::{answer, ask, task_comment};
 use usage::*;
 pub(crate) use workflow::spec_inputs;
 use workflow::*;
@@ -292,7 +293,7 @@ pub async fn client_for(cli: &Cli) -> Result<Client, CliError> {
 /// A client for a read-only command: proceeds with no token when `$CLAUDECODE`
 /// is set and no token was given, matching the daemon's tolerance for
 /// token-less GET/HEAD requests.
-async fn client_for_read(cli: &Cli) -> Result<Client, CliError> {
+pub(crate) async fn client_for_read(cli: &Cli) -> Result<Client, CliError> {
     let (url, token) = resolve_endpoint_and_token(cli, true).await?;
     Ok(Client::new(url, token).with_advisor(std::env::var("BRIDLE_ADVISOR_NAME").ok()))
 }

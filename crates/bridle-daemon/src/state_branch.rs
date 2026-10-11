@@ -102,6 +102,10 @@ struct Pending {
     /// second edit before the next flush overwrites the first: the batch
     /// collapses to each task's latest state, not a queue of diffs.
     files: HashMap<String, String>,
+    /// ticket id -> rendered `tickets/<id>.md`, the ticket's thread (22ab section 1). Only
+    /// for a task whose `ticket` is its own id, the one row of its ticket; same collapsing
+    /// as `files`.
+    threads: HashMap<String, String>,
     /// (the `events/<YYYY-MM>.jsonl` file it belongs to, one pre-rendered
     /// JSON line), in write order.
     events: Vec<(String, String)>,
@@ -282,11 +286,13 @@ impl StateBranch {
     /// next flush.
     pub fn enqueue_task(&self, task: &Task) -> Result<(), StateBranchError> {
         let rendered = render_task(task)?;
-        self.pending
-            .lock()
-            .expect("state branch pending lock")
-            .files
-            .insert(task.id.clone(), rendered);
+        let mut pending = self.pending.lock().expect("state branch pending lock");
+        if owns_thread_file(task) && !task.thread.is_empty() {
+            pending
+                .threads
+                .insert(task.id.clone(), render_thread_file(task));
+        }
+        pending.files.insert(task.id.clone(), rendered);
         Ok(())
     }
 
@@ -556,6 +562,7 @@ impl StateBranch {
     async fn flush_and_commit(&self) -> Result<bool, StateBranchError> {
         let Pending {
             files,
+            threads,
             events,
             edges,
             claims,
@@ -567,6 +574,7 @@ impl StateBranch {
             std::mem::take(&mut *guard)
         };
         if files.is_empty()
+            && threads.is_empty()
             && events.is_empty()
             && edges.is_none()
             && claims.is_none()
@@ -581,6 +589,13 @@ impl StateBranch {
         std::fs::create_dir_all(&tasks_dir)?;
         for (id, contents) in &files {
             std::fs::write(tasks_dir.join(format!("{id}.md")), contents)?;
+        }
+        if !threads.is_empty() {
+            let dir = self.dir.join(THREADS_DIR);
+            std::fs::create_dir_all(&dir)?;
+            for (id, contents) in &threads {
+                std::fs::write(dir.join(format!("{id}.md")), contents)?;
+            }
         }
         if !handovers.is_empty() {
             let dir = self.dir.join("handovers");
@@ -639,6 +654,9 @@ impl StateBranch {
         if !files.is_empty() {
             parts.push(format!("{} task update(s)", files.len()));
         }
+        if !threads.is_empty() {
+            parts.push(format!("{} ticket thread(s)", threads.len()));
+        }
         if edges.is_some() {
             parts.push("edges".to_string());
         }
@@ -685,7 +703,23 @@ impl StateBranch {
     pub fn read_task(&self, id: &str) -> Option<Task> {
         let path = self.dir.join("tasks").join(format!("{id}.md"));
         let text = std::fs::read_to_string(path).ok()?;
-        parse_task(&text).ok()
+        let mut task = parse_task(&text).ok()?;
+        self.overlay_thread(&mut task);
+        Some(task)
+    }
+
+    /// A task that owns a ticket thread file takes its thread from there; the inline
+    /// `## Thread` of a file written before the move is the fallback.
+    fn overlay_thread(&self, task: &mut Task) {
+        if !owns_thread_file(task) {
+            return;
+        }
+        let path = self.dir.join(THREADS_DIR).join(format!("{}.md", task.id));
+        if let Ok(text) = std::fs::read_to_string(path)
+            && let Ok(thread) = parse_thread_file(&text)
+        {
+            task.thread = thread;
+        }
     }
 
     /// Whether the task's file has a watchers record: false for one written before watchers
@@ -728,7 +762,9 @@ impl StateBranch {
         ids.into_iter()
             .map(|id| {
                 let text = std::fs::read_to_string(tasks_dir.join(format!("{id}.md")))?;
-                parse_task(&text)
+                let mut task = parse_task(&text)?;
+                self.overlay_thread(&mut task);
+                Ok(task)
             })
             .collect()
     }
@@ -1129,9 +1165,28 @@ fn render_task(task: &Task) -> Result<String, StateBranchError> {
     out.push_str("+++\n\n");
     out.push_str(task.body.trim_end());
     out.push('\n');
-    if !task.thread.is_empty() {
+    if !owns_thread_file(task) {
+        out.push_str(&render_thread(&task.thread));
+    }
+    Ok(out)
+}
+
+/// Where a ticket's thread lives on the state branch: `tickets/<id>.md` (22ab section 1).
+const THREADS_DIR: &str = "tickets";
+
+/// Whether the task's thread lives in `tickets/<id>.md`: the row of a ticket with its own id,
+/// which is every row `ticket new` made. A row with another ticket's id (an older task, or an
+/// extra task of one ticket) keeps its inline thread, since two rows can't share one file.
+fn owns_thread_file(task: &Task) -> bool {
+    task.ticket.as_deref() == Some(task.id.as_str())
+}
+
+/// The `## Thread` section, empty text for no entries.
+fn render_thread(thread: &[ThreadEntry]) -> String {
+    let mut out = String::new();
+    if !thread.is_empty() {
         out.push_str("\n## Thread\n");
-        for e in &task.thread {
+        for e in thread {
             out.push_str(&format!(
                 "\n### {} \u{b7} {} \u{b7} {}\n{}\n",
                 e.kind.as_str(),
@@ -1141,7 +1196,15 @@ fn render_task(task: &Task) -> Result<String, StateBranchError> {
             ));
         }
     }
-    Ok(out)
+    out
+}
+
+fn render_thread_file(task: &Task) -> String {
+    format!("# Thread of {}\n{}", task.id, render_thread(&task.thread))
+}
+
+fn parse_thread_file(text: &str) -> Result<Vec<ThreadEntry>, StateBranchError> {
+    parse_thread(text.split_once("\n## Thread\n").map_or("", |(_, t)| t))
 }
 
 #[derive(Serialize)]
@@ -1238,36 +1301,7 @@ fn parse_task(text: &str) -> Result<Task, StateBranchError> {
         None => (rest, ""),
     };
 
-    let mut thread = Vec::new();
-    for chunk in thread_str.split("\n### ") {
-        if chunk.is_empty() {
-            continue;
-        }
-        let (header, entry_body) = chunk
-            .split_once('\n')
-            .ok_or_else(|| StateBranchError::Parse(format!("malformed thread entry: {chunk:?}")))?;
-        let mut parts = header.split(" \u{b7} ");
-        let (kind_s, from, at_s) = match (parts.next(), parts.next(), parts.next()) {
-            (Some(k), Some(f), Some(a)) => (k, f, a),
-            _ => {
-                return Err(StateBranchError::Parse(format!(
-                    "malformed thread heading: {header:?}"
-                )));
-            }
-        };
-        let kind: ThreadEntryKind = kind_s
-            .parse()
-            .map_err(|e: String| StateBranchError::Parse(e))?;
-        let at = DateTime::parse_from_rfc3339(at_s)
-            .map_err(|e| StateBranchError::Parse(format!("bad thread timestamp {at_s:?}: {e}")))?
-            .with_timezone(&Utc);
-        thread.push(ThreadEntry {
-            kind,
-            from: from.to_string(),
-            body: entry_body.trim_end_matches('\n').to_string(),
-            at,
-        });
-    }
+    let thread = parse_thread(thread_str)?;
 
     let created_by = fm
         .created_by
@@ -1302,6 +1336,40 @@ fn parse_task(text: &str) -> Result<Task, StateBranchError> {
         impact: fm.impact,
         settle_until: None,
     })
+}
+
+fn parse_thread(thread_str: &str) -> Result<Vec<ThreadEntry>, StateBranchError> {
+    let mut thread = Vec::new();
+    for chunk in thread_str.split("\n### ") {
+        if chunk.is_empty() {
+            continue;
+        }
+        let (header, entry_body) = chunk
+            .split_once('\n')
+            .ok_or_else(|| StateBranchError::Parse(format!("malformed thread entry: {chunk:?}")))?;
+        let mut parts = header.split(" \u{b7} ");
+        let (kind_s, from, at_s) = match (parts.next(), parts.next(), parts.next()) {
+            (Some(k), Some(f), Some(a)) => (k, f, a),
+            _ => {
+                return Err(StateBranchError::Parse(format!(
+                    "malformed thread heading: {header:?}"
+                )));
+            }
+        };
+        let kind: ThreadEntryKind = kind_s
+            .parse()
+            .map_err(|e: String| StateBranchError::Parse(e))?;
+        let at = DateTime::parse_from_rfc3339(at_s)
+            .map_err(|e| StateBranchError::Parse(format!("bad thread timestamp {at_s:?}: {e}")))?
+            .with_timezone(&Utc);
+        thread.push(ThreadEntry {
+            kind,
+            from: from.to_string(),
+            body: entry_body.trim_end_matches('\n').to_string(),
+            at,
+        });
+    }
+    Ok(thread)
 }
 
 fn thread_first_author(thread: &[ThreadEntry]) -> Option<String> {
@@ -1624,6 +1692,58 @@ mod tests {
             log.lines().count(),
             2,
             "one commit beyond the orphan's first"
+        );
+    }
+
+    #[tokio::test]
+    async fn a_tickets_own_row_keeps_its_thread_in_the_ticket_file() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let repo = tmp.path().join("repo");
+        init_repo(&repo).await;
+        let dir = tmp.path().join("state");
+        let sb = StateBranch::open(&repo, &dir).await.expect("open");
+
+        let entry = |kind, body: &str| ThreadEntry {
+            kind,
+            from: "human".to_string(),
+            body: body.to_string(),
+            at: Utc::now(),
+        };
+        let mut own = sample_task("br-7fa2");
+        own.ticket = Some("br-7fa2".to_string());
+        own.thread = vec![
+            entry(ThreadEntryKind::Note, "first"),
+            entry(ThreadEntryKind::Question, "which?"),
+        ];
+        // A row of an older task for another ticket keeps its thread inline.
+        let mut other = sample_task("br-9999");
+        other.ticket = Some("br-7fa2".to_string());
+        other.thread = vec![entry(ThreadEntryKind::Note, "old")];
+        sb.enqueue_task(&own).expect("enqueue");
+        sb.enqueue_task(&other).expect("enqueue");
+        sb.flush_now().await.expect("flush");
+
+        let row = std::fs::read_to_string(dir.join("tasks/br-7fa2.md")).expect("row");
+        assert!(!row.contains("## Thread"), "{row}");
+        let file = std::fs::read_to_string(dir.join("tickets/br-7fa2.md")).expect("thread file");
+        assert!(file.contains("which?"), "{file}");
+        assert!(!dir.join("tickets/br-9999.md").exists());
+        let inline = std::fs::read_to_string(dir.join("tasks/br-9999.md")).expect("row");
+        assert!(inline.contains("## Thread"), "{inline}");
+
+        let back = sb.read_task("br-7fa2").expect("read back");
+        assert_eq!(back.thread.len(), 2);
+        assert_eq!(back.thread[1].kind, ThreadEntryKind::Question);
+        assert_eq!(sb.read_task("br-9999").expect("read").thread.len(), 1);
+        let listed = sb.list_tasks().expect("list");
+        assert_eq!(
+            listed
+                .iter()
+                .find(|t| t.id == "br-7fa2")
+                .unwrap()
+                .thread
+                .len(),
+            2
         );
     }
 

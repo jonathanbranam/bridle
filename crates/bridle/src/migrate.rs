@@ -89,6 +89,13 @@ pub const MIGRATIONS: &[Migration] = &[
         manual_only: true,
         run: ticket_links_in_frontmatter,
     },
+    Migration {
+        id: "0005-a-ticket-for-every-active-task",
+        description: "Give every active task without a ticket a stub ticket, and every extra task of a ticket a child ticket, so each piece of work has one (ticket 72t9).",
+        // Writes ticket files into the human's project and edits the daemon's rows: they review it first, on a trial branch.
+        manual_only: true,
+        run: a_ticket_for_every_active_task,
+    },
 ];
 
 const OLD_ROLE: &str = "product-manager";
@@ -289,6 +296,153 @@ fn ticket_links_in_frontmatter(ctx: &Ctx) -> anyhow::Result<Report> {
         }
     }
     carry_links(ctx, &edges, &rows)
+}
+
+/// A task row as the state branch holds it: what the 0005 migration needs.
+#[derive(Debug)]
+struct Row {
+    id: String,
+    state: String,
+    ticket: Option<String>,
+    created_at: String,
+}
+
+/// The rows of `tasks/*.md` on the `bridle/state` branch, read with git (the daemon owns the
+/// worktree, so nothing is read from it).
+fn state_rows(repo: &Path) -> Vec<Row> {
+    let git = |args: &[&str]| {
+        std::process::Command::new("git")
+            .arg("-C")
+            .arg(repo)
+            .args(args)
+            .output()
+            .ok()
+            .filter(|o| o.status.success())
+            .map(|o| String::from_utf8_lossy(&o.stdout).into_owned())
+    };
+    let listing = git(&["ls-tree", "--name-only", "bridle/state", "tasks/"]).unwrap_or_default();
+    listing
+        .lines()
+        .filter_map(|path| {
+            let text = git(&["show", &format!("bridle/state:{path}")])?;
+            let front: toml::Table = text.split("+++\n").nth(1)?.parse().ok()?;
+            let get = |k: &str| front.get(k).and_then(|v| v.as_str()).map(str::to_string);
+            Some(Row {
+                id: get("id")?,
+                state: get("state")?,
+                ticket: get("ticket"),
+                created_at: get("created_at").unwrap_or_default(),
+            })
+        })
+        .collect()
+}
+
+fn a_ticket_for_every_active_task(ctx: &Ctx) -> anyhow::Result<Report> {
+    let project = project_of(ctx.repo);
+    refuse_on_protected_branch(ctx.repo, &project)?;
+    let mut rows = state_rows(ctx.repo);
+    rows.sort_by(|a, b| a.created_at.cmp(&b.created_at).then(a.id.cmp(&b.id)));
+    let plan = plan_tickets(ctx.repo, &rows);
+    let summary = |n: usize, what: &str| format!("{n} {what}");
+    if plan.is_empty() {
+        return Ok(Report {
+            files: vec![],
+            summary: "every active task already has a ticket".into(),
+        });
+    }
+    if !ctx.dry_run {
+        let exe = std::env::current_exe().context("finding the bridle binary")?;
+        for (task, parent) in &plan {
+            // `ticket new --from-task` writes the file and links the row to it through the
+            // project's daemon, as it does by hand.
+            let out = std::process::Command::new(&exe)
+                .current_dir(ctx.repo)
+                .args(["ticket", "new", "--from-task", task])
+                .output()
+                .context("running bridle ticket new")?;
+            if !out.status.success() {
+                bail!(
+                    "bridle ticket new --from-task {task}: {}",
+                    String::from_utf8_lossy(&out.stderr).trim()
+                );
+            }
+            if let Some(parent) = parent {
+                let rel = String::from_utf8_lossy(&out.stdout).trim().to_string();
+                let child = crate::ticket::id_of(Path::new(&rel))
+                    .ok_or_else(|| anyhow::anyhow!("no ticket id in {rel:?}"))?;
+                let out = std::process::Command::new(&exe)
+                    .current_dir(ctx.repo)
+                    .args(["ticket", "link", &child, "parent", parent])
+                    .output()
+                    .context("running bridle ticket link")?;
+                if !out.status.success() {
+                    bail!(
+                        "bridle ticket link {child} parent {parent}: {}",
+                        String::from_utf8_lossy(&out.stderr).trim()
+                    );
+                }
+            }
+        }
+    }
+    let children = plan.iter().filter(|(_, p)| p.is_some()).count();
+    Ok(Report {
+        files: plan
+            .iter()
+            .map(|(t, _)| format!("ticket for task {t}"))
+            .collect(),
+        summary: format!(
+            "{}, {}",
+            summary(plan.len() - children, "stub tickets"),
+            summary(children, "child tickets")
+        ),
+    })
+}
+
+/// The active tasks that need a ticket made: (task id, `Some(parent ticket)` for an extra task
+/// of a ticket that has another). A task whose `ticket` names a file that exists, and that is
+/// its ticket's first task, is fine; finished tasks stay read-only history. `rows` is oldest
+/// first.
+fn plan_tickets(repo: &Path, rows: &[Row]) -> Vec<(String, Option<String>)> {
+    use crate::ticket::split_id;
+    let root = crate::ticket::tickets_root(repo);
+    let mut paths = vec![];
+    md_files(&root, &mut paths);
+    // Ticket tail -> qualified id.
+    let known: std::collections::HashMap<String, String> = paths
+        .iter()
+        .filter_map(|p| std::fs::read_to_string(p).ok())
+        .filter_map(|t| {
+            t.lines()
+                .find_map(|l| l.strip_prefix("id: "))
+                .map(|i| i.trim().trim_matches('"').to_string())
+        })
+        .map(|id| (split_id(&id).1.to_string(), id))
+        .collect();
+    let ticket_of = |r: &Row| {
+        r.ticket
+            .as_deref()
+            .and_then(|t| known.get(split_id(t).1))
+            .cloned()
+    };
+    // The first task of a ticket is the one with its id, else the oldest: it keeps the ticket.
+    let mut first: std::collections::HashMap<String, &str> = Default::default();
+    for r in rows {
+        if let Some(t) = ticket_of(r) {
+            let slot = first.entry(t.clone()).or_insert(&r.id);
+            if split_id(&r.id).1 == split_id(&t).1 {
+                *slot = &r.id;
+            }
+        }
+    }
+    let active = |r: &&Row| !matches!(r.state.as_str(), "integrated" | "dropped");
+    rows.iter()
+        .filter(active)
+        .filter_map(|r| match ticket_of(r) {
+            None => Some((r.id.clone(), None)),
+            Some(t) if first.get(&t) != Some(&r.id.as_str()) => Some((r.id.clone(), Some(t))),
+            Some(_) => None,
+        })
+        .collect()
 }
 
 /// [`ticket_links_in_frontmatter`] given the state branch's `edges.toml` text and the rows'
@@ -1158,5 +1312,38 @@ mod tests {
         sorted.sort();
         sorted.dedup();
         assert_eq!(ids, sorted);
+    }
+
+    #[test]
+    fn plan_tickets_names_ticketless_and_extra_active_tasks_only() {
+        let d = tempfile::tempdir().unwrap();
+        let open = d.path().join("docs/tickets/open");
+        std::fs::create_dir_all(&open).unwrap();
+        std::fs::write(open.join("a-thing-aaaa.md"), "---\nid: br-aaaa\n---\n").unwrap();
+        let row = |id: &str, state: &str, ticket: Option<&str>, at: &str| Row {
+            id: id.into(),
+            state: state.into(),
+            ticket: ticket.map(str::to_string),
+            created_at: at.into(),
+        };
+        let rows = vec![
+            // The ticket's own task keeps it, though an older-id extra exists.
+            row("br-aaaa", "open", Some("br-aaaa"), "2026-10-02"),
+            row("br-bbbb", "planned", Some("aaaa"), "2026-10-01"),
+            // Active with no ticket, and one naming a ticket with no file.
+            row("br-cccc", "pending", None, "2026-10-03"),
+            row("br-dddd", "claimed", Some("zzzz"), "2026-10-04"),
+            // Finished work stays history.
+            row("br-eeee", "integrated", None, "2026-10-05"),
+            row("br-ffff", "dropped", Some("aaaa"), "2026-10-06"),
+        ];
+        assert_eq!(
+            plan_tickets(d.path(), &rows),
+            vec![
+                ("br-bbbb".to_string(), Some("br-aaaa".to_string())),
+                ("br-cccc".to_string(), None),
+                ("br-dddd".to_string(), None),
+            ]
+        );
     }
 }

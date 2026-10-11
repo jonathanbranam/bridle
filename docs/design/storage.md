@@ -269,6 +269,7 @@ choice.
 
 ```
 tasks/tw-7fa2.md          one file per task: TOML frontmatter + markdown body + thread
+tickets/br-7fa2.md        a ticket's thread (br-72t9), for the task whose `ticket` is its own id
 edges.toml                the whole edge set, replaced wholesale on every add/remove
 claims.toml               the whole claim set, replaced wholesale on every claim/release
 queue.toml                the queue: an ordered [[tier]] array, replaced wholesale on every write
@@ -344,6 +345,16 @@ events/2026-09.jsonl      append-only transitions, for history and rebuild
   of string arrays, last in the file: omitted when empty, and a file written before the field
   existed loads with none. There is no SQLite column (the `tasks` table stays narrow); a
   rebuild round-trips it.
+- **A ticket's thread** (br-72t9, 22ab section 1) lives in `tickets/<id>.md` for a task whose
+  `ticket` is its own id (every row `ticket new` makes): the same `## Thread` entries, under a
+  `# Thread of <id>` line, and the task file then has no `## Thread`. Written with the task
+  (same batch, one commit), only when the thread is non-empty. Reading prefers the thread file
+  and falls back to the inline thread of a file written before the move, so a row moves on its
+  next write; there is no bulk rewrite at start-up (other projects' state is left alone). A
+  task with another ticket's id (an older task, or an extra task of a ticket) keeps its thread
+  inline, as two rows can't share one file. The **body is still in the task file**: the human UI
+  reads the ask from the row, so dropping it waits for the UI to read the ticket file (22ab step
+  8). Rebuild reads the thread files too.
 - **The task file's frontmatter delimiter is `+++`** (TOML, Hugo's
   convention), not `---` (which reads as YAML). The thread section, when a
   task has one, is a `## Thread` heading followed by one

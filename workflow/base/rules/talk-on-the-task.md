@@ -8,12 +8,14 @@ notification.
 
 - **Anything about a task goes on its thread**: the brief and changes to it,
   questions and answers, review findings, "sent back because ...", decisions
-  made along the way, and the landing summary. Use `bridle task comment <id>`
-  (`--text-file` for long or quoted text), `bridle task ask` / `bridle task answer`
-  for questions that block it.
+  made along the way, and the landing summary. Use `bridle ticket comment <id>`
+  (`--text-file` for long or quoted text), `bridle ticket ask` / `bridle ticket answer`
+  for questions that block it. The ticket's thread is `tickets/<id>.md` on the state
+  branch; `bridle ticket show <id>` prints the ticket and its thread. The `task`
+  forms still work (the only ones for a row with no ticket) until the rename.
 - **Then notify with a short message that names the task**: `bridle send
   <agent> "tw-1234: comment added (review findings)"`. The recipient reads the
-  thread with `bridle task show <id>`.
+  thread with `bridle ticket show <id>`.
 - **Direct messages are for what isn't about one task**: coordination,
   startup and ready notes, "main is red", budget and restarts.
 - Lasting decisions still go where they outlive the task (a design doc, spec

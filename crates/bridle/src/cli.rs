@@ -468,6 +468,50 @@ pub enum TicketAction {
     Check(TicketCheckArgs),
     /// File an open task on the project's daemon for its project manager to triage (any principal with a token; no ticket file).
     Submit(TicketSubmitArgs),
+    /// Add a comment to a ticket's thread (no question/answer semantics, doesn't affect readiness).
+    #[command(alias = "note")]
+    Comment(TicketCommentArgs),
+    /// Ask a question on a ticket: its thread gets the question and the ticket is not ready until it is answered.
+    Ask(TicketAskArgs),
+    /// Answer the open question on a ticket.
+    Answer(TicketAnswerArgs),
+    /// Print the ticket file, then its thread (and the threads of older tasks made from it).
+    Show(TicketShowArgs),
+}
+
+#[derive(Debug, Args)]
+#[command(group(ArgGroup::new("text_source").args(["text", "text_file"])))]
+pub struct TicketCommentArgs {
+    pub id: String,
+    pub text: Option<String>,
+    /// Read the comment text from a file (or `-` for stdin).
+    #[arg(long)]
+    pub text_file: Option<PathBuf>,
+    /// Also send this agent a short message naming the ticket (same as
+    /// `bridle send <agent> --task <id>`).
+    #[arg(long, value_name = "AGENT")]
+    pub notify: Option<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct TicketAskArgs {
+    pub id: String,
+    pub text: String,
+    /// Who to notify: an agent, `role:NAME`, `external:NAME` or `human`.
+    /// Default: your spawner (an agent) or the human.
+    #[arg(long)]
+    pub to: Option<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct TicketAnswerArgs {
+    pub id: String,
+    pub text: String,
+}
+
+#[derive(Debug, Args)]
+pub struct TicketShowArgs {
+    pub id: String,
 }
 
 #[derive(Debug, Args)]
@@ -2633,6 +2677,27 @@ mod tests {
         ])
         .unwrap_err();
         assert_eq!(err.kind(), clap::error::ErrorKind::ArgumentConflict);
+    }
+
+    #[test]
+    fn ticket_thread_commands_parse() {
+        let cli = parse(&["ticket", "comment", "br-7fa2", "hi", "--notify", "mgr"]).unwrap();
+        let Command::Ticket(args) = cli.command else {
+            panic!("expected ticket")
+        };
+        let TicketAction::Comment(c) = args.action else {
+            panic!("expected ticket comment")
+        };
+        assert_eq!((c.id.as_str(), c.text.as_deref()), ("br-7fa2", Some("hi")));
+        assert_eq!(c.notify.as_deref(), Some("mgr"));
+        for argv in [
+            &["ticket", "note", "br-7fa2", "x"][..],
+            &["ticket", "ask", "br-7fa2", "q?", "--to", "human"],
+            &["ticket", "answer", "br-7fa2", "a"],
+            &["ticket", "show", "br-7fa2"],
+        ] {
+            parse(argv).unwrap();
+        }
     }
 
     #[test]
