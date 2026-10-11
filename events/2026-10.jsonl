@@ -1523,3 +1523,5 @@
 {"actor":"external:advisor/product-manager","at":"2026-10-11T03:36:21.679314Z","from":"pending","task":"br-cbbn","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-11T03:36:36.242597Z","from":"open","task":"br-cbbn","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-11T03:36:39.529368Z","queue":"reprioritized"}
+{"actor":"human","at":"2026-10-11T03:44:27.310Z","from":"","task":"br-3k7d","to":"pending"}
+{"actor":"external:advisor/product-manager","at":"2026-10-11T03:44:28.851319Z","from":"pending","task":"br-3k7d","to":"open"}
