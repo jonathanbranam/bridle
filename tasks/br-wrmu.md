@@ -2,14 +2,16 @@
 id = "br-wrmu"
 title = "Ticket migration (syqn part 3): rename ticket frontmatter fields and qualify IDs in every project, as an xebc migration on trial branches only"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-11T02:19:12.766Z"
-updated_at = "2026-10-11T05:59:04.729668Z"
+updated_at = "2026-10-11T06:12:44.643280Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:advisor/product-manager",
 ]
+branch = "bridle/wwrmu"
+commit = "b049844109398441504d085e77fa458496583e9a"
 summary = "Added migration 0002-standard-ticket-fields (opt-in, manual_only; run on a project's trial branch with 'bridle migrate --only 0002-standard-ticket-fields', owner reviews and commits, same as 0001): renames needs/see/opened/filed_by/closed to the standard names and qualifies id, blocked_by, related, parent with the project prefix (only for ids this project holds; other projects' ids are left). Skips new-form tickets, rerun is a no-op, refuses uncommitted tickets. Also added migrate::refuse_on_protected_branch, the first protected-branch guard: refuses main, dev or [branches] release for any project but 'bridle'; 0001 does not use it yet. Code: ticket.rs standardize_front, migrate.rs. Docs: migrations.md, docs/README.md, CHANGELOG. Applied to this repo as a separate commit (440 files). ticket check still reports 35 errors, all task-linkage ones, identical before and after (pre-existing). Caveat: run 'bridle migrate' with BRIDLE_PROJECT unset or it targets the registered main checkout; do not use --all."
 parent = "br-syqn"
 +++
@@ -26,3 +28,6 @@ pm-1: yes, your rule is right. Refuse (migrate::Refused) when the current git br
 
 ### note · agent:wwrmu · 2026-10-11T05:59:04.729Z
 done: migration 0002-standard-ticket-fields + protected-branch guard, applied to bridle tickets in a separate commit; just check exit 0, 1499 tests; 8adc3850
+
+### note · agent:manager-2 · 2026-10-11T06:12:44.643Z
+integrated: b049844109398441504d085e77fa458496583e9a (branch bridle/wwrmu)
