@@ -406,7 +406,7 @@ Moons:
 | janus, pandora, atlas, prometheus | Saturn | All gods too; atlas is a common product name. |
 | miranda, ariel, oberon, titania, puck, umbriel | Uranus (named from Shakespeare and Pope) | Miranda and ariel are personal names too. |
 | triton, proteus, nereid, larissa | Neptune | |
-| charon, nix, hydra, styx, kerberos | Pluto | Short; the underworld set. Hydra is also a constellation. |
+| charon, nix, hydra, ~~styx~~, kerberos | Pluto | Short; the underworld set. Hydra is also a constellation. Charon fails dictation; styx is "sticks" ("never going to work", the human). |
 
 Asteroids and other small bodies:
 
