@@ -1518,3 +1518,4 @@
 {"actor":"agent:pm-1","at":"2026-10-11T02:19:43.787478Z","from":"open","task":"br-epvy","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-11T02:19:43.968623Z","from":"open","task":"br-wrmu","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-11T02:19:45.849873Z","queue":"reprioritized"}
+{"actor":"agent:manager-2","at":"2026-10-11T03:08:57.308035Z","from":"planned","task":"br-fd8e","to":"integrated"}

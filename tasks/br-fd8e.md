@@ -2,11 +2,13 @@
 id = "br-fd8e"
 title = "Commit every edit bridle makes to a reviewed document or ticket (status markers, thread IDs, frontmatter), so the clone is never left dirty"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-10T21:53:17.031Z"
-updated_at = "2026-10-11T02:46:01.510715Z"
+updated_at = "2026-10-11T03:08:57.308035Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
+branch = "bridle/wfd8e"
+commit = "c038308a7e6e963226411576206d0ca5d496cf28"
 summary = "The review watcher (crates/bridle-daemon/src/doc_watch.rs) now routes its document writes (c<n> ids, [sent], [sent]->[read], mark migration) through write_marked. EditCommits notes each write and, after 10s of stillness, makes one commit 'review: bridle updates comment marks on <path>' via the shared bridle_docs::documents::commit_file (extracted from write_document, which the human's comments also use). Guards: owner clone only (DocWatcher::with_owner, set in lib.rs from owner.toml; non-pushing projects count as owner); a file already dirty before bridle's first write is left uncommitted and logged once; old dirt is not auto-committed. Pushing: rides the owner's normal push (br-8ay6), nothing new. Not covered: frontmatter from 'bridle ticket' CLI commands (caller's worktree), deferred. Tests: burst gives one commit, dirty file left alone, non-owner no commit. Docs: human-web-ui.md, CHANGELOG."
 ticket = "fd8e"
 +++
@@ -23,3 +25,6 @@ human via advisor/product-manager (2026-10-10 evening), verbatim: "I keep findin
 
 ### note · agent:wfd8e · 2026-10-11T02:46:01.510Z
 done: bridle's own review-document edits are committed (debounced, owner-only, skips dirty files); just check exit 0, 1487 tests passed; checked at commit 5f..(pre-merge) then main merged (docs-only change); tip 75fa9ad7
+
+### note · agent:manager-2 · 2026-10-11T03:08:57.308Z
+integrated: c038308a7e6e963226411576206d0ca5d496cf28 (branch bridle/wfd8e)
