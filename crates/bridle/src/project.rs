@@ -100,6 +100,8 @@ mod tests {
         ("schedule", Daemon),
         ("inbox", Daemon),
         ("messages", Daemon),
+        ("message", Daemon),
+        ("recipients", Daemon),
         ("interrupt", Daemon),
         ("stop", Daemon),
         ("resume", Daemon),

@@ -17,7 +17,9 @@ use bridle_api::Client;
 use bridle_api::client::ClientError;
 use bridle_api::discovery;
 use bridle_api::machines::MachineMap;
-use bridle_api::types::{ForwardAck, ForwardRequest, HelloRequest, MessageKind, When};
+use bridle_api::types::{
+    ForwardAck, ForwardRequest, HelloRequest, MessageKind, MessageState, OutboxEntry, When,
+};
 
 use crate::store::{OutboxRow, Store};
 use crate::supervisor::{AgentManager, ToTarget};
@@ -35,6 +37,10 @@ const SLEEP_GAP: Duration = Duration::from_secs(60);
 /// A message queued this long without getting through is reported to its sender (once); it keeps
 /// being retried.
 pub const STUCK_AFTER: Duration = Duration::from_secs(30 * 60);
+
+/// A message queued this long without getting through is also reported to the human through the
+/// aide (once). `[messages] undelivered_report_mins` changes it.
+pub const REPORT_AFTER: Duration = Duration::from_secs(60 * 60);
 
 /// How long `POST /v1/outbox` waits for the first try before answering "queued".
 pub const FIRST_TRY_WAIT: Duration = Duration::from_secs(3);
@@ -126,6 +132,7 @@ pub struct Outbox {
     /// The wall clock at the previous `tick`.
     last_look: Arc<Mutex<DateTime<Utc>>>,
     stuck_after: Duration,
+    report_after: Duration,
 }
 
 impl Outbox {
@@ -141,7 +148,13 @@ impl Outbox {
             wall: Arc::new(Utc::now),
             last_look: Arc::new(Mutex::new(Utc::now())),
             stuck_after: STUCK_AFTER,
+            report_after: REPORT_AFTER,
         }
+    }
+
+    pub fn with_report_after(mut self, report_after: Duration) -> Self {
+        self.report_after = report_after;
+        self
     }
 
     #[cfg(test)]
@@ -287,6 +300,82 @@ impl Outbox {
             Err(e) => tracing::warn!(error = %e, "reading the outbox failed"),
         }
         self.notify_stuck().await;
+        self.report_to_aide().await;
+    }
+
+    /// The outbox row `id` as its sender sees it. A message the destination has accepted is
+    /// `arrived` until that daemon says its recipient received it, then `delivered`; the
+    /// destination is asked each time (it is the one that knows).
+    pub async fn entry(&self, id: &str) -> Result<Option<OutboxEntry>, crate::store::StoreError> {
+        let Some(mut entry) = self.store.outbox_entry(id).await? else {
+            return Ok(None);
+        };
+        if entry.state != "delivered" {
+            return Ok(Some(entry));
+        }
+        entry.state = "arrived".to_string();
+        match self.remote_stage(&entry).await {
+            Ok(stage) => entry.state = stage,
+            Err(why) => {
+                entry.last_error = Some(format!("could not ask '{}': {why}", entry.project))
+            }
+        }
+        Ok(Some(entry))
+    }
+
+    /// The least advanced stage of the destination's copies of `entry`.
+    async fn remote_stage(&self, entry: &OutboxEntry) -> Result<String, String> {
+        let url = self.resolve(&entry.project)?;
+        let token = self
+            .peer_token(&entry.project)?
+            .ok_or_else(|| "no peer token".to_string())?;
+        let client = Client::new(url, Some(token));
+        let mut stage = "delivered";
+        for id in &entry.remote_ids {
+            let asked = tokio::time::timeout(ATTEMPT_TIMEOUT, client.forward_state(id)).await;
+            let state = asked
+                .map_err(|_| "timed out".to_string())?
+                .map_err(|e| e.to_string())?
+                .state;
+            match state {
+                MessageState::Dropped => return Ok("failed".to_string()),
+                MessageState::Delivered | MessageState::Read => {}
+                _ => stage = "arrived",
+            }
+        }
+        Ok(stage.to_string())
+    }
+
+    /// Tells the human, through the aide, of each message undelivered past `report_after`. Once
+    /// per message: it is marked before it is sent.
+    async fn report_to_aide(&self) {
+        let cutoff = (self.wall)()
+            - chrono::Duration::from_std(self.report_after).unwrap_or(chrono::Duration::MAX);
+        let rows = match self.store.outbox_aide_due(cutoff).await {
+            Ok(rows) => rows,
+            Err(e) => {
+                tracing::warn!(error = %e, "reading unreported outbox entries failed");
+                return;
+            }
+        };
+        for row in rows {
+            if self.store.outbox_mark_aide(&row.id).await.is_err() {
+                continue;
+            }
+            let why = row.last_error.as_deref().unwrap_or("no answer yet");
+            (self.notify)(
+                "external:aide".to_string(),
+                format!(
+                    "For the human: {}'s message to {} on '{}' has been undelivered for over {}                      min: {why}. It is still being retried (outbox {}).",
+                    row.from,
+                    row.to,
+                    row.project,
+                    self.report_after.as_secs() / 60,
+                    row.id
+                ),
+            )
+            .await;
+        }
     }
 
     fn due(&self, project: &str) -> bool {
@@ -640,5 +729,27 @@ mod tests {
         // Still queued, and still being tried.
         assert!(r.try_times().len() > 2, "{:?}", r.try_times());
         assert_eq!(r.store.outbox_queued_projects().await.expect("q"), ["beta"]);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_message_stuck_an_hour_is_reported_to_the_human_through_the_aide_once() {
+        let r = rig().await;
+        r.queue("external:orchestrator@m1", "external:advisor")
+            .await;
+        r.outbox.tick().await;
+        r.skew_secs.store(61 * 60, Ordering::SeqCst);
+        r.outbox.tick().await;
+        r.step(600).await;
+        r.outbox.tick().await;
+        let aide: Vec<_> = r
+            .notices
+            .lock()
+            .expect("n")
+            .iter()
+            .filter(|(to, _)| to == "external:aide")
+            .cloned()
+            .collect();
+        assert_eq!(aide.len(), 1, "{aide:?}");
+        assert!(aide[0].1.contains("For the human"), "{aide:?}");
     }
 }

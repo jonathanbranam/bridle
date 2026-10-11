@@ -14,20 +14,21 @@ use crate::types::{
     AddQueueTierRequest, Agent, AllocPortRequest, AnswerQuestionRequest, ApiErrorResponse,
     AskQuestionRequest, BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, Conflict,
     DoneTaskRequest, DropTaskRequest, Edge, EditTaskRequest, Event, EventQuery, ForwardAck,
-    ForwardRequest, Handover, HandoverDone, Health, HelloRequest, ImpactCheckRequest, ImpactReport,
-    Interaction, InteractionsQuery, InterruptRequest, InterruptResponse, LandRequest, LandResult,
-    MaxWorkersRequest, Message, MessageQuery, NewEdgeRequest, NewTaskRequest, NoteTaskRequest,
-    OpenQuestion, OrchestratorWakeQuery, OutboxSendRequest, PeerTokenCreateRequest, PortAllocation,
-    PrincipalWakeQuery, PrincipalWakeResponse, ProbeRequest, ProbeResult, PushResult, Queue,
-    Queued, RateLimitPoint, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest,
-    RestartRequest, RestartResponse, ResumeRequest, ReviewAddRequest, ReviewAddResponse,
-    ReviewNowRequest, ReviewNowResponse, Schedule, ScheduleAddRequest, ScheduleListQuery,
-    SendRequest, SessionEnd, SessionInfo, SessionKeep, SessionRegister, SetImpactRequest,
-    SetKindRequest, SetPriorityRequest, SetQueueRequest, SetSummaryRequest, ShutdownResponse,
-    SkipSettleRequest, SpawnRequest, Status, StatusLineReport, StopRequest, StopWakeRequest,
-    StopWakeResponse, SubmitTaskRequest, Task, TaskQuery, TokenCreateRequest, TokenCreated,
-    TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery,
-    UsageHistoryQuery, WakeResponse, WriteHandoverRequest,
+    ForwardRequest, ForwardState, Handover, HandoverDone, Health, HelloRequest, ImpactCheckRequest,
+    ImpactReport, Interaction, InteractionsQuery, InterruptRequest, InterruptResponse, LandRequest,
+    LandResult, MaxWorkersRequest, Message, MessageQuery, NewEdgeRequest, NewTaskRequest,
+    NoteTaskRequest, OpenQuestion, OrchestratorWakeQuery, OutboxEntry, OutboxSendRequest,
+    PeerTokenCreateRequest, PortAllocation, PrincipalWakeQuery, PrincipalWakeResponse,
+    ProbeRequest, ProbeResult, PushResult, Queue, Queued, RateLimitPoint, Recipient,
+    RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, RestartRequest,
+    RestartResponse, ResumeRequest, ReviewAddRequest, ReviewAddResponse, ReviewNowRequest,
+    ReviewNowResponse, Schedule, ScheduleAddRequest, ScheduleListQuery, SendRequest, SessionEnd,
+    SessionInfo, SessionKeep, SessionRegister, SetImpactRequest, SetKindRequest,
+    SetPriorityRequest, SetQueueRequest, SetSummaryRequest, ShutdownResponse, SkipSettleRequest,
+    SpawnRequest, Status, StatusLineReport, StopRequest, StopWakeRequest, StopWakeResponse,
+    SubmitTaskRequest, Task, TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo,
+    TranscriptLine, TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery, UsageHistoryQuery,
+    WakeResponse, WriteHandoverRequest,
 };
 
 pub use bridle_docs::documents::{
@@ -283,6 +284,21 @@ impl Client {
     /// agent, or one per matching live agent for a `role:<name>` target.
     pub async fn send(&self, req: &SendRequest) -> Result<Vec<Message>, ClientError> {
         self.post_json(&["v1", "messages"], req).await
+    }
+
+    /// `GET /v1/outbox/{id}`: where a message sent to another daemon has got to.
+    pub async fn outbox_entry(&self, id: &str) -> Result<OutboxEntry, ClientError> {
+        self.get_json(&["v1", "outbox", id]).await
+    }
+
+    /// `GET /v1/forward/{message_id}` (peer tokens): the state of a message forwarded here.
+    pub async fn forward_state(&self, id: &str) -> Result<ForwardState, ClientError> {
+        self.get_json(&["v1", "forward", id]).await
+    }
+
+    /// `GET /v1/recipients`: addresses this daemon's principals can send to.
+    pub async fn recipients(&self) -> Result<Vec<Recipient>, ClientError> {
+        self.get_json(&["v1", "recipients"]).await
     }
 
     /// `POST /v1/outbox`: queue mail for another daemon on this one.

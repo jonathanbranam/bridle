@@ -42,6 +42,9 @@ JSON over HTTP, versioned under `/v1`. The contract is
 | `POST /v1/schedules` | schedule a message (`{to?, at? or cron?, tz?, body}`; `to` defaults to the caller): answered with the `Schedule` (`{id, created_by, target, body, kind, cron?, tz, next_fire_at, last_fired_at?, state, created_at}`). Agents and the human only; an agent may target only itself (403 otherwise), the human anyone. 400 for a past `at`, an unparsable time, zone or cron, or a cron that never fires; 404 for an unknown target |
 | `GET /v1/schedules?all=` | the caller's schedules (every one for the human); `all` includes `done` ones |
 | `DELETE /v1/schedules/{id}` | remove one; an agent's other schedules read as 404 |
+| `GET /v1/outbox/{id}` | where a message sent through `POST /v1/outbox` has got to: `{id, project, to, state, attempts, last_error?, queued_at, arrived_at?, remote_ids?}`, `state` one of `queued`, `arrived`, `delivered`, `failed`; the delivered ones are checked against the destination each time. Its sender or the human only (403), 404 if unknown |
+| `GET /v1/forward/{message_id}` | the state of a message this daemon accepted from a peer (`{state}`); peer token only |
+| `GET /v1/recipients` | what can be addressed here: `[{address, kind}]` (human, agents, external principals, visitors) |
 | `POST /v1/hello` | `{daemon}`: a peer says it is back; this daemon flushes its outbox queue for `daemon` at once. Peer token only (403 otherwise) |
 | `POST /v1/forward` | one message from another daemon's outbox (`{origin_machine, origin_daemon, origin_id, from, to, body, ...}`), peer token only (403 otherwise); answered `{message_ids}`, and a repeat of the same origin gets the same ids and delivers nothing. 404 for an unknown recipient |
 | `DELETE /v1/tokens/{name}` | revoke `external:{name}` (human only; an agent's own token isn't revoked this way — see `rm`) |

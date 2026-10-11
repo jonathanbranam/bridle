@@ -14,9 +14,10 @@ use std::sync::{Arc, Mutex};
 
 use bridle_api::types::{
     Agent, AgentState, AgentUsage, Conflict, Edge, EdgeKind, Event, EventQuery, ExitInfo, Handover,
-    InteractiveUsageRow, Message, MessageKind, MessageState, PortAllocation, PrincipalId,
-    PrincipalKind, RateLimit, RateLimitPoint, Schedule, TaskKind, TaskState, TokenCreated,
-    TokenInfo, TokenTotals, Usage, UsageBreakdown, UsageGroup, UsageGroupBy, When,
+    InteractiveUsageRow, Message, MessageKind, MessageState, OutboxEntry, OutboxPeer,
+    PortAllocation, PrincipalId, PrincipalKind, RateLimit, RateLimitPoint, Schedule, TaskKind,
+    TaskState, TokenCreated, TokenInfo, TokenTotals, Usage, UsageBreakdown, UsageGroup,
+    UsageGroupBy, When,
 };
 use chrono::{DateTime, SecondsFormat, SubsecRound, Utc};
 use rusqlite::Connection;
@@ -396,6 +397,33 @@ impl Store {
     pub async fn outbox_row(&self, id: &str) -> Result<Option<OutboxRow>, StoreError> {
         let id = id.to_string();
         self.with_conn(move |c| sync::outbox_row(c, &id)).await
+    }
+
+    /// Entries queued since before `cutoff` that have not yet been reported to the aide.
+    pub async fn outbox_aide_due(
+        &self,
+        cutoff: DateTime<Utc>,
+    ) -> Result<Vec<OutboxRow>, StoreError> {
+        self.with_conn(move |c| sync::outbox_aide_due(c, cutoff))
+            .await
+    }
+
+    pub async fn outbox_mark_aide(&self, id: &str) -> Result<(), StoreError> {
+        let id = id.to_string();
+        self.with_conn(move |c| sync::outbox_mark_aide(c, &id))
+            .await
+    }
+
+    /// One line per destination with mail queued.
+    pub async fn outbox_peers(&self) -> Result<Vec<OutboxPeer>, StoreError> {
+        self.with_conn(sync::outbox_peers).await
+    }
+
+    /// An outbox row as the sender sees it; `arrived` is not decided here (the destination
+    /// knows).
+    pub async fn outbox_entry(&self, id: &str) -> Result<Option<OutboxEntry>, StoreError> {
+        let id = id.to_string();
+        self.with_conn(move |c| sync::outbox_entry(c, &id)).await
     }
 
     pub async fn outbox_mark_stuck(&self, id: &str) -> Result<(), StoreError> {
@@ -1474,13 +1502,19 @@ mod sync {
         ALTER TABLE principals ADD COLUMN home TEXT;
     "#;
 
+    // Mail between daemons, slice 4 (br-cufw): the one-time report of a long-undelivered message
+    // to the human through the aide.
+    pub(super) const SCHEMA_V25: &str = r#"
+        ALTER TABLE outbox ADD COLUMN aide_notified_at TEXT;
+    "#;
+
     pub(super) const RATE_LIMIT_HISTORY_DAYS: i64 = 90;
 
     pub(super) const MIGRATIONS: &[&str] = &[
         SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7, SCHEMA_V8,
         SCHEMA_V9, SCHEMA_V10, SCHEMA_V11, SCHEMA_V12, SCHEMA_V13, SCHEMA_V14, SCHEMA_V15,
         SCHEMA_V16, SCHEMA_V17, SCHEMA_V18, SCHEMA_V19, SCHEMA_V20, SCHEMA_V21, SCHEMA_V22,
-        SCHEMA_V23, SCHEMA_V24,
+        SCHEMA_V23, SCHEMA_V24, SCHEMA_V25,
     ];
 
     pub(super) fn open(path: &Path) -> Result<Connection, StoreError> {
@@ -2091,6 +2125,84 @@ mod sync {
                  FROM outbox WHERE id = ?1",
                 params![id],
                 outbox_row_from,
+            )
+            .optional()?)
+    }
+
+    pub(super) fn outbox_aide_due(
+        conn: &Connection,
+        cutoff: DateTime<Utc>,
+    ) -> Result<Vec<OutboxRow>, StoreError> {
+        let mut stmt = conn.prepare(
+            "SELECT id FROM outbox WHERE state = 'queued' AND aide_notified_at IS NULL
+                AND created_at < ?1 ORDER BY seq",
+        )?;
+        let ids: Vec<String> = stmt
+            .query_map(params![fmt_dt(cutoff)], |r| r.get(0))?
+            .collect::<Result<_, _>>()?;
+        ids.iter()
+            .filter_map(|id| outbox_row(conn, id).transpose())
+            .collect()
+    }
+
+    pub(super) fn outbox_mark_aide(conn: &Connection, id: &str) -> Result<(), StoreError> {
+        conn.execute(
+            "UPDATE outbox SET aide_notified_at = ?2 WHERE id = ?1",
+            params![id, fmt_dt(Utc::now())],
+        )?;
+        Ok(())
+    }
+
+    pub(super) fn outbox_peers(conn: &Connection) -> Result<Vec<OutboxPeer>, StoreError> {
+        let mut stmt = conn.prepare(
+            "SELECT project, COUNT(*), MIN(created_at),
+                    (SELECT last_error FROM outbox o2 WHERE o2.project = o.project
+                        AND o2.state = 'queued' ORDER BY o2.seq LIMIT 1)
+             FROM outbox o WHERE state = 'queued' GROUP BY project ORDER BY project",
+        )?;
+        let rows = stmt.query_map([], |r| {
+            let oldest: String = r.get(2)?;
+            Ok(OutboxPeer {
+                project: r.get(0)?,
+                queued: r.get(1)?,
+                oldest_queued_at: parse_dt(&oldest)?,
+                last_error: r.get(3)?,
+            })
+        })?;
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
+    pub(super) fn outbox_entry(
+        conn: &Connection,
+        id: &str,
+    ) -> Result<Option<OutboxEntry>, StoreError> {
+        Ok(conn
+            .query_row(
+                "SELECT id, project, to_principal, state, attempts, last_error, created_at,
+                        delivered_at, remote_ids FROM outbox WHERE id = ?1",
+                params![id],
+                |r| {
+                    let queued: String = r.get(6)?;
+                    let arrived: Option<String> = r.get(7)?;
+                    let ids: Option<String> = r.get(8)?;
+                    Ok(OutboxEntry {
+                        id: r.get(0)?,
+                        project: r.get(1)?,
+                        to: r.get(2)?,
+                        // The table says `delivered` once the destination accepted it.
+                        state: r.get(3)?,
+                        attempts: r.get(4)?,
+                        last_error: r.get(5)?,
+                        queued_at: parse_dt(&queued)?,
+                        arrived_at: arrived.as_deref().map(parse_dt).transpose()?,
+                        remote_ids: ids
+                            .unwrap_or_default()
+                            .split(',')
+                            .filter(|s| !s.is_empty())
+                            .map(str::to_string)
+                            .collect(),
+                    })
+                },
             )
             .optional()?)
     }

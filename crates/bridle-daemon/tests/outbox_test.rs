@@ -536,3 +536,64 @@ async fn a_wake_on_a_remote_project_is_forwarded_home_once_as_a_system_message()
         .expect("messages");
     assert_eq!(again.len(), 1, "{again:?}");
 }
+
+#[tokio::test]
+async fn the_sender_sees_a_message_queued_then_arrived_then_delivered() {
+    let p = pair().await;
+    let advisor = p.b.external_client("advisor").await;
+    let sender = p.a.external_client("orchestrator").await;
+
+    // Peer unreachable (wrong token): queued, and the status carries the outbox line.
+    p.point_a_at_b(&"0".repeat(64));
+    let q = sender
+        .send_outbox(&out(&p.b_project, "external:advisor", "hello"))
+        .await
+        .expect("accepted");
+    assert_eq!(q.state, "queued");
+    assert_eq!(sender.outbox_entry(&q.id).await.expect("e").state, "queued");
+    let status = sender.status().await.expect("status");
+    assert_eq!(status.outbox.len(), 1, "{:?}", status.outbox);
+    assert_eq!(status.outbox[0].project, p.b_project);
+    assert_eq!(status.outbox[0].queued, 1);
+    assert!(status.outbox[0].last_error.is_some());
+
+    // Back up: stored on B, its recipient not yet woken.
+    p.point_a_at_b(&p.peer_token);
+    let a_peer =
+        p.a.client
+            .create_peer_token(&PeerTokenCreateRequest {
+                machine: "m2".to_string(),
+            })
+            .await
+            .expect("peer token")
+            .token;
+    Client::new(p.a.running.url.clone(), Some(a_peer))
+        .hello(&HelloRequest {
+            daemon: p.b_project.clone(),
+        })
+        .await
+        .expect("hello");
+    let arrived = wait_for("arrival", || async {
+        let e = sender.outbox_entry(&q.id).await.ok()?;
+        (e.state != "queued").then_some(e)
+    })
+    .await;
+    assert_eq!(arrived.state, "arrived", "{arrived:?}");
+    assert!(sender.status().await.expect("status").outbox.is_empty());
+
+    // The recipient takes it: delivered.
+    advisor
+        .list_messages(&MessageQuery {
+            to: Some("me".to_string()),
+            mark_read: true,
+            ..Default::default()
+        })
+        .await
+        .expect("read");
+    let done = sender.outbox_entry(&q.id).await.expect("entry");
+    assert_eq!(done.state, "delivered", "{done:?}");
+
+    // Someone else's message is not yours to look up.
+    let other = p.a.external_client("other").await;
+    assert!(other.outbox_entry(&q.id).await.is_err());
+}

@@ -1230,12 +1230,16 @@ pub struct MessagesConfig {
     /// A reply from one of these principals to a message addressed to the human closes it
     /// (`AgentManager::send`). Nothing else can.
     pub answer_for_human: Vec<String>,
+    /// Mail to another daemon undelivered this long is reported to the human through the aide
+    /// (once). `undelivered_report_mins`.
+    pub undelivered_report: std::time::Duration,
 }
 
 impl Default for MessagesConfig {
     fn default() -> Self {
         MessagesConfig {
             answer_for_human: vec!["external:orchestrator".to_string()],
+            undelivered_report: std::time::Duration::from_secs(60 * 60),
         }
     }
 }
@@ -2054,8 +2058,13 @@ impl Config {
             config.ci.github = github;
         }
 
-        if let Some(v) = raw.messages.and_then(|m| m.answer_for_human) {
-            config.messages.answer_for_human = v;
+        if let Some(m) = raw.messages {
+            if let Some(v) = m.answer_for_human {
+                config.messages.answer_for_human = v;
+            }
+            if let Some(mins) = m.undelivered_report_mins {
+                config.messages.undelivered_report = std::time::Duration::from_secs(mins * 60);
+            }
         }
         // The rest of `[mail]` belongs to `bridle mail run`; `peers` is ours.
         if let Some(v) = raw
@@ -2751,6 +2760,8 @@ struct RawCi {
 struct RawMessages {
     #[serde(default)]
     answer_for_human: Option<Vec<String>>,
+    #[serde(default)]
+    undelivered_report_mins: Option<u64>,
 }
 
 #[derive(Debug, Default, Deserialize)]

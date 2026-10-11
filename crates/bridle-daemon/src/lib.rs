@@ -901,7 +901,8 @@ async fn start_inner(
                 .unwrap_or_else(discovery::bridle_home),
             project.clone(),
             outbox::notifier(store.clone(), manager.clone()),
-        ),
+        )
+        .with_report_after(config.messages.undelivered_report),
         self_upgrade: config.self_upgrade,
         release_repo: config.release_repo.clone(),
         self_upgrade_min_interval: config.self_upgrade_min_interval,

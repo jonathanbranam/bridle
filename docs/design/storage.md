@@ -40,6 +40,7 @@ outbox(seq INTEGER PK AUTOINCREMENT, id,              -- SCHEMA_V20, mail for an
        attempts, last_error, remote_ids, created_at, delivered_at)
                                                       -- one queue per destination `project`, oldest `seq` first
                                                       -- SCHEMA_V22 adds stuck_notified_at (the one-time 30 min notice)
+                                                      -- SCHEMA_V25 adds aide_notified_at (the one-time report to the aide)
 forwarded_in(origin_machine, origin_daemon, origin_id, message_ids, received_at,
              PRIMARY KEY(origin_machine, origin_daemon, origin_id))
                                                       -- SCHEMA_V20: origins already accepted from peers (dedup)

@@ -97,6 +97,10 @@ pub enum Command {
     Send(SendArgs),
     /// Messages addressed to me (the calling principal).
     Inbox(InboxArgs),
+    /// Where a message has got to: queued, arrived or delivered.
+    Message(MessageArgs),
+    /// Who this session can message here and which other daemons it can reach.
+    Recipients,
     /// Recent messages for me or any principal, with sent/delivered/read times and channels.
     Messages(MessagesArgs),
     /// Interrupt a running agent's turn.
@@ -1084,8 +1088,10 @@ pub enum WhenArg {
 #[derive(Debug, Args)]
 #[command(group(ArgGroup::new("text_source").args(["text", "text_file"])))]
 pub struct SendArgs {
-    /// An agent id/name, `human`, or `role:<name>` for every live agent
-    /// currently holding that role. With `--project` naming another daemon's project, the
+    /// An agent id/name, `human`, `role:<name>` for every live agent currently holding that
+    /// role, or an external principal (`external:orchestrator`, `external:advisor/<name>`,
+    /// `<name>@<machine>`); `bridle recipients` lists them. Mail to another machine is queued
+    /// in your own daemon and retried until it arrives (`bridle message show <id>`). With `--project` naming another daemon's project, the
     /// principal on that daemon (`advisor`, `external:advisor`, `human`, ...): your own daemon
     /// queues the message and delivers it there.
     pub to: String,
@@ -1144,6 +1150,26 @@ pub struct MessagesArgs {
     /// Only those created within this long, e.g. `30m`, `2h`, `1d`.
     #[arg(long)]
     pub since: Option<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct MessageArgs {
+    #[command(subcommand)]
+    pub action: MessageAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum MessageAction {
+    /// Show a message's stage: `queued` (in my daemon's outbox, for mail to another daemon),
+    /// `arrived` (stored on the recipient's daemon, recipient not yet woken) or `delivered`
+    /// (the recipient received it; also read, for now). Takes an `o-NNNN` id from `send`, or
+    /// an `m-NNNN` id.
+    Show(MessageShowArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct MessageShowArgs {
+    pub id: String,
 }
 
 #[derive(Debug, Args)]
@@ -3137,6 +3163,20 @@ mod tests {
         assert!(args.action.is_none());
         assert!(args.all);
         assert!(args.mark_read);
+    }
+
+    #[test]
+    fn message_show_and_recipients_parse() {
+        let cli = parse(&["message", "show", "o-0007"]).unwrap();
+        let Command::Message(args) = cli.command else {
+            panic!("expected message")
+        };
+        let MessageAction::Show(show) = args.action;
+        assert_eq!(show.id, "o-0007");
+        assert!(matches!(
+            parse(&["recipients"]).unwrap().command,
+            Command::Recipients
+        ));
     }
 
     #[test]

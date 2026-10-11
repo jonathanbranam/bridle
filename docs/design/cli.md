@@ -82,7 +82,7 @@ bridle daemon rebuild [--from-origin]              first fetches origin/bridle/s
                                               clone with no bridle.db yet; also restores the handover notes (handovers/<id>.md)
 bridle daemon list                              # every running project daemon on this machine, with agent counts
 bridle ci                                   # the latest CI result on the integration branch: sha, conclusion, age, url; --json prints the CiStatus (null if none). Exit 0 only on success, so a manager can gate a merge on it without gh. Needs [ci] github; the result is the daemon's in-memory last result (empty until the first run finishes after a restart)
-bridle status                               # daemon, agents, machine load (1-minute average, per core, and HOLDING spawns while over [machine] load_per_core), active incidents, Claude Code version, the last wake delivered and whether a waiter is open, last CI result (sha, conclusion, age, url) when [ci] github is on; state branch push (age, or the failure) when [state] push is on
+bridle status                               # daemon, agents, an `outbox <project> N queued, unreachable <age>` line per destination with mail waiting, machine load (1-minute average, per core, and HOLDING spawns while over [machine] load_per_core), active incidents, Claude Code version, the last wake delivered and whether a waiter is open, last CI result (sha, conclusion, age, url) when [ci] github is on; state branch push (age, or the failure) when [state] push is on
 bridle agent spawn   <role> [--name N] [--prompt TEXT | --prompt-file FILE]
                [--worktree [--base REF] | --in-repo | --cwd PATH] [--model M]
                [--allow-tool TOOL ...] [--env KEY=VALUE ...] [--ignore-budget]
@@ -95,6 +95,8 @@ bridle schedule add  [--to <principal>] (--at <time> | --cron "<expr>") [--tz <I
                      # --cron is 5 fields in --tz (DST: a skipped local time is skipped that day, a repeated one fires once). Prints the id and the next fire time (schedule zone, and UTC). A past --at or a cron that never fires is refused
 bridle schedule list [--all]                # my schedules (the human sees everyone's); --all adds finished ones
 bridle schedule rm   <id>                   # mine (the human: any)
+bridle message show <id>                    # how far a message got: `queued` (in my daemon's outbox), `arrived` (on the recipient's daemon, recipient not yet woken), `delivered` (received; also read, for now); an `o-` id from `send` to another daemon, or an `m-` id
+bridle recipients                           # who I can message here (human, agents, external principals, visitors) and which other daemons I can reach with `--project`
 bridle messages [--for P] [--last N] [--since 30m] # recent messages for me (default) or P: id, from, sent/delivered/read times, channel of each; bodies only for my own, headers only for others (a display rule of the CLI, not a boundary: GET /v1/messages still returns bodies); never marks anything read
 bridle inbox   [--all] [--mark-read]        # messages to me, plus every task's open question (list); an agent's or external principal's listed messages are marked read
 bridle inbox show <id> [--mark-read]        # show one message in full; for the human it leaves it unread unless --mark-read, for an agent or external principal it marks it read

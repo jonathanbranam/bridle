@@ -192,8 +192,19 @@ token, like `task ready --project`; the outbox is for a project with no such tok
   outcome (`delivered`, `failed` with the reason, or `queued` with the last error). A refusal for
   good, and a message queued 30 min, each send the sender one note from `system`. The receiver
   accepts `agent:<name>` as well as a bare agent name.
-- **Not built yet:** status
-  lines, `bridle message show`, `--task` and `@machine` addressing across daemons.
+- **Visible state (br-cufw, P6, P7).** `bridle status` has an `outbox <project> N queued,
+  unreachable <age> (<last error>)` line per destination with mail queued (`Status.outbox`).
+  `bridle message show <id>` reports a stage: `queued` (in the sender's outbox), `arrived` (stored
+  on the recipient's daemon, recipient not yet woken: the message there is pending, held or
+  written), `delivered` (the recipient received it, which for now is also read; Q4), or `failed`.
+  For an `o-` id the sender's daemon (`GET /v1/outbox/{id}`, sender or human only) asks the
+  destination (`GET /v1/forward/{message_id}`, peer token) each time; a destination it can't
+  reach leaves it `arrived` with the error. A message queued over an hour (`[messages]
+  undelivered_report_mins`, default 60) is also reported once to `external:aide` ("For the
+  human: ..."), on top of the sender's 30 min note. `bridle recipients` (`GET /v1/recipients`)
+  lists what can be addressed here (human, agents, external principals, visitors) and the other
+  daemons known from the registry and machine config.
+- **Not built yet:** `--task` and `@machine` addressing across daemons.
 
 Rule 2 means a Claude Code session (the human's orchestrator, or any agent)
 never silently acts as the human. It has to be given an identity to write;

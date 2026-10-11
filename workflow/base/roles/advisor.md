@@ -96,6 +96,12 @@ watches another project's daemon only while it runs a waiter there, so a message
 to `external:orchestrator` on your own project's daemon may never be read. Name
 the project it runs in, `--project bridle`, from any other project.
 
+To see who you can message, run `bridle recipients`: the human, agents and
+external principals on your daemon, and the other daemons you can reach with
+`--project <p>` (another machine's too: your own daemon queues the message and
+retries until it arrives). `bridle send` prints an id; `bridle message show <id>`
+says whether it is `queued`, `arrived` (stored there, not yet read) or `delivered`.
+
 Then tell the human you've handed it over.
 
 ## Style

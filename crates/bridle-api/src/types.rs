@@ -150,6 +150,23 @@ pub struct Status {
     /// watch is off.
     #[serde(default)]
     pub load: Option<LoadStatus>,
+    /// Mail waiting in this daemon's outbox, one entry per destination daemon (3haz P6). Empty
+    /// when nothing is queued.
+    #[serde(default)]
+    pub outbox: Vec<OutboxPeer>,
+}
+
+/// One destination daemon's queue in [`Status::outbox`].
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct OutboxPeer {
+    /// The destination daemon's project.
+    pub project: String,
+    pub queued: u32,
+    /// When the oldest queued message was accepted: "unreachable for" counts from here.
+    pub oldest_queued_at: DateTime<Utc>,
+    /// Why the last try failed.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub last_error: Option<String>,
 }
 
 /// The machine load watch's last reading (docs/design/agent-host/operating-model.md, Load watch).
@@ -856,6 +873,44 @@ pub struct Queued {
 
 fn queued_state() -> String {
     "queued".to_string()
+}
+
+/// `GET /v1/outbox/{id}`: where a message the caller sent to another daemon has got to.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct OutboxEntry {
+    pub id: String,
+    pub project: String,
+    pub to: String,
+    /// `queued` (in this daemon's outbox), `arrived` (stored on the recipient's daemon, the
+    /// recipient not yet woken), `delivered` (the recipient received it; also read, for now), or
+    /// `failed` (refused for good, or dropped on the far side).
+    pub state: String,
+    pub attempts: i64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub last_error: Option<String>,
+    pub queued_at: DateTime<Utc>,
+    /// When the destination daemon accepted it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub arrived_at: Option<DateTime<Utc>>,
+    /// The message ids on the destination daemon, once it has accepted it.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub remote_ids: Vec<String>,
+}
+
+/// `GET /v1/forward/{message_id}`: a message the caller forwarded here, as the sender's daemon
+/// asks after it for `GET /v1/outbox/{id}`. Peer tokens only.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ForwardState {
+    pub state: MessageState,
+}
+
+/// One address a session can send to (`GET /v1/recipients`).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Recipient {
+    /// As `bridle send` takes it.
+    pub address: String,
+    /// What it is: `human`, `agent`, `external principal` or `visitor`.
+    pub kind: String,
 }
 
 /// `POST /v1/hello`: a daemon that has just started (or woken) tells a peer so; the peer flushes

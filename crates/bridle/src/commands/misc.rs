@@ -110,6 +110,9 @@ pub(super) async fn status(cli: &Cli) -> Result<(), CliError> {
                     .join(", ")
             );
         }
+        for peer in &status.outbox {
+            println!("{}", outbox_line(peer, chrono::Utc::now()));
+        }
         for sess in &status.sessions {
             let now = chrono::Utc::now();
             let mins = |t: chrono::DateTime<chrono::Utc>| (now - t).num_minutes().max(0);
@@ -1199,5 +1202,135 @@ mod drain_tests {
             drain_line(None, &on[..1]),
             "restart draining; waiting on w1"
         );
+    }
+}
+
+/// `outbox nuc 3 queued, unreachable 2h (why)`: one destination's queue in `bridle status`.
+fn outbox_line(peer: &bridle_api::types::OutboxPeer, now: chrono::DateTime<Utc>) -> String {
+    let secs = (now - peer.oldest_queued_at).num_seconds().max(0) as u64;
+    let mut line = format!(
+        "outbox     {} {} queued, unreachable {}",
+        peer.project,
+        peer.queued,
+        format_duration_secs(secs)
+    );
+    if let Some(why) = &peer.last_error {
+        line.push_str(&format!(" ({why})"));
+    }
+    line
+}
+
+/// The stage a message is in, as the sender thinks of it: `queued` (still in the sender's
+/// outbox), `arrived` (stored on the recipient's daemon, recipient not yet woken), `delivered`
+/// (the recipient received it; also read, for now: Q4 of 3haz).
+fn mail_stage(state: bridle_api::types::MessageState) -> &'static str {
+    use bridle_api::types::MessageState::*;
+    match state {
+        Pending | Held | Written => "arrived",
+        Delivered | Read => "delivered",
+        Dropped => "dropped",
+    }
+}
+
+/// `bridle message show <id>`: where a message has got to. `o-` ids are mail to another daemon,
+/// asked of the sender's own daemon; `m-` ids are on this daemon.
+pub(super) async fn message(cli: &Cli, args: &MessageArgs) -> Result<(), CliError> {
+    let MessageAction::Show(show) = &args.action;
+    let client = client_for_read(cli).await?;
+    if show.id.starts_with("o-") {
+        let e = client.outbox_entry(&show.id).await?;
+        if cli.json {
+            return Ok(render::print_json(&e)?);
+        }
+        println!("{} to {} on '{}': {}", e.id, e.to, e.project, e.state);
+        println!("  queued    {}", e.queued_at.to_rfc3339());
+        if let Some(at) = e.arrived_at {
+            println!("  arrived   {}", at.to_rfc3339());
+        }
+        if !e.remote_ids.is_empty() {
+            println!("  there as  {}", e.remote_ids.join(", "));
+        }
+        if let Some(why) = e.last_error {
+            println!("  last error: {why} ({} tries)", e.attempts);
+        }
+        return Ok(());
+    }
+    let msg = client
+        .list_messages(&MessageQuery {
+            id: Some(show.id.clone()),
+            ..Default::default()
+        })
+        .await?
+        .into_iter()
+        .next()
+        .ok_or_else(|| CliError::Other(anyhow::anyhow!("no message {}", show.id)))?;
+    if cli.json {
+        return Ok(render::print_json(
+            &serde_json::json!({"id": msg.id, "from": msg.from, "to": msg.to, "state": mail_stage(msg.state)}),
+        )?);
+    }
+    println!(
+        "{} from {} to {}: {}",
+        msg.id,
+        msg.from,
+        msg.to,
+        mail_stage(msg.state)
+    );
+    Ok(())
+}
+
+/// `bridle recipients`: who this session can message, and how to reach another daemon.
+pub(super) async fn recipients(cli: &Cli) -> Result<(), CliError> {
+    let client = client_for_read(cli).await?;
+    let here = client.recipients().await?;
+    let machines = bridle_api::machines::MachineMap::load(&discovery::bridle_home())
+        .map(|m| m.projects.keys().cloned().collect::<Vec<_>>())
+        .unwrap_or_default();
+    let mut daemons: Vec<String> = discovery::list_registry()
+        .into_iter()
+        .map(|d| d.project)
+        .chain(machines)
+        .collect();
+    daemons.sort();
+    daemons.dedup();
+    if cli.json {
+        return Ok(render::print_json(
+            &serde_json::json!({"here": here, "daemons": daemons}),
+        )?);
+    }
+    println!("On this daemon (bridle send <address> TEXT):");
+    for r in &here {
+        println!("  {:<40} {}", r.address, r.kind);
+    }
+    println!("On another daemon (bridle --project <project> send <address> TEXT):");
+    for d in &daemons {
+        println!("  {d}");
+    }
+    println!(
+        "Mail to another daemon goes through this one's outbox and is retried until it arrives; \
+         `bridle message show <id>` says how far it got."
+    );
+    Ok(())
+}
+
+#[cfg(test)]
+mod outbox_line_tests {
+    use super::*;
+
+    #[test]
+    fn the_status_line_names_the_peer_count_age_and_reason() {
+        let now = Utc::now();
+        let peer = bridle_api::types::OutboxPeer {
+            project: "nuc".to_string(),
+            queued: 3,
+            oldest_queued_at: now - chrono::Duration::hours(2),
+            last_error: Some("connection refused".to_string()),
+        };
+        let line = outbox_line(&peer, now);
+        assert!(
+            line.starts_with("outbox     nuc 3 queued, unreachable 2h"),
+            "{line}"
+        );
+        assert!(line.ends_with("(connection refused)"), "{line}");
     }
 }

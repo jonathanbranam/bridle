@@ -14,19 +14,19 @@ use bridle_api::types::{
     AddQueueTierRequest, Agent, AllocPortRequest, AnswerQuestionRequest, ApiErrorResponse,
     AskQuestionRequest, BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, Conflict,
     DoneTaskRequest, DropTaskRequest, Edge, EdgeKind, EditTaskRequest, ErrorBody, Event,
-    EventQuery, ForwardAck, ForwardRequest, Handover, Health, HelloRequest, HoldStatus,
-    ImpactCheckRequest, ImpactReport, Interaction, InteractionsQuery, InteractiveUsageRow,
-    InterruptRequest, MaxWorkersRequest, MergeProbe, Message, MessageKind, MessageQuery,
-    MessageState, MigrationRecord, NewEdgeRequest, NewTaskRequest, NoteTaskRequest, OpenQuestion,
-    OutboxSendRequest, OverlapLevel, PeerTokenCreateRequest, PortAllocation, PrincipalKind,
-    ProbeOutcome, ProbeRequest, ProbeResult, Queue, Queued, RateLimit, RateLimitPoint,
-    RebuildResponse, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest,
-    ResumeRequest, ScheduleOverrideStatus, SendRequest, SetImpactRequest, SetKindRequest,
-    SetPriorityRequest, SetQueueRequest, SetSummaryRequest, ShutdownResponse, SkipSettleRequest,
-    SpawnRequest, Status, StatusLineReport, StopRequest, SubmitTaskRequest, Task, TaskQuery,
-    TaskState, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
-    UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, UsageHistoryQuery, WakeResponse, When,
-    WindowStatus, WriteHandoverRequest, event_kind,
+    EventQuery, ForwardAck, ForwardRequest, ForwardState, Handover, Health, HelloRequest,
+    HoldStatus, ImpactCheckRequest, ImpactReport, Interaction, InteractionsQuery,
+    InteractiveUsageRow, InterruptRequest, MaxWorkersRequest, MergeProbe, Message, MessageKind,
+    MessageQuery, MessageState, MigrationRecord, NewEdgeRequest, NewTaskRequest, NoteTaskRequest,
+    OpenQuestion, OutboxSendRequest, OverlapLevel, PeerTokenCreateRequest, PortAllocation,
+    PrincipalKind, ProbeOutcome, ProbeRequest, ProbeResult, Queue, Queued, RateLimit,
+    RateLimitPoint, RebuildResponse, RemoveEdgeQuery, RemoveQuery, RenewRequest,
+    ResolveConflictRequest, ResumeRequest, ScheduleOverrideStatus, SendRequest, SetImpactRequest,
+    SetKindRequest, SetPriorityRequest, SetQueueRequest, SetSummaryRequest, ShutdownResponse,
+    SkipSettleRequest, SpawnRequest, Status, StatusLineReport, StopRequest, SubmitTaskRequest,
+    Task, TaskQuery, TaskState, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine,
+    TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, UsageHistoryQuery,
+    WakeResponse, When, WindowStatus, WriteHandoverRequest, event_kind,
 };
 use bridle_api::types::{
     PrincipalId, Schedule, ScheduleAddRequest, ScheduleListQuery, ThreadEntryKind,
@@ -115,6 +115,9 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/schedules/{id}", axum::routing::delete(remove_schedule))
         .route("/v1/hello", post(hello))
         .route("/v1/forward", post(forward))
+        .route("/v1/forward/{message_id}", get(forward_state))
+        .route("/v1/outbox/{id}", get(outbox_entry))
+        .route("/v1/recipients", get(recipients))
         .route("/v1/messages/{id}/read", post(mark_read))
         .route("/v1/messages/{id}/unread", post(mark_unread))
         .route("/v1/events", get(list_events))
@@ -337,7 +340,8 @@ async fn auth_middleware(
     match state.store.authenticate(&token).await {
         Ok(Some(principal))
             if principal.kind == PrincipalKind::Peer
-                && !matches!(req.uri().path(), "/v1/forward" | "/v1/hello") =>
+                && !(req.uri().path().starts_with("/v1/forward")
+                    || req.uri().path() == "/v1/hello") =>
         {
             ApiError::forbidden("a peer token may only forward mail").into_response()
         }
@@ -1062,6 +1066,7 @@ async fn status(
         draining,
         draining_on,
         sessions: state.sessions.list(),
+        outbox: state.store.outbox_peers().await?,
     }))
 }
 
@@ -1951,6 +1956,76 @@ async fn forward(
     }
     state.store.forwarded_record(&origin, &message_ids).await?;
     Ok(Json(ForwardAck { message_ids }))
+}
+
+/// `GET /v1/forward/{message_id}`: a peer asks how far a message it forwarded here has got.
+async fn forward_state(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path(id): Path<String>,
+) -> Result<Json<ForwardState>, ApiError> {
+    if principal.kind != PrincipalKind::Peer {
+        return Err(ApiError::forbidden("this takes a peer token"));
+    }
+    let msg = state
+        .store
+        .get_message(&id)
+        .await?
+        .ok_or_else(|| ApiError::not_found(format!("no message {id}")))?;
+    Ok(Json(ForwardState { state: msg.state }))
+}
+
+/// `GET /v1/outbox/{id}`: where a message the caller sent to another daemon has got to. Only
+/// its sender (or the human) may ask.
+async fn outbox_entry(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path(id): Path<String>,
+) -> Result<Json<bridle_api::types::OutboxEntry>, ApiError> {
+    let entry = state
+        .outbox
+        .entry(&id)
+        .await?
+        .ok_or_else(|| ApiError::not_found(format!("no outbox entry {id}")))?;
+    let row = state.store.outbox_row(&id).await?;
+    let sender = row.map(|r| r.from).unwrap_or_default();
+    let me = format!("{}@{}", principal.id, state.outbox.machine_name());
+    if principal.kind != PrincipalKind::Human && sender != principal.id && sender != me {
+        return Err(ApiError::forbidden("that message is not yours"));
+    }
+    Ok(Json(entry))
+}
+
+/// `GET /v1/recipients`: what the caller can address on this daemon (3haz P7, bp2v).
+async fn recipients(
+    State(state): State<AppState>,
+) -> Result<Json<Vec<bridle_api::types::Recipient>>, ApiError> {
+    use bridle_api::types::Recipient;
+    let mut out = vec![Recipient {
+        address: "human".to_string(),
+        kind: "human".to_string(),
+    }];
+    for agent in state.store.list_agents(false).await? {
+        out.push(Recipient {
+            address: agent.name,
+            kind: "agent".to_string(),
+        });
+    }
+    for t in state.store.list_external_tokens().await? {
+        if t.revoked || t.principal.starts_with("peer:") {
+            continue;
+        }
+        let kind = if t.principal.contains('@') {
+            "visitor"
+        } else {
+            "external principal"
+        };
+        out.push(Recipient {
+            address: t.principal,
+            kind: kind.to_string(),
+        });
+    }
+    Ok(Json(out))
 }
 
 async fn mark_read(

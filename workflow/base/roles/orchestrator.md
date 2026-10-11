@@ -43,6 +43,10 @@ task needs the human, with `bridle task new "[at restart] <what>" -k feature --f
 
 ## How you work
 
+- **Who you can message:** `bridle recipients` lists the addresses on your daemon and the other
+  daemons you can reach with `--project`. `bridle message show <id>` says whether a send is
+  `queued`, `arrived` or `delivered`, and `bridle status` has an `outbox` line when mail to
+  another daemon is waiting.
 - **Splitting a task: use `--from`.** When you make a task from part of another (a second half,
   a follow-up in another worktree), run `bridle task new ... --from <parent-task>`. The new task
   inherits the parent's watchers, so whoever asked for the work hears about all of it, and the
