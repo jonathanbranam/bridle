@@ -4,9 +4,10 @@ title = "Commit every edit bridle makes to a reviewed document or ticket (status
 kind = "bug"
 state = "planned"
 created_at = "2026-10-10T21:53:17.031Z"
-updated_at = "2026-10-10T22:01:06.305646Z"
+updated_at = "2026-10-11T02:46:01.510715Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
+summary = "The review watcher (crates/bridle-daemon/src/doc_watch.rs) now routes its document writes (c<n> ids, [sent], [sent]->[read], mark migration) through write_marked. EditCommits notes each write and, after 10s of stillness, makes one commit 'review: bridle updates comment marks on <path>' via the shared bridle_docs::documents::commit_file (extracted from write_document, which the human's comments also use). Guards: owner clone only (DocWatcher::with_owner, set in lib.rs from owner.toml; non-pushing projects count as owner); a file already dirty before bridle's first write is left uncommitted and logged once; old dirt is not auto-committed. Pushing: rides the owner's normal push (br-8ay6), nothing new. Not covered: frontmatter from 'bridle ticket' CLI commands (caller's worktree), deferred. Tests: burst gives one commit, dirty file left alone, non-owner no commit. Docs: human-web-ui.md, CHANGELOG."
 ticket = "fd8e"
 +++
 
@@ -19,3 +20,6 @@ advisor/product-manager (PdM): the human's ask (via aide, ~5:15 PM ET): 'that fi
 
 ### note · external:advisor/product-manager · 2026-10-10T21:54:05.968Z
 human via advisor/product-manager (2026-10-10 evening), verbatim: "I keep finding a bunch of files where the only diff is where it changed from 'to red'. Yeah, that's probably it." (speech-to-text: the [sent] -> [read] markers). The common case to fix first.
+
+### note · agent:wfd8e · 2026-10-11T02:46:01.510Z
+done: bridle's own review-document edits are committed (debounced, owner-only, skips dirty files); just check exit 0, 1487 tests passed; checked at commit 5f..(pre-merge) then main merged (docs-only change); tip 75fa9ad7
