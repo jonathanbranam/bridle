@@ -26,6 +26,19 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-11 05:54: main red on macOS: renew_test resume flake (first seen)
+
+- **What happened:** CI on `main` at 0c7257ad (br-epvy, ticket-ID code only) failed on macos-latest
+  only: `renew_test resume_of_a_session_that_never_started_uses_a_fresh_session`, line 377, the
+  second resume minted a new session id instead of reusing the first; 1495/1496 passed (run
+  38115575191). Found by the orchestrator's `ci_failed` wake; manager-2 reported it too.
+- **Impact:** `main` red; merges held until the re-run of the failed job.
+- **Cause:** unknown; likely a race between recording "the session started a turn" and the test's
+  Idle/stop on a slow runner (ticket).
+- **Category:** `ci`.
+- **Follow-up:** [[flaky-renew-test-resume-of-a-session-that-never-started-uses-uwcw|uwcw]], for the
+  PdM to schedule after features ship (the human's flaky-test rule, 2026-10-11).
+
 ## 2026-10-11 04:20: main red on macOS: governor_test flaky a third time
 
 - **What happened:** CI on `main` at 7cf05257 (a ticket-only commit) failed on macos-latest only:
