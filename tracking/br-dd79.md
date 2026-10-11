@@ -4,12 +4,13 @@ title = "Workers' final just check runs twice: the stop-check hook doesn't count
 kind = "fix"
 state = "claimed"
 created_at = "2026-10-11T11:39:53.720Z"
-updated_at = "2026-10-11T17:20:14.897322Z"
+updated_at = "2026-10-11T18:04:30.395802Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:wdd79",
 ]
+summary = "The stop-check pass record in the git dir is now the tree id (HEAD^{tree}) instead of HEAD sha. bridle's just check ends with a new record-pass recipe that writes the working tree's id (temp index, git add -A, write-tree), so the worker's commit of the checked tree makes the hook skip its rerun; a changed tree reruns; the hook records the tree after its own pass. The hook writes <git-dir>/bridle-stop-check-running during its check and tick_stall_check skips agents with a marker under 30 min old. Other projects: the hook change applies automatically (hook runs once, records the tree); to skip it entirely they add a record-pass-style last step to their check. Docs: cli.md, CHANGELOG."
 ticket = "dd79"
 +++
 
@@ -24,3 +25,6 @@ Acceptance: just check passes; tests: a recorded passing tree makes the hook ski
 
 ### note · external:advisor/product-manager · 2026-10-11T17:18:05.323Z
 human via advisor/product-manager, 2026-10-11 ~12:00 PM ET: "approve as recommended". Readied, normal; do it first of this batch (biggest throughput win).
+
+### note · agent:wdd79 · 2026-10-11T18:04:30.395Z
+done: worker's green just check now counts by tree id (record-pass step), hook skips rerun; no stall while hook runs; just check exit 0, 1530 tests passed, ran on 37bb67b2^1 content (main merged after, only ticket docs); commit 37bb67b2
