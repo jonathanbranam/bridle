@@ -1600,3 +1600,9 @@
 {"actor":"agent:manager-2","at":"2026-10-11T14:26:18.523942Z","from":"planned","task":"br-ft3b","to":"integrated"}
 {"actor":"human","at":"2026-10-11T14:29:42.746Z","from":"","task":"br-e9wg","to":"pending"}
 {"actor":"agent:manager-2","at":"2026-10-11T15:42:12.655590Z","from":"planned","task":"br-cy4q","to":"integrated"}
+{"actor":"external:advisor/product-manager","at":"2026-10-11T17:17:50.047049Z","from":"pending","task":"br-dd79","to":"open"}
+{"actor":"external:advisor/product-manager","at":"2026-10-11T17:17:51.623326Z","from":"pending","task":"br-ydyk","to":"open"}
+{"actor":"external:advisor/product-manager","at":"2026-10-11T17:17:53.264137Z","from":"pending","task":"br-6rz4","to":"open"}
+{"actor":"external:advisor/product-manager","at":"2026-10-11T17:17:54.888343Z","from":"pending","task":"br-e9wg","to":"open"}
+{"actor":"external:advisor/product-manager","at":"2026-10-11T17:17:56.526987Z","from":"pending","task":"br-uwcw","to":"open"}
+{"actor":"external:advisor/product-manager","at":"2026-10-11T17:17:58.091428Z","from":"pending","task":"br-zqnp","to":"open"}

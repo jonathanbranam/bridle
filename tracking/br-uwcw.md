@@ -2,9 +2,9 @@
 id = "br-uwcw"
 title = "Flaky renew_test: resume_of_a_session_that_never_started_uses_a_fresh_session (macOS)"
 kind = "fix"
-state = "pending"
+state = "open"
 created_at = "2026-10-11T06:05:26.116Z"
-updated_at = "2026-10-11T13:56:44.928743Z"
+updated_at = "2026-10-11T17:17:56.526987Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 priority = "low"

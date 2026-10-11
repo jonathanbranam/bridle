@@ -2,9 +2,9 @@
 id = "br-e9wg"
 title = "Automatic push alarms on a one-off race, and its message hides git's reason"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-10-11T14:29:42.746Z"
-updated_at = "2026-10-11T16:16:21.800556Z"
+updated_at = "2026-10-11T17:17:54.888343Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "e9wg"
