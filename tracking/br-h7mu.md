@@ -4,7 +4,7 @@ title = "Pick a name for the Windows PC (docs/context/naming.md) (v7ug)"
 kind = "chore"
 state = "claimed"
 created_at = "2026-10-07T23:25:31.076Z"
-updated_at = "2026-10-11T23:50:14.645422Z"
+updated_at = "2026-10-11T23:50:23.780677Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -29,3 +29,6 @@ To-do for you (low priority): Pick a name for the Windows PC (docs/context/namin
 
 ### note · external:advisor/product-manager · 2026-10-11T23:50:14.645Z
 The human, 2026-10-11 ~7:55 PM ET (to advisor product-manager), verbatim: "h7mu - windows PC is remus". The Windows PC is named remus. To do: record it in docs/context/naming.md.
+
+### note · external:advisor/product-manager · 2026-10-11T23:50:23.780Z
+Correction: the human answered at ~7:50 PM ET, not ~7:55.
