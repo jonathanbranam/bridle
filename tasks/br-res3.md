@@ -2,14 +2,16 @@
 id = "br-res3"
 title = "Code rename slice 3: no type is called Task; internal identifiers sweep (95t9)"
 kind = "arch-revision"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-11T11:05:22.388Z"
-updated_at = "2026-10-11T13:38:54.587178Z"
+updated_at = "2026-10-11T13:39:07.301193Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:advisor/product-manager",
 ]
+branch = "bridle/wres3"
+commit = "a8e606aa5ec046783af5b75a19aa65ffc9b9aa02"
 summary = "Slice 3 of the code rename: no Rust type is called Task. TaskManager/TaskError/TaskRow became TicketManager/TicketError/TicketRow (daemon); the gateway views became TicketSummary/TicketDetail/TicketListByTasks with #[ts(rename)] keeping the generated TypeScript names for bridle-ui; the legacy 'bridle task' CLI arg types became Row*Args/RowAction and Ticket{Kind,Size,Priority}Arg; QueueTaskRow became QueueRow. Left on purpose: MessageKind::TaskUpdate (wire and db value task_update), Command::Task (hidden alias variant), RawTasks (config key tasks), serde aliases. No behaviour, wire, SQL or migration change. Design docs and CHANGELOG updated."
 ticket = "res3"
 parent = "br-95t9"
@@ -18,3 +20,11 @@ parent = "br-95t9"
 docs/tickets/open/code-rename-slice-3-no-type-is-called-task-internal-identifi-res3.md
 
 Ticket: docs/tickets/open/code-rename-no-type-is-called-task-types-wire-tasks-table-st-95t9.md (read The ask and 22ab section 9 Code second pass). Slice 3 of 3, after slice 2 (wire types) is integrated. Goal: the rule of 22ab is that no type is called Task afterwards. Rename what is left: TaskManager, Task, TaskState, TaskKind and their functions, modules, variables and test names across every crate, to the ticket names slice 2 chose (the tracking row needs a name that is not task; the code design decides, so follow what slice 2 landed and record the name in docs/design/agent-host/ if not already). Mechanical but wide, so run it while little else is in flight and keep it one commit-able sweep that compiles at each step. Do not change wire names or behaviour (slice 2), and keep the wire aliases that accept old names. Docs: docs/design/agent-host/ identifiers where mentioned, CHANGELOG. Migration: none (no behaviour change); state it. Acceptance: just check passes; grep for the word Task as a type name in crates finds none (deliberate old-name serde aliases and comments excepted, listed in the done note); bridle ticket check reports no new problems. Model: Sonnet. Out of scope: wire, SQL, state folder, alias removal (step 10), bridle-ui.
+
+## Thread
+
+### note · agent:wres3 · 2026-10-11T13:38:59.887Z
+done: no Rust type is called Task (TicketManager/TicketError/TicketRow, gateway Ticket* views with ts(rename) keeping TS names, CLI Row*/Ticket*Arg); just check exit 0, 1519 tests passed (6 skipped) on 5b4228df; then merged main again (docs-only ticket file), tip d91fcc9b. Left on purpose: MessageKind::TaskUpdate, Command::Task, RawTasks. No migration.
+
+### note · agent:manager-2 · 2026-10-11T13:39:07.301Z
+integrated: a8e606aa5ec046783af5b75a19aa65ffc9b9aa02 (branch bridle/wres3)
