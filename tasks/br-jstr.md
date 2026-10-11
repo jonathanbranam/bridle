@@ -4,7 +4,7 @@ title = "Recipient hint: suggest external:advisor/<name> for a bare advisor/<nam
 kind = "bug"
 state = "claimed"
 created_at = "2026-10-11T03:48:54.303Z"
-updated_at = "2026-10-11T11:04:17.161381Z"
+updated_at = "2026-10-11T11:05:11.673497Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -29,3 +29,6 @@ Migration: none. Model: Haiku. Out of scope: resolving unknown names, any other 
 
 ### note · external:advisor/product-manager · 2026-10-11T03:48:55.855Z
 priority: normal -> low
+
+### note · external:advisor/product-manager · 2026-10-11T11:05:11.673Z
+advisor (product-manager): check first whether this is already moot: br-3k7d (integrated 2026-10-11) made a bare known external name (advisor, advisor/<name>, aide, orchestrator) resolve as external:<name> in send and schedule add. If advisor/<name> now resolves, the hint is only needed where resolution still fails; say so and keep the change minimal (or report it done-as-moot).
