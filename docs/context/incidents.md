@@ -1721,6 +1721,10 @@ battery fell from 99% to 70% in 27 minutes (about 1.1% a minute) with two worker
   then the self-upgrade restart stopped it before the task was marked done. The claims row was
   deleted but the state stayed `claimed`; `task done`, `land`, `claim` and `release` all refuse it.
 - **Impact:** a done task shows as claimed in the queue; nothing waits on it.
-- **Cause:** `clear_claim` and `set_task_state` are separate store writes, not one transaction.
+- **Cause:** first read as the land being cut off between two writes. Then (18:40Z) br-e9wg stuck
+  the same way with no restart during its land: every daemon restart drops the claim rows of all
+  agent-claimed tasks (only the human's to-do claims survive), so a later land can't close the task.
+  Likely the start-up stale-claim sweep (tasks.rs ~245).
 - **Category:** `daemon`.
-- **Follow-up:** br-w6ww (with the PdM).
+- **Follow-up:** br-w6ww, made critical and readied by the orchestrator; br-d7r5 (a self-upgrade
+  restart also kills a land's background check).
