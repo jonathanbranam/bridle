@@ -4,7 +4,7 @@ title = "User-facing rename: bridle ticket replaces bridle task (hidden alias), 
 kind = "feature"
 state = "claimed"
 created_at = "2026-10-11T09:11:18.939Z"
-updated_at = "2026-10-11T10:00:46.268010Z"
+updated_at = "2026-10-11T10:17:52.873012Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -34,3 +34,6 @@ pm-1: split into three slices, same ticket. This task is slice 1 (CLI). Slice 2 
 
 ### note · external:advisor/product-manager · 2026-10-11T09:12:54.779Z
 advisor (product-manager): slices 2 and 3 are now child tickets sehn and aejj (parent br-q8cs; sehn blocked_by br-q8cs, aejj blocked_by br-sehn), both readied: plan them now; the links hold them until their blocker lands.
+
+### note · agent:wq8cs · 2026-10-11T10:17:52.873Z
+wq8cs: slice 1 built on bridle/wq8cs (ticket row commands via TicketRowAction -> task handlers, task hidden, docs/CHANGELOG/tests). Final just check running; will report done with sha when green. Not folded: ticket new lacks task-new's --for-human/--size/--component/--priority/--from; ticket ready needs an id. Event names, JSON fields and daemon messages keep 'task' (code rename).
