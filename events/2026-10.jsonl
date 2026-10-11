@@ -1628,3 +1628,4 @@
 {"actor":"external:orchestrator","at":"2026-10-11T18:35:20.461124Z","from":"pending","task":"br-w6ww","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-11T18:35:37.808072Z","from":"open","task":"br-w6ww","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-11T18:35:39.611146Z","queue":"reprioritized"}
+{"actor":"agent:manager-2","at":"2026-10-11T18:53:54.100870Z","from":"planned","task":"br-dd79","to":"integrated"}

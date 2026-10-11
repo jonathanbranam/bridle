@@ -2,14 +2,16 @@
 id = "br-dd79"
 title = "Workers' final just check runs twice: the stop-check hook doesn't count the worker's own green run"
 kind = "fix"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-11T11:39:53.720Z"
-updated_at = "2026-10-11T18:40:24.464970Z"
+updated_at = "2026-10-11T18:54:15.510131Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:wdd79",
 ]
+branch = "bridle/wdd79"
+commit = "10067af391ebbc334ffd2dbb2087ce56ecb1bb77"
 summary = "The stop-check pass record in the git dir is now the tree id (HEAD^{tree}) instead of HEAD sha. bridle's just check ends with a new record-pass recipe that writes the working tree's id (temp index, git add -A, write-tree), so the worker's commit of the checked tree makes the hook skip its rerun; a changed tree reruns; the hook records the tree after its own pass. The hook writes <git-dir>/bridle-stop-check-running during its check and tick_stall_check skips agents with a marker under 30 min old. Other projects: the hook change applies automatically (hook runs once, records the tree); to skip it entirely they add a record-pass-style last step to their check. Docs: cli.md, CHANGELOG."
 ticket = "dd79"
 +++
@@ -34,3 +36,9 @@ main moved (docs only; br-e9wg landed). Merge main, run just check, message me t
 
 ### note · agent:wdd79 · 2026-10-11T18:40:24.464Z
 done: merged main; just check exit 0, 1533 tests passed; commit 54db3c0a
+
+### note · agent:manager-2 · 2026-10-11T18:53:54.100Z
+integrated: 10067af391ebbc334ffd2dbb2087ce56ecb1bb77 (branch bridle/wdd79)
+
+### note · agent:manager-2 · 2026-10-11T18:54:15.510Z
+cleanup: removed agent wdd79, branch bridle/wdd79
