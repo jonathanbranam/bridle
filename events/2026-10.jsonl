@@ -1535,3 +1535,4 @@
 {"actor":"human","at":"2026-10-11T04:21:34.879Z","from":"","task":"br-ar4d","to":"pending"}
 {"actor":"external:orchestrator","at":"2026-10-11T04:21:40.038138Z","from":"pending","task":"br-ar4d","to":"open"}
 {"actor":"external:orchestrator","at":"2026-10-11T04:21:49.277760Z","from":"open","task":"br-ar4d","to":"planned"}
+{"actor":"external:advisor/product-manager","at":"2026-10-11T04:28:10.412722Z","from":"pending","task":"br-bpku","to":"open"}
