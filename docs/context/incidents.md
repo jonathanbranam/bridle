@@ -26,6 +26,19 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-11 11:38: worker "stalled" inside the stop-check hook's second just check
+
+- **What happened:** the daemon raised `agent.stalled` for wjstr (br-jstr). It had finished, run
+  `just check` green and committed; the `bridle stop-check` Stop hook was running `just check` again
+  at the new HEAD, queued on the test lock (10+ min). wgd43 (br-gd43) was in the same hook. Found by
+  the orchestrator's wake; the processes showed it.
+- **Impact:** an extra full test run per task (machine time, the test lock), manager-2's messages to
+  both held as `arrived` until the turns end, and a false stall wake.
+- **Cause:** the hook only trusts its own pass record at HEAD; the worker's check ran before the
+  commit and records nothing.
+- **Category:** `daemon`.
+- **Follow-up:** [[workers-final-just-check-runs-twice-the-stop-check-hook-does-dd79|dd79]], for the PdM.
+
 ## 2026-10-11 05:54: main red on macOS: renew_test resume flake (first seen)
 
 - **What happened:** CI on `main` at 0c7257ad (br-epvy, ticket-ID code only) failed on macos-latest
