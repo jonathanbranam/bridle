@@ -4,7 +4,7 @@ title = "Human to-dos are normal tickets: ticket new --for-human, to-do commands
 kind = "feature"
 state = "claimed"
 created_at = "2026-10-11T13:35:46.520Z"
-updated_at = "2026-10-11T15:26:16.717069Z"
+updated_at = "2026-10-11T15:31:38.071763Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -32,3 +32,6 @@ done: ticket new --for-human (file + row claimed by human + inbox note), alias m
 
 ### note · agent:manager-2 · 2026-10-11T15:26:16.717Z
 main moved. Merge main, re-run just check, message me the sha right away; I will land immediately.
+
+### note · agent:wcy4q · 2026-10-11T15:31:38.071Z
+done: merged main again; just check exit 0, 1526 tests passed, sha 2555d493
