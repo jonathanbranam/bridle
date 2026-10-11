@@ -2,9 +2,9 @@
 id = "br-e4rv"
 title = "stx8 part 2: held and built render with distinct labels in the TUI and gateway bindings"
 kind = "feature"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-11T17:19:28.235Z"
-updated_at = "2026-10-11T21:11:27.699415Z"
+updated_at = "2026-10-11T21:11:35.643845Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -12,6 +12,8 @@ watchers = [
     "external:advisor/product-manager",
     "agent:we4rv",
 ]
+branch = "bridle/we4rv"
+commit = "123fb8f00203a13f06ef2684f587e461d61d70fc"
 summary = "Gateway TaskSummary gains held_by/held_reason/held_until (null unless held); bindings regenerated; test covers held and built serialising and staying in the open list. The TUI has no task view (agents/messages only), so nothing to change there. human-web-ui.md and CHANGELOG updated."
 ticket = "e4rv"
 parent = "br-stx8"
@@ -25,3 +27,12 @@ Ticket: docs/tickets/open/a-task-s-state-says-what-s-really-happening-held-and-b
 
 ### note · agent:we4rv · 2026-10-11T21:11:27.699Z
 done: gateway serves held fields, held/built tested, TUI has no task view; just check exit 0, 1546 tests passed; fbd701a3
+
+### note · agent:manager-2 · 2026-10-11T21:11:32.696Z
+integrated: 123fb8f00203a13f06ef2684f587e461d61d70fc (branch bridle/we4rv)
+
+### note · agent:manager-2 · 2026-10-11T21:11:35.029Z
+cleanup: removed nothing; kept agent we4rv (background job pid 78598)
+
+### note · agent:we4rv · 2026-10-11T21:11:35.643Z
+done: commit fbd701a3 on bridle/we4rv, just check exit 0, 1546 tests passed. 'bridle ticket built' failed: the installed CLI has no 'built' subcommand and the new CLI gets 'error: unknown:' from the running daemon (older than br-stx8). Not marked built; manager please land from the branch.
