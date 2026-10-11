@@ -220,12 +220,13 @@ impl Sessions {
                 .map(|e| (e.info.pid, e.pid_start.clone()))
                 .collect()
         };
-        for (pid, start) in snapshot {
-            let alive = tokio::task::spawn_blocking(move || {
-                crate::containment::is_same_process(pid, &start)
-            })
-            .await
-            .unwrap_or(true);
+        // One process-table read for all sessions, none with no sessions.
+        let pids: Vec<i32> = snapshot.iter().map(|(p, _)| *p).collect();
+        let alive =
+            tokio::task::spawn_blocking(move || crate::containment::are_same_processes(&snapshot))
+                .await
+                .unwrap_or_else(|_| vec![true; pids.len()]);
+        for (pid, alive) in pids.into_iter().zip(alive) {
             if !alive {
                 self.end(SessionEnd { pid }).await;
             }
@@ -759,6 +760,26 @@ mod tests {
         );
         s.tick().await;
         assert!(s.list().is_empty());
+    }
+
+    // nextest runs each test in its own process, so the snapshot counter is this test's alone.
+    #[tokio::test]
+    async fn a_tick_reads_the_process_table_once_for_all_sessions_and_not_at_all_for_none() {
+        use std::sync::atomic::Ordering;
+        let (s, _dir, _store) = fixture().await;
+        s.tick().await;
+        assert_eq!(crate::containment::SNAPSHOTS.load(Ordering::Relaxed), 0);
+        let me = std::process::id() as i32;
+        let start = real_start();
+        let taken = crate::containment::SNAPSHOTS.load(Ordering::Relaxed);
+        for _ in 0..3 {
+            s.register(reg(me, &start, None), Utc::now());
+        }
+        s.tick().await;
+        assert_eq!(
+            crate::containment::SNAPSHOTS.load(Ordering::Relaxed),
+            taken + 1
+        );
     }
 
     fn real_start() -> String {

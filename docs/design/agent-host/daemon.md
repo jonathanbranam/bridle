@@ -122,6 +122,41 @@ The sender is told by a note from `system` when a message is refused for good (o
 fails) and when it has been queued 30 min (once; retries go on). Tests drive the loop on tokio's
 paused clock with a fake transport.
 
+## Periodic loops and their cost
+
+Every timer in `lib.rs` (`spawn_loop`; the other `sleep(` and `interval(` sites in
+`crates/bridle-daemon/src` are debounces, retries and tests, not periodic loops) and what one tick
+costs. Always-on monitoring is itself a load source (n4w4, v6kr): add a loop only with a row here.
+"Idle" means no agents and no tasks. Cost: **none** (memory only), **reads** (files, the database,
+the process table natively) or **forks** (starts a process). Intervals are fixed in code unless a
+config key is named.
+
+| Loop | Interval | One tick | Idle | Cost |
+|---|---|---|---|---|
+| schedule | 15 s | reads due rows from the schedule table; sends those due | one query | reads |
+| outbox | 15 s | reads queued destinations; HTTP to a peer when one is due; checks stuck mail | one query | reads |
+| stall + context + focus | 30 s | `list_agents` twice; `focus::stop_advisors_if_locked` | two queries; forks `tmux list-panes` only inside a locked focus period | reads (forks when locked) |
+| tracker | 2 s | one native process-table read for all live agents | returns before reading when no agent runs (test `tick_tracker_with`) | reads |
+| governor | 30 s | polls usage over HTTP every 5 min (30 s above `hold_at`), else forks a throwaway `claude -p` probe; recomputes from the store | the poll still runs; the recompute is a few queries | reads (network; forks only on HTTP failure) |
+| CI watcher + self-upgrade | 60 s | `[ci] github`: forks `gh run list`. Self-upgrade not `off`: forks `git rev-list`, then `gh run list` per candidate commit until one is already built | still forks `gh` (CI on) and `git`/`gh` (upgrade on) every tick | forks |
+| prune | 24 h | deletes old events and handovers | one delete | reads |
+| task flush | 30 s | `flush_now` writes the task state branch when something is pending | nothing pending: no git | none |
+| settle wake + open watch | 30 s | scans the in-memory task list for settled and stale-open tasks | in memory | none |
+| doc watch | 30 s | `list_agents`; reads the review registry file and each registered document | registry empty: one file read | reads |
+| claim lease | 30 s | one `get_agent` per claimed task | no claims: none | none |
+| ports | 30 s | lists ports; `kill(pid, 0)` per row | no rows: one query | reads |
+| disk | `[disk] check_interval`, 1 h (0 = off) | walks `target/`, worktrees and `.bridle` to size them; emits `disk.checked` | the same walk | reads (heavy, hourly) |
+| origin divergence | 10 min (with `load_watch`) | forks `git fetch origin` (timeout), then `git rev-list --count` | the same | forks (network) |
+| load | `[machine] check_interval`, 30 s (0 = off; with `load_watch`) | `/proc/loadavg`, else forks `sysctl -n vm.loadavg` (macOS); forks `ps` only when a hold starts or a note is due | the same | forks on macOS |
+| orchestrator supervisor | 10 s (`[orchestrator] enabled`) | reads `orchestrator.pid`; one native process-table read to check it is alive | no pid file: one failed read | reads |
+| orchestrator wake | 10 s | reads new events since its cursor | one query | reads |
+| sessions | 10 s | one native process-table read for all sessions (not one each); reads each session's context file | no sessions: nothing | reads |
+
+Known costs left as they are (br-fzwa, n4w4 rec 3): the CI and self-upgrade loop forks `gh` and
+`git` every minute even when nothing changed; the origin check forks `git fetch` every 10 min; the
+load watch forks `sysctl` every 30 s on macOS. Each is the monitor's job, and changing one means
+a design (cache by head sha, back off when idle), so it is a follow-up, not a quiet edit.
+
 ## Scheduled messages
 
 (hrcn, br-9xze; `schedule.rs`.) A stored message the daemon sends to a principal at a time, once or

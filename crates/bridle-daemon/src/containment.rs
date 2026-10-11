@@ -169,6 +169,28 @@ pub fn is_same_process(pid: i32, start: &str) -> bool {
     current.as_deref() == Some(start)
 }
 
+/// [`is_same_process`] for several pids at once, with at most one process-table read however
+/// many there are (none when nothing needs one). Answers are in the order given.
+pub fn are_same_processes(procs: &[(i32, String)]) -> Vec<bool> {
+    let needs_table = procs.iter().any(|(_, s)| s.starts_with(NATIVE));
+    let snap = if needs_table {
+        snapshot().unwrap_or_default()
+    } else {
+        Vec::new()
+    };
+    let index = start_index(&snap);
+    procs
+        .iter()
+        .map(|(pid, start)| {
+            if start.starts_with(NATIVE) {
+                index.get(pid).copied() == Some(start.as_str())
+            } else {
+                is_same_process(*pid, start)
+            }
+        })
+        .collect()
+}
+
 /// Maps each pid in `snap` to its start time, for O(1) identity checks
 /// instead of a linear scan per tracked pid.
 fn start_index(snap: &[ProcInfo]) -> HashMap<i32, &str> {
