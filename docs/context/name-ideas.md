@@ -9,42 +9,53 @@ Status: ideas, nothing decided. No machine has been renamed.
 
 ## Working idea (2026-10-11)
 
-Not decided. A theme per kind of machine, each with real-world and sci-fi names, from the human's
-three categories (2026-10-11: "windows and nuc don't move; their fixed in position ... and let's
-think of what the cloud servers would be. laptops we only have one right now, dalek, that is
-slightly off-theme").
+Not decided. The overall theme is space and sci-fi (the human, 2026-10-11: "our overall theme
+is: space / sci-fi"). Within it, a theme per kind of machine, each with real-world and sci-fi
+names, from the human's three categories ("windows and nuc don't move; their fixed in position
+... and let's think of what the cloud servers would be. laptops we only have one right now,
+dalek, that is slightly off-theme").
 
 | Kind | Theme | Why |
 |---|---|---|
-| 1. Fixed, at home | Places that stay put: planets, moons, asteroids | The home system; a huge set. |
-| 2. Cloud | Stars and space stations | Far away, always up, and many of them. |
+| 1. Fixed, at home | The fixed stars | They keep their places, as home machines do. Home needs only a few names. |
+| 2. Cloud | Wanderers: planets, moons, asteroids, space stations | "Planet" is Greek for wanderer: cloud servers come and go. The biggest set of names the human knows, for the kind that may grow. |
 | 3. Laptops | Spaceships and spacecraft | They travel. |
+
+The split is the ancients' own: the fixed stars stay put, and the planets wander across them. The
+human swapped home and cloud from a first draft (planets at home, stars in the cloud) because home
+is by far the smallest list, and they recognise more solar-system names than star names; and
+"planet means wanderer".
 
 The theme says what kind of machine it is, not where it sits, so a machine that moves keeps its
 name (the c2 tip against location names, [[naming]]).
 
-**1. Fixed, at home**
+**1. Fixed, at home: the fixed stars**
 
-- Real: `jupiter`, `saturn`, `mars`, `neptune`; moons `luna`, `europa`, `callisto`, `phobos`,
-  `rhea`, `miranda`, `charon`; asteroids `vesta`, `pallas`, `psyche`, `bennu`.
-- Sci-fi: `vulcan`, `bajor`, `hoth`, `endor`, `naboo`, `caprica`, `arrakis`, `caladan`,
-  `gallifrey`, `skaro`, `trantor`, `terminus`.
-- Picks: the Windows PC `jupiter` (the biggest planet, for the heavy lifting); the NUC `vesta` (an
-  asteroid named for the Roman goddess of hearth and home: small and always on). The other family
-  PC, if it joins: `saturn` or `skaro`.
-- Avoid: `ceres` (dictation hears "series"), `earth` (generic), `uranus`.
-
-**2. Cloud**
-
-- Real stars: `vega`, `altair`, `rigel`, `deneb`, `antares`, `procyon`; pairs `castor` and
+- Real: `vega`, `rigel`, `altair`, `deneb`, `antares`, `procyon`, `capella`; pairs `castor` and
   `pollux`, `mizar` and `alcor`.
-- Real space stations: `mir`, `skylab`, `salyut`, `tiangong`.
-- Sci-fi stations and far worlds: `babylon` (Babylon 5), `citadel` (Mass Effect), `yorktown`
-  (Star Trek Beyond), `elysium`; Foundation's `aurora`, `solaria`, `gaia`.
-- Picks: the EC2 `vega` or `altair`; then `rigel`, `deneb`, `antares` as servers are added.
-- Avoid: `gateway` (bridle already has a gateway), `polaris` and `sirius` (sound like other words).
+- Sci-fi: `canopus` (a real star; Arrakis's sun in Dune), `rao` (Krypton's red sun), `tatoo`
+  (Tatooine's suns). Few, but home needs few.
+- Picks: the Windows PC `rigel` or `antares` (big, bright stars for the heavy lifting); the NUC
+  `vega` (short, clear, one of the brightest in the sky). The other family PC, if it joins:
+  `altair` or `deneb`.
+- Avoid: `polaris` and `sirius` (sound like other words), `sol` (the Sun; too short and generic).
 
-**3. Laptops**
+**2. Cloud: the wanderers**
+
+- Real planets and moons: `jupiter`, `saturn`, `mars`, `neptune`; `luna`, `europa`, `io`,
+  `callisto`, `phobos`, `titan`, `rhea`, `miranda`, `charon`.
+- Real asteroids: `vesta`, `pallas`, `psyche`, `bennu`.
+- Real space stations: `mir`, `skylab`, `salyut`, `tiangong`.
+- Sci-fi worlds: `vulcan`, `bajor`, `hoth`, `endor`, `naboo`, `caprica`, `arrakis`, `caladan`,
+  `gallifrey`, `skaro`, `trantor`, `terminus`.
+- Sci-fi stations: `babylon` (Babylon 5), `citadel` (Mass Effect), `yorktown` (Star Trek Beyond),
+  `elysium`.
+- Picks: the EC2 `luna` (the nearest one out; the EC2 is the NUC's fallback to the outside). Then
+  planets and moons as servers are added.
+- Avoid: `ceres` (dictation hears "series"), `earth` (generic), `uranus`, `gateway` (bridle
+  already has a gateway).
+
+**3. Laptops: ships**
 
 - Real spacecraft: `apollo`, `voyager`, `pioneer`, `cassini`, `galileo`, `kepler`, `juno`,
   `rosetta`, `atlantis`, `soyuz`.
@@ -54,17 +65,21 @@ name (the c2 tip against location names, [[naming]]).
 - `dalek` stays: kept by the human ("it's been dalek for a long time"), the one exception to the
   scheme.
 
+**Galaxies: not placed yet.** A galaxy holds many stars and planets, so one idea is a galaxy name
+for a group rather than a machine: the tailnet, all of bridle's machines, or a project's machines.
+The list is under "Galaxies and nebulae" in Themes.
+
 ## Machines that need names
 
 | Machine | Now | Leading idea | Notes |
 |---|---|---|---|
 | MacBook Pro (this one) | dalek | dalek | Keeping it: "it's been dalek for a long time" (the human). |
-| Intel NUC | nuc | vesta | "NUC" is a type, and dictation hears "Nook". Was `sonic`; see "Working idea". |
-| Windows desktop, running WSL2 | EzekielsPC | jupiter | The human couldn't settle on `tardis` (2026-10-11). See "WSL2 and its name" below. |
-| EC2 | (none) | vega, altair | The edge box (the NUC's tunnel fallback). Was `terminus`. |
-| Future cloud servers | | rigel, deneb, antares | More stars. |
+| Intel NUC | nuc | vega | "NUC" is a type, and dictation hears "Nook". Was `sonic`; see "Working idea". |
+| Windows desktop, running WSL2 | EzekielsPC | rigel, antares | The human couldn't settle on `tardis` (2026-10-11). See "WSL2 and its name" below. |
+| EC2 | (none) | luna | The edge box (the NUC's tunnel fallback). Was `terminus`. |
+| Future cloud servers | | planets and moons | The wanderers. |
 | Other MacBook Pros | | nostromo, serenity, voyager, defiant | Ships, because laptops travel. Only those that run bridle or join Tailscale. |
-| The other family PC | | saturn, skaro | Only if it joins Tailscale. |
+| The other family PC | | altair, deneb | Only if it joins Tailscale. |
 
 Not needed: the family's Windows laptops, the PS5, PS4 and Switch.
 
@@ -404,6 +419,34 @@ Fictional planets, from franchises already in this file:
 | magrathea | The Hitchhiker's Guide to the Galaxy | Long. |
 | gallifrey, skaro | Doctor Who | Skaro is already a spare. |
 | arrakis, caladan, trantor, terminus | Dune; Foundation | Also under those themes. |
+
+**Galaxies and nebulae** (none dictation-tested)
+
+Real galaxies and groups:
+
+| Name | Notes |
+|---|---|
+| andromeda, triangulum | Our big neighbours; andromeda is long. |
+| magellan | The Large and Small Magellanic Clouds, our satellite galaxies. |
+| whirlpool, pinwheel, sombrero, cartwheel, cigar, sunflower, tadpole, antennae | Galaxies named for their shapes: everyday words, so clear to say but less distinct. |
+| blackeye | The Black Eye Galaxy. |
+| milkyway | Ours; run together, it's a candy bar. |
+| laniakea | Our supercluster ("immeasurable heaven" in Hawaiian). Long. |
+| virgo, fornax, sculptor | Clusters and dwarf galaxies; also constellations. |
+
+Sci-fi galaxies:
+
+| Name | From | Notes |
+|---|---|---|
+| pegasus | Stargate Atlantis | Also a constellation and a Galactica ship. |
+| ida | Stargate SG-1 (the Asgard's home) | Also an asteroid. |
+| andromeda | Mass Effect: Andromeda; the Andromeda series | |
+| isop | Doctor Who ("The Web Planet") | |
+| mutter | Doctor Who: Mutter's Spiral, the Time Lords' name for the Milky Way | |
+| delta, gamma | Star Trek's quadrants of the Milky Way | Common words; Greek letters. |
+
+Nebulae, the same idea in smaller clouds: `crab`, `eagle`, `horsehead`, `lagoon`, `helix`,
+`ring`, `veil`, `carina`; sci-fi `mutara` (Star Trek II).
 
 **Gods: Greek, Norse and Roman** (big pantheons, so plenty of room; many are also product,
 planet or Marvel names)
