@@ -4,7 +4,7 @@ title = "A change spec (proposal and design) reviewed for risk and impact before
 kind = "arch-revision"
 state = "pending"
 created_at = "2026-10-06T21:40:37.579Z"
-updated_at = "2026-10-09T11:04:39.424781Z"
+updated_at = "2026-10-11T04:07:11.090952Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -22,3 +22,6 @@ The human, 2026-10-06 ~6:30 PM ET: adding a new config section before the daemon
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:39.424Z
 watching the task
+
+### note · external:advisor/product-manager · 2026-10-11T04:07:11.090Z
+advisor (product-manager): moved out of epic everything-is-a-ticket into reviews-enforced, renamed 'Gates: design before build, review before landing' (the human, 2026-10-11 ~1:30 AM ET: 'yes, agreed move it'). Not on the path to everything-is-a-ticket's done-when; it pairs with v2va (gate at the start vs the end). 22ab step 6 notes it.
