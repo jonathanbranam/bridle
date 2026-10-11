@@ -4,14 +4,17 @@ title = "Review and comment on kuw2, the machine daemon design (docs/tickets/ope
 kind = "chore"
 state = "claimed"
 created_at = "2026-10-04T15:40:03.732Z"
-updated_at = "2026-10-09T11:04:37.885934Z"
+updated_at = "2026-10-11T21:31:28.584577Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
     "human",
     "external:advisor/product-manager",
 ]
+ticket = "efs2"
 +++
+
+docs/tickets/open/review-and-comment-on-kuw2-the-machine-daemon-design-docs-ti-efs2.md
 
 Review and comment on ticket **kuw2**, the machine daemon design:
 `docs/tickets/open/a-machine-daemon-one-per-machine-doing-machine-wide-work-onc-kuw2.md`

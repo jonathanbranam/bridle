@@ -4,14 +4,17 @@ title = "Expand on 2tpm: evaluate Go instead of Rust (why, what would decide it)
 kind = "chore"
 state = "claimed"
 created_at = "2026-10-03T11:04:49.779Z"
-updated_at = "2026-10-09T11:04:37.468294Z"
+updated_at = "2026-10-11T21:31:16.579247Z"
 created_by = "external:advisor"
 watchers = [
     "external:advisor",
     "human",
     "external:advisor/product-manager",
 ]
+ticket = "da2b"
 +++
+
+docs/tickets/open/expand-on-2tpm-evaluate-go-instead-of-rust-why-what-would-de-da2b.md
 
 Ticket docs/tickets/open/evaluate-go-instead-of-rust-for-bridle-2tpm.md (task br-fd74). Say more to an advisor: what prompts it and what a good evaluation would answer.
 

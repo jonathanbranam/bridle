@@ -4,14 +4,17 @@ title = "Follow up on the workflow review: 6 decisions, 2 waiting on others (34b
 kind = "chore"
 state = "claimed"
 created_at = "2026-10-04T12:49:58.213Z"
-updated_at = "2026-10-09T11:04:37.765787Z"
+updated_at = "2026-10-11T21:31:22.387940Z"
 created_by = "external:advisor/workflow"
 watchers = [
     "external:advisor/workflow",
     "human",
     "external:advisor/product-manager",
 ]
+ticket = "tkph"
 +++
+
+docs/tickets/open/follow-up-on-the-workflow-review-6-decisions-2-waiting-on-ot-tkph.md
 
 Follow-ups from the workflow review (advisor workflow, 2026-10-02 to 04). Each ticket's "Next steps" section has the detail (commit b084d0d6). Tickets are in docs/tickets/open/.
 

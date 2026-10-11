@@ -4,13 +4,13 @@ title = "bridle-ui: a usage page with week-to-week charts of the five-hour and s
 kind = "feature"
 state = "pending"
 created_at = "2026-10-05T21:06:46.794Z"
-updated_at = "2026-10-09T11:04:39.016144Z"
+updated_at = "2026-10-11T21:31:40.354848Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:advisor/product-manager",
 ]
-ticket = "xxw9"
+ticket = "yydm"
 +++
 
 Ticket: docs/tickets/open/week-to-week-usage-charts-in-the-ui-how-often-the-five-hour-xxw9.md. Depends on br-xxw9 (the usage history API); start only after it merges.

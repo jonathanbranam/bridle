@@ -4,13 +4,16 @@ title = "Self-upgrade refused good builds 3 times overnight: the new binary's se
 kind = "incident"
 state = "pending"
 created_at = "2026-10-05T12:17:39.961Z"
-updated_at = "2026-10-09T11:04:38.865831Z"
+updated_at = "2026-10-11T21:31:37.400081Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "external:advisor/product-manager",
 ]
+ticket = "aqa7"
 +++
+
+docs/tickets/open/self-upgrade-refused-good-builds-3-times-overnight-the-new-b-aqa7.md
 
 Potential incident, filed by the orchestrator at the human's request (2026-10-05 ~8:15 AM ET: 'please do record an incident ... that's a critical kind of thing we want to be sure doesn't happen in the future').
 

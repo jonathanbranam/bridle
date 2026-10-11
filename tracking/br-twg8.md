@@ -4,14 +4,17 @@ title = "Try document review (x8jt) on gtzx: install the UI, review add, start t
 kind = "chore"
 state = "claimed"
 created_at = "2026-10-04T13:16:26.409Z"
-updated_at = "2026-10-09T11:04:37.815590Z"
+updated_at = "2026-10-11T21:31:25.647596Z"
 created_by = "external:advisor/doc-review"
 watchers = [
     "external:advisor/doc-review",
     "human",
     "external:advisor/product-manager",
 ]
+ticket = "twg8"
 +++
+
+docs/tickets/open/try-document-review-x8jt-on-gtzx-install-the-ui-review-add-s-twg8.md
 
 Ticket x8jt (docs/tickets/open/review-a-document-with-an-agent-highlight-comment-and-the-ag-x8jt.md): review a document by highlighting and commenting, and a per-document agent replies or revises. Advisor doc-review ran it 2026-10-03/04 and is retiring for your restart.
 

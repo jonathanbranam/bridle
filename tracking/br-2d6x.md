@@ -4,13 +4,16 @@ title = "Specs: vitest-bridle setup leaves step files untypechecked"
 kind = "chore"
 state = "pending"
 created_at = "2026-10-05T02:51:25.805Z"
-updated_at = "2026-10-09T11:04:38.381178Z"
+updated_at = "2026-10-11T21:31:31.518602Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
     "external:advisor/product-manager",
 ]
+ticket = "2d6x"
 +++
+
+docs/tickets/open/specs-vitest-bridle-setup-leaves-step-files-untypechecked-2d6x.md
 
 From meta-notes-ui's orchestrator (2026-10-05), adopting bridle specs with vendored vitest-bridle. vitest only transpiles, so the spec entry (specs.test.ts) and its step definitions are not covered by tsc: a typo in a step's types passes until it runs. Fix in the vitest-bridle README (find it under tools/vitest-bridle in this repo): the setup section gives a tsconfig fragment that includes the spec entry and step files, and a typecheck line (tsc --noEmit -p <that tsconfig>) to add to the project's check script. If vitest-bridle has an example project or template in the repo, update it the same way, and make sure the example typechecks. Docs only, plus the example if present. Acceptance: just check passes; if there is an example with a package script, run its typecheck. Model: Haiku. Out of scope: distribution, CI and export format (ticket pakx, br-pakx).
 
