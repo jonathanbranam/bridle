@@ -63,3 +63,9 @@ Overlaps to settle in the design:
   set of names must come out of the two. storage.md also names `in_review` and `accepted` as
   designed, not built.
 - **22ab section 10** (ticket states) may supersede task states once tasks become tickets.
+
+**The principle** (the human, 2026-10-11 ~1:50 AM ET, verbatim): "basically, I want to be sure,
+every time a ticket/task passes to a new agent or is being treated differently, that there is a state
+transition that we can trace and understand the flow." The design is checked against it: every
+hand-off between agents (worker, manager, reviewer, human) and every change in how the work is
+treated (waiting, being reviewed, sent back, held) is its own state with a recorded transition.
