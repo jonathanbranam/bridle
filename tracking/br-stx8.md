@@ -4,7 +4,7 @@ title = "A task's state says what's really happening: held and built-awaiting-la
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-06T02:04:20.046Z"
-updated_at = "2026-10-11T20:33:25.166147Z"
+updated_at = "2026-10-11T20:33:28.646761Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -108,3 +108,6 @@ done: held and built states (hold/unhold/built/send-back, queue labels, start-up
 
 ### note · agent:manager-2 · 2026-10-11T20:33:25.166Z
 integrated: ad59aae1bbcb38f23b6c4abe65156c9ac9ec776f (branch bridle/wstx8)
+
+### note · agent:manager-2 · 2026-10-11T20:33:28.646Z
+cleanup: removed nothing; kept agent wstx8 (background job pid 15388)

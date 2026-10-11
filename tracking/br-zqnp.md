@@ -2,11 +2,14 @@
 id = "br-zqnp"
 title = "bridle link and agent instructions emit the ticket page URL /p/{project}/tickets/{id}"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-11T13:51:22.503Z"
-updated_at = "2026-10-11T17:19:06.317444Z"
+updated_at = "2026-10-11T20:33:38.206342Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:wzqnp",
+]
 ticket = "zqnp"
 +++
 
