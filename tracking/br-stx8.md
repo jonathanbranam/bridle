@@ -2,13 +2,14 @@
 id = "br-stx8"
 title = "A task's state says what's really happening: held and built-awaiting-landing are states, not 'planned' with a note"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-06T02:04:20.046Z"
-updated_at = "2026-10-11T17:19:28.236336Z"
+updated_at = "2026-10-11T20:10:28.394839Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
     "external:advisor/product-manager",
+    "agent:wstx8",
 ]
 ticket = "stx8"
 +++
