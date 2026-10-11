@@ -248,6 +248,10 @@ person, dictation writes "Ariel"; in a casual sentence it writes "Arial", the fo
 future machine, alone or with a partner: `bennu` (NASA's OSIRIS-REx probe sampled the asteroid
 Bennu, and in Egyptian myth the Bennu bird belongs to Osiris), or `horus` (his son).
 
+Where it stands (the human, 2026-10-11): "this last list is pretty darn good". `romulus` and
+`remus` lead for the PC, with `mars` and `phobos` still an option while the human considers
+whether something works better. The EC2 is not being renamed today, so `proxima` can wait.
+
 ## Themes
 
 ### In: liked
