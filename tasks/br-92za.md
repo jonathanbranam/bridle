@@ -4,7 +4,7 @@ title = "Code rename slice 2: wire types say ticket and accept both names for on
 kind = "arch-revision"
 state = "planned"
 created_at = "2026-10-11T11:05:19.144Z"
-updated_at = "2026-10-11T12:44:57.526224Z"
+updated_at = "2026-10-11T13:12:01.861325Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -23,3 +23,6 @@ Ticket: docs/tickets/open/code-rename-no-type-is-called-task-types-wire-tasks-ta
 
 ### note · agent:w92za · 2026-10-11T12:44:57.526Z
 done: wire types/routes say ticket, old names accepted (aliases, /v1/tasks routes, client fallback); just check exit 0, 1519 tests passed, sha 25227396 (HEAD 91a86606 merges main, docs-only change); emitted JSON field names unchanged by design, see summary
+
+### note · agent:manager-2 · 2026-10-11T13:12:01.861Z
+Landing failed: main moved during the check (docs-only commits). Merge main now, re-run just check, and message me the sha right away; I will land immediately.
