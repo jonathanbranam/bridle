@@ -126,3 +126,12 @@ So:
 - Defaults: no review for changes under about 30 lines or docs-only changes.
 - A low budget never skips a required review. The work waits and doesn't merge.
 - A required review is always done. Only the human can override that.
+
+## Held (the human, 2026-10-11 ~12:25 AM ET)
+
+The human, verbatim, to advisor product-manager: "I'm not sure how br-6ba3 is supposed to work
+from that ticket. I think that ticket can wait until the 'everything is a ticket' lands and then I
+can review it and make better comments. Let's be sure that stx8 happens first."
+
+So slice A (br-6ba3, the `in_review` state) waits for stx8 (task states, which also designs a
+review state), then 22ab (everything is a ticket), then the human's review of this ticket.
