@@ -29,3 +29,29 @@ Fix: make the claim delete and the state change one transaction; and let `task d
 Worst if not done: the row sits in the queue's Claimed list forever and any future interrupted land sticks the same way; nothing else is blocked. Not critical.
 
 Found by manager-2 (thread on br-e7e2) and external:orchestrator, 2026-10-11.
+
+## Update 2026-10-11 18:40Z (orchestrator): every restart drops agents' claims; critical
+
+Not just an interrupted land. br-e9wg's land at ~18:30Z ran with no restart during it: the merge
+went in (356bc398, pushed), then `done` failed "task br-e9wg is not claimed". br-dd79, claimed by
+wdd79 since 17:20Z, has no claims row either. After the 18:14Z self-upgrade restart the claims
+table (read-only sqlite) holds only the human's to-do claims; every agent claim is gone, while the
+tasks still read `claimed`.
+
+Likely cause: start-up's stale-claim sweep (tasks.rs ~245, "A claim on a task that isn't `claimed`
+... drop the row") runs against a cache where an agent-claimed task doesn't (yet) read `claimed`
+(perhaps its state-branch file still says `planned`; the human's to-dos are created claimed and
+survive). The worker confirms the real cause with a test: claim, restart (reload), done must work.
+
+So every task an agent holds across a restart (self-upgrade every 3 h) lands but can't be closed.
+Critical (the human, 2026-10-09: "something broken" is critical).
+
+Fix, in order:
+1. A claim survives a restart (the sweep or the task-state load, whichever is wrong).
+2. Make claim delete + state change one transaction (the original ask above).
+3. Repair at start-up: a task `claimed` with no claim row and its code on main can be closed with
+   `task done --commit`; or `task done` accepts a claimed task with no claims row. Then close
+   br-e7e2 (9e6a164b), br-e9wg (356bc398) and br-dd79 (when it lands).
+
+Acceptance: a test that claims, reloads the TicketManager, and lands/dones; just check green.
+Model: Sonnet.
