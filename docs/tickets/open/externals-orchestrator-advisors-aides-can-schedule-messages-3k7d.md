@@ -15,7 +15,7 @@ theme: agents-and-cli
 
 ## The ask
 
-The human, 2026-10-11 ~12:30 AM ET, verbatim (to advisor product-manager), on why externals get a
+The human, 2026-10-10 ~11:40 PM ET, verbatim (to advisor product-manager), on why externals get a
 403 from `bridle schedule add`:
 
 > yeah, those internal agents barely need it; the purpose of this is specifically for the extern
@@ -47,7 +47,7 @@ landing; slice 2 (br-g5y2) did not fix it.
 - Tests: an external adds for itself (ok), for another principal (403), lists and removes only its
   own; the human still sees all.
 
-## Also: bare external names as recipients (the human hit it, 2026-10-11 ~12:50 AM ET)
+## Also: bare external names as recipients (the human hit it, 2026-10-10 ~11:45 PM ET)
 
 The human ran `bridle schedule add --to advisor/product-manager` and got
 `error: not_found: no such recipient: advisor/product-manager`. Only `external:advisor/product-manager`
@@ -57,4 +57,4 @@ that. Fix in the same task: a bare known external name (`advisor`, `advisor/<nam
 `orchestrator`, with an optional `@<machine>`) resolves as `external:<name>` when no agent has that
 name. It applies to `bridle send` and `bridle schedule add` alike (same resolver). Test both forms.
 
-Priority high: the human wants it landed tonight (2026-10-11). Small.
+Priority high: the human wants it landed tonight (2026-10-10, ET). Small.

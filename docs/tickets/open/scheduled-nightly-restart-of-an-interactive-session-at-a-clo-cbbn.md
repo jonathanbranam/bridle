@@ -68,7 +68,7 @@ table). What that means for the build (advisor product-manager's reading; the hu
   no deferring because the human was active, and if no note comes by the deadline the session is
   restarted anyway (said in the daemon log and the morning list). Once per day; a daemon that was
   down at the time does not catch up.
-- **The build and the handover text** (the human, verbatim, 2026-10-11 ~12:05 AM ET):
+- **The build and the handover text** (the human, verbatim, 2026-10-10 ~11:35 PM ET):
 
   > This only requires a scheduler component to be built, then the daemon reads the config and
   > wakes up at the time and does the handover as normal. The handover should explain "the human
@@ -81,7 +81,7 @@ table). What that means for the build (advisor product-manager's reading; the hu
   at 4:00 AM every day; it is time to hand over. Write the handover note with `bridle handover
   write --file -` and say nothing more; the restart follows when the note is recorded." (The time
   is the entry's `at`.)
-- **Not running, and events** (the human, verbatim, 2026-10-11 ~12:15 AM ET):
+- **Not running, and events** (the human, verbatim, 2026-10-10 ~11:38 PM ET):
 
   > if the agent isn't running, the daemon skips it. event should be written for the operation
   > whether it found the agent and succeeded or the agent wasn't running and the restart handover

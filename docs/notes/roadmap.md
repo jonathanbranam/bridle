@@ -258,7 +258,7 @@ No tasks yet.
 
 #### Epic `reviews-enforced`: Gates: design before build, review before landing
 
-- Outcome: A change's proposal and design are approved before it is planned (95mu, 22ab sections 5-6), and reviews are required, signed on the work and enforced before landing (v2va). Moved here from everything-is-a-ticket (the human, 2026-10-11 ~1:30 AM ET: "yes, agreed move it").
+- Outcome: A change's proposal and design are approved before it is planned (95mu, 22ab sections 5-6), and reviews are required, signed on the work and enforced before landing (v2va). Moved here from everything-is-a-ticket (the human, 2026-10-11 ~12:05 AM ET: "yes, agreed move it").
 - Done when: The daemon refuses to plan a change ticket without its approved design (95mu), and no landing until every required review is signed (v2va slice D).
 
 | Task | Title | Pri | State | Next |
@@ -568,4 +568,4 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 - 2026-10-10 2:25 PM ET: v0.6.0 tagged. New 36dp (machine-wide self_upgrade, from the orchestrator) into `machine-setup`, readied high: the NUC's switch to release upgrades waits on it, so no commits to the human's existing projects.
 - 2026-10-10 7:30 PM ET: regenerated. 36dp, chvf, hwek resolved; fv86, 3zhx, g5y2, syqn, 2msq, ysmu, bcw6, g76s landed; fd8e placed in comment-routing. New ve74 (handover request reaches the new session; the human via aide: investigate, low) in reliability, not in an epic.
 - 2026-10-10 10:20 PM ET: 8umh, 3mz4, n4w4 resolved (n4w4: all 9 recommendations landed). 3haz slices 4 and 5 landed; 3haz stays open for slice 6, br-qac3 (readied, the human's Q3), in `messaging`. syqn parts 2 and 3 (br-epvy, br-wrmu) readied, in `everything-is-a-ticket` after br-syqn.
-- 2026-10-11 1:35 AM ET: 95mu moved from everything-is-a-ticket to reviews-enforced, renamed "Gates: design before build, review before landing" (the human: "yes, agreed move it"). cbbn design decided (plain [[restart]] config), readied; new 3k7d (externals schedule for themselves, high, tonight) in scheduled-messages; new jstr (recipient hint, low) in agents-and-cli. 3haz, fd8e resolved; qac3, fd8e landed.
+- 2026-10-11 12:07 AM ET: 95mu moved from everything-is-a-ticket to reviews-enforced, renamed "Gates: design before build, review before landing" (the human: "yes, agreed move it"). cbbn design decided (plain [[restart]] config), readied; new 3k7d (externals schedule for themselves, high, tonight) in scheduled-messages; new jstr (recipient hint, low) in agents-and-cli. 3haz, fd8e resolved; qac3, fd8e landed.

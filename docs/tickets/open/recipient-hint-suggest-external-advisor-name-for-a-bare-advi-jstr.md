@@ -15,7 +15,7 @@ theme: agents-and-cli
 
 ## The ask
 
-The human, 2026-10-11 ~1:00 AM ET, verbatim (to advisor product-manager):
+The human, 2026-10-10 ~11:45 PM ET, verbatim (to advisor product-manager):
 
 > it doesn't suggest advisor though, when I tried 'aide' is suggested 'external:aide'. File a small
 > ticket to fix the suggestion to strip the '/' when comparing to agents.

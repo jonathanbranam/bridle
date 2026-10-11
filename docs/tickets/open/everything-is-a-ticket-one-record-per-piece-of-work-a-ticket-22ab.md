@@ -352,7 +352,7 @@ Advisor (product-manager) sizes, orders and plans them, with the human's approva
    existing states; stx8 is reviewed separately, later (section 10).
 6. **Change parts, gate and approvals** (with 95mu; **moved out of this workstream** to the epic
    reviews-enforced, now "Gates: design before build, review before landing" (the human,
-   2026-10-11 ~1:30 AM ET: "yes, agreed move it"); not on the path to this epic's done-when): the layout (section 4), the per-type
+   2026-10-11 ~12:05 AM ET: "yes, agreed move it"); not on the path to this epic's done-when): the layout (section 4), the per-type
    config (section 6), `ticket approve`, the daemon refusing to plan, and the proposal, design
    and review prompts.
 7. **User-facing rename**: CLI with a hidden `task` alias, roles, rules, skills, docs; the
