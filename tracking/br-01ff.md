@@ -4,14 +4,14 @@ title = "Tickets through the bridle binary in every project: new, frontmatter, c
 kind = "feature"
 state = "pending"
 created_at = "2026-09-30T19:48:27.574Z"
-updated_at = "2026-10-11T13:34:51.118363Z"
+updated_at = "2026-10-11T21:30:44.570677Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "external:advisor/product-manager",
 ]
 size = "M"
-ticket = "7gk7. docs/tickets/open/tickets-through-the-bridle-binary-7gk7.md"
+ticket = "pq79"
 +++
 
 

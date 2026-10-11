@@ -4,14 +4,17 @@ title = "Sat 10-03: review and land the parked branches (br-6b8a, br-2718, br-26
 kind = "chore"
 state = "claimed"
 created_at = "2026-10-02T12:55:45.643Z"
-updated_at = "2026-10-09T11:04:37.220825Z"
+updated_at = "2026-10-11T21:31:07.857423Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "human",
     "external:advisor/product-manager",
 ]
+ticket = "a3b9"
 +++
+
+docs/tickets/open/sat-10-03-review-and-land-the-parked-branches-br-6b8a-br-271-a3b9.md
 
 Each is built on its branch with just check green; the manager parked them for your review (start-up and relaunch paths). Branches: see each task's thread. Tell the manager to land them, then finish with bridle task done.
 

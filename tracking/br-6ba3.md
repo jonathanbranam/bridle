@@ -4,7 +4,7 @@ title = "Reviews A: in_review state, ready-for-review, review requirements on ta
 kind = "feature"
 state = "held"
 created_at = "2026-10-01T11:47:57.256Z"
-updated_at = "2026-10-11T21:16:37.197922Z"
+updated_at = "2026-10-11T21:30:56.216112Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -12,10 +12,13 @@ watchers = [
 ]
 size = "M"
 priority = "low"
+ticket = "6ba3"
 held_by = "external:orchestrator"
 held_reason = "human via orchestrator: v2va review slices are held until stx8 is built, 22ab has landed and the human has reviewed v2va again (the human's quote is on br-6ba3)"
 held_at = "2026-10-11T21:16:37.197922Z"
 +++
+
+docs/tickets/open/reviews-a-in-review-state-ready-for-review-review-requiremen-6ba3.md
 
 Slice A of br-91b3 (read its body and the v2va ticket first). Add the in_review task state between claimed and integrated, 'bridle task ready-for-review <task>' (the claiming worker only), per-task review requirements (flags like requires: code, security, human, set at creation or edit) and the project-policy lookup that yields the required set for a task. No reviewers spawn yet and nothing is enforced yet. Touch: crates/bridle-daemon tasks.rs (state machine), the state-branch mirror and rebuild (storage.md), bridle-api types (all clients and the daemon together), CLI, docs (storage.md, coordination.md, cli.md), CHANGELOG. Tests: transitions and conflicts, requirements surviving a rebuild, policy lookup. Acceptance: just check passes. Model: Sonnet. Not queued until the human is back.
 

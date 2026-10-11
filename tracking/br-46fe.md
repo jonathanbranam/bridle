@@ -4,7 +4,7 @@ title = "Reviews B: signed review records on the task (v2va slice B)"
 kind = "feature"
 state = "held"
 created_at = "2026-10-01T11:47:57.275Z"
-updated_at = "2026-10-11T21:16:37.226011Z"
+updated_at = "2026-10-11T21:30:59.132554Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -12,10 +12,13 @@ watchers = [
 ]
 size = "M"
 priority = "low"
+ticket = "46fe"
 held_by = "external:orchestrator"
 held_reason = "human via orchestrator: v2va review slices are held until stx8 is built, 22ab has landed and the human has reviewed v2va again (the human's quote is on br-6ba3)"
 held_at = "2026-10-11T21:16:37.226011Z"
 +++
+
+docs/tickets/open/reviews-b-signed-review-records-on-the-task-v2va-slice-b-46fe.md
 
 Slice B of br-91b3 (read it and the v2va ticket). Blocked by slice A. A review verdict (approve / changes-needed) is a signed thread entry on the task, written with 'bridle task review <task> --verdict ...' by a reviewer or the human; signing uses the signer's bridle token as decided (assume tokens are secure; 2bzw hardens later). Settle and document the scheme: the store keeps token hashes only, so say how the daemon verifies a signature (propose one, flag it in the done report). 'bridle task show' lists required vs signed reviews and who signed. Tests: valid signature accepted, tampered body or wrong token rejected, one reviewer cannot sign as another. Docs: principals.md, coordination.md, cli.md, CHANGELOG. Acceptance: just check passes. Model: Sonnet. Not queued until the human is back.
 
