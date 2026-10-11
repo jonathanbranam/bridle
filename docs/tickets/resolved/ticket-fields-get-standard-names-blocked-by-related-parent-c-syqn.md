@@ -10,6 +10,7 @@ specs: []
 blocked_by: []
 related: [br-22ab, br-zkbb]
 tasks: [br-syqn]
+resolved: 2026-10-11T07:22:31Z
 ---
 
 ## The ask
