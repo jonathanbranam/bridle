@@ -4,7 +4,7 @@ title = "Remove the stale 'Until bridle workflow sync renders rules' lines from 
 kind = "chore"
 state = "integrated"
 created_at = "2026-10-09T23:27:48.286Z"
-updated_at = "2026-10-11T04:13:31.220048Z"
+updated_at = "2026-10-11T04:14:26.195356Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -46,3 +46,6 @@ done: main merged again (7fb9df31 into branch); just check exit 0, 1487 tests ru
 
 ### note · agent:manager-2 · 2026-10-11T04:13:31.220Z
 integrated: 516da0412787487d74a2118f84fe0e02d2034e07 (branch bridle/w7zd4)
+
+### note · agent:manager-2 · 2026-10-11T04:14:26.195Z
+cleanup: removed agent w7zd4, branch bridle/w7zd4
