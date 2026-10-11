@@ -256,6 +256,23 @@ Places (not asked for, but planets are machine names elsewhere in this file):
 | andromeda, cassiopeia | Long to type. |
 | cygnus | Dictation may hear "signus". |
 
+**Stars** (442 names in the IAU's official catalogue, so the set won't run out. Picks below;
+none dictation-tested.) Lists: the IAU Catalog of Star Names
+([namingschemes.com](https://namingschemes.com/IAU_Catalog_of_Star_Names_(IAU-CSN)), which blocks
+automated readers, and the IAU working group's
+[full text file](https://www.pas.rochester.edu/~emamajek/WGSN/IAU-CSN.txt), last updated
+2022-04-04; the official page is [iau.org](https://www.iau.org/public/themes/naming_stars/)).
+
+| Name | Notes |
+|---|---|
+| vega, rigel, deneb, altair, antares, procyon, canopus, regulus | Bright, well-known stars; easy to say. |
+| sirius, polaris, spica, capella | Well known, but sound like other words or names: "serious", Polaris (a product), "speaker", "a cappella". |
+| arcturus, aldebaran, betelgeuse | Famous, but long; betelgeuse is hard to spell. |
+| castor, pollux | The twins in Gemini: a pair. |
+| mizar, alcor | A double star in the Big Dipper's handle: a pair. |
+| maia, electra, merope, alcyone | Sisters of the Pleiades: a family set. |
+| mira, izar, thuban, rana | Short and unusual. |
+
 **Gods: Greek, Norse and Roman** (big pantheons, so plenty of room; many are also product,
 planet or Marvel names)
 
