@@ -75,21 +75,24 @@ host"):
 | voyager | flyer | Star Trek: Voyager | The ship and the Delta Flyer, the small craft its crew built. |
 | nostromo | narcissus | Alien | The ship and its lifeboat shuttle. Both long, and nostromo is pencilled in for the work laptop. |
 
+On Star Wars, the human (2026-10-11): "overall i love star wars but it feels overused; more rare
+ones are a possibilities".
+
 Broader sci-fi pairs, places rather than ships, just "two vaguely related things" (the human,
 2026-10-11; `romulus` and `remus` are the human's favourite so far, not yet tested):
 
 | Windows | WSL2 | From | Why |
 |---|---|---|---|
 | hoth | endor | Star Wars | The two big rebel battle worlds. Both short. |
-| naboo | kamino | Star Wars | Two worlds from the prequels; kamino may dictate badly. |
-| yavin | scarif | Star Wars | Where the Death Star plans went, and where they came from. |
-| caladan | giedi | Dune | The rival houses' homeworlds (Giedi Prime). |
-| kaitain | salusa | Dune | The Emperor's capital and his prison planet (Salusa Secundus). |
+| ~~naboo~~ | kamino | Star Wars | Two worlds from the prequels; kamino may dictate badly. Naboo struck: "I'm not a fan of the prequels"; the Clone Wars are OK. |
+| yavin | scarif | Star Wars | Where the Death Star plans went, and where they came from. The human: a possibility. |
+| caladan | ~~giedi~~ | Dune | The rival houses' homeworlds (Giedi Prime). Giedi struck: no clear way to say it; "giedi prime" might work, but then agents must know to drop "prime". |
+| ~~kaitain~~ | salusa | Dune | The Emperor's capital and his prison planet (Salusa Secundus). Kaitain struck: "can't pronounce". |
 | terminus | trantor | Foundation | Opposite ends of the galaxy; trantor is also an idea for the cloud. |
 | caprica | picon | Battlestar Galactica | Two of the Twelve Colonies. |
-| abydos | chulak | Stargate | The first two worlds through the gate. Abydos may dictate badly. |
-| ariel | osiris | Firefly | Two Core worlds. Ariel is also a name. |
-| vulcan | andoria | Star Trek | Neighbours and old rivals, founders of the Federation. |
+| ~~abydos~~ | ~~chulak~~ | Stargate | The first two worlds through the gate. Struck: "can't pronounce". |
+| ariel | osiris | Firefly | Two Core worlds. Ariel is also a name. The human: good, will test. |
+| vulcan | andoria | Star Trek | Neighbours and old rivals, founders of the Federation. The human: might work, will consider. |
 
 Advisor's pick: **`mars`** (Windows) and **`phobos`** (WSL2), **`vega`** (NUC), **`proxima`**
 (EC2). Each is eight letters or fewer, and none sounds like another.
