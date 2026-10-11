@@ -4,12 +4,15 @@ title = "Incident: the benchmark sampler's script and ~2 h of data were lost whe
 kind = "incident"
 state = "pending"
 created_at = "2026-10-10T13:46:10.059Z"
-updated_at = "2026-10-10T13:48:22.989889Z"
+updated_at = "2026-10-11T21:32:21.863977Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
 priority_at = "2026-10-10T13:46:10.060030Z"
+ticket = "vt9k"
 +++
+
+docs/tickets/open/incident-the-benchmark-sampler-s-script-and-2-h-of-data-were-vt9k.md
 
 The human, 2026-10-10 ~9:45 AM ET, verbatim (to the aide): "wow - we lost everything from the benchmark sampler! OMG that is a huge miss; traack in the incident log."
 

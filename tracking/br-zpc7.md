@@ -4,7 +4,7 @@ title = "Mail bridge failures as events or messages (gdyy part 2)"
 kind = "feature"
 state = "pending"
 created_at = "2026-10-09T23:27:49.526Z"
-updated_at = "2026-10-09T23:27:49.527223Z"
+updated_at = "2026-10-11T21:32:15.691103Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -12,8 +12,11 @@ watchers = [
 ]
 priority = "low"
 priority_at = "2026-10-09T23:27:49.527223Z"
+ticket = "zpc7"
 parent = "br-gdyy"
 +++
+
+docs/tickets/open/mail-bridge-failures-as-events-or-messages-gdyy-part-2-zpc7.md
 
 Ticket: docs/tickets/open/*-gdyy.md. br-gdyy landed the log half. The second section (failures as events or messages) was left out; pm-1: ask the human first. Unscheduled until the human says it's wanted.
 

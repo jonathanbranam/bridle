@@ -2,11 +2,14 @@
 id = "br-uwcw"
 title = "Flaky renew_test: resume_of_a_session_that_never_started_uses_a_fresh_session (macOS)"
 kind = "fix"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-11T06:05:26.116Z"
-updated_at = "2026-10-11T21:32:11.314440Z"
+updated_at = "2026-10-11T21:32:18.558161Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:wuwcw",
+]
 priority = "low"
 priority_at = "2026-10-11T06:05:38.502194Z"
 ticket = "uwcw"
