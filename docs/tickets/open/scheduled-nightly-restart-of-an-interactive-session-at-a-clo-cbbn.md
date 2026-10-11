@@ -76,7 +76,21 @@ table). What that means for the build (advisor product-manager's reading; the hu
   at 4:00 AM every day; it is time to hand over. Write the handover note with `bridle handover
   write --file -` and say nothing more; the restart follows when the note is recorded." (The time
   is the entry's `at_time`.)
+- **Not running, and events** (the human, verbatim, 2026-10-11 ~12:15 AM ET):
+
+  > if the agent isn't running, the daemon skips it. event should be written for the operation
+  > whether it found the agent and succeeded or the agent wasn't running and the restart handover
+  > was skipped
+
+  So every firing writes one event, named like the existing ones (`daemon.started`,
+  `load.hold.started`, `push.failed`):
+  - `session.restart.completed`: project, session, the configured time, whether a handover note
+    was recorded before the restart (`note: true|false`; false when the deadline passed without
+    one).
+  - `session.restart.skipped`: project, session, the configured time, reason `not running`. No
+    handover request, no launch.
 - **Dropped from the earlier brief:** the per-role handover instructions (ft3b) are not needed
   first: the existing handover request is enough. 4s3z and gq9r have landed. So nothing blocks it.
 - Verify: just check, plus a daemon test with a fake clock: fires once at the time, not again that
-  day, restarts after the deadline when no note comes, does nothing with no entry.
+  day, restarts after the deadline when no note comes, skips a session that is not running, writes
+  the completed or skipped event each time, does nothing with no entry.
