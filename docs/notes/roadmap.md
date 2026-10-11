@@ -15,7 +15,7 @@ before it moves: "waits on the human" is a pending task only the human can appro
 is the project manager's; "ready to build" is in the queue; "HELD" is planned in bridle but
 stopped by the human.
 
-Last updated: 2026-10-10 2:40 PM ET.
+Last updated: 2026-10-11 6:50 PM ET (epic order only; the tables below are from 10-10).
 
 ## Needs the human now
 
@@ -47,24 +47,31 @@ Goal: ship scheduled messages, with design and specs approved before build. In b
 
 ## Epics in order
 
-The roadmap's priority order (the human, 2026-10-10 10:15 AM ET): machine setup, messaging, scheduled messages, benchmarking alongside, background agents; one orchestrator per machine before machine sync and project transfer.
+The human's order, 2026-10-11 ~6:35 PM ET (to advisor product-manager): "In terms of the bridle
+system, the most impactful changes after that will be: 1. Per-machine role support. Both current
+orch and an admin role in a following epic. ... 2. Formalize the PdM role and functionality ...
+3. Multi-part tickets (to support design work) 4. Proper per task workflow (mostly 10 I think)";
+11 and 15 "could go anytime if there is room in the queue waiting for me"; security "is low
+priority, comes after many other epics"; background agents "can wait for now".
 
-1. **Machine setup: the PC runs bridle from a release** (`machine-setup`, theme `multi-machine`)
-2. **Messages are reliable, one waiter per agent** (`messaging`, theme `agents-and-cli`)
-3. **Scheduled messages and timed actions** (`scheduled-messages`, theme `agents-and-cli`)
-4. **Benchmarking bridle's own cost** (`benchmarking`, theme `performance`)
-5. **bridle-ui ships with bridle releases** (`ui-releases`, theme `human-ui`)
-6. **Interactive agents move to the background** (`background-agents`, theme `agents-and-cli`)
-7. **Everything is a ticket** (`everything-is-a-ticket`, theme `tickets-and-release`)
-8. **Migrations** (`migrations`, theme `tickets-and-release`)
-9. **Documents and attachments on tickets** (`attachments`, theme `product-process`)
-10. **Gates: design before build, review before landing** (`reviews-enforced`, theme `product-process`)
-11. **Comments and mentions reach the right agent** (`comment-routing`, theme `human-ui`)
-12. **One orchestrator per machine** (`orchestrator-per-machine`, theme `agents-and-cli`)
-13. **Machine sync and recovery** (`machine-sync`, theme `multi-machine`)
-14. **Projects become machine-transparent** (`machine-transparent`, theme `multi-machine`)
-15. **bridle-ui enhancements and fixes** (`ui-cleanups`, theme `human-ui`)
-16. **Products: several product managers and roadmaps** (`products`, theme `product-process`)
+Done or finishing: machine setup (code done), messaging, scheduled messages (what's left waits on
+kuw2), benchmarking (report due), everything is a ticket (step 10 gated on three machines current),
+migrations.
+
+1. **Human work: bring the three machines onto bridle** (du7e; the human's to-dos h7mu, jgdb, r2nr)
+2. **bridle-ui ships with bridle releases** (`ui-releases`; t3dr readied 2026-10-11)
+3. **One orchestrator per machine** (`orchestrator-per-machine`)
+4. **Machine admin role** (j6d3; gb97)
+5. **Products: formalize the PdM role** (`products`)
+6. **Documents and attachments on tickets: multi-part tickets** (`attachments`)
+7. **Gates: design before build, review before landing: the per-ticket workflow** (`reviews-enforced`; stx8 first)
+8. **Machine sync and recovery** (`machine-sync`)
+9. **Projects become machine-transparent** (`machine-transparent`)
+10. **Interactive agents move to the background** (`background-agents`; waits)
+11. **Security and hardening** (3827; low)
+
+Anytime, when the queue is waiting on the human: **Comments and mentions reach the right agent**
+(`comment-routing`), **bridle-ui enhancements and fixes** (`ui-cleanups`).
 
 ## Themes
 
