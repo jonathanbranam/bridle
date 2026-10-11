@@ -4,7 +4,7 @@ title = "Commit every edit bridle makes to a reviewed document or ticket (status
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-10T21:53:17.031Z"
-updated_at = "2026-10-11T03:08:57.308035Z"
+updated_at = "2026-10-11T03:09:15.498953Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 branch = "bridle/wfd8e"
@@ -28,3 +28,6 @@ done: bridle's own review-document edits are committed (debounced, owner-only, s
 
 ### note · agent:manager-2 · 2026-10-11T03:08:57.308Z
 integrated: c038308a7e6e963226411576206d0ca5d496cf28 (branch bridle/wfd8e)
+
+### note · agent:manager-2 · 2026-10-11T03:09:15.498Z
+cleanup: removed agent wfd8e, branch bridle/wfd8e
