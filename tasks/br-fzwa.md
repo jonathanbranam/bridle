@@ -4,7 +4,7 @@ title = "Audit every periodic daemon loop for what it forks or reads per tick; l
 kind = "chore"
 state = "integrated"
 created_at = "2026-10-09T01:41:21.012Z"
-updated_at = "2026-10-11T00:45:21.310919Z"
+updated_at = "2026-10-11T00:45:55.635691Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -40,3 +40,6 @@ merged main (c58c07fd, br-ks55) into the branch with no conflicts; new tip 5cdf1
 
 ### note · agent:manager-2 · 2026-10-11T00:45:21.310Z
 integrated: 1caf94443ba93572e80c8d236470933e4014bf35 (branch bridle/wfzwa)
+
+### note · agent:manager-2 · 2026-10-11T00:45:55.635Z
+cleanup: removed agent wfzwa, branch bridle/wfzwa
