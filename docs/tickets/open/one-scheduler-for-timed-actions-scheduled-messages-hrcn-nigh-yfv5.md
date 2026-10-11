@@ -75,6 +75,8 @@ when the human was active within N minutes) is the real work of cbbn and is the 
 nothing is wasted. Accepts: cbbn now depends on the schedule table's shape, and still waits on its
 own needs (4s3z, gq9r, ft3b), which is true for A as well.
 
+**Decided (the human, 2026-10-10 ~11:55 PM ET): A.** "I think cbbn solution is simple: at a specific time, the daemon forces a handover of an agent. In the config I specify something like: at_time = 4:00 am". Details in ticket [[scheduled-nightly-restart-of-an-interactive-session-at-a-clo-cbbn|cbbn]]. Point 3's action column is not needed for cbbn.
+
 ### Point 2: per-project first, machine-wide later
 
 **Recommend: per project for messages and restarts; the maintenance window (3nyk) waits on cy2v / kuw2.**
