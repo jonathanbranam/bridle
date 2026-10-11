@@ -31,7 +31,7 @@ a ready-made host and guests:
 | Star | Its planets |
 |---|---|
 | cervantes | quijote, dulcinea, rocinante, ~~sancho~~ |
-| copernicus | galileo, brahe, lipperhey, janssen, harriot |
+| ~~copernicus~~ | ~~galileo~~, brahe, lipperhey, janssen, harriot |
 | lich (a pulsar) | draugr, poltergeist, phobetor |
 
 Other star ideas: sun gods (`helios`, `sol`, ~~`sunna`~~, `surya`, ~~`inti`~~, `ra`); Orion's belt
@@ -60,7 +60,7 @@ Struck by the human (2026-10-11): `sancho` ("I don't like saying sancho"), `sunn
 | jupiter | callisto | A planet and its outermost big moon. |
 | saturn | titan | Saturn's biggest moon. |
 | neptune | triton | Neptune's biggest moon. |
-| copernicus | galileo | Officially a star and its planet (NameExoWorlds); copernicus is long. |
+| ~~copernicus~~ | ~~galileo~~ | Officially a star and its planet (NameExoWorlds); copernicus is long. Struck by the human (2026-10-11). |
 | ~~mir~~ | soyuz | A station and the ship that docks with it: the guest docked in the host. Mir struck. |
 
 Sci-fi pairs, host first (a carrier and the craft it holds is another way to say "guest inside a
@@ -71,7 +71,7 @@ host"):
 | romulus | remus | Star Trek | Twin worlds; Remus is the one where the hard labour is done. |
 | galactica | viper | Battlestar Galactica | The carrier and the fighter it launches. Galactica is long. |
 | galactica | raptor | Battlestar Galactica | The carrier and its small utility craft. |
-| enterprise | galileo | Star Trek | The ship and its shuttlecraft. Enterprise is long. |
+| enterprise | ~~galileo~~ | Star Trek | The ship and its shuttlecraft. Enterprise is long. |
 | voyager | flyer | Star Trek: Voyager | The ship and the Delta Flyer, the small craft its crew built. |
 | nostromo | narcissus | Alien | The ship and its lifeboat shuttle. Both long, and nostromo is pencilled in for the work laptop. |
 
@@ -288,7 +288,7 @@ Real spacecraft, for the same theme:
 |---|---|
 | apollo, gemini, mercury | NASA's crewed programmes; also a god, a constellation and a planet. |
 | voyager, pioneer, viking | Probes that left (or landed); pioneer and viking are common words. |
-| cassini, galileo, kepler, hubble, webb | Probes and telescopes named after astronomers. |
+| cassini, ~~galileo~~, kepler, hubble, webb | Probes and telescopes named after astronomers. |
 | juno, rosetta, dawn, huygens | Probes. |
 | atlantis, discovery, endeavour | Shuttles. Leave out challenger and columbia: both were lost with their crews. |
 | soyuz, vostok, sputnik, mir | Soviet craft and station. |
