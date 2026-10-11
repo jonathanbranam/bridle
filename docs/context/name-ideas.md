@@ -5,8 +5,8 @@ themes, candidates, what's been tested and what's been cut. Kept by the human, a
 How to choose a name (short, survives dictation, a type is not a name) is in
 [[naming]]; this file is only the pool of ideas.
 
-Status: ideas. Decided 2026-10-11: the Windows PC is `romulus` and its WSL2 is `remus`. Nothing else
-is decided.
+Status: ideas. Decided 2026-10-11: the Windows PC is `romulus`, its WSL2 is `remus`, and the NUC is
+`vesta`. Nothing else is decided.
 
 ## Working idea (2026-10-11)
 
@@ -95,8 +95,8 @@ Broader sci-fi pairs, places rather than ships, just "two vaguely related things
 | ~~ariel~~ | osiris | Firefly | Two Core worlds. Ariel struck: casual sentences make it Arial, the font. Osiris kept for later. |
 | vulcan | andoria | Star Trek | Neighbours and old rivals, founders of the Federation. The human: might work, will consider. |
 
-Decided (the human, 2026-10-11: "Romulus and Remus it is"): **`romulus`** (Windows) and **`remus`** (WSL2). Leading for the rest: **`vega`** (NUC), **`proxima`**
-(EC2). Each is eight letters or fewer, and none sounds like another.
+Decided (the human, 2026-10-11: "Romulus and Remus it is"): **`romulus`** (Windows) and **`remus`** (WSL2). The NUC is **`vesta`** (the human, 2026-10-11: "vesta is an asteroid, yea? the NUC is small;
+makes sense; let's go with Vesta for the NUC."). Leading for the rest: **`proxima`** (EC2). Each is eight letters or fewer, and none sounds like another.
 
 **Reserved:** `arrakis`, "saved for something special in the future"; `canopus` and `arrakis` are
 "too grandiose" for the PC (the human, 2026-10-11).
@@ -119,7 +119,7 @@ Or let each son pick from the theme (a c2 tip: let the owner choose from the set
 | Machine | Now | Leading idea | Notes |
 |---|---|---|---|
 | MacBook Pro (this one) | dalek | dalek | Kept: "it's been dalek for a long time"; "too much work to change" (the human). |
-| Intel NUC | nuc | vega | "NUC" is a type, and dictation hears "Nook". Was `sonic`; see "Working idea". |
+| Intel NUC | nuc | **vesta: decided** | "NUC" is a type, and dictation hears "Nook". Vesta: a small main-belt asteroid, named for the goddess of the hearth. Was `sonic`; see "Working idea". |
 | Windows desktop, running WSL2 | EzekielsPC | **romulus (Windows), remus (WSL2): decided** | The human couldn't settle on `tardis` (2026-10-11). See "WSL2 and its name" below. |
 | EC2 | (none) | proxima, luna | The edge box (the NUC's tunnel fallback). Was `terminus`. |
 | Future cloud servers | | planets, moons, stations | The wanderers. |
