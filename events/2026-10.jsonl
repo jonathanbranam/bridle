@@ -1615,3 +1615,4 @@
 {"actor":"agent:pm-1","at":"2026-10-11T17:19:07.228642Z","from":"planned","task":"br-enx3","to":"dropped"}
 {"actor":"agent:pm-1","at":"2026-10-11T17:19:11.273852Z","queue":"reprioritized"}
 {"actor":"human","at":"2026-10-11T17:19:28.235Z","from":"","task":"br-e4rv","to":"pending"}
+{"actor":"agent:pm-1","at":"2026-10-11T17:19:31.205741Z","queue":"reprioritized"}
