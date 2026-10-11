@@ -4,7 +4,7 @@ title = "ticket new: a body with its own '## The ask' gets a second, empty one, 
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-11T06:05:26.191Z"
-updated_at = "2026-10-11T19:49:49.766979Z"
+updated_at = "2026-10-11T19:50:03.711669Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -45,3 +45,6 @@ done: ticket new keeps one 'The ask'; ready reads first non-empty one; just chec
 
 ### note · agent:manager-2 · 2026-10-11T19:49:49.766Z
 integrated: 097c063754b756878c112f29118efcb21353b55e (branch bridle/w6rz4)
+
+### note · agent:manager-2 · 2026-10-11T19:50:03.711Z
+cleanup: removed agent w6rz4, branch bridle/w6rz4

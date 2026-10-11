@@ -2,11 +2,14 @@
 id = "br-ydyk"
 title = "ticket new in another project can write the wrong id prefix (br- in bridle-ui)"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-11T13:39:02.299Z"
-updated_at = "2026-10-11T17:19:06.036542Z"
+updated_at = "2026-10-11T19:50:12.386Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:wydyk",
+]
 ticket = "ydyk"
 +++
 
