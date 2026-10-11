@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+- Comment IDs never repeat after a thread is deleted (br-gd43, bridle half of ui-vnuu): a document under review keeps `next_comment_id: c<n>` in its front matter (made if missing); new threads get the larger of it and the highest ID plus one, and it is raised when lower. A batch sent to the document's agent also names any thread ID used twice (and the daemon logs it). No migration.
 - The gateway serves tickets under ticket names (br-aejj, 22ab step 8, gateway slice): `GET /api/v1/projects/{project}/tickets?state=`, `.../tickets/{id}` and `POST .../tickets/{id}/{action}` run the same handlers as the `tasks` routes; the list is keyed `tickets` (the `tasks` list keeps its `tasks` key). The task routes stay unchanged for one release. No migration.
 - Roles, rules, skills and docs say ticket, not task (br-sehn, 22ab step 8, slice 2): `workflow/base/` and the design docs use the `bridle ticket` commands; `bridle task new --for-human/--from` and `bridle task ready` remain where `ticket` has no form yet. Reaches projects through the normal workflow sync.
 

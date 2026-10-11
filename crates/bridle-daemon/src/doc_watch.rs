@@ -229,20 +229,72 @@ fn mark_threads(text: &str, sent: &[String], state: &str, stamp: &str) -> String
     out.join("\n")
 }
 
-/// Gives each open thread without an ID the next free one (highest in the file plus one).
+/// The front-matter key holding the ID the next comment gets (`next_comment_id: c7`). It keeps
+/// IDs from repeating after a thread is deleted, which the highest ID in the file cannot.
+const COUNTER_KEY: &str = "next_comment_id:";
+
+/// The counter in the document's front matter, if it has one.
+fn counter(text: &str) -> Option<u32> {
+    let rest = text.strip_prefix("---\n")?;
+    let fm = &rest[..rest.find("\n---")?];
+    let v = fm.lines().find_map(|l| l.strip_prefix(COUNTER_KEY))?;
+    v.trim().strip_prefix('c')?.parse().ok()
+}
+
+/// The text with the counter set to `c<n>`: replaced in place, added to the front matter, or a
+/// minimal front matter made when the document has none.
+fn set_counter(text: &str, n: u32) -> String {
+    let line = format!("{COUNTER_KEY} c{n}");
+    let Some(rest) = text.strip_prefix("---\n") else {
+        return format!("---\n{line}\n---\n{text}");
+    };
+    let Some(end) = rest.find("\n---") else {
+        return format!("---\n{line}\n---\n{text}");
+    };
+    let mut lines: Vec<String> = rest[..end].lines().map(str::to_string).collect();
+    match lines.iter_mut().find(|l| l.starts_with(COUNTER_KEY)) {
+        Some(l) => *l = line,
+        None => lines.push(line),
+    }
+    format!("---\n{}{}", lines.join("\n"), &rest[end..])
+}
+
+/// Thread IDs used by more than one thread, in order.
+fn duplicate_ids(text: &str) -> Vec<u32> {
+    let all: Vec<&str> = text.split('\n').collect();
+    let mut seen = std::collections::HashSet::new();
+    let mut dups = Vec::new();
+    for id in scan(&all).iter().filter_map(|t| t.id(&all)) {
+        if !seen.insert(id) && !dups.contains(&id) {
+            dups.push(id);
+        }
+    }
+    dups
+}
+
+/// Gives each open thread without an ID the next one: the larger of the front-matter counter
+/// and the highest ID in the file plus one. The counter is written back as the next ID to give,
+/// and raised even when nothing was assigned if the file already holds a higher ID.
 fn assign_ids(text: &str) -> String {
     let all: Vec<&str> = text.split('\n').collect();
     let threads = scan(&all);
-    let first = threads.iter().filter_map(|t| t.id(&all)).max().unwrap_or(0) + 1;
+    let highest = threads.iter().filter_map(|t| t.id(&all)).max().unwrap_or(0);
+    let first = counter(text).unwrap_or(1).max(highest + 1);
     let mut out: Vec<String> = all.iter().map(|l| l.to_string()).collect();
     let open = threads
         .iter()
         .filter(|t| !t.resolved && t.id(&all).is_none());
-    for (next, t) in (first..).zip(open) {
+    let mut next = first;
+    for t in open {
         let h = t.lines[0];
         out[h] = out[h].replacen("> [!comment] ", &format!("> [!comment] c{next} "), 1);
+        next += 1;
     }
-    out.join("\n")
+    let out = out.join("\n");
+    if counter(&out) == Some(next) || (next == 1 && counter(&out).is_none()) {
+        return out;
+    }
+    set_counter(&out, next)
 }
 
 /// The agent has read what was sent: every human entry marked `sent` becomes `read`. Old
@@ -745,7 +797,20 @@ impl DocWatcher {
                 .map_err(|e| format!("writing {path}: {e}"))?;
         }
         let threads = pending_threads(&with_ids, resend);
-        let batch = threads.join("\n\n");
+        let mut batch = threads.join("\n\n");
+        let dups = duplicate_ids(&with_ids);
+        if !dups.is_empty() {
+            let list = dups
+                .iter()
+                .map(|n| format!("c{n}"))
+                .collect::<Vec<_>>()
+                .join(", ");
+            tracing::warn!(path, ids = %list, "document has thread IDs used twice");
+            batch.push_str(&format!(
+                "\n\nThese thread IDs are used by more than one thread: {list}. Give the later \
+                 ones new IDs (and raise next_comment_id in the front matter past them)."
+            ));
+        }
         if !self
             .deliver(&Due {
                 path: path.to_string(),
@@ -982,6 +1047,36 @@ mod tests {
                 .map(|b| unid(b))
                 .collect::<Vec<_>>()
         );
+    }
+
+    #[test]
+    fn ids_keep_counting_after_threads_are_deleted() {
+        let doc = format!("---\nnext_comment_id: c9\n---\n{HUMAN}");
+        let with = assign_ids(&doc);
+        assert!(with.contains("> [!comment] c9 human"));
+        assert_eq!(counter(&with), Some(10));
+        // All threads deleted, the counter survives and a new one gets c10.
+        let emptied = with.split("> [!comment]").next().unwrap().to_string();
+        let again = assign_ids(&format!("{emptied}{HUMAN}"));
+        assert!(again.contains("> [!comment] c10 human"));
+        assert_eq!(counter(&again), Some(11));
+        assert_eq!(assign_ids(&again), again);
+    }
+
+    #[test]
+    fn no_front_matter_gets_a_minimal_one_and_a_low_counter_is_raised() {
+        let with = assign_ids(HUMAN);
+        assert!(with.starts_with("---\nnext_comment_id: c2\n---\n"));
+        let low = "---\ntitle: x\nnext_comment_id: c1\n---\nT\n\n> [!comment] c5 human, 14:07, on \"T\"\n> Hm?\n";
+        let fixed = assign_ids(low);
+        assert!(fixed.starts_with("---\ntitle: x\nnext_comment_id: c6\n---\n"));
+    }
+
+    #[test]
+    fn duplicate_thread_ids_are_found() {
+        let t = "> [!comment] c1 human, 14:07, on \"a\"\n> x\n\n> [!comment] c1 human, 14:08, on \"b\"\n> y\n";
+        assert_eq!(duplicate_ids(t), vec![1]);
+        assert!(duplicate_ids(&assign_ids(HUMAN)).is_empty());
     }
 
     #[test]

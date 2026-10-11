@@ -28,7 +28,11 @@ and renders as a box in Obsidian. Everything is ASCII (rule `ascii-in-editable-t
 - The first line is `> [!comment] c<n> <who>, <when>, on "<quoted words>"`; the quoted words are
   what was highlighted. They anchor the comment; no line numbers (they drift when you rewrite).
   `c<n>` is the thread's ID (`bridle review resolve <path> c3`); bridle adds it to a hand-typed
-  thread when it sends it to you, so you may see a thread without one in the file.
+  thread when it sends it to you, so you may see a thread without one in the file. The document's front matter holds
+  `next_comment_id: c<n>`, the ID the next comment gets, so IDs never repeat after a thread is
+  deleted. When you write a comment by hand, give it that ID and set `next_comment_id` to the one
+  after it. bridle raises it if it is lower than the highest ID in the file plus one, and tells you
+  when a thread ID is used twice (give the later one a new ID).
 - The comment's text follows in the quote. **Replies are bold names inside the same callout**
   (`**doc-3haz, 2026-10-04 11:02 EDT:** ...`, separated by a `>` blank line). Never nest callouts.
 - Every entry's author is `who, YYYY-MM-DD HH:MM ZZZ`: US Eastern with the zone (`EST`/`EDT`).

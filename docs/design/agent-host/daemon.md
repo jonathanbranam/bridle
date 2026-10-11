@@ -205,7 +205,7 @@ batch. The watcher ticks every 30 s; at debug level it logs why a document is he
 **Marks, IDs and review now (ticket ehv6).** Each entry may end its first line with one ASCII
 status, `[pending|sent|read YYYY-MM-DD HH:MM EDT]` (US Eastern with its zone; only the latest is
 kept). Nothing parses the times: state is which mark is present. When bridle sends a batch it first
-gives each open thread without one an ID (`c<n>`, highest in the file plus one), then writes
+gives each open thread without one an ID (`c<n>`: the larger of the front matter's `next_comment_id: c<n>` and the highest in the file plus one; the key is written back as the next ID to give, a document with no front matter gets a minimal one, and a lower key is raised even when nothing is assigned), then adds a line to the batch naming any thread ID used twice (also logged) and writes
 `[sent <now>]` on each thread's newest human entry. Each tick, a document's `[sent]` human entries
 become `[read]` once its agent has no unread message (a message is read when the agent lists or
 wakes on it; an agent started with the text as its prompt has none), so a thread stuck at `sent`
