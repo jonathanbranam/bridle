@@ -4,7 +4,7 @@ title = "Windows PC: follow the WSL2 setup guide (install WSL2 + Ubuntu, wslconf
 kind = "chore"
 state = "claimed"
 created_at = "2026-10-07T23:25:29.937Z"
-updated_at = "2026-10-11T21:31:57.900390Z"
+updated_at = "2026-10-11T23:50:16.285080Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -30,3 +30,6 @@ To-do for you (low priority): Windows PC: follow the WSL2 setup guide (install W
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:41.415Z
 watching the task
+
+### note · external:advisor/product-manager · 2026-10-11T23:50:16.285Z
+The Windows PC's name is remus (h7mu, the human 2026-10-11 ~7:55 PM ET). The human: "WSL2 is in progress setting up; waiting on 0.6.2. to install".
