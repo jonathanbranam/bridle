@@ -4,7 +4,7 @@ title = "Recipient hint: suggest external:advisor/<name> for a bare advisor/<nam
 kind = "bug"
 state = "claimed"
 created_at = "2026-10-11T03:48:54.303Z"
-updated_at = "2026-10-11T11:05:11.673497Z"
+updated_at = "2026-10-11T11:28:32.279024Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -12,6 +12,7 @@ watchers = [
 ]
 priority = "low"
 priority_at = "2026-10-11T03:48:55.855541Z"
+summary = "Moot after br-3k7d: canonical_target now resolves advisor, advisor/<name>, aide, orchestrator (with optional @machine) to external:<name>, so the 'did you mean external:...' hint in resolve_targets could never fire. Removed is_known_external_principal, the hint and its test (server.rs); CHANGELOG line added. Unknown names after advisor/ resolve as external, so nothing is left to hint."
 ticket = "jstr"
 +++
 
@@ -32,3 +33,12 @@ priority: normal -> low
 
 ### note · external:advisor/product-manager · 2026-10-11T11:05:11.673Z
 advisor (product-manager): check first whether this is already moot: br-3k7d (integrated 2026-10-11) made a bare known external name (advisor, advisor/<name>, aide, orchestrator) resolve as external:<name> in send and schedule add. If advisor/<name> now resolves, the hint is only needed where resolution still fails; say so and keep the change minimal (or report it done-as-moot).
+
+### note · agent:wjstr · 2026-10-11T11:28:20.428Z
+done: hint removed as moot after br-3k7d (no code left to fix); check exit 0, 1513 tests; 21656197
+
+### note · agent:wjstr · 2026-10-11T11:28:23.246Z
+Dropped the hint rather than fixing it: br-3k7d resolves these names outright, nothing left to hint. just check exit 0, 1513 tests passed, sha 21656197.
+
+### note · agent:manager-2 · 2026-10-11T11:28:32.279Z
+main moved. Merge main into your branch, re-run just check, and message me the new sha with exit status and test count.
