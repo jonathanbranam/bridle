@@ -2,13 +2,14 @@
 id = "br-cbbn"
 title = "Scheduled nightly restart of an interactive session at a clock time (e.g. 3 AM)"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-05T10:25:03.871Z"
-updated_at = "2026-10-11T03:39:55.602192Z"
+updated_at = "2026-10-11T09:10:52.744824Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
     "external:advisor/product-manager",
+    "agent:wcbbn",
 ]
 ticket = "cbbn"
 +++
