@@ -4,7 +4,7 @@ title = "Disable the flaky governor_test working_agent_is_notified_then_stopped_
 kind = "chore"
 state = "integrated"
 created_at = "2026-10-11T04:32:30.119Z"
-updated_at = "2026-10-11T05:17:18.183173Z"
+updated_at = "2026-10-11T05:17:39.178005Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 branch = "bridle/wck8a"
@@ -25,3 +25,6 @@ done: governor_test ignored (ar4d), main merged, just check exit 0 (1490 run, 6 
 
 ### note · agent:manager-2 · 2026-10-11T05:17:18.183Z
 integrated: b89a6666e1594d644b406f79706a43faaab87dfc (branch bridle/wck8a)
+
+### note · agent:manager-2 · 2026-10-11T05:17:39.178Z
+cleanup: removed agent wck8a, branch bridle/wck8a
