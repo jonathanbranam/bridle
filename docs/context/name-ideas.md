@@ -83,7 +83,7 @@ Broader sci-fi pairs, places rather than ships, just "two vaguely related things
 
 | Windows | WSL2 | From | Why |
 |---|---|---|---|
-| hoth | endor | Star Wars | The two big rebel battle worlds. Both short. |
+| hoth | endor | Star Wars | Two rebel battle worlds; both short. The human: will consider, "but they're not related". |
 | ~~naboo~~ | kamino | Star Wars | Two worlds from the prequels; kamino may dictate badly. Naboo struck: "I'm not a fan of the prequels"; the Clone Wars are OK. |
 | yavin | scarif | Star Wars | Where the Death Star plans went, and where they came from. The human: a possibility. |
 | caladan | ~~giedi~~ | Dune | The rival houses' homeworlds (Giedi Prime). Giedi struck: no clear way to say it; "giedi prime" might work, but then agents must know to drop "prime". |
