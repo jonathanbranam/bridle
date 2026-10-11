@@ -908,6 +908,7 @@ async fn start_inner(
         drain_wake_after: overrides.drain_wake_after,
         schedule_timezone: config.schedule_timezone.clone(),
     };
+    wakes.set_outbox(state.outbox.clone());
     let tick_state = state.clone();
     let app = server::router(state);
 

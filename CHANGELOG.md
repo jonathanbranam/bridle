@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Every wake reason a project daemon raises for the orchestrator (incident, exit, crash, stall, failed CI, budget hold, usage, context) is also sent as a `system` message to the home daemon of a visiting `orchestrator@<machine>` token, so one waiter on the home daemon hears all projects; the old per-project wake path still works (br-rhba, 3haz slice 5).
 - `just check`, `just test` and the other nextest recipes take a machine-wide lock (`scripts/test-lock.sh`, `~/.bridle/test.lock`), so concurrent test runs from several worktrees queue instead of multiplying the load; `BRIDLE_TEST_NOLOCK=1` skips it (br-ks55).
 - The session loop reads the process table once per tick for all sessions instead of once per session, and `docs/design/agent-host/daemon.md` lists every periodic daemon loop with its interval and cost (br-fzwa).
 - Load-hold notes no longer say the daemon resumes held spawns (they are refused, not queued), name a bridle-owned process when one is a top consumer, and the hold records `load.hold.started` / `load.hold.ended` events; a hold of over 60 of the last 120 minutes messages the orchestrator and the human once an hour (br-g76s).

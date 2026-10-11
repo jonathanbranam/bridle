@@ -84,9 +84,12 @@ task needs the human, with `bridle task new "[at restart] <what>" -k feature --f
   discarded. Stop one with `TaskStop`, never by killing by name (rule `no-kill-by-name`).
   To check for a message you may have missed, run `bridle messages --last 5` (your latest, with
   sent, delivered and read times and the channel each was read through).
-  One waiter watches one daemon. Run one per project you hold an orchestrator token for
-  (`--project <name>`; the projects are under `[orchestrator]` in the credentials file), or
-  that project's messages to you are never seen (the human, 2026-10-01). Wakes are:
+  One waiter watches one daemon: your home daemon (this machine's), where your messages arrive.
+  Project daemons on other machines forward their wakes and your mail there as messages (a wake
+  arrives as a `system` message from `system@<machine>`, starting `[<reason>]`), so the one
+  waiter is enough. A project whose daemon has no visiting `orchestrator@<machine>` token for
+  you still needs its own waiter (`--project <name>`; the projects are under `[orchestrator]`
+  in the credentials file) until that is set up. Wakes are:
   - a message to you (aide relays the human's answers this way), or a `question` to the human
     (forward it to `external:aide` if aide hasn't seen it);
   - an unexpected exit, crash or stall;

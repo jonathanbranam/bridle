@@ -678,6 +678,9 @@ pub enum MessageKind {
     Answer,
     /// One line about a change to a task the recipient watches.
     TaskUpdate,
+    /// A daemon's own news (a wake reason forwarded to the orchestrator's home daemon). Never
+    /// counted as the human's unread or a to-do. Older builds read it as a `note`.
+    System,
     /// Also what a kind this build doesn't know reads as (`other` must be last).
     #[default]
     #[serde(other)]

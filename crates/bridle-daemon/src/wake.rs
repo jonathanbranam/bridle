@@ -264,6 +264,8 @@ struct State {
     /// Events up to here have been looked at; `None` until the first tick.
     scanned: Option<i64>,
     pending: Vec<WakeReason>,
+    /// Wakes queued since the last tick that haven't been sent home yet.
+    unforwarded: Vec<WakeReason>,
     usage_fired: HashSet<String>,
 }
 
@@ -271,6 +273,9 @@ pub struct Wakes {
     store: Store,
     state: Mutex<State>,
     notify: Notify,
+    /// Where wakes are forwarded as system messages when the orchestrator's home is another
+    /// daemon; set once the daemon has built its outbox.
+    outbox: std::sync::OnceLock<crate::outbox::Outbox>,
 }
 
 impl Wakes {
@@ -279,7 +284,67 @@ impl Wakes {
             store,
             state: Default::default(),
             notify: Notify::new(),
+            outbox: Default::default(),
         })
+    }
+
+    pub fn set_outbox(&self, outbox: crate::outbox::Outbox) {
+        let _ = self.outbox.set(outbox);
+    }
+
+    /// Sends a wake to every home daemon of a visiting orchestrator as a `system` message, so the
+    /// single waiter there wakes for it (3haz). One outbox row per wake and home. This daemon's
+    /// own waiter is still woken by the wake itself: that path stays until the message path is
+    /// verified. Messages and questions are messages already, and a stop is this daemon's own.
+    async fn forward_home(&self, wakes: &[WakeReason]) {
+        let Some(outbox) = self.outbox.get() else {
+            return;
+        };
+        let news: Vec<&WakeReason> = wakes
+            .iter()
+            .filter(|w| {
+                !matches!(
+                    w.reason.as_str(),
+                    "message" | "question" | bridle_api::types::DAEMON_STOPPING_WAKE
+                )
+            })
+            .collect();
+        if news.is_empty() {
+            return;
+        }
+        let homes = match self.store.visitor_homes_named("orchestrator").await {
+            Ok(h) => h,
+            Err(e) => {
+                tracing::warn!(error = %e, "looking up the orchestrator's home failed");
+                return;
+            }
+        };
+        let machine = outbox.machine_name();
+        let at = Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
+        for home in homes {
+            if outbox.check_destination(&home).is_err() {
+                continue;
+            }
+            for w in &news {
+                let row = crate::store::OutboxRow {
+                    id: String::new(),
+                    project: home.clone(),
+                    from: format!("system@{machine}"),
+                    to: ORCHESTRATOR.to_string(),
+                    kind: MessageKind::System,
+                    body: format!("[{}] {} (as of {at})", w.reason, w.text),
+                    reply_to: None,
+                    when: bridle_api::types::When::Now,
+                    attempts: 0,
+                    last_error: None,
+                };
+                if let Err(e) = self.store.outbox_enqueue(row).await {
+                    tracing::warn!(error = %e, "queueing a wake for the orchestrator's home failed");
+                }
+            }
+            let outbox = outbox.clone();
+            tokio::spawn(async move { outbox.flush(&home).await });
+        }
     }
 
     /// Looks for new wake conditions and queues them.
@@ -291,6 +356,9 @@ impl Wakes {
         if !st.pending.is_empty() {
             self.notify.notify_one();
         }
+        let fresh = std::mem::take(&mut st.unforwarded);
+        drop(st);
+        self.forward_home(&fresh).await;
     }
 
     async fn scan(&self, st: &mut State) -> Result<(), crate::store::StoreError> {
@@ -327,6 +395,7 @@ impl Wakes {
             };
             for ev in &events {
                 if let Some(w) = self.wake_for_event(ev).await {
+                    st.unforwarded.push(w.clone());
                     st.pending.push(w);
                 }
             }
@@ -434,11 +503,13 @@ impl Wakes {
             if util < limit {
                 st.usage_fired.remove(&rl.window);
             } else if st.usage_fired.insert(rl.window.clone()) {
-                st.pending.push(WakeReason {
+                let wake = WakeReason {
                     reason: "usage".to_string(),
                     text: format!("{} usage at {:.0}%", rl.window, util * 100.0),
                     detail: serde_json::to_value(&rl).unwrap_or(Value::Null),
-                });
+                };
+                st.unforwarded.push(wake.clone());
+                st.pending.push(wake);
             }
         }
         Ok(())
@@ -447,6 +518,7 @@ impl Wakes {
     /// Queues a wake the supervisor raised (a context or uptime note); it is delivered like the
     /// rest, and never lost to a waiter that isn't there.
     pub async fn push(&self, wake: WakeReason) {
+        self.forward_home(std::slice::from_ref(&wake)).await;
         self.state.lock().await.pending.push(wake);
         self.notify.notify_one();
     }

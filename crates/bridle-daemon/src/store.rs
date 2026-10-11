@@ -266,6 +266,13 @@ impl Store {
             .await
     }
 
+    /// The distinct homes of every visitor token named `<name>@<machine>` that has one.
+    pub async fn visitor_homes_named(&self, name: &str) -> Result<Vec<String>, StoreError> {
+        let like = format!("external:{name}@%");
+        self.with_conn(move |c| sync::visitor_homes_like(c, &like))
+            .await
+    }
+
     /// The project a visitor's mail is forwarded to; `None` for a token minted without one.
     pub async fn visitor_home(&self, principal_id: &str) -> Result<Option<String>, StoreError> {
         let id = principal_id.to_string();
@@ -1625,6 +1632,7 @@ mod sync {
             MessageKind::Question => "question",
             MessageKind::Answer => "answer",
             MessageKind::TaskUpdate => "task_update",
+            MessageKind::System => "system",
         }
     }
 
@@ -1633,6 +1641,7 @@ mod sync {
             "question" => MessageKind::Question,
             "answer" => MessageKind::Answer,
             "task_update" => MessageKind::TaskUpdate,
+            "system" => MessageKind::System,
             _ => MessageKind::Note,
         }
     }
@@ -2198,6 +2207,18 @@ mod sync {
             )
             .optional()?
             .flatten())
+    }
+
+    pub(super) fn visitor_homes_like(
+        conn: &Connection,
+        like: &str,
+    ) -> Result<Vec<String>, StoreError> {
+        let mut stmt = conn.prepare(
+            "SELECT DISTINCT home FROM principals
+             WHERE id LIKE ?1 AND home IS NOT NULL AND revoked_at IS NULL",
+        )?;
+        let rows = stmt.query_map(params![like], |r| r.get::<_, String>(0))?;
+        Ok(rows.collect::<Result<_, _>>()?)
     }
 
     pub(super) fn external_exists(conn: &Connection, name: &str) -> Result<bool, StoreError> {

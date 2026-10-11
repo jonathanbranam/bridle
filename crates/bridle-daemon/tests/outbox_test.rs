@@ -6,8 +6,8 @@ mod support;
 use bridle_api::Client;
 use bridle_api::discovery::store_credential;
 use bridle_api::types::{
-    ForwardRequest, HelloRequest, MessageKind, MessageQuery, OutboxSendRequest,
-    PeerTokenCreateRequest, TokenCreateRequest, When,
+    ForwardRequest, HelloRequest, MessageKind, MessageQuery, NewTaskRequest, OutboxSendRequest,
+    PeerTokenCreateRequest, TaskKind, TokenCreateRequest, When,
 };
 use support::{TestDaemon, machine_home_dir, start_daemon_named, wait_for};
 
@@ -445,4 +445,94 @@ async fn mail_for_a_visitor_is_forwarded_to_its_home_daemon() {
     // ... and not in B's; the token with no home keeps its mail on B, as before.
     assert!(inbox_bodies(&p.b, "external:aide@m1").await.is_empty());
     assert_eq!(inbox_bodies(&p.b, "external:old@m1").await.len(), 1);
+}
+
+/// Slice 5: a wake B raises for the orchestrator (an incident here) is sent home to A as one
+/// `system` message, where the orchestrator's single waiter hears it; B's own wake path still
+/// works.
+#[tokio::test]
+async fn a_wake_on_a_remote_project_is_forwarded_home_once_as_a_system_message() {
+    let p = pair().await;
+    let a_project = p.a.running.info.project.clone();
+    let a_peer =
+        p.a.client
+            .create_peer_token(&PeerTokenCreateRequest {
+                machine: "m2".to_string(),
+            })
+            .await
+            .expect("peer token")
+            .token;
+    let b_home = machine_home_dir(p._tmp_b.path());
+    std::fs::create_dir_all(&b_home).expect("home");
+    let a_port = p.a.running.url.rsplit(':').next().expect("port");
+    std::fs::write(
+        b_home.join("config.toml"),
+        format!(
+            "[machine]\nname = \"m2\"\n[machines]\nm1 = \"127.0.0.1\"\nm2 = \"127.0.0.1\"\n\
+             [projects]\n{a_project} = {{ machine = \"m1\", port = {a_port} }}\n"
+        ),
+    )
+    .expect("config");
+    store_credential(
+        &b_home.join("credentials.toml"),
+        "peer",
+        &a_project,
+        &a_peer,
+    )
+    .expect("credentials");
+    p.b.client
+        .create_token(&TokenCreateRequest {
+            name: "orchestrator".to_string(),
+            machine: Some("m1".to_string()),
+            home: Some(a_project),
+        })
+        .await
+        .expect("visitor");
+    let orch = p.a.external_client("orchestrator").await;
+
+    p.b.client
+        .new_task(&NewTaskRequest {
+            ticket: None,
+            parent: None,
+            for_human: false,
+            priority: None,
+            components: Vec::new(),
+            title: "the build is red".to_string(),
+            kind: TaskKind::Incident,
+            body: "red".to_string(),
+            size: None,
+        })
+        .await
+        .expect("incident");
+
+    // The wake loop ticks every 10 s.
+    let got = wait_for("forwarded wake", || async {
+        let m = orch
+            .list_messages(&MessageQuery {
+                to: Some("external:orchestrator".to_string()),
+                ..Default::default()
+            })
+            .await
+            .expect("messages");
+        (!m.is_empty()).then_some(m)
+    })
+    .await;
+    assert_eq!(got.len(), 1, "{got:?}");
+    assert_eq!(got[0].kind, MessageKind::System);
+    assert_eq!(got[0].from, "system@m2");
+    assert!(
+        got[0].body.starts_with("[incident_created] incident "),
+        "{}",
+        got[0].body
+    );
+    // Not sent again on later ticks.
+    tokio::time::sleep(std::time::Duration::from_secs(12)).await;
+    let again = orch
+        .list_messages(&MessageQuery {
+            to: Some("external:orchestrator".to_string()),
+            ..Default::default()
+        })
+        .await
+        .expect("messages");
+    assert_eq!(again.len(), 1, "{again:?}");
 }

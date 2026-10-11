@@ -173,6 +173,21 @@ is enabled. The waiter incident is measured from the later of the last request's
 session's launch. `bridle status` shows `waiter_open` and `last_wake_at` (when a poll last
 answered with wakes; in memory, so a daemon restart clears it).
 
+**Wakes are also mail (3haz slice 5, br-rhba).** When a daemon raises a wake for the
+orchestrator and holds a visitor token `external:orchestrator@<machine>` with a home (the
+orchestrator lives on another daemon), it also queues one `system` message per wake and home in
+its outbox, addressed to `external:orchestrator`, body `[<reason>] <text> (as of <time>)`, from
+`system@<machine>`. The home daemon's `/v1/forward` delivers it like any message (once: the
+origin id is deduplicated), so its ordinary message wake wakes the orchestrator's single waiter
+there; one waiter on the home daemon replaces one per project. Not forwarded: `message` and
+`question` (already messages) and `daemon_stopping`. Each message states when it was true, since
+usage, holds and stalls can be over by the time it is read. The local wake path is unchanged
+and still answers a waiter on the project's own daemon, so existing per-project waiters keep
+working; a daemon that is the orchestrator's home has no visitor token and sends nothing. A
+project daemon being down cannot report itself: that is the home outbox's unreachable-peer
+alert. The `system` kind is additive (older builds read it as `note`) and is never counted as
+the human's unread.
+
 The old shell scripts are deleted, and with them the
 `~/.bridle-orchestrator-{seen-questions,hold-state,ci-seen,ctx-level,session}` files. The
 role file's watcher step (`workflow/base/roles/orchestrator.md`) becomes: run `bridle
