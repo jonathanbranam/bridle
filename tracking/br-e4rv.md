@@ -2,9 +2,9 @@
 id = "br-e4rv"
 title = "stx8 part 2: held and built render with distinct labels in the TUI and gateway bindings"
 kind = "feature"
-state = "pending"
+state = "planned"
 created_at = "2026-10-11T17:19:28.235Z"
-updated_at = "2026-10-11T17:19:49.993601Z"
+updated_at = "2026-10-11T17:20:15.469302Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
