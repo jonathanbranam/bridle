@@ -168,6 +168,9 @@ inconsistent."
 Then `rhea` (2026-10-11, one run of five sentences; the system not noted): "Raya" four times, "Ria"
 once, never "Rhea". **Fails.**
 
+Then `phobos` and `mars` (2026-10-11, the system not noted): "Phobos" three times out of three,
+"Mars" once out of once. **Both pass.**
+
 ## Themes
 
 ### In: liked
