@@ -9,78 +9,48 @@ Status: ideas, nothing decided. No machine has been renamed.
 
 ## Working idea (2026-10-11)
 
-Not decided. The overall theme is space and sci-fi (the human, 2026-10-11: "our overall theme
-is: space / sci-fi"). Within it, a theme per kind of machine, each with real-world and sci-fi
-names, from the human's three categories ("windows and nuc don't move; their fixed in position
-... and let's think of what the cloud servers would be. laptops we only have one right now,
-dalek, that is slightly off-theme").
+Not decided. **The theme is space and sci-fi**, loosely: "space is the theme; don't have to be
+too slavish" (the human, 2026-10-11). Machines take stars, planets, moons, asteroids, stations,
+galaxies and ships, real or sci-fi; gods fit too. Not personal names: those are for agent seats.
 
-| Kind | Theme | Why |
+Ideas to draw on, not rules:
+
+- **Fixed and wandering.** "Planet" is Greek for wanderer, and the ancients called the stars
+  "fixed", so stars suit machines that stay put and planets, moons and stations suit cloud
+  servers that come and go. Ships suit laptops, which travel. Use it where it helps.
+- **Related names for related machines.** A guest (WSL2, a VM) can take a name tied to its host:
+  a planet of the host's star, a moon of the host's planet, or a world from the same story.
+  Hosts and guests get different names (the human, 2026-10-11: "I do want a different name for
+  the windows host and the WSL2 inside of it; I will also have different names if I run
+  hypervisors or vms").
+- `dalek` stays (the human: "it's been dalek for a long time"), off-theme and fine.
+
+Star systems whose planets have official IAU names (2015, NameExoWorlds; checked on Wikipedia),
+a ready-made host and guests:
+
+| Star | Its planets |
+|---|---|
+| cervantes | quijote, dulcinea, rocinante, sancho |
+| copernicus | galileo, brahe, lipperhey, janssen, harriot |
+| lich (a pulsar) | draugr, poltergeist, phobetor |
+
+Other star ideas: sun gods (`helios`, `sol`, `sunna`, `surya`, `inti`, `ra`); Orion's belt
+(`alnitak`, `alnilam`, `mintaka`); `bellatrix`, `shaula`, `nashira`, `fomalhaut`, `mira`,
+`proxima` (the nearest star); sci-fi suns `rao` (Krypton) and `canopus` (Arrakis's sun, Dune).
+
+### Suggestions for today
+
+The four machines to name now. Say each into both dictation systems before choosing.
+
+| Machine | Suggestions | Why |
 |---|---|---|
-| 1. Fixed, at home | The fixed stars | They keep their places, as home machines do. Home needs only a few names. |
-| 2. Cloud | Wanderers: planets, moons, asteroids, space stations | "Planet" is Greek for wanderer: cloud servers come and go. The biggest set of names the human knows, for the kind that may grow. |
-| 3. Laptops | Spaceships and spacecraft | They travel. |
+| 1. Windows host | `canopus`, `cervantes`, `helios`, `rigel`, `jupiter` | A star or a big planet for the host. `canopus` pairs with `arrakis`, `cervantes` with its planets, `jupiter` with its moons. |
+| 2. WSL2 (inside it) | `arrakis`, `sancho`, `rocinante`, `europa`, `io` | The guest takes a name tied to the host: Arrakis circles Canopus; Sancho and Rocinante circle Cervantes (Sancho the loyal helper, Rocinante the workhorse); Europa and Io are moons of Jupiter. |
+| 3. NUC | `vega`, `sunna`, `inti`, `mira`, `vesta` | Small, always on, at home: short star and sun-god names; `vesta` is the asteroid named for the goddess of the hearth. |
+| 4. EC2 | `proxima`, `luna`, `terminus`, `mir`, `babylon` | The edge box, the NUC's way out: `proxima` is the nearest star (and sounds like proxy); `luna` the nearest wanderer; `terminus` Foundation's edge world; `mir` and `babylon` stations. |
 
-The split is the ancients' own: the fixed stars stay put, and the planets wander across them. The
-human swapped home and cloud from a first draft (planets at home, stars in the cloud) because home
-is by far the smallest list, and they recognise more solar-system names than star names; and
-"planet means wanderer".
-
-The theme says what kind of machine it is, not where it sits, so a machine that moves keeps its
-name (the c2 tip against location names, [[naming]]).
-
-**1. Fixed, at home: the fixed stars**
-
-- Real: `vega`, `rigel`, `altair`, `deneb`, `antares`, `procyon`, `capella`; pairs `castor` and
-  `pollux`, `mizar` and `alcor`.
-- Sci-fi: `canopus` (a real star; Arrakis's sun in Dune), `rao` (Krypton's red sun), `tatoo`
-  (Tatooine's suns). Few, but home needs few.
-- Picks: the Windows PC `canopus` (its WSL2 guest `arrakis`, see "Hosts and guests"), or `rigel`
-  or `antares` (big, bright stars for the heavy lifting); the NUC
-  `vega` (short, clear, one of the brightest in the sky). The other family PC, if it joins:
-  `altair` or `deneb`.
-- Avoid: `polaris` and `sirius` (sound like other words), `sol` (the Sun; too short and generic).
-
-**2. Cloud: the wanderers**
-
-- Real planets and moons: `jupiter`, `saturn`, `mars`, `neptune`; `luna`, `europa`, `io`,
-  `callisto`, `phobos`, `titan`, `rhea`, `miranda`, `charon`.
-- Real asteroids: `vesta`, `pallas`, `psyche`, `bennu`.
-- Real space stations: `mir`, `skylab`, `salyut`, `tiangong`.
-- Sci-fi worlds: `vulcan`, `bajor`, `hoth`, `endor`, `naboo`, `caprica`, `arrakis`, `caladan`,
-  `gallifrey`, `skaro`, `trantor`, `terminus`.
-- Sci-fi stations: `babylon` (Babylon 5), `citadel` (Mass Effect), `yorktown` (Star Trek Beyond),
-  `elysium`.
-- Picks: the EC2 `luna` (the nearest one out; the EC2 is the NUC's fallback to the outside). Then
-  planets and moons as servers are added.
-- Avoid: `ceres` (dictation hears "series"), `earth` (generic), `uranus`, `gateway` (bridle
-  already has a gateway).
-
-**3. Laptops: ships**
-
-- Real spacecraft: `apollo`, `voyager`, `pioneer`, `cassini`, `galileo`, `kepler`, `juno`,
-  `rosetta`, `atlantis`, `soyuz`.
-- Sci-fi ships: `nostromo`, `serenity`, `defiant`, `rocinante`, `leonov`, `normandy`, `moya`,
-  `falcon`, `orville`, `starbug`.
-- Picks: the next laptop from `nostromo`, `serenity`, `voyager`, `defiant`.
-- `dalek` stays: kept by the human ("it's been dalek for a long time"), the one exception to the
-  scheme.
-
-**Hosts and guests: different names.** The human (2026-10-11): "I do want a different name for
-the windows host and the WSL2 inside of it; I will also have different names if I run hypervisors
-or vms". Idea: a guest (WSL2, a VM) takes a planet of its host's star. The host keeps its star
-name; the guest is a wanderer, like the cloud, because it is virtual too; and the pair says which
-guest lives on which host.
-
-- The Windows PC: host `canopus`, WSL2 `arrakis`. In Dune, Arrakis is the third planet of
-  Canopus, and it's where the heavy work happens. Both under eight letters.
-- Other real-star and sci-fi pairs: `rao` and `krypton` (Superman), `tatoo` and `tatooine`
-  (Star Wars), `eridani` and `vulcan` (Star Trek: Vulcan circles 40 Eridani A).
-- With no named planet to borrow, a guest takes any wanderer.
-
-**Galaxies: not placed yet.** A galaxy holds many stars and planets, so one idea is a galaxy name
-for a group rather than a machine: the tailnet, all of bridle's machines, or a project's machines.
-The list is under "Galaxies and nebulae" in Themes.
+Advisor's pick: **`canopus`** (Windows) and **`arrakis`** (WSL2), **`vega`** (NUC), **`proxima`**
+(EC2). Each is eight letters or fewer, and none sounds like another.
 
 ## Machines that need names
 
@@ -89,8 +59,8 @@ The list is under "Galaxies and nebulae" in Themes.
 | MacBook Pro (this one) | dalek | dalek | Keeping it: "it's been dalek for a long time" (the human). |
 | Intel NUC | nuc | vega | "NUC" is a type, and dictation hears "Nook". Was `sonic`; see "Working idea". |
 | Windows desktop, running WSL2 | EzekielsPC | canopus (Windows), arrakis (WSL2) | The human couldn't settle on `tardis` (2026-10-11). See "WSL2 and its name" below. |
-| EC2 | (none) | luna | The edge box (the NUC's tunnel fallback). Was `terminus`. |
-| Future cloud servers | | planets and moons | The wanderers. |
+| EC2 | (none) | proxima, luna | The edge box (the NUC's tunnel fallback). Was `terminus`. |
+| Future cloud servers | | planets, moons, stations | The wanderers. |
 | Other MacBook Pros | | nostromo, serenity, voyager, defiant | Ships, because laptops travel. Only those that run bridle or join Tailscale. |
 | The other family PC | | altair, deneb | Only if it joins Tailscale. |
 
