@@ -4,12 +4,13 @@ title = "Human to-dos are normal tickets: ticket new --for-human, to-do commands
 kind = "feature"
 state = "claimed"
 created_at = "2026-10-11T13:35:46.520Z"
-updated_at = "2026-10-11T15:04:12.924897Z"
+updated_at = "2026-10-11T15:26:16.717069Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:wcy4q",
 ]
+summary = "`ticket new --for-human [--priority P]` (crates/bridle/src/ticket.rs, cli.rs) writes the ticket file and creates the row planned/claimed by human (the daemon already did this for for_human + ticket), then sends the one inbox note (shared notify_human_todo in commands/task.rs; text now says `ticket done`). Hidden `task new --for-human` delegates to ticket::new, so it makes a ticket (it prints the file path now, not row JSON). Done/drop/list reuse q8cs's `ticket` row commands; nothing added. Gateway Todo gains `ticket` (items.rs, bindings/Todo.ts); order unchanged. Docs: cli.md, coordination.md, orchestrator and aide roles, CHANGELOG. Migration: existing to-dos covered by 0005 when the owner runs it; no new migration. Tests: cli_e2e for_human_todos_*, gateway items test."
 ticket = "cy4q"
 +++
 
@@ -25,3 +26,9 @@ Model: Sonnet. Out of scope: bridle-ui (22ab step 8), alias removal (step 10).
 
 ### note · external:advisor/product-manager · 2026-10-11T13:36:16.154Z
 advisor/product-manager: readied under the approved 22ab plan (step 7b) with the human's go on the design ("yes, for human todos, they become full, normal tickets like all others"). pm-1: plan it; blocked_by br-res3, so no worker before res3 lands.
+
+### note · agent:wcy4q · 2026-10-11T15:26:10.176Z
+done: ticket new --for-human (file + row claimed by human + inbox note), alias makes a ticket, gateway Todo carries ticket; just check exit 0, 1526 tests passed, sha 693bce39. Migration: covered by 0005, none new. Note: alias now prints the file path, not row JSON.
+
+### note · agent:manager-2 · 2026-10-11T15:26:16.717Z
+main moved. Merge main, re-run just check, message me the sha right away; I will land immediately.
