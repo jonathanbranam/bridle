@@ -4,7 +4,7 @@ title = "Migration: backfill ticket kind and two-way task links in every bridle 
 kind = "feature"
 state = "planned"
 created_at = "2026-10-01T19:46:02.983Z"
-updated_at = "2026-10-09T11:04:37.083529Z"
+updated_at = "2026-10-11T13:31:31.825188Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -13,15 +13,14 @@ watchers = [
 size = "S"
 +++
 
-Ticket: docs/tickets/open/tickets-get-a-kind-kinds-are-editable-tickets-and-tasks-link-v3dk.md, section 'Migration'. Design: docs/design/migrations.md. Code: crates/bridle/src/migrate.rs (the MIGRATIONS list; ids are append-only), crates/bridle/src/ticket.rs. Depends on slice A (br-2e6e: the kind field, the 'tasks:' field and the link check) and on the automatic run (br-2718) so it reaches every project. Also builds on br-vk3y (landed, 4ef66179): a task's link to its ticket is now the front-matter field `ticket` (shown as "ticket" in `bridle task show` and the API), and the daemon migrates the old `original id: <id>` first body line into that field at start-up.
+Ticket: docs/tickets/open/tickets-get-a-kind-kinds-are-editable-tickets-and-tasks-link-v3dk.md, section 'Migration'. REFRESHED 2026-10-11 against the everything-is-a-ticket epic (22ab), per the PdM thread: the human approved this task and the old parked terms are void. Starts only after br-res3 is integrated (both rewrite ticket files; avoid a merge conflict like 3v75's).
 
-Goal: add one migration (next id in the list, e.g. 0002-ticket-kind-and-links) that, for every ticket under docs/tickets/** and docs/spikes/** with a bridle frontmatter: (1) adds 'kind:' where missing, taking it from the ticket's task when it has one (find the task by its `ticket` field equal to the ticket id, or by the task's ticket path; ask the daemon if up, else read the state branch/tasks; for a task that still has an `original id:` first body line because the daemon has not migrated it yet, read the line as a fallback) and otherwise a plain recorded default ('chore'; the human can edit with 'ticket set'); (2) adds 'tasks: [...]' listing every task whose `ticket` field points at the ticket, so both sides agree. Idempotent; honours --dry-run (report what it would change); refuses, as the others do, on uncommitted changes in the files. Then flip slice A's missing-kind / missing-link warning to an error in 'bridle ticket check'. Not opt-in: it runs automatically.
-Tests: tickets with and without a task get the right kind and links (tasks fixtures use the `ticket` field; one fixture still has the old body line, to cover the fallback); second run changes nothing; dry-run writes nothing; check errors on a missing kind afterward; the daemon being down doesn't fail it (falls back).
-Docs: migrations.md (list the migration), CHANGELOG. Acceptance: just check passes, and this repo's own docs/ pass 'bridle ticket check' after running the migration on a scratch copy. Say in the done note how many of the 48 `ticket check` warnings it clears. Model: Sonnet.
-Migration plan: this is it.
+What 22ab already did, so DROP it: field renames (migration 0002-standard-ticket-fields), bug tasks that are fixes (0003), links in frontmatter and the tasks:/ticket pair going away (0004, step 3), a ticket for every active task (0005, step 4/bpku). Two-way task links are gone; do not rebuild them. Code: crates/bridle/src/migrate.rs (the MIGRATIONS list; ids append-only; follow the latest migration as the model), crates/bridle/src/ticket.rs, docs/design/migrations.md.
 
-PARKED, same terms as br-6b8a and br-2718: it must not land until the human approves the automatic run (it is the first migration to rely on it, and it changes the check every project runs). Build on the branch, pass just check, hand off; the development manager parks it. Do NOT run it on the human's other projects; the automatic run does that after the human approves.
-Out of scope: changing the kind of existing tickets beyond the default.
+What is left: 'bridle ticket check' still warns 'missing kind' on a few hundred tickets (docs/tickets/open and resolved, and docs/spikes). Goal: one migration (next id after 0005, e.g. 0006-backfill-ticket-kind) that adds 'kind:' to every ticket or spike with a bridle frontmatter that lacks it: from its row or task if one has a kind (ask the daemon if up, else read the state branch; no daemon must not fail it), else a plain recorded default ('chore'; the human edits with 'ticket set'). Idempotent; honours --dry-run (report what it would change); refuses, as the others do, on uncommitted changes in the files; never touches main or dev of an existing project that is not on a trial branch (the guard from 0002 applies). Runs automatically with the other migrations. Then flip the missing-kind warning to an error in 'bridle ticket check'. Run it on this repo as a separate commit so 'bridle ticket check' is clean (note: one resolved ticket, base-rule-the-shell-is-zsh ... urdm, also reports 'missing resolved'; fix its frontmatter in the same pass with the date from git log).
+Tests: tickets with and without a row/task get the right kind; second run changes nothing; dry-run writes nothing; check errors on a missing kind afterward; daemon down falls back.
+Docs: migrations.md (list it), CHANGELOG. Say in the done note how many of the warnings it cleared. Acceptance: just check passes and bridle ticket check on this repo reports nothing. Model: Sonnet.
+Migration plan: this is it. Out of scope: changing the kind of tickets that have one.
 
 ## Thread
 
@@ -33,3 +32,6 @@ pm-1: amended per manager-2's note: the brief now reads the task's front-matter 
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:37.083Z
 watching the task
+
+### note · external:advisor/product-manager · 2026-10-11T13:31:17.043Z
+human via advisor/product-manager, 2026-10-11 ~9:30 AM ET: "approved: br-e7e2". pm-1: this plan dates from 10-01, before 22ab renamed the ticket fields (syqn: tasks/needs/see -> blocked_by/related etc.), qualified the IDs and moved links to the frontmatter (3v75). Re-check the plan against that and update it, then queue it after br-res3 lands (both rewrite ticket files; avoid a merge conflict like 3v75's). Drop any part 22ab already did.
