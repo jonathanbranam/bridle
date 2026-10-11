@@ -183,8 +183,45 @@ Pairs to look at (examples, not decided):
 - **message / wake / note / comment:** several words for "something reaches an agent".
 - **agent / session / principal / seat:** who is acting, and for how long.
 
+## Naming machines
+
+For servers, computers and other hardware. The pool of candidates is
+[[name-ideas]]. The human (2026-10-11), from notes found online:
+
+> * Never name a machine after a person (e.g., bob-pc). If Bob changes departments or leaves, the
+>   name becomes awkward or confusing for the rest of the team
+> * Never use physical locations (e.g., front-desk or server-closet). Hardware gets moved to the
+>   warehouse or another floor eventually
+
+Both come from the c2 wiki's [TipsForNamingComputers](https://wiki.c2.com/?TipsForNamingComputers)
+("Possession" and "Location"). The page's other tips, as they apply here:
+
+- **Not its use.** Don't name a machine after what it does ("build", "mail"): the use moves, the
+  name stays. The same goes for its type (see "A type is not a name" above).
+- **Not too generic.** No "server", "workstation", "laptop", "dev", "test".
+- **Easy to spell.** No hard spellings, alternate spellings, homophones or playful misspellings
+  (and here, it must survive dictation: "Names get spoken").
+- **All lowercase; no spaces, odd characters or underscores.** Strip them (`shai-hulud` loses the
+  hyphen; hostnames don't allow underscores).
+- **No numbers, and nothing that parses as one.** A host named `7100`, or even `xb` (hex), gets read
+  as an IP address.
+- **Three to seven characters is about right** to type over and over.
+- **Choose from a big set**, not a closed one ("the moons of Jupiter"), or the theme runs out.
+- **The name is the machine's; a role gets an alias.** Give the machine a lasting proper name and
+  point role names at it (a DNS or Tailscale alias, or bridle's `[machines]` config), so moving the
+  role means moving the alias, not renaming the machine.
+
+## Sources
+
+- **The c2 wiki** (Ward Cunningham's original wiki): old, but most of it still holds. The human
+  (2026-10-11) wants it searched on design and software topics whenever it can be reached. The
+  page loads with JavaScript; the raw text of a page is at
+  `https://c2.com/wiki/remodel/pages/<PageName>` (JSON, the text in its `text` field).
+- [RFC 1178](https://www.rfc-editor.org/rfc/rfc1178), "Choosing a Name for Your Computer".
+
 ## Related
 
+- [[name-ideas]]: the pool of candidate names for machines and seats.
 - [[agent-harness-name-catalogue]]: names other harnesses use for the same things.
 - `workflow/base/rules/ticket-references.md`: how to name a ticket to the human (lead with the
   start of the file name, not the bare ID).
