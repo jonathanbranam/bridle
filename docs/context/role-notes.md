@@ -728,3 +728,11 @@ Newest first. One line per item: what happened, who did it, what it says about r
   it. Ticket moves made by managers need a committing path (or the CLI should commit them).
 - **2026-10-11: flaky tests are disabled, not fixed at once** (the human, via aide; role file
   updated). The orchestrator files the disable task itself (br-ck8a) and hands the fix to the PdM.
+- **2026-10-11: the orchestrator installs bridle-ui by hand after each landing.** bridle-ui's
+  manager can't run `npm run install-ui` (not in its allowed_tools), so ui-utp5 and ui-jgg8 each
+  waited until the orchestrator ran it (~90 min for jgg8). Widening the manager's permissions was
+  refused by the orchestrator's auto mode (it's the human's call): ticket ui-nvea, with aide.
+- **2026-10-11: the orchestrator restarts other projects' daemons onto the installed binary.**
+  bridle-ui, track-web and data-contracts ran v0.5.0 for 3.5 days (no self-upgrade there), which
+  made `ticket new` mint wrong-prefix IDs (br-ydyk). Restarted all three to 0.6.1; meta-notes (NUC)
+  is still 0.5.0.
