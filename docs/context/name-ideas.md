@@ -114,13 +114,6 @@ but right as "the aide at Sonic".
 
 **Sci-fi ships** (a favourite; some are long to type, but they sound great)
 
-> [!comment] c6 human, 2026-10-08 21:40 EDT, on "Sci-fi" [read 2026-10-08 21:51 EDT]
-> Add another section here with characters from the Alien franchise and Firefly.
->
-> **doc-name-ideas-e11e82, 2026-10-08 22:00 EDT:** @human Added "Sci-fi characters" right after the ships table, with Alien and Firefly names, from memory. [read 2026-10-08 22:04 EDT]
->
-> **resolved by human, 2026-10-11 00:45 EDT**
-
 | Name | From | Notes |
 |---|---|---|
 | nostromo | Alien | |
