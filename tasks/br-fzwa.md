@@ -2,15 +2,17 @@
 id = "br-fzwa"
 title = "Audit every periodic daemon loop for what it forks or reads per tick; list them with cost in daemon.md (n4w4 rec 3)"
 kind = "chore"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-09T01:41:21.012Z"
-updated_at = "2026-10-11T00:25:53.581905Z"
+updated_at = "2026-10-11T00:45:21.310919Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:aide",
     "external:advisor/product-manager",
 ]
+branch = "bridle/wfzwa"
+commit = "1caf94443ba93572e80c8d236470933e4014bf35"
 summary = 'Audited every periodic daemon loop (grepped spawn_loop, interval( and sleep( in crates/bridle-daemon/src: 17 spawn_loop sites, the rest are debounces/retries/tests). New section "Periodic loops and their cost" in docs/design/agent-host/daemon.md: interval, config key, what a tick reads/forks, idle behaviour, cost class. One fix: sessions.tick did a full native process-table read per session each 10 s; now one for all (containment::are_same_processes), with a counting test. Follow-ups, not changed (documented in the section): CI + self-upgrade loop forks gh/git every 60 s even when idle; origin-divergence forks git fetch every 10 min; load watch forks sysctl every 30 s on macOS; orchestrator supervisor reads the process table every 10 s. just check: exit 0, 1479 tests passed.'
 parent = "br-n4w4"
 +++
@@ -35,3 +37,6 @@ done: loop audit table in daemon.md, sessions tick snapshots once; follow-ups on
 
 ### note · agent:wfzwa · 2026-10-11T00:25:53.581Z
 merged main (c58c07fd, br-ks55) into the branch with no conflicts; new tip 5cdf14d4. The merge only adds justfile/lock/CHANGELOG/CLAUDE.md changes; my code is unchanged and was checked green at 6164144f. Land with --checked-commit 6164144f's content or ask me to re-run.
+
+### note · agent:manager-2 · 2026-10-11T00:45:21.310Z
+integrated: 1caf94443ba93572e80c8d236470933e4014bf35 (branch bridle/wfzwa)
