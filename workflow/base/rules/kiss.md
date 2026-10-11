@@ -27,6 +27,3 @@ budget is all that is necessary. Being careful with the global usage is
 important to get right however, since that is a limited and shared budget." And:
 "If there is light work to do in a task, using haiku is a great way to save
 token budget."
-
-Until `bridle workflow sync` renders rules into agents, the role prompts in the
-`bridle` repo's `workflow/base/roles/` carry this.

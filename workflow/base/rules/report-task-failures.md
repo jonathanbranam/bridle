@@ -10,6 +10,3 @@ When a tool the task needs is missing, or a fetch or site request fails during t
 **Managers and orchestrators:** when a worker reports a tool missing or a fetch failing, pass it to the human as a failure, not as an aside or "unreachable". A missing tool is a blocker; a failed fetch means the task's data is incomplete.
 
 Why: track-web incident 2026-10-04 (ticket h679 research task). The worker had no web tools (WebSearch, WebFetch), fell back to curl, and reported sites as "unreachable". The network was fine; the tools weren't offered. The gap hid the actual constraint: research tasks need web tools.
-
-Until `bridle workflow sync` renders rules into agents, the role prompts in the
-`bridle` repo's `workflow/base/roles/` carry this.

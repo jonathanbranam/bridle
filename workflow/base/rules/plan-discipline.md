@@ -15,6 +15,3 @@ it rejected, and how to check it.
 
 Why: data-contracts' `config.yaml` rules. They map onto `bridle-plan` and the
 impact declaration.
-
-Until `bridle workflow sync` renders rules into agents, the role prompts in the
-`bridle` repo's `workflow/base/roles/` carry this.

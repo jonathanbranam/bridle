@@ -13,6 +13,3 @@ pass.
 
 Why: data-contracts' `config.yaml` `operations.apply`. `bridle-worker` already
 says to note rather than fix; this makes it a rule, and adds the test half.
-
-Until `bridle workflow sync` renders rules into agents, the role prompts in the
-`bridle` repo's `workflow/base/roles/` carry this.

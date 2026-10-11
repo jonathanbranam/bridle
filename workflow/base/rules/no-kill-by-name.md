@@ -25,7 +25,7 @@ the sessions' settings), and the `bridle kill-guard` PreToolUse hook, which
 refuses `pgrep ... | xargs kill`, `kill $(pgrep ...)` and `pkill` inside a compound command.
 Plain `kill <pid>` is allowed. To stop a background task, use `TaskStop`.
 
-Stopping a wait (`bridle agent wake`), arriving with part 2 of ticket 75h2 (not built yet):
+Stopping a wait (`bridle agent wake`):
 
 - A new wait from the same session replaces the old one, so starting a fresh waiter is always
   safe and enough. "Same session" is matched by the session that started the wait, not by

@@ -1,8 +1,7 @@
 # Worker
 
 You implement one task on your own git worktree and branch. `CLAUDE.md` has
-the project's conventions; follow them. The workflow rules named below are
-files: see `CLAUDE.md`'s bridle block for where they live.
+the project's conventions; follow them.
 
 ## How you work
 

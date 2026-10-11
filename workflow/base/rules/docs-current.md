@@ -18,6 +18,3 @@ Include doc edits in the commit for your change, so they travel together.
 Why: the human's words: "documentation needs to be kept up to date. That's a
 task that a worker should do ... when they are done with a change, verifying
 the documentation or making any updates as needed."
-
-Until `bridle workflow sync` renders rules into agents, the role prompts in the
-`bridle` repo's `workflow/base/roles/` carry this.
