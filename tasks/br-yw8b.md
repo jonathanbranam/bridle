@@ -4,13 +4,14 @@ title = "fake-claude spawns skip the pyenv shim: resolve the interpreter once (n
 kind = "chore"
 state = "planned"
 created_at = "2026-10-09T01:41:32.122Z"
-updated_at = "2026-10-09T11:04:40.715866Z"
+updated_at = "2026-10-11T00:31:11.933883Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:aide",
     "external:advisor/product-manager",
 ]
+summary = "Test fake-claude now launches as one exec of the real interpreter. fake_claude_path() (crates/bridle-daemon/tests/support/mod.rs, crates/bridle/tests/cli_e2e.rs) asks `python3` once per test process (OnceLock) for sys.executable and runs a content-hashed copy of fake-claude.py, written under $TMPDIR/bridle-fake-claude/, whose shebang names that interpreter; falls back to the script itself if python3 doesn't answer. The existing sh wrappers exec this path so they benefit too. Not changed: bridle-claude/tests/process_test.rs (no daemon, few spawns). ps evidence: the pyenv shim chain execs through, so a running agent shows one process either way (python3 .../fake-claude.py); the saving is at startup (env -> shim bash -> pyenv bash -> python becomes a single python exec), which a snapshot ps can't show. just check green (1478 tests) on the commit before the main merge; the first run hit one load-flaky unit test (sessions::the_hard_limit_has_no_override..., passes alone, unrelated). Main merge brought 4 files (scripts/test-lock.sh etc.); check not re-run after it."
 parent = "br-n4w4"
 +++
 
@@ -28,3 +29,6 @@ Model: Sonnet. Migration: none. Out of scope: replacing the fake, the tracker in
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:40.715Z
 watching the task
+
+### note · agent:wyw8b · 2026-10-11T00:31:11.933Z
+done: fake-claude launched via real interpreter (one exec, not shim chain); check exit 0, 1478 tests, on 3b7dd595~1 (main merged after as 3b7dd595, check not re-run); ps note in summary
