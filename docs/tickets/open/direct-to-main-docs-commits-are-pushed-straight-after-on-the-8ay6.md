@@ -7,9 +7,8 @@ created_by: external:advisor/product-manager
 repos: [bridle]
 changes: []
 specs: []
-blocked_by: []
+blocked_by: [br-8umh]
 related: [br-j7r4, br-8z7j, br-8umh]
-tasks: [br-8ay6]
 ---
 
 ## The ask

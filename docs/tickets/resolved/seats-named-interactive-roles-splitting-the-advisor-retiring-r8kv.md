@@ -8,7 +8,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-jttf, br-ma8e, br-xxxq, br-r9vh, br-pdmd]
-tasks: [br-7810, br-r8kv, br-feyk]
 resolved: 2026-10-09T23:11:02Z
 ---
 

@@ -8,7 +8,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-n63z, br-3haz]
-tasks: [br-gdf3]
 resolved: 2026-10-09T23:11:01Z
 ---
 

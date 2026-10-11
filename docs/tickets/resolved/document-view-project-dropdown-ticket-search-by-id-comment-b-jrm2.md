@@ -8,7 +8,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-x8jt, br-v8kn, br-essy]
-tasks: [br-jrm2]
 resolved: 2026-10-09T23:11:07Z
 ---
 

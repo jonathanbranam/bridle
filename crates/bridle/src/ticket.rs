@@ -2,7 +2,7 @@
 //! `docs/tickets/open/` and move it to `resolved/`. The file logic (id mint, frontmatter, find by
 //! id) takes a tickets root and does no I/O beyond it, so `check`/`set`/`link` can reuse it.
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::hash::{BuildHasher, RandomState};
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -12,8 +12,8 @@ use bridle_api::{EditTaskRequest, NewTaskRequest, SubmitTaskRequest, TaskKind};
 use clap::ValueEnum;
 
 use crate::cli::{
-    Cli, TaskKindArg, TicketAction, TicketArgs, TicketCheckArgs, TicketNewArgs, TicketReadyArgs,
-    TicketResolveArgs, TicketSetArgs, TicketSubmitArgs,
+    Cli, LinkKind, TaskKindArg, TicketAction, TicketArgs, TicketCheckArgs, TicketLinkArgs,
+    TicketNewArgs, TicketReadyArgs, TicketResolveArgs, TicketSetArgs, TicketSubmitArgs,
 };
 use crate::commands::client_for;
 use crate::error::CliError;
@@ -43,6 +43,7 @@ pub async fn run(cli: &Cli, args: &TicketArgs) -> Result<(), CliError> {
         TicketAction::Ready(a) => ready_cmd(cli, &repo, a).await,
         TicketAction::Resolve(a) => resolve_cmd(cli, &repo, a).await,
         TicketAction::Set(a) => set_cmd(cli, &repo, a).await,
+        TicketAction::Link(a) => link_cmd(cli, &repo, a).await,
         TicketAction::Check(a) => check_cmd(cli, &repo, a).await,
         TicketAction::Submit(_) => unreachable!("handled above"),
     }
@@ -125,11 +126,8 @@ async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<(), CliErro
         .display()
         .to_string();
     if let Some(task) = &from {
-        // Link both ways: the ticket lists the task, and the task's `ticket` field names the
-        // ticket (what `ticket check` reads); the ticket's id is the task's tail unless that
-        // couldn't be reused.
+        // The task's `ticket` field names the ticket; the ticket file doesn't list the task.
         let ticket_id = id_of(&path).ok_or_else(|| anyhow!("new ticket has no id"))?;
-        set(&root, &ticket_id, "tasks", &task.id)?;
         let body = if task.ticket.is_some() {
             None
         } else {
@@ -151,10 +149,9 @@ async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<(), CliErro
         // Every ticket has a row, `pending` until `ticket ready` (22ab section 2). The daemon
         // gives it the ticket's id from the `ticket` field (br-9e15).
         let ticket_id = id_of(&path).ok_or_else(|| anyhow!("new ticket has no id"))?;
-        let task_id = make_task(cli, &title, kind, &ticket_id, &rel)
+        make_task(cli, &title, kind, &ticket_id, &rel)
             .await
             .map_err(|e| anyhow!("{rel} was written but its row was not filed: {e}"))?;
-        set(&root, &ticket_id, "tasks", &task_id)?;
     }
     println!("{rel}");
 
@@ -291,19 +288,6 @@ async fn task_id_tails(cli: &Cli) -> HashSet<String> {
         .collect()
 }
 
-/// Task id -> the ticket id its body names, for every task made from a ticket. `None` when
-/// the daemon isn't reachable: the task side of the link can't be checked then.
-async fn task_links(cli: &Cli) -> Option<HashMap<String, String>> {
-    let client = client_for(cli).await.ok()?;
-    let tasks = client.list_tasks().await.ok()?;
-    Some(
-        tasks
-            .into_iter()
-            .filter_map(|t| Some((t.id.clone(), ticket_of(&t)?)))
-            .collect(),
-    )
-}
-
 /// The ticket a task was made from: its `ticket` field, or (a daemon that hasn't migrated it
 /// yet) the old `original id:` first body line.
 fn ticket_of(t: &bridle_api::Task) -> Option<String> {
@@ -347,11 +331,138 @@ async fn set_cmd(cli: &Cli, repo: &Path, args: &TicketSetArgs) -> Result<(), Cli
     Ok(())
 }
 
+async fn link_cmd(cli: &Cli, repo: &Path, args: &TicketLinkArgs) -> Result<(), CliError> {
+    let projects = projects(cli, repo).await?;
+    let id = projects.local(&args.id)?;
+    let other = projects.qualify(&tickets_root(repo), &args.other)?;
+    if matches!(args.kind, LinkKind::Duplicates | LinkKind::Supersedes) {
+        // Rare, and not a field (22ab section 7): an edge between the two rows.
+        let own = projects.own.as_deref().unwrap_or_default();
+        let from = if own.is_empty() {
+            id.to_string()
+        } else {
+            format!("{own}-{id}")
+        };
+        let (kind, client) = match args.kind {
+            LinkKind::Duplicates => (bridle_api::EdgeKind::Duplicates, client_for(cli).await?),
+            _ => (bridle_api::EdgeKind::Supersedes, client_for(cli).await?),
+        };
+        if args.rm {
+            client
+                .remove_edge(&bridle_api::RemoveEdgeQuery {
+                    from,
+                    to: other,
+                    kind,
+                })
+                .await?;
+        } else {
+            let edge = client
+                .add_edge(&bridle_api::NewEdgeRequest {
+                    from,
+                    to: other,
+                    kind,
+                })
+                .await?;
+            println!("{} {} {}", edge.from, edge.kind, edge.to);
+        }
+        return Ok(());
+    }
+    let path = link_in(
+        &tickets_root(repo),
+        id,
+        args.kind,
+        &other,
+        args.rm,
+        &projects,
+    )?;
+    println!("{}", path.strip_prefix(repo).unwrap_or(&path).display());
+    Ok(())
+}
+
+/// Add (or, with `rm`, remove) `other` in ticket `id`'s `blocked_by`, `related` or `parent`.
+/// Edits the file only; the daemon indexes it.
+pub fn link_in(
+    root: &Path,
+    id: &str,
+    kind: LinkKind,
+    other: &str,
+    rm: bool,
+    projects: &Projects,
+) -> anyhow::Result<PathBuf> {
+    let path = find_by_id(&root.join("open"), id)
+        .or_else(|_| find_by_id(&root.join("resolved"), id))
+        .map_err(|_| anyhow!("no ticket with id {id} in open/ or resolved/"))?;
+    let text =
+        std::fs::read_to_string(&path).with_context(|| format!("reading {}", path.display()))?;
+    if let Some(out) = link_text_with(&text, kind, other, rm, projects, root)
+        .map_err(|e| anyhow!("{} ({})", e, path.display()))?
+    {
+        std::fs::write(&path, out).with_context(|| format!("writing {}", path.display()))?;
+    }
+    Ok(path)
+}
+
+/// [`link_in`]'s edit adding a link, on the text alone; `None` when nothing changes.
+pub fn link_text(
+    text: &str,
+    kind: LinkKind,
+    other: &str,
+    projects: &Projects,
+    root: &Path,
+) -> anyhow::Result<Option<String>> {
+    link_text_with(text, kind, other, false, projects, root)
+}
+
+fn link_text_with(
+    text: &str,
+    kind: LinkKind,
+    other: &str,
+    rm: bool,
+    projects: &Projects,
+    root: &Path,
+) -> anyhow::Result<Option<String>> {
+    let (field, is_list) = match kind {
+        LinkKind::BlockedBy => ("blocked_by", true),
+        LinkKind::Related => ("related", true),
+        LinkKind::Parent => ("parent", false),
+        _ => bail!("{kind:?} is an edge, not a frontmatter field"),
+    };
+    let (pairs, _) = split_front(text).ok_or_else(|| anyhow!("no frontmatter"))?;
+    let raw = |name: &str| {
+        pairs
+            .iter()
+            .find(|(k, _)| k == name)
+            .map(|(_, v)| v.trim_matches('"').to_string())
+    };
+    let value = if is_list {
+        let old = old_name(field).and_then(raw);
+        let mut items = raw(field)
+            .or(old)
+            .and_then(|r| list_items(&r))
+            .unwrap_or_default();
+        if rm {
+            items.retain(|i| i != other);
+        } else if !items.iter().any(|i| i == other) {
+            items.push(other.to_string());
+        }
+        items.join(",")
+    } else if rm {
+        String::new()
+    } else {
+        other.to_string()
+    };
+    let out = if field == "parent" && value.is_empty() {
+        drop_line(text, "parent")
+    } else {
+        set_text(text, root, field, &value, projects)?
+    };
+    Ok((out != text).then_some(out))
+}
+
 async fn check_cmd(cli: &Cli, repo: &Path, args: &TicketCheckArgs) -> Result<(), CliError> {
     let root = tickets_root(repo);
-    let links = task_links(cli).await;
     let projects = projects(cli, repo).await?;
-    let report = check_in(&root, &repo.join("docs"), links.as_ref(), &projects);
+    let report = check_in(&root, &repo.join("docs"), &projects);
     for w in &report.warnings {
         eprintln!("warning: {w}");
     }
@@ -415,7 +526,7 @@ pub fn create(
     };
     let qualified = f.prefix.map_or(id.clone(), |p| format!("{p}-{id}"));
     let text = format!(
-        "---\nid: {qualified}\ntitle: {}\nkind: {}\ncreated: {today}\n{}{}repos: {}\nchanges: []\nspecs: []\nblocked_by: {}\nrelated: {}\ntasks: []\n---\n\n## The ask\n\n{}",
+        "---\nid: {qualified}\ntitle: {}\nkind: {}\ncreated: {today}\n{}{}repos: {}\nchanges: []\nspecs: []\nblocked_by: {}\nrelated: {}\n---\n\n## The ask\n\n{}",
         yaml_scalar(f.title),
         f.kind,
         f.created_by
@@ -583,14 +694,7 @@ fn has_ticket(root: &Path, tail: &str) -> bool {
         .any(|d| find_by_id(&root.join(d), tail).is_ok())
 }
 
-const LIST_FIELDS: [&str; 6] = [
-    "repos",
-    "changes",
-    "specs",
-    "blocked_by",
-    "related",
-    "tasks",
-];
+const LIST_FIELDS: [&str; 5] = ["repos", "changes", "specs", "blocked_by", "related"];
 const REQUIRED: [&str; 8] = [
     "id",
     "title",
@@ -656,6 +760,7 @@ fn check_parent(v: &str) -> anyhow::Result<()> {
 }
 
 /// Set frontmatter `field` of ticket `id` (open or resolved) to `value`; returns the path.
+#[cfg(test)]
 pub fn set(root: &Path, id: &str, field: &str, value: &str) -> anyhow::Result<PathBuf> {
     set_in(root, id, field, value, &Projects::default())
 }
@@ -675,7 +780,7 @@ pub fn set_in(
     let is_list = LIST_FIELDS.contains(&field);
     if !is_list && !matches!(field, "title" | "kind" | "theme" | "parent") {
         bail!(
-            "unknown field {field}; one of title, kind, theme, parent, repos, changes, specs, blocked_by, related, tasks"
+            "unknown field {field}; one of title, kind, theme, parent, repos, changes, specs, blocked_by, related"
         );
     }
     if field == "kind" {
@@ -692,6 +797,21 @@ pub fn set_in(
         .map_err(|_| anyhow!("no ticket with id {id} in open/ or resolved/"))?;
     let text =
         std::fs::read_to_string(&path).with_context(|| format!("reading {}", path.display()))?;
+    let out = set_text(&text, root, field, value, projects)
+        .map_err(|e| anyhow!("{} ({})", e, path.display()))?;
+    std::fs::write(&path, out).with_context(|| format!("writing {}", path.display()))?;
+    Ok(path)
+}
+
+/// `text` with frontmatter `field` set to `value` (the transform behind [`set_in`]).
+fn set_text(
+    text: &str,
+    root: &Path,
+    field: &str,
+    value: &str,
+    projects: &Projects,
+) -> anyhow::Result<String> {
+    let is_list = LIST_FIELDS.contains(&field);
     let refs = matches!(field, "blocked_by" | "related");
     let rendered = if is_list {
         let mut items: Vec<String> = value
@@ -714,13 +834,11 @@ pub fn set_in(
     // A ticket still in the old form keeps one copy of the field: drop the old-named line so the
     // new one is the only one (the new name wins on read anyway).
     let text = match old_name(field) {
-        Some(old) => drop_line(&text, old),
-        None => text,
+        Some(old) => drop_line(text, old),
+        None => text.to_string(),
     };
-    let out = set_line(&text, field, &rendered)
-        .ok_or_else(|| anyhow!("{} has no frontmatter", path.display()))?;
-    std::fs::write(&path, out).with_context(|| format!("writing {}", path.display()))?;
-    Ok(path)
+    let out = set_line(&text, field, &rendered).ok_or_else(|| anyhow!("no frontmatter"))?;
+    Ok(out)
 }
 
 /// `text` with frontmatter `key: value` replaced, or added last before the closing `---`
@@ -752,7 +870,7 @@ fn set_line(text: &str, key: &str, value: &str) -> Option<String> {
 }
 
 /// `text` without the frontmatter line for `key`.
-fn drop_line(text: &str, key: &str) -> String {
+pub(crate) fn drop_line(text: &str, key: &str) -> String {
     let lines: Vec<String> = text.lines().map(str::to_string).collect();
     let Some(end) = front_end(&lines) else {
         return text.to_string();
@@ -958,21 +1076,15 @@ pub struct Report {
 }
 
 /// Every problem in the tickets under `root/{open,resolved}`; `docs` is where `[[links]]` may
-/// point (by file stem, anywhere beneath it). `task_links` maps task id -> the ticket id it was
-/// made from; `None` skips the task side of the two-way link.
+/// point (by file stem, anywhere beneath it).
 #[cfg(test)]
-pub fn check(root: &Path, docs: &Path, task_links: Option<&HashMap<String, String>>) -> Report {
-    check_in(root, docs, task_links, &Projects::default())
+pub fn check(root: &Path, docs: &Path) -> Report {
+    check_in(root, docs, &Projects::default())
 }
 
 /// [`check`], knowing this project's prefix (a ticket's `id:` must carry it, if qualified) and
 /// the other registered projects (a reference qualified with one of theirs is looked up there).
-pub fn check_in(
-    root: &Path,
-    docs: &Path,
-    task_links: Option<&HashMap<String, String>>,
-    projects: &Projects,
-) -> Report {
+pub fn check_in(root: &Path, docs: &Path, projects: &Projects) -> Report {
     let mut problems = Vec::new();
     let mut warnings = Vec::new();
     let mut files: Vec<(bool, PathBuf)> = Vec::new();
@@ -1055,46 +1167,6 @@ pub fn check_in(
             None | Some("") => note(MISSING_KIND_OR_LINK_IS_ERROR, "missing kind".into()),
             Some(k) if k.parse::<TaskKind>().is_err() => note(true, format!("unknown kind {k}")),
             Some(_) => {}
-        }
-        let tasks = get("tasks").and_then(list_items);
-        if get("tasks").is_none() {
-            note(
-                MISSING_KIND_OR_LINK_IS_ERROR,
-                "missing tasks (the tasks made from this ticket)".into(),
-            );
-        }
-        if let (Some(links), Some(me)) = (task_links, get("id").map(|i| split_id(i).1)) {
-            for t in tasks.iter().flatten() {
-                match links.get(t) {
-                    None => note(
-                        true,
-                        format!(
-                            "tasks names {t}, which is not a task made from a ticket \
-                             (or its task has no `ticket` field)"
-                        ),
-                    ),
-                    Some(o) if split_id(o).1 != me => {
-                        note(true, format!("tasks names {t}, which names ticket {o}"))
-                    }
-                    Some(_) => {}
-                }
-            }
-            let mut mine: Vec<&String> = links
-                .iter()
-                .filter(|(_, o)| split_id(o).1 == me)
-                .map(|(t, _)| t)
-                .collect();
-            mine.sort();
-            for t in mine {
-                if !tasks.iter().flatten().any(|x| x == t) {
-                    let msg = format!("task {t} names this ticket, but tasks doesn't list it");
-                    if tasks.is_some() {
-                        note(true, msg)
-                    } else {
-                        note(MISSING_KIND_OR_LINK_IS_ERROR, msg)
-                    }
-                }
-            }
         }
         match (resolved, get("resolved")) {
             (true, None | Some("")) => {
@@ -1325,7 +1397,7 @@ mod tests {
         assert_eq!(
             text,
             format!(
-                "---\nid: {id}\ntitle: \"Fix the: thing (now)\"\nkind: feature\ncreated: 2026-09-30\nrepos: [proj]\nchanges: []\nspecs: []\nblocked_by: []\nrelated: []\ntasks: []\n---\n\n## The ask\n\n"
+                "---\nid: {id}\ntitle: \"Fix the: thing (now)\"\nkind: feature\ncreated: 2026-09-30\nrepos: [proj]\nchanges: []\nspecs: []\nblocked_by: []\nrelated: []\n---\n\n## The ask\n\n"
             )
         );
     }
@@ -1427,7 +1499,7 @@ mod tests {
         assert_eq!(dest.parent().unwrap(), dir.path().join("resolved"));
         let text = std::fs::read_to_string(&dest).unwrap();
         assert!(
-            text.contains("tasks: []\nresolved: 2026-10-01T12:00:00Z\n---\n"),
+            text.contains("related: []\nresolved: 2026-10-01T12:00:00Z\n---\n"),
             "{text}"
         );
         assert!(resolve(dir.path(), &id, "x").is_err());
@@ -1466,12 +1538,12 @@ mod tests {
         std::fs::write(d.join(name), text).unwrap();
     }
 
-    fn report(root: &Path, links: Option<&HashMap<String, String>>) -> Report {
-        check(&root.join("docs/tickets"), &root.join("docs"), links)
+    fn report(root: &Path) -> Report {
+        check(&root.join("docs/tickets"), &root.join("docs"))
     }
 
     fn problems(root: &Path) -> String {
-        report(root, None).errors.join("\n")
+        report(root).errors.join("\n")
     }
 
     #[test]
@@ -1561,67 +1633,12 @@ mod tests {
             "kind: bug\ntasks: []\n",
             "",
         );
-        let r = report(dir.path(), None);
+        let r = report(dir.path());
         assert_eq!(r.errors.len(), 1, "{:?}", r.errors);
         assert!(r.errors[0].contains("b-bbbb.md: unknown kind nonsense"));
         let w = r.warnings.join("\n");
         assert!(w.contains("a-aaaa.md: missing kind"), "{w}");
-        assert!(w.contains("a-aaaa.md: missing tasks"), "{w}");
         assert!(!w.contains("c-cccc"), "{w}");
-    }
-
-    #[test]
-    fn check_flags_a_link_present_on_one_side_only() {
-        let dir = tempfile::tempdir().unwrap();
-        let t = dir.path().join("docs/tickets");
-        let ok = "kind: bug\n";
-        write(
-            &t,
-            "open",
-            "a-aaaa.md",
-            "aaaa",
-            &format!("{ok}tasks: [br-1111, br-2222]\n"),
-            "",
-        );
-        write(
-            &t,
-            "open",
-            "b-bbbb.md",
-            "bbbb",
-            &format!("{ok}tasks: []\n"),
-            "",
-        );
-        write(&t, "open", "c-cccc.md", "cccc", ok, "");
-        let links: HashMap<String, String> = [
-            ("br-1111", "aaaa"), // both sides
-            ("br-2222", "bbbb"), // aaaa lists a task naming another ticket
-            ("br-3333", "bbbb"), // bbbb doesn't list it
-            ("br-4444", "cccc"), // cccc has no tasks field yet: a warning
-        ]
-        .map(|(a, b)| (a.to_string(), b.to_string()))
-        .into();
-        let r = report(dir.path(), Some(&links));
-        let e = r.errors.join("\n");
-        assert!(
-            e.contains("a-aaaa.md: tasks names br-2222, which names ticket bbbb"),
-            "{e}"
-        );
-        assert!(
-            e.contains("b-bbbb.md: task br-3333 names this ticket"),
-            "{e}"
-        );
-        assert_eq!(r.errors.len(), 3, "{e}"); // br-2222 is wrong on both sides
-        assert!(
-            r.warnings
-                .iter()
-                .any(|w| w.contains("c-cccc.md: task br-4444"))
-        );
-        let unknown = HashMap::new();
-        let e = report(dir.path(), Some(&unknown)).errors.join("\n");
-        assert!(
-            e.contains("tasks names br-1111, which is not a task"),
-            "{e}"
-        );
     }
 
     #[test]
@@ -1646,12 +1663,7 @@ mod tests {
             .unwrap_err()
             .to_string();
         assert!(e.contains("unknown task kind"), "{e}");
-        set(dir.path(), &id, "tasks", "br-1111, br-2222").unwrap();
-        assert!(
-            std::fs::read_to_string(&p)
-                .unwrap()
-                .contains("tasks: [br-1111, br-2222]\n")
-        );
+        assert!(set(dir.path(), &id, "tasks", "br-1111").is_err());
     }
 
     #[test]
@@ -1674,7 +1686,7 @@ mod tests {
         assert!(text.contains("title: \"New: title\"\n"), "{text}");
         assert!(text.contains("repos: [a, b]\n"), "{text}");
         assert!(
-            text.contains("blocked_by: [xxxx]\nrelated: []\ntasks: []\n---\n"),
+            text.contains("blocked_by: [xxxx]\nrelated: []\n---\n"),
             "{text}"
         );
         assert!(text.ends_with("## The ask\n\n"));
@@ -1774,7 +1786,7 @@ mod tests {
             "done-cccc.md",
             &format!("id: cccc\ntitle: T\n{NEW_FRONT}parent: br-aaaa\nresolved: 2026-10-01\n"),
         );
-        let r = report(dir.path(), None);
+        let r = report(dir.path());
         assert!(r.errors.is_empty(), "{:?}", r.errors);
         assert!(
             r.warnings.iter().all(|w| !w.contains("both")),
@@ -1794,7 +1806,7 @@ mod tests {
             "both-aaaa.md",
             &format!("id: aaaa\ntitle: T\n{NEW_FRONT}needs: [nope]\n"),
         );
-        let r = report(dir.path(), None);
+        let r = report(dir.path());
         assert!(r.errors.is_empty(), "{:?}", r.errors);
         assert!(
             r.warnings
@@ -1878,6 +1890,33 @@ mod tests {
     }
 
     #[test]
+    fn link_adds_and_removes_frontmatter_links() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path().join("docs/tickets");
+        let repos = vec!["p".to_string()];
+        let mut f = fields("Linked", &repos);
+        f.prefix = Some("br");
+        let p = create(&root, &f, "2026-10-10", &HashSet::new()).unwrap();
+        let id = id_of(&p).unwrap();
+        let ctx = projects("br", &[]);
+        let go = |kind, other: &str, rm| link_in(&root, &id, kind, other, rm, &ctx).unwrap();
+        go(LinkKind::BlockedBy, "br-aaaa", false);
+        go(LinkKind::BlockedBy, "br-bbbb", false);
+        go(LinkKind::BlockedBy, "br-aaaa", false);
+        go(LinkKind::Parent, "br-cccc", false);
+        go(LinkKind::Related, "tw-dddd", false);
+        let text = std::fs::read_to_string(&p).unwrap();
+        assert!(text.contains("blocked_by: [br-aaaa, br-bbbb]"), "{text}");
+        assert!(text.contains("parent: br-cccc"), "{text}");
+        assert!(text.contains("related: [tw-dddd]"), "{text}");
+        go(LinkKind::BlockedBy, "br-aaaa", true);
+        go(LinkKind::Parent, "br-cccc", true);
+        let text = std::fs::read_to_string(&p).unwrap();
+        assert!(text.contains("blocked_by: [br-bbbb]"), "{text}");
+        assert!(!text.contains("parent:"), "{text}");
+    }
+
+    #[test]
     fn split_id_reads_qualified_and_bare() {
         assert_eq!(split_id("br-k7tm"), (Some("br"), "k7tm"));
         assert_eq!(split_id("k7tm"), (None, "k7tm"));
@@ -1904,7 +1943,7 @@ mod tests {
     }
 
     fn problems_in(root: &Path, ctx: &Projects) -> String {
-        check_in(&root.join("docs/tickets"), &root.join("docs"), None, ctx)
+        check_in(&root.join("docs/tickets"), &root.join("docs"), ctx)
             .errors
             .join("\n")
     }
@@ -1969,7 +2008,7 @@ mod tests {
         assert!(text.contains("parent: br-aaaa"), "{text}");
         // check looks a registered project's reference up there.
         set_in(&a, "eeee", "parent", "tw-zzzz", &Projects::default()).unwrap();
-        let p = check_in(&a, &dir.path().join("a/docs"), None, &ctx)
+        let p = check_in(&a, &dir.path().join("a/docs"), &ctx)
             .errors
             .join("\n");
         assert!(

@@ -20,7 +20,7 @@ bridle ready --all                        # every ready task, across projects
   task (ready and so unclaimed), choosing within the tier by free worker slots. If the
   top tier's tasks are all blocked, they take from the next tier down. They never move a
   task between tiers.
-- **Dependencies** are `blocks` edges (`bridle dep add`), real ones only. Use tiers, not
+- **Dependencies** are `blocks` edges (`bridle ticket link <id> blocked-by <other>`), real ones only. Use tiers, not
   edges, for ordering.
 - **Durable:** stored in `queue.toml` on the state branch, restored by `bridle rebuild`.
 

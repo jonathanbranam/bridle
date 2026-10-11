@@ -8,7 +8,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-h3ar, br-fx7x, br-m7mp, br-98xt, br-j28f, br-kuw2, br-cr7t, br-75h2]
-tasks: [br-mvtz]
 ---
 
 The kind is `research` until a `postmortem` kind exists

@@ -6,9 +6,8 @@ created: 2026-10-05
 repos: [bridle-ui, bridle]
 changes: []
 specs: []
-blocked_by: []
+blocked_by: [br-a3yd]
 related: [br-9p3v, br-a3yd]
-tasks: [br-75zr]
 resolved: 2026-10-09T23:11:07Z
 ---
 

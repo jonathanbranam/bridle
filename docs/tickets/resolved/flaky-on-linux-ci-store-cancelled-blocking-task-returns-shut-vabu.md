@@ -9,7 +9,6 @@ changes: []
 specs: []
 blocked_by: []
 related: []
-tasks: [br-vabu]
 resolved: 2026-10-09T23:11:08Z
 ---
 

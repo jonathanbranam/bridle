@@ -8,7 +8,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-34bw, br-ntca]
-tasks: [br-0473, br-7zd4]
 ---
 
 ## The ask

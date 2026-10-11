@@ -1,6 +1,6 @@
 # Coordination and communication
 
-> **Status (checked 2026-10-03):** Built and in use: edges (`bridle task dep`; only `blocks` affects readiness), the settle period, task questions and answers, notes, human to-dos, incidents, messages to agents, roles and `human`, waking the manager, `main moved` notices, `bridle wait`, the Stop hook, the role's resolved rules in each agent's system prompt · Built, not wired in: the `arch-guard` PreToolUse hook (live only where `bridle sync` installed it) · Planned: cross-project edges, acting on `parent` and the provenance edges, `handoff`/`conflict` message kinds and send-to-task from `bridle send`, layer hooks passed at spawn, `bridle prime` output as a worker's first message
+> **Status (checked 2026-10-03):** Built and in use: edges (from ticket frontmatter, `bridle ticket link`; only `blocks` affects readiness), the settle period, task questions and answers, notes, human to-dos, incidents, messages to agents, roles and `human`, waking the manager, `main moved` notices, `bridle wait`, the Stop hook, the role's resolved rules in each agent's system prompt · Built, not wired in: the `arch-guard` PreToolUse hook (live only where `bridle sync` installed it) · Planned: cross-project edges, acting on `parent` and the provenance edges, `handoff`/`conflict` message kinds and send-to-task from `bridle send`, layer hooks passed at spawn, `bridle prime` output as a worker's first message
 
 ## Edges
 
@@ -15,8 +15,8 @@ Edges are to cross projects (`hx-19ab blocked-by tw-7fa2`; planned, today an
 edge joins two tasks of one project), which turns "engine first, host second"
 into something the tool enforces.
 
-**Built so far:** the edges table (`from`, `to`, `kind`) and `bridle dep
-add|rm`, durable the same way a task is: a SQLite fast index plus a copy on
+**Built so far:** the edges table (`from`, `to`, `kind`) and `bridle ticket
+link`, durable the same way a task is: a SQLite fast index plus a copy on
 the state branch, written in the same logical operation
 ([[docs/design/agent-host/storage|storage.md]]). Only `blocks` is acted on:
 `ready` (below) treats any `blocks` edge whose `from` task isn't `dropped` or

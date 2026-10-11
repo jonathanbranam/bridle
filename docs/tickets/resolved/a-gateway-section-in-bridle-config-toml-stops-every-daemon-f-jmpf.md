@@ -8,7 +8,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-anmx, br-essy]
-tasks: [br-jmpf]
 resolved: 2026-10-09T23:11:04Z
 ---
 

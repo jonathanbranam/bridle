@@ -6,9 +6,8 @@ created: 2026-10-05
 repos: [bridle-ui, bridle]
 changes: []
 specs: []
-blocked_by: []
+blocked_by: [br-7sd9]
 related: [br-n2q9, br-s6cj, br-7sd9, br-ma8e, br-essy]
-tasks: [br-rk7k, ui-jafg]
 ---
 
 ## The ask

@@ -8,7 +8,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [ticket-state-without-moving-files-p2ys, which-docs-live-in-bridle-and-which-in-markdown-hv8e, refining-a-task-with-the-human-before-it-ships-hvxk, ticket-frontmatter-fields-have-unclear-names-rename-them-wit-zkbb]
-tasks: [br-3724, br-9e15]
 resolved: 2026-10-04T13:13:48Z
 ---
 

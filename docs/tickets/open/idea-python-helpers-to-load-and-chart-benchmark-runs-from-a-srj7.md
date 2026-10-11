@@ -9,7 +9,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-v6kr]
-tasks: [br-srj7]
 ---
 
 **Tentative idea, not committed and not scheduled.** Bring it up in the PdM's reviews of themes

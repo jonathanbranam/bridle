@@ -8,7 +8,6 @@ changes: []
 specs: []
 blocked_by: []
 related: []
-tasks: [br-kae5]
 resolved: 2026-10-09T23:11:05Z
 ---
 

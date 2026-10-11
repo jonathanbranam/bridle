@@ -46,10 +46,11 @@ startable task, skipping a tier stuck on a dependency. **Built.**
 
 ## Dependencies, ready, questions
 
-`bridle dep add <task> --blocked-by <other>` adds a `blocks` edge. Other kinds (`parent`,
-`discovered-from`, `related`, `supersedes`, `duplicates`) are stored and shown but don't
+`bridle ticket link <id> blocked-by <other>` writes `blocked_by` in the ticket's frontmatter and the
+daemon indexes it as a `blocks` edge. Other kinds (`parent`, `related` from the frontmatter;
+`supersedes`, `duplicates` from `ticket link`) are stored and shown but don't
 affect anything. A task is **ready** when it is `planned`, every task blocking it is
-integrated (or dropped), and it has no open question. `dep rm` removes an edge. **Built.**
+integrated (or dropped), and it has no open question. `ticket link --rm` removes one. **Built.**
 
 `bridle ask <task> "text"` records a question on the task and takes it out of `ready` until
 `bridle answer <task> "text"`. A task has at most one open question. `ask` also sends a

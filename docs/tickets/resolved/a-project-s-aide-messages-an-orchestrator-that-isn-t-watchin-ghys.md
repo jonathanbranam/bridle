@@ -9,7 +9,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-ma8e, br-hj4g, br-s5ah, br-kuw2, br-r8kv]
-tasks: [br-ghys]
 resolved: 2026-10-09T23:11:05Z
 ---
 

@@ -8,7 +8,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-mrhe, br-34bw, br-vp9e]
-tasks: [br-d207]
 resolved: 2026-10-09T23:11:08Z
 ---
 

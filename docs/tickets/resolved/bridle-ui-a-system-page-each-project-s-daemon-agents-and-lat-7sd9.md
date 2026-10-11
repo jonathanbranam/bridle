@@ -6,9 +6,8 @@ created: 2026-10-04
 repos: [bridle-ui, bridle]
 changes: []
 specs: []
-blocked_by: []
+blocked_by: [br-s6cj]
 related: [br-s6cj, br-essy]
-tasks: [br-7sd9]
 resolved: 2026-10-09T23:11:06Z
 ---
 

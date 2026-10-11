@@ -9,7 +9,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-j7r4, br-kt25, br-xrkh, br-k6jd, br-8ay6, br-xccp]
-tasks: [br-8z7j, br-hdbj]
 resolved: 2026-10-10T14:16:41Z
 ---
 

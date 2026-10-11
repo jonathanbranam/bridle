@@ -8,7 +8,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-g49c, br-m2pz]
-tasks: [br-qbbk, ui-qbbk]
 resolved: 2026-10-09T23:11:07Z
 ---
 

@@ -8,7 +8,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-sk52]
-tasks: [br-8b6c]
 resolved: 2026-10-09T23:11:04Z
 ---
 

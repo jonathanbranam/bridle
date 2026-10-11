@@ -6,9 +6,8 @@ created: 2026-10-04
 repos: [bridle, bridle-ui]
 changes: []
 specs: []
-blocked_by: []
+blocked_by: [br-jrm2]
 related: [br-x8jt, br-jrm2, br-wjhp]
-tasks: [br-ehv6]
 resolved: 2026-10-09T23:11:07Z
 ---
 

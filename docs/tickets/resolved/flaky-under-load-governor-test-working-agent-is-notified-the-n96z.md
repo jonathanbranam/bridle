@@ -9,7 +9,6 @@ changes: []
 specs: []
 blocked_by: []
 related: []
-tasks: [br-n96z]
 resolved: 2026-10-10T12:09:20Z
 ---
 

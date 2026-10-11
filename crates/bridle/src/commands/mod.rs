@@ -8,13 +8,13 @@ use anyhow::Context;
 use bridle_api::discovery::{self, Env, ProcessEnv};
 use bridle_api::{
     AllocPortRequest, BudgetHoldRequest, BudgetOverrideRequest, Client, DoneTaskRequest,
-    DropTaskRequest, Edge, EdgeKind, EditTaskRequest, Event, EventQuery, Impact,
-    ImpactCheckRequest, InterruptRequest, LandRequest, MaxWorkersRequest, MessageKind,
-    MessageQuery, NewEdgeRequest, NewTaskRequest, OverlapLevel, ProbeOutcome, ProbeRequest,
-    ProbeResult, RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, ResumeRequest,
-    SendRequest, SetImpactRequest, SetKindRequest, SetPriorityRequest, SetSummaryRequest,
-    SpawnRequest, SpecRef, StopRequest, Task, TaskKind, TaskPriority, TaskSize, TokenCreateRequest,
-    UsageBreakdownQuery, UsageGroupBy, UsageHistoryQuery, Workdir, event_kind,
+    DropTaskRequest, EditTaskRequest, Event, EventQuery, Impact, ImpactCheckRequest,
+    InterruptRequest, LandRequest, MaxWorkersRequest, MessageKind, MessageQuery, NewTaskRequest,
+    OverlapLevel, ProbeOutcome, ProbeRequest, ProbeResult, RemoveQuery, RenewRequest,
+    ResolveConflictRequest, ResumeRequest, SendRequest, SetImpactRequest, SetKindRequest,
+    SetPriorityRequest, SetSummaryRequest, SpawnRequest, SpecRef, StopRequest, Task, TaskKind,
+    TaskPriority, TaskSize, TokenCreateRequest, UsageBreakdownQuery, UsageGroupBy,
+    UsageHistoryQuery, Workdir, event_kind,
 };
 use chrono::{Local, TimeZone, Utc};
 use clap::CommandFactory;
@@ -24,16 +24,16 @@ use crate::cli::{AgentArgs, DaemonArgs, HookArgs, WorkflowAction};
 use crate::cli::{
     AgentsArgs, AnswerArgs, ArchProposeArgs, AskArgs, BudgetAction, BudgetArgs, BudgetHoldArgs,
     ClaimArgs, Cli, Command, CompletionsArgs, ConflictAction, ConflictArgs, CostAction, CostArgs,
-    CostAuditArgs, DepAction, DepArgs, DepEdgeArgs, EdgeKindArg, EventsArgs, HandoverAction,
-    HandoverArgs, ImpactAction, ImpactArgs, InboxAction, InboxArgs, InboxReadArgs, InboxShowArgs,
-    InterruptArgs, LogsArgs, MessageAction, MessageArgs, MessagesArgs, MigrateArgs, PaneAction,
-    PrimeArgs, PrimeRoleArg, ProbeArgs, QueueAction, QueueAddTierArgs, QueueArgs, QueueSetArgs,
-    ReadyArgs, ReleaseArgs, RmArgs, RulesAction, RulesArgs, RulesDiffArgs, RulesExplainArgs,
-    SendArgs, ShowArgs, SpawnArgs, SpecAction, SpecArgs, SpecExportArgs, SpecFormatArg, StopArgs,
-    TaskAction, TaskArgs, TaskCommentArgs, TaskDoneArgs, TaskDropArgs, TaskEditArgs, TaskKindArg,
-    TaskKindArgs, TaskListArgs, TaskNewArgs, TaskPlanArgs, TaskPriorityArg, TaskPriorityArgs,
-    TaskReopenArgs, TaskSearchArgs, TaskShowArgs, TaskSizeArg, TaskSkipSettleArgs, TaskSummaryArgs,
-    TaskWatchArgs, TokenAction, TokenArgs, UsageArgs, UsageByArg, WaitArgs, WakeArgs, WhenArg,
+    CostAuditArgs, EventsArgs, HandoverAction, HandoverArgs, ImpactAction, ImpactArgs, InboxAction,
+    InboxArgs, InboxReadArgs, InboxShowArgs, InterruptArgs, LogsArgs, MessageAction, MessageArgs,
+    MessagesArgs, MigrateArgs, PaneAction, PrimeArgs, PrimeRoleArg, ProbeArgs, QueueAction,
+    QueueAddTierArgs, QueueArgs, QueueSetArgs, ReadyArgs, ReleaseArgs, RmArgs, RulesAction,
+    RulesArgs, RulesDiffArgs, RulesExplainArgs, SendArgs, ShowArgs, SpawnArgs, SpecAction,
+    SpecArgs, SpecExportArgs, SpecFormatArg, StopArgs, TaskAction, TaskArgs, TaskCommentArgs,
+    TaskDoneArgs, TaskDropArgs, TaskEditArgs, TaskKindArg, TaskKindArgs, TaskListArgs, TaskNewArgs,
+    TaskPlanArgs, TaskPriorityArg, TaskPriorityArgs, TaskReopenArgs, TaskSearchArgs, TaskShowArgs,
+    TaskSizeArg, TaskSkipSettleArgs, TaskSummaryArgs, TaskWatchArgs, TokenAction, TokenArgs,
+    UsageArgs, UsageByArg, WaitArgs, WakeArgs, WhenArg,
 };
 use crate::cli::{
     FocusAction, FocusArgs, LandArgs, OrchestratorAction, OrchestratorArgs, PortAction, PortArgs,
@@ -109,7 +109,6 @@ fn normalize(cmd: Command) -> Command {
             TaskAction::Release(a) => Command::Release(a),
             TaskAction::Ready(a) => Command::Ready(a),
             TaskAction::Queue(a) => Command::Queue(a),
-            TaskAction::Dep(a) => Command::Dep(a),
             TaskAction::Land(a) => Command::Land(a),
             TaskAction::Conflict(a) => Command::Conflict(a),
             TaskAction::Impact(a) => Command::Impact(a),
@@ -191,7 +190,6 @@ pub async fn run(mut cli: Cli) -> Result<(), CliError> {
         Command::Push => push(&cli).await,
         Command::Conflict(args) => conflict(&cli, args).await,
         Command::Port(args) => port(&cli, args).await,
-        Command::Dep(args) => dep(&cli, args).await,
         Command::Ask(args) => ask(&cli, args).await,
         Command::Answer(args) => answer(&cli, args).await,
         Command::Claim(args) => claim(&cli, args).await,

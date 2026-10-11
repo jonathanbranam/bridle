@@ -8,7 +8,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-4r3k, br-stx8]
-tasks: [br-zcqv]
 ---
 
 ## The ask

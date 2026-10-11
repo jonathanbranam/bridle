@@ -9,7 +9,6 @@ changes: []
 specs: []
 blocked_by: [br-syqn]
 related: [br-22ab]
-tasks: [br-bpku]
 resolved: 2026-10-11T07:22:34Z
 ---
 

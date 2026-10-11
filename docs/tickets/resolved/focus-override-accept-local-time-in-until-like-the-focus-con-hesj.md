@@ -8,7 +8,6 @@ specs: []
 blocked_by: []
 related: [focus-hours-quiet-and-locked-cvaq]
 kind: feature
-tasks: [br-hesj]
 resolved: 2026-10-09T23:11:08Z
 ---
 

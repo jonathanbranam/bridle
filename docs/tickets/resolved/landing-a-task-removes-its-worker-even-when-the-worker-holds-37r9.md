@@ -9,7 +9,6 @@ changes: []
 specs: []
 blocked_by: []
 related: []
-tasks: [br-37r9]
 resolved: 2026-10-10T13:44:38Z
 ---
 

@@ -6,9 +6,8 @@ created: 2026-10-04
 repos: [bridle]
 changes: []
 specs: [docs/design/cli.md]
-blocked_by: []
+blocked_by: [br-m7mp]
 related: []
-tasks: [br-3397]
 resolved: 2026-10-09T23:11:06Z
 ---
 

@@ -8,7 +8,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [focus-hours-an-overnight-period-belongs-to-the-day-it-starts-3xr4, focus-hours-quiet-and-locked-cvaq, project-migrations-one-command-applies-pending-bridle-upgrad-xebc]
-tasks: [br-1c2a]
 resolved: 2026-10-02T12:04:32Z
 ---
 

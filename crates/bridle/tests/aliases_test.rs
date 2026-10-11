@@ -46,7 +46,6 @@ const OLD_NAMES: &[&str] = &[
     "land",
     "conflict",
     "port",
-    "dep",
     "ask",
     "answer",
     "claim",

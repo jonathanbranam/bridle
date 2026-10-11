@@ -6,9 +6,8 @@ created: 2026-10-06
 repos: [bridle]
 changes: []
 specs: []
-blocked_by: []
+blocked_by: [br-w3pk]
 related: [br-mrhe]
-tasks: [br-w3pk]
 resolved: 2026-10-09T23:11:02Z
 ---
 

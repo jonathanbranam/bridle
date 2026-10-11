@@ -8,7 +8,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [focus-hours-quiet-and-locked-cvaq, per-project-focus-hours-a-project-s-own-schedule-or-opt-out-mfgb]
-tasks: [br-14d6]
 resolved: 2026-10-09T23:11:08Z
 ---
 

@@ -9,7 +9,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-rs7p]
-tasks: [br-843g]
 resolved: 2026-10-09T23:11:07Z
 ---
 

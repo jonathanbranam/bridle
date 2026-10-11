@@ -9,7 +9,6 @@ changes: []
 specs: []
 blocked_by: []
 related: []
-tasks: [br-d48r]
 resolved: 2026-10-09T22:03:07Z
 ---
 

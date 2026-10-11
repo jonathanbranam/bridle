@@ -124,7 +124,6 @@ mod tests {
         ("push", Daemon),
         ("conflict", Daemon),
         ("port", Daemon),
-        ("dep", Daemon),
         ("ask", Daemon),
         ("answer", Daemon),
         ("claim", Daemon),

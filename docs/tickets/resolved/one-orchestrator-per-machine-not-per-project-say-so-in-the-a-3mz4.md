@@ -9,7 +9,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-bp2v]
-tasks: [br-3mz4]
 resolved: 2026-10-11T01:10:17Z
 ---
 

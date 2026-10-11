@@ -6,9 +6,8 @@ created: 2026-10-05
 repos: [bridle, bridle-ui]
 changes: []
 specs: []
-blocked_by: []
+blocked_by: [br-bek3]
 related: [br-5wdu, br-j28f, br-g6v4, br-jmpf]
-tasks: [br-yfjc]
 resolved: 2026-10-09T23:11:07Z
 ---
 

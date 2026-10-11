@@ -108,6 +108,7 @@ const CLASSES: &[(&str, Kind, &str)] = &[
     ("ticket check", Skip, "reads the cwd's repo"),
     ("ticket set", Skip, "edits the cwd's repo"),
     ("ticket resolve", Skip, "edits the cwd's repo"),
+    ("ticket link", Skip, "edits the cwd's repo"),
     ("ticket ready", Daemon, ""),
     ("ticket submit", Daemon, ""),
     (
@@ -208,8 +209,6 @@ fn required_args(path: &[String]) -> Vec<String> {
     const GIVEN: &[(&str, &[&str])] = &[
         ("task conflict resolve", &["--compatible", "r", "1"]),
         ("task summary", &["--text", "t", "1"]),
-        ("task dep add", &["1", "--to", "2"]),
-        ("task dep rm", &["1", "--to", "2"]),
         ("task search", &["word"]),
         ("probe", &["target"]),
         ("agent wake", &["external:advisor"]),

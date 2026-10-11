@@ -7,9 +7,8 @@ created_by: external:aide
 repos: [bridle]
 changes: []
 specs: []
-blocked_by: []
+blocked_by: [br-843g]
 related: [br-rs7p, br-843g]
-tasks: [br-gdyy, br-zpc7]
 ---
 
 ## The ask

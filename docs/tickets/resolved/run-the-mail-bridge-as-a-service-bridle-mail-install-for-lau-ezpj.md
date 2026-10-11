@@ -9,7 +9,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-rs7p, br-gdyy, br-843g]
-tasks: [br-ezpj]
 resolved: 2026-10-09T23:11:02Z
 ---
 

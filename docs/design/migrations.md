@@ -99,8 +99,15 @@ runs on a real project): start-up skips it, and it runs by `bridle migrate --onl
   same review and guard as `0002`. It edits files only: an open row changes with
   `bridle task kind`, an integrated row keeps `bug`.
 
+- **`0004-ticket-links-in-frontmatter`** (ticket 3v75): each `blocks`, `parent` and `related` edge
+  between two tickets of the project (read from `edges.toml` and the rows' `ticket` fields on the
+  `bridle/state` branch) is written into the owning ticket's `blocked_by`, `parent` or `related`,
+  and the `tasks:` line is dropped from every ticket. A parent already set is kept; edges to ids
+  with no ticket file, and `duplicates`, `supersedes` and `discovered-from`, stay edges. Opt-in,
+  same review and guard as `0002`; a rerun finds nothing.
+
 **Protected-branch guard** (rule `existing-projects`; `migrate::refuse_on_protected_branch`, the
 first one): a migration that rewrites a project's files calls it first and is refused
 (`migrate::Refused`) while `main`, `dev` or the configured `[branches] release` is checked out,
 so it only lands on the trial or integration branch. Bridle's own repo (project `bridle`) is
-exempt. `0002` and `0003` use it; `0001` does not yet.
+exempt. `0002`, `0003` and `0004` use it; `0001` does not yet.

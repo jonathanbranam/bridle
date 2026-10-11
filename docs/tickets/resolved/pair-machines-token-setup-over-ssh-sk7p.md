@@ -8,7 +8,6 @@ specs: []
 blocked_by: []
 related: [br-3ehu, br-k7mw, br-9mxw, br-n63z, br-gdf3]
 kind: feature
-tasks: [br-8c25, br-jw9e]
 resolved: 2026-10-09T23:00:17Z
 ---
 

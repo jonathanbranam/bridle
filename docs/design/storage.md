@@ -98,8 +98,12 @@ edges(from_task, to_task, kind, created_at, PRIMARY KEY(from_task, to_task, kind
 Unlike a task, the row *is* the whole record — there's no body/thread to
 carry, so `TaskManager`'s edge cache hydrates straight from this table at
 `open`, without touching the state branch. The `(from_task, to_task, kind)`
-triple is the natural key: there's no separate edge id, and `bridle dep rm`
-identifies the row to delete by that same triple.
+triple is the natural key: there's no separate edge id, and the edge removal
+identifies the row to delete by that same triple. The `blocks`, `parent` and `related` rows between
+tickets are an index of the ticket files' `blocked_by`, `parent` and `related` frontmatter
+(br-3v75): the daemon reconciles them from `docs/tickets` on a tick, so the files are the
+source of truth and `ticket link` edits the file. `duplicates`, `supersedes` and
+`discovered-from` rows are written directly.
 
 Open questions get their own table too (`SCHEMA_V8`), the fast index
 coordination.md's `question` message kind needs:

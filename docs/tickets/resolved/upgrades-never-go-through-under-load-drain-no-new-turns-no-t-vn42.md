@@ -8,7 +8,6 @@ changes: []
 specs: []
 blocked_by: []
 related: []
-tasks: [br-vn42]
 resolved: 2026-10-07T03:38:01Z
 ---
 

@@ -8,7 +8,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [a-web-ui-for-the-human-my-to-dos-and-decisions-to-run-throug-essy, other-projects-submit-bridle-tickets-directly-for-triage-93xm, overnight-periods-must-say-1d-and-bridle-doctor-validates-th-r5s3]
-tasks: [br-aca1]
 ---
 
 ## The ask

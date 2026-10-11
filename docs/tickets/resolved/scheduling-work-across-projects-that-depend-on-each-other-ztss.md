@@ -8,7 +8,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [cross-project-specs-yghs, one-orchestrator-and-advisor-or-one-per-project-ma8e, a-web-ui-for-the-human-my-to-dos-and-decisions-to-run-throug-essy, how-project-daemons-share-one-budget-xypj]
-tasks: [br-1d48]
 resolved: 2026-10-09T23:11:02Z
 ---
 

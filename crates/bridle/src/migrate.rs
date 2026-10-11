@@ -82,6 +82,13 @@ pub const MIGRATIONS: &[Migration] = &[
         manual_only: true,
         run: bug_tickets_that_are_fixes,
     },
+    Migration {
+        id: "0004-ticket-links-in-frontmatter",
+        description: "Carry the daemon's blocks, parent and related edges between tickets into their frontmatter and drop the `tasks:` list (ticket 3v75).",
+        // Rewrites many files of the human's project: they review it first, on a trial branch.
+        manual_only: true,
+        run: ticket_links_in_frontmatter,
+    },
 ];
 
 const OLD_ROLE: &str = "product-manager";
@@ -234,6 +241,167 @@ fn bug_tickets_that_are_fixes(ctx: &Ctx) -> anyhow::Result<Report> {
     }
     Ok(Report {
         summary: format!("{} bug tickets became fix", files.len()),
+        files,
+    })
+}
+
+/// Links live only in the frontmatter (3v75): each `blocks`, `parent` and `related` edge between
+/// two tickets of the project, read from the state branch (`edges.toml`, and each task's
+/// `ticket` field), is written into the ticket that owns it (`blocked_by`, `parent`, `related`),
+/// and the `tasks:` list goes. Edges that don't join two tickets here, and `duplicates`,
+/// `supersedes` and `discovered-from`, stay edges. A rerun finds nothing to add.
+fn ticket_links_in_frontmatter(ctx: &Ctx) -> anyhow::Result<Report> {
+    let project = project_of(ctx.repo);
+    refuse_on_protected_branch(ctx.repo, &project)?;
+    let git_show = |path: &str| -> Option<String> {
+        let out = std::process::Command::new("git")
+            .arg("-C")
+            .arg(ctx.repo)
+            .args(["show", &format!("bridle/state:{path}")])
+            .output()
+            .ok()?;
+        out.status
+            .success()
+            .then(|| String::from_utf8_lossy(&out.stdout).into_owned())
+    };
+    let edges = git_show("edges.toml").unwrap_or_default();
+    let mut rows = std::collections::HashMap::new();
+    let listing = std::process::Command::new("git")
+        .arg("-C")
+        .arg(ctx.repo)
+        .args(["ls-tree", "--name-only", "bridle/state", "tasks/"])
+        .output();
+    if let Ok(l) = listing {
+        for path in String::from_utf8_lossy(&l.stdout).lines() {
+            if let Some(text) = git_show(path) {
+                let front = text.split("+++").nth(1).unwrap_or_default();
+                let get = |key: &str| {
+                    front
+                        .lines()
+                        .find_map(|l| l.strip_prefix(&format!("{key} = \"")))
+                        .and_then(|v| v.strip_suffix('"'))
+                        .map(str::to_string)
+                };
+                if let (Some(id), Some(ticket)) = (get("id"), get("ticket")) {
+                    rows.insert(id, ticket);
+                }
+            }
+        }
+    }
+    carry_links(ctx, &edges, &rows)
+}
+
+/// [`ticket_links_in_frontmatter`] given the state branch's `edges.toml` text and the rows'
+/// `ticket` fields (row id -> ticket id).
+fn carry_links(
+    ctx: &Ctx,
+    edges_toml: &str,
+    row_ticket: &std::collections::HashMap<String, String>,
+) -> anyhow::Result<Report> {
+    use crate::cli::LinkKind;
+    use crate::ticket::{Projects, find_by_id, split_id};
+    let root = crate::ticket::tickets_root(ctx.repo);
+    // The project's tickets: bare id -> qualified id.
+    let mut paths = vec![];
+    md_files(&root, &mut paths);
+    paths.sort();
+    let mut known = std::collections::HashMap::new();
+    for p in &paths {
+        if let Ok(text) = std::fs::read_to_string(p)
+            && let Some(id) = text
+                .lines()
+                .find_map(|l| l.strip_prefix("id: "))
+                .map(|i| i.trim().trim_matches('"').to_string())
+        {
+            known.insert(split_id(&id).1.to_string(), id);
+        }
+    }
+    let ticket_for = |row: &str| -> Option<String> {
+        let t = row_ticket.get(row).map(String::as_str).unwrap_or(row);
+        known.get(split_id(t).1).cloned()
+    };
+    let own = known
+        .values()
+        .find_map(|q| split_id(q).0.map(str::to_string));
+    let projects = Projects {
+        own,
+        others: vec![],
+    };
+    // (ticket tail, link kind, other ticket)
+    let mut adds: Vec<(String, LinkKind, String)> = vec![];
+    for block in edges_toml.split("[[edge]]").skip(1) {
+        let get = |key: &str| {
+            block
+                .lines()
+                .find_map(|l| l.strip_prefix(&format!("{key} = \"")))
+                .and_then(|v| v.strip_suffix('"'))
+        };
+        let (Some(from), Some(to), Some(kind)) = (get("from"), get("to"), get("kind")) else {
+            continue;
+        };
+        let (Some(a), Some(b)) = (ticket_for(from), ticket_for(to)) else {
+            continue;
+        };
+        let (a_tail, b_tail) = (split_id(&a).1.to_string(), split_id(&b).1.to_string());
+        match kind {
+            "blocks" => adds.push((b_tail, LinkKind::BlockedBy, a)),
+            "parent" => adds.push((b_tail, LinkKind::Parent, a)),
+            "related" => adds.push((a_tail, LinkKind::Related, b)),
+            _ => {}
+        }
+    }
+    // What would change, per file, applied to a copy of the text so a dry run writes nothing.
+    let mut changed: std::collections::BTreeMap<PathBuf, String> = Default::default();
+    for (tail, kind, other) in &adds {
+        let Ok(path) = find_by_id(&root.join("open"), tail)
+            .or_else(|_| find_by_id(&root.join("resolved"), tail))
+        else {
+            continue;
+        };
+        let text = match changed.get(&path) {
+            Some(t) => t.clone(),
+            None => std::fs::read_to_string(&path)?,
+        };
+        if *kind == LinkKind::Parent && text.lines().any(|l| l.starts_with("parent:")) {
+            continue;
+        }
+        if let Some(new) = crate::ticket::link_text(&text, *kind, other, &projects, &root)? {
+            changed.insert(path, new);
+        }
+    }
+    for p in &paths {
+        let text = match changed.get(p) {
+            Some(t) => t.clone(),
+            None => std::fs::read_to_string(p)?,
+        };
+        let dropped = crate::ticket::drop_line(&text, "tasks");
+        if dropped != text {
+            changed.insert(p.clone(), dropped);
+        }
+    }
+    let files: Vec<String> = changed
+        .keys()
+        .map(|p| {
+            p.strip_prefix(ctx.repo)
+                .unwrap_or(p)
+                .to_string_lossy()
+                .into_owned()
+        })
+        .collect();
+    if files.is_empty() {
+        return Ok(Report {
+            files,
+            summary: "no ticket links to carry".into(),
+        });
+    }
+    refuse_if_uncommitted(ctx.repo, &files)?;
+    if !ctx.dry_run {
+        for (p, new) in &changed {
+            std::fs::write(p, new).with_context(|| format!("writing {}", p.display()))?;
+        }
+    }
+    Ok(Report {
+        summary: format!("{} tickets updated", files.len()),
         files,
     })
 }
@@ -905,6 +1073,60 @@ mod tests {
         assert!(got.contains("\nkind: fix\n"), "{got}");
         git(p.path(), &["commit", "-qam", "migrated"]);
         assert!(bug_tickets_that_are_fixes(&ctx).unwrap().files.is_empty());
+    }
+
+    #[test]
+    fn edges_between_tickets_move_into_frontmatter_and_tasks_goes() {
+        let p = ticket_project("bridle-adopt");
+        let open = p.path().join("docs/tickets/open");
+        let ticket = |id: &str| {
+            format!(
+                "---\nid: br-{id}\ntitle: t\nkind: feature\nblocked_by: []\nrelated: []\ntasks: [br-{id}]\n---\nbody\n"
+            )
+        };
+        for id in ["aaaa", "bbbb", "cccc"] {
+            std::fs::write(open.join(format!("t-{id}.md")), ticket(id)).unwrap();
+        }
+        git(p.path(), &["add", "."]);
+        git(p.path(), &["commit", "-q", "-m", "more"]);
+        let edge = |from: &str, to: &str, kind: &str| {
+            format!(
+                "[[edge]]\nfrom = \"{from}\"\nto = \"{to}\"\nkind = \"{kind}\"\ncreated_at = \"x\"\n\n"
+            )
+        };
+        let edges = [
+            edge("br-aaaa", "br-bbbb", "blocks"),
+            edge("br-cccc", "br-bbbb", "parent"),
+            edge("br-aaaa", "br-oldhex", "related"), // a row made from ticket cccc
+            edge("br-aaaa", "br-zzzz", "blocks"),    // no such ticket: stays an edge
+            edge("br-aaaa", "br-bbbb", "duplicates"),
+        ]
+        .concat();
+        let rows = [("br-oldhex".to_string(), "cccc".to_string())].into();
+        let ctx = Ctx {
+            repo: p.path(),
+            dry_run: true,
+        };
+        let r = carry_links(&ctx, &edges, &rows).unwrap();
+        assert_eq!(r.files.len(), 3, "{:?}", r.files);
+        assert!(
+            !std::fs::read_to_string(open.join("t-bbbb.md"))
+                .unwrap()
+                .contains("parent")
+        );
+        let ctx = Ctx {
+            repo: p.path(),
+            dry_run: false,
+        };
+        carry_links(&ctx, &edges, &rows).unwrap();
+        let b = std::fs::read_to_string(open.join("t-bbbb.md")).unwrap();
+        assert!(b.contains("blocked_by: [br-aaaa]"), "{b}");
+        assert!(b.contains("parent: br-cccc"), "{b}");
+        assert!(!b.contains("tasks:"), "{b}");
+        let a = std::fs::read_to_string(open.join("t-aaaa.md")).unwrap();
+        assert!(a.contains("related: [br-cccc]"), "{a}");
+        git(p.path(), &["commit", "-qam", "migrated"]);
+        assert!(carry_links(&ctx, &edges, &rows).unwrap().files.is_empty());
     }
 
     #[test]

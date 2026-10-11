@@ -9,7 +9,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-hw6c, br-24mj, br-v7ug]
-tasks: [br-xrkh]
 resolved: 2026-10-09T23:11:03Z
 ---
 

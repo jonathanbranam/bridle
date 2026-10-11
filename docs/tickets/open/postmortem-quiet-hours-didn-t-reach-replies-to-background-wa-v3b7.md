@@ -8,7 +8,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-yy88, br-9s8u, br-cvaq, br-u6w9, br-cr7t, br-mvtz]
-tasks: [br-v3b7]
 ---
 
 The kind is `research` until a `postmortem` kind exists ([[add-a-postmortem-ticket-kind-the-full-write-up-after-an-inci-cr7t|cr7t]]).

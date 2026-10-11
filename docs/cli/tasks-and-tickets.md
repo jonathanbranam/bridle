@@ -27,7 +27,7 @@ bridle task show|list
 bridle task claim|release <id>
 bridle task comment <id> --text-file F      # on the thread; no effect on readiness
 bridle task ask|answer ...                  # a question that blocks a task
-bridle dep add <task> --blocked-by <other>  # real dependencies only, never ordering
+bridle ticket link <id> blocked-by <other>  # real dependencies only, never ordering
 bridle task summary <id> --file F           # how it was done
 bridle task land <task>                     # integrator: squash-merge the branch
 ```

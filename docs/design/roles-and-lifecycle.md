@@ -120,7 +120,7 @@ Built states: `pending`, `open`, `planned`, `claimed`, `dropped`, `integrated`, 
 bridle ready --all                      # what can move, across projects
 bridle task new "Fix vitest config" -k chore            → tw-c0f1
 bridle task new "Watch: ratings filter" -k feature      → tw-7fa2
-bridle dep add tw-7fa2 --blocked-by tw-c0f1
+bridle ticket link 7fa2 blocked-by c0f1
 bridle task plan tw-7fa2                # PM: open -> planned, ready to build
 bridle queue add-tier tw-c0f1 tw-7fa2   # PM: queues them, tw-c0f1 first
 bridle spawn worker --prompt "Claim tw-c0f1 …"   # worktree + session; the worker claims it

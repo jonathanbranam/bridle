@@ -8,7 +8,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-x8jt, br-jrm2, br-essy]
-tasks: [ui-n6cu]
 resolved: 2026-10-04T21:21:51Z
 ---
 

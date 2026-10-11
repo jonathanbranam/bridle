@@ -8,7 +8,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-cvaq]
-tasks: [br-d772, br-u6w9]
 ---
 
 ## The ask

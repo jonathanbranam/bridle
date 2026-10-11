@@ -6,9 +6,8 @@ created: 2026-10-07
 repos: [bridle]
 changes: []
 specs: []
-blocked_by: []
+blocked_by: [br-vn42]
 related: []
-tasks: [br-m63h]
 resolved: 2026-10-09T23:11:04Z
 ---
 

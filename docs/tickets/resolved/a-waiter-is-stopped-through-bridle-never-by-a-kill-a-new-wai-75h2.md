@@ -8,7 +8,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-h3ar, br-mvtz, br-fx7x, br-m7mp, br-j28f, br-kuw2]
-tasks: [br-75h2]
 resolved: 2026-10-09T23:11:06Z
 ---
 

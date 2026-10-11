@@ -8,7 +8,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-t4rf]
-tasks: [br-g49c, ui-g49c]
 resolved: 2026-10-09T23:11:02Z
 ---
 

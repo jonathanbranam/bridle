@@ -9,7 +9,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-yfv5, br-cbbn]
-tasks: [br-3k7d]
 theme: agents-and-cli
 resolved: 2026-10-11T05:04:14Z
 ---

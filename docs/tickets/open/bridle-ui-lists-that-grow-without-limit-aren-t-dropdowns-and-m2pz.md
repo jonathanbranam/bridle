@@ -8,7 +8,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-g49c, br-ukpm]
-tasks: [ui-m2pz]
 ---
 
 ## The ask

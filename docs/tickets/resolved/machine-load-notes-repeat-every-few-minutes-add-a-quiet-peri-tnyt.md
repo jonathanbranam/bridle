@@ -9,7 +9,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-d48r, br-v7ug]
-tasks: [br-tnyt]
 resolved: 2026-10-09T23:37:59Z
 ---
 

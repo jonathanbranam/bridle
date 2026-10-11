@@ -9,7 +9,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-ft3b, br-gq9r, br-jttf, br-gtzx]
-tasks: [br-3kdc]
 resolved: 2026-10-07T14:00:08Z
 ---
 

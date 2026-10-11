@@ -8,7 +8,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-nnj2]
-tasks: []
 ---
 
 ## The ask

@@ -82,8 +82,8 @@ fn test_completions_fish_generation() {
         "fish completions should mention 'task'"
     );
     assert!(
-        completions.contains("--kind"),
-        "fish completions should mention '--kind' flag"
+        completions.contains("-l kind"),
+        "fish completions should have the '--kind' flag (fish writes it `-l kind`)"
     );
 }
 

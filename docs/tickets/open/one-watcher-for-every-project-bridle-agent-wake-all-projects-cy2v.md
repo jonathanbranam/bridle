@@ -6,9 +6,8 @@ created: 2026-10-02
 repos: [bridle]
 changes: []
 specs: []
-blocked_by: []
+blocked_by: [br-jttf]
 related: [interactive-sessions-context-for-all-daemon-decided-wakes-re-jttf, a-life-assistant-agent-on-the-notes-repo-phyy, daemons-deliver-mail-to-each-other-across-machines-store-and-3haz]
-tasks: [br-1ddd]
 ---
 
 ## The ask

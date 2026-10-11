@@ -8,7 +8,6 @@ changes: []
 specs: []
 blocked_by: [project-migrations-one-command-applies-pending-bridle-upgrad-xebc]
 related: [tickets-and-tasks-why-both-k7tm]
-tasks: []
 resolved: 2026-10-09T19:01:05Z
 ---
 

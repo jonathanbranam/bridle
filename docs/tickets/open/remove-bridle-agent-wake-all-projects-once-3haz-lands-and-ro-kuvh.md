@@ -6,9 +6,8 @@ created: 2026-10-04
 repos: [bridle]
 changes: []
 specs: []
-blocked_by: [br-3haz]
+blocked_by: [br-3haz, br-cy2v]
 related: [br-cy2v]
-tasks: [br-kuvh]
 ---
 
 ## The ask

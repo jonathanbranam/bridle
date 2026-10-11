@@ -111,7 +111,7 @@ bridle task ready   <id>                                 pending -> open for a r
 bridle queue                                     read-only: claimed tasks with their worker, then the tiers in rank order
 bridle queue set --tier T,T... [--tier T,T...]   replace the whole queue, one --tier per tier (PM, orchestrator or human only)
 bridle queue add-tier <task>...                  append one tier at the back (PM, orchestrator or human only)
-bridle task dep add|rm <task> (--to OTHER [--kind K] | --blocked-by OTHER)   K: blocks (default)|parent|discovered-from|related|supersedes|duplicates
+bridle ticket link <id> <KIND> <other> [--rm]   KIND: blocked-by|parent|related (edit the frontmatter; no commit, the daemon indexes it) or duplicates|supersedes (an edge on the daemon); replaces `task dep`
 bridle wait    <task> [--until STATE] [--or-message] [--timeout SECS]   block until the task changes state; exit 4 on timeout
 bridle agent wake <identifier> [--timeout SECS] | --stop [<identifier>]   (cap and default 6900 s = 1 h 55 min) blocks until the daemon decides that principal should wake (reason: it has an unread message, which includes the `task_update` lines about tasks it watches); prints each message (id, sender, text) (`--json`: `{reasons:[{reason,message_ids,messages,task?,event?}]}`); a non-human caller's messages stay unread until the same session (`BRIDLE_SESSION_PID`) next runs `bridle agent wake` or `bridle inbox`, which acknowledges them (a lost waiter loses nothing; another session of that principal is offered them again; no timeout, the sender is not told), the human's are never marked; refused with stdout discarded (`> /dev/null`; a shell `&` can't be detected without a tty, so it is not checked); exit 0 woken, 4 timed out, 5 superseded (a newer wait from the same session, `BRIDLE_SESSION_PID`, replaced this one, or `--stop` ended it; reason `superseded`; nothing marked read; the open wait's own hand-over is not acknowledged by it; a wait with no session replaces nothing), 6 the daemon is restarting or shutting down (reason `daemon_stopping`, `text` says why; stderr); it prints `waiting as <identity> (pid N, timeout S s)` on stderr first; `--stop` ends this session's open wait through the daemon, or with an identifier that identity's waits (own only; the human any), printing `stopped N wait(s)` or `no wait open`; caller must be that principal (or the human), else 403
 bridle agent interrupt <agent> [--drop-held]
@@ -306,7 +306,7 @@ bridle ticket resolve <id>                   stamps `resolved: <UTC date-time>` 
                                              is the caller's); errors on an unknown or ambiguous id; doesn't
                                              touch the task. Both are local file work, no daemon start-up
 bridle ticket set <id> <field> <value>       edits one frontmatter field of an open or resolved ticket: `title`,
-                                             `kind` (any time; independent of its tasks' kinds), `theme` (a slug), `parent` (one id, bare or `<prefix>-<id>`), or a list field (`repos`, `changes`, `specs`, `blocked_by`, `related`, `tasks`) given
+                                             `kind` (any time; independent of its tasks' kinds), `theme` (a slug), `parent` (one id, bare or `<prefix>-<id>`), or a list field (`repos`, `changes`, `specs`, `blocked_by`, `related`) given
                                              comma-separated (empty clears it); `blocked_by`, `related` and `parent` references are written project-qualified (`br-k7tm`; a bare id is expanded, ambiguous or unknown ones are refused listing candidates); a `<id>` argument may be bare or qualified, but one qualified with another project's prefix is refused; the old names (`needs`, `see`) map to the new; refuses `id`, `created`, `resolved`
                                              (and their old names `opened`, `closed`) and unknown fields. Local file work
 bridle ticket check [--quiet]                checks every ticket in `docs/tickets/{open,resolved}`: all of id,
@@ -726,13 +726,19 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   `queue` and `ready`) and reopen (only a dropped or integrated task can be reopened).
   `in_review` and `accepted`, and everything that depends on those, arrive with later
   tasks — see the `Planned` block below.
-- **`dep add|rm`** creates or removes one coordination edge (docs/design/coordination.md).
-  `bridle task dep add <task> --to <other> --kind <kind>` draws `<task> --kind--> <other>`;
-  `bridle task dep add <task> --blocked-by <other>` is sugar for `--kind blocks` with `from`
-  and `to` swapped (`<task>` is blocked by `<other>`, so the edge runs the other way) and
-  can't be combined with `--to`/`--kind`. `dep rm` takes the same shape. Edges can't
-  connect a task to itself, and a repeat of the same `(from, to, kind)` triple is a
-  conflict, not a silent no-op.
+- **`ticket link <id> <kind> <other> [--rm]`** (br-3v75; replaces `task dep add|rm`, which is
+  gone) adds or removes one link (docs/design/coordination.md). `blocked-by`, `parent` and
+  `related` edit the ticket's frontmatter (`blocked_by` and `related` lists, one `parent`), written
+  project-qualified, without a commit; the daemon reads the files every few seconds and makes the
+  `edges` rows match (`blocked_by: [X]` in ticket T is the edge `X blocks T`; `parent: P` is `P
+  parent T`; `related: [R]` is `T related R`), so a `blocked_by` blocks the row from being
+  ready once it is in the checkout the daemon watches (`docs/tickets` of the project repo). A
+  link to an id with no row here (another project's ticket, a typo) makes no edge. `duplicates`
+  and `supersedes` are not fields: `ticket link <id> duplicates|supersedes <other>` makes the
+  edge on the daemon directly (needs it). Children and "blocks" are computed from the edges,
+  never stored on both sides; the `tasks:` list is gone from the frontmatter (a ticket and its
+  row share an id). Migration `0004-ticket-links-in-frontmatter` carries existing edges into
+  the files.
 - **`inbox`** has three forms:
   - Bare `bridle inbox [--all] [--mark-read]` (list, the default) shows every message to
     `me` plus every task's open question: reads `GET /v1/messages` (with `to=me`,

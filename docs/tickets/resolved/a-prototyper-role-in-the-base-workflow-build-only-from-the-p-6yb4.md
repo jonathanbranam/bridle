@@ -8,7 +8,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [refining-a-task-with-the-human-before-it-ships-hvxk]
-tasks: [br-a4ea]
 resolved: 2026-10-09T23:11:05Z
 ---
 

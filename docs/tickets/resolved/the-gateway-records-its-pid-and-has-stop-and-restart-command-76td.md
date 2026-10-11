@@ -8,7 +8,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-bek3, br-tc7t]
-tasks: [br-76td]
 resolved: 2026-10-09T23:11:03Z
 ---
 

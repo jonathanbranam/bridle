@@ -8,7 +8,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-gtzx, br-jttf]
-tasks: [br-e35h]
 resolved: 2026-10-09T23:11:01Z
 ---
 

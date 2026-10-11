@@ -9,7 +9,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-57nt, br-bek3, br-76td, br-ppa6]
-tasks: [br-rztb]
 resolved: 2026-10-09T23:11:08Z
 ---
 

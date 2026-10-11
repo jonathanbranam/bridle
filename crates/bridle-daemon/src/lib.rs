@@ -51,6 +51,7 @@ pub mod store;
 mod supervisor;
 pub mod sync;
 mod tasks;
+mod ticket_links;
 mod upgrade;
 pub mod usage_http;
 mod wake;
@@ -1040,12 +1041,17 @@ async fn start_inner(
     });
     // spawn_loop sleeps before its first tick, so this never runs ahead of start-up.
     let settle_wake_task = spawn_loop(shutdown_rx.clone(), overrides.settle_wake_interval, {
+        let tasks = tasks.clone();
+        let tickets_dir = ws.repo.join("docs/tickets");
         move || {
+            let tasks = tasks.clone();
+            let tickets_dir = tickets_dir.clone();
             let settle_wake = settle_wake.clone();
             let open_watch = open_watch.clone();
             async move {
                 settle_wake.tick().await;
                 open_watch.tick().await;
+                tasks.sync_ticket_links(&tickets_dir).await;
             }
         }
     });

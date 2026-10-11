@@ -699,39 +699,6 @@ pub(super) async fn task_search(cli: &Cli, args: &TaskSearchArgs) -> Result<(), 
     Ok(())
 }
 
-pub(super) fn edge_kind_arg(k: EdgeKindArg) -> EdgeKind {
-    match k {
-        EdgeKindArg::Blocks => EdgeKind::Blocks,
-        EdgeKindArg::Parent => EdgeKind::Parent,
-        EdgeKindArg::DiscoveredFrom => EdgeKind::DiscoveredFrom,
-        EdgeKindArg::Related => EdgeKind::Related,
-        EdgeKindArg::Supersedes => EdgeKind::Supersedes,
-        EdgeKindArg::Duplicates => EdgeKind::Duplicates,
-    }
-}
-
-/// `--blocked-by <other>` is sugar for `--kind blocks --to <task>` with
-/// `from`/`to` swapped (roles-and-lifecycle.md's `bridle dep add tw-7fa2
-/// --blocked-by tw-c0f1` reads as "`tw-7fa2` is blocked by `tw-c0f1`", i.e.
-/// the edge points from the blocker to the blocked task). clap's
-/// `conflicts_with_all` already rules out combining it with `--to`/`--kind`.
-pub(super) fn resolve_edge_args(
-    args: &DepEdgeArgs,
-) -> Result<(String, String, EdgeKind), CliError> {
-    match (&args.blocked_by, &args.to) {
-        (Some(blocker), None) => Ok((blocker.clone(), args.task.clone(), EdgeKind::Blocks)),
-        (None, Some(to)) => Ok((args.task.clone(), to.clone(), edge_kind_arg(args.kind))),
-        (None, None) => Err(CliError::from(anyhow::anyhow!(
-            "specify --to <task> or --blocked-by <task>"
-        ))),
-        (Some(_), Some(_)) => unreachable!("clap's conflicts_with_all rules this out"),
-    }
-}
-
-pub(super) fn print_edge_row(e: &Edge) {
-    println!("{:<10} {:<16} {}", e.from, e.kind, e.to);
-}
-
 pub(super) async fn conflict(cli: &Cli, args: &ConflictArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
     match &args.action {
@@ -786,34 +753,6 @@ pub(super) async fn conflict(cli: &Cli, args: &ConflictArgs) -> Result<(), CliEr
             }
         }
     }
-    Ok(())
-}
-
-pub(super) async fn dep(cli: &Cli, args: &DepArgs) -> Result<(), CliError> {
-    match &args.action {
-        DepAction::Add(a) => dep_add(cli, a).await,
-        DepAction::Rm(a) => dep_rm(cli, a).await,
-    }
-}
-
-pub(super) async fn dep_add(cli: &Cli, args: &DepEdgeArgs) -> Result<(), CliError> {
-    let (from, to, kind) = resolve_edge_args(args)?;
-    let client = client_for(cli).await?;
-    let edge = client.add_edge(&NewEdgeRequest { from, to, kind }).await?;
-    if cli.json {
-        render::print_json(&edge)?;
-    } else {
-        print_edge_row(&edge);
-    }
-    Ok(())
-}
-
-pub(super) async fn dep_rm(cli: &Cli, args: &DepEdgeArgs) -> Result<(), CliError> {
-    let (from, to, kind) = resolve_edge_args(args)?;
-    let client = client_for(cli).await?;
-    client
-        .remove_edge(&RemoveEdgeQuery { from, to, kind })
-        .await?;
     Ok(())
 }
 

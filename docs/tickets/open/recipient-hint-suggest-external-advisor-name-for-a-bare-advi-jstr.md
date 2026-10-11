@@ -7,9 +7,8 @@ created_by: external:advisor/product-manager
 repos: [bridle]
 changes: []
 specs: []
-blocked_by: []
+blocked_by: [br-3k7d]
 related: [br-3k7d]
-tasks: [br-jstr]
 theme: agents-and-cli
 ---
 

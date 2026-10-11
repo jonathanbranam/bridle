@@ -7,7 +7,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [the-humans-to-do-list-and-restart-checklist-ex9q, where-the-single-orchestrator-lives-hj4g]
-tasks: [br-4d5a]
 kind: feature
 resolved: 2026-10-06T00:48:35Z
 ---

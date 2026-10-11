@@ -8,7 +8,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-essy, br-xxxq]
-tasks: [br-66f5]
 ---
 
 ## The ask

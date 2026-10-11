@@ -8,7 +8,6 @@ changes: []
 specs: []
 blocked_by: []
 related: [sign-binaries-on-intel-macs-cs7x, br-jmpf]
-tasks: [br-p88z]
 resolved: 2026-10-09T23:11:03Z
 ---
 

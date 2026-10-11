@@ -170,10 +170,6 @@ pub enum Command {
     Conflict(ConflictArgs),
     /// Ports for dev servers: allocate, release, list (docs/design/worktrees-and-ports.md).
     Port(PortArgs),
-    /// Add or remove a coordination edge between two tasks
-    /// (docs/design/coordination.md).
-    #[command(hide = true)]
-    Dep(DepArgs),
     /// Ask a question against a task: blocks it from being ready until
     /// answered (docs/design/coordination.md, "Questions do not stop work").
     #[command(hide = true)]
@@ -464,8 +460,10 @@ pub enum TicketAction {
     Ready(TicketReadyArgs),
     /// Stamp `resolved:` and move an open ticket to docs/tickets/resolved/ (no commit, no task change).
     Resolve(TicketResolveArgs),
-    /// Set one frontmatter field (title, kind, theme, parent, repos, changes, specs, blocked_by, related, tasks; the old names needs and see still work); list fields take comma-separated values.
+    /// Set one frontmatter field (title, kind, theme, parent, repos, changes, specs, blocked_by, related; the old names needs and see still work); list fields take comma-separated values.
     Set(TicketSetArgs),
+    /// Add or remove a link: `blocked-by`, `parent` and `related` edit the frontmatter (no commit; the daemon indexes it); `duplicates` and `supersedes` are edges recorded on the daemon (`<id>` duplicates / supersedes `<other>`).
+    Link(TicketLinkArgs),
     /// Check every ticket's frontmatter, IDs, blocked_by/related and [[links]]; exits 1 listing the problems.
     Check(TicketCheckArgs),
     /// File an open task on the project's daemon for its project manager to triage (any principal with a token; no ticket file).
@@ -534,6 +532,28 @@ pub struct TicketSetArgs {
     pub field: String,
     /// The new value; for a list field, comma-separated (empty clears it).
     pub value: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+#[value(rename_all = "kebab-case")]
+pub enum LinkKind {
+    BlockedBy,
+    Parent,
+    Related,
+    Duplicates,
+    Supersedes,
+}
+
+#[derive(Debug, Args)]
+pub struct TicketLinkArgs {
+    pub id: String,
+    #[arg(value_enum)]
+    pub kind: LinkKind,
+    /// The other ticket: the blocker, the parent, the related ticket, or the one duplicated or superseded.
+    pub other: String,
+    /// Remove the link instead of adding it.
+    #[arg(long)]
+    pub rm: bool,
 }
 
 #[derive(Debug, Args)]
@@ -1639,8 +1659,6 @@ pub enum TaskAction {
     Ready(ReadyArgs),
     /// The queue: claimed tasks, then the tiers in rank order.
     Queue(QueueArgs),
-    /// Add or remove a coordination edge between two tasks.
-    Dep(DepArgs),
     /// Merge a task's branch into the integration branch after the check passes.
     Land(LandArgs),
     /// Conflicts opened by `impact check`: list and resolve.
@@ -1872,17 +1890,6 @@ pub struct TaskSearchArgs {
     pub words: Vec<String>,
 }
 
-#[derive(Debug, Clone, Copy, ValueEnum)]
-#[value(rename_all = "kebab-case")]
-pub enum EdgeKindArg {
-    Blocks,
-    Parent,
-    DiscoveredFrom,
-    Related,
-    Supersedes,
-    Duplicates,
-}
-
 #[derive(Debug, Args)]
 pub struct OrchestratorArgs {
     #[command(subcommand)]
@@ -2080,20 +2087,6 @@ pub struct ConflictResolveArgs {
 }
 
 #[derive(Debug, Args)]
-pub struct DepArgs {
-    #[command(subcommand)]
-    pub action: DepAction,
-}
-
-#[derive(Debug, Subcommand)]
-pub enum DepAction {
-    /// Add an edge.
-    Add(DepEdgeArgs),
-    /// Remove an edge.
-    Rm(DepEdgeArgs),
-}
-
-#[derive(Debug, Args)]
 pub struct AskArgs {
     pub task: String,
     pub text: String,
@@ -2117,21 +2110,6 @@ pub struct ClaimArgs {
 #[derive(Debug, Args)]
 pub struct ReleaseArgs {
     pub task: String,
-}
-
-#[derive(Debug, Args)]
-pub struct DepEdgeArgs {
-    /// The edge's `from` task, unless `--blocked-by` is given.
-    pub task: String,
-    /// Sugar for `--kind blocks --to <task>` with `from`/`to` swapped: reads
-    /// as "`<task>` is blocked by `<other>`".
-    #[arg(long, value_name = "TASK", conflicts_with_all = ["to", "kind"])]
-    pub blocked_by: Option<String>,
-    /// The edge's `to` task.
-    #[arg(long, value_name = "TASK")]
-    pub to: Option<String>,
-    #[arg(long, value_enum, default_value = "blocks")]
-    pub kind: EdgeKindArg,
 }
 
 #[derive(Debug, Args)]
@@ -2990,75 +2968,6 @@ mod tests {
             ])
             .is_err()
         );
-    }
-
-    #[test]
-    fn dep_add_blocked_by_parses() {
-        let cli = parse(&["dep", "add", "tw-7fa2", "--blocked-by", "tw-c0f1"]).unwrap();
-        let Command::Dep(args) = cli.command else {
-            panic!("expected dep")
-        };
-        let DepAction::Add(a) = args.action else {
-            panic!("expected dep add")
-        };
-        assert_eq!(a.task, "tw-7fa2");
-        assert_eq!(a.blocked_by.as_deref(), Some("tw-c0f1"));
-        assert_eq!(a.to, None);
-    }
-
-    #[test]
-    fn dep_add_to_and_kind_parses() {
-        let cli = parse(&[
-            "dep",
-            "add",
-            "tw-7fa2",
-            "--to",
-            "hx-19ab",
-            "--kind",
-            "discovered-from",
-        ])
-        .unwrap();
-        let Command::Dep(args) = cli.command else {
-            panic!("expected dep")
-        };
-        let DepAction::Add(a) = args.action else {
-            panic!("expected dep add")
-        };
-        assert_eq!(a.task, "tw-7fa2");
-        assert_eq!(a.to.as_deref(), Some("hx-19ab"));
-        assert!(matches!(a.kind, EdgeKindArg::DiscoveredFrom));
-    }
-
-    #[test]
-    fn dep_add_rejects_kind_alongside_blocked_by() {
-        let err = parse(&[
-            "dep",
-            "add",
-            "tw-7fa2",
-            "--blocked-by",
-            "tw-c0f1",
-            "--kind",
-            "parent",
-        ])
-        .unwrap_err();
-        assert_eq!(err.kind(), clap::error::ErrorKind::ArgumentConflict);
-    }
-
-    #[test]
-    fn dep_rm_parses() {
-        let cli = parse(&[
-            "dep", "rm", "tw-7fa2", "--to", "tw-c0f1", "--kind", "related",
-        ])
-        .unwrap();
-        let Command::Dep(args) = cli.command else {
-            panic!("expected dep")
-        };
-        let DepAction::Rm(a) = args.action else {
-            panic!("expected dep rm")
-        };
-        assert_eq!(a.task, "tw-7fa2");
-        assert_eq!(a.to.as_deref(), Some("tw-c0f1"));
-        assert!(matches!(a.kind, EdgeKindArg::Related));
     }
 
     #[test]
