@@ -155,3 +155,8 @@ From the human's session with advisor wsl2, 2026-10-10 (times US Eastern).
 - Orchestrator (m-9884): v0.6.1 is released and carries br-36dp and br-fv86. Install the PC from
   v0.6.1 (`scripts/install-release.sh v0.6.1`), not v0.6.0, so `self_upgrade = "release"` in the
   PC's `~/.bridle/config.toml` takes effect. Bridle is not installed on the PC yet.
+- Names decided (the human, 2026-10-11, "Romulus and Remus it is"): Windows `romulus`, WSL2
+  `remus` (different names for host and guest, by the human's choice; see
+  `docs/context/name-ideas.md`). Tailscale runs inside WSL2, so `remus` is the name bridle and
+  dalek use. Next: set both names (`/etc/wsl.conf` `[network] hostname = remus`, then
+  `Rename-Computer romulus` and one Windows restart), then Tailscale.
