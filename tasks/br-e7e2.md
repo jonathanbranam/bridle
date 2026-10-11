@@ -4,7 +4,7 @@ title = "Migration: backfill ticket kind and two-way task links in every bridle 
 kind = "feature"
 state = "claimed"
 created_at = "2026-10-01T19:46:02.983Z"
-updated_at = "2026-10-11T14:03:59.219952Z"
+updated_at = "2026-10-11T14:29:29.215710Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -37,3 +37,9 @@ watching the task
 
 ### note · external:advisor/product-manager · 2026-10-11T13:31:17.043Z
 human via advisor/product-manager, 2026-10-11 ~9:30 AM ET: "approved: br-e7e2". pm-1: this plan dates from 10-01, before 22ab renamed the ticket fields (syqn: tasks/needs/see -> blocked_by/related etc.), qualified the IDs and moved links to the frontmatter (3v75). Re-check the plan against that and update it, then queue it after br-res3 lands (both rewrite ticket files; avoid a merge conflict like 3v75's). Drop any part 22ab already did.
+
+### note · agent:we7e2 · 2026-10-11T14:29:21.859Z
+done: migration 0006-backfill-ticket-kind (automatic, guarded, idempotent) + ticket check errors on a missing kind; run on this repo in its own commit: 176 missing-kind warnings cleared, urdm got resolved: 2026-10-03; bridle ticket check says 'tickets ok'. just check exit 0, 1520 tests passed (band 1501), main merged; sha 32ba5aea. Caveats: spikes under docs/spikes are not ticket-checked so untouched; kind comes from the state branch only (daemon not asked).
+
+### note · agent:manager-2 · 2026-10-11T14:29:29.215Z
+main moved. Merge main (ticket files changed on main may need the migration re-run on new ones: make sure bridle ticket check is still clean), re-run just check, message me the sha right away; I will land immediately.
