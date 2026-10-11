@@ -44,13 +44,16 @@ The four machines to name now. Say each into both dictation systems before choos
 
 | Machine | Suggestions | Why |
 |---|---|---|
-| 1. Windows host | `canopus`, `cervantes`, `helios`, `rigel`, `jupiter` | A star or a big planet for the host. `canopus` pairs with `arrakis`, `cervantes` with its planets, `jupiter` with its moons. |
-| 2. WSL2 (inside it) | `arrakis`, `sancho`, `rocinante`, `europa`, `io` | The guest takes a name tied to the host: Arrakis circles Canopus; Sancho and Rocinante circle Cervantes (Sancho the loyal helper, Rocinante the workhorse); Europa and Io are moons of Jupiter. |
+| 1. Windows host | `pluto`, `mars`, `cervantes`, `saturn` | A modest star or planet for the host, paired with the guest below. |
+| 2. WSL2 (inside it) | `charon`, `phobos`, `sancho`, `rhea` | Tied to the host: Pluto and Charon are a double world that orbit each other, as Windows and Linux share one PC, and Charon is the ferryman who carries things across (dictation may hear "Sharon"); Phobos is a moon of Mars; Sancho, the loyal helper, a planet of Cervantes; Rhea a moon of Saturn. |
 | 3. NUC | `vega`, `sunna`, `inti`, `mira`, `vesta` | Small, always on, at home: short star and sun-god names; `vesta` is the asteroid named for the goddess of the hearth. |
 | 4. EC2 | `proxima`, `luna`, `terminus`, `mir`, `babylon` | The edge box, the NUC's way out: `proxima` is the nearest star (and sounds like proxy); `luna` the nearest wanderer; `terminus` Foundation's edge world; `mir` and `babylon` stations. |
 
-Advisor's pick: **`canopus`** (Windows) and **`arrakis`** (WSL2), **`vega`** (NUC), **`proxima`**
+Advisor's pick: **`pluto`** (Windows) and **`charon`** (WSL2), **`vega`** (NUC), **`proxima`**
 (EC2). Each is eight letters or fewer, and none sounds like another.
+
+**Reserved:** `arrakis`, "saved for something special in the future"; `canopus` and `arrakis` are
+"too grandiose" for the PC (the human, 2026-10-11).
 
 Provisional, for the family's other machines (2026-10-11). `dalek` is accepted as is: "too much
 work to change" (the human).
@@ -71,7 +74,7 @@ Or let each son pick from the theme (a c2 tip: let the owner choose from the set
 |---|---|---|---|
 | MacBook Pro (this one) | dalek | dalek | Kept: "it's been dalek for a long time"; "too much work to change" (the human). |
 | Intel NUC | nuc | vega | "NUC" is a type, and dictation hears "Nook". Was `sonic`; see "Working idea". |
-| Windows desktop, running WSL2 | EzekielsPC | canopus (Windows), arrakis (WSL2) | The human couldn't settle on `tardis` (2026-10-11). See "WSL2 and its name" below. |
+| Windows desktop, running WSL2 | EzekielsPC | pluto (Windows), charon (WSL2) | The human couldn't settle on `tardis` (2026-10-11). See "WSL2 and its name" below. |
 | EC2 | (none) | proxima, luna | The edge box (the NUC's tunnel fallback). Was `terminus`. |
 | Future cloud servers | | planets, moons, stations | The wanderers. |
 | Other MacBook Pros | | nostromo, serenity, voyager, defiant | Ships, because laptops travel. Only those that run bridle or join Tailscale. |
@@ -135,7 +138,7 @@ Windows address instead.)
   ([[run-bridle-s-heavy-work-on-the-windows-pc-under-wsl2-v7ug|v7ug]]). That makes WSL its own
   Tailscale node, named after its hostname: the WSL2 name is the one bridle and dalek will use.
 - **Windows gets its own name** (the human, 2026-10-11; see "Hosts and guests" above), for
-  example `canopus` for Windows and `arrakis` for WSL2. If Windows also runs Tailscale (e.g., for
+  example `pluto` for Windows and `charon` for WSL2. If Windows also runs Tailscale (e.g., for
   Remote Desktop), it's a second node under its own name, with no clash.
 - Earlier advice here was one name everywhere (`tardis`); the human chose separate names.
 
