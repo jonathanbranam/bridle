@@ -29,71 +29,97 @@ changes too, on dalek and on the NUC (step 6), not only the host name.
 
 Bridle knows the NUC by its machine name `nuc` in `~/.bridle/config.toml` (`[machine] name`,
 `[machines]`, `[projects]`) and in `~/.bridle/credentials.toml`. `[machines]` maps a machine name
-to the host name to reach it by. Steps 1-5 rename the host and point bridle at it (bridle keeps
-working with `nuc = "vega"`); step 6 then renames bridle's machine name, which touches tokens,
-identities and routing, so the orchestrator confirms its exact sequence before it is done.
+to the host name to reach it by. Separately, each NUC project's state-branch `owner.toml` and its
+pre-push hook use the Linux host name (`hostname`), so changing the host name needs a take-over
+per project (step 4).
+
+The steps below are in the order to run them. The orchestrator checked the bridle parts against
+the code on 2026-10-11 (its comment on this ticket's thread, "step 6 checked against the code",
+has the reasons).
 
 ## Steps
 
-1. **Linux host name** (on the NUC):
+1. **Outboxes empty, both machines.** `bridle status` on dalek and the NUC; every `outbox` line
+   must be gone or 0 queued. (Forward de-duplication is keyed by the origin machine, so a message
+   retried across the rename could arrive twice.)
+
+2. **On dalek: mint the new visitor tokens** before anything is renamed; the old ones keep working
+   meanwhile. For each dalek project the NUC talks to, and each role the NUC has a
+   `[<role>.dalek]` section for (orchestrator, advisor, aide, human):
+
+   ```
+   bridle --project <dalek-project> token create <role> --machine vega --home <nuc-project>
+   ```
+
+   Paste each into the NUC's `~/.bridle/credentials.toml`, replacing the value under
+   `[<role>.dalek]`. Don't use `token pair` (it mints visitors with no home, so replies don't
+   come back). Optional: `bridle --project <dalek-project> token create --peer vega` for the
+   NUC's `[peer]` values (`/v1/forward` accepts any peer token whatever its name, so `peer:nuc`
+   also keeps working).
+
+3. **Host name and Tailscale name** (on the NUC):
 
    ```
    sudo hostnamectl set-hostname vega
    sudo sed -i 's/^127\.0\.1\.1[[:space:]]\+nuc$/127.0.1.1 vega/' /etc/hosts
-   hostnamectl --static; grep 127.0.1.1 /etc/hosts      # vega, and 127.0.1.1 vega
-   ```
-
-2. **Tailscale name** (on the NUC), so MagicDNS answers `vega`:
-
-   ```
    sudo tailscale set --hostname=vega
-   tailscale status --self                              # the first line shows vega
+   hostnamectl --static; grep 127.0.1.1 /etc/hosts; tailscale status --self   # all say vega
    ```
 
-   If the admin console shows the machine still as `nuc`, it was renamed there by hand (that
-   pins it); rename it in the console too (Machines, the machine's menu, Edit machine name).
-   The old name `nuc` stops resolving at once, so do steps 3 and 4 straight after.
+   If the Tailscale admin console still shows `nuc`, it was renamed there by hand (that pins it):
+   rename it in the console too (Machines, the machine's menu, Edit machine name). The name `nuc`
+   stops resolving at once, so go straight on.
 
-3. **Bridle config, both machines** (`~/.bridle/config.toml` on dalek and on the NUC), in
-   `[machines]`: `nuc = "vega"` (was `nuc = "nuc"`). On the NUC also `[gateway] public_url =
-   "http://vega.tailbc91f5.ts.net:7878"`. Then restart the daemons on both (or let the
-   orchestrator do it). Check from dalek: `bridle daemons` lists the NUC's projects as reachable,
-   and the gateway opens at the new URL. Add `nuc = "vega"` to remus's config too once bridle is
-   installed there (ticket v7ug).
+4. **On the NUC, per project: take ownership again under the new host name.** Without this each
+   NUC daemon refuses to start at its next restart (exit 78, which the systemd unit treats as
+   final), and the hook refuses pushes to the integration branch. For each of meta-notes, notes,
+   dotfiles-local, meta-notes-ui:
 
-4. **SSH from other machines**: `ssh vega` works through MagicDNS. Anything that says `ssh nuc`
-   (scripts, docs, muscle memory) breaks; clear the old host key with `ssh-keygen -R nuc` and
-   accept the new one on first `ssh vega` (Tailscale SSH, so no keys to copy).
+   ```
+   systemctl --user stop bridle-<p>.service
+   bridle --project <p> serve --take-over          # let it start, then Ctrl-C
+   systemctl --user start bridle-<p>.service
+   ```
 
-5. **dotfiles-local**: nothing breaks, since `host-nuc/rcrc` sets `HOSTNAME="nuc"` itself. Renaming
-   `host-nuc/` to `host-vega/` (and its `HOSTNAME`) is optional and can come later: after the
-   rename, `RCRC=<clone>/host-vega/rcrc rcup -B vega` re-links `~/.rcrc`.
+   (Unverified by the orchestrator: whether `serve --take-over` exits by itself after taking
+   over, or runs the daemon until stopped. If it keeps running, Ctrl-C it before starting the
+   unit.)
 
-6. **Bridle's machine name `nuc` -> `vega`, on both machines.** What carries the name (found
-   2026-10-11 by advisor wsl2; the orchestrator to confirm the list and the order, with daemons
-   stopped or restarted around it):
+5. **Config, both machines, in one go.** No daemon restart is needed for this (routing and the
+   sender's machine label are read from config per send), except the NUC's gateway.
 
-   - `~/.bridle/config.toml` on dalek, the NUC (and remus once it has bridle): `[machines]` key
-     `nuc` -> `vega`, and every `[projects]` entry `machine = "nuc"` -> `"vega"` (meta-notes,
-     notes, dotfiles-local, meta-notes-ui). On the NUC also `[machine] name = "vega"`.
-   - `~/.bridle/credentials.toml` on dalek: the sections keyed by the machine they reach,
-     `[advisor.nuc]`, `[human.nuc]`, `[orchestrator.nuc]` -> `.vega` (the tokens inside are the
-     NUC daemons' `<name>@dalek` visitors and don't change).
-   - Tokens that name the NUC itself, minted on dalek's daemons: the peer token `peer:nuc` (the
-     NUC's `[peer]` entries for dalek's projects) and the visitor tokens `<name>@nuc` (the NUC's
-     `[advisor.dalek]`, `[aide.dalek]`, `[orchestrator.dalek]`, `[human.dalek]`). Re-mint each
-     as `peer:vega` / `<name>@vega` (`bridle token create --peer vega`, `bridle token create
-     <name> --machine vega [--home]`, see `docs/design/agent-host/principals.md`), paste them
-     into the NUC's credentials, and revoke the old ones.
-   - systemd units: `bridle systemd install` picks projects by `[machine] name`, so re-run it on
-     the NUC after the rename (check the unit names don't change, or uninstall first).
-   - Not migrated: history. Stored messages and events say `@nuc`; leave them, and leave the docs
-     and incident history as they are. Unknown: whether a reply to an old `@nuc` message still
-     routes after the rename (orchestrator to check).
+   - dalek `~/.bridle/config.toml`: in `[machines]`, `nuc = "nuc"` -> `vega = "vega"`; every
+     `[projects]` entry `machine = "nuc"` -> `machine = "vega"`.
+   - dalek `~/.bridle/credentials.toml`, in the same edit: rename the sections `[advisor.nuc]`,
+     `[human.nuc]`, `[orchestrator.nuc]` to `.vega` (the CLI looks them up by machine name; the
+     tokens inside don't change).
+   - NUC `~/.bridle/config.toml`: `[machine] name = "vega"`; the same `[machines]` and
+     `[projects]` edits as dalek; `[gateway] public_url = "http://vega.tailbc91f5.ts.net:7878"`.
+     Then restart the NUC's gateway.
+   - remus, once bridle is installed there (ticket v7ug): the same `[machines]` and `[projects]`.
 
-   Check afterwards: `bridle doctor` and `bridle daemons` on each machine, then a message each
-   way (dalek -> a NUC project, and the NUC's orchestrator -> bridle) arrives and its `from`
-   says `@vega`.
+6. **SSH and dotfiles.** `ssh vega` works through MagicDNS; `ssh-keygen -R nuc` on dalek and remus
+   clears the old host key (Tailscale SSH, so nothing to copy). Fix anything that says `ssh nuc`.
+   dotfiles-local doesn't break (`host-nuc/rcrc` sets `HOSTNAME="nuc"` itself); renaming
+   `host-nuc/` to `host-vega/` is optional and can come later (`RCRC=<clone>/host-vega/rcrc rcup
+   -B vega` re-links `~/.rcrc`).
+
+7. **Check.** `bridle doctor` and `bridle daemons` on each machine. A message each way arrives
+   (dalek -> a NUC project, and the NUC's orchestrator -> bridle) and its `from` says `@vega`.
+   The gateway opens at the new URL.
+
+8. **Days later: revoke the old `@nuc` tokens**, on each dalek project, once the old threads are
+   done (a reply to an old `@nuc` message routes only while that principal exists; afterwards
+   it fails "no such recipient"):
+
+   ```
+   bridle --project <p> token revoke orchestrator@nuc   # and human@nuc, aide@nuc, advisor@nuc, peer:nuc
+   ```
+
+No change needed: systemd unit names (`bridle-<project>.service`, keyed by project; don't re-run
+`bridle systemd install`), the daemon registry, remote watchers, and the `@dalek` visitors on the
+NUC. History (stored messages and events saying `@nuc`, each daemon's principals rows, the docs
+and incident history) stays as it is.
 
 ## Not decided
 
