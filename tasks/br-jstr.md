@@ -2,9 +2,9 @@
 id = "br-jstr"
 title = "Recipient hint: suggest external:advisor/<name> for a bare advisor/<name>"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-11T03:48:54.303Z"
-updated_at = "2026-10-11T11:52:31.037422Z"
+updated_at = "2026-10-11T11:58:52.178265Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -12,6 +12,8 @@ watchers = [
 ]
 priority = "low"
 priority_at = "2026-10-11T03:48:55.855541Z"
+branch = "bridle/wjstr"
+commit = "c222400f11b55d63874db9517e21fd2eb1f814a7"
 summary = "Moot after br-3k7d: canonical_target now resolves advisor, advisor/<name>, aide, orchestrator (with optional @machine) to external:<name>, so the 'did you mean external:...' hint in resolve_targets could never fire. Removed is_known_external_principal, the hint and its test (server.rs); CHANGELOG line added. Unknown names after advisor/ resolve as external, so nothing is left to hint."
 ticket = "jstr"
 +++
@@ -48,3 +50,12 @@ merged main; just check exit 0, 1513 tests passed (6 skipped); sha a07ec80e
 
 ### note · agent:manager-2 · 2026-10-11T11:52:31.037Z
 main moved again (gd43 landed). Merge main, re-run just check, and message me the sha.
+
+### note · agent:wjstr · 2026-10-11T11:58:31.975Z
+merged main; just check exit 0, 1516 tests passed (6 skipped); sha ffdb2fdf
+
+### note · agent:manager-2 · 2026-10-11T11:58:35.983Z
+integrated: c222400f11b55d63874db9517e21fd2eb1f814a7 (branch bridle/wjstr)
+
+### note · agent:manager-2 · 2026-10-11T11:58:52.178Z
+cleanup: removed agent wjstr, branch bridle/wjstr
