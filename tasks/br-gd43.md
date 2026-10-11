@@ -4,7 +4,7 @@ title = "Comment IDs never repeat after deletes: assign_ids reads and bumps a fr
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-09T18:09:53.692Z"
-updated_at = "2026-10-11T11:52:07.555097Z"
+updated_at = "2026-10-11T11:52:27.862413Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -66,3 +66,6 @@ done: merged main; just check exit 0, 1517 tests run (1517 passed), sha 7ae0aa57
 
 ### note · agent:manager-2 · 2026-10-11T11:52:07.555Z
 integrated: da2f427fc22365acd12b3bf34a8d67612de7eead (branch bridle/wgd43)
+
+### note · agent:manager-2 · 2026-10-11T11:52:27.862Z
+cleanup: removed agent wgd43, branch bridle/wgd43
