@@ -4,7 +4,7 @@ title = "Mail between daemons, slice 5: every orchestrator wake is a message, se
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-10T02:59:02.102Z"
-updated_at = "2026-10-11T01:42:52.510507Z"
+updated_at = "2026-10-11T01:43:07.245327Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -28,3 +28,6 @@ done: wakes forwarded home as system messages, role/docs/CHANGELOG updated; just
 
 ### note · agent:manager-2 · 2026-10-11T01:42:52.510Z
 integrated: bcd1b7bf40fb17b1a14d883905cc4e2eb03440d0 (branch bridle/wrhba)
+
+### note · agent:manager-2 · 2026-10-11T01:43:07.245Z
+cleanup: removed agent wrhba, branch bridle/wrhba
