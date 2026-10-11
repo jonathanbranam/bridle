@@ -4,11 +4,12 @@ title = "Externals (orchestrator, advisors, aides) can schedule messages for the
 kind = "bug"
 state = "planned"
 created_at = "2026-10-11T03:44:27.310Z"
-updated_at = "2026-10-11T03:47:20.619299Z"
+updated_at = "2026-10-11T04:40:49.027721Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
 priority_at = "2026-10-11T03:44:28.901037Z"
+summary = "schedule_actor_ok now admits externals; add/list/rm follow the agent rule (self only, own only, human any; other target 403). New canonical_target in server.rs makes bare advisor, advisor/<name>, aide, orchestrator (optional @machine) resolve as external:<name> when no agent has that name, for send and schedule alike. Role text (advisor, aide, orchestrator), scheduled-wakes rule, daemon/api/cli docs and CHANGELOG updated. No migration: daemon behaviour and role text only. Tests in schedule_test.rs. just check exit 0, 1491 tests."
 ticket = "3k7d"
 +++
 
