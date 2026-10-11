@@ -91,7 +91,7 @@ Broader sci-fi pairs, places rather than ships, just "two vaguely related things
 | terminus | trantor | Foundation | Opposite ends of the galaxy; trantor is also an idea for the cloud. |
 | caprica | picon | Battlestar Galactica | Two of the Twelve Colonies. |
 | ~~abydos~~ | ~~chulak~~ | Stargate | The first two worlds through the gate. Struck: "can't pronounce". |
-| ariel | osiris | Firefly | Two Core worlds. Ariel is also a name. The human: good, will test. |
+| ariel | osiris | Firefly | Two Core worlds. Ariel is also a name. The human: good. Both pass dictation. |
 | vulcan | andoria | Star Trek | Neighbours and old rivals, founders of the Federation. The human: might work, will consider. |
 
 Advisor's pick: **`mars`** (Windows) and **`phobos`** (WSL2), **`vega`** (NUC), **`proxima`**
@@ -230,6 +230,9 @@ much background noise and it comes through as mirror or something else" (the hum
 
 **The human's shortlist for the NUC and the EC2** (2026-10-11): `proxima`, `luna`, `vega`, and
 "Vesta is probably fine as well".
+
+Then `ariel` and `osiris` (2026-10-11, the system not noted): "Ariel" five times out of five,
+"Osiris" twice out of twice. **Both pass.** ("aide" alone came out "aid" again, as before.)
 
 ## Themes
 
