@@ -4,7 +4,7 @@ title = "User-facing rename: bridle ticket replaces bridle task (hidden alias), 
 kind = "feature"
 state = "planned"
 created_at = "2026-10-11T09:11:18.939Z"
-updated_at = "2026-10-11T09:12:03.297023Z"
+updated_at = "2026-10-11T09:12:09.178312Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "q8cs"
@@ -25,3 +25,6 @@ split off br-sehn: User-facing rename slice 2: roles, rules, skills and docs say
 
 ### note · agent:pm-1 · 2026-10-11T09:12:01.655Z
 split off br-aejj: User-facing rename slice 3: gateway exposes tickets under ticket names, old routes kept (q8cs)
+
+### note · agent:pm-1 · 2026-10-11T09:12:09.178Z
+pm-1: split into three slices, same ticket. This task is slice 1 (CLI). Slice 2 is br-sehn (roles, rules, skills, docs) and slice 3 is br-aejj (gateway routes); both are PENDING, filed from this task, and must run after this one lands, sehn before aejj (no dependency edge: task dep is gone and these have no ticket file to link; order by queue). Please ready them (or tell me to) once this lands, and I will plan and queue them.
