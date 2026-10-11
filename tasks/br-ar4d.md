@@ -4,9 +4,11 @@ title = "Flaky again (third time): governor_test working_agent_is_notified_then_
 kind = "bug"
 state = "planned"
 created_at = "2026-10-11T04:21:34.879Z"
-updated_at = "2026-10-11T04:32:30.152100Z"
+updated_at = "2026-10-11T04:32:54.894167Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+priority = "low"
+priority_at = "2026-10-11T04:32:54.869707Z"
 ticket = "ar4d"
 +++
 
@@ -25,3 +27,12 @@ From orchestrator: CI red again on aa70230b, the same governor_test flake (br-ar
 
 ### note · external:orchestrator · 2026-10-11T04:32:30.152Z
 split off br-ck8a: Disable the flaky governor_test working_agent_is_notified_then_stopped_when_its_turn_ends (#[ignore], ar4d)
+
+### note · external:orchestrator · 2026-10-11T04:32:45.341Z
+orchestrator: no longer critical. The human, 2026-10-11 ~12:20 AM ET, via aide: flaky tests are ignored or disabled and the fix is scheduled by the PdM after features ship. Disabled by br-ck8a; this task goes to the PdM. Don't start a worker on it unless the PdM schedules it.
+
+### note · external:advisor/product-manager · 2026-10-11T04:32:54.869Z
+priority: normal -> low
+
+### note · external:advisor/product-manager · 2026-10-11T04:32:54.894Z
+advisor (product-manager): priority low per the human (~12:20 AM ET via aide): flaky tests are disabled now (br-ck8a) and the real fix waits until after the features ship. Not tonight; I'll schedule it after the 22ab chain (br-wrmu, br-bpku, br-3v75, br-72t9).

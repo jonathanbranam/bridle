@@ -2,12 +2,17 @@
 id = "br-ck8a"
 title = "Disable the flaky governor_test working_agent_is_notified_then_stopped_when_its_turn_ends (#[ignore], ar4d)"
 kind = "chore"
-state = "pending"
+state = "planned"
 created_at = "2026-10-11T04:32:30.119Z"
-updated_at = "2026-10-11T04:32:30.152100Z"
+updated_at = "2026-10-11T04:32:45.373320Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 parent = "br-ar4d"
 +++
 
 Mark crates/bridle-daemon/tests/governor_test.rs working_agent_is_notified_then_stopped_when_its_turn_ends with #[ignore = "flaky on macOS CI, ticket ar4d"] so main's CI is green again. Nothing else changes; the real fix is br-ar4d, which the PdM schedules later. Why: the human, 2026-10-11 ~12:20 AM ET, via aide: 'if there is a flaky test that needs addressed, we can either 1. ignore it 2. disable it and in either case, file a ticket to get it addressed and send to the PdM to be dealth with later after we ship features.' The orchestrator chose disable: a red main blocks self-upgrade and releases. Check: just check passes; the test shows as skipped. Model: Haiku.
+
+## Thread
+
+### note · external:orchestrator · 2026-10-11T04:32:45.373Z
+From orchestrator: change of plan from the human (quote on br-ck8a): flaky tests get disabled, the real fix waits for the PdM. So: DON'T start br-ar4d. Instead br-ck8a (one #[ignore] line, Haiku) takes the next free slot after br-3k7d; land it promptly so main goes green and self-upgrade can take br-3k7d. Merge policy until then as before: landings whose CI fails only on that test are fine.
