@@ -736,3 +736,11 @@ Newest first. One line per item: what happened, who did it, what it says about r
   bridle-ui, track-web and data-contracts ran v0.5.0 for 3.5 days (no self-upgrade there), which
   made `ticket new` mint wrong-prefix IDs (br-ydyk). Restarted all three to 0.6.1; meta-notes (NUC)
   is still 0.5.0.
+- **2026-10-11: the orchestrator closes stuck tasks and holds tickets by hand.** It verified and
+  traced br-e7e2/br-e9wg stuck at `claimed` (restart dropped agent claims; br-w6ww, made critical)
+  and held the five v2va slices with the new `ticket hold`. An admin role could own task-state
+  repair.
+- **2026-10-11: the NUC's move to release self-upgrade needs the human's hands.** Approved by the
+  human (via aide), but the orchestrator's auto mode refuses writes over SSH to the NUC; the
+  install, config edit and restarts went to aide as commands (m-10737). Machine admin on other
+  machines doesn't fit the orchestrator's permissions today.
