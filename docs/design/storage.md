@@ -167,7 +167,7 @@ agent's own `last_event_at`/`turn_started_at` (the same signal
 `supervisor.rs`'s stall check watches) and releases the claim once that
 activity is older than `config.claim_lease_after`. Only a `claimed` task is ever
 moved by a release: dropping or integrating a claimed task clears its claim, and
-`TicketManager::open` deletes any `claims` row whose task isn't `claimed`. The ephemeral tables
+`TicketManager::open` deletes any `claims` row whose task isn't `claimed`. That check reads the task's state from the database row, not the task file (the file lags by a flush and never records `claimed`). Ending a claim (release, drop, done) deletes the row and sets the state in one transaction (`Store::end_claim`); `done` also accepts a `claimed` task with no claims row. The ephemeral tables
 `waits`, `impact_cache` are not built.
 
 **Claims are durable now (j479):** unlike `tasks`/`edges`/`open_questions`,

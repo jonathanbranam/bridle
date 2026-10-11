@@ -900,6 +900,13 @@ impl Store {
             .await
     }
 
+    /// Deletes `task_id`'s claim row (if any) and sets its state, atomically.
+    pub async fn end_claim(&self, task_id: &str, state: TicketState) -> Result<(), StoreError> {
+        let task_id = task_id.to_string();
+        self.with_conn(move |c| sync::end_claim(c, &task_id, state))
+            .await
+    }
+
     pub async fn list_claims(&self) -> Result<Vec<Claim>, StoreError> {
         self.with_conn(sync::list_claims).await
     }
@@ -3589,6 +3596,18 @@ mod sync {
         Ok(())
     }
 
+    pub(super) fn end_claim(
+        conn: &Connection,
+        task_id: &str,
+        state: TicketState,
+    ) -> Result<(), StoreError> {
+        let tx = conn.unchecked_transaction()?;
+        tx.execute("DELETE FROM claims WHERE task_id = ?1", params![task_id])?;
+        set_task_state(&tx, task_id, state)?;
+        tx.commit()?;
+        Ok(())
+    }
+
     pub(super) fn list_claims(conn: &Connection) -> Result<Vec<Claim>, StoreError> {
         let mut stmt = conn.prepare(
             "SELECT task_id, claimed_by, claimed_at FROM claims ORDER BY claimed_at ASC, rowid ASC",
@@ -5429,5 +5448,40 @@ mod tests {
             .await
             .expect_err("already released");
         assert!(matches!(err, StoreError::NotFound(_)));
+    }
+
+    /// br-w6ww: the claim row and the task state change together or not at all.
+    #[tokio::test]
+    async fn end_claim_changes_both_or_neither() {
+        let (store, _tmp) = store().await;
+        let task = store
+            .insert_task("tw", "Add foo", TicketKind::Feature, "human")
+            .await
+            .expect("insert task");
+        store
+            .insert_claim(&task.id, &"agent:w1".to_string(), Utc::now())
+            .await
+            .expect("insert claim");
+
+        // An unknown task fails the state change; the claim delete rolls back.
+        store
+            .end_claim("tw-nope", TicketState::Integrated)
+            .await
+            .expect_err("no such task");
+        assert_eq!(store.list_claims().await.expect("list").len(), 1);
+
+        store
+            .end_claim(&task.id, TicketState::Integrated)
+            .await
+            .expect("end claim");
+        assert!(store.list_claims().await.expect("list").is_empty());
+        let row = store.get_task(&task.id).await.expect("get").expect("row");
+        assert_eq!(row.state, TicketState::Integrated);
+
+        // No claims row is fine (a task stuck by an older build).
+        store
+            .end_claim(&task.id, TicketState::Integrated)
+            .await
+            .expect("no row");
     }
 }

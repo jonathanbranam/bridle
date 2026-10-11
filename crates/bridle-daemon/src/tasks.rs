@@ -172,6 +172,7 @@ impl TicketManager {
         let mut cache = HashMap::with_capacity(rows.len());
         let mut unrecorded = Vec::new();
         for row in rows {
+            let row_state = row.state;
             let mut task = state.read_task(&row.id).unwrap_or(Ticket {
                 id: row.id.clone(),
                 title: row.title,
@@ -200,6 +201,11 @@ impl TicketManager {
                 impact: Impact::default(),
                 settle_until: None,
             });
+            // The database state is written synchronously by every transition; the task
+            // file lags it by up to a flush, so a restart in between must trust the row
+            // (br-w6ww: the file still said `planned` for a claimed task, and the claims
+            // sweep below dropped every agent's claim).
+            task.state = row_state;
             // Migration (vk3y): the old `original id:` first body line becomes the `ticket`
             // field. Idempotent: once the line is gone there is nothing to move.
             if task.ticket.is_none()
@@ -884,7 +890,7 @@ impl TicketManager {
             )));
         }
         if task.state == TicketState::Claimed {
-            self.clear_claim(id).await?;
+            self.end_claim(id, TicketState::Dropped).await?;
             task.claimed_by = None;
             task.claimed_at = None;
         }
@@ -929,7 +935,12 @@ impl TicketManager {
                     task.state
                 )));
             }
-            TicketState::Claimed => task = self.release_claim(id).await?,
+            // Tolerates a missing claims row (br-w6ww), so a task already stuck can close.
+            TicketState::Claimed => {
+                self.end_claim(id, TicketState::Integrated).await?;
+                task.claimed_by = None;
+                task.claimed_at = None;
+            }
             _ => {}
         }
         self.transition(&mut task, TicketState::Integrated, actor)
@@ -1446,10 +1457,12 @@ impl TicketManager {
         self.release_claim(id).await
     }
 
-    /// Removes `id`'s claim row, in-memory entry and state-branch record,
-    /// leaving the task's state to the caller.
-    async fn clear_claim(&self, id: &str) -> Result<(), TicketError> {
-        self.store.delete_claim(id).await?;
+    /// Removes `id`'s claim row and moves the task to `to` in one database
+    /// transaction (a stop between the two writes once left a task `claimed`
+    /// with no claim, br-w6ww), then drops the in-memory entry and the
+    /// state-branch record. A missing claims row is not an error.
+    async fn end_claim(&self, id: &str, to: TicketState) -> Result<(), TicketError> {
+        self.store.end_claim(id, to).await?;
         self.claims.lock().expect("claims lock").remove(id);
         self.enqueue_claims_snapshot()
     }
@@ -1465,8 +1478,7 @@ impl TicketManager {
         if task.state != TicketState::Claimed {
             return Err(TicketError::Conflict(format!("task {id} is not claimed")));
         }
-        self.clear_claim(id).await?;
-        self.store.set_task_state(id, TicketState::Planned).await?;
+        self.end_claim(id, TicketState::Planned).await?;
         task.state = TicketState::Planned;
         task.updated_at = Utc::now();
         task.claimed_by = None;
@@ -3010,6 +3022,71 @@ mod tests {
             .await
             .expect_err("no longer claimed");
         assert!(matches!(err, TicketError::Conflict(_)));
+    }
+
+    /// br-w6ww: the database state is written synchronously, the task file
+    /// lags (and never records `claimed`), so a restart must trust the row.
+    #[tokio::test]
+    async fn a_claim_survives_a_restart_and_the_task_can_then_be_done() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let repo = tmp.path().join("repo");
+        init_repo(&repo).await;
+        let store = Store::open(tmp.path().join("bridle.db"))
+            .await
+            .expect("open store");
+        let state = StateBranch::open(&repo, &tmp.path().join("state"))
+            .await
+            .expect("open state branch");
+        let open = || {
+            TicketManager::open(
+                store.clone(),
+                state.clone(),
+                "tw".to_string(),
+                std::time::Duration::from_secs(600),
+            )
+        };
+        let tm = open().await.expect("open");
+        let task = tm
+            .new_open_task("Add foo", TicketKind::Feature, String::new(), vec![], None)
+            .await
+            .expect("new task");
+        let human = "human".to_string();
+        tm.plan_task(&task.id, &human).await.expect("plan");
+        let w1 = "agent:w1".to_string();
+        tm.claim_task(&task.id, &w1).await.expect("claim");
+        // No flush: the restart comes before the task file catches up.
+        let tm2 = open().await.expect("reopen");
+        assert_eq!(store.list_claims().await.expect("claims").len(), 1);
+        let t = tm2.get_task(&task.id).expect("task");
+        assert_eq!(t.state, TicketState::Claimed);
+        assert_eq!(t.claimed_by.as_deref(), Some(w1.as_str()));
+        let done = tm2
+            .done_task(&task.id, "abc123", None, &w1)
+            .await
+            .expect("done after restart");
+        assert_eq!(done.state, TicketState::Integrated);
+    }
+
+    /// br-w6ww: a task `claimed` with no claims row (stuck by an older
+    /// build) can still be closed with a commit.
+    #[tokio::test]
+    async fn a_claimed_task_with_no_claims_row_can_be_done_with_a_commit() {
+        let (tm, _tmp) = manager().await;
+        let task = tm
+            .new_open_task("Add foo", TicketKind::Feature, String::new(), vec![], None)
+            .await
+            .expect("new task");
+        force_planned(&tm, &task.id);
+        let w1 = "agent:w1".to_string();
+        tm.claim_task(&task.id, &w1).await.expect("claim");
+        tm.store.delete_claim(&task.id).await.expect("drop row");
+        tm.claims.lock().expect("claims lock").remove(&task.id);
+        let done = tm
+            .done_task(&task.id, "abc123", None, &w1)
+            .await
+            .expect("done");
+        assert_eq!(done.state, TicketState::Integrated);
+        assert_eq!(done.claimed_by, None);
     }
 
     /// A human to-do: the lease check never releases the human's claim, and
