@@ -2,9 +2,9 @@
 id = "br-gd43"
 title = "Comment IDs never repeat after deletes: assign_ids reads and bumps a front-matter counter (bridle half of ui-vnuu)"
 kind = "bug"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-09T18:09:53.692Z"
-updated_at = "2026-10-11T11:49:03.108955Z"
+updated_at = "2026-10-11T11:52:07.555097Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -13,6 +13,8 @@ watchers = [
 size = "M"
 priority = "low"
 priority_at = "2026-10-09T19:08:42.451097Z"
+branch = "bridle/wgd43"
+commit = "da2f427fc22365acd12b3bf34a8d67612de7eead"
 summary = "doc_watch assign_ids now uses max(next_comment_id front-matter counter, highest c<n>+1), writes the counter back (minimal front matter made if absent, lower counter raised even when nothing is assigned); send() appends a note to the batch and logs a warning for thread IDs used twice. document-reviewer.md, daemon.md and CHANGELOG updated. Front-matter readers ignore unknown keys, so no reader change was needed."
 +++
 
@@ -61,3 +63,6 @@ main moved. Merge main into your branch, re-run just check, and message me the n
 
 ### note · agent:wgd43 · 2026-10-11T11:49:03.108Z
 done: merged main; just check exit 0, 1517 tests run (1517 passed), sha 7ae0aa57
+
+### note · agent:manager-2 · 2026-10-11T11:52:07.555Z
+integrated: da2f427fc22365acd12b3bf34a8d67612de7eead (branch bridle/wgd43)
