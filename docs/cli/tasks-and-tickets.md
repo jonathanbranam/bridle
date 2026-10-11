@@ -12,7 +12,7 @@ pending -> open -> planned -> (ready) -> claimed -> integrated
                       any state -> dropped (reason required)      integrated -> reopened
 ```
 
-- `pending`: just filed. `bridle task ready <id>` (orchestrator, or an advisor with the
+- `pending`: just filed. `bridle ticket ready <id>` (`task ready <id>` for a row with no ticket; orchestrator, or an advisor with the
   human's approval) makes it `open`.
 - `open`: the project manager triages it; `bridle task plan <id>` makes it `planned`.
 - `ready` is derived: planned, with no open blockers and no unanswered question.
@@ -41,7 +41,7 @@ the frontmatter):
 ```
 bridle ticket new "title" --kind feature [--body-file F]
 bridle ticket new --from-task <task-id>     # a task that needs design discussion
-bridle ticket task <id>                     # file the task for a committed ticket
+bridle ticket ready <id>                    # mark a committed ticket with an ask ready (human's approval)
 bridle ticket set <id> <field> <value>
 bridle ticket resolve <id>
 bridle ticket check

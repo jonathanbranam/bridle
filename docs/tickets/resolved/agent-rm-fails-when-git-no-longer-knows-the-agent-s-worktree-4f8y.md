@@ -1,7 +1,7 @@
 ---
 id: br-4f8y
 title: agent rm fails when git no longer knows the agent's worktree (pruned record, directory left)
-kind: bug
+kind: fix
 created: 2026-10-04
 repos: [bridle]
 changes: []

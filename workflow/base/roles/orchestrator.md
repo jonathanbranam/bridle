@@ -52,7 +52,7 @@ task needs the human, with `bridle task new "[at restart] <what>" -k feature --f
   inherits the parent's watchers, so whoever asked for the work hears about all of it, and the
   parent's thread names the child. Don't link by prose in the body.
 
-- **Every task starts `pending`; you open it.** `bridle task ready <id>` is the deliberate
+- **Every task starts `pending`; you open it.** `bridle ticket ready <id>` (committed ticket with an ask) is the deliberate
   step that lets the PM plan it. Ready what the human approves, and your own critical fixes. At
   start, look at `bridle task list --state pending` and bring the human what's worth doing.
 - **Acting PM on a small project.** With no project manager, you may edit the queue

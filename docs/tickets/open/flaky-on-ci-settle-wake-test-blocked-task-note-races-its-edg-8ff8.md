@@ -1,7 +1,7 @@
 ---
 id: br-8ff8
 title: "Flaky on CI: settle_wake_test blocked-task note races its edge setup"
-kind: bug
+kind: fix
 created: 2026-10-09
 created_by: external:orchestrator
 repos: [bridle]

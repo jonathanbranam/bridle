@@ -1,7 +1,7 @@
 ---
 id: br-f4xu
 title: "Flaky on macOS CI: process_test sigterm_via_signal_group_exits_143 exits 1, not 143"
-kind: bug
+kind: fix
 created: 2026-10-09
 created_by: external:orchestrator
 repos: [bridle]

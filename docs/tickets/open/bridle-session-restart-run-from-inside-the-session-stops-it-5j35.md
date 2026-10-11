@@ -1,7 +1,7 @@
 ---
 id: br-5j35
 title: "bridle session restart run from inside the session stops it and never relaunches: the detached restarter dies with the session"
-kind: bug
+kind: fix
 created: 2026-10-06
 repos: [bridle]
 changes: []

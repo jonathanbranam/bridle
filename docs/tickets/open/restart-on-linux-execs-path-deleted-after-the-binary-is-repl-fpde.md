@@ -7,7 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: []
-kind: bug
+kind: fix
 tasks: [br-fpde]
 ---
 

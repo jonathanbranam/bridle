@@ -1,7 +1,7 @@
 ---
 id: br-x3xk
 title: "is_merged calls a reused branch landed: an old Branch: trailer hides newer unlanded commits"
-kind: bug
+kind: fix
 created: 2026-10-04
 repos: [bridle]
 changes: []

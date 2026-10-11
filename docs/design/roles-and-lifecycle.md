@@ -62,8 +62,8 @@ Built states: `pending`, `open`, `planned`, `claimed`, `dropped`, `integrated`, 
   planned` transition (`TaskManager::plan_task`); `open` is the only state it
   accepts, so a task already planned, claimed, dropped or reopened is a
   conflict.
-- **Every task is created `pending`** (k7tm decisions 11-14). `bridle task ready <id>`
-  (`TaskManager::ready_task`) makes `pending -> open`, and the PM plans only `open` tasks.
+- **Every task is created `pending`** (k7tm decisions 11-14). `bridle ticket ready <id>`
+  (`TaskManager::ready_task`; it refuses an empty ask or an uncommitted ticket) makes `pending -> open`, and the PM plans only `open` tasks.
   The orchestrator, or an advisor with the human's approval, readies; a manager may ready its
   own small fix inside work already approved, never a new feature. Human to-dos
   (`--for-human`) skip the gate. The PM wakes when a task is readied, not when one is filed;

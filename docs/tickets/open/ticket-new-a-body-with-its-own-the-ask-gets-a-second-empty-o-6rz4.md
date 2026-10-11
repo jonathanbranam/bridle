@@ -1,7 +1,7 @@
 ---
 id: 6rz4
 title: "ticket new: a body with its own '## The ask' gets a second, empty one, and ticket task refuses"
-kind: bug
+kind: fix
 created: 2026-10-11
 created_by: external:orchestrator
 repos: [bridle]

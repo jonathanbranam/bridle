@@ -1,7 +1,7 @@
 ---
 id: br-r9h7
 title: "Flaky on macOS CI: spawn_with_prompt_waits_for_the_turn_to_start_before_returning sees Idle, not Working"
-kind: bug
+kind: fix
 created: 2026-10-09
 created_by: external:orchestrator
 repos: [bridle]

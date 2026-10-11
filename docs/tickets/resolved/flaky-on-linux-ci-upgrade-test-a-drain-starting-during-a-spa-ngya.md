@@ -1,7 +1,7 @@
 ---
 id: br-ngya
 title: "Flaky on Linux CI: upgrade_test a_drain_starting_during_a_spawn_restarts_promptly reads messages after the daemon stopped serving"
-kind: bug
+kind: fix
 created: 2026-10-09
 created_by: external:orchestrator
 repos: [bridle]

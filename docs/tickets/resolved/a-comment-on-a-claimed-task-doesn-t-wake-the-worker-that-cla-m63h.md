@@ -1,7 +1,7 @@
 ---
 id: br-m63h
 title: "A comment on a claimed task doesn't wake the worker that claimed it: the claimant isn't notified like a watcher"
-kind: bug
+kind: fix
 created: 2026-10-07
 repos: [bridle]
 changes: []

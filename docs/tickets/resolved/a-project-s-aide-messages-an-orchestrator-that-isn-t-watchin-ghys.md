@@ -1,7 +1,7 @@
 ---
 id: br-ghys
 title: A project's aide messages an orchestrator that isn't watching that project's daemon; the roles don't say the orchestrator is per machine
-kind: bug
+kind: fix
 created: 2026-10-08
 created_by: external:aide
 repos: [bridle]

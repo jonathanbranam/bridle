@@ -94,8 +94,13 @@ runs on a real project): start-up skips it, and it runs by `bridle migrate --onl
   branch with `bridle migrate --only 0002-standard-ticket-fields`, reviews the diff and commits it
   (the migration leaves the commit to the owner, as `0001` does).
 
+- **`0003-bug-tickets-that-are-fixes`** (ticket bpku): `kind: bug` becomes `kind: fix` in every
+  ticket that lists a task (it was worked as a fix); a bug with no task stays a report. Opt-in,
+  same review and guard as `0002`. It edits files only: an open row changes with
+  `bridle task kind`, an integrated row keeps `bug`.
+
 **Protected-branch guard** (rule `existing-projects`; `migrate::refuse_on_protected_branch`, the
 first one): a migration that rewrites a project's files calls it first and is refused
 (`migrate::Refused`) while `main`, `dev` or the configured `[branches] release` is checked out,
 so it only lands on the trial or integration branch. Bridle's own repo (project `bridle`) is
-exempt. `0002` uses it; `0001` does not yet.
+exempt. `0002` and `0003` use it; `0001` does not yet.

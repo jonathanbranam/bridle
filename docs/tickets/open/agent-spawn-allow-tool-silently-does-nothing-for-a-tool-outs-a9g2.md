@@ -1,7 +1,7 @@
 ---
 id: br-a9g2
 title: agent spawn --allow-tool silently does nothing for a tool outside the role's --tools set (WebSearch on a worker)
-kind: bug
+kind: fix
 created: 2026-10-07
 repos: [bridle]
 changes: []

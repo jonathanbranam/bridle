@@ -1,7 +1,7 @@
 ---
 id: br-jmpf
 title: A [gateway] section in ~/.bridle/config.toml stops every daemon from starting (unknown field)
-kind: bug
+kind: fix
 created: 2026-10-04
 repos: [bridle]
 changes: []

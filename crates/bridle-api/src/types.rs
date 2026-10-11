@@ -1668,7 +1668,13 @@ pub struct TokenInfo {
 #[serde(rename_all = "kebab-case")]
 pub enum TaskKind {
     Feature,
+    /// A report of something broken; the change that fixes it is a `Fix`.
     Bug,
+    /// The change that fixes a `Bug` report.
+    Fix,
+    /// A large initiative split into child tickets (`parent`); it only opens and closes.
+    Epic,
+    Docs,
     Chore,
     Question,
     Research,
@@ -1685,6 +1691,9 @@ impl TaskKind {
         match self {
             Self::Feature => "feature",
             Self::Bug => "bug",
+            Self::Fix => "fix",
+            Self::Epic => "epic",
+            Self::Docs => "docs",
             Self::Chore => "chore",
             Self::Question => "question",
             Self::Research => "research",
@@ -1693,6 +1702,17 @@ impl TaskKind {
             Self::ReEvaluate => "re-evaluate",
             Self::Incident => "incident",
         }
+    }
+}
+
+impl TaskKind {
+    /// Change kinds produce a branch that merges (22ab section 2); the rest are worked without
+    /// one or only open and close.
+    pub fn is_change(self) -> bool {
+        matches!(
+            self,
+            Self::Feature | Self::Fix | Self::Docs | Self::Chore | Self::ArchRevision
+        )
     }
 }
 
@@ -2480,6 +2500,9 @@ mod tests {
         for s in [
             "feature",
             "bug",
+            "fix",
+            "epic",
+            "docs",
             "chore",
             "question",
             "research",
@@ -2491,6 +2514,24 @@ mod tests {
             let k: TaskKind = s.parse().unwrap();
             assert_eq!(k.as_str(), s);
         }
+    }
+
+    #[test]
+    fn only_merging_kinds_are_changes() {
+        for (s, change) in [
+            ("feature", true),
+            ("fix", true),
+            ("docs", true),
+            ("chore", true),
+            ("arch-revision", true),
+            ("bug", false),
+            ("epic", false),
+            ("question", false),
+            ("incident", false),
+        ] {
+            assert_eq!(s.parse::<TaskKind>().unwrap().is_change(), change, "{s}");
+        }
+        assert!("idea".parse::<TaskKind>().is_err());
     }
 
     #[test]

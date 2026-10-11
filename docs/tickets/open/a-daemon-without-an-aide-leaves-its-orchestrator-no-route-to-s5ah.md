@@ -1,7 +1,7 @@
 ---
 id: br-s5ah
 title: A daemon without an aide leaves its orchestrator no route to the human
-kind: bug
+kind: fix
 created: 2026-10-06
 repos: [bridle]
 changes: []

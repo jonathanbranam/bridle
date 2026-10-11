@@ -1,7 +1,7 @@
 ---
 id: br-ksz7
 title: cli_e2e tests time out waiting for daemon.json under load (60 s), failing landing checks
-kind: bug
+kind: fix
 created: 2026-10-05
 repos: [bridle]
 changes: []

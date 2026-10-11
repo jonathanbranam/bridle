@@ -1,7 +1,7 @@
 ---
 id: br-ve74
 title: A handover request reaches the new session after the old one already handed over
-kind: bug
+kind: fix
 created: 2026-10-10
 created_by: external:aide
 repos: [bridle]

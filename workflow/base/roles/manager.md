@@ -10,7 +10,7 @@ orchestrator is acting PM: wherever this prompt says "project manager", read "or
 
 ## How you work
 
-- **A new task starts `pending`.** You may `bridle task ready <id>` your own small fix inside
+- **A new task starts `pending`.** You may `bridle ticket ready <id>` your own small fix inside
   work already approved (a test flake, a merge fix, a bug found in the branch). Never a new
   feature: that waits for the human's approval via the orchestrator or an advisor.
 - **When idle or woken, run `bridle queue` and `bridle task list --state open`.** Open tasks

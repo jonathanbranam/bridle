@@ -1,7 +1,7 @@
 ---
 id: br-e9yu
 title: Per-project sessions (aide) share one handover file and one identity across projects; key them by project
-kind: bug
+kind: fix
 created: 2026-10-05
 repos: [bridle]
 changes: []

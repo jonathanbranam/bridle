@@ -52,6 +52,9 @@ pub(super) fn task_kind_arg(k: TaskKindArg) -> TaskKind {
     match k {
         TaskKindArg::Feature => TaskKind::Feature,
         TaskKindArg::Bug => TaskKind::Bug,
+        TaskKindArg::Fix => TaskKind::Fix,
+        TaskKindArg::Epic => TaskKind::Epic,
+        TaskKindArg::Docs => TaskKind::Docs,
         TaskKindArg::Chore => TaskKind::Chore,
         TaskKindArg::Question => TaskKind::Question,
         TaskKindArg::Research => TaskKind::Research,
@@ -293,6 +296,15 @@ pub(super) async fn task_list(cli: &Cli, args: &TaskListArgs) -> Result<(), CliE
 
 async fn task_ready(cli: &Cli, id: &str) -> Result<(), CliError> {
     let client = client_for(cli).await?;
+    // A ticket's row is readied through the ticket, which checks the ask and the commit (k7tm).
+    if let Ok(t) = client.get_task(id).await
+        && let Some(ticket) = &t.ticket
+    {
+        return Err(anyhow::anyhow!(
+            "task {id} belongs to ticket {ticket}: use `bridle ticket ready {ticket}`"
+        )
+        .into());
+    }
     let task = client.ready_task(id).await?;
     if cli.json {
         render::print_json(&task)?;

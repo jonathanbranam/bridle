@@ -12,8 +12,8 @@ use bridle_api::{EditTaskRequest, NewTaskRequest, SubmitTaskRequest, TaskKind};
 use clap::ValueEnum;
 
 use crate::cli::{
-    Cli, TaskKindArg, TicketAction, TicketArgs, TicketCheckArgs, TicketNewArgs, TicketResolveArgs,
-    TicketSetArgs, TicketSubmitArgs, TicketTaskArgs,
+    Cli, TaskKindArg, TicketAction, TicketArgs, TicketCheckArgs, TicketNewArgs, TicketReadyArgs,
+    TicketResolveArgs, TicketSetArgs, TicketSubmitArgs,
 };
 use crate::commands::client_for;
 use crate::error::CliError;
@@ -40,7 +40,7 @@ pub async fn run(cli: &Cli, args: &TicketArgs) -> Result<(), CliError> {
     let repo = repo_root()?;
     match &args.action {
         TicketAction::New(a) => new(cli, &repo, a).await,
-        TicketAction::Task(a) => task_cmd(cli, &repo, a).await,
+        TicketAction::Ready(a) => ready_cmd(cli, &repo, a).await,
         TicketAction::Resolve(a) => resolve_cmd(cli, &repo, a).await,
         TicketAction::Set(a) => set_cmd(cli, &repo, a).await,
         TicketAction::Check(a) => check_cmd(cli, &repo, a).await,
@@ -147,27 +147,41 @@ async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<(), CliErro
             )
             .await?;
     }
+    if from.is_none() {
+        // Every ticket has a row, `pending` until `ticket ready` (22ab section 2). The daemon
+        // gives it the ticket's id from the `ticket` field (br-9e15).
+        let ticket_id = id_of(&path).ok_or_else(|| anyhow!("new ticket has no id"))?;
+        let task_id = make_task(cli, &title, kind, &ticket_id, &rel)
+            .await
+            .map_err(|e| anyhow!("{rel} was written but its row was not filed: {e}"))?;
+        set(&root, &ticket_id, "tasks", &task_id)?;
+    }
     println!("{rel}");
 
     Ok(())
 }
 
-/// `bridle ticket task <id>`: file the task for a ticket that is committed and has an ask. The
-/// task is filed only now so it can never reach an agent before its brief is in git (k7tm).
-async fn task_cmd(cli: &Cli, repo: &Path, args: &TicketTaskArgs) -> Result<(), CliError> {
+/// `bridle ticket ready <id>`: mark the ticket's row ready (`pending` -> `open`). Taken only
+/// with the human's approval; refuses an empty ask or a ticket not committed on the local
+/// integration branch, so work never outruns its brief (k7tm).
+async fn ready_cmd(cli: &Cli, repo: &Path, args: &TicketReadyArgs) -> Result<(), CliError> {
     let root = tickets_root(repo);
     let id = projects(cli, repo).await?.local(&args.id)?.to_string();
     let path = find_by_id(&root.join("open"), &id)?;
     let text =
         std::fs::read_to_string(&path).with_context(|| format!("reading {}", path.display()))?;
-    let (title, kind) = task_source(&text)?;
+    task_source(&text)?;
     let rel = path.strip_prefix(repo).unwrap_or(&path).to_path_buf();
     ensure_committed(repo, &rel)?;
-    let rel = rel.display().to_string();
-    // The daemon gives the task the ticket's id from the `ticket` field (br-9e15).
-    let task_id = make_task(cli, &title, kind, &id, &rel).await?;
-    set(&root, &id, "tasks", &task_id)?;
-    println!("{task_id}");
+    let client = client_for(cli).await?;
+    let task = client
+        .list_tasks()
+        .await?
+        .into_iter()
+        .find(|t| ticket_of(t).is_some_and(|tk| split_id(&tk).1 == id))
+        .ok_or_else(|| anyhow!("ticket {id} has no row on this daemon"))?;
+    let task = client.ready_task(&task.id).await?;
+    println!("{}", task.id);
     Ok(())
 }
 
@@ -189,7 +203,7 @@ fn task_source(text: &str) -> anyhow::Result<(String, TaskKind)> {
         .unwrap_or("");
     if ask.trim().is_empty() {
         bail!(
-            "the ticket's \"The ask\" section is empty: write the ask, commit it, then file the task"
+            "the ticket's \"The ask\" section is empty: write the ask, commit it, then mark it ready"
         );
     }
     Ok((title, kind))
@@ -207,7 +221,7 @@ fn ensure_committed(repo: &Path, rel: &Path) -> anyhow::Result<()> {
         .success();
     if !in_main {
         bail!(
-            "{} is not committed on main: commit it there first, so the task never outruns its brief",
+            "{} is not committed on main: commit it there first, so work never outruns its brief",
             rel.display()
         );
     }
@@ -840,6 +854,17 @@ pub fn standardize_front(text: &str, prefix: &str, root: &Path) -> Option<String
         s.push('\n');
     }
     Some(s)
+}
+
+/// `text` with `kind: bug` changed to `kind: fix` when the ticket lists a task (bpku); `None`
+/// for any other ticket.
+pub fn bug_to_fix(text: &str) -> Option<String> {
+    let (pairs, _) = split_front(text)?;
+    let get = |k: &str| pairs.iter().find(|(n, _)| n == k).map(|(_, v)| v.as_str());
+    if get("kind") != Some("bug") || list_items(get("tasks")?).is_none_or(|t| t.is_empty()) {
+        return None;
+    }
+    set_line(text, "kind", "fix")
 }
 
 /// The frontmatter as (key, raw value) pairs and the body after it.
@@ -1688,7 +1713,7 @@ mod tests {
     }
 
     #[test]
-    fn ticket_task_refuses_an_empty_ask() {
+    fn ticket_ready_refuses_an_empty_ask() {
         let dir = tempfile::tempdir().unwrap();
         let repos = vec!["p".to_string()];
         let p = create(
@@ -1703,7 +1728,7 @@ mod tests {
     }
 
     #[test]
-    fn ticket_task_refuses_an_uncommitted_ticket() {
+    fn ticket_ready_refuses_an_uncommitted_ticket() {
         let dir = tempfile::tempdir().unwrap();
         let git = |args: &[&str]| {
             let out = Command::new("git")

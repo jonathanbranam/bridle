@@ -1,7 +1,7 @@
 ---
 id: br-dbvd
 title: "Specs: bridle spec id duplicates ledger entries for hand-written IDs"
-kind: bug
+kind: fix
 created: 2026-10-05
 repos: [bridle]
 changes: []

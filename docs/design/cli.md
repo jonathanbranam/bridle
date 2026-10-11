@@ -107,7 +107,7 @@ bridle task answer  <task-id> TEXT                    answers a task's open ques
 bridle task claim   <task-id>                         claims a ready task for the caller: planned -> claimed
 bridle task release <task-id>                         releases the caller's own claim: claimed -> planned
 bridle task ready   [--all] [--role R]                the highest queue tier with a startable task (planned, deps met, no open question, unclaimed)
-bridle task ready   <id>                                 pending -> open: approve the task for the PM (orchestrator or an advisor with the human's approval; a manager for its own small fix inside approved work; not workers, the PM or visitors). The daemon messages the PM (else the orchestrator) that it is open, and returns it to `pending` with a note if nobody plans it within `[tasks] open_stale` (default 4h). `bridle status` lists pending tasks
+bridle task ready   <id>                                 pending -> open for a row with no ticket (`ticket submit`; a ticketed row is refused, use `ticket ready`): approve the task for the PM (orchestrator or an advisor with the human's approval; a manager for its own small fix inside approved work; not workers, the PM or visitors). The daemon messages the PM (else the orchestrator) that it is open, and returns it to `pending` with a note if nobody plans it within `[tasks] open_stale` (default 4h). `bridle status` lists pending tasks
 bridle queue                                     read-only: claimed tasks with their worker, then the tiers in rank order
 bridle queue set --tier T,T... [--tier T,T...]   replace the whole queue, one --tier per tier (PM, orchestrator or human only)
 bridle queue add-tier <task>...                  append one tier at the back (PM, orchestrator or human only)
@@ -282,9 +282,13 @@ bridle ticket new "<title>" --kind <kind> [--repos a,b] [--blocked-by ids] [--re
                                              frontmatter id, title, kind (required, no default: the task kinds), created (UTC date), created_by (the calling principal, optional; omitted when no daemon answers), repos (default: the
                                              project name), theme (optional), changes, specs, blocked_by, related, tasks, and an empty
                                              `## The ask`; creates the folders if missing; prints the path.
-                                             `--body`/`--body-file` (`-` = stdin) write the ask into the stub. Files no
-                                             task (the task would race the ticket's commit; k7tm); `--no-task`
-                                             is a hidden no-op. The new ticket's id is never a task's id either
+                                             `--body`/`--body-file` (`-` = stdin) write the ask into the stub. Also files the ticket's
+                                             row (needs a daemon; every ticket has one, same id `br-<id>`,
+                                             `pending`, `tasks:` set), so `ticket task` and `--no-task` are gone.
+                                             Kinds add `fix` (the change that fixes a `bug` report), `epic` (a large
+                                             initiative, children via `parent`) and `docs`; `feature`, `fix`, `docs`,
+                                             `chore` and `arch-revision` are the change kinds (`TaskKind::is_change`).
+                                             No `idea` kind. The new ticket's id is never a task's id either
                                              (one id space)
 bridle ticket new --from-task <task-id> [--kind k] [title]   as `ticket new`, from an existing task (needs a daemon):
                                              title and kind default to the task's; the ticket takes the
@@ -292,12 +296,11 @@ bridle ticket new --from-task <task-id> [--kind k] [title]   as `ticket new`, fr
                                              the ticket alphabet lacks (old hex ids with 0/1) or a ticket has
                                              it; either way the ticket's `tasks:` lists the task and the
                                              task's `ticket` field is set to the ticket's id
-bridle ticket task <id>                      files the task for an open ticket (its title and kind, `ticket` field
-                                             set to the id, body the path) and records its id in the
-                                             ticket's `tasks:` (the first task from a ticket takes the ticket's id,
-                                             `br-k7tm` for `k7tm`; later ones get fresh ids). Refuses an empty
-                                             `## The ask` and a ticket file not in the tip of local `main`
-                                             (commit it first); needs a daemon; prints the task id
+bridle ticket ready <id>                     marks the ticket's row ready (`pending` -> `open`; the PM plans only open
+                                             rows). Taken only with the human's approval (orchestrator or an advisor in
+                                             a conversation with them; a manager for its own small fix). Refuses an
+                                             empty `## The ask` and a ticket file not in the tip of local `main`
+                                             (commit it first; k7tm's race fix); needs a daemon; prints the task id
 bridle ticket resolve <id>                   stamps `resolved: <UTC date-time>` into the frontmatter and moves
                                              the ticket from `open/` to `resolved/` (a plain move: committing
                                              is the caller's); errors on an unknown or ambiguous id; doesn't

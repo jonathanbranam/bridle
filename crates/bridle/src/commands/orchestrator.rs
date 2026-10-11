@@ -10,7 +10,7 @@ pub(super) const ORCHESTRATOR_STARTUP_STEPS: &str = "\
 Check in: `bridle status`, `bridle agents`, and recent messages to human (from the \
 managers).
 Pending tasks (`bridle task list --state pending`; `bridle status` counts them): every task \
-starts pending. Bring the human the ones worth doing, and `bridle task ready <id>` those they \
+starts pending. Bring the human the ones worth doing, and `bridle ticket ready <id>` those they \
 approve.
 The human's open to-dos, highest priority first: `bridle task list --claimed-by human`.
 Start the watcher from the latest event seq.

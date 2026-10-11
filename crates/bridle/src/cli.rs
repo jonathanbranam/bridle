@@ -263,8 +263,8 @@ pub enum Command {
     /// Goals (docs/design/goals-tier.md). Local — no daemon call.
     #[command(hide = true)]
     Goals(GoalsArgs),
-    /// Tickets under docs/tickets/ (docs/design/cli.md). Local files; `new` also files a task
-    /// when a daemon is reachable.
+    /// Tickets under docs/tickets/ (docs/design/cli.md). Local files; `new` also makes the ticket's row
+    /// (needs the project's daemon).
     Ticket(TicketArgs),
     /// Architecture-tier elements (docs/design/architecture-tier.md). Local, no daemon call.
     #[command(hide = true)]
@@ -460,8 +460,8 @@ pub struct TicketArgs {
 pub enum TicketAction {
     /// Mint docs/tickets/open/<slug>-<id>.md with a fresh ID and print its path.
     New(TicketNewArgs),
-    /// File the bridle task for a committed ticket with a non-empty ask (two-way link).
-    Task(TicketTaskArgs),
+    /// Mark a ticket ready for work (its row `pending` -> `open`); only with the human's approval. Refuses an empty ask or a ticket not committed on the local main.
+    Ready(TicketReadyArgs),
     /// Stamp `resolved:` and move an open ticket to docs/tickets/resolved/ (no commit, no task change).
     Resolve(TicketResolveArgs),
     /// Set one frontmatter field (title, kind, theme, parent, repos, changes, specs, blocked_by, related, tasks; the old names needs and see still work); list fields take comma-separated values.
@@ -516,13 +516,10 @@ pub struct TicketNewArgs {
     /// Read the ask from a file (or `-` for stdin).
     #[arg(long)]
     pub body_file: Option<PathBuf>,
-    /// Deprecated no-op: `ticket new` never files a task (use `ticket task <id>`).
-    #[arg(long, hide = true)]
-    pub no_task: bool,
 }
 
 #[derive(Debug, Args)]
-pub struct TicketTaskArgs {
+pub struct TicketReadyArgs {
     pub id: String,
 }
 
@@ -1546,6 +1543,9 @@ pub enum TokenAction {
 pub enum TaskKindArg {
     Feature,
     Bug,
+    Fix,
+    Epic,
+    Docs,
     Chore,
     Question,
     Research,

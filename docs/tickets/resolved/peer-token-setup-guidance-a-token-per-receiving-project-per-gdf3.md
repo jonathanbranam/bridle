@@ -1,7 +1,7 @@
 ---
 id: br-gdf3
 title: "Peer-token setup guidance: a token per receiving project per sending machine, minted on the receiver"
-kind: bug
+kind: fix
 created: 2026-10-06
 repos: [bridle]
 changes: []

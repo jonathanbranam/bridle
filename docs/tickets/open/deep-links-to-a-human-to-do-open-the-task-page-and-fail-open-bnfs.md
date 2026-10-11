@@ -1,7 +1,7 @@
 ---
 id: br-bnfs
 title: Deep links to a human to-do open the task page and fail; open the to-do page instead, also when a to-do id is typed into the task page
-kind: bug
+kind: fix
 created: 2026-10-10
 created_by: external:aide
 repos: [bridle, bridle-ui]

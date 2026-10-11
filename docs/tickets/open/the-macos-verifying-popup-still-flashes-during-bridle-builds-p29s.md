@@ -1,7 +1,7 @@
 ---
 id: br-p29s
 title: The macOS Verifying popup still flashes during bridle builds, though the daemons run under launchd
-kind: bug
+kind: fix
 created: 2026-10-10
 created_by: external:aide
 repos: [bridle]

@@ -1,7 +1,7 @@
 ---
 id: br-jb4e
 title: A new advisor never reads its brief
-kind: bug
+kind: fix
 created: 2026-10-01
 repos: [bridle]
 changes: []

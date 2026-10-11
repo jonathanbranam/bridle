@@ -1,7 +1,7 @@
 ---
 id: br-fd8e
 title: Commit every edit bridle makes to a reviewed document or ticket (status markers, thread IDs, frontmatter), so the clone is never left dirty
-kind: bug
+kind: fix
 created: 2026-10-10
 created_by: external:aide
 repos: [bridle]

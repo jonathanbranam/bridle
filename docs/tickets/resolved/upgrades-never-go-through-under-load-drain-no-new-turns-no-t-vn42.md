@@ -1,7 +1,7 @@
 ---
 id: br-vn42
 title: "Upgrades never go through under load: drain (no new turns, no timeout), then restart"
-kind: bug
+kind: fix
 created: 2026-10-07
 repos: [bridle]
 changes: []

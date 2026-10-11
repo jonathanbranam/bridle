@@ -1,7 +1,7 @@
 ---
 id: br-2mtr
 title: Workers report missing tools and failed fetches plainly; a research task went to a worker with no web tools
-kind: bug
+kind: fix
 created: 2026-10-04
 repos: [bridle]
 changes: []

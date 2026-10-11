@@ -12,3 +12,8 @@ bridle_version = "0.5.0"
 id = "0002-standard-ticket-fields"
 applied_at = "2026-10-11T05:49:05.696293Z"
 bridle_version = "0.6.1"
+
+[[applied]]
+id = "0003-bug-tickets-that-are-fixes"
+applied_at = "2026-10-11T06:25:05.416866Z"
+bridle_version = "0.6.1"

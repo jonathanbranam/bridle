@@ -1,7 +1,7 @@
 ---
 id: br-tc7t
 title: A landing that needs a UI install or gateway restart to show says so, and someone does it
-kind: bug
+kind: fix
 created: 2026-10-04
 repos: [bridle, bridle-ui]
 changes: []

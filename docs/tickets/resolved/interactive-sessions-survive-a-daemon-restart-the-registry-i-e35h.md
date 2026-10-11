@@ -1,7 +1,7 @@
 ---
 id: br-e35h
 title: Interactive sessions survive a daemon restart (the registry is lost on every self-upgrade)
-kind: bug
+kind: fix
 created: 2026-10-04
 repos: [bridle]
 changes: []

@@ -1,7 +1,7 @@
 ---
 id: br-tnyt
 title: "Machine load notes repeat every few minutes: add a quiet period, and send one note per machine, not one per daemon"
-kind: bug
+kind: fix
 created: 2026-10-09
 created_by: external:aide
 repos: [bridle]

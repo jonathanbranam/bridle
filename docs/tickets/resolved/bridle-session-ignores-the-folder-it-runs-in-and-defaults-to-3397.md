@@ -1,7 +1,7 @@
 ---
 id: br-3397
 title: Every bridle command finds its project from the folder it runs in (bridle session defaults to bridle), enforced by a spec
-kind: bug
+kind: fix
 created: 2026-10-04
 repos: [bridle]
 changes: []

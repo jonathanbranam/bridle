@@ -1,7 +1,7 @@
 ---
 id: br-n96z
 title: "Flaky under load: governor_test working_agent_is_notified_then_stopped_when_its_turn_ends times out"
-kind: bug
+kind: fix
 created: 2026-10-10
 created_by: external:advisor/product-manager
 repos: [bridle]

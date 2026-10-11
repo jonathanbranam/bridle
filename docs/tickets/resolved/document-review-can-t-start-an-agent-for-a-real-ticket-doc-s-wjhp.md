@@ -1,7 +1,7 @@
 ---
 id: br-wjhp
 title: "Document review can't start an agent for a real ticket: doc-<stem> exceeds the 40-char agent name"
-kind: bug
+kind: fix
 created: 2026-10-04
 repos: [bridle]
 changes: []

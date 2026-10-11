@@ -1,7 +1,7 @@
 ---
 id: br-3xr4
 title: "Focus hours: an overnight period belongs to the day it starts, so one block covers the night"
-kind: bug
+kind: fix
 created: 2026-10-02
 repos: [bridle]
 changes: []

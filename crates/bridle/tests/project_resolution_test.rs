@@ -108,7 +108,7 @@ const CLASSES: &[(&str, Kind, &str)] = &[
     ("ticket check", Skip, "reads the cwd's repo"),
     ("ticket set", Skip, "edits the cwd's repo"),
     ("ticket resolve", Skip, "edits the cwd's repo"),
-    ("ticket task", Daemon, ""),
+    ("ticket ready", Daemon, ""),
     ("ticket submit", Daemon, ""),
     (
         "migrate",
@@ -221,7 +221,7 @@ fn required_args(path: &[String]) -> Vec<String> {
         ),
         ("ticket new", &["-k", "chore", "a title"]),
         ("task comment", &["1", "hi"]),
-        ("ticket task", &["abcd"]),
+        ("ticket ready", &["abcd"]),
         ("usage budget max-workers", &["2"]),
         ("orchestrator handover write", &["--file", "-"]),
     ];
@@ -366,7 +366,7 @@ fn world() -> World {
     let inside = ws.join("clone");
     fs::create_dir_all(ws.join(".bridle")).unwrap();
     fs::create_dir_all(&inside).unwrap();
-    // `ticket task` reads its ticket from the cwd's repo before it asks a daemon.
+    // `ticket ready` reads its ticket from the cwd's repo before it asks a daemon.
     write_ticket(&inside);
     // `orchestrator prime` reads its role prompt from the cwd's repo before it asks a daemon.
     let role = inside.join("workflow/base/roles/orchestrator.md");

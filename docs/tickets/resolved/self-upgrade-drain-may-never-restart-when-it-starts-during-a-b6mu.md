@@ -1,7 +1,7 @@
 ---
 id: br-b6mu
 title: Self-upgrade drain may never restart when it starts during a spawn
-kind: bug
+kind: fix
 created: 2026-10-09
 created_by: external:orchestrator
 repos: [bridle]

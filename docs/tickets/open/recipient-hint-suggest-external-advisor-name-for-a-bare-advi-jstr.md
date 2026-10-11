@@ -1,7 +1,7 @@
 ---
 id: br-jstr
 title: "Recipient hint: suggest external:advisor/<name> for a bare advisor/<name>"
-kind: bug
+kind: fix
 created: 2026-10-11
 created_by: external:advisor/product-manager
 repos: [bridle]

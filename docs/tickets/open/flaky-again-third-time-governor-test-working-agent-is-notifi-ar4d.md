@@ -1,7 +1,7 @@
 ---
 id: br-ar4d
 title: "Flaky again (third time): governor_test working_agent_is_notified_then_stopped_when_its_turn_ends times out waiting for Stopped (macOS CI)"
-kind: bug
+kind: fix
 created: 2026-10-11
 created_by: external:orchestrator
 repos: [bridle]

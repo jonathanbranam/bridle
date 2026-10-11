@@ -1,7 +1,7 @@
 ---
 id: br-anmx
 title: "'bridle gateway hash-password' echoes the password as it's typed: read it hidden when stdin is a terminal"
-kind: bug
+kind: fix
 created: 2026-10-04
 repos: [bridle]
 changes: []

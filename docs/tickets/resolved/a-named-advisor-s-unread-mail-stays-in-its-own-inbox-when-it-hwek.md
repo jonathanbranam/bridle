@@ -1,7 +1,7 @@
 ---
 id: br-hwek
 title: A named advisor's unread mail stays in its own inbox when its session ends or restarts (gtzx P4, pulled forward)
-kind: bug
+kind: fix
 created: 2026-10-10
 created_by: external:advisor/product-manager
 repos: [bridle]

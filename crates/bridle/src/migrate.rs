@@ -75,6 +75,13 @@ pub const MIGRATIONS: &[Migration] = &[
         manual_only: true,
         run: standard_ticket_fields,
     },
+    Migration {
+        id: "0003-bug-tickets-that-are-fixes",
+        description: "Make `kind: bug` tickets that have a task `kind: fix`; a bug with none stays a report (ticket bpku).",
+        // Rewrites many files of the human's project: they review it first, on a trial branch.
+        manual_only: true,
+        run: bug_tickets_that_are_fixes,
+    },
 ];
 
 const OLD_ROLE: &str = "product-manager";
@@ -181,6 +188,52 @@ fn standard_ticket_fields(ctx: &Ctx) -> anyhow::Result<Report> {
     }
     Ok(Report {
         summary: format!("standardized {} tickets (prefix {prefix})", files.len()),
+        files,
+    })
+}
+
+/// `bug` is a report and `fix` the change that fixes it (bpku): a `bug` ticket with a task was
+/// worked as a fix, so it becomes one. Tickets already `fix`, and bugs nobody worked, are left
+/// alone, so a rerun finds nothing. The daemon's rows are not touched: an open row changes with
+/// `bridle task kind`, an integrated one stays as it was.
+fn bug_tickets_that_are_fixes(ctx: &Ctx) -> anyhow::Result<Report> {
+    let project = project_of(ctx.repo);
+    refuse_on_protected_branch(ctx.repo, &project)?;
+    let root = crate::ticket::tickets_root(ctx.repo);
+    let mut paths = vec![];
+    md_files(&root, &mut paths);
+    paths.sort();
+    let mut edits = vec![];
+    for p in paths {
+        let text =
+            std::fs::read_to_string(&p).with_context(|| format!("reading {}", p.display()))?;
+        if let Some(new) = crate::ticket::bug_to_fix(&text) {
+            edits.push((p, new));
+        }
+    }
+    let files: Vec<String> = edits
+        .iter()
+        .map(|(p, _)| {
+            p.strip_prefix(ctx.repo)
+                .unwrap_or(p)
+                .to_string_lossy()
+                .into_owned()
+        })
+        .collect();
+    if files.is_empty() {
+        return Ok(Report {
+            files,
+            summary: "no bug ticket with a task".into(),
+        });
+    }
+    refuse_if_uncommitted(ctx.repo, &files)?;
+    if !ctx.dry_run {
+        for (p, new) in &edits {
+            std::fs::write(p, new).with_context(|| format!("writing {}", p.display()))?;
+        }
+    }
+    Ok(Report {
+        summary: format!("{} bug tickets became fix", files.len()),
         files,
     })
 }
@@ -825,6 +878,33 @@ mod tests {
             dry_run: false,
         };
         assert!(is_refusal(&standard_ticket_fields(&ctx).unwrap_err()));
+    }
+
+    #[test]
+    fn bug_tickets_with_a_task_become_fix_and_rerun_is_a_noop() {
+        let p = ticket_project("bridle-adopt");
+        let open = p.path().join("docs/tickets/open");
+        let ticket = |kind: &str, tasks: &str| {
+            format!("---\nid: br-aaaa\ntitle: t\nkind: {kind}\ntasks: {tasks}\n---\nbody\n")
+        };
+        std::fs::write(open.join("worked-aaaa.md"), ticket("bug", "[br-aaaa]")).unwrap();
+        std::fs::write(open.join("report-bbbb.md"), ticket("bug", "[]")).unwrap();
+        std::fs::write(open.join("feat-cccc.md"), ticket("feature", "[br-cccc]")).unwrap();
+        git(p.path(), &["add", "."]);
+        git(p.path(), &["commit", "-q", "-m", "more"]);
+        let ctx = Ctx {
+            repo: p.path(),
+            dry_run: false,
+        };
+        let r = bug_tickets_that_are_fixes(&ctx).unwrap();
+        assert_eq!(
+            r.files,
+            vec!["docs/tickets/open/worked-aaaa.md".to_string()]
+        );
+        let got = std::fs::read_to_string(open.join("worked-aaaa.md")).unwrap();
+        assert!(got.contains("\nkind: fix\n"), "{got}");
+        git(p.path(), &["commit", "-qam", "migrated"]);
+        assert!(bug_tickets_that_are_fixes(&ctx).unwrap().files.is_empty());
     }
 
     #[test]

@@ -50,8 +50,8 @@ design moves on; the design docs cite them.
 `workflow-instructions/ticket-conventions.md`:
 
 - One file each, `<descriptive-tail>-<id>.md`, with a 4-character ID that
-  never changes. Create them with `bridle ticket new "<title>" --kind <kind>` (files no task;
-  once the ticket with its ask is committed on `main`, `bridle ticket task <id>` files it), or by hand with a fresh ID unique
+  never changes. Create them with `bridle ticket new "<title>" --kind <kind>` (also files the ticket's row, `pending`;
+  once the ticket with its ask is committed on `main`, `bridle ticket ready <id>` readies it), or by hand with a fresh ID unique
   across the repo.
 - `bridle ticket set <id> <field> <value>` edits the frontmatter and `bridle ticket check`
   verifies frontmatter, IDs, `blocked_by`/`related` and links; shipped to every project as the `tickets`
@@ -62,7 +62,7 @@ design moves on; the design docs cite them.
   caller's identity by `ticket new`; older tickets have none and `ticket check` accepts that), `repos`, `changes`, `specs`, `blocked_by`, `related`, `parent` (optional: one ticket id, bare or `<prefix>-<id>`; the epic this belongs to), `theme` (optional: a slug of lowercase letters, digits and hyphens, e.g. `human-ui`; any well-formed slug, no registry yet), `tasks` (every task made from the
   ticket; the task's `ticket` field is `<id>`, so the link is two-way and `ticket check`
   flags one side only). Tickets and tasks share one id alphabet and space: a ticket's first task
-  takes its id (`br-<id>`), and whoever runs `ticket task` is the task's creator and so its watcher, told when it lands; `bridle ticket new --from-task <task-id>` goes the other way, making
+  takes its id (`br-<id>`), and whoever runs `ticket new` is the row's creator and so its watcher, told when it lands; `bridle ticket new --from-task <task-id>` goes the other way, making
   a ticket from a task with the task's id (a fresh, linked id when an old hex task id has `0` or `1`).
   Tickets hold design decisions (the why and the what), tasks the work and its status; a build that
   comes out of a discussion ticket gets its own feature ticket, linked, and its task is made from that. A missing `kind`/`tasks` is a warning until the backfill migration. `blocked_by:` orders them. Readers still accept the old names (`needs`, `see`, `opened`, `filed_by`, `closed`; the new name wins and `ticket check` warns on both); writers use only the new ones, and the manual migration `0002-standard-ticket-fields` renames existing tickets and qualifies their ids (syqn; [[docs/design/migrations]]).

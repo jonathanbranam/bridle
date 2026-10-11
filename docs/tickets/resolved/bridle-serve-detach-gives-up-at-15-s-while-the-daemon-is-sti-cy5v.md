@@ -1,7 +1,7 @@
 ---
 id: br-cy5v
 title: bridle serve --detach gives up at 15 s while the daemon is still starting
-kind: bug
+kind: fix
 created: 2026-10-03
 repos: [bridle]
 changes: []

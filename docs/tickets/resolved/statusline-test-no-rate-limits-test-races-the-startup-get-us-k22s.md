@@ -1,7 +1,7 @@
 ---
 id: br-k22s
 title: "statusline_test: no-rate-limits test races the startup get_usage poll (red main, macOS)"
-kind: bug
+kind: fix
 created: 2026-10-04
 repos: [bridle]
 changes: []

@@ -1,7 +1,7 @@
 ---
 id: br-srj5
 title: "Mail attachments: UTF-8 text saved garbled as Latin-1 (em dash becomes 'â€”')"
-kind: bug
+kind: fix
 created: 2026-10-08
 created_by: external:aide
 repos: [bridle]

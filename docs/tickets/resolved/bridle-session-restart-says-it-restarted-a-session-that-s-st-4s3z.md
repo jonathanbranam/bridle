@@ -1,7 +1,7 @@
 ---
 id: br-4s3z
 title: bridle session restart says it restarted a session that's still running, and types the relaunch into it
-kind: bug
+kind: fix
 created: 2026-10-05
 repos: [bridle]
 changes: []

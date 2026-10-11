@@ -1,7 +1,7 @@
 ---
 id: br-ppa6
 title: "Gateway inherits BRIDLE_AS / BRIDLE_PROJECT from the shell that starts it: started from the orchestrator's session it calls every daemon as the orchestrator, and the web UI shows every project unreachable"
-kind: bug
+kind: fix
 created: 2026-10-08
 created_by: external:orchestrator
 repos: [bridle]

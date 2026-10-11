@@ -1,7 +1,7 @@
 ---
 id: br-b795
 title: The base timestamp hook stamps every agent's prompts; the human wanted it only for the notes advisor
-kind: bug
+kind: fix
 created: 2026-10-04
 repos: [bridle]
 changes: []

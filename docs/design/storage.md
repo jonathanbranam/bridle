@@ -79,7 +79,7 @@ deliberately narrow: it's the fast index (id, title, kind, state,
 timestamps), not the record itself. `id` is `<project prefix>-<4
 characters>` (e.g. `tw-k7tm`) from the ticket alphabet (`abcdefghjkmnpqrstuvwxyz23456789`; tasks
 made before 2026-10-03 have hex ids, unchanged), generated with a collision retry. A task whose body
-has a `ticket` (the ticket it was made from, `ticket new`/`ticket task`) takes `<prefix>-<ticket>` if no task has it yet, so
+has a `ticket` (the ticket it was made from, `ticket new`, which files the row for every ticket) takes `<prefix>-<ticket>` if no task has it yet, so
 a ticket's first task shares its id; later ones get a fresh id. The prefix
 is `[tasks] prefix` in config, defaulting to the project name's first two
 alphanumeric characters (`bridle` -> `br`) if unset

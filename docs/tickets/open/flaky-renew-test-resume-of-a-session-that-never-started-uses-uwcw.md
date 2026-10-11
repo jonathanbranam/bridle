@@ -1,7 +1,7 @@
 ---
 id: uwcw
 title: "Flaky renew_test: resume_of_a_session_that_never_started_uses_a_fresh_session (macOS)"
-kind: bug
+kind: fix
 created: 2026-10-11
 created_by: external:orchestrator
 repos: [bridle]

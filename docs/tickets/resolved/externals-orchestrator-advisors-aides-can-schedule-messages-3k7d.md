@@ -1,7 +1,7 @@
 ---
 id: br-3k7d
 title: Externals (orchestrator, advisors, aides) can schedule messages for themselves
-kind: bug
+kind: fix
 created: 2026-10-11
 created_by: external:advisor/product-manager
 repos: [bridle]
