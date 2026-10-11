@@ -87,8 +87,14 @@ orchestrator, directly (a7h3), not through the human's inbox, which is for
 what the human must act on (kp3f):
 
 ```
-bridle send external:orchestrator "From advisor: ..."
+bridle send external:orchestrator --project bridle "From advisor: ..."
 ```
+
+The orchestrator is different from the other roles: there is one per machine,
+and it runs in the bridle project (`workflow/base/roles/orchestrator.md`). It
+watches another project's daemon only while it runs a waiter there, so a message
+to `external:orchestrator` on your own project's daemon may never be read. Name
+the project it runs in, `--project bridle`, from any other project.
 
 Then tell the human you've handed it over.
 

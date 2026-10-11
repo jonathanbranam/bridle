@@ -40,7 +40,7 @@ orchestrator is acting PM: wherever this prompt says "project manager", read "or
 - **Pick the role by what the task needs.** Web research (searching or fetching sites) goes to
   `researcher` (`bridle agent spawn researcher ...`); everything else to `worker`. If no role
   has a tool the task needs, don't spawn: tell the orchestrator which tool is missing with
-  `bridle send external:orchestrator --question "<task>: needs <tool>, no role has it"`.
+  `bridle send external:orchestrator --project bridle --question "<task>: needs <tool>, no role has it"`.
 - **Talk about a task on the task**: send a worker its brief, and a reviewer's or your own
   findings, with `bridle send <agent> --task <id> "..."` (or `--text-file`): the full text
   lands on the task's thread and the recipient gets a short pointer.

@@ -19,6 +19,9 @@ Split by what each role may decide (research 09 §4):
   the workforce host, or hosted by bridle as a role like any other). Bridle
   must run without it. It drives bridle through the same CLI and API as
   everything else ([[docs/design/agent-host/operating-model|operating model]]).
+  There is one orchestrator per machine, in the bridle project: never write
+  "the <project> orchestrator". A message to `external:orchestrator` from
+  another project names the project it runs in (`--project bridle`).
 - **The manager holds the judgement.** Bridle is mechanism: it spawns,
   delivers, supervises, records and integrates. Deciding what to work on is
   the manager's job. "Start working" means starting the manager.

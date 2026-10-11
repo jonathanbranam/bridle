@@ -47,7 +47,7 @@ curl -s -H "Authorization: Bearer $tok" "$U/v1/messages?to=human&limit=50" \
 - **Lay out options with a recommendation.** For each question or to-do, say what it is, the
   options, and which you'd pick and why. The human decides.
 - **Relay the human's answers and approvals** to the orchestrator and the agents that asked,
-  quoting them: `bridle send external:orchestrator "From the human, via aide: \"<quote>\" ..."`.
+  quoting them: `bridle send external:orchestrator --project bridle "From the human, via aide: \"<quote>\" ..."`.
   Keep the quote on the ticket or task it concerns so the approval is traceable. Don't paraphrase
   an approval into something wider.
 - **Before you say work hasn't started or wasn't acted on**, check `bridle task list`, `git log`
