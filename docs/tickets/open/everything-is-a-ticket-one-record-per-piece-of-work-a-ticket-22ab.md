@@ -423,7 +423,7 @@ gateway; all resolved). Step 9 is split in three: br-95t9 slice 1 landed (storag
 for one release); br-92za (wire types) is being built; br-res3 (identifier sweep) is planned
 behind it. Steps 8 (bridle-ui) and 10 (drop the `task` alias, one release after 9) are not filed.
 
-Gaps found 2026-10-11 ~9:40 AM ET (the human: "Feels like a miss on our part when planning"):
+Gaps found 2026-10-11 ~9:30 AM ET (the human: "Feels like a miss on our part when planning"):
 - Human to-dos were never in the plan. The human: "yes, for human todos, they become full,
   normal tickets like all others". Filed as step 7b,
   [[human-to-dos-are-normal-tickets-ticket-new-for-human-to-do-c-cy4q|cy4q]], after br-res3.
@@ -433,6 +433,11 @@ Gaps found 2026-10-11 ~9:40 AM ET (the human: "Feels like a miss on our part whe
   The gateway and wire keep the old names for one release only, so step 8 must land before
   step 10. Filed in bridle-ui by its aide.
 - Step 10 waits on 7b and 8.
+
+Update 2026-10-11 ~9:40 AM ET: step 9 is done. br-92za (wire) and br-res3 (no Rust type is
+called Task) landed and are resolved. Step 8 is filed in bridle-ui as ui-utp5 (readied; its
+to-do views a last slice after br-cy4q). Next in bridle: br-e7e2 (backfill), br-cy4q (step 7b),
+br-ft3b; then step 10 once 7b and 8 have landed, one release after 9.
 
 **Risks.** The rename changes what every agent types daily; the hidden `task` alias (step 7)
 keeps old habits working until step 10. The PdM's own roadmap generator reads `bridle task list`
