@@ -2229,3 +2229,9 @@ from = "br-53gy"
 to = "br-kt25"
 kind = "related"
 created_at = "2026-10-11T22:41:22.107Z"
+
+[[edge]]
+from = "br-53gy"
+to = "br-r2nr"
+kind = "related"
+created_at = "2026-10-11T22:42:52.284Z"
