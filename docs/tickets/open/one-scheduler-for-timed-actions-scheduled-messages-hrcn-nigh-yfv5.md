@@ -140,6 +140,8 @@ need reminders; the notes aide is the first user) gets 403 "only agents and the 
 **Recommend B**, as its own small ticket (it does not depend on the action column). Peers, visitors
 and system stay refused.
 
+**Point 4 decided (the human, 2026-10-11 ~12:30 AM ET): B.** "those internal agents barely need it; the purpose of this is specifically for the extern agent. Yes, create a ticket and fix that and get it done tonight." Ticket [[externals-orchestrator-advisors-aides-can-schedule-messages-3k7d|3k7d]].
+
 ### Recommendation in one list
 
 1. cbbn is the `restart` action on the schedules table, not a separate config (B).
