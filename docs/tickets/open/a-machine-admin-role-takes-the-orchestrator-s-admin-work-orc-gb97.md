@@ -8,9 +8,9 @@ repos: [bridle]
 changes: []
 specs: []
 blocked_by: []
-related: [br-kuw2, br-ma8e, br-j2vq]
-parent: br-3827
-theme: security
+related: [br-kuw2, br-ma8e, br-j2vq, br-3827]
+parent: br-j6d3
+theme: agents-and-cli
 ---
 
 ## The ask

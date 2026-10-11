@@ -205,3 +205,17 @@ same unpack code the daemon uses.
    pin bump before each tag? (It is what "tied to the bridle version" implies.)
 4. Should the dev machine stay on its clone and `install-ui` (recommended), with the daemon not
    touching `~/.bridle/ui/` unless `self_upgrade = "release"`?
+
+### The human's answers (2026-10-11, via aide; recorded by advisor product-manager)
+
+- Q2: A1, bundled. ~1:35 PM ET: "A1 is good, but yes my only concern is slowing down and already
+  slow build process; but it should be ok. it happens in CI though? that would be good." Yes: the
+  UI build runs in the release workflow in CI, not in local builds or `just check`.
+- Q3 and Q4, ~5:02 PM ET: "Q3 yes / Q4 yes". The UI reaches release machines with each bridle
+  release (bumping the pinned UI version is part of cutting a release); the dev machine keeps its
+  clone and `install-ui`, and the daemon touches `~/.bridle/ui/` only with `self_upgrade = "release"`.
+- Q1 (private repo, a read-only secret for release.yml) is not answered. The build checks whether
+  bridle-ui is private; if it is, it asks the human (`ticket ask`) to add the secret, and does not
+  add one itself.
+- Readied, the human, 2026-10-11 ~6:35 PM ET: "I tried to answer those. That is important work for
+  three machine set up."

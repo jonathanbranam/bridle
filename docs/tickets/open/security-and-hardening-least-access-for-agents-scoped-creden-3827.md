@@ -35,7 +35,7 @@ agent that made it. Theme `security` (new): access, credentials, permissions, pr
 
 - Agents' SSH access is limited (new).
 - GitHub access by fine-grained PAT (new).
-- A machine admin role (new); related: kuw2 (machine daemon), ma8e, the epic one orchestrator per machine, j2vq.
+- A machine admin role: gb97, moved to its own epic j6d3 (the human, 2026-10-11: "an admin role in a following epic"); related here.
 - Identifying agents that make changes: 2bzw (how strong provenance should be), xccp (a git identity per machine).
 
 Priority: low; it comes after many other epics (the human, 2026-10-11 ~1:25 PM ET: "security is low priority, comes after many other epics"). Future work. Each child needs a design pass
