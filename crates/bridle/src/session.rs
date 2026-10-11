@@ -584,6 +584,20 @@ async fn restart(
     restart_session(cli, identifier, fresh, reason).await
 }
 
+/// The handover request: why (a scheduled restart's reason sentence), then the instructions for
+/// the session's role (`bridle_daemon::handover`: standard text, role part, project override).
+fn handover_request(repo: &std::path::Path, identity: &str, reason: Option<&str>) -> String {
+    format!(
+        "{}\n\n{}\n\nSay nothing more once it is written; the restart follows when the note is \
+         recorded.",
+        reason.unwrap_or("The human is restarting this session."),
+        bridle_daemon::handover::instructions_for_repo(
+            repo,
+            bridle_daemon::handover::role_of(identity)
+        )
+    )
+}
+
 /// Set on the detached restart a session starts for itself after writing its handover note.
 const OWN_RESTART_ENV: &str = "BRIDLE_RESTART_OWN";
 
@@ -630,12 +644,8 @@ async fn restart_session(
         };
         let before = newest().await?;
         let to = format!("external:{}", info.identity);
-        let body = format!(
-            "{} Write a handover note (what you were doing, open threads, what the next session \
-             needs) with `bridle handover write --file -` and say nothing more; the restart \
-             follows when the note is recorded.",
-            reason.unwrap_or("The human is restarting this session.")
-        );
+        let repo = std::env::current_dir().map_err(anyhow::Error::from)?;
+        let body = handover_request(&repo, &info.identity, reason);
         client
             .send(&bridle_api::SendRequest {
                 to: Some(to),
@@ -843,6 +853,23 @@ fn process_start(pid: i32) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn handover_request_keeps_the_reason_and_uses_the_resolver() {
+        let d = tempfile::tempdir().expect("tempdir");
+        std::fs::create_dir_all(d.path().join(".bridle/handover")).expect("dir");
+        std::fs::write(d.path().join(".bridle/handover/advisor.md"), "MY TEXT").expect("w");
+        let why = "The human has configured your session to hand over at 3:00 AM every day.";
+        let advisor = handover_request(d.path(), "advisor/notes", Some(why));
+        assert!(
+            advisor.starts_with(why) && advisor.contains("MY TEXT"),
+            "{advisor}"
+        );
+        let aide = handover_request(d.path(), "aide", None);
+        assert!(
+            aide.starts_with("The human is restarting") && aide.contains("cannot be summarised")
+        );
+    }
 
     #[test]
     fn relaunch_names_the_advisor_and_project() {

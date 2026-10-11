@@ -1,0 +1,1 @@
+As an advisor, also state: the open questions you and the human were working through and where each stands, what you promised to look up or report back on, and anything the human said they wanted to think about. State the time and day you will next wake (tomorrow's wake-up) and why, and the state of the day's plan.

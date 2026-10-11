@@ -28,6 +28,7 @@ pub mod doc_watch;
 mod events;
 pub mod focus;
 pub mod governor;
+pub mod handover;
 pub mod impact;
 mod integrator;
 pub mod load;

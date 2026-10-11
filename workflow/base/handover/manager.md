@@ -1,0 +1,1 @@
+As a manager, also state: the tickets you are managing and the state of each, which workers are running and what they were told, what is merged and what is waiting for review, and what you will check next.

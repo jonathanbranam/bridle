@@ -329,6 +329,17 @@ file. The deadline is in memory: a daemon restart forgets it (section 8).
 
 ## 7. The handover note as a record
 
+**What the request says (ft3b).** The text asking a session for its note is workflow content, not
+daemon code. `workflow/base/handover/standard.md` is the standard text (including a call-out of
+what a note cannot carry: what is in the session's context); `workflow/base/handover/<role>.md`
+(advisor, aide, orchestrator, manager, worker, project-manager) is appended for that role; a
+project's `.bridle/handover/<role>.md` replaces both for that role (`bridle-daemon::handover`).
+Every path uses it: `bridle session restart --handover` (so the hard limit, the nightly
+`[[restart]]` with its reason sentence in front, and the human's restart) and the agent
+`Context handoff:` note. The role is the identity before any `/`. The project's files are read
+from the CLI's cwd (a session's restart runs in the project's repo); with no workflow root the
+built-in standard text is used. Rejected: a second override scheme in config (files are enough).
+
 Today `docs/context/orchestrator-state.md` is a file the orchestrator commits and pushes, which
 fails whenever pushing does. Most of it restates what bridle already holds (`agents`, the queue,
 tasks, CI), and that is printed live by `bridle prime orchestrator`. What is left is a note.

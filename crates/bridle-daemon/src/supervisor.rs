@@ -710,10 +710,13 @@ impl AgentManager {
             let body = format!(
                 "Context handoff: your context is at {tokens} tokens, past this role's \
                  {threshold:.0}-token wind-down threshold. Commit your work in progress \
-                 to your branch, then write your handover note with \
-                 `bridle handover write --file -` (where you are, what's next, the task \
-                 you're on); your replacement is given it. You'll be renewed with a fresh context once this turn \
-                 ends (or in {grace_secs}s regardless).",
+                 to your branch, then hand over; your replacement is given the note. You'll be \
+                 renewed with a fresh context once this turn ends (or in {grace_secs}s \
+                 regardless).\n\n{instructions}",
+                instructions = crate::handover::instructions_for_repo(
+                    &self.0.workspace.repo,
+                    crate::handover::role_of(&a.role)
+                ),
                 grace_secs = self.0.config.context.wind_down_grace.as_secs(),
             );
             let _ = self

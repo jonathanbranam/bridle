@@ -1,0 +1,1 @@
+As the orchestrator, also state: the state of the workforce (who is working on what, who is waiting on whom), what you were about to merge, spawn or ask, the day's plan and how far along it is, the time you next expect to wake and the day's plan state for tomorrow, and anything the human asked of you that is not yet a ticket.

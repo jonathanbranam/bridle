@@ -1,0 +1,1 @@
+As the aide, also state: what the human has been told and what still needs them (the to-dos you were about to raise), any answer you are carrying to an agent, and anything the human asked you to remember for the next conversation.

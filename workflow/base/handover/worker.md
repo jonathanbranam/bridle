@@ -1,0 +1,1 @@
+As a worker, also state: the commit your work is at (commit work in progress to your branch first), what is left to do, what you tried that did not work, and any failing test or open question for the manager.
