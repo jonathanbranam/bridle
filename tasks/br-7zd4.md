@@ -2,9 +2,9 @@
 id = "br-7zd4"
 title = "Remove the stale 'Until bridle workflow sync renders rules' lines from workflow/base/rules (98xt)"
 kind = "chore"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-09T23:27:48.286Z"
-updated_at = "2026-10-11T03:43:46.927339Z"
+updated_at = "2026-10-11T04:13:31.220048Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -12,6 +12,8 @@ watchers = [
 ]
 priority = "low"
 priority_at = "2026-10-09T23:27:48.287084Z"
+branch = "bridle/w7zd4"
+commit = "516da0412787487d74a2118f84fe0e02d2034e07"
 summary = "Removed the stale 'Until bridle workflow sync renders rules...' paragraph and the 'Agents read the rule files themselves...' paragraph from 14 workflow/base/rules files (the brief said about 13); the rest of each rule is unchanged. Worker role intro drops the 'see CLAUDE.md bridle block' sentence (no such block). The no-kill-by-name wake heading no longer says 'not built yet': supersede (exit 5) and 'wake --stop' are in the code. Vendored copies: .bridle/roles/advisor.md and .bridle/roles/orchestrator.md are tracked in this repo; left unedited per the brief (base is the source). Prime recommendations 2 and 3 untouched."
 parent = "br-0473"
 +++
@@ -41,3 +43,6 @@ land failed: main moved. Merge main into your branch, re-run just check once, me
 
 ### note · agent:w7zd4 · 2026-10-11T03:43:46.927Z
 done: main merged again (7fb9df31 into branch); just check exit 0, 1487 tests run, 1487 passed, 5 skipped; b0891647
+
+### note · agent:manager-2 · 2026-10-11T04:13:31.220Z
+integrated: 516da0412787487d74a2118f84fe0e02d2034e07 (branch bridle/w7zd4)
