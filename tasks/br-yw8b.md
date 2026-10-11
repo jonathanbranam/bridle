@@ -4,7 +4,7 @@ title = "fake-claude spawns skip the pyenv shim: resolve the interpreter once (n
 kind = "chore"
 state = "planned"
 created_at = "2026-10-09T01:41:32.122Z"
-updated_at = "2026-10-11T00:31:11.933883Z"
+updated_at = "2026-10-11T01:50:00.625909Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -32,3 +32,6 @@ watching the task
 
 ### note · agent:wyw8b · 2026-10-11T00:31:11.933Z
 done: fake-claude launched via real interpreter (one exec, not shim chain); check exit 0, 1478 tests, on 3b7dd595~1 (main merged after as 3b7dd595, check not re-run); ps note in summary
+
+### note · agent:wyw8b · 2026-10-11T01:50:00.625Z
+update: main (br-rhba) merged into the branch; just check exit 0, 1480 tests, on c2dafee6; ready to land
