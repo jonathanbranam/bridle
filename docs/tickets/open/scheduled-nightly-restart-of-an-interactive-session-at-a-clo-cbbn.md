@@ -75,8 +75,8 @@ table). What that means for the build (advisor product-manager's reading; the hu
   > has configured your session to handover at 4am every day; it is time to handover right the
   > note..."
 
-  So: a small timer in the daemon that reads the `[[nightly_restart]]` entries and fires at each
-  `at_time`; then the normal handover and restart. The handover request the session gets names the
+  So: a small timer in the daemon that reads the `[[restart]]` entries and fires at each
+  `at` on its `days`; then the normal handover and restart. The handover request the session gets names the
   reason and the configured time, for example: "The human has configured your session to hand over
   at 4:00 AM every day; it is time to hand over. Write the handover note with `bridle handover
   write --file -` and say nothing more; the restart follows when the note is recorded." (The time
