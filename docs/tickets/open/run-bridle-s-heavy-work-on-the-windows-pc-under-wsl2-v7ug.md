@@ -160,3 +160,10 @@ From the human's session with advisor wsl2, 2026-10-10 (times US Eastern).
   `docs/context/name-ideas.md`). Tailscale runs inside WSL2, so `remus` is the name bridle and
   dalek use. Next: set both names (`/etc/wsl.conf` `[network] hostname = remus`, then
   `Rename-Computer romulus` and one Windows restart), then Tailscale.
+- Rename done and rebooted (2026-10-11): `[network] hostname = remus` appended to `/etc/wsl.conf`,
+  `Rename-Computer -NewName romulus`, `Restart-Computer`.
+- Editor for the PC (the human: "add to doc"): Sublime Text 4 (`winget install
+  SublimeHQ.SublimeText.4`) for opening files quickly, WSL files included via
+  `\\wsl$\Ubuntu\home\jbranam\...`; Obsidian for markdown; optionally VS Code with its WSL
+  extension (`code .` from Ubuntu). The guide should say so beside the Notepad note. Not installed
+  yet ("will do later").
