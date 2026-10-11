@@ -3,7 +3,7 @@ id: docs-current
 severity: should
 roles: [worker]
 ---
-Keep docs in step with behaviour changes. When you finish a task, check the
+Keep docs in step with behaviour changes. When you finish a ticket, check the
 docs that describe the changed behaviour and update them, or note in your done
 report that none needed it.
 
@@ -16,5 +16,5 @@ For this project, the docs to check are:
 Include doc edits in the commit for your change, so they travel together.
 
 Why: the human's words: "documentation needs to be kept up to date. That's a
-task that a worker should do ... when they are done with a change, verifying
+ticket that a worker should do ... when they are done with a change, verifying
 the documentation or making any updates as needed."

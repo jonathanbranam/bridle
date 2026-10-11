@@ -15,7 +15,7 @@ An agent that already read a notice can't be made to unread it (stdin can't be u
 ## 1. The task kind
 
 A task created with `bridle task new "<title>" -k incident --body ...` (`TaskKind` gains
-`incident`). Everything else about a task applies: id, body, thread, `bridle task
+`incident`). Everything else about a task applies: id, body, thread, `bridle ticket
 show|edit|list|search`, the state branch copy, `--json`.
 
 **States reuse the existing ones** (no new `TaskState`):
@@ -23,9 +23,9 @@ show|edit|list|search`, the state branch copy, `--json`.
 | Incident | Task state | How |
 |---|---|---|
 | potential | `open` | anyone files it: `bridle task new -k incident` |
-| active | `planned` | the orchestrator promotes it: `bridle task plan <id>` |
-| resolved | `integrated` | the orchestrator closes it: `bridle task done <id>`; `--commit` isn't required for this kind (there's no commit), a `--resolution` line goes in the thread instead |
-| rejected | `dropped` | the orchestrator drops a potential one: `bridle task drop <id> --reason` |
+| active | `planned` | the orchestrator promotes it: `bridle ticket plan <id>` |
+| resolved | `integrated` | the orchestrator closes it: `bridle ticket done <id>`; `--commit` isn't required for this kind (there's no commit), a `--resolution` line goes in the thread instead |
+| rejected | `dropped` | the orchestrator drops a potential one: `bridle ticket drop <id> --reason` |
 | recurred | `reopened` | as for any task; the notice goes out again on the `planned` transition |
 
 `claimed` isn't used. Incidents are **kept out of `queue` and `ready`** (those are
@@ -35,8 +35,8 @@ for work to build, and an incident is nobody's to claim): the queue filters `kin
 - **Owner:** the orchestrator (`external:orchestrator`). The human may do anything the
   orchestrator may.
 - **Who may file** (create in `open`): any principal, agents included; workers file a
-  suspected incident this way. Before filing they search open incidents (`bridle task list
-  -k incident`, `bridle task search`) so the orchestrator isn't handed duplicates; a
+  suspected incident this way. Before filing they search open incidents (`bridle ticket list
+  -k incident`, `bridle ticket search`) so the orchestrator isn't handed duplicates; a
   duplicate is dropped with a reason pointing at the original.
 - **Who may promote, resolve, drop:** the orchestrator and the human only (403 otherwise, as for
   lifecycle endpoints, [[principals]]). Commenting is open to all.
@@ -79,7 +79,7 @@ acks apply unchanged. `when idle` because a notice mustn't interrupt a tool call
 - **Update** (`task edit` of the body of an active incident) rewrites the body of any notice
   still `pending` or `held` (the agent sees only the latest) and sends a fresh
   `Incident <id> updated: …` note to agents whose notice is already written or delivered. A
-  thread comment sends nothing: agents read the thread with `bridle task show`.
+  thread comment sends nothing: agents read the thread with `bridle ticket show`.
 - **Resolve or drop-while-active (`planned` → `integrated`, or `dropped`)**, per notice:
   - `pending` or `held` → `dropped` (event `message.dropped`, as `--drop-held` does). The agent
     never hears of it, and is never told late.
@@ -97,7 +97,7 @@ acks apply unchanged. `when idle` because a notice mustn't interrupt a tool call
 No `bridle incident` command group and no `/v1/incidents` endpoints: the task commands and
 routes cover it ([[docs/design/cli]], api.md).
 
-- **CLI:** `bridle task new -k incident`, `task plan|done|drop|edit|show|list|search` as
+- **CLI:** `bridle task new -k incident`, `ticket plan|done|drop|edit|show|list|search` as
   above. `task list` gains a `-k/--kind KIND` filter (used for "open incidents").
 - **`bridle status`** gets an `incidents` list of the active ones (id, title, age). Every
   principal reads it, external ones included; `--json` carries the same list.

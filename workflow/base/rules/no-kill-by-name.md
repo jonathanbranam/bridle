@@ -14,7 +14,7 @@ For processes you own:
 - `pkill -P $$` for your own immediate children
 
 If a stray process seems stuck and you didn't start it, leave it and report it
-on the task thread instead of trying to kill it.
+on the ticket thread instead of trying to kill it.
 
 Why: 2026-09-29, cause fx7x: workers running `pkill -f "just check"` killed the
 live orchestrator twice because `pkill -f` matches any process whose argv
@@ -23,7 +23,7 @@ contains the pattern. The orchestrator's launcher argv contained the pattern.
 Enforced by: `Bash(pkill *)` and `Bash(killall *)` in every role's deny list (and in
 the sessions' settings), and the `bridle kill-guard` PreToolUse hook, which
 refuses `pgrep ... | xargs kill`, `kill $(pgrep ...)` and `pkill` inside a compound command.
-Plain `kill <pid>` is allowed. To stop a background task, use `TaskStop`.
+Plain `kill <pid>` is allowed. To stop a background ticket, use `TaskStop`.
 
 Stopping a wait (`bridle agent wake`):
 

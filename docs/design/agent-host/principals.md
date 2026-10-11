@@ -204,7 +204,7 @@ token, like `task ready --project`; the outbox is for a project with no such tok
   human: ..."), on top of the sender's 30 min note. `bridle recipients` (`GET /v1/recipients`)
   lists what can be addressed here (human, agents, external principals, visitors) and the other
   daemons known from the registry and machine config.
-- **Watching a task of another project (br-qac3, 3haz Q3).** `bridle task watch|unwatch --project
+- **Watching a task of another project (br-qac3, 3haz Q3).** `bridle ticket watch|unwatch --project
   <p> <task>` (no direct token for `<p>` on this machine) goes to the caller's own daemon
   (`POST /v1/watch/remote`, not for visitors), which asks `<p>`'s daemon with its peer token
   (`POST /v1/watch` `{task, who, home, watch}`, peer token only) and answers with the task. The

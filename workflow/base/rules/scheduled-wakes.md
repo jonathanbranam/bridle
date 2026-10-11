@@ -6,7 +6,7 @@ roles: [project-manager, manager, worker, prototyper, designer]
 When you need to wake at a time (before a meeting, at 3 AM, in 20 minutes), schedule a message
 to yourself instead of looping short waits or sleeping.
 
-- **Wait at the maximum timeout.** A message or task change ends a wait at once, so a long wait
+- **Wait at the maximum timeout.** A message or ticket change ends a wait at once, so a long wait
   costs nothing. Short wait loops burn turns and tell you nothing on waking.
 - **Schedule the wake**: `bridle schedule add --at "YYYY-MM-DD HH:MM" --message "<why you are waking>"`
   for once (RFC 3339 also works), or `--cron "<m h dom mon dow>"` for a repeat. `--to` defaults to

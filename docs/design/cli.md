@@ -105,7 +105,7 @@ bridle inbox unread <id>...                 # mark one or more messages unread a
 bridle task ask     <task-id> TEXT [--to WHO]         question against a task; blocks it until answered, and sends a pointer message (kind question) to WHO (agent, role:NAME, external:NAME, human); default: the caller's spawner, or human
 bridle task answer  <task-id> TEXT                    answers a task's open question; frees it to be ready again; sends the asker a pointer (kind answer)
 bridle task claim   <task-id>                         claims a ready task for the caller: planned -> claimed
-bridle task release <task-id>                         releases the caller's own claim: claimed -> planned
+bridle ticket release <task-id>                         releases the caller's own claim: claimed -> planned
 bridle task ready   [--all] [--role R]                the highest queue tier with a startable task (planned, deps met, no open question, unclaimed)
 bridle task ready   <id>                                 pending -> open for a row with no ticket (`ticket submit`; a ticketed row is refused, use `ticket ready`): approve the task for the PM (orchestrator or an advisor with the human's approval; a manager for its own small fix inside approved work; not workers, the PM or visitors). The daemon messages the PM (else the orchestrator) that it is open, and returns it to `pending` with a note if nobody plans it within `[tasks] open_stale` (default 4h). `bridle status` lists pending tasks
 bridle queue                                     read-only: claimed tasks with their worker, then the tiers in rank order
@@ -407,11 +407,11 @@ bridle port list                                                allocated ports 
 bridle task conflict list                                            conflicts opened by `impact check`, open first (`--json`: array of `{id,tasks,kind,key,state,resolution,opened_at,resolved_at}`)
 bridle task conflict resolve <C12> --compatible <reason> | --order A,B | --merge-into <task>   record the outcome (exactly one flag); `--order` adds an `A blocks B` edge; A, B and the task must be the conflict's two tasks; a resolved conflict can't be resolved again
 bridle task impact show <task>                                         prints the declared impact (`--json`: the impact object)
-bridle task summary <id> --text TEXT | --file FILE                    records how it was implemented; `-` reads stdin; replaces an earlier summary
+bridle ticket summary <id> --text TEXT | --file FILE                    records how it was implemented; `-` reads stdin; replaces an earlier summary
 bridle task reopen <id>
 bridle task watch <id> · unwatch <id>                               add/remove yourself as a watcher (`task show` lists them; the creator and claimer are added automatically); with `--project <p>` for a task on another project's daemon it is registered there through your own daemon and the updates come back as messages
 bridle task skip-settle <id> --reason TEXT                            skip the settle period (recorded); human, or orchestrator/PM with a reason saying the human asked or an urgent downtime fix
-bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comment on the task's thread; tells the watchers and the claimant (not the author); no effect on readiness
+bridle ticket comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comment on the task's thread; tells the watchers and the claimant (not the author); no effect on readiness
 ```
 
 - **`--allow-tool TOOL`** on `spawn` (repeatable) grants a tool beyond the
@@ -462,7 +462,7 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   daemon to hand it to, the old direct send to `--project` applies. The own daemon's project is the
   cwd workspace's; a daemon found by `$BRIDLE_URL` is asked (`status`), and one that can't say counts as
   the same project, so an agent's own `$BRIDLE_URL` + `$BRIDLE_PROJECT` sends locally, `--task` too (x56y).
-  `--task <id>` (and `bridle task comment <id> --notify <agent>`, the same call) writes the text as a comment on the task's thread and sends the recipient `<id>: comment added` plus its first line; an unknown task is an error and nothing is sent.
+  `--task <id>` (and `bridle ticket comment <id> --notify <agent>`, the same call) writes the text as a comment on the task's thread and sends the recipient `<id>: comment added` plus its first line; an unknown task is an error and nothing is sent.
 
 - **`task new/edit/comment`**: when given `--body-file FILE` or `--text-file FILE`, pass `-`
   as the filename to read from stdin instead. This avoids passing backticks and
@@ -917,10 +917,10 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
   (`?claimed_by=me`) and blocks — printing the flat `{"decision":"block","reason":"..."}`
   spike 05 confirmed, not the `hookSpecificOutput` wrapper — on the first one with no
   thread entry (note, question or answer) from itself at or after `claimed_at`; naming
-  the task and telling the agent to `bridle task release` it or leave a `bridle task comment`
+  the task and telling the agent to `bridle ticket release` it or leave a `bridle ticket comment`
   first. It also blocks when the tree looks finished (clean, commits ahead of local `main`/`master`)
   and a claimed task has no summary or no thread entry from itself starting `done:`, telling
-  the agent to *run* `bridle task summary` and `bridle send ... done:` (workers were printing
+  the agent to *run* `bridle ticket summary` and `bridle send ... done:` (workers were printing
   them). Before that report check, a finished-looking tree also has to have passed the
   project's `commands.check_worker` (falling back to `check`) at the current HEAD: the hook
   runs it itself when `<git-dir>/bridle-check-passed` doesn't name HEAD, records HEAD there on

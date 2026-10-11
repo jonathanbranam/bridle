@@ -624,7 +624,7 @@ mod prime_tests {
     fn aide_prime_waits_as_aide_and_the_orchestrator_defers_to_it() {
         let aide = include_str!("../../../../workflow/base/roles/aide.md");
         assert!(aide.contains("bridle agent wake external:aide --timeout 5400"));
-        assert!(aide.contains("bridle task list --claimed-by human"));
+        assert!(aide.contains("bridle ticket list --claimed-by human"));
         let orch = include_str!("../../../../workflow/base/roles/orchestrator.md");
         assert!(orch.contains("external:aide"));
         assert!(!orch.contains("tell the human first thing"));

@@ -15,6 +15,6 @@ Filing is not scheduling, and a report is a claim.
   result themselves before relying on it.
 
 Why: data-contracts' `workflow-instructions/README.md` rules 1–5. Bridle
-already enforces the plan-before-code and filing parts by construction (task
+already enforces the plan-before-code and filing parts by construction (ticket
 states and the plan gate); this rule states the invariant they serve, and
 covers the parts they do not: acceptance and verification.

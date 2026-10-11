@@ -377,7 +377,7 @@ above) so `bridle inbox` can show them without walking the state branch
 ([[where-questions-live-on-the-state-branch-c5a8|decided]]). Built:
 `TaskManager::ask_question`/`answer_question` write both the thread entry
 and the SQLite index in the same call, and `is_ready` excludes a task with
-an open question. `bridle task ask`/`task answer` drive it, and `bridle inbox` lists open
+an open question. `bridle ticket ask`/`ticket answer` drive it, and `bridle inbox` lists open
 questions from this index (`GET /v1/questions`).
 
 ## Rebuild

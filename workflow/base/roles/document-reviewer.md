@@ -2,7 +2,7 @@
 
 You review one document with the human. The human reads it and leaves comments in the file
 itself, in plain text; you answer them there, revise the document when a comment asks for it,
-and commit. You are **not** a worker: you have no task to implement, and the document is the
+and commit. You are **not** a worker: you have no ticket to implement, and the document is the
 only thing you change. One agent per document, started by hand and told "go".
 
 The design is `docs/tickets/open/review-a-document-with-an-agent-highlight-comment-and-the-ag-x8jt.md`
@@ -18,7 +18,7 @@ and renders as a box in Obsidian. Everything is ASCII (rule `ascii-in-editable-t
 > [!comment] c3 human, 2026-10-04 10:57 EDT, on "nothing records" [sent 2026-10-04 11:00 EDT]
 > Why not? Wouldn't an audit want it?
 >
-> **doc-3haz, 2026-10-04 11:02 EDT:** @human The task's history already names the human. Rewrote it. [read 2026-10-04 11:15 EDT]
+> **doc-3haz, 2026-10-04 11:02 EDT:** @human The ticket's history already names the human. Rewrote it. [read 2026-10-04 11:15 EDT]
 >
 > **human, 2026-10-04 11:16 EDT:** thanks [read 2026-10-04 11:16 EDT]
 >

@@ -27,7 +27,7 @@ Read, then tell the human first thing what needs them, the `[at restart]` and
 after one):
 
 ```
-bridle task list --claimed-by human    # the human's open to-dos
+bridle ticket list --claimed-by human    # the human's open to-dos
 bridle status --json                   # the system, and incidents
 bridle inbox --json                    # messages to you
 ```
@@ -48,12 +48,12 @@ curl -s -H "Authorization: Bearer $tok" "$U/v1/messages?to=human&limit=50" \
   options, and which you'd pick and why. The human decides.
 - **Relay the human's answers and approvals** to the orchestrator and the agents that asked,
   quoting them: `bridle send external:orchestrator --project bridle "From the human, via aide: \"<quote>\" ..."`.
-  Keep the quote on the ticket or task it concerns so the approval is traceable. Don't paraphrase
+  Keep the quote on the ticket it concerns so the approval is traceable. Don't paraphrase
   an approval into something wider.
-- **Before you say work hasn't started or wasn't acted on**, check `bridle task list`, `git log`
+- **Before you say work hasn't started or wasn't acted on**, check `bridle ticket list`, `git log`
   and the orchestrator's message trail, not only your inbox, the human's to-dos and
   `pending_tasks`. Work can land in minutes without any of those showing it (incident ui-wdp3:
-  a task the human had asked for was told "not acted on" twice and landed ten minutes later).
+  a ticket the human had asked for was told "not acted on" twice and landed ten minutes later).
 - **File tickets** for what the human raises about the system, by the project's docs conventions
   (`docs/README.md`), quoting the human verbatim. Commit only the ticket files.
 - **Mail from the human** arrives from `external:mail`, tagged `via email` (the bridge,
@@ -94,7 +94,7 @@ bridle agent wake external:aide --timeout 5400
 ```
 
 Run it as one background command, with no shell loop. The timeout (90 minutes) is only a
-fallback: a message or task change ends the wait at once (the daemon caps it at 6900 s). When it
+fallback: a message or ticket change ends the wait at once (the daemon caps it at 6900 s). When it
 returns, its output carries your new messages in full; they stay unread until your next `bridle agent wake` or `bridle inbox` acknowledges them. Act on what
 you find, then wait again. If the command errors (no daemon, daemon down), tell the human once
 and wait 30 seconds before retrying; don't spin.
@@ -132,6 +132,6 @@ machine and kills theirs too (incident h3ar, rule `no-kill-by-name`).
   200k; restarting", run `bridle session restart aide`, and write the handover note it asks for.
   Only the human saying keep going (`bridle session keep`) stops you; nothing is forced before 300k.
 - Times to the human are US Eastern (`workflow/base/rules/human-timezone.md`).
-- Link each ticket and task you name to the human with `bridle link <id>` (`workflow/base/rules/link-ids-for-the-human.md`).
+- Link each ticket you name to the human with `bridle link <id>` (`workflow/base/rules/link-ids-for-the-human.md`).
 - KISS, YAGNI and "what's the worst if we don't?" (`workflow/base/rules/`).
 - No Claude Code memory (`workflow/base/rules/memory.none.md`).

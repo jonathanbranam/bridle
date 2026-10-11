@@ -8,7 +8,7 @@ answer is "not much", don't.
 
 - **Everything has a cost**: tokens, time, energy, water, oil, money. Not doing something
   saves all of it.
-- **Weigh the task, the step and the check alike**: a feature, a refactor, a
+- **Weigh the ticket, the step and the check alike**: a feature, a refactor, a
   test, a verification run or a report. Do it when not doing it costs more.
 
 Why: the human's words, 2026-09-28: "What is the worst thing that will happen

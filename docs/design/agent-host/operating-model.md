@@ -260,7 +260,7 @@ the clone:
    note to the orchestrator, sent again only when the counts change. `bridle daemon doctor`
    shows the same as "N ahead, M behind", and a failed fetch as a warning. Silent with no
    `origin` or no such branch there.
-5. `land` then does what `bridle task done <id> --commit <sha> --branch bridle/<agent>` does
+5. `land` then does what `bridle ticket done <id> --commit <sha> --branch bridle/<agent>` does
    (still available by hand): the daemon
    refuses unless `<sha>` is reachable from the integration branch, marks the task
    `integrated`, tells other workers `main moved`, then removes
