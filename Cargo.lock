@@ -684,6 +684,7 @@ dependencies = [
  "anyhow",
  "bridle-api",
  "bridle-daemon",
+ "bridle-docs",
  "bridle-gateway",
  "bridle-mail",
  "bridle-spec",

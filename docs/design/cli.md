@@ -177,7 +177,7 @@ bridle review add|remove|list <path>          documents under review (x8jt): edi
 bridle review resolve <path> c3               closes a comment thread: appends `resolved by human, <time>` to it in the file (ticket ehv6)
 bridle review now <path> [--resend]           sends the document's pending comment threads to its agent at once, skipping the quiet period;
                                              marks them `[sent YYYY-MM-DD HH:MM EDT]` in the file; marked threads stay out unless --resend
-bridle link <ID>                                                local, no daemon: the bridle UI URL for a ticket ID (`<base>/ticket?project=<p>&id=<id>`) or a task ID with a `-` (`<base>/task?id=<id>`), from `[gateway] public_url` (project config over machine config); prints nothing and exits 0 when unset (yfjc)
+bridle link <ID|PATH>                                           local, no daemon: the bridle UI URL from `[gateway] public_url` (project config over machine config), needing the project: a ticket ID `br-xxxx` or bare `xxxx` gives `<base>/p/<project>/tickets/<id>`; a repo-relative document path gives `<base>/p/<project>/docs?path=<path>`; a requirement or scenario ID (`r-xxxx`, `s-xxxx`) gives `<base>/p/<project>/specs?path=<file>#<id>`; prints nothing and exits 0 when unset (yfjc, zqnp)
 bridle focus gate                           the UserPromptSubmit hook of focus hours (cvaq): in a `quiet` `[[focus]]` period prints
                                              nudge context on the first prompt and every 5 min after; silent otherwise; never fails
 bridle orchestrator handover ...                       alias of `bridle handover ...`; `handover done` is a deprecated hidden alias (prints a note; the marker only)

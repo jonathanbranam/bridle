@@ -1,25 +1,56 @@
-//! `bridle link <id>`: the bridle UI URL for a ticket or task ID (ticket yfjc), so agents
-//! talking to the human don't build URLs by hand. Ticket IDs carry the `br-` prefix style
-//! (`<prefix>-<tail>`); ticket IDs are bare. Prints nothing and exits 0 with no base URL.
+//! `bridle link <id|path>`: the bridle UI URL for a ticket, a document or a spec (tickets yfjc,
+//! zqnp), so agents talking to the human don't build URLs by hand. The formats are the "Final
+//! formats" table of bridle-ui's `docs/design/url-scheme.md`. Prints nothing and exits 0 with
+//! no base URL.
 
 use bridle_api::discovery::bridle_home;
 use bridle_daemon::config::ui_base_url;
+use bridle_docs::specs;
 
 use crate::cli::{Cli, LinkArgs};
 use crate::error::CliError;
 use crate::project;
 
-/// The URL for `id` under `base`; a ticket link needs the project.
+/// Percent-encode everything but unreserved characters; `keep_slash` leaves `/` for a path value.
+fn encode(s: &str, keep_slash: bool) -> String {
+    let mut out = String::new();
+    for b in s.bytes() {
+        if b.is_ascii_alphanumeric() || b"-._~".contains(&b) || (keep_slash && b == b'/') {
+            out.push(b as char);
+        } else {
+            out.push_str(&format!("%{b:02X}"));
+        }
+    }
+    out
+}
+
+/// The URL for `target` under `base`. A spec ID needs `spec_path` to find the file it lives in.
 fn url(
     base: &str,
-    id: &str,
+    target: &str,
     project: impl FnOnce() -> Result<String, CliError>,
+    spec_path: impl FnOnce(&str) -> Option<String>,
 ) -> Result<String, CliError> {
-    if id.contains('-') {
-        Ok(format!("{base}/task?id={id}"))
-    } else {
-        Ok(format!("{base}/ticket?project={}&id={id}", project()?))
+    let p = encode(&project()?, false);
+    if specs::is_spec_id(target) {
+        let path = spec_path(target).ok_or_else(|| {
+            anyhow::anyhow!("no spec file has the requirement or scenario {target}")
+        })?;
+        let (file, id) = path.split_once('#').unwrap_or((&path, ""));
+        let anchor = if id.is_empty() {
+            String::new()
+        } else {
+            format!("#{id}")
+        };
+        return Ok(format!(
+            "{base}/p/{p}/specs?path={}{anchor}",
+            encode(file, true)
+        ));
     }
+    if target.contains('/') || target.ends_with(".md") {
+        return Ok(format!("{base}/p/{p}/docs?path={}", encode(target, true)));
+    }
+    Ok(format!("{base}/p/{p}/tickets/{}", encode(target, false)))
 }
 
 pub fn run(cli: &Cli, args: &LinkArgs) -> Result<(), CliError> {
@@ -28,6 +59,13 @@ pub fn run(cli: &Cli, args: &LinkArgs) -> Result<(), CliError> {
     else {
         return Ok(());
     };
-    println!("{}", url(&base, &args.id, || project::resolve(cli))?);
+    let spec_path = |id: &str| {
+        let loaded = specs::load(repo.as_deref()?);
+        specs::path_for(&loaded, id)
+    };
+    println!(
+        "{}",
+        url(&base, &args.id, || project::resolve(cli), spec_path)?
+    );
     Ok(())
 }

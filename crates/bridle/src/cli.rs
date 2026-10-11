@@ -218,7 +218,7 @@ pub enum Command {
     KillGuard,
     /// The orchestrator's supervision hooks (docs/design/agent-host/orchestrator-supervision.md).
     Orchestrator(OrchestratorArgs),
-    /// Print the bridle UI link for a ticket ID or a task ID (`br-...`); nothing when no
+    /// Print the bridle UI link for a ticket ID, a document path or a spec ID; nothing when no
     /// `[gateway] public_url` is configured.
     Link(LinkArgs),
     /// Focus hours (ticket cvaq): the human's `[[focus]]` periods in `~/.bridle/config.toml`.
@@ -996,7 +996,8 @@ pub struct InitArgs {
 
 #[derive(Debug, Args)]
 pub struct LinkArgs {
-    /// A ticket ID (`yfjc`) or a task ID (`br-yfjc`).
+    /// A ticket ID (`br-yfjc`, or bare `yfjc`), a repo-relative document path
+    /// (`docs/design/cli.md`) or a requirement or scenario ID (`r-1a2b`, `s-1a2b`).
     pub id: String,
 }
 

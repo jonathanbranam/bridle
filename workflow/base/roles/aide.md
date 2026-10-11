@@ -135,6 +135,6 @@ machine and kills theirs too (incident h3ar, rule `no-kill-by-name`).
   200k; restarting", run `bridle session restart aide`, and write the handover note it asks for.
   Only the human saying keep going (`bridle session keep`) stops you; nothing is forced before 300k.
 - Times to the human are US Eastern (`workflow/base/rules/human-timezone.md`).
-- Link each ticket you name to the human with `bridle link <id>` (`workflow/base/rules/link-ids-for-the-human.md`).
+- Link each ticket, document or spec you name to the human with `bridle link <id|path>` (`workflow/base/rules/link-ids-for-the-human.md`).
 - KISS, YAGNI and "what's the worst if we don't?" (`workflow/base/rules/`).
 - No Claude Code memory (`workflow/base/rules/memory.none.md`).
