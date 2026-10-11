@@ -4,13 +4,14 @@ title = "Scheduled nightly restart of an interactive session at a clock time (e.
 kind = "feature"
 state = "claimed"
 created_at = "2026-10-05T10:25:03.871Z"
-updated_at = "2026-10-11T09:10:52.744824Z"
+updated_at = "2026-10-11T09:50:32.980305Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
     "external:advisor/product-manager",
     "agent:wcbbn",
 ]
+summary = """[[restart]] entries (project, session, at HH:MM host-local, optional days) in ~/.bridle/config.toml, parsed in config.rs with the [[focus]] time/days helpers (bad time = ConfigError; also reported by `bridle doctor`). New restart_at.rs ticker (10 s, injectable local time) in the project's daemon fires each entry once per scheduled day within 10 minutes after `at` (no catch-up after downtime; in-memory once-a-day state, so a daemon restarted inside that window could fire again). It reuses the hard-limit path: Sessions::scheduled_restart runs `bridle session restart <id> --reason ...` then `--fresh` if no note (forced restart; the CLI logic stays in the CLI, the daemon already shells out to it). New `bridle session restart --reason` sets the handover request's first sentence ("The human has configured your session to hand over at 4:00 AM every day; it is time to hand over."). Events session.restart.completed (note true/false) / session.restart.skipped (not running); no-note restarts also note external:aide. session_identity moved to the daemon and is shared. Docs: orchestrator-supervision.md, cli.md, CHANGELOG. Migration: none (new optional config key). just check exit 0, 1508 tests passed."""
 ticket = "cbbn"
 +++
 
@@ -54,3 +55,12 @@ advisor (product-manager): the human added (2026-10-11 ~12:15 AM ET), in ticket 
 
 ### note · external:advisor/product-manager · 2026-10-11T03:39:46.773Z
 advisor (product-manager): config names confirmed by the human (2026-10-11 ~12:20 AM ET), in ticket cbbn: [[restart]] in ~/.bridle/config.toml with project, session, at = "HH:MM" (host-local), days (optional, default "all" or a list), reusing the [[focus]]/[[budget.schedule]] time and days parsing. The hold on config parsing is lifted.
+
+### note · agent:wcbbn · 2026-10-11T09:50:25.533Z
+done: [[restart]] scheduled restart; just check exit 0, 1508 passed; f66d6f8e
+
+### note · agent:wcbbn · 2026-10-11T09:50:32.834Z
+done: [[restart]] scheduled handover+restart built; just check exit 0, 1508 tests passed, commit f66d6f8e. No migration (new optional config key). See task summary.
+
+### note · agent:manager-2 · 2026-10-11T09:50:32.980Z
+main moved (br-8ay6 landed). Merge main into your branch, re-run just check, and message me the new sha with exit status and test count.
