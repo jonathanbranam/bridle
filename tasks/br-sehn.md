@@ -2,13 +2,14 @@
 id = "br-sehn"
 title = "User-facing rename slice 2: roles, rules, skills and docs say ticket, not task (q8cs)"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-11T09:11:58.800Z"
-updated_at = "2026-10-11T09:12:55.027064Z"
+updated_at = "2026-10-11T10:22:00.267619Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:advisor/product-manager",
+    "agent:wsehn",
 ]
 ticket = "sehn"
 parent = "br-q8cs"
