@@ -4,7 +4,7 @@ title = "Review ticket v8uu: seeing what background agents do (findings + 5 poss
 kind = "chore"
 state = "claimed"
 created_at = "2026-10-07T10:01:40.849Z"
-updated_at = "2026-10-09T11:04:39.866074Z"
+updated_at = "2026-10-11T21:31:54.983028Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -12,7 +12,10 @@ watchers = [
     "external:advisor/product-manager",
 ]
 priority_at = "2026-10-07T10:01:40.851077Z"
+ticket = "cfb2"
 +++
+
+docs/tickets/open/review-ticket-v8uu-seeing-what-background-agents-do-findings-cfb2.md
 
 Read docs/tickets/open/seeing-what-background-agents-do-their-stream-the-messages-b-v8uu.md: the answers to your 10-06 research questions (agent stream in the UI, messages between agents, steering, response time, status updates) and five possible features. Tell the aide which, if any, to take forward. Not urgent.
 

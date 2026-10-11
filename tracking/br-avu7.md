@@ -4,13 +4,13 @@ title = "vk3y slice 2: 'bridle task new' requires --ticket (no-ticket sentinel) 
 kind = "feature"
 state = "pending"
 created_at = "2026-10-06T00:37:58.516Z"
-updated_at = "2026-10-09T11:04:39.066155Z"
+updated_at = "2026-10-11T21:31:44.746338Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:advisor/product-manager",
 ]
-ticket = "vk3y"
+ticket = "avu7"
 +++
 
 Ticket: docs/tickets/open/tickets-and-tasks-link-each-other-in-metadata-every-time-tas-vk3y.md (read all of it, and re-read when you start). Depends on br-vk3y (slice 1: the real `ticket` task field and its migration); start only after it merges.

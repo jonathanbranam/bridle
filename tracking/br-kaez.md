@@ -4,7 +4,7 @@ title = "The bridle report in the daily mail digest (rcvb slice 2)"
 kind = "feature"
 state = "pending"
 created_at = "2026-10-09T23:27:48.926Z"
-updated_at = "2026-10-09T23:27:48.927328Z"
+updated_at = "2026-10-11T21:32:12.663113Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -12,8 +12,11 @@ watchers = [
 ]
 priority = "low"
 priority_at = "2026-10-09T23:27:48.927328Z"
+ticket = "kaez"
 parent = "br-rcvb"
 +++
+
+docs/tickets/open/the-bridle-report-in-the-daily-mail-digest-rcvb-slice-2-kaez.md
 
 Ticket: docs/tickets/open/*-rcvb.md. Slice 1 (bridle report on request) landed as br-rcvb. Slice 2 adds it to the mail digest. Unscheduled: the human decides after seeing slice 1's output.
 

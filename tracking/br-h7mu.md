@@ -4,7 +4,7 @@ title = "Pick a name for the Windows PC (docs/context/naming.md) (v7ug)"
 kind = "chore"
 state = "claimed"
 created_at = "2026-10-07T23:25:31.076Z"
-updated_at = "2026-10-07T23:25:31.082538Z"
+updated_at = "2026-10-11T21:32:00.856094Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -12,7 +12,10 @@ watchers = [
 ]
 priority = "low"
 priority_at = "2026-10-07T23:25:31.080083Z"
+ticket = "h7mu"
 +++
+
+docs/tickets/open/pick-a-name-for-the-windows-pc-docs-context-naming-md-v7ug-h7mu.md
 
 Ticket v7ug. The PC needs a machine name before its daemon is set up; see docs/context/naming.md for the convention (dalek, the NUC's name). Reply with the name you choose.
 

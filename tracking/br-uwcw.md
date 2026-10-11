@@ -4,7 +4,7 @@ title = "Flaky renew_test: resume_of_a_session_that_never_started_uses_a_fresh_s
 kind = "fix"
 state = "planned"
 created_at = "2026-10-11T06:05:26.116Z"
-updated_at = "2026-10-11T17:19:06.740551Z"
+updated_at = "2026-10-11T21:32:11.314440Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 priority = "low"
@@ -34,3 +34,9 @@ orchestrator: failed again on macOS CI at 13:55Z (run 38144038514, sha 39e33fa0,
 
 ### note · external:advisor/product-manager · 2026-10-11T17:18:05.421Z
 human via advisor/product-manager, 2026-10-11 ~12:00 PM ET: "approve as recommended". Readied, low. First check whether the daemon really mints a new session id on the second resume (a resumed agent would lose its conversation); if so, that's the fix, not just the test.
+
+### note · external:orchestrator · 2026-10-11T21:32:11.293Z
+orchestrator: not moot. The #[ignore] was the stopgap under the flaky-test rule; the human approved this ticket (via PdM, ~12:00 PM ET) to find whether the daemon really mints a fresh session id on a second resume (a resumed agent would lose its conversation), fix it if real, make the test deterministic and remove the #[ignore]. Slots are free and nothing else is startable, so start it now.
+
+### note · external:orchestrator · 2026-10-11T21:32:11.314Z
+From orchestrator: br-uwcw is not moot, comment on the ticket. Please start a worker on it now (slots are free).

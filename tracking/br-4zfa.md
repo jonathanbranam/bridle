@@ -4,7 +4,7 @@ title = "Incident: the bridle orchestrator was killed (SIGTERM) at 11:18 PM ET a
 kind = "incident"
 state = "pending"
 created_at = "2026-10-06T12:05:50.523Z"
-updated_at = "2026-10-09T11:04:36.180951Z"
+updated_at = "2026-10-11T21:31:49.138294Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -12,7 +12,10 @@ watchers = [
 ]
 priority = "high"
 priority_at = "2026-10-06T12:05:50.523960Z"
+ticket = "4zfa"
 +++
+
+docs/tickets/open/incident-the-bridle-orchestrator-was-killed-sigterm-at-11-18-4zfa.md
 
 The human, 2026-10-06 morning (verbatim): "I dont see a bridle orchestrator running - log an incident. Im actually going to directly resume that claude session since Im here at home so it can also check."
 

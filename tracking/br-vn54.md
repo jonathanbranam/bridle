@@ -4,13 +4,16 @@ title = "Incident: remote control dropped for the dalek aide session after a tmu
 kind = "incident"
 state = "pending"
 created_at = "2026-10-08T12:47:40.207Z"
-updated_at = "2026-10-09T11:04:40.066062Z"
+updated_at = "2026-10-11T21:32:03.813537Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
     "external:advisor/product-manager",
 ]
+ticket = "vn54"
 +++
+
+docs/tickets/open/incident-remote-control-dropped-for-the-dalek-aide-session-a-vn54.md
 
 Filed by the bridle aide at the human's request, 2026-10-08 ~9:00 AM ET.
 
