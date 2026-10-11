@@ -22,3 +22,8 @@ bridle_version = "0.6.1"
 id = "0004-ticket-links-in-frontmatter"
 applied_at = "2026-10-11T07:06:23.538686Z"
 bridle_version = "0.6.1"
+
+[[applied]]
+id = "0006-backfill-ticket-kind"
+applied_at = "2026-10-11T18:14:23.945191Z"
+bridle_version = "0.6.1"
