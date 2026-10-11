@@ -2,11 +2,14 @@
 id = "br-jstr"
 title = "Recipient hint: suggest external:advisor/<name> for a bare advisor/<name>"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-11T03:48:54.303Z"
-updated_at = "2026-10-11T03:49:12.403995Z"
+updated_at = "2026-10-11T11:04:17.161381Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:wjstr",
+]
 priority = "low"
 priority_at = "2026-10-11T03:48:55.855541Z"
 ticket = "jstr"

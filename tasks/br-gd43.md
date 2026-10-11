@@ -2,11 +2,14 @@
 id = "br-gd43"
 title = "Comment IDs never repeat after deletes: assign_ids reads and bumps a front-matter counter (bridle half of ui-vnuu)"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-09T18:09:53.692Z"
-updated_at = "2026-10-09T19:08:46.553103Z"
+updated_at = "2026-10-11T11:04:15.849594Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:wgd43",
+]
 size = "M"
 priority = "low"
 priority_at = "2026-10-09T19:08:42.451097Z"
