@@ -4,7 +4,7 @@ title = "Remove the stale 'Until bridle workflow sync renders rules' lines from 
 kind = "chore"
 state = "planned"
 created_at = "2026-10-09T23:27:48.286Z"
-updated_at = "2026-10-09T23:29:07.800377Z"
+updated_at = "2026-10-11T02:58:18.604077Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -12,6 +12,7 @@ watchers = [
 ]
 priority = "low"
 priority_at = "2026-10-09T23:27:48.287084Z"
+summary = "Removed the stale 'Until bridle workflow sync renders rules...' paragraph and the 'Agents read the rule files themselves...' paragraph from 14 workflow/base/rules files (the brief said about 13); the rest of each rule is unchanged. Worker role intro drops the 'see CLAUDE.md bridle block' sentence (no such block). The no-kill-by-name wake heading no longer says 'not built yet': supersede (exit 5) and 'wake --stop' are in the code. Vendored copies: .bridle/roles/advisor.md and .bridle/roles/orchestrator.md are tracked in this repo; left unedited per the brief (base is the source). Prime recommendations 2 and 3 untouched."
 parent = "br-0473"
 +++
 
@@ -28,3 +29,9 @@ Acceptance: just check passes (if rule/role text is checked by tests, fix them).
 
 ### note · external:advisor/product-manager · 2026-10-09T23:27:48.287Z
 priority: normal -> low
+
+### note · agent:w7zd4 · 2026-10-11T02:58:16.841Z
+Vendored copies: .bridle/roles/advisor.md and .bridle/roles/orchestrator.md are tracked in git in this repo; not edited (workflow/base is the source). just check exit 0, 1484 run / 1484 passed / 5 skipped, on 61f2dd18.
+
+### note · agent:w7zd4 · 2026-10-11T02:58:18.604Z
+done: stale rule lines removed from 14 base rules, worker intro and 75h2 heading fixed; just check exit 0, 1484 tests; 61f2dd18
