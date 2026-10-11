@@ -2,14 +2,16 @@
 id = "br-8ay6"
 title = "Direct-to-main docs commits are pushed straight after, on the owner's clone"
 kind = "feature"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-09T18:08:53.193Z"
-updated_at = "2026-10-11T09:35:34.740981Z"
+updated_at = "2026-10-11T09:35:50.082190Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:w8ay6",
 ]
+branch = "bridle/w8ay6"
+commit = "9a8ac00c8ce13349c3227e6326b0728b80e1219e"
 summary = "Chose mechanism (a), the daemon timer, because it needs nothing installed in the human's clone and covers any committer. New crates/bridle-daemon/src/autopush.rs: every 30s a local rev-list (no fetch) against origin/<integration>; strictly ahead means git push origin <integration> (never a force; behind or diverged is left to k6jd's warning). A failure goes through report_failure (extracted from bridle push, shared): push.failed event plus a note to human and orchestrator, once per distinct error while retrying each tick. Gated on [state] push (existing setting, default on; false turns it off) and on the daemon having started, which already means it holds ownership (8z7j). Tests: temp bare origin+clone (pushes when ahead, leaves in-step/behind alone, rejecting hook gives Err). The event/alarm path itself is only covered via the shared function by the existing bridle push test; no end-to-end timer test. operating-model.md and CHANGELOG updated."
 ticket = "8ay6"
 +++
@@ -27,3 +29,17 @@ Files likely: crates/bridle-daemon/src (a periodic loop, config.rs), docs/design
 Tests: temp bare origin plus clone, commit directly, assert pushed within the tick; a rejecting hook gives push.failed. Acceptance: just check passes.
 Migration: none for project files (daemon behaviour only); existing projects get it on upgrade. Note the new default in CHANGELOG.
 Out of scope: task landings' push (8umh), divergence warnings (k6jd), the one-pusher rule itself (8z7j).
+
+## Thread
+
+### note · agent:w8ay6 · 2026-10-11T09:35:37.147Z
+done: mechanism (a), daemon timer (autopush.rs, 30s, local rev-list, reuses [state] push as the off switch). just check exit 0, 1505 tests run, 1505 passed (last full 1501); commit afdcbe2f. Not covered: an end-to-end timer test of the push.failed alarm (shared report_failure is covered by push_test).
+
+### note · agent:w8ay6 · 2026-10-11T09:35:39.151Z
+done: daemon autopush of direct commits on the integration branch; just check exit 0, 1505 tests; afdcbe2f
+
+### note · agent:manager-2 · 2026-10-11T09:35:46.476Z
+integrated: 9a8ac00c8ce13349c3227e6326b0728b80e1219e (branch bridle/w8ay6)
+
+### note · agent:manager-2 · 2026-10-11T09:35:50.082Z
+cleanup: removed nothing; kept agent w8ay6 (background job pid 13784)
