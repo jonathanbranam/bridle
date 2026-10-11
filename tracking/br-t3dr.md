@@ -2,11 +2,14 @@
 id = "br-t3dr"
 title = "bridle-ui ships with each bridle release, fixed to that version, and self-upgrade moves both"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-10T17:17:50.352Z"
-updated_at = "2026-10-11T22:40:44.057525Z"
+updated_at = "2026-10-11T22:41:28.442911Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:wt3dr",
+]
 ticket = "t3dr"
 +++
 
