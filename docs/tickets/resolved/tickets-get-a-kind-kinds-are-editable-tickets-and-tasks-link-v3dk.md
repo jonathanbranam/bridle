@@ -8,6 +8,7 @@ specs: []
 blocked_by: [project-migrations-one-command-applies-pending-bridle-upgrad-xebc]
 related: [focus-override-accept-local-time-in-until-like-the-focus-con-hesj, questions-become-tickets-and-a-docs-folder-plan-xe5c]
 kind: chore
+resolved: 2026-10-11T15:04:30Z
 ---
 
 ## The ask
