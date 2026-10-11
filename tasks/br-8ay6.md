@@ -4,12 +4,13 @@ title = "Direct-to-main docs commits are pushed straight after, on the owner's c
 kind = "feature"
 state = "claimed"
 created_at = "2026-10-09T18:08:53.193Z"
-updated_at = "2026-10-11T09:12:49.660773Z"
+updated_at = "2026-10-11T09:35:34.740981Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:w8ay6",
 ]
+summary = "Chose mechanism (a), the daemon timer, because it needs nothing installed in the human's clone and covers any committer. New crates/bridle-daemon/src/autopush.rs: every 30s a local rev-list (no fetch) against origin/<integration>; strictly ahead means git push origin <integration> (never a force; behind or diverged is left to k6jd's warning). A failure goes through report_failure (extracted from bridle push, shared): push.failed event plus a note to human and orchestrator, once per distinct error while retrying each tick. Gated on [state] push (existing setting, default on; false turns it off) and on the daemon having started, which already means it holds ownership (8z7j). Tests: temp bare origin+clone (pushes when ahead, leaves in-step/behind alone, rejecting hook gives Err). The event/alarm path itself is only covered via the shared function by the existing bridle push test; no end-to-end timer test. operating-model.md and CHANGELOG updated."
 ticket = "8ay6"
 +++
 
