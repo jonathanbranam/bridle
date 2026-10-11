@@ -1,4 +1,4 @@
-//! Task commands: task, claim, release, ready, queue, dep, land, conflict, impact, ask, answer.
+//! Ticket commands: task, claim, release, ready, queue, dep, land, conflict, impact, ask, answer.
 
 use super::*;
 
@@ -48,20 +48,20 @@ pub(super) async fn release(cli: &Cli, args: &ReleaseArgs) -> Result<(), CliErro
     Ok(())
 }
 
-pub(super) fn task_kind_arg(k: TaskKindArg) -> TaskKind {
+pub(super) fn task_kind_arg(k: TaskKindArg) -> TicketKind {
     match k {
-        TaskKindArg::Feature => TaskKind::Feature,
-        TaskKindArg::Bug => TaskKind::Bug,
-        TaskKindArg::Fix => TaskKind::Fix,
-        TaskKindArg::Epic => TaskKind::Epic,
-        TaskKindArg::Docs => TaskKind::Docs,
-        TaskKindArg::Chore => TaskKind::Chore,
-        TaskKindArg::Question => TaskKind::Question,
-        TaskKindArg::Research => TaskKind::Research,
-        TaskKindArg::Explore => TaskKind::Explore,
-        TaskKindArg::ArchRevision => TaskKind::ArchRevision,
-        TaskKindArg::ReEvaluate => TaskKind::ReEvaluate,
-        TaskKindArg::Incident => TaskKind::Incident,
+        TaskKindArg::Feature => TicketKind::Feature,
+        TaskKindArg::Bug => TicketKind::Bug,
+        TaskKindArg::Fix => TicketKind::Fix,
+        TaskKindArg::Epic => TicketKind::Epic,
+        TaskKindArg::Docs => TicketKind::Docs,
+        TaskKindArg::Chore => TicketKind::Chore,
+        TaskKindArg::Question => TicketKind::Question,
+        TaskKindArg::Research => TicketKind::Research,
+        TaskKindArg::Explore => TicketKind::Explore,
+        TaskKindArg::ArchRevision => TicketKind::ArchRevision,
+        TaskKindArg::ReEvaluate => TicketKind::ReEvaluate,
+        TaskKindArg::Incident => TicketKind::Incident,
     }
 }
 
@@ -97,23 +97,23 @@ pub(super) fn project_has_components() -> bool {
         .is_some_and(|c| !c.components.is_empty())
 }
 
-pub(super) fn size_str(size: Option<TaskSize>) -> &'static str {
-    size.map_or("-", TaskSize::as_str)
+pub(super) fn size_str(size: Option<TicketSize>) -> &'static str {
+    size.map_or("-", TicketSize::as_str)
 }
 
-pub(super) fn task_size_arg_to_opt(arg: TaskSizeArg) -> Option<TaskSize> {
+pub(super) fn task_size_arg_to_opt(arg: TaskSizeArg) -> Option<TicketSize> {
     match arg {
-        TaskSizeArg::S => Some(TaskSize::S),
-        TaskSizeArg::M => Some(TaskSize::M),
-        TaskSizeArg::L => Some(TaskSize::L),
-        TaskSizeArg::None => Some(TaskSize::None),
+        TaskSizeArg::S => Some(TicketSize::S),
+        TaskSizeArg::M => Some(TicketSize::M),
+        TaskSizeArg::L => Some(TicketSize::L),
+        TaskSizeArg::None => Some(TicketSize::None),
     }
 }
 
 use bridle_api::settle_clock_text;
 use bridle_api::types::{RemoteWatchRequest, sort_by_priority};
 
-pub fn print_task_row(t: &Task) {
+pub fn print_task_row(t: &Ticket) {
     println!(
         "{:<10} {:<9} {:<8} {:<4} {:<8} {}",
         t.id,
@@ -132,7 +132,7 @@ pub(super) async fn task_new(cli: &Cli, args: &TaskNewArgs) -> Result<(), CliErr
     } else {
         String::new()
     };
-    let req = NewTaskRequest {
+    let req = NewTicketRequest {
         ticket: None,
         parent: args.from.clone(),
         for_human: args.for_human,
@@ -240,7 +240,7 @@ pub(super) async fn task_edit(cli: &Cli, args: &TaskEditArgs) -> Result<(), CliE
     } else {
         None
     };
-    let req = EditTaskRequest {
+    let req = EditTicketRequest {
         title: args.title.clone(),
         body,
         components: if args.no_component {
@@ -325,13 +325,13 @@ pub(super) async fn task_plan(cli: &Cli, args: &TaskPlanArgs) -> Result<(), CliE
     Ok(())
 }
 
-pub(super) fn task_priority_arg(arg: TaskPriorityArg) -> TaskPriority {
+pub(super) fn task_priority_arg(arg: TaskPriorityArg) -> TicketPriority {
     match arg {
-        TaskPriorityArg::Critical => TaskPriority::Critical,
-        TaskPriorityArg::Urgent => TaskPriority::Urgent,
-        TaskPriorityArg::High => TaskPriority::High,
-        TaskPriorityArg::Normal => TaskPriority::Normal,
-        TaskPriorityArg::Low => TaskPriority::Low,
+        TaskPriorityArg::Critical => TicketPriority::Critical,
+        TaskPriorityArg::Urgent => TicketPriority::Urgent,
+        TaskPriorityArg::High => TicketPriority::High,
+        TaskPriorityArg::Normal => TicketPriority::Normal,
+        TaskPriorityArg::Low => TicketPriority::Low,
     }
 }
 
@@ -365,7 +365,7 @@ pub(super) async fn task_kind(cli: &Cli, args: &TaskKindArgs) -> Result<(), CliE
 
 pub(super) async fn task_drop(cli: &Cli, args: &TaskDropArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
-    let req = DropTaskRequest {
+    let req = DropTicketRequest {
         reason: args.reason.clone(),
     };
     let task = client.drop_task(&args.task, &req).await?;
@@ -419,7 +419,7 @@ pub(super) async fn task_done(cli: &Cli, args: &TaskDoneArgs) -> Result<(), CliE
         .and_then(|t| t.claimed_by.as_deref())
         .map(|c| c == "human")
         .unwrap_or(false);
-    let req = DoneTaskRequest {
+    let req = DoneTicketRequest {
         commit: args.commit.clone(),
         branch: args.branch.clone(),
         resolution: args.resolution.clone(),
@@ -756,7 +756,7 @@ pub(super) async fn conflict(cli: &Cli, args: &ConflictArgs) -> Result<(), CliEr
     Ok(())
 }
 
-pub(super) fn print_task_row_with_project(project: Option<&str>, t: &Task) {
+pub(super) fn print_task_row_with_project(project: Option<&str>, t: &Ticket) {
     match project {
         Some(p) => println!(
             "{:<16} {:<10} {:<9} {:<8} {:<4} {}",
@@ -797,7 +797,7 @@ pub(super) async fn ready(cli: &Cli, args: &ReadyArgs) -> Result<(), CliError> {
     }
 
     let daemons = discovery::list_registry();
-    let mut rows: Vec<(String, Task)> = Vec::new();
+    let mut rows: Vec<(String, Ticket)> = Vec::new();
     for info in &daemons {
         let token = discovery::resolve_token(
             cli.token.as_deref(),
@@ -871,10 +871,10 @@ pub(super) async fn queue_add_tier(cli: &Cli, args: &QueueAddTierArgs) -> Result
 pub(super) struct QueueTaskRow {
     id: String,
     title: String,
-    kind: TaskKind,
-    state: bridle_api::TaskState,
+    kind: TicketKind,
+    state: bridle_api::TicketState,
     #[serde(skip_serializing_if = "Option::is_none")]
-    size: Option<TaskSize>,
+    size: Option<TicketSize>,
     /// Ready (deps met, no open question) and, since ready already implies
     /// `planned`, therefore unclaimed too (roles-and-lifecycle.md, "the
     /// queue").
@@ -891,7 +891,7 @@ pub(super) struct QueueTierRow {
 
 #[derive(serde::Serialize)]
 pub(super) struct QueueView {
-    claimed: Vec<Task>,
+    claimed: Vec<Ticket>,
     tiers: Vec<QueueTierRow>,
 }
 
@@ -910,10 +910,10 @@ pub(super) async fn queue_show(cli: &Cli) -> Result<(), CliError> {
         .into_iter()
         .map(|t| t.id)
         .collect();
-    let by_id: std::collections::HashMap<&str, &Task> =
+    let by_id: std::collections::HashMap<&str, &Ticket> =
         all_tasks.iter().map(|t| (t.id.as_str(), t)).collect();
 
-    let claimed: Vec<Task> = all_tasks
+    let claimed: Vec<Ticket> = all_tasks
         .iter()
         .filter(|t| t.claimed_by.is_some())
         .cloned()

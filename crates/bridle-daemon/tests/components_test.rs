@@ -4,7 +4,7 @@
 mod support;
 use support::ClientExt as _;
 
-use bridle_api::types::{EditTaskRequest, NewTaskRequest, SpawnRequest, TaskKind, Workdir};
+use bridle_api::types::{EditTicketRequest, NewTicketRequest, SpawnRequest, TicketKind, Workdir};
 use support::{
     default_overrides, fake_claude_env_dump_wrapper, start_daemon, start_daemon_with_config,
     wait_for_event,
@@ -19,21 +19,21 @@ parent = "client"
 [components.server]
 "#;
 
-fn req(title: &str, components: &[&str]) -> NewTaskRequest {
-    NewTaskRequest {
+fn req(title: &str, components: &[&str]) -> NewTicketRequest {
+    NewTicketRequest {
         ticket: None,
         parent: None,
         for_human: false,
         priority: None,
         title: title.to_string(),
-        kind: TaskKind::Feature,
+        kind: TicketKind::Feature,
         body: String::new(),
         size: None,
         components: components.iter().map(|s| s.to_string()).collect(),
     }
 }
 
-fn ids(tasks: &[bridle_api::types::Task]) -> Vec<String> {
+fn ids(tasks: &[bridle_api::types::Ticket]) -> Vec<String> {
     tasks.iter().map(|t| t.title.clone()).collect()
 }
 
@@ -58,7 +58,7 @@ async fn task_components_round_trip_validate_and_filter_by_descendant() {
     let err = c
         .edit_task(
             &games.id,
-            &EditTaskRequest {
+            &EditTicketRequest {
                 ticket: None,
                 components: Some(vec!["nope".to_string()]),
                 ..Default::default()
@@ -87,7 +87,7 @@ async fn task_components_round_trip_validate_and_filter_by_descendant() {
     let edited = c
         .edit_task(
             &games.id,
-            &EditTaskRequest {
+            &EditTicketRequest {
                 ticket: None,
                 components: Some(vec!["server".to_string()]),
                 ..Default::default()
@@ -99,7 +99,7 @@ async fn task_components_round_trip_validate_and_filter_by_descendant() {
     let cleared = c
         .edit_task(
             &games.id,
-            &EditTaskRequest {
+            &EditTicketRequest {
                 ticket: None,
                 components: Some(vec![]),
                 ..Default::default()

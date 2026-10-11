@@ -2107,7 +2107,7 @@ impl AgentManager {
 
     // ---------- incident notices (incidents.md) ----------
 
-    fn incident_notice(task: &bridle_api::types::Task, updated: bool) -> String {
+    fn incident_notice(task: &bridle_api::types::Ticket, updated: bool) -> String {
         let verb = if updated { " updated" } else { "" };
         format!("Incident {}{verb}: {}\n{}", task.id, task.title, task.body)
     }
@@ -2116,7 +2116,7 @@ impl AgentManager {
     async fn send_incident_notice(
         &self,
         agent_id: &str,
-        task: &bridle_api::types::Task,
+        task: &bridle_api::types::Ticket,
         updated: bool,
     ) -> Result<(), SupervisorError> {
         self.send_linked(
@@ -2133,7 +2133,7 @@ impl AgentManager {
     }
 
     /// Promote: one notice to every live-or-resumable agent.
-    pub async fn incident_activated(&self, task: &bridle_api::types::Task) {
+    pub async fn incident_activated(&self, task: &bridle_api::types::Ticket) {
         let Ok(agents) = self.0.store.list_agents(true).await else {
             return;
         };
@@ -2171,7 +2171,7 @@ impl AgentManager {
 
     /// Edit of an active incident: an unwritten notice takes the new text;
     /// an agent whose notice is already out gets an "updated" note.
-    pub async fn incident_updated(&self, task: &bridle_api::types::Task) {
+    pub async fn incident_updated(&self, task: &bridle_api::types::Ticket) {
         let Ok(rows) = self.0.store.messages_for_incident(&task.id).await else {
             return;
         };
@@ -2278,7 +2278,7 @@ impl AgentManager {
     /// Resolve or drop while active: undelivered notices are dropped, and an
     /// agent that saw the incident gets one "resolved" note (unlinked, so it
     /// can't itself be dropped).
-    pub async fn incident_resolved(&self, task: &bridle_api::types::Task, line: &str) {
+    pub async fn incident_resolved(&self, task: &bridle_api::types::Ticket, line: &str) {
         let Ok(rows) = self.0.store.messages_for_incident(&task.id).await else {
             return;
         };

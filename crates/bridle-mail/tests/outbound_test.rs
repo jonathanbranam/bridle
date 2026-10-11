@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
-use bridle_api::types::{Agent, Message, MessageKind, OpenQuestion, SendRequest, Task};
+use bridle_api::types::{Agent, Message, MessageKind, OpenQuestion, SendRequest, Ticket};
 use bridle_mail::{
     Bridge, FakeMailer, FakeStore, Feed, MailConfig, Outbound, Outcome, Rejection, Sent, Sink,
     Tokens, digest_due,
@@ -27,7 +27,7 @@ fn message(id: &str, kind: &str, from: &str, body: &str) -> Message {
     .expect("message")
 }
 
-fn task(id: &str, state: &str, claimed_by: Option<&str>) -> Task {
+fn task(id: &str, state: &str, claimed_by: Option<&str>) -> Ticket {
     serde_json::from_value(json!({
         "id": id, "title": format!("title of {id}"), "kind": "feature", "state": state,
         "body": "", "thread": [], "created_at": "2026-09-30T10:00:00Z",
@@ -39,7 +39,7 @@ fn task(id: &str, state: &str, claimed_by: Option<&str>) -> Task {
 #[derive(Default)]
 struct FakeFeed {
     messages: Mutex<Vec<Message>>,
-    tasks: Mutex<Vec<Task>>,
+    tasks: Mutex<Vec<Ticket>>,
 }
 
 #[async_trait]
@@ -50,7 +50,7 @@ impl Feed for FakeFeed {
     async fn agents(&self) -> anyhow::Result<Vec<Agent>> {
         Ok(Vec::new())
     }
-    async fn tasks(&self) -> anyhow::Result<Vec<Task>> {
+    async fn tasks(&self) -> anyhow::Result<Vec<Ticket>> {
         Ok(self.tasks.lock().expect("lock").clone())
     }
     async fn open_questions(&self) -> anyhow::Result<Vec<OpenQuestion>> {

@@ -93,6 +93,7 @@ pub struct DaemonInfo {
     pub version: String,
     /// The project's task and ticket id prefix (`br`). Older daemons don't write it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(alias = "ticket_prefix")]
     pub task_prefix: Option<String>,
 }
 
@@ -148,7 +149,8 @@ pub struct Status {
     /// Tasks waiting for `bridle task ready`; created tasks start here, so a pile is
     /// something nobody has approved yet.
     #[serde(default)]
-    pub pending_tasks: Vec<PendingTask>,
+    #[serde(alias = "pending_tickets")]
+    pub pending_tasks: Vec<PendingTicket>,
     /// The last machine load reading (`[machine]`); `None` until the first one, or when the
     /// watch is off.
     #[serde(default)]
@@ -188,7 +190,7 @@ pub struct LoadStatus {
 
 /// One `pending` task in [`Status::pending_tasks`].
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PendingTask {
+pub struct PendingTicket {
     pub id: String,
     pub title: String,
     pub created_by: String,
@@ -404,6 +406,7 @@ pub struct PrincipalWakeReason {
     /// Unused since task changes became messages; kept so old clients still parse.
     /// The task behind a `task` reason.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(alias = "ticket")]
     pub task: Option<String>,
     /// What happened to it: the event kind, e.g. `task.note_added`, `task.state`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -686,17 +689,18 @@ pub struct TranscriptQuery {
 
 // ---------- messages ----------
 
-/// Not to be confused with [`TaskKind::Question`], a *kind of task* (research
+/// Not to be confused with [`TicketKind::Question`], a *kind of task* (research
 /// work whose output is an answer, not code). A `MessageKind::Question` is a
 /// message that blocks whatever task it's addressed to until answered
 /// (docs/design/coordination.md, "Messages"); the two are unrelated and a
-/// task of any `TaskKind` can have one addressed to it.
+/// task of any `TicketKind` can have one addressed to it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum MessageKind {
     Question,
     Answer,
     /// One line about a change to a task the recipient watches.
+    #[serde(alias = "ticket_update")]
     TaskUpdate,
     /// A daemon's own news (a wake reason forwarded to the orchestrator's home daemon). Never
     /// counted as the human's unread or a to-do. Older builds read it as a `note`.
@@ -762,6 +766,7 @@ pub struct Message {
     pub answered_line: Option<String>,
     /// The incident task this notice announces; see incidents.md.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(alias = "incident_ticket")]
     pub incident_task: Option<String>,
     /// Set only on a send response: the named recipient isn't running, so the message waits in
     /// its inbox for its next session. Not stored.
@@ -786,6 +791,7 @@ pub struct SendRequest {
     /// About this task: `body` is written in full as a note on the task's
     /// thread, and the recipient gets a short message naming the task.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(alias = "ticket")]
     pub task: Option<String>,
 }
 
@@ -930,6 +936,7 @@ pub struct HelloRequest {
 pub struct RemoteWatchRequest {
     /// The project whose daemon holds the task.
     pub project: String,
+    #[serde(alias = "ticket")]
     pub task: String,
     pub watch: bool,
 }
@@ -938,6 +945,7 @@ pub struct RemoteWatchRequest {
 /// `task_update` messages go back through this daemon's outbox to `home`. Peer tokens only.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PeerWatchRequest {
+    #[serde(alias = "ticket")]
     pub task: String,
     /// The watcher as its own daemon knows it (`agent:w1`).
     pub who: PrincipalId,
@@ -1668,11 +1676,11 @@ pub struct TokenInfo {
 /// those exist (roles-and-lifecycle.md).
 /// `Question` here is a *kind of task*, unrelated to [`MessageKind::Question`]
 /// (a message that blocks the task it's addressed to). Don't conflate them:
-/// a `TaskKind::Question` task can itself have a `MessageKind::Question`
+/// a `TicketKind::Question` task can itself have a `MessageKind::Question`
 /// asked against it, like any other task.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub enum TaskKind {
+pub enum TicketKind {
     Feature,
     /// A report of something broken; the change that fixes it is a `Fix`.
     Bug,
@@ -1692,7 +1700,7 @@ pub enum TaskKind {
     Incident,
 }
 
-impl TaskKind {
+impl TicketKind {
     pub fn as_str(self) -> &'static str {
         match self {
             Self::Feature => "feature",
@@ -1711,7 +1719,7 @@ impl TaskKind {
     }
 }
 
-impl TaskKind {
+impl TicketKind {
     /// Change kinds produce a branch that merges (22ab section 2); the rest are worked without
     /// one or only open and close.
     pub fn is_change(self) -> bool {
@@ -1722,13 +1730,13 @@ impl TaskKind {
     }
 }
 
-impl std::fmt::Display for TaskKind {
+impl std::fmt::Display for TicketKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(self.as_str())
     }
 }
 
-impl std::str::FromStr for TaskKind {
+impl std::str::FromStr for TicketKind {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         serde_json::from_value(Value::String(s.to_string()))
@@ -1739,19 +1747,19 @@ impl std::str::FromStr for TaskKind {
 /// A rough estimate of a task's size, so small ones can be picked when the
 /// budget runs short. Optional on a task; nothing derives or acts on it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum TaskSize {
+pub enum TicketSize {
     #[serde(rename = "S")]
     S,
     #[serde(rename = "M")]
     M,
     #[serde(rename = "L")]
     L,
-    /// Marker used in EditTaskRequest to clear a task's size.
+    /// Marker used in EditTicketRequest to clear a task's size.
     #[serde(rename = "none")]
     None,
 }
 
-impl TaskSize {
+impl TicketSize {
     pub fn as_str(self) -> &'static str {
         match self {
             Self::S => "S",
@@ -1762,7 +1770,7 @@ impl TaskSize {
     }
 }
 
-impl std::fmt::Display for TaskSize {
+impl std::fmt::Display for TicketSize {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(self.as_str())
     }
@@ -1772,7 +1780,7 @@ impl std::fmt::Display for TaskSize {
 /// the queue's tiers, not this.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub enum TaskPriority {
+pub enum TicketPriority {
     Critical,
     Urgent,
     High,
@@ -1781,7 +1789,7 @@ pub enum TaskPriority {
     Low,
 }
 
-impl TaskPriority {
+impl TicketPriority {
     pub fn as_str(self) -> &'static str {
         match self {
             Self::Critical => "critical",
@@ -1799,10 +1807,10 @@ impl TaskPriority {
 
 /// Sorts the human's to-dos: higher level first; at `high` and above the most recently ranked
 /// goes first (a newer urgent thing outranks older ones at its level), below that oldest first.
-pub fn sort_by_priority(tasks: &mut [Task]) {
+pub fn sort_by_priority(tasks: &mut [Ticket]) {
     tasks.sort_by_key(|t| {
         let at = t.priority_at.unwrap_or(t.created_at);
-        let newest_first = t.priority <= TaskPriority::High;
+        let newest_first = t.priority <= TicketPriority::High;
         (
             t.priority,
             if newest_first {
@@ -1814,7 +1822,7 @@ pub fn sort_by_priority(tasks: &mut [Task]) {
     });
 }
 
-impl std::fmt::Display for TaskPriority {
+impl std::fmt::Display for TicketPriority {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(self.as_str())
     }
@@ -1823,22 +1831,22 @@ impl std::fmt::Display for TaskPriority {
 /// `POST /v1/tasks/{id}/priority`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SetPriorityRequest {
-    pub priority: TaskPriority,
+    pub priority: TicketPriority,
 }
 
 /// `POST /v1/tasks/{id}/kind`; only while the task is `open`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SetKindRequest {
-    pub kind: TaskKind,
+    pub kind: TicketKind,
 }
 
 /// The lifecycle states this build knows about
-/// ([[docs/design/roles-and-lifecycle#Task lifecycle|task lifecycle]]).
+/// ([[docs/design/roles-and-lifecycle#Ticket lifecycle|task lifecycle]]).
 /// `in_review` and `accepted` arrive with later tasks that build on top of
 /// this record.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum TaskState {
+pub enum TicketState {
     /// Every task starts here. Nobody plans it until `bridle task ready` opens it (k7tm
     /// decisions 11-14).
     Pending,
@@ -1857,7 +1865,7 @@ pub enum TaskState {
     Reopened,
 }
 
-impl TaskState {
+impl TicketState {
     pub fn as_str(self) -> &'static str {
         match self {
             Self::Pending => "pending",
@@ -1871,13 +1879,13 @@ impl TaskState {
     }
 }
 
-impl std::fmt::Display for TaskState {
+impl std::fmt::Display for TicketState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(self.as_str())
     }
 }
 
-impl std::str::FromStr for TaskState {
+impl std::str::FromStr for TicketState {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         serde_json::from_value(Value::String(s.to_string()))
@@ -1930,7 +1938,7 @@ pub struct ThreadEntry {
     pub at: DateTime<Utc>,
 }
 
-/// `Task::created_by` when the creator isn't known.
+/// `Ticket::created_by` when the creator isn't known.
 pub const UNKNOWN_CREATOR: &str = "unknown";
 
 fn unknown_creator() -> PrincipalId {
@@ -1938,13 +1946,13 @@ fn unknown_creator() -> PrincipalId {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Task {
+pub struct Ticket {
     /// e.g. `tw-7fa2`: a per-project prefix and a random suffix
     /// (docs/design/storage.md).
     pub id: String,
     pub title: String,
-    pub kind: TaskKind,
-    pub state: TaskState,
+    pub kind: TicketKind,
+    pub state: TicketState,
     /// The task's description. Durable only on the state branch: a crash
     /// between a write and the next batched flush can lose an edit to this
     /// (docs/design/storage.md).
@@ -1974,10 +1982,10 @@ pub struct Task {
     pub components: Vec<String>,
     /// Estimated size; null when unset.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub size: Option<TaskSize>,
+    pub size: Option<TicketSize>,
     /// Absent (normal) unless set; ranks the human's to-dos.
-    #[serde(default, skip_serializing_if = "TaskPriority::is_normal")]
-    pub priority: TaskPriority,
+    #[serde(default, skip_serializing_if = "TicketPriority::is_normal")]
+    pub priority: TicketPriority,
     /// When the priority was last set; orders to-dos within a level. Null until first set.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub priority_at: Option<DateTime<Utc>>,
@@ -2071,6 +2079,7 @@ pub enum OverlapLevel {
 pub struct Overlap {
     pub level: OverlapLevel,
     /// The two tasks, in id order.
+    #[serde(alias = "tickets")]
     pub tasks: [String; 2],
     /// `scenario`, `requirement`, `capability` or `files`.
     pub kind: String,
@@ -2116,6 +2125,7 @@ pub struct ProbeResult {
 pub struct MergeProbe {
     pub level: OverlapLevel,
     /// The task, and the other task for a pairwise probe.
+    #[serde(alias = "tickets")]
     pub tasks: Vec<String>,
     pub result: ProbeResult,
 }
@@ -2136,6 +2146,7 @@ pub struct Conflict {
     /// `C<n>`.
     pub id: String,
     /// The two tasks, in id order.
+    #[serde(alias = "tickets")]
     pub tasks: [String; 2],
     /// The overlap's `kind` and `key` (see [`Overlap`]).
     pub kind: String,
@@ -2158,6 +2169,7 @@ pub struct PortAllocation {
     pub agent: String,
     /// The task the owner had claimed when it allocated, if any.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(alias = "ticket")]
     pub task: Option<String>,
     /// The process that uses the port; the daemon frees the port once it's dead.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -2190,13 +2202,13 @@ pub struct ResolveConflictRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct NewTaskRequest {
+pub struct NewTicketRequest {
     pub title: String,
-    pub kind: TaskKind,
+    pub kind: TicketKind,
     #[serde(default)]
     pub body: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub size: Option<TaskSize>,
+    pub size: Option<TicketSize>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub components: Vec<String>,
     /// A human to-do: the task is created `planned` and claimed by the human
@@ -2205,7 +2217,7 @@ pub struct NewTaskRequest {
     pub for_human: bool,
     /// Default normal.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub priority: Option<TaskPriority>,
+    pub priority: Option<TicketPriority>,
     /// The ticket the task is made from; the task's id takes the ticket's id when free.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ticket: Option<String>,
@@ -2217,15 +2229,15 @@ pub struct NewTaskRequest {
 
 /// A submission to the project's triage (`POST /v1/tasks/submit`): always an `open` task.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SubmitTaskRequest {
+pub struct SubmitTicketRequest {
     pub title: String,
-    pub kind: TaskKind,
+    pub kind: TicketKind,
     #[serde(default)]
     pub body: String,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct EditTaskRequest {
+pub struct EditTicketRequest {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub title: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -2234,20 +2246,20 @@ pub struct EditTaskRequest {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub components: Option<Vec<String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub size: Option<TaskSize>,
+    pub size: Option<TicketSize>,
     /// Sets the task's ticket link.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ticket: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct DropTaskRequest {
+pub struct DropTicketRequest {
     pub reason: String,
 }
 
 /// `POST /v1/tasks/{id}/done`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct DoneTaskRequest {
+pub struct DoneTicketRequest {
     /// May be empty only for a task claimed by the human (a to-do, no code).
     #[serde(default)]
     pub commit: String,
@@ -2282,7 +2294,8 @@ pub struct LandRequest {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LandResult {
-    pub task: Task,
+    #[serde(alias = "ticket")]
+    pub task: Ticket,
     pub commit: String,
     pub notes: Vec<String>,
 }
@@ -2325,7 +2338,7 @@ pub struct SkipSettleRequest {
 
 /// `POST /v1/tasks/{id}/note`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct NoteTaskRequest {
+pub struct NoteTicketRequest {
     pub body: String,
 }
 
@@ -2333,6 +2346,7 @@ pub struct NoteTaskRequest {
 /// work"), for `GET /v1/questions` and `bridle inbox`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OpenQuestion {
+    #[serde(alias = "ticket_id")]
     pub task_id: String,
     pub asked_by: PrincipalId,
     pub body: String,
@@ -2342,11 +2356,11 @@ pub struct OpenQuestion {
 /// `GET /v1/tasks?ready=true` filters to ready tasks only (roles-and-lifecycle.md,
 /// "ready is computed"); omitted or `false` returns every task, as before.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct TaskQuery {
+pub struct TicketQuery {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ready: Option<bool>,
     /// `?claimed_by=me` resolves to the calling principal's own id;
-    /// anything else is matched against `Task::claimed_by` verbatim.
+    /// anything else is matched against `Ticket::claimed_by` verbatim.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub claimed_by: Option<String>,
     /// `?top_tier=true`: just the highest queue tier with a startable task
@@ -2359,7 +2373,7 @@ pub struct TaskQuery {
     pub component: Option<String>,
     /// `?kind=<kind>`: only tasks of that kind.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub kind: Option<TaskKind>,
+    pub kind: Option<TicketKind>,
 }
 
 // ---------- queue ----------
@@ -2385,6 +2399,7 @@ pub struct SetQueueRequest {
 /// one.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AddQueueTierRequest {
+    #[serde(alias = "tickets")]
     pub tasks: Vec<String>,
 }
 
@@ -2517,7 +2532,7 @@ mod tests {
             "re-evaluate",
             "incident",
         ] {
-            let k: TaskKind = s.parse().unwrap();
+            let k: TicketKind = s.parse().unwrap();
             assert_eq!(k.as_str(), s);
         }
     }
@@ -2535,15 +2550,15 @@ mod tests {
             ("question", false),
             ("incident", false),
         ] {
-            assert_eq!(s.parse::<TaskKind>().unwrap().is_change(), change, "{s}");
+            assert_eq!(s.parse::<TicketKind>().unwrap().is_change(), change, "{s}");
         }
-        assert!("idea".parse::<TaskKind>().is_err());
+        assert!("idea".parse::<TicketKind>().is_err());
     }
 
     #[test]
     fn task_state_round_trip() {
         for s in ["pending", "open", "planned", "dropped", "reopened"] {
-            let st: TaskState = s.parse().unwrap();
+            let st: TicketState = s.parse().unwrap();
             assert_eq!(st.as_str(), s);
         }
     }
@@ -2566,24 +2581,24 @@ mod tests {
     #[test]
     fn task_size_preserves_wire_format() {
         assert_eq!(
-            serde_json::to_value(TaskSize::S).unwrap(),
+            serde_json::to_value(TicketSize::S).unwrap(),
             serde_json::json!("S")
         );
         assert_eq!(
-            serde_json::to_value(TaskSize::M).unwrap(),
+            serde_json::to_value(TicketSize::M).unwrap(),
             serde_json::json!("M")
         );
         assert_eq!(
-            serde_json::to_value(TaskSize::L).unwrap(),
+            serde_json::to_value(TicketSize::L).unwrap(),
             serde_json::json!("L")
         );
-        let s: TaskSize = serde_json::from_value(serde_json::json!("S")).unwrap();
-        assert_eq!(s, TaskSize::S);
+        let s: TicketSize = serde_json::from_value(serde_json::json!("S")).unwrap();
+        assert_eq!(s, TicketSize::S);
     }
 
     #[test]
     fn priority_sort_levels_then_newest_first_above_normal() {
-        let mk = |id: &str, p: &str, day: u32, set: Option<u32>| -> Task {
+        let mk = |id: &str, p: &str, day: u32, set: Option<u32>| -> Ticket {
             let at = |d: u32| format!("2026-01-{d:02}T00:00:00Z");
             let mut v = serde_json::json!({
                 "id": id, "title": id, "kind": "feature", "state": "claimed", "body": "",

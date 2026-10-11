@@ -7,7 +7,7 @@ use support::ClientExt as _;
 use std::time::Duration;
 
 use bridle_api::types::{
-    AgentState, MessageQuery, NewTaskRequest, SpawnRequest, TaskKind, Workdir,
+    AgentState, MessageQuery, NewTicketRequest, SpawnRequest, TicketKind, Workdir,
 };
 use support::{default_overrides, start_daemon, wait_for_state};
 
@@ -28,14 +28,14 @@ async fn daemon_with(debounce: Duration) -> (support::TestDaemon, tempfile::Temp
 async fn task(daemon: &support::TestDaemon, title: &str) -> String {
     daemon
         .client
-        .new_open_task(&NewTaskRequest {
+        .new_open_task(&NewTicketRequest {
             ticket: None,
             parent: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
             title: title.to_string(),
-            kind: TaskKind::Feature,
+            kind: TicketKind::Feature,
             body: String::new(),
             size: None,
         })

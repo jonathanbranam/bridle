@@ -10,7 +10,7 @@ use std::collections::BTreeMap;
 use axum::Json;
 use axum::extract::Path;
 use bridle_api::client::{Client, ClientError};
-use bridle_api::types::{Agent, Status, TaskState};
+use bridle_api::types::{Agent, Status, TicketState};
 use serde::Serialize;
 use ts_rs::TS;
 
@@ -198,7 +198,7 @@ pub(crate) async fn agents(client: &Client, project: &str) -> Result<AgentList, 
                 .iter()
                 .find(|t| {
                     t.claimed_by.as_deref() == Some(me.as_str())
-                        && !matches!(t.state, TaskState::Integrated | TaskState::Dropped)
+                        && !matches!(t.state, TicketState::Integrated | TicketState::Dropped)
                 })
                 .map(|t| t.id.clone());
             AgentView {
@@ -308,7 +308,7 @@ mod tests {
             Router::new()
                 .route("/v1/status", get(|| async { Json(status()) }))
                 .route("/v1/agents", get(move || async move { Json(agents) }))
-                .route("/v1/tasks", get(move || async move { Json(tasks) })),
+                .route("/v1/tickets", get(move || async move { Json(tasks) })),
         )
         .await
     }

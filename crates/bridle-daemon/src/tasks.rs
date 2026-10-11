@@ -1,4 +1,4 @@
-//! Task records: the SQLite fast index (`crate::store`) and the state
+//! Ticket records: the SQLite fast index (`crate::store`) and the state
 //! branch (`crate::state_branch`) kept in step, plus an in-memory cache that
 //! carries the body/thread the database doesn't (docs/design/storage.md).
 //! Scoped to this build's states: `open`, `planned`, `claimed`, `dropped`,
@@ -30,9 +30,9 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use bridle_api::types::{
-    Edge, EdgeKind, Handover, Impact, MessageKind, MessageState, OpenQuestion, PrincipalId, Task,
-    TaskKind, TaskPriority, TaskSize, TaskState, ThreadEntry, ThreadEntryKind, UNKNOWN_CREATOR,
-    When,
+    Edge, EdgeKind, Handover, Impact, MessageKind, MessageState, OpenQuestion, PrincipalId,
+    ThreadEntry, ThreadEntryKind, Ticket, TicketKind, TicketPriority, TicketSize, TicketState,
+    UNKNOWN_CREATOR, When,
 };
 use chrono::{DateTime, Utc};
 
@@ -98,22 +98,22 @@ pub struct TaskManager {
     /// Full records, including body/thread, which the database doesn't
     /// carry. Hydrated from the state branch at [`TaskManager::open`], kept
     /// current on every write.
-    cache: Arc<Mutex<HashMap<String, Task>>>,
+    cache: Arc<Mutex<HashMap<String, Ticket>>>,
     /// Every edge. Unlike `cache`, the database row *is* the full record
     /// (there's no extra body/thread to hydrate from the state branch), so
     /// this is loaded straight from `Store::list_edges` at `open`.
     edges: Arc<Mutex<Vec<Edge>>>,
-    /// Task id -> the id of its open question's message, for the tasks that
+    /// Ticket id -> the id of its open question's message, for the tasks that
     /// currently have one. Mirrors `Store::list_open_questions`, loaded at
     /// `open`, so `has_open_questions` (called from the sync `is_ready`) can
     /// answer without a database round trip.
     open_questions: Arc<Mutex<HashMap<String, String>>>,
-    /// Task id -> (claimant, claimed at), for every currently claimed task.
+    /// Ticket id -> (claimant, claimed at), for every currently claimed task.
     /// Mirrors `Store::list_claims`, loaded at `open`. Like
     /// `open_questions` it is a SQLite table, but the whole set is also
     /// mirrored to `claims.toml` on the state branch and restored by a
     /// rebuild (storage.md); this is also the source of
-    /// `Task::claimed_by`/`claimed_at` on the cached task.
+    /// `Ticket::claimed_by`/`claimed_at` on the cached task.
     claims: Arc<Mutex<HashMap<String, ClaimEntry>>>,
     /// How long a claim survives without the claiming agent's own activity
     /// before [`TaskManager::tick_claim_lease_check`] releases it.
@@ -140,7 +140,7 @@ fn add_watcher(watchers: &mut Vec<PrincipalId>, who: &PrincipalId) -> bool {
 
 /// Who is told about a change to `task`: its watchers. The one place that answers it, so the
 /// notification code doesn't re-derive it from the creator and claimer.
-pub fn notified_of(task: &Task) -> Vec<PrincipalId> {
+pub fn notified_of(task: &Ticket) -> Vec<PrincipalId> {
     task.watchers.clone()
 }
 
@@ -172,7 +172,7 @@ impl TaskManager {
         let mut cache = HashMap::with_capacity(rows.len());
         let mut unrecorded = Vec::new();
         for row in rows {
-            let mut task = state.read_task(&row.id).unwrap_or(Task {
+            let mut task = state.read_task(&row.id).unwrap_or(Ticket {
                 id: row.id.clone(),
                 title: row.title,
                 kind: row.kind,
@@ -190,7 +190,7 @@ impl TaskManager {
                 claimed_at: None,
                 components: Vec::new(),
                 size: None,
-                priority: TaskPriority::default(),
+                priority: TicketPriority::default(),
                 priority_at: None,
                 branch: None,
                 commit: None,
@@ -249,7 +249,7 @@ impl TaskManager {
         for c in store.list_claims().await? {
             if cache
                 .get(&c.task_id)
-                .is_some_and(|t| t.state == TaskState::Claimed)
+                .is_some_and(|t| t.state == TicketState::Claimed)
             {
                 claims.insert(c.task_id, (c.claimed_by, c.claimed_at));
             } else {
@@ -377,10 +377,10 @@ impl TaskManager {
             // whatever pre-claim state it was last flushed at (`planned`),
             // so this mirrors that same synchronous update here too.
             self.store
-                .set_task_state(&c.task_id, TaskState::Claimed)
+                .set_task_state(&c.task_id, TicketState::Claimed)
                 .await?;
             if let Some(task) = cache.get_mut(&c.task_id) {
-                task.state = TaskState::Claimed;
+                task.state = TicketState::Claimed;
                 task.claimed_by = Some(c.claimed_by.clone());
                 task.claimed_at = Some(c.claimed_at);
             }
@@ -416,7 +416,7 @@ impl TaskManager {
         StateBranch::fetch_from_origin(self.state.dir()).await
     }
 
-    fn put(&self, task: Task) -> Task {
+    fn put(&self, task: Ticket) -> Ticket {
         self.cache
             .lock()
             .expect("task cache lock")
@@ -426,7 +426,7 @@ impl TaskManager {
 
     /// Fills in the computed `settle_until`; the cache (and so the state
     /// branch) never holds it.
-    fn decorate(&self, mut task: Task) -> Task {
+    fn decorate(&self, mut task: Ticket) -> Ticket {
         task.settle_until = self.settle_until(&task, Utc::now());
         task
     }
@@ -435,8 +435,9 @@ impl TaskManager {
     /// `now`: `max(created_at, the human's latest thread entry) + settle`,
     /// unless a skip note is in the thread. Computed from the thread alone,
     /// so old tasks need no migration (ny9u).
-    pub fn settle_until(&self, task: &Task, now: DateTime<Utc>) -> Option<DateTime<Utc>> {
-        if self.settle.is_zero() || !matches!(task.state, TaskState::Open | TaskState::Planned) {
+    pub fn settle_until(&self, task: &Ticket, now: DateTime<Utc>) -> Option<DateTime<Utc>> {
+        if self.settle.is_zero() || !matches!(task.state, TicketState::Open | TicketState::Planned)
+        {
             return None;
         }
         if task
@@ -462,7 +463,7 @@ impl TaskManager {
         id: &str,
         by: &PrincipalId,
         reason: &str,
-    ) -> Result<Task, TaskError> {
+    ) -> Result<Ticket, TaskError> {
         if reason.trim().is_empty() {
             return Err(TaskError::BadRequest(
                 "skipping the settle period requires a reason".to_string(),
@@ -488,11 +489,11 @@ impl TaskManager {
     pub async fn new_task(
         &self,
         title: &str,
-        kind: TaskKind,
+        kind: TicketKind,
         body: String,
         components: Vec<String>,
-        size: Option<TaskSize>,
-    ) -> Result<Task, TaskError> {
+        size: Option<TicketSize>,
+    ) -> Result<Ticket, TaskError> {
         self.new_task_by(title, kind, body, components, size, UNKNOWN_CREATOR)
             .await
     }
@@ -500,12 +501,12 @@ impl TaskManager {
     pub async fn new_task_by(
         &self,
         title: &str,
-        kind: TaskKind,
+        kind: TicketKind,
         body: String,
         components: Vec<String>,
-        size: Option<TaskSize>,
+        size: Option<TicketSize>,
         created_by: &str,
-    ) -> Result<Task, TaskError> {
+    ) -> Result<Ticket, TaskError> {
         self.new_task_for_ticket(title, kind, body, components, size, created_by, None)
             .await
     }
@@ -517,13 +518,13 @@ impl TaskManager {
     pub async fn new_task_for_ticket(
         &self,
         title: &str,
-        kind: TaskKind,
+        kind: TicketKind,
         body: String,
         components: Vec<String>,
-        size: Option<TaskSize>,
+        size: Option<TicketSize>,
         created_by: &str,
         ticket: Option<String>,
-    ) -> Result<Task, TaskError> {
+    ) -> Result<Ticket, TaskError> {
         if title.trim().is_empty() {
             return Err(TaskError::BadRequest("title must not be empty".to_string()));
         }
@@ -537,7 +538,7 @@ impl TaskManager {
             .store
             .insert_task_wanting(&self.prefix, title, kind, created_by, ticket_ref)
             .await?;
-        let task = Task {
+        let task = Ticket {
             id: row.id,
             title: row.title,
             kind: row.kind,
@@ -558,7 +559,7 @@ impl TaskManager {
             claimed_at: None,
             components,
             size,
-            priority: TaskPriority::default(),
+            priority: TicketPriority::default(),
             priority_at: None,
             branch: None,
             commit: None,
@@ -583,7 +584,7 @@ impl TaskManager {
         child: &str,
         parent: &str,
         by: &PrincipalId,
-    ) -> Result<Task, TaskError> {
+    ) -> Result<Ticket, TaskError> {
         let mut parent_task = self
             .get_task(parent)
             .ok_or_else(|| TaskError::NotFound(format!("no such task: {parent}")))?;
@@ -613,9 +614,9 @@ impl TaskManager {
     pub async fn set_priority(
         &self,
         id: &str,
-        priority: TaskPriority,
+        priority: TicketPriority,
         actor: &PrincipalId,
-    ) -> Result<(Task, TaskPriority), TaskError> {
+    ) -> Result<(Ticket, TicketPriority), TaskError> {
         let mut task = self
             .get_task(id)
             .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
@@ -641,13 +642,13 @@ impl TaskManager {
     pub async fn set_kind(
         &self,
         id: &str,
-        kind: TaskKind,
+        kind: TicketKind,
         actor: &PrincipalId,
-    ) -> Result<(Task, TaskKind), TaskError> {
+    ) -> Result<(Ticket, TicketKind), TaskError> {
         let mut task = self
             .get_task(id)
             .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
-        if !matches!(task.state, TaskState::Pending | TaskState::Open) {
+        if !matches!(task.state, TicketState::Pending | TicketState::Open) {
             return Err(TaskError::Conflict(format!(
                 "{id} is {}; a task's kind can only change while it is pending or open",
                 task.state
@@ -674,9 +675,9 @@ impl TaskManager {
     pub async fn note_created(
         &self,
         id: &str,
-        priority: TaskPriority,
+        priority: TicketPriority,
         actor: &PrincipalId,
-    ) -> Result<Task, TaskError> {
+    ) -> Result<Ticket, TaskError> {
         let mut task = self
             .get_task(id)
             .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
@@ -692,20 +693,20 @@ impl TaskManager {
         Ok(self.put(task))
     }
 
-    pub fn get_task(&self, id: &str) -> Option<Task> {
+    pub fn get_task(&self, id: &str) -> Option<Ticket> {
         let task = self.cache.lock().expect("task cache lock").get(id).cloned();
         task.map(|t| self.decorate(t))
     }
 
-    pub fn list_tasks(&self) -> Vec<Task> {
+    pub fn list_tasks(&self) -> Vec<Ticket> {
         let cache = self.cache.lock().expect("task cache lock");
-        let mut tasks: Vec<Task> = cache.values().cloned().map(|t| self.decorate(t)).collect();
+        let mut tasks: Vec<Ticket> = cache.values().cloned().map(|t| self.decorate(t)).collect();
         tasks.sort_by_key(|t| t.created_at);
         tasks
     }
 
     /// Sets the task's ticket link; no thread note, it is metadata.
-    pub async fn set_ticket(&self, id: &str, ticket: &str) -> Result<Task, TaskError> {
+    pub async fn set_ticket(&self, id: &str, ticket: &str) -> Result<Ticket, TaskError> {
         let ticket = ticket.trim();
         if ticket.is_empty() {
             return Err(TaskError::BadRequest(
@@ -734,8 +735,8 @@ impl TaskManager {
         title: Option<String>,
         body: Option<String>,
         components: Option<Vec<String>>,
-        size: Option<TaskSize>,
-    ) -> Result<Task, TaskError> {
+        size: Option<TicketSize>,
+    ) -> Result<Ticket, TaskError> {
         let mut task = self
             .get_task(id)
             .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
@@ -766,7 +767,7 @@ impl TaskManager {
             task.components = components;
         }
         if let Some(size) = size {
-            task.size = if size == TaskSize::None {
+            task.size = if size == TicketSize::None {
                 None
             } else {
                 Some(size)
@@ -779,17 +780,17 @@ impl TaskManager {
 
     /// `pending` -> `open`: someone with the authority (the human's approval, or the manager's
     /// own small fix) has said this task is ready for the PM. Every task is created `pending`.
-    pub async fn ready_task(&self, id: &str, actor: &PrincipalId) -> Result<Task, TaskError> {
+    pub async fn ready_task(&self, id: &str, actor: &PrincipalId) -> Result<Ticket, TaskError> {
         let mut task = self
             .get_task(id)
             .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
-        if task.state != TaskState::Pending {
+        if task.state != TicketState::Pending {
             return Err(TaskError::Conflict(format!(
                 "task {id} is {}, not pending; only a pending task can be readied",
                 task.state
             )));
         }
-        self.transition(&mut task, TaskState::Open, actor).await?;
+        self.transition(&mut task, TicketState::Open, actor).await?;
         self.state.enqueue_task(&task)?;
         Ok(self.put(task))
     }
@@ -802,11 +803,11 @@ impl TaskManager {
         id: &str,
         actor: &PrincipalId,
         reason: &str,
-    ) -> Result<Option<Task>, TaskError> {
+    ) -> Result<Option<Ticket>, TaskError> {
         let Some(mut task) = self.get_task(id) else {
             return Ok(None);
         };
-        if task.state != TaskState::Open || self.has_open_questions(&task) {
+        if task.state != TicketState::Open || self.has_open_questions(&task) {
             return Ok(None);
         }
         task.thread.push(ThreadEntry {
@@ -815,7 +816,7 @@ impl TaskManager {
             body: reason.to_string(),
             at: Utc::now(),
         });
-        self.transition(&mut task, TaskState::Pending, actor)
+        self.transition(&mut task, TicketState::Pending, actor)
             .await?;
         self.state.enqueue_task(&task)?;
         Ok(Some(self.put(task)))
@@ -826,11 +827,11 @@ impl TaskManager {
     pub async fn new_open_task(
         &self,
         title: &str,
-        kind: TaskKind,
+        kind: TicketKind,
         body: String,
         components: Vec<String>,
-        size: Option<TaskSize>,
-    ) -> Result<Task, TaskError> {
+        size: Option<TicketSize>,
+    ) -> Result<Ticket, TaskError> {
         let task = self.new_task(title, kind, body, components, size).await?;
         self.ready_task(&task.id, &UNKNOWN_CREATOR.to_string())
             .await
@@ -840,19 +841,19 @@ impl TaskManager {
     /// Fails with `Conflict` if the task isn't `open` (including a task
     /// that's already `planned`, `claimed`, or reachable only by `reopen`
     /// once dropped).
-    pub async fn plan_task(&self, id: &str, actor: &PrincipalId) -> Result<Task, TaskError> {
+    pub async fn plan_task(&self, id: &str, actor: &PrincipalId) -> Result<Ticket, TaskError> {
         let mut task = self
             .get_task(id)
             .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
         // A recurred incident goes active again from `reopened`.
-        let recurred = task.kind == TaskKind::Incident && task.state == TaskState::Reopened;
-        if task.state != TaskState::Open && !recurred {
+        let recurred = task.kind == TicketKind::Incident && task.state == TicketState::Reopened;
+        if task.state != TicketState::Open && !recurred {
             return Err(TaskError::Conflict(format!(
                 "task {id} is {}, not open; only an open task can be planned",
                 task.state
             )));
         }
-        self.transition(&mut task, TaskState::Planned, actor)
+        self.transition(&mut task, TicketState::Planned, actor)
             .await?;
         self.state.enqueue_task(&task)?;
         Ok(self.put(task))
@@ -864,7 +865,7 @@ impl TaskManager {
         id: &str,
         reason: &str,
         actor: &PrincipalId,
-    ) -> Result<Task, TaskError> {
+    ) -> Result<Ticket, TaskError> {
         if reason.trim().is_empty() {
             return Err(TaskError::BadRequest(
                 "dropping a task requires a reason".to_string(),
@@ -873,15 +874,15 @@ impl TaskManager {
         let mut task = self
             .get_task(id)
             .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
-        if task.state == TaskState::Dropped {
+        if task.state == TicketState::Dropped {
             return Err(TaskError::Conflict(format!("task {id} is already dropped")));
         }
-        if task.state == TaskState::Claimed {
+        if task.state == TicketState::Claimed {
             self.clear_claim(id).await?;
             task.claimed_by = None;
             task.claimed_at = None;
         }
-        self.transition(&mut task, TaskState::Dropped, actor)
+        self.transition(&mut task, TicketState::Dropped, actor)
             .await?;
         task.thread.push(ThreadEntry {
             kind: ThreadEntryKind::Note,
@@ -902,30 +903,30 @@ impl TaskManager {
         commit: &str,
         branch: Option<&str>,
         actor: &PrincipalId,
-    ) -> Result<Task, TaskError> {
+    ) -> Result<Ticket, TaskError> {
         let mut task = self
             .get_task(id)
             .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
         // A human to-do has no code to land, so the human finishes it bare.
-        let bare_ok = (task.state == TaskState::Claimed
+        let bare_ok = (task.state == TicketState::Claimed
             && task.claimed_by.as_deref() == Some("human"))
-            || task.kind == TaskKind::Incident;
+            || task.kind == TicketKind::Incident;
         if commit.trim().is_empty() && !bare_ok {
             return Err(TaskError::BadRequest(
                 "marking a task done requires a commit".to_string(),
             ));
         }
         match task.state {
-            TaskState::Dropped | TaskState::Integrated => {
+            TicketState::Dropped | TicketState::Integrated => {
                 return Err(TaskError::Conflict(format!(
                     "task {id} is already {}",
                     task.state
                 )));
             }
-            TaskState::Claimed => task = self.release_claim(id).await?,
+            TicketState::Claimed => task = self.release_claim(id).await?,
             _ => {}
         }
-        self.transition(&mut task, TaskState::Integrated, actor)
+        self.transition(&mut task, TicketState::Integrated, actor)
             .await?;
         let branch = branch.map(str::trim).filter(|b| !b.is_empty());
         let commit = commit.trim();
@@ -948,7 +949,7 @@ impl TaskManager {
     /// Records how the task was implemented, replacing any earlier summary.
     /// Allowed in any state: a worker writes it before the manager marks
     /// the task done.
-    pub async fn set_summary(&self, id: &str, text: &str) -> Result<Task, TaskError> {
+    pub async fn set_summary(&self, id: &str, text: &str) -> Result<Ticket, TaskError> {
         if text.trim().is_empty() {
             return Err(TaskError::BadRequest(
                 "summary must not be empty".to_string(),
@@ -965,13 +966,13 @@ impl TaskManager {
 
     /// Replaces the task's declared impact (impact-and-conflicts.md). Only
     /// while the task can still be worked: pending, open, planned or claimed.
-    pub async fn set_impact(&self, id: &str, impact: Impact) -> Result<Task, TaskError> {
+    pub async fn set_impact(&self, id: &str, impact: Impact) -> Result<Ticket, TaskError> {
         let mut task = self
             .get_task(id)
             .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
         if !matches!(
             task.state,
-            TaskState::Pending | TaskState::Open | TaskState::Planned | TaskState::Claimed
+            TicketState::Pending | TicketState::Open | TicketState::Planned | TicketState::Claimed
         ) {
             return Err(TaskError::Conflict(format!(
                 "task {id} is {}; impact can only be set on a pending, open, planned or claimed task",
@@ -1002,17 +1003,17 @@ impl TaskManager {
     }
 
     /// `dropped` or `integrated` -> `reopened`. Any other starting state is a conflict.
-    pub async fn reopen_task(&self, id: &str, actor: &PrincipalId) -> Result<Task, TaskError> {
+    pub async fn reopen_task(&self, id: &str, actor: &PrincipalId) -> Result<Ticket, TaskError> {
         let mut task = self
             .get_task(id)
             .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
-        if !matches!(task.state, TaskState::Dropped | TaskState::Integrated) {
+        if !matches!(task.state, TicketState::Dropped | TicketState::Integrated) {
             return Err(TaskError::Conflict(format!(
                 "task {id} is {}; only a dropped or integrated task can be reopened",
                 task.state
             )));
         }
-        self.transition(&mut task, TaskState::Reopened, actor)
+        self.transition(&mut task, TicketState::Reopened, actor)
             .await?;
         self.state.enqueue_task(&task)?;
         Ok(self.put(task))
@@ -1020,8 +1021,8 @@ impl TaskManager {
 
     async fn transition(
         &self,
-        task: &mut Task,
-        to: TaskState,
+        task: &mut Ticket,
+        to: TicketState,
         actor: &PrincipalId,
     ) -> Result<(), TaskError> {
         let from = task.state;
@@ -1088,19 +1089,19 @@ impl TaskManager {
     /// build makes, not the final rule.
     fn blocker_is_resolved(&self, blocker_id: &str) -> bool {
         self.get_task(blocker_id)
-            .is_some_and(|b| matches!(b.state, TaskState::Dropped | TaskState::Integrated))
+            .is_some_and(|b| matches!(b.state, TicketState::Dropped | TicketState::Integrated))
     }
 
     /// `planned`, no open `blocks` edge naming an unresolved blocker, no
     /// unanswered question, and settled.
-    pub fn is_ready(&self, task: &Task) -> bool {
+    pub fn is_ready(&self, task: &Ticket) -> bool {
         self.is_ready_unsettled(task) && self.settle_until(task, Utc::now()).is_none()
     }
 
     /// [`TaskManager::is_ready`] ignoring the settle period.
-    pub(crate) fn is_ready_unsettled(&self, task: &Task) -> bool {
+    pub(crate) fn is_ready_unsettled(&self, task: &Ticket) -> bool {
         // An incident is nobody's to build or claim (incidents.md).
-        if task.state != TaskState::Planned || task.kind == TaskKind::Incident {
+        if task.state != TicketState::Planned || task.kind == TicketKind::Incident {
             return false;
         }
         if self.has_open_questions(task) {
@@ -1114,7 +1115,7 @@ impl TaskManager {
 
     /// `true` while `task` has an unanswered question (docs/design/coordination.md,
     /// "Questions do not stop work").
-    fn has_open_questions(&self, task: &Task) -> bool {
+    fn has_open_questions(&self, task: &Ticket) -> bool {
         self.open_questions
             .lock()
             .expect("open questions lock")
@@ -1133,7 +1134,7 @@ impl TaskManager {
         id: &str,
         from: &PrincipalId,
         body: &str,
-    ) -> Result<Task, TaskError> {
+    ) -> Result<Ticket, TaskError> {
         if body.trim().is_empty() {
             return Err(TaskError::BadRequest(
                 "a question requires a body".to_string(),
@@ -1156,7 +1157,7 @@ impl TaskManager {
             .insert_message(NewMessage {
                 from: from.clone(),
                 to: id.to_string(),
-                to_kind: RecipientKind::Task,
+                to_kind: RecipientKind::Ticket,
                 kind: MessageKind::Question,
                 body: body.to_string(),
                 reply_to: None,
@@ -1194,7 +1195,7 @@ impl TaskManager {
         id: &str,
         from: &PrincipalId,
         body: &str,
-    ) -> Result<Task, TaskError> {
+    ) -> Result<Ticket, TaskError> {
         if body.trim().is_empty() {
             return Err(TaskError::BadRequest(
                 "an answer requires a body".to_string(),
@@ -1215,7 +1216,7 @@ impl TaskManager {
             .insert_message(NewMessage {
                 from: from.clone(),
                 to: id.to_string(),
-                to_kind: RecipientKind::Task,
+                to_kind: RecipientKind::Ticket,
                 kind: MessageKind::Answer,
                 body: body.to_string(),
                 reply_to: Some(question_message_id),
@@ -1248,7 +1249,7 @@ impl TaskManager {
         id: &str,
         from: &PrincipalId,
         body: &str,
-    ) -> Result<Task, TaskError> {
+    ) -> Result<Ticket, TaskError> {
         if body.trim().is_empty() {
             return Err(TaskError::BadRequest("a note requires a body".to_string()));
         }
@@ -1265,7 +1266,7 @@ impl TaskManager {
             .insert_message(NewMessage {
                 from: from.clone(),
                 to: id.to_string(),
-                to_kind: RecipientKind::Task,
+                to_kind: RecipientKind::Ticket,
                 kind: MessageKind::Note,
                 body: body.to_string(),
                 reply_to: None,
@@ -1294,7 +1295,7 @@ impl TaskManager {
         id: &str,
         who: &PrincipalId,
         watch: bool,
-    ) -> Result<(Task, bool), TaskError> {
+    ) -> Result<(Ticket, bool), TaskError> {
         let mut task = self
             .get_task(id)
             .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
@@ -1355,7 +1356,7 @@ impl TaskManager {
     /// `is_ready` already requires). Writes synchronously to the database,
     /// like every other task state change, and enqueues the claim set's new
     /// state to the state branch for the next flush (storage.md, "claims").
-    pub async fn claim_task(&self, id: &str, by: &PrincipalId) -> Result<Task, TaskError> {
+    pub async fn claim_task(&self, id: &str, by: &PrincipalId) -> Result<Ticket, TaskError> {
         self.claim_inner(id, by, true).await
     }
 
@@ -1365,7 +1366,7 @@ impl TaskManager {
         &self,
         id: &str,
         by: &PrincipalId,
-    ) -> Result<Task, TaskError> {
+    ) -> Result<Ticket, TaskError> {
         self.claim_inner(id, by, false).await
     }
 
@@ -1374,7 +1375,7 @@ impl TaskManager {
         id: &str,
         by: &PrincipalId,
         must_be_settled: bool,
-    ) -> Result<Task, TaskError> {
+    ) -> Result<Ticket, TaskError> {
         let mut task = self
             .get_task(id)
             .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
@@ -1391,13 +1392,13 @@ impl TaskManager {
         }
         let now = Utc::now();
         self.store.insert_claim(id, by, now).await?;
-        self.store.set_task_state(id, TaskState::Claimed).await?;
+        self.store.set_task_state(id, TicketState::Claimed).await?;
         self.claims
             .lock()
             .expect("claims lock")
             .insert(id.to_string(), (by.clone(), now));
         self.enqueue_claims_snapshot()?;
-        task.state = TaskState::Claimed;
+        task.state = TicketState::Claimed;
         task.updated_at = now;
         task.claimed_by = Some(by.clone());
         task.claimed_at = Some(now);
@@ -1409,7 +1410,7 @@ impl TaskManager {
     /// Releases `id`'s claim: `claimed` -> `planned`. Fails with `Conflict`
     /// if `by` isn't the current claimant (including if the task isn't
     /// claimed at all).
-    pub async fn release_task(&self, id: &str, by: &PrincipalId) -> Result<Task, TaskError> {
+    pub async fn release_task(&self, id: &str, by: &PrincipalId) -> Result<Ticket, TaskError> {
         {
             let claims = self.claims.lock().expect("claims lock");
             match claims.get(id) {
@@ -1439,16 +1440,16 @@ impl TaskManager {
     /// lease expiry: clears the claim and transitions the task back to
     /// `planned`, enqueuing the claim set's new state to the state branch
     /// the same way [`TaskManager::claim_task`] does.
-    async fn release_claim(&self, id: &str) -> Result<Task, TaskError> {
+    async fn release_claim(&self, id: &str) -> Result<Ticket, TaskError> {
         let mut task = self
             .get_task(id)
             .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
-        if task.state != TaskState::Claimed {
+        if task.state != TicketState::Claimed {
             return Err(TaskError::Conflict(format!("task {id} is not claimed")));
         }
         self.clear_claim(id).await?;
-        self.store.set_task_state(id, TaskState::Planned).await?;
-        task.state = TaskState::Planned;
+        self.store.set_task_state(id, TicketState::Planned).await?;
+        task.state = TicketState::Planned;
         task.updated_at = Utc::now();
         task.claimed_by = None;
         task.claimed_at = None;
@@ -1497,7 +1498,7 @@ impl TaskManager {
     pub fn active_incidents(&self) -> Vec<bridle_api::types::IncidentSummary> {
         self.list_tasks()
             .into_iter()
-            .filter(|t| t.kind == TaskKind::Incident && t.state == TaskState::Planned)
+            .filter(|t| t.kind == TicketKind::Incident && t.state == TicketState::Planned)
             .map(|t| bridle_api::types::IncidentSummary {
                 id: t.id,
                 title: t.title,
@@ -1506,7 +1507,7 @@ impl TaskManager {
             .collect()
     }
 
-    pub fn ready_tasks(&self) -> Vec<Task> {
+    pub fn ready_tasks(&self) -> Vec<Ticket> {
         self.list_tasks()
             .into_iter()
             .filter(|t| self.is_ready(t))
@@ -1532,7 +1533,7 @@ impl TaskManager {
                 tier.into_iter()
                     .filter(|id| {
                         self.get_task(id)
-                            .is_none_or(|t| t.state != TaskState::Integrated)
+                            .is_none_or(|t| t.state != TicketState::Integrated)
                     })
                     .collect::<Vec<_>>()
             })
@@ -1555,7 +1556,7 @@ impl TaskManager {
                 let Some(task) = self.get_task(id) else {
                     return Err(TaskError::NotFound(format!("no such task: {id}")));
                 };
-                if task.kind == TaskKind::Incident {
+                if task.kind == TicketKind::Incident {
                     return Err(TaskError::BadRequest(format!(
                         "task {id} is an incident; incidents aren't queued"
                     )));
@@ -1608,11 +1609,11 @@ impl TaskManager {
     /// empty: the manager takes from the next tier down rather than idling
     /// on a blocked one (roles-and-lifecycle.md, "the queue"), and a task
     /// outside the queue entirely is backlog, never returned here.
-    pub fn highest_startable_tier(&self) -> Vec<Task> {
+    pub fn highest_startable_tier(&self) -> Vec<Ticket> {
         let ready_ids: std::collections::HashSet<String> =
             self.ready_tasks().into_iter().map(|t| t.id).collect();
         for tier in self.queue_tiers() {
-            let startable: Vec<Task> = tier
+            let startable: Vec<Ticket> = tier
                 .iter()
                 .filter(|id| ready_ids.contains(*id))
                 .filter_map(|id| self.get_task(id))
@@ -1750,7 +1751,7 @@ mod tests {
         let task = tm
             .new_open_task(
                 "Add foo",
-                TaskKind::Feature,
+                TicketKind::Feature,
                 "a description".to_string(),
                 vec![],
                 None,
@@ -1758,7 +1759,7 @@ mod tests {
             .await
             .expect("new task");
         assert!(task.id.starts_with("tw-"));
-        assert_eq!(task.state, TaskState::Open);
+        assert_eq!(task.state, TicketState::Open);
         assert_eq!(task.body, "a description");
 
         let fetched = tm.get_task(&task.id).expect("get");
@@ -1771,7 +1772,7 @@ mod tests {
         let (tm, _tmp) = manager().await;
         for _ in 0..40 {
             let t = tm
-                .new_open_task("A", TaskKind::Chore, String::new(), vec![], None)
+                .new_open_task("A", TicketKind::Chore, String::new(), vec![], None)
                 .await
                 .expect("new task");
             let tail = t.id.strip_prefix("tw-").expect("prefix");
@@ -1788,12 +1789,12 @@ mod tests {
         let (tm, _tmp) = manager().await;
         let body = "original id: k7tm\ndocs/tickets/open/x-k7tm.md".to_string();
         let first = tm
-            .new_open_task("A", TaskKind::Feature, body.clone(), vec![], None)
+            .new_open_task("A", TicketKind::Feature, body.clone(), vec![], None)
             .await
             .expect("first");
         assert_eq!(first.id, "tw-k7tm");
         let second = tm
-            .new_open_task("B", TaskKind::Feature, body, vec![], None)
+            .new_open_task("B", TicketKind::Feature, body, vec![], None)
             .await
             .expect("second");
         assert_ne!(second.id, "tw-k7tm");
@@ -1804,7 +1805,7 @@ mod tests {
     async fn edit_changes_title_and_body_without_changing_state() {
         let (tm, _tmp) = manager().await;
         let task = tm
-            .new_open_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Add foo", TicketKind::Feature, String::new(), vec![], None)
             .await
             .expect("new task");
 
@@ -1820,7 +1821,7 @@ mod tests {
             .await
             .expect("edit title");
         assert_eq!(edited.title, "Add foo, better");
-        assert_eq!(edited.state, TaskState::Open);
+        assert_eq!(edited.state, TicketState::Open);
 
         let edited = tm
             .edit_task(
@@ -1843,7 +1844,7 @@ mod tests {
         let task = tm
             .new_task_for_ticket(
                 "T",
-                TaskKind::Feature,
+                TicketKind::Feature,
                 "docs/tickets/open/x-abcd.md".to_string(),
                 vec![],
                 None,
@@ -1872,7 +1873,7 @@ mod tests {
         assert_eq!(set.ticket.as_deref(), Some("wxyz"));
         // A task without a ticket stays without one.
         let plain = tm
-            .new_open_task("P", TaskKind::Feature, "plain".to_string(), vec![], None)
+            .new_open_task("P", TicketKind::Feature, "plain".to_string(), vec![], None)
             .await
             .expect("new task");
         assert_eq!(plain.ticket, None);
@@ -1884,7 +1885,7 @@ mod tests {
         let task = tm
             .new_open_task(
                 "T",
-                TaskKind::Feature,
+                TicketKind::Feature,
                 "original id: abcd\nold".to_string(),
                 vec![],
                 None,
@@ -1899,11 +1900,11 @@ mod tests {
     async fn start_moves_an_original_id_line_into_the_ticket_field_once() {
         let (tm, tmp) = manager().await;
         let mut task = tm
-            .new_open_task("T", TaskKind::Feature, "x".to_string(), vec![], None)
+            .new_open_task("T", TicketKind::Feature, "x".to_string(), vec![], None)
             .await
             .expect("new task");
         let plain = tm
-            .new_open_task("P", TaskKind::Feature, "plain".to_string(), vec![], None)
+            .new_open_task("P", TicketKind::Feature, "plain".to_string(), vec![], None)
             .await
             .expect("new task");
         // The state a pre-vk3y daemon left behind.
@@ -1947,7 +1948,7 @@ mod tests {
     async fn edit_rejects_a_blank_title() {
         let (tm, _tmp) = manager().await;
         let task = tm
-            .new_open_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Add foo", TicketKind::Feature, String::new(), vec![], None)
             .await
             .expect("new task");
         let err = tm
@@ -1970,17 +1971,17 @@ mod tests {
         let task = tm
             .new_open_task(
                 "Add foo",
-                TaskKind::Feature,
+                TicketKind::Feature,
                 String::new(),
                 vec![],
-                Some(TaskSize::M),
+                Some(TicketSize::M),
             )
             .await
             .expect("new task");
-        assert_eq!(task.size, Some(TaskSize::M));
+        assert_eq!(task.size, Some(TicketSize::M));
 
         let edited = tm
-            .edit_task(&task.id, &agent(), None, None, None, Some(TaskSize::None))
+            .edit_task(&task.id, &agent(), None, None, None, Some(TicketSize::None))
             .await
             .expect("clear size");
         assert_eq!(edited.size, None);
@@ -1990,7 +1991,7 @@ mod tests {
     async fn drop_requires_a_reason_and_reopen_only_applies_to_dropped() {
         let (tm, _tmp) = manager().await;
         let task = tm
-            .new_open_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Add foo", TicketKind::Feature, String::new(), vec![], None)
             .await
             .expect("new task");
 
@@ -2010,7 +2011,7 @@ mod tests {
             .drop_task(&task.id, "budget cut", &"human".to_string())
             .await
             .expect("drop");
-        assert_eq!(dropped.state, TaskState::Dropped);
+        assert_eq!(dropped.state, TicketState::Dropped);
         assert_eq!(dropped.thread.len(), 1);
         assert_eq!(dropped.thread[0].body, "dropped: budget cut");
 
@@ -2024,7 +2025,7 @@ mod tests {
             .reopen_task(&task.id, &"human".to_string())
             .await
             .expect("reopen");
-        assert_eq!(reopened.state, TaskState::Reopened);
+        assert_eq!(reopened.state, TicketState::Reopened);
 
         let err = tm
             .reopen_task(&task.id, &"human".to_string())
@@ -2037,16 +2038,16 @@ mod tests {
     async fn plan_moves_open_to_planned_and_rejects_every_other_state() {
         let (tm, _tmp) = manager().await;
         let task = tm
-            .new_open_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Add foo", TicketKind::Feature, String::new(), vec![], None)
             .await
             .expect("new task");
-        assert_eq!(task.state, TaskState::Open);
+        assert_eq!(task.state, TicketState::Open);
 
         let planned = tm
             .plan_task(&task.id, &"human".to_string())
             .await
             .expect("plan");
-        assert_eq!(planned.state, TaskState::Planned);
+        assert_eq!(planned.state, TicketState::Planned);
 
         // Already planned: not open any more.
         let err = tm
@@ -2097,11 +2098,11 @@ mod tests {
     async fn add_edge_rejects_self_loops_and_unknown_tasks_and_duplicates() {
         let (tm, _tmp) = manager().await;
         let a = tm
-            .new_open_task("A", TaskKind::Chore, String::new(), vec![], None)
+            .new_open_task("A", TicketKind::Chore, String::new(), vec![], None)
             .await
             .expect("new a");
         let b = tm
-            .new_open_task("B", TaskKind::Chore, String::new(), vec![], None)
+            .new_open_task("B", TicketKind::Chore, String::new(), vec![], None)
             .await
             .expect("new b");
 
@@ -2142,11 +2143,11 @@ mod tests {
     async fn remove_edge_drops_it_and_errors_when_missing() {
         let (tm, _tmp) = manager().await;
         let a = tm
-            .new_open_task("A", TaskKind::Chore, String::new(), vec![], None)
+            .new_open_task("A", TicketKind::Chore, String::new(), vec![], None)
             .await
             .expect("new a");
         let b = tm
-            .new_open_task("B", TaskKind::Chore, String::new(), vec![], None)
+            .new_open_task("B", TicketKind::Chore, String::new(), vec![], None)
             .await
             .expect("new b");
         tm.add_edge(&a.id, &b.id, EdgeKind::Blocks)
@@ -2172,7 +2173,7 @@ mod tests {
     /// tests have no use for.
     fn force_planned(tm: &TaskManager, id: &str) {
         let mut cache = tm.cache.lock().expect("task cache lock");
-        cache.get_mut(id).expect("task in cache").state = TaskState::Planned;
+        cache.get_mut(id).expect("task in cache").state = TicketState::Planned;
     }
 
     #[tokio::test]
@@ -2180,11 +2181,11 @@ mod tests {
         let (tm, _tmp) = manager().await;
         let human = "human".to_string();
         let blocker = tm
-            .new_open_task("Blocker", TaskKind::Chore, String::new(), vec![], None)
+            .new_open_task("Blocker", TicketKind::Chore, String::new(), vec![], None)
             .await
             .expect("new blocker");
         let blocked = tm
-            .new_open_task("Blocked", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Blocked", TicketKind::Feature, String::new(), vec![], None)
             .await
             .expect("new blocked");
         tm.add_edge(&blocker.id, &blocked.id, EdgeKind::Blocks)
@@ -2210,7 +2211,7 @@ mod tests {
             .done_task(&blocker.id, "abc123", None, &human)
             .await
             .expect("done");
-        assert_eq!(done.state, TaskState::Integrated);
+        assert_eq!(done.state, TicketState::Integrated);
         assert_eq!(done.thread[0].body, "integrated: abc123");
         assert!(tm.is_ready(&tm.get_task(&blocked.id).expect("blocked")));
         let ready: Vec<String> = tm.ready_tasks().into_iter().map(|t| t.id).collect();
@@ -2224,7 +2225,7 @@ mod tests {
         assert!(matches!(err, TaskError::Conflict(_)));
 
         let reopened = tm.reopen_task(&blocker.id, &human).await.expect("reopen");
-        assert_eq!(reopened.state, TaskState::Reopened);
+        assert_eq!(reopened.state, TicketState::Reopened);
         assert_eq!(tm.live_queue_tiers().len(), 2);
     }
 
@@ -2233,7 +2234,7 @@ mod tests {
         let (tm, _tmp) = manager().await;
         let human = "human".to_string();
         let t = tm
-            .new_open_task("T", TaskKind::Chore, String::new(), vec![], None)
+            .new_open_task("T", TicketKind::Chore, String::new(), vec![], None)
             .await
             .expect("new");
         let err = tm.set_summary(&t.id, "  ").await.expect_err("empty");
@@ -2255,15 +2256,21 @@ mod tests {
     async fn ready_tasks_excludes_unplanned_and_blocked_tasks() {
         let (tm, _tmp) = manager().await;
         let blocker = tm
-            .new_open_task("Blocker", TaskKind::Chore, String::new(), vec![], None)
+            .new_open_task("Blocker", TicketKind::Chore, String::new(), vec![], None)
             .await
             .expect("new blocker");
         let blocked = tm
-            .new_open_task("Blocked", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Blocked", TicketKind::Feature, String::new(), vec![], None)
             .await
             .expect("new blocked");
         let unplanned = tm
-            .new_open_task("Unplanned", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task(
+                "Unplanned",
+                TicketKind::Feature,
+                String::new(),
+                vec![],
+                None,
+            )
             .await
             .expect("new unplanned");
 
@@ -2299,11 +2306,11 @@ mod tests {
     async fn set_queue_validates_unknown_ids_duplicates_and_empty_tiers() {
         let (tm, _tmp) = manager().await;
         let a = tm
-            .new_open_task("A", TaskKind::Chore, String::new(), vec![], None)
+            .new_open_task("A", TicketKind::Chore, String::new(), vec![], None)
             .await
             .expect("new a");
         let b = tm
-            .new_open_task("B", TaskKind::Chore, String::new(), vec![], None)
+            .new_open_task("B", TicketKind::Chore, String::new(), vec![], None)
             .await
             .expect("new b");
 
@@ -2340,11 +2347,11 @@ mod tests {
     async fn add_queue_tier_appends_after_whatever_is_already_there() {
         let (tm, _tmp) = manager().await;
         let a = tm
-            .new_open_task("A", TaskKind::Chore, String::new(), vec![], None)
+            .new_open_task("A", TicketKind::Chore, String::new(), vec![], None)
             .await
             .expect("new a");
         let b = tm
-            .new_open_task("B", TaskKind::Chore, String::new(), vec![], None)
+            .new_open_task("B", TicketKind::Chore, String::new(), vec![], None)
             .await
             .expect("new b");
 
@@ -2365,15 +2372,15 @@ mod tests {
     async fn highest_startable_tier_skips_a_tier_blocked_on_a_dependency() {
         let (tm, _tmp) = manager().await;
         let blocker = tm
-            .new_open_task("Blocker", TaskKind::Chore, String::new(), vec![], None)
+            .new_open_task("Blocker", TicketKind::Chore, String::new(), vec![], None)
             .await
             .expect("new blocker");
         let blocked = tm
-            .new_open_task("Blocked", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Blocked", TicketKind::Feature, String::new(), vec![], None)
             .await
             .expect("new blocked");
         let next = tm
-            .new_open_task("Next", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Next", TicketKind::Feature, String::new(), vec![], None)
             .await
             .expect("new next");
         tm.add_edge(&blocker.id, &blocked.id, EdgeKind::Blocks)
@@ -2420,7 +2427,7 @@ mod tests {
         // A task exists and is even ready, but it's backlog: not in any
         // tier, so it's never returned here.
         let task = tm
-            .new_open_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Add foo", TicketKind::Feature, String::new(), vec![], None)
             .await
             .expect("new task");
         force_planned(&tm, &task.id);
@@ -2449,11 +2456,11 @@ mod tests {
         .expect("open task manager");
 
         let a = tm
-            .new_open_task("A", TaskKind::Chore, String::new(), vec![], None)
+            .new_open_task("A", TicketKind::Chore, String::new(), vec![], None)
             .await
             .expect("new a");
         let b = tm
-            .new_open_task("B", TaskKind::Chore, String::new(), vec![], None)
+            .new_open_task("B", TicketKind::Chore, String::new(), vec![], None)
             .await
             .expect("new b");
         tm.set_queue(
@@ -2519,7 +2526,7 @@ mod tests {
         let task = tm
             .new_open_task(
                 "Add foo",
-                TaskKind::Feature,
+                TicketKind::Feature,
                 "a description".to_string(),
                 vec![],
                 None,
@@ -2571,7 +2578,7 @@ mod tests {
         let task = tm
             .new_task_for_ticket(
                 "T",
-                TaskKind::Feature,
+                TicketKind::Feature,
                 "docs/tickets/open/t-abcd.md".to_string(),
                 vec![],
                 None,
@@ -2601,7 +2608,7 @@ mod tests {
         let parent = tm
             .new_task_by(
                 "P",
-                TaskKind::Feature,
+                TicketKind::Feature,
                 String::new(),
                 vec![],
                 None,
@@ -2611,7 +2618,7 @@ mod tests {
             .expect("parent");
         let orch = "orchestrator".to_string();
         let child = tm
-            .new_task_by("C", TaskKind::Feature, String::new(), vec![], None, &orch)
+            .new_task_by("C", TicketKind::Feature, String::new(), vec![], None, &orch)
             .await
             .expect("child");
         let child = tm
@@ -2651,12 +2658,19 @@ mod tests {
         let tm = reopen_manager(store.clone(), state.clone()).await;
 
         let task = tm
-            .new_task_by("T", TaskKind::Feature, String::new(), vec![], None, "human")
+            .new_task_by(
+                "T",
+                TicketKind::Feature,
+                String::new(),
+                vec![],
+                None,
+                "human",
+            )
             .await
             .expect("new task");
         assert_eq!(task.watchers, vec!["human".to_string()]);
         let anon = tm
-            .new_open_task("A", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("A", TicketKind::Feature, String::new(), vec![], None)
             .await
             .expect("new task");
         assert!(
@@ -2762,7 +2776,7 @@ mod tests {
     async fn asking_a_question_blocks_ready_and_answering_unblocks_it() {
         let (tm, _tmp) = manager().await;
         let task = tm
-            .new_open_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Add foo", TicketKind::Feature, String::new(), vec![], None)
             .await
             .expect("new task");
         force_planned(&tm, &task.id);
@@ -2813,7 +2827,7 @@ mod tests {
     async fn ask_and_answer_reject_blank_bodies() {
         let (tm, _tmp) = manager().await;
         let task = tm
-            .new_open_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Add foo", TicketKind::Feature, String::new(), vec![], None)
             .await
             .expect("new task");
 
@@ -2837,7 +2851,7 @@ mod tests {
     async fn note_adds_a_thread_entry_without_affecting_readiness() {
         let (tm, _tmp) = manager().await;
         let task = tm
-            .new_open_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Add foo", TicketKind::Feature, String::new(), vec![], None)
             .await
             .expect("new task");
         force_planned(&tm, &task.id);
@@ -2869,7 +2883,7 @@ mod tests {
     async fn note_rejects_a_blank_body() {
         let (tm, _tmp) = manager().await;
         let task = tm
-            .new_open_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Add foo", TicketKind::Feature, String::new(), vec![], None)
             .await
             .expect("new task");
         let err = tm
@@ -2900,7 +2914,7 @@ mod tests {
         .expect("open task manager");
 
         let task = tm
-            .new_open_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Add foo", TicketKind::Feature, String::new(), vec![], None)
             .await
             .expect("new task");
         force_planned(&tm, &task.id);
@@ -2934,7 +2948,7 @@ mod tests {
     async fn claim_blocks_ready_and_release_unblocks_it() {
         let (tm, _tmp) = manager().await;
         let task = tm
-            .new_open_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Add foo", TicketKind::Feature, String::new(), vec![], None)
             .await
             .expect("new task");
         force_planned(&tm, &task.id);
@@ -2945,7 +2959,7 @@ mod tests {
             .claim_task(&task.id, &"agent:w1".to_string())
             .await
             .expect("claim task");
-        assert_eq!(claimed.state, TaskState::Claimed);
+        assert_eq!(claimed.state, TicketState::Claimed);
         assert_eq!(claimed.claimed_by.as_deref(), Some("agent:w1"));
         assert!(claimed.claimed_at.is_some());
         assert!(
@@ -2964,7 +2978,7 @@ mod tests {
             .release_task(&task.id, &"agent:w1".to_string())
             .await
             .expect("release task");
-        assert_eq!(released.state, TaskState::Planned);
+        assert_eq!(released.state, TicketState::Planned);
         assert_eq!(released.claimed_by, None, "cleared on release");
         assert_eq!(released.claimed_at, None);
         assert!(
@@ -2988,7 +3002,7 @@ mod tests {
         let t = tm
             .new_open_task(
                 "[at restart] tokens",
-                TaskKind::Feature,
+                TicketKind::Feature,
                 String::new(),
                 vec![],
                 None,
@@ -3000,10 +3014,13 @@ mod tests {
         tm.claim_task(&t.id, &human).await.expect("claim");
         tm.tick_claim_lease_check(Utc::now() + chrono::Duration::days(30))
             .await;
-        assert_eq!(tm.get_task(&t.id).expect("task").state, TaskState::Claimed);
+        assert_eq!(
+            tm.get_task(&t.id).expect("task").state,
+            TicketState::Claimed
+        );
 
         let done = tm.done_task(&t.id, "", None, &human).await.expect("done");
-        assert_eq!(done.state, TaskState::Integrated);
+        assert_eq!(done.state, TicketState::Integrated);
         assert_eq!(done.commit, None);
     }
 
@@ -3011,7 +3028,7 @@ mod tests {
     async fn done_without_a_commit_is_refused_for_an_agent_claim() {
         let (tm, _tmp) = manager().await;
         let t = tm
-            .new_open_task("A", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("A", TicketKind::Feature, String::new(), vec![], None)
             .await
             .expect("new");
         force_planned(&tm, &t.id);
@@ -3026,18 +3043,18 @@ mod tests {
     }
 
     /// `server.rs::list_tasks` filters `?claimed_by=` by matching
-    /// `Task::claimed_by` verbatim against the already-resolved id (`me` is
+    /// `Ticket::claimed_by` verbatim against the already-resolved id (`me` is
     /// resolved to the caller's own `PrincipalId` before this filter ever
     /// runs); this exercises that same filter directly against the field.
     #[tokio::test]
     async fn claimed_by_filters_to_the_matching_claimant() {
         let (tm, _tmp) = manager().await;
         let a = tm
-            .new_open_task("A", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("A", TicketKind::Feature, String::new(), vec![], None)
             .await
             .expect("new a");
         let b = tm
-            .new_open_task("B", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("B", TicketKind::Feature, String::new(), vec![], None)
             .await
             .expect("new b");
         force_planned(&tm, &a.id);
@@ -3066,7 +3083,7 @@ mod tests {
     async fn claim_by_another_agent_is_rejected() {
         let (tm, _tmp) = manager().await;
         let task = tm
-            .new_open_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Add foo", TicketKind::Feature, String::new(), vec![], None)
             .await
             .expect("new task");
         force_planned(&tm, &task.id);
@@ -3085,9 +3102,9 @@ mod tests {
         assert!(!tm.ready_tasks().iter().any(|t| t.id == task.id));
     }
 
-    async fn claimed_task(tm: &TaskManager, agent: &str) -> Task {
+    async fn claimed_task(tm: &TaskManager, agent: &str) -> Ticket {
         let task = tm
-            .new_open_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Add foo", TicketKind::Feature, String::new(), vec![], None)
             .await
             .expect("new task");
         force_planned(tm, &task.id);
@@ -3105,7 +3122,7 @@ mod tests {
             .drop_task(&task.id, "obsolete", &"human".to_string())
             .await
             .expect("drop claimed task");
-        assert_eq!(dropped.state, TaskState::Dropped);
+        assert_eq!(dropped.state, TicketState::Dropped);
         assert_eq!(dropped.claimed_by, None);
         assert!(tm.store.list_claims().await.expect("claims").is_empty());
         assert!(tm.claims.lock().expect("claims lock").is_empty());
@@ -3121,7 +3138,7 @@ mod tests {
             .expect("task cache lock")
             .get_mut(&task.id)
             .expect("task in cache")
-            .state = TaskState::Dropped;
+            .state = TicketState::Dropped;
         assert!(matches!(
             tm.release_claim(&task.id).await,
             Err(TaskError::Conflict(_))
@@ -3130,7 +3147,7 @@ mod tests {
             .await;
         assert_eq!(
             tm.get_task(&task.id).expect("task").state,
-            TaskState::Dropped
+            TicketState::Dropped
         );
     }
 
@@ -3139,7 +3156,7 @@ mod tests {
         let (tm, _tmp) = manager().await;
         let task = claimed_task(&tm, "w1").await;
         tm.store
-            .set_task_state(&task.id, TaskState::Dropped)
+            .set_task_state(&task.id, TicketState::Dropped)
             .await
             .expect("set state");
 
@@ -3161,7 +3178,7 @@ mod tests {
         let (tm, _tmp) = manager().await;
         let store = tm.store.clone();
         let task = tm
-            .new_open_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Add foo", TicketKind::Feature, String::new(), vec![], None)
             .await
             .expect("new task");
         force_planned(&tm, &task.id);
@@ -3233,7 +3250,7 @@ mod tests {
         let task = tm
             .new_task_by(
                 "Add foo",
-                TaskKind::Feature,
+                TicketKind::Feature,
                 String::new(),
                 vec![],
                 None,
@@ -3269,7 +3286,7 @@ mod tests {
         tm2.rebuild_from_state_branch().await.expect("rebuild");
 
         let rehydrated = tm2.get_task(&task.id).expect("rehydrated");
-        assert_eq!(rehydrated.state, TaskState::Claimed);
+        assert_eq!(rehydrated.state, TicketState::Claimed);
         assert_eq!(rehydrated.claimed_by.as_deref(), Some("agent:w1"));
         assert!(rehydrated.claimed_at.is_some());
         assert_eq!(rehydrated.created_by, "external:advisor");
@@ -3306,7 +3323,7 @@ mod tests {
         .await
         .expect("open task manager");
         let task = tm
-            .new_open_task("Add foo", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("Add foo", TicketKind::Feature, String::new(), vec![], None)
             .await
             .expect("new task");
 
@@ -3372,15 +3389,15 @@ mod tests {
         .expect("open task manager");
 
         let a = tm
-            .new_open_task("A", TaskKind::Chore, "body a".to_string(), vec![], None)
+            .new_open_task("A", TicketKind::Chore, "body a".to_string(), vec![], None)
             .await
             .expect("new a");
         let b = tm
-            .new_open_task("B", TaskKind::Feature, "body b".to_string(), vec![], None)
+            .new_open_task("B", TicketKind::Feature, "body b".to_string(), vec![], None)
             .await
             .expect("new b");
         let c = tm
-            .new_open_task("C", TaskKind::Feature, String::new(), vec![], None)
+            .new_open_task("C", TicketKind::Feature, String::new(), vec![], None)
             .await
             .expect("new c");
         tm.add_edge(&a.id, &b.id, EdgeKind::Blocks)
@@ -3425,10 +3442,10 @@ mod tests {
         let got_a = tasks.iter().find(|t| t.id == a.id).expect("a rebuilt");
         assert_eq!(got_a.title, "A");
         assert_eq!(got_a.body, "body a");
-        assert_eq!(got_a.state, TaskState::Open);
+        assert_eq!(got_a.state, TicketState::Open);
 
         let got_b = tasks.iter().find(|t| t.id == b.id).expect("b rebuilt");
-        assert_eq!(got_b.state, TaskState::Planned);
+        assert_eq!(got_b.state, TicketState::Planned);
         assert_eq!(
             got_b.thread.len(),
             2,
@@ -3440,7 +3457,7 @@ mod tests {
         );
 
         let got_c = tasks.iter().find(|t| t.id == c.id).expect("c rebuilt");
-        assert_eq!(got_c.state, TaskState::Planned);
+        assert_eq!(got_c.state, TicketState::Planned);
         assert!(
             !tm2.is_ready(got_c),
             "c's open question survives the rebuild and still blocks ready"
@@ -3531,7 +3548,7 @@ mod tests {
     #[tokio::test]
     async fn rebuild_refuses_against_an_already_populated_database() {
         let (tm, _tmp) = manager().await;
-        tm.new_open_task("A", TaskKind::Chore, String::new(), vec![], None)
+        tm.new_open_task("A", TicketKind::Chore, String::new(), vec![], None)
             .await
             .expect("new a");
         tm.flush_now().await.expect("flush");
@@ -3551,11 +3568,11 @@ mod tests {
 
     /// A manager with a 5 minute settle period and a planned task created
     /// `age` ago (the injected clock: shifting `created_at`/thread times back).
-    async fn settling(age_mins: i64) -> (TaskManager, Task, tempfile::TempDir) {
+    async fn settling(age_mins: i64) -> (TaskManager, Ticket, tempfile::TempDir) {
         let (tm, tmp) = manager().await;
         let tm = tm.with_settle(std::time::Duration::from_secs(300));
         let t = tm
-            .new_open_task("T", TaskKind::Chore, String::new(), vec![], None)
+            .new_open_task("T", TicketKind::Chore, String::new(), vec![], None)
             .await
             .expect("new");
         force_planned(&tm, &t.id);

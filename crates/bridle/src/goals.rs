@@ -1,7 +1,7 @@
 //! `bridle goals list` and `bridle goals propose` (docs/design/goals-tier.md).
 
 use anyhow::anyhow;
-use bridle_api::{NewTaskRequest, TaskKind};
+use bridle_api::{NewTicketRequest, TicketKind};
 use bridle_spec::{Goal, parse_goals};
 
 use crate::cli::{Cli, GoalsAction, GoalsArgs, GoalsListArgs, GoalsProposeProposeArgs};
@@ -134,13 +134,13 @@ async fn propose(cli: &Cli, args: &GoalsProposeProposeArgs) -> Result<(), CliErr
     );
 
     let client = client_for(cli).await?;
-    let req = NewTaskRequest {
+    let req = NewTicketRequest {
         ticket: None,
         parent: None,
         for_human: false,
         priority: None,
         title,
-        kind: TaskKind::Question,
+        kind: TicketKind::Question,
         body,
         components: Vec::new(),
         size: None,

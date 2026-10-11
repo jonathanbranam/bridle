@@ -7,7 +7,7 @@ use support::ClientExt as _;
 use std::time::Duration;
 
 use bridle_api::types::{
-    AgentState, EdgeKind, MessageQuery, NewEdgeRequest, NewTaskRequest, SpawnRequest, TaskKind,
+    AgentState, EdgeKind, MessageQuery, NewEdgeRequest, NewTicketRequest, SpawnRequest, TicketKind,
     Workdir,
 };
 use support::{default_overrides, start_daemon_with_config, wait_for_state};
@@ -21,14 +21,14 @@ async fn daemon(settle: &str) -> (support::TestDaemon, tempfile::TempDir) {
 async fn planned_task(daemon: &support::TestDaemon, title: &str) -> String {
     let id = daemon
         .client
-        .new_open_task(&NewTaskRequest {
+        .new_open_task(&NewTicketRequest {
             ticket: None,
             parent: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
             title: title.to_string(),
-            kind: TaskKind::Chore,
+            kind: TicketKind::Chore,
             body: String::new(),
             size: None,
         })

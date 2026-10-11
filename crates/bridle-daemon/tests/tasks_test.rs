@@ -9,14 +9,14 @@ use support::ClientExt as _;
 
 use bridle_api::ClientError;
 use bridle_api::types::{
-    AgentState, DoneTaskRequest, DropTaskRequest, EditTaskRequest, NewTaskRequest, SetKindRequest,
-    SetPriorityRequest, SetSummaryRequest, SpawnRequest, TaskKind, TaskPriority, TaskSize,
-    TaskState, ThreadEntryKind, Workdir,
+    AgentState, DoneTicketRequest, DropTicketRequest, EditTicketRequest, NewTicketRequest,
+    SetKindRequest, SetPriorityRequest, SetSummaryRequest, SpawnRequest, ThreadEntryKind,
+    TicketKind, TicketPriority, TicketSize, TicketState, Workdir,
 };
 use support::{start_daemon, wait_for_state};
 
-fn new_req(title: &str, kind: TaskKind) -> NewTaskRequest {
-    NewTaskRequest {
+fn new_req(title: &str, kind: TicketKind) -> NewTicketRequest {
+    NewTicketRequest {
         ticket: None,
         parent: None,
         for_human: false,
@@ -35,14 +35,14 @@ async fn create_show_list_and_edit_a_task() {
     let c = &daemon.client;
 
     let task = c
-        .new_open_task(&NewTaskRequest {
+        .new_open_task(&NewTicketRequest {
             ticket: None,
             parent: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
             title: "Add foo".to_string(),
-            kind: TaskKind::Feature,
+            kind: TicketKind::Feature,
             body: "a description".to_string(),
             size: None,
         })
@@ -51,7 +51,7 @@ async fn create_show_list_and_edit_a_task() {
     // The test harness's repo directory is named "repo", so the default
     // prefix (config::default_task_prefix) is its first two letters.
     assert!(task.id.starts_with("re-"), "got id {}", task.id);
-    assert_eq!(task.state, TaskState::Open);
+    assert_eq!(task.state, TicketState::Open);
     assert_eq!(task.title, "Add foo");
     assert_eq!(task.body, "a description");
 
@@ -66,7 +66,7 @@ async fn create_show_list_and_edit_a_task() {
     let edited = c
         .edit_task(
             &task.id,
-            &EditTaskRequest {
+            &EditTicketRequest {
                 ticket: None,
                 components: None,
                 size: None,
@@ -78,7 +78,7 @@ async fn create_show_list_and_edit_a_task() {
         .expect("edit task");
     assert_eq!(edited.title, "Add foo, better");
     assert_eq!(edited.body, "a description");
-    assert_eq!(edited.state, TaskState::Open);
+    assert_eq!(edited.state, TicketState::Open);
 }
 
 #[tokio::test]
@@ -97,7 +97,7 @@ async fn new_task_rejects_a_blank_title() {
     let (daemon, _tmp) = start_daemon(None).await;
     let err = daemon
         .client
-        .new_open_task(&new_req("   ", TaskKind::Chore))
+        .new_open_task(&new_req("   ", TicketKind::Chore))
         .await
         .expect_err("blank title");
     assert!(matches!(err, ClientError::Api { status: 400, .. }));
@@ -108,7 +108,7 @@ async fn drop_requires_a_reason() {
     let (daemon, _tmp) = start_daemon(None).await;
     let task = daemon
         .client
-        .new_open_task(&new_req("Add foo", TaskKind::Bug))
+        .new_open_task(&new_req("Add foo", TicketKind::Bug))
         .await
         .expect("new task");
 
@@ -116,7 +116,7 @@ async fn drop_requires_a_reason() {
         .client
         .drop_task(
             &task.id,
-            &DropTaskRequest {
+            &DropTicketRequest {
                 reason: String::new(),
             },
         )
@@ -128,13 +128,13 @@ async fn drop_requires_a_reason() {
         .client
         .drop_task(
             &task.id,
-            &DropTaskRequest {
+            &DropTicketRequest {
                 reason: "budget cut".to_string(),
             },
         )
         .await
         .expect("drop with a reason");
-    assert_eq!(dropped.state, TaskState::Dropped);
+    assert_eq!(dropped.state, TicketState::Dropped);
     assert_eq!(dropped.thread.len(), 1);
     assert!(dropped.thread[0].body.contains("budget cut"));
 }
@@ -144,7 +144,7 @@ async fn reopen_only_applies_to_a_dropped_task() {
     let (daemon, _tmp) = start_daemon(None).await;
     let c = &daemon.client;
     let task = c
-        .new_open_task(&new_req("Add foo", TaskKind::Research))
+        .new_open_task(&new_req("Add foo", TicketKind::Research))
         .await
         .expect("new task");
 
@@ -153,7 +153,7 @@ async fn reopen_only_applies_to_a_dropped_task() {
 
     c.drop_task(
         &task.id,
-        &DropTaskRequest {
+        &DropTicketRequest {
             reason: "later".to_string(),
         },
     )
@@ -161,7 +161,7 @@ async fn reopen_only_applies_to_a_dropped_task() {
     .expect("drop");
 
     let reopened = c.reopen_task(&task.id).await.expect("reopen");
-    assert_eq!(reopened.state, TaskState::Reopened);
+    assert_eq!(reopened.state, TicketState::Reopened);
 
     let err = c
         .reopen_task(&task.id)
@@ -185,7 +185,7 @@ async fn ask_blocks_a_task_and_answer_frees_it_again() {
     let c = &daemon.client;
 
     let task = c
-        .new_open_task(&new_req("Add foo", TaskKind::Feature))
+        .new_open_task(&new_req("Add foo", TicketKind::Feature))
         .await
         .expect("new task");
     assert!(c.list_open_questions().await.expect("list").is_empty());
@@ -245,7 +245,7 @@ async fn note_appears_in_the_task_thread_from_human_and_agent() {
     let c = &daemon.client;
 
     let task = c
-        .new_open_task(&new_req("Add foo", TaskKind::Feature))
+        .new_open_task(&new_req("Add foo", TicketKind::Feature))
         .await
         .expect("new task");
 
@@ -293,10 +293,10 @@ async fn claim_of_a_task_that_is_not_ready_is_a_conflict() {
     let (daemon, _tmp) = start_daemon(None).await;
     let c = &daemon.client;
     let task = c
-        .new_open_task(&new_req("Add foo", TaskKind::Feature))
+        .new_open_task(&new_req("Add foo", TicketKind::Feature))
         .await
         .expect("new task");
-    assert_eq!(task.state, TaskState::Open);
+    assert_eq!(task.state, TicketState::Open);
 
     let err = c
         .claim_task(&task.id)
@@ -310,7 +310,7 @@ async fn release_of_an_unclaimed_task_is_a_conflict() {
     let (daemon, _tmp) = start_daemon(None).await;
     let c = &daemon.client;
     let task = c
-        .new_open_task(&new_req("Add foo", TaskKind::Feature))
+        .new_open_task(&new_req("Add foo", TicketKind::Feature))
         .await
         .expect("new task");
 
@@ -323,7 +323,7 @@ async fn a_task_created_before_restart_is_still_there_after() {
     let (daemon, tmp) = start_daemon(None).await;
     let task = daemon
         .client
-        .new_open_task(&new_req("Add foo", TaskKind::Feature))
+        .new_open_task(&new_req("Add foo", TicketKind::Feature))
         .await
         .expect("new task");
     // A graceful shutdown flushes the state branch (lib.rs::start), so the
@@ -377,7 +377,7 @@ async fn a_task_created_before_restart_is_still_there_after() {
         .await
         .expect("get task after restart");
     assert_eq!(fetched.title, "Add foo");
-    assert_eq!(fetched.state, TaskState::Open);
+    assert_eq!(fetched.state, TicketState::Open);
 
     running.shutdown();
     running.join().await.expect("join");
@@ -389,10 +389,10 @@ async fn a_new_task_is_pending_until_readied() {
     let (daemon, _tmp) = start_daemon(None).await;
     let c = &daemon.client;
     let task = c
-        .new_task(&new_req("Add foo", TaskKind::Feature))
+        .new_task(&new_req("Add foo", TicketKind::Feature))
         .await
         .expect("new task");
-    assert_eq!(task.state, TaskState::Pending);
+    assert_eq!(task.state, TicketState::Pending);
     let status = c.status().await.expect("status");
     assert!(status.pending_tasks.iter().any(|t| t.id == task.id));
 
@@ -400,7 +400,7 @@ async fn a_new_task_is_pending_until_readied() {
     assert!(matches!(err, ClientError::Api { status: 409, .. }));
 
     let open = c.ready_task(&task.id).await.expect("ready");
-    assert_eq!(open.state, TaskState::Open);
+    assert_eq!(open.state, TicketState::Open);
     let status = c.status().await.expect("status");
     assert!(status.pending_tasks.iter().all(|t| t.id != task.id));
     let err = c.ready_task(&task.id).await.expect_err("already open");
@@ -412,13 +412,13 @@ async fn plan_moves_open_to_planned_and_rejects_a_second_plan() {
     let (daemon, _tmp) = start_daemon(None).await;
     let c = &daemon.client;
     let task = c
-        .new_open_task(&new_req("Add foo", TaskKind::Feature))
+        .new_open_task(&new_req("Add foo", TicketKind::Feature))
         .await
         .expect("new task");
-    assert_eq!(task.state, TaskState::Open);
+    assert_eq!(task.state, TicketState::Open);
 
     let planned = c.plan_task(&task.id).await.expect("plan");
-    assert_eq!(planned.state, TaskState::Planned);
+    assert_eq!(planned.state, TicketState::Planned);
     assert!(
         c.ready_tasks()
             .await
@@ -451,17 +451,17 @@ async fn plan_then_claim_round_trips_through_the_http_surface() {
     let (daemon, _tmp) = start_daemon(None).await;
     let c = &daemon.client;
     let task = c
-        .new_open_task(&new_req("Add foo", TaskKind::Feature))
+        .new_open_task(&new_req("Add foo", TicketKind::Feature))
         .await
         .expect("new task");
     c.plan_task(&task.id).await.expect("plan");
 
     let claimed = c.claim_task(&task.id).await.expect("claim");
-    assert_eq!(claimed.state, TaskState::Claimed);
+    assert_eq!(claimed.state, TicketState::Claimed);
     assert_eq!(claimed.claimed_by.as_deref(), Some("human"));
 
     let released = c.release_task(&task.id).await.expect("release");
-    assert_eq!(released.state, TaskState::Planned);
+    assert_eq!(released.state, TicketState::Planned);
     assert_eq!(released.claimed_by, None);
 }
 
@@ -471,10 +471,10 @@ async fn plan_then_claim_round_trips_through_the_http_surface() {
 async fn for_human_task_is_claimed_by_the_human_and_done_without_a_commit() {
     let (daemon, _tmp) = start_daemon(None).await;
     let c = &daemon.client;
-    let mut req = new_req("[at restart] move tokens", TaskKind::Feature);
+    let mut req = new_req("[at restart] move tokens", TicketKind::Feature);
     req.for_human = true;
     let task = c.new_open_task(&req).await.expect("new task");
-    assert_eq!(task.state, TaskState::Claimed);
+    assert_eq!(task.state, TicketState::Claimed);
     assert_eq!(task.claimed_by.as_deref(), Some("human"));
 
     let listed = c.list_tasks_claimed_by("human").await.expect("list");
@@ -483,7 +483,7 @@ async fn for_human_task_is_claimed_by_the_human_and_done_without_a_commit() {
     let done = c
         .done_task(
             &task.id,
-            &DoneTaskRequest {
+            &DoneTicketRequest {
                 commit: String::new(),
                 branch: None,
                 ..Default::default()
@@ -491,7 +491,7 @@ async fn for_human_task_is_claimed_by_the_human_and_done_without_a_commit() {
         )
         .await
         .expect("done");
-    assert_eq!(done.state, TaskState::Integrated);
+    assert_eq!(done.state, TicketState::Integrated);
 }
 
 /// A human to-do carries a priority; changing it and rescinding the to-do are each in the
@@ -500,29 +500,29 @@ async fn for_human_task_is_claimed_by_the_human_and_done_without_a_commit() {
 async fn human_todo_priority_change_and_rescind_are_audited() {
     let (daemon, _tmp) = start_daemon(None).await;
     let c = &daemon.client;
-    let mut req = new_req("rotate the key", TaskKind::Chore);
+    let mut req = new_req("rotate the key", TicketKind::Chore);
     req.for_human = true;
-    req.priority = Some(TaskPriority::High);
+    req.priority = Some(TicketPriority::High);
     let task = c.new_open_task(&req).await.expect("new task");
-    assert_eq!(task.priority, TaskPriority::High);
+    assert_eq!(task.priority, TicketPriority::High);
     assert!(task.thread[0].body.contains("priority high"));
 
     let plain = c
-        .new_open_task(&new_req("plain", TaskKind::Chore))
+        .new_open_task(&new_req("plain", TicketKind::Chore))
         .await
         .expect("plain");
-    assert_eq!(plain.priority, TaskPriority::Normal);
+    assert_eq!(plain.priority, TicketPriority::Normal);
 
     let t = c
         .set_task_priority(
             &task.id,
             &SetPriorityRequest {
-                priority: TaskPriority::Low,
+                priority: TicketPriority::Low,
             },
         )
         .await
         .expect("set priority");
-    assert_eq!(t.priority, TaskPriority::Low);
+    assert_eq!(t.priority, TicketPriority::Low);
     assert_eq!(
         t.thread.last().expect("entry").body,
         "priority: high -> low"
@@ -541,13 +541,13 @@ async fn human_todo_priority_change_and_rescind_are_audited() {
     let dropped = orch
         .drop_task(
             &task.id,
-            &DropTaskRequest {
+            &DropTicketRequest {
                 reason: "no longer needed".to_string(),
             },
         )
         .await
         .expect("drop");
-    assert_eq!(dropped.state, TaskState::Dropped);
+    assert_eq!(dropped.state, TicketState::Dropped);
     assert!(
         dropped
             .thread
@@ -592,15 +592,15 @@ async fn queue_set_get_and_top_tier_pick_the_right_tier_when_blocked() {
     );
 
     let blocker = c
-        .new_open_task(&new_req("Blocker", TaskKind::Chore))
+        .new_open_task(&new_req("Blocker", TicketKind::Chore))
         .await
         .expect("new blocker");
     let blocked = c
-        .new_open_task(&new_req("Blocked", TaskKind::Feature))
+        .new_open_task(&new_req("Blocked", TicketKind::Feature))
         .await
         .expect("new blocked");
     let next = c
-        .new_open_task(&new_req("Next", TaskKind::Feature))
+        .new_open_task(&new_req("Next", TicketKind::Feature))
         .await
         .expect("new next");
     c.add_edge(&bridle_api::types::NewEdgeRequest {
@@ -633,7 +633,7 @@ async fn queue_set_get_and_top_tier_pick_the_right_tier_when_blocked() {
     // Resolving the blocker frees tier 1, which now outranks tier 2 again.
     c.drop_task(
         &blocker.id,
-        &DropTaskRequest {
+        &DropTicketRequest {
             reason: "done another way".to_string(),
         },
     )
@@ -658,7 +658,7 @@ async fn only_pm_or_human_may_write_the_queue() {
     let (daemon, _tmp) = start_daemon(None).await;
     let task = daemon
         .client
-        .new_open_task(&new_req("Add foo", TaskKind::Feature))
+        .new_open_task(&new_req("Add foo", TicketKind::Feature))
         .await
         .expect("new task");
 
@@ -706,7 +706,7 @@ async fn only_pm_or_human_may_write_the_queue() {
         .expect("orchestrator can set the queue");
     let other = daemon
         .client
-        .new_open_task(&new_req("Add bar", TaskKind::Feature))
+        .new_open_task(&new_req("Add bar", TicketKind::Feature))
         .await
         .expect("new task");
     orch.add_queue_tier(vec![other.id.clone()])
@@ -744,7 +744,7 @@ async fn rebuild_is_a_no_op_when_empty_and_refuses_once_populated() {
     c.rebuild(false).await.expect("rebuild against an empty db");
     assert!(c.list_tasks().await.expect("list tasks").is_empty());
 
-    c.new_open_task(&new_req("Add foo", TaskKind::Feature))
+    c.new_open_task(&new_req("Add foo", TicketKind::Feature))
         .await
         .expect("new task");
 
@@ -757,12 +757,12 @@ async fn size_is_set_on_new_shown_edited_and_kept_by_other_edits() {
     let (daemon, _tmp) = start_daemon(None).await;
     let c = &daemon.client;
 
-    let mut req = new_req("Small", TaskKind::Chore);
-    req.size = Some(TaskSize::S);
+    let mut req = new_req("Small", TicketKind::Chore);
+    req.size = Some(TicketSize::S);
     let task = c.new_open_task(&req).await.expect("new task");
-    assert_eq!(task.size, Some(TaskSize::S));
+    assert_eq!(task.size, Some(TicketSize::S));
     let unsized_task = c
-        .new_open_task(&new_req("Unsized", TaskKind::Chore))
+        .new_open_task(&new_req("Unsized", TicketKind::Chore))
         .await
         .expect("new task");
     assert_eq!(unsized_task.size, None);
@@ -770,19 +770,19 @@ async fn size_is_set_on_new_shown_edited_and_kept_by_other_edits() {
     let edited = c
         .edit_task(
             &unsized_task.id,
-            &EditTaskRequest {
+            &EditTicketRequest {
                 ticket: None,
-                size: Some(TaskSize::L),
+                size: Some(TicketSize::L),
                 ..Default::default()
             },
         )
         .await
         .expect("edit size");
-    assert_eq!(edited.size, Some(TaskSize::L));
+    assert_eq!(edited.size, Some(TicketSize::L));
     let retitled = c
         .edit_task(
             &edited.id,
-            &EditTaskRequest {
+            &EditTicketRequest {
                 ticket: None,
                 title: Some("Bigger".to_string()),
                 ..Default::default()
@@ -790,13 +790,13 @@ async fn size_is_set_on_new_shown_edited_and_kept_by_other_edits() {
         )
         .await
         .expect("edit title");
-    assert_eq!(retitled.size, Some(TaskSize::L));
+    assert_eq!(retitled.size, Some(TicketSize::L));
 
     let list = c.list_tasks().await.expect("list");
     // list order isn't guaranteed for tasks created in the same instant
     let size_of = |id: &str| list.iter().find(|t| t.id == id).expect("listed").size;
-    assert_eq!(size_of(&task.id), Some(TaskSize::S));
-    assert_eq!(size_of(&unsized_task.id), Some(TaskSize::L));
+    assert_eq!(size_of(&task.id), Some(TicketSize::S));
+    assert_eq!(size_of(&unsized_task.id), Some(TicketSize::L));
 }
 
 #[tokio::test]
@@ -805,7 +805,7 @@ async fn done_records_branch_commit_and_a_replaceable_summary() {
     let c = &daemon.client;
 
     let task = c
-        .new_open_task(&new_req("Landed", TaskKind::Feature))
+        .new_open_task(&new_req("Landed", TicketKind::Feature))
         .await
         .expect("new task");
     assert!(task.summary.is_none());
@@ -827,7 +827,7 @@ async fn done_records_branch_commit_and_a_replaceable_summary() {
     let done = c
         .done_task(
             &task.id,
-            &DoneTaskRequest {
+            &DoneTicketRequest {
                 commit: head.clone(),
                 branch: Some("bridle/landed".into()),
                 ..Default::default()
@@ -847,14 +847,14 @@ async fn search_matches_words_in_title_body_and_summary() {
     let c = &daemon.client;
 
     let t1 = c
-        .new_open_task(&NewTaskRequest {
+        .new_open_task(&NewTicketRequest {
             ticket: None,
             parent: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
             title: "Fix database connection pool".to_string(),
-            kind: TaskKind::Bug,
+            kind: TicketKind::Bug,
             body: "The connection pool is leaking memory in production".to_string(),
             size: None,
         })
@@ -862,14 +862,14 @@ async fn search_matches_words_in_title_body_and_summary() {
         .expect("new task");
 
     let t2 = c
-        .new_open_task(&NewTaskRequest {
+        .new_open_task(&NewTicketRequest {
             ticket: None,
             parent: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
             title: "Refactor API endpoint".to_string(),
-            kind: TaskKind::Feature,
+            kind: TicketKind::Feature,
             body: "The endpoint needs optimization for better performance".to_string(),
             size: None,
         })
@@ -877,14 +877,14 @@ async fn search_matches_words_in_title_body_and_summary() {
         .expect("new task");
 
     let t3 = c
-        .new_open_task(&NewTaskRequest {
+        .new_open_task(&NewTicketRequest {
             ticket: None,
             parent: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
             title: "Add logging".to_string(),
-            kind: TaskKind::Feature,
+            kind: TicketKind::Feature,
             body: "Add debug logging to trace requests".to_string(),
             size: None,
         })
@@ -952,14 +952,14 @@ async fn search_includes_done_and_dropped_tasks() {
     let c = &daemon.client;
 
     let open_task = c
-        .new_open_task(&NewTaskRequest {
+        .new_open_task(&NewTicketRequest {
             ticket: None,
             parent: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
             title: "Open task".to_string(),
-            kind: TaskKind::Feature,
+            kind: TicketKind::Feature,
             body: "Search in open".to_string(),
             size: None,
         })
@@ -967,14 +967,14 @@ async fn search_includes_done_and_dropped_tasks() {
         .expect("new task");
 
     let done_task = c
-        .new_open_task(&NewTaskRequest {
+        .new_open_task(&NewTicketRequest {
             ticket: None,
             parent: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
             title: "Done task".to_string(),
-            kind: TaskKind::Feature,
+            kind: TicketKind::Feature,
             body: "Search in done".to_string(),
             size: None,
         })
@@ -982,14 +982,14 @@ async fn search_includes_done_and_dropped_tasks() {
         .expect("new task");
 
     let dropped_task = c
-        .new_open_task(&NewTaskRequest {
+        .new_open_task(&NewTicketRequest {
             ticket: None,
             parent: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
             title: "Dropped task".to_string(),
-            kind: TaskKind::Feature,
+            kind: TicketKind::Feature,
             body: "Search in dropped".to_string(),
             size: None,
         })
@@ -999,7 +999,7 @@ async fn search_includes_done_and_dropped_tasks() {
     // Mark one as done
     c.done_task(
         &done_task.id,
-        &DoneTaskRequest {
+        &DoneTicketRequest {
             commit: "abc123".into(),
             branch: None,
             ..Default::default()
@@ -1011,7 +1011,7 @@ async fn search_includes_done_and_dropped_tasks() {
     // Mark one as dropped
     c.drop_task(
         &dropped_task.id,
-        &DropTaskRequest {
+        &DropTicketRequest {
             reason: "not needed".into(),
         },
     )
@@ -1035,7 +1035,7 @@ async fn send_with_task_notes_the_thread_and_notifies_briefly() {
     let (daemon, _tmp) = start_daemon(None).await;
     let c = &daemon.client;
     let task = c
-        .new_open_task(&new_req("Add foo", TaskKind::Feature))
+        .new_open_task(&new_req("Add foo", TicketKind::Feature))
         .await
         .expect("new task");
     let external = daemon.external_client("w1").await;
@@ -1150,13 +1150,13 @@ async fn done_with_a_landed_branch_removes_its_agents_worktree_and_branch() {
     let head = git_out(&daemon.repo, &["rev-parse", "HEAD"]);
 
     let task = c
-        .new_open_task(&new_req("Landed", TaskKind::Feature))
+        .new_open_task(&new_req("Landed", TicketKind::Feature))
         .await
         .expect("new task");
     let done = c
         .done_task(
             &task.id,
-            &DoneTaskRequest {
+            &DoneTicketRequest {
                 commit: head,
                 branch: Some("bridle/w1".into()),
                 ..Default::default()
@@ -1165,7 +1165,7 @@ async fn done_with_a_landed_branch_removes_its_agents_worktree_and_branch() {
         .await
         .expect("done");
 
-    assert_eq!(done.state, TaskState::Integrated);
+    assert_eq!(done.state, TicketState::Integrated);
     assert!(c.get_agent("w1").await.is_err(), "agent should be removed");
     assert!(
         !std::path::Path::new(&wt).exists(),
@@ -1182,7 +1182,7 @@ async fn done_with_a_landed_branch_removes_its_agents_worktree_and_branch() {
 }
 
 /// Squash-lands `bridle/w1` on main and marks a fresh task done with it.
-async fn land_w1(daemon: &support::TestDaemon) -> bridle_api::types::Task {
+async fn land_w1(daemon: &support::TestDaemon) -> bridle_api::types::Ticket {
     git_out(&daemon.repo, &["merge", "--squash", "bridle/w1"]);
     git_out(
         &daemon.repo,
@@ -1191,14 +1191,14 @@ async fn land_w1(daemon: &support::TestDaemon) -> bridle_api::types::Task {
     let head = git_out(&daemon.repo, &["rev-parse", "HEAD"]);
     let task = daemon
         .client
-        .new_open_task(&new_req("Landed", TaskKind::Feature))
+        .new_open_task(&new_req("Landed", TicketKind::Feature))
         .await
         .expect("new task");
     daemon
         .client
         .done_task(
             &task.id,
-            &DoneTaskRequest {
+            &DoneTicketRequest {
                 commit: head,
                 branch: Some("bridle/w1".into()),
                 ..Default::default()
@@ -1212,11 +1212,11 @@ async fn land_w1(daemon: &support::TestDaemon) -> bridle_api::types::Task {
 /// landed task's note says why.
 async fn assert_worker_kept(
     daemon: &support::TestDaemon,
-    done: &bridle_api::types::Task,
+    done: &bridle_api::types::Ticket,
     wt: &str,
     why: &str,
 ) {
-    assert_eq!(done.state, TaskState::Integrated);
+    assert_eq!(done.state, TicketState::Integrated);
     assert!(daemon.client.get_agent("w1").await.is_ok(), "agent kept");
     assert!(std::path::Path::new(wt).exists(), "worktree kept");
     assert!(!git_out(&daemon.repo, &["branch", "--list", "bridle/w1"]).is_empty());
@@ -1257,7 +1257,7 @@ async fn done_keeps_a_worker_with_another_claimed_task() {
     let wt = agent.worktree.clone().expect("worktree");
     let second = daemon
         .client
-        .new_open_task(&new_req("Second", TaskKind::Feature))
+        .new_open_task(&new_req("Second", TicketKind::Feature))
         .await
         .expect("new task");
     let impact = Impact {
@@ -1297,13 +1297,13 @@ async fn done_refuses_a_commit_not_on_the_integration_branch() {
     let unmerged = git_out(&wt, &["rev-parse", "HEAD"]);
 
     let task = c
-        .new_open_task(&new_req("Unlanded", TaskKind::Feature))
+        .new_open_task(&new_req("Unlanded", TicketKind::Feature))
         .await
         .expect("new task");
     let err = c
         .done_task(
             &task.id,
-            &DoneTaskRequest {
+            &DoneTicketRequest {
                 commit: unmerged,
                 branch: Some("bridle/w1".into()),
                 ..Default::default()
@@ -1317,7 +1317,7 @@ async fn done_refuses_a_commit_not_on_the_integration_branch() {
     );
     assert_eq!(
         c.get_task(&task.id).await.expect("show").state,
-        TaskState::Open
+        TicketState::Open
     );
     assert!(c.get_agent("w1").await.is_ok());
     assert!(wt.exists());
@@ -1404,7 +1404,7 @@ async fn ask_with_to_notifies_that_recipient_and_answer_notifies_the_asker() {
     let c = &daemon.client;
     let boss = c.spawn(&spawn_req("boss")).await.expect("spawn boss");
     let task = c
-        .new_open_task(&new_req("Add foo", TaskKind::Feature))
+        .new_open_task(&new_req("Add foo", TicketKind::Feature))
         .await
         .expect("new task");
 
@@ -1467,7 +1467,7 @@ async fn ask_defaults_to_the_spawner_or_the_human() {
         .await
         .expect("boss spawns w1");
     let task = c
-        .new_open_task(&new_req("Add foo", TaskKind::Feature))
+        .new_open_task(&new_req("Add foo", TicketKind::Feature))
         .await
         .expect("new task");
 
@@ -1503,15 +1503,15 @@ async fn task_kind_changes_only_while_open() {
     let c = &daemon.client;
     let req = |kind| SetKindRequest { kind };
     let task = c
-        .new_open_task(&new_req("Mislabelled", TaskKind::Feature))
+        .new_open_task(&new_req("Mislabelled", TicketKind::Feature))
         .await
         .expect("new task");
 
     let t = c
-        .set_task_kind(&task.id, &req(TaskKind::Bug))
+        .set_task_kind(&task.id, &req(TicketKind::Bug))
         .await
         .expect("open task");
-    assert_eq!(t.kind, TaskKind::Bug);
+    assert_eq!(t.kind, TicketKind::Bug);
     assert_eq!(t.thread.last().expect("entry").body, "kind: feature -> bug");
     let events = c
         .events(&bridle_api::types::EventQuery {
@@ -1525,25 +1525,28 @@ async fn task_kind_changes_only_while_open() {
 
     let refused = |e: ClientError| matches!(e, ClientError::Api { status: 409, .. });
     c.plan_task(&task.id).await.expect("plan");
-    let e = c.set_task_kind(&task.id, &req(TaskKind::Chore)).await;
+    let e = c.set_task_kind(&task.id, &req(TicketKind::Chore)).await;
     assert!(refused(e.expect_err("planned")));
 
     let orch = daemon.external_client("orchestrator").await;
     orch.drop_task(
         &task.id,
-        &DropTaskRequest {
+        &DropTicketRequest {
             reason: "x".to_string(),
         },
     )
     .await
     .expect("drop");
-    let e = c.set_task_kind(&task.id, &req(TaskKind::Chore)).await;
+    let e = c.set_task_kind(&task.id, &req(TicketKind::Chore)).await;
     assert!(refused(e.expect_err("dropped")));
 
     c.reopen_task(&task.id).await.expect("reopen");
-    let e = c.set_task_kind(&task.id, &req(TaskKind::Chore)).await;
+    let e = c.set_task_kind(&task.id, &req(TicketKind::Chore)).await;
     assert!(refused(e.expect_err("reopened")));
-    assert_eq!(c.get_task(&task.id).await.expect("get").kind, TaskKind::Bug);
+    assert_eq!(
+        c.get_task(&task.id).await.expect("get").kind,
+        TicketKind::Bug
+    );
 }
 
 /// A worker's open-questions list holds only the questions on its own claimed task;
@@ -1565,11 +1568,11 @@ async fn a_workers_open_questions_omit_other_tasks_but_the_humans_do_not() {
         bridle_api::Client::new(daemon.running.url.clone(), Some(token.trim().to_string()));
 
     let mine = c
-        .new_open_task(&new_req("Mine", TaskKind::Feature))
+        .new_open_task(&new_req("Mine", TicketKind::Feature))
         .await
         .expect("mine");
     let other = c
-        .new_open_task(&new_req("Other", TaskKind::Feature))
+        .new_open_task(&new_req("Other", TicketKind::Feature))
         .await
         .expect("other");
     c.plan_task(&mine.id).await.expect("plan");
@@ -1591,7 +1594,7 @@ async fn a_workers_open_questions_omit_other_tasks_but_the_humans_do_not() {
 async fn the_ticket_field_round_trips_through_the_api_and_survives_an_edit() {
     let (daemon, _tmp) = start_daemon(None).await;
     let c = &daemon.client;
-    let mut req = new_req("From a ticket", TaskKind::Feature);
+    let mut req = new_req("From a ticket", TicketKind::Feature);
     req.ticket = Some("k7tm".to_string());
     req.body = "docs/tickets/open/x-k7tm.md".to_string();
     let task = c.new_open_task(&req).await.expect("new task");
@@ -1602,7 +1605,7 @@ async fn the_ticket_field_round_trips_through_the_api_and_survives_an_edit() {
     let edited = c
         .edit_task(
             &task.id,
-            &EditTaskRequest {
+            &EditTicketRequest {
                 body: Some("new brief".to_string()),
                 ..Default::default()
             },
@@ -1617,7 +1620,7 @@ async fn the_ticket_field_round_trips_through_the_api_and_survives_an_edit() {
     let relinked = c
         .edit_task(
             &task.id,
-            &EditTaskRequest {
+            &EditTicketRequest {
                 ticket: Some("zzzz".to_string()),
                 ..Default::default()
             },

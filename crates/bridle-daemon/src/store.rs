@@ -15,8 +15,8 @@ use std::sync::{Arc, Mutex};
 use bridle_api::types::{
     Agent, AgentState, AgentUsage, Conflict, Edge, EdgeKind, Event, EventQuery, ExitInfo, Handover,
     InteractiveUsageRow, Message, MessageKind, MessageState, OutboxEntry, OutboxPeer,
-    PortAllocation, PrincipalId, PrincipalKind, RateLimit, RateLimitPoint, Schedule, TaskKind,
-    TaskState, TokenCreated, TokenInfo, TokenTotals, Usage, UsageBreakdown, UsageGroup,
+    PortAllocation, PrincipalId, PrincipalKind, RateLimit, RateLimitPoint, Schedule, TicketKind,
+    TicketState, TokenCreated, TokenInfo, TokenTotals, Usage, UsageBreakdown, UsageGroup,
     UsageGroupBy, When,
 };
 use chrono::{DateTime, SecondsFormat, SubsecRound, Utc};
@@ -115,8 +115,8 @@ pub struct RunningAgent {
 pub struct TaskRow {
     pub id: String,
     pub title: String,
-    pub kind: TaskKind,
-    pub state: TaskState,
+    pub kind: TicketKind,
+    pub state: TicketState,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     /// `None` = creator unknown (a task from before the column, nothing to recover it from).
@@ -130,7 +130,7 @@ pub struct TaskRow {
 pub enum RecipientKind {
     Human,
     Agent,
-    Task,
+    Ticket,
     External,
 }
 
@@ -139,7 +139,7 @@ impl RecipientKind {
         match self {
             Self::Human => "human",
             Self::Agent => "agent",
-            Self::Task => "task",
+            Self::Ticket => "task",
             Self::External => "external",
         }
     }
@@ -762,7 +762,7 @@ impl Store {
         &self,
         prefix: &str,
         title: &str,
-        kind: TaskKind,
+        kind: TicketKind,
         created_by: &str,
     ) -> Result<TaskRow, StoreError> {
         self.insert_task_wanting(prefix, title, kind, created_by, None)
@@ -776,7 +776,7 @@ impl Store {
         &self,
         prefix: &str,
         title: &str,
-        kind: TaskKind,
+        kind: TicketKind,
         created_by: &str,
         ticket: Option<&str>,
     ) -> Result<TaskRow, StoreError> {
@@ -831,13 +831,13 @@ impl Store {
             .await
     }
 
-    pub async fn set_task_kind(&self, id: &str, kind: TaskKind) -> Result<(), StoreError> {
+    pub async fn set_task_kind(&self, id: &str, kind: TicketKind) -> Result<(), StoreError> {
         let id = id.to_string();
         self.with_conn(move |c| sync::set_task_kind(c, &id, kind))
             .await
     }
 
-    pub async fn set_task_state(&self, id: &str, state: TaskState) -> Result<(), StoreError> {
+    pub async fn set_task_state(&self, id: &str, state: TicketState) -> Result<(), StoreError> {
         let id = id.to_string();
         self.with_conn(move |c| sync::set_task_state(c, &id, state))
             .await
@@ -3040,7 +3040,7 @@ mod sync {
         conn: &Connection,
         prefix: &str,
         title: &str,
-        kind: TaskKind,
+        kind: TicketKind,
         created_by: &str,
         wanted: Option<&str>,
     ) -> Result<TaskRow, StoreError> {
@@ -3062,7 +3062,7 @@ mod sync {
                     id,
                     title,
                     kind.as_str(),
-                    TaskState::Pending.as_str(),
+                    TicketState::Pending.as_str(),
                     fmt_dt(now),
                     created_by
                 ],
@@ -3073,7 +3073,7 @@ mod sync {
                         id,
                         title: title.to_string(),
                         kind,
-                        state: TaskState::Pending,
+                        state: TicketState::Pending,
                         created_at: now,
                         updated_at: now,
                         created_by: Some(created_by.to_string()),
@@ -3148,7 +3148,7 @@ mod sync {
     pub(super) fn set_task_kind(
         conn: &Connection,
         id: &str,
-        kind: TaskKind,
+        kind: TicketKind,
     ) -> Result<(), StoreError> {
         let n = conn.execute(
             "UPDATE tickets SET kind = ?1, updated_at = ?2 WHERE id = ?3",
@@ -3163,7 +3163,7 @@ mod sync {
     pub(super) fn set_task_state(
         conn: &Connection,
         id: &str,
-        state: TaskState,
+        state: TicketState,
     ) -> Result<(), StoreError> {
         let n = conn.execute(
             "UPDATE tickets SET state = ?1, updated_at = ?2 WHERE id = ?3",
@@ -4063,7 +4063,7 @@ mod tests {
     async fn new_task_records_its_creator() {
         let (store, _tmp) = store().await;
         let row = store
-            .insert_task("tw", "A", TaskKind::Chore, "external:advisor")
+            .insert_task("tw", "A", TicketKind::Chore, "external:advisor")
             .await
             .expect("insert");
         assert_eq!(row.created_by.as_deref(), Some("external:advisor"));
@@ -4235,8 +4235,8 @@ mod tests {
                 .insert_task_row(&TaskRow {
                     id: id.to_string(),
                     title: id.to_string(),
-                    kind: TaskKind::Feature,
-                    state: TaskState::Open,
+                    kind: TicketKind::Feature,
+                    state: TicketState::Open,
                     created_at: at,
                     updated_at: at,
                     created_by: None,
@@ -5217,7 +5217,7 @@ mod tests {
     async fn insert_task_uses_the_prefix_and_four_ticket_alphabet_chars() {
         let (store, _tmp) = store().await;
         let task = store
-            .insert_task("tw", "Add foo", TaskKind::Feature, "human")
+            .insert_task("tw", "Add foo", TicketKind::Feature, "human")
             .await
             .expect("insert");
         assert!(task.id.starts_with("tw-"));
@@ -5229,8 +5229,8 @@ mod tests {
                 .all(|b| b"abcdefghjkmnpqrstuvwxyz23456789".contains(&b))
         );
         assert_eq!(task.title, "Add foo");
-        assert_eq!(task.kind, TaskKind::Feature);
-        assert_eq!(task.state, TaskState::Pending);
+        assert_eq!(task.kind, TicketKind::Feature);
+        assert_eq!(task.state, TicketState::Pending);
         assert_eq!(task.created_at, task.updated_at);
     }
 
@@ -5244,7 +5244,7 @@ mod tests {
         let mut ids = std::collections::HashSet::new();
         for i in 0..50 {
             let t = store
-                .insert_task("tw", &format!("task {i}"), TaskKind::Chore, "human")
+                .insert_task("tw", &format!("task {i}"), TicketKind::Chore, "human")
                 .await
                 .expect("insert");
             assert!(ids.insert(t.id), "duplicate task id generated");
@@ -5255,7 +5255,7 @@ mod tests {
     async fn get_list_edit_and_transition_a_task() {
         let (store, _tmp) = store().await;
         let task = store
-            .insert_task("tw", "Add foo", TaskKind::Bug, "human")
+            .insert_task("tw", "Add foo", TicketKind::Bug, "human")
             .await
             .expect("insert");
 
@@ -5276,15 +5276,15 @@ mod tests {
         assert!(renamed.updated_at >= task.updated_at);
 
         store
-            .set_task_state(&task.id, TaskState::Dropped)
+            .set_task_state(&task.id, TicketState::Dropped)
             .await
             .expect("drop");
         store
-            .set_task_state(&task.id, TaskState::Reopened)
+            .set_task_state(&task.id, TicketState::Reopened)
             .await
             .expect("reopen");
         let reopened = store.get_task(&task.id).await.expect("get").expect("some");
-        assert_eq!(reopened.state, TaskState::Reopened);
+        assert_eq!(reopened.state, TicketState::Reopened);
 
         let err = store
             .set_task_title("tw-nope", "x")
@@ -5301,11 +5301,11 @@ mod tests {
     async fn insert_list_and_delete_edges() {
         let (store, _tmp) = store().await;
         let a = store
-            .insert_task("tw", "A", TaskKind::Chore, "human")
+            .insert_task("tw", "A", TicketKind::Chore, "human")
             .await
             .expect("insert a");
         let b = store
-            .insert_task("tw", "B", TaskKind::Chore, "human")
+            .insert_task("tw", "B", TicketKind::Chore, "human")
             .await
             .expect("insert b");
 
@@ -5344,14 +5344,14 @@ mod tests {
     async fn insert_list_and_delete_open_questions() {
         let (store, _tmp) = store().await;
         let task = store
-            .insert_task("tw", "Add foo", TaskKind::Feature, "human")
+            .insert_task("tw", "Add foo", TicketKind::Feature, "human")
             .await
             .expect("insert task");
         let msg = store
             .insert_message(NewMessage {
                 from: "agent:w1".to_string(),
                 to: task.id.clone(),
-                to_kind: RecipientKind::Task,
+                to_kind: RecipientKind::Ticket,
                 kind: MessageKind::Question,
                 body: "which endpoint?".to_string(),
                 reply_to: None,
@@ -5398,7 +5398,7 @@ mod tests {
     async fn insert_list_and_delete_claims() {
         let (store, _tmp) = store().await;
         let task = store
-            .insert_task("tw", "Add foo", TaskKind::Feature, "human")
+            .insert_task("tw", "Add foo", TicketKind::Feature, "human")
             .await
             .expect("insert task");
 

@@ -1421,7 +1421,7 @@ pub struct WaitArgs {
     /// Return when the task is in this state (at once if it already is);
     /// default: return on the next state change.
     #[arg(long)]
-    pub until: Option<bridle_api::TaskState>,
+    pub until: Option<bridle_api::TicketState>,
     /// Also return when a message to me arrives (or is already unread).
     #[arg(long)]
     pub or_message: bool,

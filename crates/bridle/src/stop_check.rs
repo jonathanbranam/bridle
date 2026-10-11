@@ -9,14 +9,14 @@
 //! and the API calls, and never lets an error here block a stop (the
 //! protocol: any bug in bridle's own tooling must allow, not block).
 
-use bridle_api::types::Task;
+use bridle_api::types::Ticket;
 
 /// The task among `claimed` (already filtered to the calling principal's own
 /// claims), if any, with no thread entry from its own claimant at or after
 /// `claimed_at`. Tasks with no `claimed_by`/`claimed_at` are skipped rather
 /// than treated as violations — the wire type allows it, but `?claimed_by=me`
 /// never returns one.
-pub fn first_unacknowledged_claim(claimed: &[Task]) -> Option<&Task> {
+pub fn first_unacknowledged_claim(claimed: &[Ticket]) -> Option<&Ticket> {
     claimed.iter().find(|task| {
         let (Some(claimed_by), Some(claimed_at)) = (task.claimed_by.as_deref(), task.claimed_at)
         else {
@@ -34,7 +34,7 @@ pub fn first_unacknowledged_claim(claimed: &[Task]) -> Option<&Task> {
 /// and the task has no summary or no thread entry from its claimant
 /// starting `done:`. Overnight, workers printed their `bridle send done`
 /// instead of running it and sat idle.
-pub fn first_unreported_finish(claimed: &[Task], finished: bool) -> Option<&Task> {
+pub fn first_unreported_finish(claimed: &[Ticket], finished: bool) -> Option<&Ticket> {
     if !finished {
         return None;
     }
@@ -51,7 +51,7 @@ pub fn first_unreported_finish(claimed: &[Task], finished: bool) -> Option<&Task
 }
 
 /// Direct instruction for a finished worker with no summary or report.
-pub fn unreported_reason_for(task: &Task) -> String {
+pub fn unreported_reason_for(task: &Ticket) -> String {
     format!(
         "Your work on {id} ({title}) looks finished (clean tree, commits ahead) but you have not \
          reported it. RUN these commands now with the Bash tool; printing them does nothing: \
@@ -140,7 +140,7 @@ pub fn unchecked_head_reason(dir: &std::path::Path, command: Option<&str>) -> Op
 /// The block reason, phrased as a direct instruction since Claude Code
 /// delivers it as an ordinary user-turn message, not a system directive
 /// (spike 05, surprise 2).
-pub fn reason_for(task: &Task) -> String {
+pub fn reason_for(task: &Ticket) -> String {
     format!(
         "You have an unreleased claim on {} ({}) with no note since claiming it. \
          Release it with `bridle release {}` or leave a handoff note with \
@@ -159,16 +159,16 @@ pub fn block_json(reason: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use bridle_api::types::{TaskKind, TaskState, ThreadEntry, ThreadEntryKind};
+    use bridle_api::types::{ThreadEntry, ThreadEntryKind, TicketKind, TicketState};
     use chrono::{Duration, Utc};
 
     fn task_with(
         claimed_by: Option<&str>,
         claimed_at: Option<chrono::DateTime<Utc>>,
         thread: Vec<ThreadEntry>,
-    ) -> Task {
+    ) -> Ticket {
         let now = Utc::now();
-        Task {
+        Ticket {
             components: Vec::new(),
             size: None,
             priority: Default::default(),
@@ -182,8 +182,8 @@ mod tests {
             settle_until: None,
             id: "tw-0001".to_string(),
             title: "do the thing".to_string(),
-            kind: TaskKind::Chore,
-            state: TaskState::Claimed,
+            kind: TicketKind::Chore,
+            state: TicketState::Claimed,
             body: String::new(),
             thread,
             created_at: now,

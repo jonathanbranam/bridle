@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use bridle_api::types::{MessageKind, PrincipalId, TaskState, When, event_kind};
+use bridle_api::types::{MessageKind, PrincipalId, TicketState, When, event_kind};
 
 use crate::events::Emitter;
 use crate::store::Store;
@@ -93,7 +93,7 @@ impl OpenWatch {
         let lines: Vec<String> = ids
             .iter()
             .filter_map(|id| self.tasks.get_task(id))
-            .filter(|t| t.state == TaskState::Open)
+            .filter(|t| t.state == TicketState::Open)
             .map(|t| format!("- {} ({})", t.id, t.title))
             .collect();
         if lines.is_empty() {
@@ -152,7 +152,7 @@ impl OpenWatch {
             .tasks
             .list_tasks()
             .into_iter()
-            .filter(|t| t.state == TaskState::Open && now - t.updated_at >= after)
+            .filter(|t| t.state == TicketState::Open && now - t.updated_at >= after)
             .collect();
         for t in stale {
             let hours = self.stale_after.as_secs_f64() / 3600.0;
@@ -169,7 +169,7 @@ impl OpenWatch {
                             system,
                             None,
                             serde_json::json!({
-                                "task": task.id, "from": TaskState::Open, "to": task.state,
+                                "task": task.id, "from": TicketState::Open, "to": task.state,
                             }),
                         )
                         .await;

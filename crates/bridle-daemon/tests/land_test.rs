@@ -4,7 +4,7 @@
 mod support;
 use support::ClientExt as _;
 
-use bridle_api::types::{LandRequest, NewTaskRequest, TaskKind, TaskState};
+use bridle_api::types::{LandRequest, NewTicketRequest, TicketKind, TicketState};
 use support::{TestDaemon, start_daemon, start_daemon_with_config};
 
 fn git(dir: &std::path::Path, args: &[&str]) -> String {
@@ -42,9 +42,9 @@ fn branch_with(d: &TestDaemon, branch: &str, file: &str, content: &str) {
     );
 }
 
-async fn task(d: &TestDaemon, kind: TaskKind) -> String {
+async fn task(d: &TestDaemon, kind: TicketKind) -> String {
     d.client
-        .new_open_task(&NewTaskRequest {
+        .new_open_task(&NewTicketRequest {
             ticket: None,
             parent: None,
             for_human: false,
@@ -80,7 +80,7 @@ async fn land_err(d: &TestDaemon, id: &str, r: &LandRequest) -> String {
 async fn clean_land_moves_main_and_integrates_the_task() {
     let (d, _tmp) = start_daemon(None).await;
     branch_with(&d, "b1", "f.txt", "x\n");
-    let id = task(&d, TaskKind::Feature).await;
+    let id = task(&d, TicketKind::Feature).await;
     let before = git(&d.repo, &["rev-parse", "main"]);
     let tip = git(&d.repo, &["rev-parse", "b1"]);
     let r = d
@@ -111,7 +111,7 @@ async fn clean_land_moves_main_and_integrates_the_task() {
             .await
             .expect("is_merged")
     );
-    assert_eq!(r.task.state, TaskState::Integrated);
+    assert_eq!(r.task.state, TicketState::Integrated);
     assert!(
         r.notes.iter().any(|n| n.contains("skipped")),
         "{:?}",
@@ -126,14 +126,14 @@ async fn conflict_lands_nothing() {
     std::fs::write(d.repo.join("f.txt"), "main\n").expect("w");
     git(&d.repo, &["add", "."]);
     git(&d.repo, &["commit", "-qm", "main adds f"]);
-    let id = task(&d, TaskKind::Feature).await;
+    let id = task(&d, TicketKind::Feature).await;
     let before = git(&d.repo, &["rev-parse", "main"]);
     let e = land_err(&d, &id, &req("b1", None)).await;
     assert!(e.contains("f.txt"), "{e}");
     assert_eq!(git(&d.repo, &["rev-parse", "main"]), before);
     assert_ne!(
         d.client.get_task(&id).await.expect("task").state,
-        TaskState::Integrated
+        TicketState::Integrated
     );
 }
 
@@ -145,7 +145,7 @@ async fn failing_check_lands_nothing_and_reports_the_tail() {
     std::fs::write(d.repo.join("other.txt"), "y\n").expect("w");
     git(&d.repo, &["add", "."]);
     git(&d.repo, &["commit", "-qm", "main moves"]);
-    let id = task(&d, TaskKind::Feature).await;
+    let id = task(&d, TicketKind::Feature).await;
     let before = git(&d.repo, &["rev-parse", "main"]);
     let e = land_err(&d, &id, &req("b1", Some("echo boom; exit 1"))).await;
     assert!(e.contains("boom"), "{e}");
@@ -160,7 +160,7 @@ async fn a_moved_main_is_refused() {
     std::fs::write(d.repo.join("other.txt"), "y\n").expect("w");
     git(&d.repo, &["add", "."]);
     git(&d.repo, &["commit", "-qm", "main moves"]);
-    let id = task(&d, TaskKind::Feature).await;
+    let id = task(&d, TicketKind::Feature).await;
     // The check moves main out from under the landing.
     let repo = d.repo.to_str().expect("utf8");
     let mover = format!(
@@ -172,7 +172,7 @@ async fn a_moved_main_is_refused() {
     assert!(e.contains("main moved, retry"), "{e}");
     assert_ne!(
         d.client.get_task(&id).await.expect("task").state,
-        TaskState::Integrated
+        TicketState::Integrated
     );
 }
 
@@ -180,12 +180,12 @@ async fn a_moved_main_is_refused() {
 async fn architecture_changes_need_an_arch_revision() {
     let (d, _tmp) = start_daemon(None).await;
     branch_with(&d, "b1", "design/architecture/a.md", "x\n");
-    let feature = task(&d, TaskKind::Feature).await;
+    let feature = task(&d, TicketKind::Feature).await;
     let before = git(&d.repo, &["rev-parse", "main"]);
     let e = land_err(&d, &feature, &req("b1", None)).await;
     assert!(e.contains("arch-revision"), "{e}");
     assert_eq!(git(&d.repo, &["rev-parse", "main"]), before);
-    let arch = task(&d, TaskKind::ArchRevision).await;
+    let arch = task(&d, TicketKind::ArchRevision).await;
     d.client
         .land_task(&arch, &req("b1", None))
         .await
@@ -197,7 +197,7 @@ async fn architecture_changes_need_an_arch_revision() {
 async fn landing_into_a_checked_out_branch_leaves_it_clean() {
     let (d, _tmp) = start_daemon(None).await;
     branch_with(&d, "b1", "f.txt", "x\n");
-    let id = task(&d, TaskKind::Feature).await;
+    let id = task(&d, TicketKind::Feature).await;
     assert_eq!(git(&d.repo, &["symbolic-ref", "--short", "HEAD"]), "main");
     let r = d
         .client
@@ -227,7 +227,7 @@ async fn a_dirty_file_the_landing_touches_refuses_it_naming_the_file() {
     git(&d.repo, &["add", "tracked.txt"]);
     git(&d.repo, &["commit", "-qm", "track"]);
     branch_with(&d, "b1", "tracked.txt", "theirs\n");
-    let id = task(&d, TaskKind::Feature).await;
+    let id = task(&d, TicketKind::Feature).await;
     std::fs::write(d.repo.join("tracked.txt"), "dirty\n").expect("dirty");
     let before = git(&d.repo, &["rev-parse", "main"]);
     let e = land_err(&d, &id, &req("b1", None)).await;
@@ -238,7 +238,7 @@ async fn a_dirty_file_the_landing_touches_refuses_it_naming_the_file() {
     assert_eq!(git(&d.repo, &["rev-parse", "main"]), before);
     assert_ne!(
         d.client.get_task(&id).await.expect("task").state,
-        TaskState::Integrated
+        TicketState::Integrated
     );
 }
 
@@ -247,7 +247,7 @@ async fn a_dirty_file_the_landing_does_not_touch_is_left_alone() {
     let (d, _tmp) = start_daemon(None).await;
     dirty_tracked(&d);
     branch_with(&d, "b1", "f.txt", "x\n");
-    let id = task(&d, TaskKind::Feature).await;
+    let id = task(&d, TicketKind::Feature).await;
     let r = d
         .client
         .land_task(&id, &req("b1", None))
@@ -272,7 +272,7 @@ fn checked(branch: &str, sha: Option<String>) -> LandRequest {
 async fn a_fast_forward_of_the_reported_checked_commit_skips_the_check() {
     let (d, _tmp) = start_daemon(None).await;
     branch_with(&d, "b1", "f.txt", "x\n");
-    let id = task(&d, TaskKind::Feature).await;
+    let id = task(&d, TicketKind::Feature).await;
     let tip = git(&d.repo, &["rev-parse", "b1"]);
     let r = d
         .client
@@ -305,7 +305,7 @@ async fn a_newer_commit_than_the_reported_one_runs_the_check() {
         &d.repo,
         &["worktree", "remove", "--force", wt.to_str().expect("utf8")],
     );
-    let id = task(&d, TaskKind::Feature).await;
+    let id = task(&d, TicketKind::Feature).await;
     let e = land_err(&d, &id, &checked("b1", Some(reported))).await;
     assert!(e.contains("check failed"), "{e}");
 }
@@ -314,7 +314,7 @@ async fn a_newer_commit_than_the_reported_one_runs_the_check() {
 async fn no_reported_commit_runs_the_check() {
     let (d, _tmp) = start_daemon(None).await;
     branch_with(&d, "b1", "f.txt", "x\n");
-    let id = task(&d, TaskKind::Feature).await;
+    let id = task(&d, TicketKind::Feature).await;
     let e = land_err(&d, &id, &checked("b1", None)).await;
     assert!(e.contains("check failed"), "{e}");
 }
@@ -326,7 +326,7 @@ async fn a_moved_base_runs_the_check_even_with_the_tip_reported() {
     std::fs::write(d.repo.join("other.txt"), "y\n").expect("w");
     git(&d.repo, &["add", "."]);
     git(&d.repo, &["commit", "-qm", "main moves"]);
-    let id = task(&d, TaskKind::Feature).await;
+    let id = task(&d, TicketKind::Feature).await;
     let tip = git(&d.repo, &["rev-parse", "b1"]);
     let e = land_err(&d, &id, &checked("b1", Some(tip))).await;
     assert!(e.contains("check failed"), "{e}");
@@ -339,7 +339,7 @@ async fn a_moved_base_runs_the_check_and_says_so() {
     std::fs::write(d.repo.join("other.txt"), "y\n").expect("w");
     git(&d.repo, &["add", "."]);
     git(&d.repo, &["commit", "-qm", "main moves"]);
-    let id = task(&d, TaskKind::Feature).await;
+    let id = task(&d, TicketKind::Feature).await;
     let r = d
         .client
         .land_task(&id, &req("b1", Some("true")))
@@ -367,7 +367,7 @@ async fn land_moved(d: &TestDaemon, branch: &str, check: &str) -> Result<(), Str
     std::fs::write(d.repo.join(format!("m-{branch}.txt")), "y\n").expect("w");
     git(&d.repo, &["add", "."]);
     git(&d.repo, &["commit", "-qm", "main moves"]);
-    let id = task(d, TaskKind::Feature).await;
+    let id = task(d, TicketKind::Feature).await;
     d.client
         .land_task(&id, &req(branch, Some(check)))
         .await
@@ -424,7 +424,7 @@ async fn moved_main_setup(d: &TestDaemon) -> String {
     std::fs::write(d.repo.join("other.txt"), "y\n").expect("w");
     git(&d.repo, &["add", "."]);
     git(&d.repo, &["commit", "-qm", "main moves"]);
-    task(d, TaskKind::Feature).await
+    task(d, TicketKind::Feature).await
 }
 
 #[tokio::test]

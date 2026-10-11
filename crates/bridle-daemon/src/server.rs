@@ -13,18 +13,18 @@ use axum::{Extension, Json, Router};
 use bridle_api::types::{
     AddQueueTierRequest, Agent, AllocPortRequest, AnswerQuestionRequest, ApiErrorResponse,
     AskQuestionRequest, BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, Conflict,
-    DoneTaskRequest, DropTaskRequest, Edge, EdgeKind, EditTaskRequest, ErrorBody, Event,
+    DoneTicketRequest, DropTicketRequest, Edge, EdgeKind, EditTicketRequest, ErrorBody, Event,
     EventQuery, ForwardAck, ForwardRequest, ForwardState, Handover, Health, HelloRequest,
     HoldStatus, ImpactCheckRequest, ImpactReport, Interaction, InteractionsQuery,
     InteractiveUsageRow, InterruptRequest, MaxWorkersRequest, MergeProbe, Message, MessageKind,
-    MessageQuery, MessageState, MigrationRecord, NewEdgeRequest, NewTaskRequest, NoteTaskRequest,
-    OpenQuestion, OutboxSendRequest, OverlapLevel, PeerTokenCreateRequest, PortAllocation,
-    PrincipalKind, ProbeOutcome, ProbeRequest, ProbeResult, Queue, Queued, RateLimit,
-    RateLimitPoint, RebuildResponse, RemoveEdgeQuery, RemoveQuery, RenewRequest,
+    MessageQuery, MessageState, MigrationRecord, NewEdgeRequest, NewTicketRequest,
+    NoteTicketRequest, OpenQuestion, OutboxSendRequest, OverlapLevel, PeerTokenCreateRequest,
+    PortAllocation, PrincipalKind, ProbeOutcome, ProbeRequest, ProbeResult, Queue, Queued,
+    RateLimit, RateLimitPoint, RebuildResponse, RemoveEdgeQuery, RemoveQuery, RenewRequest,
     ResolveConflictRequest, ResumeRequest, ScheduleOverrideStatus, SendRequest, SetImpactRequest,
     SetKindRequest, SetPriorityRequest, SetQueueRequest, SetSummaryRequest, ShutdownResponse,
-    SkipSettleRequest, SpawnRequest, Status, StatusLineReport, StopRequest, SubmitTaskRequest,
-    Task, TaskQuery, TaskState, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine,
+    SkipSettleRequest, SpawnRequest, Status, StatusLineReport, StopRequest, SubmitTicketRequest,
+    Ticket, TicketQuery, TicketState, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine,
     TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, UsageHistoryQuery,
     WakeResponse, When, WindowStatus, WriteHandoverRequest, event_kind,
 };
@@ -158,18 +158,31 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/tokens/peer", post(create_peer_token))
         .route("/v1/tokens", get(list_tokens).post(create_token))
         .route("/v1/tokens/{name}", axum::routing::delete(revoke_token))
+        // /v1/tasks is the pre-rename path (22ab step 9); both reach the same handlers for one release.
+        .route("/v1/tickets", get(list_tasks).post(new_task))
         .route("/v1/tasks", get(list_tasks).post(new_task))
+        .route("/v1/tickets/submit", post(submit_task))
         .route("/v1/tasks/submit", post(submit_task))
+        .route("/v1/tickets/{id}", get(get_task).patch(edit_task))
         .route("/v1/tasks/{id}", get(get_task).patch(edit_task))
+        .route("/v1/tickets/{id}/ready", post(ready_task))
         .route("/v1/tasks/{id}/ready", post(ready_task))
+        .route("/v1/tickets/{id}/plan", post(plan_task))
         .route("/v1/tasks/{id}/plan", post(plan_task))
+        .route("/v1/tickets/{id}/drop", post(drop_task))
         .route("/v1/tasks/{id}/drop", post(drop_task))
+        .route("/v1/tickets/{id}/done", post(done_task))
         .route("/v1/tasks/{id}/done", post(done_task))
+        .route("/v1/tickets/{id}/land", post(land_task))
         .route("/v1/tasks/{id}/land", post(land_task))
         .route("/v1/push", post(push_integration))
+        .route("/v1/tickets/{id}/summary", post(set_summary))
         .route("/v1/tasks/{id}/summary", post(set_summary))
+        .route("/v1/tickets/{id}/priority", post(set_priority))
         .route("/v1/tasks/{id}/priority", post(set_priority))
+        .route("/v1/tickets/{id}/kind", post(set_kind))
         .route("/v1/tasks/{id}/kind", post(set_kind))
+        .route("/v1/tickets/{id}/impact", post(set_impact))
         .route("/v1/tasks/{id}/impact", post(set_impact))
         .route("/v1/impact/check", post(impact_check))
         .route("/v1/probe", post(probe))
@@ -177,14 +190,23 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/ports/{port}/release", post(release_port))
         .route("/v1/conflicts", get(list_conflicts))
         .route("/v1/conflicts/{id}/resolve", post(resolve_conflict))
+        .route("/v1/tickets/{id}/reopen", post(reopen_task))
         .route("/v1/tasks/{id}/reopen", post(reopen_task))
+        .route("/v1/tickets/{id}/ask", post(ask_task))
         .route("/v1/tasks/{id}/ask", post(ask_task))
+        .route("/v1/tickets/{id}/answer", post(answer_task))
         .route("/v1/tasks/{id}/answer", post(answer_task))
+        .route("/v1/tickets/{id}/note", post(note_task))
         .route("/v1/tasks/{id}/note", post(note_task))
+        .route("/v1/tickets/{id}/skip-settle", post(skip_settle))
         .route("/v1/tasks/{id}/skip-settle", post(skip_settle))
+        .route("/v1/tickets/{id}/watch", post(watch_task))
         .route("/v1/tasks/{id}/watch", post(watch_task))
+        .route("/v1/tickets/{id}/unwatch", post(unwatch_task))
         .route("/v1/tasks/{id}/unwatch", post(unwatch_task))
+        .route("/v1/tickets/{id}/claim", post(claim_task))
         .route("/v1/tasks/{id}/claim", post(claim_task))
+        .route("/v1/tickets/{id}/release", post(release_task))
         .route("/v1/tasks/{id}/release", post(release_task))
         .route("/v1/questions", get(list_open_questions))
         .route(
@@ -412,7 +434,7 @@ fn require_incident_owner(
     let is_incident = state
         .tasks
         .get_task(id)
-        .is_some_and(|t| t.kind == bridle_api::types::TaskKind::Incident);
+        .is_some_and(|t| t.kind == bridle_api::types::TicketKind::Incident);
     if is_incident
         && principal.kind != PrincipalKind::Human
         && principal.id != crate::wake::ORCHESTRATOR
@@ -431,7 +453,7 @@ fn is_visitor(principal: &Principal) -> bool {
     principal.id.contains('@')
 }
 
-fn submitter_of(task: &Task) -> Option<&str> {
+fn submitter_of(task: &Ticket) -> Option<&str> {
     task.body
         .lines()
         .next()
@@ -1059,8 +1081,8 @@ async fn status(
             .tasks
             .list_tasks()
             .into_iter()
-            .filter(|t| t.state == bridle_api::types::TaskState::Pending)
-            .map(|t| bridle_api::types::PendingTask {
+            .filter(|t| t.state == bridle_api::types::TicketState::Pending)
+            .map(|t| bridle_api::types::PendingTicket {
                 id: t.id,
                 title: t.title,
                 created_by: t.created_by,
@@ -1936,7 +1958,7 @@ async fn remote_watch(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
     Json(req): Json<RemoteWatchRequest>,
-) -> Result<Json<Task>, ApiError> {
+) -> Result<Json<Ticket>, ApiError> {
     require_not_visitor(&principal)?;
     if principal.kind == PrincipalKind::Peer {
         return Err(ApiError::forbidden("a peer token may not ask for a watch"));
@@ -1982,7 +2004,7 @@ async fn peer_watch(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
     Json(req): Json<PeerWatchRequest>,
-) -> Result<Json<Task>, ApiError> {
+) -> Result<Json<Ticket>, ApiError> {
     if principal.kind != PrincipalKind::Peer {
         return Err(ApiError::forbidden("this takes a peer token"));
     }
@@ -2499,7 +2521,7 @@ async fn report_statusline(
 // ---------- tasks ----------
 
 /// `?claimed_by=me` resolves to the caller's own id, same as `resolve_to`'s
-/// `"me"` case for messages; anything else is matched against `Task::claimed_by`
+/// `"me"` case for messages; anything else is matched against `Ticket::claimed_by`
 /// verbatim (that field is the claimant's `PrincipalId`, e.g. `agent:w1`, not
 /// the stable agent id `resolve_to`/`resolve_from` resolve names to).
 async fn resolve_claimed_by(
@@ -2520,8 +2542,8 @@ async fn resolve_claimed_by(
 async fn list_tasks(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
-    Query(q): Query<TaskQuery>,
-) -> Result<Json<Vec<Task>>, ApiError> {
+    Query(q): Query<TicketQuery>,
+) -> Result<Json<Vec<Ticket>>, ApiError> {
     let tasks = if q.top_tier.unwrap_or(false) {
         state.tasks.highest_startable_tier()
     } else if q.ready.unwrap_or(false) {
@@ -2529,14 +2551,14 @@ async fn list_tasks(
     } else {
         state.tasks.list_tasks()
     };
-    let tasks: Vec<Task> = match q.component.as_deref() {
+    let tasks: Vec<Ticket> = match q.component.as_deref() {
         Some(id) => tasks
             .into_iter()
             .filter(|t| state.manager.components_match(&t.components, id))
             .collect(),
         None => tasks,
     };
-    let tasks: Vec<Task> = match q.kind {
+    let tasks: Vec<Ticket> = match q.kind {
         Some(kind) => tasks.into_iter().filter(|t| t.kind == kind).collect(),
         None => tasks,
     };
@@ -2556,8 +2578,8 @@ async fn list_tasks(
 async fn new_task(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
-    Json(req): Json<NewTaskRequest>,
-) -> Result<Json<Task>, ApiError> {
+    Json(req): Json<NewTicketRequest>,
+) -> Result<Json<Ticket>, ApiError> {
     let components = state.manager.normalize_components(&req.components)?;
     if let Some(parent) = &req.parent
         && state.tasks.get_task(parent).is_none()
@@ -2621,8 +2643,8 @@ async fn new_task(
 async fn submit_task(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
-    Json(req): Json<SubmitTaskRequest>,
-) -> Result<Json<Task>, ApiError> {
+    Json(req): Json<SubmitTicketRequest>,
+) -> Result<Json<Ticket>, ApiError> {
     let body = format!("{SUBMITTED_BY}{}\n\n{}", principal.id, req.body);
     let task = state
         .tasks
@@ -2658,7 +2680,7 @@ async fn submit_task(
 async fn get_task(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Result<Json<Task>, ApiError> {
+) -> Result<Json<Ticket>, ApiError> {
     state
         .tasks
         .get_task(&id)
@@ -2670,8 +2692,8 @@ async fn edit_task(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
     Path(id): Path<String>,
-    Json(req): Json<EditTaskRequest>,
-) -> Result<Json<Task>, ApiError> {
+    Json(req): Json<EditTicketRequest>,
+) -> Result<Json<Ticket>, ApiError> {
     require_not_visitor(&principal)?;
     let components = req
         .components
@@ -2694,8 +2716,8 @@ async fn edit_task(
         Some(t) => state.tasks.set_ticket(&task.id, t).await?,
         None => task,
     };
-    if task.kind == bridle_api::types::TaskKind::Incident
-        && task.state == bridle_api::types::TaskState::Planned
+    if task.kind == bridle_api::types::TicketKind::Incident
+        && task.state == bridle_api::types::TicketState::Planned
         && edited_notice_text
     {
         state.manager.incident_updated(&task).await;
@@ -2718,7 +2740,7 @@ async fn ready_task(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
     Path(id): Path<String>,
-) -> Result<Json<Task>, ApiError> {
+) -> Result<Json<Ticket>, ApiError> {
     require_not_visitor(&principal)?;
     require_incident_owner(&state, &principal, &id)?;
     if principal.kind == PrincipalKind::Agent {
@@ -2738,7 +2760,7 @@ async fn ready_task(
         .tasks
         .list_tasks()
         .iter()
-        .filter(|t| t.state == bridle_api::types::TaskState::Open)
+        .filter(|t| t.state == bridle_api::types::TicketState::Open)
         .count();
     state
         .manager
@@ -2751,12 +2773,12 @@ async fn plan_task(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
     Path(id): Path<String>,
-) -> Result<Json<Task>, ApiError> {
+) -> Result<Json<Ticket>, ApiError> {
     require_not_visitor(&principal)?;
     require_incident_owner(&state, &principal, &id)?;
     let from = state.tasks.get_task(&id).map(|t| t.state);
     let task = state.tasks.plan_task(&id, &principal.id).await?;
-    if task.kind == bridle_api::types::TaskKind::Incident {
+    if task.kind == bridle_api::types::TicketKind::Incident {
         state.manager.incident_activated(&task).await;
     }
     emit_state_change(&state, principal.id, &task, from).await;
@@ -2767,23 +2789,24 @@ async fn drop_task(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
     Path(id): Path<String>,
-    Json(req): Json<DropTaskRequest>,
-) -> Result<Json<Task>, ApiError> {
+    Json(req): Json<DropTicketRequest>,
+) -> Result<Json<Ticket>, ApiError> {
     require_not_visitor(&principal)?;
     require_incident_owner(&state, &principal, &id)?;
     let from = state.tasks.get_task(&id).map(|t| t.state);
     let was_active = state
         .tasks
         .get_task(&id)
-        .is_some_and(|t| t.state == bridle_api::types::TaskState::Planned);
+        .is_some_and(|t| t.state == bridle_api::types::TicketState::Planned);
     let was_human_todo = state.tasks.get_task(&id).is_some_and(|t| {
-        t.state == bridle_api::types::TaskState::Claimed && t.claimed_by.as_deref() == Some("human")
+        t.state == bridle_api::types::TicketState::Claimed
+            && t.claimed_by.as_deref() == Some("human")
     });
     let task = state
         .tasks
         .drop_task(&id, &req.reason, &principal.id)
         .await?;
-    if task.kind == bridle_api::types::TaskKind::Incident && was_active {
+    if task.kind == bridle_api::types::TicketKind::Incident && was_active {
         state.manager.incident_resolved(&task, &req.reason).await;
     }
     if let Some(submitter) = submitter_of(&task)
@@ -2818,7 +2841,7 @@ async fn set_priority(
     Extension(principal): Extension<Principal>,
     Path(id): Path<String>,
     Json(req): Json<SetPriorityRequest>,
-) -> Result<Json<Task>, ApiError> {
+) -> Result<Json<Ticket>, ApiError> {
     let (task, from) = state
         .tasks
         .set_priority(&id, req.priority, &principal.id)
@@ -2848,7 +2871,7 @@ async fn set_kind(
     Extension(principal): Extension<Principal>,
     Path(id): Path<String>,
     Json(req): Json<SetKindRequest>,
-) -> Result<Json<Task>, ApiError> {
+) -> Result<Json<Ticket>, ApiError> {
     let (task, from) = state.tasks.set_kind(&id, req.kind, &principal.id).await?;
     if from != task.kind {
         let change = format!("kind {from} -> {} by {}", task.kind, principal.id);
@@ -2870,7 +2893,7 @@ async fn set_summary(
     State(state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<SetSummaryRequest>,
-) -> Result<Json<Task>, ApiError> {
+) -> Result<Json<Ticket>, ApiError> {
     Ok(Json(state.tasks.set_summary(&id, &req.text).await?))
 }
 
@@ -2878,7 +2901,7 @@ async fn set_impact(
     State(state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<SetImpactRequest>,
-) -> Result<Json<Task>, ApiError> {
+) -> Result<Json<Ticket>, ApiError> {
     Ok(Json(state.tasks.set_impact(&id, req.impact).await?))
 }
 
@@ -2931,7 +2954,7 @@ async fn probe_branches(
 }
 
 /// The branch a claimed task's claimant works on.
-async fn claimed_branch(state: &AppState, task: &Task) -> Option<String> {
+async fn claimed_branch(state: &AppState, task: &Ticket) -> Option<String> {
     let name = task.claimed_by.as_deref()?.strip_prefix("agent:")?;
     state.store.get_agent(name).await.ok()??.branch
 }
@@ -2942,7 +2965,7 @@ async fn claimed_branch(state: &AppState, task: &Task) -> Option<String> {
 async fn merge_probes(state: &AppState) -> Vec<MergeProbe> {
     let mut claimed = Vec::new();
     for t in state.tasks.list_tasks() {
-        if t.state == TaskState::Claimed
+        if t.state == TicketState::Claimed
             && let Some(b) = claimed_branch(state, &t).await
         {
             claimed.push((t.id, b));
@@ -3171,8 +3194,8 @@ async fn done_task(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
     Path(id): Path<String>,
-    Json(req): Json<DoneTaskRequest>,
-) -> Result<Json<Task>, ApiError> {
+    Json(req): Json<DoneTicketRequest>,
+) -> Result<Json<Ticket>, ApiError> {
     let branch = req
         .branch
         .as_deref()
@@ -3199,12 +3222,12 @@ async fn done_task(
     let was_active = state
         .tasks
         .get_task(&id)
-        .is_some_and(|t| t.state == bridle_api::types::TaskState::Planned);
+        .is_some_and(|t| t.state == bridle_api::types::TicketState::Planned);
     let mut task = state
         .tasks
         .done_task(&id, &req.commit, req.branch.as_deref(), &principal.id)
         .await?;
-    if task.kind == bridle_api::types::TaskKind::Incident {
+    if task.kind == bridle_api::types::TicketKind::Incident {
         let resolution = req.resolution.as_deref().map(str::trim).unwrap_or("");
         if !resolution.is_empty() {
             task = state
@@ -3224,7 +3247,7 @@ async fn done_task(
     if task.commit.is_some() {
         notify_main_moved(&state, &task, claimant.as_deref(), branch).await;
     }
-    if task.kind == bridle_api::types::TaskKind::ArchRevision {
+    if task.kind == bridle_api::types::TicketKind::ArchRevision {
         open_reevaluate_tasks(&state, &task).await;
     }
     if let Some(branch) = branch {
@@ -3351,7 +3374,7 @@ async fn land_task(
         task: &id,
         title: &task.title,
         summary: task.summary.as_deref(),
-        is_arch_revision: task.kind == bridle_api::types::TaskKind::ArchRevision,
+        is_arch_revision: task.kind == bridle_api::types::TicketKind::ArchRevision,
         check,
         checked_commit: req.checked_commit.as_deref(),
         check_skip_paths: &state.check_skip_paths,
@@ -3383,7 +3406,7 @@ async fn land_task(
         State(state),
         Extension(principal),
         Path(id),
-        Json(DoneTaskRequest {
+        Json(DoneTicketRequest {
             commit: landed.commit.clone(),
             branch: Some(branch),
             ..Default::default()
@@ -3400,7 +3423,7 @@ async fn land_task(
 /// After an `arch-revision` lands, opens one `re-evaluate` task per capability with suspect
 /// requirements (once per arch task and capability) and tells the manager. Failures only log:
 /// the landing itself has succeeded.
-async fn open_reevaluate_tasks(state: &AppState, arch: &Task) {
+async fn open_reevaluate_tasks(state: &AppState, arch: &Ticket) {
     let repo = state.workspace.repo.clone();
     let suspects =
         match tokio::task::spawn_blocking(move || crate::reevaluate::suspects_by_capability(&repo))
@@ -3417,7 +3440,7 @@ async fn open_reevaluate_tasks(state: &AppState, arch: &Task) {
         .tasks
         .list_tasks()
         .into_iter()
-        .filter(|t| t.kind == bridle_api::types::TaskKind::ReEvaluate)
+        .filter(|t| t.kind == bridle_api::types::TicketKind::ReEvaluate)
         .map(|t| t.title)
         .collect();
     let mut opened = Vec::new();
@@ -3430,7 +3453,7 @@ async fn open_reevaluate_tasks(state: &AppState, arch: &Task) {
             .tasks
             .new_task_by(
                 &title,
-                bridle_api::types::TaskKind::ReEvaluate,
+                bridle_api::types::TicketKind::ReEvaluate,
                 crate::reevaluate::body(&ids),
                 Vec::new(),
                 None,
@@ -3474,7 +3497,7 @@ async fn open_reevaluate_tasks(state: &AppState, arch: &Task) {
 /// task landed. A git failure just drops the file list.
 async fn notify_main_moved(
     state: &AppState,
-    task: &Task,
+    task: &Ticket,
     claimant: Option<&str>,
     landed_branch: Option<&str>,
 ) {
@@ -3521,7 +3544,8 @@ async fn notify_main_moved(
     let mut by_claimant: std::collections::HashMap<String, bridle_api::types::Impact> =
         std::collections::HashMap::new();
     for t in state.tasks.list_tasks() {
-        if let (Some(c), bridle_api::types::TaskState::Claimed) = (t.claimed_by.clone(), t.state) {
+        if let (Some(c), bridle_api::types::TicketState::Claimed) = (t.claimed_by.clone(), t.state)
+        {
             by_claimant.insert(c, t.impact);
         }
     }
@@ -3571,7 +3595,7 @@ async fn landed_spec_ids(
 /// and the manager is told once.
 async fn clean_up_landed_branch(
     state: &AppState,
-    task: &Task,
+    task: &Ticket,
     branch: &str,
     principal: &Principal,
 ) -> String {
@@ -3634,7 +3658,7 @@ async fn still_holds_work(
 ) -> Option<String> {
     let principal = format!("agent:{}", agent.name);
     if let Some(other) = state.tasks.list_tasks().into_iter().find(|t| {
-        t.state == bridle_api::types::TaskState::Claimed
+        t.state == bridle_api::types::TicketState::Claimed
             && t.claimed_by.as_deref() == Some(principal.as_str())
     }) {
         return Some(format!("claimed task {}", other.id));
@@ -3673,7 +3697,7 @@ async fn still_holds_work(
     None
 }
 
-async fn tell_manager_worker_kept(state: &AppState, task: &Task, kept: &[String]) {
+async fn tell_manager_worker_kept(state: &AppState, task: &Ticket, kept: &[String]) {
     let manager = match state.store.list_agents(false).await {
         Ok(agents) => agents
             .into_iter()
@@ -3711,7 +3735,7 @@ async fn reopen_task(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
     Path(id): Path<String>,
-) -> Result<Json<Task>, ApiError> {
+) -> Result<Json<Ticket>, ApiError> {
     require_incident_owner(&state, &principal, &id)?;
     let from = state.tasks.get_task(&id).map(|t| t.state);
     let task = state.tasks.reopen_task(&id, &principal.id).await?;
@@ -3739,7 +3763,7 @@ async fn emit_task_change(
     state: &AppState,
     kind: &str,
     actor: PrincipalId,
-    task: &Task,
+    task: &Ticket,
     extra: serde_json::Value,
     change: String,
     told: &[ToTarget],
@@ -3791,8 +3815,8 @@ async fn emit_task_change(
 async fn emit_state_change(
     state: &AppState,
     actor: PrincipalId,
-    task: &Task,
-    from: Option<bridle_api::types::TaskState>,
+    task: &Ticket,
+    from: Option<bridle_api::types::TicketState>,
 ) {
     let change = match from {
         Some(f) => format!("{f} -> {} by {actor}", task.state),
@@ -3814,7 +3838,7 @@ async fn emit_state_change(
 async fn emit_comment(
     state: &AppState,
     actor: PrincipalId,
-    task: &Task,
+    task: &Ticket,
     body: &str,
     told: &[ToTarget],
 ) {
@@ -3890,7 +3914,7 @@ async fn ask_task(
     Extension(principal): Extension<Principal>,
     Path(id): Path<String>,
     Json(req): Json<AskQuestionRequest>,
-) -> Result<Json<Task>, ApiError> {
+) -> Result<Json<Ticket>, ApiError> {
     // Resolved before the question is recorded, so a bad `--to` leaves no
     // open question behind. The default is the caller's spawner (an agent
     // caller) or the human.
@@ -3943,7 +3967,7 @@ async fn answer_task(
     Extension(principal): Extension<Principal>,
     Path(id): Path<String>,
     Json(req): Json<AnswerQuestionRequest>,
-) -> Result<Json<Task>, ApiError> {
+) -> Result<Json<Ticket>, ApiError> {
     let asker = state.tasks.get_task(&id).and_then(|t| {
         t.thread
             .iter()
@@ -3997,7 +4021,7 @@ async fn skip_settle(
     Extension(principal): Extension<Principal>,
     Path(id): Path<String>,
     Json(req): Json<SkipSettleRequest>,
-) -> Result<Json<Task>, ApiError> {
+) -> Result<Json<Ticket>, ApiError> {
     if principal.kind != PrincipalKind::Human {
         require_pm_or_human(&state, &principal).await.map_err(|_| {
             ApiError::forbidden(
@@ -4025,8 +4049,8 @@ async fn note_task(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
     Path(id): Path<String>,
-    Json(req): Json<NoteTaskRequest>,
-) -> Result<Json<Task>, ApiError> {
+    Json(req): Json<NoteTicketRequest>,
+) -> Result<Json<Ticket>, ApiError> {
     if is_visitor(&principal) {
         let own = state
             .tasks
@@ -4071,7 +4095,7 @@ async fn claim_task(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
     Path(id): Path<String>,
-) -> Result<Json<Task>, ApiError> {
+) -> Result<Json<Ticket>, ApiError> {
     require_not_visitor(&principal)?;
     if state.manager.draining() {
         return Err(ApiError::new(
@@ -4090,7 +4114,7 @@ async fn watch_task(
     state: State<AppState>,
     principal: Extension<Principal>,
     id: Path<String>,
-) -> Result<Json<Task>, ApiError> {
+) -> Result<Json<Ticket>, ApiError> {
     set_watching(state, principal, id, true).await
 }
 
@@ -4098,7 +4122,7 @@ async fn unwatch_task(
     state: State<AppState>,
     principal: Extension<Principal>,
     id: Path<String>,
-) -> Result<Json<Task>, ApiError> {
+) -> Result<Json<Ticket>, ApiError> {
     set_watching(state, principal, id, false).await
 }
 
@@ -4109,7 +4133,7 @@ async fn set_watching(
     Extension(principal): Extension<Principal>,
     Path(id): Path<String>,
     watch: bool,
-) -> Result<Json<Task>, ApiError> {
+) -> Result<Json<Ticket>, ApiError> {
     let (task, changed) = state.tasks.set_watching(&id, &principal.id, watch).await?;
     if changed {
         let _ = state
@@ -4129,7 +4153,7 @@ async fn release_task(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
     Path(id): Path<String>,
-) -> Result<Json<Task>, ApiError> {
+) -> Result<Json<Ticket>, ApiError> {
     let from = state.tasks.get_task(&id).map(|t| t.state);
     let task = state.tasks.release_task(&id, &principal.id).await?;
     emit_state_change(&state, principal.id, &task, from).await;

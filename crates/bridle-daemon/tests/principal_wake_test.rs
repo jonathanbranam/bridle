@@ -7,9 +7,9 @@ use support::ClientExt as _;
 use std::time::Duration;
 
 use bridle_api::types::{
-    MessageKind, MessageQuery, MessageState, NewTaskRequest, PrincipalWakeQuery,
-    PrincipalWakeResponse, SendRequest, SetKindRequest, SetPriorityRequest, TaskKind, TaskPriority,
-    When,
+    MessageKind, MessageQuery, MessageState, NewTicketRequest, PrincipalWakeQuery,
+    PrincipalWakeResponse, SendRequest, SetKindRequest, SetPriorityRequest, TicketKind,
+    TicketPriority, When,
 };
 use bridle_api::{Client, ClientError};
 
@@ -130,11 +130,11 @@ async fn only_that_principal_or_the_human_may_wait() {
 
 async fn new_task(client: &Client) -> String {
     client
-        .new_open_task(&NewTaskRequest {
+        .new_open_task(&NewTicketRequest {
             ticket: None,
             parent: None,
             title: "t".to_string(),
-            kind: TaskKind::Feature,
+            kind: TicketKind::Feature,
             body: String::new(),
             size: None,
             components: Vec::new(),
@@ -209,7 +209,7 @@ async fn each_kind_of_change_is_its_own_line() {
     h.set_task_priority(
         &task,
         &SetPriorityRequest {
-            priority: TaskPriority::High,
+            priority: TicketPriority::High,
         },
     )
     .await
@@ -250,7 +250,7 @@ async fn a_kind_change_is_a_line() {
         .set_task_kind(
             &task,
             &SetKindRequest {
-                kind: TaskKind::Bug,
+                kind: TicketKind::Bug,
             },
         )
         .await

@@ -3,8 +3,8 @@
 mod support;
 
 use bridle_api::types::{
-    AgentState, DoneTaskRequest, DropTaskRequest, EditTaskRequest, Message, MessageQuery,
-    MessageState, NewTaskRequest, SpawnRequest, StopRequest, TaskKind, TaskState, Workdir,
+    AgentState, DoneTicketRequest, DropTicketRequest, EditTicketRequest, Message, MessageQuery,
+    MessageState, NewTicketRequest, SpawnRequest, StopRequest, TicketKind, TicketState, Workdir,
 };
 use support::{TestDaemon, start_daemon, wait_for, wait_for_state};
 
@@ -30,14 +30,14 @@ async fn spawn(d: &TestDaemon, name: &str) -> String {
 
 async fn file(client: &bridle_api::Client, title: &str) -> String {
     client
-        .new_task(&NewTaskRequest {
+        .new_task(&NewTicketRequest {
             ticket: None,
             parent: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
             title: title.to_string(),
-            kind: TaskKind::Incident,
+            kind: TicketKind::Incident,
             body: "the build is red".to_string(),
             size: None,
         })
@@ -73,7 +73,10 @@ async fn anyone_files_a_potential_incident_but_only_the_owner_moves_it() {
 
     let id = file(&worker, "main is red").await;
     let t = d.client.get_task(&id).await.expect("task");
-    assert_eq!((t.kind, t.state), (TaskKind::Incident, TaskState::Pending));
+    assert_eq!(
+        (t.kind, t.state),
+        (TicketKind::Incident, TicketState::Pending)
+    );
 
     for c in [&worker, &advisor] {
         assert!(c.ready_task(&id).await.is_err(), "ready must be refused");
@@ -81,7 +84,7 @@ async fn anyone_files_a_potential_incident_but_only_the_owner_moves_it() {
         assert!(
             c.drop_task(
                 &id,
-                &DropTaskRequest {
+                &DropTicketRequest {
                     reason: "no".to_string()
                 }
             )
@@ -89,20 +92,22 @@ async fn anyone_files_a_potential_incident_but_only_the_owner_moves_it() {
             .is_err()
         );
         assert!(
-            c.done_task(&id, &DoneTaskRequest::default()).await.is_err(),
+            c.done_task(&id, &DoneTicketRequest::default())
+                .await
+                .is_err(),
             "resolve must be refused"
         );
     }
     assert_eq!(
         d.client.get_task(&id).await.expect("task").state,
-        TaskState::Pending
+        TicketState::Pending
     );
 
     // The orchestrator and the human may; no commit is needed to resolve.
     orch.ready_task(&id).await.expect("ready");
     assert_eq!(
         orch.plan_task(&id).await.expect("plan").state,
-        TaskState::Planned
+        TicketState::Planned
     );
     let status = d.client.status().await.expect("status");
     assert_eq!(status.incidents.len(), 1);
@@ -119,14 +124,14 @@ async fn anyone_files_a_potential_incident_but_only_the_owner_moves_it() {
         .client
         .done_task(
             &id,
-            &DoneTaskRequest {
+            &DoneTicketRequest {
                 resolution: Some("reverted".to_string()),
                 ..Default::default()
             },
         )
         .await
         .expect("resolve");
-    assert_eq!(done.state, TaskState::Integrated);
+    assert_eq!(done.state, TicketState::Integrated);
     assert!(done.thread.iter().any(|e| e.body == "resolution: reverted"));
     assert!(
         d.client
@@ -160,7 +165,7 @@ async fn a_running_agent_gets_the_notice_and_then_a_resolved_note() {
 
     orch.done_task(
         &id,
-        &DoneTaskRequest {
+        &DoneTicketRequest {
             resolution: Some("reverted".to_string()),
             ..Default::default()
         },
@@ -205,7 +210,7 @@ async fn an_undelivered_notice_is_dropped_on_resolve_and_never_announced() {
 
     orch.drop_task(
         &id,
-        &DropTaskRequest {
+        &DropTicketRequest {
             reason: "false alarm".to_string(),
         },
     )
@@ -231,7 +236,7 @@ async fn editing_an_active_incident_updates_the_pending_notice_in_place() {
     orch.plan_task(&id).await.expect("plan");
     orch.edit_task(
         &id,
-        &EditTaskRequest {
+        &EditTicketRequest {
             ticket: None,
             body: Some("now it's green-ish".to_string()),
             ..Default::default()

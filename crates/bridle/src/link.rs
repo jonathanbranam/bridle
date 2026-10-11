@@ -1,5 +1,5 @@
 //! `bridle link <id>`: the bridle UI URL for a ticket or task ID (ticket yfjc), so agents
-//! talking to the human don't build URLs by hand. Task IDs carry the `br-` prefix style
+//! talking to the human don't build URLs by hand. Ticket IDs carry the `br-` prefix style
 //! (`<prefix>-<tail>`); ticket IDs are bare. Prints nothing and exits 0 with no base URL.
 
 use bridle_api::discovery::bridle_home;

@@ -1,12 +1,12 @@
-//! `POST /v1/tasks/submit`: any principal, visitors included, files an open task for the PM
+//! `POST /v1/tickets/submit`: any principal, visitors included, files an open task for the PM
 //! to triage (ticket 93xm).
 
 mod support;
 
 use bridle_api::Client;
 use bridle_api::types::{
-    AgentState, DropTaskRequest, MessageQuery, SpawnRequest, SubmitTaskRequest, TaskKind,
-    TaskState, TokenCreateRequest, Workdir,
+    AgentState, DropTicketRequest, MessageQuery, SpawnRequest, SubmitTicketRequest, TicketKind,
+    TicketState, TokenCreateRequest, Workdir,
 };
 use support::{start_daemon_with_config, wait_for_state};
 
@@ -26,10 +26,10 @@ async fn visitor(daemon: &support::TestDaemon) -> Client {
     Client::new(daemon.running.url.clone(), Some(created.token))
 }
 
-fn req() -> SubmitTaskRequest {
-    SubmitTaskRequest {
+fn req() -> SubmitTicketRequest {
+    SubmitTicketRequest {
         title: "idea".to_string(),
-        kind: TaskKind::Feature,
+        kind: TicketKind::Feature,
         body: "details".to_string(),
     }
 }
@@ -71,7 +71,7 @@ async fn a_visitor_submits_a_pending_task_and_cannot_ready_plan_or_claim_it() {
     wait_for_state(&daemon.client, &pm.id, AgentState::Idle).await;
     let v = visitor(&daemon).await;
     let task = v.submit_task(&req()).await.expect("submit");
-    assert_eq!(task.state, TaskState::Pending);
+    assert_eq!(task.state, TicketState::Pending);
     assert!(task.body.starts_with("submitted by external:advisor@nuc\n"));
     assert!(
         task.thread[0]
@@ -107,7 +107,7 @@ async fn dropping_a_submission_tells_the_submitter_why() {
     assert!(
         v.drop_task(
             &task.id,
-            &DropTaskRequest {
+            &DropTicketRequest {
                 reason: "mine".to_string()
             }
         )
@@ -118,7 +118,7 @@ async fn dropping_a_submission_tells_the_submitter_why() {
         .client
         .drop_task(
             &task.id,
-            &DropTaskRequest {
+            &DropTicketRequest {
                 reason: "duplicate of abcd".to_string(),
             },
         )

@@ -158,9 +158,9 @@ async fn report_startup_migrations(
         }
     }
     if let Some(f) = failure {
-        let req = bridle_api::types::NewTaskRequest {
+        let req = bridle_api::types::NewTicketRequest {
             title: "Project migration failed at start-up".into(),
-            kind: bridle_api::types::TaskKind::Incident,
+            kind: bridle_api::types::TicketKind::Incident,
             body: format!(
                 "{f}\n\nThe daemon started anyway. Fix the cause and restart, or run \
                  `bridle migrate` by hand; details are in the daemon log."

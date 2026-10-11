@@ -5,7 +5,7 @@ mod support;
 use support::ClientExt as _;
 
 use bridle_api::types::{
-    AgentState, MessageQuery, NewTaskRequest, SpawnRequest, TaskKind, Workdir,
+    AgentState, MessageQuery, NewTicketRequest, SpawnRequest, TicketKind, Workdir,
 };
 use support::{start_daemon_with_config, wait_for_state};
 
@@ -35,14 +35,14 @@ async fn spawn_role(daemon: &support::TestDaemon, role: &str, name: &str) -> Str
 async fn file(daemon: &support::TestDaemon, title: &str) {
     daemon
         .client
-        .new_open_task(&NewTaskRequest {
+        .new_open_task(&NewTicketRequest {
             ticket: None,
             parent: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
             title: title.to_string(),
-            kind: TaskKind::Feature,
+            kind: TicketKind::Feature,
             body: String::new(),
             size: None,
         })

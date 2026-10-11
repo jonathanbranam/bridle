@@ -10,7 +10,7 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use bridle_api::client::{Client, ClientError};
 use bridle_api::discovery::resolve_token;
-use bridle_api::types::{DoneTaskRequest, DropTaskRequest, ReviewNowRequest};
+use bridle_api::types::{DoneTicketRequest, DropTicketRequest, ReviewNowRequest};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use ts_rs::TS;
@@ -183,7 +183,7 @@ pub(crate) async fn act(
     let client = Client::new_with_timeout(url.to_string(), Some(token), PROBE_TIMEOUT * 5);
     let sent = match action {
         Action::Done => client
-            .done_task(task_id, &DoneTaskRequest::default())
+            .done_task(task_id, &DoneTicketRequest::default())
             .await
             .map(drop),
         Action::Drop => {
@@ -193,7 +193,7 @@ pub(crate) async fn act(
             client
                 .drop_task(
                     task_id,
-                    &DropTaskRequest {
+                    &DropTicketRequest {
                         reason: text.to_string(),
                     },
                 )
@@ -298,10 +298,10 @@ mod tests {
             }))
         };
         let app = Router::new()
-            .route("/v1/tasks/{id}/done", post(record))
-            .route("/v1/tasks/{id}/drop", post(record))
-            .route("/v1/tasks/{id}/answer", post(record))
-            .route("/v1/tasks/{id}/note", post(record))
+            .route("/v1/tickets/{id}/done", post(record))
+            .route("/v1/tickets/{id}/drop", post(record))
+            .route("/v1/tickets/{id}/answer", post(record))
+            .route("/v1/tickets/{id}/note", post(record))
             .with_state(seen.clone());
         let l = tokio::net::TcpListener::bind("127.0.0.1:0")
             .await
@@ -332,10 +332,10 @@ mod tests {
         assert_eq!(
             paths,
             [
-                "/v1/tasks/t-1/done",
-                "/v1/tasks/t-1/drop",
-                "/v1/tasks/t-1/answer",
-                "/v1/tasks/t-1/note"
+                "/v1/tickets/t-1/done",
+                "/v1/tickets/t-1/drop",
+                "/v1/tickets/t-1/answer",
+                "/v1/tickets/t-1/note"
             ]
         );
         assert!(

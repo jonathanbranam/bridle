@@ -7,13 +7,13 @@ use std::path::{Path, PathBuf};
 use anyhow::Context;
 use bridle_api::discovery::{self, Env, ProcessEnv};
 use bridle_api::{
-    AllocPortRequest, BudgetHoldRequest, BudgetOverrideRequest, Client, DoneTaskRequest,
-    DropTaskRequest, EditTaskRequest, Event, EventQuery, Impact, ImpactCheckRequest,
-    InterruptRequest, LandRequest, MaxWorkersRequest, MessageKind, MessageQuery, NewTaskRequest,
+    AllocPortRequest, BudgetHoldRequest, BudgetOverrideRequest, Client, DoneTicketRequest,
+    DropTicketRequest, EditTicketRequest, Event, EventQuery, Impact, ImpactCheckRequest,
+    InterruptRequest, LandRequest, MaxWorkersRequest, MessageKind, MessageQuery, NewTicketRequest,
     OverlapLevel, ProbeOutcome, ProbeRequest, ProbeResult, RemoveQuery, RenewRequest,
     ResolveConflictRequest, ResumeRequest, SendRequest, SetImpactRequest, SetKindRequest,
-    SetPriorityRequest, SetSummaryRequest, SpawnRequest, SpecRef, StopRequest, Task, TaskKind,
-    TaskPriority, TaskSize, TokenCreateRequest, UsageBreakdownQuery, UsageGroupBy,
+    SetPriorityRequest, SetSummaryRequest, SpawnRequest, SpecRef, StopRequest, Ticket, TicketKind,
+    TicketPriority, TicketSize, TokenCreateRequest, UsageBreakdownQuery, UsageGroupBy,
     UsageHistoryQuery, Workdir, event_kind,
 };
 use chrono::{Local, TimeZone, Utc};

@@ -6,7 +6,7 @@ use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
-use bridle_api::TaskKind;
+use bridle_api::TicketKind;
 use bridle_daemon::config::Config;
 use bridle_daemon::rules::{self, Layer, LayerKind};
 
@@ -27,14 +27,14 @@ pub fn render(
     role: &str,
     title: &str,
     components: &[String],
-    kind: Option<TaskKind>,
+    kind: Option<TicketKind>,
 ) -> Result<String> {
     let workflow_root = config.workflow_root(repo)?;
     let base_layers = rules::discover_layers(repo, workflow_root.as_deref(), &config.packs);
     let base = rules::load_and_resolve(&base_layers).context("resolving workflow rules")?;
 
     let mut out = format!("# Role: {title}\n\n");
-    if role == "worker" && kind == Some(TaskKind::Explore) {
+    if role == "worker" && kind == Some(TicketKind::Explore) {
         let _ = write!(out, "{EXPLORE_PARAGRAPH}\n\n");
     }
     out.push_str("## Rules\n\n");
@@ -256,12 +256,12 @@ mod tests {
     fn explore_task_gets_the_paragraph_and_a_feature_task_does_not() {
         let (dir, config) = fixture();
         let go = |kind| render(dir.path(), &config, "worker", "worker", &[], kind).expect("render");
-        let explore = go(Some(TaskKind::Explore));
+        let explore = go(Some(TicketKind::Explore));
         assert!(
             explore.contains("You are exploring an alternative"),
             "{explore}"
         );
-        assert!(!go(Some(TaskKind::Feature)).contains("exploring an alternative"));
+        assert!(!go(Some(TicketKind::Feature)).contains("exploring an alternative"));
         assert!(!go(None).contains("exploring an alternative"));
     }
 

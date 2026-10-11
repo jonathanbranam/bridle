@@ -6,7 +6,7 @@
 
 use std::path::{Component, Path, PathBuf};
 
-use bridle_api::types::{Task, TaskKind};
+use bridle_api::types::{Ticket, TicketKind};
 
 /// Tools that write a file; the hook's matcher only names the first three,
 /// but `NotebookEdit` is handled here too in case a project widens it.
@@ -58,8 +58,8 @@ pub fn is_architecture_path(path: &str, cwd: Option<&str>) -> bool {
 
 /// Whether the edit must be denied: it targets the architecture directory and
 /// none of the caller's own claimed tasks is an `arch-revision`.
-pub fn should_deny(path: &str, cwd: Option<&str>, claimed: &[Task]) -> bool {
-    is_architecture_path(path, cwd) && !claimed.iter().any(|t| t.kind == TaskKind::ArchRevision)
+pub fn should_deny(path: &str, cwd: Option<&str>, claimed: &[Ticket]) -> bool {
+    is_architecture_path(path, cwd) && !claimed.iter().any(|t| t.kind == TicketKind::ArchRevision)
 }
 
 pub fn deny_reason(path: &str) -> String {
@@ -87,12 +87,12 @@ pub fn deny_json(reason: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use bridle_api::types::TaskState;
+    use bridle_api::types::TicketState;
     use chrono::Utc;
 
-    fn task(kind: TaskKind) -> Task {
+    fn task(kind: TicketKind) -> Ticket {
         let now = Utc::now();
-        Task {
+        Ticket {
             components: Vec::new(),
             size: None,
             priority: Default::default(),
@@ -107,7 +107,7 @@ mod tests {
             id: "tw-0001".to_string(),
             title: "t".to_string(),
             kind,
-            state: TaskState::Claimed,
+            state: TicketState::Claimed,
             body: String::new(),
             thread: Vec::new(),
             created_at: now,
@@ -167,11 +167,11 @@ mod tests {
     fn deny_unless_claimed_task_is_arch_revision() {
         let p = "design/architecture/a.md";
         assert!(should_deny(p, Some(CWD), &[]));
-        assert!(should_deny(p, Some(CWD), &[task(TaskKind::Feature)]));
+        assert!(should_deny(p, Some(CWD), &[task(TicketKind::Feature)]));
         assert!(!should_deny(
             p,
             Some(CWD),
-            &[task(TaskKind::Feature), task(TaskKind::ArchRevision)]
+            &[task(TicketKind::Feature), task(TicketKind::ArchRevision)]
         ));
         assert!(!should_deny("src/a.rs", Some(CWD), &[]));
     }

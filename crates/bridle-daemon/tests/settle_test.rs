@@ -6,7 +6,7 @@ mod support;
 use support::ClientExt as _;
 
 use bridle_api::ClientError;
-use bridle_api::types::{NewTaskRequest, TaskKind};
+use bridle_api::types::{NewTicketRequest, TicketKind};
 use support::start_daemon_with_config;
 
 #[tokio::test]
@@ -14,14 +14,14 @@ async fn a_new_task_settles_and_skip_settle_is_gated() {
     let (daemon, _tmp) = start_daemon_with_config(None, Some("[tasks]\nsettle = \"5m\"\n")).await;
     let c = &daemon.client;
     let task = c
-        .new_open_task(&NewTaskRequest {
+        .new_open_task(&NewTicketRequest {
             ticket: None,
             parent: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
             title: "T".to_string(),
-            kind: TaskKind::Chore,
+            kind: TicketKind::Chore,
             body: String::new(),
             size: None,
         })
@@ -56,14 +56,14 @@ async fn a_human_todo_is_claimed_at_creation_despite_settling() {
     let (daemon, _tmp) = start_daemon_with_config(None, Some("[tasks]\nsettle = \"5m\"\n")).await;
     let task = daemon
         .client
-        .new_open_task(&NewTaskRequest {
+        .new_open_task(&NewTicketRequest {
             ticket: None,
             parent: None,
             for_human: true,
             priority: None,
             components: Vec::new(),
             title: "mine".to_string(),
-            kind: TaskKind::Chore,
+            kind: TicketKind::Chore,
             body: String::new(),
             size: None,
         })

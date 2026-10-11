@@ -8,7 +8,7 @@ use std::time::Duration;
 
 use bridle_api::client::Client;
 use bridle_api::discovery::resolve_token;
-use bridle_api::types::{Task, TaskPriority, TaskState, sort_by_priority};
+use bridle_api::types::{Ticket, TicketPriority, TicketState, sort_by_priority};
 use serde::Serialize;
 use ts_rs::TS;
 
@@ -25,14 +25,14 @@ pub enum Priority {
     Low,
 }
 
-impl From<TaskPriority> for Priority {
-    fn from(p: TaskPriority) -> Self {
+impl From<TicketPriority> for Priority {
+    fn from(p: TicketPriority) -> Self {
         match p {
-            TaskPriority::Critical => Self::Critical,
-            TaskPriority::Urgent => Self::Urgent,
-            TaskPriority::High => Self::High,
-            TaskPriority::Normal => Self::Normal,
-            TaskPriority::Low => Self::Low,
+            TicketPriority::Critical => Self::Critical,
+            TicketPriority::Urgent => Self::Urgent,
+            TicketPriority::High => Self::High,
+            TicketPriority::Normal => Self::Normal,
+            TicketPriority::Low => Self::Low,
         }
     }
 }
@@ -163,10 +163,10 @@ async fn read_project(s: Source, timeout: Duration) -> Result<ProjectItems, Proj
     );
     let (claimed, all, questions) = fetched.map_err(|e| down(e.to_string()))?;
 
-    let by_id: HashMap<&str, &Task> = all.iter().map(|t| (t.id.as_str(), t)).collect();
-    let mut held: Vec<Task> = claimed
+    let by_id: HashMap<&str, &Ticket> = all.iter().map(|t| (t.id.as_str(), t)).collect();
+    let mut held: Vec<Ticket> = claimed
         .iter()
-        .filter(|t| t.state == TaskState::Claimed)
+        .filter(|t| t.state == TicketState::Claimed)
         .cloned()
         .collect();
     sort_by_priority(&mut held);
@@ -187,7 +187,7 @@ async fn read_project(s: Source, timeout: Duration) -> Result<ProjectItems, Proj
         .filter(|q| {
             by_id
                 .get(q.task_id.as_str())
-                .is_none_or(|t| t.state != TaskState::Dropped)
+                .is_none_or(|t| t.state != TicketState::Dropped)
         })
         .map(|q| {
             let task = by_id.get(q.task_id.as_str());
@@ -232,7 +232,7 @@ mod tests {
     async fn fake(claimed: Vec<Value>, all: Vec<Value>, questions: Vec<Value>) -> String {
         let app = Router::new()
             .route(
-                "/v1/tasks",
+                "/v1/tickets",
                 get(move |axum::extract::RawQuery(q): axum::extract::RawQuery| {
                     let list = if q.is_some_and(|q| q.contains("claimed_by=human")) {
                         claimed.clone()
@@ -365,7 +365,7 @@ mod tests {
             .expect("list");
         assert!(
             all.iter()
-                .any(|t| t.id == "t-gone" && t.state == TaskState::Dropped)
+                .any(|t| t.id == "t-gone" && t.state == TicketState::Dropped)
         );
         assert!(all.iter().any(|t| t.id == "q-gone"));
     }

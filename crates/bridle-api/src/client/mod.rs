@@ -13,11 +13,11 @@ use thiserror::Error;
 use crate::types::{
     AddQueueTierRequest, Agent, AllocPortRequest, AnswerQuestionRequest, ApiErrorResponse,
     AskQuestionRequest, BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, Conflict,
-    DoneTaskRequest, DropTaskRequest, Edge, EditTaskRequest, Event, EventQuery, ForwardAck,
+    DoneTicketRequest, DropTicketRequest, Edge, EditTicketRequest, Event, EventQuery, ForwardAck,
     ForwardRequest, ForwardState, Handover, HandoverDone, Health, HelloRequest, ImpactCheckRequest,
     ImpactReport, Interaction, InteractionsQuery, InterruptRequest, InterruptResponse, LandRequest,
-    LandResult, MaxWorkersRequest, Message, MessageQuery, NewEdgeRequest, NewTaskRequest,
-    NoteTaskRequest, OpenQuestion, OrchestratorWakeQuery, OutboxEntry, OutboxSendRequest,
+    LandResult, MaxWorkersRequest, Message, MessageQuery, NewEdgeRequest, NewTicketRequest,
+    NoteTicketRequest, OpenQuestion, OrchestratorWakeQuery, OutboxEntry, OutboxSendRequest,
     PeerTokenCreateRequest, PeerWatchRequest, PortAllocation, PrincipalWakeQuery,
     PrincipalWakeResponse, ProbeRequest, ProbeResult, PushResult, Queue, Queued, RateLimitPoint,
     Recipient, RemoteWatchRequest, RemoveEdgeQuery, RemoveQuery, RenewRequest,
@@ -26,9 +26,9 @@ use crate::types::{
     ScheduleListQuery, SendRequest, SessionEnd, SessionInfo, SessionKeep, SessionRegister,
     SetImpactRequest, SetKindRequest, SetPriorityRequest, SetQueueRequest, SetSummaryRequest,
     ShutdownResponse, SkipSettleRequest, SpawnRequest, Status, StatusLineReport, StopRequest,
-    StopWakeRequest, StopWakeResponse, SubmitTaskRequest, Task, TaskQuery, TokenCreateRequest,
-    TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown,
-    UsageBreakdownQuery, UsageHistoryQuery, WakeResponse, WriteHandoverRequest,
+    StopWakeRequest, StopWakeResponse, SubmitTicketRequest, Ticket, TicketQuery,
+    TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
+    UsageBreakdown, UsageBreakdownQuery, UsageHistoryQuery, WakeResponse, WriteHandoverRequest,
 };
 
 pub use bridle_docs::documents::{
@@ -180,7 +180,7 @@ impl Client {
     }
 
     async fn send_json<T: DeserializeOwned>(&self, req: RequestBuilder) -> Result<T, ClientError> {
-        let resp = req.send().await.map_err(map_send_err)?;
+        let resp = send_with_old_path_fallback(req).await?;
         let status = resp.status();
         let bytes = resp
             .bytes()
@@ -194,7 +194,7 @@ impl Client {
     }
 
     async fn send_unit(&self, req: RequestBuilder) -> Result<(), ClientError> {
-        let resp = req.send().await.map_err(map_send_err)?;
+        let resp = send_with_old_path_fallback(req).await?;
         let status = resp.status();
         if status.is_success() {
             Ok(())
@@ -330,12 +330,12 @@ impl Client {
 
     /// `POST /v1/watch/remote`: watch (or stop watching) a task on another project's daemon,
     /// through this daemon's peer token.
-    pub async fn remote_watch(&self, req: &RemoteWatchRequest) -> Result<Task, ClientError> {
+    pub async fn remote_watch(&self, req: &RemoteWatchRequest) -> Result<Ticket, ClientError> {
         self.post_json(&["v1", "watch", "remote"], req).await
     }
 
     /// `POST /v1/watch`: register a peer's principal as a watcher here (peer token).
-    pub async fn peer_watch(&self, req: &PeerWatchRequest) -> Result<Task, ClientError> {
+    pub async fn peer_watch(&self, req: &PeerWatchRequest) -> Result<Ticket, ClientError> {
         self.post_json(&["v1", "watch"], req).await
     }
 
@@ -673,53 +673,56 @@ impl Client {
 
     // ---------- tasks ----------
 
-    pub async fn list_tasks(&self) -> Result<Vec<Task>, ClientError> {
-        self.get_json(&["v1", "tasks"]).await
+    pub async fn list_tasks(&self) -> Result<Vec<Ticket>, ClientError> {
+        self.get_json(&["v1", "tickets"]).await
     }
 
-    /// `GET /v1/tasks?ready=true` (roles-and-lifecycle.md, "ready is computed").
-    pub async fn ready_tasks(&self) -> Result<Vec<Task>, ClientError> {
-        let query = TaskQuery {
+    /// `GET /v1/tickets?ready=true` (roles-and-lifecycle.md, "ready is computed").
+    pub async fn ready_tasks(&self) -> Result<Vec<Ticket>, ClientError> {
+        let query = TicketQuery {
             ready: Some(true),
             ..Default::default()
         };
-        self.get_json_query(&["v1", "tasks"], &query).await
+        self.get_json_query(&["v1", "tickets"], &query).await
     }
 
-    /// `GET /v1/tasks?top_tier=true`: just the highest queue tier with a
+    /// `GET /v1/tickets?top_tier=true`: just the highest queue tier with a
     /// startable task (roles-and-lifecycle.md, "the queue").
-    pub async fn top_tier_ready_tasks(&self) -> Result<Vec<Task>, ClientError> {
-        let query = TaskQuery {
+    pub async fn top_tier_ready_tasks(&self) -> Result<Vec<Ticket>, ClientError> {
+        let query = TicketQuery {
             top_tier: Some(true),
             ..Default::default()
         };
-        self.get_json_query(&["v1", "tasks"], &query).await
+        self.get_json_query(&["v1", "tickets"], &query).await
     }
 
-    /// `GET /v1/tasks?claimed_by=...`; `claimed_by` may be `me`, `human`, an
+    /// `GET /v1/tickets?claimed_by=...`; `claimed_by` may be `me`, `human`, an
     /// agent name, or a full `PrincipalId`.
-    pub async fn list_tasks_claimed_by(&self, claimed_by: &str) -> Result<Vec<Task>, ClientError> {
-        let query = TaskQuery {
+    pub async fn list_tasks_claimed_by(
+        &self,
+        claimed_by: &str,
+    ) -> Result<Vec<Ticket>, ClientError> {
+        let query = TicketQuery {
             claimed_by: Some(claimed_by.to_string()),
             ..Default::default()
         };
-        self.get_json_query(&["v1", "tasks"], &query).await
+        self.get_json_query(&["v1", "tickets"], &query).await
     }
 
-    /// `GET /v1/tasks?component=...`: tasks naming `component` or a descendant.
-    pub async fn list_tasks_component(&self, component: &str) -> Result<Vec<Task>, ClientError> {
-        let query = TaskQuery {
+    /// `GET /v1/tickets?component=...`: tasks naming `component` or a descendant.
+    pub async fn list_tasks_component(&self, component: &str) -> Result<Vec<Ticket>, ClientError> {
+        let query = TicketQuery {
             component: Some(component.to_string()),
             ..Default::default()
         };
-        self.get_json_query(&["v1", "tasks"], &query).await
+        self.get_json_query(&["v1", "tickets"], &query).await
     }
 
     /// Search for tasks by words in title, body, or summary (all words must match, case-insensitive).
-    pub async fn search_tasks(&self, words: &[&str]) -> Result<Vec<Task>, ClientError> {
+    pub async fn search_tasks(&self, words: &[&str]) -> Result<Vec<Ticket>, ClientError> {
         let all_tasks = self.list_tasks().await?;
         let search_words: Vec<String> = words.iter().map(|w| w.to_lowercase()).collect();
-        let filtered_tasks: Vec<Task> = all_tasks
+        let filtered_tasks: Vec<Ticket> = all_tasks
             .into_iter()
             .filter(|task| {
                 let title_lower = task.title.to_lowercase();
@@ -735,56 +738,73 @@ impl Client {
         Ok(filtered_tasks)
     }
 
-    pub async fn new_task(&self, req: &NewTaskRequest) -> Result<Task, ClientError> {
-        self.post_json(&["v1", "tasks"], req).await
+    pub async fn new_task(&self, req: &NewTicketRequest) -> Result<Ticket, ClientError> {
+        self.post_json(&["v1", "tickets"], req).await
     }
 
-    pub async fn submit_task(&self, req: &SubmitTaskRequest) -> Result<Task, ClientError> {
-        self.post_json(&["v1", "tasks", "submit"], req).await
+    pub async fn submit_task(&self, req: &SubmitTicketRequest) -> Result<Ticket, ClientError> {
+        self.post_json(&["v1", "tickets", "submit"], req).await
     }
 
-    pub async fn get_task(&self, id: &str) -> Result<Task, ClientError> {
-        self.get_json(&["v1", "tasks", id]).await
+    pub async fn get_task(&self, id: &str) -> Result<Ticket, ClientError> {
+        self.get_json(&["v1", "tickets", id]).await
     }
 
-    pub async fn edit_task(&self, id: &str, req: &EditTaskRequest) -> Result<Task, ClientError> {
-        self.patch_json(&["v1", "tasks", id], req).await
+    pub async fn edit_task(
+        &self,
+        id: &str,
+        req: &EditTicketRequest,
+    ) -> Result<Ticket, ClientError> {
+        self.patch_json(&["v1", "tickets", id], req).await
     }
 
-    pub async fn drop_task(&self, id: &str, req: &DropTaskRequest) -> Result<Task, ClientError> {
-        self.post_json(&["v1", "tasks", id, "drop"], req).await
+    pub async fn drop_task(
+        &self,
+        id: &str,
+        req: &DropTicketRequest,
+    ) -> Result<Ticket, ClientError> {
+        self.post_json(&["v1", "tickets", id, "drop"], req).await
     }
 
-    pub async fn done_task(&self, id: &str, req: &DoneTaskRequest) -> Result<Task, ClientError> {
-        self.post_json(&["v1", "tasks", id, "done"], req).await
+    pub async fn done_task(
+        &self,
+        id: &str,
+        req: &DoneTicketRequest,
+    ) -> Result<Ticket, ClientError> {
+        self.post_json(&["v1", "tickets", id, "done"], req).await
     }
 
     pub async fn set_task_summary(
         &self,
         id: &str,
         req: &SetSummaryRequest,
-    ) -> Result<Task, ClientError> {
-        self.post_json(&["v1", "tasks", id, "summary"], req).await
+    ) -> Result<Ticket, ClientError> {
+        self.post_json(&["v1", "tickets", id, "summary"], req).await
     }
 
     pub async fn set_task_priority(
         &self,
         id: &str,
         req: &SetPriorityRequest,
-    ) -> Result<Task, ClientError> {
-        self.post_json(&["v1", "tasks", id, "priority"], req).await
+    ) -> Result<Ticket, ClientError> {
+        self.post_json(&["v1", "tickets", id, "priority"], req)
+            .await
     }
 
-    pub async fn set_task_kind(&self, id: &str, req: &SetKindRequest) -> Result<Task, ClientError> {
-        self.post_json(&["v1", "tasks", id, "kind"], req).await
+    pub async fn set_task_kind(
+        &self,
+        id: &str,
+        req: &SetKindRequest,
+    ) -> Result<Ticket, ClientError> {
+        self.post_json(&["v1", "tickets", id, "kind"], req).await
     }
 
     pub async fn set_task_impact(
         &self,
         id: &str,
         req: &SetImpactRequest,
-    ) -> Result<Task, ClientError> {
-        self.post_json(&["v1", "tasks", id, "impact"], req).await
+    ) -> Result<Ticket, ClientError> {
+        self.post_json(&["v1", "tickets", id, "impact"], req).await
     }
 
     pub async fn impact_check(
@@ -795,7 +815,7 @@ impl Client {
     }
 
     pub async fn land_task(&self, id: &str, req: &LandRequest) -> Result<LandResult, ClientError> {
-        self.post_json(&["v1", "tasks", id, "land"], req).await
+        self.post_json(&["v1", "tickets", id, "land"], req).await
     }
 
     pub async fn push(&self) -> Result<PushResult, ClientError> {
@@ -834,18 +854,18 @@ impl Client {
             .await
     }
 
-    pub async fn reopen_task(&self, id: &str) -> Result<Task, ClientError> {
-        self.post_empty(&["v1", "tasks", id, "reopen"]).await
+    pub async fn reopen_task(&self, id: &str) -> Result<Ticket, ClientError> {
+        self.post_empty(&["v1", "tickets", id, "reopen"]).await
     }
 
     /// `pending` -> `open`. A 409 means the task isn't `pending`.
-    pub async fn ready_task(&self, id: &str) -> Result<Task, ClientError> {
-        self.post_empty(&["v1", "tasks", id, "ready"]).await
+    pub async fn ready_task(&self, id: &str) -> Result<Ticket, ClientError> {
+        self.post_empty(&["v1", "tickets", id, "ready"]).await
     }
 
     /// `open` -> `planned`. A 409 means the task isn't `open`.
-    pub async fn plan_task(&self, id: &str) -> Result<Task, ClientError> {
-        self.post_empty(&["v1", "tasks", id, "plan"]).await
+    pub async fn plan_task(&self, id: &str) -> Result<Ticket, ClientError> {
+        self.post_empty(&["v1", "tickets", id, "plan"]).await
     }
 
     pub async fn ask_question(
@@ -853,9 +873,9 @@ impl Client {
         id: &str,
         body: &str,
         to: Option<&str>,
-    ) -> Result<Task, ClientError> {
+    ) -> Result<Ticket, ClientError> {
         self.post_json(
-            &["v1", "tasks", id, "ask"],
+            &["v1", "tickets", id, "ask"],
             &AskQuestionRequest {
                 body: body.to_string(),
                 to: to.map(str::to_string),
@@ -864,9 +884,9 @@ impl Client {
         .await
     }
 
-    pub async fn answer_question(&self, id: &str, body: &str) -> Result<Task, ClientError> {
+    pub async fn answer_question(&self, id: &str, body: &str) -> Result<Ticket, ClientError> {
         self.post_json(
-            &["v1", "tasks", id, "answer"],
+            &["v1", "tickets", id, "answer"],
             &AnswerQuestionRequest {
                 body: body.to_string(),
             },
@@ -874,10 +894,10 @@ impl Client {
         .await
     }
 
-    pub async fn note_task(&self, id: &str, body: &str) -> Result<Task, ClientError> {
+    pub async fn note_task(&self, id: &str, body: &str) -> Result<Ticket, ClientError> {
         self.post_json(
-            &["v1", "tasks", id, "note"],
-            &NoteTaskRequest {
+            &["v1", "tickets", id, "note"],
+            &NoteTicketRequest {
                 body: body.to_string(),
             },
         )
@@ -885,9 +905,9 @@ impl Client {
     }
 
     /// Skips the task's settle period, recording `reason` in its thread.
-    pub async fn skip_settle(&self, id: &str, reason: &str) -> Result<Task, ClientError> {
+    pub async fn skip_settle(&self, id: &str, reason: &str) -> Result<Ticket, ClientError> {
         self.post_json(
-            &["v1", "tasks", id, "skip-settle"],
+            &["v1", "tickets", id, "skip-settle"],
             &SkipSettleRequest {
                 reason: reason.to_string(),
             },
@@ -902,25 +922,25 @@ impl Client {
     /// Claims a ready task for the caller: `planned` -> `claimed`. A 409
     /// means the task isn't ready to claim (not planned, blocked, or
     /// already claimed).
-    pub async fn claim_task(&self, id: &str) -> Result<Task, ClientError> {
-        self.post_empty(&["v1", "tasks", id, "claim"]).await
+    pub async fn claim_task(&self, id: &str) -> Result<Ticket, ClientError> {
+        self.post_empty(&["v1", "tickets", id, "claim"]).await
     }
 
     /// Releases the caller's own claim: `claimed` -> `planned`. A 409 means
     /// the caller isn't the current claimant, including if the task isn't
     /// claimed at all.
     /// The calling principal starts watching the task (a no-op if it already does).
-    pub async fn watch_task(&self, id: &str) -> Result<Task, ClientError> {
-        self.post_empty(&["v1", "tasks", id, "watch"]).await
+    pub async fn watch_task(&self, id: &str) -> Result<Ticket, ClientError> {
+        self.post_empty(&["v1", "tickets", id, "watch"]).await
     }
 
     /// The calling principal stops watching the task.
-    pub async fn unwatch_task(&self, id: &str) -> Result<Task, ClientError> {
-        self.post_empty(&["v1", "tasks", id, "unwatch"]).await
+    pub async fn unwatch_task(&self, id: &str) -> Result<Ticket, ClientError> {
+        self.post_empty(&["v1", "tickets", id, "unwatch"]).await
     }
 
-    pub async fn release_task(&self, id: &str) -> Result<Task, ClientError> {
-        self.post_empty(&["v1", "tasks", id, "release"]).await
+    pub async fn release_task(&self, id: &str) -> Result<Ticket, ClientError> {
+        self.post_empty(&["v1", "tickets", id, "release"]).await
     }
 
     // ---------- queue ----------
@@ -1019,6 +1039,30 @@ impl Client {
             .json(report);
         self.send_unit(req).await
     }
+}
+
+/// Sends `req`; a `/v1/tickets/...` request that hits a daemon from before the rename (an unmatched
+/// route: 404 with an empty body, where a real "not found" carries a JSON error) is retried on the
+/// old `/v1/tasks/...` path. Goes with the old-path routes, one release (22ab step 9).
+async fn send_with_old_path_fallback(
+    req: RequestBuilder,
+) -> Result<reqwest::Response, ClientError> {
+    let retry = req.try_clone();
+    let resp = req.send().await.map_err(map_send_err)?;
+    let Some(retry) = retry else { return Ok(resp) };
+    if resp.status() != reqwest::StatusCode::NOT_FOUND || resp.content_length() != Some(0) {
+        return Ok(resp);
+    }
+    let Ok(mut built) = retry.build() else {
+        return Ok(resp);
+    };
+    if !built.url().path().starts_with("/v1/tickets") {
+        return Ok(resp);
+    }
+    let old = built.url().path().replacen("/v1/tickets", "/v1/tasks", 1);
+    built.url_mut().set_path(&old);
+    let client = reqwest::Client::new();
+    client.execute(built).await.map_err(map_send_err)
 }
 
 fn map_send_err(e: reqwest::Error) -> ClientError {

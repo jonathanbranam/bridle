@@ -6,7 +6,7 @@ use anyhow::Context;
 use async_trait::async_trait;
 use bridle_api::client::Client;
 use bridle_api::types::{
-    Agent, Message, MessageKind, MessageQuery, OpenQuestion, SendRequest, Task, When,
+    Agent, Message, MessageKind, MessageQuery, OpenQuestion, SendRequest, Ticket, When,
 };
 use chrono::{DateTime, NaiveDateTime, Utc};
 use std::collections::HashMap;
@@ -80,7 +80,7 @@ impl Feed for ClientSink {
         Ok(self.0.list_agents().await?)
     }
 
-    async fn tasks(&self) -> anyhow::Result<Vec<Task>> {
+    async fn tasks(&self) -> anyhow::Result<Vec<Ticket>> {
         Ok(self.0.list_tasks().await?)
     }
 

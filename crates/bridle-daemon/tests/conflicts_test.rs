@@ -8,22 +8,22 @@ use support::ClientExt as _;
 use std::collections::BTreeMap;
 
 use bridle_api::types::{
-    AgentState, EdgeKind, Impact, ImpactCheckRequest, MessageQuery, NewTaskRequest,
-    ResolveConflictRequest, SetImpactRequest, SpawnRequest, TaskKind, Workdir,
+    AgentState, EdgeKind, Impact, ImpactCheckRequest, MessageQuery, NewTicketRequest,
+    ResolveConflictRequest, SetImpactRequest, SpawnRequest, TicketKind, Workdir,
 };
 use support::{TestDaemon, start_daemon, wait_for_state};
 
 async fn planned_task(d: &TestDaemon, title: &str, scenario: &str) -> String {
     let c = &d.client;
     let t = c
-        .new_open_task(&NewTaskRequest {
+        .new_open_task(&NewTicketRequest {
             ticket: None,
             parent: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
             title: title.to_string(),
-            kind: TaskKind::Feature,
+            kind: TicketKind::Feature,
             body: String::new(),
             size: None,
         })

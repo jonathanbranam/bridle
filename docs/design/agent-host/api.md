@@ -50,23 +50,23 @@ JSON over HTTP, versioned under `/v1`. The contract is
 | `POST /v1/watch` | `{task, who, home, watch}`: a peer daemon watches a task here for its principal `who`, recorded as `remote:<who>@<home>`; updates are queued for `home`. Peer token only (403 otherwise); 404 for an unknown task |
 | `POST /v1/forward` | one message from another daemon's outbox (`{origin_machine, origin_daemon, origin_id, from, to, body, ...}`), peer token only (403 otherwise); answered `{message_ids}`, and a repeat of the same origin gets the same ids and delivers nothing. 404 for an unknown recipient |
 | `DELETE /v1/tokens/{name}` | revoke `external:{name}` (human only; an agent's own token isn't revoked this way — see `rm`) |
-| `POST /v1/tasks/{id}/watch` · `POST /v1/tasks/{id}/unwatch` | the caller starts or stops watching the task (`watchers` on the task; the creator and the claimer are added automatically); recorded in the thread and emitted as `task.watching` `{task, watching}` only when the list changed |
-| `GET /v1/tasks` · `POST /v1/tasks` | list (`?ready=`, `?claimed_by=` (`me`), `?top_tier=`, `?component=`) · create (`{title, kind, body?, size?, components?}`), starting `open`, with `created_by` set to the caller (`unknown` on a task whose creator was never recorded; an absent field parses as `unknown`); emits `task.created`, and wakes the manager ([[../coordination#Waking the manager|coordination.md]]) |
-| `POST /v1/tasks/submit` | `{title, kind, body}`: file an `open` task whose body starts `submitted by <principal>` (`bridle ticket submit`; visitors allowed, [[principals]]) |
-| `POST /v1/tasks/{id}/priority` · `/kind` · `/skip-settle` | change the priority (`{priority}`) · the kind (`{kind}`, only while `open`) · skip the settle period (`{reason}`; human, orchestrator or project manager); each recorded in the thread, the first two as `task.priority` / `task.kind` events |
-| `GET /v1/tasks/{id}` · `PATCH /v1/tasks/{id}` | one task, including its body and thread · change `title`/`body`/`components`/`size` (`{title?, body?, components?, size?}`; never state) |
-| `POST /v1/tasks/{id}/plan` | `open` -> `planned` |
-| `POST /v1/tasks/{id}/drop` | `{reason}` (required) -> `dropped`, recorded in the thread |
-| `POST /v1/tasks/{id}/reopen` | `dropped` or `integrated` -> `reopened`; any other current state is a 409 |
-| `POST /v1/tasks/{id}/claim` | claims a ready task for the caller: `planned` -> `claimed`; 409 if it isn't ready (not planned, blocked, or already claimed) |
-| `POST /v1/tasks/{id}/release` | releases the caller's own claim: `claimed` -> `planned`; 409 if the caller isn't the current claimant, including if it isn't claimed at all |
-| `POST /v1/tasks/{id}/done` | `{commit, branch?}` -> `integrated`, recording the landing; with `branch` the commit must be on the integration branch, and the branch's agents, worktrees and branch are removed (cleanup reported in the thread), except an agent that still holds other work (uncommitted changes, another unmerged branch checked out, another claimed task, or a background job with files open in its worktree), which is kept with its branch, named in the thread note, and the manager is told once; tells other workers `main moved` |
-| `POST /v1/tasks/{id}/land` | `{branch?, check_cmd?}`: the integrator ([[roles-and-config]]); 409 `land_failed` leaves everything untouched; on success runs `done` and returns `{task, commit, notes}` |
-| `POST /v1/tasks/{id}/summary` | `{text}`: the landing summary, kept in the task record |
-| `POST /v1/tasks/{id}/impact` · `POST /v1/impact/check` | declare a task's impact (`{impact}`) · overlap-check all tasks against a spec map (`{spec_map}`), opening conflicts and returning `{overlaps, opened, probes}` ([[../impact-and-conflicts]]) |
+| `POST /v1/tickets/{id}/watch` · `POST /v1/tickets/{id}/unwatch` | the caller starts or stops watching the task (`watchers` on the task; the creator and the claimer are added automatically); recorded in the thread and emitted as `task.watching` `{task, watching}` only when the list changed |
+| `GET /v1/tickets` · `POST /v1/tickets` | list (`?ready=`, `?claimed_by=` (`me`), `?top_tier=`, `?component=`) · create (`{title, kind, body?, size?, components?}`), starting `open`, with `created_by` set to the caller (`unknown` on a task whose creator was never recorded; an absent field parses as `unknown`); emits `task.created`, and wakes the manager ([[../coordination#Waking the manager|coordination.md]]) |
+| `POST /v1/tickets/submit` | `{title, kind, body}`: file an `open` task whose body starts `submitted by <principal>` (`bridle ticket submit`; visitors allowed, [[principals]]) |
+| `POST /v1/tickets/{id}/priority` · `/kind` · `/skip-settle` | change the priority (`{priority}`) · the kind (`{kind}`, only while `open`) · skip the settle period (`{reason}`; human, orchestrator or project manager); each recorded in the thread, the first two as `task.priority` / `task.kind` events |
+| `GET /v1/tickets/{id}` · `PATCH /v1/tickets/{id}` | one task, including its body and thread · change `title`/`body`/`components`/`size` (`{title?, body?, components?, size?}`; never state) |
+| `POST /v1/tickets/{id}/plan` | `open` -> `planned` |
+| `POST /v1/tickets/{id}/drop` | `{reason}` (required) -> `dropped`, recorded in the thread |
+| `POST /v1/tickets/{id}/reopen` | `dropped` or `integrated` -> `reopened`; any other current state is a 409 |
+| `POST /v1/tickets/{id}/claim` | claims a ready task for the caller: `planned` -> `claimed`; 409 if it isn't ready (not planned, blocked, or already claimed) |
+| `POST /v1/tickets/{id}/release` | releases the caller's own claim: `claimed` -> `planned`; 409 if the caller isn't the current claimant, including if it isn't claimed at all |
+| `POST /v1/tickets/{id}/done` | `{commit, branch?}` -> `integrated`, recording the landing; with `branch` the commit must be on the integration branch, and the branch's agents, worktrees and branch are removed (cleanup reported in the thread), except an agent that still holds other work (uncommitted changes, another unmerged branch checked out, another claimed task, or a background job with files open in its worktree), which is kept with its branch, named in the thread note, and the manager is told once; tells other workers `main moved` |
+| `POST /v1/tickets/{id}/land` | `{branch?, check_cmd?}`: the integrator ([[roles-and-config]]); 409 `land_failed` leaves everything untouched; on success runs `done` and returns `{task, commit, notes}` |
+| `POST /v1/tickets/{id}/summary` | `{text}`: the landing summary, kept in the task record |
+| `POST /v1/tickets/{id}/impact` · `POST /v1/impact/check` | declare a task's impact (`{impact}`) · overlap-check all tasks against a spec map (`{spec_map}`), opening conflicts and returning `{overlaps, opened, probes}` ([[../impact-and-conflicts]]) |
 | `POST /v1/probe` | in-memory merge probe of a branch (`{branch}` or `{target}`: task or agent) against the integration branch |
 | `GET /v1/conflicts` · `POST /v1/conflicts/{id}/resolve` | conflicts opened by `impact check` · resolve one with exactly one of `{compatible}`, `{order: [a,b]}` (adds a `blocks` edge) or `{merge_into}` |
-| `POST /v1/tasks/{id}/ask` · `/answer` · `/note` · `GET /v1/questions` | ask a question of a task (`{body}`) · answer it · add a thread note · list open questions (a worker sees only those on its own claimed task or asked by it) |
+| `POST /v1/tickets/{id}/ask` · `/answer` · `/note` · `GET /v1/questions` | ask a question of a task (`{body}`) · answer it · add a thread note · list open questions (a worker sees only those on its own claimed task or asked by it) |
 | `GET /v1/edges` · `POST /v1/edges` · `DELETE /v1/edges` | list · add (`{from, to, kind}`) · remove (same triple as query) |
 | `GET /v1/queue` · `POST /v1/queue` · `POST /v1/queue/tiers` | read · replace (`{tiers}`) · append a tier (`{tasks}`); writes are project-manager, `external:orchestrator` or human only |
 | `POST /v1/migrations` | record a project migration `bridle migrate` applied, as a `project.migrated` event ([[docs/design/migrations|migrations]]) |
@@ -108,6 +108,16 @@ with `curl -N`, resumes from an event sequence number with `Last-Event-ID`, and
 needs no extra protocol in the CLI. A WebSocket endpoint can be added beside it
 if a GUI needs bidirectional streaming, for example a live terminal attached to
 an agent.
+
+## Ticket names and the old ones (22ab step 9)
+
+The wire says ticket: the Rust types are `Ticket`, `TicketKind`, `TicketState`, `NewTicketRequest` and so on, and the routes are `/v1/tickets/...`. For one release (removal is 22ab step 10) the old names also work, so an old client talks to a new daemon (the lesson of incident 2ax5):
+
+- Every `/v1/tasks/...` route is still served by the same handler as its `/v1/tickets/...` twin.
+- The client calls `/v1/tickets/...`; a daemon from before the rename answers that with an empty 404, and the client retries once on `/v1/tasks/...`.
+- JSON field names that carry "task" (`task`, `tasks`, `task_id`, `task_prefix`, `pending_tasks`, `incident_task`, and the `task_update` message kind) are *emitted* unchanged and *accepted* under the ticket spelling too (`ticket`, `tickets`, `ticket_id`, `ticket_prefix`, `pending_tickets`, `incident_ticket`, `ticket_update`; serde aliases). A daemon in the next release starts emitting the new spellings, once every client reads them. Event kinds (`task.created` and the rest) are emitted unchanged for now.
+
+Test: `crates/bridle-daemon/tests/wire_compat_test.rs`.
 
 ## Events
 

@@ -6,7 +6,7 @@
 use axum::Json;
 use axum::extract::{Path, Query};
 use bridle_api::client::{Client, ClientError};
-use bridle_api::types::{EdgeKind, Task, TaskState};
+use bridle_api::types::{EdgeKind, Ticket, TicketState};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -26,8 +26,8 @@ pub enum StateFilter {
 }
 
 impl StateFilter {
-    fn keeps(self, state: TaskState) -> bool {
-        let closed = matches!(state, TaskState::Integrated | TaskState::Dropped);
+    fn keeps(self, state: TicketState) -> bool {
+        let closed = matches!(state, TicketState::Integrated | TicketState::Dropped);
         match self {
             Self::Open => !closed,
             Self::Closed => closed,
@@ -126,7 +126,7 @@ async fn claim_agent(client: &Client, claimed_by: Option<&str>) -> Option<ClaimA
         })
 }
 
-fn summary(t: &Task, agent: Option<ClaimAgent>) -> TaskSummary {
+fn summary(t: &Ticket, agent: Option<ClaimAgent>) -> TaskSummary {
     TaskSummary {
         id: t.id.clone(),
         title: t.title.clone(),
@@ -286,9 +286,9 @@ mod tests {
         }]);
         let by_id = tasks.clone();
         let app = Router::new()
-            .route("/v1/tasks", get(move || async move { Json(tasks) }))
+            .route("/v1/tickets", get(move || async move { Json(tasks) }))
             .route(
-                "/v1/tasks/{id}",
+                "/v1/tickets/{id}",
                 get(
                     move |axum::extract::Path(id): axum::extract::Path<String>| async move {
                         by_id

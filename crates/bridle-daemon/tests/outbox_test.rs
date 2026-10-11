@@ -6,8 +6,8 @@ mod support;
 use bridle_api::Client;
 use bridle_api::discovery::store_credential;
 use bridle_api::types::{
-    ForwardRequest, HelloRequest, MessageKind, MessageQuery, NewTaskRequest, OutboxSendRequest,
-    PeerTokenCreateRequest, PeerWatchRequest, RemoteWatchRequest, TaskKind, TokenCreateRequest,
+    ForwardRequest, HelloRequest, MessageKind, MessageQuery, NewTicketRequest, OutboxSendRequest,
+    PeerTokenCreateRequest, PeerWatchRequest, RemoteWatchRequest, TicketKind, TokenCreateRequest,
     When,
 };
 use support::{TestDaemon, machine_home_dir, start_daemon_named, wait_for};
@@ -492,14 +492,14 @@ async fn a_wake_on_a_remote_project_is_forwarded_home_once_as_a_system_message()
     let orch = p.a.external_client("orchestrator").await;
 
     p.b.client
-        .new_task(&NewTaskRequest {
+        .new_task(&NewTicketRequest {
             ticket: None,
             parent: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
             title: "the build is red".to_string(),
-            kind: TaskKind::Incident,
+            kind: TicketKind::Incident,
             body: "red".to_string(),
             size: None,
         })
@@ -653,14 +653,14 @@ async fn a_principal_of_one_project_watches_a_task_of_another_through_the_peer_t
     let advisor_b = p.b.external_client("advisor").await;
     let task =
         p.a.client
-            .new_task(&NewTaskRequest {
+            .new_task(&NewTicketRequest {
                 ticket: None,
                 parent: None,
                 for_human: false,
                 priority: None,
                 components: Vec::new(),
                 title: "cross watch".to_string(),
-                kind: TaskKind::Feature,
+                kind: TicketKind::Feature,
                 body: "b".to_string(),
                 size: None,
             })

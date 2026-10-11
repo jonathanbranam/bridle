@@ -4,7 +4,7 @@
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
-use bridle_api::types::{Agent, Message, OpenQuestion, SendRequest, Task};
+use bridle_api::types::{Agent, Message, OpenQuestion, SendRequest, Ticket};
 use bridle_mail::{
     Bridge, FakeMailer, FakeStore, Feed, FixedLocal, MailConfig, Outbound, Outcome, Sent, Sink,
     Tokens,
@@ -68,7 +68,7 @@ impl Feed for NoFeed {
     async fn agents(&self) -> anyhow::Result<Vec<Agent>> {
         Ok(Vec::new())
     }
-    async fn tasks(&self) -> anyhow::Result<Vec<Task>> {
+    async fn tasks(&self) -> anyhow::Result<Vec<Ticket>> {
         Ok(Vec::new())
     }
     async fn open_questions(&self) -> anyhow::Result<Vec<OpenQuestion>> {

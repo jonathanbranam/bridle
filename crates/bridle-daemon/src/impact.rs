@@ -3,13 +3,13 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use bridle_api::types::{Impact, Overlap, OverlapLevel, SpecRef, Task, TaskState};
+use bridle_api::types::{Impact, Overlap, OverlapLevel, SpecRef, Ticket, TicketState};
 
 /// Every overlap between two planned or claimed tasks, most severe first.
-pub fn check(tasks: &[Task], spec_map: &BTreeMap<String, SpecRef>) -> Vec<Overlap> {
-    let mut live: Vec<&Task> = tasks
+pub fn check(tasks: &[Ticket], spec_map: &BTreeMap<String, SpecRef>) -> Vec<Overlap> {
+    let mut live: Vec<&Ticket> = tasks
         .iter()
-        .filter(|t| matches!(t.state, TaskState::Planned | TaskState::Claimed))
+        .filter(|t| matches!(t.state, TicketState::Planned | TicketState::Claimed))
         .filter(|t| !t.impact.is_empty())
         .collect();
     live.sort_by(|a, b| a.id.cmp(&b.id));
@@ -45,7 +45,7 @@ fn touched<'a>(
     m
 }
 
-fn pair(a: &Task, b: &Task, map: &BTreeMap<String, SpecRef>, out: &mut Vec<Overlap>) {
+fn pair(a: &Ticket, b: &Ticket, map: &BTreeMap<String, SpecRef>, out: &mut Vec<Overlap>) {
     let mut push = |level, kind: &str, key: String| {
         out.push(Overlap {
             level,
@@ -56,7 +56,7 @@ fn pair(a: &Task, b: &Task, map: &BTreeMap<String, SpecRef>, out: &mut Vec<Overl
     };
 
     // Conflict: one scenario changed or removed by both.
-    let changed = |t: &Task| -> BTreeSet<String> {
+    let changed = |t: &Ticket| -> BTreeSet<String> {
         t.impact
             .modify
             .iter()
@@ -197,11 +197,11 @@ fn literal_prefix(g: &str) -> &str {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use bridle_api::types::{Impact, TaskKind};
+    use bridle_api::types::{Impact, TicketKind};
 
-    fn task(id: &str, state: TaskState, impact: Impact) -> Task {
-        let mut t: Task = serde_json::from_value(serde_json::json!({
-            "id": id, "title": "t", "kind": serde_json::to_value(TaskKind::Feature).unwrap(),
+    fn task(id: &str, state: TicketState, impact: Impact) -> Ticket {
+        let mut t: Ticket = serde_json::from_value(serde_json::json!({
+            "id": id, "title": "t", "kind": serde_json::to_value(TicketKind::Feature).unwrap(),
             "state": serde_json::to_value(state).unwrap(), "body": "", "thread": [],
             "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z",
         }))
@@ -237,8 +237,8 @@ mod tests {
 
     fn run(a: Impact, b: Impact, m: &BTreeMap<String, SpecRef>) -> Vec<(OverlapLevel, String)> {
         let ts = [
-            task("a", TaskState::Planned, a),
-            task("b", TaskState::Claimed, b),
+            task("a", TicketState::Planned, a),
+            task("b", TicketState::Claimed, b),
         ];
         check(&ts, m)
             .into_iter()
@@ -321,9 +321,9 @@ mod tests {
     fn only_in_flight_tasks_count() {
         let i = imp(&["s-1"], &[], &[], &[]);
         let ts = [
-            task("a", TaskState::Planned, i.clone()),
-            task("b", TaskState::Integrated, i.clone()),
-            task("c", TaskState::Open, i),
+            task("a", TicketState::Planned, i.clone()),
+            task("b", TicketState::Integrated, i.clone()),
+            task("c", TicketState::Open, i),
         ];
         assert!(check(&ts, &map()).is_empty());
     }

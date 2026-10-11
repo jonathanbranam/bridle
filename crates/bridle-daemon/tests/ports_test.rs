@@ -8,7 +8,7 @@ use std::net::TcpListener;
 use std::time::Duration;
 
 use bridle_api::types::{
-    AgentState, AllocPortRequest, NewTaskRequest, SpawnRequest, StopRequest, TaskKind, Workdir,
+    AgentState, AllocPortRequest, NewTicketRequest, SpawnRequest, StopRequest, TicketKind, Workdir,
 };
 use support::{default_overrides, start_daemon_with_config, wait_for, wait_for_state};
 
@@ -87,14 +87,14 @@ async fn an_agents_ports_are_freed_when_it_exits() {
     let (d, _tmp) = start_daemon_with_config(None, Some(&cfg)).await;
     let c = &d.client;
     let t = c
-        .new_open_task(&NewTaskRequest {
+        .new_open_task(&NewTicketRequest {
             ticket: None,
             parent: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
             title: "web".to_string(),
-            kind: TaskKind::Feature,
+            kind: TicketKind::Feature,
             body: String::new(),
             size: None,
         })

@@ -4,7 +4,7 @@
 mod support;
 use support::ClientExt as _;
 
-use bridle_api::types::{DoneTaskRequest, NewTaskRequest, TaskKind};
+use bridle_api::types::{DoneTicketRequest, NewTicketRequest, TicketKind};
 use support::start_daemon;
 
 const SPEC: &str = "## Requirements\n\n### Requirement: R {#r-000N traces=a-12cd@0000}\nSHALL.\n\n#### Scenario: S {#s-000N}\n\n*Verification*: **non-executable**\n\nprose\n";
@@ -23,10 +23,10 @@ fn git(repo: &std::path::Path, args: &[&str]) -> String {
         .to_string()
 }
 
-async fn land(daemon: &support::TestDaemon, kind: TaskKind, title: &str) -> String {
+async fn land(daemon: &support::TestDaemon, kind: TicketKind, title: &str) -> String {
     let t = daemon
         .client
-        .new_open_task(&NewTaskRequest {
+        .new_open_task(&NewTicketRequest {
             ticket: None,
             parent: None,
             for_human: false,
@@ -44,7 +44,7 @@ async fn land(daemon: &support::TestDaemon, kind: TaskKind, title: &str) -> Stri
         .client
         .done_task(
             &t.id,
-            &DoneTaskRequest {
+            &DoneTicketRequest {
                 commit,
                 branch: None,
                 ..Default::default()
@@ -62,7 +62,7 @@ async fn reevaluate_titles(daemon: &support::TestDaemon) -> Vec<String> {
         .await
         .expect("list")
         .into_iter()
-        .filter(|t| t.kind == TaskKind::ReEvaluate)
+        .filter(|t| t.kind == TicketKind::ReEvaluate)
         .map(|t| t.title)
         .collect();
     v.sort();
@@ -88,10 +88,10 @@ async fn arch_revision_opens_one_task_per_capability_once() {
     git(&daemon.repo, &["commit", "-m", "design"]);
 
     // A non-arch landing opens nothing.
-    land(&daemon, TaskKind::Feature, "feature").await;
+    land(&daemon, TicketKind::Feature, "feature").await;
     assert!(reevaluate_titles(&daemon).await.is_empty());
 
-    let arch = land(&daemon, TaskKind::ArchRevision, "revise").await;
+    let arch = land(&daemon, TicketKind::ArchRevision, "revise").await;
     assert_eq!(
         reevaluate_titles(&daemon).await,
         vec![

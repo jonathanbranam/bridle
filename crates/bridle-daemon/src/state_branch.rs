@@ -8,7 +8,7 @@
 //! future immediate-flush case) calls [`StateBranch::flush_now`], which
 //! writes whatever is pending and makes one commit. A crash between an
 //! enqueue and the next flush loses that pending write (storage.md notes
-//! this on `Task::body`); the database's own copy of `title`/`kind`/`state`
+//! this on `Ticket::body`); the database's own copy of `title`/`kind`/`state`
 //! is unaffected, since that write already went to SQLite synchronously.
 
 use std::collections::HashMap;
@@ -17,8 +17,8 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use bridle_api::types::{
-    Edge, EdgeKind, Handover, Impact, StatePushStatus, Task, TaskKind, TaskPriority, TaskSize,
-    TaskState, ThreadEntry, ThreadEntryKind, UNKNOWN_CREATOR,
+    Edge, EdgeKind, Handover, Impact, StatePushStatus, ThreadEntry, ThreadEntryKind, Ticket,
+    TicketKind, TicketPriority, TicketSize, TicketState, UNKNOWN_CREATOR,
 };
 use chrono::{DateTime, SecondsFormat, Utc};
 use serde::{Deserialize, Serialize};
@@ -284,7 +284,7 @@ impl StateBranch {
 
     /// Renders `task` and queues it to overwrite `tasks/<id>.md` at the
     /// next flush.
-    pub fn enqueue_task(&self, task: &Task) -> Result<(), StateBranchError> {
+    pub fn enqueue_task(&self, task: &Ticket) -> Result<(), StateBranchError> {
         let rendered = render_task(task)?;
         let mut pending = self.pending.lock().expect("state branch pending lock");
         if owns_thread_file(task) && !task.thread.is_empty() {
@@ -706,7 +706,7 @@ impl StateBranch {
     /// Reads a task's file back from the worktree, if it exists. A plain
     /// file read, not part of the batched write path; used to hydrate the
     /// in-memory cache on daemon startup.
-    pub fn read_task(&self, id: &str) -> Option<Task> {
+    pub fn read_task(&self, id: &str) -> Option<Ticket> {
         let text = self.read_item_file(id)?;
         let mut task = parse_task(&text).ok()?;
         self.overlay_thread(&mut task);
@@ -723,7 +723,7 @@ impl StateBranch {
 
     /// A task that owns a ticket thread file takes its thread from there; the inline
     /// `## Thread` of a file written before the move is the fallback.
-    fn overlay_thread(&self, task: &mut Task) {
+    fn overlay_thread(&self, task: &mut Ticket) {
         if !owns_thread_file(task) {
             return;
         }
@@ -753,7 +753,7 @@ impl StateBranch {
     /// only used by `bridle rebuild`, reconstructing the database from this
     /// branch alone, where a task file that exists but won't parse must
     /// surface as an error rather than silently vanish from the rebuilt set.
-    pub fn list_tasks(&self) -> Result<Vec<Task>, StateBranchError> {
+    pub fn list_tasks(&self) -> Result<Vec<Ticket>, StateBranchError> {
         let mut ids = Vec::new();
         for d in [ITEMS_DIR, LEGACY_ITEMS_DIR] {
             match std::fs::read_dir(self.dir.join(d)) {
@@ -1122,10 +1122,10 @@ struct Frontmatter {
     components: Vec<String>,
     /// Absent in records written before size existed, or with none set.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    size: Option<TaskSize>,
+    size: Option<TicketSize>,
     /// Absent in records written before priority existed, or normal.
-    #[serde(default, skip_serializing_if = "TaskPriority::is_normal")]
-    priority: TaskPriority,
+    #[serde(default, skip_serializing_if = "TicketPriority::is_normal")]
+    priority: TicketPriority,
     /// Absent in records written before ordering existed, or never set.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     priority_at: Option<DateTime<Utc>>,
@@ -1153,7 +1153,7 @@ struct Frontmatter {
 /// section with one `### <kind> · <from> · <timestamp>` heading per entry.
 /// Only `note` entries are produced by this build; `question`/`answer`/
 /// `handoff`/`conflict`/`system` slot into the same heading shape later.
-fn render_task(task: &Task) -> Result<String, StateBranchError> {
+fn render_task(task: &Ticket) -> Result<String, StateBranchError> {
     let fm = Frontmatter {
         id: task.id.clone(),
         title: task.title.clone(),
@@ -1199,7 +1199,7 @@ const LEGACY_ITEMS_DIR: &str = "tasks";
 /// Whether the task's thread lives in `tickets/<id>.md`: the row of a ticket with its own id,
 /// which is every row `ticket new` made. A row with another ticket's id (an older task, or an
 /// extra task of one ticket) keeps its inline thread, since two rows can't share one file.
-fn owns_thread_file(task: &Task) -> bool {
+fn owns_thread_file(task: &Ticket) -> bool {
     task.ticket.as_deref() == Some(task.id.as_str())
 }
 
@@ -1221,7 +1221,7 @@ fn render_thread(thread: &[ThreadEntry]) -> String {
     out
 }
 
-fn render_thread_file(task: &Task) -> String {
+fn render_thread_file(task: &Ticket) -> String {
     format!("# Thread of {}\n{}", task.id, render_thread(&task.thread))
 }
 
@@ -1300,7 +1300,7 @@ fn parse_edges(text: &str) -> Result<Vec<Edge>, StateBranchError> {
 /// entry's text containing the literal sequences `"\n## Thread\n"` or
 /// `"\n### "` confuses the split; not guarded against in this build (noted
 /// in docs/design/storage.md).
-fn parse_task(text: &str) -> Result<Task, StateBranchError> {
+fn parse_task(text: &str) -> Result<Ticket, StateBranchError> {
     let after_open = text
         .strip_prefix("+++\n")
         .ok_or_else(|| StateBranchError::Parse("missing opening +++ frontmatter fence".into()))?;
@@ -1308,11 +1308,11 @@ fn parse_task(text: &str) -> Result<Task, StateBranchError> {
         .split_once("\n+++\n")
         .ok_or_else(|| StateBranchError::Parse("missing closing +++ frontmatter fence".into()))?;
     let fm: Frontmatter = toml::from_str(fm_str)?;
-    let kind: TaskKind = fm
+    let kind: TicketKind = fm
         .kind
         .parse()
         .map_err(|e: String| StateBranchError::Parse(e))?;
-    let state: TaskState = fm
+    let state: TicketState = fm
         .state
         .parse()
         .map_err(|e: String| StateBranchError::Parse(e))?;
@@ -1329,7 +1329,7 @@ fn parse_task(text: &str) -> Result<Task, StateBranchError> {
         .created_by
         .or_else(|| thread_first_author(&thread))
         .unwrap_or_else(|| UNKNOWN_CREATOR.to_string());
-    Ok(Task {
+    Ok(Ticket {
         id: fm.id,
         title: fm.title,
         kind,
@@ -1539,13 +1539,13 @@ mod tests {
         .await;
     }
 
-    fn sample_task(id: &str) -> Task {
+    fn sample_task(id: &str) -> Ticket {
         let now = Utc::now();
-        Task {
+        Ticket {
             id: id.to_string(),
             title: "Add foo".to_string(),
-            kind: TaskKind::Feature,
-            state: TaskState::Open,
+            kind: TicketKind::Feature,
+            state: TicketState::Open,
             body: "Some description.\n\nWith a second paragraph.".to_string(),
             thread: vec![],
             created_at: now,
@@ -1555,8 +1555,8 @@ mod tests {
             claimed_by: None,
             claimed_at: None,
             components: vec!["client-games".to_string(), "dungeon".to_string()],
-            size: Some(TaskSize::S),
-            priority: TaskPriority::High,
+            size: Some(TicketSize::S),
+            priority: TicketPriority::High,
             priority_at: None,
             branch: Some("bridle/x".to_string()),
             commit: Some("abc123".to_string()),
@@ -1585,8 +1585,8 @@ mod tests {
         assert_eq!(parsed.state, task.state);
         assert_eq!(parsed.body, task.body);
         assert!(parsed.thread.is_empty());
-        assert_eq!(parsed.size, Some(TaskSize::S));
-        assert_eq!(parsed.priority, TaskPriority::High);
+        assert_eq!(parsed.size, Some(TicketSize::S));
+        assert_eq!(parsed.priority, TicketPriority::High);
         assert_eq!(parsed.branch, task.branch);
         assert_eq!(parsed.commit, task.commit);
         assert_eq!(parsed.summary, task.summary);
@@ -1617,7 +1617,7 @@ mod tests {
         let task = parse_task(text).expect("parse old record");
         assert!(task.components.is_empty());
         assert_eq!(task.size, None);
-        assert_eq!(task.priority, TaskPriority::Normal);
+        assert_eq!(task.priority, TicketPriority::Normal);
         assert!(!render_task(&task).expect("render").contains("size"));
         // And an empty list isn't written back out.
         assert!(!render_task(&task).expect("render").contains("components"));

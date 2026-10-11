@@ -19,7 +19,7 @@ use bridle_api::discovery;
 use bridle_api::machines::MachineMap;
 use bridle_api::types::{
     ForwardAck, ForwardRequest, HelloRequest, MessageKind, MessageState, OutboxEntry,
-    PeerWatchRequest, Task, When,
+    PeerWatchRequest, Ticket, When,
 };
 
 use crate::store::{OutboxRow, Store};
@@ -213,7 +213,7 @@ impl Outbox {
         &self,
         project: &str,
         req: &PeerWatchRequest,
-    ) -> Result<Task, ClientError> {
+    ) -> Result<Ticket, ClientError> {
         let other = ClientError::Unreachable;
         self.check_destination(project).map_err(other)?;
         let url = self.resolve(project).map_err(other)?;

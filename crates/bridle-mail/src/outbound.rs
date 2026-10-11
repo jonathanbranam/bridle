@@ -11,7 +11,7 @@ use std::sync::Mutex;
 
 use anyhow::Context;
 use async_trait::async_trait;
-use bridle_api::types::{Agent, Message, MessageKind, MessageState, OpenQuestion, Task};
+use bridle_api::types::{Agent, Message, MessageKind, MessageState, OpenQuestion, Ticket};
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 
 use crate::config::MailConfig;
@@ -38,7 +38,7 @@ pub trait Feed: Send + Sync {
     /// Every message addressed to the human, read or not.
     async fn human_messages(&self) -> anyhow::Result<Vec<Message>>;
     async fn agents(&self) -> anyhow::Result<Vec<Agent>>;
-    async fn tasks(&self) -> anyhow::Result<Vec<Task>>;
+    async fn tasks(&self) -> anyhow::Result<Vec<Ticket>>;
     async fn open_questions(&self) -> anyhow::Result<Vec<OpenQuestion>>;
 }
 
@@ -258,7 +258,7 @@ pub fn digest_mail(
     cfg: &MailConfig,
     messages: &[Message],
     open: &[OpenQuestion],
-    tasks: &[Task],
+    tasks: &[Ticket],
     now: NaiveDateTime,
 ) -> OutMail {
     let mut out = format!(

@@ -496,15 +496,15 @@ pub async fn wait_for_event(
 pub trait ClientExt {
     async fn new_open_task(
         &self,
-        req: &bridle_api::types::NewTaskRequest,
-    ) -> Result<bridle_api::types::Task, bridle_api::ClientError>;
+        req: &bridle_api::types::NewTicketRequest,
+    ) -> Result<bridle_api::types::Ticket, bridle_api::ClientError>;
 }
 
 impl ClientExt for Client {
     async fn new_open_task(
         &self,
-        req: &bridle_api::types::NewTaskRequest,
-    ) -> Result<bridle_api::types::Task, bridle_api::ClientError> {
+        req: &bridle_api::types::NewTicketRequest,
+    ) -> Result<bridle_api::types::Ticket, bridle_api::ClientError> {
         let task = self.new_task(req).await?;
         if req.for_human {
             return Ok(task);

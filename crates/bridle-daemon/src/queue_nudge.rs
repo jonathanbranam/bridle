@@ -117,7 +117,7 @@ impl SettleWake {
 
     /// Ids that left the settling set by settling alone; stores the new set. Tasks
     /// blocked by deps or questions are never in the set, so they never note.
-    fn scan(&self, tasks: &[bridle_api::types::Task]) -> Vec<String> {
+    fn scan(&self, tasks: &[bridle_api::types::Ticket]) -> Vec<String> {
         let now = chrono::Utc::now();
         let mut prev = self.settling.lock().expect("settling lock");
         let mut settling = HashSet::new();

@@ -240,7 +240,7 @@ fn glob_match(glob: &str, path: &str) -> bool {
     go(glob.as_bytes(), path.as_bytes())
 }
 
-/// `<task id>: <title>`, the task summary as the body, then the `Task:` and `Branch:` trailers.
+/// `<task id>: <title>`, the task summary as the body, then the `Ticket:` and `Branch:` trailers.
 fn commit_message(i: &LandInput<'_>) -> String {
     let mut msg = format!("{}: {}\n\n", i.task, i.title);
     if let Some(s) = i.summary.map(str::trim).filter(|s| !s.is_empty()) {

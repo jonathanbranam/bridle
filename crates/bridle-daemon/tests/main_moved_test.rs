@@ -6,7 +6,8 @@ mod support;
 use support::ClientExt as _;
 
 use bridle_api::types::{
-    AgentState, DoneTaskRequest, MessageQuery, NewTaskRequest, SpawnRequest, TaskKind, Workdir,
+    AgentState, DoneTicketRequest, MessageQuery, NewTicketRequest, SpawnRequest, TicketKind,
+    Workdir,
 };
 use support::{start_daemon, wait_for_state};
 
@@ -54,14 +55,14 @@ async fn landing_notifies_the_other_worker_once_and_not_the_lander() {
     let other = worker(&daemon, "w2").await;
     let task = daemon
         .client
-        .new_open_task(&NewTaskRequest {
+        .new_open_task(&NewTicketRequest {
             ticket: None,
             parent: None,
             for_human: false,
             priority: None,
             components: Vec::new(),
             title: "Landed".to_string(),
-            kind: TaskKind::Feature,
+            kind: TicketKind::Feature,
             body: String::new(),
             size: None,
         })
@@ -83,7 +84,7 @@ async fn landing_notifies_the_other_worker_once_and_not_the_lander() {
         .client
         .done_task(
             &task.id,
-            &DoneTaskRequest {
+            &DoneTicketRequest {
                 commit: head.clone(),
                 branch: Some("bridle/w1".to_string()),
                 ..Default::default()
@@ -128,14 +129,14 @@ async fn landing_names_the_overlap_only_to_the_worker_whose_impact_overlaps() {
     ] {
         let t = daemon
             .client
-            .new_open_task(&NewTaskRequest {
+            .new_open_task(&NewTicketRequest {
                 ticket: None,
                 parent: None,
                 for_human: false,
                 priority: None,
                 components: Vec::new(),
                 title: title.to_string(),
-                kind: TaskKind::Feature,
+                kind: TicketKind::Feature,
                 body: String::new(),
                 size: None,
             })
@@ -169,7 +170,7 @@ async fn landing_names_the_overlap_only_to_the_worker_whose_impact_overlaps() {
         .client
         .done_task(
             &tasks[0].id,
-            &DoneTaskRequest {
+            &DoneTicketRequest {
                 commit: head,
                 branch: None,
                 ..Default::default()

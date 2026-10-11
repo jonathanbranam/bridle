@@ -6,7 +6,7 @@ use std::fmt::Write as _;
 use std::path::PathBuf;
 use std::process::Command as Proc;
 
-use bridle_api::{Edge, EdgeKind, Task, TaskKind, TaskState};
+use bridle_api::{Edge, EdgeKind, Ticket, TicketKind, TicketState};
 use chrono::{DateTime, Datelike, Duration, NaiveDate, Utc, Weekday};
 
 use super::client_for_read;
@@ -102,18 +102,18 @@ fn eastern(at: DateTime<Utc>) -> String {
 
 /// When the task was integrated: the daemon's `integrated: <sha>` thread note, else its last
 /// update (the task has no field for it).
-fn integrated_at(t: &Task) -> DateTime<Utc> {
+fn integrated_at(t: &Ticket) -> DateTime<Utc> {
     t.thread
         .iter()
         .find(|e| e.body.starts_with("integrated:"))
         .map_or(t.updated_at, |e| e.at)
 }
 
-fn is_integrated_in(t: &Task, from: DateTime<Utc>, to: DateTime<Utc>) -> bool {
-    t.state == TaskState::Integrated && (from..=to).contains(&integrated_at(t))
+fn is_integrated_in(t: &Ticket, from: DateTime<Utc>, to: DateTime<Utc>) -> bool {
+    t.state == TicketState::Integrated && (from..=to).contains(&integrated_at(t))
 }
 
-fn created_in(t: &Task, from: DateTime<Utc>, to: DateTime<Utc>) -> bool {
+fn created_in(t: &Ticket, from: DateTime<Utc>, to: DateTime<Utc>) -> bool {
     (from..=to).contains(&t.created_at)
 }
 
@@ -121,7 +121,7 @@ fn short(sha: &str) -> &str {
     &sha[..sha.len().min(9)]
 }
 
-fn delivered_line(t: &Task) -> String {
+fn delivered_line(t: &Ticket) -> String {
     match &t.commit {
         Some(c) => format!("- {}: {} ({})", t.id, t.title, short(c)),
         None => format!("- {}: {}", t.id, t.title),
@@ -150,7 +150,7 @@ fn sub(out: &mut String, title: &str, lines: &[String]) {
 
 /// The report for the window `[from, to]`. Pure: everything it needs is passed in.
 pub(crate) fn render(
-    tasks: &[Task],
+    tasks: &[Ticket],
     edges: &[Edge],
     commits: &[String],
     from: DateTime<Utc>,
@@ -158,24 +158,24 @@ pub(crate) fn render(
 ) -> String {
     let mut out = format!("# What happened, {} to {}\n", eastern(from), eastern(to));
 
-    let mut sorted: Vec<&Task> = tasks.iter().collect();
+    let mut sorted: Vec<&Ticket> = tasks.iter().collect();
     sorted.sort_by_key(|t| t.created_at);
 
     let features: Vec<String> = sorted
         .iter()
-        .filter(|t| t.kind == TaskKind::Feature && is_integrated_in(t, from, to))
+        .filter(|t| t.kind == TicketKind::Feature && is_integrated_in(t, from, to))
         .map(|t| delivered_line(t))
         .collect();
     section(&mut out, "Features built and delivered", &features);
 
     let found: Vec<String> = sorted
         .iter()
-        .filter(|t| t.kind == TaskKind::Bug && created_in(t, from, to))
+        .filter(|t| t.kind == TicketKind::Bug && created_in(t, from, to))
         .map(|t| format!("- {}: {} ({})", t.id, t.title, t.state))
         .collect();
     let fixed: Vec<String> = sorted
         .iter()
-        .filter(|t| t.kind == TaskKind::Bug && is_integrated_in(t, from, to))
+        .filter(|t| t.kind == TicketKind::Bug && is_integrated_in(t, from, to))
         .map(|t| delivered_line(t))
         .collect();
     let _ = write!(out, "\n## Bugs\n\n");
@@ -186,10 +186,13 @@ pub(crate) fn render(
     let pending: Vec<String> = sorted
         .iter()
         .filter(|t| {
-            t.kind != TaskKind::Incident
+            t.kind != TicketKind::Incident
                 && matches!(
                     t.state,
-                    TaskState::Pending | TaskState::Open | TaskState::Planned | TaskState::Claimed
+                    TicketState::Pending
+                        | TicketState::Open
+                        | TicketState::Planned
+                        | TicketState::Claimed
                 )
         })
         .map(|t| {
@@ -200,13 +203,13 @@ pub(crate) fn render(
                     tasks
                         .iter()
                         .find(|b| b.id == e.from)
-                        .is_some_and(|b| b.state != TaskState::Integrated)
+                        .is_some_and(|b| b.state != TicketState::Integrated)
                 })
                 .map(|e| e.from.as_str())
                 .collect();
             let why = if !blockers.is_empty() {
                 format!("blocked by {}", blockers.join(", "))
-            } else if let (TaskState::Claimed, Some(who)) = (t.state, &t.claimed_by) {
+            } else if let (TicketState::Claimed, Some(who)) = (t.state, &t.claimed_by) {
                 format!("claimed by {who}")
             } else {
                 format!("{}, waiting", t.state)
@@ -219,7 +222,7 @@ pub(crate) fn render(
     let incidents: Vec<String> = sorted
         .iter()
         .filter(|t| {
-            t.kind == TaskKind::Incident
+            t.kind == TicketKind::Incident
                 && (created_in(t, from, to) || is_integrated_in(t, from, to))
         })
         .map(|t| {
@@ -232,12 +235,12 @@ pub(crate) fn render(
     section(&mut out, "Incidents", &incidents);
 
     let created = tasks.iter().filter(|t| created_in(t, from, to)).count();
-    let other: Vec<&Task> = sorted
+    let other: Vec<&Ticket> = sorted
         .iter()
         .filter(|t| {
             !matches!(
                 t.kind,
-                TaskKind::Feature | TaskKind::Bug | TaskKind::Incident
+                TicketKind::Feature | TicketKind::Bug | TicketKind::Incident
             ) && is_integrated_in(t, from, to)
         })
         .copied()
@@ -278,7 +281,7 @@ mod tests {
         Utc.with_ymd_and_hms(2026, 10, 8, h, 0, 0).unwrap()
     }
 
-    fn task(id: &str, kind: TaskKind, state: TaskState, created: DateTime<Utc>) -> Task {
+    fn task(id: &str, kind: TicketKind, state: TicketState, created: DateTime<Utc>) -> Ticket {
         serde_json::from_value(serde_json::json!({
             "id": id, "title": format!("title {id}"), "kind": kind.as_str(),
             "state": state.as_str(), "body": "", "thread": [],
@@ -287,7 +290,7 @@ mod tests {
         .unwrap()
     }
 
-    fn note(t: &mut Task, body: &str, when: DateTime<Utc>) {
+    fn note(t: &mut Ticket, body: &str, when: DateTime<Utc>) {
         t.thread.push(ThreadEntry {
             kind: ThreadEntryKind::Note,
             from: "x".into(),
@@ -307,26 +310,26 @@ mod tests {
     #[test]
     fn window_edges_and_sections() {
         let (from, to) = (at(0), at(12));
-        let mut f_in = task("f1", TaskKind::Feature, TaskState::Integrated, at(1));
+        let mut f_in = task("f1", TicketKind::Feature, TicketState::Integrated, at(1));
         f_in.commit = Some("abcdef1234567".into());
         note(&mut f_in, "integrated: abcdef1234567", from); // exactly on the edge: in
-        let mut f_old = task("f2", TaskKind::Feature, TaskState::Integrated, at(1));
+        let mut f_old = task("f2", TicketKind::Feature, TicketState::Integrated, at(1));
         note(&mut f_old, "integrated: x", from - Duration::seconds(1)); // just outside
-        let bug_new = task("b1", TaskKind::Bug, TaskState::Open, at(2));
+        let bug_new = task("b1", TicketKind::Bug, TicketState::Open, at(2));
         let mut bug_fixed = task(
             "b2",
-            TaskKind::Bug,
-            TaskState::Integrated,
+            TicketKind::Bug,
+            TicketState::Integrated,
             from - Duration::days(3),
         );
         note(&mut bug_fixed, "integrated: y", at(5));
-        let waiting = task("p1", TaskKind::Chore, TaskState::Planned, at(3));
-        let blocker = task("p0", TaskKind::Chore, TaskState::Claimed, at(3));
-        let mut inc = task("i1", TaskKind::Incident, TaskState::Integrated, at(4));
+        let waiting = task("p1", TicketKind::Chore, TicketState::Planned, at(3));
+        let blocker = task("p0", TicketKind::Chore, TicketState::Claimed, at(3));
+        let mut inc = task("i1", TicketKind::Incident, TicketState::Integrated, at(4));
         note(&mut inc, "integrated: z", at(6));
         note(&mut inc, "fixed by restart\nmore", at(7));
         let chore = {
-            let mut c = task("c1", TaskKind::Chore, TaskState::Integrated, at(1));
+            let mut c = task("c1", TicketKind::Chore, TicketState::Integrated, at(1));
             note(&mut c, "integrated: w", at(8));
             c
         };

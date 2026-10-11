@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use anyhow::{Context, anyhow, bail};
-use bridle_api::{EditTaskRequest, NewTaskRequest, SubmitTaskRequest, TaskKind};
+use bridle_api::{EditTicketRequest, NewTicketRequest, SubmitTicketRequest, TicketKind};
 use clap::ValueEnum;
 
 use crate::cli::{
@@ -143,7 +143,7 @@ async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<(), CliErro
             .await?
             .edit_task(
                 &task.id,
-                &EditTaskRequest {
+                &EditTicketRequest {
                     body,
                     ticket: Some(ticket_id),
                     ..Default::default()
@@ -191,7 +191,11 @@ async fn ready_cmd(cli: &Cli, repo: &Path, args: &TicketReadyArgs) -> Result<(),
 /// The rows that carry a ticket's thread, oldest first: the row with the ticket's own id (its
 /// thread is `tickets/<id>.md` on the state branch) or, for a ticket made from an older task,
 /// the rows whose `ticket` names it.
-async fn thread_rows(cli: &Cli, repo: &Path, id: &str) -> Result<Vec<bridle_api::Task>, CliError> {
+async fn thread_rows(
+    cli: &Cli,
+    repo: &Path,
+    id: &str,
+) -> Result<Vec<bridle_api::Ticket>, CliError> {
     let tail = projects(cli, repo).await?.local(id)?.to_string();
     let all = crate::commands::client_for_read(cli)
         .await?
@@ -290,7 +294,7 @@ async fn show_cmd(cli: &Cli, repo: &Path, args: &TicketShowArgs) -> Result<(), C
 }
 
 /// The title and kind of a ticket's text; refuses an empty "The ask".
-fn task_source(text: &str) -> anyhow::Result<(String, TaskKind)> {
+fn task_source(text: &str) -> anyhow::Result<(String, TicketKind)> {
     let (pairs, body) = split_front(text).ok_or_else(|| anyhow!("ticket has no frontmatter"))?;
     let get = |k: &str| pairs.iter().find(|(n, _)| n == k).map(|(_, v)| v.as_str());
     let title = get("title")
@@ -299,7 +303,7 @@ fn task_source(text: &str) -> anyhow::Result<(String, TaskKind)> {
         .ok_or_else(|| anyhow!("ticket has no title"))?;
     let kind = get("kind")
         .ok_or_else(|| anyhow!("ticket has no kind (bridle ticket set <id> kind <kind>)"))?
-        .parse::<TaskKind>()
+        .parse::<TicketKind>()
         .map_err(|_| anyhow!("ticket has an unknown kind"))?;
     let ask = body
         .split_once("## The ask")
@@ -340,7 +344,7 @@ async fn submit(cli: &Cli, args: &TicketSubmitArgs) -> Result<(), CliError> {
     };
     let client = client_for(cli).await?;
     let task = client
-        .submit_task(&SubmitTaskRequest {
+        .submit_task(&SubmitTicketRequest {
             title: args.title.clone(),
             kind: kind_of(args.kind),
             body,
@@ -350,7 +354,7 @@ async fn submit(cli: &Cli, args: &TicketSubmitArgs) -> Result<(), CliError> {
     Ok(())
 }
 
-fn kind_of(arg: TaskKindArg) -> TaskKind {
+fn kind_of(arg: TaskKindArg) -> TicketKind {
     let name = arg.to_possible_value().expect("no skipped kinds");
     name.get_name().parse().expect("CLI kinds are task kinds")
 }
@@ -359,13 +363,13 @@ fn kind_of(arg: TaskKindArg) -> TaskKind {
 async fn make_task(
     cli: &Cli,
     title: &str,
-    kind: TaskKind,
+    kind: TicketKind,
     id: &str,
     rel: &str,
 ) -> Result<String, CliError> {
     let client = client_for(cli).await?;
     let task = client
-        .new_task(&NewTaskRequest {
+        .new_task(&NewTicketRequest {
             for_human: false,
             priority: None,
             title: title.to_string(),
@@ -397,7 +401,7 @@ async fn task_id_tails(cli: &Cli) -> HashSet<String> {
 
 /// The ticket a task was made from: its `ticket` field, or (a daemon that hasn't migrated it
 /// yet) the old `original id:` first body line.
-fn ticket_of(t: &bridle_api::Task) -> Option<String> {
+fn ticket_of(t: &bridle_api::Ticket) -> Option<String> {
     t.ticket.clone().or_else(|| {
         let first = t.body.lines().next()?;
         Some(first.strip_prefix(TASK_ORIGIN_PREFIX)?.trim().to_string())
@@ -591,7 +595,7 @@ pub struct Fields<'a> {
     pub title: &'a str,
     /// Text of "The ask" (may be empty).
     pub ask: &'a str,
-    pub kind: TaskKind,
+    pub kind: TicketKind,
     pub repos: &'a [String],
     pub blocked_by: &'a [String],
     pub related: &'a [String],
@@ -891,7 +895,7 @@ pub fn set_in(
         );
     }
     if field == "kind" {
-        value.parse::<TaskKind>().map_err(|e| anyhow!(e))?;
+        value.parse::<TicketKind>().map_err(|e| anyhow!(e))?;
     }
     if field == "theme" {
         check_theme(value)?;
@@ -1272,7 +1276,7 @@ pub fn check_in(root: &Path, docs: &Path, projects: &Projects) -> Report {
         }
         match get("kind") {
             None | Some("") => note(MISSING_KIND_OR_LINK_IS_ERROR, "missing kind".into()),
-            Some(k) if k.parse::<TaskKind>().is_err() => note(true, format!("unknown kind {k}")),
+            Some(k) if k.parse::<TicketKind>().is_err() => note(true, format!("unknown kind {k}")),
             Some(_) => {}
         }
         match (resolved, get("resolved")) {
@@ -1457,7 +1461,7 @@ mod tests {
             id: None,
             title,
             ask: "",
-            kind: TaskKind::Feature,
+            kind: TicketKind::Feature,
             repos,
             blocked_by: &[],
             related: &[],
@@ -1469,7 +1473,7 @@ mod tests {
 
     #[test]
     fn ticket_of_reads_the_field_then_the_old_body_line() {
-        let mut t: bridle_api::Task = serde_json::from_value(serde_json::json!({
+        let mut t: bridle_api::Ticket = serde_json::from_value(serde_json::json!({
             "id": "br-abcd", "title": "T", "kind": "feature", "state": "open", "body": "x",
             "thread": [], "created_at": "2026-01-01T00:00:00Z",
             "updated_at": "2026-01-01T00:00:00Z",
@@ -1828,7 +1832,7 @@ mod tests {
         let text = std::fs::read_to_string(p).unwrap();
         assert!(text.ends_with("## The ask\n\nDo the thing.\n"), "{text}");
         let (title, kind) = task_source(&text).unwrap();
-        assert_eq!((title.as_str(), kind), ("Thing", TaskKind::Feature));
+        assert_eq!((title.as_str(), kind), ("Thing", TicketKind::Feature));
     }
 
     #[test]

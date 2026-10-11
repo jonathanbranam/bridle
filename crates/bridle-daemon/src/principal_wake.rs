@@ -1,6 +1,6 @@
 //! `GET /v1/wake`: the daemon decides when a principal should wake. Every reason lives in
 //! [`wake_reasons`] so a new one (schedule, ticket comment) is added there, not in a prompt.
-//! Task changes are not a reason of their own: each is a `task_update` message to the task's
+//! Ticket changes are not a reason of their own: each is a `task_update` message to the task's
 //! watchers, so the unread message is the doorbell. The orchestrator's own `wait-for-wake` is separate (wake.rs).
 
 use std::time::Duration;

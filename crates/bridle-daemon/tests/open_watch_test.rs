@@ -7,7 +7,7 @@ use support::ClientExt as _;
 use std::time::Duration;
 
 use bridle_api::types::{
-    AgentState, MessageQuery, NewTaskRequest, SpawnRequest, TaskKind, TaskState, Workdir,
+    AgentState, MessageQuery, NewTicketRequest, SpawnRequest, TicketKind, TicketState, Workdir,
 };
 use support::{default_overrides, start_daemon_with_config, wait_for_state};
 
@@ -22,15 +22,15 @@ async fn daemon(config: &str) -> (support::TestDaemon, tempfile::TempDir) {
     start_daemon_with_config(Some(o), Some(config)).await
 }
 
-fn req(title: &str) -> NewTaskRequest {
-    NewTaskRequest {
+fn req(title: &str) -> NewTicketRequest {
+    NewTicketRequest {
         ticket: None,
         parent: None,
         for_human: false,
         priority: None,
         components: Vec::new(),
         title: title.to_string(),
-        kind: TaskKind::Feature,
+        kind: TicketKind::Feature,
         body: String::new(),
         size: None,
     }
@@ -134,7 +134,7 @@ async fn a_task_open_too_long_goes_back_to_pending_with_a_comment() {
     let a = open_task(&daemon, "stale").await;
     tokio::time::sleep(Duration::from_secs(3)).await;
     let t = daemon.client.get_task(&a).await.expect("get");
-    assert_eq!(t.state, TaskState::Pending);
+    assert_eq!(t.state, TicketState::Pending);
     assert!(
         t.thread.iter().any(|e| e.body.contains("never planned")),
         "thread: {:?}",
@@ -160,5 +160,5 @@ async fn a_task_with_an_open_question_stays_open() {
         .expect("ask");
     tokio::time::sleep(Duration::from_secs(3)).await;
     let t = daemon.client.get_task(&a).await.expect("get");
-    assert_eq!(t.state, TaskState::Open);
+    assert_eq!(t.state, TicketState::Open);
 }
