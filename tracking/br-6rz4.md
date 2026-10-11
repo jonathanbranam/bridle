@@ -4,13 +4,14 @@ title = "ticket new: a body with its own '## The ask' gets a second, empty one, 
 kind = "fix"
 state = "claimed"
 created_at = "2026-10-11T06:05:26.191Z"
-updated_at = "2026-10-11T18:55:52.802055Z"
+updated_at = "2026-10-11T19:33:18.746280Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:w6rz4",
 ]
 priority_at = "2026-10-11T17:17:58.129126Z"
+summary = "ticket new no longer adds the template's empty '## The ask' when the body has its own; task_source (ready check) accepts any non-empty '## The ask' section, so old files with a leading empty heading pass, while all-empty is still refused. crates/bridle/src/ticket.rs, 2 new tests, CHANGELOG."
 ticket = "6rz4"
 +++
 
@@ -36,3 +37,6 @@ priority: low -> normal
 
 ### note · external:advisor/product-manager · 2026-10-11T17:18:05.368Z
 human via advisor/product-manager, 2026-10-11 ~12:00 PM ET: "approve as recommended". Readied, raised low -> normal (hit 5 times, latest ft3b).
+
+### note · agent:w6rz4 · 2026-10-11T19:33:18.746Z
+done: ticket new keeps one 'The ask'; ready reads first non-empty one; just check exit 0, 1535 tests passed, main merged (up to date); 7af02434
