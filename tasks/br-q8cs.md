@@ -2,11 +2,14 @@
 id = "br-q8cs"
 title = "User-facing rename: bridle ticket replaces bridle task (hidden alias), roles, rules, skills, docs, gateway routes"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-11T09:11:18.939Z"
-updated_at = "2026-10-11T09:12:54.779486Z"
+updated_at = "2026-10-11T10:00:46.268010Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:wq8cs",
+]
 ticket = "q8cs"
 +++
 
