@@ -52,17 +52,32 @@ The four machines to name now. Say each into both dictation systems before choos
 Advisor's pick: **`canopus`** (Windows) and **`arrakis`** (WSL2), **`vega`** (NUC), **`proxima`**
 (EC2). Each is eight letters or fewer, and none sounds like another.
 
+Provisional, for the family's other machines (2026-10-11). `dalek` is accepted as is: "too much
+work to change" (the human).
+
+| Machine | Suggestions | Why |
+|---|---|---|
+| 5. The human's work laptop | `nostromo`, `serenity`, `defiant`, `voyager` | A ship, because it travels. Only an alias: bridle will never connect to it. `nostromo` is the company's ship in Alien, for the company's laptop. |
+| 6. Younger son's gaming PC (Windows, at home) | `pollux`, `castor`, `mizar`, `altair`, `deneb` | Fixed at home, so a star. |
+| 7. Older son's gaming PC (at home or college) | `castor`, `pollux`, `alcor`, `mars`, `falcon` | It moves, so a wanderer or a ship fits; a star works too. |
+
+For the two sons, a pair: **`castor` and `pollux`**, the twin brothers of Gemini, two stars side by
+side; or **`mizar` and `alcor`**, the horse and rider, a double star in the Big Dipper's handle.
+Or let each son pick from the theme (a c2 tip: let the owner choose from the set).
+
 ## Machines that need names
 
 | Machine | Now | Leading idea | Notes |
 |---|---|---|---|
-| MacBook Pro (this one) | dalek | dalek | Keeping it: "it's been dalek for a long time" (the human). |
+| MacBook Pro (this one) | dalek | dalek | Kept: "it's been dalek for a long time"; "too much work to change" (the human). |
 | Intel NUC | nuc | vega | "NUC" is a type, and dictation hears "Nook". Was `sonic`; see "Working idea". |
 | Windows desktop, running WSL2 | EzekielsPC | canopus (Windows), arrakis (WSL2) | The human couldn't settle on `tardis` (2026-10-11). See "WSL2 and its name" below. |
 | EC2 | (none) | proxima, luna | The edge box (the NUC's tunnel fallback). Was `terminus`. |
 | Future cloud servers | | planets, moons, stations | The wanderers. |
 | Other MacBook Pros | | nostromo, serenity, voyager, defiant | Ships, because laptops travel. Only those that run bridle or join Tailscale. |
-| The other family PC | | altair, deneb | Only if it joins Tailscale. |
+| The human's work laptop | | nostromo | An alias only; bridle never connects to it. |
+| Younger son's gaming PC (Windows, home) | | pollux, mizar | |
+| Older son's gaming PC (home or college) | | castor, alcor | |
 
 Not needed: the family's Windows laptops, the PS5, PS4 and Switch.
 
