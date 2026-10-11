@@ -45,20 +45,20 @@ the same.
 > [!comment] c2 human, 2026-10-09 17:11 EDT, on "PdM's suggestion: yes, the same rule for everyone, so agents can hand off on the thread instead of in DMs" [pending 2026-10-09 17:11 EDT]
 > Agree and approve this direction - agents can use the same syntax to tag another agent. This is NOT NECESSARY when the agent tagged is watching the task, so use this sparingly and only when actually necessary.
 >
-> **human, 2026-10-09 17:13 EDT:** See below for clarification: we should build in de-duplication for this case. [sent 2026-10-09 22:44 EDT]
+> **human, 2026-10-09 17:13 EDT:** See below for clarification: we should build in de-duplication for this case. [read 2026-10-09 22:45 EDT]
 >
 > **doc-4cgx, 2026-10-09 22:50 EDT:** @human Done: agents use the same syntax, with a note to use it sparingly (only when the agent is not already watching). De-duplication is in the new bullets under "The ask, as understood".
 >
 > **resolved by human via doc-4cgx, 2026-10-09 22:50 EDT**
 
-> [!comment] c3 human, 2026-10-09 17:12 EDT, on "ticket's thread (today a task's)" [sent 2026-10-09 22:44 EDT]
+> [!comment] c3 human, 2026-10-09 17:12 EDT, on "ticket's thread (today a task's)" [read 2026-10-09 22:45 EDT]
 > This should be de-duplicated with the watchers list so that agents only receive a single message. If they watch the ticket/task and are @ mentioned, then only one message should be sent to the agent, preferably the one from the mention (since it is more explicit).
 >
 > **doc-4cgx, 2026-10-09 22:50 EDT:** @human Added: one message per agent per comment; if the agent is also a watcher, the mention's message is the one sent. See the new "One message per agent" bullet.
 >
 > **resolved by doc-4cgx, 2026-10-09 22:50 EDT**
 
-> [!comment] c5 human, 2026-10-09 17:16 EDT, on "contains @<role>" [sent 2026-10-09 22:44 EDT]
+> [!comment] c5 human, 2026-10-09 17:16 EDT, on "contains @<role>" [read 2026-10-09 22:45 EDT]
 > To block this, preceding the @ with a backslash "escapes" the character and disables the behavior for use in documents and comments such as: \@orchestrator <- this would *not* be sent to the orchestrator.
 >
 > **doc-4cgx, 2026-10-09 22:50 EDT:** @human Added an "Escaping" bullet: `\@orchestrator` is plain text and sends nothing. The backslash stays in the stored text.
@@ -70,11 +70,11 @@ the same.
 >
 > If review: agent-a and a comment includes \@agent-b the comment is sent to agent-b and not agent-a (unless agent-a is also mentioned.
 >
-> **human, 2026-10-09 17:22 EDT:** I'm not sure about this at second thought; evaluate this for consistency across our systems - An \@mention in a ticket THREAD will notify that agent and all watchers; maybe we should treat the reviewer the same? I'm not sure. [sent 2026-10-09 22:44 EDT]
+> **human, 2026-10-09 17:22 EDT:** I'm not sure about this at second thought; evaluate this for consistency across our systems - An \@mention in a ticket THREAD will notify that agent and all watchers; maybe we should treat the reviewer the same? I'm not sure. [read 2026-10-09 22:45 EDT]
 >
 > **doc-4cgx, 2026-10-09 22:50 EDT:** @human Recommend the consistent rule: the reviewer is like a watcher of the document. Every comment goes to the reviewer; a mention adds the mentioned agents; nobody gets two. So with `reviewer: agent-a` and a comment mentioning \@agent-b, both get it (same as a ticket thread: mentioned agent plus watchers). It is also simpler: no "mention replaces the reviewer" case. I wrote this into a "Reviewer front matter (re79)" bullet as the proposal. Say yes and I will resolve; or tell me if you prefer the first version.
 
-> [!comment] c7 human, 2026-10-09 17:21 EDT, on "sends that role a message" [sent 2026-10-09 22:44 EDT]
+> [!comment] c7 human, 2026-10-09 17:21 EDT, on "sends that role a message" [read 2026-10-09 22:45 EDT]
 > If more than one \@mention exists in a single thread or comment, a message is sent to every agent in the message.
 >
 > **doc-4cgx, 2026-10-09 22:50 EDT:** @human Added: every distinct agent mentioned gets one message (see the "One message per agent" bullet).
@@ -107,7 +107,7 @@ No syntax exists today. Cross-project messages use the CLI flag only: `bridle se
 (`human@<machine>`, docs/design/agent-host/principals.md). Options for the design (the human approved
 both, 2026-10-09; the explicit `external:` form is also accepted, as in `@bridle-ui:external:orchestrator`):
 
-> [!comment] c1 human, 2026-10-09 17:10 EDT, on "Options for the design" [sent 2026-10-09 22:44 EDT]
+> [!comment] c1 human, 2026-10-09 17:10 EDT, on "Options for the design" [read 2026-10-09 22:45 EDT]
 > Approve both of these options - the project short prefix is readily available and used extensively, guaranteed unique among connected projects (soon).
 >
 > **doc-4cgx, 2026-10-09 22:50 EDT:** @human Noted: both forms are approved. Marked them as approved in the list below.
@@ -117,7 +117,7 @@ both, 2026-10-09; the explicit `external:` form is also accepted, as in `@bridle
 - `@bridle-ui:orchestrator`: project name, then role. Readable; the colon also appears in
   `external:aide`, which the mention would never include.
 
-> [!comment] c4 human, 2026-10-09 17:15 EDT, on "bridle-ui:orchestrator: project name, then role. Readable; the colon also appears in external:aide, which the mention would never include" [sent 2026-10-09 22:44 EDT]
+> [!comment] c4 human, 2026-10-09 17:15 EDT, on "bridle-ui:orchestrator: project name, then role. Readable; the colon also appears in external:aide, which the mention would never include" [read 2026-10-09 22:45 EDT]
 > is \@bridle-ui:external:orchestrator also valid syntax? I think it should be valid.
 >
 > **doc-4cgx, 2026-10-09 22:50 EDT:** @human Yes. Added: the explicit `external:` form is accepted everywhere the short form is, same result (`@bridle-ui:external:orchestrator` = `@bridle-ui:orchestrator`).
