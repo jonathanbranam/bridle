@@ -89,7 +89,7 @@ Broader sci-fi pairs, places rather than ships, just "two vaguely related things
 | caladan | ~~giedi~~ | Dune | The rival houses' homeworlds (Giedi Prime). Giedi struck: no clear way to say it; "giedi prime" might work, but then agents must know to drop "prime". |
 | ~~kaitain~~ | salusa | Dune | The Emperor's capital and his prison planet (Salusa Secundus). Kaitain struck: "can't pronounce". |
 | terminus | trantor | Foundation | Opposite ends of the galaxy; trantor is also an idea for the cloud. |
-| caprica | picon | Battlestar Galactica | Two of the Twelve Colonies. |
+| caprica | ~~picon~~ | Battlestar Galactica | Two of the Twelve Colonies. Picon struck: dictation writes "PyCon" (the human, 2026-10-11). |
 | ~~abydos~~ | ~~chulak~~ | Stargate | The first two worlds through the gate. Struck: "can't pronounce". |
 | ~~ariel~~ | osiris | Firefly | Two Core worlds. Ariel struck: casual sentences make it Arial, the font. Osiris kept for later. |
 | vulcan | andoria | Star Trek | Neighbours and old rivals, founders of the Federation. The human: might work, will consider. |
