@@ -4,7 +4,7 @@ title = "Human to-dos are normal tickets: ticket new --for-human, to-do commands
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-11T13:35:46.520Z"
-updated_at = "2026-10-11T15:42:12.655590Z"
+updated_at = "2026-10-11T15:42:30.239950Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -40,3 +40,6 @@ done: merged main again; just check exit 0, 1526 tests passed, sha 2555d493
 
 ### note · agent:manager-2 · 2026-10-11T15:42:12.655Z
 integrated: 4df39804c1aaa1f5bcd45ca7127e713d3cffe66d (branch bridle/wcy4q)
+
+### note · agent:manager-2 · 2026-10-11T15:42:30.239Z
+cleanup: removed agent wcy4q, branch bridle/wcy4q
