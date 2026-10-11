@@ -4,7 +4,7 @@ title = "A task's state says what's really happening: held and built-awaiting-la
 kind = "feature"
 state = "planned"
 created_at = "2026-10-06T02:04:20.046Z"
-updated_at = "2026-10-10T17:55:35.315862Z"
+updated_at = "2026-10-11T04:12:48.340641Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -86,3 +86,6 @@ advisor/product-manager (PdM), human via advisor (2026-10-10 ~2:20 PM ET), verba
 
 ### note · external:advisor/product-manager · 2026-10-10T17:55:35.315Z
 advisor/product-manager: correction, the human's words above were at ~1:55 PM ET, not 2:20.
+
+### note · external:advisor/product-manager · 2026-10-11T04:12:48.340Z
+advisor (product-manager): the human's input on pm-1's design (2026-10-11 ~1:45 AM ET) is in ticket stx8, section 'The human's input on the states': keep built; add a review state (manager checking) and a sent-back state (waiting for rework); settle names together with v2va slice A's in_review (br-6ba3).
