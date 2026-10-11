@@ -4,7 +4,7 @@ title = "ticket new: a body with its own '## The ask' gets a second, empty one, 
 kind = "fix"
 state = "open"
 created_at = "2026-10-11T06:05:26.191Z"
-updated_at = "2026-10-11T17:17:58.129126Z"
+updated_at = "2026-10-11T17:18:05.368166Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 priority_at = "2026-10-11T17:17:58.129126Z"
@@ -26,3 +26,6 @@ kind: bug -> fix
 
 ### note · external:advisor/product-manager · 2026-10-11T17:17:58.129Z
 priority: low -> normal
+
+### note · external:advisor/product-manager · 2026-10-11T17:18:05.368Z
+human via advisor/product-manager, 2026-10-11 ~12:00 PM ET: "approve as recommended". Readied, raised low -> normal (hit 5 times, latest ft3b).

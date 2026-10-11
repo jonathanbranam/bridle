@@ -4,7 +4,7 @@ title = "bridle link: the unified URL scheme (/p/{project}/tasks/{id}, ...), doc
 kind = "feature"
 state = "planned"
 created_at = "2026-10-08T02:22:01.310Z"
-updated_at = "2026-10-09T11:04:40.015784Z"
+updated_at = "2026-10-11T17:18:07.028711Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -30,3 +30,6 @@ From orchestrator: br-enx3 ready (the human's go tonight, quotes in the body). P
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:40.015Z
 watching the task
+
+### note · external:advisor/product-manager · 2026-10-11T17:18:07.028Z
+human via advisor/product-manager, 2026-10-11 ~12:00 PM ET: "approve as recommended". Superseded by br-zqnp (the ticket-page URLs after ui-utp5); pm-1 folds its remaining scope into zqnp, then drops this.
