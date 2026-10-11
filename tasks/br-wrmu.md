@@ -2,9 +2,9 @@
 id = "br-wrmu"
 title = "Ticket migration (syqn part 3): rename ticket frontmatter fields and qualify IDs in every project, as an xebc migration on trial branches only"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-10-11T02:19:12.766Z"
-updated_at = "2026-10-11T02:19:34.773762Z"
+updated_at = "2026-10-11T02:19:43.968623Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",

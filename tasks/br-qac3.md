@@ -2,9 +2,9 @@
 id = "br-qac3"
 title = "Mail between daemons, slice 6: an agent of another project or machine can watch a task through the peer token, and its task wakes arrive as messages (3haz Q3)"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-10-11T02:18:57.281Z"
-updated_at = "2026-10-11T02:19:34.703772Z"
+updated_at = "2026-10-11T02:19:43.671601Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
