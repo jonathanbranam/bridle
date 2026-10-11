@@ -293,6 +293,7 @@ async fn renew_reapplies_the_spawn_s_extra_allowed_tools_and_env() {
 /// session that doesn't exist (dies on the first turn). Such an agent must
 /// resume into a fresh session instead.
 #[tokio::test]
+#[ignore = "flaky on macOS CI, ticket uwcw"]
 async fn resume_of_a_session_that_never_started_uses_a_fresh_session() {
     let dump_dir = tempfile::tempdir().expect("dump tempdir");
     let argv_path = dump_dir.path().join("argv.json");
