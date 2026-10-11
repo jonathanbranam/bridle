@@ -62,6 +62,10 @@ pub struct TicketSummary {
     pub agent: Option<ClaimAgent>,
     /// RFC 3339, UTC.
     pub updated: String,
+    /// While `held`: who paused it, why, and until when (free text). Null otherwise.
+    pub held_by: Option<String>,
+    pub held_reason: Option<String>,
+    pub held_until: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
@@ -139,6 +143,9 @@ fn summary(t: &Ticket, agent: Option<ClaimAgent>) -> TicketSummary {
         claimed_by: t.claimed_by.clone(),
         agent,
         updated: t.updated_at.to_rfc3339(),
+        held_by: t.held_by.as_ref().map(|p| p.to_string()),
+        held_reason: t.held_reason.clone(),
+        held_until: t.held_until.clone(),
     }
 }
 
@@ -384,5 +391,28 @@ mod tests {
             err.into_response().status(),
             axum::http::StatusCode::NOT_FOUND
         );
+    }
+
+    #[tokio::test]
+    async fn held_and_built_states_and_held_fields_serialize() {
+        let mut held = task("t-h", "held", None, "2026-01-06T00:00:00Z");
+        held["held_by"] = json!("human");
+        held["held_reason"] = json!("waiting on a design call");
+        held["held_until"] = json!("friday");
+        let built = task("t-b", "built", None, "2026-01-07T00:00:00Z");
+        let (h, b) = (
+            serde_json::from_value::<Ticket>(held).expect("held"),
+            serde_json::from_value::<Ticket>(built).expect("built"),
+        );
+        let (h, b) = (summary(&h, None), summary(&b, None));
+        assert_eq!((h.state.as_str(), b.state.as_str()), ("held", "built"));
+        let v = serde_json::to_value(&h).expect("json");
+        assert_eq!(v["held_by"], "human");
+        assert_eq!(v["held_reason"], "waiting on a design call");
+        assert_eq!(v["held_until"], "friday");
+        assert!(serde_json::to_value(&b).expect("json")["held_by"].is_null());
+        // Neither is closed, so both stay in the default (open) list.
+        assert!(StateFilter::Open.keeps(TicketState::Held));
+        assert!(StateFilter::Open.keeps(TicketState::Built));
     }
 }

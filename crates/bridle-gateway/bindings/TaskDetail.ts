@@ -22,4 +22,8 @@ agent: ClaimAgent | null,
 /**
  * RFC 3339, UTC.
  */
-updated: string, };
+updated: string, 
+/**
+ * While `held`: who paused it, why, and until when (free text). Null otherwise.
+ */
+held_by: string | null, held_reason: string | null, held_until: string | null, };

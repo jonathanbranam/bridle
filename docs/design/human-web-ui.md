@@ -211,7 +211,7 @@ read with the gateway's per-project credentials, as for review. `GET /api/v1/pro
 returns `TaskList {project, tasks}`, most recently updated first; `open` (the default) is every
 task not integrated or dropped, `closed` is integrated or dropped. Each `TaskSummary` has `id`,
 `title`, `kind`, `state`, `priority`, `claimed_by`, `agent` (`{name, role}` when `claimed_by` is
-`agent:<name>` and the daemon knows it, else null) and `updated`. `GET .../tasks/{id}` returns
+`agent:<name>` and the daemon knows it, else null), `updated`, and `held_by`, `held_reason`, `held_until` (null unless `state` is `held`; `built` needs no extra field, `branch` is on the detail). `GET .../tasks/{id}` returns
 `TaskDetail` for a task in any state (so closed tasks open from links): the summary plus `body`,
 `thread`, `watchers`, `branch`, and its `blocks` and `blocked_by` task ids (from `/v1/edges`; other
 edge kinds aren't shown). The same routes also answer under ticket names (br-aejj, 22ab step 8):
