@@ -239,7 +239,15 @@ the clone:
    this machine with `owner.toml` on `bridle/state` (a fresh fetch of origin's, else the local
    branch; no readable owner refuses) and refuses with the owner's name and `bridle serve
    --take-over`. Other branches and tags pass; `--no-verify` and `core.hooksPath` edits are denied
-   to agents (locked), not to the human. Projects with `[state] push = false` have no
+   to agents (locked), not to the human.
+   **Direct commits** (8ay6): commits made straight on the integration branch (tickets, notes, by
+   the orchestrator, advisors and aides) never pass through `land`, so the owner's daemon pushes
+   them: every 30 seconds (`autopush.rs`) it runs a local `rev-list` against `origin/<integration>`
+   and, when the branch is strictly ahead, `git push origin <integration>` (no fetch; never a
+   force; behind or diverged is left to the origin watch below). A rejection is a `push.failed`
+   event and a note to the human and the orchestrator, sent once per distinct error while it is
+   retried each tick. Only a daemon that holds the project's ownership runs it, and `[state] push =
+   false` turns it off. This is what makes "the remote never lags the clone" true for docs too. Projects with `[state] push = false` have no
    owner file and get no hook. `land` never pushes: only the merger pushes, and only the integration
    branch and (trunk pattern) release tags; workers never push. The release
    branch, when a project has one, is never a target of this step at all

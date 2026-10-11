@@ -17,6 +17,7 @@ use nix::unistd::Pid;
 use serde_json::json;
 use tokio::sync::watch;
 
+pub mod autopush;
 pub mod ci;
 pub mod config;
 pub mod containment;
@@ -764,6 +765,14 @@ async fn start_inner(
         manager.clone(),
     );
 
+    let auto_push = autopush::AutoPush::new(
+        ws.repo.clone(),
+        project.clone(),
+        config.branches.integration.clone(),
+        emitter.clone(),
+        manager.clone(),
+    );
+
     let load_watch = load::LoadWatch::new(
         config.machine.load_per_core,
         config.machine.load_quiet_below,
@@ -1094,6 +1103,17 @@ async fn start_inner(
             }
         })
     });
+    // Only a daemon that holds the project's ownership gets here with `[state] push` on (it
+    // refused to start otherwise); `push = false` turns the automatic push off with the rest.
+    let auto_push_task = (overrides.load_watch && config.state_push).then(|| {
+        spawn_loop(shutdown_rx.clone(), autopush::INTERVAL, {
+            let auto_push = auto_push.clone();
+            move || {
+                let auto_push = auto_push.clone();
+                async move { auto_push.tick().await }
+            }
+        })
+    });
     let load_task = (overrides.load_watch && !config.machine.check_interval.is_zero()).then(|| {
         spawn_loop(shutdown_rx.clone(), config.machine.check_interval, {
             let load_watch = load_watch.clone();
@@ -1202,6 +1222,9 @@ async fn start_inner(
         tracker_task.abort();
         governor_task.abort();
         ci_task.abort();
+        if let Some(t) = auto_push_task {
+            t.abort();
+        }
         if let Some(t) = load_task {
             t.abort();
         }

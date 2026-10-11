@@ -3288,42 +3288,22 @@ async fn push_integration(
             branch: state.integration.clone(),
         }));
     }
-    let stderr = String::from_utf8_lossy(&out.stderr);
-    let first = stderr
-        .lines()
-        .find(|l| !l.trim().is_empty())
-        .unwrap_or("git push failed")
-        .to_string();
-    let _ = state
-        .emitter
-        .emit(
-            event_kind::PUSH_FAILED,
-            principal.id.clone(),
-            None,
-            serde_json::json!({"project": state.project, "branch": state.integration, "error": first}),
-        )
-        .await;
+    let first = crate::autopush::first_line(&out.stderr);
     let body = format!(
         "Push of {} to origin failed ({}): {first}. The landing is on the local branch only; \
          find out why before landing more.",
         state.integration, state.project
     );
-    for to in [
-        ToTarget::Human,
-        ToTarget::External(crate::wake::ORCHESTRATOR.to_string()),
-    ] {
-        let _ = state
-            .manager
-            .send(
-                "system".to_string(),
-                to,
-                MessageKind::Note,
-                body.clone(),
-                When::Now,
-                None,
-            )
-            .await;
-    }
+    crate::autopush::report_failure(
+        &state.emitter,
+        &state.manager,
+        principal.id.clone(),
+        &state.project,
+        &state.integration,
+        &first,
+        body,
+    )
+    .await;
     Err(ApiError::new(
         StatusCode::CONFLICT,
         "push_failed",
