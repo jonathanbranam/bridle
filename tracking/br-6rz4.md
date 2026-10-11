@@ -2,11 +2,14 @@
 id = "br-6rz4"
 title = "ticket new: a body with its own '## The ask' gets a second, empty one, and ticket task refuses"
 kind = "fix"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-11T06:05:26.191Z"
-updated_at = "2026-10-11T17:19:05.933744Z"
+updated_at = "2026-10-11T18:55:52.802055Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:w6rz4",
+]
 priority_at = "2026-10-11T17:17:58.129126Z"
 ticket = "6rz4"
 +++
