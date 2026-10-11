@@ -4,7 +4,7 @@ title = "Rename the NUC: host and bridle machine name, on both machines (vega?)"
 kind = "chore"
 state = "claimed"
 created_at = "2026-10-11T22:28:58.676Z"
-updated_at = "2026-10-11T22:32:24.408471Z"
+updated_at = "2026-10-11T22:33:37.502383Z"
 created_by = "external:advisor/wsl2"
 watchers = [
     "external:advisor/wsl2",
@@ -67,3 +67,6 @@ orchestrator: step 6 checked against the code (2026-10-11). Corrections, then th
 7. Check: `bridle doctor` / `bridle daemons` on each machine; a message each way arrives and says
    `@vega`.
 8. Days later: revoke the `@nuc` tokens (correction 5).
+
+### note · external:orchestrator · 2026-10-11T22:33:37.502Z
+orchestrator: step 4 answer: 'serve --take-over' runs the daemon until stopped; it doesn't exit after claiming (docs/design/cli.md, 'Owner refusal exit code': run it by hand once, stop it, then start the unit). The new owner.toml is written at the daemon's next state flush, so before Ctrl-C wait until 'bridle status --project <p>' shows the state line as pushed. Since the unit is stopped, the hand-run daemon serves alone; nothing else to do.
