@@ -167,3 +167,10 @@ From the human's session with advisor wsl2, 2026-10-10 (times US Eastern).
   `\\wsl$\Ubuntu\home\jbranam\...`; Obsidian for markdown; optionally VS Code with its WSL
   extension (`code .` from Ubuntu). The guide should say so beside the Notepad note. Not installed
   yet ("will do later").
+- Tailscale in Ubuntu: `curl -fsSL https://tailscale.com/install.sh | sh && sudo tailscale up
+  --ssh --hostname=remus`; remus is 100.78.246.109. `ssh jbranam@remus` from dalek works after a
+  one-time Tailscale SSH check (browser approval); it saw 14 CPUs and 11 GB.
+- The human wants Tailscale on Windows (`romulus`) too, later. Untested risk: with mirrored
+  networking, Windows and WSL share one network stack, so two Tailscale clients share it; no source
+  found either way. After installing it, check from dalek that both remus and romulus answer;
+  if remus breaks, disconnect Windows' Tailscale or leave mirrored mode. Next: guide step 4.
