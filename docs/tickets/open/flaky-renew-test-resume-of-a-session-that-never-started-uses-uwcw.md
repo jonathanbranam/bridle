@@ -12,8 +12,6 @@ related: []
 tasks: []
 ---
 
-## The ask
-
 ## What happened
 
 CI on `main` failed on macOS at 0c7257ad (run 38115575191, 2026-10-11 05:54Z), Linux green:
