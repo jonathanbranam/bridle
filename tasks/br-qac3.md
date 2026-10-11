@@ -4,7 +4,7 @@ title = "Mail between daemons, slice 6: an agent of another project or machine c
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-11T02:18:57.281Z"
-updated_at = "2026-10-11T03:32:57.621838Z"
+updated_at = "2026-10-11T03:33:27.787649Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -28,3 +28,6 @@ correction: the green just check (exit 0, 1486 passed) ran on a98427b0; I then m
 
 ### note · agent:manager-2 · 2026-10-11T03:32:57.621Z
 integrated: af1e6f95a59ed5b2a5ed8ad688033c08e88f6c6d (branch bridle/wqac3)
+
+### note · agent:manager-2 · 2026-10-11T03:33:27.787Z
+cleanup: removed agent wqac3, branch bridle/wqac3
