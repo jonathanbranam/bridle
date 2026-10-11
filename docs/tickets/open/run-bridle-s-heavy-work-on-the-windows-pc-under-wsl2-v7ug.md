@@ -189,3 +189,11 @@ From the human's session with advisor wsl2, 2026-10-10 (times US Eastern).
   false). SSH from dalek is Tailscale SSH (browser check about every 12 hours; `"action":
   "accept"` in the tailnet's ssh rule would drop it). Next: step 6 (toolchain, Claude Code, bridle
   v0.6.1) over SSH from dalek.
+- Step 6a done (checked over SSH): rustc 1.99.0, just 1.58.0, cargo-nextest 0.9.148, tmux 3.6,
+  gcc 15.2. Step 6b (Claude Code) given. Work folder: `~/work` (Ubuntu's ext4 disk, a vhdx on C:,
+  1 TB cap, 952 GB free); keep projects off `/mnt/c`.
+- Missing from the guide: dotfiles. The human needs thoughtbot dotfiles + dotfiles-local on every
+  host (both public, so clone over HTTPS): `apt install rcm zsh`, clone both, `git submodule
+  update --init`, a new `host-remus/rcrc` (dalek's with `HOSTNAME="remus"`), `RCRC=... rcup -B
+  remus`, `chsh` to zsh. Then dotfiles-local's auto-update as a systemd user timer (its README's
+  Linux section; linger is on). GitHub push auth: `gh auth login` + `gh auth setup-git`.
