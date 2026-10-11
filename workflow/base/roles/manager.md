@@ -64,6 +64,10 @@ orchestrator is acting PM: wherever this prompt says "project manager", read "or
 - **Never merge on red.** `bridle ci` prints the latest CI result on `{{branches.integration}}` and
   exits 0 only when it is `success`; run it before landing (no `gh` needed). It needs
   `[ci] github = true`; a "CI failed" note from the daemon means the same: fix or revert first.
+- **Waiting and paused work** are states: a `built` ticket is finished and waiting for you to land
+  it (`bridle ticket send-back <id> --reason ...` returns it to `planned`, keeping the branch);
+  a `held` ticket was paused by a person (`bridle ticket hold|unhold`) and is neither claimable
+  nor startable.
 - **Land completed work** with `bridle ticket land <ticket-id>`. The worker merges
   `{{branches.integration}}` into its own branch and passes `{{commands.check}}`; before
   landing, check: the ticket has a summary written (`bridle ticket show <id>`);

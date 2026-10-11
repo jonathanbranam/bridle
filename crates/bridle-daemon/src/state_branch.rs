@@ -1142,6 +1142,15 @@ struct Frontmatter {
     /// The task this one was split from; absent for an ordinary task.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     parent: Option<String>,
+    /// Set while the task is `held`; absent otherwise.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    held_by: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    held_reason: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    held_until: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    held_at: Option<DateTime<Utc>>,
     /// Last: TOML needs tables after plain values.
     #[serde(default, skip_serializing_if = "Impact::is_empty")]
     impact: Impact,
@@ -1172,6 +1181,10 @@ fn render_task(task: &Ticket) -> Result<String, StateBranchError> {
         summary: task.summary.clone(),
         ticket: task.ticket.clone(),
         parent: task.parent.clone(),
+        held_by: task.held_by.clone(),
+        held_reason: task.held_reason.clone(),
+        held_until: task.held_until.clone(),
+        held_at: task.held_at,
         impact: task.impact.clone(),
     };
     let toml = toml::to_string_pretty(&fm)?;
@@ -1357,6 +1370,10 @@ fn parse_task(text: &str) -> Result<Ticket, StateBranchError> {
         parent: fm.parent,
         impact: fm.impact,
         settle_until: None,
+        held_by: fm.held_by,
+        held_reason: fm.held_reason,
+        held_until: fm.held_until,
+        held_at: fm.held_at,
     })
 }
 
@@ -1570,6 +1587,10 @@ mod tests {
                 files: vec!["client/**".to_string()],
             },
             settle_until: None,
+            held_by: None,
+            held_reason: None,
+            held_until: None,
+            held_at: None,
         }
     }
 

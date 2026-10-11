@@ -1863,6 +1863,13 @@ pub enum TicketState {
     Integrated,
     /// A dropped or integrated task brought back.
     Reopened,
+    /// A person paused it (`ticket hold`): not claimable, not startable, still shown in the
+    /// queue under its tier. Only from `planned`; back by `unhold` or `drop`.
+    Held,
+    /// Finished on a branch (`branch` and `commit` set), waiting to land or be reviewed. Not
+    /// claimable or startable, and does not resolve `blocks` edges. Left by landing (`done`),
+    /// `send-back` or `drop`.
+    Built,
 }
 
 impl TicketState {
@@ -1875,6 +1882,8 @@ impl TicketState {
             Self::Dropped => "dropped",
             Self::Integrated => "integrated",
             Self::Reopened => "reopened",
+            Self::Held => "held",
+            Self::Built => "built",
         }
     }
 }
@@ -2014,6 +2023,16 @@ pub struct Ticket {
     /// Computed by the daemon, never stored; null once settled.
     #[serde(default)]
     pub settle_until: Option<DateTime<Utc>>,
+    /// While `held`: who paused it, why, until when (free text) and when. Null otherwise;
+    /// old task files and old daemons omit them.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub held_by: Option<PrincipalId>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub held_reason: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub held_until: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub held_at: Option<DateTime<Utc>>,
 }
 
 /// A task's declared impact. Ids are validated by shape only (`r-`/`s-`/`g-`/`a-`
@@ -2268,6 +2287,28 @@ pub struct DoneTicketRequest {
     /// For an incident: how it ended, recorded in its thread and sent in the "resolved" note.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub resolution: Option<String>,
+}
+
+/// `POST /v1/tickets/{id}/hold`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HoldTicketRequest {
+    pub reason: String,
+    /// Free text, e.g. "human reviews kzw2".
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub until: Option<String>,
+}
+
+/// `POST /v1/tickets/{id}/built`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BuiltTicketRequest {
+    pub branch: String,
+    pub commit: String,
+}
+
+/// `POST /v1/tickets/{id}/send-back`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SendBackTicketRequest {
+    pub reason: String,
 }
 
 /// `POST /v1/push` result: the integration branch was pushed to origin.

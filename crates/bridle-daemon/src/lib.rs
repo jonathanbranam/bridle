@@ -609,6 +609,13 @@ async fn start_inner(
         .backfill_handovers()
         .await
         .context("writing existing handover notes to the state branch")?;
+    let built = tasks
+        .migrate_planned_with_branch_to_built()
+        .await
+        .context("moving finished planned tasks to built")?;
+    if !built.is_empty() {
+        tracing::info!(tasks = ?built, "planned tasks with a branch and commit are now built");
+    }
 
     let emitter = Emitter::new(store.clone());
     reconcile(&store, &emitter)

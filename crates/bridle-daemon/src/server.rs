@@ -190,6 +190,10 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/ports/{port}/release", post(release_port))
         .route("/v1/conflicts", get(list_conflicts))
         .route("/v1/conflicts/{id}/resolve", post(resolve_conflict))
+        .route("/v1/tickets/{id}/hold", post(hold_task))
+        .route("/v1/tickets/{id}/unhold", post(unhold_task))
+        .route("/v1/tickets/{id}/built", post(built_task))
+        .route("/v1/tickets/{id}/send-back", post(send_back_task))
         .route("/v1/tickets/{id}/reopen", post(reopen_task))
         .route("/v1/tasks/{id}/reopen", post(reopen_task))
         .route("/v1/tickets/{id}/ask", post(ask_task))
@@ -3345,9 +3349,15 @@ async fn land_task(
         .filter(|b| !b.is_empty())
     {
         Some(b) => b.to_string(),
-        None => claimed_branch(&state, &task)
-            .await
-            .ok_or_else(|| ApiError::bad_request(format!("no branch for {id}; pass --branch")))?,
+        None => match task
+            .branch
+            .clone()
+            .filter(|_| task.state == TicketState::Built)
+        {
+            Some(b) => Some(b),
+            None => claimed_branch(&state, &task).await,
+        }
+        .ok_or_else(|| ApiError::bad_request(format!("no branch for {id}; pass --branch")))?,
     };
     let one_at_a_time = state.landing.clone().lock_owned().await;
     let emit = |kind: &'static str, data: serde_json::Value| {
@@ -3729,6 +3739,79 @@ fn list_or_none(items: &[String]) -> String {
     } else {
         items.join(", ")
     }
+}
+
+/// `planned` -> `held` (stx8). The state change is the usual `task.state` event.
+async fn hold_task(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path(id): Path<String>,
+    Json(req): Json<bridle_api::types::HoldTicketRequest>,
+) -> Result<Json<Ticket>, ApiError> {
+    require_not_visitor(&principal)?;
+    require_not_worker(&state, &principal).await?;
+    let from = state.tasks.get_task(&id).map(|t| t.state);
+    let task = state
+        .tasks
+        .hold_task(&id, &req.reason, req.until.as_deref(), &principal.id)
+        .await?;
+    emit_state_change(&state, principal.id, &task, from).await;
+    Ok(Json(task))
+}
+
+async fn unhold_task(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path(id): Path<String>,
+) -> Result<Json<Ticket>, ApiError> {
+    require_not_visitor(&principal)?;
+    require_not_worker(&state, &principal).await?;
+    let from = state.tasks.get_task(&id).map(|t| t.state);
+    let task = state.tasks.unhold_task(&id, &principal.id).await?;
+    emit_state_change(&state, principal.id, &task, from).await;
+    Ok(Json(task))
+}
+
+/// `claimed` or `planned` -> `built`: the claiming worker for its own task, a non-worker for
+/// anything.
+async fn built_task(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path(id): Path<String>,
+    Json(req): Json<bridle_api::types::BuiltTicketRequest>,
+) -> Result<Json<Ticket>, ApiError> {
+    require_not_visitor(&principal)?;
+    let before = state.tasks.get_task(&id);
+    let own_claim = before
+        .as_ref()
+        .is_some_and(|t| t.claimed_by.as_deref() == Some(principal.id.as_str()));
+    if !own_claim {
+        require_not_worker(&state, &principal).await?;
+    }
+    let from = before.map(|t| t.state);
+    let task = state
+        .tasks
+        .built_task(&id, &req.branch, &req.commit, &principal.id)
+        .await?;
+    emit_state_change(&state, principal.id, &task, from).await;
+    Ok(Json(task))
+}
+
+async fn send_back_task(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path(id): Path<String>,
+    Json(req): Json<bridle_api::types::SendBackTicketRequest>,
+) -> Result<Json<Ticket>, ApiError> {
+    require_not_visitor(&principal)?;
+    require_not_worker(&state, &principal).await?;
+    let from = state.tasks.get_task(&id).map(|t| t.state);
+    let task = state
+        .tasks
+        .send_back_task(&id, &req.reason, &principal.id)
+        .await?;
+    emit_state_change(&state, principal.id, &task, from).await;
+    Ok(Json(task))
 }
 
 async fn reopen_task(

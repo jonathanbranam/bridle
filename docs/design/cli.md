@@ -729,12 +729,20 @@ bridle ticket comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain com
   crate, `crates/bridle-tui`, split Elm-style: a plain state struct and update function
   with no terminal/ratatui dependency (so it's unit-tested without a terminal),
   rendered by a separate `ui` module.
-- **`task`** covers the `pending`/`open`/`planned`/`claimed`/`dropped`/`integrated`/`reopened` states
+- **`task`** covers the `pending`/`open`/`planned`/`claimed`/`held`/`built`/`dropped`/`integrated`/`reopened` states
   (docs/design/roles-and-lifecycle.md, Task lifecycle): create (always `pending`; `task ready <id>` opens it), show, edit (title/body,
   never state), list (id/title/kind/state), plan (`open` -> `planned`), drop (a reason is
   required, recorded in the task's thread), done (`--commit` required, recorded in the
   thread; the task becomes `integrated`, which resolves its `blocks` edges and drops it from
   `queue` and `ready`) and reopen (only a dropped or integrated task can be reopened).
+  Also (stx8): `ticket hold <id> --reason TEXT [--until TEXT]` (`planned` -> `held`; not claimable
+  or startable) and `ticket unhold <id>`; `ticket built <id> --branch NAME --commit SHA` (a worker's
+  finish: `claimed` -> `built`, releasing the claim; or parked work, `planned` -> `built`, by a
+  non-worker); `ticket send-back <id> --reason TEXT` (`built` -> `planned`, keeping the branch).
+  `done` takes `built` -> `integrated` (and still `claimed`/`planned`); `drop` works from `held`
+  and `built`. Hold, unhold and send-back are for non-workers. `queue` labels a held or built
+  ticket `held` or `built` instead of `startable`. Each change is a `task.state` event
+  (`from`/`to`) plus a thread note.
   `in_review` and `accepted`, and everything that depends on those, arrive with later
   tasks — see the `Planned` block below.
 - **`ticket link <id> <kind> <other> [--rm]`** (br-3v75; replaces `task dep add|rm`, which is

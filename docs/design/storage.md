@@ -252,7 +252,23 @@ cleared when the incident resolves
 `settle_until` on a task is computed from `created_at` and the thread, never stored (coordination.md,
 "Settling"), so the settle period needs no column, file field or migration.
 
-Built for task records at the `pending`/`open`/`planned`/`claimed`/`dropped`/`integrated`/`reopened`
+Two states are pauses and waits, not steps of the work (stx8). `held`: a person paused a
+`planned` ticket; `held_by`, `held_reason`, `held_until` (free text) and `held_at` are frontmatter
+fields, absent otherwise. `built`: finished on a branch, waiting to land, with `branch` and
+`commit` set; `blocks` edges resolve only on `integrated`. The transitions (anything else is a 409):
+
+```
+planned    -> claimed | held | built | dropped
+claimed    -> planned | built | integrated | dropped
+held       -> planned | dropped
+built      -> integrated | planned (send-back; keeps the branch, clears the commit) | dropped
+integrated -> reopened       dropped -> reopened
+```
+
+Migration, automatic at every daemon start and idempotent: a `planned` ticket with `branch` and
+`commit` set becomes `built`. Nothing is guessed for `held`; a person holds those.
+
+Built for task records at the `pending`/`open`/`planned`/`claimed`/`held`/`built`/`dropped`/`integrated`/`reopened`
 states (`TaskState`) (`crates/bridle-daemon/src/state_branch.rs`, `src/tasks.rs`),
 including claims and the queue now (above); `in_review` and
 `accepted`, and the edges/questions that go with them, are still only

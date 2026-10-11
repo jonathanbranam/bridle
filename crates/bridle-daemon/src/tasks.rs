@@ -200,6 +200,10 @@ impl TicketManager {
                 parent: None,
                 impact: Impact::default(),
                 settle_until: None,
+                held_by: None,
+                held_reason: None,
+                held_until: None,
+                held_at: None,
             });
             // The database state is written synchronously by every transition; the task
             // file lags it by up to a flush, so a restart in between must trust the row
@@ -576,6 +580,10 @@ impl TicketManager {
             parent: None,
             impact: Impact::default(),
             settle_until: None,
+            held_by: None,
+            held_reason: None,
+            held_until: None,
+            held_at: None,
         };
         self.state.enqueue_task(&task)?;
         self.state
@@ -896,6 +904,7 @@ impl TicketManager {
         }
         self.transition(&mut task, TicketState::Dropped, actor)
             .await?;
+        clear_held(&mut task);
         task.thread.push(ThreadEntry {
             kind: ThreadEntryKind::Note,
             from: actor.clone(),
@@ -933,6 +942,12 @@ impl TicketManager {
                 return Err(TicketError::Conflict(format!(
                     "task {id} is already {}",
                     task.state
+                )));
+            }
+            // A held task is paused by a person: unhold it first.
+            TicketState::Held => {
+                return Err(TicketError::Conflict(format!(
+                    "task {id} is held; unhold it before marking it done"
                 )));
             }
             // Tolerates a missing claims row (br-w6ww), so a task already stuck can close.
@@ -1034,6 +1049,174 @@ impl TicketManager {
             .await?;
         self.state.enqueue_task(&task)?;
         Ok(self.put(task))
+    }
+
+    /// `planned` -> `held`: a person pauses the task. Not claimable or startable until
+    /// `unhold_task`. The reason is required and goes in the thread.
+    pub async fn hold_task(
+        &self,
+        id: &str,
+        reason: &str,
+        until: Option<&str>,
+        actor: &PrincipalId,
+    ) -> Result<Ticket, TicketError> {
+        if reason.trim().is_empty() {
+            return Err(TicketError::BadRequest(
+                "holding a task requires a reason".to_string(),
+            ));
+        }
+        let mut task = self
+            .get_task(id)
+            .ok_or_else(|| TicketError::NotFound(format!("no such task: {id}")))?;
+        if task.state != TicketState::Planned {
+            return Err(TicketError::Conflict(format!(
+                "task {id} is {}; only a planned task can be held (release a claim first)",
+                task.state
+            )));
+        }
+        self.transition(&mut task, TicketState::Held, actor).await?;
+        let until = until.map(str::trim).filter(|u| !u.is_empty());
+        task.held_by = Some(actor.clone());
+        task.held_reason = Some(reason.trim().to_string());
+        task.held_until = until.map(str::to_string);
+        task.held_at = Some(task.updated_at);
+        task.thread.push(ThreadEntry {
+            kind: ThreadEntryKind::Note,
+            from: actor.clone(),
+            body: match until {
+                Some(u) => format!("held: {} (until {u})", reason.trim()),
+                None => format!("held: {}", reason.trim()),
+            },
+            at: task.updated_at,
+        });
+        self.state.enqueue_task(&task)?;
+        Ok(self.put(task))
+    }
+
+    /// `held` -> `planned`.
+    pub async fn unhold_task(&self, id: &str, actor: &PrincipalId) -> Result<Ticket, TicketError> {
+        let mut task = self
+            .get_task(id)
+            .ok_or_else(|| TicketError::NotFound(format!("no such task: {id}")))?;
+        if task.state != TicketState::Held {
+            return Err(TicketError::Conflict(format!(
+                "task {id} is {}; only a held task can be unheld",
+                task.state
+            )));
+        }
+        self.transition(&mut task, TicketState::Planned, actor)
+            .await?;
+        clear_held(&mut task);
+        task.thread.push(ThreadEntry {
+            kind: ThreadEntryKind::Note,
+            from: actor.clone(),
+            body: "unheld".to_string(),
+            at: task.updated_at,
+        });
+        self.state.enqueue_task(&task)?;
+        Ok(self.put(task))
+    }
+
+    /// `claimed` or `planned` -> `built`: the work is finished on `branch` at `commit` and
+    /// waits to land. A claim is released. Only `done_task` or `send_back_task` leave it.
+    pub async fn built_task(
+        &self,
+        id: &str,
+        branch: &str,
+        commit: &str,
+        actor: &PrincipalId,
+    ) -> Result<Ticket, TicketError> {
+        let (branch, commit) = (branch.trim(), commit.trim());
+        if branch.is_empty() || commit.is_empty() {
+            return Err(TicketError::BadRequest(
+                "marking a task built requires a branch and a commit".to_string(),
+            ));
+        }
+        let mut task = self
+            .get_task(id)
+            .ok_or_else(|| TicketError::NotFound(format!("no such task: {id}")))?;
+        match task.state {
+            TicketState::Planned => {}
+            TicketState::Claimed => {
+                self.end_claim(id, TicketState::Built).await?;
+                task.claimed_by = None;
+                task.claimed_at = None;
+            }
+            other => {
+                return Err(TicketError::Conflict(format!(
+                    "task {id} is {other}; only a claimed or planned task can be built"
+                )));
+            }
+        }
+        self.transition(&mut task, TicketState::Built, actor)
+            .await?;
+        task.branch = Some(branch.to_string());
+        task.commit = Some(commit.to_string());
+        task.thread.push(ThreadEntry {
+            kind: ThreadEntryKind::Note,
+            from: actor.clone(),
+            body: format!("built: {commit} (branch {branch})"),
+            at: task.updated_at,
+        });
+        self.state.enqueue_task(&task)?;
+        Ok(self.put(task))
+    }
+
+    /// `built` -> `planned`, keeping `branch` for the next worker. Records
+    /// `reason` in the thread.
+    pub async fn send_back_task(
+        &self,
+        id: &str,
+        reason: &str,
+        actor: &PrincipalId,
+    ) -> Result<Ticket, TicketError> {
+        if reason.trim().is_empty() {
+            return Err(TicketError::BadRequest(
+                "sending a task back requires a reason".to_string(),
+            ));
+        }
+        let mut task = self
+            .get_task(id)
+            .ok_or_else(|| TicketError::NotFound(format!("no such task: {id}")))?;
+        if task.state != TicketState::Built {
+            return Err(TicketError::Conflict(format!(
+                "task {id} is {}; only a built task can be sent back",
+                task.state
+            )));
+        }
+        self.transition(&mut task, TicketState::Planned, actor)
+            .await?;
+        // The branch stays for the next worker; the commit goes, or the start-up migration
+        // would take this planned task for finished work again.
+        task.commit = None;
+        task.thread.push(ThreadEntry {
+            kind: ThreadEntryKind::Note,
+            from: actor.clone(),
+            body: format!("sent back: {}", reason.trim()),
+            at: task.updated_at,
+        });
+        self.state.enqueue_task(&task)?;
+        Ok(self.put(task))
+    }
+
+    /// Migration (stx8): a `planned` task with a branch and commit is finished work waiting to
+    /// land, so it becomes `built`. Idempotent: once moved, nothing matches. Run at start-up.
+    pub async fn migrate_planned_with_branch_to_built(&self) -> Result<Vec<String>, TicketError> {
+        let ids: Vec<String> = self
+            .list_tasks()
+            .into_iter()
+            .filter(|t| t.state == TicketState::Planned && t.branch.is_some() && t.commit.is_some())
+            .map(|t| t.id)
+            .collect();
+        for id in &ids {
+            let mut task = self.get_task(id).expect("listed task is cached");
+            self.store.set_task_state(id, TicketState::Built).await?;
+            task.state = TicketState::Built;
+            task.updated_at = Utc::now();
+            self.state.enqueue_task(&task)?;
+            self.put(task);
+        }
+        Ok(ids)
     }
 
     async fn transition(
@@ -1704,6 +1887,13 @@ impl TicketManager {
 /// Before the `ticket` front-matter field, a task made from a ticket started its body
 /// `original id: <ticket>`. Returns that ticket id (if the first line is such a line) and the
 /// body without the line.
+fn clear_held(task: &mut Ticket) {
+    task.held_by = None;
+    task.held_reason = None;
+    task.held_until = None;
+    task.held_at = None;
+}
+
 fn split_legacy_origin(body: &str) -> (Option<String>, String) {
     const PREFIX: &str = "original id: ";
     let (first, rest) = body.split_once('\n').unwrap_or((body, ""));
@@ -3784,5 +3974,212 @@ mod tests {
             .expect("human to-do claim");
         let (tm, t, _tmp) = settling(6).await;
         tm.claim_task(&t.id, &agent()).await.expect("settled claim");
+    }
+    async fn planned(tm: &TicketManager, title: &str) -> Ticket {
+        let t = tm
+            .new_open_task(title, TicketKind::Chore, String::new(), vec![], None)
+            .await
+            .expect("new");
+        tm.plan_task(&t.id, &"human".to_string())
+            .await
+            .expect("plan")
+    }
+
+    #[tokio::test]
+    async fn hold_blocks_claiming_until_unheld_and_is_recorded() {
+        let (tm, _tmp) = manager().await;
+        let human = "human".to_string();
+        let t = planned(&tm, "A").await;
+        let err = tm
+            .hold_task(&t.id, " ", None, &human)
+            .await
+            .expect_err("no reason");
+        assert!(matches!(err, TicketError::BadRequest(_)));
+        let held = tm
+            .hold_task(&t.id, "wait for design", Some("human reviews"), &human)
+            .await
+            .expect("hold");
+        assert_eq!(held.state, TicketState::Held);
+        assert_eq!(held.held_by.as_deref(), Some("human"));
+        assert_eq!(held.held_reason.as_deref(), Some("wait for design"));
+        assert_eq!(held.held_until.as_deref(), Some("human reviews"));
+        assert!(held.held_at.is_some());
+        assert!(
+            held.thread
+                .last()
+                .expect("note")
+                .body
+                .starts_with("held: wait for design")
+        );
+        assert!(!tm.is_ready(&held));
+        let err = tm
+            .claim_task(&t.id, &"agent:w1".to_string())
+            .await
+            .expect_err("held");
+        assert!(matches!(err, TicketError::Conflict(_)));
+        // Only planned can be held; held cannot be done.
+        assert!(matches!(
+            tm.hold_task(&t.id, "again", None, &human).await,
+            Err(TicketError::Conflict(_))
+        ));
+        assert!(matches!(
+            tm.done_task(&t.id, "abc", None, &human).await,
+            Err(TicketError::Conflict(_))
+        ));
+        let back = tm.unhold_task(&t.id, &human).await.expect("unhold");
+        assert_eq!(back.state, TicketState::Planned);
+        assert!(back.held_by.is_none() && back.held_reason.is_none() && back.held_at.is_none());
+        assert!(tm.is_ready(&back));
+        assert!(matches!(
+            tm.unhold_task(&t.id, &human).await,
+            Err(TicketError::Conflict(_))
+        ));
+        // Drop is allowed from held.
+        tm.hold_task(&t.id, "again", None, &human)
+            .await
+            .expect("hold");
+        let dropped = tm
+            .drop_task(&t.id, "not needed", &human)
+            .await
+            .expect("drop");
+        assert_eq!(dropped.state, TicketState::Dropped);
+        assert!(dropped.held_by.is_none());
+    }
+
+    #[tokio::test]
+    async fn built_from_claimed_and_planned_leaves_only_by_done_or_send_back() {
+        let (tm, _tmp) = manager().await;
+        let human = "human".to_string();
+        let w = "agent:w1".to_string();
+        let a = planned(&tm, "A").await;
+        let b = planned(&tm, "B").await;
+        tm.add_edge(&a.id, &b.id, EdgeKind::Blocks)
+            .await
+            .expect("edge");
+
+        // The worker's finish: claimed -> built releases the lease.
+        tm.claim_task(&a.id, &w).await.expect("claim");
+        assert!(matches!(
+            tm.built_task(&a.id, "", "abc", &w).await,
+            Err(TicketError::BadRequest(_))
+        ));
+        let built = tm
+            .built_task(&a.id, "bridle/a", "abc123", &w)
+            .await
+            .expect("built");
+        assert_eq!(built.state, TicketState::Built);
+        assert!(built.claimed_by.is_none());
+        assert_eq!(built.branch.as_deref(), Some("bridle/a"));
+        assert_eq!(built.commit.as_deref(), Some("abc123"));
+        assert!(tm.release_task(&a.id, &w).await.is_err(), "lease is gone");
+        // Built does not resolve blocks edges and is not claimable.
+        assert!(!tm.is_ready(&tm.get_task(&b.id).expect("b")));
+        assert!(matches!(
+            tm.claim_task(&a.id, &w).await,
+            Err(TicketError::Conflict(_))
+        ));
+        assert!(matches!(
+            tm.hold_task(&a.id, "x", None, &human).await,
+            Err(TicketError::Conflict(_))
+        ));
+        assert!(matches!(
+            tm.built_task(&a.id, "b", "c", &human).await,
+            Err(TicketError::Conflict(_))
+        ));
+        // Send-back keeps the branch and clears the commit.
+        assert!(matches!(
+            tm.send_back_task(&a.id, " ", &human).await,
+            Err(TicketError::BadRequest(_))
+        ));
+        let sent = tm
+            .send_back_task(&a.id, "fix tests", &human)
+            .await
+            .expect("send back");
+        assert_eq!(sent.state, TicketState::Planned);
+        assert_eq!(sent.branch.as_deref(), Some("bridle/a"));
+        assert!(sent.commit.is_none());
+        assert!(
+            sent.thread
+                .last()
+                .expect("note")
+                .body
+                .contains("sent back: fix tests")
+        );
+        assert!(matches!(
+            tm.send_back_task(&a.id, "again", &human).await,
+            Err(TicketError::Conflict(_))
+        ));
+        // Parked work: planned -> built, then landed.
+        let parked = tm
+            .built_task(&a.id, "bridle/a", "def456", &human)
+            .await
+            .expect("parked");
+        assert_eq!(parked.state, TicketState::Built);
+        let done = tm
+            .done_task(&a.id, "def456", Some("bridle/a"), &human)
+            .await
+            .expect("done");
+        assert_eq!(done.state, TicketState::Integrated);
+        assert!(tm.is_ready(&tm.get_task(&b.id).expect("b")));
+        // Drop is allowed from built.
+        tm.claim_task(&b.id, &w).await.expect("claim b");
+        tm.built_task(&b.id, "bridle/b", "bbb", &w)
+            .await
+            .expect("built b");
+        let dropped = tm.drop_task(&b.id, "obsolete", &human).await.expect("drop");
+        assert_eq!(dropped.state, TicketState::Dropped);
+    }
+
+    #[tokio::test]
+    async fn migration_moves_planned_with_branch_and_commit_to_built_once() {
+        let (tm, _tmp) = manager().await;
+        let human = "human".to_string();
+        let with = planned(&tm, "with").await;
+        let without = planned(&tm, "without").await;
+        let branch_only = planned(&tm, "branch only").await;
+        // A planned task that carries a landing record (as older builds left them).
+        for (id, branch, commit) in [
+            (&with.id, Some("bridle/w"), Some("abc")),
+            (&branch_only.id, Some("bridle/b"), None),
+        ] {
+            let mut t = tm.get_task(id).expect("task");
+            t.branch = branch.map(str::to_string);
+            t.commit = commit.map(str::to_string);
+            tm.put(t);
+        }
+        let moved = tm
+            .migrate_planned_with_branch_to_built()
+            .await
+            .expect("migrate");
+        assert_eq!(moved, vec![with.id.clone()]);
+        assert_eq!(tm.get_task(&with.id).expect("t").state, TicketState::Built);
+        assert_eq!(
+            tm.get_task(&without.id).expect("t").state,
+            TicketState::Planned
+        );
+        assert_eq!(
+            tm.get_task(&branch_only.id).expect("t").state,
+            TicketState::Planned
+        );
+        // Rerun is a no-op.
+        assert!(
+            tm.migrate_planned_with_branch_to_built()
+                .await
+                .expect("rerun")
+                .is_empty()
+        );
+        // The state is durable in the database, not just the cache.
+        assert_eq!(
+            tm.store
+                .list_tasks()
+                .await
+                .expect("rows")
+                .iter()
+                .find(|r| r.id == with.id)
+                .expect("row")
+                .state,
+            TicketState::Built
+        );
+        let _ = human;
     }
 }

@@ -12,23 +12,24 @@ use thiserror::Error;
 
 use crate::types::{
     AddQueueTierRequest, Agent, AllocPortRequest, AnswerQuestionRequest, ApiErrorResponse,
-    AskQuestionRequest, BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, Conflict,
-    DoneTicketRequest, DropTicketRequest, Edge, EditTicketRequest, Event, EventQuery, ForwardAck,
-    ForwardRequest, ForwardState, Handover, HandoverDone, Health, HelloRequest, ImpactCheckRequest,
-    ImpactReport, Interaction, InteractionsQuery, InterruptRequest, InterruptResponse, LandRequest,
-    LandResult, MaxWorkersRequest, Message, MessageQuery, NewEdgeRequest, NewTicketRequest,
-    NoteTicketRequest, OpenQuestion, OrchestratorWakeQuery, OutboxEntry, OutboxSendRequest,
-    PeerTokenCreateRequest, PeerWatchRequest, PortAllocation, PrincipalWakeQuery,
-    PrincipalWakeResponse, ProbeRequest, ProbeResult, PushResult, Queue, Queued, RateLimitPoint,
-    Recipient, RemoteWatchRequest, RemoveEdgeQuery, RemoveQuery, RenewRequest,
-    ResolveConflictRequest, RestartRequest, RestartResponse, ResumeRequest, ReviewAddRequest,
-    ReviewAddResponse, ReviewNowRequest, ReviewNowResponse, Schedule, ScheduleAddRequest,
-    ScheduleListQuery, SendRequest, SessionEnd, SessionInfo, SessionKeep, SessionRegister,
-    SetImpactRequest, SetKindRequest, SetPriorityRequest, SetQueueRequest, SetSummaryRequest,
-    ShutdownResponse, SkipSettleRequest, SpawnRequest, Status, StatusLineReport, StopRequest,
-    StopWakeRequest, StopWakeResponse, SubmitTicketRequest, Ticket, TicketQuery,
-    TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
-    UsageBreakdown, UsageBreakdownQuery, UsageHistoryQuery, WakeResponse, WriteHandoverRequest,
+    AskQuestionRequest, BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, BuiltTicketRequest,
+    Conflict, DoneTicketRequest, DropTicketRequest, Edge, EditTicketRequest, Event, EventQuery,
+    ForwardAck, ForwardRequest, ForwardState, Handover, HandoverDone, Health, HelloRequest,
+    HoldTicketRequest, ImpactCheckRequest, ImpactReport, Interaction, InteractionsQuery,
+    InterruptRequest, InterruptResponse, LandRequest, LandResult, MaxWorkersRequest, Message,
+    MessageQuery, NewEdgeRequest, NewTicketRequest, NoteTicketRequest, OpenQuestion,
+    OrchestratorWakeQuery, OutboxEntry, OutboxSendRequest, PeerTokenCreateRequest,
+    PeerWatchRequest, PortAllocation, PrincipalWakeQuery, PrincipalWakeResponse, ProbeRequest,
+    ProbeResult, PushResult, Queue, Queued, RateLimitPoint, Recipient, RemoteWatchRequest,
+    RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, RestartRequest,
+    RestartResponse, ResumeRequest, ReviewAddRequest, ReviewAddResponse, ReviewNowRequest,
+    ReviewNowResponse, Schedule, ScheduleAddRequest, ScheduleListQuery, SendBackTicketRequest,
+    SendRequest, SessionEnd, SessionInfo, SessionKeep, SessionRegister, SetImpactRequest,
+    SetKindRequest, SetPriorityRequest, SetQueueRequest, SetSummaryRequest, ShutdownResponse,
+    SkipSettleRequest, SpawnRequest, Status, StatusLineReport, StopRequest, StopWakeRequest,
+    StopWakeResponse, SubmitTicketRequest, Ticket, TicketQuery, TokenCreateRequest, TokenCreated,
+    TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery,
+    UsageHistoryQuery, WakeResponse, WriteHandoverRequest,
 };
 
 pub use bridle_docs::documents::{
@@ -851,6 +852,39 @@ impl Client {
     /// Returns the allocation that was released.
     pub async fn release_port(&self, port: u16) -> Result<PortAllocation, ClientError> {
         self.post_empty(&["v1", "ports", &port.to_string(), "release"])
+            .await
+    }
+
+    /// `planned` -> `held`. A 409 means the task isn't `planned`.
+    pub async fn hold_task(
+        &self,
+        id: &str,
+        req: &HoldTicketRequest,
+    ) -> Result<Ticket, ClientError> {
+        self.post_json(&["v1", "tickets", id, "hold"], req).await
+    }
+
+    /// `held` -> `planned`.
+    pub async fn unhold_task(&self, id: &str) -> Result<Ticket, ClientError> {
+        self.post_empty(&["v1", "tickets", id, "unhold"]).await
+    }
+
+    /// `claimed` or `planned` -> `built`.
+    pub async fn built_task(
+        &self,
+        id: &str,
+        req: &BuiltTicketRequest,
+    ) -> Result<Ticket, ClientError> {
+        self.post_json(&["v1", "tickets", id, "built"], req).await
+    }
+
+    /// `built` -> `planned`.
+    pub async fn send_back_task(
+        &self,
+        id: &str,
+        req: &SendBackTicketRequest,
+    ) -> Result<Ticket, ClientError> {
+        self.post_json(&["v1", "tickets", id, "send-back"], req)
             .await
     }
 

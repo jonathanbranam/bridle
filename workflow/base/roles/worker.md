@@ -25,6 +25,10 @@ the project's conventions; follow them.
   paragraph on the ticket itself (what changed, where, any decision or caveat worth
   keeping) with `bridle ticket summary <ticket-id> --file <path>` (or `--file -` on stdin;
   `--text` for one line). Re-running replaces it. The manager records it with the landing.
+- **Mark it built** once the check is green and committed:
+  `bridle ticket built <ticket-id> --branch <your-branch> --commit <sha>`. It releases your
+  claim and moves the ticket to `built` (finished, waiting to land); the manager's landing then
+  makes it `integrated`.
 - **Report** to whoever spawned you or manages you, never to `human` unless told to (if the
   sender in the message header is `human`, use the manager: `bridle agents --json`):
   `bridle send <manager> --task <ticket-id> "done: <one-line summary>; <commit sha>"`

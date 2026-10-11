@@ -504,6 +504,14 @@ pub enum TicketRowAction {
     Summary(RowSummaryArgs),
     /// Bring a dropped or integrated ticket back.
     Reopen(RowReopenArgs),
+    /// Pause a planned ticket: not claimable or startable until unheld (reason required).
+    Hold(RowHoldArgs),
+    /// Un-pause a held ticket: `held` -> `planned`.
+    Unhold(RowUnholdArgs),
+    /// Mark a claimed or planned ticket built: finished on a branch, waiting to land.
+    Built(RowBuiltArgs),
+    /// Send a built ticket back for rework: `built` -> `planned`, keeping its branch.
+    SendBack(RowSendBackArgs),
     /// Skip a ticket's settle period so it can start now (recorded in its thread).
     SkipSettle(RowSkipSettleArgs),
     /// Start watching a ticket as the calling principal (recorded in its thread).
@@ -539,6 +547,10 @@ impl From<TicketRowAction> for RowAction {
             R::Done(a) => Self::Done(a),
             R::Summary(a) => Self::Summary(a),
             R::Reopen(a) => Self::Reopen(a),
+            R::Hold(a) => Self::Hold(a),
+            R::Unhold(a) => Self::Unhold(a),
+            R::Built(a) => Self::Built(a),
+            R::SendBack(a) => Self::SendBack(a),
             R::SkipSettle(a) => Self::SkipSettle(a),
             R::Watch(a) => Self::Watch(a),
             R::Unwatch(a) => Self::Unwatch(a),
@@ -1764,6 +1776,14 @@ pub enum RowAction {
     Summary(RowSummaryArgs),
     /// Bring a dropped or integrated ticket back.
     Reopen(RowReopenArgs),
+    /// Pause a planned ticket: not claimable or startable until unheld (reason required).
+    Hold(RowHoldArgs),
+    /// Un-pause a held ticket: `held` -> `planned`.
+    Unhold(RowUnholdArgs),
+    /// Mark a claimed or planned ticket built: finished on a branch, waiting to land.
+    Built(RowBuiltArgs),
+    /// Send a built ticket back for rework: `built` -> `planned`, keeping its branch.
+    SendBack(RowSendBackArgs),
     /// Skip a ticket's settle period so it can start now (recorded in its thread).
     SkipSettle(RowSkipSettleArgs),
     /// Start watching a ticket as the calling principal (recorded in its thread).
@@ -1994,6 +2014,41 @@ pub struct RowWatchArgs {
 #[derive(Debug, Args)]
 pub struct RowReopenArgs {
     pub task: String,
+}
+
+#[derive(Debug, Args)]
+pub struct RowHoldArgs {
+    pub task: String,
+    /// Why it is paused (recorded in the thread).
+    #[arg(long)]
+    pub reason: String,
+    /// Until when, in free text (e.g. "human reviews kzw2").
+    #[arg(long)]
+    pub until: Option<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct RowUnholdArgs {
+    pub task: String,
+}
+
+#[derive(Debug, Args)]
+pub struct RowBuiltArgs {
+    pub task: String,
+    /// The branch the work is on.
+    #[arg(long)]
+    pub branch: String,
+    /// The commit the work is at.
+    #[arg(long)]
+    pub commit: String,
+}
+
+#[derive(Debug, Args)]
+pub struct RowSendBackArgs {
+    pub task: String,
+    /// What to rework (recorded in the thread).
+    #[arg(long)]
+    pub reason: String,
 }
 
 #[derive(Debug, Args)]

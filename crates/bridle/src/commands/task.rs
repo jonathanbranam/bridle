@@ -78,6 +78,33 @@ pub(super) async fn task(cli: &Cli, args: &RowArgs) -> Result<(), CliError> {
         RowAction::Done(a) => task_done(cli, a).await,
         RowAction::Summary(a) => task_summary(cli, a).await,
         RowAction::Reopen(a) => task_reopen(cli, a).await,
+        RowAction::Hold(a) => {
+            let req = HoldTicketRequest {
+                reason: a.reason.clone(),
+                until: a.until.clone(),
+            };
+            let client = client_for(cli).await?;
+            print_changed(cli, client.hold_task(&a.task, &req).await?)
+        }
+        RowAction::Unhold(a) => {
+            let client = client_for(cli).await?;
+            print_changed(cli, client.unhold_task(&a.task).await?)
+        }
+        RowAction::Built(a) => {
+            let req = BuiltTicketRequest {
+                branch: a.branch.clone(),
+                commit: a.commit.clone(),
+            };
+            let client = client_for(cli).await?;
+            print_changed(cli, client.built_task(&a.task, &req).await?)
+        }
+        RowAction::SendBack(a) => {
+            let req = SendBackTicketRequest {
+                reason: a.reason.clone(),
+            };
+            let client = client_for(cli).await?;
+            print_changed(cli, client.send_back_task(&a.task, &req).await?)
+        }
         RowAction::SkipSettle(a) => task_skip_settle(cli, a).await,
         RowAction::Watch(a) => task_watch(cli, a, true).await,
         RowAction::Unwatch(a) => task_watch(cli, a, false).await,
@@ -111,7 +138,10 @@ pub(super) fn task_size_arg_to_opt(arg: TicketSizeArg) -> Option<TicketSize> {
 }
 
 use bridle_api::settle_clock_text;
-use bridle_api::types::{RemoteWatchRequest, sort_by_priority};
+use bridle_api::types::{
+    BuiltTicketRequest, HoldTicketRequest, RemoteWatchRequest, SendBackTicketRequest,
+    sort_by_priority,
+};
 
 pub fn print_task_row(t: &Ticket) {
     println!(
@@ -611,6 +641,15 @@ pub(super) async fn task_summary(cli: &Cli, args: &RowSummaryArgs) -> Result<(),
     Ok(())
 }
 
+fn print_changed(cli: &Cli, task: Ticket) -> Result<(), CliError> {
+    if cli.json {
+        render::print_json(&task)?;
+    } else {
+        print_task_row(&task);
+    }
+    Ok(())
+}
+
 pub(super) async fn task_reopen(cli: &Cli, args: &RowReopenArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
     let task = client.reopen_task(&args.task).await?;
@@ -920,6 +959,19 @@ pub(super) struct QueueView {
     tiers: Vec<QueueTierRow>,
 }
 
+/// The label after a queued task: `held` and `built` say so (never startable), an unmet
+/// dependency is `blocked`.
+fn queue_mark(t: &QueueRow) -> String {
+    use bridle_api::TicketState;
+    match (t.state, t.settle_until) {
+        (TicketState::Held, _) => "held".to_string(),
+        (TicketState::Built, _) => "built".to_string(),
+        (_, Some(until)) => format!("settling until {}", settle_clock_text(until)),
+        _ if t.startable => "startable".to_string(),
+        _ => "blocked".to_string(),
+    }
+}
+
 /// `bridle queue`'s read-only view: claimed tasks with their worker, then
 /// the tiers in rank order, each task marked startable or blocked
 /// (roles-and-lifecycle.md, "the queue"). Composed client-side from three
@@ -994,11 +1046,7 @@ pub(super) async fn queue_show(cli: &Cli) -> Result<(), CliError> {
         println!();
         println!("Tier {}:", tier.rank);
         for t in &tier.tasks {
-            let mark = match t.settle_until {
-                Some(until) => format!("settling until {}", settle_clock_text(until)),
-                None if t.startable => "startable".to_string(),
-                None => "blocked".to_string(),
-            };
+            let mark = queue_mark(t);
             println!(
                 "  {:<10} {:<9} {:<8} {:<4} {:<9} {}",
                 t.id,
@@ -1011,4 +1059,30 @@ pub(super) async fn queue_show(cli: &Cli) -> Result<(), CliError> {
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod queue_mark_tests {
+    use super::*;
+    use bridle_api::TicketState;
+
+    fn row(state: TicketState, startable: bool) -> QueueRow {
+        QueueRow {
+            id: "t-1".into(),
+            title: "x".into(),
+            kind: TicketKind::Chore,
+            state,
+            size: None,
+            startable,
+            settle_until: None,
+        }
+    }
+
+    #[test]
+    fn held_and_built_are_labelled_and_never_startable() {
+        assert_eq!(queue_mark(&row(TicketState::Held, true)), "held");
+        assert_eq!(queue_mark(&row(TicketState::Built, true)), "built");
+        assert_eq!(queue_mark(&row(TicketState::Planned, true)), "startable");
+        assert_eq!(queue_mark(&row(TicketState::Planned, false)), "blocked");
+    }
 }

@@ -58,6 +58,8 @@ JSON over HTTP, versioned under `/v1`. The contract is
 | `POST /v1/tickets/{id}/plan` | `open` -> `planned` |
 | `POST /v1/tickets/{id}/drop` | `{reason}` (required) -> `dropped`, recorded in the thread |
 | `POST /v1/tickets/{id}/reopen` | `dropped` or `integrated` -> `reopened`; any other current state is a 409 |
+| `POST /v1/tickets/{id}/hold` · `/unhold` | `{reason, until?}`: `planned` -> `held` (not claimable or startable) · `held` -> `planned`; not for workers; other states are a 409 |
+| `POST /v1/tickets/{id}/built` · `/send-back` | `{branch, commit}`: `claimed` or `planned` -> `built` (the claiming worker, or a non-worker; releases the claim) · `{reason}`: `built` -> `planned`, keeping the branch (not for workers). `done` takes `built` -> `integrated`; `drop` works from `held` and `built`. Each emits the usual `task.state` event |
 | `POST /v1/tickets/{id}/claim` | claims a ready task for the caller: `planned` -> `claimed`; 409 if it isn't ready (not planned, blocked, or already claimed) |
 | `POST /v1/tickets/{id}/release` | releases the caller's own claim: `claimed` -> `planned`; 409 if the caller isn't the current claimant, including if it isn't claimed at all |
 | `POST /v1/tickets/{id}/done` | `{commit, branch?}` -> `integrated`, recording the landing; with `branch` the commit must be on the integration branch, and the branch's agents, worktrees and branch are removed (cleanup reported in the thread), except an agent that still holds other work (uncommitted changes, another unmerged branch checked out, another claimed task, or a background job with files open in its worktree), which is kept with its branch, named in the thread note, and the manager is told once; tells other workers `main moved` |
@@ -77,7 +79,7 @@ JSON over HTTP, versioned under `/v1`. The contract is
 | `POST /v1/shutdown` | graceful stop of all agents, then exit (human only); replies `{stop_limit_secs}`, the cap (`stop_grace` + 5 s) |
 
 Tasks ([[docs/design/storage#The state branch|storage.md]]) are scoped, for
-now, to `open`/`planned`/`claimed`/`dropped`/`integrated`/`reopened`
+now, to `open`/`planned`/`claimed`/`held`/`built`/`dropped`/`integrated`/`reopened`
 ([[docs/design/roles-and-lifecycle#Task lifecycle|task lifecycle]]);
 `in_review`/`accepted` and what drives them arrive with later tasks.
 
