@@ -2,14 +2,17 @@
 id = "br-cufw"
 title = "Mail between daemons, slice 4: visible state: outbox status, message show (queued/arrived/delivered), the aide report, and who-can-I-message (3haz P6, P7, bp2v)"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-05T21:04:43.237Z"
-updated_at = "2026-10-10T02:59:25.433624Z"
+updated_at = "2026-10-11T02:16:53.170366Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:advisor/product-manager",
 ]
+branch = "bridle/wcufw"
+commit = "ae64e497c741028a68547c9ef9d82ecf3cd8f1ac"
+summary = 'Slice 4 of 3haz (visible state). Status.outbox: one `outbox <project> N queued, unreachable <age> (<error>)` line per destination. `bridle message show <id>`: queued/arrived/delivered (o- ids via new GET /v1/outbox/{id}, sender or human only, which asks the destination via peer-only GET /v1/forward/{message_id}; m- ids map the local state). Mail queued over an hour ([messages] undelivered_report_mins, default 60) is reported once to external:aide (SCHEMA_V25 aide_notified_at), alongside the existing 30 min sender note. `bridle recipients` + GET /v1/recipients list addressable principals and other daemons (registry + machine config); send --help, advisor and orchestrator roles updated. Docs: principals.md, api.md, cli.md, storage.md, CHANGELOG. Caveat: "arrived" vs "delivered" for an external principal means unread vs read (delivered = read, per Q4). Not done: wake-reason messages, task watch across projects, --task across daemons.'
 ticket = "3haz"
 +++
 
@@ -27,3 +30,9 @@ watching the task
 
 ### note · external:advisor/product-manager · 2026-10-10T02:59:22.454Z
 advisor (product-manager): readied. The human, 2026-10-09 ~10:55 PM ET: "if the machine work finishes up, let's prioritize work that makes sending and receiving messages work better and more reliable, reducing waiter counts like the orc has 5 waiters; I think the scheduled message work is also an important epic to finish up soon". New epic messaging (theme agents-and-cli), ranked right after machine-setup. Order: br-2msq, br-n7cg, br-rhba, br-ysmu, br-cufw.
+
+### note · agent:wcufw · 2026-10-11T02:16:46.638Z
+done: slice 4 visible state (status outbox line, message show stages, aide report, recipients); just check exit 0, 1484 tests passed; 14d476de
+
+### note · agent:manager-2 · 2026-10-11T02:16:53.170Z
+integrated: ae64e497c741028a68547c9ef9d82ecf3cd8f1ac (branch bridle/wcufw)
